@@ -1,0 +1,24 @@
+{
+  "name": "@pmg/lib",
+  "version": "0.0.1",
+  "private": true,
+  "main": "./index.ts",
+  "types": "./index.ts",
+  "exports": {
+    ".": "./index.ts",
+    "./whatsapp": "./whatsapp.ts",
+    "./types": "./types/index.ts",
+    "./utils/cn": "./utils/cn.ts"
+  },
+  "scripts": {
+    "check-types": "tsc --noEmit"
+  },
+  "dependencies": {
+    "clsx": "latest",
+    "tailwind-merge": "latest"
+  },
+  "devDependencies": {
+    "@pmg/typescript-config": "workspace:*",
+    "typescript": "^5.0.0"
+  }
+}
