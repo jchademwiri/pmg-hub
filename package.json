@@ -2,16 +2,11 @@
   "name": "pmg-hub",
   "private": true,
   "scripts": {
-    "dev":          "turbo run dev",
-    "dev:pmg":      "turbo run dev --filter=pmg",
-    "dev:tes":      "turbo run dev --filter=tender",
-    "build":        "turbo run build",
-    "build:pmg":     "turbo run build --filter=pmg",
-    "build:tes":    "turbo run build --filter=tender",
-    "lint":         "turbo run lint",
-    "check-types":  "turbo run check-types",
-    "typecheck":    "turbo run check-types",
-    "format":       "prettier --write \"**/*.{ts,tsx,md,astro}\""
+    "build": "turbo run build",
+    "dev": "turbo run dev",
+    "lint": "turbo run lint",
+    "format": "prettier --write \"**/*.{ts,tsx,md}\"",
+    "check-types": "turbo run check-types"
   },
   "devDependencies": {
     "prettier": "^3.7.4",
@@ -19,7 +14,7 @@
     "typescript": "5.9.2"
   },
   "engines": {
-    "node": ">=20"
+    "node": ">=18"
   },
   "packageManager": "bun@1.3.5",
   "workspaces": [
