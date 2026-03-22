@@ -1,159 +1,210 @@
-# Turborepo starter
+# Playhouse Media Group — Monorepo
 
-This Turborepo starter is maintained by the Turborepo core team.
+Multi-app monorepo for [Playhouse Media Group](https://playhousemedia.co.za) and all its division websites. Built with Bun workspaces, Next.js, and Astro. Deployed on Vercel.
 
-## Using this example
+> **Current focus:** PMG hub + Tender Edge Solutions. All other apps added as each division launches.
 
-Run the following command:
+---
 
-```sh
-npx create-turbo@latest
+## Apps
+
+| App | Domain | Framework | Status |
+|---|---|---|---|
+| `Playhouse Media Group Hub` | playhousemedia.co.za | Next.js 16 | Building — trust hub + admin panel |
+| `Tender Edge Solutions` | tenderedgesolutions.co.za | Astro 6 | Building — primary revenue site |
+| `Apex Web Solutions` | apexwebsolutions.co.za | Astro 6 | Migrating from separate repo |
+| `Jacob C` | jacobc.co.za | Astro 6 | Migrating + converting from Next.js |
+
+**External — not in this monorepo:**
+
+| Site | Domain | Notes |
+|---|---|---|
+| TenderTrack 360 | tendertrack360.co.za | Live SaaS product — stays in its own repo |
+
+---
+
+## Packages
+
+| Package | Purpose |
+|---|---|
+| `@pmg/ui` | Shared shadcn/ui components (used by Next.js apps) |
+| `@pmg/config` | Shared Tailwind base config, TypeScript base config, ESLint base config |
+| `@pmg/lib` | Shared TypeScript types, utilities, WhatsApp link helpers |
+
+---
+
+## Stack
+
+| Layer | Technology |
+|---|---|
+| Runtime & package manager | Bun |
+| Hub + admin panel | Next.js 16 (App Router) |
+| Division marketing sites | Astro 6 |
+| Database | Neon DB (serverless PostgreSQL) + Drizzle ORM |
+| File storage | Cloudflare R2 (zero egress fees) |
+| Email | Resend + React Email |
+| Email bot (future) | Chat SDK + @resend/chat-sdk-adapter |
+| Authentication | Better Auth |
+| API layer | Hono (mounted inside Next.js) |
+| Hosting | Vercel (one team, all projects) |
+| DNS + CDN | Cloudflare |
+| UI components | shadcn/ui + Tailwind CSS |
+
+---
+
+## Framework Decision
+
+```
+Static marketing sites (Astro)        Dynamic apps with auth + DB (Next.js)
+─────────────────────────────          ──────────────────────────────────────
+Tender Edge Solutions                    Playhouse Media Group Hub
+Apex Web Solutions                       ├── public site
+Jacob C                                  ├── admin panel (/admin)
+Launchpad SA (future)                    └── Hono API (/api)
+Creative Studio (future)
+StudyEdge (future)
 ```
 
-## What's inside?
+Astro sites handle forms via Astro Actions — no Next.js needed for a contact form.
 
-This Turborepo includes the following packages/apps:
+---
 
-### Apps and Packages
+## Getting Started
 
-- `docs`: a [Next.js](https://nextjs.org/) app
-- `web`: another [Next.js](https://nextjs.org/) app
-- `@repo/ui`: a stub React component library shared by both `web` and `docs` applications
-- `@repo/eslint-config`: `eslint` configurations (includes `eslint-config-next` and `eslint-config-prettier`)
-- `@repo/typescript-config`: `tsconfig.json`s used throughout the monorepo
+```bash
+# Install all workspaces
+bun install
 
-Each package/app is 100% [TypeScript](https://www.typescriptlang.org/).
+# Run individual apps
+bun run dev           # pmg-hub (Next.js) → localhost:3000
+bun run dev:tes       # tender-edge (Astro) → localhost:4321
+bun run dev:apex      # apex-web (Astro)
+bun run dev:jacobc    # jacobc (Astro)
 
-### Utilities
+# Build
+bun run build         # pmg-hub
+bun run build:tes     # tender-edge
 
-This Turborepo has some additional tools already setup for you:
-
-- [TypeScript](https://www.typescriptlang.org/) for static type checking
-- [ESLint](https://eslint.org/) for code linting
-- [Prettier](https://prettier.io) for code formatting
-
-### Build
-
-To build all apps and packages, run the following command:
-
-With [global `turbo`](https://turborepo.dev/docs/getting-started/installation#global-installation) installed (recommended):
-
-```sh
-cd my-turborepo
-turbo build
+# Type check all
+bun run typecheck
 ```
 
-Without global `turbo`, use your package manager:
+---
 
-```sh
-cd my-turborepo
-npx turbo build
-yarn dlx turbo build
-pnpm exec turbo build
+## Repository Structure
+
+```
+playhousemedia/
+│
+├── apps/
+│   ├── playhouse-media-group-hub/              # playhousemedia.co.za — Next.js
+│   │   ├── src/
+│   │   │   ├── app/           # All pages + components
+│   │   │   │   ├── (public)/  # Public site — Home, About, Services, Contact
+│   │   │   │   ├── (admin)/   # Admin panel — auth protected
+│   │   │   │   └── api/       # Hono API routes
+│   │   │   └── lib/
+│   │   │       ├── db/        # Neon DB + Drizzle
+│   │   │       ├── auth/      # Better Auth
+│   │   │       ├── storage/   # Cloudflare R2
+│   │   │       └── email/     # Resend + React Email templates
+│   │
+│   ├── tender-edge-solutions/          # tenderedgesolutions.co.za — Astro
+│   │   └── src/
+│   │       ├── pages/        # Home, Services, Portfolio, About, Contact
+│   │       ├── actions/      # Astro Actions → PMG leads API
+│   │       └── content/      # Portfolio case studies (MDX)
+│   │
+│   ├── apex-web-solutions/             # apexwebsolutions.co.za — Astro (migrating)
+│   │   └── src/
+│   │
+│   └── jacobc/                         # jacobc.co.za — Astro (migrating + converting)
+│       └── src/
+│
+└── packages/
+    ├── ui/                   # Shared shadcn/ui components
+    ├── config/               # Shared tailwind, tsconfig, eslint base configs
+    └── lib/                  # Shared types, utils, WhatsApp utility
 ```
 
-You can build a specific package by using a [filter](https://turborepo.dev/docs/crafting-your-repository/running-tasks#using-filters):
+## Lead Flow
 
-With [global `turbo`](https://turborepo.dev/docs/getting-started/installation#global-installation) installed:
+Every division site submits leads to the centralised PMG API — all leads land in one database and appear in the PMG admin panel regardless of which site collected them.
 
-```sh
-turbo build --filter=docs
+```
+Division site form submit
+        ↓
+Astro Action → POST playhousemedia.co.za/api/leads
+        ↓
+Hono route → Neon DB (public.leads)
+        ↓
+Resend → auto-reply to visitor + notification to PMG
+        ↓
+Appears in playhousemedia.co.za/admin/leads
 ```
 
-Without global `turbo`:
+---
 
-```sh
-npx turbo build --filter=docs
-yarn exec turbo build --filter=docs
-pnpm exec turbo build --filter=docs
-```
+## Domain Strategy
 
-### Develop
+| Domain | Status | Notes |
+|---|---|---|
+| playhousemedia.co.za | Primary | All new development |
+| playhousemedia.net | Legacy | Permanent 301 → .co.za |
+| tenderedgesolutions.co.za | Register now | Building TES |
+| apexwebsolutions.co.za | Live | Migrate repo only |
+| jacobc.co.za | Live | Migrate + convert to Astro |
+| tendertrack360.co.za | Live — external | Stays independent |
 
-To develop all apps and packages, run the following command:
+---
 
-With [global `turbo`](https://turborepo.dev/docs/getting-started/installation#global-installation) installed (recommended):
+## Environment Variables
 
-```sh
-cd my-turborepo
-turbo dev
-```
+Each app manages its own `.env.local`. Never commit env files.
 
-Without global `turbo`, use your package manager:
+**`apps/pmg-hub`** — needs: `DATABASE_URL`, `BETTER_AUTH_SECRET`, `BETTER_AUTH_URL`, `RESEND_API_KEY`, `RESEND_WEBHOOK_SECRET`, `CF_ACCOUNT_ID`, `CF_R2_ACCESS_KEY`, `CF_R2_SECRET_KEY`, `CF_R2_BUCKET`, `NEXT_PUBLIC_WHATSAPP`
 
-```sh
-cd my-turborepo
-npx turbo dev
-yarn exec turbo dev
-pnpm exec turbo dev
-```
+**`apps/tender-edge`** — needs: `PUBLIC_SITE_URL`, `PMG_LEADS_API`, `RESEND_API_KEY`, `BRAND_DOMAIN`, `BRAND_NOTIFY_EMAIL`, `PUBLIC_WHATSAPP`
 
-You can develop a specific package by using a [filter](https://turborepo.dev/docs/crafting-your-repository/running-tasks#using-filters):
+See individual developer guides in `/developer-guides/` for full variable reference.
 
-With [global `turbo`](https://turborepo.dev/docs/getting-started/installation#global-installation) installed:
+---
 
-```sh
-turbo dev --filter=web
-```
+## Build Order
 
-Without global `turbo`:
+| Priority | App | Task |
+|---|---|---|
+| 1 | `pmg-hub` | Neon DB + Drizzle schema + Hono `POST /api/leads` |
+| 2 | `pmg-hub` | Better Auth + login + admin leads table |
+| 3 | `tender-edge` | Full site — 5 pages live |
+| 4 | `pmg-hub` | Public site — Home, About, Services, Contact |
+| 5 | `apex-web` | Migrate from separate repo |
+| 6 | `jacobc` | Migrate + convert Next.js → Astro |
+| 7 | `pmg-hub` | Admin full panel — clients, files, dashboard |
 
-```sh
-npx turbo dev --filter=web
-yarn exec turbo dev --filter=web
-pnpm exec turbo dev --filter=web
-```
+---
 
-### Remote Caching
+## Developer Guides
 
-> [!TIP]
-> Vercel Remote Cache is free for all plans. Get started today at [vercel.com](https://vercel.com/signup?utm_source=remote-cache-sdk&utm_campaign=free_remote_cache).
+Detailed AI-assisted developer guides live in `/developer-guides/`:
 
-Turborepo can use a technique known as [Remote Caching](https://turborepo.dev/docs/core-concepts/remote-caching) to share cache artifacts across machines, enabling you to share build caches with your team and CI/CD pipelines.
+| Guide | Contents |
+|---|---|
+| `01_PMG_Hub_Developer_Guide.md` | All pages, components, DB, Hono, Better Auth, admin panel |
+| `02_TES_Developer_Guide.md` | All pages, Astro Actions, QuoteForm, deployment |
+| `03_WhatsApp_Utility_Guide.md` | `packages/lib/whatsapp.ts` — all components and patterns |
+| `04_ChatSDK_Email_Bot_Guide.md` | Future email bot — build after core is live |
 
-By default, Turborepo will cache locally. To enable Remote Caching you will need an account with Vercel. If you don't have an account you can [create one](https://vercel.com/signup?utm_source=turborepo-examples), then enter the following commands:
+---
 
-With [global `turbo`](https://turborepo.dev/docs/getting-started/installation#global-installation) installed (recommended):
+## About PMG
 
-```sh
-cd my-turborepo
-turbo login
-```
+Playhouse Media Group (PTY) Ltd is a South African multi-service business group based in Centurion, Gauteng — providing tender compliance, web development, company registrations, graphic design, and academic support through five specialist divisions.
 
-Without global `turbo`, use your package manager:
+*"Building Businesses. One Service at a Time."*
 
-```sh
-cd my-turborepo
-npx turbo login
-yarn exec turbo login
-pnpm exec turbo login
-```
+---
 
-This will authenticate the Turborepo CLI with your [Vercel account](https://vercel.com/docs/concepts/personal-accounts/overview).
-
-Next, you can link your Turborepo to your Remote Cache by running the following command from the root of your Turborepo:
-
-With [global `turbo`](https://turborepo.dev/docs/getting-started/installation#global-installation) installed:
-
-```sh
-turbo link
-```
-
-Without global `turbo`:
-
-```sh
-npx turbo link
-yarn exec turbo link
-pnpm exec turbo link
-```
-
-## Useful Links
-
-Learn more about the power of Turborepo:
-
-- [Tasks](https://turborepo.dev/docs/crafting-your-repository/running-tasks)
-- [Caching](https://turborepo.dev/docs/crafting-your-repository/caching)
-- [Remote Caching](https://turborepo.dev/docs/core-concepts/remote-caching)
-- [Filtering](https://turborepo.dev/docs/crafting-your-repository/running-tasks#using-filters)
-- [Configuration Options](https://turborepo.dev/docs/reference/configuration)
-- [CLI Usage](https://turborepo.dev/docs/reference/command-line-reference)
+**Private repository — Playhouse Media Group (PTY) Ltd**  
+Jacob Chademwiri · Centurion, Gauteng, South Africa  
+info@playhousemedia.co.za
