@@ -1,0 +1,63 @@
+ΓÇó turbo 2.8.20
+ WARNING  Unable to calculate transitive closures: Workspace 'apps/pmg' not found in lockfile.
+
+   ΓÇó Packages in scope: @pmg/eslint-config, @pmg/typescript-config, @pmg/ui, pmg, tes
+   ΓÇó Running build in 5 packages
+   ΓÇó Remote caching disabled
+
+pmg:build: cache miss, executing 4de1a6520a52f55e
+tes:build: cache hit, replaying logs 5c73dfcd326bc685
+tes:build: [6n[m]0;C:\Users\JacobC\.bun\bin\bun.exe[?25h[35m[2m$[m [1m[2mastro build
+tes:build: [22m[2m19:56:09[22m [34m[vite] [mRe-optimizing dependencies because vite config has changed
+tes:build: [2m19:56:13[22m [34m[types] [mGenerated [2m4.17s
+tes:build: 19:56:13[22m [34m[build] [moutput: [34m"static"[m[2m
+tes:build: 19:56:13[22m [34m[build] [mmode: [34m"static"[m[2m
+tes:build: 19:56:13[22m [34m[build] [mdirectory: [34mD:\websites\pmg-hub\apps\tes\dist\[m[2m
+tes:build: 19:56:13[22m [34m[build] [mCollecting build info...[2m
+tes:build: 19:56:13[22m [34m[build] [32mΓ£ô Completed in 4.19s.
+tes:build: [m
+tes:build: [2m19:56:13[22m [34m[build] [mBuilding static entrypoints...[K
+tes:build: [K[2m19:56:16[22m [34m[vite] [32mΓ£ô built in 2.44s
+tes:build: [m
+tes:build: [2m19:56:16[22m [34m[vite] [32mΓ£ô built in 11ms
+tes:build: [m
+tes:build: [2m19:56:16[22m [34m[build] [mRearranging server assets...[K
+tes:build: 
+tes:build: [30m[42m generating static routes [m[K
+tes:build: [2m19:56:16[22m   [34mΓö£ΓöÇ [m[2m/index.html[22m[K [2m(+18ms)[22m 
+tes:build: [2m19:56:16[22m [32mΓ£ô Completed in 44ms.[K
+tes:build: [m
+tes:build: [32m[m
+tes:build: [2m19:56:16[22m [34m[build] [32mΓ£ô Completed in 2.71s.[K
+tes:build: [m
+tes:build: [2m19:56:16[22m [34m[build] [m1 page(s) built in [1m6.91s
+tes:build: [22m
+tes:build: [2m19:56:16[22m [34m[build] [m[1mComplete![22m[K
+pmg:build: $ next build
+pmg:build: Γû▓ Next.js 16.2.1 (Turbopack)
+pmg:build: 
+pmg:build:   Creating an optimized production build ...
+pmg:build: Γ£ô Compiled successfully in 24.3s
+pmg:build:   Running TypeScript ...
+pmg:build:   Finished TypeScript in 11.4s ...
+pmg:build:   Collecting page data using 3 workers ...
+pmg:build:   Generating static pages using 3 workers (0/4) ...
+pmg:build:   Generating static pages using 3 workers (1/4) 
+pmg:build:   Generating static pages using 3 workers (2/4) 
+pmg:build:   Generating static pages using 3 workers (3/4) 
+pmg:build: Γ£ô Generating static pages using 3 workers (4/4) in 999ms
+pmg:build:   Finalizing page optimization ...
+pmg:build: 
+pmg:build: Route (app)
+pmg:build: Γöî Γùï /
+pmg:build: Γöö Γùï /_not-found
+pmg:build: 
+pmg:build: 
+pmg:build: Γùï  (Static)  prerendered as static content
+pmg:build: 
+
+ Tasks:    2 successful, 2 total
+Cached:    1 cached, 2 total
+  Time:    45.683s 
+
+ WARNING  Invalid file path: IO Error failed to query metadata of symlink `D:\websites\pmg-hub\apps\pmg\.next\diagnostics\route-bundle-stats.json`
