@@ -1,9 +1,8 @@
-import ComingSoon from "@/components/ComingSoon";
 
 export default function Home() {
   return (
     <div >
-      <ComingSoon />
+    <p className="text-lg">Welcome to the PMG Hub</p>
     </div>
   );
 }
