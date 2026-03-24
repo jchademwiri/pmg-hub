@@ -21,7 +21,7 @@ export default function ComingSoon() {
         <div className="divider" />
 
         <p className="body">
-          Five specialist divisions. One trusted group.<br />
+          Three specialist divisions. One trusted group.<br />
           We're putting the finishing touches on our new home.
         </p>
 
@@ -29,9 +29,7 @@ export default function ComingSoon() {
           {[
             "Tender Edge Solutions",
             "Apex Web Solutions",
-            "LaunchPad SA",
             "Playhouse Creative Studio",
-            "StudyEdge SA",
           ].map((name) => (
             <span key={name} className="division-tag">{name}</span>
           ))}
