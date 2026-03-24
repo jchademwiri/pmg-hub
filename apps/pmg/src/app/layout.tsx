@@ -13,7 +13,7 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "PMG",
+  title: "Playhouse Media Group",
   description: "Building Businesses. One Service at a Time.",
 };
 
