@@ -1,0 +1,29 @@
+/*
+  @pmg/tailwind-config/base
+  ─────────────────────────
+  Import this in every app's globals.css as the first line.
+  It pulls in Tailwind v4 and defines design tokens that are
+  shared across ALL brands (spacing scale, border radius, fonts, etc.)
+  Brand-specific colour palettes live in each theme file.
+*/
+
+@import "tailwindcss";
+
+/* ── Shared typography ── */
+@theme {
+  --font-sans: "DM Sans", ui-sans-serif, system-ui, sans-serif;
+  --font-display: "Playfair Display", ui-serif, Georgia, serif;
+  --font-condensed: "Barlow Condensed", ui-sans-serif, system-ui, sans-serif;
+  --font-mono: ui-monospace, "Cascadia Code", "Source Code Pro", monospace;
+
+  /* ── Shared spacing overrides (if needed) ── */
+  --spacing-18: 4.5rem;
+  --spacing-88: 22rem;
+  --spacing-128: 32rem;
+
+  /* ── Shared border radius ── */
+  --radius-sm: 4px;
+  --radius-md: 8px;
+  --radius-lg: 12px;
+  --radius-xl: 16px;
+}

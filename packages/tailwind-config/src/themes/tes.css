@@ -1,0 +1,44 @@
+/*
+  @pmg/tailwind-config/tes
+  ─────────────────────────
+  Theme for Tender Edge Solutions (tenderedgesolutions.co.za)
+  Forest green + gold palette.
+
+  Usage in apps/tes/src/styles/globals.css:
+    @import "@pmg/tailwind-config/base";
+    @import "@pmg/tailwind-config/tes";
+*/
+
+@theme {
+  /* ── Brand colours ── */
+  --color-brand-forest:     #1A2E1A;
+  --color-brand-green:      #4ADE80;
+  --color-brand-gold:       #FBBF24;
+  --color-brand-white:      #F0FDF4;
+
+  /* ── Semantic aliases ── */
+  --color-background:       var(--color-brand-forest);
+  --color-foreground:       var(--color-brand-white);
+  --color-primary:          var(--color-brand-green);
+  --color-primary-hover:    #22C55E;
+  --color-accent:           var(--color-brand-gold);
+
+  /* ── Muted / faint layers ── */
+  --color-muted:            rgba(240, 253, 244, 0.55);
+  --color-faint:            rgba(240, 253, 244, 0.15);
+  --color-mint:             rgba(74, 222, 128, 0.08);
+
+  /* ── Surface colours ── */
+  --color-surface:          var(--color-brand-forest);
+  --color-surface-hover:    var(--color-mint);
+
+  /* ── WhatsApp CTA ── */
+  --color-whatsapp:         #25D366;
+  --color-whatsapp-hover:   #20BD5C;
+}
+
+/* ── Root defaults ── */
+:root {
+  --background: var(--color-brand-forest);
+  --foreground: var(--color-brand-white);
+}

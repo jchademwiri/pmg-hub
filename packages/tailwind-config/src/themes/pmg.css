@@ -1,0 +1,41 @@
+/*
+  @pmg/tailwind-config/pmg
+  ─────────────────────────
+  Theme for the main PMG holding site (pmgconsulting.co.za)
+  Navy + Orange brand palette.
+
+  Usage in apps/pmg/src/app/globals.css:
+    @import "@pmg/tailwind-config/base";
+    @import "@pmg/tailwind-config/pmg";
+*/
+
+@theme {
+  /* ── Brand colours ── */
+  --color-brand-navy:       #0D1B2A;
+  --color-brand-orange:     #F97316;
+  --color-brand-white:      #F4F4F2;
+
+  /* ── Semantic aliases ── */
+  --color-background:       var(--color-brand-navy);
+  --color-foreground:       var(--color-brand-white);
+  --color-primary:          var(--color-brand-orange);
+  --color-primary-hover:    #EA6C10;
+
+  /* ── Muted / faint layers (used for text and borders) ── */
+  --color-muted:            rgba(244, 244, 242, 0.55);
+  --color-faint:            rgba(244, 244, 242, 0.15);
+
+  /* ── Surface colours ── */
+  --color-surface:          #111D2B;
+  --color-surface-hover:    #162232;
+
+  /* ── WhatsApp CTA (shared across all brands) ── */
+  --color-whatsapp:         #25D366;
+  --color-whatsapp-hover:   #20BD5C;
+}
+
+/* ── Light/dark root defaults ── */
+:root {
+  --background: var(--color-brand-navy);
+  --foreground: var(--color-brand-white);
+}

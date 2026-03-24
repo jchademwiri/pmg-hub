@@ -10,10 +10,18 @@
         "typescript": "5.9.2",
       },
     },
+    "apps/aws": {
+      "name": "aws",
+      "version": "0.0.1",
+      "dependencies": {
+        "astro": "^6.0.8",
+      },
+    },
     "apps/pmg": {
       "name": "pmg",
       "version": "0.1.0",
       "dependencies": {
+        "@pmg/tailwind-config": "*",
         "next": "16.2.1",
         "react": "19.2.4",
         "react-dom": "19.2.4",
@@ -33,7 +41,12 @@
       "name": "tes",
       "version": "0.0.1",
       "dependencies": {
+        "@pmg/tailwind-config": "*",
         "astro": "^6.0.8",
+      },
+      "devDependencies": {
+        "@tailwindcss/vite": "^4",
+        "tailwindcss": "^4",
       },
     },
     "packages/eslint-config": {
@@ -51,6 +64,13 @@
         "globals": "^16.5.0",
         "typescript": "^5.9.2",
         "typescript-eslint": "^8.50.0",
+      },
+    },
+    "packages/tailwind-config": {
+      "name": "@pmg/tailwind-config",
+      "version": "0.0.0",
+      "dependencies": {
+        "tailwindcss": "^4",
       },
     },
     "packages/typescript-config": {
@@ -308,6 +328,8 @@
 
     "@pmg/eslint-config": ["@pmg/eslint-config@workspace:packages/eslint-config"],
 
+    "@pmg/tailwind-config": ["@pmg/tailwind-config@workspace:packages/tailwind-config"],
+
     "@pmg/typescript-config": ["@pmg/typescript-config@workspace:packages/typescript-config"],
 
     "@pmg/ui": ["@pmg/ui@workspace:packages/ui"],
@@ -413,6 +435,8 @@
     "@tailwindcss/oxide-win32-x64-msvc": ["@tailwindcss/oxide-win32-x64-msvc@4.2.2", "", { "os": "win32", "cpu": "x64" }, "sha512-1T/37VvI7WyH66b+vqHj/cLwnCxt7Qt3WFu5Q8hk65aOvlwAhs7rAp1VkulBJw/N4tMirXjVnylTR72uI0HGcA=="],
 
     "@tailwindcss/postcss": ["@tailwindcss/postcss@4.2.2", "", { "dependencies": { "@alloc/quick-lru": "^5.2.0", "@tailwindcss/node": "4.2.2", "@tailwindcss/oxide": "4.2.2", "postcss": "^8.5.6", "tailwindcss": "4.2.2" } }, "sha512-n4goKQbW8RVXIbNKRB/45LzyUqN451deQK0nzIeauVEqjlI49slUlgKYJM2QyUzap/PcpnS7kzSUmPb1sCRvYQ=="],
+
+    "@tailwindcss/vite": ["@tailwindcss/vite@4.2.2", "", { "dependencies": { "@tailwindcss/node": "4.2.2", "@tailwindcss/oxide": "4.2.2", "tailwindcss": "4.2.2" }, "peerDependencies": { "vite": "^5.2.0 || ^6 || ^7 || ^8" } }, "sha512-mEiF5HO1QqCLXoNEfXVA1Tzo+cYsrqV7w9Juj2wdUFyW07JRenqMG225MvPwr3ZD9N1bFQj46X7r33iHxLUW0w=="],
 
     "@turbo/darwin-64": ["@turbo/darwin-64@2.8.20", "", { "os": "darwin", "cpu": "x64" }, "sha512-FQ9EX1xMU5nbwjxXxM3yU88AQQ6Sqc6S44exPRroMcx9XZHqqppl5ymJF0Ig/z3nvQNwDmz1Gsnvxubo+nXWjQ=="],
 
@@ -551,6 +575,8 @@
     "async-function": ["async-function@1.0.0", "", {}, "sha512-hsU18Ae8CDTR6Kgu9DYf0EbCr/a5iGL0rytQDobUcdpYOKokk8LEjVphnXkDkgpi0wYVsqrXuP0bZxJaTqdgoA=="],
 
     "available-typed-arrays": ["available-typed-arrays@1.0.7", "", { "dependencies": { "possible-typed-array-names": "^1.0.0" } }, "sha512-wvUjBtSGN7+7SjNpq/9M2Tg350UZD3q62IFZLbRAR1bSMlCo1ZaeW+BJ+D090e4hIIZLBcTDWe4Mh4jvUDajzQ=="],
+
+    "aws": ["aws@workspace:apps/aws"],
 
     "axe-core": ["axe-core@4.11.1", "", {}, "sha512-BASOg+YwO2C+346x3LZOeoovTIoTrRqEsqMa6fmfAV0P+U9mFr9NsyOEpiYvFjbc64NMrSswhV50WdXzdb/Z5A=="],
 

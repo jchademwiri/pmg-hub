@@ -19,7 +19,7 @@ pmg-hub/
 ├── apps/
 │   ├── web/              # Next.js — holds /admin, markets TES + AWS
 │   ├── tes/              # Astro — tendering services public site
-│   └── aws/              # Next.js — web dev services (to be added)
+│   └── aws/              # Astro — web dev services (to be added)
 │
 └── packages/
     ├── db/               # Shared Drizzle ORM + Neon DB package

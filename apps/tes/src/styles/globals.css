@@ -1,5 +1,5 @@
 @import "@pmg/tailwind-config/base";
-@import "@pmg/tailwind-config/pmg";
+@import "@pmg/tailwind-config/tes";
 
 body {
   background: var(--background);
