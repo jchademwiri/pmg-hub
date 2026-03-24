@@ -36,7 +36,7 @@ export default function ComingSoon() {
         </div>
 
         <a
-          href="https://wa.me/27740491433?text=Hi%2C+I+found+Playhouse+Media+Group+online+and+would+like+to+know+more."
+          href="https://wa.me/27745017094?text=Hi%2C+I+found+Playhouse+Media+Group+online+and+would+like+to+know+more."
           target="_blank"
           rel="noopener noreferrer"
           className="cta"
