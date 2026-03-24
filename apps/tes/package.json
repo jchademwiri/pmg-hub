@@ -12,6 +12,11 @@
     "astro": "astro"
   },
   "dependencies": {
+    "@pmg/tailwind-config": "*",
     "astro": "^6.0.8"
+  },
+  "devDependencies": {
+    "tailwindcss": "^4",
+    "@tailwindcss/vite": "^4"
   }
 }
