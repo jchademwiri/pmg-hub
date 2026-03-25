@@ -1,210 +1,492 @@
 ---
-import astroLogo from '../assets/astro.svg';
-import background from '../assets/background.svg';
+// apps/aws/src/components/ComingSoon.astro
+// Coming Soon — Apex Web Solutions
+// Brand: Dark slate #0F172A + Indigo #6366F1
 ---
 
-<div id="container">
-	<img id="background" src={background.src} alt="" fetchpriority="high" />
-	<main>
-		<section id="hero">
-			<a href="https://astro.build"
-				><img src={astroLogo.src} width="115" height="48" alt="Astro Homepage" /></a
-			>
-			<h1>
-				To get started, open the <code><pre>src/pages</pre></code> directory in your project.
-			</h1>
-			<section id="links">
-				<a class="button" href="https://docs.astro.build">Read our docs</a>
-				<a href="https://astro.build/chat"
-					>Join our Discord <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 127.14 96.36"
-						><path
-							fill="currentColor"
-							d="M107.7 8.07A105.15 105.15 0 0 0 81.47 0a72.06 72.06 0 0 0-3.36 6.83 97.68 97.68 0 0 0-29.11 0A72.37 72.37 0 0 0 45.64 0a105.89 105.89 0 0 0-26.25 8.09C2.79 32.65-1.71 56.6.54 80.21a105.73 105.73 0 0 0 32.17 16.15 77.7 77.7 0 0 0 6.89-11.11 68.42 68.42 0 0 1-10.85-5.18c.91-.66 1.8-1.34 2.66-2a75.57 75.57 0 0 0 64.32 0c.87.71 1.76 1.39 2.66 2a68.68 68.68 0 0 1-10.87 5.19 77 77 0 0 0 6.89 11.1 105.25 105.25 0 0 0 32.19-16.14c2.64-27.38-4.51-51.11-18.9-72.15ZM42.45 65.69C36.18 65.69 31 60 31 53s5-12.74 11.43-12.74S54 46 53.89 53s-5.05 12.69-11.44 12.69Zm42.24 0C78.41 65.69 73.25 60 73.25 53s5-12.74 11.44-12.74S96.23 46 96.12 53s-5.04 12.69-11.43 12.69Z"
-						></path></svg
-					>
-				</a>
-			</section>
-		</section>
-	</main>
+<!doctype html>
+<html lang='en'>
+  <head>
+    <meta charset='UTF-8' />
+    <meta name='viewport' content='width=device-width, initial-scale=1.0' />
+    <title>Apex Web Solutions — Coming Soon</title>
+    <meta
+      name='description'
+      content='Apex Web Solutions — South African web development, design, and digital services. Centurion, Gauteng.'
+    />
+    <link rel='icon' type='image/svg+xml' href='/favicon.svg' />
+    <link rel='preconnect' href='https://fonts.googleapis.com' />
+    <link rel='preconnect' href='https://fonts.gstatic.com' crossorigin />
+    <link
+      href='https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;700&family=Space+Mono:ital,wght@0,400;0,700;1,400&display=swap'
+      rel='stylesheet'
+    />
+  </head>
+  <body>
+    <!-- Scanline effect -->
+    <div class='scanlines' aria-hidden='true'></div>
 
-	<a href="https://astro.build/blog/astro-6-beta/" id="news" class="box">
-		<svg width="32" height="32" fill="none" xmlns="http://www.w3.org/2000/svg"
-			><path
-				d="M24.667 12c1.333 1.414 2 3.192 2 5.334 0 4.62-4.934 5.7-7.334 12C18.444 28.567 18 27.456 18 26c0-4.642 6.667-7.053 6.667-14Zm-5.334-5.333c1.6 1.65 2.4 3.43 2.4 5.333 0 6.602-8.06 7.59-6.4 17.334C13.111 27.787 12 25.564 12 22.666c0-4.434 7.333-8 7.333-16Zm-6-5.333C15.111 3.555 16 5.556 16 7.333c0 8.333-11.333 10.962-5.333 22-3.488-.774-6-4-6-8 0-8.667 8.666-10 8.666-20Z"
-				fill="#111827"></path></svg
-		>
-		<h2>What's New in Astro 6.0?</h2>
-		<p>
-			Redesigned dev server, fonts, live collections, built-in CSP support, and more! Click to
-			explore Astro 6.0's new features.
-		</p>
-	</a>
-</div>
+    <!-- Circuit pattern -->
+    <div class='circuit-bg' aria-hidden='true'></div>
+
+    <main>
+      <div class='wrapper'>
+        <!-- Header -->
+        <header>
+          <div class='logo-block'>
+            <div class='logo-mark' aria-hidden='true'>
+              <span></span><span></span><span></span>
+            </div>
+            <div class='logo-text'>
+              <span class='logo-apex'>Apex</span>
+              <span class='logo-web'> Web</span>
+              <span class='logo-solutions'> Solutions</span>
+            </div>
+          </div>
+          <div class='status-badge'>
+            <span class='status-dot'></span>
+            <span>In development</span>
+          </div>
+        </header>
+
+        <!-- Hero -->
+        <section class='hero'>
+          <div class='mono-label'>// EST. 2025</div>
+
+          <h1>
+            Build.<br />
+            Launch.<br />
+            <span class='h1-accent'>Dominate.</span>
+          </h1>
+
+          <p class='sub'>
+            Full-stack web development for South African businesses ready to claim their digital
+            edge. No templates. No shortcuts. Just craft.
+          </p>
+        </section>
+
+        <!-- Services preview -->
+        <div class='services-grid'>
+          {
+            [
+              { icon: '⬡', label: 'Web Design' },
+              { icon: '⬡', label: 'Development' },
+              { icon: '⬡', label: 'E-Commerce' },
+              { icon: '⬡', label: 'SEO & Growth' },
+            ].map((s) => (
+              <div class='service-chip'>
+                <span class='chip-icon'>{s.icon}</span>
+                <span>{s.label}</span>
+              </div>
+            ))
+          }
+        </div>
+
+        <!-- CTA -->
+        <div class='cta-row'>
+          <a
+            href="https://wa.me/27745017094?text=Hi%2C+I'm+interested+in+web+development+services+from+Apex+Web+Solutions."
+            class='cta-btn'
+            target='_blank'
+            rel='noopener noreferrer'
+          >
+            <svg width='16' height='16' viewBox='0 0 24 24' fill='currentColor'>
+              <path
+                d='M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z'
+              ></path>
+            </svg>
+            Start a project
+          </a>
+          <a href='mailto:info@apexwebsolutions.co.za' class='cta-link'
+            >info@apexwebsolutions.co.za</a
+          >
+        </div>
+
+        <!-- Footer -->
+        <footer>
+          <span class='mono'>074 501 7094</span>
+          <span class='sep'>/</span>
+          <span class='mono'>apexwebsolutions.co.za</span>
+          <span class='sep'>/</span>
+          <span class='mono'>Centurion, ZA</span>
+        </footer>
+
+        <!-- Corner decoration -->
+        <div class='corner-el' aria-hidden='true'>
+          <div class='corner-ring'></div>
+          <div class='corner-ring corner-ring--2'></div>
+          <div class='corner-ring corner-ring--3'></div>
+        </div>
+      </div>
+    </main>
+  </body>
+</html>
 
 <style>
-	#background {
-		position: fixed;
-		top: 0;
-		left: 0;
-		width: 100%;
-		height: 100%;
-		z-index: -1;
-		filter: blur(100px);
-	}
+  *,
+  *::before,
+  *::after {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+  }
 
-	#container {
-		font-family: Inter, Roboto, 'Helvetica Neue', 'Arial Nova', 'Nimbus Sans', Arial, sans-serif;
-		height: 100%;
-	}
+  :root {
+    --dark: #0f172a;
+    --surface: #1e293b;
+    --surface-2: #273549;
+    --indigo: #6366f1;
+    --indigo-dim: rgba(99, 102, 241, 0.12);
+    --indigo-glow: rgba(99, 102, 241, 0.25);
+    --white: #f8fafc;
+    --muted: rgba(248, 250, 252, 0.5);
+    --faint: rgba(248, 250, 252, 0.06);
+    --border: rgba(99, 102, 241, 0.2);
+  }
 
-	main {
-		height: 100%;
-		display: flex;
-		justify-content: center;
-	}
+  html,
+  body {
+    height: 100%;
+  }
 
-	#hero {
-		display: flex;
-		align-items: start;
-		flex-direction: column;
-		justify-content: center;
-		padding: 16px;
-	}
+  body {
+    min-height: 100vh;
+    background: var(--dark);
+    color: var(--white);
+    font-family: 'Space Grotesk', sans-serif;
+    overflow-x: hidden;
+    position: relative;
+  }
 
-	h1 {
-		font-size: 22px;
-		margin-top: 0.25em;
-	}
+  /* Scanlines */
+  .scanlines {
+    position: fixed;
+    inset: 0;
+    z-index: 0;
+    pointer-events: none;
+    background: repeating-linear-gradient(
+      0deg,
+      transparent,
+      transparent 2px,
+      rgba(0, 0, 0, 0.03) 2px,
+      rgba(0, 0, 0, 0.03) 4px
+    );
+  }
 
-	#links {
-		display: flex;
-		gap: 16px;
-	}
+  /* Circuit bg */
+  .circuit-bg {
+    position: fixed;
+    inset: 0;
+    z-index: 0;
+    pointer-events: none;
+    background-image:
+      radial-gradient(circle at 20% 20%, rgba(99, 102, 241, 0.1) 0%, transparent 50%),
+      radial-gradient(circle at 80% 80%, rgba(99, 102, 241, 0.06) 0%, transparent 50%);
+  }
 
-	#links a {
-		display: flex;
-		align-items: center;
-		padding: 10px 12px;
-		color: #111827;
-		text-decoration: none;
-		transition: color 0.2s;
-	}
+  main {
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 48px 24px;
+    position: relative;
+    z-index: 1;
+  }
 
-	#links a:hover {
-		color: rgb(78, 80, 86);
-	}
+  .wrapper {
+    max-width: 600px;
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    position: relative;
+  }
 
-	#links a svg {
-		height: 1em;
-		margin-left: 8px;
-	}
+  /* Header */
+  header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 12px;
+    margin-bottom: 60px;
+    animation: in 0.6s ease both;
+  }
 
-	#links a.button {
-		color: white;
-		background: linear-gradient(83.21deg, #3245ff 0%, #bc52ee 100%);
-		box-shadow:
-			inset 0 0 0 1px rgba(255, 255, 255, 0.12),
-			inset 0 -2px 0 rgba(0, 0, 0, 0.24);
-		border-radius: 10px;
-	}
+  .logo-block {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
 
-	#links a.button:hover {
-		color: rgb(230, 230, 230);
-		box-shadow: none;
-	}
+  .logo-mark {
+    display: flex;
+    gap: 3px;
+    align-items: flex-end;
+  }
+  .logo-mark span {
+    display: block;
+    width: 6px;
+    border-radius: 1px;
+    background: var(--indigo);
+  }
+  .logo-mark span:nth-child(1) {
+    height: 10px;
+  }
+  .logo-mark span:nth-child(2) {
+    height: 16px;
+  }
+  .logo-mark span:nth-child(3) {
+    height: 12px;
+  }
 
-	pre {
-		font-family:
-			ui-monospace, 'Cascadia Code', 'Source Code Pro', Menlo, Consolas, 'DejaVu Sans Mono',
-			monospace;
-		font-weight: normal;
-		background: linear-gradient(14deg, #d83333 0%, #f041ff 100%);
-		-webkit-background-clip: text;
-		-webkit-text-fill-color: transparent;
-		background-clip: text;
-		margin: 0;
-	}
+  .logo-text {
+    font-size: 16px;
+    font-weight: 700;
+    letter-spacing: -0.01em;
+  }
+  .logo-apex {
+    color: var(--indigo);
+  }
+  .logo-web {
+    color: var(--white);
+  }
+  .logo-solutions {
+    color: var(--muted);
+    font-weight: 300;
+    font-size: 13px;
+  }
 
-	h2 {
-		margin: 0 0 1em;
-		font-weight: normal;
-		color: #111827;
-		font-size: 20px;
-	}
+  .status-badge {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 11px;
+    color: var(--muted);
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    border: 1px solid var(--border);
+    padding: 5px 12px;
+    border-radius: 20px;
+    background: var(--indigo-dim);
+  }
+  .status-dot {
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: var(--indigo);
+    animation: pulse 2s ease-in-out infinite;
+  }
 
-	p {
-		color: #4b5563;
-		font-size: 16px;
-		line-height: 24px;
-		letter-spacing: -0.006em;
-		margin: 0;
-	}
+  /* Hero */
+  .hero {
+    margin-bottom: 44px;
+    animation: in 0.6s 0.08s ease both;
+  }
 
-	code {
-		display: inline-block;
-		background:
-			linear-gradient(66.77deg, #f3cddd 0%, #f5cee7 100%) padding-box,
-			linear-gradient(155deg, #d83333 0%, #f041ff 18%, #f5cee7 45%) border-box;
-		border-radius: 8px;
-		border: 1px solid transparent;
-		padding: 6px 8px;
-	}
+  .mono-label {
+    font-family: 'Space Mono', monospace;
+    font-size: 11px;
+    color: var(--indigo);
+    margin-bottom: 20px;
+    letter-spacing: 0.08em;
+  }
 
-	.box {
-		padding: 16px;
-		background: rgba(255, 255, 255, 1);
-		border-radius: 16px;
-		border: 1px solid white;
-	}
+  h1 {
+    font-family: 'Space Grotesk', sans-serif;
+    font-weight: 700;
+    font-size: clamp(58px, 12vw, 100px);
+    line-height: 0.9;
+    letter-spacing: -0.04em;
+    margin-bottom: 28px;
+  }
+  .h1-accent {
+    color: transparent;
+    -webkit-text-stroke: 2px var(--indigo);
+    display: block;
+  }
 
-	#news {
-		position: absolute;
-		bottom: 16px;
-		right: 16px;
-		max-width: 300px;
-		text-decoration: none;
-		transition: background 0.2s;
-		backdrop-filter: blur(50px);
-	}
+  .sub {
+    font-size: 15px;
+    color: var(--muted);
+    line-height: 1.65;
+    font-weight: 300;
+    max-width: 440px;
+  }
 
-	#news:hover {
-		background: rgba(255, 255, 255, 0.55);
-	}
+  /* Services */
+  .services-grid {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-bottom: 44px;
+    animation: in 0.6s 0.16s ease both;
+  }
 
-	@media screen and (max-height: 368px) {
-		#news {
-			display: none;
-		}
-	}
+  .service-chip {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 14px;
+    background: var(--faint);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--muted);
+    transition:
+      background 0.2s,
+      color 0.2s,
+      border-color 0.2s;
+    cursor: default;
+  }
+  .service-chip:hover {
+    background: var(--indigo-dim);
+    border-color: var(--indigo);
+    color: var(--white);
+  }
+  .chip-icon {
+    color: var(--indigo);
+    font-size: 11px;
+  }
 
-	@media screen and (max-width: 768px) {
-		#container {
-			display: flex;
-			flex-direction: column;
-		}
+  /* CTA */
+  .cta-row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px;
+    align-items: center;
+    margin-bottom: 44px;
+    animation: in 0.6s 0.22s ease both;
+  }
 
-		#hero {
-			display: block;
-			padding-top: 10%;
-		}
+  .cta-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+    background: var(--indigo);
+    color: #fff;
+    text-decoration: none;
+    padding: 13px 26px;
+    border-radius: 6px;
+    font-size: 14px;
+    font-weight: 600;
+    font-family: 'Space Grotesk', sans-serif;
+    transition:
+      background 0.2s,
+      transform 0.15s,
+      box-shadow 0.2s;
+    box-shadow: 0 0 20px rgba(99, 102, 241, 0.3);
+  }
+  .cta-btn:hover {
+    background: #4f46e5;
+    transform: translateY(-2px);
+    box-shadow: 0 0 32px rgba(99, 102, 241, 0.5);
+  }
+  .cta-btn:active {
+    transform: scale(0.97);
+  }
 
-		#links {
-			flex-wrap: wrap;
-		}
+  .cta-link {
+    font-family: 'Space Mono', monospace;
+    font-size: 12px;
+    color: var(--muted);
+    text-decoration: none;
+    transition: color 0.2s;
+  }
+  .cta-link:hover {
+    color: var(--indigo);
+  }
 
-		#links a.button {
-			padding: 14px 18px;
-		}
+  /* Footer */
+  footer {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    align-items: center;
+    animation: in 0.6s 0.28s ease both;
+  }
+  .mono {
+    font-family: 'Space Mono', monospace;
+    font-size: 11px;
+    color: rgba(248, 250, 252, 0.2);
+  }
+  .sep {
+    color: rgba(99, 102, 241, 0.3);
+    font-size: 11px;
+  }
 
-		#news {
-			right: 16px;
-			left: 16px;
-			bottom: 2.5rem;
-			max-width: 100%;
-		}
+  /* Corner rings */
+  .corner-el {
+    position: absolute;
+    bottom: -20px;
+    right: -20px;
+    width: 120px;
+    height: 120px;
+    pointer-events: none;
+  }
+  .corner-ring {
+    position: absolute;
+    inset: 0;
+    border-radius: 50%;
+    border: 1px solid var(--border);
+    animation: spin 20s linear infinite;
+  }
+  .corner-ring--2 {
+    inset: 15px;
+    border-color: rgba(99, 102, 241, 0.15);
+    animation-duration: 14s;
+    animation-direction: reverse;
+  }
+  .corner-ring--3 {
+    inset: 30px;
+    border-color: rgba(99, 102, 241, 0.25);
+    animation-duration: 8s;
+  }
 
-		h1 {
-			line-height: 1.5;
-		}
-	}
+  @keyframes in {
+    from {
+      opacity: 0;
+      transform: translateY(16px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+  @keyframes pulse {
+    0%,
+    100% {
+      opacity: 1;
+      transform: scale(1);
+    }
+    50% {
+      opacity: 0.5;
+      transform: scale(0.8);
+    }
+  }
+  @keyframes spin {
+    to {
+      transform: rotate(360deg);
+    }
+  }
+
+  @media (max-width: 480px) {
+    header {
+      margin-bottom: 40px;
+    }
+    h1 {
+      font-size: 58px;
+    }
+    footer {
+      flex-direction: column;
+      gap: 4px;
+    }
+    footer .sep {
+      display: none;
+    }
+    .corner-el {
+      display: none;
+    }
+  }
 </style>
