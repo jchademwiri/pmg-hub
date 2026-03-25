@@ -1,8 +1,0 @@
-@import "@pmg/tailwind-config/base";
-@import "@pmg/tailwind-config/pmg";
-
-body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: var(--font-sans);
-}
