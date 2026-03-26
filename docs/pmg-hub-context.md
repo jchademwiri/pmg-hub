@@ -17,7 +17,7 @@ PMG Consulting Group runs 3 sites under one monorepo called `pmg-hub`. The main 
 ```
 pmg-hub/
 ├── apps/
-│   ├── web/              # Next.js — holds /admin, markets TES + AWS
+│   ├── pmg/              # Astro — holds /admin, markets TES + AWS
 │   ├── tes/              # Astro — tendering services public site
 │   └── aws/              # Astro — web dev services (to be added)
 │
