@@ -1,0 +1,1 @@
+ALTER TABLE "aws_pricing" ADD CONSTRAINT "aws_pricing_name_unique" UNIQUE("name");

@@ -6,63 +6,63 @@ Set up `packages/db` (`@pmg/db`) as the shared database package: define the prod
 
 ## Tasks
 
-- [-] 1. Create production schema files
-  - [-] 1.1 Create `packages/db/src/schema/tes.ts`
+- [x] 1. Create production schema files
+  - [x] 1.1 Create `packages/db/src/schema/tes.ts`
     - Define `tesServiceEnum` (`tes_service`) with 8 values
     - Define `tesLeadStatusEnum` (`tes_lead_status`) with 4 values
     - Define `tesLeads` table with all columns, indexes on `status` and `email`
     - Export `TesLead` and `NewTesLead` inferred types
     - _Requirements: 2.1, 2.2, 2.3, 2.12, 2.13, 2.14_
 
-  - [ ] 1.2 Create `packages/db/src/schema/aws.ts`
+  - [x] 1.2 Create `packages/db/src/schema/aws.ts`
     - Define `awsPackageTypeEnum`, `awsMessageStatusEnum`, `awsBookingStatusEnum`
     - Define `awsMessages`, `awsBookings`, `awsPricing` tables with all columns and indexes
     - Export all inferred types (`AwsMessage`, `NewAwsMessage`, `AwsBooking`, `NewAwsBooking`, `AwsPricing`, `NewAwsPricing`)
     - _Requirements: 2.4, 2.5, 2.6, 2.7, 2.8, 2.12, 2.13, 2.14, 3.1, 3.2_
 
-  - [ ] 1.3 Create `packages/db/src/schema/pmg.ts`
+  - [x] 1.3 Create `packages/db/src/schema/pmg.ts`
     - Define `pmgLeadServiceEnum` (`pmg_lead_service`) with 4 values
     - Define `pmgLeadStatusEnum` (`pmg_lead_status`) with 6 values
     - Define `pmgLeads` table with all columns, indexes on `status` and `email`
     - Export `PmgLead` and `NewPmgLead` inferred types
     - _Requirements: 2.9, 2.10, 2.11, 2.12, 2.13, 2.14_
 
-  - [ ] 1.4 Update `packages/db/src/schema/index.ts` to re-export from `tes.ts`, `aws.ts`, and `pmg.ts`; remove the `./test` export
+  - [x] 1.4 Update `packages/db/src/schema/index.ts` to re-export from `tes.ts`, `aws.ts`, and `pmg.ts`; remove the `./test` export
     - Delete `packages/db/src/schema/test.ts`
     - _Requirements: 4.1, 4.2, 6.2_
 
-- [ ] 2. Fix `packages/db/drizzle.config.ts`
+- [x] 2. Fix `packages/db/drizzle.config.ts`
   - Change `dbCredentials.url` from `env.DATABASE_URL` to `env.DATABASE_URL_UNPOOLED`
   - _Requirements: 1.5, 5.3_
 
-- [ ] 3. Wire root `package.json` and `turbo.json`
-  - [ ] 3.1 Add `db:generate`, `db:migrate`, and `db:studio` scripts to root `package.json` delegating via `bun --filter @pmg/db`
+- [x] 3. Wire root `package.json` and `turbo.json`
+  - [x] 3.1 Add `db:generate`, `db:migrate`, and `db:studio` scripts to root `package.json` delegating via `bun --filter @pmg/db`
     - _Requirements: 5.5_
 
-  - [ ] 3.2 Add `db:generate` task to `turbo.json` with `"cache": false`
+  - [x] 3.2 Add `db:generate` task to `turbo.json` with `"cache": false`
     - _Requirements: 12.1_
 
-- [ ] 4. Generate and push migrations
+- [x] 4. Generate and push migrations
   - Run `bun db:generate` from the repo root to produce SQL files in `packages/db/src/migrations/`
   - Run `bun db:migrate` from the repo root to apply the schema to Neon via `DATABASE_URL_UNPOOLED`
   - Verify the Neon database contains all tables from Requirements 2 and 3
   - _Requirements: 5.1, 5.2, 5.4_
 
-- [ ] 5. Create seed script
-  - [ ] 5.1 Create `packages/db/src/seed.ts`
+- [x] 5. Create seed script
+  - [x] 5.1 Create `packages/db/src/seed.ts`
     - Import `db` and `awsPricing` from the package internals
     - Define the 5 pricing rows (3 monthly, 2 once-off) with correct cent values
     - Insert using `onConflictDoNothing()` keyed on `name` for idempotence
     - Run with `bun packages/db/src/seed.ts` and confirm rows are inserted
     - _Requirements: 11.1, 11.2, 11.3, 11.4, 11.5_
 
-- [ ] 6. Checkpoint — ensure schema, migrations, and seed are working
+- [x] 6. Checkpoint — ensure schema, migrations, and seed are working
   - Confirm `bun db:generate` and `bun db:migrate` complete without errors
   - Confirm `bun packages/db/src/seed.ts` runs twice without creating duplicates
   - Ask the user if any questions arise before proceeding to tests.
 
-- [ ] 7. Add test infrastructure and write tests
-  - [ ] 7.1 Add `fast-check` dev dependency and create `packages/db/vitest.config.ts`
+- [x] 7. Add test infrastructure and write tests
+  - [x] 7.1 Add `fast-check` dev dependency and create `packages/db/vitest.config.ts`
     - Run `bun add -D fast-check --filter @pmg/db`
     - Create `packages/db/vitest.config.ts` with `environment: "node"`
     - _Requirements: (testing infrastructure)_
@@ -96,7 +96,7 @@ Set up `packages/db` (`@pmg/db`) as the shared database package: define the prod
     - Extract seed rows and upsert logic into a pure function; generate arbitrary existing table states; assert applying the function twice equals applying it once
     - Tag: `// Feature: database-integration, Property 2: Seed script is idempotent`
 
-- [ ] 8. Final checkpoint — ensure all tests pass
+- [x] 8. Final checkpoint — ensure all tests pass
   - Run `bun test --filter @pmg/db` and confirm all tests pass
   - Ask the user if any questions arise.
 
