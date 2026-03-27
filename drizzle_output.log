@@ -1,0 +1,10 @@
+@pmg/db db:studio: Failed to find Response internal state key
+@pmg/db db:studio: drizzle-kit: v0.20.18
+@pmg/db db:studio: drizzle-orm: v0.30.10
+@pmg/db db:studio: 
+@pmg/db db:studio: No config path provided, using default path
+@pmg/db db:studio: Reading config file 'D:\websites\pmg-hub\packages\db\drizzle.config.ts'
+@pmg/db db:studio: 
+@pmg/db db:studio: [Warning] Drizzle Studio is currently in Beta. If you find anything that is not working as expected or should be improved, feel free to create an issue on GitHub: https://github.com/drizzle-team/drizzle-kit-mirror/issues/new or write to us on Discord: https://discord.gg/WcRKz2FFxN
+@pmg/db db:studio: 
+@pmg/db db:studio: Drizzle Studio is up and running on https://local.drizzle.studio
