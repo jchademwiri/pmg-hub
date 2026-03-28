@@ -1,99 +1,92 @@
 /*
   @pmg/tailwind-config/tes
-  Tender Edge Solutions Theme (Navy + Gold)
+  ─────────────────────────
+  Theme for Tender Edge Solutions (tenderedgesolutions.co.za)
+  Navy + Gold brand palette.
+
+  Usage in apps/tes/src/styles/globals.css:
+    @import "@pmg/tailwind-config/base";
+    @import "@pmg/tailwind-config/tes";
 */
 
 @theme {
-  
-  /* ─────────────────────────────
-     BRAND COLORS (RAW)
-  ───────────────────────────── */
-  --navy: 215 65% 18%;        /* #0B2A4A */
-  --navy-soft: 215 45% 22%;
-  --navy-deep: 215 70% 12%;
+  /* ── Brand colours (raw) ── */
+  --color-brand-navy:       #0b2a4a;
+  --color-brand-navy-soft:  #1a3a5c;
+  --color-brand-navy-deep:  #061829;
+  --color-brand-gold:       #c9a227;
+  --color-brand-gold-light: #e2c06a;
+  --color-brand-white:      #ffffff;
+  --color-brand-soft-white: #f5f7fa;
 
-  --gold: 45 65% 52%;         /* #D4AF37 */
-  --gold-light: 45 80% 70%;
+  /* ── Semantic aliases ── */
+  --color-background:       var(--color-brand-soft-white);
+  --color-foreground:       #1a2744;
+  --color-primary:          var(--color-brand-gold);
+  --color-primary-hover:    #b8911f;
+  --color-primary-foreground: var(--color-brand-navy);
 
-  --white: 0 0% 100%;
-  --soft-white: 210 40% 98%;
+  /* ── Secondary (Navy) ── */
+  --color-secondary:        var(--color-brand-navy);
+  --color-secondary-hover:  var(--color-brand-navy-soft);
+  --color-secondary-foreground: var(--color-brand-white);
 
-  --text-dark: 222 47% 11%;
-  --text-muted: 215 16% 47%;
+  /* ── Surface / card colours ── */
+  --color-surface:          #ffffff;
+  --color-surface-hover:    #eef2f7;
+  --color-card:             #ffffff;
+  --color-card-foreground:  #1a2744;
+  --color-popover:          #ffffff;
+  --color-popover-foreground: #1a2744;
 
-  /* ─────────────────────────────
-     SHADCN TOKENS
-  ───────────────────────────── */
+  /* ── Muted / faint layers ── */
+  --color-muted:            #eef2f7;
+  --color-muted-foreground: #64748b;
+  --color-faint:            rgba(11, 42, 74, 0.06);
 
-  /* Base */
-  --background: 210 40% 98%;
-  --foreground: 222 47% 11%;
+  /* ── Accent (gold-light) ── */
+  --color-accent:           var(--color-brand-gold-light);
+  --color-accent-foreground: var(--color-brand-navy);
 
-  /* Surfaces */
-  --card: 0 0% 100%;
-  --card-foreground: 222 47% 11%;
+  /* ── Utility ── */
+  --color-destructive:      #dc2626;
+  --color-destructive-foreground: #ffffff;
+  --color-border:           #dde3ec;
+  --color-input:            #dde3ec;
+  --color-ring:             var(--color-brand-gold);
 
-  --popover: 0 0% 100%;
-  --popover-foreground: 222 47% 11%;
-
-  /* Primary (Gold) */
-  --primary: 45 65% 52%;
-  --primary-foreground: 215 65% 18%;
-
-  /* Secondary (Navy) */
-  --secondary: 215 65% 18%;
-  --secondary-foreground: 0 0% 100%;
-
-  /* UI */
-  --muted: 210 40% 96%;
-  --muted-foreground: 215 16% 47%;
-
-  --accent: 45 80% 70%;
-  --accent-foreground: 215 65% 18%;
-
-  --destructive: 0 72% 51%;
-  --destructive-foreground: 0 0% 100%;
-
-  --border: 214 32% 91%;
-  --input: 214 32% 91%;
-  --ring: 45 65% 52%;
-
-  /* ─────────────────────────────
-     CUSTOM EXTENSIONS (OPTIONAL)
-  ───────────────────────────── */
-  --brand-navy: 215 65% 18%;
-  --brand-gold: 45 65% 52%;
-
-  --surface: 0 0% 100%;
-  --surface-hover: 210 40% 96%;
+  /* ── WhatsApp CTA (shared) ── */
+  --color-whatsapp:         #25d366;
+  --color-whatsapp-hover:   #20bd5c;
 }
 
-/* ─────────────────────────────
-   DARK MODE
-───────────────────────────── */
+/* ── Dark mode overrides ── */
 .dark {
-  --background: 215 65% 10%;
-  --foreground: 0 0% 100%;
+  --color-background:       var(--color-brand-navy-deep);
+  --color-foreground:       #f5f7fa;
 
-  --card: 215 55% 14%;
-  --card-foreground: 0 0% 100%;
+  --color-surface:          var(--color-brand-navy);
+  --color-surface-hover:    var(--color-brand-navy-soft);
+  --color-card:             var(--color-brand-navy);
+  --color-card-foreground:  #f5f7fa;
+  --color-popover:          var(--color-brand-navy);
+  --color-popover-foreground: #f5f7fa;
 
-  --popover: 215 55% 14%;
-  --popover-foreground: 0 0% 100%;
+  --color-primary:          var(--color-brand-gold-light);
+  --color-primary-hover:    var(--color-brand-gold);
+  --color-primary-foreground: var(--color-brand-navy-deep);
 
-  --primary: 45 75% 60%;
-  --primary-foreground: 215 65% 10%;
+  --color-secondary:        var(--color-brand-navy-soft);
+  --color-secondary-foreground: #f5f7fa;
 
-  --secondary: 215 45% 22%;
-  --secondary-foreground: 0 0% 100%;
+  --color-muted:            #1a3a5c;
+  --color-muted-foreground: #94a3b8;
+  --color-faint:            rgba(245, 247, 250, 0.08);
 
-  --muted: 215 35% 20%;
-  --muted-foreground: 215 20% 65%;
+  --color-accent:           var(--color-brand-gold);
+  --color-accent-foreground: var(--color-brand-navy-deep);
 
-  --accent: 45 85% 65%;
-  --accent-foreground: 215 65% 10%;
-
-  --border: 215 30% 25%;
-  --input: 215 30% 25%;
-  --ring: 45 75% 60%;
+  --color-border:           rgba(245, 247, 250, 0.12);
+  --color-input:            rgba(245, 247, 250, 0.12);
+  --color-ring:             var(--color-brand-gold-light);
 }

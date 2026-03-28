@@ -9,6 +9,7 @@
     "check-types": "turbo run check-types",
     "db:generate": "bun --filter @pmg/db db:generate",
     "db:migrate": "bun --filter @pmg/db db:migrate",
+    "db:push": "bun --filter @pmg/db db:migrate",
     "db:studio": "bun --filter @pmg/db db:studio"
   },
   "devDependencies": {

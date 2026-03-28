@@ -1,31 +1,21 @@
--- Drop indexes on tables being removed
-DROP INDEX IF EXISTS "tes_leads_status_idx";--> statement-breakpoint
-DROP INDEX IF EXISTS "tes_leads_email_idx";--> statement-breakpoint
-DROP INDEX IF EXISTS "aws_bookings_status_idx";--> statement-breakpoint
-DROP INDEX IF EXISTS "aws_bookings_email_idx";--> statement-breakpoint
-DROP INDEX IF EXISTS "aws_messages_status_idx";--> statement-breakpoint
-DROP INDEX IF EXISTS "aws_messages_email_idx";--> statement-breakpoint
-DROP INDEX IF EXISTS "pmg_leads_status_idx";--> statement-breakpoint
-DROP INDEX IF EXISTS "pmg_leads_email_idx";--> statement-breakpoint
-
--- Drop obsolete tables
-DROP TABLE "tes_leads";--> statement-breakpoint
-DROP TABLE "aws_bookings";--> statement-breakpoint
-DROP TABLE "aws_messages";--> statement-breakpoint
-DROP TABLE "pmg_leads";--> statement-breakpoint
-
--- Drop obsolete enums
-DROP TYPE "public"."tes_lead_status";--> statement-breakpoint
-DROP TYPE "public"."tes_service";--> statement-breakpoint
-DROP TYPE "public"."aws_booking_status";--> statement-breakpoint
-DROP TYPE "public"."aws_message_status";--> statement-breakpoint
-DROP TYPE "public"."pmg_lead_service";--> statement-breakpoint
-DROP TYPE "public"."pmg_lead_status";--> statement-breakpoint
-
--- Create new lead_status enum
+CREATE TYPE "public"."aws_package_type" AS ENUM('monthly', 'once_off');--> statement-breakpoint
 CREATE TYPE "public"."lead_status" AS ENUM('new', 'contacted', 'converted', 'lost');--> statement-breakpoint
-
--- Create divisions table (no FK deps)
+CREATE TABLE "aws_pricing" (
+	"id" uuid PRIMARY KEY DEFAULT gen_random_uuid() NOT NULL,
+	"name" text NOT NULL,
+	"price" integer NOT NULL,
+	"period" text,
+	"upfront" integer,
+	"description" text NOT NULL,
+	"features" jsonb NOT NULL,
+	"cta" text NOT NULL,
+	"popular" boolean DEFAULT false,
+	"type" "aws_package_type" NOT NULL,
+	"sort_order" integer DEFAULT 0,
+	"is_active" boolean DEFAULT true,
+	CONSTRAINT "aws_pricing_name_unique" UNIQUE("name")
+);
+--> statement-breakpoint
 CREATE TABLE "divisions" (
 	"id" uuid PRIMARY KEY DEFAULT gen_random_uuid() NOT NULL,
 	"name" text NOT NULL,
@@ -34,8 +24,6 @@ CREATE TABLE "divisions" (
 	CONSTRAINT "divisions_name_unique" UNIQUE("name")
 );
 --> statement-breakpoint
-
--- Create clients table (no FK deps)
 CREATE TABLE "clients" (
 	"id" uuid PRIMARY KEY DEFAULT gen_random_uuid() NOT NULL,
 	"name" text NOT NULL,
@@ -46,8 +34,6 @@ CREATE TABLE "clients" (
 	"updated_at" timestamp with time zone
 );
 --> statement-breakpoint
-
--- Create income table (FK → divisions, clients)
 CREATE TABLE "income" (
 	"id" uuid PRIMARY KEY DEFAULT gen_random_uuid() NOT NULL,
 	"date" date NOT NULL,
@@ -57,11 +43,9 @@ CREATE TABLE "income" (
 	"amount" numeric(12, 2) NOT NULL,
 	"created_at" timestamp with time zone DEFAULT now() NOT NULL,
 	"updated_at" timestamp with time zone,
-	CONSTRAINT "income_amount_positive" CHECK ("amount" > 0)
+	CONSTRAINT "income_amount_positive" CHECK ("income"."amount" > 0)
 );
 --> statement-breakpoint
-
--- Create expenses table (FK → divisions)
 CREATE TABLE "expenses" (
 	"id" uuid PRIMARY KEY DEFAULT gen_random_uuid() NOT NULL,
 	"date" date NOT NULL,
@@ -71,11 +55,9 @@ CREATE TABLE "expenses" (
 	"amount" numeric(12, 2) NOT NULL,
 	"created_at" timestamp with time zone DEFAULT now() NOT NULL,
 	"updated_at" timestamp with time zone,
-	CONSTRAINT "expenses_amount_positive" CHECK ("amount" > 0)
+	CONSTRAINT "expenses_amount_positive" CHECK ("expenses"."amount" > 0)
 );
 --> statement-breakpoint
-
--- Create leads table (FK → divisions)
 CREATE TABLE "leads" (
 	"id" uuid PRIMARY KEY DEFAULT gen_random_uuid() NOT NULL,
 	"name" text,
@@ -88,20 +70,16 @@ CREATE TABLE "leads" (
 	"division_id" uuid,
 	"created_at" timestamp with time zone DEFAULT now() NOT NULL,
 	"updated_at" timestamp with time zone,
-	CONSTRAINT "leads_email_or_phone" CHECK ("email" IS NOT NULL OR "phone" IS NOT NULL)
+	CONSTRAINT "leads_email_or_phone" CHECK ("leads"."email" IS NOT NULL OR "leads"."phone" IS NOT NULL)
 );
 --> statement-breakpoint
-
--- Add FK constraints
 ALTER TABLE "income" ADD CONSTRAINT "income_division_id_divisions_id_fk" FOREIGN KEY ("division_id") REFERENCES "public"."divisions"("id") ON DELETE restrict ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "income" ADD CONSTRAINT "income_client_id_clients_id_fk" FOREIGN KEY ("client_id") REFERENCES "public"."clients"("id") ON DELETE set null ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "expenses" ADD CONSTRAINT "expenses_division_id_divisions_id_fk" FOREIGN KEY ("division_id") REFERENCES "public"."divisions"("id") ON DELETE restrict ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "leads" ADD CONSTRAINT "leads_division_id_divisions_id_fk" FOREIGN KEY ("division_id") REFERENCES "public"."divisions"("id") ON DELETE set null ON UPDATE no action;--> statement-breakpoint
-
--- Create indexes on new tables
 CREATE INDEX "divisions_name_idx" ON "divisions" USING btree ("name");--> statement-breakpoint
 CREATE INDEX "clients_name_idx" ON "clients" USING btree ("name");--> statement-breakpoint
-CREATE UNIQUE INDEX "clients_email_unique_idx" ON "clients" USING btree ("email") WHERE "email" IS NOT NULL;--> statement-breakpoint
+CREATE UNIQUE INDEX "clients_email_unique_idx" ON "clients" USING btree ("email") WHERE "clients"."email" IS NOT NULL;--> statement-breakpoint
 CREATE INDEX "income_date_idx" ON "income" USING btree ("date");--> statement-breakpoint
 CREATE INDEX "income_division_id_idx" ON "income" USING btree ("division_id");--> statement-breakpoint
 CREATE INDEX "income_client_id_idx" ON "income" USING btree ("client_id");--> statement-breakpoint
@@ -112,5 +90,5 @@ CREATE INDEX "leads_status_idx" ON "leads" USING btree ("status");--> statement-
 CREATE INDEX "leads_created_at_idx" ON "leads" USING btree ("created_at");--> statement-breakpoint
 CREATE INDEX "leads_email_idx" ON "leads" USING btree ("email");--> statement-breakpoint
 CREATE INDEX "leads_division_id_idx" ON "leads" USING btree ("division_id");--> statement-breakpoint
-CREATE UNIQUE INDEX "leads_email_unique_idx" ON "leads" USING btree ("email") WHERE "email" IS NOT NULL;--> statement-breakpoint
-CREATE UNIQUE INDEX "leads_phone_unique_idx" ON "leads" USING btree ("phone") WHERE "phone" IS NOT NULL;
+CREATE UNIQUE INDEX "leads_email_unique_idx" ON "leads" USING btree ("email") WHERE "leads"."email" IS NOT NULL;--> statement-breakpoint
+CREATE UNIQUE INDEX "leads_phone_unique_idx" ON "leads" USING btree ("phone") WHERE "leads"."phone" IS NOT NULL;

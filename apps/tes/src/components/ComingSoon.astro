@@ -1,10 +1,10 @@
 ---
-// apps/tes/src/pages/index.astro
+// apps/tes/src/components/ComingSoon.astro
 // Coming soon page for Tender Edge Solutions
 ---
 
 <!doctype html>
-<html lang='en'>
+<html lang='en' class='dark'>
   <head>
     <meta charset='UTF-8' />
     <meta name='viewport' content='width=device-width, initial-scale=1.0' />
@@ -21,86 +21,87 @@
       rel='stylesheet'
     />
   </head>
-  <body>
+
+  <body class='min-h-screen bg-background text-foreground font-sans overflow-x-hidden relative'>
+    <!-- Grain overlay -->
     <div class='noise' aria-hidden='true'></div>
 
-    <main>
-      <div class='bg' aria-hidden='true'>
-        <span class='glow-top'></span>
-        <span class='glow-bottom'></span>
-      </div>
+    <!-- Background glows -->
+    <div class='fixed inset-0 pointer-events-none overflow-hidden' aria-hidden='true'>
+      <span class='glow-top'></span>
+      <span class='glow-bottom'></span>
+    </div>
 
-      <div class='content'>
-        <header>
-          <div class='logo'>
-            <span class='logo-tender'>Tender</span><span class='logo-edge'
-              >Edge</span
-            >
-            <span class='logo-solutions'>Solutions</span>
+    <main class='min-h-screen flex items-center justify-center px-6 py-12 relative z-10'>
+      <div class='relative w-full max-w-[600px] flex flex-col'>
+        <!-- Header -->
+        <header class='flex items-baseline justify-between flex-wrap gap-3 mb-14 animate-up'>
+          <div
+            class='font-condensed font-bold text-[22px] tracking-wide leading-none flex items-baseline gap-1'
+          >
+            <span class='text-foreground'>Tender</span>
+
+            <span class='text-primary'>Edge</span>
+
+            <span class='text-foreground'>Solutions</span>
           </div>
-          <div class='cta-secondary'>A Playhouse Media Group Division</div>
+          <div class='text-[11px] text-muted-foreground tracking-widest uppercase'>
+            A Playhouse Media Group Division
+          </div>
         </header>
 
-        <div class='hero'>
-          <p class='eyebrow'>Gauteng's Tender Compliance Specialists</p>
+        <!-- Hero -->
+        <section class='mb-12 animate-up [animation-delay:80ms]'>
+          <p class='text-[11px] tracking-[0.16em] uppercase text-primary font-medium mb-5'>
+            Gauteng's Tender Compliance Specialists
+          </p>
 
-          <h1>
+          <h1
+            class='font-condensed font-bold leading-[0.92] tracking-tight mb-7 text-foreground'
+            style='font-size: clamp(64px, 13vw, 108px);'
+          >
             Win More<br />
-            <span class='accent'>Tenders.</span>
+            <span class='text-primary'>Tenders.</span>
           </h1>
 
-          <p class='sub'>
+          <p class='text-base text-muted-foreground leading-relaxed font-light max-w-[440px]'>
             We're building something sharp.<br />
             Full site launching soon — but we're open for business right now.
           </p>
-        </div>
+        </section>
 
-        <!-- <div class="services">
-        {[
-          { label: "CSD Registration", price: "R650" },
-          { label: "B-BBEE Affidavit", price: "R550" },
-          { label: "CIDB Grading", price: "from R1,200" },
-          { label: "Full Tender Prep", price: "R2,500+" },
-          { label: "Monthly Retainer", price: "R1,500/mo" },
-          { label: "SBD Forms", price: "R800+" },
-        ].map(({ label, price }) => (
-          <div class="service-item">
-            <span class="service-name">{label}</span>
-            <span class="service-price">{price}</span>
-          </div>
-        ))}
-      </div> -->
-
-        <div class='cta-group'>
+        <!-- CTAs -->
+        <div class='flex flex-wrap gap-3 items-center mb-10 animate-up [animation-delay:220ms]'>
           <a
             href="https://wa.me/27745017094?text=Hi%2C+I'm+interested+in+your+tender+compliance+services.+I+found+you+on+Tender+Edge+Solutions."
             target='_blank'
             rel='noopener noreferrer'
-            class='cta-primary'
+            class='inline-flex items-center gap-2.5 bg-whatsapp hover:bg-whatsapp-hover text-white no-underline px-7 py-3.5 rounded-md text-[15px] font-semibold transition-all duration-200 hover:-translate-y-px active:scale-[0.97]'
           >
-            <svg
-              width='18'
-              height='18'
-              viewBox='0 0 24 24'
-              fill='currentColor'
-              aria-hidden='true'
-            >
+            <svg width='18' height='18' viewBox='0 0 24 24' fill='currentColor' aria-hidden='true'>
               <path
                 d='M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z'
               ></path>
             </svg>
             WhatsApp Us Now
           </a>
-          <a href='mailto:info@tenderedgesolutions.co.za' class='cta-secondary'>
+
+          <a
+            href='mailto:info@tenderedgesolutions.co.za'
+            class='text-sm text-muted-foreground no-underline font-normal border-b border-transparent hover:text-foreground hover:border-primary pb-px transition-all duration-200'
+          >
             info@tenderedgesolutions.co.za
           </a>
         </div>
 
-        <footer class='cta-secondary'>
+        <!-- Footer -->
+        <footer
+          class='flex flex-wrap gap-2 items-center text-xs text-muted-foreground/50 animate-up [animation-delay:280ms] max-sm:flex-col max-sm:gap-1'
+        >
           <span>074 501 7094</span>
-          <span class='dot'>·</span>
+          <span class='text-border max-sm:hidden'>·</span>
           <span>Centurion, Gauteng</span>
-          <span class='dot'>·</span>
+          <span class='text-border max-sm:hidden'>·</span>
           <span>playhousemedia.co.za</span>
         </footer>
       </div>
@@ -109,65 +110,17 @@
 </html>
 
 <style>
-  *,
-  *::before,
-  *::after {
-    box-sizing: border-box;
-    margin: 0;
-    padding: 0;
-  }
-
-  :root {
-    --forest: #1a2e1a;
-    --green: #4ade80;
-    --gold: #fbbf24;
-    --mint: rgba(74, 222, 128, 0.08);
-    --muted: rgba(240, 253, 244, 0.55);
-    --faint: rgba(240, 253, 244, 0.15);
-    --white: #f0fdf4;
-  }
-
-  html,
-  body {
-    height: 100%;
-  }
-
-  body {
-    min-height: 100vh;
-    background: var(--forest);
-    color: var(--white);
-    font-family: 'DM Sans', sans-serif;
-    position: relative;
-    overflow-x: hidden;
-  }
-
-  /* subtle grain */
+  /* Grain texture — no Tailwind equivalent */
   .noise {
     position: fixed;
     inset: 0;
     pointer-events: none;
     z-index: 0;
-    opacity: 0.03;
+    opacity: 0.04;
     background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='300' height='300'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.75' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='300' height='300' filter='url(%23n)' opacity='1'/%3E%3C/svg%3E");
   }
 
-  main {
-    min-height: 100vh;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    padding: 48px 24px;
-    position: relative;
-    z-index: 1;
-  }
-
-  /* ── background glows ── */
-  .bg {
-    position: absolute;
-    inset: 0;
-    pointer-events: none;
-    overflow: hidden;
-  }
+  /* Radial glows — no Tailwind equivalent for arbitrary radial gradients */
   .glow-top {
     position: absolute;
     width: 600px;
@@ -176,7 +129,7 @@
     right: -150px;
     background: radial-gradient(
       ellipse,
-      rgba(74, 222, 128, 0.12) 0%,
+      color-mix(in srgb, hsl(45 75% 60%) 20%, transparent) 0%,
       transparent 70%
     );
   }
@@ -188,206 +141,13 @@
     left: -100px;
     background: radial-gradient(
       ellipse,
-      rgba(251, 191, 36, 0.08) 0%,
+      color-mix(in srgb, hsl(215 45% 22%) 35%, transparent) 0%,
       transparent 70%
     );
   }
 
-  /* ── content ── */
-  .content {
-    position: relative;
-    max-width: 600px;
-    width: 100%;
-    display: flex;
-    flex-direction: column;
-    gap: 0;
-  }
-
-  /* ── header ── */
-  header {
-    display: flex;
-    align-items: baseline;
-    justify-content: space-between;
-    flex-wrap: wrap;
-    gap: 12px;
-    margin-bottom: 56px;
-    animation: up 0.7s ease both;
-  }
-
-  .logo {
-    font-family: 'Barlow Condensed', sans-serif;
-    font-weight: 700;
-    font-size: 22px;
-    letter-spacing: 0.02em;
-    line-height: 1;
-    display: flex;
-    align-items: baseline;
-    gap: 0;
-  }
-  .logo-tender {
-    color: var(--white);
-  }
-  .logo-edge {
-    color: var(--green);
-  }
-  .logo-solutions {
-    color: rgba(240, 253, 244, 0.45);
-    font-weight: 400;
-    font-size: 13px;
-    margin-left: 6px;
-    letter-spacing: 0.04em;
-    align-self: flex-end;
-  }
-
-  .badge {
-    font-size: 10px;
-    letter-spacing: 0.12em;
-    text-transform: uppercase;
-    color: var(--faint);
-    border: 1px solid var(--faint);
-    padding: 4px 10px;
-    border-radius: 4px;
-  }
-
-  /* ── hero ── */
-  .hero {
-    margin-bottom: 48px;
-    animation: up 0.7s 0.08s ease both;
-  }
-
-  .eyebrow {
-    font-size: 11px;
-    letter-spacing: 0.16em;
-    text-transform: uppercase;
-    color: var(--green);
-    font-weight: 500;
-    margin-bottom: 20px;
-  }
-
-  h1 {
-    font-family: 'Barlow Condensed', sans-serif;
-    font-weight: 700;
-    font-size: clamp(64px, 13vw, 108px);
-    line-height: 0.92;
-    letter-spacing: -0.01em;
-    margin-bottom: 28px;
-  }
-  .accent {
-    color: var(--green);
-  }
-
-  .sub {
-    font-size: 16px;
-    color: var(--muted);
-    line-height: 1.65;
-    font-weight: 300;
-    max-width: 440px;
-  }
-
-  /* ── services grid ── */
-  .services {
-    display: grid;
-    grid-template-columns: repeat(3, 1fr);
-    gap: 1px;
-    background: var(--faint);
-    border: 1px solid var(--faint);
-    border-radius: 10px;
-    overflow: hidden;
-    margin-bottom: 40px;
-    animation: up 0.7s 0.16s ease both;
-  }
-
-  .service-item {
-    background: var(--forest);
-    padding: 16px 18px;
-    display: flex;
-    flex-direction: column;
-    gap: 4px;
-    transition: background 0.2s;
-  }
-  .service-item:hover {
-    background: var(--mint);
-  }
-
-  .service-name {
-    font-size: 12px;
-    font-weight: 500;
-    color: var(--white);
-    letter-spacing: 0.01em;
-  }
-  .service-price {
-    font-family: 'Barlow Condensed', sans-serif;
-    font-size: 16px;
-    font-weight: 600;
-    color: var(--green);
-    letter-spacing: 0.02em;
-  }
-
-  /* ── CTAs ── */
-  .cta-group {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 12px;
-    align-items: center;
-    margin-bottom: 40px;
-    animation: up 0.7s 0.22s ease both;
-  }
-
-  .cta-primary {
-    display: inline-flex;
-    align-items: center;
-    gap: 10px;
-    background: #25d366;
-    color: #fff;
-    text-decoration: none;
-    padding: 14px 28px;
-    border-radius: 8px;
-    font-size: 15px;
-    font-weight: 600;
-    font-family: 'DM Sans', sans-serif;
-    transition:
-      background 0.2s,
-      transform 0.15s;
-  }
-  .cta-primary:hover {
-    background: #20bd5c;
-    transform: translateY(-1px);
-  }
-  .cta-primary:active {
-    transform: scale(0.97);
-  }
-
-  .cta-secondary {
-    font-size: 14px;
-    color: var(--muted);
-    text-decoration: none;
-    font-weight: 400;
-    border-bottom: 1px solid transparent;
-    transition:
-      color 0.2s,
-      border-color 0.2s;
-    padding-bottom: 1px;
-  }
-  .cta-secondary:hover {
-    color: var(--white);
-    border-color: var(--green);
-  }
-
-  /* ── footer ── */
-  footer {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 8px;
-    align-items: center;
-    font-size: 12px;
-    color: var(--faint);
-    animation: up 0.7s 0.28s ease both;
-  }
-  .dot {
-    color: rgba(240, 253, 244, 0.1);
-  }
-
-  /* ── animation ── */
+  /* Entrance animation — registered as a custom utility via @theme would need
+     a plugin; defining here and applying via class is the pragmatic approach */
   @keyframes up {
     from {
       opacity: 0;
@@ -398,24 +158,7 @@
       transform: translateY(0);
     }
   }
-
-  /* ── responsive ── */
-  @media (max-width: 520px) {
-    .services {
-      grid-template-columns: repeat(2, 1fr);
-    }
-    header {
-      margin-bottom: 40px;
-    }
-    h1 {
-      font-size: 64px;
-    }
-    footer {
-      flex-direction: column;
-      gap: 4px;
-    }
-    footer .dot {
-      display: none;
-    }
+  .animate-up {
+    animation: up 0.7s ease both;
   }
 </style>

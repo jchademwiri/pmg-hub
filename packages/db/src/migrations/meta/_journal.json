@@ -5,22 +5,8 @@
     {
       "idx": 0,
       "version": "7",
-      "when": 1774587249840,
-      "tag": "0000_magical_blade",
-      "breakpoints": true
-    },
-    {
-      "idx": 1,
-      "version": "7",
-      "when": 1774587421090,
-      "tag": "0001_hard_bedlam",
-      "breakpoints": true
-    },
-    {
-      "idx": 2,
-      "version": "7",
-      "when": 1774600000000,
-      "tag": "0002_new_schema",
+      "when": 1774720718754,
+      "tag": "0000_next_wrecking_crew",
       "breakpoints": true
     }
   ]
