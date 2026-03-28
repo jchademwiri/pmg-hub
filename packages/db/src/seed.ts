@@ -1,315 +1,141 @@
-import { db } from "./client";
-import { awsPricing, divisions, clients, income, expenses, leads } from "./schema/index";
-import { eq, and } from "drizzle-orm";
+// packages/db/src/seed.ts
+import { config } from "dotenv";
+import { resolve } from "path";
+import pg from "pg";
+import { drizzle } from "drizzle-orm/node-postgres";
+import { divisions, clients, income, expenses, leads, awsPricing } from "./schema";
 
-const seedRows = [
+config({ path: resolve(import.meta.dir, "../.env") });
+
+const client = new pg.Client({
+  connectionString: process.env.DATABASE_URL_UNPOOLED,
+  ssl: { rejectUnauthorized: true },
+});
+await client.connect();
+const db = drizzle(client);
+
+console.log("🌱 Seeding database...");
+
+// ── Divisions ────────────────────────────────────────────────────────────────
+const [pmg, tes, aws] = await db
+  .insert(divisions)
+  .values([
+    { name: "Playhouse Media Group" },
+    { name: "Tender Edge Solutions" },
+    { name: "Accounting & Web Services" },
+  ])
+  .returning();
+
+console.log("  ✓ divisions");
+
+// ── Clients ──────────────────────────────────────────────────────────────────
+const [clientA, clientB, clientC] = await db
+  .insert(clients)
+  .values([
+    { name: "Sipho Dlamini", businessName: "Dlamini Construction CC", email: "sipho@dlaminicc.co.za", phone: "0821234567" },
+    { name: "Priya Naidoo", businessName: "Naidoo Logistics (Pty) Ltd", email: "priya@naidoolog.co.za", phone: "0839876543" },
+    { name: "Johan van der Merwe", businessName: "VDM Electrical", email: "johan@vdmelectrical.co.za", phone: "0764561234" },
+  ])
+  .returning();
+
+console.log("  ✓ clients");
+
+// ── AWS Pricing ───────────────────────────────────────────────────────────────
+await db.insert(awsPricing).values([
   {
     name: "Starter",
-    price: 29900,
-    period: "/month",
-    upfront: null,
-    type: "monthly" as const,
-    popular: false,
-    description: "Entry-level monthly package",
+    price: 1500,
+    period: "month",
+    description: "Perfect for small businesses getting started online.",
+    features: ["1-page website", "Basic SEO setup", "Monthly report", "Email support"],
     cta: "Get Started",
-    features: [] as string[],
+    popular: false,
+    type: "monthly",
     sortOrder: 1,
   },
   {
     name: "Growth",
-    price: 59900,
-    period: "/month",
-    upfront: 150000,
-    type: "monthly" as const,
+    price: 3500,
+    period: "month",
+    description: "For growing businesses that need more reach and automation.",
+    features: ["Up to 5 pages", "Google Ads management", "Social media scheduling", "Bi-weekly report", "Priority support"],
+    cta: "Start Growing",
     popular: true,
-    description: "Growth monthly package",
-    cta: "Get Started",
-    features: [] as string[],
+    type: "monthly",
     sortOrder: 2,
   },
   {
     name: "Pro",
-    price: 99900,
-    period: "/month",
-    upfront: 250000,
-    type: "monthly" as const,
+    price: 7500,
+    period: "month",
+    description: "Full-service digital presence for established businesses.",
+    features: ["Unlimited pages", "Full ad management", "Content creation", "Weekly strategy call", "Dedicated account manager"],
+    cta: "Go Pro",
     popular: false,
-    description: "Pro monthly package",
-    cta: "Get Started",
-    features: [] as string[],
+    type: "monthly",
     sortOrder: 3,
   },
   {
-    name: "Landing Page",
-    price: 250000,
-    period: null,
-    upfront: null,
-    type: "once_off" as const,
+    name: "Logo & Brand Identity",
+    price: 4500,
+    upfront: 4500,
+    description: "One-time brand identity package including logo, colours, and typography.",
+    features: ["Logo design (3 concepts)", "Brand colour palette", "Typography guide", "Business card design", "All source files"],
+    cta: "Order Now",
     popular: false,
-    description: "Single landing page",
-    cta: "Get Started",
-    features: [] as string[],
+    type: "once_off",
     sortOrder: 4,
   },
   {
-    name: "Business Website",
-    price: 650000,
-    period: null,
-    upfront: null,
-    type: "once_off" as const,
+    name: "Website Launch",
+    price: 12000,
+    upfront: 12000,
+    description: "Complete website build, deployed and ready to go.",
+    features: ["Up to 8 pages", "Mobile responsive", "Contact form", "Basic SEO", "1 month free support"],
+    cta: "Build My Site",
     popular: false,
-    description: "Full business website",
-    cta: "Get Started",
-    features: [] as string[],
+    type: "once_off",
     sortOrder: 5,
   },
-];
+]);
 
-async function seed() {
-  // Block 1: aws_pricing (unchanged)
-  console.log("Seeding aws_pricing...");
+console.log("  ✓ aws_pricing");
 
-  const result = await db
-    .insert(awsPricing)
-    .values(seedRows)
-    .onConflictDoNothing({ target: awsPricing.name });
+// ── Income ────────────────────────────────────────────────────────────────────
+await db.insert(income).values([
+  { date: "2025-01-15", divisionId: pmg!.id, clientId: clientA!.id, description: "Social media management — Jan", amount: "3500.00" },
+  { date: "2025-02-15", divisionId: pmg!.id, clientId: clientA!.id, description: "Social media management — Feb", amount: "3500.00" },
+  { date: "2025-01-20", divisionId: tes!.id, clientId: clientB!.id, description: "CSD registration & CIDB grading", amount: "5800.00" },
+  { date: "2025-02-10", divisionId: tes!.id, clientId: clientC!.id, description: "Tender document compilation", amount: "4200.00" },
+  { date: "2025-01-28", divisionId: aws!.id, clientId: clientB!.id, description: "Website build — Naidoo Logistics", amount: "12000.00" },
+  { date: "2025-02-28", divisionId: aws!.id, clientId: clientC!.id, description: "Growth package — Feb", amount: "3500.00" },
+]);
 
-  console.log("Seed complete. Rows inserted (skipped if already present).");
+console.log("  ✓ income");
 
-  // Block 2: financial tables in transaction
-  await db.transaction(async (tx) => {
-    console.log("Seeding financial tables...");
+// ── Expenses ──────────────────────────────────────────────────────────────────
+await db.insert(expenses).values([
+  { date: "2025-01-05", divisionId: pmg!.id, category: "Software", description: "Canva Pro subscription", amount: "350.00" },
+  { date: "2025-01-05", divisionId: pmg!.id, category: "Advertising", description: "Meta Ads — client campaigns", amount: "2200.00" },
+  { date: "2025-02-05", divisionId: pmg!.id, category: "Advertising", description: "Meta Ads — client campaigns", amount: "2400.00" },
+  { date: "2025-01-10", divisionId: tes!.id, category: "Transport", description: "Client site visits — Centurion", amount: "650.00" },
+  { date: "2025-02-12", divisionId: tes!.id, category: "Printing", description: "Tender document printing & binding", amount: "480.00" },
+  { date: "2025-01-15", divisionId: aws!.id, category: "Hosting", description: "Vercel Pro + Neon DB", amount: "890.00" },
+  { date: "2025-02-15", divisionId: aws!.id, category: "Hosting", description: "Vercel Pro + Neon DB", amount: "890.00" },
+]);
 
-    // 1. Divisions
-    const divisionNames = ["TES", "AWS"];
-    const divisionIds: Record<string, string> = {};
+console.log("  ✓ expenses");
 
-    for (const name of divisionNames) {
-      const existing = await tx
-        .select()
-        .from(divisions)
-        .where(eq(divisions.name, name));
+// ── Leads ─────────────────────────────────────────────────────────────────────
+await db.insert(leads).values([
+  { name: "Thabo Mokoena", email: "thabo@mokoenabuilds.co.za", phone: "0731112233", source: "WhatsApp", serviceInterest: "Tender document compilation", status: "new", divisionId: tes!.id },
+  { name: "Fatima Essop", email: "fatima.essop@gmail.com", phone: "0844445566", source: "Referral", serviceInterest: "CSD registration", status: "contacted", divisionId: tes!.id },
+  { name: "Ruan Botha", email: "ruan@bothatech.co.za", phone: "0617778899", source: "Google", serviceInterest: "Website + Growth package", status: "converted", divisionId: aws!.id },
+  { name: "Nomsa Khumalo", phone: "0799990011", source: "WhatsApp", serviceInterest: "Social media management", status: "new", divisionId: pmg!.id },
+  { name: "Derek Pietersen", email: "derek.p@outlook.com", phone: "0823334455", source: "Instagram", serviceInterest: "Logo & brand identity", status: "lost", divisionId: aws!.id },
+]);
 
-      if (existing.length > 0) {
-        divisionIds[name] = existing[0].id;
-        console.log(`Division "${name}" already exists, skipping.`);
-      } else {
-        const inserted = await tx
-          .insert(divisions)
-          .values({ name })
-          .returning();
-        divisionIds[name] = inserted[0].id;
-        console.log(`Inserted division "${name}".`);
-      }
-    }
+console.log("  ✓ leads");
 
-    // 2. Clients
-    const clientFixtures = [
-      {
-        name: "John Smith",
-        businessName: "Smith Consulting",
-        email: "john@smithconsulting.co.za",
-        phone: "+27821234567",
-      },
-      {
-        name: "Sarah Johnson",
-        businessName: "Johnson Enterprises",
-        email: "sarah@johnsonenterprises.co.za",
-        phone: "+27831234567",
-      },
-      {
-        name: "Mike Williams",
-        businessName: null,
-        email: "mike@gmail.com",
-        phone: "+27841234567",
-      },
-    ];
-
-    const clientIds: Record<string, string> = {};
-
-    for (const fixture of clientFixtures) {
-      const existing = await tx
-        .select()
-        .from(clients)
-        .where(eq(clients.name, fixture.name));
-
-      if (existing.length > 0) {
-        clientIds[fixture.name] = existing[0].id;
-        console.log(`Client "${fixture.name}" already exists, skipping.`);
-      } else {
-        const inserted = await tx.insert(clients).values(fixture).returning();
-        clientIds[fixture.name] = inserted[0].id;
-        console.log(`Inserted client "${fixture.name}".`);
-      }
-    }
-
-    // 3. Income records
-    const incomeFixtures = [
-      {
-        date: "2024-01-15",
-        description: "Website development",
-        amount: "15000.00",
-        divisionName: "TES",
-        clientName: "John Smith",
-      },
-      {
-        date: "2024-02-01",
-        description: "AWS setup and configuration",
-        amount: "8500.00",
-        divisionName: "AWS",
-        clientName: "Sarah Johnson",
-      },
-      {
-        date: "2024-02-15",
-        description: "Monthly retainer",
-        amount: "5000.00",
-        divisionName: "TES",
-        clientName: "Mike Williams",
-      },
-    ];
-
-    for (const fixture of incomeFixtures) {
-      const existing = await tx
-        .select()
-        .from(income)
-        .where(
-          and(
-            eq(income.description, fixture.description),
-            eq(income.date, fixture.date),
-          ),
-        );
-
-      if (existing.length > 0) {
-        console.log(
-          `Income record "${fixture.description}" on ${fixture.date} already exists, skipping.`,
-        );
-      } else {
-        await tx.insert(income).values({
-          date: fixture.date,
-          description: fixture.description,
-          amount: fixture.amount,
-          divisionId: divisionIds[fixture.divisionName],
-          clientId: clientIds[fixture.clientName],
-        });
-        console.log(`Inserted income record "${fixture.description}".`);
-      }
-    }
-
-    // 4. Expense records
-    const expenseFixtures = [
-      {
-        date: "2024-01-20",
-        category: "Software",
-        description: "Adobe Creative Suite",
-        amount: "2500.00",
-        divisionName: "TES",
-      },
-      {
-        date: "2024-02-05",
-        category: "Infrastructure",
-        description: "AWS hosting costs",
-        amount: "1200.00",
-        divisionName: "AWS",
-      },
-      {
-        date: "2024-02-20",
-        category: "Marketing",
-        description: "Social media advertising",
-        amount: "3000.00",
-        divisionName: "TES",
-      },
-    ];
-
-    for (const fixture of expenseFixtures) {
-      const existing = await tx
-        .select()
-        .from(expenses)
-        .where(
-          and(
-            eq(expenses.description, fixture.description),
-            eq(expenses.date, fixture.date),
-          ),
-        );
-
-      if (existing.length > 0) {
-        console.log(
-          `Expense record "${fixture.description}" on ${fixture.date} already exists, skipping.`,
-        );
-      } else {
-        await tx.insert(expenses).values({
-          date: fixture.date,
-          category: fixture.category,
-          description: fixture.description,
-          amount: fixture.amount,
-          divisionId: divisionIds[fixture.divisionName],
-        });
-        console.log(`Inserted expense record "${fixture.description}".`);
-      }
-    }
-
-    // 5. Lead records
-    const leadFixtures = [
-      {
-        name: "Alice Brown",
-        email: "alice@example.com",
-        phone: "+27851234567",
-        source: "website",
-        serviceInterest: "web development",
-        status: "new" as const,
-        divisionName: null,
-      },
-      {
-        name: "Bob Davis",
-        email: "bob@techcorp.co.za",
-        phone: "+27861234567",
-        source: "referral",
-        serviceInterest: "aws services",
-        status: "contacted" as const,
-        divisionName: "AWS",
-      },
-      {
-        name: "Carol Wilson",
-        email: "carol@startup.co.za",
-        phone: "+27871234567",
-        source: "social media",
-        serviceInterest: "monthly package",
-        status: "new" as const,
-        divisionName: "TES",
-      },
-    ];
-
-    for (const fixture of leadFixtures) {
-      const normalizedEmail = fixture.email.toLowerCase();
-
-      const existing = await tx
-        .select()
-        .from(leads)
-        .where(eq(leads.email, normalizedEmail));
-
-      if (existing.length > 0) {
-        console.log(
-          `Lead with email "${normalizedEmail}" already exists, skipping.`,
-        );
-      } else {
-        await tx.insert(leads).values({
-          name: fixture.name,
-          email: normalizedEmail,
-          phone: fixture.phone,
-          source: fixture.source,
-          serviceInterest: fixture.serviceInterest,
-          status: fixture.status,
-          divisionId:
-            fixture.divisionName ? divisionIds[fixture.divisionName] : null,
-        });
-        console.log(`Inserted lead "${fixture.name}".`);
-      }
-    }
-
-    console.log("Financial tables seeded successfully.");
-  });
-}
-
-seed().catch((err) => {
-  console.error("Seed failed:", err);
-  process.exit(1);
-});
+console.log("\n✅ Seed complete.");
+await client.end();
