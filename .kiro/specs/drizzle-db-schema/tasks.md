@@ -6,17 +6,17 @@ Establish a domain-oriented schema layer in `packages/db` using Drizzle ORM + Ne
 
 ## Tasks
 
-- [ ] 1. Cleanup: delete obsolete schema files and rewrite aws.ts
-  - [ ] 1.1 Delete `src/schema/tes.ts` and `src/schema/pmg.ts`
+- [x] 1. Cleanup: delete obsolete schema files and rewrite aws.ts
+  - [x] 1.1 Delete `src/schema/tes.ts` and `src/schema/pmg.ts`
     - Remove both files entirely; they are superseded by the unified `leads` table
     - _Requirements: 5.1_
 
-  - [ ] 1.2 Rewrite `src/schema/aws.ts` to keep pricing only
+  - [x] 1.2 Rewrite `src/schema/aws.ts` to keep pricing only
     - Retain `awsPackageTypeEnum`, `awsPricing`, `AwsPricing`, `NewAwsPricing`
     - Remove `awsMessageStatusEnum`, `awsBookingStatusEnum`, `awsMessages`, `awsBookings`
     - _Requirements: 11.1, 11.4_
 
-- [ ] 2. Create `src/schema/divisions.ts`
+- [x] 2. Create `src/schema/divisions.ts`
   - Define `divisions` table: `id` (uuid PK defaultRandom), `name` (text NOT NULL UNIQUE), `createdAt` (timestamptz defaultNow), `updatedAt` (timestamptz nullable)
   - Add code comment above `updatedAt` documenting the application-layer tradeoff (Req 9.11)
   - Add `divisions_name_idx` index on `name`
@@ -29,7 +29,7 @@ Establish a domain-oriented schema layer in `packages/db` using Drizzle ORM + Ne
     - **Validates: Requirements 7.2, 7.3**
     - Generate random symbol names from each domain module; verify all are present in barrel index exports
 
-- [ ] 3. Create `src/schema/clients.ts`
+- [x] 3. Create `src/schema/clients.ts`
   - Define `clients` table: `id` (uuid PK), `name` (text NOT NULL), `businessName` (text nullable), `email` (text nullable), `phone` (text nullable), `createdAt` (timestamptz), `updatedAt` (timestamptz nullable)
   - Add code comment above `updatedAt` documenting the application-layer tradeoff
   - Add `clients_name_idx` index on `name`; partial unique index on `email WHERE email IS NOT NULL`
@@ -42,7 +42,7 @@ Establish a domain-oriented schema layer in `packages/db` using Drizzle ORM + Ne
     - **Validates: Requirements 3a.11**
     - Generate two clients with the same non-null email; verify second insert throws a unique constraint error
 
-- [ ] 4. Create `src/schema/income.ts`
+- [x] 4. Create `src/schema/income.ts`
   - Define `income` table: `id` (uuid PK), `date` (date NOT NULL, no default), `divisionId` (uuid NOT NULL FK→divisions.id onDelete:restrict), `clientId` (uuid nullable FK→clients.id onDelete:set null), `description` (text nullable), `amount` (numeric(12,2) NOT NULL), `createdAt` (timestamptz), `updatedAt` (timestamptz nullable)
   - Add inline comment on `divisionId`: `// restrict: prevent division deletion while financial records exist`
   - Add code comment above `updatedAt` documenting the application-layer tradeoff
@@ -62,7 +62,7 @@ Establish a domain-oriented schema layer in `packages/db` using Drizzle ORM + Ne
     - **Validates: Requirements 3.13, 3.14, 4.13, 2.8**
     - Generate random UUIDs not present in parent tables; verify FK insert throws a referential integrity error
 
-- [ ] 5. Create `src/schema/expenses.ts`
+- [x] 5. Create `src/schema/expenses.ts`
   - Define `expenses` table: `id` (uuid PK), `date` (date NOT NULL, no default), `divisionId` (uuid NOT NULL FK→divisions.id onDelete:restrict), `category` (text NOT NULL), `description` (text nullable), `amount` (numeric(12,2) NOT NULL), `createdAt` (timestamptz), `updatedAt` (timestamptz nullable)
   - Add inline comment on `divisionId`: `// restrict: prevent division deletion while financial records exist`
   - Add code comment above `updatedAt` documenting the application-layer tradeoff
@@ -72,7 +72,7 @@ Establish a domain-oriented schema layer in `packages/db` using Drizzle ORM + Ne
   - Export `expensesRelations` declaring belongsTo divisions
   - _Requirements: 4.1–4.13, 6.3, 11.1–11.4, 12.1, 12.4–12.6, 12.10_
 
-- [ ] 6. Create `src/schema/leads.ts`
+- [x] 6. Create `src/schema/leads.ts`
   - Define `leadStatusEnum` pgEnum with values `["new", "contacted", "converted", "lost"]`
   - Define `leads` table: `id` (uuid PK), `name` (text nullable), `email` (text nullable), `phone` (text nullable), `message` (text nullable), `source` (text nullable), `serviceInterest` (text nullable), `status` (leadStatusEnum NOT NULL default "new"), `divisionId` (uuid nullable FK→divisions.id onDelete:set null), `createdAt` (timestamptz), `updatedAt` (timestamptz nullable)
   - Add inline comment on `divisionId`: `// set null: leads are soft-linked; division deletion should not block or cascade`
@@ -99,12 +99,12 @@ Establish a domain-oriented schema layer in `packages/db` using Drizzle ORM + Ne
     - **Validates: Requirements 5.16**
     - Generate leads with mixed-case emails; verify stored email equals the lowercased input
 
-- [ ] 7. Rewrite `src/schema/index.ts` barrel
+- [x] 7. Rewrite `src/schema/index.ts` barrel
   - Replace contents with `export * from` for each of: `./aws`, `./divisions`, `./clients`, `./income`, `./expenses`, `./leads`
   - Confirm `tes.ts` and `pmg.ts` are no longer referenced
   - _Requirements: 7.1–7.3, 6.7_
 
-- [ ] 8. Create `src/queries.ts`
+- [x] 8. Create `src/queries.ts`
   - Implement `getTotalRevenue(): Promise<number>` — `coalesce(sum(income.amount), 0)`, cast to number
   - Implement `getTotalExpenses(): Promise<number>` — `coalesce(sum(expenses.amount), 0)`, cast to number
   - Implement `getRevenueByDivision(): Promise<{ divisionName: string; total: number }[]>` — join income+divisions, group by division name, order DESC
@@ -133,10 +133,10 @@ Establish a domain-oriented schema layer in `packages/db` using Drizzle ORM + Ne
     - **Validates: Requirements 10.10**
     - Generate non-empty result sets; verify first element has the highest total/count value
 
-- [ ] 9. Checkpoint — ensure schema and queries compile
+- [x] 9. Checkpoint — ensure schema and queries compile
   - Ensure all TypeScript types resolve without errors, ask the user if questions arise.
 
-- [ ] 10. Rewrite `src/seed.ts`
+- [x] 10. Rewrite `src/seed.ts`
   - Preserve Block 1 (aws_pricing) exactly as-is using `.onConflictDoNothing()`
   - Add Block 2 wrapped in `db.transaction()`:
     - Insert 2 divisions (`TES`, `AWS`) — query by name first, skip if exists
@@ -158,41 +158,41 @@ Establish a domain-oriented schema layer in `packages/db` using Drizzle ORM + Ne
     - **Validates: Requirements 9.10**
     - Simulate a mid-seed failure; verify no partial records from that run are committed
 
-- [ ] 11. Create `.env.example`
+- [x] 11. Create `.env.example`
   - Add template with `DATABASE_URL` and `DATABASE_URL_UNPOOLED` placeholders (no real credentials)
   - _Requirements: 1.6, 1.7_
 
-- [ ] 12. Generate migration
+- [x] 12. Generate migration
   - Run `bun db:generate` to produce `src/migrations/0002_*.sql`
   - Do NOT run `bun db:migrate` — review the generated SQL before applying
   - Confirm the generated migration DROPs `tes_leads`, `aws_messages`, `aws_bookings`, `pmg_leads` and CREATEs `divisions`, `clients`, `income`, `expenses`, `leads` in FK-safe order
   - _Requirements: 8.1–8.5_
 
-- [ ] 13. Rewrite `__tests__/db.test.ts` and add new test files
-  - [ ] 13.1 Rewrite `__tests__/db.test.ts`
+- [x] 13. Rewrite `__tests__/db.test.ts` and add new test files
+  - [x] 13.1 Rewrite `__tests__/db.test.ts`
     - Remove assertions for deleted tables (`tes_leads`, `pmg_leads`, `aws_messages`, `aws_bookings`)
     - Add assertions confirming those symbols are NOT exported from the barrel index
     - Add grep/import check confirming no file in the codebase imports from `tes.ts`, `pmg.ts`, or aws messages/bookings
     - _Requirements: 7.2, 7.3_
 
-  - [ ] 13.2 Create `__tests__/schema.test.ts`
+  - [x] 13.2 Create `__tests__/schema.test.ts`
     - Verify all 5 new domain tables, enums, and types are exported from the barrel index
     - Verify `leadStatusEnum` contains exactly `["new", "contacted", "converted", "lost"]`
     - Verify `awsPackageTypeEnum` is exported and contains exactly `["monthly", "once_off"]`
     - Verify `leads` table has a nullable `divisionId` FK column referencing `divisions.id`
     - _Requirements: 2.7, 3.12, 3a.10, 4.12, 5.14, 7.2_
 
-  - [ ] 13.3 Create `__tests__/queries.test.ts`
+  - [x] 13.3 Create `__tests__/queries.test.ts`
     - Unit tests: verify `getTotalRevenue` and `getTotalExpenses` return `0` on empty tables
     - Unit tests: verify `getRevenueByDivision`, `getExpensesByDivision`, `getLeadsByStatus` return `[]` on empty tables
     - Include property tests from tasks 8.1–8.4
     - _Requirements: 10.2–10.7, 10.10_
 
-  - [ ] 13.4 Create `__tests__/seed.test.ts`
+  - [x] 13.4 Create `__tests__/seed.test.ts`
     - Include property tests from tasks 10.1–10.2
     - _Requirements: 9.7, 9.9, 9.10_
 
-- [ ] 14. Final checkpoint — ensure all tests pass
+- [x] 14. Final checkpoint — ensure all tests pass
   - Run `bun test --filter @pmg/db` and confirm all tests pass; ask the user if questions arise.
 
 ## Notes
