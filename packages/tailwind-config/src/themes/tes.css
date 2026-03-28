@@ -1,44 +1,99 @@
 /*
   @pmg/tailwind-config/tes
-  ─────────────────────────
-  Theme for Tender Edge Solutions (tenderedgesolutions.co.za)
-  Forest green + gold palette.
-
-  Usage in apps/tes/src/styles/globals.css:
-    @import "@pmg/tailwind-config/base";
-    @import "@pmg/tailwind-config/tes";
+  Tender Edge Solutions Theme (Navy + Gold)
 */
 
 @theme {
-  /* ── Brand colours ── */
-  --color-brand-forest:     #1A2E1A;
-  --color-brand-green:      #4ADE80;
-  --color-brand-gold:       #FBBF24;
-  --color-brand-white:      #F0FDF4;
+  
+  /* ─────────────────────────────
+     BRAND COLORS (RAW)
+  ───────────────────────────── */
+  --navy: 215 65% 18%;        /* #0B2A4A */
+  --navy-soft: 215 45% 22%;
+  --navy-deep: 215 70% 12%;
 
-  /* ── Semantic aliases ── */
-  --color-background:       var(--color-brand-forest);
-  --color-foreground:       var(--color-brand-white);
-  --color-primary:          var(--color-brand-green);
-  --color-primary-hover:    #22C55E;
-  --color-accent:           var(--color-brand-gold);
+  --gold: 45 65% 52%;         /* #D4AF37 */
+  --gold-light: 45 80% 70%;
 
-  /* ── Muted / faint layers ── */
-  --color-muted:            rgba(240, 253, 244, 0.55);
-  --color-faint:            rgba(240, 253, 244, 0.15);
-  --color-mint:             rgba(74, 222, 128, 0.08);
+  --white: 0 0% 100%;
+  --soft-white: 210 40% 98%;
 
-  /* ── Surface colours ── */
-  --color-surface:          var(--color-brand-forest);
-  --color-surface-hover:    var(--color-mint);
+  --text-dark: 222 47% 11%;
+  --text-muted: 215 16% 47%;
 
-  /* ── WhatsApp CTA ── */
-  --color-whatsapp:         #25D366;
-  --color-whatsapp-hover:   #20BD5C;
+  /* ─────────────────────────────
+     SHADCN TOKENS
+  ───────────────────────────── */
+
+  /* Base */
+  --background: 210 40% 98%;
+  --foreground: 222 47% 11%;
+
+  /* Surfaces */
+  --card: 0 0% 100%;
+  --card-foreground: 222 47% 11%;
+
+  --popover: 0 0% 100%;
+  --popover-foreground: 222 47% 11%;
+
+  /* Primary (Gold) */
+  --primary: 45 65% 52%;
+  --primary-foreground: 215 65% 18%;
+
+  /* Secondary (Navy) */
+  --secondary: 215 65% 18%;
+  --secondary-foreground: 0 0% 100%;
+
+  /* UI */
+  --muted: 210 40% 96%;
+  --muted-foreground: 215 16% 47%;
+
+  --accent: 45 80% 70%;
+  --accent-foreground: 215 65% 18%;
+
+  --destructive: 0 72% 51%;
+  --destructive-foreground: 0 0% 100%;
+
+  --border: 214 32% 91%;
+  --input: 214 32% 91%;
+  --ring: 45 65% 52%;
+
+  /* ─────────────────────────────
+     CUSTOM EXTENSIONS (OPTIONAL)
+  ───────────────────────────── */
+  --brand-navy: 215 65% 18%;
+  --brand-gold: 45 65% 52%;
+
+  --surface: 0 0% 100%;
+  --surface-hover: 210 40% 96%;
 }
 
-/* ── Root defaults ── */
-:root {
-  --background: var(--color-brand-forest);
-  --foreground: var(--color-brand-white);
+/* ─────────────────────────────
+   DARK MODE
+───────────────────────────── */
+.dark {
+  --background: 215 65% 10%;
+  --foreground: 0 0% 100%;
+
+  --card: 215 55% 14%;
+  --card-foreground: 0 0% 100%;
+
+  --popover: 215 55% 14%;
+  --popover-foreground: 0 0% 100%;
+
+  --primary: 45 75% 60%;
+  --primary-foreground: 215 65% 10%;
+
+  --secondary: 215 45% 22%;
+  --secondary-foreground: 0 0% 100%;
+
+  --muted: 215 35% 20%;
+  --muted-foreground: 215 20% 65%;
+
+  --accent: 45 85% 65%;
+  --accent-foreground: 215 65% 10%;
+
+  --border: 215 30% 25%;
+  --input: 215 30% 25%;
+  --ring: 45 75% 60%;
 }
