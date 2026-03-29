@@ -5,7 +5,7 @@ import {
   TooltipContent,
   TooltipTrigger,
 } from '@/components/ui/tooltip'
-import { formatZAR } from '@/lib/financial'
+import { formatZAR } from '@/lib/format'
 
 type AllocationItem = {
   key: string

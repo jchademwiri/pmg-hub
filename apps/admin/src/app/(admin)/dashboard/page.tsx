@@ -6,6 +6,7 @@ import { AllocationBar } from '@/components/dashboard/allocation-bar'
 import { DivisionRevenue } from '@/components/dashboard/division-revenue'
 import { LeadsSummary } from '@/components/dashboard/leads-summary'
 
+export const dynamic = 'force-dynamic'
 export const metadata: Metadata = { title: 'Dashboard' }
 
 export default async function DashboardPage() {

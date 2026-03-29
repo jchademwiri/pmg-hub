@@ -47,11 +47,4 @@ export async function getLeadCounts(): Promise<LeadStatusCount[]> {
   return getLeadsByStatus()
 }
 
-export function formatZAR(amount: number): string {
-  return new Intl.NumberFormat('en-ZA', {
-    style: 'currency',
-    currency: 'ZAR',
-    minimumFractionDigits: 2,
-    maximumFractionDigits: 2,
-  }).format(amount)
-}
+export { formatZAR } from '@/lib/format'
