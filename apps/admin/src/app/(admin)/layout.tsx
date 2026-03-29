@@ -2,10 +2,11 @@ import { SidebarProvider, SidebarInset } from '@/components/ui/sidebar'
 import { AppSidebar } from '@/components/layout/app-sidebar'
 import { TopNav } from '@/components/layout/top-nav'
 import { Toaster } from '@/components/ui/sonner'
+import { TooltipProvider } from '@/components/ui/tooltip'
 
 export default function AdminLayout({ children }: { children: React.ReactNode }) {
   return (
-    <>
+    <TooltipProvider>
       <SidebarProvider>
         <AppSidebar />
         <SidebarInset>
@@ -16,6 +17,6 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
         </SidebarInset>
       </SidebarProvider>
       <Toaster theme="dark" position="bottom-right" />
-    </>
+    </TooltipProvider>
   )
 }
