@@ -68,7 +68,7 @@ apps/admin/src/
 │
 ├── app/
 │   ├── layout.tsx                    ← Root layout: fonts, noindex meta, globals.css
-│   ├── page.tsx                      ← Redirect → /admin/dashboard
+│   ├── page.tsx                      ← Redirect → /dashboard
 │   ├── globals.css                   ← Tailwind + PMG admin theme tokens
 │   │
 │   ├── (admin)/                      ← Protected route group
