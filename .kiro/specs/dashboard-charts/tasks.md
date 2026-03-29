@@ -8,7 +8,7 @@ All additions are purely additive; no existing code is modified except the sideb
 
 ## Tasks
 
-- [ ] 1. Install shadcn chart component
+- [x] 1. Install shadcn chart component
   - Run `npx shadcn@latest add chart --cwd apps/admin` to install the Recharts-based
     chart primitive.
   - Verify `ChartContainer`, `ChartTooltip`, `ChartTooltipContent`, `ChartLegend`,
@@ -16,7 +16,7 @@ All additions are purely additive; no existing code is modified except the sideb
   - _Requirements: 1.1, 1.2, 1.3_
 
 - [ ] 2. Add new DB queries to `@pmg/db`
-  - [ ] 2.1 Implement `getMonthlyRevenueByDivision` in `packages/db/src/queries.ts`
+  - [x] 2.1 Implement `getMonthlyRevenueByDivision` in `packages/db/src/queries.ts`
     - Accept `months = 6` parameter; join `income` to `divisions`; group by
       `TO_CHAR(date, 'YYYY-MM')` and `divisions.name`; filter to last N months;
       order by `month ASC`, `divisionName ASC`; return `number` totals.
@@ -37,7 +37,7 @@ All additions are purely additive; no existing code is modified except the sideb
       non-decreasing (lexicographic).
     - Tag: `// Feature: dashboard-charts, Property 2: Results ordered by month ASC`
 
-  - [ ] 2.4 Implement `getMonthlyFinancials` in `packages/db/src/queries.ts`
+  - [x] 2.4 Implement `getMonthlyFinancials` in `packages/db/src/queries.ts`
     - Use a raw SQL CTE with `FULL OUTER JOIN` on month; filter to current year;
       `COALESCE` missing sides to `0`; order by `month ASC`; return `number` values.
     - Export from `packages/db/src/index.ts`.
@@ -50,17 +50,17 @@ All additions are purely additive; no existing code is modified except the sideb
       `revenue >= 0` and `expenses >= 0` for every entry.
     - Tag: `// Feature: dashboard-charts, Property 3: MonthlyFinancials non-negative values`
 
-  - [ ] 2.6 Implement `getMoMSnapshot` in `packages/db/src/queries.ts`
+  - [x] 2.6 Implement `getMoMSnapshot` in `packages/db/src/queries.ts`
     - Use two raw SQL queries (income + expenses) with `CASE WHEN` date windows for
       current and previous month; `COALESCE(SUM(...), 0)`; return four `number` fields.
     - Export from `packages/db/src/index.ts`.
     - _Requirements: 4.1, 4.2, 4.3, 4.4, 4.5, 4.6, 4.7_
 
-- [ ] 3. Checkpoint — Ensure all tests pass
+- [x] 3. Checkpoint — Ensure all tests pass
   - Ensure all tests pass, ask the user if questions arise.
 
 - [ ] 4. Add chart-data functions to `financial.ts`
-  - [ ] 4.1 Add exported types and `getRevenueByDivisionSeries` to `financial.ts`
+  - [x] 4.1 Add exported types and `getRevenueByDivisionSeries` to `financial.ts`
     - Export `MonthlyRevenueByDivision`, `MonthlyFinancials`, `MoMSnapshot` types.
     - Implement `getRevenueByDivisionSeries`: call `getMonthlyRevenueByDivision(6)`,
       build sorted `divisions` array, zero-fill missing division-month combinations,
@@ -76,11 +76,11 @@ All additions are purely additive; no existing code is modified except the sideb
       value for every name in `divisions`.
     - Tag: `// Feature: dashboard-charts, Property 4: getRevenueByDivisionSeries zero-fill completeness`
 
-  - [ ] 4.3 Add `getMonthlyFinancialsSeries` to `financial.ts`
+  - [x] 4.3 Add `getMonthlyFinancialsSeries` to `financial.ts`
     - Call `getMonthlyFinancials` from `@pmg/db`; return `MonthlyFinancials[]` directly.
     - _Requirements: 5.3, 5.5_
 
-  - [ ] 4.4 Add `getMoMChartData` to `financial.ts`
+  - [x] 4.4 Add `getMoMChartData` to `financial.ts`
     - Call `getMoMSnapshot` from `@pmg/db`; return exactly 3 `MoMSnapshot` entries in
       order: Revenue, Expenses, Profit Pool (with derived profit values).
     - _Requirements: 5.4, 5.5, 13.3_
@@ -98,11 +98,11 @@ All additions are purely additive; no existing code is modified except the sideb
     - Test `getRevenueByDivisionSeries` with a known sparse DB result → verify zero-fill.
     - _Requirements: 5.2, 5.4_
 
-- [ ] 5. Checkpoint — Ensure all tests pass
+- [x] 5. Checkpoint — Ensure all tests pass
   - Ensure all tests pass, ask the user if questions arise.
 
 - [ ] 6. Implement chart components
-  - [ ] 6.1 Create `RevenueByDivisionChart` at
+  - [x] 6.1 Create `RevenueByDivisionChart` at
     `apps/admin/src/components/reports/revenue-by-division-chart.tsx`
     - `'use client'` directive; accept `{ series, divisions }` props; build `ChartConfig`
       with `CHART_TOKENS[i % 5]` cycling; render `ChartContainer` → `AreaChart` with
@@ -124,7 +124,7 @@ All additions are purely additive; no existing code is modified except the sideb
     - Assert "No data for the last 6 months." renders when `series=[]`.
     - _Requirements: 8.10_
 
-  - [ ] 6.4 Create `RevenueVsExpensesChart` at
+  - [x] 6.4 Create `RevenueVsExpensesChart` at
     `apps/admin/src/components/reports/revenue-vs-expenses-chart.tsx`
     - `'use client'` directive; accept `{ series }` props; static `ChartConfig` with
       `chart-1` / `chart-3`; render `ChartContainer` → `LineChart` with two `Line`
@@ -137,7 +137,7 @@ All additions are purely additive; no existing code is modified except the sideb
     - Assert "No data for the current year." renders when `series=[]`.
     - _Requirements: 9.7_
 
-  - [ ] 6.6 Create `MoMComparisonChart` at
+  - [x] 6.6 Create `MoMComparisonChart` at
     `apps/admin/src/components/reports/mom-comparison-chart.tsx`
     - `'use client'` directive; accept `{ data }` props; static `ChartConfig` with
       `chart-1` / `chart-4`; render `ChartContainer` → `BarChart` with two side-by-side
@@ -152,20 +152,20 @@ All additions are purely additive; no existing code is modified except the sideb
     - _Requirements: 10.8_
 
 - [ ] 7. Create the Reports page and update sidebar
-  - [ ] 7.1 Create `apps/admin/src/app/(admin)/reports/page.tsx`
+  - [x] 7.1 Create `apps/admin/src/app/(admin)/reports/page.tsx`
     - Async Server Component (no `'use client'`); export `metadata` with
       `title: 'Reports'`; call all three financial functions via `Promise.all`; render
       chart components in a `<div className="space-y-6">`; pass only plain serialisable
       props; no try/catch (let errors propagate to Next.js error boundary).
     - _Requirements: 6.1, 6.2, 6.3, 6.4, 6.5, 6.6, 6.7, 12.2, 12.3, 12.4_
 
-  - [ ] 7.2 Add `/reports` nav item to `AppSidebar`
+  - [x] 7.2 Add `/reports` nav item to `AppSidebar`
     - Import `BarChart3` from `lucide-react`; add
       `{ href: '/reports', label: 'Reports', icon: BarChart3 }` after the `/divisions`
       entry in the nav items array.
     - _Requirements: 7.1, 7.2, 7.3_
 
-- [ ] 8. Final checkpoint — Ensure all tests pass
+- [x] 8. Final checkpoint — Ensure all tests pass
   - Ensure all tests pass, ask the user if questions arise.
 
 ## Notes
