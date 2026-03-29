@@ -153,7 +153,7 @@ export const config = {
 
 ---
 
-## 3. Phase 0 — Foundation (already done ✅)
+## 3. Phase 0 — Foundation ✅ COMPLETE
 
 ### What exists
 
@@ -170,17 +170,17 @@ export const config = {
   - `getLeadsByStatus()`
 - Vitest unit + property-based tests passing
 
-### Phase 0 cleanup tasks (do before Phase 1)
+### Phase 0 cleanup tasks
 
-- [ ] Verify all foreign keys are enforced (`division_id`, `client_id`)
-- [ ] Confirm `numeric(12,2)` on all `amount` fields (not plain `integer`)
-- [ ] Add `@pmg/db": "*"` to `apps/admin/package.json` if not already present
-- [ ] Run `bun install` from root to link workspace packages
-- [ ] Confirm `DATABASE_URL` is set in `apps/admin/.env.local`
+- [x] Verify all foreign keys are enforced (`division_id`, `client_id`)
+- [x] Confirm `numeric(12,2)` on all `amount` fields (not plain `integer`)
+- [x] Add `@pmg/db": "*"` to `apps/admin/package.json` if not already present
+- [x] Run `bun install` from root to link workspace packages
+- [x] Confirm `DATABASE_URL` is set in `apps/admin/.env.local`
 
 ---
 
-## 4. Phase 1 — Financial Engine (MVP 🔥)
+## 4. Phase 1 — Financial Engine ✅ COMPLETE
 
 ### Goal
 
@@ -309,6 +309,15 @@ In apps/admin/src/lib/financial.ts, create a financial engine that:
 Export TypeScript types for FinancialSummary, DivisionRevenue, LeadStatusCount.
 No 'use client'. This file is server-only.
 ```
+
+### What was delivered
+
+- `apps/admin/src/lib/financial.ts` — server-only financial engine with `getFinancialSummary()`, `getDivisionRevenue()`, `getLeadCounts()`, `formatZAR()`
+- `apps/admin/src/__tests__/financial.test.ts` — full Vitest suite with unit tests and 9 property-based tests (fast-check), all passing
+- `apps/admin/vitest.config.ts` — Vitest configured with `node` environment and `@/*` path alias
+- `packages/db/src/index.ts` — exports `* from './queries'` so named imports resolve correctly
+- `packages/db/src/queries.ts` — typed query helpers with explicit result types; `noUncheckedIndexedAccess` and `noImplicitAny` clean
+- `packages/db/tsconfig.json` — `moduleResolution: Bundler` to match the Bun/Next.js bundler environment
 
 ---
 
