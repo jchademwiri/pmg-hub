@@ -54,32 +54,32 @@ Implement the PMG Financial Engine as a server-side TypeScript module in `apps/a
     - Loss case: `revenue=10000, expenses=15000` → assert `salary=-2450`, `reinvest=-2100`, `reserve=-2100`, `flex=-350` (exact values)
     - Determinism: same mocked inputs called twice → structurally identical results
     - _Requirements: 1.2, 1.3, 1.4, 1.5, 1.6, 1.7, 2.3, 2.4, 7.1_
-  - [~] 4.3 Write property test for Property 1: Financial formulas correctness
+  - [x] 4.3 Write property test for Property 1: Financial formulas correctness
     - `// Feature: financial-engine, Property 1: Financial formulas correctness`
     - Use `fc.float` / `fc.double` for revenue and expenses; assert each formula field
     - **Property 1: Financial formulas correctness**
     - **Validates: Requirements 1.2, 1.3, 1.4, 1.5, 1.6, 1.7**
-  - [~] 4.4 Write property test for Property 2: Allocation sum invariant
+  - [x] 4.4 Write property test for Property 2: Allocation sum invariant
     - `// Feature: financial-engine, Property 2: Allocation sum invariant`
     - Assert `Math.abs((salary + reinvest + reserve + flex) - profitPool) < 0.01` for all inputs
     - **Property 2: Allocation sum invariant**
     - **Validates: Requirements 2.1**
-  - [~] 4.5 Write property test for Property 3: Concurrent fetch and single invocation
+  - [x] 4.5 Write property test for Property 3: Concurrent fetch and single invocation
     - `// Feature: financial-engine, Property 3: Concurrent fetch and single invocation`
     - Assert each of `getTotalRevenue` and `getTotalExpenses` called exactly once per `getFinancialSummary()` call
     - **Property 3: Concurrent fetch and single invocation**
     - **Validates: Requirements 1.1, 1.9**
-  - [~] 4.6 Write property test for Property 5: Negative profitPool propagates correctly
+  - [x] 4.6 Write property test for Property 5: Negative profitPool propagates correctly
     - `// Feature: financial-engine, Property 5: Negative profitPool propagates correctly`
     - Generate inputs where `expenses > revenue - (revenue × 0.20)`; assert all allocation fields are negative and match formulas
     - **Property 5: Negative profitPool propagates correctly**
     - **Validates: Requirements 2.4**
-  - [~] 4.7 Write property test for Property 6: getDivisionRevenue passthrough
+  - [x] 4.7 Write property test for Property 6: getDivisionRevenue passthrough
     - `// Feature: financial-engine, Property 6: getDivisionRevenue passthrough`
     - Generate arbitrary `DivisionRevenue[]` arrays; assert `getDivisionRevenue()` returns the exact same reference/value
     - **Property 6: getDivisionRevenue passthrough**
     - **Validates: Requirements 3.1**
-  - [~] 4.8 Write property test for Property 7: getLeadCounts passthrough
+  - [x] 4.8 Write property test for Property 7: getLeadCounts passthrough
     - `// Feature: financial-engine, Property 7: getLeadCounts passthrough`
     - Generate arbitrary `LeadStatusCount[]` arrays; assert `getLeadCounts()` returns the exact same reference/value
     - **Property 7: getLeadCounts passthrough**
@@ -89,17 +89,17 @@ Implement the PMG Financial Engine as a server-side TypeScript module in `apps/a
     - Zero (`0`): result contains `R` and two decimal places
     - Negative (`-500`): result contains `R` and two decimal places
     - _Requirements: 5.1, 5.2, 5.3_
-  - [ ] 4.10 Write property test for Property 8: formatZAR output correctness
+  - [x] 4.10 Write property test for Property 8: formatZAR output correctness
     - `// Feature: financial-engine, Property 8: formatZAR output correctness`
     - Use `fc.float({ noNaN: true, noDefaultInfinity: true })` for finite numbers; assert non-empty string, contains `R`, matches two-decimal pattern
     - **Property 8: formatZAR output correctness**
     - **Validates: Requirements 5.1, 5.2, 5.3**
-  - [ ] 4.11 Write property test for Property 9: formatZAR determinism
+  - [x] 4.11 Write property test for Property 9: formatZAR determinism
     - `// Feature: financial-engine, Property 9: formatZAR determinism`
     - Call `formatZAR` twice with the same finite input; assert both results are strictly equal
     - **Property 9: formatZAR determinism**
     - **Validates: Requirements 5.4**
-  - [ ] 4.12 Write property test for Property 10: getFinancialSummary determinism
+  - [x] 4.12 Write property test for Property 10: getFinancialSummary determinism
     - `// Feature: financial-engine, Property 10: getFinancialSummary determinism`
     - Mock same revenue/expenses; call `getFinancialSummary()` twice; assert deep equality of both results
     - **Property 10: getFinancialSummary determinism**

@@ -8,7 +8,8 @@ export async function getTotalRevenue(): Promise<number> {
       total: sql<string>`COALESCE(SUM(${income.amount}), '0')`,
     })
     .from(income);
-  return Number(result[0].total);
+  // COALESCE guarantees exactly one row is always returned
+  return Number(result[0]!.total);
 }
 
 export async function getTotalExpenses(): Promise<number> {
@@ -17,13 +18,14 @@ export async function getTotalExpenses(): Promise<number> {
       total: sql<string>`COALESCE(SUM(${expenses.amount}), '0')`,
     })
     .from(expenses);
-  return Number(result[0].total);
+  // COALESCE guarantees exactly one row is always returned
+  return Number(result[0]!.total);
 }
 
 export async function getRevenueByDivision(): Promise<
   { divisionName: string; total: number }[]
 > {
-  const result = await db
+  const result: { divisionName: string; total: string }[] = await db
     .select({
       divisionName: divisions.name,
       total: sql<string>`COALESCE(SUM(${income.amount}), '0')`,
@@ -32,13 +34,16 @@ export async function getRevenueByDivision(): Promise<
     .innerJoin(divisions, eq(income.divisionId, divisions.id))
     .groupBy(divisions.name)
     .orderBy(desc(sql`SUM(${income.amount})`));
-  return result.map((row) => ({ divisionName: row.divisionName, total: Number(row.total) }));
+  return result.map((row) => ({
+    divisionName: row.divisionName,
+    total: Number(row.total),
+  }));
 }
 
 export async function getExpensesByDivision(): Promise<
   { divisionName: string; total: number }[]
 > {
-  const result = await db
+  const result: { divisionName: string; total: string }[] = await db
     .select({
       divisionName: divisions.name,
       total: sql<string>`COALESCE(SUM(${expenses.amount}), '0')`,
@@ -47,13 +52,16 @@ export async function getExpensesByDivision(): Promise<
     .innerJoin(divisions, eq(expenses.divisionId, divisions.id))
     .groupBy(divisions.name)
     .orderBy(desc(sql`SUM(${expenses.amount})`));
-  return result.map((row) => ({ divisionName: row.divisionName, total: Number(row.total) }));
+  return result.map((row) => ({
+    divisionName: row.divisionName,
+    total: Number(row.total),
+  }));
 }
 
 export async function getLeadsByStatus(): Promise<
   { status: string; count: number }[]
 > {
-  const result = await db
+  const result: { status: string; count: string }[] = await db
     .select({
       status: leads.status,
       count: sql<string>`COUNT(*)`,
@@ -61,5 +69,8 @@ export async function getLeadsByStatus(): Promise<
     .from(leads)
     .groupBy(leads.status)
     .orderBy(desc(sql`COUNT(*)`));
-  return result.map((row) => ({ status: row.status, count: Number(row.count) }));
+  return result.map((row) => ({
+    status: row.status,
+    count: Number(row.count),
+  }));
 }
