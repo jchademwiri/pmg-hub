@@ -5,7 +5,7 @@ import pg from "pg";
 import { drizzle } from "drizzle-orm/node-postgres";
 import { divisions, clients, income, expenses, leads, awsPricing } from "./schema";
 
-config({ path: resolve(import.meta.dir, "../.env") });
+config({ path: resolve(__dirname, "../.env") });
 
 const client = new pg.Client({
   connectionString: process.env.DATABASE_URL_UNPOOLED,
