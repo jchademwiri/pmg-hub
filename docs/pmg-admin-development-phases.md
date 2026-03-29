@@ -37,7 +37,7 @@ It is the only app in the monorepo built with Next.js 16 — all other apps (`te
 ```
 pmg-hub/
 ├── apps/
-│   ├── admin/     ← Next.js 16 — PMG Control Center (this document)
+│   ├──      ← Next.js 16 — PMG Control Center (this document)
 │   ├── aws/       ← Astro 6 — Apex Web Solutions public site
 │   ├── tes/       ← Astro 6 — Tender Edge Solutions public site
 │   └── pmg/       ← Astro 6 — Playhouse Media Group holding site
@@ -62,7 +62,7 @@ and Server Actions — there is no REST API layer between the UI and the databas
 > The `matcher` config and `NextRequest` / `NextResponse` API are unchanged.
 
 ```
-apps/admin/src/
+apps/src/
 │
 ├── proxy.ts                          ← Auth guard (Next.js 16 — was middleware.ts)
 │
@@ -142,7 +142,7 @@ export function proxy(request: NextRequest) {
 }
 
 export const config = {
-  matcher: ['/admin/:path*'],
+  matcher: ['/:path*'],
 }
 ```
 
@@ -174,9 +174,9 @@ export const config = {
 
 - [x] Verify all foreign keys are enforced (`division_id`, `client_id`)
 - [x] Confirm `numeric(12,2)` on all `amount` fields (not plain `integer`)
-- [x] Add `@pmg/db": "*"` to `apps/admin/package.json` if not already present
+- [x] Add `@pmg/db": "*"` to `apps/package.json` if not already present
 - [x] Run `bun install` from root to link workspace packages
-- [x] Confirm `DATABASE_URL` is set in `apps/admin/.env.local`
+- [x] Confirm `DATABASE_URL` is set in `apps/.env.local`
 
 ---
 
@@ -214,7 +214,7 @@ Flex         =  profitPool × 0.05
 
 ### Files to create
 
-**`apps/admin/src/lib/financial.ts`**
+**`apps/src/lib/financial.ts`**
 
 ```ts
 import {
@@ -287,7 +287,7 @@ export function formatZAR(amount: number): string {
 ### AI prompt
 
 ```
-In apps/admin/src/lib/financial.ts, create a financial engine that:
+In apps/src/lib/financial.ts, create a financial engine that:
 
 1. Imports getTotalRevenue, getTotalExpenses, getRevenueByDivision,
    getLeadsByStatus from '@pmg/db'
@@ -312,9 +312,9 @@ No 'use client'. This file is server-only.
 
 ### What was delivered
 
-- `apps/admin/src/lib/financial.ts` — server-only financial engine with `getFinancialSummary()`, `getDivisionRevenue()`, `getLeadCounts()`, `formatZAR()`
-- `apps/admin/src/__tests__/financial.test.ts` — full Vitest suite with unit tests and 9 property-based tests (fast-check), all passing
-- `apps/admin/vitest.config.ts` — Vitest configured with `node` environment and `@/*` path alias
+- `apps/src/lib/financial.ts` — server-only financial engine with `getFinancialSummary()`, `getDivisionRevenue()`, `getLeadCounts()`, `formatZAR()`
+- `apps/src/__tests__/financial.test.ts` — full Vitest suite with unit tests and 9 property-based tests (fast-check), all passing
+- `apps/vitest.config.ts` — Vitest configured with `node` environment and `@/*` path alias
 - `packages/db/src/index.ts` — exports `* from './queries'` so named imports resolve correctly
 - `packages/db/src/queries.ts` — typed query helpers with explicit result types; `noUncheckedIndexedAccess` and `noImplicitAny` clean
 - `packages/db/tsconfig.json` — `moduleResolution: Bundler` to match the Bun/Next.js bundler environment
@@ -343,14 +343,14 @@ components/dashboard/*  [pure presentational components]
 
 ### Route
 
-`/admin/dashboard` — protected by `src/proxy.ts` matcher
+`/dashboard` — protected by `src/proxy.ts` matcher
 
 ### Files to create
 
 #### `app/(admin)/layout.tsx` — sidebar shell
 
 ```ts
-// This layout wraps every /admin/* page with the sidebar and top nav.
+// This layout wraps every /* page with the sidebar and top nav.
 // It is a Server Component — no 'use client'.
 import { Sidebar } from '@/components/layout/sidebar'
 import { TopNav } from '@/components/layout/top-nav'
@@ -593,11 +593,11 @@ import Link from 'next/link'
 import { NavLink } from './nav-link'
 
 const NAV_ITEMS = [
-  { href: '/admin/dashboard', label: 'Dashboard',  icon: 'grid'     },
-  { href: '/admin/income',    label: 'Income',      icon: 'trending-up' },
-  { href: '/admin/expenses',  label: 'Expenses',    icon: 'trending-down' },
-  { href: '/admin/leads',     label: 'Leads',       icon: 'users'    },
-  { href: '/admin/divisions', label: 'Divisions',   icon: 'layers'   },
+  { href: '/dashboard', label: 'Dashboard',  icon: 'grid'     },
+  { href: '/income',    label: 'Income',      icon: 'trending-up' },
+  { href: '/expenses',  label: 'Expenses',    icon: 'trending-down' },
+  { href: '/leads',     label: 'Leads',       icon: 'users'    },
+  { href: '/divisions', label: 'Divisions',   icon: 'layers'   },
 ]
 
 export function Sidebar() {
@@ -688,8 +688,8 @@ Every entry must have a division. Client is optional.
 
 ### Route
 
-`/admin/income` — list + inline add form
-`/admin/income/[id]` — edit entry
+`/income` — list + inline add form
+`/income/[id]` — edit entry
 
 ### Database tables used
 
@@ -701,7 +701,7 @@ Every entry must have a division. Client is optional.
 - Filter by division (select dropdown)
 - Filter by date range (month picker)
 - Inline "Add Income" form (no modal — stays on the same page via Server Action)
-- Edit entry → `/admin/income/[id]`
+- Edit entry → `/income/[id]`
 - Delete entry (with confirm)
 - Running total visible at top of list
 
@@ -729,8 +729,8 @@ export async function createIncome(formData: FormData) {
     ...parsed,
     amount: String(parsed.amount),
   })
-  revalidatePath('/admin/income')
-  revalidatePath('/admin/dashboard')
+  revalidatePath('/income')
+  revalidatePath('/dashboard')
 }
 
 export async function updateIncome(id: string, formData: FormData) {
@@ -739,14 +739,14 @@ export async function updateIncome(id: string, formData: FormData) {
     ...parsed,
     amount: String(parsed.amount),
   }).where(eq(income.id, id))
-  revalidatePath('/admin/income')
-  revalidatePath('/admin/dashboard')
+  revalidatePath('/income')
+  revalidatePath('/dashboard')
 }
 
 export async function deleteIncome(id: string) {
   await db.delete(income).where(eq(income.id, id))
-  revalidatePath('/admin/income')
-  revalidatePath('/admin/dashboard')
+  revalidatePath('/income')
+  revalidatePath('/dashboard')
 }
 ```
 
@@ -761,16 +761,16 @@ Build Phase 3 — Income Management in apps/admin.
    - Renders an inline "Add Income" form (date, division select, client select,
      description, amount) — form action calls createIncome Server Action
    - Renders a table: date | division | client | description | amount | edit | delete
-   - Delete calls deleteIncome; edit links to /admin/income/[id]
+   - Delete calls deleteIncome; edit links to /income/[id]
    - Accepts ?division= and ?month= search params for filtering (use searchParams prop)
 
 2. Create app/(admin)/income/[id]/page.tsx (Server Component):
    - Fetches the income entry by id
    - Renders a pre-filled edit form, submit calls updateIncome Server Action
-   - Cancel button links back to /admin/income
+   - Cancel button links back to /income
 
 3. Create actions/income.ts with createIncome, updateIncome, deleteIncome
-   as shown above. Each action revalidates /admin/income and /admin/dashboard.
+   as shown above. Each action revalidates /income and /dashboard.
 
 4. Division and client selects are populated from the database (Server Component
    fetches divisions and clients and passes them as props to the form component).
@@ -790,8 +790,8 @@ Categories are freeform text (not an enum) so they can evolve without migrations
 
 ### Route
 
-`/admin/expenses` — list + inline add form
-`/admin/expenses/[id]` — edit entry
+`/expenses` — list + inline add form
+`/expenses/[id]` — edit entry
 
 ### Database tables used
 
@@ -830,8 +830,8 @@ export async function createExpense(formData: FormData) {
     ...parsed,
     amount: String(parsed.amount),
   })
-  revalidatePath('/admin/expenses')
-  revalidatePath('/admin/dashboard')
+  revalidatePath('/expenses')
+  revalidatePath('/dashboard')
 }
 
 export async function updateExpense(id: string, formData: FormData) {
@@ -840,14 +840,14 @@ export async function updateExpense(id: string, formData: FormData) {
     ...parsed,
     amount: String(parsed.amount),
   }).where(eq(expenses.id, id))
-  revalidatePath('/admin/expenses')
-  revalidatePath('/admin/dashboard')
+  revalidatePath('/expenses')
+  revalidatePath('/dashboard')
 }
 
 export async function deleteExpense(id: string) {
   await db.delete(expenses).where(eq(expenses.id, id))
-  revalidatePath('/admin/expenses')
-  revalidatePath('/admin/dashboard')
+  revalidatePath('/expenses')
+  revalidatePath('/dashboard')
 }
 ```
 
@@ -864,7 +864,7 @@ Mirror the structure of Phase 3 (Income Management) exactly, but for expenses.
 2. app/(admin)/expenses/[id]/page.tsx — edit form.
 
 3. actions/expenses.ts — createExpense, updateExpense, deleteExpense.
-   Each revalidates /admin/expenses and /admin/dashboard.
+   Each revalidates /expenses and /dashboard.
 
 4. The category field is a text input with a datalist element populated from
    distinct categories already in the database (query via Drizzle SELECT DISTINCT).
@@ -884,8 +884,8 @@ The admin can update status, add notes, and filter by source/division/status.
 
 ### Route
 
-`/admin/leads` — list with filter tabs
-`/admin/leads/[id]` — lead detail with status update and notes
+`/leads` — list with filter tabs
+`/leads/[id]` — lead detail with status update and notes
 
 ### Database tables used
 
@@ -925,16 +925,16 @@ export async function updateLeadStatus(id: string, formData: FormData) {
   await db.update(leads)
     .set({ status, updatedAt: new Date() })
     .where(eq(leads.id, id))
-  revalidatePath('/admin/leads')
-  revalidatePath(`/admin/leads/${id}`)
-  revalidatePath('/admin/dashboard')
+  revalidatePath('/leads')
+  revalidatePath(`/leads/${id}`)
+  revalidatePath('/dashboard')
 }
 
 export async function updateLeadNotes(id: string, formData: FormData) {
   const notes = String(formData.get('notes') ?? '')
   // notes field requires a schema migration if not already on the leads table
   // Add: notes text nullable to leads in packages/db/src/schema/leads.ts
-  revalidatePath(`/admin/leads/${id}`)
+  revalidatePath(`/leads/${id}`)
 }
 ```
 
@@ -950,13 +950,13 @@ Build Phase 5 — Leads Management in apps/admin.
      Each tab shows count in a badge. Active tab matches ?status= param.
    - Table columns: date | name | email/phone | source | division | service interest | status | view
    - Status shown as a coloured badge (new=blue, contacted=amber, converted=teal, lost=zinc)
-   - "View" links to /admin/leads/[id]
+   - "View" links to /leads/[id]
 
 2. app/(admin)/leads/[id]/page.tsx (Server Component):
    - Full lead detail card (all fields)
    - Status update form (select dropdown + submit = updateLeadStatus Server Action)
    - Notes textarea (updateLeadNotes Server Action)
-   - Back link to /admin/leads
+   - Back link to /leads
 
 3. actions/leads.ts with updateLeadStatus and updateLeadNotes.
 
@@ -974,7 +974,7 @@ Divisions cannot be deleted if income or expenses reference them (FK restrict en
 
 ### Route
 
-`/admin/divisions` — list + inline add form
+`/divisions` — list + inline add form
 
 ### Database tables used
 
@@ -1004,13 +1004,13 @@ const DivisionSchema = z.object({
 export async function createDivision(formData: FormData) {
   const { name } = DivisionSchema.parse(Object.fromEntries(formData))
   await db.insert(divisions).values({ name })
-  revalidatePath('/admin/divisions')
+  revalidatePath('/divisions')
 }
 
 export async function updateDivision(id: string, formData: FormData) {
   const { name } = DivisionSchema.parse(Object.fromEntries(formData))
   await db.update(divisions).set({ name, updatedAt: new Date() }).where(eq(divisions.id, id))
-  revalidatePath('/admin/divisions')
+  revalidatePath('/divisions')
 }
 ```
 
@@ -1092,7 +1092,7 @@ Build Phase 7 — Financial Snapshots in apps/admin.
    - period format: 'YYYY-MM'
    - Calls getFinancialSummary() with a date filter for that month
    - Inserts into snapshots table (upsert: if snapshot exists for period, do nothing)
-   - Revalidates /admin/dashboard
+   - Revalidates /dashboard
 
 3. On the dashboard page, show a "Close Month" button below the KPI cards.
    The button is a form with action=closeMonth and a hidden period input.
@@ -1178,7 +1178,7 @@ Prepare the system for real daily use before any SaaS expansion.
 ### File additions
 
 ```
-apps/admin/src/app/(admin)/
+apps/src/app/(admin)/
 ├── error.tsx       ← catches render errors in admin layout
 ├── loading.tsx     ← skeleton while pages load
 ├── dashboard/
@@ -1271,7 +1271,7 @@ Turn the PMG Control Center into a multi-tenant product that other businesses ca
 7. **No client state for data.** Server Components fetch data. Server Actions mutate
    data. `revalidatePath` refreshes the page. The database is the single source of truth.
 
-8. **Keep the proxy fast.** `src/proxy.ts` runs on every request to `/admin/*`.
+8. **Keep the proxy fast.** `src/proxy.ts` runs on every request to `/*`.
    It checks a cookie — nothing else. No database calls, no heavy logic.
 
 ---
