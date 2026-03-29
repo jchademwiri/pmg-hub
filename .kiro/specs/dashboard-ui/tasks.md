@@ -67,8 +67,8 @@ Financial Engine.
 - [x] 4. Checkpoint — verify layout shell renders
   - Ensure all tests pass, ask the user if questions arise.
 
-- [~] 5. Build dashboard presentational components
-  - [-] 5.1 Create `apps/admin/src/components/dashboard/kpi-card.tsx`
+- [x] 5. Build dashboard presentational components
+  - [x] 5.1 Create `apps/admin/src/components/dashboard/kpi-card.tsx`
     - Props: `label`, `value`, `sub?`, `icon?`
     - Use `Card`, `CardHeader`, `CardDescription`, `CardContent` shadcn primitives
     - Format value with `formatZAR` from `@/lib/financial`
@@ -79,14 +79,14 @@ Financial Engine.
     - **Property 1: formatZAR output correctness**
     - **Validates: Requirements 4.3, 5.1, 15.5**
 
-  - [~] 5.3 Create `apps/admin/src/components/dashboard/salary-card.tsx`
+  - [x] 5.3 Create `apps/admin/src/components/dashboard/salary-card.tsx`
     - Props: `salary: number`
     - Use `Card`, `CardHeader`, `CardTitle`, `CardContent`, `CardDescription`
     - chart-1 color scheme throughout; sub-label "35% of profit pool · calculated, not guessed"
     - No `'use client'`
     - _Requirements: 5.1–5.5, 9.6, 16.1–16.4_
 
-  - [~] 5.4 Create `apps/admin/src/components/dashboard/allocation-tooltip-bar.tsx`
+  - [x] 5.4 Create `apps/admin/src/components/dashboard/allocation-tooltip-bar.tsx`
     - `'use client'` directive
     - Props: `allocations: AllocationItem[]`
     - Outer container: `className="flex h-3 w-full overflow-hidden rounded-full bg-muted"`
@@ -98,7 +98,7 @@ Financial Engine.
     - **Property 7: AllocationTooltipBar tooltip content**
     - **Validates: Requirements 17.4, 28.7**
 
-  - [~] 5.6 Create `apps/admin/src/components/dashboard/allocation-bar.tsx`
+  - [x] 5.6 Create `apps/admin/src/components/dashboard/allocation-bar.tsx`
     - Props: `summary: FinancialSummary`
     - Define `ALLOCATIONS` constant with four entries (salary 35%, reinvest 30%, reserve 30%, flex 5%)
     - Use `Card`, `CardHeader`, `CardTitle`, `CardContent`; render `AllocationTooltipBar` + legend grid
@@ -109,7 +109,7 @@ Financial Engine.
     - **Property 5: Allocation percentages sum to 100**
     - **Validates: Requirements 6.1, 17.6**
 
-  - [~] 5.8 Create `apps/admin/src/components/dashboard/division-revenue.tsx`
+  - [x] 5.8 Create `apps/admin/src/components/dashboard/division-revenue.tsx`
     - Props: `divisions: DivisionRevenue[]`
     - Use `Card`, `CardHeader`, `CardTitle`, `CardContent`, `ScrollArea`, `Progress`
     - Bar width: `Math.round((total / max) * 100)`, max fallback of 1 to prevent division-by-zero
@@ -129,7 +129,7 @@ Financial Engine.
     - **Property 4: Empty state rendering (DivisionRevenue)**
     - **Validates: Requirements 7.5**
 
-  - [~] 5.12 Create `apps/admin/src/components/dashboard/leads-summary.tsx`
+  - [x] 5.12 Create `apps/admin/src/components/dashboard/leads-summary.tsx`
     - Props: `leads: LeadStatusCount[]`
     - Use `Card`, `CardHeader`, `CardTitle`, `CardContent`, `ScrollArea`, `Progress`, `Badge`
     - Define `BADGE_CLASS` and `PROGRESS_CLASS` maps; fallback to `lost` for unknown statuses
@@ -141,7 +141,7 @@ Financial Engine.
     - **Property 4: Empty state rendering (LeadsSummary)**
     - **Validates: Requirements 8.4**
 
-- [~] 6. Checkpoint — ensure all component tests pass
+- [x] 6. Checkpoint — ensure all component tests pass
   - Ensure all tests pass, ask the user if questions arise.
 
 - [~] 7. Build dashboard page and login placeholder
