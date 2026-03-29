@@ -18,8 +18,8 @@ Financial Engine.
   - Create `apps/admin/src/__tests__/setup.ts` importing `@testing-library/jest-dom`
   - _Requirements: 1.1, 1.2, 13.1_
 
-- [~] 2. Set up proxy auth guard and root layout
-  - [-] 2.1 Create `apps/admin/src/proxy.ts` with the `proxy` function and `config` matcher
+- [x] 2. Set up proxy auth guard and root layout
+  - [x] 2.1 Create `apps/admin/src/proxy.ts` with the `proxy` function and `config` matcher
     - Export `proxy` (not `middleware`), check `better-auth.session_token` cookie only
     - Exclude `/login` paths to prevent redirect loop
     - _Requirements: 22.1–22.5, 27.1–27.7_
@@ -28,47 +28,47 @@ Financial Engine.
     - **Property 6: Proxy cookie check**
     - **Validates: Requirements 22.3, 22.4, 27.3, 27.4, 27.6**
 
-  - [~] 2.3 Update `apps/admin/src/app/layout.tsx` (root layout)
+  - [x] 2.3 Update `apps/admin/src/app/layout.tsx` (root layout)
     - Add `className="dark"` and `lang="en"` to `<html>`, replace Geist with Noto Sans
     - Export `metadata` with title template, description, and noindex robots
     - Retain `suppressHydrationWarning` on `<body>`
     - _Requirements: 10.9, 25.1–25.7_
 
-  - [~] 2.4 Replace `apps/admin/src/app/page.tsx` with root redirect to `/dashboard`
+  - [x] 2.4 Replace `apps/admin/src/app/page.tsx` with root redirect to `/dashboard`
     - _Requirements: 23.2, 23.3_
 
-- [~] 3. Build the admin layout shell
-  - [~] 3.1 Create `apps/admin/src/components/layout/nav-link.tsx`
+- [x] 3. Build the admin layout shell
+  - [x] 3.1 Create `apps/admin/src/components/layout/nav-link.tsx`
     - `'use client'` directive, use `usePathname` for active state detection
     - Active: `bg-sidebar-accent text-sidebar-accent-foreground`
     - Hover: `hover:bg-sidebar-accent/50 hover:text-sidebar-accent-foreground`
     - Active condition: `pathname === href || pathname.startsWith(href + '/')`
     - _Requirements: 2.7, 2.8, 9.10, 11.5_
 
-  - [~] 3.2 Customise `apps/admin/src/components/layout/app-sidebar.tsx` (scaffolded by sidebar-08)
+  - [x] 3.2 Customise `apps/admin/src/components/layout/app-sidebar.tsx` (scaffolded by sidebar-08)
     - Replace placeholder nav items with five PMG routes using lucide-react icons
     - Replace brand label with "PMG / Control Center" two-line header
     - Replace user footer with minimal "PMG Admin" label
     - Use `NavLink` as the link renderer inside nav item slots
     - _Requirements: 2.2, 2.5, 2.6, 11.1–11.7_
 
-  - [~] 3.3 Create `apps/admin/src/components/layout/top-nav.tsx`
+  - [x] 3.3 Create `apps/admin/src/components/layout/top-nav.tsx`
     - Server Component: `SidebarTrigger` + `Separator` (vertical, h-4) + `Breadcrumb`
     - Root `className="h-12 flex items-center gap-2 px-4 border-b border-border bg-card"`
     - Static "Dashboard" breadcrumb text for Phase 2
     - _Requirements: 2.3, 2.9, 9.4, 14.1–14.5_
 
-  - [~] 3.4 Create `apps/admin/src/app/(admin)/layout.tsx`
+  - [x] 3.4 Create `apps/admin/src/app/(admin)/layout.tsx`
     - Server Component wrapping `SidebarProvider` > `AppSidebar` + `SidebarInset` > `TopNav` + `<main>`
     - `Toaster` as sibling to `SidebarProvider` with `theme="dark" position="bottom-right"`
     - `<main className="flex-1 overflow-y-auto p-6 bg-background">`
     - _Requirements: 2.1, 2.4, 9.2, 20.1–20.4, 21.1–21.6_
 
-- [~] 4. Checkpoint — verify layout shell renders
+- [x] 4. Checkpoint — verify layout shell renders
   - Ensure all tests pass, ask the user if questions arise.
 
 - [~] 5. Build dashboard presentational components
-  - [~] 5.1 Create `apps/admin/src/components/dashboard/kpi-card.tsx`
+  - [-] 5.1 Create `apps/admin/src/components/dashboard/kpi-card.tsx`
     - Props: `label`, `value`, `sub?`, `icon?`
     - Use `Card`, `CardHeader`, `CardDescription`, `CardContent` shadcn primitives
     - Format value with `formatZAR` from `@/lib/financial`
