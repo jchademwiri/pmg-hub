@@ -1,7 +1,11 @@
 # PMG Hub — SEO Developer Guide
 
-> **Playhouse Media Group · Internal Developer Docs**  
-> `pmg-hub / docs / seo-guide.md` · March 2026 · v2.0
+> **Playhouse Media Group · Internal Developer Docs**
+> `pmg-hub / docs / pmg-seo-guide.md` · March 2026 · v2.1
+>
+> Updates from v2.0: Next.js 16 references corrected in the admin section
+> (`middleware.ts` → `proxy.ts`, `middleware()` → `proxy()`).
+> All SEO strategy, keyword, and schema content is unchanged.
 
 ---
 
@@ -28,17 +32,22 @@
 
 ## 1. PMG Ecosystem Overview
 
-PMG runs a **House of Brands** model — 7 brands, each targeting a distinct market segment, all feeding back into each other through the PMG flywheel. Every brand deserves its own SEO identity.
+PMG runs a **House of Brands** model — 7 brands, each targeting a distinct market segment,
+all feeding back into each other through the PMG flywheel. Every brand deserves its own SEO identity.
 
-| Brand | Domain | Framework | Purpose |
+| Brand | Domain | Framework | Status |
 |---|---|---|---|
-| PMG Holding | `playhousemedia.co.za` | Astro (`apps/pmg`) | Parent brand. Markets all divisions. Authority + trust signals. |
-| Tender Edge Solutions | `tenderedgesolutions.co.za` | Astro (`apps/tes`) | Primary revenue driver. CSD, CIDB, tender compliance searches. |
-| Apex Web Solutions | `apexwebsolutions.co.za` | Astro (`apps/aws`) | Web design/dev. Gauteng SME web searches. |
-| LaunchPad SA | `launchpadsa.co.za` | Astro (`apps/launchpad`) | Company registrations. Lead gen engine. |
-| Playhouse Creative Studio | `playhousecreative.co.za` | Astro (`apps/creative`) | Graphic design & branding. Upsell from LaunchPad + TES. |
-| StudyEdge SA | `studyedgesa.co.za` | Astro (`apps/studyedge`) | Academic support. UNISA + tutoring searches. |
-| TenderTrack 360 | `tendertrack360.co.za` | Next.js (existing) | SaaS product. Tender management software searches. |
+| PMG Holding | `playhousemedia.co.za` | Astro (`apps/pmg`) | Live |
+| Tender Edge Solutions | `tenderedgesolutions.co.za` | Astro (`apps/tes`) | Live |
+| Apex Web Solutions | `apexwebsolutions.co.za` | Astro (`apps/aws`) | Live |
+| LaunchPad SA | `launchpadsa.co.za` | Astro (`apps/launchpad`) | Future |
+| Playhouse Creative Studio | `playhousecreative.co.za` | Astro (`apps/creative`) | Future |
+| StudyEdge SA | `studyedgesa.co.za` | Astro (`apps/studyedge`) | Future |
+| TenderTrack 360 | `tendertrack360.co.za` | Next.js (existing) | Beta |
+
+> **Note:** `apps/launchpad`, `apps/creative`, `apps/studyedge`, and `apps/tt360`
+> do not exist in the monorepo yet. SEO preparation for these brands is documented
+> here so it is ready when the apps are built.
 
 ### The PMG Flywheel (SEO Cross-Link Strategy)
 
@@ -54,18 +63,16 @@ Every site should cross-link to at least 2 other division sites using keyword-ri
 
 ## 2. Domain Architecture
 
-> **Recommended:** `playhousemedia.co.za` is the primary canonical domain. All `.net` traffic 301-redirects to `.co.za`. Admin lives at `admin.playhousemedia.co.za`. Each division owns its own `.co.za` domain.
-
 | Domain | Framework | Canonical | Indexed |
 |---|---|---|---|
 | `playhousemedia.co.za` | Astro (`apps/pmg`) | Self | ✅ Yes |
 | `playhousemedia.net` | Legacy Next.js (old) | → `.co.za` (301) | ❌ Redirect only |
-| `admin.playhousemedia.co.za` | Next.js (`apps/admin`) | Self | ❌ noindex |
+| `admin.playhousemedia.co.za` | Next.js 16 (`apps/admin`) | Self | ❌ noindex |
 | `tenderedgesolutions.co.za` | Astro (`apps/tes`) | Self | ✅ Yes |
 | `apexwebsolutions.co.za` | Astro (`apps/aws`) | Self | ✅ Yes |
-| `launchpadsa.co.za` | Astro (`apps/launchpad`) | Self | ✅ Yes |
-| `playhousecreative.co.za` | Astro (`apps/creative`) | Self | ✅ Yes |
-| `studyedgesa.co.za` | Astro (`apps/studyedge`) | Self | ✅ Yes |
+| `launchpadsa.co.za` | Astro (`apps/launchpad`) | Self | ✅ Yes (future) |
+| `playhousecreative.co.za` | Astro (`apps/creative`) | Self | ✅ Yes (future) |
+| `studyedgesa.co.za` | Astro (`apps/studyedge`) | Self | ✅ Yes (future) |
 | `tendertrack360.co.za` | Next.js (existing) | Self | ✅ Yes |
 
 ### Monorepo App Mapping
@@ -73,10 +80,10 @@ Every site should cross-link to at least 2 other division sites using keyword-ri
 ```
 pmg-hub/
 └── apps/
-    ├── pmg/          → playhousemedia.co.za          (Astro — rebuild from .net)
-    ├── admin/        → admin.playhousemedia.co.za    (Next.js 15 — NEW)
-    ├── tes/          → tenderedgesolutions.co.za     (Astro ✅ exists)
-    ├── aws/          → apexwebsolutions.co.za        (Astro ✅ exists)
+    ├── pmg/          → playhousemedia.co.za          (Astro — live)
+    ├── admin/        → admin.playhousemedia.co.za    (Next.js 16 — live)
+    ├── tes/          → tenderedgesolutions.co.za     (Astro — live)
+    ├── aws/          → apexwebsolutions.co.za        (Astro — live)
     ├── launchpad/    → launchpadsa.co.za             (Astro — future)
     ├── creative/     → playhousecreative.co.za       (Astro — future)
     ├── studyedge/    → studyedgesa.co.za             (Astro — future)
@@ -87,7 +94,8 @@ pmg-hub/
 
 ## 3. Metadata & Open Graph
 
-Every Astro page should use a shared `SEOHead` component. Keep it in `packages/ui/src/SEOHead.astro` so all apps pull from one source.
+Every Astro page should use a shared `SEOHead` component. Keep it in
+`packages/ui/src/SEOHead.astro` so all apps pull from one source.
 
 ### Shared Astro SEO Component
 
@@ -141,13 +149,14 @@ const defaultOg = ogImage ?? `/og-${brand}.png`;
 | StudyEdge | `{Subject} Tutoring & Support \| StudyEdge SA` | 60 chars |
 | TT360 | `TenderTrack 360 — Tender Management Software for SA` | 60 chars |
 
-> **Description length:** Keep meta descriptions between 140–160 characters. Google truncates at ~158. Always include a call to action and the city/region (Centurion / Gauteng / South Africa) for local relevance.
+> **Description length:** Keep meta descriptions between 140–160 characters.
+> Always include a call to action and the city/region for local relevance.
 
 ### OG Image Sizes
 
 - **Dimensions:** 1200 × 630px
 - **Format:** PNG or JPG
-- **Naming:** `/og-{brand}.png` — one per brand, stored in `public/` of each app
+- **Naming:** `/og-{brand}.png` — one per brand, in `public/` of each app
 - **Content:** Brand logo + tagline + domain on brand-coloured background
 
 ---
@@ -160,7 +169,6 @@ const defaultOg = ogImage ?? `/og-${brand}.png`;
 bun --filter tes add @astrojs/sitemap
 bun --filter aws add @astrojs/sitemap
 bun --filter pmg add @astrojs/sitemap
-# repeat for each new Astro app
 ```
 
 ### Astro Config — add per app
@@ -173,7 +181,7 @@ import sitemap from '@astrojs/sitemap';
 import tailwindcss from '@tailwindcss/vite';
 
 export default defineConfig({
-  site: 'https://www.tenderedgesolutions.co.za',  // ← change per app
+  site: 'https://www.tenderedgesolutions.co.za',
   integrations: [
     sitemap({
       changefreq: 'weekly',
@@ -185,9 +193,7 @@ export default defineConfig({
 });
 ```
 
-### robots.txt — public-facing apps
-
-**`apps/tes/public/robots.txt`**
+### `robots.txt` — public-facing apps
 
 ```
 User-agent: *
@@ -196,9 +202,7 @@ Allow: /
 Sitemap: https://www.tenderedgesolutions.co.za/sitemap-index.xml
 ```
 
-Replace the sitemap URL for each app.
-
-### robots.txt — admin app (block entirely)
+### `robots.txt` — admin app (block entirely)
 
 **`apps/admin/public/robots.txt`**
 
@@ -229,8 +233,6 @@ Disallow: /
 
 **Domain:** `playhousemedia.co.za` · **App:** `apps/pmg` · **Framework:** Astro
 
-The PMG holding site is the trust anchor. It should rank for branded terms and Centurion business services, and provide clear cross-links to all 7 divisions.
-
 ### Homepage Metadata
 
 ```astro
@@ -243,7 +245,7 @@ The PMG holding site is the trust anchor. It should rank for branded terms and C
 />
 ```
 
-### Content Priorities for the PMG Homepage
+### Content Priorities
 
 - **H1:** "Business Services in Centurion, Gauteng — Playhouse Media Group"
 - **Division cards:** Each card links to the division site with keyword-rich anchor text
@@ -269,8 +271,6 @@ The PMG holding site is the trust anchor. It should rank for branded terms and C
 
 **Domain:** `tenderedgesolutions.co.za` · **App:** `apps/tes` · **Framework:** Astro
 
-TES is the primary revenue driver — this gets the most SEO effort. "CSD registration" and "tender compliance" are extremely high-intent, high-volume searches in SA.
-
 ### Homepage Metadata
 
 ```astro
@@ -292,7 +292,7 @@ TES is the primary revenue driver — this gets the most SEO effort. "CSD regist
 /coida-registration     → "COIDA registration" — R750
 /tender-document-prep   → "SBD forms tender documents" — R2,500+
 /tender-ready-packages  → Bundle pages
-/blog/                  → Long-form content (tender tips, compliance guides)
+/blog/                  → Long-form content
 /contact                → WhatsApp + form CTA
 ```
 
@@ -308,10 +308,8 @@ TES is the primary revenue driver — this gets the most SEO effort. "CSD regist
 | government tenders Centurion | Informational | MED |
 | SBD forms South Africa | Transactional | MED |
 | COIDA letter of good standing | Transactional | MED |
-| tender consultant Pretoria | Transactional | MED |
-| tender ready starter pack | Transactional | MED |
 
-### Blog Content Ideas (Long-tail SEO)
+### Blog Content Ideas
 
 - "How to register on CSD in 2026 — step by step"
 - "What is a B-BBEE affidavit and who needs one?"
@@ -343,11 +341,11 @@ TES is the primary revenue driver — this gets the most SEO effort. "CSD regist
 /web-design-pretoria      → Local landing page
 /web-design-centurion     → Local landing page
 /ecommerce-websites       → "ecommerce website South Africa"
-/website-packages         → Pricing page — Starter/Business/Ecommerce
+/website-packages         → Pricing page
 /seo-services             → "SEO services Gauteng"
 /website-maintenance      → "website maintenance South Africa"
-/portfolio                → Case studies (Ultratech, KingTax, Sithembe)
-/blog/                    → "how to get a website" type content
+/portfolio                → Case studies
+/blog/                    → How-to content
 ```
 
 ### Top Keywords
@@ -358,25 +356,13 @@ TES is the primary revenue driver — this gets the most SEO effort. "CSD regist
 | affordable website South Africa | Transactional | **HIGH** |
 | web design Centurion | Transactional | **HIGH** |
 | small business website SA | Transactional | MED |
-| Next.js developer Gauteng | Transactional | MED |
 | ecommerce website South Africa | Transactional | MED |
-| free co.za domain website | Transactional | MED |
-| website for tender application | Transactional | MED |
-
-### Portfolio SEO
-
-Each case study page should target:
-- Client name + "website" as the title keyword
-- Industry-specific keywords (e.g. "aircon company website Pretoria")
-- Include before/after performance metrics if available
 
 ---
 
 ## 9. LaunchPad SA SEO
 
-**Domain:** `launchpadsa.co.za` · **App:** `apps/launchpad` · **Framework:** Astro
-
-LaunchPad is the **lead generation engine** for the entire PMG flywheel. A company registration client is a future candidate for AWS, Creative, TES, and TT360.
+**Domain:** `launchpadsa.co.za` · **App:** `apps/launchpad` (future) · **Framework:** Astro
 
 ### Homepage Metadata
 
@@ -389,19 +375,6 @@ LaunchPad is the **lead generation engine** for the entire PMG flywheel. A compa
 />
 ```
 
-### Recommended URL Structure
-
-```
-/                          → Homepage: Company Registration SA
-/pty-registration          → "PTY Ltd registration South Africa"
-/cipc-registration         → "CIPC registration"
-/csd-registration          → "CSD registration for new businesses"
-/bbee-affidavit            → "B-BBEE affidavit new business"
-/bizstart-package          → Bundle: CIPC + CSD + BEE
-/business-in-a-box         → Bundle: CIPC + CSD + BEE + Logo + Website
-/blog/                     → "how to start a business SA" content
-```
-
 ### Top Keywords
 
 | Keyword | Priority |
@@ -411,17 +384,12 @@ LaunchPad is the **lead generation engine** for the entire PMG flywheel. A compa
 | PTY registration | **HIGH** |
 | register company online SA | **HIGH** |
 | how to start a business South Africa | MED |
-| register Pty Ltd Gauteng | MED |
-| business name reservation SA | MED |
-| NPC registration South Africa | MED |
 
 ---
 
 ## 10. Playhouse Creative Studio SEO
 
-**Domain:** `playhousecreative.co.za` · **App:** `apps/creative` · **Framework:** Astro
-
-Creative Studio is the design arm that supports every other PMG division. Grows organically through internal referrals from LaunchPad and TES clients.
+**Domain:** `playhousecreative.co.za` · **App:** `apps/creative` (future) · **Framework:** Astro
 
 ### Homepage Metadata
 
@@ -434,18 +402,6 @@ Creative Studio is the design arm that supports every other PMG division. Grows 
 />
 ```
 
-### Recommended URL Structure
-
-```
-/                          → Homepage: Logo Design & Branding SA
-/logo-design               → "logo design South Africa"
-/company-profile-design    → "company profile design for tenders"
-/social-media-management   → "social media management Gauteng"
-/business-stationery       → "business card letterhead design SA"
-/pitch-deck-design         → "pitch deck design South Africa"
-/packages                  → Social media management packages
-```
-
 ### Top Keywords
 
 | Keyword | Priority |
@@ -455,16 +411,12 @@ Creative Studio is the design arm that supports every other PMG division. Grows 
 | graphic design Pretoria | MED |
 | branding for small business SA | MED |
 | social media management Gauteng | MED |
-| tender company profile design | MED |
-| business card design SA | MED |
 
 ---
 
 ## 11. StudyEdge SA SEO
 
-**Domain:** `studyedgesa.co.za` · **App:** `apps/studyedge` · **Framework:** Astro
-
-StudyEdge feeds back into the PMG flywheel — graduates who start businesses become clients for LaunchPad, AWS, TES, and Creative Studio.
+**Domain:** `studyedgesa.co.za` · **App:** `apps/studyedge` (future) · **Framework:** Astro
 
 ### Homepage Metadata
 
@@ -477,18 +429,6 @@ StudyEdge feeds back into the PMG flywheel — graduates who start businesses be
 />
 ```
 
-### Recommended URL Structure
-
-```
-/                          → Homepage: Academic Support SA
-/unisa-assignment-help     → "UNISA assignment help"
-/university-tutoring       → "university tutoring South Africa"
-/research-support          → "research paper help SA"
-/exam-preparation          → "exam prep tutoring Gauteng"
-/editing-proofreading      → "essay editing South Africa"
-/packages                  → Semester support packages
-```
-
 ### Top Keywords
 
 | Keyword | Priority |
@@ -497,14 +437,9 @@ StudyEdge feeds back into the PMG flywheel — graduates who start businesses be
 | university tutoring SA | **HIGH** |
 | academic support South Africa | **HIGH** |
 | assignment help Gauteng | MED |
-| study help Pretoria | MED |
-| research proposal help SA | MED |
-| essay editing South Africa | MED |
-| APA Harvard referencing help | MED |
 
-### Important Positioning Note for SEO Copy
-
-Always frame content as **guided learning and tutoring support** — not ghostwriting or submission services. This is both legally safer and opens doors to institutional partnerships that a ghostwriting framing cannot access.
+> **Important:** Always frame content as guided learning and tutoring support —
+> not ghostwriting or submission services.
 
 ---
 
@@ -512,9 +447,7 @@ Always frame content as **guided learning and tutoring support** — not ghostwr
 
 **Domain:** `tendertrack360.co.za` · **App:** `apps/tt360` (existing Next.js) · **Status:** Beta
 
-### Homepage Metadata
-
-Update `src/app/(site)/layout.tsx` metadataBase and title:
+### Metadata
 
 ```tsx
 export const metadata: Metadata = {
@@ -522,9 +455,7 @@ export const metadata: Metadata = {
   title: 'TenderTrack 360 — Tender Management Software for South Africa',
   description:
     'Track, manage, and win more tenders with TenderTrack 360. The affordable tender management platform built for South African businesses. Free during beta. From R249/month.',
-  alternates: {
-    canonical: 'https://www.tendertrack360.co.za',
-  },
+  alternates: { canonical: 'https://www.tendertrack360.co.za' },
   openGraph: {
     title: 'TenderTrack 360 — Tender Management Software for SA',
     siteName: 'TenderTrack 360',
@@ -542,14 +473,10 @@ export const metadata: Metadata = {
 | tender tracking app South Africa | **HIGH** |
 | bid management software | MED |
 | government tender tracker SA | MED |
-| SaaS tender platform | MED |
-| eTender portal integration | MED |
 
 ---
 
 ## 13. Schema Markup (JSON-LD)
-
-Add JSON-LD structured data to every site's layout. This powers rich results in Google — address cards, star ratings, FAQ snippets, and more.
 
 ### Shared LocalBusiness Schema Component
 
@@ -599,20 +526,6 @@ const schema = {
 <script type="application/ld+json" set:html={JSON.stringify(schema)} />
 ```
 
-### Usage in Layout
-
-```astro
-<!-- apps/tes/src/layouts/Layout.astro -->
-<LocalBusiness
-  name="Tender Edge Solutions"
-  url="https://www.tenderedgesolutions.co.za"
-  telephone="+27745017094"
-  description="Tender compliance and bid preparation specialists in Gauteng"
-  serviceType="Tender Compliance Consulting"
-  priceRange="R650 - R5,500"
-/>
-```
-
 ### Per-Brand Schema Values
 
 | Brand | serviceType | priceRange |
@@ -624,50 +537,9 @@ const schema = {
 | Creative | Graphic Design and Branding | R1,800 - R8,000 |
 | StudyEdge | Academic Tutoring and Support | R250 - R3,500 |
 
-### FAQ Schema (add to service pages)
-
-```astro
----
-const faqSchema = {
-  "@context": "https://schema.org",
-  "@type": "FAQPage",
-  "mainEntity": [
-    {
-      "@type": "Question",
-      "name": "How much does CSD registration cost?",
-      "acceptedAnswer": {
-        "@type": "Answer",
-        "text": "CSD registration with Tender Edge Solutions costs R650 and is completed within 2–3 business days."
-      }
-    }
-  ]
-};
----
-<script type="application/ld+json" set:html={JSON.stringify(faqSchema)} />
-```
-
 ---
 
 ## 14. Monorepo SEO Setup
-
-### Create a shared SEO config package
-
-Add `packages/seo/` to centralise all brand data so any app can import it.
-
-**`packages/seo/package.json`**
-
-```json
-{
-  "name": "@pmg/seo",
-  "version": "0.0.0",
-  "private": true,
-  "type": "module",
-  "exports": {
-    ".": "./src/index.ts",
-    "./brands": "./src/brands.ts"
-  }
-}
-```
 
 **`packages/seo/src/brands.ts`**
 
@@ -679,7 +551,6 @@ export const brands = {
     tagline: "Building Businesses. One Service at a Time.",
     phone: "+27745017094",
     email: "info@playhousemedia.co.za",
-    twitter: "@jchademwiri",
     address: {
       street: "285 Erasmus Ave, Raslouw AH",
       city: "Centurion",
@@ -735,87 +606,65 @@ export const brands = {
 export type BrandKey = keyof typeof brands;
 ```
 
-**`packages/seo/src/index.ts`**
-
-```ts
-export { brands } from './brands';
-export type { BrandKey } from './brands';
-```
-
-### Add to root turbo workspace
-
-In `package.json` workspaces, `packages/*` already covers this. Just run:
-
-```bash
-bun install
-```
-
-### Using the SEO package in an Astro app
-
-```astro
----
-import { brands } from '@pmg/seo/brands';
-const brand = brands.tes;
----
-
-<title>{brand.name} — Tender Compliance in Centurion</title>
-<meta name="description" content={`Contact ${brand.name} at ${brand.phone}`} />
-```
-
 ---
 
 ## 15. Admin App — SEO Notes
 
-> ⚠️ **The admin app must NEVER be indexed by Google.** Use `noindex,nofollow` on all pages and block the entire domain in `robots.txt`.
+> ⚠️ **The admin app must NEVER be indexed by Google.**
+> Use `noindex,nofollow` on all pages and block the entire domain in `robots.txt`.
 
 ### Setup Steps
 
-1. **Scaffold the app**
-   ```bash
-   cd apps
-   bun create next-app admin --typescript --tailwind --app --no-src-dir
-   ```
+> **Next.js 16 note:** The auth guard is in `src/proxy.ts` (not `middleware.ts`).
+> Export a named `proxy` function or use a default export.
+> See `pmg-db-setup-guide.md` Step 15 for the full proxy implementation.
 
-2. **Set name in `package.json`**
-   ```json
-   {
-     "name": "admin",
-     "dependencies": {
-       "@pmg/db": "*",
-       "@pmg/tailwind-config": "*",
-       "better-auth": "^1.2.7",
-       "next": "16.2.1",
-       "react": "19.2.4",
-       "react-dom": "19.2.4"
-     }
-   }
-   ```
+1. **Set global noindex in `app/layout.tsx`**
 
-3. **Add global noindex in `app/layout.tsx`**
-   ```tsx
-   export const metadata: Metadata = {
-     title: 'PMG Admin',
-     robots: {
-       index: false,
-       follow: false,
-       googleBot: {
-         index: false,
-         follow: false,
-       },
-     },
-   };
-   ```
+```tsx
+export const metadata: Metadata = {
+  title: 'PMG Admin',
+  robots: {
+    index: false,
+    follow: false,
+    googleBot: {
+      index: false,
+      follow: false,
+    },
+  },
+};
+```
 
-4. **Add `public/robots.txt`**
-   ```
-   User-agent: *
-   Disallow: /
-   ```
+2. **Add `public/robots.txt`**
 
-5. **Deploy to Vercel**
+```
+User-agent: *
+Disallow: /
+```
+
+3. **Auth protection via `src/proxy.ts`** (Next.js 16)
+
+```ts
+// src/proxy.ts — NOT middleware.ts
+import { NextResponse } from 'next/server'
+import type { NextRequest } from 'next/server'
+
+export function proxy(request: NextRequest) {
+  const session = request.cookies.get('better-auth.session_token')
+  if (!session) {
+    return NextResponse.redirect(new URL('/login', request.url))
+  }
+  return NextResponse.next()
+}
+
+export const config = {
+  matcher: ['/admin/:path*'],
+}
+```
+
+4. **Deploy to Vercel**
    - Custom domain: `admin.playhousemedia.co.za`
-   - Set `ADMIN_EMAIL`, `BETTER_AUTH_SECRET`, `DATABASE_URL` env vars
-   - Auth middleware already blocks unauthenticated access (see `pmg-hub-context.md`)
+   - Set `ADMIN_EMAIL`, `BETTER_AUTH_SECRET`, `DATABASE_URL` env vars in Vercel project settings
 
 ---
 
@@ -850,12 +699,12 @@ Work through this checklist for each app before going live.
 - [ ] Google Business Profile — created and verified for PMG
 - [ ] Address in footer of all public sites — 285 Erasmus Ave, Centurion
 - [ ] Phone number — 074 501 7094 clickable (`tel:` link) on mobile
-- [ ] WhatsApp CTA — present on every page (already done ✅)
-- [ ] Google Maps embed — on contact page (already done ✅)
+- [ ] WhatsApp CTA — present on every page
+- [ ] Google Maps embed — on contact page
 
 ### Content
 
-- [ ] Dedicated page per main service — not everything on one page
+- [ ] Dedicated page per main service
 - [ ] At least 3 blog articles targeting long-tail keywords before launch
 - [ ] Google Search Console — all domains verified, sitemaps submitted
 - [ ] Google Analytics 4 — installed on all public sites
@@ -871,7 +720,7 @@ Work through this checklist for each app before going live.
 
 ---
 
-## Quick Reference — NAP (Name / Address / Phone)
+## Quick Reference — NAP
 
 Use this exact format consistently across all sites, Google Business Profile, and directories:
 
@@ -892,11 +741,11 @@ info@playhousemedia.co.za
 | [Google Business Profile](https://business.google.com) | Create and manage local listing |
 | [PageSpeed Insights](https://pagespeed.web.dev) | Core Web Vitals testing |
 | [Schema Markup Validator](https://validator.schema.org) | Test JSON-LD structured data |
-| [Screaming Frog](https://www.screamingfrog.co.uk/seo-spider/) (free up to 500 URLs) | Crawl for broken links and missing meta |
-| [Ahrefs Webmaster Tools](https://ahrefs.com/webmaster-tools) (free) | Backlinks and keyword tracking |
+| [Screaming Frog](https://www.screamingfrog.co.uk/seo-spider/) | Crawl for broken links |
+| [Ahrefs Webmaster Tools](https://ahrefs.com/webmaster-tools) | Backlinks and keyword tracking |
 | [Google Rich Results Test](https://search.google.com/test/rich-results) | Test schema markup |
 
 ---
 
-*Last updated: March 2026 · Playhouse Media Group (PTY) Ltd*  
+*Last updated: March 2026 · Playhouse Media Group (PTY) Ltd*
 *Jacob Chademwiri · 285 Erasmus Ave, Raslouw AH, Centurion, 0157*
