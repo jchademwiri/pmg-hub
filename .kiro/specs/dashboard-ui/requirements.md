@@ -14,7 +14,6 @@ browser-initiated API calls. A sidebar shell layout wraps all admin pages.
 
 - **Dashboard_Page**: The async Server Component at `app/(admin)/dashboard/page.tsx` that fetches all financial data and renders the dashboard UI.
 - **Admin_Layout**: The Server Component at `app/(admin)/layout.tsx` that wraps every `/*` page with the Sidebar and TopNav.
-- **Sidebar**: The navigation sidebar Server Component at `components/layout/sidebar.tsx`.
 - **NavLink**: The `'use client'` component at `components/layout/nav-link.tsx` that uses `usePathname` to highlight the active route.
 - **TopNav**: The page header Server Component at `components/layout/top-nav.tsx`.
 - **KpiCard**: The stat card component at `components/dashboard/kpi-card.tsx`.
@@ -30,7 +29,7 @@ browser-initiated API calls. A sidebar shell layout wraps all admin pages.
 - **formatZAR**: The `formatZAR(amount: number): string` utility exported from `lib/financial.ts`.
 - **Proxy**: The Next.js 16 auth guard at `apps/admin/src/proxy.ts` that protects `/:path*` routes.
 - **shadcn**: The component library used for UI primitives in `components/ui/`.
-- **AppSidebar**: The customised sidebar-07 block component at `components/layout/app-sidebar.tsx`.
+- **AppSidebar**: The customised sidebar-08 block component at `components/layout/app-sidebar.tsx`.
 - **SidebarProvider**: The shadcn context provider from the sidebar block that manages collapse state.
 - **SidebarInset**: The shadcn companion component used as the right content wrapper in Admin_Layout.
 - **SidebarTrigger**: The shadcn client component that toggles sidebar collapse, rendered in TopNav.
@@ -62,7 +61,7 @@ page, so that I can navigate the app without losing context.
 
 1. THE Admin_Layout full structure, SidebarProvider wiring, and SidebarInset usage SHALL
    follow Requirement 21.
-2. THE Sidebar SHALL be built from the scaffolded sidebar-07 block per Requirement 11.
+2. THE Sidebar (AppSidebar) SHALL be built from the scaffolded sidebar-08 block per Requirement 11.
 3. THE TopNav SHALL be built per Requirement 14.
 4. THE Admin_Layout SHALL be a Server Component with no `'use client'` directive.
 5. THE Sidebar SHALL display a "PMG / Control Center" brand label at the top.
@@ -268,8 +267,11 @@ are handled by a proven composition.
 
 #### Acceptance Criteria
 
-1. THE developer SHALL run `npx shadcn@latest add sidebar-07 --cwd apps/admin` to scaffold
-   the sidebar block as the foundation for the Admin_Layout shell.
+1. THE developer SHALL run `npx shadcn@latest add sidebar-08 --cwd apps/admin` to scaffold
+   the sidebar block as the foundation for the Admin_Layout shell. sidebar-08 is the inset
+   sidebar variant ("An inset sidebar with secondary navigation") that scaffolds
+   `SidebarInset`, `SidebarTrigger`, and the breadcrumb header structure that
+   Requirement 21 depends on.
 2. THE scaffolded sidebar block SHALL be customised to:
    (a) replace placeholder nav items with the five PMG admin routes:
        `/dashboard` (LayoutDashboard icon), `/income` (TrendingUp),
@@ -293,6 +295,10 @@ are handled by a proven composition.
    link renderer inside the sidebar block's nav item slots.
 6. THE sidebar block's SidebarProvider SHALL be rendered in Admin_Layout and SHALL be the
    only provider needed for sidebar state.
+7. THE scaffolded sidebar block SHALL produce a file at `components/layout/app-sidebar.tsx`
+   (exported as `AppSidebar`). This is the component referenced as `AppSidebar` in
+   Requirement 21. The developer SHALL customise this file directly — not create a separate
+   sidebar component alongside it.
 
 ---
 
@@ -330,7 +336,7 @@ interruptions.
 
    **Step 1 — Sidebar block (installs sidebar + its dependencies automatically):**
    ```
-   npx shadcn@latest add sidebar-07 --cwd apps/admin
+   npx shadcn@latest add sidebar-08 --cwd apps/admin
    ```
 
    **Step 2 — Remaining components not covered by the sidebar block:**
@@ -535,7 +541,7 @@ functional shell.
 1. THE Admin_Layout SHALL wrap its entire output in `SidebarProvider` (from the sidebar
    block) to enable sidebar collapse state management.
 2. THE Admin_Layout SHALL render:
-   `SidebarProvider` > `AppSidebar` (the customised sidebar-07 component) +
+   `SidebarProvider` > `AppSidebar` (the customised sidebar-08 component) +
    `SidebarInset` > `TopNav` + `<main>`.
 3. `SidebarInset` SHALL be used as the right content wrapper — it is the correct companion
    component from the sidebar block, not a plain `div`.
@@ -577,6 +583,10 @@ admin root to redirect automatically.
    `import { redirect } from 'next/navigation'` and
    `export default function AdminPage() { redirect('/dashboard') }`.
 3. Both files SHALL have no `'use client'` directive.
+4. THE existing `apps/admin/src/app/page.tsx` is currently a full navigation landing page
+   and SHALL be replaced entirely. The replacement SHALL contain only the redirect import
+   and function as specified in criterion 2. All existing content (Card, Badge, nav
+   sections) SHALL be removed from this file.
 
 ---
 
@@ -641,6 +651,10 @@ metadata, and the title template so that every admin page inherits the correct s
    variable declarations.
 6. THE `<body>` element SHALL have `className` including `font-sans antialiased
    bg-background text-foreground` to apply the base theme.
+7. THE existing `apps/admin/src/app/layout.tsx` SHALL be updated to add `"dark"` to the
+   `<html>` element's `className`. The current file does NOT include the `dark` class.
+   This is a change to an existing file, not a new file. The resulting `<html>` element
+   SHALL have both `className="dark"` and `lang="en"` as per criterion 2.
 
 ---
 
@@ -667,3 +681,58 @@ target resolves to a valid page rather than a 404.
    integration in Phase 2 — that is Phase 2.5 / auth setup. Its sole purpose is to
    prevent a 404 when the proxy redirects unauthenticated users.
 6. THE login page SHALL NOT use `'use client'`.
+7. THE developer MAY scaffold the login page using
+   `npx shadcn@latest add login-01 --cwd apps/admin` as the structural foundation, then
+   strip out the form fields and replace the content with the placeholder text per
+   criterion 3. The login-01 block provides the correct centred card layout and
+   `bg-muted` background. If scaffolded, the `LoginForm` component SHALL NOT be used —
+   only the page layout shell.
+
+---
+
+### Requirement 27: proxy.ts Auth Guard
+
+**User Story:** As a developer, I want the Next.js 16 auth guard created in Phase 2 so
+that all admin routes are protected before the dashboard goes live.
+
+#### Acceptance Criteria
+
+1. THE file `apps/admin/src/proxy.ts` SHALL be created in Phase 2 if it does not already
+   exist.
+2. THE exported function SHALL be named `proxy` — NOT `middleware`. The file SHALL NOT be
+   named `middleware.ts`.
+3. THE proxy SHALL check for the `better-auth.session_token` cookie only. No database
+   calls, no heavy logic.
+4. IF the cookie is absent, THE proxy SHALL redirect to `/login` using
+   `NextResponse.redirect(new URL('/login', request.url))`.
+5. IF the cookie is present, THE proxy SHALL return `NextResponse.next()`.
+6. THE matcher config SHALL be `['/:path*']` — covering all routes.
+7. THE proxy SHALL import `NextResponse` from `'next/server'` and type the parameter as
+   `NextRequest` from `'next/server'`.
+
+---
+
+### Requirement 28: AllocationTooltipBar Component
+
+**User Story:** As a developer, I want AllocationTooltipBar fully specified as its own
+component so I know exactly what to build.
+
+#### Acceptance Criteria
+
+1. THE file SHALL be located at `components/dashboard/allocation-tooltip-bar.tsx`.
+2. THE component SHALL have `'use client'` as its first line.
+3. THE component SHALL accept props:
+   `allocations: Array<{ key: string; label: string; pct: number; color: string; amount: number }>`.
+4. THE component SHALL render the outer bar container with
+   `className="flex h-3 w-full overflow-hidden rounded-full bg-muted"`.
+5. EACH allocation segment SHALL be rendered as a `div` with `style={{ width: '${pct}%' }}`
+   and `className` set to the allocation's `color` value (e.g. `bg-chart-1`).
+6. EACH segment `div` SHALL be wrapped in the shadcn Tooltip composition:
+   `TooltipProvider` > `Tooltip` > `TooltipTrigger asChild` > `TooltipContent`.
+7. THE `TooltipContent` SHALL display the string `"{label}: {formatZAR(amount)} ({pct}%)"`
+   — importing `formatZAR` from `@/lib/financial`.
+8. THE `AllocationBar` Server Component SHALL import and render `AllocationTooltipBar`,
+   passing the four allocation objects defined in Requirement 17 criterion 6, with the
+   `amount` field sourced from the `FinancialSummary` prop using the matching `key`.
+9. THE component SHALL NOT import or use any other client-side state or hooks beyond what
+   shadcn Tooltip requires internally.
