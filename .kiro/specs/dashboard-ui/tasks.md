@@ -144,26 +144,26 @@ Financial Engine.
 - [x] 6. Checkpoint — ensure all component tests pass
   - Ensure all tests pass, ask the user if questions arise.
 
-- [~] 7. Build dashboard page and login placeholder
-  - [~] 7.1 Create `apps/admin/src/app/(admin)/dashboard/page.tsx`
+- [x] 7. Build dashboard page and login placeholder
+  - [x] 7.1 Create `apps/admin/src/app/(admin)/dashboard/page.tsx`
     - Async Server Component; `Promise.all([getFinancialSummary(), getDivisionRevenue(), getLeadCounts()])`
     - Export `metadata: Metadata = { title: 'Dashboard' }`
     - KPI grid (`grid-cols-2 lg:grid-cols-4`), salary+allocation row (`grid-cols-1 lg:grid-cols-3`), divisions+leads row (`grid-cols-1 lg:grid-cols-2`)
     - No `'use client'`; errors propagate to Next.js error boundary
     - _Requirements: 3.1–3.6, 9.1, 12.1–12.4, 23.1_
 
-  - [~] 7.2 Create `apps/admin/src/app/(auth)/login/page.tsx`
+  - [x] 7.2 Create `apps/admin/src/app/(auth)/login/page.tsx`
     - Server Component placeholder; centred card with PMG brand and placeholder text
     - Export `metadata: Metadata = { title: 'Login' }`
     - No `'use client'`, no auth form
     - _Requirements: 26.1–26.7_
 
-- [~] 8. Verify color token compliance
+- [x] 8. Verify color token compliance
   - Search codebase for any raw palette utilities (`zinc-`, `amber-`, `blue-`, `teal-`, `purple-`, `gray-`, `slate-`) in component classNames
   - Replace any found instances with the correct semantic token from Requirement 24
   - _Requirements: 10.8, 24.1–24.4_
 
-- [~] 9. Final checkpoint — ensure all tests pass
+- [x] 9. Final checkpoint — ensure all tests pass
   - Ensure all tests pass, ask the user if questions arise.
 
 ## Notes
