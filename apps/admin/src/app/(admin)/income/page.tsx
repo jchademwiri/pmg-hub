@@ -1,0 +1,64 @@
+import type { Metadata } from 'next'
+import {
+  getAllIncome,
+  getAllDivisions,
+  getAllClients,
+  getDistinctIncomeMonths,
+} from '@pmg/db'
+import { createIncome, deleteIncome } from '@/app/actions/income'
+import { FilterBar } from '@/components/income/filter-bar'
+import { IncomeAddForm } from '@/components/income/income-add-form'
+import { IncomeTable } from '@/components/income/income-table'
+import { formatZAR } from '@/lib/format'
+
+export const dynamic = 'force-dynamic'
+export const metadata: Metadata = { title: 'Income' }
+
+interface IncomePageProps {
+  searchParams: Promise<{ divisionId?: string; month?: string }>
+}
+
+export default async function IncomePage({ searchParams }: IncomePageProps) {
+  const { divisionId, month } = await searchParams
+
+  const [entries, divisions, clients, months] = await Promise.all([
+    getAllIncome({ divisionId, month }),
+    getAllDivisions(),
+    getAllClients(),
+    getDistinctIncomeMonths(),
+  ])
+
+  const runningTotal = entries.reduce((sum, e) => sum + Number(e.amount), 0)
+
+  return (
+    <div className="flex flex-col gap-6 p-6">
+      <div className="flex items-center justify-between">
+        <h1 className="text-2xl font-semibold">Income</h1>
+        <span className="text-lg font-medium text-muted-foreground">
+          {formatZAR(runningTotal)}
+        </span>
+      </div>
+
+      <FilterBar
+        divisions={divisions}
+        months={months}
+        currentDivisionId={divisionId}
+        currentMonth={month}
+      />
+
+      <IncomeAddForm
+        divisions={divisions}
+        clients={clients}
+        createAction={createIncome}
+      />
+
+      {entries.length === 0 ? (
+        <p className="text-sm text-muted-foreground">
+          No income entries yet. Add one above.
+        </p>
+      ) : (
+        <IncomeTable entries={entries} deleteAction={deleteIncome} />
+      )}
+    </div>
+  )
+}

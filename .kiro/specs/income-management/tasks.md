@@ -8,7 +8,7 @@ Each layer builds on the previous; no orphaned code.
 
 ## Tasks
 
-- [ ] 1. Add DB query helpers to `packages/db/src/queries.ts`
+- [x] 1. Add DB query helpers to `packages/db/src/queries.ts`
   - Add `getAllIncome(filters?)` — INNER JOIN divisions, LEFT JOIN clients, optional WHERE clauses, ORDER BY date DESC
   - Add `getIncomeById(id)` — same joins, WHERE income.id = id, returns single row or null
   - Add `getDistinctIncomeMonths()` — SELECT DISTINCT TO_CHAR(date, 'YYYY-MM') ORDER BY 1 DESC
@@ -60,7 +60,7 @@ Each layer builds on the previous; no orphaned code.
     - Tag: `// Feature: income-management, Property 13: getAllClients sort`
     - Minimum 100 iterations
 
-- [ ] 2. Implement Server Actions in `apps/admin/src/app/actions/income.ts`
+- [x] 2. Implement Server Actions in `apps/admin/src/app/actions/income.ts`
   - Add `'use server'` directive at top of file
   - Define `IncomeSchema` with Zod: date (string min 1), divisionId (uuid), clientId (uuid optional), description (string optional), amount (coerce number positive)
   - Implement `createIncome(formData)` — normalize `clientId = ''` → delete key, parse, insert, `revalidatePath('/income')` + `revalidatePath('/dashboard')` inside try before `return {}`
@@ -123,10 +123,10 @@ Each layer builds on the previous; no orphaned code.
     - `deleteIncome` calls `revalidatePath('/income')` and `revalidatePath('/dashboard')` on success — verifies R11.1
     - _Requirements: 3.6, 5.6, 6.2, 6.3, 9.2, 10.2, 10.3, 11.1_
 
-- [ ] 3. Checkpoint — Ensure all tests pass
+- [x] 3. Checkpoint — Ensure all tests pass
   - Ensure all tests pass, ask the user if questions arise.
 
-- [ ] 4. Implement `FilterBar` client component at `apps/admin/src/components/income/filter-bar.tsx`
+- [x] 4. Implement `FilterBar` client component at `apps/admin/src/components/income/filter-bar.tsx`
   - `'use client'` directive
   - Props: `divisions`, `months`, `currentDivisionId?`, `currentMonth?`
   - Two shadcn `<Select>` controls: division (default "All divisions") and month (default "All months")
@@ -140,7 +140,7 @@ Each layer builds on the previous; no orphaned code.
     - Month options display human-readable labels (e.g. "March 2026") not raw YYYY-MM
     - _Requirements: 2.1, 2.2_
 
-- [ ] 5. Implement `IncomeAddForm` client component at `apps/admin/src/components/income/income-add-form.tsx`
+- [x] 5. Implement `IncomeAddForm` client component at `apps/admin/src/components/income/income-add-form.tsx`
   - `'use client'` directive
   - Props: `divisions`, `clients`, `createAction`
   - Fields: date (type="date" required), divisionId (Select required), clientId (Select with leading "No client" option value=""), description (Input optional), amount (type="number" min="0.01" step="0.01" required)
@@ -149,7 +149,7 @@ Each layer builds on the previous; no orphaned code.
   - Submit button label: "Add Income" / "Adding…" while pending
   - _Requirements: 3.1, 3.2, 3.3, 3.4, 3.6, 6.5_
 
-- [ ] 6. Implement `IncomeTable` client component at `apps/admin/src/components/income/income-table.tsx`
+- [x] 6. Implement `IncomeTable` client component at `apps/admin/src/components/income/income-table.tsx`
   - `'use client'` directive
   - Props: `entries: IncomeRow[]`, `deleteAction`
   - State: `pendingDeleteId: string | null`
@@ -166,7 +166,7 @@ Each layer builds on the previous; no orphaned code.
     - Empty entries array renders no table rows
     - _Requirements: 1.2, 4.1_
 
-- [ ] 7. Implement `IncomeEditForm` client component at `apps/admin/src/components/income/income-edit-form.tsx`
+- [x] 7. Implement `IncomeEditForm` client component at `apps/admin/src/components/income/income-edit-form.tsx`
   - `'use client'` directive
   - Props: `entry: IncomeRow`, `divisions`, `clients`, `updateAction`
   - Same fields as `IncomeAddForm`, pre-populated with `entry` values
@@ -174,7 +174,7 @@ Each layer builds on the previous; no orphaned code.
   - Uses `useTransition` + `useRouter`; on success: `router.push('/income')`; on error: inline error display
   - _Requirements: 4.3, 4.4, 4.5, 4.6, 4.8, 6.5_
 
-- [ ] 8. Implement Income list page at `apps/admin/src/app/(admin)/income/page.tsx`
+- [x] 8. Implement Income list page at `apps/admin/src/app/(admin)/income/page.tsx`
   - Replace stub with full Server Component
   - Props: `{ searchParams: Promise<{ divisionId?: string; month?: string }> }`
   - Await `searchParams`, then `Promise.all([getAllIncome({ divisionId, month }), getAllDivisions(), getAllClients(), getDistinctIncomeMonths()])`
@@ -194,7 +194,7 @@ Each layer builds on the previous; no orphaned code.
     - When `entries = []`, renders empty-state message instead of table
     - _Requirements: 1.5_
 
-- [ ] 9. Implement Income edit page at `apps/admin/src/app/(admin)/income/[id]/page.tsx`
+- [x] 9. Implement Income edit page at `apps/admin/src/app/(admin)/income/[id]/page.tsx`
   - Replace stub with full Server Component
   - Props: `{ params: Promise<{ id: string }> }`
   - Await `params`, call `getIncomeById(id)`, call `notFound()` from `next/navigation` if null
@@ -202,7 +202,7 @@ Each layer builds on the previous; no orphaned code.
   - Render: back link to `/income` + `<IncomeEditForm updateAction={updateIncome.bind(null, id)}>`
   - _Requirements: 4.2, 4.3, 4.5, 4.6, 4.9_
 
-- [ ] 10. Final checkpoint — Ensure all tests pass
+- [x] 10. Final checkpoint — Ensure all tests pass
   - Ensure all tests pass, ask the user if questions arise.
 
 ## Notes
