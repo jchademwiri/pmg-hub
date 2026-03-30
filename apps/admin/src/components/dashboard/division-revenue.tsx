@@ -1,41 +1,109 @@
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card'
 import { ScrollArea } from '@/components/ui/scroll-area'
-import { Progress } from '@/components/ui/progress'
 import { formatZAR, type DivisionRevenue } from '@/lib/financial'
 
-type DivisionRevenueProps = { divisions: DivisionRevenue[] }
+type DivisionRevenueProps = {
+  divisions: DivisionRevenue[]
+  divisionExpenseMap: Map<string, number>
+}
 
-export function DivisionRevenue({ divisions }: DivisionRevenueProps) {
-  const max = Math.max(...divisions.map(d => d.total), 1)
+export function DivisionRevenue({ divisions, divisionExpenseMap }: DivisionRevenueProps) {
+  if (divisions.length === 0) {
+    return (
+      <Card className="rounded-xl border border-border bg-card shadow-none">
+        <CardHeader className="pb-2">
+          <CardTitle className="text-card-foreground text-sm font-medium">
+            Revenue by Division
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <p className="text-muted-foreground/50 text-xs">No income recorded yet.</p>
+        </CardContent>
+      </Card>
+    )
+  }
+
+  // Find max revenue for proportional bars
+  const maxRevenue = Math.max(...divisions.map((d) => d.total), 1)
+
+  // Attach expenses and compute net per division
+  const enriched = divisions.map((div) => {
+    const expenses = divisionExpenseMap.get(div.divisionName) ?? 0
+    const net = div.total - expenses
+    return { ...div, expenses, net }
+  })
 
   return (
     <Card className="rounded-xl border border-border bg-card shadow-none">
-      <CardHeader className="pb-2">
-        <CardTitle className="text-card-foreground text-sm font-medium">
-          Revenue by Division
-        </CardTitle>
+      <CardHeader className="pb-3">
+        <div className="flex items-center justify-between">
+          <CardTitle className="text-card-foreground text-sm font-medium">
+            Revenue by Division
+          </CardTitle>
+          <div className="flex items-center gap-3">
+            <span className="flex items-center gap-1.5 text-xs text-muted-foreground">
+              <span className="inline-block h-2 w-2 rounded-full bg-chart-2" />
+              Revenue
+            </span>
+            <span className="flex items-center gap-1.5 text-xs text-muted-foreground">
+              <span className="inline-block h-2 w-2 rounded-full bg-chart-3" />
+              Expenses
+            </span>
+          </div>
+        </div>
       </CardHeader>
       <CardContent>
-        {divisions.length === 0 ? (
-          <p className="text-muted-foreground/50 text-xs">No income recorded yet.</p>
-        ) : (
-          <ScrollArea className="max-h-64">
-            <div className="space-y-3">
-              {divisions.map(div => (
-                <div key={div.divisionName} className="space-y-1">
-                  <div className="flex justify-between">
+        <ScrollArea className="max-h-64">
+          <div className="space-y-4">
+            {enriched.map((div) => {
+              const revPct  = (div.total    / maxRevenue) * 100
+              const expPct  = (div.expenses / maxRevenue) * 100
+              const isProfit = div.net >= 0
+
+              return (
+                <div key={div.divisionName} className="space-y-1.5">
+                  {/* Header row */}
+                  <div className="flex items-center justify-between">
                     <span className="text-card-foreground text-sm">{div.divisionName}</span>
-                    <span className="text-muted-foreground text-xs">{formatZAR(div.total)}</span>
+                    <span
+                      className={`text-xs font-semibold tabular-nums ${
+                        isProfit ? 'text-emerald-400' : 'text-red-400'
+                      }`}
+                    >
+                      {isProfit ? '+' : ''}{formatZAR(div.net)} net
+                    </span>
                   </div>
-                  <Progress
-                    value={Math.round((div.total / max) * 100)}
-                    className="[&>div]:bg-chart-2 bg-muted h-1.5"
-                  />
+                  {/* Revenue bar */}
+                  <div className="space-y-1">
+                    <div className="flex items-center gap-2">
+                      <div className="flex-1 h-1.5 rounded-full bg-muted overflow-hidden">
+                        <div
+                          className="h-full rounded-full bg-chart-2 transition-all duration-500"
+                          style={{ width: `${revPct}%` }}
+                        />
+                      </div>
+                      <span className="text-xs text-muted-foreground tabular-nums w-24 text-right">
+                        {formatZAR(div.total)}
+                      </span>
+                    </div>
+                    {/* Expense bar */}
+                    <div className="flex items-center gap-2">
+                      <div className="flex-1 h-1.5 rounded-full bg-muted overflow-hidden">
+                        <div
+                          className="h-full rounded-full bg-chart-3 transition-all duration-500"
+                          style={{ width: `${expPct}%` }}
+                        />
+                      </div>
+                      <span className="text-xs text-muted-foreground/60 tabular-nums w-24 text-right">
+                        {formatZAR(div.expenses)}
+                      </span>
+                    </div>
+                  </div>
                 </div>
-              ))}
-            </div>
-          </ScrollArea>
-        )}
+              )
+            })}
+          </div>
+        </ScrollArea>
       </CardContent>
     </Card>
   )

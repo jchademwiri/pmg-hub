@@ -38,10 +38,10 @@ export async function getFinancialSummary(): Promise<FinancialSummary> {
   const pmgShare = revenue * 0.20
   const profitPool = revenue - expenses - pmgShare
 
-  const salary = profitPool * 0.35
+  const salary  = profitPool * 0.35
   const reinvest = profitPool * 0.30
-  const reserve = profitPool * 0.30
-  const flex = profitPool * 0.05
+  const reserve  = profitPool * 0.30
+  const flex     = profitPool * 0.05
 
   return { revenue, expenses, pmgShare, profitPool, salary, reinvest, reserve, flex }
 }
@@ -59,7 +59,7 @@ export async function getRevenueByDivisionSeries(): Promise<{
   divisions: string[]
 }> {
   const rows = await getMonthlyRevenueByDivision(6)
-  const divisionSet = new Set(rows.map(r => r.divisionName))
+  const divisionSet = new Set(rows.map((r) => r.divisionName))
   const divisions = [...divisionSet].sort()
   const monthMap = new Map<string, MonthlyRevenueByDivision>()
   for (const row of rows) {
@@ -81,10 +81,13 @@ export async function getMonthlyFinancialsSeries(): Promise<MonthlyFinancials[]>
 export async function getMoMChartData(): Promise<MoMSnapshot[]> {
   const snap = await getMoMSnapshot()
   return [
-    { metric: 'Revenue',     current: snap.currentRevenue,   previous: snap.previousRevenue },
-    { metric: 'Expenses',    current: snap.currentExpenses,  previous: snap.previousExpenses },
-    { metric: 'Profit Pool', current: snap.currentRevenue - snap.currentExpenses,
-                             previous: snap.previousRevenue - snap.previousExpenses },
+    { metric: 'Revenue',     current: snap.currentRevenue,  previous: snap.previousRevenue },
+    { metric: 'Expenses',    current: snap.currentExpenses, previous: snap.previousExpenses },
+    {
+      metric: 'Profit Pool',
+      current:  snap.currentRevenue  - snap.currentExpenses  - (snap.currentRevenue  * 0.20),
+      previous: snap.previousRevenue - snap.previousExpenses - (snap.previousRevenue * 0.20),
+    },
   ]
 }
 
