@@ -1,5 +1,5 @@
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card'
-import { formatZAR } from '@/lib/financial'
+import { formatZAR } from '@/lib/format'
 
 type ExpenseSnapshotProps = {
   expensesByDivision: { divisionName: string; total: number }[]

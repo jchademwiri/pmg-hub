@@ -1,6 +1,7 @@
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card'
 import { ScrollArea } from '@/components/ui/scroll-area'
-import { formatZAR, type DivisionRevenue } from '@/lib/financial'
+import { formatZAR } from '@/lib/format'
+import type { DivisionRevenue } from '@/lib/financial'
 
 type DivisionRevenueProps = {
   divisions: DivisionRevenue[]

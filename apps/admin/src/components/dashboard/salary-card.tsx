@@ -1,5 +1,5 @@
 import { Card, CardHeader, CardTitle, CardContent, CardDescription } from '@/components/ui/card'
-import { formatZAR } from '@/lib/financial'
+import { formatZAR } from '@/lib/format'
 import { AlertTriangle, Wallet, ArrowDownCircle, CheckCircle2 } from 'lucide-react'
 import type { WithdrawalSummary } from '@/lib/financial'
 

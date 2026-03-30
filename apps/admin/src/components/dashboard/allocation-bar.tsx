@@ -1,6 +1,7 @@
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card'
 import { AllocationTooltipBar } from '@/components/dashboard/allocation-tooltip-bar'
-import { formatZAR, type FinancialSummary } from '@/lib/financial'
+import { formatZAR } from '@/lib/format'
+import type { FinancialSummary } from '@/lib/financial'
 
 type AllocationBarProps = { summary: FinancialSummary }
 

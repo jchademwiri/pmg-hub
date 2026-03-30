@@ -1,5 +1,5 @@
 import { Card, CardHeader, CardDescription, CardContent } from '@/components/ui/card'
-import { formatZAR } from '@/lib/financial'
+import { formatZAR } from '@/lib/format'
 import { TrendingUp, TrendingDown, Minus } from 'lucide-react'
 
 type KpiCardProps = {
