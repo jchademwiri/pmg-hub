@@ -1,24 +1,20 @@
 import { db } from "./client";
 import { income, expenses, leads, divisions } from "./schema/index";
-import { sql, eq, desc, asc } from "drizzle-orm";
+import { sql, eq, desc, asc, and, gte, lt, ilike } from "drizzle-orm";
+
+// ── Existing queries (unchanged) ─────────────────────────────────────────────
 
 export async function getTotalRevenue(): Promise<number> {
   const result = await db
-    .select({
-      total: sql<string>`COALESCE(SUM(${income.amount}), '0')`,
-    })
+    .select({ total: sql<string>`COALESCE(SUM(${income.amount}), '0')` })
     .from(income);
-  // COALESCE guarantees exactly one row is always returned
   return Number(result[0]!.total);
 }
 
 export async function getTotalExpenses(): Promise<number> {
   const result = await db
-    .select({
-      total: sql<string>`COALESCE(SUM(${expenses.amount}), '0')`,
-    })
+    .select({ total: sql<string>`COALESCE(SUM(${expenses.amount}), '0')` })
     .from(expenses);
-  // COALESCE guarantees exactly one row is always returned
   return Number(result[0]!.total);
 }
 
@@ -34,10 +30,7 @@ export async function getRevenueByDivision(): Promise<
     .innerJoin(divisions, eq(income.divisionId, divisions.id))
     .groupBy(divisions.name)
     .orderBy(desc(sql`SUM(${income.amount})`));
-  return result.map((row) => ({
-    divisionName: row.divisionName,
-    total: Number(row.total),
-  }));
+  return result.map((row) => ({ divisionName: row.divisionName, total: Number(row.total) }));
 }
 
 export async function getExpensesByDivision(): Promise<
@@ -52,10 +45,7 @@ export async function getExpensesByDivision(): Promise<
     .innerJoin(divisions, eq(expenses.divisionId, divisions.id))
     .groupBy(divisions.name)
     .orderBy(desc(sql`SUM(${expenses.amount})`));
-  return result.map((row) => ({
-    divisionName: row.divisionName,
-    total: Number(row.total),
-  }));
+  return result.map((row) => ({ divisionName: row.divisionName, total: Number(row.total) }));
 }
 
 export async function getMonthlyRevenueByDivision(
@@ -73,15 +63,8 @@ export async function getMonthlyRevenueByDivision(
       sql`${income.date} >= DATE_TRUNC('month', NOW()) - INTERVAL '${sql.raw(String(months - 1))} months'`
     )
     .groupBy(sql`TO_CHAR(${income.date}, 'YYYY-MM')`, divisions.name)
-    .orderBy(
-      sql`TO_CHAR(${income.date}, 'YYYY-MM') ASC`,
-      asc(divisions.name)
-    );
-  return result.map((r) => ({
-    month: r.month,
-    divisionName: r.divisionName,
-    total: Number(r.total),
-  }));
+    .orderBy(sql`TO_CHAR(${income.date}, 'YYYY-MM') ASC`, asc(divisions.name));
+  return result.map((r) => ({ month: r.month, divisionName: r.divisionName, total: Number(r.total) }));
 }
 
 export async function getMonthlyFinancials(): Promise<
@@ -89,55 +72,38 @@ export async function getMonthlyFinancials(): Promise<
 > {
   const result = await db.execute(sql`
     WITH rev AS (
-      SELECT TO_CHAR(date, 'YYYY-MM') AS month,
-             COALESCE(SUM(amount), 0) AS revenue
-      FROM income
-      WHERE EXTRACT(YEAR FROM date) = EXTRACT(YEAR FROM NOW())
+      SELECT TO_CHAR(date, 'YYYY-MM') AS month, COALESCE(SUM(amount), 0) AS revenue
+      FROM income WHERE EXTRACT(YEAR FROM date) = EXTRACT(YEAR FROM NOW())
       GROUP BY TO_CHAR(date, 'YYYY-MM')
     ),
     exp AS (
-      SELECT TO_CHAR(date, 'YYYY-MM') AS month,
-             COALESCE(SUM(amount), 0) AS expenses
-      FROM expenses
-      WHERE EXTRACT(YEAR FROM date) = EXTRACT(YEAR FROM NOW())
+      SELECT TO_CHAR(date, 'YYYY-MM') AS month, COALESCE(SUM(amount), 0) AS expenses
+      FROM expenses WHERE EXTRACT(YEAR FROM date) = EXTRACT(YEAR FROM NOW())
       GROUP BY TO_CHAR(date, 'YYYY-MM')
     )
     SELECT COALESCE(rev.month, exp.month) AS month,
-           COALESCE(rev.revenue, 0)       AS revenue,
-           COALESCE(exp.expenses, 0)      AS expenses
-    FROM rev
-    FULL OUTER JOIN exp ON rev.month = exp.month
+           COALESCE(rev.revenue, 0) AS revenue,
+           COALESCE(exp.expenses, 0) AS expenses
+    FROM rev FULL OUTER JOIN exp ON rev.month = exp.month
     ORDER BY month ASC
-  `)
-  return (result.rows as { month: string; revenue: string; expenses: string }[]).map(r => ({
-    month: r.month,
-    revenue: Number(r.revenue),
-    expenses: Number(r.expenses),
-  }))
-}
-
-export async function getLeadsByStatus(): Promise<
-  { status: string; count: number }[]
-> {
-  const result: { status: string; count: string }[] = await db
-    .select({
-      status: leads.status,
-      count: sql<string>`COUNT(*)`,
-    })
-    .from(leads)
-    .groupBy(leads.status)
-    .orderBy(desc(sql`COUNT(*)`));
-  return result.map((row) => ({
-    status: row.status,
-    count: Number(row.count),
+  `);
+  return (result.rows as { month: string; revenue: string; expenses: string }[]).map((r) => ({
+    month: r.month, revenue: Number(r.revenue), expenses: Number(r.expenses),
   }));
 }
 
+export async function getLeadsByStatus(): Promise<{ status: string; count: number }[]> {
+  const result: { status: string; count: string }[] = await db
+    .select({ status: leads.status, count: sql<string>`COUNT(*)` })
+    .from(leads)
+    .groupBy(leads.status)
+    .orderBy(desc(sql`COUNT(*)`));
+  return result.map((row) => ({ status: row.status, count: Number(row.count) }));
+}
+
 export async function getMoMSnapshot(): Promise<{
-  currentRevenue: number
-  previousRevenue: number
-  currentExpenses: number
-  previousExpenses: number
+  currentRevenue: number; previousRevenue: number;
+  currentExpenses: number; previousExpenses: number;
 }> {
   const result = await db.execute(sql`
     SELECT
@@ -148,7 +114,7 @@ export async function getMoMSnapshot(): Promise<{
                          AND date <  DATE_TRUNC('month', NOW())
                         THEN amount END), 0) AS previous_revenue
     FROM income
-  `)
+  `);
   const expResult = await db.execute(sql`
     SELECT
       COALESCE(SUM(CASE WHEN date >= DATE_TRUNC('month', NOW())
@@ -158,13 +124,181 @@ export async function getMoMSnapshot(): Promise<{
                          AND date <  DATE_TRUNC('month', NOW())
                         THEN amount END), 0) AS previous_expenses
     FROM expenses
-  `)
-  const inc = result.rows[0] as { current_revenue: string; previous_revenue: string }
-  const exp = expResult.rows[0] as { current_expenses: string; previous_expenses: string }
+  `);
+  const inc = result.rows[0] as { current_revenue: string; previous_revenue: string };
+  const exp = expResult.rows[0] as { current_expenses: string; previous_expenses: string };
   return {
     currentRevenue:   Number(inc.current_revenue),
     previousRevenue:  Number(inc.previous_revenue),
     currentExpenses:  Number(exp.current_expenses),
     previousExpenses: Number(exp.previous_expenses),
-  }
+  };
+}
+
+// ── NEW: Period-specific financial summary ────────────────────────────────────
+
+export type PeriodSummary = {
+  revenue: number;
+  expenses: number;
+  pmgShare: number;
+  profitPool: number;
+  salary: number;
+  reinvest: number;
+  reserve: number;
+  flex: number;
+};
+
+/**
+ * Returns financial summary for a specific SQL date range.
+ * startExpr / endExpr are raw SQL expressions e.g.:
+ *   startExpr = "DATE_TRUNC('month', NOW())"
+ *   endExpr   = "DATE_TRUNC('month', NOW()) + INTERVAL '1 month'"
+ */
+export async function getFinancialSummaryForPeriod(
+  startExpr: string,
+  endExpr: string
+): Promise<PeriodSummary> {
+  const revResult = await db.execute(sql`
+    SELECT COALESCE(SUM(amount), 0) AS total
+    FROM income
+    WHERE date >= ${sql.raw(startExpr)} AND date < ${sql.raw(endExpr)}
+  `);
+  const expResult = await db.execute(sql`
+    SELECT COALESCE(SUM(amount), 0) AS total
+    FROM expenses
+    WHERE date >= ${sql.raw(startExpr)} AND date < ${sql.raw(endExpr)}
+  `);
+  const revenue  = Number((revResult.rows[0] as { total: string }).total);
+  const expTotal = Number((expResult.rows[0] as { total: string }).total);
+  const pmgShare   = revenue * 0.20;
+  const profitPool = revenue - expTotal - pmgShare;
+  return {
+    revenue, expenses: expTotal, pmgShare, profitPool,
+    salary:   profitPool * 0.35,
+    reinvest: profitPool * 0.30,
+    reserve:  profitPool * 0.30,
+    flex:     profitPool * 0.05,
+  };
+}
+
+/** Current month summary */
+export async function getCurrentMonthSummary(): Promise<PeriodSummary> {
+  return getFinancialSummaryForPeriod(
+    "DATE_TRUNC('month', NOW())",
+    "DATE_TRUNC('month', NOW()) + INTERVAL '1 month'"
+  );
+}
+
+/** Previous month summary */
+export async function getPreviousMonthSummary(): Promise<PeriodSummary> {
+  return getFinancialSummaryForPeriod(
+    "DATE_TRUNC('month', NOW()) - INTERVAL '1 month'",
+    "DATE_TRUNC('month', NOW())"
+  );
+}
+
+/** Year-to-date summary (Jan 1 → now) */
+export async function getYTDSummary(): Promise<PeriodSummary> {
+  return getFinancialSummaryForPeriod(
+    "DATE_TRUNC('year', NOW())",
+    "NOW() + INTERVAL '1 day'"
+  );
+}
+
+// ── NEW: Withdrawals this month ───────────────────────────────────────────────
+
+/**
+ * Reads expenses where the category contains "withdrawal" or "owner salary"
+ * (case-insensitive). This is the convention for recording salary withdrawals
+ * in the existing expenses table.
+ */
+export async function getWithdrawalsCurrentMonth(): Promise<{
+  total: number;
+  entries: { date: string; description: string | null; amount: number }[];
+}> {
+  const result = await db.execute(sql`
+    SELECT date::text, description, amount
+    FROM expenses
+    WHERE
+      date >= DATE_TRUNC('month', NOW())
+      AND date < DATE_TRUNC('month', NOW()) + INTERVAL '1 month'
+      AND (
+        LOWER(category) LIKE '%withdrawal%'
+        OR LOWER(category) LIKE '%owner salary%'
+        OR LOWER(category) LIKE '%owner draw%'
+      )
+    ORDER BY date DESC
+  `);
+  const entries = (
+    result.rows as { date: string; description: string | null; amount: string }[]
+  ).map((r) => ({ date: r.date, description: r.description, amount: Number(r.amount) }));
+  const total = entries.reduce((sum, e) => sum + e.amount, 0);
+  return { total, entries };
+}
+
+// ── NEW: Division revenue by period for interactive chart ─────────────────────
+
+/**
+ * Returns monthly revenue per division for the last N months.
+ * Used by the interactive division area chart.
+ */
+export async function getDivisionRevenueSeries(months: number): Promise<
+  { month: string; divisionName: string; total: number }[]
+> {
+  const result: { month: string; divisionName: string; total: string }[] = await db
+    .select({
+      month: sql<string>`TO_CHAR(${income.date}, 'YYYY-MM')`,
+      divisionName: divisions.name,
+      total: sql<string>`COALESCE(SUM(${income.amount}), '0')`,
+    })
+    .from(income)
+    .innerJoin(divisions, eq(income.divisionId, divisions.id))
+    .where(
+      sql`${income.date} >= DATE_TRUNC('month', NOW()) - INTERVAL '${sql.raw(String(months - 1))} months'`
+    )
+    .groupBy(sql`TO_CHAR(${income.date}, 'YYYY-MM')`, divisions.name)
+    .orderBy(sql`TO_CHAR(${income.date}, 'YYYY-MM') ASC`, asc(divisions.name));
+  return result.map((r) => ({ month: r.month, divisionName: r.divisionName, total: Number(r.total) }));
+}
+
+/**
+ * Returns revenue per division for the current month only.
+ */
+export async function getDivisionRevenueCurrentMonth(): Promise<
+  { month: string; divisionName: string; total: number }[]
+> {
+  const result: { month: string; divisionName: string; total: string }[] = await db
+    .select({
+      month: sql<string>`TO_CHAR(${income.date}, 'YYYY-MM')`,
+      divisionName: divisions.name,
+      total: sql<string>`COALESCE(SUM(${income.amount}), '0')`,
+    })
+    .from(income)
+    .innerJoin(divisions, eq(income.divisionId, divisions.id))
+    .where(
+      sql`${income.date} >= DATE_TRUNC('month', NOW()) AND ${income.date} < DATE_TRUNC('month', NOW()) + INTERVAL '1 month'`
+    )
+    .groupBy(sql`TO_CHAR(${income.date}, 'YYYY-MM')`, divisions.name)
+    .orderBy(asc(divisions.name));
+  return result.map((r) => ({ month: r.month, divisionName: r.divisionName, total: Number(r.total) }));
+}
+
+/**
+ * Returns revenue per division for year-to-date.
+ */
+export async function getDivisionRevenueYTD(): Promise<
+  { month: string; divisionName: string; total: number }[]
+> {
+  const result: { month: string; divisionName: string; total: string }[] = await db
+    .select({
+      month: sql<string>`TO_CHAR(${income.date}, 'YYYY-MM')`,
+      divisionName: divisions.name,
+      total: sql<string>`COALESCE(SUM(${income.amount}), '0')`,
+    })
+    .from(income)
+    .innerJoin(divisions, eq(income.divisionId, divisions.id))
+    .where(sql`${income.date} >= DATE_TRUNC('year', NOW())`)
+    .groupBy(sql`TO_CHAR(${income.date}, 'YYYY-MM')`, divisions.name)
+    .orderBy(sql`TO_CHAR(${income.date}, 'YYYY-MM') ASC`, asc(divisions.name));
+  return result.map((r) => ({ month: r.month, divisionName: r.divisionName, total: Number(r.total) }));
 }
