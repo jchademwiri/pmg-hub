@@ -1,11 +1,11 @@
 # PMG Control Center — Development Phases
 
 > **Internal developer reference · Playhouse Media Group**
-> `pmg-hub / docs / pmg_control_center_development_phases.md` · March 2026 · v2.0
+> `pmg-hub / docs / pmg_control_center_development_phases.md` · March 2026 · v3.0
 >
-> This document supersedes the original `pmg_control_center_development_phases.md`.
-> All phase plans, folder structures, component lists, and AI prompts have been
-> expanded with full implementation detail.
+> This document supersedes v2.0. Phase 2 has been fully rewritten to reflect
+> the actual dashboard build. Folder structure updated to match the live codebase.
+> All other phase plans remain as the implementation target.
 
 ---
 
@@ -13,9 +13,9 @@
 
 1. [Monorepo Context](#1-monorepo-context)
 2. [Admin App Folder Structure](#2-admin-app-folder-structure)
-3. [Phase 0 — Foundation](#3-phase-0--foundation-already-done-)
-4. [Phase 1 — Financial Engine](#4-phase-1--financial-engine-mvp-)
-5. [Phase 2 — Dashboard UI](#5-phase-2--dashboard-ui)
+3. [Phase 0 — Foundation](#3-phase-0--foundation-complete-)
+4. [Phase 1 — Financial Engine](#4-phase-1--financial-engine-complete-)
+5. [Phase 2 — Dashboard UI](#5-phase-2--dashboard-ui-complete-)
 6. [Phase 3 — Income Management](#6-phase-3--income-management)
 7. [Phase 4 — Expense Management](#7-phase-4--expense-management)
 8. [Phase 5 — Leads Management](#8-phase-5--leads-management)
@@ -32,12 +32,12 @@
 ## 1. Monorepo Context
 
 The PMG Control Center lives in `apps/admin` inside the `pmg-hub` Turborepo monorepo.
-It is the only app in the monorepo built with Next.js 16 — all other apps (`tes`, `aws`, `pmg`) use Astro 6.
+It is the only app in the monorepo built with Next.js 16.
 
 ```
 pmg-hub/
 ├── apps/
-│   ├──      ← Next.js 16 — PMG Control Center (this document)
+│   ├── admin/     ← Next.js 16 — PMG Control Center (this document)
 │   ├── aws/       ← Astro 6 — Apex Web Solutions public site
 │   ├── tes/       ← Astro 6 — Tender Edge Solutions public site
 │   └── pmg/       ← Astro 6 — Playhouse Media Group holding site
@@ -50,106 +50,111 @@ pmg-hub/
     └── ui/                ← @pmg/ui
 ```
 
-The admin app imports the database directly from `@pmg/db` using Drizzle Server Components
-and Server Actions — there is no REST API layer between the UI and the database.
+The admin app imports the database directly from `@pmg/db` using Drizzle Server
+Components and Server Actions — there is no REST API layer between the UI and the
+database.
 
 ---
 
 ## 2. Admin App Folder Structure
 
 > **Next.js 16 breaking change:** `middleware.ts` has been renamed to `proxy.ts`.
-> The exported function must be named `proxy` (or use a default export).
-> The `matcher` config and `NextRequest` / `NextResponse` API are unchanged.
+> The exported function must be named `proxy`. The `matcher` config and
+> `NextRequest` / `NextResponse` API are unchanged.
 
 ```
-apps/src/
+apps/admin/src/
 │
-├── proxy.ts                          ← Auth guard (Next.js 16 — was middleware.ts)
+├── proxy.ts                              ← Auth guard (Next.js 16 — was middleware.ts)
 │
 ├── app/
-│   ├── layout.tsx                    ← Root layout: fonts, noindex meta, globals.css
-│   ├── page.tsx                      ← Redirect → /dashboard
-│   ├── globals.css                   ← Tailwind + PMG admin theme tokens
+│   ├── layout.tsx                        ← Root layout: Noto Sans font, dark class, globals.css
+│   ├── page.tsx                          ← Redirect → /dashboard
+│   ├── globals.css                       ← Tailwind v4 + PMG admin theme (OKLCH tokens)
+│   ├── not-found.tsx                     ← 404 page with quick-link buttons
 │   │
-│   ├── (admin)/                      ← Protected route group
-│   │   ├── layout.tsx                ← Sidebar shell + top nav (wraps all admin pages)
+│   ├── (admin)/                          ← Protected route group
+│   │   ├── layout.tsx                    ← TooltipProvider + SidebarProvider + AppSidebar
+│   │   │                                    + SidebarInset + TopNav + Toaster
 │   │   ├── dashboard/
-│   │   │   └── page.tsx              ← Phase 2 —  Financial Engine
+│   │   │   └── page.tsx                  ← BUILT — fetches all data, renders DashboardShell
 │   │   ├── income/
-│   │   │   ├── page.tsx              ← Phase 3 — income list + add form
-│   │   │   └── [id]/
-│   │   │       └── page.tsx          ← Phase 3 — edit income entry
+│   │   │   ├── page.tsx                  ← Phase 3 stub
+│   │   │   └── [id]/page.tsx             ← Phase 3 stub
 │   │   ├── expenses/
-│   │   │   ├── page.tsx              ← Phase 4 — expense list + add form
-│   │   │   └── [id]/
-│   │   │       └── page.tsx          ← Phase 4 — edit expense entry
+│   │   │   ├── page.tsx                  ← Phase 4 stub
+│   │   │   └── [id]/page.tsx             ← Phase 4 stub
 │   │   ├── leads/
-│   │   │   ├── page.tsx              ← Phase 5 — leads list + status filter
-│   │   │   └── [id]/
-│   │   │       └── page.tsx          ← Phase 5 — lead detail + status update
-│   │   └── divisions/
-│   │       └── page.tsx              ← Phase 6 — manage divisions
+│   │   │   ├── page.tsx                  ← Phase 5 stub
+│   │   │   └── [id]/page.tsx             ← Phase 5 stub
+│   │   ├── divisions/
+│   │   │   └── page.tsx                  ← Phase 6 stub (returns null)
+│   │   └── reports/
+│   │       └── page.tsx                  ← Phase 8 stub (returns null)
 │   │
-│   ├── (auth)/                       ← Public route group (no auth required)
+│   ├── (auth)/
 │   │   └── login/
-│   │       └── page.tsx              ← Magic link login form
+│   │       └── page.tsx                  ← Static placeholder — auth not yet wired
 │   │
-│   └── api/
-│       └── auth/
-│           └── [...all]/
-│               └── route.ts          ← Better Auth handler
+│   └── actions/
+│       └── withdraw.ts                   ← BUILT — recordWithdrawal Server Action
 │
 ├── components/
-│   ├── ui/                           ← Shared primitives (button, card, badge, input…)
+│   ├── ui/                               ← shadcn/ui primitives (button, card, badge,
+│   │                                        input, dialog, sidebar, tooltip, progress,
+│   │                                        scroll-area, select, separator, skeleton,
+│   │                                        sonner, sheet, collapsible, dropdown-menu,
+│   │                                        breadcrumb, avatar, chart)
+│   │
 │   ├── layout/
-│   │   ├── sidebar.tsx               ← Nav sidebar with active route highlight
-│   │   ├── top-nav.tsx               ← Page header + user avatar
-│   │   └── nav-link.tsx              ← Single nav item with icon + label
-│   └── dashboard/
-│       ├── kpi-card.tsx              ← Stat card (label, value, sub-label)
-│       ├── salary-card.tsx           ← Highlighted owner salary card
-│       ├── allocation-bar.tsx        ← Visual breakdown bar (salary/reinvest/reserve/flex)
-│       ├── division-revenue.tsx      ← Per-division revenue list/chart
-│       └── leads-summary.tsx         ← Lead count by status
+│   │   ├── app-sidebar.tsx               ← BUILT — nav items: Dashboard, Income, Expenses,
+│   │   │                                    Leads, Divisions, Reports
+│   │   ├── top-nav.tsx                   ← BUILT — SidebarTrigger + breadcrumb
+│   │   └── nav-link.tsx                  ← BUILT — active route highlight via usePathname
+│   │
+│   ├── dashboard/
+│   │   ├── dashboard-shell.tsx           ← BUILT — client component, manages period tab state
+│   │   ├── kpi-grid.tsx                  ← BUILT — 4-card grid with MoM delta badges
+│   │   ├── kpi-card.tsx                  ← BUILT — individual KPI card (used elsewhere)
+│   │   ├── salary-card.tsx               ← BUILT — salary + withdrawal tracking + modal trigger
+│   │   ├── withdraw-modal.tsx            ← BUILT — dialog for recording withdrawals
+│   │   ├── revenue-sparkline.tsx         ← BUILT — 6-month revenue vs expenses area chart
+│   │   ├── division-area-chart.tsx       ← BUILT — interactive stacked area chart (5 ranges)
+│   │   ├── division-revenue.tsx          ← BUILT — per-division bar with revenue + expense
+│   │   ├── leads-summary.tsx             ← BUILT — status breakdown with progress bars
+│   │   ├── expense-snapshot.tsx          ← BUILT — stacked bar + division breakdown cards
+│   │   ├── allocation-bar.tsx            ← BUILT — profit pool allocation breakdown
+│   │   └── allocation-tooltip-bar.tsx    ← BUILT — interactive tooltip bar (client component)
+│   │
+│   └── reports/
+│       ├── mom-comparison-chart.tsx      ← Phase 8 — MoM bar chart (built, not yet wired)
+│       ├── revenue-by-division-chart.tsx ← Phase 8 — stacked area chart (built, not yet wired)
+│       └── revenue-vs-expenses-chart.tsx ← Phase 8 — line chart (built, not yet wired)
 │
 ├── lib/
-│   ├── auth.ts                       ← Better Auth server config
-│   ├── auth-client.ts                ← Better Auth client config
-│   └── financial.ts                  ← Phase 1 — financial engine (core calculations)
+│   ├── financial.ts                      ← BUILT — data fetching layer, type re-exports
+│   └── format.ts                         ← BUILT — formatZAR utility
 │
-└── actions/                          ← Server Actions (Phases 3–6)
-    ├── income.ts                     ← createIncome, updateIncome, deleteIncome
-    ├── expenses.ts                   ← createExpense, updateExpense, deleteExpense
-    ├── leads.ts                      ← updateLeadStatus, updateLeadNotes
-    └── divisions.ts                  ← createDivision, updateDivision
+└── hooks/
+    └── use-mobile.ts                     ← BUILT — mobile breakpoint hook for sidebar
 ```
 
 ### `src/proxy.ts` — Next.js 16 auth guard
 
 ```ts
 // src/proxy.ts
-import { NextResponse } from 'next/server'
-import type { NextRequest } from 'next/server'
+import { NextResponse, type NextRequest } from 'next/server'
 
-export function proxy(request: NextRequest) {
-  const session = request.cookies.get('better-auth.session_token')
-
-  if (!session) {
-    return NextResponse.redirect(new URL('/login', request.url))
-  }
-
+export function proxy(_request: NextRequest) {
+  // Auth disabled — re-enable by restoring cookie check (Phase 9)
   return NextResponse.next()
 }
 
-export const config = {
-  matcher: ['/:path*'],
-}
+export const config = { matcher: ['/:path*'] }
 ```
 
-> **Note:** The proxy performs an *optimistic* cookie presence check only.
-> Full session validation happens inside Better Auth via the
-> `api/auth/[...all]/route.ts` handler. Do not use the proxy for
-> database calls or heavy logic — it runs on every request.
+> Auth will be wired in Phase 9. When active, the proxy checks for
+> `better-auth.session_token` and redirects to `/login` if absent.
 
 ---
 
@@ -159,33 +164,17 @@ export const config = {
 
 - Monorepo scaffolded with Bun + Turborepo
 - `packages/db` with Drizzle ORM + Neon PostgreSQL
-- Schema tables: `divisions`, `clients`, `income`, `expenses`, `leads`, `aws_pricing`
+- Schema tables: `divisions`, `clients`, `income`, `expenses`, `leads`,
+  `withdrawals`, `aws_pricing`
 - Migrations applied — database is live on Neon
-- Seed data: 3 divisions, 3 clients, 5 packages, sample income/expenses/leads
-- Query helpers in `packages/db/src/queries.ts`:
-  - `getTotalRevenue()`
-  - `getTotalExpenses()`
-  - `getRevenueByDivision()`
-  - `getExpensesByDivision()`
-  - `getLeadsByStatus()`
+- Seed data: 3 divisions, 9 clients, 5 packages, 12 months of income/expenses
+  (Apr 2025 – Mar 2026), 21 leads
+- Query helpers in `packages/db/src/queries.ts` — see Phase 1 and Phase 2 for full list
 - Vitest unit + property-based tests passing
-
-### Phase 0 cleanup tasks
-
-- [x] Verify all foreign keys are enforced (`division_id`, `client_id`)
-- [x] Confirm `numeric(12,2)` on all `amount` fields (not plain `integer`)
-- [x] Add `@pmg/db": "*"` to `apps/package.json` if not already present
-- [x] Run `bun install` from root to link workspace packages
-- [x] Confirm `DATABASE_URL` is set in `apps/.env.local`
 
 ---
 
 ## 4. Phase 1 — Financial Engine ✅ COMPLETE
-
-### Goal
-
-Implement the PMG financial model as a pure server-side calculation layer.
-This is the brain of the entire system — every dashboard number flows through here.
 
 ### Financial model
 
@@ -202,480 +191,210 @@ Reserve      =  profitPool × 0.30
 Flex         =  profitPool × 0.05
 ```
 
-### Allocation meaning
-
-| Allocation | % | Role | Purpose |
-|---|---|---|---|
-| PMG Share | 20% of revenue | Business backbone | Shared infrastructure, admin, scalability |
-| Salary | 35% of profit | Personal stability | Fixed owner income — never guessed |
-| Reinvest | 30% of profit | Growth engine | Ads, tools, hiring, product development |
-| Reserve | 30% of profit | Risk protection | Emergency fund and stability buffer |
-| Flex | 5% of profit | Reward system | Controlled discretionary spending |
-
-### Files to create
-
-**`apps/src/lib/financial.ts`**
-
-```ts
-import {
-  getTotalRevenue,
-  getTotalExpenses,
-  getRevenueByDivision,
-  getExpensesByDivision,
-  getLeadsByStatus,
-} from '@pmg/db'
-
-export type FinancialSummary = {
-  revenue: number
-  expenses: number
-  pmgShare: number
-  profitPool: number
-  salary: number
-  reinvest: number
-  reserve: number
-  flex: number
-}
-
-export type DivisionRevenue = {
-  divisionName: string
-  total: number
-}
-
-export type LeadStatusCount = {
-  status: string
-  count: number
-}
-
-export async function getFinancialSummary(): Promise<FinancialSummary> {
-  const [revenue, expenses] = await Promise.all([
-    getTotalRevenue(),
-    getTotalExpenses(),
-  ])
-
-  const pmgShare = revenue * 0.2
-  const profitPool = revenue - expenses - pmgShare
-
-  return {
-    revenue,
-    expenses,
-    pmgShare,
-    profitPool,
-    salary: profitPool * 0.35,
-    reinvest: profitPool * 0.30,
-    reserve: profitPool * 0.30,
-    flex: profitPool * 0.05,
-  }
-}
-
-export async function getDivisionRevenue(): Promise<DivisionRevenue[]> {
-  return getRevenueByDivision()
-}
-
-export async function getLeadCounts(): Promise<LeadStatusCount[]> {
-  return getLeadsByStatus()
-}
-
-export function formatZAR(amount: number): string {
-  return new Intl.NumberFormat('en-ZA', {
-    style: 'currency',
-    currency: 'ZAR',
-    minimumFractionDigits: 2,
-  }).format(amount)
-}
-```
-
-### AI prompt
-
-```
-In apps/src/lib/financial.ts, create a financial engine that:
-
-1. Imports getTotalRevenue, getTotalExpenses, getRevenueByDivision,
-   getLeadsByStatus from '@pmg/db'
-
-2. Exports getFinancialSummary() → returns:
-   { revenue, expenses, pmgShare, profitPool, salary, reinvest, reserve, flex }
-   using the PMG model:
-     pmgShare = revenue * 0.20
-     profitPool = revenue - expenses - pmgShare
-     salary = profitPool * 0.35
-     reinvest = profitPool * 0.30
-     reserve = profitPool * 0.30
-     flex = profitPool * 0.05
-
-3. Exports getDivisionRevenue() and getLeadCounts() as thin wrappers
-
-4. Exports formatZAR(amount: number) using Intl.NumberFormat en-ZA ZAR
-
-Export TypeScript types for FinancialSummary, DivisionRevenue, LeadStatusCount.
-No 'use client'. This file is server-only.
-```
-
 ### What was delivered
 
-- `apps/src/lib/financial.ts` — server-only financial engine with `getFinancialSummary()`, `getDivisionRevenue()`, `getLeadCounts()`, `formatZAR()`
-- `apps/src/__tests__/financial.test.ts` — full Vitest suite with unit tests and 9 property-based tests (fast-check), all passing
-- `apps/vitest.config.ts` — Vitest configured with `node` environment and `@/*` path alias
-- `packages/db/src/index.ts` — exports `* from './queries'` so named imports resolve correctly
-- `packages/db/src/queries.ts` — typed query helpers with explicit result types; `noUncheckedIndexedAccess` and `noImplicitAny` clean
-- `packages/db/tsconfig.json` — `moduleResolution: Bundler` to match the Bun/Next.js bundler environment
+**`packages/db/src/queries.ts`** — all query helpers:
+- `getTotalRevenue()` / `getTotalExpenses()` — all-time aggregates
+- `getRevenueByDivision()` / `getExpensesByDivision()` — division breakdowns
+- `getMonthlyRevenueByDivision(months)` — stacked chart data
+- `getMonthlyFinancials()` — current year revenue vs expenses by month
+- `getLeadsByStatus()` — lead count per status
+- `getMoMSnapshot()` — current vs previous month revenue and expenses
+- `getFinancialSummaryForPeriod(startExpr, endExpr)` — period-based P&L
+- `getCurrentMonthSummary()` — current calendar month `PeriodSummary`
+- `getPreviousMonthSummary()` — previous calendar month `PeriodSummary`
+- `getYTDSummary()` — year-to-date `PeriodSummary`
+- `getWithdrawalsCurrentMonth()` — withdrawal total + entries for current month
+- `insertWithdrawal(amount, date)` — insert new withdrawal record
+- `getDivisionRevenueSeries(months)` — N-month series for area chart
+- `getDivisionRevenueCurrentMonth()` — current month series
+- `getDivisionRevenuePreviousMonth()` — previous month series
+- `getDivisionRevenueYTD()` — YTD series
+
+**`apps/admin/src/lib/financial.ts`** — server-only data orchestration layer:
+- `getFinancialSummary()` — all-time summary (kept for tests)
+- `getCurrentMonthSummary()` / `getPreviousMonthSummary()` / `getYTDSummary()` — re-exported from `@pmg/db`
+- `getDivisionRevenue()` / `getLeadCounts()` — thin wrappers
+- `getMonthlyFinancialsSeries()` — monthly chart data
+- `getMoMChartData()` — MoM snapshot shaped for the report chart
+- `getWithdrawals()` — current month withdrawal summary
+- `getAllDivisionSeriesData()` — all five range variants fetched in one `Promise.all`
+- `getCurrentMonthLabel()` / `getPreviousMonthLabel()` / `getYTDLabel()` — period label strings
+- `getExpensesByDivision()` — re-exported from `@pmg/db`
+
+**`apps/admin/src/lib/format.ts`**:
+- `formatZAR(amount)` — `Intl.NumberFormat` en-ZA ZAR formatting
+
+**`apps/admin/src/__tests__/financial.test.ts`** — full Vitest suite with unit and
+property-based tests (fast-check), all passing.
+
+### Exported types
+
+```ts
+export type PeriodSummary = {
+  revenue: number; expenses: number; pmgShare: number; profitPool: number;
+  salary: number; reinvest: number; reserve: number; flex: number;
+}
+export type FinancialSummary   // same shape as PeriodSummary, kept for compat
+export type DivisionRevenue    // { divisionName: string; total: number }
+export type LeadStatusCount    // { status: string; count: number }
+export type MonthlyFinancials  // { month: string; revenue: number; expenses: number }
+export type MoMSnapshot        // { metric: string; current: number; previous: number }
+export type WithdrawalSummary  // { total: number; entries: [...] }
+export type DivisionSeriesRow  // { month: string; divisionName: string; total: number }
+export type DivisionSeriesChart // { series: MonthlyRevenueByDivision[]; divisions: string[] }
+```
 
 ---
 
-## 5. Phase 2 — Dashboard UI
+## 5. Phase 2 — Dashboard UI ✅ COMPLETE
 
-### Goal
+### What was built
 
-Build the real-time financial overview — the first page an admin sees on login.
-Every number on this page is calculated at request time from live database data.
-No client state, no loading spinners, no API calls from the browser — pure Server Components.
+The dashboard significantly exceeds the original Phase 2 spec. It includes
+interactive period switching, MoM comparisons, recharts-powered charts, salary
+withdrawal tracking, and a five-range division area chart.
 
-### Data flow
+### Architecture
 
 ```
 packages/db (Drizzle + Neon)
-        ↓
-lib/financial.ts  (getFinancialSummary, getDivisionRevenue, getLeadCounts)
-        ↓
-app/(admin)/dashboard/page.tsx  [Server Component — awaits all data]
-        ↓
-components/dashboard/*  [pure presentational components]
+         ↓
+lib/financial.ts  (all data fetching functions)
+         ↓
+app/(admin)/dashboard/page.tsx  [Server Component — 10 parallel fetches]
+         ↓
+DashboardShell  [Client Component — owns period tab state]
+         ↓
+KpiGrid · SalaryCard · RevenueSparkline · DivisionAreaChart
+DivisionRevenue · LeadsSummary · ExpenseSnapshot
 ```
 
 ### Route
 
-`/dashboard` — protected by `src/proxy.ts` matcher
+`/dashboard` — default landing page (redirected from `/`)
 
-### Files to create
+### `app/(admin)/dashboard/page.tsx`
 
-#### `app/(admin)/layout.tsx` — sidebar shell
-
-```ts
-// This layout wraps every /* page with the sidebar and top nav.
-// It is a Server Component — no 'use client'.
-import { Sidebar } from '@/components/layout/sidebar'
-import { TopNav } from '@/components/layout/top-nav'
-
-export default function AdminLayout({
-  children,
-}: {
-  children: React.ReactNode
-}) {
-  return (
-    <div className="flex h-screen overflow-hidden bg-zinc-950">
-      <Sidebar />
-      <div className="flex flex-1 flex-col overflow-hidden">
-        <TopNav />
-        <main className="flex-1 overflow-y-auto p-6">{children}</main>
-      </div>
-    </div>
-  )
-}
-```
-
-#### `app/(admin)/dashboard/page.tsx` — dashboard page
+An async Server Component that fires all data fetches in a single `Promise.all`:
 
 ```ts
-import { getFinancialSummary, getDivisionRevenue, getLeadCounts } from '@/lib/financial'
-import { KpiCard } from '@/components/dashboard/kpi-card'
-import { SalaryCard } from '@/components/dashboard/salary-card'
-import { AllocationBar } from '@/components/dashboard/allocation-bar'
-import { DivisionRevenue } from '@/components/dashboard/division-revenue'
-import { LeadsSummary } from '@/components/dashboard/leads-summary'
-
-export default async function DashboardPage() {
-  const [summary, divisions, leads] = await Promise.all([
-    getFinancialSummary(),
-    getDivisionRevenue(),
-    getLeadCounts(),
-  ])
-
-  return (
-    <div className="space-y-6">
-      <h1 className="text-2xl font-semibold text-white">Dashboard</h1>
-
-      {/* KPI row */}
-      <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
-        <KpiCard label="Total Revenue" value={summary.revenue} />
-        <KpiCard label="Total Expenses" value={summary.expenses} />
-        <KpiCard label="PMG Share (20%)" value={summary.pmgShare} />
-        <KpiCard label="Profit Pool" value={summary.profitPool} />
-      </div>
-
-      {/* Salary highlight + allocation breakdown */}
-      <div className="grid grid-cols-1 gap-4 lg:grid-cols-3">
-        <SalaryCard salary={summary.salary} />
-        <div className="lg:col-span-2">
-          <AllocationBar summary={summary} />
-        </div>
-      </div>
-
-      {/* Division + leads row */}
-      <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
-        <DivisionRevenue divisions={divisions} />
-        <LeadsSummary leads={leads} />
-      </div>
-    </div>
-  )
-}
+const [
+  ytdSummary,
+  currentMonthSummary,
+  previousMonthSummary,
+  divisions,
+  leads,
+  monthlySeries,
+  withdrawals,
+  divisionSeriesData,
+  momData,
+  expensesByDivision,
+] = await Promise.all([...])
 ```
 
-### Components to create
+It then computes labels, MoM deltas, and the division expense map before
+passing everything down to `DashboardShell` as props.
 
-#### `components/dashboard/kpi-card.tsx`
+### `DashboardShell` (client component)
 
-```ts
-import { formatZAR } from '@/lib/financial'
+Manages `activeTab` state (`'current' | 'previous' | 'ytd'`). Renders the
+period tab switcher and passes the correct `PeriodSummary` to each child.
+MoM delta badges are only shown on the `'current'` tab.
 
-type Props = { label: string; value: number; sub?: string }
+### Period tab switcher
 
-export function KpiCard({ label, value, sub }: Props) {
-  return (
-    <div className="rounded-xl border border-zinc-800 bg-zinc-900 p-5">
-      <p className="text-sm text-zinc-400">{label}</p>
-      <p className="mt-1 text-2xl font-semibold text-white">{formatZAR(value)}</p>
-      {sub && <p className="mt-1 text-xs text-zinc-500">{sub}</p>}
-    </div>
-  )
-}
-```
+Three pill tabs with an active label showing the human-readable period
+(e.g. "March 2026", "February 2026", "Jan – Mar 2026"). Tab switching is
+instant — no refetch, all data is already in memory.
 
-#### `components/dashboard/salary-card.tsx`
+### KPI grid
 
-Highlighted card — visually distinct from `KpiCard` to signal it is the owner's take-home.
+Four cards in a 2×2 (mobile) / 1×4 (desktop) grid:
 
-```ts
-import { formatZAR } from '@/lib/financial'
+| Card | Value | Delta |
+|---|---|---|
+| Total Revenue | `summary.revenue` | MoM vs previous month revenue |
+| Total Expenses | `summary.expenses` | MoM inverted (up = bad) |
+| PMG Share (20%) | `summary.pmgShare` | MoM |
+| Profit Pool | `summary.profitPool` | MoM — red border when negative |
 
-export function SalaryCard({ salary }: { salary: number }) {
-  return (
-    <div className="rounded-xl border border-amber-500/40 bg-amber-500/10 p-5">
-      <p className="text-sm text-amber-400">Recommended Owner Salary</p>
-      <p className="mt-1 text-3xl font-bold text-amber-300">{formatZAR(salary)}</p>
-      <p className="mt-1 text-xs text-amber-500/70">35% of profit pool · calculated, not guessed</p>
-    </div>
-  )
-}
-```
+`DeltaBadge` shows TrendingUp/TrendingDown icon + percentage vs previous month.
+The percentage is always shown as positive with a direction indicator.
 
-#### `components/dashboard/allocation-bar.tsx`
+### Salary card
 
-Visual percentage breakdown bar showing all four allocations.
+Teal-bordered card showing:
+- **Recommended salary** — `salary` from the active `PeriodSummary`
+- **YTD salary** — sub-label from `ytdSummary.salary` (always shown)
+- **Withdraw button** — only visible on Current Month tab when `profitPool >= 0`
+- **Withdrawal tracking** — current month only:
+  - Withdrawn amount (amber if > 0)
+  - Balance remaining (green) or Overdrawn (red)
+  - "Nothing yet" hint if no withdrawals recorded
+- **Warning state** — red border, red text, and explanatory copy when
+  `profitPool < 0`. The withdraw button is hidden.
 
-```ts
-import type { FinancialSummary } from '@/lib/financial'
-import { formatZAR } from '@/lib/financial'
+**Withdrawal flow:**
+1. User clicks "Withdraw" button
+2. `WithdrawModal` opens (shadcn `Dialog`)
+3. User enters amount → calls `recordWithdrawal(amount)` Server Action
+4. On success: modal closes, `router.refresh()` reloads the page data
 
-const ALLOCATIONS = [
-  { key: 'salary',   label: 'Salary',    pct: 35, color: 'bg-amber-400' },
-  { key: 'reinvest', label: 'Reinvest',  pct: 30, color: 'bg-blue-500'  },
-  { key: 'reserve',  label: 'Reserve',   pct: 30, color: 'bg-teal-500'  },
-  { key: 'flex',     label: 'Flex',      pct: 5,  color: 'bg-purple-500' },
-] as const
+### Revenue sparkline
 
-export function AllocationBar({ summary }: { summary: FinancialSummary }) {
-  return (
-    <div className="rounded-xl border border-zinc-800 bg-zinc-900 p-5">
-      <p className="mb-3 text-sm text-zinc-400">Profit Pool Allocation</p>
+`RevenueSparkline` — recharts `AreaChart` showing last 6 months of revenue vs
+expenses as overlapping areas. Revenue uses `--chart-1` (teal family), expenses
+use `--chart-expense` (warm orange). Custom tooltip shows revenue, expenses,
+and net for the hovered month. Trend label compares first to last data point.
 
-      {/* Stacked bar */}
-      <div className="flex h-3 w-full overflow-hidden rounded-full">
-        {ALLOCATIONS.map((a) => (
-          <div key={a.key} className={`${a.color}`} style={{ width: `${a.pct}%` }} />
-        ))}
-      </div>
+### Interactive division area chart
 
-      {/* Legend */}
-      <div className="mt-4 grid grid-cols-2 gap-3">
-        {ALLOCATIONS.map((a) => (
-          <div key={a.key} className="flex items-center justify-between">
-            <div className="flex items-center gap-2">
-              <span className={`h-2 w-2 rounded-full ${a.color}`} />
-              <span className="text-xs text-zinc-400">{a.label} ({a.pct}%)</span>
-            </div>
-            <span className="text-xs font-medium text-white">
-              {formatZAR(summary[a.key])}
-            </span>
-          </div>
-        ))}
-      </div>
-    </div>
-  )
-}
-```
+`DivisionAreaChart` — recharts stacked `AreaChart` with five range selectors.
 
-#### `components/dashboard/division-revenue.tsx`
+| Range | Data source |
+|---|---|
+| This Month | `divisionSeriesData.current` |
+| Prev Month | `divisionSeriesData.prev` |
+| Last 3 Months | `divisionSeriesData.last3` |
+| Last 6 Months | `divisionSeriesData.last6` |
+| Year to Date | `divisionSeriesData.ytd` |
 
-```ts
-import type { DivisionRevenue as DRType } from '@/lib/financial'
-import { formatZAR } from '@/lib/financial'
+Range switching is purely client-side — all five datasets were fetched
+server-side and are already in memory. Division colours cycle through
+`--chart-1` to `--chart-5`. Custom tooltip shows all division values plus
+a grand total. Summary pills below the chart show each division's total and
+percentage for the selected range.
 
-export function DivisionRevenue({ divisions }: { divisions: DRType[] }) {
-  const max = Math.max(...divisions.map((d) => d.total), 1)
+### Division revenue card
 
-  return (
-    <div className="rounded-xl border border-zinc-800 bg-zinc-900 p-5">
-      <p className="mb-4 text-sm text-zinc-400">Revenue by Division</p>
-      <div className="space-y-3">
-        {divisions.map((d) => (
-          <div key={d.divisionName}>
-            <div className="mb-1 flex justify-between text-xs">
-              <span className="text-zinc-300">{d.divisionName}</span>
-              <span className="text-zinc-400">{formatZAR(d.total)}</span>
-            </div>
-            <div className="h-1.5 w-full overflow-hidden rounded-full bg-zinc-800">
-              <div
-                className="h-full rounded-full bg-blue-500"
-                style={{ width: `${(d.total / max) * 100}%` }}
-              />
-            </div>
-          </div>
-        ))}
-        {divisions.length === 0 && (
-          <p className="text-xs text-zinc-600">No income recorded yet.</p>
-        )}
-      </div>
-    </div>
-  )
-}
-```
+`DivisionRevenue` — scrollable list of divisions. Each division shows:
+- Division name + net profit label (green / red)
+- Revenue bar (proportional to max division revenue)
+- Expense bar (same scale) in a different colour
+- Revenue and expense amounts as labels
 
-#### `components/dashboard/leads-summary.tsx`
+Expense data comes from `divisionExpenseMap` built in the page from
+`getExpensesByDivision()`.
 
-```ts
-import type { LeadStatusCount } from '@/lib/financial'
+### Leads summary
 
-const STATUS_COLORS: Record<string, string> = {
-  new:       'bg-blue-500',
-  contacted: 'bg-amber-500',
-  converted: 'bg-teal-500',
-  lost:      'bg-zinc-600',
-}
+`LeadsSummary` — three headline metrics (New count, Converted count, Win Rate)
+plus a per-status breakdown with `Progress` bars. Status order: new →
+contacted → converted → lost. Win rate = converted / (converted + lost).
 
-export function LeadsSummary({ leads }: { leads: LeadStatusCount[] }) {
-  const total = leads.reduce((sum, l) => sum + l.count, 0)
+### Expense snapshot
 
-  return (
-    <div className="rounded-xl border border-zinc-800 bg-zinc-900 p-5">
-      <p className="mb-4 text-sm text-zinc-400">Leads by Status</p>
-      <div className="space-y-3">
-        {leads.map((l) => (
-          <div key={l.status} className="flex items-center justify-between">
-            <div className="flex items-center gap-2">
-              <span className={`h-2 w-2 rounded-full ${STATUS_COLORS[l.status] ?? 'bg-zinc-500'}`} />
-              <span className="text-sm capitalize text-zinc-300">{l.status}</span>
-            </div>
-            <div className="flex items-center gap-3">
-              <div className="h-1.5 w-24 overflow-hidden rounded-full bg-zinc-800">
-                <div
-                  className={`h-full rounded-full ${STATUS_COLORS[l.status] ?? 'bg-zinc-500'}`}
-                  style={{ width: `${total > 0 ? (l.count / total) * 100 : 0}%` }}
-                />
-              </div>
-              <span className="w-6 text-right text-xs text-zinc-400">{l.count}</span>
-            </div>
-          </div>
-        ))}
-        {leads.length === 0 && (
-          <p className="text-xs text-zinc-600">No leads yet.</p>
-        )}
-      </div>
-    </div>
-  )
-}
-```
+`ExpenseSnapshot` — only renders when `expensesByDivision.length > 0 && totalExpenses > 0`.
+Shows a stacked proportion bar across the top, then a three-column card grid
+with each division's expense total and percentage of the overall total.
 
-### Layout components to create
+### Allocation bar
 
-#### `components/layout/sidebar.tsx`
-
-```ts
-import Link from 'next/link'
-import { NavLink } from './nav-link'
-
-const NAV_ITEMS = [
-  { href: '/dashboard', label: 'Dashboard',  icon: 'grid'     },
-  { href: '/income',    label: 'Income',      icon: 'trending-up' },
-  { href: '/expenses',  label: 'Expenses',    icon: 'trending-down' },
-  { href: '/leads',     label: 'Leads',       icon: 'users'    },
-  { href: '/divisions', label: 'Divisions',   icon: 'layers'   },
-]
-
-export function Sidebar() {
-  return (
-    <aside className="flex w-56 flex-col border-r border-zinc-800 bg-zinc-950 px-3 py-6">
-      <div className="mb-8 px-3">
-        <p className="text-xs font-semibold uppercase tracking-widest text-zinc-500">PMG</p>
-        <p className="text-sm font-semibold text-white">Control Center</p>
-      </div>
-      <nav className="flex flex-col gap-1">
-        {NAV_ITEMS.map((item) => (
-          <NavLink key={item.href} href={item.href} label={item.label} />
-        ))}
-      </nav>
-    </aside>
-  )
-}
-```
-
-#### `components/layout/nav-link.tsx`
-
-```ts
-'use client'
-
-import Link from 'next/link'
-import { usePathname } from 'next/navigation'
-
-type Props = { href: string; label: string }
-
-export function NavLink({ href, label }: Props) {
-  const pathname = usePathname()
-  const active = pathname === href || pathname.startsWith(href + '/')
-
-  return (
-    <Link
-      href={href}
-      className={`rounded-lg px-3 py-2 text-sm transition-colors ${
-        active
-          ? 'bg-zinc-800 text-white'
-          : 'text-zinc-400 hover:bg-zinc-800/50 hover:text-zinc-200'
-      }`}
-    >
-      {label}
-    </Link>
-  )
-}
-```
-
-### AI prompt
-
-```
-In apps/admin, build Phase 2 — the dashboard UI. All components are Server Components
-unless they need usePathname (NavLink only).
-
-1. Create app/(admin)/layout.tsx with a fixed sidebar (Sidebar component, w-56)
-   and a main content area with TopNav at the top and a scrollable <main>.
-
-2. Create app/(admin)/dashboard/page.tsx as an async Server Component that:
-   - Calls getFinancialSummary(), getDivisionRevenue(), getLeadCounts()
-     from '@/lib/financial' using Promise.all
-   - Renders a 4-column KPI grid (revenue, expenses, pmgShare, profitPool)
-   - Renders SalaryCard (amber highlight) + AllocationBar side by side
-   - Renders DivisionRevenue + LeadsSummary in a 2-column grid
-
-3. Create these components in components/dashboard/:
-   - kpi-card.tsx — rounded-xl zinc-900 card, label + formatZAR value
-   - salary-card.tsx — amber border/bg highlight, formatZAR, "calculated not guessed" sub-label
-   - allocation-bar.tsx — stacked bar (35/30/30/5%) + legend grid with amounts
-   - division-revenue.tsx — horizontal bar per division, proportional to max
-   - leads-summary.tsx — per-status count with coloured dot + inline bar
-
-4. Create components/layout/sidebar.tsx (Server) and nav-link.tsx ('use client',
-   usePathname for active state).
-
-Use Tailwind only. No shadcn yet. Dark theme: zinc-950 bg, zinc-900 cards,
-zinc-800 borders. Amber for salary, blue for income/revenue, teal for converted leads.
-No 'use client' except NavLink.
-```
+`AllocationBar` — horizontal stacked bar divided into four segments (35/30/30/5%
+of profit pool) with a 2×2 legend grid showing label, percentage, and ZAR amount.
+`AllocationTooltipBar` is a client component that wraps each segment in a Radix
+`Tooltip` showing the exact amount on hover.
 
 ---
 
@@ -691,19 +410,15 @@ Every entry must have a division. Client is optional.
 `/income` — list + inline add form
 `/income/[id]` — edit entry
 
-### Database tables used
-
-`income`, `divisions`, `clients`
-
 ### Features
 
 - Sortable list: date descending by default
-- Filter by division (select dropdown)
-- Filter by date range (month picker)
-- Inline "Add Income" form (no modal — stays on the same page via Server Action)
-- Edit entry → `/income/[id]`
-- Delete entry (with confirm)
-- Running total visible at top of list
+- Filter by division (select dropdown) and month
+- Inline "Add Income" form — no modal, form action calls `createIncome` Server Action
+- Table: date | division | client | description | amount | edit | delete
+- Edit → `/income/[id]`
+- Delete with confirm
+- Running total visible at top
 
 ### Server Actions — `actions/income.ts`
 
@@ -725,20 +440,15 @@ const IncomeSchema = z.object({
 
 export async function createIncome(formData: FormData) {
   const parsed = IncomeSchema.parse(Object.fromEntries(formData))
-  await db.insert(income).values({
-    ...parsed,
-    amount: String(parsed.amount),
-  })
+  await db.insert(income).values({ ...parsed, amount: String(parsed.amount) })
   revalidatePath('/income')
   revalidatePath('/dashboard')
 }
 
 export async function updateIncome(id: string, formData: FormData) {
   const parsed = IncomeSchema.parse(Object.fromEntries(formData))
-  await db.update(income).set({
-    ...parsed,
-    amount: String(parsed.amount),
-  }).where(eq(income.id, id))
+  await db.update(income).set({ ...parsed, amount: String(parsed.amount) })
+    .where(eq(income.id, id))
   revalidatePath('/income')
   revalidatePath('/dashboard')
 }
@@ -750,72 +460,32 @@ export async function deleteIncome(id: string) {
 }
 ```
 
-### AI prompt
-
-```
-Build Phase 3 — Income Management in apps/admin.
-
-1. Create app/(admin)/income/page.tsx (Server Component):
-   - Fetches all income with division name and client name via Drizzle join
-   - Shows running total at top using formatZAR
-   - Renders an inline "Add Income" form (date, division select, client select,
-     description, amount) — form action calls createIncome Server Action
-   - Renders a table: date | division | client | description | amount | edit | delete
-   - Delete calls deleteIncome; edit links to /income/[id]
-   - Accepts ?division= and ?month= search params for filtering (use searchParams prop)
-
-2. Create app/(admin)/income/[id]/page.tsx (Server Component):
-   - Fetches the income entry by id
-   - Renders a pre-filled edit form, submit calls updateIncome Server Action
-   - Cancel button links back to /income
-
-3. Create actions/income.ts with createIncome, updateIncome, deleteIncome
-   as shown above. Each action revalidates /income and /dashboard.
-
-4. Division and client selects are populated from the database (Server Component
-   fetches divisions and clients and passes them as props to the form component).
-
-Use Zod for validation. Use 'use server' on every action file.
-No client-side state — form submissions drive everything.
-```
-
 ---
 
 ## 7. Phase 4 — Expense Management
 
 ### Goal
 
-Track every business expense. Every expense must have a division and a category.
-Categories are freeform text (not an enum) so they can evolve without migrations.
+Track every business expense. Division and category are required.
+Categories are freeform text.
 
 ### Route
 
 `/expenses` — list + inline add form
 `/expenses/[id]` — edit entry
 
-### Database tables used
-
-`expenses`, `divisions`
-
 ### Features
 
-- Sortable list: date descending by default
 - Filter by division, category, and month
-- Category autocomplete (derived from existing expense categories — no hardcoded list)
-- Running total and breakdown by category visible at top
+- Category autocomplete via datalist from existing categories
+- Running total and category breakdown at top
 - Inline add form
 - Edit + delete
 
 ### Server Actions — `actions/expenses.ts`
 
+Mirror the structure of `actions/income.ts` with `ExpenseSchema`:
 ```ts
-'use server'
-
-import { db, expenses } from '@pmg/db'
-import { revalidatePath } from 'next/cache'
-import { eq } from 'drizzle-orm'
-import { z } from 'zod'
-
 const ExpenseSchema = z.object({
   date:        z.string().min(1),
   divisionId:  z.string().uuid(),
@@ -823,54 +493,9 @@ const ExpenseSchema = z.object({
   description: z.string().optional(),
   amount:      z.coerce.number().positive(),
 })
-
-export async function createExpense(formData: FormData) {
-  const parsed = ExpenseSchema.parse(Object.fromEntries(formData))
-  await db.insert(expenses).values({
-    ...parsed,
-    amount: String(parsed.amount),
-  })
-  revalidatePath('/expenses')
-  revalidatePath('/dashboard')
-}
-
-export async function updateExpense(id: string, formData: FormData) {
-  const parsed = ExpenseSchema.parse(Object.fromEntries(formData))
-  await db.update(expenses).set({
-    ...parsed,
-    amount: String(parsed.amount),
-  }).where(eq(expenses.id, id))
-  revalidatePath('/expenses')
-  revalidatePath('/dashboard')
-}
-
-export async function deleteExpense(id: string) {
-  await db.delete(expenses).where(eq(expenses.id, id))
-  revalidatePath('/expenses')
-  revalidatePath('/dashboard')
-}
 ```
 
-### AI prompt
-
-```
-Build Phase 4 — Expense Management in apps/admin.
-Mirror the structure of Phase 3 (Income Management) exactly, but for expenses.
-
-1. app/(admin)/expenses/page.tsx — list with running total, category breakdown
-   summary at top, inline add form (date, division, category, description, amount).
-   Accept ?division=, ?category=, ?month= search params.
-
-2. app/(admin)/expenses/[id]/page.tsx — edit form.
-
-3. actions/expenses.ts — createExpense, updateExpense, deleteExpense.
-   Each revalidates /expenses and /dashboard.
-
-4. The category field is a text input with a datalist element populated from
-   distinct categories already in the database (query via Drizzle SELECT DISTINCT).
-
-No client state. Zod validation. 'use server' on action file.
-```
+Revalidate `/expenses` and `/dashboard` on every mutation.
 
 ---
 
@@ -878,18 +503,13 @@ No client state. Zod validation. 'use server' on action file.
 
 ### Goal
 
-Centralise all incoming business leads from all sources.
-Leads arrive from TES, AWS, and PMG contact forms (inserted by those Astro apps).
-The admin can update status, add notes, and filter by source/division/status.
+Centralise all incoming business leads. Update status, add notes, filter
+by source/division/status.
 
 ### Route
 
 `/leads` — list with filter tabs
 `/leads/[id]` — lead detail with status update and notes
-
-### Database tables used
-
-`leads`, `divisions`
 
 ### Lead status flow
 
@@ -900,67 +520,30 @@ new → contacted → converted
 
 ### Features
 
-- Tab filter: All | New | Contacted | Converted | Lost (with counts per tab)
+- Tab filter: All | New | Contacted | Converted | Lost (with counts)
 - Filter by division and source
-- Sortable: newest first by default
-- Lead detail page: full info + status update dropdown + internal notes textarea
-- Read/unread tracking (optional, Phase 5+)
+- Sorted: newest first by default
+- Lead detail: full info + status update + internal notes
+
+> Leads are created by the public Astro apps — no manual lead creation in admin.
 
 ### Server Actions — `actions/leads.ts`
 
 ```ts
 'use server'
 
-import { db, leads } from '@pmg/db'
-import { revalidatePath } from 'next/cache'
-import { eq } from 'drizzle-orm'
-import { z } from 'zod'
-
-const StatusSchema = z.object({
-  status: z.enum(['new', 'contacted', 'converted', 'lost']),
-})
-
 export async function updateLeadStatus(id: string, formData: FormData) {
-  const { status } = StatusSchema.parse(Object.fromEntries(formData))
-  await db.update(leads)
-    .set({ status, updatedAt: new Date() })
+  const { status } = z.object({
+    status: z.enum(['new', 'contacted', 'converted', 'lost'])
+  }).parse(Object.fromEntries(formData))
+
+  await db.update(leads).set({ status, updatedAt: new Date() })
     .where(eq(leads.id, id))
+
   revalidatePath('/leads')
   revalidatePath(`/leads/${id}`)
   revalidatePath('/dashboard')
 }
-
-export async function updateLeadNotes(id: string, formData: FormData) {
-  const notes = String(formData.get('notes') ?? '')
-  // notes field requires a schema migration if not already on the leads table
-  // Add: notes text nullable to leads in packages/db/src/schema/leads.ts
-  revalidatePath(`/leads/${id}`)
-}
-```
-
-### AI prompt
-
-```
-Build Phase 5 — Leads Management in apps/admin.
-
-1. app/(admin)/leads/page.tsx (Server Component):
-   - Accepts ?status=, ?division=, ?source= search params
-   - Fetches leads with division name via Drizzle join
-   - Renders tab bar: All | New | Contacted | Converted | Lost
-     Each tab shows count in a badge. Active tab matches ?status= param.
-   - Table columns: date | name | email/phone | source | division | service interest | status | view
-   - Status shown as a coloured badge (new=blue, contacted=amber, converted=teal, lost=zinc)
-   - "View" links to /leads/[id]
-
-2. app/(admin)/leads/[id]/page.tsx (Server Component):
-   - Full lead detail card (all fields)
-   - Status update form (select dropdown + submit = updateLeadStatus Server Action)
-   - Notes textarea (updateLeadNotes Server Action)
-   - Back link to /leads
-
-3. actions/leads.ts with updateLeadStatus and updateLeadNotes.
-
-No inline add form — leads are created by the public-facing Astro apps, not manually.
 ```
 
 ---
@@ -969,69 +552,39 @@ No inline add form — leads are created by the public-facing Astro apps, not ma
 
 ### Goal
 
-Allow the admin to create and rename divisions.
-Divisions cannot be deleted if income or expenses reference them (FK restrict enforced by DB).
+Create and rename divisions. Deletion blocked by FK if income or expenses exist.
 
 ### Route
 
 `/divisions` — list + inline add form
 
-### Database tables used
-
-`divisions`, `income`, `expenses`, `leads`
-
 ### Features
 
-- List of all divisions with their total income, total expenses, and lead count
-- Inline "Add Division" form (name only)
-- Rename division (inline edit)
-- Delete button — disabled (with tooltip) if division has any income or expenses
+- Table: name, total income, total expenses, net profit, lead count
+- Net coloured green (positive) / red (negative)
+- Inline add form (name only)
+- Rename via inline edit
+- Delete disabled when income or expenses reference the division
 
 ### Server Actions — `actions/divisions.ts`
 
 ```ts
 'use server'
 
-import { db, divisions } from '@pmg/db'
-import { revalidatePath } from 'next/cache'
-import { eq } from 'drizzle-orm'
-import { z } from 'zod'
-
-const DivisionSchema = z.object({
-  name: z.string().min(1).max(100),
-})
-
 export async function createDivision(formData: FormData) {
-  const { name } = DivisionSchema.parse(Object.fromEntries(formData))
+  const { name } = z.object({ name: z.string().min(1).max(100) })
+    .parse(Object.fromEntries(formData))
   await db.insert(divisions).values({ name })
   revalidatePath('/divisions')
 }
 
 export async function updateDivision(id: string, formData: FormData) {
-  const { name } = DivisionSchema.parse(Object.fromEntries(formData))
-  await db.update(divisions).set({ name, updatedAt: new Date() }).where(eq(divisions.id, id))
+  const { name } = z.object({ name: z.string().min(1).max(100) })
+    .parse(Object.fromEntries(formData))
+  await db.update(divisions).set({ name, updatedAt: new Date() })
+    .where(eq(divisions.id, id))
   revalidatePath('/divisions')
 }
-```
-
-### AI prompt
-
-```
-Build Phase 6 — Division Management in apps/admin.
-
-1. app/(admin)/divisions/page.tsx (Server Component):
-   - Fetches all divisions with aggregated totals:
-     total income (SUM), total expenses (SUM), lead count (COUNT)
-     using Drizzle left joins + groupBy
-   - Renders a table: name | total income | total expenses | net | leads | edit | delete
-   - "Net" = income − expenses per division, colour green if positive / red if negative
-   - Inline add form (name field + submit) → createDivision Server Action
-   - Delete button disabled if division has income or expenses (check totals from query)
-   - Inline rename: click name → text input, submit → updateDivision Server Action
-
-2. actions/divisions.ts with createDivision, updateDivision.
-
-Note: No deleteDiv action — the database FK (onDelete: restrict) prevents it anyway.
 ```
 
 ---
@@ -1040,20 +593,14 @@ Note: No deleteDiv action — the database FK (onDelete: restrict) prevents it a
 
 ### Goal
 
-> **⚠️ Critical.** Without snapshots, adding or editing past income entries changes
-> every historical dashboard number retroactively. Snapshots lock the numbers for a
-> closed month so historical reports are stable.
-
-A snapshot is a point-in-time record of all financial figures for a given month.
-Once a month is "closed", its snapshot is used for reporting instead of live queries.
+> **⚠️ Critical.** Without snapshots, editing past income retroactively changes
+> every historical dashboard number. Snapshots lock a closed month's figures.
 
 ### New database table
 
 Add to `packages/db/src/schema/snapshots.ts`:
 
 ```ts
-import { numeric, pgTable, text, timestamp, uuid } from 'drizzle-orm/pg-core'
-
 export const snapshots = pgTable('snapshots', {
   id:         uuid('id').primaryKey().defaultRandom(),
   period:     text('period').notNull().unique(),    // 'YYYY-MM'
@@ -1067,41 +614,13 @@ export const snapshots = pgTable('snapshots', {
   flex:       numeric('flex',       { precision: 12, scale: 2 }).notNull(),
   createdAt:  timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
 })
-
-export type Snapshot = typeof snapshots.$inferSelect
-export type NewSnapshot = typeof snapshots.$inferInsert
 ```
 
 ### Features
 
-- "Close Month" button on dashboard — visible only when current month has no snapshot
-- Generates snapshot from live query results for the selected month
-- Monthly view page: list all snapshots in a table
-- Dashboard optionally shows prior month snapshot vs current month live figures
-
-### AI prompt
-
-```
-Build Phase 7 — Financial Snapshots in apps/admin.
-
-1. Add snapshots table to packages/db/src/schema/snapshots.ts as above.
-   Export from packages/db/src/schema/index.ts.
-   Run bun db:generate && bun db:migrate.
-
-2. Create actions/snapshots.ts with closeMonth(period: string):
-   - period format: 'YYYY-MM'
-   - Calls getFinancialSummary() with a date filter for that month
-   - Inserts into snapshots table (upsert: if snapshot exists for period, do nothing)
-   - Revalidates /dashboard
-
-3. On the dashboard page, show a "Close Month" button below the KPI cards.
-   The button is a form with action=closeMonth and a hidden period input.
-   Only show the button if no snapshot exists for the current month.
-
-4. Create app/(admin)/snapshots/page.tsx:
-   - Fetches all snapshots ordered by period desc
-   - Table: period | revenue | expenses | profit pool | salary | closed at
-```
+- "Close Month" button on dashboard — visible when current month has no snapshot
+- Snapshot generated from live query results for the period
+- Snapshot page: all closed months in a table
 
 ---
 
@@ -1109,47 +628,23 @@ Build Phase 7 — Financial Snapshots in apps/admin.
 
 ### Goal
 
-Turn the accumulated data into trends and decision-making tools.
-This phase adds charts and multi-period comparisons. It is the first phase that
-introduces client components beyond `NavLink`.
+Turn accumulated data into trends and decision tools. Chart components already
+exist in `components/reports/` but are not wired to a route yet.
 
-### Features
+### Existing components (built, not yet wired)
 
-- Monthly revenue vs expenses line chart (last 12 months)
-- Expense breakdown by category (donut or bar chart)
-- Division profitability comparison over time
-- Year-to-date summary card
-- Export to CSV (income, expenses, leads)
+| Component | Chart type | Data |
+|---|---|---|
+| `MoMComparisonChart` | Grouped bar (recharts) | `getMoMChartData()` |
+| `RevenueByDivisionChart` | Stacked area (recharts) | `getRevenueByDivisionSeries()` |
+| `RevenueVsExpensesChart` | Line chart (recharts) | `getMonthlyFinancialsSeries()` |
 
-### Tech choices
+### Work remaining
 
-- Charts: `recharts` (already available in React ecosystem, no extra install needed
-  if you add it) or native SVG for simple bar charts
-- CSV export: Server Action that streams a `text/csv` response
-
-### AI prompt
-
-```
-Build Phase 8 — Reporting in apps/admin.
-
-1. Create app/(admin)/reports/page.tsx (Server Component):
-   - Fetches monthly revenue and expense totals for last 12 months via Drizzle
-     (GROUP BY month using date_trunc('month', date))
-   - Passes data to a 'use client' MonthlyChart component
-
-2. Create components/reports/monthly-chart.tsx ('use client'):
-   - Recharts LineChart with two lines: revenue (blue) and expenses (red)
-   - X axis: month labels (Jan, Feb…)
-   - Responsive container, minimal grid, clean dark theme
-
-3. Create components/reports/category-breakdown.tsx ('use client'):
-   - Bar chart of expenses grouped by category
-   - Top 8 categories, "Other" for the rest
-
-4. Add CSV export: a Server Action that queries income or expenses for a
-   given period and returns a Response with Content-Type: text/csv.
-   Link it from the reports page as a plain <a> download link.
-```
+- Wire all three charts to `/reports/page.tsx`
+- Add date range selector / year filter
+- Add expense breakdown by category (donut or bar)
+- CSV export via Server Action streaming `text/csv`
 
 ---
 
@@ -1157,37 +652,20 @@ Build Phase 8 — Reporting in apps/admin.
 
 ### Goal
 
-Prepare the system for real daily use before any SaaS expansion.
+Prepare the system for real daily use.
 
 ### Tasks
 
-- [ ] **Validation layer**: Every Server Action uses Zod. Errors surface as
-      `{ error: string }` return values and display inline next to the form.
-- [ ] **Error boundaries**: Add `error.tsx` to `(admin)/` route group to catch
-      render errors gracefully.
-- [ ] **Loading states**: Add `loading.tsx` to each route (Next.js streaming
-      suspense boundary) — shows skeleton cards while data loads.
-- [ ] **Empty states**: Every list page handles the zero-data case with a
-      helpful prompt ("No income yet — add your first entry above.").
-- [ ] **Optimistic updates**: Phase 9+ only — use `useOptimistic` for status
-      changes on leads to avoid full-page reload feel.
-- [ ] **Rate limiting**: Add basic rate limiting on the auth endpoints via proxy.
-- [ ] **Audit log** (optional): A simple `audit_logs` table recording which user
-      performed which action and when.
-
-### File additions
-
-```
-apps/src/app/(admin)/
-├── error.tsx       ← catches render errors in admin layout
-├── loading.tsx     ← skeleton while pages load
-├── dashboard/
-│   └── loading.tsx ← skeleton for KPI cards
-├── income/
-│   └── loading.tsx
-└── expenses/
-    └── loading.tsx
-```
+- [ ] **Auth** — wire Better Auth + magic link. Update `src/proxy.ts` to check
+      `better-auth.session_token`. Add `lib/auth.ts`, `lib/auth-client.ts`,
+      and `app/api/auth/[...all]/route.ts`.
+- [ ] **Validation feedback** — all Server Actions return `{ error: string }` on
+      failure. Errors display inline next to the form field.
+- [ ] **Error boundaries** — add `error.tsx` to `(admin)/` route group.
+- [ ] **Loading states** — add `loading.tsx` to each route (Suspense boundary).
+- [ ] **Empty states** — every list page handles zero-data gracefully.
+- [ ] **Rate limiting** — basic rate limiting on auth endpoints via proxy.
+- [ ] **Optimistic updates** — `useOptimistic` for lead status changes.
 
 ---
 
@@ -1195,27 +673,18 @@ apps/src/app/(admin)/
 
 ### Goal
 
-Turn the PMG Control Center into a multi-tenant product that other businesses can use.
+Multi-tenant product — other businesses can use the Control Center.
 
-> This is a future phase. Do not architect for it now — over-engineering for
-> multi-tenancy before the single-tenant system is proven is a common trap.
+> Do not architect for this now. Over-engineering before the single-tenant
+> system is proven is a common trap.
 
 ### What changes
 
-- **Organizations table**: Each business gets an `organization_id`. All tables
-  (`income`, `expenses`, `leads`, `divisions`) gain an `organization_id` FK.
-- **Row-level security**: Neon Postgres RLS policies enforce data isolation.
-- **User roles**: `admin`, `owner`, `viewer` per organization.
-- **Billing**: Stripe integration for subscription management.
-- **Onboarding flow**: Sign up → create org → invite team → first income entry.
-
-### Migration path from single-tenant
-
-1. Add `organizations` table and seed with a single "PMG" org
-2. Add `organization_id` to all tables with a migration
-3. Backfill `organization_id` on all existing rows
-4. Add Better Auth organization plugin
-5. Update all queries to filter by `organization_id` from session
+- **Organizations table** — all domain tables gain `organization_id` FK
+- **Row-level security** — Neon Postgres RLS policies
+- **User roles** — `admin`, `owner`, `viewer` per organization
+- **Billing** — Stripe subscription management
+- **Onboarding flow** — sign up → create org → invite team → first income entry
 
 ---
 
@@ -1223,24 +692,27 @@ Turn the PMG Control Center into a multi-tenant product that other businesses ca
 
 | Layer | Choice | Notes |
 |---|---|---|
-| Framework | Next.js 16 (App Router) | `apps/admin` only |
-| Language | TypeScript 5.9 | strict mode |
+| Framework | Next.js 16 (Turbopack) | `apps/admin` only |
+| Language | TypeScript 5.9 | strict mode, React Compiler enabled |
 | Database | PostgreSQL via Neon | serverless, pooled |
 | ORM | Drizzle ORM | `@pmg/db` workspace package |
-| Auth | Better Auth + magic link | Resend for email delivery |
-| Styling | Tailwind CSS v4 | dark theme, zinc palette |
+| UI | shadcn/ui (radix-vega) | `components/ui/` |
+| Charts | recharts 3.8.0 | used in dashboard + reports |
+| Auth | Better Auth + magic link | not yet wired — Phase 9 |
+| Styling | Tailwind CSS v4 | OKLCH colour tokens |
+| Toasts | sonner | dark theme, bottom-right |
 | Validation | Zod | on every Server Action |
 | Monorepo | Bun + Turborepo | `bun --filter admin` |
 | Deployment | Vercel | `admin.playhousemedia.co.za` |
-| Proxy (auth guard) | `src/proxy.ts` | Next.js 16 rename of `middleware.ts` |
+| Proxy | `src/proxy.ts` | Next.js 16 rename of `middleware.ts` |
 
 ### Next.js 16 — breaking changes relevant to this project
 
-| Old (Next.js 15) | New (Next.js 16) | Impact |
-|---|---|---|
-| `middleware.ts` | `proxy.ts` | Rename file, rename export to `proxy` |
-| `export function middleware` | `export function proxy` (or default) | Same API otherwise |
-| — | `matcher` config unchanged | No change |
+| Old (Next.js 15) | New (Next.js 16) |
+|---|---|
+| `middleware.ts` | `proxy.ts` |
+| `export function middleware` | `export function proxy` |
+| Same API otherwise | — |
 
 ---
 
@@ -1249,30 +721,34 @@ Turn the PMG Control Center into a multi-tenant product that other businesses ca
 > **Every rand has a job.**
 
 1. **Income first, salary second.** The system cannot tell you what to pay yourself
-   until it knows what came in and what went out. Enter income before checking the dashboard.
+   until it knows what came in and what went out.
 
 2. **Every income entry must have a division.** The division breakdown is how you
    know which part of the business is carrying its weight.
 
 3. **Every expense must have a division and a category.** Categories are freeform —
-   don't over-engineer them. Use what feels natural ("Hosting", "Printing", "Transport").
+   don't over-engineer them.
 
 4. **Salary is calculated, never guessed.** The system shows you what you can safely
-   withdraw. Withdrawing more than the salary figure erodes the reserve and reinvestment
-   allocations — the system does not prevent this, but it makes it visible.
+   withdraw. Withdrawing more than the salary figure erodes the reserve and reinvest
+   allocations.
 
-5. **PMG always takes 20% of gross revenue.** This happens before expenses.
-   It is the business entity's share — the cost of operating under the PMG umbrella.
+5. **Withdrawals are not expenses.** Owner salary is tracked in the `withdrawals`
+   table, not in `expenses`. Entering salary withdrawals as expenses double-counts
+   them and collapses the profit pool.
 
-6. **Build phases in order.** Phase 1 (engine) → Phase 2 (dashboard) → Phase 3+4
-   (data entry) → Phase 5 (leads) → Phase 7 (snapshots). Skipping snapshots means
-   historical numbers become unstable the moment you edit past data.
+6. **PMG always takes 20% of gross revenue.** This happens before expenses.
 
 7. **No client state for data.** Server Components fetch data. Server Actions mutate
-   data. `revalidatePath` refreshes the page. The database is the single source of truth.
+   data. `revalidatePath` refreshes the page. The database is the single source of
+   truth.
 
-8. **Keep the proxy fast.** `src/proxy.ts` runs on every request to `/*`.
-   It checks a cookie — nothing else. No database calls, no heavy logic.
+8. **Keep the proxy fast.** `src/proxy.ts` runs on every request. Cookie check only —
+   no database calls, no heavy logic.
+
+9. **All five chart datasets are fetched once.** `getAllDivisionSeriesData()` fetches
+   all five range variants in a single `Promise.all`. Range switching in the division
+   area chart is instant and client-side only — no subsequent fetches.
 
 ---
 
