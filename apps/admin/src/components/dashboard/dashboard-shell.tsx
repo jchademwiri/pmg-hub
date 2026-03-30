@@ -33,6 +33,7 @@ type Props = {
     last6: DivisionSeriesChart
     ytd:   DivisionSeriesChart
     current: DivisionSeriesChart
+    prev:    DivisionSeriesChart
   }
   expensesByDivision: { divisionName: string; total: number }[]
 }
@@ -105,6 +106,7 @@ export function DashboardShell({
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
         <SalaryCard
           salary={activeSummary.salary}
+          ytdSalary={ytdSummary.salary}
           profitPool={activeSummary.profitPool}
           periodLabel={activeLabel}
           withdrawals={activeTab === 'current' ? withdrawals : null}

@@ -1,16 +1,26 @@
+'use client'
+
+import { useState } from 'react'
+import { useRouter } from 'next/navigation'
 import { Card, CardHeader, CardTitle, CardContent, CardDescription } from '@/components/ui/card'
+import { Button } from '@/components/ui/button'
 import { formatZAR } from '@/lib/format'
 import { AlertTriangle, Wallet, ArrowDownCircle, CheckCircle2 } from 'lucide-react'
 import type { WithdrawalSummary } from '@/lib/financial'
+import { WithdrawModal } from '@/components/dashboard/withdraw-modal'
+import { recordWithdrawal } from '@/app/actions/withdraw'
 
 type SalaryCardProps = {
   salary: number
+  ytdSalary: number
   profitPool: number
   periodLabel: string
   withdrawals: WithdrawalSummary | null
 }
 
-export function SalaryCard({ salary, profitPool, periodLabel, withdrawals }: SalaryCardProps) {
+export function SalaryCard({ salary, ytdSalary, profitPool, periodLabel, withdrawals }: SalaryCardProps) {
+  const router = useRouter()
+  const [modalOpen, setModalOpen] = useState(false)
   const isNegative  = profitPool < 0
   const withdrawn   = withdrawals?.total ?? 0
   const balance     = salary - withdrawn
@@ -49,13 +59,23 @@ export function SalaryCard({ salary, profitPool, periodLabel, withdrawals }: Sal
             <Wallet className="size-4" />
             Owner Salary
           </CardTitle>
-          <span className="text-xs text-chart-1/50">{periodLabel}</span>
+          <div className="flex items-center gap-2">
+            <span className="text-xs text-chart-1/50">{periodLabel}</span>
+            {withdrawals !== null && profitPool >= 0 && (
+              <Button variant="outline" size="sm" onClick={() => setModalOpen(true)}>
+                Withdraw
+              </Button>
+            )}
+          </div>
         </div>
       </CardHeader>
       <CardContent className="space-y-3">
         {/* Primary salary figure */}
         <div>
           <p className="text-chart-1 text-3xl font-bold tabular-nums">{formatZAR(salary)}</p>
+          {withdrawals !== null && (
+            <p className="text-chart-1/50 text-xs mt-0.5">YTD: {formatZAR(ytdSalary)}</p>
+          )}
           <p className="text-chart-1/60 text-xs mt-0.5">
             35% of profit pool · calculated, not guessed
           </p>
@@ -120,6 +140,15 @@ export function SalaryCard({ salary, profitPool, periodLabel, withdrawals }: Sal
           )}
         </div>
       </CardContent>
+      <WithdrawModal
+        open={modalOpen}
+        onClose={() => setModalOpen(false)}
+        onSuccess={() => {
+          setModalOpen(false)
+          router.refresh()
+        }}
+        withdrawAction={recordWithdrawal}
+      />
     </Card>
   )
 }

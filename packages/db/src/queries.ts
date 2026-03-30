@@ -1,6 +1,6 @@
 import { db } from "./client";
-import { income, expenses, leads, divisions } from "./schema/index";
-import { sql, eq, desc, asc, and, gte, lt, ilike } from "drizzle-orm";
+import { income, expenses, leads, divisions, withdrawals } from "./schema/index";
+import { sql, eq, desc, asc } from "drizzle-orm";
 
 // ── Existing queries (unchanged) ─────────────────────────────────────────────
 
@@ -208,32 +208,52 @@ export async function getYTDSummary(): Promise<PeriodSummary> {
 // ── NEW: Withdrawals this month ───────────────────────────────────────────────
 
 /**
- * Reads expenses where the category contains "withdrawal" or "owner salary"
- * (case-insensitive). This is the convention for recording salary withdrawals
- * in the existing expenses table.
+ * Returns all withdrawals recorded in the withdrawals table for the current
+ * calendar month (date >= start of month AND date < start of next month).
  */
 export async function getWithdrawalsCurrentMonth(): Promise<{
   total: number;
   entries: { date: string; description: string | null; amount: number }[];
 }> {
-  const result = await db.execute(sql`
-    SELECT date::text, description, amount
-    FROM expenses
-    WHERE
-      date >= DATE_TRUNC('month', NOW())
-      AND date < DATE_TRUNC('month', NOW()) + INTERVAL '1 month'
-      AND (
-        LOWER(category) LIKE '%withdrawal%'
-        OR LOWER(category) LIKE '%owner salary%'
-        OR LOWER(category) LIKE '%owner draw%'
-      )
-    ORDER BY date DESC
-  `);
-  const entries = (
-    result.rows as { date: string; description: string | null; amount: string }[]
-  ).map((r) => ({ date: r.date, description: r.description, amount: Number(r.amount) }));
+  const result = await db
+    .select({
+      date: sql<string>`${withdrawals.date}::text`,
+      description: withdrawals.description,
+      amount: withdrawals.amount,
+    })
+    .from(withdrawals)
+    .where(
+      sql`${withdrawals.date} >= DATE_TRUNC('month', NOW()) AND ${withdrawals.date} < DATE_TRUNC('month', NOW()) + INTERVAL '1 month'`
+    )
+    .orderBy(desc(withdrawals.date));
+  const entries = result.map((r) => ({
+    date: r.date,
+    description: r.description,
+    amount: Number(r.amount),
+  }));
   const total = entries.reduce((sum, e) => sum + e.amount, 0);
   return { total, entries };
+}
+
+/**
+ * Inserts a new withdrawal record and returns the inserted row.
+ */
+export async function insertWithdrawal(
+  amount: number,
+  date: string
+): Promise<{ id: string; date: string; amount: number; description: string | null; createdAt: Date | null }> {
+  const result = await db
+    .insert(withdrawals)
+    .values({ amount: String(amount), date })
+    .returning();
+  const row = result[0]!;
+  return {
+    id: row.id,
+    date: row.date,
+    amount: Number(row.amount),
+    description: row.description,
+    createdAt: row.createdAt,
+  };
 }
 
 // ── NEW: Division revenue by period for interactive chart ─────────────────────
@@ -277,6 +297,28 @@ export async function getDivisionRevenueCurrentMonth(): Promise<
     .innerJoin(divisions, eq(income.divisionId, divisions.id))
     .where(
       sql`${income.date} >= DATE_TRUNC('month', NOW()) AND ${income.date} < DATE_TRUNC('month', NOW()) + INTERVAL '1 month'`
+    )
+    .groupBy(sql`TO_CHAR(${income.date}, 'YYYY-MM')`, divisions.name)
+    .orderBy(asc(divisions.name));
+  return result.map((r) => ({ month: r.month, divisionName: r.divisionName, total: Number(r.total) }));
+}
+
+/**
+ * Returns revenue per division for the previous month only.
+ */
+export async function getDivisionRevenuePreviousMonth(): Promise<
+  { month: string; divisionName: string; total: number }[]
+> {
+  const result: { month: string; divisionName: string; total: string }[] = await db
+    .select({
+      month: sql<string>`TO_CHAR(${income.date}, 'YYYY-MM')`,
+      divisionName: divisions.name,
+      total: sql<string>`COALESCE(SUM(${income.amount}), '0')`,
+    })
+    .from(income)
+    .innerJoin(divisions, eq(income.divisionId, divisions.id))
+    .where(
+      sql`${income.date} >= DATE_TRUNC('month', NOW()) - INTERVAL '1 month' AND ${income.date} < DATE_TRUNC('month', NOW())`
     )
     .groupBy(sql`TO_CHAR(${income.date}, 'YYYY-MM')`, divisions.name)
     .orderBy(asc(divisions.name));

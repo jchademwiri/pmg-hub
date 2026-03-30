@@ -101,8 +101,8 @@ export function RevenueSparkline({ data }: Props) {
                 <stop offset="95%" stopColor="var(--chart-1)" stopOpacity={0.02} />
               </linearGradient>
               <linearGradient id="expGrad" x1="0" y1="0" x2="0" y2="1">
-                <stop offset="5%"  stopColor="var(--chart-3)" stopOpacity={0.20} />
-                <stop offset="95%" stopColor="var(--chart-3)" stopOpacity={0.02} />
+                <stop offset="5%"  stopColor="var(--chart-expense)" stopOpacity={0.20} />
+                <stop offset="95%" stopColor="var(--chart-expense)" stopOpacity={0.02} />
               </linearGradient>
             </defs>
             <CartesianGrid
@@ -137,11 +137,11 @@ export function RevenueSparkline({ data }: Props) {
             <Area
               type="monotone"
               dataKey="expenses"
-              stroke="var(--chart-3)"
+              stroke="var(--chart-expense)"
               strokeWidth={2}
               fill="url(#expGrad)"
               dot={false}
-              activeDot={{ r: 4, strokeWidth: 0, fill: 'var(--chart-3)' }}
+              activeDot={{ r: 4, strokeWidth: 0, fill: 'var(--chart-expense)' }}
             />
           </AreaChart>
         </ResponsiveContainer>
@@ -151,7 +151,7 @@ export function RevenueSparkline({ data }: Props) {
             Revenue
           </span>
           <span className="flex items-center gap-1.5 text-xs text-muted-foreground">
-            <span className="inline-block h-2 w-2 rounded-full bg-chart-3" />
+            <span className="inline-block h-2 w-2 rounded-full" style={{ background: 'var(--chart-expense)' }} />
             Expenses
           </span>
         </div>

@@ -16,6 +16,7 @@ import {
   getDivisionRevenueSeries,
   getDivisionRevenueCurrentMonth,
   getDivisionRevenueYTD,
+  getDivisionRevenuePreviousMonth,
 } from '@pmg/db'
 
 // ── Re-export DB types ────────────────────────────────────────────────────────
@@ -119,18 +120,21 @@ export async function getAllDivisionSeriesData(): Promise<{
   last6:    DivisionSeriesChart
   ytd:      DivisionSeriesChart
   current:  DivisionSeriesChart
+  prev:     DivisionSeriesChart
 }> {
-  const [rows3, rows6, rowsYTD, rowsCurrent] = await Promise.all([
+  const [rows3, rows6, rowsYTD, rowsCurrent, rowsPrev] = await Promise.all([
     getDivisionRevenueSeries(3),
     getDivisionRevenueSeries(6),
     getDivisionRevenueYTD(),
     getDivisionRevenueCurrentMonth(),
+    getDivisionRevenuePreviousMonth(),
   ])
   return {
     last3:   buildDivisionSeries(rows3),
     last6:   buildDivisionSeries(rows6),
     ytd:     buildDivisionSeries(rowsYTD),
     current: buildDivisionSeries(rowsCurrent),
+    prev:    buildDivisionSeries(rowsPrev),
   }
 }
 

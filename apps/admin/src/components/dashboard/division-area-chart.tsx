@@ -9,10 +9,11 @@ import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card'
 import { formatZAR } from '@/lib/format'
 import type { DivisionSeriesChart } from '@/lib/financial'
 
-type RangeKey = 'current' | 'last3' | 'last6' | 'ytd'
+type RangeKey = 'current' | 'prev' | 'last3' | 'last6' | 'ytd'
 
 const RANGE_OPTIONS: { key: RangeKey; label: string }[] = [
   { key: 'current', label: 'This Month' },
+  { key: 'prev',    label: 'Prev Month' },
   { key: 'last3',   label: 'Last 3 Months' },
   { key: 'last6',   label: 'Last 6 Months' },
   { key: 'ytd',     label: 'Year to Date' },
@@ -30,6 +31,7 @@ const DIVISION_COLORS = [
 type Props = {
   seriesData: {
     current: DivisionSeriesChart
+    prev:    DivisionSeriesChart
     last3:   DivisionSeriesChart
     last6:   DivisionSeriesChart
     ytd:     DivisionSeriesChart
