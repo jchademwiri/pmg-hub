@@ -3,7 +3,7 @@ import { config } from "dotenv";
 import { resolve } from "path";
 import pg from "pg";
 import { drizzle } from "drizzle-orm/node-postgres";
-import { divisions, clients, income, expenses, leads, awsPricing } from "./schema";
+import { divisions, clients, income, expenses, leads, withdrawals, awsPricing } from "./schema";
 
 config({ path: resolve(__dirname, "../.env") });
 
@@ -893,6 +893,19 @@ await db.insert(leads).values([
 
 console.log("  ✓ leads");
 
+// ── Withdrawals ───────────────────────────────────────────────────────────────
+// A handful of salary withdrawals across the last few months to give the
+// salary card and withdrawal tracking meaningful data.
+await db.insert(withdrawals).values([
+  { date: "2025-11-28", amount: "25000.00", description: "Salary withdrawal — November 2025" },
+  { date: "2025-12-22", amount: "18000.00", description: "Salary withdrawal — December 2025" },
+  { date: "2026-01-30", amount: "28000.00", description: "Salary withdrawal — January 2026" },
+  { date: "2026-02-27", amount: "30000.00", description: "Salary withdrawal — February 2026" },
+  { date: "2026-03-28", amount: "35000.00", description: "Salary withdrawal — March 2026" },
+]);
+
+console.log("  ✓ withdrawals");
+
 console.log(`
 ✅ Seed complete.
 
@@ -902,6 +915,7 @@ console.log(`
    Income     : ~200 entries across 12 months (Apr 2025 – Mar 2026)
    Expenses   : ~130 entries across 12 months
    Leads      : 21  (6 new · 5 contacted · 6 converted · 4 lost)
+   Withdrawals: 5   (Nov 2025 – Mar 2026)
 
    Monthly revenue (approx):
      Apr 2025 → R128,000
