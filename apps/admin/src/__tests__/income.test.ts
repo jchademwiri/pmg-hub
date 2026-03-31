@@ -254,9 +254,9 @@ describe('getAllIncome — Property 3: Month filter excludes entries outside the
     // Feature: income-management, Property 3: Month filter
     await fc.assert(
       fc.asyncProperty(
-        fc.date({ min: new Date('2020-01-01'), max: new Date('2030-12-31') }).map(
-          (d) => d.toISOString().slice(0, 7) // YYYY-MM
-        ),
+        fc.date({ min: new Date('2020-01-01'), max: new Date('2030-12-31') })
+          .filter((d) => !isNaN(d.getTime()))
+          .map((d) => d.toISOString().slice(0, 7)), // YYYY-MM
         fc.array(incomeArb, { minLength: 0, maxLength: 20 }),
         async (filterMonth, allEntries) => {
           // Simulate what the real DB query does: only return entries within the month
@@ -431,9 +431,9 @@ describe('createIncome — Property 5: round-trip — valid input succeeds and e
     await fc.assert(
       fc.asyncProperty(
         fc.record({
-          date: fc.date({ min: new Date('2020-01-01'), max: new Date('2030-12-31') }).map(
-            (d) => d.toISOString().slice(0, 10)
-          ),
+          date: fc.date({ min: new Date('2020-01-01'), max: new Date('2030-12-31') })
+            .filter((d) => !isNaN(d.getTime()))
+            .map((d) => d.toISOString().slice(0, 10)),
           divisionId: fc.uuid(),
           clientId: fc.option(fc.uuid(), { nil: undefined }),
           description: fc.option(fc.string({ maxLength: 200 }), { nil: undefined }),
@@ -506,9 +506,9 @@ describe('updateIncome — Property 6: round-trip — valid input succeeds and c
         incomeArb,
         // New values to apply
         fc.record({
-          date: fc.date({ min: new Date('2020-01-01'), max: new Date('2030-12-31') }).map(
-            (d) => d.toISOString().slice(0, 10)
-          ),
+          date: fc.date({ min: new Date('2020-01-01'), max: new Date('2030-12-31') })
+            .filter((d) => !isNaN(d.getTime()))
+            .map((d) => d.toISOString().slice(0, 10)),
           divisionId: fc.uuid(),
           clientId: fc.option(fc.uuid(), { nil: undefined }),
           description: fc.option(fc.string({ maxLength: 200 }), { nil: undefined }),
