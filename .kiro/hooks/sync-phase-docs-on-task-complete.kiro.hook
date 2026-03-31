@@ -1,0 +1,13 @@
+{
+  "enabled": true,
+  "name": "Sync Phase Docs on Task Complete",
+  "description": "When a spec task is completed, automatically updates docs/pmg-admin-development-phases.md to add a ✅ checkmark next to the corresponding phase in the Table of Contents and marks the phase heading as COMPLETE.",
+  "version": "1",
+  "when": {
+    "type": "postTaskExecution"
+  },
+  "then": {
+    "type": "askAgent",
+    "prompt": "A spec task was just completed. Check the completed task in the spec tasks.md file and determine which development phase it belongs to. Then update docs/pmg-admin-development-phases.md:\n1. In the Table of Contents, add a ✅ emoji before the phase entry if all tasks for that phase are now complete (e.g. `✅ [Phase 4 — Expense Management](...)`).\n2. If the phase heading in the doc does not already say \"✅ COMPLETE\", update it to add \"✅ COMPLETE\" at the end (e.g. `## 7. Phase 4 — Expense Management ✅ COMPLETE`).\nOnly make changes if the phase is fully complete (all tasks checked). Do not modify phases that are already marked complete or phases that are not yet done."
+  }
+}
