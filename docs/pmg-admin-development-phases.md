@@ -3,8 +3,8 @@
 > **Internal developer reference · Playhouse Media Group**
 > `pmg-hub / docs / pmg_control_center_development_phases.md` · March 2026 · v3.0
 >
-> This document supersedes v2.0. Phase 2 has been fully rewritten to reflect
-> the actual dashboard build. Folder structure updated to match the live codebase.
+> This document supersedes v2.0. Phases 0–3 are complete. Phase 2 has been fully rewritten to reflect
+> the actual dashboard build. Phase 3 has been added to reflect the completed income management feature.
 > All other phase plans remain as the implementation target.
 
 ---
@@ -16,7 +16,7 @@
 3. [Phase 0 — Foundation](#3-phase-0--foundation-complete-)
 4. [Phase 1 — Financial Engine](#4-phase-1--financial-engine-complete-)
 5. [Phase 2 — Dashboard UI](#5-phase-2--dashboard-ui-complete-)
-6. [Phase 3 — Income Management](#6-phase-3--income-management)
+6. [Phase 3 — Income Management](#6-phase-3--income-management-complete-)
 7. [Phase 4 — Expense Management](#7-phase-4--expense-management)
 8. [Phase 5 — Leads Management](#8-phase-5--leads-management)
 9. [Phase 6 — Division Management](#9-phase-6--division-management)
@@ -79,8 +79,8 @@ apps/admin/src/
 │   │   ├── dashboard/
 │   │   │   └── page.tsx                  ← BUILT — fetches all data, renders DashboardShell
 │   │   ├── income/
-│   │   │   ├── page.tsx                  ← Phase 3 stub
-│   │   │   └── [id]/page.tsx             ← Phase 3 stub
+│   │   │   ├── page.tsx                  ← BUILT — list + filter + add form + running total
+│   │   │   └── [id]/page.tsx             ← BUILT — edit form with notFound() guard
 │   │   ├── expenses/
 │   │   │   ├── page.tsx                  ← Phase 4 stub
 │   │   │   └── [id]/page.tsx             ← Phase 4 stub
@@ -97,7 +97,8 @@ apps/admin/src/
 │   │       └── page.tsx                  ← Static placeholder — auth not yet wired
 │   │
 │   └── actions/
-│       └── withdraw.ts                   ← BUILT — recordWithdrawal Server Action
+│       ├── withdraw.ts                   ← BUILT — recordWithdrawal Server Action
+│       └── income.ts                     ← BUILT — createIncome, updateIncome, deleteIncome
 │
 ├── components/
 │   ├── ui/                               ← shadcn/ui primitives (button, card, badge,
@@ -125,6 +126,12 @@ apps/admin/src/
 │   │   ├── expense-snapshot.tsx          ← BUILT — stacked bar + division breakdown cards
 │   │   ├── allocation-bar.tsx            ← BUILT — profit pool allocation breakdown
 │   │   └── allocation-tooltip-bar.tsx    ← BUILT — interactive tooltip bar (client component)
+│   │
+│   ├── income/
+│   │   ├── filter-bar.tsx                ← BUILT — division + month selects, router.push on change
+│   │   ├── income-add-form.tsx           ← BUILT — useTransition + useRef, inline error display
+│   │   ├── income-table.tsx              ← BUILT — shadcn Table, inline delete confirm, sonner toast
+│   │   └── income-edit-form.tsx          ← BUILT — pre-populated form, router.push on success
 │   │
 │   └── reports/
 │       ├── mom-comparison-chart.tsx      ← Phase 8 — MoM bar chart (built, not yet wired)
@@ -398,67 +405,101 @@ of profit pool) with a 2×2 legend grid showing label, percentage, and ZAR amoun
 
 ---
 
-## 6. Phase 3 — Income Management
+## 6. Phase 3 — Income Management ✅ COMPLETE
 
-### Goal
+### What was delivered
 
-Allow the admin to add, edit, and delete income entries.
-Every entry must have a division. Client is optional.
+Full CRUD income management following the established PMG admin pattern:
+DB query helpers → Server Actions → Client Components → Server Component pages.
 
-### Route
+### Routes
 
-`/income` — list + inline add form
-`/income/[id]` — edit entry
+`/income` — list + filter bar + inline add form
+`/income/[id]` — edit entry (calls `notFound()` if id doesn't exist)
 
-### Features
+### New DB query helpers — `packages/db/src/queries.ts`
 
-- Sortable list: date descending by default
-- Filter by division (select dropdown) and month
-- Inline "Add Income" form — no modal, form action calls `createIncome` Server Action
-- Table: date | division | client | description | amount | edit | delete
-- Edit → `/income/[id]`
-- Delete with confirm
-- Running total visible at top
+- `getAllIncome(filters?)` — INNER JOIN divisions, LEFT JOIN clients, optional `divisionId` / `month` WHERE clauses, ORDER BY date DESC. Returns `IncomeRow[]`.
+- `getIncomeById(id)` — same joins, WHERE `income.id = id`, returns single `IncomeRow | null`
+- `getDistinctIncomeMonths()` — `SELECT DISTINCT TO_CHAR(date, 'YYYY-MM')` ORDER BY 1 DESC, returns `string[]`
+- `getAllClients()` — `SELECT id, name, business_name FROM clients ORDER BY name ASC`
+- `getAllDivisions()` — already existed; confirmed present before adding
 
-### Server Actions — `actions/income.ts`
+All five exported from `packages/db/src/index.ts` via `export * from './queries'`.
+
+### Server Actions — `apps/admin/src/app/actions/income.ts`
 
 ```ts
 'use server'
 
-import { db, income } from '@pmg/db'
-import { revalidatePath } from 'next/cache'
-import { eq } from 'drizzle-orm'
-import { z } from 'zod'
-
 const IncomeSchema = z.object({
   date:        z.string().min(1),
   divisionId:  z.string().uuid(),
-  clientId:    z.string().uuid().optional(),
+  clientId:    z.string().uuid().optional(),   // '' → deleted before parse
   description: z.string().optional(),
   amount:      z.coerce.number().positive(),
 })
 
-export async function createIncome(formData: FormData) {
-  const parsed = IncomeSchema.parse(Object.fromEntries(formData))
-  await db.insert(income).values({ ...parsed, amount: String(parsed.amount) })
-  revalidatePath('/income')
-  revalidatePath('/dashboard')
-}
-
-export async function updateIncome(id: string, formData: FormData) {
-  const parsed = IncomeSchema.parse(Object.fromEntries(formData))
-  await db.update(income).set({ ...parsed, amount: String(parsed.amount) })
-    .where(eq(income.id, id))
-  revalidatePath('/income')
-  revalidatePath('/dashboard')
-}
-
-export async function deleteIncome(id: string) {
-  await db.delete(income).where(eq(income.id, id))
-  revalidatePath('/income')
-  revalidatePath('/dashboard')
-}
+createIncome(formData: FormData): Promise<{ error?: string }>
+updateIncome(id: string, formData: FormData): Promise<{ error?: string }>
+deleteIncome(id: string): Promise<{ error?: string }>
 ```
+
+Key constraints:
+- `clientId = ''` is normalised to `undefined` before Zod parse
+- `amount` stored as `String(parsed.amount)` — never a raw JS number
+- `revalidatePath('/income')` + `revalidatePath('/dashboard')` called inside `try` on success only, never in `catch`
+- All three return `Promise<{ error?: string }>` — never throw
+
+### Client Components
+
+| File | Description |
+|---|---|
+| `components/income/filter-bar.tsx` | `'use client'` — two shadcn `<Select>` controls (division + month). Month labels formatted via `toLocaleString('en-ZA', { month: 'long', year: 'numeric' })`. On change: `router.push('/income?' + params)` |
+| `components/income/income-add-form.tsx` | `'use client'` — `useTransition` + `useRef`. Fields: date, divisionId, clientId ("No client" option), description, amount. On success: `formRef.current.reset()`. On error: inline error display. |
+| `components/income/income-table.tsx` | `'use client'` — shadcn `<Table>`. Edit: `<Link href={'/income/' + id}>`. Delete: inline confirm/cancel with `pendingDeleteId` state. Error feedback via sonner `toast.error`. |
+| `components/income/income-edit-form.tsx` | `'use client'` — same fields as add form, pre-populated. `entry.clientId === null` → pre-selects "No client". On success: `router.push('/income')`. |
+
+### Server Component Pages
+
+**`app/(admin)/income/page.tsx`**
+- Props: `{ searchParams: Promise<{ divisionId?: string; month?: string }> }`
+- Awaits `searchParams`, fires `Promise.all([getAllIncome, getAllDivisions, getAllClients, getDistinctIncomeMonths])`
+- Computes `runningTotal = entries.reduce((sum, e) => sum + Number(e.amount), 0)`
+- Renders: header + `formatZAR(runningTotal)`, `<FilterBar>`, `<IncomeAddForm>`, `<IncomeTable>` or empty-state message
+
+**`app/(admin)/income/[id]/page.tsx`**
+- Props: `{ params: Promise<{ id: string }> }`
+- Calls `getIncomeById(id)` → `notFound()` if null
+- Fires `Promise.all([getAllDivisions, getAllClients])`
+- Renders: back link + `<IncomeEditForm updateAction={updateIncome.bind(null, id)}>`
+
+### Tests — `apps/admin/src/__tests__/income.test.ts`
+
+Full Vitest suite (44 tests, all passing via `bun run test --cwd apps/admin`):
+
+**Property-based tests (fast-check, 100 iterations each):**
+- P1: `getAllIncome` shape + sort order (date DESC)
+- P2: Division filter excludes entries from other divisions
+- P3: Month filter excludes entries outside the calendar month
+- P4: Running total equals sum of amounts in result set
+- P5: `createIncome` round-trip — valid input succeeds, entry retrievable
+- P6: `updateIncome` round-trip — changes reflected in `getAllIncome`
+- P7: `deleteIncome` round-trip — entry no longer retrievable
+- P8: `getIncomeById` returns correct entry or null
+- P9: `getDistinctIncomeMonths` returns distinct YYYY-MM strings sorted DESC
+- P10: Invalid input to `createIncome`/`updateIncome` always returns `{ error }`
+- P11: Amount precision preserved on `String(amount)` → `Number()` round-trip
+- P12: `getAllDivisions` sorted by name ASC
+- P13: `getAllClients` sorted by name ASC
+
+**Unit tests:**
+- `FilterBar` renders "All divisions" and "All months" defaults; month labels are human-readable
+- `IncomeTable` renders edit links with correct `/income/<id>` hrefs; empty array renders no rows
+- `IncomeSchema` rejects empty date, rejects `clientId = ''`, accepts `clientId = undefined`
+- `createIncome` with `amount = 0` or `amount = -1` returns `{ error }`
+- `deleteIncome` returns `{ error }` on DB throw; returns `{}` and calls `revalidatePath` on success
+- Empty-state condition (`entries.length === 0`) renders message instead of table
 
 ---
 

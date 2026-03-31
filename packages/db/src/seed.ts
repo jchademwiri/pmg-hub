@@ -874,8 +874,8 @@ await db.insert(leads).values([
   // Contacted
   { name: "Fatima Essop",      email: "fatima.essop@gmail.com",          phone: "0844445566", source: "Referral",  serviceInterest: "CSD registration",                     status: "contacted", divisionId: tes!.id },
   { name: "Wayne Olivier",     email: "wayne.olivier@wayneco.co.za",     phone: "0729988776", source: "LinkedIn",  serviceInterest: "Monthly social media retainer",        status: "contacted", divisionId: pmg!.id },
-  { name: "Tebogo Nkosi",      email: "tebogo@nkosigroup.co.za",         phone: "0813344556", source: "Google",    serviceInterest: "Website + Growth package",             status: "contacted", divisionId: aws!.id },
-  { name: "Chantelle Ferreira",email: "chantelle.f@ferreiraplumbing.co.za", phone: "0844556677", source: "WhatsApp", serviceInterest: "Tender-Ready Starter bundle",        status: "contacted", divisionId: tes!.id },
+  { name: "Tebogo Nkosi",      email: "tebogo@nkosigroup.co.za",         phone: "0813344557", source: "Google",    serviceInterest: "Website + Growth package",             status: "contacted", divisionId: aws!.id },
+  { name: "Chantelle Ferreira",email: "chantelle.f@ferreiraplumbing.co.za", phone: "0844556678", source: "WhatsApp", serviceInterest: "Tender-Ready Starter bundle",        status: "contacted", divisionId: tes!.id },
   { name: "Bongani Mthethwa",  email: "bongani@mthethwalogistics.co.za", phone: "0761234567", source: "Google",    serviceInterest: "Pro website package",                  status: "contacted", divisionId: aws!.id },
   // Converted
   { name: "Ruan Botha",        email: "ruan@bothatech.co.za",            phone: "0617778899", source: "Google",    serviceInterest: "Website + Growth package",             status: "converted", divisionId: aws!.id },
@@ -885,7 +885,7 @@ await db.insert(leads).values([
   { name: "Nompumelelo Dube",  email: "nompumelelo@dubecatering.co.za",  phone: "0831122334", source: "Referral",  serviceInterest: "Social media management + website",   status: "converted", divisionId: pmg!.id },
   { name: "Gerhard Swart",     email: "gerhard@swartcivil.co.za",        phone: "0762233445", source: "Google",    serviceInterest: "Full tender compilation",               status: "converted", divisionId: tes!.id },
   // Lost
-  { name: "Derek Pietersen",   email: "derek.p@outlook.com",             phone: "0823334455", source: "Instagram", serviceInterest: "Logo & brand identity",                status: "lost",      divisionId: aws!.id },
+  { name: "Derek Pietersen",   email: "derek.p@outlook.com",             phone: "0823334456", source: "Instagram", serviceInterest: "Logo & brand identity",                status: "lost",      divisionId: aws!.id },
   { name: "Mpho Ramahlele",    email: "mpho.r@mphoservices.co.za",       phone: "0765544332", source: "Facebook",  serviceInterest: "Full tender compilation",               status: "lost",      divisionId: tes!.id },
   { name: "Sandra Jacobs",     email: "sandra.jacobs@sjenterprises.co.za",phone: "0834433221", source: "Google",   serviceInterest: "Website build",                        status: "lost",      divisionId: aws!.id },
   { name: "Kobus Venter",      email: "kobus@ventersupplies.co.za",      phone: "0815566778", source: "Facebook",  serviceInterest: "Social media management",              status: "lost",      divisionId: pmg!.id },
