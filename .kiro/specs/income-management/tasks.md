@@ -18,42 +18,42 @@ Each layer builds on the previous; no orphaned code.
   - amount column returns string from Drizzle numeric — do NOT coerce to number in the query helper
   - _Requirements: 8.1, 8.2, 8.3, 8.4, 8.5, 8.6_
 
-  - [ ]* 1.1 Write property test for `getAllIncome` shape and sort order
+  - [x] 1.1 Write property test for `getAllIncome` shape and sort order
     - **Property 1: getAllIncome returns all entries with correct shape, sorted date DESC**
     - **Validates: Requirements 1.1, 1.3, 8.1**
     - Use `fc.array(incomeArb)` — mock DB, assert shape and descending date order
     - Tag: `// Feature: income-management, Property 1: getAllIncome shape + sort`
     - Minimum 100 iterations
 
-  - [ ]* 1.2 Write property test for division filter exclusivity
+  - [x] 1.2 Write property test for division filter exclusivity
     - **Property 2: Division filter excludes entries from other divisions**
     - **Validates: Requirements 2.3, 7.3**
     - Use `fc.uuid()` as divisionId filter; assert no returned entry has a different divisionId
     - Tag: `// Feature: income-management, Property 2: Division filter`
     - Minimum 100 iterations
 
-  - [ ]* 1.3 Write property test for month filter exclusivity
+  - [x] 1.3 Write property test for month filter exclusivity
     - **Property 3: Month filter excludes entries outside the calendar month**
     - **Validates: Requirements 2.4, 7.3**
     - Use `fc.date()` mapped to YYYY-MM; assert all returned entries fall within that month
     - Tag: `// Feature: income-management, Property 3: Month filter`
     - Minimum 100 iterations
 
-  - [ ]* 1.4 Write property test for `getDistinctIncomeMonths` distinctness and sort
+  - [x] 1.4 Write property test for `getDistinctIncomeMonths` distinctness and sort
     - **Property 9: getDistinctIncomeMonths returns distinct YYYY-MM strings sorted DESC**
     - **Validates: Requirements 2.2, 8.3**
     - Use `fc.array(fc.date())` spanning multiple months; assert no duplicates, sorted DESC
     - Tag: `// Feature: income-management, Property 9: getDistinctIncomeMonths`
     - Minimum 100 iterations
 
-  - [ ]* 1.5 Write property test for `getAllDivisions` sort order
+  - [x] 1.5 Write property test for `getAllDivisions` sort order
     - **Property 12: getAllDivisions returns all divisions sorted by name ASC**
     - **Validates: Requirements 8.4**
     - Use `fc.array(fc.string())` as division names; assert sorted alphabetically ASC
     - Tag: `// Feature: income-management, Property 12: getAllDivisions sort`
     - Minimum 100 iterations
 
-  - [ ]* 1.6 Write property test for `getAllClients` sort order
+  - [x] 1.6 Write property test for `getAllClients` sort order
     - **Property 13: getAllClients returns all clients sorted by name ASC**
     - **Validates: Requirements 8.5**
     - Use `fc.array(fc.record({ name: fc.string(), businessName: fc.option(fc.string()) }))` 
@@ -71,49 +71,49 @@ Each layer builds on the previous; no orphaned code.
   - amount stored as `String(parsed.amount)` — never raw JS number
   - _Requirements: 3.5, 3.6, 3.7, 4.7, 4.8, 5.3, 5.6, 6.1, 6.2, 6.3, 6.4, 9.1, 9.2, 10.1, 10.2, 10.3, 10.4, 10.5, 11.1_
 
-  - [ ]* 2.1 Write property test for `createIncome` round-trip
+  - [x] 2.1 Write property test for `createIncome` round-trip
     - **Property 5: createIncome round-trip — valid input succeeds and entry is retrievable**
     - **Validates: Requirements 3.5, 3.7, 6.4**
     - Use `fc.record({ date, divisionId: fc.uuid(), amount: fc.float({ min: 0.01 }), ... })`
     - Tag: `// Feature: income-management, Property 5: createIncome round-trip`
     - Minimum 100 iterations
 
-  - [ ]* 2.2 Write property test for `updateIncome` round-trip
+  - [x] 2.2 Write property test for `updateIncome` round-trip
     - **Property 6: updateIncome round-trip — valid input succeeds and changes are reflected**
     - **Validates: Requirements 4.7**
     - Use existing entry + `fc.record(...)` for new values; assert getAllIncome reflects update
     - Tag: `// Feature: income-management, Property 6: updateIncome round-trip`
     - Minimum 100 iterations
 
-  - [ ]* 2.3 Write property test for `deleteIncome` round-trip
+  - [x] 2.3 Write property test for `deleteIncome` round-trip
     - **Property 7: deleteIncome round-trip — deleted entry is no longer retrievable**
     - **Validates: Requirements 5.3, 5.4**
     - Assert `getIncomeById(id)` returns null after `deleteIncome(id)` returns `{}`
     - Tag: `// Feature: income-management, Property 7: deleteIncome round-trip`
     - Minimum 100 iterations
 
-  - [ ]* 2.4 Write property test for `getIncomeById` correctness
+  - [x] 2.4 Write property test for `getIncomeById` correctness
     - **Property 8: getIncomeById returns the correct entry or null**
     - **Validates: Requirements 4.2, 4.9, 8.2**
     - Test both existing id (returns correct row) and non-existent UUID (returns null)
     - Tag: `// Feature: income-management, Property 8: getIncomeById`
     - Minimum 100 iterations
 
-  - [ ]* 2.5 Write property test for invalid input rejection
+  - [x] 2.5 Write property test for invalid input rejection
     - **Property 10: Invalid input to createIncome/updateIncome always returns an error**
     - **Validates: Requirements 3.6, 4.8, 9.2, 10.2, 10.3**
     - Use `fc.oneof(invalidAmountArb, invalidUuidArb, missingFieldArb)` — assert `{ error: <non-empty string> }` and no DB write
     - Tag: `// Feature: income-management, Property 10: Invalid input returns error`
     - Minimum 100 iterations
 
-  - [ ]* 2.6 Write property test for amount precision round-trip
+  - [x] 2.6 Write property test for amount precision round-trip
     - **Property 11: Amount precision is preserved on round-trip**
     - **Validates: Requirements 9.1, 9.2**
     - Use `fc.float({ min: 0.01, max: 999999.99 })`; assert `Number(String(amount))` equals original within 2 decimal places
     - Tag: `// Feature: income-management, Property 11: Amount precision`
     - Minimum 100 iterations
 
-  - [ ]* 2.7 Write unit tests for Server Action edge cases
+  - [x] 2.7 Write unit tests for Server Action edge cases
     - `IncomeSchema` rejects empty string date
     - `IncomeSchema` rejects `clientId = ''` before normalization
     - `IncomeSchema` accepts `clientId = undefined`
@@ -134,7 +134,7 @@ Each layer builds on the previous; no orphaned code.
   - On select change: build new URLSearchParams, call `router.push('/income?' + params.toString())`
   - _Requirements: 2.1, 2.2, 2.3, 2.4, 2.5, 7.1, 7.2_
 
-  - [ ]* 4.1 Write unit tests for `FilterBar`
+  - [x] 4.1 Write unit tests for `FilterBar`
     - `FilterBar` renders "All divisions" as default option
     - `FilterBar` renders "All months" as default option
     - Month options display human-readable labels (e.g. "March 2026") not raw YYYY-MM
@@ -161,7 +161,7 @@ Each layer builds on the previous; no orphaned code.
   - No optimistic removal — page revalidation handles refresh on success
   - _Requirements: 1.2, 1.3, 4.1, 5.1, 5.2, 5.4, 5.5, 5.6_
 
-  - [ ]* 6.1 Write unit tests for `IncomeTable`
+  - [x] 6.1 Write unit tests for `IncomeTable`
     - Renders edit link with correct href `/income/<id>` for each row
     - Empty entries array renders no table rows
     - _Requirements: 1.2, 4.1_
@@ -183,14 +183,14 @@ Each layer builds on the previous; no orphaned code.
   - Filter values read exclusively from `searchParams` — no client-side state
   - _Requirements: 1.1, 1.4, 1.5, 2.1, 2.2, 2.5, 2.6, 2.7, 2.8, 3.1, 3.3, 3.4, 7.1, 7.3, 7.4_
 
-  - [ ]* 8.1 Write property test for running total computation
+  - [x] 8.1 Write property test for running total computation
     - **Property 4: Running total equals sum of amounts in the result set**
     - **Validates: Requirements 1.4, 2.6, 7.4**
     - Use `fc.array(fc.float({ min: 0.01 }))` as amounts; assert reduce equals arithmetic sum
     - Tag: `// Feature: income-management, Property 4: Running total`
     - Minimum 100 iterations
 
-  - [ ]* 8.2 Write unit test for empty-state rendering
+  - [x] 8.2 Write unit test for empty-state rendering
     - When `entries = []`, renders empty-state message instead of table
     - _Requirements: 1.5_
 
