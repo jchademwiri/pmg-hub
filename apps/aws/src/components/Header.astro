@@ -1,0 +1,266 @@
+---
+import ThemeToggle from "./ThemeToggle.astro";
+
+export const navLinks = [
+  { href: "#home", label: "Home" },
+  { href: "#services", label: "Services" },
+  { href: "#portfolio", label: "Portfolio" },
+  { href: "#pricing", label: "Pricing" },
+  { href: "#contact", label: "Contact" },
+];
+
+// For hash-based navigation, we'll handle active state in the client script
+const linkClass = "text-sm font-medium transition-colors";
+---
+
+<header
+  id="main-header"
+  class="fixed top-0 z-50 w-full border-transparent bg-transparent transition-all duration-300"
+>
+  <div
+    class="relative container mx-auto flex h-16 items-center justify-between px-4"
+  >
+    <a href="/" class="flex items-center gap-2">
+      <!-- Mobile Icon -->
+      <img
+        src="/icon.svg"
+        alt="Apex Logo"
+        width="32"
+        height="32"
+        class="h-8 w-8 rounded-lg shadow-md md:hidden"
+      />
+      <!-- Desktop Full Logo (Light Mode) -->
+      <img
+        src="/logo.svg"
+        alt="Apex Web Solutions"
+        width="125"
+        height="40"
+        class="hidden h-10 w-auto md:block dark:hidden"
+      />
+      <!-- Desktop Full Logo (Dark Mode) -->
+      <img
+        src="/logo-dark.svg"
+        alt="Apex Web Solutions"
+        width="125"
+        height="40"
+        class="hidden h-10 w-auto dark:md:block"
+      />
+    </a>
+
+    <div class="flex items-center gap-4">
+      <!-- Desktop Nav -->
+      <nav class="hidden items-center gap-6 md:flex">
+        {
+          navLinks.map((link) => (
+            <a
+              href={link.href}
+              class={`${linkClass} nav-link text-foreground/70 hover:text-primary dark:hover:text-primary-accent`}
+              data-href={link.href}
+            >
+              {link.label}
+            </a>
+          ))
+        }
+      </nav>
+
+      <div class="bg-border hidden h-6 w-px md:block"></div>
+
+      <ThemeToggle />
+
+      <!-- Hamburger Button -->
+      <button
+        id="mobile-menu-btn"
+        class="text-foreground/70 hover:bg-accent rounded-lg p-2 transition-colors md:hidden"
+        aria-label="Toggle mobile menu"
+        aria-expanded="false"
+        aria-controls="mobile-menu"
+      >
+        <svg
+          xmlns="http://www.w3.org/2000/svg"
+          fill="none"
+          viewBox="0 0 24 24"
+          stroke-width="1.5"
+          stroke="currentColor"
+          class="h-6 w-6 transition-transform duration-300"
+          aria-hidden="true"
+        >
+          <path
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            d="M3.75 6.75h16.5M3.75 12h16.5m-16.5 5.25h16.5"></path>
+        </svg>
+      </button>
+    </div>
+
+    <!-- Mobile Menu -->
+    <div
+      id="mobile-menu"
+      class="border-border bg-popover/80 invisible absolute top-18 right-0 w-48 origin-top-right scale-95 rounded-xl border p-2 opacity-0 shadow-lg backdrop-blur-2xl transition-all duration-300 ease-in-out md:hidden"
+    >
+      <nav class="flex flex-col space-y-1">
+        {
+          navLinks.map((link) => (
+            <a
+              href={link.href}
+              class={`${linkClass} nav-link text-foreground/70 hover:bg-accent hover:text-primary dark:hover:text-primary-accent block rounded-lg px-4 py-2`}
+              data-href={link.href}
+            >
+              {link.label}
+            </a>
+          ))
+        }
+      </nav>
+    </div>
+  </div>
+</header>
+
+<script is:inline>
+  // Prevent duplicate event listeners on navigation
+  if (!window.__headerInitialized) {
+    window.__headerInitialized = true;
+
+    const header = document.getElementById("main-header");
+    const btn = document.getElementById("mobile-menu-btn");
+    const menu = document.getElementById("mobile-menu");
+    const menuLinks = menu?.querySelectorAll("a");
+    const navLinks = document.querySelectorAll(".nav-link");
+
+    // Handle Header Scroll Effect
+    const handleScroll = () => {
+      if (window.scrollY > 10) {
+        header?.classList.add(
+          "bg-background/80",
+          "backdrop-blur-md",
+          "shadow-sm",
+          "border-b",
+          "border-border",
+        );
+        header?.classList.remove("bg-transparent", "border-transparent");
+      } else {
+        header?.classList.remove(
+          "bg-background/80",
+          "backdrop-blur-md",
+          "shadow-sm",
+          "border-b",
+          "border-border",
+        );
+        header?.classList.add("bg-transparent", "border-transparent");
+      }
+    };
+
+    window.addEventListener("scroll", handleScroll);
+    // Initial check
+    handleScroll();
+
+    const closeMenu = () => {
+      if (btn && menu) {
+        btn.setAttribute("aria-expanded", "false");
+        menu.classList.remove("opacity-100", "scale-100", "visible");
+        menu.classList.add("opacity-0", "scale-95", "invisible");
+      }
+    };
+
+    // Update active link based on hash or section in view
+    const updateActiveLink = (hash) => {
+      navLinks.forEach((link) => {
+        const linkHash = link.getAttribute("data-href");
+        if (linkHash === hash) {
+          link.classList.add(
+            "text-primary",
+            "dark:text-primary-accent",
+            "font-semibold",
+          );
+          link.classList.remove("text-foreground/70");
+        } else {
+          link.classList.remove(
+            "text-primary",
+            "dark:text-primary-accent",
+            "font-semibold",
+          );
+          link.classList.add("text-foreground/70");
+        }
+      });
+    };
+
+    // Intersection Observer to detect which section is in view
+    const observerOptions = {
+      root: null,
+      rootMargin: "-50% 0px -50% 0px",
+      threshold: 0,
+    };
+
+    const observerCallback = (entries) => {
+      entries.forEach((entry) => {
+        if (entry.isIntersecting) {
+          const hash = "#" + entry.target.id;
+          updateActiveLink(hash);
+          // Update URL hash without scrolling
+          if (window.location.hash !== hash) {
+            history.replaceState(null, null, hash);
+          }
+        }
+      });
+    };
+
+    const observer = new IntersectionObserver(
+      observerCallback,
+      observerOptions,
+    );
+
+    // Observe all sections
+    document.querySelectorAll("section[id]").forEach((section) => {
+      observer.observe(section);
+    });
+
+    // Set initial active state based on hash or default to #home
+    const initialHash = window.location.hash || "#home";
+    updateActiveLink(initialHash);
+
+    // Handle hash changes
+    window.addEventListener("hashchange", () => {
+      updateActiveLink(window.location.hash);
+    });
+
+    if (btn && menu) {
+      // Toggle menu on button click
+      btn.addEventListener("click", (e) => {
+        e.stopPropagation();
+        const isExpanded = btn.getAttribute("aria-expanded") === "true";
+
+        btn.setAttribute("aria-expanded", (!isExpanded).toString());
+
+        if (!isExpanded) {
+          // Open
+          menu.classList.remove("opacity-0", "scale-95", "invisible");
+          menu.classList.add("opacity-100", "scale-100", "visible");
+        } else {
+          // Close
+          closeMenu();
+        }
+      });
+
+      // Close menu when clicking a link
+      menuLinks?.forEach((link) => {
+        link.addEventListener("click", closeMenu);
+      });
+
+      // Close on click outside
+      document.addEventListener("click", (e) => {
+        if (!menu.contains(e.target) && !btn.contains(e.target)) {
+          closeMenu();
+        }
+      });
+
+      // Close on Escape key
+      document.addEventListener("keydown", (e) => {
+        if (
+          e.key === "Escape" &&
+          btn.getAttribute("aria-expanded") === "true"
+        ) {
+          closeMenu();
+          btn.focus(); // Return focus to button
+        }
+      });
+    }
+  }
+</script>

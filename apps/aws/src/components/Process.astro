@@ -1,0 +1,43 @@
+---
+import { steps } from "@/data/process-steps";
+---
+
+<div class="bg-muted/30 relative overflow-hidden py-24">
+  <div class="container mx-auto px-4">
+    <div class="mx-auto mb-16 max-w-3xl text-center">
+      <h2 class="mb-4 text-3xl font-bold md:text-4xl">
+        The <span class="text-primary">Apex Web Development</span> Process
+      </h2>
+      <p class="text-muted-foreground text-lg">
+        From concept to code, our proven workflow ensures we deliver exceptional
+        results on time and on budget.
+      </p>
+    </div>
+
+    <!-- Steps Container -->
+    <div class="relative grid gap-8 md:grid-cols-4">
+      <!-- Connecting Line (Desktop) -->
+      <div
+        class="via-primary/30 absolute top-12 left-0 -z-10 hidden h-0.5 w-full bg-linear-to-r from-transparent to-transparent md:block"
+      >
+      </div>
+
+      {
+        steps.map((step, index) => (
+          <div class="relative flex flex-col items-center text-center">
+            {/* Number Bubble */}
+            <div class="bg-background border-muted text-primary group relative z-10 mb-6 flex h-24 w-24 items-center justify-center rounded-full border-4 text-2xl font-bold shadow-sm transition-transform duration-300 hover:scale-110">
+              <span class="bg-primary/5 absolute inset-0 scale-0 rounded-full transition-transform duration-500 group-hover:scale-125" />
+              {step.number}
+            </div>
+
+            <h3 class="mb-3 text-xl font-bold">{step.title}</h3>
+            <p class="text-muted-foreground max-w-[250px] text-sm leading-relaxed">
+              {step.description}
+            </p>
+          </div>
+        ))
+      }
+    </div>
+  </div>
+</div>

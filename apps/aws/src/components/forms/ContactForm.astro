@@ -1,0 +1,154 @@
+---
+
+---
+
+<form id="contact-form" class="space-y-6">
+  <div class="grid grid-cols-1 gap-6 md:grid-cols-2">
+    <!-- Name -->
+    <div>
+      <label for="name" class="text-foreground mb-2 block text-sm font-medium"
+        >Name</label
+      >
+      <input
+        type="text"
+        name="name"
+        id="name"
+        required
+        class="border-input bg-background ring-offset-background placeholder:text-muted-foreground focus-visible:ring-primary flex h-10 w-full rounded-md border px-3 py-2 text-sm file:border-0 file:bg-transparent file:text-sm file:font-medium focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:outline-none disabled:cursor-not-allowed disabled:opacity-50"
+        placeholder="John Doe"
+      />
+    </div>
+
+    <!-- Email -->
+    <div>
+      <label for="email" class="text-foreground mb-2 block text-sm font-medium"
+        >Email</label
+      >
+      <input
+        type="email"
+        name="email"
+        id="email"
+        required
+        class="border-input bg-background ring-offset-background placeholder:text-muted-foreground focus-visible:ring-primary flex h-10 w-full rounded-md border px-3 py-2 text-sm file:border-0 file:bg-transparent file:text-sm file:font-medium focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:outline-none disabled:cursor-not-allowed disabled:opacity-50"
+        placeholder="john@example.com"
+      />
+    </div>
+  </div>
+
+  <!-- Subject -->
+  <div>
+    <label for="subject" class="text-foreground mb-2 block text-sm font-medium"
+      >Subject</label
+    >
+    <select
+      name="subject"
+      id="subject"
+      class="border-input bg-background ring-offset-background placeholder:text-muted-foreground focus-visible:ring-primary flex h-10 w-full rounded-md border px-3 py-2 text-sm file:border-0 file:bg-transparent file:text-sm file:font-medium focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:outline-none disabled:cursor-not-allowed disabled:opacity-50"
+    >
+      <option value="General Inquiry">General Inquiry</option>
+      <option value="Project Quote">Request a Quote</option>
+      <option value="Support">Support</option>
+    </select>
+  </div>
+
+  <!-- Message -->
+  <div>
+    <label for="message" class="text-foreground mb-2 block text-sm font-medium"
+      >Message</label
+    >
+    <textarea
+      name="message"
+      id="message"
+      rows="4"
+      required
+      class="border-input bg-background ring-offset-background placeholder:text-muted-foreground focus-visible:ring-primary flex min-h-[80px] w-full rounded-md border px-3 py-2 text-sm focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:outline-none disabled:cursor-not-allowed disabled:opacity-50"
+      placeholder="Tell us about your project..."></textarea>
+  </div>
+
+  <button
+    type="submit"
+    class="ring-offset-background focus-visible:ring-ring bg-primary text-primary-foreground hover:bg-primary/90 inline-flex h-10 w-full items-center justify-center rounded-md px-4 py-2 text-sm font-medium transition-colors focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:outline-none disabled:pointer-events-none disabled:opacity-50"
+  >
+    <span id="btn-text">Send Message</span>
+    <span id="btn-loader" class="ml-2 hidden">
+      <svg
+        class="h-4 w-4 animate-spin text-white"
+        xmlns="http://www.w3.org/2000/svg"
+        fill="none"
+        viewBox="0 0 24 24"
+      >
+        <circle
+          class="opacity-25"
+          cx="12"
+          cy="12"
+          r="10"
+          stroke="currentColor"
+          stroke-width="4"></circle>
+        <path
+          class="opacity-75"
+          fill="currentColor"
+          d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+        ></path>
+      </svg>
+    </span>
+  </button>
+  <p id="contact-message" class="mt-2 hidden text-center text-sm"></p>
+</form>
+
+<script is:inline>
+  {
+    const form = document.getElementById("contact-form");
+    const btnText = document.getElementById("btn-text");
+    const btnLoader = document.getElementById("btn-loader");
+    const formMessage = document.getElementById("contact-message");
+
+    if (form) {
+      form.addEventListener("submit", async (e) => {
+        e.preventDefault();
+
+        // Reset UI
+        formMessage.classList.add("hidden");
+        formMessage.classList.remove("text-green-600", "text-red-600");
+        btnText.textContent = "Sending...";
+        btnLoader.classList.remove("hidden");
+        const submitBtn = form.querySelector('button[type="submit"]');
+        submitBtn.disabled = true;
+
+        const formData = new FormData(form);
+        const data = Object.fromEntries(formData);
+
+        try {
+          const response = await fetch("/api/contact", {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify(data),
+          });
+
+          const result = await response.json();
+
+          if (response.ok) {
+            form.reset();
+            formMessage.textContent =
+              "Message sent successfully! We will get back to you soon.";
+            formMessage.classList.add("text-green-600");
+            formMessage.classList.remove("hidden");
+          } else {
+            throw new Error(result.error || "Failed to send message");
+          }
+        } catch (error) {
+          console.error("Error:", error);
+          formMessage.textContent =
+            "Something went wrong. Please try again later.";
+          formMessage.classList.add("text-red-600");
+          formMessage.classList.remove("hidden");
+        } finally {
+          btnText.textContent = "Send Message";
+          btnLoader.classList.add("hidden");
+          submitBtn.disabled = false;
+        }
+      });
+    }
+  }
+</script>

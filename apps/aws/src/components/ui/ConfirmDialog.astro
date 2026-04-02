@@ -1,0 +1,96 @@
+---
+// Simple Props if needed, but mostly this will be driven by window events
+interface Props {
+  id?: string;
+}
+
+const { id = "confirm-dialog" } = Astro.props;
+---
+
+<dialog
+  id={id}
+  class="open:animate-in open:fade-in open:zoom-in-95 closed:animate-out closed:fade-out closed:zoom-out-95 fixed top-1/2 left-1/2 w-full max-w-sm -translate-x-1/2 -translate-y-1/2 rounded-xl bg-white p-6 shadow-xl ring-1 ring-zinc-200 backdrop:bg-zinc-900/50 backdrop:backdrop-blur-sm focus:outline-none dark:bg-zinc-900 dark:ring-zinc-800"
+>
+  <div class="flex flex-col gap-4">
+    <div>
+      <h3
+        id={`${id}-title`}
+        class="text-lg font-semibold text-zinc-900 dark:text-white"
+      >
+        Confirm Action
+      </h3>
+      <p
+        id={`${id}-message`}
+        class="mt-2 text-sm text-zinc-500 dark:text-zinc-400"
+      >
+        Are you sure?
+      </p>
+    </div>
+
+    <div class="flex justify-end gap-3">
+      <button
+        id={`${id}-cancel`}
+        class="rounded-lg border border-zinc-200 px-4 py-2 text-sm font-medium text-zinc-700 hover:bg-zinc-50 dark:border-zinc-800 dark:text-zinc-300 dark:hover:bg-zinc-800"
+      >
+        Cancel
+      </button>
+      <button
+        id={`${id}-confirm`}
+        class="rounded-lg bg-red-600 px-4 py-2 text-sm font-medium text-white hover:bg-red-700"
+      >
+        Confirm
+      </button>
+    </div>
+  </div>
+</dialog>
+
+<script define:vars={{ id }}>
+  const dialog = document.getElementById(id);
+  const titleEl = document.getElementById(`${id}-title`);
+  const messageEl = document.getElementById(`${id}-message`);
+  const cancelBtn = document.getElementById(`${id}-cancel`);
+  const confirmBtn = document.getElementById(`${id}-confirm`);
+
+  let resolvePromise;
+
+  window.confirmDialog = (options = {}) => {
+    return new Promise((resolve) => {
+      resolvePromise = resolve;
+
+      // Set content
+      if (titleEl) titleEl.textContent = options.title || "Confirm Action";
+      if (messageEl) messageEl.textContent = options.message || "Are you sure?";
+      if (confirmBtn) {
+        confirmBtn.textContent = options.confirmText || "Confirm";
+        // Reset classes
+        confirmBtn.className =
+          "rounded-lg px-4 py-2 text-sm font-medium text-white";
+        if (options.variant === "destructive") {
+          confirmBtn.classList.add("bg-red-600", "hover:bg-red-700");
+        } else {
+          confirmBtn.classList.add("bg-indigo-600", "hover:bg-indigo-700");
+        }
+      }
+
+      dialog?.classList.remove("hidden");
+      dialog?.showModal();
+    });
+  };
+
+  const closeDialog = (value) => {
+    dialog?.close();
+    // dialog?.classList.add('hidden'); // Optional: if using hidden class for animations
+    if (resolvePromise) {
+      resolvePromise(value);
+      resolvePromise = null;
+    }
+  };
+
+  cancelBtn?.addEventListener("click", () => closeDialog(false));
+  confirmBtn?.addEventListener("click", () => closeDialog(true));
+
+  // Close on backdrop click (optional)
+  dialog?.addEventListener("click", (e) => {
+    if (e.target === dialog) closeDialog(false);
+  });
+</script>

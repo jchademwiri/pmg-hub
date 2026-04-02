@@ -1,0 +1,68 @@
+{
+  "meta": {
+    "currency": "ZAR",
+    "currencySymbol": "R",
+    "billingPeriod": "per month"
+  },
+  "packages": [
+    {
+      "id": "starter",
+      "title": "Digital Identity",
+      "tagline": "The Tender Starter Pack",
+      "description": "Perfect for new companies needing a professional email for tenders.",
+      "pricing": {
+        "monthly": 99,
+        "setupFee": 450
+      },
+      "features": [
+        "Professional .co.za Domain",
+        "3x Business Email Accounts",
+        "Digital Business Card (Landing Page)",
+        "Company Reg Number Display",
+        "Mobile Friendly Design"
+      ],
+      "isPopular": false,
+      "ctaText": "Get Identity Pack"
+    },
+    {
+      "id": "standard",
+      "title": "Company Profile",
+      "tagline": "The Credibility Builder",
+      "description": "A complete one-page website to showcase your services and build trust.",
+      "pricing": {
+        "monthly": 250,
+        "setupFee": 1450
+      },
+      "features": [
+        "Everything in Digital Identity",
+        "Professional One-Page Website",
+        "About Us & Services Sections",
+        "WhatsApp Chat Button",
+        "Google Maps Integration",
+        "Monthly Text Content Updates"
+      ],
+      "isPopular": true,
+      "ctaText": "Get Company Profile"
+    },
+    {
+      "id": "growth",
+      "title": "Business Growth",
+      "tagline": "The SEO Ranker",
+      "description": "A multi-page solution to help you rank on Google and find new clients.",
+      "pricing": {
+        "monthly": 350,
+        "setupFee": 2950
+      },
+      "features": [
+        "Everything in Company Profile",
+        "5-Page Website Structure",
+        "Contact Form with Lead Alerts",
+        "Basic SEO (Google Ranking)",
+        "Google Business Profile Setup",
+        "Social Media Links"
+      ],
+      "isPopular": false,
+      "ctaText": "Get Growth Pack"
+    }
+  ]
+}

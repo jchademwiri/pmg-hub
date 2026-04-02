@@ -1,0 +1,10 @@
+<svg width="800" height="256" viewBox="0 0 800 256" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <!-- Icon Part -->
+  <rect width="256" height="256" rx="64" fill="#1d4ed8"/>
+  <path d="M128 48L40 208H216L128 48Z" fill="white"/>
+  <path d="M128 108L82 188H174L128 108Z" fill="#1d4ed8"/>
+  
+  <!-- Text Part -->
+  <text x="290" y="130" font-family="Arial, sans-serif" font-weight="bold" font-size="80" fill="#ffffff" textLength="440" lengthAdjust="spacing">APEX</text>
+  <text x="290" y="200" font-family="Arial, sans-serif" font-size="50" fill="#60a5fa" text-transform="uppercase" textLength="440" lengthAdjust="spacing">WEB SOLUTIONS</text>
+</svg>

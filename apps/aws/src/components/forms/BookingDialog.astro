@@ -1,0 +1,438 @@
+---
+import { getDb } from '@db/client';
+import { pricing } from '@db/schema';
+import { type InferSelectModel, asc } from 'drizzle-orm';
+
+const { id = 'booking-dialog' } = Astro.props;
+
+// Fetch data from DB
+const db = getDb(undefined);
+type Pricing = InferSelectModel<typeof pricing>;
+const allPlans: Pricing[] = await db
+  .select()
+  .from(pricing)
+  .orderBy(asc(pricing.price));
+
+const formatPrice = (amount: number) => `R${amount.toLocaleString()}`;
+
+const monthlyPlans = allPlans
+  .filter((p) => p.type === 'monthly')
+  .map((p) => ({
+    ...p,
+    price: formatPrice(p.price),
+    upfront: p.upfront ? `${formatPrice(p.upfront)} Once-Off Setup` : undefined,
+  }));
+
+const onceOffPlans = allPlans
+  .filter((p) => p.type === 'once-off')
+  .map((p) => ({
+    ...p,
+    price: formatPrice(p.price),
+    upfront: p.upfront ? `${formatPrice(p.upfront)} Once-Off Setup` : undefined,
+  }));
+
+// Prepare data for client-side
+const plansData = {
+  monthly: monthlyPlans,
+  onceOff: onceOffPlans,
+};
+---
+
+<dialog
+  id={id}
+  class='bg-background text-foreground backdrop:bg-background/80 fixed inset-0 z-50 m-auto w-full max-w-lg rounded-2xl border p-0 shadow-2xl backdrop:backdrop-blur-sm'
+>
+  <div class='relative p-6'>
+    <!-- Close Button -->
+    <button
+      id='close-dialog'
+      class='text-muted-foreground hover:bg-muted absolute top-4 right-4 rounded-full p-2 transition-colors'
+      aria-label='Close'
+    >
+      <svg
+        xmlns='http://www.w3.org/2000/svg'
+        width='24'
+        height='24'
+        viewBox='0 0 24 24'
+        fill='none'
+        stroke='currentColor'
+        stroke-width='2'
+        stroke-linecap='round'
+        stroke-linejoin='round'
+      >
+        <path d='M18 6 6 18'></path>
+        <path d='m6 6 12 12'></path>
+      </svg>
+    </button>
+
+    <div id='dialog-content'>
+      <div class='mb-6'>
+        <h2 class='text-2xl font-bold'>Get Started</h2>
+        <p class='text-muted-foreground text-sm'>
+          Customize your plan and complete your details.
+        </p>
+      </div>
+
+      <!-- Dynamic Selection -->
+      <div
+        class='bg-muted/50 border-border mb-6 flex flex-col gap-4 rounded-lg border p-4 sm:flex-row sm:items-center sm:justify-between'
+      >
+        <div class='flex w-full flex-col gap-3 sm:w-2/3'>
+          <div>
+            <label
+              for='select-type'
+              class='text-muted-foreground mb-1 block text-xs font-semibold tracking-wider uppercase'
+              >Billing Frequency</label
+            >
+            <div class='bg-background border-input flex rounded-lg border p-1'>
+              <button
+                type='button'
+                data-val='monthly'
+                class='type-toggle bg-primary text-primary-foreground flex-1 rounded-md px-2 py-1 text-sm font-medium shadow-sm transition-colors'
+                >Monthly</button
+              >
+              <button
+                type='button'
+                data-val='once-off'
+                class='type-toggle text-muted-foreground hover:bg-muted flex-1 rounded-md px-2 py-1 text-sm font-medium transition-colors'
+                >Once-Off</button
+              >
+            </div>
+          </div>
+
+          <div>
+            <label
+              for='select-package'
+              class='text-muted-foreground mb-1 block text-xs font-semibold tracking-wider uppercase'
+              >Package</label
+            >
+            <select
+              id='select-package'
+              class='bg-background border-input focus-visible:ring-primary w-full rounded-md border p-2 text-sm focus-visible:ring-2 focus-visible:outline-none'
+            >
+              {
+                monthlyPlans.map((p) => (
+                  <option value={p.name}>{p.name}</option>
+                ))
+              }
+            </select>
+          </div>
+        </div>
+
+        <div
+          class='border-border mt-2 flex flex-row items-center justify-between border-t pt-3 text-right sm:mt-0 sm:w-1/3 sm:flex-col sm:items-end sm:justify-center sm:border-t-0 sm:pt-0'
+        >
+          <p class='text-foreground text-sm font-medium'>Total Price</p>
+          <p id='summary-price' class='text-primary text-xl font-bold'>
+            R299<span class='text-muted-foreground text-sm font-normal'
+              >/mo</span
+            >
+          </p>
+          <p id='upfront-cost' class='text-muted-foreground hidden text-xs'>
+            + Setup
+          </p>
+        </div>
+      </div>
+
+      <form id='booking-form' class='space-y-4'>
+        <input type='hidden' name='package' id='input-package' />
+        <input type='hidden' name='price' id='input-price' />
+        <input type='hidden' name='type' id='input-type' />
+
+        <div>
+          <label for='name' class='mb-1 block text-sm font-medium'>Name</label>
+          <input
+            type='text'
+            name='name'
+            id='name'
+            required
+            class='bg-background border-input ring-offset-background placeholder:text-muted-foreground focus-visible:ring-ring flex h-10 w-full rounded-md border px-3 py-2 text-sm focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:outline-none disabled:cursor-not-allowed disabled:opacity-50'
+            placeholder='John Doe'
+          />
+        </div>
+
+        <div>
+          <label for='email' class='mb-1 block text-sm font-medium'>Email</label
+          >
+          <input
+            type='email'
+            name='email'
+            id='email'
+            required
+            class='bg-background border-input ring-offset-background placeholder:text-muted-foreground focus-visible:ring-ring flex h-10 w-full rounded-md border px-3 py-2 text-sm focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:outline-none disabled:cursor-not-allowed disabled:opacity-50'
+            placeholder='john@example.com'
+          />
+        </div>
+
+        <div>
+          <label for='phone' class='mb-1 block text-sm font-medium'
+            >Phone Number</label
+          >
+          <input
+            type='tel'
+            name='phone'
+            id='phone'
+            required
+            class='bg-background border-input ring-offset-background placeholder:text-muted-foreground focus-visible:ring-ring flex h-10 w-full rounded-md border px-3 py-2 text-sm focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:outline-none disabled:cursor-not-allowed disabled:opacity-50'
+            placeholder='+27 12 345 6789'
+          />
+        </div>
+
+        <div class='pt-2'>
+          <button
+            type='submit'
+            id='submit-btn'
+            class='bg-primary text-primary-foreground hover:bg-primary/90 flex h-10 w-full items-center justify-center rounded-lg font-medium transition-colors disabled:opacity-50'
+          >
+            <span>Confirm Booking</span>
+          </button>
+        </div>
+
+        <p id='form-error' class='text-destructive hidden text-center text-sm'>
+        </p>
+      </form>
+    </div>
+
+    <!-- Success View -->
+    <div id='success-view' class='hidden py-8 text-center'>
+      <div
+        class='mx-auto mb-6 flex h-16 w-16 items-center justify-center rounded-full bg-green-100 dark:bg-green-900/30'
+      >
+        <svg
+          class='h-8 w-8 text-green-600 dark:text-green-500'
+          fill='none'
+          viewBox='0 0 24 24'
+          stroke='currentColor'
+        >
+          <path
+            stroke-linecap='round'
+            stroke-linejoin='round'
+            stroke-width='2'
+            d='M5 13l4 4L19 7'></path>
+        </svg>
+      </div>
+      <h3 class='text-foreground mb-2 text-2xl font-bold'>Booking Received!</h3>
+      <p class='text-muted-foreground mx-auto mb-8 max-w-xs'>
+        Thank you! We've sent a confirmation email to your inbox. We'll be in
+        touch shortly.
+      </p>
+      <button
+        id='success-close-btn'
+        class='bg-primary text-primary-foreground hover:bg-primary/90 inline-flex h-10 items-center justify-center rounded-lg px-8 font-medium transition-colors'
+      >
+        Close
+      </button>
+    </div>
+  </div>
+</dialog>
+
+<script define:vars={{ plansData }}>
+  const dialog = document.getElementById('booking-dialog');
+  const closeBtn = document.getElementById('close-dialog');
+  const form = document.getElementById('booking-form');
+  const submitBtn = document.getElementById('submit-btn');
+  const errorMsg = document.getElementById('form-error');
+
+  // Views
+  const dialogContent = document.getElementById('dialog-content');
+  const successView = document.getElementById('success-view');
+  const successCloseBtn = document.getElementById('success-close-btn');
+
+  // Dynamic Elements
+  const typeToggles = document.querySelectorAll('.type-toggle');
+  const selectPackage = document.getElementById('select-package');
+  const summaryPrice = document.getElementById('summary-price');
+  const upfrontDisplay = document.getElementById('upfront-cost');
+
+  // Hidden Inputs
+  const inputPackage = document.getElementById('input-package');
+  const inputPrice = document.getElementById('input-price');
+  const inputType = document.getElementById('input-type');
+
+  let currentType = 'monthly'; // 'monthly' | 'once-off'
+  // Initial plan finding
+  let currentPlan =
+    plansData.monthly && plansData.monthly.length > 0
+      ? plansData.monthly[0]
+      : null;
+
+  function resetForm() {
+    form.reset();
+    submitBtn.disabled = false;
+    submitBtn.textContent = 'Confirm Booking';
+    submitBtn.classList.remove('bg-green-600', 'hover:bg-green-700');
+    submitBtn.classList.add('bg-primary', 'hover:bg-primary/90');
+
+    // Navigate back to form
+    dialogContent.classList.remove('hidden');
+    successView.classList.add('hidden');
+
+    // Re-sync UI to defaults
+    updateState('monthly');
+    if (plansData.monthly && plansData.monthly.length > 0) {
+      selectPackage.value = plansData.monthly[0].name;
+    }
+    updatePrice();
+  }
+
+  function updateState(newType) {
+    currentType = newType;
+
+    // Update Selection UI
+    typeToggles.forEach((btn) => {
+      const isActive = btn.dataset.val === currentType;
+      if (isActive) {
+        btn.classList.add('bg-primary', 'text-primary-foreground', 'shadow-sm');
+        btn.classList.remove('text-muted-foreground', 'hover:bg-muted');
+      } else {
+        btn.classList.remove(
+          'bg-primary',
+          'text-primary-foreground',
+          'shadow-sm',
+        );
+        btn.classList.add('text-muted-foreground', 'hover:bg-muted');
+      }
+    });
+
+    updatePrice();
+  }
+
+  function updatePrice() {
+    const selectedName = selectPackage.value;
+    const plans =
+      currentType === 'monthly' ? plansData.monthly : plansData.onceOff;
+    const plan = plans.find((p) => p.name === selectedName);
+
+    if (plan) {
+      currentPlan = plan;
+      const periodLabel = currentType === 'monthly' ? '/mo' : '';
+      summaryPrice.innerHTML = `${plan.price}<span class='text-muted-foreground text-sm font-normal'>${periodLabel}</span>`;
+
+      if (plan.upfront) {
+        upfrontDisplay.textContent = `+ ${plan.upfront}`;
+        upfrontDisplay.classList.remove('hidden');
+      } else {
+        upfrontDisplay.classList.add('hidden');
+      }
+
+      // Update Hidden Inputs
+      inputPackage.value = plan.name;
+      inputPrice.value = plan.price;
+      inputType.value = currentType;
+    }
+  }
+
+  // Event Listeners
+  typeToggles.forEach((btn) => {
+    btn.addEventListener('click', () => {
+      updateState(btn.dataset.val);
+    });
+  });
+
+  if (selectPackage) {
+    selectPackage.addEventListener('change', updatePrice);
+  }
+
+  if (dialog && closeBtn) {
+    closeBtn.addEventListener('click', () => {
+      dialog.close();
+      // Optional: reset form after a delay if closed manually
+      setTimeout(resetForm, 500);
+    });
+
+    // Close on click outside
+    dialog.addEventListener('click', (e) => {
+      const rect = dialog.getBoundingClientRect();
+      const isInDialog =
+        rect.top <= e.clientY &&
+        e.clientY <= rect.top + rect.height &&
+        rect.left <= e.clientX &&
+        e.clientX <= rect.left + rect.width;
+
+      if (!isInDialog) {
+        dialog.close();
+        setTimeout(resetForm, 500);
+      }
+    });
+  }
+
+  if (successCloseBtn) {
+    successCloseBtn.addEventListener('click', () => {
+      dialog.close();
+      setTimeout(resetForm, 500);
+    });
+  }
+
+  // Handle Form Submission
+  if (form) {
+    form.addEventListener('submit', async (e) => {
+      e.preventDefault();
+
+      // Reset State
+      submitBtn.disabled = true;
+      submitBtn.innerHTML = `<svg class="animate-spin -ml-1 mr-3 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+        <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+        <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+      </svg> Processing...`;
+      if (errorMsg) errorMsg.classList.add('hidden');
+
+      const formData = new FormData(form);
+      const data = Object.fromEntries(formData.entries());
+
+      try {
+        const response = await fetch('/api/book', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify(data),
+        });
+
+        const text = await response.text();
+        let result;
+        try {
+          result = JSON.parse(text);
+        } catch (e) {
+          throw new Error(
+            'Server returned invalid response: ' + text.substring(0, 50),
+          );
+        }
+
+        if (result.success) {
+          // Success State - Show Success View
+          dialogContent.classList.add('hidden');
+          successView.classList.remove('hidden');
+        } else {
+          throw new Error(result.error || 'Failed to submit booking');
+        }
+      } catch (err) {
+        console.error(err);
+        submitBtn.disabled = false;
+        submitBtn.textContent = 'Confirm Booking';
+        if (errorMsg) {
+          errorMsg.textContent =
+            err.message || 'An error occurred. Please try again.';
+          errorMsg.classList.remove('hidden');
+        }
+      }
+    });
+  }
+
+  // Expose function to open dialog
+  window.openBookingDialog = (pkgName, price, type) => {
+    if (dialog && selectPackage) {
+      // Normalize type to match data keys
+      const normalizedType = type === 'once-off' ? 'once-off' : 'monthly';
+
+      updateState(normalizedType);
+
+      // Select the package
+      selectPackage.value = pkgName;
+
+      // Update price calculation
+      updatePrice();
+
+      dialog.showModal();
+    }
+  };
+</script>
