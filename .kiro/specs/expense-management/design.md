@@ -57,7 +57,7 @@ export type ExpenseRow = {
 
 getAllExpenses(filters?: { divisionId?: string; category?: string; month?: string }): Promise<ExpenseRow[]>
 getExpenseById(id: string): Promise<ExpenseRow | null>
-getDistinctExpenseMonths(): Promise<string[]>   // YYYY-MM, sorted DESC
+getDistinctExpenseMonths(): Promise<string[]>   // YYYY-MM, sorted ASC
 getDistinctExpenseCategories(): Promise<string[]> // sorted ASC
 ```
 
@@ -80,6 +80,7 @@ All three wrap their logic in `try/catch` and never throw. `revalidatePath` is c
 - Props: `divisions`, `categories`, `months`, `currentDivisionId?`, `currentCategory?`, `currentMonth?`
 - Three shadcn `<Select>` controls; on change calls `router.push('/expenses?' + params)`
 - Month labels formatted via `toLocaleString('en-ZA', { month: 'long', year: 'numeric' })`
+- Each `<Select>` includes a default "all" option as its first item: `"All divisions"` (value `"all"`), `"All categories"` (value `"all"`), `"All months"` (value `"all"`). When the default option is selected, the corresponding query parameter is omitted from the URL — effectively clearing that filter. No separate reset button is needed.
 
 **`ExpenseAddForm`** (`expense-add-form.tsx`)
 - Props: `divisions`, `categories`, `createAction`
@@ -92,6 +93,7 @@ All three wrap their logic in `try/catch` and never throw. `revalidatePath` is c
 - Columns: Date, Division, Category, Description, Amount (`formatZAR`), Actions
 - Edit: `<Button asChild><Link href={'/expenses/' + entry.id}>…</Link></Button>`
 - Delete: inline confirm/cancel with `pendingDeleteId` state; errors via `toast.error`
+- Delete pending UX: when a delete is confirmed, `startTransition` wraps the `deleteAction` call. While the transition is in flight, the row for that entry is visually disabled — `opacity-50 pointer-events-none` — to indicate the operation is pending. The row is only removed from the DOM after `revalidatePath` triggers a server re-render and the page data refreshes.
 
 **`ExpenseEditForm`** (`expense-edit-form.tsx`)
 - Props: `entry: ExpenseRow`, `divisions`, `categories`, `updateAction`
@@ -231,9 +233,9 @@ Rendered as: total in the page header + a flex-wrap list of `category: formatZAR
 
 **Validates: Requirements 11.2, 6.1, 6.2**
 
-### Property 11: getDistinctExpenseMonths returns distinct YYYY-MM strings sorted DESC
+### Property 11: getDistinctExpenseMonths returns distinct YYYY-MM strings sorted ASC
 
-*For any* set of expense entries in the database, `getDistinctExpenseMonths()` must return an array of strings where: every string matches `YYYY-MM` format, there are no duplicate values, and the array is sorted in descending order.
+*For any* set of expense entries in the database, `getDistinctExpenseMonths()` must return an array of strings where: every string matches `YYYY-MM` format, there are no duplicate values, and the array is sorted in ascending order (oldest month first).
 
 **Validates: Requirements 11.3, 2.7**
 
@@ -323,7 +325,7 @@ Each correctness property above is implemented by exactly one property-based tes
 | P8: updateExpense round-trip | Property 8 | 7.3, 7.4 |
 | P9: deleteExpense round-trip | Property 9 | 9.1, 9.2 |
 | P10: getExpenseById | Property 10 | 11.2, 6.1, 6.2 |
-| P11: getDistinctExpenseMonths | Property 11 | 11.3, 2.7 |
+| P11: getDistinctExpenseMonths (sorted ASC) | Property 11 | 11.3, 2.7 |
 | P12: getDistinctExpenseCategories | Property 12 | 11.4, 2.6 |
 | P13: Invalid input returns error | Property 13 | 5.2, 7.2, 10.1–10.6 |
 | P14: Amount precision | Property 14 | 5.3, 7.3 |
