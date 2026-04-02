@@ -457,3 +457,111 @@ export async function getAllClients(): Promise<
     .from(clients)
     .orderBy(asc(clients.name));
 }
+
+// ── Expense management query helpers ─────────────────────────────────────────
+
+export type ExpenseRow = {
+  id: string;
+  date: string;           // ISO date string e.g. "2026-03-15"
+  divisionId: string;
+  divisionName: string;
+  category: string;
+  description: string | null;
+  amount: string;         // numeric from DB — caller converts with Number()
+  createdAt: Date;
+  updatedAt: Date | null;
+};
+
+/**
+ * Returns all expense rows joined to divisions (INNER),
+ * with optional filters for divisionId, category, and month (YYYY-MM),
+ * sorted by date DESC.
+ */
+export async function getAllExpenses(
+  filters?: { divisionId?: string; category?: string; month?: string }
+): Promise<ExpenseRow[]> {
+  const conditions = [];
+  if (filters?.divisionId) {
+    conditions.push(eq(expenses.divisionId, filters.divisionId));
+  }
+  if (filters?.category) {
+    conditions.push(eq(expenses.category, filters.category));
+  }
+  if (filters?.month) {
+    conditions.push(
+      sql`TO_CHAR(${expenses.date}, 'YYYY-MM') = ${filters.month}`
+    );
+  }
+
+  const query = db
+    .select({
+      id: expenses.id,
+      date: sql<string>`${expenses.date}::text`,
+      divisionId: expenses.divisionId,
+      divisionName: divisions.name,
+      category: expenses.category,
+      description: expenses.description,
+      amount: expenses.amount,
+      createdAt: expenses.createdAt,
+      updatedAt: expenses.updatedAt,
+    })
+    .from(expenses)
+    .innerJoin(divisions, eq(expenses.divisionId, divisions.id))
+    .orderBy(desc(expenses.date));
+
+  if (conditions.length > 0) {
+    return query.where(and(...conditions));
+  }
+  return query;
+}
+
+/**
+ * Returns a single expense row by id (with division joined),
+ * or null if no row with that id exists.
+ */
+export async function getExpenseById(id: string): Promise<ExpenseRow | null> {
+  const result = await db
+    .select({
+      id: expenses.id,
+      date: sql<string>`${expenses.date}::text`,
+      divisionId: expenses.divisionId,
+      divisionName: divisions.name,
+      category: expenses.category,
+      description: expenses.description,
+      amount: expenses.amount,
+      createdAt: expenses.createdAt,
+      updatedAt: expenses.updatedAt,
+    })
+    .from(expenses)
+    .innerJoin(divisions, eq(expenses.divisionId, divisions.id))
+    .where(eq(expenses.id, id));
+
+  return result[0] ?? null;
+}
+
+/**
+ * Returns distinct YYYY-MM strings for months that have at least one expense
+ * entry, sorted ascending.
+ */
+export async function getDistinctExpenseMonths(): Promise<string[]> {
+  const result = await db
+    .selectDistinct({
+      month: sql<string>`TO_CHAR(${expenses.date}, 'YYYY-MM')`,
+    })
+    .from(expenses)
+    .orderBy(sql`TO_CHAR(${expenses.date}, 'YYYY-MM') ASC`);
+
+  return result.map((r) => r.month);
+}
+
+/**
+ * Returns distinct category strings from the expenses table, sorted alphabetically ascending.
+ */
+export async function getDistinctExpenseCategories(): Promise<string[]> {
+  const result = await db
+    .selectDistinct({ category: expenses.category })
+    .from(expenses)
+    .orderBy(asc(expenses.category));
+
+  return result.map((r) => r.category);
+}
