@@ -90,6 +90,10 @@
 }
 
 @layer base {
+  * {
+    @apply border-border outline-outline/50;
+  }
+
   body {
     font-family: var(--font-sans);
     @apply bg-background text-foreground;
