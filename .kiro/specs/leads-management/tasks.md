@@ -104,69 +104,69 @@ Implement the leads management feature following the established PMG admin patte
     - Define `leadArb` using `fc.record` matching the `LeadRow` shape (id, name, email, phone, message, source, serviceInterest, status, divisionId, divisionName, notes, createdAt, updatedAt)
     - _Requirements: 10.5_
 
-  - [ ]* 6.2 Write property test P1: getAllLeads shape and sort order
+  - [x] 6.2 Write property test P1: getAllLeads shape and sort order
     - **Property 1: getAllLeads shape + sort order (createdAt DESC)**
     - **Validates: Requirements 1.1, 1.2, 10.1, 10.7**
 
-  - [ ]* 6.3 Write property test P2: status filter excludes other statuses
+  - [x] 6.3 Write property test P2: status filter excludes other statuses
     - **Property 2: status filter excludes entries with other statuses**
     - **Validates: Requirements 2.3, 10.6**
 
-  - [ ]* 6.4 Write property test P3: divisionId filter excludes other divisions
+  - [x] 6.4 Write property test P3: divisionId filter excludes other divisions
     - **Property 3: divisionId filter excludes entries from other divisions**
     - **Validates: Requirements 3.3**
 
-  - [ ]* 6.5 Write property test P4: source filter excludes other sources
+  - [x] 6.5 Write property test P4: source filter excludes other sources
     - **Property 4: source filter excludes entries from other sources**
     - **Validates: Requirements 3.4**
 
-  - [ ]* 6.6 Write property test P5: getLeadById returns correct entry or null
+  - [x] 6.6 Write property test P5: getLeadById returns correct entry or null
     - **Property 5: getLeadById returns correct entry or null**
     - **Validates: Requirements 4.1, 10.2**
 
-  - [ ]* 6.7 Write property test P6: getLeadCountsByStatus counts sum to total
+  - [x] 6.7 Write property test P6: getLeadCountsByStatus counts sum to total
     - **Property 6: new+contacted+converted+lost sum equals all**
     - **Validates: Requirements 2.2, 10.3**
 
-  - [ ]* 6.8 Write property test P7: getDistinctLeadSources — non-null, no duplicates, sorted ASC
+  - [x] 6.8 Write property test P7: getDistinctLeadSources — non-null, no duplicates, sorted ASC
     - **Property 7: getDistinctLeadSources returns only non-null sources, no duplicates, sorted ASC**
     - **Validates: Requirements 3.2, 10.4**
 
-  - [ ]* 6.9 Write property test P8: updateLeadStatus round-trip
+  - [x] 6.9 Write property test P8: updateLeadStatus round-trip
     - **Property 8: valid status persisted, updatedAt updated**
     - **Validates: Requirements 5.2, 5.3, 6.3**
 
-  - [ ]* 6.10 Write property test P9: updateLeadNotes round-trip
+  - [x] 6.10 Write property test P9: updateLeadNotes round-trip
     - **Property 9: notes persisted, updatedAt updated**
     - **Validates: Requirements 7.2, 7.3, 8.3, 8.6**
 
-  - [ ]* 6.11 Write property test P10: invalid status always returns { error }, never throws
+  - [x] 6.11 Write property test P10: invalid status always returns { error }, never throws
     - **Property 10: invalid status to updateLeadStatus always returns { error }, never throws**
     - **Validates: Requirements 6.1, 6.2, 6.6**
 
-  - [ ]* 6.12 Write property test P11: LeadStatusSchema round-trip for all four valid values
+  - [x] 6.12 Write property test P11: LeadStatusSchema round-trip for all four valid values
     - **Property 11: LeadStatusSchema round-trip for all four valid values**
     - **Validates: Requirements 9.1, 9.3**
 
-  - [ ]* 6.13 Write property test P12: notes column nullable after migration
+  - [x] 6.13 Write property test P12: notes column nullable after migration
     - **Property 12: existing leads have notes=null after migration**
     - **Validates: Requirements 11.1**
 
-  - [ ]* 6.14 Write unit tests for LeadStatusTabs
+  - [x] 6.14 Write unit tests for LeadStatusTabs
     - Renders correct tab as active from URL param
     - Tab change preserves `currentDivisionId` and `currentSource` in URL
     - _Requirements: 2.3, 2.5_
 
-  - [ ]* 6.15 Write unit tests for LeadsTable
+  - [x] 6.15 Write unit tests for LeadsTable
     - Renders detail links with correct `/leads/<id>` hrefs
     - _Requirements: 1.4_
 
-  - [ ]* 6.16 Write unit tests for LeadStatusForm and LeadNotesForm
+  - [x] 6.16 Write unit tests for LeadStatusForm and LeadNotesForm
     - `LeadStatusForm` disables controls while `isPending`
     - `LeadNotesForm` pre-populates textarea with existing notes value
     - _Requirements: 5.5, 7.1, 7.5_
 
-  - [ ]* 6.17 Write unit tests for server action error handling and edge cases
+  - [x] 6.17 Write unit tests for server action error handling and edge cases
     - `updateLeadStatus` returns `{ error }` on DB throw
     - `updateLeadNotes` returns `{ error }` on DB throw
     - Empty-state renders when `entries.length === 0`

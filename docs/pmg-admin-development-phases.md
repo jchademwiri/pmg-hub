@@ -663,6 +663,9 @@ export const snapshots = pgTable('snapshots', {
 - Snapshot generated from live query results for the period
 - Snapshot page: all closed months in a table
 
+### Database Seed
+update our seed data file to include the current updated schema 
+
 ---
 
 ## 11. Phase 8 — Reporting & Insights
@@ -687,6 +690,9 @@ exist in `components/reports/` but are not wired to a route yet.
 - Add expense breakdown by category (donut or bar)
 - CSV export via Server Action streaming `text/csv`
 
+### Database Seed
+update our seed data file to include the current updated schema 
+
 ---
 
 ## 12. Phase 9 — System Hardening
@@ -708,28 +714,12 @@ Prepare the system for real daily use.
 - [ ] **Rate limiting** — basic rate limiting on auth endpoints via proxy.
 - [ ] **Optimistic updates** — `useOptimistic` for lead status changes.
 
----
-
-## 13. Phase 10 — SaaS Expansion
-
-### Goal
-
-Multi-tenant product — other businesses can use the Control Center.
-
-> Do not architect for this now. Over-engineering before the single-tenant
-> system is proven is a common trap.
-
-### What changes
-
-- **Organizations table** — all domain tables gain `organization_id` FK
-- **Row-level security** — Neon Postgres RLS policies
-- **User roles** — `admin`, `owner`, `viewer` per organization
-- **Billing** — Stripe subscription management
-- **Onboarding flow** — sign up → create org → invite team → first income entry
+### Database Seed
+update our seed data file to include the current updated schema 
 
 ---
 
-## 14. Tech Stack Reference
+## 13. Tech Stack Reference
 
 | Layer | Choice | Notes |
 |---|---|---|
@@ -757,7 +747,7 @@ Multi-tenant product — other businesses can use the Control Center.
 
 ---
 
-## 15. Key Principles
+## 14. Key Principles
 
 > **Every rand has a job.**
 
@@ -793,5 +783,5 @@ Multi-tenant product — other businesses can use the Control Center.
 
 ---
 
-*Last updated: March 2026 · Playhouse Media Group (PTY) Ltd*
+*Last updated: April 2026 · Playhouse Media Group (PTY) Ltd*
 *Jacob Chademwiri · 285 Erasmus Ave, Raslouw AH, Centurion, 0157*
