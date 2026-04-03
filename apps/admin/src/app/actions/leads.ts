@@ -6,7 +6,7 @@ import { db, leads, eq } from '@pmg/db';
 
 const LeadStatusSchema = z.object({
   status: z.enum(['new', 'contacted', 'converted', 'lost'], {
-    errorMap: () => ({ message: 'Status must be one of: new, contacted, converted, or lost' }),
+    error: 'Status must be one of: new, contacted, converted, or lost',
   }),
 });
 
