@@ -2,41 +2,122 @@
   @pmg/tailwind-config/aws
   ─────────────────────────
   Theme for Apex Web Solutions (apexwebsolutions.co.za)
-  Define the AWS brand palette here when ready.
-
-  Usage in apps/aws/src/app/globals.css:
-    @import "@pmg/tailwind-config/base";
-    @import "@pmg/tailwind-config/aws";
+  Full Starwind-compatible token set with light/dark modes.
 */
 
-
 @theme {
-  /* ── Brand colours (placeholder — update with final AWS brand) ── */
-  --color-brand-dark:       #0F172A;
-  --color-brand-primary:    #6366F1;   /* indigo — update when brand is finalised */
-  --color-brand-white:      #F8FAFC;
+  --animate-accordion-down: accordion-down 0.2s ease-out;
+  --animate-accordion-up: accordion-up 0.2s ease-out;
 
-  /* ── Semantic aliases ── */
-  --color-background:       var(--color-brand-dark);
-  --color-foreground:       var(--color-brand-white);
-  --color-primary:          var(--color-brand-primary);
-  --color-primary-hover:    #4F46E5;
+  @keyframes accordion-down {
+    from { height: 0; }
+    to   { height: var(--starwind-accordion-content-height); }
+  }
 
-  /* ── Muted / faint layers ── */
-  --color-muted:            rgba(248, 250, 252, 0.55);
-  --color-faint:            rgba(248, 250, 252, 0.15);
-
-  /* ── Surface colours ── */
-  --color-surface:          #1E293B;
-  --color-surface-hover:    #273549;
-
-  /* ── WhatsApp CTA ── */
-  --color-whatsapp:         #25D366;
-  --color-whatsapp-hover:   #20BD5C;
+  @keyframes accordion-up {
+    from { height: var(--starwind-accordion-content-height); }
+    to   { height: 0; }
+  }
 }
 
-/* ── Root defaults ── */
+/* Bridge Tailwind color utilities to CSS custom properties */
+@theme inline {
+  --color-background:          var(--background);
+  --color-foreground:          var(--foreground);
+  --color-card:                var(--card);
+  --color-card-foreground:     var(--card-foreground);
+  --color-popover:             var(--popover);
+  --color-popover-foreground:  var(--popover-foreground);
+  --color-primary:             var(--primary);
+  --color-primary-foreground:  var(--primary-foreground);
+  --color-primary-accent:      var(--primary-accent);
+  --color-secondary:           var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-secondary-accent:    var(--secondary-accent);
+  --color-muted:               var(--muted);
+  --color-muted-foreground:    var(--muted-foreground);
+  --color-accent:              var(--accent);
+  --color-accent-foreground:   var(--accent-foreground);
+  --color-info:                var(--info);
+  --color-info-foreground:     var(--info-foreground);
+  --color-success:             var(--success);
+  --color-success-foreground:  var(--success-foreground);
+  --color-warning:             var(--warning);
+  --color-warning-foreground:  var(--warning-foreground);
+  --color-error:               var(--error);
+  --color-error-foreground:    var(--error-foreground);
+  --color-border:              var(--border);
+  --color-input:               var(--input);
+  --color-outline:             var(--outline);
+
+  --radius-xs:  calc(var(--radius) - 0.375rem);
+  --radius-sm:  calc(var(--radius) - 0.25rem);
+  --radius-md:  calc(var(--radius) - 0.125rem);
+  --radius-lg:  var(--radius);
+  --radius-xl:  calc(var(--radius) + 0.25rem);
+  --radius-2xl: calc(var(--radius) + 0.5rem);
+  --radius-3xl: calc(var(--radius) + 1rem);
+}
+
+/* Light mode tokens */
 :root {
-  --background: var(--color-brand-dark);
-  --foreground: var(--color-brand-white);
+  --background:          var(--color-neutral-50);
+  --foreground:          var(--color-neutral-900);
+  --card:                var(--color-neutral-50);
+  --card-foreground:     var(--color-neutral-900);
+  --popover:             var(--color-neutral-50);
+  --popover-foreground:  var(--color-neutral-900);
+  --primary:             var(--color-blue-700);
+  --primary-foreground:  var(--color-neutral-50);
+  --primary-accent:      var(--color-blue-700);
+  --secondary:           var(--color-fuchsia-700);
+  --secondary-foreground: var(--color-neutral-50);
+  --secondary-accent:    var(--color-fuchsia-700);
+  --muted:               var(--color-neutral-100);
+  --muted-foreground:    var(--color-neutral-600);
+  --accent:              var(--color-neutral-100);
+  --accent-foreground:   var(--color-neutral-900);
+  --info:                var(--color-sky-300);
+  --info-foreground:     var(--color-sky-950);
+  --success:             var(--color-green-300);
+  --success-foreground:  var(--color-green-950);
+  --warning:             var(--color-amber-300);
+  --warning-foreground:  var(--color-amber-950);
+  --error:               var(--color-red-700);
+  --error-foreground:    var(--color-neutral-50);
+  --border:              var(--color-neutral-200);
+  --input:               var(--color-neutral-200);
+  --outline:             var(--color-neutral-400);
+  --radius:              0.625rem;
+}
+
+/* Dark mode tokens */
+.dark {
+  --background:          var(--color-neutral-900);
+  --foreground:          var(--color-neutral-100);
+  --card:                var(--color-neutral-850);
+  --card-foreground:     var(--color-neutral-100);
+  --popover:             var(--color-neutral-850);
+  --popover-foreground:  var(--color-neutral-100);
+  --primary:             var(--color-blue-700);
+  --primary-foreground:  var(--color-neutral-50);
+  --primary-accent:      var(--color-blue-400);
+  --secondary:           var(--color-fuchsia-700);
+  --secondary-foreground: var(--color-neutral-50);
+  --secondary-accent:    var(--color-fuchsia-400);
+  --muted:               var(--color-neutral-800);
+  --muted-foreground:    var(--color-neutral-400);
+  --accent:              var(--color-neutral-750);
+  --accent-foreground:   var(--color-neutral-100);
+  --info:                var(--color-sky-300);
+  --info-foreground:     var(--color-sky-950);
+  --success:             var(--color-green-300);
+  --success-foreground:  var(--color-green-950);
+  --warning:             var(--color-amber-300);
+  --warning-foreground:  var(--color-amber-950);
+  --error:               var(--color-red-800);
+  --error-foreground:    var(--color-neutral-50);
+  --border:              --alpha(var(--color-neutral-50) / 10%);
+  --input:               --alpha(var(--color-neutral-50) / 15%);
+  --outline:             var(--color-neutral-500);
 }

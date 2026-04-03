@@ -4,6 +4,13 @@
 */
 
 @import "tailwindcss";
+@import "tw-animate-css";
+
+@plugin "@tailwindcss/forms";
+@plugin "@tailwindcss/typography";
+@plugin "@tailwindcss/container-queries";
+
+@custom-variant dark (&:where(.dark, .dark *));
 
 /* ─────────────────────────────
    DESIGN TOKENS (GLOBAL)
@@ -30,8 +37,6 @@
   /* ─────────────────────────────
      SEMANTIC COLOR STUBS
      Each brand theme overrides these via @theme in its own file.
-     Defined here so Tailwind generates the utility classes (bg-background,
-     text-foreground, etc.) even before a brand theme is loaded.
   ───────────────────────────── */
   --color-background: #ffffff;
   --color-foreground: #0f172a;
@@ -56,8 +61,19 @@
   color-scheme: dark;
 }
 
-body {
-  background-color: var(--color-background);
-  color: var(--color-foreground);
-  font-family: var(--font-sans);
+@layer base {
+  * {
+    @apply border-border outline-outline/50;
+  }
+
+  body {
+    background-color: var(--color-background);
+    color: var(--color-foreground);
+    font-family: var(--font-sans);
+    @apply scheme-light dark:scheme-dark;
+  }
+
+  button {
+    @apply cursor-pointer;
+  }
 }
