@@ -446,6 +446,53 @@ export async function getAllDivisions(): Promise<{ id: string; name: string }[]>
     .orderBy(asc(divisions.name));
 }
 
+export type DivisionRow = {
+  id: string;
+  name: string;
+  totalIncome: number;
+  totalExpenses: number;
+  netProfit: number;
+  leadCount: number;
+};
+
+/**
+ * Returns all divisions with aggregated financial stats and lead count,
+ * sorted by name ascending.
+ */
+export async function getDivisionsWithStats(): Promise<DivisionRow[]> {
+  const result = await db.execute(sql`
+    SELECT
+      d.id,
+      d.name,
+      COALESCE(SUM(i.amount), 0)::numeric AS "totalIncome",
+      COALESCE(SUM(e.amount), 0)::numeric AS "totalExpenses",
+      (COALESCE(SUM(i.amount), 0) - COALESCE(SUM(e.amount), 0))::numeric AS "netProfit",
+      COALESCE(COUNT(l.id), 0)::integer AS "leadCount"
+    FROM divisions d
+    LEFT JOIN income i ON i.division_id = d.id
+    LEFT JOIN expenses e ON e.division_id = d.id
+    LEFT JOIN leads l ON l.division_id = d.id
+    GROUP BY d.id, d.name
+    ORDER BY d.name ASC
+  `);
+
+  return (result.rows as Array<{
+    id: string;
+    name: string;
+    totalIncome: string;
+    totalExpenses: string;
+    netProfit: string;
+    leadCount: string;
+  }>).map((row) => ({
+    id: row.id,
+    name: row.name,
+    totalIncome: Number(row.totalIncome),
+    totalExpenses: Number(row.totalExpenses),
+    netProfit: Number(row.netProfit),
+    leadCount: Number(row.leadCount),
+  }));
+}
+
 /**
  * Returns all clients as { id, name, businessName }[], sorted by name ascending.
  */

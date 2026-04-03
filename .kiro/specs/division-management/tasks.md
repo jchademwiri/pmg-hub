@@ -6,8 +6,8 @@ Implement the division management feature following the established PMG admin pa
 
 ## Tasks
 
-- [ ] 1. DB query helper — `packages/db/src/queries.ts`
-  - [ ] 1.1 Add `DivisionRow` type and `getDivisionsWithStats` to `packages/db/src/queries.ts`
+- [x] 1. DB query helper — `packages/db/src/queries.ts`
+  - [x] 1.1 Add `DivisionRow` type and `getDivisionsWithStats` to `packages/db/src/queries.ts`
     - Export `DivisionRow` type with all six fields: `id` (string), `name` (string), `totalIncome` (number), `totalExpenses` (number), `netProfit` (number), `leadCount` (number)
     - Implement `getDivisionsWithStats()` using raw SQL with LEFT JOINs to `income`, `expenses`, and `leads` tables
     - Use `COALESCE(SUM(...), 0)` for zero defaults on all aggregated columns
@@ -16,17 +16,17 @@ Implement the division management feature following the established PMG admin pa
     - Do NOT modify or duplicate the existing `getAllDivisions()` function
     - _Requirements: 7.1, 7.2, 7.3, 7.4, 7.5, 7.6, 7.8_
 
-  - [ ] 1.2 Export `DivisionRow` type from `packages/db/src/index.ts`
+  - [x] 1.2 Export `DivisionRow` type from `packages/db/src/index.ts`
     - Add `export type { DivisionRow } from './queries'` (functions are already covered by `export * from './queries'`)
     - _Requirements: 7.7_
 
-- [ ] 2. Server Actions — `apps/admin/src/app/actions/divisions.ts`
-  - [ ] 2.1 Create `divisions.ts` server actions file with `DivisionSchema`
+- [x] 2. Server Actions — `apps/admin/src/app/actions/divisions.ts`
+  - [x] 2.1 Create `divisions.ts` server actions file with `DivisionSchema`
     - Create `apps/admin/src/app/actions/divisions.ts` with `'use server'`
     - Define named `DivisionSchema` with `z.object({ name: z.string().min(1, { message: 'Division name is required.' }).max(100, { message: 'Division name must be 100 characters or fewer.' }) })`
     - _Requirements: 6.1, 6.2_
 
-  - [ ] 2.2 Implement `createDivision` server action
+  - [x] 2.2 Implement `createDivision` server action
     - `createDivision(formData: FormData): Promise<{ error?: string }>`
     - `Object.fromEntries(formData)` → `DivisionSchema.safeParse` → Drizzle insert → `revalidatePath('/divisions')` + `revalidatePath('/dashboard')` inside try → return `{}`
     - On validation failure: return `{ error: issues[0]?.message }` without DB write
@@ -34,7 +34,7 @@ Implement the division management feature following the established PMG admin pa
     - Never throw; `revalidatePath` only on success inside try
     - _Requirements: 2.3, 2.4, 2.5, 5.1, 5.2, 5.3, 5.4, 9.1_
 
-  - [ ] 2.3 Implement `updateDivision` server action
+  - [x] 2.3 Implement `updateDivision` server action
     - `updateDivision(id: string, formData: FormData): Promise<{ error?: string }>`
     - `Object.fromEntries(formData)` → `DivisionSchema.safeParse` → Drizzle update (`name` + `updatedAt`) → `revalidatePath('/divisions')` + `revalidatePath('/dashboard')` inside try → return `{}`
     - On validation failure: return `{ error: issues[0]?.message }` without DB write
@@ -42,7 +42,7 @@ Implement the division management feature following the established PMG admin pa
     - Never throw; `revalidatePath` only on success inside try
     - _Requirements: 3.3, 3.4, 3.5, 5.1, 5.2, 5.3, 5.4, 9.1_
 
-  - [ ] 2.4 Implement `deleteDivision` server action
+  - [x] 2.4 Implement `deleteDivision` server action
     - `deleteDivision(id: string): Promise<{ error?: string }>`
     - Attempt Drizzle delete inside try/catch — NO pre-check query
     - On FK constraint violation: return `{ error: 'Cannot delete division with existing income or expense records.' }`
@@ -50,11 +50,11 @@ Implement the division management feature following the established PMG admin pa
     - Never throw; detect FK violation by checking error message for Postgres code `23503`
     - _Requirements: 4.3, 4.4, 4.5, 4.7, 5.1, 5.3, 5.4, 8.1, 8.2, 8.3, 8.4_
 
-- [ ] 3. Checkpoint — Ensure all tests pass
+- [x] 3. Checkpoint — Ensure all tests pass
   - Ensure all tests pass, ask the user if questions arise.
 
-- [ ] 4. Client Components — `apps/admin/src/components/divisions/`
-  - [ ] 4.1 Implement `DivisionAddForm` (`division-add-form.tsx`)
+- [x] 4. Client Components — `apps/admin/src/components/divisions/`
+  - [x] 4.1 Implement `DivisionAddForm` (`division-add-form.tsx`)
     - `'use client'`; accepts `createAction: (formData: FormData) => Promise<{ error?: string }>`
     - `useTransition` + `useRef` pattern (same as `income-add-form.tsx`)
     - Single field: `name`; "Add Division" submit button
@@ -62,7 +62,7 @@ Implement the division management feature following the established PMG admin pa
     - Disable input and button while `isPending`
     - _Requirements: 2.1, 2.2, 2.4, 2.6, 5.5_
 
-  - [ ] 4.2 Implement `DivisionsTable` (`divisions-table.tsx`)
+  - [x] 4.2 Implement `DivisionsTable` (`divisions-table.tsx`)
     - `'use client'`; accepts `divisions: DivisionRow[]`, `updateAction`, `deleteAction`
     - Render shadcn `Table` with columns: Name, Total Income, Total Expenses, Net Profit, Lead Count, Actions
     - Currency columns (Total Income, Total Expenses, Net Profit) use `formatZAR`
@@ -71,17 +71,17 @@ Implement the division management feature following the established PMG admin pa
     - Inline delete: Delete button → inline confirmation within the row (NOT a modal) → Confirm + Cancel buttons; `useTransition` for pending state; disable buttons while pending; inline error on failure
     - _Requirements: 1.2, 1.3, 1.5, 3.1, 3.2, 3.4, 3.6, 3.7, 4.1, 4.2, 4.4, 4.6, 5.5_
 
-- [ ] 5. Server Component Page — `apps/admin/src/app/(admin)/divisions/page.tsx`
+- [x] 5. Server Component Page — `apps/admin/src/app/(admin)/divisions/page.tsx`
   - Replace the existing stub (returns null) with a full async Server Component
   - Fetch `getDivisionsWithStats()` at the top of the component
   - Render: page header, `DivisionAddForm` with `createAction={createDivision}`, empty-state message when `divisions.length === 0`, or `DivisionsTable` with `divisions`, `updateAction={updateDivision}`, `deleteAction={deleteDivision}`
   - _Requirements: 1.1, 1.4, 2.1, 4.1_
 
-- [ ] 6. Checkpoint — Ensure all tests pass
+- [x] 6. Checkpoint — Ensure all tests pass
   - Ensure all tests pass, ask the user if questions arise.
 
-- [ ] 7. Tests — `apps/admin/src/__tests__/divisions.test.ts`
-  - [ ] 7.1 Set up test file with mocks and `divisionRowArb` arbitrary
+- [x] 7. Tests — `apps/admin/src/__tests__/divisions.test.ts`
+  - [x] 7.1 Set up test file with mocks and `divisionRowArb` arbitrary
     - Create `apps/admin/src/__tests__/divisions.test.ts`
     - `vi.mock('@pmg/db')` for all DB helpers; `vi.mock('@/app/actions/divisions')` for server actions
     - Define `divisionRowArb` using `fc.record` matching the `DivisionRow` shape: `id` (uuid), `name` (string 1–100), `totalIncome` (float 0–999999), `totalExpenses` (float 0–999999), `netProfit` (float -999999–999999), `leadCount` (integer 0–1000)
@@ -156,7 +156,7 @@ Implement the division management feature following the established PMG admin pa
     - `updateDivision` returns `{ error }` on validation failure
     - _Requirements: 1.4, 4.4, 2.4, 3.4_
 
-- [ ] 8. Final checkpoint — Ensure all tests pass
+- [x] 8. Final checkpoint — Ensure all tests pass
   - Ensure all tests pass, ask the user if questions arise.
 
 ## Notes

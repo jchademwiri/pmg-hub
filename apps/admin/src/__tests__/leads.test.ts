@@ -40,8 +40,8 @@ const leadArb = fc.record({
   divisionId: fc.option(fc.uuid(), { nil: null }),
   divisionName: fc.option(fc.string({ minLength: 1, maxLength: 50 }), { nil: null }),
   notes: fc.option(fc.string({ maxLength: 1000 }), { nil: null }),
-  createdAt: fc.date({ min: new Date('2020-01-01'), max: new Date('2030-12-31') }),
-  updatedAt: fc.option(fc.date({ min: new Date('2020-01-01'), max: new Date('2030-12-31') }), { nil: null }),
+  createdAt: fc.date({ min: new Date('2020-01-01'), max: new Date('2030-12-31'), noInvalidDate: true }),
+  updatedAt: fc.option(fc.date({ min: new Date('2020-01-01'), max: new Date('2030-12-31'), noInvalidDate: true }), { nil: null }),
 })
 
 // ─── Placeholder describe block ──────────────────────────────────────────────
