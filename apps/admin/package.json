@@ -12,6 +12,7 @@
   },
   "dependencies": {
     "@pmg/db": "*",
+    "@pmg/tailwind-config": "workspace:*",
     "@radix-ui/react-select": "^2.2.6",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
@@ -25,8 +26,7 @@
     "server-only": "^0.0.1",
     "shadcn": "^4.1.1",
     "sonner": "^2.0.7",
-    "tailwind-merge": "^3.5.0",
-    "tw-animate-css": "^1.4.0"
+    "tailwind-merge": "^3.5.0"
   },
   "devDependencies": {
     "@tailwindcss/postcss": "^4",

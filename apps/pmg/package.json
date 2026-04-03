@@ -12,6 +12,11 @@
     "astro": "astro"
   },
   "dependencies": {
+    "@pmg/tailwind-config": "workspace:*",
     "astro": "^6.0.8"
+  },
+  "devDependencies": {
+    "@tailwindcss/vite": "catalog:",
+    "tailwindcss": "catalog:"
   }
 }

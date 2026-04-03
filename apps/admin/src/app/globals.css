@@ -1,5 +1,4 @@
-@import "tailwindcss";
-@import "tw-animate-css";
+@import "@pmg/tailwind-config/base";
 @import "shadcn/tailwind.css";
 
 @custom-variant dark (&:is(.dark *));

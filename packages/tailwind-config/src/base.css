@@ -1,6 +1,9 @@
 /*
   @pmg/tailwind-config/base
-  Shared foundation for all brands (PMG ecosystem)
+  ─────────────────────────
+  Shared engine for all PMG apps.
+  Only things that are identical across every site live here.
+  Fonts, colors, spacing, and tokens belong in each app's own global CSS.
 */
 
 @import "tailwindcss";
@@ -12,64 +15,12 @@
 
 @custom-variant dark (&:where(.dark, .dark *));
 
-/* ─────────────────────────────
-   DESIGN TOKENS (GLOBAL)
-───────────────────────────── */
-@theme {
-  /* Typography */
-  --font-sans: "DM Sans", ui-sans-serif, system-ui, sans-serif;
-  --font-display: "Playfair Display", ui-serif, Georgia, serif;
-  --font-condensed: "Barlow Condensed", ui-sans-serif, system-ui, sans-serif;
-  --font-mono: ui-monospace, "Cascadia Code", "Source Code Pro", monospace;
-
-  /* Spacing extensions */
-  --spacing-18: 4.5rem;
-  --spacing-88: 22rem;
-  --spacing-128: 32rem;
-
-  /* Radius */
-  --radius: 0.75rem;
-  --radius-sm: 4px;
-  --radius-md: 8px;
-  --radius-lg: 12px;
-  --radius-xl: 16px;
-
-  /* ─────────────────────────────
-     SEMANTIC COLOR STUBS
-     Each brand theme overrides these via @theme in its own file.
-  ───────────────────────────── */
-  --color-background: #ffffff;
-  --color-foreground: #0f172a;
-  --color-primary: #6366f1;
-  --color-primary-hover: #4f46e5;
-  --color-muted: rgba(15, 23, 42, 0.55);
-  --color-faint: rgba(15, 23, 42, 0.08);
-  --color-surface: #f8fafc;
-  --color-surface-hover: #f1f5f9;
-  --color-whatsapp: #25d366;
-  --color-whatsapp-hover: #20bd5c;
-}
-
-/* ─────────────────────────────
-   BASE STYLES
-───────────────────────────── */
-:root {
-  color-scheme: light;
-}
-
-.dark {
-  color-scheme: dark;
-}
-
 @layer base {
   * {
     @apply border-border outline-outline/50;
   }
 
   body {
-    background-color: var(--color-background);
-    color: var(--color-foreground);
-    font-family: var(--font-sans);
     @apply scheme-light dark:scheme-dark;
   }
 
