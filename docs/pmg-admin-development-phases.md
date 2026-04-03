@@ -17,7 +17,7 @@
 4. ✅ [Phase 1 — Financial Engine](#4-phase-1--financial-engine-complete-)
 5. ✅ [Phase 2 — Dashboard UI](#5-phase-2--dashboard-ui-complete-)
 6. ✅ [Phase 3 — Income Management](#6-phase-3--income-management-complete-)
-7. [Phase 4 — Expense Management](#7-phase-4--expense-management)
+7. ✅ [Phase 4 — Expense Management](#7-phase-4--expense-management)
 8. [Phase 5 — Leads Management](#8-phase-5--leads-management)
 9. [Phase 6 — Division Management](#9-phase-6--division-management)
 10. [Phase 7 — Financial Snapshots](#10-phase-7--financial-snapshots)
@@ -503,7 +503,7 @@ Full Vitest suite (44 tests, all passing via `bun run test --cwd apps/admin`):
 
 ---
 
-## 7. Phase 4 — Expense Management
+## 7. Phase 4 — Expense Management ✅ COMPLETE
 
 ### Goal
 

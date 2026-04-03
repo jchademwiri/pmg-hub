@@ -68,49 +68,49 @@ Implement full CRUD for business expenses, mirroring the Income Management patte
   - [x] 7.1 Set up file: mock `@pmg/db`, `next/navigation`, `next/link`, `sonner`, and `@/app/actions/expenses`; define `expenseArb` arbitrary mirroring `incomeArb` pattern
     - Note: `@/app/actions/expenses` mock covers `createExpense` and `updateExpense` (used directly in form components). `deleteAction` is prop-injected into `ExpenseTable` and should be passed as a `vi.fn()` in those specific tests — no module-level mock needed for it.
     - _Requirements: 11.5_
-  - [ ]* 7.2 Write property test P1: `getAllExpenses` shape and sort order (date DESC)
+  - [x] 7.2 Write property test P1: `getAllExpenses` shape and sort order (date DESC)
     - **Property 1: getAllExpenses shape + sort order**
     - **Validates: Requirements 1.1, 1.2, 11.1, 11.7**
-  - [ ]* 7.3 Write property test P2: division filter excludes other divisions
+  - [x] 7.3 Write property test P2: division filter excludes other divisions
     - **Property 2: Division filter excludes other divisions**
     - **Validates: Requirements 2.2, 11.1**
-  - [ ]* 7.4 Write property test P3: category filter excludes other categories
+  - [x] 7.4 Write property test P3: category filter excludes other categories
     - **Property 3: Category filter excludes other categories**
     - **Validates: Requirements 2.3, 11.1**
-  - [ ]* 7.5 Write property test P4: month filter excludes entries outside the calendar month
+  - [x] 7.5 Write property test P4: month filter excludes entries outside the calendar month
     - **Property 4: Month filter excludes entries outside the calendar month**
     - **Validates: Requirements 2.4, 11.6**
-  - [ ]* 7.6 Write property test P5: running total equals sum of amounts
+  - [x] 7.6 Write property test P5: running total equals sum of amounts
     - **Property 5: Running total equals sum of amounts**
     - **Validates: Requirements 3.1, 3.4**
-  - [ ]* 7.7 Write property test P6: category breakdown sums equal running total
+  - [x] 7.7 Write property test P6: category breakdown sums equal running total
     - **Property 6: Category breakdown sums equal running total**
     - **Validates: Requirements 3.2, 3.5**
-  - [ ]* 7.8 Write property test P7: `createExpense` round-trip
+  - [x] 7.8 Write property test P7: `createExpense` round-trip
     - **Property 7: createExpense round-trip**
     - **Validates: Requirements 5.3, 5.4**
-  - [ ]* 7.9 Write property test P8: `updateExpense` round-trip
+  - [x] 7.9 Write property test P8: `updateExpense` round-trip
     - **Property 8: updateExpense round-trip**
     - **Validates: Requirements 7.3, 7.4**
-  - [ ]* 7.10 Write property test P9: `deleteExpense` round-trip
+  - [x] 7.10 Write property test P9: `deleteExpense` round-trip
     - **Property 9: deleteExpense round-trip**
     - **Validates: Requirements 9.1, 9.2**
-  - [ ]* 7.11 Write property test P10: `getExpenseById` returns correct entry or null
+  - [x] 7.11 Write property test P10: `getExpenseById` returns correct entry or null
     - **Property 10: getExpenseById returns correct entry or null**
     - **Validates: Requirements 11.2, 6.1, 6.2**
-  - [ ]* 7.12 Write property test P11: `getDistinctExpenseMonths` returns distinct YYYY-MM sorted ASC
+  - [x] 7.12 Write property test P11: `getDistinctExpenseMonths` returns distinct YYYY-MM sorted ASC
     - **Property 11: getDistinctExpenseMonths returns distinct YYYY-MM strings sorted ASC**
     - **Validates: Requirements 11.3, 2.7**
-  - [ ]* 7.13 Write property test P12: `getDistinctExpenseCategories` returns distinct strings sorted ASC
+  - [x] 7.13 Write property test P12: `getDistinctExpenseCategories` returns distinct strings sorted ASC
     - **Property 12: getDistinctExpenseCategories returns distinct strings sorted ASC**
     - **Validates: Requirements 11.4, 2.6**
-  - [ ]* 7.14 Write property test P13: invalid input to `createExpense`/`updateExpense` always returns `{ error }`
+  - [x] 7.14 Write property test P13: invalid input to `createExpense`/`updateExpense` always returns `{ error }`
     - **Property 13: Invalid input always returns `{ error }`**
     - **Validates: Requirements 5.2, 5.6, 7.2, 7.6, 10.1–10.6**
-  - [ ]* 7.15 Write property test P14: amount precision preserved on String/Number round-trip
+  - [x] 7.15 Write property test P14: amount precision preserved on String/Number round-trip
     - **Property 14: Amount precision preserved on String/Number round-trip**
     - **Validates: Requirements 5.3, 7.3**
-  - [ ]* 7.16 Write unit tests for `ExpenseFilterBar`, `ExpenseTable`, `ExpenseSchema`, `deleteExpense`, empty-state, and category datalist
+  - [x] 7.16 Write unit tests for `ExpenseFilterBar`, `ExpenseTable`, `ExpenseSchema`, `deleteExpense`, empty-state, and category datalist
     - `ExpenseFilterBar` renders "All divisions", "All categories", "All months" defaults
     - `ExpenseTable` renders edit links with correct `/expenses/<id>` hrefs; empty array renders no data rows
     - `ExpenseSchema` rejects empty date, empty category, amount = 0, amount = -1
