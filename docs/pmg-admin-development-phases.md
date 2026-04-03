@@ -18,7 +18,7 @@
 5. ✅ [Phase 2 — Dashboard UI](#5-phase-2--dashboard-ui-complete-)
 6. ✅ [Phase 3 — Income Management](#6-phase-3--income-management-complete-)
 7. ✅ [Phase 4 — Expense Management](#7-phase-4--expense-management)
-8. [Phase 5 — Leads Management](#8-phase-5--leads-management)
+8. ✅ [Phase 5 — Leads Management](#8-phase-5--leads-management)
 9. [Phase 6 — Division Management](#9-phase-6--division-management)
 10. [Phase 7 — Financial Snapshots](#10-phase-7--financial-snapshots)
 11. [Phase 8 — Reporting & Insights](#11-phase-8--reporting--insights)
@@ -540,7 +540,7 @@ Revalidate `/expenses` and `/dashboard` on every mutation.
 
 ---
 
-## 8. Phase 5 — Leads Management
+## 8. Phase 5 — Leads Management ✅ COMPLETE
 
 ### Goal
 

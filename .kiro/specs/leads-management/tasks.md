@@ -6,87 +6,87 @@ Implement the leads management feature following the established PMG admin patte
 
 ## Tasks
 
-- [ ] 1. Database layer — schema, migration, and query helpers
-  - [ ] 1.1 Add `notes` column to leads schema
+- [x] 1. Database layer — schema, migration, and query helpers
+  - [x] 1.1 Add `notes` column to leads schema
     - Add `notes: text("notes")` to `packages/db/src/schema/leads.ts` after `updatedAt` (nullable, no default, no `.notNull()`, no `.default()`)
     - _Requirements: 11.1_
 
-  - [ ] 1.2 Generate and apply migration
+  - [x] 1.2 Generate and apply migration
     - Run `bun db:generate` to produce `ALTER TABLE "leads" ADD COLUMN "notes" text;`
     - Run `bun db:migrate` to apply to Neon PostgreSQL
     - _Requirements: 11.1_
 
-  - [ ] 1.3 Add `LeadRow` type and `getAllLeads` to `packages/db/src/queries.ts`
+  - [x] 1.3 Add `LeadRow` type and `getAllLeads` to `packages/db/src/queries.ts`
     - Export `LeadRow` type with all fields: `id`, `name`, `email`, `phone`, `message`, `source`, `serviceInterest`, `status`, `divisionId`, `divisionName`, `notes`, `createdAt`, `updatedAt`
     - Implement `getAllLeads(filters?)` — LEFT JOIN divisions, optional `status`/`divisionId`/`source` filters using `and(...conditions)`, ORDER BY `createdAt DESC`
     - _Requirements: 10.1, 10.5, 10.6, 10.7_
 
-  - [ ] 1.4 Add `getLeadById`, `getLeadCountsByStatus`, and `getDistinctLeadSources` to `packages/db/src/queries.ts`
+  - [x] 1.4 Add `getLeadById`, `getLeadCountsByStatus`, and `getDistinctLeadSources` to `packages/db/src/queries.ts`
     - `getLeadById(id)` — LEFT JOIN divisions, WHERE id, returns `LeadRow | null`
     - `getLeadCountsByStatus()` — single query with conditional aggregation, returns `{ all, new, contacted, converted, lost }`
     - `getDistinctLeadSources()` — SELECT DISTINCT non-null sources, ORDER BY ASC
     - _Requirements: 10.2, 10.3, 10.4_
 
-  - [ ] 1.5 Export `LeadRow` type from `packages/db/src/index.ts`
+  - [x] 1.5 Export `LeadRow` type from `packages/db/src/index.ts`
     - Add `export type { LeadRow } from './queries'` (the functions are already covered by `export * from './queries'`)
     - _Requirements: 10.5, 10.8_
 
-- [ ] 2. Server Actions — `apps/admin/src/app/actions/leads.ts`
-  - [ ] 2.1 Implement `updateLeadStatus` server action
+- [x] 2. Server Actions — `apps/admin/src/app/actions/leads.ts`
+  - [x] 2.1 Implement `updateLeadStatus` server action
     - Create `apps/admin/src/app/actions/leads.ts` with `'use server'`
     - Define `LeadStatusSchema` with `z.enum(['new', 'contacted', 'converted', 'lost'])` and custom `errorMap`
     - Implement `updateLeadStatus(id, formData)`: `Object.fromEntries` → `safeParse` → Drizzle update (`status` + `updatedAt`) → `revalidatePath('/leads')`, `revalidatePath('/leads/${id}')`, `revalidatePath('/dashboard')` → return `{}`
     - Never throw; return `{ error }` on validation failure or DB error
     - _Requirements: 6.1, 6.2, 6.3, 6.4, 6.5, 6.6, 12.1_
 
-  - [ ] 2.2 Implement `updateLeadNotes` server action
+  - [x] 2.2 Implement `updateLeadNotes` server action
     - Define `LeadNotesSchema` with `z.object({ notes: z.string().optional() })`
     - Implement `updateLeadNotes(id, formData)`: same pattern — `Object.fromEntries` → `safeParse` → Drizzle update (`notes` + `updatedAt`) → `revalidatePath('/leads/${id}')` → return `{}`
     - Never throw; return `{ error }` on validation failure or DB error
     - _Requirements: 8.1, 8.2, 8.3, 8.4, 8.5, 8.6_
 
-- [ ] 3. Client Components — `apps/admin/src/components/leads/`
-  - [ ] 3.1 Implement `LeadStatusTabs` (`lead-status-tabs.tsx`)
+- [x] 3. Client Components — `apps/admin/src/components/leads/`
+  - [x] 3.1 Implement `LeadStatusTabs` (`lead-status-tabs.tsx`)
     - `'use client'`; accepts `counts`, `currentStatus?`, `currentDivisionId?`, `currentSource?`
     - Render five shadcn `Tabs` items: All, New, Contacted, Converted, Lost — each with count badge
     - `handleTabChange`: build `URLSearchParams` preserving `currentDivisionId` and `currentSource`, set `status` (omit for "all"), call `router.push('/leads?' + params.toString())`
     - Active tab derived from `currentStatus` prop
     - _Requirements: 2.1, 2.2, 2.3, 2.4, 2.5_
 
-  - [ ] 3.2 Implement `LeadsFilterBar` (`leads-filter-bar.tsx`)
+  - [x] 3.2 Implement `LeadsFilterBar` (`leads-filter-bar.tsx`)
     - `'use client'`; accepts `divisions`, `sources`, `currentDivisionId?`, `currentSource?`, `currentStatus?`
     - Two shadcn `Select` controls (division, source); each handler preserves all other active params and calls `router.push`
     - Mirrors `income/filter-bar.tsx` pattern
     - _Requirements: 3.1, 3.2, 3.3, 3.4, 3.5, 3.6_
 
-  - [ ] 3.3 Implement `LeadsTable` (`leads-table.tsx`)
+  - [x] 3.3 Implement `LeadsTable` (`leads-table.tsx`)
     - `'use client'`; accepts `entries: LeadRow[]`
     - Columns: name, email (fallback phone), divisionName, source, status badge, detail link (`/leads/${entry.id}`)
     - Status badge colour-coded: new=blue, contacted=amber, converted=green, lost=red
     - Read-only — no delete, no inline edit
     - _Requirements: 1.4_
 
-  - [ ] 3.4 Implement `LeadStatusForm` (`lead-status-form.tsx`)
+  - [x] 3.4 Implement `LeadStatusForm` (`lead-status-form.tsx`)
     - `'use client'`; accepts `id`, `currentStatus`, `updateAction`
     - `useTransition`; select pre-populated with `currentStatus`; disable select and submit while `isPending`
     - Display inline error when action returns `{ error }`
     - _Requirements: 5.1, 5.2, 5.4, 5.5_
 
-  - [ ] 3.5 Implement `LeadNotesForm` (`lead-notes-form.tsx`)
+  - [x] 3.5 Implement `LeadNotesForm` (`lead-notes-form.tsx`)
     - `'use client'`; accepts `id`, `currentNotes: string | null`, `updateAction`
     - `useTransition`; textarea pre-populated with `currentNotes ?? ''`; disable textarea and submit while `isPending`
     - Display inline error when action returns `{ error }`
     - _Requirements: 7.1, 7.2, 7.4, 7.5, 11.2, 11.3_
 
-- [ ] 4. Server Component Pages
-  - [ ] 4.1 Implement `/leads` list page (`apps/admin/src/app/(admin)/leads/page.tsx`)
+- [x] 4. Server Component Pages
+  - [x] 4.1 Implement `/leads` list page (`apps/admin/src/app/(admin)/leads/page.tsx`)
     - `export const dynamic = 'force-dynamic'`
     - Await `searchParams` (`status?`, `divisionId?`, `source?`)
     - `Promise.all([getAllLeads(filters), getLeadCountsByStatus(), getAllDivisions(), getDistinctLeadSources()])`
     - Render: page header, `LeadStatusTabs` (counts + currentStatus + currentDivisionId + currentSource), `LeadsFilterBar` (divisions + sources + currentDivisionId + currentSource + currentStatus), `LeadsTable` or empty-state message when `entries.length === 0`
     - _Requirements: 1.1, 1.2, 1.3, 2.2, 3.1, 3.2, 3.5, 3.6_
 
-  - [ ] 4.2 Implement `/leads/[id]` detail page (`apps/admin/src/app/(admin)/leads/[id]/page.tsx`)
+  - [x] 4.2 Implement `/leads/[id]` detail page (`apps/admin/src/app/(admin)/leads/[id]/page.tsx`)
     - `export const dynamic = 'force-dynamic'`
     - Await `params`, call `getLeadById(id)`, call `notFound()` if null
     - Render: back link to `/leads`, lead detail fields (name, email, phone, message, source, serviceInterest, divisionName, status, createdAt formatted as human-readable date)
@@ -94,11 +94,11 @@ Implement the leads management feature following the established PMG admin patte
     - Render `LeadNotesForm` with `updateAction={updateLeadNotes.bind(null, id)}`
     - _Requirements: 4.1, 4.2, 4.3, 4.4, 5.3, 7.3, 12.2_
 
-- [ ] 5. Checkpoint — Ensure all tests pass
+- [x] 5. Checkpoint — Ensure all tests pass
   - Ensure all tests pass, ask the user if questions arise.
 
-- [ ] 6. Tests — `apps/admin/src/__tests__/leads.test.ts`
-  - [ ] 6.1 Set up test file with mocks and `leadArb` arbitrary
+- [x] 6. Tests — `apps/admin/src/__tests__/leads.test.ts`
+  - [x] 6.1 Set up test file with mocks and `leadArb` arbitrary
     - Create `apps/admin/src/__tests__/leads.test.ts`
     - `vi.mock('@pmg/db')` for all DB helpers; `vi.mock('@/app/actions/leads')` for server actions
     - Define `leadArb` using `fc.record` matching the `LeadRow` shape (id, name, email, phone, message, source, serviceInterest, status, divisionId, divisionName, notes, createdAt, updatedAt)
@@ -173,7 +173,7 @@ Implement the leads management feature following the established PMG admin patte
     - `LeadStatusSchema` produces descriptive error for invalid status value
     - _Requirements: 6.5, 8.5, 1.3, 9.2_
 
-- [ ] 7. Final checkpoint — Ensure all tests pass
+- [x] 7. Final checkpoint — Ensure all tests pass
   - Ensure all tests pass, ask the user if questions arise.
 
 ## Notes

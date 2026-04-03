@@ -41,6 +41,7 @@ export const leads = pgTable(
     // leave updatedAt stale. Teams requiring guaranteed accuracy should implement a
     // PostgreSQL trigger.
     updatedAt: timestamp("updated_at", { withTimezone: true }),
+    notes: text("notes"),
   },
   (t) => [
     check(
