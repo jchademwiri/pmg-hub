@@ -865,30 +865,129 @@ console.log("  ✓ expenses");
 // ── Leads ─────────────────────────────────────────────────────────────────────
 await db.insert(leads).values([
   // New
-  { name: "Thabo Mokoena",     email: "thabo@mokoenabuilds.co.za",       phone: "0731112233", source: "WhatsApp",  serviceInterest: "Tender document compilation",          status: "new",       divisionId: tes!.id },
-  { name: "Nomsa Khumalo",                                               phone: "0799990011", source: "WhatsApp",  serviceInterest: "Social media management",              status: "new",       divisionId: pmg!.id },
-  { name: "Kagiso Sithole",    email: "kagiso.sithole@outlook.com",      phone: "0835552211", source: "Google",    serviceInterest: "CSD registration + B-BBEE affidavit",  status: "new",       divisionId: tes!.id },
-  { name: "Mbali Dlamini",     email: "mbali@dlaminiservices.co.za",     phone: "0826663344", source: "Referral",  serviceInterest: "Business website build",               status: "new",       divisionId: aws!.id },
-  { name: "Andile Khumalo",    email: "andile@khumalocontracting.co.za", phone: "0712223344", source: "Instagram", serviceInterest: "Full tender compilation",               status: "new",       divisionId: tes!.id },
-  { name: "Yolanda Pretorius", email: "yolanda@pretoriushr.co.za",       phone: "0823334455", source: "LinkedIn",  serviceInterest: "Brand identity & company profile",     status: "new",       divisionId: pmg!.id },
+  {
+    name: "Thabo Mokoena", email: "thabo@mokoenabuilds.co.za", phone: "0731112233",
+    message: "Hi, I need help putting together a tender for a government roads project in Limpopo. Can you assist?",
+    source: "WhatsApp", serviceInterest: "Tender document compilation", status: "new", divisionId: tes!.id,
+  },
+  {
+    name: "Nomsa Khumalo", phone: "0799990011",
+    message: "Looking for someone to manage our Facebook and Instagram pages. We are a cleaning company in Pretoria.",
+    source: "WhatsApp", serviceInterest: "Social media management", status: "new", divisionId: pmg!.id,
+  },
+  {
+    name: "Kagiso Sithole", email: "kagiso.sithole@outlook.com", phone: "0835552211",
+    message: "We need to get our CSD profile updated and a B-BBEE affidavit done urgently for a bid closing next week.",
+    source: "Google", serviceInterest: "CSD registration + B-BBEE affidavit", status: "new", divisionId: tes!.id,
+  },
+  {
+    name: "Mbali Dlamini", email: "mbali@dlaminiservices.co.za", phone: "0826663344",
+    message: "We are a small logistics company and need a professional website. Budget is flexible.",
+    source: "Referral", serviceInterest: "Business website build", status: "new", divisionId: aws!.id,
+  },
+  {
+    name: "Andile Khumalo", email: "andile@khumalocontracting.co.za", phone: "0712223344",
+    message: "Interested in your full tender compilation service. We have a civil works bid due end of month.",
+    source: "Instagram", serviceInterest: "Full tender compilation", status: "new", divisionId: tes!.id,
+  },
+  {
+    name: "Yolanda Pretorius", email: "yolanda@pretoriushr.co.za", phone: "0823334455",
+    message: "We are rebranding our HR consultancy and need a full brand identity package including logo and company profile.",
+    source: "LinkedIn", serviceInterest: "Brand identity & company profile", status: "new", divisionId: pmg!.id,
+  },
   // Contacted
-  { name: "Fatima Essop",      email: "fatima.essop@gmail.com",          phone: "0844445566", source: "Referral",  serviceInterest: "CSD registration",                     status: "contacted", divisionId: tes!.id },
-  { name: "Wayne Olivier",     email: "wayne.olivier@wayneco.co.za",     phone: "0729988776", source: "LinkedIn",  serviceInterest: "Monthly social media retainer",        status: "contacted", divisionId: pmg!.id },
-  { name: "Tebogo Nkosi",      email: "tebogo@nkosigroup.co.za",         phone: "0813344557", source: "Google",    serviceInterest: "Website + Growth package",             status: "contacted", divisionId: aws!.id },
-  { name: "Chantelle Ferreira",email: "chantelle.f@ferreiraplumbing.co.za", phone: "0844556678", source: "WhatsApp", serviceInterest: "Tender-Ready Starter bundle",        status: "contacted", divisionId: tes!.id },
-  { name: "Bongani Mthethwa",  email: "bongani@mthethwalogistics.co.za", phone: "0761234567", source: "Google",    serviceInterest: "Pro website package",                  status: "contacted", divisionId: aws!.id },
+  {
+    name: "Fatima Essop", email: "fatima.essop@gmail.com", phone: "0844445566",
+    message: "Need CSD registration done. Referred by a friend who used your services.",
+    source: "Referral", serviceInterest: "CSD registration", status: "contacted", divisionId: tes!.id,
+    notes: "Called on 2026-03-10. Sent quote. Waiting for CIPC documents from client.",
+  },
+  {
+    name: "Wayne Olivier", email: "wayne.olivier@wayneco.co.za", phone: "0729988776",
+    message: "Looking for a reliable agency to handle our LinkedIn and Instagram presence on a monthly basis.",
+    source: "LinkedIn", serviceInterest: "Monthly social media retainer", status: "contacted", divisionId: pmg!.id,
+    notes: "Had intro call 2026-03-12. Sending proposal this week.",
+  },
+  {
+    name: "Tebogo Nkosi", email: "tebogo@nkosigroup.co.za", phone: "0813344557",
+    message: "We need a new website and want to explore the Growth package. Our current site is outdated.",
+    source: "Google", serviceInterest: "Website + Growth package", status: "contacted", divisionId: aws!.id,
+    notes: "Demo call done 2026-03-14. Client reviewing proposal.",
+  },
+  {
+    name: "Chantelle Ferreira", email: "chantelle.f@ferreiraplumbing.co.za", phone: "0844556678",
+    message: "We want to start bidding on government tenders. Not sure where to begin — please advise.",
+    source: "WhatsApp", serviceInterest: "Tender-Ready Starter bundle", status: "contacted", divisionId: tes!.id,
+    notes: "Explained the Starter bundle. Client wants to proceed but needs to confirm budget.",
+  },
+  {
+    name: "Bongani Mthethwa", email: "bongani@mthethwalogistics.co.za", phone: "0761234567",
+    message: "Interested in a professional website for our logistics company. Seen your work on a colleague's site.",
+    source: "Google", serviceInterest: "Pro website package", status: "contacted", divisionId: aws!.id,
+    notes: "Sent Pro package details. Follow up scheduled for 2026-04-02.",
+  },
   // Converted
-  { name: "Ruan Botha",        email: "ruan@bothatech.co.za",            phone: "0617778899", source: "Google",    serviceInterest: "Website + Growth package",             status: "converted", divisionId: aws!.id },
-  { name: "Lindiwe Mthembu",   email: "lindiwe@mthembucontracting.co.za",phone: "0838899001", source: "Referral",  serviceInterest: "Tender-Ready Professional bundle",     status: "converted", divisionId: tes!.id },
-  { name: "Pieter van Wyk",    email: "pieter@vanwykplastering.co.za",   phone: "0827766554", source: "WhatsApp",  serviceInterest: "CIDB grading + full tender compliance", status: "converted", divisionId: tes!.id },
-  { name: "Siyanda Cele",      email: "siyanda.cele@gmail.com",          phone: "0749900112", source: "Instagram", serviceInterest: "Brand identity & company profile",     status: "converted", divisionId: pmg!.id },
-  { name: "Nompumelelo Dube",  email: "nompumelelo@dubecatering.co.za",  phone: "0831122334", source: "Referral",  serviceInterest: "Social media management + website",   status: "converted", divisionId: pmg!.id },
-  { name: "Gerhard Swart",     email: "gerhard@swartcivil.co.za",        phone: "0762233445", source: "Google",    serviceInterest: "Full tender compilation",               status: "converted", divisionId: tes!.id },
+  {
+    name: "Ruan Botha", email: "ruan@bothatech.co.za", phone: "0617778899",
+    message: "Need a website and ongoing digital marketing. Found you on Google.",
+    source: "Google", serviceInterest: "Website + Growth package", status: "converted", divisionId: aws!.id,
+    notes: "Signed up for Growth package. Website launched 2026-02-15. Happy client.",
+  },
+  {
+    name: "Lindiwe Mthembu", email: "lindiwe@mthembucontracting.co.za", phone: "0838899001",
+    message: "We need full tender compliance support. We have been losing bids due to missing documents.",
+    source: "Referral", serviceInterest: "Tender-Ready Professional bundle", status: "converted", divisionId: tes!.id,
+    notes: "Onboarded Jan 2026. First bid submitted successfully.",
+  },
+  {
+    name: "Pieter van Wyk", email: "pieter@vanwykplastering.co.za", phone: "0827766554",
+    message: "Need CIDB grading upgrade and full tender compliance package. Urgent.",
+    source: "WhatsApp", serviceInterest: "CIDB grading + full tender compliance", status: "converted", divisionId: tes!.id,
+    notes: "CIDB Grade 3 upgrade completed. Now on monthly compliance retainer.",
+  },
+  {
+    name: "Siyanda Cele", email: "siyanda.cele@gmail.com", phone: "0749900112",
+    message: "Starting a new events company and need a full brand identity — logo, colours, everything.",
+    source: "Instagram", serviceInterest: "Brand identity & company profile", status: "converted", divisionId: pmg!.id,
+    notes: "Brand identity delivered Feb 2026. Client very satisfied.",
+  },
+  {
+    name: "Nompumelelo Dube", email: "nompumelelo@dubecatering.co.za", phone: "0831122334",
+    message: "We need social media management and a website for our catering business.",
+    source: "Referral", serviceInterest: "Social media management + website", status: "converted", divisionId: pmg!.id,
+    notes: "Website live. On monthly social media retainer since Jan 2026.",
+  },
+  {
+    name: "Gerhard Swart", email: "gerhard@swartcivil.co.za", phone: "0762233445",
+    message: "Civil engineering company looking for tender compilation support for multiple upcoming bids.",
+    source: "Google", serviceInterest: "Full tender compilation", status: "converted", divisionId: tes!.id,
+    notes: "Ongoing client. 3 bids submitted, 1 awarded.",
+  },
   // Lost
-  { name: "Derek Pietersen",   email: "derek.p@outlook.com",             phone: "0823334456", source: "Instagram", serviceInterest: "Logo & brand identity",                status: "lost",      divisionId: aws!.id },
-  { name: "Mpho Ramahlele",    email: "mpho.r@mphoservices.co.za",       phone: "0765544332", source: "Facebook",  serviceInterest: "Full tender compilation",               status: "lost",      divisionId: tes!.id },
-  { name: "Sandra Jacobs",     email: "sandra.jacobs@sjenterprises.co.za",phone: "0834433221", source: "Google",   serviceInterest: "Website build",                        status: "lost",      divisionId: aws!.id },
-  { name: "Kobus Venter",      email: "kobus@ventersupplies.co.za",      phone: "0815566778", source: "Facebook",  serviceInterest: "Social media management",              status: "lost",      divisionId: pmg!.id },
+  {
+    name: "Derek Pietersen", email: "derek.p@outlook.com", phone: "0823334456",
+    message: "Need a logo for my new startup. Looking for something modern and affordable.",
+    source: "Instagram", serviceInterest: "Logo & brand identity", status: "lost", divisionId: aws!.id,
+    notes: "Price was too high for client's budget. Went with a freelancer.",
+  },
+  {
+    name: "Mpho Ramahlele", email: "mpho.r@mphoservices.co.za", phone: "0765544332",
+    message: "Interested in tender compilation for a cleaning services bid.",
+    source: "Facebook", serviceInterest: "Full tender compilation", status: "lost", divisionId: tes!.id,
+    notes: "Did not respond after initial quote was sent.",
+  },
+  {
+    name: "Sandra Jacobs", email: "sandra.jacobs@sjenterprises.co.za", phone: "0834433221",
+    message: "We need a basic website for our small business. Nothing too fancy.",
+    source: "Google", serviceInterest: "Website build", status: "lost", divisionId: aws!.id,
+    notes: "Client chose a cheaper DIY option.",
+  },
+  {
+    name: "Kobus Venter", email: "kobus@ventersupplies.co.za", phone: "0815566778",
+    message: "Looking for social media management for our hardware supply business.",
+    source: "Facebook", serviceInterest: "Social media management", status: "lost", divisionId: pmg!.id,
+    notes: "No response after two follow-up calls.",
+  },
 ]);
 
 console.log("  ✓ leads");

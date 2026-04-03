@@ -4,12 +4,12 @@ import * as React from 'react'
 import { Button } from '@/components/ui/button'
 
 interface LeadNotesFormProps {
-  id: string
   currentNotes: string | null
-  updateAction: (id: string, formData: FormData) => Promise<{ error?: string }>
+  // updateAction is pre-bound with the lead id: updateLeadNotes.bind(null, id)
+  updateAction: (formData: FormData) => Promise<{ error?: string }>
 }
 
-export function LeadNotesForm({ id, currentNotes, updateAction }: LeadNotesFormProps) {
+export function LeadNotesForm({ currentNotes, updateAction }: LeadNotesFormProps) {
   const [isPending, startTransition] = React.useTransition()
   const [error, setError] = React.useState<string | null>(null)
 
@@ -18,7 +18,7 @@ export function LeadNotesForm({ id, currentNotes, updateAction }: LeadNotesFormP
     setError(null)
     const formData = new FormData(e.currentTarget)
     startTransition(() => {
-      updateAction(id, formData).then((result) => {
+      updateAction(formData).then((result) => {
         if (result.error) setError(result.error)
       })
     })

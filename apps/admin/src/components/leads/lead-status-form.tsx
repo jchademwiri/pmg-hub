@@ -11,21 +11,24 @@ import {
 } from '@/components/ui/select'
 
 interface LeadStatusFormProps {
-  id: string
   currentStatus: string
-  updateAction: (id: string, formData: FormData) => Promise<{ error?: string }>
+  // updateAction is pre-bound with the lead id: updateLeadStatus.bind(null, id)
+  updateAction: (formData: FormData) => Promise<{ error?: string }>
 }
 
-export function LeadStatusForm({ id, currentStatus, updateAction }: LeadStatusFormProps) {
+export function LeadStatusForm({ currentStatus, updateAction }: LeadStatusFormProps) {
   const [isPending, startTransition] = React.useTransition()
   const [error, setError] = React.useState<string | null>(null)
+  const [status, setStatus] = React.useState(currentStatus)
 
   function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault()
     setError(null)
+    // shadcn Select doesn't write to FormData — append the value manually
     const formData = new FormData(e.currentTarget)
+    formData.set('status', status)
     startTransition(() => {
-      updateAction(id, formData).then((result) => {
+      updateAction(formData).then((result) => {
         if (result.error) setError(result.error)
       })
     })
@@ -37,7 +40,7 @@ export function LeadStatusForm({ id, currentStatus, updateAction }: LeadStatusFo
         <label htmlFor="lead-status" className="text-sm font-medium">
           Status
         </label>
-        <Select name="status" defaultValue={currentStatus} disabled={isPending}>
+        <Select value={status} onValueChange={setStatus} disabled={isPending}>
           <SelectTrigger id="lead-status" className="w-40">
             <SelectValue placeholder="Select status" />
           </SelectTrigger>

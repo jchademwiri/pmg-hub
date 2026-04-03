@@ -83,7 +83,6 @@ export default async function LeadDetailPage({ params }: LeadDetailPageProps) {
       <div className="flex flex-col gap-4 rounded-lg border p-4">
         <h2 className="text-lg font-medium">Update Status</h2>
         <LeadStatusForm
-          id={id}
           currentStatus={lead.status}
           updateAction={updateLeadStatus.bind(null, id)}
         />
@@ -92,7 +91,6 @@ export default async function LeadDetailPage({ params }: LeadDetailPageProps) {
       <div className="flex flex-col gap-4 rounded-lg border p-4">
         <h2 className="text-lg font-medium">Notes</h2>
         <LeadNotesForm
-          id={id}
           currentNotes={lead.notes}
           updateAction={updateLeadNotes.bind(null, id)}
         />
