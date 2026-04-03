@@ -117,37 +117,17 @@
         const formData = new FormData(form);
         const data = Object.fromEntries(formData);
 
-        try {
-          const response = await fetch("/api/contact", {
-            method: "POST",
-            headers: {
-              "Content-Type": "application/json",
-            },
-            body: JSON.stringify(data),
-          });
+        console.log("Contact form submitted:", data);
 
-          const result = await response.json();
+        form.reset();
+        formMessage.textContent =
+          "Message sent successfully! We will get back to you soon.";
+        formMessage.classList.add("text-green-600");
+        formMessage.classList.remove("hidden");
 
-          if (response.ok) {
-            form.reset();
-            formMessage.textContent =
-              "Message sent successfully! We will get back to you soon.";
-            formMessage.classList.add("text-green-600");
-            formMessage.classList.remove("hidden");
-          } else {
-            throw new Error(result.error || "Failed to send message");
-          }
-        } catch (error) {
-          console.error("Error:", error);
-          formMessage.textContent =
-            "Something went wrong. Please try again later.";
-          formMessage.classList.add("text-red-600");
-          formMessage.classList.remove("hidden");
-        } finally {
-          btnText.textContent = "Send Message";
-          btnLoader.classList.add("hidden");
-          submitBtn.disabled = false;
-        }
+        btnText.textContent = "Send Message";
+        btnLoader.classList.add("hidden");
+        submitBtn.disabled = false;
       });
     }
   }

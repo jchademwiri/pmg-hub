@@ -1,37 +1,8 @@
 ---
-import { getDb } from '@db/client';
-import { pricing } from '@db/schema';
-import { type InferSelectModel, asc } from 'drizzle-orm';
+import { monthlyPlans, onceOffPlans } from '@/data/pricing';
 
 const { id = 'booking-dialog' } = Astro.props;
 
-// Fetch data from DB
-const db = getDb(undefined);
-type Pricing = InferSelectModel<typeof pricing>;
-const allPlans: Pricing[] = await db
-  .select()
-  .from(pricing)
-  .orderBy(asc(pricing.price));
-
-const formatPrice = (amount: number) => `R${amount.toLocaleString()}`;
-
-const monthlyPlans = allPlans
-  .filter((p) => p.type === 'monthly')
-  .map((p) => ({
-    ...p,
-    price: formatPrice(p.price),
-    upfront: p.upfront ? `${formatPrice(p.upfront)} Once-Off Setup` : undefined,
-  }));
-
-const onceOffPlans = allPlans
-  .filter((p) => p.type === 'once-off')
-  .map((p) => ({
-    ...p,
-    price: formatPrice(p.price),
-    upfront: p.upfront ? `${formatPrice(p.upfront)} Once-Off Setup` : undefined,
-  }));
-
-// Prepare data for client-side
 const plansData = {
   monthly: monthlyPlans,
   onceOff: onceOffPlans,
@@ -124,9 +95,7 @@ const plansData = {
         >
           <p class='text-foreground text-sm font-medium'>Total Price</p>
           <p id='summary-price' class='text-primary text-xl font-bold'>
-            R299<span class='text-muted-foreground text-sm font-normal'
-              >/mo</span
-            >
+            {monthlyPlans[0]?.price ?? 'R0'}<span class='text-muted-foreground text-sm font-normal'>/mo</span>
           </p>
           <p id='upfront-cost' class='text-muted-foreground hidden text-xs'>
             + Setup
@@ -140,11 +109,11 @@ const plansData = {
         <input type='hidden' name='type' id='input-type' />
 
         <div>
-          <label for='name' class='mb-1 block text-sm font-medium'>Name</label>
+          <label for='booking-name' class='mb-1 block text-sm font-medium'>Name</label>
           <input
             type='text'
             name='name'
-            id='name'
+            id='booking-name'
             required
             class='bg-background border-input ring-offset-background placeholder:text-muted-foreground focus-visible:ring-ring flex h-10 w-full rounded-md border px-3 py-2 text-sm focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:outline-none disabled:cursor-not-allowed disabled:opacity-50'
             placeholder='John Doe'
@@ -152,12 +121,11 @@ const plansData = {
         </div>
 
         <div>
-          <label for='email' class='mb-1 block text-sm font-medium'>Email</label
-          >
+          <label for='booking-email' class='mb-1 block text-sm font-medium'>Email</label>
           <input
             type='email'
             name='email'
-            id='email'
+            id='booking-email'
             required
             class='bg-background border-input ring-offset-background placeholder:text-muted-foreground focus-visible:ring-ring flex h-10 w-full rounded-md border px-3 py-2 text-sm focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:outline-none disabled:cursor-not-allowed disabled:opacity-50'
             placeholder='john@example.com'
@@ -165,13 +133,11 @@ const plansData = {
         </div>
 
         <div>
-          <label for='phone' class='mb-1 block text-sm font-medium'
-            >Phone Number</label
-          >
+          <label for='booking-phone' class='mb-1 block text-sm font-medium'>Phone Number</label>
           <input
             type='tel'
             name='phone'
-            id='phone'
+            id='booking-phone'
             required
             class='bg-background border-input ring-offset-background placeholder:text-muted-foreground focus-visible:ring-ring flex h-10 w-full rounded-md border px-3 py-2 text-sm focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:outline-none disabled:cursor-not-allowed disabled:opacity-50'
             placeholder='+27 12 345 6789'
@@ -188,8 +154,7 @@ const plansData = {
           </button>
         </div>
 
-        <p id='form-error' class='text-destructive hidden text-center text-sm'>
-        </p>
+        <p id='form-error' class='text-destructive hidden text-center text-sm'></p>
       </form>
     </div>
 
@@ -233,24 +198,20 @@ const plansData = {
   const submitBtn = document.getElementById('submit-btn');
   const errorMsg = document.getElementById('form-error');
 
-  // Views
   const dialogContent = document.getElementById('dialog-content');
   const successView = document.getElementById('success-view');
   const successCloseBtn = document.getElementById('success-close-btn');
 
-  // Dynamic Elements
   const typeToggles = document.querySelectorAll('.type-toggle');
   const selectPackage = document.getElementById('select-package');
   const summaryPrice = document.getElementById('summary-price');
   const upfrontDisplay = document.getElementById('upfront-cost');
 
-  // Hidden Inputs
   const inputPackage = document.getElementById('input-package');
   const inputPrice = document.getElementById('input-price');
   const inputType = document.getElementById('input-type');
 
-  let currentType = 'monthly'; // 'monthly' | 'once-off'
-  // Initial plan finding
+  let currentType = 'monthly';
   let currentPlan =
     plansData.monthly && plansData.monthly.length > 0
       ? plansData.monthly[0]
@@ -260,14 +221,10 @@ const plansData = {
     form.reset();
     submitBtn.disabled = false;
     submitBtn.textContent = 'Confirm Booking';
-    submitBtn.classList.remove('bg-green-600', 'hover:bg-green-700');
-    submitBtn.classList.add('bg-primary', 'hover:bg-primary/90');
 
-    // Navigate back to form
     dialogContent.classList.remove('hidden');
     successView.classList.add('hidden');
 
-    // Re-sync UI to defaults
     updateState('monthly');
     if (plansData.monthly && plansData.monthly.length > 0) {
       selectPackage.value = plansData.monthly[0].name;
@@ -278,20 +235,25 @@ const plansData = {
   function updateState(newType) {
     currentType = newType;
 
-    // Update Selection UI
     typeToggles.forEach((btn) => {
       const isActive = btn.dataset.val === currentType;
       if (isActive) {
         btn.classList.add('bg-primary', 'text-primary-foreground', 'shadow-sm');
         btn.classList.remove('text-muted-foreground', 'hover:bg-muted');
       } else {
-        btn.classList.remove(
-          'bg-primary',
-          'text-primary-foreground',
-          'shadow-sm',
-        );
+        btn.classList.remove('bg-primary', 'text-primary-foreground', 'shadow-sm');
         btn.classList.add('text-muted-foreground', 'hover:bg-muted');
       }
+    });
+
+    // Rebuild package options for the selected type
+    const plans = currentType === 'monthly' ? plansData.monthly : plansData.onceOff;
+    selectPackage.innerHTML = '';
+    plans.forEach((p) => {
+      const opt = document.createElement('option');
+      opt.value = p.name;
+      opt.textContent = p.name;
+      selectPackage.appendChild(opt);
     });
 
     updatePrice();
@@ -299,8 +261,7 @@ const plansData = {
 
   function updatePrice() {
     const selectedName = selectPackage.value;
-    const plans =
-      currentType === 'monthly' ? plansData.monthly : plansData.onceOff;
+    const plans = currentType === 'monthly' ? plansData.monthly : plansData.onceOff;
     const plan = plans.find((p) => p.name === selectedName);
 
     if (plan) {
@@ -315,18 +276,14 @@ const plansData = {
         upfrontDisplay.classList.add('hidden');
       }
 
-      // Update Hidden Inputs
       inputPackage.value = plan.name;
       inputPrice.value = plan.price;
       inputType.value = currentType;
     }
   }
 
-  // Event Listeners
   typeToggles.forEach((btn) => {
-    btn.addEventListener('click', () => {
-      updateState(btn.dataset.val);
-    });
+    btn.addEventListener('click', () => updateState(btn.dataset.val));
   });
 
   if (selectPackage) {
@@ -336,11 +293,9 @@ const plansData = {
   if (dialog && closeBtn) {
     closeBtn.addEventListener('click', () => {
       dialog.close();
-      // Optional: reset form after a delay if closed manually
       setTimeout(resetForm, 500);
     });
 
-    // Close on click outside
     dialog.addEventListener('click', (e) => {
       const rect = dialog.getBoundingClientRect();
       const isInDialog =
@@ -363,75 +318,26 @@ const plansData = {
     });
   }
 
-  // Handle Form Submission
   if (form) {
-    form.addEventListener('submit', async (e) => {
+    form.addEventListener('submit', (e) => {
       e.preventDefault();
-
-      // Reset State
-      submitBtn.disabled = true;
-      submitBtn.innerHTML = `<svg class="animate-spin -ml-1 mr-3 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-        <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
-        <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-      </svg> Processing...`;
-      if (errorMsg) errorMsg.classList.add('hidden');
 
       const formData = new FormData(form);
       const data = Object.fromEntries(formData.entries());
 
-      try {
-        const response = await fetch('/api/book', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify(data),
-        });
+      console.log('Booking form submitted:', data);
 
-        const text = await response.text();
-        let result;
-        try {
-          result = JSON.parse(text);
-        } catch (e) {
-          throw new Error(
-            'Server returned invalid response: ' + text.substring(0, 50),
-          );
-        }
-
-        if (result.success) {
-          // Success State - Show Success View
-          dialogContent.classList.add('hidden');
-          successView.classList.remove('hidden');
-        } else {
-          throw new Error(result.error || 'Failed to submit booking');
-        }
-      } catch (err) {
-        console.error(err);
-        submitBtn.disabled = false;
-        submitBtn.textContent = 'Confirm Booking';
-        if (errorMsg) {
-          errorMsg.textContent =
-            err.message || 'An error occurred. Please try again.';
-          errorMsg.classList.remove('hidden');
-        }
-      }
+      dialogContent.classList.add('hidden');
+      successView.classList.remove('hidden');
     });
   }
 
-  // Expose function to open dialog
   window.openBookingDialog = (pkgName, price, type) => {
     if (dialog && selectPackage) {
-      // Normalize type to match data keys
       const normalizedType = type === 'once-off' ? 'once-off' : 'monthly';
-
       updateState(normalizedType);
-
-      // Select the package
       selectPackage.value = pkgName;
-
-      // Update price calculation
       updatePrice();
-
       dialog.showModal();
     }
   };

@@ -1,3 +1,6 @@
+@import "@pmg/tailwind-config/base";
+@import "@pmg/tailwind-config/aws";
+
 @import "tailwindcss";
 @import "tw-animate-css";
 @plugin "@tailwindcss/forms";

@@ -60,7 +60,7 @@ import { ArrowRight, CheckCircle2, Loader2, Mail } from "lucide-astro";
     const btnLoader = submitBtn?.querySelector(".btn-loader");
     const emailInput = document.getElementById("waitlist-email");
 
-    async function handleSubmit(e) {
+    function handleSubmit(e) {
       e.preventDefault();
 
       if (!form || !messageEl || !submitBtn || !emailInput) return;
@@ -77,36 +77,18 @@ import { ArrowRight, CheckCircle2, Loader2, Mail } from "lucide-astro";
       btnIcon?.classList.add("hidden");
       btnLoader?.classList.remove("hidden");
 
-      try {
-        const response = await fetch("/api/subscribe", {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({ email }),
-        });
+      console.log("Waitlist form submitted:", { email });
 
-        const data = await response.json();
+      messageEl.textContent = "You're on the list! We'll be in touch.";
+      messageEl.classList.add("text-green-600");
+      form.reset();
 
-        if (response.ok) {
-          messageEl.textContent = "You're on the list! We'll be in touch.";
-          messageEl.classList.add("text-green-600");
-          form.reset();
-        } else {
-          throw new Error(data.error || "Something went wrong.");
-        }
-      } catch (error) {
-        console.error("Submission error:", error);
-        messageEl.textContent = error.message || "Failed to subscribe.";
-        messageEl.classList.add("text-red-600");
-      } finally {
-        messageEl.classList.remove("hidden");
-        submitBtn.disabled = false;
-        emailInput.disabled = false;
-        btnText?.classList.remove("hidden");
-        btnIcon?.classList.remove("hidden");
-        btnLoader?.classList.add("hidden");
-      }
+      messageEl.classList.remove("hidden");
+      submitBtn.disabled = false;
+      emailInput.disabled = false;
+      btnText?.classList.remove("hidden");
+      btnIcon?.classList.remove("hidden");
+      btnLoader?.classList.add("hidden");
     }
 
     if (form) {

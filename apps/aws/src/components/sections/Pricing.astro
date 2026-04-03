@@ -1,31 +1,7 @@
 ---
-
 import BookingDialog from '../forms/BookingDialog.astro';
 import PricingFallback from './PricingFallback.astro';
-
-import type { InferSelectModel } from 'drizzle-orm';
-type Pricing = InferSelectModel<typeof pricing>;
-
-const db = getDb();
-let allPlans: Pricing[] = [];
-try {
-  allPlans = await db.select().from(pricing);
-} catch (error) {
-  console.error('Pricing Section Query Error:', error);
-}
-
-const monthlyPlans = allPlans
-  .filter((p) => p.type === 'monthly')
-  .map((p) => ({
-    ...p,
-    features: Array.isArray(p.features) ? (p.features as string[]) : [],
-  }));
-const onceOffPlans = allPlans
-  .filter((p) => p.type === 'once-off')
-  .map((p) => ({
-    ...p,
-    features: Array.isArray(p.features) ? (p.features as string[]) : [],
-  }));
+import { monthlyPlans, onceOffPlans } from '@/data/pricing';
 ---
 
 <section id='pricing' class='bg-muted/30 relative py-24'>
@@ -82,11 +58,7 @@ const onceOffPlans = allPlans
                 <h3 class='mb-2 text-xl font-bold'>{plan.name}</h3>
                 <div class='mb-2 flex items-baseline gap-1'>
                   <span class='text-primary text-3xl font-bold'>
-                    {new Intl.NumberFormat('en-ZA', {
-                      style: 'currency',
-                      currency: 'ZAR',
-                      maximumFractionDigits: 0,
-                    }).format(plan.price)}
+                    {plan.price}
                   </span>
                   <span class='text-muted-foreground text-sm'>
                     {plan.period}
@@ -94,13 +66,7 @@ const onceOffPlans = allPlans
                 </div>
                 {plan.upfront && (
                   <div class='text-primary/80 mb-2 text-xs font-semibold'>
-                    +{' '}
-                    {new Intl.NumberFormat('en-ZA', {
-                      style: 'currency',
-                      currency: 'ZAR',
-                      maximumFractionDigits: 0,
-                    }).format(plan.upfront)}{' '}
-                    Setup
+                    + {plan.upfront}
                   </div>
                 )}
                 <p class='text-muted-foreground mt-3 text-sm'>
@@ -128,7 +94,7 @@ const onceOffPlans = allPlans
                 ))}
               </ul>
               <button
-                onclick={`window.openBookingDialog('${plan.name}', '${new Intl.NumberFormat('en-ZA', { style: 'currency', currency: 'ZAR', maximumFractionDigits: 0 }).format(plan.price)}', 'monthly')`}
+                onclick={`window.openBookingDialog('${plan.name}', '${plan.price}', 'monthly')`}
                 class={`inline-flex h-12 w-full cursor-pointer items-center justify-center rounded-lg font-medium transition-colors ${plan.popular ? 'bg-primary text-primary-foreground hover:bg-primary/90' : 'bg-muted text-foreground hover:bg-muted/80'}`}
               >
                 {plan.cta}
@@ -161,11 +127,7 @@ const onceOffPlans = allPlans
                 <h3 class='mb-2 text-xl font-bold'>{plan.name}</h3>
                 <div class='mb-2 flex items-baseline gap-1'>
                   <span class='text-primary text-3xl font-bold'>
-                    {new Intl.NumberFormat('en-ZA', {
-                      style: 'currency',
-                      currency: 'ZAR',
-                      maximumFractionDigits: 0,
-                    }).format(plan.price)}
+                    {plan.price}
                   </span>
                   <span class='text-muted-foreground bg-muted rounded-full px-2 py-0.5 text-sm text-xs font-bold uppercase'>
                     Once-Off
@@ -196,7 +158,7 @@ const onceOffPlans = allPlans
                 ))}
               </ul>
               <button
-                onclick={`window.openBookingDialog('${plan.name}', '${new Intl.NumberFormat('en-ZA', { style: 'currency', currency: 'ZAR', maximumFractionDigits: 0 }).format(plan.price)}', 'once-off')`}
+                onclick={`window.openBookingDialog('${plan.name}', '${plan.price}', 'once-off')`}
                 class={`inline-flex h-12 w-full cursor-pointer items-center justify-center rounded-lg font-medium transition-colors ${plan.popular ? 'bg-primary text-primary-foreground hover:bg-primary/90' : 'bg-muted text-foreground hover:bg-muted/80'}`}
               >
                 {plan.cta}
@@ -214,7 +176,6 @@ const onceOffPlans = allPlans
 </section>
 
 <script>
-  // Ensure elements exist before accessing
   const toggleBtn = document.getElementById('pricing-toggle');
   const toggleCircle = document.getElementById('toggle-circle');
   const monthlyCards = document.getElementById('monthly-cards');
@@ -236,21 +197,17 @@ const onceOffPlans = allPlans
       isMonthly = !isMonthly;
 
       if (isMonthly) {
-        // Show Monthly
         toggleCircle.classList.remove('translate-x-7');
         monthlyCards.classList.remove('hidden', 'opacity-0');
         onceOffCards.classList.add('hidden', 'opacity-0');
-
         labelMonthly.classList.add('text-primary');
         labelMonthly.classList.remove('text-muted-foreground');
         labelOnceOff.classList.add('text-muted-foreground');
         labelOnceOff.classList.remove('text-primary');
       } else {
-        // Show Once-Off
         toggleCircle.classList.add('translate-x-7');
         monthlyCards.classList.add('hidden', 'opacity-0');
         onceOffCards.classList.remove('hidden', 'opacity-0');
-
         labelMonthly.classList.add('text-muted-foreground');
         labelMonthly.classList.remove('text-primary');
         labelOnceOff.classList.add('text-primary');
