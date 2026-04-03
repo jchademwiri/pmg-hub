@@ -5,14 +5,24 @@ import {
   Head,
   Heading,
   Html,
+  Img,
   Preview,
   Section,
   Text,
   Tailwind,
 } from "@react-email/components";
+import type { BrandingProps } from "../types";
 
-const NewSubscriberEmail = (props: { email: string }) => {
-  const { email } = props;
+export type NewSubscriberEmailProps = { email: string } & BrandingProps;
+
+const NewSubscriberEmail = (props: NewSubscriberEmailProps) => {
+  const {
+    email,
+    companyName = "Apex Web Solutions",
+    primaryColor = "#1d4ed8",
+    websiteUrl = "https://apexwebsolutions.co.za",
+    logoUrl = undefined,
+  } = props;
 
   return (
     <Html lang="en" dir="ltr">
@@ -28,9 +38,16 @@ const NewSubscriberEmail = (props: { email: string }) => {
             style={{ backgroundColor: "#FFFFFF" }}
           >
             <Section className="mb-[24px] text-center">
+              {logoUrl && (
+                <Img
+                  src={logoUrl}
+                  alt={companyName}
+                  className="mx-auto mb-[16px]"
+                />
+              )}
               <Heading
                 className="m-0 mb-[8px] text-[20px] font-bold"
-                style={{ color: "#020304" }}
+                style={{ color: primaryColor }}
               >
                 New Newsletter Subscription
               </Heading>
@@ -53,7 +70,7 @@ const NewSubscriberEmail = (props: { email: string }) => {
 
             <Section className="border-t border-solid border-gray-200 pt-[24px] text-center">
               <Text className="m-0 text-[12px]" style={{ color: "#9CA3AF" }}>
-                © 2025 Apex Web Solutions. All rights reserved.
+                © {new Date().getFullYear()} {companyName}. All rights reserved.
               </Text>
             </Section>
           </Container>

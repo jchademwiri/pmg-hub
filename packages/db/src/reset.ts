@@ -21,7 +21,8 @@ await client.query(`
     income,
     clients,
     divisions,
-    aws_pricing
+    aws_pricing,
+    withdrawals
   cascade
 `);
 

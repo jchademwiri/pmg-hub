@@ -4,20 +4,36 @@ import {
   Head,
   Heading,
   Html,
+  Img,
   Preview,
   Section,
   Text,
   Tailwind,
   Hr,
+  Link,
 } from "@react-email/components";
+import type { BrandingProps } from "../types";
 
-const ContactFormEmail = (props: {
+type ContentProps = {
   name: string;
   email: string;
   subject: string;
   message: string;
-}) => {
-  const { name, email, subject, message } = props;
+};
+
+export type ContactFormEmailProps = ContentProps & BrandingProps;
+
+const ContactFormEmail = (props: ContactFormEmailProps) => {
+  const {
+    name,
+    email,
+    subject,
+    message,
+    companyName = "Apex Web Solutions",
+    primaryColor = "#1d4ed8",
+    websiteUrl = "https://apexwebsolutions.co.za",
+    logoUrl,
+  } = props;
 
   return (
     <Html lang="en" dir="ltr">
@@ -28,7 +44,17 @@ const ContactFormEmail = (props: {
           <Container className="mx-auto max-w-[600px] rounded-[8px] bg-white p-[32px] shadow-lg">
             {/* Header */}
             <Section>
-              <Heading className="mb-[24px] text-center text-[24px] font-bold text-gray-900">
+              {logoUrl && (
+                <Img
+                  src={logoUrl}
+                  alt={companyName}
+                  className="mx-auto mb-[16px] block"
+                />
+              )}
+              <Heading
+                className="mb-[24px] text-center text-[24px] font-bold text-gray-900"
+                style={{ color: primaryColor }}
+              >
                 📧 New Contact Form Submission
               </Heading>
               <Hr className="my-[20px] border-gray-200" />
@@ -64,8 +90,14 @@ const ContactFormEmail = (props: {
 
             {/* Message Section */}
             <Section className="mb-[32px]">
-              <div className="rounded-[8px] border border-solid border-blue-200 bg-blue-50 p-[20px]">
-                <Text className="m-0 mb-[12px] text-[16px] font-semibold text-gray-800">
+              <div
+                className="rounded-[8px] border border-solid bg-blue-50 p-[20px]"
+                style={{ borderColor: primaryColor }}
+              >
+                <Text
+                  className="m-0 mb-[12px] text-[16px] font-semibold text-gray-800"
+                  style={{ color: primaryColor }}
+                >
                   💬 Message
                 </Text>
                 <div className="rounded-[6px] border border-solid border-gray-200 bg-white p-[16px]">
@@ -84,11 +116,11 @@ const ContactFormEmail = (props: {
                 This message was sent via your website contact form.
               </Text>
               <Text className="m-0 mt-[8px] text-center text-[12px] text-gray-500">
-                © {new Date().getFullYear()} Apex Web Solutions. All rights
-                reserved.
-              </Text>
-              <Text className="m-0 mt-[4px] text-center text-[12px] text-gray-500">
-                Pretoria, Centurion, South Africa
+                © {new Date().getFullYear()}{" "}
+                <Link href={websiteUrl} className="text-gray-500 underline">
+                  {companyName}
+                </Link>
+                . All rights reserved.
               </Text>
             </Section>
           </Container>

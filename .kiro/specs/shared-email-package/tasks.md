@@ -6,17 +6,17 @@ Scaffold `packages/emails` (`@pmg/emails`), migrate the five existing email temp
 
 ## Tasks
 
-- [ ] 1. Scaffold the `packages/emails` package skeleton
+- [x] 1. Scaffold the `packages/emails` package skeleton
   - Create `packages/emails/package.json` with name `@pmg/emails`, exports pointing to `./src/index.ts`, `email:dev` script, and the dependencies listed in the design (`@react-email/components`, `resend`, `react-email`, `@pmg/typescript-config`)
   - Create `packages/emails/tsconfig.json` extending `@pmg/typescript-config/react-library.json` with `"include": ["src"]`
   - Create `packages/emails/README.md` documenting the three required env vars (`RESEND_API_KEY`, `FROM_EMAIL`, `ADMIN_EMAIL`) and a `createEmailClient` usage example
   - Create empty placeholder files: `src/index.ts`, `src/send.ts`, `src/types.ts`, and the five template stubs under `src/templates/`
   - _Requirements: 1.6, 8.1, 8.2, 5.5, 7.4_
 
-- [ ] 2. Implement `BrandingProps` and the send wrapper
-  - [ ] 2.1 Define `BrandingProps` interface in `src/types.ts` with optional fields: `companyName`, `logoUrl`, `primaryColor`, `websiteUrl`
+- [x] 2. Implement `BrandingProps` and the send wrapper
+  - [x] 2.1 Define `BrandingProps` interface in `src/types.ts` with optional fields: `companyName`, `logoUrl`, `primaryColor`, `websiteUrl`
     - _Requirements: 3.1_
-  - [ ] 2.2 Implement `src/send.ts` — `ResendConfig`, `EmailPayload`, `SendResult` interfaces, `sendEmail` function (wraps Resend SDK in try/catch, never throws, never reads env vars), and `createEmailClient` factory
+  - [x] 2.2 Implement `src/send.ts` — `ResendConfig`, `EmailPayload`, `SendResult` interfaces, `sendEmail` function (wraps Resend SDK in try/catch, never throws, never reads env vars), and `createEmailClient` factory
     - _Requirements: 4.1, 4.2, 4.3, 4.4, 4.5, 4.6, 7.2, 7.3_
   - [ ]* 2.3 Write unit tests for `sendEmail` and `createEmailClient` in `src/__tests__/send.test.ts`
     - Verify `{ data, error }` shape is always returned
@@ -36,16 +36,16 @@ Scaffold `packages/emails` (`@pmg/emails`), migrate the five existing email temp
     - Tag: `// Feature: shared-email-package, Property 4: createEmailClient closes over config`
     - _Requirements: 7.3_
 
-- [ ] 3. Migrate and update the five email templates
-  - [ ] 3.1 Copy `ContactFormEmail.tsx` from `apps/aws/emails/` to `src/templates/`, update to accept `ContentProps & BrandingProps`, apply branding defaults, export named `ContactFormEmailProps` type
+- [x] 3. Migrate and update the five email templates
+  - [x] 3.1 Copy `ContactFormEmail.tsx` from `apps/aws/emails/` to `src/templates/`, update to accept `ContentProps & BrandingProps`, apply branding defaults, export named `ContactFormEmailProps` type
     - _Requirements: 2.1, 2.2, 2.3, 2.4, 3.1, 3.2, 3.3, 3.4_
-  - [ ] 3.2 Copy `AutoReplyEmail.tsx`, apply same branding props pattern and defaults, export `AutoReplyEmailProps`
+  - [x] 3.2 Copy `AutoReplyEmail.tsx`, apply same branding props pattern and defaults, export `AutoReplyEmailProps`
     - _Requirements: 2.1, 2.2, 2.3, 3.1, 3.2, 3.3, 3.4_
-  - [ ] 3.3 Copy `BookingConfirmationEmail.tsx`, apply branding props pattern and defaults, export `BookingConfirmationEmailProps`
+  - [x] 3.3 Copy `BookingConfirmationEmail.tsx`, apply branding props pattern and defaults, export `BookingConfirmationEmailProps`
     - _Requirements: 2.1, 2.2, 2.3, 3.1, 3.2, 3.3, 3.4_
-  - [ ] 3.4 Copy `NewSubscriberEmail.tsx`, apply branding props pattern and defaults, export `NewSubscriberEmailProps`
+  - [x] 3.4 Copy `NewSubscriberEmail.tsx`, apply branding props pattern and defaults, export `NewSubscriberEmailProps`
     - _Requirements: 2.1, 2.2, 2.3, 3.1, 3.2, 3.3, 3.4_
-  - [ ] 3.5 Copy `AdminNewLeadEmail.tsx`, apply branding props pattern and defaults, export `AdminNewLeadEmailProps`
+  - [x] 3.5 Copy `AdminNewLeadEmail.tsx`, apply branding props pattern and defaults, export `AdminNewLeadEmailProps`
     - _Requirements: 2.1, 2.2, 2.3, 3.1, 3.2, 3.3, 3.4_
   - [ ]* 3.6 Write property test — rendered HTML contains all provided props (Property 1)
     - **Property 1: Rendered HTML contains all provided props**
@@ -64,28 +64,28 @@ Scaffold `packages/emails` (`@pmg/emails`), migrate the five existing email temp
     - Verify each template has a `PreviewProps` static property
     - _Requirements: 2.3, 6.4_
 
-- [ ] 4. Checkpoint — Ensure all tests pass
+- [x] 4. Checkpoint — Ensure all tests pass
   - Ensure all tests pass, ask the user if questions arise.
 
-- [ ] 5. Wire up `src/index.ts` and verify exports
+- [x] 5. Wire up `src/index.ts` and verify exports
   - Implement `src/index.ts` re-exporting `sendEmail`, `createEmailClient`, all type interfaces, `BrandingProps`, all five template components, and all five template prop types as shown in the design
   - _Requirements: 1.1, 1.2, 1.3, 7.1_
 
-- [ ] 6. Update monorepo configuration
-  - [ ] 6.1 Add `email:dev` task to `turbo.json` with `"cache": false` and `"persistent": true`
+- [x] 6. Update monorepo configuration
+  - [x] 6.1 Add `email:dev` task to `turbo.json` with `"cache": false` and `"persistent": true`
     - _Requirements: 11.1, 11.2, 11.3_
-  - [ ] 6.2 Add `@react-email/components: "^1.0.1"` and `resend: "^4.0.0"` to the `overrides` block in the root `package.json`
+  - [x] 6.2 Add `@react-email/components: "^1.0.1"` and `resend: "^4.0.0"` to the `overrides` block in the root `package.json`
     - _Requirements: 10.1, 10.2, 10.3, 10.4_
-  - [ ] 6.3 Add `withdrawals` to the `DROP TABLE IF EXISTS` list in `packages/db/src/reset.ts`
+  - [x] 6.3 Add `withdrawals` to the `DROP TABLE IF EXISTS` list in `packages/db/src/reset.ts`
     - _Requirements: 9.1, 9.2_
 
-- [ ] 7. Integrate `@pmg/emails` into `apps/aws`
+- [x] 7. Integrate `@pmg/emails` into `apps/aws`
   - Add `"@pmg/emails": "workspace:*"` to `apps/aws/package.json` dependencies
   - Update the Astro actions / route handlers in `apps/aws` that currently import from the local `emails/` directory to import from `@pmg/emails` instead
   - Remove the now-redundant local email files from `apps/aws/emails/` once all imports are updated
   - _Requirements: 1.4, 1.5, 5.2, 5.3, 5.4_
 
-- [ ] 8. Final checkpoint — Ensure all tests pass
+- [x] 8. Final checkpoint — Ensure all tests pass
   - Ensure all tests pass and type-check passes (`tsc --noEmit`) across the workspace, ask the user if questions arise.
 
 ## Notes

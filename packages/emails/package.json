@@ -1,0 +1,27 @@
+{
+  "name": "@pmg/emails",
+  "version": "0.0.1",
+  "private": true,
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "scripts": {
+    "email:dev": "email dev --dir src/templates --port 3010"
+  },
+  "dependencies": {
+    "@react-email/components": "^1.0.1",
+    "resend": "^4.0.0"
+  },
+  "devDependencies": {
+    "@pmg/typescript-config": "workspace:*",
+    "@react-email/preview-server": "5.2.10",
+    "@types/react": "19.2.2",
+    "@types/react-dom": "19.2.2",
+    "react-email": "latest",
+    "typescript": "5.9.2"
+  },
+  "peerDependencies": {
+    "react": "^19.0.0",
+    "react-dom": "^19.0.0"
+  }
+}

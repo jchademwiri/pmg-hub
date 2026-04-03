@@ -6,20 +6,30 @@ import {
   Head,
   Heading,
   Html,
+  Img,
   Preview,
   Section,
   Text,
   Tailwind,
 } from "@react-email/components";
+import type { BrandingProps } from "../types";
 
-const AutoReplyEmail = (props: { name: string }) => {
-  const { name } = props;
+export type AutoReplyEmailProps = { name: string } & BrandingProps;
+
+const AutoReplyEmail = (props: AutoReplyEmailProps) => {
+  const {
+    name,
+    companyName = "Apex Web Solutions",
+    primaryColor = "#1d4ed8",
+    websiteUrl = "https://apexwebsolutions.co.za",
+    logoUrl,
+  } = props;
 
   return (
     <Html lang="en" dir="ltr">
       <Head />
       <Preview>
-        Thank you for contacting Apex Web Solutions - We'll be in touch soon!
+        Thank you for contacting {companyName} - We'll be in touch soon!
       </Preview>
       <Tailwind>
         <Body
@@ -43,9 +53,16 @@ const AutoReplyEmail = (props: { name: string }) => {
                 >
                   {/* Header */}
                   <Section className="mb-[32px]">
+                    {logoUrl && (
+                      <Img
+                        src={logoUrl}
+                        alt={companyName}
+                        className="mx-auto mb-[16px] block"
+                      />
+                    )}
                     <Heading
                       className="m-0 mb-[16px] text-[24px] font-bold"
-                      style={{ color: "#020304" }}
+                      style={{ color: primaryColor }}
                     >
                       Hi {name},
                     </Heading>
@@ -53,7 +70,7 @@ const AutoReplyEmail = (props: { name: string }) => {
                       className="m-0 text-[16px] leading-[1.6]"
                       style={{ color: "#020304" }}
                     >
-                      Thank you for reaching out to Apex Web Solutions. We have
+                      Thank you for reaching out to {companyName}. We have
                       received your message and will get back to you shortly.
                     </Text>
                   </Section>
@@ -163,10 +180,10 @@ const AutoReplyEmail = (props: { name: string }) => {
                       <tr>
                         <td>
                           <Button
-                            href="https://dev.apexwebsolutions.co.za/"
+                            href={websiteUrl}
                             className="mb-[16px] box-border rounded-[6px] px-[20px] py-[10px] text-[14px] font-semibold text-white no-underline"
                             style={{
-                              backgroundColor: "#3B82F6",
+                              backgroundColor: primaryColor,
                               display: "inline-block",
                             }}
                           >
@@ -179,7 +196,8 @@ const AutoReplyEmail = (props: { name: string }) => {
                       className="m-0 mb-[4px] text-[12px]"
                       style={{ color: "#9CA3AF" }}
                     >
-                      © 2025 Apex Web Solutions. All rights reserved.
+                      © {new Date().getFullYear()} {companyName}. All rights
+                      reserved.
                     </Text>
                     <Text
                       className="m-0 text-[12px]"

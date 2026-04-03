@@ -13,6 +13,7 @@
     "email": "email dev"
   },
   "dependencies": {
+    "@pmg/emails": "workspace:*",
     "@astrojs/partytown": "^2.1.5",
     "@astrojs/react": "^5.0.0",
     "@astrojs/sitemap": "^3.7.1",

@@ -4,6 +4,7 @@ import {
   Head,
   Heading,
   Html,
+  Img,
   Preview,
   Section,
   Text,
@@ -12,32 +13,47 @@ import {
   Tailwind,
 } from "@react-email/components";
 import * as React from "react";
+import type { BrandingProps } from "../types";
 
-interface BookingConfirmationEmailProps {
+export type BookingConfirmationEmailProps = {
   name: string;
   package_name: string;
   package_price: string;
   package_type: string;
-}
+} & BrandingProps;
 
 const BookingConfirmationEmail = ({
   name,
   package_name,
   package_price,
   package_type,
+  companyName = "Apex Web Solutions",
+  primaryColor = "#1d4ed8",
+  websiteUrl = "https://apexwebsolutions.co.za",
+  logoUrl = undefined,
 }: BookingConfirmationEmailProps) => {
   return (
     <Html lang="en" dir="ltr">
       <Tailwind>
         <Head />
         <Preview>
-          Booking Confirmed: {package_name} - Apex Web Solutions
+          Booking Confirmed: {package_name} - {companyName}
         </Preview>
         <Body className="bg-[#F6F8FA] py-[40px] font-sans">
           <Container className="mx-auto max-w-[600px] rounded-[8px] bg-[#FFFFFF]">
             {/* Header */}
             <Section className="px-[32px] py-[32px] text-center">
-              <Heading className="m-0 text-[24px] font-bold text-[#020304]">
+              {logoUrl && (
+                <Img
+                  src={logoUrl}
+                  alt={companyName}
+                  className="mx-auto mb-[16px]"
+                />
+              )}
+              <Heading
+                className="m-0 text-[24px] font-bold text-[#020304]"
+                style={{ color: primaryColor }}
+              >
                 Booking Confirmed
               </Heading>
             </Section>
@@ -50,9 +66,9 @@ const BookingConfirmationEmail = ({
 
               <Text className="m-0 mb-[24px] text-[16px] leading-[24px] text-[#020304]">
                 Thank you for booking the <strong>{package_name}</strong>{" "}
-                package with Apex Web Solutions. We have received your details
-                and a team member will contact you within 24 hours to finalize
-                the process.
+                package with {companyName}. We have received your details and a
+                team member will contact you within 24 hours to finalize the
+                process.
               </Text>
 
               {/* Package Details */}
@@ -73,14 +89,14 @@ const BookingConfirmationEmail = ({
               <Hr className="my-[24px] border-gray-300" />
 
               <Text className="m-0 text-center text-[16px] text-[#020304]">
-                Thank you for choosing Apex Web Solutions.
+                Thank you for choosing {companyName}.
               </Text>
             </Section>
 
             {/* Footer */}
             <Section className="bg-[#F6F8FA] px-[32px] py-[24px] text-center">
               <Text className="m-0 mb-[8px] text-[14px] font-semibold text-gray-600">
-                Apex Web Solutions
+                {companyName}
               </Text>
               <Text className="m-0 mb-[8px] text-[12px] text-gray-500">
                 Streamline your tender management process with our comprehensive
@@ -91,14 +107,15 @@ const BookingConfirmationEmail = ({
               </Text>
               <Text className="m-0 mb-[8px] text-[12px] text-gray-500">
                 <Link
-                  href="https://www.apexwebsolutions.co.za/"
+                  href={websiteUrl}
                   className="text-[#0066CC] no-underline"
                 >
-                  www.apexwebsolutions.co.za
+                  {websiteUrl}
                 </Link>
               </Text>
               <Text className="m-0 text-[12px] text-gray-500">
-                © 2024 Apex Web Solutions. All rights reserved.
+                © {new Date().getFullYear()} {companyName}. All rights
+                reserved.
               </Text>
             </Section>
           </Container>

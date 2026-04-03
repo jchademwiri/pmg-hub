@@ -4,6 +4,7 @@ import {
   Head,
   Heading,
   Html,
+  Img,
   Preview,
   Section,
   Text,
@@ -12,40 +13,57 @@ import {
   Tailwind,
 } from "@react-email/components";
 import * as React from "react";
+import type { BrandingProps } from "../types";
 
-interface AdminNewLeadEmailProps {
+export type AdminNewLeadEmailProps = {
   name: string;
   email: string;
   phone: string;
   package_name: string;
   package_price: string;
   package_type: string;
-}
+} & BrandingProps;
 
-const AdminNewLeadEmail = ({
-  name,
-  email,
-  phone,
-  package_name,
-  package_price,
-  package_type,
-}: AdminNewLeadEmailProps) => {
+const AdminNewLeadEmail = (props: AdminNewLeadEmailProps) => {
+  const {
+    name,
+    email,
+    phone,
+    package_name,
+    package_price,
+    package_type,
+    companyName = "Apex Web Solutions",
+    primaryColor = "#1d4ed8",
+    websiteUrl = "https://apexwebsolutions.co.za",
+    logoUrl = undefined,
+  } = props;
+
   return (
     <Html lang="en" dir="ltr">
       <Tailwind>
         <Head />
         <Preview>
-          New Lead Alert: {package_name} - {name} | Apex Web Solutions
+          New Lead Alert: {package_name} - {name} | {companyName}
         </Preview>
         <Body className="bg-[#F6F8FA] py-[40px] font-sans">
           <Container className="mx-auto max-w-[600px] rounded-[12px] bg-[#FFFFFF] shadow-lg">
             {/* Header */}
-            <Section className="rounded-t-[12px] bg-[#0066CC] py-[32px] text-center text-white">
+            <Section
+              className="rounded-t-[12px] py-[32px] text-center text-white"
+              style={{ backgroundColor: primaryColor }}
+            >
+              {logoUrl && (
+                <Img
+                  src={logoUrl}
+                  alt={companyName}
+                  className="mx-auto mb-[16px]"
+                />
+              )}
               <Heading className="m-0 text-[28px] font-bold text-white">
                 🎯 New Lead Alert
               </Heading>
               <Text className="m-0 mt-[8px] text-[16px] text-blue-100">
-                Apex Web Solutions Lead Management
+                {companyName} Lead Management
               </Text>
             </Section>
 
@@ -58,7 +76,10 @@ const AdminNewLeadEmail = ({
 
               {/* Package Information */}
               <Section className="mb-[24px] rounded-[8px] border border-solid border-gray-200 bg-[#F6F8FA] p-[24px]">
-                <Heading className="m-0 mb-[16px] text-[20px] font-bold text-[#0066CC]">
+                <Heading
+                  className="m-0 mb-[16px] text-[20px] font-bold"
+                  style={{ color: primaryColor }}
+                >
                   📋 Package Details
                 </Heading>
                 <Text className="m-0 mb-[8px] text-[16px] text-[#020304]">
@@ -66,7 +87,7 @@ const AdminNewLeadEmail = ({
                 </Text>
                 <Text className="m-0 mb-[8px] text-[16px] text-[#020304]">
                   <strong>Price:</strong>{" "}
-                  <span className="font-semibold text-[#0066CC]">
+                  <span style={{ color: primaryColor, fontWeight: 600 }}>
                     {package_price}
                   </span>
                 </Text>
@@ -79,7 +100,10 @@ const AdminNewLeadEmail = ({
 
               {/* Contact Information */}
               <Section className="mb-[24px] rounded-[8px] border border-solid border-gray-200 bg-[#F6F8FA] p-[24px]">
-                <Heading className="m-0 mb-[16px] text-[20px] font-bold text-[#0066CC]">
+                <Heading
+                  className="m-0 mb-[16px] text-[20px] font-bold"
+                  style={{ color: primaryColor }}
+                >
                   👤 Contact Information
                 </Heading>
                 <Text className="m-0 mb-[8px] text-[16px] text-[#020304]">
@@ -89,7 +113,8 @@ const AdminNewLeadEmail = ({
                   <strong>Email:</strong>{" "}
                   <Link
                     href={`mailto:${email}`}
-                    className="text-[#0066CC] underline hover:text-blue-800"
+                    style={{ color: primaryColor }}
+                    className="underline"
                   >
                     {email}
                   </Link>
@@ -98,7 +123,8 @@ const AdminNewLeadEmail = ({
                   <strong>Phone:</strong>{" "}
                   <Link
                     href={`tel:${phone}`}
-                    className="text-[#0066CC] underline hover:text-blue-800"
+                    style={{ color: primaryColor }}
+                    className="underline"
                   >
                     {phone}
                   </Link>
@@ -113,7 +139,8 @@ const AdminNewLeadEmail = ({
                 </Text>
                 <Link
                   href={`mailto:${email}`}
-                  className="box-border inline-block rounded-[6px] bg-[#0066CC] px-[32px] py-[12px] text-[16px] font-semibold text-white no-underline hover:bg-blue-700"
+                  className="box-border inline-block rounded-[6px] px-[32px] py-[12px] text-[16px] font-semibold text-white no-underline"
+                  style={{ backgroundColor: primaryColor }}
                 >
                   Contact Lead Now
                 </Link>
@@ -131,15 +158,15 @@ const AdminNewLeadEmail = ({
               </Text>
               <Text className="m-0 mb-[8px] text-center text-[12px] text-gray-500">
                 <Link
-                  href="https://www.apexwebsolutions.co.za/"
-                  className="text-[#0066CC] no-underline"
+                  href={websiteUrl}
+                  style={{ color: primaryColor }}
+                  className="no-underline"
                 >
-                  www.apexwebsolutions.co.za
+                  {websiteUrl.replace(/^https?:\/\//, "")}
                 </Link>
               </Text>
               <Text className="m-0 text-center text-[12px] text-gray-500">
-                © {new Date().getFullYear()} Apex Web Solutions. All rights
-                reserved.
+                © {new Date().getFullYear()} {companyName}. All rights reserved.
               </Text>
             </Section>
           </Container>
