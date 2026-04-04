@@ -3,6 +3,7 @@ import { config } from "dotenv";
 import { resolve } from "path";
 import pg from "pg";
 import { drizzle } from "drizzle-orm/node-postgres";
+import { eq } from "drizzle-orm";
 import { divisions, clients, income, expenses, leads, withdrawals, awsPricing, snapshots } from "./schema";
 import { getFinancialSummaryForPeriod } from "./queries";
 
@@ -18,19 +19,26 @@ const db = drizzle(client);
 console.log("🌱 Seeding database...");
 
 // ── Divisions ────────────────────────────────────────────────────────────────
-const [pmg, tes, aws] = await db
+// Use onConflictDoNothing() (unique on name) then query back to get IDs.
+await db
   .insert(divisions)
   .values([
     { name: "Playhouse Media Group" },
     { name: "Tender Edge Solutions" },
     { name: "Apex Web Solutions" },
   ])
-  .returning();
+  .onConflictDoNothing();
+
+const divisionRows = await db.select().from(divisions);
+const pmg  = divisionRows.find((d) => d.name === "Playhouse Media Group")!;
+const tes  = divisionRows.find((d) => d.name === "Tender Edge Solutions")!;
+const aws  = divisionRows.find((d) => d.name === "Apex Web Solutions")!;
 
 console.log("  ✓ divisions");
 
 // ── Clients ──────────────────────────────────────────────────────────────────
-const [clientA, clientB, clientC, clientD, clientE, clientF, clientG, clientH, clientI] = await db
+// Use onConflictDoNothing() (unique on email) then query back to get IDs.
+await db
   .insert(clients)
   .values([
     { name: "Sipho Dlamini",      businessName: "Dlamini Construction CC",       email: "sipho@dlaminicc.co.za",         phone: "0821234567" },
@@ -43,7 +51,18 @@ const [clientA, clientB, clientC, clientD, clientE, clientF, clientG, clientH, c
     { name: "Tebogo Nkosi",       businessName: "Nkosi Group Holdings",          email: "tebogo@nkosigroup.co.za",       phone: "0813344556" },
     { name: "Chantelle Ferreira", businessName: "Ferreira Plumbing & Gas",       email: "chantelle@ferreiraplumbing.co.za", phone: "0844556677" },
   ])
-  .returning();
+  .onConflictDoNothing();
+
+const clientRows = await db.select().from(clients);
+const clientA = clientRows.find((c) => c.email === "sipho@dlaminicc.co.za")!;
+const clientB = clientRows.find((c) => c.email === "priya@naidoolog.co.za")!;
+const clientC = clientRows.find((c) => c.email === "johan@vdmelectrical.co.za")!;
+const clientD = clientRows.find((c) => c.email === "lungelo@zulusecurity.co.za")!;
+const clientE = clientRows.find((c) => c.email === "aisha@mohamedcleaning.co.za")!;
+const clientF = clientRows.find((c) => c.email === "zanele@mthembuproperty.co.za")!;
+const clientG = clientRows.find((c) => c.email === "riaan@steyncivil.co.za")!;
+const clientH = clientRows.find((c) => c.email === "tebogo@nkosigroup.co.za")!;
+const clientI = clientRows.find((c) => c.email === "chantelle@ferreiraplumbing.co.za")!;
 
 console.log("  ✓ clients");
 
@@ -104,7 +123,7 @@ await db.insert(awsPricing).values([
     type: "once_off",
     sortOrder: 5,
   },
-]);
+]).onConflictDoNothing();
 
 console.log("  ✓ aws_pricing");
 
@@ -116,6 +135,9 @@ console.log("  ✓ aws_pricing");
 //   Oct 2025 → ~R192,000   Nov 2025 → ~R210,000   Dec 2025 → ~R145,000
 //   Jan 2026 → ~R220,000   Feb 2026 → ~R235,000   Mar 2026 → ~R258,000
 //
+// Guard: only insert if no income rows exist yet (income has no natural unique key).
+const existingIncomeCount = await db.select().from(income).limit(1);
+if (existingIncomeCount.length === 0) {
 await db.insert(income).values([
 
   // ────────────────────────────────────────────────────────────────────────
@@ -702,10 +724,14 @@ await db.insert(income).values([
   { date: "2026-03-28", divisionId: aws!.id, clientId: clientI!.id, description: "Full website rebuild — Ferreira Plumbing 2026", amount: "3350.00" },
 
 ]);
+} // end income guard
 
 console.log("  ✓ income");
 
 // ── Expenses (Apr 2025 – Mar 2026) ────────────────────────────────────────────
+// Guard: only insert if no expense rows exist yet (expenses has no natural unique key).
+const existingExpensesCount = await db.select().from(expenses).limit(1);
+if (existingExpensesCount.length === 0) {
 await db.insert(expenses).values([
 
   // APRIL 2025
@@ -860,10 +886,12 @@ await db.insert(expenses).values([
   { date: "2026-03-27", divisionId: aws!.id, category: "Freelancers",           description: "Freelance photographer — Mar content shoots",      amount: "2500.00" },
 
 ]);
+} // end expenses guard
 
 console.log("  ✓ expenses");
 
 // ── Leads ─────────────────────────────────────────────────────────────────────
+// Use onConflictDoNothing() — leads have unique email and phone constraints.
 await db.insert(leads).values([
   // New
   {
@@ -989,13 +1017,16 @@ await db.insert(leads).values([
     source: "Facebook", serviceInterest: "Social media management", status: "lost", divisionId: pmg!.id,
     notes: "No response after two follow-up calls.",
   },
-]);
+]).onConflictDoNothing();
 
 console.log("  ✓ leads");
 
 // ── Withdrawals ───────────────────────────────────────────────────────────────
 // A handful of salary withdrawals across the last few months to give the
 // salary card and withdrawal tracking meaningful data.
+// Guard: only insert if no withdrawal rows exist yet (withdrawals has no natural unique key).
+const existingWithdrawalsCount = await db.select().from(withdrawals).limit(1);
+if (existingWithdrawalsCount.length === 0) {
 await db.insert(withdrawals).values([
   { date: "2025-11-28", amount: "25000.00", description: "Salary withdrawal — November 2025" },
   { date: "2025-12-22", amount: "18000.00", description: "Salary withdrawal — December 2025" },
@@ -1003,6 +1034,7 @@ await db.insert(withdrawals).values([
   { date: "2026-02-27", amount: "30000.00", description: "Salary withdrawal — February 2026" },
   { date: "2026-03-28", amount: "35000.00", description: "Salary withdrawal — March 2026" },
 ]);
+} // end withdrawals guard
 
 console.log("  ✓ withdrawals");
 

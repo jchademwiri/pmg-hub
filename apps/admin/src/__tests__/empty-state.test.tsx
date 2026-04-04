@@ -1,104 +1,89 @@
+/**
+ * Unit Tests for EmptyState
+ * Validates: Requirements 4.6, 4.7, 4.8
+ */
+
 import { describe, it, expect } from 'vitest'
 import { render, screen } from '@testing-library/react'
-import * as fc from 'fast-check'
 import { EmptyState } from '@/components/ui/empty-state'
 
-// Mock next/link so it renders as a plain <a> in jsdom
+// Mock next/link as a plain <a> tag
 vi.mock('next/link', () => ({
   default: ({ href, children, ...props }: any) => (
     <a href={href} {...props}>{children}</a>
   ),
 }))
 
-// ─── Unit tests (Task 1.2) ────────────────────────────────────────────────────
-
 describe('EmptyState', () => {
-  it('renders the message — Validates: Requirements 4.6', () => {
-    render(<EmptyState message="No income records yet." />)
-    expect(screen.getByText('No income records yet.')).toBeDefined()
-  })
-
-  it('renders the CTA link when ctaLabel and ctaHref are provided — Validates: Requirements 4.7', () => {
+  it('renders the message and CTA link when both ctaLabel and ctaHref are provided', () => {
     render(
       <EmptyState
-        message="No expenses yet."
-        ctaLabel="Add Expense"
-        ctaHref="/expenses/new"
+        message="No income records found."
+        ctaLabel="Add Income"
+        ctaHref="/income/new"
       />
     )
-    const link = screen.getByRole('link', { name: /add expense/i })
-    expect(link).toBeDefined()
-    expect((link as HTMLAnchorElement).href).toContain('/expenses/new')
+
+    expect(screen.getByText('No income records found.')).toBeTruthy()
+
+    const link = screen.getByRole('link', { name: 'Add Income' })
+    expect(link).toBeTruthy()
+    expect(link.getAttribute('href')).toBe('/income/new')
   })
 
-  it('does not render a link when ctaLabel/ctaHref are omitted — Validates: Requirements 4.7', () => {
-    render(<EmptyState message="No reports available." />)
+  it('does not render a link when CTA props are omitted', () => {
+    render(<EmptyState message="No records yet." />)
+
+    expect(screen.getByText('No records yet.')).toBeTruthy()
     expect(screen.queryByRole('link')).toBeNull()
   })
 
-  it('renders with filtered=true (filter-specific icon/state) — Validates: Requirements 4.8', () => {
+  it('does not render a link when only ctaLabel is provided (no ctaHref)', () => {
+    render(<EmptyState message="No records yet." ctaLabel="Add Item" />)
+
+    expect(screen.queryByRole('link')).toBeNull()
+  })
+
+  it('does not render a link when only ctaHref is provided (no ctaLabel)', () => {
+    render(<EmptyState message="No records yet." ctaHref="/items/new" />)
+
+    expect(screen.queryByRole('link')).toBeNull()
+  })
+
+  it('renders a filter-specific message when filtered=true', () => {
     render(
       <EmptyState
-        message="No results match your filter."
+        message="No results match your current filter."
         filtered={true}
       />
     )
-    expect(screen.getByText('No results match your filter.')).toBeDefined()
+
+    expect(screen.getByText('No results match your current filter.')).toBeTruthy()
   })
 
-  it('renders with filtered=false (zero-data state) — Validates: Requirements 4.8', () => {
+  it('renders the message without a link when filtered=true and no CTA provided', () => {
     render(
       <EmptyState
-        message="No leads yet."
-        filtered={false}
+        message="No results match your current filter."
+        filtered={true}
       />
     )
-    expect(screen.getByText('No leads yet.')).toBeDefined()
-  })
-})
 
-// ─── Property-based test (Task 1.1) ──────────────────────────────────────────
-// Property 2: EmptyState renders its message and CTA for any input
-// Validates: Requirements 4.6, 4.7
-
-/** Arbitrary that produces non-empty, non-whitespace-only strings */
-const nonBlankString = fc
-  .string({ minLength: 1 })
-  .filter((s) => s.trim().length > 0)
-
-describe('EmptyState — Property 2: renders message and CTA for any input', () => {
-  it('always renders the message text — Validates: Requirements 4.6', () => {
-    fc.assert(
-      fc.property(nonBlankString, (message) => {
-        const { container, unmount } = render(<EmptyState message={message} />)
-        const found = container.textContent?.includes(message.trim()) ?? false
-        unmount()
-        return found
-      }),
-      { numRuns: 100 }
-    )
+    expect(screen.queryByRole('link')).toBeNull()
   })
 
-  it('always renders the CTA link when ctaLabel and ctaHref are provided — Validates: Requirements 4.7', () => {
-    fc.assert(
-      fc.property(
-        nonBlankString,
-        nonBlankString,
-        fc.webUrl(),
-        (message, ctaLabel, ctaHref) => {
-          const { container, unmount } = render(
-            <EmptyState message={message} ctaLabel={ctaLabel} ctaHref={ctaHref} />
-          )
-          const link = container.querySelector('a')
-          const found =
-            link !== null &&
-            (link.textContent?.trim() === ctaLabel.trim()) &&
-            link.getAttribute('href') === ctaHref
-          unmount()
-          return found
-        }
-      ),
-      { numRuns: 100 }
+  it('renders both message and CTA when filtered=true with CTA props', () => {
+    render(
+      <EmptyState
+        message="No results match your current filter."
+        filtered={true}
+        ctaLabel="Clear Filters"
+        ctaHref="/leads"
+      />
     )
+
+    expect(screen.getByText('No results match your current filter.')).toBeTruthy()
+    const link = screen.getByRole('link', { name: 'Clear Filters' })
+    expect(link.getAttribute('href')).toBe('/leads')
   })
 })

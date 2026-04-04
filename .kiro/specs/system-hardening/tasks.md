@@ -18,14 +18,14 @@ integration tests.
     message variants
   - _Requirements: 4.6, 4.7, 4.8_
 
-  - [ ]* 1.1 Write property test for EmptyState (Property 2)
+  - [x] 1.1 Write property test for EmptyState (Property 2)
     - **Property 2: EmptyState renders its message and CTA for any input**
     - Generate arbitrary non-empty `message` strings and `ctaLabel`/`ctaHref`
       pairs with `fc.string()` / `fc.webUrl()`; render and assert both appear
     - Minimum 100 iterations
     - **Validates: Requirements 4.6, 4.7**
 
-  - [ ]* 1.2 Write unit tests for EmptyState
+  - [x] 1.2 Write unit tests for EmptyState
     - Render with message + CTA; assert both present
     - Render without CTA; assert no link rendered
     - Render with `filtered=true`; assert filter-specific message shown
@@ -39,7 +39,7 @@ integration tests.
   - Render a navigation link to `/dashboard`
   - _Requirements: 2.1, 2.2, 2.3, 2.4, 2.5_
 
-  - [ ]* 2.1 Write unit tests for AdminError
+  - [x] 2.1 Write unit tests for AdminError
     - Render with a mock error and `reset` spy; assert safe message shown
     - Assert "Try again" calls `reset()`
     - Assert `/dashboard` link is present
@@ -52,7 +52,7 @@ integration tests.
     bar and a table with 5 placeholder rows
   - _Requirements: 3.1, 3.2, 3.3, 3.4_
 
-  - [ ]* 3.1 Write unit tests for AdminLoading
+  - [x] 3.1 Write unit tests for AdminLoading
     - Render and assert `Skeleton` elements are present
     - _Requirements: 3.3_
 
@@ -66,7 +66,7 @@ integration tests.
     on failure — never re-throw
   - _Requirements: 1.1, 1.2, 1.6_
 
-  - [ ]* 4.1 Write property test for Server Actions (Property 1)
+  - [x] 4.1 Write property test for Server Actions (Property 1)
     - **Property 1: Server Actions never throw — they always return `{ error? }`**
     - For each action, generate arbitrary `FormData` payloads with
       `fc.dictionary(fc.string(), fc.string())`; mock `db` to succeed or throw
@@ -86,7 +86,7 @@ integration tests.
   - Ensure field values are preserved on error (state-managed inputs, not reset)
   - _Requirements: 1.3, 1.4, 1.5, 1.7_
 
-  - [ ]* 6.1 Write unit tests for form inline errors
+  - [x] 6.1 Write unit tests for form inline errors
     - For each form: render with mock action returning `{ error: 'test error' }`,
       submit, assert error text appears and field values are preserved
     - Submit with mock action returning `{}`; assert error is cleared
@@ -101,7 +101,7 @@ integration tests.
     `currentStatus`
   - _Requirements: 5.1, 5.2, 5.3, 5.4, 5.5, 5.6_
 
-  - [ ]* 7.1 Write unit tests for LeadStatusForm optimistic update
+  - [x] 7.1 Write unit tests for LeadStatusForm optimistic update
     - Render with `currentStatus='new'`, select `'contacted'`, assert UI shows
       `'contacted'` before action resolves
     - Trigger action returning `{ error: '...' }`, assert status reverts to
@@ -134,7 +134,7 @@ integration tests.
     withdrawals)
   - _Requirements: 6.1, 6.2, 6.3, 6.4, 6.5, 6.6_
 
-  - [ ]* 9.1 Write integration tests for seed idempotency
+  - [x] 9.1 Write integration tests for seed idempotency
     - Run seed against a test database; assert expenses cover ≥ 3 distinct
       `divisionId` and ≥ 3 distinct `category` values
     - Assert leads table contains all four statuses

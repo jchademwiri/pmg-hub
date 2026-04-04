@@ -1,5 +1,12 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import * as fc from "fast-check";
+import { spawnSync } from "child_process";
+import { resolve, dirname } from "path";
+import { fileURLToPath } from "url";
+import pg from "pg";
+import { drizzle } from "drizzle-orm/node-postgres";
+import { sql } from "drizzle-orm";
+import { config } from "dotenv";
 
 // Feature: drizzle-db-schema, Property 7: Seed idempotency
 // Feature: drizzle-db-schema, Property 10: Seed transaction atomicity
@@ -343,4 +350,180 @@ describe("Property 10: Seed transaction atomicity", () => {
     expect(inserted).toHaveLength(3);
     expect(Object.keys(db)).toHaveLength(3);
   });
+});
+
+// ---------------------------------------------------------------------------
+// Integration Tests: Seed idempotency against a real database
+// Validates: Requirements 6.1, 6.2, 6.3, 6.4, 6.5
+// ---------------------------------------------------------------------------
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = dirname(__filename);
+
+// Load .env from packages/db/.env
+config({ path: resolve(__dirname, "../.env") });
+
+const DB_URL = process.env.DATABASE_URL_UNPOOLED ?? process.env.DATABASE_URL;
+const hasDb = Boolean(DB_URL);
+
+/**
+ * Run the seed script as a subprocess using bun.
+ * Returns { exitCode, stderr, stdout }.
+ */
+function runSeed(): { exitCode: number | null; stdout: string; stderr: string } {
+  const seedPath = resolve(__dirname, "../src/seed.ts");
+  const result = spawnSync("bun", ["run", seedPath], {
+    cwd: resolve(__dirname, ".."),
+    encoding: "utf-8",
+    timeout: 120_000, // 2 minutes — seed does a lot of DB work
+    env: { ...process.env },
+  });
+  return {
+    exitCode: result.status,
+    stdout: result.stdout ?? "",
+    stderr: result.stderr ?? "",
+  };
+}
+
+/**
+ * Create a direct pg + drizzle connection for querying after seed.
+ */
+async function createTestDb() {
+  const client = new pg.Client({
+    connectionString: DB_URL,
+    ssl: { rejectUnauthorized: false },
+  });
+  await client.connect();
+  const db = drizzle(client);
+  return { client, db };
+}
+
+describe.skipIf(!hasDb)("Integration: seed idempotency (real database)", () => {
+  // Run seed once before all integration assertions
+  // We run it here so the describe block can share the connection
+  it("seed runs without error on first execution", () => {
+    const { exitCode, stderr } = runSeed();
+    // Print stderr for debugging if it fails
+    if (exitCode !== 0) {
+      console.error("Seed stderr:", stderr);
+    }
+    expect(exitCode).toBe(0);
+  }, 120_000); // 2 minute timeout
+
+  it("expenses table covers ≥ 3 distinct divisionId values after seed", async () => {
+    const { client, db } = await createTestDb();
+    try {
+      const result = await db.execute(
+        sql`SELECT COUNT(DISTINCT division_id) AS cnt FROM expenses`
+      );
+      const cnt = Number((result.rows[0] as { cnt: string }).cnt);
+      expect(cnt).toBeGreaterThanOrEqual(3);
+    } finally {
+      await client.end();
+    }
+  }, 30_000);
+
+  it("expenses table covers ≥ 3 distinct category values after seed", async () => {
+    const { client, db } = await createTestDb();
+    try {
+      const result = await db.execute(
+        sql`SELECT COUNT(DISTINCT category) AS cnt FROM expenses`
+      );
+      const cnt = Number((result.rows[0] as { cnt: string }).cnt);
+      expect(cnt).toBeGreaterThanOrEqual(3);
+    } finally {
+      await client.end();
+    }
+  }, 30_000);
+
+  it("leads table contains all four statuses after seed", async () => {
+    const { client, db } = await createTestDb();
+    try {
+      const result = await db.execute(
+        sql`SELECT DISTINCT status FROM leads ORDER BY status`
+      );
+      const statuses = (result.rows as { status: string }[]).map((r) => r.status);
+      expect(statuses).toContain("new");
+      expect(statuses).toContain("contacted");
+      expect(statuses).toContain("converted");
+      expect(statuses).toContain("lost");
+    } finally {
+      await client.end();
+    }
+  }, 30_000);
+
+  it("snapshots table has ≥ 1 row with valid numeric fields after seed", async () => {
+    const { client, db } = await createTestDb();
+    try {
+      const result = await db.execute(
+        sql`SELECT revenue, expenses, pmg_share, profit_pool, salary, reinvest, reserve, flex FROM snapshots LIMIT 1`
+      );
+      expect(result.rows.length).toBeGreaterThanOrEqual(1);
+      const row = result.rows[0] as {
+        revenue: string;
+        expenses: string;
+        pmg_share: string;
+        profit_pool: string;
+        salary: string;
+        reinvest: string;
+        reserve: string;
+        flex: string;
+      };
+      // All numeric fields must be finite numbers
+      for (const field of [
+        row.revenue, row.expenses, row.pmg_share, row.profit_pool,
+        row.salary, row.reinvest, row.reserve, row.flex,
+      ]) {
+        expect(isFinite(Number(field))).toBe(true);
+      }
+    } finally {
+      await client.end();
+    }
+  }, 30_000);
+
+  it("seed is idempotent: row counts unchanged after running a second time", async () => {
+    // Capture row counts after first seed (already run above)
+    const { client: c1, db: db1 } = await createTestDb();
+    let expensesBefore: number;
+    let leadsBefore: number;
+    let snapshotsBefore: number;
+    try {
+      const [expR, leadR, snapR] = await Promise.all([
+        db1.execute(sql`SELECT COUNT(*) AS cnt FROM expenses`),
+        db1.execute(sql`SELECT COUNT(*) AS cnt FROM leads`),
+        db1.execute(sql`SELECT COUNT(*) AS cnt FROM snapshots`),
+      ]);
+      expensesBefore = Number((expR.rows[0] as { cnt: string }).cnt);
+      leadsBefore = Number((leadR.rows[0] as { cnt: string }).cnt);
+      snapshotsBefore = Number((snapR.rows[0] as { cnt: string }).cnt);
+    } finally {
+      await c1.end();
+    }
+
+    // Run seed a second time
+    const { exitCode, stderr } = runSeed();
+    if (exitCode !== 0) {
+      console.error("Second seed run stderr:", stderr);
+    }
+    expect(exitCode).toBe(0);
+
+    // Assert row counts are unchanged
+    const { client: c2, db: db2 } = await createTestDb();
+    try {
+      const [expR2, leadR2, snapR2] = await Promise.all([
+        db2.execute(sql`SELECT COUNT(*) AS cnt FROM expenses`),
+        db2.execute(sql`SELECT COUNT(*) AS cnt FROM leads`),
+        db2.execute(sql`SELECT COUNT(*) AS cnt FROM snapshots`),
+      ]);
+      const expensesAfter = Number((expR2.rows[0] as { cnt: string }).cnt);
+      const leadsAfter = Number((leadR2.rows[0] as { cnt: string }).cnt);
+      const snapshotsAfter = Number((snapR2.rows[0] as { cnt: string }).cnt);
+
+      expect(expensesAfter).toBe(expensesBefore);
+      expect(leadsAfter).toBe(leadsBefore);
+      expect(snapshotsAfter).toBe(snapshotsBefore);
+    } finally {
+      await c2.end();
+    }
+  }, 120_000); // 2 minute timeout — seed runs take ~8s each
 });
