@@ -247,6 +247,56 @@ export async function getTotalWithdrawalsYTD(): Promise<number> {
 }
 
 /**
+ * Returns all withdrawals for the previous calendar month.
+ */
+export async function getWithdrawalsPreviousMonth(): Promise<{
+  total: number;
+  entries: { date: string; description: string | null; amount: number }[];
+}> {
+  const result = await db
+    .select({
+      date: sql<string>`${withdrawals.date}::text`,
+      description: withdrawals.description,
+      amount: withdrawals.amount,
+    })
+    .from(withdrawals)
+    .where(
+      sql`${withdrawals.date} >= DATE_TRUNC('month', NOW()) - INTERVAL '1 month' AND ${withdrawals.date} < DATE_TRUNC('month', NOW())`
+    )
+    .orderBy(desc(withdrawals.date));
+  const entries = result.map((r) => ({
+    date: r.date,
+    description: r.description,
+    amount: Number(r.amount),
+  }));
+  return { total: entries.reduce((sum, e) => sum + e.amount, 0), entries };
+}
+
+/**
+ * Returns all withdrawals year-to-date (Jan 1 → now) with entries.
+ */
+export async function getWithdrawalsYTDFull(): Promise<{
+  total: number;
+  entries: { date: string; description: string | null; amount: number }[];
+}> {
+  const result = await db
+    .select({
+      date: sql<string>`${withdrawals.date}::text`,
+      description: withdrawals.description,
+      amount: withdrawals.amount,
+    })
+    .from(withdrawals)
+    .where(sql`${withdrawals.date} >= DATE_TRUNC('year', NOW())`)
+    .orderBy(desc(withdrawals.date));
+  const entries = result.map((r) => ({
+    date: r.date,
+    description: r.description,
+    amount: Number(r.amount),
+  }));
+  return { total: entries.reduce((sum, e) => sum + e.amount, 0), entries };
+}
+
+/**
  * Inserts a new withdrawal record and returns the inserted row.
  */
 export async function insertWithdrawal(

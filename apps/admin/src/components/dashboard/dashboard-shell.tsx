@@ -30,6 +30,8 @@ type Props = {
   monthlySeries: MonthlyFinancials[]
   sparklineData: MonthlyFinancials[]
   withdrawals: WithdrawalSummary
+  withdrawalsPrevMonth: WithdrawalSummary
+  withdrawalsYTD: WithdrawalSummary
   divisionSeriesData: {
     last3: DivisionSeriesChart
     last6: DivisionSeriesChart
@@ -59,6 +61,8 @@ export function DashboardShell({
   leads,
   sparklineData,
   withdrawals,
+  withdrawalsPrevMonth,
+  withdrawalsYTD,
   divisionSeriesData,
   expensesByDivision,
   currentPeriodSnapshot,
@@ -122,8 +126,20 @@ export function DashboardShell({
           ytdSalary={ytdSummary.salary}
           profitPool={activeSummary.profitPool}
           periodLabel={activeLabel}
-          withdrawals={activeTab === 'current' ? withdrawals : null}
-          carryOver={activeTab === 'current' ? withdrawals.carryOver : 0}
+          withdrawals={
+            activeTab === 'current'  ? withdrawals :
+            activeTab === 'previous' ? withdrawalsPrevMonth :
+            withdrawalsYTD
+          }
+          carryOver={
+            activeTab === 'current'  ? withdrawals.carryOver :
+            activeTab === 'previous' ? withdrawalsPrevMonth.carryOver :
+            0
+          }
+          showWithdrawButton={activeTab === 'current'}
+          withdrawLabel={
+            activeTab === 'ytd' ? 'Withdrawn YTD' : 'Withdrawn this month'
+          }
         />
         <div className="lg:col-span-2">
           <DivisionAreaChart seriesData={divisionSeriesData} />

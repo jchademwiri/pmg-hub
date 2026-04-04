@@ -17,18 +17,23 @@ type SalaryCardProps = {
   periodLabel: string
   withdrawals: WithdrawalSummary | null
   carryOver?: number
+  showWithdrawButton?: boolean
+  withdrawLabel?: string
 }
 
-export function SalaryCard({ salary, ytdSalary, profitPool, periodLabel, withdrawals, carryOver = 0 }: SalaryCardProps) {
+export function SalaryCard({
+  salary, ytdSalary, profitPool, periodLabel, withdrawals,
+  carryOver = 0, showWithdrawButton = false, withdrawLabel = 'Withdrawn this month'
+}: SalaryCardProps) {
   const router = useRouter()
   const [modalOpen, setModalOpen] = useState(false)
-  const isNegative  = profitPool < 0
-  const withdrawn   = withdrawals?.total ?? 0
+  const isNegative     = profitPool < 0
+  const withdrawn      = withdrawals?.total ?? 0
   const totalAvailable = salary + carryOver
-  const balance     = totalAvailable - withdrawn
-  const isOverdrawn = balance < 0
+  const balance        = totalAvailable - withdrawn
+  const isOverdrawn    = balance < 0
   const hasWithdrawals = withdrawn > 0
-  const hasCarryOver = carryOver > 0
+  const hasCarryOver   = carryOver > 0
 
   if (isNegative) {
     return (
@@ -68,21 +73,13 @@ export function SalaryCard({ salary, ytdSalary, profitPool, periodLabel, withdra
       <CardContent className="space-y-3">
         {/* Primary salary figure */}
         <div>
-          {withdrawals !== null ? (
-            <>
-              <p className={`text-3xl font-bold tabular-nums ${isOverdrawn ? 'text-red-400' : 'text-green-400'}`}>
-                {formatZAR(balance)}
-              </p>
-              <p className="text-chart-1/50 text-xs mt-0.5">
-                available · of {formatZAR(totalAvailable)} salary
-              </p>
-            </>
-          ) : (
-            <p className="text-chart-1 text-3xl font-bold tabular-nums">{formatZAR(salary)}</p>
-          )}
-          {withdrawals !== null && (
-            <p className="text-chart-1/50 text-xs mt-0.5">YTD: {formatZAR(ytdSalary)}</p>
-          )}
+          <p className={`text-3xl font-bold tabular-nums ${isOverdrawn ? 'text-red-400' : 'text-green-400'}`}>
+            {formatZAR(balance)}
+          </p>
+          <p className="text-chart-1/50 text-xs mt-0.5">
+            available · of {formatZAR(totalAvailable)} salary
+          </p>
+          <p className="text-chart-1/50 text-xs mt-0.5">YTD: {formatZAR(ytdSalary)}</p>
           <p className="text-chart-1/60 text-xs mt-0.5">
             35% of profit pool · calculated, not guessed
           </p>
@@ -99,63 +96,45 @@ export function SalaryCard({ salary, ytdSalary, profitPool, periodLabel, withdra
             <span className="text-chart-1 font-semibold tabular-nums">{formatZAR(salary)}</span>
           </div>
 
-          {/* Carry-over from previous months — only shown when there is carry-over */}
-          {withdrawals !== null && hasCarryOver && (
+          {/* Carry-over — only shown when applicable */}
+          {hasCarryOver && (
             <div className="flex justify-between text-xs">
               <span className="text-chart-1/60">Carried over from before</span>
               <span className="text-chart-1/80 font-medium tabular-nums">+{formatZAR(carryOver)}</span>
             </div>
           )}
 
-          {/* Withdrawals section — only shown on current month tab */}
-          {withdrawals !== null && (
-            <>
-              <div className="border-t border-chart-1/20 pt-1.5">
-                <div className="flex justify-between text-xs">
-                  <span className="flex items-center gap-1 text-chart-1/60">
-                    <ArrowDownCircle className="size-3" />
-                    Withdrawn this month
-                  </span>
-                  <span
-                    className={`font-medium tabular-nums ${
-                      hasWithdrawals ? 'text-amber-400' : 'text-chart-1/40'
-                    }`}
-                  >
-                    {hasWithdrawals ? `-${formatZAR(withdrawn)}` : 'Nothing yet'}
-                  </span>
-                </div>
-              </div>
+          <div className="border-t border-chart-1/20 pt-1.5">
+            <div className="flex justify-between text-xs">
+              <span className="flex items-center gap-1 text-chart-1/60">
+                <ArrowDownCircle className="size-3" />
+                {withdrawLabel}
+              </span>
+              <span className={`font-medium tabular-nums ${hasWithdrawals ? 'text-amber-400' : 'text-chart-1/40'}`}>
+                {hasWithdrawals ? `-${formatZAR(withdrawn)}` : 'Nothing yet'}
+              </span>
+            </div>
+          </div>
 
-              {/* Balance remaining */}
-              <div
-                className={`flex justify-between text-xs font-semibold pt-0.5 border-t ${
-                  isOverdrawn
-                    ? 'border-red-500/30 text-red-400'
-                    : 'border-chart-1/20 text-chart-1'
-                }`}
-              >
-                <span className="flex items-center gap-1">
-                  {isOverdrawn ? (
-                    <AlertTriangle className="size-3" />
-                  ) : (
-                    <CheckCircle2 className="size-3" />
-                  )}
-                  {isOverdrawn ? 'Overdrawn' : 'Balance remaining'}
-                </span>
-                <span className="tabular-nums">{formatZAR(Math.abs(balance))}</span>
-              </div>
+          {/* Balance remaining */}
+          <div className={`flex justify-between text-xs font-semibold pt-0.5 border-t ${
+            isOverdrawn ? 'border-red-500/30 text-red-400' : 'border-chart-1/20 text-chart-1'
+          }`}>
+            <span className="flex items-center gap-1">
+              {isOverdrawn ? <AlertTriangle className="size-3" /> : <CheckCircle2 className="size-3" />}
+              {isOverdrawn ? 'Overdrawn' : 'Balance remaining'}
+            </span>
+            <span className="tabular-nums">{formatZAR(Math.abs(balance))}</span>
+          </div>
 
-              {/* Hint when no withdrawals yet */}
-              {!hasWithdrawals && (
-                <p className="text-xs text-chart-1/40 pt-0.5">
-                  Record a withdrawal by adding an expense with category "Owner Withdrawal"
-                </p>
-              )}
-            </>
+          {showWithdrawButton && !hasWithdrawals && (
+            <p className="text-xs text-chart-1/40 pt-0.5">
+              Record a withdrawal by adding an expense with category "Owner Withdrawal"
+            </p>
           )}
         </div>
 
-        {withdrawals !== null && profitPool >= 0 && !isOverdrawn && (
+        {showWithdrawButton && profitPool >= 0 && !isOverdrawn && (
           <Button className="w-full" variant="outline" onClick={() => setModalOpen(true)}>
             Withdraw
           </Button>

@@ -8,6 +8,8 @@ import {
   getLeadCounts,
   getMonthlyFinancialsSeries,
   getWithdrawals,
+  getWithdrawalsPrevMonth,
+  getWithdrawalsYTD,
   getAllDivisionSeriesData,
   getMoMChartData,
   getExpensesByDivision,
@@ -32,6 +34,8 @@ export default async function DashboardPage() {
     leads,
     monthlySeries,
     withdrawals,
+    withdrawalsPrevMonth,
+    withdrawalsYTD,
     divisionSeriesData,
     momData,
     expensesByDivision,
@@ -44,6 +48,8 @@ export default async function DashboardPage() {
     getLeadCounts(),
     getMonthlyFinancialsSeries(),
     getWithdrawals(),
+    getWithdrawalsPrevMonth(),
+    getWithdrawalsYTD(),
     getAllDivisionSeriesData(),
     getMoMChartData(),
     getExpensesByDivision(),
@@ -87,6 +93,8 @@ export default async function DashboardPage() {
       monthlySeries={monthlySeries}
       sparklineData={monthlySeries.slice(-6)}
       withdrawals={withdrawals}
+      withdrawalsPrevMonth={withdrawalsPrevMonth}
+      withdrawalsYTD={withdrawalsYTD}
       divisionSeriesData={divisionSeriesData}
       expensesByDivision={expensesByDivision}
       // Snapshot

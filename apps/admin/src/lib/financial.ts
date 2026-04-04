@@ -14,6 +14,8 @@ import {
   getYTDSummary,
   getWithdrawalsCurrentMonth,
   getTotalWithdrawalsYTD,
+  getWithdrawalsPreviousMonth,
+  getWithdrawalsYTDFull,
   getDivisionRevenueSeries,
   getDivisionRevenueCurrentMonth,
   getDivisionRevenueYTD,
@@ -88,13 +90,33 @@ export async function getWithdrawals(): Promise<WithdrawalSummary> {
     getYTDSummary(),
     getCurrentMonthSummary(),
   ])
-  // Salary earned in all months before this one (YTD minus current month)
-  const prevMonthsSalary = ytdSummary.salary - currentMonthSummary.salary
-  // Withdrawals made in all months before this one
+  const prevMonthsSalary    = ytdSummary.salary - currentMonthSummary.salary
   const prevMonthsWithdrawn = ytdWithdrawn - current.total
-  // Carry-over = what was earned but not yet withdrawn in prior months
   const carryOver = Math.max(0, prevMonthsSalary - prevMonthsWithdrawn)
   return { ...current, carryOver }
+}
+
+export async function getWithdrawalsPrevMonth(): Promise<WithdrawalSummary> {
+  const [prev, ytdWithdrawn, ytdSummary, currentMonthSummary, previousMonthSummary] = await Promise.all([
+    getWithdrawalsPreviousMonth(),
+    getTotalWithdrawalsYTD(),
+    getYTDSummary(),
+    getCurrentMonthSummary(),
+    getPreviousMonthSummary(),
+  ])
+  // Salary earned before the previous month (i.e. before 2 months ago)
+  const beforePrevSalary    = ytdSummary.salary - currentMonthSummary.salary - previousMonthSummary.salary
+  // Withdrawals made before the previous month
+  const currentWithdrawn    = (await getWithdrawalsCurrentMonth()).total
+  const beforePrevWithdrawn = ytdWithdrawn - prev.total - currentWithdrawn
+  const carryOver = Math.max(0, beforePrevSalary - beforePrevWithdrawn)
+  return { ...prev, carryOver }
+}
+
+export async function getWithdrawalsYTD(): Promise<WithdrawalSummary> {
+  const ytd = await getWithdrawalsYTDFull()
+  // No carry-over for YTD — it already covers the full year
+  return { ...ytd, carryOver: 0 }
 }
 
 // ── Division revenue ──────────────────────────────────────────────────────────
