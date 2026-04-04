@@ -3,8 +3,6 @@
 import * as React from 'react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
-import { Label } from '@/components/ui/label'
-import { Textarea } from '@/components/ui/textarea'
 import {
   Select,
   SelectContent,
@@ -46,7 +44,7 @@ export function LeadAddForm({ divisions, createAction }: LeadAddFormProps) {
   return (
     <form ref={formRef} onSubmit={handleSubmit} className="flex flex-wrap gap-3 items-end">
       <div className="flex flex-col gap-1">
-        <Label htmlFor="lead-name">Name *</Label>
+        <label htmlFor="lead-name" className="text-sm font-medium">Name *</label>
         <Input
           id="lead-name"
           name="name"
@@ -58,7 +56,7 @@ export function LeadAddForm({ divisions, createAction }: LeadAddFormProps) {
       </div>
 
       <div className="flex flex-col gap-1">
-        <Label htmlFor="lead-email">Email</Label>
+        <label htmlFor="lead-email" className="text-sm font-medium">Email</label>
         <Input
           id="lead-email"
           name="email"
@@ -70,7 +68,7 @@ export function LeadAddForm({ divisions, createAction }: LeadAddFormProps) {
       </div>
 
       <div className="flex flex-col gap-1">
-        <Label htmlFor="lead-phone">Phone</Label>
+        <label htmlFor="lead-phone" className="text-sm font-medium">Phone</label>
         <Input
           id="lead-phone"
           name="phone"
@@ -82,7 +80,7 @@ export function LeadAddForm({ divisions, createAction }: LeadAddFormProps) {
       </div>
 
       <div className="flex flex-col gap-1">
-        <Label htmlFor="lead-source">Source</Label>
+        <label htmlFor="lead-source" className="text-sm font-medium">Source</label>
         <Input
           id="lead-source"
           name="source"
@@ -94,7 +92,7 @@ export function LeadAddForm({ divisions, createAction }: LeadAddFormProps) {
       </div>
 
       <div className="flex flex-col gap-1">
-        <Label htmlFor="lead-service-interest">Service Interest</Label>
+        <label htmlFor="lead-service-interest" className="text-sm font-medium">Service Interest</label>
         <Input
           id="lead-service-interest"
           name="serviceInterest"
@@ -106,7 +104,7 @@ export function LeadAddForm({ divisions, createAction }: LeadAddFormProps) {
       </div>
 
       <div className="flex flex-col gap-1">
-        <Label htmlFor="lead-division">Division</Label>
+        <label htmlFor="lead-division" className="text-sm font-medium">Division</label>
         <Select value={divisionId} onValueChange={setDivisionId} disabled={isPending}>
           <SelectTrigger id="lead-division" className="w-44">
             <SelectValue placeholder="Select division" />
@@ -122,13 +120,14 @@ export function LeadAddForm({ divisions, createAction }: LeadAddFormProps) {
       </div>
 
       <div className="flex flex-col gap-1">
-        <Label htmlFor="lead-message">Message</Label>
-        <Textarea
+        <label htmlFor="lead-message" className="text-sm font-medium">Message</label>
+        <textarea
           id="lead-message"
           name="message"
           placeholder="Optional"
           disabled={isPending}
-          className="w-64 min-h-[60px]"
+          rows={3}
+          className="w-64 rounded-md border border-input bg-transparent px-2.5 py-1.5 text-sm shadow-xs outline-none placeholder:text-muted-foreground focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50 disabled:pointer-events-none disabled:opacity-50"
         />
       </div>
 

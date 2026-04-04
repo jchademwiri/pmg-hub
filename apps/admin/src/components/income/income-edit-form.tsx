@@ -25,7 +25,7 @@ export function IncomeEditForm({ entry, divisions, clients, updateAction }: Inco
   const router = useRouter()
   const [isPending, startTransition] = React.useTransition()
   const [errorMessage, setErrorMessage] = React.useState<string | null>(null)
-  const [clientId, setClientId] = React.useState<string>(entry.clientId)
+  const [clientId, setClientId] = React.useState<string>(entry.clientId ?? '')
 
   function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault()

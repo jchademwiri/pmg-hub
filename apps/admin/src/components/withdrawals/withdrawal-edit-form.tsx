@@ -6,7 +6,6 @@ import { toast } from 'sonner'
 import type { WithdrawalRow } from '@pmg/db'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
-import { Label } from '@/components/ui/label'
 
 interface WithdrawalEditFormProps {
   entry: WithdrawalRow
@@ -37,7 +36,7 @@ export function WithdrawalEditForm({ entry, updateAction }: WithdrawalEditFormPr
   return (
     <form onSubmit={handleSubmit} className="flex flex-wrap gap-3 items-end">
       <div className="flex flex-col gap-1">
-        <Label htmlFor="withdrawal-date">Date</Label>
+        <label htmlFor="withdrawal-date" className="text-sm font-medium">Date</label>
         <Input
           id="withdrawal-date"
           name="date"
@@ -50,7 +49,7 @@ export function WithdrawalEditForm({ entry, updateAction }: WithdrawalEditFormPr
       </div>
 
       <div className="flex flex-col gap-1">
-        <Label htmlFor="withdrawal-amount">Amount</Label>
+        <label htmlFor="withdrawal-amount" className="text-sm font-medium">Amount</label>
         <Input
           id="withdrawal-amount"
           name="amount"
@@ -65,7 +64,7 @@ export function WithdrawalEditForm({ entry, updateAction }: WithdrawalEditFormPr
       </div>
 
       <div className="flex flex-col gap-1">
-        <Label htmlFor="withdrawal-description">Description</Label>
+        <label htmlFor="withdrawal-description" className="text-sm font-medium">Description</label>
         <Input
           id="withdrawal-description"
           name="description"
