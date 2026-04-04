@@ -3,7 +3,8 @@ import { config } from "dotenv";
 import { resolve } from "path";
 import pg from "pg";
 import { drizzle } from "drizzle-orm/node-postgres";
-import { divisions, clients, income, expenses, leads, withdrawals, awsPricing } from "./schema";
+import { divisions, clients, income, expenses, leads, withdrawals, awsPricing, snapshots } from "./schema";
+import { getFinancialSummaryForPeriod } from "./queries";
 
 config({ path: resolve(__dirname, "../.env") });
 
@@ -1004,6 +1005,46 @@ await db.insert(withdrawals).values([
 ]);
 
 console.log("  ✓ withdrawals");
+
+// ── Snapshots (past closed months) ───────────────────────────────────────────
+// Generate past months from 2025-04 up to (but not including) current month.
+const startYear = 2025, startMonth = 4; // April 2025
+const now = new Date();
+const currentYear = now.getFullYear();
+const currentMonth = now.getMonth() + 1; // 1-indexed
+
+const pastMonths: string[] = [];
+let y = startYear, m = startMonth;
+while (y < currentYear || (y === currentYear && m < currentMonth)) {
+  pastMonths.push(`${y}-${String(m).padStart(2, "0")}`);
+  m++;
+  if (m > 12) { m = 1; y++; }
+}
+
+const summaries = await Promise.all(
+  pastMonths.map((period) =>
+    getFinancialSummaryForPeriod(
+      `DATE_TRUNC('month', TIMESTAMP '${period}-01')`,
+      `DATE_TRUNC('month', TIMESTAMP '${period}-01') + INTERVAL '1 month'`
+    )
+  )
+);
+
+const snapshotValues = pastMonths.map((period, i) => ({
+  period,
+  revenue:    String(summaries[i]!.revenue),
+  expenses:   String(summaries[i]!.expenses),
+  pmgShare:   String(summaries[i]!.pmgShare),
+  profitPool: String(summaries[i]!.profitPool),
+  salary:     String(summaries[i]!.salary),
+  reinvest:   String(summaries[i]!.reinvest),
+  reserve:    String(summaries[i]!.reserve),
+  flex:       String(summaries[i]!.flex),
+}));
+
+await db.insert(snapshots).values(snapshotValues);
+const lastMonth = pastMonths[pastMonths.length - 1];
+console.log(`  ✓ snapshots (${pastMonths.length} months: 2025-04 → ${lastMonth})`);
 
 console.log(`
 ✅ Seed complete.

@@ -16,6 +16,7 @@ console.log("⚠️  Dropping all tables and types...");
 
 await client.query(`
   drop table if exists
+    snapshots,
     leads,
     expenses,
     income,

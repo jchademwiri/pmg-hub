@@ -8,7 +8,10 @@ import { DivisionAreaChart } from '@/components/dashboard/division-area-chart'
 import { DivisionRevenue } from '@/components/dashboard/division-revenue'
 import { LeadsSummary } from '@/components/dashboard/leads-summary'
 import { ExpenseSnapshot } from '@/components/dashboard/expense-snapshot'
+import CloseMonthButton from '@/components/dashboard/close-month-button'
+import { Badge } from '@/components/ui/badge'
 import type { PeriodSummary, DivisionRevenue as DivisionRevenueType, LeadStatusCount, MonthlyFinancials, WithdrawalSummary, DivisionSeriesChart } from '@/lib/financial'
+import type { SnapshotRow } from '@pmg/db'
 
 type Tab = 'current' | 'previous' | 'ytd'
 
@@ -36,6 +39,8 @@ type Props = {
     prev:    DivisionSeriesChart
   }
   expensesByDivision: { divisionName: string; total: number }[]
+  currentPeriodSnapshot: SnapshotRow | null
+  currentPeriod: string
 }
 
 const TABS: { key: Tab; label: string }[] = [
@@ -57,6 +62,8 @@ export function DashboardShell({
   withdrawals,
   divisionSeriesData,
   expensesByDivision,
+  currentPeriodSnapshot,
+  currentPeriod,
 }: Props) {
   const [activeTab, setActiveTab] = useState<Tab>('current')
 
@@ -74,6 +81,13 @@ export function DashboardShell({
 
   return (
     <div className="space-y-5">
+
+      {/* ── Close Month / Month closed ── */}
+      {currentPeriodSnapshot === null ? (
+        <CloseMonthButton period={currentPeriod} />
+      ) : (
+        <Badge variant="secondary">Month closed</Badge>
+      )}
 
       {/* ── Period tabs ── */}
       <div className="flex items-center gap-1 p-1 bg-muted/40 rounded-lg w-fit border border-border">

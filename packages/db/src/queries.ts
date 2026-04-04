@@ -1,5 +1,5 @@
 import { db } from "./client";
-import { income, expenses, leads, divisions, withdrawals, clients } from "./schema/index";
+import { income, expenses, leads, divisions, withdrawals, clients, snapshots } from "./schema/index";
 import { sql, eq, desc, asc, and } from "drizzle-orm";
 
 // ── Existing queries (unchanged) ─────────────────────────────────────────────
@@ -752,4 +752,56 @@ export async function getDistinctLeadSources(): Promise<string[]> {
     .orderBy(asc(leads.source));
 
   return result.map((r) => r.source as string);
+}
+
+// ── Snapshot query helpers ────────────────────────────────────────────────────
+
+export type SnapshotRow = {
+  id: string;
+  period: string;
+  revenue: string;
+  expenses: string;
+  pmgShare: string;
+  profitPool: string;
+  salary: string;
+  reinvest: string;
+  reserve: string;
+  flex: string;
+  createdAt: Date;
+};
+
+/**
+ * Returns all snapshot rows ordered by period descending.
+ */
+export async function getAllSnapshots(): Promise<SnapshotRow[]> {
+  return db.select().from(snapshots).orderBy(desc(snapshots.period));
+}
+
+/**
+ * Returns the snapshot for the given period, or null if none exists.
+ */
+export async function getSnapshotByPeriod(period: string): Promise<SnapshotRow | null> {
+  const rows = await db.select().from(snapshots).where(eq(snapshots.period, period));
+  return rows[0] ?? null;
+}
+
+/**
+ * Inserts a new snapshot row and returns the inserted row.
+ */
+export async function insertSnapshot(period: string, summary: PeriodSummary): Promise<SnapshotRow> {
+  const rows = await db
+    .insert(snapshots)
+    .values({
+      period,
+      revenue:    String(summary.revenue),
+      expenses:   String(summary.expenses),
+      pmgShare:   String(summary.pmgShare),
+      profitPool: String(summary.profitPool),
+      salary:     String(summary.salary),
+      reinvest:   String(summary.reinvest),
+      reserve:    String(summary.reserve),
+      flex:       String(summary.flex),
+    })
+    .returning();
+  return rows[0]!;
 }

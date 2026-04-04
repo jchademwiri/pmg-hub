@@ -15,12 +15,15 @@ import {
   getPreviousMonthLabel,
   getYTDLabel,
 } from '@/lib/financial'
+import { getSnapshotByPeriod } from '@pmg/db'
 import { DashboardShell } from '@/components/dashboard/dashboard-shell'
 
 export const dynamic = 'force-dynamic'
 export const metadata: Metadata = { title: 'Dashboard' }
 
 export default async function DashboardPage() {
+  const currentPeriod = new Date().toISOString().slice(0, 7)
+
   const [
     ytdSummary,
     currentMonthSummary,
@@ -32,6 +35,7 @@ export default async function DashboardPage() {
     divisionSeriesData,
     momData,
     expensesByDivision,
+    currentPeriodSnapshot,
   ] = await Promise.all([
     getYTDSummary(),
     getCurrentMonthSummary(),
@@ -43,6 +47,7 @@ export default async function DashboardPage() {
     getAllDivisionSeriesData(),
     getMoMChartData(),
     getExpensesByDivision(),
+    getSnapshotByPeriod(currentPeriod),
   ])
 
   const labels = {
@@ -84,6 +89,9 @@ export default async function DashboardPage() {
       withdrawals={withdrawals}
       divisionSeriesData={divisionSeriesData}
       expensesByDivision={expensesByDivision}
+      // Snapshot
+      currentPeriodSnapshot={currentPeriodSnapshot}
+      currentPeriod={currentPeriod}
     />
   )
 }
