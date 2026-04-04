@@ -784,4 +784,4 @@ update our seed data file to include the current updated schema
 ---
 
 *Last updated: April 2026 · Playhouse Media Group (PTY) Ltd*
-*Jacob Chademwiri · 285 Erasmus Ave, Raslouw AH, Centurion, 0157*
+*Jacob Chademwiri · Raslouw AH, Centurion, 0157*

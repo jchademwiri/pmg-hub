@@ -13,6 +13,8 @@ vi.mock('@pmg/db', async (importActual) => {
   return {
     ...actual,
     getMonthlyFinancialsForYear: vi.fn(),
+    getDistinctYears: vi.fn(),
+    getExpensesByCategoryForYear: vi.fn(),
   }
 })
 
@@ -119,13 +121,132 @@ vi.mock('@/components/reports/revenue-vs-expenses-chart', () => ({
 
 // ─── Imports (after mocks) ────────────────────────────────────────────────────
 
-import { getMonthlyFinancialsForYear } from '@pmg/db'
+import { getMonthlyFinancialsForYear, getDistinctYears, getExpensesByCategoryForYear } from '@pmg/db'
 import { exportFinancialsCsv } from '@/app/actions/reports'
 
 const MONTH_NAMES = [
   'January', 'February', 'March', 'April', 'May', 'June',
   'July', 'August', 'September', 'October', 'November', 'December',
 ]
+
+// ─── P1: getDistinctReportYears returns sorted, distinct years ────────────────
+
+describe('P1: getDistinctReportYears returns sorted, distinct years', () => {
+  beforeEach(() => {
+    vi.resetAllMocks()
+  })
+
+  /**
+   * Feature: reporting-insights, Property 1: getDistinctReportYears returns sorted, distinct years
+   * Validates: Requirements 2.5, 6.2, 6.5
+   */
+  it('P1: getDistinctReportYears returns sorted DESC, distinct years covering all input years — Validates: Requirements 2.5, 6.2, 6.5', async () => {
+    // Feature: reporting-insights, Property 1: getDistinctReportYears returns sorted, distinct years
+    const { getDistinctReportYears } = await vi.importActual<typeof import('@/lib/financial')>('@/lib/financial')
+
+    await fc.assert(
+      fc.asyncProperty(
+        fc.array(
+          fc.record({
+            table: fc.constantFrom('income', 'expenses'),
+            year: fc.integer({ min: 2020, max: 2030 }),
+          }),
+          { minLength: 1, maxLength: 30 }
+        ),
+        async (entries) => {
+          // Derive the union of distinct years from the entries
+          const distinctInputYears = [...new Set(entries.map((e) => e.year))]
+
+          // Mock getDistinctYears to return those years (simulating the DB)
+          vi.mocked(getDistinctYears).mockResolvedValue(
+            [...distinctInputYears].sort((a, b) => b - a)
+          )
+
+          const result = await getDistinctReportYears()
+
+          // (a) all values are distinct
+          const resultSet = new Set(result)
+          if (resultSet.size !== result.length) return false
+
+          // (b) sorted descending
+          for (let i = 0; i < result.length - 1; i++) {
+            if (result[i]! <= result[i + 1]!) return false
+          }
+
+          // (c) every year from input entries is present
+          for (const year of distinctInputYears) {
+            if (!resultSet.has(year)) return false
+          }
+
+          return true
+        }
+      ),
+      { numRuns: 100 }
+    )
+  })
+})
+
+// ─── P2: getExpensesByCategory returns valid, ordered data ───────────────────
+
+describe('P2: getExpensesByCategory returns valid, ordered data', () => {
+  beforeEach(() => {
+    vi.resetAllMocks()
+  })
+
+  /**
+   * Feature: reporting-insights, Property 2: getExpensesByCategory returns valid, ordered data
+   * Validates: Requirements 3.2, 6.1, 6.4, 6.6
+   */
+  it('P2: getExpensesByCategory returns totals > 0, non-empty categories, sorted DESC — Validates: Requirements 3.2, 6.1, 6.4, 6.6', async () => {
+    // Feature: reporting-insights, Property 2: getExpensesByCategory returns valid, ordered data
+    const { getExpensesByCategory } = await vi.importActual<typeof import('@/lib/financial')>('@/lib/financial')
+
+    await fc.assert(
+      fc.asyncProperty(
+        fc.integer({ min: 2020, max: 2030 }),
+        fc.array(
+          fc.record({
+            category: fc.string({ minLength: 1, maxLength: 50 }),
+            amount: fc.float({ min: Math.fround(0.01), max: Math.fround(100_000), noNaN: true }),
+          }),
+          { minLength: 1, maxLength: 20 }
+        ),
+        async (year, expenseEntries) => {
+          // Aggregate entries: group by category, sum amounts, sort by total DESC
+          const aggregated = new Map<string, number>()
+          for (const entry of expenseEntries) {
+            aggregated.set(entry.category, (aggregated.get(entry.category) ?? 0) + entry.amount)
+          }
+          const mockResult = [...aggregated.entries()]
+            .map(([category, total]) => ({ category, total }))
+            .sort((a, b) => b.total - a.total)
+
+          vi.mocked(getExpensesByCategoryForYear).mockResolvedValue(mockResult)
+
+          const result = await getExpensesByCategory(year)
+
+          // (a) every total > 0
+          for (const row of result) {
+            if (row.total <= 0) return false
+          }
+
+          // (b) every category is a non-empty string
+          for (const row of result) {
+            if (typeof row.category !== 'string' || row.category.length === 0) return false
+          }
+
+          // (c) sorted by total DESC
+          for (let i = 0; i < result.length - 1; i++) {
+            if (result[i]!.total < result[i + 1]!.total) return false
+          }
+
+          return true
+        }
+      ),
+      { numRuns: 100 }
+    )
+  })
+})
 
 // ─── P3: CSV export correctness — structure and financial model ───────────────
 

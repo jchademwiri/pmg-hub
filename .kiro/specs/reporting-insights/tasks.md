@@ -34,11 +34,11 @@ Wire the three pre-built chart components to `/reports`, add a year filter, intr
   - Wrap entire body in try/catch — on DB error return `{ error: err.message }`, never throw
   - _Requirements: 4.1, 4.2, 4.3, 4.4, 4.5, 4.6_
 
-  - [ ]* 4.1 Write property test for CSV export correctness (Property 3)
+  - [x] 4.1 Write property test for CSV export correctness (Property 3)
     - **Property 3: CSV export correctness — structure and financial model**
     - **Validates: Requirements 4.2, 4.3, 4.4**
 
-  - [ ]* 4.2 Write property test for CSV export error safety (Property 4)
+  - [x] 4.2 Write property test for CSV export error safety (Property 4)
     - **Property 4: CSV export error safety — invalid year and never throws**
     - **Validates: Requirements 4.5, 4.6**
 
@@ -80,21 +80,21 @@ Wire the three pre-built chart components to `/reports`, add a year filter, intr
   - Pass correct props to each chart component; render each chart regardless of whether its data array is empty
   - _Requirements: 1.1, 1.2, 1.3, 1.4, 1.5, 1.6, 2.1, 2.2, 2.3, 2.4, 2.6, 3.3, 4.7, 5.1, 5.2, 5.3_
 
-  - [ ]* 9.1 Write property test for year filter fallback (Property 5)
+  - [x] 9.1 Write property test for year filter fallback (Property 5)
     - **Property 5: Year filter falls back to current year for invalid query params**
     - **Validates: Requirements 2.3, 2.6**
 
-- [ ] 10. Tests — write full test suite
+- [x] 10. Tests — write full test suite
   - [x] 10.1 Create `apps/admin/src/__tests__/reports.test.ts`
     - Write all five property-based tests (P1–P5) using fast-check with minimum 100 iterations each, tagged with their property reference comments
     - Write unit tests: `YearFilter` renders one option per year in the `years` array; `YearFilter` calls `router.push('/reports?year=2024')` when 2024 is selected; `ExpenseByCategoryChart` renders `"No expense data for this year."` when `data = []`; `ExpenseByCategoryChart` renders a bar for each category; `ExportCsvButton` is disabled and shows `"Exporting…"` while `isPending` is true; `ExportCsvButton` calls `toast.error` when action returns `{ error }`; `ExportCsvButton` triggers download with filename `pmg-financials-2025.csv`; reports page renders heading `"Reports & Insights"`; `exportFinancialsCsv(2025)` with no DB data returns a string with 12 zero-value rows
     - _Requirements: 1.1, 2.1, 2.2, 2.3, 2.6, 3.1, 3.4, 4.2, 4.3, 4.4, 4.5, 4.6, 4.7, 4.8, 4.9, 4.10, 5.3_
 
-  - [ ]* 10.2 Write property test for getDistinctReportYears sorted distinct years (Property 1)
+  - [x] 10.2 Write property test for getDistinctReportYears sorted distinct years (Property 1)
     - **Property 1: getDistinctReportYears returns sorted, distinct years**
     - **Validates: Requirements 2.5, 6.2, 6.5**
 
-  - [ ]* 10.3 Write property test for getExpensesByCategory valid ordered data (Property 2)
+  - [x] 10.3 Write property test for getExpensesByCategory valid ordered data (Property 2)
     - **Property 2: getExpensesByCategory returns valid, ordered data**
     - **Validates: Requirements 3.2, 6.1, 6.4, 6.6**
 
