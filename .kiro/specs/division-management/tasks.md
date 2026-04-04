@@ -87,69 +87,69 @@ Implement the division management feature following the established PMG admin pa
     - Define `divisionRowArb` using `fc.record` matching the `DivisionRow` shape: `id` (uuid), `name` (string 1–100), `totalIncome` (float 0–999999), `totalExpenses` (float 0–999999), `netProfit` (float -999999–999999), `leadCount` (integer 0–1000)
     - _Requirements: 7.2_
 
-  - [ ]* 7.2 Write property test P1: getDivisionsWithStats shape and sort order
+  - [x] 7.2 Write property test P1: getDivisionsWithStats shape and sort order
     - **Property 1: getDivisionsWithStats shape and sort order (name ASC)**
     - **Validates: Requirements 1.1, 1.2, 1.5, 7.1, 7.2**
 
-  - [ ]* 7.3 Write property test P2: getDivisionsWithStats zero defaults
+  - [x] 7.3 Write property test P2: getDivisionsWithStats zero defaults
     - **Property 2: getDivisionsWithStats zero defaults for divisions with no income, expenses, or leads**
     - **Validates: Requirements 7.3, 7.4, 7.5**
 
-  - [ ]* 7.4 Write property test P3: netProfit computed correctly
+  - [x] 7.4 Write property test P3: netProfit computed correctly
     - **Property 3: netProfit equals totalIncome - totalExpenses for every DivisionRow**
     - **Validates: Requirements 7.6**
 
-  - [ ]* 7.5 Write property test P4: createDivision round-trip
+  - [x] 7.5 Write property test P4: createDivision round-trip
     - **Property 4: createDivision with valid name returns {} and division appears in getDivisionsWithStats**
     - **Validates: Requirements 2.3, 2.5, 5.4**
 
-  - [ ]* 7.6 Write property test P5: updateDivision round-trip
+  - [x] 7.6 Write property test P5: updateDivision round-trip
     - **Property 5: updateDivision with valid name returns {} and getDivisionsWithStats reflects updated name and non-null updatedAt**
     - **Validates: Requirements 3.3, 3.5, 5.4**
 
-  - [ ]* 7.7 Write property test P6: deleteDivision round-trip
+  - [x] 7.7 Write property test P6: deleteDivision round-trip
     - **Property 6: deleteDivision with no FK references returns {} and division no longer appears in getDivisionsWithStats**
     - **Validates: Requirements 4.3, 4.5, 8.4**
 
-  - [ ]* 7.8 Write property test P7: deleteDivision FK block
+  - [x] 7.8 Write property test P7: deleteDivision FK block
     - **Property 7: deleteDivision returns { error: 'Cannot delete division with existing income or expense records.' } on FK violation without throwing**
     - **Validates: Requirements 4.4, 4.7, 8.1, 8.2, 8.3**
 
-  - [ ]* 7.9 Write property test P8: invalid input always returns { error }
+  - [x] 7.9 Write property test P8: invalid input always returns { error }
     - **Property 8: empty name or name > 100 chars to createDivision/updateDivision always returns { error } without DB write and without throwing**
     - **Validates: Requirements 2.4, 3.4, 5.2, 6.1, 6.2**
 
-  - [ ]* 7.10 Write property test P9: DivisionSchema round-trip
+  - [x] 7.10 Write property test P9: DivisionSchema round-trip
     - **Property 9: parsing { name } with DivisionSchema for any valid name (length 1–100) produces output with the same name value**
     - **Validates: Requirements 6.3**
 
-  - [ ]* 7.11 Write property test P10: getDivisionsWithStats after create — appears sorted
+  - [x] 7.11 Write property test P10: getDivisionsWithStats after create — appears sorted
     - **Property 10: after createDivision succeeds, the new division appears in getDivisionsWithStats at the correct name-ascending sort position**
     - **Validates: Requirements 1.5, 2.3, 7.1**
 
-  - [ ]* 7.12 Write unit tests for DivisionsTable rendering
+  - [x] 7.12 Write unit tests for DivisionsTable rendering
     - `DivisionsTable` renders correct column headers: Name, Total Income, Total Expenses, Net Profit, Lead Count, Actions
     - `DivisionsTable` applies `formatZAR` to Total Income, Total Expenses, and Net Profit columns
     - Net Profit applies `text-green-600` for positive values and `text-red-600` for zero or negative values
     - _Requirements: 1.2, 1.3_
 
-  - [ ]* 7.13 Write unit tests for DivisionsTable inline rename state
+  - [x] 7.13 Write unit tests for DivisionsTable inline rename state
     - Clicking Edit shows a text input pre-populated with the current division name
     - Clicking Cancel reverts the row to display state without saving
     - Pressing Escape reverts the row to display state without saving
     - _Requirements: 3.1, 3.2, 3.6_
 
-  - [ ]* 7.14 Write unit tests for DivisionsTable inline delete state
+  - [x] 7.14 Write unit tests for DivisionsTable inline delete state
     - Clicking Delete shows an inline confirmation prompt within the row (not a modal)
     - Clicking Cancel on the confirmation reverts the row to display state
     - _Requirements: 4.1, 4.2, 4.6_
 
-  - [ ]* 7.15 Write unit tests for DivisionAddForm
+  - [x] 7.15 Write unit tests for DivisionAddForm
     - `DivisionAddForm` resets the form on successful submission
     - `DivisionAddForm` displays inline error when action returns `{ error }`
     - _Requirements: 2.5, 2.4_
 
-  - [ ]* 7.16 Write unit tests for page-level and server action edge cases
+  - [x] 7.16 Write unit tests for page-level and server action edge cases
     - Empty-state message renders when `divisions.length === 0`
     - `deleteDivision` returns `{ error }` on FK constraint violation
     - `createDivision` returns `{ error }` on validation failure
