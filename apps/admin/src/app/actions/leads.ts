@@ -24,8 +24,8 @@ export async function updateLeadStatus(id: string, formData: FormData): Promise<
     revalidatePath(`/leads/${id}`);
     revalidatePath('/dashboard');
     return {};
-  } catch (err) {
-    return { error: err instanceof Error ? err.message : 'Unknown error' };
+  } catch {
+    return { error: 'Failed to save. Please try again.' };
   }
 }
 
@@ -43,7 +43,7 @@ export async function updateLeadNotes(id: string, formData: FormData): Promise<{
       .where(eq(leads.id, id));
     revalidatePath(`/leads/${id}`);
     return {};
-  } catch (err) {
-    return { error: err instanceof Error ? err.message : 'Unknown error' };
+  } catch {
+    return { error: 'Failed to save. Please try again.' };
   }
 }

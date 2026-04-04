@@ -3,6 +3,7 @@ import { getDivisionsWithStats } from '@pmg/db'
 import { createDivision, updateDivision, deleteDivision } from '@/app/actions/divisions'
 import { DivisionAddForm } from '@/components/divisions/division-add-form'
 import { DivisionsTable } from '@/components/divisions/divisions-table'
+import { EmptyState } from '@/components/ui/empty-state'
 
 export const dynamic = 'force-dynamic'
 export const metadata: Metadata = { title: 'Divisions' }
@@ -19,9 +20,11 @@ export default async function DivisionsPage() {
       <DivisionAddForm createAction={createDivision} />
 
       {divisions.length === 0 ? (
-        <p className="text-sm text-muted-foreground">
-          No divisions yet. Add one above.
-        </p>
+        <EmptyState
+          message="No divisions yet."
+          ctaLabel="Add Division"
+          ctaHref="#division-add-form"
+        />
       ) : (
         <DivisionsTable
           divisions={divisions}

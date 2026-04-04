@@ -31,9 +31,8 @@ export async function createIncome(formData: FormData): Promise<{ error?: string
     revalidatePath('/income');
     revalidatePath('/dashboard');
     return {};
-  } catch (err) {
-    const message = err instanceof Error ? err.message : 'Unknown error';
-    return { error: message };
+  } catch {
+    return { error: 'Failed to save. Please try again.' };
   }
 }
 
@@ -59,9 +58,8 @@ export async function updateIncome(id: string, formData: FormData): Promise<{ er
     revalidatePath('/income');
     revalidatePath('/dashboard');
     return {};
-  } catch (err) {
-    const message = err instanceof Error ? err.message : 'Unknown error';
-    return { error: message };
+  } catch {
+    return { error: 'Failed to save. Please try again.' };
   }
 }
 
@@ -71,8 +69,7 @@ export async function deleteIncome(id: string): Promise<{ error?: string }> {
     revalidatePath('/income');
     revalidatePath('/dashboard');
     return {};
-  } catch (err) {
-    const message = err instanceof Error ? err.message : 'Unknown error';
-    return { error: message };
+  } catch {
+    return { error: 'Failed to save. Please try again.' };
   }
 }

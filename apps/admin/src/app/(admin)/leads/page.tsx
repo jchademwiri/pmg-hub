@@ -8,6 +8,7 @@ import {
 import { LeadStatusTabs } from '@/components/leads/lead-status-tabs'
 import { LeadsFilterBar } from '@/components/leads/leads-filter-bar'
 import { LeadsTable } from '@/components/leads/leads-table'
+import { EmptyState } from '@/components/ui/empty-state'
 
 export const dynamic = 'force-dynamic'
 export const metadata: Metadata = { title: 'Leads' }
@@ -46,9 +47,16 @@ export default async function LeadsPage({ searchParams }: LeadsPageProps) {
       />
 
       {entries.length === 0 ? (
-        <p className="text-sm text-muted-foreground">
-          No leads match the current filters.
-        </p>
+        <EmptyState
+          message={
+            status || divisionId || source
+              ? 'No leads match the current filters.'
+              : 'No leads yet.'
+          }
+          ctaLabel={status || divisionId || source ? undefined : 'Add Lead'}
+          ctaHref={status || divisionId || source ? undefined : '#lead-add-form'}
+          filtered={!!(status || divisionId || source)}
+        />
       ) : (
         <LeadsTable entries={entries} />
       )}

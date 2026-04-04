@@ -10,14 +10,14 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select'
-import { createExpense } from '@/app/actions/expenses'
 
 interface ExpenseAddFormProps {
   divisions: { id: string; name: string }[]
   categories: string[]
+  createAction: (formData: FormData) => Promise<{ error?: string }>
 }
 
-export function ExpenseAddForm({ divisions, categories }: ExpenseAddFormProps) {
+export function ExpenseAddForm({ divisions, categories, createAction }: ExpenseAddFormProps) {
   const formRef = React.useRef<HTMLFormElement>(null)
   const [isPending, startTransition] = React.useTransition()
   const [errorMessage, setErrorMessage] = React.useState<string | null>(null)
@@ -28,7 +28,7 @@ export function ExpenseAddForm({ divisions, categories }: ExpenseAddFormProps) {
 
     startTransition(async () => {
       const fd = new FormData(formRef.current!)
-      const result = await createExpense(fd)
+      const result = await createAction(fd)
       if (result.error) {
         setErrorMessage(result.error)
       } else {

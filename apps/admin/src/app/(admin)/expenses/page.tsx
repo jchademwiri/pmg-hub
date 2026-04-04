@@ -9,6 +9,7 @@ import { createExpense, deleteExpense } from '@/app/actions/expenses'
 import { ExpenseFilterBar } from '@/components/expenses/expense-filter-bar'
 import { ExpenseAddForm } from '@/components/expenses/expense-add-form'
 import { ExpenseTable } from '@/components/expenses/expense-table'
+import { EmptyState } from '@/components/ui/empty-state'
 import { formatZAR } from '@/lib/format'
 
 export const dynamic = 'force-dynamic'
@@ -71,10 +72,27 @@ export default async function ExpensePage({ searchParams }: ExpensePageProps) {
         currentMonth={filters.month}
       />
 
-      <ExpenseAddForm divisions={divisions} categories={categories} />
+      <ExpenseAddForm divisions={divisions} categories={categories} createAction={createExpense} />
 
       {entries.length === 0 ? (
-        <p className="text-sm text-muted-foreground">No expense entries found.</p>
+        <EmptyState
+          message={
+            filters.divisionId || filters.category || filters.month
+              ? 'No expense entries match the current filters.'
+              : 'No expense entries yet.'
+          }
+          ctaLabel={
+            filters.divisionId || filters.category || filters.month
+              ? undefined
+              : 'Add Expense'
+          }
+          ctaHref={
+            filters.divisionId || filters.category || filters.month
+              ? undefined
+              : '#expense-add-form'
+          }
+          filtered={!!(filters.divisionId || filters.category || filters.month)}
+        />
       ) : (
         <ExpenseTable entries={entries} deleteAction={deleteExpense} />
       )}

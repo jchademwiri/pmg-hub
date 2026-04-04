@@ -1,5 +1,6 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { render, screen, fireEvent } from '@testing-library/react'
+import userEvent from '@testing-library/user-event'
 import { LeadStatusTabs } from '@/components/leads/lead-status-tabs'
 import { LeadsTable } from '@/components/leads/leads-table'
 import { LeadStatusForm } from '@/components/leads/lead-status-form'
@@ -13,10 +14,17 @@ vi.mock('next/navigation', () => ({
 
 vi.mock('@/components/ui/select', () => ({
   Select: ({ children, value, onValueChange, disabled }: any) => (
-    <div data-disabled={disabled}>{children}</div>
+    <select
+      data-testid="select-wrapper"
+      value={value}
+      disabled={disabled}
+      onChange={(e) => onValueChange?.(e.target.value)}
+    >
+      {children}
+    </select>
   ),
-  SelectTrigger: ({ children, id }: any) => <div id={id}>{children}</div>,
-  SelectContent: ({ children }: any) => <div>{children}</div>,
+  SelectTrigger: ({ children, id }: any) => <>{children}</>,
+  SelectContent: ({ children }: any) => <>{children}</>,
   SelectItem: ({ value, children }: any) => <option value={value}>{children}</option>,
   SelectValue: ({ placeholder }: any) => <span>{placeholder}</span>,
 }))
@@ -165,13 +173,90 @@ describe('LeadsTable', () => {
 // ─── LeadStatusForm unit tests ────────────────────────────────────────────────
 
 describe('LeadStatusForm', () => {
-  it('submit button is initially enabled with correct label', () => {
-    // Validates: Requirements 5.5
+  it('renders the select with the current status', () => {
+    // Validates: Requirements 5.1, 5.2
     const mockAction = vi.fn().mockResolvedValue({})
     render(<LeadStatusForm currentStatus="new" updateAction={mockAction} />)
 
-    const submitBtn = screen.getByRole('button', { name: /update status/i })
-    expect(submitBtn).not.toBeDisabled()
+    const select = screen.getByTestId('select-wrapper') as HTMLSelectElement
+    expect(select.value).toBe('new')
+    expect(select).not.toBeDisabled()
+  })
+
+  it('applies optimistic update immediately on status change — Validates: Requirements 5.1, 5.2', async () => {
+    const user = userEvent.setup()
+    // Action that never resolves during the test (simulates pending)
+    let resolveAction!: (v: { error?: string }) => void
+    const updateAction = vi.fn().mockReturnValue(
+      new Promise<{ error?: string }>((res) => { resolveAction = res })
+    )
+
+    render(<LeadStatusForm currentStatus="new" updateAction={updateAction} />)
+
+    const select = screen.getByTestId('select-wrapper') as HTMLSelectElement
+    expect(select.value).toBe('new')
+
+    await user.selectOptions(select, 'contacted')
+
+    // Optimistic update: UI shows 'contacted' immediately
+    expect(select.value).toBe('contacted')
+    expect(updateAction).toHaveBeenCalledOnce()
+
+    // Clean up
+    resolveAction({})
+  })
+
+  it('selector is disabled while action is pending — Validates: Requirements 5.6', async () => {
+    const user = userEvent.setup()
+    let resolveAction!: (v: { error?: string }) => void
+    const updateAction = vi.fn().mockReturnValue(
+      new Promise<{ error?: string }>((res) => { resolveAction = res })
+    )
+
+    render(<LeadStatusForm currentStatus="new" updateAction={updateAction} />)
+
+    const select = screen.getByTestId('select-wrapper') as HTMLSelectElement
+    await user.selectOptions(select, 'contacted')
+
+    // While pending, selector should be disabled
+    expect(select).toBeDisabled()
+
+    resolveAction({})
+  })
+
+  it('shows error and reverts on action failure — Validates: Requirements 5.4, 5.5', async () => {
+    const user = userEvent.setup()
+    const updateAction = vi.fn().mockResolvedValue({ error: 'Update failed.' })
+
+    render(<LeadStatusForm currentStatus="new" updateAction={updateAction} />)
+
+    const select = screen.getByTestId('select-wrapper') as HTMLSelectElement
+    await user.selectOptions(select, 'contacted')
+
+    // Error message appears
+    expect(await screen.findByText('Update failed.')).toBeDefined()
+    // Optimistic state reverts to currentStatus ('new')
+    expect(select.value).toBe('new')
+  })
+
+  it('retains updated status on successful action — Validates: Requirements 5.3', async () => {
+    const user = userEvent.setup()
+    const updateAction = vi.fn().mockResolvedValue({})
+
+    render(<LeadStatusForm currentStatus="new" updateAction={updateAction} />)
+
+    const select = screen.getByTestId('select-wrapper') as HTMLSelectElement
+    await user.selectOptions(select, 'contacted')
+
+    // Action was called with the new status
+    expect(updateAction).toHaveBeenCalledOnce()
+    const formData: FormData = updateAction.mock.calls[0][0]
+    expect(formData.get('status')).toBe('contacted')
+
+    // No error shown — action succeeded
+    await vi.waitFor(() => {
+      expect(screen.queryByText(/error/i)).toBeNull()
+    })
   })
 })
 

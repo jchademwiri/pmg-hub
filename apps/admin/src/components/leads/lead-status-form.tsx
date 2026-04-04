@@ -18,29 +18,29 @@ interface LeadStatusFormProps {
 
 export function LeadStatusForm({ currentStatus, updateAction }: LeadStatusFormProps) {
   const [isPending, startTransition] = React.useTransition()
+  const [optimisticStatus, setOptimisticStatus] = React.useOptimistic(currentStatus)
   const [error, setError] = React.useState<string | null>(null)
-  const [status, setStatus] = React.useState(currentStatus)
 
-  function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
-    e.preventDefault()
+  function handleStatusChange(newStatus: string) {
     setError(null)
-    // shadcn Select doesn't write to FormData — append the value manually
-    const formData = new FormData(e.currentTarget)
-    formData.set('status', status)
-    startTransition(() => {
-      updateAction(formData).then((result) => {
-        if (result.error) setError(result.error)
-      })
+    setOptimisticStatus(newStatus)
+    startTransition(async () => {
+      const formData = new FormData()
+      formData.set('status', newStatus)
+      const result = await updateAction(formData)
+      if (result.error) {
+        setError(result.error)
+      }
     })
   }
 
   return (
-    <form onSubmit={handleSubmit} className="flex flex-wrap gap-3 items-end">
+    <div className="flex flex-wrap gap-3 items-end">
       <div className="flex flex-col gap-1">
         <label htmlFor="lead-status" className="text-sm font-medium">
           Status
         </label>
-        <Select value={status} onValueChange={setStatus} disabled={isPending}>
+        <Select value={optimisticStatus} onValueChange={handleStatusChange} disabled={isPending}>
           <SelectTrigger id="lead-status" className="w-40">
             <SelectValue placeholder="Select status" />
           </SelectTrigger>
@@ -53,11 +53,7 @@ export function LeadStatusForm({ currentStatus, updateAction }: LeadStatusFormPr
         </Select>
       </div>
 
-      <Button type="submit" disabled={isPending}>
-        {isPending ? 'Saving…' : 'Update Status'}
-      </Button>
-
       {error && <p className="w-full text-sm text-destructive">{error}</p>}
-    </form>
+    </div>
   )
 }

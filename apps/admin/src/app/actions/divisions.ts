@@ -15,8 +15,8 @@ export async function createDivision(formData: FormData): Promise<{ error?: stri
     revalidatePath('/divisions');
     revalidatePath('/dashboard');
     return {};
-  } catch (err) {
-    return { error: err instanceof Error ? err.message : 'Unknown error' };
+  } catch {
+    return { error: 'Failed to save. Please try again.' };
   }
 }
 
@@ -33,8 +33,8 @@ export async function updateDivision(id: string, formData: FormData): Promise<{ 
     revalidatePath('/divisions');
     revalidatePath('/dashboard');
     return {};
-  } catch (err) {
-    return { error: err instanceof Error ? err.message : 'Unknown error' };
+  } catch {
+    return { error: 'Failed to save. Please try again.' };
   }
 }
 
@@ -44,10 +44,10 @@ export async function deleteDivision(id: string): Promise<{ error?: string }> {
     revalidatePath('/divisions');
     return {};
   } catch (err) {
-    const message = err instanceof Error ? err.message : 'Unknown error';
+    const message = err instanceof Error ? err.message : '';
     if (message.includes('23503')) {
       return { error: 'Cannot delete division with existing income or expense records.' };
     }
-    return { error: message };
+    return { error: 'Failed to save. Please try again.' };
   }
 }

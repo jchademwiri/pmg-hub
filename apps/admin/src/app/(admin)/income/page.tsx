@@ -9,6 +9,7 @@ import { createIncome, deleteIncome } from '@/app/actions/income'
 import { FilterBar } from '@/components/income/filter-bar'
 import { IncomeAddForm } from '@/components/income/income-add-form'
 import { IncomeTable } from '@/components/income/income-table'
+import { EmptyState } from '@/components/ui/empty-state'
 import { formatZAR } from '@/lib/format'
 
 export const dynamic = 'force-dynamic'
@@ -53,9 +54,16 @@ export default async function IncomePage({ searchParams }: IncomePageProps) {
       />
 
       {entries.length === 0 ? (
-        <p className="text-sm text-muted-foreground">
-          No income entries yet. Add one above.
-        </p>
+        <EmptyState
+          message={
+            divisionId || month
+              ? 'No income entries match the current filters.'
+              : 'No income entries yet.'
+          }
+          ctaLabel={divisionId || month ? undefined : 'Add Income'}
+          ctaHref={divisionId || month ? undefined : '#income-add-form'}
+          filtered={!!(divisionId || month)}
+        />
       ) : (
         <IncomeTable entries={entries} deleteAction={deleteIncome} />
       )}

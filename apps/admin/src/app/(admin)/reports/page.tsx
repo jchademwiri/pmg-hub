@@ -13,6 +13,7 @@ import { ExpenseByCategoryChart } from '@/components/reports/expense-by-category
 import { RevenueSparkline } from '@/components/dashboard/revenue-sparkline'
 import { YearFilter } from '@/components/reports/year-filter'
 import { ExportCsvButton } from '@/components/reports/export-csv-button'
+import { EmptyState } from '@/components/ui/empty-state'
 
 export const dynamic = 'force-dynamic'
 export const metadata: Metadata = { title: 'Reports & Insights' }
@@ -42,6 +43,12 @@ export default async function ReportsPage({ searchParams }: ReportsPageProps) {
       getExpensesByCategory(year).catch((e) => { console.error('getExpensesByCategory failed:', e); return [] }),
     ])
 
+  const hasData =
+    momData.length > 0 ||
+    monthlySeries.length > 0 ||
+    divisionSeries.series.length > 0 ||
+    expensesByCategory.length > 0
+
   return (
     <div className="flex flex-col gap-6 p-6">
       <div className="flex items-center justify-between">
@@ -52,14 +59,20 @@ export default async function ReportsPage({ searchParams }: ReportsPageProps) {
         </div>
       </div>
 
-      <MoMComparisonChart data={momData} />
-      <RevenueByDivisionChart
-        series={divisionSeries.series}
-        divisions={divisionSeries.divisions}
-      />
-      <RevenueSparkline data={monthlySeries.slice(-6)} />
-      <RevenueVsExpensesChart series={monthlySeries} />
-      <ExpenseByCategoryChart data={expensesByCategory} />
+      {hasData ? (
+        <>
+          <MoMComparisonChart data={momData} />
+          <RevenueByDivisionChart
+            series={divisionSeries.series}
+            divisions={divisionSeries.divisions}
+          />
+          <RevenueSparkline data={monthlySeries.slice(-6)} />
+          <RevenueVsExpensesChart series={monthlySeries} />
+          <ExpenseByCategoryChart data={expensesByCategory} />
+        </>
+      ) : (
+        <EmptyState message="No snapshot data available yet. Add income and expenses to generate reports." />
+      )}
     </div>
   )
 }

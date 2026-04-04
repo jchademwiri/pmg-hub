@@ -30,9 +30,8 @@ export async function createExpense(formData: FormData): Promise<{ error?: strin
     revalidatePath('/expenses');
     revalidatePath('/dashboard');
     return {};
-  } catch (err) {
-    const message = err instanceof Error ? err.message : 'Unknown error';
-    return { error: message };
+  } catch {
+    return { error: 'Failed to save. Please try again.' };
   }
 }
 
@@ -57,9 +56,8 @@ export async function updateExpense(id: string, formData: FormData): Promise<{ e
     revalidatePath('/expenses');
     revalidatePath('/dashboard');
     return {};
-  } catch (err) {
-    const message = err instanceof Error ? err.message : 'Unknown error';
-    return { error: message };
+  } catch {
+    return { error: 'Failed to save. Please try again.' };
   }
 }
 
@@ -69,8 +67,7 @@ export async function deleteExpense(id: string): Promise<{ error?: string }> {
     revalidatePath('/expenses');
     revalidatePath('/dashboard');
     return {};
-  } catch (err) {
-    const message = err instanceof Error ? err.message : 'Unknown error';
-    return { error: message };
+  } catch {
+    return { error: 'Failed to save. Please try again.' };
   }
 }
