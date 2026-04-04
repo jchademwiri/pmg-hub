@@ -16,7 +16,7 @@
     "@astrojs/partytown": "^2.1.5",
     "@astrojs/react": "^5.0.0",
     "@astrojs/sitemap": "^3.7.1",
-    "@astrojs/vercel": "^10.0.3",
+    "@astrojs/vercel": "^10.0.4",
     "@pmg/emails": "workspace:*",
     "@pmg/tailwind-config": "workspace:*",
     "@react-email/components": "^1.0.1",
