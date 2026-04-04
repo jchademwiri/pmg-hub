@@ -18,6 +18,8 @@ interface IncomeAddFormProps {
   createAction: (formData: FormData) => Promise<{ error?: string }>
 }
 
+const today = new Date().toISOString().split('T')[0]
+
 export function IncomeAddForm({ divisions, clients, createAction }: IncomeAddFormProps) {
   const formRef = React.useRef<HTMLFormElement>(null)
   const [isPending, startTransition] = React.useTransition()
@@ -59,6 +61,7 @@ export function IncomeAddForm({ divisions, clients, createAction }: IncomeAddFor
           type="date"
           required
           disabled={isPending}
+          defaultValue={today}
           className="w-40"
         />
       </div>

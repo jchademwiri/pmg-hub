@@ -1,6 +1,7 @@
 'use client'
 
 import * as React from 'react'
+import { toast } from 'sonner'
 import { Button } from '@/components/ui/button'
 
 interface LeadNotesFormProps {
@@ -20,6 +21,7 @@ export function LeadNotesForm({ currentNotes, updateAction }: LeadNotesFormProps
     startTransition(() => {
       updateAction(formData).then((result) => {
         if (result.error) setError(result.error)
+        else toast.success('Notes saved')
       })
     })
   }

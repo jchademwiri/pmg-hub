@@ -1,6 +1,7 @@
 'use client'
 
 import * as React from 'react'
+import { toast } from 'sonner'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import {
@@ -10,6 +11,8 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select'
+
+const today = new Date().toISOString().split('T')[0]
 
 interface ExpenseAddFormProps {
   divisions: { id: string; name: string }[]
@@ -32,6 +35,7 @@ export function ExpenseAddForm({ divisions, categories, createAction }: ExpenseA
       if (result.error) {
         setErrorMessage(result.error)
       } else {
+        toast.success('Expense added')
         formRef.current?.reset()
       }
     })
@@ -50,6 +54,7 @@ export function ExpenseAddForm({ divisions, categories, createAction }: ExpenseA
           required
           disabled={isPending}
           className="w-40"
+          defaultValue={today}
         />
       </div>
 

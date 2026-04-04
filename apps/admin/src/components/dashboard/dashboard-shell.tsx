@@ -10,7 +10,6 @@ import { ExpenseSnapshot } from '@/components/dashboard/expense-snapshot'
 import CloseMonthButton from '@/components/dashboard/close-month-button'
 import { Badge } from '@/components/ui/badge'
 import type { PeriodSummary, DivisionRevenue as DivisionRevenueType, LeadStatusCount, MonthlyFinancials, WithdrawalSummary, DivisionSeriesChart } from '@/lib/financial'
-import type { SnapshotRow } from '@pmg/db'
 
 type Tab = 'current' | 'previous' | 'ytd'
 
@@ -41,7 +40,7 @@ type Props = {
     prev:    DivisionSeriesChart
   }
   expensesByDivision: { divisionName: string; total: number }[]
-  currentPeriodSnapshot: SnapshotRow | null
+  hasSnapshot: boolean
   currentPeriod: string
 }
 
@@ -67,7 +66,7 @@ export function DashboardShell({
   withdrawalsYTD,
   divisionSeriesData,
   expensesByDivision,
-  currentPeriodSnapshot,
+  hasSnapshot,
   currentPeriod,
 }: Props) {
   const [activeTab, setActiveTab] = useState<Tab>('current')
@@ -108,10 +107,10 @@ export function DashboardShell({
     <div className="space-y-5">
 
       {/* ── Close Month / Month closed ── */}
-      {currentPeriodSnapshot === null ? (
-        <CloseMonthButton period={currentPeriod} />
-      ) : (
+      {hasSnapshot ? (
         <Badge variant="secondary">Month closed</Badge>
+      ) : (
+        <CloseMonthButton period={currentPeriod} hasSnapshot={hasSnapshot} />
       )}
 
       {/* ── Period tabs ── */}

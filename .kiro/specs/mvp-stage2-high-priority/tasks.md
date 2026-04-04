@@ -123,64 +123,64 @@ MUST follow Tasks 1–2 (H1 data layer and UI).
     - Align to canonical pattern if any deviation found
     - _Requirements: 4.5, 4.6_
 
-- [-] 6. H4 — Success Toasts on Create and Update
+- [x] 6. H4 — Success Toasts on Create and Update
   - [x] 6.1 Add `toast.success` to income forms
     - `income-add-form.tsx`: add `toast.success('Income added')` in the `!result.error` branch; add `import { toast } from 'sonner'` if missing
     - `income-edit-form.tsx`: add `toast.success('Income updated')` in the `!result.error` branch
     - _Requirements: 5.1, 5.2, 5.9_
 
-  - [~] 6.2 Add `toast.success` to expense forms
+  - [x] 6.2 Add `toast.success` to expense forms
     - `expense-add-form.tsx`: add `toast.success('Expense added')` in the `!result.error` branch
     - `expense-edit-form.tsx`: add `toast.success('Expense updated')` in the `!result.error` branch
     - _Requirements: 5.3, 5.4, 5.9_
 
-  - [~] 6.3 Add `toast.success` to division and lead forms
+  - [x] 6.3 Add `toast.success` to division and lead forms
     - `division-add-form.tsx`: add `toast.success('Division created')` in the `!result.error` branch
     - `lead-status-form.tsx`: add `toast.success('Status updated')` in the `!result.error` branch
     - `lead-notes-form.tsx`: add `toast.success('Notes saved')` in the `!result.error` branch
     - Add `import { toast } from 'sonner'` to any file that doesn't already import it
     - _Requirements: 5.5, 5.6, 5.7, 5.9_
 
-- [ ] 7. H5 — Date Fields Default to Today
-  - [~] 7.1 Add `defaultValue={today}` to date input in `apps/admin/src/components/income/income-add-form.tsx`
+- [x] 7. H5 — Date Fields Default to Today
+  - [x] 7.1 Add `defaultValue={today}` to date input in `apps/admin/src/components/income/income-add-form.tsx`
     - Define `const today = new Date().toISOString().split('T')[0]` once at component top, outside render
     - Set `defaultValue={today}` on the date `<Input>`
     - _Requirements: 6.1, 6.4_
 
-  - [~] 7.2 Add `defaultValue={today}` to date input in `apps/admin/src/components/expenses/expense-add-form.tsx`
+  - [x] 7.2 Add `defaultValue={today}` to date input in `apps/admin/src/components/expenses/expense-add-form.tsx`
     - Define `const today = new Date().toISOString().split('T')[0]` once at component top, outside render
     - Set `defaultValue={today}` on the date `<Input>`
     - _Requirements: 6.2, 6.4_
 
-- [ ] 8. H7 — Close Month Flash Fix
-  - [~] 8.1 Derive `hasSnapshot` in `apps/admin/src/app/(admin)/dashboard/page.tsx` and pass to `DashboardShell`
+- [x] 8. H7 — Close Month Flash Fix
+  - [x] 8.1 Derive `hasSnapshot` in `apps/admin/src/app/(admin)/dashboard/page.tsx` and pass to `DashboardShell`
     - Add `const hasSnapshot = currentPeriodSnapshot !== null` (no additional DB query)
     - Pass `hasSnapshot={hasSnapshot}` to `<DashboardShell>`
     - _Requirements: 8.1, 8.5_
 
-  - [~] 8.2 Update `apps/admin/src/components/dashboard/dashboard-shell.tsx` to accept and use `hasSnapshot` prop
+  - [x] 8.2 Update `apps/admin/src/components/dashboard/dashboard-shell.tsx` to accept and use `hasSnapshot` prop
     - Add `hasSnapshot: boolean` to Props type
     - Replace existing snapshot conditional: render `<Badge variant="secondary">Month closed</Badge>` when `hasSnapshot` is `true`; render `<CloseMonthButton period={currentPeriod} hasSnapshot={hasSnapshot} />` when `false`
     - Remove `currentPeriodSnapshot` prop if no longer used elsewhere in the component
     - If snapshot-dependent UI cannot resolve synchronously, wrap in `<Suspense fallback={null}>`
     - _Requirements: 8.1, 8.3, 8.4, 8.6_
 
-  - [~] 8.3 Write property test for `DashboardShell` snapshot-conditional rendering
+  - [x] 8.3 Write property test for `DashboardShell` snapshot-conditional rendering
     - **Property 7: DashboardShell snapshot-conditional rendering**
     - Generate arbitrary `hasSnapshot: boolean`, render `DashboardShell`, assert exactly one of badge or button is rendered matching the `hasSnapshot` value
     - Minimum 100 iterations; tag: `// Feature: mvp-stage2-high-priority, Property 7: DashboardShell snapshot-conditional rendering`
     - _Requirements: 8.3, 8.4_
 
-  - [~] 8.4 Update `apps/admin/src/components/dashboard/close-month-button.tsx` to accept `hasSnapshot` prop
+  - [x] 8.4 Update `apps/admin/src/components/dashboard/close-month-button.tsx` to accept `hasSnapshot` prop
     - Add `hasSnapshot: boolean` to props; use it as initial render state to avoid flash
     - Remove any client-side snapshot fetch the component currently performs
     - _Requirements: 8.2_
 
-- [~] 9. Checkpoint — H2–H5, H7 complete
+- [x] 9. Checkpoint — H2–H5, H7 complete
   - Ensure all tests pass, ask the user if questions arise.
 
-- [ ] 10. H6 — Withdrawal Over-Limit Guard (depends on Tasks 1–2)
-  - [~] 10.1 Add `maxAmount` prop and over-limit warning to `apps/admin/src/components/dashboard/withdraw-modal.tsx`
+- [x] 10. H6 — Withdrawal Over-Limit Guard (depends on Tasks 1–2)
+  - [x] 10.1 Add `maxAmount` prop and over-limit warning to `apps/admin/src/components/dashboard/withdraw-modal.tsx`
     - Add `maxAmount: number` to `WithdrawModalProps`
     - Add `const [enteredAmount, setEnteredAmount] = React.useState<number | null>(null)` and `const isOverLimit = enteredAmount !== null && enteredAmount > maxAmount`
     - Wire `onChange` on the amount input to update `enteredAmount`
@@ -188,24 +188,24 @@ MUST follow Tasks 1–2 (H1 data layer and UI).
     - Warning is advisory — do NOT block form submission
     - _Requirements: 7.1, 7.2, 7.3, 7.4_
 
-  - [~] 10.2 Write property test for `WithdrawModal` over-limit warning visibility
+  - [x] 10.2 Write property test for `WithdrawModal` over-limit warning visibility
     - **Property 5: WithdrawModal over-limit warning visibility**
     - Generate arbitrary `(maxAmount: number, enteredAmount: number)` pairs, render the component, assert warning is shown iff `enteredAmount > maxAmount`
     - Minimum 100 iterations; tag: `// Feature: mvp-stage2-high-priority, Property 5: WithdrawModal over-limit warning visibility`
     - _Requirements: 7.2, 7.3_
 
-  - [~] 10.3 Compute `remaining` in `apps/admin/src/components/dashboard/salary-card.tsx` and pass to `WithdrawModal`
+  - [x] 10.3 Compute `remaining` in `apps/admin/src/components/dashboard/salary-card.tsx` and pass to `WithdrawModal`
     - Add `const remaining = Math.max(0, salary - withdrawn)` after the existing `withdrawn` derivation
     - Pass `maxAmount={remaining}` to `<WithdrawModal>`
     - _Requirements: 7.5, 7.6_
 
-  - [~] 10.4 Write property test for `SalaryCard` remaining balance computation
+  - [x] 10.4 Write property test for `SalaryCard` remaining balance computation
     - **Property 6: SalaryCard remaining balance computation**
     - Generate arbitrary `(salary: number, withdrawn: number)` pairs including cases where `withdrawn > salary`, assert `remaining === Math.max(0, salary - withdrawn)`
     - Minimum 100 iterations; tag: `// Feature: mvp-stage2-high-priority, Property 6: SalaryCard remaining balance computation`
     - _Requirements: 7.5, 7.6_
 
-- [~] 11. Final Checkpoint — All tasks complete
+- [x] 11. Final Checkpoint — All tasks complete
   - Ensure all tests pass, ask the user if questions arise.
 
 ## Notes

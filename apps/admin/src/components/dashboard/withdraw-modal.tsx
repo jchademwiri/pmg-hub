@@ -11,12 +11,14 @@ import {
 } from '@/components/ui/dialog'
 import { Input } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'
+import { formatZAR } from '@/lib/format'
 
 interface WithdrawModalProps {
   open: boolean
   onClose: () => void
   onSuccess: () => void
   withdrawAction: (amount: number) => Promise<{ error?: string }>
+  maxAmount: number
 }
 
 export function WithdrawModal({
@@ -24,16 +26,20 @@ export function WithdrawModal({
   onClose,
   onSuccess,
   withdrawAction,
+  maxAmount,
 }: WithdrawModalProps) {
   const inputRef = React.useRef<HTMLInputElement>(null)
   const [validationError, setValidationError] = React.useState<string | null>(null)
   const [serverError, setServerError] = React.useState<string | null>(null)
   const [isPending, setIsPending] = React.useState(false)
+  const [enteredAmount, setEnteredAmount] = React.useState<number | null>(null)
+  const isOverLimit = enteredAmount !== null && enteredAmount > maxAmount
 
   function resetState() {
     setValidationError(null)
     setServerError(null)
     setIsPending(false)
+    setEnteredAmount(null)
     if (inputRef.current) inputRef.current.value = ''
   }
 
@@ -89,7 +95,13 @@ export function WithdrawModal({
               placeholder="Amount"
               aria-invalid={validationError != null || undefined}
               disabled={isPending}
+              onChange={(e) => setEnteredAmount(parseFloat(e.target.value) || null)}
             />
+            {isOverLimit && (
+              <p className="text-sm text-destructive">
+                This exceeds your remaining balance of {formatZAR(maxAmount)}
+              </p>
+            )}
             {validationError && (
               <p className="text-sm text-destructive">{validationError}</p>
             )}

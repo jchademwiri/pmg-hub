@@ -65,6 +65,8 @@ export default async function DashboardPage() {
     ytd:      getYTDLabel(),
   }
 
+  const hasSnapshot = currentPeriodSnapshot !== null
+
   // Build MoM deltas (current vs previous month)
   const revenueSnap = momData.find((d) => d.metric === 'Revenue')
   const expenseSnap = momData.find((d) => d.metric === 'Expenses')
@@ -104,6 +106,7 @@ export default async function DashboardPage() {
       // Snapshot
       currentPeriodSnapshot={currentPeriodSnapshot}
       currentPeriod={currentPeriod}
+      hasSnapshot={hasSnapshot}
     />
   )
 }

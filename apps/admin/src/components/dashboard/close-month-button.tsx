@@ -6,7 +6,13 @@ import { toast } from 'sonner'
 import { closeMonth } from '@/app/actions/snapshots'
 import { Button } from '@/components/ui/button'
 
-export default function CloseMonthButton({ period }: { period: string }) {
+export default function CloseMonthButton({
+  period,
+  hasSnapshot,
+}: {
+  period: string
+  hasSnapshot: boolean
+}) {
   const router = useRouter()
   const [isPending, startTransition] = useTransition()
 

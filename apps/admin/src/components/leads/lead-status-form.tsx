@@ -1,6 +1,7 @@
 'use client'
 
 import * as React from 'react'
+import { toast } from 'sonner'
 import { Button } from '@/components/ui/button'
 import {
   Select,
@@ -30,6 +31,8 @@ export function LeadStatusForm({ currentStatus, updateAction }: LeadStatusFormPr
       const result = await updateAction(formData)
       if (result.error) {
         setError(result.error)
+      } else {
+        toast.success('Status updated')
       }
     })
   }

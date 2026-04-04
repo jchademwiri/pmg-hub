@@ -1,6 +1,7 @@
 'use client'
 
 import * as React from 'react'
+import { toast } from 'sonner'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 
@@ -24,6 +25,7 @@ export function DivisionAddForm({ createAction }: DivisionAddFormProps) {
         setErrorMessage(result.error)
       } else {
         formRef.current?.reset()
+        toast.success('Division created')
       }
     })
   }

@@ -2,6 +2,7 @@
 
 import * as React from 'react'
 import { useRouter } from 'next/navigation'
+import { toast } from 'sonner'
 import type { ExpenseRow } from '@pmg/db'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -35,6 +36,7 @@ export function ExpenseEditForm({ entry, divisions, categories, updateAction }: 
       if (result.error) {
         setErrorMessage(result.error)
       } else {
+        toast.success('Expense updated')
         router.push('/expenses')
       }
     })

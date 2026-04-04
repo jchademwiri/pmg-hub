@@ -29,6 +29,7 @@ export function SalaryCard({
   const [modalOpen, setModalOpen] = useState(false)
   const isNegative     = profitPool < 0
   const withdrawn      = withdrawals?.total ?? 0
+  const remaining      = Math.max(0, salary - withdrawn)
   const totalAvailable = salary + carryOver
   const balance        = totalAvailable - withdrawn
   const isOverdrawn    = balance < 0
@@ -148,6 +149,7 @@ export function SalaryCard({
           router.refresh()
         }}
         withdrawAction={recordWithdrawal}
+        maxAmount={remaining}
       />
     </Card>
   )
