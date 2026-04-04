@@ -13,6 +13,7 @@
   },
   "dependencies": {
     "@pmg/tailwind-config": "*",
+    "@vercel/analytics": "^2.0.1",
     "astro": "catalog:"
   },
   "devDependencies": {

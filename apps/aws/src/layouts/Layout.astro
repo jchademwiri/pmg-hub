@@ -1,5 +1,6 @@
 ---
 // style import
+import Analytics from '@vercel/analytics/astro'
 import Header from "@/components/Header.astro";
 import Footer from "@/components/Footer.astro";
 import "@/styles/starwind.css";
@@ -85,6 +86,7 @@ const graphSchema: Graph = {
       description={description}
       canonicalUrl={canonicalURL}
     />
+     <Analytics />
 
     <script is:inline>
       (function () {
