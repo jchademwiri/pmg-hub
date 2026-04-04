@@ -1036,3 +1036,47 @@ export async function getExpenseCategoryById(id: string): Promise<ExpenseCategor
 
   return result[0] ?? null;
 }
+
+// ── Withdrawal History ────────────────────────────────────────────────────────
+
+export type WithdrawalRow = {
+  id: string;
+  date: string;          // ISO date string e.g. "2026-03-15"
+  amount: string;        // numeric from DB — caller converts with Number()
+  description: string | null;
+  createdAt: Date | null;
+};
+
+/**
+ * Returns all withdrawal rows ordered by date DESC, then created_at DESC.
+ */
+export async function getAllWithdrawals(): Promise<WithdrawalRow[]> {
+  return db
+    .select({
+      id: withdrawals.id,
+      date: sql<string>`${withdrawals.date}::text`,
+      amount: withdrawals.amount,
+      description: withdrawals.description,
+      createdAt: withdrawals.createdAt,
+    })
+    .from(withdrawals)
+    .orderBy(desc(withdrawals.date), desc(withdrawals.createdAt));
+}
+
+/**
+ * Returns a single withdrawal row by id, or null if no row with that id exists.
+ */
+export async function getWithdrawalById(id: string): Promise<WithdrawalRow | null> {
+  const result = await db
+    .select({
+      id: withdrawals.id,
+      date: sql<string>`${withdrawals.date}::text`,
+      amount: withdrawals.amount,
+      description: withdrawals.description,
+      createdAt: withdrawals.createdAt,
+    })
+    .from(withdrawals)
+    .where(eq(withdrawals.id, id));
+
+  return result[0] ?? null;
+}

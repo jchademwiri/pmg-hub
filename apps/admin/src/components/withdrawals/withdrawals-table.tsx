@@ -4,7 +4,7 @@ import * as React from 'react'
 import Link from 'next/link'
 import { Pencil, Trash2 } from 'lucide-react'
 import { toast } from 'sonner'
-import type { IncomeRow } from '@pmg/db'
+import type { WithdrawalRow } from '@pmg/db'
 import { Button } from '@/components/ui/button'
 import {
   Table,
@@ -14,13 +14,14 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table'
+import { formatZAR } from '@/lib/format'
 
-interface IncomeTableProps {
-  entries: IncomeRow[]
+interface WithdrawalsTableProps {
+  entries: WithdrawalRow[]
   deleteAction: (id: string) => Promise<{ error?: string }>
 }
 
-export function IncomeTable({ entries, deleteAction }: IncomeTableProps) {
+export function WithdrawalsTable({ entries, deleteAction }: WithdrawalsTableProps) {
   const [pendingDeleteId, setPendingDeleteId] = React.useState<string | null>(null)
   const [isPendingDelete, setIsPendingDelete] = React.useState(false)
 
@@ -42,10 +43,8 @@ export function IncomeTable({ entries, deleteAction }: IncomeTableProps) {
       <TableHeader>
         <TableRow>
           <TableHead>Date</TableHead>
-          <TableHead>Division</TableHead>
-          <TableHead>Client</TableHead>
-          <TableHead>Description</TableHead>
           <TableHead>Amount</TableHead>
+          <TableHead>Description</TableHead>
           <TableHead>Actions</TableHead>
         </TableRow>
       </TableHeader>
@@ -53,14 +52,12 @@ export function IncomeTable({ entries, deleteAction }: IncomeTableProps) {
         {entries.map((entry) => (
           <TableRow key={entry.id}>
             <TableCell>{entry.date}</TableCell>
-            <TableCell>{entry.divisionName}</TableCell>
-            <TableCell>{entry.clientName ?? ''}</TableCell>
+            <TableCell>{formatZAR(Number(entry.amount))}</TableCell>
             <TableCell>{entry.description ?? ''}</TableCell>
-            <TableCell>{entry.amount}</TableCell>
             <TableCell>
               <div className="flex items-center gap-2">
                 <Button asChild variant="ghost" size="icon">
-                  <Link href={'/income/' + entry.id}>
+                  <Link href={'/withdrawals/' + entry.id}>
                     <Pencil className="h-4 w-4" />
                     <span className="sr-only">Edit</span>
                   </Link>

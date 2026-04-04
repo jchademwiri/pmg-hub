@@ -5,6 +5,8 @@ import {
   getAllDivisions,
   getDistinctLeadSources,
 } from '@pmg/db'
+import { createLead, deleteLead } from '@/app/actions/leads'
+import { LeadAddForm } from '@/components/leads/lead-add-form'
 import { LeadStatusTabs } from '@/components/leads/lead-status-tabs'
 import { LeadsFilterBar } from '@/components/leads/leads-filter-bar'
 import { LeadsTable } from '@/components/leads/leads-table'
@@ -46,6 +48,10 @@ export default async function LeadsPage({ searchParams }: LeadsPageProps) {
         currentStatus={status}
       />
 
+      <div id="lead-add-form">
+        <LeadAddForm divisions={divisions} createAction={createLead} />
+      </div>
+
       {entries.length === 0 ? (
         <EmptyState
           message={
@@ -53,12 +59,10 @@ export default async function LeadsPage({ searchParams }: LeadsPageProps) {
               ? 'No leads match the current filters.'
               : 'No leads yet.'
           }
-          ctaLabel={status || divisionId || source ? undefined : 'Add Lead'}
-          ctaHref={status || divisionId || source ? undefined : '#lead-add-form'}
           filtered={!!(status || divisionId || source)}
         />
       ) : (
-        <LeadsTable entries={entries} />
+        <LeadsTable entries={entries} deleteAction={deleteLead} />
       )}
     </div>
   )

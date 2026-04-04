@@ -41,7 +41,7 @@ function DivisionTableRow({
   const [editError, setEditError] = React.useState<string | null>(null)
   const [deleteError, setDeleteError] = React.useState<string | null>(null)
   const [isRenamePending, startRenameTransition] = React.useTransition()
-  const [isDeletePending, startDeleteTransition] = React.useTransition()
+  const [isPendingDelete, setIsPendingDelete] = React.useState(false)
 
   function handleEditClick() {
     setEditName(division.name)
@@ -84,15 +84,18 @@ function DivisionTableRow({
     setDeleteError(null)
   }
 
-  function handleConfirmDelete() {
+  async function handleConfirmDelete() {
     setDeleteError(null)
-    startDeleteTransition(async () => {
+    setIsPendingDelete(true)
+    try {
       const result = await deleteAction(division.id)
       if (result.error) {
         setDeleteError(result.error)
         setMode('confirm-delete')
       }
-    })
+    } finally {
+      setIsPendingDelete(false)
+    }
   }
 
   const netProfitClass =
@@ -149,15 +152,15 @@ function DivisionTableRow({
                 size="sm"
                 variant="destructive"
                 onClick={handleConfirmDelete}
-                disabled={isDeletePending}
+                disabled={isPendingDelete}
               >
-                {isDeletePending ? 'Deleting…' : 'Confirm'}
+                {isPendingDelete ? 'Deleting…' : 'Confirm'}
               </Button>
               <Button
                 size="sm"
                 variant="outline"
                 onClick={handleDeleteCancel}
-                disabled={isDeletePending}
+                disabled={isPendingDelete}
               >
                 Cancel
               </Button>

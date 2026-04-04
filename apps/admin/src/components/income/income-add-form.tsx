@@ -1,6 +1,7 @@
 'use client'
 
 import * as React from 'react'
+import { toast } from 'sonner'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import {
@@ -39,6 +40,7 @@ export function IncomeAddForm({ divisions, clients, createAction }: IncomeAddFor
       if (result.error) {
         setErrorMessage(result.error)
       } else {
+        toast.success('Income added')
         formRef.current?.reset()
         setClientId('')
       }

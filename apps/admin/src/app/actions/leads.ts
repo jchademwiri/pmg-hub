@@ -47,3 +47,54 @@ export async function updateLeadNotes(id: string, formData: FormData): Promise<{
     return { error: 'Failed to save. Please try again.' };
   }
 }
+
+const CreateLeadSchema = z
+  .object({
+    name: z.string().min(1),
+    email: z.string().email().optional(),
+    phone: z.string().optional(),
+    source: z.string().optional(),
+    serviceInterest: z.string().optional(),
+    divisionId: z.string().uuid().optional(),
+    message: z.string().optional(),
+  })
+  .refine((data) => !!(data.email || data.phone), {
+    message: 'At least one of email or phone is required',
+  });
+
+export async function createLead(formData: FormData): Promise<{ error?: string }> {
+  try {
+    const raw = Object.fromEntries(formData);
+    const result = CreateLeadSchema.safeParse(raw);
+    if (!result.success) {
+      return { error: result.error.issues[0]?.message ?? 'Validation error' };
+    }
+    const parsed = result.data;
+    await db.insert(leads).values({
+      name: parsed.name,
+      email: parsed.email ?? null,
+      phone: parsed.phone ?? null,
+      source: parsed.source ?? null,
+      serviceInterest: parsed.serviceInterest ?? null,
+      divisionId: parsed.divisionId ?? null,
+      message: parsed.message ?? null,
+      status: 'new',
+    });
+    revalidatePath('/leads');
+    revalidatePath('/dashboard');
+    return {};
+  } catch {
+    return { error: 'Failed to save. Please try again.' };
+  }
+}
+
+export async function deleteLead(id: string): Promise<{ error?: string }> {
+  try {
+    await db.delete(leads).where(eq(leads.id, id));
+    revalidatePath('/leads');
+    revalidatePath('/dashboard');
+    return {};
+  } catch {
+    return { error: 'Failed to delete. Please try again.' };
+  }
+}

@@ -2,6 +2,7 @@
 
 import * as React from 'react'
 import { useRouter } from 'next/navigation'
+import { toast } from 'sonner'
 import type { IncomeRow } from '@pmg/db'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -37,6 +38,7 @@ export function IncomeEditForm({ entry, divisions, clients, updateAction }: Inco
       if (result.error) {
         setErrorMessage(result.error)
       } else {
+        toast.success('Income updated')
         router.push('/income')
       }
     })

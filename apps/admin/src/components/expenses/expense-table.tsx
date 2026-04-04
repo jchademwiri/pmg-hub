@@ -23,18 +23,17 @@ interface ExpenseTableProps {
 
 export function ExpenseTable({ entries, deleteAction }: ExpenseTableProps) {
   const [pendingDeleteId, setPendingDeleteId] = React.useState<string | null>(null)
-  const [isPending, startTransition] = React.useTransition()
-  const [inFlightId, setInFlightId] = React.useState<string | null>(null)
+  const [isPendingDelete, setIsPendingDelete] = React.useState(false)
 
-  function handleConfirmDelete(id: string) {
-    setInFlightId(id)
-    startTransition(() => {
-      deleteAction(id).then((r) => {
-        if (r?.error) toast.error(r.error)
-        setInFlightId(null)
-      })
-    })
-    setPendingDeleteId(null)
+  async function handleConfirmDelete(id: string) {
+    setIsPendingDelete(true)
+    try {
+      const result = await deleteAction(id)
+      if (result.error) toast.error(result.error)
+      setPendingDeleteId(null)
+    } finally {
+      setIsPendingDelete(false)
+    }
   }
 
   return (
@@ -51,11 +50,9 @@ export function ExpenseTable({ entries, deleteAction }: ExpenseTableProps) {
       </TableHeader>
       <TableBody>
         {entries.map((entry) => {
-          const isInFlight = isPending && inFlightId === entry.id
           return (
             <TableRow
               key={entry.id}
-              className={isInFlight ? 'opacity-50 pointer-events-none' : undefined}
             >
               <TableCell>{entry.date}</TableCell>
               <TableCell>{entry.divisionName}</TableCell>
@@ -76,9 +73,10 @@ export function ExpenseTable({ entries, deleteAction }: ExpenseTableProps) {
                       <Button
                         variant="destructive"
                         size="sm"
+                        disabled={isPendingDelete}
                         onClick={() => handleConfirmDelete(entry.id)}
                       >
-                        Confirm
+                        {isPendingDelete ? 'Deleting…' : 'Confirm'}
                       </Button>
                       <Button
                         variant="outline"
