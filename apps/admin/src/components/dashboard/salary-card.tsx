@@ -72,7 +72,18 @@ export function SalaryCard({ salary, ytdSalary, profitPool, periodLabel, withdra
       <CardContent className="space-y-3">
         {/* Primary salary figure */}
         <div>
-          <p className="text-chart-1 text-3xl font-bold tabular-nums">{formatZAR(salary)}</p>
+          {withdrawals !== null ? (
+            <>
+              <p className={`text-3xl font-bold tabular-nums ${isOverdrawn ? 'text-red-400' : 'text-chart-1'}`}>
+                {formatZAR(balance)}
+              </p>
+              <p className="text-chart-1/50 text-xs mt-0.5">
+                available · of {formatZAR(salary)} salary
+              </p>
+            </>
+          ) : (
+            <p className="text-chart-1 text-3xl font-bold tabular-nums">{formatZAR(salary)}</p>
+          )}
           {withdrawals !== null && (
             <p className="text-chart-1/50 text-xs mt-0.5">YTD: {formatZAR(ytdSalary)}</p>
           )}
