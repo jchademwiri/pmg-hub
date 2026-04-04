@@ -805,3 +805,94 @@ export async function insertSnapshot(period: string, summary: PeriodSummary): Pr
     .returning();
   return rows[0]!;
 }
+
+// ── Reporting & Insights query helpers ───────────────────────────────────────
+
+/**
+ * Returns total expenses grouped by category for the given calendar year,
+ * ordered by total descending.
+ */
+export async function getExpensesByCategoryForYear(
+  year: number
+): Promise<{ category: string; total: number }[]> {
+  const result: { category: string; total: string }[] = await db
+    .select({
+      category: expenses.category,
+      total: sql<string>`COALESCE(SUM(${expenses.amount}), '0')`,
+    })
+    .from(expenses)
+    .where(sql`EXTRACT(YEAR FROM ${expenses.date}) = ${year}`)
+    .groupBy(expenses.category)
+    .orderBy(desc(sql`SUM(${expenses.amount})`));
+  return result.map((r) => ({ category: r.category, total: Number(r.total) }));
+}
+
+/**
+ * Returns the union of distinct calendar years from income.date and
+ * expenses.date, sorted descending.
+ */
+export async function getDistinctYears(): Promise<number[]> {
+  const result = await db.execute(sql`
+    SELECT DISTINCT EXTRACT(YEAR FROM date)::integer AS year
+    FROM income
+    UNION
+    SELECT DISTINCT EXTRACT(YEAR FROM date)::integer AS year
+    FROM expenses
+    ORDER BY year DESC
+  `);
+  return (result.rows as { year: number }[]).map((r) => Number(r.year));
+}
+
+/**
+ * Returns monthly revenue and expenses for the given calendar year,
+ * ordered by month ascending. month format is 'YYYY-MM'.
+ */
+export async function getMonthlyFinancialsForYear(
+  year: number
+): Promise<{ month: string; revenue: number; expenses: number }[]> {
+  const result = await db.execute(sql`
+    WITH rev AS (
+      SELECT TO_CHAR(date, 'YYYY-MM') AS month, COALESCE(SUM(amount), 0) AS revenue
+      FROM income
+      WHERE EXTRACT(YEAR FROM date) = ${year}
+      GROUP BY TO_CHAR(date, 'YYYY-MM')
+    ),
+    exp AS (
+      SELECT TO_CHAR(date, 'YYYY-MM') AS month, COALESCE(SUM(amount), 0) AS expenses
+      FROM expenses
+      WHERE EXTRACT(YEAR FROM date) = ${year}
+      GROUP BY TO_CHAR(date, 'YYYY-MM')
+    )
+    SELECT COALESCE(rev.month, exp.month) AS month,
+           COALESCE(rev.revenue, 0) AS revenue,
+           COALESCE(exp.expenses, 0) AS expenses
+    FROM rev FULL OUTER JOIN exp ON rev.month = exp.month
+    ORDER BY month ASC
+  `);
+  return (result.rows as { month: string; revenue: string; expenses: string }[]).map((r) => ({
+    month: r.month,
+    revenue: Number(r.revenue),
+    expenses: Number(r.expenses),
+  }));
+}
+
+/**
+ * Returns monthly revenue per division for the given calendar year,
+ * ordered by month ascending then division name ascending.
+ */
+export async function getMonthlyRevenueByDivisionForYear(
+  year: number
+): Promise<{ month: string; divisionName: string; total: number }[]> {
+  const result: { month: string; divisionName: string; total: string }[] = await db
+    .select({
+      month: sql<string>`TO_CHAR(${income.date}, 'YYYY-MM')`,
+      divisionName: divisions.name,
+      total: sql<string>`COALESCE(SUM(${income.amount}), '0')`,
+    })
+    .from(income)
+    .innerJoin(divisions, eq(income.divisionId, divisions.id))
+    .where(sql`EXTRACT(YEAR FROM ${income.date}) = ${year}`)
+    .groupBy(sql`TO_CHAR(${income.date}, 'YYYY-MM')`, divisions.name)
+    .orderBy(sql`TO_CHAR(${income.date}, 'YYYY-MM') ASC`, asc(divisions.name));
+  return result.map((r) => ({ month: r.month, divisionName: r.divisionName, total: Number(r.total) }));
+}

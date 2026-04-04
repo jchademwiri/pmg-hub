@@ -6,7 +6,7 @@ Wire the three pre-built chart components to `/reports`, add a year filter, intr
 
 ## Tasks
 
-- [ ] 1. DB query helpers — add four new helpers to queries.ts
+- [x] 1. DB query helpers — add four new helpers to queries.ts
   - Add `getExpensesByCategoryForYear(year: number)` — queries `expenses` table, groups by `category`, filters by `EXTRACT(YEAR FROM date) = year`, returns `{ category: string; total: number }[]` ordered by `total` DESC
   - Add `getDistinctYears()` — returns the union of distinct years from `income.date` and `expenses.date` as `number[]` sorted DESC
   - Add `getMonthlyFinancialsForYear(year: number)` — returns `{ month: string; revenue: number; expenses: number }[]` for the given calendar year, ordered by month ASC (month = `'YYYY-MM'`)
@@ -14,17 +14,17 @@ Wire the three pre-built chart components to `/reports`, add a year filter, intr
   - Export all four from `packages/db/src/index.ts` via the existing `export * from './queries'`
   - _Requirements: 6.3, 6.4, 6.5, 7.1, 7.5_
 
-- [ ] 2. financial.ts wrappers — add four new helpers
+- [x] 2. financial.ts wrappers — add four new helpers
   - Add `getExpensesByCategory(year: number)` — thin wrapper over `getExpensesByCategoryForYear(year)`; returns `{ category: string; total: number }[]`
   - Add `getDistinctReportYears()` — thin wrapper over `getDistinctYears()`; returns `number[]`
   - Add `getMonthlyFinancialsSeriesForYear(year: number)` — calls `getMonthlyFinancialsForYear(year)` and returns `MonthlyFinancials[]`
   - Add `getRevenueByDivisionSeriesForYear(year: number)` — calls `getMonthlyRevenueByDivisionForYear(year)` and passes rows through the existing `buildDivisionSeries` helper; returns `DivisionSeriesChart`
   - _Requirements: 3.2, 6.1, 6.2, 7.2, 7.4_
 
-- [ ] 3. Checkpoint — ensure DB layer and financial.ts compile and types resolve
+- [x] 3. Checkpoint — ensure DB layer and financial.ts compile and types resolve
   - Ensure all tests pass, ask the user if questions arise.
 
-- [ ] 4. Server Action — implement exportFinancialsCsv
+- [x] 4. Server Action — implement exportFinancialsCsv
   - Create `apps/admin/src/app/actions/reports.ts` with `'use server'` directive
   - Validate `year` is an integer in range 1000–9999; return `{ error: 'Invalid year' }` on failure
   - Call `getMonthlyFinancialsForYear(year)` once to get all revenue/expense rows
@@ -42,7 +42,7 @@ Wire the three pre-built chart components to `/reports`, add a year filter, intr
     - **Property 4: CSV export error safety — invalid year and never throws**
     - **Validates: Requirements 4.5, 4.6**
 
-- [ ] 5. YearFilter client component
+- [x] 5. YearFilter client component
   - Create `apps/admin/src/components/reports/year-filter.tsx` with `'use client'` directive
   - Props: `{ years: number[]; currentYear: number }`
   - Render a shadcn `<Select>` populated with the provided years array; pre-select `currentYear`
@@ -50,7 +50,7 @@ Wire the three pre-built chart components to `/reports`, add a year filter, intr
   - When `years` is empty, render only the `currentYear` as the sole option
   - _Requirements: 2.1, 2.2, 5.1, 5.2_
 
-- [ ] 6. ExpenseByCategoryChart client component
+- [x] 6. ExpenseByCategoryChart client component
   - Create `apps/admin/src/components/reports/expense-by-category-chart.tsx` with `'use client'` directive
   - Props: `{ data: { category: string; total: number }[] }`
   - Render a horizontal recharts `BarChart` with one bar per category
@@ -59,7 +59,7 @@ Wire the three pre-built chart components to `/reports`, add a year filter, intr
   - Use `var(--chart-3)` as the bar fill colour
   - _Requirements: 3.1, 3.4, 3.5, 3.6_
 
-- [ ] 7. ExportCsvButton client component
+- [x] 7. ExportCsvButton client component
   - Create `apps/admin/src/components/reports/export-csv-button.tsx` with `'use client'` directive
   - Props: `{ year: number }`
   - Use `useTransition` for pending state; disable button and show `"Exporting…"` label while in flight
@@ -67,10 +67,10 @@ Wire the three pre-built chart components to `/reports`, add a year filter, intr
   - When action returns `{ error }`: call `toast.error(error)` from sonner
   - _Requirements: 4.7, 4.8, 4.9, 4.10_
 
-- [ ] 8. Checkpoint — ensure all new components compile
+- [x] 8. Checkpoint — ensure all new components compile
   - Ensure all tests pass, ask the user if questions arise.
 
-- [ ] 9. Reports page — replace stub with full implementation
+- [x] 9. Reports page — replace stub with full implementation
   - Replace the stub at `apps/admin/src/app/(admin)/reports/page.tsx` with an async Server Component
   - Read `searchParams.year`; validate it matches `/^\d{4}$/` and parses to a value in 1000–9999; fall back to `new Date().getFullYear()` if absent or invalid
   - Fire all five fetches in a single `Promise.all`: `getDistinctReportYears()`, `getMoMChartData()`, `getMonthlyFinancialsSeriesForYear(year)`, `getRevenueByDivisionSeriesForYear(year)`, `getExpensesByCategory(year)`
@@ -85,7 +85,7 @@ Wire the three pre-built chart components to `/reports`, add a year filter, intr
     - **Validates: Requirements 2.3, 2.6**
 
 - [ ] 10. Tests — write full test suite
-  - [ ] 10.1 Create `apps/admin/src/__tests__/reports.test.ts`
+  - [x] 10.1 Create `apps/admin/src/__tests__/reports.test.ts`
     - Write all five property-based tests (P1–P5) using fast-check with minimum 100 iterations each, tagged with their property reference comments
     - Write unit tests: `YearFilter` renders one option per year in the `years` array; `YearFilter` calls `router.push('/reports?year=2024')` when 2024 is selected; `ExpenseByCategoryChart` renders `"No expense data for this year."` when `data = []`; `ExpenseByCategoryChart` renders a bar for each category; `ExportCsvButton` is disabled and shows `"Exporting…"` while `isPending` is true; `ExportCsvButton` calls `toast.error` when action returns `{ error }`; `ExportCsvButton` triggers download with filename `pmg-financials-2025.csv`; reports page renders heading `"Reports & Insights"`; `exportFinancialsCsv(2025)` with no DB data returns a string with 12 zero-value rows
     - _Requirements: 1.1, 2.1, 2.2, 2.3, 2.6, 3.1, 3.4, 4.2, 4.3, 4.4, 4.5, 4.6, 4.7, 4.8, 4.9, 4.10, 5.3_
@@ -98,7 +98,7 @@ Wire the three pre-built chart components to `/reports`, add a year filter, intr
     - **Property 2: getExpensesByCategory returns valid, ordered data**
     - **Validates: Requirements 3.2, 6.1, 6.4, 6.6**
 
-- [ ] 11. Final checkpoint — ensure all tests pass
+- [x] 11. Final checkpoint — ensure all tests pass
   - Ensure all tests pass, ask the user if questions arise.
 
 ## Notes

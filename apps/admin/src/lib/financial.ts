@@ -17,6 +17,10 @@ import {
   getDivisionRevenueCurrentMonth,
   getDivisionRevenueYTD,
   getDivisionRevenuePreviousMonth,
+  getExpensesByCategoryForYear,
+  getDistinctYears,
+  getMonthlyFinancialsForYear,
+  getMonthlyRevenueByDivisionForYear,
 } from '@pmg/db'
 
 // ── Re-export DB types ────────────────────────────────────────────────────────
@@ -157,3 +161,27 @@ export async function getMoMChartData(): Promise<MoMSnapshot[]> {
 
 export { getExpensesByDivision }
 export { formatZAR } from '@/lib/format'
+
+// ── Reporting & Insights helpers ──────────────────────────────────────────────
+export async function getExpensesByCategory(
+  year: number
+): Promise<{ category: string; total: number }[]> {
+  return getExpensesByCategoryForYear(year)
+}
+
+export async function getDistinctReportYears(): Promise<number[]> {
+  return getDistinctYears()
+}
+
+export async function getMonthlyFinancialsSeriesForYear(
+  year: number
+): Promise<MonthlyFinancials[]> {
+  return getMonthlyFinancialsForYear(year)
+}
+
+export async function getRevenueByDivisionSeriesForYear(
+  year: number
+): Promise<DivisionSeriesChart> {
+  const rows = await getMonthlyRevenueByDivisionForYear(year)
+  return buildDivisionSeries(rows)
+}
