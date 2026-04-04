@@ -104,7 +104,6 @@ export default async function DashboardPage() {
       divisionSeriesData={divisionSeriesData}
       expensesByDivision={expensesByDivision}
       // Snapshot
-      currentPeriodSnapshot={currentPeriodSnapshot}
       currentPeriod={currentPeriod}
       hasSnapshot={hasSnapshot}
     />

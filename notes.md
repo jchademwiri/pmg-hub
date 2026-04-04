@@ -18,5 +18,8 @@ Office: R 7 700,00
 
 remove categories and put divisions and their total expense values
 
-- 
+- Month closed must only show between 1 to 5 of every month, if not closed by 5 of the new month, then it must auto close on the 5th midnight such that on the sixth its closed, and the butou ui must not show on the screen, when the month is closed button ui must not show, can only show from the 1st, once its closed it must be hidden from the ui
+user have 1 to the 5th to update any invoices and back data
+
+- /withdrawals - user must ne able to withdraw from this page
 

@@ -169,45 +169,45 @@ Zod validation, `revalidatePath`, `useTransition`, sonner toasts, shadcn/ui, ser
   - On success: reset form; on error: inline error message
   - _Requirements: 14.1, 14.2, 14.3_
 
-- [~] 21. Create ExpenseCategoriesTable component
+- [ ] 21. Create ExpenseCategoriesTable component
   - Create `apps/admin/src/components/expense-categories/expense-categories-table.tsx` as `'use client'`
   - shadcn `Table` with columns: Name, Actions (edit link + delete with inline confirm/cancel)
   - On delete confirm: call `deleteExpenseCategory`, on error call `toast.error(result.error)`
   - _Requirements: 14.4, 14.5_
 
-- [~] 22. Create ExpenseCategoriesPage server component
+- [ ] 22. Create ExpenseCategoriesPage server component
   - Create `apps/admin/src/app/(admin)/expense-categories/page.tsx` as a server component
   - Fetch `getAllExpenseCategories()`; render `ExpenseCategoryAddForm` + `ExpenseCategoriesTable` or empty state
   - _Requirements: 14.6_
 
-- [~] 23. Update ExpenseAddForm — replace datalist with Select
+- [ ] 23. Update ExpenseAddForm — replace datalist with Select
   - In `apps/admin/src/components/expenses/expense-add-form.tsx`, change `categories` prop type from `string[]` to `{ id: string; name: string }[]`
   - Replace `<Input type="text" list="...">` + `<datalist>` with shadcn `<Select name="category">` using `<SelectItem key={c.id} value={c.name}>` so the submitted value is the category name string
   - _Requirements: 15.1, 15.2, 15.3_
 
-- [~] 24. Update ExpenseEditForm — replace datalist with Select
+- [ ] 24. Update ExpenseEditForm — replace datalist with Select
   - In `apps/admin/src/components/expenses/expense-edit-form.tsx`, apply the same Select replacement and prop type change as ExpenseAddForm
   - Pre-select the category matching `entry.category` by name
   - _Requirements: 15.4, 15.5_
 
-- [~] 25. Update expense pages to pass category objects
+- [ ] 25. Update expense pages to pass category objects
   - In `apps/admin/src/app/(admin)/expenses/page.tsx`, replace `getDistinctExpenseCategories()` with `getAllExpenseCategories()` and pass the `{ id, name }[]` array to `ExpenseAddForm`
   - In `apps/admin/src/app/(admin)/expenses/[id]/page.tsx`, do the same for `ExpenseEditForm`
   - _Requirements: 15.1, 15.2_
 
-- [~] 26. Add Categories nav item to AppSidebar
+- [ ] 26. Add Categories nav item to AppSidebar
   - In `apps/admin/src/components/layout/app-sidebar.tsx`, import `Tag` from `lucide-react`
   - Add `{ href: '/expense-categories', label: 'Categories', icon: Tag }` to navItems after Expenses
   - _Requirements: 15.6_
 
-- [~] 27. Checkpoint — B3 complete
+- [ ] 27. Checkpoint — B3 complete
   - Ensure all tests pass, ask the user if questions arise.
 
 ---
 
 ### B4 — Fix Hardcoded Breadcrumb
 
-- [~] 28. Update TopNav with dynamic breadcrumb
+- [ ] 28. Update TopNav with dynamic breadcrumb
   - In `apps/admin/src/components/layout/top-nav.tsx`, add `'use client'` directive if not already present
   - Import `usePathname` from `'next/navigation'`
   - Define `ROUTE_LABELS` map: `{ dashboard: 'Dashboard', income: 'Income', expenses: 'Expenses', leads: 'Leads', divisions: 'Divisions', clients: 'Clients', withdrawals: 'Withdrawals', snapshots: 'Snapshots', reports: 'Reports', 'expense-categories': 'Expense Categories' }`
@@ -225,18 +225,18 @@ Zod validation, `revalidatePath`, `useTransition`, sonner toasts, shadcn/ui, ser
 
 ### B5 — Apply formatZAR to Income Table
 
-- [~] 29. Apply formatZAR to IncomeTable amount column
+- [ ] 29. Apply formatZAR to IncomeTable amount column
   - In `apps/admin/src/components/income/income-table.tsx`, import `formatZAR` from `'@/lib/format'`
   - Change the amount cell from `{entry.amount}` to `{formatZAR(Number(entry.amount))}`
   - Do not change any other column rendering, sorting, filtering, or action logic
   - _Requirements: 17.1, 17.2, 17.4_
 
-- [~] 30. Verify formatZAR on ExpenseTable
+- [ ] 30. Verify formatZAR on ExpenseTable
   - In `apps/admin/src/components/expenses/expense-table.tsx`, confirm `formatZAR` is already applied to the amount column
   - If not applied, add the same import and wrap: `{formatZAR(Number(entry.amount))}`
   - _Requirements: 17.3_
 
-- [~] 31. Final checkpoint — all blockers complete
+- [ ] 31. Final checkpoint — all blockers complete
   - Ensure all tests pass, ask the user if questions arise.
 
 ## Notes
