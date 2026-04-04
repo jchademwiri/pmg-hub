@@ -12,6 +12,7 @@ import {
   getCurrentMonthSummary,
   getPreviousMonthSummary,
   getYTDSummary,
+  getPreviousYearYTDSummary,
   getWithdrawalsCurrentMonth,
   getTotalWithdrawalsYTD,
   getWithdrawalsPreviousMonth,
@@ -80,7 +81,7 @@ export async function getFinancialSummary(): Promise<FinancialSummary> {
 }
 
 // ── Period summaries ──────────────────────────────────────────────────────────
-export { getCurrentMonthSummary, getPreviousMonthSummary, getYTDSummary }
+export { getCurrentMonthSummary, getPreviousMonthSummary, getYTDSummary, getPreviousYearYTDSummary }
 
 // ── Withdrawals ───────────────────────────────────────────────────────────────
 export async function getWithdrawals(): Promise<WithdrawalSummary> {

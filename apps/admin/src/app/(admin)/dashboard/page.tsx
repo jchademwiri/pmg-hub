@@ -4,6 +4,7 @@ import {
   getCurrentMonthSummary,
   getPreviousMonthSummary,
   getYTDSummary,
+  getPreviousYearYTDSummary,
   getDivisionRevenue,
   getLeadCounts,
   getMonthlyFinancialsSeries,
@@ -28,6 +29,7 @@ export default async function DashboardPage() {
 
   const [
     ytdSummary,
+    previousYearYTDSummary,
     currentMonthSummary,
     previousMonthSummary,
     divisions,
@@ -42,6 +44,7 @@ export default async function DashboardPage() {
     currentPeriodSnapshot,
   ] = await Promise.all([
     getYTDSummary(),
+    getPreviousYearYTDSummary(),
     getCurrentMonthSummary(),
     getPreviousMonthSummary(),
     getDivisionRevenue(),
@@ -82,6 +85,7 @@ export default async function DashboardPage() {
     <DashboardShell
       // Period summaries
       ytdSummary={ytdSummary}
+      previousYearYTDSummary={previousYearYTDSummary}
       currentMonthSummary={currentMonthSummary}
       previousMonthSummary={previousMonthSummary}
       labels={labels}

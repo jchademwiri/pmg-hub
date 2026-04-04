@@ -205,6 +205,14 @@ export async function getYTDSummary(): Promise<PeriodSummary> {
   );
 }
 
+/** Same Jan–month-day range but for the previous year */
+export async function getPreviousYearYTDSummary(): Promise<PeriodSummary> {
+  return getFinancialSummaryForPeriod(
+    "DATE_TRUNC('year', NOW()) - INTERVAL '1 year'",
+    "NOW() - INTERVAL '1 year' + INTERVAL '1 day'"
+  );
+}
+
 // ── NEW: Withdrawals this month ───────────────────────────────────────────────
 
 /**

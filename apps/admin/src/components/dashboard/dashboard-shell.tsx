@@ -16,6 +16,7 @@ type Tab = 'current' | 'previous' | 'ytd'
 
 type Props = {
   ytdSummary: PeriodSummary
+  previousYearYTDSummary: PeriodSummary
   currentMonthSummary: PeriodSummary
   previousMonthSummary: PeriodSummary
   labels: { current: string; previous: string; ytd: string }
@@ -52,6 +53,7 @@ const TABS: { key: Tab; label: string }[] = [
 
 export function DashboardShell({
   ytdSummary,
+  previousYearYTDSummary,
   currentMonthSummary,
   previousMonthSummary,
   labels,
@@ -81,6 +83,26 @@ export function DashboardShell({
 
   // MoM deltas only make sense on Current Month tab
   const showDeltas = activeTab === 'current'
+
+  // Build deltas and comparison label per tab
+  const activeDeltas = activeTab === 'current' ? (showDeltas ? deltas : null) :
+    activeTab === 'previous' ? {
+      revenue:  { current: previousMonthSummary.revenue,    previous: currentMonthSummary.revenue },
+      expenses: { current: previousMonthSummary.expenses,   previous: currentMonthSummary.expenses },
+      profit:   { current: previousMonthSummary.profitPool, previous: currentMonthSummary.profitPool },
+    } : {
+      revenue:  { current: ytdSummary.revenue,    previous: previousYearYTDSummary.revenue },
+      expenses: { current: ytdSummary.expenses,   previous: previousYearYTDSummary.expenses },
+      profit:   { current: ytdSummary.profitPool, previous: previousYearYTDSummary.profitPool },
+    }
+
+  const activePreviousSummary = activeTab === 'current' ? previousMonthSummary :
+    activeTab === 'previous' ? currentMonthSummary :
+    previousYearYTDSummary
+
+  const activeDeltaLabel = activeTab === 'current' ? 'vs prev month' :
+    activeTab === 'previous' ? 'vs current month' :
+    'vs prev year'
 
   return (
     <div className="space-y-5">
@@ -115,8 +137,9 @@ export function DashboardShell({
       {/* ── Row 1: KPI cards ── */}
       <KpiGrid
         summary={activeSummary}
-        deltas={showDeltas ? deltas : null}
-        previousSummary={showDeltas ? previousMonthSummary : null}
+        deltas={activeDeltas}
+        previousSummary={activePreviousSummary}
+        deltaLabel={activeDeltaLabel}
       />
 
       {/* ── Row 2: Salary card + Division Area Chart ── */}
