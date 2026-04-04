@@ -833,11 +833,11 @@ export async function getExpensesByCategoryForYear(
  */
 export async function getDistinctYears(): Promise<number[]> {
   const result = await db.execute(sql`
-    SELECT DISTINCT EXTRACT(YEAR FROM date)::integer AS year
-    FROM income
-    UNION
-    SELECT DISTINCT EXTRACT(YEAR FROM date)::integer AS year
-    FROM expenses
+    SELECT year FROM (
+      SELECT DISTINCT EXTRACT(YEAR FROM date)::integer AS year FROM income
+      UNION
+      SELECT DISTINCT EXTRACT(YEAR FROM date)::integer AS year FROM expenses
+    ) combined
     ORDER BY year DESC
   `);
   return (result.rows as { year: number }[]).map((r) => Number(r.year));
@@ -867,7 +867,7 @@ export async function getMonthlyFinancialsForYear(
            COALESCE(rev.revenue, 0) AS revenue,
            COALESCE(exp.expenses, 0) AS expenses
     FROM rev FULL OUTER JOIN exp ON rev.month = exp.month
-    ORDER BY month ASC
+    ORDER BY 1 ASC
   `);
   return (result.rows as { month: string; revenue: string; expenses: string }[]).map((r) => ({
     month: r.month,

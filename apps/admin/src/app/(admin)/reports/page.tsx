@@ -34,11 +34,11 @@ export default async function ReportsPage({ searchParams }: ReportsPageProps) {
 
   const [years, momData, monthlySeries, divisionSeries, expensesByCategory] =
     await Promise.all([
-      getDistinctReportYears(),
-      getMoMChartData(),
-      getMonthlyFinancialsSeriesForYear(year),
-      getRevenueByDivisionSeriesForYear(year),
-      getExpensesByCategory(year),
+      getDistinctReportYears().catch((e) => { console.error('getDistinctReportYears failed:', e); return [] as number[] }),
+      getMoMChartData().catch((e) => { console.error('getMoMChartData failed:', e); return [] }),
+      getMonthlyFinancialsSeriesForYear(year).catch((e) => { console.error('getMonthlyFinancialsSeriesForYear failed:', e); return [] }),
+      getRevenueByDivisionSeriesForYear(year).catch((e) => { console.error('getRevenueByDivisionSeriesForYear failed:', e); return { series: [], divisions: [] } }),
+      getExpensesByCategory(year).catch((e) => { console.error('getExpensesByCategory failed:', e); return [] }),
     ])
 
   return (
