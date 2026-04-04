@@ -8,7 +8,6 @@ import { DivisionRevenue } from '@/components/dashboard/division-revenue'
 import { LeadsSummary } from '@/components/dashboard/leads-summary'
 import { ExpenseSnapshot } from '@/components/dashboard/expense-snapshot'
 import CloseMonthButton from '@/components/dashboard/close-month-button'
-import { Badge } from '@/components/ui/badge'
 import type { PeriodSummary, DivisionRevenue as DivisionRevenueType, LeadStatusCount, MonthlyFinancials, WithdrawalSummary, DivisionSeriesChart } from '@/lib/financial'
 
 type Tab = 'current' | 'previous' | 'ytd'
@@ -108,12 +107,10 @@ export function DashboardShell({
   return (
     <div className="space-y-5">
 
-      {/* ── Close Month / Month closed ── */}
-      {hasSnapshot ? (
-        <Badge variant="secondary">Month closed</Badge>
-      ) : showCloseMonthButton ? (
+      {/* ── Close Month button — only shown days 1–5 and only if not yet closed ── */}
+      {!hasSnapshot && showCloseMonthButton && (
         <CloseMonthButton period={currentPeriod} />
-      ) : null}
+      )}
 
       {/* ── Period tabs ── */}
       <div className="flex items-center gap-1 p-1 bg-muted/40 rounded-lg w-fit border border-border">
