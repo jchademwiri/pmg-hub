@@ -10,6 +10,7 @@ import { MoMComparisonChart } from '@/components/reports/mom-comparison-chart'
 import { RevenueByDivisionChart } from '@/components/reports/revenue-by-division-chart'
 import { RevenueVsExpensesChart } from '@/components/reports/revenue-vs-expenses-chart'
 import { ExpenseByCategoryChart } from '@/components/reports/expense-by-category-chart'
+import { RevenueSparkline } from '@/components/dashboard/revenue-sparkline'
 import { YearFilter } from '@/components/reports/year-filter'
 import { ExportCsvButton } from '@/components/reports/export-csv-button'
 
@@ -56,6 +57,7 @@ export default async function ReportsPage({ searchParams }: ReportsPageProps) {
         series={divisionSeries.series}
         divisions={divisionSeries.divisions}
       />
+      <RevenueSparkline data={monthlySeries.slice(-6)} />
       <RevenueVsExpensesChart series={monthlySeries} />
       <ExpenseByCategoryChart data={expensesByCategory} />
     </div>

@@ -3,7 +3,6 @@
 import { useState } from 'react'
 import { KpiGrid } from '@/components/dashboard/kpi-grid'
 import { SalaryCard } from '@/components/dashboard/salary-card'
-import { RevenueSparkline } from '@/components/dashboard/revenue-sparkline'
 import { DivisionAreaChart } from '@/components/dashboard/division-area-chart'
 import { DivisionRevenue } from '@/components/dashboard/division-revenue'
 import { LeadsSummary } from '@/components/dashboard/leads-summary'
@@ -116,7 +115,7 @@ export function DashboardShell({
         previousSummary={showDeltas ? previousMonthSummary : null}
       />
 
-      {/* ── Row 2: Salary card + Revenue sparkline ── */}
+      {/* ── Row 2: Salary card + Division Area Chart ── */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
         <SalaryCard
           salary={activeSummary.salary}
@@ -126,12 +125,9 @@ export function DashboardShell({
           withdrawals={activeTab === 'current' ? withdrawals : null}
         />
         <div className="lg:col-span-2">
-          <RevenueSparkline data={sparklineData} />
+          <DivisionAreaChart seriesData={divisionSeriesData} />
         </div>
       </div>
-
-      {/* ── Row 3: Interactive Division Revenue Area Chart ── */}
-      <DivisionAreaChart seriesData={divisionSeriesData} />
 
       {/* ── Row 4: Division revenue with expenses + Leads ── */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
