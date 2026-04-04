@@ -1,14 +1,8 @@
 'use server';
 
-import { z } from 'zod';
 import { revalidatePath } from 'next/cache';
 import { db, divisions, eq } from '@pmg/db';
-
-export const DivisionSchema = z.object({
-  name: z.string()
-    .min(1, { message: 'Division name is required.' })
-    .max(100, { message: 'Division name must be 100 characters or fewer.' }),
-});
+import { DivisionSchema } from './division-schema';
 
 export async function createDivision(formData: FormData): Promise<{ error?: string }> {
   try {

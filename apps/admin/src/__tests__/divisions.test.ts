@@ -1,7 +1,8 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import * as fc from 'fast-check'
 import { getDivisionsWithStats } from '@pmg/db'
-import { createDivision, updateDivision, deleteDivision, DivisionSchema } from '@/app/actions/divisions'
+import { createDivision, updateDivision, deleteDivision } from '@/app/actions/divisions'
+import { DivisionSchema } from '@/app/actions/division-schema'
 
 // ─── Mocks ───────────────────────────────────────────────────────────────────
 
@@ -9,15 +10,11 @@ vi.mock('@pmg/db', () => ({
   getDivisionsWithStats: vi.fn(),
 }))
 
-vi.mock('@/app/actions/divisions', async (importActual) => {
-  const actual = await importActual<typeof import('@/app/actions/divisions')>()
-  return {
-    createDivision: vi.fn(),
-    updateDivision: vi.fn(),
-    deleteDivision: vi.fn(),
-    DivisionSchema: actual.DivisionSchema,
-  }
-})
+vi.mock('@/app/actions/divisions', () => ({
+  createDivision: vi.fn(),
+  updateDivision: vi.fn(),
+  deleteDivision: vi.fn(),
+}))
 
 // ─── DivisionRow arbitrary ───────────────────────────────────────────────────
 
