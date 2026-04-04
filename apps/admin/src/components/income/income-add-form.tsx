@@ -62,6 +62,7 @@ export function IncomeAddForm({ divisions, clients, createAction }: IncomeAddFor
           required
           disabled={isPending}
           defaultValue={today}
+          max={today}
           className="w-40"
         />
       </div>

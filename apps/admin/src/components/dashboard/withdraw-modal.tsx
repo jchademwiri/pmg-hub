@@ -17,8 +17,12 @@ interface WithdrawModalProps {
   open: boolean
   onClose: () => void
   onSuccess: () => void
-  withdrawAction: (amount: number) => Promise<{ error?: string }>
+  withdrawAction: (amount: number, description?: string) => Promise<{ error?: string }>
   maxAmount: number
+}
+
+function formatDefaultDescription(date: Date): string {
+  return `Salary withdrawal — ${date.toLocaleDateString('en-ZA', { day: 'numeric', month: 'long', year: 'numeric' })}`
 }
 
 export function WithdrawModal({
@@ -28,19 +32,23 @@ export function WithdrawModal({
   withdrawAction,
   maxAmount,
 }: WithdrawModalProps) {
-  const inputRef = React.useRef<HTMLInputElement>(null)
+  const amountRef = React.useRef<HTMLInputElement>(null)
+  const descRef = React.useRef<HTMLInputElement>(null)
   const [validationError, setValidationError] = React.useState<string | null>(null)
   const [serverError, setServerError] = React.useState<string | null>(null)
   const [isPending, setIsPending] = React.useState(false)
   const [enteredAmount, setEnteredAmount] = React.useState<number | null>(null)
   const isOverLimit = enteredAmount !== null && enteredAmount > maxAmount
 
+  const defaultDescription = formatDefaultDescription(new Date())
+
   function resetState() {
     setValidationError(null)
     setServerError(null)
     setIsPending(false)
     setEnteredAmount(null)
-    if (inputRef.current) inputRef.current.value = ''
+    if (amountRef.current) amountRef.current.value = ''
+    if (descRef.current) descRef.current.value = ''
   }
 
   function handleClose() {
@@ -53,7 +61,7 @@ export function WithdrawModal({
     setValidationError(null)
     setServerError(null)
 
-    const raw = inputRef.current?.value ?? ''
+    const raw = amountRef.current?.value ?? ''
     const amount = parseFloat(raw)
 
     if (!raw || isNaN(amount) || amount <= 0) {
@@ -61,9 +69,11 @@ export function WithdrawModal({
       return
     }
 
+    const description = descRef.current?.value?.trim() || undefined
+
     setIsPending(true)
     try {
-      const result = await withdrawAction(amount)
+      const result = await withdrawAction(amount, description)
       if (result.error) {
         setServerError(result.error)
       } else {
@@ -86,25 +96,40 @@ export function WithdrawModal({
         </DialogHeader>
 
         <form onSubmit={handleSubmit} noValidate>
-          <div className="flex flex-col gap-2 py-2">
-            <Input
-              ref={inputRef}
-              type="number"
-              min="0.01"
-              step="0.01"
-              placeholder="Amount"
-              aria-invalid={validationError != null || undefined}
-              disabled={isPending}
-              onChange={(e) => setEnteredAmount(parseFloat(e.target.value) || null)}
-            />
-            {isOverLimit && (
-              <p className="text-sm text-destructive">
-                This exceeds your remaining balance of {formatZAR(maxAmount)}
-              </p>
-            )}
-            {validationError && (
-              <p className="text-sm text-destructive">{validationError}</p>
-            )}
+          <div className="flex flex-col gap-3 py-2">
+            <div className="flex flex-col gap-1">
+              <label className="text-sm font-medium">Amount</label>
+              <Input
+                ref={amountRef}
+                type="number"
+                min="0.01"
+                step="0.01"
+                placeholder="Amount"
+                aria-invalid={validationError != null || undefined}
+                disabled={isPending}
+                onChange={(e) => setEnteredAmount(parseFloat(e.target.value) || null)}
+              />
+              {isOverLimit && (
+                <p className="text-sm text-destructive">
+                  This exceeds your remaining balance of {formatZAR(maxAmount)}
+                </p>
+              )}
+              {validationError && (
+                <p className="text-sm text-destructive">{validationError}</p>
+              )}
+            </div>
+
+            <div className="flex flex-col gap-1">
+              <label className="text-sm font-medium">Description <span className="text-muted-foreground font-normal">(optional)</span></label>
+              <Input
+                ref={descRef}
+                type="text"
+                placeholder={defaultDescription}
+                disabled={isPending}
+              />
+              <p className="text-xs text-muted-foreground">Leave blank to use: &quot;{defaultDescription}&quot;</p>
+            </div>
+
             {serverError && (
               <p className="text-sm text-destructive">{serverError}</p>
             )}

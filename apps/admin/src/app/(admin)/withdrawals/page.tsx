@@ -1,7 +1,8 @@
 import type { Metadata } from 'next'
 import { getAllWithdrawals } from '@pmg/db'
-import { deleteWithdrawal } from '@/app/actions/withdrawals'
+import { createWithdrawal, deleteWithdrawal } from '@/app/actions/withdrawals'
 import { WithdrawalsTable } from '@/components/withdrawals/withdrawals-table'
+import { WithdrawalAddForm } from '@/components/withdrawals/withdrawal-add-form'
 import { EmptyState } from '@/components/ui/empty-state'
 import { Badge } from '@/components/ui/badge'
 import { formatZAR } from '@/lib/format'
@@ -25,6 +26,8 @@ export default async function WithdrawalsPage() {
           {formatZAR(ytdTotal)} YTD
         </Badge>
       </div>
+
+      <WithdrawalAddForm createAction={createWithdrawal} />
 
       {withdrawals.length === 0 ? (
         <EmptyState message="No withdrawals yet." />

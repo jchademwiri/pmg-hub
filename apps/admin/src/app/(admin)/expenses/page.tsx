@@ -36,8 +36,8 @@ export default async function ExpensePage({ searchParams }: ExpensePageProps) {
   ])
 
   const runningTotal = entries.reduce((sum, e) => sum + Number(e.amount), 0)
-  const categoryBreakdown = entries.reduce((map, e) => {
-    map.set(e.category, (map.get(e.category) ?? 0) + Number(e.amount))
+  const divisionBreakdown = entries.reduce((map, e) => {
+    map.set(e.divisionName, (map.get(e.divisionName) ?? 0) + Number(e.amount))
     return map
   }, new Map<string, number>())
 
@@ -50,14 +50,14 @@ export default async function ExpensePage({ searchParams }: ExpensePageProps) {
         </span>
       </div>
 
-      {categoryBreakdown.size > 0 && (
+      {divisionBreakdown.size > 0 && (
         <div className="flex flex-wrap gap-2">
-          {Array.from(categoryBreakdown.entries()).map(([cat, amount]) => (
+          {Array.from(divisionBreakdown.entries()).map(([division, amount]) => (
             <span
-              key={cat}
+              key={division}
               className="rounded-full bg-muted px-3 py-1 text-sm text-muted-foreground"
             >
-              {cat}: {formatZAR(amount)}
+              {division}: {formatZAR(amount)}
             </span>
           ))}
         </div>

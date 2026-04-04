@@ -1,15 +1,12 @@
 'use client'
 
 import * as React from 'react'
-import { useRouter } from 'next/navigation'
 import { toast } from 'sonner'
-import type { WithdrawalRow } from '@pmg/db'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 
-interface WithdrawalEditFormProps {
-  entry: WithdrawalRow
-  updateAction: (formData: FormData) => Promise<{ error?: string }>
+interface WithdrawalAddFormProps {
+  createAction: (formData: FormData) => Promise<{ error?: string }>
 }
 
 const today = new Date().toISOString().split('T')[0]!
@@ -19,40 +16,41 @@ function formatDefaultDescription(dateStr: string): string {
   return `Salary withdrawal — ${date.toLocaleDateString('en-ZA', { day: 'numeric', month: 'long', year: 'numeric' })}`
 }
 
-export function WithdrawalEditForm({ entry, updateAction }: WithdrawalEditFormProps) {
-  const router = useRouter()
+export function WithdrawalAddForm({ createAction }: WithdrawalAddFormProps) {
+  const formRef = React.useRef<HTMLFormElement>(null)
   const [isPending, startTransition] = React.useTransition()
   const [errorMessage, setErrorMessage] = React.useState<string | null>(null)
-  const [selectedDate, setSelectedDate] = React.useState(entry.date)
+  const [selectedDate, setSelectedDate] = React.useState(today)
 
   function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault()
     setErrorMessage(null)
 
     startTransition(async () => {
-      const fd = new FormData(e.currentTarget)
-      const result = await updateAction(fd)
+      const fd = new FormData(formRef.current!)
+      const result = await createAction(fd)
       if (result.error) {
-        toast.error(result.error)
         setErrorMessage(result.error)
       } else {
-        router.push('/withdrawals')
+        toast.success('Withdrawal recorded')
+        formRef.current?.reset()
+        setSelectedDate(today)
       }
     })
   }
 
   return (
-    <form onSubmit={handleSubmit} className="flex flex-wrap gap-3 items-end">
+    <form ref={formRef} onSubmit={handleSubmit} className="flex flex-wrap gap-3 items-end">
       <div className="flex flex-col gap-1">
         <label htmlFor="withdrawal-date" className="text-sm font-medium">Date</label>
         <Input
           id="withdrawal-date"
           name="date"
           type="date"
-          defaultValue={entry.date}
-          max={today}
           required
           disabled={isPending}
+          defaultValue={today}
+          max={today}
           className="w-40"
           onChange={(e) => setSelectedDate(e.target.value)}
         />
@@ -66,7 +64,6 @@ export function WithdrawalEditForm({ entry, updateAction }: WithdrawalEditFormPr
           type="number"
           min="0.01"
           step="0.01"
-          defaultValue={entry.amount}
           required
           disabled={isPending}
           className="w-36"
@@ -82,15 +79,13 @@ export function WithdrawalEditForm({ entry, updateAction }: WithdrawalEditFormPr
           name="description"
           type="text"
           placeholder={formatDefaultDescription(selectedDate)}
-          defaultValue={entry.description ?? ''}
           disabled={isPending}
           className="w-72"
         />
-        <p className="text-xs text-muted-foreground">Leave blank to use default description</p>
       </div>
 
       <Button type="submit" disabled={isPending}>
-        {isPending ? 'Saving…' : 'Save Changes'}
+        {isPending ? 'Adding…' : 'Add Withdrawal'}
       </Button>
 
       {errorMessage && (

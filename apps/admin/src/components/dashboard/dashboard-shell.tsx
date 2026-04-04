@@ -42,6 +42,7 @@ type Props = {
   expensesByDivision: { divisionName: string; total: number }[]
   hasSnapshot: boolean
   currentPeriod: string
+  showCloseMonthButton: boolean
 }
 
 const TABS: { key: Tab; label: string }[] = [
@@ -68,6 +69,7 @@ export function DashboardShell({
   expensesByDivision,
   hasSnapshot,
   currentPeriod,
+  showCloseMonthButton,
 }: Props) {
   const [activeTab, setActiveTab] = useState<Tab>('current')
 
@@ -109,9 +111,9 @@ export function DashboardShell({
       {/* ── Close Month / Month closed ── */}
       {hasSnapshot ? (
         <Badge variant="secondary">Month closed</Badge>
-      ) : (
-        <CloseMonthButton period={currentPeriod} hasSnapshot={hasSnapshot} />
-      )}
+      ) : showCloseMonthButton ? (
+        <CloseMonthButton period={currentPeriod} />
+      ) : null}
 
       {/* ── Period tabs ── */}
       <div className="flex items-center gap-1 p-1 bg-muted/40 rounded-lg w-fit border border-border">

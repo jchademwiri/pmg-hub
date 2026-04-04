@@ -20,6 +20,10 @@ export async function createExpense(formData: FormData): Promise<{ error?: strin
       return { error: result.error.issues[0]?.message ?? 'Validation error' };
     }
     const parsed = result.data;
+    const today = new Date().toISOString().split('T')[0]!;
+    if (parsed.date > today) {
+      return { error: 'Expense date cannot be in the future.' };
+    }
     await db.insert(expenses).values({
       date: parsed.date,
       divisionId: parsed.divisionId,
@@ -43,6 +47,10 @@ export async function updateExpense(id: string, formData: FormData): Promise<{ e
       return { error: result.error.issues[0]?.message ?? 'Validation error' };
     }
     const parsed = result.data;
+    const today = new Date().toISOString().split('T')[0]!;
+    if (parsed.date > today) {
+      return { error: 'Expense date cannot be in the future.' };
+    }
     await db.update(expenses)
       .set({
         date: parsed.date,

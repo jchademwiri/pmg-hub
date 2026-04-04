@@ -55,6 +55,7 @@ export function ExpenseAddForm({ divisions, categories, createAction }: ExpenseA
           disabled={isPending}
           className="w-40"
           defaultValue={today}
+          max={today}
         />
       </div>
 

@@ -1,14 +1,23 @@
 'use server';
 
 import { insertWithdrawal } from '@pmg/db';
+import { revalidatePath } from 'next/cache';
 
-export async function recordWithdrawal(amount: number): Promise<{ error?: string }> {
+function formatDefaultDescription(date: Date): string {
+  return `Salary withdrawal — ${date.toLocaleDateString('en-ZA', { day: 'numeric', month: 'long', year: 'numeric' })}`
+}
+
+export async function recordWithdrawal(amount: number, description?: string): Promise<{ error?: string }> {
   try {
-    const date = new Date().toISOString().split('T')[0];
-    await insertWithdrawal(amount, date);
-    return {};
+    const now = new Date()
+    const date = now.toISOString().split('T')[0]!
+    const desc = description?.trim() || formatDefaultDescription(now)
+    await insertWithdrawal(amount, date, desc)
+    revalidatePath('/withdrawals')
+    revalidatePath('/dashboard')
+    return {}
   } catch (err) {
-    const message = err instanceof Error ? err.message : 'Unknown error';
-    return { error: message };
+    const message = err instanceof Error ? err.message : 'Unknown error'
+    return { error: message }
   }
 }

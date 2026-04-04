@@ -8,10 +8,8 @@ import { Button } from '@/components/ui/button'
 
 export default function CloseMonthButton({
   period,
-  hasSnapshot,
 }: {
   period: string
-  hasSnapshot: boolean
 }) {
   const router = useRouter()
   const [isPending, startTransition] = useTransition()
@@ -28,7 +26,7 @@ export default function CloseMonthButton({
   }
 
   return (
-    <Button onClick={handleClick} disabled={isPending}>
+    <Button onClick={handleClick} disabled={isPending} variant="outline" size="sm">
       {isPending ? 'Closing…' : 'Close Month'}
     </Button>
   )

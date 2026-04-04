@@ -55,6 +55,7 @@ export function IncomeEditForm({ entry, divisions, clients, updateAction }: Inco
           name="date"
           type="date"
           defaultValue={entry.date}
+          max={new Date().toISOString().split('T')[0]}
           required
           disabled={isPending}
           className="w-40"

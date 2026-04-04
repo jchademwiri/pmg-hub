@@ -311,11 +311,12 @@ export async function getWithdrawalsYTDFull(): Promise<{
  */
 export async function insertWithdrawal(
   amount: number,
-  date: string
+  date: string,
+  description?: string
 ): Promise<{ id: string; date: string; amount: number; description: string | null; createdAt: Date | null }> {
   const result = await db
     .insert(withdrawals)
-    .values({ amount: String(amount), date })
+    .values({ amount: String(amount), date, description: description ?? null })
     .returning();
   const row = result[0]!;
   return {
@@ -582,6 +583,7 @@ export type ClientWithIncomeCount = {
   businessName: string | null;
   email: string | null;
   phone: string | null;
+  isActive: boolean;
   createdAt: Date;
   incomeCount: number;
 };
@@ -598,6 +600,7 @@ export async function getClientsWithIncomeCount(): Promise<ClientWithIncomeCount
       businessName: clients.businessName,
       email: clients.email,
       phone: clients.phone,
+      isActive: clients.isActive,
       createdAt: clients.createdAt,
       incomeCount: sql<number>`CAST(COUNT(${income.id}) AS INTEGER)`,
     })
@@ -619,6 +622,13 @@ export async function getClientById(id: string): Promise<Client | null> {
     .where(eq(clients.id, id));
 
   return result[0] ?? null;
+}
+
+/**
+ * Sets isActive to the given value for the client with the given id.
+ */
+export async function setClientActive(id: string, isActive: boolean): Promise<void> {
+  await db.update(clients).set({ isActive, updatedAt: new Date() }).where(eq(clients.id, id));
 }
 
 // ── Expense management query helpers ─────────────────────────────────────────

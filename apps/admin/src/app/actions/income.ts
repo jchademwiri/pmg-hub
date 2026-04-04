@@ -20,6 +20,10 @@ export async function createIncome(formData: FormData): Promise<{ error?: string
       return { error: result.error.issues[0]?.message ?? 'Validation error' };
     }
     const parsed = result.data;
+    const today = new Date().toISOString().split('T')[0]!;
+    if (parsed.date > today) {
+      return { error: 'Income date cannot be in the future.' };
+    }
     await db.insert(income).values({
       date: parsed.date,
       divisionId: parsed.divisionId,
@@ -43,6 +47,10 @@ export async function updateIncome(id: string, formData: FormData): Promise<{ er
       return { error: result.error.issues[0]?.message ?? 'Validation error' };
     }
     const parsed = result.data;
+    const today = new Date().toISOString().split('T')[0]!;
+    if (parsed.date > today) {
+      return { error: 'Income date cannot be in the future.' };
+    }
     await db.update(income)
       .set({
         date: parsed.date,

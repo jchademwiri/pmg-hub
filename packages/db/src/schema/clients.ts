@@ -1,4 +1,4 @@
-import { index, pgTable, text, timestamp, uniqueIndex, uuid } from "drizzle-orm/pg-core";
+import { boolean, index, pgTable, text, timestamp, uniqueIndex, uuid } from "drizzle-orm/pg-core";
 import { relations, sql } from "drizzle-orm";
 import { income } from "./income";
 
@@ -10,6 +10,7 @@ export const clients = pgTable(
     businessName: text("business_name"),
     email: text("email"),
     phone: text("phone"),
+    isActive: boolean("is_active").notNull().default(true),
     createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
     // updatedAt is managed by the application layer on update. Any database-level operation
     // that bypasses the application (direct SQL fixes, migrations, external services) will

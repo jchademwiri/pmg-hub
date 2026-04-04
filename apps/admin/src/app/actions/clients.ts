@@ -3,6 +3,7 @@
 import { z } from 'zod';
 import { revalidatePath } from 'next/cache';
 import { db, clients, eq } from '@pmg/db';
+import { setClientActive } from '@pmg/db';
 
 const ClientSchema = z.object({
   name:         z.string().min(1),
@@ -62,6 +63,16 @@ export async function updateClient(id: string, formData: FormData): Promise<{ er
   }
 }
 
+export async function toggleClientActive(id: string, isActive: boolean): Promise<{ error?: string }> {
+  try {
+    await setClientActive(id, isActive);
+    revalidatePath('/clients');
+    return {};
+  } catch {
+    return { error: 'Failed to update client status.' };
+  }
+}
+
 export async function deleteClient(id: string): Promise<{ error?: string }> {
   try {
     await db.delete(clients).where(eq(clients.id, id));
@@ -70,7 +81,7 @@ export async function deleteClient(id: string): Promise<{ error?: string }> {
   } catch (err) {
     const message = err instanceof Error ? err.message : '';
     if (message.includes('23503')) {
-      return { error: 'Cannot delete client with existing income records.' };
+      return { error: 'Cannot delete a client that has income records. Disable the client instead.' };
     }
     return { error: 'Failed to save. Please try again.' };
   }

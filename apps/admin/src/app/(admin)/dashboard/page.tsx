@@ -19,13 +19,22 @@ import {
   getYTDLabel,
 } from '@/lib/financial'
 import { getSnapshotByPeriod } from '@pmg/db'
+import { autoClosePreviousMonthIfNeeded } from '@/app/actions/snapshots'
 import { DashboardShell } from '@/components/dashboard/dashboard-shell'
 
 export const dynamic = 'force-dynamic'
 export const metadata: Metadata = { title: 'Dashboard' }
 
 export default async function DashboardPage() {
-  const currentPeriod = new Date().toISOString().slice(0, 7)
+  // Auto-close previous month if we're on day 5 or later and it's not closed
+  await autoClosePreviousMonthIfNeeded()
+
+  const now = new Date()
+  const currentPeriod = now.toISOString().slice(0, 7)
+  const dayOfMonth = now.getDate()
+
+  // Close Month button is only shown between the 1st and 5th of the month
+  const showCloseMonthButton = dayOfMonth >= 1 && dayOfMonth <= 5
 
   const [
     ytdSummary,
@@ -106,6 +115,7 @@ export default async function DashboardPage() {
       // Snapshot
       currentPeriod={currentPeriod}
       hasSnapshot={hasSnapshot}
+      showCloseMonthButton={showCloseMonthButton}
     />
   )
 }

@@ -1,6 +1,6 @@
 import type { Metadata } from 'next'
 import { getClientsWithIncomeCount } from '@pmg/db'
-import { createClient, deleteClient } from '@/app/actions/clients'
+import { createClient, deleteClient, toggleClientActive } from '@/app/actions/clients'
 import { ClientAddForm } from '@/components/clients/client-add-form'
 import { ClientsTable } from '@/components/clients/clients-table'
 import { EmptyState } from '@/components/ui/empty-state'
@@ -22,7 +22,7 @@ export default async function ClientsPage() {
       {clients.length === 0 ? (
         <EmptyState message="No clients yet." ctaLabel="Add Client" ctaHref="#client-add-form" />
       ) : (
-        <ClientsTable clients={clients} deleteAction={deleteClient} />
+        <ClientsTable clients={clients} deleteAction={deleteClient} toggleActiveAction={toggleClientActive} />
       )}
     </div>
   )

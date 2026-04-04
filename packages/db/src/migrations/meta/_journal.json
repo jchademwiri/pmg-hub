@@ -36,6 +36,13 @@
       "when": 1775291000000,
       "tag": "0004_expense_categories",
       "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "7",
+      "when": 1775291100000,
+      "tag": "0005_client_is_active",
+      "breakpoints": true
     }
   ]
 }
