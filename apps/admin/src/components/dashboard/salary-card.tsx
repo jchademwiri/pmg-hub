@@ -59,14 +59,7 @@ export function SalaryCard({ salary, ytdSalary, profitPool, periodLabel, withdra
             <Wallet className="size-4" />
             Owner Salary
           </CardTitle>
-          <div className="flex items-center gap-2">
-            <span className="text-xs text-chart-1/50">{periodLabel}</span>
-            {withdrawals !== null && profitPool >= 0 && (
-              <Button variant="outline" size="sm" onClick={() => setModalOpen(true)}>
-                Withdraw
-              </Button>
-            )}
-          </div>
+          <span className="text-xs text-chart-1/50">{periodLabel}</span>
         </div>
       </CardHeader>
       <CardContent className="space-y-3">
@@ -74,7 +67,7 @@ export function SalaryCard({ salary, ytdSalary, profitPool, periodLabel, withdra
         <div>
           {withdrawals !== null ? (
             <>
-              <p className={`text-3xl font-bold tabular-nums ${isOverdrawn ? 'text-red-400' : 'text-chart-1'}`}>
+              <p className={`text-3xl font-bold tabular-nums ${isOverdrawn ? 'text-red-400' : 'text-green-400'}`}>
                 {formatZAR(balance)}
               </p>
               <p className="text-chart-1/50 text-xs mt-0.5">
@@ -150,6 +143,12 @@ export function SalaryCard({ salary, ytdSalary, profitPool, periodLabel, withdra
             </>
           )}
         </div>
+
+        {withdrawals !== null && profitPool >= 0 && !isOverdrawn && (
+          <Button className="w-full" variant="outline" onClick={() => setModalOpen(true)}>
+            Withdraw
+          </Button>
+        )}
       </CardContent>
       <WithdrawModal
         open={modalOpen}
