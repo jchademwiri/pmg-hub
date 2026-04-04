@@ -3,13 +3,13 @@
 
 **A Division of Playhouse Media Group (PTY) Ltd**
 
-📍 Gauteng, South Africa &nbsp;|&nbsp; 📞 074 501 7094 (Call / WhatsApp) &nbsp;|&nbsp; 📧 tenders@tenderedgesolutions.co.za
+📍 Centurion, Pretoria, South Africa &nbsp;|&nbsp; 📞 074 501 7094 (Call / WhatsApp) &nbsp;|&nbsp; 📧 tenders@tenderedgesolutions.co.za
 
 ---
 
 ## 1. Company Overview
 
-**TenderEdge Solutions (TES)** is a specialist tender compliance and bid preparation consultancy based in Gauteng, South Africa, serving businesses across a wide range of industries — from construction and engineering to ICT, healthcare, and professional services.
+**TenderEdge Solutions (TES)** is a specialist tender compliance and bid preparation consultancy based in Centurion, Pretoria, South Africa, serving businesses across a wide range of industries — from construction and engineering to ICT, healthcare, and professional services.
 
 We provide end-to-end tender support, from initial compliance setup and document preparation through to full tender compilation and submission. Our focus extends beyond paperwork — we strategically position businesses to compete and win contracts in both government and private-sector procurement.
 
@@ -55,7 +55,6 @@ South African businesses lose tender opportunities every day — not because the
 - COIDA Registration & Letter of Good Standing
 - B-BBEE Affidavits (EME / QSE)
 - CIDB Applications & grading upgrades
-- Tax Clearance & SARS compliance verification
 - Supplier database registrations — Municipal & Provincial
 
 ### BOQ & Pricing Support
@@ -197,7 +196,7 @@ Ready to submit with confidence? We'd love to help.
 |---|---|
 | 📞 **Phone / WhatsApp** | 074 501 7094 |
 | 📧 **Email** | tenders@tenderedgesolutions.co.za |
-| 📍 **Location** | Gauteng, South Africa |
+| 📍 **Location** | Centurion, Pretoria, South Africa |
 
 **Send your documents today for a FREE Tender Readiness Assessment.**
 
