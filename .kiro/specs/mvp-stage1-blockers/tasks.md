@@ -129,18 +129,18 @@ Zod validation, `revalidatePath`, `useTransition`, sonner toasts, shadcn/ui, ser
 
 ### B3 — Expense Category Management
 
-- [-] 16. Create expense-categories schema
+- [x] 16. Create expense-categories schema
   - Create `packages/db/src/schema/expense-categories.ts` with table `expense_categories`: `id` (uuid PK defaultRandom), `name` (text NOT NULL UNIQUE), `createdAt` (timestamptz defaultNow NOT NULL)
   - Export `expenseCategories`, `ExpenseCategory`, `NewExpenseCategory` types
   - Add `export * from "./expense-categories"` to `packages/db/src/schema/index.ts`
   - _Requirements: 11.1, 11.2_
 
-- [~] 17. Create Drizzle migration for expense_categories
+- [x] 17. Create Drizzle migration for expense_categories
   - Generate a new Drizzle migration that creates the `expense_categories` table
   - Seed with: `INSERT INTO expense_categories (name) SELECT DISTINCT category FROM expenses WHERE category IS NOT NULL ORDER BY category ON CONFLICT (name) DO NOTHING`
   - _Requirements: 11.3_
 
-- [~] 18. Add expense category query helpers
+- [x] 18. Add expense category query helpers
   - Add `getAllExpenseCategories()` to `packages/db/src/queries.ts`: SELECT id, name FROM expense_categories ORDER BY name ASC
   - Add `getExpenseCategoryById(id: string)` to `packages/db/src/queries.ts`: SELECT * WHERE id = $id, return null if not found
   - Export both from `packages/db/src/index.ts`
@@ -151,7 +151,7 @@ Zod validation, `revalidatePath`, `useTransition`, sonner toasts, shadcn/ui, ser
     - Generate random unique category names (1–30), insert all, call `getAllExpenseCategories()`, assert all inserted names present, ordered by name ASC, no duplicates
     - **Validates: Requirements 12.1**
 
-- [~] 19. Create expense category server actions
+- [x] 19. Create expense category server actions
   - Create `apps/admin/src/app/actions/expense-categories.ts` with `'use server'`
   - Implement `createExpenseCategory(formData)`: Zod `{ name: z.string().min(1).max(100) }`, insert, `revalidatePath('/expense-categories')` + `revalidatePath('/expenses')`, return `{}`
   - Implement `updateExpenseCategory(id, formData)`: same schema, update, both revalidatePaths, return `{}`
@@ -163,7 +163,7 @@ Zod validation, `revalidatePath`, `useTransition`, sonner toasts, shadcn/ui, ser
     - Generate a random category + random expense rows referencing it by name, insert all, call `deleteExpenseCategory(id)`, assert returns `{ error: 'Category is in use by existing expenses' }` and the row still exists in the DB
     - **Validates: Requirements 13.3, 13.4**
 
-- [~] 20. Create ExpenseCategoryAddForm component
+- [x] 20. Create ExpenseCategoryAddForm component
   - Create `apps/admin/src/components/expense-categories/expense-category-add-form.tsx` as `'use client'`
   - Single `name` text input + submit button; `useTransition` + `useRef` matching ClientAddForm pattern
   - On success: reset form; on error: inline error message

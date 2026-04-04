@@ -1,6 +1,7 @@
 import { db } from "./client";
-import { income, expenses, leads, divisions, withdrawals, clients, snapshots } from "./schema/index";
+import { income, expenses, leads, divisions, withdrawals, clients, snapshots, expenseCategories } from "./schema/index";
 import type { Client } from "./schema/clients";
+import type { ExpenseCategory } from "./schema/expense-categories";
 import { sql, eq, desc, asc, and } from "drizzle-orm";
 
 // ── Existing queries (unchanged) ─────────────────────────────────────────────
@@ -1010,4 +1011,28 @@ export async function getMonthlyRevenueByDivisionForYear(
     .groupBy(sql`TO_CHAR(${income.date}, 'YYYY-MM')`, divisions.name)
     .orderBy(sql`TO_CHAR(${income.date}, 'YYYY-MM') ASC`, asc(divisions.name));
   return result.map((r) => ({ month: r.month, divisionName: r.divisionName, total: Number(r.total) }));
+}
+
+// ── Expense category query helpers ────────────────────────────────────────────
+
+/**
+ * Returns all expense categories ordered by name ascending.
+ */
+export async function getAllExpenseCategories(): Promise<{ id: string; name: string }[]> {
+  return db
+    .select({ id: expenseCategories.id, name: expenseCategories.name })
+    .from(expenseCategories)
+    .orderBy(asc(expenseCategories.name));
+}
+
+/**
+ * Returns a single expense category by primary key, or null if not found.
+ */
+export async function getExpenseCategoryById(id: string): Promise<ExpenseCategory | null> {
+  const result = await db
+    .select()
+    .from(expenseCategories)
+    .where(eq(expenseCategories.id, id));
+
+  return result[0] ?? null;
 }

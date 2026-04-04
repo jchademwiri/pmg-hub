@@ -6,3 +6,4 @@ export * from "./expenses";
 export * from "./leads";
 export * from "./withdrawals";
 export * from "./snapshots";
+export * from "./expense-categories";
