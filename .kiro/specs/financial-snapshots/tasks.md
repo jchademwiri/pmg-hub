@@ -13,7 +13,7 @@ Implement point-in-time locking of monthly financial figures. The dependency cha
   - Add `snapshots` to the `DROP TABLE IF EXISTS` statement in `packages/db/src/reset.ts`, listed before `leads`
   - _Requirements: 1.1, 1.2, 1.3, 8.1, 8.2_
 
-- [ ] 2. Query helpers — add snapshot queries to queries.ts
+- [x] 2. Query helpers — add snapshot queries to queries.ts
   - [x] 2.1 Add `SnapshotRow` type and three query helpers to `packages/db/src/queries.ts`
     - Define `SnapshotRow` type with all columns (numeric fields as `string`, `createdAt` as `Date`)
     - Implement `getAllSnapshots()` — returns all rows ordered by `period DESC`
@@ -22,15 +22,15 @@ Implement point-in-time locking of monthly financial figures. The dependency cha
     - Export `getAllSnapshots`, `getSnapshotByPeriod`, `insertSnapshot`, and `SnapshotRow` from `packages/db/src/index.ts`
     - _Requirements: 2.1, 2.2, 2.3, 2.4, 2.5_
 
-  - [ ]* 2.2 Write property test for getAllSnapshots ordering invariant (Property 1)
+  - [x] 2.2 Write property test for getAllSnapshots ordering invariant (Property 1)
     - **Property 1: getAllSnapshots ordering invariant**
     - **Validates: Requirements 2.1, 5.3**
 
-  - [ ]* 2.3 Write property test for getSnapshotByPeriod null return (Property 2)
+  - [x] 2.3 Write property test for getSnapshotByPeriod null return (Property 2)
     - **Property 2: getSnapshotByPeriod returns null for non-existent period**
     - **Validates: Requirements 2.2, 2.4**
 
-  - [ ]* 2.4 Write property test for numeric round-trip (Property 3)
+  - [x] 2.4 Write property test for numeric round-trip (Property 3)
     - **Property 3: Numeric round-trip — insert then retrieve preserves values**
     - **Validates: Requirements 2.2, 2.3, 6.2, 6.3**
 
@@ -46,19 +46,19 @@ Implement point-in-time locking of monthly financial figures. The dependency cha
   - On DB error return `{ error: err.message }` — never throw
   - _Requirements: 3.1, 3.2, 3.3, 3.4, 3.5, 3.6_
 
-  - [ ]* 4.1 Write property test for duplicate period guard (Property 4)
+  - [x] 4.1 Write property test for duplicate period guard (Property 4)
     - **Property 4: Duplicate period insert returns 'Month already closed'**
     - **Validates: Requirements 1.2, 1.4, 3.4**
 
-  - [ ]* 4.2 Write property test for invalid period format (Property 5)
+  - [x] 4.2 Write property test for invalid period format (Property 5)
     - **Property 5: Invalid period format returns validation error**
     - **Validates: Requirements 3.5, 3.6**
 
-  - [ ]* 4.3 Write property test for closeMonth success round-trip (Property 6)
+  - [x] 4.3 Write property test for closeMonth success round-trip (Property 6)
     - **Property 6: closeMonth success — valid period returns {} and snapshot is retrievable**
     - **Validates: Requirements 3.2, 3.3**
 
-- [ ] 5. Dashboard integration — CloseMonthButton + DashboardShell + page.tsx
+- [x] 5. Dashboard integration — CloseMonthButton + DashboardShell + page.tsx
   - [x] 5.1 Create `apps/admin/src/components/dashboard/close-month-button.tsx`
     - `'use client'` component accepting `{ period: string }`
     - Use `useTransition` for pending state; disable button and show "Closing…" label while in flight
@@ -81,7 +81,7 @@ Implement point-in-time locking of monthly financial figures. The dependency cha
 - [x] 6. Checkpoint — ensure dashboard compiles and Close Month button renders
   - Ensure all tests pass, ask the user if questions arise.
 
-- [ ] 7. Snapshots page — new route + sidebar nav item
+- [x] 7. Snapshots page — new route + sidebar nav item
   - [x] 7.1 Create `apps/admin/src/app/(admin)/snapshots/page.tsx`
     - Server Component; call `getAllSnapshots()` at the top
     - When snapshots exist: render a table with columns Period, Revenue, Expenses, PMG Share, Profit Pool, Salary, Reinvest, Reserve, Flex — all numeric columns formatted with `formatZAR`
@@ -94,7 +94,7 @@ Implement point-in-time locking of monthly financial figures. The dependency cha
     - Insert `{ href: '/snapshots', label: 'Snapshots', icon: Camera }` into `navItems` at index 4 (between "Divisions" and "Reports")
     - _Requirements: 5.5, 5.6, 5.7, 5.8_
 
-  - [ ]* 7.3 Write property test for period formatting (Property 7)
+  - [x] 7.3 Write property test for period formatting (Property 7)
     - **Property 7: Period formatting produces correct month name and year**
     - **Validates: Requirements 5.9**
 
@@ -110,13 +110,13 @@ Implement point-in-time locking of monthly financial figures. The dependency cha
 - [x] 9. Checkpoint — run `bun db:seed` and verify clean reset + reseed
   - Ensure all tests pass, ask the user if questions arise.
 
-- [ ] 10. Tests — write full test suite
+- [x] 10. Tests — write full test suite
   - [x] 10.1 Create `apps/admin/src/__tests__/snapshots.test.ts`
     - Write all eight property-based tests (P1–P8) using fast-check with minimum 100 iterations each, tagged with their property reference comments
     - Write unit tests: `CloseMonthButton` renders "Close Month" label; button is disabled and shows "Closing…" during transition; snapshots page renders empty-state when `snapshots = []`; snapshots page renders one row per snapshot; period `'2026-03'` formats to `'March 2026'`; `closeMonth` with valid period returns `{}` (mocked DB); duplicate insert throws unique constraint error
     - _Requirements: 1.2, 1.4, 2.1, 2.2, 2.3, 2.4, 3.2, 3.3, 3.4, 3.5, 3.6, 4.7, 4.8, 5.2, 5.4, 5.9, 6.2, 6.3, 6.4_
 
-  - [ ]* 10.2 Write property test for financial model formula invariants (Property 8)
+  - [x] 10.2 Write property test for financial model formula invariants (Property 8)
     - **Property 8: Financial model formula invariants**
     - **Validates: Requirements 6.4**
 
