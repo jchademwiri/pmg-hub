@@ -23,7 +23,7 @@
 10. ✅ [Phase 7 — Financial Snapshots](#10-phase-7--financial-snapshots)
 11. ✅ [Phase 8 — Reporting & Insights](#11-phase-8--reporting--insights)
 12. [Phase 9 — System Hardening](#12-phase-9--system-hardening)
-13. [Phase 10 — SaaS Expansion](#13-phase-10--saas-expansion)
+13. [Phase 10 — Auth, Roles & Advanced Features](#13-phase-10--auth-roles--advanced-features)
 14. [Tech Stack Reference](#14-tech-stack-reference)
 15. [Key Principles](#15-key-principles)
 
@@ -699,27 +699,204 @@ update our seed data file to include the current updated schema
 
 ### Goal
 
-Prepare the system for real daily use.
+Prepare the system for real daily use — validation feedback, error boundaries,
+loading states, and empty states across every route.
 
 ### Tasks
 
-- [ ] **Auth** — wire Better Auth + magic link. Update `src/proxy.ts` to check
-      `better-auth.session_token`. Add `lib/auth.ts`, `lib/auth-client.ts`,
-      and `app/api/auth/[...all]/route.ts`.
 - [ ] **Validation feedback** — all Server Actions return `{ error: string }` on
-      failure. Errors display inline next to the form field.
-- [ ] **Error boundaries** — add `error.tsx` to `(admin)/` route group.
-- [ ] **Loading states** — add `loading.tsx` to each route (Suspense boundary).
-- [ ] **Empty states** — every list page handles zero-data gracefully.
-- [ ] **Rate limiting** — basic rate limiting on auth endpoints via proxy.
-- [ ] **Optimistic updates** — `useOptimistic` for lead status changes.
-
-### Database Seed
-update our seed data file to include the current updated schema 
+      failure. Errors display inline next to the relevant form field, not just
+      as a toast.
+- [ ] **Error boundaries** — add `error.tsx` to the `(admin)/` route group so
+      unhandled errors show a recovery UI instead of a blank page.
+- [ ] **Loading states** — add `loading.tsx` to each route (Suspense boundary)
+      so navigating between pages shows a skeleton instead of nothing.
+- [ ] **Empty states** — every list page (`/income`, `/expenses`, `/leads`,
+      `/divisions`, `/reports`) handles zero-data gracefully with a helpful
+      call-to-action message.
+- [ ] **Optimistic updates** — `useOptimistic` for lead status changes so the
+      UI updates instantly without waiting for the Server Action to complete.
+- [ ] **Database seed** — update seed file to include all schema changes from
+      Phases 4–8 (snapshots table, new query helpers).
 
 ---
 
-## 13. Tech Stack Reference
+## 13. Phase 10 — Auth, Roles & Advanced Features
+
+### Goal
+
+Lock down the system with invitation-only authentication, role-based access
+control, and a user management interface. No public sign-up — all users are
+pre-created by a super-admin via email invite.
+
+### Auth model
+
+Better Auth with magic link only. No passwords. No public registration.
+The sign-up endpoint is blocked at the hook level — a magic link only works
+if the email already exists in the `users` table (i.e. was invited first).
+
+```
+Super-admin invites email → invite token stored → email sent via Resend
+Recipient clicks link → account activated → session created
+Proxy checks session token + user exists → access granted
+```
+
+### Roles
+
+| Role | Access |
+|---|---|
+| `super_admin` | Full access + user management (`/users`) |
+| `admin` | Full access to all data routes — no user management |
+| `viewer` | Read-only — no add/edit/delete, no CSV export, no withdrawals |
+
+Role is stored on the `users` table and checked server-side in each page and
+Server Action. The proxy only checks for a valid session — role enforcement
+happens at the route/action level.
+
+### New database tables
+
+Better Auth manages `users` and `sessions` automatically via its Drizzle
+adapter. One additional table is needed:
+
+```ts
+// packages/db/src/schema/invitations.ts
+export const invitations = pgTable('invitations', {
+  id:        uuid('id').primaryKey().defaultRandom(),
+  email:     text('email').notNull().unique(),
+  role:      text('role', { enum: ['super_admin', 'admin', 'viewer'] })
+               .notNull().default('admin'),
+  token:     text('token').notNull().unique(),   // secure random token
+  expiresAt: timestamp('expires_at', { withTimezone: true }).notNull(),
+  acceptedAt:timestamp('accepted_at', { withTimezone: true }),
+  invitedBy: uuid('invited_by').references(() => users.id),
+  createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
+})
+```
+
+### New files
+
+| File | Description |
+|---|---|
+| `lib/auth.ts` | Better Auth config — magic link only, Drizzle adapter, sign-up hook that blocks uninvited emails |
+| `lib/auth-client.ts` | Better Auth client — `signIn.magicLink()`, `useSession()` |
+| `app/api/auth/[...all]/route.ts` | Better Auth catch-all API route |
+| `app/(auth)/login/page.tsx` | Magic link request form — email input only, no password field |
+| `app/(admin)/users/page.tsx` | User list — super_admin only. Shows all users with role badges and last-login. |
+| `app/(admin)/users/invite/page.tsx` | Invite form — email + role select. Sends invite email via Resend. |
+| `actions/users.ts` | `inviteUser(formData)`, `revokeUser(id)`, `updateUserRole(id, role)` |
+| `components/users/user-table.tsx` | User list table with role badge, last login, revoke button |
+| `components/users/invite-form.tsx` | Invite form component |
+
+### Auth config sketch
+
+```ts
+// lib/auth.ts
+import { betterAuth } from 'better-auth'
+import { drizzleAdapter } from 'better-auth/adapters/drizzle'
+
+export const auth = betterAuth({
+  database: drizzleAdapter(db, { provider: 'pg' }),
+  emailAndPassword: { enabled: false },
+  magicLink: {
+    enabled: true,
+    sendMagicLink: async ({ email, url }) => {
+      await resend.emails.send({
+        from: 'PMG Admin <noreply@playhousemedia.co.za>',
+        to: email,
+        subject: 'Sign in to PMG Control Center',
+        html: `<a href="${url}">Click to sign in</a>`,
+      })
+    },
+  },
+  hooks: {
+    before: [
+      {
+        // Block sign-up unless the email was pre-invited
+        matcher: (ctx) => ctx.path === '/sign-up/magic-link',
+        handler: async (ctx) => {
+          const existing = await db.query.users.findFirst({
+            where: eq(users.email, ctx.body.email),
+          })
+          if (!existing) {
+            throw new APIError('FORBIDDEN', { message: 'Not invited' })
+          }
+        },
+      },
+    ],
+  },
+})
+```
+
+### Proxy update
+
+```ts
+// src/proxy.ts
+import { NextResponse, type NextRequest } from 'next/server'
+
+export async function proxy(request: NextRequest) {
+  const sessionToken = request.cookies.get('better-auth.session_token')
+  const isAuthRoute = request.nextUrl.pathname.startsWith('/login') ||
+                      request.nextUrl.pathname.startsWith('/api/auth')
+
+  if (!sessionToken && !isAuthRoute) {
+    return NextResponse.redirect(new URL('/login', request.url))
+  }
+  return NextResponse.next()
+}
+
+export const config = { matcher: ['/((?!_next/static|_next/image|favicon.ico).*)'] }
+```
+
+### Role enforcement pattern
+
+```ts
+// In any Server Component page or Server Action:
+import { auth } from '@/lib/auth'
+import { headers } from 'next/headers'
+
+const session = await auth.api.getSession({ headers: await headers() })
+if (!session) redirect('/login')
+if (session.user.role === 'viewer') notFound()  // or return { error: 'Forbidden' }
+```
+
+### User management flow
+
+1. Super-admin visits `/users` — sees all users, their roles, and last login
+2. Clicks "Invite User" → fills in email + role → `inviteUser()` Server Action:
+   - Generates a secure token, stores in `invitations` table with 48h expiry
+   - Sends invite email via Resend with a magic link containing the token
+   - Pre-creates the user row in `users` table so the sign-up hook allows them through
+3. Recipient clicks link → Better Auth activates their account → redirected to `/dashboard`
+4. Super-admin can revoke access (`revokeUser`) or change role (`updateUserRole`) at any time
+
+### Tasks
+
+- [ ] **Better Auth setup** — install `better-auth`, configure `lib/auth.ts` and
+      `lib/auth-client.ts`, add `app/api/auth/[...all]/route.ts`.
+- [ ] **Database schema** — add `invitations` table to `packages/db/src/schema/`.
+      Run migration. Better Auth auto-creates `users` and `sessions` tables.
+- [ ] **Proxy** — update `src/proxy.ts` to check `better-auth.session_token` and
+      redirect unauthenticated requests to `/login`.
+- [ ] **Login page** — replace the static placeholder at `app/(auth)/login/page.tsx`
+      with a magic link request form. On submit: call `signIn.magicLink({ email })`.
+      Show "Check your email" confirmation state.
+- [ ] **Session in layout** — pass session/user to `AppSidebar` so the top-nav
+      can show the logged-in user's name and a sign-out button.
+- [ ] **User management pages** — `/users` list and `/users/invite` form,
+      restricted to `super_admin` role only.
+- [ ] **Server Actions** — `inviteUser`, `revokeUser`, `updateUserRole` in
+      `actions/users.ts`. All follow the never-throw `{ error?: string }` pattern.
+- [ ] **Role enforcement** — add role checks to all sensitive Server Actions
+      (`createIncome`, `deleteIncome`, `recordWithdrawal`, etc.) so `viewer`
+      role cannot mutate data.
+- [ ] **Rate limiting** — basic rate limiting on `/api/auth/*` endpoints via
+      the proxy to prevent magic link spam.
+- [ ] **Resend integration** — wire Resend for transactional emails (invite +
+      magic link). Add `RESEND_API_KEY` to `.env.local` and Vercel env vars.
+
+---
+
+## 14. Tech Stack Reference
 
 | Layer | Choice | Notes |
 |---|---|---|
@@ -747,7 +924,7 @@ update our seed data file to include the current updated schema
 
 ---
 
-## 14. Key Principles
+## 15. Key Principles
 
 > **Every rand has a job.**
 
