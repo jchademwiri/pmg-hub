@@ -13,6 +13,7 @@ import {
   getPreviousMonthSummary,
   getYTDSummary,
   getWithdrawalsCurrentMonth,
+  getTotalWithdrawalsYTD,
   getDivisionRevenueSeries,
   getDivisionRevenueCurrentMonth,
   getDivisionRevenueYTD,
@@ -39,6 +40,7 @@ export type LeadStatusCount = { status: string; count: number }
 
 export type WithdrawalSummary = {
   total: number;
+  carryOver: number;
   entries: { date: string; description: string | null; amount: number }[];
 }
 
@@ -80,7 +82,19 @@ export { getCurrentMonthSummary, getPreviousMonthSummary, getYTDSummary }
 
 // ── Withdrawals ───────────────────────────────────────────────────────────────
 export async function getWithdrawals(): Promise<WithdrawalSummary> {
-  return getWithdrawalsCurrentMonth()
+  const [current, ytdWithdrawn, ytdSummary, currentMonthSummary] = await Promise.all([
+    getWithdrawalsCurrentMonth(),
+    getTotalWithdrawalsYTD(),
+    getYTDSummary(),
+    getCurrentMonthSummary(),
+  ])
+  // Salary earned in all months before this one (YTD minus current month)
+  const prevMonthsSalary = ytdSummary.salary - currentMonthSummary.salary
+  // Withdrawals made in all months before this one
+  const prevMonthsWithdrawn = ytdWithdrawn - current.total
+  // Carry-over = what was earned but not yet withdrawn in prior months
+  const carryOver = Math.max(0, prevMonthsSalary - prevMonthsWithdrawn)
+  return { ...current, carryOver }
 }
 
 // ── Division revenue ──────────────────────────────────────────────────────────

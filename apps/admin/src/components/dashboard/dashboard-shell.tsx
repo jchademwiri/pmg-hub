@@ -123,6 +123,7 @@ export function DashboardShell({
           profitPool={activeSummary.profitPool}
           periodLabel={activeLabel}
           withdrawals={activeTab === 'current' ? withdrawals : null}
+          carryOver={activeTab === 'current' ? withdrawals.carryOver : 0}
         />
         <div className="lg:col-span-2">
           <DivisionAreaChart seriesData={divisionSeriesData} />

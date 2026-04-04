@@ -16,16 +16,19 @@ type SalaryCardProps = {
   profitPool: number
   periodLabel: string
   withdrawals: WithdrawalSummary | null
+  carryOver?: number
 }
 
-export function SalaryCard({ salary, ytdSalary, profitPool, periodLabel, withdrawals }: SalaryCardProps) {
+export function SalaryCard({ salary, ytdSalary, profitPool, periodLabel, withdrawals, carryOver = 0 }: SalaryCardProps) {
   const router = useRouter()
   const [modalOpen, setModalOpen] = useState(false)
   const isNegative  = profitPool < 0
   const withdrawn   = withdrawals?.total ?? 0
-  const balance     = salary - withdrawn
+  const totalAvailable = salary + carryOver
+  const balance     = totalAvailable - withdrawn
   const isOverdrawn = balance < 0
   const hasWithdrawals = withdrawn > 0
+  const hasCarryOver = carryOver > 0
 
   if (isNegative) {
     return (
@@ -71,7 +74,7 @@ export function SalaryCard({ salary, ytdSalary, profitPool, periodLabel, withdra
                 {formatZAR(balance)}
               </p>
               <p className="text-chart-1/50 text-xs mt-0.5">
-                available · of {formatZAR(salary)} salary
+                available · of {formatZAR(totalAvailable)} salary
               </p>
             </>
           ) : (
@@ -95,6 +98,14 @@ export function SalaryCard({ salary, ytdSalary, profitPool, periodLabel, withdra
             <span className="text-chart-1/60">Recommended salary (35%)</span>
             <span className="text-chart-1 font-semibold tabular-nums">{formatZAR(salary)}</span>
           </div>
+
+          {/* Carry-over from previous months — only shown when there is carry-over */}
+          {withdrawals !== null && hasCarryOver && (
+            <div className="flex justify-between text-xs">
+              <span className="text-chart-1/60">Carried over from before</span>
+              <span className="text-chart-1/80 font-medium tabular-nums">+{formatZAR(carryOver)}</span>
+            </div>
+          )}
 
           {/* Withdrawals section — only shown on current month tab */}
           {withdrawals !== null && (

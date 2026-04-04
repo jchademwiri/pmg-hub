@@ -236,6 +236,17 @@ export async function getWithdrawalsCurrentMonth(): Promise<{
 }
 
 /**
+ * Returns the total amount withdrawn year-to-date (Jan 1 → now).
+ */
+export async function getTotalWithdrawalsYTD(): Promise<number> {
+  const result = await db
+    .select({ total: sql<string>`COALESCE(SUM(${withdrawals.amount}), '0')` })
+    .from(withdrawals)
+    .where(sql`${withdrawals.date} >= DATE_TRUNC('year', NOW())`);
+  return Number(result[0]?.total ?? 0);
+}
+
+/**
  * Inserts a new withdrawal record and returns the inserted row.
  */
 export async function insertWithdrawal(
