@@ -1,5 +1,6 @@
 import { db } from "./client";
 import { income, expenses, leads, divisions, withdrawals, clients, snapshots } from "./schema/index";
+import type { Client } from "./schema/clients";
 import { sql, eq, desc, asc, and } from "drizzle-orm";
 
 // ── Existing queries (unchanged) ─────────────────────────────────────────────
@@ -572,6 +573,51 @@ export async function getAllClients(): Promise<
     .select({ id: clients.id, name: clients.name, businessName: clients.businessName })
     .from(clients)
     .orderBy(asc(clients.name));
+}
+
+export type ClientWithIncomeCount = {
+  id: string;
+  name: string;
+  businessName: string | null;
+  email: string | null;
+  phone: string | null;
+  createdAt: Date;
+  incomeCount: number;
+};
+
+/**
+ * Returns all clients joined with a count of their associated income entries,
+ * ordered by client name ascending.
+ */
+export async function getClientsWithIncomeCount(): Promise<ClientWithIncomeCount[]> {
+  const result = await db
+    .select({
+      id: clients.id,
+      name: clients.name,
+      businessName: clients.businessName,
+      email: clients.email,
+      phone: clients.phone,
+      createdAt: clients.createdAt,
+      incomeCount: sql<number>`CAST(COUNT(${income.id}) AS INTEGER)`,
+    })
+    .from(clients)
+    .leftJoin(income, eq(income.clientId, clients.id))
+    .groupBy(clients.id)
+    .orderBy(asc(clients.name));
+
+  return result;
+}
+
+/**
+ * Returns a single client row by primary key, or null if no matching row exists.
+ */
+export async function getClientById(id: string): Promise<Client | null> {
+  const result = await db
+    .select()
+    .from(clients)
+    .where(eq(clients.id, id));
+
+  return result[0] ?? null;
 }
 
 // ── Expense management query helpers ─────────────────────────────────────────

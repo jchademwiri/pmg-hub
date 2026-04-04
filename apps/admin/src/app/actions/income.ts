@@ -7,7 +7,7 @@ import { db, income, eq } from '@pmg/db';
 const IncomeSchema = z.object({
   date:        z.string().min(1),
   divisionId:  z.string().uuid(),
-  clientId:    z.string().uuid().optional(),
+  clientId:    z.string().uuid(),
   description: z.string().optional(),
   amount:      z.coerce.number().positive(),
 });
@@ -15,7 +15,6 @@ const IncomeSchema = z.object({
 export async function createIncome(formData: FormData): Promise<{ error?: string }> {
   try {
     const raw = Object.fromEntries(formData);
-    if (raw.clientId === '') delete raw.clientId;
     const result = IncomeSchema.safeParse(raw);
     if (!result.success) {
       return { error: result.error.issues[0]?.message ?? 'Validation error' };
@@ -24,7 +23,7 @@ export async function createIncome(formData: FormData): Promise<{ error?: string
     await db.insert(income).values({
       date: parsed.date,
       divisionId: parsed.divisionId,
-      clientId: parsed.clientId ?? null,
+      clientId: parsed.clientId,
       description: parsed.description ?? null,
       amount: String(parsed.amount),
     });
@@ -39,7 +38,6 @@ export async function createIncome(formData: FormData): Promise<{ error?: string
 export async function updateIncome(id: string, formData: FormData): Promise<{ error?: string }> {
   try {
     const raw = Object.fromEntries(formData);
-    if (raw.clientId === '') delete raw.clientId;
     const result = IncomeSchema.safeParse(raw);
     if (!result.success) {
       return { error: result.error.issues[0]?.message ?? 'Validation error' };
@@ -49,7 +47,7 @@ export async function updateIncome(id: string, formData: FormData): Promise<{ er
       .set({
         date: parsed.date,
         divisionId: parsed.divisionId,
-        clientId: parsed.clientId ?? null,
+        clientId: parsed.clientId,
         description: parsed.description ?? null,
         amount: String(parsed.amount),
         updatedAt: new Date(),

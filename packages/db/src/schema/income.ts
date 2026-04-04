@@ -11,7 +11,7 @@ export const income = pgTable(
     divisionId: uuid("division_id")
       .notNull()
       .references(() => divisions.id, { onDelete: "restrict" }), // restrict: prevent division deletion while financial records exist
-    clientId: uuid("client_id").references(() => clients.id, { onDelete: "set null" }),
+    clientId: uuid("client_id").notNull().references(() => clients.id, { onDelete: "restrict" }),
     description: text("description"),
     amount: numeric("amount", { precision: 12, scale: 2 }).notNull(),
     createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),

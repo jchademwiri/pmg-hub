@@ -17,28 +17,30 @@ interface IncomeAddFormProps {
   createAction: (formData: FormData) => Promise<{ error?: string }>
 }
 
-const NO_CLIENT = '__none__'
-
 export function IncomeAddForm({ divisions, clients, createAction }: IncomeAddFormProps) {
   const formRef = React.useRef<HTMLFormElement>(null)
   const [isPending, startTransition] = React.useTransition()
   const [errorMessage, setErrorMessage] = React.useState<string | null>(null)
-  const [clientId, setClientId] = React.useState<string>(NO_CLIENT)
+  const [clientId, setClientId] = React.useState<string>('')
 
   function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault()
     setErrorMessage(null)
 
+    if (!clientId) {
+      setErrorMessage('Please select a client.')
+      return
+    }
+
     startTransition(async () => {
       const fd = new FormData(formRef.current!)
-      // Replace sentinel with empty string so server action normalization works
-      fd.set('clientId', clientId === NO_CLIENT ? '' : clientId)
+      fd.set('clientId', clientId)
       const result = await createAction(fd)
       if (result.error) {
         setErrorMessage(result.error)
       } else {
         formRef.current?.reset()
-        setClientId(NO_CLIENT)
+        setClientId('')
       }
     })
   }
@@ -83,10 +85,9 @@ export function IncomeAddForm({ divisions, clients, createAction }: IncomeAddFor
         </label>
         <Select value={clientId} onValueChange={setClientId} disabled={isPending}>
           <SelectTrigger id="income-client" className="w-44">
-            <SelectValue placeholder="No client" />
+            <SelectValue placeholder="Select client" />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value={NO_CLIENT}>No client</SelectItem>
             {clients.map((client) => (
               <SelectItem key={client.id} value={client.id}>
                 {client.businessName ?? client.name}

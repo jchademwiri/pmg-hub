@@ -20,13 +20,11 @@ interface IncomeEditFormProps {
   updateAction: (formData: FormData) => Promise<{ error?: string }>
 }
 
-const NO_CLIENT = '__none__'
-
 export function IncomeEditForm({ entry, divisions, clients, updateAction }: IncomeEditFormProps) {
   const router = useRouter()
   const [isPending, startTransition] = React.useTransition()
   const [errorMessage, setErrorMessage] = React.useState<string | null>(null)
-  const [clientId, setClientId] = React.useState<string>(entry.clientId ?? NO_CLIENT)
+  const [clientId, setClientId] = React.useState<string>(entry.clientId)
 
   function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault()
@@ -34,7 +32,7 @@ export function IncomeEditForm({ entry, divisions, clients, updateAction }: Inco
 
     startTransition(async () => {
       const fd = new FormData(e.currentTarget)
-      fd.set('clientId', clientId === NO_CLIENT ? '' : clientId)
+      fd.set('clientId', clientId)
       const result = await updateAction(fd)
       if (result.error) {
         setErrorMessage(result.error)
@@ -85,10 +83,9 @@ export function IncomeEditForm({ entry, divisions, clients, updateAction }: Inco
         </label>
         <Select value={clientId} onValueChange={setClientId} disabled={isPending}>
           <SelectTrigger id="income-client" className="w-44">
-            <SelectValue placeholder="No client" />
+            <SelectValue placeholder="Select client" />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value={NO_CLIENT}>No client</SelectItem>
             {clients.map((client) => (
               <SelectItem key={client.id} value={client.id}>
                 {client.businessName ?? client.name}
