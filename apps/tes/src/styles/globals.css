@@ -111,3 +111,9 @@
 .scrollbar-hide::-webkit-scrollbar {
   display: none;
 }
+
+/* ── Utility: subtle dot grid background pattern ── */
+.dot-grid {
+  background-image: radial-gradient(circle, rgba(201, 162, 39, 0.12) 1px, transparent 1px);
+  background-size: 28px 28px;
+}
