@@ -40,9 +40,9 @@ export async function autoClosePreviousMonthIfNeeded(): Promise<void> {
   // Only auto-close on day 5 or later
   if (day < 5) return;
 
-  // Compute previous month period
+  // Compute previous month period using local date parts to avoid UTC offset issues
   const prev = new Date(now.getFullYear(), now.getMonth() - 1, 1);
-  const period = prev.toISOString().slice(0, 7); // YYYY-MM
+  const period = `${prev.getFullYear()}-${String(prev.getMonth() + 1).padStart(2, '0')}`;
 
   const existing = await getSnapshotByPeriod(period);
   if (existing !== null) return; // already closed
