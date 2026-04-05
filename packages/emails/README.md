@@ -42,11 +42,15 @@ if (error) {
 
 ## Available Templates
 
-- `ContactFormEmail` — Contact form submission notification
-- `AutoReplyEmail` — Auto-reply to the person who submitted the form
-- `BookingConfirmationEmail` — Booking confirmation for a client
-- `NewSubscriberEmail` — New newsletter subscriber notification
-- `AdminNewLeadEmail` — New lead notification for the admin
+| Template | Purpose | Add when... |
+|---|---|---|
+| `AdminNewLeadEmail` | Admin notification when a lead submits an enquiry | TES lead form goes live |
+| `AutoReplyEmail` | Auto-reply to the person who submitted a form | TES lead form goes live |
+
+### Planned (add when the relevant site section is built)
+- `BookingConfirmationEmail` — AWS booking dialog
+- `ContactFormEmail` — AWS contact form
+- `WaitlistEmail` — AWS waitlist form
 
 ## Preview Server
 

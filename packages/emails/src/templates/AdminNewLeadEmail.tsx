@@ -11,6 +11,7 @@ import {
   Hr,
   Link,
   Tailwind,
+  pixelBasedPreset,
 } from "@react-email/components";
 import * as React from "react";
 import type { BrandingProps } from "../types";
@@ -19,6 +20,7 @@ export type AdminNewLeadEmailProps = {
   name: string;
   email: string;
   phone: string;
+  companyName_lead?: string;
   package_name: string;
   package_price: string;
   package_type: string;
@@ -29,27 +31,33 @@ const AdminNewLeadEmail = (props: AdminNewLeadEmailProps) => {
     name,
     email,
     phone,
+    companyName_lead,
     package_name,
     package_price,
     package_type,
-    companyName = "Apex Web Solutions",
+    companyName = "Your Company",
     primaryColor = "#1d4ed8",
-    websiteUrl = "https://apexwebsolutions.co.za",
+    websiteUrl = "https://example.com",
     logoUrl = undefined,
   } = props;
 
   return (
     <Html lang="en" dir="ltr">
-      <Tailwind>
+      <Tailwind
+        config={{
+          presets: [pixelBasedPreset],
+          theme: { extend: { colors: { brand: primaryColor } } },
+        }}
+      >
         <Head />
         <Preview>
-          New Lead Alert: {package_name} - {name} | {companyName}
+          New Lead: {package_name} — {name} | {companyName}
         </Preview>
         <Body className="bg-[#F6F8FA] py-[40px] font-sans">
           <Container className="mx-auto max-w-[600px] rounded-[12px] bg-[#FFFFFF] shadow-lg">
             {/* Header */}
             <Section
-              className="rounded-t-[12px] py-[32px] text-center text-white"
+              className="rounded-t-[12px] py-[32px] text-center"
               style={{ backgroundColor: primaryColor }}
             >
               {logoUrl && (
@@ -62,16 +70,16 @@ const AdminNewLeadEmail = (props: AdminNewLeadEmailProps) => {
               <Heading className="m-0 text-[28px] font-bold text-white">
                 🎯 New Lead Alert
               </Heading>
-              <Text className="m-0 mt-[8px] text-[16px] text-blue-100">
-                {companyName} Lead Management
+              <Text className="m-0 mt-[8px] text-[16px] text-white opacity-80">
+                {companyName} · Lead Notification
               </Text>
             </Section>
 
             {/* Main Content */}
             <Section className="px-[32px] py-[32px]">
               <Text className="mb-[24px] text-[18px] font-medium text-[#020304]">
-                Great news! A new potential client has shown interest in our
-                services.
+                A new enquiry has come in. Follow up promptly to maximise
+                conversion.
               </Text>
 
               {/* Package Information */}
@@ -80,10 +88,10 @@ const AdminNewLeadEmail = (props: AdminNewLeadEmailProps) => {
                   className="m-0 mb-[16px] text-[20px] font-bold"
                   style={{ color: primaryColor }}
                 >
-                  📋 Package Details
+                  📋 Enquiry Details
                 </Heading>
                 <Text className="m-0 mb-[8px] text-[16px] text-[#020304]">
-                  <strong>Plan:</strong> {package_name}
+                  <strong>Service:</strong> {package_name}
                 </Text>
                 <Text className="m-0 mb-[8px] text-[16px] text-[#020304]">
                   <strong>Price:</strong>{" "}
@@ -96,7 +104,7 @@ const AdminNewLeadEmail = (props: AdminNewLeadEmailProps) => {
                 </Text>
               </Section>
 
-              <Hr className="my-[24px] border-gray-300" />
+              <Hr className="my-[24px] border-none border-t border-solid border-gray-200" />
 
               {/* Contact Information */}
               <Section className="mb-[24px] rounded-[8px] border border-solid border-gray-200 bg-[#F6F8FA] p-[24px]">
@@ -104,22 +112,17 @@ const AdminNewLeadEmail = (props: AdminNewLeadEmailProps) => {
                   className="m-0 mb-[16px] text-[20px] font-bold"
                   style={{ color: primaryColor }}
                 >
-                  👤 Contact Information
+                  👤 Contact Details
                 </Heading>
                 <Text className="m-0 mb-[8px] text-[16px] text-[#020304]">
                   <strong>Name:</strong> {name}
                 </Text>
+                {companyName_lead && (
+                  <Text className="m-0 mb-[8px] text-[16px] text-[#020304]">
+                    <strong>Company:</strong> {companyName_lead}
+                  </Text>
+                )}
                 <Text className="m-0 mb-[8px] text-[16px] text-[#020304]">
-                  <strong>Email:</strong>{" "}
-                  <Link
-                    href={`mailto:${email}`}
-                    style={{ color: primaryColor }}
-                    className="underline"
-                  >
-                    {email}
-                  </Link>
-                </Text>
-                <Text className="m-0 mb-0 text-[16px] text-[#020304]">
                   <strong>Phone:</strong>{" "}
                   <Link
                     href={`tel:${phone}`}
@@ -129,33 +132,32 @@ const AdminNewLeadEmail = (props: AdminNewLeadEmailProps) => {
                     {phone}
                   </Link>
                 </Text>
+                <Text className="m-0 mb-0 text-[16px] text-[#020304]">
+                  <strong>Email:</strong>{" "}
+                  <Link
+                    href={`mailto:${email}`}
+                    style={{ color: primaryColor }}
+                    className="underline"
+                  >
+                    {email}
+                  </Link>
+                </Text>
               </Section>
 
               {/* Call to Action */}
               <Section className="py-[24px] text-center">
-                <Text className="mb-[16px] text-[16px] text-[#020304]">
-                  Follow up with this lead promptly to maximize conversion
-                  potential.
-                </Text>
                 <Link
                   href={`mailto:${email}`}
                   className="box-border inline-block rounded-[6px] px-[32px] py-[12px] text-[16px] font-semibold text-white no-underline"
                   style={{ backgroundColor: primaryColor }}
                 >
-                  Contact Lead Now
+                  Reply to Lead
                 </Link>
               </Section>
             </Section>
 
             {/* Footer */}
-            <Section className="rounded-b-[12px] border-t border-solid border-gray-200 bg-[#F6F8FA] px-[32px] py-[24px]">
-              <Text className="m-0 mb-[8px] text-center text-[14px] text-gray-600">
-                Streamline your tender management process with our comprehensive
-                platform.
-              </Text>
-              <Text className="m-0 mb-[8px] text-center text-[12px] text-gray-500">
-                123 Business Ave, Suite 100
-              </Text>
+            <Section className="rounded-b-[12px] border-none border-t border-solid border-gray-200 bg-[#F6F8FA] px-[32px] py-[24px]">
               <Text className="m-0 mb-[8px] text-center text-[12px] text-gray-500">
                 <Link
                   href={websiteUrl}
@@ -177,12 +179,16 @@ const AdminNewLeadEmail = (props: AdminNewLeadEmailProps) => {
 };
 
 AdminNewLeadEmail.PreviewProps = {
-  name: "John Smith",
-  email: "john.smith@example.com",
-  phone: "+27 11 123 4567",
-  package_name: "Professional Tender Management",
-  package_price: "R2,500/month",
-  package_type: "Premium",
+  name: "Sipho Dlamini",
+  email: "sipho@example.co.za",
+  phone: "074 501 7094",
+  companyName_lead: "Basadipele Cleaning & Hygiene",
+  package_name: "Tender-Ready Starter",
+  package_price: "R2,500",
+  package_type: "TES Enquiry",
+  companyName: "Tender Edge Solutions",
+  primaryColor: "#c9a227",
+  websiteUrl: "https://www.tenderedgesolutions.co.za",
 };
 
 export default AdminNewLeadEmail;
