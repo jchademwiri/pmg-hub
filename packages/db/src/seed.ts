@@ -4,7 +4,7 @@ import { resolve } from "path";
 import pg from "pg";
 import { drizzle } from "drizzle-orm/node-postgres";
 import { eq } from "drizzle-orm";
-import { divisions, clients, income, expenses, leads, withdrawals, awsPricing, snapshots } from "./schema";
+import { divisions, clients, income, expenses, leads, withdrawals, awsPricing, snapshots, expenseCategories } from "./schema";
 import { getFinancialSummaryForPeriod } from "./queries";
 
 config({ path: resolve(__dirname, "../.env") });
@@ -35,6 +35,24 @@ const tes  = divisionRows.find((d) => d.name === "Tender Edge Solutions")!;
 const aws  = divisionRows.find((d) => d.name === "Apex Web Solutions")!;
 
 console.log("  ✓ divisions");
+
+// ── Expense Categories ────────────────────────────────────────────────────────
+await db
+  .insert(expenseCategories)
+  .values([
+    { name: "Advertising" },
+    { name: "Equipment" },
+    { name: "Freelancers" },
+    { name: "General" },
+    { name: "Hosting" },
+    { name: "Printing" },
+    { name: "Professional Services" },
+    { name: "Software" },
+    { name: "Transport" },
+  ])
+  .onConflictDoNothing();
+
+console.log("  ✓ expense_categories");
 
 // ── Clients ──────────────────────────────────────────────────────────────────
 // Use onConflictDoNothing() (unique on email) then query back to get IDs.

@@ -12,8 +12,7 @@
     "db:push": "bun --filter @pmg/db db:push",
     "db:reset": "bun --filter @pmg/db db:reset",
     "db:seed": "bun --filter @pmg/db db:seed",
-    "db:studio": "bun --filter @pmg/db db:studio",
-     "prune:turbo": "turbo prune"
+    "db:studio": "bun --filter @pmg/db db:studio"
   },
   "catalog": {
     "astro": "^6.0.8",

@@ -57,6 +57,13 @@
       "when": 1775291300000,
       "tag": "0007_withdrawal_account",
       "breakpoints": true
+    },
+    {
+      "idx": 8,
+      "version": "7",
+      "when": 1775385447033,
+      "tag": "0008_lively_squadron_supreme",
+      "breakpoints": true
     }
   ]
 }
