@@ -127,7 +127,7 @@ function IncomeTableRow({
       <TableCell>{entry.divisionName}</TableCell>
       <TableCell>{entry.clientName ?? ''}</TableCell>
       <TableCell>{entry.description ?? ''}</TableCell>
-      <TableCell>{formatZAR(Number(entry.amount))}</TableCell>
+      <TableCell className="tabular-nums font-medium text-green-500">+{formatZAR(Number(entry.amount))}</TableCell>
       <TableCell>
         <div className="flex items-center gap-2">
           <Button variant="ghost" size="icon" onClick={startEdit}>

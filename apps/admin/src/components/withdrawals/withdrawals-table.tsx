@@ -100,8 +100,8 @@ function WithdrawalTableRow({ entry, deleteAction, updateAction }: {
   return (
     <TableRow>
       <TableCell>{entry.date}</TableCell>
-      <TableCell className="text-muted-foreground text-sm">{ACCOUNT_LABELS[entry.account] ?? entry.account}</TableCell>
-      <TableCell>{formatZAR(Number(entry.amount))}</TableCell>
+      <TableCell className="text-sm text-muted-foreground">{ACCOUNT_LABELS[entry.account] ?? entry.account}</TableCell>
+      <TableCell className="tabular-nums font-medium text-amber-500">−{formatZAR(Number(entry.amount))}</TableCell>
       <TableCell>{entry.description ?? ''}</TableCell>
       <TableCell>
         <div className="flex items-center gap-2">

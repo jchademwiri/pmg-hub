@@ -82,7 +82,7 @@ export function AccountCard({
         <div className="rounded-lg bg-muted/40 p-3 space-y-1.5 text-xs">
           <div className="flex justify-between">
             <span className="text-muted-foreground">Earned YTD</span>
-            <span className="tabular-nums font-medium">{formatZAR(earned)}</span>
+            <span className="tabular-nums font-medium text-green-500">+{formatZAR(earned)}</span>
           </div>
           <div className="flex justify-between border-t border-border pt-1.5">
             <span className="text-muted-foreground">Withdrawn YTD</span>
@@ -92,7 +92,7 @@ export function AccountCard({
           </div>
           <div className="flex justify-between border-t border-border pt-1.5 font-semibold">
             <span>Balance</span>
-            <span className={`tabular-nums ${isNegative ? 'text-red-500' : ''}`}>{formatZAR(balance)}</span>
+            <span className={`tabular-nums ${isNegative ? 'text-red-500' : 'text-green-500'}`}>{formatZAR(balance)}</span>
           </div>
         </div>
 

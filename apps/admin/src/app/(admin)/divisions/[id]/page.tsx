@@ -85,15 +85,7 @@ export default async function DivisionDetailPage({ params }: DivisionDetailPageP
                   <TableCell>{e.date}</TableCell>
                   <TableCell>{e.clientName ?? '—'}</TableCell>
                   <TableCell>{e.description ?? '—'}</TableCell>
-                  <TableCell className="text-right tabular-nums">{formatZAR(Number(e.amount))}</TableCell>
-                </TableRow>
-              ))}
-            </TableBody>
-          </Table>
-        )}
-      </section>
-
-      {/* Expense history */}
+                  <TableCell className="text-right tabular-nums font-medium text-green-500">+{formatZAR(Number(e.amount))}</TableCell>
       <section className="rounded-lg border p-5 flex flex-col gap-4">
         <div className="flex items-center justify-between">
           <h2 className="text-base font-medium">Expense History</h2>
@@ -119,7 +111,7 @@ export default async function DivisionDetailPage({ params }: DivisionDetailPageP
                   <TableCell>{e.date}</TableCell>
                   <TableCell>{e.category}</TableCell>
                   <TableCell>{e.description ?? '—'}</TableCell>
-                  <TableCell className="text-right tabular-nums">{formatZAR(Number(e.amount))}</TableCell>
+                  <TableCell className="text-right tabular-nums font-medium text-amber-500">−{formatZAR(Number(e.amount))}</TableCell>
                 </TableRow>
               ))}
             </TableBody>

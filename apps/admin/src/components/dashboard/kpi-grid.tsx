@@ -63,7 +63,10 @@ function KpiCard({ label, value, delta, invertDelta, highlight, deltaLabel }: Kp
     highlight === 'danger'  ? 'border-red-500/30' :
     highlight === 'success' ? 'border-emerald-500/30' : 'border-border'
   const valueClass =
-    highlight === 'danger' ? 'text-red-400' : 'text-foreground'
+    highlight === 'danger'  ? 'text-red-500' :
+    highlight === 'success' ? 'text-green-500' :
+    // Revenue-type cards (not inverted) → green, expense-type (inverted) → amber
+    invertDelta ? 'text-amber-500' : 'text-green-500'
 
   return (
     <Card className={`rounded-xl border ${borderClass} bg-card shadow-none`}>
@@ -128,7 +131,7 @@ export function KpiGrid({ summary, deltas, previousSummary, deltaLabel }: Props)
         label="Profit Pool"
         value={summary.profitPool}
         delta={deltas?.profit ?? undefined}
-        highlight={summary.profitPool < 0 ? 'danger' : undefined}
+        highlight={summary.profitPool < 0 ? 'danger' : 'success'}
         deltaLabel={deltaLabel}
       />
     </div>

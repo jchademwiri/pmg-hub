@@ -91,8 +91,8 @@ export default async function ClientDetailPage({ params }: ClientDetailPageProps
                   <TableCell>{entry.date}</TableCell>
                   <TableCell>{entry.divisionName}</TableCell>
                   <TableCell>{entry.description ?? '—'}</TableCell>
-                  <TableCell className="text-right tabular-nums">
-                    {formatZAR(Number(entry.amount))}
+                  <TableCell className="text-right tabular-nums font-medium text-green-500">
+                    +{formatZAR(Number(entry.amount))}
                   </TableCell>
                 </TableRow>
               ))}

@@ -7,7 +7,6 @@ import { ACCOUNT_KEYS, ACCOUNT_LABELS } from '@/lib/accounts'
 import {
   Table, TableBody, TableCell, TableHead, TableHeader, TableRow,
 } from '@/components/ui/table'
-import { Badge } from '@/components/ui/badge'
 
 export const dynamic = 'force-dynamic'
 
@@ -145,9 +144,13 @@ export default async function AccountHistoryPage({ params }: AccountHistoryPageP
                 <TableCell className="text-muted-foreground text-sm">{row.date}</TableCell>
                 <TableCell>{row.description}</TableCell>
                 <TableCell>
-                  <Badge variant={row.type === 'credit' ? 'default' : 'secondary'}>
+                  <span className={`inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium ${
+                    row.type === 'credit'
+                      ? 'bg-green-500/15 text-green-500'
+                      : 'bg-amber-500/15 text-amber-500'
+                  }`}>
                     {row.type === 'credit' ? 'Credit' : 'Debit'}
-                  </Badge>
+                  </span>
                 </TableCell>
                 <TableCell className={`text-right tabular-nums font-medium ${row.type === 'debit' ? 'text-amber-500' : 'text-green-500'}`}>
                   {row.type === 'debit' ? '−' : '+'}{formatZAR(row.amount)}

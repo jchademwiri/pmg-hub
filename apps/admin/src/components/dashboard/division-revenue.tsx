@@ -83,7 +83,7 @@ export function DivisionRevenue({ divisions, divisionExpenseMap }: DivisionReven
                           style={{ width: `${revPct}%` }}
                         />
                       </div>
-                      <span className="text-xs text-muted-foreground tabular-nums w-24 text-right">
+                      <span className="text-xs text-green-500 tabular-nums w-24 text-right">
                         {formatZAR(div.total)}
                       </span>
                     </div>
@@ -95,7 +95,7 @@ export function DivisionRevenue({ divisions, divisionExpenseMap }: DivisionReven
                           style={{ width: `${expPct}%` }}
                         />
                       </div>
-                      <span className="text-xs text-muted-foreground/60 tabular-nums w-24 text-right">
+                      <span className="text-xs text-amber-500 tabular-nums w-24 text-right">
                         {formatZAR(div.expenses)}
                       </span>
                     </div>

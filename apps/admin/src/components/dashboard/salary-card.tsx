@@ -90,11 +90,11 @@ export function SalaryCard({
         <div className="rounded-lg bg-chart-1/10 border border-chart-1/20 p-3 space-y-1.5">
           <div className="flex justify-between text-xs">
             <span className="text-chart-1/60">Profit pool</span>
-            <span className="text-chart-1/80 font-medium tabular-nums">{formatZAR(profitPool)}</span>
+            <span className={`font-medium tabular-nums ${profitPool < 0 ? 'text-red-500' : 'text-green-500'}`}>{formatZAR(profitPool)}</span>
           </div>
           <div className="flex justify-between text-xs">
             <span className="text-chart-1/60">Recommended salary (35%)</span>
-            <span className="text-chart-1 font-semibold tabular-nums">{formatZAR(salary)}</span>
+            <span className="text-green-500 font-semibold tabular-nums">{formatZAR(salary)}</span>
           </div>
 
           {/* Carry-over — only shown when applicable */}
