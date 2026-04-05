@@ -10,9 +10,9 @@
   <div class='max-w-7xl mx-auto flex items-center justify-between'>
     <!-- Left: TES Wordmark -->
     <a
-      href='/'
+      href='#hero'
       class='font-condensed font-bold text-xl leading-none shrink-0'
-      aria-label='TenderEdge Solutions — home'
+      aria-label='TenderEdge Solutions — back to top'
     >
       <span class='text-foreground'>TenderEdge</span><span class='text-primary'>Solutions</span>
     </a>
@@ -94,9 +94,40 @@
   <!-- Mobile slide-down menu -->
   <div
     id='mobile-menu'
-    class='fixed top-0 left-0 right-0 z-40 pt-20 px-6 pb-6 bg-background/95 backdrop-blur-md border-b border-border transform -translate-y-full transition-transform duration-300 md:hidden'
+    class='fixed top-0 left-0 right-0 z-40 px-6 pb-6 bg-background/95 backdrop-blur-md border-b border-border transform -translate-y-full transition-transform duration-300 md:hidden'
     aria-hidden='true'
   >
+    <!-- Mobile menu header: brand + close -->
+    <div class='flex items-center justify-between py-4'>
+      <a
+        href='#hero'
+        class='mobile-nav-link font-condensed font-bold text-xl leading-none'
+        aria-label='TenderEdge Solutions — back to top'
+      >
+        <span class='text-foreground'>TenderEdge</span><span class='text-primary'>Solutions</span>
+      </a>
+      <button
+        id='mobile-menu-close'
+        class='flex items-center justify-center w-9 h-9 rounded-md text-foreground hover:text-primary transition-colors'
+        aria-label='Close navigation menu'
+      >
+        <svg
+          xmlns='http://www.w3.org/2000/svg'
+          width='20'
+          height='20'
+          viewBox='0 0 24 24'
+          fill='none'
+          stroke='currentColor'
+          stroke-width='2'
+          stroke-linecap='round'
+          stroke-linejoin='round'
+          aria-hidden='true'
+        >
+          <line x1='18' y1='6' x2='6' y2='18'></line>
+          <line x1='6' y1='6' x2='18' y2='18'></line>
+        </svg>
+      </button>
+    </div>
     <ul class='flex flex-col gap-1 list-none m-0 p-0' role='list'>
       <li>
         <a
@@ -139,6 +170,7 @@
   <script>
     const nav = document.getElementById('site-nav') as HTMLElement;
     const toggle = document.getElementById('mobile-menu-toggle') as HTMLButtonElement;
+    const closeBtn = document.getElementById('mobile-menu-close') as HTMLButtonElement;
     const mobileMenu = document.getElementById('mobile-menu') as HTMLElement;
     let menuOpen = false;
 
@@ -182,6 +214,8 @@
     toggle.addEventListener('click', () => {
       menuOpen ? closeMenu() : openMenu();
     });
+
+    closeBtn.addEventListener('click', closeMenu);
 
     // Close menu when a mobile nav link is clicked
     mobileMenu.querySelectorAll('.mobile-nav-link').forEach((link) => {
