@@ -594,12 +594,12 @@ export const server = {
       try {
         await sendEmail(
           {
-            apiKey:     import.meta.env.RESEND_API_KEY,
-            from:       import.meta.env.FROM_EMAIL,
-            adminEmail: import.meta.env.ADMIN_EMAIL,
+            apiKey:     import.meta.env.TES_RESEND_API_KEY,
+            from:       import.meta.env.TES_FROM_EMAIL,
+            adminEmail: import.meta.env.TES_ADMIN_EMAIL,
           },
           {
-            to: import.meta.env.ADMIN_EMAIL,
+            to: import.meta.env.TES_ADMIN_EMAIL,
             subject: `New TES Lead: ${input.name} — ${input.serviceInterest}`,
             react: React.createElement(AdminNewLeadEmail, {
               name:          input.name,
@@ -645,14 +645,25 @@ const submitted = result?.data?.success === true;
 )}
 ```
 
-### Required Environment Variables (`apps/tes/.env`)
+### Required Environment Variables (`apps/tes/.env.local`)
+
+Each app uses a site prefix to avoid collisions when running multiple apps locally.
 
 ```env
+# Database — shared across all apps
 DATABASE_URL=postgresql://USER:PASSWORD@HOST/neondb?sslmode=require
-RESEND_API_KEY=re_xxxxxxxxxxxx
-FROM_EMAIL=noreply@tenderedgesolutions.co.za
-ADMIN_EMAIL=tenders@tenderedgesolutions.co.za
+DATABASE_URL_UNPOOLED=postgresql://USER:PASSWORD@HOST/neondb?sslmode=require
+
+# Resend — TES sending identity (TES_ prefix)
+TES_RESEND_API_KEY=re_xxxxxxxxxxxx
+TES_FROM_EMAIL=noreply@tenderedgesolutions.co.za
+TES_ADMIN_EMAIL=tenders@tenderedgesolutions.co.za
+
+# Site
+TES_SITE_URL=http://localhost:4321
 ```
+
+See `apps/tes/.env.example` for the full template. Other sites use `AWS_` and `PMG_` prefixes respectively.
 
 ### Required `astro.config.mjs` changes
 
