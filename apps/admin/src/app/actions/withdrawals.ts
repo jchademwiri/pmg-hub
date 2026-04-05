@@ -9,6 +9,7 @@ const WithdrawalSchema = z.object({
   date:        z.string().min(1),
   amount:      z.coerce.number().positive(),
   description: z.string().optional(),
+  account:     z.string().min(1).default('salary'),
 });
 
 function formatDefaultDescription(dateStr: string): string {
@@ -29,7 +30,7 @@ export async function createWithdrawal(formData: FormData): Promise<{ error?: st
       return { error: 'Withdrawal date cannot be in the future.' };
     }
     const description = parsed.description?.trim() || formatDefaultDescription(parsed.date);
-    await insertWithdrawal(parsed.amount, parsed.date, description);
+    await insertWithdrawal(parsed.amount, parsed.date, description, parsed.account);
     revalidatePath('/withdrawals');
     revalidatePath('/dashboard');
     return {};
@@ -56,6 +57,7 @@ export async function updateWithdrawal(id: string, formData: FormData): Promise<
         date: parsed.date,
         amount: String(parsed.amount),
         description,
+        account: parsed.account,
       })
       .where(eq(withdrawals.id, id));
     revalidatePath('/withdrawals');

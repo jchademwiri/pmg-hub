@@ -50,6 +50,13 @@
       "when": 1775291200000,
       "tag": "0006_division_is_active",
       "breakpoints": true
+    },
+    {
+      "idx": 7,
+      "version": "7",
+      "when": 1775291300000,
+      "tag": "0007_withdrawal_account",
+      "breakpoints": true
     }
   ]
 }

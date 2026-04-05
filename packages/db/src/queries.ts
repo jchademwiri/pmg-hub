@@ -307,16 +307,49 @@ export async function getWithdrawalsYTDFull(): Promise<{
 }
 
 /**
- * Inserts a new withdrawal record and returns the inserted row.
+ * Returns total withdrawn per account YTD.
  */
+export async function getWithdrawalsByAccountYTD(): Promise<Record<string, number>> {
+  const result = await db
+    .select({
+      account: withdrawals.account,
+      total: sql<string>`COALESCE(SUM(${withdrawals.amount}), '0')`,
+    })
+    .from(withdrawals)
+    .where(sql`${withdrawals.date} >= DATE_TRUNC('year', NOW())`)
+    .groupBy(withdrawals.account);
+  const map: Record<string, number> = {};
+  for (const row of result) map[row.account] = Number(row.total);
+  return map;
+}
+
+/**
+ * Returns all withdrawals for a specific account, ordered by date DESC.
+ */
+export async function getWithdrawalsByAccount(account: string): Promise<WithdrawalRow[]> {
+  return db
+    .select({
+      id: withdrawals.id,
+      date: sql<string>`${withdrawals.date}::text`,
+      amount: withdrawals.amount,
+      description: withdrawals.description,
+      account: withdrawals.account,
+      createdAt: withdrawals.createdAt,
+    })
+    .from(withdrawals)
+    .where(eq(withdrawals.account, account))
+    .orderBy(desc(withdrawals.date), desc(withdrawals.createdAt));
+}
+
 export async function insertWithdrawal(
   amount: number,
   date: string,
-  description?: string
-): Promise<{ id: string; date: string; amount: number; description: string | null; createdAt: Date | null }> {
+  description?: string,
+  account: string = 'salary'
+): Promise<{ id: string; date: string; amount: number; description: string | null; account: string; createdAt: Date | null }> {
   const result = await db
     .insert(withdrawals)
-    .values({ amount: String(amount), date, description: description ?? null })
+    .values({ amount: String(amount), date, description: description ?? null, account })
     .returning();
   const row = result[0]!;
   return {
@@ -324,6 +357,7 @@ export async function insertWithdrawal(
     date: row.date,
     amount: Number(row.amount),
     description: row.description,
+    account: row.account,
     createdAt: row.createdAt,
   };
 }
@@ -1101,6 +1135,7 @@ export type WithdrawalRow = {
   date: string;          // ISO date string e.g. "2026-03-15"
   amount: string;        // numeric from DB — caller converts with Number()
   description: string | null;
+  account: string;
   createdAt: Date | null;
 };
 
@@ -1114,6 +1149,7 @@ export async function getAllWithdrawals(): Promise<WithdrawalRow[]> {
       date: sql<string>`${withdrawals.date}::text`,
       amount: withdrawals.amount,
       description: withdrawals.description,
+      account: withdrawals.account,
       createdAt: withdrawals.createdAt,
     })
     .from(withdrawals)
@@ -1130,6 +1166,7 @@ export async function getWithdrawalById(id: string): Promise<WithdrawalRow | nul
       date: sql<string>`${withdrawals.date}::text`,
       amount: withdrawals.amount,
       description: withdrawals.description,
+      account: withdrawals.account,
       createdAt: withdrawals.createdAt,
     })
     .from(withdrawals)

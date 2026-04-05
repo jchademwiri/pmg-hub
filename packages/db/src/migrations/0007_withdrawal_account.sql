@@ -1,0 +1,1 @@
+ALTER TABLE withdrawals ADD COLUMN IF NOT EXISTS account TEXT NOT NULL DEFAULT 'salary';

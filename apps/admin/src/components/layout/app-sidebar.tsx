@@ -7,13 +7,14 @@ import {
   SidebarMenuItem,
 } from '@/components/ui/sidebar'
 import { NavLink } from '@/components/layout/nav-link'
-import { LayoutDashboard, TrendingUp, TrendingDown, UserCheck, Users, Layers, Camera, BarChart3, Wallet } from 'lucide-react'
+import { LayoutDashboard, TrendingUp, TrendingDown, UserCheck, Users, Layers, Camera, BarChart3, Wallet, PiggyBank } from 'lucide-react'
 
 const navItems = [
   { href: '/dashboard',   label: 'Dashboard',   icon: LayoutDashboard },
   { href: '/income',      label: 'Income',      icon: TrendingUp },
   { href: '/expenses',    label: 'Expenses',    icon: TrendingDown },
   { href: '/withdrawals', label: 'Withdrawals', icon: Wallet },
+  { href: '/accounts',    label: 'Accounts',    icon: PiggyBank },
   { href: '/clients',   label: 'Clients',   icon: UserCheck },
   { href: '/leads',     label: 'Leads',     icon: Users },
   { href: '/divisions', label: 'Divisions', icon: Layers },

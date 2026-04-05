@@ -1,6 +1,9 @@
 import { check, date, index, numeric, pgTable, text, timestamp, uuid } from "drizzle-orm/pg-core";
 import { sql } from "drizzle-orm";
 
+export const ACCOUNT_TYPES = ['salary', 'pmg_share', 'reinvest', 'reserve', 'flex'] as const;
+export type AccountType = typeof ACCOUNT_TYPES[number];
+
 export const withdrawals = pgTable(
   "withdrawals",
   {
@@ -8,6 +11,7 @@ export const withdrawals = pgTable(
     date: date("date").notNull(),
     amount: numeric("amount", { precision: 12, scale: 2 }).notNull(),
     description: text("description"),
+    account: text("account").notNull().default('salary'),
     createdAt: timestamp("created_at", { withTimezone: true }).defaultNow(),
   },
   (t) => [
