@@ -117,3 +117,14 @@
   background-image: radial-gradient(circle, rgba(201, 162, 39, 0.12) 1px, transparent 1px);
   background-size: 28px 28px;
 }
+
+/* ── Utility: subtle diagonal line pattern (for bg-background sections) ── */
+.diagonal-lines {
+  background-image: repeating-linear-gradient(
+    -45deg,
+    rgba(201, 162, 39, 0.04) 0px,
+    rgba(201, 162, 39, 0.04) 1px,
+    transparent 1px,
+    transparent 20px
+  );
+}
