@@ -1,6 +1,6 @@
 import { defineAction } from 'astro:actions';
 import { z } from 'astro:schema';
-import { db, leads } from '@pmg/db';
+import { getDb, leads } from '@pmg/db';
 import { sendEmail, AdminNewLeadEmail } from '@pmg/emails';
 import * as React from 'react';
 
@@ -15,7 +15,20 @@ export const server = {
       serviceInterest: z.string().min(1, 'Please select a service'),
     }),
     handler: async (input) => {
-      const { TES_RESEND_API_KEY, TES_FROM_EMAIL, TES_ADMIN_EMAIL } = import.meta.env;
+      const {
+        TES_RESEND_API_KEY,
+        TES_FROM_EMAIL,
+        TES_ADMIN_EMAIL,
+        DATABASE_URL,
+        DATABASE_URL_UNPOOLED,
+      } = import.meta.env;
+
+      // Astro SSR exposes env via import.meta.env, not process.env.
+      // @pmg/db reads process.env, so we bridge the gap here.
+      process.env.DATABASE_URL = DATABASE_URL;
+      if (DATABASE_URL_UNPOOLED) process.env.DATABASE_URL_UNPOOLED = DATABASE_URL_UNPOOLED;
+
+      const db = getDb();
 
       await db
         .insert(leads)
@@ -41,16 +54,16 @@ export const server = {
             to:      TES_ADMIN_EMAIL,
             subject: `New TES Enquiry — ${input.name}`,
             react:   React.createElement(AdminNewLeadEmail, {
-              name:            input.name,
-              email:           input.email || 'Not provided',
-              phone:           input.phone,
+              name:             input.name,
+              email:            input.email || 'Not provided',
+              phone:            input.phone,
               companyName_lead: input.companyName || undefined,
-              package_name:    input.serviceInterest,
-              package_price:   'TBC',
-              package_type:    'TES Enquiry',
-              companyName:     'Tender Edge Solutions',
-              primaryColor:    '#c9a227',
-              websiteUrl:      'https://www.tenderedgesolutions.co.za',
+              package_name:     input.serviceInterest,
+              package_price:    'TBC',
+              package_type:     'TES Enquiry',
+              companyName:      'Tender Edge Solutions',
+              primaryColor:     '#c9a227',
+              websiteUrl:       'https://www.tenderedgesolutions.co.za',
             }),
           },
         );

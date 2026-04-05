@@ -137,7 +137,8 @@ const submitted = result?.data?.success === true;
               <!-- Submit -->
               <button
                 type="submit"
-                class="bg-primary hover:bg-primary-hover text-primary-foreground font-medium py-3 px-6 rounded-lg text-sm transition-colors w-full"
+                id="submit-btn"
+                class="bg-primary hover:bg-primary-hover text-primary-foreground font-medium py-3 px-6 rounded-lg text-sm transition-colors w-full disabled:opacity-60 disabled:cursor-not-allowed"
               >
                 Send My Enquiry
               </button>
@@ -147,6 +148,17 @@ const submitted = result?.data?.success === true;
       </div>
 
       <!-- Right column: Contact details -->
+
+<script>
+  const form = document.querySelector('form[action]') as HTMLFormElement | null;
+  const btn = document.getElementById('submit-btn') as HTMLButtonElement | null;
+  if (form && btn) {
+    form.addEventListener('submit', () => {
+      btn.disabled = true;
+      btn.textContent = 'Sending…';
+    });
+  }
+</script>
       <div class="flex flex-col gap-6">
         <div>
           <p class="text-foreground font-semibold text-base mb-3">Contact Us Directly</p>

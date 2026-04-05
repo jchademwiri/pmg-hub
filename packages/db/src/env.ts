@@ -2,7 +2,7 @@ import { z } from "zod";
 
 const envSchema = z.object({
   DATABASE_URL: z.string().url(),
-  DATABASE_URL_UNPOOLED: z.string().url(),
+  DATABASE_URL_UNPOOLED: z.string().url().optional(),
 });
 
 export function getEnv() {
