@@ -2,7 +2,7 @@
 
 import { z } from 'zod';
 import { revalidatePath } from 'next/cache';
-import { db, clients, eq } from '@pmg/db';
+import { db, clients, income, eq } from '@pmg/db';
 import { setClientActive } from '@pmg/db';
 
 const ClientSchema = z.object({
@@ -75,14 +75,20 @@ export async function toggleClientActive(id: string, isActive: boolean): Promise
 
 export async function deleteClient(id: string): Promise<{ error?: string }> {
   try {
+    const [incomeCount] = await db
+      .select({ id: income.id })
+      .from(income)
+      .where(eq(income.clientId, id))
+      .limit(1);
+
+    if (incomeCount) {
+      return { error: 'Cannot delete a client that has income records. Disable the client instead.' };
+    }
+
     await db.delete(clients).where(eq(clients.id, id));
     revalidatePath('/clients');
     return {};
-  } catch (err) {
-    const message = err instanceof Error ? err.message : '';
-    if (message.includes('23503')) {
-      return { error: 'Cannot delete a client that has income records. Disable the client instead.' };
-    }
-    return { error: 'Failed to save. Please try again.' };
+  } catch {
+    return { error: 'Failed to delete. Please try again.' };
   }
 }

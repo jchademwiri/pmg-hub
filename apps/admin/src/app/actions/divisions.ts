@@ -1,7 +1,7 @@
 'use server';
 
 import { revalidatePath } from 'next/cache';
-import { db, divisions, eq } from '@pmg/db';
+import { db, divisions, income, expenses, leads, eq } from '@pmg/db';
 import { setDivisionActive } from '@pmg/db';
 import { DivisionSchema } from './division-schema';
 
@@ -52,14 +52,21 @@ export async function toggleDivisionActive(id: string, isActive: boolean): Promi
 
 export async function deleteDivision(id: string): Promise<{ error?: string }> {
   try {
+    // Check all linked tables before attempting delete
+    const [incomeCount, expenseCount, leadCount] = await Promise.all([
+      db.select({ id: income.id }).from(income).where(eq(income.divisionId, id)).limit(1),
+      db.select({ id: expenses.id }).from(expenses).where(eq(expenses.divisionId, id)).limit(1),
+      db.select({ id: leads.id }).from(leads).where(eq(leads.divisionId, id)).limit(1),
+    ]);
+
+    if (incomeCount.length > 0 || expenseCount.length > 0 || leadCount.length > 0) {
+      return { error: 'Cannot delete a division that has linked records. Disable it instead.' };
+    }
+
     await db.delete(divisions).where(eq(divisions.id, id));
     revalidatePath('/divisions');
     return {};
-  } catch (err) {
-    const message = err instanceof Error ? err.message : '';
-    if (message.includes('23503')) {
-      return { error: 'Cannot delete a division that has income or expense records. Disable it instead.' };
-    }
-    return { error: 'Failed to save. Please try again.' };
+  } catch {
+    return { error: 'Failed to delete division. Please try again.' };
   }
 }
