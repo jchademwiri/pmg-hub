@@ -9,20 +9,20 @@
 
 ## 1. Company Overview
 
-**TenderEdge Solutions (TES)** is a specialist tender compliance and bid preparation consultancy based in Centurion, Pretoria, South Africa, serving businesses across a wide range of industries — from construction and engineering to ICT, healthcare, and professional services.
+**TenderEdge Solutions (TES)** is a specialist tender compliance and bid preparation consultancy based in Centurion, Pretoria, South Africa, serving businesses across a wide range of industries - from construction and engineering to ICT, and professional services.
 
-We provide end-to-end tender support, from initial compliance setup and document preparation through to full tender compilation and submission. Our focus extends beyond paperwork — we strategically position businesses to compete and win contracts in both government and private-sector procurement.
+We provide end-to-end tender support, from initial compliance setup and document preparation through to full tender compilation and submission. Our focus extends beyond paperwork - we strategically position businesses to compete and win contracts in both government and private-sector procurement.
 
-Whether you are a startup entering the tender space for the first time, a growing SME looking to scale your contract pipeline, or an established contractor seeking to reduce disqualification risks — **TenderEdge Solutions is built for you.**
+Whether you are a startup entering the tender space for the first time, a growing SME looking to scale your contract pipeline, or an established contractor seeking to reduce disqualification risks - **TenderEdge Solutions is built for you.**
 
-> *"We don't just prepare paperwork — we position businesses to win."*
+> *"We don't just prepare paperwork - we position businesses to win."*
 
 ---
 
 ## 2. Vision & Mission
 
 ### Vision
-To become South Africa's most trusted tender compliance and bid support partner — recognised for measurably improving client success rates through precision, compliance, and strategic execution.
+To become South Africa's most trusted tender compliance and bid support partner - recognised for measurably improving client success rates through precision, compliance, and strategic execution.
 
 ### Mission
 To simplify and professionalise the tender process by delivering accurate, compliant, and high-quality submissions that give our clients a genuine competitive edge in every opportunity they pursue.
@@ -31,7 +31,7 @@ To simplify and professionalise the tender process by delivering accurate, compl
 
 ## 3. The Problem We Solve
 
-South African businesses lose tender opportunities every day — not because they lack capability, but because of avoidable submission failures:
+South African businesses lose tender opportunities every day - not because they lack capability, but because of avoidable submission failures:
 
 - Incomplete or expired compliance documents
 - Incorrectly completed returnables and schedules
@@ -39,7 +39,7 @@ South African businesses lose tender opportunities every day — not because the
 - Missed technical requirements leading to automatic disqualification
 - No reliable system for tracking compliance renewals
 
-**TenderEdge Solutions eliminates each of these risks** — ensuring every submission is accurate, fully compliant, and professionally packaged before it leaves your hands.
+**TenderEdge Solutions eliminates each of these risks** - ensuring every submission is accurate, fully compliant, and professionally packaged before it leaves your hands.
 
 ---
 
@@ -48,14 +48,14 @@ South African businesses lose tender opportunities every day — not because the
 ### Tender Document Services
 - Full tender compilation and professional formatting
 - Completion of all returnables, schedules, and annexures
-- Submission packaging — both electronic and physical
+- Submission packaging - both electronic and physical
 
 ### Compliance & Registrations
 - CSD Registration & profile management
 - COIDA Registration & Letter of Good Standing
 - B-BBEE Affidavits (EME / QSE)
 - CIDB Applications & grading upgrades
-- Supplier database registrations — Municipal & Provincial
+- Supplier database registrations - Municipal & Provincial
 
 ### BOQ & Pricing Support
 - Bill of Quantities review and alignment
@@ -72,11 +72,11 @@ South African businesses lose tender opportunities every day — not because the
 
 Every client engagement follows a structured, results-driven methodology designed to maximise submission quality and minimise disqualification risk:
 
-1. **Tender Readiness Assessment** — Evaluate your current compliance status and identify gaps
-2. **Compliance Gap Analysis** — Detailed review of missing, expired, or non-compliant documents
-3. **Execution & Compilation** — Complete all required documentation to evaluator standards
-4. **Quality Assurance Review** — Rigorous accuracy and compliance checks before submission
-5. **Submission-Ready Delivery** — Professionally packaged tender, ready to submit with confidence
+1. **Tender Readiness Assessment** - Evaluate your current compliance status and identify gaps
+2. **Compliance Gap Analysis** - Detailed review of missing, expired, or non-compliant documents
+3. **Execution & Compilation** - Complete all required documentation to evaluator standards
+4. **Quality Assurance Review** - Rigorous accuracy and compliance checks before submission
+5. **Submission-Ready Delivery** - Professionally packaged tender, ready to submit with confidence
 
 ---
 
@@ -92,7 +92,7 @@ We work with businesses across compliance-driven sectors where tender opportunit
 | Security Services | PSIRA-registered security service providers |
 | Professional Services | HR, finance, consulting, training, marketing |
 | Technology & ICT | Software, IT support, digital services |
-| Specialised Sectors | Catering, healthcare, agriculture, medical supply |
+| Specialised Sectors | agriculture, Aboriculture |
 
 ### Business Segments We Support
 - Small and medium enterprises (SMEs) building their tender pipeline
@@ -109,7 +109,7 @@ Our specialisation in tender compliance and bid preparation gives clients a meas
 | What We Deliver | What That Means For You |
 |---|---|
 | **Deep Compliance Expertise** | Thorough knowledge of CSD, CIDB, SARS, and procurement rules across government tiers |
-| **Evaluator-Friendly Submissions** | Documents structured the way evaluators expect — reducing scoring friction |
+| **Evaluator-Friendly Submissions** | Documents structured the way evaluators expect - reducing scoring friction |
 | **Fast Turnaround** | Deadline-driven workflows without compromising quality |
 | **Low Disqualification Risk** | Systematic QA checks that catch errors before submission |
 | **Confidential & Reliable** | Professional discretion on all client information and tender strategies |
@@ -118,7 +118,7 @@ Our specialisation in tender compliance and bid preparation gives clients a meas
 
 ---
 
-## 8. Case Study — Basadipele Cleaning & Hygiene
+## 8. Case Study - Basadipele Cleaning & Hygiene
 
 Basadipele, a cleaning and hygiene services company, approached TenderEdge Solutions with incomplete compliance documentation and no structured tender process in place.
 
@@ -143,11 +143,11 @@ Basadipele, a cleaning and hygiene services company, approached TenderEdge Solut
 
 ## 9. Our Team
 
-### Senior Tender Specialist — Lead Consultant
-Leads all tender compliance, document preparation, and submission processes. Brings deep expertise in South African procurement regulations, CSD systems, CIDB grading requirements, and bid evaluation criteria — with a focused commitment to accuracy and deadline-driven delivery.
+### Senior Tender Specialist - Lead Consultant
+Leads all tender compliance, document preparation, and submission processes. Brings deep expertise in South African procurement regulations, CSD systems, CIDB grading requirements, and bid evaluation criteria - with a focused commitment to accuracy and deadline-driven delivery.
 
 ### Compliance Support Specialists
-A dedicated support team that manages the operational execution of client engagements — handling document sourcing, registration applications, compliance tracking, and quality assurance checks to ensure every submission leaves in a submission-ready state.
+A dedicated support team that manages the operational execution of client engagements - handling document sourcing, registration applications, compliance tracking, and quality assurance checks to ensure every submission leaves in a submission-ready state.
 
 > *"Every tender we handle is treated with the same precision and urgency as if it were our own."*
 
@@ -155,13 +155,40 @@ A dedicated support team that manages the operational execution of client engage
 
 ## 10. Service Fees
 
-Our fees are structured based on the scope of work required — whether that is a once-off tender compilation, a full compliance overhaul, or an ongoing monthly retainer.
+Our fees are structured to be transparent and accessible. No hidden costs, no surprises.
 
-- **Once-off Tender Compilation** — Quoted per tender based on complexity and volume of documents
-- **Compliance Packages** — Fixed-fee packages for registration and compliance setup
-- **Monthly Retainer** — Ongoing compliance management and tender monitoring support
+### Tender-Ready Starter Package - R2,500
+Everything you need to enter the tender market:
+- ✅ CSD Registration
+- ✅ B-BBEE Affidavit
+- ✅ COIDA Registration
+- ✅ SBD Forms Pack
+- *Saves R400 vs individual pricing*
 
-> 💡 **Your first Tender Readiness Assessment is FREE** — no commitment required. Contact us to get started.
+### Tender-Ready Professional Package - R5,500
+- ✅ Everything in Starter
+- ✅ CIDB Grade 1 Application
+- ✅ Municipal Supplier Registration
+- ✅ 1 Full Tender Compilation
+- *Saves R1,750 vs individual pricing*
+
+### Individual Services
+
+| Service | Price | Turnaround |
+|---|---|---|
+| CSD Registration (new profile) | R650 | 3–5 days |
+| CSD Profile Update / Amendment | R350 | 2–3 days |
+| COIDA Registration | R750 | 5–10 days |
+| COIDA Letter of Good Standing | R450 | 2–4 days |
+| B-BBEE Affidavit (EME/QSE) | R550 | 1–2 days |
+| CIDB Grade 1 Application | R1,200 | 7–14 days |
+| CIDB Grade 2–3 Application | R1,800 | 14–21 days |
+| SBD Forms Pack | R950 | 2–3 days |
+| Municipal Supplier Registration | R850 | 5–7 days |
+| Full Tender Compilation | R2,500+ | 3–5 days |
+| BoQ Preparation & Pricing Support | R1,500+ | 2–5 days |
+
+> 💡 **Your first Tender Readiness Assessment is FREE** - no commitment required. Contact us to get started.
 
 ---
 
@@ -202,11 +229,11 @@ Ready to submit with confidence? We'd love to help.
 
 ---
 
-*TenderEdge Solutions is committed to helping South African businesses submit professional, compliant, and competitive tenders. We go beyond document preparation — we ensure every submission is structured, accurate, and strategically aligned with tender requirements.*
+*TenderEdge Solutions is committed to helping South African businesses submit professional, compliant, and competitive tenders. We go beyond document preparation - we ensure every submission is structured, accurate, and strategically aligned with tender requirements.*
 
 *By partnering with us, you gain a reliable expert focused entirely on giving your business a measurable edge in every tender opportunity.*
 
 ---
 
-**TenderEdge Solutions — Your Edge in Every Tender.**
+**TenderEdge Solutions - Your Edge in Every Tender.**
 *A Division of Playhouse Media Group (PTY) Ltd*

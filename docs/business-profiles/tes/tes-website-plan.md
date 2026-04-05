@@ -37,7 +37,7 @@
 
 | Layer | Choice | Notes |
 |---|---|---|
-| Framework | Astro 6 | SSG — no server-side rendering needed |
+| Framework | Astro 6 | Hybrid (SSG + SSR for form action via `getActionResult`) |
 | Styling | Tailwind v4 + `@pmg/tailwind-config` | Inherits base config from monorepo |
 | Form handling | **Astro Actions** | No API endpoints — all form logic via `src/actions/index.ts` |
 | Fonts | Barlow Condensed (display) + DM Sans (body) | Already loaded in existing `ComingSoon.astro` |
@@ -68,11 +68,16 @@ TES operates in a sector built on credibility, compliance, and results. The desi
 | `--background` | `#0b1929` | Near-black navy — page background |
 | `--foreground` | `#f0f4f8` | Off-white body text |
 | `--primary` | `#c9a227` | Gold accent — CTAs, highlights, underlines |
+| `--primary-foreground` | `#0b1929` | Text on gold buttons |
 | `--primary-hover` | `#e0b82e` | Gold hover state |
+| `--secondary` | `#1a3350` | Supporting surface |
 | `--muted-foreground` | `#8ca0b3` | Subtext, labels, metadata |
 | `--card` | `#0f2237` | Section cards, service tiles |
 | `--border` | `rgba(201,162,39,0.2)` | Subtle gold borders |
+| `--input` | `rgba(201,162,39,0.15)` | Form input borders |
+| `--outline` | `rgba(201,162,39,0.4)` | Focus rings |
 | `--whatsapp` | `#25D366` | WhatsApp button always this colour |
+| `--whatsapp-hover` | `#1fb155` | WhatsApp hover state |
 
 **Typography**
 
@@ -169,7 +174,7 @@ Primary CTA:  [WhatsApp icon]  WhatsApp Us Now
 Secondary CTA: View our services ↓
               → smooth scroll to #services
 
-Trust note:   Based in Centurion · Serving all of Gauteng
+Trust note:   Based in Centurion · Serving all of South Africa
 ```
 
 **Design notes:**
@@ -379,6 +384,7 @@ B-BBEE Affidavit (EME/QSE)            R550      1–2 days
 CIDB Grade 1 Application               R1,200    7–14 days
 CIDB Grade 2–3 Application             R1,800    14–21 days
 SBD Forms Pack                         R950      2–3 days
+Municipal Supplier Registration        R850      5–7 days
 Full Tender Compilation                R2,500+   3–5 days
 BoQ Preparation & Pricing Support      R1,500+   2–5 days
 
@@ -413,8 +419,8 @@ Note at bottom:
 ```
 Eyebrow:  CLIENT RESULTS
 
-H2:       Real businesses.
-          Real tenders won.
+H2:       A real business.
+          A real tender won.
 
 Client:   Basadipele Cleaning & Hygiene
 
@@ -466,6 +472,7 @@ Subheading:
 
 Form fields:
   Name *                  (text input)
+  Company name            (text input — optional, improves lead quality)
   Phone number *          (tel input)
   Email address           (email input — optional)
   What do you need help with? *  (select dropdown)
@@ -567,6 +574,7 @@ export const server = {
       name:            z.string().min(1, 'Name is required'),
       phone:           z.string().min(7, 'Phone number is required'),
       email:           z.string().email().optional().or(z.literal('')),
+      companyName:     z.string().optional().or(z.literal('')),
       serviceInterest: z.string().min(1, 'Please select a service'),
     }),
     handler: async (input) => {
@@ -575,6 +583,7 @@ export const server = {
         name:            input.name,
         phone:           input.phone,
         email:           input.email || null,
+        companyName:     input.companyName || null,
         serviceInterest: input.serviceInterest,
         source:          'tes',
         status:          'new',
@@ -666,9 +675,14 @@ Mark `index.astro` as prerendered except the action route:
 
 ```astro
 ---
-export const prerender = false; // needed for actions to work on this page
+export const prerender = false;
+// Required for Astro Actions — getActionResult reads the POST response server-side.
+// This means index.astro is SSR on every request (no CDN edge cache for this page).
+// All other pages in the app remain statically generated.
 ---
 ```
+
+> **Note:** Setting `prerender = false` on `index.astro` is intentional. The `getActionResult` API requires a server context to read the form POST response. The tradeoff is acceptable for a single-page lead-gen site — Vercel's edge network still handles routing efficiently.
 
 ---
 
@@ -757,22 +771,33 @@ package.json has astro, @astrojs/vercel, @pmg/tailwind-config, @vercel/analytics
      --color-background: var(--background);
      --color-foreground: var(--foreground);
      --color-primary: var(--primary);
+     --color-primary-hover: var(--primary-hover);
      --color-muted-foreground: var(--muted-foreground);
      --color-card: var(--card);
      --color-border: var(--border);
      --color-whatsapp: var(--whatsapp);
+     --color-whatsapp-hover: var(--whatsapp-hover);
    }
    :root, .dark {
      --background: #0b1929;
      --foreground: #f0f4f8;
      --primary: #c9a227;
+     --primary-foreground: #0b1929;
      --primary-hover: #e0b82e;
+     --secondary: #1a3350;
      --muted-foreground: #8ca0b3;
      --card: #0f2237;
-     --border: rgba(201,162,39,0.2);
+     --border: rgba(201, 162, 39, 0.2);
+     --input: rgba(201, 162, 39, 0.15);
+     --outline: rgba(201, 162, 39, 0.4);
      --whatsapp: #25D366;
      --whatsapp-hover: #1fb155;
    }
+   /* Scroll offset for sticky nav — prevents section headings hiding behind nav */
+   section[id] { scroll-margin-top: 72px; }
+   /* Hide scrollbar utility (used by TrustBar) */
+   .scrollbar-hide { scrollbar-width: none; }
+   .scrollbar-hide::-webkit-scrollbar { display: none; }
 ```
 
 ---
@@ -797,7 +822,7 @@ Requirements:
     description: "Get CSD-registered, CIDB-graded, and tender-ready. B-BBEE affidavits,
       SBD forms, and full tender document prep in Gauteng. Free assessment."
     canonical: "https://www.tenderedgesolutions.co.za"
-- OG tags: og:title, og:description, og:image (/og-tes.png), og:type (website), og:locale (en_ZA)
+- OG tags: og:title, og:description, og:url (canonical), og:image (/og-tes.png), og:type (website), og:locale (en_ZA)
 - Favicon: /favicon.svg
 - <slot /> in body
 - body: class="min-h-screen bg-background text-foreground font-sans overflow-x-hidden"
@@ -879,7 +904,7 @@ Content (max-w-[640px], flex flex-col, justify-center, min-h-screen, px-6 py-20)
       View our services ↓
     </a>
   - Trust note: text-xs text-muted-foreground/60 mt-8
-    "Based in Centurion · Serving all of Gauteng"
+    "Based in Centurion · Serving all of South Africa"
 
 Entrance animations: reuse @keyframes up from ComingSoon.astro
   .animate-up { animation: up 0.7s ease both; }
@@ -1089,7 +1114,7 @@ Max-w-4xl mx-auto:
      thead: Service | Price | Turnaround — text-muted-foreground text-xs uppercase
      tbody rows: alternating bg-background/30 and transparent
        Each row: service name | price in gold font-medium | turnaround text-muted-foreground
-   11 rows (see Section 4 pricing content above for all 11 services)
+   11 rows (see Section 4 pricing content above for all 11 services — matches individual services table exactly)
 
 3. Tender-Ready Professional bundle:
    class="border border-primary/50 rounded-2xl p-8 mt-6"
@@ -1193,6 +1218,7 @@ Left — Form:
 
     Fields:
       Name * — text input, name="name", placeholder="Your full name"
+      Company name — text input, name="companyName", placeholder="Your company name (optional)"
       Phone * — tel input, name="phone", placeholder="074 501 7094"
       Email — email input, name="email", placeholder="you@company.co.za (optional)"
       Service interest * — <select name="serviceInterest">
