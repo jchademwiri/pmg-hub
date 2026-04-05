@@ -524,6 +524,7 @@ export async function getAllDivisions(): Promise<{ id: string; name: string }[]>
 export type DivisionRow = {
   id: string;
   name: string;
+  isActive: boolean;
   totalIncome: number;
   totalExpenses: number;
   netProfit: number;
@@ -539,6 +540,7 @@ export async function getDivisionsWithStats(): Promise<DivisionRow[]> {
     SELECT
       d.id,
       d.name,
+      d.is_active AS "isActive",
       COALESCE(SUM(i.amount), 0)::numeric AS "totalIncome",
       COALESCE(SUM(e.amount), 0)::numeric AS "totalExpenses",
       (COALESCE(SUM(i.amount), 0) - COALESCE(SUM(e.amount), 0))::numeric AS "netProfit",
@@ -547,13 +549,14 @@ export async function getDivisionsWithStats(): Promise<DivisionRow[]> {
     LEFT JOIN income i ON i.division_id = d.id
     LEFT JOIN expenses e ON e.division_id = d.id
     LEFT JOIN leads l ON l.division_id = d.id
-    GROUP BY d.id, d.name
+    GROUP BY d.id, d.name, d.is_active
     ORDER BY d.name ASC
   `);
 
   return (result.rows as Array<{
     id: string;
     name: string;
+    isActive: boolean;
     totalIncome: string;
     totalExpenses: string;
     netProfit: string;
@@ -561,11 +564,52 @@ export async function getDivisionsWithStats(): Promise<DivisionRow[]> {
   }>).map((row) => ({
     id: row.id,
     name: row.name,
+    isActive: row.isActive,
     totalIncome: Number(row.totalIncome),
     totalExpenses: Number(row.totalExpenses),
     netProfit: Number(row.netProfit),
     leadCount: Number(row.leadCount),
   }));
+}
+
+/**
+ * Returns a single division with stats by id, or null if not found.
+ */
+export async function getDivisionWithStatsById(id: string): Promise<DivisionRow | null> {
+  const result = await db.execute(sql`
+    SELECT
+      d.id,
+      d.name,
+      d.is_active AS "isActive",
+      COALESCE(SUM(i.amount), 0)::numeric AS "totalIncome",
+      COALESCE(SUM(e.amount), 0)::numeric AS "totalExpenses",
+      (COALESCE(SUM(i.amount), 0) - COALESCE(SUM(e.amount), 0))::numeric AS "netProfit",
+      COALESCE(COUNT(l.id), 0)::integer AS "leadCount"
+    FROM divisions d
+    LEFT JOIN income i ON i.division_id = d.id
+    LEFT JOIN expenses e ON e.division_id = d.id
+    LEFT JOIN leads l ON l.division_id = d.id
+    WHERE d.id = ${id}
+    GROUP BY d.id, d.name, d.is_active
+  `);
+  const row = result.rows[0] as { id: string; name: string; isActive: boolean; totalIncome: string; totalExpenses: string; netProfit: string; leadCount: string } | undefined;
+  if (!row) return null;
+  return {
+    id: row.id,
+    name: row.name,
+    isActive: row.isActive,
+    totalIncome: Number(row.totalIncome),
+    totalExpenses: Number(row.totalExpenses),
+    netProfit: Number(row.netProfit),
+    leadCount: Number(row.leadCount),
+  };
+}
+
+/**
+ * Sets isActive to the given value for the division with the given id.
+ */
+export async function setDivisionActive(id: string, isActive: boolean): Promise<void> {
+  await db.update(divisions).set({ isActive, updatedAt: new Date() }).where(eq(divisions.id, id));
 }
 
 /**

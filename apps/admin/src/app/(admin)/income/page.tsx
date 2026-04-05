@@ -5,12 +5,13 @@ import {
   getAllClients,
   getDistinctIncomeMonths,
 } from '@pmg/db'
-import { createIncome, deleteIncome } from '@/app/actions/income'
+import { createIncome, updateIncome, deleteIncome } from '@/app/actions/income'
 import { FilterBar } from '@/components/income/filter-bar'
 import { IncomeAddForm } from '@/components/income/income-add-form'
 import { IncomeTable } from '@/components/income/income-table'
 import { EmptyState } from '@/components/ui/empty-state'
 import { formatZAR } from '@/lib/format'
+import { SetPageTotal } from '@/components/layout/page-header-context'
 
 export const dynamic = 'force-dynamic'
 export const metadata: Metadata = { title: 'Income' }
@@ -32,13 +33,8 @@ export default async function IncomePage({ searchParams }: IncomePageProps) {
   const runningTotal = entries.reduce((sum, e) => sum + Number(e.amount), 0)
 
   return (
-    <div className="flex flex-col gap-6 p-6">
-      <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-semibold">Income</h1>
-        <span className="text-lg font-medium text-muted-foreground">
-          {formatZAR(runningTotal)}
-        </span>
-      </div>
+    <div className="flex flex-col gap-6">
+      <SetPageTotal value={formatZAR(runningTotal)} />
 
       <FilterBar
         divisions={divisions}
@@ -65,8 +61,9 @@ export default async function IncomePage({ searchParams }: IncomePageProps) {
           filtered={!!(divisionId || month)}
         />
       ) : (
-        <IncomeTable entries={entries} deleteAction={deleteIncome} />
+        <IncomeTable entries={entries} divisions={divisions} clients={clients} deleteAction={deleteIncome} updateAction={updateIncome} />
       )}
     </div>
   )
 }
+

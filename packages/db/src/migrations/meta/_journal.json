@@ -43,6 +43,13 @@
       "when": 1775291100000,
       "tag": "0005_client_is_active",
       "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "7",
+      "when": 1775291200000,
+      "tag": "0006_division_is_active",
+      "breakpoints": true
     }
   ]
 }

@@ -17,11 +17,7 @@ export default async function SnapshotsPage() {
   const snapshots = await getAllSnapshots()
 
   return (
-    <div className="flex flex-col gap-6 p-6">
-      <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-semibold">Financial Snapshots</h1>
-      </div>
-
+    <div className="flex flex-col gap-6">
       {snapshots.length === 0 ? (
         <p className="text-sm text-muted-foreground">
           No months have been closed yet. Use the Close Month button on the dashboard to lock a month&apos;s figures.
@@ -66,3 +62,4 @@ export default async function SnapshotsPage() {
     </div>
   )
 }
+

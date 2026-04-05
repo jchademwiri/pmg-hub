@@ -30,9 +30,7 @@ export default async function LeadsPage({ searchParams }: LeadsPageProps) {
   ])
 
   return (
-    <div className="flex flex-col gap-6 p-6">
-      <h1 className="text-2xl font-semibold">Leads</h1>
-
+    <div className="flex flex-col gap-6">
       <LeadStatusTabs
         counts={counts}
         currentStatus={status}
@@ -67,3 +65,4 @@ export default async function LeadsPage({ searchParams }: LeadsPageProps) {
     </div>
   )
 }
+

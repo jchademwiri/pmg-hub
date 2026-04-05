@@ -6,6 +6,7 @@ import { Separator } from '@/components/ui/separator'
 import {
   Breadcrumb, BreadcrumbList, BreadcrumbItem, BreadcrumbPage
 } from '@/components/ui/breadcrumb'
+import { usePageHeader } from '@/components/layout/page-header-context'
 
 const ROUTE_LABELS: Record<string, string> = {
   '/dashboard':   'Dashboard',
@@ -15,14 +16,12 @@ const ROUTE_LABELS: Record<string, string> = {
   '/clients':     'Clients',
   '/leads':       'Leads',
   '/divisions':   'Divisions',
-  '/snapshots':   'Snapshots',
-  '/reports':     'Reports',
+  '/snapshots':   'Financial Snapshots',
+  '/reports':     'Reports & Insights',
 }
 
 function getPageLabel(pathname: string): string {
-  // Exact match first
   if (ROUTE_LABELS[pathname]) return ROUTE_LABELS[pathname]
-  // Match by prefix (e.g. /clients/[id] → Clients)
   for (const [route, label] of Object.entries(ROUTE_LABELS)) {
     if (pathname.startsWith(route + '/')) return label
   }
@@ -31,19 +30,29 @@ function getPageLabel(pathname: string): string {
 
 export function TopNav() {
   const pathname = usePathname()
+  const { total } = usePageHeader()
   const label = getPageLabel(pathname)
 
   return (
-    <header className="h-12 flex items-center gap-2 px-4 border-b border-border bg-card">
+    <header className="sticky top-0 z-30 h-13 flex items-center gap-2 px-4 border-b border-border bg-card">
       <SidebarTrigger />
       <Separator orientation="vertical" className="h-4" />
-      <Breadcrumb>
-        <BreadcrumbList>
-          <BreadcrumbItem>
-            <BreadcrumbPage>{label}</BreadcrumbPage>
-          </BreadcrumbItem>
-        </BreadcrumbList>
-      </Breadcrumb>
+      <div className="flex flex-1 items-center justify-between">
+        <Breadcrumb>
+          <BreadcrumbList>
+            <BreadcrumbItem>
+              <BreadcrumbPage className="text-base font-semibold text-foreground">
+                {label}
+              </BreadcrumbPage>
+            </BreadcrumbItem>
+          </BreadcrumbList>
+        </Breadcrumb>
+        {total && (
+          <span className="text-base font-semibold tabular-nums text-muted-foreground pr-1">
+            {total}
+          </span>
+        )}
+      </div>
     </header>
   )
 }

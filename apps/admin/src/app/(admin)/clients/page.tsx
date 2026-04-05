@@ -12,11 +12,7 @@ export default async function ClientsPage() {
   const clients = await getClientsWithIncomeCount()
 
   return (
-    <div className="flex flex-col gap-6 p-6">
-      <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-semibold">Clients</h1>
-      </div>
-
+    <div className="flex flex-col gap-6">
       <ClientAddForm createAction={createClient} />
 
       {clients.length === 0 ? (
@@ -27,3 +23,4 @@ export default async function ClientsPage() {
     </div>
   )
 }
+

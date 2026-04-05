@@ -50,13 +50,10 @@ export default async function ReportsPage({ searchParams }: ReportsPageProps) {
     expensesByCategory.length > 0
 
   return (
-    <div className="flex flex-col gap-6 p-6">
-      <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-semibold">Reports &amp; Insights</h1>
-        <div className="flex items-center gap-2">
-          <YearFilter years={years} currentYear={year} />
-          <ExportCsvButton year={year} />
-        </div>
+    <div className="flex flex-col gap-6">
+      <div className="flex items-center justify-end gap-2">
+        <YearFilter years={years} currentYear={year} />
+        <ExportCsvButton year={year} />
       </div>
 
       {hasData ? (
@@ -76,3 +73,4 @@ export default async function ReportsPage({ searchParams }: ReportsPageProps) {
     </div>
   )
 }
+

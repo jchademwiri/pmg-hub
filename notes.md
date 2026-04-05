@@ -1,25 +1,5 @@
-- you must not be able to delete a client as long as she has records linked to them, but they can be disabled or activated so that we have all our financial records intact. if we delete user, our financial records will not be able to show where the money came from
+1. all the monies must be formated, i see on the income page, no fomating is applied
 
-- Withdrawal form needs to be updated to include optional description, if no description added system must use default value of Salary withdrawal — current date i this format (22 March 2026)
-
-- Expences page have categories on top. Freelancers: R 84 800,00
-Professional Services: R 7 750,00
-Software: R 21 330,00
-Equipment: R 51 500,00
-Printing: R 10 590,00
-Transport: R 21 450,00
-Advertising: R 90 000,00
-Hosting: R 10 680,00
-General: R 12 000,00
-Salaries: R 125 000,00
-Travel: R 4 700,00
-Marketing: R 8 500,00
-Office: R 7 700,00
-
-remove categories and put divisions and their total expense values
-
-- Month closed must only show between 1 to 5 of every month, if not closed by 5 of the new month, then it must auto close on the 5th midnight such that on the sixth its closed, and the butou ui must not show on the screen, when the month is closed button ui must not show, can only show from the 1st, once its closed it must be hidden from the ui
-user have 1 to the 5th to update any invoices and back data
-
-- /withdrawals - user must ne able to withdraw from this page
-
+2. i want a page that shows me the current balances of all revenues according to the shares where i can update withdrwals for for any reasons, it must have cards showing how much each account have for example salary, pmg share, Reinvest, Reserve and flex accounts
+these cards must show how much each account have, when i use the money i need to update
+i also need to see withdrwal history for each account

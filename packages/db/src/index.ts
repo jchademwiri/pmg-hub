@@ -6,6 +6,7 @@ export type { PeriodSummary, LeadRow, DivisionRow, SnapshotRow, ClientWithIncome
 export { getAllWithdrawals, getWithdrawalById } from './queries';
 export { getAllSnapshots, getSnapshotByPeriod, insertSnapshot, getTotalWithdrawalsYTD } from './queries';
 export { getClientsWithIncomeCount, getClientById, setClientActive } from './queries';
+export { getDivisionWithStatsById, setDivisionActive } from './queries';
 export { getAllExpenseCategories, getExpenseCategoryById } from './queries';
 export type { ExpenseCategory } from './schema/expense-categories';
 // export type { Withdrawal, NewWithdrawal } from './schema/withdrawals';

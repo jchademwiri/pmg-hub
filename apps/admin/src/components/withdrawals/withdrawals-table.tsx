@@ -1,43 +1,146 @@
 'use client'
 
 import * as React from 'react'
-import Link from 'next/link'
-import { Pencil, Trash2 } from 'lucide-react'
+import { Pencil, Trash2, X, Check } from 'lucide-react'
 import { toast } from 'sonner'
 import type { WithdrawalRow } from '@pmg/db'
 import { Button } from '@/components/ui/button'
+import { Input } from '@/components/ui/input'
 import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
+  Table, TableBody, TableCell, TableHead, TableHeader, TableRow,
 } from '@/components/ui/table'
 import { formatZAR } from '@/lib/format'
+
+const today = new Date().toISOString().split('T')[0]!
+
+function formatDefaultDescription(dateStr: string): string {
+  const date = new Date(dateStr + 'T00:00:00')
+  return `Salary withdrawal — ${date.toLocaleDateString('en-ZA', { day: 'numeric', month: 'long', year: 'numeric' })}`
+}
 
 interface WithdrawalsTableProps {
   entries: WithdrawalRow[]
   deleteAction: (id: string) => Promise<{ error?: string }>
+  updateAction: (id: string, formData: FormData) => Promise<{ error?: string }>
 }
 
-export function WithdrawalsTable({ entries, deleteAction }: WithdrawalsTableProps) {
-  const [pendingDeleteId, setPendingDeleteId] = React.useState<string | null>(null)
-  const [isPendingDelete, setIsPendingDelete] = React.useState(false)
+function WithdrawalTableRow({
+  entry, deleteAction, updateAction,
+}: {
+  entry: WithdrawalRow
+  deleteAction: (id: string) => Promise<{ error?: string }>
+  updateAction: (id: string, formData: FormData) => Promise<{ error?: string }>
+}) {
+  const [mode, setMode] = React.useState<'display' | 'edit' | 'confirm-delete'>('display')
+  const [editDate, setEditDate] = React.useState(entry.date)
+  const [editAmount, setEditAmount] = React.useState(entry.amount)
+  const [editDesc, setEditDesc] = React.useState(entry.description ?? '')
+  const [error, setError] = React.useState<string | null>(null)
+  const [isSaving, startSaveTransition] = React.useTransition()
+  const [isDeleting, setIsDeleting] = React.useState(false)
 
-  async function handleConfirmDelete(id: string) {
-    setIsPendingDelete(true)
+  function startEdit() {
+    setEditDate(entry.date)
+    setEditAmount(entry.amount)
+    setEditDesc(entry.description ?? '')
+    setError(null)
+    setMode('edit')
+  }
+
+  function handleSave() {
+    setError(null)
+    startSaveTransition(async () => {
+      const fd = new FormData()
+      fd.set('date', editDate)
+      fd.set('amount', editAmount)
+      fd.set('description', editDesc)
+      const result = await updateAction(entry.id, fd)
+      if (result.error) setError(result.error)
+      else setMode('display')
+    })
+  }
+
+  async function handleDelete() {
+    setIsDeleting(true)
     try {
-      const result = await deleteAction(id)
-      if (result.error) {
-        toast.error(result.error)
-      }
-      setPendingDeleteId(null)
+      const result = await deleteAction(entry.id)
+      if (result.error) { toast.error(result.error); setMode('display') }
     } finally {
-      setIsPendingDelete(false)
+      setIsDeleting(false)
     }
   }
 
+  if (mode === 'edit') {
+    return (
+      <>
+        <TableRow className="bg-muted/30">
+          <TableCell>
+            <Input type="date" value={editDate} max={today} onChange={(e) => setEditDate(e.target.value)} className="w-36" disabled={isSaving} />
+          </TableCell>
+          <TableCell>
+            <Input type="number" min="0.01" step="0.01" value={editAmount} onChange={(e) => setEditAmount(e.target.value)} className="w-32" disabled={isSaving} />
+          </TableCell>
+          <TableCell>
+            <Input
+              type="text"
+              value={editDesc}
+              onChange={(e) => setEditDesc(e.target.value)}
+              placeholder={formatDefaultDescription(editDate)}
+              className="w-72"
+              disabled={isSaving}
+            />
+          </TableCell>
+          <TableCell>
+            <div className="flex items-center gap-2">
+              <Button size="sm" onClick={handleSave} disabled={isSaving}>
+                <Check className="h-4 w-4 mr-1" />{isSaving ? 'Saving…' : 'Save'}
+              </Button>
+              <Button size="sm" variant="outline" onClick={() => setMode('display')} disabled={isSaving}>
+                <X className="h-4 w-4" />
+              </Button>
+            </div>
+          </TableCell>
+        </TableRow>
+        {error && (
+          <TableRow>
+            <TableCell colSpan={4} className="py-1">
+              <p className="text-sm text-destructive">{error}</p>
+            </TableCell>
+          </TableRow>
+        )}
+      </>
+    )
+  }
+
+  return (
+    <TableRow>
+      <TableCell>{entry.date}</TableCell>
+      <TableCell>{formatZAR(Number(entry.amount))}</TableCell>
+      <TableCell>{entry.description ?? ''}</TableCell>
+      <TableCell>
+        <div className="flex items-center gap-2">
+          <Button variant="ghost" size="icon" onClick={startEdit}>
+            <Pencil className="h-4 w-4" /><span className="sr-only">Edit</span>
+          </Button>
+          {mode === 'confirm-delete' ? (
+            <>
+              <Button variant="destructive" size="sm" disabled={isDeleting} onClick={handleDelete}>
+                {isDeleting ? 'Deleting…' : 'Confirm'}
+              </Button>
+              <Button variant="outline" size="sm" onClick={() => setMode('display')}>Cancel</Button>
+            </>
+          ) : (
+            <Button variant="ghost" size="icon" onClick={() => setMode('confirm-delete')}>
+              <Trash2 className="h-4 w-4" /><span className="sr-only">Delete</span>
+            </Button>
+          )}
+        </div>
+      </TableCell>
+    </TableRow>
+  )
+}
+
+export function WithdrawalsTable({ entries, deleteAction, updateAction }: WithdrawalsTableProps) {
   return (
     <Table>
       <TableHeader>
@@ -50,50 +153,7 @@ export function WithdrawalsTable({ entries, deleteAction }: WithdrawalsTableProp
       </TableHeader>
       <TableBody>
         {entries.map((entry) => (
-          <TableRow key={entry.id}>
-            <TableCell>{entry.date}</TableCell>
-            <TableCell>{formatZAR(Number(entry.amount))}</TableCell>
-            <TableCell>{entry.description ?? ''}</TableCell>
-            <TableCell>
-              <div className="flex items-center gap-2">
-                <Button asChild variant="ghost" size="icon">
-                  <Link href={'/withdrawals/' + entry.id}>
-                    <Pencil className="h-4 w-4" />
-                    <span className="sr-only">Edit</span>
-                  </Link>
-                </Button>
-
-                {pendingDeleteId === entry.id ? (
-                  <>
-                    <Button
-                      variant="destructive"
-                      size="sm"
-                      disabled={isPendingDelete}
-                      onClick={() => handleConfirmDelete(entry.id)}
-                    >
-                      {isPendingDelete ? 'Deleting…' : 'Confirm'}
-                    </Button>
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => setPendingDeleteId(null)}
-                    >
-                      Cancel
-                    </Button>
-                  </>
-                ) : (
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    onClick={() => setPendingDeleteId(entry.id)}
-                  >
-                    <Trash2 className="h-4 w-4" />
-                    <span className="sr-only">Delete</span>
-                  </Button>
-                )}
-              </div>
-            </TableCell>
-          </TableRow>
+          <WithdrawalTableRow key={entry.id} entry={entry} deleteAction={deleteAction} updateAction={updateAction} />
         ))}
       </TableBody>
     </Table>

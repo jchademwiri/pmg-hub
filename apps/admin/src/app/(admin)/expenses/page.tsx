@@ -5,12 +5,13 @@ import {
   getDistinctExpenseCategories,
   getDistinctExpenseMonths,
 } from '@pmg/db'
-import { createExpense, deleteExpense } from '@/app/actions/expenses'
+import { createExpense, updateExpense, deleteExpense } from '@/app/actions/expenses'
 import { ExpenseFilterBar } from '@/components/expenses/expense-filter-bar'
 import { ExpenseAddForm } from '@/components/expenses/expense-add-form'
 import { ExpenseTable } from '@/components/expenses/expense-table'
 import { EmptyState } from '@/components/ui/empty-state'
 import { formatZAR } from '@/lib/format'
+import { SetPageTotal } from '@/components/layout/page-header-context'
 
 export const dynamic = 'force-dynamic'
 export const metadata: Metadata = { title: 'Expenses' }
@@ -42,13 +43,8 @@ export default async function ExpensePage({ searchParams }: ExpensePageProps) {
   }, new Map<string, number>())
 
   return (
-    <div className="flex flex-col gap-6 p-6">
-      <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-semibold">Expenses</h1>
-        <span className="text-lg font-medium text-muted-foreground">
-          {formatZAR(runningTotal)}
-        </span>
-      </div>
+    <div className="flex flex-col gap-6">
+      <SetPageTotal value={formatZAR(runningTotal)} />
 
       {divisionBreakdown.size > 0 && (
         <div className="flex flex-wrap gap-2">
@@ -94,8 +90,9 @@ export default async function ExpensePage({ searchParams }: ExpensePageProps) {
           filtered={!!(filters.divisionId || filters.category || filters.month)}
         />
       ) : (
-        <ExpenseTable entries={entries} deleteAction={deleteExpense} />
+        <ExpenseTable entries={entries} divisions={divisions} categories={categories} deleteAction={deleteExpense} updateAction={updateExpense} />
       )}
     </div>
   )
 }
+

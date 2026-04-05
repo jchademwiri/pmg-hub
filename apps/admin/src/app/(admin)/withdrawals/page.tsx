@@ -1,11 +1,11 @@
 import type { Metadata } from 'next'
 import { getAllWithdrawals } from '@pmg/db'
-import { createWithdrawal, deleteWithdrawal } from '@/app/actions/withdrawals'
+import { createWithdrawal, updateWithdrawal, deleteWithdrawal } from '@/app/actions/withdrawals'
 import { WithdrawalsTable } from '@/components/withdrawals/withdrawals-table'
 import { WithdrawalAddForm } from '@/components/withdrawals/withdrawal-add-form'
 import { EmptyState } from '@/components/ui/empty-state'
-import { Badge } from '@/components/ui/badge'
 import { formatZAR } from '@/lib/format'
+import { SetPageTotal } from '@/components/layout/page-header-context'
 
 export const dynamic = 'force-dynamic'
 export const metadata: Metadata = { title: 'Withdrawals' }
@@ -19,21 +19,17 @@ export default async function WithdrawalsPage() {
     .reduce((sum, w) => sum + Number(w.amount), 0)
 
   return (
-    <div className="flex flex-col gap-6 p-6">
-      <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-semibold">Withdrawals</h1>
-        <Badge variant="secondary">
-          {formatZAR(ytdTotal)} YTD
-        </Badge>
-      </div>
+    <div className="flex flex-col gap-6">
+      <SetPageTotal value={formatZAR(ytdTotal) + ' YTD'} />
 
       <WithdrawalAddForm createAction={createWithdrawal} />
 
       {withdrawals.length === 0 ? (
         <EmptyState message="No withdrawals yet." />
       ) : (
-        <WithdrawalsTable entries={withdrawals} deleteAction={deleteWithdrawal} />
+        <WithdrawalsTable entries={withdrawals} deleteAction={deleteWithdrawal} updateAction={updateWithdrawal} />
       )}
     </div>
   )
 }
+

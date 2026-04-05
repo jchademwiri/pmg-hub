@@ -2,6 +2,7 @@
 
 import { revalidatePath } from 'next/cache';
 import { db, divisions, eq } from '@pmg/db';
+import { setDivisionActive } from '@pmg/db';
 import { DivisionSchema } from './division-schema';
 
 export async function createDivision(formData: FormData): Promise<{ error?: string }> {
@@ -38,6 +39,17 @@ export async function updateDivision(id: string, formData: FormData): Promise<{ 
   }
 }
 
+export async function toggleDivisionActive(id: string, isActive: boolean): Promise<{ error?: string }> {
+  try {
+    await setDivisionActive(id, isActive);
+    revalidatePath('/divisions');
+    revalidatePath('/dashboard');
+    return {};
+  } catch {
+    return { error: 'Failed to update division status.' };
+  }
+}
+
 export async function deleteDivision(id: string): Promise<{ error?: string }> {
   try {
     await db.delete(divisions).where(eq(divisions.id, id));
@@ -46,7 +58,7 @@ export async function deleteDivision(id: string): Promise<{ error?: string }> {
   } catch (err) {
     const message = err instanceof Error ? err.message : '';
     if (message.includes('23503')) {
-      return { error: 'Cannot delete division with existing income or expense records.' };
+      return { error: 'Cannot delete a division that has income or expense records. Disable it instead.' };
     }
     return { error: 'Failed to save. Please try again.' };
   }
