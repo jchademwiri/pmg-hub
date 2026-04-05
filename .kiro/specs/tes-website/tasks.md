@@ -9,7 +9,7 @@ property-based tests for the six correctness properties defined in the design do
 
 ## Tasks
 
-- [ ] 1. Astro config, dependencies, globals.css, and actions stub
+- [x] 1. Astro config, dependencies, globals.css, and actions stub
   - Update `apps/tes/astro.config.mjs`: set `output: 'hybrid'`, keep `vercel()` adapter, add
     `site: 'https://www.tenderedgesolutions.co.za'`, keep `@tailwindcss/vite` plugin
   - Add `"@pmg/db": "*"` and `"@pmg/emails": "*"` to `apps/tes/package.json` dependencies
@@ -30,7 +30,7 @@ property-based tests for the six correctness properties defined in the design do
   - _Requirements: 1.1, 1.2, 1.3, 1.4, 1.6, 2.1, 2.3, 2.4, 2.5, 13.1, 13.2, 13.3, 13.4,
     13.5, 13.6, 13.8_
 
-- [ ] 2. Layout.astro
+- [x] 2. Layout.astro
   - Create `apps/tes/src/layouts/Layout.astro` accepting `title`, `description`, `canonical`
     props with the defaults specified in Requirement 3.1
   - Render `<html lang="en" class="dark" style="scroll-behavior: smooth;">`
@@ -47,7 +47,7 @@ property-based tests for the six correctness properties defined in the design do
     `aria-hidden="true"`
   - _Requirements: 2.2, 2.6, 2.7, 3.1, 3.2, 3.3, 3.4, 3.5_
 
-- [ ] 3. Nav.astro
+- [x] 3. Nav.astro
   - Create `apps/tes/src/components/Nav.astro`
   - Fixed top, full-width, `z-50`, transparent on load; add inline `<script>` that toggles
     `bg-background/90` and `backdrop-blur-md` when `window.scrollY > 40`
@@ -61,7 +61,7 @@ property-based tests for the six correctness properties defined in the design do
     anchor links
   - _Requirements: 4.1, 4.2, 4.3, 4.4, 4.5, 4.6, 4.7, 4.8, 16.1, 16.2, 16.3_
 
-- [ ] 4. Hero.astro
+- [x] 4. Hero.astro
   - Create `apps/tes/src/components/Hero.astro` with `id="hero"` and `min-h-screen`
   - Eyebrow: `"GAUTENG'S TENDER COMPLIANCE SPECIALISTS"` in `text-primary`, uppercase,
     `tracking-widest`, 10–11px
@@ -75,7 +75,7 @@ property-based tests for the six correctness properties defined in the design do
   - CSS `@keyframes` fade-up animations: eyebrow at 0ms, H1 at 100ms, sub+CTAs at 250ms
   - _Requirements: 5.1, 5.2, 5.3, 5.4, 5.5, 5.6, 5.7, 5.8, 5.9, 16.1, 16.2, 16.3, 17.5_
 
-- [ ] 5. TrustBar.astro
+- [x] 5. TrustBar.astro
   - Create `apps/tes/src/components/TrustBar.astro` on `bg-card` background
   - Five credential pills in a horizontal flex row: "CSD Registered Supplier",
     "CIDB Grading Specialists", "B-BBEE Affidavit Experts",
@@ -85,7 +85,7 @@ property-based tests for the six correctness properties defined in the design do
   - Mobile: `overflow-x-auto scrollbar-hide` on the row container
   - _Requirements: 6.1, 6.2, 6.3, 6.4_
 
-- [ ] 6. ProblemSection.astro
+- [x] 6. ProblemSection.astro
   - Create `apps/tes/src/components/ProblemSection.astro` with `id="problem"` on `bg-background`
   - Eyebrow `"THE PROBLEM"` and H2 about businesses losing tenders due to paperwork
   - Body copy covering COIDA, B-BBEE, SBD4, CSD profile failure scenarios
@@ -94,7 +94,7 @@ property-based tests for the six correctness properties defined in the design do
   - Desktop: two-column layout (copy left, cards right); mobile: single column
   - _Requirements: 7.1, 7.2, 7.3, 7.4, 7.5, 7.6, 7.7, 17.1, 17.4_
 
-- [ ] 7. ServicesSection.astro
+- [x] 7. ServicesSection.astro
   - Create `apps/tes/src/components/ServicesSection.astro` with `id="services"` on `bg-card`
   - Eyebrow `"WHAT WE DO"` and H2 `"Everything you need to submit with confidence."`
   - Six service cards with name, description, price tag in `text-primary`; styled
@@ -104,14 +104,14 @@ property-based tests for the six correctness properties defined in the design do
   - Desktop: 2-column grid; mobile: 1-column
   - _Requirements: 8.1, 8.2, 8.3, 8.4, 8.5, 8.6, 8.7, 8.8, 17.1, 17.4_
 
-  - [ ] 7.1 Write property test for service card completeness
+  - [x] 7.1 Write property test for service card completeness
     - **Property 5: Service card completeness**
     - For each of the six service cards, assert rendered HTML contains service name,
       description, and a price string beginning with "R"
     - Use `fast-check` to generate arbitrary indices 0–5 and verify each card
     - **Validates: Requirements 8.3, 8.4**
 
-- [ ] 8. HowItWorks.astro
+- [x] 8. HowItWorks.astro
   - Create `apps/tes/src/components/HowItWorks.astro` with `id="process"` on `bg-background`
   - Eyebrow `"THE PROCESS"` and H2 `"Simple. Fast. Submission-ready."`
   - Three steps with step numbers in `text-primary font-condensed text-7xl`
@@ -120,7 +120,7 @@ property-based tests for the six correctness properties defined in the design do
   - Bottom WhatsApp CTA: `bg-whatsapp hover:bg-whatsapp-hover`, correct URL
   - _Requirements: 9.1, 9.2, 9.3, 9.4, 9.5, 9.6, 9.7, 16.1, 16.2, 16.3, 17.1, 17.4_
 
-- [ ] 9. PricingSection.astro
+- [x] 9. PricingSection.astro
   - Create `apps/tes/src/components/PricingSection.astro` with `id="pricing"` on `bg-card`
   - Eyebrow `"PRICING"` and H2 `"Transparent pricing. No surprises."`
   - "Tender-Ready Starter" bundle at R2,500: gold border, "MOST POPULAR" badge, four
@@ -131,14 +131,14 @@ property-based tests for the six correctness properties defined in the design do
   - All bundle CTA buttons: `bg-whatsapp hover:bg-whatsapp-hover`, correct URL
   - _Requirements: 10.1, 10.2, 10.3, 10.4, 10.5, 10.6, 10.7, 16.1, 16.2, 16.3, 17.1, 17.4_
 
-  - [ ] 9.1 Write property test for pricing table row completeness
+  - [x] 9.1 Write property test for pricing table row completeness
     - **Property 6: Pricing table row completeness**
     - For each of the eleven individual service rows, assert rendered HTML contains service
       name, a price string, and a turnaround duration string
     - Use `fast-check` to generate arbitrary row indices 0–10 and verify each row
     - **Validates: Requirements 10.5**
 
-- [ ] 10. CaseStudy.astro
+- [x] 10. CaseStudy.astro
   - Create `apps/tes/src/components/CaseStudy.astro` with `id="results"` on `bg-background`
   - Eyebrow `"CLIENT RESULTS"` and H2 `"A real business. A real tender won."`
   - Challenges panel: three ✗ items in `text-red-400`, `border-l-4 border-red-500/40`
@@ -148,7 +148,7 @@ property-based tests for the six correctness properties defined in the design do
   - Desktop: side-by-side panels; mobile: stacked
   - _Requirements: 11.1, 11.2, 11.3, 11.4, 11.5, 11.6, 11.7, 11.8, 11.9, 17.1, 17.4_
 
-- [ ] 11. LeadForm.astro with Astro Actions integration
+- [x] 11. LeadForm.astro with Astro Actions integration
   - Create `apps/tes/src/components/LeadForm.astro` with `id="contact"` on `bg-card`
   - Frontmatter: import `actions`, `isInputError` from `astro:actions`; call
     `Astro.getActionResult(actions.enquireLead)`; derive `inputErrors` and `submitted`
@@ -163,7 +163,7 @@ property-based tests for the six correctness properties defined in the design do
   - _Requirements: 12.1, 12.2, 12.3, 12.4, 12.5, 12.6, 12.7, 12.8, 12.9, 12.10, 12.11,
     13.7, 16.1, 16.2, 16.3, 17.1, 17.4_
 
-- [ ] 12. Footer.astro
+- [x] 12. Footer.astro
   - Create `apps/tes/src/components/Footer.astro` on `bg-background`
   - Column 1: TES wordmark, tagline `"Your Edge in Every Tender"`, legal line, WhatsApp CTA
   - Column 2: quick links to `#services`, `#process`, `#pricing`, `#results`, `#contact`
@@ -173,7 +173,7 @@ property-based tests for the six correctness properties defined in the design do
   - Desktop: three-column layout; mobile: single column
   - _Requirements: 15.1, 15.2, 15.3, 15.4, 15.5, 15.6, 15.7, 16.1, 16.2, 16.3, 17.1, 17.4_
 
-- [ ] 13. Assemble index.astro and create .env.example
+- [x] 13. Assemble index.astro and create .env.example
   - Create `apps/tes/src/pages/index.astro` with `export const prerender = false`
   - Import and assemble all ten section components in order: Nav, Hero, TrustBar,
     ProblemSection, ServicesSection, HowItWorks, PricingSection, CaseStudy, LeadForm, Footer
@@ -184,15 +184,15 @@ property-based tests for the six correctness properties defined in the design do
     (default `tenders@tenderedgesolutions.co.za`), `TES_SITE_URL`
   - _Requirements: 1.5, 1.6, 14.1, 14.2, 14.3, 14.4, 18.1, 18.2, 18.3_
 
-- [ ] 14. Checkpoint — Ensure all tests pass
+- [x] 14. Checkpoint — Ensure all tests pass
   - Ensure all tests pass, ask the user if questions arise.
 
-- [ ] 15. Property-based tests for the enquireLead action
+- [x] 15. Property-based tests for the enquireLead action
   - Add `fast-check` as a dev dependency in `apps/tes/package.json`
   - Create `apps/tes/src/actions/__tests__/enquireLead.test.ts`
   - Mock `@pmg/db` (`db.insert`) and `@pmg/emails` (`sendEmail`) for all tests
 
-  - [ ] 15.1 Write property test — valid form submission persists a lead
+  - [x] 15.1 Write property test — valid form submission persists a lead
     - **Property 1: Valid form submission persists a lead**
     - Generate arbitrary valid payloads: non-empty name, phone ≥ 7 chars, optional valid
       email or empty string, any non-empty serviceInterest string
@@ -201,20 +201,20 @@ property-based tests for the six correctness properties defined in the design do
     - Assert handler returns `{ success: true }`
     - **Validates: Requirements 13.3, 13.6**
 
-  - [ ] 15.2 Write property test — email failure does not prevent lead persistence
+  - [x] 15.2 Write property test — email failure does not prevent lead persistence
     - **Property 2: Email failure does not prevent lead persistence**
     - Generate arbitrary valid payloads; mock `sendEmail` to throw
     - Assert `db.insert` was still called and handler returns `{ success: true }`
     - **Validates: Requirements 13.5**
 
-  - [ ] 15.3 Write property test — invalid inputs are rejected before database write
+  - [x] 15.3 Write property test — invalid inputs are rejected before database write
     - **Property 3: Invalid inputs are rejected before database write**
     - Generate payloads with at least one invalid field (empty name, phone < 7 chars, or
       empty serviceInterest)
     - Assert action returns a validation error and `db.insert` was never called
     - **Validates: Requirements 13.2, 12.10**
 
-  - [ ] 15.4 Write property test — WhatsApp URL consistency
+  - [x] 15.4 Write property test — WhatsApp URL consistency
     - **Property 4: WhatsApp URL consistency**
     - Parse the rendered HTML of each component that contains a WhatsApp CTA
       (Nav, Hero, HowItWorks, PricingSection, Footer, LeadForm success state)
@@ -223,7 +223,7 @@ property-based tests for the six correctness properties defined in the design do
     - Use `fast-check` to enumerate component names and verify each
     - **Validates: Requirements 16.1, 16.2, 16.3**
 
-- [ ] 16. Final checkpoint — Ensure all tests pass
+- [x] 16. Final checkpoint — Ensure all tests pass
   - Ensure all tests pass, ask the user if questions arise.
 
 ## Notes

@@ -1,0 +1,61 @@
+---
+const cards = [
+  {
+    title: 'Expired compliance documents',
+    description:
+      'COIDA, B-BBEE, and tax clearance certificates that lapse without a renewal system',
+  },
+  {
+    title: 'Incorrectly completed returnables',
+    description: 'SBD forms with errors, missing signatures, or wrong declarations',
+  },
+  {
+    title: 'Poor document structure',
+    description:
+      "Submissions that don't follow the tender specification or are missing required sections",
+  },
+  {
+    title: 'No system for tracking renewals',
+    description: 'No calendar or process to ensure documents stay current before deadlines',
+  },
+];
+---
+
+<section id='problem' class='bg-background py-20 md:py-28 px-6 md:px-12'>
+  <div class='max-w-7xl mx-auto'>
+    <div class='grid md:grid-cols-2 gap-12 items-start'>
+      <!-- Left: copy -->
+      <div>
+        <p class='text-primary uppercase tracking-widest text-[10px] md:text-[11px] font-medium'>
+          THE PROBLEM
+        </p>
+        <h2 class='font-condensed text-4xl md:text-5xl text-foreground mt-4 mb-6'>
+          Businesses lose tenders because of paperwork — not capability.
+        </h2>
+        <p class='text-muted-foreground text-base md:text-lg leading-relaxed'>
+          Most South African SMEs have the skills and capacity to deliver on government contracts.
+          But they lose tenders before the evaluation even begins — disqualified on compliance
+          grounds. Missing COIDA certificates, expired B-BBEE affidavits, incorrectly completed SBD4
+          forms, and outdated CSD profiles are the real reasons bids fail.
+        </p>
+      </div>
+
+      <!-- Right: failure-point cards -->
+      <div class='flex flex-col gap-4'>
+        {
+          cards.map((card) => (
+            <div class='border-l-2 border-red-500/60 pl-4 py-2'>
+              <p class='text-foreground font-medium text-sm'>{card.title}</p>
+              <p class='text-muted-foreground text-sm mt-1'>{card.description}</p>
+            </div>
+          ))
+        }
+      </div>
+    </div>
+
+    <!-- Closing statement -->
+    <p class='text-primary italic text-xl md:text-2xl text-center mt-12 font-medium'>
+      TenderEdge Solutions eliminates every one of these risks.
+    </p>
+  </div>
+</section>
