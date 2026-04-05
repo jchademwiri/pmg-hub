@@ -51,6 +51,8 @@ export async function autoClosePreviousMonthIfNeeded(): Promise<void> {
     const startExpr = "DATE_TRUNC('month', TIMESTAMP '" + period + "-01')";
     const endExpr = "DATE_TRUNC('month', TIMESTAMP '" + period + "-01') + INTERVAL '1 month'";
     const summary = await getFinancialSummaryForPeriod(startExpr, endExpr);
+    // Skip auto-close if the month has no financial activity
+    if (summary.revenue === 0 && summary.expenses === 0) return;
     await insertSnapshot(period, summary);
     revalidatePath('/dashboard');
     revalidatePath('/snapshots');

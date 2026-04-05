@@ -9,6 +9,7 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table'
+import { EmptyState } from '@/components/ui/empty-state'
 
 export const dynamic = 'force-dynamic'
 export const metadata: Metadata = { title: 'Snapshots' }
@@ -19,9 +20,7 @@ export default async function SnapshotsPage() {
   return (
     <div className="flex flex-col gap-6">
       {snapshots.length === 0 ? (
-        <p className="text-sm text-muted-foreground">
-          No months have been closed yet. Use the Close Month button on the dashboard to lock a month&apos;s figures.
-        </p>
+        <EmptyState message="No months have been closed yet. Use the Close Month button on the dashboard to lock a month's figures." />
       ) : (
         <Table>
           <TableHeader>

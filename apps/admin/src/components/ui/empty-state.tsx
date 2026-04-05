@@ -17,7 +17,7 @@ export function EmptyState({ message, ctaLabel, ctaHref, filtered }: EmptyStateP
 
   return (
     <div className="flex items-center justify-center py-16">
-      <Card className="w-full max-w-sm text-center">
+      <Card className="w-full text-center">
         <CardContent className="flex flex-col items-center gap-4 py-10">
           <div className="flex size-14 items-center justify-center rounded-full bg-muted">
             <Icon className="size-7 text-muted-foreground" />
