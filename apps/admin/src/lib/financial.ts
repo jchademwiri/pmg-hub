@@ -25,6 +25,7 @@ import {
   getDistinctYears,
   getMonthlyFinancialsForYear,
   getMonthlyRevenueByDivisionForYear,
+  getAllSnapshots,
 } from '@pmg/db'
 
 // ── Re-export DB types ────────────────────────────────────────────────────────
@@ -221,4 +222,29 @@ export async function getRevenueByDivisionSeriesForYear(
 ): Promise<DivisionSeriesChart> {
   const rows = await getMonthlyRevenueByDivisionForYear(year)
   return buildDivisionSeries(rows)
+}
+
+// ── Profit Pool split series ──────────────────────────────────────────────────
+export type ProfitPoolRow = {
+  period: string
+  profitPool: number
+  salary: number
+  reinvest: number
+  reserve: number
+  flex: number
+}
+
+export async function getProfitPoolSeriesForYear(year: number): Promise<ProfitPoolRow[]> {
+  const all = await getAllSnapshots()
+  return all
+    .filter((s) => s.period.startsWith(String(year)))
+    .map((s) => ({
+      period: s.period,
+      profitPool: Number(s.profitPool),
+      salary: Number(s.salary),
+      reinvest: Number(s.reinvest),
+      reserve: Number(s.reserve),
+      flex: Number(s.flex),
+    }))
+    .sort((a, b) => a.period.localeCompare(b.period))
 }

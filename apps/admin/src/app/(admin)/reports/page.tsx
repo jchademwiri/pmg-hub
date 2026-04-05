@@ -2,15 +2,14 @@ import type { Metadata } from 'next'
 import {
   getDistinctReportYears,
   getMoMChartData,
-  getMonthlyFinancialsSeriesForYear,
   getRevenueByDivisionSeriesForYear,
   getExpensesByCategory,
+  getProfitPoolSeriesForYear,
 } from '@/lib/financial'
 import { MoMComparisonChart } from '@/components/reports/mom-comparison-chart'
 import { RevenueByDivisionChart } from '@/components/reports/revenue-by-division-chart'
-import { RevenueVsExpensesChart } from '@/components/reports/revenue-vs-expenses-chart'
 import { ExpenseByCategoryChart } from '@/components/reports/expense-by-category-chart'
-import { RevenueSparkline } from '@/components/dashboard/revenue-sparkline'
+import { ProfitPoolChart } from '@/components/reports/profit-pool-chart'
 import { YearFilter } from '@/components/reports/year-filter'
 import { ExportCsvButton } from '@/components/reports/export-csv-button'
 import { EmptyState } from '@/components/ui/empty-state'
@@ -34,20 +33,20 @@ export default async function ReportsPage({ searchParams }: ReportsPageProps) {
   const { year: yearParam } = await searchParams
   const year = resolveYear(yearParam)
 
-  const [years, momData, monthlySeries, divisionSeries, expensesByCategory] =
+  const [years, momData, divisionSeries, expensesByCategory, profitPoolSeries] =
     await Promise.all([
       getDistinctReportYears().catch((e) => { console.error('getDistinctReportYears failed:', e); return [] as number[] }),
       getMoMChartData().catch((e) => { console.error('getMoMChartData failed:', e); return [] }),
-      getMonthlyFinancialsSeriesForYear(year).catch((e) => { console.error('getMonthlyFinancialsSeriesForYear failed:', e); return [] }),
       getRevenueByDivisionSeriesForYear(year).catch((e) => { console.error('getRevenueByDivisionSeriesForYear failed:', e); return { series: [], divisions: [] } }),
       getExpensesByCategory(year).catch((e) => { console.error('getExpensesByCategory failed:', e); return [] }),
+      getProfitPoolSeriesForYear(year).catch((e) => { console.error('getProfitPoolSeriesForYear failed:', e); return [] }),
     ])
 
   const hasData =
     momData.length > 0 ||
-    monthlySeries.length > 0 ||
     divisionSeries.series.length > 0 ||
-    expensesByCategory.length > 0
+    expensesByCategory.length > 0 ||
+    profitPoolSeries.length > 0
 
   return (
     <div className="flex flex-col gap-6">
@@ -63,8 +62,7 @@ export default async function ReportsPage({ searchParams }: ReportsPageProps) {
             series={divisionSeries.series}
             divisions={divisionSeries.divisions}
           />
-          <RevenueSparkline data={monthlySeries.slice(-6)} />
-          <RevenueVsExpensesChart series={monthlySeries} />
+          <ProfitPoolChart data={profitPoolSeries} />
           <ExpenseByCategoryChart data={expensesByCategory} />
         </>
       ) : (
@@ -73,4 +71,3 @@ export default async function ReportsPage({ searchParams }: ReportsPageProps) {
     </div>
   )
 }
-
