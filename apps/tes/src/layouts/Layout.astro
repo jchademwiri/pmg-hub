@@ -2,6 +2,7 @@
 import Nav from '@/components/Nav.astro';
 import '../styles/globals.css';
 import Analytics from '@vercel/analytics/astro';
+import SpeedInsights from "@vercel/speed-insights/astro"
 import Footer from '@/components/Footer.astro';
 
 interface Props {
@@ -24,7 +25,7 @@ const localBusinessSchema = {
 	'@context': 'https://schema.org',
 	'@type': ['LocalBusiness', 'ProfessionalService'],
 	'@id': `${SITE_URL}/#business`,
-	name: 'TenderEdge Solutions',
+	name: 'Tender Edge Solutions',
 	alternateName: 'TES',
 	description:
 		'Tender compliance specialists based in Centurion, Gauteng. We handle CSD registration, CIDB grading, B-BBEE affidavits, COIDA registration, SBD forms, and full tender document compilation for South African SMEs.',
