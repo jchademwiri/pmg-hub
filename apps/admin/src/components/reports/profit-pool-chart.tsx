@@ -1,6 +1,6 @@
 'use client'
 
-import { BarChart, Bar, XAxis, YAxis, CartesianGrid } from 'recharts'
+import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Cell } from 'recharts'
 import {
   ChartContainer,
   ChartTooltip,
@@ -19,6 +19,11 @@ const config: ChartConfig = {
   reserve:  { label: 'Reserve',  color: 'var(--chart-3)' },
   flex:     { label: 'Flex',     color: 'var(--chart-4)' },
 }
+
+const NEG_COLOR = 'var(--color-destructive, #ef4444)'
+
+const KEYS = ['salary', 'reinvest', 'reserve', 'flex'] as const
+const COLORS = ['var(--chart-1)', 'var(--chart-2)', 'var(--chart-3)', 'var(--chart-4)']
 
 type Props = { data: ProfitPoolRow[] }
 
@@ -53,10 +58,19 @@ export function ProfitPoolChart({ data }: Props) {
                 content={<ChartTooltipContent formatter={(v) => formatZAR(Number(v))} />}
               />
               <ChartLegend content={<ChartLegendContent />} />
-              <Bar dataKey="salary"   stackId="a" fill="var(--chart-1)" radius={[0, 0, 0, 0]} />
-              <Bar dataKey="reinvest" stackId="a" fill="var(--chart-2)" radius={[0, 0, 0, 0]} />
-              <Bar dataKey="reserve"  stackId="a" fill="var(--chart-3)" radius={[0, 0, 0, 0]} />
-              <Bar dataKey="flex"     stackId="a" fill="var(--chart-4)" radius={[4, 4, 0, 0]} />
+              {KEYS.map((key, ki) => (
+                <Bar
+                  key={key}
+                  dataKey={key}
+                  stackId="a"
+                  fill={COLORS[ki]}
+                  radius={ki === KEYS.length - 1 ? [4, 4, 0, 0] : [0, 0, 0, 0]}
+                >
+                  {data.map((entry, i) => (
+                    <Cell key={i} fill={(entry[key] as number) < 0 ? NEG_COLOR : COLORS[ki]} />
+                  ))}
+                </Bar>
+              ))}
             </BarChart>
           </ChartContainer>
         )}
