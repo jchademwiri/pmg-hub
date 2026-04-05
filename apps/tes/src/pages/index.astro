@@ -1,7 +1,7 @@
 ---
 export const prerender = false;
 import Layout from '@/layouts/Layout.astro';
-import Nav from '@/components/Nav.astro';
+import Hero from '@/components/Hero.astro';
 import TrustBar from '@/components/TrustBar.astro';
 import ProblemSection from '@/components/ProblemSection.astro';
 import ServicesSection from '@/components/ServicesSection.astro';
@@ -13,6 +13,7 @@ import LeadForm from '@/components/LeadForm.astro';
 
 <Layout>
   <main>
+    <Hero />
     <TrustBar />
     <ProblemSection />
     <ServicesSection />
