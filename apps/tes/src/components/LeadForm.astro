@@ -20,7 +20,7 @@ const submitted = result?.data?.success === true;
       <div>
         {submitted ? (
           <!-- Success state -->
-          <div class="py-12 text-center">
+          <div class="py-12 text-center" data-success>
             <h3 class="font-condensed text-3xl text-foreground mb-3">We've received your enquiry.</h3>
             <p class="text-muted-foreground mb-6">We'll follow up within 24 hours. In the meantime, feel free to reach out on WhatsApp.</p>
             <a
@@ -157,6 +157,12 @@ const submitted = result?.data?.success === true;
       btn.disabled = true;
       btn.textContent = 'Sending…';
     });
+  }
+
+  // After a successful POST, Astro re-renders from the top.
+  // Scroll back to #contact so the user sees the success state.
+  if (document.getElementById('contact')?.querySelector('[data-success]')) {
+    document.getElementById('contact')?.scrollIntoView({ behavior: 'smooth' });
   }
 </script>
       <div class="flex flex-col gap-6">

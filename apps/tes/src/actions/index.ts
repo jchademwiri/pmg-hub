@@ -1,6 +1,7 @@
 import { defineAction } from 'astro:actions';
 import { z } from 'astro:schema';
-import { getDb, leads } from '@pmg/db';
+import { getDb, leads, divisions } from '@pmg/db';
+import { eq } from '@pmg/db';
 import { sendEmail, AdminNewLeadEmail } from '@pmg/emails';
 import * as React from 'react';
 
@@ -23,12 +24,18 @@ export const server = {
         DATABASE_URL_UNPOOLED,
       } = import.meta.env;
 
-      // Astro SSR exposes env via import.meta.env, not process.env.
-      // @pmg/db reads process.env, so we bridge the gap here.
+      // Bridge import.meta.env → process.env for @pmg/db
       process.env.DATABASE_URL = DATABASE_URL;
       if (DATABASE_URL_UNPOOLED) process.env.DATABASE_URL_UNPOOLED = DATABASE_URL_UNPOOLED;
 
       const db = getDb();
+
+      // Look up the TES division ID
+      const [tesDivision] = await db
+        .select({ id: divisions.id })
+        .from(divisions)
+        .where(eq(divisions.name, 'Tender Edge Solutions'))
+        .limit(1);
 
       await db
         .insert(leads)
@@ -40,6 +47,7 @@ export const server = {
           serviceInterest: input.serviceInterest,
           source:          'tes',
           status:          'new',
+          divisionId:      tesDivision?.id ?? null,
         })
         .onConflictDoNothing();
 
