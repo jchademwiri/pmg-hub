@@ -16,10 +16,7 @@ import { services } from '../data/services';
         services.map((service) => (
           <div class='bg-card border border-[--border] rounded-xl p-6 flex flex-col gap-3 hover:border-primary/60 transition-colors'>
             <p class='text-foreground font-semibold text-base'>{service.name}</p>
-            <p class='text-muted-foreground text-sm leading-relaxed flex-1'>
-              {service.description}
-            </p>
-            <p class='text-primary font-medium text-sm'>{service.price}</p>
+            <p class='text-muted-foreground text-sm leading-relaxed'>{service.description}</p>
           </div>
         ))
       }
@@ -32,14 +29,15 @@ import { services } from '../data/services';
       <div>
         <p class='text-foreground font-semibold'>Tender-Ready Bundles</p>
         <p class='text-muted-foreground text-sm'>
-          Save money with our all-inclusive compliance packages — everything you need in one price.
+          We offer all-inclusive compliance packages — everything you need in one engagement. Get in
+          touch for a quote.
         </p>
       </div>
       <a
-        href='#pricing'
+        href='#contact'
         class='text-primary hover:text-primary-hover font-medium text-sm transition-colors whitespace-nowrap'
       >
-        View pricing packages →
+        Get a quote →
       </a>
     </div>
   </div>
