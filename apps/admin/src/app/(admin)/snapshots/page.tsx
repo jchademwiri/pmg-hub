@@ -46,14 +46,14 @@ export default async function SnapshotsPage() {
                     year: 'numeric',
                   })}
                 </TableCell>
-                <TableCell>{formatZAR(Number(row.revenue))}</TableCell>
-                <TableCell>{formatZAR(Number(row.expenses))}</TableCell>
-                <TableCell>{formatZAR(Number(row.pmgShare))}</TableCell>
-                <TableCell>{formatZAR(Number(row.profitPool))}</TableCell>
-                <TableCell>{formatZAR(Number(row.salary))}</TableCell>
-                <TableCell>{formatZAR(Number(row.reinvest))}</TableCell>
-                <TableCell>{formatZAR(Number(row.reserve))}</TableCell>
-                <TableCell>{formatZAR(Number(row.flex))}</TableCell>
+                <TableCell className="text-green-500 tabular-nums font-medium">{formatZAR(Number(row.revenue))}</TableCell>
+                <TableCell className="text-amber-500 tabular-nums font-medium">{formatZAR(Number(row.expenses))}</TableCell>
+                <TableCell className="text-green-500 tabular-nums font-medium">{formatZAR(Number(row.pmgShare))}</TableCell>
+                <TableCell className={`tabular-nums font-medium ${Number(row.profitPool) < 0 ? 'text-red-500' : 'text-green-500'}`}>{formatZAR(Number(row.profitPool))}</TableCell>
+                <TableCell className="text-green-500 tabular-nums font-medium">{formatZAR(Number(row.salary))}</TableCell>
+                <TableCell className="text-green-500 tabular-nums font-medium">{formatZAR(Number(row.reinvest))}</TableCell>
+                <TableCell className="text-green-500 tabular-nums font-medium">{formatZAR(Number(row.reserve))}</TableCell>
+                <TableCell className="text-green-500 tabular-nums font-medium">{formatZAR(Number(row.flex))}</TableCell>
               </TableRow>
             ))}
           </TableBody>

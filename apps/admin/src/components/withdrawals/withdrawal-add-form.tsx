@@ -4,6 +4,10 @@ import * as React from 'react'
 import { toast } from 'sonner'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
+import {
+  Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
+} from '@/components/ui/select'
+import { ACCOUNT_LABELS, ACCOUNT_KEYS } from '@/lib/accounts'
 
 interface WithdrawalAddFormProps {
   createAction: (formData: FormData) => Promise<{ error?: string }>
@@ -11,9 +15,10 @@ interface WithdrawalAddFormProps {
 
 const today = new Date().toISOString().split('T')[0]!
 
-function formatDefaultDescription(dateStr: string): string {
+function formatDefaultDescription(account: string, dateStr: string): string {
+  const label = ACCOUNT_LABELS[account] ?? 'Salary'
   const date = new Date(dateStr + 'T00:00:00')
-  return `Salary withdrawal — ${date.toLocaleDateString('en-ZA', { day: 'numeric', month: 'long', year: 'numeric' })}`
+  return `${label} withdrawal — ${date.toLocaleDateString('en-ZA', { day: 'numeric', month: 'long', year: 'numeric' })}`
 }
 
 export function WithdrawalAddForm({ createAction }: WithdrawalAddFormProps) {
@@ -21,6 +26,7 @@ export function WithdrawalAddForm({ createAction }: WithdrawalAddFormProps) {
   const [isPending, startTransition] = React.useTransition()
   const [errorMessage, setErrorMessage] = React.useState<string | null>(null)
   const [selectedDate, setSelectedDate] = React.useState(today)
+  const [selectedAccount, setSelectedAccount] = React.useState('salary')
 
   function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault()
@@ -28,6 +34,7 @@ export function WithdrawalAddForm({ createAction }: WithdrawalAddFormProps) {
 
     startTransition(async () => {
       const fd = new FormData(formRef.current!)
+      fd.set('account', selectedAccount)
       const result = await createAction(fd)
       if (result.error) {
         setErrorMessage(result.error)
@@ -35,6 +42,7 @@ export function WithdrawalAddForm({ createAction }: WithdrawalAddFormProps) {
         toast.success('Withdrawal recorded')
         formRef.current?.reset()
         setSelectedDate(today)
+        setSelectedAccount('salary')
       }
     })
   }
@@ -54,6 +62,20 @@ export function WithdrawalAddForm({ createAction }: WithdrawalAddFormProps) {
           className="w-40"
           onChange={(e) => setSelectedDate(e.target.value)}
         />
+      </div>
+
+      <div className="flex flex-col gap-1">
+        <label htmlFor="withdrawal-account" className="text-sm font-medium">Account</label>
+        <Select value={selectedAccount} onValueChange={setSelectedAccount} disabled={isPending}>
+          <SelectTrigger id="withdrawal-account" className="w-36">
+            <SelectValue />
+          </SelectTrigger>
+          <SelectContent>
+            {ACCOUNT_KEYS.map((key) => (
+              <SelectItem key={key} value={key}>{ACCOUNT_LABELS[key]}</SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
       </div>
 
       <div className="flex flex-col gap-1">
@@ -78,7 +100,7 @@ export function WithdrawalAddForm({ createAction }: WithdrawalAddFormProps) {
           id="withdrawal-description"
           name="description"
           type="text"
-          placeholder={formatDefaultDescription(selectedDate)}
+          placeholder={formatDefaultDescription(selectedAccount, selectedDate)}
           disabled={isPending}
           className="w-72"
         />

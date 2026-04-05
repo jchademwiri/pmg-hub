@@ -105,9 +105,9 @@ function DivisionTableRow({
           division.name
         )}
       </TableCell>
-      <TableCell>{formatZAR(division.totalIncome)}</TableCell>
-      <TableCell>{formatZAR(division.totalExpenses)}</TableCell>
-      <TableCell className={netProfitClass}>{formatZAR(division.netProfit)}</TableCell>
+      <TableCell className="text-green-500 tabular-nums font-medium">{formatZAR(division.totalIncome)}</TableCell>
+      <TableCell className="text-amber-500 tabular-nums font-medium">{formatZAR(division.totalExpenses)}</TableCell>
+      <TableCell className={`tabular-nums font-medium ${netProfitClass}`}>{formatZAR(division.netProfit)}</TableCell>
       <TableCell>{division.leadCount}</TableCell>
       <TableCell>
         <Badge variant={division.isActive ? 'default' : 'secondary'}>
