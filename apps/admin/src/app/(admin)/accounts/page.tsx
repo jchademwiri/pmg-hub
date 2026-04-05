@@ -38,7 +38,7 @@ export default async function AccountsPage() {
 
   return (
     <div className="flex flex-col gap-6">
-      <SetPageTotal value={formatZAR(totalBalance) + ' total balance'} />
+      <SetPageTotal value={formatZAR(totalBalance)} />
 
       <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-4">
         {ACCOUNT_KEYS.map((key) => {
@@ -53,7 +53,7 @@ export default async function AccountsPage() {
               earned={earnedAmt}
               withdrawn={withdrawn}
               balance={balance}
-              history={histories[key]!}
+              historyCount={histories[key]!.length}
               recordAction={recordAccountWithdrawal}
             />
           )

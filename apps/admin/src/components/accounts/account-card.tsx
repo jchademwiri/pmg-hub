@@ -1,16 +1,13 @@
 'use client'
 
 import * as React from 'react'
+import Link from 'next/link'
 import { toast } from 'sonner'
-import { ChevronDown, ChevronUp, Plus } from 'lucide-react'
+import { Plus, History } from 'lucide-react'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
-import {
-  Table, TableBody, TableCell, TableHead, TableHeader, TableRow,
-} from '@/components/ui/table'
 import { formatZAR } from '@/lib/format'
-import type { WithdrawalRow } from '@pmg/db'
 
 const today = new Date().toISOString().split('T')[0]!
 
@@ -20,14 +17,13 @@ interface AccountCardProps {
   earned: number
   withdrawn: number
   balance: number
-  history: WithdrawalRow[]
+  historyCount: number
   recordAction: (formData: FormData) => Promise<{ error?: string }>
 }
 
 export function AccountCard({
-  accountKey, label, earned, withdrawn, balance, history, recordAction,
+  accountKey, label, earned, withdrawn, balance, historyCount, recordAction,
 }: AccountCardProps) {
-  const [showHistory, setShowHistory] = React.useState(false)
   const [showForm, setShowForm] = React.useState(false)
   const [date, setDate] = React.useState(today)
   const [amount, setAmount] = React.useState('')
@@ -62,7 +58,16 @@ export function AccountCard({
   return (
     <Card className="rounded-xl border shadow-none flex flex-col">
       <CardHeader className="pb-2">
-        <CardTitle className="text-sm font-medium text-muted-foreground">{label}</CardTitle>
+        <div className="flex items-center justify-between">
+          <CardTitle className="text-sm font-medium text-muted-foreground">{label}</CardTitle>
+          <Link
+            href={`/accounts/${accountKey}`}
+            className="flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground transition-colors"
+          >
+            <History className="h-3.5 w-3.5" />
+            History{historyCount > 0 ? ` (${historyCount})` : ''}
+          </Link>
+        </div>
       </CardHeader>
       <CardContent className="flex flex-col gap-3">
         {/* Balance */}
@@ -91,7 +96,7 @@ export function AccountCard({
           </div>
         </div>
 
-        {/* Record withdrawal button */}
+        {/* Record withdrawal */}
         {!showForm ? (
           <Button variant="outline" size="sm" className="w-full" onClick={() => setShowForm(true)}>
             <Plus className="h-3.5 w-3.5 mr-1" /> Record Withdrawal
@@ -122,39 +127,6 @@ export function AccountCard({
               </Button>
             </div>
           </form>
-        )}
-
-        {/* History toggle */}
-        {history.length > 0 && (
-          <button
-            type="button"
-            className="flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground transition-colors"
-            onClick={() => setShowHistory((v) => !v)}
-          >
-            {showHistory ? <ChevronUp className="h-3.5 w-3.5" /> : <ChevronDown className="h-3.5 w-3.5" />}
-            {showHistory ? 'Hide' : 'Show'} history ({history.length})
-          </button>
-        )}
-
-        {showHistory && history.length > 0 && (
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead className="text-xs">Date</TableHead>
-                <TableHead className="text-xs">Amount</TableHead>
-                <TableHead className="text-xs">Description</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {history.map((w) => (
-                <TableRow key={w.id}>
-                  <TableCell className="text-xs">{w.date}</TableCell>
-                  <TableCell className="text-xs tabular-nums">{formatZAR(Number(w.amount))}</TableCell>
-                  <TableCell className="text-xs text-muted-foreground">{w.description ?? '—'}</TableCell>
-                </TableRow>
-              ))}
-            </TableBody>
-          </Table>
         )}
       </CardContent>
     </Card>
