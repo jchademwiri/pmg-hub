@@ -1,8 +1,8 @@
 'use client'
 
 import * as React from 'react'
-import Link from 'next/link'
-import { Pencil, Trash2, PowerOff, Power } from 'lucide-react'
+import { useRouter } from 'next/navigation'
+import { Trash2, PowerOff, Power } from 'lucide-react'
 import { toast } from 'sonner'
 import type { ClientWithIncomeCount } from '@pmg/db'
 import { Button } from '@/components/ui/button'
@@ -23,6 +23,7 @@ interface ClientsTableProps {
 }
 
 export function ClientsTable({ clients, deleteAction, toggleActiveAction }: ClientsTableProps) {
+  const router = useRouter()
   const [pendingDeleteId, setPendingDeleteId] = React.useState<string | null>(null)
   const [pendingToggleId, setPendingToggleId] = React.useState<string | null>(null)
 
@@ -63,7 +64,11 @@ export function ClientsTable({ clients, deleteAction, toggleActiveAction }: Clie
       </TableHeader>
       <TableBody>
         {clients.map((client) => (
-          <TableRow key={client.id} className={!client.isActive ? 'opacity-60' : ''}>
+          <TableRow
+              key={client.id}
+              className={`cursor-pointer ${!client.isActive ? 'opacity-60' : ''}`}
+              onClick={() => router.push('/clients/' + client.id)}
+            >
             <TableCell>{client.name}</TableCell>
             <TableCell>{client.businessName ?? ''}</TableCell>
             <TableCell>{client.email ?? ''}</TableCell>
@@ -74,15 +79,8 @@ export function ClientsTable({ clients, deleteAction, toggleActiveAction }: Clie
                 {client.isActive ? 'Active' : 'Disabled'}
               </Badge>
             </TableCell>
-            <TableCell>
+            <TableCell onClick={(e) => e.stopPropagation()}>
               <div className="flex items-center gap-2">
-                <Button asChild variant="ghost" size="icon">
-                  <Link href={'/clients/' + client.id}>
-                    <Pencil className="h-4 w-4" />
-                    <span className="sr-only">Edit</span>
-                  </Link>
-                </Button>
-
                 {/* Disable / Activate toggle */}
                 <Button
                   variant="ghost"

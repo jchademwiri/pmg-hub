@@ -435,11 +435,14 @@ export type IncomeRow = {
  * with optional filters for divisionId and month (YYYY-MM), sorted by date DESC.
  */
 export async function getAllIncome(
-  filters?: { divisionId?: string; month?: string }
+  filters?: { divisionId?: string; month?: string; clientId?: string }
 ): Promise<IncomeRow[]> {
   const conditions = [];
   if (filters?.divisionId) {
     conditions.push(eq(income.divisionId, filters.divisionId));
+  }
+  if (filters?.clientId) {
+    conditions.push(eq(income.clientId, filters.clientId));
   }
   if (filters?.month) {
     conditions.push(
