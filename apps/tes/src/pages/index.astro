@@ -2,7 +2,6 @@
 export const prerender = false;
 import Layout from '@/layouts/Layout.astro';
 import Nav from '@/components/Nav.astro';
-import Hero from '@/components/Hero.astro';
 import TrustBar from '@/components/TrustBar.astro';
 import ProblemSection from '@/components/ProblemSection.astro';
 import ServicesSection from '@/components/ServicesSection.astro';
@@ -10,13 +9,10 @@ import HowItWorks from '@/components/HowItWorks.astro';
 import PricingSection from '@/components/PricingSection.astro';
 import CaseStudy from '@/components/CaseStudy.astro';
 import LeadForm from '@/components/LeadForm.astro';
-import Footer from '@/components/Footer.astro';
 ---
 
 <Layout>
-  <Nav />
   <main>
-    <Hero />
     <TrustBar />
     <ProblemSection />
     <ServicesSection />
@@ -25,5 +21,4 @@ import Footer from '@/components/Footer.astro';
     <CaseStudy />
     <LeadForm />
   </main>
-  <Footer />
 </Layout>
