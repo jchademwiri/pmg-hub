@@ -34,7 +34,7 @@ export default async function IncomePage({ searchParams }: IncomePageProps) {
 
   return (
     <div className="flex flex-col gap-6">
-      <SetPageTotal value={formatZAR(runningTotal)} />
+      <SetPageTotal value={formatZAR(runningTotal)} variant="green" />
 
       <FilterBar
         divisions={divisions}

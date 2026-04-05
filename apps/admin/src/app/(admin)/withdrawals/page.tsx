@@ -20,7 +20,7 @@ export default async function WithdrawalsPage() {
 
   return (
     <div className="flex flex-col gap-6">
-      <SetPageTotal value={formatZAR(ytdTotal) + ' YTD'} />
+      <SetPageTotal value={formatZAR(ytdTotal) + ' YTD'} variant="amber" />
 
       <WithdrawalAddForm createAction={createWithdrawal} />
 

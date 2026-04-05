@@ -31,14 +31,21 @@ function getPageLabel(pathname: string): string {
 
 export function TopNav() {
   const pathname = usePathname()
-  const { total } = usePageHeader()
+  const { total, totalVariant } = usePageHeader()
   const label = getPageLabel(pathname)
 
+  const totalColor = {
+    green:   'text-green-500',
+    amber:   'text-amber-500',
+    red:     'text-red-500',
+    default: 'text-muted-foreground',
+  }[totalVariant]
+
   return (
-    <header className="sticky top-0 z-30 h-13 flex items-center gap-2 px-4 border-b border-border bg-card">
-      <SidebarTrigger />
-      <Separator orientation="vertical" className="h-4" />
-      <div className="flex flex-1 items-center justify-between">
+    <header className="sticky top-0 z-30 h-13 flex items-center border-b border-border bg-card px-6 gap-2">
+      <SidebarTrigger className="shrink-0" />
+      <Separator orientation="vertical" className="h-4 shrink-0" />
+      <div className="flex items-center gap-3">
         <Breadcrumb>
           <BreadcrumbList>
             <BreadcrumbItem>
@@ -49,7 +56,7 @@ export function TopNav() {
           </BreadcrumbList>
         </Breadcrumb>
         {total && (
-          <span className="text-base font-semibold tabular-nums text-muted-foreground pr-1">
+          <span className={`text-base font-semibold tabular-nums ${totalColor}`}>
             {total}
           </span>
         )}

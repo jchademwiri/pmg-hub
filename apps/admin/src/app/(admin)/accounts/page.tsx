@@ -38,7 +38,7 @@ export default async function AccountsPage() {
 
   return (
     <div className="flex flex-col gap-6">
-      <SetPageTotal value={formatZAR(totalBalance)} />
+      <SetPageTotal value={formatZAR(totalBalance)} variant="green" />
 
       <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-4">
         {ACCOUNT_KEYS.map((key) => {

@@ -44,7 +44,7 @@ export default async function ExpensePage({ searchParams }: ExpensePageProps) {
 
   return (
     <div className="flex flex-col gap-6">
-      <SetPageTotal value={formatZAR(runningTotal)} />
+      <SetPageTotal value={formatZAR(runningTotal)} variant="amber" />
 
       {divisionBreakdown.size > 0 && (
         <div className="flex flex-wrap gap-2">
