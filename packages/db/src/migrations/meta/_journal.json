@@ -5,64 +5,8 @@
     {
       "idx": 0,
       "version": "7",
-      "when": 1774721774229,
-      "tag": "0000_wooden_tombstone",
-      "breakpoints": true
-    },
-    {
-      "idx": 1,
-      "version": "7",
-      "when": 1775233465466,
-      "tag": "0001_chubby_aqueduct",
-      "breakpoints": true
-    },
-    {
-      "idx": 2,
-      "version": "7",
-      "when": 1775290801149,
-      "tag": "0002_large_hellion",
-      "breakpoints": true
-    },
-    {
-      "idx": 3,
-      "version": "7",
-      "when": 1775290900000,
-      "tag": "0003_enforce_income_client_id",
-      "breakpoints": true
-    },
-    {
-      "idx": 4,
-      "version": "7",
-      "when": 1775291000000,
-      "tag": "0004_expense_categories",
-      "breakpoints": true
-    },
-    {
-      "idx": 5,
-      "version": "7",
-      "when": 1775291100000,
-      "tag": "0005_client_is_active",
-      "breakpoints": true
-    },
-    {
-      "idx": 6,
-      "version": "7",
-      "when": 1775291200000,
-      "tag": "0006_division_is_active",
-      "breakpoints": true
-    },
-    {
-      "idx": 7,
-      "version": "7",
-      "when": 1775291300000,
-      "tag": "0007_withdrawal_account",
-      "breakpoints": true
-    },
-    {
-      "idx": 8,
-      "version": "7",
-      "when": 1775385447033,
-      "tag": "0008_lively_squadron_supreme",
+      "when": 1775385900392,
+      "tag": "0000_faulty_gateway",
       "breakpoints": true
     }
   ]
