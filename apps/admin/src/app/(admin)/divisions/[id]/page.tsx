@@ -45,16 +45,14 @@ export default async function DivisionDetailPage({ params }: DivisionDetailPageP
       {/* Stats */}
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
         {[
-          { label: 'Total Income', value: formatZAR(division.totalIncome) },
-          { label: 'Total Expenses', value: formatZAR(division.totalExpenses) },
-          { label: 'Net Profit', value: formatZAR(division.netProfit), colored: true, positive: division.netProfit >= 0 },
-          { label: 'Leads', value: String(division.leadCount) },
-        ].map(({ label, value, colored, positive }) => (
+          { label: 'Total Income',   value: formatZAR(division.totalIncome),   cls: 'text-green-500' },
+          { label: 'Total Expenses', value: formatZAR(division.totalExpenses), cls: 'text-amber-500' },
+          { label: 'Net Profit',     value: formatZAR(division.netProfit),     cls: division.netProfit >= 0 ? 'text-green-500' : 'text-red-500' },
+          { label: 'Leads',          value: String(division.leadCount),        cls: '' },
+        ].map(({ label, value, cls }) => (
           <div key={label} className="rounded-lg border p-4 flex flex-col gap-1">
             <span className="text-xs text-muted-foreground">{label}</span>
-            <span className={`text-lg font-semibold tabular-nums ${colored ? (positive ? 'text-green-500' : 'text-red-500') : ''}`}>
-              {value}
-            </span>
+            <span className={`text-lg font-semibold tabular-nums ${cls}`}>{value}</span>
           </div>
         ))}
       </div>
@@ -63,9 +61,7 @@ export default async function DivisionDetailPage({ params }: DivisionDetailPageP
       <section className="rounded-lg border p-5 flex flex-col gap-4">
         <div className="flex items-center justify-between">
           <h2 className="text-base font-medium">Income History</h2>
-          <span className="text-sm font-semibold text-muted-foreground">
-            {formatZAR(division.totalIncome)}
-          </span>
+          <span className="text-sm font-semibold text-green-500">{formatZAR(division.totalIncome)}</span>
         </div>
         {incomeEntries.length === 0 ? (
           <p className="text-sm text-muted-foreground">No income records for this division.</p>
@@ -85,13 +81,21 @@ export default async function DivisionDetailPage({ params }: DivisionDetailPageP
                   <TableCell>{e.date}</TableCell>
                   <TableCell>{e.clientName ?? '—'}</TableCell>
                   <TableCell>{e.description ?? '—'}</TableCell>
-                  <TableCell className="text-right tabular-nums font-medium text-green-500">+{formatZAR(Number(e.amount))}</TableCell>
+                  <TableCell className="text-right tabular-nums font-medium text-green-500">
+                    +{formatZAR(Number(e.amount))}
+                  </TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
+        )}
+      </section>
+
+      {/* Expense history */}
       <section className="rounded-lg border p-5 flex flex-col gap-4">
         <div className="flex items-center justify-between">
           <h2 className="text-base font-medium">Expense History</h2>
-          <span className="text-sm font-semibold text-muted-foreground">
-            {formatZAR(division.totalExpenses)}
-          </span>
+          <span className="text-sm font-semibold text-amber-500">{formatZAR(division.totalExpenses)}</span>
         </div>
         {expenseEntries.length === 0 ? (
           <p className="text-sm text-muted-foreground">No expense records for this division.</p>
@@ -111,7 +115,9 @@ export default async function DivisionDetailPage({ params }: DivisionDetailPageP
                   <TableCell>{e.date}</TableCell>
                   <TableCell>{e.category}</TableCell>
                   <TableCell>{e.description ?? '—'}</TableCell>
-                  <TableCell className="text-right tabular-nums font-medium text-amber-500">−{formatZAR(Number(e.amount))}</TableCell>
+                  <TableCell className="text-right tabular-nums font-medium text-amber-500">
+                    −{formatZAR(Number(e.amount))}
+                  </TableCell>
                 </TableRow>
               ))}
             </TableBody>
