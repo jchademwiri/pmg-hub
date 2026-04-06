@@ -1,0 +1,129 @@
+import { betterAuth } from 'better-auth'
+import { drizzleAdapter } from 'better-auth/adapters/drizzle'
+import { magicLink } from 'better-auth/plugins'
+import { createAuthMiddleware, APIError } from 'better-auth/api'
+import { headers } from 'next/headers'
+import { redirect } from 'next/navigation'
+import { getDb } from '@pmg/db'
+import { invitations } from '@pmg/db'
+import { eq } from '@pmg/db'
+import { Resend } from 'resend'
+
+// ── Resend client ─────────────────────────────────────────────────────────────
+
+function getResend() {
+  return new Resend(process.env.RESEND_API_KEY)
+}
+
+// ── Better Auth config ────────────────────────────────────────────────────────
+
+export const auth = betterAuth({
+  database: drizzleAdapter(getDb(), { provider: 'pg' }),
+
+  emailAndPassword: {
+    enabled: false,
+  },
+
+  plugins: [
+    magicLink({
+      sendMagicLink: async ({ email, url }) => {
+        const resend = getResend()
+        try {
+          const { error } = await resend.emails.send({
+            from: 'PMG Admin <noreply@playhousemedia.co.za>',
+            to: email,
+            subject: 'Sign in to PMG Control Center',
+            html: `<p>Click the link below to sign in to PMG Control Center:</p><p><a href="${url}">${url}</a></p>`,
+          })
+          if (error) {
+            throw new APIError('INTERNAL_SERVER_ERROR', { message: 'Failed to send email' })
+          }
+        } catch (err) {
+          if (err instanceof APIError) throw err
+          throw new APIError('INTERNAL_SERVER_ERROR', { message: 'Failed to send email' })
+        }
+      },
+    }),
+  ],
+
+  user: {
+    additionalFields: {
+      role: {
+        type: 'string',
+        required: true,
+        defaultValue: 'viewer',
+      },
+      isActive: {
+        type: 'boolean',
+        required: true,
+        defaultValue: true,
+      },
+    },
+  },
+
+  hooks: {
+    before: createAuthMiddleware(async (ctx) => {
+      if (ctx.path !== '/sign-in/magic-link') return
+
+      const email = ctx.body?.email as string | undefined
+      if (!email) {
+        throw new APIError('FORBIDDEN', { message: 'Not invited' })
+      }
+
+      // Use the internal adapter to check if the user exists in the users table
+      const user = await ctx.context.adapter.findOne({
+        model: 'user',
+        where: [{ field: 'email', value: email }],
+      })
+
+      if (!user) {
+        throw new APIError('FORBIDDEN', { message: 'Not invited' })
+      }
+    }),
+
+    after: createAuthMiddleware(async (ctx) => {
+      if (ctx.path !== '/sign-in/magic-link') return
+
+      const newSession = ctx.context.newSession
+      if (!newSession?.user?.email) return
+
+      const db = getDb()
+      try {
+        await db
+          .update(invitations)
+          .set({ acceptedAt: new Date() })
+          .where(eq(invitations.email, newSession.user.email))
+      } catch {
+        // Non-fatal: invitation may not exist for legacy users
+      }
+    }),
+  },
+})
+
+export type Session = typeof auth.$Infer.Session
+
+// ── Role hierarchy ────────────────────────────────────────────────────────────
+
+const ROLE_HIERARCHY = { super_admin: 3, admin: 2, viewer: 1 } as const
+type Role = keyof typeof ROLE_HIERARCHY
+
+// ── Server helpers ────────────────────────────────────────────────────────────
+
+/**
+ * Fetches the current session server-side.
+ * Redirects to /login if no session exists.
+ */
+export async function getSessionOrRedirect() {
+  const session = await auth.api.getSession({ headers: await headers() })
+  if (!session) redirect('/login')
+  return session
+}
+
+/**
+ * Returns true if the session user's role meets or exceeds the required role.
+ */
+export function requireRole(session: Session, role: Role): boolean {
+  const userRole = (session.user as { role?: string }).role as Role | undefined
+  const userLevel = ROLE_HIERARCHY[userRole ?? 'viewer'] ?? 1
+  return userLevel >= ROLE_HIERARCHY[role]
+}

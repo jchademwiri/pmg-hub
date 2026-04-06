@@ -7,3 +7,4 @@ export * from "./leads";
 export * from "./withdrawals";
 export * from "./snapshots";
 export * from "./expense-categories";
+export * from "./invitations";

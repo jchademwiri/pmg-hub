@@ -9,5 +9,6 @@ export { getClientsWithIncomeCount, getClientById, setClientActive } from './que
 export { getDivisionWithStatsById, setDivisionActive } from './queries';
 export { getAllExpenseCategories, getExpenseCategoryById } from './queries';
 export type { ExpenseCategory } from './schema/expense-categories';
+export type { Invitation, NewInvitation } from './schema/invitations';
 // export type { Withdrawal, NewWithdrawal } from './schema/withdrawals';
 

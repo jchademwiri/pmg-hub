@@ -8,6 +8,13 @@
       "when": 1775385900392,
       "tag": "0000_faulty_gateway",
       "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "7",
+      "when": 1775454633177,
+      "tag": "0001_brave_king_cobra",
+      "breakpoints": true
     }
   ]
 }
