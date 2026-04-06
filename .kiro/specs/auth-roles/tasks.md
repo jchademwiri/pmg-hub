@@ -128,7 +128,7 @@ Implement invitation-only authentication, role-based access control, and user ma
     - Proxy contains no role-checking logic
   - _Requirements: 1.1, 2.1, 9.3, 10.1, 10.2, 6.1_
 
-- [ ] 14. Final checkpoint — Ensure all tests pass
+- [x] 14. Final checkpoint — Ensure all tests pass
   - Ensure all tests pass, ask the user if questions arise.
 
 ## Notes
