@@ -21,6 +21,7 @@ const ROLES = [
 type Role = (typeof ROLES)[number]['value']
 
 export function InviteUserForm() {
+  const [name, setName] = React.useState('')
   const [email, setEmail] = React.useState('')
   const [role, setRole] = React.useState<Role>('viewer')
   const [error, setError] = React.useState<string | null>(null)
@@ -33,6 +34,7 @@ export function InviteUserForm() {
     setSuccess(null)
 
     const formData = new FormData()
+    formData.set('name', name)
     formData.set('email', email)
     formData.set('role', role)
 
@@ -42,6 +44,7 @@ export function InviteUserForm() {
         setError(result.error)
       } else {
         setSuccess(`Invitation sent to ${email}`)
+        setName('')
         setEmail('')
         setRole('viewer')
       }
@@ -50,6 +53,21 @@ export function InviteUserForm() {
 
   return (
     <form onSubmit={handleSubmit} className="space-y-4 max-w-md">
+      <div className="space-y-1.5">
+        <label htmlFor="name" className="text-sm font-medium leading-none">
+          Full Name
+        </label>
+        <Input
+          id="name"
+          type="text"
+          required
+          placeholder="Jane Smith"
+          value={name}
+          onChange={(e) => setName(e.target.value)}
+          disabled={isPending}
+        />
+      </div>
+
       <div className="space-y-1.5">
         <label htmlFor="email" className="text-sm font-medium leading-none">
           Email

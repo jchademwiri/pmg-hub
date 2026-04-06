@@ -9,6 +9,7 @@ import { Resend } from 'resend'
 // ── Zod schemas ───────────────────────────────────────────────────────────────
 
 const InviteSchema = z.object({
+  name: z.string().min(1, 'Name is required').max(100),
   email: z.string().email(),
   role: z.enum(['super_admin', 'admin', 'viewer']),
 })
@@ -49,7 +50,7 @@ export async function inviteUser(formData: FormData): Promise<{ error?: string }
     return { error: result.error.issues[0]?.message ?? 'Validation error' }
   }
 
-  const { email, role } = result.data
+  const { name, email, role } = result.data
   const db = getDb()
 
   try {
@@ -71,6 +72,7 @@ export async function inviteUser(formData: FormData): Promise<{ error?: string }
     const expiresAt = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000)
 
     await db.insert(invitations).values({
+      name,
       email,
       role,
       token,
@@ -86,7 +88,7 @@ export async function inviteUser(formData: FormData): Promise<{ error?: string }
       from: 'PMG Admin <noreply@playhousemedia.co.za>',
       to: email,
       subject: 'You have been invited to PMG Control Center',
-      html: `<p>You have been invited to join PMG Control Center as <strong>${role}</strong>.</p><p><a href="${inviteUrl}">Accept invitation</a></p><p>This invitation expires in 7 days.</p>`,
+      html: `<p>Hi ${name},</p><p>You have been invited to join PMG Control Center as <strong>${role}</strong>.</p><p><a href="${inviteUrl}">Accept invitation</a></p><p>This invitation expires in 7 days.</p>`,
     })
 
     if (emailError) {

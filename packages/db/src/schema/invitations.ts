@@ -2,6 +2,7 @@ import { pgTable, uuid, text, timestamp } from "drizzle-orm/pg-core";
 
 export const invitations = pgTable("invitations", {
   id: uuid("id").primaryKey().defaultRandom(),
+  name: text("name").notNull(),
   email: text("email").notNull().unique(),
   role: text("role", { enum: ["super_admin", "admin", "viewer"] }).notNull(),
   token: text("token").notNull().unique(),
