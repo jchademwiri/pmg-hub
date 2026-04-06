@@ -120,6 +120,24 @@ export async function revokeUser(userId: string): Promise<{ error?: string }> {
   }
 }
 
+export async function updateUserName(userId: string, formData: FormData): Promise<{ error?: string }> {
+  const guard = await requireSuperAdmin()
+  if (guard) return guard
+
+  const name = (formData.get('name') as string | null)?.trim()
+  if (!name || name.length < 1) return { error: 'Name cannot be empty' }
+  if (name.length > 100) return { error: 'Name too long' }
+
+  try {
+    const db = getDb()
+    await db.execute(sql`UPDATE "user" SET "name" = ${name} WHERE "id" = ${userId}`)
+    revalidatePath('/users')
+    return {}
+  } catch {
+    return { error: 'Something went wrong' }
+  }
+}
+
 export async function updateUserRole(userId: string, formData: FormData): Promise<{ error?: string }> {
   const guard = await requireSuperAdmin()
   if (guard) return guard

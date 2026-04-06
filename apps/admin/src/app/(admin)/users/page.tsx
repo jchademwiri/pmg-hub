@@ -19,7 +19,7 @@ export default async function UsersPage() {
 
   const db = getDb()
   const result = await db.execute(
-    sql`SELECT id, name, email, role, "isActive" FROM "user" ORDER BY "createdAt" DESC`
+    sql`SELECT id, name, email, role, is_active AS "isActive" FROM "user" ORDER BY created_at DESC`
   )
   const users = result.rows as unknown as UserRow[]
 
