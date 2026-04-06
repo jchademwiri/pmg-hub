@@ -1,3 +1,4 @@
+import 'server-only'
 import { betterAuth } from 'better-auth'
 import { drizzleAdapter } from 'better-auth/adapters/drizzle'
 import { magicLink } from 'better-auth/plugins'
@@ -18,6 +19,8 @@ function getResend() {
 // ── Better Auth config ────────────────────────────────────────────────────────
 
 export const auth = betterAuth({
+  secret: process.env.BETTER_AUTH_SECRET,
+  baseURL: process.env.BETTER_AUTH_URL,
   database: drizzleAdapter(getDb(), { provider: 'pg' }),
 
   emailAndPassword: {
@@ -36,9 +39,11 @@ export const auth = betterAuth({
             html: `<p>Click the link below to sign in to PMG Control Center:</p><p><a href="${url}">${url}</a></p>`,
           })
           if (error) {
+            console.error('[MagicLink Error]', error)
             throw new APIError('INTERNAL_SERVER_ERROR', { message: 'Failed to send email' })
           }
         } catch (err) {
+          console.error('[MagicLink Error Catch]', err)
           if (err instanceof APIError) throw err
           throw new APIError('INTERNAL_SERVER_ERROR', { message: 'Failed to send email' })
         }

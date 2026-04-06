@@ -55,4 +55,15 @@ export function proxy(request: NextRequest): NextResponse {
   return NextResponse.next()
 }
 
-export const config = { matcher: ['/:path*'] }
+export const config = {
+  matcher: [
+    /*
+     * Match all request paths EXCEPT:
+     * - _next/static  (static files)
+     * - _next/image   (image optimisation)
+     * - favicon.ico, sitemap.xml, robots.txt (static assets)
+     * - public folder files (png, jpg, svg, etc.)
+     */
+    '/((?!_next/static|_next/image|favicon\\.ico|sitemap\\.xml|robots\\.txt|.*\\.(?:png|jpg|jpeg|gif|svg|webp|ico|woff|woff2|ttf|otf)).*)',
+  ],
+}

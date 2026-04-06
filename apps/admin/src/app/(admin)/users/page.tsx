@@ -21,7 +21,7 @@ export default async function UsersPage() {
   const result = await db.execute(
     sql`SELECT id, name, email, role, "isActive" FROM "user" ORDER BY "createdAt" DESC`
   )
-  const users = result.rows as UserRow[]
+  const users = result.rows as unknown as UserRow[]
 
   return (
     <div className="flex flex-col gap-6">
