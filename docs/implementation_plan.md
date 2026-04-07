@@ -1,0 +1,44 @@
+# Complete System Overhaul Implementation Plan
+
+This implementation plan thoroughly integrates your requirements for withdrawal constraints and expense management with the 14 critical issues identified in `docs/notes.md`.
+
+## User Review Required
+
+> [!IMPORTANT]
+> This is a significant refactoring plan addressing auth security, raw SQL vulnerabilities, database schema changes, and UI optimizations. Please review the organized phases to confirm you agree with the prioritization.
+
+## Proposed Changes
+
+### Phase 1: Security, Auth & Tests
+- **Create/Update Tests:** Set up Vitest/Playwright tests securing withdrawal validation, category constraints, and authentication.
+- **Auth Middleware Check (Issue #1):** Upgrade `proxy.ts` / `middleware.ts` to fully validate the session server-side using Better Auth to prevent tampered or expired cookies from slipping through.
+- **Raw SQL Removal (Issue #5):** Refactor the `users.ts` server actions to use proper Drizzle ORM type-safe queries instead of raw `UPDATE` SQL commands.
+- **Missing `/invite` Route (Issue #14):** Build the `/invite` route to properly handle the account setup redirect.
+
+### Phase 2: Database & Core Domain
+- **Expense Client Linking (New Req):** Update `expenses` schema with an optional `client_id`.
+- **Run Migrations:** `bun run db:generate` and `bun run db:migrate`.
+
+### Phase 3: Withdrawals & Accounts Logic
+- **Consolidate Withdrawals (Issue #4 & 7):** Delete the redundant `withdraw.ts`. Standardize on `withdrawals.ts`. Ensure the account parameter is passed explicitly and the hardcoded `'salary'` fallback is removed.
+- **Withdrawal Rules (New Req):** Enforce the R20 minimum balance checks and maximum available balance constraints within this consolidated Server Action.
+- **Account Rates Bug (Issue #6):** Fix the math/documentation for `ACCOUNT_RATES` in `accounts.ts` so `pmg_share` (revenue based) and the profit pool allocations sum up consistently.
+- **Statement Labeling (Issue #8):** Update the UI and localization in `accounts/[account]/page.tsx` to explicitly label the `effectiveRate` calculations as "Allocated" rather than "Deposited" to reflect synthetic flows.
+
+### Phase 4: UI Cleanup & Performance
+- **Dashboard Refactor (New Req & Issue #3, 12, 13):** 
+  - Completely remove the withdrawal functional UI forms/buttons from the dashboard.
+  - Fix `autoClosePreviousMonthIfNeeded` so it doesn't query the DB on every request (implement caching or request memoization ) i prefear chron job so it auto closes at 00.00 of every 6th of each month, it must write to database snapshots when it auto closes, user can also manually close the month. it must close to the last date of the previuse month
+  - Clean up dead code by removing `revenue-sparkline.tsx` and `allocation-bar.tsx`.
+- **Pagination (Issue #9):** Add cursor or offset-based pagination to `getAllIncome()`, `getAllExpenses()`, and `getAllWithdrawals()` queries, and implement a data table capability.
+- **Expenses Form (New Req):** Add our `shadcn` select/combobox for optionally linking specific clients.
+- **Categories Page (New Req & Issue #11):** Build the `/expense-categories` route and sidebar link. Protect in-use categories from deletion, but permit renaming.
+- **Styling Fixes (Issue #10):** Update the `leads-table.tsx` badge classes (`bg-blue-100`) to strictly use CSS variable-based patterns designed for the forced dark mode UI.
+
+### Phase 5: Build & Final Polish
+- Ensure the Turborepo `bun run build` completely passes.
+- Fix any TypeScript definitions adjusted across schemas.
+
+## Verification Plan
+- Unit tests run confirming withdrawal logic, missing routes, and database models.
+- Manual execution of the app to confirm proper auth intercepts and visual data formatting (Pagination, Dark Mode).
