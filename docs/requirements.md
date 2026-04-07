@@ -22,11 +22,11 @@ This document captures custom requirements alongside high, medium, and low prior
 ## 2. Codebase Refinements (from `docs/notes.md`)
 
 ### High Priority
-1. **Middleware Security Check:** Server-side verification of valid session token must happen inside `proxy.ts`/`middleware.ts`, checking the DB validation beyond cookie existence.
+1. ✅ **Middleware Security Check:** Server-side verification of valid session token must happen inside `proxy.ts`/`middleware.ts`, checking the DB validation beyond cookie existence.
 
 3. **Database Performance:** Remove `autoClosePreviousMonthIfNeeded` from being queried on every dashboard load. Instead, implement a cron job that auto-closes at 00:00 on the 6th of each month (closing to the last date of the previous month and writing to database snapshots). Also implement manual month closure functionality.
 4. **Data Integrity for Withrawals:** Deprecate and delete redundant `withdraw.ts`. Use exactly one standardized action (`withdrawals.ts`) avoiding any hardcoded defaults like `'salary'`.
-5. **Type Safety Security:** Migrate all raw SQL usage entirely out of `users.ts` actions to leverage Drizzle type-save implementations. 
+5. ✅ **Type Safety Security:** Migrate all raw SQL usage entirely out of `users.ts` actions to leverage Drizzle type-safe implementations.
 
 ### Medium Priority
 6. **Account Math Correctness:** Document and decouple `pmg_share` (calculated from Revenue bounds) against logic processing the standard Profit Pool array items inside `ACCOUNT_RATES`. (This is correct, pmg takes share from gross income)
@@ -39,4 +39,4 @@ This document captures custom requirements alongside high, medium, and low prior
 
 ### Low Priority / Cleanup
 13. **Component Pruning:** Aggressively remove unused logic structures representing features no longer supported such as `revenue-sparkline.tsx` and `allocation-bar.tsx`.
-14. **Route Repair:** Complete the logic loop for magic link user assignments by providing the valid resolution target component via standard routing mapping (`/invite`).
+14. ✅ **Route Repair:** Complete the logic loop for magic link user assignments by providing the valid resolution target component via standard routing mapping (`/invite`).
