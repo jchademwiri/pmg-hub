@@ -28,7 +28,7 @@ This implementation plan thoroughly integrates your requirements for withdrawal 
 ### Phase 4: UI Cleanup & Performance
 - **Dashboard Refactor (New Req & Issue #3, 12, 13):** 
   - Completely remove the withdrawal functional UI forms/buttons from the dashboard.
-  - Fix `autoClosePreviousMonthIfNeeded` so it doesn't query the DB on every request (implement caching or request memoization ) i prefear chron job so it auto closes at 00.00 of every 6th of each month, it must write to database snapshots when it auto closes, user can also manually close the month. it must close to the last date of the previuse month
+  - Fix `autoClosePreviousMonthIfNeeded` so it doesn't query the DB on every request. Implement a cron job that auto-closes at 00:00 on the 6th of each month. It must write to database snapshots when it auto-closes, locking up to the last date of the previous month. Ensure users can also manually close the month.
   - Clean up dead code by removing `revenue-sparkline.tsx` and `allocation-bar.tsx`.
 - **Pagination (Issue #9):** Add cursor or offset-based pagination to `getAllIncome()`, `getAllExpenses()`, and `getAllWithdrawals()` queries, and implement a data table capability.
 - **Expenses Form (New Req):** Add our `shadcn` select/combobox for optionally linking specific clients.

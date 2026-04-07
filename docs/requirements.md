@@ -24,7 +24,7 @@ This document captures custom requirements alongside high, medium, and low prior
 ### High Priority
 1. **Middleware Security Check:** Server-side verification of valid session token must happen inside `proxy.ts`/`middleware.ts`, checking the DB validation beyond cookie existence.
 
-3. **Database Performance:** Isolate the `autoClosePreviousMonthIfNeeded` from directly querying on every dashboard load. Must be cached, memoized, or delegated respectively.
+3. **Database Performance:** Remove `autoClosePreviousMonthIfNeeded` from being queried on every dashboard load. Instead, implement a cron job that auto-closes at 00:00 on the 6th of each month (closing to the last date of the previous month and writing to database snapshots). Also implement manual month closure functionality.
 4. **Data Integrity for Withrawals:** Deprecate and delete redundant `withdraw.ts`. Use exactly one standardized action (`withdrawals.ts`) avoiding any hardcoded defaults like `'salary'`.
 5. **Type Safety Security:** Migrate all raw SQL usage entirely out of `users.ts` actions to leverage Drizzle type-save implementations. 
 
