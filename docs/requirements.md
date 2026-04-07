@@ -34,7 +34,9 @@ This document captures custom requirements alongside high, medium, and low prior
 8. **UI Labels:** Formally tag values processed via `effectiveRate` internally on the statement page as "Allocated" over misleading labels like "Deposited".
 9. **Query Scalability:** Insert base pagination (Cursor or offset parameters coupled with `LIMIT`) on large queries spanning: `getAllIncome()`, `getAllExpenses()`, and `getAllWithdrawals()`.
 10. **Dark Mode Accents:** Adjust standard light styling (`bg-blue-100` / `bg-green-100`) located within the `leads-table.tsx` to adopt the theme's core CSS `chart-X` color scales explicitly.
+11. **Sidebar Mobile UX:** On mobile, the sidebar must auto-close when a navigation link is selected.
+12. **Sidebar Logo Link:** The "PMG Control Center" title/logo in the sidebar must be clickable and link to the dashboard (`/dashboard`).
 
 ### Low Priority / Cleanup
-11. **Component Pruning:** Aggressively remove unused logic structures representing features no longer supported such as `revenue-sparkline.tsx` and `allocation-bar.tsx`.
-12. **Route Repair:** Complete the logic loop for magic link user assignments by providing the valid resolution target component via standard routing mapping (`/invite`).
+13. **Component Pruning:** Aggressively remove unused logic structures representing features no longer supported such as `revenue-sparkline.tsx` and `allocation-bar.tsx`.
+14. **Route Repair:** Complete the logic loop for magic link user assignments by providing the valid resolution target component via standard routing mapping (`/invite`).

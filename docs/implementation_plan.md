@@ -34,6 +34,8 @@ This implementation plan thoroughly integrates your requirements for withdrawal 
 - **Expenses Form (New Req):** Add our `shadcn` select/combobox for optionally linking specific clients.
 - **Categories Page (New Req & Issue #11):** Build the `/expense-categories` route and sidebar link. Protect in-use categories from deletion, but permit renaming.
 - **Styling Fixes (Issue #10):** Update the `leads-table.tsx` badge classes (`bg-blue-100`) to strictly use CSS variable-based patterns designed for the forced dark mode UI.
+- **Sidebar Mobile UX (Issue #11):** Auto-close the sidebar on mobile when a navigation link is selected.
+- **Sidebar Logo Link (Issue #12):** Make the "PMG Control Center" title/logo clickable, linking to `/dashboard`.
 
 ### Phase 5: Build & Final Polish
 - Ensure the Turborepo `bun run build` completely passes.

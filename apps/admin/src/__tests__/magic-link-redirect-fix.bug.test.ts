@@ -14,7 +14,7 @@
  * Validates: Requirements 1.1, 1.2
  */
 
-import { describe, it, expect } from 'vitest'
+import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { NextRequest } from 'next/server'
 import { proxy } from '@/proxy'
 
@@ -46,11 +46,18 @@ describe('magic-link-redirect-fix — Property 1: Bug Condition — Secure-Prefi
    *   proxy(request to /dashboard with __Secure-better-auth.session_token=abc)
    *   returns redirect to /login instead of NextResponse.next()
    */
+  beforeEach(() => {
+    // Mock fetch for server-side session validation — return a valid active session
+    vi.stubGlobal('fetch', vi.fn().mockResolvedValue(
+      new Response(JSON.stringify({ user: { id: '1', name: 'Test', email: 'test@test.com', isActive: true } }), { status: 200 })
+    ))
+  })
+
   it(
     'proxy returns NextResponse.next() (not a redirect) when only __Secure-better-auth.session_token is set on a protected path — Validates: Requirements 1.1, 1.2',
-    () => {
+    async () => {
       const req = makeSecureCookieRequest('/dashboard', 'abc123')
-      const res = proxy(req)
+      const res = await proxy(req)
 
       // The response MUST NOT be a redirect
       expect(res.status).not.toBe(302)

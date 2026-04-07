@@ -134,6 +134,8 @@ vi.mock('@pmg/db', () => {
       invitedBy: 'invitedBy',
       acceptedAt: 'acceptedAt',
     },
+    user: { id: 'id', name: 'name', email: 'email', role: 'role', isActive: 'isActive' },
+    session: { id: 'id', userId: 'userId' },
     eq: vi.fn(),
     sql: Object.assign(
       (strings: TemplateStringsArray, ...values: unknown[]) => ({ strings, values }),
