@@ -27,7 +27,8 @@ function isRateLimited(ip: string): boolean {
 // Feature: auth-roles, Property 4: Proxy blocks unauthenticated requests to protected paths
 // Feature: auth-roles, Property 5: Proxy passes authenticated requests through
 // Feature: auth-roles, Property 6: Auth allowlist always passes through
-export function proxy(request: NextRequest): NextResponse {
+// Feature: auth-security, Property 12: Server-side session validation via Better Auth
+export async function proxy(request: NextRequest): Promise<NextResponse> {
   const { pathname } = request.nextUrl
 
   // Rate limit auth endpoints
@@ -46,12 +47,51 @@ export function proxy(request: NextRequest): NextResponse {
     return NextResponse.next()
   }
 
+  // Allow the public invite acceptance route through
+  if (pathname === '/invite') {
+    return NextResponse.next()
+  }
+
   // Require session cookie for all other routes
   const sessionToken =
     request.cookies.get('__Secure-better-auth.session_token') ??
     request.cookies.get('better-auth.session_token')
   if (!sessionToken) {
     return NextResponse.redirect(new URL('/login', request.url))
+  }
+
+  // ── Server-side session validation via Better Auth ──────────────────────
+  // Instead of just trusting the cookie exists, verify it against the DB
+  // by calling the Better Auth session endpoint internally.
+  try {
+    const sessionUrl = new URL('/api/auth/get-session', request.url)
+    const res = await fetch(sessionUrl.toString(), {
+      headers: {
+        cookie: request.headers.get('cookie') ?? '',
+      },
+    })
+
+    if (!res.ok) {
+      return NextResponse.redirect(new URL('/login', request.url))
+    }
+
+    const session = await res.json()
+
+    // Reject inactive users even if session is valid
+    if (session?.user && session.user.isActive === false) {
+      // Clear the session cookie and redirect to login
+      const response = NextResponse.redirect(new URL('/login', request.url))
+      response.cookies.delete('better-auth.session_token')
+      response.cookies.delete('__Secure-better-auth.session_token')
+      return response
+    }
+
+    if (!session?.user) {
+      return NextResponse.redirect(new URL('/login', request.url))
+    }
+  } catch {
+    // If the internal fetch fails (e.g. during build or cold start), 
+    // fall back to cookie-only check which we already passed above
   }
 
   return NextResponse.next()

@@ -1,4 +1,4 @@
-import { describe, it, expect, vi } from 'vitest'
+import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { NextRequest, NextResponse } from 'next/server'
 
 // Mocks
@@ -27,31 +27,38 @@ vi.mock('next/server', () => {
 })
 
 describe('proxy() function in proxy.ts', () => {
+  beforeEach(() => {
+    // Mock fetch for server-side session validation
+    vi.stubGlobal('fetch', vi.fn().mockResolvedValue(
+      new Response(JSON.stringify({ user: { id: '1', name: 'Test', email: 'test@test.com', isActive: true } }), { status: 200 })
+    ))
+  })
+
   it('1. Request has __Secure-better-auth.session_token cookie → NextResponse.next()', async () => {
     const { proxy } = await import('../proxy')
     const req = new NextRequest('/dashboard', { '__Secure-better-auth.session_token': 'abc123' })
-    proxy(req as any)
+    await proxy(req as any)
     expect(NextResponse.next).toHaveBeenCalled()
   })
 
   it('2. Request has better-auth.session_token cookie → NextResponse.next()', async () => {
     const { proxy } = await import('../proxy')
     const req = new NextRequest('/dashboard', { 'better-auth.session_token': 'abc123' })
-    proxy(req as any)
+    await proxy(req as any)
     expect(NextResponse.next).toHaveBeenCalled()
   })
 
   it('3. Request has neither cookie → redirect to /login', async () => {
     const { proxy } = await import('../proxy')
     const req = new NextRequest('/dashboard', {})
-    proxy(req as any)
+    await proxy(req as any)
     expect(NextResponse.redirect).toHaveBeenCalledWith(new URL('/login', req.url))
   })
 
   it('4. Request is to /api/auth/magic-link/verify with no cookie → NextResponse.next()', async () => {
     const { proxy } = await import('../proxy')
     const req = new NextRequest('/api/auth/magic-link/verify', {})
-    proxy(req as any)
+    await proxy(req as any)
     expect(NextResponse.next).toHaveBeenCalled()
   })
 })

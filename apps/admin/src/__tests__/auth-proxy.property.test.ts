@@ -4,7 +4,7 @@
  * Property 4: Proxy blocks unauthenticated requests to protected paths
  * Validates: Requirements 3.1
  *
- * Property 5: Proxy passes authenticated requests through
+ * Property 5: Proxy passes authenticated requests through (with server-side validation)
  * Validates: Requirements 3.2
  *
  * Property 6: Auth allowlist always passes through
@@ -12,16 +12,18 @@
  *
  * Property 11: Rate limiter isolates by IP
  * Validates: Requirements 8.1, 8.2, 8.3
+ *
+ * Property 12: Server-side session validation rejects invalid/inactive users
+ * Validates: Requirements 1.1
  */
 
-import { describe, it, beforeEach } from 'vitest'
+import { describe, it, beforeEach, vi } from 'vitest'
 import * as fc from 'fast-check'
 import { NextRequest, NextResponse } from 'next/server'
 
-// Re-import proxy fresh for each test group so the rate limiter Map resets
-// We use a dynamic import trick via a factory to get a fresh module per describe block.
-// Since vitest caches modules, we test the rate limiter in isolation by calling
-// the exported function directly and resetting state via the module's internals.
+// ─── Global fetch mock ─────────────────────────────────────────────────────
+// The upgraded proxy now calls fetch() internally to validate sessions.
+// We mock globalThis.fetch for test control.
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
 
@@ -60,6 +62,7 @@ const protectedPathArb = fc
   .filter(
     (p) =>
       p !== '/login' &&
+      p !== '/invite' &&
       !p.startsWith('/api/auth/') &&
       p.length > 0
   )
@@ -67,6 +70,7 @@ const protectedPathArb = fc
 /** Paths in the allowlist */
 const allowlistPathArb = fc.oneof(
   fc.constant('/login'),
+  fc.constant('/invite'),
   fc
     .webSegment()
     .map((seg) => `/api/auth/${seg}`)
@@ -89,9 +93,9 @@ describe('proxy — Property 4: blocks unauthenticated requests to protected pat
     const { proxy } = await import('@/proxy')
 
     await fc.assert(
-      fc.property(protectedPathArb, (pathname) => {
+      fc.asyncProperty(protectedPathArb, async (pathname) => {
         const req = makeRequest(pathname)
-        const res = proxy(req)
+        const res = await proxy(req)
 
         expect(res.status).toBe(307)
         const location = res.headers.get('location')
@@ -107,13 +111,20 @@ describe('proxy — Property 5: passes authenticated requests through', () => {
    * Feature: auth-roles, Property 5: Proxy passes authenticated requests through
    * Validates: Requirements 3.2
    */
-  it('returns next() for any path when session cookie is present — Validates: Requirements 3.2', async () => {
+  beforeEach(() => {
+    // Mock fetch to return a valid session for all internal session validation calls
+    vi.stubGlobal('fetch', vi.fn().mockResolvedValue(
+      new Response(JSON.stringify({ user: { id: '1', name: 'Test', email: 'test@test.com', isActive: true } }), { status: 200 })
+    ))
+  })
+
+  it('returns next() for any path when session cookie is present and valid — Validates: Requirements 3.2', async () => {
     const { proxy } = await import('@/proxy')
 
     await fc.assert(
-      fc.property(protectedPathArb, cookieValueArb, (pathname, cookieValue) => {
+      fc.asyncProperty(protectedPathArb, cookieValueArb, async (pathname, cookieValue) => {
         const req = makeRequest(pathname, { sessionCookie: cookieValue })
-        const res = proxy(req)
+        const res = await proxy(req)
 
         // Should NOT redirect
         expect(res.status).not.toBe(307)
@@ -129,23 +140,22 @@ describe('proxy — Property 6: auth allowlist always passes through', () => {
    * Feature: auth-roles, Property 6: Auth allowlist always passes through
    * Validates: Requirements 3.3
    */
-  it('allows /login and /api/auth/* through regardless of session cookie — Validates: Requirements 3.3', async () => {
+  it('allows /login, /invite, and /api/auth/* through regardless of session cookie — Validates: Requirements 3.3', async () => {
     const { proxy } = await import('@/proxy')
 
     await fc.assert(
-      fc.property(
+      fc.asyncProperty(
         allowlistPathArb,
         fc.option(cookieValueArb, { nil: undefined }),
-        (pathname, cookieValue) => {
+        async (pathname, cookieValue) => {
           const req = makeRequest(pathname, cookieValue ? { sessionCookie: cookieValue } : {})
-          const res = proxy(req)
+          const res = await proxy(req)
 
           // Should NOT redirect to /login
           expect(res.status).not.toBe(307)
           expect(res.status).not.toBe(302)
-          // Should not be a 429 (rate limit only applies to /api/auth/*, tested separately)
-          // For /login specifically, no rate limiting
-          if (pathname === '/login') {
+          // For /login and /invite specifically, no rate limiting
+          if (pathname === '/login' || pathname === '/invite') {
             expect(res.status).toBe(200)
           }
         }
@@ -182,21 +192,21 @@ describe('proxy — Property 11: rate limiter isolates by IP', () => {
             const req = new NextRequest('http://localhost/api/auth/sign-in', {
               headers: { 'x-forwarded-for': ip1 },
             })
-            proxy(req)
+            await proxy(req)
           }
 
           // ip1's 11th request should be rate limited
           const ip1Req = new NextRequest('http://localhost/api/auth/sign-in', {
             headers: { 'x-forwarded-for': ip1 },
           })
-          const ip1Res = proxy(ip1Req)
+          const ip1Res = await proxy(ip1Req)
           expect(ip1Res.status).toBe(429)
 
           // ip2 should still be allowed through (independent counter)
           const ip2Req = new NextRequest('http://localhost/api/auth/sign-in', {
             headers: { 'x-forwarded-for': ip2 },
           })
-          const ip2Res = proxy(ip2Req)
+          const ip2Res = await proxy(ip2Req)
           expect(ip2Res.status).not.toBe(429)
         }
       ),
@@ -216,7 +226,7 @@ describe('proxy — Property 11: rate limiter isolates by IP', () => {
       const req = new NextRequest('http://localhost/api/auth/sign-in', {
         headers: { 'x-forwarded-for': ip },
       })
-      const res = proxy(req)
+      const res = await proxy(req)
       expect(res.status).not.toBe(429)
     }
 
@@ -224,7 +234,7 @@ describe('proxy — Property 11: rate limiter isolates by IP', () => {
     const req = new NextRequest('http://localhost/api/auth/sign-in', {
       headers: { 'x-forwarded-for': ip },
     })
-    const res = proxy(req)
+    const res = await proxy(req)
     expect(res.status).toBe(429)
   })
 
@@ -232,6 +242,11 @@ describe('proxy — Property 11: rate limiter isolates by IP', () => {
     const { vi } = await import('vitest')
     vi.resetModules()
     const { proxy } = await import('@/proxy')
+
+    // Mock fetch for valid session
+    vi.stubGlobal('fetch', vi.fn().mockResolvedValue(
+      new Response(JSON.stringify({ user: { id: '1', name: 'Test', email: 'test@test.com', isActive: true } }), { status: 200 })
+    ))
 
     const ip = '5.6.7.8'
 
@@ -243,8 +258,73 @@ describe('proxy — Property 11: rate limiter isolates by IP', () => {
           cookie: 'better-auth.session_token=abc123',
         },
       })
-      const res = proxy(req)
+      const res = await proxy(req)
       expect(res.status).not.toBe(429)
     }
+  })
+})
+
+describe('proxy — Property 12: server-side session validation', () => {
+  /**
+   * Feature: auth-security, Property 12: Server-side session validation
+   * Validates: Requirements 1.1
+   */
+
+  beforeEach(async () => {
+    const { vi } = await import('vitest')
+    vi.resetModules()
+  })
+
+  it('redirects to /login when session validation returns no user — Validates: Requirements 1.1', async () => {
+    const { vi } = await import('vitest')
+    vi.resetModules()
+    const { proxy } = await import('@/proxy')
+
+    // Mock fetch to return an invalid session
+    vi.stubGlobal('fetch', vi.fn().mockResolvedValue(
+      new Response(JSON.stringify(null), { status: 200 })
+    ))
+
+    const req = makeRequest('/dashboard', { sessionCookie: 'expired-token' })
+    const res = await proxy(req)
+
+    expect(res.status).toBe(307)
+    const location = res.headers.get('location')
+    expect(location).toContain('/login')
+  })
+
+  it('redirects to /login when user is inactive — Validates: Requirements 1.1', async () => {
+    const { vi } = await import('vitest')
+    vi.resetModules()
+    const { proxy } = await import('@/proxy')
+
+    // Mock fetch to return a session with inactive user
+    vi.stubGlobal('fetch', vi.fn().mockResolvedValue(
+      new Response(JSON.stringify({ user: { id: '1', name: 'Revoked', email: 'revoked@test.com', isActive: false } }), { status: 200 })
+    ))
+
+    const req = makeRequest('/dashboard', { sessionCookie: 'valid-token' })
+    const res = await proxy(req)
+
+    expect(res.status).toBe(307)
+    const location = res.headers.get('location')
+    expect(location).toContain('/login')
+  })
+
+  it('passes through when session is valid and user is active — Validates: Requirements 1.1', async () => {
+    const { vi } = await import('vitest')
+    vi.resetModules()
+    const { proxy } = await import('@/proxy')
+
+    // Mock fetch to return a valid active session
+    vi.stubGlobal('fetch', vi.fn().mockResolvedValue(
+      new Response(JSON.stringify({ user: { id: '1', name: 'Active', email: 'active@test.com', isActive: true } }), { status: 200 })
+    ))
+
+    const req = makeRequest('/dashboard', { sessionCookie: 'valid-token' })
+    const res = await proxy(req)
+
+    expect(res.status).not.toBe(307)
+    expect(res.status).not.toBe(302)
   })
 })

@@ -55,7 +55,7 @@ describe('magic-link-redirect-fix — Property 2: Preservation — Baseline Beha
       async () => {
         const { proxy } = await import('@/proxy')
         const req = makeRequest('/dashboard')
-        const res = proxy(req)
+        const res = await proxy(req)
 
         // NextResponse.redirect returns 307 by default
         expect([302, 307]).toContain(res.status)
@@ -71,7 +71,7 @@ describe('magic-link-redirect-fix — Property 2: Preservation — Baseline Beha
 
         for (const pathname of protectedPaths) {
           const req = makeRequest(pathname)
-          const res = proxy(req)
+          const res = await proxy(req)
           expect([302, 307]).toContain(res.status)
           expect(res.headers.get('location')).toContain('/login')
         }
@@ -85,12 +85,19 @@ describe('magic-link-redirect-fix — Property 2: Preservation — Baseline Beha
      *
      * Observation: proxy(request to /dashboard with better-auth.session_token=abc) → NextResponse.next()
      */
+    beforeEach(() => {
+      // Mock fetch for server-side session validation — active user
+      vi.stubGlobal('fetch', vi.fn().mockResolvedValue(
+        new Response(JSON.stringify({ user: { id: '1', name: 'Test', email: 'test@test.com', isActive: true } }), { status: 200 })
+      ))
+    })
+
     it(
       'proxy returns NextResponse.next() when plain better-auth.session_token cookie is present — Validates: Requirements 3.1',
       async () => {
         const { proxy } = await import('@/proxy')
         const req = makeRequest('/dashboard', { 'better-auth.session_token': 'abc123' })
-        const res = proxy(req)
+        const res = await proxy(req)
 
         expect(res.status).not.toBe(302)
         expect(res.status).not.toBe(307)
@@ -111,7 +118,7 @@ describe('magic-link-redirect-fix — Property 2: Preservation — Baseline Beha
       async () => {
         const { proxy } = await import('@/proxy')
         const req = makeRequest('/login')
-        const res = proxy(req)
+        const res = await proxy(req)
 
         expect(res.status).not.toBe(302)
         expect(res.headers.get('location')).toBeNull()
@@ -123,7 +130,7 @@ describe('magic-link-redirect-fix — Property 2: Preservation — Baseline Beha
       async () => {
         const { proxy } = await import('@/proxy')
         const req = makeRequest('/api/auth/signin')
-        const res = proxy(req)
+        const res = await proxy(req)
 
         expect(res.status).not.toBe(302)
         expect(res.headers.get('location')).toBeNull()
@@ -143,7 +150,7 @@ describe('magic-link-redirect-fix — Property 2: Preservation — Baseline Beha
 
         for (const pathname of authPaths) {
           const req = makeRequest(pathname)
-          const res = proxy(req)
+          const res = await proxy(req)
           // Should not redirect (rate limit not exceeded yet for these IPs)
           expect(res.headers.get('location')).toBeNull()
         }
@@ -171,13 +178,13 @@ describe('magic-link-redirect-fix — Property 2: Preservation — Baseline Beha
         // Send RATE_LIMIT_MAX requests — all should pass through
         for (let i = 0; i < RATE_LIMIT_MAX; i++) {
           const req = makeRequest('/api/auth/signin', {}, uniqueIp)
-          const res = proxy(req)
+          const res = await proxy(req)
           expect(res.status).not.toBe(429)
         }
 
         // The (RATE_LIMIT_MAX + 1)th request should be rate limited
         const req = makeRequest('/api/auth/signin', {}, uniqueIp)
-        const res = proxy(req)
+        const res = await proxy(req)
         expect(res.status).toBe(429)
       }
     )

@@ -101,15 +101,46 @@ vi.mock('@pmg/db', () => {
     return chain
   }
 
+  function makeUpdateChain() {
+    const chain: Record<string, unknown> = {
+      then(resolve: (v: unknown) => unknown, reject: (e: unknown) => unknown) {
+        return mockDbExecute().then(resolve, reject)
+      },
+      catch(reject: (e: unknown) => unknown) {
+        return mockDbExecute().catch(reject)
+      },
+    }
+    chain['set'] = () => chain
+    chain['where'] = () => chain
+    return chain
+  }
+
+  function makeDeleteChain() {
+    const chain: Record<string, unknown> = {
+      then(resolve: (v: unknown) => unknown, reject: (e: unknown) => unknown) {
+        return mockDbExecute().then(resolve, reject)
+      },
+      catch(reject: (e: unknown) => unknown) {
+        return mockDbExecute().catch(reject)
+      },
+    }
+    chain['where'] = () => chain
+    return chain
+  }
+
   const dbMock = {
     insert: () => makeInsertChain(),
     select: () => makeSelectChain(),
+    update: () => makeUpdateChain(),
+    delete: () => makeDeleteChain(),
     execute: mockDbExecute,
   }
 
   return {
     getDb: () => dbMock,
     invitations: { id: 'id', email: 'email', role: 'role', token: 'token', expiresAt: 'expiresAt', invitedBy: 'invitedBy' },
+    user: { id: 'id', name: 'name', email: 'email', role: 'role', isActive: 'isActive' },
+    session: { id: 'id', userId: 'userId' },
     eq: vi.fn(),
     sql: Object.assign(
       (strings: TemplateStringsArray, ...values: unknown[]) => ({ strings, values }),

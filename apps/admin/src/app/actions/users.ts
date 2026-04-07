@@ -2,7 +2,7 @@
 
 import { z } from 'zod'
 import { revalidatePath } from 'next/cache'
-import { getDb, invitations, eq, sql } from '@pmg/db'
+import { getDb, invitations, user, session, eq } from '@pmg/db'
 import { getSessionOrRedirect, requireRole } from '@/lib/auth'
 import { Resend } from 'resend'
 
@@ -65,8 +65,8 @@ export async function inviteUser(formData: FormData): Promise<{ error?: string }
       return { error: 'Email already invited' }
     }
 
-    const session = await getSessionOrRedirect()
-    const invitedBy = session.user.id
+    const currentSession = await getSessionOrRedirect()
+    const invitedBy = currentSession.user.id
 
     const token = crypto.randomUUID()
     const expiresAt = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000)
@@ -109,11 +109,11 @@ export async function revokeUser(userId: string): Promise<{ error?: string }> {
   const db = getDb()
 
   try {
-    // Invalidate all sessions for the user via raw SQL (Better Auth manages the sessions table)
-    await db.execute(sql`DELETE FROM "session" WHERE "userId" = ${userId}`)
+    // Invalidate all sessions for the user using Drizzle ORM (type-safe)
+    await db.delete(session).where(eq(session.userId, userId))
 
-    // Mark user as inactive via raw SQL (Better Auth manages the users table)
-    await db.execute(sql`UPDATE "user" SET "isActive" = false WHERE "id" = ${userId}`)
+    // Mark user as inactive using Drizzle ORM (type-safe)
+    await db.update(user).set({ isActive: false }).where(eq(user.id, userId))
 
     revalidatePath('/users')
     return {}
@@ -132,7 +132,8 @@ export async function updateUserName(userId: string, formData: FormData): Promis
 
   try {
     const db = getDb()
-    await db.execute(sql`UPDATE "user" SET "name" = ${name} WHERE "id" = ${userId}`)
+    // Update user name using Drizzle ORM (type-safe)
+    await db.update(user).set({ name }).where(eq(user.id, userId))
     revalidatePath('/users')
     return {}
   } catch {
@@ -154,8 +155,8 @@ export async function updateUserRole(userId: string, formData: FormData): Promis
 
   try {
     const db = getDb()
-    // Update role via raw SQL (Better Auth manages the users table)
-    await db.execute(sql`UPDATE "user" SET "role" = ${role} WHERE "id" = ${userId}`)
+    // Update role using Drizzle ORM (type-safe)
+    await db.update(user).set({ role }).where(eq(user.id, userId))
 
     revalidatePath('/users')
     return {}
