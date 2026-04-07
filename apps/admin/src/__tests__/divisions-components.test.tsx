@@ -25,6 +25,7 @@ vi.mock('@pmg/db', async (importActual) => {
 
 const updateAction = vi.fn().mockResolvedValue({})
 const deleteAction = vi.fn().mockResolvedValue({})
+const toggleActiveAction = vi.fn().mockResolvedValue({})
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
 
@@ -51,16 +52,18 @@ describe('DivisionsTable', () => {
     vi.resetAllMocks()
     updateAction.mockResolvedValue({})
     deleteAction.mockResolvedValue({})
+    toggleActiveAction.mockResolvedValue({})
   })
 
   // ── Column headers ──────────────────────────────────────────────────────────
 
-  it('renders all 6 column headers — Validates: Requirements 1.2', () => {
+  it('renders all 7 column headers — Validates: Requirements 1.2', () => {
     render(
       <DivisionsTable
         divisions={[]}
         updateAction={updateAction}
         deleteAction={deleteAction}
+        toggleActiveAction={toggleActiveAction}
       />
     )
 
@@ -68,7 +71,8 @@ describe('DivisionsTable', () => {
     expect(screen.getByRole('columnheader', { name: /^total income$/i })).toBeDefined()
     expect(screen.getByRole('columnheader', { name: /^total expenses$/i })).toBeDefined()
     expect(screen.getByRole('columnheader', { name: /^net profit$/i })).toBeDefined()
-    expect(screen.getByRole('columnheader', { name: /^lead count$/i })).toBeDefined()
+    expect(screen.getByRole('columnheader', { name: /^leads$/i })).toBeDefined()
+    expect(screen.getByRole('columnheader', { name: /^status$/i })).toBeDefined()
     expect(screen.getByRole('columnheader', { name: /^actions$/i })).toBeDefined()
   })
 

@@ -785,19 +785,20 @@ describe('ExpenseFilterBar', () => {
 
 describe('ExpenseTable', () => {
   const deleteAction = vi.fn().mockResolvedValue({})
+  const updateAction = vi.fn().mockResolvedValue({})
+  const divisions = [{ id: 'div-1', name: 'AWS' }]
+  const categories = ['Salaries', 'Software']
 
-  it('renders edit link with correct href /expenses/<id> for each row', () => {
+  it('renders Edit and Delete buttons for each row', () => {
     const entries = [makeExpenseEntry('abc-123'), makeExpenseEntry('def-456')]
-    render(React.createElement(ExpenseTable, { entries, deleteAction }))
+    render(React.createElement(ExpenseTable, { entries, deleteAction, updateAction, divisions, categories }))
 
-    const links = screen.getAllByRole('link')
-    const hrefs = links.map((l) => l.getAttribute('href'))
-    expect(hrefs).toContain('/expenses/abc-123')
-    expect(hrefs).toContain('/expenses/def-456')
+    const editButtons = screen.getAllByRole('button', { name: /edit/i })
+    expect(editButtons.length).toBe(2)
   })
 
   it('empty entries array renders no table rows (only header row)', () => {
-    render(React.createElement(ExpenseTable, { entries: [], deleteAction }))
+    render(React.createElement(ExpenseTable, { entries: [], deleteAction, updateAction, divisions, categories }))
     // No data rows — only the header row exists
     const rows = screen.queryAllByRole('row')
     // Only the header row should be present

@@ -11,7 +11,7 @@ vi.mock('@/lib/auth-client', () => ({
 describe('LoginPage', () => {
   it('renders the login form', () => {
     render(<LoginPage />)
-    expect(screen.getByText(/Control Center/i)).toBeInTheDocument()
+    expect(screen.getAllByText(/Control Center/i).length).toBeGreaterThan(0)
     expect(screen.getByLabelText(/Email/i)).toBeInTheDocument()
   })
 })

@@ -103,6 +103,7 @@ vi.mock('@/lib/financial', () => ({
   getMonthlyFinancialsSeriesForYear: vi.fn().mockResolvedValue([]),
   getRevenueByDivisionSeriesForYear: vi.fn().mockResolvedValue({ series: [], divisions: [] }),
   getExpensesByCategory: vi.fn().mockResolvedValue([]),
+  getProfitPoolSeriesForYear: vi.fn().mockResolvedValue([]),
 }))
 
 // Mock chart components used by the Reports page (they use recharts internally,

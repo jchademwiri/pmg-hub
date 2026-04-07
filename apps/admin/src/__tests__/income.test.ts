@@ -152,19 +152,20 @@ const makeEntry = (id: string): IncomeRow => ({
 
 describe('IncomeTable', () => {
   const deleteAction = vi.fn().mockResolvedValue({})
+  const updateAction = vi.fn().mockResolvedValue({})
+  const divisions = [{ id: 'div-1', name: 'AWS' }]
+  const clients: { id: string; name: string; businessName: string | null }[] = []
 
-  it('renders edit link with correct href /income/<id> for each row', () => {
+  it('renders Edit and Delete buttons for each row', () => {
     const entries = [makeEntry('abc-123'), makeEntry('def-456')]
-    render(React.createElement(IncomeTable, { entries, deleteAction }))
+    render(React.createElement(IncomeTable, { entries, deleteAction, updateAction, divisions, clients }))
 
-    const links = screen.getAllByRole('link')
-    const hrefs = links.map((l) => l.getAttribute('href'))
-    expect(hrefs).toContain('/income/abc-123')
-    expect(hrefs).toContain('/income/def-456')
+    const editButtons = screen.getAllByRole('button', { name: /edit/i })
+    expect(editButtons.length).toBe(2)
   })
 
   it('empty entries array renders no table rows', () => {
-    render(React.createElement(IncomeTable, { entries: [], deleteAction }))
+    render(React.createElement(IncomeTable, { entries: [], deleteAction, updateAction, divisions, clients }))
     // No data rows — only the header row exists
     const rows = screen.queryAllByRole('row')
     // Only the header row should be present

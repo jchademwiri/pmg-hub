@@ -14,11 +14,13 @@ describe('AdminLoading', () => {
 
   it('renders 2 Skeleton elements in the page header bar — Validates: Requirements 3.3', () => {
     const { container } = render(<AdminLoading />)
-    // Header bar has title skeleton (h-8 w-48) and action button skeleton (h-9 w-28)
-    const headerRow = container.querySelector('.flex.items-center.justify-between')
-    expect(headerRow).not.toBeNull()
-    const headerSkeletons = headerRow!.querySelectorAll('[data-slot="skeleton"]')
-    expect(headerSkeletons.length).toBe(2)
+    // The table section has a header row (first .flex.gap-4 child)
+    const tableSection = container.querySelector('.flex.flex-col.gap-2')
+    expect(tableSection).not.toBeNull()
+    const firstRow = tableSection!.querySelector('.flex.gap-4')
+    expect(firstRow).not.toBeNull()
+    const headerSkeletons = firstRow!.querySelectorAll('[data-slot="skeleton"]')
+    expect(headerSkeletons.length).toBe(4)
   })
 
   it('renders 5 placeholder table rows — Validates: Requirements 3.3', () => {

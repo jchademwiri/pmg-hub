@@ -88,6 +88,7 @@ const baseProps = {
   },
   expensesByDivision: [],
   currentPeriod: '2025-01',
+  showCloseMonthButton: true,
 }
 
 // ─── Property 7: DashboardShell snapshot-conditional rendering ────────────────
