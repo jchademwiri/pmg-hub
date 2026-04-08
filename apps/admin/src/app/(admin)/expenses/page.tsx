@@ -4,6 +4,7 @@ import {
   getAllDivisions,
   getDistinctExpenseCategories,
   getDistinctExpenseMonths,
+  getAllClients,
 } from '@pmg/db'
 import { createExpense, updateExpense, deleteExpense } from '@/app/actions/expenses'
 import { ExpenseFilterBar } from '@/components/expenses/expense-filter-bar'
@@ -17,11 +18,11 @@ export const dynamic = 'force-dynamic'
 export const metadata: Metadata = { title: 'Expenses' }
 
 interface ExpensePageProps {
-  searchParams: Promise<{ divisionId?: string; category?: string; month?: string }>
+  searchParams: Promise<{ divisionId?: string; category?: string; month?: string; page?: string }>
 }
 
 export default async function ExpensePage({ searchParams }: ExpensePageProps) {
-  const { divisionId, category, month } = await searchParams
+  const { divisionId, category, month, page } = await searchParams
 
   const filters = {
     divisionId: divisionId || undefined,
@@ -29,35 +30,24 @@ export default async function ExpensePage({ searchParams }: ExpensePageProps) {
     month: month || undefined,
   }
 
-  const [entries, divisions, categories, months] = await Promise.all([
-    getAllExpenses(filters),
+  const currentPage = Math.max(1, parseInt(page || '1', 10))
+  const pageSize = 20
+
+  const [result, divisions, categories, months, clients] = await Promise.all([
+    getAllExpenses(filters, { page: currentPage, pageSize }),
     getAllDivisions(),
     getDistinctExpenseCategories(),
     getDistinctExpenseMonths(),
+    getAllClients(),
   ])
 
-  const runningTotal = entries.reduce((sum, e) => sum + Number(e.amount), 0)
-  const divisionBreakdown = entries.reduce((map, e) => {
-    map.set(e.divisionName, (map.get(e.divisionName) ?? 0) + Number(e.amount))
-    return map
-  }, new Map<string, number>())
+  const runningTotal = result.sum
 
   return (
     <div className="flex flex-col gap-6">
       <SetPageTotal value={formatZAR(runningTotal)} variant="amber" />
 
-      {divisionBreakdown.size > 0 && (
-        <div className="flex flex-wrap gap-2">
-          {Array.from(divisionBreakdown.entries()).map(([division, amount]) => (
-            <span
-              key={division}
-              className="rounded-full bg-muted px-3 py-1 text-sm text-muted-foreground"
-            >
-              {division}: {formatZAR(amount)}
-            </span>
-          ))}
-        </div>
-      )}
+      <SetPageTotal value={formatZAR(runningTotal)} variant="amber" />
 
       <ExpenseFilterBar
         divisions={divisions}
@@ -68,9 +58,9 @@ export default async function ExpensePage({ searchParams }: ExpensePageProps) {
         currentMonth={filters.month}
       />
 
-      <ExpenseAddForm divisions={divisions} categories={categories} createAction={createExpense} />
+      <ExpenseAddForm divisions={divisions} categories={categories} clients={clients} createAction={createExpense} />
 
-      {entries.length === 0 ? (
+      {result.data.length === 0 ? (
         <EmptyState
           message={
             filters.divisionId || filters.category || filters.month
@@ -90,7 +80,25 @@ export default async function ExpensePage({ searchParams }: ExpensePageProps) {
           filtered={!!(filters.divisionId || filters.category || filters.month)}
         />
       ) : (
-        <ExpenseTable entries={entries} divisions={divisions} categories={categories} deleteAction={deleteExpense} updateAction={updateExpense} />
+        <>
+          <ExpenseTable entries={result.data} divisions={divisions} categories={categories} clients={clients} deleteAction={deleteExpense} updateAction={updateExpense} />
+          
+          {result.total > pageSize && (
+            <div className="flex justify-between items-center px-2 py-4">
+              <span className="text-sm text-muted-foreground">
+                Showing {(currentPage - 1) * pageSize + 1} to {Math.min(currentPage * pageSize, result.total)} of {result.total} entries
+              </span>
+              <div className="flex gap-2">
+                {currentPage > 1 && (
+                  <a href={`?page=${currentPage - 1}${divisionId ? `&divisionId=${divisionId}` : ''}${category ? `&category=${category}` : ''}${month ? `&month=${month}` : ''}`} className="px-3 py-1 text-sm border rounded-md hover:bg-muted transition-colors">Previous</a>
+                )}
+                {currentPage * pageSize < result.total && (
+                  <a href={`?page=${currentPage + 1}${divisionId ? `&divisionId=${divisionId}` : ''}${category ? `&category=${category}` : ''}${month ? `&month=${month}` : ''}`} className="px-3 py-1 text-sm border rounded-md hover:bg-muted transition-colors">Next</a>
+                )}
+              </div>
+            </div>
+          )}
+        </>
       )}
     </div>
   )

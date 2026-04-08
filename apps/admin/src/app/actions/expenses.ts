@@ -7,6 +7,7 @@ import { db, expenses, eq } from '@pmg/db';
 const ExpenseSchema = z.object({
   date:        z.string().min(1),
   divisionId:  z.string().uuid(),
+  clientId:    z.string().optional().transform(val => (val === '' || val === 'none') ? undefined : val),
   category:    z.string().min(1),
   description: z.string().optional(),
   amount:      z.coerce.number().positive(),
@@ -27,6 +28,7 @@ export async function createExpense(formData: FormData): Promise<{ error?: strin
     await db.insert(expenses).values({
       date: parsed.date,
       divisionId: parsed.divisionId,
+      clientId: parsed.clientId ?? null,
       category: parsed.category,
       description: parsed.description ?? null,
       amount: String(parsed.amount),
@@ -55,6 +57,7 @@ export async function updateExpense(id: string, formData: FormData): Promise<{ e
       .set({
         date: parsed.date,
         divisionId: parsed.divisionId,
+        clientId: parsed.clientId ?? null,
         category: parsed.category,
         description: parsed.description ?? null,
         amount: String(parsed.amount),

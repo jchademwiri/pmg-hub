@@ -469,8 +469,9 @@ export type IncomeRow = {
  * with optional filters for divisionId and month (YYYY-MM), sorted by date DESC.
  */
 export async function getAllIncome(
-  filters?: { divisionId?: string; month?: string; clientId?: string }
-): Promise<IncomeRow[]> {
+  filters?: { divisionId?: string; month?: string; clientId?: string },
+  pageObj?: { page: number; pageSize: number }
+): Promise<{ data: IncomeRow[], total: number, sum: number }> {
   const conditions = [];
   if (filters?.divisionId) {
     conditions.push(eq(income.divisionId, filters.divisionId));
@@ -500,10 +501,25 @@ export async function getAllIncome(
     .leftJoin(clients, eq(income.clientId, clients.id))
     .orderBy(desc(income.date));
 
-  if (conditions.length > 0) {
-    return query.where(and(...conditions));
+  let finalQuery = conditions.length > 0 ? query.where(and(...conditions)) : query;
+
+  const countQuery = db
+    .select({ count: sql<number>`count(*)::int`, sum: sql<number>`COALESCE(SUM(${income.amount}), 0)::numeric` })
+    .from(income);
+  if (conditions.length > 0) countQuery.where(and(...conditions));
+  
+  const [totalRes] = await countQuery;
+  const total = totalRes?.count ?? 0;
+  const sumAmount = Number(totalRes?.sum ?? 0);
+
+  if (pageObj) {
+    finalQuery = finalQuery
+      .limit(pageObj.pageSize)
+      .offset((pageObj.page - 1) * pageObj.pageSize) as any;
   }
-  return query;
+
+  const data = await finalQuery;
+  return { data, total, sum: sumAmount };
 }
 
 /**
@@ -719,6 +735,8 @@ export type ExpenseRow = {
   date: string;           // ISO date string e.g. "2026-03-15"
   divisionId: string;
   divisionName: string;
+  clientId: string | null;
+  clientName: string | null;
   category: string;
   description: string | null;
   amount: string;         // numeric from DB — caller converts with Number()
@@ -732,8 +750,9 @@ export type ExpenseRow = {
  * sorted by date DESC.
  */
 export async function getAllExpenses(
-  filters?: { divisionId?: string; category?: string; month?: string }
-): Promise<ExpenseRow[]> {
+  filters?: { divisionId?: string; category?: string; month?: string },
+  pageObj?: { page: number; pageSize: number }
+): Promise<{ data: ExpenseRow[], total: number, sum: number }> {
   const conditions = [];
   if (filters?.divisionId) {
     conditions.push(eq(expenses.divisionId, filters.divisionId));
@@ -753,6 +772,8 @@ export async function getAllExpenses(
       date: sql<string>`${expenses.date}::text`,
       divisionId: expenses.divisionId,
       divisionName: divisions.name,
+      clientId: expenses.clientId,
+      clientName: clients.name,
       category: expenses.category,
       description: expenses.description,
       amount: expenses.amount,
@@ -761,12 +782,28 @@ export async function getAllExpenses(
     })
     .from(expenses)
     .innerJoin(divisions, eq(expenses.divisionId, divisions.id))
+    .leftJoin(clients, eq(expenses.clientId, clients.id))
     .orderBy(desc(expenses.date));
 
-  if (conditions.length > 0) {
-    return query.where(and(...conditions));
+  let finalQuery = conditions.length > 0 ? query.where(and(...conditions)) : query;
+
+  const countQuery = db
+    .select({ count: sql<number>`count(*)::int`, sum: sql<number>`COALESCE(SUM(${expenses.amount}), 0)::numeric` })
+    .from(expenses);
+  if (conditions.length > 0) countQuery.where(and(...conditions));
+  
+  const [totalRes] = await countQuery;
+  const total = totalRes?.count ?? 0;
+  const sumAmount = Number(totalRes?.sum ?? 0);
+
+  if (pageObj) {
+    finalQuery = finalQuery
+      .limit(pageObj.pageSize)
+      .offset((pageObj.page - 1) * pageObj.pageSize) as any;
   }
-  return query;
+
+  const data = await finalQuery;
+  return { data, total, sum: sumAmount };
 }
 
 /**
@@ -780,6 +817,8 @@ export async function getExpenseById(id: string): Promise<ExpenseRow | null> {
       date: sql<string>`${expenses.date}::text`,
       divisionId: expenses.divisionId,
       divisionName: divisions.name,
+      clientId: expenses.clientId,
+      clientName: clients.name,
       category: expenses.category,
       description: expenses.description,
       amount: expenses.amount,
@@ -788,6 +827,7 @@ export async function getExpenseById(id: string): Promise<ExpenseRow | null> {
     })
     .from(expenses)
     .innerJoin(divisions, eq(expenses.divisionId, divisions.id))
+    .leftJoin(clients, eq(expenses.clientId, clients.id))
     .where(eq(expenses.id, id));
 
   return result[0] ?? null;
@@ -988,8 +1028,19 @@ export async function getAllSnapshots(): Promise<SnapshotRow[]> {
  * Returns the snapshot for the given period, or null if none exists.
  */
 export async function getSnapshotByPeriod(period: string): Promise<SnapshotRow | null> {
-  const rows = await db.select().from(snapshots).where(eq(snapshots.period, period));
-  return rows[0] ?? null;
+  const result = await db
+    .select()
+    .from(snapshots)
+    .where(eq(snapshots.period, period));
+
+  return result[0] ?? null;
+}
+
+export async function getAllExpenseCategories(): Promise<{ id: string; name: string }[]> {
+  return db
+    .select({ id: expenseCategories.id, name: expenseCategories.name })
+    .from(expenseCategories)
+    .orderBy(asc(expenseCategories.name));
 }
 
 /**
@@ -1142,8 +1193,10 @@ export type WithdrawalRow = {
 /**
  * Returns all withdrawal rows ordered by date DESC, then created_at DESC.
  */
-export async function getAllWithdrawals(): Promise<WithdrawalRow[]> {
-  return db
+export async function getAllWithdrawals(
+  pageObj?: { page: number; pageSize: number }
+): Promise<{ data: WithdrawalRow[], total: number, sum: number }> {
+  let query = db
     .select({
       id: withdrawals.id,
       date: sql<string>`${withdrawals.date}::text`,
@@ -1153,7 +1206,24 @@ export async function getAllWithdrawals(): Promise<WithdrawalRow[]> {
       createdAt: withdrawals.createdAt,
     })
     .from(withdrawals)
-    .orderBy(desc(withdrawals.date), desc(withdrawals.createdAt));
+    .orderBy(desc(withdrawals.date), desc(withdrawals.createdAt)) as any;
+
+  const countQuery = db
+    .select({ count: sql<number>`count(*)::int`, sum: sql<number>`COALESCE(SUM(${withdrawals.amount}), 0)::numeric` })
+    .from(withdrawals);
+
+  const [totalRes] = await countQuery;
+  const total = totalRes?.count ?? 0;
+  const sumAmount = Number(totalRes?.sum ?? 0);
+
+  if (pageObj) {
+    query = query
+      .limit(pageObj.pageSize)
+      .offset((pageObj.page - 1) * pageObj.pageSize);
+  }
+
+  const data = await query;
+  return { data, total, sum: sumAmount };
 }
 
 /**

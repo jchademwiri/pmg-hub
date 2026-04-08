@@ -20,22 +20,25 @@ interface ExpenseTableProps {
   entries: ExpenseRow[]
   divisions: { id: string; name: string }[]
   categories: string[]
+  clients: { id: string; name: string }[]
   deleteAction: (id: string) => Promise<{ error?: string }>
   updateAction: (id: string, formData: FormData) => Promise<{ error?: string }>
 }
 
 function ExpenseTableRow({
-  entry, divisions, categories, deleteAction, updateAction,
+  entry, divisions, categories, clients, deleteAction, updateAction,
 }: {
   entry: ExpenseRow
   divisions: { id: string; name: string }[]
   categories: string[]
+  clients: { id: string; name: string }[]
   deleteAction: (id: string) => Promise<{ error?: string }>
   updateAction: (id: string, formData: FormData) => Promise<{ error?: string }>
 }) {
   const [mode, setMode] = React.useState<'display' | 'edit' | 'confirm-delete'>('display')
   const [editDate, setEditDate] = React.useState(entry.date)
   const [editDivisionId, setEditDivisionId] = React.useState(entry.divisionId)
+  const [editClientId, setEditClientId] = React.useState(entry.clientId ?? '')
   const [editCategory, setEditCategory] = React.useState(entry.category)
   const [editDesc, setEditDesc] = React.useState(entry.description ?? '')
   const [editAmount, setEditAmount] = React.useState(entry.amount)
@@ -45,6 +48,7 @@ function ExpenseTableRow({
 
   function startEdit() {
     setEditDate(entry.date); setEditDivisionId(entry.divisionId)
+    setEditClientId(entry.clientId ?? '')
     setEditCategory(entry.category); setEditDesc(entry.description ?? '')
     setEditAmount(entry.amount); setError(null); setMode('edit')
   }
@@ -54,6 +58,7 @@ function ExpenseTableRow({
     startSaveTransition(async () => {
       const fd = new FormData()
       fd.set('date', editDate); fd.set('divisionId', editDivisionId)
+      if (editClientId) fd.set('clientId', editClientId)
       fd.set('category', editCategory); fd.set('description', editDesc)
       fd.set('amount', editAmount)
       const result = await updateAction(entry.id, fd)
@@ -86,6 +91,15 @@ function ExpenseTableRow({
             </Select>
           </TableCell>
           <TableCell>
+            <Select value={editClientId || "none"} onValueChange={(val) => setEditClientId(val === "none" ? "" : val)} disabled={isSaving}>
+              <SelectTrigger className="w-36"><SelectValue placeholder="No client" /></SelectTrigger>
+              <SelectContent>
+                <SelectItem value="none">No client</SelectItem>
+                {clients.map((c) => <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>)}
+              </SelectContent>
+            </Select>
+          </TableCell>
+          <TableCell>
             <Input type="text" list="edit-category-list" value={editCategory} onChange={(e) => setEditCategory(e.target.value)} className="w-36" disabled={isSaving} />
             <datalist id="edit-category-list">
               {categories.map((c) => <option key={c} value={c} />)}
@@ -110,7 +124,7 @@ function ExpenseTableRow({
         </TableRow>
         {error && (
           <TableRow>
-            <TableCell colSpan={6} className="py-1">
+            <TableCell colSpan={7} className="py-1">
               <p className="text-sm text-destructive">{error}</p>
             </TableCell>
           </TableRow>
@@ -123,6 +137,7 @@ function ExpenseTableRow({
     <TableRow>
       <TableCell>{entry.date}</TableCell>
       <TableCell>{entry.divisionName}</TableCell>
+      <TableCell className="text-muted-foreground">{entry.clientName ?? '—'}</TableCell>
       <TableCell>{entry.category}</TableCell>
       <TableCell>{entry.description ?? ''}</TableCell>
       <TableCell className="tabular-nums font-medium text-amber-500">−{formatZAR(Number(entry.amount))}</TableCell>
@@ -149,13 +164,14 @@ function ExpenseTableRow({
   )
 }
 
-export function ExpenseTable({ entries, divisions, categories, deleteAction, updateAction }: ExpenseTableProps) {
+export function ExpenseTable({ entries, divisions, categories, clients, deleteAction, updateAction }: ExpenseTableProps) {
   return (
     <Table>
       <TableHeader>
         <TableRow>
           <TableHead>Date</TableHead>
           <TableHead>Division</TableHead>
+          <TableHead>Client</TableHead>
           <TableHead>Category</TableHead>
           <TableHead>Description</TableHead>
           <TableHead>Amount</TableHead>
@@ -166,7 +182,7 @@ export function ExpenseTable({ entries, divisions, categories, deleteAction, upd
         {entries.map((entry) => (
           <ExpenseTableRow
             key={entry.id} entry={entry}
-            divisions={divisions} categories={categories}
+            divisions={divisions} categories={categories} clients={clients}
             deleteAction={deleteAction} updateAction={updateAction}
           />
         ))}

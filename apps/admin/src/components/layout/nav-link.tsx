@@ -2,6 +2,7 @@
 
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
+import { useSidebar } from '@/components/ui/sidebar'
 
 type NavLinkProps = {
   href: string
@@ -12,10 +13,12 @@ type NavLinkProps = {
 export function NavLink({ href, label, icon }: NavLinkProps) {
   const pathname = usePathname()
   const isActive = pathname === href || pathname.startsWith(href + '/')
+  const { setOpenMobile } = useSidebar()
 
   return (
     <Link
       href={href}
+      onClick={() => setOpenMobile(false)}
       className={
         isActive
           ? 'flex items-center gap-2 rounded-md px-2 py-1.5 text-sm bg-sidebar-accent text-sidebar-accent-foreground'

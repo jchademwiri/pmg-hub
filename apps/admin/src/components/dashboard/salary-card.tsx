@@ -1,14 +1,9 @@
 'use client'
 
-import { useState } from 'react'
-import { useRouter } from 'next/navigation'
 import { Card, CardHeader, CardTitle, CardContent, CardDescription } from '@/components/ui/card'
-import { Button } from '@/components/ui/button'
 import { formatZAR } from '@/lib/format'
 import { AlertTriangle, Wallet, ArrowDownCircle, CheckCircle2 } from 'lucide-react'
 import type { WithdrawalSummary } from '@/lib/financial'
-import { WithdrawModal } from '@/components/dashboard/withdraw-modal'
-import { recordWithdrawal } from '@/app/actions/withdraw'
 
 type SalaryCardProps = {
   salary: number
@@ -25,8 +20,6 @@ export function SalaryCard({
   salary, ytdSalary, profitPool, periodLabel, withdrawals,
   carryOver = 0, showWithdrawButton = false, withdrawLabel = 'Withdrawn this month'
 }: SalaryCardProps) {
-  const router = useRouter()
-  const [modalOpen, setModalOpen] = useState(false)
   const isNegative     = profitPool < 0
   const withdrawn      = withdrawals?.total ?? 0
   const remaining      = Math.max(0, salary - withdrawn)
@@ -128,29 +121,13 @@ export function SalaryCard({
             <span className="tabular-nums">{formatZAR(Math.abs(balance))}</span>
           </div>
 
-          {showWithdrawButton && !hasWithdrawals && (
-            <p className="text-xs text-chart-1/40 pt-0.5">
-              Record a withdrawal by adding an expense with category "Owner Withdrawal"
-            </p>
-          )}
-        </div>
-
-        {showWithdrawButton && profitPool >= 0 && !isOverdrawn && (
-          <Button className="w-full" variant="outline" onClick={() => setModalOpen(true)}>
-            Withdraw
-          </Button>
+        {showWithdrawButton && !hasWithdrawals && (
+          <p className="text-xs text-chart-1/40 pt-0.5">
+            Record a withdrawal from the accounts or withdrawals page.
+          </p>
         )}
+        </div>
       </CardContent>
-      <WithdrawModal
-        open={modalOpen}
-        onClose={() => setModalOpen(false)}
-        onSuccess={() => {
-          setModalOpen(false)
-          router.refresh()
-        }}
-        withdrawAction={recordWithdrawal}
-        maxAmount={remaining}
-      />
     </Card>
   )
 }

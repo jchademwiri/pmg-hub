@@ -19,15 +19,12 @@ import {
   getYTDLabel,
 } from '@/lib/financial'
 import { getSnapshotByPeriod } from '@pmg/db'
-import { autoClosePreviousMonthIfNeeded } from '@/app/actions/snapshots'
 import { DashboardShell } from '@/components/dashboard/dashboard-shell'
 
 export const dynamic = 'force-dynamic'
 export const metadata: Metadata = { title: 'Dashboard' }
 
 export default async function DashboardPage() {
-  // Auto-close previous month if we're on day 5 or later and it's not closed
-  await autoClosePreviousMonthIfNeeded()
 
   const now = new Date()
   const currentPeriod = now.toISOString().slice(0, 7)

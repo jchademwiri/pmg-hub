@@ -65,7 +65,7 @@ export default async function AccountHistoryPage({ params }: AccountHistoryPageP
     events.push({
       date: entry.date,
       type: 'credit',
-      description: `Income — ${entry.clientName ?? entry.divisionName}${entry.description ? ` · ${entry.description}` : ''}`,
+      description: `Allocated Income — ${entry.clientName ?? entry.divisionName}${entry.description ? ` · ${entry.description}` : ''}`,
       amount: credit,
     })
   }
@@ -110,7 +110,7 @@ export default async function AccountHistoryPage({ params }: AccountHistoryPageP
       {/* Summary strip */}
       <div className="flex flex-wrap gap-4 text-sm">
         <div className="rounded-lg border px-4 py-2 flex flex-col gap-0.5">
-          <span className="text-xs text-muted-foreground">Earned YTD</span>
+          <span className="text-xs text-muted-foreground">Allocated YTD</span>
           <span className="font-semibold tabular-nums">{formatZAR(earned)}</span>
         </div>
         <div className="rounded-lg border px-4 py-2 flex flex-col gap-0.5">

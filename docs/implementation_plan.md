@@ -16,8 +16,8 @@ This implementation plan thoroughly integrates your requirements for withdrawal 
 - ✅ **Missing `/invite` Route (Issue #14):** Built `(auth)/invite/page.tsx` with token validation, expiry checks, and magic link sign-in flow.
 
 ### Phase 2: Database & Core Domain
-- **Expense Client Linking (New Req):** Update `expenses` schema with an optional `client_id`.
-- **Run Migrations:** `bun run db:generate` and `bun run db:migrate`.
+- ✅ **Expense Client Linking (New Req):** Update `expenses` schema with an optional `client_id`.
+- ✅ **Run Migrations:** Pushed db changes via `drizzle-kit push`.
 
 ### Phase 3: Withdrawals & Accounts Logic
 - **Consolidate Withdrawals (Issue #4 & 7):** Delete the redundant `withdraw.ts`. Standardize on `withdrawals.ts`. Ensure the account parameter is passed explicitly and the hardcoded `'salary'` fallback is removed.

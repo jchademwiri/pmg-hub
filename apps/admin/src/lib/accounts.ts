@@ -9,15 +9,22 @@ export const ACCOUNT_LABELS: Record<string, string> = {
   flex:      'Flex',
 }
 
-/** YTD profit pool share per account (must sum to 1.0) */
-export const ACCOUNT_RATES: Record<AccountKey, number> = {
-  salary:    0.35,
+export const REVENUE_RATES = {
   pmg_share: 0.20,
+} as const
+
+/** YTD profit pool share per account (must sum to 1.0) */
+export const PROFIT_POOL_RATES = {
+  salary:    0.35,
   reinvest:  0.30,
   reserve:   0.30,
   flex:      0.05,
-}
+} as const
 
 // Note: pmg_share is 20% of revenue (not profit pool).
 // salary, reinvest, reserve, flex are % of profit pool.
-// The page handles this distinction when computing balances.
+// We export ACCOUNT_RATES for backwards compatibility but typing it carefully.
+export const ACCOUNT_RATES: Record<AccountKey, number> = {
+  ...REVENUE_RATES,
+  ...PROFIT_POOL_RATES,
+}
