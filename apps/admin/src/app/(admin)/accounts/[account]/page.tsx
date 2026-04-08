@@ -59,7 +59,7 @@ export default async function AccountHistoryPage({ params }: AccountHistoryPageP
   type RawEvent = { date: string; type: 'credit' | 'debit'; description: string; amount: number }
   const events: RawEvent[] = []
 
-  for (const entry of incomeEntries) {
+  for (const entry of incomeEntries.data) {
     const credit = Number(entry.amount) * effectiveRate
     if (credit <= 0) continue
     events.push({

@@ -6,7 +6,7 @@ import { toast } from 'sonner'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
-import { createCategory, updateCategory, deleteCategory } from '@/app/actions/expense-categories'
+import { createExpenseCategory, updateExpenseCategory, deleteExpenseCategory } from '@/app/actions/expense-categories'
 
 interface CategoryListProps {
   initialCategories: { id: string; name: string }[]
@@ -29,7 +29,7 @@ export function CategoryList({ initialCategories }: CategoryListProps) {
     startTransition(async () => {
       const fd = new FormData()
       fd.set('name', newName.trim())
-      const res = await createCategory(fd)
+      const res = await createExpenseCategory(fd)
       if (res.error) toast.error(res.error)
       else {
         toast.success('Category created')
@@ -44,7 +44,7 @@ export function CategoryList({ initialCategories }: CategoryListProps) {
     startTransition(async () => {
       const fd = new FormData()
       fd.set('name', editName.trim())
-      const res = await updateCategory(id, fd)
+      const res = await updateExpenseCategory(id, fd)
       if (res.error) toast.error(res.error)
       else {
         toast.success('Category updated')
@@ -56,7 +56,7 @@ export function CategoryList({ initialCategories }: CategoryListProps) {
   const handleDelete = (id: string, name: string) => {
     if (!window.confirm(`Are you sure you want to delete "${name}"?`)) return
     startTransition(async () => {
-      const res = await deleteCategory(id)
+      const res = await deleteExpenseCategory(id)
       if (res.error) toast.error(res.error)
       else toast.success('Category deleted')
     })

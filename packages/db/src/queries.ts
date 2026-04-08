@@ -1036,12 +1036,7 @@ export async function getSnapshotByPeriod(period: string): Promise<SnapshotRow |
   return result[0] ?? null;
 }
 
-export async function getAllExpenseCategories(): Promise<{ id: string; name: string }[]> {
-  return db
-    .select({ id: expenseCategories.id, name: expenseCategories.name })
-    .from(expenseCategories)
-    .orderBy(asc(expenseCategories.name));
-}
+
 
 /**
  * Inserts a new snapshot row and returns the inserted row.
