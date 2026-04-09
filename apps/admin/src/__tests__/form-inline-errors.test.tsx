@@ -232,7 +232,7 @@ describe('ExpenseAddForm — inline error display', () => {
     const user = userEvent.setup()
     const createAction = vi.fn().mockResolvedValue({ error: 'Amount is required.' })
 
-    render(<ExpenseAddForm divisions={divisions} categories={categories} createAction={createAction} />)
+    render(<ExpenseAddForm divisions={divisions} categories={categories} clients={[]} createAction={createAction} />)
 
     // Fill required fields so native validation doesn't block submit
     await user.type(screen.getByLabelText(/date/i), '2025-01-15')
@@ -251,7 +251,7 @@ describe('ExpenseAddForm — inline error display', () => {
       .mockResolvedValueOnce({ error: 'First error.' })
       .mockResolvedValueOnce({})
 
-    render(<ExpenseAddForm divisions={divisions} categories={categories} createAction={createAction} />)
+    render(<ExpenseAddForm divisions={divisions} categories={categories} clients={[]} createAction={createAction} />)
 
     await user.type(screen.getByLabelText(/date/i), '2025-01-15')
     await user.type(screen.getByLabelText(/category/i), 'Salaries')
@@ -270,7 +270,7 @@ describe('ExpenseAddForm — inline error display', () => {
     const user = userEvent.setup()
     const createAction = vi.fn().mockResolvedValue({ error: 'Server error.' })
 
-    render(<ExpenseAddForm divisions={divisions} categories={categories} createAction={createAction} />)
+    render(<ExpenseAddForm divisions={divisions} categories={categories} clients={[]} createAction={createAction} />)
 
     await user.type(screen.getByLabelText(/date/i), '2025-01-15')
     await user.type(screen.getByLabelText(/category/i), 'Salaries')
@@ -312,6 +312,7 @@ describe('ExpenseEditForm — inline error display', () => {
         entry={entry}
         divisions={divisions}
         categories={categories}
+        clients={[]}
         updateAction={updateAction}
       />
     )
@@ -331,6 +332,7 @@ describe('ExpenseEditForm — inline error display', () => {
         entry={entry}
         divisions={divisions}
         categories={categories}
+        clients={[]}
         updateAction={updateAction}
       />
     )
@@ -353,6 +355,7 @@ describe('ExpenseEditForm — inline error display', () => {
         entry={entry}
         divisions={divisions}
         categories={categories}
+        clients={[]}
         updateAction={updateAction}
       />
     )
@@ -375,6 +378,7 @@ describe('ExpenseEditForm — inline error display', () => {
         entry={entry}
         divisions={divisions}
         categories={categories}
+        clients={[]}
         updateAction={updateAction}
       />
     )

@@ -5,6 +5,8 @@ import { getDb, sql } from '@pmg/db'
 import { getSessionOrRedirect, requireRole } from '@/lib/auth'
 import { UserTable } from '@/components/users/user-table'
 import type { UserRow } from '@/components/users/user-table'
+import { PendingInvitationsTable } from '@/components/users/pending-invitations-table'
+import type { PendingInvitationRow } from '@/components/users/pending-invitations-table'
 import { Button } from '@/components/ui/button'
 
 export const dynamic = 'force-dynamic'
@@ -23,6 +25,11 @@ export default async function UsersPage() {
   )
   const users = result.rows as unknown as UserRow[]
 
+  const pendingResult = await db.execute(
+    sql`SELECT id, name, email, role, expires_at AS "expiresAt" FROM "invitations" WHERE accepted_at IS NULL ORDER BY created_at DESC`
+  )
+  const pending = pendingResult.rows as unknown as PendingInvitationRow[]
+
   return (
     <div className="flex flex-col gap-6">
       <div className="flex items-center justify-between">
@@ -31,7 +38,11 @@ export default async function UsersPage() {
           <Link href="/users/invite">Invite User</Link>
         </Button>
       </div>
-      <UserTable users={users} />
+      {(pending && pending.length > 0) && <PendingInvitationsTable pending={pending} />}
+      <div>
+        <h2 className="text-lg font-semibold border-b pb-2 mb-4">Active Users</h2>
+        <UserTable users={users} />
+      </div>
     </div>
   )
 }

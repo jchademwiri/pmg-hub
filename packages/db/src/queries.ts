@@ -848,17 +848,6 @@ export async function getDistinctExpenseMonths(): Promise<string[]> {
   return result.map((r) => r.month);
 }
 
-/**
- * Returns distinct category strings from the expenses table, sorted alphabetically ascending.
- */
-export async function getDistinctExpenseCategories(): Promise<string[]> {
-  const result = await db
-    .selectDistinct({ category: expenses.category })
-    .from(expenses)
-    .orderBy(asc(expenses.category));
-
-  return result.map((r) => r.category);
-}
 
 // ── Leads management query helpers ───────────────────────────────────────────
 
