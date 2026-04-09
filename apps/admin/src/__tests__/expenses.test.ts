@@ -10,11 +10,10 @@ vi.mock('@pmg/db', () => ({
   getAllExpenses: vi.fn(),
   getExpenseById: vi.fn(),
   getDistinctExpenseMonths: vi.fn(),
-  getDistinctExpenseCategories: vi.fn(),
   getAllDivisions: vi.fn(),
 }))
 
-import { getAllExpenses, getExpenseById, getDistinctExpenseMonths, getDistinctExpenseCategories, getAllDivisions } from '@pmg/db'
+import { getAllExpenses, getExpenseById, getDistinctExpenseMonths, getAllDivisions } from '@pmg/db'
 
 // Arbitrary for a single ExpenseRow
 const expenseArb = fc.record({
@@ -537,42 +536,6 @@ describe('getDistinctExpenseMonths — Property 11: distinct YYYY-MM strings sor
   })
 })
 
-// ─── P12: getDistinctExpenseCategories returns distinct strings sorted ASC ────
-// Feature: expense-management, Property 12: getDistinctExpenseCategories
-
-describe('getDistinctExpenseCategories — Property 12: distinct strings sorted ASC', () => {
-  beforeEach(() => {
-    vi.resetAllMocks()
-  })
-
-  it('Property 12: getDistinctExpenseCategories returns distinct strings with no duplicates, sorted ASC — Validates: Requirements 11.4, 2.6', async () => {
-    // Feature: expense-management, Property 12: getDistinctExpenseCategories returns distinct strings sorted ASC
-    await fc.assert(
-      fc.asyncProperty(
-        fc.array(fc.string({ minLength: 1, maxLength: 50 }), { minLength: 0, maxLength: 30 }),
-        async (categories) => {
-          // Derive the expected result: distinct categories sorted ASC
-          const distinct = [...new Set(categories)]
-          const sortedAsc = distinct.sort((a, b) => a.localeCompare(b))
-
-          vi.mocked(getDistinctExpenseCategories).mockResolvedValue(sortedAsc)
-
-          const result = await getDistinctExpenseCategories()
-
-          // Assert no duplicates
-          const resultSet = new Set(result)
-          expect(resultSet.size).toBe(result.length)
-
-          // Assert sorted ascending
-          for (let i = 1; i < result.length; i++) {
-            expect(result[i - 1].localeCompare(result[i]) <= 0).toBe(true)
-          }
-        }
-      ),
-      { numRuns: 100 }
-    )
-  })
-})
 
 // ─── P13: Invalid input to createExpense/updateExpense always returns { error } ─
 // Feature: expense-management, Property 13: Invalid input returns error
@@ -791,7 +754,7 @@ describe('ExpenseTable', () => {
 
   it('renders Edit and Delete buttons for each row', () => {
     const entries = [makeExpenseEntry('abc-123'), makeExpenseEntry('def-456')]
-    render(React.createElement(ExpenseTable, { entries, deleteAction, updateAction, divisions, categories }))
+    render(React.createElement(ExpenseTable, { entries, deleteAction, updateAction, divisions, categories, clients: [] }))
 
     const editButtons = screen.getAllByRole('button', { name: /edit/i })
     expect(editButtons.length).toBe(2)

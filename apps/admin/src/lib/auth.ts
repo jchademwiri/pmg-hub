@@ -5,9 +5,7 @@ import { magicLink } from 'better-auth/plugins'
 import { createAuthMiddleware, APIError } from 'better-auth/api'
 import { headers } from 'next/headers'
 import { redirect } from 'next/navigation'
-import { getDb } from '@pmg/db'
-import { invitations } from '@pmg/db'
-import { eq } from '@pmg/db'
+import { getDb, invitations, user, eq } from '@pmg/db'
 import { Resend } from 'resend'
 
 // ── Resend client ─────────────────────────────────────────────────────────────
@@ -76,14 +74,22 @@ export const auth = betterAuth({
         throw new APIError('FORBIDDEN', { message: 'Not invited' })
       }
 
-      // Use the internal adapter to check if the user exists in the users table
-      const user = await ctx.context.adapter.findOne({
+      const existingUser = await ctx.context.adapter.findOne({
         model: 'user',
         where: [{ field: 'email', value: email }],
       })
 
-      if (!user) {
-        throw new APIError('FORBIDDEN', { message: 'Not invited' })
+      if (!existingUser) {
+        const db = getDb()
+        const [invitation] = await db
+          .select()
+          .from(invitations)
+          .where(eq(invitations.email, email))
+          .limit(1)
+
+        if (!invitation || new Date() > invitation.expiresAt) {
+          throw new APIError('FORBIDDEN', { message: 'Not invited' })
+        }
       }
     }),
 
@@ -95,12 +101,24 @@ export const auth = betterAuth({
 
       const db = getDb()
       try {
-        await db
+        const [invitation] = await db
           .update(invitations)
           .set({ acceptedAt: new Date() })
           .where(eq(invitations.email, newSession.user.email))
-      } catch {
+          .returning()
+
+        if (invitation && newSession.user.id) {
+          await db
+            .update(user)
+            .set({ 
+              role: invitation.role, 
+              name: invitation.name 
+            })
+            .where(eq(user.id, newSession.user.id))
+        }
+      } catch (err) {
         // Non-fatal: invitation may not exist for legacy users
+        console.error('[MagicLink Update Error]', err)
       }
     }),
   },

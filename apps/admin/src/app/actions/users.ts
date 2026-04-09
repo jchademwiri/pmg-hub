@@ -174,3 +174,69 @@ export async function updateUserRole(userId: string, formData: FormData): Promis
     return { error: 'Something went wrong' }
   }
 }
+
+export async function resendInvitation(invitationId: string): Promise<{ error?: string }> {
+  const guard = await requireSuperAdmin()
+  if (guard) return guard
+
+  const db = getDb()
+
+  try {
+    const [invitation] = await db
+      .select()
+      .from(invitations)
+      .where(eq(invitations.id, invitationId))
+      .limit(1)
+
+    if (!invitation) return { error: 'Invitation not found' }
+
+    const token = crypto.randomUUID()
+    const expiresAt = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000)
+
+    await db.update(invitations).set({
+      token,
+      expiresAt,
+    }).where(eq(invitations.id, invitationId))
+
+    const resend = getResend()
+    const appUrl = process.env.BETTER_AUTH_URL
+    if (!appUrl) return { error: 'BETTER_AUTH_URL is not configured' }
+
+    const inviteUrl = `${appUrl}/invite?token=${token}`
+    const { error: emailError } = await resend.emails.send({
+      from: 'PMG Admin <noreply@playhousemedia.co.za>',
+      to: invitation.email,
+      subject: 'You have been invited to PMG Control Center',
+      html: `
+        <p>Hi ${invitation.name},</p>
+        <p>You have been invited to join PMG Control Center as <strong>${invitation.role}</strong>.</p>
+        <p><a href="${inviteUrl}" style="background:#1a1a1a;color:#ffffff;padding:12px 24px;border-radius:6px;text-decoration:none;display:inline-block;">Accept Invitation</a></p>
+        <p>Or copy this link into your browser:</p>
+        <p style="word-break:break-all;color:#555;">${inviteUrl}</p>
+        <p>This invitation expires in 7 days.</p>
+      `,
+    })
+
+    if (emailError) return { error: 'Failed to resend email' }
+
+    revalidatePath('/users')
+    return {}
+  } catch {
+    return { error: 'Something went wrong' }
+  }
+}
+
+export async function deleteInvitation(invitationId: string): Promise<{ error?: string }> {
+  const guard = await requireSuperAdmin()
+  if (guard) return guard
+
+  const db = getDb()
+
+  try {
+    await db.delete(invitations).where(eq(invitations.id, invitationId))
+    revalidatePath('/users')
+    return {}
+  } catch {
+    return { error: 'Something went wrong' }
+  }
+}

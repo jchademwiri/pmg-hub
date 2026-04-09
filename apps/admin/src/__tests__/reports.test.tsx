@@ -617,6 +617,7 @@ describe('Reports page', () => {
     vi.mocked(financial.getMonthlyFinancialsSeriesForYear).mockResolvedValue([])
     vi.mocked(financial.getRevenueByDivisionSeriesForYear).mockResolvedValue({ series: [], divisions: [] })
     vi.mocked(financial.getExpensesByCategory).mockResolvedValue([])
+    vi.mocked(financial.getProfitPoolSeriesForYear).mockResolvedValue([])
   })
 
   it('renders heading "Reports & Insights" — Validates: Requirements 5.3', async () => {
