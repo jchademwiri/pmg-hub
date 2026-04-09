@@ -2,7 +2,7 @@ import type { Metadata } from 'next'
 import {
   getAllExpenses,
   getAllDivisions,
-  getDistinctExpenseCategories,
+  getAllExpenseCategories,
   getDistinctExpenseMonths,
   getAllClients,
 } from '@pmg/db'
@@ -33,13 +33,15 @@ export default async function ExpensePage({ searchParams }: ExpensePageProps) {
   const currentPage = Math.max(1, parseInt(page || '1', 10))
   const pageSize = 20
 
-  const [result, divisions, categories, months, clients] = await Promise.all([
+  const [result, divisions, categoryObjects, months, clients] = await Promise.all([
     getAllExpenses(filters, { page: currentPage, pageSize }),
     getAllDivisions(),
-    getDistinctExpenseCategories(),
+    getAllExpenseCategories(),
     getDistinctExpenseMonths(),
     getAllClients(),
   ])
+
+  const categories = categoryObjects.map((c) => c.name)
 
   const runningTotal = result.sum
 

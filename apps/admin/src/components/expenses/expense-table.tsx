@@ -100,10 +100,12 @@ function ExpenseTableRow({
             </Select>
           </TableCell>
           <TableCell>
-            <Input type="text" list="edit-category-list" value={editCategory} onChange={(e) => setEditCategory(e.target.value)} className="w-36" disabled={isSaving} />
-            <datalist id="edit-category-list">
-              {categories.map((c) => <option key={c} value={c} />)}
-            </datalist>
+            <Select value={editCategory} onValueChange={setEditCategory} disabled={isSaving}>
+              <SelectTrigger className="w-40"><SelectValue /></SelectTrigger>
+              <SelectContent>
+                {categories.map((c) => <SelectItem key={c} value={c}>{c}</SelectItem>)}
+              </SelectContent>
+            </Select>
           </TableCell>
           <TableCell>
             <Input type="text" value={editDesc} onChange={(e) => setEditDesc(e.target.value)} placeholder="Optional" className="w-44" disabled={isSaving} />

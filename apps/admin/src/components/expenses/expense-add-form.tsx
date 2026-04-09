@@ -101,20 +101,18 @@ export function ExpenseAddForm({ divisions, categories, clients, createAction }:
         <label htmlFor="expense-category" className="text-sm font-medium">
           Category
         </label>
-        <Input
-          id="expense-category"
-          name="category"
-          type="text"
-          list="category-suggestions"
-          required
-          disabled={isPending}
-          className="w-44"
-        />
-        <datalist id="category-suggestions">
-          {categories.map((category) => (
-            <option key={category} value={category} />
-          ))}
-        </datalist>
+        <Select name="category" required disabled={isPending}>
+          <SelectTrigger id="expense-category" className="w-44">
+            <SelectValue placeholder="Select category" />
+          </SelectTrigger>
+          <SelectContent>
+            {categories.map((category) => (
+              <SelectItem key={category} value={category}>
+                {category}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
       </div>
 
       <div className="flex flex-col gap-1">
