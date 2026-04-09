@@ -1,6 +1,7 @@
 import { boolean, index, pgTable, text, timestamp, uniqueIndex, uuid } from "drizzle-orm/pg-core";
 import { relations, sql } from "drizzle-orm";
 import { income } from "./income";
+import { expenses } from "./expenses";
 
 export const clients = pgTable(
   "clients",
@@ -29,4 +30,5 @@ export type NewClient = typeof clients.$inferInsert;
 
 export const clientsRelations = relations(clients, ({ many }) => ({
   income: many(income),
+  expenses: many(expenses),
 }));

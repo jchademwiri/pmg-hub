@@ -1,3 +1,4 @@
+import Link from 'next/link'
 import {
   Sidebar,
   SidebarContent,
@@ -8,19 +9,20 @@ import {
 } from '@/components/ui/sidebar'
 import { NavLink } from '@/components/layout/nav-link'
 import { SignOutButton } from '@/components/layout/sign-out-button'
-import { LayoutDashboard, TrendingUp, TrendingDown, UserCheck, Users, Layers, Camera, BarChart3, Wallet, PiggyBank, UserCog } from 'lucide-react'
+import { LayoutDashboard, TrendingUp, TrendingDown, UserCheck, Users, Layers, Camera, BarChart3, Wallet, PiggyBank, UserCog, Tags } from 'lucide-react'
 
 const navItems = [
   { href: '/dashboard',   label: 'Dashboard',   icon: LayoutDashboard },
   { href: '/income',      label: 'Income',      icon: TrendingUp },
   { href: '/expenses',    label: 'Expenses',    icon: TrendingDown },
+  { href: '/expense-categories', label: 'Categories', icon: Tags },
   { href: '/withdrawals', label: 'Withdrawals', icon: Wallet },
   { href: '/accounts',    label: 'Accounts',    icon: PiggyBank },
-  { href: '/clients',   label: 'Clients',   icon: UserCheck },
-  { href: '/leads',     label: 'Leads',     icon: Users },
-  { href: '/divisions', label: 'Divisions', icon: Layers },
-  { href: '/snapshots', label: 'Snapshots', icon: Camera },
-  { href: '/reports',   label: 'Reports',   icon: BarChart3 },
+  { href: '/clients',     label: 'Clients',     icon: UserCheck },
+  { href: '/leads',       label: 'Leads',       icon: Users },
+  { href: '/divisions',   label: 'Divisions',   icon: Layers },
+  { href: '/snapshots',   label: 'Snapshots',   icon: Camera },
+  { href: '/reports',     label: 'Reports',     icon: BarChart3 },
 ]
 
 const adminItems = [
@@ -35,10 +37,10 @@ export function AppSidebar({ user }: AppSidebarProps) {
   return (
     <Sidebar variant="inset">
       <SidebarHeader>
-        <div className="flex flex-col gap-0.5 px-2 py-3">
+        <Link href="/dashboard" className="flex flex-col gap-0.5 px-2 py-3 hover:opacity-80 transition-opacity">
           <span className="text-sidebar-foreground/50 text-xs uppercase tracking-widest">PMG</span>
           <span className="text-sidebar-foreground text-sm font-semibold">Control Center</span>
-        </div>
+        </Link>
       </SidebarHeader>
       <SidebarContent>
         <SidebarMenu>

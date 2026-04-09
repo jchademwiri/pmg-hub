@@ -10,24 +10,45 @@ import { SetPageTotal } from '@/components/layout/page-header-context'
 export const dynamic = 'force-dynamic'
 export const metadata: Metadata = { title: 'Withdrawals' }
 
-export default async function WithdrawalsPage() {
-  const withdrawals = await getAllWithdrawals()
+interface WithdrawalsPageProps {
+  searchParams: Promise<{ page?: string }>
+}
 
-  const currentYear = new Date().getFullYear().toString()
-  const ytdTotal = withdrawals
-    .filter((w) => w.date.startsWith(currentYear))
-    .reduce((sum, w) => sum + Number(w.amount), 0)
+export default async function WithdrawalsPage({ searchParams }: WithdrawalsPageProps) {
+  const { page } = await searchParams
+  const currentPage = Math.max(1, parseInt(page || '1', 10))
+  const pageSize = 20
+
+  const result = await getAllWithdrawals({ page: currentPage, pageSize })
 
   return (
     <div className="flex flex-col gap-6">
-      <SetPageTotal value={formatZAR(ytdTotal) + ' YTD'} variant="amber" />
+      <SetPageTotal value={formatZAR(result.sum) + ' All-time'} variant="amber" />
 
       <WithdrawalAddForm createAction={createWithdrawal} />
 
-      {withdrawals.length === 0 ? (
+      {result.data.length === 0 ? (
         <EmptyState message="No withdrawals yet." />
       ) : (
-        <WithdrawalsTable entries={withdrawals} deleteAction={deleteWithdrawal} updateAction={updateWithdrawal} />
+        <>
+          <WithdrawalsTable entries={result.data} deleteAction={deleteWithdrawal} updateAction={updateWithdrawal} />
+          
+          {result.total > pageSize && (
+            <div className="flex justify-between items-center px-2 py-4">
+              <span className="text-sm text-muted-foreground">
+                Showing {(currentPage - 1) * pageSize + 1} to {Math.min(currentPage * pageSize, result.total)} of {result.total} entries
+              </span>
+              <div className="flex gap-2">
+                {currentPage > 1 && (
+                  <a href={`?page=${currentPage - 1}`} className="px-3 py-1 text-sm border rounded-md hover:bg-muted transition-colors">Previous</a>
+                )}
+                {currentPage * pageSize < result.total && (
+                  <a href={`?page=${currentPage + 1}`} className="px-3 py-1 text-sm border rounded-md hover:bg-muted transition-colors">Next</a>
+                )}
+              </div>
+            </div>
+          )}
+        </>
       )}
     </div>
   )

@@ -17,10 +17,11 @@ const today = new Date().toISOString().split('T')[0]
 interface ExpenseAddFormProps {
   divisions: { id: string; name: string }[]
   categories: string[]
+  clients: { id: string; name: string }[]
   createAction: (formData: FormData) => Promise<{ error?: string }>
 }
 
-export function ExpenseAddForm({ divisions, categories, createAction }: ExpenseAddFormProps) {
+export function ExpenseAddForm({ divisions, categories, clients, createAction }: ExpenseAddFormProps) {
   const formRef = React.useRef<HTMLFormElement>(null)
   const [isPending, startTransition] = React.useTransition()
   const [errorMessage, setErrorMessage] = React.useState<string | null>(null)
@@ -78,23 +79,40 @@ export function ExpenseAddForm({ divisions, categories, createAction }: ExpenseA
       </div>
 
       <div className="flex flex-col gap-1">
+        <label htmlFor="expense-client" className="text-sm font-medium">
+          Client (Optional)
+        </label>
+        <Select name="clientId" disabled={isPending}>
+          <SelectTrigger id="expense-client" className="w-44">
+            <SelectValue placeholder="No client" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="none">No client</SelectItem>
+            {clients.map((client) => (
+              <SelectItem key={client.id} value={client.id}>
+                {client.name}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+      </div>
+
+      <div className="flex flex-col gap-1">
         <label htmlFor="expense-category" className="text-sm font-medium">
           Category
         </label>
-        <Input
-          id="expense-category"
-          name="category"
-          type="text"
-          list="category-suggestions"
-          required
-          disabled={isPending}
-          className="w-44"
-        />
-        <datalist id="category-suggestions">
-          {categories.map((category) => (
-            <option key={category} value={category} />
-          ))}
-        </datalist>
+        <Select name="category" required disabled={isPending}>
+          <SelectTrigger id="expense-category" className="w-44">
+            <SelectValue placeholder="Select category" />
+          </SelectTrigger>
+          <SelectContent>
+            {categories.map((category) => (
+              <SelectItem key={category} value={category}>
+                {category}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
       </div>
 
       <div className="flex flex-col gap-1">

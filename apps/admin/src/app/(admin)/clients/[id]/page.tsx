@@ -35,7 +35,7 @@ export default async function ClientDetailPage({ params }: ClientDetailPageProps
   ])
   if (!client) notFound()
 
-  const totalIncome = incomeEntries.reduce((sum, e) => sum + Number(e.amount), 0)
+  const totalIncome = incomeEntries.sum
 
   return (
     <div className="flex flex-col gap-8">
@@ -73,7 +73,7 @@ export default async function ClientDetailPage({ params }: ClientDetailPageProps
           </span>
         </div>
 
-        {incomeEntries.length === 0 ? (
+        {incomeEntries.data.length === 0 ? (
           <p className="text-sm text-muted-foreground">No income records for this client yet.</p>
         ) : (
           <Table>
@@ -86,7 +86,7 @@ export default async function ClientDetailPage({ params }: ClientDetailPageProps
               </TableRow>
             </TableHeader>
             <TableBody>
-              {incomeEntries.map((entry) => (
+              {incomeEntries.data.map((entry) => (
                 <TableRow key={entry.id}>
                   <TableCell>{entry.date}</TableCell>
                   <TableCell>{entry.divisionName}</TableCell>

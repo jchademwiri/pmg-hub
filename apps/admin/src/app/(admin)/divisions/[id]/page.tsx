@@ -63,7 +63,7 @@ export default async function DivisionDetailPage({ params }: DivisionDetailPageP
           <h2 className="text-base font-medium">Income History</h2>
           <span className="text-sm font-semibold text-green-500">{formatZAR(division.totalIncome)}</span>
         </div>
-        {incomeEntries.length === 0 ? (
+        {incomeEntries.data.length === 0 ? (
           <p className="text-sm text-muted-foreground">No income records for this division.</p>
         ) : (
           <Table>
@@ -76,7 +76,7 @@ export default async function DivisionDetailPage({ params }: DivisionDetailPageP
               </TableRow>
             </TableHeader>
             <TableBody>
-              {incomeEntries.map((e) => (
+              {incomeEntries.data.map((e) => (
                 <TableRow key={e.id}>
                   <TableCell>{e.date}</TableCell>
                   <TableCell>{e.clientName ?? '—'}</TableCell>
@@ -97,7 +97,7 @@ export default async function DivisionDetailPage({ params }: DivisionDetailPageP
           <h2 className="text-base font-medium">Expense History</h2>
           <span className="text-sm font-semibold text-amber-500">{formatZAR(division.totalExpenses)}</span>
         </div>
-        {expenseEntries.length === 0 ? (
+        {expenseEntries.data.length === 0 ? (
           <p className="text-sm text-muted-foreground">No expense records for this division.</p>
         ) : (
           <Table>
@@ -110,7 +110,7 @@ export default async function DivisionDetailPage({ params }: DivisionDetailPageP
               </TableRow>
             </TableHeader>
             <TableBody>
-              {expenseEntries.map((e) => (
+              {expenseEntries.data.map((e) => (
                 <TableRow key={e.id}>
                   <TableCell>{e.date}</TableCell>
                   <TableCell>{e.category}</TableCell>

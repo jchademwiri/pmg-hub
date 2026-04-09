@@ -31,9 +31,24 @@ export async function updateExpenseCategory(id: string, formData: FormData): Pro
     if (!result.success) {
       return { error: result.error.issues[0]?.message ?? 'Validation error' };
     }
-    await db.update(expenseCategories)
-      .set({ name: result.data.name })
-      .where(eq(expenseCategories.id, id));
+    const newName = result.data.name;
+
+    const rows = await db.select().from(expenseCategories).where(eq(expenseCategories.id, id));
+    if (rows.length === 0) return { error: 'Category not found.' };
+    const oldName = rows[0]!.name;
+
+    await db.transaction(async (tx) => {
+      await tx.update(expenseCategories)
+        .set({ name: newName })
+        .where(eq(expenseCategories.id, id));
+
+      if (oldName !== newName) {
+        await tx.update(expenses)
+          .set({ category: newName })
+          .where(eq(expenses.category, oldName));
+      }
+    });
+
     revalidatePath('/expense-categories');
     revalidatePath('/expenses');
     return {};

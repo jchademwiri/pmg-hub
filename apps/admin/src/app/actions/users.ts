@@ -82,13 +82,23 @@ export async function inviteUser(formData: FormData): Promise<{ error?: string }
 
     // Send invitation email via Resend
     const resend = getResend()
-    const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? ''
+    const appUrl = process.env.BETTER_AUTH_URL
+    if (!appUrl) {
+      return { error: 'BETTER_AUTH_URL is not configured' }
+    }
     const inviteUrl = `${appUrl}/invite?token=${token}`
     const { error: emailError } = await resend.emails.send({
       from: 'PMG Admin <noreply@playhousemedia.co.za>',
       to: email,
       subject: 'You have been invited to PMG Control Center',
-      html: `<p>Hi ${name},</p><p>You have been invited to join PMG Control Center as <strong>${role}</strong>.</p><p><a href="${inviteUrl}">Accept invitation</a></p><p>This invitation expires in 7 days.</p>`,
+      html: `
+        <p>Hi ${name},</p>
+        <p>You have been invited to join PMG Control Center as <strong>${role}</strong>.</p>
+        <p><a href="${inviteUrl}" style="background:#1a1a1a;color:#ffffff;padding:12px 24px;border-radius:6px;text-decoration:none;display:inline-block;">Accept Invitation</a></p>
+        <p>Or copy this link into your browser:</p>
+        <p style="word-break:break-all;color:#555;">${inviteUrl}</p>
+        <p>This invitation expires in 7 days.</p>
+      `,
     })
 
     if (emailError) {
