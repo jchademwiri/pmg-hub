@@ -1,27 +1,313 @@
 ---
-import "../styles/globals.css";
+import Nav from '@/components/Nav.astro';
+import '../styles/globals.css';
+import Analytics from '@vercel/analytics/astro';
+import SpeedInsights from '@vercel/speed-insights/astro';
+import Footer from '@/components/Footer.astro';
+
+interface Props {
+	title?: string;
+	description?: string;
+	canonical?: string;
+}
+
+const {
+	title = 'CSD Registration & Tender Compliance | Tender Edge Solutions — Centurion',
+	description = 'Get CSD-registered, CIDB-graded, and tender-ready. B-BBEE affidavits, SBD forms, and full tender document prep in Gauteng. Free assessment.',
+	canonical = 'https://www.tenderedgesolutions.co.za',
+} = Astro.props;
+
+const SITE_URL = 'https://www.tenderedgesolutions.co.za';
+const OG_IMAGE = `${SITE_URL}/og-tes.png`;
+
+// ── JSON-LD: LocalBusiness / ProfessionalService ──────────────────────────
+const localBusinessSchema = {
+	'@context': 'https://schema.org',
+	'@type': ['LocalBusiness', 'ProfessionalService'],
+	'@id': `${SITE_URL}/#business`,
+	name: 'Tender Edge Solutions',
+	alternateName: 'TES',
+	description:
+		'Tender compliance specialists based in Centurion, Gauteng. We handle CSD registration, CIDB grading, B-BBEE affidavits, COIDA registration, SBD forms, and full tender document compilation for South African SMEs.',
+	url: SITE_URL,
+	telephone: '+27745017094',
+	email: 'tenders@tenderedgesolutions.co.za',
+	logo: `${SITE_URL}/favicon.svg`,
+	image: OG_IMAGE,
+	priceRange: '$$',
+	address: {
+		'@type': 'PostalAddress',
+		streetAddress: 'Centurion',
+		addressLocality: 'Centurion',
+		addressRegion: 'Gauteng',
+		addressCountry: 'ZA',
+	},
+	geo: {
+		'@type': 'GeoCoordinates',
+		latitude: -25.8553,
+		longitude: 28.1881,
+	},
+	areaServed: [
+		{ '@type': 'Country', name: 'South Africa' },
+		{ '@type': 'State', name: 'Gauteng' },
+	],
+	serviceArea: {
+		'@type': 'Country',
+		name: 'South Africa',
+	},
+	sameAs: [`https://wa.me/27745017094`],
+	hasOfferCatalog: {
+		'@type': 'OfferCatalog',
+		name: 'Tender Compliance Services',
+		itemListElement: [
+			{
+				'@type': 'Offer',
+				itemOffered: { '@type': 'Service', name: 'CSD Registration & Management' },
+			},
+			{ '@type': 'Offer', itemOffered: { '@type': 'Service', name: 'CIDB Grading' } },
+			{ '@type': 'Offer', itemOffered: { '@type': 'Service', name: 'B-BBEE Affidavits' } },
+			{ '@type': 'Offer', itemOffered: { '@type': 'Service', name: 'COIDA Registration' } },
+			{ '@type': 'Offer', itemOffered: { '@type': 'Service', name: 'SBD Forms & Returnables' } },
+			{ '@type': 'Offer', itemOffered: { '@type': 'Service', name: 'Full Tender Compilation' } },
+		],
+	},
+};
+
+// ── JSON-LD: Service blocks ───────────────────────────────────────────────
+const servicesSchema = {
+	'@context': 'https://schema.org',
+	'@type': 'ItemList',
+	name: 'Tender Compliance Services — TenderEdge Solutions',
+	itemListElement: [
+		{
+			'@type': 'ListItem',
+			position: 1,
+			item: {
+				'@type': 'Service',
+				'@id': `${SITE_URL}/#service-csd`,
+				name: 'CSD Registration & Management',
+				description:
+					'Get registered on the Central Supplier Database and keep your profile current. We handle the full process from initial registration to annual updates.',
+				provider: { '@id': `${SITE_URL}/#business` },
+				areaServed: { '@type': 'Country', name: 'South Africa' },
+				serviceType: 'Government Supplier Registration',
+			},
+		},
+		{
+			'@type': 'ListItem',
+			position: 2,
+			item: {
+				'@type': 'Service',
+				'@id': `${SITE_URL}/#service-cidb`,
+				name: 'CIDB Grading',
+				description:
+					'Obtain your CIDB contractor grading certificate for construction and civil tenders. We manage the application, documentation, and submission.',
+				provider: { '@id': `${SITE_URL}/#business` },
+				areaServed: { '@type': 'Country', name: 'South Africa' },
+				serviceType: 'Construction Industry Grading',
+			},
+		},
+		{
+			'@type': 'ListItem',
+			position: 3,
+			item: {
+				'@type': 'Service',
+				'@id': `${SITE_URL}/#service-bbbee`,
+				name: 'B-BBEE Affidavits',
+				description:
+					'EME and QSE affidavits prepared and commissioned correctly. Valid, compliant, and ready for any tender submission.',
+				provider: { '@id': `${SITE_URL}/#business` },
+				areaServed: { '@type': 'Country', name: 'South Africa' },
+				serviceType: 'B-BBEE Compliance',
+			},
+		},
+		{
+			'@type': 'ListItem',
+			position: 4,
+			item: {
+				'@type': 'Service',
+				'@id': `${SITE_URL}/#service-coida`,
+				name: 'COIDA Registration',
+				description:
+					'Register with the Compensation Fund and obtain your Letter of Good Standing. Essential for any government tender submission.',
+				provider: { '@id': `${SITE_URL}/#business` },
+				areaServed: { '@type': 'Country', name: 'South Africa' },
+				serviceType: 'Occupational Injuries Registration',
+			},
+		},
+		{
+			'@type': 'ListItem',
+			position: 5,
+			item: {
+				'@type': 'Service',
+				'@id': `${SITE_URL}/#service-sbd`,
+				name: 'SBD Forms & Returnables',
+				description:
+					'All standard bidding documents completed accurately — SBD1, SBD4, SBD6.1, SBD8, and SBD9. No errors, no omissions.',
+				provider: { '@id': `${SITE_URL}/#business` },
+				areaServed: { '@type': 'Country', name: 'South Africa' },
+				serviceType: 'Tender Document Preparation',
+			},
+		},
+		{
+			'@type': 'ListItem',
+			position: 6,
+			item: {
+				'@type': 'Service',
+				'@id': `${SITE_URL}/#service-tender`,
+				name: 'Full Tender Compilation',
+				description:
+					'End-to-end tender document preparation. We compile, format, and package your complete submission to meet every specification.',
+				provider: { '@id': `${SITE_URL}/#business` },
+				areaServed: { '@type': 'Country', name: 'South Africa' },
+				serviceType: 'Tender Bid Preparation',
+			},
+		},
+	],
+};
+
+// ── JSON-LD: FAQPage ──────────────────────────────────────────────────────
+const faqSchema = {
+	'@context': 'https://schema.org',
+	'@type': 'FAQPage',
+	mainEntity: [
+		{
+			'@type': 'Question',
+			name: 'What is CSD registration and why do I need it?',
+			acceptedAnswer: {
+				'@type': 'Answer',
+				text: "The Central Supplier Database (CSD) is the South African government's single supplier registration system. All businesses wishing to supply goods or services to any government department must be registered on the CSD. Without a valid CSD registration, your tender bid will be automatically disqualified.",
+			},
+		},
+		{
+			'@type': 'Question',
+			name: 'How long does CSD registration take?',
+			acceptedAnswer: {
+				'@type': 'Answer',
+				text: 'CSD registration typically takes 3–5 business days when all required documents are in order. TenderEdge Solutions handles the full process and ensures your profile is correctly completed to avoid delays.',
+			},
+		},
+		{
+			'@type': 'Question',
+			name: 'What is a B-BBEE affidavit and who needs one?',
+			acceptedAnswer: {
+				'@type': 'Answer',
+				text: "A B-BBEE affidavit is a sworn statement confirming your business's Broad-Based Black Economic Empowerment status. Exempted Micro Enterprises (EMEs) with annual turnover under R10 million and Qualifying Small Enterprises (QSEs) with turnover under R50 million can use an affidavit instead of a full B-BBEE certificate. It is required for virtually all government tender submissions.",
+			},
+		},
+		{
+			'@type': 'Question',
+			name: 'What is CIDB grading and do I need it?',
+			acceptedAnswer: {
+				'@type': 'Answer',
+				text: 'The Construction Industry Development Board (CIDB) grades contractors for construction and civil engineering tenders. If you are bidding on any construction-related government contract, a valid CIDB grading certificate is mandatory. TenderEdge Solutions manages the full application and submission process.',
+			},
+		},
+		{
+			'@type': 'Question',
+			name: 'How much does a tender compliance package cost?',
+			acceptedAnswer: {
+				'@type': 'Answer',
+				text: 'TenderEdge Solutions offers flexible individual services and all-inclusive compliance packages tailored to your specific needs. Contact us via WhatsApp or the enquiry form for a personalised quote. Your first Tender Readiness Assessment is completely free.',
+			},
+		},
+		{
+			'@type': 'Question',
+			name: 'Do you serve businesses outside of Centurion?',
+			acceptedAnswer: {
+				'@type': 'Answer',
+				text: 'Yes. While TenderEdge Solutions is based in Centurion, Gauteng, we serve businesses across all of South Africa. All services can be completed remotely — simply send your documents via WhatsApp or email.',
+			},
+		},
+		{
+			'@type': 'Question',
+			name: 'What documents do I need to get started?',
+			acceptedAnswer: {
+				'@type': 'Answer',
+				text: 'The documents required depend on the services you need. Generally you will need your company registration documents (CIPC), ID documents for directors, proof of banking details, and any existing compliance certificates. Contact us for a free assessment and we will tell you exactly what is needed.',
+			},
+		},
+	],
+};
 ---
 
 <!doctype html>
-<html lang="en">
+<html lang='en' class='dark' style='scroll-behavior: smooth;'>
 	<head>
-		<meta charset="UTF-8" />
-		<meta name="viewport" content="width=device-width" />
-		<link rel="icon" type="image/svg+xml" href="/favicon.svg" />
-		<link rel="icon" href="/favicon.ico" />
-		<meta name="generator" content={Astro.generator} />
-		<title>Astro Basics</title>
+		<meta charset='UTF-8' />
+		<meta name='viewport' content='width=device-width, initial-scale=1' />
+		<link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png">
+<link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png">
+<link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png">
+<link rel="manifest" href="/site.webmanifest">
+		<meta name='generator' content={Astro.generator} />
+		<meta name='theme-color' content='#c9a227' />
+
+		<title>{title}</title>
+		<meta name='description' content={description} />
+		<link rel='canonical' href={canonical} />
+
+		<!-- Open Graph -->
+		<meta property='og:title' content={title} />
+		<meta property='og:description' content={description} />
+		<meta property='og:url' content={canonical} />
+		<meta property='og:image' content={OG_IMAGE} />
+		<meta property='og:image:width' content='1200' />
+		<meta property='og:image:height' content='630' />
+		<meta
+			property='og:image:alt'
+			content='TenderEdge Solutions — Tender Compliance Specialists, Centurion'
+		/>
+		<meta property='og:type' content='website' />
+		<meta property='og:locale' content='en_ZA' />
+		<meta property='og:site_name' content='TenderEdge Solutions' />
+
+		<!-- Twitter / X Card -->
+		<meta name='twitter:card' content='summary_large_image' />
+		<meta name='twitter:title' content={title} />
+		<meta name='twitter:description' content={description} />
+		<meta name='twitter:image' content={OG_IMAGE} />
+		<meta
+			name='twitter:image:alt'
+			content='TenderEdge Solutions — Tender Compliance Specialists, Centurion'
+		/>
+
+		<!-- Favicon -->
+		<link rel='icon' href='/favicon.svg' />
+		<link rel='sitemap' href='/sitemap-index.xml' />
+
+		<!-- Google Fonts: Barlow Condensed + DM Sans -->
+		<link rel='preconnect' href='https://fonts.googleapis.com' />
+		<link rel='preconnect' href='https://fonts.gstatic.com' crossorigin />
+		<link
+			rel='stylesheet'
+			href='https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;700&family=DM+Sans:wght@300;400;500&display=swap'
+		/>
+
+		<!-- JSON-LD Structured Data -->
+		<script type='application/ld+json' set:html={JSON.stringify(localBusinessSchema)} />
+		<script type='application/ld+json' set:html={JSON.stringify(servicesSchema)} />
+		<script type='application/ld+json' set:html={JSON.stringify(faqSchema)} />
+		<SpeedInsights />
+		<Analytics />
 	</head>
-	<body>
+	<body class='min-h-screen bg-background text-foreground font-sans overflow-x-hidden'>
+		<!-- Grain noise overlay -->
+		<div aria-hidden='true' class='grain-overlay'></div>
+		<Nav />
 		<slot />
+		<Footer />
 	</body>
 </html>
 
 <style>
-	html,
-	body {
-		margin: 0;
-		width: 100%;
-		height: 100%;
+	.grain-overlay {
+		position: fixed;
+		inset: 0;
+		pointer-events: none;
+		opacity: 0.04;
+		z-index: 9999;
+		background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='200' height='200'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='200' height='200' filter='url(%23n)'/%3E%3C/svg%3E");
+		background-repeat: repeat;
 	}
 </style>

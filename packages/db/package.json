@@ -12,7 +12,7 @@
     "db:push": "drizzle-kit push",
     "db:studio": "drizzle-kit studio",
     "db:reset": "bun src/reset.ts",
-    "db:seed": "bun src/reset.ts && bun src/migrate.ts && bun src/seed.ts",
+    "db:seed": "bun src/reset.ts && bun src/seed.ts",
     "test": "vitest run"
   },
   "dependencies": {

@@ -3,7 +3,7 @@
   "private": true,
   "scripts": {
     "build": "turbo run build",
-    "dev": "turbo run dev db:studio",
+    "dev": "turbo run dev db:studio email:dev",
     "lint": "turbo run lint",
     "format": "prettier --write \"**/*.{ts,tsx,md}\"",
     "check-types": "turbo run check-types",
@@ -24,11 +24,11 @@
     "zod": "^4.3.6"
   },
   "devDependencies": {
+    "@tailwindcss/vite": "catalog:",
     "prettier": "^3.7.4",
-    "turbo": "^2.8.20",
-    "typescript": "catalog:",
     "tailwindcss": "catalog:",
-    "@tailwindcss/vite": "catalog:"
+    "turbo": "^2.9.5",
+    "typescript": "catalog:"
   },
   "engines": {
     "node": ">=20"
@@ -46,7 +46,11 @@
     "tailwindcss": "4.2.2",
     "@tailwindcss/vite": "4.2.2",
     "@tailwindcss/node": "4.2.2",
-    "@tailwindcss/oxide": "4.2.2"
+    "@tailwindcss/oxide": "4.2.2",
+    "@types/react": "^19.2.14",
+    "@types/react-dom": "^19.2.3",
+    "@react-email/components": "^1.0.1",
+    "resend": "^4.0.0"
   },
   "trustedDependencies": [
     "@tailwindcss/oxide"

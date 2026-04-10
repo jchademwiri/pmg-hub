@@ -12,6 +12,13 @@
     "astro": "astro"
   },
   "dependencies": {
+    "@astrojs/vercel": "^10.0.4",
+    "@pmg/tailwind-config": "workspace:*",
+    "@vercel/analytics": "^2.0.1",
     "astro": "^6.0.8"
+  },
+  "devDependencies": {
+    "@tailwindcss/vite": "catalog:",
+    "tailwindcss": "catalog:"
   }
 }

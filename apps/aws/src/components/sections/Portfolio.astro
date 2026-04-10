@@ -1,0 +1,52 @@
+---
+import { projects } from "@/data/projects";
+
+---
+
+<section id="portfolio" class="py-24 bg-background relative">
+  <div class="container mx-auto px-4">
+    <div class="flex flex-col md:flex-row justify-between items-end mb-16 gap-4">
+      <div class="max-w-2xl">
+        <h2 class="text-3xl md:text-4xl font-bold mb-4">
+          Featured <span class="text-primary">Work</span>
+        </h2>
+        <p class="text-muted-foreground text-lg">
+          A selection of our recent projects. We build digital products that define industries.
+        </p>
+      </div>
+      <div>
+        <a href="#contact" class="inline-flex items-center text-primary font-medium hover:underline group">
+          View All Projects
+          <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 ml-2 transition-transform group-hover:translate-x-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 8l4 4m0 0l-4 4m4-4H3" />
+          </svg>
+        </a>
+      </div>
+    </div>
+
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+      {projects.map((project) => (
+        <a href={project.url} target="_blank" rel="noopener noreferrer" class="group relative overflow-hidden rounded-2xl bg-muted/30 border border-border/50 hover:border-primary/50 transition-all duration-300 hover:shadow-lg block">
+          <!-- Image Placeholder -->
+          <div class={`h-64 w-full ${project.image} relative overflow-hidden`}>
+              <img 
+                src={project.bgImage} 
+                alt={project.title}
+                width="800"
+                height="600"
+                class="absolute inset-0 w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
+              />
+          </div>
+          
+          <div class="p-8 relative z-10 -mt-12 mx-4 bg-blue-950/80 backdrop-blur-xl rounded-xl shadow-2xl border border-border/50 group-hover:translate-y-[-10px] transition-transform duration-300">
+            <div class="text-xs font-bold text-blue-400 uppercase tracking-wider mb-2">{project.category}</div>
+            <h3 class="text-xl font-bold mb-2 text-white">{project.title}</h3>
+            <p class="text-blue-100/80 text-sm line-clamp-2">
+              {project.description}
+            </p>
+          </div>
+        </a>
+      ))}
+    </div>
+  </div>
+</section>

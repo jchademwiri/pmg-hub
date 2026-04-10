@@ -2,8 +2,9 @@
   "extends": "@pmg/typescript-config/base.json",
   "compilerOptions": {
     "outDir": "dist",
-    "rootDir": "src",
-    "types": ["node"]
+    "types": ["node"],
+    "module": "Preserve",
+    "moduleResolution": "Bundler"
   },
   "include": ["src", "drizzle.config.ts", "__tests__"],
   "exclude": ["node_modules", "dist"]

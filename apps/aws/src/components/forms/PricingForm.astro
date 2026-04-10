@@ -1,0 +1,275 @@
+---
+const { initialData = {} } = Astro.props;
+
+// Use raw price directly since it's now a number
+const rawPrice = initialData.price || "";
+---
+
+<form id="pricing-form" class="max-w-2xl space-y-6">
+  <input type="hidden" name="id" value={initialData.id || ""} />
+
+  {/* Hidden period field, calculated on submit */}
+  <input
+    type="hidden"
+    name="period"
+    id="period"
+    value={initialData.period || ""}
+  />
+
+  <div class="grid gap-6 md:grid-cols-2">
+    <div class="space-y-2">
+      <label
+        for="type"
+        class="text-sm leading-none font-medium peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
+        >Plan Type</label
+      >
+      <select
+        name="type"
+        id="type"
+        required
+        class="border-input bg-background ring-offset-background placeholder:text-muted-foreground focus:ring-ring flex h-10 w-full items-center justify-between rounded-md border px-3 py-2 text-sm focus:ring-2 focus:ring-offset-2 focus:outline-none disabled:cursor-not-allowed disabled:opacity-50"
+      >
+        <option value="monthly" selected={initialData.type === "monthly"}
+          >Monthly Subscription</option
+        >
+        <option value="once-off" selected={initialData.type === "once-off"}
+          >Once-Off Payment</option
+        >
+      </select>
+      <p class="text-muted-foreground text-xs">
+        The period will be set automatically based on this selection.
+      </p>
+    </div>
+
+    <div class="space-y-2">
+      <label
+        for="price"
+        class="text-sm leading-none font-medium peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
+        >Price (ZAR)</label
+      >
+      <div class="relative">
+        <span class="text-muted-foreground absolute top-2.5 left-3">R</span>
+        <input
+          type="number"
+          name="price_raw"
+          id="price_raw"
+          value={rawPrice}
+          required
+          min="0"
+          step="1"
+          class="border-input bg-background ring-offset-background placeholder:text-muted-foreground focus-visible:ring-ring flex h-10 w-full rounded-md border px-3 py-2 pl-7 text-sm file:border-0 file:bg-transparent file:text-sm file:font-medium focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:outline-none disabled:cursor-not-allowed disabled:opacity-50"
+          placeholder="599"
+        />
+      </div>
+    </div>
+  </div>
+
+  <div class="space-y-2">
+    <label
+      for="name"
+      class="text-sm leading-none font-medium peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
+      >Plan Name</label
+    >
+    <input
+      type="text"
+      name="name"
+      id="name"
+      value={initialData.name || ""}
+      required
+      class="border-input bg-background ring-offset-background placeholder:text-muted-foreground focus-visible:ring-ring flex h-10 w-full rounded-md border px-3 py-2 text-sm file:border-0 file:bg-transparent file:text-sm file:font-medium focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:outline-none disabled:cursor-not-allowed disabled:opacity-50"
+      placeholder="e.g., Professional"
+    />
+  </div>
+
+  <div class="space-y-2">
+    <label
+      for="upfront"
+      class="text-sm leading-none font-medium peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
+      >Upfront Cost (ZAR - Optional)</label
+    >
+    <div class="relative">
+      <span class="text-muted-foreground absolute top-2.5 left-3">R</span>
+      <input
+        type="number"
+        name="upfront"
+        id="upfront"
+        value={initialData.upfront || ""}
+        min="0"
+        step="1"
+        class="border-input bg-background ring-offset-background placeholder:text-muted-foreground focus-visible:ring-ring flex h-10 w-full rounded-md border px-3 py-2 pl-7 text-sm file:border-0 file:bg-transparent file:text-sm file:font-medium focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:outline-none disabled:cursor-not-allowed disabled:opacity-50"
+        placeholder="2499"
+      />
+    </div>
+  </div>
+
+  <div class="space-y-2">
+    <label
+      for="description"
+      class="text-sm leading-none font-medium peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
+      >Description</label
+    >
+    <textarea
+      name="description"
+      id="description"
+      required
+      class="border-input bg-background ring-offset-background placeholder:text-muted-foreground focus-visible:ring-ring flex min-h-[80px] w-full rounded-md border px-3 py-2 text-sm focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:outline-none disabled:cursor-not-allowed disabled:opacity-50"
+      placeholder="Brief description of the plan"
+      >{initialData.description || ""}</textarea
+    >
+  </div>
+
+  <div class="space-y-2">
+    <label
+      for="features"
+      class="text-sm leading-none font-medium peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
+    >
+      Features (One per line)
+    </label>
+    <textarea
+      name="features"
+      id="features"
+      required
+      class="border-input bg-background ring-offset-background placeholder:text-muted-foreground focus-visible:ring-ring flex min-h-[150px] w-full rounded-md border px-3 py-2 text-sm focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:outline-none disabled:cursor-not-allowed disabled:opacity-50"
+      placeholder="10 Page Website
+Mobile Responsive
+SEO Basics"
+      >{
+        Array.isArray(initialData.features)
+          ? initialData.features.join("\n")
+          : initialData.features || ""
+      }</textarea
+    >
+  </div>
+
+  <div class="space-y-2">
+    <label
+      for="cta"
+      class="text-sm leading-none font-medium peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
+      >CTA Button Text</label
+    >
+    <input
+      type="text"
+      name="cta"
+      id="cta"
+      value={initialData.cta || ""}
+      required
+      class="border-input bg-background ring-offset-background placeholder:text-muted-foreground focus-visible:ring-ring flex h-10 w-full rounded-md border px-3 py-2 text-sm file:border-0 file:bg-transparent file:text-sm file:font-medium focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:outline-none disabled:cursor-not-allowed disabled:opacity-50"
+      placeholder="e.g., Get Started"
+    />
+  </div>
+
+  <div class="flex items-center space-x-2">
+    <input
+      type="checkbox"
+      name="popular"
+      id="popular"
+      checked={!!initialData.popular}
+      class="border-primary text-primary ring-offset-background focus-visible:ring-ring aspect-square h-4 w-4 rounded-sm border focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+    />
+    <label
+      for="popular"
+      class="text-sm leading-none font-medium peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
+    >
+      Mark as Popular/Best Value
+    </label>
+  </div>
+
+  <div class="flex gap-4 pt-4">
+    <button
+      type="submit"
+      id="save-btn"
+      class="ring-offset-background focus-visible:ring-ring bg-primary text-primary-foreground hover:bg-primary/90 inline-flex h-10 w-full items-center justify-center rounded-md px-4 py-2 text-sm font-medium transition-colors focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:outline-none disabled:pointer-events-none disabled:opacity-50 md:w-auto"
+    >
+      <span id="btn-text">Save Plan</span>
+    </button>
+
+    <a
+      href="/admin/pricing"
+      class="ring-offset-background focus-visible:ring-ring border-input bg-background hover:bg-accent hover:text-accent-foreground inline-flex h-10 w-full items-center justify-center rounded-md border px-4 py-2 text-sm font-medium transition-colors focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:outline-none disabled:pointer-events-none disabled:opacity-50 md:w-auto"
+    >
+      Cancel
+    </a>
+  </div>
+
+  <p id="form-error" class="text-destructive hidden text-sm font-medium"></p>
+</form>
+
+<script>
+  const form = document.getElementById(
+    "pricing-form",
+  ) as HTMLFormElement | null;
+  const saveBtn = document.getElementById(
+    "save-btn",
+  ) as HTMLButtonElement | null;
+  const btnText = document.getElementById("btn-text");
+  const errorMsg = document.getElementById("form-error");
+
+  if (form && saveBtn && btnText && errorMsg) {
+    form.addEventListener("submit", async (e) => {
+      e.preventDefault();
+      saveBtn.disabled = true;
+      btnText.textContent = "Saving...";
+      errorMsg.classList.add("hidden");
+
+      const formData = new FormData(form);
+      const data = Object.fromEntries(formData.entries()) as Record<
+        string,
+        any
+      >;
+
+      // --- Logic: Process Numbers ---
+      // Send raw numbers to API
+      data.price = data.price_raw ? parseInt(data.price_raw as string) : 0;
+      data.upfront = data.upfront ? parseInt(data.upfront as string) : null;
+
+      // Cleanup temp fields
+      delete data.price_raw;
+
+      // --- Logic: Auto-set Period ---
+      if (data.type === "monthly") {
+        data.period = "/month";
+      } else {
+        data.period = "once-off";
+      }
+
+      // Process features
+      if (typeof data.features === "string") {
+        data.features = data.features
+          .split("\n")
+          .map((f: string) => f.trim())
+          .filter((f: string) => f.length > 0);
+      }
+
+      // Process popular
+      const popularInput = document.getElementById(
+        "popular",
+      ) as HTMLInputElement | null;
+      data.popular = popularInput ? popularInput.checked : false;
+
+      const id = data.id;
+      const method = id ? "PUT" : "POST";
+      const url = id ? `/api/pricing/${id}` : "/api/pricing";
+
+      try {
+        const res = await fetch(url, {
+          method,
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(data),
+        });
+
+        const result = (await res.json()) as any;
+
+        if (!res.ok) throw new Error(result.error || "Operation failed");
+
+        // Success - Redirect back to list
+        window.location.href = "/admin/pricing";
+      } catch (err: any) {
+        console.error(err);
+        errorMsg.textContent = err.message;
+        errorMsg.classList.remove("hidden");
+        saveBtn.disabled = false;
+        btnText.textContent = "Save Plan";
+      }
+    });
+  }
+</script>

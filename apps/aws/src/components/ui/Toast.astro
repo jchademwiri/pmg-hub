@@ -1,0 +1,82 @@
+---
+import { CheckCircle, AlertCircle, X } from "lucide-astro";
+---
+
+<div
+  id="toast-container"
+  class="fixed right-4 bottom-4 z-50 flex flex-col gap-2"
+>
+  <!-- Toasts will be injected here -->
+</div>
+
+<template id="toast-template">
+  <div
+    class="toast flex w-80 translate-x-full items-start gap-3 rounded-lg border bg-white p-4 opacity-0 shadow-lg transition-all duration-300 dark:bg-zinc-900"
+  >
+    <div class="toast-icon mt-0.5 shrink-0"></div>
+    <div class="flex-1">
+      <h4
+        class="toast-title text-sm font-semibold text-zinc-900 dark:text-white"
+      >
+      </h4>
+      <p class="toast-message mt-1 text-sm text-zinc-500 dark:text-zinc-400">
+      </p>
+    </div>
+    <button
+      class="toast-close text-zinc-400 hover:text-zinc-500 dark:hover:text-zinc-300"
+    >
+      <X class="h-4 w-4" />
+    </button>
+  </div>
+</template>
+
+<script>
+  window.toast = ({ title, message, variant = "success", duration = 3000 }) => {
+    const container = document.getElementById("toast-container");
+    const template = document.getElementById("toast-template");
+
+    if (!container || !template) return;
+
+    const clone = template.content.cloneNode(true);
+    const toastEl = clone.querySelector(".toast");
+
+    // Set content
+    toastEl.querySelector(".toast-title").textContent =
+      title || (variant === "success" ? "Success" : "Error");
+    toastEl.querySelector(".toast-message").textContent = message;
+
+    // Set styling based on variant
+    const iconContainer = toastEl.querySelector(".toast-icon");
+    if (variant === "success") {
+      toastEl.classList.add("border-green-200", "dark:border-green-900");
+      iconContainer.innerHTML = `<svg class="h-5 w-5 text-green-500" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>`;
+    } else {
+      toastEl.classList.add("border-red-200", "dark:border-red-900");
+      iconContainer.innerHTML = `<svg class="h-5 w-5 text-red-500" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" x2="12" y1="8" y2="12"/><line x1="12" x2="12.01" y1="16" y2="16"/></svg>`;
+    }
+
+    // Close button
+    toastEl.querySelector(".toast-close").addEventListener("click", () => {
+      removeToast(toastEl);
+    });
+
+    container.appendChild(toastEl);
+
+    // Animate in
+    requestAnimationFrame(() => {
+      toastEl.classList.remove("translate-x-full", "opacity-0");
+    });
+
+    // Auto dismiss
+    setTimeout(() => {
+      removeToast(toastEl);
+    }, duration);
+
+    function removeToast(el) {
+      el.classList.add("translate-x-full", "opacity-0");
+      setTimeout(() => {
+        el.remove();
+      }, 300);
+    }
+  };
+</script>

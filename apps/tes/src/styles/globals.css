@@ -1,8 +1,130 @@
-@import "@pmg/tailwind-config/base";
-@import "@pmg/tailwind-config/tes";
+/*
+  TES — Global Styles
+  Tender Edge Solutions · Dark Authority + Gold Precision
+  Import base engine, then define TES-specific tokens here.
+*/
 
-body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: var(--font-sans);
+@import "@pmg/tailwind-config/base";
+
+/* ── Fonts ── */
+@theme {
+  --font-sans:      "DM Sans", ui-sans-serif, system-ui, sans-serif;
+  --font-condensed: "Barlow Condensed", ui-sans-serif, sans-serif;
+  --font-mono:      ui-monospace, "Cascadia Code", "Source Code Pro", monospace;
+}
+
+/* ── Spacing ── */
+@theme {
+  --spacing-18:  4.5rem;
+  --spacing-88:  22rem;
+  --spacing-128: 32rem;
+}
+
+/* ── Bridge CSS custom properties → Tailwind color utilities ── */
+@theme inline {
+  --color-background:           var(--background);
+  --color-foreground:           var(--foreground);
+  --color-card:                 var(--card);
+  --color-card-foreground:      var(--card-foreground);
+  --color-popover:              var(--popover);
+  --color-popover-foreground:   var(--popover-foreground);
+  --color-primary:              var(--primary);
+  --color-primary-foreground:   var(--primary-foreground);
+  --color-primary-hover:        var(--primary-hover);
+  --color-secondary:            var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-muted:                var(--muted);
+  --color-muted-foreground:     var(--muted-foreground);
+  --color-accent:               var(--accent);
+  --color-accent-foreground:    var(--accent-foreground);
+  --color-border:               var(--border);
+  --color-input:                var(--input);
+  --color-outline:              var(--outline);
+  --color-whatsapp:             var(--whatsapp);
+  --color-whatsapp-hover:       var(--whatsapp-hover);
+
+  --radius-sm:  calc(var(--radius) - 0.25rem);
+  --radius-md:  calc(var(--radius) - 0.125rem);
+  --radius-lg:  var(--radius);
+  --radius-xl:  calc(var(--radius) + 0.25rem);
+  --radius-2xl: calc(var(--radius) + 0.5rem);
+}
+
+/* ── TES Theme — always dark, no light mode ── */
+:root,
+.dark {
+  /* Page */
+  --background:           #0b1929;
+  --foreground:           #f0f4f8;
+
+  /* Cards & surfaces */
+  --card:                 #0f2237;
+  --card-foreground:      #f0f4f8;
+  --popover:              #0f2237;
+  --popover-foreground:   #f0f4f8;
+
+  /* Gold — primary brand accent */
+  --primary:              #c9a227;
+  --primary-foreground:   #0b1929;
+  --primary-hover:        #e0b82e;
+
+  /* Neutral supporting tones */
+  --secondary:            #1a3350;
+  --secondary-foreground: #f0f4f8;
+  --muted:                #0f2237;
+  --muted-foreground:     #8ca0b3;
+  --accent:               #1a3350;
+  --accent-foreground:    #f0f4f8;
+
+  /* Borders & inputs — subtle gold tint */
+  --border:               rgba(201, 162, 39, 0.2);
+  --input:                rgba(201, 162, 39, 0.15);
+  --outline:              rgba(201, 162, 39, 0.4);
+
+  /* WhatsApp — always green, never adapts to gold palette */
+  --whatsapp:             #25D366;
+  --whatsapp-hover:       #1fb155;
+
+  --radius: 0.625rem;
+}
+
+@layer base {
+  * {
+    @apply border-border outline-outline/50;
+  }
+
+  body {
+    font-family: var(--font-sans);
+    @apply bg-background text-foreground;
+  }
+
+  /* Offset anchor targets so sticky nav doesn't cover section headings */
+  section[id] {
+    scroll-margin-top: 72px;
+  }
+}
+
+/* ── Utility: hide scrollbar (used by TrustBar) ── */
+.scrollbar-hide {
+  scrollbar-width: none;
+}
+.scrollbar-hide::-webkit-scrollbar {
+  display: none;
+}
+
+/* ── Utility: subtle dot grid background pattern ── */
+.dot-grid {
+  background-image: radial-gradient(circle, rgba(201, 162, 39, 0.12) 1px, transparent 1px);
+  background-size: 28px 28px;
+}
+
+/* ── Utility: subtle diagonal line pattern (for bg-background sections) ── */
+.diagonal-lines {
+  background-image: repeating-linear-gradient(
+    -45deg,
+    rgba(201, 162, 39, 0.04) 0px,
+    rgba(201, 162, 39, 0.04) 1px,
+    transparent 1px,
+    transparent 20px
+  );
 }

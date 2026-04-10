@@ -1,0 +1,129 @@
+import type { Metadata } from 'next'
+import Link from 'next/link'
+import { notFound } from 'next/navigation'
+import { getDivisionWithStatsById, getAllIncome, getAllExpenses } from '@pmg/db'
+import { formatZAR } from '@/lib/format'
+import { Badge } from '@/components/ui/badge'
+import {
+  Table, TableBody, TableCell, TableHead, TableHeader, TableRow,
+} from '@/components/ui/table'
+
+export const dynamic = 'force-dynamic'
+
+interface DivisionDetailPageProps {
+  params: Promise<{ id: string }>
+}
+
+export async function generateMetadata({ params }: DivisionDetailPageProps): Promise<Metadata> {
+  const { id } = await params
+  const division = await getDivisionWithStatsById(id)
+  return { title: division ? division.name : 'Division' }
+}
+
+export default async function DivisionDetailPage({ params }: DivisionDetailPageProps) {
+  const { id } = await params
+  const [division, incomeEntries, expenseEntries] = await Promise.all([
+    getDivisionWithStatsById(id),
+    getAllIncome({ divisionId: id }),
+    getAllExpenses({ divisionId: id }),
+  ])
+  if (!division) notFound()
+
+  return (
+    <div className="flex flex-col gap-8">
+      {/* Header */}
+      <div className="flex items-center gap-4">
+        <Link href="/divisions" className="text-sm text-muted-foreground hover:text-foreground transition-colors">
+          ← Back to Divisions
+        </Link>
+        <h1 className="text-2xl font-semibold">{division.name}</h1>
+        <Badge variant={division.isActive ? 'default' : 'secondary'}>
+          {division.isActive ? 'Active' : 'Disabled'}
+        </Badge>
+      </div>
+
+      {/* Stats */}
+      <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+        {[
+          { label: 'Total Income',   value: formatZAR(division.totalIncome),   cls: 'text-green-500' },
+          { label: 'Total Expenses', value: formatZAR(division.totalExpenses), cls: 'text-amber-500' },
+          { label: 'Net Profit',     value: formatZAR(division.netProfit),     cls: division.netProfit >= 0 ? 'text-green-500' : 'text-red-500' },
+          { label: 'Leads',          value: String(division.leadCount),        cls: '' },
+        ].map(({ label, value, cls }) => (
+          <div key={label} className="rounded-lg border p-4 flex flex-col gap-1">
+            <span className="text-xs text-muted-foreground">{label}</span>
+            <span className={`text-lg font-semibold tabular-nums ${cls}`}>{value}</span>
+          </div>
+        ))}
+      </div>
+
+      {/* Income history */}
+      <section className="rounded-lg border p-5 flex flex-col gap-4">
+        <div className="flex items-center justify-between">
+          <h2 className="text-base font-medium">Income History</h2>
+          <span className="text-sm font-semibold text-green-500">{formatZAR(division.totalIncome)}</span>
+        </div>
+        {incomeEntries.data.length === 0 ? (
+          <p className="text-sm text-muted-foreground">No income records for this division.</p>
+        ) : (
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead>Date</TableHead>
+                <TableHead>Client</TableHead>
+                <TableHead>Description</TableHead>
+                <TableHead className="text-right">Amount</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {incomeEntries.data.map((e) => (
+                <TableRow key={e.id}>
+                  <TableCell>{e.date}</TableCell>
+                  <TableCell>{e.clientName ?? '—'}</TableCell>
+                  <TableCell>{e.description ?? '—'}</TableCell>
+                  <TableCell className="text-right tabular-nums font-medium text-green-500">
+                    +{formatZAR(Number(e.amount))}
+                  </TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
+        )}
+      </section>
+
+      {/* Expense history */}
+      <section className="rounded-lg border p-5 flex flex-col gap-4">
+        <div className="flex items-center justify-between">
+          <h2 className="text-base font-medium">Expense History</h2>
+          <span className="text-sm font-semibold text-amber-500">{formatZAR(division.totalExpenses)}</span>
+        </div>
+        {expenseEntries.data.length === 0 ? (
+          <p className="text-sm text-muted-foreground">No expense records for this division.</p>
+        ) : (
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead>Date</TableHead>
+                <TableHead>Category</TableHead>
+                <TableHead>Description</TableHead>
+                <TableHead className="text-right">Amount</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {expenseEntries.data.map((e) => (
+                <TableRow key={e.id}>
+                  <TableCell>{e.date}</TableCell>
+                  <TableCell>{e.category}</TableCell>
+                  <TableCell>{e.description ?? '—'}</TableCell>
+                  <TableCell className="text-right tabular-nums font-medium text-amber-500">
+                    −{formatZAR(Number(e.amount))}
+                  </TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
+        )}
+      </section>
+    </div>
+  )
+}

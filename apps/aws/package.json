@@ -9,9 +9,37 @@
     "dev": "astro dev",
     "build": "astro build",
     "preview": "astro preview",
-    "astro": "astro"
+    "astro": "astro",
+    "email": "email dev"
   },
   "dependencies": {
-    "astro": "^6.0.8"
+    "@astrojs/partytown": "^2.1.5",
+    "@astrojs/react": "^5.0.0",
+    "@astrojs/sitemap": "^3.7.1",
+    "@astrojs/vercel": "^10.0.4",
+    "@pmg/emails": "workspace:*",
+    "@pmg/tailwind-config": "workspace:*",
+    "@react-email/components": "^1.0.1",
+    "@tailwindcss/vite": "^4.1.17",
+    "@vercel/analytics": "^2.0.1",
+    "astro": "^6.0.8",
+    "lucide-astro": "^0.556.0",
+    "react": "^19.2.1",
+    "react-dom": "^19.2.1",
+    "react-email": "^5.0.6",
+    "resend": "^6.5.2",
+    "schema-dts": "^2.0.0",
+    "tailwind-merge": "^3.4.0",
+    "tailwind-variants": "^3.2.2",
+    "tailwindcss": "^4.1.17"
+  },
+  "devDependencies": {
+    "@astrojs/check": "^0.9.7",
+    "@types/react": "^19.2.7",
+    "@types/react-dom": "^19.2.3",
+    "typescript": "^5.9.3",
+    "prettier": "^3.7.4",
+    "prettier-plugin-astro": "^0.14.1",
+    "prettier-plugin-tailwindcss": "^0.7.2"
   }
 }

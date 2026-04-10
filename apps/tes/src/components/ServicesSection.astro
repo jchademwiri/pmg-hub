@@ -1,0 +1,44 @@
+---
+import { services } from '../data/services';
+---
+
+<section id='services' class='bg-card py-20 md:py-28 px-6 md:px-12 dot-grid'>
+  <div class='max-w-7xl mx-auto'>
+    <p class='text-primary uppercase tracking-widest text-[10px] md:text-[11px] font-medium'>
+      WHAT WE DO
+    </p>
+    <h2 class='font-condensed text-4xl md:text-5xl text-foreground mt-4 mb-12'>
+      Everything you need to submit with confidence.
+    </h2>
+
+    <div class='grid grid-cols-1 md:grid-cols-2 gap-6'>
+      {
+        services.map((service) => (
+          <div class='bg-card border border-[--border] rounded-xl p-6 flex flex-col gap-3 hover:border-primary/60 transition-colors'>
+            <p class='text-foreground font-semibold text-base'>{service.name}</p>
+            <p class='text-muted-foreground text-sm leading-relaxed'>{service.description}</p>
+          </div>
+        ))
+      }
+    </div>
+
+    <!-- Bundle teaser card -->
+    <div
+      class='mt-6 bg-primary/10 border border-primary/30 rounded-xl p-6 flex flex-col md:flex-row items-start md:items-center justify-between gap-4'
+    >
+      <div>
+        <p class='text-foreground font-semibold'>Tender-Ready Bundles</p>
+        <p class='text-muted-foreground text-sm'>
+          We offer all-inclusive compliance packages — everything you need in one engagement. Get in
+          touch for a quote.
+        </p>
+      </div>
+      <a
+        href='#contact'
+        class='text-primary hover:text-primary-hover font-medium text-sm transition-colors whitespace-nowrap'
+      >
+        Get a quote →
+      </a>
+    </div>
+  </div>
+</section>

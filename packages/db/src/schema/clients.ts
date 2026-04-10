@@ -1,6 +1,7 @@
-import { index, pgTable, text, timestamp, uniqueIndex, uuid } from "drizzle-orm/pg-core";
+import { boolean, index, pgTable, text, timestamp, uniqueIndex, uuid } from "drizzle-orm/pg-core";
 import { relations, sql } from "drizzle-orm";
 import { income } from "./income";
+import { expenses } from "./expenses";
 
 export const clients = pgTable(
   "clients",
@@ -10,6 +11,7 @@ export const clients = pgTable(
     businessName: text("business_name"),
     email: text("email"),
     phone: text("phone"),
+    isActive: boolean("is_active").notNull().default(true),
     createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
     // updatedAt is managed by the application layer on update. Any database-level operation
     // that bypasses the application (direct SQL fixes, migrations, external services) will
@@ -28,4 +30,5 @@ export type NewClient = typeof clients.$inferInsert;
 
 export const clientsRelations = relations(clients, ({ many }) => ({
   income: many(income),
+  expenses: many(expenses),
 }));

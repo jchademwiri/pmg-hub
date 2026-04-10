@@ -1,0 +1,218 @@
+---
+import BookingDialog from '../forms/BookingDialog.astro';
+import PricingFallback from './PricingFallback.astro';
+import { monthlyPlans, onceOffPlans } from '@/data/pricing';
+---
+
+<section id='pricing' class='bg-muted/30 relative py-24'>
+  <div class='container mx-auto px-4'>
+    <div class='mx-auto mb-12 max-w-3xl text-center'>
+      <h2 class='mb-4 text-3xl font-bold md:text-4xl'>
+        Flexible <span class='text-primary'>Pricing</span>
+      </h2>
+      <p class='text-muted-foreground mb-8 text-lg'>
+        Choose the model that fits your cash flow. Monthly subscription or
+        once-off investment.
+      </p>
+
+      <!-- Toggle Switch -->
+      <div class='mb-8 flex items-center justify-center gap-4'>
+        <span id='label-monthly' class='text-primary text-sm font-medium'
+          >Monthly Sub</span
+        >
+        <button
+          id='pricing-toggle'
+          class='bg-primary/20 relative h-7 w-14 rounded-full transition-colors focus:outline-none'
+          aria-label='Toggle Pricing'
+        >
+          <div
+            id='toggle-circle'
+            class='bg-primary absolute top-1 left-1 h-5 w-5 rounded-full shadow-md transition-transform duration-300'
+          >
+          </div>
+        </button>
+        <span
+          id='label-onceoff'
+          class='text-muted-foreground text-sm font-medium'>Once-Off</span
+        >
+      </div>
+    </div>
+
+    {/* Monthly Cards Container */}
+    <div
+      id='monthly-cards'
+      class='mx-auto grid max-w-6xl grid-cols-1 gap-8 transition-opacity duration-300 md:grid-cols-3'
+    >
+      {
+        monthlyPlans.length > 0 ? (
+          monthlyPlans.map((plan) => (
+            <div
+              class={`relative flex flex-col rounded-2xl border p-8 transition-all duration-300 hover:shadow-xl ${plan.popular ? 'bg-background border-primary z-10 scale-105 shadow-lg' : 'bg-background/50 border-border/50 hover:border-border'}`}
+            >
+              {plan.popular && (
+                <div class='bg-primary text-primary-foreground absolute -top-4 left-1/2 -translate-x-1/2 rounded-full px-3 py-1 text-xs font-bold tracking-wider uppercase'>
+                  Most Popular
+                </div>
+              )}
+              <div class='mb-6'>
+                <h3 class='mb-2 text-xl font-bold'>{plan.name}</h3>
+                <div class='mb-2 flex items-baseline gap-1'>
+                  <span class='text-primary text-3xl font-bold'>
+                    {plan.price}
+                  </span>
+                  <span class='text-muted-foreground text-sm'>
+                    {plan.period}
+                  </span>
+                </div>
+                {plan.upfront && (
+                  <div class='text-primary/80 mb-2 text-xs font-semibold'>
+                    + {plan.upfront}
+                  </div>
+                )}
+                <p class='text-muted-foreground mt-3 text-sm'>
+                  {plan.description}
+                </p>
+              </div>
+              <ul class='mb-8 flex-1 space-y-4'>
+                {plan.features.map((feature) => (
+                  <li class='flex items-start text-sm'>
+                    <svg
+                      class='text-primary mr-2 h-5 w-5 shrink-0'
+                      fill='none'
+                      viewBox='0 0 24 24'
+                      stroke='currentColor'
+                    >
+                      <path
+                        stroke-linecap='round'
+                        stroke-linejoin='round'
+                        stroke-width='2'
+                        d='M5 13l4 4L19 7'
+                      />
+                    </svg>
+                    <span class='text-foreground/80'>{feature}</span>
+                  </li>
+                ))}
+              </ul>
+              <button
+                onclick={`window.openBookingDialog('${plan.name}', '${plan.price}', 'monthly')`}
+                class={`inline-flex h-12 w-full cursor-pointer items-center justify-center rounded-lg font-medium transition-colors ${plan.popular ? 'bg-primary text-primary-foreground hover:bg-primary/90' : 'bg-muted text-foreground hover:bg-muted/80'}`}
+              >
+                {plan.cta}
+              </button>
+            </div>
+          ))
+        ) : (
+          <PricingFallback />
+        )
+      }
+    </div>
+
+    {/* Once-Off Cards Container (Hidden by default) */}
+    <div
+      id='onceoff-cards'
+      class='mx-auto grid hidden max-w-6xl grid-cols-1 gap-8 opacity-0 transition-opacity duration-300 md:grid-cols-3'
+    >
+      {
+        onceOffPlans.length > 0 ? (
+          onceOffPlans.map((plan) => (
+            <div
+              class={`relative flex flex-col rounded-2xl border p-8 transition-all duration-300 hover:shadow-xl ${plan.popular ? 'bg-background border-primary z-10 scale-105 shadow-lg' : 'bg-background/50 border-border/50 hover:border-border'}`}
+            >
+              {plan.popular && (
+                <div class='bg-primary text-primary-foreground absolute -top-4 left-1/2 -translate-x-1/2 rounded-full px-3 py-1 text-xs font-bold tracking-wider uppercase'>
+                  Best Value
+                </div>
+              )}
+              <div class='mb-6'>
+                <h3 class='mb-2 text-xl font-bold'>{plan.name}</h3>
+                <div class='mb-2 flex items-baseline gap-1'>
+                  <span class='text-primary text-3xl font-bold'>
+                    {plan.price}
+                  </span>
+                  <span class='text-muted-foreground bg-muted rounded-full px-2 py-0.5 text-sm text-xs font-bold uppercase'>
+                    Once-Off
+                  </span>
+                </div>
+                <p class='text-muted-foreground mt-3 text-sm'>
+                  {plan.description}
+                </p>
+              </div>
+              <ul class='mb-8 flex-1 space-y-4'>
+                {plan.features.map((feature) => (
+                  <li class='flex items-start text-sm'>
+                    <svg
+                      class='text-primary mr-2 h-5 w-5 shrink-0'
+                      fill='none'
+                      viewBox='0 0 24 24'
+                      stroke='currentColor'
+                    >
+                      <path
+                        stroke-linecap='round'
+                        stroke-linejoin='round'
+                        stroke-width='2'
+                        d='M5 13l4 4L19 7'
+                      />
+                    </svg>
+                    <span class='text-foreground/80'>{feature}</span>
+                  </li>
+                ))}
+              </ul>
+              <button
+                onclick={`window.openBookingDialog('${plan.name}', '${plan.price}', 'once-off')`}
+                class={`inline-flex h-12 w-full cursor-pointer items-center justify-center rounded-lg font-medium transition-colors ${plan.popular ? 'bg-primary text-primary-foreground hover:bg-primary/90' : 'bg-muted text-foreground hover:bg-muted/80'}`}
+              >
+                {plan.cta}
+              </button>
+            </div>
+          ))
+        ) : (
+          <PricingFallback />
+        )
+      }
+    </div>
+  </div>
+
+  <BookingDialog />
+</section>
+
+<script>
+  const toggleBtn = document.getElementById('pricing-toggle');
+  const toggleCircle = document.getElementById('toggle-circle');
+  const monthlyCards = document.getElementById('monthly-cards');
+  const onceOffCards = document.getElementById('onceoff-cards');
+  const labelMonthly = document.getElementById('label-monthly');
+  const labelOnceOff = document.getElementById('label-onceoff');
+
+  let isMonthly = true;
+
+  if (
+    toggleBtn &&
+    toggleCircle &&
+    monthlyCards &&
+    onceOffCards &&
+    labelMonthly &&
+    labelOnceOff
+  ) {
+    toggleBtn.addEventListener('click', () => {
+      isMonthly = !isMonthly;
+
+      if (isMonthly) {
+        toggleCircle.classList.remove('translate-x-7');
+        monthlyCards.classList.remove('hidden', 'opacity-0');
+        onceOffCards.classList.add('hidden', 'opacity-0');
+        labelMonthly.classList.add('text-primary');
+        labelMonthly.classList.remove('text-muted-foreground');
+        labelOnceOff.classList.add('text-muted-foreground');
+        labelOnceOff.classList.remove('text-primary');
+      } else {
+        toggleCircle.classList.add('translate-x-7');
+        monthlyCards.classList.add('hidden', 'opacity-0');
+        onceOffCards.classList.remove('hidden', 'opacity-0');
+        labelMonthly.classList.add('text-muted-foreground');
+        labelMonthly.classList.remove('text-primary');
+        labelOnceOff.classList.add('text-primary');
+        labelOnceOff.classList.remove('text-muted-foreground');
+      }
+    });
+  }
+</script>

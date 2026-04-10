@@ -1,0 +1,38 @@
+---
+interface Props {
+  title?: string;
+  description?: string;
+  image?: string;
+  canonicalUrl?: URL;
+}
+
+const {
+  title = "Apex Web Solutions",
+  description = "Premium web design and development for South African SMEs. Affordable, high-performance websites starting from R299/month.",
+  image = "/og-image.jpg",
+  canonicalUrl = new URL(Astro.url.pathname, Astro.site),
+} = Astro.props;
+
+const absoluteImage = new URL(image, Astro.site);
+---
+
+<!-- Canonical URL -->
+<link rel="canonical" href={canonicalUrl.href} />
+
+<!-- Primary Meta Tags -->
+<title>{title}</title>
+<meta name="description" content={description} />
+
+<!-- Open Graph / Facebook -->
+<meta property="og:type" content="website" />
+<meta property="og:url" content={canonicalUrl.href} />
+<meta property="og:title" content={title} />
+<meta property="og:description" content={description} />
+<meta property="og:image" content={absoluteImage} />
+
+<!-- Twitter -->
+<meta name="twitter:card" content="summary_large_image" />
+<meta name="twitter:url" content={canonicalUrl.href} />
+<meta name="twitter:title" content={title} />
+<meta name="twitter:description" content={description} />
+<meta name="twitter:image" content={absoluteImage} />
