@@ -1,138 +1,201 @@
 ---
-// PackagesSection.astro — All-inclusive compliance bundles
+// PackagesSection.astro — 3 service packages, Full Tender Compilation as flagship
 
 const WHATSAPP_URL =
-  "https://wa.me/27745017094?text=Hi%2C+I'm+interested+in+your+tender+compliance+services.";
+  "https://wa.me/27745017094?text=Hi%2C+I'm+interested+in+your+tender+compliance+services."
 
-interface Bundle {
-  name: string;
-  tagline: string;
-  badge: string | null;
-  badgeClass: string;
-  cardClass: string;
-  ctaClass: string;
-  inclusions: string[];
+interface Package {
+  name: string
+  tagline: string
+  description: string
+  badge: string | null
+  featured: boolean
+  inclusions: string[]
+  cta: string
+  cardClass: string
+  badgeClass: string
+  ctaClass: string
+  secondaryCtaClass: string
+  checkClass: string
 }
 
-const bundles: Bundle[] = [
+const packages: Package[] = [
   {
-    name: 'Tender-Ready Starter',
-    tagline: 'Everything you need to get compliant and submission-ready.',
-    badge: 'MOST POPULAR',
-    badgeClass: 'bg-primary text-primary-foreground',
-    cardClass: 'border-2 border-primary/60 bg-card',
-    ctaClass: 'bg-primary hover:bg-primary-hover text-primary-foreground',
-    inclusions: ['CSD Registration', 'B-BBEE Affidavit', 'COIDA Registration', 'SBD Forms Pack'],
+    name: 'Compliance Ready',
+    tagline: 'Get your documents in order',
+    description:
+      'Everything you need to become a compliant, registered supplier — before a single tender is submitted.',
+    badge: null,
+    featured: false,
+    inclusions: [
+      'CSD Registration & Profile',
+      'B-BBEE Affidavit (EME/QSE)',
+      'COIDA Registration & Letter',
+      'SBD Forms Pack',
+    ],
+    cta: 'Get a Quote',
+    cardClass: 'border border-[--border] bg-card',
+    badgeClass: '',
+    ctaClass: 'bg-whatsapp hover:bg-whatsapp-hover text-white',
+    secondaryCtaClass: 'border border-[--border] text-muted-foreground hover:text-foreground hover:border-primary/40',
+    checkClass: 'text-primary',
   },
   {
-    name: 'Tender-Ready Professional',
-    tagline: 'Full compliance plus CIDB grading and a complete tender compilation.',
-    badge: null,
-    badgeClass: '',
-    cardClass: 'border border-[--border] bg-card',
-    ctaClass: 'bg-whatsapp hover:bg-whatsapp-hover text-white',
+    name: 'Full Tender Compilation',
+    tagline: 'Our flagship service',
+    description:
+      'End-to-end tender document preparation. We compile, format, and package your complete submission — every returnable, every compliance document, on time.',
+    badge: 'MOST POPULAR',
+    featured: true,
     inclusions: [
-      'Everything in Starter',
-      'CIDB Grade 1',
+      'Complete bid document review',
+      'All returnables compiled & checked',
+      'Compliance documents sourced',
+      'Professionally packaged submission',
+      'Deadline-tracked delivery',
+    ],
+    cta: 'Get a Quote',
+    cardClass: 'border-2 border-primary/70 bg-background',
+    badgeClass: 'bg-primary text-primary-foreground',
+    ctaClass: 'bg-primary hover:bg-primary-hover text-primary-foreground',
+    secondaryCtaClass: 'border border-primary/30 text-primary hover:bg-primary/5',
+    checkClass: 'text-primary',
+  },
+  {
+    name: 'Complete Package',
+    tagline: 'Compliance + Grading + Tender',
+    description:
+      'The full engagement. We handle your CIDB grading, all compliance registrations, and compile your complete tender submission from start to finish.',
+    badge: null,
+    featured: false,
+    inclusions: [
+      'Everything in Compliance Ready',
+      'CIDB Grading (Grade 1)',
       'Municipal Supplier Registration',
       '1 Full Tender Compilation',
     ],
+    cta: 'Get a Quote',
+    cardClass: 'border border-[--border] bg-card',
+    badgeClass: '',
+    ctaClass: 'bg-whatsapp hover:bg-whatsapp-hover text-white',
+    secondaryCtaClass: 'border border-[--border] text-muted-foreground hover:text-foreground hover:border-primary/40',
+    checkClass: 'text-primary',
   },
-];
+]
 
-const checkIcon = `<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="20 6 9 17 4 12"/></svg>`;
-const waIcon = `<svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/></svg>`;
+const checkIcon = `<svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="20 6 9 17 4 12"/></svg>`
+const waIcon = `<svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/></svg>`
 ---
 
 <section id='pricing' class='bg-card py-20 md:py-28 px-6 md:px-12 dot-grid'>
   <div class='max-w-7xl mx-auto'>
+
     <!-- Header -->
     <p class='text-primary uppercase tracking-widest text-[10px] md:text-[11px] font-medium'>
       PACKAGES
     </p>
-    <div class='flex flex-col md:flex-row md:items-end justify-between gap-4 mt-4 mb-12'>
+    <div class='flex flex-col md:flex-row md:items-end justify-between gap-4 mt-4 mb-14'>
       <div>
         <h2 class='font-condensed text-4xl md:text-5xl text-foreground leading-tight'>
-          All-inclusive compliance packages.
+          Choose your level of support.
         </h2>
         <p class='text-muted-foreground text-base mt-3 max-w-xl'>
-          Everything bundled into one engagement — or pick exactly what you need. Contact us for a
-          tailored quote.
+          From getting compliant to submitting a complete tender — we have a package that fits where you are right now.
         </p>
       </div>
-      <p
-        class='text-primary text-sm font-medium whitespace-nowrap shrink-0 border border-primary/30 bg-primary/5 px-4 py-2 rounded-lg'
-      >
+      <p class='text-primary text-sm font-medium whitespace-nowrap shrink-0 border border-primary/30 bg-primary/5 px-4 py-2 rounded-lg self-start md:self-auto'>
         Free assessment · No commitment
       </p>
     </div>
 
-    <!-- Bundle cards -->
-    <div class='grid grid-cols-1 md:grid-cols-2 gap-6 mb-6'>
-      {
-        bundles.map((bundle) => (
-          <div
-            class={`bundle-card rounded-xl p-7 relative flex flex-col gap-5 ${bundle.cardClass}`}
-          >
-            {bundle.badge && (
-              <span
-                class={`absolute -top-3 left-6 text-xs font-bold px-3 py-1 rounded-full ${bundle.badgeClass}`}
-              >
-                {bundle.badge}
-              </span>
-            )}
+    <!-- 3-column package cards -->
+    <div class='grid grid-cols-1 md:grid-cols-3 gap-6 items-stretch pt-5'>
+      {packages.map((pkg) => (
+        <div class={`package-card rounded-2xl p-7 relative flex flex-col gap-5 ${pkg.cardClass}`}>
 
+          <!-- Glow for featured -->
+          {pkg.featured && (
+            <span
+              class='pointer-events-none absolute -top-16 -right-16 w-56 h-56 rounded-full'
+              style='background: radial-gradient(circle, rgba(201,162,39,0.14) 0%, transparent 70%);'
+              aria-hidden='true'
+            ></span>
+          )}
+
+          <!-- Badge -->
+          {pkg.badge && (
+            <span class={`absolute -top-3 left-6 text-xs font-bold px-3 py-1 rounded-full ${pkg.badgeClass}`}>
+              {pkg.badge}
+            </span>
+          )}
+
+          <!-- Package icon area -->
+          <div class='flex items-start justify-between gap-2'>
             <div class='flex flex-col gap-1'>
-              <h3 class='text-foreground font-semibold text-lg'>{bundle.name}</h3>
-              <p class='text-muted-foreground text-sm'>{bundle.tagline}</p>
-            </div>
-
-            <ul class='flex flex-col gap-2.5 flex-1'>
-              {bundle.inclusions.map((item) => (
-                <li class='flex items-center gap-2.5 text-sm text-foreground'>
-                  <span class='text-primary shrink-0'>
-                    <Fragment set:html={checkIcon} />
-                  </span>
-                  {item}
-                </li>
-              ))}
-            </ul>
-
-            <div class='h-px bg-[--border]/60' />
-
-            <div class='flex flex-col sm:flex-row items-stretch sm:items-center gap-3'>
-              <a
-                href={WHATSAPP_URL}
-                target='_blank'
-                rel='noopener noreferrer'
-                class={`flex items-center justify-center gap-2 py-3 px-5 rounded-lg text-sm font-medium transition-all duration-200 hover:-translate-y-px active:scale-[0.98] flex-1 ${bundle.ctaClass}`}
-              >
-                <Fragment set:html={waIcon} />
-                Get a Quote
-              </a>
-              <a
-                href='#contact'
-                class='flex items-center justify-center py-3 px-5 rounded-lg text-sm font-medium border border-[--border] text-muted-foreground hover:text-foreground hover:border-primary/40 transition-all duration-200'
-              >
-                Send Enquiry
-              </a>
+              <p class='text-muted-foreground text-xs uppercase tracking-widest font-medium'>{pkg.tagline}</p>
+              <h3 class={`font-condensed text-2xl font-bold leading-tight ${pkg.featured ? 'text-foreground' : 'text-foreground'}`}>
+                {pkg.name}
+              </h3>
             </div>
           </div>
-        ))
-      }
+
+          <!-- Description -->
+          <p class='text-muted-foreground text-sm leading-relaxed'>{pkg.description}</p>
+
+          <!-- Divider -->
+          <div class='h-px bg-[--border]/50'></div>
+
+          <!-- Inclusions -->
+          <ul class='flex flex-col gap-2.5 flex-1'>
+            {pkg.inclusions.map((item) => (
+              <li class='flex items-start gap-2.5 text-sm text-foreground'>
+                <span class={`mt-0.5 shrink-0 ${pkg.checkClass}`}>
+                  <Fragment set:html={checkIcon} />
+                </span>
+                {item}
+              </li>
+            ))}
+          </ul>
+
+          <!-- CTAs -->
+          <div class='flex flex-col gap-2.5 mt-2'>
+            <a
+              href={WHATSAPP_URL}
+              target='_blank'
+              rel='noopener noreferrer'
+              class={`flex items-center justify-center gap-2 py-3 px-5 rounded-lg text-sm font-semibold transition-all duration-200 hover:-translate-y-px active:scale-[0.98] w-full ${pkg.ctaClass}`}
+            >
+              <Fragment set:html={waIcon} />
+              {pkg.cta}
+            </a>
+            <a
+              href='#contact'
+              class={`flex items-center justify-center py-2.5 px-5 rounded-lg text-sm font-medium transition-all duration-200 w-full ${pkg.secondaryCtaClass}`}
+            >
+              Send Enquiry
+            </a>
+          </div>
+
+        </div>
+      ))}
     </div>
 
-    <p class='text-center text-muted-foreground text-sm italic'>
+    <!-- Free assessment note -->
+    <p class='text-center text-muted-foreground text-sm italic mt-10'>
       First Tender Readiness Assessment is FREE — no commitment required.
     </p>
+
   </div>
 </section>
 
 <style>
-  .bundle-card {
-    transition: transform 0.2s ease;
+  .package-card {
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
   }
-  .bundle-card:hover {
-    transform: translateY(-2px);
+  .package-card:hover {
+    transform: translateY(-3px);
+  }
+  .package-card.md\:-mt-3:hover {
+    box-shadow: 0 0 0 1px rgba(201, 162, 39, 0.4), 0 12px 40px rgba(201, 162, 39, 0.1);
   }
 </style>
