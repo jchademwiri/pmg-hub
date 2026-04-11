@@ -1,58 +1,64 @@
-'use client'
+'use client';
 
-import * as React from 'react'
-import Link from 'next/link'
-import { toast } from 'sonner'
-import { Plus, History } from 'lucide-react'
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
-import { Button } from '@/components/ui/button'
-import { Input } from '@/components/ui/input'
-import { formatZAR } from '@/lib/format'
+import * as React from 'react';
+import Link from 'next/link';
+import { toast } from 'sonner';
+import { Plus, History } from 'lucide-react';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { formatZAR } from '@/lib/format';
 
-const today = new Date().toISOString().split('T')[0]!
+const today = new Date().toISOString().split('T')[0]!;
 
 interface AccountCardProps {
-  accountKey: string
-  label: string
-  earned: number
-  withdrawn: number
-  balance: number
-  historyCount: number
-  recordAction: (formData: FormData) => Promise<{ error?: string }>
+  accountKey: string;
+  label: string;
+  earned: number;
+  withdrawn: number;
+  balance: number;
+  historyCount: number;
+  recordAction: (formData: FormData) => Promise<{ error?: string }>;
 }
 
 export function AccountCard({
-  accountKey, label, earned, withdrawn, balance, historyCount, recordAction,
+  accountKey,
+  label,
+  earned,
+  withdrawn,
+  balance,
+  historyCount,
+  recordAction,
 }: AccountCardProps) {
-  const [showForm, setShowForm] = React.useState(false)
-  const [date, setDate] = React.useState(today)
-  const [amount, setAmount] = React.useState('')
-  const [description, setDescription] = React.useState('')
-  const [error, setError] = React.useState<string | null>(null)
-  const [isPending, startTransition] = React.useTransition()
+  const [showForm, setShowForm] = React.useState(false);
+  const [date, setDate] = React.useState(today);
+  const [amount, setAmount] = React.useState('');
+  const [description, setDescription] = React.useState('');
+  const [error, setError] = React.useState<string | null>(null);
+  const [isPending, startTransition] = React.useTransition();
 
-  const isNegative = balance < 0
+  const isNegative = balance < 0;
 
   function handleSubmit(e: React.FormEvent) {
-    e.preventDefault()
-    setError(null)
+    e.preventDefault();
+    setError(null);
     startTransition(async () => {
-      const fd = new FormData()
-      fd.set('account', accountKey)
-      fd.set('date', date)
-      fd.set('amount', amount)
-      fd.set('description', description)
-      const result = await recordAction(fd)
+      const fd = new FormData();
+      fd.set('account', accountKey);
+      fd.set('date', date);
+      fd.set('amount', amount);
+      fd.set('description', description);
+      const result = await recordAction(fd);
       if (result.error) {
-        setError(result.error)
+        setError(result.error);
       } else {
-        toast.success(`${label} withdrawal recorded`)
-        setAmount('')
-        setDescription('')
-        setDate(today)
-        setShowForm(false)
+        toast.success(`${label} withdrawal recorded`);
+        setAmount('');
+        setDescription('');
+        setDate(today);
+        setShowForm(false);
       }
-    })
+    });
   }
 
   return (
@@ -72,7 +78,9 @@ export function AccountCard({
       <CardContent className="flex flex-col gap-3">
         {/* Balance */}
         <div>
-          <p className={`text-2xl font-bold tabular-nums ${isNegative ? 'text-red-500' : 'text-foreground'}`}>
+          <p
+            className={`text-2xl font-bold tabular-nums ${isNegative ? 'text-red-500' : 'text-foreground'}`}
+          >
             {formatZAR(balance)}
           </p>
           <p className="text-xs text-muted-foreground mt-0.5">available balance</p>
@@ -86,19 +94,29 @@ export function AccountCard({
           </div>
           <div className="flex justify-between border-t border-border pt-1.5">
             <span className="text-muted-foreground">Withdrawn YTD</span>
-            <span className={`tabular-nums font-medium ${withdrawn > 0 ? 'text-amber-500' : 'text-muted-foreground'}`}>
+            <span
+              className={`tabular-nums font-medium ${withdrawn > 0 ? 'text-amber-500' : 'text-muted-foreground'}`}
+            >
               {withdrawn > 0 ? `−${formatZAR(withdrawn)}` : formatZAR(0)}
             </span>
           </div>
           <div className="flex justify-between border-t border-border pt-1.5 font-semibold">
             <span>Balance</span>
-            <span className={`tabular-nums ${isNegative ? 'text-red-500' : 'text-green-500'}`}>{formatZAR(balance)}</span>
+            <span className={`tabular-nums ${isNegative ? 'text-red-500' : 'text-green-500'}`}>
+              {formatZAR(balance)}
+            </span>
           </div>
         </div>
 
         {/* Record withdrawal */}
         {!showForm ? (
-          <Button variant="outline" size="sm" className="w-full" onClick={() => setShowForm(true)}>
+          <Button
+            variant="outline"
+            size="sm"
+            className="w-full"
+            onClick={() => setShowForm(true)}
+            disabled={balance <= 0}
+          >
             <Plus className="h-3.5 w-3.5 mr-1" /> Record Withdrawal
           </Button>
         ) : (
@@ -106,23 +124,56 @@ export function AccountCard({
             <div className="grid grid-cols-2 gap-2">
               <div className="flex flex-col gap-1">
                 <label className="text-xs text-muted-foreground">Date</label>
-                <Input type="date" value={date} max={today} onChange={(e) => setDate(e.target.value)} disabled={isPending} className="h-8 text-sm" />
+                <Input
+                  type="date"
+                  value={date}
+                  max={today}
+                  onChange={(e) => setDate(e.target.value)}
+                  disabled={isPending}
+                  className="h-8 text-sm"
+                />
               </div>
               <div className="flex flex-col gap-1">
                 <label className="text-xs text-muted-foreground">Amount</label>
-                <Input type="number" min="0.01" step="0.01" value={amount} onChange={(e) => setAmount(e.target.value)} placeholder="0.00" required disabled={isPending} className="h-8 text-sm" />
+                <Input
+                  type="number"
+                  min="0.01"
+                  step="0.01"
+                  value={amount}
+                  onChange={(e) => setAmount(e.target.value)}
+                  placeholder="0.00"
+                  required
+                  disabled={isPending}
+                  className="h-8 text-sm"
+                />
               </div>
             </div>
             <div className="flex flex-col gap-1">
               <label className="text-xs text-muted-foreground">Description (optional)</label>
-              <Input type="text" value={description} onChange={(e) => setDescription(e.target.value)} placeholder={`${label} withdrawal`} disabled={isPending} className="h-8 text-sm" />
+              <Input
+                type="text"
+                value={description}
+                onChange={(e) => setDescription(e.target.value)}
+                placeholder={`${label} withdrawal`}
+                disabled={isPending}
+                className="h-8 text-sm"
+              />
             </div>
             {error && <p className="text-xs text-destructive">{error}</p>}
             <div className="flex gap-2">
               <Button type="submit" size="sm" className="flex-1" disabled={isPending}>
                 {isPending ? 'Saving…' : 'Save'}
               </Button>
-              <Button type="button" size="sm" variant="outline" onClick={() => { setShowForm(false); setError(null) }} disabled={isPending}>
+              <Button
+                type="button"
+                size="sm"
+                variant="outline"
+                onClick={() => {
+                  setShowForm(false);
+                  setError(null);
+                }}
+                disabled={isPending}
+              >
                 Cancel
               </Button>
             </div>
@@ -130,5 +181,5 @@ export function AccountCard({
         )}
       </CardContent>
     </Card>
-  )
+  );
 }
