@@ -1,99 +1,219 @@
 ---
-// CaseStudy.astro — Client Results section (Requirement 11)
+// CaseStudy.astro - Your Transformation section
+
+const outcomes = [
+  {
+    stat: '5',
+    unit: 'days',
+    label: 'Average time to CSD registration',
+    sub: 'From document drop-off to active profile',
+  },
+  {
+    stat: '0',
+    unit: 'errors',
+    label: 'SBD form resubmissions',
+    sub: 'We get it right the first time',
+  },
+  {
+    stat: '100%',
+    unit: '',
+    label: 'Submission-ready packages',
+    sub: 'Every document checked before you submit',
+  },
+  {
+    stat: '24h',
+    unit: '',
+    label: 'First response turnaround',
+    sub: 'Assessment back to you within a day',
+  },
+];
+
+interface Phase {
+  phase: string;
+  title: string;
+  description: string;
+  stateLabel: string;
+  tags: string[];
+  cardClass: string;
+  bubbleClass: string;
+  numClass: string;
+  badgeClass: string;
+  tagClass: string;
+}
+
+const phases: Phase[] = [
+  {
+    phase: '01',
+    title: 'You arrive with gaps',
+    description:
+      "Expired certificates, incomplete CSD profile, missing SBD forms - the kind of gaps that cause automatic disqualification. Most businesses don't even know what's missing.",
+    stateLabel: 'Where you are now',
+    tags: ['Missing COIDA', 'Expired B-BBEE', 'No CIDB grade'],
+    cardClass: 'bg-red-500/5 border-red-500/20',
+    bubbleClass: 'border-red-500/30 bg-red-500/10',
+    numClass: 'text-red-400',
+    badgeClass: 'text-red-400 bg-red-500/10',
+    tagClass: 'text-red-400/80 bg-red-500/5 border border-red-500/15',
+  },
+  {
+    phase: '02',
+    title: 'We close every gap',
+    description:
+      "We run a full compliance audit in 24 hours, prioritise what's urgent, and systematically process every registration, affidavit, and returnable on your behalf.",
+    stateLabel: 'What we do',
+    tags: ['Audit complete', 'Processing started', 'Docs tracked'],
+    cardClass: 'bg-primary/5 border-primary/25',
+    bubbleClass: 'border-primary/40 bg-primary/10',
+    numClass: 'text-primary',
+    badgeClass: 'text-primary bg-primary/10',
+    tagClass: 'text-primary/80 bg-primary/5 border border-primary/20',
+  },
+  {
+    phase: '03',
+    title: 'You submit with confidence',
+    description:
+      'Your complete, professionally packaged submission lands before the deadline - fully compliant, correctly ordered, and ready for evaluation. You focus on delivery, not paperwork.',
+    stateLabel: "Where you'll be",
+    tags: ['Fully compliant', 'On-time submission', 'Zero rejections'],
+    cardClass: 'bg-emerald-500/5 border-emerald-500/20',
+    bubbleClass: 'border-emerald-500/30 bg-emerald-500/10',
+    numClass: 'text-emerald-400',
+    badgeClass: 'text-emerald-400 bg-emerald-500/10',
+    tagClass: 'text-emerald-400/80 bg-emerald-500/5 border border-emerald-500/15',
+  },
+];
 ---
 
 <section id='results' class='bg-background py-20 md:py-28 px-6 md:px-12 diagonal-lines'>
   <div class='max-w-7xl mx-auto'>
-    <!-- Eyebrow -->
-    <p class='text-primary uppercase tracking-widest text-[10px] md:text-[11px] font-medium'>
-      CLIENT RESULTS
-    </p>
+    <!-- Eyebrow + heading -->
+    <div class='mb-16'>
+      <p class='text-primary uppercase tracking-widest text-[10px] md:text-[11px] font-medium'>
+        YOUR TRANSFORMATION
+      </p>
+      <h2 class='font-condensed text-4xl md:text-5xl text-foreground mt-4 max-w-2xl leading-tight'>
+        From compliance chaos to submission-ready - in days, not months.
+      </h2>
+      <p class='text-muted-foreground text-base md:text-lg mt-4 max-w-2xl leading-relaxed'>
+        Here's what working with TenderEdge Solutions actually looks like for your business.
+      </p>
+    </div>
 
-    <!-- H2 -->
-    <h2 class='font-condensed text-4xl md:text-5xl text-foreground mt-4 mb-2'>
-      A real business. A real tender won.
-    </h2>
+    <!-- Outcome stat strip -->
+    <div class='grid grid-cols-2 md:grid-cols-4 gap-4 mb-16'>
+      {
+        outcomes.map((item) => (
+          <div class='outcome-card bg-card border border-[--border] rounded-xl p-5 flex flex-col gap-1 relative overflow-hidden'>
+            <span
+              class='absolute top-0 right-0 w-12 h-12 rounded-bl-xl'
+              style='background: rgba(201,162,39,0.08);'
+              aria-hidden='true'
+            />
+            <div class='flex items-baseline gap-1'>
+              <span class='font-condensed text-4xl md:text-5xl font-bold text-primary leading-none'>
+                {item.stat}
+              </span>
+              {item.unit && (
+                <span class='text-primary font-condensed text-lg font-semibold'>{item.unit}</span>
+              )}
+            </div>
+            <p class='text-foreground text-sm font-medium mt-1 leading-snug'>{item.label}</p>
+            <p class='text-muted-foreground text-xs leading-relaxed'>{item.sub}</p>
+          </div>
+        ))
+      }
+    </div>
 
-    <!-- Client name -->
-    <p class='text-muted-foreground text-sm mb-10'>Basadipele Cleaning &amp; Hygiene</p>
-
-    <!-- Panels grid -->
-    <div class='grid md:grid-cols-2 gap-12 items-start'>
-      <!-- Challenges panel -->
-      <div class='border-l-4 border-red-500/40 pl-6 py-4'>
-        <h3 class='text-foreground font-semibold text-base mb-4'>Before TenderEdge</h3>
-
-        <div class='flex items-start gap-3 mb-3'>
-          <span class='text-red-400 font-bold mt-0.5 shrink-0'>✗</span>
-          <p class='text-muted-foreground text-sm'>
-            Multiple missing and expired compliance documents
-          </p>
-        </div>
-
-        <div class='flex items-start gap-3 mb-3'>
-          <span class='text-red-400 font-bold mt-0.5 shrink-0'>✗</span>
-          <p class='text-muted-foreground text-sm'>
-            No structured tender documentation or submission process
-          </p>
-        </div>
-
-        <div class='flex items-start gap-3 mb-3'>
-          <span class='text-red-400 font-bold mt-0.5 shrink-0'>✗</span>
-          <p class='text-muted-foreground text-sm'>
-            High risk of automatic disqualification on any submission
-          </p>
-        </div>
-      </div>
-
-      <!-- Outcomes panel -->
-      <div class='border-l-4 border-[--primary] pl-6 py-4'>
-        <h3 class='text-foreground font-semibold text-base mb-4'>After TenderEdge</h3>
-
-        <div class='flex items-start gap-3 mb-3'>
-          <span class='text-primary font-bold mt-0.5 shrink-0'>✓</span>
-          <p class='text-muted-foreground text-sm'>
-            Submitted fully compliant, professionally packaged tenders
-          </p>
-        </div>
-
-        <div class='flex items-start gap-3 mb-3'>
-          <span class='text-primary font-bold mt-0.5 shrink-0'>✓</span>
-          <p class='text-muted-foreground text-sm'>
-            Significantly improved document quality and evaluator presentation
-          </p>
-        </div>
-
-        <div class='flex items-start gap-3 mb-3'>
-          <span class='text-primary font-bold mt-0.5 shrink-0'>✓</span>
-          <p class='text-muted-foreground text-sm'>
-            Secured tender awards in the cleaning and hygiene sector
-          </p>
-        </div>
-
-        <div class='flex items-start gap-3 mb-3'>
-          <span class='text-primary font-bold mt-0.5 shrink-0'>✓</span>
-          <p class='text-muted-foreground text-sm'>
-            Business now positioned for a consistent pipeline of opportunities
-          </p>
-        </div>
+    <!-- Journey phases -->
+    <div class='relative'>
+      <div class='grid md:grid-cols-3 gap-6'>
+        {
+          phases.map((phase) => (
+            <div
+              class={`phase-card rounded-xl p-6 border relative flex flex-col gap-4 ${phase.cardClass}`}
+            >
+              <div
+                class={`w-10 h-10 rounded-full flex items-center justify-center shrink-0 border ${phase.bubbleClass}`}
+              >
+                <span class={`font-condensed text-sm font-bold ${phase.numClass}`}>
+                  {phase.phase}
+                </span>
+              </div>
+              <div>
+                <span
+                  class={`inline-block text-[10px] uppercase tracking-widest font-semibold px-2 py-0.5 rounded-full mb-2 ${phase.badgeClass}`}
+                >
+                  {phase.stateLabel}
+                </span>
+                <h3 class='text-foreground font-semibold text-base leading-snug'>{phase.title}</h3>
+              </div>
+              <p class='text-muted-foreground text-sm leading-relaxed flex-1'>
+                {phase.description}
+              </p>
+              <div class='flex flex-wrap gap-1.5'>
+                {phase.tags.map((tag) => (
+                  <span class={`text-[11px] px-2.5 py-1 rounded-md font-medium ${phase.tagClass}`}>
+                    {tag}
+                  </span>
+                ))}
+              </div>
+            </div>
+          ))
+        }
       </div>
     </div>
 
-    <!-- Pull quote -->
-    <p
-      class='text-primary italic font-condensed text-2xl md:text-3xl text-center mt-12 max-w-3xl mx-auto'
+    <!-- Bottom CTA strip -->
+    <div
+      class='mt-14 flex flex-col md:flex-row items-center justify-between gap-6 pt-10 border-t border-[--border]/50'
     >
-      "We don't just prepare paperwork — we position businesses to win."
-    </p>
-
-    <!-- CTA -->
-    <div class='mt-8 flex justify-center'>
+      <p class='text-foreground text-base md:text-lg font-medium max-w-lg text-center md:text-left'>
+        Ready to move from <span class='text-red-400'>phase one</span> to <span
+          class='text-emerald-400'>phase three</span
+        >?
+        <span class='text-muted-foreground font-normal'>
+          Your free assessment takes less than 24 hours.</span
+        >
+      </p>
       <a
         href='#contact'
-        class='inline-flex items-center gap-2 border border-primary text-primary hover:bg-primary hover:text-primary-foreground px-6 py-3 rounded-lg text-sm font-medium transition-colors'
+        class='inline-flex items-center gap-2 bg-primary hover:bg-primary-hover text-primary-foreground px-6 py-3 rounded-lg text-sm font-medium transition-all duration-200 hover:-translate-y-px active:scale-[0.98] whitespace-nowrap shrink-0'
       >
         Start Your Free Assessment
+        <svg
+          xmlns='http://www.w3.org/2000/svg'
+          width='14'
+          height='14'
+          viewBox='0 0 24 24'
+          fill='none'
+          stroke='currentColor'
+          stroke-width='2.5'
+          stroke-linecap='round'
+          stroke-linejoin='round'
+          aria-hidden='true'
+        >
+          <line x1='5' y1='12' x2='19' y2='12'></line><polyline points='12 5 19 12 12 19'
+          ></polyline>
+        </svg>
       </a>
     </div>
   </div>
 </section>
+
+<style>
+  .outcome-card {
+    transition:
+      border-color 0.2s ease,
+      transform 0.2s ease;
+  }
+  .outcome-card:hover {
+    border-color: rgba(201, 162, 39, 0.4);
+    transform: translateY(-2px);
+  }
+  .phase-card {
+    transition: transform 0.2s ease;
+  }
+  .phase-card:hover {
+    transform: translateY(-2px);
+  }
+</style>

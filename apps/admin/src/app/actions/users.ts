@@ -2,7 +2,7 @@
 
 import { z } from 'zod'
 import { revalidatePath } from 'next/cache'
-import { getDb, invitations, user, session, eq } from '@pmg/db'
+import { getDb, invitations, user, session, eq, and } from '@pmg/db'
 import { getSessionOrRedirect, requireRole } from '@/lib/auth'
 import { Resend } from 'resend'
 
@@ -54,15 +54,26 @@ export async function inviteUser(formData: FormData): Promise<{ error?: string }
   const db = getDb()
 
   try {
-    // Check for duplicate email
-    const existing = await db
+    // Check for duplicate email in invitations
+    const existingInvitation = await db
       .select({ id: invitations.id })
       .from(invitations)
       .where(eq(invitations.email, email))
       .limit(1)
 
-    if (existing.length > 0) {
+    if (existingInvitation.length > 0) {
       return { error: 'Email already invited' }
+    }
+
+    // Check for duplicate email in users table
+    const existingUser = await db
+      .select({ id: user.id })
+      .from(user)
+      .where(eq(user.email, email))
+      .limit(1)
+
+    if (existingUser.length > 0) {
+      return { error: 'User is already registered' }
     }
 
     const currentSession = await getSessionOrRedirect()
@@ -119,11 +130,83 @@ export async function revokeUser(userId: string): Promise<{ error?: string }> {
   const db = getDb()
 
   try {
+    // Prevent revoking the last active super_admin
+    const targetUserArr = await db
+      .select({ role: user.role })
+      .from(user)
+      .where(eq(user.id, userId))
+      .limit(1)
+    const targetUser = targetUserArr[0]
+
+    if (targetUser?.role === 'super_admin') {
+      const activeSuperAdmins = await db
+        .select({ id: user.id })
+        .from(user)
+        .where(and(eq(user.role, 'super_admin'), eq(user.isActive, true)))
+      
+      if (activeSuperAdmins.length <= 1) {
+        return { error: 'Cannot revoke the last active super admin' }
+      }
+    }
+
     // Invalidate all sessions for the user using Drizzle ORM (type-safe)
     await db.delete(session).where(eq(session.userId, userId))
 
     // Mark user as inactive using Drizzle ORM (type-safe)
     await db.update(user).set({ isActive: false }).where(eq(user.id, userId))
+
+    revalidatePath('/users')
+    return {}
+  } catch {
+    return { error: 'Something went wrong' }
+  }
+}
+
+export async function reactivateUser(userId: string): Promise<{ error?: string }> {
+  const guard = await requireSuperAdmin()
+  if (guard) return guard
+
+  const db = getDb()
+
+  try {
+    // Mark user as active using Drizzle ORM (type-safe)
+    await db.update(user).set({ isActive: true }).where(eq(user.id, userId))
+
+    revalidatePath('/users')
+    return {}
+  } catch {
+    return { error: 'Something went wrong' }
+  }
+}
+
+export async function deleteUser(userId: string): Promise<{ error?: string }> {
+  const guard = await requireSuperAdmin()
+  if (guard) return guard
+
+  const db = getDb()
+
+  try {
+    // Prevent deleting the last active super_admin
+    const targetUserArr = await db
+      .select({ role: user.role })
+      .from(user)
+      .where(eq(user.id, userId))
+      .limit(1)
+    const targetUser = targetUserArr[0]
+
+    if (targetUser?.role === 'super_admin') {
+      const activeSuperAdmins = await db
+        .select({ id: user.id })
+        .from(user)
+        .where(and(eq(user.role, 'super_admin'), eq(user.isActive, true)))
+      
+      if (activeSuperAdmins.length <= 1) {
+        return { error: 'Cannot delete the last active super admin' }
+      }
+    }
+
+    // Delete user (sessions should cascade, or depends on db schema, but we'll delete directly)
+    await db.delete(user).where(eq(user.id, userId))
 
     revalidatePath('/users')
     return {}
@@ -165,6 +248,26 @@ export async function updateUserRole(userId: string, formData: FormData): Promis
 
   try {
     const db = getDb()
+
+    // If demoting from super_admin, prevent if it's the last one
+    const targetUserArr = await db
+      .select({ role: user.role })
+      .from(user)
+      .where(eq(user.id, userId))
+      .limit(1)
+    const targetUser = targetUserArr[0]
+
+    if (targetUser?.role === 'super_admin' && role !== 'super_admin') {
+      const activeSuperAdmins = await db
+        .select({ id: user.id })
+        .from(user)
+        .where(and(eq(user.role, 'super_admin'), eq(user.isActive, true)))
+      
+      if (activeSuperAdmins.length <= 1) {
+        return { error: 'Cannot demote the last active super admin' }
+      }
+    }
+
     // Update role using Drizzle ORM (type-safe)
     await db.update(user).set({ role }).where(eq(user.id, userId))
 

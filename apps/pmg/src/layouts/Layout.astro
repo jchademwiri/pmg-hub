@@ -1,5 +1,14 @@
 ---
 import Analytics from '@vercel/analytics/astro';
+
+interface Props {
+	title?: string;
+	description?: string;
+	image?: string;
+}
+
+const { title = 'PMG', description = 'PMG - Professional Management Group', image = '/og-image.png' } = Astro.props;
+const siteUrl = Astro.site ? new URL(Astro.url.pathname, Astro.site) : Astro.url.origin;
 ---
 
 <!doctype html>
@@ -10,7 +19,24 @@ import Analytics from '@vercel/analytics/astro';
 		<link rel='icon' type='image/svg+xml' href='/favicon.svg' />
 		<link rel='icon' href='/favicon.ico' />
 		<meta name='generator' content={Astro.generator} />
-		<title>Astro Basics</title>
+
+		<link rel='canonical' href={siteUrl} />
+
+		<title>{title}</title>
+		<meta name='description' content={description} />
+
+		<meta property='og:type' content='website' />
+		<meta property='og:url' content={siteUrl} />
+		<meta property='og:title' content={title} />
+		<meta property='og:description' content={description} />
+		<meta property='og:image' content={new URL(image, Astro.url)} />
+
+		<meta name='twitter:card' content='summary_large_image' />
+		<meta name='twitter:url' content={siteUrl} />
+		<meta name='twitter:title' content={title} />
+		<meta name='twitter:description' content={description} />
+		<meta name='twitter:image' content={new URL(image, Astro.url)} />
+
 		<Analytics />
 	</head>
 	<body>

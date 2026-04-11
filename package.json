@@ -27,7 +27,7 @@
     "@tailwindcss/vite": "catalog:",
     "prettier": "^3.7.4",
     "tailwindcss": "catalog:",
-    "turbo": "^2.9.5",
+    "turbo": "^2.9.6",
     "typescript": "catalog:"
   },
   "engines": {
