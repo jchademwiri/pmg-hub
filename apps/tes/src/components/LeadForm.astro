@@ -45,6 +45,7 @@ const submitted = result?.data?.success === true;
               </p>
             )}
             <form method="POST" action={actions.enquireLead} class="flex flex-col gap-5" id="lead-form" novalidate>
+
               <!-- Name -->
               <div class="form-field flex flex-col gap-1">
                 <label for="name" class="text-foreground text-sm font-medium">Full Name <span class="text-red-400" aria-hidden="true">*</span></label>
@@ -119,21 +120,18 @@ const submitted = result?.data?.success === true;
 
               <!-- Service interest -->
               <div class="form-field flex flex-col gap-1">
-                <label for="serviceInterest" class="text-foreground text-sm font-medium">Service Interest <span class="text-red-400" aria-hidden="true">*</span></label>
+                <label for="serviceInterest" class="text-foreground text-sm font-medium">How can we help? <span class="text-red-400" aria-hidden="true">*</span></label>
                 <select
                   id="serviceInterest"
                   name="serviceInterest"
                   required
                   class="input-field bg-background border border-[--border] focus:border-primary focus:outline-none rounded-lg px-4 py-3 text-foreground text-sm w-full transition-all duration-200"
                 >
-                  <option value="" disabled selected>What do you need help with?</option>
-                  <option value="CSD Registration">CSD Registration</option>
-                  <option value="CIDB Grading">CIDB Grading</option>
-                  <option value="B-BBEE Affidavit">B-BBEE Affidavit</option>
-                  <option value="COIDA Registration">COIDA Registration</option>
-                  <option value="Full Tender Compilation">Full Tender Compilation</option>
-                  <option value="Complete Compliance Package">Complete Compliance Package</option>
-                  <option value="I'm not sure - please advise">I'm not sure - please advise</option>
+                  <option value="" disabled selected>Select a service</option>
+                  <option value="Compliance Ready">Compliance Ready - get my business tender-eligible</option>
+                  <option value="Full Tender Compilation">Full Tender Compilation - compile my complete submission</option>
+                  <option value="Bid Support & Review">Bid Support & Review - I need help with a specific tender</option>
+                  <option value="I'm not sure - let's discuss">I'm not sure - let's discuss</option>
                 </select>
                 {inputErrors.serviceInterest?.[0] && (
                   <p class="text-red-400 text-xs mt-1 flex items-center gap-1.5" role="alert">
@@ -141,6 +139,11 @@ const submitted = result?.data?.success === true;
                     {inputErrors.serviceInterest[0]}
                   </p>
                 )}
+              </div>
+
+              <!-- Honeypot - hidden from real users, catches bots -->
+              <div style="display:none" aria-hidden="true">
+                <input type="text" name="_gotcha" tabindex="-1" autocomplete="off" />
               </div>
 
               <!-- Submit -->
@@ -245,6 +248,11 @@ const submitted = result?.data?.success === true;
     color: var(--muted-foreground);
     opacity: 0.6;
   }
+  select.input-field:invalid,
+  select.input-field option[value=""] {
+    color: var(--muted-foreground);
+    opacity: 0.6;
+  }
   @keyframes spin {
     to { transform: rotate(360deg); }
   }
@@ -260,7 +268,12 @@ const submitted = result?.data?.success === true;
   const btnLoading = document.getElementById('btn-loading');
 
   if (form && btn && btnText && btnLoading) {
-    form.addEventListener('submit', () => {
+    form.addEventListener('submit', (e) => {
+      const honeypot = form.querySelector<HTMLInputElement>('input[name="_gotcha"]');
+      if (honeypot?.value) {
+        e.preventDefault();
+        return;
+      }
       btn.disabled = true;
       btnText.classList.add('hidden');
       btnLoading.classList.remove('hidden');
@@ -268,7 +281,6 @@ const submitted = result?.data?.success === true;
     });
   }
 
-  // Scroll to success state after POST redirect
   if (document.querySelector('[data-success]')) {
     document.getElementById('contact')?.scrollIntoView({ behavior: 'smooth' });
   }

@@ -9,28 +9,44 @@
   .reveal {
     opacity: 0;
     transform: translateY(24px);
-    transition: opacity 0.55s ease, transform 0.55s ease;
+    transition:
+      opacity 0.55s ease,
+      transform 0.55s ease;
   }
   .reveal.visible {
     opacity: 1;
     transform: translateY(0);
   }
+
+  @media (prefers-reduced-motion: reduce) {
+    .reveal {
+      opacity: 1;
+      transform: none;
+      transition: none;
+    }
+  }
 </style>
 
 <script>
-  const revealObserver = new IntersectionObserver(
-    (entries) => {
-      entries.forEach((entry) => {
-        if (entry.isIntersecting) {
-          const el = entry.target as HTMLElement;
-          const delay = el.dataset.delay ? parseInt(el.dataset.delay) : 0;
-          setTimeout(() => el.classList.add('visible'), delay);
-          revealObserver.unobserve(el);
-        }
-      });
-    },
-    { threshold: 0.12 }
-  );
+  const reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
-  document.querySelectorAll('.reveal').forEach((el) => revealObserver.observe(el));
+  if (reduced) {
+    document.querySelectorAll('.reveal').forEach((el) => el.classList.add('visible'));
+  } else {
+    const revealObserver = new IntersectionObserver(
+      (entries) => {
+        entries.forEach((entry) => {
+          if (entry.isIntersecting) {
+            const el = entry.target as HTMLElement;
+            const delay = el.dataset.delay ? parseInt(el.dataset.delay) : 0;
+            setTimeout(() => el.classList.add('visible'), delay);
+            revealObserver.unobserve(el);
+          }
+        });
+      },
+      { threshold: 0.12 },
+    );
+
+    document.querySelectorAll('.reveal').forEach((el) => revealObserver.observe(el));
+  }
 </script>
