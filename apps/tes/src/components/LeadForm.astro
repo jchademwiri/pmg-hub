@@ -1,9 +1,9 @@
 ---
 // LeadForm.astro - polished form with smooth micro-interactions
-import { actions, isInputError } from 'astro:actions';
+import { actions } from 'astro:actions';
 
 const result = Astro.getActionResult(actions.enquireLead);
-const inputErrors = isInputError(result?.error) ? result.error.fields : {};
+const inputErrors = result?.error && 'fields' in result.error ? result.error.fields : {};
 const submitted = result?.data?.success === true;
 ---
 
@@ -38,7 +38,7 @@ const submitted = result?.data?.success === true;
           </div>
         ) : (
           <div>
-            {result?.error && !isInputError(result?.error) && (
+            {result?.error && !('fields' in result.error) && (
               <p class="text-red-400 text-sm mb-4 flex items-center gap-2">
                 <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
                 Something went wrong. Please WhatsApp us directly.
