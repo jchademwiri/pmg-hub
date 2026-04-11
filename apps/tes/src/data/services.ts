@@ -32,7 +32,7 @@ export const services: Service[] = [
   {
     name: 'SBD Forms & Returnables',
     description:
-      'All standard bidding documents completed accurately — SBD1, SBD4, SBD6.1, SBD8, and SBD9. No errors, no omissions.',
+      'All standard bidding documents completed accurately - SBD1, SBD4, SBD6.1, SBD8, and SBD9. No errors, no omissions.',
     price: 'Get a quote',
   },
   {

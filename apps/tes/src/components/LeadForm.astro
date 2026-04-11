@@ -1,5 +1,5 @@
 ---
-// LeadForm.astro — polished form with smooth micro-interactions
+// LeadForm.astro - polished form with smooth micro-interactions
 import { actions, isInputError } from 'astro:actions';
 
 const result = Astro.getActionResult(actions.enquireLead);
@@ -133,7 +133,7 @@ const submitted = result?.data?.success === true;
                   <option value="COIDA Registration">COIDA Registration</option>
                   <option value="Full Tender Compilation">Full Tender Compilation</option>
                   <option value="Complete Compliance Package">Complete Compliance Package</option>
-                  <option value="I'm not sure — please advise">I'm not sure — please advise</option>
+                  <option value="I'm not sure - please advise">I'm not sure - please advise</option>
                 </select>
                 {inputErrors.serviceInterest?.[0] && (
                   <p class="text-red-400 text-xs mt-1 flex items-center gap-1.5" role="alert">

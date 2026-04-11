@@ -1,5 +1,5 @@
 ---
-// Hero.astro — Full-viewport opening section with mobile stat cards
+// Hero.astro - Full-viewport opening section with mobile stat cards
 ---
 
 <section
@@ -10,23 +10,23 @@
     <!-- Left: copy -->
     <div>
       <p
-        class='eyebrow text-primary uppercase tracking-widest font-medium text-[10px] md:text-[11px]'
+        class='hero-eyebrow text-primary uppercase tracking-widest font-medium text-[10px] md:text-[11px]'
       >
         GAUTENG'S TENDER COMPLIANCE SPECIALISTS
       </p>
 
       <h1
-        class='hero-h1 font-condensed uppercase mt-4'
-        style='font-size: clamp(56px, 10vw, 100px); line-height: 0.9; opacity: 0;'
+        class='hero-heading font-condensed uppercase mt-4'
+        style='font-size: clamp(56px, 10vw, 100px); line-height: 0.9;'
       >
         WIN MORE <br />
         <span class='text-primary'>TENDERS.</span>
       </h1>
 
-      <div class='sub-ctas mt-8 flex flex-col gap-6' style='opacity: 0;'>
+      <div class='hero-body mt-8 flex flex-col gap-6'>
         <p class='text-muted-foreground text-lg md:text-xl max-w-xl'>
           We handle your CSD registration, CIDB grading, B-BBEE affidavits, and full tender document
-          compilation — so you can focus on winning.
+          compilation - so you can focus on winning.
         </p>
 
         <div class='flex flex-wrap items-center gap-4'>
@@ -50,11 +50,29 @@
             </svg>
             Get Your Free Assessment
           </a>
+
           <a
             href='#services'
-            class='text-muted-foreground hover:text-foreground text-sm transition-colors'
+            class='group inline-flex items-center gap-1.5 text-muted-foreground hover:text-foreground text-sm transition-colors'
+            aria-label='Skip to services section'
           >
-            View our services ↓
+            View our services
+            <svg
+              xmlns='http://www.w3.org/2000/svg'
+              width='14'
+              height='14'
+              viewBox='0 0 24 24'
+              fill='none'
+              stroke='currentColor'
+              stroke-width='2'
+              stroke-linecap='round'
+              stroke-linejoin='round'
+              aria-hidden='true'
+              class='transition-transform duration-200 group-hover:translate-y-0.5'
+            >
+              <line x1='12' y1='5' x2='12' y2='19'></line>
+              <polyline points='19 12 12 19 5 12'></polyline>
+            </svg>
           </a>
         </div>
 
@@ -63,8 +81,8 @@
         </p>
       </div>
 
-      <!-- Mobile stat cards (shown below copy on small screens) -->
-      <div class='sub-ctas md:hidden grid grid-cols-2 gap-3 mt-8' style='opacity: 0;'>
+      <!-- Mobile stat cards -->
+      <div class='hero-stat-cards md:hidden grid grid-cols-2 gap-3 mt-8'>
         {
           [
             { label: 'CSD', sub: 'Registered Supplier', detail: 'Central Supplier Database' },
@@ -134,18 +152,32 @@
       transform: translateY(0);
     }
   }
-  .eyebrow {
-    animation: fadeUp 0.6s ease forwards;
-    animation-delay: 0ms;
-  }
-  .hero-h1 {
-    animation: fadeUp 0.6s ease forwards;
-    animation-delay: 100ms;
+
+  .hero-eyebrow {
     opacity: 0;
+    animation: fadeUp 0.6s ease forwards 0ms;
   }
-  .sub-ctas {
-    animation: fadeUp 0.6s ease forwards;
-    animation-delay: 250ms;
+  .hero-heading {
     opacity: 0;
+    animation: fadeUp 0.6s ease forwards 100ms;
+  }
+  .hero-body {
+    opacity: 0;
+    animation: fadeUp 0.6s ease forwards 250ms;
+  }
+  .hero-stat-cards {
+    opacity: 0;
+    animation: fadeUp 0.6s ease forwards 250ms;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .hero-eyebrow,
+    .hero-heading,
+    .hero-body,
+    .hero-stat-cards {
+      animation: none;
+      opacity: 1;
+      transform: none;
+    }
   }
 </style>
