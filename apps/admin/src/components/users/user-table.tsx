@@ -21,7 +21,7 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table'
-import { updateUserRole, revokeUser, updateUserName } from '@/app/actions/users'
+import { updateUserRole, revokeUser, updateUserName, reactivateUser, deleteUser } from '@/app/actions/users'
 
 export interface UserRow {
   id: string
@@ -49,6 +49,8 @@ function roleLabel(role: string): string {
 function UserTableRow({ user }: { user: UserRow }) {
   const [isRoleChanging, startRoleTransition] = React.useTransition()
   const [isRevoking, startRevokeTransition] = React.useTransition()
+  const [isReactivating, startReactivateTransition] = React.useTransition()
+  const [isDeleting, startDeleteTransition] = React.useTransition()
   const [isNameSaving, startNameTransition] = React.useTransition()
 
   const [editingName, setEditingName] = React.useState(false)
@@ -74,6 +76,25 @@ function UserTableRow({ user }: { user: UserRow }) {
       const result = await revokeUser(user.id)
       if (result.error) toast.error(result.error)
       else toast.success('User revoked')
+    })
+  }
+
+  function handleReactivate() {
+    startReactivateTransition(async () => {
+      const result = await reactivateUser(user.id)
+      if (result.error) toast.error(result.error)
+      else toast.success('User reactivated')
+    })
+  }
+
+  function handleDelete() {
+    // We could add a confirmation dialog here, but for simplicity let's use window.confirm
+    if (!window.confirm('Are you sure you want to permanently delete this user?')) return
+    
+    startDeleteTransition(async () => {
+      const result = await deleteUser(user.id)
+      if (result.error) toast.error(result.error)
+      else toast.success('User deleted')
     })
   }
 
@@ -159,28 +180,52 @@ function UserTableRow({ user }: { user: UserRow }) {
       </TableCell>
       <TableCell>
         <div className="flex items-center gap-2">
-          <Select
-            defaultValue={user.role}
-            onValueChange={(v) => handleRoleChange(v as Role)}
-            disabled={isRoleChanging}
-          >
-            <SelectTrigger className="w-36">
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              {ROLES.map((r) => (
-                <SelectItem key={r} value={r}>{roleLabel(r)}</SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-          <Button
-            variant="destructive"
-            size="sm"
-            onClick={handleRevoke}
-            disabled={!user.isActive || isRevoking}
-          >
-            {isRevoking ? 'Revoking…' : 'Revoke'}
-          </Button>
+          {user.isActive ? (
+            <>
+              <Select
+                defaultValue={user.role}
+                onValueChange={(v) => handleRoleChange(v as Role)}
+                disabled={isRoleChanging}
+              >
+                <SelectTrigger className="w-36 leading-none">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {ROLES.map((r) => (
+                    <SelectItem key={r} value={r}>{roleLabel(r)}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              <Button
+                variant="destructive"
+                size="sm"
+                onClick={handleRevoke}
+                disabled={isRevoking}
+              >
+                {isRevoking ? 'Revoking…' : 'Revoke'}
+              </Button>
+            </>
+          ) : (
+            <>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={handleReactivate}
+                disabled={isReactivating}
+                className="w-[144px]"
+              >
+                {isReactivating ? 'Reactivating…' : 'Reactivate'}
+              </Button>
+              <Button
+                variant="destructive"
+                size="sm"
+                onClick={handleDelete}
+                disabled={isDeleting}
+              >
+                {isDeleting ? 'Deleting…' : 'Delete'}
+              </Button>
+            </>
+          )}
         </div>
       </TableCell>
     </TableRow>

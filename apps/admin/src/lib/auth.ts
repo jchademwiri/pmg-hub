@@ -94,7 +94,7 @@ export const auth = betterAuth({
     }),
 
     after: createAuthMiddleware(async (ctx) => {
-      if (ctx.path !== '/sign-in/magic-link') return
+      if (ctx.path !== '/magic-link/verify') return
 
       const newSession = ctx.context.newSession
       if (!newSession?.user?.email) return

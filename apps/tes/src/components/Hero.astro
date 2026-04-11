@@ -1,5 +1,5 @@
 ---
-// Hero.astro — Full-viewport opening section
+// Hero.astro — Full-viewport opening section with mobile stat cards
 ---
 
 <section
@@ -9,14 +9,12 @@
   <div class='max-w-7xl mx-auto w-full grid md:grid-cols-2 gap-12 items-center'>
     <!-- Left: copy -->
     <div>
-      <!-- Eyebrow -->
       <p
         class='eyebrow text-primary uppercase tracking-widest font-medium text-[10px] md:text-[11px]'
       >
         GAUTENG'S TENDER COMPLIANCE SPECIALISTS
       </p>
 
-      <!-- H1 -->
       <h1
         class='hero-h1 font-condensed uppercase mt-4'
         style='font-size: clamp(56px, 10vw, 100px); line-height: 0.9; opacity: 0;'
@@ -25,20 +23,18 @@
         <span class='text-primary'>TENDERS.</span>
       </h1>
 
-      <!-- Subheadline + CTAs wrapper -->
       <div class='sub-ctas mt-8 flex flex-col gap-6' style='opacity: 0;'>
         <p class='text-muted-foreground text-lg md:text-xl max-w-xl'>
           We handle your CSD registration, CIDB grading, B-BBEE affidavits, and full tender document
           compilation — so you can focus on winning.
         </p>
 
-        <!-- CTA buttons -->
         <div class='flex flex-wrap items-center gap-4'>
           <a
             href="https://wa.me/27745017094?text=Hi%2C+I'm+interested+in+your+tender+compliance+services."
             target='_blank'
             rel='noopener noreferrer'
-            class='inline-flex items-center gap-2 rounded-lg bg-whatsapp px-6 py-3 text-sm font-medium text-white transition-colors hover:bg-whatsapp-hover'
+            class='inline-flex items-center gap-2 rounded-lg bg-whatsapp px-6 py-3 text-sm font-medium text-white transition-all duration-200 hover:bg-whatsapp-hover hover:-translate-y-px active:scale-[0.97]'
           >
             <svg
               xmlns='http://www.w3.org/2000/svg'
@@ -66,50 +62,55 @@
           Based in Centurion · Serving all of South Africa
         </p>
       </div>
+
+      <!-- Mobile stat cards (shown below copy on small screens) -->
+      <div class='sub-ctas md:hidden grid grid-cols-2 gap-3 mt-8' style='opacity: 0;'>
+        {
+          [
+            { label: 'CSD', sub: 'Registered Supplier', detail: 'Central Supplier Database' },
+            { label: 'CIDB', sub: 'Grading Specialists', detail: 'All contractor grades' },
+            { label: 'B-BBEE', sub: 'Affidavit Experts', detail: 'EME & QSE compliant' },
+            { label: '24h', sub: 'Fast Turnaround', detail: 'Deadline-driven service' },
+          ].map((card) => (
+            <div class='bg-white/5 border border-white/10 rounded-md p-4 flex flex-col gap-1'>
+              <span class='text-primary font-condensed text-3xl font-bold leading-none'>
+                {card.label}
+              </span>
+              <span class='text-foreground text-xs font-medium mt-1'>{card.sub}</span>
+              <span class='text-muted-foreground text-[11px]'>{card.detail}</span>
+            </div>
+          ))
+        }
+      </div>
     </div>
 
     <!-- Right: credential card panel (desktop only) -->
     <div class='hidden md:flex flex-col gap-4 relative'>
-      <!-- Gold glow behind the cards -->
       <span
         aria-hidden='true'
         class='pointer-events-none absolute -top-16 -right-8 h-80 w-80 rounded-tr-2xl'
         style='background: radial-gradient(circle at top right, rgba(201,162,39,0.18), transparent 70%);'
       ></span>
 
-      <!-- Stat cards -->
       <div class='grid grid-cols-2 gap-4 relative z-10'>
-        <div
-          class='bg-white/5 backdrop-blur-md border border-white/10 rounded-md p-5 flex flex-col gap-1'
-        >
-          <span class='text-primary font-condensed text-4xl font-bold leading-none'>CSD</span>
-          <span class='text-foreground text-sm font-medium mt-1'>Registered Supplier</span>
-          <span class='text-muted-foreground text-xs'>Central Supplier Database</span>
-        </div>
-        <div
-          class='bg-white/5 backdrop-blur-md border border-white/10 rounded-md p-5 flex flex-col gap-1'
-        >
-          <span class='text-primary font-condensed text-4xl font-bold leading-none'>CIDB</span>
-          <span class='text-foreground text-sm font-medium mt-1'>Grading Specialists</span>
-          <span class='text-muted-foreground text-xs'>All contractor grades</span>
-        </div>
-        <div
-          class='bg-white/5 backdrop-blur-md border border-white/10 rounded-md p-5 flex flex-col gap-1'
-        >
-          <span class='text-primary font-condensed text-4xl font-bold leading-none'>B-BBEE</span>
-          <span class='text-foreground text-sm font-medium mt-1'>Affidavit Experts</span>
-          <span class='text-muted-foreground text-xs'>EME & QSE compliant</span>
-        </div>
-        <div
-          class='bg-white/5 backdrop-blur-md border border-white/10 rounded-md p-5 flex flex-col gap-1'
-        >
-          <span class='text-primary font-condensed text-4xl font-bold leading-none'>24h</span>
-          <span class='text-foreground text-sm font-medium mt-1'>Fast Turnaround</span>
-          <span class='text-muted-foreground text-xs'>Deadline-driven service</span>
-        </div>
+        {
+          [
+            { label: 'CSD', sub: 'Registered Supplier', detail: 'Central Supplier Database' },
+            { label: 'CIDB', sub: 'Grading Specialists', detail: 'All contractor grades' },
+            { label: 'B-BBEE', sub: 'Affidavit Experts', detail: 'EME & QSE compliant' },
+            { label: '24h', sub: 'Fast Turnaround', detail: 'Deadline-driven service' },
+          ].map((card) => (
+            <div class='bg-white/5 backdrop-blur-md border border-white/10 rounded-md p-5 flex flex-col gap-1'>
+              <span class='text-primary font-condensed text-4xl font-bold leading-none'>
+                {card.label}
+              </span>
+              <span class='text-foreground text-sm font-medium mt-1'>{card.sub}</span>
+              <span class='text-muted-foreground text-xs'>{card.detail}</span>
+            </div>
+          ))
+        }
       </div>
 
-      <!-- Free assessment callout -->
       <div
         class='bg-primary/10 backdrop-blur-md border border-primary/30 rounded-md p-5 relative z-10'
       >
@@ -133,18 +134,15 @@
       transform: translateY(0);
     }
   }
-
   .eyebrow {
     animation: fadeUp 0.6s ease forwards;
     animation-delay: 0ms;
   }
-
   .hero-h1 {
     animation: fadeUp 0.6s ease forwards;
     animation-delay: 100ms;
     opacity: 0;
   }
-
   .sub-ctas {
     animation: fadeUp 0.6s ease forwards;
     animation-delay: 250ms;
