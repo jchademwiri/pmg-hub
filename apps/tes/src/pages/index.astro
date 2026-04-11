@@ -1,4 +1,5 @@
 ---
+// pages/index.astro — updated to include ScrollReveal + FloatingWhatsApp
 export const prerender = false;
 import Layout from '@/layouts/Layout.astro';
 import Hero from '@/components/Hero.astro';
@@ -9,6 +10,8 @@ import HowItWorks from '@/components/HowItWorks.astro';
 import PricingSection from '@/components/PricingSection.astro';
 import CaseStudy from '@/components/CaseStudy.astro';
 import LeadForm from '@/components/LeadForm.astro';
+import ScrollReveal from '@/components/ScrollReveal.astro';
+import FloatingWhatsApp from '@/components/FloatingWhatsApp.astro';
 ---
 
 <Layout>
@@ -22,4 +25,6 @@ import LeadForm from '@/components/LeadForm.astro';
     <CaseStudy />
     <LeadForm />
   </main>
+  <ScrollReveal />
+  <FloatingWhatsApp />
 </Layout>

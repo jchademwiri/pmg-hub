@@ -4,19 +4,23 @@ const cards = [
     title: 'Expired compliance documents',
     description:
       'COIDA, B-BBEE, and tax clearance certificates that lapse without a renewal system',
+    icon: `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>`,
   },
   {
     title: 'Incorrectly completed returnables',
     description: 'SBD forms with errors, missing signatures, or wrong declarations',
+    icon: `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><line x1="9" y1="15" x2="15" y2="15"/><line x1="2" y1="2" x2="22" y2="22"/></svg>`,
   },
   {
     title: 'Poor document structure',
     description:
       "Submissions that don't follow the tender specification or are missing required sections",
+    icon: `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="2" y="3" width="20" height="14" rx="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/><line x1="2" y1="2" x2="22" y2="22"/></svg>`,
   },
   {
     title: 'No system for tracking renewals',
     description: 'No calendar or process to ensure documents stay current before deadlines',
+    icon: `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/><line x1="2" y1="2" x2="22" y2="22"/></svg>`,
   },
 ];
 ---
@@ -26,36 +30,70 @@ const cards = [
     <div class='grid md:grid-cols-2 gap-12 items-start'>
       <!-- Left: copy -->
       <div>
-        <p class='text-primary uppercase tracking-widest text-[10px] md:text-[11px] font-medium'>
+        <p
+          class='reveal text-primary uppercase tracking-widest text-[10px] md:text-[11px] font-medium'
+        >
           THE PROBLEM
         </p>
-        <h2 class='font-condensed text-4xl md:text-5xl text-foreground mt-4 mb-6'>
+        <h2
+          class='reveal font-condensed text-4xl md:text-5xl text-foreground mt-4 mb-6'
+          data-delay='80'
+        >
           Businesses lose tenders because of paperwork — not capability.
         </h2>
-        <p class='text-muted-foreground text-base md:text-lg leading-relaxed'>
+        <p
+          class='reveal text-muted-foreground text-base md:text-lg leading-relaxed mb-8'
+          data-delay='140'
+        >
           Most South African SMEs have the skills and capacity to deliver on government contracts.
           But they lose tenders before the evaluation even begins — disqualified on compliance
           grounds. Missing COIDA certificates, expired B-BBEE affidavits, incorrectly completed SBD4
           forms, and outdated CSD profiles are the real reasons bids fail.
         </p>
+
+        <!-- Closing statement — desktop -->
+        <p
+          class='reveal hidden md:block text-primary italic text-lg font-medium border-l-2 border-primary/50 pl-4'
+          data-delay='180'
+        >
+          TenderEdge Solutions eliminates every one of these risks.
+        </p>
       </div>
 
       <!-- Right: failure-point cards -->
-      <div class='flex flex-col gap-4'>
+      <div class='flex flex-col gap-3'>
         {
-          cards.map((card) => (
-            <div class='border-l-2 border-red-500/60 pl-4 py-2'>
-              <p class='text-foreground font-medium text-sm'>{card.title}</p>
-              <p class='text-muted-foreground text-sm mt-1'>{card.description}</p>
+          cards.map((card, i) => (
+            <div
+              class='reveal problem-card flex items-start gap-4 p-4 rounded-xl border border-red-500/15 bg-red-500/5 transition-all duration-200'
+              data-delay={String(i * 70)}
+            >
+              <div class='shrink-0 w-8 h-8 rounded-lg bg-red-500/10 flex items-center justify-center text-red-400 mt-0.5'>
+                <Fragment set:html={card.icon} />
+              </div>
+              <div>
+                <p class='text-foreground font-medium text-sm mb-0.5'>{card.title}</p>
+                <p class='text-muted-foreground text-sm leading-relaxed'>{card.description}</p>
+              </div>
             </div>
           ))
         }
       </div>
     </div>
 
-    <!-- Closing statement -->
-    <p class='text-primary italic text-xl md:text-2xl text-center mt-12 font-medium'>
+    <!-- Closing statement — mobile -->
+    <p
+      class='reveal md:hidden text-primary italic text-lg font-medium mt-10 border-l-2 border-primary/50 pl-4'
+      data-delay='200'
+    >
       TenderEdge Solutions eliminates every one of these risks.
     </p>
   </div>
 </section>
+
+<style>
+  .problem-card:hover {
+    border-color: rgba(239, 68, 68, 0.3);
+    background-color: rgba(239, 68, 68, 0.08);
+  }
+</style>

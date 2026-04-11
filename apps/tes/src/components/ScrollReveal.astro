@@ -1,0 +1,36 @@
+---
+// ScrollReveal.astro
+// Drop this component anywhere in your layout (e.g. end of Layout.astro body).
+// Any element with class "reveal" will fade-up into view when scrolled into viewport.
+// Usage: add class="reveal" (and optionally data-delay="150") to any element.
+---
+
+<style>
+  .reveal {
+    opacity: 0;
+    transform: translateY(24px);
+    transition: opacity 0.55s ease, transform 0.55s ease;
+  }
+  .reveal.visible {
+    opacity: 1;
+    transform: translateY(0);
+  }
+</style>
+
+<script>
+  const revealObserver = new IntersectionObserver(
+    (entries) => {
+      entries.forEach((entry) => {
+        if (entry.isIntersecting) {
+          const el = entry.target as HTMLElement;
+          const delay = el.dataset.delay ? parseInt(el.dataset.delay) : 0;
+          setTimeout(() => el.classList.add('visible'), delay);
+          revealObserver.unobserve(el);
+        }
+      });
+    },
+    { threshold: 0.12 }
+  );
+
+  document.querySelectorAll('.reveal').forEach((el) => revealObserver.observe(el));
+</script>
