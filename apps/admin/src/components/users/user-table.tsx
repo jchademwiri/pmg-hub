@@ -1,18 +1,18 @@
-'use client'
+'use client';
 
-import * as React from 'react'
-import { toast } from 'sonner'
-import { Pencil, X, Check } from 'lucide-react'
-import { Badge } from '@/components/ui/badge'
-import { Button } from '@/components/ui/button'
-import { Input } from '@/components/ui/input'
+import * as React from 'react';
+import { toast } from 'sonner';
+import { Pencil, X, Check } from 'lucide-react';
+import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from '@/components/ui/select'
+} from '@/components/ui/select';
 import {
   Table,
   TableBody,
@@ -20,106 +20,118 @@ import {
   TableHead,
   TableHeader,
   TableRow,
-} from '@/components/ui/table'
-import { updateUserRole, revokeUser, updateUserName, reactivateUser, deleteUser } from '@/app/actions/users'
+} from '@/components/ui/table';
+import {
+  updateUserRole,
+  revokeUser,
+  updateUserName,
+  reactivateUser,
+  deleteUser,
+} from '@/app/actions/users';
+import { confirm } from '@/components/ui/confirm-dialog';
 
 export interface UserRow {
-  id: string
-  name: string
-  email: string
-  role: string
-  isActive: boolean
+  id: string;
+  name: string;
+  email: string;
+  role: string;
+  isActive: boolean;
 }
 
-const ROLES = ['super_admin', 'admin', 'viewer'] as const
-type Role = (typeof ROLES)[number]
+const ROLES = ['super_admin', 'admin', 'viewer'] as const;
+type Role = (typeof ROLES)[number];
 
 function roleBadgeVariant(role: string): 'destructive' | 'default' | 'secondary' | 'outline' {
-  if (role === 'super_admin') return 'destructive'
-  if (role === 'admin') return 'default'
-  return 'secondary'
+  if (role === 'super_admin') return 'destructive';
+  if (role === 'admin') return 'default';
+  return 'secondary';
 }
 
 function roleLabel(role: string): string {
-  if (role === 'super_admin') return 'Super Admin'
-  if (role === 'admin') return 'Admin'
-  return 'Viewer'
+  if (role === 'super_admin') return 'Super Admin';
+  if (role === 'admin') return 'Admin';
+  return 'Viewer';
 }
 
 function UserTableRow({ user }: { user: UserRow }) {
-  const [isRoleChanging, startRoleTransition] = React.useTransition()
-  const [isRevoking, startRevokeTransition] = React.useTransition()
-  const [isReactivating, startReactivateTransition] = React.useTransition()
-  const [isDeleting, startDeleteTransition] = React.useTransition()
-  const [isNameSaving, startNameTransition] = React.useTransition()
+  const [isRoleChanging, startRoleTransition] = React.useTransition();
+  const [isRevoking, startRevokeTransition] = React.useTransition();
+  const [isReactivating, startReactivateTransition] = React.useTransition();
+  const [isDeleting, startDeleteTransition] = React.useTransition();
+  const [isNameSaving, startNameTransition] = React.useTransition();
 
-  const [editingName, setEditingName] = React.useState(false)
-  const [nameValue, setNameValue] = React.useState(user.name)
-  const inputRef = React.useRef<HTMLInputElement>(null)
+  const [editingName, setEditingName] = React.useState(false);
+  const [nameValue, setNameValue] = React.useState(user.name);
+  const inputRef = React.useRef<HTMLInputElement>(null);
 
   React.useEffect(() => {
-    if (editingName) inputRef.current?.focus()
-  }, [editingName])
+    if (editingName) inputRef.current?.focus();
+  }, [editingName]);
 
   function handleRoleChange(newRole: Role) {
     startRoleTransition(async () => {
-      const fd = new FormData()
-      fd.set('role', newRole)
-      const result = await updateUserRole(user.id, fd)
-      if (result.error) toast.error(result.error)
-      else toast.success('Role updated')
-    })
+      const fd = new FormData();
+      fd.set('role', newRole);
+      const result = await updateUserRole(user.id, fd);
+      if (result.error) toast.error(result.error);
+      else toast.success('Role updated');
+    });
   }
 
   function handleRevoke() {
     startRevokeTransition(async () => {
-      const result = await revokeUser(user.id)
-      if (result.error) toast.error(result.error)
-      else toast.success('User revoked')
-    })
+      const result = await revokeUser(user.id);
+      if (result.error) toast.error(result.error);
+      else toast.success('User revoked');
+    });
   }
 
   function handleReactivate() {
     startReactivateTransition(async () => {
-      const result = await reactivateUser(user.id)
-      if (result.error) toast.error(result.error)
-      else toast.success('User reactivated')
-    })
+      const result = await reactivateUser(user.id);
+      if (result.error) toast.error(result.error);
+      else toast.success('User reactivated');
+    });
   }
 
   function handleDelete() {
-    // We could add a confirmation dialog here, but for simplicity let's use window.confirm
-    if (!window.confirm('Are you sure you want to permanently delete this user?')) return
-    
-    startDeleteTransition(async () => {
-      const result = await deleteUser(user.id)
-      if (result.error) toast.error(result.error)
-      else toast.success('User deleted')
-    })
+    confirm({
+      title: 'Permanently Delete User',
+      description: `Are you sure you want to permanently delete ${user.name}? This action cannot be undone.`,
+      confirmText: 'Delete',
+      variant: 'destructive',
+    }).then((confirmed) => {
+      if (!confirmed) return;
+      startDeleteTransition(async () => {
+        const result = await deleteUser(user.id);
+        if (result.error) toast.error(result.error);
+        else toast.success('User deleted');
+      });
+    });
   }
 
   function handleNameSave() {
     startNameTransition(async () => {
-      const fd = new FormData()
-      fd.set('name', nameValue)
-      const result = await updateUserName(user.id, fd)
+      const fd = new FormData();
+      fd.set('name', nameValue);
+      const result = await updateUserName(user.id, fd);
       if (result.error) {
-        toast.error(result.error)
+        toast.error(result.error);
       } else {
-        toast.success('Name updated')
-        setEditingName(false)
+        toast.success('Name updated');
+        setEditingName(false);
       }
-    })
+    });
   }
 
   function handleNameCancel() {
-    setNameValue(user.name)
-    setEditingName(false)
+    setNameValue(user.name);
+    setEditingName(false);
   }
 
   function handleNameKeyDown(e: React.KeyboardEvent) {
-    if (e.key === 'Enter') handleNameSave()
-    if (e.key === 'Escape') handleNameCancel()
+    if (e.key === 'Enter') handleNameSave();
+    if (e.key === 'Escape') handleNameCancel();
   }
 
   return (
@@ -173,7 +185,9 @@ function UserTableRow({ user }: { user: UserRow }) {
       </TableCell>
       <TableCell>
         {user.isActive ? (
-          <Badge variant="default" className="bg-green-600 text-white hover:bg-green-700">Active</Badge>
+          <Badge variant="default" className="bg-green-600 text-white hover:bg-green-700">
+            Active
+          </Badge>
         ) : (
           <Badge variant="secondary">Inactive</Badge>
         )}
@@ -192,16 +206,13 @@ function UserTableRow({ user }: { user: UserRow }) {
                 </SelectTrigger>
                 <SelectContent>
                   {ROLES.map((r) => (
-                    <SelectItem key={r} value={r}>{roleLabel(r)}</SelectItem>
+                    <SelectItem key={r} value={r}>
+                      {roleLabel(r)}
+                    </SelectItem>
                   ))}
                 </SelectContent>
               </Select>
-              <Button
-                variant="destructive"
-                size="sm"
-                onClick={handleRevoke}
-                disabled={isRevoking}
-              >
+              <Button variant="destructive" size="sm" onClick={handleRevoke} disabled={isRevoking}>
                 {isRevoking ? 'Revoking…' : 'Revoke'}
               </Button>
             </>
@@ -216,12 +227,7 @@ function UserTableRow({ user }: { user: UserRow }) {
               >
                 {isReactivating ? 'Reactivating…' : 'Reactivate'}
               </Button>
-              <Button
-                variant="destructive"
-                size="sm"
-                onClick={handleDelete}
-                disabled={isDeleting}
-              >
+              <Button variant="destructive" size="sm" onClick={handleDelete} disabled={isDeleting}>
                 {isDeleting ? 'Deleting…' : 'Delete'}
               </Button>
             </>
@@ -229,18 +235,16 @@ function UserTableRow({ user }: { user: UserRow }) {
         </div>
       </TableCell>
     </TableRow>
-  )
+  );
 }
 
 interface UserTableProps {
-  users: UserRow[]
+  users: UserRow[];
 }
 
 export function UserTable({ users }: UserTableProps) {
   if (users.length === 0) {
-    return (
-      <p className="text-sm text-muted-foreground py-4 text-center">No users found.</p>
-    )
+    return <p className="text-sm text-muted-foreground py-4 text-center">No users found.</p>;
   }
 
   return (
@@ -260,5 +264,5 @@ export function UserTable({ users }: UserTableProps) {
         ))}
       </TableBody>
     </Table>
-  )
+  );
 }
