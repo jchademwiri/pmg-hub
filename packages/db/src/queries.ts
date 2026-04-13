@@ -1266,7 +1266,7 @@ export async function insertLedgerEntry(data: {
     date: row.date,
     amount: row.amount,
     allocationType: row.allocationType,
-    entryType: row.entryType, // No need for casting, inferred correctly
+    entryType: row.entryType,
     description: row.description,
     createdAt: row.createdAt,
     createdBy: row.createdBy,
@@ -1292,4 +1292,7 @@ export async function updateLedgerEntry(id: string, data: Partial<{
 
 export async function deleteLedgerEntry(id: string): Promise<void> {
   await db.delete(ledger).where(eq(ledger.id, id));
+}
+export async function getLedgerByAllocation(allocationType: 'salary' | 'reinvest' | 'reserve' | 'flex') {
+  return await db.select().from(ledger).where(eq(ledger.allocationType, allocationType)).orderBy(desc(ledger.date));
 }

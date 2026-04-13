@@ -45,9 +45,9 @@ export default async function AccountHistoryPage({ params }: AccountHistoryPageP
 
   const label = ACCOUNT_LABELS[account]!;
 
-  const [withdrawalsAll, withdrawalsYTD, incomeEntries, ytd] = await Promise.all([
+  const [withdrawalsAll, ytdSums, incomeEntries, ytd] = await Promise.all([
     getLedgerByAllocation(account as any),
-    getLedgerByAllocationYTD(account as any),
+    getLedgerByAllocationYTD(),
     getAllIncome(),
     getYTDSummary(),
   ]);
@@ -103,7 +103,7 @@ export default async function AccountHistoryPage({ params }: AccountHistoryPageP
   const displayRows = [...statement].reverse();
 
   const currentBalance = running;
-  const totalWithdrawnYTD = withdrawalsYTD.reduce((s, w) => s + Number(w.amount), 0);
+  const totalWithdrawnYTD = ytdSums[account] ?? 0;
 
   return (
     <div className="flex flex-col gap-6">

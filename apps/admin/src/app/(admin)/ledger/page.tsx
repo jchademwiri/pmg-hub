@@ -18,7 +18,7 @@ export default async function LedgerPage({ searchParams }: LedgerPageProps) {
   const currentPage = Math.max(1, parseInt(page || '1', 10));
   const pageSize = 20;
 
-  const result = await getAllLedgerEntries({ page: currentPage, pageSize });
+  const result = await getAllLedgerEntries(undefined, { page: currentPage, pageSize });
 
   return (
     <div className="flex flex-col gap-6">
