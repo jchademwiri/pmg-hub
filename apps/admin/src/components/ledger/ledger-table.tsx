@@ -64,7 +64,7 @@ export function LedgerTable({
   }
 
   return (
-    <div className="rounded-md border bg-card overflow-x-auto">
+    <div className="bg-card rounded-xl border border-border shadow-sm overflow-hidden">
       <Table>
         <TableHeader>
           <TableRow>
@@ -98,12 +98,11 @@ export function LedgerTable({
             return (
               <TableRow key={entry.id}>
                 <TableCell className="font-medium whitespace-nowrap">
-                  {new Date(entry.date + 'T00:00:00')
-                    .toLocaleDateString('en-ZA', {
-                      day: 'numeric',
-                      month: 'short',
-                      year: 'numeric',
-                    })}
+                  {new Date(entry.date + 'T00:00:00').toLocaleDateString('en-ZA', {
+                    day: 'numeric',
+                    month: 'short',
+                    year: 'numeric',
+                  })}
                 </TableCell>
                 <TableCell className="capitalize">{entry.allocationType}</TableCell>
                 <TableCell className="capitalize text-muted-foreground">
