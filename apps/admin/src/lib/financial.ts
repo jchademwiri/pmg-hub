@@ -13,10 +13,11 @@ import {
   getPreviousMonthSummary,
   getYTDSummary,
   getPreviousYearYTDSummary,
-  getWithdrawalsCurrentMonth,
-  getTotalWithdrawalsYTD,
-  getWithdrawalsPreviousMonth,
-  getWithdrawalsYTDFull,
+  getLedgerEntriesCurrentMonth,
+  getLedgerTotalByAllocation,
+  getLedgerEntriesPreviousMonth,
+  getLedgerEntriesYTD,
+  getLedgerByAllocationYTD,
   getDivisionRevenueSeries,
   getDivisionRevenueCurrentMonth,
   getDivisionRevenueYTD,
@@ -42,11 +43,12 @@ export type FinancialSummary = {
 export type DivisionRevenue = { divisionName: string; total: number }
 export type LeadStatusCount = { status: string; count: number }
 
-export type WithdrawalSummary = {
-  total: number;
-  carryOver: number;
-  entries: { date: string; description: string | null; amount: number }[];
-}
+export type BucketBalances = {
+  salary: { expected: number; spent: number; available: number };
+  reinvest: { expected: number; spent: number; available: number };
+  reserve: { expected: number; spent: number; available: number };
+  flex: { expected: number; spent: number; available: number };
+};
 
 export type DivisionSeriesRow = { month: string; divisionName: string; total: number }
 export type DivisionSeriesChart = {
@@ -84,41 +86,31 @@ export async function getFinancialSummary(): Promise<FinancialSummary> {
 // ── Period summaries ──────────────────────────────────────────────────────────
 export { getCurrentMonthSummary, getPreviousMonthSummary, getYTDSummary, getPreviousYearYTDSummary }
 
-// ── Withdrawals ───────────────────────────────────────────────────────────────
-export async function getWithdrawals(): Promise<WithdrawalSummary> {
-  const [current, ytdWithdrawn, ytdSummary, currentMonthSummary] = await Promise.all([
-    getWithdrawalsCurrentMonth(),
-    getTotalWithdrawalsYTD(),
-    getYTDSummary(),
-    getCurrentMonthSummary(),
-  ])
-  const prevMonthsSalary    = ytdSummary.salary - currentMonthSummary.salary
-  const prevMonthsWithdrawn = ytdWithdrawn - current.total
-  const carryOver = Math.max(0, prevMonthsSalary - prevMonthsWithdrawn)
-  return { ...current, carryOver }
+// ── Ledger ────────────────────────────────────────────────────────────────────
+export async function getLedgerBalances(): Promise<BucketBalances> {
+  const summary = await getFinancialSummary();
+  const [spentSalary, spentReinvest, spentReserve, spentFlex] = await Promise.all([
+    getLedgerTotalByAllocation('salary'),
+    getLedgerTotalByAllocation('reinvest'),
+    getLedgerTotalByAllocation('reserve'),
+    getLedgerTotalByAllocation('flex')
+  ]);
+
+  return {
+    salary: { expected: summary.salary, spent: spentSalary, available: summary.salary - spentSalary },
+    reinvest: { expected: summary.reinvest, spent: spentReinvest, available: summary.reinvest - spentReinvest },
+    reserve: { expected: summary.reserve, spent: spentReserve, available: summary.reserve - spentReserve },
+    flex: { expected: summary.flex, spent: spentFlex, available: summary.flex - spentFlex },
+  };
 }
 
-export async function getWithdrawalsPrevMonth(): Promise<WithdrawalSummary> {
-  const [prev, ytdWithdrawn, ytdSummary, currentMonthSummary, previousMonthSummary] = await Promise.all([
-    getWithdrawalsPreviousMonth(),
-    getTotalWithdrawalsYTD(),
-    getYTDSummary(),
-    getCurrentMonthSummary(),
-    getPreviousMonthSummary(),
-  ])
-  // Salary earned before the previous month (i.e. before 2 months ago)
-  const beforePrevSalary    = ytdSummary.salary - currentMonthSummary.salary - previousMonthSummary.salary
-  // Withdrawals made before the previous month
-  const currentWithdrawn    = (await getWithdrawalsCurrentMonth()).total
-  const beforePrevWithdrawn = ytdWithdrawn - prev.total - currentWithdrawn
-  const carryOver = Math.max(0, beforePrevSalary - beforePrevWithdrawn)
-  return { ...prev, carryOver }
-}
-
-export async function getWithdrawalsYTD(): Promise<WithdrawalSummary> {
-  const ytd = await getWithdrawalsYTDFull()
-  // No carry-over for YTD — it already covers the full year
-  return { ...ytd, carryOver: 0 }
+export async function getLedgerEntriesForPeriod(
+  period: 'current' | 'previous' | 'ytd',
+  allocationType?: 'salary' | 'reinvest' | 'reserve' | 'flex'
+): Promise<{ total: number; entries: { date: string; description: string | null; amount: number }[] }> {
+  if (period === 'current') return getLedgerEntriesCurrentMonth(allocationType);
+  if (period === 'previous') return getLedgerEntriesPreviousMonth(allocationType);
+  return getLedgerEntriesYTD(allocationType);
 }
 
 // ── Division revenue ──────────────────────────────────────────────────────────

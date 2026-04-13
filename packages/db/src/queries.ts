@@ -4,7 +4,7 @@ import {
   expenses,
   leads,
   divisions,
-  withdrawals,
+  ledger,
   clients,
   snapshots,
   expenseCategories,
@@ -228,27 +228,30 @@ export async function getPreviousYearYTDSummary(): Promise<PeriodSummary> {
   );
 }
 
-// ── NEW: Withdrawals this month ───────────────────────────────────────────────
+// ── Ledger Period Queries ───────────────────────────────────────────────────
 
-/**
- * Returns all withdrawals recorded in the withdrawals table for the current
- * calendar month (date >= start of month AND date < start of next month).
- */
-export async function getWithdrawalsCurrentMonth(): Promise<{
+export async function getLedgerEntriesCurrentMonth(allocationType?: 'salary' | 'reinvest' | 'reserve' | 'flex'): Promise<{
   total: number;
   entries: { date: string; description: string | null; amount: number }[];
 }> {
+  const conditions = [
+    sql`${ledger.date} >= DATE_TRUNC('month', NOW())`,
+    sql`${ledger.date} < DATE_TRUNC('month', NOW()) + INTERVAL '1 month'`
+  ];
+  if (allocationType) {
+    conditions.push(eq(ledger.allocationType, allocationType));
+  }
+
   const result = await db
     .select({
-      date: sql<string>`${withdrawals.date}::text`,
-      description: withdrawals.description,
-      amount: withdrawals.amount,
+      date: sql<string>`${ledger.date}::text`,
+      description: ledger.description,
+      amount: ledger.amount,
     })
-    .from(withdrawals)
-    .where(
-      sql`${withdrawals.date} >= DATE_TRUNC('month', NOW()) AND ${withdrawals.date} < DATE_TRUNC('month', NOW()) + INTERVAL '1 month'`,
-    )
-    .orderBy(desc(withdrawals.date));
+    .from(ledger)
+    .where(and(...conditions))
+    .orderBy(desc(ledger.date));
+    
   const entries = result.map((r) => ({
     date: r.date,
     description: r.description,
@@ -258,35 +261,36 @@ export async function getWithdrawalsCurrentMonth(): Promise<{
   return { total, entries };
 }
 
-/**
- * Returns the total amount withdrawn year-to-date (Jan 1 → now).
- */
-export async function getTotalWithdrawalsYTD(): Promise<number> {
+export async function getLedgerTotalByAllocation(allocationType: 'salary' | 'reinvest' | 'reserve' | 'flex'): Promise<number> {
   const result = await db
-    .select({ total: sql<string>`COALESCE(SUM(${withdrawals.amount}), '0')` })
-    .from(withdrawals)
-    .where(sql`${withdrawals.date} >= DATE_TRUNC('year', NOW())`);
+    .select({ total: sql<string>`COALESCE(SUM(${ledger.amount}), '0')` })
+    .from(ledger)
+    .where(eq(ledger.allocationType, allocationType));
   return Number(result[0]?.total ?? 0);
 }
 
-/**
- * Returns all withdrawals for the previous calendar month.
- */
-export async function getWithdrawalsPreviousMonth(): Promise<{
+export async function getLedgerEntriesPreviousMonth(allocationType?: 'salary' | 'reinvest' | 'reserve' | 'flex'): Promise<{
   total: number;
   entries: { date: string; description: string | null; amount: number }[];
 }> {
+  const conditions = [
+    sql`${ledger.date} >= DATE_TRUNC('month', NOW()) - INTERVAL '1 month'`,
+    sql`${ledger.date} < DATE_TRUNC('month', NOW())`
+  ];
+  if (allocationType) {
+    conditions.push(eq(ledger.allocationType, allocationType));
+  }
+
   const result = await db
     .select({
-      date: sql<string>`${withdrawals.date}::text`,
-      description: withdrawals.description,
-      amount: withdrawals.amount,
+      date: sql<string>`${ledger.date}::text`,
+      description: ledger.description,
+      amount: ledger.amount,
     })
-    .from(withdrawals)
-    .where(
-      sql`${withdrawals.date} >= DATE_TRUNC('month', NOW()) - INTERVAL '1 month' AND ${withdrawals.date} < DATE_TRUNC('month', NOW())`,
-    )
-    .orderBy(desc(withdrawals.date));
+    .from(ledger)
+    .where(and(...conditions))
+    .orderBy(desc(ledger.date));
+    
   const entries = result.map((r) => ({
     date: r.date,
     description: r.description,
@@ -295,22 +299,25 @@ export async function getWithdrawalsPreviousMonth(): Promise<{
   return { total: entries.reduce((sum, e) => sum + e.amount, 0), entries };
 }
 
-/**
- * Returns all withdrawals year-to-date (Jan 1 → now) with entries.
- */
-export async function getWithdrawalsYTDFull(): Promise<{
+export async function getLedgerEntriesYTD(allocationType?: 'salary' | 'reinvest' | 'reserve' | 'flex'): Promise<{
   total: number;
   entries: { date: string; description: string | null; amount: number }[];
 }> {
+  const conditions = [sql`${ledger.date} >= DATE_TRUNC('year', NOW())`];
+  if (allocationType) {
+    conditions.push(eq(ledger.allocationType, allocationType));
+  }
+
   const result = await db
     .select({
-      date: sql<string>`${withdrawals.date}::text`,
-      description: withdrawals.description,
-      amount: withdrawals.amount,
+      date: sql<string>`${ledger.date}::text`,
+      description: ledger.description,
+      amount: ledger.amount,
     })
-    .from(withdrawals)
-    .where(sql`${withdrawals.date} >= DATE_TRUNC('year', NOW())`)
-    .orderBy(desc(withdrawals.date));
+    .from(ledger)
+    .where(and(...conditions))
+    .orderBy(desc(ledger.date));
+    
   const entries = result.map((r) => ({
     date: r.date,
     description: r.description,
@@ -319,89 +326,19 @@ export async function getWithdrawalsYTDFull(): Promise<{
   return { total: entries.reduce((sum, e) => sum + e.amount, 0), entries };
 }
 
-/**
- * Returns total withdrawn per account YTD.
- */
-export async function getWithdrawalsByAccountYTD(): Promise<Record<string, number>> {
+export async function getLedgerByAllocationYTD(): Promise<Record<string, number>> {
   const result = await db
     .select({
-      account: withdrawals.account,
-      total: sql<string>`COALESCE(SUM(${withdrawals.amount}), '0')`,
+      allocationType: ledger.allocationType,
+      total: sql<string>`COALESCE(SUM(${ledger.amount}), '0')`,
     })
-    .from(withdrawals)
-    .where(sql`${withdrawals.date} >= DATE_TRUNC('year', NOW())`)
-    .groupBy(withdrawals.account);
+    .from(ledger)
+    .where(sql`${ledger.date} >= DATE_TRUNC('year', NOW())`)
+    .groupBy(ledger.allocationType);
+    
   const map: Record<string, number> = {};
-  for (const row of result) map[row.account] = Number(row.total);
+  for (const row of result) map[row.allocationType] = Number(row.total);
   return map;
-}
-
-/**
- * Returns all withdrawals for a specific account YTD, ordered by date DESC.
- */
-export async function getWithdrawalsByAccountYTDSpecific(
-  account: string,
-): Promise<WithdrawalRow[]> {
-  return db
-    .select({
-      id: withdrawals.id,
-      date: sql<string>`${withdrawals.date}::text`,
-      amount: withdrawals.amount,
-      description: withdrawals.description,
-      account: withdrawals.account,
-      createdAt: withdrawals.createdAt,
-    })
-    .from(withdrawals)
-    .where(
-      sql`${withdrawals.account} = ${account} AND ${withdrawals.date} >= DATE_TRUNC('year', NOW())`,
-    )
-    .orderBy(desc(withdrawals.date), desc(withdrawals.createdAt));
-}
-
-/**
- * Returns all withdrawals for a specific account, ordered by date DESC.
- */
-export async function getWithdrawalsByAccount(account: string): Promise<WithdrawalRow[]> {
-  return db
-    .select({
-      id: withdrawals.id,
-      date: sql<string>`${withdrawals.date}::text`,
-      amount: withdrawals.amount,
-      description: withdrawals.description,
-      account: withdrawals.account,
-      createdAt: withdrawals.createdAt,
-    })
-    .from(withdrawals)
-    .where(eq(withdrawals.account, account))
-    .orderBy(desc(withdrawals.date), desc(withdrawals.createdAt));
-}
-
-export async function insertWithdrawal(
-  amount: number,
-  date: string,
-  description?: string,
-  account: string = 'salary',
-): Promise<{
-  id: string;
-  date: string;
-  amount: number;
-  description: string | null;
-  account: string;
-  createdAt: Date | null;
-}> {
-  const result = await db
-    .insert(withdrawals)
-    .values({ amount: String(amount), date, description: description ?? null, account })
-    .returning();
-  const row = result[0]!;
-  return {
-    id: row.id,
-    date: row.date,
-    amount: Number(row.amount),
-    description: row.description,
-    account: row.account,
-    createdAt: row.createdAt,
-  };
 }
 
 // ── NEW: Division revenue by period for interactive chart ─────────────────────
@@ -1229,42 +1166,50 @@ export async function getExpenseCategoryById(id: string): Promise<ExpenseCategor
   return result[0] ?? null;
 }
 
-// ── Withdrawal History ────────────────────────────────────────────────────────
+// ── Ledger History ────────────────────────────────────────────────────────────
 
-export type WithdrawalRow = {
+export type LedgerEntryRow = {
   id: string;
-  date: string; // ISO date string e.g. "2026-03-15"
-  amount: string; // numeric from DB — caller converts with Number()
+  date: string;
+  amount: string;
+  allocationType: 'salary' | 'reinvest' | 'reserve' | 'flex';
+  entryType: 'spend' | 'transfer' | 'adjustment';
   description: string | null;
-  account: string;
   createdAt: Date | null;
+  createdBy: string | null;
 };
 
-/**
- * Returns all withdrawal rows ordered by date DESC, then created_at DESC.
- */
-export async function getAllWithdrawals(pageObj?: {
-  page: number;
-  pageSize: number;
-}): Promise<{ data: WithdrawalRow[]; total: number; sum: number }> {
+export async function getAllLedgerEntries(
+  filters?: { allocationType?: 'salary' | 'reinvest' | 'reserve' | 'flex'; entryType?: 'spend' | 'transfer' | 'adjustment' },
+  pageObj?: { page: number; pageSize: number }
+): Promise<{ data: LedgerEntryRow[]; total: number; sum: number }> {
+  const conditions = [];
+  if (filters?.allocationType) conditions.push(eq(ledger.allocationType, filters.allocationType));
+  if (filters?.entryType) conditions.push(eq(ledger.entryType, filters.entryType));
+
   let query = db
     .select({
-      id: withdrawals.id,
-      date: sql<string>`${withdrawals.date}::text`,
-      amount: withdrawals.amount,
-      description: withdrawals.description,
-      account: withdrawals.account,
-      createdAt: withdrawals.createdAt,
+      id: ledger.id,
+      date: sql<string>`${ledger.date}::text`,
+      amount: ledger.amount,
+      allocationType: ledger.allocationType,
+      entryType: ledger.entryType,
+      description: ledger.description,
+      createdAt: ledger.createdAt,
+      createdBy: ledger.createdBy,
     })
-    .from(withdrawals)
-    .orderBy(desc(withdrawals.date), desc(withdrawals.createdAt)) as any;
+    .from(ledger)
+    .orderBy(desc(ledger.date), desc(ledger.createdAt)) as any;
+
+  if (conditions.length > 0) query = query.where(and(...conditions));
 
   const countQuery = db
     .select({
       count: sql<number>`count(*)::int`,
-      sum: sql<number>`COALESCE(SUM(${withdrawals.amount}), 0)::numeric`,
+      sum: sql<number>`COALESCE(SUM(${ledger.amount}), 0)::numeric`,
     })
-    .from(withdrawals);
+    .from(ledger);
+  if (conditions.length > 0) countQuery.where(and(...conditions));
 
   const [totalRes] = await countQuery;
   const total = totalRes?.count ?? 0;
@@ -1278,21 +1223,73 @@ export async function getAllWithdrawals(pageObj?: {
   return { data, total, sum: sumAmount };
 }
 
-/**
- * Returns a single withdrawal row by id, or null if no row with that id exists.
- */
-export async function getWithdrawalById(id: string): Promise<WithdrawalRow | null> {
+export async function getLedgerById(id: string): Promise<LedgerEntryRow | null> {
   const result = await db
     .select({
-      id: withdrawals.id,
-      date: sql<string>`${withdrawals.date}::text`,
-      amount: withdrawals.amount,
-      description: withdrawals.description,
-      account: withdrawals.account,
-      createdAt: withdrawals.createdAt,
+      id: ledger.id,
+      date: sql<string>`${ledger.date}::text`,
+      amount: ledger.amount,
+      allocationType: ledger.allocationType,
+      entryType: ledger.entryType,
+      description: ledger.description,
+      createdAt: ledger.createdAt,
+      createdBy: ledger.createdBy,
     })
-    .from(withdrawals)
-    .where(eq(withdrawals.id, id));
+    .from(ledger)
+    .where(eq(ledger.id, id));
 
   return result[0] ?? null;
+}
+
+export async function insertLedgerEntry(data: {
+  amount: number;
+  date: string;
+  allocationType: 'salary' | 'reinvest' | 'reserve' | 'flex';
+  entryType: 'spend' | 'transfer' | 'adjustment';
+  description?: string;
+  createdBy?: string;
+}): Promise<LedgerEntryRow> {
+  const result = await db
+    .insert(ledger)
+    .values({
+      amount: String(data.amount),
+      date: data.date,
+      allocationType: data.allocationType,
+      entryType: data.entryType,
+      description: data.description ?? null,
+      createdBy: data.createdBy ?? null,
+    })
+    .returning();
+  const row = result[0]!;
+  return {
+    id: row.id,
+    date: row.date,
+    amount: row.amount,
+    allocationType: row.allocationType,
+    entryType: row.entryType, // No need for casting, inferred correctly
+    description: row.description,
+    createdAt: row.createdAt,
+    createdBy: row.createdBy,
+  };
+}
+
+export async function updateLedgerEntry(id: string, data: Partial<{
+  amount: number;
+  date: string;
+  allocationType: 'salary' | 'reinvest' | 'reserve' | 'flex';
+  entryType: 'spend' | 'transfer' | 'adjustment';
+  description?: string;
+}>): Promise<void> {
+  const updates: Record<string, any> = {};
+  if (data.amount !== undefined) updates.amount = String(data.amount);
+  if (data.date !== undefined) updates.date = data.date;
+  if (data.allocationType !== undefined) updates.allocationType = data.allocationType;
+  if (data.entryType !== undefined) updates.entryType = data.entryType;
+  if (data.description !== undefined) updates.description = data.description;
+  
+  await db.update(ledger).set(updates).where(eq(ledger.id, id));
+}
+
+export async function deleteLedgerEntry(id: string): Promise<void> {
+  await db.delete(ledger).where(eq(ledger.id, id));
 }
