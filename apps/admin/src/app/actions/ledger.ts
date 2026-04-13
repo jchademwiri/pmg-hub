@@ -11,6 +11,10 @@ import {
 import { getLedgerBalances } from '@/lib/financial';
 import { getSessionOrRedirect } from '@/lib/auth';
 
+export async function getLedgerBalancesAction() {
+  return await getLedgerBalances();
+}
+
 const ledgerSchema = z.object({
   date: z.string().min(1),
   amount: z.coerce.number().positive(),
