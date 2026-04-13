@@ -5,7 +5,7 @@ export * from "./clients";
 export * from "./income";
 export * from "./expenses";
 export * from "./leads";
-export * from "./withdrawals";
+export * from "./ledger";
 export * from "./snapshots";
 export * from "./expense-categories";
 export * from "./invitations";
