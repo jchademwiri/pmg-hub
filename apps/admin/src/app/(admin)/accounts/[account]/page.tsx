@@ -2,8 +2,8 @@ import type { Metadata } from 'next';
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import {
-  getWithdrawalsByAccount,
-  getWithdrawalsByAccountYTDSpecific,
+  getLedgerByAllocation,
+  getLedgerByAllocationYTD,
   getAllIncome,
   getYTDSummary,
 } from '@pmg/db';
@@ -46,8 +46,8 @@ export default async function AccountHistoryPage({ params }: AccountHistoryPageP
   const label = ACCOUNT_LABELS[account]!;
 
   const [withdrawalsAll, withdrawalsYTD, incomeEntries, ytd] = await Promise.all([
-    getWithdrawalsByAccount(account),
-    getWithdrawalsByAccountYTDSpecific(account),
+    getLedgerByAllocation(account as any),
+    getLedgerByAllocationYTD(account as any),
     getAllIncome(),
     getYTDSummary(),
   ]);
@@ -57,7 +57,6 @@ export default async function AccountHistoryPage({ params }: AccountHistoryPageP
   const totalRevenue = ytd.revenue;
   const accountEarned: Record<string, number> = {
     salary: ytd.salary,
-    pmg_share: ytd.pmgShare,
     reinvest: ytd.reinvest,
     reserve: ytd.reserve,
     flex: ytd.flex,
@@ -85,7 +84,7 @@ export default async function AccountHistoryPage({ params }: AccountHistoryPageP
     events.push({
       date: w.date,
       type: 'debit',
-      description: w.description ?? `${label} withdrawal`,
+      description: w.description ?? `${label} spend`,
       amount: Number(w.amount),
     });
   }

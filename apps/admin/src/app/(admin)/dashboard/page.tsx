@@ -8,9 +8,7 @@ import {
   getDivisionRevenue,
   getLeadCounts,
   getMonthlyFinancialsSeries,
-  getWithdrawals,
-  getWithdrawalsPrevMonth,
-  getWithdrawalsYTD,
+  getLedgerBalances,
   getAllDivisionSeriesData,
   getMoMChartData,
   getExpensesByDivision,
@@ -41,9 +39,7 @@ export default async function DashboardPage() {
     divisions,
     leads,
     monthlySeries,
-    withdrawals,
-    withdrawalsPrevMonth,
-    withdrawalsYTD,
+    ledgerBalances,
     divisionSeriesData,
     momData,
     expensesByDivision,
@@ -56,9 +52,7 @@ export default async function DashboardPage() {
     getDivisionRevenue(),
     getLeadCounts(),
     getMonthlyFinancialsSeries(),
-    getWithdrawals(),
-    getWithdrawalsPrevMonth(),
-    getWithdrawalsYTD(),
+    getLedgerBalances(),
     getAllDivisionSeriesData(),
     getMoMChartData(),
     getExpensesByDivision(),
@@ -104,9 +98,7 @@ export default async function DashboardPage() {
       leads={leads}
       monthlySeries={monthlySeries}
       sparklineData={monthlySeries.slice(-6)}
-      withdrawals={withdrawals}
-      withdrawalsPrevMonth={withdrawalsPrevMonth}
-      withdrawalsYTD={withdrawalsYTD}
+      ledgerBalances={ledgerBalances}
       divisionSeriesData={divisionSeriesData}
       expensesByDivision={expensesByDivision}
       // Snapshot
