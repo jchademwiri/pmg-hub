@@ -3,35 +3,40 @@
 import { z } from 'zod';
 import { revalidatePath } from 'next/cache';
 import { db, withdrawals, eq } from '@pmg/db';
-import { insertWithdrawal, getWithdrawalsByAccount, getYTDSummary } from '@pmg/db';
+import { insertWithdrawal, getWithdrawalsByAccountYTD, getYTDSummary } from '@pmg/db';
 
 const WithdrawalSchema = z.object({
-  date:        z.string().min(1),
-  amount:      z.coerce.number().positive(),
+  date: z.string().min(1),
+  amount: z.coerce.number().positive(),
   description: z.string().optional(),
-  account:     z.string().min(1),
+  account: z.string().min(1),
 });
 
 function formatDefaultDescription(dateStr: string): string {
-  const date = new Date(dateStr + 'T00:00:00')
-  return `Withdrawal — ${date.toLocaleDateString('en-ZA', { day: 'numeric', month: 'long', year: 'numeric' })}`
+  const date = new Date(dateStr + 'T00:00:00');
+  return `Withdrawal — ${date.toLocaleDateString('en-ZA', { day: 'numeric', month: 'long', year: 'numeric' })}`;
 }
 
-async function checkWithdrawalConstraints(account: string, requestedAmount: number, existingAmountId?: string): Promise<{ error?: string }> {
-  const [withdrawnList, ytd] = await Promise.all([
-    getWithdrawalsByAccount(account),
+async function checkWithdrawalConstraints(
+  account: string,
+  requestedAmount: number,
+  existingAmountId?: string,
+): Promise<{ error?: string }> {
+  const [withdrawnMap, ytd, withdrawnList] = await Promise.all([
+    getWithdrawalsByAccountYTD(),
     getYTDSummary(),
+    getWithdrawalsByAccount(account),
   ]);
 
   const accountEarned: Record<string, number> = {
-    salary:    ytd.salary,
+    salary: ytd.salary,
     pmg_share: ytd.pmgShare,
-    reinvest:  ytd.reinvest,
-    reserve:   ytd.reserve,
-    flex:      ytd.flex,
+    reinvest: ytd.reinvest,
+    reserve: ytd.reserve,
+    flex: ytd.flex,
   };
   const earned = accountEarned[account] ?? 0;
-  let totalWithdrawn = withdrawnList.reduce((s, w) => s + Number(w.amount), 0);
+  let totalWithdrawn = withdrawnMap[account] ?? 0;
 
   if (existingAmountId) {
     const existing = withdrawnList.find((w) => w.id === existingAmountId);
@@ -43,12 +48,11 @@ async function checkWithdrawalConstraints(account: string, requestedAmount: numb
   const availableBalance = earned - totalWithdrawn;
 
   if (requestedAmount > availableBalance) {
-    return { error: `Cannot withdraw more than available balance (R${availableBalance.toFixed(2)}).` };
+    return {
+      error: `Cannot withdraw more than available balance (R${availableBalance.toFixed(2)}).`,
+    };
   }
-  
-  if (availableBalance - requestedAmount < 20) {
-    return { error: `Must maintain a minimum balance of R20. Maximum allowed withdrawal is R${(availableBalance - 20).toFixed(2)}.` };
-  }
+
   return {};
 }
 
@@ -65,7 +69,7 @@ export async function createWithdrawal(formData: FormData): Promise<{ error?: st
       return { error: 'Withdrawal date cannot be in the future.' };
     }
     const description = parsed.description?.trim() || formatDefaultDescription(parsed.date);
-    
+
     // Check constraints before inserting
     const constraintCheck = await checkWithdrawalConstraints(parsed.account, parsed.amount);
     if (constraintCheck.error) return constraintCheck;
@@ -79,7 +83,10 @@ export async function createWithdrawal(formData: FormData): Promise<{ error?: st
   }
 }
 
-export async function updateWithdrawal(id: string, formData: FormData): Promise<{ error?: string }> {
+export async function updateWithdrawal(
+  id: string,
+  formData: FormData,
+): Promise<{ error?: string }> {
   try {
     const raw = Object.fromEntries(formData);
     const result = WithdrawalSchema.safeParse(raw);
@@ -97,7 +104,8 @@ export async function updateWithdrawal(id: string, formData: FormData): Promise<
     const constraintCheck = await checkWithdrawalConstraints(parsed.account, parsed.amount, id);
     if (constraintCheck.error) return constraintCheck;
 
-    await db.update(withdrawals)
+    await db
+      .update(withdrawals)
       .set({
         date: parsed.date,
         amount: String(parsed.amount),
