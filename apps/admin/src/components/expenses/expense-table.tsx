@@ -1,7 +1,7 @@
 'use client';
 
 import * as React from 'react';
-import { Pencil, Trash2, X, Check } from 'lucide-react';
+import { Pencil, Trash2, X, Check, Lock } from 'lucide-react';
 import { toast } from 'sonner';
 import type { ExpenseRow } from '@pmg/db';
 import { Button } from '@/components/ui/button';
@@ -32,6 +32,7 @@ interface ExpenseTableProps {
   clients: { id: string; name: string }[];
   deleteAction: (id: string) => Promise<{ error?: string }>;
   updateAction: (id: string, formData: FormData) => Promise<{ error?: string }>;
+  closedPeriods?: string[];
 }
 
 function ExpenseTableRow({
@@ -41,6 +42,7 @@ function ExpenseTableRow({
   clients,
   deleteAction,
   updateAction,
+  closedPeriods,
 }: {
   entry: ExpenseRow;
   divisions: { id: string; name: string }[];
@@ -48,7 +50,10 @@ function ExpenseTableRow({
   clients: { id: string; name: string }[];
   deleteAction: (id: string) => Promise<{ error?: string }>;
   updateAction: (id: string, formData: FormData) => Promise<{ error?: string }>;
+  closedPeriods?: string[];
 }) {
+  const period = entry.date.slice(0, 7);
+  const isLocked = closedPeriods?.includes(period);
   const [mode, setMode] = React.useState<'display' | 'edit' | 'confirm-delete'>('display');
   const [editDate, setEditDate] = React.useState(entry.date);
   const [editDivisionId, setEditDivisionId] = React.useState(entry.divisionId);
@@ -109,6 +114,7 @@ function ExpenseTableRow({
               type="date"
               value={editDate}
               max={today}
+              min={isLocked ? entry.date : undefined}
               onChange={(e) => setEditDate(e.target.value)}
               className="w-36"
               disabled={isSaving}
@@ -222,10 +228,16 @@ function ExpenseTableRow({
       </TableCell>
       <TableCell>
         <div className="flex items-center gap-2">
-          <Button variant="ghost" size="icon" onClick={startEdit}>
-            <Pencil className="h-4 w-4" />
-            <span className="sr-only">Edit</span>
-          </Button>
+          {isLocked ? (
+            <Button variant="ghost" size="icon" disabled title="Period is closed">
+              <Lock className="h-4 w-4 text-muted-foreground/30" />
+            </Button>
+          ) : (
+            <Button variant="ghost" size="icon" onClick={startEdit}>
+              <Pencil className="h-4 w-4" />
+              <span className="sr-only">Edit</span>
+            </Button>
+          )}
           {mode === 'confirm-delete' ? (
             <>
               <Button variant="destructive" size="sm" disabled={isDeleting} onClick={handleDelete}>
@@ -235,6 +247,10 @@ function ExpenseTableRow({
                 Cancel
               </Button>
             </>
+          ) : isLocked ? (
+            <Button variant="ghost" size="icon" disabled title="Period is closed">
+              <Lock className="h-4 w-4 text-muted-foreground/30" />
+            </Button>
           ) : (
             <Button variant="ghost" size="icon" onClick={() => setMode('confirm-delete')}>
               <Trash2 className="h-4 w-4" />
@@ -254,6 +270,7 @@ export function ExpenseTable({
   clients,
   deleteAction,
   updateAction,
+  closedPeriods,
 }: ExpenseTableProps) {
   return (
     <Table>
@@ -278,6 +295,7 @@ export function ExpenseTable({
             clients={clients}
             deleteAction={deleteAction}
             updateAction={updateAction}
+            closedPeriods={closedPeriods}
           />
         ))}
       </TableBody>

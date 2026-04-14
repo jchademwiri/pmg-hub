@@ -1,6 +1,7 @@
 import type { Metadata } from 'next';
 import { getAllLedgerEntries } from '@pmg/db';
 import LedgerClient from './ledger-client';
+import { getMinAllowedDate, getClosedPeriodsFromDates } from '@/lib/date-rules';
 
 export const dynamic = 'force-dynamic';
 export const metadata: Metadata = { title: 'Corporate Ledger' };
@@ -14,7 +15,12 @@ export default async function LedgerPage({ searchParams }: LedgerPageProps) {
   const currentPage = Math.max(1, parseInt(page || '1', 10));
   const pageSize = 20;
 
-  const result = await getAllLedgerEntries(undefined, { page: currentPage, pageSize });
+  const [result, minDate] = await Promise.all([
+    getAllLedgerEntries(undefined, { page: currentPage, pageSize }),
+    getMinAllowedDate(),
+  ]);
+
+  const closedPeriods = await getClosedPeriodsFromDates(result.data.map((r) => r.date));
 
   return (
     <LedgerClient
@@ -23,6 +29,8 @@ export default async function LedgerPage({ searchParams }: LedgerPageProps) {
       sum={result.sum}
       currentPage={currentPage}
       pageSize={pageSize}
+      minDate={minDate}
+      closedPeriods={closedPeriods}
     />
   );
 }

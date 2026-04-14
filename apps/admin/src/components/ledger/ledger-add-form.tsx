@@ -17,19 +17,24 @@ import type { BucketBalances } from '@/lib/financial';
 interface LedgerAddFormProps {
   createAction: (formData: FormData) => Promise<{ error?: string }>;
   disabled?: boolean;
+  minDate?: string;
 }
 
 const today = new Date().toISOString().split('T')[0]!;
 
-export function LedgerAddForm({ createAction, disabled = false }: LedgerAddFormProps) {
+export function LedgerAddForm({ createAction, disabled = false, minDate }: LedgerAddFormProps) {
   const formRef = React.useRef<HTMLFormElement>(null);
   const [isPending, startTransition] = React.useTransition();
   const [errorMessage, setErrorMessage] = React.useState<string | null>(null);
   const [selectedDate, setSelectedDate] = React.useState(today);
-  const [selectedAllocation, setSelectedAllocation] = React.useState<'salary' | 'reinvest' | 'reserve' | 'flex'>('salary');
-  const [selectedEntry, setSelectedEntry] = React.useState<'spend' | 'transfer' | 'adjustment'>('spend');
+  const [selectedAllocation, setSelectedAllocation] = React.useState<
+    'salary' | 'reinvest' | 'reserve' | 'flex'
+  >('salary');
+  const [selectedEntry, setSelectedEntry] = React.useState<'spend' | 'transfer' | 'adjustment'>(
+    'spend',
+  );
   const [balances, setBalances] = React.useState<BucketBalances | null>(null);
-  
+
   React.useEffect(() => {
     getLedgerBalancesAction().then(setBalances).catch(console.error);
   }, []);
@@ -73,6 +78,7 @@ export function LedgerAddForm({ createAction, disabled = false }: LedgerAddFormP
           disabled={isPending || disabled}
           defaultValue={today}
           max={today}
+          min={minDate}
           className="w-40"
           onChange={(e) => setSelectedDate(e.target.value)}
         />
@@ -120,7 +126,10 @@ export function LedgerAddForm({ createAction, disabled = false }: LedgerAddFormP
       </div>
 
       <div className="flex flex-col gap-1">
-        <label htmlFor="ledger-amount" className="text-sm font-medium flex items-center justify-between">
+        <label
+          htmlFor="ledger-amount"
+          className="text-sm font-medium flex items-center justify-between"
+        >
           Amount
           <span className="text-xs text-muted-foreground ml-2">
             (Avail: R{availableBalance.toFixed(2)})

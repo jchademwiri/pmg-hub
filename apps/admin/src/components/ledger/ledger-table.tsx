@@ -17,7 +17,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
-import { MoreHorizontal, Pencil, Trash2 } from 'lucide-react';
+import { MoreHorizontal, Pencil, Trash2, Lock } from 'lucide-react';
 import { formatZAR } from '@/lib/format';
 import { LedgerEditForm } from './ledger-edit-form';
 import { ConfirmDialog } from '@/components/ui/confirm-dialog';
@@ -36,6 +36,7 @@ interface LedgerTableProps {
   updateAction: (id: string, formData: FormData) => Promise<{ error?: string }>;
   deleteAction: (id: string) => Promise<{ error?: string }>;
   disabled?: boolean;
+  closedPeriods?: string[];
 }
 
 export function LedgerTable({
@@ -43,6 +44,7 @@ export function LedgerTable({
   updateAction,
   deleteAction,
   disabled = false,
+  closedPeriods,
 }: LedgerTableProps) {
   const [editingId, setEditingId] = React.useState<string | null>(null);
   const [deleteId, setDeleteId] = React.useState<string | null>(null);
@@ -93,6 +95,9 @@ export function LedgerTable({
         <TableBody>
           {sorted.map((entry) => {
             const isEditing = editingId === entry.id;
+            const period = entry.date.slice(0, 7);
+            const isLocked = closedPeriods?.includes(period);
+            const minDate = isLocked ? entry.date : undefined;
 
             if (isEditing) {
               return (
@@ -103,6 +108,7 @@ export function LedgerTable({
                       updateAction={updateAction}
                       onCancel={() => setEditingId(null)}
                       disabled={disabled}
+                      minDate={minDate}
                     />
                   </TableCell>
                 </TableRow>
@@ -129,27 +135,33 @@ export function LedgerTable({
                   {formatZAR(Number(entry.amount))}
                 </TableCell>
                 <TableCell>
-                  <DropdownMenu>
-                    <DropdownMenuTrigger asChild>
-                      <Button variant="ghost" className="h-8 w-8 p-0" disabled={disabled}>
-                        <span className="sr-only">Open menu</span>
-                        <MoreHorizontal className="h-4 w-4" />
-                      </Button>
-                    </DropdownMenuTrigger>
-                    <DropdownMenuContent align="end">
-                      <DropdownMenuItem onClick={() => setEditingId(entry.id)}>
-                        <Pencil className="mr-2 h-4 w-4" />
-                        Edit
-                      </DropdownMenuItem>
-                      <DropdownMenuItem
-                        className="text-destructive focus:bg-destructive focus:text-destructive-foreground"
-                        onClick={() => setDeleteId(entry.id)}
-                      >
-                        <Trash2 className="mr-2 h-4 w-4" />
-                        Delete
-                      </DropdownMenuItem>
-                    </DropdownMenuContent>
-                  </DropdownMenu>
+                  {isLocked ? (
+                    <Button variant="ghost" size="icon" disabled title="Period is closed">
+                      <Lock className="h-4 w-4 text-muted-foreground/30" />
+                    </Button>
+                  ) : (
+                    <DropdownMenu>
+                      <DropdownMenuTrigger asChild>
+                        <Button variant="ghost" className="h-8 w-8 p-0" disabled={disabled}>
+                          <span className="sr-only">Open menu</span>
+                          <MoreHorizontal className="h-4 w-4" />
+                        </Button>
+                      </DropdownMenuTrigger>
+                      <DropdownMenuContent align="end">
+                        <DropdownMenuItem onClick={() => setEditingId(entry.id)}>
+                          <Pencil className="mr-2 h-4 w-4" />
+                          Edit
+                        </DropdownMenuItem>
+                        <DropdownMenuItem
+                          className="text-destructive focus:bg-destructive focus:text-destructive-foreground"
+                          onClick={() => setDeleteId(entry.id)}
+                        >
+                          <Trash2 className="mr-2 h-4 w-4" />
+                          Delete
+                        </DropdownMenuItem>
+                      </DropdownMenuContent>
+                    </DropdownMenu>
+                  )}
                 </TableCell>
               </TableRow>
             );

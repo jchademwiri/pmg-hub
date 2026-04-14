@@ -11,6 +11,7 @@ import { ExpenseFilterBar } from '@/components/expenses/expense-filter-bar';
 import { formatZAR } from '@/lib/format';
 import { SetPageTotal } from '@/components/layout/page-header-context';
 import ExpensesPageClient from './expenses-client';
+import { getMinAllowedDate, getClosedPeriodsFromDates } from '@/lib/date-rules';
 
 export const dynamic = 'force-dynamic';
 export const metadata: Metadata = { title: 'Expenses' };
@@ -31,15 +32,17 @@ export default async function ExpensePage({ searchParams }: ExpensePageProps) {
   const currentPage = Math.max(1, parseInt(page || '1', 10));
   const pageSize = 20;
 
-  const [result, divisions, categoryObjects, months, clients] = await Promise.all([
+  const [result, divisions, categoryObjects, months, clients, minDate] = await Promise.all([
     getAllExpenses(filters, { page: currentPage, pageSize }),
     getAllDivisions(),
     getAllExpenseCategories(),
     getDistinctExpenseMonths(),
     getAllClients(),
+    getMinAllowedDate(),
   ]);
 
   const categories = categoryObjects.map((c) => c.name);
+  const closedPeriods = await getClosedPeriodsFromDates(result.data.map((r) => r.date));
 
   return (
     <div className="flex flex-col gap-6">
@@ -67,6 +70,8 @@ export default async function ExpensePage({ searchParams }: ExpensePageProps) {
         createAction={createExpense}
         deleteAction={deleteExpense}
         updateAction={updateExpense}
+        minDate={minDate}
+        closedPeriods={closedPeriods}
       />
     </div>
   );
