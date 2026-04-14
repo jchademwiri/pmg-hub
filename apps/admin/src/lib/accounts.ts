@@ -1,17 +1,14 @@
-export const ACCOUNT_KEYS = ['salary', 'pmg_share', 'reinvest', 'reserve', 'flex'] as const
+export const ACCOUNT_KEYS = ['salary', 'reinvest', 'reserve', 'flex'] as const
 export type AccountKey = typeof ACCOUNT_KEYS[number]
 
 export const ACCOUNT_LABELS: Record<string, string> = {
   salary:    'Salary',
-  pmg_share: 'PMG Share',
   reinvest:  'Reinvest',
   reserve:   'Reserve',
   flex:      'Flex',
 }
 
-export const REVENUE_RATES = {
-  pmg_share: 0.20,
-} as const
+export const REVENUE_RATES = {} as const
 
 /** YTD profit pool share per account (must sum to 1.0) */
 export const PROFIT_POOL_RATES = {

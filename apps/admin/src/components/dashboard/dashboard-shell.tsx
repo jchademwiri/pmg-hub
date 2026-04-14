@@ -2,13 +2,13 @@
 
 import { useState } from 'react'
 import { KpiGrid } from '@/components/dashboard/kpi-grid'
-import { SalaryCard } from '@/components/dashboard/salary-card'
+import { BudgetCard } from '@/components/dashboard/budget-card'
 import { DivisionAreaChart } from '@/components/dashboard/division-area-chart'
 import { DivisionRevenue } from '@/components/dashboard/division-revenue'
 import { LeadsSummary } from '@/components/dashboard/leads-summary'
 import { ExpenseSnapshot } from '@/components/dashboard/expense-snapshot'
 import CloseMonthButton from '@/components/dashboard/close-month-button'
-import type { PeriodSummary, DivisionRevenue as DivisionRevenueType, LeadStatusCount, MonthlyFinancials, WithdrawalSummary, DivisionSeriesChart } from '@/lib/financial'
+import type { PeriodSummary, DivisionRevenue as DivisionRevenueType, LeadStatusCount, MonthlyFinancials, BucketBalances, DivisionSeriesChart } from '@/lib/financial'
 
 type Tab = 'current' | 'previous' | 'ytd'
 
@@ -28,9 +28,7 @@ type Props = {
   leads: LeadStatusCount[]
   monthlySeries: MonthlyFinancials[]
   sparklineData: MonthlyFinancials[]
-  withdrawals: WithdrawalSummary
-  withdrawalsPrevMonth: WithdrawalSummary
-  withdrawalsYTD: WithdrawalSummary
+  ledgerBalances: BucketBalances
   divisionSeriesData: {
     last3: DivisionSeriesChart
     last6: DivisionSeriesChart
@@ -61,9 +59,7 @@ export function DashboardShell({
   divisionExpenseMap,
   leads,
   sparklineData,
-  withdrawals,
-  withdrawalsPrevMonth,
-  withdrawalsYTD,
+  ledgerBalances,
   divisionSeriesData,
   expensesByDivision,
   hasSnapshot,
@@ -140,31 +136,17 @@ export function DashboardShell({
         deltaLabel={activeDeltaLabel}
       />
 
-      {/* ── Row 2: Salary card + Division Area Chart ── */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
-        <SalaryCard
-          salary={activeSummary.salary}
-          ytdSalary={ytdSummary.salary}
-          profitPool={activeSummary.profitPool}
-          periodLabel={activeLabel}
-          withdrawals={
-            activeTab === 'current'  ? withdrawals :
-            activeTab === 'previous' ? withdrawalsPrevMonth :
-            withdrawalsYTD
-          }
-          carryOver={
-            activeTab === 'current'  ? withdrawals.carryOver :
-            activeTab === 'previous' ? withdrawalsPrevMonth.carryOver :
-            0
-          }
-          showWithdrawButton={activeTab === 'current'}
-          withdrawLabel={
-            activeTab === 'ytd' ? 'Withdrawn YTD' : 'Withdrawn this month'
-          }
-        />
-        <div className="lg:col-span-2">
-          <DivisionAreaChart seriesData={divisionSeriesData} />
-        </div>
+      {/* ── Row 2: Ledger Balances ── */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+        <BudgetCard title="Salary" bucket={ledgerBalances.salary} colorClass="text-green-500" bgClass="bg-green-500/10" borderClass="border-green-500/20" />
+        <BudgetCard title="Reinvest" bucket={ledgerBalances.reinvest} colorClass="text-blue-500" bgClass="bg-blue-500/10" borderClass="border-blue-500/20" />
+        <BudgetCard title="Reserve" bucket={ledgerBalances.reserve} colorClass="text-amber-500" bgClass="bg-amber-500/10" borderClass="border-amber-500/20" />
+        <BudgetCard title="Flex" bucket={ledgerBalances.flex} colorClass="text-purple-500" bgClass="bg-purple-500/10" borderClass="border-purple-500/20" />
+      </div>
+
+      {/* ── Row 3: Division Area Chart ── */}
+      <div className="w-full">
+        <DivisionAreaChart seriesData={divisionSeriesData} />
       </div>
 
       {/* ── Row 4: Division revenue with expenses + Leads ── */}

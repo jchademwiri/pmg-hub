@@ -16,7 +16,7 @@ const navItems = [
   { href: '/income',      label: 'Income',      icon: TrendingUp },
   { href: '/expenses',    label: 'Expenses',    icon: TrendingDown },
   { href: '/expense-categories', label: 'Categories', icon: Tags },
-  { href: '/withdrawals', label: 'Withdrawals', icon: Wallet },
+  { href: '/ledger',      label: 'Corporate Ledger', icon: Wallet },
   { href: '/accounts',    label: 'Accounts',    icon: PiggyBank },
   { href: '/clients',     label: 'Clients',     icon: UserCheck },
   { href: '/leads',       label: 'Leads',       icon: Users },

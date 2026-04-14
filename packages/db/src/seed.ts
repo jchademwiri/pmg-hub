@@ -4,7 +4,7 @@ import { resolve } from "path";
 import pg from "pg";
 import { drizzle } from "drizzle-orm/node-postgres";
 import { eq } from "drizzle-orm";
-import { divisions, clients, income, expenses, leads, withdrawals, awsPricing, snapshots, expenseCategories } from "./schema";
+import { divisions, clients, income, expenses, leads, awsPricing, snapshots, expenseCategories } from "./schema";
 import { getFinancialSummaryForPeriod } from "./queries";
 
 config({ path: resolve(__dirname, "../.env") });
