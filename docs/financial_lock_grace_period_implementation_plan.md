@@ -1,256 +1,407 @@
-# Financial Lock & Grace Period Implementation Plan
-
-This document outlines the strategy for restricting financial record backdating, prohibiting modifications to closed periods, and aligning the **Month Close** functionality with Playhouse Media Group's business rules.
+# Financial Lock & Grace Period — Implementation Plan v2
 
 ---
 
-## 1. Detailed Analysis of Current Implementation
+## 1. Summary of Changes from v1
 
-### Snapshot Module (`snapshots.ts` & Dashboard)
+Before implementing, read this diff between v1 and v2:
 
-- **Manual Close Logic**  
-  The "Close Month" button currently identifies the period to close as the **current month**. This is incorrect — it should target the **previous calendar month**.
-
-- **Auto-Close Logic**  
-  `autoClosePreviousMonthIfNeeded` correctly calculates the previous month and triggers when `day >= 5`.
-
-- **Storage**  
-  Snapshots are stored as period strings (e.g., `"2026-05"`).
-
-- **Integrity Gap**  
-  There are currently no application-level restrictions preventing a user from:
-  - Deleting a snapshot
-  - Modifying an existing snapshot
+| # | Gap in v1 | Fix in v2 |
+|---|-----------|-----------|
+| 1 | `getMinAllowedDate()` listed as sync | Corrected to `async` — requires DB call |
+| 2 | No rule for months older than previous | Explicit: any month older than previous is unconditionally closed |
+| 3 | Grace period defined as "1st–5th inclusive" but code fires auto-close on day 5 | Clarified: grace is days 1–5, lock starts day **6** (`day > 5`) |
+| 4 | `account-withdrawal.ts` listed as needing changes | Removed — it delegates to `createLedgerEntry`, covered transitively |
+| 5 | `closedPeriods` UI prop mentioned with no utility to produce it | Added `getClosedPeriodsFromDates()` to the date rules engine |
+| 6 | Delete safety described in plan but which query helpers to use was unclear | Explicit: use `getIncomeById`, `getExpenseById`, `getLedgerById` — all exist in `queries.ts` |
+| 7 | No `server-only` import mentioned for `date-rules.ts` | Required — file queries DB and must not run client-side |
+| 8 | Snapshot delete/update protection unclear | Clarified: no UI exists for this, that's the protection. No code changes needed |
+| 9 | Phase count was 4, UI enforcement in one phase | Split into P4 (page-level data) and P5 (component-level rendering) for clarity |
 
 ---
 
-### Financial Transaction Modules (Income, Expenses, Withdrawals, Ledger)
+## 2. Current State Analysis
 
-- **Validation**  
-  Currently only prevents **future-dated entries**.
+### Snapshot Module
 
-- **Integrity Gaps**  
-  - Users can **backdate entries indefinitely**.
-  - Users can **edit or delete records in closed months**.
-  - This results in **mutable financial history**, compromising reporting accuracy.
+| Item | Status |
+|------|--------|
+| Auto-close targets previous month | ✅ Correct |
+| Auto-close fires on day >= 5 | ✅ Correct |
+| Manual close button targets previous month | ❌ Bug — currently uses `currentPeriod = now.toISOString().slice(0, 7)` which is the current month |
+| Duplicate snapshot prevention | ✅ Already implemented |
+| Snapshot delete/update protection | ✅ No UI exists — by design |
 
----
+### Income / Expenses / Ledger
 
-## 2. Proposed Business Rules & Constraints
-
-### Date Entry & Backdating
-
-- **Standard Rule**  
-  Records can only be added for the **current calendar month**.
-
-- **Grace Period (1st–5th)**  
-  Users may:
-  - Add records
-  - Edit records
-  for the **previous month only**.
-
-- **The Lock (From the 6th or Snapshot Creation)**  
-  A month becomes **closed** when:
-  - The system date is the **6th or later**, OR
-  - A **snapshot exists** for that month
-
-- **Future Guard**  
-  No records may be created with a **future date**.
+| Item | Status |
+|------|--------|
+| Future date prevention | ✅ Implemented |
+| Unlimited backdating | ❌ Not restricted |
+| Closed period create guard | ❌ Missing |
+| Closed period update guard | ❌ Missing |
+| Closed period delete guard | ❌ Missing — delete doesn't fetch existing record first |
 
 ---
 
-### Immutable Financial History
+## 3. Execution Plan
 
-- **No Retroactive Changes**  
-  Once a month is closed:
-  - ❌ No creation
-  - ❌ No updates
-  - ❌ No deletions
-  for any records within that month
+### Phase 1 — Date Rules Engine
 
-- **Snapshot Immutability**  
-  - Snapshots are **final**
-  - ❌ Cannot be edited
-  - ❌ Cannot be deleted
-  - Serve as the **source of truth**
-
----
-
-## 3. Implementation Strategy
-
-### Phase 1: Date Rules Engine
-
-Create a centralized utility:
-
-**File:** `lib/date-rules.ts`
-
-Responsibilities:
-- Determine `minAllowedDate`
-- Check if a date falls in a **closed period**
-
-This module must be used by **all server actions**.
-
----
-
-### Phase 2: Snapshot Integrity & Alignment
-
-- Fix Dashboard "Close Month" button:
-  - Must target **previous month**, not current
-
-- Enforce snapshot immutability:
-  - Block deletion
-  - Block updates
-
----
-
-### Phase 3: Server Action Hardening (The Core Lock)
-
-Apply strict validation across all mutation endpoints:
-
-- `actions/income.ts`
-- `actions/expenses.ts`
-- `actions/account-withdrawal.ts`
-- `actions/ledger.ts`
-
-Rules:
-- Block all operations on **closed periods**
-
----
-
-### Phase 4: UI Enforcement
-
-- Disable or hide:
-  - Edit buttons
-  - Delete buttons
-
-- Restrict date inputs:
-  - Set `min` attribute to `minAllowedDate`
-
----
-
-## 4. Detailed Developer Guide (Execution Instructions)
-
-### Step 1: Create Date Rules Utility
-
-**File:** `apps/admin/src/lib/date-rules.ts`
-
-Implement:
-
-- `getMinAllowedDate()`
-  - Returns a `YYYY-MM-DD` string
-
-- `isPeriodClosed(date: string)`
-  - Extracts `YYYY-MM`
-  - Returns `true` if:
-    - A snapshot exists for that period, OR
-    - Date falls outside grace period
-
----
-
-### Step 2: Harden Server Actions
-
-**Files:**
-- `actions/income.ts`
-- `actions/expenses.ts`
-- `actions/ledger.ts`
-- `actions/snapshots.ts`
-
-#### Create / Update
+**File to create:** `apps/admin/src/lib/date-rules.ts`
 
 ```ts
-if (await isPeriodClosed(data.date)) {
-  throw new Error("This financial period is closed.");
+import 'server-only'
+import { getSnapshotByPeriod } from '@pmg/db'
+
+/**
+ * Returns the earliest YYYY-MM-DD date allowed for new or updated records.
+ * MUST be async — checks the DB for an existing snapshot.
+ */
+export async function getMinAllowedDate(): Promise<string> {
+  const now = new Date()
+  const day = now.getDate()
+  const year = now.getFullYear()
+  const month = now.getMonth() // 0-indexed
+
+  const currentMonthStart = `${year}-${String(month + 1).padStart(2, '0')}-01`
+
+  // Grace period is over — current month only
+  if (day > 5) return currentMonthStart
+
+  // Check if previous month has already been closed via snapshot
+  const prevDate = new Date(year, month - 1, 1)
+  const prevPeriod = `${prevDate.getFullYear()}-${String(prevDate.getMonth() + 1).padStart(2, '0')}`
+  const snapshot = await getSnapshotByPeriod(prevPeriod)
+
+  if (snapshot) return currentMonthStart
+
+  // Grace period active and previous month is open
+  return `${prevPeriod}-01`
+}
+
+/**
+ * Returns true if the period containing `date` is closed.
+ * A period is closed if:
+ *   - A snapshot exists for it, OR
+ *   - It is older than the previous calendar month (always closed), OR
+ *   - It is the previous month and today is day 6 or later
+ */
+export async function isPeriodClosed(date: string): Promise<boolean> {
+  const period = date.slice(0, 7) // "YYYY-MM"
+  const now = new Date()
+  const currentPeriod = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`
+
+  // Current month is always open
+  if (period === currentPeriod) return false
+
+  // Compute previous month period
+  const prevDate = new Date(now.getFullYear(), now.getMonth() - 1, 1)
+  const prevPeriod = `${prevDate.getFullYear()}-${String(prevDate.getMonth() + 1).padStart(2, '0')}`
+
+  // Any month older than previous is unconditionally closed
+  if (period < prevPeriod) return true
+
+  // period === prevPeriod — apply grace + snapshot logic
+  const snapshot = await getSnapshotByPeriod(period)
+  if (snapshot) return true
+
+  const day = now.getDate()
+  if (day > 5) return true // grace period over
+
+  return false // grace period active, no snapshot
+}
+
+/**
+ * Returns a human-readable error message for a rejected date.
+ */
+export function getMinDateErrorMessage(minDate: string): string {
+  const [y, m] = minDate.split('-')
+  const label = new Date(Number(y), Number(m) - 1, 1).toLocaleString('en-ZA', {
+    month: 'long',
+    year: 'numeric',
+  })
+  return `Date must be ${label} or later — this financial period is closed.`
+}
+
+/**
+ * Given a list of date strings (YYYY-MM-DD), returns the subset of
+ * periods (YYYY-MM) that are currently closed.
+ *
+ * Used by page components to pass a closedPeriods prop to table components.
+ * Deduplicates periods before checking to minimise DB calls.
+ */
+export async function getClosedPeriodsFromDates(dates: string[]): Promise<string[]> {
+  const uniquePeriods = [...new Set(dates.map((d) => d.slice(0, 7)))]
+
+  const results = await Promise.all(
+    uniquePeriods.map(async (period) => ({
+      period,
+      closed: await isPeriodClosed(period + '-01'),
+    }))
+  )
+
+  return results.filter((r) => r.closed).map((r) => r.period)
 }
 ```
 
-#### Delete (Critical Safety Pattern)
+**Commit:** `feat(core): add async date rules engine for financial period locking`
 
-1. Fetch record from DB
-2. Validate using stored date
+---
+
+### Phase 2 — Fix Snapshot Close Month Period
+
+**File:** `apps/admin/src/app/(admin)/dashboard/page.tsx`
+
+Find:
+```ts
+const currentPeriod = now.toISOString().slice(0, 7)
+const dayOfMonth = now.getDate()
+const showCloseMonthButton = dayOfMonth >= 1 && dayOfMonth <= 5
+// ...
+const currentPeriodSnapshot = await getSnapshotByPeriod(currentPeriod)
+```
+
+Replace with:
+```ts
+const dayOfMonth = now.getDate()
+const showCloseMonthButton = dayOfMonth >= 1 && dayOfMonth <= 5
+
+// The period to close is ALWAYS the previous month, not the current one
+const prevDate = new Date(now.getFullYear(), now.getMonth() - 1, 1)
+const periodToClose = `${prevDate.getFullYear()}-${String(prevDate.getMonth() + 1).padStart(2, '0')}`
+
+// Check if previous month is already closed
+const currentPeriodSnapshot = await getSnapshotByPeriod(periodToClose)
+```
+
+Then pass `periodToClose` (not `currentPeriod`) to `DashboardShell`:
+```ts
+<DashboardShell
+  // ...
+  currentPeriod={periodToClose}   // was: currentPeriod
+  hasSnapshot={hasSnapshot}
+  showCloseMonthButton={showCloseMonthButton}
+/>
+```
+
+**Commit:** `fix(snapshots): close month targets previous period not current`
+
+---
+
+### Phase 3 — Server Action Locks
+
+#### 3a. `actions/income.ts`
+
+Apply to `createIncome`, `updateIncome`, and `deleteIncome`.
+
+**Create / Update** — add after existing future-date check:
+```ts
+import { isPeriodClosed, getMinAllowedDate, getMinDateErrorMessage } from '@/lib/date-rules'
+
+// After future date check:
+if (await isPeriodClosed(parsed.date)) {
+  const minDate = await getMinAllowedDate()
+  return { error: getMinDateErrorMessage(minDate) }
+}
+```
+
+**Delete** — replace existing with fetch-first pattern:
+```ts
+import { getIncomeById } from '@pmg/db'  // already exists in queries.ts
+
+export async function deleteIncome(id: string): Promise<{ error?: string }> {
+  try {
+    const existing = await getIncomeById(id)
+    if (!existing) return { error: 'Record not found.' }
+
+    if (await isPeriodClosed(existing.date)) {
+      return { error: 'Cannot delete records from a closed financial period.' }
+    }
+
+    await db.delete(income).where(eq(income.id, id))
+    revalidatePath('/income')
+    revalidatePath('/dashboard')
+    return {}
+  } catch {
+    return { error: 'Failed to delete. Please try again.' }
+  }
+}
+```
+
+---
+
+#### 3b. `actions/expenses.ts`
+
+Same pattern as income. Use `getExpenseById` (already in `queries.ts`) for the delete guard.
+
+---
+
+#### 3c. `actions/ledger.ts`
+
+Same pattern. Use `getLedgerById` (already in `queries.ts`) for the delete guard.
+
+Note: `updateLedgerEntry` in the actions file receives a date from the form. Apply
+`isPeriodClosed` to both the submitted date AND the existing record's date:
 
 ```ts
-const existing = await getRecordById(id);
+// In updateLedgerEntry:
+const existing = await getLedgerById(id)
+if (!existing) return { error: 'Record not found.' }
 
+// Block if existing record is in a closed period
 if (await isPeriodClosed(existing.date)) {
-  throw new Error("Cannot delete records from a closed period.");
+  return { error: 'Cannot edit records from a closed financial period.' }
+}
+
+// Also block if trying to move a record into a closed period
+if (await isPeriodClosed(parsed.date)) {
+  const minDate = await getMinAllowedDate()
+  return { error: getMinDateErrorMessage(minDate) }
 }
 ```
 
+**Commit:** `feat(actions): block create/update/delete mutations on closed financial periods`
+
 ---
 
-### Step 3: Snapshot Protection
+### Phase 4 — Page-Level Data Computation
 
-- Prevent:
-  - Overwriting snapshots
-  - Deleting snapshots
+**Files:** `income/page.tsx`, `expenses/page.tsx`, `ledger/page.tsx`
+
+For each page, add `getMinAllowedDate` and `getClosedPeriodsFromDates` to the `Promise.all`:
 
 ```ts
-if (snapshotExists(period)) {
-  throw new Error("Snapshot already exists and is immutable.");
-}
+import { getMinAllowedDate, getClosedPeriodsFromDates } from '@/lib/date-rules'
+
+// In Promise.all:
+const [result, divisions, clients, months, minDate] = await Promise.all([
+  getAllIncome(filters, pageObj),
+  getAllDivisions(),
+  getAllClients(),
+  getDistinctIncomeMonths(),
+  getMinAllowedDate(),
+])
+
+// After Promise.all — getClosedPeriodsFromDates deduplicates internally
+const closedPeriods = await getClosedPeriodsFromDates(result.data.map((r) => r.date))
+
+// Pass to client component:
+<IncomePageClient
+  // ...existing props
+  minDate={minDate}
+  closedPeriods={closedPeriods}
+/>
+```
+
+Add `minDate: string` and `closedPeriods: string[]` to the client component's props interface.
+
+**Commit:** `feat(ui): compute minDate and closedPeriods server-side for table pages`
+
+---
+
+### Phase 5 — Component-Level UI Enforcement
+
+#### 5a. Add/Edit Forms — date input `min` attribute
+
+**Files:** `income-add-form.tsx`, `expense-add-form.tsx`, `ledger-add-form.tsx`
+and their edit equivalents.
+
+Add `minDate: string` to each form's props interface, then apply:
+
+```tsx
+<Input
+  type="date"
+  name="date"
+  min={minDate}   // ← add this
+  max={today}
+  // ...
+/>
 ```
 
 ---
 
-### Step 4: UI Prop Drilling & Conditional Rendering
+#### 5b. Table Components — hide actions for locked rows
 
-**Files:**
-- `income-table.tsx`
-- `expense-table.tsx`
-- `ledger-table.tsx`
+**Files:** `income-table.tsx`, `expense-table.tsx`, `ledger-table.tsx`
 
-#### Pass Down:
+Add `closedPeriods: string[]` to the table's props interface. Pass it through to each row component.
 
+Inside each row:
 ```ts
-closedPeriods: string[]
+const period = entry.date.slice(0, 7)
+const isLocked = closedPeriods.includes(period)
 ```
 
-#### UI Logic:
+Replace edit and delete buttons:
+```tsx
+{isLocked ? (
+  <Button variant="ghost" size="icon" disabled title="Period is closed">
+    <Lock className="h-4 w-4 text-muted-foreground/30" />
+  </Button>
+) : (
+  <Button variant="ghost" size="icon" onClick={startEdit}>
+    <Pencil className="h-4 w-4" />
+  </Button>
+)}
+```
 
-- If `record.date` belongs to a closed period:
-  - Hide Edit button
-  - Hide/Delete button
+Apply same pattern for the delete button. Use `Lock` from `lucide-react`.
 
----
-
-## 5. Implementation Phases & Git Commit Strategy
-
-| Phase | Description | Commit Message |
-|------|-------------|----------------|
-| P1 | Create date rules engine | `feat(core): add date rules engine for financial locking` |
-| P2 | Fix snapshot logic & immutability | `fix(snapshots): align close period and prevent snapshot modification` |
-| P3 | Enforce backend mutation locks | `feat(actions): block mutations on closed financial periods` |
-| P4 | UI enforcement & restrictions | `feat(ui): hide edit/delete actions for closed month records` |
-
----
-
-## 6. Safety Checks (Critical)
-
-### Deletion Safety
-
-- Always fetch record from database before deletion
-- Never trust client-provided date
+**Commit:** `feat(ui): hide edit and delete actions for closed period records`
 
 ---
 
-### Snapshot Priority Rule
+## 4. Phase Summary & Commit Strategy
 
-- A snapshot **immediately locks a period**, regardless of date
-
-> Even on the 2nd of the month, if a snapshot exists, the period is considered closed.
-
----
-
-## Summary
-
-This implementation ensures:
-
-- Strict financial period control
-- Immutable historical records
-- Alignment between system behavior and accounting best practices
-- Elimination of reporting inconsistencies caused by retroactive edits
+| Phase | Files Changed | What Changes | Commit |
+|-------|--------------|--------------|--------|
+| P1 | `lib/date-rules.ts` (new) | Creates async date rules engine | `feat(core): add async date rules engine` |
+| P2 | `dashboard/page.tsx` | Fixes Close Month period target | `fix(snapshots): close previous month not current` |
+| P3 | `actions/income.ts`, `actions/expenses.ts`, `actions/ledger.ts` | Adds create/update/delete locks | `feat(actions): block mutations on closed periods` |
+| P4 | `income/page.tsx`, `expenses/page.tsx`, `ledger/page.tsx` | Computes minDate + closedPeriods | `feat(ui): compute lock data server-side` |
+| P5 | All form and table components | Applies min attr + hides locked actions | `feat(ui): restrict UI for closed periods` |
 
 ---
 
-**End of Document**
+## 5. Testing Checklist
 
+Work through each scenario before marking a phase complete:
+
+### Phase 3 Tests (Server Actions)
+
+| Test | Setup | Expected |
+|------|-------|----------|
+| Create income in current month | Any day | ✅ Succeeds |
+| Create income in prev month, day 2, no snapshot | Day 2 of month, no snapshot | ✅ Succeeds |
+| Create income in prev month, day 2, snapshot exists | Day 2, snapshot present | ❌ Blocked |
+| Create income in prev month, day 7 | Day 7 | ❌ Blocked |
+| Create income 2 months ago | Any day | ❌ Blocked |
+| Create future income | Any day | ❌ Blocked |
+| Delete current month record | Any day | ✅ Succeeds |
+| Delete closed period record | Snapshot exists or day 6+ | ❌ Blocked |
+| Edit closed period record | Snapshot exists or day 6+ | ❌ Blocked |
+| Move record into closed period via update | Date changed to closed period | ❌ Blocked |
+
+### Phase 2 Test (Dashboard)
+
+| Test | Expected |
+|------|----------|
+| "Close Month" on June 3rd closes May | ✅ `periodToClose = "2026-05"` |
+| "Close Month" creates snapshot for `"2026-05"` not `"2026-06"` | ✅ |
+| Clicking "Close Month" twice shows error | ✅ Already handled |
+
+---
+
+## 6. Files NOT Changed
+
+| File | Reason |
+|------|--------|
+| `actions/account-withdrawal.ts` | Delegates to `createLedgerEntry` — covered transitively |
+| `actions/snapshots.ts` | No delete/update actions exist — no change needed |
+| `queries.ts` | All needed helpers (`getIncomeById`, `getExpenseById`, `getLedgerById`) already exist |
+| `packages/db/src/schema/*` | DB schema unchanged |
+
+---
+
+**End of Implementation Plan v2**
