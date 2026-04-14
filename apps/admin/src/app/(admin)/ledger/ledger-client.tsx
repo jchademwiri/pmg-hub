@@ -35,7 +35,7 @@ export default function LedgerClient({
       <div className="flex justify-between items-center bg-card p-4 rounded-xl border border-border shadow-sm">
         <h2 className="text-lg font-medium">Ledger Entries</h2>
         <Button onClick={() => setIsAdding(true)} disabled={isAdding}>
-          <Plus className="h-4 w-4 mr-2" /> Add Withdrawal
+          <Plus className="h-4 w-4 mr-2" /> Add Ledger Entry
         </Button>
       </div>
 
