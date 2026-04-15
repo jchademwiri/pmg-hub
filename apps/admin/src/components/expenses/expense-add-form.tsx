@@ -1,45 +1,52 @@
-'use client'
+'use client';
 
-import * as React from 'react'
-import { toast } from 'sonner'
-import { Button } from '@/components/ui/button'
-import { Input } from '@/components/ui/input'
+import * as React from 'react';
+import { toast } from 'sonner';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from '@/components/ui/select'
+} from '@/components/ui/select';
 
-const today = new Date().toISOString().split('T')[0]
+const today = new Date().toISOString().split('T')[0];
 
 interface ExpenseAddFormProps {
-  divisions: { id: string; name: string }[]
-  categories: string[]
-  clients: { id: string; name: string }[]
-  createAction: (formData: FormData) => Promise<{ error?: string }>
+  divisions: { id: string; name: string }[];
+  categories: string[];
+  clients: { id: string; name: string }[];
+  createAction: (formData: FormData) => Promise<{ error?: string }>;
+  minDate?: string;
 }
 
-export function ExpenseAddForm({ divisions, categories, clients, createAction }: ExpenseAddFormProps) {
-  const formRef = React.useRef<HTMLFormElement>(null)
-  const [isPending, startTransition] = React.useTransition()
-  const [errorMessage, setErrorMessage] = React.useState<string | null>(null)
+export function ExpenseAddForm({
+  divisions,
+  categories,
+  clients,
+  createAction,
+  minDate,
+}: ExpenseAddFormProps) {
+  const formRef = React.useRef<HTMLFormElement>(null);
+  const [isPending, startTransition] = React.useTransition();
+  const [errorMessage, setErrorMessage] = React.useState<string | null>(null);
 
   function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
-    e.preventDefault()
-    setErrorMessage(null)
+    e.preventDefault();
+    setErrorMessage(null);
 
     startTransition(async () => {
-      const fd = new FormData(formRef.current!)
-      const result = await createAction(fd)
+      const fd = new FormData(formRef.current!);
+      const result = await createAction(fd);
       if (result.error) {
-        setErrorMessage(result.error)
+        setErrorMessage(result.error);
       } else {
-        toast.success('Expense added')
-        formRef.current?.reset()
+        toast.success('Expense added');
+        formRef.current?.reset();
       }
-    })
+    });
   }
 
   return (
@@ -57,6 +64,7 @@ export function ExpenseAddForm({ divisions, categories, clients, createAction }:
           className="w-40"
           defaultValue={today}
           max={today}
+          min={minDate}
         />
       </div>
 
@@ -149,9 +157,7 @@ export function ExpenseAddForm({ divisions, categories, clients, createAction }:
         {isPending ? 'Adding…' : 'Add Expense'}
       </Button>
 
-      {errorMessage && (
-        <p className="w-full text-sm text-destructive">{errorMessage}</p>
-      )}
+      {errorMessage && <p className="w-full text-sm text-destructive">{errorMessage}</p>}
     </form>
-  )
+  );
 }

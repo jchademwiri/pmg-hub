@@ -26,11 +26,18 @@ interface LedgerEditFormProps {
   updateAction: (id: string, formData: FormData) => Promise<{ error?: string }>;
   onCancel: () => void;
   disabled?: boolean;
+  minDate?: string;
 }
 
 const today = new Date().toISOString().split('T')[0]!;
 
-export function LedgerEditForm({ entry, updateAction, onCancel, disabled = false }: LedgerEditFormProps) {
+export function LedgerEditForm({
+  entry,
+  updateAction,
+  onCancel,
+  disabled = false,
+  minDate,
+}: LedgerEditFormProps) {
   const formRef = React.useRef<HTMLFormElement>(null);
   const [isPending, startTransition] = React.useTransition();
   const [errorMessage, setErrorMessage] = React.useState<string | null>(null);
@@ -52,7 +59,7 @@ export function LedgerEditForm({ entry, updateAction, onCancel, disabled = false
       const fd = new FormData(formRef.current!);
       fd.set('allocationType', selectedAllocation);
       fd.set('entryType', selectedEntry);
-      
+
       const result = await updateAction(entry.id, fd);
       if (result.error) {
         setErrorMessage(result.error);
@@ -65,16 +72,21 @@ export function LedgerEditForm({ entry, updateAction, onCancel, disabled = false
     });
   }
 
-  // When editing, available balance conceptually includes the current entry's amount 
+  // When editing, available balance conceptually includes the current entry's amount
   // since changing it shouldn't be penalized for what was already assigned to it.
   const availableBalance = balances?.[selectedAllocation]?.available ?? 0;
   // Technically we should add the `entry.amount` to it if we stay in same allocation
-  const effectiveAvailable = selectedAllocation === entry.allocationType 
-    ? availableBalance + Number(entry.amount)
-    : availableBalance;
+  const effectiveAvailable =
+    selectedAllocation === entry.allocationType
+      ? availableBalance + Number(entry.amount)
+      : availableBalance;
 
   return (
-    <form ref={formRef} onSubmit={handleSubmit} className="flex flex-col gap-3 items-end bg-muted/30 p-3 rounded-md border text-left w-full sm:w-auto">
+    <form
+      ref={formRef}
+      onSubmit={handleSubmit}
+      className="flex flex-col gap-3 items-end bg-muted/30 p-3 rounded-md border text-left w-full sm:w-auto"
+    >
       <div className="flex flex-wrap gap-3 items-end w-full">
         <div className="flex flex-col gap-1 w-full sm:w-auto">
           <label htmlFor={`edit-date-${entry.id}`} className="text-sm font-medium">
@@ -89,6 +101,7 @@ export function LedgerEditForm({ entry, updateAction, onCancel, disabled = false
             value={selectedDate}
             onChange={(e) => setSelectedDate(e.target.value)}
             max={today}
+            min={minDate}
             className="sm:w-36"
           />
         </div>
@@ -135,7 +148,10 @@ export function LedgerEditForm({ entry, updateAction, onCancel, disabled = false
         </div>
 
         <div className="flex flex-col gap-1 w-full sm:w-auto">
-          <label htmlFor={`edit-amount-${entry.id}`} className="text-sm font-medium flex justify-between">
+          <label
+            htmlFor={`edit-amount-${entry.id}`}
+            className="text-sm font-medium flex justify-between"
+          >
             Amount
             <span className="text-xs text-muted-foreground ml-2">
               (R{effectiveAvailable.toFixed(2)})

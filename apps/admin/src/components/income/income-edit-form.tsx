@@ -1,47 +1,54 @@
-'use client'
+'use client';
 
-import * as React from 'react'
-import { useRouter } from 'next/navigation'
-import { toast } from 'sonner'
-import type { IncomeRow } from '@pmg/db'
-import { Button } from '@/components/ui/button'
-import { Input } from '@/components/ui/input'
+import * as React from 'react';
+import { useRouter } from 'next/navigation';
+import { toast } from 'sonner';
+import type { IncomeRow } from '@pmg/db';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from '@/components/ui/select'
+} from '@/components/ui/select';
 
 interface IncomeEditFormProps {
-  entry: IncomeRow
-  divisions: { id: string; name: string }[]
-  clients: { id: string; name: string; businessName: string | null }[]
-  updateAction: (formData: FormData) => Promise<{ error?: string }>
+  entry: IncomeRow;
+  divisions: { id: string; name: string }[];
+  clients: { id: string; name: string; businessName: string | null }[];
+  updateAction: (formData: FormData) => Promise<{ error?: string }>;
+  minDate?: string;
 }
 
-export function IncomeEditForm({ entry, divisions, clients, updateAction }: IncomeEditFormProps) {
-  const router = useRouter()
-  const [isPending, startTransition] = React.useTransition()
-  const [errorMessage, setErrorMessage] = React.useState<string | null>(null)
-  const [clientId, setClientId] = React.useState<string>(entry.clientId ?? '')
+export function IncomeEditForm({
+  entry,
+  divisions,
+  clients,
+  updateAction,
+  minDate,
+}: IncomeEditFormProps) {
+  const router = useRouter();
+  const [isPending, startTransition] = React.useTransition();
+  const [errorMessage, setErrorMessage] = React.useState<string | null>(null);
+  const [clientId, setClientId] = React.useState<string>(entry.clientId ?? '');
 
   function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
-    e.preventDefault()
-    setErrorMessage(null)
+    e.preventDefault();
+    setErrorMessage(null);
 
     startTransition(async () => {
-      const fd = new FormData(e.currentTarget)
-      fd.set('clientId', clientId)
-      const result = await updateAction(fd)
+      const fd = new FormData(e.currentTarget);
+      fd.set('clientId', clientId);
+      const result = await updateAction(fd);
       if (result.error) {
-        setErrorMessage(result.error)
+        setErrorMessage(result.error);
       } else {
-        toast.success('Income updated')
-        router.push('/income')
+        toast.success('Income updated');
+        router.push('/income');
       }
-    })
+    });
   }
 
   return (
@@ -56,6 +63,7 @@ export function IncomeEditForm({ entry, divisions, clients, updateAction }: Inco
           type="date"
           defaultValue={entry.date}
           max={new Date().toISOString().split('T')[0]}
+          min={minDate}
           required
           disabled={isPending}
           className="w-40"
@@ -134,9 +142,7 @@ export function IncomeEditForm({ entry, divisions, clients, updateAction }: Inco
         {isPending ? 'Saving…' : 'Save Changes'}
       </Button>
 
-      {errorMessage && (
-        <p className="w-full text-sm text-destructive">{errorMessage}</p>
-      )}
+      {errorMessage && <p className="w-full text-sm text-destructive">{errorMessage}</p>}
     </form>
-  )
+  );
 }

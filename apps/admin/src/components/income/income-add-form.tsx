@@ -1,52 +1,53 @@
-'use client'
+'use client';
 
-import * as React from 'react'
-import { toast } from 'sonner'
-import { Button } from '@/components/ui/button'
-import { Input } from '@/components/ui/input'
+import * as React from 'react';
+import { toast } from 'sonner';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from '@/components/ui/select'
+} from '@/components/ui/select';
 
 interface IncomeAddFormProps {
-  divisions: { id: string; name: string }[]
-  clients: { id: string; name: string; businessName: string | null }[]
-  createAction: (formData: FormData) => Promise<{ error?: string }>
+  divisions: { id: string; name: string }[];
+  clients: { id: string; name: string; businessName: string | null }[];
+  createAction: (formData: FormData) => Promise<{ error?: string }>;
+  minDate?: string;
 }
 
-const today = new Date().toISOString().split('T')[0]
+const today = new Date().toISOString().split('T')[0];
 
-export function IncomeAddForm({ divisions, clients, createAction }: IncomeAddFormProps) {
-  const formRef = React.useRef<HTMLFormElement>(null)
-  const [isPending, startTransition] = React.useTransition()
-  const [errorMessage, setErrorMessage] = React.useState<string | null>(null)
-  const [clientId, setClientId] = React.useState<string>('')
+export function IncomeAddForm({ divisions, clients, createAction, minDate }: IncomeAddFormProps) {
+  const formRef = React.useRef<HTMLFormElement>(null);
+  const [isPending, startTransition] = React.useTransition();
+  const [errorMessage, setErrorMessage] = React.useState<string | null>(null);
+  const [clientId, setClientId] = React.useState<string>('');
 
   function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
-    e.preventDefault()
-    setErrorMessage(null)
+    e.preventDefault();
+    setErrorMessage(null);
 
     if (!clientId) {
-      setErrorMessage('Please select a client.')
-      return
+      setErrorMessage('Please select a client.');
+      return;
     }
 
     startTransition(async () => {
-      const fd = new FormData(formRef.current!)
-      fd.set('clientId', clientId)
-      const result = await createAction(fd)
+      const fd = new FormData(formRef.current!);
+      fd.set('clientId', clientId);
+      const result = await createAction(fd);
       if (result.error) {
-        setErrorMessage(result.error)
+        setErrorMessage(result.error);
       } else {
-        toast.success('Income added')
-        formRef.current?.reset()
-        setClientId('')
+        toast.success('Income added');
+        formRef.current?.reset();
+        setClientId('');
       }
-    })
+    });
   }
 
   return (
@@ -63,6 +64,7 @@ export function IncomeAddForm({ divisions, clients, createAction }: IncomeAddFor
           disabled={isPending}
           defaultValue={today}
           max={today}
+          min={minDate}
           className="w-40"
         />
       </div>
@@ -137,9 +139,7 @@ export function IncomeAddForm({ divisions, clients, createAction }: IncomeAddFor
         {isPending ? 'Adding…' : 'Add Income'}
       </Button>
 
-      {errorMessage && (
-        <p className="w-full text-sm text-destructive">{errorMessage}</p>
-      )}
+      {errorMessage && <p className="w-full text-sm text-destructive">{errorMessage}</p>}
     </form>
-  )
+  );
 }

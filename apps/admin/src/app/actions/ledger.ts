@@ -2,7 +2,7 @@
 
 import { z } from 'zod';
 import { revalidatePath } from 'next/cache';
-import { db, ledger, eq } from '@pmg/db';
+import { db, ledger, eq, getLedgerById } from '@pmg/db';
 import {
   insertLedgerEntry,
   updateLedgerEntry as dbUpdateLedgerEntry,
@@ -10,6 +10,7 @@ import {
 } from '@pmg/db';
 import { getLedgerBalances } from '@/lib/financial';
 import { getSessionOrRedirect } from '@/lib/auth';
+import { isPeriodClosed, getMinAllowedDate, getMinDateErrorMessage } from '@/lib/date-rules';
 
 export async function getLedgerBalancesAction() {
   return await getLedgerBalances();
@@ -58,17 +59,21 @@ export async function createLedgerEntry(formData: FormData): Promise<{ error?: s
     const session = await getSessionOrRedirect();
     const raw = Object.fromEntries(formData);
     const result = ledgerSchema.safeParse(raw);
-    
+
     if (!result.success) {
       return { error: result.error.issues[0]?.message ?? 'Validation error' };
     }
-    
+
     const parsed = result.data;
     const today = new Date().toISOString().split('T')[0]!;
     if (parsed.date > today) {
       return { error: 'Ledger date cannot be in the future.' };
     }
-    
+    if (await isPeriodClosed(parsed.date)) {
+      const minDate = await getMinAllowedDate();
+      return { error: getMinDateErrorMessage(minDate) };
+    }
+
     const description = parsed.description?.trim() || formatDefaultDescription(parsed.date);
 
     const constraintCheck = await checkLedgerConstraints(parsed.allocationType, parsed.amount);
@@ -80,9 +85,9 @@ export async function createLedgerEntry(formData: FormData): Promise<{ error?: s
       description,
       allocationType: parsed.allocationType,
       entryType: parsed.entryType,
-      createdBy: session.user.id
+      createdBy: session.user.id,
     });
-    
+
     revalidatePath('/ledger');
     revalidatePath('/accounts');
     revalidatePath('/dashboard');
@@ -100,30 +105,42 @@ export async function updateLedgerEntry(
     await getSessionOrRedirect(); // just ensure active session
     const raw = Object.fromEntries(formData);
     const result = ledgerSchema.safeParse(raw);
-    
+
     if (!result.success) {
       return { error: result.error.issues[0]?.message ?? 'Validation error' };
     }
-    
+
     const parsed = result.data;
     const today = new Date().toISOString().split('T')[0]!;
     if (parsed.date > today) {
       return { error: 'Ledger date cannot be in the future.' };
     }
-    
+
+    const existing = await getLedgerById(id);
+    if (!existing) return { error: 'Record not found.' };
+
+    if (await isPeriodClosed(existing.date)) {
+      return { error: 'Cannot edit records from a closed financial period.' };
+    }
+
+    if (await isPeriodClosed(parsed.date)) {
+      const minDate = await getMinAllowedDate();
+      return { error: getMinDateErrorMessage(minDate) };
+    }
+
     const description = parsed.description?.trim() || formatDefaultDescription(parsed.date);
 
     const constraintCheck = await checkLedgerConstraints(parsed.allocationType, parsed.amount, id);
     if (constraintCheck.error) return constraintCheck;
 
     await dbUpdateLedgerEntry(id, {
-        date: parsed.date,
-        amount: parsed.amount,
-        description,
-        allocationType: parsed.allocationType,
-        entryType: parsed.entryType
+      date: parsed.date,
+      amount: parsed.amount,
+      description,
+      allocationType: parsed.allocationType,
+      entryType: parsed.entryType,
     });
-    
+
     revalidatePath('/ledger');
     revalidatePath('/accounts');
     revalidatePath('/dashboard');
@@ -136,13 +153,21 @@ export async function updateLedgerEntry(
 export async function deleteLedgerEntry(id: string): Promise<{ error?: string }> {
   try {
     await getSessionOrRedirect();
+
+    const existing = await getLedgerById(id);
+    if (!existing) return { error: 'Record not found.' };
+
+    if (await isPeriodClosed(existing.date)) {
+      return { error: 'Cannot delete records from a closed financial period.' };
+    }
+
     await dbDeleteLedgerEntry(id);
-    
+
     revalidatePath('/ledger');
     revalidatePath('/accounts');
     revalidatePath('/dashboard');
     return {};
   } catch {
-    return { error: 'Failed to save. Please try again.' };
+    return { error: 'Failed to delete. Please try again.' };
   }
 }

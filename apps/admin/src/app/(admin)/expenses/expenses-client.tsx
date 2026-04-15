@@ -23,6 +23,8 @@ interface ExpensesPageClientProps {
   createAction: (formData: FormData) => Promise<{ error?: string }>;
   deleteAction: (id: string) => Promise<{ error?: string }>;
   updateAction: (id: string, formData: FormData) => Promise<{ error?: string }>;
+  minDate: string;
+  closedPeriods: string[];
 }
 
 export default function ExpensesPageClient({
@@ -39,6 +41,8 @@ export default function ExpensesPageClient({
   createAction,
   deleteAction,
   updateAction,
+  minDate,
+  closedPeriods,
 }: ExpensesPageClientProps) {
   const [isAdding, setIsAdding] = React.useState(false);
 
@@ -59,6 +63,7 @@ export default function ExpensesPageClient({
             divisions={divisions}
             categories={categories}
             clients={clients}
+            minDate={minDate}
             createAction={async (fd) => {
               const result = await createAction(fd);
               if (!result.error) setIsAdding(false);
@@ -92,6 +97,7 @@ export default function ExpensesPageClient({
             clients={clients}
             deleteAction={deleteAction}
             updateAction={updateAction}
+            closedPeriods={closedPeriods}
           />
           {total > pageSize && (
             <div className="flex justify-between items-center px-2 py-4">

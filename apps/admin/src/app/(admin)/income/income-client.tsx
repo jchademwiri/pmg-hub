@@ -21,6 +21,8 @@ interface IncomePageClientProps {
   createAction: (formData: FormData) => Promise<{ error?: string }>;
   deleteAction: (id: string) => Promise<{ error?: string }>;
   updateAction: (id: string, formData: FormData) => Promise<{ error?: string }>;
+  minDate: string;
+  closedPeriods: string[];
 }
 
 export default function IncomePageClient({
@@ -35,6 +37,8 @@ export default function IncomePageClient({
   createAction,
   deleteAction,
   updateAction,
+  minDate,
+  closedPeriods,
 }: IncomePageClientProps) {
   const [isAdding, setIsAdding] = React.useState(false);
 
@@ -54,6 +58,7 @@ export default function IncomePageClient({
           <IncomeAddForm
             divisions={divisions}
             clients={clients}
+            minDate={minDate}
             createAction={async (fd) => {
               const result = await createAction(fd);
               if (!result.error) setIsAdding(false);
@@ -86,6 +91,7 @@ export default function IncomePageClient({
             clients={clients}
             deleteAction={deleteAction}
             updateAction={updateAction}
+            closedPeriods={closedPeriods}
           />
           {total > pageSize && (
             <div className="flex justify-between items-center px-2 py-4">

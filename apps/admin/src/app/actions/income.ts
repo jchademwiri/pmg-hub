@@ -2,14 +2,15 @@
 
 import { z } from 'zod';
 import { revalidatePath } from 'next/cache';
-import { db, income, eq } from '@pmg/db';
+import { db, income, eq, getIncomeById } from '@pmg/db';
+import { isPeriodClosed, getMinAllowedDate, getMinDateErrorMessage } from '@/lib/date-rules';
 
 const IncomeSchema = z.object({
-  date:        z.string().min(1),
-  divisionId:  z.string().uuid(),
-  clientId:    z.string().uuid(),
+  date: z.string().min(1),
+  divisionId: z.string().uuid(),
+  clientId: z.string().uuid(),
   description: z.string().optional(),
-  amount:      z.coerce.number().positive(),
+  amount: z.coerce.number().positive(),
 });
 
 export async function createIncome(formData: FormData): Promise<{ error?: string }> {
@@ -23,6 +24,10 @@ export async function createIncome(formData: FormData): Promise<{ error?: string
     const today = new Date().toISOString().split('T')[0]!;
     if (parsed.date > today) {
       return { error: 'Income date cannot be in the future.' };
+    }
+    if (await isPeriodClosed(parsed.date)) {
+      const minDate = await getMinAllowedDate();
+      return { error: getMinDateErrorMessage(minDate) };
     }
     await db.insert(income).values({
       date: parsed.date,
@@ -51,7 +56,12 @@ export async function updateIncome(id: string, formData: FormData): Promise<{ er
     if (parsed.date > today) {
       return { error: 'Income date cannot be in the future.' };
     }
-    await db.update(income)
+    if (await isPeriodClosed(parsed.date)) {
+      const minDate = await getMinAllowedDate();
+      return { error: getMinDateErrorMessage(minDate) };
+    }
+    await db
+      .update(income)
       .set({
         date: parsed.date,
         divisionId: parsed.divisionId,
@@ -71,11 +81,18 @@ export async function updateIncome(id: string, formData: FormData): Promise<{ er
 
 export async function deleteIncome(id: string): Promise<{ error?: string }> {
   try {
+    const existing = await getIncomeById(id);
+    if (!existing) return { error: 'Record not found.' };
+
+    if (await isPeriodClosed(existing.date)) {
+      return { error: 'Cannot delete records from a closed financial period.' };
+    }
+
     await db.delete(income).where(eq(income.id, id));
     revalidatePath('/income');
     revalidatePath('/dashboard');
     return {};
   } catch {
-    return { error: 'Failed to save. Please try again.' };
+    return { error: 'Failed to delete. Please try again.' };
   }
 }

@@ -17,6 +17,8 @@ interface LedgerClientProps {
   sum: number;
   currentPage: number;
   pageSize: number;
+  minDate: string;
+  closedPeriods: string[];
 }
 
 export default function LedgerClient({
@@ -25,6 +27,8 @@ export default function LedgerClient({
   sum,
   currentPage,
   pageSize,
+  minDate,
+  closedPeriods,
 }: LedgerClientProps) {
   const [isAdding, setIsAdding] = React.useState(false);
 
@@ -41,7 +45,7 @@ export default function LedgerClient({
 
       {isAdding && (
         <div className="bg-card rounded-xl border border-border shadow-sm p-4">
-          <LedgerAddForm createAction={createLedgerEntry} />
+          <LedgerAddForm createAction={createLedgerEntry} minDate={minDate} />
           <div className="mt-2 flex justify-end">
             <Button variant="outline" onClick={() => setIsAdding(false)}>
               Cancel
@@ -58,6 +62,7 @@ export default function LedgerClient({
             entries={entries}
             deleteAction={deleteLedgerEntry}
             updateAction={updateLedgerEntry}
+            closedPeriods={closedPeriods}
           />
 
           {total > pageSize && (

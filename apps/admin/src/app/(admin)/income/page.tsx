@@ -5,6 +5,7 @@ import { FilterBar } from '@/components/income/filter-bar';
 import { formatZAR } from '@/lib/format';
 import { SetPageTotal } from '@/components/layout/page-header-context';
 import IncomePageClient from './income-client';
+import { getMinAllowedDate, getClosedPeriodsFromDates } from '@/lib/date-rules';
 
 export const dynamic = 'force-dynamic';
 export const metadata: Metadata = { title: 'Income' };
@@ -19,12 +20,15 @@ export default async function IncomePage({ searchParams }: IncomePageProps) {
   const currentPage = Math.max(1, parseInt(page || '1', 10));
   const pageSize = 20;
 
-  const [result, divisions, clients, months] = await Promise.all([
+  const [result, divisions, clients, months, minDate] = await Promise.all([
     getAllIncome({ divisionId, month }, { page: currentPage, pageSize }),
     getAllDivisions(),
     getAllClients(),
     getDistinctIncomeMonths(),
+    getMinAllowedDate(),
   ]);
+
+  const closedPeriods = await getClosedPeriodsFromDates(result.data.map((r) => r.date));
 
   return (
     <div className="flex flex-col gap-6">
@@ -48,6 +52,8 @@ export default async function IncomePage({ searchParams }: IncomePageProps) {
         createAction={createIncome}
         deleteAction={deleteIncome}
         updateAction={updateIncome}
+        minDate={minDate}
+        closedPeriods={closedPeriods}
       />
     </div>
   );

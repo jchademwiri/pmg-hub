@@ -2,15 +2,19 @@
 
 import { z } from 'zod';
 import { revalidatePath } from 'next/cache';
-import { db, expenses, eq } from '@pmg/db';
+import { db, expenses, eq, getExpenseById } from '@pmg/db';
+import { isPeriodClosed, getMinAllowedDate, getMinDateErrorMessage } from '@/lib/date-rules';
 
 const ExpenseSchema = z.object({
-  date:        z.string().min(1),
-  divisionId:  z.string().uuid(),
-  clientId:    z.string().optional().transform(val => (val === '' || val === 'none') ? undefined : val),
-  category:    z.string().min(1),
+  date: z.string().min(1),
+  divisionId: z.string().uuid(),
+  clientId: z
+    .string()
+    .optional()
+    .transform((val) => (val === '' || val === 'none' ? undefined : val)),
+  category: z.string().min(1),
   description: z.string().optional(),
-  amount:      z.coerce.number().positive(),
+  amount: z.coerce.number().positive(),
 });
 
 export async function createExpense(formData: FormData): Promise<{ error?: string }> {
@@ -24,6 +28,10 @@ export async function createExpense(formData: FormData): Promise<{ error?: strin
     const today = new Date().toISOString().split('T')[0]!;
     if (parsed.date > today) {
       return { error: 'Expense date cannot be in the future.' };
+    }
+    if (await isPeriodClosed(parsed.date)) {
+      const minDate = await getMinAllowedDate();
+      return { error: getMinDateErrorMessage(minDate) };
     }
     await db.insert(expenses).values({
       date: parsed.date,
@@ -53,7 +61,12 @@ export async function updateExpense(id: string, formData: FormData): Promise<{ e
     if (parsed.date > today) {
       return { error: 'Expense date cannot be in the future.' };
     }
-    await db.update(expenses)
+    if (await isPeriodClosed(parsed.date)) {
+      const minDate = await getMinAllowedDate();
+      return { error: getMinDateErrorMessage(minDate) };
+    }
+    await db
+      .update(expenses)
       .set({
         date: parsed.date,
         divisionId: parsed.divisionId,
@@ -74,11 +87,18 @@ export async function updateExpense(id: string, formData: FormData): Promise<{ e
 
 export async function deleteExpense(id: string): Promise<{ error?: string }> {
   try {
+    const existing = await getExpenseById(id);
+    if (!existing) return { error: 'Record not found.' };
+
+    if (await isPeriodClosed(existing.date)) {
+      return { error: 'Cannot delete records from a closed financial period.' };
+    }
+
     await db.delete(expenses).where(eq(expenses.id, id));
     revalidatePath('/expenses');
     revalidatePath('/dashboard');
     return {};
   } catch {
-    return { error: 'Failed to save. Please try again.' };
+    return { error: 'Failed to delete. Please try again.' };
   }
 }
