@@ -19,7 +19,7 @@ export async function getLedgerBalancesAction() {
 const ledgerSchema = z.object({
   date: z.string().min(1),
   amount: z.coerce.number().positive(),
-  allocationType: z.enum(['salary', 'reinvest', 'reserve', 'flex']).default('salary'),
+  allocationType: z.enum(['salary', 'reinvest', 'reserve', 'flex', 'pmg_share']).default('salary'),
   entryType: z.enum(['spend', 'transfer', 'adjustment']).default('spend'),
   description: z.string().optional(),
 });
@@ -30,7 +30,7 @@ function formatDefaultDescription(dateStr: string): string {
 }
 
 async function checkLedgerConstraints(
-  allocationType: 'salary' | 'reinvest' | 'reserve' | 'flex',
+  allocationType: 'salary' | 'reinvest' | 'reserve' | 'flex' | 'pmg_share',
   requestedAmount: number,
   existingAmountId?: string,
 ): Promise<{ error?: string }> {

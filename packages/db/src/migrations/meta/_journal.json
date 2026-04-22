@@ -36,6 +36,13 @@
       "when": 1776097870056,
       "tag": "0004_superb_invisible_woman",
       "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "7",
+      "when": 1776827059628,
+      "tag": "0005_simple_susan_delgado",
+      "breakpoints": true
     }
   ]
 }

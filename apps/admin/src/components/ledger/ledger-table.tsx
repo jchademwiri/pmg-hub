@@ -27,7 +27,7 @@ export type LedgerEntry = {
   date: string;
   description: string | null;
   amount: string | number;
-  allocationType: 'salary' | 'reinvest' | 'reserve' | 'flex';
+  allocationType: 'salary' | 'reinvest' | 'reserve' | 'flex' | 'pmg_share';
   entryType: 'spend' | 'transfer' | 'adjustment';
 };
 

@@ -56,10 +56,11 @@ export default async function AccountHistoryPage({ params }: AccountHistoryPageP
   // so each income entry gets a proportional credit that sums to YTD earned.
   const totalRevenue = ytd.revenue;
   const accountEarned: Record<string, number> = {
-    salary: ytd.salary,
-    reinvest: ytd.reinvest,
-    reserve: ytd.reserve,
-    flex: ytd.flex,
+    salary:    ytd.salary,
+    reinvest:  ytd.reinvest,
+    reserve:   ytd.reserve,
+    flex:      ytd.flex,
+    pmg_share: ytd.pmgShare,
   };
   const earned = accountEarned[account] ?? 0;
   // effective rate = earned / revenue (avoids per-tx expense allocation complexity)

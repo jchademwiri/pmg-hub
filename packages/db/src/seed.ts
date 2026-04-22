@@ -4,7 +4,7 @@ import { resolve } from "path";
 import pg from "pg";
 import { drizzle } from "drizzle-orm/node-postgres";
 import { eq } from "drizzle-orm";
-import { divisions, clients, income, expenses, leads, awsPricing, snapshots, expenseCategories } from "./schema";
+import { divisions, clients, income, expenses, leads, awsPricing, snapshots, expenseCategories, ledger } from "./schema";
 import { getFinancialSummaryForPeriod } from "./queries";
 
 config({ path: resolve(__dirname, "../.env") });
@@ -1039,22 +1039,22 @@ await db.insert(leads).values([
 
 console.log("  ✓ leads");
 
-// ── Withdrawals ───────────────────────────────────────────────────────────────
+// ── Ledger Withdrawals ────────────────────────────────────────────────────────
 // A handful of salary withdrawals across the last few months to give the
 // salary card and withdrawal tracking meaningful data.
-// Guard: only insert if no withdrawal rows exist yet (withdrawals has no natural unique key).
-const existingWithdrawalsCount = await db.select().from(withdrawals).limit(1);
-if (existingWithdrawalsCount.length === 0) {
-await db.insert(withdrawals).values([
-  { date: "2025-11-28", amount: "25000.00", description: "Salary withdrawal — November 2025" },
-  { date: "2025-12-22", amount: "18000.00", description: "Salary withdrawal — December 2025" },
-  { date: "2026-01-30", amount: "28000.00", description: "Salary withdrawal — January 2026" },
-  { date: "2026-02-27", amount: "30000.00", description: "Salary withdrawal — February 2026" },
-  { date: "2026-03-28", amount: "35000.00", description: "Salary withdrawal — March 2026" },
+// Guard: only insert if no ledger rows exist yet.
+const existingLedgerCount = await db.select().from(ledger).limit(1);
+if (existingLedgerCount.length === 0) {
+await db.insert(ledger).values([
+  { date: "2025-11-28", amount: "25000.00", description: "Salary withdrawal — November 2025", allocationType: 'salary', entryType: 'spend' },
+  { date: "2025-12-22", amount: "18000.00", description: "Salary withdrawal — December 2025", allocationType: 'salary', entryType: 'spend' },
+  { date: "2026-01-30", amount: "28000.00", description: "Salary withdrawal — January 2026", allocationType: 'salary', entryType: 'spend' },
+  { date: "2026-02-27", amount: "30000.00", description: "Salary withdrawal — February 2026", allocationType: 'salary', entryType: 'spend' },
+  { date: "2026-03-28", amount: "35000.00", description: "Salary withdrawal — March 2026", allocationType: 'salary', entryType: 'spend' },
 ]);
-} // end withdrawals guard
+} // end ledger guard
 
-console.log("  ✓ withdrawals");
+console.log("  ✓ ledger");
 
 // ── Snapshots (past closed months) ───────────────────────────────────────────
 // Generate past months from 2025-04 up to (but not including) current month.

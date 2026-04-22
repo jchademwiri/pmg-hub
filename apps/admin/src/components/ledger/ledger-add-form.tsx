@@ -28,7 +28,7 @@ export function LedgerAddForm({ createAction, disabled = false, minDate }: Ledge
   const [errorMessage, setErrorMessage] = React.useState<string | null>(null);
   const [selectedDate, setSelectedDate] = React.useState(today);
   const [selectedAllocation, setSelectedAllocation] = React.useState<
-    'salary' | 'reinvest' | 'reserve' | 'flex'
+    'salary' | 'reinvest' | 'reserve' | 'flex' | 'pmg_share'
   >('salary');
   const [selectedEntry, setSelectedEntry] = React.useState<'spend' | 'transfer' | 'adjustment'>(
     'spend',
@@ -97,6 +97,7 @@ export function LedgerAddForm({ createAction, disabled = false, minDate }: Ledge
             <SelectValue />
           </SelectTrigger>
           <SelectContent>
+            <SelectItem value="pmg_share">PMG Share</SelectItem>
             <SelectItem value="salary">Salary</SelectItem>
             <SelectItem value="reinvest">Reinvest</SelectItem>
             <SelectItem value="reserve">Reserve</SelectItem>

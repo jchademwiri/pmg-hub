@@ -1,0 +1,1 @@
+ALTER TYPE "public"."allocation_type" ADD VALUE 'pmg_share';

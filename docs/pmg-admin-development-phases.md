@@ -337,7 +337,7 @@ Teal-bordered card showing:
 - **Withdraw button** — only visible on Current Month tab when `profitPool >= 0`
 - **Withdrawal tracking** — current month only:
   - Withdrawn amount (amber if > 0)
-  - Balance remaining (green) or Overdrawn (red)
+  - Balance (green) or Overdrawn (red)
   - "Nothing yet" hint if no withdrawals recorded
 - **Warning state** — red border, red text, and explanatory copy when
   `profitPool < 0`. The withdraw button is hidden.
