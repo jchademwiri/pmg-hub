@@ -2,11 +2,12 @@ import { describe, it, expect, vi, beforeEach } from "vitest";
 import * as fc from "fast-check";
 
 // Use vi.hoisted so mockSelect is available when vi.mock factory runs (hoisted to top)
-const { mockSelect } = vi.hoisted(() => ({ mockSelect: vi.fn() }));
+const { mockSelect, mockExecute } = vi.hoisted(() => ({ mockSelect: vi.fn(), mockExecute: vi.fn() }));
 
 vi.mock("../src/client", () => ({
   db: {
     select: mockSelect,
+    execute: mockExecute,
   },
 }));
 
@@ -16,6 +17,8 @@ import {
   getRevenueByDivision,
   getExpensesByDivision,
   getLeadsByStatus,
+  getDivisionsWithStats,
+  getDivisionWithStatsById,
 } from "../src/queries";
 
 // Helper: build a chainable Drizzle-like select mock that resolves to returnValue
@@ -103,6 +106,70 @@ describe("getLeadsByStatus", () => {
     mockChain([]);
     const result = await getLeadsByStatus();
     expect(result).toEqual([]);
+  });
+});
+
+describe("getDivisionsWithStats", () => {
+  it("returns mapping of db rows to DivisionRow types", async () => {
+    mockExecute.mockResolvedValue({
+      rows: [
+        {
+          id: "1",
+          name: "Division 1",
+          isActive: true,
+          totalIncome: "1000",
+          totalExpenses: "500",
+          netProfit: "500",
+          leadCount: "10",
+        },
+      ],
+    });
+    const result = await getDivisionsWithStats();
+    expect(result).toEqual([
+      {
+        id: "1",
+        name: "Division 1",
+        isActive: true,
+        totalIncome: 1000,
+        totalExpenses: 500,
+        netProfit: 500,
+        leadCount: 10,
+      },
+    ]);
+  });
+});
+
+describe("getDivisionWithStatsById", () => {
+  it("returns null if no row found", async () => {
+    mockExecute.mockResolvedValue({ rows: [] });
+    const result = await getDivisionWithStatsById("non-existent");
+    expect(result).toBeNull();
+  });
+
+  it("returns mapped DivisionRow if found", async () => {
+    mockExecute.mockResolvedValue({
+      rows: [
+        {
+          id: "1",
+          name: "Division 1",
+          isActive: true,
+          totalIncome: "1000",
+          totalExpenses: "500",
+          netProfit: "500",
+          leadCount: "10",
+        },
+      ],
+    });
+    const result = await getDivisionWithStatsById("1");
+    expect(result).toEqual({
+      id: "1",
+      name: "Division 1",
+      isActive: true,
+      totalIncome: 1000,
+      totalExpenses: 500,
+      netProfit: 500,
+      leadCount: 10,
+    });
   });
 });
 

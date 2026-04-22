@@ -6,6 +6,7 @@ export const allocationEnum = pgEnum('allocation_type', [
   'reinvest',
   'reserve',
   'flex',
+  'pmg_share',
 ]);
 
 export const entryTypeEnum = pgEnum('entry_type', [

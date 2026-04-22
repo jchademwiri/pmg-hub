@@ -43,7 +43,7 @@ export function BudgetCard({
           <div className="flex justify-between text-xs">
             <span className={`${colorClass} flex items-center gap-1.5`}>
               <ArrowDownCircle className="size-3" />
-              Ledger Spends
+              Spends
             </span>
             <span className={`font-medium tabular-nums ${hasSpends ? 'opacity-80' : 'opacity-40'} ${colorClass}`}>
               {hasSpends ? `-${formatZAR(bucket.spent)}` : 'Nothing yet'}
@@ -55,7 +55,7 @@ export function BudgetCard({
           }`}>
             <span className="flex items-center gap-1">
               {isOverdrawn ? <AlertTriangle className="size-3" /> : <CheckCircle2 className="size-3" />}
-              {isOverdrawn ? 'Overdrawn' : 'Balance remaining'}
+              {isOverdrawn ? 'Overdrawn' : 'Balance'}
             </span>
             <span className="tabular-nums">{formatZAR(Math.abs(bucket.available))}</span>
           </div>

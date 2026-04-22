@@ -230,7 +230,7 @@ export async function getPreviousYearYTDSummary(): Promise<PeriodSummary> {
 
 // ── Ledger Period Queries ───────────────────────────────────────────────────
 
-export async function getLedgerEntriesCurrentMonth(allocationType?: 'salary' | 'reinvest' | 'reserve' | 'flex'): Promise<{
+export async function getLedgerEntriesCurrentMonth(allocationType?: 'salary' | 'reinvest' | 'reserve' | 'flex' | 'pmg_share'): Promise<{
   total: number;
   entries: { date: string; description: string | null; amount: number }[];
 }> {
@@ -261,7 +261,7 @@ export async function getLedgerEntriesCurrentMonth(allocationType?: 'salary' | '
   return { total, entries };
 }
 
-export async function getLedgerTotalByAllocation(allocationType: 'salary' | 'reinvest' | 'reserve' | 'flex'): Promise<number> {
+export async function getLedgerTotalByAllocation(allocationType: 'salary' | 'reinvest' | 'reserve' | 'flex' | 'pmg_share'): Promise<number> {
   const result = await db
     .select({ total: sql<string>`COALESCE(SUM(${ledger.amount}), '0')` })
     .from(ledger)
@@ -269,7 +269,7 @@ export async function getLedgerTotalByAllocation(allocationType: 'salary' | 'rei
   return Number(result[0]?.total ?? 0);
 }
 
-export async function getLedgerEntriesPreviousMonth(allocationType?: 'salary' | 'reinvest' | 'reserve' | 'flex'): Promise<{
+export async function getLedgerEntriesPreviousMonth(allocationType?: 'salary' | 'reinvest' | 'reserve' | 'flex' | 'pmg_share'): Promise<{
   total: number;
   entries: { date: string; description: string | null; amount: number }[];
 }> {
@@ -299,7 +299,7 @@ export async function getLedgerEntriesPreviousMonth(allocationType?: 'salary' | 
   return { total: entries.reduce((sum, e) => sum + e.amount, 0), entries };
 }
 
-export async function getLedgerEntriesYTD(allocationType?: 'salary' | 'reinvest' | 'reserve' | 'flex'): Promise<{
+export async function getLedgerEntriesYTD(allocationType?: 'salary' | 'reinvest' | 'reserve' | 'flex' | 'pmg_share'): Promise<{
   total: number;
   entries: { date: string; description: string | null; amount: number }[];
 }> {
@@ -586,16 +586,27 @@ export async function getDivisionsWithStats(): Promise<DivisionRow[]> {
     SELECT
       d.id,
       d.name,
-      d.is_active AS "isActive",
-      COALESCE(SUM(i.amount), 0)::numeric AS "totalIncome",
-      COALESCE(SUM(e.amount), 0)::numeric AS "totalExpenses",
-      (COALESCE(SUM(i.amount), 0) - COALESCE(SUM(e.amount), 0))::numeric AS "netProfit",
-      COALESCE(COUNT(l.id), 0)::integer AS "leadCount"
+      d.is_active                            AS "isActive",
+      COALESCE(i.total_income,   0)::numeric AS "totalIncome",
+      COALESCE(e.total_expenses, 0)::numeric AS "totalExpenses",
+      (COALESCE(i.total_income, 0) - COALESCE(e.total_expenses, 0))::numeric AS "netProfit",
+      COALESCE(l.lead_count,     0)::integer AS "leadCount"
     FROM divisions d
-    LEFT JOIN income i ON i.division_id = d.id
-    LEFT JOIN expenses e ON e.division_id = d.id
-    LEFT JOIN leads l ON l.division_id = d.id
-    GROUP BY d.id, d.name, d.is_active
+    LEFT JOIN (
+      SELECT division_id, SUM(amount) AS total_income
+      FROM income
+      GROUP BY division_id
+    ) i ON i.division_id = d.id
+    LEFT JOIN (
+      SELECT division_id, SUM(amount) AS total_expenses
+      FROM expenses
+      GROUP BY division_id
+    ) e ON e.division_id = d.id
+    LEFT JOIN (
+      SELECT division_id, COUNT(*) AS lead_count
+      FROM leads
+      GROUP BY division_id
+    ) l ON l.division_id = d.id
     ORDER BY d.name ASC
   `);
 
@@ -610,13 +621,13 @@ export async function getDivisionsWithStats(): Promise<DivisionRow[]> {
       leadCount: string;
     }>
   ).map((row) => ({
-    id: row.id,
-    name: row.name,
-    isActive: row.isActive,
-    totalIncome: Number(row.totalIncome),
+    id:            row.id,
+    name:          row.name,
+    isActive:      row.isActive,
+    totalIncome:   Number(row.totalIncome),
     totalExpenses: Number(row.totalExpenses),
-    netProfit: Number(row.netProfit),
-    leadCount: Number(row.leadCount),
+    netProfit:     Number(row.netProfit),
+    leadCount:     Number(row.leadCount),
   }));
 }
 
@@ -628,18 +639,33 @@ export async function getDivisionWithStatsById(id: string): Promise<DivisionRow 
     SELECT
       d.id,
       d.name,
-      d.is_active AS "isActive",
-      COALESCE(SUM(i.amount), 0)::numeric AS "totalIncome",
-      COALESCE(SUM(e.amount), 0)::numeric AS "totalExpenses",
-      (COALESCE(SUM(i.amount), 0) - COALESCE(SUM(e.amount), 0))::numeric AS "netProfit",
-      COALESCE(COUNT(l.id), 0)::integer AS "leadCount"
+      d.is_active                            AS "isActive",
+      COALESCE(i.total_income,   0)::numeric AS "totalIncome",
+      COALESCE(e.total_expenses, 0)::numeric AS "totalExpenses",
+      (COALESCE(i.total_income, 0) - COALESCE(e.total_expenses, 0))::numeric AS "netProfit",
+      COALESCE(l.lead_count,     0)::integer AS "leadCount"
     FROM divisions d
-    LEFT JOIN income i ON i.division_id = d.id
-    LEFT JOIN expenses e ON e.division_id = d.id
-    LEFT JOIN leads l ON l.division_id = d.id
+    LEFT JOIN (
+      SELECT division_id, SUM(amount) AS total_income
+      FROM income
+      WHERE division_id = ${id}
+      GROUP BY division_id
+    ) i ON i.division_id = d.id
+    LEFT JOIN (
+      SELECT division_id, SUM(amount) AS total_expenses
+      FROM expenses
+      WHERE division_id = ${id}
+      GROUP BY division_id
+    ) e ON e.division_id = d.id
+    LEFT JOIN (
+      SELECT division_id, COUNT(*) AS lead_count
+      FROM leads
+      WHERE division_id = ${id}
+      GROUP BY division_id
+    ) l ON l.division_id = d.id
     WHERE d.id = ${id}
-    GROUP BY d.id, d.name, d.is_active
   `);
+
   const row = result.rows[0] as
     | {
         id: string;
@@ -651,15 +677,17 @@ export async function getDivisionWithStatsById(id: string): Promise<DivisionRow 
         leadCount: string;
       }
     | undefined;
+
   if (!row) return null;
+
   return {
-    id: row.id,
-    name: row.name,
-    isActive: row.isActive,
-    totalIncome: Number(row.totalIncome),
+    id:            row.id,
+    name:          row.name,
+    isActive:      row.isActive,
+    totalIncome:   Number(row.totalIncome),
     totalExpenses: Number(row.totalExpenses),
-    netProfit: Number(row.netProfit),
-    leadCount: Number(row.leadCount),
+    netProfit:     Number(row.netProfit),
+    leadCount:     Number(row.leadCount),
   };
 }
 
@@ -1172,7 +1200,7 @@ export type LedgerEntryRow = {
   id: string;
   date: string;
   amount: string;
-  allocationType: 'salary' | 'reinvest' | 'reserve' | 'flex';
+  allocationType: 'salary' | 'reinvest' | 'reserve' | 'flex' | 'pmg_share';
   entryType: 'spend' | 'transfer' | 'adjustment';
   description: string | null;
   createdAt: Date | null;
@@ -1180,7 +1208,7 @@ export type LedgerEntryRow = {
 };
 
 export async function getAllLedgerEntries(
-  filters?: { allocationType?: 'salary' | 'reinvest' | 'reserve' | 'flex'; entryType?: 'spend' | 'transfer' | 'adjustment' },
+  filters?: { allocationType?: 'salary' | 'reinvest' | 'reserve' | 'flex' | 'pmg_share'; entryType?: 'spend' | 'transfer' | 'adjustment' },
   pageObj?: { page: number; pageSize: number }
 ): Promise<{ data: LedgerEntryRow[]; total: number; sum: number }> {
   const conditions = [];
@@ -1244,7 +1272,7 @@ export async function getLedgerById(id: string): Promise<LedgerEntryRow | null> 
 export async function insertLedgerEntry(data: {
   amount: number;
   date: string;
-  allocationType: 'salary' | 'reinvest' | 'reserve' | 'flex';
+  allocationType: 'salary' | 'reinvest' | 'reserve' | 'flex' | 'pmg_share';
   entryType: 'spend' | 'transfer' | 'adjustment';
   description?: string;
   createdBy?: string;
@@ -1276,7 +1304,7 @@ export async function insertLedgerEntry(data: {
 export async function updateLedgerEntry(id: string, data: Partial<{
   amount: number;
   date: string;
-  allocationType: 'salary' | 'reinvest' | 'reserve' | 'flex';
+  allocationType: 'salary' | 'reinvest' | 'reserve' | 'flex' | 'pmg_share';
   entryType: 'spend' | 'transfer' | 'adjustment';
   description?: string;
 }>): Promise<void> {
@@ -1293,6 +1321,6 @@ export async function updateLedgerEntry(id: string, data: Partial<{
 export async function deleteLedgerEntry(id: string): Promise<void> {
   await db.delete(ledger).where(eq(ledger.id, id));
 }
-export async function getLedgerByAllocation(allocationType: 'salary' | 'reinvest' | 'reserve' | 'flex') {
+export async function getLedgerByAllocation(allocationType: 'salary' | 'reinvest' | 'reserve' | 'flex' | 'pmg_share') {
   return await db.select().from(ledger).where(eq(ledger.allocationType, allocationType)).orderBy(desc(ledger.date));
 }

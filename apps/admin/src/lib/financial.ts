@@ -44,10 +44,11 @@ export type DivisionRevenue = { divisionName: string; total: number }
 export type LeadStatusCount = { status: string; count: number }
 
 export type BucketBalances = {
-  salary: { expected: number; spent: number; available: number };
-  reinvest: { expected: number; spent: number; available: number };
-  reserve: { expected: number; spent: number; available: number };
-  flex: { expected: number; spent: number; available: number };
+  salary:    { expected: number; spent: number; available: number };
+  reinvest:  { expected: number; spent: number; available: number };
+  reserve:   { expected: number; spent: number; available: number };
+  flex:      { expected: number; spent: number; available: number };
+  pmg_share: { expected: number; spent: number; available: number };
 };
 
 export type DivisionSeriesRow = { month: string; divisionName: string; total: number }
@@ -89,24 +90,26 @@ export { getCurrentMonthSummary, getPreviousMonthSummary, getYTDSummary, getPrev
 // ── Ledger ────────────────────────────────────────────────────────────────────
 export async function getLedgerBalances(): Promise<BucketBalances> {
   const summary = await getFinancialSummary();
-  const [spentSalary, spentReinvest, spentReserve, spentFlex] = await Promise.all([
+  const [spentSalary, spentReinvest, spentReserve, spentFlex, spentPmgShare] = await Promise.all([
     getLedgerTotalByAllocation('salary'),
     getLedgerTotalByAllocation('reinvest'),
     getLedgerTotalByAllocation('reserve'),
-    getLedgerTotalByAllocation('flex')
+    getLedgerTotalByAllocation('flex'),
+    getLedgerTotalByAllocation('pmg_share'),
   ]);
 
   return {
-    salary: { expected: summary.salary, spent: spentSalary, available: summary.salary - spentSalary },
-    reinvest: { expected: summary.reinvest, spent: spentReinvest, available: summary.reinvest - spentReinvest },
-    reserve: { expected: summary.reserve, spent: spentReserve, available: summary.reserve - spentReserve },
-    flex: { expected: summary.flex, spent: spentFlex, available: summary.flex - spentFlex },
+    salary:    { expected: summary.salary,    spent: spentSalary,    available: summary.salary    - spentSalary    },
+    reinvest:  { expected: summary.reinvest,  spent: spentReinvest,  available: summary.reinvest  - spentReinvest  },
+    reserve:   { expected: summary.reserve,   spent: spentReserve,   available: summary.reserve   - spentReserve   },
+    flex:      { expected: summary.flex,      spent: spentFlex,      available: summary.flex      - spentFlex      },
+    pmg_share: { expected: summary.pmgShare,  spent: spentPmgShare,  available: summary.pmgShare  - spentPmgShare  },
   };
 }
 
 export async function getLedgerEntriesForPeriod(
   period: 'current' | 'previous' | 'ytd',
-  allocationType?: 'salary' | 'reinvest' | 'reserve' | 'flex'
+  allocationType?: 'salary' | 'reinvest' | 'reserve' | 'flex' | 'pmg_share'
 ): Promise<{ total: number; entries: { date: string; description: string | null; amount: number }[] }> {
   if (period === 'current') return getLedgerEntriesCurrentMonth(allocationType);
   if (period === 'previous') return getLedgerEntriesPreviousMonth(allocationType);

@@ -19,7 +19,7 @@ interface LedgerEditFormProps {
     id: string;
     date: string;
     amount: string | number;
-    allocationType: 'salary' | 'reinvest' | 'reserve' | 'flex';
+    allocationType: 'salary' | 'reinvest' | 'reserve' | 'flex' | 'pmg_share';
     entryType: 'spend' | 'transfer' | 'adjustment';
     description: string | null;
   };
@@ -119,6 +119,7 @@ export function LedgerEditForm({
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
+              <SelectItem value="pmg_share">PMG Share</SelectItem>
               <SelectItem value="salary">Salary</SelectItem>
               <SelectItem value="reinvest">Reinvest</SelectItem>
               <SelectItem value="reserve">Reserve</SelectItem>
