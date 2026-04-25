@@ -1,6 +1,6 @@
 import { NextResponse, type NextRequest } from 'next/server'
+import { auth } from '@/lib/auth'
 
-// Feature: auth-roles, Property 11: Rate limiter isolates by IP
 // In-memory rate limiter: 10 requests / 60 seconds per IP
 const rateLimitMap = new Map<string, { count: number; windowStart: number }>()
 
@@ -24,10 +24,6 @@ function isRateLimited(ip: string): boolean {
   return false
 }
 
-// Feature: auth-roles, Property 4: Proxy blocks unauthenticated requests to protected paths
-// Feature: auth-roles, Property 5: Proxy passes authenticated requests through
-// Feature: auth-roles, Property 6: Auth allowlist always passes through
-// Feature: auth-security, Property 12: Server-side session validation via Better Auth
 export async function proxy(request: NextRequest): Promise<NextResponse> {
   const { pathname } = request.nextUrl
 
@@ -60,38 +56,26 @@ export async function proxy(request: NextRequest): Promise<NextResponse> {
     return NextResponse.redirect(new URL('/login', request.url))
   }
 
-  // ── Server-side session validation via Better Auth ──────────────────────
-  // Instead of just trusting the cookie exists, verify it against the DB
-  // by calling the Better Auth session endpoint internally.
+  // Validate session directly via the DB adapter — no internal HTTP fetch
   try {
-    const sessionUrl = new URL('/api/auth/get-session', request.url)
-    const res = await fetch(sessionUrl.toString(), {
-      headers: {
-        cookie: request.headers.get('cookie') ?? '',
-      },
+    const session = await auth.api.getSession({
+      headers: request.headers,
     })
 
-    if (!res.ok) {
+    if (!session?.user) {
       return NextResponse.redirect(new URL('/login', request.url))
     }
 
-    const session = await res.json()
-
-    // Reject inactive users even if session is valid
-    if (session?.user && session.user.isActive === false) {
-      // Clear the session cookie and redirect to login
+    // Reject inactive users even if session cookie is present
+    if ((session.user as { isActive?: boolean }).isActive === false) {
       const response = NextResponse.redirect(new URL('/login', request.url))
       response.cookies.delete('better-auth.session_token')
       response.cookies.delete('__Secure-better-auth.session_token')
       return response
     }
-
-    if (!session?.user) {
-      return NextResponse.redirect(new URL('/login', request.url))
-    }
   } catch {
-    // If the internal fetch fails (e.g. during build or cold start), 
-    // fall back to cookie-only check which we already passed above
+    // Session validation failed — redirect to login
+    return NextResponse.redirect(new URL('/login', request.url))
   }
 
   return NextResponse.next()
@@ -99,13 +83,6 @@ export async function proxy(request: NextRequest): Promise<NextResponse> {
 
 export const config = {
   matcher: [
-    /*
-     * Match all request paths EXCEPT:
-     * - _next/static  (static files)
-     * - _next/image   (image optimisation)
-     * - favicon.ico, sitemap.xml, robots.txt (static assets)
-     * - public folder files (png, jpg, svg, etc.)
-     */
     '/((?!_next/static|_next/image|favicon\\.ico|sitemap\\.xml|robots\\.txt|.*\\.(?:png|jpg|jpeg|gif|svg|webp|ico|woff|woff2|ttf|otf)).*)',
   ],
 }
