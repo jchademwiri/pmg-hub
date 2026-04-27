@@ -15,49 +15,68 @@ export const server = {
       message: z.string().min(1, 'Message is required'),
     }),
     handler: async (input) => {
-      const {
-        RESEND_API_KEY,
-        TES_RESEND_API_KEY,
-        AWS_FROM_EMAIL,
-        AWS_ADMIN_EMAIL,
-        DATABASE_URL,
-        DATABASE_URL_UNPOOLED,
-      } = import.meta.env;
+      try {
+        const {
+          RESEND_API_KEY,
+          AWS_RESEND_API_KEY,
+          AWS_FROM_EMAIL,
+          AWS_ADMIN_EMAIL,
+          DATABASE_URL,
+          DATABASE_URL_UNPOOLED,
+        } = import.meta.env;
 
-      const apiKey = RESEND_API_KEY || TES_RESEND_API_KEY;
+        const apiKey = RESEND_API_KEY || AWS_RESEND_API_KEY;
 
-      if (!apiKey) {
-        console.warn('[submitContact] RESEND_API_KEY (or TES_RESEND_API_KEY) is missing in environment.');
-      }
-      if (!DATABASE_URL) {
-        console.warn('[submitContact] DATABASE_URL is missing in environment.');
-      }
+        console.log('[submitContact] DATABASE_URL presence:', !!DATABASE_URL);
+        process.env.DATABASE_URL = DATABASE_URL;
+        if (DATABASE_URL_UNPOOLED) process.env.DATABASE_URL_UNPOOLED = DATABASE_URL_UNPOOLED;
 
-      // Bridge import.meta.env → process.env for @pmg/db
-      process.env.DATABASE_URL = DATABASE_URL;
-      if (DATABASE_URL_UNPOOLED) process.env.DATABASE_URL_UNPOOLED = DATABASE_URL_UNPOOLED;
+        const db = getDb();
 
-      const db = getDb();
+        console.log('[submitContact] Looking up division...');
+        const [awsDivision] = await db
+          .select({ id: divisions.id })
+          .from(divisions)
+          .where(eq(divisions.name, 'Apex Web Solutions'))
+          .limit(1);
+        console.log('[submitContact] Division query result:', awsDivision);
+        console.log('[submitContact] Division found:', awsDivision?.id ?? 'NONE');
 
-      // Look up the AWS division ID
-      const [awsDivision] = await db
-        .select({ id: divisions.id })
-        .from(divisions)
-        .where(eq(divisions.name, 'Apex Web Solutions'))
-        .limit(1);
+        console.log('[submitContact] Checking for existing lead by email and division...', { email: input.email, divisionId: awsDivision?.id });
+        const existingLead = await db.query.leads.findFirst({
+          where: (cols, { and, eq }) => and(
+            eq(cols.email, input.email),
+            eq(cols.divisionId, awsDivision?.id ?? null)
+          )
+        });
 
-      // Insert Lead
-      await db
-        .insert(leads)
-        .values({
-          name:            input.name,
-          email:           input.email,
-          message:         `Subject: ${input.subject}\n\n${input.message}`,
-          source:          'aws',
-          status:          'new',
-          divisionId:      awsDivision?.id ?? null,
-        })
-        .onConflictDoNothing();
+        if (existingLead) {
+          console.log(`[submitContact] Updating existing lead: ${existingLead.id}`);
+          const updRes = await db
+            .update(leads)
+            .set({
+              name:            input.name,
+              message:         input.message,
+              serviceInterest: input.subject,
+              updatedAt:       new Date(),
+            })
+            .where(eq(leads.id, existingLead.id));
+          console.log('[submitContact] Update completed:', updRes);
+        } else {
+          console.log(`[submitContact] Creating new lead...`);
+          const insRes = await db
+            .insert(leads)
+            .values({
+              name:            input.name,
+              email:           input.email,
+              message:         input.message,
+              serviceInterest: input.subject,
+              source:          'aws',
+              status:          'new',
+              divisionId:      awsDivision?.id ?? null,
+            });
+          console.log('[submitContact] Insert completed:', insRes);
+        }
 
       const branding = {
         companyName:  'Apex Web Solutions',
@@ -115,8 +134,12 @@ export const server = {
         console.error('[submitContact] Email flow failed:', err);
       }
 
-      console.log('[submitContact] Handler completed successfully.');
-      return { success: true };
+        console.log('[submitContact] Handler completed successfully.');
+        return { success: true };
+      } catch (error) {
+        console.error('[submitContact] FATAL ERROR:', error);
+        return { success: false, error: (error as Error).message };
+      }
     },
   }),
 
@@ -131,89 +154,125 @@ export const server = {
       type:    z.string().min(1, 'Type is required'),
     }),
     handler: async (input) => {
-      const {
-        RESEND_API_KEY,
-        TES_RESEND_API_KEY,
-        AWS_FROM_EMAIL,
-        AWS_ADMIN_EMAIL,
-        DATABASE_URL,
-        DATABASE_URL_UNPOOLED,
-      } = import.meta.env;
-
-      const apiKey = RESEND_API_KEY || TES_RESEND_API_KEY;
-
-      process.env.DATABASE_URL = DATABASE_URL;
-      if (DATABASE_URL_UNPOOLED) process.env.DATABASE_URL_UNPOOLED = DATABASE_URL_UNPOOLED;
-
-      const db = getDb();
-
-      // Look up division
-      const [awsDivision] = await db
-        .select({ id: divisions.id })
-        .from(divisions)
-        .where(eq(divisions.name, 'Apex Web Solutions'))
-        .limit(1);
-
-      // Insert Lead
-      await db
-        .insert(leads)
-        .values({
-          name:            input.name,
-          email:           input.email,
-          phone:           input.phone,
-          message:         `Booking for: ${input.package} (${input.price} ${input.type})`,
-          source:          'aws',
-          status:          'new',
-          divisionId:      awsDivision?.id ?? null,
-        })
-        .onConflictDoNothing();
-
-      const branding = {
-        companyName:  'Apex Web Solutions',
-        primaryColor: '#2563eb',
-        websiteUrl:   'https://apexwebsolutions.co.za',
-      };
-
       try {
-        console.log(`[bookService] Processing booking from ${input.email} for ${input.package}...`);
+        const {
+          RESEND_API_KEY,
+          AWS_RESEND_API_KEY,
+          AWS_FROM_EMAIL,
+          AWS_ADMIN_EMAIL,
+          DATABASE_URL,
+          DATABASE_URL_UNPOOLED,
+        } = import.meta.env;
 
-        // 1. Admin Notification
-        await sendEmail(
-          { apiKey, from: AWS_FROM_EMAIL, adminEmail: AWS_ADMIN_EMAIL },
-          {
-            to:      AWS_ADMIN_EMAIL,
-            subject: `New AWS Booking — ${input.package}`,
-            react:   React.createElement(AdminNewLeadEmail, {
-              ...branding,
-              name:             input.name,
-              email:            input.email,
-              phone:            input.phone,
-              package_name:     input.package,
-              package_price:    input.price,
-              package_type:     `AWS ${input.type.toUpperCase()}`,
-            }),
-          },
-        );
+        const apiKey = RESEND_API_KEY || AWS_RESEND_API_KEY;
 
-        // 2. User Auto-Reply
-        await sendEmail(
-          { apiKey, from: AWS_FROM_EMAIL, adminEmail: AWS_ADMIN_EMAIL },
-          {
-            to:      input.email,
-            subject: `Booking Confirmation — ${branding.companyName}`,
-            react:   React.createElement(AutoReplyEmail, {
-              ...branding,
-              name:           input.name,
-              whatsappNumber: '27740491433',
-            }),
-          },
-        );
-      } catch (err) {
-        console.error('[bookService] Email flow failed:', err);
+        console.log('[bookService] DATABASE_URL presence:', !!DATABASE_URL);
+        process.env.DATABASE_URL = DATABASE_URL;
+        if (DATABASE_URL_UNPOOLED) process.env.DATABASE_URL_UNPOOLED = DATABASE_URL_UNPOOLED;
+
+        const db = getDb();
+
+        console.log('[bookService] Looking up division...');
+        const [awsDivision] = await db
+          .select({ id: divisions.id })
+          .from(divisions)
+          .where(eq(divisions.name, 'Apex Web Solutions'))
+          .limit(1);
+        console.log('[bookService] Division query result:', awsDivision);
+        console.log('[bookService] Division found:', awsDivision?.id ?? 'NONE');
+
+        console.log('[bookService] Checking for existing lead by (email OR phone) + division...', { email: input.email, phone: input.phone, divisionId: awsDivision?.id });
+        const existingLead = await db.query.leads.findFirst({
+          where: (cols, { and, or, eq }) => and(
+            eq(cols.divisionId, awsDivision?.id ?? null),
+            or(
+              eq(cols.email, input.email),
+              eq(cols.phone, input.phone)
+            )
+          )
+        });
+
+        if (existingLead) {
+          console.log(`[bookService] Updating existing lead: ${existingLead.id}`);
+          const updRes = await db
+            .update(leads)
+            .set({
+              name:            input.name,
+              email:           input.email,
+              phone:           input.phone,
+              message:         `Booking for: ${input.package} (${input.price} ${input.type})`,
+              serviceInterest: input.package,
+              updatedAt:       new Date(),
+            })
+            .where(eq(leads.id, existingLead.id));
+          console.log('[bookService] Update completed:', updRes);
+        } else {
+          console.log(`[bookService] Creating new lead...`);
+          const insRes = await db
+            .insert(leads)
+            .values({
+              name:            input.name,
+              email:           input.email,
+              phone:           input.phone,
+              message:         `Booking for: ${input.package} (${input.price} ${input.type})`,
+              serviceInterest: input.package,
+              source:          'aws',
+              status:          'new',
+              divisionId:      awsDivision?.id ?? null,
+            });
+          console.log('[bookService] Insert completed:', insRes);
+        }
+
+        const branding = {
+          companyName:  'Apex Web Solutions',
+          primaryColor: '#2563eb',
+          websiteUrl:   'https://apexwebsolutions.co.za',
+        };
+
+        try {
+          console.log(`[bookService] Processing booking from ${input.email} for ${input.package}...`);
+
+          // 1. Admin Notification
+          await sendEmail(
+            { apiKey, from: AWS_FROM_EMAIL, adminEmail: AWS_ADMIN_EMAIL },
+            {
+              to:      AWS_ADMIN_EMAIL,
+              subject: `New AWS Booking — ${input.package}`,
+              react:   React.createElement(AdminNewLeadEmail, {
+                ...branding,
+                name:             input.name,
+                email:            input.email,
+                phone:            input.phone,
+                package_name:     input.package,
+                package_price:    input.price,
+                package_type:     `AWS ${input.type.toUpperCase()}`,
+              }),
+            },
+          );
+
+          // 2. User Auto-Reply
+          await sendEmail(
+            { apiKey, from: AWS_FROM_EMAIL, adminEmail: AWS_ADMIN_EMAIL },
+            {
+              to:      input.email,
+              subject: `Booking Confirmation — ${branding.companyName}`,
+              react:   React.createElement(AutoReplyEmail, {
+                ...branding,
+                name:           input.name,
+                whatsappNumber: '27740491433',
+              }),
+            },
+          );
+        } catch (err) {
+          console.error('[bookService] Email flow failed:', err);
+        }
+
+        console.log('[bookService] Handler completed successfully.');
+        return { success: true };
+      } catch (error) {
+        console.error('[bookService] FATAL ERROR:', error);
+        return { success: false, error: (error as Error).message };
       }
-
-      console.log('[bookService] Handler completed successfully.');
-      return { success: true };
     },
   }),
 };

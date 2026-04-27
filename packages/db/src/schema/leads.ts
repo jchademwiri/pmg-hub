@@ -52,11 +52,11 @@ export const leads = pgTable(
     index("leads_created_at_idx").on(t.createdAt),
     index("leads_email_idx").on(t.email),
     index("leads_division_id_idx").on(t.divisionId),
-    uniqueIndex("leads_email_unique_idx")
-      .on(t.email)
+    uniqueIndex("leads_email_division_unique_idx")
+      .on(t.email, t.divisionId)
       .where(sql`${t.email} IS NOT NULL`),
-    uniqueIndex("leads_phone_unique_idx")
-      .on(t.phone)
+    uniqueIndex("leads_phone_division_unique_idx")
+      .on(t.phone, t.divisionId)
       .where(sql`${t.phone} IS NOT NULL`),
   ],
 );
