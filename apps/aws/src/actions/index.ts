@@ -92,9 +92,12 @@ export const server = {
           console.log('[submitContact] Sending notification emails...');
           // 1. Admin Notification
           await sendEmail(
-            { apiKey },
+            { 
+              apiKey,
+              from:       branding.contactEmail,
+              adminEmail: adminRecipient,
+            },
             {
-              from:    branding.contactEmail,
               to:      adminRecipient,
               subject: `${isUpdate ? '[UPDATE] ' : '[NEW LEAD] '} Contact Inquiry: ${input.subject}`,
               react:   React.createElement(AdminNewLeadEmail, {
@@ -109,9 +112,12 @@ export const server = {
 
           // 2. User Auto-Reply
           await sendEmail(
-            { apiKey },
+            { 
+              apiKey,
+              from:       branding.contactEmail,
+              adminEmail: adminRecipient,
+            },
             {
-              from:    branding.contactEmail,
               to:      input.email,
               subject: `We've received your enquiry — ${branding.companyName}`,
               react:   React.createElement(AutoReplyEmail, {
@@ -229,10 +235,14 @@ export const server = {
 
         try {
           console.log('[bookService] Sending notification emails...');
+          // 1. Admin Notification
           await sendEmail(
-            { apiKey },
+            { 
+              apiKey,
+              from:       branding.contactEmail,
+              adminEmail: adminRecipient,
+            },
             {
-              from:    branding.contactEmail,
               to:      adminRecipient,
               subject: `${isUpdate ? '[UPDATE] ' : '[NEW LEAD] '} Booking Request: ${input.package}`,
               react:   React.createElement(AdminNewLeadEmail, {
@@ -246,10 +256,14 @@ export const server = {
             }
           );
 
+          // 2. User Auto-Reply
           await sendEmail(
-            { apiKey },
+            { 
+              apiKey,
+              from:       branding.contactEmail,
+              adminEmail: adminRecipient,
+            },
             {
-              from:    branding.contactEmail,
               to:      input.email,
               subject: `Booking Confirmation — ${branding.companyName}`,
               react:   React.createElement(AutoReplyEmail, {
