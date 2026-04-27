@@ -10,13 +10,16 @@
     "build": "astro build",
     "preview": "astro preview",
     "astro": "astro",
-    "email": "email dev"
+    "email": "email dev",
+    "test": "vitest run",
+    "test:watch": "vitest"
   },
   "dependencies": {
     "@astrojs/partytown": "^2.1.5",
     "@astrojs/react": "^5.0.0",
     "@astrojs/sitemap": "^3.7.1",
     "@astrojs/vercel": "^10.0.4",
+    "@pmg/db": "workspace:*",
     "@pmg/emails": "workspace:*",
     "@pmg/tailwind-config": "workspace:*",
     "@react-email/components": "^1.0.1",
@@ -37,6 +40,8 @@
     "@astrojs/check": "^0.9.7",
     "@types/react": "^19.2.7",
     "@types/react-dom": "^19.2.3",
+    "vitest": "^3.0.0",
+    "fast-check": "^3.15.0",
     "typescript": "^5.9.3",
     "prettier": "^3.7.4",
     "prettier-plugin-astro": "^0.14.1",

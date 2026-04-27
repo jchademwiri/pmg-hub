@@ -191,10 +191,18 @@ const plansData = {
   </div>
 </dialog>
 
-<script define:vars={{ plansData }}>
-  const dialog = document.getElementById('booking-dialog');
+<script>
+  import { actions } from 'astro:actions';
+  import { monthlyPlans, onceOffPlans } from '@/data/pricing';
+
+  const plansData = {
+    monthly: monthlyPlans,
+    onceOff: onceOffPlans,
+  };
+
+  const dialog = document.getElementById('booking-dialog') as HTMLDialogElement;
   const closeBtn = document.getElementById('close-dialog');
-  const form = document.getElementById('booking-form');
+  const form = document.getElementById('booking-form') as HTMLFormElement;
   const submitBtn = document.getElementById('submit-btn');
   const errorMsg = document.getElementById('form-error');
 
@@ -203,13 +211,13 @@ const plansData = {
   const successCloseBtn = document.getElementById('success-close-btn');
 
   const typeToggles = document.querySelectorAll('.type-toggle');
-  const selectPackage = document.getElementById('select-package');
+  const selectPackage = document.getElementById('select-package') as HTMLSelectElement;
   const summaryPrice = document.getElementById('summary-price');
   const upfrontDisplay = document.getElementById('upfront-cost');
 
-  const inputPackage = document.getElementById('input-package');
-  const inputPrice = document.getElementById('input-price');
-  const inputType = document.getElementById('input-type');
+  const inputPackage = document.getElementById('input-package') as HTMLInputElement;
+  const inputPrice = document.getElementById('input-price') as HTMLInputElement;
+  const inputType = document.getElementById('input-type') as HTMLInputElement;
 
   let currentType = 'monthly';
   let currentPlan =
@@ -218,25 +226,27 @@ const plansData = {
       : null;
 
   function resetForm() {
-    form.reset();
-    submitBtn.disabled = false;
-    submitBtn.textContent = 'Confirm Booking';
+    if (form) form.reset();
+    if (submitBtn) {
+      (submitBtn as HTMLButtonElement).disabled = false;
+      submitBtn.querySelector('span')!.textContent = 'Confirm Booking';
+    }
 
-    dialogContent.classList.remove('hidden');
-    successView.classList.add('hidden');
+    dialogContent?.classList.remove('hidden');
+    successView?.classList.add('hidden');
 
     updateState('monthly');
     if (plansData.monthly && plansData.monthly.length > 0) {
-      selectPackage.value = plansData.monthly[0].name;
+      if (selectPackage) selectPackage.value = plansData.monthly[0].name;
     }
     updatePrice();
   }
 
-  function updateState(newType) {
+  function updateState(newType: string) {
     currentType = newType;
 
     typeToggles.forEach((btn) => {
-      const isActive = btn.dataset.val === currentType;
+      const isActive = (btn as HTMLElement).dataset.val === currentType;
       if (isActive) {
         btn.classList.add('bg-primary', 'text-primary-foreground', 'shadow-sm');
         btn.classList.remove('text-muted-foreground', 'hover:bg-muted');
@@ -247,43 +257,48 @@ const plansData = {
     });
 
     // Rebuild package options for the selected type
-    const plans = currentType === 'monthly' ? plansData.monthly : plansData.onceOff;
-    selectPackage.innerHTML = '';
-    plans.forEach((p) => {
-      const opt = document.createElement('option');
-      opt.value = p.name;
-      opt.textContent = p.name;
-      selectPackage.appendChild(opt);
-    });
+    const plans = currentType === 'monthly' ? plansData.monthly : (plansData.onceOff as any[]);
+    if (selectPackage) {
+      selectPackage.innerHTML = '';
+      plans.forEach((p) => {
+        const opt = document.createElement('option');
+        opt.value = p.name;
+        opt.textContent = p.name;
+        selectPackage.appendChild(opt);
+      });
+    }
 
     updatePrice();
   }
 
   function updatePrice() {
+    if (!selectPackage) return;
     const selectedName = selectPackage.value;
-    const plans = currentType === 'monthly' ? plansData.monthly : plansData.onceOff;
+    const plans = currentType === 'monthly' ? plansData.monthly : (plansData.onceOff as any[]);
     const plan = plans.find((p) => p.name === selectedName);
 
     if (plan) {
       currentPlan = plan;
       const periodLabel = currentType === 'monthly' ? '/mo' : '';
-      summaryPrice.innerHTML = `${plan.price}<span class='text-muted-foreground text-sm font-normal'>${periodLabel}</span>`;
+      if (summaryPrice) summaryPrice.innerHTML = `${plan.price}<span class='text-muted-foreground text-sm font-normal'>${periodLabel}</span>`;
 
-      if (plan.upfront) {
-        upfrontDisplay.textContent = `+ ${plan.upfront}`;
-        upfrontDisplay.classList.remove('hidden');
-      } else {
-        upfrontDisplay.classList.add('hidden');
+      if (upfrontDisplay) {
+        if (plan.upfront) {
+          upfrontDisplay.textContent = `+ ${plan.upfront}`;
+          upfrontDisplay.classList.remove('hidden');
+        } else {
+          upfrontDisplay.classList.add('hidden');
+        }
       }
 
-      inputPackage.value = plan.name;
-      inputPrice.value = plan.price;
-      inputType.value = currentType;
+      if (inputPackage) inputPackage.value = plan.name;
+      if (inputPrice) inputPrice.value = (plan as any).price;
+      if (inputType) inputType.value = currentType;
     }
   }
 
   typeToggles.forEach((btn) => {
-    btn.addEventListener('click', () => updateState(btn.dataset.val));
+    btn.addEventListener('click', () => updateState((btn as HTMLElement).dataset.val!));
   });
 
   if (selectPackage) {
@@ -313,26 +328,41 @@ const plansData = {
 
   if (successCloseBtn) {
     successCloseBtn.addEventListener('click', () => {
-      dialog.close();
+      dialog?.close();
       setTimeout(resetForm, 500);
     });
   }
 
   if (form) {
-    form.addEventListener('submit', (e) => {
+    form.addEventListener('submit', async (e) => {
       e.preventDefault();
 
+      if (submitBtn) {
+        (submitBtn as HTMLButtonElement).disabled = true;
+        submitBtn.querySelector('span')!.textContent = 'Processing...';
+      }
+
       const formData = new FormData(form);
-      const data = Object.fromEntries(formData.entries());
+      
+      const { data, error } = await actions.bookService(formData);
 
-      console.log('Booking form submitted:', data);
-
-      dialogContent.classList.add('hidden');
-      successView.classList.remove('hidden');
+      if (error) {
+        if (errorMsg) {
+          errorMsg.textContent = "Booking failed. Please try again.";
+          errorMsg.classList.remove('hidden');
+        }
+        if (submitBtn) {
+          (submitBtn as HTMLButtonElement).disabled = false;
+          submitBtn.querySelector('span')!.textContent = 'Confirm Booking';
+        }
+      } else if (data?.success) {
+        dialogContent?.classList.add('hidden');
+        successView?.classList.remove('hidden');
+      }
     });
   }
 
-  window.openBookingDialog = (pkgName, price, type) => {
+  (window as any).openBookingDialog = (pkgName: string, price: string, type: string) => {
     if (dialog && selectPackage) {
       const normalizedType = type === 'once-off' ? 'once-off' : 'monthly';
       updateState(normalizedType);
