@@ -10,12 +10,14 @@ import vercel from '@astrojs/vercel';
 // https://astro.build/config
 export default defineConfig({
   site: 'https://apexwebsolutions.co.za',
-  output: 'static',
+  output: 'server',
 
   integrations: [
     react(),
     partytown({ config: { forward: ['dataLayer.push'] } }),
-    sitemap(),
+    sitemap({
+      customPages: ['https://apexwebsolutions.co.za/'],
+    }),
   ],
 
   vite: {

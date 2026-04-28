@@ -95,40 +95,52 @@
   <p id="contact-message" class="mt-2 hidden text-center text-sm"></p>
 </form>
 
-<script is:inline>
-  {
-    const form = document.getElementById("contact-form");
-    const btnText = document.getElementById("btn-text");
-    const btnLoader = document.getElementById("btn-loader");
-    const formMessage = document.getElementById("contact-message");
+<script>
+  import { actions, isActionError } from "astro:actions";
 
-    if (form) {
-      form.addEventListener("submit", async (e) => {
-        e.preventDefault();
+  const form = document.getElementById("contact-form") as HTMLFormElement;
+  const btnText = document.getElementById("btn-text");
+  const btnLoader = document.getElementById("btn-loader");
+  const formMessage = document.getElementById("contact-message");
 
-        // Reset UI
-        formMessage.classList.add("hidden");
-        formMessage.classList.remove("text-green-600", "text-red-600");
-        btnText.textContent = "Sending...";
-        btnLoader.classList.remove("hidden");
-        const submitBtn = form.querySelector('button[type="submit"]');
-        submitBtn.disabled = true;
+  if (form) {
+    form.addEventListener("submit", async (e) => {
+      e.preventDefault();
 
-        const formData = new FormData(form);
-        const data = Object.fromEntries(formData);
+      // Reset UI
+      formMessage?.classList.add("hidden");
+      formMessage?.classList.remove("text-green-600", "text-red-600");
+      if (btnText) btnText.textContent = "Sending...";
+      btnLoader?.classList.remove("hidden");
+      const submitBtn = form.querySelector('button[type="submit"]') as HTMLButtonElement;
+      if (submitBtn) submitBtn.disabled = true;
 
-        console.log("Contact form submitted:", data);
+      const formData = new FormData(form);
+      
+      const { data, error } = await actions.submitContact(formData);
 
+      console.log("[ContactForm] Action result:", { data, error });
+
+      if (error) {
+        if (formMessage) {
+          formMessage.textContent = isActionError(error) 
+            ? "Submission failed. Please check your inputs." 
+            : "An unexpected error occurred.";
+          formMessage.classList.add("text-red-600");
+          formMessage.classList.remove("hidden");
+        }
+      } else if (data?.success) {
         form.reset();
-        formMessage.textContent =
-          "Message sent successfully! We will get back to you soon.";
-        formMessage.classList.add("text-green-600");
-        formMessage.classList.remove("hidden");
+        if (formMessage) {
+          formMessage.textContent = "Message sent successfully! We will get back to you soon.";
+          formMessage.classList.add("text-green-600");
+          formMessage.classList.remove("hidden");
+        }
+      }
 
-        btnText.textContent = "Send Message";
-        btnLoader.classList.add("hidden");
-        submitBtn.disabled = false;
-      });
-    }
+      if (btnText) btnText.textContent = "Send Message";
+      btnLoader?.classList.add("hidden");
+      if (submitBtn) submitBtn.disabled = false;
+    });
   }
 </script>
