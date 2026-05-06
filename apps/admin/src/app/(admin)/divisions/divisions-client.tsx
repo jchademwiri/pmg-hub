@@ -6,6 +6,7 @@ import { Button } from '@/components/ui/button';
 import { DivisionAddForm } from '@/components/divisions/division-add-form';
 import { DivisionsTable } from '@/components/divisions/divisions-table';
 import { EmptyState } from '@/components/ui/empty-state';
+import { formatZAR } from '@/lib/format';
 import type { DivisionRow } from '@pmg/db';
 
 interface DivisionsPageClientProps {
@@ -25,6 +26,13 @@ export default function DivisionsPageClient({
 }: DivisionsPageClientProps) {
   const [isAdding, setIsAdding] = React.useState(false);
 
+  const totals = React.useMemo(() => ({
+    income:   divisions.reduce((s, d) => s + d.totalIncome,   0),
+    expenses: divisions.reduce((s, d) => s + d.totalExpenses, 0),
+    profit:   divisions.reduce((s, d) => s + d.netProfit,     0),
+    leads:    divisions.reduce((s, d) => s + d.leadCount,     0),
+  }), [divisions]);
+
   return (
     <div className="flex flex-col gap-6">
       {/* Header card */}
@@ -34,6 +42,23 @@ export default function DivisionsPageClient({
           <Plus className="h-4 w-4 mr-2" /> Add Division
         </Button>
       </div>
+
+      {/* Combined totals */}
+      {divisions.length > 0 && (
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+          {[
+            { label: 'Total Income',   value: formatZAR(totals.income),   cls: 'text-green-500' },
+            { label: 'Total Expenses', value: formatZAR(totals.expenses), cls: 'text-amber-500' },
+            { label: 'Net Profit',     value: formatZAR(totals.profit),   cls: totals.profit >= 0 ? 'text-green-500' : 'text-red-500' },
+            { label: 'Leads',          value: String(totals.leads),       cls: '' },
+          ].map(({ label, value, cls }) => (
+            <div key={label} className="rounded-lg border p-4 flex flex-col gap-1">
+              <span className="text-xs text-muted-foreground">{label}</span>
+              <span className={`text-lg font-semibold tabular-nums ${cls}`}>{value}</span>
+            </div>
+          ))}
+        </div>
+      )}
 
       {/* Collapsible add form */}
       {isAdding && (
