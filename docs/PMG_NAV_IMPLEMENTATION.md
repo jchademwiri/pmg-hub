@@ -1,96 +1,126 @@
 # PMG Control Center — Navigation Implementation Plan (Next.js)
 
-Implementation guide for the PMG sidebar + modules in a **Next.js 14+ App
-Router** project. Stack assumptions:
+Implementation guide for the PMG sidebar + modules in a **Next.js 16+ App
+Router** project.
 
-- Next.js App Router (`app/` directory, RSC by default)
-- Server Actions for mutations
-- Drizzle ORM + PostgreSQL (Neon or Supabase Postgres)
-- Tailwind + shadcn/ui
-- `lucide-react` for icons
-- NextAuth (or Clerk/Supabase Auth) for sessions
+## Current Stack
+
+- Next.js 16.2.1 App Router (`src/app/` directory, RSC by default)
+- Server Actions for mutations (`src/app/actions/`)
+- Drizzle ORM + PostgreSQL via `@pmg/db` workspace package
+- Tailwind CSS 4 + shadcn/ui (radix-vega style, zinc base)
+- `lucide-react` 1.7.0 for icons
+- Better Auth 1.5.6 with magic link authentication
+- Resend 4.8.0 for email delivery
+- Recharts 3.8.0 for data visualization
 
 ---
 
 ## 0. Sidebar Layout
+
+### Current Implementation (Flat List)
+
+The sidebar currently uses a **flat list** of navigation items without grouping:
+
+1. Dashboard
+2. Income
+3. Expenses
+4. Categories (`/expense-categories`)
+5. Corporate Ledger
+6. Accounts
+7. Clients
+8. Leads
+9. Divisions
+10. Snapshots
+11. Reports
+12. **Users** (super_admin only, in footer)
+
+**Missing:** Billing group (Quotations, Invoices, Statements) and Settings page.
+
+### Target Layout (Grouped & Collapsible)
 
 Collapsible groups, each with a group icon. **Overview renders as a static
 (non-collapsible) group** because it contains only one link. **System is
 pinned to the bottom**. When collapsed (`collapsible="icon"`), only item icons
 render and group headers hide.
 
-| Group           | Group icon       | Items |
-|-----------------|------------------|-------|
-| Overview (static) | `Home`         | Dashboard |
-| Finance         | `Banknote`       | Income · Expenses · Categories · Corporate Ledger · Accounts |
-| Billing         | `FileSpreadsheet`| Quotations · Invoices · Statements |
-| Relationships   | `Network`        | Clients · Leads · Divisions |
-| Insights        | `LineChart`      | Snapshots · Reports |
-| **System** (bottom) | `Cog`        | Users · Settings |
+| Group             | Group icon         | Items                                                         | Status                          |
+|-------------------|--------------------|---------------------------------------------------------------|---------------------------------|
+| Overview (static) | `Home`             | Dashboard                                                     | ✅ Exists at `/dashboard`       |
+| Finance           | `Banknote`         | Income · Expenses · Categories · Corporate Ledger · Accounts  | ✅ All exist                    |
+| Billing           | `FileSpreadsheet`  | Quotations · Invoices · Statements                            | ❌ **Missing — shell pages added** |
+| Relationships     | `Network`          | Clients · Leads · Divisions                                   | ✅ All exist                    |
+| Insights          | `LineChart`        | Snapshots · Reports                                           | ✅ Both exist                   |
+| **System** (bottom) | `Cog`            | Users · Settings                                              | ⚠️ Users ✅, Settings ❌ added  |
 
-Behavior:
+**Behavior:**
 - Multi-item groups are collapsible via shadcn `<Collapsible>` + chevron rotation.
 - Active group auto-expands (matched against `usePathname()`).
 - Single-item groups (Overview) render as a plain label without a toggle.
 - Active item highlighted via `pathname.startsWith(item.url)`.
 
-### Reference component (`components/app-sidebar.tsx`)
+### Updated `src/components/layout/app-sidebar.tsx`
 
 ```tsx
-"use client";
+'use client'
 
-import Link from "next/link";
-import { usePathname } from "next/navigation";
+import Link from 'next/link'
+import { usePathname } from 'next/navigation'
 import {
   Home, Banknote, FileSpreadsheet, Network, LineChart, Cog,
   LayoutDashboard, TrendingUp, TrendingDown, Tags, BookOpen, Wallet,
   FileText, Receipt, ScrollText, Users, UserPlus, Building2,
-  Camera, BarChart3, Settings, ChevronDown,
-} from "lucide-react";
+  Camera, BarChart3, Settings, ChevronDown, UserCog, PiggyBank,
+} from 'lucide-react'
 import {
-  Sidebar, SidebarContent, SidebarGroup, SidebarGroupContent,
-  SidebarGroupLabel, SidebarHeader, SidebarMenu, SidebarMenuButton,
-  SidebarMenuItem, useSidebar,
-} from "@/components/ui/sidebar";
-import {
-  Collapsible, CollapsibleContent, CollapsibleTrigger,
-} from "@/components/ui/collapsible";
+  Sidebar, SidebarContent, SidebarFooter, SidebarGroup,
+  SidebarGroupContent, SidebarGroupLabel, SidebarHeader,
+  SidebarMenu, SidebarMenuButton, SidebarMenuItem, useSidebar,
+} from '@/components/ui/sidebar'
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible'
+import { SignOutButton } from '@/components/layout/sign-out-button'
 
-type NavItem = { title: string; url: string; icon: typeof LayoutDashboard };
+type NavItem = { title: string; url: string; icon: React.ElementType }
 
-const overview: NavItem[]      = [{ title: "Dashboard", url: "/", icon: LayoutDashboard }];
-const finance: NavItem[]       = [
-  { title: "Income",           url: "/income",     icon: TrendingUp },
-  { title: "Expenses",         url: "/expenses",   icon: TrendingDown },
-  { title: "Categories",       url: "/categories", icon: Tags },
-  { title: "Corporate Ledger", url: "/ledger",     icon: BookOpen },
-  { title: "Accounts",         url: "/accounts",   icon: Wallet },
-];
-const billing: NavItem[]       = [
-  { title: "Quotations", url: "/billing/quotes",     icon: FileText },
-  { title: "Invoices",   url: "/billing/invoices",   icon: Receipt },
-  { title: "Statements", url: "/billing/statements", icon: ScrollText },
-];
+const overview: NavItem[] = [
+  { title: 'Dashboard', url: '/dashboard', icon: LayoutDashboard },
+]
+const finance: NavItem[] = [
+  { title: 'Income',           url: '/income',             icon: TrendingUp },
+  { title: 'Expenses',         url: '/expenses',           icon: TrendingDown },
+  { title: 'Categories',       url: '/expense-categories', icon: Tags },
+  { title: 'Corporate Ledger', url: '/ledger',             icon: BookOpen },
+  { title: 'Accounts',         url: '/accounts',           icon: PiggyBank },
+]
+const billing: NavItem[] = [
+  { title: 'Quotations', url: '/billing/quotes',     icon: FileText },
+  { title: 'Invoices',   url: '/billing/invoices',   icon: Receipt },
+  { title: 'Statements', url: '/billing/statements', icon: ScrollText },
+]
 const relationships: NavItem[] = [
-  { title: "Clients",   url: "/clients",   icon: Users },
-  { title: "Leads",     url: "/leads",     icon: UserPlus },
-  { title: "Divisions", url: "/divisions", icon: Building2 },
-];
-const insights: NavItem[]      = [
-  { title: "Snapshots", url: "/snapshots", icon: Camera },
-  { title: "Reports",   url: "/reports",   icon: BarChart3 },
-];
-const system: NavItem[]        = [
-  { title: "Users",    url: "/users",    icon: Users },
-  { title: "Settings", url: "/settings", icon: Settings },
-];
+  { title: 'Clients',   url: '/clients',   icon: Users },
+  { title: 'Leads',     url: '/leads',     icon: UserPlus },
+  { title: 'Divisions', url: '/divisions', icon: Building2 },
+]
+const insights: NavItem[] = [
+  { title: 'Snapshots', url: '/snapshots', icon: Camera },
+  { title: 'Reports',   url: '/reports',   icon: BarChart3 },
+]
+const system: NavItem[] = [
+  { title: 'Users',    url: '/users',    icon: UserCog },
+  { title: 'Settings', url: '/settings', icon: Settings },
+]
 
-export function AppSidebar() {
-  const pathname = usePathname();
-  const { state } = useSidebar();
-  const collapsed = state === "collapsed";
-  const isActive = (url: string) =>
-    url === "/" ? pathname === "/" : pathname.startsWith(url);
+interface AppSidebarProps {
+  user: { name: string; email: string; role: string }
+}
+
+export function AppSidebar({ user }: AppSidebarProps) {
+  const pathname = usePathname()
+  const { state } = useSidebar()
+  const collapsed = state === 'collapsed'
+
+  const isActive = (url: string) => pathname.startsWith(url)
 
   const renderMenu = (items: NavItem[]) => (
     <SidebarMenu>
@@ -98,51 +128,46 @@ export function AppSidebar() {
         <SidebarMenuItem key={item.url}>
           <SidebarMenuButton asChild isActive={isActive(item.url)}>
             <Link href={item.url} className="flex items-center gap-2">
-              <item.icon className="h-4 w-4" />
+              <item.icon className="size-4 shrink-0" />
               {!collapsed && <span>{item.title}</span>}
             </Link>
           </SidebarMenuButton>
         </SidebarMenuItem>
       ))}
     </SidebarMenu>
-  );
+  )
 
-  const renderGroup = (
-    label: string,
-    GroupIcon: typeof Home,
-    items: NavItem[],
-    options: { collapsible?: boolean } = { collapsible: true },
-  ) => {
+  const renderStaticGroup = (label: string, GroupIcon: React.ElementType, items: NavItem[]) => (
+    <SidebarGroup>
+      {!collapsed && (
+        <SidebarGroupLabel className="flex items-center gap-2">
+          <GroupIcon className="size-3.5" />
+          {label}
+        </SidebarGroupLabel>
+      )}
+      <SidebarGroupContent>{renderMenu(items)}</SidebarGroupContent>
+    </SidebarGroup>
+  )
+
+  const renderCollapsibleGroup = (label: string, GroupIcon: React.ElementType, items: NavItem[]) => {
+    const hasActive = items.some((i) => isActive(i.url))
     if (collapsed) {
       return (
         <SidebarGroup>
           <SidebarGroupContent>{renderMenu(items)}</SidebarGroupContent>
         </SidebarGroup>
-      );
+      )
     }
-    // Single-item groups (e.g. Overview) render as a static label — no toggle.
-    if (options.collapsible === false) {
-      return (
-        <SidebarGroup>
-          <SidebarGroupLabel className="flex items-center gap-2">
-            <GroupIcon className="h-3.5 w-3.5" />
-            {label}
-          </SidebarGroupLabel>
-          <SidebarGroupContent>{renderMenu(items)}</SidebarGroupContent>
-        </SidebarGroup>
-      );
-    }
-    const hasActive = items.some((i) => isActive(i.url));
     return (
       <Collapsible defaultOpen={hasActive} className="group/collapsible">
         <SidebarGroup>
           <CollapsibleTrigger asChild>
             <SidebarGroupLabel className="cursor-pointer flex items-center justify-between hover:text-foreground">
               <span className="flex items-center gap-2">
-                <GroupIcon className="h-3.5 w-3.5" />
+                <GroupIcon className="size-3.5" />
                 {label}
               </span>
-              <ChevronDown className="h-3.5 w-3.5 transition-transform group-data-[state=closed]/collapsible:-rotate-90" />
+              <ChevronDown className="size-3.5 transition-transform group-data-[state=closed]/collapsible:-rotate-90" />
             </SidebarGroupLabel>
           </CollapsibleTrigger>
           <CollapsibleContent>
@@ -150,314 +175,404 @@ export function AppSidebar() {
           </CollapsibleContent>
         </SidebarGroup>
       </Collapsible>
-    );
-  };
+    )
+  }
 
   return (
-    <Sidebar collapsible="icon">
-      <SidebarHeader className="px-3 py-4">{/* logo */}</SidebarHeader>
+    <Sidebar variant="inset">
+      <SidebarHeader>
+        <Link href="/dashboard" className="flex flex-col gap-0.5 px-2 py-3 hover:opacity-80 transition-opacity">
+          <span className="text-sidebar-foreground/50 text-xs uppercase tracking-widest">PMG</span>
+          <span className="text-sidebar-foreground text-sm font-semibold">Control Center</span>
+        </Link>
+      </SidebarHeader>
       <SidebarContent>
-        {renderGroup("Overview",      Home,             overview, { collapsible: false })}
-        {renderGroup("Finance",       Banknote,         finance)}
-        {renderGroup("Billing",       FileSpreadsheet,  billing)}
-        {renderGroup("Relationships", Network,          relationships)}
-        {renderGroup("Insights",      LineChart,        insights)}
-        <div className="mt-auto">
-          {renderGroup("System", Cog, system)}
-        </div>
+        {renderStaticGroup('Overview', Home, overview)}
+        {renderCollapsibleGroup('Finance', Banknote, finance)}
+        {renderCollapsibleGroup('Billing', FileSpreadsheet, billing)}
+        {renderCollapsibleGroup('Relationships', Network, relationships)}
+        {renderCollapsibleGroup('Insights', LineChart, insights)}
       </SidebarContent>
-    </Sidebar>
-  );
-}
-```
-
-### Root layout (`app/layout.tsx`)
-
-```tsx
-import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
-import { AppSidebar } from "@/components/app-sidebar";
-import { Toaster } from "@/components/ui/sonner";
-
-export default function RootLayout({ children }: { children: React.ReactNode }) {
-  return (
-    <html lang="en">
-      <body>
-        <SidebarProvider>
-          <div className="min-h-screen flex w-full bg-background">
-            <AppSidebar />
-            <div className="flex-1 flex flex-col min-w-0">
-              <header className="h-14 flex items-center gap-2 border-b px-3 sticky top-0 z-10 bg-background/80 backdrop-blur">
-                <SidebarTrigger />
-              </header>
-              <main className="flex-1">{children}</main>
+      <SidebarFooter>
+        <div className="flex flex-col gap-1">
+          {renderCollapsibleGroup('System', Cog, system)}
+          <div className="mx-2 h-px bg-sidebar-border" />
+          <div className="px-2 py-2 flex flex-col gap-2">
+            <div>
+              <span className="text-sidebar-foreground text-sm font-medium">{user.name}</span>
+              <span className="text-sidebar-foreground/50 text-xs block">{user.email}</span>
             </div>
-            <Toaster />
+            <SignOutButton />
           </div>
-        </SidebarProvider>
-      </body>
-    </html>
-  );
+        </div>
+      </SidebarFooter>
+    </Sidebar>
+  )
 }
 ```
+
+**Note:** The System group replaces the old conditional `super_admin` check for Users.
+Access control for admin-only pages is enforced at the page/action level, not the nav.
+
+### `src/components/layout/top-nav.tsx` — Route Labels to Update
+
+Add billing routes to `ROUTE_LABELS`:
+
+```ts
+const ROUTE_LABELS: Record<string, string> = {
+  '/dashboard':          'Dashboard',
+  '/income':             'Income',
+  '/expenses':           'Expenses',
+  '/expense-categories': 'Categories',
+  '/ledger':             'Corporate Ledger',
+  '/accounts':           'Accounts',
+  '/billing/quotes':     'Quotations',
+  '/billing/invoices':   'Invoices',
+  '/billing/statements': 'Statements',
+  '/clients':            'Clients',
+  '/leads':              'Leads',
+  '/divisions':          'Divisions',
+  '/snapshots':          'Financial Snapshots',
+  '/reports':            'Reports & Insights',
+  '/users':              'Users',
+  '/settings':           'Settings',
+}
+```
+
+### Current Admin Layout (`src/app/(admin)/layout.tsx`)
+
+No changes needed — layout already uses `AppSidebar` with `SidebarProvider`.
 
 ---
 
 ## 1. Conventions
 
-- **Routes**: `app/<segment>/page.tsx`. Nested e.g. `app/billing/quotes/page.tsx`,
-  `app/billing/quotes/[id]/page.tsx`, `app/billing/quotes/new/page.tsx`.
+- **Routes**: `src/app/(admin)/<segment>/page.tsx`. Nested e.g.
+  `src/app/(admin)/billing/quotes/page.tsx`.
 - **Data layer**:
-  - **Reads** in Server Components → `lib/queries/<area>.ts` (Drizzle).
-  - **Writes** as Server Actions → `lib/actions/<area>.ts` (`"use server"`).
-- **Schema**: `lib/db/schema/<area>.ts`, exported via `lib/db/schema/index.ts`.
-- **UI primitives**: shared `<PageHeader>`, `<MetricCard>`, `<StatusBadge>`
-  in `components/billing/`.
-- **Money**: `lib/format.ts` → `fmt(amount, currency = "ZAR")`.
-- **List page anatomy**: metrics → filters (search params) → table → row link to detail.
+  - **Reads** in Server Components via `@pmg/db` package functions.
+  - **Writes** as Server Actions → `src/app/actions/<area>.ts` (`"use server"`).
+- **Schema**: Managed in `packages/db/` workspace package.
+- **UI primitives**: Module-specific components in `src/components/<module>/`.
+- **Money**: `src/lib/format.ts` → `formatZAR(amount)`.
+- **List page anatomy**: metrics → filters (search params) → table → row actions.
 - **Cache**: use `revalidatePath()` / `revalidateTag()` after mutating Server Actions.
 
-Required folders:
+### Full Route Map
 
 ```
-app/
-  layout.tsx
-  page.tsx                     // Dashboard
-  income/page.tsx
-  expenses/page.tsx
-  categories/page.tsx
-  ledger/page.tsx
-  accounts/page.tsx
-  billing/
+src/app/(admin)/
+  layout.tsx                          ✅ Admin layout with sidebar + auth guard
+  dashboard/page.tsx                  ✅ Dashboard
+  income/page.tsx                     ✅ Income tracking
+  expenses/page.tsx                   ✅ Expense tracking
+  expense-categories/page.tsx         ✅ Expense categories
+  ledger/page.tsx                     ✅ Corporate ledger
+  accounts/page.tsx                   ✅ Accounts
+  billing/                            ❌ → shell pages added
     quotes/page.tsx
     quotes/new/page.tsx
     quotes/[id]/page.tsx
     invoices/page.tsx
+    invoices/new/page.tsx
     invoices/[id]/page.tsx
     statements/page.tsx
     statements/[clientId]/page.tsx
-  clients/page.tsx
-  clients/[id]/page.tsx
-  leads/page.tsx
-  divisions/page.tsx
-  snapshots/page.tsx
-  reports/page.tsx
-  users/page.tsx
-  settings/page.tsx
-components/
-  app-sidebar.tsx
-  billing/{page-header,status-badge,line-items-form,...}.tsx
-  ui/...                       // shadcn
-lib/
-  db/{client.ts, schema/*.ts}
-  queries/{billing.ts, finance.ts, ...}
-  actions/{billing-quotes.ts, billing-invoices.ts, ...}
-  format.ts
-  document-numbers.ts
+  clients/page.tsx                    ✅ Client management
+  leads/page.tsx                      ✅ Lead management
+  divisions/page.tsx                  ✅ Division management
+  snapshots/page.tsx                  ✅ Financial snapshots
+  reports/page.tsx                    ✅ Reports & insights
+  users/page.tsx                      ✅ User management
+  settings/page.tsx                   ❌ → shell page added
 ```
 
 ---
 
 ## 2. Overview
 
-### `/` — Dashboard (`app/page.tsx`)
-- Server Component. KPI cards (revenue, expenses, outstanding, paid),
-  revenue-by-division chart (`recharts`, in a `"use client"` wrapper), recent
-  invoices/quotes.
-- Period tabs: Current Month · Previous Month · Year to Date · All-Time
-  via `?period=` search param.
-- Queries: `getDashboardSummary({ period })`,
-  `getRevenueByDivision({ period })`.
+### `/dashboard` — Dashboard
+
+**Status:** ✅ **Implemented**
+
+- KPI cards (revenue, expenses, profit pool, outstanding)
+- Revenue by division chart (Recharts, `"use client"` wrapper)
+- Budget tracking cards
+- Close month button
+- Components in `src/components/dashboard/`
 
 ---
 
 ## 3. Finance
 
-### `/income`
-- Table of incoming payments. Filters via search params
-  (`?month=&division=&account=&source=`).
-- Auto-populated when an invoice is marked **PAID** (Phase 2 link).
-- Actions: `createIncome`, `updateIncome`, `deleteIncome`.
+### `/income` — Income Tracking
 
-### `/expenses`
-- Table of outgoing payments. Filters: category, account, division, month.
-- Actions: `createExpense`, `updateExpense`, `deleteExpense`.
+**Status:** ✅ **Implemented**
 
-### `/categories`
-- Tabs: Income vs Expense. Tree (parent → child) with color tag.
-- Actions: `upsertCategory`, `deleteCategory`.
+- Table of incoming payments with filters (month, division, account, source)
+- Will be auto-populated when invoices are marked PAID (billing phase)
+- Actions in `src/app/actions/income.ts`
+- Components in `src/components/income/`
+
+### `/expenses` — Expense Tracking
+
+**Status:** ✅ **Implemented**
+
+- Table of outgoing payments with filters (category, account, division, month)
+- Actions in `src/app/actions/expenses.ts`
+- Components in `src/components/expenses/`
+
+### `/expense-categories` — Categories
+
+**Status:** ✅ **Implemented** (route is `/expense-categories`, not `/categories`)
+
+- Category management with color coding
+- Components in `src/components/expense-categories/`
 
 ### `/ledger` — Corporate Ledger
-- Read-only consolidated income + expense across divisions, with running balance.
-- Query: `getLedger({ from, to, divisionId? })`.
 
-### `/accounts`
-- Bank · cash · virtual accounts. `app/accounts/[id]/page.tsx` shows
-  transactions and reconciled balance.
-- Queries: `listAccounts`, `getAccount(id)`, `getAccountTransactions(id)`.
+**Status:** ✅ **Implemented**
 
----
+- Consolidated income + expense view across divisions with running balance
+- Actions in `src/app/actions/ledger.ts`
+- Components in `src/components/ledger/`
 
-## 4. Billing  *(MVP focus — Phases 0–3)*
+### `/accounts` — Account Management
 
-### `/billing/quotes`
-- List + metrics. Filters via search params. Row link → `[id]/page.tsx`.
+**Status:** ✅ **Implemented**
 
-### `/billing/quotes/new`
-- Client component form using `useFormState` against `createQuotation` server
-  action. Dynamic line items, live totals (subtotal, VAT, total).
-- After insert → `redirect("/billing/quotes/" + id)` from the action.
-
-### `/billing/quotes/[id]`
-- Status workflow: DRAFT → SENT → ACCEPTED → DECLINED → CANCELLED.
-- Action: **Convert to invoice** → `convertQuoteToInvoice(id)` →
-  `revalidatePath("/billing/invoices")` + redirect.
-
-### `/billing/invoices`
-- List + metrics (Outstanding, Overdue, Paid, total invoiced).
-
-### `/billing/invoices/[id]`
-- Issue · mark paid · void. Marking paid auto-inserts an `income` row in
-  the same DB transaction.
-- Lock edits when status is PAID or VOID.
-
-### `/billing/statements`
-- Per-client summary. `[clientId]/page.tsx` shows quotes + invoices + payments
-  and outstanding balance.
+- Bank, cash, and virtual account tracking
+- Components in `src/components/accounts/`
+- Actions in `src/app/actions/account-withdrawal.ts`
 
 ---
 
-## 5. Relationships
+## 4. Billing *(Next build phase)*
 
-### `/clients`
-- Directory: name, contact, division, totals, outstanding.
-- `[id]/page.tsx`: profile, quotes, invoices, statement link.
+### `/billing/quotes` — Quotations
 
-### `/leads`
-- Pipeline (kanban or table): New · Contacted · Qualified · Won · Lost.
-- Action: `convertLeadToClient(id)`.
+**Status:** 🔲 **Shell page created**
 
-### `/divisions`
-- CRUD divisions. Each stores **document number prefix** consumed by
-  `getNextDocumentNumber()`.
+- List + metrics (total quotes, value, conversion rate)
+- Filters via search params (status, client, division, date range)
+- Row link → `[id]/page.tsx`
 
----
+### `/billing/quotes/new` — New Quotation
 
-## 6. Insights
+**Status:** 🔲 **Shell page created**
 
-### `/snapshots`
-- Period-end financial snapshots. Cron via Vercel Cron or Supabase pg_cron
-  hitting an authenticated route handler `/api/cron/snapshot`.
+- Client component form against `createQuotation` server action
+- Dynamic line items with live totals (subtotal, VAT, total)
+- After insert → `redirect("/billing/quotes/" + id)`
 
-### `/reports`
-- Tabs: Revenue · AR Aging · VAT · P&L (basic). CSV/PDF export post-MVP.
+### `/billing/quotes/[id]` — Quote Detail
 
----
+**Status:** 🔲 **Shell page created**
 
-## 7. System  *(pinned to sidebar bottom)*
+- Status workflow: DRAFT → SENT → ACCEPTED → DECLINED → CANCELLED
+- **Convert to invoice** action → `convertQuoteToInvoice(id)`
+- Edit mode when DRAFT; read-only otherwise
 
-### `/users`
-- Team members + role badges. Roles in a separate `user_roles` table — never
-  store role on profile/users. Use a `has_role(uid, role)` SECURITY DEFINER fn
-  for RLS / authorization checks.
+### `/billing/invoices` — Invoices
 
-### `/settings`
-- Sections: Company profile · Document numbering · Tax (VAT) · Branding.
+**Status:** 🔲 **Shell page created**
 
----
+- List + metrics (Outstanding, Overdue, Paid, total invoiced)
+- Filters (status, client, division, date range)
 
-## 8. Database Schema (Drizzle)
+### `/billing/invoices/new` — New Invoice
 
-`lib/db/schema/billing.ts`, etc. Tables to create:
+**Status:** 🔲 **Shell page created**
 
-```
-divisions            (id, name, prefix, color)
-clients              (id, name, contact, email, phone, division_id)
-leads                (id, name, contact, stage, division_id, client_id?)
-accounts             (id, name, kind, opening_balance, division_id)
-categories           (id, name, kind, parent_id, color)
-income               (id, date, amount, account_id, category_id, source, invoice_id?, division_id)
-expenses             (id, date, amount, account_id, category_id, vendor, division_id)
-quotations           (id, number, client_id, division_id, status, subtotal, tax, total, notes, terms, issued_at, expires_at)
-invoices             (id, number, client_id, division_id, status, subtotal, tax, total, due_date, po_number, quotation_id?, income_id?)
-billing_line_items   (id, parent_kind, parent_id, description, qty, unit_price, tax_rate, total)
-document_sequences   (year, prefix, kind, last_number)   -- atomic numbering
-snapshots            (id, period, totals_json, created_at)
-user_roles           (id, user_id, role)                  -- enum: admin, member
-```
+- Direct invoice creation (not from quote)
+- Same line items form as quotation
 
-Enums: `quote_status`, `invoice_status`, `app_role`.
+### `/billing/invoices/[id]` — Invoice Detail
 
-`getNextDocumentNumber()` lives in `lib/document-numbers.ts` and runs inside a
-DB transaction with `SELECT ... FOR UPDATE` on `document_sequences` to prevent
-duplicate numbers.
+**Status:** 🔲 **Shell page created**
 
----
+- Issue · mark paid · void actions
+- Marking paid auto-inserts an `income` row in the same DB transaction
+- Edits locked when status is PAID or VOID
 
-## 9. Server Action template
+### `/billing/statements` — Client Statements
+
+**Status:** 🔲 **Shell page created**
+
+- Per-client summary list
+
+### `/billing/statements/[clientId]` — Client Statement Detail
+
+**Status:** 🔲 **Shell page created**
+
+- All quotes + invoices + payments for a client
+- Outstanding balance and aging breakdown
+
+### Components to Build (`src/components/billing/`)
+
+- `quote-form.tsx` — Quotation form with dynamic line items
+- `invoice-form.tsx` — Invoice form with dynamic line items
+- `line-items-form.tsx` — Reusable line items editor (qty, unit price, tax rate, total)
+- `status-badge.tsx` — Quote/invoice status display
+- `billing-table.tsx` — Reusable table for quotes/invoices
+- `convert-to-invoice-button.tsx` — Quote → invoice conversion
+- `mark-paid-button.tsx` — Invoice payment action
+- `billing-metrics.tsx` — KPI cards for billing list pages
+
+### Server Actions to Build (`src/app/actions/`)
+
+- `billing-quotes.ts` — `createQuotation`, `updateQuotation`, `sendQuotation`,
+  `acceptQuotation`, `declineQuotation`, `cancelQuotation`, `convertQuoteToInvoice`
+- `billing-invoices.ts` — `createInvoice`, `issueInvoice`, `markInvoicePaid`,
+  `voidInvoice` (paid auto-inserts income row in same transaction)
+- `billing-statements.ts` — `getClientStatement`
+
+### Server Action Template
 
 ```ts
-// lib/actions/billing-quotes.ts
-"use server";
+// src/app/actions/billing-quotes.ts
+'use server'
 
-import { z } from "zod";
-import { revalidatePath } from "next/cache";
-import { redirect } from "next/navigation";
-import { db } from "@/lib/db/client";
-import { quotations, billingLineItems } from "@/lib/db/schema";
-import { getNextDocumentNumber } from "@/lib/document-numbers";
-import { requireUser } from "@/lib/auth";
+import { z } from 'zod'
+import { revalidatePath } from 'next/cache'
+import { redirect } from 'next/navigation'
+import { getDb } from '@pmg/db'
+import { getSessionOrRedirect } from '@/lib/auth'
+
+const LineSchema = z.object({
+  description: z.string().min(1).max(500),
+  qty: z.number().positive(),
+  unitPrice: z.number().nonnegative(),
+  taxRate: z.number().min(0).max(100),
+})
 
 const QuoteSchema = z.object({
   clientId: z.string().uuid(),
   divisionId: z.string().uuid(),
   notes: z.string().max(2000).optional(),
   terms: z.string().max(2000).optional(),
-  lines: z.array(z.object({
-    description: z.string().min(1).max(500),
-    qty: z.number().positive(),
-    unitPrice: z.number().nonnegative(),
-    taxRate: z.number().min(0).max(100),
-  })).min(1).max(100),
-});
+  lines: z.array(LineSchema).min(1).max(100),
+})
 
 export async function createQuotation(input: unknown) {
-  await requireUser();
-  const data = QuoteSchema.parse(input);
+  await getSessionOrRedirect()
+  const data = QuoteSchema.parse(input)
+  const db = getDb()
 
-  const id = await db.transaction(async (tx) => {
-    const number = await getNextDocumentNumber(tx, { kind: "quote", divisionId: data.divisionId });
-    const subtotal = data.lines.reduce((s, l) => s + l.qty * l.unitPrice, 0);
-    const tax      = data.lines.reduce((s, l) => s + l.qty * l.unitPrice * (l.taxRate / 100), 0);
-    const [row] = await tx.insert(quotations).values({
-      number, clientId: data.clientId, divisionId: data.divisionId,
-      status: "DRAFT", subtotal, tax, total: subtotal + tax,
-      notes: data.notes, terms: data.terms,
-    }).returning({ id: quotations.id });
-    await tx.insert(billingLineItems).values(
-      data.lines.map((l) => ({
-        parentKind: "quote", parentId: row.id, ...l,
-        total: l.qty * l.unitPrice * (1 + l.taxRate / 100),
-      }))
-    );
-    return row.id;
-  });
+  // TODO: implement once billing schema is in @pmg/db
+  // const id = await db.transaction(async (tx) => { ... })
 
-  revalidatePath("/billing/quotes");
-  redirect(`/billing/quotes/${id}`);
+  revalidatePath('/billing/quotes')
+  redirect(`/billing/quotes/new`) // update to /billing/quotes/${id} after schema
 }
 ```
 
 ---
 
-## 10. Build Order
+## 5. Relationships
 
-1. **Phase 0** — Schema, Drizzle migrations, `getNextDocumentNumber`, base queries.
-2. **Phase 1** — `/billing/quotes` end-to-end.
-3. **Phase 2** — `/billing/invoices` + income auto-insert.
-4. **Phase 3** — `/billing/statements`.
-5. **Phase 4** — Finance pages.
-6. **Phase 5** — Relationships.
-7. **Phase 6** — Insights + `/users`, `/settings`.
+### `/clients` — Client Management
 
-Each phase ships independently; sidebar shells already exist so navigation
+**Status:** ✅ **Implemented**
+
+- Client directory with add/edit
+- Actions in `src/app/actions/clients.ts`
+- Components in `src/components/clients/`
+- **Future:** link to quotes, invoices, statement once billing is live
+
+### `/leads` — Lead Management
+
+**Status:** ✅ **Implemented**
+
+- Pipeline with status tabs (New, Contacted, Qualified, Won, Lost)
+- `convertLeadToClient(id)` action
+- Actions in `src/app/actions/leads.ts`
+- Components in `src/components/leads/`
+
+### `/divisions` — Division Management
+
+**Status:** ✅ **Implemented**
+
+- CRUD divisions; each stores document number prefix for billing
+- Actions in `src/app/actions/divisions.ts`
+- Components in `src/components/divisions/`
+
+---
+
+## 6. Insights
+
+### `/snapshots` — Financial Snapshots
+
+**Status:** ✅ **Implemented**
+
+- Period-end snapshots triggered by Close Month on dashboard
+- Automated via cron at `/api/cron/snapshot`
+- Actions in `src/app/actions/snapshots.ts`
+
+### `/reports` — Reports & Analytics
+
+**Status:** ✅ **Implemented**
+
+- Expense by category, MoM comparison, profit pool, revenue by division
+- CSV export
+- Components in `src/components/reports/`
+- Actions in `src/app/actions/reports.ts`
+- **Future:** AR Aging (requires billing), VAT report, P&L statement
+
+---
+
+## 7. System *(pinned to sidebar bottom)*
+
+### `/users` — User Management
+
+**Status:** ✅ **Implemented**
+
+- Team members with role badges (super_admin, admin, viewer)
+- Invitation system via magic link
+- Role stored on user record via Better Auth `additionalFields`
+- Actions in `src/app/actions/users.ts`
+- Components in `src/components/users/`
+
+### `/settings` — System Settings
+
+**Status:** 🔲 **Shell page created**
+
+**Planned sections:**
+- Company profile (name, address, contact, logo)
+- Document numbering (prefixes per division, sequences)
+- Tax settings (VAT rate, registration number)
+- Branding (colors, logo, email templates)
+
+---
+
+## 8. Database Schema Notes
+
+Schema lives in `packages/db/`. Billing tables to add:
+
+```
+quotations           (id, number, client_id, division_id, status, subtotal, tax, total, notes, terms, issued_at, expires_at)
+invoices             (id, number, client_id, division_id, status, subtotal, tax, total, due_date, po_number, quotation_id?, income_id?)
+billing_line_items   (id, parent_kind, parent_id, description, qty, unit_price, tax_rate, total)
+document_sequences   (year, prefix, kind, last_number)   -- atomic numbering
+```
+
+Enums: `quote_status` (DRAFT, SENT, ACCEPTED, DECLINED, CANCELLED),
+`invoice_status` (DRAFT, ISSUED, PAID, VOID, OVERDUE).
+
+`getNextDocumentNumber()` runs inside a DB transaction with
+`SELECT ... FOR UPDATE` on `document_sequences` to prevent duplicate numbers.
+
+---
+
+## 9. Build Order
+
+1. **Phase 0** *(done)* — Core finance, relationships, insights, users.
+2. **Phase 1** — Billing schema in `@pmg/db` + `getNextDocumentNumber`.
+3. **Phase 2** — `/billing/quotes` end-to-end (form, actions, detail, status workflow).
+4. **Phase 3** — `/billing/invoices` + income auto-insert on paid.
+5. **Phase 4** — `/billing/statements` per-client view.
+6. **Phase 5** — `/settings` company profile + document numbering.
+7. **Phase 6** — AR Aging report, VAT report, P&L in `/reports`.
+
+Shell pages for all billing routes and settings already exist so navigation
 never breaks while modules come online.

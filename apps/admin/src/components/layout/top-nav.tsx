@@ -9,16 +9,22 @@ import {
 import { usePageHeader } from '@/components/layout/page-header-context'
 
 const ROUTE_LABELS: Record<string, string> = {
-  '/dashboard':   'Dashboard',
-  '/income':      'Income',
-  '/expenses':    'Expenses',
-  '/ledger':      'Corporate Ledger',
-  '/clients':     'Clients',
-  '/leads':       'Leads',
-  '/divisions':   'Divisions',
-  '/accounts':    'Accounts',
-  '/snapshots':   'Financial Snapshots',
-  '/reports':     'Reports & Insights',
+  '/dashboard':          'Dashboard',
+  '/income':             'Income',
+  '/expenses':           'Expenses',
+  '/expense-categories': 'Categories',
+  '/ledger':             'Corporate Ledger',
+  '/accounts':           'Accounts',
+  '/billing/quotes':     'Quotations',
+  '/billing/invoices':   'Invoices',
+  '/billing/statements': 'Statements',
+  '/clients':            'Clients',
+  '/leads':              'Leads',
+  '/divisions':          'Divisions',
+  '/snapshots':          'Financial Snapshots',
+  '/reports':            'Reports & Insights',
+  '/users':              'Users',
+  '/settings':           'Settings',
 }
 
 function getPageLabel(pathname: string): string {
