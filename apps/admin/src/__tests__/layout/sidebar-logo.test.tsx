@@ -18,14 +18,12 @@ Object.defineProperty(window, 'matchMedia', {
   })),
 });
 
-
-// Mocking nav items and auth/logout components since they might require context/router
-vi.mock('next/link', () => ({
-  default: ({ children, href }: any) => <a href={href}>{children}</a>,
+vi.mock('next/navigation', () => ({
+  usePathname: () => '/dashboard',
 }));
 
-vi.mock('@/components/layout/nav-link', () => ({
-  NavLink: ({ label }: any) => <div>{label}</div>,
+vi.mock('next/link', () => ({
+  default: ({ children, href }: any) => <a href={href}>{children}</a>,
 }));
 
 vi.mock('@/components/layout/sign-out-button', () => ({

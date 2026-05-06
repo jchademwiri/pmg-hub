@@ -9,24 +9,34 @@ import {
 import { usePageHeader } from '@/components/layout/page-header-context'
 
 const ROUTE_LABELS: Record<string, string> = {
-  '/dashboard':   'Dashboard',
-  '/income':      'Income',
-  '/expenses':    'Expenses',
-  '/ledger':      'Corporate Ledger',
-  '/clients':     'Clients',
-  '/leads':       'Leads',
-  '/divisions':   'Divisions',
-  '/accounts':    'Accounts',
-  '/snapshots':   'Financial Snapshots',
-  '/reports':     'Reports & Insights',
+  '/dashboard':          'Dashboard',
+  '/income':             'Income',
+  '/expenses':           'Expenses',
+  '/expense-categories': 'Categories',
+  '/ledger':             'Corporate Ledger',
+  '/accounts':           'Accounts',
+  '/billing/quotes':     'Quotations',
+  '/billing/invoices':   'Invoices',
+  '/billing/statements': 'Statements',
+  '/clients':            'Clients',
+  '/leads':              'Leads',
+  '/divisions':          'Divisions',
+  '/snapshots':          'Financial Snapshots',
+  '/reports':            'Reports & Insights',
+  '/users':              'Users',
+  '/settings':           'Settings',
 }
 
 function getPageLabel(pathname: string): string {
   if (ROUTE_LABELS[pathname]) return ROUTE_LABELS[pathname]
-  for (const [route, label] of Object.entries(ROUTE_LABELS)) {
-    if (pathname.startsWith(route + '/')) return label
-  }
-  return 'Dashboard'
+  // Match nested routes (longest prefix wins)
+  const match = Object.entries(ROUTE_LABELS)
+    .filter(([route]) => pathname.startsWith(route + '/'))
+    .sort((a, b) => b[0].length - a[0].length)[0]
+  if (match) return match[1]
+  // Derive a readable label from the last path segment as a last resort
+  const segment = pathname.split('/').filter(Boolean).pop() ?? ''
+  return segment.replace(/-/g, ' ').replace(/\b\w/g, (c) => c.toUpperCase())
 }
 
 export function TopNav() {
