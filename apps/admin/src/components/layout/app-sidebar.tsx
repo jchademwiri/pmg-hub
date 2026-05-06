@@ -1,5 +1,6 @@
 'use client'
 
+import React from 'react'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import {
@@ -64,6 +65,23 @@ const system: NavItem[] = [
   { title: 'Settings', url: '/settings', icon: Settings },
 ]
 
+type GroupKey = 'finance' | 'billing' | 'relationships' | 'insights' | 'system'
+
+const GROUPS: { key: GroupKey; label: string; icon: React.ElementType; items: NavItem[] }[] = [
+  { key: 'finance',       label: 'Finance',       icon: Banknote,        items: finance },
+  { key: 'billing',       label: 'Billing',       icon: FileSpreadsheet, items: billing },
+  { key: 'relationships', label: 'Relationships', icon: Network,         items: relationships },
+  { key: 'insights',      label: 'Insights',      icon: LineChart,       items: insights },
+  { key: 'system',        label: 'System',        icon: Cog,             items: system },
+]
+
+function getActiveGroup(pathname: string): GroupKey | null {
+  for (const group of GROUPS) {
+    if (group.items.some((i) => pathname.startsWith(i.url))) return group.key
+  }
+  return null
+}
+
 interface AppSidebarProps {
   user: { name: string; email: string; role: string }
 }
@@ -72,6 +90,10 @@ export function AppSidebar({ user }: AppSidebarProps) {
   const pathname = usePathname()
   const { state } = useSidebar()
   const collapsed = state === 'collapsed'
+
+  const [openGroup, setOpenGroup] = React.useState<GroupKey | null>(
+    () => getActiveGroup(pathname),
+  )
 
   const isActive = (url: string) => pathname.startsWith(url)
 
@@ -90,41 +112,29 @@ export function AppSidebar({ user }: AppSidebarProps) {
     </SidebarMenu>
   )
 
-  // Static (non-collapsible) group — used for Overview
-  const renderStaticGroup = (
-    label: string,
-    GroupIcon: React.ElementType,
-    items: NavItem[],
-  ) => (
-    <SidebarGroup>
-      {!collapsed && (
-        <SidebarGroupLabel className="flex items-center gap-2">
-          <GroupIcon className="size-3.5" />
-          {label}
-        </SidebarGroupLabel>
-      )}
-      <SidebarGroupContent>{renderMenu(items)}</SidebarGroupContent>
-    </SidebarGroup>
-  )
-
-  // Collapsible group — auto-opens when a child is active
   const renderCollapsibleGroup = (
+    key: GroupKey,
     label: string,
     GroupIcon: React.ElementType,
     items: NavItem[],
   ) => {
-    const hasActive = items.some((i) => isActive(i.url))
-
     if (collapsed) {
       return (
-        <SidebarGroup>
+        <SidebarGroup key={key}>
           <SidebarGroupContent>{renderMenu(items)}</SidebarGroupContent>
         </SidebarGroup>
       )
     }
 
+    const isOpen = openGroup === key
+
     return (
-      <Collapsible defaultOpen={hasActive} className="group/collapsible">
+      <Collapsible
+        key={key}
+        open={isOpen}
+        onOpenChange={(open) => setOpenGroup(open ? key : null)}
+        className="group/collapsible"
+      >
         <SidebarGroup>
           <CollapsibleTrigger asChild>
             <SidebarGroupLabel className="cursor-pointer flex items-center justify-between hover:text-foreground">
@@ -143,6 +153,8 @@ export function AppSidebar({ user }: AppSidebarProps) {
     )
   }
 
+  const [mainGroups, systemGroup] = [GROUPS.slice(0, 4), GROUPS[4]]
+
   return (
     <Sidebar variant="inset">
       <SidebarHeader>
@@ -156,16 +168,30 @@ export function AppSidebar({ user }: AppSidebarProps) {
       </SidebarHeader>
 
       <SidebarContent>
-        {renderStaticGroup('Overview', Home, overview)}
-        {renderCollapsibleGroup('Finance', Banknote, finance)}
-        {renderCollapsibleGroup('Billing', FileSpreadsheet, billing)}
-        {renderCollapsibleGroup('Relationships', Network, relationships)}
-        {renderCollapsibleGroup('Insights', LineChart, insights)}
+        {/* Overview — static, no toggle */}
+        <SidebarGroup>
+          {!collapsed && (
+            <SidebarGroupLabel className="flex items-center gap-2">
+              <Home className="size-3.5" />
+              Overview
+            </SidebarGroupLabel>
+          )}
+          <SidebarGroupContent>{renderMenu(overview)}</SidebarGroupContent>
+        </SidebarGroup>
+
+        {mainGroups.map((g) =>
+          renderCollapsibleGroup(g.key, g.label, g.icon, g.items),
+        )}
       </SidebarContent>
 
       <SidebarFooter>
         <div className="flex flex-col gap-1">
-          {renderCollapsibleGroup('System', Cog, system)}
+          {renderCollapsibleGroup(
+            systemGroup.key,
+            systemGroup.label,
+            systemGroup.icon,
+            systemGroup.items,
+          )}
           <div className="mx-2 h-px bg-sidebar-border" />
           <div className="px-2 py-2 flex flex-col gap-2">
             <div>
