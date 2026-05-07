@@ -18,6 +18,7 @@ const ROUTE_LABELS: Record<string, string> = {
   '/billing/quotes':     'Quotations',
   '/billing/invoices':   'Invoices',
   '/billing/statements': 'Statements',
+  '/billing/items':      'Items',
   '/clients':            'Clients',
   '/leads':              'Leads',
   '/divisions':          'Divisions',

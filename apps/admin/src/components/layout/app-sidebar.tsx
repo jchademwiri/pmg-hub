@@ -7,7 +7,7 @@ import {
   Home, Banknote, FileSpreadsheet, Network, LineChart, Cog,
   LayoutDashboard, TrendingUp, TrendingDown, Tags, BookOpen,
   FileText, Receipt, ScrollText, Users, UserPlus, Building2,
-  Camera, BarChart3, Settings, ChevronDown, UserCog, PiggyBank,
+  Camera, BarChart3, Settings, ChevronDown, UserCog, PiggyBank, Package,
 } from 'lucide-react'
 import {
   Sidebar,
@@ -61,6 +61,7 @@ const GROUPS: { key: GroupKey; label: string; icon: React.ElementType; items: Na
       { title: 'Quotations', url: '/billing/quotes',     icon: FileText },
       { title: 'Invoices',   url: '/billing/invoices',   icon: Receipt },
       { title: 'Statements', url: '/billing/statements', icon: ScrollText },
+      { title: 'Items',      url: '/billing/items',      icon: Package },
     ],
   },
   {
