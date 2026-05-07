@@ -1,5 +1,6 @@
 import 'server-only'
 
+import { ACCOUNT_RATES, PROFIT_POOL_RATES } from '@/lib/accounts'
 import {
   getTotalRevenue,
   getTotalExpenses,
@@ -73,14 +74,14 @@ export function getYTDLabel(): string {
 // ── All-time summary (YTD shortcut for totals) ────────────────────────────────
 export async function getFinancialSummary(): Promise<FinancialSummary> {
   const [revenue, expenses] = await Promise.all([getTotalRevenue(), getTotalExpenses()])
-  const pmgShare   = revenue * 0.20
+  const pmgShare   = revenue * ACCOUNT_RATES.pmg_share
   const profitPool = revenue - expenses - pmgShare
   return {
     revenue, expenses, pmgShare, profitPool,
-    salary:   profitPool * 0.35,
-    reinvest: profitPool * 0.30,
-    reserve:  profitPool * 0.30,
-    flex:     profitPool * 0.05,
+    salary:   profitPool * PROFIT_POOL_RATES.salary,
+    reinvest: profitPool * PROFIT_POOL_RATES.reinvest,
+    reserve:  profitPool * PROFIT_POOL_RATES.reserve,
+    flex:     profitPool * PROFIT_POOL_RATES.flex,
   }
 }
 
@@ -186,8 +187,8 @@ export async function getMoMChartData(): Promise<MoMSnapshot[]> {
     { metric: 'Expenses',    current: snap.currentExpenses, previous: snap.previousExpenses },
     {
       metric: 'Profit Pool',
-      current:  snap.currentRevenue  - snap.currentExpenses  - (snap.currentRevenue  * 0.20),
-      previous: snap.previousRevenue - snap.previousExpenses - (snap.previousRevenue * 0.20),
+      current:  snap.currentRevenue  - snap.currentExpenses  - (snap.currentRevenue  * ACCOUNT_RATES.pmg_share),
+      previous: snap.previousRevenue - snap.previousExpenses - (snap.previousRevenue * ACCOUNT_RATES.pmg_share),
     },
   ]
 }
