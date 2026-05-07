@@ -4,40 +4,14 @@ import { usePathname } from 'next/navigation'
 import { SidebarTrigger } from '@/components/ui/sidebar'
 import { Separator } from '@/components/ui/separator'
 import {
-  Breadcrumb, BreadcrumbList, BreadcrumbItem, BreadcrumbPage
+  Breadcrumb, BreadcrumbList, BreadcrumbItem, BreadcrumbPage,
 } from '@/components/ui/breadcrumb'
 import { usePageHeader } from '@/components/navigation/page-header-context'
-
-const ROUTE_LABELS: Record<string, string> = {
-  '/dashboard':          'Dashboard',
-  '/income':             'Income',
-  '/expenses':           'Expenses',
-  '/expense-categories': 'Categories',
-  '/ledger':             'Ledger',
-  '/accounts':           'Accounts',
-  '/billing/quotes':     'Quotations',
-  '/billing/invoices':   'Invoices',
-  '/billing/statements': 'Statements',
-  '/billing/items':      'Items',
-  '/clients':            'Clients',
-  '/leads':              'Leads',
-  '/divisions':          'Divisions',
-  '/snapshots':          'Financial Snapshots',
-  '/reports':            'Reports & Insights',
-  '/settings/users':              'Users',
-  '/settings/users/invite':       'Invite User',
-  '/settings/organisation':       'Organisation',
-  '/settings/billing':            'Billing & Invoicing',
-  '/settings/localisation':       'Localisation',
-  '/settings/email':              'Email',
-  '/settings/security':           'Security',
-  '/settings/data':               'Data & Exports',
-  '/settings':                    'Settings',
-}
+import { ROUTE_LABELS } from '@/components/navigation/nav-data'
 
 function getPageLabel(pathname: string): string {
   if (ROUTE_LABELS[pathname]) return ROUTE_LABELS[pathname]
-  // Match nested routes (longest prefix wins)
+  // Match nested routes — longest prefix wins
   const match = Object.entries(ROUTE_LABELS)
     .filter(([route]) => pathname.startsWith(route + '/'))
     .sort((a, b) => b[0].length - a[0].length)[0]
