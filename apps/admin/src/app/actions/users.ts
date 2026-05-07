@@ -116,7 +116,7 @@ export async function inviteUser(formData: FormData): Promise<{ error?: string }
       return { error: 'Failed to send email' }
     }
 
-    revalidatePath('/users')
+    revalidatePath('/settings/users')
     return {}
   } catch {
     return { error: 'Something went wrong' }
@@ -155,7 +155,7 @@ export async function revokeUser(userId: string): Promise<{ error?: string }> {
     // Mark user as inactive using Drizzle ORM (type-safe)
     await db.update(user).set({ isActive: false }).where(eq(user.id, userId))
 
-    revalidatePath('/users')
+    revalidatePath('/settings/users')
     return {}
   } catch {
     return { error: 'Something went wrong' }
@@ -172,7 +172,7 @@ export async function reactivateUser(userId: string): Promise<{ error?: string }
     // Mark user as active using Drizzle ORM (type-safe)
     await db.update(user).set({ isActive: true }).where(eq(user.id, userId))
 
-    revalidatePath('/users')
+    revalidatePath('/settings/users')
     return {}
   } catch {
     return { error: 'Something went wrong' }
@@ -208,7 +208,7 @@ export async function deleteUser(userId: string): Promise<{ error?: string }> {
     // Delete user (sessions should cascade, or depends on db schema, but we'll delete directly)
     await db.delete(user).where(eq(user.id, userId))
 
-    revalidatePath('/users')
+    revalidatePath('/settings/users')
     return {}
   } catch {
     return { error: 'Something went wrong' }
@@ -227,7 +227,7 @@ export async function updateUserName(userId: string, formData: FormData): Promis
     const db = getDb()
     // Update user name using Drizzle ORM (type-safe)
     await db.update(user).set({ name }).where(eq(user.id, userId))
-    revalidatePath('/users')
+    revalidatePath('/settings/users')
     return {}
   } catch {
     return { error: 'Something went wrong' }
@@ -271,7 +271,7 @@ export async function updateUserRole(userId: string, formData: FormData): Promis
     // Update role using Drizzle ORM (type-safe)
     await db.update(user).set({ role }).where(eq(user.id, userId))
 
-    revalidatePath('/users')
+    revalidatePath('/settings/users')
     return {}
   } catch {
     return { error: 'Something went wrong' }
@@ -322,7 +322,7 @@ export async function resendInvitation(invitationId: string): Promise<{ error?: 
 
     if (emailError) return { error: 'Failed to resend email' }
 
-    revalidatePath('/users')
+    revalidatePath('/settings/users')
     return {}
   } catch {
     return { error: 'Something went wrong' }
@@ -337,7 +337,7 @@ export async function deleteInvitation(invitationId: string): Promise<{ error?: 
 
   try {
     await db.delete(invitations).where(eq(invitations.id, invitationId))
-    revalidatePath('/users')
+    revalidatePath('/settings/users')
     return {}
   } catch {
     return { error: 'Something went wrong' }

@@ -1,6 +1,6 @@
 # Settings
 
-The Settings section lives at `/settings` and is split into six sub-pages. Each sub-page follows the same 1/3 + 2/3 section layout used across the admin app — a label/description column on the left and a `Card` form on the right.
+The Settings section lives at `/settings` and is split into ten sub-pages. Each sub-page follows the same 1/3 + 2/3 section layout used across the admin app — a label/description column on the left and a `Card` form on the right.
 
 ---
 
@@ -11,6 +11,9 @@ The Settings section lives at `/settings` and is split into six sub-pages. Each 
 | `/settings` | Settings index — nav card grid | ✅ Active |
 | `/settings/organisation` | Organisation details | ✅ Active |
 | `/settings/billing` | Billing & Invoicing per division | ✅ Active |
+| `/settings/users` | Team members, roles, invitations | ✅ Active |
+| `/settings/localisation` | Timezone, locale, financial year | 🔜 Soon |
+| `/settings/email` | Outbound email / SMTP config | 🔜 Soon |
 | `/settings/notifications` | Notification preferences | 🔜 Soon |
 | `/settings/appearance` | Theme & display density | 🔜 Soon |
 | `/settings/security` | Password, 2FA, sessions, audit log | 🔜 Soon |
@@ -102,6 +105,131 @@ This produces prefixes like `AWS-INV-`, `AWS-QTE-`, with document numbers format
 **Default Notes**
 - Invoice Notes
 - Quote Notes / Terms
+
+---
+
+## `/settings/localisation`
+
+Controls global time, date, and financial year settings that affect the entire workspace — snapshots, reports, due date calculations, and document formatting.
+
+**File:** `src/app/(admin)/settings/localisation/page.tsx`
+
+> 🔜 Not yet implemented — UI is a placeholder.
+
+### Sections
+
+**Timezone**
+- Timezone — searchable dropdown of IANA timezones (default: `Africa/Johannesburg`)
+- Affects: due date calculations, snapshot timestamps, audit log entries, scheduled notifications
+
+**Date & Number Format**
+- Date Format — `DD/MM/YYYY` (default) | `MM/DD/YYYY` | `YYYY-MM-DD`
+- Number Format — `R 1 000,00` (default) | `R 1,000.00`
+- These apply to all documents, tables, and exports across the app
+
+**Financial Year**
+- Financial Year Start — month picker (default: March, i.e. 1 March – 28/29 February)
+- Affects: financial snapshots, income/expense reports, year-to-date calculations
+
+**Default Country**
+- Pre-fills the Country field when creating new clients or leads (default: South Africa)
+
+---
+
+## `/settings/email`
+
+Configures how outbound emails are sent — used for invoice delivery, quote sending, notifications, and user invitations.
+
+**File:** `src/app/(admin)/settings/email/page.tsx`
+
+> 🔜 Not yet implemented — UI is a placeholder.
+
+### Sections
+
+**Sending Provider**
+- Provider — `Resend` | `SMTP` | `SendGrid` (radio/select)
+- Switching provider shows the relevant credential fields below
+
+**Resend**
+- API Key
+
+**SMTP**
+- Host
+- Port
+- Username
+- Password
+- Encryption — None | TLS | STARTTLS
+
+**Sender Identity**
+- From Name — display name on outgoing emails (e.g. "PMG Hub")
+- From Address — the `from` email address (e.g. `billing@yourdomain.com`)
+- Reply-To Address — optional; defaults to From Address
+
+**Test Email**
+- Send a test email to a specified address to verify the configuration is working
+
+> Credentials are stored encrypted. The API key or SMTP password is never returned to the client after saving — only a masked placeholder is shown.
+
+---
+
+## `/settings/users`
+
+Manages who has access to the workspace, what they can do, and how they are invited.
+
+**Files:**
+- `src/app/(admin)/settings/users/page.tsx` — server component; fetches all users and pending invitations from the database
+- `src/app/(admin)/settings/users/invite/page.tsx` — invite form page
+
+> Access is restricted to `super_admin` role. Other roles receive a 404.
+
+### Sections
+
+**Team Members**
+
+Table of all users with access to the workspace.
+
+| Column | Description |
+|---|---|
+| Name | User's display name |
+| Email | Login email |
+| Role | Current role badge |
+| Status | Active / Invited / Suspended |
+| Joined | Date added |
+| Actions | Change role, Suspend, Remove |
+
+**Invite User**
+- Email address
+- Role — assigned at invite time
+- Send Invite button — dispatches an invitation email via the configured email provider
+
+**Roles & Permissions**
+
+Defines what each role can see and do across the app. Roles are fixed (not custom).
+
+| Role | Description |
+|---|---|
+| `owner` | Full access; can manage users, settings, and all data |
+| `admin` | Full access except user management and danger zone |
+| `manager` | Can view and create all billing and finance records; cannot change settings |
+| `viewer` | Read-only access across the app |
+
+Permission matrix (✅ allowed, ❌ not allowed):
+
+| Area | owner | admin | manager | viewer |
+|---|---|---|---|---|
+| View dashboard & reports | ✅ | ✅ | ✅ | ✅ |
+| Create / edit invoices & quotes | ✅ | ✅ | ✅ | ❌ |
+| Create / edit expenses & income | ✅ | ✅ | ✅ | ❌ |
+| Manage clients & leads | ✅ | ✅ | ✅ | ❌ |
+| Manage items catalogue | ✅ | ✅ | ✅ | ❌ |
+| View settings | ✅ | ✅ | ❌ | ❌ |
+| Change settings | ✅ | ✅ | ❌ | ❌ |
+| Manage users | ✅ | ❌ | ❌ | ❌ |
+| Danger zone actions | ✅ | ❌ | ❌ | ❌ |
+
+**Access Control**
+- Invitation mode — Invite-only (default) | Open registration
+- Session timeout — duration of inactivity before automatic sign-out (default: 7 days)
 
 ---
 
@@ -219,5 +347,9 @@ Handles data exports, retention policies, and destructive operations.
 
 - All sub-pages use a `Back → Settings` button linking to `/settings`.
 - Form fields are currently placeholder `div` elements styled to look like inputs. Wire them up with real `Input` components and server actions when implementing each section.
-- The billing page is the only settings page that is a server component (`async`) — it needs `getAllDivisions()` at render time.
+- The billing page is the only settings page that is currently a server component (`async`) — it needs `getAllDivisions()` at render time. Localisation and Users will also need to be server components when implemented.
+- **Users** (`/settings/users`) is already a fully working server component — it fetches users and pending invitations at render time and is restricted to `super_admin`. The sidebar nav entry points to `/settings/users` (moved from the old `/users` route).
 - "Soon" sections have their save buttons disabled and display a `Badge variant="secondary"` in the page header.
+- **Email credentials** must be stored encrypted at rest. Never return the raw secret to the client — show a masked placeholder after saving.
+- **Localisation settings** (timezone, financial year start, date format) are workspace-global and should be loaded once at the layout level and passed via context or server props to any component that formats dates or currency.
+- **Role enforcement** should happen at the server action and route handler level, not just in the UI. The permission matrix in `/settings/users` is the source of truth for what each role can do.

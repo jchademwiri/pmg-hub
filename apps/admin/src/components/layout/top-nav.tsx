@@ -24,7 +24,8 @@ const ROUTE_LABELS: Record<string, string> = {
   '/divisions':          'Divisions',
   '/snapshots':          'Financial Snapshots',
   '/reports':            'Reports & Insights',
-  '/users':              'Users',
+  '/settings/users':        'Users',
+  '/settings/users/invite': 'Invite User',
   '/settings':           'Settings',
 }
 
