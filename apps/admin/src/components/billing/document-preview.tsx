@@ -1,4 +1,5 @@
-import { Separator } from '@/components/ui/separator'
+import Link from 'next/link'
+import { ExternalLink } from 'lucide-react'
 import { cn } from '@/lib/utils'
 
 // ── Types ─────────────────────────────────────────────────────────────────────
@@ -54,6 +55,8 @@ export interface DocumentPreviewProps {
   terms?: string
   banking?: DocumentBanking
   vatRate?: number
+  /** Optional link shown on the sticky header — useful during development */
+  href?: string
 }
 
 export interface StatementTransaction {
@@ -107,6 +110,7 @@ export function DocumentPreview({
   terms,
   banking,
   vatRate = 15,
+  href,
 }: DocumentPreviewProps) {
   // Totals
   const subtotal = lineItems.reduce((sum, i) => sum + i.qty * i.unitPrice, 0)
@@ -144,13 +148,22 @@ export function DocumentPreview({
           {org.website && <span className="text-xs text-zinc-500">{org.website}</span>}
         </div>
 
-        {/* Document type + number + status */}
-        <div className="flex flex-col items-end gap-2">
+        {/* Document type + number + status — sticky as you scroll */}
+        <div className="sticky top-4 flex flex-col items-end gap-2">
           <span className="text-2xl font-bold uppercase tracking-widest text-zinc-300">
             {typeLabel}
           </span>
           <span className="text-sm font-semibold text-zinc-700">#{number}</span>
           <StatusPill status={status} />
+          {href && (
+            <Link
+              href={href}
+              className="mt-1 inline-flex items-center gap-1 rounded-md px-2 py-1 text-[10px] font-medium text-zinc-400 ring-1 ring-zinc-200 transition-colors hover:bg-zinc-100 hover:text-zinc-700"
+            >
+              <ExternalLink className="size-3" />
+              Open page
+            </Link>
+          )}
         </div>
       </div>
 

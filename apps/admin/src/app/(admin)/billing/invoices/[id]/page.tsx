@@ -96,7 +96,7 @@ export default async function InvoiceDetailPage({ params }: Props) {
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
         {/* Document preview */}
         <div className="lg:col-span-2">
-          <DocumentPreview type="invoice" {...MOCK} />
+          <DocumentPreview type="invoice" {...MOCK} href={`/billing/invoices/${id}`} />
         </div>
 
         {/* Sidebar */}

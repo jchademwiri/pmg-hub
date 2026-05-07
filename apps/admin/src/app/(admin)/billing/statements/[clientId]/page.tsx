@@ -110,7 +110,7 @@ export default async function StatementDetailPage({ params }: Props) {
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
         {/* Document preview */}
         <div className="lg:col-span-2">
-          <DocumentPreview type="statement" {...MOCK} />
+          <DocumentPreview type="statement" {...MOCK} href={`/billing/statements/${clientId}`} />
         </div>
 
         {/* Sidebar */}

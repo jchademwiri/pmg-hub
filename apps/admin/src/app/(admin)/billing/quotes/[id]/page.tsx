@@ -102,7 +102,7 @@ export default async function QuoteDetailPage({ params }: Props) {
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
         {/* Document preview */}
         <div className="lg:col-span-2">
-          <DocumentPreview type="quote" {...MOCK} />
+          <DocumentPreview type="quote" {...MOCK} href={`/billing/quotes/${id}`} />
         </div>
 
         {/* Sidebar */}
