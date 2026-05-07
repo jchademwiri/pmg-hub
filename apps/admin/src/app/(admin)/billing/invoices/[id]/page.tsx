@@ -62,7 +62,7 @@ export default async function InvoiceDetailPage({ params }: Props) {
         </div>
 
         {/* Sidebar */}
-        <div className="flex flex-col gap-4 lg:sticky lg:top-6">
+        <div className="flex flex-col gap-4 lg:sticky lg:top-16">
           <Card>
             <CardHeader>
               <CardTitle>Summary</CardTitle>

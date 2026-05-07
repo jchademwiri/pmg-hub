@@ -121,7 +121,7 @@ export default async function ItemDetailPage({ params }: Props) {
         </div>
 
         {/* Sidebar — sticky */}
-        <div className="flex flex-col gap-4 lg:sticky lg:top-6">
+        <div className="flex flex-col gap-4 lg:sticky lg:top-16">
           <Card size="sm">
             <CardHeader>
               <CardTitle>Usage</CardTitle>

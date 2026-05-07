@@ -69,7 +69,7 @@ export default async function StatementDetailPage({ params }: Props) {
         </div>
 
         {/* Sidebar */}
-        <div className="flex flex-col gap-4 lg:sticky lg:top-6">
+        <div className="flex flex-col gap-4 lg:sticky lg:top-16">
           <Card size="sm">
             <CardHeader>
               <CardTitle>Client Info</CardTitle>
