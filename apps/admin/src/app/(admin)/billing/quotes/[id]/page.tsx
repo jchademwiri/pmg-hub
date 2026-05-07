@@ -7,52 +7,12 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Separator } from '@/components/ui/separator'
 import { DocumentPreview } from '@/components/billing/document-preview'
 import type { DocumentPreviewProps } from '@/components/billing/document-preview'
+import { MOCK_QUOTE, MOCK_QUOTE_ACTIVITY } from '@/lib/mock/billing'
 
 export const metadata: Metadata = { title: 'Quotation' }
 
 interface Props {
   params: Promise<{ id: string }>
-}
-
-// ── Mock data ─────────────────────────────────────────────────────────────────
-
-const MOCK: Omit<DocumentPreviewProps, 'type'> = {
-  number: 'AWS-QTE-0018',
-  status: 'Sent',
-  issueDate: '01 May 2026',
-  dueDate: '31 May 2026',
-  reference: 'New Client Onboarding — Digital Package',
-  org: {
-    name: 'PMG',
-    registrationNumber: '2018/123456/07',
-    vatNumber: '4560123456',
-    email: 'billing@playhousemedia.co.za',
-    phone: '+27 21 000 0000',
-    website: 'www.playhousemedia.co.za',
-    address: '12 Media Park, Century City\nCape Town, 7441',
-  },
-  client: {
-    name: 'Bright Future Logistics',
-    email: 'info@brightfuture.co.za',
-    phone: '+27 31 444 0200',
-    address: '8 Harbour Road, Durban\nKwaZulu-Natal, 4001',
-  },
-  lineItems: [
-    { description: 'Brand Identity Package (logo, colours, typography)', qty: 1,  unitPrice: 18000, vatApplicable: true },
-    { description: 'Website Design & Development (5-page)',               qty: 1,  unitPrice: 35000, vatApplicable: true },
-    { description: 'Social Media Setup & Profile Optimisation',           qty: 3,  unitPrice: 1200,  vatApplicable: true },
-    { description: 'Copywriting — Website Pages',                         qty: 5,  unitPrice: 950,   vatApplicable: true },
-    { description: 'Photography Session (half day)',                      qty: 1,  unitPrice: 4500,  vatApplicable: true },
-  ],
-  terms:
-    '50% deposit required to commence work.\nBalance due on project completion.\nQuotation valid for 30 days from issue date.\nAll prices exclude VAT unless otherwise stated.',
-  banking: {
-    bankName: 'First National Bank',
-    accountName: 'PMG Media (Pty) Ltd',
-    accountNumber: '62012345678',
-    branchCode: '250655',
-  },
-  vatRate: 15,
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -75,9 +35,9 @@ export default async function QuoteDetailPage({ params }: Props) {
           <div>
             <div className="flex items-center gap-2">
               <h2 className="text-lg font-semibold">Quote #{id}</h2>
-              <Badge variant="secondary">{MOCK.status}</Badge>
+              <Badge variant="secondary">{MOCK_QUOTE.status}</Badge>
             </div>
-            <p className="text-sm text-muted-foreground">Issued {MOCK.issueDate}</p>
+            <p className="text-sm text-muted-foreground">Issued {MOCK_QUOTE.issueDate}</p>
           </div>
         </div>
         <div className="flex items-center gap-2">
@@ -102,7 +62,7 @@ export default async function QuoteDetailPage({ params }: Props) {
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-3 lg:items-start">
         {/* Document preview */}
         <div className="lg:col-span-2">
-          <DocumentPreview type="quote" {...MOCK} href={`/billing/quotes/${id}`} />
+          <DocumentPreview type="quote" {...MOCK_QUOTE} href={`/billing/quotes/${id}`} />
         </div>
 
         {/* Sidebar */}
@@ -134,10 +94,7 @@ export default async function QuoteDetailPage({ params }: Props) {
             </CardHeader>
             <CardContent>
               <div className="flex flex-col gap-3">
-                {[
-                  { label: 'Quote sent to client', date: '01 May 2026, 10:30' },
-                  { label: 'Quote created',        date: '01 May 2026, 10:15' },
-                ].map((entry) => (
+                {MOCK_QUOTE_ACTIVITY.map((entry) => (
                   <div key={entry.date} className="flex flex-col gap-0.5">
                     <span className="text-sm">{entry.label}</span>
                     <span className="text-xs text-muted-foreground">{entry.date}</span>

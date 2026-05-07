@@ -12,19 +12,7 @@ interface Props {
   params: Promise<{ id: string }>
 }
 
-// ── Mock data — TODO: replace with real DB fetch ──────────────────────────────
-
-const MOCK = {
-  name: 'Website Maintenance',
-  description: 'Monthly website maintenance including security updates, plugin updates, uptime monitoring, and up to 2 hours of content changes.',
-  unitPrice: 'R 4 500.00',
-  unitLabel: 'month',
-  vatApplicable: true,
-  status: 'Active',
-  createdAt: '12 Jan 2026',
-  usageInvoices: 8,
-  usageQuotes: 3,
-}
+import { MOCK_ITEM } from '@/lib/mock/billing'
 
 // ─────────────────────────────────────────────────────────────────────────────
 
@@ -45,10 +33,10 @@ export default async function ItemDetailPage({ params }: Props) {
           <Separator orientation="vertical" className="h-5" />
           <div>
             <div className="flex items-center gap-2">
-              <h2 className="text-lg font-semibold">{MOCK.name}</h2>
-              <Badge variant="secondary">{MOCK.status}</Badge>
+              <h2 className="text-lg font-semibold">{MOCK_ITEM.name}</h2>
+              <Badge variant="secondary">{MOCK_ITEM.status}</Badge>
             </div>
-            <p className="text-sm text-muted-foreground">Created {MOCK.createdAt}</p>
+            <p className="text-sm text-muted-foreground">Created {MOCK_ITEM.createdAt}</p>
           </div>
         </div>
         <div className="flex items-center gap-2">
@@ -75,7 +63,7 @@ export default async function ItemDetailPage({ params }: Props) {
               <div className="flex flex-col gap-1.5">
                 <label className="text-sm font-medium">Name</label>
                 <div className="h-9 rounded-md border border-input bg-muted/40 px-3 flex items-center text-sm">
-                  {MOCK.name}
+                  {MOCK_ITEM.name}
                 </div>
               </div>
 
@@ -83,7 +71,7 @@ export default async function ItemDetailPage({ params }: Props) {
               <div className="flex flex-col gap-1.5">
                 <label className="text-sm font-medium">Description</label>
                 <div className="min-h-20 rounded-md border border-input bg-muted/40 px-3 py-2 text-sm">
-                  {MOCK.description}
+                  {MOCK_ITEM.description}
                 </div>
               </div>
 
@@ -92,13 +80,13 @@ export default async function ItemDetailPage({ params }: Props) {
                 <div className="flex flex-col gap-1.5">
                   <label className="text-sm font-medium">Unit Price</label>
                   <div className="h-9 rounded-md border border-input bg-muted/40 px-3 flex items-center text-sm">
-                    {MOCK.unitPrice}
+                    {MOCK_ITEM.unitPrice}
                   </div>
                 </div>
                 <div className="flex flex-col gap-1.5">
                   <label className="text-sm font-medium">Unit Label</label>
                   <div className="h-9 rounded-md border border-input bg-muted/40 px-3 flex items-center text-sm">
-                    {MOCK.unitLabel}
+                    {MOCK_ITEM.unitLabel}
                   </div>
                 </div>
               </div>
@@ -142,15 +130,15 @@ export default async function ItemDetailPage({ params }: Props) {
               <div className="flex flex-col gap-2">
                 <div className="flex justify-between text-sm">
                   <span className="text-muted-foreground">Invoices</span>
-                  <span className="tabular-nums font-medium">{MOCK.usageInvoices}</span>
+                  <span className="tabular-nums font-medium">{MOCK_ITEM.usageInvoices}</span>
                 </div>
                 <div className="flex justify-between text-sm">
                   <span className="text-muted-foreground">Quotes</span>
-                  <span className="tabular-nums font-medium">{MOCK.usageQuotes}</span>
+                  <span className="tabular-nums font-medium">{MOCK_ITEM.usageQuotes}</span>
                 </div>
                 <Separator className="my-1" />
                 <p className="text-xs text-muted-foreground">
-                  Used on {MOCK.usageInvoices + MOCK.usageQuotes} documents in total.
+                  Used on {MOCK_ITEM.usageInvoices + MOCK_ITEM.usageQuotes} documents in total.
                 </p>
               </div>
             </CardContent>
@@ -164,15 +152,15 @@ export default async function ItemDetailPage({ params }: Props) {
               <div className="flex flex-col gap-2">
                 <div className="flex justify-between text-sm">
                   <span className="text-muted-foreground">Status</span>
-                  <Badge variant="secondary">{MOCK.status}</Badge>
+                  <Badge variant="secondary">{MOCK_ITEM.status}</Badge>
                 </div>
                 <div className="flex justify-between text-sm">
                   <span className="text-muted-foreground">VAT</span>
-                  <span>{MOCK.vatApplicable ? 'Applicable' : 'Exempt'}</span>
+                  <span>{MOCK_ITEM.vatApplicable ? 'Applicable' : 'Exempt'}</span>
                 </div>
                 <div className="flex justify-between text-sm">
                   <span className="text-muted-foreground">Created</span>
-                  <span>{MOCK.createdAt}</span>
+                  <span>{MOCK_ITEM.createdAt}</span>
                 </div>
               </div>
             </CardContent>
