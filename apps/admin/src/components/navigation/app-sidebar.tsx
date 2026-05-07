@@ -46,16 +46,22 @@ interface NavMenuProps {
 function NavMenu({ items, pathname, onNavigate }: NavMenuProps) {
   return (
     <SidebarMenu>
-      {items.map((item) => (
-        <SidebarMenuItem key={item.url}>
-          <SidebarMenuButton asChild isActive={pathname.startsWith(item.url)}>
-            <Link href={item.url} onClick={onNavigate} className="flex items-center gap-2">
-              <item.icon className="size-4 shrink-0" />
-              <span>{item.title}</span>
-            </Link>
-          </SidebarMenuButton>
-        </SidebarMenuItem>
-      ))}
+      {items.map((item) => {
+        // Exact match for root-level settings to avoid /settings matching /settings/users etc.
+        const isActive = item.url === '/settings'
+          ? pathname === '/settings'
+          : pathname.startsWith(item.url)
+        return (
+          <SidebarMenuItem key={item.url}>
+            <SidebarMenuButton asChild isActive={isActive}>
+              <Link href={item.url} onClick={onNavigate} className="flex items-center gap-2">
+                <item.icon className="size-4 shrink-0" />
+                <span>{item.title}</span>
+              </Link>
+            </SidebarMenuButton>
+          </SidebarMenuItem>
+        )
+      })}
     </SidebarMenu>
   )
 }

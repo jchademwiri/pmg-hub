@@ -11,9 +11,10 @@ import { ROUTE_LABELS } from '@/components/navigation/nav-data'
 
 function getPageLabel(pathname: string): string {
   if (ROUTE_LABELS[pathname]) return ROUTE_LABELS[pathname]
-  // Match nested routes — longest prefix wins
+  // Match nested routes — longest prefix wins, but skip exact-only routes like /settings
+  const EXACT_ONLY = new Set(['/settings'])
   const match = Object.entries(ROUTE_LABELS)
-    .filter(([route]) => pathname.startsWith(route + '/'))
+    .filter(([route]) => !EXACT_ONLY.has(route) && pathname.startsWith(route + '/'))
     .sort((a, b) => b[0].length - a[0].length)[0]
   if (match) return match[1]
   // Derive a readable label from the last path segment as a last resort
