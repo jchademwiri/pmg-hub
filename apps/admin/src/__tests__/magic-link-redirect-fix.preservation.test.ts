@@ -67,7 +67,7 @@ describe('magic-link-redirect-fix — Property 2: Preservation — Baseline Beha
       'proxy redirects to /login for any protected path with no cookies — Validates: Requirements 3.1',
       async () => {
         const { proxy } = await import('@/proxy')
-        const protectedPaths = ['/dashboard', '/settings', '/users', '/reports', '/admin']
+        const protectedPaths = ['/dashboard', '/settings', '/settings/users', '/reports', '/admin']
 
         for (const pathname of protectedPaths) {
           const req = makeRequest(pathname)

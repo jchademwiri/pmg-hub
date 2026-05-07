@@ -35,7 +35,7 @@ export default async function UsersPage() {
       <div className="flex justify-between items-center bg-card p-4 rounded-xl border border-border shadow-sm">
         <h2 className="text-lg font-medium">Users</h2>
         <Button asChild>
-          <Link href="/users/invite">Invite User</Link>
+          <Link href="/settings/users/invite">Invite User</Link>
         </Button>
       </div>
       {pending && pending.length > 0 && <PendingInvitationsTable pending={pending} />}

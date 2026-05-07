@@ -88,8 +88,8 @@ const GROUPS: { key: GroupKey; label: string; icon: React.ElementType; items: Na
     label: 'System',
     icon: Cog,
     items: [
-      { title: 'Users',    url: '/users',    icon: UserCog },
-      { title: 'Settings', url: '/settings', icon: Settings },
+      { title: 'Users',    url: '/settings/users', icon: UserCog },
+      { title: 'Settings', url: '/settings',       icon: Settings },
     ],
   },
 ]
