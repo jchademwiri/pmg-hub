@@ -11,9 +11,9 @@ The Settings section lives at `/settings` and is split into ten sub-pages. Each 
 | `/settings` | Settings index — nav card grid | ✅ Active |
 | `/settings/organisation` | Organisation details | ✅ Active |
 | `/settings/billing` | Billing & Invoicing per division | ✅ Active |
+| `/settings/users` | Team members, roles, invitations | ✅ Active |
 | `/settings/localisation` | Timezone, locale, financial year | 🔜 Soon |
 | `/settings/email` | Outbound email / SMTP config | 🔜 Soon |
-| `/settings/users` | Roles, permissions, invitations | 🔜 Soon |
 | `/settings/notifications` | Notification preferences | 🔜 Soon |
 | `/settings/appearance` | Theme & display density | 🔜 Soon |
 | `/settings/security` | Password, 2FA, sessions, audit log | 🔜 Soon |
@@ -176,9 +176,11 @@ Configures how outbound emails are sent — used for invoice delivery, quote sen
 
 Manages who has access to the workspace, what they can do, and how they are invited.
 
-**File:** `src/app/(admin)/settings/users/page.tsx`
+**Files:**
+- `src/app/(admin)/settings/users/page.tsx` — server component; fetches all users and pending invitations from the database
+- `src/app/(admin)/settings/users/invite/page.tsx` — invite form page
 
-> 🔜 Not yet implemented — UI is a placeholder.
+> Access is restricted to `super_admin` role. Other roles receive a 404.
 
 ### Sections
 
@@ -346,6 +348,7 @@ Handles data exports, retention policies, and destructive operations.
 - All sub-pages use a `Back → Settings` button linking to `/settings`.
 - Form fields are currently placeholder `div` elements styled to look like inputs. Wire them up with real `Input` components and server actions when implementing each section.
 - The billing page is the only settings page that is currently a server component (`async`) — it needs `getAllDivisions()` at render time. Localisation and Users will also need to be server components when implemented.
+- **Users** (`/settings/users`) is already a fully working server component — it fetches users and pending invitations at render time and is restricted to `super_admin`. The sidebar nav entry points to `/settings/users` (moved from the old `/users` route).
 - "Soon" sections have their save buttons disabled and display a `Badge variant="secondary"` in the page header.
 - **Email credentials** must be stored encrypted at rest. Never return the raw secret to the client — show a masked placeholder after saving.
 - **Localisation settings** (timezone, financial year start, date format) are workspace-global and should be loaded once at the layout level and passed via context or server props to any component that formats dates or currency.

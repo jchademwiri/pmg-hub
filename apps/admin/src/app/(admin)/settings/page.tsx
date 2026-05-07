@@ -8,6 +8,9 @@ import {
   Receipt,
   Database,
   ChevronRight,
+  Globe,
+  Mail,
+  Users,
 } from 'lucide-react'
 import { Card, CardHeader, CardTitle, CardDescription } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
@@ -28,6 +31,27 @@ const sections = [
     title: 'Billing & Invoicing',
     description: 'Invoice numbering, VAT rate, payment terms, and default notes',
     badge: null,
+  },
+  {
+    id: 'users',
+    icon: Users,
+    title: 'Users',
+    description: 'Manage team members, roles, and send invitations',
+    badge: null,
+  },
+  {
+    id: 'localisation',
+    icon: Globe,
+    title: 'Localisation',
+    description: 'Timezone, date format, currency, and financial year start',
+    badge: 'Soon',
+  },
+  {
+    id: 'email',
+    icon: Mail,
+    title: 'Email',
+    description: 'Outbound email provider, sender identity, and delivery settings',
+    badge: 'Soon',
   },
   {
     id: 'notifications',
