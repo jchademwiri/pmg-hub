@@ -1,6 +1,6 @@
 import type { Metadata } from 'next'
 import Link from 'next/link'
-import { Plus, FileText, Clock, CheckCircle, AlertCircle } from 'lucide-react'
+import { Plus, Package, CheckCircle, Archive } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
@@ -14,35 +14,34 @@ import {
   TableRow,
 } from '@/components/ui/table'
 
-export const metadata: Metadata = { title: 'Invoices' }
+export const metadata: Metadata = { title: 'Items' }
 
 // Placeholder stats — replace with real data fetching when ready
 const stats = [
-  { label: 'Total Invoices', value: '—', icon: FileText, description: 'All time' },
-  { label: 'Pending', value: '—', icon: Clock, description: 'Awaiting payment' },
-  { label: 'Paid', value: '—', icon: CheckCircle, description: 'This month' },
-  { label: 'Overdue', value: '—', icon: AlertCircle, description: 'Past due date' },
+  { label: 'Total Items', value: '—', icon: Package, description: 'All items' },
+  { label: 'Active', value: '—', icon: CheckCircle, description: 'Available for selection' },
+  { label: 'Archived', value: '—', icon: Archive, description: 'Hidden from selection' },
 ]
 
-export default function InvoicesPage() {
+export default function ItemsPage() {
   return (
     <div className="flex flex-col gap-6">
       {/* Page header */}
       <div className="flex items-center justify-between">
         <div>
-          <h2 className="text-lg font-semibold">Invoices</h2>
-          <p className="text-sm text-muted-foreground">Manage and track client invoices</p>
+          <h2 className="text-lg font-semibold">Items</h2>
+          <p className="text-sm text-muted-foreground">Manage your service catalogue</p>
         </div>
         <Button asChild size="sm">
-          <Link href="/billing/invoices/new">
+          <Link href="/billing/items/new">
             <Plus className="size-4" />
-            New Invoice
+            New Item
           </Link>
         </Button>
       </div>
 
       {/* Stats row */}
-      <div className="grid grid-cols-2 gap-4 sm:grid-cols-4">
+      <div className="grid grid-cols-2 gap-4 sm:grid-cols-3">
         {stats.map((stat) => (
           <Card key={stat.label} size="sm">
             <CardHeader>
@@ -59,32 +58,31 @@ export default function InvoicesPage() {
         ))}
       </div>
 
-      {/* Invoices table */}
+      {/* Items table */}
       <Card>
         <CardHeader>
-          <CardTitle>All Invoices</CardTitle>
-          <CardDescription>A list of all invoices across clients</CardDescription>
+          <CardTitle>All Items</CardTitle>
+          <CardDescription>Service items available for invoices and quotes</CardDescription>
         </CardHeader>
         <CardContent className="p-0">
           <Table>
             <TableHeader>
               <TableRow>
-                <TableHead>Invoice #</TableHead>
-                <TableHead>Client</TableHead>
-                <TableHead>Issue Date</TableHead>
-                <TableHead>Due Date</TableHead>
-                <TableHead>Amount</TableHead>
+                <TableHead>Name</TableHead>
+                <TableHead>Description</TableHead>
+                <TableHead className="text-right">Unit Price</TableHead>
+                <TableHead>VAT</TableHead>
                 <TableHead>Status</TableHead>
                 <TableHead className="w-0" />
               </TableRow>
             </TableHeader>
             <TableBody>
               <TableRow>
-                <TableCell colSpan={7} className="py-0">
+                <TableCell colSpan={6} className="py-0">
                   <EmptyState
-                    message="No invoices yet. Create your first invoice to get started."
-                    ctaLabel="New Invoice"
-                    ctaHref="/billing/invoices/new"
+                    message="No items yet. Create your first service item to get started."
+                    ctaLabel="New Item"
+                    ctaHref="/billing/items/new"
                   />
                 </TableCell>
               </TableRow>
