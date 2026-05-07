@@ -3,22 +3,19 @@ import Link from 'next/link'
 import { ChevronLeft, Printer, Send, MoreHorizontal } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card'
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Separator } from '@/components/ui/separator'
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from '@/components/ui/table'
+import { DocumentPreview } from '@/components/billing/document-preview'
+import type { DocumentPreviewProps } from '@/components/billing/document-preview'
+import { MOCK_INVOICE, MOCK_INVOICE_ACTIVITY } from '@/lib/mock/billing'
 
 export const metadata: Metadata = { title: 'Invoice' }
 
 interface Props {
   params: Promise<{ id: string }>
 }
+
+// ─────────────────────────────────────────────────────────────────────────────
 
 export default async function InvoiceDetailPage({ params }: Props) {
   const { id } = await params
@@ -38,9 +35,9 @@ export default async function InvoiceDetailPage({ params }: Props) {
           <div>
             <div className="flex items-center gap-2">
               <h2 className="text-lg font-semibold">Invoice #{id}</h2>
-              <Badge variant="secondary">Draft</Badge>
+              <Badge variant="secondary">{MOCK_INVOICE.status}</Badge>
             </div>
-            <p className="text-sm text-muted-foreground">Created —</p>
+            <p className="text-sm text-muted-foreground">Issued {MOCK_INVOICE.issueDate}</p>
           </div>
         </div>
         <div className="flex items-center gap-2">
@@ -58,75 +55,14 @@ export default async function InvoiceDetailPage({ params }: Props) {
         </div>
       </div>
 
-      <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
-        {/* Invoice body */}
-        <div className="flex flex-col gap-6 lg:col-span-2">
-          {/* Client & invoice meta */}
-          <Card>
-            <CardHeader>
-              <div className="flex items-start justify-between">
-                <div>
-                  <CardTitle>Invoice Details</CardTitle>
-                  <CardDescription>Invoice #{id}</CardDescription>
-                </div>
-              </div>
-            </CardHeader>
-            <CardContent>
-              <div className="grid grid-cols-2 gap-6 sm:grid-cols-4">
-                {[
-                  { label: 'Client', value: '—' },
-                  { label: 'Issue Date', value: '—' },
-                  { label: 'Due Date', value: '—' },
-                  { label: 'Reference', value: '—' },
-                ].map((field) => (
-                  <div key={field.label} className="flex flex-col gap-1">
-                    <span className="text-xs text-muted-foreground">{field.label}</span>
-                    <span className="text-sm font-medium">{field.value}</span>
-                  </div>
-                ))}
-              </div>
-            </CardContent>
-          </Card>
-
-          {/* Line items */}
-          <Card>
-            <CardHeader>
-              <CardTitle>Line Items</CardTitle>
-            </CardHeader>
-            <CardContent className="p-0">
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>Description</TableHead>
-                    <TableHead className="text-right">Qty</TableHead>
-                    <TableHead className="text-right">Unit Price</TableHead>
-                    <TableHead className="text-right">Amount</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  <TableRow>
-                    <TableCell colSpan={4} className="text-center text-sm text-muted-foreground py-8">
-                      No line items
-                    </TableCell>
-                  </TableRow>
-                </TableBody>
-              </Table>
-            </CardContent>
-          </Card>
-
-          {/* Notes */}
-          <Card size="sm">
-            <CardHeader>
-              <CardTitle>Notes</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <p className="text-sm text-muted-foreground">No notes added.</p>
-            </CardContent>
-          </Card>
+      <div className="grid grid-cols-1 gap-6 lg:grid-cols-3 lg:items-start">
+        {/* Document preview */}
+        <div className="lg:col-span-2">
+          <DocumentPreview type="invoice" {...MOCK_INVOICE} href={`/billing/invoices/${id}`} />
         </div>
 
         {/* Sidebar */}
-        <div className="flex flex-col gap-4">
+        <div className="flex flex-col gap-4 lg:sticky lg:top-16">
           <Card>
             <CardHeader>
               <CardTitle>Summary</CardTitle>
@@ -134,16 +70,16 @@ export default async function InvoiceDetailPage({ params }: Props) {
             <CardContent className="flex flex-col gap-3">
               <div className="flex justify-between text-sm">
                 <span className="text-muted-foreground">Subtotal</span>
-                <span className="tabular-nums">R 0.00</span>
+                <span className="tabular-nums">R 16 549.00</span>
               </div>
               <div className="flex justify-between text-sm">
                 <span className="text-muted-foreground">VAT (15%)</span>
-                <span className="tabular-nums">R 0.00</span>
+                <span className="tabular-nums">R 2 432.25</span>
               </div>
               <Separator />
               <div className="flex justify-between text-sm font-semibold">
                 <span>Total</span>
-                <span className="tabular-nums">R 0.00</span>
+                <span className="tabular-nums">R 18 981.25</span>
               </div>
             </CardContent>
           </Card>
@@ -153,7 +89,14 @@ export default async function InvoiceDetailPage({ params }: Props) {
               <CardTitle>Activity</CardTitle>
             </CardHeader>
             <CardContent>
-              <p className="text-sm text-muted-foreground">No activity yet.</p>
+              <div className="flex flex-col gap-3">
+                {MOCK_INVOICE_ACTIVITY.map((entry) => (
+                  <div key={entry.date} className="flex flex-col gap-0.5">
+                    <span className="text-sm">{entry.label}</span>
+                    <span className="text-xs text-muted-foreground">{entry.date}</span>
+                  </div>
+                ))}
+              </div>
             </CardContent>
           </Card>
         </div>

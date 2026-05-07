@@ -3,12 +3,7 @@
 import React from 'react'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
-import {
-  Home, Banknote, FileSpreadsheet, Network, LineChart, Cog,
-  LayoutDashboard, TrendingUp, TrendingDown, Tags, BookOpen,
-  FileText, Receipt, ScrollText, Users, UserPlus, Building2,
-  Camera, BarChart3, Settings, ChevronDown, UserCog, PiggyBank, Package,
-} from 'lucide-react'
+import { Home, ChevronDown } from 'lucide-react'
 import {
   Sidebar,
   SidebarContent,
@@ -27,75 +22,9 @@ import {
   CollapsibleContent,
   CollapsibleTrigger,
 } from '@/components/ui/collapsible'
-import { SignOutButton } from '@/components/layout/sign-out-button'
-
-// ── Types ─────────────────────────────────────────────────────────────────────
-
-type NavItem = { title: string; url: string; icon: React.ElementType }
-type GroupKey = 'finance' | 'billing' | 'relationships' | 'insights' | 'system'
-
-// ── Nav data ──────────────────────────────────────────────────────────────────
-
-const OVERVIEW: NavItem[] = [
-  { title: 'Dashboard', url: '/dashboard', icon: LayoutDashboard },
-]
-
-const GROUPS: { key: GroupKey; label: string; icon: React.ElementType; items: NavItem[] }[] = [
-  {
-    key: 'finance',
-    label: 'Finance',
-    icon: Banknote,
-    items: [
-      { title: 'Income',           url: '/income',             icon: TrendingUp },
-      { title: 'Expenses',         url: '/expenses',           icon: TrendingDown },
-      { title: 'Categories',       url: '/expense-categories', icon: Tags },
-      { title: 'Corporate Ledger', url: '/ledger',             icon: BookOpen },
-      { title: 'Accounts',         url: '/accounts',           icon: PiggyBank },
-    ],
-  },
-  {
-    key: 'billing',
-    label: 'Billing',
-    icon: FileSpreadsheet,
-    items: [
-      { title: 'Quotations', url: '/billing/quotes',     icon: FileText },
-      { title: 'Invoices',   url: '/billing/invoices',   icon: Receipt },
-      { title: 'Statements', url: '/billing/statements', icon: ScrollText },
-      { title: 'Items',      url: '/billing/items',      icon: Package },
-    ],
-  },
-  {
-    key: 'relationships',
-    label: 'Relationships',
-    icon: Network,
-    items: [
-      { title: 'Clients',   url: '/clients',   icon: Users },
-      { title: 'Leads',     url: '/leads',     icon: UserPlus },
-      { title: 'Divisions', url: '/divisions', icon: Building2 },
-    ],
-  },
-  {
-    key: 'insights',
-    label: 'Insights',
-    icon: LineChart,
-    items: [
-      { title: 'Snapshots', url: '/snapshots', icon: Camera },
-      { title: 'Reports',   url: '/reports',   icon: BarChart3 },
-    ],
-  },
-  {
-    key: 'system',
-    label: 'System',
-    icon: Cog,
-    items: [
-      { title: 'Users',    url: '/settings/users', icon: UserCog },
-      { title: 'Settings', url: '/settings',       icon: Settings },
-    ],
-  },
-]
-
-const MAIN_GROUPS = GROUPS.filter((g) => g.key !== 'system')
-const SYSTEM_GROUP = GROUPS.find((g) => g.key === 'system')!
+import { SignOutButton } from '@/components/navigation/sign-out-button'
+import { OVERVIEW, GROUPS } from '@/components/navigation/nav-data'
+import type { NavItem, NavGroup, GroupKey } from '@/components/navigation/nav-data'
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
 
@@ -117,60 +46,54 @@ interface NavMenuProps {
 function NavMenu({ items, pathname, onNavigate }: NavMenuProps) {
   return (
     <SidebarMenu>
-      {items.map((item) => (
-        <SidebarMenuItem key={item.url}>
-          <SidebarMenuButton asChild isActive={pathname.startsWith(item.url)}>
-            <Link href={item.url} onClick={onNavigate} className="flex items-center gap-2">
-              <item.icon className="size-4 shrink-0" />
-              <span>{item.title}</span>
-            </Link>
-          </SidebarMenuButton>
-        </SidebarMenuItem>
-      ))}
+      {items.map((item) => {
+        // Exact match for root-level settings to avoid /settings matching /settings/users etc.
+        const isActive = item.url === '/settings'
+          ? pathname === '/settings'
+          : pathname.startsWith(item.url)
+        return (
+          <SidebarMenuItem key={item.url}>
+            <SidebarMenuButton asChild isActive={isActive}>
+              <Link href={item.url} onClick={onNavigate} className="flex items-center gap-2">
+                <item.icon className="size-4 shrink-0" />
+                <span>{item.title}</span>
+              </Link>
+            </SidebarMenuButton>
+          </SidebarMenuItem>
+        )
+      })}
     </SidebarMenu>
   )
 }
 
 interface CollapsibleGroupProps {
-  groupKey: GroupKey
-  label: string
-  icon: React.ElementType
-  items: NavItem[]
+  group: NavGroup
   isOpen: boolean
   pathname: string
   onToggle: (key: GroupKey, open: boolean) => void
   onNavigate: () => void
 }
 
-function CollapsibleGroup({
-  groupKey,
-  label,
-  icon: GroupIcon,
-  items,
-  isOpen,
-  pathname,
-  onToggle,
-  onNavigate,
-}: CollapsibleGroupProps) {
+function CollapsibleGroup({ group, isOpen, pathname, onToggle, onNavigate }: CollapsibleGroupProps) {
   return (
     <Collapsible
       open={isOpen}
-      onOpenChange={(open) => onToggle(groupKey, open)}
+      onOpenChange={(open) => onToggle(group.key, open)}
       className="group/collapsible"
     >
       <SidebarGroup>
         <CollapsibleTrigger asChild>
           <SidebarGroupLabel className="cursor-pointer flex items-center justify-between hover:text-foreground">
             <span className="flex items-center gap-2">
-              <GroupIcon className="size-3.5" />
-              {label}
+              <group.icon className="size-3.5" />
+              {group.label}
             </span>
             <ChevronDown className="size-3.5 transition-transform group-data-[state=closed]/collapsible:-rotate-90" />
           </SidebarGroupLabel>
         </CollapsibleTrigger>
         <CollapsibleContent>
           <SidebarGroupContent>
-            <NavMenu items={items} pathname={pathname} onNavigate={onNavigate} />
+            <NavMenu items={group.items} pathname={pathname} onNavigate={onNavigate} />
           </SidebarGroupContent>
         </CollapsibleContent>
       </SidebarGroup>
@@ -184,6 +107,9 @@ interface AppSidebarProps {
   user: { name: string; email: string; role: string }
 }
 
+const MAIN_GROUPS = GROUPS.filter((g) => g.key !== 'system')
+const SYSTEM_GROUP = GROUPS.find((g) => g.key === 'system')!
+
 export function AppSidebar({ user }: AppSidebarProps) {
   const pathname = usePathname()
   const { isMobile, setOpenMobile } = useSidebar()
@@ -192,7 +118,6 @@ export function AppSidebar({ user }: AppSidebarProps) {
     () => getActiveGroup(pathname),
   )
 
-  // Keep the open group in sync when the route changes (e.g. browser back/forward)
   React.useEffect(() => {
     const active = getActiveGroup(pathname)
     if (active) setOpenGroup(active)
@@ -202,7 +127,6 @@ export function AppSidebar({ user }: AppSidebarProps) {
     setOpenGroup(open ? key : null)
   }
 
-  // Close the mobile sheet after tapping a link
   const handleNavigate = React.useCallback(() => {
     if (isMobile) setOpenMobile(false)
   }, [isMobile, setOpenMobile])
@@ -235,10 +159,7 @@ export function AppSidebar({ user }: AppSidebarProps) {
         {MAIN_GROUPS.map((g) => (
           <CollapsibleGroup
             key={g.key}
-            groupKey={g.key}
-            label={g.label}
-            icon={g.icon}
-            items={g.items}
+            group={g}
             isOpen={openGroup === g.key}
             pathname={pathname}
             onToggle={handleToggle}
@@ -250,10 +171,7 @@ export function AppSidebar({ user }: AppSidebarProps) {
       <SidebarFooter>
         <div className="flex flex-col gap-1">
           <CollapsibleGroup
-            groupKey={SYSTEM_GROUP.key}
-            label={SYSTEM_GROUP.label}
-            icon={SYSTEM_GROUP.icon}
-            items={SYSTEM_GROUP.items}
+            group={SYSTEM_GROUP}
             isOpen={openGroup === SYSTEM_GROUP.key}
             pathname={pathname}
             onToggle={handleToggle}

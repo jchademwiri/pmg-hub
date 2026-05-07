@@ -31,9 +31,18 @@ export default function StatementsPage() {
           <h2 className="text-lg font-semibold">Statements</h2>
           <p className="text-sm text-muted-foreground">View account statements per client</p>
         </div>
-        <Button variant="outline" size="sm" disabled>
-          Generate Statement
-        </Button>
+        <div className="flex items-center gap-2">
+          {/* TODO: remove — dev preview link */}
+          <Link
+            href="/billing/statements/mock-preview"
+            className="rounded-md border border-dashed border-border px-3 py-1.5 text-xs text-muted-foreground transition-colors hover:border-foreground/30 hover:text-foreground"
+          >
+            Preview mock statement →
+          </Link>
+          <Button variant="outline" size="sm" disabled>
+            Generate Statement
+          </Button>
+        </div>
       </div>
 
       {/* Stats row */}

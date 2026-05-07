@@ -1,6 +1,6 @@
 import { describe, it, expect, vi } from 'vitest';
 import { render, screen } from '@testing-library/react';
-import { AppSidebar } from '../../components/layout/app-sidebar';
+import { AppSidebar } from '../../components/navigation/app-sidebar';
 import { TooltipProvider } from '../../components/ui/tooltip';
 import { SidebarProvider } from '../../components/ui/sidebar';
 

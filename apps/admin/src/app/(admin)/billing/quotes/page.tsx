@@ -32,12 +32,21 @@ export default function QuotesPage() {
           <h2 className="text-lg font-semibold">Quotations</h2>
           <p className="text-sm text-muted-foreground">Create and manage client quotes</p>
         </div>
-        <Button asChild size="sm">
-          <Link href="/billing/quotes/new">
-            <Plus className="size-4" />
-            New Quote
+        <div className="flex items-center gap-2">
+          {/* TODO: remove — dev preview link */}
+          <Link
+            href="/billing/quotes/mock-preview"
+            className="rounded-md border border-dashed border-border px-3 py-1.5 text-xs text-muted-foreground transition-colors hover:border-foreground/30 hover:text-foreground"
+          >
+            Preview mock quote →
           </Link>
-        </Button>
+          <Button asChild size="sm">
+            <Link href="/billing/quotes/new">
+              <Plus className="size-4" />
+              New Quote
+            </Link>
+          </Button>
+        </div>
       </div>
 
       {/* Stats row */}

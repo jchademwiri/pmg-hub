@@ -1,7 +1,7 @@
 import { SidebarProvider, SidebarInset } from '@/components/ui/sidebar';
-import { AppSidebar } from '@/components/layout/app-sidebar';
-import { TopNav } from '@/components/layout/top-nav';
-import { PageHeaderProvider } from '@/components/layout/page-header-context';
+import { AppSidebar } from '@/components/navigation/app-sidebar';
+import { TopNav } from '@/components/navigation/top-nav';
+import { PageHeaderProvider } from '@/components/navigation/page-header-context';
 import { Toaster } from '@/components/ui/sonner';
 import { TooltipProvider } from '@/components/ui/tooltip';
 import { ConfirmProvider } from '@/components/ui/confirm-dialog';
@@ -26,7 +26,7 @@ export default async function AdminLayout({ children }: { children: React.ReactN
         <SidebarInset>
           <PageHeaderProvider>
             <TopNav />
-            <main className="flex-1 overflow-y-auto p-6 bg-background">
+            <main className="flex-1 p-6 bg-background">
               <div className="mx-auto w-full max-w-7xl">
                 <ConfirmProvider>{children}</ConfirmProvider>
               </div>

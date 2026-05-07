@@ -2,14 +2,10 @@ import type { Metadata } from 'next'
 import Link from 'next/link'
 import {
   Building2,
-  Bell,
   Shield,
-  Palette,
   Receipt,
   Database,
   ChevronRight,
-  Globe,
-  Mail,
   Users,
 } from 'lucide-react'
 import { Card, CardHeader, CardTitle, CardDescription } from '@/components/ui/card'
@@ -38,34 +34,6 @@ const sections = [
     title: 'Users',
     description: 'Manage team members, roles, and send invitations',
     badge: null,
-  },
-  {
-    id: 'localisation',
-    icon: Globe,
-    title: 'Localisation',
-    description: 'Timezone, date format, currency, and financial year start',
-    badge: 'Soon',
-  },
-  {
-    id: 'email',
-    icon: Mail,
-    title: 'Email',
-    description: 'Outbound email provider, sender identity, and delivery settings',
-    badge: 'Soon',
-  },
-  {
-    id: 'notifications',
-    icon: Bell,
-    title: 'Notifications',
-    description: 'Email alerts for overdue invoices, new leads, and monthly snapshots',
-    badge: 'Soon',
-  },
-  {
-    id: 'appearance',
-    icon: Palette,
-    title: 'Appearance',
-    description: 'Theme preferences and display density',
-    badge: 'Soon',
   },
   {
     id: 'security',

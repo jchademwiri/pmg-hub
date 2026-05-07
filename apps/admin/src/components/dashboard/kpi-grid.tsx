@@ -122,7 +122,7 @@ export function KpiGrid({ summary, deltas, previousSummary, deltaLabel }: Props)
         deltaLabel={deltaLabel}
       />
       <KpiCard
-        label="PMG Share (20%)"
+        label="PMG Share (25%)"
         value={summary.pmgShare}
         delta={pmgDelta ?? undefined}
         deltaLabel={deltaLabel}

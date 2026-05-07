@@ -2,9 +2,9 @@ import type { Metadata } from 'next'
 import { getLedgerBalances } from '@/lib/financial'
 import { recordAccountWithdrawal } from '@/app/actions/account-withdrawal'
 import { AccountCard } from '@/components/accounts/account-card'
-import { ACCOUNT_KEYS, ACCOUNT_LABELS } from '@/lib/accounts'
+import { ACCOUNT_KEYS, ACCOUNT_LABELS, LOCKED_ACCOUNTS } from '@/lib/accounts'
 import { formatZAR } from '@/lib/format'
-import { SetPageTotal } from '@/components/layout/page-header-context'
+import { SetPageTotal } from '@/components/navigation/page-header-context'
 import { getLedgerByAllocation } from '@pmg/db'
 
 export const dynamic = 'force-dynamic'
@@ -41,6 +41,9 @@ export default async function AccountsPage() {
               balance={bucket.available}
               historyCount={histories[key]!.length}
               recordAction={recordAccountWithdrawal}
+              // TODO: make withdrawalLocked dynamic — admin should be able to lock/unlock
+              // any account from settings without a code change.
+              withdrawalLocked={(LOCKED_ACCOUNTS as readonly string[]).includes(key)}
             />
           )
         })}

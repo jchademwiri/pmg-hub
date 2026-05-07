@@ -17,9 +17,13 @@ export const PROFIT_POOL_RATES = {
   flex:     0.05,
 } as const
 
-// Note: pmg_share is 20% of revenue (not profit pool).
+// Note: pmg_share is 25% of revenue (not profit pool).
 // It is intentionally excluded from PROFIT_POOL_RATES.
 export const ACCOUNT_RATES: Record<AccountKey, number> = {
   ...PROFIT_POOL_RATES,
-  pmg_share: 0.20,
+  pmg_share: 0.25,
 }
+
+// TODO: make this dynamic — admin should be able to lock/unlock any account
+// from settings without a code change.
+export const LOCKED_ACCOUNTS = ['pmg_share', 'flex'] as const

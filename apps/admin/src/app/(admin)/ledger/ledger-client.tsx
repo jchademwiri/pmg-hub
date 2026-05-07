@@ -7,7 +7,7 @@ import { LedgerTable } from '@/components/ledger/ledger-table';
 import { LedgerAddForm } from '@/components/ledger/ledger-add-form';
 import { EmptyState } from '@/components/ui/empty-state';
 import { formatZAR } from '@/lib/format';
-import { SetPageTotal } from '@/components/layout/page-header-context';
+import { SetPageTotal } from '@/components/navigation/page-header-context';
 import { updateLedgerEntry, deleteLedgerEntry, createLedgerEntry } from '@/app/actions/ledger';
 import type { LedgerEntry } from '@/components/ledger/ledger-table';
 
