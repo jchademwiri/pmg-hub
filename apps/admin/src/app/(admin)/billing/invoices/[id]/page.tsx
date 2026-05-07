@@ -93,14 +93,14 @@ export default async function InvoiceDetailPage({ params }: Props) {
         </div>
       </div>
 
-      <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
+      <div className="grid grid-cols-1 gap-6 lg:grid-cols-3 lg:items-start">
         {/* Document preview */}
         <div className="lg:col-span-2">
           <DocumentPreview type="invoice" {...MOCK} href={`/billing/invoices/${id}`} />
         </div>
 
         {/* Sidebar */}
-        <div className="flex flex-col gap-4">
+        <div className="flex flex-col gap-4 lg:sticky lg:top-6">
           <Card>
             <CardHeader>
               <CardTitle>Summary</CardTitle>

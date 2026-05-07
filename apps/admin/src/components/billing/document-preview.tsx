@@ -1,5 +1,4 @@
 import Link from 'next/link'
-import { ExternalLink } from 'lucide-react'
 import { cn } from '@/lib/utils'
 
 // ── Types ─────────────────────────────────────────────────────────────────────
@@ -158,9 +157,8 @@ export function DocumentPreview({
           {href && (
             <Link
               href={href}
-              className="mt-1 inline-flex items-center gap-1 rounded-md px-2 py-1 text-[10px] font-medium text-zinc-400 ring-1 ring-zinc-200 transition-colors hover:bg-zinc-100 hover:text-zinc-700"
+              className="mt-1 rounded-md px-2 py-1 text-[10px] font-medium text-zinc-400 ring-1 ring-zinc-200 transition-colors hover:bg-zinc-100 hover:text-zinc-700"
             >
-              <ExternalLink className="size-3" />
               Open page
             </Link>
           )}
