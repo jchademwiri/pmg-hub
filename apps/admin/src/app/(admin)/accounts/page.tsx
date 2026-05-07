@@ -41,6 +41,7 @@ export default async function AccountsPage() {
               balance={bucket.available}
               historyCount={histories[key]!.length}
               recordAction={recordAccountWithdrawal}
+              withdrawalLocked={key === 'pmg_share'}
             />
           )
         })}
