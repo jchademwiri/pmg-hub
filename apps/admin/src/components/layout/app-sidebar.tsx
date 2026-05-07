@@ -8,7 +8,7 @@ import {
   LayoutDashboard, TrendingUp, TrendingDown, Tags, BookOpen,
   FileText, Receipt, ScrollText, Users, UserPlus, Building2,
   Camera, BarChart3, Settings, ChevronDown, UserCog, PiggyBank,
-  Package, Globe, Mail, Shield, Database,
+  Package, Shield, Database,
 } from 'lucide-react'
 import {
   Sidebar,
@@ -89,11 +89,10 @@ const GROUPS: { key: GroupKey; label: string; icon: React.ElementType; items: Na
     label: 'System',
     icon: Cog,
     items: [
+      { title: 'Settings',       url: '/settings',               icon: Settings   },
       { title: 'Users',          url: '/settings/users',         icon: UserCog    },
       { title: 'Organisation',   url: '/settings/organisation',  icon: Building2  },
       { title: 'Billing',        url: '/settings/billing',       icon: Receipt    },
-      { title: 'Localisation',   url: '/settings/localisation',  icon: Globe      },
-      { title: 'Email',          url: '/settings/email',         icon: Mail       },
       { title: 'Security',       url: '/settings/security',      icon: Shield     },
       { title: 'Data & Exports', url: '/settings/data',          icon: Database   },
     ],

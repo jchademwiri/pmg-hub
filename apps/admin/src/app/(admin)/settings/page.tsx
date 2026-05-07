@@ -6,8 +6,6 @@ import {
   Receipt,
   Database,
   ChevronRight,
-  Globe,
-  Mail,
   Users,
 } from 'lucide-react'
 import { Card, CardHeader, CardTitle, CardDescription } from '@/components/ui/card'
@@ -36,20 +34,6 @@ const sections = [
     title: 'Users',
     description: 'Manage team members, roles, and send invitations',
     badge: null,
-  },
-  {
-    id: 'localisation',
-    icon: Globe,
-    title: 'Localisation',
-    description: 'Timezone, date format, currency, and financial year start',
-    badge: 'Soon',
-  },
-  {
-    id: 'email',
-    icon: Mail,
-    title: 'Email',
-    description: 'Outbound email provider, sender identity, and delivery settings',
-    badge: 'Soon',
   },
   {
     id: 'security',
