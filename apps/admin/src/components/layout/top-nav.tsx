@@ -24,9 +24,15 @@ const ROUTE_LABELS: Record<string, string> = {
   '/divisions':          'Divisions',
   '/snapshots':          'Financial Snapshots',
   '/reports':            'Reports & Insights',
-  '/settings/users':        'Users',
-  '/settings/users/invite': 'Invite User',
-  '/settings':           'Settings',
+  '/settings/users':              'Users',
+  '/settings/users/invite':       'Invite User',
+  '/settings/organisation':       'Organisation',
+  '/settings/billing':            'Billing & Invoicing',
+  '/settings/localisation':       'Localisation',
+  '/settings/email':              'Email',
+  '/settings/security':           'Security',
+  '/settings/data':               'Data & Exports',
+  '/settings':                    'Settings',
 }
 
 function getPageLabel(pathname: string): string {
