@@ -2,9 +2,7 @@ import type { Metadata } from 'next'
 import Link from 'next/link'
 import {
   Building2,
-  Bell,
   Shield,
-  Palette,
   Receipt,
   Database,
   ChevronRight,
@@ -51,20 +49,6 @@ const sections = [
     icon: Mail,
     title: 'Email',
     description: 'Outbound email provider, sender identity, and delivery settings',
-    badge: 'Soon',
-  },
-  {
-    id: 'notifications',
-    icon: Bell,
-    title: 'Notifications',
-    description: 'Email alerts for overdue invoices, new leads, and monthly snapshots',
-    badge: 'Soon',
-  },
-  {
-    id: 'appearance',
-    icon: Palette,
-    title: 'Appearance',
-    description: 'Theme preferences and display density',
     badge: 'Soon',
   },
   {
