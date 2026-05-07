@@ -9,7 +9,7 @@ import {
 import { createExpense, updateExpense, deleteExpense } from '@/app/actions/expenses';
 import { ExpenseFilterBar } from '@/components/expenses/expense-filter-bar';
 import { formatZAR } from '@/lib/format';
-import { SetPageTotal } from '@/components/layout/page-header-context';
+import { SetPageTotal } from '@/components/navigation/page-header-context';
 import ExpensesPageClient from './expenses-client';
 import { getMinAllowedDate, getClosedPeriodsFromDates } from '@/lib/date-rules';
 

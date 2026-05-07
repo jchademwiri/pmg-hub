@@ -28,7 +28,7 @@ import {
   CollapsibleContent,
   CollapsibleTrigger,
 } from '@/components/ui/collapsible'
-import { SignOutButton } from '@/components/layout/sign-out-button'
+import { SignOutButton } from '@/components/navigation/sign-out-button'
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 
@@ -50,7 +50,7 @@ const GROUPS: { key: GroupKey; label: string; icon: React.ElementType; items: Na
       { title: 'Income',           url: '/income',             icon: TrendingUp },
       { title: 'Expenses',         url: '/expenses',           icon: TrendingDown },
       { title: 'Categories',       url: '/expense-categories', icon: Tags },
-      { title: 'Corporate Ledger', url: '/ledger',             icon: BookOpen },
+      { title: 'Ledger',           url: '/ledger',             icon: BookOpen },
       { title: 'Accounts',         url: '/accounts',           icon: PiggyBank },
     ],
   },

@@ -6,14 +6,14 @@ import { Separator } from '@/components/ui/separator'
 import {
   Breadcrumb, BreadcrumbList, BreadcrumbItem, BreadcrumbPage
 } from '@/components/ui/breadcrumb'
-import { usePageHeader } from '@/components/layout/page-header-context'
+import { usePageHeader } from '@/components/navigation/page-header-context'
 
 const ROUTE_LABELS: Record<string, string> = {
   '/dashboard':          'Dashboard',
   '/income':             'Income',
   '/expenses':           'Expenses',
   '/expense-categories': 'Categories',
-  '/ledger':             'Corporate Ledger',
+  '/ledger':             'Ledger',
   '/accounts':           'Accounts',
   '/billing/quotes':     'Quotations',
   '/billing/invoices':   'Invoices',

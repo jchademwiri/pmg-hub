@@ -18,7 +18,6 @@ import {
   getLedgerTotalByAllocation,
   getLedgerEntriesPreviousMonth,
   getLedgerEntriesYTD,
-  getLedgerByAllocationYTD,
   getDivisionRevenueSeries,
   getDivisionRevenueCurrentMonth,
   getDivisionRevenueYTD,

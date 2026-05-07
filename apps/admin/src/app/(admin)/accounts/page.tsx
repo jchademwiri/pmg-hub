@@ -4,7 +4,7 @@ import { recordAccountWithdrawal } from '@/app/actions/account-withdrawal'
 import { AccountCard } from '@/components/accounts/account-card'
 import { ACCOUNT_KEYS, ACCOUNT_LABELS, LOCKED_ACCOUNTS } from '@/lib/accounts'
 import { formatZAR } from '@/lib/format'
-import { SetPageTotal } from '@/components/layout/page-header-context'
+import { SetPageTotal } from '@/components/navigation/page-header-context'
 import { getLedgerByAllocation } from '@pmg/db'
 
 export const dynamic = 'force-dynamic'

@@ -3,7 +3,7 @@ import { getAllIncome, getAllDivisions, getAllClients, getDistinctIncomeMonths }
 import { createIncome, updateIncome, deleteIncome } from '@/app/actions/income';
 import { FilterBar } from '@/components/income/filter-bar';
 import { formatZAR } from '@/lib/format';
-import { SetPageTotal } from '@/components/layout/page-header-context';
+import { SetPageTotal } from '@/components/navigation/page-header-context';
 import IncomePageClient from './income-client';
 import { getMinAllowedDate, getClosedPeriodsFromDates } from '@/lib/date-rules';
 

@@ -1,7 +1,7 @@
 import { SidebarProvider, SidebarInset } from '@/components/ui/sidebar';
-import { AppSidebar } from '@/components/layout/app-sidebar';
-import { TopNav } from '@/components/layout/top-nav';
-import { PageHeaderProvider } from '@/components/layout/page-header-context';
+import { AppSidebar } from '@/components/navigation/app-sidebar';
+import { TopNav } from '@/components/navigation/top-nav';
+import { PageHeaderProvider } from '@/components/navigation/page-header-context';
 import { Toaster } from '@/components/ui/sonner';
 import { TooltipProvider } from '@/components/ui/tooltip';
 import { ConfirmProvider } from '@/components/ui/confirm-dialog';
