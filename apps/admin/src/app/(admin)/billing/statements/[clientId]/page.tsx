@@ -1,26 +1,63 @@
 import type { Metadata } from 'next'
 import Link from 'next/link'
-import { ChevronLeft, Printer, Download } from 'lucide-react'
+import { ChevronLeft, Printer, FileDown } from 'lucide-react'
 import { Button } from '@/components/ui/button'
-import { Badge } from '@/components/ui/badge'
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card'
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Separator } from '@/components/ui/separator'
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from '@/components/ui/table'
+import { DocumentPreview } from '@/components/billing/document-preview'
+import type { DocumentPreviewProps } from '@/components/billing/document-preview'
 
-export const metadata: Metadata = { title: 'Client Statement' }
+export const metadata: Metadata = { title: 'Statement' }
 
 interface Props {
   params: Promise<{ clientId: string }>
 }
 
-export default async function ClientStatementPage({ params }: Props) {
+// ── Mock data ─────────────────────────────────────────────────────────────────
+
+const MOCK: Omit<DocumentPreviewProps, 'type'> = {
+  number: 'STMT-2026-05',
+  status: 'Sent',
+  issueDate: '01 May 2026',
+  periodFrom: '01 Feb 2026',
+  periodTo: '30 Apr 2026',
+  org: {
+    name: 'PMG',
+    registrationNumber: '2018/123456/07',
+    vatNumber: '4560123456',
+    email: 'billing@playhousemedia.co.za',
+    phone: '+27 21 000 0000',
+    website: 'www.playhousemedia.co.za',
+    address: '12 Media Park, Century City\nCape Town, 7441',
+  },
+  client: {
+    name: 'Acme Corp (Pty) Ltd',
+    email: 'accounts@acmecorp.co.za',
+    phone: '+27 11 555 0100',
+    address: '45 Business Ave, Sandton\nJohannesburg, 2196',
+  },
+  transactions: [
+    { date: '01 Feb 2026', reference: 'AWS-INV-0038', description: 'Monthly Retainer — February',    debit: 5175.00,  credit: undefined, balance: 5175.00  },
+    { date: '14 Feb 2026', reference: 'PMT-0038',     description: 'Payment received — EFT',         debit: undefined, credit: 5175.00,  balance: 0       },
+    { date: '01 Mar 2026', reference: 'AWS-INV-0039', description: 'Monthly Retainer — March',       debit: 5175.00,  credit: undefined, balance: 5175.00  },
+    { date: '05 Mar 2026', reference: 'AWS-INV-0040', description: 'SEO Audit & Report',             debit: 9775.00,  credit: undefined, balance: 14950.00 },
+    { date: '28 Mar 2026', reference: 'PMT-0039',     description: 'Payment received — EFT',         debit: undefined, credit: 5175.00,  balance: 9775.00  },
+    { date: '01 Apr 2026', reference: 'AWS-INV-0041', description: 'Monthly Retainer — April',       debit: 5175.00,  credit: undefined, balance: 14950.00 },
+    { date: '15 Apr 2026', reference: 'PMT-0040',     description: 'Payment received — EFT',         debit: undefined, credit: 9775.00,  balance: 5175.00  },
+    { date: '22 Apr 2026', reference: 'AWS-INV-0042', description: 'Content Updates (5 pages)',      debit: 3737.50,  credit: undefined, balance: 8912.50  },
+  ],
+  notes: 'Please contact us if you have any queries regarding this statement.\nPayment can be made via EFT using your account number as reference.',
+  banking: {
+    bankName: 'First National Bank',
+    accountName: 'PMG Media (Pty) Ltd',
+    accountNumber: '62012345678',
+    branchCode: '250655',
+  },
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+
+export default async function StatementDetailPage({ params }: Props) {
   const { clientId } = await params
 
   return (
@@ -36,8 +73,10 @@ export default async function ClientStatementPage({ params }: Props) {
           </Button>
           <Separator orientation="vertical" className="h-5" />
           <div>
-            <h2 className="text-lg font-semibold">Account Statement</h2>
-            <p className="text-sm text-muted-foreground">Client ID: {clientId}</p>
+            <h2 className="text-lg font-semibold">Statement — {clientId}</h2>
+            <p className="text-sm text-muted-foreground">
+              {MOCK.periodFrom} – {MOCK.periodTo}
+            </p>
           </div>
         </div>
         <div className="flex items-center gap-2">
@@ -46,81 +85,54 @@ export default async function ClientStatementPage({ params }: Props) {
             Print
           </Button>
           <Button variant="outline" size="sm" disabled>
-            <Download className="size-4" />
+            <FileDown className="size-4" />
             Export PDF
           </Button>
         </div>
       </div>
 
       {/* Summary cards */}
-      <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
+      <div className="grid grid-cols-3 gap-4">
         {[
-          { label: 'Total Invoiced', value: 'R 0.00', description: 'All time' },
-          { label: 'Total Paid', value: 'R 0.00', description: 'Received payments' },
-          { label: 'Outstanding Balance', value: 'R 0.00', description: 'Amount due' },
-        ].map((card) => (
-          <Card key={card.label} size="sm">
+          { label: 'Total Invoiced', value: 'R 28 037.50' },
+          { label: 'Total Paid',     value: 'R 20 125.00' },
+          { label: 'Balance Due',    value: 'R 8 912.50'  },
+        ].map((s) => (
+          <Card key={s.label} size="sm">
             <CardHeader>
-              <CardDescription>{card.label}</CardDescription>
-              <CardTitle className="text-2xl tabular-nums">{card.value}</CardTitle>
+              <p className="text-xs text-muted-foreground">{s.label}</p>
+              <p className="text-xl font-semibold tabular-nums">{s.value}</p>
             </CardHeader>
-            <CardContent>
-              <p className="text-xs text-muted-foreground">{card.description}</p>
-            </CardContent>
           </Card>
         ))}
       </div>
 
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
-        {/* Statement transactions */}
-        <div className="flex flex-col gap-6 lg:col-span-2">
-          <Card>
-            <CardHeader>
-              <CardTitle>Transaction History</CardTitle>
-              <CardDescription>All invoices and payments for this client</CardDescription>
-            </CardHeader>
-            <CardContent className="p-0">
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>Date</TableHead>
-                    <TableHead>Reference</TableHead>
-                    <TableHead>Description</TableHead>
-                    <TableHead className="text-right">Debit</TableHead>
-                    <TableHead className="text-right">Credit</TableHead>
-                    <TableHead className="text-right">Balance</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  <TableRow>
-                    <TableCell colSpan={6} className="text-center text-sm text-muted-foreground py-8">
-                      No transactions found for this client
-                    </TableCell>
-                  </TableRow>
-                </TableBody>
-              </Table>
-            </CardContent>
-          </Card>
+        {/* Document preview */}
+        <div className="lg:col-span-2">
+          <DocumentPreview type="statement" {...MOCK} />
         </div>
 
-        {/* Client info sidebar */}
+        {/* Sidebar */}
         <div className="flex flex-col gap-4">
-          <Card>
+          <Card size="sm">
             <CardHeader>
               <CardTitle>Client Info</CardTitle>
             </CardHeader>
-            <CardContent className="flex flex-col gap-3">
-              {[
-                { label: 'Name', value: '—' },
-                { label: 'Email', value: '—' },
-                { label: 'Phone', value: '—' },
-                { label: 'Address', value: '—' },
-              ].map((field) => (
-                <div key={field.label} className="flex flex-col gap-0.5">
-                  <span className="text-xs text-muted-foreground">{field.label}</span>
-                  <span className="text-sm">{field.value}</span>
-                </div>
-              ))}
+            <CardContent>
+              <div className="flex flex-col gap-1.5">
+                {[
+                  { label: 'Name',    value: MOCK.client.name },
+                  { label: 'Email',   value: MOCK.client.email ?? '—' },
+                  { label: 'Phone',   value: MOCK.client.phone ?? '—' },
+                  { label: 'Address', value: MOCK.client.address ?? '—' },
+                ].map((f) => (
+                  <div key={f.label} className="flex flex-col gap-0.5">
+                    <span className="text-xs text-muted-foreground">{f.label}</span>
+                    <span className="text-sm whitespace-pre-line">{f.value}</span>
+                  </div>
+                ))}
+              </div>
             </CardContent>
           </Card>
 
@@ -128,18 +140,21 @@ export default async function ClientStatementPage({ params }: Props) {
             <CardHeader>
               <CardTitle>Statement Period</CardTitle>
             </CardHeader>
-            <CardContent className="flex flex-col gap-2">
-              <div className="flex justify-between text-sm">
-                <span className="text-muted-foreground">From</span>
-                <span>—</span>
+            <CardContent>
+              <div className="flex flex-col gap-2">
+                <div className="flex justify-between text-sm">
+                  <span className="text-muted-foreground">From</span>
+                  <span>{MOCK.periodFrom}</span>
+                </div>
+                <div className="flex justify-between text-sm">
+                  <span className="text-muted-foreground">To</span>
+                  <span>{MOCK.periodTo}</span>
+                </div>
+                <Separator className="my-1" />
+                <Button variant="outline" size="sm" className="w-full" disabled>
+                  Change Period
+                </Button>
               </div>
-              <div className="flex justify-between text-sm">
-                <span className="text-muted-foreground">To</span>
-                <span>—</span>
-              </div>
-              <Button variant="outline" size="sm" className="mt-2 w-full" disabled>
-                Change Period
-              </Button>
             </CardContent>
           </Card>
         </div>
