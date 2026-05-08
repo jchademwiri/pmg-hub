@@ -195,6 +195,11 @@
 - [ ] `updatedAt` set explicitly as `new Date()` — no `$onUpdate()` in schema
 - [ ] All mock preview links removed from production pages
 - [ ] `billing.ts` added to `schema/index.ts` exports
+- [ ] Paid invoices cannot be edited or deleted — guard in server action + UI
+- [ ] `archiveItem` sets both `status='archived'` and `isActive=false`
+- [ ] `unarchiveItem` sets both `status='active'` and `isActive=true`
+- [ ] Quote/invoice create blocked without a client — Zod + UI validation
+- [ ] VAT toggle defaults to off on all new quotes and invoices
 
 **Phase 6 Completed:** ___________
 
@@ -211,6 +216,7 @@
 | 4 | Items Catalogue | ✅ Done | May 8, 2026 |
 | 5 | Settings Wiring | ⏳ Pending | — |
 | 6 | Polish & Cleanup | ⏳ Pending | — |
+| 7 | System Updates (Quotes, Invoices & Items) | ⏳ Pending | — |
 
 ---
 
@@ -221,13 +227,56 @@
 | PDF generation | `@react-pdf/renderer` — `QuotePDF`, `InvoicePDF`, `StatementPDF` | High |
 | Email delivery | Resend + React Email — send on `issueInvoice`, `sendQuote` | High |
 | Audit log | `billing_audit_log` table — all status transitions | Medium |
-| Discount fields | Line-item % discount + document-level fixed/% | Medium |
 | Partial payments | `billing_payments` table, `PARTIALLY_PAID` status | Medium |
 | Statement export | CSV server action (mirrors `exportFinancialsCsv`) | Low |
 | Overdue auto-flag | On-read check: past due + issued → flag overdue | Low |
 | Localisation settings | Wire up timezone, date format, financial year start | Low |
 | Email settings | Wire up Resend API key, sender identity | Low |
 | Notification toggles | `notification_settings` table, toggle save | Low |
+
+---
+
+## Phase 7 — System Updates (Quotes, Invoices & Items)
+
+**Goal:** Apply the system update requirements from `notes.md` across quotes, invoices, and items.  
+**Status:** ⏳ Pending
+
+| # | Task | File(s) | Status | Notes |
+|---|------|---------|--------|-------|
+| 7.1 | Enforce client required on quote + invoice create | `billing-schema.ts`, `quote-form-client.tsx`, `invoice-form-client.tsx` | ⏳ Pending | Zod: `clientId` required (not nullable). Inline validation error on Client field. |
+| 7.2 | Enforce items-from-catalogue only on line items form | `billing-line-items-form.tsx` | ⏳ Pending | Combobox only — no free-form text. Must select from `getActiveItems()`. |
+| 7.3 | Remove per-item VAT; add document-level VAT toggle | `billing-schema.ts`, `quote-form-client.tsx`, `invoice-form-client.tsx`, `billing-totals-block.tsx` | ⏳ Pending | Add `vatEnabled boolean default false` to quotations + invoices schema. Summary sidebar Switch. |
+| 7.4 | Remove VAT per line item from `BillingLineItemsForm` | `billing-line-items-form.tsx`, `billing-line-items-table.tsx` | ⏳ Pending | Remove VAT Rate column from form rows and read-only table. Line total = qty × unitPrice only. |
+| 7.5 | Make Summary sidebar sticky | `billing/quotes/new/page.tsx`, `billing/invoices/new/page.tsx`, `billing/quotes/[id]/page.tsx`, `billing/invoices/[id]/page.tsx` | ⏳ Pending | Add `sticky top-6` to the sidebar column. |
+| 7.6 | Add edit route for quotes | `billing/quotes/[id]/edit/page.tsx` | ⏳ Pending | Only for `draft` and `sent` statuses. Reuse `QuoteFormClient` pre-filled with existing data. |
+| 7.7 | Add edit route for invoices | `billing/invoices/[id]/edit/page.tsx` | ⏳ Pending | Only for `draft`, `issued`, `overdue`. Hide Edit button + remove Delete action when `paid`. |
+| 7.8 | Guard paid invoices from edit/delete | `billing-invoices.ts` (actions), `billing/invoices/[id]/page.tsx` | ⏳ Pending | Server action guard: if `status === 'paid'` → return error. UI: hide Edit button and Delete action. |
+| 7.9 | Add reference input to quote form | `billing-schema.ts`, `quote-form-client.tsx`, `billing/quotes/[id]/page.tsx` | ⏳ Pending | Add `reference text nullable` to quotations schema + migration. Show in Quote Details card and DocumentPreview. |
+| 7.10 | Add discount field to quote + invoice forms | `billing-schema.ts`, `quote-form-client.tsx`, `invoice-form-client.tsx`, `billing-totals-block.tsx` | ⏳ Pending | Add `discount_type text nullable`, `discount_value numeric nullable` to schema. Summary sidebar input with % / R toggle. |
+| 7.11 | Add Export as PDF button to quote + invoice detail | `billing/quotes/[id]/page.tsx`, `billing/invoices/[id]/page.tsx` | ⏳ Pending | Disabled in v1 (shell only). Wired in v2 with `@react-pdf/renderer`. |
+| 7.12 | Remove VAT Applicable toggle from items new + edit | `billing/items/new/page.tsx`, `billing/items/[id]/page.tsx`, `billing-items.ts` (actions) | ⏳ Pending | Remove field from form, schema Zod, and DB column (or leave column, just stop using it). |
+| 7.13 | Auto-set `isActive` on archive/restore | `billing-items.ts` (actions) | ⏳ Pending | `archiveItem`: set `status='archived'` + `isActive=false`. `unarchiveItem`: set `status='active'` + `isActive=true`. |
+| 7.14 | Schema migration for new fields | `packages/db/src/schema/billing.ts` | ⏳ Pending | Add: `reference`, `discount_type`, `discount_value`, `vat_enabled` to quotations + invoices. Add `is_active` to billing_items. Run `drizzle-kit generate` + `migrate`. |
+
+### Phase 7 Acceptance Criteria
+- [ ] Cannot save a quote or invoice without a client — inline error shown
+- [ ] Line items combobox only shows catalogue items — no free-form entry
+- [ ] VAT toggle in Summary sidebar defaults to off; toggling on shows 15% VAT row
+- [ ] No VAT column on line item rows
+- [ ] Summary sidebar is sticky on all quote/invoice create and detail pages
+- [ ] Can edit a draft or sent quote; cannot edit accepted/converted/declined/cancelled/expired
+- [ ] Can edit a draft/issued/overdue invoice; Edit button hidden on paid invoices
+- [ ] Cannot delete a paid invoice — action removed from dropdown
+- [ ] Reference field appears on quote form and renders on DocumentPreview
+- [ ] Discount field works in both % and R modes; shown as negative line in summary
+- [ ] Export as PDF button visible in header (disabled shell)
+- [ ] VAT Applicable toggle gone from items new and edit pages
+- [ ] Archiving an item sets status=archived AND isActive=false
+- [ ] Restoring an item sets status=active AND isActive=true
+- [ ] Migration runs clean — new columns visible in Neon console
+- [ ] No TypeScript errors
+
+**Phase 7 Completed:** ___________
 
 ---
 

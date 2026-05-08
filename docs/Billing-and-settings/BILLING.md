@@ -94,20 +94,40 @@ Two-column layout: `lg:col-span-2` form + `col-span-1` sidebar.
 
 **Main form (left) — three cards:**
 
-1. **Quote Details card** — Client (select), Quote # (auto-generated, read-only), Issue Date, Expiry Date
-2. **Line Items card** — `BillingLineItemsForm` (dynamic rows). Shell shows dashed placeholder + disabled "+ Add Line Item" button
+1. **Quote Details card** — Client (select, **required** — cannot save without a client), Quote # (auto-generated, read-only), Reference (optional free-text input for client's own reference number), Issue Date, Expiry Date
+2. **Line Items card** — `BillingLineItemsForm` (dynamic rows). All line items must be selected from the pre-saved items catalogue via the item combobox — free-form one-off entries are not permitted. Shell shows dashed placeholder + disabled "+ Add Line Item" button
 3. **Terms & Notes card** — textarea for optional terms and client-facing notes
 
-**Sidebar (right) — two cards:**
+**Sidebar (right) — two cards (sidebar is `sticky top-6`):**
 
-- **Summary card** — Subtotal, VAT (15%), Total (live-calculated from line items), Save Quote button, Save as Draft button
+- **Summary card** — Subtotal, Discount (optional — see below), VAT toggle (default **off** — owner is not VAT registered; when toggled on, shows VAT at 15%), Total (live-calculated from line items), Save Quote button, Save as Draft button
 - **Status card** — "Quote will be saved as **Draft** until sent to the client."
+
+**Discount field (inside Summary card):**
+- Input with a mode toggle: **%** (percentage) or **R** (fixed amount)
+- Applied after subtotal, before VAT
+- Displayed as a negative line in the summary: `Discount (10%) — R −450.00`
+- Stored as `discountType: 'percent' | 'amount'` and `discountValue: number` on the quotation
+
+**VAT toggle (inside Summary card):**
+- shadcn `Switch` labelled "Include VAT (15%)"
+- Default: **off** (no VAT shown or calculated)
+- When on: shows VAT row at 15% of (subtotal − discount)
+- Stored as `vatEnabled: boolean` on the quotation
+
+**Client validation:** The form must not allow submission without a client selected. Show an inline error on the Client field if attempted.
 
 **On submit:** call `createQuotation(data)` → redirect to `/billing/quotes/{id}`
 
 **Form state** (controlled React state, not FormData — line items are nested):
 ```typescript
-{ divisionId, clientId, quoteDate, expiryDate, notes, terms, lineItems, isSubmitting, error }
+{
+  divisionId, clientId, quoteDate, expiryDate, reference,
+  notes, terms, lineItems,
+  discountType: 'percent' | 'amount', discountValue: number,
+  vatEnabled: boolean,
+  isSubmitting, error
+}
 ```
 
 ---
@@ -119,14 +139,17 @@ Two-column layout: `lg:col-span-2` form + `col-span-1` sidebar.
 **Header actions (in order):**
 - Print — disabled (v2: PDF)
 - Send — disabled (v2: email)
+- **Export as PDF** — disabled (v2: PDF generation)
 - **Convert to Invoice** — `ConvertToInvoiceButton`, only active when `status === 'accepted'`
 - More (MoreHorizontal) — disabled
 
-**Main content (left):** `DocumentPreview type="quote"` — renders the styled quotation document including org details, client details, line items table, totals, terms, and banking details.
+**Edit quote:** An "Edit" button is shown in the header for all non-terminal statuses (`draft`, `sent`). Clicking navigates to `/billing/quotes/{id}/edit`. Quotes with status `accepted`, `converted`, `declined`, `cancelled`, or `expired` cannot be edited (button hidden or disabled with tooltip).
 
-**Sidebar (right):**
+**Main content (left):** `DocumentPreview type="quote"` — renders the styled quotation document including org details, client details, reference (if set), line items table, discount (if set), totals, terms, and banking details.
 
-- **Summary card** — Subtotal, VAT (15%), Total (from denormalised `subtotal`/`vatAmount`/`total` fields)
+**Sidebar (right, `sticky top-6`):**
+
+- **Summary card** — Subtotal, Discount (if set, shown as negative), VAT (only if `vatEnabled` is true), Total (from denormalised fields)
 - **Activity card** — Timeline of state changes (e.g. "Quote sent to client", "Quote created"). In shell uses mock data; wire to audit log in v2.
 
 **Action bar (below document) by status:**
@@ -188,14 +211,16 @@ Includes `Preview mock invoice →` dev link (remove before production).
 
 Same two-column layout as quote form with these differences:
 
-**Invoice Details card fields:** Client, Invoice # (auto-generated), Issue Date, Due Date (default +30 days), PO Number (optional)
+**Invoice Details card fields:** Client (select, **required**), Invoice # (auto-generated), Issue Date, Due Date (default +30 days), PO Number (optional)
+
+**Line Items:** All line items must be selected from the pre-saved items catalogue via the item combobox — same constraint as quotes.
 
 **Period lock warning:** If `invoiceDate` falls in a grace-period or locked month, show an amber banner:
 ```
 ⚠ This invoice date may fall in a restricted financial period. Marking as paid may be blocked.
 ```
 
-**Sidebar:** Save Invoice button + Save as Draft button. Status card reads "Invoice will be saved as **Draft** until sent."
+**Sidebar (`sticky top-6`):** Summary card with Subtotal, Discount (optional — same % or R toggle as quotes), VAT toggle (default **off**), Total. Save Invoice button + Save as Draft button. Status card reads "Invoice will be saved as **Draft** until sent."
 
 **On submit:** call `createInvoice(data)` → redirect to `/billing/invoices/{id}`
 
@@ -208,12 +233,15 @@ Same two-column layout as quote form with these differences:
 **Header actions:**
 - Print — disabled (v2: PDF)
 - Send — disabled (v2: email)
+- **Export as PDF** — disabled (v2: PDF generation)
 - More (MoreHorizontal) — disabled
+
+**Edit invoice:** An "Edit" button is shown in the header **only when the invoice has not been paid** (status is `draft`, `issued`, or `overdue`). Once status is `paid` or `void`, the Edit button is hidden entirely — paid invoices cannot be edited or deleted.
 
 **Main content (left):** `DocumentPreview type="invoice"` — same as quote preview but shows banking details prominently and payment reference instructions.
 
-**Sidebar (right):**
-- **Summary card** — Subtotal, VAT (15%), Total
+**Sidebar (right, `sticky top-6`):**
+- **Summary card** — Subtotal, Discount (if set, shown as negative), VAT (only if `vatEnabled` is true), Total
 - **Activity card** — timeline (mock in shell, real in v2)
 
 **Action bar by status:**
@@ -222,7 +250,7 @@ Same two-column layout as quote form with these differences:
 |---|---|
 | `draft` | Issue Invoice, Void |
 | `issued` | **Mark Paid** (MarkPaidButton — disabled if no client), Void |
-| `paid` | "Paid on {paidAt}. Revenue posted to income." + "View in Income →" link |
+| `paid` | "Paid on {paidAt}. Revenue posted to income." + "View in Income →" link. **No edit, no delete.** |
 | `overdue` | Mark Paid, Void. Amber banner: "⚠ This invoice is overdue." |
 | `void` | "This invoice has been voided." (no actions) |
 
@@ -338,7 +366,7 @@ interface DocumentPreviewProps {
   dueDate?: string
   periodFrom?: string      // statement only
   periodTo?: string        // statement only
-  reference?: string
+  reference?: string       // quote only — client's own reference
   org: OrgDetails
   client: ClientDetails
   lineItems?: LineItem[]   // quote + invoice
@@ -346,7 +374,10 @@ interface DocumentPreviewProps {
   notes?: string
   terms?: string           // quote only
   banking?: BankingDetails // invoice + statement
-  vatRate?: number
+  vatEnabled?: boolean     // quote + invoice — default false
+  vatRate?: number         // only used when vatEnabled is true, default 15
+  discountType?: 'percent' | 'amount'
+  discountValue?: number
   href?: string
 }
 ```
@@ -399,6 +430,15 @@ Sequence is per-division, per-type, resets each calendar year. Assigned atomical
 
 - **All billing detail pages** use the `DocumentPreview` component for the main content area — do not build separate line item tables inline in the page.
 - **All create forms** use controlled React state (not FormData) because line items are nested arrays.
+- **Client is required** on both quotes and invoices — the form must not submit without a client selected. Show an inline validation error on the Client field.
+- **All line items must come from the pre-saved items catalogue.** The `BillingLineItemsForm` combobox must only allow selecting from `getActiveItems()`. Free-form one-off text entries are not permitted.
+- **VAT is off by default.** The owner is not VAT registered. The Summary sidebar shows a `Switch` labelled "Include VAT (15%)". When toggled on, VAT is calculated at 15% of (subtotal − discount). The `vatEnabled` boolean is stored on the document.
+- **Discount field** in the Summary sidebar accepts either a percentage or a fixed ZAR amount (toggle between `%` and `R`). Applied after subtotal, before VAT. Stored as `discountType` and `discountValue` on the document.
+- **Reference field** on quotes — a free-text input in the Quote Details card for the client's own reference number (e.g. their PO or job number). Stored as `reference` on the quotation.
+- **Summary sidebar is sticky** (`sticky top-6`) on both create and detail pages.
+- **Edit quote:** available for `draft` and `sent` statuses only. Terminal statuses (`accepted`, `converted`, `declined`, `cancelled`, `expired`) cannot be edited.
+- **Edit invoice:** available only when status is `draft`, `issued`, or `overdue`. Once `paid`, the invoice cannot be edited or deleted — the Edit button is hidden and the Delete action is removed from the actions dropdown.
+- **Export as PDF** button is shown in the header of quote and invoice detail pages (disabled in v1, wired in v2).
 - **Convert to Invoice** button on the quote detail page is the only way to create a linked invoice. The standalone "New Invoice" form creates unlinked invoices.
 - **Mark Paid** inserts into the existing `income` table (not a new table). The `income.clientId` column is `NOT NULL` — always check before enabling the button.
 - **Period lock** gates both create and mark-paid actions via `isPeriodClosed(date)` from `lib/date-rules.ts`.

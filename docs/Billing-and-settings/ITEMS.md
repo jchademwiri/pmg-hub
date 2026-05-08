@@ -39,7 +39,7 @@ Stats are currently hardcoded to `'—'`. Wire to `getAllItems()` aggregates.
 | Unit Price | `formatZAR(unitPrice)`, right-aligned |
 | VAT | "15%" or "Exempt" |
 | Status | Badge: Active / Archived |
-| Actions | Dropdown: Edit (→ `[id]` page), Archive/Unarchive, Delete |
+| Actions | Dropdown: Edit (→ `[id]` page), Archive/Unarchive (archiving sets status=`archived` + isActive=`false`; restoring sets status=`active` + isActive=`true`), Delete |
 
 Shows `EmptyState` with CTA to `/billing/items/new` when no items exist. Includes `Preview mock item →` dev link (remove before production).
 
@@ -67,9 +67,8 @@ Single-column form (`max-w-2xl mx-auto`) — one card.
 | Description | Longer text that pre-fills the line item description on invoices/quotes |
 | Unit Price* | Default price in ZAR; can be overridden per line item |
 | Unit Label | Optional label shown next to quantity (e.g. "hour", "month", "project") |
-| VAT Applicable | Toggle — default `true` (15% VAT). Shell shows a mock toggle |
 
-The VAT toggle in the shell is a visual mock (`div` styled as a toggle). Replace with a real controlled toggle using shadcn Switch component.
+> **VAT Applicable toggle removed.** VAT is controlled at the document level via the Summary sidebar toggle, not per item. All items are treated as VAT-neutral in the catalogue.
 
 **Actions:** Save Item, Cancel (→ `/billing/items`)
 
@@ -91,7 +90,7 @@ Same two-column layout as invoice/quote detail: `lg:col-span-2` content + `col-s
 - "Created {createdAt}" subtitle
 
 **Header actions:**
-- Archive / Unarchive — toggles availability without deleting. Shell shows disabled Archive button
+- **Archive / Unarchive** — Archiving an item automatically sets its `status` to `'archived'` **and** `isActive` to `false`. Restoring (unarchiving) automatically sets `status` back to `'active'` **and** `isActive` to `true`. These two fields always move together — no manual toggle needed. Shell shows disabled Archive button
 - Delete (Trash2) — disabled in shell. Requires confirmation. Guard: if item has been used on any document, prefer archiving (show warning)
 
 **Main content (left) — Item Details card:**
@@ -102,7 +101,8 @@ Same two-column layout as invoice/quote detail: `lg:col-span-2` content + `col-s
 | Description | Editable textarea |
 | Unit Price | Editable number input |
 | Unit Label | Editable text input (optional) |
-| VAT Applicable | Toggle (mock in shell — replace with shadcn Switch) |
+
+> **VAT Applicable toggle removed.** VAT is no longer a per-item setting. It is controlled at the document level.
 
 **Actions:** Save Changes, Cancel (→ `/billing/items`)
 
@@ -122,7 +122,7 @@ if (!item) notFound()
 
 ## Using Items in Invoices and Quotes
 
-When a user adds a line item on the quote or invoice create form, the description field is a **combobox** — they can either pick an existing item from the catalogue or type a free-form description.
+When a user adds a line item on the quote or invoice create form, the description field is a **combobox** — they must pick an existing item from the catalogue. Free-form one-off entries are **not permitted**.
 
 ### Combobox Behaviour
 
@@ -131,24 +131,20 @@ When a user adds a line item on the quote or invoice create form, the descriptio
 - Selecting an item pre-fills the row:
   - **Description** ← item's description
   - **Unit Price** ← item's default unit price
-  - **VAT Rate** ← item's `vatApplicable` flag → 15% or 0%
 - All pre-filled values remain editable on the row — changing them does not update the catalogue item
-- If no matching item is found, the user types a custom description directly (one-off, no catalogue link)
+- If no matching item is found, the user must create one in `/billing/items/new` first — no ad-hoc entries
 - Archived items do **not** appear in the dropdown
 
 ### Line Item Row Fields
 
 | Field | Source | Editable |
 |---|---|---|
-| Description | From selected item or typed manually | ✅ Yes |
+| Description | From selected item | ✅ Yes (can refine wording per document) |
 | Qty | Defaults to 1 | ✅ Yes |
 | Unit Price | From selected item | ✅ Yes |
-| VAT Rate | From selected item flag (0% or 15%) | ✅ Yes |
-| Line Total | Qty × Unit Price × (1 + VAT/100) — calculated | ❌ Read-only |
+| Line Total | Qty × Unit Price — calculated | ❌ Read-only |
 
-### One-Off Items
-
-If the user types without selecting from the dropdown, treat the input as a plain text description with no catalogue link. The line item is stored with whatever was typed — no `itemId` reference.
+> **VAT per line item removed.** VAT is no longer a per-row field. It is applied globally via the document-level VAT toggle in the Summary sidebar.
 
 ---
 
@@ -163,8 +159,12 @@ export const billingItems = pgTable('billing_items', {
   description:  text('description'),
   unitPrice:    numeric('unit_price', { precision: 12, scale: 2 }).notNull(),
   unitLabel:    text('unit_label'),              // e.g. 'hour', 'month', 'project'
-  vatApplicable: boolean('vat_applicable').notNull().default(true),
+  // vatApplicable removed — VAT is controlled at the document level, not per item
   status:       text('status', { enum: ['active', 'archived'] }).notNull().default('active'),
+  isActive:     boolean('is_active').notNull().default(true),
+  // status and isActive always move together:
+  //   archive  → status='archived', isActive=false
+  //   restore  → status='active',   isActive=true
   createdAt:    timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
   updatedAt:    timestamp('updated_at', { withTimezone: true }),
 }, (t) => [
@@ -176,7 +176,7 @@ export type BillingItem    = typeof billingItems.$inferSelect
 export type NewBillingItem = typeof billingItems.$inferInsert
 ```
 
-Items are global to the workspace (not per-division). Division-specific VAT rates and currency are applied at the invoice/quote level, not stored on the item.
+Items are global to the workspace (not per-division). VAT is applied at the invoice/quote level via the document-level VAT toggle, not stored on the item.
 
 ---
 
@@ -207,8 +207,10 @@ getActiveItems(): Promise<{ id: string; name: string; description: string | null
 
 createItem(data: CreateItemInput): Promise<{ error?: string; id?: string }>
 updateItem(id: string, data: UpdateItemInput): Promise<{ error?: string }>
-archiveItem(id: string): Promise<{ error?: string }>      // status → 'archived'
-unarchiveItem(id: string): Promise<{ error?: string }>    // status → 'active'
+archiveItem(id: string): Promise<{ error?: string }>
+  // Sets status → 'archived' AND isActive → false (always together)
+unarchiveItem(id: string): Promise<{ error?: string }>
+  // Sets status → 'active' AND isActive → true (always together)
 deleteItem(id: string): Promise<{ error?: string }>       // guard: no usage on documents
 
 // Zod schemas:
@@ -217,7 +219,7 @@ const ItemSchema = z.object({
   description:   z.string().max(2000).optional().nullable(),
   unitPrice:     z.coerce.number().min(0),
   unitLabel:     z.string().max(50).optional().nullable(),
-  vatApplicable: z.coerce.boolean(),
+  // vatApplicable removed — VAT is document-level
 })
 ```
 
@@ -225,10 +227,12 @@ const ItemSchema = z.object({
 
 ## Implementation Notes
 
-- **VAT toggle** in the shell is a styled `div` mock. Replace with shadcn `Switch` component wired to form state.
+- **VAT toggle removed from items.** The `vatApplicable` field and its toggle are no longer part of the item form or detail page. VAT is controlled at the document level via the Summary sidebar toggle on quotes and invoices.
+- **Archive/restore auto-sets `isActive`.** `archiveItem` must set both `status = 'archived'` and `isActive = false` in the same update. `unarchiveItem` must set both `status = 'active'` and `isActive = true`. These two fields are always in sync — never update one without the other.
 - **Combobox** is built from shadcn `Command` + `Popover`. Pre-fetch active items at page load via `getActiveItems()` and filter client-side for small catalogues.
-- **Deletion guard** — if an item has been used on any `billing_line_items` row (via `itemId` if you add that column, or via a usage count query), show a warning and suggest archiving instead.
-- **`itemId` on line items** — the current `billing_line_items` schema does not store an `itemId` FK. This is intentional for v1 (one-off items are common). Add `itemId uuid nullable FK → billing_items` in v2 to enable usage tracking and the Usage card.
+- **All line items on quotes and invoices must come from the catalogue.** The combobox does not allow free-form text entry — users must select an existing active item. Archived items do not appear in the dropdown.
+- **Deletion guard** — if an item has been used on any `billing_line_items` row, show a warning and suggest archiving instead.
+- **`itemId` on line items** — the current `billing_line_items` schema does not store an `itemId` FK. This is intentional for v1. Add `itemId uuid nullable FK → billing_items` in v2 to enable usage tracking and the Usage card.
 - **Unit label** — shown in the quantity column of the line items table (e.g. "5 hours" instead of "5"). Display as `{qty} {unitLabel}` when `unitLabel` is set.
 - **Archived items** appear in the items list page but not in the combobox dropdown. They still appear in historical line item data.
 - **`updatedAt`** is application-managed — set explicitly on every update.
