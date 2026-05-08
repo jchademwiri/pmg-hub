@@ -69,13 +69,6 @@ export default async function StatementDetailPage({ params, searchParams }: Prop
     };
   });
 
-  // ── Summary cards ─────────────────────────────────────────────────────────
-  const summaryCards = [
-    { label: 'Total Invoiced', value: formatZAR(summary.totalInvoiced) },
-    { label: 'Total Paid', value: formatZAR(summary.totalPaid) },
-    { label: 'Balance Due', value: formatZAR(summary.totalOutstanding) },
-  ];
-
   // ── DocumentPreview props ─────────────────────────────────────────────────
   const now = new Date();
   const periodLabel = year ? String(year) : String(now.getFullYear());
@@ -154,18 +147,6 @@ export default async function StatementDetailPage({ params, searchParams }: Prop
               >
                 {s.value}
               </p>
-            </CardHeader>
-          </Card>
-        ))}
-      </div>
-
-      {/* Summary cards (compact — Total Invoiced / Paid / Balance) */}
-      <div className="grid grid-cols-3 gap-4">
-        {summaryCards.map((s) => (
-          <Card key={s.label} size="sm">
-            <CardHeader>
-              <p className="text-xs text-muted-foreground">{s.label}</p>
-              <p className="text-xl font-semibold tabular-nums">{s.value}</p>
             </CardHeader>
           </Card>
         ))}
