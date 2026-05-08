@@ -1,0 +1,224 @@
+'use client';
+
+import Link from 'next/link';
+import { useState, useTransition } from 'react';
+import { MoreHorizontal } from 'lucide-react';
+import { toast } from 'sonner';
+import { Button } from '@/components/ui/button';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from '@/components/ui/table';
+import { EmptyState } from '@/components/ui/empty-state';
+import { BillingStatusBadge } from '@/components/billing/billing-status-badge';
+import { formatZAR } from '@/lib/format';
+import type { QuotationRow } from '@pmg/db';
+
+interface QuotesClientProps {
+  entries: QuotationRow[];
+  total: number;
+  currentPage: number;
+  pageSize: number;
+  divisionId?: string;
+  status?: string;
+  deleteAction: (id: string) => Promise<{ error?: string }>;
+  updateStatusAction: (
+    id: string,
+    status: 'sent' | 'accepted' | 'declined' | 'cancelled',
+  ) => Promise<{ error?: string }>;
+}
+
+export function QuotesClient({
+  entries,
+  total,
+  currentPage,
+  pageSize,
+  divisionId,
+  status,
+  deleteAction,
+  updateStatusAction,
+}: QuotesClientProps) {
+  const [, startTransition] = useTransition();
+
+  function buildHref(page: number) {
+    const params = new URLSearchParams();
+    if (page > 1) params.set('page', String(page));
+    if (divisionId) params.set('divisionId', divisionId);
+    if (status) params.set('status', status);
+    const qs = params.toString();
+    return `/billing/quotes${qs ? `?${qs}` : ''}`;
+  }
+
+  function handleStatusChange(
+    id: string,
+    newStatus: 'sent' | 'accepted' | 'declined' | 'cancelled',
+  ) {
+    startTransition(async () => {
+      const result = await updateStatusAction(id, newStatus);
+      if (result.error) {
+        toast.error(result.error);
+      } else {
+        toast.success(`Quote marked as ${newStatus}.`);
+      }
+    });
+  }
+
+  function handleDelete(id: string, docNumber: string) {
+    if (!window.confirm(`Delete quote ${docNumber}? This cannot be undone.`)) return;
+    startTransition(async () => {
+      const result = await deleteAction(id);
+      if (result.error) {
+        toast.error(result.error);
+      } else {
+        toast.success('Quote deleted.');
+      }
+    });
+  }
+
+  if (entries.length === 0) {
+    return (
+      <EmptyState
+        message={
+          divisionId || status
+            ? 'No quotations match the current filters.'
+            : 'No quotations yet. Create your first quote to get started.'
+        }
+        filtered={!!(divisionId || status)}
+        ctaLabel={!divisionId && !status ? 'New Quote' : undefined}
+        ctaHref={!divisionId && !status ? '/billing/quotes/new' : undefined}
+      />
+    );
+  }
+
+  return (
+    <div className="flex flex-col gap-4">
+      <Table>
+        <TableHeader>
+          <TableRow>
+            <TableHead>Quote #</TableHead>
+            <TableHead>Client</TableHead>
+            <TableHead>Issue Date</TableHead>
+            <TableHead>Expiry Date</TableHead>
+            <TableHead className="text-right">Amount</TableHead>
+            <TableHead>Status</TableHead>
+            <TableHead className="w-10" />
+          </TableRow>
+        </TableHeader>
+        <TableBody>
+          {entries.map((quote) => (
+            <TableRow key={quote.id}>
+              <TableCell>
+                <Link
+                  href={`/billing/quotes/${quote.id}`}
+                  className="font-medium hover:underline"
+                >
+                  {quote.documentNumber}
+                </Link>
+              </TableCell>
+              <TableCell className="text-muted-foreground">
+                {quote.clientName ?? <span className="italic">No client</span>}
+              </TableCell>
+              <TableCell className="tabular-nums text-sm">{quote.quoteDate}</TableCell>
+              <TableCell className="tabular-nums text-sm text-muted-foreground">
+                {quote.expiryDate ?? '—'}
+              </TableCell>
+              <TableCell className="text-right tabular-nums text-sm font-medium">
+                {formatZAR(Number(quote.total))}
+              </TableCell>
+              <TableCell>
+                <BillingStatusBadge status={quote.status} />
+              </TableCell>
+              <TableCell>
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <Button variant="ghost" size="icon" className="size-8">
+                      <MoreHorizontal className="size-4" />
+                      <span className="sr-only">Actions</span>
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="end">
+                    <DropdownMenuItem asChild>
+                      <Link href={`/billing/quotes/${quote.id}`}>View</Link>
+                    </DropdownMenuItem>
+                    {quote.status === 'draft' && (
+                      <DropdownMenuItem
+                        onClick={() => handleStatusChange(quote.id, 'sent')}
+                      >
+                        Mark Sent
+                      </DropdownMenuItem>
+                    )}
+                    {quote.status === 'sent' && (
+                      <>
+                        <DropdownMenuItem
+                          onClick={() => handleStatusChange(quote.id, 'accepted')}
+                        >
+                          Mark Accepted
+                        </DropdownMenuItem>
+                        <DropdownMenuItem
+                          onClick={() => handleStatusChange(quote.id, 'declined')}
+                        >
+                          Mark Declined
+                        </DropdownMenuItem>
+                      </>
+                    )}
+                    {(quote.status === 'draft' || quote.status === 'sent') && (
+                      <>
+                        <DropdownMenuSeparator />
+                        <DropdownMenuItem
+                          className="text-destructive focus:text-destructive"
+                          onClick={() => handleDelete(quote.id, quote.documentNumber)}
+                          disabled={quote.status !== 'draft'}
+                        >
+                          Delete
+                        </DropdownMenuItem>
+                      </>
+                    )}
+                  </DropdownMenuContent>
+                </DropdownMenu>
+              </TableCell>
+            </TableRow>
+          ))}
+        </TableBody>
+      </Table>
+
+      {/* Pagination */}
+      {total > pageSize && (
+        <div className="flex items-center justify-between px-2 py-2">
+          <span className="text-sm text-muted-foreground">
+            Showing {(currentPage - 1) * pageSize + 1}–
+            {Math.min(currentPage * pageSize, total)} of {total}
+          </span>
+          <div className="flex gap-2">
+            {currentPage > 1 && (
+              <Link
+                href={buildHref(currentPage - 1)}
+                className="rounded-md border px-3 py-1 text-sm hover:bg-muted transition-colors"
+              >
+                Previous
+              </Link>
+            )}
+            {currentPage * pageSize < total && (
+              <Link
+                href={buildHref(currentPage + 1)}
+                className="rounded-md border px-3 py-1 text-sm hover:bg-muted transition-colors"
+              >
+                Next
+              </Link>
+            )}
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}

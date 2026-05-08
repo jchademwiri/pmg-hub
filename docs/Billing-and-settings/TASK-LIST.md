@@ -37,22 +37,22 @@
 ## Phase 1 — Quotations (Wire Up Existing Shell)
 
 **Goal:** Quote create form works end-to-end. List shows real data. Detail shows real data with working status actions.  
-**Status:** ⏳ Pending
+**Status:** ✅ Done
 
 | # | Task | File(s) | Status | Notes |
 |---|------|---------|--------|-------|
-| 1.1a | Create Zod billing schemas | `apps/admin/src/app/actions/billing-schema.ts` | ⏳ Pending | `LineItemSchema`, `CreateQuotationSchema`, `CreateInvoiceSchema` |
-| 1.1b | Create quote server actions | `apps/admin/src/app/actions/billing-quotes.ts` | ⏳ Pending | `createQuotation`, `updateQuotationStatus`, `deleteQuotation` |
-| 1.2a | Create `BillingStatusBadge` component | `components/billing/billing-status-badge.tsx` | ⏳ Pending | |
-| 1.2b | Create `BillingLineItemsForm` component | `components/billing/billing-line-items-form.tsx` | ⏳ Pending | Editable table with add/remove rows |
-| 1.2c | Create `BillingLineItemsTable` component | `components/billing/billing-line-items-table.tsx` | ⏳ Pending | Read-only display |
-| 1.2d | Create `BillingTotalsBlock` component | `components/billing/billing-totals-block.tsx` | ⏳ Pending | Subtotal / VAT / Total |
-| 1.2e | Create `ConvertToInvoiceButton` component | `components/billing/convert-to-invoice-button.tsx` | ⏳ Pending | Confirm + redirect |
-| 1.3a | Wire up quote list page (real data) | `billing/quotes/page.tsx` | ⏳ Pending | Patch shell — async, searchParams, real rows |
-| 1.3b | Create quotes client component | `billing/quotes/quotes-client.tsx` | ⏳ Pending | Pagination, filters, row actions |
-| 1.4a | Create quote form client component | `billing/quotes/new/quote-form-client.tsx` | ⏳ Pending | Controlled state, line items, live totals |
-| 1.4b | Patch quote new page to be server component | `billing/quotes/new/page.tsx` | ⏳ Pending | Fetch divisions + clients, render client form |
-| 1.5 | Wire up quote detail page (real data + action bar) | `billing/quotes/[id]/page.tsx` | ⏳ Pending | Status-based action bar, real sidebar amounts |
+| 1.1a | Create Zod billing schemas | `apps/admin/src/app/actions/billing-schema.ts` | ✅ Done | `LineItemSchema`, `CreateQuotationSchema`, `CreateInvoiceSchema` |
+| 1.1b | Create quote server actions | `apps/admin/src/app/actions/billing-quotes.ts` | ✅ Done | `createQuotation`, `updateQuotationStatus`, `deleteQuotation` |
+| 1.2a | Create `BillingStatusBadge` component | `components/billing/billing-status-badge.tsx` | ✅ Done | |
+| 1.2b | Create `BillingLineItemsForm` component | `components/billing/billing-line-items-form.tsx` | ✅ Done | Editable table with add/remove rows |
+| 1.2c | Create `BillingLineItemsTable` component | `components/billing/billing-line-items-table.tsx` | ✅ Done | Read-only display |
+| 1.2d | Create `BillingTotalsBlock` component | `components/billing/billing-totals-block.tsx` | ✅ Done | Subtotal / VAT / Total |
+| 1.2e | Create `ConvertToInvoiceButton` component | `components/billing/convert-to-invoice-button.tsx` | ✅ Done | Confirm + redirect |
+| 1.3a | Wire up quote list page (real data) | `billing/quotes/page.tsx` | ✅ Done | Patch shell — async, searchParams, real rows |
+| 1.3b | Create quotes client component | `billing/quotes/quotes-client.tsx` | ✅ Done | Pagination, filters, row actions |
+| 1.4a | Create quote form client component | `billing/quotes/new/quote-form-client.tsx` | ✅ Done | Controlled state, line items, live totals |
+| 1.4b | Patch quote new page to be server component | `billing/quotes/new/page.tsx` | ✅ Done | Fetch divisions + clients, render client form |
+| 1.5 | Wire up quote detail page (real data + action bar) | `billing/quotes/[id]/page.tsx` | ✅ Done | Status-based action bar, real sidebar amounts |
 
 ### Phase 1 Acceptance Criteria
 - [ ] Create a quote with 3 line items (mix of 0% and 15% VAT) — correct totals
@@ -64,7 +64,7 @@
 - [ ] Detail page shows real data, correct action bar per status
 - [ ] No TypeScript errors
 
-**Phase 1 Completed:** ___________
+**Phase 1 Completed:** May 8, 2026
 
 ---
 
@@ -207,7 +207,7 @@
 | Phase | Description | Status | Completed |
 |-------|-------------|--------|-----------|
 | 0 | Schema, Utilities & Queries | ✅ Done | May 8, 2026 |
-| 1 | Quotations | ⏳ Pending | — |
+| 1 | Quotations | ✅ Done | May 8, 2026 |
 | 2 | Invoices + Mark Paid | ⏳ Pending | — |
 | 3 | Statements | ⏳ Pending | — |
 | 4 | Items Catalogue | ⏳ Pending | — |

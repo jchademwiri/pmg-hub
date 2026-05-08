@@ -1,24 +1,50 @@
-import type { Metadata } from 'next'
-import Link from 'next/link'
-import { ChevronLeft, Printer, Send, CheckCircle, MoreHorizontal } from 'lucide-react'
-import { Button } from '@/components/ui/button'
-import { Badge } from '@/components/ui/badge'
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
-import { Separator } from '@/components/ui/separator'
-import { DocumentPreview } from '@/components/billing/document-preview'
-import type { DocumentPreviewProps } from '@/components/billing/document-preview'
-import { MOCK_QUOTE, MOCK_QUOTE_ACTIVITY } from '@/lib/mock/billing'
+import type { Metadata } from 'next';
+import Link from 'next/link';
+import { notFound } from 'next/navigation';
+import { ChevronLeft, Printer, Send, CheckCircle, MoreHorizontal } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Separator } from '@/components/ui/separator';
+import { DocumentPreview } from '@/components/billing/document-preview';
+import { BillingStatusBadge } from '@/components/billing/billing-status-badge';
+import { BillingTotalsBlock } from '@/components/billing/billing-totals-block';
+import { ConvertToInvoiceButton } from '@/components/billing/convert-to-invoice-button';
+import { getQuotationById } from '@pmg/db';
+import { updateQuotationStatus, deleteQuotation } from '@/app/actions/billing-quotes';
+import { QuoteDetailActions } from './quote-detail-actions';
 
-export const metadata: Metadata = { title: 'Quotation' }
+export const dynamic = 'force-dynamic';
+export const metadata: Metadata = { title: 'Quotation' };
 
 interface Props {
-  params: Promise<{ id: string }>
+  params: Promise<{ id: string }>;
 }
 
-// ─────────────────────────────────────────────────────────────────────────────
-
 export default async function QuoteDetailPage({ params }: Props) {
-  const { id } = await params
+  const { id } = await params;
+  const quote = await getQuotationById(id);
+  if (!quote) notFound();
+
+  // Build DocumentPreview props from real data
+  const docPreviewProps = {
+    number: quote.documentNumber,
+    status: quote.status.charAt(0).toUpperCase() + quote.status.slice(1),
+    issueDate: quote.quoteDate,
+    dueDate: quote.expiryDate ?? undefined,
+    org: { name: quote.divisionName },
+    client: {
+      name: quote.clientName ?? 'No client',
+    },
+    lineItems: quote.lineItems.map((li) => ({
+      description: li.description,
+      qty: Number(li.quantity),
+      unitPrice: Number(li.unitPrice),
+      vatApplicable: Number(li.vatRate) > 0,
+    })),
+    notes: quote.notes ?? undefined,
+    terms: quote.terms ?? undefined,
+    vatRate: 15 as const,
+  };
 
   return (
     <div className="flex flex-col gap-6">
@@ -34,10 +60,10 @@ export default async function QuoteDetailPage({ params }: Props) {
           <Separator orientation="vertical" className="h-5" />
           <div>
             <div className="flex items-center gap-2">
-              <h2 className="text-lg font-semibold">Quote #{id}</h2>
-              <Badge variant="secondary">{MOCK_QUOTE.status}</Badge>
+              <h2 className="text-lg font-semibold">{quote.documentNumber}</h2>
+              <BillingStatusBadge status={quote.status} />
             </div>
-            <p className="text-sm text-muted-foreground">Issued {MOCK_QUOTE.issueDate}</p>
+            <p className="text-sm text-muted-foreground">Issued {quote.quoteDate}</p>
           </div>
         </div>
         <div className="flex items-center gap-2">
@@ -49,7 +75,7 @@ export default async function QuoteDetailPage({ params }: Props) {
             <Send className="size-4" />
             Send
           </Button>
-          <Button size="sm" disabled>
+          <Button size="sm" disabled={quote.status !== 'accepted'}>
             <CheckCircle className="size-4" />
             Convert to Invoice
           </Button>
@@ -59,10 +85,11 @@ export default async function QuoteDetailPage({ params }: Props) {
         </div>
       </div>
 
+      {/* Two-column layout */}
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-3 lg:items-start">
         {/* Document preview */}
         <div className="lg:col-span-2">
-          <DocumentPreview type="quote" {...MOCK_QUOTE} href={`/billing/quotes/${id}`} />
+          <DocumentPreview type="quote" {...docPreviewProps} />
         </div>
 
         {/* Sidebar */}
@@ -71,20 +98,12 @@ export default async function QuoteDetailPage({ params }: Props) {
             <CardHeader>
               <CardTitle>Summary</CardTitle>
             </CardHeader>
-            <CardContent className="flex flex-col gap-3">
-              <div className="flex justify-between text-sm">
-                <span className="text-muted-foreground">Subtotal</span>
-                <span className="tabular-nums">R 66 350.00</span>
-              </div>
-              <div className="flex justify-between text-sm">
-                <span className="text-muted-foreground">VAT (15%)</span>
-                <span className="tabular-nums">R 9 952.50</span>
-              </div>
-              <Separator />
-              <div className="flex justify-between text-sm font-semibold">
-                <span>Total</span>
-                <span className="tabular-nums">R 76 302.50</span>
-              </div>
+            <CardContent>
+              <BillingTotalsBlock
+                subtotal={Number(quote.subtotal)}
+                vatAmount={Number(quote.vatAmount)}
+                total={Number(quote.total)}
+              />
             </CardContent>
           </Card>
 
@@ -94,17 +113,31 @@ export default async function QuoteDetailPage({ params }: Props) {
             </CardHeader>
             <CardContent>
               <div className="flex flex-col gap-3">
-                {MOCK_QUOTE_ACTIVITY.map((entry) => (
-                  <div key={entry.date} className="flex flex-col gap-0.5">
-                    <span className="text-sm">{entry.label}</span>
-                    <span className="text-xs text-muted-foreground">{entry.date}</span>
-                  </div>
-                ))}
+                <div className="flex flex-col gap-0.5">
+                  <span className="text-sm">Quote created</span>
+                  <span className="text-xs text-muted-foreground">
+                    {new Date(quote.createdAt).toLocaleString('en-ZA', {
+                      day: '2-digit', month: 'short', year: 'numeric',
+                      hour: '2-digit', minute: '2-digit',
+                    })}
+                  </span>
+                </div>
               </div>
             </CardContent>
           </Card>
         </div>
       </div>
+
+      {/* Action bar — below the grid */}
+      <QuoteDetailActions
+        quote={{
+          id: quote.id,
+          status: quote.status,
+          convertedInvoiceId: quote.convertedInvoiceId,
+        }}
+        updateStatusAction={updateQuotationStatus}
+        deleteAction={deleteQuotation}
+      />
     </div>
-  )
+  );
 }
