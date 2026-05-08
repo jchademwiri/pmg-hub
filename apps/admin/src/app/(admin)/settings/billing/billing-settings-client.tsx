@@ -141,6 +141,61 @@ function DivisionBillingForm({ division, currentSettings, saveAction }: Division
 
       <Separator />
 
+      {/* Contact Details */}
+      <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
+        <div className="lg:col-span-1">
+          <h3 className="text-sm font-semibold">Contact Details</h3>
+          <p className="mt-1 text-sm text-muted-foreground">
+            Sales rep contact info printed on invoices and quotes for this division.
+          </p>
+        </div>
+        <Card className="lg:col-span-2">
+          <CardContent className="flex flex-col gap-4 pt-6">
+            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+              <div className="flex flex-col gap-1.5 sm:col-span-2">
+                <label className="text-sm font-medium">Sales Rep Name</label>
+                <Input
+                  name="salesRepName"
+                  defaultValue={s?.salesRepName ?? ''}
+                  placeholder="e.g. Jacob Chademwiri"
+                  disabled={isPending}
+                />
+              </div>
+              <div className="flex flex-col gap-1.5">
+                <label className="text-sm font-medium">Phone Number</label>
+                <Input
+                  name="salesRepPhone"
+                  defaultValue={s?.salesRepPhone ?? ''}
+                  placeholder="+27 21 000 0000"
+                  disabled={isPending}
+                />
+              </div>
+              <div className="flex flex-col gap-1.5">
+                <label className="text-sm font-medium">Email Address</label>
+                <Input
+                  name="salesRepEmail"
+                  type="email"
+                  defaultValue={s?.salesRepEmail ?? ''}
+                  placeholder="sales@example.co.za"
+                  disabled={isPending}
+                />
+              </div>
+              <div className="flex flex-col gap-1.5">
+                <label className="text-sm font-medium">Division Website</label>
+                <Input
+                  name="divisionWebsite"
+                  defaultValue={s?.divisionWebsite ?? ''}
+                  placeholder="www.example.co.za"
+                  disabled={isPending}
+                />
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+
+      <Separator />
+
       {/* Banking Details */}
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
         <div className="lg:col-span-1">

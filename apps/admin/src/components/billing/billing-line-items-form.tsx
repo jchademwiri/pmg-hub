@@ -123,7 +123,7 @@ export function BillingLineItemsForm({ value, onChange, activeItems }: BillingLi
                   value={row.itemId}
                   onValueChange={(itemId) => selectItem(row.id, itemId)}
                 >
-                  <SelectTrigger className="w-[200px]">
+                  <SelectTrigger className={`w-[200px] ${!row.itemId ? 'border-destructive/50' : ''}`}>
                     <SelectValue placeholder="Select an item…" />
                   </SelectTrigger>
                   <SelectContent>

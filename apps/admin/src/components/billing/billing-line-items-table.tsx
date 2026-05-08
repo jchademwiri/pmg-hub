@@ -22,7 +22,6 @@ export function BillingLineItemsTable({ lineItems }: BillingLineItemsTableProps)
           <TableHead>Description</TableHead>
           <TableHead className="text-right w-16">Qty</TableHead>
           <TableHead className="text-right w-28">Unit Price</TableHead>
-          <TableHead className="text-right w-20">VAT</TableHead>
           <TableHead className="text-right w-28">Line Total</TableHead>
         </TableRow>
       </TableHeader>
@@ -36,9 +35,6 @@ export function BillingLineItemsTable({ lineItems }: BillingLineItemsTableProps)
             </TableCell>
             <TableCell className="text-right tabular-nums text-sm">
               {formatZAR(Number(item.unitPrice))}
-            </TableCell>
-            <TableCell className="text-right text-sm text-muted-foreground">
-              {Number(item.vatRate) === 0 ? 'Exempt' : `${Number(item.vatRate)}%`}
             </TableCell>
             <TableCell className="text-right tabular-nums text-sm font-medium">
               {formatZAR(Number(item.lineTotal))}

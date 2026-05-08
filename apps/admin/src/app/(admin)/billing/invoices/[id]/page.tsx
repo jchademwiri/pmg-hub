@@ -1,14 +1,14 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
-import { ChevronLeft, Printer, Send, MoreHorizontal, Pencil } from 'lucide-react';
+import { ChevronLeft, Printer, Send, MoreHorizontal, Pencil, FileDown } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Separator } from '@/components/ui/separator';
 import { DocumentPreview } from '@/components/billing/document-preview';
 import { BillingStatusBadge } from '@/components/billing/billing-status-badge';
 import { BillingTotalsBlock } from '@/components/billing/billing-totals-block';
-import { getInvoiceById, getUnlinkedIncomeForClient } from '@pmg/db';
+import { getInvoiceById, getUnlinkedIncomeForClient, getDivisionBillingSettings } from '@pmg/db';
 import { issueInvoice, markInvoicePaid, voidInvoice, linkInvoiceToIncome } from '@/app/actions/billing-invoices';
 import { InvoiceDetailActions } from './invoice-detail-actions';
 
@@ -23,6 +23,8 @@ export default async function InvoiceDetailPage({ params }: Props) {
   const { id } = await params;
   const invoice = await getInvoiceById(id);
   if (!invoice) notFound();
+
+  const divSettings = await getDivisionBillingSettings(invoice.divisionId);
 
   // Fetch unlinked income records for this client — used by the "Link Payment" flow.
   // Only relevant when invoice is draft or issued and has a client.
@@ -39,6 +41,10 @@ export default async function InvoiceDetailPage({ params }: Props) {
     org: {
       name: invoice.divisionName,
       divisionOf: 'Playhouse Media Group',
+      email: divSettings?.salesRepEmail ?? undefined,
+      phone: divSettings?.salesRepPhone ?? undefined,
+      website: divSettings?.divisionWebsite ?? undefined,
+      salesRep: divSettings?.salesRepName ?? undefined,
     },
     client: { name: invoice.clientName ?? 'No client' },
     lineItems: invoice.lineItems.map((li) => ({
@@ -92,6 +98,10 @@ export default async function InvoiceDetailPage({ params }: Props) {
           <Button variant="outline" size="sm" disabled>
             <Send className="size-4" />
             Send
+          </Button>
+          <Button variant="outline" size="sm" disabled>
+            <FileDown className="size-4" />
+            Export PDF
           </Button>
           {canEdit && (
             <Button variant="outline" size="sm" asChild>

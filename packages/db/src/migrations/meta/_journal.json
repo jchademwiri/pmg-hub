@@ -78,6 +78,20 @@
       "when": 1778300000000,
       "tag": "0010_settings_tables",
       "breakpoints": true
+    },
+    {
+      "idx": 11,
+      "version": "7",
+      "when": 1778274262101,
+      "tag": "0011_broken_black_knight",
+      "breakpoints": true
+    },
+    {
+      "idx": 12,
+      "version": "7",
+      "when": 1778274857192,
+      "tag": "0012_abnormal_doomsday",
+      "breakpoints": true
     }
   ]
 }

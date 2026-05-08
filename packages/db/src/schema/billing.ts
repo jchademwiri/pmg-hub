@@ -311,6 +311,11 @@ export const divisionBillingSettings = pgTable(
     invoiceNotes: text("invoice_notes"),
     quoteNotes: text("quote_notes"),
     logoUrl: text("logo_url"),
+    // Division contact details — appear on invoices and quotes
+    salesRepName: text("sales_rep_name"),
+    salesRepPhone: text("sales_rep_phone"),
+    salesRepEmail: text("sales_rep_email"),
+    divisionWebsite: text("division_website"),
     updatedAt: timestamp("updated_at", { withTimezone: true }),
   },
 );

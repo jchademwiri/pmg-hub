@@ -121,8 +121,8 @@ export function QuoteFormClient({
       setError('A client is required.');
       return;
     }
-    if (lineItems.some((r) => !r.description.trim())) {
-      setError('All line items must have a description.');
+    if (lineItems.some((r) => !r.itemId)) {
+      setError('All line items must have an item selected from the catalogue.');
       return;
     }
     if (lineItems.some((r) => !r.unitPrice || parseFloat(r.unitPrice) < 0)) {

@@ -1,0 +1,1 @@
+ALTER TABLE "division_billing_settings" RENAME COLUMN "sales_rep_website" TO "division_website";

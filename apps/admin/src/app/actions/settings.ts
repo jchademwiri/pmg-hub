@@ -74,6 +74,11 @@ const DivisionBillingSchema = z.object({
   bankBranchCode:    z.string().max(20).optional().nullable(),
   invoiceNotes:      z.string().max(2000).optional().nullable(),
   quoteNotes:        z.string().max(2000).optional().nullable(),
+  // Division contact details
+  salesRepName:      z.string().max(200).optional().nullable(),
+  salesRepPhone:     z.string().max(50).optional().nullable(),
+  salesRepEmail:     z.string().email().optional().nullable().or(z.literal('')),
+  divisionWebsite:   z.string().max(200).optional().nullable(),
 });
 
 export async function saveDivisionBillingSettings(
@@ -111,6 +116,10 @@ export async function saveDivisionBillingSettings(
       bankBranchCode:    parsed.data.bankBranchCode ?? null,
       invoiceNotes:      parsed.data.invoiceNotes ?? null,
       quoteNotes:        parsed.data.quoteNotes ?? null,
+      salesRepName:      parsed.data.salesRepName ?? null,
+      salesRepPhone:     parsed.data.salesRepPhone ?? null,
+      salesRepEmail:     parsed.data.salesRepEmail || null,
+      divisionWebsite:   parsed.data.divisionWebsite ?? null,
       updatedAt:         new Date(),
     };
 

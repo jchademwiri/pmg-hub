@@ -19,6 +19,7 @@ export interface DocumentOrg {
   phone?: string
   website?: string
   address?: string
+  salesRep?: string
 }
 
 export interface DocumentBanking {
@@ -146,6 +147,9 @@ export function DocumentPreview({
           {org.email && <span className="text-xs text-zinc-500">{org.email}</span>}
           {org.phone && <span className="text-xs text-zinc-500">{org.phone}</span>}
           {org.website && <span className="text-xs text-zinc-500">{org.website}</span>}
+          {org.salesRep && (
+            <span className="mt-1 text-xs text-zinc-500">Rep: {org.salesRep}</span>
+          )}
         </div>
 
         {/* Document type + number + status — sticky as you scroll */}

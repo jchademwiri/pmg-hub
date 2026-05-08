@@ -1,7 +1,7 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
-import { ChevronLeft, Printer, Send, CheckCircle, MoreHorizontal, Pencil } from 'lucide-react';
+import { ChevronLeft, Printer, Send, CheckCircle, MoreHorizontal, Pencil, FileDown } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Separator } from '@/components/ui/separator';
@@ -9,7 +9,7 @@ import { DocumentPreview } from '@/components/billing/document-preview';
 import { BillingStatusBadge } from '@/components/billing/billing-status-badge';
 import { BillingTotalsBlock } from '@/components/billing/billing-totals-block';
 import { ConvertToInvoiceButton } from '@/components/billing/convert-to-invoice-button';
-import { getQuotationById } from '@pmg/db';
+import { getQuotationById, getDivisionBillingSettings } from '@pmg/db';
 import { updateQuotationStatus, deleteQuotation } from '@/app/actions/billing-quotes';
 import { QuoteDetailActions } from './quote-detail-actions';
 
@@ -25,6 +25,8 @@ export default async function QuoteDetailPage({ params }: Props) {
   const quote = await getQuotationById(id);
   if (!quote) notFound();
 
+  const divSettings = await getDivisionBillingSettings(quote.divisionId);
+
   // Build DocumentPreview props from real data
   const docPreviewProps = {
     number: quote.documentNumber,
@@ -35,6 +37,10 @@ export default async function QuoteDetailPage({ params }: Props) {
     org: {
       name: quote.divisionName,
       divisionOf: 'Playhouse Media Group',
+      email: divSettings?.salesRepEmail ?? undefined,
+      phone: divSettings?.salesRepPhone ?? undefined,
+      website: divSettings?.divisionWebsite ?? undefined,
+      salesRep: divSettings?.salesRepName ?? undefined,
     },
     client: {
       name: quote.clientName ?? 'No client',
@@ -80,6 +86,10 @@ export default async function QuoteDetailPage({ params }: Props) {
           <Button variant="outline" size="sm" disabled>
             <Send className="size-4" />
             Send
+          </Button>
+          <Button variant="outline" size="sm" disabled>
+            <FileDown className="size-4" />
+            Export PDF
           </Button>
           {canEdit && (
             <Button variant="outline" size="sm" asChild>
