@@ -21,7 +21,7 @@ export function MarkPaidButton({ invoiceId, hasClient, markPaidAction }: MarkPai
 
   async function handleClick() {
     const confirmed = window.confirm(
-      'Mark this invoice as paid? This will post the revenue to the income ledger and cannot be undone.',
+      'Mark this invoice as paid? This will post the revenue to the income ledger using today\'s date as the payment date. This cannot be undone.',
     );
     if (!confirmed) return;
 

@@ -236,7 +236,12 @@ export async function markInvoicePaid(id: string): Promise<{ error?: string }> {
     if (!invoice.clientId) {
       return { error: 'A client must be set before marking as paid.' };
     }
-    if (await isPeriodClosed(invoice.invoiceDate)) {
+
+    // Period lock is checked against TODAY (the payment date), not the invoice
+    // date. An invoice can be issued in a prior period and paid late — what
+    // matters for the ledger is when the cash was received.
+    const paymentDate = new Date().toISOString().split('T')[0]!;
+    if (await isPeriodClosed(paymentDate)) {
       const minDate = await getMinAllowedDate();
       return { error: getMinDateErrorMessage(minDate) };
     }
@@ -252,11 +257,12 @@ export async function markInvoicePaid(id: string): Promise<{ error?: string }> {
     const clientLabel = client.businessName ?? client.name;
     const description = `${invoice.documentNumber} — ${clientLabel}`;
 
-    // Post to income ledger
+    // Post to income ledger using today as the payment date so late payments
+    // land in the correct open period, not the (possibly closed) invoice period.
     const [incomeRow] = await db
       .insert(income)
       .values({
-        date: invoice.invoiceDate,
+        date: paymentDate,
         divisionId: invoice.divisionId,
         clientId: invoice.clientId,
         description,
