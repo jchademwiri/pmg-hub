@@ -1,7 +1,7 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
-import { ChevronLeft, Printer, Send, MoreHorizontal } from 'lucide-react';
+import { ChevronLeft, Printer, Send, MoreHorizontal, Pencil } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Separator } from '@/components/ui/separator';
@@ -35,12 +35,15 @@ export default async function InvoiceDetailPage({ params }: Props) {
       description: li.description,
       qty: Number(li.quantity),
       unitPrice: Number(li.unitPrice),
-      vatApplicable: Number(li.vatRate) > 0,
+      vatApplicable: false,
     })),
     notes: invoice.notes ?? undefined,
     terms: invoice.terms ?? undefined,
     vatRate: 15 as const,
   };
+
+  // Paid and voided invoices cannot be edited
+  const canEdit = !['paid', 'void'].includes(invoice.status);
 
   return (
     <div className="flex flex-col gap-6">
@@ -80,6 +83,17 @@ export default async function InvoiceDetailPage({ params }: Props) {
             <Send className="size-4" />
             Send
           </Button>
+          {canEdit && (
+            <Button variant="outline" size="sm" asChild>
+              <Link href={`/billing/invoices/${invoice.id}/edit`}>
+                <Pencil className="size-4" />
+                Edit
+              </Link>
+            </Button>
+          )}
+          {invoice.status === 'paid' && (
+            <p className="text-xs text-muted-foreground">Paid invoices cannot be modified.</p>
+          )}
           <Button variant="ghost" size="sm" disabled>
             <MoreHorizontal className="size-4" />
           </Button>
@@ -102,6 +116,8 @@ export default async function InvoiceDetailPage({ params }: Props) {
             <CardContent>
               <BillingTotalsBlock
                 subtotal={Number(invoice.subtotal)}
+                discountAmount={Number(invoice.discountAmount ?? 0)}
+                vatEnabled={invoice.vatEnabled}
                 vatAmount={Number(invoice.vatAmount)}
                 total={Number(invoice.total)}
               />

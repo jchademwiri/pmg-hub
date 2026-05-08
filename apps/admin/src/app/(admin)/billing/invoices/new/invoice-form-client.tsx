@@ -15,14 +15,20 @@ import { Separator } from '@/components/ui/separator';
 import {
   BillingLineItemsForm,
   type LineItemFormRow,
+  type ActiveItem,
 } from '@/components/billing/billing-line-items-form';
 import { BillingTotalsBlock } from '@/components/billing/billing-totals-block';
 import { createInvoice } from '@/app/actions/billing-invoices';
+import type { InvoiceDetail } from '@pmg/db';
 
-interface InvoiceFormClientProps {
+export interface InvoiceFormClientProps {
   divisions: { id: string; name: string }[];
   clients: { id: string; name: string; businessName: string | null }[];
+  activeItems: ActiveItem[];
   minDate: string;
+  /** When provided, the form is in edit mode */
+  initialData?: InvoiceDetail;
+  editId?: string;
 }
 
 const today = new Date().toISOString().split('T')[0]!;
@@ -31,43 +37,73 @@ const plus30 = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString().spl
 function blankRow(): LineItemFormRow {
   return {
     id: crypto.randomUUID(),
+    itemId: '',
     description: '',
     quantity: '1',
     unitPrice: '',
-    vatRate: '15',
   };
 }
 
-function calcTotals(lineItems: LineItemFormRow[]) {
+function calcTotals(
+  lineItems: LineItemFormRow[],
+  vatEnabled: boolean,
+  discountType: 'percent' | 'amount',
+  discountValue: string,
+) {
   let subtotal = 0;
-  let vatAmount = 0;
   for (const item of lineItems) {
-    const qty = parseFloat(item.quantity) || 0;
-    const price = parseFloat(item.unitPrice) || 0;
-    const vat = parseInt(item.vatRate) || 0;
-    const lineSubtotal = qty * price;
-    subtotal += lineSubtotal;
-    vatAmount += lineSubtotal * (vat / 100);
+    subtotal += (parseFloat(item.quantity) || 0) * (parseFloat(item.unitPrice) || 0);
   }
-  return { subtotal, vatAmount, total: subtotal + vatAmount };
+  const discountVal = parseFloat(discountValue) || 0;
+  const discountAmount =
+    discountType === 'percent'
+      ? subtotal * (discountVal / 100)
+      : Math.min(discountVal, subtotal);
+  const vatBase = subtotal - discountAmount;
+  const vatAmount = vatEnabled ? vatBase * 0.15 : 0;
+  return { subtotal, discountAmount, vatAmount, total: vatBase + vatAmount };
 }
 
-export function InvoiceFormClient({ divisions, clients, minDate }: InvoiceFormClientProps) {
+export function InvoiceFormClient({
+  divisions,
+  clients,
+  activeItems,
+  minDate,
+  initialData,
+  editId,
+}: InvoiceFormClientProps) {
   const router = useRouter();
   const [, startTransition] = useTransition();
 
-  const [divisionId, setDivisionId] = useState('');
-  const [clientId, setClientId] = useState('none');
-  const [invoiceDate, setInvoiceDate] = useState(today);
-  const [dueDate, setDueDate] = useState(plus30);
-  const [poNumber, setPoNumber] = useState('');
-  const [notes, setNotes] = useState('');
-  const [terms, setTerms] = useState('');
-  const [lineItems, setLineItems] = useState<LineItemFormRow[]>([blankRow()]);
+  const [divisionId, setDivisionId] = useState(initialData?.divisionId ?? '');
+  const [clientId, setClientId] = useState(initialData?.clientId ?? '');
+  const [invoiceDate, setInvoiceDate] = useState(initialData?.invoiceDate ?? today);
+  const [dueDate, setDueDate] = useState(initialData?.dueDate ?? plus30);
+  const [poNumber, setPoNumber] = useState(initialData?.poNumber ?? '');
+  const [notes, setNotes] = useState(initialData?.notes ?? '');
+  const [terms, setTerms] = useState(initialData?.terms ?? '');
+  const [lineItems, setLineItems] = useState<LineItemFormRow[]>(
+    initialData?.lineItems.length
+      ? initialData.lineItems.map((li) => ({
+          id: crypto.randomUUID(),
+          itemId: '',
+          description: li.description,
+          quantity: li.quantity,
+          unitPrice: li.unitPrice,
+        }))
+      : [blankRow()],
+  );
+  const [vatEnabled, setVatEnabled] = useState(initialData?.vatEnabled ?? false);
+  const [discountType, setDiscountType] = useState<'percent' | 'amount'>(
+    (initialData?.discountType as 'percent' | 'amount') ?? 'percent',
+  );
+  const [discountValue, setDiscountValue] = useState(
+    initialData?.discountValue ? String(Number(initialData.discountValue)) : '',
+  );
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const totals = calcTotals(lineItems);
+  const totals = calcTotals(lineItems, vatEnabled, discountType, discountValue);
 
   // Warn if invoice date is near the period boundary
   const isPeriodWarning = invoiceDate < minDate;
@@ -79,8 +115,12 @@ export function InvoiceFormClient({ divisions, clients, minDate }: InvoiceFormCl
       setError('Please select a division.');
       return;
     }
-    if (lineItems.some((r) => !r.description.trim())) {
-      setError('All line items must have a description.');
+    if (!clientId) {
+      setError('A client is required.');
+      return;
+    }
+    if (lineItems.some((r) => !r.itemId)) {
+      setError('All line items must have an item selected.');
       return;
     }
     if (lineItems.some((r) => !r.unitPrice || parseFloat(r.unitPrice) < 0)) {
@@ -88,29 +128,48 @@ export function InvoiceFormClient({ divisions, clients, minDate }: InvoiceFormCl
       return;
     }
 
+    const payload = {
+      divisionId,
+      clientId,
+      invoiceDate,
+      dueDate: dueDate || null,
+      poNumber: poNumber || null,
+      notes: notes || null,
+      terms: terms || null,
+      lineItems: lineItems.map((r) => ({
+        itemId: r.itemId,
+        description: r.description,
+        quantity: parseFloat(r.quantity) || 1,
+        unitPrice: parseFloat(r.unitPrice) || 0,
+        vatRate: 0 as const,
+      })),
+      vatEnabled,
+      discountType: discountValue ? discountType : null,
+      discountValue: discountValue ? parseFloat(discountValue) : null,
+    };
+
     setIsSubmitting(true);
     startTransition(async () => {
-      const result = await createInvoice({
-        divisionId,
-        clientId: clientId === 'none' ? null : clientId || null,
-        invoiceDate,
-        dueDate: dueDate || null,
-        poNumber: poNumber || null,
-        notes: notes || null,
-        terms: terms || null,
-        lineItems: lineItems.map((r) => ({
-          description: r.description,
-          quantity: parseFloat(r.quantity) || 1,
-          unitPrice: parseFloat(r.unitPrice) || 0,
-          vatRate: (parseInt(r.vatRate) || 0) as 0 | 15,
-        })),
-      });
+      let result: { error?: string; id?: string };
+
+      if (editId) {
+        const { updateInvoice } = await import('@/app/actions/billing-invoices');
+        result = await updateInvoice(editId, payload);
+        if (!result.error) {
+          router.push(`/billing/invoices/${editId}`);
+          return;
+        }
+      } else {
+        result = await createInvoice(payload);
+        if (!result.error && result.id) {
+          router.push(`/billing/invoices/${result.id}`);
+          return;
+        }
+      }
 
       if (result.error) {
         setError(result.error);
         setIsSubmitting(false);
-      } else if (result.id) {
-        router.push(`/billing/invoices/${result.id}`);
       }
     });
   }
@@ -133,7 +192,7 @@ export function InvoiceFormClient({ divisions, clients, minDate }: InvoiceFormCl
             <label className="text-sm font-medium">
               Division <span className="text-destructive">*</span>
             </label>
-            <Select value={divisionId} onValueChange={setDivisionId} disabled={isSubmitting}>
+            <Select value={divisionId} onValueChange={setDivisionId} disabled={isSubmitting || !!editId}>
               <SelectTrigger>
                 <SelectValue placeholder="Select a division…" />
               </SelectTrigger>
@@ -148,13 +207,14 @@ export function InvoiceFormClient({ divisions, clients, minDate }: InvoiceFormCl
           </div>
 
           <div className="flex flex-col gap-1.5">
-            <label className="text-sm font-medium">Client</label>
+            <label className="text-sm font-medium">
+              Client <span className="text-destructive">*</span>
+            </label>
             <Select value={clientId} onValueChange={setClientId} disabled={isSubmitting}>
               <SelectTrigger>
-                <SelectValue placeholder="Select a client…" />
+                <SelectValue placeholder="Select a client… *" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="none">No client</SelectItem>
                 {clients.map((c) => (
                   <SelectItem key={c.id} value={c.id}>
                     {c.businessName ?? c.name}
@@ -200,13 +260,17 @@ export function InvoiceFormClient({ divisions, clients, minDate }: InvoiceFormCl
           <div className="flex flex-col gap-1.5">
             <label className="text-sm font-medium">Invoice #</label>
             <div className="h-9 rounded-md border border-input bg-muted/40 px-3 flex items-center text-sm text-muted-foreground">
-              Auto-generated on save
+              {editId ? 'Existing number preserved' : 'Auto-generated on save'}
             </div>
           </div>
         </div>
 
         {/* Line items */}
-        <BillingLineItemsForm value={lineItems} onChange={setLineItems} />
+        <BillingLineItemsForm
+          value={lineItems}
+          onChange={setLineItems}
+          activeItems={activeItems}
+        />
 
         {/* Notes & terms */}
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
@@ -235,36 +299,89 @@ export function InvoiceFormClient({ divisions, clients, minDate }: InvoiceFormCl
         </div>
       </div>
 
-      {/* Sidebar */}
-      <div className="flex flex-col gap-4">
+      {/* Sidebar — sticky */}
+      <div className="flex flex-col gap-4 lg:sticky lg:top-16 self-start">
         <div className="rounded-xl border bg-card p-4 flex flex-col gap-3">
           <p className="text-sm font-semibold">Summary</p>
+
+          {/* VAT toggle */}
+          <button
+            type="button"
+            role="switch"
+            aria-checked={vatEnabled}
+            onClick={() => setVatEnabled((v) => !v)}
+            className="flex items-center justify-between py-1"
+          >
+            <span className="text-sm text-muted-foreground">VAT (15%)</span>
+            <div
+              className={`relative h-5 w-9 rounded-full transition-colors ${
+                vatEnabled ? 'bg-primary' : 'bg-input'
+              }`}
+            >
+              <div
+                className={`absolute top-0.5 h-4 w-4 rounded-full bg-background shadow-sm transition-transform ${
+                  vatEnabled ? 'translate-x-4' : 'translate-x-0.5'
+                }`}
+              />
+            </div>
+          </button>
+
+          {/* Discount */}
+          <div className="flex items-center gap-2">
+            <select
+              value={discountType}
+              onChange={(e) => setDiscountType(e.target.value as 'percent' | 'amount')}
+              className="h-8 rounded-md border border-input bg-background px-2 text-sm"
+            >
+              <option value="percent">%</option>
+              <option value="amount">R</option>
+            </select>
+            <Input
+              type="number"
+              min="0"
+              step="0.01"
+              value={discountValue}
+              onChange={(e) => setDiscountValue(e.target.value)}
+              placeholder="Discount"
+              className="h-8"
+            />
+          </div>
+
           <BillingTotalsBlock
             subtotal={totals.subtotal}
+            discountAmount={totals.discountAmount}
+            vatEnabled={vatEnabled}
             vatAmount={totals.vatAmount}
             total={totals.total}
           />
+
           <Separator />
+
           {error && <p className="text-sm text-destructive">{error}</p>}
+
           <Button className="w-full" onClick={handleSubmit} disabled={isSubmitting}>
-            {isSubmitting ? 'Saving…' : 'Save Invoice'}
+            {isSubmitting ? 'Saving…' : editId ? 'Save Changes' : 'Save Invoice'}
           </Button>
-          <Button
-            variant="outline"
-            className="w-full"
-            onClick={handleSubmit}
-            disabled={isSubmitting}
-          >
-            Save as Draft
-          </Button>
+          {!editId && (
+            <Button
+              variant="outline"
+              className="w-full"
+              onClick={handleSubmit}
+              disabled={isSubmitting}
+            >
+              Save as Draft
+            </Button>
+          )}
         </div>
 
-        <div className="rounded-xl border bg-card p-4">
-          <p className="text-sm font-semibold mb-1">Status</p>
-          <p className="text-sm text-muted-foreground">
-            Invoice will be saved as <strong>Draft</strong> until issued.
-          </p>
-        </div>
+        {!editId && (
+          <div className="rounded-xl border bg-card p-4">
+            <p className="text-sm font-semibold mb-1">Status</p>
+            <p className="text-sm text-muted-foreground">
+              Invoice will be saved as <strong>Draft</strong> until issued.
+            </p>
+          </div>
+        )}
       </div>
     </div>
   );

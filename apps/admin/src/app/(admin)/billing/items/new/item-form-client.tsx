@@ -15,7 +15,6 @@ export function ItemFormClient() {
   const [description, setDescription] = useState('');
   const [unitPrice, setUnitPrice] = useState('');
   const [unitLabel, setUnitLabel] = useState('');
-  const [vatApplicable, setVatApplicable] = useState(true);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -31,7 +30,7 @@ export function ItemFormClient() {
         description: description.trim() || null,
         unitPrice: parseFloat(unitPrice),
         unitLabel: unitLabel.trim() || null,
-        vatApplicable,
+        vatApplicable: true,
       });
       if (result.error) {
         setError(result.error);
@@ -96,32 +95,6 @@ export function ItemFormClient() {
           <p className="text-xs text-muted-foreground">Label shown next to quantity</p>
         </div>
       </div>
-
-      {/* VAT toggle */}
-      <button
-        type="button"
-        role="switch"
-        aria-checked={vatApplicable}
-        onClick={() => setVatApplicable((v) => !v)}
-        disabled={isSubmitting}
-        className="flex items-center justify-between rounded-md border border-input bg-muted/40 px-3 py-2.5 text-left w-full disabled:opacity-50"
-      >
-        <div className="flex flex-col gap-0.5">
-          <span className="text-sm font-medium">VAT Applicable</span>
-        </div>
-        {/* Visual toggle */}
-        <div
-          className={`relative h-5 w-9 rounded-full transition-colors ${
-            vatApplicable ? 'bg-primary' : 'bg-input'
-          }`}
-        >
-          <div
-            className={`absolute top-0.5 h-4 w-4 rounded-full bg-background shadow-sm transition-transform ${
-              vatApplicable ? 'translate-x-4' : 'translate-x-0.5'
-            }`}
-          />
-        </div>
-      </button>
 
       <Separator className="my-2" />
 

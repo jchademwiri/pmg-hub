@@ -31,7 +31,12 @@ export type QuotationRow = {
   status: string;
   quoteDate: string;
   expiryDate: string | null;
+  reference: string | null;
   subtotal: string;
+  discountType: string | null;
+  discountValue: string | null;
+  discountAmount: string;
+  vatEnabled: boolean;
   vatAmount: string;
   total: string;
   notes: string | null;
@@ -63,6 +68,10 @@ export type InvoiceRow = {
   quotationNumber: string | null;
   incomeId: string | null;
   subtotal: string;
+  discountType: string | null;
+  discountValue: string | null;
+  discountAmount: string;
+  vatEnabled: boolean;
   vatAmount: string;
   total: string;
   notes: string | null;
@@ -144,7 +153,12 @@ const quotationRowSelect = {
   status: quotations.status,
   quoteDate: sql<string>`${quotations.quoteDate}::text`,
   expiryDate: sql<string | null>`${quotations.expiryDate}::text`,
+  reference: quotations.reference,
   subtotal: quotations.subtotal,
+  discountType: quotations.discountType,
+  discountValue: quotations.discountValue,
+  discountAmount: quotations.discountAmount,
+  vatEnabled: quotations.vatEnabled,
   vatAmount: quotations.vatAmount,
   total: quotations.total,
   notes: quotations.notes,
@@ -170,6 +184,10 @@ const invoiceRowSelect = {
   quotationNumber: sql<string | null>`NULL::text`,
   incomeId: invoices.incomeId,
   subtotal: invoices.subtotal,
+  discountType: invoices.discountType,
+  discountValue: invoices.discountValue,
+  discountAmount: invoices.discountAmount,
+  vatEnabled: invoices.vatEnabled,
   vatAmount: invoices.vatAmount,
   total: invoices.total,
   notes: invoices.notes,
@@ -670,4 +688,26 @@ export async function getItemById(id: string): Promise<BillingItemDetail | null>
     usageInvoices: invoiceUsageResult[0]?.count ?? 0,
     usageQuotes: quoteUsageResult[0]?.count ?? 0,
   };
+}
+
+// ── getActiveItems ────────────────────────────────────────────────────────────
+
+/**
+ * Returns active billing items for use in line item selectors.
+ * Only active items are returned — archived items cannot be selected.
+ */
+export async function getActiveItems(): Promise<
+  { id: string; name: string; description: string | null; unitPrice: string; unitLabel: string | null }[]
+> {
+  return db
+    .select({
+      id: billingItems.id,
+      name: billingItems.name,
+      description: billingItems.description,
+      unitPrice: billingItems.unitPrice,
+      unitLabel: billingItems.unitLabel,
+    })
+    .from(billingItems)
+    .where(eq(billingItems.status, 'active' as any))
+    .orderBy(asc(billingItems.name));
 }

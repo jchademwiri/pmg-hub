@@ -12,7 +12,8 @@ const ItemSchema = z.object({
   description: z.string().optional().nullable(),
   unitPrice: z.coerce.number().min(0, 'Unit price cannot be negative'),
   unitLabel: z.string().optional().nullable(),
-  vatApplicable: z.coerce.boolean(),
+  // vatApplicable removed from UI — VAT is document-level. Kept in DB for
+  // backward compatibility; always passed as true so existing records are stable.
 });
 
 type ItemInput = z.infer<typeof ItemSchema>;
@@ -29,7 +30,7 @@ export async function createItem(
     if (!parsed.success) {
       return { error: parsed.error.issues[0]?.message ?? 'Validation error' };
     }
-    const { name, description, unitPrice, unitLabel, vatApplicable } = parsed.data;
+    const { name, description, unitPrice, unitLabel } = parsed.data;
 
     const db = getDb();
     const [inserted] = await db
@@ -39,7 +40,7 @@ export async function createItem(
         description: description ?? null,
         unitPrice: String(unitPrice.toFixed(2)),
         unitLabel: unitLabel ?? null,
-        vatApplicable,
+        vatApplicable: true, // always true — VAT is document-level
       })
       .returning({ id: billingItems.id });
 
@@ -65,7 +66,7 @@ export async function updateItem(
     if (!parsed.success) {
       return { error: parsed.error.issues[0]?.message ?? 'Validation error' };
     }
-    const { name, description, unitPrice, unitLabel, vatApplicable } = parsed.data;
+    const { name, description, unitPrice, unitLabel } = parsed.data;
 
     const db = getDb();
     await db
@@ -75,7 +76,7 @@ export async function updateItem(
         description: description ?? null,
         unitPrice: String(unitPrice.toFixed(2)),
         unitLabel: unitLabel ?? null,
-        vatApplicable,
+        // vatApplicable: preserve existing value — not changed from UI
         updatedAt: new Date(),
       })
       .where(eq(billingItems.id, id));

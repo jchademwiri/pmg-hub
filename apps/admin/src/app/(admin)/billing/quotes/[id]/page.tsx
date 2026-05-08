@@ -1,7 +1,7 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
-import { ChevronLeft, Printer, Send, CheckCircle, MoreHorizontal } from 'lucide-react';
+import { ChevronLeft, Printer, Send, CheckCircle, MoreHorizontal, Pencil } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Separator } from '@/components/ui/separator';
@@ -31,6 +31,7 @@ export default async function QuoteDetailPage({ params }: Props) {
     status: quote.status.charAt(0).toUpperCase() + quote.status.slice(1),
     issueDate: quote.quoteDate,
     dueDate: quote.expiryDate ?? undefined,
+    reference: quote.reference ?? undefined,
     org: { name: quote.divisionName },
     client: {
       name: quote.clientName ?? 'No client',
@@ -39,12 +40,14 @@ export default async function QuoteDetailPage({ params }: Props) {
       description: li.description,
       qty: Number(li.quantity),
       unitPrice: Number(li.unitPrice),
-      vatApplicable: Number(li.vatRate) > 0,
+      vatApplicable: false,
     })),
     notes: quote.notes ?? undefined,
     terms: quote.terms ?? undefined,
     vatRate: 15 as const,
   };
+
+  const canEdit = ['draft', 'sent', 'accepted'].includes(quote.status);
 
   return (
     <div className="flex flex-col gap-6">
@@ -75,6 +78,14 @@ export default async function QuoteDetailPage({ params }: Props) {
             <Send className="size-4" />
             Send
           </Button>
+          {canEdit && (
+            <Button variant="outline" size="sm" asChild>
+              <Link href={`/billing/quotes/${quote.id}/edit`}>
+                <Pencil className="size-4" />
+                Edit
+              </Link>
+            </Button>
+          )}
           <Button size="sm" disabled={quote.status !== 'accepted'}>
             <CheckCircle className="size-4" />
             Convert to Invoice
@@ -101,6 +112,8 @@ export default async function QuoteDetailPage({ params }: Props) {
             <CardContent>
               <BillingTotalsBlock
                 subtotal={Number(quote.subtotal)}
+                discountAmount={Number(quote.discountAmount ?? 0)}
+                vatEnabled={quote.vatEnabled}
                 vatAmount={Number(quote.vatAmount)}
                 total={Number(quote.total)}
               />

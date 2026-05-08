@@ -91,8 +91,15 @@ export const quotations = pgTable(
     quoteDate: date("quote_date").notNull(),
     expiryDate: date("expiry_date"),
     subtotal: numeric("subtotal", { precision: 12, scale: 2 }).notNull().default("0"),
+    // Discount fields — both nullable; discountAmount is always stored (0 when no discount)
+    discountType: text("discount_type"),   // 'percent' | 'amount' | null
+    discountValue: numeric("discount_value", { precision: 12, scale: 2 }),  // nullable
+    discountAmount: numeric("discount_amount", { precision: 12, scale: 2 }).notNull().default("0"),
+    vatEnabled: boolean("vat_enabled").notNull().default(false),
     vatAmount: numeric("vat_amount", { precision: 12, scale: 2 }).notNull().default("0"),
     total: numeric("total", { precision: 12, scale: 2 }).notNull().default("0"),
+    // reference — optional client-facing reference (PO number, tender ref, etc.)
+    reference: text("reference"),
     notes: text("notes"),
     terms: text("terms"),
     // created_by stores session.user.id which is text (not uuid) — matches Better Auth user table
@@ -138,6 +145,11 @@ export const invoices = pgTable(
     // income_id: FK to income table — set when invoice is marked paid and revenue is posted
     incomeId: uuid("income_id").references(() => income.id, { onDelete: "set null" }),
     subtotal: numeric("subtotal", { precision: 12, scale: 2 }).notNull().default("0"),
+    // Discount fields — both nullable; discountAmount is always stored (0 when no discount)
+    discountType: text("discount_type"),   // 'percent' | 'amount' | null
+    discountValue: numeric("discount_value", { precision: 12, scale: 2 }),  // nullable
+    discountAmount: numeric("discount_amount", { precision: 12, scale: 2 }).notNull().default("0"),
+    vatEnabled: boolean("vat_enabled").notNull().default(false),
     vatAmount: numeric("vat_amount", { precision: 12, scale: 2 }).notNull().default("0"),
     total: numeric("total", { precision: 12, scale: 2 }).notNull().default("0"),
     notes: text("notes"),
