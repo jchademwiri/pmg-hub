@@ -100,12 +100,12 @@
 ## Phase 3 — Statements
 
 **Goal:** Statement list and client detail pages show real data.  
-**Status:** ⏳ Pending
+**Status:** ✅ Done
 
 | # | Task | File(s) | Status | Notes |
 |---|------|---------|--------|-------|
-| 3.1a | Wire up statements list page (real data) | `billing/statements/page.tsx` | ⏳ Pending | `getClientsWithBillingActivity()`, real table rows |
-| 3.1b | Wire up client statement detail page | `billing/statements/[clientId]/page.tsx` | ⏳ Pending | Summary strip, transaction history, income records section |
+| 3.1a | Wire up statements list page (real data) | `billing/statements/page.tsx` | ✅ Done | `getClientsWithBillingActivity()`, real table rows |
+| 3.1b | Wire up client statement detail page | `billing/statements/[clientId]/page.tsx` | ✅ Done | Summary strip, transaction history, income records section |
 
 ### Phase 3 Acceptance Criteria
 - [ ] Statement list shows all clients with billing activity and correct outstanding
@@ -114,7 +114,7 @@
 - [ ] Income records section matches `/income` filtered by that client
 - [ ] `notFound()` fires for unknown clientId
 
-**Phase 3 Completed:** ___________
+**Phase 3 Completed:** May 8, 2026
 
 ---
 
@@ -209,7 +209,7 @@
 | 0 | Schema, Utilities & Queries | ✅ Done | May 8, 2026 |
 | 1 | Quotations | ✅ Done | May 8, 2026 |
 | 2 | Invoices + Mark Paid | ✅ Done | May 8, 2026 |
-| 3 | Statements | ⏳ Pending | — |
+| 3 | Statements | ✅ Done | May 8, 2026 |
 | 4 | Items Catalogue | ⏳ Pending | — |
 | 5 | Settings Wiring | ⏳ Pending | — |
 | 6 | Polish & Cleanup | ⏳ Pending | — |

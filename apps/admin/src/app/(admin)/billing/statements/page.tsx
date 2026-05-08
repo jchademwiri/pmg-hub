@@ -1,9 +1,9 @@
-import type { Metadata } from 'next'
-import Link from 'next/link'
-import { Users, TrendingUp, FileText, Calendar } from 'lucide-react'
-import { Button } from '@/components/ui/button'
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card'
-import { EmptyState } from '@/components/ui/empty-state'
+import type { Metadata } from 'next';
+import Link from 'next/link';
+import { Users, TrendingUp, AlertCircle, CheckCircle } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
+import { EmptyState } from '@/components/ui/empty-state';
 import {
   Table,
   TableBody,
@@ -11,18 +11,28 @@ import {
   TableHead,
   TableHeader,
   TableRow,
-} from '@/components/ui/table'
+} from '@/components/ui/table';
+import { getClientsWithBillingActivity } from '@pmg/db';
+import { formatZAR } from '@/lib/format';
 
-export const metadata: Metadata = { title: 'Statements' }
+export const dynamic = 'force-dynamic';
+export const metadata: Metadata = { title: 'Statements' };
 
-const stats = [
-  { label: 'Active Clients', value: '—', icon: Users, description: 'With statements' },
-  { label: 'Total Billed', value: '—', icon: TrendingUp, description: 'All time' },
-  { label: 'Statements', value: '—', icon: FileText, description: 'Generated' },
-  { label: 'Last Generated', value: '—', icon: Calendar, description: 'Most recent' },
-]
+export default async function StatementsPage() {
+  const clients = await getClientsWithBillingActivity();
 
-export default function StatementsPage() {
+  const totalBilled = clients.reduce((s, c) => s + c.totalInvoiced, 0);
+  const totalOutstanding = clients.reduce((s, c) => s + c.totalOutstanding, 0);
+  const activeCount = clients.length;
+  const withOutstanding = clients.filter((c) => c.totalOutstanding > 0).length;
+
+  const stats = [
+    { label: 'Active Clients', value: String(activeCount), icon: Users, description: 'With billing activity' },
+    { label: 'Total Billed', value: formatZAR(totalBilled), icon: TrendingUp, description: 'All time' },
+    { label: 'Outstanding', value: formatZAR(totalOutstanding), icon: AlertCircle, description: 'Unpaid invoices' },
+    { label: 'Fully Paid', value: String(activeCount - withOutstanding), icon: CheckCircle, description: 'No balance due' },
+  ];
+
   return (
     <div className="flex flex-col gap-6">
       {/* Page header */}
@@ -32,13 +42,6 @@ export default function StatementsPage() {
           <p className="text-sm text-muted-foreground">View account statements per client</p>
         </div>
         <div className="flex items-center gap-2">
-          {/* TODO: remove — dev preview link */}
-          <Link
-            href="/billing/statements/mock-preview"
-            className="rounded-md border border-dashed border-border px-3 py-1.5 text-xs text-muted-foreground transition-colors hover:border-foreground/30 hover:text-foreground"
-          >
-            Preview mock statement →
-          </Link>
           <Button variant="outline" size="sm" disabled>
             Generate Statement
           </Button>
@@ -70,29 +73,65 @@ export default function StatementsPage() {
           <CardDescription>Select a client to view their full account statement</CardDescription>
         </CardHeader>
         <CardContent className="p-0">
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>Client</TableHead>
-                <TableHead>Total Invoiced</TableHead>
-                <TableHead>Total Paid</TableHead>
-                <TableHead>Outstanding</TableHead>
-                <TableHead>Last Activity</TableHead>
-                <TableHead className="w-0" />
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              <TableRow>
-                <TableCell colSpan={6} className="py-0">
-                  <EmptyState
-                    message="No client statements available yet. Statements are generated from invoices."
-                  />
-                </TableCell>
-              </TableRow>
-            </TableBody>
-          </Table>
+          {clients.length === 0 ? (
+            <div className="px-6 pb-4">
+              <EmptyState message="No client statements available yet. Statements are generated from invoices." />
+            </div>
+          ) : (
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Client</TableHead>
+                  <TableHead className="text-right">Total Invoiced</TableHead>
+                  <TableHead className="text-right">Total Paid</TableHead>
+                  <TableHead className="text-right">Outstanding</TableHead>
+                  <TableHead>Last Activity</TableHead>
+                  <TableHead className="w-20" />
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {clients.map((client) => (
+                  <TableRow key={client.id}>
+                    <TableCell>
+                      <Link
+                        href={`/billing/statements/${client.id}`}
+                        className="font-medium hover:underline"
+                      >
+                        {client.businessName ?? client.name}
+                      </Link>
+                    </TableCell>
+                    <TableCell className="text-right tabular-nums text-sm">
+                      {formatZAR(client.totalInvoiced)}
+                    </TableCell>
+                    <TableCell className="text-right tabular-nums text-sm text-green-600 dark:text-green-400">
+                      {formatZAR(client.totalPaid)}
+                    </TableCell>
+                    <TableCell className="text-right tabular-nums text-sm">
+                      <span
+                        className={
+                          client.totalOutstanding > 0
+                            ? 'text-red-500'
+                            : 'text-muted-foreground'
+                        }
+                      >
+                        {formatZAR(client.totalOutstanding)}
+                      </span>
+                    </TableCell>
+                    <TableCell className="text-sm text-muted-foreground">
+                      {client.lastActivityDate ?? '—'}
+                    </TableCell>
+                    <TableCell>
+                      <Button variant="outline" size="sm" asChild>
+                        <Link href={`/billing/statements/${client.id}`}>View</Link>
+                      </Button>
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          )}
         </CardContent>
       </Card>
     </div>
-  )
+  );
 }

@@ -56,13 +56,6 @@ export default async function InvoicesPage({ searchParams }: InvoicesPageProps) 
           <p className="text-sm text-muted-foreground">Manage and track client invoices</p>
         </div>
         <div className="flex items-center gap-2">
-          {/* TODO: remove — dev preview link */}
-          <Link
-            href="/billing/invoices/mock-preview"
-            className="rounded-md border border-dashed border-border px-3 py-1.5 text-xs text-muted-foreground transition-colors hover:border-foreground/30 hover:text-foreground"
-          >
-            Preview mock invoice →
-          </Link>
           <Button asChild size="sm">
             <Link href="/billing/invoices/new">
               <Plus className="size-4" />
