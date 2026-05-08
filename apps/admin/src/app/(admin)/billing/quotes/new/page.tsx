@@ -7,6 +7,7 @@ import { Separator } from '@/components/ui/separator';
 import { getAllDivisions, getAllClients, getActiveItems } from '@pmg/db';
 import { QuoteFormClient } from './quote-form-client';
 
+export const dynamic = 'force-dynamic';
 export const metadata: Metadata = { title: 'New Quotation' };
 
 export default async function NewQuotePage() {
