@@ -108,7 +108,6 @@ export function ItemFormClient() {
       >
         <div className="flex flex-col gap-0.5">
           <span className="text-sm font-medium">VAT Applicable</span>
-          <span className="text-xs text-muted-foreground">Apply 15% VAT to this item by default</span>
         </div>
         {/* Visual toggle */}
         <div
