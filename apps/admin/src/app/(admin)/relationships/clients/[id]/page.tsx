@@ -42,7 +42,7 @@ export default async function ClientDetailPage({ params }: ClientDetailPageProps
       {/* Header */}
       <div className="flex items-center gap-4">
         <Link
-          href="/clients"
+          href="/relationships/clients"
           className="text-sm text-muted-foreground hover:text-foreground transition-colors"
         >
           ← Back to Clients

@@ -13,7 +13,7 @@ export async function createDivision(formData: FormData): Promise<{ error?: stri
       return { error: result.error.issues[0]?.message ?? 'Validation error' };
     }
     await db.insert(divisions).values({ name: result.data.name });
-    revalidatePath('/divisions');
+    revalidatePath('/relationships/divisions');
     revalidatePath('/dashboard');
     return {};
   } catch {
@@ -31,7 +31,7 @@ export async function updateDivision(id: string, formData: FormData): Promise<{ 
     await db.update(divisions)
       .set({ name: result.data.name, updatedAt: new Date() })
       .where(eq(divisions.id, id));
-    revalidatePath('/divisions');
+    revalidatePath('/relationships/divisions');
     revalidatePath('/dashboard');
     return {};
   } catch {
@@ -42,7 +42,7 @@ export async function updateDivision(id: string, formData: FormData): Promise<{ 
 export async function toggleDivisionActive(id: string, isActive: boolean): Promise<{ error?: string }> {
   try {
     await setDivisionActive(id, isActive);
-    revalidatePath('/divisions');
+    revalidatePath('/relationships/divisions');
     revalidatePath('/dashboard');
     return {};
   } catch {
@@ -52,7 +52,6 @@ export async function toggleDivisionActive(id: string, isActive: boolean): Promi
 
 export async function deleteDivision(id: string): Promise<{ error?: string }> {
   try {
-    // Check all linked tables before attempting delete
     const [incomeCount, expenseCount, leadCount] = await Promise.all([
       db.select({ id: income.id }).from(income).where(eq(income.divisionId, id)).limit(1),
       db.select({ id: expenses.id }).from(expenses).where(eq(expenses.divisionId, id)).limit(1),
@@ -64,7 +63,7 @@ export async function deleteDivision(id: string): Promise<{ error?: string }> {
     }
 
     await db.delete(divisions).where(eq(divisions.id, id));
-    revalidatePath('/divisions');
+    revalidatePath('/relationships/divisions');
     return {};
   } catch {
     return { error: 'Failed to delete division. Please try again.' };

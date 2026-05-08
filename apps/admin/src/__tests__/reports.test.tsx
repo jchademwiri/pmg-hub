@@ -406,7 +406,7 @@ describe('P4: CSV export error safety — invalid year and never throws', () => 
 
 // ─── P5: Year filter falls back to current year for invalid query params ──────
 
-import { resolveYear } from '@/app/(admin)/reports/page'
+import { resolveYear } from '@/app/(admin)/insights/reports/page'
 
 describe('P5: Year filter falls back to current year for invalid query params', () => {
   /**
@@ -606,7 +606,7 @@ describe('ExportCsvButton', () => {
 
 // ─── Unit Tests: Reports page heading ────────────────────────────────────────
 
-import ReportsPage from '@/app/(admin)/reports/page'
+import ReportsPage from '@/app/(admin)/insights/reports/page'
 import * as financial from '@/lib/financial'
 
 describe('Reports page', () => {

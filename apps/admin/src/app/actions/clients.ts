@@ -29,7 +29,7 @@ export async function createClient(formData: FormData): Promise<{ error?: string
       email: parsed.email ?? null,
       phone: parsed.phone ?? null,
     });
-    revalidatePath('/clients');
+    revalidatePath('/relationships/clients');
     return {};
   } catch {
     return { error: 'Failed to save. Please try again.' };
@@ -56,7 +56,7 @@ export async function updateClient(id: string, formData: FormData): Promise<{ er
         updatedAt: new Date(),
       })
       .where(eq(clients.id, id));
-    revalidatePath('/clients');
+    revalidatePath('/relationships/clients');
     return {};
   } catch {
     return { error: 'Failed to save. Please try again.' };
@@ -66,7 +66,7 @@ export async function updateClient(id: string, formData: FormData): Promise<{ er
 export async function toggleClientActive(id: string, isActive: boolean): Promise<{ error?: string }> {
   try {
     await setClientActive(id, isActive);
-    revalidatePath('/clients');
+    revalidatePath('/relationships/clients');
     return {};
   } catch {
     return { error: 'Failed to update client status.' };
@@ -86,7 +86,7 @@ export async function deleteClient(id: string): Promise<{ error?: string }> {
     }
 
     await db.delete(clients).where(eq(clients.id, id));
-    revalidatePath('/clients');
+    revalidatePath('/relationships/clients');
     return {};
   } catch {
     return { error: 'Failed to delete. Please try again.' };

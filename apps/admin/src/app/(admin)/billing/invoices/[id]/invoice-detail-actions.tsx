@@ -89,7 +89,7 @@ export function InvoiceDetailActions({
               . Revenue posted to income.
             </p>
             <Button variant="outline" size="sm" asChild>
-              <Link href="/income">View in Income →</Link>
+              <Link href="/finance/income">View in Income →</Link>
             </Button>
           </div>
         )}

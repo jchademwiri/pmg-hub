@@ -16,8 +16,8 @@ export async function createExpenseCategory(formData: FormData): Promise<{ error
       return { error: result.error.issues[0]?.message ?? 'Validation error' };
     }
     await db.insert(expenseCategories).values({ name: result.data.name });
-    revalidatePath('/expense-categories');
-    revalidatePath('/expenses');
+    revalidatePath('/finance/categories');
+    revalidatePath('/finance/expenses');
     return {};
   } catch {
     return { error: 'Failed to save. Please try again.' };
@@ -49,8 +49,8 @@ export async function updateExpenseCategory(id: string, formData: FormData): Pro
       }
     });
 
-    revalidatePath('/expense-categories');
-    revalidatePath('/expenses');
+    revalidatePath('/finance/categories');
+    revalidatePath('/finance/expenses');
     return {};
   } catch {
     return { error: 'Failed to save. Please try again.' };
@@ -59,14 +59,12 @@ export async function updateExpenseCategory(id: string, formData: FormData): Pro
 
 export async function deleteExpenseCategory(id: string): Promise<{ error?: string }> {
   try {
-    // Get the category name first
     const rows = await db.select().from(expenseCategories).where(eq(expenseCategories.id, id));
     if (rows.length === 0) {
       return { error: 'Category not found.' };
     }
     const categoryName = rows[0]!.name;
 
-    // Check if any expenses reference this category
     const usageResult = await db
       .select({ count: sql<number>`count(*)::int` })
       .from(expenses)
@@ -78,8 +76,8 @@ export async function deleteExpenseCategory(id: string): Promise<{ error?: strin
     }
 
     await db.delete(expenseCategories).where(eq(expenseCategories.id, id));
-    revalidatePath('/expense-categories');
-    revalidatePath('/expenses');
+    revalidatePath('/finance/categories');
+    revalidatePath('/finance/expenses');
     return {};
   } catch {
     return { error: 'Failed to save. Please try again.' };

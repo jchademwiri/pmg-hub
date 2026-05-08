@@ -285,7 +285,7 @@ export async function markInvoicePaid(id: string): Promise<{ error?: string }> {
 
     revalidatePath('/billing/invoices');
     revalidatePath(`/billing/invoices/${id}`);
-    revalidatePath('/income');
+    revalidatePath('/finance/income');
     revalidatePath('/dashboard');
 
     return {};

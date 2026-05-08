@@ -33,7 +33,7 @@ export default async function DivisionDetailPage({ params }: DivisionDetailPageP
     <div className="flex flex-col gap-8">
       {/* Header */}
       <div className="flex items-center gap-4">
-        <Link href="/divisions" className="text-sm text-muted-foreground hover:text-foreground transition-colors">
+        <Link href="/relationships/divisions" className="text-sm text-muted-foreground hover:text-foreground transition-colors">
           ← Back to Divisions
         </Link>
         <h1 className="text-2xl font-semibold">{division.name}</h1>

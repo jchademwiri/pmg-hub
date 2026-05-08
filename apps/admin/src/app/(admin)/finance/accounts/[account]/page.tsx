@@ -110,7 +110,7 @@ export default async function AccountHistoryPage({ params }: AccountHistoryPageP
     <div className="flex flex-col gap-6">
       <div className="flex items-center gap-4">
         <Link
-          href="/accounts"
+          href="/finance/accounts"
           className="text-sm text-muted-foreground hover:text-foreground transition-colors"
         >
           ← Back to Accounts

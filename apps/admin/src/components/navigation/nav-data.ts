@@ -48,11 +48,11 @@ export const GROUPS: NavGroup[] = [
     label: 'Finance',
     icon: Banknote,
     items: [
-      { title: 'Income',     url: '/income',             icon: TrendingUp   },
-      { title: 'Expenses',   url: '/expenses',           icon: TrendingDown },
-      { title: 'Categories', url: '/expense-categories', icon: Tags         },
-      { title: 'Ledger',     url: '/ledger',             icon: BookOpen     },
-      { title: 'Accounts',   url: '/accounts',           icon: PiggyBank    },
+      { title: 'Income',     url: '/finance/income',     icon: TrendingUp   },
+      { title: 'Expenses',   url: '/finance/expenses',   icon: TrendingDown },
+      { title: 'Categories', url: '/finance/categories', icon: Tags         },
+      { title: 'Ledger',     url: '/finance/ledger',     icon: BookOpen     },
+      { title: 'Accounts',   url: '/finance/accounts',   icon: PiggyBank    },
     ],
   },
   {
@@ -71,9 +71,9 @@ export const GROUPS: NavGroup[] = [
     label: 'Relationships',
     icon: Network,
     items: [
-      { title: 'Clients',   url: '/clients',   icon: Users     },
-      { title: 'Leads',     url: '/leads',     icon: UserPlus  },
-      { title: 'Divisions', url: '/divisions', icon: Building2 },
+      { title: 'Clients',   url: '/relationships/clients',   icon: Users     },
+      { title: 'Leads',     url: '/relationships/leads',     icon: UserPlus  },
+      { title: 'Divisions', url: '/relationships/divisions', icon: Building2 },
     ],
   },
   {
@@ -81,8 +81,8 @@ export const GROUPS: NavGroup[] = [
     label: 'Insights',
     icon: LineChart,
     items: [
-      { title: 'Snapshots', url: '/snapshots', icon: Camera   },
-      { title: 'Reports',   url: '/reports',   icon: BarChart3 },
+      { title: 'Snapshots', url: '/insights/snapshots', icon: Camera   },
+      { title: 'Reports',   url: '/insights/reports',   icon: BarChart3 },
     ],
   },
   {
@@ -117,6 +117,11 @@ for (const group of GROUPS) {
 // Extra routes that exist in the app but are not sidebar items
 const EXTRA_LABELS: Record<string, string> = {
   '/settings/users/invite': 'Invite User',
+  '/finance/income/new':     'New Income',
+  '/finance/expenses/new':   'New Expense',
+  '/relationships/clients/new':   'New Client',
+  '/relationships/leads/new':     'New Lead',
+  '/relationships/divisions/new': 'New Division',
 }
 
 export const ROUTE_LABELS: Record<string, string> = {

@@ -22,7 +22,7 @@ export default async function LeadDetailPage({ params }: LeadDetailPageProps) {
     <div className="flex flex-col gap-6">
       <div className="flex items-center gap-4">
         <Link
-          href="/leads"
+          href="/relationships/leads"
           className="text-sm text-muted-foreground hover:text-foreground transition-colors"
         >
           ← Back to Leads

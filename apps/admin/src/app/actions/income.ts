@@ -36,7 +36,7 @@ export async function createIncome(formData: FormData): Promise<{ error?: string
       description: parsed.description ?? null,
       amount: String(parsed.amount),
     });
-    revalidatePath('/income');
+    revalidatePath('/finance/income');
     revalidatePath('/dashboard');
     return {};
   } catch {
@@ -71,7 +71,7 @@ export async function updateIncome(id: string, formData: FormData): Promise<{ er
         updatedAt: new Date(),
       })
       .where(eq(income.id, id));
-    revalidatePath('/income');
+    revalidatePath('/finance/income');
     revalidatePath('/dashboard');
     return {};
   } catch {
@@ -89,7 +89,7 @@ export async function deleteIncome(id: string): Promise<{ error?: string }> {
     }
 
     await db.delete(income).where(eq(income.id, id));
-    revalidatePath('/income');
+    revalidatePath('/finance/income');
     revalidatePath('/dashboard');
     return {};
   } catch {
