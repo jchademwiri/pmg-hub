@@ -43,6 +43,20 @@
       "when": 1776827059628,
       "tag": "0005_simple_susan_delgado",
       "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "7",
+      "when": 1778210360437,
+      "tag": "0006_curved_emma_frost",
+      "breakpoints": true
+    },
+    {
+      "idx": 7,
+      "version": "7",
+      "when": 1778210721795,
+      "tag": "0007_many_mandrill",
+      "breakpoints": true
     }
   ]
 }

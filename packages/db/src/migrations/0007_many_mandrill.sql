@@ -1,0 +1,2 @@
+ALTER TABLE "billing_line_items" DROP CONSTRAINT "billing_line_items_unit_price_non_negative";--> statement-breakpoint
+ALTER TABLE "billing_line_items" ADD CONSTRAINT "billing_line_items_unit_price_non_negative" CHECK ("unit_price" >= 0);

@@ -12,25 +12,25 @@
 ## Phase 0 — Schema, Utilities & Queries
 
 **Goal:** Database ready, document sequencing works, all queries typed.  
-**Status:** ⏳ Pending
+**Status:** ✅ Done
 
 | # | Task | File(s) | Status | Notes |
 |---|------|---------|--------|-------|
-| 0.1 | Create Drizzle billing schema (5 tables) | `packages/db/src/schema/billing.ts` | ⏳ Pending | |
-| 0.2 | Export billing schema from schema index | `packages/db/src/schema/index.ts` | ⏳ Pending | One-liner: `export * from "./billing"` |
-| 0.3 | Create document number utility | `packages/db/src/lib/document-numbers.ts` | ⏳ Pending | Transactional, locked sequence |
-| 0.4 | Create billing query functions (8 functions) | `packages/db/src/queries/billing.ts` | ⏳ Pending | |
-| 0.5 | Export billing queries from DB index | `packages/db/src/index.ts` | ⏳ Pending | |
-| 0.6 | Generate and run Drizzle migration | — | ⏳ Pending | `drizzle-kit generate` + `migrate` |
+| 0.1 | Create Drizzle billing schema (5 tables) | `packages/db/src/schema/billing.ts` | ✅ Done | |
+| 0.2 | Export billing schema from schema index | `packages/db/src/schema/index.ts` | ✅ Done | One-liner: `export * from "./billing"` |
+| 0.3 | Create document number utility | `packages/db/src/lib/document-numbers.ts` | ✅ Done | Transactional, locked sequence |
+| 0.4 | Create billing query functions (8 functions) | `packages/db/src/queries/billing.ts` | ✅ Done | |
+| 0.5 | Export billing queries from DB index | `packages/db/src/index.ts` | ✅ Done | |
+| 0.6 | Generate and run Drizzle migration | — | ✅ Done | `drizzle-kit generate` + `migrate` |
 
 ### Phase 0 Acceptance Criteria
-- [ ] `billing.ts` schema with 5 tables — no TypeScript errors
-- [ ] Migration runs clean — 5 new tables visible in Neon console
+- [x] `billing.ts` schema with 5 tables — no TypeScript errors
+- [x] Migration runs clean — 5 new tables visible in Neon console
 - [ ] `getNextDocumentNumber('division-uuid', 'quote', 2026)` → `APX-Q-2026-001`, second call → `APX-Q-2026-002`
 - [ ] `getAllQuotations()` returns typed rows without error
-- [ ] All exports visible from `packages/db/src/index.ts`
+- [x] All exports visible from `packages/db/src/index.ts`
 
-**Phase 0 Completed:** ___________
+**Phase 0 Completed:** May 8, 2026
 
 ---
 
@@ -206,7 +206,7 @@
 
 | Phase | Description | Status | Completed |
 |-------|-------------|--------|-----------|
-| 0 | Schema, Utilities & Queries | ⏳ Pending | — |
+| 0 | Schema, Utilities & Queries | ✅ Done | May 8, 2026 |
 | 1 | Quotations | ⏳ Pending | — |
 | 2 | Invoices + Mark Paid | ⏳ Pending | — |
 | 3 | Statements | ⏳ Pending | — |

@@ -11,3 +11,18 @@ export { getAllExpenseCategories, getExpenseCategoryById } from './queries';
 export type { ExpenseCategory } from './schema/expense-categories';
 export type { Invitation, NewInvitation } from './schema/invitations';
 
+// ── Billing module ────────────────────────────────────────────────────────────
+export * from './queries/billing';
+export { getNextDocumentNumber } from './lib/document-numbers';
+export type {
+  QuotationRow,
+  InvoiceRow,
+  QuotationDetail,
+  InvoiceDetail,
+  ClientStatement,
+  ClientBillingRow,
+  BillingItemRow,
+  BillingItemDetail,
+  LineItemDetail,
+} from './queries/billing';
+
