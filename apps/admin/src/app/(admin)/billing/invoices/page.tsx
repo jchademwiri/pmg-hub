@@ -1,32 +1,54 @@
-import type { Metadata } from 'next'
-import Link from 'next/link'
-import { Plus, FileText, Clock, CheckCircle, AlertCircle } from 'lucide-react'
-import { Button } from '@/components/ui/button'
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card'
-import { Badge } from '@/components/ui/badge'
-import { EmptyState } from '@/components/ui/empty-state'
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from '@/components/ui/table'
+import type { Metadata } from 'next';
+import Link from 'next/link';
+import { Plus, FileText, Clock, CheckCircle, AlertCircle } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
+import { getAllInvoices, getAllDivisions, getAllClients } from '@pmg/db';
+import { SetPageTotal } from '@/components/navigation/page-header-context';
+import { formatZAR } from '@/lib/format';
+import { InvoicesClient } from './invoices-client';
+import { issueInvoice, voidInvoice } from '@/app/actions/billing-invoices';
 
-export const metadata: Metadata = { title: 'Invoices' }
+export const dynamic = 'force-dynamic';
+export const metadata: Metadata = { title: 'Invoices' };
 
-// Placeholder stats — replace with real data fetching when ready
-const stats = [
-  { label: 'Total Invoices', value: '—', icon: FileText, description: 'All time' },
-  { label: 'Pending', value: '—', icon: Clock, description: 'Awaiting payment' },
-  { label: 'Paid', value: '—', icon: CheckCircle, description: 'This month' },
-  { label: 'Overdue', value: '—', icon: AlertCircle, description: 'Past due date' },
-]
+interface InvoicesPageProps {
+  searchParams: Promise<{ divisionId?: string; status?: string; page?: string }>;
+}
 
-export default function InvoicesPage() {
+export default async function InvoicesPage({ searchParams }: InvoicesPageProps) {
+  const { divisionId, status, page } = await searchParams;
+
+  const currentPage = Math.max(1, parseInt(page || '1', 10));
+  const pageSize = 20;
+
+  const [result, allResult] = await Promise.all([
+    getAllInvoices({ divisionId, status }, { page: currentPage, pageSize }),
+    getAllInvoices(),
+  ]);
+
+  // Stats from full unfiltered result
+  const now = new Date();
+  const thisMonth = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
+  const paidThisMonth = allResult.data.filter(
+    (inv) => inv.status === 'paid' && inv.invoiceDate.startsWith(thisMonth),
+  ).length;
+  const overdueCount = allResult.data.filter((inv) => inv.status === 'overdue').length;
+  const pendingCount = allResult.data.filter(
+    (inv) => inv.status === 'issued' || inv.status === 'overdue',
+  ).length;
+
+  const stats = [
+    { label: 'Total Invoices', value: String(allResult.total), icon: FileText, description: 'All time' },
+    { label: 'Pending', value: String(pendingCount), icon: Clock, description: 'Awaiting payment' },
+    { label: 'Paid', value: String(paidThisMonth), icon: CheckCircle, description: 'This month' },
+    { label: 'Overdue', value: String(overdueCount), icon: AlertCircle, description: 'Past due date' },
+  ];
+
   return (
     <div className="flex flex-col gap-6">
+      <SetPageTotal value={formatZAR(result.outstanding)} variant="amber" />
+
       {/* Page header */}
       <div className="flex items-center justify-between">
         <div>
@@ -74,33 +96,19 @@ export default function InvoicesPage() {
           <CardTitle>All Invoices</CardTitle>
           <CardDescription>A list of all invoices across clients</CardDescription>
         </CardHeader>
-        <CardContent className="p-0">
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>Invoice #</TableHead>
-                <TableHead>Client</TableHead>
-                <TableHead>Issue Date</TableHead>
-                <TableHead>Due Date</TableHead>
-                <TableHead>Amount</TableHead>
-                <TableHead>Status</TableHead>
-                <TableHead className="w-0" />
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              <TableRow>
-                <TableCell colSpan={7} className="py-0">
-                  <EmptyState
-                    message="No invoices yet. Create your first invoice to get started."
-                    ctaLabel="New Invoice"
-                    ctaHref="/billing/invoices/new"
-                  />
-                </TableCell>
-              </TableRow>
-            </TableBody>
-          </Table>
+        <CardContent className="p-0 px-6 pb-4">
+          <InvoicesClient
+            entries={result.data}
+            total={result.total}
+            currentPage={currentPage}
+            pageSize={pageSize}
+            divisionId={divisionId}
+            status={status}
+            issueAction={issueInvoice}
+            voidAction={voidInvoice}
+          />
         </CardContent>
       </Card>
     </div>
-  )
+  );
 }

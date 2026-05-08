@@ -71,17 +71,17 @@
 ## Phase 2 — Invoices + Mark Paid
 
 **Goal:** Full invoice lifecycle. Mark paid posts to income table. Dashboard updates.  
-**Status:** ⏳ Pending
+**Status:** ✅ Done
 
 | # | Task | File(s) | Status | Notes |
 |---|------|---------|--------|-------|
-| 2.1 | Create invoice server actions | `apps/admin/src/app/actions/billing-invoices.ts` | ⏳ Pending | `createInvoice`, `convertQuoteToInvoice`, `issueInvoice`, `markInvoicePaid`, `voidInvoice` |
-| 2.2a | Create `MarkPaidButton` component | `components/billing/mark-paid-button.tsx` | ⏳ Pending | Disabled + tooltip when no client |
-| 2.2b | Create `VoidInvoiceButton` component | `components/billing/void-invoice-button.tsx` | ⏳ Pending | Confirm dialog |
-| 2.3a | Wire up invoice list page (real data) | `billing/invoices/page.tsx` | ⏳ Pending | Outstanding total, stats, row actions |
-| 2.3b | Create invoice form client component | `billing/invoices/new/invoice-form-client.tsx` | ⏳ Pending | PO number, period lock warning |
-| 2.3c | Patch invoice new page to be server component | `billing/invoices/new/page.tsx` | ⏳ Pending | |
-| 2.4 | Wire up invoice detail page (real data + action bar) | `billing/invoices/[id]/page.tsx` | ⏳ Pending | Status-based actions, overdue banner, quote link |
+| 2.1 | Create invoice server actions | `apps/admin/src/app/actions/billing-invoices.ts` | ✅ Done | `createInvoice`, `convertQuoteToInvoice`, `issueInvoice`, `markInvoicePaid`, `voidInvoice` |
+| 2.2a | Create `MarkPaidButton` component | `components/billing/mark-paid-button.tsx` | ✅ Done | Disabled + tooltip when no client |
+| 2.2b | Create `VoidInvoiceButton` component | `components/billing/void-invoice-button.tsx` | ✅ Done | Confirm dialog |
+| 2.3a | Wire up invoice list page (real data) | `billing/invoices/page.tsx` | ✅ Done | Outstanding total, stats, row actions |
+| 2.3b | Create invoice form client component | `billing/invoices/new/invoice-form-client.tsx` | ✅ Done | PO number, period lock warning |
+| 2.3c | Patch invoice new page to be server component | `billing/invoices/new/page.tsx` | ✅ Done | |
+| 2.4 | Wire up invoice detail page (real data + action bar) | `billing/invoices/[id]/page.tsx` | ✅ Done | Status-based actions, overdue banner, quote link |
 
 ### Phase 2 Acceptance Criteria
 - [ ] Create standalone invoice
@@ -93,7 +93,7 @@
 - [ ] Cannot mark paid if period locked — toast error shown
 - [ ] Void works for draft/issued, blocked for paid
 
-**Phase 2 Completed:** ___________
+**Phase 2 Completed:** May 8, 2026
 
 ---
 
@@ -208,7 +208,7 @@
 |-------|-------------|--------|-----------|
 | 0 | Schema, Utilities & Queries | ✅ Done | May 8, 2026 |
 | 1 | Quotations | ✅ Done | May 8, 2026 |
-| 2 | Invoices + Mark Paid | ⏳ Pending | — |
+| 2 | Invoices + Mark Paid | ✅ Done | May 8, 2026 |
 | 3 | Statements | ⏳ Pending | — |
 | 4 | Items Catalogue | ⏳ Pending | — |
 | 5 | Settings Wiring | ⏳ Pending | — |

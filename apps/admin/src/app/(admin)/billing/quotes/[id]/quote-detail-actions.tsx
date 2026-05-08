@@ -6,6 +6,7 @@ import { useState, useTransition } from 'react';
 import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
 import { ConvertToInvoiceButton } from '@/components/billing/convert-to-invoice-button';
+import { convertQuoteToInvoice } from '@/app/actions/billing-invoices';
 
 interface QuoteDetailActionsProps {
   quote: {
@@ -58,11 +59,6 @@ export function QuoteDetailActions({
     });
   }
 
-  // Stub for convert — will be replaced in Phase 2 with real billing-invoices action
-  async function convertStub(_id: string): Promise<{ error?: string; id?: string }> {
-    return { error: 'Invoice actions not yet available. Complete Phase 2 first.' };
-  }
-
   const { status, convertedInvoiceId } = quote;
 
   return (
@@ -106,7 +102,7 @@ export function QuoteDetailActions({
       )}
 
       {status === 'accepted' && (
-        <ConvertToInvoiceButton quotationId={quote.id} convertAction={convertStub} />
+        <ConvertToInvoiceButton quotationId={quote.id} convertAction={convertQuoteToInvoice} />
       )}
 
       {status === 'converted' && convertedInvoiceId && (
