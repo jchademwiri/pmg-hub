@@ -36,7 +36,10 @@ export default async function InvoiceDetailPage({ params }: Props) {
     status: invoice.status.charAt(0).toUpperCase() + invoice.status.slice(1),
     issueDate: invoice.invoiceDate,
     dueDate: invoice.dueDate ?? undefined,
-    org: { name: invoice.divisionName },
+    org: {
+      name: invoice.divisionName,
+      divisionOf: 'Playhouse Media Group',
+    },
     client: { name: invoice.clientName ?? 'No client' },
     lineItems: invoice.lineItems.map((li) => ({
       description: li.description,

@@ -12,6 +12,7 @@ export interface LineItem {
 
 export interface DocumentOrg {
   name: string
+  divisionOf?: string
   registrationNumber?: string
   vatNumber?: string
   email?: string
@@ -380,7 +381,12 @@ export function DocumentPreview({
 
       {/* ── Footer ─────────────────────────────────────────────────────────── */}
       <div className="mx-10 border-t border-zinc-100 py-4 flex items-center justify-between">
-        <span className="text-[10px] text-zinc-400">{org.name}</span>
+        <div className="flex flex-col">
+          <span className="text-[10px] text-zinc-400">{org.name}</span>
+          {org.divisionOf && (
+            <span className="text-[10px] text-zinc-400">A division of {org.divisionOf}</span>
+          )}
+        </div>
         <span className="text-[10px] text-zinc-400">
           {org.email ?? ''}{org.phone ? ` · ${org.phone}` : ''}
         </span>

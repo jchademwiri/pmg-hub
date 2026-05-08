@@ -32,7 +32,10 @@ export default async function QuoteDetailPage({ params }: Props) {
     issueDate: quote.quoteDate,
     dueDate: quote.expiryDate ?? undefined,
     reference: quote.reference ?? undefined,
-    org: { name: quote.divisionName },
+    org: {
+      name: quote.divisionName,
+      divisionOf: 'Playhouse Media Group',
+    },
     client: {
       name: quote.clientName ?? 'No client',
     },
