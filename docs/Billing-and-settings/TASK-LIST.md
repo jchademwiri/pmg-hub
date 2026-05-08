@@ -143,17 +143,17 @@
 ## Phase 5 — Settings Wiring
 
 **Goal:** Organisation settings save. Billing settings save. Notifications toggles functional.  
-**Status:** ⏳ Pending
+**Status:** ✅ Done
 
 | # | Task | File(s) | Status | Notes |
 |---|------|---------|--------|-------|
-| 5.1a | Add `organisation_settings` table to schema | `packages/db/src/schema/billing.ts` or `settings.ts` | ⏳ Pending | Singleton row, upsert pattern |
-| 5.1b | Create settings server action | `apps/admin/src/app/actions/settings.ts` | ⏳ Pending | `updateOrganisationSettings` — upsert |
-| 5.1c | Wire up organisation settings page | `settings/organisation/page.tsx` | ⏳ Pending | Real inputs, pre-filled, Save enabled |
-| 5.2a | Add `division_billing_settings` table to schema | `packages/db/src/schema/billing.ts` or `settings.ts` | ⏳ Pending | Per-division, upsert on division_id |
-| 5.2b | Create `saveDivisionBillingSettings` action | `apps/admin/src/app/actions/settings.ts` | ⏳ Pending | Zod validation, upsert |
-| 5.2c | Patch `BillingSettingsClient` with real inputs | `settings/billing/billing-settings-client.tsx` | ⏳ Pending | Pre-fill from `currentSettings`, Save enabled |
-| 5.2d | Patch billing settings page to fetch per-division settings | `settings/billing/page.tsx` | ⏳ Pending | Pass `currentSettings` per division |
+| 5.1a | Add `organisation_settings` table to schema | `packages/db/src/schema/billing.ts` | ✅ Done | Singleton row, upsert pattern |
+| 5.1b | Create settings server action | `apps/admin/src/app/actions/settings.ts` | ✅ Done | `updateOrganisationSettings` — upsert |
+| 5.1c | Wire up organisation settings page | `settings/organisation/page.tsx` | ✅ Done | Real inputs, pre-filled, Save enabled |
+| 5.2a | Add `division_billing_settings` table to schema | `packages/db/src/schema/billing.ts` | ✅ Done | Per-division, upsert on division_id |
+| 5.2b | Create `saveDivisionBillingSettings` action | `apps/admin/src/app/actions/settings.ts` | ✅ Done | Zod validation, upsert |
+| 5.2c | Patch `BillingSettingsClient` with real inputs | `settings/billing/billing-settings-client.tsx` | ✅ Done | Pre-fill from `currentSettings`, Save enabled |
+| 5.2d | Patch billing settings page to fetch per-division settings | `settings/billing/page.tsx` | ✅ Done | Pass `currentSettings` per division |
 
 ### Phase 5 Acceptance Criteria
 - [ ] Organisation settings save and reload correctly after page refresh
@@ -161,7 +161,7 @@
 - [ ] Division settings tabs still work with real data
 - [ ] No TypeScript errors
 
-**Phase 5 Completed:** ___________
+**Phase 5 Completed:** May 8, 2026
 
 ---
 
@@ -214,7 +214,7 @@
 | 2 | Invoices + Mark Paid | ✅ Done | May 8, 2026 |
 | 3 | Statements | ✅ Done | May 8, 2026 |
 | 4 | Items Catalogue | ✅ Done | May 8, 2026 |
-| 5 | Settings Wiring | ⏳ Pending | — |
+| 5 | Settings Wiring | ✅ Done | May 8, 2026 |
 | 6 | Polish & Cleanup | ⏳ Pending | — |
 | 7 | System Updates (Quotes, Invoices & Items) | ⏳ Pending | — |
 

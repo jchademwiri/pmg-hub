@@ -788,3 +788,45 @@ export async function getUnlinkedIncomeForClient(
 
   return rows as { id: string; date: string; description: string | null; amount: string }[];
 }
+
+// ── Settings queries ──────────────────────────────────────────────────────────
+
+import { organisationSettings, divisionBillingSettings } from "../schema/billing";
+import type {
+  OrganisationSettings,
+  DivisionBillingSettings,
+} from "../schema/billing";
+
+export type { OrganisationSettings, DivisionBillingSettings };
+
+/**
+ * Returns the single organisation settings row, or null if not yet saved.
+ */
+export async function getOrganisationSettings(): Promise<OrganisationSettings | null> {
+  const rows = await db.select().from(organisationSettings).limit(1);
+  return rows[0] ?? null;
+}
+
+/**
+ * Returns billing settings for a specific division, or null if not yet saved.
+ */
+export async function getDivisionBillingSettings(
+  divisionId: string,
+): Promise<DivisionBillingSettings | null> {
+  const rows = await db
+    .select()
+    .from(divisionBillingSettings)
+    .where(eq(divisionBillingSettings.divisionId, divisionId))
+    .limit(1);
+  return rows[0] ?? null;
+}
+
+/**
+ * Returns billing settings for all divisions as a map keyed by divisionId.
+ */
+export async function getAllDivisionBillingSettings(): Promise<
+  Record<string, DivisionBillingSettings>
+> {
+  const rows = await db.select().from(divisionBillingSettings);
+  return Object.fromEntries(rows.map((r) => [r.divisionId, r]));
+}

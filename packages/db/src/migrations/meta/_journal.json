@@ -64,6 +64,13 @@
       "when": 1778241435611,
       "tag": "0008_moaning_sharon_ventura",
       "breakpoints": true
+    },
+    {
+      "idx": 9,
+      "version": "7",
+      "when": 1778270875811,
+      "tag": "0009_lame_bastion",
+      "breakpoints": true
     }
   ]
 }
