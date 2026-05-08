@@ -141,33 +141,68 @@ export type BillingItemDetail = BillingItemRow & {
   usageQuotes: number;
 };
 
+const VALID_QUOTE_STATUSES = new Set([
+  "draft",
+  "sent",
+  "accepted",
+  "declined",
+  "cancelled",
+  "expired",
+  "converted",
+]);
+
+let hasQuotationReferenceColumnPromise: Promise<boolean> | null = null;
+
+async function hasQuotationReferenceColumn(): Promise<boolean> {
+  if (!hasQuotationReferenceColumnPromise) {
+    hasQuotationReferenceColumnPromise = db
+      .execute(sql`
+        SELECT EXISTS (
+          SELECT 1
+          FROM information_schema.columns
+          WHERE table_schema = 'public'
+            AND table_name = 'quotations'
+            AND column_name = 'reference'
+        ) AS "exists"
+      `)
+      .then((res) => {
+        const row = res.rows[0] as { exists?: boolean } | undefined;
+        return Boolean(row?.exists);
+      })
+      .catch(() => false);
+  }
+  return hasQuotationReferenceColumnPromise;
+}
+
 // ── Helpers ───────────────────────────────────────────────────────────────────
 
 /** Shared select shape for quotation rows */
-const quotationRowSelect = {
-  id: quotations.id,
-  divisionId: quotations.divisionId,
-  divisionName: divisions.name,
-  clientId: quotations.clientId,
-  clientName: sql<string | null>`COALESCE(${clients.businessName}, ${clients.name})`,
-  documentNumber: quotations.documentNumber,
-  status: quotations.status,
-  quoteDate: sql<string>`${quotations.quoteDate}::text`,
-  expiryDate: sql<string | null>`${quotations.expiryDate}::text`,
-  reference: quotations.reference,
-  subtotal: quotations.subtotal,
-  discountType: quotations.discountType,
-  discountValue: quotations.discountValue,
-  discountAmount: quotations.discountAmount,
-  vatEnabled: quotations.vatEnabled,
-  vatAmount: quotations.vatAmount,
-  total: quotations.total,
-  notes: quotations.notes,
-  terms: quotations.terms,
-  createdBy: quotations.createdBy,
-  createdAt: quotations.createdAt,
-  updatedAt: quotations.updatedAt,
-};
+function getQuotationRowSelect(includeReference: boolean) {
+  return {
+    id: quotations.id,
+    divisionId: quotations.divisionId,
+    divisionName: divisions.name,
+    clientId: quotations.clientId,
+    clientName: sql<string | null>`COALESCE(${clients.businessName}, ${clients.name})`,
+    documentNumber: quotations.documentNumber,
+    status: quotations.status,
+    quoteDate: sql<string>`${quotations.quoteDate}::text`,
+    expiryDate: sql<string | null>`${quotations.expiryDate}::text`,
+    reference: includeReference ? quotations.reference : sql<string | null>`NULL::text`,
+    subtotal: quotations.subtotal,
+    discountType: quotations.discountType,
+    discountValue: quotations.discountValue,
+    discountAmount: quotations.discountAmount,
+    vatEnabled: quotations.vatEnabled,
+    vatAmount: quotations.vatAmount,
+    total: quotations.total,
+    notes: quotations.notes,
+    terms: quotations.terms,
+    createdBy: quotations.createdBy,
+    createdAt: quotations.createdAt,
+    updatedAt: quotations.updatedAt,
+  };
+}
 
 /** Shared select shape for invoice rows */
 const invoiceRowSelect = {
@@ -215,13 +250,16 @@ export async function getAllQuotations(
   },
   pageObj?: { page: number; pageSize: number },
 ): Promise<{ data: QuotationRow[]; total: number; sum: number }> {
+  const includeReference = await hasQuotationReferenceColumn();
   const conditions = [];
 
   if (filters?.divisionId) {
     conditions.push(eq(quotations.divisionId, filters.divisionId));
   }
   if (filters?.status) {
-    conditions.push(eq(quotations.status, filters.status as any));
+    if (VALID_QUOTE_STATUSES.has(filters.status)) {
+      conditions.push(eq(quotations.status, filters.status as any));
+    }
   }
   if (filters?.clientId) {
     conditions.push(eq(quotations.clientId, filters.clientId));
@@ -231,7 +269,7 @@ export async function getAllQuotations(
   }
 
   const query = db
-    .select(quotationRowSelect)
+    .select(getQuotationRowSelect(includeReference))
     .from(quotations)
     .innerJoin(divisions, eq(quotations.divisionId, divisions.id))
     .leftJoin(clients, eq(quotations.clientId, clients.id))
@@ -360,8 +398,9 @@ export async function getAllInvoices(
  * (if the quote has been converted), or null if not found.
  */
 export async function getQuotationById(id: string): Promise<QuotationDetail | null> {
+  const includeReference = await hasQuotationReferenceColumn();
   const rows = await db
-    .select(quotationRowSelect)
+    .select(getQuotationRowSelect(includeReference))
     .from(quotations)
     .innerJoin(divisions, eq(quotations.divisionId, divisions.id))
     .leftJoin(clients, eq(quotations.clientId, clients.id))
@@ -467,6 +506,7 @@ export async function getClientStatement(
   clientId: string,
   filters?: { year?: number },
 ): Promise<ClientStatement | null> {
+  const includeReference = await hasQuotationReferenceColumn();
   // Fetch client
   const clientRows = await db
     .select({
@@ -495,7 +535,7 @@ export async function getClientStatement(
   if (quoteYearCondition) quoteConditions.push(quoteYearCondition);
 
   const quoteRows = await db
-    .select(quotationRowSelect)
+    .select(getQuotationRowSelect(includeReference))
     .from(quotations)
     .innerJoin(divisions, eq(quotations.divisionId, divisions.id))
     .leftJoin(clients, eq(quotations.clientId, clients.id))

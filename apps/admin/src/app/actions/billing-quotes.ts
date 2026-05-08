@@ -7,6 +7,29 @@ import { getSessionOrRedirect } from '@/lib/auth';
 import { isPeriodClosed, getMinAllowedDate, getMinDateErrorMessage } from '@/lib/date-rules';
 import { CreateQuotationSchema, type CreateQuotationInput } from './billing-schema';
 
+let hasQuotationReferenceColumnPromise: Promise<boolean> | null = null;
+
+async function hasQuotationReferenceColumn() {
+  if (!hasQuotationReferenceColumnPromise) {
+    hasQuotationReferenceColumnPromise = getDb()
+      .execute(`
+        SELECT EXISTS (
+          SELECT 1
+          FROM information_schema.columns
+          WHERE table_schema = 'public'
+            AND table_name = 'quotations'
+            AND column_name = 'reference'
+        ) AS "exists"
+      `)
+      .then((res) => {
+        const rows = (res as { rows?: Array<{ exists?: boolean }> }).rows;
+        return Boolean(rows?.[0]?.exists);
+      })
+      .catch(() => false);
+  }
+  return hasQuotationReferenceColumnPromise;
+}
+
 // ── Shared discount + totals helper ──────────────────────────────────────────
 
 function calcDocumentTotals(
@@ -91,6 +114,7 @@ export async function createQuotation(
     const documentNumber = await getNextDocumentNumber(divisionId, 'quote', year);
 
     const db = getDb();
+    const includeReference = await hasQuotationReferenceColumn();
 
     const [inserted] = await db
       .insert(quotations)
@@ -101,7 +125,7 @@ export async function createQuotation(
         status: 'draft',
         quoteDate,
         expiryDate: expiryDate ?? null,
-        reference: reference ?? null,
+        ...(includeReference ? { reference: reference ?? null } : {}),
         subtotal: String(subtotal.toFixed(2)),
         discountType: discountType ?? null,
         discountValue: discountValue != null ? String(discountValue) : null,
@@ -171,6 +195,7 @@ export async function updateQuotation(
     }
 
     const db = getDb();
+    const includeReference = await hasQuotationReferenceColumn();
     const [existing] = await db
       .select({ id: quotations.id, status: quotations.status })
       .from(quotations)
@@ -206,7 +231,7 @@ export async function updateQuotation(
         clientId,
         quoteDate,
         expiryDate: expiryDate ?? null,
-        reference: reference ?? null,
+        ...(includeReference ? { reference: reference ?? null } : {}),
         subtotal: String(subtotal.toFixed(2)),
         discountType: discountType ?? null,
         discountValue: discountValue != null ? String(discountValue) : null,

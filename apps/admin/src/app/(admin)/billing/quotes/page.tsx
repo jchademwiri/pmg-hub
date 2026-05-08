@@ -3,7 +3,7 @@ import Link from 'next/link';
 import { Plus, FileText, Clock, CheckCircle, XCircle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
-import { getAllQuotations, getAllDivisions, getAllClients } from '@pmg/db';
+import { getAllQuotations } from '@pmg/db';
 import { SetPageTotal } from '@/components/navigation/page-header-context';
 import { formatZAR } from '@/lib/format';
 import { QuotesClient } from './quotes-client';
@@ -16,17 +16,28 @@ interface QuotesPageProps {
   searchParams: Promise<{ divisionId?: string; status?: string; page?: string }>;
 }
 
+const VALID_QUOTE_STATUSES = new Set([
+  'draft',
+  'sent',
+  'accepted',
+  'declined',
+  'cancelled',
+  'expired',
+  'converted',
+]);
+
 export default async function QuotesPage({ searchParams }: QuotesPageProps) {
   const { divisionId, status, page } = await searchParams;
 
-  const currentPage = Math.max(1, parseInt(page || '1', 10));
+  const parsedPage = Number.parseInt(page ?? '1', 10);
+  const currentPage = Number.isFinite(parsedPage) && parsedPage > 0 ? parsedPage : 1;
+  const normalizedStatus = status && VALID_QUOTE_STATUSES.has(status) ? status : undefined;
   const pageSize = 20;
 
-  const [result, divisions, clients] = await Promise.all([
-    getAllQuotations({ divisionId, status }, { page: currentPage, pageSize }),
-    getAllDivisions(),
-    getAllClients(),
-  ]);
+  const result = await getAllQuotations(
+    { divisionId, status: normalizedStatus },
+    { page: currentPage, pageSize },
+  );
 
   // Derive stats from the full (unfiltered) result for the stat cards
   const [allResult] = await Promise.all([getAllQuotations()]);
@@ -98,7 +109,7 @@ export default async function QuotesPage({ searchParams }: QuotesPageProps) {
             currentPage={currentPage}
             pageSize={pageSize}
             divisionId={divisionId}
-            status={status}
+            status={normalizedStatus}
             deleteAction={deleteQuotation}
             updateStatusAction={updateQuotationStatus}
           />
