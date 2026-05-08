@@ -46,7 +46,7 @@ export function IncomeEditForm({
         setErrorMessage(result.error);
       } else {
         toast.success('Income updated');
-        router.push('/income');
+        router.push('/finance/income');
       }
     });
   }
