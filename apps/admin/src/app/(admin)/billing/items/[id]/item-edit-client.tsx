@@ -45,7 +45,7 @@ export function ItemEditClient({ item }: ItemEditClientProps) {
         setError(result.error);
       } else {
         toast.success('Item saved.');
-        router.refresh();
+        router.push('/billing/items');
       }
     });
   }
@@ -105,7 +105,7 @@ export function ItemEditClient({ item }: ItemEditClientProps) {
 
       <div className="grid grid-cols-2 gap-4">
         <div className="flex flex-col gap-1.5">
-          <label className="text-sm font-medium">Unit Price <span className="text-destructive">*</span></label>
+          <label className="text-sm font-medium">Unit Price (excl. VAT) <span className="text-destructive">*</span></label>
           <Input
             type="number"
             min="0"

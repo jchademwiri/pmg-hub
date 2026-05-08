@@ -37,7 +37,7 @@ export function ItemFormClient() {
         setError(result.error);
         setIsSubmitting(false);
       } else if (result.id) {
-        router.push(`/billing/items/${result.id}`);
+        router.push('/billing/items');
       }
     });
   }
@@ -72,7 +72,7 @@ export function ItemFormClient() {
       <div className="grid grid-cols-2 gap-4">
         <div className="flex flex-col gap-1.5">
           <label className="text-sm font-medium">
-            Unit Price <span className="text-destructive">*</span>
+            Unit Price (excl. VAT) <span className="text-destructive">*</span>
           </label>
           <Input
             type="number"

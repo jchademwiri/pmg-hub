@@ -110,11 +110,7 @@ export default async function ItemDetailPage({ params }: Props) {
                 </div>
                 <div className="flex justify-between text-sm">
                   <span className="text-muted-foreground">Unit Price</span>
-                  <span className="tabular-nums">{formatZAR(Number(item.unitPrice))}</span>
-                </div>
-                <div className="flex justify-between text-sm">
-                  <span className="text-muted-foreground">VAT</span>
-                  <span>{item.vatApplicable ? '15% applicable' : 'Exempt'}</span>
+                  <span className="tabular-nums">{formatZAR(Number(item.unitPrice))} <span className="text-xs text-muted-foreground">excl. VAT</span></span>
                 </div>
                 {item.unitLabel && (
                   <div className="flex justify-between text-sm">

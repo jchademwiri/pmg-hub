@@ -122,8 +122,7 @@ export default async function ItemsPage({ searchParams }: ItemsPageProps) {
                 <TableRow>
                   <TableHead>Name</TableHead>
                   <TableHead>Description</TableHead>
-                  <TableHead className="text-right">Unit Price</TableHead>
-                  <TableHead>VAT</TableHead>
+                  <TableHead className="text-right">Unit Price (excl. VAT)</TableHead>
                   <TableHead>Status</TableHead>
                   <TableHead className="w-16" />
                 </TableRow>
@@ -147,9 +146,6 @@ export default async function ItemsPage({ searchParams }: ItemsPageProps) {
                       {item.unitLabel && (
                         <span className="text-muted-foreground"> / {item.unitLabel}</span>
                       )}
-                    </TableCell>
-                    <TableCell className="text-sm">
-                      {item.vatApplicable ? '15%' : 'Exempt'}
                     </TableCell>
                     <TableCell>
                       <BillingStatusBadge status={item.status} />
