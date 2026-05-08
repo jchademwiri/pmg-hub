@@ -267,3 +267,53 @@ export const invoicesRelations = relations(invoices, ({ one, many }) => ({
     references: [income.id],
   }),
 }));
+
+// ── organisation_settings ─────────────────────────────────────────────────────
+// Singleton table — always exactly one row. Use upsert on a fixed id.
+
+export const organisationSettings = pgTable("organisation_settings", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  companyName: text("company_name"),
+  registrationNumber: text("registration_number"),
+  vatNumber: text("vat_number"),
+  email: text("email"),
+  phone: text("phone"),
+  website: text("website"),
+  addressStreet: text("address_street"),
+  addressCity: text("address_city"),
+  addressPostal: text("address_postal"),
+  addressProvince: text("address_province"),
+  country: text("country").default("South Africa"),
+  logoUrl: text("logo_url"),
+  updatedAt: timestamp("updated_at", { withTimezone: true }),
+});
+
+export type OrganisationSettings = typeof organisationSettings.$inferSelect;
+export type NewOrganisationSettings = typeof organisationSettings.$inferInsert;
+
+// ── division_billing_settings ─────────────────────────────────────────────────
+// One row per division. Upsert on division_id.
+
+export const divisionBillingSettings = pgTable(
+  "division_billing_settings",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    divisionId: uuid("division_id")
+      .notNull()
+      .unique()
+      .references(() => divisions.id, { onDelete: "cascade" }),
+    defaultVatRate: numeric("default_vat_rate", { precision: 5, scale: 2 }).default("15"),
+    paymentTermsDays: integer("payment_terms_days").default(30),
+    bankName: text("bank_name"),
+    bankAccountName: text("bank_account_name"),
+    bankAccountNumber: text("bank_account_number"),
+    bankBranchCode: text("bank_branch_code"),
+    invoiceNotes: text("invoice_notes"),
+    quoteNotes: text("quote_notes"),
+    logoUrl: text("logo_url"),
+    updatedAt: timestamp("updated_at", { withTimezone: true }),
+  },
+);
+
+export type DivisionBillingSettings = typeof divisionBillingSettings.$inferSelect;
+export type NewDivisionBillingSettings = typeof divisionBillingSettings.$inferInsert;

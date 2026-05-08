@@ -15,8 +15,6 @@ interface Props {
   params: Promise<{ id: string }>;
 }
 
-const EDITABLE_STATUSES = ['draft', 'sent', 'accepted'];
-
 export default async function EditQuotePage({ params }: Props) {
   const { id } = await params;
 
@@ -29,10 +27,8 @@ export default async function EditQuotePage({ params }: Props) {
 
   if (!quote) notFound();
 
-  // Terminal statuses cannot be edited
-  if (!EDITABLE_STATUSES.includes(quote.status)) {
-    notFound();
-  }
+  // Only draft, sent, and accepted quotes can be edited
+  if (!['draft', 'sent', 'accepted'].includes(quote.status)) notFound();
 
   return (
     <div className="flex flex-col gap-6">
@@ -46,15 +42,15 @@ export default async function EditQuotePage({ params }: Props) {
         </Button>
         <Separator orientation="vertical" className="h-5" />
         <div>
-          <h2 className="text-lg font-semibold">Edit Quotation</h2>
-          <p className="text-sm text-muted-foreground">{quote.documentNumber}</p>
+          <h2 className="text-lg font-semibold">Edit {quote.documentNumber}</h2>
+          <p className="text-sm text-muted-foreground">Update this quotation</p>
         </div>
       </div>
 
       <Card>
         <CardHeader>
           <CardTitle>Quote Details</CardTitle>
-          <CardDescription>Update the details for this quotation</CardDescription>
+          <CardDescription>Changes will be saved to the existing quotation</CardDescription>
         </CardHeader>
         <CardContent>
           <QuoteFormClient

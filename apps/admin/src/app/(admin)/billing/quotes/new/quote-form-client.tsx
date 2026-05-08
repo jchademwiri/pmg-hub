@@ -83,13 +83,19 @@ export function QuoteFormClient({
   const [terms, setTerms] = useState(initialData?.terms ?? '');
   const [lineItems, setLineItems] = useState<LineItemFormRow[]>(
     initialData?.lineItems.length
-      ? initialData.lineItems.map((li) => ({
-          id: crypto.randomUUID(),
-          itemId: '',  // itemId not stored on line items yet — leave blank
-          description: li.description,
-          quantity: li.quantity,
-          unitPrice: li.unitPrice,
-        }))
+      ? initialData.lineItems.map((li) => {
+          // Try to match to a catalogue item by description so the select shows the right value
+          const matched = activeItems.find(
+            (item) => item.name === li.description || (item.description ?? '') === li.description,
+          );
+          return {
+            id: crypto.randomUUID(),
+            itemId: matched?.id ?? '',
+            description: li.description,
+            quantity: li.quantity,
+            unitPrice: li.unitPrice,
+          };
+        })
       : [blankRow()],
   );
   const [vatEnabled, setVatEnabled] = useState(initialData?.vatEnabled ?? false);
@@ -115,8 +121,8 @@ export function QuoteFormClient({
       setError('A client is required.');
       return;
     }
-    if (lineItems.some((r) => !r.itemId)) {
-      setError('All line items must have an item selected.');
+    if (lineItems.some((r) => !r.description.trim())) {
+      setError('All line items must have a description.');
       return;
     }
     if (lineItems.some((r) => !r.unitPrice || parseFloat(r.unitPrice) < 0)) {

@@ -16,9 +16,6 @@ interface Props {
   params: Promise<{ id: string }>;
 }
 
-// Paid and voided invoices cannot be edited
-const LOCKED_STATUSES = ['paid', 'void'];
-
 export default async function EditInvoicePage({ params }: Props) {
   const { id } = await params;
 
@@ -32,10 +29,8 @@ export default async function EditInvoicePage({ params }: Props) {
 
   if (!invoice) notFound();
 
-  // Block editing paid/voided invoices
-  if (LOCKED_STATUSES.includes(invoice.status)) {
-    notFound();
-  }
+  // Paid and voided invoices cannot be edited
+  if (['paid', 'void'].includes(invoice.status)) notFound();
 
   return (
     <div className="flex flex-col gap-6">
@@ -49,15 +44,15 @@ export default async function EditInvoicePage({ params }: Props) {
         </Button>
         <Separator orientation="vertical" className="h-5" />
         <div>
-          <h2 className="text-lg font-semibold">Edit Invoice</h2>
-          <p className="text-sm text-muted-foreground">{invoice.documentNumber}</p>
+          <h2 className="text-lg font-semibold">Edit {invoice.documentNumber}</h2>
+          <p className="text-sm text-muted-foreground">Update this invoice</p>
         </div>
       </div>
 
       <Card>
         <CardHeader>
           <CardTitle>Invoice Details</CardTitle>
-          <CardDescription>Update the details for this invoice</CardDescription>
+          <CardDescription>Changes will be saved to the existing invoice</CardDescription>
         </CardHeader>
         <CardContent>
           <InvoiceFormClient
