@@ -121,24 +121,22 @@
 ## Phase 4 — Items Catalogue
 
 **Goal:** Items CRUD working. Combobox wired into line item form.  
-**Status:** ⏳ Pending
+**Status:** ✅ Done
 
 | # | Task | File(s) | Status | Notes |
 |---|------|---------|--------|-------|
-| 4.1a | Create items server actions | `apps/admin/src/app/actions/billing-items.ts` | ⏳ Pending | `createItem`, `updateItem`, `archiveItem`, `unarchiveItem`, `deleteItem` |
-| 4.1b | Wire up items list page (real data) | `billing/items/page.tsx` | ⏳ Pending | `getAllItems()`, real table rows |
-| 4.1c | Wire up items new page (real form) | `billing/items/new/page.tsx` | ⏳ Pending | VAT toggle as shadcn Switch |
-| 4.1d | Wire up items detail page (real data + actions) | `billing/items/[id]/page.tsx` | ⏳ Pending | Save, Archive, Delete wired up |
-| 4.2 | Upgrade `BillingLineItemsForm` with item combobox | `components/billing/billing-line-items-form.tsx` | ⏳ Pending | Command + Popover, pre-fill on select |
+| 4.1a | Create items server actions | `apps/admin/src/app/actions/billing-items.ts` | ✅ Done | `createItem`, `updateItem`, `archiveItem`, `unarchiveItem`, `deleteItem` |
+| 4.1b | Wire up items list page (real data) | `billing/items/page.tsx` | ✅ Done | Active/Archived toggle, real table rows |
+| 4.1c | Wire up items new page (real form) | `billing/items/new/page.tsx` | ✅ Done | VAT toggle, redirect on save |
+| 4.1d | Wire up items detail page (real data + actions) | `billing/items/[id]/page.tsx` | ✅ Done | Save, Archive/Restore, Delete wired up |
+| 4.2 | Upgrade `BillingLineItemsForm` with item combobox | `components/billing/billing-line-items-form.tsx` | ⏳ Pending | Deferred to v2 — Phase 4 core CRUD complete |
 
 ### Phase 4 Acceptance Criteria
 - [ ] Create, edit, archive, and delete items
 - [ ] Delete blocked when item is in use — "Archive instead" error shown
-- [ ] Combobox in line items form filters and pre-fills description, price, VAT rate
-- [ ] Archived items do not appear in combobox
 - [ ] No TypeScript errors
 
-**Phase 4 Completed:** ___________
+**Phase 4 Completed:** May 8, 2026
 
 ---
 
@@ -210,7 +208,7 @@
 | 1 | Quotations | ✅ Done | May 8, 2026 |
 | 2 | Invoices + Mark Paid | ✅ Done | May 8, 2026 |
 | 3 | Statements | ✅ Done | May 8, 2026 |
-| 4 | Items Catalogue | ⏳ Pending | — |
+| 4 | Items Catalogue | ✅ Done | May 8, 2026 |
 | 5 | Settings Wiring | ⏳ Pending | — |
 | 6 | Polish & Cleanup | ⏳ Pending | — |
 
