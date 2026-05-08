@@ -30,7 +30,6 @@ export function ItemFormClient() {
         description: description.trim() || null,
         unitPrice: parseFloat(unitPrice),
         unitLabel: unitLabel.trim() || null,
-        vatApplicable: true,
       });
       if (result.error) {
         setError(result.error);
