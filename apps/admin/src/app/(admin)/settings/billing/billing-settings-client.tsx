@@ -261,7 +261,7 @@ export function BillingSettingsClient({
   return (
     <div className="flex flex-col gap-6">
       {/* Division tabs */}
-      <div className="flex items-center gap-1 overflow-x-auto border-b border-border">
+      <div className="flex items-center gap-1 flex-wrap border-b border-border">
         {divisions.map((division) => (
           <button
             key={division.id}
