@@ -298,8 +298,6 @@ export function QuoteFormClient({
           {/* VAT toggle */}
           <button
             type="button"
-            role="switch"
-            aria-checked={vatEnabled}
             onClick={() => setVatEnabled((v) => !v)}
             className="flex items-center justify-between py-1"
           >
@@ -322,6 +320,7 @@ export function QuoteFormClient({
             <select
               value={discountType}
               onChange={(e) => setDiscountType(e.target.value as 'percent' | 'amount')}
+              aria-label="Discount type"
               className="h-8 rounded-md border border-input bg-background px-2 text-sm"
             >
               <option value="percent">%</option>
