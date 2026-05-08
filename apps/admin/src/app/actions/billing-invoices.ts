@@ -2,7 +2,7 @@
 
 import { revalidatePath } from 'next/cache';
 import { getDb, invoices, quotations, billingLineItems, income, clients, eq, and } from '@pmg/db';
-import { getNextDocumentNumber } from '@pmg/db';
+import { getNextDocumentNumber, getIncomeById } from '@pmg/db';
 import { getSessionOrRedirect } from '@/lib/auth';
 import { isPeriodClosed, getMinAllowedDate, getMinDateErrorMessage } from '@/lib/date-rules';
 import { CreateInvoiceSchema, type CreateInvoiceInput } from './billing-schema';
@@ -451,5 +451,87 @@ export async function voidInvoice(id: string): Promise<{ error?: string }> {
     return {};
   } catch {
     return { error: 'Failed to void invoice. Please try again.' };
+  }
+}
+
+// ── linkInvoiceToIncome ───────────────────────────────────────────────────────
+//
+// Links an existing income record to an invoice WITHOUT creating a new income
+// row. Used for historical invoices (e.g. Zoho migrations) where the payment
+// was already recorded as a direct income entry.
+//
+// Guards:
+//   - Invoice must be draft or issued (not already paid/void)
+//   - Income record must exist and belong to the same client as the invoice
+//   - Income record must not already be linked to another invoice
+
+export async function linkInvoiceToIncome(
+  invoiceId: string,
+  incomeId: string,
+): Promise<{ error?: string }> {
+  try {
+    await getSessionOrRedirect();
+
+    const db = getDb();
+
+    // Load invoice
+    const [invoice] = await db
+      .select()
+      .from(invoices)
+      .where(eq(invoices.id, invoiceId));
+
+    if (!invoice) return { error: 'Invoice not found.' };
+
+    if (invoice.status === 'paid') {
+      return { error: 'This invoice is already marked as paid.' };
+    }
+    if (invoice.status === 'void') {
+      return { error: 'Cannot link a payment to a voided invoice.' };
+    }
+
+    // Load income record
+    const incomeRecord = await getIncomeById(incomeId);
+    if (!incomeRecord) return { error: 'Income record not found.' };
+
+    // Client must match
+    if (incomeRecord.clientId !== invoice.clientId) {
+      return { error: 'The income record belongs to a different client.' };
+    }
+
+    // Income must not already be linked to another invoice
+    const [alreadyLinked] = await db
+      .select({ id: invoices.id, documentNumber: invoices.documentNumber })
+      .from(invoices)
+      .where(eq(invoices.incomeId, incomeId));
+
+    if (alreadyLinked) {
+      return {
+        error: `This income record is already linked to invoice ${alreadyLinked.documentNumber}.`,
+      };
+    }
+
+    // Amount mismatch — warn in the UI but don't block here (amounts may differ
+    // due to rounding or partial payments). The UI shows a warning.
+
+    // Link: mark invoice paid, set incomeId, set paidAt to the income date
+    await db
+      .update(invoices)
+      .set({
+        status: 'paid',
+        incomeId,
+        paidAt: new Date(incomeRecord.date),
+        updatedAt: new Date(),
+      })
+      .where(eq(invoices.id, invoiceId));
+
+    revalidatePath('/billing/invoices');
+    revalidatePath(`/billing/invoices/${invoiceId}`);
+    revalidatePath('/billing/statements');
+    revalidatePath('/finance/income');
+    revalidatePath('/dashboard');
+
+    return {};
+  } catch {
+    return { error: 'Failed to link payment. Please try again.' };
   }
 }

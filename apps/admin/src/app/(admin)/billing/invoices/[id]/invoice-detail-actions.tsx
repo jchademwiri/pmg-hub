@@ -7,6 +7,14 @@ import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
 import { MarkPaidButton } from '@/components/billing/mark-paid-button';
 import { VoidInvoiceButton } from '@/components/billing/void-invoice-button';
+import { LinkPaymentButton } from '@/components/billing/link-payment-button';
+
+interface UnlinkedIncomeRow {
+  id: string;
+  date: string;
+  description: string | null;
+  amount: string;
+}
 
 interface InvoiceDetailActionsProps {
   invoice: {
@@ -16,10 +24,13 @@ interface InvoiceDetailActionsProps {
     dueDate: string | null;
     paidAt: Date | null;
     incomeId: string | null;
+    total: string;
   };
   issueAction: (id: string) => Promise<{ error?: string }>;
   markPaidAction: (id: string) => Promise<{ error?: string }>;
   voidAction: (id: string) => Promise<{ error?: string }>;
+  linkPaymentAction: (invoiceId: string, incomeId: string) => Promise<{ error?: string }>;
+  unlinkedIncome: UnlinkedIncomeRow[];
 }
 
 export function InvoiceDetailActions({
@@ -27,6 +38,8 @@ export function InvoiceDetailActions({
   issueAction,
   markPaidAction,
   voidAction,
+  linkPaymentAction,
+  unlinkedIncome,
 }: InvoiceDetailActionsProps) {
   const router = useRouter();
   const [, startTransition] = useTransition();
@@ -56,16 +69,34 @@ export function InvoiceDetailActions({
         </div>
       )}
 
-      <div className="flex items-center gap-3">
+      <div className="flex flex-wrap items-start gap-3">
         {status === 'draft' && (
           <>
             <Button onClick={handleIssue}>Issue Invoice</Button>
             <VoidInvoiceButton invoiceId={invoice.id} voidAction={voidAction} />
+            {/* Link Payment — shown first so it's visually distinct from Mark Paid */}
+            {unlinkedIncome.length > 0 && (
+              <LinkPaymentButton
+                invoiceId={invoice.id}
+                invoiceTotal={invoice.total}
+                unlinkedIncome={unlinkedIncome}
+                linkAction={linkPaymentAction}
+              />
+            )}
           </>
         )}
 
         {(status === 'issued' || status === 'overdue') && (
           <>
+            {/* Link Payment appears before Mark Paid to prevent accidental duplicates */}
+            {unlinkedIncome.length > 0 && (
+              <LinkPaymentButton
+                invoiceId={invoice.id}
+                invoiceTotal={invoice.total}
+                unlinkedIncome={unlinkedIncome}
+                linkAction={linkPaymentAction}
+              />
+            )}
             <MarkPaidButton
               invoiceId={invoice.id}
               hasClient={!!invoice.clientId}

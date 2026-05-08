@@ -25,5 +25,5 @@ export type {
   BillingItemDetail,
   LineItemDetail,
 } from './queries/billing';
-export { getActiveItems } from './queries/billing';
+export { getActiveItems, getUnlinkedIncomeForClient } from './queries/billing';
 

@@ -37,7 +37,6 @@ export function ItemEditClient({ item }: ItemEditClientProps) {
         description: description.trim() || null,
         unitPrice: parseFloat(unitPrice),
         unitLabel: unitLabel.trim() || null,
-        vatApplicable: item.vatApplicable, // preserve existing value
       });
       setIsSubmitting(false);
       if (result.error) {

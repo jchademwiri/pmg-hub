@@ -8,8 +8,8 @@ import { Separator } from '@/components/ui/separator';
 import { DocumentPreview } from '@/components/billing/document-preview';
 import { BillingStatusBadge } from '@/components/billing/billing-status-badge';
 import { BillingTotalsBlock } from '@/components/billing/billing-totals-block';
-import { getInvoiceById } from '@pmg/db';
-import { issueInvoice, markInvoicePaid, voidInvoice } from '@/app/actions/billing-invoices';
+import { getInvoiceById, getUnlinkedIncomeForClient } from '@pmg/db';
+import { issueInvoice, markInvoicePaid, voidInvoice, linkInvoiceToIncome } from '@/app/actions/billing-invoices';
 import { InvoiceDetailActions } from './invoice-detail-actions';
 
 export const dynamic = 'force-dynamic';
@@ -23,6 +23,13 @@ export default async function InvoiceDetailPage({ params }: Props) {
   const { id } = await params;
   const invoice = await getInvoiceById(id);
   if (!invoice) notFound();
+
+  // Fetch unlinked income records for this client — used by the "Link Payment" flow.
+  // Only relevant when invoice is draft or issued and has a client.
+  const unlinkedIncome =
+    invoice.clientId && ['draft', 'issued', 'overdue'].includes(invoice.status)
+      ? await getUnlinkedIncomeForClient(invoice.clientId)
+      : [];
 
   const docPreviewProps = {
     number: invoice.documentNumber,
@@ -165,10 +172,13 @@ export default async function InvoiceDetailPage({ params }: Props) {
           dueDate: invoice.dueDate,
           paidAt: invoice.paidAt,
           incomeId: invoice.incomeId,
+          total: invoice.total,
         }}
         issueAction={issueInvoice}
         markPaidAction={markInvoicePaid}
         voidAction={voidInvoice}
+        linkPaymentAction={linkInvoiceToIncome}
+        unlinkedIncome={unlinkedIncome}
       />
     </div>
   );

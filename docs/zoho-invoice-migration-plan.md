@@ -124,11 +124,10 @@ Go to `/billing/statements/{clientId}` — the statement should now show:
 
 ## What Needs to Be Built
 
-### New server action: `linkInvoiceToIncome`
+### New server action: `linkInvoiceToIncome` ✅ Built
 
 ```ts
 // apps/admin/src/app/actions/billing-invoices.ts
-
 export async function linkInvoiceToIncome(
   invoiceId: string,
   incomeId: string,
@@ -147,25 +146,43 @@ Steps:
 4. `UPDATE invoices SET status='paid', income_id=$incomeId, paid_at=income.date, updated_at=NOW() WHERE id=$invoiceId`
 5. `revalidatePath` for invoice, income, statements, dashboard
 
-### New UI: "Link Payment" button on invoice detail
+### New query: `getUnlinkedIncomeForClient` ✅ Built
 
-On the invoice detail page, when status is `draft` or `issued` and the client has unlinked income records:
+```ts
+// packages/db/src/queries/billing.ts
+export async function getUnlinkedIncomeForClient(clientId: string):
+  Promise<{ id: string; date: string; description: string | null; amount: string }[]>
+```
 
-- Show a **"Link Existing Payment"** button alongside the existing action bar
-- Opens a simple select: lists unlinked income records for this client (date + amount + description)
+Returns income records for a client that are not already linked to any invoice.
+
+### New UI: `LinkPaymentButton` component ✅ Built
+
+`apps/admin/src/components/billing/link-payment-button.tsx`
+
+- Renders as a secondary "Link Existing Payment" button
+- Expands inline to show a dropdown of unlinked income records (date + amount + description)
+- Shows an amber warning if the selected income amount doesn't match the invoice total
 - On confirm: calls `linkInvoiceToIncome`
+
+### Invoice detail page wired ✅ Done
+
+`apps/admin/src/app/(admin)/billing/invoices/[id]/page.tsx` — fetches `getUnlinkedIncomeForClient` and passes to `InvoiceDetailActions`.
+
+`apps/admin/src/app/(admin)/billing/invoices/[id]/invoice-detail-actions.tsx` — renders `LinkPaymentButton` **before** `MarkPaidButton` when unlinked income records exist, reducing the risk of accidental duplicates.
 
 ---
 
 ## Migration Checklist
 
 - [ ] Export Zoho invoices to CSV
-- [ ] Build `linkInvoiceToIncome` server action
-- [ ] Add "Link Payment" UI to invoice detail page
+- [x] Build `linkInvoiceToIncome` server action
+- [x] Build `getUnlinkedIncomeForClient` query
+- [x] Add "Link Payment" UI to invoice detail page
 - [ ] For each historical invoice:
   - [ ] Create invoice in PMG (`/billing/invoices/new`)
-  - [ ] Issue it
-  - [ ] Link to existing income record
+  - [ ] Issue it (or leave as draft — Link Payment works on both)
+  - [ ] Use "Link Existing Payment" button → select matching income record
   - [ ] Verify on client statement — balance should be R 0.00
 - [ ] Check `/finance/income` — no duplicate entries
 - [ ] Check `/billing/statements` — all clients show correct balances

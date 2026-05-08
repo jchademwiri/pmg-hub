@@ -1,5 +1,6 @@
 import { db } from "../client";
 import { quotations, invoices, billingLineItems, billingItems } from "../schema/billing";
+import { income } from "../schema/income";
 import { divisions } from "../schema/divisions";
 import { clients } from "../schema/clients";
 import { sql, eq, and, desc, asc, inArray, or } from "drizzle-orm";
@@ -710,4 +711,40 @@ export async function getActiveItems(): Promise<
     .from(billingItems)
     .where(eq(billingItems.status, 'active' as any))
     .orderBy(asc(billingItems.name));
+}
+
+// ── getUnlinkedIncomeForClient ─────────────────────────────────────────────────
+
+/**
+ * Returns income records for a given client that are NOT already linked to an
+ * invoice (i.e. no invoice has income_id = this income row's id).
+ * Used by the "Link Payment" flow to let you attach an existing income record
+ * to a historical invoice without creating a duplicate.
+ */
+export async function getUnlinkedIncomeForClient(
+  clientId: string,
+): Promise<{ id: string; date: string; description: string | null; amount: string }[]> {
+  // Subquery: all income IDs already linked to an invoice
+  const linkedIds = db
+    .select({ incomeId: invoices.incomeId })
+    .from(invoices)
+    .where(sql`${invoices.incomeId} IS NOT NULL`);
+
+  const rows = await db
+    .select({
+      id: income.id,
+      date: sql<string>`${income.date}::text`,
+      description: income.description,
+      amount: income.amount,
+    })
+    .from(income)
+    .where(
+      and(
+        eq(income.clientId, clientId),
+        sql`${income.id} NOT IN (${linkedIds})`,
+      ),
+    )
+    .orderBy(desc(income.date));
+
+  return rows as { id: string; date: string; description: string | null; amount: string }[];
 }
