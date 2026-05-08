@@ -6,7 +6,7 @@ System Updates
 - remove inline VAT (add a toggle VAT on the summery sidebar, by default no VAT since i am not registered for VAT
 - the Summary sidebar must be sticky
 - allow me to edit invoice or quote
-- only allow to edit invoice if it has not been paid, onnce paid, it must not be edited or deleted
+- only allow to edit invoice if it has not been paid, once paid, it must not be edited or deleted
 - add a reference input for quote
 - add an input for dicount as a % or amount
 - add an option to export as pdf
