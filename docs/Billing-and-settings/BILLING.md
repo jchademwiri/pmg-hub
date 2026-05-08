@@ -1,95 +1,45 @@
 # Billing
 
-The Billing section covers three core document types: **Invoices**, **Quotations**, and **Statements**. All pages live under `/billing` and share the same layout conventions used across the admin app.
+The Billing section covers four areas: **Quotations**, **Invoices**, **Statements**, and **Items** (service catalogue). All pages live under `/billing` and share the same Card-based layout, two-column document preview pattern, and `DocumentPreview` component established in the shell.
 
 ---
 
 ## Route Map
 
-| Route | Page | Type | Status |
-|---|---|---|---|
-| `/billing/invoices` | Invoices list | Server | 🔜 Placeholder |
-| `/billing/invoices/new` | New invoice form | Server | 🔜 Placeholder |
-| `/billing/invoices/[id]` | Invoice detail | Server | 🔜 Placeholder |
-| `/billing/quotes` | Quotations list | Server | 🔜 Placeholder |
-| `/billing/quotes/new` | New quote form | Server | 🔜 Placeholder |
-| `/billing/quotes/[id]` | Quote detail | Server | 🔜 Placeholder |
-| `/billing/statements` | Statements list | Server | 🔜 Placeholder |
-| `/billing/statements/[clientId]` | Client statement | Server | 🔜 Placeholder |
-
-> All pages are currently structural shells with placeholder data. Forms and tables need to be wired up to real data and server actions.
-
----
-
-## Invoices
-
-### `/billing/invoices` — List
-
-**File:** `src/app/(admin)/billing/invoices/page.tsx`
-
-The main invoices overview.
-
-**Stats row (4 cards)**
-| Stat | Description |
-|---|---|
-| Total Invoices | All time count |
-| Pending | Awaiting payment |
-| Paid | Paid this month |
-| Overdue | Past due date |
-
-**Table columns**
-- Invoice #
-- Client
-- Issue Date
-- Due Date
-- Amount
-- Status
-- Actions (overflow menu)
-
-Shows `EmptyState` with a CTA to `/billing/invoices/new` when no invoices exist.
+| Route | Page | Status |
+|---|---|---|
+| `/billing/quotes` | Quotations list | 🔜 Shell — wire up data |
+| `/billing/quotes/new` | New quote form | 🔜 Shell — wire up form |
+| `/billing/quotes/[id]` | Quote detail + actions | 🔜 Shell — wire up data + actions |
+| `/billing/invoices` | Invoices list | 🔜 Shell — wire up data |
+| `/billing/invoices/new` | New invoice form | 🔜 Shell — wire up form |
+| `/billing/invoices/[id]` | Invoice detail + actions | 🔜 Shell — wire up data + actions |
+| `/billing/statements` | Statements list | 🔜 Shell — wire up data |
+| `/billing/statements/[clientId]` | Client statement | 🔜 Shell — wire up data |
+| `/billing/items` | Items catalogue list | 🔜 Shell — wire up data |
+| `/billing/items/new` | New item form | 🔜 Shell — wire up form |
+| `/billing/items/[id]` | Item detail / edit | 🔜 Shell — wire up data |
 
 ---
 
-### `/billing/invoices/new` — Create
+## Layout & Visual Conventions
 
-**File:** `src/app/(admin)/billing/invoices/new/page.tsx`
+All billing detail pages (`[id]`) follow the same two-column layout established in the shell:
 
-Two-column layout: 2/3 form + 1/3 sidebar.
+```
+lg:grid-cols-3
+  ├── lg:col-span-2  →  DocumentPreview (main content)
+  └── col-span-1     →  Sidebar cards (Summary, Activity, Client Info)
+```
 
-**Main form (left)**
-- Invoice Details card — Client, Invoice # (auto-generated), Issue Date, Due Date
-- Line Items card — dashed empty state + "Add Line Item" button
-- Notes card — optional notes or payment instructions
+The `DocumentPreview` component renders a styled document that looks like the actual printed output. It is shared across quotes, invoices, and statements — `type` prop switches the layout.
 
-**Sidebar (right)**
-- Summary card — Subtotal, VAT (15%), Total, Save Invoice button, Save as Draft button
-- Status card — shows "Draft" until sent
+Page headers follow the pattern:
+```
+[Ghost back button] [Separator] [Title + Badge]    [Action buttons]
+```
 
----
-
-### `/billing/invoices/[id]` — Detail
-
-**File:** `src/app/(admin)/billing/invoices/[id]/page.tsx`
-
-**URL param:** `id` — the invoice identifier
-
-Two-column layout: 2/3 content + 1/3 sidebar.
-
-**Header actions**
-- Print
-- Send
-- More (overflow menu)
-
-**Main content (left)**
-- Invoice Details card — Client, Issue Date, Due Date, Reference (4-up grid)
-- Line Items table — Description, Qty, Unit Price, Amount
-- Notes card
-
-**Sidebar (right)**
-- Summary card — Subtotal, VAT (15%), Total
-- Activity card — timeline of actions on this invoice
-
-**Status badge** shown next to the invoice number in the header (e.g. Draft, Sent, Paid, Overdue).
+Action buttons in the header (Print, Send, Convert to Invoice, More) are disabled in the shell and wired up when implementing each feature.
 
 ---
 
@@ -100,23 +50,39 @@ Two-column layout: 2/3 content + 1/3 sidebar.
 **File:** `src/app/(admin)/billing/quotes/page.tsx`
 
 **Stats row (4 cards)**
-| Stat | Description |
-|---|---|
-| Total Quotes | All time count |
-| Pending | Awaiting client response |
-| Accepted | Converted to invoice |
-| Declined | Not accepted |
+
+| Stat | Icon | Description |
+|---|---|---|
+| Total Quotes | FileText | All time count |
+| Pending | Clock | Awaiting client response |
+| Accepted | CheckCircle | Converted to invoice |
+| Declined | XCircle | Not accepted |
+
+Stats are currently hardcoded to `'—'`. Wire up to `getAllQuotations()` aggregates when implementing.
 
 **Table columns**
-- Quote #
-- Client
-- Issue Date
-- Expiry Date
-- Amount
-- Status
-- Actions
 
-Shows `EmptyState` with a CTA to `/billing/quotes/new` when no quotes exist.
+| Column | Notes |
+|---|---|
+| Quote # | Monospace, links to `/billing/quotes/{id}` |
+| Client | `clientName ?? '—'` |
+| Issue Date | `quoteDate` |
+| Expiry Date | `expiryDate ?? '—'` |
+| Amount | `formatZAR(total)`, right-aligned, `text-green-500` |
+| Status | `BillingStatusBadge` |
+| Actions | Dropdown: View, Mark Sent, Mark Accepted, Mark Declined, Delete |
+
+Shows `EmptyState` with CTA to `/billing/quotes/new` when no quotes exist. Includes a `Preview mock quote →` dev link (remove before production).
+
+**Data to fetch (server component):**
+```typescript
+const [result, divisions, clients] = await Promise.all([
+  getAllQuotations({ divisionId, status }, { page, pageSize: 20 }),
+  getAllDivisions(),
+  getAllClients(),
+])
+// SetPageTotal → formatZAR(result.sum), variant: 'green'
+```
 
 ---
 
@@ -124,16 +90,25 @@ Shows `EmptyState` with a CTA to `/billing/quotes/new` when no quotes exist.
 
 **File:** `src/app/(admin)/billing/quotes/new/page.tsx`
 
-Two-column layout: 2/3 form + 1/3 sidebar.
+Two-column layout: `lg:col-span-2` form + `col-span-1` sidebar.
 
-**Main form (left)**
-- Quote Details card — Client, Quote # (auto-generated), Issue Date, Expiry Date
-- Line Items card — dashed empty state + "Add Line Item" button
-- Terms & Notes card — optional terms, conditions, or client notes
+**Main form (left) — three cards:**
 
-**Sidebar (right)**
-- Summary card — Subtotal, VAT (15%), Total, Save Quote button, Save as Draft button
-- Status card — shows "Draft" until sent to client
+1. **Quote Details card** — Client (select), Quote # (auto-generated, read-only), Issue Date, Expiry Date
+2. **Line Items card** — `BillingLineItemsForm` (dynamic rows). Shell shows dashed placeholder + disabled "+ Add Line Item" button
+3. **Terms & Notes card** — textarea for optional terms and client-facing notes
+
+**Sidebar (right) — two cards:**
+
+- **Summary card** — Subtotal, VAT (15%), Total (live-calculated from line items), Save Quote button, Save as Draft button
+- **Status card** — "Quote will be saved as **Draft** until sent to the client."
+
+**On submit:** call `createQuotation(data)` → redirect to `/billing/quotes/{id}`
+
+**Form state** (controlled React state, not FormData — line items are nested):
+```typescript
+{ divisionId, clientId, quoteDate, expiryDate, notes, terms, lineItems, isSubmitting, error }
+```
 
 ---
 
@@ -141,26 +116,123 @@ Two-column layout: 2/3 form + 1/3 sidebar.
 
 **File:** `src/app/(admin)/billing/quotes/[id]/page.tsx`
 
-**URL param:** `id` — the quote identifier
+**Header actions (in order):**
+- Print — disabled (v2: PDF)
+- Send — disabled (v2: email)
+- **Convert to Invoice** — `ConvertToInvoiceButton`, only active when `status === 'accepted'`
+- More (MoreHorizontal) — disabled
 
-Two-column layout: 2/3 content + 1/3 sidebar.
+**Main content (left):** `DocumentPreview type="quote"` — renders the styled quotation document including org details, client details, line items table, totals, terms, and banking details.
 
-**Header actions**
-- Print
-- Send
-- Convert to Invoice
-- More (overflow menu)
+**Sidebar (right):**
 
-**Main content (left)**
-- Quote Details card — Client, Issue Date, Expiry Date, Reference (4-up grid)
-- Line Items table — Description, Qty, Unit Price, Amount
-- Terms & Notes card
+- **Summary card** — Subtotal, VAT (15%), Total (from denormalised `subtotal`/`vatAmount`/`total` fields)
+- **Activity card** — Timeline of state changes (e.g. "Quote sent to client", "Quote created"). In shell uses mock data; wire to audit log in v2.
 
-**Sidebar (right)**
-- Summary card — Subtotal, VAT (15%), Total
-- Activity card
+**Action bar (below document) by status:**
 
-**Status badge** shown next to the quote number (e.g. Draft, Sent, Accepted, Declined, Expired).
+| Status | Actions |
+|---|---|
+| `draft` | Mark Sent, Delete |
+| `sent` | Mark Accepted, Mark Declined, Cancel |
+| `accepted` | **Convert to Invoice** (ConvertToInvoiceButton) |
+| `converted` | "Converted to Invoice {number}" → link to invoice |
+| `declined / cancelled / expired` | "No further actions available." |
+
+**Data to fetch:**
+```typescript
+const quote = await getQuotationById(id)
+if (!quote) notFound()
+```
+
+---
+
+## Invoices
+
+### `/billing/invoices` — List
+
+**File:** `src/app/(admin)/billing/invoices/page.tsx`
+
+Same structure as quotes list with invoice-specific columns and stats.
+
+**Stats row (4 cards)**
+
+| Stat | Icon | Description |
+|---|---|---|
+| Total Invoices | FileText | All time count |
+| Pending | Clock | Awaiting payment |
+| Paid | CheckCircle | This month |
+| Overdue | AlertCircle | Past due date |
+
+**Table columns**
+
+| Column | Notes |
+|---|---|
+| Invoice # | Monospace, links to `/billing/invoices/{id}` |
+| Client | `clientName ?? '—'` |
+| Issue Date | `invoiceDate` |
+| Due Date | `dueDate ?? '—'` |
+| Amount | `formatZAR(total)`, right-aligned |
+| Status | `BillingStatusBadge` |
+| Actions | Dropdown: View, Issue (if draft), Mark Paid (if issued/overdue), Void |
+
+`SetPageTotal` uses `result.outstanding` (unpaid total), variant `'amber'`.
+
+Includes `Preview mock invoice →` dev link (remove before production).
+
+---
+
+### `/billing/invoices/new` — Create
+
+**File:** `src/app/(admin)/billing/invoices/new/page.tsx`
+
+Same two-column layout as quote form with these differences:
+
+**Invoice Details card fields:** Client, Invoice # (auto-generated), Issue Date, Due Date (default +30 days), PO Number (optional)
+
+**Period lock warning:** If `invoiceDate` falls in a grace-period or locked month, show an amber banner:
+```
+⚠ This invoice date may fall in a restricted financial period. Marking as paid may be blocked.
+```
+
+**Sidebar:** Save Invoice button + Save as Draft button. Status card reads "Invoice will be saved as **Draft** until sent."
+
+**On submit:** call `createInvoice(data)` → redirect to `/billing/invoices/{id}`
+
+---
+
+### `/billing/invoices/[id]` — Detail
+
+**File:** `src/app/(admin)/billing/invoices/[id]/page.tsx`
+
+**Header actions:**
+- Print — disabled (v2: PDF)
+- Send — disabled (v2: email)
+- More (MoreHorizontal) — disabled
+
+**Main content (left):** `DocumentPreview type="invoice"` — same as quote preview but shows banking details prominently and payment reference instructions.
+
+**Sidebar (right):**
+- **Summary card** — Subtotal, VAT (15%), Total
+- **Activity card** — timeline (mock in shell, real in v2)
+
+**Action bar by status:**
+
+| Status | Actions |
+|---|---|
+| `draft` | Issue Invoice, Void |
+| `issued` | **Mark Paid** (MarkPaidButton — disabled if no client), Void |
+| `paid` | "Paid on {paidAt}. Revenue posted to income." + "View in Income →" link |
+| `overdue` | Mark Paid, Void. Amber banner: "⚠ This invoice is overdue." |
+| `void` | "This invoice has been voided." (no actions) |
+
+**Critical: Mark Paid flow**
+
+`MarkPaidButton` must be disabled with a tooltip if `invoice.clientId` is null — the `income` table requires a non-null `clientId`. Confirm dialog message: _"Mark this invoice as paid? This will post the revenue to the income ledger and cannot be undone."_
+
+On success: posts a row to `income` table → `revalidatePath('/income')` + `revalidatePath('/dashboard')`.
+
+**Linked quote:** If `quotationId` is set, show "From Quote: {quotationNumber}" as a link to `/billing/quotes/{quotationId}`.
 
 ---
 
@@ -170,85 +242,168 @@ Two-column layout: 2/3 content + 1/3 sidebar.
 
 **File:** `src/app/(admin)/billing/statements/page.tsx`
 
-Statements are generated per client from their invoice history. This page lists all clients with statement data.
+Lists all clients who have at least one quotation or invoice. Stats and table are populated from `getClientsWithBillingActivity()`.
 
 **Stats row (4 cards)**
-| Stat | Description |
-|---|---|
-| Active Clients | Clients with statements |
-| Total Billed | All time |
-| Statements | Generated count |
-| Last Generated | Most recent date |
+
+| Stat | Icon | Description |
+|---|---|---|
+| Active Clients | Users | With billing activity |
+| Total Billed | TrendingUp | All time |
+| Statements | FileText | Generated |
+| Last Generated | Calendar | Most recent |
 
 **Table columns**
-- Client
-- Total Invoiced
-- Total Paid
-- Outstanding
-- Last Activity
-- View link
 
-Shows `EmptyState` when no statements exist. Statements are derived from invoices — no invoices means no statements.
+| Column | Notes |
+|---|---|
+| Client | `businessName ?? name` |
+| Total Invoiced | Sum of all invoice totals |
+| Total Paid | Sum of paid invoice totals |
+| Outstanding | Total invoiced − total paid. `text-red-500` if > 0 |
+| Last Activity | Most recent quote or invoice date |
+| View | Link → `/billing/statements/{clientId}` |
+
+Includes `Preview mock statement →` dev link (remove before production). "Generate Statement" button is currently disabled.
 
 ---
 
-### `/billing/statements/[clientId]` — Client Statement
+### `/billing/statements/[clientId]` — Client Statement Detail
 
 **File:** `src/app/(admin)/billing/statements/[clientId]/page.tsx`
 
-**URL param:** `clientId` — the client identifier
+**Header actions:**
+- Print — disabled (v2)
+- Export PDF — disabled (v2)
 
-**Header actions**
-- Print
-- Export PDF
+**Summary cards (3-up row):**
 
-**Summary cards (3-up)**
-- Total Invoiced
-- Total Paid
-- Outstanding Balance
+| Card | Source |
+|---|---|
+| Total Invoiced | Sum of all invoice totals for this client |
+| Total Paid | Sum of paid invoices |
+| Balance Due | Outstanding = invoiced − paid |
 
-Two-column layout: 2/3 transactions + 1/3 sidebar.
+**Two-column layout (lg:grid-cols-3):**
 
-**Transaction History table (left)**
+**Main content (left) — `DocumentPreview type="statement"`:**
+
+The statement document renders a transaction history table:
+
 | Column | Description |
 |---|---|
 | Date | Transaction date |
-| Reference | Invoice or payment reference |
+| Reference | Invoice # or payment reference |
 | Description | What the entry is for |
-| Debit | Amount charged |
-| Credit | Amount received |
+| Debit | Amount charged (invoice issued) |
+| Credit | Amount received (payment recorded) |
 | Balance | Running balance |
 
-**Sidebar (right)**
-- Client Info card — Name, Email, Phone, Address
-- Statement Period card — From / To date range with "Change Period" button
+In v1 this table is built from: all `invoices` for this client (each `issued` invoice = a debit row) + all `income` records for this client (each income row = a credit row). Sort by date ascending to compute running balance correctly.
+
+**Sidebar (right):**
+- **Client Info card** — Name, Email, Phone, Address
+- **Statement Period card** — From / To date range. "Change Period" button (disabled in v1, active in v2 with date pickers)
+
+**Data to fetch:**
+```typescript
+const [statement, allIncome] = await Promise.all([
+  getClientStatement(clientId, { year }),
+  getAllIncome({ clientId }),   // existing function — reused as-is
+])
+if (!statement.client) notFound()
+```
+
+**Summary strip** (same card style as `/accounts/[account]`):
+- Total Quoted — sum of all quote totals
+- Total Invoiced — sum of invoice totals
+- Total Paid — sum of paid invoice totals
+- Outstanding — `text-red-500` if > 0, `text-green-500` if 0
+- Conversion Rate — `accepted / sent quotes` as percentage
+
+---
+
+## Document Preview Component
+
+**File:** `src/components/billing/document-preview.tsx`
+
+Shared across quotes, invoices, and statements. Props:
+
+```typescript
+interface DocumentPreviewProps {
+  type: 'quote' | 'invoice' | 'statement'
+  number: string
+  status: string
+  issueDate: string
+  dueDate?: string
+  periodFrom?: string      // statement only
+  periodTo?: string        // statement only
+  reference?: string
+  org: OrgDetails
+  client: ClientDetails
+  lineItems?: LineItem[]   // quote + invoice
+  transactions?: Transaction[]  // statement
+  notes?: string
+  terms?: string           // quote only
+  banking?: BankingDetails // invoice + statement
+  vatRate?: number
+  href?: string
+}
+```
+
+**Type variants:**
+- `quote` — shows line items, totals, terms, no banking
+- `invoice` — shows line items, totals, notes, banking details
+- `statement` — shows transaction history table (debit / credit / balance), no line items
 
 ---
 
 ## Document Lifecycle
 
 ```
-Quote (Draft)
-  → Quote (Sent)
-    → Quote (Accepted) → Invoice (Draft)
-    → Quote (Declined)
-    → Quote (Expired)
+Quote (draft)
+  → Quote (sent)
+    → Quote (accepted)
+      → [Convert to Invoice] → Invoice (draft)
+    → Quote (declined)      [terminal]
+    → Quote (expired)       [terminal — auto, past expiry]
+  → Quote (cancelled)       [terminal]
+  → Quote (converted)       [terminal — set when invoice created]
 
-Invoice (Draft)
-  → Invoice (Sent)
-    → Invoice (Paid)
-    → Invoice (Overdue)
+Invoice (draft)
+  → Invoice (issued)
+    → Invoice (paid)        [terminal — posts to income table]
+    → Invoice (overdue)     [auto — past due date + not paid]
+    → Invoice (void)        [terminal]
+  → Invoice (void)          [terminal]
 ```
 
-Quotes can be converted directly to invoices via the "Convert to Invoice" action on the quote detail page.
+---
+
+## Document Numbering
+
+Format: `{DIVISION_PREFIX}-{TYPE}-{YEAR}-{SEQ}`
+
+Prefix derived from division name — first 3 uppercase alpha chars:
+- "Apex Web Solutions" → `APX`
+- "TenderEdge Solutions" → `TES`
+- "PMG Services" → `PMG`
+
+Examples: `APX-Q-2026-001`, `TES-INV-2026-007`
+
+Sequence is per-division, per-type, resets each calendar year. Assigned atomically in a Postgres transaction using `SELECT ... FOR UPDATE` on `document_sequences` table. Number is shown as read-only "Auto-generated" in the create form.
 
 ---
 
 ## Implementation Notes
 
-- **Prefix format** — Invoice and quote numbers follow the division prefix pattern configured in `/settings/billing`. Format: `{DIVISION}-INV-0001` and `{DIVISION}-QTE-0001`.
-- **VAT** — Default rate is 15% (ZAR). Configurable per division in `/settings/billing`.
-- **Line items** — Each line item has: Description, Quantity, Unit Price, Amount (Qty × Unit Price). VAT is calculated on the subtotal.
-- **All pages are server components** — when wiring up real data, fetch in the page and pass down to client components for interactivity (same pattern as `/expenses`, `/clients`, etc.).
-- **Form fields** are currently placeholder `div` elements. Replace with `Input`, `Select`, and `DatePicker` components and connect to server actions when implementing.
+- **All billing detail pages** use the `DocumentPreview` component for the main content area — do not build separate line item tables inline in the page.
+- **All create forms** use controlled React state (not FormData) because line items are nested arrays.
+- **Convert to Invoice** button on the quote detail page is the only way to create a linked invoice. The standalone "New Invoice" form creates unlinked invoices.
+- **Mark Paid** inserts into the existing `income` table (not a new table). The `income.clientId` column is `NOT NULL` — always check before enabling the button.
+- **Period lock** gates both create and mark-paid actions via `isPeriodClosed(date)` from `lib/date-rules.ts`.
+- **`created_by`** is `text` matching `user.id` in the auth schema — not `uuid`.
+- **`updatedAt`** is application-managed — set explicitly in `.set({ updatedAt: new Date() })`.
 - **Banking details and logo** on generated documents come from the division's billing settings at `/settings/billing`.
+- **Dev preview links** (`Preview mock quote →`, `Preview mock invoice →`, `Preview mock statement →`) are in the current shells — remove before production.
+- **Activity card** in the detail sidebar uses mock data in v1 — wire to a real audit log table in v2.
