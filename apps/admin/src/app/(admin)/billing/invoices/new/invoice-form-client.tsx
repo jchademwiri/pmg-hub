@@ -57,7 +57,7 @@ export function InvoiceFormClient({ divisions, clients, minDate }: InvoiceFormCl
   const [, startTransition] = useTransition();
 
   const [divisionId, setDivisionId] = useState('');
-  const [clientId, setClientId] = useState('');
+  const [clientId, setClientId] = useState('none');
   const [invoiceDate, setInvoiceDate] = useState(today);
   const [dueDate, setDueDate] = useState(plus30);
   const [poNumber, setPoNumber] = useState('');
@@ -92,7 +92,7 @@ export function InvoiceFormClient({ divisions, clients, minDate }: InvoiceFormCl
     startTransition(async () => {
       const result = await createInvoice({
         divisionId,
-        clientId: clientId || null,
+        clientId: clientId === 'none' ? null : clientId || null,
         invoiceDate,
         dueDate: dueDate || null,
         poNumber: poNumber || null,
@@ -154,7 +154,7 @@ export function InvoiceFormClient({ divisions, clients, minDate }: InvoiceFormCl
                 <SelectValue placeholder="Select a client…" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="">No client</SelectItem>
+                <SelectItem value="none">No client</SelectItem>
                 {clients.map((c) => (
                   <SelectItem key={c.id} value={c.id}>
                     {c.businessName ?? c.name}

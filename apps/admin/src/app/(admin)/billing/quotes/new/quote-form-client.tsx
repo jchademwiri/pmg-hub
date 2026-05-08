@@ -53,7 +53,7 @@ export function QuoteFormClient({ divisions, clients }: QuoteFormClientProps) {
   const [, startTransition] = useTransition();
 
   const [divisionId, setDivisionId] = useState('');
-  const [clientId, setClientId] = useState('');
+  const [clientId, setClientId] = useState('none');
   const [quoteDate, setQuoteDate] = useState(today);
   const [expiryDate, setExpiryDate] = useState(plus30);
   const [notes, setNotes] = useState('');
@@ -84,7 +84,7 @@ export function QuoteFormClient({ divisions, clients }: QuoteFormClientProps) {
     startTransition(async () => {
       const result = await createQuotation({
         divisionId,
-        clientId: clientId || null,
+        clientId: clientId === 'none' ? null : clientId || null,
         quoteDate,
         expiryDate: expiryDate || null,
         notes: notes || null,
@@ -133,7 +133,7 @@ export function QuoteFormClient({ divisions, clients }: QuoteFormClientProps) {
                   <SelectValue placeholder="Select a client…" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="">No client</SelectItem>
+                  <SelectItem value="none">No client</SelectItem>
                   {clients.map((c) => (
                     <SelectItem key={c.id} value={c.id}>
                       {c.businessName ?? c.name}
