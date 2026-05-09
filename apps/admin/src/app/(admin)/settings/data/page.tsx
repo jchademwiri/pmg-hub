@@ -74,7 +74,7 @@ export default function DataSettingsPage() {
                     <span className="text-xs text-muted-foreground">{opt.description}</span>
                   </div>
                 </div>
-                <Button variant="outline" size="sm" disabled>
+                <Button variant="outline" size="sm" disabled title="Coming soon">
                   <Download className="size-4" />
                   Export
                 </Button>
@@ -139,7 +139,7 @@ export default function DataSettingsPage() {
                   Permanently delete all financial snapshots. This cannot be undone.
                 </span>
               </div>
-              <Button variant="outline" size="sm" className="border-destructive/50 text-destructive hover:bg-destructive/10" disabled>
+              <Button variant="outline" size="sm" className="border-destructive/50 text-destructive hover:bg-destructive/10" disabled title="Coming soon">
                 <Trash2 className="size-4" />
                 Clear
               </Button>
@@ -151,7 +151,7 @@ export default function DataSettingsPage() {
                   Restore all settings to their factory defaults.
                 </span>
               </div>
-              <Button variant="outline" size="sm" className="border-destructive/50 text-destructive hover:bg-destructive/10" disabled>
+              <Button variant="outline" size="sm" className="border-destructive/50 text-destructive hover:bg-destructive/10" disabled title="Coming soon">
                 <Trash2 className="size-4" />
                 Reset
               </Button>

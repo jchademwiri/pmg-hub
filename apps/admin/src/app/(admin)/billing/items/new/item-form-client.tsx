@@ -43,10 +43,11 @@ export function ItemFormClient() {
   return (
     <div className="flex flex-col gap-4">
       <div className="flex flex-col gap-1.5">
-        <label className="text-sm font-medium">
+        <label htmlFor="item-name" className="text-sm font-medium">
           Name <span className="text-destructive">*</span>
         </label>
         <Input
+          id="item-name"
           value={name}
           onChange={(e) => setName(e.target.value)}
           placeholder="e.g. Website Maintenance"
@@ -56,8 +57,9 @@ export function ItemFormClient() {
       </div>
 
       <div className="flex flex-col gap-1.5">
-        <label className="text-sm font-medium">Description</label>
+        <label htmlFor="item-description" className="text-sm font-medium">Description</label>
         <textarea
+          id="item-description"
           value={description}
           onChange={(e) => setDescription(e.target.value)}
           placeholder="Longer description that pre-fills the line item on invoices and quotes…"
@@ -69,10 +71,11 @@ export function ItemFormClient() {
 
       <div className="grid grid-cols-2 gap-4">
         <div className="flex flex-col gap-1.5">
-          <label className="text-sm font-medium">
+          <label htmlFor="item-price" className="text-sm font-medium">
             Unit Price (excl. VAT) <span className="text-destructive">*</span>
           </label>
           <Input
+            id="item-price"
             type="number"
             min="0"
             step="0.01"
@@ -84,8 +87,9 @@ export function ItemFormClient() {
           <p className="text-xs text-muted-foreground">Default price; can be overridden per line item</p>
         </div>
         <div className="flex flex-col gap-1.5">
-          <label className="text-sm font-medium">Unit Label</label>
+          <label htmlFor="item-unit-label" className="text-sm font-medium">Unit Label</label>
           <Input
+            id="item-unit-label"
             value={unitLabel}
             onChange={(e) => setUnitLabel(e.target.value)}
             placeholder="e.g. hour, month, project"

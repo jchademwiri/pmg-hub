@@ -42,7 +42,7 @@ export default async function StatementsPage() {
           <p className="text-sm text-muted-foreground">View account statements per client</p>
         </div>
         <div className="flex items-center gap-2">
-          <Button variant="outline" size="sm" disabled>
+          <Button variant="outline" size="sm" disabled title="Coming soon">
             Generate Statement
           </Button>
         </div>

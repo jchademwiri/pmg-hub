@@ -114,11 +114,11 @@ export default async function StatementDetailPage({ params, searchParams }: Prop
           </div>
         </div>
         <div className="flex items-center gap-2">
-          <Button variant="outline" size="sm" disabled>
+          <Button variant="outline" size="sm" disabled title="Coming soon">
             <Printer className="size-4" />
             Print
           </Button>
-          <Button variant="outline" size="sm" disabled>
+          <Button variant="outline" size="sm" disabled title="Coming soon">
             <FileDown className="size-4" />
             Export PDF
           </Button>

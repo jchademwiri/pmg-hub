@@ -75,7 +75,7 @@ export default function SecuritySettingsPage() {
               </div>
             </div>
             <div className="flex justify-end">
-              <Button variant="outline" size="sm" disabled>
+              <Button variant="outline" size="sm" disabled title="Coming soon">
                 <KeyRound className="size-4" />
                 Update Password
               </Button>
@@ -100,7 +100,7 @@ export default function SecuritySettingsPage() {
               <span className="text-sm font-medium">Authenticator App</span>
               <span className="text-xs text-muted-foreground">Use an app like Google Authenticator or Authy</span>
             </div>
-            <Button variant="outline" size="sm" disabled>Enable 2FA</Button>
+            <Button variant="outline" size="sm" disabled title="Coming soon">Enable 2FA</Button>
           </CardContent>
         </Card>
       </div>
@@ -131,7 +131,7 @@ export default function SecuritySettingsPage() {
                   </span>
                 </div>
                 {!session.current && (
-                  <Button variant="ghost" size="sm" disabled>
+                  <Button variant="ghost" size="sm" disabled title="Coming soon">
                     <LogOut className="size-4" />
                     Revoke
                   </Button>
