@@ -312,6 +312,7 @@ export function InvoiceFormClient({
           {/* VAT toggle */}
           <button
             type="button"
+            aria-label="Toggle VAT (15%)"
             onClick={() => setVatEnabled((v) => !v)}
             className="flex items-center justify-between py-1"
           >

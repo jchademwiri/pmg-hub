@@ -117,11 +117,6 @@ for (const group of GROUPS) {
 // Extra routes that exist in the app but are not sidebar items
 const EXTRA_LABELS: Record<string, string> = {
   '/settings/users/invite': 'Invite User',
-  '/finance/income/new':     'New Income',
-  '/finance/expenses/new':   'New Expense',
-  '/relationships/clients/new':   'New Client',
-  '/relationships/leads/new':     'New Lead',
-  '/relationships/divisions/new': 'New Division',
 }
 
 export const ROUTE_LABELS: Record<string, string> = {

@@ -1,7 +1,7 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
-import { ChevronLeft, Printer, Send, MoreHorizontal, Pencil, FileDown } from 'lucide-react';
+import { ChevronLeft, Printer, Send, Pencil, FileDown } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Separator } from '@/components/ui/separator';
@@ -101,15 +101,15 @@ export default async function InvoiceDetailPage({ params }: Props) {
           </div>
         </div>
         <div className="flex items-center gap-2">
-          <Button variant="outline" size="sm" disabled>
+          <Button variant="outline" size="sm" disabled title="Coming soon">
             <Printer className="size-4" />
             Print
           </Button>
-          <Button variant="outline" size="sm" disabled>
+          <Button variant="outline" size="sm" disabled title="Coming soon">
             <Send className="size-4" />
             Send
           </Button>
-          <Button variant="outline" size="sm" disabled>
+          <Button variant="outline" size="sm" disabled title="Coming soon">
             <FileDown className="size-4" />
             Export PDF
           </Button>
@@ -124,9 +124,6 @@ export default async function InvoiceDetailPage({ params }: Props) {
           {invoice.status === 'paid' && (
             <p className="text-xs text-muted-foreground">Paid invoices cannot be modified.</p>
           )}
-          <Button variant="ghost" size="sm" disabled>
-            <MoreHorizontal className="size-4" />
-          </Button>
         </div>
       </div>
 

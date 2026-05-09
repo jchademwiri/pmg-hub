@@ -1,14 +1,13 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
-import { ChevronLeft, Printer, Send, CheckCircle, MoreHorizontal, Pencil, FileDown } from 'lucide-react';
+import { ChevronLeft, Printer, Send, Pencil, FileDown } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Separator } from '@/components/ui/separator';
 import { DocumentPreview } from '@/components/billing/document-preview';
 import { BillingStatusBadge } from '@/components/billing/billing-status-badge';
 import { BillingTotalsBlock } from '@/components/billing/billing-totals-block';
-import { ConvertToInvoiceButton } from '@/components/billing/convert-to-invoice-button';
 import { getQuotationById, getDivisionBillingSettings } from '@pmg/db';
 import { updateQuotationStatus, deleteQuotation } from '@/app/actions/billing-quotes';
 import { QuoteDetailActions } from './quote-detail-actions';
@@ -87,15 +86,15 @@ export default async function QuoteDetailPage({ params }: Props) {
           </div>
         </div>
         <div className="flex items-center gap-2">
-          <Button variant="outline" size="sm" disabled>
+          <Button variant="outline" size="sm" disabled title="Coming soon">
             <Printer className="size-4" />
             Print
           </Button>
-          <Button variant="outline" size="sm" disabled>
+          <Button variant="outline" size="sm" disabled title="Coming soon">
             <Send className="size-4" />
             Send
           </Button>
-          <Button variant="outline" size="sm" disabled>
+          <Button variant="outline" size="sm" disabled title="Coming soon">
             <FileDown className="size-4" />
             Export PDF
           </Button>
@@ -107,13 +106,6 @@ export default async function QuoteDetailPage({ params }: Props) {
               </Link>
             </Button>
           )}
-          <Button size="sm" disabled={quote.status !== 'accepted'}>
-            <CheckCircle className="size-4" />
-            Convert to Invoice
-          </Button>
-          <Button variant="ghost" size="sm" disabled>
-            <MoreHorizontal className="size-4" />
-          </Button>
         </div>
       </div>
 

@@ -193,7 +193,7 @@ function IncomeTableRow({
 
   return (
     <TableRow>
-      <TableCell>{entry.date}</TableCell>
+      <TableCell>{new Date(entry.date + 'T00:00:00').toLocaleDateString('en-ZA', { day: '2-digit', month: 'short', year: 'numeric' })}</TableCell>
       <TableCell>{entry.divisionName}</TableCell>
       <TableCell>{entry.clientName ?? ''}</TableCell>
       <TableCell>{entry.description ?? ''}</TableCell>

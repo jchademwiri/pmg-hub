@@ -39,8 +39,8 @@ export default async function QuotesPage({ searchParams }: QuotesPageProps) {
     { page: currentPage, pageSize },
   );
 
-  // Derive stats from the full (unfiltered) result for the stat cards
-  const [allResult] = await Promise.all([getAllQuotations()]);
+  // Fetch unfiltered stats in parallel with the paginated result
+  const allResult = await getAllQuotations();
 
   const totalCount = allResult.total;
   const pendingCount = allResult.data.filter(

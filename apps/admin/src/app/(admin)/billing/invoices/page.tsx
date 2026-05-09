@@ -3,7 +3,7 @@ import Link from 'next/link';
 import { Plus, FileText, Clock, CheckCircle, AlertCircle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
-import { getAllInvoices, getAllDivisions, getAllClients } from '@pmg/db';
+import { getAllInvoices } from '@pmg/db';
 import { SetPageTotal } from '@/components/navigation/page-header-context';
 import { formatZAR } from '@/lib/format';
 import { InvoicesClient } from './invoices-client';
