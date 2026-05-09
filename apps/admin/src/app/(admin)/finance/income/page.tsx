@@ -1,6 +1,6 @@
 import type { Metadata } from 'next';
 import { getAllIncome, getAllDivisions, getAllClients, getDistinctIncomeMonths } from '@pmg/db';
-import { createIncome, updateIncome, deleteIncome } from '@/app/actions/income';
+import { updateIncome, deleteIncome } from '@/app/actions/income';
 import { FilterBar } from '@/components/income/filter-bar';
 import { formatZAR } from '@/lib/format';
 import { SetPageTotal } from '@/components/navigation/page-header-context';
@@ -49,7 +49,7 @@ export default async function IncomePage({ searchParams }: IncomePageProps) {
         clients={clients}
         divisionId={divisionId}
         month={month}
-        createAction={createIncome}
+        createAction={async () => ({})}
         deleteAction={deleteIncome}
         updateAction={updateIncome}
         minDate={minDate}
