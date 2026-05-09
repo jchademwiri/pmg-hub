@@ -53,8 +53,9 @@ export default async function StatementDetailPage({ params, searchParams }: Prop
     })),
   ];
 
-  // Sort by date ASC, then compute running balance
-  txRaw.sort((a, b) => a.date.localeCompare(b.date));
+  // Sort by date DESC (newest first), then compute running balance from oldest
+  // so balance is accurate, but display newest at top
+  txRaw.sort((a, b) => a.date.localeCompare(b.date)); // ASC for balance calc
 
   let runningBalance = 0;
   const transactions: StatementTransaction[] = txRaw.map((tx) => {
@@ -68,6 +69,9 @@ export default async function StatementDetailPage({ params, searchParams }: Prop
       balance: runningBalance,
     };
   });
+
+  // Reverse to show newest first in the document
+  transactions.reverse();
 
   // ── DocumentPreview props ─────────────────────────────────────────────────
   const now = new Date();

@@ -173,26 +173,26 @@ export default async function InvoiceDetailPage({ params }: Props) {
               </div>
             </CardContent>
           </Card>
+
+          {/* Actions — in sidebar below activity */}
+          <InvoiceDetailActions
+            invoice={{
+              id: invoice.id,
+              status: invoice.status,
+              clientId: invoice.clientId,
+              dueDate: invoice.dueDate,
+              paidAt: invoice.paidAt,
+              incomeId: invoice.incomeId,
+              total: invoice.total,
+            }}
+            issueAction={issueInvoice}
+            markPaidAction={markInvoicePaid}
+            voidAction={voidInvoice}
+            linkPaymentAction={linkInvoiceToIncome}
+            unlinkedIncome={unlinkedIncome}
+          />
         </div>
       </div>
-
-      {/* Action bar */}
-      <InvoiceDetailActions
-        invoice={{
-          id: invoice.id,
-          status: invoice.status,
-          clientId: invoice.clientId,
-          dueDate: invoice.dueDate,
-          paidAt: invoice.paidAt,
-          incomeId: invoice.incomeId,
-          total: invoice.total,
-        }}
-        issueAction={issueInvoice}
-        markPaidAction={markInvoicePaid}
-        voidAction={voidInvoice}
-        linkPaymentAction={linkInvoiceToIncome}
-        unlinkedIncome={unlinkedIncome}
-      />
     </div>
   );
 }

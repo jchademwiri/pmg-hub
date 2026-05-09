@@ -32,7 +32,7 @@ export function VoidInvoiceButton({ invoiceId, voidAction }: VoidInvoiceButtonPr
   return (
     <Button
       variant="outline"
-      className="text-destructive border-destructive/50 hover:bg-destructive/10"
+      className="w-full text-destructive border-destructive/50 hover:bg-destructive/10"
       onClick={handleClick}
       disabled={isPending}
     >

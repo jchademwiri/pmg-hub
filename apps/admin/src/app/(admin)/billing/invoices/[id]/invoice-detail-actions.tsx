@@ -61,20 +61,19 @@ export function InvoiceDetailActions({
   const { status } = invoice;
 
   return (
-    <div className="flex flex-col gap-3 rounded-xl border bg-card p-4">
+    <div className="flex flex-col gap-3 pt-2">
       {/* Overdue banner */}
       {(status === 'issued' || status === 'overdue') && isOverdue && (
-        <div className="rounded-lg border border-amber-200 bg-amber-50 px-4 py-2.5 text-sm text-amber-800 dark:border-amber-800/40 dark:bg-amber-950/30 dark:text-amber-400">
+        <div className="rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-xs text-amber-800 dark:border-amber-800/40 dark:bg-amber-950/30 dark:text-amber-400">
           ⚠ This invoice is overdue.
         </div>
       )}
 
-      <div className="flex flex-wrap items-start gap-3">
+      <div className="flex flex-col gap-2">
         {status === 'draft' && (
           <>
-            <Button onClick={handleIssue}>Issue Invoice</Button>
+            <Button className="w-full" onClick={handleIssue}>Issue Invoice</Button>
             <VoidInvoiceButton invoiceId={invoice.id} voidAction={voidAction} />
-            {/* Link Payment — shown first so it's visually distinct from Mark Paid */}
             {unlinkedIncome.length > 0 && (
               <LinkPaymentButton
                 invoiceId={invoice.id}
@@ -88,7 +87,6 @@ export function InvoiceDetailActions({
 
         {(status === 'issued' || status === 'overdue') && (
           <>
-            {/* Link Payment appears before Mark Paid to prevent accidental duplicates */}
             {unlinkedIncome.length > 0 && (
               <LinkPaymentButton
                 invoiceId={invoice.id}
@@ -107,8 +105,8 @@ export function InvoiceDetailActions({
         )}
 
         {status === 'paid' && (
-          <div className="flex items-center gap-3">
-            <p className="text-sm text-green-600 dark:text-green-400">
+          <div className="flex flex-col gap-2">
+            <p className="text-xs text-green-600 dark:text-green-400">
               Paid on{' '}
               {invoice.paidAt
                 ? new Date(invoice.paidAt).toLocaleDateString('en-ZA', {
@@ -119,14 +117,14 @@ export function InvoiceDetailActions({
                 : '—'}
               . Revenue posted to income.
             </p>
-            <Button variant="outline" size="sm" asChild>
+            <Button variant="outline" size="sm" className="w-full" asChild>
               <Link href="/finance/income">View in Income →</Link>
             </Button>
           </div>
         )}
 
         {status === 'void' && (
-          <p className="text-sm text-muted-foreground">This invoice has been voided.</p>
+          <p className="text-xs text-muted-foreground">This invoice has been voided.</p>
         )}
       </div>
     </div>

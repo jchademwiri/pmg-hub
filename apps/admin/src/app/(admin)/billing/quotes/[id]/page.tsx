@@ -151,19 +151,19 @@ export default async function QuoteDetailPage({ params }: Props) {
               </div>
             </CardContent>
           </Card>
+
+          {/* Actions — in sidebar below activity */}
+          <QuoteDetailActions
+            quote={{
+              id: quote.id,
+              status: quote.status,
+              convertedInvoiceId: quote.convertedInvoiceId,
+            }}
+            updateStatusAction={updateQuotationStatus}
+            deleteAction={deleteQuotation}
+          />
         </div>
       </div>
-
-      {/* Action bar — below the grid */}
-      <QuoteDetailActions
-        quote={{
-          id: quote.id,
-          status: quote.status,
-          convertedInvoiceId: quote.convertedInvoiceId,
-        }}
-        updateStatusAction={updateQuotationStatus}
-        deleteAction={deleteQuotation}
-      />
     </div>
   );
 }

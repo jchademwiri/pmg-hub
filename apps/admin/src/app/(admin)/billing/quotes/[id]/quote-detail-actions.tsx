@@ -62,15 +62,15 @@ export function QuoteDetailActions({
   const { status, convertedInvoiceId } = quote;
 
   return (
-    <div className="flex items-center gap-3 rounded-xl border bg-card p-4">
+    <div className="flex flex-col gap-2 pt-2">
       {status === 'draft' && (
         <>
-          <Button onClick={() => handleStatus('sent')} disabled={isPending}>
+          <Button className="w-full" onClick={() => handleStatus('sent')} disabled={isPending}>
             Mark Sent
           </Button>
           <Button
             variant="outline"
-            className="text-destructive border-destructive/50 hover:bg-destructive/10"
+            className="w-full text-destructive border-destructive/50 hover:bg-destructive/10"
             onClick={handleDelete}
             disabled={isPending}
           >
@@ -81,11 +81,12 @@ export function QuoteDetailActions({
 
       {status === 'sent' && (
         <>
-          <Button onClick={() => handleStatus('accepted')} disabled={isPending}>
+          <Button className="w-full" onClick={() => handleStatus('accepted')} disabled={isPending}>
             Mark Accepted
           </Button>
           <Button
             variant="outline"
+            className="w-full"
             onClick={() => handleStatus('declined')}
             disabled={isPending}
           >
@@ -93,6 +94,7 @@ export function QuoteDetailActions({
           </Button>
           <Button
             variant="outline"
+            className="w-full"
             onClick={() => handleStatus('cancelled')}
             disabled={isPending}
           >
@@ -102,22 +104,22 @@ export function QuoteDetailActions({
       )}
 
       {status === 'accepted' && (
-        <ConvertToInvoiceButton quotationId={quote.id} convertAction={convertQuoteToInvoice} />
+        <div className="w-full">
+          <ConvertToInvoiceButton quotationId={quote.id} convertAction={convertQuoteToInvoice} />
+        </div>
       )}
 
       {status === 'converted' && convertedInvoiceId && (
-        <div className="flex items-center gap-3">
-          <span className="text-sm text-muted-foreground">
-            This quote has been converted to an invoice.
-          </span>
-          <Button variant="outline" size="sm" asChild>
+        <div className="flex flex-col gap-2">
+          <p className="text-xs text-muted-foreground">Converted to an invoice.</p>
+          <Button variant="outline" size="sm" className="w-full" asChild>
             <Link href={`/billing/invoices/${convertedInvoiceId}`}>View Invoice →</Link>
           </Button>
         </div>
       )}
 
       {(status === 'declined' || status === 'cancelled' || status === 'expired') && (
-        <p className="text-sm text-muted-foreground">No further actions available.</p>
+        <p className="text-xs text-muted-foreground">No further actions available.</p>
       )}
     </div>
   );

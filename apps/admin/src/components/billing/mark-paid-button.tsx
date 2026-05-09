@@ -43,8 +43,8 @@ export function MarkPaidButton({ invoiceId, hasClient, markPaidAction }: MarkPai
       <TooltipProvider>
         <Tooltip>
           <TooltipTrigger asChild>
-            <span>
-              <Button disabled>Mark Paid</Button>
+            <span className="w-full">
+              <Button disabled className="w-full">Mark Paid</Button>
             </span>
           </TooltipTrigger>
           <TooltipContent>
@@ -56,7 +56,7 @@ export function MarkPaidButton({ invoiceId, hasClient, markPaidAction }: MarkPai
   }
 
   return (
-    <Button onClick={handleClick} disabled={isPending}>
+    <Button className="w-full" onClick={handleClick} disabled={isPending}>
       {isPending ? 'Processing…' : 'Mark Paid'}
     </Button>
   );
