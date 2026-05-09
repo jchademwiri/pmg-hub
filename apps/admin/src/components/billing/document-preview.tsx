@@ -361,27 +361,9 @@ export function DocumentPreview({
         </div>
       )}
 
-      {/* ── Notes / Terms ───────────────────────────────────────────────────── */}
-      {(notes || terms) && (
-        <div className="mx-10 border-t border-zinc-100 pt-5 pb-6 flex flex-col gap-3">
-          {notes && (
-            <div>
-              <p className="text-[10px] font-semibold uppercase tracking-widest text-zinc-400">Notes</p>
-              <p className="mt-1 text-xs text-zinc-600 whitespace-pre-line">{notes}</p>
-            </div>
-          )}
-          {terms && (
-            <div>
-              <p className="text-[10px] font-semibold uppercase tracking-widest text-zinc-400">Terms & Conditions</p>
-              <p className="mt-1 text-xs text-zinc-600 whitespace-pre-line">{terms}</p>
-            </div>
-          )}
-        </div>
-      )}
-
-      {/* ── Banking details ─────────────────────────────────────────────────── */}
+      {/* ── Banking details — after line items ──────────────────────────────── */}
       {banking && (
-        <div className="mx-10 border-t border-zinc-100 pt-5 pb-6">
+        <div className="mx-10 border-t border-zinc-100 pt-5 pb-4">
           <p className="text-[10px] font-semibold uppercase tracking-widest text-zinc-400 mb-3">
             Banking Details
           </p>
@@ -401,8 +383,29 @@ export function DocumentPreview({
         </div>
       )}
 
+      {/* ── Spacer — pushes notes + footer to the bottom of the page ────────── */}
+      <div className="flex-1" />
+
+      {/* ── Notes / Terms — fixed just above footer ─────────────────────────── */}
+      {(notes || terms) && (
+        <div className="mx-10 border-t border-zinc-100 pt-4 pb-4 flex flex-col gap-3">
+          {notes && (
+            <div>
+              <p className="text-[10px] font-semibold uppercase tracking-widest text-zinc-400">Notes</p>
+              <p className="mt-1 text-xs text-zinc-600 whitespace-pre-line">{notes}</p>
+            </div>
+          )}
+          {terms && (
+            <div>
+              <p className="text-[10px] font-semibold uppercase tracking-widest text-zinc-400">Terms & Conditions</p>
+              <p className="mt-1 text-xs text-zinc-600 whitespace-pre-line">{terms}</p>
+            </div>
+          )}
+        </div>
+      )}
+
       {/* ── Footer — pinned to bottom ───────────────────────────────────── */}
-      <div className="mt-auto mx-10 border-t border-zinc-100 py-4 flex items-center justify-between">
+      <div className="mx-10 border-t border-zinc-100 py-4 flex items-center justify-between">
         <span className="text-[10px] text-zinc-400">
           {org.divisionOf ? `A division of ${org.divisionOf}` : ''}
         </span>
