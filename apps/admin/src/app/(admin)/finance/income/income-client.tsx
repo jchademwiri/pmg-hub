@@ -20,7 +20,6 @@ interface IncomePageClientProps {
   month?: string;
   deleteAction: (id: string) => Promise<{ error?: string }>;
   updateAction: (id: string, formData: FormData) => Promise<{ error?: string }>;
-  minDate: string;
   closedPeriods: string[];
 }
 

@@ -76,6 +76,15 @@ function fmt(amount: number) {
   return `R ${amount.toLocaleString('en-ZA', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
 }
 
+/** Format ISO date string (YYYY-MM-DD) to human-readable e.g. "08 May 2026" */
+function fmtDate(dateStr: string | undefined): string {
+  if (!dateStr) return '—'
+  // Parse as local date to avoid UTC offset shifting the day
+  const [y, m, d] = dateStr.split('-').map(Number)
+  const date = new Date(y!, m! - 1, d!)
+  return date.toLocaleDateString('en-ZA', { day: '2-digit', month: 'long', year: 'numeric' })
+}
+
 function StatusPill({ status }: { status: string }) {
   const map: Record<string, string> = {
     Draft:    'bg-zinc-100 text-zinc-500',
@@ -208,23 +217,23 @@ export function DocumentPreview({
           <div className="flex gap-8 shrink-0">
             <div className="flex flex-col items-end gap-0.5">
               <span className="text-[10px] font-semibold uppercase tracking-widest text-zinc-400">Period From</span>
-              <span className="text-sm font-medium">{periodFrom ?? '—'}</span>
+              <span className="text-sm font-medium">{fmtDate(periodFrom)}</span>
             </div>
             <div className="flex flex-col items-end gap-0.5">
               <span className="text-[10px] font-semibold uppercase tracking-widest text-zinc-400">Period To</span>
-              <span className="text-sm font-medium">{periodTo ?? '—'}</span>
+              <span className="text-sm font-medium">{fmtDate(periodTo)}</span>
             </div>
           </div>
         ) : (
           <div className="flex flex-col gap-1 items-end shrink-0">
             <div className="flex items-center gap-3">
               <span className="text-[10px] font-semibold uppercase tracking-widest text-zinc-400">Issue Date</span>
-              <span className="text-sm font-medium">{issueDate}</span>
+              <span className="text-sm font-medium">{fmtDate(issueDate)}</span>
             </div>
             {dueDateLabel && (
               <div className="flex items-center gap-3">
                 <span className="text-[10px] font-semibold uppercase tracking-widest text-zinc-400">{dueDateLabel}</span>
-                <span className="text-sm font-medium">{dueDate ?? '—'}</span>
+                <span className="text-sm font-medium">{fmtDate(dueDate)}</span>
               </div>
             )}
           </div>
@@ -315,7 +324,7 @@ export function DocumentPreview({
             <tbody>
               {transactions.map((tx, i) => (
                 <tr key={i} className="border-b border-zinc-50">
-                  <td className="py-2.5 pr-4 text-xs text-zinc-600 whitespace-nowrap">{tx.date}</td>
+                  <td className="py-2.5 pr-4 text-xs text-zinc-600 whitespace-nowrap">{fmtDate(tx.date)}</td>
                   <td className="py-2.5 px-4 text-xs text-zinc-600 whitespace-nowrap">{tx.reference}</td>
                   <td className="py-2.5 px-4 text-xs text-zinc-800">{tx.description}</td>
                   <td className="py-2.5 px-4 text-right tabular-nums text-xs text-zinc-600">
