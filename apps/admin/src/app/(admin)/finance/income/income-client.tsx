@@ -18,7 +18,6 @@ interface IncomePageClientProps {
   clients: { id: string; name: string; businessName: string | null }[];
   divisionId?: string;
   month?: string;
-  createAction: (formData: FormData) => Promise<{ error?: string }>;
   deleteAction: (id: string) => Promise<{ error?: string }>;
   updateAction: (id: string, formData: FormData) => Promise<{ error?: string }>;
   minDate: string;

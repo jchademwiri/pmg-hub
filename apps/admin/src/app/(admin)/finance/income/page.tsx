@@ -49,7 +49,6 @@ export default async function IncomePage({ searchParams }: IncomePageProps) {
         clients={clients}
         divisionId={divisionId}
         month={month}
-        createAction={async () => ({})}
         deleteAction={deleteIncome}
         updateAction={updateIncome}
         minDate={minDate}
