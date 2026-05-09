@@ -158,8 +158,8 @@ export default async function StatementDetailPage({ params, searchParams }: Prop
 
       {/* Two-column layout */}
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-3 lg:items-start">
-        {/* Document preview */}
-        <div className="lg:col-span-2">
+        {/* Document preview — scrollable on small screens */}
+        <div className="lg:col-span-2 overflow-x-auto">
           <DocumentPreview
             type="statement"
             {...docPreviewProps}

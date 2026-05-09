@@ -128,8 +128,10 @@ export function DocumentPreview({
     type === 'invoice' ? 'Due Date' : type === 'quote' ? 'Expiry Date' : undefined
 
   return (
-    // Paper shell — white background, constrained width, subtle shadow
-    <div className="w-full rounded-xl bg-white text-zinc-900 shadow-md ring-1 ring-zinc-200 dark:bg-zinc-50 dark:text-zinc-900 dark:ring-zinc-300 print:shadow-none print:ring-0">
+    // A4 paper shell — 794px wide (A4 at 96dpi), min-height 1123px (A4 height).
+    // Fixed width ensures consistent PDF output. Overflow visible so content
+    // can extend beyond one page when printed.
+    <div className="w-[794px] min-h-[1123px] mx-auto rounded-xl bg-white text-zinc-900 shadow-md ring-1 ring-zinc-200 dark:bg-zinc-50 dark:text-zinc-900 dark:ring-zinc-300 print:shadow-none print:ring-0 print:rounded-none print:mx-0">
       {/* ── Header ─────────────────────────────────────────────────────────── */}
       <div className="flex items-start justify-between gap-6 px-10 pt-10 pb-6">
         {/* Company block */}
