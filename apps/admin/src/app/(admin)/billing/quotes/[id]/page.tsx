@@ -44,6 +44,8 @@ export default async function QuoteDetailPage({ params }: Props) {
     },
     client: {
       name: quote.clientName ?? 'No client',
+      email: quote.clientEmail ?? undefined,
+      phone: quote.clientPhone ?? undefined,
     },
     lineItems: quote.lineItems.map((li) => ({
       description: li.description,
@@ -54,6 +56,12 @@ export default async function QuoteDetailPage({ params }: Props) {
     notes: quote.notes ?? undefined,
     terms: quote.terms ?? undefined,
     vatRate: 15 as const,
+    banking: divSettings?.bankName ? {
+      bankName: divSettings.bankName,
+      accountName: divSettings.bankAccountName ?? '',
+      accountNumber: divSettings.bankAccountNumber ?? '',
+      branchCode: divSettings.bankBranchCode ?? '',
+    } : undefined,
   };
 
   const canEdit = ['draft', 'sent', 'accepted'].includes(quote.status);

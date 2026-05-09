@@ -46,7 +46,11 @@ export default async function InvoiceDetailPage({ params }: Props) {
       website: divSettings?.divisionWebsite ?? undefined,
       salesRep: divSettings?.salesRepName ?? undefined,
     },
-    client: { name: invoice.clientName ?? 'No client' },
+    client: {
+      name: invoice.clientName ?? 'No client',
+      email: invoice.clientEmail ?? undefined,
+      phone: invoice.clientPhone ?? undefined,
+    },
     lineItems: invoice.lineItems.map((li) => ({
       description: li.description,
       qty: Number(li.quantity),
@@ -56,6 +60,12 @@ export default async function InvoiceDetailPage({ params }: Props) {
     notes: invoice.notes ?? undefined,
     terms: invoice.terms ?? undefined,
     vatRate: 15 as const,
+    banking: divSettings?.bankName ? {
+      bankName: divSettings.bankName,
+      accountName: divSettings.bankAccountName ?? '',
+      accountNumber: divSettings.bankAccountNumber ?? '',
+      branchCode: divSettings.bankBranchCode ?? '',
+    } : undefined,
   };
 
   // Paid and voided invoices cannot be edited

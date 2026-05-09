@@ -28,6 +28,8 @@ export type QuotationRow = {
   divisionName: string;
   clientId: string | null;
   clientName: string | null;
+  clientEmail: string | null;
+  clientPhone: string | null;
   documentNumber: string;
   status: string;
   quoteDate: string;
@@ -60,6 +62,8 @@ export type InvoiceRow = {
   divisionName: string;
   clientId: string | null;
   clientName: string | null;
+  clientEmail: string | null;
+  clientPhone: string | null;
   documentNumber: string;
   status: string;
   invoiceDate: string;
@@ -184,6 +188,8 @@ function getQuotationRowSelect(includeReference: boolean) {
     divisionName: divisions.name,
     clientId: quotations.clientId,
     clientName: sql<string | null>`COALESCE(${clients.businessName}, ${clients.name})`,
+    clientEmail: clients.email,
+    clientPhone: clients.phone,
     documentNumber: quotations.documentNumber,
     status: quotations.status,
     quoteDate: sql<string>`${quotations.quoteDate}::text`,
@@ -211,6 +217,8 @@ const invoiceRowSelect = {
   divisionName: divisions.name,
   clientId: invoices.clientId,
   clientName: sql<string | null>`COALESCE(${clients.businessName}, ${clients.name})`,
+  clientEmail: clients.email,
+  clientPhone: clients.phone,
   documentNumber: invoices.documentNumber,
   status: invoices.status,
   invoiceDate: sql<string>`${invoices.invoiceDate}::text`,
@@ -451,6 +459,8 @@ export async function getInvoiceById(id: string): Promise<InvoiceDetail | null> 
       divisionName: divisions.name,
       clientId: invoices.clientId,
       clientName: sql<string | null>`COALESCE(${clients.businessName}, ${clients.name})`,
+      clientEmail: clients.email,
+      clientPhone: clients.phone,
       documentNumber: invoices.documentNumber,
       status: invoices.status,
       invoiceDate: sql<string>`${invoices.invoiceDate}::text`,

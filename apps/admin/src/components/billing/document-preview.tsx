@@ -20,6 +20,7 @@ export interface DocumentOrg {
   website?: string
   address?: string
   salesRep?: string
+  logoUrl?: string
 }
 
 export interface DocumentBanking {
@@ -77,13 +78,15 @@ function fmt(amount: number) {
 
 function StatusPill({ status }: { status: string }) {
   const map: Record<string, string> = {
-    Draft:    'bg-muted text-muted-foreground',
-    Sent:     'bg-blue-50 text-blue-700 dark:bg-blue-950 dark:text-blue-300',
-    Paid:     'bg-emerald-50 text-emerald-700 dark:bg-emerald-950 dark:text-emerald-300',
-    Overdue:  'bg-red-50 text-red-700 dark:bg-red-950 dark:text-red-300',
-    Accepted: 'bg-emerald-50 text-emerald-700 dark:bg-emerald-950 dark:text-emerald-300',
-    Declined: 'bg-red-50 text-red-700 dark:bg-red-950 dark:text-red-300',
-    Expired:  'bg-orange-50 text-orange-700 dark:bg-orange-950 dark:text-orange-300',
+    Draft:    'bg-zinc-100 text-zinc-500',
+    Sent:     'bg-blue-50 text-blue-700',
+    Paid:     'bg-emerald-50 text-emerald-700',
+    Overdue:  'bg-red-50 text-red-700',
+    Accepted: 'bg-emerald-50 text-emerald-700',
+    Declined: 'bg-red-50 text-red-700',
+    Expired:  'bg-orange-50 text-orange-700',
+    Issued:   'bg-blue-50 text-blue-700',
+    Void:     'bg-zinc-100 text-zinc-500',
   }
   return (
     <span className={cn('inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium', map[status] ?? map['Draft'])}>
@@ -129,34 +132,44 @@ export function DocumentPreview({
 
   return (
     // A4 paper shell — 794px wide (A4 at 96dpi), min-height 1123px (A4 height).
-    // Fixed width ensures consistent PDF output. Overflow visible so content
-    // can extend beyond one page when printed.
-    <div className="w-[794px] min-h-[1123px] mx-auto rounded-xl bg-white text-zinc-900 shadow-md ring-1 ring-zinc-200 dark:bg-zinc-50 dark:text-zinc-900 dark:ring-zinc-300 print:shadow-none print:ring-0 print:rounded-none print:mx-0">
+    <div className="w-[794px] min-h-[1123px] mx-auto flex flex-col bg-white text-zinc-900 shadow-md ring-1 ring-zinc-200 print:shadow-none print:ring-0">
+
       {/* ── Header ─────────────────────────────────────────────────────────── */}
       <div className="flex items-start justify-between gap-6 px-10 pt-10 pb-6">
-        {/* Company block */}
-        <div className="flex flex-col gap-1">
-          <span className="text-xl font-bold tracking-tight">{org.name}</span>
-          {org.registrationNumber && (
-            <span className="text-xs text-zinc-500">Reg: {org.registrationNumber}</span>
-          )}
-          {org.vatNumber && (
-            <span className="text-xs text-zinc-500">VAT: {org.vatNumber}</span>
-          )}
-          {org.address && (
-            <span className="mt-1 text-xs text-zinc-500 whitespace-pre-line">{org.address}</span>
-          )}
-          {org.email && <span className="text-xs text-zinc-500">{org.email}</span>}
-          {org.phone && <span className="text-xs text-zinc-500">{org.phone}</span>}
-          {org.website && <span className="text-xs text-zinc-500">{org.website}</span>}
-          {org.salesRep && (
-            <span className="mt-1 text-xs text-zinc-500">Rep: {org.salesRep}</span>
-          )}
+
+        {/* Left: Logo + Company info */}
+        <div className="flex items-start gap-4">
+          {/* Logo placeholder — shows initials if no logo */}
+          <div className="flex size-14 shrink-0 items-center justify-center rounded-lg bg-zinc-100 text-zinc-400 text-xs font-bold overflow-hidden">
+            {org.logoUrl
+              ? <img src={org.logoUrl} alt={org.name} className="w-full h-full object-contain" />
+              : org.name.slice(0, 3).toUpperCase()
+            }
+          </div>
+
+          <div className="flex flex-col gap-0.5">
+            <span className="text-lg font-bold tracking-tight">{org.name}</span>
+            {org.registrationNumber && (
+              <span className="text-xs text-zinc-500">Reg: {org.registrationNumber}</span>
+            )}
+            {org.vatNumber && (
+              <span className="text-xs text-zinc-500">VAT: {org.vatNumber}</span>
+            )}
+            {org.address && (
+              <span className="mt-0.5 text-xs text-zinc-500 whitespace-pre-line">{org.address}</span>
+            )}
+            {org.email && <span className="text-xs text-zinc-500">{org.email}</span>}
+            {org.phone && <span className="text-xs text-zinc-500">{org.phone}</span>}
+            {org.website && <span className="text-xs text-zinc-500">{org.website}</span>}
+            {org.salesRep && (
+              <span className="text-xs text-zinc-500">Rep: {org.salesRep}</span>
+            )}
+          </div>
         </div>
 
-        {/* Document type + number + status — sticky as you scroll */}
-        <div className="sticky top-4 flex flex-col items-end gap-2">
-          <span className="text-2xl font-bold uppercase tracking-widest text-zinc-300">
+        {/* Right: Document type + number + status */}
+        <div className="flex flex-col items-end gap-2 shrink-0">
+          <span className="text-2xl font-bold uppercase tracking-widest text-zinc-200">
             {typeLabel}
           </span>
           <span className="text-sm font-semibold text-zinc-700">#{number}</span>
@@ -174,10 +187,11 @@ export function DocumentPreview({
 
       <div className="mx-10 border-t border-zinc-100" />
 
-      {/* ── Meta grid ──────────────────────────────────────────────────────── */}
-      <div className="grid grid-cols-2 gap-6 px-10 py-6 sm:grid-cols-4">
+      {/* ── Meta: Bill To + Dates (inline, far right) ──────────────────────── */}
+      <div className="flex items-start justify-between gap-6 px-10 py-6">
+
         {/* Bill To */}
-        <div className="col-span-2 flex flex-col gap-1">
+        <div className="flex flex-col gap-1">
           <span className="text-[10px] font-semibold uppercase tracking-widest text-zinc-400">
             {type === 'statement' ? 'Account' : 'Bill To'}
           </span>
@@ -189,31 +203,31 @@ export function DocumentPreview({
           {client.phone && <span className="text-xs text-zinc-500">{client.phone}</span>}
         </div>
 
-        {/* Dates / period */}
+        {/* Dates — inline, far right */}
         {type === 'statement' ? (
-          <>
-            <div className="flex flex-col gap-1">
+          <div className="flex gap-8 shrink-0">
+            <div className="flex flex-col items-end gap-0.5">
               <span className="text-[10px] font-semibold uppercase tracking-widest text-zinc-400">Period From</span>
               <span className="text-sm font-medium">{periodFrom ?? '—'}</span>
             </div>
-            <div className="flex flex-col gap-1">
+            <div className="flex flex-col items-end gap-0.5">
               <span className="text-[10px] font-semibold uppercase tracking-widest text-zinc-400">Period To</span>
               <span className="text-sm font-medium">{periodTo ?? '—'}</span>
             </div>
-          </>
+          </div>
         ) : (
-          <>
-            <div className="flex flex-col gap-1">
+          <div className="flex flex-col gap-1 items-end shrink-0">
+            <div className="flex items-center gap-3">
               <span className="text-[10px] font-semibold uppercase tracking-widest text-zinc-400">Issue Date</span>
               <span className="text-sm font-medium">{issueDate}</span>
             </div>
-            <div className="flex flex-col gap-1">
-              <span className="text-[10px] font-semibold uppercase tracking-widest text-zinc-400">
-                {dueDateLabel}
-              </span>
-              <span className="text-sm font-medium">{dueDate ?? '—'}</span>
-            </div>
-          </>
+            {dueDateLabel && (
+              <div className="flex items-center gap-3">
+                <span className="text-[10px] font-semibold uppercase tracking-widest text-zinc-400">{dueDateLabel}</span>
+                <span className="text-sm font-medium">{dueDate ?? '—'}</span>
+              </div>
+            )}
+          </div>
         )}
       </div>
 
@@ -263,10 +277,12 @@ export function DocumentPreview({
                 <span>Subtotal</span>
                 <span className="tabular-nums">{fmt(subtotal)}</span>
               </div>
-              <div className="flex justify-between text-sm text-zinc-600">
-                <span>VAT ({vatRate}%)</span>
-                <span className="tabular-nums">{fmt(vat)}</span>
-              </div>
+              {vat > 0 && (
+                <div className="flex justify-between text-sm text-zinc-600">
+                  <span>VAT ({vatRate}%)</span>
+                  <span className="tabular-nums">{fmt(vat)}</span>
+                </div>
+              )}
               <div className="border-t border-zinc-200 pt-2 flex justify-between text-sm font-bold text-zinc-900">
                 <span>Total</span>
                 <span className="tabular-nums">{fmt(total)}</span>
@@ -366,10 +382,10 @@ export function DocumentPreview({
       {/* ── Banking details ─────────────────────────────────────────────────── */}
       {banking && (
         <div className="mx-10 border-t border-zinc-100 pt-5 pb-6">
-          <p className="text-[10px] font-semibold uppercase tracking-widest text-zinc-400 mb-2">
+          <p className="text-[10px] font-semibold uppercase tracking-widest text-zinc-400 mb-3">
             Banking Details
           </p>
-          <div className="grid grid-cols-2 gap-x-8 gap-y-1 sm:grid-cols-4">
+          <div className="grid grid-cols-4 gap-x-6 gap-y-2">
             {[
               { label: 'Bank', value: banking.bankName },
               { label: 'Account Name', value: banking.accountName },
@@ -378,23 +394,17 @@ export function DocumentPreview({
             ].map((f) => (
               <div key={f.label} className="flex flex-col gap-0.5">
                 <span className="text-[10px] text-zinc-400">{f.label}</span>
-                <span className="text-xs font-medium text-zinc-700">{f.value}</span>
+                <span className="text-xs font-semibold text-zinc-700">{f.value}</span>
               </div>
             ))}
           </div>
         </div>
       )}
 
-      {/* ── Footer ─────────────────────────────────────────────────────────── */}
-      <div className="mx-10 border-t border-zinc-100 py-4 flex items-center justify-between">
-        <div className="flex flex-col">
-          <span className="text-[10px] text-zinc-400">{org.name}</span>
-          {org.divisionOf && (
-            <span className="text-[10px] text-zinc-400">A division of {org.divisionOf}</span>
-          )}
-        </div>
+      {/* ── Footer — pinned to bottom ───────────────────────────────────── */}
+      <div className="mt-auto mx-10 border-t border-zinc-100 py-4 flex items-center justify-between">
         <span className="text-[10px] text-zinc-400">
-          {org.email ?? ''}{org.phone ? ` · ${org.phone}` : ''}
+          {org.divisionOf ? `A division of ${org.divisionOf}` : ''}
         </span>
         <span className="text-[10px] text-zinc-400">Thank you for your business.</span>
       </div>
