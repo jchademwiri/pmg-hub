@@ -385,15 +385,15 @@ export function DocumentPreview({
           <p className="text-[10px] font-semibold uppercase tracking-widest text-zinc-400 mb-3">
             Banking Details
           </p>
-          <div className="grid grid-cols-4 gap-x-6 gap-y-2">
+          <div className="flex flex-col gap-1.5">
             {[
               { label: 'Bank', value: banking.bankName },
               { label: 'Account Name', value: banking.accountName },
               { label: 'Account Number', value: banking.accountNumber },
               { label: 'Branch Code', value: banking.branchCode },
             ].map((f) => (
-              <div key={f.label} className="flex flex-col gap-0.5">
-                <span className="text-[10px] text-zinc-400">{f.label}</span>
+              <div key={f.label} className="flex items-center gap-2">
+                <span className="text-xs text-zinc-400 w-32 shrink-0">{f.label}:</span>
                 <span className="text-xs font-semibold text-zinc-700">{f.value}</span>
               </div>
             ))}
