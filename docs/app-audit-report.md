@@ -1,37 +1,38 @@
-# PMG Control Center — App Audit Report (Revision 5)
+# PMG Control Center — App Audit Report (Revision 6)
 **Date:** May 2026  
-**Previous revisions:** Rev 1 (3 fixes) · Rev 2 (10 wins) · Rev 3 (5 wins) · Rev 4 (10 wins)  
+**Previous revisions:** Rev 1–5 (28 quick wins applied)  
 **All previous quick wins confirmed applied ✅**
 
 ---
 
-## ✅ Rev 4 Quick Wins — All Confirmed Applied
+## ✅ Rev 5 Changes — Confirmed Applied
 
-All 10 quick wins from Revision 4 (QW-16 through QW-25) have been verified as applied:
+| Change | Status |
+|---|---|
+| `link-payment-button.tsx` deleted | ✅ File gone |
+| `linkInvoiceToIncome` action removed from `billing-invoices.ts` | ✅ Removed |
+| `getUnlinkedIncomeForClient` removed from invoice detail page | ✅ Removed |
+| `LinkPaymentButton` removed from `invoice-detail-actions.tsx` | ✅ Removed |
+| `UnlinkedIncomeRow` interface removed | ✅ Removed |
+| `linkPaymentAction` / `unlinkedIncome` props removed | ✅ Removed |
+| `getIncomeById` dead import removed from `billing-invoices.ts` | ✅ Removed |
 
-| QW | Description | Status |
-|---|---|---|
-| QW-16 | Format dates in quotes list table | ✅ `fmtDate()` |
-| QW-17 | Format dates in invoices list table | ✅ `fmtDate()` |
-| QW-18 | Format "Issued" date in quote/invoice detail headers | ✅ `fmtDate()` |
-| QW-19 | Format dates in client detail income history | ✅ `fmtDate()` |
-| QW-20 | Format dates in division detail income/expense history | ✅ `fmtDate()` |
-| QW-21 | Format dates in accounts detail page | ✅ `fmtDate()` |
-| QW-22 | Format dates in statement income records section | ✅ `fmtDate()` |
-| QW-23 | Format dates in link-payment-button dropdown | ✅ `fmtDate()` |
-| QW-24 | Format `lastActivityDate` in statements list | ✅ `fmtDate()` |
-| QW-25 | Add `title="Coming soon"` to Upload Logo button | ✅ Applied |
-
-A shared `fmtDate()` helper in `apps/admin/src/lib/format.ts` now handles all date formatting consistently across the app. A `fmtDateLong()` variant is used for printed documents.
+**Exported actions in `billing-invoices.ts` (current):**
+`createInvoice` · `updateInvoice` · `convertQuoteToInvoice` · `issueInvoice` · `markInvoicePaid` · `voidInvoice`
 
 ---
 
-## ⚡ Quick Wins — Revision 5 (< 30 min each)
+## ⚡ Quick Wins — Revision 6 (< 30 min each)
 
 ### QW-26 — Add `fmtDateTime()` helper and use it for activity timestamps
 **Effort:** 10 min  
 **Files:** `apps/admin/src/lib/format.ts`, `billing/quotes/[id]/page.tsx`, `billing/invoices/[id]/page.tsx`  
-**Issue:** Activity section timestamps in quote and invoice detail pages use an inline `new Date().toLocaleString('en-ZA', {...})` call instead of the shared format helpers. Inconsistent with the rest of the app.  
+**Issue:** Activity card timestamps in both detail pages use inline `new Date(...).toLocaleString('en-ZA', {...})` calls. The options object is duplicated across 3 places. Inconsistent with the rest of the app which uses shared helpers from `lib/format.ts`.  
+**Affected lines:**
+- `quotes/[id]/page.tsx` line ~148 — `quote.createdAt`
+- `invoices/[id]/page.tsx` line ~160 — `invoice.paidAt`
+- `invoices/[id]/page.tsx` line ~170 — `invoice.createdAt`
+
 **Fix:**
 ```ts
 // lib/format.ts — add:
@@ -44,61 +45,46 @@ export function fmtDateTime(value: string | Date | null | undefined): string {
   })
 }
 ```
-Then replace the inline `new Date().toLocaleString(...)` calls in both detail pages with `fmtDateTime(...)`.
-
-### QW-27 — Add `title` to disabled "Confirm Link" button in link-payment-button
-**Effort:** 5 min  
-**File:** `apps/admin/src/components/billing/link-payment-button.tsx`  
-**Issue:** The "Confirm Link" button is disabled when no income record is selected but has no `title` attribute explaining why.  
-**Fix:**
-```tsx
-<Button
-  ...
-  disabled={!selectedId}
-  title={!selectedId ? 'Select an income record to link' : undefined}
->
-```
+Then replace all 3 inline calls with `fmtDateTime(...)`.
 
 ---
 
 ## 📅 Complete Date Format Audit
 
-### ✅ All locations now formatted correctly
+### ✅ All UI date fields formatted correctly
 
-| Location | Field | Format |
+| Location | Field(s) | Format |
 |---|---|---|
-| Quotes list table | `quoteDate`, `expiryDate` | ✅ `fmtDate()` |
-| Invoices list table | `invoiceDate`, `dueDate` | ✅ `fmtDate()` |
-| Quote detail header subtitle | `quoteDate` | ✅ `fmtDate()` |
-| Invoice detail header subtitle | `invoiceDate` | ✅ `fmtDate()` |
+| Quotes list | `quoteDate`, `expiryDate` | ✅ `fmtDate()` |
+| Invoices list | `invoiceDate`, `dueDate` | ✅ `fmtDate()` |
+| Quote detail header | `quoteDate` | ✅ `fmtDate()` |
+| Invoice detail header | `invoiceDate` | ✅ `fmtDate()` |
+| Invoice detail — paid state | `paidAt` | ✅ `fmtDate()` |
 | Client detail — income history | `entry.date` | ✅ `fmtDate()` |
 | Division detail — income/expense history | `e.date` | ✅ `fmtDate()` |
 | Accounts detail — statement table | `row.date` | ✅ `fmtDate()` |
 | Statement detail — income records | `inc.date` | ✅ `fmtDate()` |
-| Link Payment dropdown | `row.date` | ✅ `fmtDate()` |
 | Statements list — last activity | `lastActivityDate` | ✅ `fmtDate()` |
-| Income table | `date` | ✅ `toLocaleDateString` |
-| Expense table | `date` | ✅ `toLocaleDateString` |
-| Ledger table | `date` | ✅ `toLocaleDateString` |
-| Document preview (all dates) | all | ✅ `fmtDateLong()` |
-| Snapshot periods | all | ✅ `toLocaleString` |
+| Document preview — all dates | all | ✅ `fmtDateLong()` |
+| Income/expense filter bars — month labels | `month + '-01'` | ✅ `toLocaleString` (month+year only, correct) |
+| Snapshots list — period labels | `period + '-01'` | ✅ `toLocaleString` (month+year only, correct) |
 
 ### ⚠️ Minor inconsistency (QW-26)
 
 | Location | Field | Issue |
 |---|---|---|
-| Quote detail — activity section | timestamp | Inline `toLocaleString` instead of shared helper |
-| Invoice detail — activity section | timestamp | Inline `toLocaleString` instead of shared helper |
+| Quote detail — Activity card | `quote.createdAt` | Inline `toLocaleString` — should use `fmtDateTime()` |
+| Invoice detail — Activity card | `invoice.paidAt`, `invoice.createdAt` | Inline `toLocaleString` — should use `fmtDateTime()` |
 
 ---
 
 ## 🟡 Medium Priority
 
 ### M-1 — Overdue invoice auto-flagging ⭐ (still pending)
-**Issue:** `getAllInvoices` in `packages/db/src/queries/billing.ts` returns the raw DB status. Invoices past their due date still show `issued` in the DB and in the UI. The "Overdue" stat on the invoices page counts `status = 'overdue'` rows, which will always be 0 unless someone manually sets that status.  
-**Fix:** Add a computed status transform after the DB fetch in `getAllInvoices` and `getInvoiceById`:
+**Issue:** `getAllInvoices` returns the raw DB `status` column. No computed transform exists. Invoices past their due date stay as `issued` in the DB indefinitely. The "Overdue" stat card on the invoices page counts `status = 'overdue'` rows — which will always be 0 unless someone manually sets that status via a direct DB update.  
+**Note:** `invoice-detail-actions.tsx` does compute `isOverdue` client-side from `dueDate` to show the amber banner, but this doesn't affect the stored status or the list page stat.  
+**Fix:** Add a computed transform in `getAllInvoices` (and `getInvoiceById`) after the DB fetch:
 ```ts
-// After fetching rows:
 const today = new Date().toISOString().slice(0, 10)
 data = data.map(inv => ({
   ...inv,
@@ -109,29 +95,29 @@ data = data.map(inv => ({
 ```
 No DB write needed — purely computed at read time.
 
-### M-2 — Search on Clients and Invoices ⭐ (still pending)
-**Issue:** No free-text search on any list page. Clients page has no filter bar at all. Invoices page supports `divisionId` and `status` URL params but no text search.  
-**Fix:** Add a search input to the filter bars; pass a `query` param to `getAllInvoices` / `getClientsWithIncomeCount` and add `ILIKE '%query%'` conditions on name/document number.
+### M-2 — Free-text search on Clients and Invoices ⭐ (still pending)
+**Issue:** No text search on any list page. Invoices and quotes support `divisionId` + `status` URL filters but no name/number search. Clients page has no filter bar at all.  
+**Fix:** Add a search input to the filter bars; pass a `query` param to `getAllInvoices` / `getAllQuotations` / `getClientsWithIncomeCount` and add `ILIKE '%query%'` conditions on client name and document number.
 
 ### M-3 — Mark Paid from invoice list dropdown (still pending)
-**Issue:** "Mark Paid" exists on the invoice detail page (`MarkPaidButton`) but is not available from the invoices list row dropdown. The dropdown only has View, Issue Invoice, and Void.  
-**Fix:** Add a "Mark Paid" item to the `DropdownMenuContent` in `invoices-client.tsx` for `issued`/`overdue` invoices, wired to the existing `markInvoicePaid` server action.
+**Issue:** `MarkPaidButton` exists and works on the invoice detail page, but the invoices list row dropdown only has View, Issue Invoice, and Void. Users must navigate into each invoice to mark it paid.  
+**Fix:** Add a "Mark Paid" `DropdownMenuItem` in `invoices-client.tsx` for `issued`/`overdue` rows, wired to the existing `markInvoicePaid` server action (already imported in `invoices/page.tsx`).
 
 ### M-4 — Client detail → New Invoice shortcut (still pending)
-**Issue:** No "New Invoice" button on the client detail page. Users must navigate to `/billing/invoices/new` and re-select the client.  
-**Fix:** Add a "New Invoice" button to the client detail header that links to `/billing/invoices/new?clientId={id}`, and pre-fill the client field in the invoice form when `clientId` is present in search params.
+**Issue:** No "New Invoice" button on the client detail page. Users must navigate to `/billing/invoices/new` and manually re-select the client.  
+**Fix:** Add a "New Invoice" button linking to `/billing/invoices/new?clientId={id}`. Pre-fill the client field in the invoice form when `clientId` is present in search params.
 
-### M-5 — Dynamic account locking (still pending — 2 TODO comments)
-**Issue:** `LOCKED_ACCOUNTS` in `apps/admin/src/lib/accounts.ts` is a hardcoded `const` array with a `// TODO` comment. Locking/unlocking an account requires a code change and redeploy.  
-**Fix:** Move locked accounts to a DB settings table; read via a cached query. Remove the TODO comments.
+### M-5 — Dynamic account locking (still pending — 1 TODO comment)
+**Issue:** `LOCKED_ACCOUNTS` in `apps/admin/src/lib/accounts.ts` is a hardcoded `const` array. Locking or unlocking an account requires a code change and redeploy. A `// TODO` comment acknowledges this.  
+**Fix:** Move locked accounts to a DB settings table; read via a cached query. Remove the TODO.
 
 ### M-6 — Unsaved changes warning on settings forms (still pending)
-**Issue:** Settings forms (org settings, etc.) have no `isDirty` guard. Navigating away silently discards edits.  
+**Issue:** Settings forms have no `isDirty` guard. Navigating away silently discards edits.  
 **Fix:** Track `isDirty` state; add a `beforeunload` listener and/or a confirmation dialog on navigation when there are unsaved changes.
 
 ### M-7 — Statement list — year filter (still pending)
-**Issue:** The statements list shows all clients with billing activity but has no way to filter by year. For clients with multi-year history this makes the "Last Activity" column less useful.  
-**Fix:** Add a year dropdown to the statements list page; pass the selected year to `getClientsWithBillingActivity` and filter `lastActivityDate` accordingly.
+**Issue:** The statements list (`/billing/statements`) shows all clients with no year filter. The statement detail page already supports `?year=` filtering, but there's no way to reach it from the list with a year pre-selected.  
+**Fix:** Add a year dropdown to the statements list page; pass the selected year through to the client statement links.
 
 ---
 
@@ -144,46 +130,69 @@ No DB write needed — purely computed at read time.
 | Security settings | "Soon" badge |
 | Data & Exports | "Soon" badge |
 | Notification settings | Not started |
+| Logo upload | Disabled button (`title="Coming soon"`) |
 
 ---
 
-## ✅ Confirmed Working (all previous fixes)
+## 📊 Complete Date Format Reference
 
-All 25 previous quick wins confirmed applied. Zero TypeScript errors. Clean build.
+### `lib/format.ts` — current helpers
+
+| Function | Output | Use case |
+|---|---|---|
+| `fmtDate(value)` | `08 May 2026` | All UI date fields |
+| `fmtDateLong(value)` | `08 May 2026` (long month) | Printed documents |
+| `formatZAR(amount)` | `R 1 234.56` | All currency fields |
+| *(missing)* `fmtDateTime(value)` | `08 May 2026, 14:30` | Activity timestamps (QW-26) |
+
+---
+
+## ✅ Confirmed Working — Full Inventory
+
+| Area | Detail |
+|---|---|
+| All 28 previous quick wins | Applied and verified |
+| Date formatting | Consistent `fmtDate()` / `fmtDateLong()` across all UI |
+| Disabled buttons | All have `title="Coming soon"` or tooltip |
+| Link Payment flow | Fully removed (migration complete) |
+| Invoice actions | `createInvoice`, `updateInvoice`, `convertQuoteToInvoice`, `issueInvoice`, `markInvoicePaid`, `voidInvoice` |
+| Quote actions | `createQuotation`, `updateQuotation`, `updateQuotationStatus`, `deleteQuotation` |
+| Statement year filter | Working via `?year=` param on detail page |
+| Overdue banner | Shows client-side on invoice detail when past due date |
+| TypeScript | Zero errors |
 
 ---
 
 ## 📊 Scores
 
-| Area | Rev 4 | Rev 5 | Notes |
+| Area | Rev 5 | Rev 6 | Notes |
 |---|---|---|---|
 | Functionality | 9/10 | 9/10 | Overdue flagging, search, Mark Paid from list still pending |
-| Usability | 8/10 | 8.5/10 | All date fixes applied; minor timestamp inconsistency remains |
-| Code Quality | 9.5/10 | 9.5/10 | 2 TODO comments remain (LOCKED_ACCOUNTS) |
+| Usability | 8.5/10 | 8.5/10 | QW-26 (fmtDateTime) still pending |
+| Code Quality | 9.5/10 | 9.5/10 | 1 TODO remains (LOCKED_ACCOUNTS); link payment dead code fully removed |
 | Performance | 8/10 | 8/10 | No change |
 | Security | 9.5/10 | 9.5/10 | No change |
 | Accessibility | 7/10 | 7/10 | No change |
-| **Overall** | **8.5** | **8.6** | **↑** |
+| **Overall** | **8.6** | **8.6** | Stable — cleanup complete, medium items remain |
 
 ---
 
 ## 🎯 Recommended Next Actions
 
-**Do now (< 30 min total):**
-1. QW-26 — Add `fmtDateTime()` helper + use in activity sections
-2. QW-27 — Add `title` to disabled Confirm Link button
+**Do now (< 15 min):**
+1. QW-26 — Add `fmtDateTime()` to `lib/format.ts` and replace 3 inline `toLocaleString` calls
 
 **Do this week:**
-3. M-1 — Overdue invoice auto-flagging (1 hour) ⭐ highest impact
-4. M-3 — Mark Paid from invoice list dropdown (30 min)
-5. M-2 — Search on Clients and Invoices (2–3 hours)
+2. M-1 — Overdue invoice auto-flagging (1 hour) ⭐ highest impact — fixes the always-zero stat
+3. M-3 — Mark Paid from invoice list dropdown (30 min)
 
 **Do this sprint:**
-6. M-4 — Client detail → New Invoice shortcut (1 hour)
-7. M-5 — Dynamic account locking (2 hours)
-8. M-6 — Unsaved changes warning (1 hour)
-9. M-7 — Statement list year filter (1 hour)
+4. M-2 — Free-text search on Clients and Invoices (2–3 hours)
+5. M-4 — Client detail → New Invoice shortcut (1 hour)
+6. M-5 — Dynamic account locking (2 hours)
+7. M-6 — Unsaved changes warning (1 hour)
+8. M-7 — Statement list year filter (1 hour)
 
 ---
 
-*Updated: May 2026 — PMG Control Center Audit Revision 5*
+*Updated: May 2026 — PMG Control Center Audit Revision 6*

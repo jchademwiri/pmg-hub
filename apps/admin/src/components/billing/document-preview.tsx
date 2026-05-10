@@ -58,6 +58,8 @@ export interface DocumentPreviewProps {
   terms?: string
   banking?: DocumentBanking
   vatRate?: number
+  /** Pre-computed discount amount (positive number). If provided, shown as a deduction in the totals block. */
+  discountAmount?: number
   /** Optional link shown on the sticky header — useful during development */
   href?: string
 }
@@ -115,15 +117,17 @@ export function DocumentPreview({
   terms,
   banking,
   vatRate = 15,
+  discountAmount = 0,
   href,
 }: DocumentPreviewProps) {
-  // Totals
+  // Totals — discount is applied after subtotal, before VAT
   const subtotal = lineItems.reduce((sum, i) => sum + i.qty * i.unitPrice, 0)
+  const vatBase = subtotal - discountAmount
   const vat = lineItems.reduce(
     (sum, i) => sum + (i.vatApplicable ? i.qty * i.unitPrice * (vatRate / 100) : 0),
     0,
   )
-  const total = subtotal + vat
+  const total = vatBase + vat
 
   const typeLabel =
     type === 'invoice' ? 'Invoice' : type === 'quote' ? 'Quotation' : 'Statement'
@@ -278,6 +282,12 @@ export function DocumentPreview({
                 <span>Subtotal</span>
                 <span className="tabular-nums">{fmt(subtotal)}</span>
               </div>
+              {discountAmount > 0 && (
+                <div className="flex justify-between text-sm text-orange-600">
+                  <span>Discount</span>
+                  <span className="tabular-nums">−{fmt(discountAmount)}</span>
+                </div>
+              )}
               {vat > 0 && (
                 <div className="flex justify-between text-sm text-zinc-600">
                   <span>VAT ({vatRate}%)</span>

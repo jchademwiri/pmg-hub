@@ -56,6 +56,7 @@ export default async function QuoteDetailPage({ params }: Props) {
     notes: quote.notes ?? divSettings?.quoteNotes ?? undefined,
     terms: quote.terms ?? undefined,
     vatRate: 15 as const,
+    discountAmount: Number(quote.discountAmount ?? 0),
     banking: divSettings?.bankName ? {
       bankName: divSettings.bankName,
       accountName: divSettings.bankAccountName ?? '',

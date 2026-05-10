@@ -324,15 +324,15 @@ export function QuoteFormClient({
 
           {/* Discount */}
           <div className="flex items-center gap-2">
-            <select
-              value={discountType}
-              onChange={(e) => setDiscountType(e.target.value as 'percent' | 'amount')}
-              aria-label="Discount type"
-              className="h-8 rounded-md border border-input bg-background px-2 text-sm"
-            >
-              <option value="percent">%</option>
-              <option value="amount">R</option>
-            </select>
+            <Select value={discountType} onValueChange={(v) => setDiscountType(v as 'percent' | 'amount')}>
+              <SelectTrigger className="h-8 w-28" aria-label="Discount type">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="percent">% Percent</SelectItem>
+                <SelectItem value="amount">R Amount</SelectItem>
+              </SelectContent>
+            </Select>
             <Input
               type="number"
               min="0"
