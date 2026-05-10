@@ -1,6 +1,6 @@
 import Link from 'next/link'
 import { cn } from '@/lib/utils'
-import { fmtDate, fmtDateLong } from '@/lib/format'
+import { fmtDateLong, formatZAR } from '@/lib/format'
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 
@@ -74,7 +74,7 @@ export interface StatementTransaction {
 // ── Helpers ───────────────────────────────────────────────────────────────────
 
 function fmt(amount: number) {
-  return `R ${amount.toLocaleString('en-ZA', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
+  return formatZAR(amount)
 }
 
 function StatusPill({ status }: { status: string }) {

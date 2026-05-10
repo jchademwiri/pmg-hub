@@ -6,6 +6,7 @@ import { useTransition } from 'react';
 import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
 import { fmtDate } from '@/lib/format';
+import { MarkPaidButton } from '@/components/billing/mark-paid-button';
 import { VoidInvoiceButton } from '@/components/billing/void-invoice-button';
 import { LinkPaymentButton } from '@/components/billing/link-payment-button';
 

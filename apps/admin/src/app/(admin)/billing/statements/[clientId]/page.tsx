@@ -30,7 +30,7 @@ export default async function StatementDetailPage({ params, searchParams }: Prop
 
   if (!statement) notFound();
 
-  const { client, summary, quotes, invoices } = statement;
+  const { client, summary, invoices } = statement;
 
   // ── Build transaction history ─────────────────────────────────────────────
   // Each non-void invoice = debit; each income record for this client = credit
