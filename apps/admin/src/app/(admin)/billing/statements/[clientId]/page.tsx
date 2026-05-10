@@ -8,7 +8,7 @@ import { Separator } from '@/components/ui/separator';
 import { DocumentPreview } from '@/components/billing/document-preview';
 import type { StatementTransaction } from '@/components/billing/document-preview';
 import { getClientStatement, getAllIncome } from '@pmg/db';
-import { formatZAR } from '@/lib/format';
+import { formatZAR, fmtDate } from '@/lib/format';
 
 export const dynamic = 'force-dynamic';
 export const metadata: Metadata = { title: 'Statement' };
@@ -254,7 +254,7 @@ export default async function StatementDetailPage({ params, searchParams }: Prop
               <tbody>
                 {incomeResult.data.map((inc) => (
                   <tr key={inc.id} className="border-b last:border-0">
-                    <td className="px-6 py-3 tabular-nums text-muted-foreground">{inc.date}</td>
+                    <td className="px-6 py-3 tabular-nums text-muted-foreground">{fmtDate(inc.date)}</td>
                     <td className="px-6 py-3">{inc.divisionName}</td>
                     <td className="px-6 py-3 text-muted-foreground">{inc.description ?? '—'}</td>
                     <td className="px-6 py-3 text-right tabular-nums font-medium text-green-600 dark:text-green-400">

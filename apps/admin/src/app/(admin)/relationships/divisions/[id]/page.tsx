@@ -2,7 +2,7 @@ import type { Metadata } from 'next'
 import Link from 'next/link'
 import { notFound } from 'next/navigation'
 import { getDivisionWithStatsById, getAllIncome, getAllExpenses } from '@pmg/db'
-import { formatZAR } from '@/lib/format'
+import { formatZAR, fmtDate } from '@/lib/format'
 import { Badge } from '@/components/ui/badge'
 import {
   Table, TableBody, TableCell, TableHead, TableHeader, TableRow,
@@ -78,7 +78,7 @@ export default async function DivisionDetailPage({ params }: DivisionDetailPageP
             <TableBody>
               {incomeEntries.data.map((e) => (
                 <TableRow key={e.id}>
-                  <TableCell>{e.date}</TableCell>
+                  <TableCell>{fmtDate(e.date)}</TableCell>
                   <TableCell>{e.clientName ?? '—'}</TableCell>
                   <TableCell>{e.description ?? '—'}</TableCell>
                   <TableCell className="text-right tabular-nums font-medium text-green-500">
@@ -112,7 +112,7 @@ export default async function DivisionDetailPage({ params }: DivisionDetailPageP
             <TableBody>
               {expenseEntries.data.map((e) => (
                 <TableRow key={e.id}>
-                  <TableCell>{e.date}</TableCell>
+                  <TableCell>{fmtDate(e.date)}</TableCell>
                   <TableCell>{e.category}</TableCell>
                   <TableCell>{e.description ?? '—'}</TableCell>
                   <TableCell className="text-right tabular-nums font-medium text-amber-500">

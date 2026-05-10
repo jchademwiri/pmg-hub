@@ -7,7 +7,7 @@ import {
   getAllIncome,
   getYTDSummary,
 } from '@pmg/db';
-import { formatZAR } from '@/lib/format';
+import { formatZAR, fmtDate } from '@/lib/format';
 import { ACCOUNT_KEYS, ACCOUNT_LABELS } from '@/lib/accounts';
 import {
   Table,
@@ -161,7 +161,7 @@ export default async function AccountHistoryPage({ params }: AccountHistoryPageP
           <TableBody>
             {displayRows.map((row, i) => (
               <TableRow key={i}>
-                <TableCell className="text-muted-foreground text-sm">{row.date}</TableCell>
+                <TableCell className="text-muted-foreground text-sm">{fmtDate(row.date)}</TableCell>
                 <TableCell>{row.description}</TableCell>
                 <TableCell>
                   <span

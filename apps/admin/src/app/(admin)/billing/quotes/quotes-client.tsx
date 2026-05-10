@@ -22,7 +22,7 @@ import {
 } from '@/components/ui/table';
 import { EmptyState } from '@/components/ui/empty-state';
 import { BillingStatusBadge } from '@/components/billing/billing-status-badge';
-import { formatZAR } from '@/lib/format';
+import { formatZAR, fmtDate } from '@/lib/format';
 import type { QuotationRow } from '@pmg/db';
 
 interface QuotesClientProps {
@@ -129,9 +129,11 @@ export function QuotesClient({
               <TableCell className="text-muted-foreground">
                 {quote.clientName ?? <span className="italic">No client</span>}
               </TableCell>
-              <TableCell className="tabular-nums text-sm">{quote.quoteDate}</TableCell>
+              <TableCell className="tabular-nums text-sm">
+                {fmtDate(quote.quoteDate)}
+              </TableCell>
               <TableCell className="tabular-nums text-sm text-muted-foreground">
-                {quote.expiryDate ?? '—'}
+                {fmtDate(quote.expiryDate)}
               </TableCell>
               <TableCell className="text-right tabular-nums text-sm font-medium">
                 {formatZAR(Number(quote.total))}

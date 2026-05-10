@@ -4,7 +4,7 @@ import { notFound } from 'next/navigation'
 import { getClientById, getAllIncome } from '@pmg/db'
 import { updateClient } from '@/app/actions/clients'
 import { ClientEditForm } from '@/components/clients/client-edit-form'
-import { formatZAR } from '@/lib/format'
+import { formatZAR, fmtDate } from '@/lib/format'
 import {
   Table,
   TableBody,
@@ -88,7 +88,7 @@ export default async function ClientDetailPage({ params }: ClientDetailPageProps
             <TableBody>
               {incomeEntries.data.map((entry) => (
                 <TableRow key={entry.id}>
-                  <TableCell>{entry.date}</TableCell>
+                  <TableCell>{fmtDate(entry.date)}</TableCell>
                   <TableCell>{entry.divisionName}</TableCell>
                   <TableCell>{entry.description ?? '—'}</TableCell>
                   <TableCell className="text-right tabular-nums font-medium text-green-500">

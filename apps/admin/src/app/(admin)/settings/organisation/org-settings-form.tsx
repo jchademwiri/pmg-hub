@@ -204,7 +204,7 @@ export function OrgSettingsForm({ settings, saveAction }: OrgSettingsFormProps) 
                 No logo
               </div>
               <div className="flex flex-col gap-2">
-                <Button variant="outline" size="sm" disabled type="button">
+                <Button variant="outline" size="sm" disabled type="button" title="Coming soon">
                   Upload Logo
                 </Button>
                 <p className="text-xs text-muted-foreground">PNG or SVG, max 2 MB — coming soon</p>

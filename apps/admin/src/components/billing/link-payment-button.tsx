@@ -12,7 +12,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { formatZAR } from '@/lib/format';
+import { formatZAR, fmtDate } from '@/lib/format';
 
 interface UnlinkedIncomeRow {
   id: string;
@@ -85,7 +85,7 @@ export function LinkPaymentButton({
         <SelectContent>
           {unlinkedIncome.map((row) => (
             <SelectItem key={row.id} value={row.id}>
-              <span className="tabular-nums">{row.date}</span>
+              <span className="tabular-nums">{fmtDate(row.date)}</span>
               {' — '}
               <span className="font-medium">{formatZAR(Number(row.amount))}</span>
               {row.description ? ` — ${row.description}` : ''}

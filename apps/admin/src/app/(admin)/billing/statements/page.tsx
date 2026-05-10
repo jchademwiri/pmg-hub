@@ -13,7 +13,7 @@ import {
   TableRow,
 } from '@/components/ui/table';
 import { getClientsWithBillingActivity } from '@pmg/db';
-import { formatZAR } from '@/lib/format';
+import { formatZAR, fmtDate } from '@/lib/format';
 
 export const dynamic = 'force-dynamic';
 export const metadata: Metadata = { title: 'Statements' };
@@ -118,7 +118,7 @@ export default async function StatementsPage() {
                       </span>
                     </TableCell>
                     <TableCell className="text-sm text-muted-foreground">
-                      {client.lastActivityDate ?? '—'}
+                      {fmtDate(client.lastActivityDate)}
                     </TableCell>
                     <TableCell>
                       <Button variant="outline" size="sm" asChild>

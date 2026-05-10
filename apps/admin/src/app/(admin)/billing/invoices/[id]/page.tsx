@@ -10,6 +10,7 @@ import { BillingStatusBadge } from '@/components/billing/billing-status-badge';
 import { BillingTotalsBlock } from '@/components/billing/billing-totals-block';
 import { getInvoiceById, getUnlinkedIncomeForClient, getDivisionBillingSettings } from '@pmg/db';
 import { issueInvoice, markInvoicePaid, voidInvoice, linkInvoiceToIncome } from '@/app/actions/billing-invoices';
+import { fmtDate } from '@/lib/format';
 import { InvoiceDetailActions } from './invoice-detail-actions';
 
 export const dynamic = 'force-dynamic';
@@ -97,7 +98,9 @@ export default async function InvoiceDetailPage({ params }: Props) {
                 </Link>
               )}
             </div>
-            <p className="text-sm text-muted-foreground">Issued {invoice.invoiceDate}</p>
+            <p className="text-sm text-muted-foreground">
+              Issued {fmtDate(invoice.invoiceDate)}
+            </p>
           </div>
         </div>
         <div className="flex items-center gap-2">

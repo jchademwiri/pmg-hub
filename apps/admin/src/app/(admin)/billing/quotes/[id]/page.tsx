@@ -10,6 +10,7 @@ import { BillingStatusBadge } from '@/components/billing/billing-status-badge';
 import { BillingTotalsBlock } from '@/components/billing/billing-totals-block';
 import { getQuotationById, getDivisionBillingSettings } from '@pmg/db';
 import { updateQuotationStatus, deleteQuotation } from '@/app/actions/billing-quotes';
+import { fmtDate } from '@/lib/format';
 import { QuoteDetailActions } from './quote-detail-actions';
 
 export const dynamic = 'force-dynamic';
@@ -82,7 +83,9 @@ export default async function QuoteDetailPage({ params }: Props) {
               <h2 className="text-lg font-semibold">{quote.documentNumber}</h2>
               <BillingStatusBadge status={quote.status} />
             </div>
-            <p className="text-sm text-muted-foreground">Issued {quote.quoteDate}</p>
+            <p className="text-sm text-muted-foreground">
+              Issued {fmtDate(quote.quoteDate)}
+            </p>
           </div>
         </div>
         <div className="flex items-center gap-2">

@@ -22,7 +22,7 @@ import {
 } from '@/components/ui/table';
 import { EmptyState } from '@/components/ui/empty-state';
 import { BillingStatusBadge } from '@/components/billing/billing-status-badge';
-import { formatZAR } from '@/lib/format';
+import { formatZAR, fmtDate } from '@/lib/format';
 import type { InvoiceRow } from '@pmg/db';
 
 interface InvoicesClientProps {
@@ -114,9 +114,11 @@ export function InvoicesClient({
               <TableCell className="text-muted-foreground">
                 {inv.clientName ?? <span className="italic">No client</span>}
               </TableCell>
-              <TableCell className="tabular-nums text-sm">{inv.invoiceDate}</TableCell>
+              <TableCell className="tabular-nums text-sm">
+                {fmtDate(inv.invoiceDate)}
+              </TableCell>
               <TableCell className="tabular-nums text-sm text-muted-foreground">
-                {inv.dueDate ?? '—'}
+                {fmtDate(inv.dueDate)}
               </TableCell>
               <TableCell className="text-right tabular-nums text-sm font-medium">
                 {formatZAR(Number(inv.total))}
