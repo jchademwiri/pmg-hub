@@ -120,7 +120,7 @@ describe('LeadStatusTabs', () => {
 describe('LeadsTable', () => {
   it('renders no rows when entries is empty', () => {
     // Validates: Requirements 1.3
-    render(<LeadsTable entries={[]} />)
+    render(<LeadsTable entries={[]} deleteAction={vi.fn()} />)
 
     const links = screen.queryAllByRole('link', { name: /view/i })
     expect(links).toHaveLength(0)
@@ -161,7 +161,7 @@ describe('LeadsTable', () => {
       },
     ]
 
-    render(<LeadsTable entries={entries} />)
+    render(<LeadsTable entries={entries} deleteAction={vi.fn()} />)
 
     const links = screen.getAllByRole('link', { name: /view/i })
     expect(links).toHaveLength(2)

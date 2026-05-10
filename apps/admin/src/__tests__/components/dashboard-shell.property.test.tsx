@@ -89,6 +89,13 @@ const baseProps = {
   expensesByDivision: [],
   currentPeriod: '2025-01',
   showCloseMonthButton: true,
+  ledgerBalances: {
+    salary:    { expected: 0, spent: 0, available: 0 },
+    reinvest:  { expected: 0, spent: 0, available: 0 },
+    reserve:   { expected: 0, spent: 0, available: 0 },
+    flex:      { expected: 0, spent: 0, available: 0 },
+    pmg_share: { expected: 0, spent: 0, available: 0 },
+  },
 }
 
 // ─── Property 7: DashboardShell snapshot-conditional rendering ────────────────

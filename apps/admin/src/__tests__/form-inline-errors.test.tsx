@@ -126,11 +126,11 @@ describe('IncomeEditForm — inline error display', () => {
     id: 'inc-1',
     date: '2025-01-15',
     divisionId: 'div-1',
+    divisionName: 'PMG',
     clientId: null,
+    clientName: null,
     description: 'Test income',
     amount: '1000',
-    createdAt: new Date('2025-01-15'),
-    updatedAt: null,
   }
 
   it('displays inline error when action returns { error } — Validates: Requirements 1.3', async () => {
@@ -296,6 +296,9 @@ describe('ExpenseEditForm — inline error display', () => {
     id: 'exp-1',
     date: '2025-01-15',
     divisionId: 'div-1',
+    divisionName: 'PMG',
+    clientId: null,
+    clientName: null,
     category: 'Salaries',
     description: 'Monthly salary',
     amount: '5000',
@@ -312,7 +315,6 @@ describe('ExpenseEditForm — inline error display', () => {
         entry={entry}
         divisions={divisions}
         categories={categories}
-        clients={[]}
         updateAction={updateAction}
       />
     )
@@ -332,7 +334,6 @@ describe('ExpenseEditForm — inline error display', () => {
         entry={entry}
         divisions={divisions}
         categories={categories}
-        clients={[]}
         updateAction={updateAction}
       />
     )
@@ -355,7 +356,6 @@ describe('ExpenseEditForm — inline error display', () => {
         entry={entry}
         divisions={divisions}
         categories={categories}
-        clients={[]}
         updateAction={updateAction}
       />
     )
@@ -378,7 +378,6 @@ describe('ExpenseEditForm — inline error display', () => {
         entry={entry}
         divisions={divisions}
         categories={categories}
-        clients={[]}
         updateAction={updateAction}
       />
     )

@@ -36,14 +36,14 @@ describe('proxy() function in proxy.ts', () => {
 
   it('1. Request has __Secure-better-auth.session_token cookie → NextResponse.next()', async () => {
     const { proxy } = await import('../proxy')
-    const req = new NextRequest('/dashboard', { '__Secure-better-auth.session_token': 'abc123' })
+    const req = new NextRequest('/dashboard', { '__Secure-better-auth.session_token': 'abc123' } as any)
     await proxy(req as any)
     expect(NextResponse.next).toHaveBeenCalled()
   })
 
   it('2. Request has better-auth.session_token cookie → NextResponse.next()', async () => {
     const { proxy } = await import('../proxy')
-    const req = new NextRequest('/dashboard', { 'better-auth.session_token': 'abc123' })
+    const req = new NextRequest('/dashboard', { 'better-auth.session_token': 'abc123' } as any)
     await proxy(req as any)
     expect(NextResponse.next).toHaveBeenCalled()
   })
