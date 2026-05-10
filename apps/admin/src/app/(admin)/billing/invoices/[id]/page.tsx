@@ -54,6 +54,7 @@ export default async function InvoiceDetailPage({ params }: Props) {
     notes: invoice.notes ?? divSettings?.invoiceNotes ?? undefined,
     terms: invoice.terms ?? undefined,
     vatRate: 15 as const,
+    discountAmount: Number(invoice.discountAmount ?? 0),
     banking: divSettings?.bankName ? {
       bankName: divSettings.bankName,
       accountName: divSettings.bankAccountName ?? '',

@@ -36,18 +36,24 @@ export default async function StatementDetailPage({ params, searchParams }: Prop
   // Each non-void invoice = debit; each income record for this client = credit
   type TxRaw = { date: string; reference: string; description: string; debit?: number; credit?: number };
 
+  // Build a map of incomeId → invoice document number for cross-referencing payments
+  const incomeToInvoiceNumber = new Map<string, string>();
+  for (const inv of invoices) {
+    if (inv.incomeId) incomeToInvoiceNumber.set(inv.incomeId, inv.documentNumber);
+  }
+
   const txRaw: TxRaw[] = [
     ...invoices
       .filter((inv) => inv.status !== 'void')
       .map((inv) => ({
         date: inv.invoiceDate,
         reference: inv.documentNumber,
-        description: `${inv.documentNumber} — Invoice`,
+        description: inv.poNumber ?? 'Invoice',
         debit: Number(inv.total),
       })),
     ...incomeResult.data.map((inc) => ({
       date: inc.date,
-      reference: inc.description ?? 'Payment',
+      reference: incomeToInvoiceNumber.get(inc.id) ?? '—',
       description: 'Payment received',
       credit: Number(inc.amount),
     })),

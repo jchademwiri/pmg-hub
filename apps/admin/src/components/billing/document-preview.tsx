@@ -58,6 +58,8 @@ export interface DocumentPreviewProps {
   terms?: string
   banking?: DocumentBanking
   vatRate?: number
+  /** Pre-computed discount amount (positive number). If provided, shown as a deduction in the totals block. */
+  discountAmount?: number
   /** Optional link shown on the sticky header — useful during development */
   href?: string
 }
@@ -115,15 +117,17 @@ export function DocumentPreview({
   terms,
   banking,
   vatRate = 15,
+  discountAmount = 0,
   href,
 }: DocumentPreviewProps) {
-  // Totals
+  // Totals — discount is applied after subtotal, before VAT
   const subtotal = lineItems.reduce((sum, i) => sum + i.qty * i.unitPrice, 0)
+  const vatBase = subtotal - discountAmount
   const vat = lineItems.reduce(
     (sum, i) => sum + (i.vatApplicable ? i.qty * i.unitPrice * (vatRate / 100) : 0),
     0,
   )
-  const total = subtotal + vat
+  const total = vatBase + vat
 
   const typeLabel =
     type === 'invoice' ? 'Invoice' : type === 'quote' ? 'Quotation' : 'Statement'
@@ -278,6 +282,12 @@ export function DocumentPreview({
                 <span>Subtotal</span>
                 <span className="tabular-nums">{fmt(subtotal)}</span>
               </div>
+              {discountAmount > 0 && (
+                <div className="flex justify-between text-sm text-orange-600">
+                  <span>Discount</span>
+                  <span className="tabular-nums">−{fmt(discountAmount)}</span>
+                </div>
+              )}
               {vat > 0 && (
                 <div className="flex justify-between text-sm text-zinc-600">
                   <span>VAT ({vatRate}%)</span>
@@ -299,7 +309,7 @@ export function DocumentPreview({
           <table className="w-full text-sm">
             <thead>
               <tr className="border-y border-zinc-100 bg-zinc-50">
-                {['Date', 'Reference', 'Description', 'Debit', 'Credit', 'Balance'].map((h) => (
+                {['Date', 'Invoice No.', 'Description', 'Debit', 'Credit', 'Balance'].map((h) => (
                   <th
                     key={h}
                     className={cn(
@@ -318,11 +328,13 @@ export function DocumentPreview({
                 <tr key={i} className="border-b border-zinc-50">
                   <td className="py-2.5 pr-4 text-xs text-zinc-600 whitespace-nowrap">{fmtDateLong(tx.date)}</td>
                   <td className="py-2.5 px-4 text-xs text-zinc-600 whitespace-nowrap">{tx.reference}</td>
-                  <td className="py-2.5 px-4 text-xs text-zinc-800">{tx.description}</td>
+                  <td className={cn('py-2.5 px-4 text-xs', tx.credit != null ? 'text-emerald-600 font-medium' : 'text-zinc-800')}>
+                    {tx.description}
+                  </td>
                   <td className="py-2.5 px-4 text-right tabular-nums text-xs text-zinc-600">
                     {tx.debit != null ? fmt(tx.debit) : '—'}
                   </td>
-                  <td className="py-2.5 px-4 text-right tabular-nums text-xs text-zinc-600">
+                  <td className="py-2.5 px-4 text-right tabular-nums text-xs font-medium text-emerald-600">
                     {tx.credit != null ? fmt(tx.credit) : '—'}
                   </td>
                   <td className={cn(
@@ -339,24 +351,29 @@ export function DocumentPreview({
           {/* Statement summary */}
           <div className="mt-4 flex justify-end">
             <div className="flex w-64 flex-col gap-2">
-              <div className="flex justify-between text-sm text-zinc-600">
-                <span>Total Invoiced</span>
-                <span className="tabular-nums">
-                  {fmt(transactions.reduce((s, t) => s + (t.debit ?? 0), 0))}
-                </span>
-              </div>
-              <div className="flex justify-between text-sm text-zinc-600">
-                <span>Total Paid</span>
-                <span className="tabular-nums">
-                  {fmt(transactions.reduce((s, t) => s + (t.credit ?? 0), 0))}
-                </span>
-              </div>
-              <div className="border-t border-zinc-200 pt-2 flex justify-between text-sm font-bold text-zinc-900">
-                <span>Balance Due</span>
-                <span className="tabular-nums">
-                  {fmt(transactions[transactions.length - 1]?.balance ?? 0)}
-                </span>
-              </div>
+              {(() => {
+                const totalInvoiced = transactions.reduce((s, t) => s + (t.debit ?? 0), 0)
+                const totalPaid = transactions.reduce((s, t) => s + (t.credit ?? 0), 0)
+                const balanceDue = totalInvoiced - totalPaid
+                return (
+                  <>
+                    <div className="flex justify-between text-sm text-zinc-600">
+                      <span>Total Invoiced</span>
+                      <span className="tabular-nums">{fmt(totalInvoiced)}</span>
+                    </div>
+                    <div className="flex justify-between text-sm text-emerald-600">
+                      <span>Total Paid</span>
+                      <span className="tabular-nums">{fmt(totalPaid)}</span>
+                    </div>
+                    <div className="border-t border-zinc-200 pt-2 flex justify-between text-sm font-bold">
+                      <span className="text-zinc-900">Balance Due</span>
+                      <span className={cn('tabular-nums', balanceDue <= 0 ? 'text-emerald-600' : 'text-red-600')}>
+                        {fmt(Math.abs(balanceDue))}{balanceDue < 0 ? ' CR' : ''}
+                      </span>
+                    </div>
+                  </>
+                )
+              })()}
             </div>
           </div>
         </div>
