@@ -41,7 +41,7 @@ export async function createExpense(formData: FormData): Promise<{ error?: strin
       description: parsed.description ?? null,
       amount: String(parsed.amount),
     });
-    revalidatePath('/expenses');
+    revalidatePath('/finance/expenses');
     revalidatePath('/dashboard');
     return {};
   } catch {
@@ -77,7 +77,7 @@ export async function updateExpense(id: string, formData: FormData): Promise<{ e
         updatedAt: new Date(),
       })
       .where(eq(expenses.id, id));
-    revalidatePath('/expenses');
+    revalidatePath('/finance/expenses');
     revalidatePath('/dashboard');
     return {};
   } catch {
@@ -95,7 +95,7 @@ export async function deleteExpense(id: string): Promise<{ error?: string }> {
     }
 
     await db.delete(expenses).where(eq(expenses.id, id));
-    revalidatePath('/expenses');
+    revalidatePath('/finance/expenses');
     revalidatePath('/dashboard');
     return {};
   } catch {

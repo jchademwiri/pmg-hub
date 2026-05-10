@@ -20,8 +20,8 @@ export async function updateLeadStatus(id: string, formData: FormData): Promise<
     await db.update(leads)
       .set({ status: result.data.status, updatedAt: new Date() })
       .where(eq(leads.id, id));
-    revalidatePath('/leads');
-    revalidatePath(`/leads/${id}`);
+    revalidatePath('/relationships/leads');
+    revalidatePath(`/relationships/leads/${id}`);
     revalidatePath('/dashboard');
     return {};
   } catch {
@@ -41,7 +41,7 @@ export async function updateLeadNotes(id: string, formData: FormData): Promise<{
     await db.update(leads)
       .set({ notes: result.data.notes ?? null, updatedAt: new Date() })
       .where(eq(leads.id, id));
-    revalidatePath(`/leads/${id}`);
+    revalidatePath(`/relationships/leads/${id}`);
     return {};
   } catch {
     return { error: 'Failed to save. Please try again.' };
@@ -80,7 +80,7 @@ export async function createLead(formData: FormData): Promise<{ error?: string }
       message: parsed.message ?? null,
       status: 'new',
     });
-    revalidatePath('/leads');
+    revalidatePath('/relationships/leads');
     revalidatePath('/dashboard');
     return {};
   } catch {
@@ -91,7 +91,7 @@ export async function createLead(formData: FormData): Promise<{ error?: string }
 export async function deleteLead(id: string): Promise<{ error?: string }> {
   try {
     await db.delete(leads).where(eq(leads.id, id));
-    revalidatePath('/leads');
+    revalidatePath('/relationships/leads');
     revalidatePath('/dashboard');
     return {};
   } catch {

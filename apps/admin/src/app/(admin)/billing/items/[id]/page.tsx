@@ -1,23 +1,28 @@
-import type { Metadata } from 'next'
-import Link from 'next/link'
-import { ChevronLeft, Archive, Trash2 } from 'lucide-react'
-import { Button } from '@/components/ui/button'
-import { Badge } from '@/components/ui/badge'
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card'
-import { Separator } from '@/components/ui/separator'
+import type { Metadata } from 'next';
+import Link from 'next/link';
+import { notFound } from 'next/navigation';
+import { ChevronLeft } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
+import { Separator } from '@/components/ui/separator';
+import { BillingStatusBadge } from '@/components/billing/billing-status-badge';
+import { getItemById } from '@pmg/db';
+import { formatZAR, fmtDate } from '@/lib/format';
+import { ItemEditClient } from './item-edit-client';
 
-export const metadata: Metadata = { title: 'Item' }
+export const dynamic = 'force-dynamic';
+export const metadata: Metadata = { title: 'Item' };
 
 interface Props {
-  params: Promise<{ id: string }>
+  params: Promise<{ id: string }>;
 }
 
-import { MOCK_ITEM } from '@/lib/mock/billing'
-
-// ─────────────────────────────────────────────────────────────────────────────
-
 export default async function ItemDetailPage({ params }: Props) {
-  const { id } = await params
+  const { id } = await params;
+  const item = await getItemById(id);
+  if (!item) notFound();
+
+  const totalUsage = item.usageInvoices + item.usageQuotes;
 
   return (
     <div className="flex flex-col gap-6">
@@ -33,94 +38,31 @@ export default async function ItemDetailPage({ params }: Props) {
           <Separator orientation="vertical" className="h-5" />
           <div>
             <div className="flex items-center gap-2">
-              <h2 className="text-lg font-semibold">{MOCK_ITEM.name}</h2>
-              <Badge variant="secondary">{MOCK_ITEM.status}</Badge>
+              <h2 className="text-lg font-semibold">{item.name}</h2>
+              <BillingStatusBadge status={item.status} />
             </div>
-            <p className="text-sm text-muted-foreground">Created {MOCK_ITEM.createdAt}</p>
+            <p className="text-sm text-muted-foreground">
+              Created {fmtDate(item.createdAt)}
+            </p>
           </div>
-        </div>
-        <div className="flex items-center gap-2">
-          <Button variant="outline" size="sm" disabled>
-            <Archive className="size-4" />
-            Archive
-          </Button>
-          <Button variant="ghost" size="sm" disabled>
-            <Trash2 className="size-4" />
-          </Button>
         </div>
       </div>
 
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-3 lg:items-start">
-        {/* Item details */}
+        {/* Edit form */}
         <div className="lg:col-span-2">
           <Card>
             <CardHeader>
               <CardTitle>Item Details</CardTitle>
               <CardDescription>Service item information</CardDescription>
             </CardHeader>
-            <CardContent className="flex flex-col gap-4">
-              {/* Name */}
-              <div className="flex flex-col gap-1.5">
-                <label className="text-sm font-medium">Name</label>
-                <div className="h-9 rounded-md border border-input bg-muted/40 px-3 flex items-center text-sm">
-                  {MOCK_ITEM.name}
-                </div>
-              </div>
-
-              {/* Description */}
-              <div className="flex flex-col gap-1.5">
-                <label className="text-sm font-medium">Description</label>
-                <div className="min-h-20 rounded-md border border-input bg-muted/40 px-3 py-2 text-sm">
-                  {MOCK_ITEM.description}
-                </div>
-              </div>
-
-              {/* Unit Price + Unit Label */}
-              <div className="grid grid-cols-2 gap-4">
-                <div className="flex flex-col gap-1.5">
-                  <label className="text-sm font-medium">Unit Price</label>
-                  <div className="h-9 rounded-md border border-input bg-muted/40 px-3 flex items-center text-sm">
-                    {MOCK_ITEM.unitPrice}
-                  </div>
-                </div>
-                <div className="flex flex-col gap-1.5">
-                  <label className="text-sm font-medium">Unit Label</label>
-                  <div className="h-9 rounded-md border border-input bg-muted/40 px-3 flex items-center text-sm">
-                    {MOCK_ITEM.unitLabel}
-                  </div>
-                </div>
-              </div>
-
-              {/* VAT Applicable */}
-              <div className="flex items-center justify-between rounded-md border border-input bg-muted/40 px-3 py-2.5">
-                <div className="flex flex-col gap-0.5">
-                  <span className="text-sm font-medium">VAT Applicable</span>
-                  <span className="text-xs text-muted-foreground">
-                    Apply 15% VAT to this item by default
-                  </span>
-                </div>
-                {/* Mock toggle — on state */}
-                <div className="h-5 w-9 rounded-full bg-primary flex items-center px-0.5">
-                  <div className="ml-auto h-4 w-4 rounded-full bg-primary-foreground shadow-sm" />
-                </div>
-              </div>
-
-              <Separator className="my-2" />
-
-              {/* Actions */}
-              <div className="flex gap-2">
-                <Button className="flex-1" disabled>
-                  Save Changes
-                </Button>
-                <Button variant="outline" asChild>
-                  <Link href="/billing/items">Cancel</Link>
-                </Button>
-              </div>
+            <CardContent>
+              <ItemEditClient item={item} />
             </CardContent>
           </Card>
         </div>
 
-        {/* Sidebar — sticky */}
+        {/* Sidebar */}
         <div className="flex flex-col gap-4 lg:sticky lg:top-16">
           <Card size="sm">
             <CardHeader>
@@ -130,16 +72,23 @@ export default async function ItemDetailPage({ params }: Props) {
               <div className="flex flex-col gap-2">
                 <div className="flex justify-between text-sm">
                   <span className="text-muted-foreground">Invoices</span>
-                  <span className="tabular-nums font-medium">{MOCK_ITEM.usageInvoices}</span>
+                  <span className="tabular-nums font-medium">{item.usageInvoices}</span>
                 </div>
                 <div className="flex justify-between text-sm">
                   <span className="text-muted-foreground">Quotes</span>
-                  <span className="tabular-nums font-medium">{MOCK_ITEM.usageQuotes}</span>
+                  <span className="tabular-nums font-medium">{item.usageQuotes}</span>
                 </div>
                 <Separator className="my-1" />
                 <p className="text-xs text-muted-foreground">
-                  Used on {MOCK_ITEM.usageInvoices + MOCK_ITEM.usageQuotes} documents in total.
+                  {totalUsage === 0
+                    ? 'Not used on any documents yet.'
+                    : `Used on ${totalUsage} document${totalUsage === 1 ? '' : 's'} in total.`}
                 </p>
+                {totalUsage > 0 && (
+                  <p className="text-xs text-amber-600 dark:text-amber-400">
+                    Archive instead of deleting items that are in use.
+                  </p>
+                )}
               </div>
             </CardContent>
           </Card>
@@ -152,21 +101,23 @@ export default async function ItemDetailPage({ params }: Props) {
               <div className="flex flex-col gap-2">
                 <div className="flex justify-between text-sm">
                   <span className="text-muted-foreground">Status</span>
-                  <Badge variant="secondary">{MOCK_ITEM.status}</Badge>
+                  <BillingStatusBadge status={item.status} />
                 </div>
                 <div className="flex justify-between text-sm">
-                  <span className="text-muted-foreground">VAT</span>
-                  <span>{MOCK_ITEM.vatApplicable ? 'Applicable' : 'Exempt'}</span>
+                  <span className="text-muted-foreground">Unit Price</span>
+                  <span className="tabular-nums">{formatZAR(Number(item.unitPrice))} <span className="text-xs text-muted-foreground">excl. VAT</span></span>
                 </div>
-                <div className="flex justify-between text-sm">
-                  <span className="text-muted-foreground">Created</span>
-                  <span>{MOCK_ITEM.createdAt}</span>
-                </div>
+                {item.unitLabel && (
+                  <div className="flex justify-between text-sm">
+                    <span className="text-muted-foreground">Unit</span>
+                    <span>{item.unitLabel}</span>
+                  </div>
+                )}
               </div>
             </CardContent>
           </Card>
         </div>
       </div>
     </div>
-  )
+  );
 }

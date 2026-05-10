@@ -23,39 +23,32 @@ export async function closeMonth(period: string): Promise<{} | { error: string }
     const summary = await getFinancialSummaryForPeriod(startExpr, endExpr);
     await insertSnapshot(period, summary);
     revalidatePath('/dashboard');
-    revalidatePath('/snapshots');
+    revalidatePath('/insights/snapshots');
     return {};
   } catch (err) {
     return { error: (err as Error).message };
   }
 }
 
-/**
- * Auto-closes the previous month if today is the 5th or later and it hasn't been closed yet.
- * Called server-side on dashboard load.
- */
 export async function autoClosePreviousMonthIfNeeded(): Promise<void> {
   const now = new Date();
   const day = now.getDate();
-  // Only auto-close on day 5 or later
   if (day < 5) return;
 
-  // Compute previous month period using local date parts to avoid UTC offset issues
   const prev = new Date(now.getFullYear(), now.getMonth() - 1, 1);
   const period = `${prev.getFullYear()}-${String(prev.getMonth() + 1).padStart(2, '0')}`;
 
   const existing = await getSnapshotByPeriod(period);
-  if (existing !== null) return; // already closed
+  if (existing !== null) return;
 
   try {
     const startExpr = "DATE_TRUNC('month', TIMESTAMP '" + period + "-01')";
     const endExpr = "DATE_TRUNC('month', TIMESTAMP '" + period + "-01') + INTERVAL '1 month'";
     const summary = await getFinancialSummaryForPeriod(startExpr, endExpr);
-    // Skip auto-close if the month has no financial activity
     if (summary.revenue === 0 && summary.expenses === 0) return;
     await insertSnapshot(period, summary);
     revalidatePath('/dashboard');
-    revalidatePath('/snapshots');
+    revalidatePath('/insights/snapshots');
   } catch {
     // Silent — auto-close failure should not break the dashboard
   }

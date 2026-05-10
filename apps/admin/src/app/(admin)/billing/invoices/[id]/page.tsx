@@ -1,24 +1,76 @@
-import type { Metadata } from 'next'
-import Link from 'next/link'
-import { ChevronLeft, Printer, Send, MoreHorizontal } from 'lucide-react'
-import { Button } from '@/components/ui/button'
-import { Badge } from '@/components/ui/badge'
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
-import { Separator } from '@/components/ui/separator'
-import { DocumentPreview } from '@/components/billing/document-preview'
-import type { DocumentPreviewProps } from '@/components/billing/document-preview'
-import { MOCK_INVOICE, MOCK_INVOICE_ACTIVITY } from '@/lib/mock/billing'
+import type { Metadata } from 'next';
+import Link from 'next/link';
+import { notFound } from 'next/navigation';
+import { ChevronLeft, Printer, Send, Pencil, FileDown } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Separator } from '@/components/ui/separator';
+import { DocumentPreview } from '@/components/billing/document-preview';
+import { BillingStatusBadge } from '@/components/billing/billing-status-badge';
+import { BillingTotalsBlock } from '@/components/billing/billing-totals-block';
+import { getInvoiceById, getUnlinkedIncomeForClient, getDivisionBillingSettings } from '@pmg/db';
+import { issueInvoice, markInvoicePaid, voidInvoice, linkInvoiceToIncome } from '@/app/actions/billing-invoices';
+import { fmtDate } from '@/lib/format';
+import { InvoiceDetailActions } from './invoice-detail-actions';
 
-export const metadata: Metadata = { title: 'Invoice' }
+export const dynamic = 'force-dynamic';
+export const metadata: Metadata = { title: 'Invoice' };
 
 interface Props {
-  params: Promise<{ id: string }>
+  params: Promise<{ id: string }>;
 }
 
-// ─────────────────────────────────────────────────────────────────────────────
-
 export default async function InvoiceDetailPage({ params }: Props) {
-  const { id } = await params
+  const { id } = await params;
+  const invoice = await getInvoiceById(id);
+  if (!invoice) notFound();
+
+  const divSettings = await getDivisionBillingSettings(invoice.divisionId);
+
+  // Fetch unlinked income records for this client — used by the "Link Payment" flow.
+  // Only relevant when invoice is draft or issued and has a client.
+  const unlinkedIncome =
+    invoice.clientId && ['draft', 'issued', 'overdue'].includes(invoice.status)
+      ? await getUnlinkedIncomeForClient(invoice.clientId)
+      : [];
+
+  const docPreviewProps = {
+    number: invoice.documentNumber,
+    status: invoice.status.charAt(0).toUpperCase() + invoice.status.slice(1),
+    issueDate: invoice.invoiceDate,
+    dueDate: invoice.dueDate ?? undefined,
+    org: {
+      name: invoice.divisionName,
+      divisionOf: 'Playhouse Media Group',
+      email: divSettings?.salesRepEmail ?? undefined,
+      phone: divSettings?.salesRepPhone ?? undefined,
+      website: divSettings?.divisionWebsite ?? undefined,
+      salesRep: divSettings?.salesRepName ?? undefined,
+    },
+    client: {
+      name: invoice.clientName ?? 'No client',
+      email: invoice.clientEmail ?? undefined,
+      phone: invoice.clientPhone ?? undefined,
+    },
+    lineItems: invoice.lineItems.map((li) => ({
+      description: li.description,
+      qty: Number(li.quantity),
+      unitPrice: Number(li.unitPrice),
+      vatApplicable: false,
+    })),
+    notes: invoice.notes ?? divSettings?.invoiceNotes ?? undefined,
+    terms: invoice.terms ?? undefined,
+    vatRate: 15 as const,
+    banking: divSettings?.bankName ? {
+      bankName: divSettings.bankName,
+      accountName: divSettings.bankAccountName ?? '',
+      accountNumber: divSettings.bankAccountNumber ?? '',
+      branchCode: divSettings.bankBranchCode ?? '',
+    } : undefined,
+  };
+
+  // Paid and voided invoices cannot be edited
+  const canEdit = !['paid', 'void'].includes(invoice.status);
 
   return (
     <div className="flex flex-col gap-6">
@@ -33,32 +85,56 @@ export default async function InvoiceDetailPage({ params }: Props) {
           </Button>
           <Separator orientation="vertical" className="h-5" />
           <div>
-            <div className="flex items-center gap-2">
-              <h2 className="text-lg font-semibold">Invoice #{id}</h2>
-              <Badge variant="secondary">{MOCK_INVOICE.status}</Badge>
+            <div className="flex items-center gap-2 flex-wrap">
+              <h2 className="text-lg font-semibold">{invoice.documentNumber}</h2>
+              <BillingStatusBadge status={invoice.status} />
+              {/* Link back to source quote if converted from one */}
+              {invoice.quotationId && invoice.quotationNumber && (
+                <Link
+                  href={`/billing/quotes/${invoice.quotationId}`}
+                  className="text-xs text-muted-foreground hover:text-foreground transition-colors"
+                >
+                  From Quote: {invoice.quotationNumber}
+                </Link>
+              )}
             </div>
-            <p className="text-sm text-muted-foreground">Issued {MOCK_INVOICE.issueDate}</p>
+            <p className="text-sm text-muted-foreground">
+              Issued {fmtDate(invoice.invoiceDate)}
+            </p>
           </div>
         </div>
         <div className="flex items-center gap-2">
-          <Button variant="outline" size="sm" disabled>
+          <Button variant="outline" size="sm" disabled title="Coming soon">
             <Printer className="size-4" />
             Print
           </Button>
-          <Button variant="outline" size="sm" disabled>
+          <Button variant="outline" size="sm" disabled title="Coming soon">
             <Send className="size-4" />
             Send
           </Button>
-          <Button variant="ghost" size="sm" disabled>
-            <MoreHorizontal className="size-4" />
+          <Button variant="outline" size="sm" disabled title="Coming soon">
+            <FileDown className="size-4" />
+            Export PDF
           </Button>
+          {canEdit && (
+            <Button variant="outline" size="sm" asChild>
+              <Link href={`/billing/invoices/${invoice.id}/edit`}>
+                <Pencil className="size-4" />
+                Edit
+              </Link>
+            </Button>
+          )}
+          {invoice.status === 'paid' && (
+            <p className="text-xs text-muted-foreground">Paid invoices cannot be modified.</p>
+          )}
         </div>
       </div>
 
+      {/* Two-column layout */}
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-3 lg:items-start">
-        {/* Document preview */}
-        <div className="lg:col-span-2">
-          <DocumentPreview type="invoice" {...MOCK_INVOICE} href={`/billing/invoices/${id}`} />
+        {/* Document preview — scrollable on small screens */}
+        <div className="lg:col-span-2 overflow-x-auto">
+          <DocumentPreview type="invoice" {...docPreviewProps} />
         </div>
 
         {/* Sidebar */}
@@ -67,20 +143,14 @@ export default async function InvoiceDetailPage({ params }: Props) {
             <CardHeader>
               <CardTitle>Summary</CardTitle>
             </CardHeader>
-            <CardContent className="flex flex-col gap-3">
-              <div className="flex justify-between text-sm">
-                <span className="text-muted-foreground">Subtotal</span>
-                <span className="tabular-nums">R 16 549.00</span>
-              </div>
-              <div className="flex justify-between text-sm">
-                <span className="text-muted-foreground">VAT (15%)</span>
-                <span className="tabular-nums">R 2 432.25</span>
-              </div>
-              <Separator />
-              <div className="flex justify-between text-sm font-semibold">
-                <span>Total</span>
-                <span className="tabular-nums">R 18 981.25</span>
-              </div>
+            <CardContent>
+              <BillingTotalsBlock
+                subtotal={Number(invoice.subtotal)}
+                discountAmount={Number(invoice.discountAmount ?? 0)}
+                vatEnabled={invoice.vatEnabled}
+                vatAmount={Number(invoice.vatAmount)}
+                total={Number(invoice.total)}
+              />
             </CardContent>
           </Card>
 
@@ -90,17 +160,49 @@ export default async function InvoiceDetailPage({ params }: Props) {
             </CardHeader>
             <CardContent>
               <div className="flex flex-col gap-3">
-                {MOCK_INVOICE_ACTIVITY.map((entry) => (
-                  <div key={entry.date} className="flex flex-col gap-0.5">
-                    <span className="text-sm">{entry.label}</span>
-                    <span className="text-xs text-muted-foreground">{entry.date}</span>
+                {invoice.paidAt && (
+                  <div className="flex flex-col gap-0.5">
+                    <span className="text-sm">Invoice paid</span>
+                    <span className="text-xs text-muted-foreground">
+                      {new Date(invoice.paidAt).toLocaleString('en-ZA', {
+                        day: '2-digit', month: 'short', year: 'numeric',
+                        hour: '2-digit', minute: '2-digit',
+                      })}
+                    </span>
                   </div>
-                ))}
+                )}
+                <div className="flex flex-col gap-0.5">
+                  <span className="text-sm">Invoice created</span>
+                  <span className="text-xs text-muted-foreground">
+                    {new Date(invoice.createdAt).toLocaleString('en-ZA', {
+                      day: '2-digit', month: 'short', year: 'numeric',
+                      hour: '2-digit', minute: '2-digit',
+                    })}
+                  </span>
+                </div>
               </div>
             </CardContent>
           </Card>
+
+          {/* Actions — in sidebar below activity */}
+          <InvoiceDetailActions
+            invoice={{
+              id: invoice.id,
+              status: invoice.status,
+              clientId: invoice.clientId,
+              dueDate: invoice.dueDate,
+              paidAt: invoice.paidAt,
+              incomeId: invoice.incomeId,
+              total: invoice.total,
+            }}
+            issueAction={issueInvoice}
+            markPaidAction={markInvoicePaid}
+            voidAction={voidInvoice}
+            linkPaymentAction={linkInvoiceToIncome}
+            unlinkedIncome={unlinkedIncome}
+          />
         </div>
       </div>
     </div>
-  )
+  );
 }

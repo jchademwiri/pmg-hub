@@ -26,7 +26,7 @@ export function ClientEditForm({ client, updateAction }: ClientEditFormProps) {
       if (result.error) {
         setErrorMessage(result.error)
       } else {
-        router.push('/clients')
+        router.push('/relationships/clients')
       }
     })
   }

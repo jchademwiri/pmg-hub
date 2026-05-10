@@ -44,7 +44,7 @@ export function ExpenseEditForm({
         setErrorMessage(result.error);
       } else {
         toast.success('Expense updated');
-        router.push('/expenses');
+        router.push('/finance/expenses');
       }
     });
   }

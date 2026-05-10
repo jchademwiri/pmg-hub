@@ -35,8 +35,12 @@ export function LedgerAddForm({ createAction, disabled = false, minDate }: Ledge
   );
   const [balances, setBalances] = React.useState<BucketBalances | null>(null);
 
+  function refreshBalances() {
+    getLedgerBalancesAction().then(setBalances).catch(() => {});
+  }
+
   React.useEffect(() => {
-    getLedgerBalancesAction().then(setBalances).catch(console.error);
+    refreshBalances();
   }, []);
 
   function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
@@ -57,7 +61,7 @@ export function LedgerAddForm({ createAction, disabled = false, minDate }: Ledge
         setSelectedAllocation('salary');
         setSelectedEntry('spend');
         // Refresh balances
-        getLedgerBalancesAction().then(setBalances).catch(console.error);
+        refreshBalances();
       }
     });
   }

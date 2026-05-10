@@ -1,16 +1,20 @@
-import type { Metadata } from 'next'
-import Link from 'next/link'
-import { ChevronLeft, Receipt } from 'lucide-react'
-import { getAllDivisions } from '@pmg/db'
-import { Button } from '@/components/ui/button'
-import { Separator } from '@/components/ui/separator'
-import { BillingSettingsClient } from './billing-settings-client'
+import type { Metadata } from 'next';
+import Link from 'next/link';
+import { ChevronLeft, Receipt } from 'lucide-react';
+import { getAllDivisions, getAllDivisionBillingSettings } from '@pmg/db';
+import { Button } from '@/components/ui/button';
+import { Separator } from '@/components/ui/separator';
+import { BillingSettingsClient } from './billing-settings-client';
+import { saveDivisionBillingSettings } from '@/app/actions/settings';
 
-export const dynamic = 'force-dynamic'
-export const metadata: Metadata = { title: 'Billing & Invoicing Settings' }
+export const dynamic = 'force-dynamic';
+export const metadata: Metadata = { title: 'Billing & Invoicing Settings' };
 
 export default async function BillingSettingsPage() {
-  const divisions = await getAllDivisions()
+  const [divisions, allSettings] = await Promise.all([
+    getAllDivisions(),
+    getAllDivisionBillingSettings(),
+  ]);
 
   return (
     <div className="flex flex-col gap-6">
@@ -34,7 +38,11 @@ export default async function BillingSettingsPage() {
         </div>
       </div>
 
-      <BillingSettingsClient divisions={divisions} />
+      <BillingSettingsClient
+        divisions={divisions}
+        allSettings={allSettings}
+        saveAction={saveDivisionBillingSettings}
+      />
     </div>
-  )
+  );
 }

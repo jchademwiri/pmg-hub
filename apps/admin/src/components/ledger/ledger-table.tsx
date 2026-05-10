@@ -18,7 +18,7 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { MoreHorizontal, Pencil, Trash2, Lock } from 'lucide-react';
-import { formatZAR } from '@/lib/format';
+import { formatZAR, fmtDate } from '@/lib/format';
 import { LedgerEditForm } from './ledger-edit-form';
 import { ConfirmDialog } from '@/components/ui/confirm-dialog';
 
@@ -118,11 +118,7 @@ export function LedgerTable({
             return (
               <TableRow key={entry.id}>
                 <TableCell className="font-medium whitespace-nowrap">
-                  {new Date(entry.date + 'T00:00:00').toLocaleDateString('en-ZA', {
-                    day: 'numeric',
-                    month: 'short',
-                    year: 'numeric',
-                  })}
+                  {fmtDate(entry.date)}
                 </TableCell>
                 <TableCell className="capitalize">{entry.allocationType}</TableCell>
                 <TableCell className="capitalize text-muted-foreground">

@@ -88,8 +88,8 @@ export async function createLedgerEntry(formData: FormData): Promise<{ error?: s
       createdBy: session.user.id,
     });
 
-    revalidatePath('/ledger');
-    revalidatePath('/accounts');
+    revalidatePath('/finance/ledger');
+    revalidatePath('/finance/accounts');
     revalidatePath('/dashboard');
     return {};
   } catch {
@@ -102,7 +102,7 @@ export async function updateLedgerEntry(
   formData: FormData,
 ): Promise<{ error?: string }> {
   try {
-    await getSessionOrRedirect(); // just ensure active session
+    await getSessionOrRedirect();
     const raw = Object.fromEntries(formData);
     const result = ledgerSchema.safeParse(raw);
 
@@ -141,8 +141,8 @@ export async function updateLedgerEntry(
       entryType: parsed.entryType,
     });
 
-    revalidatePath('/ledger');
-    revalidatePath('/accounts');
+    revalidatePath('/finance/ledger');
+    revalidatePath('/finance/accounts');
     revalidatePath('/dashboard');
     return {};
   } catch {
@@ -163,8 +163,8 @@ export async function deleteLedgerEntry(id: string): Promise<{ error?: string }>
 
     await dbDeleteLedgerEntry(id);
 
-    revalidatePath('/ledger');
-    revalidatePath('/accounts');
+    revalidatePath('/finance/ledger');
+    revalidatePath('/finance/accounts');
     revalidatePath('/dashboard');
     return {};
   } catch {

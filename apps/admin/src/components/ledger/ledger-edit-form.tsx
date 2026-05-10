@@ -47,8 +47,12 @@ export function LedgerEditForm({
   const [selectedEntry, setSelectedEntry] = React.useState(entry.entryType);
   const [balances, setBalances] = React.useState<BucketBalances | null>(null);
 
+  function refreshBalances() {
+    getLedgerBalancesAction().then(setBalances).catch(() => {});
+  }
+
   React.useEffect(() => {
-    getLedgerBalancesAction().then(setBalances).catch(console.error);
+    refreshBalances();
   }, []);
 
   function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
@@ -66,7 +70,7 @@ export function LedgerEditForm({
       } else {
         toast.success('Ledger entry updated');
         // Refresh balances
-        getLedgerBalancesAction().then(setBalances).catch(console.error);
+        refreshBalances();
         onCancel();
       }
     });

@@ -1,6 +1,6 @@
 # Settings
 
-The Settings section lives at `/settings` and is split into ten sub-pages. Each sub-page follows the same 1/3 + 2/3 section layout used across the admin app — a label/description column on the left and a `Card` form on the right.
+The Settings section lives at `/settings` and is split into sub-pages. Each sub-page follows the same `1/3 + 2/3` section layout — a label/description column on the left and a `Card` form on the right. The back button always reads "← Settings" and links to `/settings`.
 
 ---
 
@@ -9,13 +9,10 @@ The Settings section lives at `/settings` and is split into ten sub-pages. Each 
 | Route | Page | Status |
 |---|---|---|
 | `/settings` | Settings index — nav card grid | ✅ Active |
-| `/settings/organisation` | Organisation details | ✅ Active |
-| `/settings/billing` | Billing & Invoicing per division | ✅ Active |
-| `/settings/users` | Team members, roles, invitations | ✅ Active |
-| `/settings/localisation` | Timezone, locale, financial year | 🔜 Soon |
-| `/settings/email` | Outbound email / SMTP config | 🔜 Soon |
-| `/settings/notifications` | Notification preferences | 🔜 Soon |
-| `/settings/appearance` | Theme & display density | 🔜 Soon |
+| `/settings/organisation` | Company details for all documents | ✅ Shell — wire up save |
+| `/settings/billing` | Billing defaults per division | ✅ Active — wired to `getAllDivisions()` |
+| `/settings/users` | Team members, roles, invitations | ✅ Active — fully working |
+| `/settings/users/invite` | Invite user form | ✅ Active |
 | `/settings/security` | Password, 2FA, sessions, audit log | 🔜 Soon |
 | `/settings/data` | Exports, retention, danger zone | 🔜 Soon |
 
@@ -23,78 +20,96 @@ The Settings section lives at `/settings` and is split into ten sub-pages. Each 
 
 ## `/settings` — Index
 
-The index page renders a 2-column grid of clickable nav cards, one per section. Each card shows an icon, title, description, and a "Soon" badge where the feature is not yet implemented. Clicking a card navigates to the corresponding sub-page.
+**File:** `src/app/(admin)/settings/page.tsx` ✅ Active
 
-**File:** `src/app/(admin)/settings/page.tsx`
+Renders a 2-column grid of clickable nav cards, one per section. Each card shows an icon, title, description, and a `Badge variant="secondary"` labelled "Soon" for unimplemented sections. Clicking a card navigates to the sub-page.
+
+**Sections in order:**
+
+| Section | Icon | Badge |
+|---|---|---|
+| Organisation | Building2 | — |
+| Billing & Invoicing | Receipt | — |
+| Users | Users | — |
+| Security | Shield | Soon |
+| Data & Exports | Database | Soon |
 
 ---
 
 ## `/settings/organisation`
 
-Manages company-wide identity used across all documents.
+**File:** `src/app/(admin)/settings/organisation/page.tsx` ✅ Shell — wire up save
 
-**File:** `src/app/(admin)/settings/organisation/page.tsx`
+Manages company-wide identity used across all documents (invoices, quotes, statements). These are workspace-global fields — not per-division. Division-specific overrides live in `/settings/billing`.
 
-### Sections
+**Sections:**
 
-**Company Identity**
-- Company Name
+### Company Identity
+- Company Name (defaults to "PMG" in shell)
 - Registration Number
 - VAT Number
 
-**Contact Details**
+### Contact Details
 - Email
 - Phone
 - Website
 
-**Address**
+### Address
 - Street Address
 - City
 - Postal Code
 - Province
-- Country (defaults to South Africa)
+- Country (default: South Africa)
 
-**Logo**
-- Upload a PNG or SVG (max 2 MB) displayed on invoices, quotes, and statements.
+### Logo
+- Upload PNG or SVG, max 2 MB
+- Displayed on all documents. Division logos in `/settings/billing` override this per division.
+
+**Save button** is currently disabled. When wiring up: create a `settings` table (or organisation settings record) and a `updateOrganisationSettings` server action.
 
 ---
 
 ## `/settings/billing`
 
-Configures billing defaults **per division**. Each division gets its own tab. Settings are identical across divisions but stored independently.
-
 **Files:**
-- `src/app/(admin)/settings/billing/page.tsx` — server component, fetches divisions via `getAllDivisions()` from `@pmg/db`
-- `src/app/(admin)/settings/billing/billing-settings-client.tsx` — client component, manages tab state
+- `src/app/(admin)/settings/billing/page.tsx` ✅ Active — server component, `export const dynamic = 'force-dynamic'`
+- `src/app/(admin)/settings/billing/billing-settings-client.tsx` ✅ Active — client component, manages tab state
 
-### Division Tabs
+Configures billing defaults **per division**. Each division gets its own tab. Switching tabs re-renders the form for the selected division via `useState<string>` tracking `activeId`.
 
-Divisions are fetched from the database and rendered as a horizontal scrollable tab bar. The active tab is tracked in `useState`. Switching tabs re-renders the form for the selected division.
-
-### Document Prefix Logic
+### Division Prefix Logic
 
 Invoice and quote prefixes are auto-derived from the division name using `divisionPrefix()`:
 
-- If the first word is already all-caps and 2–5 characters, it is used as-is (e.g. `"AWS Solutions"` → `AWS`)
-- Otherwise, initials of up to 3 words are used (e.g. `"The Energy Solutions"` → `TES`)
+```typescript
+function divisionPrefix(name: string): string {
+  const firstWord = name.trim().split(/\s+/)[0]
+  if (/^[A-Z]{2,5}$/.test(firstWord)) return firstWord   // "AWS Solutions" → "AWS"
+  return name.trim().split(/\s+/).slice(0, 3)
+    .map((w) => w[0].toUpperCase()).join('')               // "Tender Edge" → "TE"
+}
+```
 
-This produces prefixes like `AWS-INV-`, `AWS-QTE-`, with document numbers formatted as `AWS-INV-0001`.
+This produces prefixes like `APX-INV-`, `APX-QTE-`, with document numbers formatted as `APX-INV-2026-001`.
+
+> **Note:** The shell uses `QTE` as the quote type code. The PRD specifies `Q`. Decide on one format and apply consistently across `document_sequences` and all display. Recommendation: use `Q` (shorter, cleaner).
 
 ### Sections (per division)
 
 **Document Numbering**
-- Invoice Prefix (e.g. `AWS-INV-`)
-- Next Invoice Number
-- Quote Prefix (e.g. `AWS-QTE-`)
-- Next Quote Number
+- Invoice Prefix — derived, read-only (e.g. `APX-INV-`)
+- Next Invoice Number — shows current sequence, editable for initial setup
+- Quote Prefix — derived, read-only (e.g. `APX-QTE-`)
+- Next Quote Number — shows current sequence, editable for initial setup
 
 **Tax & Payment**
-- Default VAT Rate (default: 15%)
-- Default Payment Terms (default: 30 days)
-- Currency (default: ZAR — South African Rand)
+- Default VAT Rate — default 15%
+- Default Payment Terms — default 30 days
+- Currency — ZAR (read-only in v1)
 
 **Logo**
-- Division-specific logo for invoices and quotes
+- Division-specific logo (overrides the org logo for documents from this division)
+- Upload PNG or SVG, max 2 MB
 
 **Banking Details**
 - Bank Name
@@ -102,254 +117,123 @@ This produces prefixes like `AWS-INV-`, `AWS-QTE-`, with document numbers format
 - Account Number
 - Branch Code
 
+Printed on invoices and statements so clients know where to pay. These fields populate the `banking` prop on `DocumentPreview`.
+
 **Default Notes**
-- Invoice Notes
-- Quote Notes / Terms
+- Invoice Notes — pre-filled on new invoices for this division
+- Quote Notes / Terms — pre-filled on new quotes
 
----
-
-## `/settings/localisation`
-
-Controls global time, date, and financial year settings that affect the entire workspace — snapshots, reports, due date calculations, and document formatting.
-
-**File:** `src/app/(admin)/settings/localisation/page.tsx`
-
-> 🔜 Not yet implemented — UI is a placeholder.
-
-### Sections
-
-**Timezone**
-- Timezone — searchable dropdown of IANA timezones (default: `Africa/Johannesburg`)
-- Affects: due date calculations, snapshot timestamps, audit log entries, scheduled notifications
-
-**Date & Number Format**
-- Date Format — `DD/MM/YYYY` (default) | `MM/DD/YYYY` | `YYYY-MM-DD`
-- Number Format — `R 1 000,00` (default) | `R 1,000.00`
-- These apply to all documents, tables, and exports across the app
-
-**Financial Year**
-- Financial Year Start — month picker (default: March, i.e. 1 March – 28/29 February)
-- Affects: financial snapshots, income/expense reports, year-to-date calculations
-
-**Default Country**
-- Pre-fills the Country field when creating new clients or leads (default: South Africa)
-
----
-
-## `/settings/email`
-
-Configures how outbound emails are sent — used for invoice delivery, quote sending, notifications, and user invitations.
-
-**File:** `src/app/(admin)/settings/email/page.tsx`
-
-> 🔜 Not yet implemented — UI is a placeholder.
-
-### Sections
-
-**Sending Provider**
-- Provider — `Resend` | `SMTP` | `SendGrid` (radio/select)
-- Switching provider shows the relevant credential fields below
-
-**Resend**
-- API Key
-
-**SMTP**
-- Host
-- Port
-- Username
-- Password
-- Encryption — None | TLS | STARTTLS
-
-**Sender Identity**
-- From Name — display name on outgoing emails (e.g. "PMG Hub")
-- From Address — the `from` email address (e.g. `billing@yourdomain.com`)
-- Reply-To Address — optional; defaults to From Address
-
-**Test Email**
-- Send a test email to a specified address to verify the configuration is working
-
-> Credentials are stored encrypted. The API key or SMTP password is never returned to the client after saving — only a masked placeholder is shown.
+All Save buttons are currently disabled. When wiring up: add a `division_billing_settings` table (or extend divisions table) and a `saveDivisionBillingSettings(divisionId, data)` server action.
 
 ---
 
 ## `/settings/users`
 
-Manages who has access to the workspace, what they can do, and how they are invited.
-
 **Files:**
-- `src/app/(admin)/settings/users/page.tsx` — server component; fetches all users and pending invitations from the database
-- `src/app/(admin)/settings/users/invite/page.tsx` — invite form page
+- `src/app/(admin)/settings/users/page.tsx` ✅ Active — fully working server component
+- `src/app/(admin)/settings/users/invite/page.tsx` ✅ Active
 
-> Access is restricted to `super_admin` role. Other roles receive a 404.
+Access is restricted to `super_admin` role — other roles receive a 404 via `requireRole(session, 'super_admin')`.
 
-### Sections
+Fetches users and pending invitations directly via raw SQL (Better Auth manages the `user` table schema).
 
-**Team Members**
+### Team Members Table
 
-Table of all users with access to the workspace.
-
-| Column | Description |
+| Column | Notes |
 |---|---|
 | Name | User's display name |
 | Email | Login email |
-| Role | Current role badge |
+| Role | `super_admin`, `admin`, or `viewer` |
 | Status | Active / Invited / Suspended |
-| Joined | Date added |
-| Actions | Change role, Suspend, Remove |
+| Actions | Change role, Revoke, Delete |
 
-**Invite User**
+### Pending Invitations Table
+
+Shows pending (not yet accepted) invitation rows. Actions: Resend, Delete.
+
+### Roles & Permissions
+
+Roles are fixed — not custom. Permission matrix:
+
+| Area | super_admin | admin | viewer |
+|---|:---:|:---:|:---:|
+| View dashboard & reports | ✅ | ✅ | ✅ |
+| View all billing documents | ✅ | ✅ | ✅ |
+| Create / edit invoices & quotes | ✅ | ✅ | ❌ |
+| Mark invoice paid | ✅ | ✅ | ❌ |
+| Create / edit expenses & income | ✅ | ✅ | ❌ |
+| Manage clients & leads | ✅ | ✅ | ❌ |
+| Manage items catalogue | ✅ | ✅ | ❌ |
+| View settings | ✅ | ✅ | ❌ |
+| Change settings | ✅ | ✅ | ❌ |
+| Manage users | ✅ | ❌ | ❌ |
+| Danger zone actions | ✅ | ❌ | ❌ |
+
+### Invite User Form
+
+- Name
 - Email address
-- Role — assigned at invite time
-- Send Invite button — dispatches an invitation email via the configured email provider
-
-**Roles & Permissions**
-
-Defines what each role can see and do across the app. Roles are fixed (not custom).
-
-| Role | Description |
-|---|---|
-| `owner` | Full access; can manage users, settings, and all data |
-| `admin` | Full access except user management and danger zone |
-| `manager` | Can view and create all billing and finance records; cannot change settings |
-| `viewer` | Read-only access across the app |
-
-Permission matrix (✅ allowed, ❌ not allowed):
-
-| Area | owner | admin | manager | viewer |
-|---|---|---|---|---|
-| View dashboard & reports | ✅ | ✅ | ✅ | ✅ |
-| Create / edit invoices & quotes | ✅ | ✅ | ✅ | ❌ |
-| Create / edit expenses & income | ✅ | ✅ | ✅ | ❌ |
-| Manage clients & leads | ✅ | ✅ | ✅ | ❌ |
-| Manage items catalogue | ✅ | ✅ | ✅ | ❌ |
-| View settings | ✅ | ✅ | ❌ | ❌ |
-| Change settings | ✅ | ✅ | ❌ | ❌ |
-| Manage users | ✅ | ❌ | ❌ | ❌ |
-| Danger zone actions | ✅ | ❌ | ❌ | ❌ |
-
-**Access Control**
-- Invitation mode — Invite-only (default) | Open registration
-- Session timeout — duration of inactivity before automatic sign-out (default: 7 days)
-
----
-
-## `/settings/notifications`
-
-Controls where and when alerts are sent.
-
-**File:** `src/app/(admin)/settings/notifications/page.tsx`
-
-> 🔜 Not yet implemented — UI is a placeholder with toggle rows.
-
-### Sections
-
-**Delivery Channel**
-- Notification Email — all alerts are sent to this address
-
-**Billing Alerts**
-- Invoice overdue
-- Invoice paid
-- Quote expiring
-- Quote accepted
-
-**Finance Alerts**
-- Monthly snapshot ready
-- Expense limit exceeded
-- New lead added
-
-**System Alerts**
-- New user invited
-- User role changed
-- Failed login attempt
-
----
-
-## `/settings/appearance`
-
-Controls the visual presentation of the admin interface.
-
-**File:** `src/app/(admin)/settings/appearance/page.tsx`
-
-> 🔜 Not yet implemented — UI is a placeholder.
-
-### Sections
-
-**Theme**
-- System (follows OS preference)
-- Light
-- Dark
-
-**Display Density**
-- Comfortable — more spacing, easier to scan
-- Compact — tighter layout, more data visible
-
-**Sidebar**
-- Collapse sidebar by default
-- Remember last open group
+- Role (select: super_admin, admin, viewer)
+- Send Invite → dispatches invitation email via Resend
 
 ---
 
 ## `/settings/security`
 
+**File:** `src/app/(admin)/settings/security/page.tsx` ✅ Shell — everything disabled
+
 Manages account security and access history.
-
-**File:** `src/app/(admin)/settings/security/page.tsx`
-
-> 🔜 Not yet implemented — UI is a placeholder.
 
 ### Sections
 
-**Password**
-- Current Password
-- New Password
-- Confirm New Password
+**Password** — Current, New, Confirm. "Update Password" button (disabled)
 
-**Two-Factor Authentication**
-- Enable authenticator app (Google Authenticator, Authy, etc.)
+**Two-Factor Authentication** — "Enable 2FA" button (disabled). Supports authenticator app (Google Authenticator, Authy)
 
-**Active Sessions**
-- Lists devices currently signed in
-- Ability to revoke individual sessions
+**Active Sessions** — Lists devices currently signed in. "Revoke" per session. Shell shows one placeholder row for current session.
 
-**Audit Log**
-- Table of recent actions: action, user, timestamp, IP address
+**Audit Log** — Table: Action | User | Time | IP. Shell shows 3 placeholder rows. Wire to a real `audit_log` table in v2.
 
 ---
 
 ## `/settings/data`
 
+**File:** `src/app/(admin)/settings/data/page.tsx` ✅ Shell — all buttons disabled
+
 Handles data exports, retention policies, and destructive operations.
 
-**File:** `src/app/(admin)/settings/data/page.tsx`
+### Export Data
 
-> 🔜 Not yet implemented — UI is a placeholder.
+| Export | Format |
+|---|---|
+| Income & Expenses | CSV |
+| Invoices | CSV |
+| Clients | CSV |
+| Full Data Export | JSON |
 
-### Sections
+Wire export buttons to server actions that return downloadable content (mirrors the existing `exportFinancialsCsv` action pattern).
 
-**Export Data**
-- Income & Expenses (CSV)
-- Invoices (CSV)
-- Clients (CSV)
-- Full Data Export (JSON)
+### Data Retention
 
-**Data Retention**
-- Financial Records (default: keep indefinitely)
-- Audit Log (default: 12 months)
-- Deleted Records (default: 30 days soft delete)
+- Financial Records — keep indefinitely
+- Audit Log — 12 months
+- Deleted Records — 30 days (soft delete)
 
-**Danger Zone**
-- Clear all snapshots — permanently deletes all financial snapshots
+### Danger Zone
+
+- Clear all snapshots — permanently deletes all snapshot rows
 - Reset all settings — restores factory defaults
+
+Both actions use `border-destructive/50 text-destructive` styled buttons and require confirmation.
 
 ---
 
 ## Implementation Notes
 
-- All sub-pages use a `Back → Settings` button linking to `/settings`.
-- Form fields are currently placeholder `div` elements styled to look like inputs. Wire them up with real `Input` components and server actions when implementing each section.
-- The billing page is the only settings page that is currently a server component (`async`) — it needs `getAllDivisions()` at render time. Localisation and Users will also need to be server components when implemented.
-- **Users** (`/settings/users`) is already a fully working server component — it fetches users and pending invitations at render time and is restricted to `super_admin`. The sidebar nav entry points to `/settings/users` (moved from the old `/users` route).
-- "Soon" sections have their save buttons disabled and display a `Badge variant="secondary"` in the page header.
-- **Email credentials** must be stored encrypted at rest. Never return the raw secret to the client — show a masked placeholder after saving.
-- **Localisation settings** (timezone, financial year start, date format) are workspace-global and should be loaded once at the layout level and passed via context or server props to any component that formats dates or currency.
-- **Role enforcement** should happen at the server action and route handler level, not just in the UI. The permission matrix in `/settings/users` is the source of truth for what each role can do.
+- **All sub-pages** use a `Back → Settings` ghost button linking to `/settings`, followed by a vertical `Separator` and the page heading with icon.
+- **Form fields** in shells are styled `div` placeholders. Replace with real shadcn `Input`, `Select`, `Switch`, and `DatePicker` components when implementing each section.
+- **`/settings/billing`** is already a working server component — it calls `getAllDivisions()` at render time and passes divisions to `BillingSettingsClient`. When implementing the save flow, add a `division_billing_settings` table and keep the server component pattern.
+- **`/settings/users`** is fully working. It queries the `user` and `invitations` tables directly via raw SQL (Better Auth manages the `user` table). Role enforcement happens at the action level via `requireSuperAdmin()`.
+- **"Soon" sections** display a `Badge variant="secondary"` in the page header and have all save buttons disabled.
+- **Role enforcement** happens at the server action level, not just in the UI. The permission matrix in `/settings/users` is the source of truth.
+- **The `/users` route** (top-level) still exists for backward compatibility. The canonical location is `/settings/users`. Consolidate to `/settings/users` and add a redirect from `/users` when cleaning up.

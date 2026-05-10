@@ -21,7 +21,7 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table';
-import { formatZAR } from '@/lib/format';
+import { formatZAR, fmtDate } from '@/lib/format';
 
 const today = new Date().toISOString().split('T')[0]!;
 
@@ -193,7 +193,7 @@ function IncomeTableRow({
 
   return (
     <TableRow>
-      <TableCell>{entry.date}</TableCell>
+      <TableCell>{fmtDate(entry.date)}</TableCell>
       <TableCell>{entry.divisionName}</TableCell>
       <TableCell>{entry.clientName ?? ''}</TableCell>
       <TableCell>{entry.description ?? ''}</TableCell>

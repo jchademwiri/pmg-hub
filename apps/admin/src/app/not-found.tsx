@@ -4,10 +4,10 @@ import { Separator } from "@/components/ui/separator";
 import { Badge } from "@/components/ui/badge";
 
 const quickLinks = [
-  { label: "Leads", href: "/leads" },
-  { label: "Clients", href: "/clients" },
-  { label: "Income", href: "/income" },
-  { label: "Expenses", href: "/expenses" },
+  { label: "Leads", href: "/relationships/leads" },
+  { label: "Clients", href: "/relationships/clients" },
+  { label: "Income", href: "/finance/income" },
+  { label: "Expenses", href: "/finance/expenses" },
 ];
 
 export default function NotFound() {
