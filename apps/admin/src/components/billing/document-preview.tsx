@@ -1,6 +1,6 @@
 import Link from 'next/link'
 import { cn } from '@/lib/utils'
-import { fmtDate } from '@/lib/format'
+import { fmtDate, fmtDateLong } from '@/lib/format'
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 
@@ -209,23 +209,23 @@ export function DocumentPreview({
           <div className="flex gap-8 shrink-0">
             <div className="flex flex-col items-end gap-0.5">
               <span className="text-[10px] font-semibold uppercase tracking-widest text-zinc-400">Period From</span>
-              <span className="text-sm font-medium">{fmtDate(periodFrom)}</span>
+              <span className="text-sm font-medium">{fmtDateLong(periodFrom)}</span>
             </div>
             <div className="flex flex-col items-end gap-0.5">
               <span className="text-[10px] font-semibold uppercase tracking-widest text-zinc-400">Period To</span>
-              <span className="text-sm font-medium">{fmtDate(periodTo)}</span>
+              <span className="text-sm font-medium">{fmtDateLong(periodTo)}</span>
             </div>
           </div>
         ) : (
           <div className="flex flex-col gap-1 items-end shrink-0">
             <div className="flex items-center gap-3">
               <span className="text-[10px] font-semibold uppercase tracking-widest text-zinc-400">Issue Date</span>
-              <span className="text-sm font-medium">{fmtDate(issueDate)}</span>
+              <span className="text-sm font-medium">{fmtDateLong(issueDate)}</span>
             </div>
             {dueDateLabel && (
               <div className="flex items-center gap-3">
                 <span className="text-[10px] font-semibold uppercase tracking-widest text-zinc-400">{dueDateLabel}</span>
-                <span className="text-sm font-medium">{fmtDate(dueDate)}</span>
+                <span className="text-sm font-medium">{fmtDateLong(dueDate)}</span>
               </div>
             )}
           </div>
@@ -316,7 +316,7 @@ export function DocumentPreview({
             <tbody>
               {transactions.map((tx, i) => (
                 <tr key={i} className="border-b border-zinc-50">
-                  <td className="py-2.5 pr-4 text-xs text-zinc-600 whitespace-nowrap">{fmtDate(tx.date)}</td>
+                  <td className="py-2.5 pr-4 text-xs text-zinc-600 whitespace-nowrap">{fmtDateLong(tx.date)}</td>
                   <td className="py-2.5 px-4 text-xs text-zinc-600 whitespace-nowrap">{tx.reference}</td>
                   <td className="py-2.5 px-4 text-xs text-zinc-800">{tx.description}</td>
                   <td className="py-2.5 px-4 text-right tabular-nums text-xs text-zinc-600">

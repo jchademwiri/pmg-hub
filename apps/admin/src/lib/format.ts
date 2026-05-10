@@ -16,3 +16,14 @@ export function fmtDate(value: string | Date | null | undefined): string {
   const date = typeof value === 'string' ? new Date(value + 'T00:00:00') : value
   return date.toLocaleDateString('en-ZA', { day: '2-digit', month: 'short', year: 'numeric' })
 }
+
+/**
+ * Format an ISO date string (YYYY-MM-DD) or Date object as "08 May 2026".
+ * Use this for printed documents (invoices, quotes, statements) where the
+ * full month name reads better on paper.
+ */
+export function fmtDateLong(value: string | Date | null | undefined): string {
+  if (!value) return '—'
+  const date = typeof value === 'string' ? new Date(value + 'T00:00:00') : value
+  return date.toLocaleDateString('en-ZA', { day: '2-digit', month: 'long', year: 'numeric' })
+}
