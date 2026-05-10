@@ -3,6 +3,7 @@ import Link from 'next/link'
 import { notFound } from 'next/navigation'
 import { getLeadById } from '@pmg/db'
 import { updateLeadStatus, updateLeadNotes } from '@/app/actions/leads'
+import { fmtDate } from '@/lib/format'
 import { LeadStatusForm } from '@/components/leads/lead-status-form'
 import { LeadNotesForm } from '@/components/leads/lead-notes-form'
 
@@ -74,7 +75,7 @@ export default async function LeadDetailPage({ params }: LeadDetailPageProps) {
             </div>
             <div className="flex flex-col gap-0.5">
               <dt className="text-muted-foreground">Received</dt>
-              <dd>{lead.createdAt.toLocaleDateString()}</dd>
+              <dd>{fmtDate(lead.createdAt)}</dd>
             </div>
           </dl>
         </div>

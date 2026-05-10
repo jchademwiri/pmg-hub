@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation';
 import { useTransition } from 'react';
 import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
-import { MarkPaidButton } from '@/components/billing/mark-paid-button';
+import { fmtDate } from '@/lib/format';
 import { VoidInvoiceButton } from '@/components/billing/void-invoice-button';
 import { LinkPaymentButton } from '@/components/billing/link-payment-button';
 
@@ -108,14 +108,7 @@ export function InvoiceDetailActions({
           <div className="flex flex-col gap-2">
             <p className="text-xs text-green-600 dark:text-green-400">
               Paid on{' '}
-              {invoice.paidAt
-                ? new Date(invoice.paidAt).toLocaleDateString('en-ZA', {
-                    day: '2-digit',
-                    month: 'short',
-                    year: 'numeric',
-                  })
-                : '—'}
-              . Revenue posted to income.
+              {fmtDate(invoice.paidAt ?? undefined)}. Revenue posted to income.
             </p>
             <Button variant="outline" size="sm" className="w-full" asChild>
               <Link href="/finance/income">View in Income →</Link>

@@ -1,5 +1,6 @@
 import Link from 'next/link'
 import { cn } from '@/lib/utils'
+import { fmtDate } from '@/lib/format'
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 
@@ -74,15 +75,6 @@ export interface StatementTransaction {
 
 function fmt(amount: number) {
   return `R ${amount.toLocaleString('en-ZA', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
-}
-
-/** Format ISO date string (YYYY-MM-DD) to human-readable e.g. "08 May 2026" */
-function fmtDate(dateStr: string | undefined): string {
-  if (!dateStr) return '—'
-  // Parse as local date to avoid UTC offset shifting the day
-  const [y, m, d] = dateStr.split('-').map(Number)
-  const date = new Date(y!, m! - 1, d!)
-  return date.toLocaleDateString('en-ZA', { day: '2-digit', month: 'long', year: 'numeric' })
 }
 
 function StatusPill({ status }: { status: string }) {

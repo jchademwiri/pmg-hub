@@ -21,7 +21,7 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table';
-import { formatZAR } from '@/lib/format';
+import { formatZAR, fmtDate } from '@/lib/format';
 
 const today = new Date().toISOString().split('T')[0]!;
 
@@ -218,7 +218,7 @@ function ExpenseTableRow({
 
   return (
     <TableRow>
-      <TableCell>{new Date(entry.date + 'T00:00:00').toLocaleDateString('en-ZA', { day: '2-digit', month: 'short', year: 'numeric' })}</TableCell>
+      <TableCell>{fmtDate(entry.date)}</TableCell>
       <TableCell>{entry.divisionName}</TableCell>
       <TableCell className="text-muted-foreground">{entry.clientName ?? '—'}</TableCell>
       <TableCell>{entry.category}</TableCell>

@@ -7,7 +7,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/com
 import { Separator } from '@/components/ui/separator';
 import { BillingStatusBadge } from '@/components/billing/billing-status-badge';
 import { getItemById } from '@pmg/db';
-import { formatZAR } from '@/lib/format';
+import { formatZAR, fmtDate } from '@/lib/format';
 import { ItemEditClient } from './item-edit-client';
 
 export const dynamic = 'force-dynamic';
@@ -42,12 +42,7 @@ export default async function ItemDetailPage({ params }: Props) {
               <BillingStatusBadge status={item.status} />
             </div>
             <p className="text-sm text-muted-foreground">
-              Created{' '}
-              {new Date(item.createdAt).toLocaleDateString('en-ZA', {
-                day: '2-digit',
-                month: 'short',
-                year: 'numeric',
-              })}
+              Created {fmtDate(item.createdAt)}
             </p>
           </div>
         </div>
