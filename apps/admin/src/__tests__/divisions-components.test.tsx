@@ -87,6 +87,7 @@ describe('DivisionsTable', () => {
         totalExpenses: 6789,
         netProfit: 5556,
         leadCount: 3,
+        isActive: true,
       },
     ]
 
@@ -95,6 +96,7 @@ describe('DivisionsTable', () => {
         divisions={divisions}
         updateAction={updateAction}
         deleteAction={deleteAction}
+        toggleActiveAction={toggleActiveAction}
       />
     )
 
@@ -121,6 +123,7 @@ describe('DivisionsTable', () => {
         totalExpenses: 40,
         netProfit: 60,
         leadCount: 1,
+        isActive: true,
       },
     ]
 
@@ -129,6 +132,7 @@ describe('DivisionsTable', () => {
         divisions={divisions}
         updateAction={updateAction}
         deleteAction={deleteAction}
+        toggleActiveAction={toggleActiveAction}
       />
     )
 
@@ -147,6 +151,7 @@ describe('DivisionsTable', () => {
         totalExpenses: 100,
         netProfit: -60,
         leadCount: 1,
+        isActive: true,
       },
     ]
 
@@ -155,6 +160,7 @@ describe('DivisionsTable', () => {
         divisions={divisions}
         updateAction={updateAction}
         deleteAction={deleteAction}
+        toggleActiveAction={toggleActiveAction}
       />
     )
 
@@ -172,6 +178,7 @@ describe('DivisionsTable', () => {
         totalExpenses: 0,
         netProfit: 0,
         leadCount: 0,
+        isActive: true,
       },
     ]
 
@@ -180,6 +187,7 @@ describe('DivisionsTable', () => {
         divisions={divisions}
         updateAction={updateAction}
         deleteAction={deleteAction}
+        toggleActiveAction={toggleActiveAction}
       />
     )
 
@@ -200,6 +208,7 @@ describe('DivisionsTable', () => {
         totalExpenses: 0,
         netProfit: 0,
         leadCount: 0,
+        isActive: true,
       },
     ]
 
@@ -208,6 +217,7 @@ describe('DivisionsTable', () => {
         divisions={divisions}
         updateAction={updateAction}
         deleteAction={deleteAction}
+        toggleActiveAction={toggleActiveAction}
       />
     )
 
@@ -231,6 +241,7 @@ describe('DivisionsTable', () => {
         totalExpenses: 0,
         netProfit: 0,
         leadCount: 0,
+        isActive: true,
       },
     ]
 
@@ -239,6 +250,7 @@ describe('DivisionsTable', () => {
         divisions={divisions}
         updateAction={updateAction}
         deleteAction={deleteAction}
+        toggleActiveAction={toggleActiveAction}
       />
     )
 
@@ -263,6 +275,7 @@ describe('DivisionsTable', () => {
         totalExpenses: 0,
         netProfit: 0,
         leadCount: 0,
+        isActive: true,
       },
     ]
 
@@ -271,6 +284,7 @@ describe('DivisionsTable', () => {
         divisions={divisions}
         updateAction={updateAction}
         deleteAction={deleteAction}
+        toggleActiveAction={toggleActiveAction}
       />
     )
 
@@ -298,6 +312,7 @@ describe('DivisionsTable', () => {
         totalExpenses: 0,
         netProfit: 0,
         leadCount: 0,
+        isActive: true,
       },
     ]
 
@@ -306,6 +321,7 @@ describe('DivisionsTable', () => {
         divisions={divisions}
         updateAction={updateAction}
         deleteAction={deleteAction}
+        toggleActiveAction={toggleActiveAction}
       />
     )
 
@@ -333,6 +349,7 @@ describe('DivisionsTable', () => {
         totalExpenses: 0,
         netProfit: 0,
         leadCount: 0,
+        isActive: true,
       },
     ]
 
@@ -341,6 +358,7 @@ describe('DivisionsTable', () => {
         divisions={divisions}
         updateAction={updateAction}
         deleteAction={deleteAction}
+        toggleActiveAction={toggleActiveAction}
       />
     )
 
@@ -432,7 +450,7 @@ describe('deleteDivision — FK constraint violation returns { error }', () => {
     const fkError = new Error('insert or update on table violates foreign key constraint 23503')
     vi.mocked(db.delete).mockReturnValue({
       where: vi.fn().mockRejectedValue(fkError),
-    } as ReturnType<typeof db.delete>)
+    } as unknown as ReturnType<typeof db.delete>)
 
     const result = await deleteDivision('some-id')
 

@@ -25,6 +25,7 @@ const divisionRowArb = fc.record({
   totalExpenses: fc.float({ min: 0, max: 999999, noNaN: true }),
   netProfit: fc.float({ min: -999999, max: 999999, noNaN: true }),
   leadCount: fc.integer({ min: 0, max: 1000 }),
+  isActive: fc.boolean(),
 })
 
 // ─── Placeholder describe block ──────────────────────────────────────────────
@@ -116,6 +117,7 @@ describe('getDivisionsWithStats — Property 2: zero defaults for divisions with
           totalExpenses: fc.constant(0),
           netProfit: fc.constant(0),
           leadCount: fc.constant(0),
+          isActive: fc.boolean(),
         }),
         async (row) => {
           vi.mocked(getDivisionsWithStats).mockResolvedValue([row])
@@ -188,6 +190,7 @@ describe('createDivision — Property 4: round-trip with valid name', () => {
             totalExpenses: 0,
             netProfit: 0,
             leadCount: 0,
+            isActive: true,
           }
           vi.mocked(getDivisionsWithStats).mockResolvedValue([createdRow])
 
@@ -236,6 +239,7 @@ describe('updateDivision — Property 5: round-trip with valid name', () => {
             totalExpenses: 0,
             netProfit: 0,
             leadCount: 0,
+            isActive: true,
           }
           vi.mocked(getDivisionsWithStats).mockResolvedValue([updatedRow])
 
@@ -445,6 +449,7 @@ describe('getDivisionsWithStats after createDivision — Property 10: new divisi
             totalExpenses: 0,
             netProfit: 0,
             leadCount: 0,
+            isActive: true,
           }
 
           // Insert the new row at the correct sorted position

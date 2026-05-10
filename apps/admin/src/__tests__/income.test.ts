@@ -43,12 +43,12 @@ describe('getAllIncome — Property 1: shape and sort order', () => {
         async (entries) => {
           // Sort entries by date DESC (as the real DB query would)
           const sorted = [...entries].sort((a, b) => b.date.localeCompare(a.date))
-          vi.mocked(getAllIncome).mockResolvedValue(sorted)
+          vi.mocked(getAllIncome).mockResolvedValue({ data: sorted, total: sorted.length, sum: 0 })
 
           const result = await getAllIncome()
 
           // Assert correct shape: every entry has all required fields
-          for (const entry of result) {
+          for (const entry of result.data) {
             expect(typeof entry.id).toBe('string')
             expect(typeof entry.date).toBe('string')
             expect(typeof entry.divisionId).toBe('string')
@@ -60,8 +60,8 @@ describe('getAllIncome — Property 1: shape and sort order', () => {
           }
 
           // Assert sorted by date descending
-          for (let i = 1; i < result.length; i++) {
-            expect(result[i - 1].date >= result[i].date).toBe(true)
+          for (let i = 1; i < result.data.length; i++) {
+            expect(result.data[i - 1]!.date >= result.data[i]!.date).toBe(true)
           }
         }
       ),
@@ -228,12 +228,12 @@ describe('getAllIncome — Property 2: Division filter excludes entries from oth
             .filter((e) => e.divisionId === filterDivisionId)
             .sort((a, b) => b.date.localeCompare(a.date))
 
-          vi.mocked(getAllIncome).mockResolvedValue(matchingEntries)
+          vi.mocked(getAllIncome).mockResolvedValue({ data: matchingEntries, total: matchingEntries.length, sum: 0 })
 
           const result = await getAllIncome({ divisionId: filterDivisionId })
 
           // Assert: no returned entry has a divisionId different from the filter value
-          for (const entry of result) {
+          for (const entry of result.data) {
             expect(entry.divisionId).toBe(filterDivisionId)
           }
         }
@@ -265,12 +265,12 @@ describe('getAllIncome — Property 3: Month filter excludes entries outside the
             .filter((e) => e.date.startsWith(filterMonth))
             .sort((a, b) => b.date.localeCompare(a.date))
 
-          vi.mocked(getAllIncome).mockResolvedValue(matchingEntries)
+          vi.mocked(getAllIncome).mockResolvedValue({ data: matchingEntries, total: matchingEntries.length, sum: 0 })
 
           const result = await getAllIncome({ month: filterMonth })
 
           // Assert: no returned entry has a date outside the filtered calendar month
-          for (const entry of result) {
+          for (const entry of result.data) {
             expect(entry.date.startsWith(filterMonth)).toBe(true)
           }
         }
@@ -470,13 +470,13 @@ describe('createIncome — Property 5: round-trip — valid input succeeds and e
             description: input.description ?? null,
             amount: input.amount.toFixed(2),
           }
-          vi.mocked(getAllIncome).mockResolvedValue([createdEntry])
+          vi.mocked(getAllIncome).mockResolvedValue({ data: [createdEntry], total: 1, sum: Number(createdEntry.amount) })
 
           // Assert: getAllIncome result contains an entry with matching fields
           const entries = await getAllIncome()
-          expect(entries.length).toBeGreaterThanOrEqual(1)
+          expect(entries.data.length).toBeGreaterThanOrEqual(1)
 
-          const found = entries.find((e) => e.divisionId === input.divisionId && e.date === input.date)
+          const found = entries.data.find((e) => e.divisionId === input.divisionId && e.date === input.date)
           expect(found).toBeDefined()
           expect(found!.date).toBe(input.date)
           expect(found!.divisionId).toBe(input.divisionId)
@@ -545,13 +545,13 @@ describe('updateIncome — Property 6: round-trip — valid input succeeds and c
             description: newValues.description ?? null,
             amount: newValues.amount.toFixed(2),
           }
-          vi.mocked(getAllIncome).mockResolvedValue([updatedEntry])
+          vi.mocked(getAllIncome).mockResolvedValue({ data: [updatedEntry], total: 1, sum: Number(updatedEntry.amount) })
 
           // Assert: getAllIncome result contains the entry with updated field values
           const entries = await getAllIncome()
-          expect(entries.length).toBeGreaterThanOrEqual(1)
+          expect(entries.data.length).toBeGreaterThanOrEqual(1)
 
-          const found = entries.find((e) => e.id === existingEntry.id)
+          const found = entries.data.find((e) => e.id === existingEntry.id)
           expect(found).toBeDefined()
           expect(found!.date).toBe(newValues.date)
           expect(found!.divisionId).toBe(newValues.divisionId)

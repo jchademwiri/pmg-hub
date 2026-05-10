@@ -8,8 +8,8 @@ import { Separator } from '@/components/ui/separator';
 import { DocumentPreview } from '@/components/billing/document-preview';
 import { BillingStatusBadge } from '@/components/billing/billing-status-badge';
 import { BillingTotalsBlock } from '@/components/billing/billing-totals-block';
-import { getInvoiceById, getUnlinkedIncomeForClient, getDivisionBillingSettings } from '@pmg/db';
-import { issueInvoice, markInvoicePaid, voidInvoice, linkInvoiceToIncome } from '@/app/actions/billing-invoices';
+import { getInvoiceById, getDivisionBillingSettings } from '@pmg/db';
+import { issueInvoice, markInvoicePaid, voidInvoice } from '@/app/actions/billing-invoices';
 import { fmtDate } from '@/lib/format';
 import { InvoiceDetailActions } from './invoice-detail-actions';
 
@@ -26,13 +26,6 @@ export default async function InvoiceDetailPage({ params }: Props) {
   if (!invoice) notFound();
 
   const divSettings = await getDivisionBillingSettings(invoice.divisionId);
-
-  // Fetch unlinked income records for this client — used by the "Link Payment" flow.
-  // Only relevant when invoice is draft or issued and has a client.
-  const unlinkedIncome =
-    invoice.clientId && ['draft', 'issued', 'overdue'].includes(invoice.status)
-      ? await getUnlinkedIncomeForClient(invoice.clientId)
-      : [];
 
   const docPreviewProps = {
     number: invoice.documentNumber,
@@ -198,8 +191,6 @@ export default async function InvoiceDetailPage({ params }: Props) {
             issueAction={issueInvoice}
             markPaidAction={markInvoicePaid}
             voidAction={voidInvoice}
-            linkPaymentAction={linkInvoiceToIncome}
-            unlinkedIncome={unlinkedIncome}
           />
         </div>
       </div>

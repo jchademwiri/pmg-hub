@@ -23,6 +23,8 @@ const expenseArb = fc.record({
     .map((d) => d.toISOString().slice(0, 10)),
   divisionId: fc.uuid(),
   divisionName: fc.string({ minLength: 1, maxLength: 50 }),
+  clientId: fc.option(fc.uuid(), { nil: null }),
+  clientName: fc.option(fc.string({ minLength: 1, maxLength: 100 }), { nil: null }),
   category: fc.string({ minLength: 1, maxLength: 50 }),
   description: fc.option(fc.string({ maxLength: 200 }), { nil: null }),
   amount: fc.float({ min: Math.fround(0.01), max: Math.fround(999999.99), noNaN: true }).map((n) => n.toFixed(2)),
@@ -46,12 +48,12 @@ describe('getAllExpenses — Property 1: shape and sort order', () => {
         async (entries) => {
           // Sort entries by date DESC (as the real DB query would)
           const sorted = [...entries].sort((a, b) => b.date.localeCompare(a.date))
-          vi.mocked(getAllExpenses).mockResolvedValue(sorted)
+          vi.mocked(getAllExpenses).mockResolvedValue({ data: sorted, total: sorted.length, sum: 0 })
 
           const result = await getAllExpenses()
 
           // Assert correct shape: every entry has all required fields
-          for (const entry of result) {
+          for (const entry of result.data) {
             expect(typeof entry.id).toBe('string')
             expect(typeof entry.date).toBe('string')
             expect(typeof entry.divisionId).toBe('string')
@@ -62,8 +64,8 @@ describe('getAllExpenses — Property 1: shape and sort order', () => {
           }
 
           // Assert sorted by date descending
-          for (let i = 1; i < result.length; i++) {
-            expect(result[i - 1].date >= result[i].date).toBe(true)
+          for (let i = 1; i < result.data.length; i++) {
+            expect(result.data[i - 1]!.date >= result.data[i]!.date).toBe(true)
           }
         }
       ),
@@ -121,12 +123,12 @@ describe('getAllExpenses — Property 2: Division filter excludes entries from o
             .filter((e) => e.divisionId === filterDivisionId)
             .sort((a, b) => b.date.localeCompare(a.date))
 
-          vi.mocked(getAllExpenses).mockResolvedValue(matchingEntries)
+          vi.mocked(getAllExpenses).mockResolvedValue({ data: matchingEntries, total: matchingEntries.length, sum: 0 })
 
           const result = await getAllExpenses({ divisionId: filterDivisionId })
 
           // Assert: no returned entry has a divisionId different from the filter value
-          for (const entry of result) {
+          for (const entry of result.data) {
             expect(entry.divisionId).toBe(filterDivisionId)
           }
         }
@@ -156,12 +158,12 @@ describe('getAllExpenses — Property 3: Category filter excludes entries from o
             .filter((e) => e.category === filterCategory)
             .sort((a, b) => b.date.localeCompare(a.date))
 
-          vi.mocked(getAllExpenses).mockResolvedValue(matchingEntries)
+          vi.mocked(getAllExpenses).mockResolvedValue({ data: matchingEntries, total: matchingEntries.length, sum: 0 })
 
           const result = await getAllExpenses({ category: filterCategory })
 
           // Assert: no returned entry has a category different from the filter value
-          for (const entry of result) {
+          for (const entry of result.data) {
             expect(entry.category).toBe(filterCategory)
           }
         }
@@ -193,12 +195,12 @@ describe('getAllExpenses — Property 4: Month filter excludes entries outside t
             .filter((e) => e.date.startsWith(filterMonth))
             .sort((a, b) => b.date.localeCompare(a.date))
 
-          vi.mocked(getAllExpenses).mockResolvedValue(matchingEntries)
+          vi.mocked(getAllExpenses).mockResolvedValue({ data: matchingEntries, total: matchingEntries.length, sum: 0 })
 
           const result = await getAllExpenses({ month: filterMonth })
 
           // Assert: no returned entry has a date outside the filtered calendar month
-          for (const entry of result) {
+          for (const entry of result.data) {
             expect(entry.date.startsWith(filterMonth)).toBe(true)
           }
         }
@@ -300,19 +302,21 @@ describe('createExpense — Property 7: round-trip — valid input succeeds and 
             date: input.date,
             divisionId: input.divisionId,
             divisionName: 'Test Division',
+            clientId: null,
+            clientName: null,
             category: input.category,
             description: input.description ?? null,
             amount: input.amount.toFixed(2),
             createdAt: new Date(),
             updatedAt: null,
           }
-          vi.mocked(getAllExpenses).mockResolvedValue([createdEntry])
+          vi.mocked(getAllExpenses).mockResolvedValue({ data: [createdEntry], total: 1, sum: Number(createdEntry.amount) })
 
           // Assert: getAllExpenses result contains an entry with matching fields
           const entries = await getAllExpenses()
-          expect(entries.length).toBeGreaterThanOrEqual(1)
+          expect(entries.data.length).toBeGreaterThanOrEqual(1)
 
-          const found = entries.find((e) => e.divisionId === input.divisionId && e.date === input.date)
+          const found = entries.data.find((e) => e.divisionId === input.divisionId && e.date === input.date)
           expect(found).toBeDefined()
           expect(found!.date).toBe(input.date)
           expect(found!.divisionId).toBe(input.divisionId)
@@ -379,13 +383,13 @@ describe('updateExpense — Property 8: round-trip — valid input succeeds and 
             amount: newValues.amount.toFixed(2),
             updatedAt: new Date(),
           }
-          vi.mocked(getAllExpenses).mockResolvedValue([updatedEntry])
+          vi.mocked(getAllExpenses).mockResolvedValue({ data: [updatedEntry], total: 1, sum: Number(updatedEntry.amount) })
 
           // Assert: getAllExpenses result contains the entry with updated field values
           const entries = await getAllExpenses()
-          expect(entries.length).toBeGreaterThanOrEqual(1)
+          expect(entries.data.length).toBeGreaterThanOrEqual(1)
 
-          const found = entries.find((e) => e.id === existingEntry.id)
+          const found = entries.data.find((e) => e.id === existingEntry.id)
           expect(found).toBeDefined()
           expect(found!.date).toBe(newValues.date)
           expect(found!.divisionId).toBe(newValues.divisionId)
@@ -689,6 +693,8 @@ const makeExpenseEntry = (id: string): ExpenseRow => ({
   date: '2026-03-01',
   divisionId: 'div-1',
   divisionName: 'AWS',
+  clientId: null,
+  clientName: null,
   category: 'Travel',
   description: null,
   amount: '1000.00',
@@ -761,7 +767,7 @@ describe('ExpenseTable', () => {
   })
 
   it('empty entries array renders no table rows (only header row)', () => {
-    render(React.createElement(ExpenseTable, { entries: [], deleteAction, updateAction, divisions, categories }))
+    render(React.createElement(ExpenseTable, { entries: [], deleteAction, updateAction, divisions, categories, clients: [] }))
     // No data rows — only the header row exists
     const rows = screen.queryAllByRole('row')
     // Only the header row should be present
@@ -895,6 +901,8 @@ describe('Category datalist', () => {
       React.createElement(ExpenseAddForm, {
         divisions,
         categories,
+        clients: [],
+        createAction: vi.fn().mockResolvedValue({}),
       })
     )
 

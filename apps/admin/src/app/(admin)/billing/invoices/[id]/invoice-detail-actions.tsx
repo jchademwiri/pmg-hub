@@ -8,14 +8,6 @@ import { Button } from '@/components/ui/button';
 import { fmtDate } from '@/lib/format';
 import { MarkPaidButton } from '@/components/billing/mark-paid-button';
 import { VoidInvoiceButton } from '@/components/billing/void-invoice-button';
-import { LinkPaymentButton } from '@/components/billing/link-payment-button';
-
-interface UnlinkedIncomeRow {
-  id: string;
-  date: string;
-  description: string | null;
-  amount: string;
-}
 
 interface InvoiceDetailActionsProps {
   invoice: {
@@ -30,8 +22,6 @@ interface InvoiceDetailActionsProps {
   issueAction: (id: string) => Promise<{ error?: string }>;
   markPaidAction: (id: string) => Promise<{ error?: string }>;
   voidAction: (id: string) => Promise<{ error?: string }>;
-  linkPaymentAction: (invoiceId: string, incomeId: string) => Promise<{ error?: string }>;
-  unlinkedIncome: UnlinkedIncomeRow[];
 }
 
 export function InvoiceDetailActions({
@@ -39,8 +29,6 @@ export function InvoiceDetailActions({
   issueAction,
   markPaidAction,
   voidAction,
-  linkPaymentAction,
-  unlinkedIncome,
 }: InvoiceDetailActionsProps) {
   const router = useRouter();
   const [, startTransition] = useTransition();
@@ -75,27 +63,11 @@ export function InvoiceDetailActions({
           <>
             <Button className="w-full" onClick={handleIssue}>Issue Invoice</Button>
             <VoidInvoiceButton invoiceId={invoice.id} voidAction={voidAction} />
-            {unlinkedIncome.length > 0 && (
-              <LinkPaymentButton
-                invoiceId={invoice.id}
-                invoiceTotal={invoice.total}
-                unlinkedIncome={unlinkedIncome}
-                linkAction={linkPaymentAction}
-              />
-            )}
           </>
         )}
 
         {(status === 'issued' || status === 'overdue') && (
           <>
-            {unlinkedIncome.length > 0 && (
-              <LinkPaymentButton
-                invoiceId={invoice.id}
-                invoiceTotal={invoice.total}
-                unlinkedIncome={unlinkedIncome}
-                linkAction={linkPaymentAction}
-              />
-            )}
             <MarkPaidButton
               invoiceId={invoice.id}
               hasClient={!!invoice.clientId}
