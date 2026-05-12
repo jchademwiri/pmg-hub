@@ -141,8 +141,7 @@ export function DocumentPreview({
     type === 'invoice' ? 'Due Date' : type === 'quote' ? 'Expiry Date' : undefined
 
   return (
-    // A4 paper shell — 794px wide (A4 at 96dpi), min-height 1123px (A4 height).
-    <div className="print-document w-[794px] min-h-[1123px] mx-auto flex flex-col bg-white text-zinc-900 shadow-md ring-1 ring-zinc-200 print:ring-0">
+    <div className="print-document w-[794px] min-h-[1123px] mx-auto flex flex-col bg-white text-zinc-900 shadow-md print:shadow-none ring-1 ring-zinc-200 print:ring-0">
 
       {/* ── Header ─────────────────────────────────────────────────────────── */}
       <div className="flex items-start justify-between gap-6 px-10 pt-10 pb-6">

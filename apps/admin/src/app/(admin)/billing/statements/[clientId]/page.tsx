@@ -167,7 +167,7 @@ export default async function StatementDetailPage({ params, searchParams }: Prop
           </div>
         </div>
         <div className="flex items-center gap-2 flex-wrap justify-end">
-          <PrintButton />
+          <PrintButton documentTitle={`Statement-${client.businessName?.replace(/\s+/g, '-') ?? client.name.replace(/\s+/g, '-')}`} />
         </div>
       </div>
 

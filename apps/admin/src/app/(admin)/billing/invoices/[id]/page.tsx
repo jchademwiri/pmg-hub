@@ -106,7 +106,7 @@ export default async function InvoiceDetailPage({ params }: Props) {
           </div>
         </div>
         <div className="flex items-center gap-2 flex-wrap justify-end">
-          <PrintButton />
+          <PrintButton documentTitle={`Invoice-${invoice.documentNumber}`} />
           <Button variant="outline" size="sm" disabled title="Coming soon">
             <Send className="size-4" />
             Send
