@@ -31,7 +31,7 @@ export interface QuoteFormClientProps {
 }
 
 const today = new Date().toISOString().split('T')[0]!;
-const plus30 = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0]!;
+const plus5 = new Date(Date.now() + 5 * 24 * 60 * 60 * 1000).toISOString().split('T')[0]!;
 
 function blankRow(): LineItemFormRow {
   return {
@@ -77,7 +77,8 @@ export function QuoteFormClient({
   const [divisionId, setDivisionId] = useState(initialData?.divisionId ?? '');
   const [clientId, setClientId] = useState(initialData?.clientId ?? '');
   const [quoteDate, setQuoteDate] = useState(initialData?.quoteDate ?? today);
-  const [expiryDate, setExpiryDate] = useState(initialData?.expiryDate ?? plus30);
+  const [expiryDate, setExpiryDate] = useState(initialData?.expiryDate ?? plus5);
+  const [isExpiryDateModified, setIsExpiryDateModified] = useState(!!initialData?.expiryDate);
   const [reference, setReference] = useState(initialData?.reference ?? '');
   const [notes, setNotes] = useState(initialData?.notes ?? '');
   const [terms, setTerms] = useState(initialData?.terms ?? '');
@@ -226,7 +227,15 @@ export function QuoteFormClient({
               type="date"
               value={quoteDate}
               max={today}
-              onChange={(e) => setQuoteDate(e.target.value)}
+              onChange={(e) => {
+                const newDate = e.target.value;
+                setQuoteDate(newDate);
+                if (!isExpiryDateModified) {
+                  const d = new Date(newDate);
+                  d.setDate(d.getDate() + 5);
+                  setExpiryDate(d.toISOString().split('T')[0]!);
+                }
+              }}
               disabled={isSubmitting}
             />
           </div>
@@ -236,7 +245,10 @@ export function QuoteFormClient({
             <Input
               type="date"
               value={expiryDate}
-              onChange={(e) => setExpiryDate(e.target.value)}
+              onChange={(e) => {
+                setExpiryDate(e.target.value);
+                setIsExpiryDateModified(true);
+              }}
               disabled={isSubmitting}
             />
           </div>

@@ -32,7 +32,7 @@ export interface InvoiceFormClientProps {
 }
 
 const today = new Date().toISOString().split('T')[0]!;
-const plus30 = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0]!;
+const plus5 = new Date(Date.now() + 5 * 24 * 60 * 60 * 1000).toISOString().split('T')[0]!;
 
 function blankRow(): LineItemFormRow {
   return {
@@ -78,7 +78,8 @@ export function InvoiceFormClient({
   const [divisionId, setDivisionId] = useState(initialData?.divisionId ?? '');
   const [clientId, setClientId] = useState(initialData?.clientId ?? '');
   const [invoiceDate, setInvoiceDate] = useState(initialData?.invoiceDate ?? today);
-  const [dueDate, setDueDate] = useState(initialData?.dueDate ?? plus30);
+  const [dueDate, setDueDate] = useState(initialData?.dueDate ?? plus5);
+  const [isDueDateModified, setIsDueDateModified] = useState(!!initialData?.dueDate);
   const [poNumber, setPoNumber] = useState(initialData?.poNumber ?? '');
   const [notes, setNotes] = useState(initialData?.notes ?? '');
   const [terms, setTerms] = useState(initialData?.terms ?? '');
@@ -237,7 +238,15 @@ export function InvoiceFormClient({
               type="date"
               value={invoiceDate}
               max={today}
-              onChange={(e) => setInvoiceDate(e.target.value)}
+              onChange={(e) => {
+                const newDate = e.target.value;
+                setInvoiceDate(newDate);
+                if (!isDueDateModified) {
+                  const d = new Date(newDate);
+                  d.setDate(d.getDate() + 5);
+                  setDueDate(d.toISOString().split('T')[0]!);
+                }
+              }}
               disabled={isSubmitting}
             />
           </div>
@@ -247,7 +256,10 @@ export function InvoiceFormClient({
             <Input
               type="date"
               value={dueDate}
-              onChange={(e) => setDueDate(e.target.value)}
+              onChange={(e) => {
+                setDueDate(e.target.value);
+                setIsDueDateModified(true);
+              }}
               disabled={isSubmitting}
             />
           </div>
