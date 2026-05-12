@@ -7,19 +7,15 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Separator } from '@/components/ui/separator';
 import { DocumentPreview } from '@/components/billing/document-preview';
 import type { StatementTransaction } from '@/components/billing/document-preview';
-import { getClientStatement, getAllIncome, getStatementYears, getDivisionBillingSettings } from '@pmg/db';
+import { getClientStatement, getAllIncome, getStatementYears, getDivisionBillingSettings, getClientById } from '@pmg/db';
 import { formatZAR, fmtDate } from '@/lib/format';
 import { PrintButton } from '@/components/billing/print-button';
-
-import { db } from '@pmg/db';
 
 export const dynamic = 'force-dynamic';
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { clientId } = await params;
-  const client = await db.query.clients.findFirst({
-    where: (c, { eq }) => eq(c.id, clientId),
-  });
+  const client = await getClientById(clientId);
   if (!client) return { title: 'Statement' };
   
   const clientName = client.businessName ?? client.name;
