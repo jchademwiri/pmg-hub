@@ -141,10 +141,10 @@ export function DocumentPreview({
     type === 'invoice' ? 'Due Date' : type === 'quote' ? 'Expiry Date' : undefined
 
   return (
-    <div className="print-document w-[794px] min-h-[1123px] mx-auto flex flex-col bg-white text-zinc-900 shadow-md print:shadow-none ring-1 ring-zinc-200 print:ring-0">
+    <div className="print-document w-full max-w-[794px] min-h-[1123px] mx-auto flex flex-col bg-white text-zinc-900 shadow-md print:shadow-none ring-1 ring-zinc-200 print:ring-0">
 
       {/* ── Header ─────────────────────────────────────────────────────────── */}
-      <div className="flex items-start justify-between gap-6 px-10 pt-10 pb-6">
+      <div className="flex items-start justify-between gap-6 px-4 sm:px-10 pt-10 pb-6">
 
         {/* Left: Logo + Company info */}
         <div className="flex items-start gap-4">
@@ -202,10 +202,10 @@ export function DocumentPreview({
         </div>
       </div>
 
-      <div className="mx-10 border-t border-zinc-100" />
+      <div className="mx-4 sm:mx-10 border-t border-zinc-100" />
 
       {/* ── Meta: Bill To + Dates (inline, far right) ──────────────────────── */}
-      <div className="flex items-start justify-between gap-6 px-10 py-6">
+      <div className="flex items-start justify-between gap-6 px-4 sm:px-10 py-6">
 
         {/* Bill To */}
         <div className="flex flex-col gap-1">
@@ -249,7 +249,7 @@ export function DocumentPreview({
       </div>
 
       {reference && (
-        <div className="px-10 pb-4">
+        <div className="px-4 sm:px-10 pb-4">
           <span className="text-[10px] font-semibold uppercase tracking-widest text-zinc-400">Reference</span>
           <p className="mt-0.5 text-xs text-zinc-600">{reference}</p>
         </div>
@@ -257,7 +257,7 @@ export function DocumentPreview({
 
       {/* ── Line items (invoice / quote) ────────────────────────────────────── */}
       {type !== 'statement' && (
-        <div className="px-10 pb-6">
+        <div className="px-4 sm:px-10 pb-6">
           <table className="w-full text-sm">
             <thead>
               <tr className="border-y border-zinc-100 bg-zinc-50">
@@ -317,7 +317,7 @@ export function DocumentPreview({
 
       {/* ── Statement transactions ──────────────────────────────────────────── */}
       {type === 'statement' && (
-        <div className="px-10 pb-6">
+        <div className="px-4 sm:px-10 pb-6">
           {transactions.length === 0 ? (
             <div className="py-12 border border-dashed border-zinc-200 rounded-lg text-center">
               <p className="text-sm text-zinc-500">No transactions for this period.</p>
@@ -394,7 +394,7 @@ export function DocumentPreview({
 
       {/* ── Banking details — after line items ──────────────────────────────── */}
       {banking && (
-        <div className="mx-10 border-t border-zinc-100 pt-5 pb-4">
+        <div className="mx-4 sm:mx-10 border-t border-zinc-100 pt-5 pb-4">
           <p className="text-[10px] font-semibold uppercase tracking-widest text-zinc-400 mb-3">
             Banking Details
           </p>
@@ -419,27 +419,27 @@ export function DocumentPreview({
 
       {/* ── Statement Ageing — pinned to bottom ─────────────────────────────── */}
       {type === 'statement' && ageing && (
-        <div className="mx-10 border-t border-zinc-100 pt-5 pb-4">
+        <div className="mx-4 sm:mx-10 border-t border-zinc-100 pt-5 pb-4">
           <p className="text-[10px] font-semibold uppercase tracking-widest text-zinc-400 mb-3">
             Ageing Summary
           </p>
           <table className="w-full text-xs text-center border border-zinc-200">
             <thead>
               <tr className="bg-zinc-50 border-b border-zinc-200">
-                <th className="py-2 font-medium text-zinc-500 uppercase tracking-wide">Current</th>
-                <th className="py-2 font-medium text-zinc-500 uppercase tracking-wide border-l border-zinc-200">30 Days</th>
-                <th className="py-2 font-medium text-zinc-500 uppercase tracking-wide border-l border-zinc-200">60 Days</th>
+                <th className="py-2 font-medium text-zinc-500 uppercase tracking-wide">120+ Days</th>
                 <th className="py-2 font-medium text-zinc-500 uppercase tracking-wide border-l border-zinc-200">90 Days</th>
-                <th className="py-2 font-medium text-zinc-500 uppercase tracking-wide border-l border-zinc-200">120+ Days</th>
+                <th className="py-2 font-medium text-zinc-500 uppercase tracking-wide border-l border-zinc-200">60 Days</th>
+                <th className="py-2 font-medium text-zinc-500 uppercase tracking-wide border-l border-zinc-200">30 Days</th>
+                <th className="py-2 font-medium text-zinc-500 uppercase tracking-wide border-l border-zinc-200">Current</th>
               </tr>
             </thead>
             <tbody>
               <tr>
-                <td className="py-3 tabular-nums font-semibold">{fmt(ageing.current)}</td>
-                <td className="py-3 tabular-nums font-semibold border-l border-zinc-200">{fmt(ageing.days30)}</td>
-                <td className="py-3 tabular-nums font-semibold border-l border-zinc-200">{fmt(ageing.days60)}</td>
+                <td className="py-3 tabular-nums font-semibold">{fmt(ageing.days120)}</td>
                 <td className="py-3 tabular-nums font-semibold border-l border-zinc-200">{fmt(ageing.days90)}</td>
-                <td className="py-3 tabular-nums font-semibold border-l border-zinc-200">{fmt(ageing.days120)}</td>
+                <td className="py-3 tabular-nums font-semibold border-l border-zinc-200">{fmt(ageing.days60)}</td>
+                <td className="py-3 tabular-nums font-semibold border-l border-zinc-200">{fmt(ageing.days30)}</td>
+                <td className="py-3 tabular-nums font-semibold border-l border-zinc-200">{fmt(ageing.current)}</td>
               </tr>
             </tbody>
           </table>
@@ -448,7 +448,7 @@ export function DocumentPreview({
 
       {/* ── Notes / Terms — fixed just above footer ─────────────────────────── */}
       {(notes || terms) && (
-        <div className="mx-10 border-t border-zinc-100 pt-4 pb-4 flex flex-col gap-3">
+        <div className="mx-4 sm:mx-10 border-t border-zinc-100 pt-4 pb-4 flex flex-col gap-3">
           {notes && (
             <div>
               <p className="text-[10px] font-semibold uppercase tracking-widest text-zinc-400">Notes</p>
@@ -465,7 +465,7 @@ export function DocumentPreview({
       )}
 
       {/* ── Footer — pinned to bottom ───────────────────────────────────── */}
-      <div className="mx-10 border-t border-zinc-100 py-4 flex items-center justify-between">
+      <div className="mx-4 sm:mx-10 border-t border-zinc-100 py-4 flex items-center justify-between">
         <span className="text-[10px] text-zinc-400">
           {org.divisionOf ? `A division of ${org.divisionOf}` : ''}
         </span>
