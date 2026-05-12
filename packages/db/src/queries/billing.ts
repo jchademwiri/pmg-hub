@@ -556,8 +556,11 @@ export async function getClientStatement(
     .where(and(...quoteConditions))
     .orderBy(desc(quotations.quoteDate));
 
-  // Fetch invoices
-  const invoiceConditions = [eq(invoices.clientId, clientId)];
+  // Fetch invoices (excluding draft and void)
+  const invoiceConditions = [
+    eq(invoices.clientId, clientId),
+    sql`${invoices.status} NOT IN ('draft', 'void')`
+  ];
   if (invoiceYearCondition) invoiceConditions.push(invoiceYearCondition);
 
   const invoiceRows = await db
@@ -592,15 +595,38 @@ export async function getClientStatement(
     .where(and(...invoiceConditions))
     .orderBy(desc(invoices.invoiceDate));
 
-  // Compute summary
+  // Compute global balance for "Amount Due"
+  const globalInvoicedRes = await db
+    .select({ total: sql<number>`COALESCE(SUM(${invoices.total}), 0)::numeric` })
+    .from(invoices)
+    .where(and(eq(invoices.clientId, clientId), sql`${invoices.status} NOT IN ('draft', 'void')`));
+  
+  const globalPaidRes = await db
+    .select({ total: sql<number>`COALESCE(SUM(${income.amount}), 0)::numeric` })
+    .from(income)
+    .where(eq(income.clientId, clientId));
+
+  const globalInvoiced = Number(globalInvoicedRes[0]?.total ?? 0);
+  const globalPaid = Number(globalPaidRes[0]?.total ?? 0);
+  const totalOutstanding = globalInvoiced - globalPaid;
+
+  // Compute period summary
   const totalQuoted = quoteRows.reduce((s, r) => s + Number(r.total), 0);
   const totalInvoiced = invoiceRows.reduce((s, r) => s + Number(r.total), 0);
-  const totalPaid = invoiceRows
-    .filter((r) => r.status === "paid")
-    .reduce((s, r) => s + Number(r.total), 0);
-  const totalOutstanding = invoiceRows
-    .filter((r) => r.status === "issued" || r.status === "overdue")
-    .reduce((s, r) => s + Number(r.total), 0);
+  
+  // For period paid, we sum income records in that period
+  const incomeConditions = [eq(income.clientId, clientId)];
+  if (filters?.year) {
+    incomeConditions.push(
+      sql`${income.date} >= ${`${filters.year}-03-01`}`,
+      sql`${income.date} < ${`${filters.year + 1}-03-01`}`
+    );
+  }
+  const periodPaidRes = await db
+    .select({ total: sql<number>`COALESCE(SUM(${income.amount}), 0)::numeric` })
+    .from(income)
+    .where(and(...incomeConditions));
+  const totalPaid = Number(periodPaidRes[0]?.total ?? 0);
 
   const sentCount = quoteRows.filter((r) => r.status === "sent" || r.status === "accepted" || r.status === "declined" || r.status === "converted").length;
   const acceptedCount = quoteRows.filter((r) => r.status === "accepted" || r.status === "converted").length;
@@ -637,8 +663,8 @@ export async function getClientsWithBillingActivity(): Promise<ClientBillingRow[
       COALESCE(q.quote_count, 0)::int AS "quoteCount",
       COALESCE(inv.invoice_count, 0)::int AS "invoiceCount",
       COALESCE(inv.total_invoiced, 0)::numeric AS "totalInvoiced",
-      COALESCE(inv.total_paid, 0)::numeric AS "totalPaid",
-      COALESCE(inv.total_outstanding, 0)::numeric AS "totalOutstanding",
+      COALESCE(inc.total_paid, 0)::numeric AS "totalPaid",
+      (COALESCE(inv.total_invoiced, 0) - COALESCE(inc.total_paid, 0))::numeric AS "totalOutstanding",
       GREATEST(q.last_quote_date, inv.last_invoice_date)::text AS "lastActivityDate"
     FROM clients c
     LEFT JOIN (
@@ -654,12 +680,17 @@ export async function getClientsWithBillingActivity(): Promise<ClientBillingRow[
         client_id,
         COUNT(*)::int AS invoice_count,
         MAX(invoice_date) AS last_invoice_date,
-        COALESCE(SUM(total), 0) AS total_invoiced,
-        COALESCE(SUM(CASE WHEN status = 'paid' THEN total ELSE 0 END), 0) AS total_paid,
-        COALESCE(SUM(CASE WHEN status IN ('issued', 'overdue') THEN total ELSE 0 END), 0) AS total_outstanding
+        COALESCE(SUM(CASE WHEN status NOT IN ('draft', 'void') THEN total ELSE 0 END), 0) AS total_invoiced
       FROM invoices
       GROUP BY client_id
     ) inv ON inv.client_id = c.id
+    LEFT JOIN (
+      SELECT
+        client_id,
+        COALESCE(SUM(amount), 0) AS total_paid
+      FROM income
+      GROUP BY client_id
+    ) inc ON inc.client_id = c.id
     WHERE q.client_id IS NOT NULL OR inv.client_id IS NOT NULL
     ORDER BY GREATEST(q.last_quote_date, inv.last_invoice_date) DESC NULLS LAST
   `);
