@@ -96,10 +96,6 @@ export default async function QuoteDetailPage({ params }: Props) {
             <Send className="size-4" />
             Send
           </Button>
-          <Button variant="outline" size="sm" disabled title="Coming soon">
-            <FileDown className="size-4" />
-            Export PDF
-          </Button>
           {canEdit && (
             <Button variant="outline" size="sm" asChild>
               <Link href={`/billing/quotes/${quote.id}/edit`}>

@@ -156,10 +156,6 @@ export default async function StatementDetailPage({ params, searchParams }: Prop
         </div>
         <div className="flex items-center gap-2 flex-wrap justify-end">
           <PrintButton />
-          <Button variant="outline" size="sm" disabled title="Coming soon">
-            <FileDown className="size-4" />
-            Export PDF
-          </Button>
         </div>
       </div>
 

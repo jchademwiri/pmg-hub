@@ -1,9 +1,14 @@
 'use client';
 
-import { Printer } from 'lucide-react';
+import { Printer, FileDown } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 
-export function PrintButton() {
+interface PrintButtonProps {
+  label?: string;
+  icon?: 'printer' | 'pdf';
+}
+
+export function PrintButton({ label = 'Print / PDF', icon = 'printer' }: PrintButtonProps) {
   return (
     <Button
       variant="outline"
@@ -11,8 +16,8 @@ export function PrintButton() {
       onClick={() => window.print()}
       className="print:hidden"
     >
-      <Printer className="size-4 mr-2" />
-      Print
+      {icon === 'pdf' ? <FileDown className="size-4 mr-2" /> : <Printer className="size-4 mr-2" />}
+      {label}
     </Button>
   );
 }
