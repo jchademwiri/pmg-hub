@@ -12,9 +12,17 @@ import { getQuotationById, getDivisionBillingSettings } from '@pmg/db';
 import { updateQuotationStatus, deleteQuotation } from '@/app/actions/billing-quotes';
 import { fmtDate } from '@/lib/format';
 import { QuoteDetailActions } from './quote-detail-actions';
+import { PrintButton } from '@/components/billing/print-button';
 
 export const dynamic = 'force-dynamic';
-export const metadata: Metadata = { title: 'Quotation' };
+
+export async function generateMetadata({ params }: Props): Promise<Metadata> {
+  const { id } = await params;
+  const quote = await getQuotationById(id);
+  if (!quote) return { title: 'Quotation' };
+  
+  return { title: `Quote ${quote.documentNumber}` };
+}
 
 interface Props {
   params: Promise<{ id: string }>;
@@ -89,18 +97,11 @@ export default async function QuoteDetailPage({ params }: Props) {
             </p>
           </div>
         </div>
-        <div className="flex items-center gap-2">
-          <Button variant="outline" size="sm" disabled title="Coming soon">
-            <Printer className="size-4" />
-            Print
-          </Button>
+        <div className="flex items-center gap-2 flex-wrap justify-end">
+          <PrintButton documentTitle={`Quote-${quote.documentNumber}`} />
           <Button variant="outline" size="sm" disabled title="Coming soon">
             <Send className="size-4" />
             Send
-          </Button>
-          <Button variant="outline" size="sm" disabled title="Coming soon">
-            <FileDown className="size-4" />
-            Export PDF
           </Button>
           {canEdit && (
             <Button variant="outline" size="sm" asChild>
@@ -121,8 +122,8 @@ export default async function QuoteDetailPage({ params }: Props) {
         </div>
 
         {/* Sidebar */}
-        <div className="flex flex-col gap-4 lg:sticky lg:top-16">
-          <Card>
+        <div className="flex flex-col gap-4 lg:sticky lg:top-16 lg:self-start">
+          <Card size="sm">
             <CardHeader>
               <CardTitle>Summary</CardTitle>
             </CardHeader>

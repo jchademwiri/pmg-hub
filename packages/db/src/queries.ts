@@ -10,8 +10,9 @@ import {
   expenseCategories,
 } from './schema/index';
 import type { Client } from './schema/clients';
-import type { ExpenseCategory } from './schema/expense-categories';
+import { ExpenseCategory } from './schema/expense-categories';
 import { sql, eq, desc, asc, and } from 'drizzle-orm';
+import { ACCOUNT_RATES } from './accounts';
 
 // ── Existing queries (unchanged) ─────────────────────────────────────────────
 
@@ -185,17 +186,17 @@ export async function getFinancialSummaryForPeriod(
   `);
   const revenue = Number((revResult.rows[0] as { total: string }).total);
   const expTotal = Number((expResult.rows[0] as { total: string }).total);
-  const pmgShare = revenue * 0.25; //pmg share
+  const pmgShare = revenue * ACCOUNT_RATES.pmg_share;
   const profitPool = revenue - expTotal - pmgShare;
   return {
     revenue,
     expenses: expTotal,
     pmgShare,
     profitPool,
-    salary: profitPool * 0.35,
-    reinvest: profitPool * 0.3,
-    reserve: profitPool * 0.3,
-    flex: profitPool * 0.05,
+    salary: profitPool * ACCOUNT_RATES.salary,
+    reinvest: profitPool * ACCOUNT_RATES.reinvest,
+    reserve: profitPool * ACCOUNT_RATES.reserve,
+    flex: profitPool * ACCOUNT_RATES.flex,
   };
 }
 
@@ -215,16 +216,19 @@ export async function getPreviousMonthSummary(): Promise<PeriodSummary> {
   );
 }
 
-/** Year-to-date summary (Jan 1 → now) */
+/** Year-to-date summary (Mar 1 → now) */
 export async function getYTDSummary(): Promise<PeriodSummary> {
-  return getFinancialSummaryForPeriod("DATE_TRUNC('year', NOW())", "NOW() + INTERVAL '1 day'");
+  return getFinancialSummaryForPeriod(
+    "DATE_TRUNC('year', NOW() - INTERVAL '2 months') + INTERVAL '2 months'",
+    "NOW() + INTERVAL '1 day'"
+  );
 }
 
-/** Same Jan–month-day range but for the previous year */
+/** Same Mar 1–month-day range but for the previous year */
 export async function getPreviousYearYTDSummary(): Promise<PeriodSummary> {
   return getFinancialSummaryForPeriod(
-    "DATE_TRUNC('year', NOW()) - INTERVAL '1 year'",
-    "NOW() - INTERVAL '1 year' + INTERVAL '1 day'",
+    "DATE_TRUNC('year', NOW() - INTERVAL '2 months') - INTERVAL '1 year' + INTERVAL '2 months'",
+    "NOW() - INTERVAL '1 year' + INTERVAL '1 day'"
   );
 }
 
@@ -303,7 +307,7 @@ export async function getLedgerEntriesYTD(allocationType?: 'salary' | 'reinvest'
   total: number;
   entries: { date: string; description: string | null; amount: number }[];
 }> {
-  const conditions = [sql`${ledger.date} >= DATE_TRUNC('year', NOW())`];
+  const conditions = [sql`${ledger.date} >= DATE_TRUNC('year', NOW() - INTERVAL '2 months') + INTERVAL '2 months'`];
   if (allocationType) {
     conditions.push(eq(ledger.allocationType, allocationType));
   }
@@ -333,7 +337,7 @@ export async function getLedgerByAllocationYTD(): Promise<Record<string, number>
       total: sql<string>`COALESCE(SUM(${ledger.amount}), '0')`,
     })
     .from(ledger)
-    .where(sql`${ledger.date} >= DATE_TRUNC('year', NOW())`)
+    .where(sql`${ledger.date} >= DATE_TRUNC('year', NOW() - INTERVAL '2 months') + INTERVAL '2 months'`)
     .groupBy(ledger.allocationType);
     
   const map: Record<string, number> = {};
@@ -436,7 +440,7 @@ export async function getDivisionRevenueYTD(): Promise<
     })
     .from(income)
     .innerJoin(divisions, eq(income.divisionId, divisions.id))
-    .where(sql`${income.date} >= DATE_TRUNC('year', NOW())`)
+    .where(sql`${income.date} >= DATE_TRUNC('year', NOW() - INTERVAL '2 months') + INTERVAL '2 months'`)
     .groupBy(sql`TO_CHAR(${income.date}, 'YYYY-MM')`, divisions.name)
     .orderBy(sql`TO_CHAR(${income.date}, 'YYYY-MM') ASC`, asc(divisions.name));
   return result.map((r) => ({
@@ -464,7 +468,7 @@ export type IncomeRow = {
  * with optional filters for divisionId and month (YYYY-MM), sorted by date DESC.
  */
 export async function getAllIncome(
-  filters?: { divisionId?: string; month?: string; clientId?: string },
+  filters?: { divisionId?: string; month?: string; year?: number; clientId?: string },
   pageObj?: { page: number; pageSize: number },
 ): Promise<{ data: IncomeRow[]; total: number; sum: number }> {
   const conditions = [];
@@ -476,6 +480,12 @@ export async function getAllIncome(
   }
   if (filters?.month) {
     conditions.push(sql`TO_CHAR(${income.date}, 'YYYY-MM') = ${filters.month}`);
+  }
+  if (filters?.year) {
+    conditions.push(
+      sql`${income.date} >= ${`${filters.year}-03-01`}`,
+      sql`${income.date} < ${`${filters.year + 1}-03-01`}`
+    );
   }
 
   const query = db

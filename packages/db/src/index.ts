@@ -1,6 +1,7 @@
 export * from "./client";
 export * from "./schema";
 export * from "./queries";
+export * from "./accounts";
 export { eq, and, desc, asc, sql } from "drizzle-orm";
 export type { PeriodSummary, LeadRow, DivisionRow, SnapshotRow, ClientWithIncomeCount, LedgerEntryRow } from './queries';
 export { getAllLedgerEntries, getLedgerById, getLedgerByAllocation, getLedgerByAllocationYTD } from './queries';
@@ -27,5 +28,5 @@ export type {
   OrganisationSettings,
   DivisionBillingSettings,
 } from './queries/billing';
-export { getActiveItems, getUnlinkedIncomeForClient } from './queries/billing';
+export { getActiveItems, getUnlinkedIncomeForClient, getStatementYears } from './queries/billing';
 

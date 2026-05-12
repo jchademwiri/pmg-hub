@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
+import { confirm } from '@/components/ui/confirm-dialog';
 
 interface VoidInvoiceButtonProps {
   invoiceId: string;
@@ -13,7 +14,13 @@ export function VoidInvoiceButton({ invoiceId, voidAction }: VoidInvoiceButtonPr
   const [isPending, setIsPending] = useState(false);
 
   async function handleClick() {
-    const confirmed = window.confirm('Void this invoice? This cannot be undone.');
+    const confirmed = await confirm({
+      title: 'Void Invoice',
+      description: 'Are you sure you want to void this invoice? This action cannot be undone.',
+      confirmText: 'Void Invoice',
+      cancelText: 'Cancel',
+      variant: 'destructive',
+    });
     if (!confirmed) return;
 
     setIsPending(true);
