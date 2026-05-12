@@ -1,14 +1,15 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
-import { ChevronLeft, Printer, FileDown } from 'lucide-react';
+import { ChevronLeft, FileDown } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Separator } from '@/components/ui/separator';
 import { DocumentPreview } from '@/components/billing/document-preview';
 import type { StatementTransaction } from '@/components/billing/document-preview';
-import { getClientStatement, getAllIncome } from '@pmg/db';
+import { getClientStatement, getAllIncome, getStatementYears, getDivisionBillingSettings } from '@pmg/db';
 import { formatZAR, fmtDate } from '@/lib/format';
+import { PrintButton } from '@/components/billing/print-button';
 
 export const dynamic = 'force-dynamic';
 export const metadata: Metadata = { title: 'Statement' };
@@ -23,9 +24,10 @@ export default async function StatementDetailPage({ params, searchParams }: Prop
   const { year: yearParam } = await searchParams;
   const year = yearParam ? parseInt(yearParam, 10) : undefined;
 
-  const [statement, incomeResult] = await Promise.all([
+  const [statement, incomeResult, availableYears] = await Promise.all([
     getClientStatement(clientId, year ? { year } : undefined),
-    getAllIncome({ clientId }),
+    getAllIncome({ clientId, ...(year ? { year } : {}) }),
+    getStatementYears(clientId),
   ]);
 
   if (!statement) notFound();
@@ -59,43 +61,76 @@ export default async function StatementDetailPage({ params, searchParams }: Prop
     })),
   ];
 
-  // Sort by date DESC (newest first), then compute running balance from oldest
-  // so balance is accurate, but display newest at top
-  txRaw.sort((a, b) => a.date.localeCompare(b.date)); // ASC for balance calc
+  txRaw.sort((a, b) => a.date.localeCompare(b.date)); // ASC
 
-  let runningBalance = 0;
   const transactions: StatementTransaction[] = txRaw.map((tx) => {
-    runningBalance += (tx.debit ?? 0) - (tx.credit ?? 0);
     return {
       date: tx.date,
       reference: tx.reference,
       description: tx.description,
       debit: tx.debit,
       credit: tx.credit,
-      balance: runningBalance,
     };
   });
 
   // Reverse to show newest first in the document
   transactions.reverse();
 
+  // ── Calculate dynamic status and ageing ──────────────────────────────────
+  let docStatus = 'Paid';
+  if (summary.totalOutstanding > 0) {
+    const hasOverdue = invoices.some(i => i.status === 'overdue');
+    docStatus = hasOverdue ? 'Overdue' : 'Outstanding';
+  }
+
+  const ageing = { current: 0, days30: 0, days60: 0, days90: 0, days120: 0 };
+  const _now = new Date();
+  for (const inv of invoices) {
+    if (inv.status === 'issued' || inv.status === 'overdue') {
+      const due = inv.dueDate ? new Date(inv.dueDate) : new Date(inv.invoiceDate);
+      const diffTime = _now.getTime() - due.getTime();
+      const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+      if (diffDays <= 0) ageing.current += Number(inv.total);
+      else if (diffDays <= 30) ageing.days30 += Number(inv.total);
+      else if (diffDays <= 60) ageing.days60 += Number(inv.total);
+      else if (diffDays <= 90) ageing.days90 += Number(inv.total);
+      else ageing.days120 += Number(inv.total);
+    }
+  }
+
   // ── DocumentPreview props ─────────────────────────────────────────────────
   const now = new Date();
   const periodLabel = year ? String(year) : String(now.getFullYear());
 
+  const primaryDivisionId = invoices[0]?.divisionId;
+  const divSettings = primaryDivisionId ? await getDivisionBillingSettings(primaryDivisionId) : null;
+
   const docPreviewProps = {
     number: `STMT-${periodLabel}-${(client.businessName ?? client.name).slice(0, 3).toUpperCase()}`,
-    status: 'Current',
+    status: docStatus,
     issueDate: now.toISOString().split('T')[0]!,
-    periodFrom: year ? `${year}-01-01` : `${now.getFullYear()}-01-01`,
-    periodTo: year ? `${year}-12-31` : now.toISOString().split('T')[0]!,
-    org: { name: 'PMG' },
+    periodFrom: year ? `${year}-03-01` : `${now.getFullYear()}-03-01`,
+    periodTo: year ? `${year + 1}-02-28` : now.toISOString().split('T')[0]!,
+    org: {
+      name: invoices[0]?.divisionName ?? 'PMG',
+      divisionOf: divSettings ? 'Playhouse Media Group' : undefined,
+      email: divSettings?.salesRepEmail ?? undefined,
+      phone: divSettings?.salesRepPhone ?? undefined,
+      website: divSettings?.divisionWebsite ?? undefined,
+      salesRep: divSettings?.salesRepName ?? undefined,
+      bankName: divSettings?.bankName ?? undefined,
+      accountName: divSettings?.bankAccountName ?? undefined,
+      accountNumber: divSettings?.bankAccountNumber ?? undefined,
+      branchCode: divSettings?.bankBranchCode ?? undefined,
+    },
     client: {
       name: client.businessName ?? client.name,
       email: client.email ?? undefined,
       phone: client.phone ?? undefined,
     },
     transactions,
+    ageing,
+    balanceDue: summary.totalOutstanding,
   };
 
   return (
@@ -119,11 +154,8 @@ export default async function StatementDetailPage({ params, searchParams }: Prop
             </p>
           </div>
         </div>
-        <div className="flex items-center gap-2">
-          <Button variant="outline" size="sm" disabled title="Coming soon">
-            <Printer className="size-4" />
-            Print
-          </Button>
+        <div className="flex items-center gap-2 flex-wrap justify-end">
+          <PrintButton />
           <Button variant="outline" size="sm" disabled title="Coming soon">
             <FileDown className="size-4" />
             Export PDF
@@ -173,7 +205,7 @@ export default async function StatementDetailPage({ params, searchParams }: Prop
         </div>
 
         {/* Sidebar */}
-        <div className="flex flex-col gap-4 lg:sticky lg:top-16">
+        <div className="flex flex-col gap-4 lg:sticky lg:top-16 lg:self-start">
           <Card size="sm">
             <CardHeader>
               <CardTitle>Client Info</CardTitle>
@@ -215,7 +247,7 @@ export default async function StatementDetailPage({ params, searchParams }: Prop
                 <Separator className="my-1" />
                 {/* Year filter links */}
                 <div className="flex gap-2 flex-wrap">
-                  {[now.getFullYear(), now.getFullYear() - 1, now.getFullYear() - 2].map((y) => (
+                  {availableYears.map((y) => (
                     <Link
                       key={y}
                       href={`/billing/statements/${clientId}?year=${y}`}
@@ -237,41 +269,43 @@ export default async function StatementDetailPage({ params, searchParams }: Prop
 
       {/* Income records section */}
       {incomeResult.data.length > 0 && (
-        <Card>
-          <CardHeader>
-            <CardTitle>Income Records</CardTitle>
-            <p className="text-sm text-muted-foreground">
-              Payments posted to the income ledger for this client —{' '}
-              <span className="font-medium text-green-600 dark:text-green-400">
-                {formatZAR(incomeResult.sum)} total
-              </span>
-            </p>
-          </CardHeader>
-          <CardContent className="p-0">
-            <table className="w-full text-sm">
-              <thead>
-                <tr className="border-b">
-                  <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground">Date</th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground">Division</th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground">Description</th>
-                  <th className="px-6 py-3 text-right text-xs font-medium text-muted-foreground">Amount</th>
-                </tr>
-              </thead>
-              <tbody>
-                {incomeResult.data.map((inc) => (
-                  <tr key={inc.id} className="border-b last:border-0">
-                    <td className="px-6 py-3 tabular-nums text-muted-foreground">{fmtDate(inc.date)}</td>
-                    <td className="px-6 py-3">{inc.divisionName}</td>
-                    <td className="px-6 py-3 text-muted-foreground">{inc.description ?? '—'}</td>
-                    <td className="px-6 py-3 text-right tabular-nums font-medium text-green-600 dark:text-green-400">
-                      +{formatZAR(Number(inc.amount))}
-                    </td>
+        <div className="overflow-x-auto">
+          <Card>
+            <CardHeader>
+              <CardTitle>Income Records</CardTitle>
+              <p className="text-sm text-muted-foreground">
+                Payments posted to the income ledger for this client —{' '}
+                <span className="font-medium text-green-600 dark:text-green-400">
+                  {formatZAR(incomeResult.sum)} total
+                </span>
+              </p>
+            </CardHeader>
+            <CardContent className="p-0">
+              <table className="w-full text-sm">
+                <thead>
+                  <tr className="border-b">
+                    <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground">Date</th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground">Division</th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground">Description</th>
+                    <th className="px-6 py-3 text-right text-xs font-medium text-muted-foreground">Amount</th>
                   </tr>
-                ))}
-              </tbody>
-            </table>
-          </CardContent>
-        </Card>
+                </thead>
+                <tbody>
+                  {incomeResult.data.map((inc) => (
+                    <tr key={inc.id} className="border-b last:border-0">
+                      <td className="px-6 py-3 tabular-nums text-muted-foreground">{fmtDate(inc.date)}</td>
+                      <td className="px-6 py-3">{inc.divisionName}</td>
+                      <td className="px-6 py-3 text-muted-foreground">{inc.description ?? '—'}</td>
+                      <td className="px-6 py-3 text-right tabular-nums font-medium text-green-600 dark:text-green-400">
+                        +{formatZAR(Number(inc.amount))}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </CardContent>
+          </Card>
+        </div>
       )}
     </div>
   );

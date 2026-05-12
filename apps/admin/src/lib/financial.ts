@@ -1,6 +1,6 @@
 import 'server-only'
 
-import { ACCOUNT_RATES, PROFIT_POOL_RATES } from '@/lib/accounts'
+import { ACCOUNT_RATES, PROFIT_POOL_RATES } from '@pmg/db'
 import {
   getTotalRevenue,
   getTotalExpenses,

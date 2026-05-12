@@ -34,13 +34,30 @@ export function QuoteDetailActions({
     setIsPending(true);
     startTransition(async () => {
       const result = await updateStatusAction(quote.id, status);
-      setIsPending(false);
+      
       if (result.error) {
+        setIsPending(false);
         toast.error(result.error);
-      } else {
-        toast.success(`Quote marked as ${status}.`);
-        router.refresh();
+        return;
       }
+
+      if (status === 'accepted') {
+        const convertResult = await convertQuoteToInvoice(quote.id);
+        setIsPending(false);
+        
+        if (convertResult.error) {
+          toast.error(`Quote accepted, but failed to create invoice: ${convertResult.error}`);
+          router.refresh();
+        } else {
+          toast.success('Quote accepted and auto-converted to invoice.');
+          router.push(`/billing/invoices/${convertResult.id}`);
+        }
+        return;
+      }
+
+      setIsPending(false);
+      toast.success(`Quote marked as ${status}.`);
+      router.refresh();
     });
   }
 

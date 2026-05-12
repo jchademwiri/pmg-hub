@@ -538,10 +538,10 @@ export async function getClientStatement(
 
   // Build year filter condition
   const quoteYearCondition = filters?.year
-    ? sql`EXTRACT(YEAR FROM ${quotations.quoteDate}) = ${filters.year}`
+    ? sql`${quotations.quoteDate} >= ${`${filters.year}-03-01`} AND ${quotations.quoteDate} < ${`${filters.year + 1}-03-01`}`
     : undefined;
   const invoiceYearCondition = filters?.year
-    ? sql`EXTRACT(YEAR FROM ${invoices.invoiceDate}) = ${filters.year}`
+    ? sql`${invoices.invoiceDate} >= ${`${filters.year}-03-01`} AND ${invoices.invoiceDate} < ${`${filters.year + 1}-03-01`}`
     : undefined;
 
   // Fetch quotes
@@ -843,4 +843,32 @@ export async function getAllDivisionBillingSettings(): Promise<
 > {
   const rows = await db.select().from(divisionBillingSettings);
   return Object.fromEntries(rows.map((r) => [r.divisionId, r]));
+}
+
+/**
+ * Returns distinct financial years for a client from their invoices and income.
+ * A date of 2025-01-15 falls into the 2024 financial year (since FY starts Mar 1).
+ */
+export async function getStatementYears(clientId: string): Promise<number[]> {
+  const invYears = await db.execute(sql`
+    SELECT DISTINCT
+      EXTRACT(YEAR FROM (invoice_date - INTERVAL '2 months')) AS year
+    FROM invoices
+    WHERE client_id = ${clientId}
+  `);
+  const incYears = await db.execute(sql`
+    SELECT DISTINCT
+      EXTRACT(YEAR FROM (date - INTERVAL '2 months')) AS year
+    FROM income
+    WHERE client_id = ${clientId}
+  `);
+
+  const years = new Set<number>();
+  for (const r of invYears.rows) years.add(Number(r.year));
+  for (const r of incYears.rows) years.add(Number(r.year));
+
+  const currentFY = new Date().getMonth() < 2 ? new Date().getFullYear() - 1 : new Date().getFullYear();
+  years.add(currentFY); // Always include current FY
+
+  return Array.from(years).sort((a, b) => b - a);
 }

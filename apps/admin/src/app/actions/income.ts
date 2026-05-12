@@ -2,7 +2,7 @@
 
 import { z } from 'zod';
 import { revalidatePath } from 'next/cache';
-import { db, income, eq, getIncomeById } from '@pmg/db';
+import { db, income, eq, getIncomeById, invoices } from '@pmg/db';
 import { isPeriodClosed, getMinAllowedDate, getMinDateErrorMessage } from '@/lib/date-rules';
 
 const IncomeSchema = z.object({
@@ -88,7 +88,16 @@ export async function deleteIncome(id: string): Promise<{ error?: string }> {
       return { error: 'Cannot delete records from a closed financial period.' };
     }
 
-    await db.delete(income).where(eq(income.id, id));
+    await db.transaction(async (tx) => {
+      // Revert any invoice linked to this income
+      await tx
+        .update(invoices)
+        .set({ status: 'issued', paidAt: null, incomeId: null })
+        .where(eq(invoices.incomeId, id));
+
+      await tx.delete(income).where(eq(income.id, id));
+    });
+
     revalidatePath('/finance/income');
     revalidatePath('/dashboard');
     return {};

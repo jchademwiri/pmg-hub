@@ -8,7 +8,7 @@ import {
   getYTDSummary,
 } from '@pmg/db';
 import { formatZAR, fmtDate } from '@/lib/format';
-import { ACCOUNT_KEYS, ACCOUNT_LABELS } from '@/lib/accounts';
+import { ACCOUNT_KEYS, ACCOUNT_LABELS, LOCKED_ACCOUNTS, type AccountKey } from '@pmg/db';
 import {
   Table,
   TableBody,

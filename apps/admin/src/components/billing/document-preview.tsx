@@ -62,6 +62,10 @@ export interface DocumentPreviewProps {
   discountAmount?: number
   /** Optional link shown on the sticky header — useful during development */
   href?: string
+  /** Statement ageing buckets */
+  ageing?: { current: number; days30: number; days60: number; days90: number; days120: number; }
+  /** Global balance due for statement */
+  balanceDue?: number
 }
 
 export interface StatementTransaction {
@@ -70,7 +74,6 @@ export interface StatementTransaction {
   description: string
   debit?: number
   credit?: number
-  balance: number
 }
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
@@ -119,6 +122,8 @@ export function DocumentPreview({
   vatRate = 15,
   discountAmount = 0,
   href,
+  ageing,
+  balanceDue,
 }: DocumentPreviewProps) {
   // Totals — discount is applied after subtotal, before VAT
   const subtotal = lineItems.reduce((sum, i) => sum + i.qty * i.unitPrice, 0)
@@ -172,13 +177,21 @@ export function DocumentPreview({
           </div>
         </div>
 
-        {/* Right: Document type + number + status */}
+        {/* Right: Document type + number + status + amount due */}
         <div className="flex flex-col items-end gap-2 shrink-0">
           <span className="text-2xl font-bold uppercase tracking-widest text-zinc-200">
             {typeLabel}
           </span>
           <span className="text-sm font-semibold text-zinc-700">#{number}</span>
           <StatusPill status={status} />
+          {balanceDue !== undefined && type === 'statement' && (
+            <div className="mt-2 text-right">
+              <span className="text-[10px] font-semibold uppercase tracking-widest text-zinc-400 block mb-0.5">Amount Due</span>
+              <span className={cn('text-lg font-bold tabular-nums', balanceDue <= 0 ? 'text-emerald-600' : 'text-red-600')}>
+                {fmt(Math.abs(balanceDue))}{balanceDue < 0 ? ' CR' : ''}
+              </span>
+            </div>
+          )}
           {href && (
             <Link
               href={href}
@@ -304,49 +317,49 @@ export function DocumentPreview({
       )}
 
       {/* ── Statement transactions ──────────────────────────────────────────── */}
-      {type === 'statement' && transactions.length > 0 && (
+      {type === 'statement' && (
         <div className="px-10 pb-6">
-          <table className="w-full text-sm">
-            <thead>
-              <tr className="border-y border-zinc-100 bg-zinc-50">
-                {['Date', 'Invoice No.', 'Description', 'Debit', 'Credit', 'Balance'].map((h) => (
-                  <th
-                    key={h}
-                    className={cn(
-                      'py-2.5 text-[10px] font-semibold uppercase tracking-widest text-zinc-400',
-                      ['Debit', 'Credit', 'Balance'].includes(h) ? 'text-right' : 'text-left',
-                      h === 'Date' ? 'pr-4' : 'px-4',
-                    )}
-                  >
-                    {h}
-                  </th>
-                ))}
-              </tr>
-            </thead>
-            <tbody>
-              {transactions.map((tx, i) => (
-                <tr key={i} className="border-b border-zinc-50">
-                  <td className="py-2.5 pr-4 text-xs text-zinc-600 whitespace-nowrap">{fmtDateLong(tx.date)}</td>
-                  <td className="py-2.5 px-4 text-xs text-zinc-600 whitespace-nowrap">{tx.reference}</td>
-                  <td className={cn('py-2.5 px-4 text-xs', tx.credit != null ? 'text-emerald-600 font-medium' : 'text-zinc-800')}>
-                    {tx.description}
-                  </td>
-                  <td className="py-2.5 px-4 text-right tabular-nums text-xs text-zinc-600">
-                    {tx.debit != null ? fmt(tx.debit) : '—'}
-                  </td>
-                  <td className="py-2.5 px-4 text-right tabular-nums text-xs font-medium text-emerald-600">
-                    {tx.credit != null ? fmt(tx.credit) : '—'}
-                  </td>
-                  <td className={cn(
-                    'py-2.5 pl-4 text-right tabular-nums text-xs font-medium',
-                    tx.balance < 0 ? 'text-red-600' : 'text-zinc-900',
-                  )}>
-                    {fmt(Math.abs(tx.balance))}{tx.balance < 0 ? ' CR' : ''}
-                  </td>
+          {transactions.length === 0 ? (
+            <div className="py-12 border border-dashed border-zinc-200 rounded-lg text-center">
+              <p className="text-sm text-zinc-500">No transactions for this period.</p>
+            </div>
+          ) : (
+            <table className="w-full text-sm">
+              <thead>
+                <tr className="border-y border-zinc-100 bg-zinc-50">
+                  {['Date', 'Invoice No.', 'Description', 'Debit', 'Credit'].map((h) => (
+                    <th
+                      key={h}
+                      className={cn(
+                        'py-2.5 text-[10px] font-semibold uppercase tracking-widest text-zinc-400',
+                        ['Debit', 'Credit'].includes(h) ? 'text-right' : 'text-left',
+                        h === 'Date' ? 'pr-4' : 'px-4',
+                      )}
+                    >
+                      {h}
+                    </th>
+                  ))}
                 </tr>
-              ))}
-            </tbody>
-          </table>
+              </thead>
+              <tbody>
+                {transactions.map((tx, i) => (
+                  <tr key={i} className="border-b border-zinc-50">
+                    <td className="py-2.5 pr-4 text-xs text-zinc-600 whitespace-nowrap">{fmtDateLong(tx.date)}</td>
+                    <td className="py-2.5 px-4 text-xs text-zinc-600 whitespace-nowrap">{tx.reference}</td>
+                    <td className={cn('py-2.5 px-4 text-xs', tx.credit != null ? 'text-emerald-600 font-medium' : 'text-zinc-800')}>
+                      {tx.description}
+                    </td>
+                    <td className="py-2.5 px-4 text-right tabular-nums text-xs text-zinc-600">
+                      {tx.debit != null ? fmt(tx.debit) : '—'}
+                    </td>
+                    <td className="py-2.5 px-4 text-right tabular-nums text-xs font-medium text-emerald-600">
+                      {tx.credit != null ? fmt(tx.credit) : '—'}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          )}
 
           {/* Statement summary */}
           <div className="mt-4 flex justify-end">
@@ -354,21 +367,21 @@ export function DocumentPreview({
               {(() => {
                 const totalInvoiced = transactions.reduce((s, t) => s + (t.debit ?? 0), 0)
                 const totalPaid = transactions.reduce((s, t) => s + (t.credit ?? 0), 0)
-                const balanceDue = totalInvoiced - totalPaid
+                const balanceDueCalc = balanceDue !== undefined ? balanceDue : (totalInvoiced - totalPaid)
                 return (
                   <>
                     <div className="flex justify-between text-sm text-zinc-600">
-                      <span>Total Invoiced</span>
+                      <span>Total Invoiced (Period)</span>
                       <span className="tabular-nums">{fmt(totalInvoiced)}</span>
                     </div>
                     <div className="flex justify-between text-sm text-emerald-600">
-                      <span>Total Paid</span>
+                      <span>Total Paid (Period)</span>
                       <span className="tabular-nums">{fmt(totalPaid)}</span>
                     </div>
                     <div className="border-t border-zinc-200 pt-2 flex justify-between text-sm font-bold">
-                      <span className="text-zinc-900">Balance Due</span>
-                      <span className={cn('tabular-nums', balanceDue <= 0 ? 'text-emerald-600' : 'text-red-600')}>
-                        {fmt(Math.abs(balanceDue))}{balanceDue < 0 ? ' CR' : ''}
+                      <span className="text-zinc-900">Amount Due</span>
+                      <span className={cn('tabular-nums', balanceDueCalc <= 0 ? 'text-emerald-600' : 'text-red-600')}>
+                        {fmt(Math.abs(balanceDueCalc))}{balanceDueCalc < 0 ? ' CR' : ''}
                       </span>
                     </div>
                   </>
@@ -378,6 +391,7 @@ export function DocumentPreview({
           </div>
         </div>
       )}
+
 
       {/* ── Banking details — after line items ──────────────────────────────── */}
       {banking && (
@@ -403,6 +417,35 @@ export function DocumentPreview({
 
       {/* ── Spacer — pushes notes + footer to the bottom of the page ────────── */}
       <div className="flex-1" />
+
+      {/* ── Statement Ageing — pinned to bottom ─────────────────────────────── */}
+      {type === 'statement' && ageing && (
+        <div className="mx-10 border-t border-zinc-100 pt-5 pb-4">
+          <p className="text-[10px] font-semibold uppercase tracking-widest text-zinc-400 mb-3">
+            Ageing Summary
+          </p>
+          <table className="w-full text-xs text-center border border-zinc-200">
+            <thead>
+              <tr className="bg-zinc-50 border-b border-zinc-200">
+                <th className="py-2 font-medium text-zinc-500 uppercase tracking-wide">Current</th>
+                <th className="py-2 font-medium text-zinc-500 uppercase tracking-wide border-l border-zinc-200">30 Days</th>
+                <th className="py-2 font-medium text-zinc-500 uppercase tracking-wide border-l border-zinc-200">60 Days</th>
+                <th className="py-2 font-medium text-zinc-500 uppercase tracking-wide border-l border-zinc-200">90 Days</th>
+                <th className="py-2 font-medium text-zinc-500 uppercase tracking-wide border-l border-zinc-200">120+ Days</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td className="py-3 tabular-nums font-semibold">{fmt(ageing.current)}</td>
+                <td className="py-3 tabular-nums font-semibold border-l border-zinc-200">{fmt(ageing.days30)}</td>
+                <td className="py-3 tabular-nums font-semibold border-l border-zinc-200">{fmt(ageing.days60)}</td>
+                <td className="py-3 tabular-nums font-semibold border-l border-zinc-200">{fmt(ageing.days90)}</td>
+                <td className="py-3 tabular-nums font-semibold border-l border-zinc-200">{fmt(ageing.days120)}</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      )}
 
       {/* ── Notes / Terms — fixed just above footer ─────────────────────────── */}
       {(notes || terms) && (

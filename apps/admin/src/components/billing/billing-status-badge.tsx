@@ -18,7 +18,7 @@ const statusStyles: Record<string, string> = {
 
 export function BillingStatusBadge({ status }: BillingStatusBadgeProps) {
   const styles = statusStyles[status] ?? 'bg-muted text-muted-foreground';
-  const label = status.charAt(0).toUpperCase() + status.slice(1);
+  const label = status === 'converted' ? 'Invoiced' : status.charAt(0).toUpperCase() + status.slice(1);
 
   return (
     <span

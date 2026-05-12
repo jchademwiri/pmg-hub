@@ -5,6 +5,7 @@ import { useTransition } from 'react';
 import { MoreHorizontal } from 'lucide-react';
 import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
+import { confirm } from '@/components/ui/confirm-dialog';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -65,8 +66,16 @@ export function InvoicesClient({
     });
   }
 
-  function handleVoid(id: string, docNumber: string) {
-    if (!window.confirm(`Void invoice ${docNumber}? This cannot be undone.`)) return;
+  async function handleVoid(id: string, docNumber: string) {
+    const confirmed = await confirm({
+      title: 'Void Invoice',
+      description: `Are you sure you want to void invoice ${docNumber}? This action cannot be undone.`,
+      confirmText: 'Void Invoice',
+      cancelText: 'Cancel',
+      variant: 'destructive',
+    });
+    if (!confirmed) return;
+
     startTransition(async () => {
       const result = await voidAction(id);
       if (result.error) toast.error(result.error);
