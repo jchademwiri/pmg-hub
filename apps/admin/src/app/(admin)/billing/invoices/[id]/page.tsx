@@ -15,7 +15,14 @@ import { InvoiceDetailActions } from './invoice-detail-actions';
 import { PrintButton } from '@/components/billing/print-button';
 
 export const dynamic = 'force-dynamic';
-export const metadata: Metadata = { title: 'Invoice' };
+
+export async function generateMetadata({ params }: Props): Promise<Metadata> {
+  const { id } = await params;
+  const invoice = await getInvoiceById(id);
+  if (!invoice) return { title: 'Invoice' };
+  
+  return { title: `Invoice ${invoice.documentNumber}` };
+}
 
 interface Props {
   params: Promise<{ id: string }>;

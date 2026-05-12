@@ -15,7 +15,14 @@ import { QuoteDetailActions } from './quote-detail-actions';
 import { PrintButton } from '@/components/billing/print-button';
 
 export const dynamic = 'force-dynamic';
-export const metadata: Metadata = { title: 'Quotation' };
+
+export async function generateMetadata({ params }: Props): Promise<Metadata> {
+  const { id } = await params;
+  const quote = await getQuotationById(id);
+  if (!quote) return { title: 'Quotation' };
+  
+  return { title: `Quote ${quote.documentNumber}` };
+}
 
 interface Props {
   params: Promise<{ id: string }>;

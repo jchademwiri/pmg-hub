@@ -11,8 +11,20 @@ import { getClientStatement, getAllIncome, getStatementYears, getDivisionBilling
 import { formatZAR, fmtDate } from '@/lib/format';
 import { PrintButton } from '@/components/billing/print-button';
 
+import { db } from '@pmg/db';
+
 export const dynamic = 'force-dynamic';
-export const metadata: Metadata = { title: 'Statement' };
+
+export async function generateMetadata({ params }: Props): Promise<Metadata> {
+  const { clientId } = await params;
+  const client = await db.query.clients.findFirst({
+    where: (c, { eq }) => eq(c.id, clientId),
+  });
+  if (!client) return { title: 'Statement' };
+  
+  const clientName = client.businessName ?? client.name;
+  return { title: `Statement - ${clientName}` };
+}
 
 interface Props {
   params: Promise<{ clientId: string }>;
