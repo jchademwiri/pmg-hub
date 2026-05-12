@@ -178,14 +178,14 @@ export function DocumentPreview({
 
         {/* Right: Document type + number + status + amount due */}
         <div className="flex flex-col items-end gap-2 shrink-0">
-          <span className="text-2xl font-bold uppercase tracking-widest text-zinc-200">
+          <span className="text-2xl font-bold uppercase tracking-widest text-zinc-300 print:text-zinc-600">
             {typeLabel}
           </span>
           <span className="text-sm font-semibold text-zinc-700">#{number}</span>
           <StatusPill status={status} />
           {balanceDue !== undefined && type === 'statement' && (
             <div className="mt-2 text-right">
-              <span className="text-[10px] font-semibold uppercase tracking-widest text-zinc-400 block mb-0.5">Amount Due</span>
+              <span className="text-[10px] font-semibold uppercase tracking-widest text-zinc-400 print:text-zinc-600 block mb-0.5">Amount Due</span>
               <span className={cn('text-lg font-bold tabular-nums', balanceDue <= 0 ? 'text-emerald-600' : 'text-red-600')}>
                 {fmt(Math.abs(balanceDue))}{balanceDue < 0 ? ' CR' : ''}
               </span>
@@ -209,7 +209,7 @@ export function DocumentPreview({
 
         {/* Bill To */}
         <div className="flex flex-col gap-1">
-          <span className="text-[10px] font-semibold uppercase tracking-widest text-zinc-400">
+          <span className="text-[10px] font-semibold uppercase tracking-widest text-zinc-400 print:text-zinc-600">
             {type === 'statement' ? 'Account' : 'Bill To'}
           </span>
           <span className="text-sm font-semibold">{client.name}</span>
@@ -224,23 +224,23 @@ export function DocumentPreview({
         {type === 'statement' ? (
           <div className="flex gap-8 shrink-0">
             <div className="flex flex-col items-end gap-0.5">
-              <span className="text-[10px] font-semibold uppercase tracking-widest text-zinc-400">Period From</span>
+              <span className="text-[10px] font-semibold uppercase tracking-widest text-zinc-400 print:text-zinc-600">Period From</span>
               <span className="text-sm font-medium">{fmtDateLong(periodFrom)}</span>
             </div>
             <div className="flex flex-col items-end gap-0.5">
-              <span className="text-[10px] font-semibold uppercase tracking-widest text-zinc-400">Period To</span>
+              <span className="text-[10px] font-semibold uppercase tracking-widest text-zinc-400 print:text-zinc-600">Period To</span>
               <span className="text-sm font-medium">{fmtDateLong(periodTo)}</span>
             </div>
           </div>
         ) : (
           <div className="flex flex-col gap-1 items-end shrink-0">
             <div className="flex items-center gap-3">
-              <span className="text-[10px] font-semibold uppercase tracking-widest text-zinc-400">Issue Date</span>
+              <span className="text-[10px] font-semibold uppercase tracking-widest text-zinc-400 print:text-zinc-600">Issue Date</span>
               <span className="text-sm font-medium">{fmtDateLong(issueDate)}</span>
             </div>
             {dueDateLabel && (
               <div className="flex items-center gap-3">
-                <span className="text-[10px] font-semibold uppercase tracking-widest text-zinc-400">{dueDateLabel}</span>
+                <span className="text-[10px] font-semibold uppercase tracking-widest text-zinc-400 print:text-zinc-600">{dueDateLabel}</span>
                 <span className="text-sm font-medium">{fmtDateLong(dueDate)}</span>
               </div>
             )}
@@ -250,7 +250,7 @@ export function DocumentPreview({
 
       {reference && (
         <div className="px-4 sm:px-10 pb-4">
-          <span className="text-[10px] font-semibold uppercase tracking-widest text-zinc-400">Reference</span>
+          <span className="text-[10px] font-semibold uppercase tracking-widest text-zinc-400 print:text-zinc-600">Reference</span>
           <p className="mt-0.5 text-xs text-zinc-600">{reference}</p>
         </div>
       )}
@@ -261,16 +261,16 @@ export function DocumentPreview({
           <table className="w-full text-sm">
             <thead>
               <tr className="border-y border-zinc-100 bg-zinc-50">
-                <th className="py-2.5 pr-4 text-left text-[10px] font-semibold uppercase tracking-widest text-zinc-400">
+                <th className="py-2.5 pr-4 text-left text-[10px] font-semibold uppercase tracking-widest text-zinc-400 print:text-zinc-600">
                   Description
                 </th>
-                <th className="py-2.5 px-4 text-right text-[10px] font-semibold uppercase tracking-widest text-zinc-400">
+                <th className="py-2.5 px-4 text-right text-[10px] font-semibold uppercase tracking-widest text-zinc-400 print:text-zinc-600">
                   Qty
                 </th>
-                <th className="py-2.5 px-4 text-right text-[10px] font-semibold uppercase tracking-widest text-zinc-400">
+                <th className="py-2.5 px-4 text-right text-[10px] font-semibold uppercase tracking-widest text-zinc-400 print:text-zinc-600">
                   Unit Price
                 </th>
-                <th className="py-2.5 pl-4 text-right text-[10px] font-semibold uppercase tracking-widest text-zinc-400">
+                <th className="py-2.5 pl-4 text-right text-[10px] font-semibold uppercase tracking-widest text-zinc-400 print:text-zinc-600">
                   Amount
                 </th>
               </tr>
@@ -330,7 +330,7 @@ export function DocumentPreview({
                     <th
                       key={h}
                       className={cn(
-                        'py-2.5 text-[10px] font-semibold uppercase tracking-widest text-zinc-400',
+                        'py-2.5 text-[10px] font-semibold uppercase tracking-widest text-zinc-400 print:text-zinc-600',
                         ['Debit', 'Credit'].includes(h) ? 'text-right' : 'text-left',
                         h === 'Date' ? 'pr-4' : 'px-4',
                       )}
@@ -395,7 +395,7 @@ export function DocumentPreview({
       {/* ── Banking details — after line items ──────────────────────────────── */}
       {banking && (
         <div className="mx-4 sm:mx-10 border-t border-zinc-100 pt-5 pb-4">
-          <p className="text-[10px] font-semibold uppercase tracking-widest text-zinc-400 mb-3">
+          <p className="text-[10px] font-semibold uppercase tracking-widest text-zinc-400 print:text-zinc-600 mb-3">
             Banking Details
           </p>
           <div className="flex flex-col gap-1.5">
@@ -420,7 +420,7 @@ export function DocumentPreview({
       {/* ── Statement Ageing — pinned to bottom ─────────────────────────────── */}
       {type === 'statement' && ageing && (
         <div className="mx-4 sm:mx-10 border-t border-zinc-100 pt-5 pb-4">
-          <p className="text-[10px] font-semibold uppercase tracking-widest text-zinc-400 mb-3">
+          <p className="text-[10px] font-semibold uppercase tracking-widest text-zinc-400 print:text-zinc-600 mb-3">
             Ageing Summary
           </p>
           <table className="w-full text-xs text-center border border-zinc-200">
@@ -451,13 +451,13 @@ export function DocumentPreview({
         <div className="mx-4 sm:mx-10 border-t border-zinc-100 pt-4 pb-4 flex flex-col gap-3">
           {notes && (
             <div>
-              <p className="text-[10px] font-semibold uppercase tracking-widest text-zinc-400">Notes</p>
+              <p className="text-[10px] font-semibold uppercase tracking-widest text-zinc-400 print:text-zinc-600">Notes</p>
               <p className="mt-1 text-xs text-zinc-600 whitespace-pre-line">{notes}</p>
             </div>
           )}
           {terms && (
             <div>
-              <p className="text-[10px] font-semibold uppercase tracking-widest text-zinc-400">Terms & Conditions</p>
+              <p className="text-[10px] font-semibold uppercase tracking-widest text-zinc-400 print:text-zinc-600">Terms & Conditions</p>
               <p className="mt-1 text-xs text-zinc-600 whitespace-pre-line">{terms}</p>
             </div>
           )}
