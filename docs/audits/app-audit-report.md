@@ -277,3 +277,23 @@ Your app is dark-mode locked (`className="dark"`). These hardcoded light classes
 ---
 
 **Where would you like to dig in first?** The auth middleware gap and the missing `/invite` route are the most operationally risky. The pagination issue is the most likely to cause real pain as data grows. And the dead components are quick wins to clean up.
+
+
+---
+
+## Component Deep Scan Findings
+
+An automated component-by-component deep scan was performed to identify pending implementations, mocked data, and \Coming soon\ states. The overall application is highly complete (95%+), with the following specific items pending:
+
+### 1. Billing Module
+- **\pp/(admin)/billing/invoices/[id]/page.tsx\**: \Export to PDF\ and \Print\ actions are currently disabled with \Coming soon\ tooltips.
+- **\pp/(admin)/billing/quotes/[id]/page.tsx\**: \Export to PDF\ and \Print\ actions are currently disabled with \Coming soon\ tooltips.
+- **\pp/(admin)/billing/statements/page.tsx\**: \Generate Statement\ bulk action button is disabled with \Coming soon\.
+
+### 2. Finance Core
+- **\pp/(admin)/finance/accounts/page.tsx\**: Account withdrawal lock is hardcoded. Contains \TODO: make withdrawalLocked dynamic — admin should be able to lock/unlock\.
+
+### 3. Settings Module
+- **\pp/(admin)/settings/data/page.tsx\**: Data export buttons (Export DB, Sync, Archive) are disabled with \Coming soon\.
+- **\pp/(admin)/settings/organisation/org-settings-form.tsx\**: Organisation Logo upload button is disabled with \Coming soon\ (PNG/SVG max 2MB).
+- **\pp/(admin)/settings/security/page.tsx\**: Two-Factor Authentication (2FA) and Audit Log export actions are disabled with \Coming soon\.
