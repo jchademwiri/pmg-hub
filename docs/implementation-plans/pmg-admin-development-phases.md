@@ -9,9 +9,23 @@
 
 ---
 
-## Table of Contents
+## Current Project Status (May 2026)
 
-1. [Monorepo Context](#1-monorepo-context)
+**What has been done (95% Complete):**
+- **Foundation & Database:** Fully scaffolded, seeded, and deployed.
+- **Financial Engine & Dashboard:** Core metrics, charts, MoM comparison, and withdrawal tracking are fully operational.
+- **Core CRUD Modules:** Income, Expenses, Leads, Divisions, and Client tracking are fully implemented and connected to Drizzle ORM.
+- **Billing Module (Phase 11):** Quotations, Invoices, Statements, and Items catalogues are fully functional. PDF generation and Print functionality are pending.
+- **Authentication & Security:** Better Auth is fully integrated with magic links, role-based access control, and user invitation flows.
+
+**What still needs to be done:**
+- **Quality of Life & UI Polish:** Centralizing date formatting, adding unsaved changes warnings, improving empty states, and fixing layout bugs (e.g. sidebar stickiness).
+- **Billing Module Polish:** Unlocking the `Export to PDF` and `Print` buttons.
+- **Settings Module:** Unlocking Data Export, 2FA, and Logo Upload capabilities.
+
+---
+
+## Table of Contents
 2. [Admin App Folder Structure](#2-admin-app-folder-structure)
 3. ✅ [Phase 0 — Foundation](#3-phase-0--foundation-complete-)
 4. ✅ [Phase 1 — Financial Engine](#4-phase-1--financial-engine-complete-)
