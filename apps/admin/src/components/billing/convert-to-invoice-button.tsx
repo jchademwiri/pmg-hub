@@ -31,7 +31,7 @@ export function ConvertToInvoiceButton({
         toast.error(result.error);
       } else if (result.id) {
         toast.success('Invoice created.');
-        router.push(`/billing/invoices/${result.id}`);
+        router.push(`/billing/invoices/${result.id}/edit`);
       }
     } finally {
       setIsPending(false);

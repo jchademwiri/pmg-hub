@@ -1,7 +1,7 @@
 'use server';
 
 import { revalidatePath } from 'next/cache';
-import { getDb, invoices, quotations, billingLineItems, income, clients, eq, and } from '@pmg/db';
+import { getDb, invoices, quotations, billingLineItems, income, clients, divisionBillingSettings, eq, and } from '@pmg/db';
 import { getNextDocumentNumber } from '@pmg/db';
 import { getSessionOrRedirect } from '@/lib/auth';
 import { isPeriodClosed, getMinAllowedDate, getMinDateErrorMessage } from '@/lib/date-rules';
@@ -47,7 +47,7 @@ export async function createInvoice(
     if (!parsed.success) {
       return { error: parsed.error.issues[0]?.message ?? 'Validation error' };
     }
-    const { divisionId, clientId, invoiceDate, dueDate, poNumber, notes, terms, lineItems, vatEnabled, discountType, discountValue } =
+    const { divisionId, clientId, invoiceDate, dueDate, reference, notes, terms, lineItems, vatEnabled, discountType, discountValue } =
       parsed.data;
 
     // clientId is required — enforced by Zod but double-check
@@ -79,7 +79,7 @@ export async function createInvoice(
         status: 'draft',
         invoiceDate,
         dueDate: dueDate ?? null,
-        poNumber: poNumber ?? null,
+        reference: reference ?? null,
         subtotal: String(subtotal.toFixed(2)),
         discountType: discountType ?? null,
         discountValue: discountValue != null ? String(discountValue) : null,
@@ -134,7 +134,7 @@ export async function updateInvoice(
       clientId,
       invoiceDate,
       dueDate,
-      poNumber,
+      reference,
       notes,
       terms,
       lineItems,
@@ -186,7 +186,7 @@ export async function updateInvoice(
         clientId,
         invoiceDate,
         dueDate: dueDate ?? null,
-        poNumber: poNumber ?? null,
+        reference: reference ?? null,
         subtotal: String(subtotal.toFixed(2)),
         discountType: discountType ?? null,
         discountValue: discountValue != null ? String(discountValue) : null,
@@ -260,6 +260,17 @@ export async function convertQuoteToInvoice(
         ),
       );
 
+    // Fetch division payment terms to calculate due date
+    const [settings] = await db
+      .select({ paymentTermsDays: divisionBillingSettings.paymentTermsDays })
+      .from(divisionBillingSettings)
+      .where(eq(divisionBillingSettings.divisionId, quote.divisionId));
+
+    const paymentTermsDays = settings?.paymentTermsDays ?? 30;
+    const dueDateObj = new Date(today);
+    dueDateObj.setDate(dueDateObj.getDate() + paymentTermsDays);
+    const calculatedDueDate = dueDateObj.toISOString().split('T')[0];
+
     const year = new Date().getFullYear();
     const documentNumber = await getNextDocumentNumber(quote.divisionId, 'invoice', year);
 
@@ -272,6 +283,8 @@ export async function convertQuoteToInvoice(
         documentNumber,
         status: 'draft',
         invoiceDate: today,
+        dueDate: calculatedDueDate,
+        reference: quote.reference,
         quotationId: quote.id,
         subtotal: quote.subtotal,
         discountType: quote.discountType,

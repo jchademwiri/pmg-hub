@@ -40,7 +40,7 @@ export const CreateInvoiceSchema = z.object({
   clientId: z.string().uuid('A client is required'),
   invoiceDate: z.string().min(1, 'Invoice date is required'),
   dueDate: z.string().optional().nullable(),
-  poNumber: z.string().max(100).optional().nullable(),
+  reference: z.string().max(100).optional().nullable(),
   notes: z.string().max(2000).optional().nullable(),
   terms: z.string().max(2000).optional().nullable(),
   lineItems: z.array(LineItemSchema).min(1, 'At least one line item is required'),
