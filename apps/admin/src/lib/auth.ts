@@ -32,7 +32,7 @@ export const auth = betterAuth({
         const resend = getResend()
         try {
           const { error } = await resend.emails.send({
-            from: 'PMG Admin <noreply@playhousemedia.co.za>',
+            from: 'PMG Admin <noreply@info.playhousemedia.co.za>',
             to: email,
             subject: 'Sign in to PMG Control Center',
             html: `<p>Click the link below to sign in to PMG Control Center:</p><p><a href="${url}">${url}</a></p>`,
