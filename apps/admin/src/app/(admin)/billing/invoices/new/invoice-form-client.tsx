@@ -80,7 +80,7 @@ export function InvoiceFormClient({
   const [invoiceDate, setInvoiceDate] = useState(initialData?.invoiceDate ?? today);
   const [dueDate, setDueDate] = useState(initialData?.dueDate ?? plus5);
   const [isDueDateModified, setIsDueDateModified] = useState(!!initialData?.dueDate);
-  const [poNumber, setPoNumber] = useState(initialData?.poNumber ?? '');
+  const [reference, setReference] = useState(initialData?.reference ?? '');
   const [notes, setNotes] = useState(initialData?.notes ?? '');
   const [terms, setTerms] = useState(initialData?.terms ?? '');
   const [lineItems, setLineItems] = useState<LineItemFormRow[]>(
@@ -139,7 +139,7 @@ export function InvoiceFormClient({
       clientId,
       invoiceDate,
       dueDate: dueDate || null,
-      poNumber: poNumber || null,
+      reference: reference || null,
       notes: notes || null,
       terms: terms || null,
       lineItems: lineItems.map((r) => ({
@@ -265,11 +265,11 @@ export function InvoiceFormClient({
           </div>
 
           <div className="flex flex-col gap-1.5">
-            <label className="text-sm font-medium">PO Number</label>
+            <label className="text-sm font-medium">Reference</label>
             <Input
-              value={poNumber}
-              onChange={(e) => setPoNumber(e.target.value)}
-              placeholder="Optional purchase order number"
+              value={reference}
+              onChange={(e) => setReference(e.target.value)}
+              placeholder="Optional reference number"
               disabled={isSubmitting}
             />
           </div>

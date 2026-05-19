@@ -98,10 +98,10 @@ export async function inviteUser(formData: FormData): Promise<{ error?: string }
       return { error: 'BETTER_AUTH_URL is not configured' }
     }
     const inviteUrl = `${appUrl}/invite?token=${token}`
-    const { error: emailError } = await resend.emails.send({
-      from: 'PMG Admin <noreply@playhousemedia.co.za>',
-      to: email,
-      subject: 'You have been invited to PMG Control Center',
+     const { error: emailError } = await resend.emails.send({
+       from: 'PMG Admin <noreply@info.playhousemedia.co.za>',
+       to: email,
+       subject: 'You have been invited to PMG Control Center',
       html: `
         <p>Hi ${name},</p>
         <p>You have been invited to join PMG Control Center as <strong>${role}</strong>.</p>
@@ -306,10 +306,10 @@ export async function resendInvitation(invitationId: string): Promise<{ error?: 
     if (!appUrl) return { error: 'BETTER_AUTH_URL is not configured' }
 
     const inviteUrl = `${appUrl}/invite?token=${token}`
-    const { error: emailError } = await resend.emails.send({
-      from: 'PMG Admin <noreply@playhousemedia.co.za>',
-      to: invitation.email,
-      subject: 'You have been invited to PMG Control Center',
+     const { error: emailError } = await resend.emails.send({
+       from: 'PMG Admin <noreply@info.playhousemedia.co.za>',
+       to: invitation.email,
+       subject: 'You have been invited to PMG Control Center',
       html: `
         <p>Hi ${invitation.name},</p>
         <p>You have been invited to join PMG Control Center as <strong>${invitation.role}</strong>.</p>

@@ -58,7 +58,7 @@ export default async function StatementDetailPage({ params, searchParams }: Prop
       .map((inv) => ({
         date: inv.invoiceDate,
         reference: inv.documentNumber,
-        description: inv.poNumber ?? 'Invoice',
+        description: inv.reference ?? 'Invoice',
         debit: Number(inv.total),
       })),
     ...incomeResult.data.map((inc) => ({

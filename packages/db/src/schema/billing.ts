@@ -138,6 +138,7 @@ export const invoices = pgTable(
     invoiceDate: date("invoice_date").notNull(),
     dueDate: date("due_date"),
     poNumber: text("po_number"),
+    reference: text("reference"),
     // quotation_id: soft reference to quotations.id — no FK constraint in schema to avoid
     // circular dependency issues and to allow invoices to exist independently.
     // Application layer enforces referential integrity.

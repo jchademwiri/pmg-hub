@@ -68,7 +68,7 @@ export type InvoiceRow = {
   status: string;
   invoiceDate: string;
   dueDate: string | null;
-  poNumber: string | null;
+  reference: string | null;
   quotationId: string | null;
   quotationNumber: string | null;
   incomeId: string | null;
@@ -223,7 +223,7 @@ const invoiceRowSelect = {
   status: invoices.status,
   invoiceDate: sql<string>`${invoices.invoiceDate}::text`,
   dueDate: sql<string | null>`${invoices.dueDate}::text`,
-  poNumber: invoices.poNumber,
+  reference: invoices.reference,
   quotationId: invoices.quotationId,
   quotationNumber: sql<string | null>`NULL::text`,
   incomeId: invoices.incomeId,
@@ -352,7 +352,7 @@ export async function getAllInvoices(
       status: invoices.status,
       invoiceDate: sql<string>`${invoices.invoiceDate}::text`,
       dueDate: sql<string | null>`${invoices.dueDate}::text`,
-      poNumber: invoices.poNumber,
+      reference: invoices.reference,
       quotationId: invoices.quotationId,
       quotationNumber: sql<string | null>`${q.documentNumber}`,
       incomeId: invoices.incomeId,
@@ -465,7 +465,7 @@ export async function getInvoiceById(id: string): Promise<InvoiceDetail | null> 
       status: invoices.status,
       invoiceDate: sql<string>`${invoices.invoiceDate}::text`,
       dueDate: sql<string | null>`${invoices.dueDate}::text`,
-      poNumber: invoices.poNumber,
+      reference: invoices.reference,
       quotationId: invoices.quotationId,
       quotationNumber: sql<string | null>`${quotations.documentNumber}`,
       incomeId: invoices.incomeId,
@@ -574,7 +574,7 @@ export async function getClientStatement(
       status: invoices.status,
       invoiceDate: sql<string>`${invoices.invoiceDate}::text`,
       dueDate: sql<string | null>`${invoices.dueDate}::text`,
-      poNumber: invoices.poNumber,
+      reference: invoices.reference,
       quotationId: invoices.quotationId,
       quotationNumber: sql<string | null>`${quotations.documentNumber}`,
       incomeId: invoices.incomeId,

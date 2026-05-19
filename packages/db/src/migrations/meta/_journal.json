@@ -92,6 +92,13 @@
       "when": 1778274857192,
       "tag": "0012_abnormal_doomsday",
       "breakpoints": true
+    },
+    {
+      "idx": 13,
+      "version": "7",
+      "when": 1778847127388,
+      "tag": "0013_lyrical_echo",
+      "breakpoints": true
     }
   ]
 }

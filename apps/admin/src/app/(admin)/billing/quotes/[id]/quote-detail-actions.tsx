@@ -50,7 +50,7 @@ export function QuoteDetailActions({
           router.refresh();
         } else {
           toast.success('Quote accepted and auto-converted to invoice.');
-          router.push(`/billing/invoices/${convertResult.id}`);
+          router.push(`/billing/invoices/${convertResult.id}/edit`);
         }
         return;
       }
