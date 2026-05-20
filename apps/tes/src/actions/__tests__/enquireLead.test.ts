@@ -43,7 +43,7 @@ async function enquireLeadHandler(input: LeadInput, deps: HandlerDeps) {
   return { success: true }
 }
 
-// Validation gate — mirrors the zod schema in the Astro action
+// Validation gate - mirrors the zod schema in the Astro action
 function isValidInput(input: Partial<LeadInput>): input is LeadInput {
   return (
     typeof input.name === 'string' &&
@@ -79,7 +79,7 @@ const validPayload = fc.record({
 
 // ── Property 1: Valid form submission persists a lead ──
 // Validates: Requirements 13.3, 13.6
-describe('enquireLead handler — Property 1: Valid form submission persists a lead', () => {
+describe('enquireLead handler - Property 1: Valid form submission persists a lead', () => {
   it('inserts a lead with source=tes, status=new, and matching field values for any valid payload', async () => {
     await fc.assert(
       fc.asyncProperty(validPayload, async (input) => {
@@ -110,7 +110,7 @@ describe('enquireLead handler — Property 1: Valid form submission persists a l
 
 // ── Property 2: Email failure does not prevent lead persistence ──
 // Validates: Requirements 13.5
-describe('enquireLead handler — Property 2: Email failure does not prevent lead persistence', () => {
+describe('enquireLead handler - Property 2: Email failure does not prevent lead persistence', () => {
   it('still inserts the lead and returns { success: true } even when sendEmail throws', async () => {
     await fc.assert(
       fc.asyncProperty(validPayload, async (input) => {
@@ -129,7 +129,7 @@ describe('enquireLead handler — Property 2: Email failure does not prevent lea
 
 // ── Property 3: Invalid inputs are rejected before database write ──
 // Validates: Requirements 13.2, 12.10
-describe('enquireLead handler — Property 3: Invalid inputs are rejected before database write', () => {
+describe('enquireLead handler - Property 3: Invalid inputs are rejected before database write', () => {
   const invalidPayloads = fc.oneof(
     // Empty name
     fc.record({
@@ -160,7 +160,7 @@ describe('enquireLead handler — Property 3: Invalid inputs are rejected before
     )
   })
 
-  it('handler is never invoked for invalid payloads — dbInsert is not called', async () => {
+  it('handler is never invoked for invalid payloads - dbInsert is not called', async () => {
     await fc.assert(
       fc.asyncProperty(invalidPayloads, async (input) => {
         const dbInsert = vi.fn().mockResolvedValue(undefined)
@@ -183,7 +183,7 @@ describe('enquireLead handler — Property 3: Invalid inputs are rejected before
 
 // ── Property 4: WhatsApp URL consistency ──
 // Validates: Requirements 16.1, 16.2, 16.3
-describe('enquireLead handler — Property 4: WhatsApp URL consistency', () => {
+describe('enquireLead handler - Property 4: WhatsApp URL consistency', () => {
   const CANONICAL_WHATSAPP_URL =
     "https://wa.me/27745017094?text=Hi%2C+I'm+interested+in+your+tender+compliance+services."
   const COMPONENTS_WITH_WHATSAPP = [

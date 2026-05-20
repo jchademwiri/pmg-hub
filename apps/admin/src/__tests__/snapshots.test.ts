@@ -74,7 +74,7 @@ describe('P1: getAllSnapshots ordering invariant', () => {
     vi.resetAllMocks()
   })
 
-  it('P1: getAllSnapshots returns rows ordered by period DESC — Validates: Requirements 2.1, 5.3', async () => {
+  it('P1: getAllSnapshots returns rows ordered by period DESC - Validates: Requirements 2.1, 5.3', async () => {
     // Feature: financial-snapshots, Property 1: getAllSnapshots ordering invariant
     await fc.assert(
       fc.asyncProperty(
@@ -112,7 +112,7 @@ describe('P2: getSnapshotByPeriod returns null for non-existent period', () => {
     vi.resetAllMocks()
   })
 
-  it('P2: getSnapshotByPeriod returns null for any period not in the known set — Validates: Requirements 2.2, 2.4', async () => {
+  it('P2: getSnapshotByPeriod returns null for any period not in the known set - Validates: Requirements 2.2, 2.4', async () => {
     // Feature: financial-snapshots, Property 2: getSnapshotByPeriod returns null for non-existent period
     const insertedPeriods = new Set(['2026-01', '2026-02'])
 
@@ -134,12 +134,12 @@ describe('P2: getSnapshotByPeriod returns null for non-existent period', () => {
 
 // ─── P3: Numeric round-trip ───────────────────────────────────────────────────
 
-describe('P3: Numeric round-trip — insert then retrieve preserves values', () => {
+describe('P3: Numeric round-trip - insert then retrieve preserves values', () => {
   beforeEach(() => {
     vi.resetAllMocks()
   })
 
-  it('P3: Number(row.field) equals original summary field for all eight numeric fields — Validates: Requirements 2.2, 2.3, 6.2, 6.3', async () => {
+  it('P3: Number(row.field) equals original summary field for all eight numeric fields - Validates: Requirements 2.2, 2.3, 6.2, 6.3', async () => {
     // Feature: financial-snapshots, Property 3: Numeric round-trip
     await fc.assert(
       fc.asyncProperty(
@@ -189,7 +189,7 @@ describe('P4: Duplicate period insert returns Month already closed', () => {
     vi.resetAllMocks()
   })
 
-  it('P4: closeMonth called twice for same period returns { error: "Month already closed" } — Validates: Requirements 1.2, 1.4, 3.4', async () => {
+  it('P4: closeMonth called twice for same period returns { error: "Month already closed" } - Validates: Requirements 1.2, 1.4, 3.4', async () => {
     // Feature: financial-snapshots, Property 4: Duplicate period insert returns 'Month already closed'
     await fc.assert(
       fc.asyncProperty(
@@ -220,7 +220,7 @@ describe('P5: Invalid period format returns validation error', () => {
     vi.resetAllMocks()
   })
 
-  it('P5: closeMonth with non-YYYY-MM string returns { error: string } — Validates: Requirements 3.5, 3.6', async () => {
+  it('P5: closeMonth with non-YYYY-MM string returns { error: string } - Validates: Requirements 3.5, 3.6', async () => {
     // Feature: financial-snapshots, Property 5: Invalid period format returns validation error
     await fc.assert(
       fc.asyncProperty(
@@ -247,7 +247,7 @@ describe('P6: closeMonth success round-trip', () => {
     vi.resetAllMocks()
   })
 
-  it('P6: closeMonth returns {} for valid period and snapshot is retrievable — Validates: Requirements 3.2, 3.3', async () => {
+  it('P6: closeMonth returns {} for valid period and snapshot is retrievable - Validates: Requirements 3.2, 3.3', async () => {
     // Feature: financial-snapshots, Property 6: closeMonth success round-trip
     await fc.assert(
       fc.asyncProperty(
@@ -277,7 +277,7 @@ describe('P6: closeMonth success round-trip', () => {
 // ─── P7: Period formatting ────────────────────────────────────────────────────
 
 describe('P7: Period formatting produces correct month name and year', () => {
-  it('P7: new Date(period + "-01").toLocaleString("en-ZA", ...) contains year and non-empty month name — Validates: Requirements 5.9', () => {
+  it('P7: new Date(period + "-01").toLocaleString("en-ZA", ...) contains year and non-empty month name - Validates: Requirements 5.9', () => {
     // Feature: financial-snapshots, Property 7: Period formatting produces correct month name and year
     fc.assert(
       fc.property(
@@ -301,7 +301,7 @@ describe('P7: Period formatting produces correct month name and year', () => {
 // ─── P8: Financial model formula invariants ───────────────────────────────────
 
 describe('P8: Financial model formula invariants', () => {
-  it('P8: computeSummary satisfies all six formula relationships — Validates: Requirements 6.4', () => {
+  it('P8: computeSummary satisfies all six formula relationships - Validates: Requirements 6.4', () => {
     // Feature: financial-snapshots, Property 8: Financial model formula invariants
     fc.assert(
       fc.property(
@@ -337,13 +337,13 @@ describe('P8: Financial model formula invariants', () => {
 // and "Closing…" (disabled) when isPending=true.
 
 describe('CloseMonthButton unit tests', () => {
-  it('renders "Close Month" label when not pending — Validates: Requirements 4.7, 4.8', () => {
+  it('renders "Close Month" label when not pending - Validates: Requirements 4.7, 4.8', () => {
     // Verify the label text the component uses when not in a pending state
     const notPendingLabel = 'Close Month'
     expect(notPendingLabel).toBe('Close Month')
   })
 
-  it('button is disabled and shows "Closing…" during transition — Validates: Requirements 4.8', () => {
+  it('button is disabled and shows "Closing…" during transition - Validates: Requirements 4.8', () => {
     // Verify the label text and disabled state the component uses when isPending=true
     const pendingLabel = 'Closing\u2026'
     expect(pendingLabel).toBe('Closing…')
@@ -359,7 +359,7 @@ describe('Snapshots page unit tests', () => {
     vi.resetAllMocks()
   })
 
-  it('renders empty-state message when snapshots = [] — Validates: Requirements 5.4, 5.10', () => {
+  it('renders empty-state message when snapshots = [] - Validates: Requirements 5.4, 5.10', () => {
     // Test the empty-state condition directly (Server Component renders based on data)
     const snapshots: SnapshotRow[] = []
     const showsEmptyState = snapshots.length === 0
@@ -370,7 +370,7 @@ describe('Snapshots page unit tests', () => {
     expect(emptyMessage).toBeTruthy()
   })
 
-  it('renders one row per snapshot — Validates: Requirements 5.2', () => {
+  it('renders one row per snapshot - Validates: Requirements 5.2', () => {
     const snapshots = [
       makeSnapshotRow('2026-03'),
       makeSnapshotRow('2026-02'),
@@ -382,7 +382,7 @@ describe('Snapshots page unit tests', () => {
     expect(rowCount).toBe(3)
   })
 
-  it('period "2026-03" formats to "March 2026" — Validates: Requirements 5.9', () => {
+  it('period "2026-03" formats to "March 2026" - Validates: Requirements 5.9', () => {
     const period = '2026-03'
     const formatted = new Date(period + '-01').toLocaleString('en-ZA', {
       month: 'long',
@@ -398,7 +398,7 @@ describe('closeMonth server action unit tests', () => {
     vi.resetAllMocks()
   })
 
-  it('closeMonth with valid period returns {} (mocked DB) — Validates: Requirements 3.2, 3.3', async () => {
+  it('closeMonth with valid period returns {} (mocked DB) - Validates: Requirements 3.2, 3.3', async () => {
     vi.mocked(closeMonth).mockResolvedValue({})
 
     const result = await closeMonth('2026-03')
@@ -407,7 +407,7 @@ describe('closeMonth server action unit tests', () => {
     expect((result as { error?: string }).error).toBeUndefined()
   })
 
-  it('duplicate insert throws unique constraint error — Validates: Requirements 1.2, 1.4', async () => {
+  it('duplicate insert throws unique constraint error - Validates: Requirements 1.2, 1.4', async () => {
     const uniqueConstraintError = new Error(
       'duplicate key value violates unique constraint "snapshots_period_key"'
     )

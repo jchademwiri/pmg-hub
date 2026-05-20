@@ -33,7 +33,7 @@ async function idempotentInsert(
 ): Promise<boolean> {
   const existing = await selectFn();
   if (existing.length > 0) {
-    return false; // already exists — skip
+    return false; // already exists - skip
   }
   await insertFn();
   return true;
@@ -146,11 +146,11 @@ describe("Property 7: Seed idempotency", () => {
             transaction: async <T>(cb: () => Promise<T>) => cb(),
           };
 
-          // First run — inserts all records
+          // First run - inserts all records
           const run1 = await runSeedBlock2(fixtures, mockDb);
           const countAfterRun1 = db.size;
 
-          // Second run — all records already exist, nothing inserted
+          // Second run - all records already exist, nothing inserted
           const run2 = await runSeedBlock2(fixtures, mockDb);
           const countAfterRun2 = db.size;
 
@@ -165,7 +165,7 @@ describe("Property 7: Seed idempotency", () => {
     );
   });
 
-  it("property: partial existence — only missing records are inserted", async () => {
+  it("property: partial existence - only missing records are inserted", async () => {
     // Feature: drizzle-db-schema, Property 7: Seed idempotency
     // Validates: Requirements 9.7, 9.9
     await fc.assert(
@@ -375,7 +375,7 @@ function runSeed(): { exitCode: number | null; stdout: string; stderr: string } 
   const result = spawnSync("bun", ["run", seedPath], {
     cwd: resolve(__dirname, ".."),
     encoding: "utf-8",
-    timeout: 120_000, // 2 minutes — seed does a lot of DB work
+    timeout: 120_000, // 2 minutes - seed does a lot of DB work
     env: { ...process.env },
   });
   return {
@@ -525,5 +525,5 @@ describe.skipIf(!hasDb)("Integration: seed idempotency (real database)", () => {
     } finally {
       await c2.end();
     }
-  }, 120_000); // 2 minute timeout — seed runs take ~8s each
+  }, 120_000); // 2 minute timeout - seed runs take ~8s each
 });

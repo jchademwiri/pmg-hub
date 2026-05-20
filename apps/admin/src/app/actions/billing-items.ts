@@ -12,7 +12,7 @@ const ItemSchema = z.object({
   description: z.string().optional().nullable(),
   unitPrice: z.coerce.number().min(0, 'Unit price cannot be negative'),
   unitLabel: z.string().optional().nullable(),
-  // vatApplicable removed from UI — VAT is document-level. Kept in DB for
+  // vatApplicable removed from UI - VAT is document-level. Kept in DB for
   // backward compatibility; always passed as true so existing records are stable.
 });
 
@@ -40,7 +40,7 @@ export async function createItem(
         description: description ?? null,
         unitPrice: String(unitPrice.toFixed(2)),
         unitLabel: unitLabel ?? null,
-        vatApplicable: true, // always true — VAT is document-level
+        vatApplicable: true, // always true - VAT is document-level
       })
       .returning({ id: billingItems.id });
 
@@ -76,7 +76,7 @@ export async function updateItem(
         description: description ?? null,
         unitPrice: String(unitPrice.toFixed(2)),
         unitLabel: unitLabel ?? null,
-        // vatApplicable: preserve existing value — not changed from UI
+        // vatApplicable: preserve existing value - not changed from UI
         updatedAt: new Date(),
       })
       .where(eq(billingItems.id, id));
@@ -137,7 +137,7 @@ export async function deleteItem(id: string): Promise<{ error?: string }> {
 
     const db = getDb();
 
-    // Check if item is referenced in any line items (by name match — no FK)
+    // Check if item is referenced in any line items (by name match - no FK)
     const [usedInInvoice] = await db
       .select({ id: billingLineItems.id })
       .from(billingLineItems)

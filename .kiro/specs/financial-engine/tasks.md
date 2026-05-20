@@ -37,9 +37,9 @@ Implement the PMG Financial Engine as a server-side TypeScript module in `apps/a
     - Calculate `salary = profitPool × 0.35`, `reinvest = profitPool × 0.30`, `reserve = profitPool × 0.30`, `flex = profitPool × 0.05`
     - Return all eight fields; do not clamp negative values
     - _Requirements: 1.1, 1.2, 1.3, 1.4, 1.5, 1.6, 1.7, 1.8, 1.9, 2.2, 2.3, 2.4_
-  - [x] 3.5 Implement `getDivisionRevenue()` — delegate directly to `getRevenueByDivision()`, no transformation
+  - [x] 3.5 Implement `getDivisionRevenue()` - delegate directly to `getRevenueByDivision()`, no transformation
     - _Requirements: 3.1, 3.2_
-  - [x] 3.6 Implement `getLeadCounts()` — delegate directly to `getLeadsByStatus()`, no transformation
+  - [x] 3.6 Implement `getLeadCounts()` - delegate directly to `getLeadsByStatus()`, no transformation
     - _Requirements: 4.1, 4.2_
   - [x] 3.7 Implement `formatZAR(amount: number): string`
     - Use `Intl.NumberFormat('en-ZA', { style: 'currency', currency: 'ZAR', minimumFractionDigits: 2, maximumFractionDigits: 2 })`
@@ -105,7 +105,7 @@ Implement the PMG Financial Engine as a server-side TypeScript module in `apps/a
     - **Property 10: getFinancialSummary determinism**
     - **Validates: Requirements 7.1**
 
-- [x] 5. Checkpoint — run tests and verify
+- [x] 5. Checkpoint - run tests and verify
   - Run `bun test` (or `bun run test`) inside `apps/admin` to execute the Vitest suite
   - Ensure all tests pass, ask the user if questions arise.
   - _Requirements: all_
@@ -113,7 +113,7 @@ Implement the PMG Financial Engine as a server-side TypeScript module in `apps/a
 ## Notes
 
 - Tasks marked with `*` are optional and can be skipped for a faster MVP
-- Task 1 is a hard prerequisite — `financial.ts` cannot be implemented without it
+- Task 1 is a hard prerequisite - `financial.ts` cannot be implemented without it
 - `formatZAR` assertions must be locale-safe: check for `R` symbol and `/\.\d{2}$|,\d{2}$/`, never assert exact separator characters
-- Property tests require a minimum of 100 iterations (fast-check default — do not reduce)
+- Property tests require a minimum of 100 iterations (fast-check default - do not reduce)
 - `financial.ts` must never contain a `'use client'` directive

@@ -38,11 +38,11 @@ vi.mock('@/components/ui/select', () => ({
 
 import { IncomeAddForm } from '@/components/income/income-add-form'
 
-describe('IncomeAddForm — inline error display', () => {
+describe('IncomeAddForm - inline error display', () => {
   const divisions = [{ id: 'div-1', name: 'PMG' }]
   const clients = [{ id: 'cli-1', name: 'Alice', businessName: null }]
 
-  it('displays inline error when action returns { error } — Validates: Requirements 1.3', async () => {
+  it('displays inline error when action returns { error } - Validates: Requirements 1.3', async () => {
     const user = userEvent.setup()
     const createAction = vi.fn().mockResolvedValue({ error: 'Amount must be positive.' })
 
@@ -57,7 +57,7 @@ describe('IncomeAddForm — inline error display', () => {
     expect(await screen.findByText('Amount must be positive.')).toBeDefined()
   })
 
-  it('does not navigate away on error — Validates: Requirements 1.4', async () => {
+  it('does not navigate away on error - Validates: Requirements 1.4', async () => {
     const user = userEvent.setup()
     mockPush.mockClear()
     const createAction = vi.fn().mockResolvedValue({ error: 'Validation failed.' })
@@ -73,7 +73,7 @@ describe('IncomeAddForm — inline error display', () => {
     expect(mockPush).not.toHaveBeenCalled()
   })
 
-  it('clears error message on successful submission — Validates: Requirements 1.5', async () => {
+  it('clears error message on successful submission - Validates: Requirements 1.5', async () => {
     const user = userEvent.setup()
     const createAction = vi
       .fn()
@@ -85,18 +85,18 @@ describe('IncomeAddForm — inline error display', () => {
     await user.type(screen.getByLabelText(/date/i), '2025-01-15')
     await user.type(screen.getByLabelText(/amount/i), '100')
 
-    // First submit — error appears
+    // First submit - error appears
     await user.click(screen.getByRole('button', { name: /add income/i }))
     expect(await screen.findByText('First attempt failed.')).toBeDefined()
 
-    // Second submit — error clears
+    // Second submit - error clears
     await user.click(screen.getByRole('button', { name: /add income/i }))
     await vi.waitFor(() => {
       expect(screen.queryByText('First attempt failed.')).toBeNull()
     })
   })
 
-  it('preserves field values on error — Validates: Requirements 1.7', async () => {
+  it('preserves field values on error - Validates: Requirements 1.7', async () => {
     const user = userEvent.setup()
     const createAction = vi.fn().mockResolvedValue({ error: 'Server error.' })
 
@@ -119,7 +119,7 @@ describe('IncomeAddForm — inline error display', () => {
 import { IncomeEditForm } from '@/components/income/income-edit-form'
 import type { IncomeRow } from '@pmg/db'
 
-describe('IncomeEditForm — inline error display', () => {
+describe('IncomeEditForm - inline error display', () => {
   const divisions = [{ id: 'div-1', name: 'PMG' }]
   const clients = [{ id: 'cli-1', name: 'Alice', businessName: null }]
   const entry: IncomeRow = {
@@ -133,7 +133,7 @@ describe('IncomeEditForm — inline error display', () => {
     amount: '1000',
   }
 
-  it('displays inline error when action returns { error } — Validates: Requirements 1.3', async () => {
+  it('displays inline error when action returns { error } - Validates: Requirements 1.3', async () => {
     const user = userEvent.setup()
     const updateAction = vi.fn().mockResolvedValue({ error: 'Invalid amount.' })
 
@@ -151,7 +151,7 @@ describe('IncomeEditForm — inline error display', () => {
     expect(await screen.findByText('Invalid amount.')).toBeDefined()
   })
 
-  it('does not navigate away on error — Validates: Requirements 1.4', async () => {
+  it('does not navigate away on error - Validates: Requirements 1.4', async () => {
     const user = userEvent.setup()
     mockPush.mockClear()
     const updateAction = vi.fn().mockResolvedValue({ error: 'DB error.' })
@@ -171,7 +171,7 @@ describe('IncomeEditForm — inline error display', () => {
     expect(mockPush).not.toHaveBeenCalled()
   })
 
-  it('clears error on successful submission — Validates: Requirements 1.5', async () => {
+  it('clears error on successful submission - Validates: Requirements 1.5', async () => {
     const user = userEvent.setup()
     const updateAction = vi
       .fn()
@@ -196,7 +196,7 @@ describe('IncomeEditForm — inline error display', () => {
     })
   })
 
-  it('preserves field values on error — Validates: Requirements 1.7', async () => {
+  it('preserves field values on error - Validates: Requirements 1.7', async () => {
     const user = userEvent.setup()
     const updateAction = vi.fn().mockResolvedValue({ error: 'Server error.' })
 
@@ -224,11 +224,11 @@ describe('IncomeEditForm — inline error display', () => {
 
 import { ExpenseAddForm } from '@/components/expenses/expense-add-form'
 
-describe('ExpenseAddForm — inline error display', () => {
+describe('ExpenseAddForm - inline error display', () => {
   const divisions = [{ id: 'div-1', name: 'PMG' }]
   const categories = ['Salaries', 'Software']
 
-  it('displays inline error when action returns { error } — Validates: Requirements 1.3', async () => {
+  it('displays inline error when action returns { error } - Validates: Requirements 1.3', async () => {
     const user = userEvent.setup()
     const createAction = vi.fn().mockResolvedValue({ error: 'Amount is required.' })
 
@@ -244,7 +244,7 @@ describe('ExpenseAddForm — inline error display', () => {
     expect(await screen.findByText('Amount is required.')).toBeDefined()
   })
 
-  it('clears error on successful submission — Validates: Requirements 1.5', async () => {
+  it('clears error on successful submission - Validates: Requirements 1.5', async () => {
     const user = userEvent.setup()
     const createAction = vi
       .fn()
@@ -266,7 +266,7 @@ describe('ExpenseAddForm — inline error display', () => {
     })
   })
 
-  it('preserves field values on error — Validates: Requirements 1.7', async () => {
+  it('preserves field values on error - Validates: Requirements 1.7', async () => {
     const user = userEvent.setup()
     const createAction = vi.fn().mockResolvedValue({ error: 'Server error.' })
 
@@ -289,7 +289,7 @@ describe('ExpenseAddForm — inline error display', () => {
 import { ExpenseEditForm } from '@/components/expenses/expense-edit-form'
 import type { ExpenseRow } from '@pmg/db'
 
-describe('ExpenseEditForm — inline error display', () => {
+describe('ExpenseEditForm - inline error display', () => {
   const divisions = [{ id: 'div-1', name: 'PMG' }]
   const categories = ['Salaries', 'Software']
   const entry: ExpenseRow = {
@@ -306,7 +306,7 @@ describe('ExpenseEditForm — inline error display', () => {
     updatedAt: null,
   }
 
-  it('displays inline error when action returns { error } — Validates: Requirements 1.3', async () => {
+  it('displays inline error when action returns { error } - Validates: Requirements 1.3', async () => {
     const user = userEvent.setup()
     const updateAction = vi.fn().mockResolvedValue({ error: 'Invalid category.' })
 
@@ -324,7 +324,7 @@ describe('ExpenseEditForm — inline error display', () => {
     expect(await screen.findByText('Invalid category.')).toBeDefined()
   })
 
-  it('does not navigate away on error — Validates: Requirements 1.4', async () => {
+  it('does not navigate away on error - Validates: Requirements 1.4', async () => {
     const user = userEvent.setup()
     mockPush.mockClear()
     const updateAction = vi.fn().mockResolvedValue({ error: 'DB error.' })
@@ -344,7 +344,7 @@ describe('ExpenseEditForm — inline error display', () => {
     expect(mockPush).not.toHaveBeenCalled()
   })
 
-  it('clears error on successful submission — Validates: Requirements 1.5', async () => {
+  it('clears error on successful submission - Validates: Requirements 1.5', async () => {
     const user = userEvent.setup()
     const updateAction = vi
       .fn()
@@ -369,7 +369,7 @@ describe('ExpenseEditForm — inline error display', () => {
     })
   })
 
-  it('preserves field values on error — Validates: Requirements 1.7', async () => {
+  it('preserves field values on error - Validates: Requirements 1.7', async () => {
     const user = userEvent.setup()
     const updateAction = vi.fn().mockResolvedValue({ error: 'Server error.' })
 
@@ -397,8 +397,8 @@ describe('ExpenseEditForm — inline error display', () => {
 
 import { LeadStatusForm } from '@/components/leads/lead-status-form'
 
-describe('LeadStatusForm — inline error display', () => {
-  it('displays inline error when action returns { error } — Validates: Requirements 1.3, 5.5', async () => {
+describe('LeadStatusForm - inline error display', () => {
+  it('displays inline error when action returns { error } - Validates: Requirements 1.3, 5.5', async () => {
     const user = userEvent.setup()
     const updateAction = vi.fn().mockResolvedValue({ error: 'Status update failed.' })
 
@@ -409,7 +409,7 @@ describe('LeadStatusForm — inline error display', () => {
     expect(await screen.findByText('Status update failed.')).toBeDefined()
   })
 
-  it('clears error on successful submission — Validates: Requirements 1.5', async () => {
+  it('clears error on successful submission - Validates: Requirements 1.5', async () => {
     const user = userEvent.setup()
     const updateAction = vi
       .fn()
@@ -427,14 +427,14 @@ describe('LeadStatusForm — inline error display', () => {
     })
   })
 
-  it('preserves status field value on error — Validates: Requirements 1.7', async () => {
+  it('preserves status field value on error - Validates: Requirements 1.7', async () => {
     const user = userEvent.setup()
     const updateAction = vi.fn().mockResolvedValue({ error: 'Server error.' })
 
     render(<LeadStatusForm currentStatus="contacted" updateAction={updateAction} />)
 
     const select = screen.getByTestId('select-wrapper') as HTMLSelectElement
-    // Status state is managed via useOptimistic — it won't be reset on error
+    // Status state is managed via useOptimistic - it won't be reset on error
     expect(select).toBeDefined()
   })
 })
@@ -443,8 +443,8 @@ describe('LeadStatusForm — inline error display', () => {
 
 import { LeadNotesForm } from '@/components/leads/lead-notes-form'
 
-describe('LeadNotesForm — inline error display', () => {
-  it('displays inline error when action returns { error } — Validates: Requirements 1.3', async () => {
+describe('LeadNotesForm - inline error display', () => {
+  it('displays inline error when action returns { error } - Validates: Requirements 1.3', async () => {
     const user = userEvent.setup()
     const updateAction = vi.fn().mockResolvedValue({ error: 'Notes update failed.' })
 
@@ -455,7 +455,7 @@ describe('LeadNotesForm — inline error display', () => {
     expect(await screen.findByText('Notes update failed.')).toBeDefined()
   })
 
-  it('does not navigate away on error — Validates: Requirements 1.4', async () => {
+  it('does not navigate away on error - Validates: Requirements 1.4', async () => {
     const user = userEvent.setup()
     mockPush.mockClear()
     const updateAction = vi.fn().mockResolvedValue({ error: 'DB error.' })
@@ -468,7 +468,7 @@ describe('LeadNotesForm — inline error display', () => {
     expect(mockPush).not.toHaveBeenCalled()
   })
 
-  it('clears error on successful submission — Validates: Requirements 1.5', async () => {
+  it('clears error on successful submission - Validates: Requirements 1.5', async () => {
     const user = userEvent.setup()
     const updateAction = vi
       .fn()
@@ -486,7 +486,7 @@ describe('LeadNotesForm — inline error display', () => {
     })
   })
 
-  it('preserves textarea value on error — Validates: Requirements 1.7', async () => {
+  it('preserves textarea value on error - Validates: Requirements 1.7', async () => {
     const user = userEvent.setup()
     const updateAction = vi.fn().mockResolvedValue({ error: 'Server error.' })
 

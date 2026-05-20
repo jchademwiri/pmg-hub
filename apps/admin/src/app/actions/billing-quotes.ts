@@ -89,7 +89,7 @@ export async function createQuotation(
       discountValue,
     } = parsed.data;
 
-    // clientId is required — enforced by Zod but double-check
+    // clientId is required - enforced by Zod but double-check
     if (!clientId) {
       return { error: 'A client is required.' };
     }
@@ -141,7 +141,7 @@ export async function createQuotation(
 
     if (!inserted) return { error: 'Failed to create quotation.' };
 
-    // Insert line items — vatRate always 0 (VAT is document-level)
+    // Insert line items - vatRate always 0 (VAT is document-level)
     await db.insert(billingLineItems).values(
       lineItems.map((item: { itemId: string; description: string; quantity: number; unitPrice: number; vatRate: number }, i: number) => ({
         documentType: 'quote' as const,
@@ -325,7 +325,7 @@ export async function deleteQuotation(id: string): Promise<{ error?: string }> {
       return { error: 'Only draft quotations can be deleted.' };
     }
 
-    // Delete line items first (no FK cascade — polymorphic)
+    // Delete line items first (no FK cascade - polymorphic)
     await db
       .delete(billingLineItems)
       .where(

@@ -86,7 +86,7 @@ vi.mock('sonner', () => ({
   },
 }))
 
-// Mock @/app/actions/reports — wraps real implementation so P3/P4 tests work,
+// Mock @/app/actions/reports - wraps real implementation so P3/P4 tests work,
 // and ExportCsvButton tests can override with vi.mocked().mockResolvedValue()
 vi.mock('@/app/actions/reports', async (importActual) => {
   const actual = await importActual<typeof import('@/app/actions/reports')>()
@@ -141,7 +141,7 @@ describe('P1: getDistinctReportYears returns sorted, distinct years', () => {
    * Feature: reporting-insights, Property 1: getDistinctReportYears returns sorted, distinct years
    * Validates: Requirements 2.5, 6.2, 6.5
    */
-  it('P1: getDistinctReportYears returns sorted DESC, distinct years covering all input years — Validates: Requirements 2.5, 6.2, 6.5', async () => {
+  it('P1: getDistinctReportYears returns sorted DESC, distinct years covering all input years - Validates: Requirements 2.5, 6.2, 6.5', async () => {
     // Feature: reporting-insights, Property 1: getDistinctReportYears returns sorted, distinct years
     const { getDistinctReportYears } = await vi.importActual<typeof import('@/lib/financial')>('@/lib/financial')
 
@@ -198,7 +198,7 @@ describe('P2: getExpensesByCategory returns valid, ordered data', () => {
    * Feature: reporting-insights, Property 2: getExpensesByCategory returns valid, ordered data
    * Validates: Requirements 3.2, 6.1, 6.4, 6.6
    */
-  it('P2: getExpensesByCategory returns totals > 0, non-empty categories, sorted DESC — Validates: Requirements 3.2, 6.1, 6.4, 6.6', async () => {
+  it('P2: getExpensesByCategory returns totals > 0, non-empty categories, sorted DESC - Validates: Requirements 3.2, 6.1, 6.4, 6.6', async () => {
     // Feature: reporting-insights, Property 2: getExpensesByCategory returns valid, ordered data
     const { getExpensesByCategory } = await vi.importActual<typeof import('@/lib/financial')>('@/lib/financial')
 
@@ -249,9 +249,9 @@ describe('P2: getExpensesByCategory returns valid, ordered data', () => {
   })
 })
 
-// ─── P3: CSV export correctness — structure and financial model ───────────────
+// ─── P3: CSV export correctness - structure and financial model ───────────────
 
-describe('P3: CSV export correctness — structure and financial model', () => {
+describe('P3: CSV export correctness - structure and financial model', () => {
   beforeEach(async () => {
     vi.resetAllMocks()
     // Restore the real exportFinancialsCsv after resetAllMocks clears the implementation
@@ -262,11 +262,11 @@ describe('P3: CSV export correctness — structure and financial model', () => {
   })
 
   /**
-   * Feature: reporting-insights, Property 3: CSV export correctness — structure and financial model
+   * Feature: reporting-insights, Property 3: CSV export correctness - structure and financial model
    * Validates: Requirements 4.2, 4.3, 4.4
    */
-  it('P3: exportFinancialsCsv returns correct header, 12 rows, and valid financial model — Validates: Requirements 4.2, 4.3, 4.4', async () => {
-    // Feature: reporting-insights, Property 3: CSV export correctness — structure and financial model
+  it('P3: exportFinancialsCsv returns correct header, 12 rows, and valid financial model - Validates: Requirements 4.2, 4.3, 4.4', async () => {
+    // Feature: reporting-insights, Property 3: CSV export correctness - structure and financial model
     await fc.assert(
       fc.asyncProperty(
         fc.integer({ min: 1000, max: 9999 }),
@@ -351,9 +351,9 @@ describe('P3: CSV export correctness — structure and financial model', () => {
   })
 })
 
-// ─── P4: CSV export error safety — invalid year and never throws ──────────────
+// ─── P4: CSV export error safety - invalid year and never throws ──────────────
 
-describe('P4: CSV export error safety — invalid year and never throws', () => {
+describe('P4: CSV export error safety - invalid year and never throws', () => {
   beforeEach(async () => {
     vi.resetAllMocks()
     const actual = await vi.importActual<typeof import('@/app/actions/reports')>('@/app/actions/reports')
@@ -362,11 +362,11 @@ describe('P4: CSV export error safety — invalid year and never throws', () => 
   })
 
   /**
-   * Feature: reporting-insights, Property 4: CSV export error safety — invalid year and never throws
+   * Feature: reporting-insights, Property 4: CSV export error safety - invalid year and never throws
    * Validates: Requirements 4.5, 4.6
    */
-  it('P4: exportFinancialsCsv returns { error: "Invalid year" } for any integer outside 1000–9999 — Validates: Requirements 4.5, 4.6', async () => {
-    // Feature: reporting-insights, Property 4: CSV export error safety — invalid year and never throws
+  it('P4: exportFinancialsCsv returns { error: "Invalid year" } for any integer outside 1000–9999 - Validates: Requirements 4.5, 4.6', async () => {
+    // Feature: reporting-insights, Property 4: CSV export error safety - invalid year and never throws
     await fc.assert(
       fc.asyncProperty(
         fc.oneof(
@@ -387,10 +387,10 @@ describe('P4: CSV export error safety — invalid year and never throws', () => 
     )
   })
 
-  it('P4: exportFinancialsCsv never throws even when DB throws — Validates: Requirements 4.6', async () => {
+  it('P4: exportFinancialsCsv never throws even when DB throws - Validates: Requirements 4.6', async () => {
     vi.mocked(getMonthlyFinancialsForYear).mockRejectedValue(new Error('DB connection failed'))
 
-    // Should not throw — must return { error: ... }
+    // Should not throw - must return { error: ... }
     const result = await exportFinancialsCsv(2025)
 
     expect(typeof result).toBe('object')
@@ -398,7 +398,7 @@ describe('P4: CSV export error safety — invalid year and never throws', () => 
     expect((result as { error: string }).error).toBe('DB connection failed')
   })
 
-  it('P4: exportFinancialsCsv returns { error: "Invalid year" } for non-integer year — Validates: Requirements 4.5', async () => {
+  it('P4: exportFinancialsCsv returns { error: "Invalid year" } for non-integer year - Validates: Requirements 4.5', async () => {
     const result = await exportFinancialsCsv(2025.5)
     expect(result).toEqual({ error: 'Invalid year' })
   })
@@ -413,7 +413,7 @@ describe('P5: Year filter falls back to current year for invalid query params', 
    * Feature: reporting-insights, Property 5: Year filter falls back to current year for invalid query params
    * Validates: Requirements 2.3, 2.6
    */
-  it('P5: resolveYear returns current year for any invalid param — Validates: Requirements 2.3, 2.6', () => {
+  it('P5: resolveYear returns current year for any invalid param - Validates: Requirements 2.3, 2.6', () => {
     // Feature: reporting-insights, Property 5: Year filter falls back to current year for invalid query params
     fc.assert(
       fc.property(
@@ -431,7 +431,7 @@ describe('P5: Year filter falls back to current year for invalid query params', 
     )
   })
 
-  it('P5: resolveYear returns current year when param is undefined — Validates: Requirements 2.3', () => {
+  it('P5: resolveYear returns current year when param is undefined - Validates: Requirements 2.3', () => {
     expect(resolveYear(undefined)).toBe(new Date().getFullYear())
   })
 
@@ -456,7 +456,7 @@ describe('YearFilter', () => {
     vi.resetAllMocks()
   })
 
-  it('renders one option per year in the years array — Validates: Requirements 2.1', async () => {
+  it('renders one option per year in the years array - Validates: Requirements 2.1', async () => {
     const { useRouter } = await import('next/navigation')
     vi.mocked(useRouter).mockReturnValue({ push: vi.fn() } as any)
 
@@ -469,7 +469,7 @@ describe('YearFilter', () => {
     expect(options[2]).toHaveTextContent('2023')
   })
 
-  it('calls router.push("/reports?year=2024") when 2024 is selected — Validates: Requirements 2.2', async () => {
+  it('calls router.push("/reports?year=2024") when 2024 is selected - Validates: Requirements 2.2', async () => {
     const user = userEvent.setup()
     const mockPush = vi.fn()
     const { useRouter } = await import('next/navigation')
@@ -490,12 +490,12 @@ describe('YearFilter', () => {
 import { ExpenseByCategoryChart } from '@/components/reports/expense-by-category-chart'
 
 describe('ExpenseByCategoryChart', () => {
-  it('renders "No expense data for this year." when data is empty — Validates: Requirements 3.4', () => {
+  it('renders "No expense data for this year." when data is empty - Validates: Requirements 3.4', () => {
     render(<ExpenseByCategoryChart data={[]} />)
     expect(screen.getByText('No expense data for this year.')).toBeDefined()
   })
 
-  it('renders a bar for each category in the data array — Validates: Requirements 3.1', () => {
+  it('renders a bar for each category in the data array - Validates: Requirements 3.1', () => {
     const data = [
       { category: 'Salaries', total: 50000 },
       { category: 'Rent', total: 20000 },
@@ -523,7 +523,7 @@ describe('ExportCsvButton', () => {
     vi.mocked(exportFinancialsCsv).mockResolvedValue('Month,Revenue\nJanuary,0')
   })
 
-  it('is disabled and shows "Exporting…" while isPending is true — Validates: Requirements 4.9', async () => {
+  it('is disabled and shows "Exporting…" while isPending is true - Validates: Requirements 4.9', async () => {
     const user = userEvent.setup()
 
     // Make the action hang so we can observe the pending state
@@ -548,7 +548,7 @@ describe('ExportCsvButton', () => {
     resolveAction('Month,Revenue\nJanuary,0')
   })
 
-  it('calls toast.error when action returns { error } — Validates: Requirements 4.10', async () => {
+  it('calls toast.error when action returns { error } - Validates: Requirements 4.10', async () => {
     const user = userEvent.setup()
 
     vi.mocked(exportFinancialsCsv).mockResolvedValue({ error: 'DB error' } as any)
@@ -563,7 +563,7 @@ describe('ExportCsvButton', () => {
     })
   })
 
-  it('triggers download with filename pmg-financials-2025.csv — Validates: Requirements 4.7', async () => {
+  it('triggers download with filename pmg-financials-2025.csv - Validates: Requirements 4.7', async () => {
     const user = userEvent.setup()
 
     const csvContent = 'Month,Revenue\nJanuary,0'
@@ -620,7 +620,7 @@ describe('Reports page', () => {
     vi.mocked(financial.getProfitPoolSeriesForYear).mockResolvedValue([])
   })
 
-  it('renders heading "Reports & Insights" — Validates: Requirements 5.3', async () => {
+  it('renders heading "Reports & Insights" - Validates: Requirements 5.3', async () => {
     const searchParams = Promise.resolve({})
     const page = await ReportsPage({ searchParams })
     render(page as React.ReactElement)

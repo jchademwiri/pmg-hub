@@ -65,7 +65,7 @@ export async function getNextDocumentNumber(
 
   // Atomic upsert: insert sequence row if it doesn't exist, otherwise increment.
   // The RETURNING clause gives us the new sequence value in one round-trip.
-  // This is safe under concurrent requests — PostgreSQL guarantees the UPDATE
+  // This is safe under concurrent requests - PostgreSQL guarantees the UPDATE
   // is atomic, so two concurrent calls will get different sequence numbers.
   const result = await db.execute(sql`
     INSERT INTO document_sequences (division_id, document_type, year, last_sequence, updated_at)

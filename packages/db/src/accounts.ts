@@ -24,6 +24,6 @@ export const ACCOUNT_RATES: Record<AccountKey, number> = {
   pmg_share: 0.25,
 }
 
-// TODO: make this dynamic — admin should be able to lock/unlock any account
+// TODO: make this dynamic - admin should be able to lock/unlock any account
 // from settings without a code change.
 export const LOCKED_ACCOUNTS = ['pmg_share', 'flex'] as const

@@ -9,8 +9,8 @@ Detailed flag specifications for `resend contacts` commands.
 | Flag | Type | Default | Description |
 |------|------|---------|-------------|
 | `--limit <n>` | number | 10 | Max results (1-100) |
-| `--after <cursor>` | string | — | Forward pagination |
-| `--before <cursor>` | string | — | Backward pagination |
+| `--after <cursor>` | string | - | Forward pagination |
+| `--before <cursor>` | string | - | Backward pagination |
 
 ---
 
@@ -29,13 +29,13 @@ Detailed flag specifications for `resend contacts` commands.
 
 ## contacts get
 
-**Argument:** `<id|email>` — Contact UUID or email address (both accepted)
+**Argument:** `<id|email>` - Contact UUID or email address (both accepted)
 
 ---
 
 ## contacts update
 
-**Argument:** `<id|email>` — Contact UUID or email address
+**Argument:** `<id|email>` - Contact UUID or email address
 
 | Flag | Type | Description |
 |------|------|-------------|
@@ -47,7 +47,7 @@ Detailed flag specifications for `resend contacts` commands.
 
 ## contacts delete
 
-**Argument:** `<id|email>` — Contact UUID or email address
+**Argument:** `<id|email>` - Contact UUID or email address
 
 | Flag | Type | Required | Description |
 |------|------|----------|-------------|
@@ -61,13 +61,13 @@ Detailed flag specifications for `resend contacts` commands.
 
 List segments a contact belongs to.
 
-**Argument:** `<id|email>` — Contact UUID or email
+**Argument:** `<id|email>` - Contact UUID or email
 
 ---
 
 ## contacts add-segment
 
-**Argument:** `<contactId>` — Contact UUID or email
+**Argument:** `<contactId>` - Contact UUID or email
 
 | Flag | Type | Required | Description |
 |------|------|----------|-------------|
@@ -85,13 +85,13 @@ List segments a contact belongs to.
 
 List contact's topic subscriptions.
 
-**Argument:** `<id|email>` — Contact UUID or email
+**Argument:** `<id|email>` - Contact UUID or email
 
 ---
 
 ## contacts update-topics
 
-**Argument:** `<id|email>` — Contact UUID or email
+**Argument:** `<id|email>` - Contact UUID or email
 
 | Flag | Type | Required | Description |
 |------|------|----------|-------------|

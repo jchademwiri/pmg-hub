@@ -308,7 +308,7 @@ export function QuoteFormClient({
         </div>
       </div>
 
-      {/* Sidebar — sticky */}
+      {/* Sidebar - sticky */}
       <div className="flex flex-col gap-4 lg:sticky lg:top-16 self-start">
         <div className="rounded-xl border bg-card p-4 flex flex-col gap-3">
           <p className="text-sm font-semibold">Summary</p>

@@ -21,7 +21,7 @@ export interface SendResult {
 /**
  * Sends a single email via the Resend API.
  * Instantiates a new Resend client per call using the provided config.
- * Never throws — errors are returned in the `error` field.
+ * Never throws - errors are returned in the `error` field.
  */
 export async function sendEmail(
   config: ResendConfig,

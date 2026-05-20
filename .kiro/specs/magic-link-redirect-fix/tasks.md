@@ -6,12 +6,12 @@
   - **DO NOT attempt to fix the test or the code when it fails**
   - **NOTE**: This test encodes the expected behavior - it will validate the fix when it passes after implementation
   - **GOAL**: Surface counterexamples that demonstrate the bug exists
-  - **Scoped PBT Approach**: Scope the property to the concrete failing case — a request to any protected path carrying only `__Secure-better-auth.session_token`
+  - **Scoped PBT Approach**: Scope the property to the concrete failing case - a request to any protected path carrying only `__Secure-better-auth.session_token`
   - Construct a mock `NextRequest` targeting a protected path (e.g. `/dashboard`) with only `__Secure-better-auth.session_token` set
   - Call the unfixed `proxy` function and assert the response is NOT a redirect (status != 302) and IS `NextResponse.next()`
   - isBugCondition: `hasSecureCookie AND NOT hasPlainCookie AND isProtectedPath`
   - Run test on UNFIXED code
-  - **EXPECTED OUTCOME**: Test FAILS (confirms the bug — plain cookie lookup misses the `__Secure-` prefixed cookie)
+  - **EXPECTED OUTCOME**: Test FAILS (confirms the bug - plain cookie lookup misses the `__Secure-` prefixed cookie)
   - Document counterexamples found (e.g. `proxy(request to /dashboard with __Secure-better-auth.session_token=abc)` returns redirect instead of `NextResponse.next()`)
   - Mark task complete when test is written, run, and failure is documented
   - _Requirements: 1.1, 1.2_
@@ -36,7 +36,7 @@
     - Replace `request.cookies.get('better-auth.session_token')` with a dual lookup using `??`
     - New lookup: `request.cookies.get('__Secure-better-auth.session_token') ?? request.cookies.get('better-auth.session_token')`
     - Leave rate limiting, allowlist logic, and `config.matcher` export completely untouched
-    - _Bug_Condition: `isBugCondition(request)` — request targets a protected path and carries `__Secure-better-auth.session_token` but not `better-auth.session_token`_
+    - _Bug_Condition: `isBugCondition(request)` - request targets a protected path and carries `__Secure-better-auth.session_token` but not `better-auth.session_token`_
     - _Expected_Behavior: `proxy(request)` returns `NextResponse.next()` for all requests where `isBugCondition` holds_
     - _Preservation: All requests where `isBugCondition` is false must produce identical results to the original `proxy` function_
     - _Requirements: 2.1, 2.2, 3.1, 3.2, 3.3, 3.4_

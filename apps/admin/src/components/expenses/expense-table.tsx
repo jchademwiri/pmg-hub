@@ -220,7 +220,7 @@ function ExpenseTableRow({
     <TableRow>
       <TableCell>{fmtDate(entry.date)}</TableCell>
       <TableCell>{entry.divisionName}</TableCell>
-      <TableCell className="text-muted-foreground">{entry.clientName ?? '—'}</TableCell>
+      <TableCell className="text-muted-foreground">{entry.clientName ?? '-'}</TableCell>
       <TableCell>{entry.category}</TableCell>
       <TableCell>{entry.description ?? ''}</TableCell>
       <TableCell className="tabular-nums font-medium text-amber-500">

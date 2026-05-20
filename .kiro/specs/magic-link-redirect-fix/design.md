@@ -15,9 +15,9 @@ The fix is minimal: extend the cookie lookup to accept either the `__Secure-` pr
 ## Glossary
 
 - **Bug_Condition (C)**: A request that carries `__Secure-better-auth.session_token` but NOT
-  `better-auth.session_token` — i.e. a legitimate production session that the current middleware
+  `better-auth.session_token` - i.e. a legitimate production session that the current middleware
   incorrectly treats as unauthenticated.
-- **Property (P)**: The desired behaviour when the bug condition holds — the proxy SHALL allow
+- **Property (P)**: The desired behaviour when the bug condition holds - the proxy SHALL allow
   the request through (`NextResponse.next()`) instead of redirecting to `/login`.
 - **Preservation**: All existing behaviours that must remain unchanged after the fix, including
   unauthenticated redirects, auth-path allowlisting, rate limiting, and static-asset exclusion.
@@ -97,16 +97,16 @@ Based on the bug description and the source of `apps/admin/src/proxy.ts`:
 3. **No fallback lookup**: The code does not fall back to the prefixed name when the plain
    name is absent.
 
-The root cause is (1) — the fix requires checking both cookie names so that either a plain
+The root cause is (1) - the fix requires checking both cookie names so that either a plain
 (dev) or prefixed (production) session cookie is accepted.
 
 ## Correctness Properties
 
 Property 1: Bug Condition - Secure-Prefixed Cookie Grants Access
 
-_For any_ request where the bug condition holds (isBugCondition returns true) — i.e. the
+_For any_ request where the bug condition holds (isBugCondition returns true) - i.e. the
 request targets a protected path and carries `__Secure-better-auth.session_token` but not
-`better-auth.session_token` — the fixed `proxy` function SHALL return `NextResponse.next()`
+`better-auth.session_token` - the fixed `proxy` function SHALL return `NextResponse.next()`
 and SHALL NOT redirect to `/login`.
 
 **Validates: Requirements 2.1**
@@ -176,17 +176,17 @@ Confirm or refute the root cause analysis.
 
 **Test Plan**: Construct a mock `NextRequest` targeting a protected path (e.g. `/dashboard`)
 with only the `__Secure-better-auth.session_token` cookie set. Call the unfixed `proxy`
-function and assert that the response is NOT a redirect — this assertion will FAIL on unfixed
+function and assert that the response is NOT a redirect - this assertion will FAIL on unfixed
 code, confirming the bug.
 
 **Test Cases**:
-1. **Secure cookie only — protected path** (will fail on unfixed code): Request to `/dashboard`
+1. **Secure cookie only - protected path** (will fail on unfixed code): Request to `/dashboard`
    with `__Secure-better-auth.session_token` set; expect `NextResponse.next()`.
 2. **Secure cookie on allowlisted path** (should pass even on unfixed code): Request to
    `/login` with `__Secure-better-auth.session_token` set; expect `NextResponse.next()`.
 3. **Both cookies present** (should pass even on unfixed code): Request to `/dashboard` with
    both cookies set; expect `NextResponse.next()`.
-4. **No cookies — protected path** (should redirect on both unfixed and fixed code): Request
+4. **No cookies - protected path** (should redirect on both unfixed and fixed code): Request
    to `/dashboard` with no cookies; expect redirect to `/login`.
 
 **Expected Counterexamples**:

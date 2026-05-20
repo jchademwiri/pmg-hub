@@ -54,7 +54,7 @@ export function RevenueByDivisionChart({ series, divisions }: Props) {
       <CardHeader className="flex items-center gap-2 space-y-0 border-b py-5 sm:flex-row">
         <div className="grid flex-1 gap-1">
           <CardTitle>Revenue by Division</CardTitle>
-          <CardDescription>Stacked area — monthly revenue per division</CardDescription>
+          <CardDescription>Stacked area - monthly revenue per division</CardDescription>
         </div>
         <Select value={monthRange} onValueChange={setMonthRange}>
           <SelectTrigger

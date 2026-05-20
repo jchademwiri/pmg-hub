@@ -10,7 +10,7 @@ Zod validation, `revalidatePath`, `useTransition`, sonner toasts, shadcn/ui, ser
 
 ---
 
-### B2 — /clients Page
+### B2 - /clients Page
 
 - [x] 1. Add client query helpers to packages/db
   - Add `getClientsWithIncomeCount()` to `packages/db/src/queries.ts`: SELECT clients.* + COUNT(income.id) as incomeCount FROM clients LEFT JOIN income ON income.client_id = clients.id GROUP BY clients.id ORDER BY clients.name ASC
@@ -83,14 +83,14 @@ Zod validation, `revalidatePath`, `useTransition`, sonner toasts, shadcn/ui, ser
   - Add `{ href: '/clients', label: 'Clients', icon: UserCheck }` to navItems after Expenses and before Leads
   - _Requirements: 7.1, 7.2_
 
-- [x] 9. Checkpoint — B2 complete
+- [x] 9. Checkpoint - B2 complete
   - Ensure all tests pass, ask the user if questions arise.
 
 ---
 
-### B1 — Enforce clientId Required on Income
+### B1 - Enforce clientId Required on Income
 
-- [x] 10. Update income schema — clientId NOT NULL
+- [x] 10. Update income schema - clientId NOT NULL
   - In `packages/db/src/schema/income.ts`, change clientId from nullable to:
     `uuid("client_id").notNull().references(() => clients.id, { onDelete: "restrict" })`
   - _Requirements: 8.1, 8.2_
@@ -100,7 +100,7 @@ Zod validation, `revalidatePath`, `useTransition`, sonner toasts, shadcn/ui, ser
   - Migration must run in order: first `UPDATE income SET client_id = (SELECT id FROM clients LIMIT 1) WHERE client_id IS NULL`, then `ALTER TABLE income ALTER COLUMN client_id SET NOT NULL`
   - _Requirements: 8.3_
 
-- [x] 12. Update income server actions — clientId required
+- [x] 12. Update income server actions - clientId required
   - In `apps/admin/src/app/actions/income.ts`, change `clientId` from `z.string().uuid().optional()` to `z.string().uuid()` in both `createIncome` and `updateIncome` schemas
   - Remove the `if (raw.clientId === '') delete raw.clientId` normalisation line from both actions
   - _Requirements: 9.1, 9.2, 9.3_
@@ -110,24 +110,24 @@ Zod validation, `revalidatePath`, `useTransition`, sonner toasts, shadcn/ui, ser
     - Generate random income FormData missing `clientId` or with non-UUID values, call `createIncome`/`updateIncome`, assert returns `{ error: string }` and no DB row is inserted/updated
     - **Validates: Requirements 9.1, 9.2, 9.3**
 
-- [x] 13. Update IncomeAddForm — remove NO_CLIENT sentinel
+- [x] 13. Update IncomeAddForm - remove NO_CLIENT sentinel
   - In `apps/admin/src/components/income/income-add-form.tsx`, remove the `NO_CLIENT` constant and `'__none__'` sentinel
   - Remove the "No client" `SelectItem`
   - Default clientId state to `''` with a "Select client" placeholder
   - Show inline validation error if no client is selected on submit
   - _Requirements: 10.1, 10.2, 10.3_
 
-- [x] 14. Update IncomeEditForm — remove NO_CLIENT sentinel
+- [x] 14. Update IncomeEditForm - remove NO_CLIENT sentinel
   - In `apps/admin/src/components/income/income-edit-form.tsx`, remove the `NO_CLIENT` constant and "No client" `SelectItem`
   - Pre-select `entry.clientId` (always non-null after migration)
   - _Requirements: 10.4, 10.5_
 
-- [x] 15. Checkpoint — B1 complete
+- [x] 15. Checkpoint - B1 complete
   - Ensure all tests pass, ask the user if questions arise.
 
 ---
 
-### B3 — Expense Category Management
+### B3 - Expense Category Management
 
 - [x] 16. Create expense-categories schema
   - Create `packages/db/src/schema/expense-categories.ts` with table `expense_categories`: `id` (uuid PK defaultRandom), `name` (text NOT NULL UNIQUE), `createdAt` (timestamptz defaultNow NOT NULL)
@@ -180,12 +180,12 @@ Zod validation, `revalidatePath`, `useTransition`, sonner toasts, shadcn/ui, ser
   - Fetch `getAllExpenseCategories()`; render `ExpenseCategoryAddForm` + `ExpenseCategoriesTable` or empty state
   - _Requirements: 14.6_
 
-- [ ] 23. Update ExpenseAddForm — replace datalist with Select
+- [ ] 23. Update ExpenseAddForm - replace datalist with Select
   - In `apps/admin/src/components/expenses/expense-add-form.tsx`, change `categories` prop type from `string[]` to `{ id: string; name: string }[]`
   - Replace `<Input type="text" list="...">` + `<datalist>` with shadcn `<Select name="category">` using `<SelectItem key={c.id} value={c.name}>` so the submitted value is the category name string
   - _Requirements: 15.1, 15.2, 15.3_
 
-- [ ] 24. Update ExpenseEditForm — replace datalist with Select
+- [ ] 24. Update ExpenseEditForm - replace datalist with Select
   - In `apps/admin/src/components/expenses/expense-edit-form.tsx`, apply the same Select replacement and prop type change as ExpenseAddForm
   - Pre-select the category matching `entry.category` by name
   - _Requirements: 15.4, 15.5_
@@ -200,12 +200,12 @@ Zod validation, `revalidatePath`, `useTransition`, sonner toasts, shadcn/ui, ser
   - Add `{ href: '/expense-categories', label: 'Categories', icon: Tag }` to navItems after Expenses
   - _Requirements: 15.6_
 
-- [ ] 27. Checkpoint — B3 complete
+- [ ] 27. Checkpoint - B3 complete
   - Ensure all tests pass, ask the user if questions arise.
 
 ---
 
-### B4 — Fix Hardcoded Breadcrumb
+### B4 - Fix Hardcoded Breadcrumb
 
 - [ ] 28. Update TopNav with dynamic breadcrumb
   - In `apps/admin/src/components/layout/top-nav.tsx`, add `'use client'` directive if not already present
@@ -223,7 +223,7 @@ Zod validation, `revalidatePath`, `useTransition`, sonner toasts, shadcn/ui, ser
 
 ---
 
-### B5 — Apply formatZAR to Income Table
+### B5 - Apply formatZAR to Income Table
 
 - [ ] 29. Apply formatZAR to IncomeTable amount column
   - In `apps/admin/src/components/income/income-table.tsx`, import `formatZAR` from `'@/lib/format'`
@@ -236,7 +236,7 @@ Zod validation, `revalidatePath`, `useTransition`, sonner toasts, shadcn/ui, ser
   - If not applied, add the same import and wrap: `{formatZAR(Number(entry.amount))}`
   - _Requirements: 17.3_
 
-- [ ] 31. Final checkpoint — all blockers complete
+- [ ] 31. Final checkpoint - all blockers complete
   - Ensure all tests pass, ask the user if questions arise.
 
 ## Notes

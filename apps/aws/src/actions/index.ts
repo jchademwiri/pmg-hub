@@ -119,7 +119,7 @@ export const server = {
             },
             {
               to:      input.email,
-              subject: `We've received your enquiry — ${branding.companyName}`,
+              subject: `We've received your enquiry - ${branding.companyName}`,
               react:   React.createElement(AutoReplyEmail, {
                 ...branding,
                 name:           input.name,
@@ -265,7 +265,7 @@ export const server = {
             },
             {
               to:      input.email,
-              subject: `Booking Confirmation — ${branding.companyName}`,
+              subject: `Booking Confirmation - ${branding.companyName}`,
               react:   React.createElement(AutoReplyEmail, {
                 ...branding,
                 name:           input.name,

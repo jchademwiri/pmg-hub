@@ -62,7 +62,7 @@ function DivisionBillingForm({ division, currentSettings, saveAction }: Division
 
   return (
     <form ref={formRef} onSubmit={handleSubmit} className="flex flex-col gap-6">
-      {/* Document Numbering — read-only, driven by document_sequences */}
+      {/* Document Numbering - read-only, driven by document_sequences */}
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
         <div className="lg:col-span-1">
           <h3 className="text-sm font-semibold">Document Numbering</h3>
@@ -131,7 +131,7 @@ function DivisionBillingForm({ division, currentSettings, saveAction }: Division
               <div className="flex flex-col gap-1.5">
                 <label className="text-sm font-medium">Currency</label>
                 <div className="h-9 rounded-md border border-input bg-muted/40 px-3 flex items-center text-sm text-muted-foreground">
-                  ZAR — South African Rand
+                  ZAR - South African Rand
                 </div>
               </div>
             </div>

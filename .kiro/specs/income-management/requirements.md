@@ -22,7 +22,7 @@ success. Filtering is server-side via URL search params.
 - **Running_Total**: The aggregate sum of all income entries currently visible after filtering.
 - **Division**: A business unit (e.g. AWS, TES, PMG). Every income entry must reference one.
 - **Client**: A client record that can be associated with an income entry. The database column allows null, but the UI always presents the full client list as a select with a "No client" option.
-- **IncomeSchema**: The Zod schema that validates income form data — `date`, `divisionId`, `clientId?`, `description?`, `amount`.
+- **IncomeSchema**: The Zod schema that validates income form data - `date`, `divisionId`, `clientId?`, `description?`, `amount`.
 - **Filter**: The division select and month select controls that narrow the Income_Table rows.
 - **Filter_Bar**: The `'use client'` wrapper component that owns the filter controls and pushes updated URL search params via `useRouter().push`.
 - **DB_Queries**: The query helpers exported from `packages/db/src/queries.ts` and re-exported from `packages/db/src/index.ts`.
@@ -56,7 +56,7 @@ success. Filtering is server-side via URL search params.
 5. WHEN both a division and a month are selected, THE Income_Page SHALL apply both filters simultaneously by passing both values to the DB query.
 6. WHEN a filter is active, THE Running_Total SHALL reflect only the filtered entries.
 7. WHEN no filter is selected, THE Income_Table SHALL display all entries.
-8. THE Income_Page SHALL read filter values exclusively from `searchParams` — THE Income_Page SHALL NOT use client-side state or `useEffect` to manage filter values.
+8. THE Income_Page SHALL read filter values exclusively from `searchParams` - THE Income_Page SHALL NOT use client-side state or `useEffect` to manage filter values.
 
 ---
 
@@ -90,7 +90,7 @@ success. Filtering is server-side via URL search params.
 6. THE Edit_Form SHALL populate the client select with all clients returned by `getAllClients()`, plus a leading "No client" option.
 7. WHEN the admin submits the Edit_Form with valid data, THE Income_Action SHALL update the record, set `updatedAt` to the current timestamp, and revalidate `/income` and `/dashboard`.
 8. WHEN the admin submits the Edit_Form with an invalid or missing required field, THE Income_Action SHALL return `{ error: "<human-readable message>" }` and THE Edit_Form SHALL display the error inline without throwing an exception.
-9. IF `getIncomeById(id)` returns `null`, THEN THE Edit_Page SHALL call `notFound()` from `next/navigation` — THE Edit_Page SHALL NOT render a blank page or redirect.
+9. IF `getIncomeById(id)` returns `null`, THEN THE Edit_Page SHALL call `notFound()` from `next/navigation` - THE Edit_Page SHALL NOT render a blank page or redirect.
 
 ---
 
@@ -119,7 +119,7 @@ success. Filtering is server-side via URL search params.
 2. WHEN validation fails, THE Income_Action SHALL return `{ error: "<human-readable message>" }` without throwing an exception.
 3. WHEN a database error occurs, THE Income_Action SHALL return `{ error: "<human-readable message>" }` without throwing an exception.
 4. WHEN the operation succeeds, THE Income_Action SHALL return `{}`.
-5. THE Add_Form and Edit_Form SHALL use the return value of the Income_Action to display inline errors — THE Add_Form and Edit_Form SHALL NOT rely on thrown exceptions for user-facing error display.
+5. THE Add_Form and Edit_Form SHALL use the return value of the Income_Action to display inline errors - THE Add_Form and Edit_Form SHALL NOT rely on thrown exceptions for user-facing error display.
 
 ---
 
@@ -132,7 +132,7 @@ success. Filtering is server-side via URL search params.
 1. THE Income_Page SHALL read `divisionId` and `month` filter values exclusively from `searchParams`.
 2. THE Filter_Bar SHALL be a `'use client'` component that calls `useRouter().push` to update the URL when the admin changes a filter value.
 3. WHEN filter values are present in `searchParams`, THE Income_Page SHALL pass those values to the DB query functions to perform server-side filtering.
-4. THE Running_Total SHALL be computed from the already-filtered result set returned by the DB query — THE Income_Page SHALL NOT filter a full result set client-side.
+4. THE Running_Total SHALL be computed from the already-filtered result set returned by the DB query - THE Income_Page SHALL NOT filter a full result set client-side.
 
 ---
 
@@ -157,7 +157,7 @@ success. Filtering is server-side via URL search params.
 
 #### Acceptance Criteria
 
-1. THE Income_Action SHALL always pass `String(parsed.amount)` when writing `amount` to the database — THE Income_Action SHALL NOT pass a raw JavaScript number to a Drizzle `numeric` column.
+1. THE Income_Action SHALL always pass `String(parsed.amount)` when writing `amount` to the database - THE Income_Action SHALL NOT pass a raw JavaScript number to a Drizzle `numeric` column.
 2. THE IncomeSchema SHALL coerce `amount` to a positive number via Zod before the Income_Action converts it to a string for storage.
 
 ---

@@ -1,8 +1,8 @@
-# Billing fix plan — due date defaults & aging report
+# Billing fix plan - due date defaults & aging report
 
 **Scope:** PMG Control Center · `packages/db` + `apps/admin`  
 **Date:** 19 May 2026  
-**Priority:** High — affects all new quotes and invoices going forward
+**Priority:** High - affects all new quotes and invoices going forward
 
 ---
 
@@ -13,7 +13,7 @@
 
 ---
 
-## Fix 1 — Auto-set expiry and due dates
+## Fix 1 - Auto-set expiry and due dates
 
 ### 1.1 Shared utility
 
@@ -147,7 +147,7 @@ await db.update(quotations)
 
 Run this directly against your Neon database via the Neon console or a migration script to fix historical records.
 
-**Backfill quotations — set expiry to quoteDate + 30 where null:**
+**Backfill quotations - set expiry to quoteDate + 30 where null:**
 
 ```sql
 UPDATE quotations
@@ -155,7 +155,7 @@ SET expiry_date = quote_date + INTERVAL '30 days'
 WHERE expiry_date IS NULL;
 ```
 
-**Backfill invoices — set due date to invoiceDate + 7 where null:**
+**Backfill invoices - set due date to invoiceDate + 7 where null:**
 
 ```sql
 UPDATE invoices
@@ -167,7 +167,7 @@ Run these once. Verify row counts before committing.
 
 ---
 
-## Fix 2 — Aging report buckets
+## Fix 2 - Aging report buckets
 
 ### 2.1 Updated bucket definition
 
@@ -186,7 +186,7 @@ Run these once. Verify row counts before committing.
 
 ### 2.2 Update the aging query
 
-**File:** wherever your aging report query lives — likely `packages/db/src/queries/billing.ts` or a dedicated `apps/admin/src/app/api/billing/aging/route.ts`.
+**File:** wherever your aging report query lives - likely `packages/db/src/queries/billing.ts` or a dedicated `apps/admin/src/app/api/billing/aging/route.ts`.
 
 Replace the `CASE WHEN` bucket logic with:
 
@@ -283,13 +283,13 @@ The `getClientStatement` query in `packages/db/src/queries/billing.ts` does not 
 
 - [ ] Create `packages/db/src/lib/date-utils.ts`
 - [ ] Export `addDays` and `today` from `packages/db/src/index.ts`
-- [ ] Update quote create route — auto-set `expiryDate`
-- [ ] Update invoice create route — auto-set `dueDate`
-- [ ] Update quote → invoice convert route — add `dueDate`
+- [ ] Update quote create route - auto-set `expiryDate`
+- [ ] Update invoice create route - auto-set `dueDate`
+- [ ] Update quote → invoice convert route - add `dueDate`
 - [ ] Run backfill SQL on Neon (quotations + invoices)
-- [ ] Update aging query — replace `120+` with `1_14` bucket
+- [ ] Update aging query - replace `120+` with `1_14` bucket
 - [ ] Update `AgingBucket` type and `LABELS` map
-- [ ] Update aging report UI — 6 columns, new order
-- [ ] Update client statement aging grid — match new bucket keys
+- [ ] Update aging report UI - 6 columns, new order
+- [ ] Update client statement aging grid - match new bucket keys
 - [ ] Smoke test: create a quote → convert → confirm `expiryDate` and `dueDate` are set
 - [ ] Smoke test: age an invoice by updating `due_date` directly in Neon → confirm it lands in correct bucket

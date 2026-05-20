@@ -31,5 +31,5 @@ CREATE TABLE IF NOT EXISTS "division_billing_settings" (
 	CONSTRAINT "division_billing_settings_division_id_unique" UNIQUE("division_id")
 );
 --> statement-breakpoint
--- FK already applied in a previous partial run — skipped
+-- FK already applied in a previous partial run - skipped
 -- ALTER TABLE "division_billing_settings" ADD CONSTRAINT "division_billing_settings_division_id_divisions_id_fk" FOREIGN KEY ("division_id") REFERENCES "public"."divisions"("id") ON DELETE cascade ON UPDATE no action;

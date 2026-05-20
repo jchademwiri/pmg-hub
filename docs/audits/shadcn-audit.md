@@ -1,4 +1,4 @@
-# PMG Control Center — shadcn/ui Component Audit
+# PMG Control Center - shadcn/ui Component Audit
 **Date:** May 2026
 
 ---
@@ -47,9 +47,9 @@
 
 ## 🔴 High Priority
 
-### H-1 — `window.confirm()` → `ConfirmDialog` (7 instances)
+### H-1 - `window.confirm()` → `ConfirmDialog` (7 instances)
 
-A `ConfirmDialog` component already exists at `ui/confirm-dialog.tsx` with a `confirm()` imperative helper and `ConfirmProvider`. None of the destructive actions use it — they all use the native browser dialog which is unstyled and ignores the app's dark theme.
+A `ConfirmDialog` component already exists at `ui/confirm-dialog.tsx` with a `confirm()` imperative helper and `ConfirmProvider`. None of the destructive actions use it - they all use the native browser dialog which is unstyled and ignores the app's dark theme.
 
 | File | Action | Current |
 |---|---|---|
@@ -79,7 +79,7 @@ Ensure `ConfirmProvider` wraps the layout (check `app/(admin)/layout.tsx`).
 
 ---
 
-### H-2 — Native `<textarea>` → shadcn `Textarea` (8 instances across 5 files)
+### H-2 - Native `<textarea>` → shadcn `Textarea` (8 instances across 5 files)
 
 **Install required:** `npx shadcn@latest add textarea`
 
@@ -112,7 +112,7 @@ import { Textarea } from '@/components/ui/textarea'
 
 ---
 
-### H-3 — Custom VAT toggle → shadcn `Switch` (2 instances)
+### H-3 - Custom VAT toggle → shadcn `Switch` (2 instances)
 
 **Install required:** `npx shadcn@latest add switch`
 
@@ -141,27 +141,27 @@ import { Switch } from '@/components/ui/switch'
 
 ## 🟡 Medium Priority
 
-### M-1 — Native `<label>` → shadcn `Label` (widespread)
+### M-1 - Native `<label>` → shadcn `Label` (widespread)
 
 `Label` is already installed at `ui/label.tsx`. Across the entire app, form fields use raw `<label className="text-sm font-medium">` instead. This matters for consistent focus styling and accessibility.
 
 **Affected files (all use the same pattern):**
-- `components/clients/client-add-form.tsx` — 4 labels
-- `components/clients/client-edit-form.tsx` — 4 labels
-- `components/income/income-add-form.tsx` — 5 labels
-- `components/income/income-edit-form.tsx` — 5 labels
-- `components/expenses/expense-add-form.tsx` — 6 labels
-- `components/expenses/expense-edit-form.tsx` — 5 labels
-- `components/ledger/ledger-add-form.tsx` — 4 labels
-- `components/ledger/ledger-edit-form.tsx` — 4 labels
-- `components/divisions/division-add-form.tsx` — 1 label
-- `components/users/invite-form.tsx` — 3 labels
-- `components/leads/lead-add-form.tsx` — 1 label
-- `components/leads/lead-notes-form.tsx` — 1 label
-- `billing/quotes/new/quote-form-client.tsx` — 6 labels
-- `billing/invoices/new/invoice-form-client.tsx` — 6 labels
-- `settings/billing/billing-settings-client.tsx` — multiple labels
-- `components/accounts/account-card.tsx` — 3 labels
+- `components/clients/client-add-form.tsx` - 4 labels
+- `components/clients/client-edit-form.tsx` - 4 labels
+- `components/income/income-add-form.tsx` - 5 labels
+- `components/income/income-edit-form.tsx` - 5 labels
+- `components/expenses/expense-add-form.tsx` - 6 labels
+- `components/expenses/expense-edit-form.tsx` - 5 labels
+- `components/ledger/ledger-add-form.tsx` - 4 labels
+- `components/ledger/ledger-edit-form.tsx` - 4 labels
+- `components/divisions/division-add-form.tsx` - 1 label
+- `components/users/invite-form.tsx` - 3 labels
+- `components/leads/lead-add-form.tsx` - 1 label
+- `components/leads/lead-notes-form.tsx` - 1 label
+- `billing/quotes/new/quote-form-client.tsx` - 6 labels
+- `billing/invoices/new/invoice-form-client.tsx` - 6 labels
+- `settings/billing/billing-settings-client.tsx` - multiple labels
+- `components/accounts/account-card.tsx` - 3 labels
 
 **Fix:**
 ```tsx
@@ -175,7 +175,7 @@ import { Label } from '@/components/ui/label'
 
 ---
 
-### M-2 — Pagination links → `Button` with `asChild` (2 files)
+### M-2 - Pagination links → `Button` with `asChild` (2 files)
 
 Quotes and invoices list pages use raw `<Link>` with manual border/hover classes for pagination instead of the Button component.
 
@@ -199,7 +199,7 @@ Quotes and invoices list pages use raw `<Link>` with manual border/hover classes
 
 ---
 
-### M-3 — Custom card-like divs → shadcn `Card` (1 file)
+### M-3 - Custom card-like divs → shadcn `Card` (1 file)
 
 `clients-client.tsx` uses raw `<div className="bg-card p-4 rounded-xl border border-border shadow-sm">` for the page header and the collapsible add-form container instead of the `Card` component.
 
@@ -211,7 +211,7 @@ Quotes and invoices list pages use raw `<Link>` with manual border/hover classes
 
 ---
 
-### M-4 — Custom inline badges → shadcn `Badge` (2 files)
+### M-4 - Custom inline badges → shadcn `Badge` (2 files)
 
 `Badge` is already installed. Two places use custom `<span>` with hardcoded colour classes instead.
 
@@ -267,18 +267,18 @@ npx shadcn@latest add switch
 |---|---|---|
 | 🔴 High | 3 issues, 17 instances | 9 files |
 | 🟡 Medium | 4 issues, ~60 instances | ~18 files |
-| 🟢 None | — | — |
+| 🟢 None | - | - |
 
 ### Recommended Order
 1. Install `Textarea` + `Switch` (2 commands, 5 min)
-2. Replace VAT toggles with `Switch` — 2 files (15 min)
-3. Replace `<textarea>` with `Textarea` — 5 files (20 min)
-4. Replace `window.confirm()` with `confirm()` helper — 7 files (30 min)
-5. Replace `<label>` with `Label` — 16 files (1 hour, low risk, high volume)
-6. Replace pagination links with `Button asChild` — 2 files (10 min)
-7. Replace custom card divs — 1 file (10 min)
-8. Replace custom inline badges — 2 files (10 min)
+2. Replace VAT toggles with `Switch` - 2 files (15 min)
+3. Replace `<textarea>` with `Textarea` - 5 files (20 min)
+4. Replace `window.confirm()` with `confirm()` helper - 7 files (30 min)
+5. Replace `<label>` with `Label` - 16 files (1 hour, low risk, high volume)
+6. Replace pagination links with `Button asChild` - 2 files (10 min)
+7. Replace custom card divs - 1 file (10 min)
+8. Replace custom inline badges - 2 files (10 min)
 
 ---
 
-*Generated: May 2026 — PMG Control Center shadcn/ui Audit*
+*Generated: May 2026 - PMG Control Center shadcn/ui Audit*

@@ -7,7 +7,7 @@ export const LineItemSchema = z.object({
   description: z.string().min(1, 'Description is required'),
   quantity: z.coerce.number().positive('Quantity must be greater than 0'),
   unitPrice: z.coerce.number().min(0, 'Unit price cannot be negative'),
-  // vatRate is always 0 — VAT is document-level. Kept for DB compatibility.
+  // vatRate is always 0 - VAT is document-level. Kept for DB compatibility.
   vatRate: z.coerce.number().default(0),
 });
 
@@ -17,7 +17,7 @@ export type LineItemInput = z.infer<typeof LineItemSchema>;
 
 export const CreateQuotationSchema = z.object({
   divisionId: z.string().uuid('Division is required'),
-  // clientId is required — quotes must have a client
+  // clientId is required - quotes must have a client
   clientId: z.string().uuid('A client is required'),
   quoteDate: z.string().min(1, 'Quote date is required'),
   expiryDate: z.string().optional().nullable(),
@@ -36,7 +36,7 @@ export type CreateQuotationInput = z.infer<typeof CreateQuotationSchema>;
 
 export const CreateInvoiceSchema = z.object({
   divisionId: z.string().uuid('Division is required'),
-  // clientId is required — invoices must have a client
+  // clientId is required - invoices must have a client
   clientId: z.string().uuid('A client is required'),
   invoiceDate: z.string().min(1, 'Invoice date is required'),
   dueDate: z.string().optional().nullable(),

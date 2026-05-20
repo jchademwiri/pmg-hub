@@ -57,7 +57,7 @@ describe('DivisionsTable', () => {
 
   // ── Column headers ──────────────────────────────────────────────────────────
 
-  it('renders all 7 column headers — Validates: Requirements 1.2', () => {
+  it('renders all 7 column headers - Validates: Requirements 1.2', () => {
     render(
       <DivisionsTable
         divisions={[]}
@@ -78,7 +78,7 @@ describe('DivisionsTable', () => {
 
   // ── formatZAR applied to currency columns ───────────────────────────────────
 
-  it('applies formatZAR (ZAR currency format with R prefix) to Total Income, Total Expenses, and Net Profit columns — Validates: Requirements 1.3', () => {
+  it('applies formatZAR (ZAR currency format with R prefix) to Total Income, Total Expenses, and Net Profit columns - Validates: Requirements 1.3', () => {
     const divisions: DivisionRow[] = [
       {
         id: 'div-1',
@@ -114,7 +114,7 @@ describe('DivisionsTable', () => {
 
   // ── Net Profit color classes ────────────────────────────────────────────────
 
-  it('applies text-green-600 to Net Profit cell when netProfit > 0 — Validates: Requirements 1.3', () => {
+  it('applies text-green-600 to Net Profit cell when netProfit > 0 - Validates: Requirements 1.3', () => {
     const divisions: DivisionRow[] = [
       {
         id: 'div-pos',
@@ -142,7 +142,7 @@ describe('DivisionsTable', () => {
     expect(netProfitCell.className).toContain('text-green-600')
   })
 
-  it('applies text-red-600 to Net Profit cell when netProfit < 0 — Validates: Requirements 1.3', () => {
+  it('applies text-red-600 to Net Profit cell when netProfit < 0 - Validates: Requirements 1.3', () => {
     const divisions: DivisionRow[] = [
       {
         id: 'div-neg',
@@ -169,7 +169,7 @@ describe('DivisionsTable', () => {
     expect(netProfitCell.className).toContain('text-red-600')
   })
 
-  it('applies text-red-600 to Net Profit cell when netProfit === 0 — Validates: Requirements 1.3', () => {
+  it('applies text-red-600 to Net Profit cell when netProfit === 0 - Validates: Requirements 1.3', () => {
     const divisions: DivisionRow[] = [
       {
         id: 'div-zero',
@@ -198,7 +198,7 @@ describe('DivisionsTable', () => {
 
   // ── Inline rename state ─────────────────────────────────────────────────────
 
-  it('clicking Edit shows a text input pre-populated with the current division name — Validates: Requirements 3.1', async () => {
+  it('clicking Edit shows a text input pre-populated with the current division name - Validates: Requirements 3.1', async () => {
     const user = userEvent.setup()
     const divisions: DivisionRow[] = [
       {
@@ -231,7 +231,7 @@ describe('DivisionsTable', () => {
     expect((input as HTMLInputElement).value).toBe('Alpha Division')
   })
 
-  it('clicking Cancel reverts the row to display state without saving — Validates: Requirements 3.2', async () => {
+  it('clicking Cancel reverts the row to display state without saving - Validates: Requirements 3.2', async () => {
     const user = userEvent.setup()
     const divisions: DivisionRow[] = [
       {
@@ -265,7 +265,7 @@ describe('DivisionsTable', () => {
     expect(updateAction).not.toHaveBeenCalled()
   })
 
-  it('pressing Escape reverts the row to display state without saving — Validates: Requirements 3.6', async () => {
+  it('pressing Escape reverts the row to display state without saving - Validates: Requirements 3.6', async () => {
     const user = userEvent.setup()
     const divisions: DivisionRow[] = [
       {
@@ -302,7 +302,7 @@ describe('DivisionsTable', () => {
 
   // ── Inline delete state ─────────────────────────────────────────────────────
 
-  it('clicking Delete shows an inline confirmation prompt within the row (not a modal) — Validates: Requirements 4.1', async () => {
+  it('clicking Delete shows an inline confirmation prompt within the row (not a modal) - Validates: Requirements 4.1', async () => {
     const user = userEvent.setup()
     const divisions: DivisionRow[] = [
       {
@@ -339,7 +339,7 @@ describe('DivisionsTable', () => {
     expect(screen.getByRole('button', { name: /^cancel$/i })).toBeDefined()
   })
 
-  it('clicking Cancel on the delete confirmation reverts the row to display state — Validates: Requirements 4.2, 4.6', async () => {
+  it('clicking Cancel on the delete confirmation reverts the row to display state - Validates: Requirements 4.2, 4.6', async () => {
     const user = userEvent.setup()
     const divisions: DivisionRow[] = [
       {
@@ -381,7 +381,7 @@ describe('DivisionsTable', () => {
 describe('DivisionAddForm', () => {
   // ── Resets form on successful submission ────────────────────────────────────
 
-  it('resets the form input after a successful submission — Validates: Requirements 2.5', async () => {
+  it('resets the form input after a successful submission - Validates: Requirements 2.5', async () => {
     const user = userEvent.setup()
     const createAction = vi.fn().mockResolvedValue({})
 
@@ -399,7 +399,7 @@ describe('DivisionAddForm', () => {
 
   // ── Displays inline error on failed submission ───────────────────────────────
 
-  it('displays inline error message when action returns { error } — Validates: Requirements 2.4', async () => {
+  it('displays inline error message when action returns { error } - Validates: Requirements 2.4', async () => {
     const user = userEvent.setup()
     const createAction = vi.fn().mockResolvedValue({ error: 'Division name is required.' })
 
@@ -422,7 +422,7 @@ describe('DivisionAddForm', () => {
 // ── Empty-state message ─────────────────────────────────────────────────────
 
 describe('Divisions page empty state', () => {
-  it('renders empty-state message when divisions.length === 0 — Validates: Requirements 1.4', () => {
+  it('renders empty-state message when divisions.length === 0 - Validates: Requirements 1.4', () => {
     // The empty-state message is rendered by the page when divisions.length === 0.
     // We test the logic directly: the condition that drives the branch.
     const divisions: DivisionRow[] = []
@@ -437,12 +437,12 @@ describe('Divisions page empty state', () => {
 
 // ── deleteDivision FK constraint violation ──────────────────────────────────
 
-describe('deleteDivision — FK constraint violation returns { error }', () => {
+describe('deleteDivision - FK constraint violation returns { error }', () => {
   beforeEach(() => {
     vi.resetAllMocks()
   })
 
-  it('returns { error: "Cannot delete division with existing income or expense records." } on FK constraint violation — Validates: Requirements 4.4', async () => {
+  it('returns { error: "Cannot delete division with existing income or expense records." } on FK constraint violation - Validates: Requirements 4.4', async () => {
     const { db } = await import('@pmg/db')
     const { deleteDivision } = await import('@/app/actions/divisions')
 
@@ -463,12 +463,12 @@ describe('deleteDivision — FK constraint violation returns { error }', () => {
 
 // ── createDivision validation failure ──────────────────────────────────────
 
-describe('createDivision — validation failure returns { error }', () => {
+describe('createDivision - validation failure returns { error }', () => {
   beforeEach(() => {
     vi.resetAllMocks()
   })
 
-  it('returns { error: <non-empty string> } when name is empty — Validates: Requirements 2.4', async () => {
+  it('returns { error: <non-empty string> } when name is empty - Validates: Requirements 2.4', async () => {
     const { createDivision } = await import('@/app/actions/divisions')
 
     const formData = new FormData()
@@ -484,12 +484,12 @@ describe('createDivision — validation failure returns { error }', () => {
 
 // ── updateDivision validation failure ──────────────────────────────────────
 
-describe('updateDivision — validation failure returns { error }', () => {
+describe('updateDivision - validation failure returns { error }', () => {
   beforeEach(() => {
     vi.resetAllMocks()
   })
 
-  it('returns { error: <non-empty string> } when name is empty — Validates: Requirements 3.4', async () => {
+  it('returns { error: <non-empty string> } when name is empty - Validates: Requirements 3.4', async () => {
     const { updateDivision } = await import('@/app/actions/divisions')
 
     const formData = new FormData()

@@ -2,7 +2,7 @@
 
 ## Introduction
 
-Leads Management is Phase 5 of the PMG Control Center admin app. It provides a read-and-update interface for incoming business leads. Leads are created exclusively by the public Astro apps — no manual lead creation exists in the admin. The admin can view all leads, filter by status/division/source, update a lead's status, and add internal notes. The feature follows the established PMG admin pattern: DB query helpers → Server Actions → Client Components → Server Component pages. The `/leads` route hosts a tabbed list view; `/leads/[id]` hosts the lead detail with status update and notes.
+Leads Management is Phase 5 of the PMG Control Center admin app. It provides a read-and-update interface for incoming business leads. Leads are created exclusively by the public Astro apps - no manual lead creation exists in the admin. The admin can view all leads, filter by status/division/source, update a lead's status, and add internal notes. The feature follows the established PMG admin pattern: DB query helpers → Server Actions → Client Components → Server Component pages. The `/leads` route hosts a tabbed list view; `/leads/[id]` hosts the lead detail with status update and notes.
 
 ## Glossary
 

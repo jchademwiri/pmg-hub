@@ -22,20 +22,20 @@ Lists all topics. No pagination flags.
 
 ## topics get
 
-**Argument:** `<id>` — Topic UUID
+**Argument:** `<id>` - Topic UUID
 
 ---
 
 ## topics update
 
-**Argument:** `<id>` — Topic UUID
+**Argument:** `<id>` - Topic UUID
 
 | Flag | Type | Description |
 |------|------|-------------|
 | `--name <name>` | string | New name |
 | `--description <desc>` | string | New description |
 
-At least one of `--name` or `--description` is required — otherwise the CLI errors with `no_changes`.
+At least one of `--name` or `--description` is required - otherwise the CLI errors with `no_changes`.
 
 `default_subscription` cannot be changed after creation.
 
@@ -43,7 +43,7 @@ At least one of `--name` or `--description` is required — otherwise the CLI er
 
 ## topics delete
 
-**Argument:** `<id>` — Topic UUID
+**Argument:** `<id>` - Topic UUID
 
 | Flag | Type | Required | Description |
 |------|------|----------|-------------|

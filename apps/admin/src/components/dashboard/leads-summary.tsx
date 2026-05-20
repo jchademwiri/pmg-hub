@@ -67,7 +67,7 @@ export function LeadsSummary({ leads }: LeadsSummaryProps) {
                   </>
                 ) : (
                   <>
-                    <p className="text-muted-foreground text-xl font-bold">—</p>
+                    <p className="text-muted-foreground text-xl font-bold">-</p>
                     <p className="text-muted-foreground text-xs mt-0.5">Win rate</p>
                   </>
                 )}

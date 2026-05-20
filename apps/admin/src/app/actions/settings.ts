@@ -40,7 +40,7 @@ export async function updateOrganisationSettings(
 
     const db = getDb();
 
-    // Upsert — there is always exactly one row. Use a fixed sentinel approach:
+    // Upsert - there is always exactly one row. Use a fixed sentinel approach:
     // try to update first; if no rows updated, insert.
     const existing = await db.select({ id: organisationSettings.id }).from(organisationSettings).limit(1);
 

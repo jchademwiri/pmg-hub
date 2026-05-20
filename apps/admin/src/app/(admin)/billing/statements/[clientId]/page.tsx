@@ -63,7 +63,7 @@ export default async function StatementDetailPage({ params, searchParams }: Prop
       })),
     ...incomeResult.data.map((inc) => ({
       date: inc.date,
-      reference: incomeToInvoiceNumber.get(inc.id) ?? '—',
+      reference: incomeToInvoiceNumber.get(inc.id) ?? '-',
       description: 'Payment received',
       credit: Number(inc.amount),
     })),
@@ -159,7 +159,7 @@ export default async function StatementDetailPage({ params, searchParams }: Prop
               {client.businessName ?? client.name}
             </h2>
             <p className="text-sm text-muted-foreground">
-              Account statement — {periodLabel}
+              Account statement - {periodLabel}
             </p>
           </div>
         </div>
@@ -201,7 +201,7 @@ export default async function StatementDetailPage({ params, searchParams }: Prop
 
       {/* Two-column layout */}
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-3 lg:items-start">
-        {/* Document preview — scrollable on small screens */}
+        {/* Document preview - scrollable on small screens */}
         <div className="lg:col-span-2 overflow-x-auto">
           <DocumentPreview
             type="statement"
@@ -219,8 +219,8 @@ export default async function StatementDetailPage({ params, searchParams }: Prop
               <div className="flex flex-col gap-2">
                 {[
                   { label: 'Name', value: client.businessName ?? client.name },
-                  { label: 'Email', value: client.email ?? '—' },
-                  { label: 'Phone', value: client.phone ?? '—' },
+                  { label: 'Email', value: client.email ?? '-' },
+                  { label: 'Phone', value: client.phone ?? '-' },
                 ].map((f) => (
                   <div key={f.label} className="flex flex-col gap-0.5">
                     <span className="text-xs text-muted-foreground">{f.label}</span>
@@ -279,7 +279,7 @@ export default async function StatementDetailPage({ params, searchParams }: Prop
             <CardHeader>
               <CardTitle>Income Records</CardTitle>
               <p className="text-sm text-muted-foreground">
-                Payments posted to the income ledger for this client —{' '}
+                Payments posted to the income ledger for this client -{' '}
                 <span className="font-medium text-green-600 dark:text-green-400">
                   {formatZAR(incomeResult.sum)} total
                 </span>
@@ -300,7 +300,7 @@ export default async function StatementDetailPage({ params, searchParams }: Prop
                     <tr key={inc.id} className="border-b last:border-0">
                       <td className="px-6 py-3 tabular-nums text-muted-foreground">{fmtDate(inc.date)}</td>
                       <td className="px-6 py-3">{inc.divisionName}</td>
-                      <td className="px-6 py-3 text-muted-foreground">{inc.description ?? '—'}</td>
+                      <td className="px-6 py-3 text-muted-foreground">{inc.description ?? '-'}</td>
                       <td className="px-6 py-3 text-right tabular-nums font-medium text-green-600 dark:text-green-400">
                         +{formatZAR(Number(inc.amount))}
                       </td>

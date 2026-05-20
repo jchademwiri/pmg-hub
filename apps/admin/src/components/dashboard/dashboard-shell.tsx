@@ -103,7 +103,7 @@ export function DashboardShell({
   return (
     <div className="space-y-5">
 
-      {/* ── Close Month button — only shown days 1–5 and only if not yet closed ── */}
+      {/* ── Close Month button - only shown days 1–5 and only if not yet closed ── */}
       {!hasSnapshot && showCloseMonthButton && (
         <CloseMonthButton period={currentPeriod} />
       )}

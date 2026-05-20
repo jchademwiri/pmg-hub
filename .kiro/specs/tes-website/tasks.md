@@ -2,7 +2,7 @@
 
 ## Overview
 
-Build the TenderEdge Solutions single-page marketing site in `apps/tes` — Astro 6 hybrid
+Build the TenderEdge Solutions single-page marketing site in `apps/tes` - Astro 6 hybrid
 rendering, Tailwind v4, Astro Actions lead capture, and ten section components assembled in
 `pages/index.astro`. Tasks follow the build order from the design (Steps 0–12) and include
 property-based tests for the six correctness properties defined in the design document.
@@ -24,7 +24,7 @@ property-based tests for the six correctness properties defined in the design do
       `companyName` (string optional), `serviceInterest` (min 1)
     - Handler: `db.insert(leads)` with `source: 'tes'`, `status: 'new'`; store `companyName`
       in the `message` field as `"Company: <value>"` (the `leads` table has no `companyName`
-      column — confirmed in `packages/db/src/schema/leads.ts`); wrap `sendEmail` in try/catch;
+      column - confirmed in `packages/db/src/schema/leads.ts`); wrap `sendEmail` in try/catch;
       return `{ success: true }`
     - Read `TES_RESEND_API_KEY`, `TES_FROM_EMAIL`, `TES_ADMIN_EMAIL` from `import.meta.env`
   - _Requirements: 1.1, 1.2, 1.3, 1.4, 1.6, 2.1, 2.3, 2.4, 2.5, 13.1, 13.2, 13.3, 13.4,
@@ -51,11 +51,11 @@ property-based tests for the six correctness properties defined in the design do
   - Create `apps/tes/src/components/Nav.astro`
   - Fixed top, full-width, `z-50`, transparent on load; add inline `<script>` that toggles
     `bg-background/90` and `backdrop-blur-md` when `window.scrollY > 40`
-  - Left: TES wordmark — "TenderEdge" in `text-foreground`, "Solutions" in `text-primary`,
+  - Left: TES wordmark - "TenderEdge" in `text-foreground`, "Solutions" in `text-primary`,
     `font-condensed font-bold`
   - Centre (desktop only, `hidden md:flex`): anchor links to `#services`, `#process`,
     `#pricing`, `#results`, `#contact` in `text-muted-foreground hover:text-foreground`
-  - Right: WhatsApp CTA button — `bg-whatsapp hover:bg-whatsapp-hover`, WhatsApp SVG icon,
+  - Right: WhatsApp CTA button - `bg-whatsapp hover:bg-whatsapp-hover`, WhatsApp SVG icon,
     "WhatsApp Us", `target="_blank" rel="noopener noreferrer"`, correct pre-filled URL
   - Mobile: hamburger toggle (minimal JS or `<details>`) revealing slide-down menu with same
     anchor links
@@ -184,7 +184,7 @@ property-based tests for the six correctness properties defined in the design do
     (default `tenders@tenderedgesolutions.co.za`), `TES_SITE_URL`
   - _Requirements: 1.5, 1.6, 14.1, 14.2, 14.3, 14.4, 18.1, 18.2, 18.3_
 
-- [x] 14. Checkpoint — Ensure all tests pass
+- [x] 14. Checkpoint - Ensure all tests pass
   - Ensure all tests pass, ask the user if questions arise.
 
 - [x] 15. Property-based tests for the enquireLead action
@@ -192,7 +192,7 @@ property-based tests for the six correctness properties defined in the design do
   - Create `apps/tes/src/actions/__tests__/enquireLead.test.ts`
   - Mock `@pmg/db` (`db.insert`) and `@pmg/emails` (`sendEmail`) for all tests
 
-  - [x] 15.1 Write property test — valid form submission persists a lead
+  - [x] 15.1 Write property test - valid form submission persists a lead
     - **Property 1: Valid form submission persists a lead**
     - Generate arbitrary valid payloads: non-empty name, phone ≥ 7 chars, optional valid
       email or empty string, any non-empty serviceInterest string
@@ -201,20 +201,20 @@ property-based tests for the six correctness properties defined in the design do
     - Assert handler returns `{ success: true }`
     - **Validates: Requirements 13.3, 13.6**
 
-  - [x] 15.2 Write property test — email failure does not prevent lead persistence
+  - [x] 15.2 Write property test - email failure does not prevent lead persistence
     - **Property 2: Email failure does not prevent lead persistence**
     - Generate arbitrary valid payloads; mock `sendEmail` to throw
     - Assert `db.insert` was still called and handler returns `{ success: true }`
     - **Validates: Requirements 13.5**
 
-  - [x] 15.3 Write property test — invalid inputs are rejected before database write
+  - [x] 15.3 Write property test - invalid inputs are rejected before database write
     - **Property 3: Invalid inputs are rejected before database write**
     - Generate payloads with at least one invalid field (empty name, phone < 7 chars, or
       empty serviceInterest)
     - Assert action returns a validation error and `db.insert` was never called
     - **Validates: Requirements 13.2, 12.10**
 
-  - [x] 15.4 Write property test — WhatsApp URL consistency
+  - [x] 15.4 Write property test - WhatsApp URL consistency
     - **Property 4: WhatsApp URL consistency**
     - Parse the rendered HTML of each component that contains a WhatsApp CTA
       (Nav, Hero, HowItWorks, PricingSection, Footer, LeadForm success state)
@@ -223,17 +223,17 @@ property-based tests for the six correctness properties defined in the design do
     - Use `fast-check` to enumerate component names and verify each
     - **Validates: Requirements 16.1, 16.2, 16.3**
 
-- [x] 16. Final checkpoint — Ensure all tests pass
+- [x] 16. Final checkpoint - Ensure all tests pass
   - Ensure all tests pass, ask the user if questions arise.
 
 ## Notes
 
 - Tasks marked with `*` are optional and can be skipped for a faster MVP
-- The `leads` table has no `companyName` column — company name is stored in the `message`
+- The `leads` table has no `companyName` column - company name is stored in the `message`
   field as `"Company: <value>"` (see `packages/db/src/schema/leads.ts`)
-- The `leads` table has unique indexes on `email` and `phone` (where not null) — the action
+- The `leads` table has unique indexes on `email` and `phone` (where not null) - the action
   should use `onConflictDoNothing()` or catch the constraint error gracefully
-- All WhatsApp CTAs must use `bg-whatsapp` (`#25D366`) — never the gold palette
+- All WhatsApp CTAs must use `bg-whatsapp` (`#25D366`) - never the gold palette
 - The canonical WhatsApp URL is:
   `https://wa.me/27745017094?text=Hi%2C+I'm+interested+in+your+tender+compliance+services.`
 - `index.astro` must have `export const prerender = false` for `getActionResult` to work

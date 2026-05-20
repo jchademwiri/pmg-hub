@@ -60,7 +60,7 @@ export interface DocumentPreviewProps {
   vatRate?: number
   /** Pre-computed discount amount (positive number). If provided, shown as a deduction in the totals block. */
   discountAmount?: number
-  /** Optional link shown on the sticky header — useful during development */
+  /** Optional link shown on the sticky header - useful during development */
   href?: string
   /** Statement ageing buckets */
   ageing?: {
@@ -132,7 +132,7 @@ export function DocumentPreview({
   ageing,
   balanceDue,
 }: DocumentPreviewProps) {
-  // Totals — discount is applied after subtotal, before VAT
+  // Totals - discount is applied after subtotal, before VAT
   const subtotal = lineItems.reduce((sum, i) => sum + i.qty * i.unitPrice, 0)
   const vatBase = subtotal - discountAmount
   const vat = lineItems.reduce(
@@ -155,7 +155,7 @@ export function DocumentPreview({
 
         {/* Left: Logo + Company info */}
         <div className="flex items-start gap-4">
-          {/* Logo placeholder — shows initials if no logo */}
+          {/* Logo placeholder - shows initials if no logo */}
           <div className="flex size-14 shrink-0 items-center justify-center rounded-lg bg-zinc-100 text-zinc-400 text-xs font-bold overflow-hidden">
             {org.logoUrl
               ? <img src={org.logoUrl} alt={org.name} className="w-full h-full object-contain" />
@@ -227,7 +227,7 @@ export function DocumentPreview({
           {client.phone && <span className="text-xs text-zinc-500">{client.phone}</span>}
         </div>
 
-        {/* Dates — inline, far right */}
+        {/* Dates - inline, far right */}
         {type === 'statement' ? (
           <div className="flex gap-8 shrink-0">
             <div className="flex flex-col items-end gap-0.5">
@@ -356,10 +356,10 @@ export function DocumentPreview({
                       {tx.description}
                     </td>
                     <td className="py-2.5 px-4 text-right tabular-nums text-xs text-zinc-600">
-                      {tx.debit != null ? fmt(tx.debit) : '—'}
+                      {tx.debit != null ? fmt(tx.debit) : '-'}
                     </td>
                     <td className="py-2.5 px-4 text-right tabular-nums text-xs font-medium text-emerald-600">
-                      {tx.credit != null ? fmt(tx.credit) : '—'}
+                      {tx.credit != null ? fmt(tx.credit) : '-'}
                     </td>
                   </tr>
                 ))}
@@ -399,7 +399,7 @@ export function DocumentPreview({
       )}
 
 
-      {/* ── Banking details — after line items ──────────────────────────────── */}
+      {/* ── Banking details - after line items ──────────────────────────────── */}
       {banking && (
         <div className="mx-4 sm:mx-10 border-t border-zinc-100 pt-5 pb-4">
           <p className="text-[10px] font-semibold uppercase tracking-widest text-zinc-400 print:text-zinc-600 mb-3">
@@ -421,10 +421,10 @@ export function DocumentPreview({
         </div>
       )}
 
-      {/* ── Spacer — pushes notes + footer to the bottom of the page ────────── */}
+      {/* ── Spacer - pushes notes + footer to the bottom of the page ────────── */}
       <div className="flex-1" />
 
-      {/* ── Statement Ageing — pinned to bottom ─────────────────────────────── */}
+      {/* ── Statement Ageing - pinned to bottom ─────────────────────────────── */}
       {type === 'statement' && ageing && (
         <div className="mx-4 sm:mx-10 border-t border-zinc-100 pt-5 pb-4">
           <p className="text-[10px] font-semibold uppercase tracking-widest text-zinc-400 print:text-zinc-600 mb-3">
@@ -455,7 +455,7 @@ export function DocumentPreview({
         </div>
       )}
 
-      {/* ── Notes / Terms — fixed just above footer ─────────────────────────── */}
+      {/* ── Notes / Terms - fixed just above footer ─────────────────────────── */}
       {(notes || terms) && (
         <div className="mx-4 sm:mx-10 border-t border-zinc-100 pt-4 pb-4 flex flex-col gap-3">
           {notes && (
@@ -473,7 +473,7 @@ export function DocumentPreview({
         </div>
       )}
 
-      {/* ── Footer — pinned to bottom ───────────────────────────────────── */}
+      {/* ── Footer - pinned to bottom ───────────────────────────────────── */}
       <div className="mx-4 sm:mx-10 border-t border-zinc-100 py-4 flex items-center justify-between">
         <span className="text-[10px] text-zinc-400">
           {org.divisionOf ? `A division of ${org.divisionOf}` : ''}

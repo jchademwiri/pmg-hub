@@ -1,11 +1,11 @@
 # Apex Web Solutions
-### Brand Profile — Division 02 of Playhouse Media Group
+### Brand Profile - Division 02 of Playhouse Media Group
 
 ---
 
 ## Who We Are
 
-Apex Web Solutions is the web design and development division of Playhouse Media Group. We build professional, modern websites for South African small and medium businesses — fast, functional, and built to grow with the client.
+Apex Web Solutions is the web design and development division of Playhouse Media Group. We build professional, modern websites for South African small and medium businesses - fast, functional, and built to grow with the client.
 
 In 2025, Jacob served 3–5 web clients informally, covering website design, development, and hosting. That existing base is the starting point for building a proper retainer-based web business in 2026.
 
@@ -17,13 +17,13 @@ In 2025, Jacob served 3–5 web clients informally, covering website design, dev
 |---|---|
 | Brand Name | Apex Web Solutions |
 | Parent Company | Playhouse Media Group (PTY) Ltd |
-| Division | 02 — Web Design & Development |
-| Status | **Active — 3–5 clients served in 2025** |
+| Division | 02 - Web Design & Development |
+| Status | **Active - 3–5 clients served in 2025** |
 | Domain | apexwebsolutions.co.za *(live)* |
 | Email | info@apexwebsolutions.co.za |
 | Social Media | @apexwebsolutionssa |
 | Revenue Model | Once-off project fees + monthly maintenance retainers |
-| Tech Stack | Next.js, TypeScript, React, shadcn/ui — deployed on Vercel |
+| Tech Stack | Next.js, TypeScript, React, shadcn/ui - deployed on Vercel |
 | Strategic Focus | 30% of PMG's total effort |
 
 ---
@@ -130,10 +130,10 @@ Our clients range from new entrepreneurs needing their first website to contract
 
 ## Positioning Statement
 
-> Apex Web Solutions is Gauteng's go-to web partner for small and medium businesses who want a professional, modern website without the big-agency price tag. We build websites that work — fast, beautiful, and built for growth.
+> Apex Web Solutions is Gauteng's go-to web partner for small and medium businesses who want a professional, modern website without the big-agency price tag. We build websites that work - fast, beautiful, and built for growth.
 
 ---
 
 *Last updated: March 2026 | Version 2.0*
-*Apex Web Solutions — a Playhouse Media Group division*
+*Apex Web Solutions - a Playhouse Media Group division*
 *apexwebsolutions.co.za | info@apexwebsolutions.co.za*

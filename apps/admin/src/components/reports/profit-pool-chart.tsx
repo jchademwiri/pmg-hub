@@ -32,7 +32,7 @@ export function ProfitPoolChart({ data }: Props) {
     <Card className="rounded-xl border border-border bg-card shadow-none">
       <CardHeader>
         <CardTitle>Profit Pool Split</CardTitle>
-        <CardDescription>Monthly breakdown — salary, reinvest, reserve, flex</CardDescription>
+        <CardDescription>Monthly breakdown - salary, reinvest, reserve, flex</CardDescription>
       </CardHeader>
       <CardContent>
         {data.length === 0 ? (

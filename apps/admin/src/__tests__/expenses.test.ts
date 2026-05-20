@@ -35,12 +35,12 @@ const expenseArb = fc.record({
 // ─── P1: getAllExpenses shape and sort order ─────────────────────────────────
 // Feature: expense-management, Property 1: getAllExpenses shape + sort order
 
-describe('getAllExpenses — Property 1: shape and sort order', () => {
+describe('getAllExpenses - Property 1: shape and sort order', () => {
   beforeEach(() => {
     vi.resetAllMocks()
   })
 
-  it('Property 1: getAllExpenses returns all entries with correct shape, sorted date DESC — Validates: Requirements 1.1, 1.2, 11.1, 11.7', async () => {
+  it('Property 1: getAllExpenses returns all entries with correct shape, sorted date DESC - Validates: Requirements 1.1, 1.2, 11.1, 11.7', async () => {
     // Feature: expense-management, Property 1: getAllExpenses shape + sort order
     await fc.assert(
       fc.asyncProperty(
@@ -106,12 +106,12 @@ import type { ExpenseRow } from '@pmg/db'
 // ─── P2: Division filter excludes other divisions ────────────────────────────
 // Feature: expense-management, Property 2: Division filter
 
-describe('getAllExpenses — Property 2: Division filter excludes entries from other divisions', () => {
+describe('getAllExpenses - Property 2: Division filter excludes entries from other divisions', () => {
   beforeEach(() => {
     vi.resetAllMocks()
   })
 
-  it('Property 2: getAllExpenses({ divisionId }) never returns an entry with a different divisionId — Validates: Requirements 2.2, 11.1', async () => {
+  it('Property 2: getAllExpenses({ divisionId }) never returns an entry with a different divisionId - Validates: Requirements 2.2, 11.1', async () => {
     // Feature: expense-management, Property 2: Division filter excludes other divisions
     await fc.assert(
       fc.asyncProperty(
@@ -141,12 +141,12 @@ describe('getAllExpenses — Property 2: Division filter excludes entries from o
 // ─── P3: Category filter excludes other categories ───────────────────────────
 // Feature: expense-management, Property 3: Category filter
 
-describe('getAllExpenses — Property 3: Category filter excludes entries from other categories', () => {
+describe('getAllExpenses - Property 3: Category filter excludes entries from other categories', () => {
   beforeEach(() => {
     vi.resetAllMocks()
   })
 
-  it('Property 3: getAllExpenses({ category }) never returns an entry with a different category — Validates: Requirements 2.3, 11.1', async () => {
+  it('Property 3: getAllExpenses({ category }) never returns an entry with a different category - Validates: Requirements 2.3, 11.1', async () => {
     // Feature: expense-management, Property 3: Category filter excludes other categories
     await fc.assert(
       fc.asyncProperty(
@@ -176,12 +176,12 @@ describe('getAllExpenses — Property 3: Category filter excludes entries from o
 // ─── P4: Month filter excludes entries outside the calendar month ─────────────
 // Feature: expense-management, Property 4: Month filter
 
-describe('getAllExpenses — Property 4: Month filter excludes entries outside the calendar month', () => {
+describe('getAllExpenses - Property 4: Month filter excludes entries outside the calendar month', () => {
   beforeEach(() => {
     vi.resetAllMocks()
   })
 
-  it('Property 4: getAllExpenses({ month }) never returns an entry whose date falls outside that calendar month — Validates: Requirements 2.4, 11.6', async () => {
+  it('Property 4: getAllExpenses({ month }) never returns an entry whose date falls outside that calendar month - Validates: Requirements 2.4, 11.6', async () => {
     // Feature: expense-management, Property 4: Month filter excludes entries outside the calendar month
     await fc.assert(
       fc.asyncProperty(
@@ -213,8 +213,8 @@ describe('getAllExpenses — Property 4: Month filter excludes entries outside t
 // ─── P5: Running total equals sum of amounts ─────────────────────────────────
 // Feature: expense-management, Property 5: Running total
 
-describe('Running total computation — Property 5: Running total equals sum of amounts', () => {
-  it('Property 5: running total equals sum of amounts — Validates: Requirements 3.1, 3.4', () => {
+describe('Running total computation - Property 5: Running total equals sum of amounts', () => {
+  it('Property 5: running total equals sum of amounts - Validates: Requirements 3.1, 3.4', () => {
     // Feature: expense-management, Property 5: Running total equals sum of amounts
     fc.assert(
       fc.property(
@@ -234,8 +234,8 @@ describe('Running total computation — Property 5: Running total equals sum of 
 // ─── P6: Category breakdown sums equal running total ─────────────────────────
 // Feature: expense-management, Property 6: Category breakdown
 
-describe('Category breakdown — Property 6: Category breakdown sums equal running total', () => {
-  it('Property 6: sum of all per-category totals equals the running total — Validates: Requirements 3.2, 3.5', () => {
+describe('Category breakdown - Property 6: Category breakdown sums equal running total', () => {
+  it('Property 6: sum of all per-category totals equals the running total - Validates: Requirements 3.2, 3.5', () => {
     // Feature: expense-management, Property 6: Category breakdown sums equal running total
     fc.assert(
       fc.property(
@@ -259,12 +259,12 @@ describe('Category breakdown — Property 6: Category breakdown sums equal runni
 // ─── P7: createExpense round-trip ─────────────────────────────────────────────
 // Feature: expense-management, Property 7: createExpense round-trip
 
-describe('createExpense — Property 7: round-trip — valid input succeeds and entry is retrievable', () => {
+describe('createExpense - Property 7: round-trip - valid input succeeds and entry is retrievable', () => {
   beforeEach(() => {
     vi.resetAllMocks()
   })
 
-  it('Property 7: createExpense returns {} (no error) and entry appears in getAllExpenses — Validates: Requirements 5.3, 5.4', async () => {
+  it('Property 7: createExpense returns {} (no error) and entry appears in getAllExpenses - Validates: Requirements 5.3, 5.4', async () => {
     // Feature: expense-management, Property 7: createExpense round-trip
     await fc.assert(
       fc.asyncProperty(
@@ -332,12 +332,12 @@ describe('createExpense — Property 7: round-trip — valid input succeeds and 
 // ─── P8: updateExpense round-trip ─────────────────────────────────────────────
 // Feature: expense-management, Property 8: updateExpense round-trip
 
-describe('updateExpense — Property 8: round-trip — valid input succeeds and changes are reflected', () => {
+describe('updateExpense - Property 8: round-trip - valid input succeeds and changes are reflected', () => {
   beforeEach(() => {
     vi.resetAllMocks()
   })
 
-  it('Property 8: updateExpense returns {} (no error) and getAllExpenses reflects updated values — Validates: Requirements 7.3, 7.4', async () => {
+  it('Property 8: updateExpense returns {} (no error) and getAllExpenses reflects updated values - Validates: Requirements 7.3, 7.4', async () => {
     // Feature: expense-management, Property 8: updateExpense round-trip
     await fc.assert(
       fc.asyncProperty(
@@ -405,12 +405,12 @@ describe('updateExpense — Property 8: round-trip — valid input succeeds and 
 // ─── P9: deleteExpense round-trip ─────────────────────────────────────────────
 // Feature: expense-management, Property 9: deleteExpense round-trip
 
-describe('deleteExpense — Property 9: round-trip — deleted entry is no longer retrievable', () => {
+describe('deleteExpense - Property 9: round-trip - deleted entry is no longer retrievable', () => {
   beforeEach(() => {
     vi.resetAllMocks()
   })
 
-  it('Property 9: deleteExpense returns {} (no error) and getExpenseById returns null afterwards — Validates: Requirements 9.1, 9.2', async () => {
+  it('Property 9: deleteExpense returns {} (no error) and getExpenseById returns null afterwards - Validates: Requirements 9.1, 9.2', async () => {
     // Feature: expense-management, Property 9: deleteExpense round-trip
     await fc.assert(
       fc.asyncProperty(
@@ -442,12 +442,12 @@ describe('deleteExpense — Property 9: round-trip — deleted entry is no longe
 // ─── P10: getExpenseById returns correct entry or null ───────────────────────
 // Feature: expense-management, Property 10: getExpenseById
 
-describe('getExpenseById — Property 10: returns the correct entry or null', () => {
+describe('getExpenseById - Property 10: returns the correct entry or null', () => {
   beforeEach(() => {
     vi.resetAllMocks()
   })
 
-  it('Property 10a: getExpenseById(entry.id) returns that entry with correct field values — Validates: Requirements 11.2, 6.1, 6.2', async () => {
+  it('Property 10a: getExpenseById(entry.id) returns that entry with correct field values - Validates: Requirements 11.2, 6.1, 6.2', async () => {
     // Feature: expense-management, Property 10: getExpenseById returns correct entry or null
     await fc.assert(
       fc.asyncProperty(
@@ -473,7 +473,7 @@ describe('getExpenseById — Property 10: returns the correct entry or null', ()
     )
   })
 
-  it('Property 10b: getExpenseById(nonExistentId) returns null — Validates: Requirements 11.2, 6.2', async () => {
+  it('Property 10b: getExpenseById(nonExistentId) returns null - Validates: Requirements 11.2, 6.2', async () => {
     // Feature: expense-management, Property 10: getExpenseById returns correct entry or null
     await fc.assert(
       fc.asyncProperty(
@@ -496,12 +496,12 @@ describe('getExpenseById — Property 10: returns the correct entry or null', ()
 // ─── P11: getDistinctExpenseMonths returns distinct YYYY-MM sorted ASC ────────
 // Feature: expense-management, Property 11: getDistinctExpenseMonths
 
-describe('getDistinctExpenseMonths — Property 11: distinct YYYY-MM strings sorted ASC', () => {
+describe('getDistinctExpenseMonths - Property 11: distinct YYYY-MM strings sorted ASC', () => {
   beforeEach(() => {
     vi.resetAllMocks()
   })
 
-  it('Property 11: getDistinctExpenseMonths returns distinct YYYY-MM strings with no duplicates, sorted ASC — Validates: Requirements 11.3, 2.7', async () => {
+  it('Property 11: getDistinctExpenseMonths returns distinct YYYY-MM strings with no duplicates, sorted ASC - Validates: Requirements 11.3, 2.7', async () => {
     // Feature: expense-management, Property 11: getDistinctExpenseMonths returns distinct YYYY-MM strings sorted ASC
     await fc.assert(
       fc.asyncProperty(
@@ -544,7 +544,7 @@ describe('getDistinctExpenseMonths — Property 11: distinct YYYY-MM strings sor
 // ─── P13: Invalid input to createExpense/updateExpense always returns { error } ─
 // Feature: expense-management, Property 13: Invalid input returns error
 
-describe('createExpense/updateExpense — Property 13: Invalid input always returns an error', () => {
+describe('createExpense/updateExpense - Property 13: Invalid input always returns an error', () => {
   const invalidAmountArb = fc.oneof(
     fc.constant('0'),
     fc.constant('-1'),
@@ -565,7 +565,7 @@ describe('createExpense/updateExpense — Property 13: Invalid input always retu
     vi.mocked(updateExpense).mockResolvedValue({ error: 'Validation error' })
   })
 
-  it('Property 13: createExpense with invalid input always returns { error: <non-empty string> } — Validates: Requirements 5.2, 5.6, 7.2, 7.6, 10.1–10.6', async () => {
+  it('Property 13: createExpense with invalid input always returns { error: <non-empty string> } - Validates: Requirements 5.2, 5.6, 7.2, 7.6, 10.1–10.6', async () => {
     // Feature: expense-management, Property 13: Invalid input always returns { error }
     await fc.assert(
       fc.asyncProperty(
@@ -614,7 +614,7 @@ describe('createExpense/updateExpense — Property 13: Invalid input always retu
     )
   })
 
-  it('Property 13: updateExpense with invalid input always returns { error: <non-empty string> } — Validates: Requirements 5.2, 5.6, 7.2, 7.6, 10.1–10.6', async () => {
+  it('Property 13: updateExpense with invalid input always returns { error: <non-empty string> } - Validates: Requirements 5.2, 5.6, 7.2, 7.6, 10.1–10.6', async () => {
     // Feature: expense-management, Property 13: Invalid input always returns { error }
     await fc.assert(
       fc.asyncProperty(
@@ -668,8 +668,8 @@ describe('createExpense/updateExpense — Property 13: Invalid input always retu
 // ─── P14: Amount precision preserved on String/Number round-trip ──────────────
 // Feature: expense-management, Property 14: Amount precision
 
-describe('Amount precision — Property 14: Amount precision is preserved on round-trip', () => {
-  it('Property 14: Number(String(amount)) equals original amount within 2 decimal places — Validates: Requirements 5.3, 7.3', () => {
+describe('Amount precision - Property 14: Amount precision is preserved on round-trip', () => {
+  it('Property 14: Number(String(amount)) equals original amount within 2 decimal places - Validates: Requirements 5.3, 7.3', () => {
     // Feature: expense-management, Property 14: Amount precision preserved on String/Number round-trip
     fc.assert(
       fc.property(
@@ -768,7 +768,7 @@ describe('ExpenseTable', () => {
 
   it('empty entries array renders no table rows (only header row)', () => {
     render(React.createElement(ExpenseTable, { entries: [], deleteAction, updateAction, divisions, categories, clients: [] }))
-    // No data rows — only the header row exists
+    // No data rows - only the header row exists
     const rows = screen.queryAllByRole('row')
     // Only the header row should be present
     expect(rows).toHaveLength(1)
@@ -777,12 +777,12 @@ describe('ExpenseTable', () => {
 
 // ─── ExpenseSchema unit tests (via mocked createExpense) ─────────────────────
 
-describe('Server Action edge cases — Unit tests', () => {
+describe('Server Action edge cases - Unit tests', () => {
   beforeEach(() => {
     vi.resetAllMocks()
   })
 
-  it('ExpenseSchema rejects empty string date — Validates: Requirements 10.1, 10.2', async () => {
+  it('ExpenseSchema rejects empty string date - Validates: Requirements 10.1, 10.2', async () => {
     vi.mocked(createExpense).mockResolvedValue({ error: 'String must contain at least 1 character(s)' })
 
     const formData = new FormData()
@@ -798,7 +798,7 @@ describe('Server Action edge cases — Unit tests', () => {
     expect((result as { error: string }).error.length).toBeGreaterThan(0)
   })
 
-  it('ExpenseSchema rejects empty string category — Validates: Requirements 10.3', async () => {
+  it('ExpenseSchema rejects empty string category - Validates: Requirements 10.3', async () => {
     vi.mocked(createExpense).mockResolvedValue({ error: 'String must contain at least 1 character(s)' })
 
     const formData = new FormData()
@@ -814,7 +814,7 @@ describe('Server Action edge cases — Unit tests', () => {
     expect((result as { error: string }).error.length).toBeGreaterThan(0)
   })
 
-  it('createExpense with amount = 0 returns { error } — Validates: Requirements 10.5', async () => {
+  it('createExpense with amount = 0 returns { error } - Validates: Requirements 10.5', async () => {
     vi.mocked(createExpense).mockResolvedValue({ error: 'Number must be greater than 0' })
 
     const formData = new FormData()
@@ -830,7 +830,7 @@ describe('Server Action edge cases — Unit tests', () => {
     expect((result as { error: string }).error.length).toBeGreaterThan(0)
   })
 
-  it('createExpense with amount = -1 returns { error } — Validates: Requirements 10.5', async () => {
+  it('createExpense with amount = -1 returns { error } - Validates: Requirements 10.5', async () => {
     vi.mocked(createExpense).mockResolvedValue({ error: 'Number must be greater than 0' })
 
     const formData = new FormData()
@@ -846,7 +846,7 @@ describe('Server Action edge cases — Unit tests', () => {
     expect((result as { error: string }).error.length).toBeGreaterThan(0)
   })
 
-  it('deleteExpense returns { error } when DB throws — Validates: Requirements 9.3', async () => {
+  it('deleteExpense returns { error } when DB throws - Validates: Requirements 9.3', async () => {
     vi.mocked(deleteExpense).mockResolvedValue({ error: 'Database error' })
 
     const result = await deleteExpense(crypto.randomUUID())
@@ -856,7 +856,7 @@ describe('Server Action edge cases — Unit tests', () => {
     expect((result as { error: string }).error.length).toBeGreaterThan(0)
   })
 
-  it('deleteExpense returns {} and was called with correct id on success — Validates: Requirements 9.1, 9.2', async () => {
+  it('deleteExpense returns {} and was called with correct id on success - Validates: Requirements 9.1, 9.2', async () => {
     vi.mocked(deleteExpense).mockResolvedValue({})
 
     const id = crypto.randomUUID()
@@ -875,7 +875,7 @@ describe('Server Action edge cases — Unit tests', () => {
 // ─── Empty-state condition unit test ─────────────────────────────────────────
 
 describe('Expense page empty state', () => {
-  it('when entries = [], renders empty-state message instead of table — Validates: Requirements 1.3', () => {
+  it('when entries = [], renders empty-state message instead of table - Validates: Requirements 1.3', () => {
     // The empty-state message is rendered by the page when entries.length === 0.
     // We test the logic directly: the condition that drives the branch.
     const entries: unknown[] = []
@@ -893,7 +893,7 @@ describe('Expense page empty state', () => {
 import { ExpenseAddForm } from '@/components/expenses/expense-add-form'
 
 describe('Category datalist', () => {
-  it('renders datalist with id="category-suggestions" and populated options — Validates: Requirements 4.3', () => {
+  it('renders datalist with id="category-suggestions" and populated options - Validates: Requirements 4.3', () => {
     const divisions = [{ id: 'div-1', name: 'AWS' }]
     const categories = ['Travel', 'Software', 'Office']
 

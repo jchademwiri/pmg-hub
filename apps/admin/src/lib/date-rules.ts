@@ -47,7 +47,7 @@ export function getMinDateErrorMessage(minDate: string): string {
     month: 'long',
     year: 'numeric',
   });
-  return `Date must be ${label} or later — this financial period is closed.`;
+  return `Date must be ${label} or later - this financial period is closed.`;
 }
 
 export async function getClosedPeriodsFromDates(dates: string[]): Promise<string[]> {

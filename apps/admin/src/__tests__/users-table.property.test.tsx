@@ -61,7 +61,7 @@ function roleLabel(role: string): string {
 
 describe('Property 13: User table renders all required fields', () => {
   it(
-    'renders each user name, email, role label, and status for any array of users — Validates: Requirements 5.1',
+    'renders each user name, email, role label, and status for any array of users - Validates: Requirements 5.1',
     () => {
       fc.assert(
         fc.property(fc.array(userRowArb, { minLength: 1, maxLength: 10 }), (users) => {

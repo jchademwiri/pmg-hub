@@ -9,8 +9,8 @@ Detailed flag specifications for `resend segments` commands.
 | Flag | Type | Default | Description |
 |------|------|---------|-------------|
 | `--limit <n>` | number | 10 | Max results (1-100) |
-| `--after <cursor>` | string | — | Forward pagination |
-| `--before <cursor>` | string | — | Backward pagination |
+| `--after <cursor>` | string | - | Forward pagination |
+| `--before <cursor>` | string | - | Backward pagination |
 
 ---
 
@@ -24,13 +24,13 @@ Detailed flag specifications for `resend segments` commands.
 
 ## segments get
 
-**Argument:** `<id>` — Segment UUID
+**Argument:** `<id>` - Segment UUID
 
 ---
 
 ## segments delete
 
-**Argument:** `<id>` — Segment UUID
+**Argument:** `<id>` - Segment UUID
 
 | Flag | Type | Required | Description |
 |------|------|----------|-------------|

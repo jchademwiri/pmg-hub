@@ -115,7 +115,7 @@ protected from future edits to income or expense data.
 5. IF the `period` argument does not match the pattern `YYYY-MM`, THEN THE
    Close_Month_Action SHALL return `{ error: string }` describing the validation
    failure.
-6. THE Close_Month_Action SHALL never throw — all errors MUST be returned as
+6. THE Close_Month_Action SHALL never throw - all errors MUST be returned as
    `{ error: string }`.
 
 ---
@@ -150,7 +150,7 @@ expenses have been entered.
    pending/loading state (disabled button, loading label) using `useTransition`
    while the Server Action is in flight.
 9. WHEN `closeMonth` returns `{ error }`, THE CloseMonthButton SHALL display
-   the error via `toast.error(error)` from sonner — exactly as other client
+   the error via `toast.error(error)` from sonner - exactly as other client
    components in the codebase use it (e.g. `expense-table.tsx`).
 10. WHEN `closeMonth` returns `{}` (success), THE CloseMonthButton SHALL call
     `router.refresh()` using `useRouter` from `next/navigation`.
@@ -158,7 +158,7 @@ expenses have been entered.
     `new Date().toISOString().slice(0, 7)` (a `YYYY-MM` string) and pass it
     to both `getSnapshotByPeriod` and `CloseMonthButton`.
 12. THE Dashboard `page.tsx` SHALL add `getSnapshotByPeriod(currentPeriod)` to
-    its existing `Promise.all` call as the eleventh parallel fetch — no
+    its existing `Promise.all` call as the eleventh parallel fetch - no
     additional sequential round-trips. The result SHALL be passed to
     `DashboardShell` as a new prop `currentPeriodSnapshot: SnapshotRow | null`.
 13. THE `DashboardShell` component SHALL accept `currentPeriodSnapshot` and
@@ -182,7 +182,7 @@ can review all closed months and their locked financial figures in one place.
 2. WHEN at least one snapshot exists, THE Snapshots_Page SHALL render a table
    with one row per snapshot, showing: Period (formatted as "Month YYYY"),
    Revenue, Expenses, PMG Share, Profit Pool, Salary, Reinvest, Reserve, and
-   Flex — all formatted as ZAR currency.
+   Flex - all formatted as ZAR currency.
 3. THE Snapshots_Page SHALL display snapshots ordered by period descending
    (most recent closed month first).
 4. WHEN no snapshots exist, THE Snapshots_Page SHALL render an empty-state
@@ -199,7 +199,7 @@ can review all closed months and their locked financial figures in one place.
 9. THE Snapshots_Page SHALL format the `period` column value (a `YYYY-MM` string)
    as a full month name and year using:
    `new Date(period + '-01').toLocaleString('en-ZA', { month: 'long', year: 'numeric' })`
-   — consistent with how months are formatted elsewhere in the codebase
+   - consistent with how months are formatted elsewhere in the codebase
    (e.g. `expense-filter-bar.tsx`).
 10. WHEN no snapshots exist, THE Snapshots_Page SHALL render the empty-state
     message: "No months have been closed yet. Use the Close Month button on the
@@ -248,14 +248,14 @@ data from the start.
    month, as it is not yet closed.
 4. THE seed script SHALL compute each past month's snapshot values by reusing
    the `getFinancialSummaryForPeriod(startExpr, endExpr)` query helper from
-   `packages/db/src/queries.ts` — not by hardcoding values or reimplementing
+   `packages/db/src/queries.ts` - not by hardcoding values or reimplementing
    the formula inline.
 5. FOR each fully elapsed month M in the range Apr 2025 through the month prior
    to the current calendar month, THE seed script SHALL call:
    `getFinancialSummaryForPeriod("DATE_TRUNC('month', TIMESTAMP '" + M + "-01')", "DATE_TRUNC('month', TIMESTAMP '" + M + "-01') + INTERVAL '1 month'")`
    where M is a `YYYY-MM` string, and insert the result as a snapshot row.
 6. THE seed script SHALL generate the list of past months programmatically
-   using JavaScript date arithmetic — not a hardcoded array. The start month
+   using JavaScript date arithmetic - not a hardcoded array. The start month
    is always `2025-04`. The end month (exclusive) is always the current
    calendar month computed at seed-run time as
    `new Date().toISOString().slice(0, 7)`.

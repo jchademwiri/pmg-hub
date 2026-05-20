@@ -50,7 +50,7 @@ export type ExpenseRow = {
   divisionName: string
   category: string
   description: string | null
-  amount: string         // numeric from DB — caller converts with Number()
+  amount: string         // numeric from DB - caller converts with Number()
   createdAt: Date
   updatedAt: Date | null
 }
@@ -80,7 +80,7 @@ All three wrap their logic in `try/catch` and never throw. `revalidatePath` is c
 - Props: `divisions`, `categories`, `months`, `currentDivisionId?`, `currentCategory?`, `currentMonth?`
 - Three shadcn `<Select>` controls; on change calls `router.push('/expenses?' + params)`
 - Month labels formatted via `toLocaleString('en-ZA', { month: 'long', year: 'numeric' })`
-- Each `<Select>` includes a default "all" option as its first item: `"All divisions"` (value `"all"`), `"All categories"` (value `"all"`), `"All months"` (value `"all"`). When the default option is selected, the corresponding query parameter is omitted from the URL — effectively clearing that filter. No separate reset button is needed.
+- Each `<Select>` includes a default "all" option as its first item: `"All divisions"` (value `"all"`), `"All categories"` (value `"all"`), `"All months"` (value `"all"`). When the default option is selected, the corresponding query parameter is omitted from the URL - effectively clearing that filter. No separate reset button is needed.
 
 **`ExpenseAddForm`** (`expense-add-form.tsx`)
 - Props: `divisions`, `categories`, `createAction`
@@ -93,7 +93,7 @@ All three wrap their logic in `try/catch` and never throw. `revalidatePath` is c
 - Columns: Date, Division, Category, Description, Amount (`formatZAR`), Actions
 - Edit: `<Button asChild><Link href={'/expenses/' + entry.id}>…</Link></Button>`
 - Delete: inline confirm/cancel with `pendingDeleteId` state; errors via `toast.error`
-- Delete pending UX: when a delete is confirmed, `startTransition` wraps the `deleteAction` call. While the transition is in flight, the row for that entry is visually disabled — `opacity-50 pointer-events-none` — to indicate the operation is pending. The row is only removed from the DOM after `revalidatePath` triggers a server re-render and the page data refreshes.
+- Delete pending UX: when a delete is confirmed, `startTransition` wraps the `deleteAction` call. While the transition is in flight, the row for that entry is visually disabled - `opacity-50 pointer-events-none` - to indicate the operation is pending. The row is only removed from the DOM after `revalidatePath` triggers a server re-render and the page data refreshes.
 
 **`ExpenseEditForm`** (`expense-edit-form.tsx`)
 - Props: `entry: ExpenseRow`, `divisions`, `categories`, `updateAction`
@@ -153,7 +153,7 @@ const ExpenseSchema = z.object({
 })
 ```
 
-`amount` is stored as `String(parsed.amount)` — never a raw JS number — to preserve numeric precision through the `numeric(12,2)` column.
+`amount` is stored as `String(parsed.amount)` - never a raw JS number - to preserve numeric precision through the `numeric(12,2)` column.
 
 ### Expense Summary (computed server-side, inline in page)
 
@@ -171,7 +171,7 @@ Rendered as: total in the page header + a flex-wrap list of `category: formatZAR
 
 ## Correctness Properties
 
-*A property is a characteristic or behavior that should hold true across all valid executions of a system — essentially, a formal statement about what the system should do. Properties serve as the bridge between human-readable specifications and machine-verifiable correctness guarantees.*
+*A property is a characteristic or behavior that should hold true across all valid executions of a system - essentially, a formal statement about what the system should do. Properties serve as the bridge between human-readable specifications and machine-verifiable correctness guarantees.*
 
 ### Property 1: getAllExpenses shape and sort order
 
@@ -181,19 +181,19 @@ Rendered as: total in the page header + a flex-wrap list of `category: formatZAR
 
 ### Property 2: Division filter excludes other divisions
 
-*For any* `divisionId` filter value and any backing dataset, `getAllExpenses({ divisionId })` must return only entries whose `divisionId` exactly matches the filter value — no entries from other divisions may appear.
+*For any* `divisionId` filter value and any backing dataset, `getAllExpenses({ divisionId })` must return only entries whose `divisionId` exactly matches the filter value - no entries from other divisions may appear.
 
 **Validates: Requirements 2.2, 11.1**
 
 ### Property 3: Category filter excludes other categories
 
-*For any* `category` filter value and any backing dataset, `getAllExpenses({ category })` must return only entries whose `category` exactly matches the filter value — no entries with a different category may appear.
+*For any* `category` filter value and any backing dataset, `getAllExpenses({ category })` must return only entries whose `category` exactly matches the filter value - no entries with a different category may appear.
 
 **Validates: Requirements 2.3, 11.1**
 
 ### Property 4: Month filter excludes entries outside the calendar month
 
-*For any* `month` filter value in `YYYY-MM` format and any backing dataset, `getAllExpenses({ month })` must return only entries whose `date` starts with that `YYYY-MM` prefix — no entries from other months may appear.
+*For any* `month` filter value in `YYYY-MM` format and any backing dataset, `getAllExpenses({ month })` must return only entries whose `date` starts with that `YYYY-MM` prefix - no entries from other months may appear.
 
 **Validates: Requirements 2.4, 11.6**
 
@@ -253,7 +253,7 @@ Rendered as: total in the page header + a flex-wrap list of `category: formatZAR
 
 ### Property 14: Amount precision preserved on String/Number round-trip
 
-*For any* positive numeric amount value, `Number(String(amount))` must equal the original value within two decimal places of precision — ensuring no precision is lost when storing as `String(parsed.amount)` and reading back with `Number(entry.amount)`.
+*For any* positive numeric amount value, `Number(String(amount))` must equal the original value within two decimal places of precision - ensuring no precision is lost when storing as `String(parsed.amount)` and reading back with `Number(entry.amount)`.
 
 **Validates: Requirements 5.3, 7.3**
 
@@ -267,7 +267,7 @@ All three Server Actions follow the same pattern as `income.ts`:
 export async function createExpense(formData: FormData): Promise<{ error?: string }> {
   try {
     // 1. Parse FormData
-    // 2. Validate with ExpenseSchema.safeParse — return { error } on failure
+    // 2. Validate with ExpenseSchema.safeParse - return { error } on failure
     // 3. DB insert
     // 4. revalidatePath (inside try, only on success)
     return {}
@@ -279,7 +279,7 @@ export async function createExpense(formData: FormData): Promise<{ error?: strin
 
 Key rules:
 - `revalidatePath` is called only inside `try`, never in `catch`
-- Actions never throw — all errors are returned as `{ error: string }`
+- Actions never throw - all errors are returned as `{ error: string }`
 - Validation errors return the first Zod issue message
 - DB errors return the caught error message
 

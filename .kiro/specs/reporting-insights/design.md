@@ -24,7 +24,7 @@ No new database tables are required. All data is derived from the existing
   appended to the existing `packages/db/src/queries.ts`.
 - **CSV as a string return**: `exportFinancialsCsv` returns a plain `string` (or
   `{ error }`) rather than a `Response` or `ReadableStream`. The client component
-  constructs the `Blob` and triggers the download — this keeps the Server Action
+  constructs the `Blob` and triggers the download - this keeps the Server Action
   compatible with the existing `Promise<{ error?: string }>` pattern.
 - **Financial model computed inline in CSV action**: The action reuses the same
   formula constants already established in Phase 1 rather than calling
@@ -67,7 +67,7 @@ download).
 
 ## Components and Interfaces
 
-### packages/db/src/queries.ts — new additions
+### packages/db/src/queries.ts - new additions
 
 | Helper | Signature | Returns |
 |---|---|---|
@@ -78,7 +78,7 @@ download).
 
 All four are exported from `packages/db/src/index.ts` via `export * from './queries'`.
 
-### apps/admin/src/lib/financial.ts — new additions
+### apps/admin/src/lib/financial.ts - new additions
 
 | Helper | Signature | Returns |
 |---|---|---|
@@ -184,7 +184,7 @@ flex       = profitPool × 0.05
 ## Correctness Properties
 
 *A property is a characteristic or behavior that should hold true across all valid
-executions of a system — essentially, a formal statement about what the system
+executions of a system - essentially, a formal statement about what the system
 should do. Properties serve as the bridge between human-readable specifications
 and machine-verifiable correctness guarantees.*
 
@@ -207,7 +207,7 @@ descending (i.e. `result[i].total >= result[i+1].total` for all valid `i`).
 
 **Validates: Requirements 3.2, 6.1, 6.4, 6.6**
 
-### Property 3: CSV export correctness — structure and financial model
+### Property 3: CSV export correctness - structure and financial model
 
 *For any* valid four-digit year (1000–9999), `exportFinancialsCsv(year)` SHALL
 return a string (not `{ error }`) whose: (a) first line equals exactly
@@ -221,11 +221,11 @@ return a string (not `{ error }`) whose: (a) first line equals exactly
 
 **Validates: Requirements 4.2, 4.3, 4.4**
 
-### Property 4: CSV export error safety — invalid year and never throws
+### Property 4: CSV export error safety - invalid year and never throws
 
 *For any* integer outside the range 1000–9999, `exportFinancialsCsv(year)` SHALL
 return `{ error: 'Invalid year' }` and SHALL NOT throw. Additionally, *for any*
-input whatsoever (including non-integer values), the action SHALL never throw —
+input whatsoever (including non-integer values), the action SHALL never throw -
 all error conditions are returned as `{ error: string }`.
 
 **Validates: Requirements 4.5, 4.6**
@@ -270,7 +270,7 @@ all other Server Actions in the codebase (`income.ts`, `snapshots.ts`).
 fast-check is the existing property-based testing library used throughout the
 codebase. Each test is tagged with its design property reference.
 
-**P1 — getDistinctReportYears returns sorted, distinct years**
+**P1 - getDistinctReportYears returns sorted, distinct years**
 ```ts
 // Feature: reporting-insights, Property 1: getDistinctReportYears returns sorted, distinct years
 fc.assert(fc.asyncProperty(
@@ -288,7 +288,7 @@ fc.assert(fc.asyncProperty(
 ), { numRuns: 100 })
 ```
 
-**P2 — getExpensesByCategory returns valid, ordered data**
+**P2 - getExpensesByCategory returns valid, ordered data**
 ```ts
 // Feature: reporting-insights, Property 2: getExpensesByCategory returns valid, ordered data
 fc.assert(fc.asyncProperty(
@@ -307,9 +307,9 @@ fc.assert(fc.asyncProperty(
 ), { numRuns: 100 })
 ```
 
-**P3 — CSV export correctness**
+**P3 - CSV export correctness**
 ```ts
-// Feature: reporting-insights, Property 3: CSV export correctness — structure and financial model
+// Feature: reporting-insights, Property 3: CSV export correctness - structure and financial model
 fc.assert(fc.asyncProperty(
   fc.integer({ min: 1000, max: 9999 }),
   async (year) => {
@@ -333,9 +333,9 @@ fc.assert(fc.asyncProperty(
 ), { numRuns: 100 })
 ```
 
-**P4 — CSV export error safety**
+**P4 - CSV export error safety**
 ```ts
-// Feature: reporting-insights, Property 4: CSV export error safety — invalid year and never throws
+// Feature: reporting-insights, Property 4: CSV export error safety - invalid year and never throws
 fc.assert(fc.asyncProperty(
   fc.oneof(
     fc.integer({ max: 999 }),
@@ -348,7 +348,7 @@ fc.assert(fc.asyncProperty(
 ), { numRuns: 100 })
 ```
 
-**P5 — Year filter fallback**
+**P5 - Year filter fallback**
 ```ts
 // Feature: reporting-insights, Property 5: Year filter falls back to current year for invalid query params
 fc.assert(fc.property(
@@ -385,8 +385,8 @@ fc.assert(fc.property(
 
 ### What is NOT tested with PBT
 
-- UI layout (single-column chart order) — snapshot test
-- Nav item wiring (`/reports`, `BarChart3` icon) — already implemented, smoke check
-- `var(--chart-3)` bar fill colour — code review / snapshot test
-- `revalidatePath` calls — mock-based unit test
-- `Promise.all` parallelism — architectural constraint, code review
+- UI layout (single-column chart order) - snapshot test
+- Nav item wiring (`/reports`, `BarChart3` icon) - already implemented, smoke check
+- `var(--chart-3)` bar fill colour - code review / snapshot test
+- `revalidatePath` calls - mock-based unit test
+- `Promise.all` parallelism - architectural constraint, code review

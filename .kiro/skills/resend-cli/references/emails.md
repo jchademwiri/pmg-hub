@@ -17,13 +17,13 @@ Send an email via the Resend API.
 | `--text-file <path>` | string | One of text/html/file/react-email/template | Path to plain-text file (use `"-"` for stdin) |
 | `--html <html>` | string | One of text/html/file/react-email/template | HTML body |
 | `--html-file <path>` | string | One of text/html/file/react-email/template | Path to HTML file (use `"-"` for stdin) |
-| `--react-email <path>` | string | One of text/html/file/react-email/template | Path to React Email template (.tsx) — bundles, renders to HTML, and sends |
-| `--template <id>` | string | No | Template ID — replaces body/subject/from with template defaults |
+| `--react-email <path>` | string | One of text/html/file/react-email/template | Path to React Email template (.tsx) - bundles, renders to HTML, and sends |
+| `--template <id>` | string | No | Template ID - replaces body/subject/from with template defaults |
 | `--var <key=value...>` | string[] | No | Template variables as key=value pairs (e.g. `--var name=John --var count=42`) |
 | `--cc <addresses...>` | string[] | No | CC recipients |
 | `--bcc <addresses...>` | string[] | No | BCC recipients |
 | `--reply-to <address>` | string | No | Reply-to address |
-| `--scheduled-at <datetime>` | string | No | Schedule for later — ISO 8601 or natural language (e.g. `"in 1 hour"`, `"tomorrow at 9am ET"`) |
+| `--scheduled-at <datetime>` | string | No | Schedule for later - ISO 8601 or natural language (e.g. `"in 1 hour"`, `"tomorrow at 9am ET"`) |
 | `--attachment <paths...>` | string[] | No | File paths to attach (not compatible with `--template`) |
 | `--headers <key=value...>` | string[] | No | Custom headers |
 | `--tags <name=value...>` | string[] | No | Email tags |
@@ -37,7 +37,7 @@ Send an email via the Resend API.
 
 Retrieve a sent email by ID.
 
-**Argument:** `<id>` — Email UUID
+**Argument:** `<id>` - Email UUID
 
 **Output:**
 ```json
@@ -62,8 +62,8 @@ List sent emails.
 | Flag | Type | Default | Description |
 |------|------|---------|-------------|
 | `--limit <n>` | number | 10 | Max results (1-100) |
-| `--after <cursor>` | string | — | Forward pagination cursor |
-| `--before <cursor>` | string | — | Backward pagination cursor |
+| `--after <cursor>` | string | - | Forward pagination cursor |
+| `--before <cursor>` | string | - | Backward pagination cursor |
 
 **Output:** `{"object":"list","data":[...],"has_more":bool}`
 
@@ -76,7 +76,7 @@ Send up to 100 emails in a single request.
 | Flag | Type | Required | Description |
 |------|------|----------|-------------|
 | `--file <path>` | string | Yes (non-interactive) | Path to JSON file with email array |
-| `--react-email <path>` | string | No | Path to React Email template (.tsx) — rendered HTML is set on every email in the batch |
+| `--react-email <path>` | string | No | Path to React Email template (.tsx) - rendered HTML is set on every email in the batch |
 | `--idempotency-key <key>` | string | No | Deduplicate batch |
 | `--batch-validation <mode>` | string | No | `strict` (fail all) or `permissive` (partial success) |
 
@@ -99,7 +99,7 @@ Send up to 100 emails in a single request.
 
 Cancel a scheduled email.
 
-**Argument:** `<id>` — Email UUID
+**Argument:** `<id>` - Email UUID
 
 **Output:** `{"object":"email","id":"..."}`
 
@@ -109,11 +109,11 @@ Cancel a scheduled email.
 
 Update a scheduled email.
 
-**Argument:** `<id>` — Email UUID
+**Argument:** `<id>` - Email UUID
 
 | Flag | Type | Required | Description |
 |------|------|----------|-------------|
-| `--scheduled-at <datetime>` | string | Yes | New schedule — ISO 8601 or natural language |
+| `--scheduled-at <datetime>` | string | Yes | New schedule - ISO 8601 or natural language |
 
 **Output:** `{"object":"email","id":"..."}`
 
@@ -126,14 +126,14 @@ List received (inbound) emails. Requires domain receiving enabled.
 | Flag | Type | Default | Description |
 |------|------|---------|-------------|
 | `--limit <n>` | number | 10 | Max results (1-100) |
-| `--after <cursor>` | string | — | Forward pagination |
-| `--before <cursor>` | string | — | Backward pagination |
+| `--after <cursor>` | string | - | Forward pagination |
+| `--before <cursor>` | string | - | Backward pagination |
 
 ---
 
 ## emails receiving get
 
-**Argument:** `<id>` — Received email UUID
+**Argument:** `<id>` - Received email UUID
 
 Returns full email with html, text, headers, `raw.download_url`, and `attachments[]`.
 
@@ -141,7 +141,7 @@ Returns full email with html, text, headers, `raw.download_url`, and `attachment
 
 ## emails receiving attachments
 
-**Argument:** `<emailId>` — Received email UUID
+**Argument:** `<emailId>` - Received email UUID
 
 Lists attachments with `id`, `filename`, `size`, `content_type`, `download_url`, `expires_at`.
 
@@ -157,7 +157,7 @@ Returns single attachment object with `download_url`.
 
 ## emails receiving forward
 
-**Argument:** `<id>` — Received email UUID
+**Argument:** `<id>` - Received email UUID
 
 | Flag | Type | Required | Description |
 |------|------|----------|-------------|

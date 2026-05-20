@@ -11,7 +11,7 @@ import { describe, it, expect } from 'vitest'
 import * as fc from 'fast-check'
 import { services } from '../../data/services'
 
-describe('ServicesSection — Property 5: Service card completeness', () => {
+describe('ServicesSection - Property 5: Service card completeness', () => {
   it('should have exactly six service cards', () => {
     expect(services).toHaveLength(6)
   })

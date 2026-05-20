@@ -15,9 +15,9 @@ const sessions = [
 
 // Placeholder audit log rows
 const auditLog = [
-  { action: 'Signed in', user: '—', timestamp: '—', ip: '—' },
-  { action: 'Invoice created', user: '—', timestamp: '—', ip: '—' },
-  { action: 'User invited', user: '—', timestamp: '—', ip: '—' },
+  { action: 'Signed in', user: '-', timestamp: '-', ip: '-' },
+  { action: 'Invoice created', user: '-', timestamp: '-', ip: '-' },
+  { action: 'User invited', user: '-', timestamp: '-', ip: '-' },
 ]
 
 export default function SecuritySettingsPage() {
@@ -64,13 +64,13 @@ export default function SecuritySettingsPage() {
               <div className="flex flex-col gap-1.5">
                 <label className="text-sm font-medium">New Password</label>
                 <div className="h-9 rounded-md border border-input bg-muted/40 px-3 flex items-center text-sm text-muted-foreground">
-                  —
+                  -
                 </div>
               </div>
               <div className="flex flex-col gap-1.5">
                 <label className="text-sm font-medium">Confirm New Password</label>
                 <div className="h-9 rounded-md border border-input bg-muted/40 px-3 flex items-center text-sm text-muted-foreground">
-                  —
+                  -
                 </div>
               </div>
             </div>

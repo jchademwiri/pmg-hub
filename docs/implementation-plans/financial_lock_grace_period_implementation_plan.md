@@ -1,4 +1,4 @@
-# Financial Lock & Grace Period — Implementation Plan v2
+# Financial Lock & Grace Period - Implementation Plan v2
 
 ---
 
@@ -8,13 +8,13 @@ Before implementing, read this diff between v1 and v2:
 
 | # | Gap in v1 | Fix in v2 |
 |---|-----------|-----------|
-| 1 | `getMinAllowedDate()` listed as sync | Corrected to `async` — requires DB call |
+| 1 | `getMinAllowedDate()` listed as sync | Corrected to `async` - requires DB call |
 | 2 | No rule for months older than previous | Explicit: any month older than previous is unconditionally closed |
 | 3 | Grace period defined as "1st–5th inclusive" but code fires auto-close on day 5 | Clarified: grace is days 1–5, lock starts day **6** (`day > 5`) |
-| 4 | `account-withdrawal.ts` listed as needing changes | Removed — it delegates to `createLedgerEntry`, covered transitively |
+| 4 | `account-withdrawal.ts` listed as needing changes | Removed - it delegates to `createLedgerEntry`, covered transitively |
 | 5 | `closedPeriods` UI prop mentioned with no utility to produce it | Added `getClosedPeriodsFromDates()` to the date rules engine |
-| 6 | Delete safety described in plan but which query helpers to use was unclear | Explicit: use `getIncomeById`, `getExpenseById`, `getLedgerById` — all exist in `queries.ts` |
-| 7 | No `server-only` import mentioned for `date-rules.ts` | Required — file queries DB and must not run client-side |
+| 6 | Delete safety described in plan but which query helpers to use was unclear | Explicit: use `getIncomeById`, `getExpenseById`, `getLedgerById` - all exist in `queries.ts` |
+| 7 | No `server-only` import mentioned for `date-rules.ts` | Required - file queries DB and must not run client-side |
 | 8 | Snapshot delete/update protection unclear | Clarified: no UI exists for this, that's the protection. No code changes needed |
 | 9 | Phase count was 4, UI enforcement in one phase | Split into P4 (page-level data) and P5 (component-level rendering) for clarity |
 
@@ -28,9 +28,9 @@ Before implementing, read this diff between v1 and v2:
 |------|--------|
 | Auto-close targets previous month | ✅ Correct |
 | Auto-close fires on day >= 5 | ✅ Correct |
-| Manual close button targets previous month | ❌ Bug — currently uses `currentPeriod = now.toISOString().slice(0, 7)` which is the current month |
+| Manual close button targets previous month | ❌ Bug - currently uses `currentPeriod = now.toISOString().slice(0, 7)` which is the current month |
 | Duplicate snapshot prevention | ✅ Already implemented |
-| Snapshot delete/update protection | ✅ No UI exists — by design |
+| Snapshot delete/update protection | ✅ No UI exists - by design |
 
 ### Income / Expenses / Ledger
 
@@ -40,13 +40,13 @@ Before implementing, read this diff between v1 and v2:
 | Unlimited backdating | ❌ Not restricted |
 | Closed period create guard | ❌ Missing |
 | Closed period update guard | ❌ Missing |
-| Closed period delete guard | ❌ Missing — delete doesn't fetch existing record first |
+| Closed period delete guard | ❌ Missing - delete doesn't fetch existing record first |
 
 ---
 
 ## 3. Execution Plan
 
-### Phase 1 — Date Rules Engine
+### Phase 1 - Date Rules Engine
 
 **File to create:** `apps/admin/src/lib/date-rules.ts`
 
@@ -56,7 +56,7 @@ import { getSnapshotByPeriod } from '@pmg/db'
 
 /**
  * Returns the earliest YYYY-MM-DD date allowed for new or updated records.
- * MUST be async — checks the DB for an existing snapshot.
+ * MUST be async - checks the DB for an existing snapshot.
  */
 export async function getMinAllowedDate(): Promise<string> {
   const now = new Date()
@@ -66,7 +66,7 @@ export async function getMinAllowedDate(): Promise<string> {
 
   const currentMonthStart = `${year}-${String(month + 1).padStart(2, '0')}-01`
 
-  // Grace period is over — current month only
+  // Grace period is over - current month only
   if (day > 5) return currentMonthStart
 
   // Check if previous month has already been closed via snapshot
@@ -102,7 +102,7 @@ export async function isPeriodClosed(date: string): Promise<boolean> {
   // Any month older than previous is unconditionally closed
   if (period < prevPeriod) return true
 
-  // period === prevPeriod — apply grace + snapshot logic
+  // period === prevPeriod - apply grace + snapshot logic
   const snapshot = await getSnapshotByPeriod(period)
   if (snapshot) return true
 
@@ -121,7 +121,7 @@ export function getMinDateErrorMessage(minDate: string): string {
     month: 'long',
     year: 'numeric',
   })
-  return `Date must be ${label} or later — this financial period is closed.`
+  return `Date must be ${label} or later - this financial period is closed.`
 }
 
 /**
@@ -149,7 +149,7 @@ export async function getClosedPeriodsFromDates(dates: string[]): Promise<string
 
 ---
 
-### Phase 2 — Fix Snapshot Close Month Period
+### Phase 2 - Fix Snapshot Close Month Period
 
 **File:** `apps/admin/src/app/(admin)/dashboard/page.tsx`
 
@@ -189,13 +189,13 @@ Then pass `periodToClose` (not `currentPeriod`) to `DashboardShell`:
 
 ---
 
-### Phase 3 — Server Action Locks
+### Phase 3 - Server Action Locks
 
 #### 3a. `actions/income.ts`
 
 Apply to `createIncome`, `updateIncome`, and `deleteIncome`.
 
-**Create / Update** — add after existing future-date check:
+**Create / Update** - add after existing future-date check:
 ```ts
 import { isPeriodClosed, getMinAllowedDate, getMinDateErrorMessage } from '@/lib/date-rules'
 
@@ -206,7 +206,7 @@ if (await isPeriodClosed(parsed.date)) {
 }
 ```
 
-**Delete** — replace existing with fetch-first pattern:
+**Delete** - replace existing with fetch-first pattern:
 ```ts
 import { getIncomeById } from '@pmg/db'  // already exists in queries.ts
 
@@ -265,7 +265,7 @@ if (await isPeriodClosed(parsed.date)) {
 
 ---
 
-### Phase 4 — Page-Level Data Computation
+### Phase 4 - Page-Level Data Computation
 
 **Files:** `income/page.tsx`, `expenses/page.tsx`, `ledger/page.tsx`
 
@@ -283,7 +283,7 @@ const [result, divisions, clients, months, minDate] = await Promise.all([
   getMinAllowedDate(),
 ])
 
-// After Promise.all — getClosedPeriodsFromDates deduplicates internally
+// After Promise.all - getClosedPeriodsFromDates deduplicates internally
 const closedPeriods = await getClosedPeriodsFromDates(result.data.map((r) => r.date))
 
 // Pass to client component:
@@ -300,9 +300,9 @@ Add `minDate: string` and `closedPeriods: string[]` to the client component's pr
 
 ---
 
-### Phase 5 — Component-Level UI Enforcement
+### Phase 5 - Component-Level UI Enforcement
 
-#### 5a. Add/Edit Forms — date input `min` attribute
+#### 5a. Add/Edit Forms - date input `min` attribute
 
 **Files:** `income-add-form.tsx`, `expense-add-form.tsx`, `ledger-add-form.tsx`
 and their edit equivalents.
@@ -321,7 +321,7 @@ Add `minDate: string` to each form's props interface, then apply:
 
 ---
 
-#### 5b. Table Components — hide actions for locked rows
+#### 5b. Table Components - hide actions for locked rows
 
 **Files:** `income-table.tsx`, `expense-table.tsx`, `ledger-table.tsx`
 
@@ -397,8 +397,8 @@ Work through each scenario before marking a phase complete:
 
 | File | Reason |
 |------|--------|
-| `actions/account-withdrawal.ts` | Delegates to `createLedgerEntry` — covered transitively |
-| `actions/snapshots.ts` | No delete/update actions exist — no change needed |
+| `actions/account-withdrawal.ts` | Delegates to `createLedgerEntry` - covered transitively |
+| `actions/snapshots.ts` | No delete/update actions exist - no change needed |
 | `queries.ts` | All needed helpers (`getIncomeById`, `getExpenseById`, `getLedgerById`) already exist |
 | `packages/db/src/schema/*` | DB schema unchanged |
 

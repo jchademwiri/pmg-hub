@@ -12,7 +12,7 @@ This implementation plan thoroughly integrates your requirements for withdrawal 
 ### Phase 1: Security, Auth & Tests
 - **Create/Update Tests:** Set up Vitest/Playwright tests securing withdrawal validation, category constraints, and authentication.
 - ✅ **Auth Middleware Check (Issue #1):** Upgraded `proxy.ts` to validate sessions server-side via internal fetch to `/api/auth/get-session`. Also rejects inactive users.
-- ✅ **Raw SQL Removal (Issue #5):** Refactored `users.ts` — `revokeUser`, `updateUserName`, `updateUserRole` now use Drizzle `db.update(user)` / `db.delete(session)` instead of raw SQL.
+- ✅ **Raw SQL Removal (Issue #5):** Refactored `users.ts` - `revokeUser`, `updateUserName`, `updateUserRole` now use Drizzle `db.update(user)` / `db.delete(session)` instead of raw SQL.
 - ✅ **Missing `/invite` Route (Issue #14):** Built `(auth)/invite/page.tsx` with token validation, expiry checks, and magic link sign-in flow.
 
 ### Phase 2: Database & Core Domain

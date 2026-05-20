@@ -4,7 +4,7 @@
 
 ### Module Purpose
 
-The Financial Engine is the core calculation layer for the PMG Control Center — the internal
+The Financial Engine is the core calculation layer for the PMG Control Center - the internal
 admin system for Playhouse Media Group (PTY) Ltd. It is implemented as a single server-side
 module at `apps/admin/src/lib/financial.ts` and is responsible for applying the PMG financial
 model to live database data, producing all monetary figures consumed by the admin UI.
@@ -16,10 +16,10 @@ the database, applies deterministic arithmetic, and returns typed results.
 
 The Financial Engine feeds the following downstream surfaces:
 
-- **Dashboard** (`app/(admin)/dashboard/page.tsx`) — primary consumer; renders KPI cards,
+- **Dashboard** (`app/(admin)/dashboard/page.tsx`) - primary consumer; renders KPI cards,
   salary highlight, allocation breakdown, division revenue bars, and lead status counts.
-- **Reports** (Phase 8) — will use `FinancialSummary` to generate period-over-period comparisons.
-- **Snapshots** (Phase 7) — will persist `FinancialSummary` values to the database for
+- **Reports** (Phase 8) - will use `FinancialSummary` to generate period-over-period comparisons.
+- **Snapshots** (Phase 7) - will persist `FinancialSummary` values to the database for
   historical tracking.
 
 ### Data Flow
@@ -44,14 +44,14 @@ apps/admin/src/lib/financial.ts   [Financial_Engine]
         ├──────────────────────────────────────┐
         ▼                                      ▼
 Next.js Server Components          Next.js Server Actions
-(dashboard/page.tsx — reads)       (actions/income.ts — mutates,
+(dashboard/page.tsx - reads)       (actions/income.ts - mutates,
         │                           then calls revalidatePath()
         ▼                           which triggers re-read)
 Presentational components
 (components/dashboard/*)
 ```
 
-The Financial Engine is read-only. Server Actions do not call it directly during mutations — they mutate the database and call `revalidatePath()`, which causes the Server Component to re-fetch through the Financial Engine on the next render.
+The Financial Engine is read-only. Server Actions do not call it directly during mutations - they mutate the database and call `revalidatePath()`, which causes the Server Component to re-fetch through the Financial Engine on the next render.
 
 No REST API layer exists between the database and the UI. All data access happens
 server-side via Drizzle ORM. The Financial Engine must never be imported from a
@@ -158,7 +158,7 @@ so that amounts are immediately readable in the correct locale and currency.
 1. WHEN `formatZAR(amount)` is called with a numeric value, THE Formatter SHALL return a string produced by `Intl.NumberFormat` configured with locale `en-ZA` and currency `ZAR`.
 2. THE Formatter SHALL always include exactly two decimal places in the output (`minimumFractionDigits: 2`, `maximumFractionDigits: 2`).
 3. WHEN `formatZAR(amount)` is called with any finite number, THE Formatter SHALL return a non-empty string containing the `R` currency symbol.
-4. FOR ALL identical finite numeric inputs, THE Formatter SHALL produce identical string outputs — the same input always yields the same string.
+4. FOR ALL identical finite numeric inputs, THE Formatter SHALL produce identical string outputs - the same input always yields the same string.
 
 ---
 
@@ -172,7 +172,7 @@ database credentials and query logic are never exposed to the browser bundle.
 1. THE Financial_Engine SHALL NOT contain a `'use client'` directive at any point in the file.
 2. THE Financial_Engine SHALL be importable only from Next.js Server Components and Server Actions, not from Client Components.
 
-   > Note: Server Actions (`'use server'` files under `actions/`) are valid importers of `financial.ts` only if they need to read financial data directly — for example, a snapshot action that reads `getFinancialSummary()` before persisting it (Phase 7). Mutation actions (`createIncome`, `deleteExpense`, etc.) do not import `financial.ts` directly — they mutate the database and call `revalidatePath('/admin/dashboard')`, which causes the Server Component to re-fetch through the Financial Engine on the next render.
+   > Note: Server Actions (`'use server'` files under `actions/`) are valid importers of `financial.ts` only if they need to read financial data directly - for example, a snapshot action that reads `getFinancialSummary()` before persisting it (Phase 7). Mutation actions (`createIncome`, `deleteExpense`, etc.) do not import `financial.ts` directly - they mutate the database and call `revalidatePath('/admin/dashboard')`, which causes the Server Component to re-fetch through the Financial Engine on the next render.
 3. THE Financial_Engine SHALL export the TypeScript types `FinancialSummary`, `DivisionRevenue`, and `LeadStatusCount` so that consuming Server Components can type their props without re-declaring these shapes.
 4. THE Financial_Engine SHALL import the `server-only` package as its first import, causing the Next.js bundler to throw a build error if the module is ever imported from a Client Component.
 
@@ -198,7 +198,7 @@ in `financial.ts` and must not be assumed by any Phase 1 test.
 
 | # | Excluded Item |
 |---|---|
-| 1 | Persisting `FinancialSummary` to the database (belongs to Phase 7 — Snapshots) |
+| 1 | Persisting `FinancialSummary` to the database (belongs to Phase 7 - Snapshots) |
 | 2 | Date range filtering or period-scoped queries (all figures are all-time totals in Phase 1) |
 | 3 | Per-division expense breakdown (only revenue is broken down by division in Phase 1) |
 | 4 | Currency conversion or multi-currency support (ZAR only) |
@@ -208,8 +208,8 @@ in `financial.ts` and must not be assumed by any Phase 1 test.
 | 8 | Input validation or sanitisation of amounts (enforced by database `CHECK` constraints and Zod in Server Actions) |
 | 9 | Tax calculations, VAT, or SARS compliance logic |
 | 10 | Budget targets, forecasting, or variance analysis |
-| 11 | Per-division expense breakdown via `getExpensesByDivision()` — available in `@pmg/db` but not wrapped by the Financial Engine in Phase 1 (consumed directly in Phase 6) |
-| 12 | Triggering `revalidatePath` or any Next.js cache invalidation — that responsibility belongs to Server Actions in `apps/admin/actions/`, not to the Financial Engine |
+| 11 | Per-division expense breakdown via `getExpensesByDivision()` - available in `@pmg/db` but not wrapped by the Financial Engine in Phase 1 (consumed directly in Phase 6) |
+| 12 | Triggering `revalidatePath` or any Next.js cache invalidation - that responsibility belongs to Server Actions in `apps/admin/actions/`, not to the Financial Engine |
 
 ---
 
@@ -217,7 +217,7 @@ in `financial.ts` and must not be assumed by any Phase 1 test.
 
 All test scenarios are designed to run in Vitest at
 `apps/admin/src/__tests__/financial.test.ts` with the DB_Package query helpers
-mocked — no real database connection is required.
+mocked - no real database connection is required.
 
 | Scenario | Inputs | Expected Outputs |
 |---|---|---|
@@ -225,12 +225,12 @@ mocked — no real database connection is required.
 | **Zero case** | `revenue = 0`, `expenses = 0` | All eight fields equal `0`; no error thrown |
 | **Loss case** | `revenue = 10 000`, `expenses = 15 000` | `pmgShare = 2 000`, `profitPool = −7 000`, `salary = −2 450` (exact), `reinvest = −2 100` (exact), `reserve = −2 100` (exact), `flex = −350` (exact) |
 | **Determinism case** | Same `revenue` and `expenses` called twice | Both calls return structurally identical `FinancialSummary` objects |
-| **formatZAR — positive** | `amount = 1234.5` | Returns a non-empty string containing the `R` symbol and two decimal places. Exact separators (space, comma, period) are locale-implementation dependent and are not asserted. |
-| **formatZAR — zero** | `amount = 0` | Returns a non-empty string containing the `R` symbol and two decimal places. Exact separator is locale-dependent and not asserted. |
-| **formatZAR — negative** | `amount = −500` | Returns a non-empty string containing the `R` symbol and two decimal places. Sign rendering and exact separator are locale-dependent and not asserted. |
+| **formatZAR - positive** | `amount = 1234.5` | Returns a non-empty string containing the `R` symbol and two decimal places. Exact separators (space, comma, period) are locale-implementation dependent and are not asserted. |
+| **formatZAR - zero** | `amount = 0` | Returns a non-empty string containing the `R` symbol and two decimal places. Exact separator is locale-dependent and not asserted. |
+| **formatZAR - negative** | `amount = −500` | Returns a non-empty string containing the `R` symbol and two decimal places. Sign rendering and exact separator are locale-dependent and not asserted. |
 | **Allocation sum** | Any `revenue`, any `expenses` | `salary + reinvest + reserve + flex` equals `profitPool` within tolerance `0.01` |
 
-### Standard Case — Full Worked Example
+### Standard Case - Full Worked Example
 
 ```
 revenue   = 100 000.00
@@ -247,7 +247,7 @@ flex      =  40 000 × 0.05          =   2 000.00
 sum check: 14 000 + 12 000 + 12 000 + 2 000 = 40 000 ✓
 ```
 
-### Loss Case — Full Worked Example
+### Loss Case - Full Worked Example
 
 ```
 revenue   =  10 000.00
@@ -285,7 +285,7 @@ Phase 1 is complete when all of the following pass:
 - [ ] `getLeadCounts()` delegates to `getLeadsByStatus()` without modification
 - [ ] `formatZAR` uses `Intl.NumberFormat`, locale `en-ZA`, currency `ZAR`, 2 decimal places
 - [ ] `formatZAR` returns a string containing `R` for any finite input
-- [ ] `formatZAR` is deterministic — same input always produces same output
+- [ ] `formatZAR` is deterministic - same input always produces same output
 - [ ] `financial.ts` contains no `'use client'` directive
 - [ ] `financial.ts` imports `server-only` as its first import
 - [ ] `server-only` is listed as a dependency in `apps/admin/package.json`

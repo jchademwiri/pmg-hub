@@ -56,7 +56,7 @@ All additions are purely additive; no existing code is modified except the sideb
     - Export from `packages/db/src/index.ts`.
     - _Requirements: 4.1, 4.2, 4.3, 4.4, 4.5, 4.6, 4.7_
 
-- [x] 3. Checkpoint — Ensure all tests pass
+- [x] 3. Checkpoint - Ensure all tests pass
   - Ensure all tests pass, ask the user if questions arise.
 
 - [ ] 4. Add chart-data functions to `financial.ts`
@@ -98,7 +98,7 @@ All additions are purely additive; no existing code is modified except the sideb
     - Test `getRevenueByDivisionSeries` with a known sparse DB result → verify zero-fill.
     - _Requirements: 5.2, 5.4_
 
-- [x] 5. Checkpoint — Ensure all tests pass
+- [x] 5. Checkpoint - Ensure all tests pass
   - Ensure all tests pass, ask the user if questions arise.
 
 - [ ] 6. Implement chart components
@@ -165,7 +165,7 @@ All additions are purely additive; no existing code is modified except the sideb
       entry in the nav items array.
     - _Requirements: 7.1, 7.2, 7.3_
 
-- [x] 8. Final checkpoint — Ensure all tests pass
+- [x] 8. Final checkpoint - Ensure all tests pass
   - Ensure all tests pass, ask the user if questions arise.
 
 ## Notes

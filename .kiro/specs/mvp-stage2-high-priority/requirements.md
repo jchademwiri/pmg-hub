@@ -8,9 +8,9 @@ first week of real use. None of these block shipping, but all should be resolved
 app handles sustained real financial data.
 
 The items span three concerns:
-- **Missing CRUD surfaces** — withdrawal history (H1) and lead create/delete (H2)
-- **UX feedback gaps** — delete loading states (H3), success toasts (H4), date defaults (H5)
-- **Data integrity / visual correctness** — withdrawal over-limit guard (H6) and close-month flash (H7)
+- **Missing CRUD surfaces** - withdrawal history (H1) and lead create/delete (H2)
+- **UX feedback gaps** - delete loading states (H3), success toasts (H4), date defaults (H5)
+- **Data integrity / visual correctness** - withdrawal over-limit guard (H6) and close-month flash (H7)
 
 H1–H5 and H7 are independent and can be implemented in parallel. H6 depends on H1 (the
 withdrawal modal must exist before the guard can be added to it).
@@ -31,7 +31,7 @@ withdrawal modal must exist before the guard can be added to it).
 - **revalidatePath**: Next.js cache invalidation function called after every mutating server action
 - **useTransition**: React hook used in all client forms to track server action pending state
 - **Sonner**: The toast notification library (`sonner`) already installed and configured in the Admin app
-- **YTD**: Year-to-date — from January 1 of the current calendar year to today
+- **YTD**: Year-to-date - from January 1 of the current calendar year to today
 - **maxAmount**: The computed remaining salary balance passed as a prop to WithdrawModal to enable the over-limit warning
 
 ---
@@ -40,7 +40,7 @@ withdrawal modal must exist before the guard can be added to it).
 
 ---
 
-### Requirement 1: Withdrawal History — Data Layer
+### Requirement 1: Withdrawal History - Data Layer
 
 **User Story:** As the business owner, I want to view, edit, and delete past withdrawal records,
 so that I can correct mistakes and maintain an accurate financial history.
@@ -67,12 +67,12 @@ so that I can correct mistakes and maintain an accurate financial history.
 6. IF `deleteWithdrawal` encounters a database error, THEN THE Admin SHALL return
    `{ error: string }` without throwing.
 
-7. THE Admin SHALL never throw from `updateWithdrawal` or `deleteWithdrawal` — all errors
+7. THE Admin SHALL never throw from `updateWithdrawal` or `deleteWithdrawal` - all errors
    MUST be returned as `{ error: string }`.
 
 ---
 
-### Requirement 2: Withdrawal History — Pages and Components
+### Requirement 2: Withdrawal History - Pages and Components
 
 **User Story:** As the business owner, I want a dedicated withdrawals page with a full history
 table and an edit form, so that I can review and correct individual withdrawal records.
@@ -101,7 +101,7 @@ table and an edit form, so that I can review and correct individual withdrawal r
    href: `/withdrawals`) to `app-sidebar.tsx`.
 
 7. THE Admin SHALL add a `date` input to the withdrawal recording flow (the `recordWithdrawal`
-   action currently hard-codes today's date — the new edit form requires an explicit date field).
+   action currently hard-codes today's date - the new edit form requires an explicit date field).
 
 ---
 
@@ -173,7 +173,7 @@ the server action runs, so that the UI does not appear frozen during deletion.
    button and display the label `"Deleting…"`.
 
 6. THE Admin SHALL use an `isPendingDelete` boolean state (or equivalent `useTransition`
-   pending flag) to track the in-flight state — the pattern MUST NOT rely on a global
+   pending flag) to track the in-flight state - the pattern MUST NOT rely on a global
    loading indicator.
 
 ---
@@ -206,7 +206,7 @@ or update a record, so that I know the action completed without having to check 
 7. WHEN `lead-notes-form.tsx` saves successfully, THE Admin SHALL call
    `toast.success('Notes saved')`.
 
-8. THE Admin SHALL NOT add success toasts to delete actions — the row disappearing from
+8. THE Admin SHALL NOT add success toasts to delete actions - the row disappearing from
    the table is sufficient feedback.
 
 9. THE Admin SHALL call `toast.success` only after confirming the server action returned
@@ -231,11 +231,11 @@ date, so that I do not have to manually select today every time I record a trans
    the date input's `defaultValue` to today's date in `YYYY-MM-DD` format.
 
 4. THE Admin SHALL compute today's date as
-   `new Date().toISOString().split('T')[0]` — a plain string constant defined once per
+   `new Date().toISOString().split('T')[0]` - a plain string constant defined once per
    component, not recalculated on every render.
 
 5. THE Admin SHALL NOT change the `defaultValue` of any date input on edit forms
-   (`income-edit-form.tsx`, `expense-edit-form.tsx`, `withdrawal-edit-form.tsx`) — edit
+   (`income-edit-form.tsx`, `expense-edit-form.tsx`, `withdrawal-edit-form.tsx`) - edit
    forms MUST pre-populate from the existing record's date.
 
 ---
@@ -257,13 +257,13 @@ remaining salary balance, so that I can avoid accidentally overdrawing my accoun
 3. WHEN the amount entered in `WithdrawModal` is less than or equal to `maxAmount`, THE Admin
    SHALL NOT display the over-limit warning.
 
-4. THE `WithdrawModal` SHALL NOT block form submission when the over-limit warning is shown —
+4. THE `WithdrawModal` SHALL NOT block form submission when the over-limit warning is shown -
    the warning is advisory only.
 
 5. THE `SalaryCard` component SHALL compute `remaining = Math.max(0, salary - withdrawn)` and
    pass `remaining` as the `maxAmount` prop to `WithdrawModal`.
 
-6. THE `SalaryCard` SHALL ensure `remaining` is always a non-negative number — it SHALL NOT
+6. THE `SalaryCard` SHALL ensure `remaining` is always a non-negative number - it SHALL NOT
    pass a negative value as `maxAmount`.
 
 ---
@@ -291,7 +291,7 @@ on load.
    SHALL NOT render the `"Month closed"` badge.
 
 5. THE dashboard `page.tsx` server component already fetches `currentPeriodSnapshot` via
-   `getSnapshotByPeriod(currentPeriod)` — THE Admin SHALL derive `hasSnapshot` from this
+   `getSnapshotByPeriod(currentPeriod)` - THE Admin SHALL derive `hasSnapshot` from this
    existing fetch result as `currentPeriodSnapshot !== null`, with no additional database
    query.
 
@@ -307,5 +307,5 @@ Per the readiness plan:
 
 - H1 (Req 1 + 2), H2 (Req 3), H3 (Req 4), H4 (Req 5), H5 (Req 6), H7 (Req 8) are
   independent and can be implemented in parallel.
-- H6 (Req 7) depends on H1 — the `WithdrawModal` component must exist before the
+- H6 (Req 7) depends on H1 - the `WithdrawModal` component must exist before the
   `maxAmount` prop and over-limit warning can be added.

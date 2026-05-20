@@ -9,7 +9,7 @@ MUST follow Tasks 1–2 (H1 data layer and UI).
 
 ## Tasks
 
-- [x] 1. H1 — Withdrawal History: Data Layer
+- [x] 1. H1 - Withdrawal History: Data Layer
   - [x] 1.1 Add `WithdrawalRow` type and `getAllWithdrawals()` to `packages/db/src/queries.ts`
     - Define `WithdrawalRow` type with fields: `id`, `date` (string), `amount` (string), `description` (string | null), `createdAt` (Date | null)
     - Implement `getAllWithdrawals()`: SELECT from `withdrawals` ORDER BY `date DESC`, `created_at DESC`
@@ -46,7 +46,7 @@ MUST follow Tasks 1–2 (H1 data layer and UI).
     - Minimum 100 iterations; tag: `// Feature: mvp-stage2-high-priority, Property 3: updateWithdrawal validation gate`
     - _Requirements: 1.4_
 
-- [x] 2. H1 — Withdrawal History: Pages and Components
+- [x] 2. H1 - Withdrawal History: Pages and Components
   - [x] 2.1 Create `apps/admin/src/app/(admin)/withdrawals/page.tsx` server component
     - Fetch `getAllWithdrawals()`; derive `ytdTotal` by filtering current year and summing `Number(w.amount)`
     - Render page header, `Badge` with `formatZAR(ytdTotal)` + "YTD", `WithdrawalsTable`, and empty state when no withdrawals
@@ -73,10 +73,10 @@ MUST follow Tasks 1–2 (H1 data layer and UI).
     - Import `Wallet` from `lucide-react`; add `{ href: '/withdrawals', label: 'Withdrawals', icon: Wallet }` to navItems
     - _Requirements: 2.6_
 
-- [x] 3. Checkpoint — H1 complete
+- [x] 3. Checkpoint - H1 complete
   - Ensure all tests pass, ask the user if questions arise.
 
-- [x] 4. H2 — Lead Create and Delete
+- [x] 4. H2 - Lead Create and Delete
   - [x] 4.1 Add `createLead` and `deleteLead` to `apps/admin/src/app/actions/leads.ts`
     - `createLead(formData)`: Zod schema (name min 1, email optional valid email, phone optional, source optional, serviceInterest optional, divisionId optional UUID, message optional) with `.refine` requiring at least one of email or phone → db.insert with `status: 'new'` → revalidatePath('/leads') + revalidatePath('/dashboard')
     - `deleteLead(id)`: db.delete where id → revalidatePath('/leads') + revalidatePath('/dashboard') → return `{ error? }`; never throw
@@ -106,7 +106,7 @@ MUST follow Tasks 1–2 (H1 data layer and UI).
     - Render `LeadAddForm` above the table
     - _Requirements: 3.11_
 
-- [x] 5. H3 — Delete Button Loading States
+- [x] 5. H3 - Delete Button Loading States
   - [x] 5.1 Add `isPendingDelete` pattern to `apps/admin/src/components/income/income-table.tsx`
     - Add `const [isPendingDelete, setIsPendingDelete] = React.useState(false)`
     - In `handleConfirmDelete`: `setIsPendingDelete(true)` before action, `setIsPendingDelete(false)` in `finally`
@@ -123,7 +123,7 @@ MUST follow Tasks 1–2 (H1 data layer and UI).
     - Align to canonical pattern if any deviation found
     - _Requirements: 4.5, 4.6_
 
-- [x] 6. H4 — Success Toasts on Create and Update
+- [x] 6. H4 - Success Toasts on Create and Update
   - [x] 6.1 Add `toast.success` to income forms
     - `income-add-form.tsx`: add `toast.success('Income added')` in the `!result.error` branch; add `import { toast } from 'sonner'` if missing
     - `income-edit-form.tsx`: add `toast.success('Income updated')` in the `!result.error` branch
@@ -141,7 +141,7 @@ MUST follow Tasks 1–2 (H1 data layer and UI).
     - Add `import { toast } from 'sonner'` to any file that doesn't already import it
     - _Requirements: 5.5, 5.6, 5.7, 5.9_
 
-- [x] 7. H5 — Date Fields Default to Today
+- [x] 7. H5 - Date Fields Default to Today
   - [x] 7.1 Add `defaultValue={today}` to date input in `apps/admin/src/components/income/income-add-form.tsx`
     - Define `const today = new Date().toISOString().split('T')[0]` once at component top, outside render
     - Set `defaultValue={today}` on the date `<Input>`
@@ -152,7 +152,7 @@ MUST follow Tasks 1–2 (H1 data layer and UI).
     - Set `defaultValue={today}` on the date `<Input>`
     - _Requirements: 6.2, 6.4_
 
-- [x] 8. H7 — Close Month Flash Fix
+- [x] 8. H7 - Close Month Flash Fix
   - [x] 8.1 Derive `hasSnapshot` in `apps/admin/src/app/(admin)/dashboard/page.tsx` and pass to `DashboardShell`
     - Add `const hasSnapshot = currentPeriodSnapshot !== null` (no additional DB query)
     - Pass `hasSnapshot={hasSnapshot}` to `<DashboardShell>`
@@ -176,16 +176,16 @@ MUST follow Tasks 1–2 (H1 data layer and UI).
     - Remove any client-side snapshot fetch the component currently performs
     - _Requirements: 8.2_
 
-- [x] 9. Checkpoint — H2–H5, H7 complete
+- [x] 9. Checkpoint - H2–H5, H7 complete
   - Ensure all tests pass, ask the user if questions arise.
 
-- [x] 10. H6 — Withdrawal Over-Limit Guard (depends on Tasks 1–2)
+- [x] 10. H6 - Withdrawal Over-Limit Guard (depends on Tasks 1–2)
   - [x] 10.1 Add `maxAmount` prop and over-limit warning to `apps/admin/src/components/dashboard/withdraw-modal.tsx`
     - Add `maxAmount: number` to `WithdrawModalProps`
     - Add `const [enteredAmount, setEnteredAmount] = React.useState<number | null>(null)` and `const isOverLimit = enteredAmount !== null && enteredAmount > maxAmount`
     - Wire `onChange` on the amount input to update `enteredAmount`
     - Render `<p className="text-sm text-destructive">This exceeds your remaining balance of {formatZAR(maxAmount)}</p>` below the input when `isOverLimit` is true
-    - Warning is advisory — do NOT block form submission
+    - Warning is advisory - do NOT block form submission
     - _Requirements: 7.1, 7.2, 7.3, 7.4_
 
   - [x] 10.2 Write property test for `WithdrawModal` over-limit warning visibility
@@ -205,7 +205,7 @@ MUST follow Tasks 1–2 (H1 data layer and UI).
     - Minimum 100 iterations; tag: `// Feature: mvp-stage2-high-priority, Property 6: SalaryCard remaining balance computation`
     - _Requirements: 7.5, 7.6_
 
-- [x] 11. Final Checkpoint — All tasks complete
+- [x] 11. Final Checkpoint - All tasks complete
   - Ensure all tests pass, ask the user if questions arise.
 
 ## Notes

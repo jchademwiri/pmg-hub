@@ -1,15 +1,15 @@
 # TenderTrack 360
-### Product Profile — SaaS Platform under Playhouse Media Group
+### Product Profile - SaaS Platform under Playhouse Media Group
 
 ---
 
 ## What Is TenderTrack 360?
 
-TenderTrack 360 is a **cloud-based tender management platform** built by Jacob Chademwiri to solve a real problem he experienced while running Tender Edge Solutions — there was no simple, affordable tool for South African businesses to track, manage, and follow up on their tenders.
+TenderTrack 360 is a **cloud-based tender management platform** built by Jacob Chademwiri to solve a real problem he experienced while running Tender Edge Solutions - there was no simple, affordable tool for South African businesses to track, manage, and follow up on their tenders.
 
 Jacob built TenderTrack 360 himself using Next.js and TypeScript. The platform is live at tendertrack360.co.za, fully functional, and currently free during the beta period.
 
-It is **not a consultancy service** — it is a software product. Where Tender Edge Solutions does the tender work *for* clients, TenderTrack 360 gives clients (and any organisation) the tools to manage their own tender pipeline independently.
+It is **not a consultancy service** - it is a software product. Where Tender Edge Solutions does the tender work *for* clients, TenderTrack 360 gives clients (and any organisation) the tools to manage their own tender pipeline independently.
 
 ---
 
@@ -18,11 +18,11 @@ It is **not a consultancy service** — it is a software product. Where Tender E
 | Field | Detail |
 |---|---|
 | Product Name | TenderTrack 360 |
-| Type | SaaS — Software as a Service |
+| Type | SaaS - Software as a Service |
 | Parent Company | Playhouse Media Group (PTY) Ltd |
 | Built By | Jacob Chademwiri |
 | Tech Stack | Next.js, TypeScript |
-| Status | **Live — Beta (free during beta period)** |
+| Status | **Live - Beta (free during beta period)** |
 | Website | tendertrack360.co.za |
 | Email | info@tendertrack360.co.za |
 | Revenue Model | Monthly subscription tiers |
@@ -37,7 +37,7 @@ It is **not a consultancy service** — it is a software product. Where Tender E
 
 ## What It Does
 
-TenderTrack 360 helps organisations track tenders from discovery through to award, manage deadlines, collaborate with team members, and analyse performance — all in one place.
+TenderTrack 360 helps organisations track tenders from discovery through to award, manage deadlines, collaborate with team members, and analyse performance - all in one place.
 
 ---
 
@@ -101,5 +101,5 @@ A TES client gets their compliance sorted → subscribes to TenderTrack 360 to t
 ---
 
 *Last updated: March 2026 | Version 2.0*
-*TenderTrack 360 — a Playhouse Media Group product*
+*TenderTrack 360 - a Playhouse Media Group product*
 *tendertrack360.co.za | info@tendertrack360.co.za*

@@ -13,7 +13,7 @@ export type LineItemDetail = {
   documentId: string;
   sortOrder: number;
   description: string;
-  quantity: string;   // numeric from DB — caller converts with Number()
+  quantity: string;   // numeric from DB - caller converts with Number()
   unitPrice: string;
   vatRate: string;
   lineTotal: string;
@@ -780,7 +780,7 @@ export async function getItemById(id: string): Promise<BillingItemDetail | null>
 
 /**
  * Returns active billing items for use in line item selectors.
- * Only active items are returned — archived items cannot be selected.
+ * Only active items are returned - archived items cannot be selected.
  */
 export async function getActiveItems(): Promise<
   { id: string; name: string; description: string | null; unitPrice: string; unitLabel: string | null }[]

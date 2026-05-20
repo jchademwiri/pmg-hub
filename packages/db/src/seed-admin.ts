@@ -20,7 +20,7 @@ const client = new pg.Client({
 await client.connect();
 const db = drizzle(client);
 
-// Better Auth uses nanoid-style text IDs — generate a simple one
+// Better Auth uses nanoid-style text IDs - generate a simple one
 const id = crypto.randomUUID().replace(/-/g, "");
 
 await db

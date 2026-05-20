@@ -11,8 +11,8 @@ List all domains.
 | Flag | Type | Default | Description |
 |------|------|---------|-------------|
 | `--limit <n>` | number | 10 | Max results (1-100) |
-| `--after <cursor>` | string | — | Forward pagination |
-| `--before <cursor>` | string | — | Backward pagination |
+| `--after <cursor>` | string | - | Forward pagination |
+| `--before <cursor>` | string | - | Backward pagination |
 
 **Note:** List does NOT include DNS records. Use `domains get` for full details.
 
@@ -36,7 +36,7 @@ Create a new domain and receive DNS records to configure.
 
 ## domains get
 
-**Argument:** `<id>` — Domain ID
+**Argument:** `<id>` - Domain ID
 
 Returns full domain with `records[]`, `status` (`not_started`|`pending`|`verified`|`failed`|`temporary_failure`), `capabilities`, `region`.
 
@@ -46,7 +46,7 @@ Returns full domain with `records[]`, `status` (`not_started`|`pending`|`verifie
 
 Trigger async DNS verification.
 
-**Argument:** `<id>` — Domain ID
+**Argument:** `<id>` - Domain ID
 
 **Output:** `{"object":"domain","id":"..."}`
 
@@ -54,7 +54,7 @@ Trigger async DNS verification.
 
 ## domains update
 
-**Argument:** `<id>` — Domain ID
+**Argument:** `<id>` - Domain ID
 
 | Flag | Type | Description |
 |------|------|-------------|
@@ -70,7 +70,7 @@ At least one option required.
 
 ## domains delete
 
-**Argument:** `<id>` — Domain ID
+**Argument:** `<id>` - Domain ID
 
 | Flag | Type | Required | Description |
 |------|------|----------|-------------|

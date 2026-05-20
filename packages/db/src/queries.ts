@@ -460,7 +460,7 @@ export type IncomeRow = {
   clientId: string | null;
   clientName: string | null;
   description: string | null;
-  amount: string; // numeric from DB — caller converts with Number()
+  amount: string; // numeric from DB - caller converts with Number()
 };
 
 /**
@@ -782,7 +782,7 @@ export type ExpenseRow = {
   clientName: string | null;
   category: string;
   description: string | null;
-  amount: string; // numeric from DB — caller converts with Number()
+  amount: string; // numeric from DB - caller converts with Number()
   createdAt: Date;
   updatedAt: Date | null;
 };

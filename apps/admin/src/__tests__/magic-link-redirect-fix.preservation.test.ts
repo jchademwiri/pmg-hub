@@ -1,7 +1,7 @@
 /**
- * Preservation Property Tests — magic-link-redirect-fix
+ * Preservation Property Tests - magic-link-redirect-fix
  *
- * Property 2: Preservation — Unauthenticated Redirects, Allowlist, and Rate Limiting Unchanged
+ * Property 2: Preservation - Unauthenticated Redirects, Allowlist, and Rate Limiting Unchanged
  *
  * These tests MUST PASS on unfixed code. They capture baseline behavior that
  * must be preserved after the fix is applied.
@@ -38,20 +38,20 @@ function makeRequest(
 
 // ─── Preservation Tests ───────────────────────────────────────────────────────
 
-describe('magic-link-redirect-fix — Property 2: Preservation — Baseline Behaviors', () => {
+describe('magic-link-redirect-fix - Property 2: Preservation - Baseline Behaviors', () => {
   /**
    * Each test module import gets a fresh in-memory rate limiter, so we
    * re-import proxy dynamically inside the rate-limit test to get a clean state.
    */
 
-  describe('3.1 — Unauthenticated requests to protected paths redirect to /login', () => {
+  describe('3.1 - Unauthenticated requests to protected paths redirect to /login', () => {
     /**
      * Validates: Requirements 3.1
      *
      * Observation: proxy(request to /dashboard with no cookies) → redirect to /login
      */
     it(
-      'proxy redirects to /login when no session cookie is present on a protected path — Validates: Requirements 3.1',
+      'proxy redirects to /login when no session cookie is present on a protected path - Validates: Requirements 3.1',
       async () => {
         const { proxy } = await import('@/proxy')
         const req = makeRequest('/dashboard')
@@ -64,7 +64,7 @@ describe('magic-link-redirect-fix — Property 2: Preservation — Baseline Beha
     )
 
     it(
-      'proxy redirects to /login for any protected path with no cookies — Validates: Requirements 3.1',
+      'proxy redirects to /login for any protected path with no cookies - Validates: Requirements 3.1',
       async () => {
         const { proxy } = await import('@/proxy')
         const protectedPaths = ['/dashboard', '/settings', '/settings/users', '/reports', '/admin']
@@ -79,21 +79,21 @@ describe('magic-link-redirect-fix — Property 2: Preservation — Baseline Beha
     )
   })
 
-  describe('3.2 — Plain session cookie still grants access to protected paths', () => {
+  describe('3.2 - Plain session cookie still grants access to protected paths', () => {
     /**
      * Validates: Requirements 2.2 / Preservation
      *
      * Observation: proxy(request to /dashboard with better-auth.session_token=abc) → NextResponse.next()
      */
     beforeEach(() => {
-      // Mock fetch for server-side session validation — active user
+      // Mock fetch for server-side session validation - active user
       vi.stubGlobal('fetch', vi.fn().mockResolvedValue(
         new Response(JSON.stringify({ user: { id: '1', name: 'Test', email: 'test@test.com', isActive: true } }), { status: 200 })
       ))
     })
 
     it(
-      'proxy returns NextResponse.next() when plain better-auth.session_token cookie is present — Validates: Requirements 3.1',
+      'proxy returns NextResponse.next() when plain better-auth.session_token cookie is present - Validates: Requirements 3.1',
       async () => {
         const { proxy } = await import('@/proxy')
         const req = makeRequest('/dashboard', { 'better-auth.session_token': 'abc123' })
@@ -106,7 +106,7 @@ describe('magic-link-redirect-fix — Property 2: Preservation — Baseline Beha
     )
   })
 
-  describe('3.3 — Allowlisted paths always pass through unconditionally', () => {
+  describe('3.3 - Allowlisted paths always pass through unconditionally', () => {
     /**
      * Validates: Requirements 3.2
      *
@@ -114,7 +114,7 @@ describe('magic-link-redirect-fix — Property 2: Preservation — Baseline Beha
      * Observation: proxy(request to /api/auth/signin with no cookies) → NextResponse.next()
      */
     it(
-      'proxy returns NextResponse.next() for /login with no cookies — Validates: Requirements 3.2',
+      'proxy returns NextResponse.next() for /login with no cookies - Validates: Requirements 3.2',
       async () => {
         const { proxy } = await import('@/proxy')
         const req = makeRequest('/login')
@@ -126,7 +126,7 @@ describe('magic-link-redirect-fix — Property 2: Preservation — Baseline Beha
     )
 
     it(
-      'proxy returns NextResponse.next() for /api/auth/signin with no cookies — Validates: Requirements 3.2',
+      'proxy returns NextResponse.next() for /api/auth/signin with no cookies - Validates: Requirements 3.2',
       async () => {
         const { proxy } = await import('@/proxy')
         const req = makeRequest('/api/auth/signin')
@@ -138,7 +138,7 @@ describe('magic-link-redirect-fix — Property 2: Preservation — Baseline Beha
     )
 
     it(
-      'proxy returns NextResponse.next() for all /api/auth/* paths regardless of cookies — Validates: Requirements 3.2',
+      'proxy returns NextResponse.next() for all /api/auth/* paths regardless of cookies - Validates: Requirements 3.2',
       async () => {
         const { proxy } = await import('@/proxy')
         const authPaths = [
@@ -158,7 +158,7 @@ describe('magic-link-redirect-fix — Property 2: Preservation — Baseline Beha
     )
   })
 
-  describe('3.4 — Rate limiting on /api/auth/ endpoints returns 429', () => {
+  describe('3.4 - Rate limiting on /api/auth/ endpoints returns 429', () => {
     /**
      * Validates: Requirements 3.3
      *
@@ -169,13 +169,13 @@ describe('magic-link-redirect-fix — Property 2: Preservation — Baseline Beha
      * RATE_LIMIT_MAX + 1 requests to trigger the limit.
      */
     it(
-      'proxy returns 429 after exceeding rate limit on /api/auth/ endpoint — Validates: Requirements 3.3',
+      'proxy returns 429 after exceeding rate limit on /api/auth/ endpoint - Validates: Requirements 3.3',
       async () => {
         const { proxy } = await import('@/proxy')
         const RATE_LIMIT_MAX = 10
         const uniqueIp = `10.0.0.${Math.floor(Math.random() * 200) + 50}` // avoid collision with other tests
 
-        // Send RATE_LIMIT_MAX requests — all should pass through
+        // Send RATE_LIMIT_MAX requests - all should pass through
         for (let i = 0; i < RATE_LIMIT_MAX; i++) {
           const req = makeRequest('/api/auth/signin', {}, uniqueIp)
           const res = await proxy(req)

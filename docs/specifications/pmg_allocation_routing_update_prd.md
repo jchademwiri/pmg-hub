@@ -11,7 +11,7 @@
 
 ## 1. Executive Summary
 
-The PMG Financial Control System currently treats every outbound payment as an "Expense," which shrinks the Profit Pool regardless of whether the money comes from pre-profit operations or post-profit savings. This means spending saved Reinvest capital on an ad campaign accidentally reduces your Salary allocation — you end up personally subsidising business growth.
+The PMG Financial Control System currently treats every outbound payment as an "Expense," which shrinks the Profit Pool regardless of whether the money comes from pre-profit operations or post-profit savings. This means spending saved Reinvest capital on an ad campaign accidentally reduces your Salary allocation - you end up personally subsidising business growth.
 
 This update draws a hard line between two fundamentally different kinds of spending, replaces the `withdrawals` table with a structured `ledger` table, and expands the dashboard to show real-time balances across all four allocation buckets.
 
@@ -36,13 +36,13 @@ The Profit Pool is then split:
 
 ### Core Flaw
 
-Every payment — whether it is a server bill required to deliver a client's job, or a Facebook ad campaign paid for out of saved Reinvest capital — is currently logged as an Expense. This shrinks the Profit Pool, which in turn shrinks every allocation including Salary.
+Every payment - whether it is a server bill required to deliver a client's job, or a Facebook ad campaign paid for out of saved Reinvest capital - is currently logged as an Expense. This shrinks the Profit Pool, which in turn shrinks every allocation including Salary.
 
 **The result:** The owner unintentionally funds business growth from personal income.
 
 ### Secondary Flaw (identified during codebase review)
 
-The existing `/accounts` page and `recordAccountWithdrawal` server action both call `insertWithdrawal()` directly. This action is not governed by Profit Pool logic at all — it only checks the YTD earned vs withdrawn balance per account. After this update, all post-profit spending must go through the Ledger system. The `insertWithdrawal` path must be retired and replaced.
+The existing `/accounts` page and `recordAccountWithdrawal` server action both call `insertWithdrawal()` directly. This action is not governed by Profit Pool logic at all - it only checks the YTD earned vs withdrawn balance per account. After this update, all post-profit spending must go through the Ledger system. The `insertWithdrawal` path must be retired and replaced.
 
 ---
 
@@ -99,8 +99,8 @@ The balance formula uses the cumulative all-time Profit Pool (i.e. summed direct
 
 | Situation | Action | Where it goes |
 |---|---|---|
-| Cost required to **deliver an existing obligation** | "Add Expense" | `expenses` table — reduces Profit Pool |
-| Cost funded by **saved profits** (growth, salary draw, investment) | "Add Ledger Entry" | `ledger` table — deducts from selected bucket only |
+| Cost required to **deliver an existing obligation** | "Add Expense" | `expenses` table - reduces Profit Pool |
+| Cost funded by **saved profits** (growth, salary draw, investment) | "Add Ledger Entry" | `ledger` table - deducts from selected bucket only |
 
 ### Examples
 
@@ -187,9 +187,9 @@ const ledgerSchema = z.object({
 });
 ```
 
-- `createLedgerEntry` — validates, checks available bucket balance, inserts into `ledger`
-- `updateLedgerEntry` — validates, rechecks balance excluding current row, updates
-- `deleteLedgerEntry` — deletes by id
+- `createLedgerEntry` - validates, checks available bucket balance, inserts into `ledger`
+- `updateLedgerEntry` - validates, rechecks balance excluding current row, updates
+- `deleteLedgerEntry` - deletes by id
 - All three must call `revalidatePath('/ledger')`, `revalidatePath('/accounts')`, `revalidatePath('/dashboard')`
 
 #### File: `apps/admin/src/app/actions/account-withdrawal.ts`
@@ -204,7 +204,7 @@ This file currently calls `insertWithdrawal()`. **It must be updated** to call `
 
 **Remove** or deprecate: `getWithdrawals()`, `getWithdrawalsPrevMonth()`, `getWithdrawalsYTD()`, `WithdrawalSummary` type.
 
-**Add** `getLedgerBalances()` — calculates available balance for all four buckets:
+**Add** `getLedgerBalances()` - calculates available balance for all four buckets:
 
 ```typescript
 export type BucketBalances = {
@@ -222,9 +222,9 @@ export async function getLedgerBalances(): Promise<BucketBalances> {
 }
 ```
 
-**Add** `getLedgerEntriesForPeriod(start, end, allocationType?)` — for dashboard period cards and the ledger page.
+**Add** `getLedgerEntriesForPeriod(start, end, allocationType?)` - for dashboard period cards and the ledger page.
 
-**Update** `SalaryCard` data source — the salary card must now receive `BucketBalances.salary` instead of `WithdrawalSummary`. The carryOver concept remains valid and should be calculated as `available` from prior periods.
+**Update** `SalaryCard` data source - the salary card must now receive `BucketBalances.salary` instead of `WithdrawalSummary`. The carryOver concept remains valid and should be calculated as `available` from prior periods.
 
 ---
 
@@ -235,14 +235,14 @@ export async function getLedgerBalances(): Promise<BucketBalances> {
 **Remove:** All `withdrawal`-related query functions (`getAllWithdrawals`, `getWithdrawalById`, `getWithdrawalsByAccount`, `getWithdrawalsByAccountYTD`, `getWithdrawalsByAccountYTDSpecific`, `getWithdrawalsCurrentMonth`, `getWithdrawalsPreviousMonth`, `getWithdrawalsYTDFull`, `getTotalWithdrawalsYTD`, `insertWithdrawal`).
 
 **Add:**
-- `getAllLedgerEntries(filters?, pageObj?)` — paginated, filterable by `allocationType` and `entryType`
+- `getAllLedgerEntries(filters?, pageObj?)` - paginated, filterable by `allocationType` and `entryType`
 - `getLedgerById(id)`
 - `insertLedgerEntry(data)`
-- `getLedgerTotalByAllocation(allocationType)` — sum of all entries for a given bucket
-- `getLedgerEntriesCurrentMonth(allocationType?)` — for dashboard period cards
+- `getLedgerTotalByAllocation(allocationType)` - sum of all entries for a given bucket
+- `getLedgerEntriesCurrentMonth(allocationType?)` - for dashboard period cards
 - `getLedgerEntriesPreviousMonth(allocationType?)`
 - `getLedgerEntriesYTD(allocationType?)`
-- `getLedgerByAccountYTD()` — returns `Record<AllocationKey, number>` for balance checks
+- `getLedgerByAccountYTD()` - returns `Record<AllocationKey, number>` for balance checks
 
 #### `packages/db/src/index.ts`
 
@@ -269,14 +269,14 @@ Remove all `withdrawals`-related exports. Export all new `ledger` query function
 - Unified transaction table showing all ledger entries
 - Columns: Date | Bucket | Entry Type | Amount | Description | Actions
 - Filter by `allocationType` (show all, or filter to one bucket)
-- Filter by `entryType` (future enhancement — wire up now, activate later)
+- Filter by `entryType` (future enhancement - wire up now, activate later)
 - Page total shows all-time ledger spend
 
 #### Dashboard: `apps/admin/src/components/dashboard/`
 
-**`salary-card.tsx`** — update to receive `BucketBalances.salary` data. Salary metrics must **only** query `allocationType = 'salary'`. No unfiltered ledger queries may feed this card.
+**`salary-card.tsx`** - update to receive `BucketBalances.salary` data. Salary metrics must **only** query `allocationType = 'salary'`. No unfiltered ledger queries may feed this card.
 
-**New `bucket-balances-card.tsx`** (or expand existing KPI grid) — display available balances for all four buckets: Salary, Reinvest, Reserve, Flex. This replaces the single salary carry-over display and gives the owner a full capital overview at a glance.
+**New `bucket-balances-card.tsx`** (or expand existing KPI grid) - display available balances for all four buckets: Salary, Reinvest, Reserve, Flex. This replaces the single salary carry-over display and gives the owner a full capital overview at a glance.
 
 #### Accounts Page: `apps/admin/src/app/(admin)/accounts/`
 
@@ -310,7 +310,7 @@ The "Record Withdrawal" button on each `AccountCard` currently opens an inline f
 
 ## 7. Functional Requirements
 
-### 7.1 Expense System (Pre-Profit) — Unchanged
+### 7.1 Expense System (Pre-Profit) - Unchanged
 
 - Logged via "Add Expense"
 - Stored in `expenses` table
@@ -359,8 +359,8 @@ If a bucket has insufficient funds:
 | Ledger amount must not exceed available bucket balance | Server action guard |
 | `allocationType` must match enum exactly | DB enum + Zod |
 | `entryType` must match enum exactly | DB enum + Zod |
-| Expenses must be positive | Existing — unchanged |
-| Allocation percentages must equal 100% | Compile-time constant — unchanged |
+| Expenses must be positive | Existing - unchanged |
+| Allocation percentages must equal 100% | Compile-time constant - unchanged |
 | Date cannot be in the future | Server action guard |
 
 ---
@@ -383,7 +383,7 @@ If Expenses exceed Net Revenue:
 
 ### Orphaned Imports After Rename
 
-Every file that currently imports from `packages/db/src/schema/withdrawals.ts` or `apps/admin/src/app/actions/withdrawals.ts` must be updated. A build will fail with orphaned imports — treat this as a hard gate before deployment.
+Every file that currently imports from `packages/db/src/schema/withdrawals.ts` or `apps/admin/src/app/actions/withdrawals.ts` must be updated. A build will fail with orphaned imports - treat this as a hard gate before deployment.
 
 ---
 
@@ -447,7 +447,7 @@ As an agency owner, I want a full audit trail of all post-profit spending.
 - All ledger entries include `createdAt` timestamp (DB default)
 - `createdBy` field populated from session user id on insert
 - Description field is optional but encouraged via UI placeholder text
-- Entries are never deleted in production — soft-delete or adjustment entries only (future enhancement)
+- Entries are never deleted in production - soft-delete or adjustment entries only (future enhancement)
 - The `entryType` field distinguishes spending (`spend`), cross-bucket transfers (`transfer`), and manual corrections (`adjustment`)
 
 ---
@@ -482,7 +482,7 @@ Since there is no historical data to preserve:
 | Risk | Mitigation |
 |---|---|
 | Misclassification (expense logged as ledger or vice versa) | Clear decision rule surfaced in both form UIs with examples |
-| Incorrect balance calculations | Centralise all logic in `getLedgerBalances()` — no inline calculations in components |
+| Incorrect balance calculations | Centralise all logic in `getLedgerBalances()` - no inline calculations in components |
 | Data pollution in Salary dashboard card | Strict `WHERE allocationType = 'salary'` filter on every query feeding that card |
 | Orphaned imports breaking the build | Search codebase for all references to `withdrawals` before final deployment |
 | `account-withdrawal.ts` bypassing the new system | Explicitly redirect this action through `createLedgerEntry` in Phase 2 |
@@ -504,7 +504,7 @@ Since there is no historical data to preserve:
 - Remove all `withdrawals`-related exports
 - **Gate:** All TypeScript compiles with no errors. No orphaned imports.
 
-### Phase 3: UI — Forms & Ledger Page
+### Phase 3: UI - Forms & Ledger Page
 - Create `apps/admin/src/components/ledger/` folder with add and edit forms
 - Create `apps/admin/src/app/(admin)/ledger/page.tsx`
 - Add bucket dropdown and real-time balance display to forms
@@ -545,7 +545,7 @@ If you are reading this document to implement the Allocation Routing Update, adh
 
 **One Phase at a Time:** Complete Phase 1, ask the user to run Drizzle migrations, and wait for confirmation before proceeding to Phase 2.
 
-**Handle the Rename Rigorously:** Search for every reference to `withdrawals` across the entire monorepo — schema, queries, actions, components, pages, sidebar, top-nav, and `index.ts` exports. Leaving a single orphaned import will break the build.
+**Handle the Rename Rigorously:** Search for every reference to `withdrawals` across the entire monorepo - schema, queries, actions, components, pages, sidebar, top-nav, and `index.ts` exports. Leaving a single orphaned import will break the build.
 
 **Type Safety is Non-Negotiable:** The `allocationEnum` values in Drizzle (`'salary' | 'reinvest' | 'reserve' | 'flex'`) must match the Zod schemas in server actions and the React hook form schemas exactly.
 

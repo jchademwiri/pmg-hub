@@ -1,11 +1,11 @@
 ---
 name: resend-cli
 description: >
-  Operate the Resend platform from the terminal — send emails (including React Email
+  Operate the Resend platform from the terminal - send emails (including React Email
   .tsx templates via --react-email), manage domains, contacts, broadcasts, templates,
   webhooks, API keys, and logs via the `resend` CLI. Use when the user wants to run
   Resend commands in the shell, scripts, or CI/CD pipelines, or send/preview React
-  Email templates. Always load this skill before running `resend` commands — it
+  Email templates. Always load this skill before running `resend` commands - it
   contains the non-interactive flag contract and gotchas that prevent silent failures.
 license: MIT
 metadata:
@@ -38,7 +38,7 @@ references:
 
 ## Agent Protocol
 
-The CLI auto-detects non-TTY environments and outputs JSON — no `--json` flag needed.
+The CLI auto-detects non-TTY environments and outputs JSON - no `--json` flag needed.
 
 **Rules for agents:**
 - Supply ALL required flags. The CLI will NOT prompt when stdin is not a TTY.
@@ -89,14 +89,14 @@ Read the matching reference file for detailed flags and output shapes.
 
 | # | Mistake | Fix |
 |---|---------|-----|
-| 1 | **Forgetting `--yes` on delete commands** | All `delete`/`rm` subcommands require `--yes` in non-interactive mode — otherwise the CLI exits with an error |
-| 2 | **Not saving webhook `signing_secret`** | `webhooks create` shows the secret once only — it cannot be retrieved later. Capture it from command output immediately |
+| 1 | **Forgetting `--yes` on delete commands** | All `delete`/`rm` subcommands require `--yes` in non-interactive mode - otherwise the CLI exits with an error |
+| 2 | **Not saving webhook `signing_secret`** | `webhooks create` shows the secret once only - it cannot be retrieved later. Capture it from command output immediately |
 | 3 | **Omitting `--quiet` in CI** | Without `-q`, spinners and status text leak into stdout. Use `-q` to get clean JSON only |
-| 4 | **Using `--scheduled-at` with batch** | Batch sending does not support `scheduled_at` — use single `emails send` instead |
-| 5 | **Expecting `domains list` to include DNS records** | List returns summaries only — use `domains get <id>` for the full `records[]` array |
-| 6 | **Sending a dashboard-created broadcast via CLI** | Only API-created broadcasts can be sent with `broadcasts send` — dashboard broadcasts must be sent from the dashboard |
-| 7 | **Passing `--events` to `webhooks update` expecting additive behavior** | `--events` replaces the entire subscription list — always pass the complete set |
-| 8 | **Expecting `logs list` to include request/response bodies** | List returns summary fields only — use `logs get <id>` for full `request_body` and `response_body` |
+| 4 | **Using `--scheduled-at` with batch** | Batch sending does not support `scheduled_at` - use single `emails send` instead |
+| 5 | **Expecting `domains list` to include DNS records** | List returns summaries only - use `domains get <id>` for the full `records[]` array |
+| 6 | **Sending a dashboard-created broadcast via CLI** | Only API-created broadcasts can be sent with `broadcasts send` - dashboard broadcasts must be sent from the dashboard |
+| 7 | **Passing `--events` to `webhooks update` expecting additive behavior** | `--events` replaces the entire subscription list - always pass the complete set |
+| 8 | **Expecting `logs list` to include request/response bodies** | List returns summary fields only - use `logs get <id>` for full `request_body` and `response_body` |
 
 ## Common Patterns
 

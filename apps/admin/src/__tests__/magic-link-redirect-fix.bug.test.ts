@@ -1,7 +1,7 @@
 /**
- * Bug Condition Exploration Test — magic-link-redirect-fix
+ * Bug Condition Exploration Test - magic-link-redirect-fix
  *
- * Property 1: Bug Condition — Secure-Prefixed Cookie Grants Access
+ * Property 1: Bug Condition - Secure-Prefixed Cookie Grants Access
  *
  * This test MUST FAIL on unfixed code. Failure confirms the bug exists.
  * DO NOT modify proxy.ts or this test to make it pass.
@@ -34,7 +34,7 @@ function makeSecureCookieRequest(pathname: string, secureCookieValue: string): N
 
 // ─── Bug Condition Exploration Test ──────────────────────────────────────────
 
-describe('magic-link-redirect-fix — Property 1: Bug Condition — Secure-Prefixed Cookie Grants Access', () => {
+describe('magic-link-redirect-fix - Property 1: Bug Condition - Secure-Prefixed Cookie Grants Access', () => {
   /**
    * Validates: Requirements 1.1, 1.2
    *
@@ -47,14 +47,14 @@ describe('magic-link-redirect-fix — Property 1: Bug Condition — Secure-Prefi
    *   returns redirect to /login instead of NextResponse.next()
    */
   beforeEach(() => {
-    // Mock fetch for server-side session validation — return a valid active session
+    // Mock fetch for server-side session validation - return a valid active session
     vi.stubGlobal('fetch', vi.fn().mockResolvedValue(
       new Response(JSON.stringify({ user: { id: '1', name: 'Test', email: 'test@test.com', isActive: true } }), { status: 200 })
     ))
   })
 
   it(
-    'proxy returns NextResponse.next() (not a redirect) when only __Secure-better-auth.session_token is set on a protected path — Validates: Requirements 1.1, 1.2',
+    'proxy returns NextResponse.next() (not a redirect) when only __Secure-better-auth.session_token is set on a protected path - Validates: Requirements 1.1, 1.2',
     async () => {
       const req = makeSecureCookieRequest('/dashboard', 'abc123')
       const res = await proxy(req)
@@ -63,7 +63,7 @@ describe('magic-link-redirect-fix — Property 1: Bug Condition — Secure-Prefi
       expect(res.status).not.toBe(302)
       expect(res.status).not.toBe(307)
 
-      // The response MUST be NextResponse.next() — no Location header
+      // The response MUST be NextResponse.next() - no Location header
       expect(res.headers.get('location')).toBeNull()
     }
   )

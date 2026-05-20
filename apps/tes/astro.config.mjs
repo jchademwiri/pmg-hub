@@ -23,7 +23,7 @@ export default defineConfig({
   integrations: [
     react(),
     sitemap({
-      // index.astro is SSR so it won't be auto-discovered — add it manually
+      // index.astro is SSR so it won't be auto-discovered - add it manually
       customPages: ['https://www.tenderedgesolutions.co.za/'],
     }),
   ],

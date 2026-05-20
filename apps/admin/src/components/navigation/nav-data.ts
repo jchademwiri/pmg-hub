@@ -100,7 +100,7 @@ export const GROUPS: NavGroup[] = [
   },
 ]
 
-// ── Route labels (derived — do not edit manually) ─────────────────────────────
+// ── Route labels (derived - do not edit manually) ─────────────────────────────
 // Built from GROUPS + OVERVIEW so top-nav breadcrumbs always match the sidebar.
 
 const derivedLabels: Record<string, string> = {}

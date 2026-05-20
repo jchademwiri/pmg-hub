@@ -51,7 +51,7 @@ const AdminNewLeadEmail = (props: AdminNewLeadEmailProps) => {
       >
         <Head />
         <Preview>
-          New Lead: {package_name} — {name} | {companyName}
+          New Lead: {package_name} - {name} | {companyName}
         </Preview>
         <Body className="bg-[#F6F8FA] py-[40px] font-sans">
           <Container className="mx-auto max-w-[600px] rounded-[12px] bg-[#FFFFFF] shadow-lg">

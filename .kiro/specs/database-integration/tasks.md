@@ -56,7 +56,7 @@ Set up `packages/db` (`@pmg/db`) as the shared database package: define the prod
     - Run with `bun packages/db/src/seed.ts` and confirm rows are inserted
     - _Requirements: 11.1, 11.2, 11.3, 11.4, 11.5_
 
-- [x] 6. Checkpoint — ensure schema, migrations, and seed are working
+- [x] 6. Checkpoint - ensure schema, migrations, and seed are working
   - Confirm `bun db:generate` and `bun db:migrate` complete without errors
   - Confirm `bun packages/db/src/seed.ts` runs twice without creating duplicates
   - Ask the user if any questions arise before proceeding to tests.
@@ -96,13 +96,13 @@ Set up `packages/db` (`@pmg/db`) as the shared database package: define the prod
     - Extract seed rows and upsert logic into a pure function; generate arbitrary existing table states; assert applying the function twice equals applying it once
     - Tag: `// Feature: database-integration, Property 2: Seed script is idempotent`
 
-- [x] 8. Final checkpoint — ensure all tests pass
+- [x] 8. Final checkpoint - ensure all tests pass
   - Run `bun test --filter @pmg/db` and confirm all tests pass
   - Ask the user if any questions arise.
 
 ## Notes
 
 - Tasks marked with `*` are optional and can be skipped for a faster MVP
-- `drizzle-kit push` is used (not `migrate`) — it directly syncs the schema without a migration history table
+- `drizzle-kit push` is used (not `migrate`) - it directly syncs the schema without a migration history table
 - The `connection_test` table must be removed before generating migrations to avoid it appearing in the schema
 - All cent values are integers in ZAR cents (e.g. R299/mo = 29900)
