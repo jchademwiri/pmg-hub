@@ -1,6 +1,7 @@
 import Link from 'next/link'
 import { cn } from '@/lib/utils'
 import { fmtDateLong, formatZAR } from '@/lib/format'
+import { getDocumentLogoUrl } from '@/lib/document-logo'
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 
@@ -147,6 +148,8 @@ export function DocumentPreview({
   const dueDateLabel =
     type === 'invoice' ? 'Due Date' : type === 'quote' ? 'Expiry Date' : undefined
 
+  const logoUrl = org.logoUrl ?? getDocumentLogoUrl(org.name)
+
   return (
     <div className="print-document w-full max-w-[794px] min-h-[1123px] mx-auto flex flex-col bg-white text-zinc-900 shadow-md print:shadow-none ring-1 ring-zinc-200 print:ring-0">
 
@@ -157,8 +160,8 @@ export function DocumentPreview({
         <div className="flex items-start gap-4">
           {/* Logo placeholder - shows initials if no logo */}
           <div className="flex size-14 shrink-0 items-center justify-center rounded-lg bg-zinc-100 text-zinc-400 text-xs font-bold overflow-hidden">
-            {org.logoUrl
-              ? <img src={org.logoUrl} alt={org.name} className="w-full h-full object-contain" />
+            {logoUrl
+              ? <img src={logoUrl} alt={org.name} className="w-full h-full object-contain" />
               : org.name.slice(0, 3).toUpperCase()
             }
           </div>

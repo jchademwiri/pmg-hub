@@ -11,6 +11,7 @@ import { BillingTotalsBlock } from '@/components/billing/billing-totals-block';
 import { getQuotationById, getDivisionBillingSettings } from '@pmg/db';
 import { updateQuotationStatus, deleteQuotation } from '@/app/actions/billing-quotes';
 import { fmtDate } from '@/lib/format';
+import { getDocumentLogoUrl } from '@/lib/document-logo';
 import { QuoteDetailActions } from './quote-detail-actions';
 import { PrintButton } from '@/components/billing/print-button';
 
@@ -44,6 +45,7 @@ export default async function QuoteDetailPage({ params }: Props) {
     reference: quote.reference ?? undefined,
     org: {
       name: quote.divisionName,
+      logoUrl: getDocumentLogoUrl(quote.divisionName),
       divisionOf: 'Playhouse Media Group',
       email: divSettings?.salesRepEmail ?? undefined,
       phone: divSettings?.salesRepPhone ?? undefined,

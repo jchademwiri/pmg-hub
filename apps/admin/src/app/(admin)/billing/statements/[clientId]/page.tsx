@@ -8,6 +8,7 @@ import { Separator } from '@/components/ui/separator';
 import { DocumentPreview } from '@/components/billing/document-preview';
 import type { StatementTransaction } from '@/components/billing/document-preview';
 import { getClientStatement, getAllIncome, getStatementYears, getDivisionBillingSettings, getClientById } from '@pmg/db';
+import { getDocumentLogoUrl } from '@/lib/document-logo';
 import { formatZAR, fmtDate } from '@/lib/format';
 import { PrintButton } from '@/components/billing/print-button';
 
@@ -113,6 +114,7 @@ export default async function StatementDetailPage({ params, searchParams }: Prop
 
   const primaryDivisionId = invoices[0]?.divisionId;
   const divSettings = primaryDivisionId ? await getDivisionBillingSettings(primaryDivisionId) : null;
+  const orgName = invoices[0]?.divisionName ?? 'PMG';
 
   const docPreviewProps = {
     number: `STMT-${periodLabel}-${(client.businessName ?? client.name).slice(0, 3).toUpperCase()}`,
@@ -121,7 +123,8 @@ export default async function StatementDetailPage({ params, searchParams }: Prop
     periodFrom: year ? `${year}-03-01` : `${now.getFullYear()}-03-01`,
     periodTo: year ? `${year + 1}-02-28` : now.toISOString().split('T')[0]!,
     org: {
-      name: invoices[0]?.divisionName ?? 'PMG',
+      name: orgName,
+      logoUrl: getDocumentLogoUrl(orgName),
       divisionOf: divSettings ? 'Playhouse Media Group' : undefined,
       email: divSettings?.salesRepEmail ?? undefined,
       phone: divSettings?.salesRepPhone ?? undefined,
