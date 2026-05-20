@@ -2,7 +2,7 @@ export const DOCUMENT_LOGOS = {
   tes: '/logo/tes-logo.svg',
   pmg: '/logo/pmg-logo.svg',
   apex: '/logo/apex-logo.svg',
-  default: '/logo/default-logo.svg',
+  default: '/logo/pmg-logo.svg',
 } as const;
 
 export function getDocumentLogoUrl(orgName?: string): string {
@@ -13,7 +13,7 @@ export function getDocumentLogoUrl(orgName?: string): string {
     return DOCUMENT_LOGOS.tes;
   }
 
-  if (/apex web|apex/.test(normalized)) {
+  if (/apex web|apex|aws/.test(normalized)) {
     return DOCUMENT_LOGOS.apex;
   }
 

@@ -20,5 +20,8 @@
     "editor.defaultFormatter": "astro-build.astro-vscode"
   },
   "css.lint.unknownAtRules": "ignore",
-  "typescript.autoClosingTags": false
+  "typescript.autoClosingTags": false,
+  "chat.tools.terminal.autoApprove": {
+    "npm exec": true
+  }
 }

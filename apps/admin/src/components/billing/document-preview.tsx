@@ -159,11 +159,12 @@ export function DocumentPreview({
         {/* Left: Logo + Company info */}
         <div className="flex items-start gap-4">
           {/* Logo placeholder - shows initials if no logo */}
-          <div className="flex size-14 shrink-0 items-center justify-center rounded-lg bg-zinc-100 text-zinc-400 text-xs font-bold overflow-hidden">
-            {logoUrl
-              ? <img src={logoUrl} alt={org.name} className="w-full h-full object-contain" />
-              : org.name.slice(0, 3).toUpperCase()
-            }
+          <div className="flex size-14 shrink-0 items-center justify-center rounded-lg bg-zinc-100 text-zinc-800 text-xs font-bold overflow-hidden">
+            {logoUrl ? (
+              <img src={logoUrl} alt={org.name} className="w-full h-full object-contain" />
+            ) : (
+              org.name.slice(0, 3).toUpperCase()
+            )}
           </div>
 
           <div className="flex flex-col gap-0.5">
