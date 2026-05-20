@@ -2,7 +2,7 @@
 
 import { revalidatePath } from 'next/cache';
 import { getDb, invoices, quotations, billingLineItems, income, clients, divisionBillingSettings, eq, and } from '@pmg/db';
-import { getNextDocumentNumber } from '@pmg/db';
+import { getNextDocumentNumber, addDays } from '@pmg/db';
 import { getSessionOrRedirect } from '@/lib/auth';
 import { isPeriodClosed, getMinAllowedDate, getMinDateErrorMessage } from '@/lib/date-rules';
 import { CreateInvoiceSchema, type CreateInvoiceInput } from './billing-schema';
@@ -78,7 +78,7 @@ export async function createInvoice(
         documentNumber,
         status: 'draft',
         invoiceDate,
-        dueDate: dueDate ?? null,
+        dueDate: dueDate ?? addDays(invoiceDate, 7),
         reference: reference ?? null,
         subtotal: String(subtotal.toFixed(2)),
         discountType: discountType ?? null,

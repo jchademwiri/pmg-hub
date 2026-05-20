@@ -63,7 +63,14 @@ export interface DocumentPreviewProps {
   /** Optional link shown on the sticky header — useful during development */
   href?: string
   /** Statement ageing buckets */
-  ageing?: { current: number; days30: number; days60: number; days90: number; days120: number; }
+  ageing?: {
+    current: number;
+    days1_14: number;
+    days15_30: number;
+    days31_60: number;
+    days61_90: number;
+    days91_120: number;
+  }
   /** Global balance due for statement */
   balanceDue?: number
 }
@@ -426,19 +433,21 @@ export function DocumentPreview({
           <table className="w-full text-xs text-center border border-zinc-200">
             <thead>
               <tr className="bg-zinc-50 border-b border-zinc-200">
-                <th className="py-2 font-medium text-zinc-500 uppercase tracking-wide">120+ Days</th>
-                <th className="py-2 font-medium text-zinc-500 uppercase tracking-wide border-l border-zinc-200">90 Days</th>
-                <th className="py-2 font-medium text-zinc-500 uppercase tracking-wide border-l border-zinc-200">60 Days</th>
-                <th className="py-2 font-medium text-zinc-500 uppercase tracking-wide border-l border-zinc-200">30 Days</th>
+                <th className="py-2 font-medium text-zinc-500 uppercase tracking-wide">91–120 Days</th>
+                <th className="py-2 font-medium text-zinc-500 uppercase tracking-wide border-l border-zinc-200">61–90 Days</th>
+                <th className="py-2 font-medium text-zinc-500 uppercase tracking-wide border-l border-zinc-200">31–60 Days</th>
+                <th className="py-2 font-medium text-zinc-500 uppercase tracking-wide border-l border-zinc-200">15–30 Days</th>
+                <th className="py-2 font-medium text-zinc-500 uppercase tracking-wide border-l border-zinc-200">1–14 Days</th>
                 <th className="py-2 font-medium text-zinc-500 uppercase tracking-wide border-l border-zinc-200">Current</th>
               </tr>
             </thead>
             <tbody>
               <tr>
-                <td className="py-3 tabular-nums font-semibold">{fmt(ageing.days120)}</td>
-                <td className="py-3 tabular-nums font-semibold border-l border-zinc-200">{fmt(ageing.days90)}</td>
-                <td className="py-3 tabular-nums font-semibold border-l border-zinc-200">{fmt(ageing.days60)}</td>
-                <td className="py-3 tabular-nums font-semibold border-l border-zinc-200">{fmt(ageing.days30)}</td>
+                <td className={cn('py-3 tabular-nums font-semibold', ageing.days91_120 > 0 ? 'text-red-700' : '')}>{fmt(ageing.days91_120)}</td>
+                <td className={cn('py-3 tabular-nums font-semibold border-l border-zinc-200', ageing.days61_90 > 0 ? 'text-red-600' : '')}>{fmt(ageing.days61_90)}</td>
+                <td className={cn('py-3 tabular-nums font-semibold border-l border-zinc-200', ageing.days31_60 > 0 ? 'text-red-500' : '')}>{fmt(ageing.days31_60)}</td>
+                <td className={cn('py-3 tabular-nums font-semibold border-l border-zinc-200', ageing.days15_30 > 0 ? 'text-orange-600' : '')}>{fmt(ageing.days15_30)}</td>
+                <td className={cn('py-3 tabular-nums font-semibold border-l border-zinc-200', ageing.days1_14 > 0 ? 'text-amber-600' : '')}>{fmt(ageing.days1_14)}</td>
                 <td className="py-3 tabular-nums font-semibold border-l border-zinc-200">{fmt(ageing.current)}</td>
               </tr>
             </tbody>

@@ -2,7 +2,7 @@
 
 import { revalidatePath } from 'next/cache';
 import { getDb, quotations, billingLineItems, eq, and } from '@pmg/db';
-import { getNextDocumentNumber } from '@pmg/db';
+import { getNextDocumentNumber, addDays } from '@pmg/db';
 import { getSessionOrRedirect } from '@/lib/auth';
 import { isPeriodClosed, getMinAllowedDate, getMinDateErrorMessage } from '@/lib/date-rules';
 import { CreateQuotationSchema, type CreateQuotationInput } from './billing-schema';
@@ -124,7 +124,7 @@ export async function createQuotation(
         documentNumber,
         status: 'draft',
         quoteDate,
-        expiryDate: expiryDate ?? null,
+        expiryDate: expiryDate ?? addDays(quoteDate, 30),
         ...(includeReference ? { reference: reference ?? null } : {}),
         subtotal: String(subtotal.toFixed(2)),
         discountType: discountType ?? null,
