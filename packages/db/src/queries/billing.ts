@@ -906,7 +906,7 @@ export async function getStatementYears(clientId: string): Promise<number[]> {
 
 // ── Aging report ──────────────────────────────────────────────────────────────
 
-export type AgingBucket = 'current' | '1_14' | '15_30' | '31_60' | '61_90' | '91_120';
+export type AgingBucket = 'current' | '1_14' | '15_30' | '31_60' | '61_90' | '91_plus';
 
 export type AgingRow = {
   bucket: AgingBucket;
@@ -915,7 +915,7 @@ export type AgingRow = {
   count: number;
 };
 
-const AGING_BUCKETS: AgingBucket[] = ['current', '1_14', '15_30', '31_60', '61_90', '91_120'];
+const AGING_BUCKETS: AgingBucket[] = ['current', '1_14', '15_30', '31_60', '61_90', '91_plus'];
 
 const AGING_LABELS: Record<AgingBucket, string> = {
   current:  'Current',
@@ -923,7 +923,7 @@ const AGING_LABELS: Record<AgingBucket, string> = {
   '15_30':  '15–30 days',
   '31_60':  '31–60 days',
   '61_90':  '61–90 days',
-  '91_120': '91–120 days',
+  '91_plus': '91+ days',
 };
 
 /**
@@ -937,7 +937,7 @@ const AGING_LABELS: Record<AgingBucket, string> = {
  *   15_30     15–30 days past due
  *   31_60     31–60 days past due
  *   61_90     61–90 days past due
- *   91_120    91+ days past due
+ *   91_plus   91+ days past due
  */
 export async function getAgingReport(): Promise<AgingRow[]> {
   const result = await db.execute(sql`
@@ -948,7 +948,7 @@ export async function getAgingReport(): Promise<AgingRow[]> {
         WHEN CURRENT_DATE - due_date BETWEEN 15 AND 30           THEN '15_30'
         WHEN CURRENT_DATE - due_date BETWEEN 31 AND 60           THEN '31_60'
         WHEN CURRENT_DATE - due_date BETWEEN 61 AND 90           THEN '61_90'
-        ELSE '91_120'
+        ELSE '91_plus'
       END                                                         AS bucket,
       COUNT(*)::int                                               AS count,
       COALESCE(SUM(invoices.total), 0)                            AS total

@@ -23,18 +23,26 @@ Create a small date helper that every route can import. Add it to the shared pac
 
 ```ts
 /**
- * Adds N calendar days to an ISO date string (YYYY-MM-DD)
- * and returns the result as an ISO date string.
+ * Parses an ISO date string (YYYY-MM-DD) as UTC, adds N calendar days in UTC,
+ * and returns the result as an ISO date string (YYYY-MM-DD).
  */
 export function addDays(dateStr: string, days: number): string {
   const d = new Date(dateStr);
-  d.setDate(d.getDate() + days);
-  return d.toISOString().split('T')[0];
+  if (Number.isNaN(d.getTime())) {
+    throw new Error(`Invalid date string: ${dateStr}`);
+  }
+
+  const result = new Date(Date.UTC(d.getUTCFullYear(), d.getUTCMonth(), d.getUTCDate() + days));
+  return result.toISOString().slice(0, 10);
 }
 
-/** Returns today as an ISO date string (YYYY-MM-DD) */
+/** Returns today's local calendar date as an ISO date string (YYYY-MM-DD) */
 export function today(): string {
-  return new Date().toISOString().split('T')[0];
+  const now = new Date();
+  const year = now.getFullYear();
+  const month = String(now.getMonth() + 1).padStart(2, '0');
+  const day = String(now.getDate()).padStart(2, '0');
+  return `${year}-${month}-${day}`;
 }
 ```
 
@@ -55,7 +63,7 @@ export { addDays, today } from './lib/date-utils';
 Find the `db.insert(quotations)` call and apply this before the insert:
 
 ```ts
-import { addDays } from '@pmg/db';
+import { addDays, today } from '@pmg/db';
 
 // Before insert:
 const quoteDate = data.quoteDate ?? today();
@@ -77,7 +85,7 @@ await db.insert(quotations).values({
 **Rule:** `dueDate` = `invoiceDate + 7` unless the user explicitly provided one.
 
 ```ts
-import { addDays } from '@pmg/db';
+import { addDays, today } from '@pmg/db';
 
 // Before insert:
 const invoiceDate = data.invoiceDate ?? today();
@@ -170,7 +178,7 @@ Run these once. Verify row counts before committing.
 | `15_30` | 15–30 days | `15–30 days past due` |
 | `31_60` | 31–60 days | `31–60 days past due` |
 | `61_90` | 61–90 days | `61–90 days past due` |
-| `91_120` | 91–120 days | `91+ days past due` |
+| `91_plus` | 91+ days | `91+ days past due` |
 
 `120+` is removed. `1–14` is added between Current and 15–30.
 
@@ -183,7 +191,7 @@ Run these once. Verify row counts before committing.
 Replace the `CASE WHEN` bucket logic with:
 
 ```ts
-export type AgingBucket = 'current' | '1_14' | '15_30' | '31_60' | '61_90' | '91_120';
+export type AgingBucket = 'current' | '1_14' | '15_30' | '31_60' | '61_90' | '91_plus';
 
 export type AgingRow = {
   bucket: AgingBucket;
@@ -202,7 +210,7 @@ const result = await db.execute(sql`
       WHEN CURRENT_DATE - due_date BETWEEN 15 AND 30                  THEN '15_30'
       WHEN CURRENT_DATE - due_date BETWEEN 31 AND 60                  THEN '31_60'
       WHEN CURRENT_DATE - due_date BETWEEN 61 AND 90                  THEN '61_90'
-      ELSE '91_120'
+      ELSE '91_plus'
     END                                                 AS bucket,
     COUNT(*)::int                                       AS count,
     COALESCE(SUM(total - COALESCE(amount_paid, 0)), 0)  AS total
@@ -222,14 +230,14 @@ const result = await db.execute(sql`
 Map the result to the full 6-bucket output (fill missing buckets with zero):
 
 ```ts
-const BUCKETS: AgingBucket[] = ['current', '1_14', '15_30', '31_60', '61_90', '91_120'];
+const BUCKETS: AgingBucket[] = ['current', '1_14', '15_30', '31_60', '61_90', '91_plus'];
 const LABELS: Record<AgingBucket, string> = {
   current: 'Current',
   '1_14':  '1–14 days',
   '15_30': '15–30 days',
   '31_60': '31–60 days',
   '61_90': '61–90 days',
-  '91_120':'91–120 days',
+  '91_plus': '91+ days',
 };
 
 const map = Object.fromEntries(
@@ -263,7 +271,7 @@ The statement preview (as shown) uses a 6-column grid. Update the column order a
 
 ```ts
 const STATEMENT_BUCKETS: AgingBucket[] = [
-  'current', '1_14', '15_30', '31_60', '61_90', '91_120'
+  'current', '1_14', '15_30', '31_60', '61_90', '91_plus'
 ];
 ```
 

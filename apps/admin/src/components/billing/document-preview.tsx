@@ -433,7 +433,7 @@ export function DocumentPreview({
           <table className="w-full text-xs text-center border border-zinc-200">
             <thead>
               <tr className="bg-zinc-50 border-b border-zinc-200">
-                <th className="py-2 font-medium text-zinc-500 uppercase tracking-wide">91–120 Days</th>
+                <th className="py-2 font-medium text-zinc-500 uppercase tracking-wide">91+ Days</th>
                 <th className="py-2 font-medium text-zinc-500 uppercase tracking-wide border-l border-zinc-200">61–90 Days</th>
                 <th className="py-2 font-medium text-zinc-500 uppercase tracking-wide border-l border-zinc-200">31–60 Days</th>
                 <th className="py-2 font-medium text-zinc-500 uppercase tracking-wide border-l border-zinc-200">15–30 Days</th>
