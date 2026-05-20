@@ -22,7 +22,7 @@ import { formatZAR } from '@/lib/format';
 
 export interface LineItemFormRow {
   id: string;
-  itemId: string;        // required — must select from catalogue
+  itemId: string;        // required - must select from catalogue
   description: string;
   quantity: string;
   unitPrice: string;

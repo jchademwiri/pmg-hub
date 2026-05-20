@@ -42,7 +42,7 @@ resend emails send \
   --cc manager@example.com \
   --reply-to support@yourdomain.com
 
-# React Email template (.tsx) — bundles, renders to HTML, and sends
+# React Email template (.tsx) - bundles, renders to HTML, and sends
 resend emails send \
   --from "you@yourdomain.com" \
   --to recipient@example.com \
@@ -165,7 +165,7 @@ resend webhooks create \
   --endpoint https://yourapp.com/webhooks/resend \
   --events email.delivered email.bounced email.complained
 
-# IMPORTANT: Save the signing_secret from output — shown once only
+# IMPORTANT: Save the signing_secret from output - shown once only
 
 # Or subscribe to all events
 resend webhooks create \

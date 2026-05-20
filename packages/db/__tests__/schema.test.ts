@@ -43,7 +43,7 @@ describe("schema structure", () => {
 
     it("divisionId is nullable (no notNull constraint)", () => {
       const divisionIdCol = (schema.leads as any).divisionId;
-      // Drizzle column notNull property — nullable columns have notNull as false or undefined
+      // Drizzle column notNull property - nullable columns have notNull as false or undefined
       expect(divisionIdCol?.notNull).toBeFalsy();
     });
   });

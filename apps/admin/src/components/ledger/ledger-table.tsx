@@ -125,7 +125,7 @@ export function LedgerTable({
                   {entry.entryType}
                 </TableCell>
                 <TableCell className="max-w-[200px] truncate" title={entry.description || ''}>
-                  {entry.description || '—'}
+                  {entry.description || '-'}
                 </TableCell>
                 <TableCell className="text-right font-medium">
                   {formatZAR(Number(entry.amount))}

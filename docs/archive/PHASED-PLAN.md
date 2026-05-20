@@ -1,4 +1,4 @@
-# PMG Control Center — Phased Development Plan
+# PMG Control Center - Phased Development Plan
 ## With AI Copilot Prompts
 
 **Date:** May 2026  
@@ -11,7 +11,7 @@
 
 ## Current State Before We Start
 
-The following shell pages already exist and must be kept — do not regenerate them from scratch:
+The following shell pages already exist and must be kept - do not regenerate them from scratch:
 
 | File | State |
 |---|---|
@@ -24,12 +24,12 @@ The following shell pages already exist and must be kept — do not regenerate t
 | `billing/statements/page.tsx` | Shell with stats cards, empty table |
 | `billing/statements/[clientId]/page.tsx` | Shell with `DocumentPreview`, summary cards |
 | `billing/items/page.tsx` | Shell with stats cards, empty table |
-| `billing/items/new/page.tsx` | Shell — single card form with mocked fields |
+| `billing/items/new/page.tsx` | Shell - single card form with mocked fields |
 | `billing/items/[id]/page.tsx` | Shell with two-column layout, mock data |
-| `settings/billing/page.tsx` | ✅ Live — fetches `getAllDivisions()` |
-| `settings/billing/billing-settings-client.tsx` | ✅ Live — tab switching, `divisionPrefix()` logic |
-| `settings/organisation/page.tsx` | Shell — all save buttons disabled |
-| `settings/notifications/page.tsx` | Shell — toggle rows are visual mocks |
+| `settings/billing/page.tsx` | ✅ Live - fetches `getAllDivisions()` |
+| `settings/billing/billing-settings-client.tsx` | ✅ Live - tab switching, `divisionPrefix()` logic |
+| `settings/organisation/page.tsx` | Shell - all save buttons disabled |
+| `settings/notifications/page.tsx` | Shell - toggle rows are visual mocks |
 
 **Strategy:** Every prompt in this plan asks Claude to patch/extend existing files, not replace them. Always paste the current file content alongside the prompt.
 
@@ -38,22 +38,22 @@ The following shell pages already exist and must be kept — do not regenerate t
 ## How to Use This Plan
 
 Each step has:
-- **What you do** — your action
-- **What AI does** — what to hand to Claude
-- **Copilot Prompt** — paste this at the start of a new conversation, with the file contents attached
-- **Done When** — acceptance criteria before moving on
+- **What you do** - your action
+- **What AI does** - what to hand to Claude
+- **Copilot Prompt** - paste this at the start of a new conversation, with the file contents attached
+- **Done When** - acceptance criteria before moving on
 
 Always open a fresh conversation per step. Paste the prompt, attach the referenced files.
 
 ---
 
-## Phase 0 — Schema, Utilities & Queries
+## Phase 0 - Schema, Utilities & Queries
 **Duration:** 2–3 days  
 **Goal:** Database ready, document sequencing works, all queries typed.
 
 ---
 
-### Step 0.1 — Billing Schema
+### Step 0.1 - Billing Schema
 
 **What you do:** Create `packages/db/src/schema/billing.ts`
 
@@ -63,7 +63,7 @@ I need you to generate a new Drizzle ORM schema file for PMG Control Center's bi
 
 File to create: packages/db/src/schema/billing.ts
 
-My existing schema files for reference — copy their style exactly:
+My existing schema files for reference - copy their style exactly:
 [paste packages/db/src/schema/income.ts]
 [paste packages/db/src/schema/expenses.ts]
 [paste packages/db/src/schema/clients.ts]
@@ -71,7 +71,7 @@ My existing schema files for reference — copy their style exactly:
 Rules from my codebase:
 - uuid PKs with .defaultRandom()
 - timestamptz columns use { withTimezone: true }
-- updatedAt is nullable, app-managed — NO $onUpdate()
+- updatedAt is nullable, app-managed - NO $onUpdate()
 - created_by is text (matches user.id which is text, not uuid)
 - Indexes and check constraints follow the pattern in income.ts
 
@@ -99,7 +99,7 @@ Generate these tables:
    Indexes: division_id, client_id, status, quote_date
 
 3. invoices
-   Same as quotations plus: quotation_id (uuid nullable, no FK in schema — add FK comment),
+   Same as quotations plus: quotation_id (uuid nullable, no FK in schema - add FK comment),
    invoice_date (date NOT NULL), due_date (date nullable), po_number (text nullable),
    income_id (uuid nullable FK→income SET NULL),
    paid_at (timestamptz nullable)
@@ -107,7 +107,7 @@ Generate these tables:
 
 4. billing_line_items
    Columns: id (uuid PK), document_type (text enum 'quote'|'invoice'),
-   document_id (uuid NOT NULL — NO FK, polymorphic — add comment explaining this),
+   document_id (uuid NOT NULL - NO FK, polymorphic - add comment explaining this),
    sort_order (integer NOT NULL default 0), description (text NOT NULL),
    quantity (numeric 10,2 NOT NULL), unit_price (numeric 12,2 NOT NULL),
    vat_rate (numeric 5,2 NOT NULL default '0'), line_total (numeric 12,2 NOT NULL),
@@ -129,7 +129,7 @@ Export all TypeScript types ($inferSelect and $inferInsert for all 5 tables).
 
 ---
 
-### Step 0.2 — Update Schema Index
+### Step 0.2 - Update Schema Index
 
 **What you do:** Add one line to `packages/db/src/schema/index.ts`
 
@@ -141,7 +141,7 @@ No AI needed.
 
 ---
 
-### Step 0.3 — Document Number Utility
+### Step 0.3 - Document Number Utility
 
 **What you do:** Create `packages/db/src/lib/document-numbers.ts`
 
@@ -179,7 +179,7 @@ Export getNextDocumentNumber.
 
 ---
 
-### Step 0.4 — Billing Query Functions
+### Step 0.4 - Billing Query Functions
 
 **What you do:** Create `packages/db/src/queries/billing.ts`
 
@@ -190,7 +190,7 @@ Generate the billing query file for PMG Control Center.
 File: packages/db/src/queries/billing.ts
 
 Follow the exact style of getAllIncome and getAllExpenses in:
-[paste packages/db/src/queries.ts — lines 200–350 covering getAllIncome]
+[paste packages/db/src/queries.ts - lines 200–350 covering getAllIncome]
 
 Generate these 8 functions with complete TypeScript types:
 
@@ -234,7 +234,7 @@ ClientStatement, ClientBillingRow, LineItemDetail, BillingItemDetail.
 
 ---
 
-### Step 0.5 — Update DB Index Exports
+### Step 0.5 - Update DB Index Exports
 
 **What you do:** Add billing exports to `packages/db/src/index.ts`
 
@@ -247,7 +247,7 @@ export type { QuotationRow, InvoiceRow, QuotationDetail, InvoiceDetail,
 
 ---
 
-### Step 0.6 — Run Migration
+### Step 0.6 - Run Migration
 
 ```bash
 cd packages/db
@@ -256,27 +256,27 @@ npx drizzle-kit migrate
 ```
 
 **Done When Phase 0 Is Complete:**
-- [ ] `billing.ts` schema with 5 tables — no TypeScript errors
-- [ ] Migration runs clean — 5 new tables in Neon console
+- [ ] `billing.ts` schema with 5 tables - no TypeScript errors
+- [ ] Migration runs clean - 5 new tables in Neon console
 - [ ] `getNextDocumentNumber('division-uuid', 'quote', 2026)` → `APX-Q-2026-001`, second call → `APX-Q-2026-002`
 - [ ] `getAllQuotations()` returns typed rows without error
 - [ ] All exports visible from `packages/db/src/index.ts`
 
 ---
 
-## Phase 1 — Quotations (Wire Up Existing Shell)
+## Phase 1 - Quotations (Wire Up Existing Shell)
 **Duration:** 3–4 days  
 **Goal:** Quote create form works end-to-end. List shows real data. Detail shows real data with working status actions.
 
 ---
 
-### Step 1.1 — Billing Zod Schemas + Quote Actions
+### Step 1.1 - Billing Zod Schemas + Quote Actions
 
 #### Copilot Prompt
 ```
 Generate two files for PMG Control Center billing.
 
-Context — follow these existing action files exactly:
+Context - follow these existing action files exactly:
 [paste apps/admin/src/app/actions/income.ts]
 [paste apps/admin/src/app/actions/expenses.ts]
 
@@ -284,7 +284,7 @@ FILE 1: apps/admin/src/app/actions/billing-schema.ts
 
 Export:
 - LineItemSchema: { description (string min 1), quantity (coerce.number positive),
-  unitPrice (coerce.number min 0), vatRate (coerce.number — must be 0 or 15) }
+  unitPrice (coerce.number min 0), vatRate (coerce.number - must be 0 or 15) }
 - CreateQuotationSchema: { divisionId (uuid required), clientId (uuid optional nullable),
   quoteDate (string min 1), expiryDate (string optional nullable),
   notes (string max 2000 optional nullable), terms (string max 2000 optional nullable),
@@ -321,7 +321,7 @@ FILE 2: apps/admin/src/app/actions/billing-quotes.ts
 
 ---
 
-### Step 1.2 — Shared Billing Components
+### Step 1.2 - Shared Billing Components
 
 #### Copilot Prompt
 ```
@@ -353,7 +353,7 @@ Props: { value: LineItemFormRow[]; onChange: (rows: LineItemFormRow[]) => void }
 LineItemFormRow = { id: string; description: string; quantity: string; unitPrice: string; vatRate: '0' | '15' }
 Table with rows: description (Input flex-grow), quantity (Input w-20),
 unitPrice (Input w-28, placeholder "0.00"), vatRate (Select: "Exempt (0%)" | "VAT 15%"),
-lineTotal (read-only, text-right, formatZAR), delete button (Trash2 — disabled if 1 row).
+lineTotal (read-only, text-right, formatZAR), delete button (Trash2 - disabled if 1 row).
 "+ Add Line Item" button appends blank row with crypto.randomUUID() id.
 Call onChange whenever any field changes.
 
@@ -379,12 +379,12 @@ Button label "Convert to Invoice", variant="default", CheckCircle icon.
 
 ---
 
-### Step 1.3 — Wire Up Quote List Page
+### Step 1.3 - Wire Up Quote List Page
 
 #### Copilot Prompt
 ```
 I need to wire up the existing quotations list shell page in PMG Control Center.
-DO NOT rewrite the file from scratch — patch it to add real data fetching.
+DO NOT rewrite the file from scratch - patch it to add real data fetching.
 
 Here is the current shell file:
 [paste apps/admin/src/app/(admin)/billing/quotes/page.tsx]
@@ -398,14 +398,14 @@ Changes needed to quotes/page.tsx:
 2. Accept searchParams: Promise<{ divisionId?, status?, page? }>
 3. Fetch in parallel: getAllQuotations({ divisionId, status }, { page, pageSize: 20 }),
    getAllDivisions(), getAllClients()
-4. Replace the 4 hardcoded '—' stats with real counts from result
+4. Replace the 4 hardcoded '-' stats with real counts from result
 5. Add SetPageTotal with result.sum formatted as ZAR, variant 'green'
 6. Keep the existing table structure but render real rows from result.data
 7. Each row: Doc# (link to /billing/quotes/{id}), clientName, quoteDate, expiryDate,
    formatZAR(total), BillingStatusBadge, actions dropdown (View, Mark Sent, Mark Accepted,
-   Mark Declined, Delete — show/hide based on status)
+   Mark Declined, Delete - show/hide based on status)
 8. Keep the mock preview link for now (remove in Phase 4 polish)
-9. Add pagination below table — copy income-client.tsx pagination pattern exactly
+9. Add pagination below table - copy income-client.tsx pagination pattern exactly
 
 Also create apps/admin/src/app/(admin)/billing/quotes/quotes-client.tsx
 as the client component that receives: entries, total, sum, currentPage, pageSize,
@@ -414,7 +414,7 @@ divisions, clients, divisionId?, status?, deleteAction, updateStatusAction
 
 ---
 
-### Step 1.4 — Quote Create Form (Client Component)
+### Step 1.4 - Quote Create Form (Client Component)
 
 #### Copilot Prompt
 ```
@@ -435,7 +435,7 @@ The page.tsx should become a server component that:
 
 The QuoteFormClient must:
 - Be 'use client'
-- Use controlled React state (NOT FormData — line items are nested)
+- Use controlled React state (NOT FormData - line items are nested)
 - State: { divisionId, clientId, quoteDate (default today), expiryDate (default +30 days),
   notes, terms, lineItems: LineItemFormRow[] (start with 1 blank row), isSubmitting, error }
 - Replace the "Select a client…" div with a real shadcn Select
@@ -443,8 +443,8 @@ The QuoteFormClient must:
 - Replace the dashed line items placeholder with <BillingLineItemsForm />
 - Show live totals using <BillingTotalsBlock /> calculated from line items
 - Replace the disabled Save Quote and Save as Draft buttons with working buttons
-  (both call createQuotation — Draft saves with status 'draft', Save Quote also status 'draft'
-   since status advances manually — keep it simple)
+  (both call createQuotation - Draft saves with status 'draft', Save Quote also status 'draft'
+   since status advances manually - keep it simple)
 - On submit: call createQuotation(data) imported from '@/app/actions/billing-quotes'
 - On success: router.push('/billing/quotes/' + result.id)
 - On error: show error message above the buttons in text-destructive
@@ -455,7 +455,7 @@ Import BillingLineItemsForm, BillingTotalsBlock from '@/components/billing/'.
 
 ---
 
-### Step 1.5 — Wire Up Quote Detail Page
+### Step 1.5 - Wire Up Quote Detail Page
 
 #### Copilot Prompt
 ```
@@ -466,11 +466,11 @@ Here is the current shell:
 
 Changes needed:
 1. Make it async server component with export const dynamic = 'force-dynamic'
-2. Fetch: const quote = await getQuotationById(id) — if null, notFound()
+2. Fetch: const quote = await getQuotationById(id) - if null, notFound()
 3. Replace the MOCK const with real quote data passed to DocumentPreview
 4. Replace the hardcoded Badge status with real quote.status via BillingStatusBadge
 5. Replace the hardcoded sidebar summary amounts with real quote.subtotal/vatAmount/total
-6. Replace mock Activity entries with a placeholder (real audit log in v2) — keep the
+6. Replace mock Activity entries with a placeholder (real audit log in v2) - keep the
    Activity card but show only "Quote created" entry using quote.createdAt
 7. Add the action bar BELOW the two-column grid (not inside it):
    - draft:     "Mark Sent" button (calls updateQuotationStatus('sent'))
@@ -479,8 +479,8 @@ Changes needed:
    - accepted:  <ConvertToInvoiceButton> (wires to convertQuoteToInvoice from billing-invoices actions)
    - converted: show link to the invoice (fetch convertedInvoiceId from getQuotationById result)
    - declined/cancelled/expired: muted text "No further actions available."
-8. Keep all header buttons (Print, Send, More) disabled — they stay as shells
-9. Keep the "Convert to Invoice" header button — make it functional only when status === 'accepted',
+8. Keep all header buttons (Print, Send, More) disabled - they stay as shells
+9. Keep the "Convert to Invoice" header button - make it functional only when status === 'accepted',
    disabled otherwise (wire to same ConvertToInvoiceButton logic)
 
 All status-change buttons call updateQuotationStatus with toast feedback.
@@ -488,7 +488,7 @@ Import actions from '@/app/actions/billing-quotes' and '@/app/actions/billing-in
 ```
 
 **Done When Phase 1 Is Complete:**
-- [ ] Create a quote with 3 line items (mix of 0% and 15% VAT) — see correct totals
+- [ ] Create a quote with 3 line items (mix of 0% and 15% VAT) - see correct totals
 - [ ] Document number auto-assigned on save (`APX-Q-2026-001`)
 - [ ] Quote appears in list with correct status badge
 - [ ] Draft → Sent → Accepted lifecycle works
@@ -499,13 +499,13 @@ Import actions from '@/app/actions/billing-quotes' and '@/app/actions/billing-in
 
 ---
 
-## Phase 2 — Invoices + Mark Paid
+## Phase 2 - Invoices + Mark Paid
 **Duration:** 3–4 days  
 **Goal:** Full invoice lifecycle. Mark paid posts to income table. Dashboard updates.
 
 ---
 
-### Step 2.1 — Invoice Actions
+### Step 2.1 - Invoice Actions
 
 #### Copilot Prompt
 ```
@@ -549,11 +549,11 @@ Export:
    - isPeriodClosed(invoice.invoiceDate) → period lock error
    Steps:
    1. Load invoice. Load client (for description).
-   2. description = invoice.documentNumber + ' — ' + (client.businessName ?? client.name)
+   2. description = invoice.documentNumber + ' - ' + (client.businessName ?? client.name)
    3. db.insert(income): { date: invoice.invoiceDate, divisionId: invoice.divisionId,
       clientId: invoice.clientId, description, amount: invoice.total }
       .returning({ id })
-      THIS IS THE EXISTING income TABLE — not a new table. Import income from '@pmg/db'.
+      THIS IS THE EXISTING income TABLE - not a new table. Import income from '@pmg/db'.
    4. db.update(invoices): { status:'paid', paidAt: new Date(), incomeId: incomeRow.id, updatedAt }
    5. revalidatePath: '/billing/invoices', '/billing/invoices/'+id, '/income', '/dashboard'
 
@@ -564,7 +564,7 @@ Export:
 
 ---
 
-### Step 2.2 — Mark Paid + Void Buttons
+### Step 2.2 - Mark Paid + Void Buttons
 
 #### Copilot Prompt
 ```
@@ -594,12 +594,12 @@ Button: variant="outline", className includes "text-destructive border-destructi
 
 ---
 
-### Step 2.3 — Wire Up Invoice List + Form
+### Step 2.3 - Wire Up Invoice List + Form
 
 #### Copilot Prompt
 ```
 Wire up the invoice list page and create form in PMG Control Center.
-Patch the existing shell files — do not rewrite from scratch.
+Patch the existing shell files - do not rewrite from scratch.
 
 Here are the shells:
 [paste billing/invoices/page.tsx]
@@ -624,7 +624,7 @@ For invoices/new/page.tsx → invoice-form-client.tsx:
 
 ---
 
-### Step 2.4 — Wire Up Invoice Detail Page
+### Step 2.4 - Wire Up Invoice Detail Page
 
 #### Copilot Prompt
 ```
@@ -636,7 +636,7 @@ Here is the current shell:
 Follow the same pattern as the quote detail page you wired up in Step 1.5.
 
 Changes needed:
-1. Fetch: const invoice = await getInvoiceById(id) — if null, notFound()
+1. Fetch: const invoice = await getInvoiceById(id) - if null, notFound()
 2. Replace MOCK data with real invoice data passed to DocumentPreview
 3. Real status badge via BillingStatusBadge
 4. Real sidebar summary amounts
@@ -662,19 +662,19 @@ Import markInvoicePaid, issueInvoice, voidInvoice from '@/app/actions/billing-in
 - [ ] Issue invoice (Draft → Issued)
 - [ ] Mark invoice paid → income row appears in `/income` with correct division, client, amount
 - [ ] Dashboard revenue total increases by invoice amount
-- [ ] Cannot mark paid with no client — button disabled with tooltip
-- [ ] Cannot mark paid if period locked — toast error shown
+- [ ] Cannot mark paid with no client - button disabled with tooltip
+- [ ] Cannot mark paid if period locked - toast error shown
 - [ ] Void works for draft/issued, blocked for paid
 
 ---
 
-## Phase 3 — Statements
+## Phase 3 - Statements
 **Duration:** 2–3 days  
 **Goal:** Statement list and client detail pages show real data.
 
 ---
 
-### Step 3.1 — Wire Up Statements
+### Step 3.1 - Wire Up Statements
 
 #### Copilot Prompt
 ```
@@ -690,18 +690,18 @@ Reference how the existing clients/[id]/page.tsx shows income history:
 For statements/page.tsx:
 1. Make async, dynamic = 'force-dynamic'
 2. Fetch: getClientsWithBillingActivity()
-3. Replace the 4 hardcoded '—' stats with real values
-4. Render real table rows — each row: client name (link to /billing/statements/{id}),
+3. Replace the 4 hardcoded '-' stats with real values
+4. Render real table rows - each row: client name (link to /billing/statements/{id}),
    totalInvoiced (formatZAR), totalPaid (formatZAR, text-green-500),
-   outstanding (formatZAR — text-red-500 if > 0, text-muted-foreground if 0),
+   outstanding (formatZAR - text-red-500 if > 0, text-muted-foreground if 0),
    lastActivityDate, "View" link button
 5. Keep the mock preview link and disabled Generate Statement button for now
 
 For statements/[clientId]/page.tsx:
 1. Make async, dynamic = 'force-dynamic'
 2. Fetch in parallel:
-   - getClientStatement(clientId, { year }) — year from searchParams, default current year
-   - getAllIncome({ clientId }) — existing function, reused as-is
+   - getClientStatement(clientId, { year }) - year from searchParams, default current year
+   - getAllIncome({ clientId }) - existing function, reused as-is
 3. If statement.client is null: notFound()
 4. Replace the MOCK summary cards with real data:
    Total Invoiced, Total Paid, Balance Due (outstanding)
@@ -711,13 +711,13 @@ For statements/[clientId]/page.tsx:
 6. The DocumentPreview type="statement" already renders the transaction history table
    from the MOCK transactions prop. Replace MOCK with real transactions built from:
    - Each invoice (all statuses except void): { date: invoiceDate, reference: documentNumber,
-     description: documentNumber + ' — Invoice', debit: Number(total), credit: undefined,
+     description: documentNumber + ' - Invoice', debit: Number(total), credit: undefined,
      balance: 0 (calculated after sort) }
    - Each income row for this client: { date, reference: description,
      description: 'Payment received', debit: undefined, credit: Number(amount), balance: 0 }
    Sort all by date ASC. Compute running balance.
 7. Sidebar Client Info card: real client.name, client.email, client.phone, client.address (from client data)
-8. Add Section 3 BELOW the two-column grid — "Income Records":
+8. Add Section 3 BELOW the two-column grid - "Income Records":
    Heading + total. Table: Date | Division | Description | Amount (text-green-500, + prefix)
    Use allIncome.data for this section. Empty state if no income records.
    This mirrors the income history section in clients/[id]/page.tsx exactly.
@@ -732,13 +732,13 @@ For statements/[clientId]/page.tsx:
 
 ---
 
-## Phase 4 — Items Catalogue
+## Phase 4 - Items Catalogue
 **Duration:** 2 days  
 **Goal:** Items CRUD working. Combobox wired into line item form.
 
 ---
 
-### Step 4.1 — Items Actions + Wire Up Pages
+### Step 4.1 - Items Actions + Wire Up Pages
 
 #### Copilot Prompt
 ```
@@ -751,14 +751,14 @@ Export:
 - updateItem(id, data): guard, validate, update
 - archiveItem(id): set status='archived'
 - unarchiveItem(id): set status='active'
-- deleteItem(id): check if used in billing_line_items — if yes, return error 'Archive instead of deleting used items.'
+- deleteItem(id): check if used in billing_line_items - if yes, return error 'Archive instead of deleting used items.'
   Otherwise delete.
 
 ItemSchema (Zod): { name: string min 1 max 200, description: string optional, 
   unitPrice: coerce.number min 0, unitLabel: string optional, vatApplicable: coerce.boolean }
 
 FILE 2: Wire up billing/items/page.tsx
-Make async, fetch getAllItems() and getItemStats(). Replace '—' stats with real values.
+Make async, fetch getAllItems() and getItemStats(). Replace '-' stats with real values.
 Render real table rows. Keep mock preview link.
 
 FILE 3: Wire up billing/items/new/page.tsx
@@ -777,7 +777,7 @@ Shell files for reference:
 
 ---
 
-### Step 4.2 — Combobox in Line Items Form
+### Step 4.2 - Combobox in Line Items Form
 
 #### Copilot Prompt
 ```
@@ -802,13 +802,13 @@ shadcn Command + Popover:
 
 ---
 
-## Phase 5 — Settings Wiring
+## Phase 5 - Settings Wiring
 **Duration:** 2 days  
 **Goal:** Organisation settings save. Billing settings save. Notifications toggles functional.
 
 ---
 
-### Step 5.1 — Organisation Settings Save
+### Step 5.1 - Organisation Settings Save
 
 #### Copilot Prompt
 ```
@@ -818,7 +818,7 @@ Here is the current shell:
 [paste settings/organisation/page.tsx]
 
 I need:
-1. A new database table: organisation_settings (singleton — one row)
+1. A new database table: organisation_settings (singleton - one row)
    Columns: id uuid PK, company_name text, registration_number text nullable,
    vat_number text nullable, email text nullable, phone text nullable, website text nullable,
    address_street text nullable, address_city text nullable, address_postal text nullable,
@@ -828,21 +828,21 @@ I need:
 
 2. A server action: apps/admin/src/app/actions/settings.ts
    updateOrganisationSettings(formData: FormData): Promise<{ error?: string }>
-   Uses upsert (INSERT ... ON CONFLICT DO UPDATE) — there is only ever one row.
+   Uses upsert (INSERT ... ON CONFLICT DO UPDATE) - there is only ever one row.
 
 3. Patch settings/organisation/page.tsx:
    - Make async, fetch current settings from getOrganisationSettings()
    - Replace div placeholder fields with real Input components pre-filled with current values
-   - Enable the Save button — calls updateOrganisationSettings server action
+   - Enable the Save button - calls updateOrganisationSettings server action
    - Show success toast on save
 
 Follow the existing form pattern from settings/billing/billing-settings-client.tsx for
-field layout. Use FormData approach (not controlled state — this is a simple flat form).
+field layout. Use FormData approach (not controlled state - this is a simple flat form).
 ```
 
 ---
 
-### Step 5.2 — Billing Settings Save
+### Step 5.2 - Billing Settings Save
 
 #### Copilot Prompt
 ```
@@ -868,7 +868,7 @@ I need:
    - DivisionBillingForm now accepts currentSettings?: DivisionBillingSettings prop
    - Replace all div placeholders in Tax & Payment and Banking Details sections with
      real Input components pre-filled from currentSettings
-   - Enable Save button — calls saveDivisionBillingSettings with the division's id
+   - Enable Save button - calls saveDivisionBillingSettings with the division's id
    - Show toast on success/error
 
 4. Patch settings/billing/page.tsx:
@@ -878,27 +878,27 @@ I need:
 
 **Done When Phase 5 Is Complete:**
 - [ ] Organisation settings save and reload correctly
-- [ ] Billing settings save per division — banking details persist across page refreshes
+- [ ] Billing settings save per division - banking details persist across page refreshes
 - [ ] Division settings tabs still work with real data
 
 ---
 
-## Phase 6 — Polish & Cleanup
+## Phase 6 - Polish & Cleanup
 **Duration:** 1–2 days  
 **Goal:** Production-ready. No broken states. No dev artefacts.
 
 ---
 
-### Step 6.1 — Remove Dev Artefacts
+### Step 6.1 - Remove Dev Artefacts
 
 **What you do manually:**
 - [ ] Remove all `Preview mock quote →`, `Preview mock invoice →`, `Preview mock statement →`, `Preview mock item →` links from list pages
-- [ ] Remove mock data `const MOCK = {...}` from all detail pages — all data now comes from DB
+- [ ] Remove mock data `const MOCK = {...}` from all detail pages - all data now comes from DB
 - [ ] Remove `/billing/quotes/mock-preview`, `/billing/invoices/mock-preview`, `/billing/statements/mock-preview`, `/billing/items/mock-preview` routes if they exist
 
 ---
 
-### Step 6.2 — Loading + Error States
+### Step 6.2 - Loading + Error States
 
 #### Copilot Prompt
 ```
@@ -908,15 +908,15 @@ Copy the exact pattern from:
 [paste apps/admin/src/app/(admin)/error.tsx]
 
 Generate:
-1. apps/admin/src/app/(admin)/billing/loading.tsx — same skeleton
-2. apps/admin/src/app/(admin)/billing/error.tsx — same error UI
+1. apps/admin/src/app/(admin)/billing/loading.tsx - same skeleton
+2. apps/admin/src/app/(admin)/billing/error.tsx - same error UI
 
 These inherit to all /billing/* routes automatically.
 ```
 
 ---
 
-### Step 6.3 — Final Verification
+### Step 6.3 - Final Verification
 
 #### Copilot Prompt (audit prompt)
 ```
@@ -933,9 +933,9 @@ Check each item and flag any gaps:
 8. deleteQuotation and deleteItem check status/usage before deleting
 9. ConvertToInvoiceButton only visible/active when quote.status === 'accepted'
 10. MarkPaidButton disabled when invoice.clientId is null
-11. Statement income section uses getAllIncome({ clientId }) — existing function
+11. Statement income section uses getAllIncome({ clientId }) - existing function
 12. created_by fields store session.user.id which is text (not uuid)
-13. updatedAt set explicitly as new Date() — no $onUpdate() in schema
+13. updatedAt set explicitly as new Date() - no $onUpdate() in schema
 14. All mock preview links removed from production pages
 15. billing.ts added to schema/index.ts exports
 
@@ -949,7 +949,7 @@ Report any issues found with the file and line reference.
 | Phase | Focus | Days | Cumulative |
 |---|---|---|---|
 | 0 | Schema, utilities, queries | 2–3 | Day 3 |
-| 1 | Quotations — wire up shells | 3–4 | Day 7 |
+| 1 | Quotations - wire up shells | 3–4 | Day 7 |
 | 2 | Invoices + Mark Paid | 3–4 | Day 11 |
 | 3 | Statements | 2–3 | Day 14 |
 | 4 | Items catalogue | 2 | Day 16 |
@@ -966,9 +966,9 @@ When v1 is stable in production, these are next:
 
 | Feature | What's Needed |
 |---|---|
-| PDF generation | `@react-pdf/renderer` in `packages/documents` — `QuotePDF`, `InvoicePDF`, `StatementPDF` |
-| Email delivery | Resend + React Email templates — send on issueInvoice, sendQuote |
-| Audit log | `billing_audit_log` table — all status transitions |
+| PDF generation | `@react-pdf/renderer` in `packages/documents` - `QuotePDF`, `InvoicePDF`, `StatementPDF` |
+| Email delivery | Resend + React Email templates - send on issueInvoice, sendQuote |
+| Audit log | `billing_audit_log` table - all status transitions |
 | Discount fields | Line-item % discount + document-level fixed/% |
 | Partial payments | `billing_payments` table, `PARTIALLY_PAID` status |
 | Statement export | CSV server action (mirrors `exportFinancialsCsv`) |
@@ -979,4 +979,4 @@ When v1 is stable in production, these are next:
 
 ---
 
-*PMG Control Center — Phased Development Plan — May 2026*
+*PMG Control Center - Phased Development Plan - May 2026*

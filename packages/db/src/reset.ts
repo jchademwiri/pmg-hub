@@ -1,5 +1,5 @@
 // packages/db/src/reset.ts
-// Truncates all table data — preserves schema, tables, and types
+// Truncates all table data - preserves schema, tables, and types
 import { config } from "dotenv";
 import { resolve } from "path";
 import pg from "pg";

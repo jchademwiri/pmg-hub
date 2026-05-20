@@ -13,7 +13,7 @@ export type LineItemDetail = {
   documentId: string;
   sortOrder: number;
   description: string;
-  quantity: string;   // numeric from DB — caller converts with Number()
+  quantity: string;   // numeric from DB - caller converts with Number()
   unitPrice: string;
   vatRate: string;
   lineTotal: string;
@@ -780,7 +780,7 @@ export async function getItemById(id: string): Promise<BillingItemDetail | null>
 
 /**
  * Returns active billing items for use in line item selectors.
- * Only active items are returned — archived items cannot be selected.
+ * Only active items are returned - archived items cannot be selected.
  */
 export async function getActiveItems(): Promise<
   { id: string; name: string; description: string | null; unitPrice: string; unitLabel: string | null }[]
@@ -903,3 +903,73 @@ export async function getStatementYears(clientId: string): Promise<number[]> {
 
   return Array.from(years).sort((a, b) => b - a);
 }
+
+// ── Aging report ──────────────────────────────────────────────────────────────
+
+export type AgingBucket = 'current' | '1_14' | '15_30' | '31_60' | '61_90' | '91_plus';
+
+export type AgingRow = {
+  bucket: AgingBucket;
+  label: string;
+  total: number;
+  count: number;
+};
+
+const AGING_BUCKETS: AgingBucket[] = ['current', '1_14', '15_30', '31_60', '61_90', '91_plus'];
+
+const AGING_LABELS: Record<AgingBucket, string> = {
+  current:  'Current',
+  '1_14':   '1–14 days',
+  '15_30':  '15–30 days',
+  '31_60':  '31–60 days',
+  '61_90':  '61–90 days',
+  '91_plus': '91+ days',
+};
+
+/**
+ * Returns the aging report for all outstanding invoices (status = 'issued' or
+ * 'overdue') across 6 buckets. Buckets with no invoices are returned with
+ * total = 0 and count = 0.
+ *
+ * Bucket rules:
+ *   current   dueDate >= today
+ *   1_14      1–14 days past due
+ *   15_30     15–30 days past due
+ *   31_60     31–60 days past due
+ *   61_90     61–90 days past due
+ *   91_plus   91+ days past due
+ */
+export async function getAgingReport(): Promise<AgingRow[]> {
+  const result = await db.execute(sql`
+    SELECT
+      CASE
+        WHEN due_date >= CURRENT_DATE                             THEN 'current'
+        WHEN CURRENT_DATE - due_date BETWEEN 1  AND 14           THEN '1_14'
+        WHEN CURRENT_DATE - due_date BETWEEN 15 AND 30           THEN '15_30'
+        WHEN CURRENT_DATE - due_date BETWEEN 31 AND 60           THEN '31_60'
+        WHEN CURRENT_DATE - due_date BETWEEN 61 AND 90           THEN '61_90'
+        ELSE '91_plus'
+      END                                                         AS bucket,
+      COUNT(*)::int                                               AS count,
+      COALESCE(SUM(invoices.total), 0)                            AS total
+    FROM invoices
+    WHERE status IN ('issued', 'overdue')
+      AND due_date IS NOT NULL
+    GROUP BY bucket
+  `);
+
+  const map = Object.fromEntries(
+    (result.rows as { bucket: string; total: string; count: number }[]).map((r) => [
+      r.bucket,
+      { total: Number(r.total), count: Number(r.count) },
+    ]),
+  );
+
+  return AGING_BUCKETS.map((bucket) => ({
+    bucket,
+    label: AGING_LABELS[bucket],
+    total: map[bucket]?.total ?? 0,
+    count: map[bucket]?.count ?? 0,
+  }));
+}
+

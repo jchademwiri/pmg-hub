@@ -9,8 +9,8 @@ Detailed flag specifications for `resend webhooks` commands.
 | Flag | Type | Default | Description |
 |------|------|---------|-------------|
 | `--limit <n>` | number | 10 | Max results (1-100) |
-| `--after <cursor>` | string | — | Forward pagination |
-| `--before <cursor>` | string | — | Backward pagination |
+| `--after <cursor>` | string | - | Forward pagination |
+| `--before <cursor>` | string | - | Backward pagination |
 
 ---
 
@@ -26,13 +26,13 @@ Detailed flag specifications for `resend webhooks` commands.
 - Contact: `contact.created`, `contact.updated`, `contact.deleted`
 - Domain: `domain.created`, `domain.updated`, `domain.deleted`
 
-**Output includes `signing_secret`** — shown once only. Save immediately.
+**Output includes `signing_secret`** - shown once only. Save immediately.
 
 ---
 
 ## webhooks get
 
-**Argument:** `<id>` — Webhook ID
+**Argument:** `<id>` - Webhook ID
 
 **Note:** `signing_secret` is NOT returned by get (only at creation).
 
@@ -40,7 +40,7 @@ Detailed flag specifications for `resend webhooks` commands.
 
 ## webhooks update
 
-**Argument:** `<id>` — Webhook ID
+**Argument:** `<id>` - Webhook ID
 
 | Flag | Type | Description |
 |------|------|-------------|
@@ -52,7 +52,7 @@ Detailed flag specifications for `resend webhooks` commands.
 
 ## webhooks delete
 
-**Argument:** `<id>` — Webhook ID
+**Argument:** `<id>` - Webhook ID
 
 | Flag | Type | Required | Description |
 |------|------|----------|-------------|
@@ -66,8 +66,8 @@ Start a local server that receives Resend webhook events in real time via a publ
 
 | Flag | Type | Default | Description |
 |------|------|---------|-------------|
-| `--url <url>` | string | — | Public tunnel URL for receiving webhooks (required in non-interactive) |
-| `--forward-to <url>` | string | — | Forward payloads to this local URL (preserves Svix headers) |
+| `--url <url>` | string | - | Public tunnel URL for receiving webhooks (required in non-interactive) |
+| `--forward-to <url>` | string | - | Forward payloads to this local URL (preserves Svix headers) |
 | `--events <events...>` | string[] | all | Event types to listen for |
 | `--port <port>` | number | 4318 | Local server port |
 

@@ -84,12 +84,12 @@ const ipv4Arb = fc.ipV4()
 
 // ─── Tests ───────────────────────────────────────────────────────────────────
 
-describe('proxy — Property 4: blocks unauthenticated requests to protected paths', () => {
+describe('proxy - Property 4: blocks unauthenticated requests to protected paths', () => {
   /**
    * Feature: auth-roles, Property 4: Proxy blocks unauthenticated requests to protected paths
    * Validates: Requirements 3.1
    */
-  it('redirects to /login when no session cookie is present — Validates: Requirements 3.1', async () => {
+  it('redirects to /login when no session cookie is present - Validates: Requirements 3.1', async () => {
     const { proxy } = await import('@/proxy')
 
     await fc.assert(
@@ -106,7 +106,7 @@ describe('proxy — Property 4: blocks unauthenticated requests to protected pat
   })
 })
 
-describe('proxy — Property 5: passes authenticated requests through', () => {
+describe('proxy - Property 5: passes authenticated requests through', () => {
   /**
    * Feature: auth-roles, Property 5: Proxy passes authenticated requests through
    * Validates: Requirements 3.2
@@ -118,7 +118,7 @@ describe('proxy — Property 5: passes authenticated requests through', () => {
     ))
   })
 
-  it('returns next() for any path when session cookie is present and valid — Validates: Requirements 3.2', async () => {
+  it('returns next() for any path when session cookie is present and valid - Validates: Requirements 3.2', async () => {
     const { proxy } = await import('@/proxy')
 
     await fc.assert(
@@ -135,12 +135,12 @@ describe('proxy — Property 5: passes authenticated requests through', () => {
   })
 })
 
-describe('proxy — Property 6: auth allowlist always passes through', () => {
+describe('proxy - Property 6: auth allowlist always passes through', () => {
   /**
    * Feature: auth-roles, Property 6: Auth allowlist always passes through
    * Validates: Requirements 3.3
    */
-  it('allows /login, /invite, and /api/auth/* through regardless of session cookie — Validates: Requirements 3.3', async () => {
+  it('allows /login, /invite, and /api/auth/* through regardless of session cookie - Validates: Requirements 3.3', async () => {
     const { proxy } = await import('@/proxy')
 
     await fc.assert(
@@ -165,7 +165,7 @@ describe('proxy — Property 6: auth allowlist always passes through', () => {
   })
 })
 
-describe('proxy — Property 11: rate limiter isolates by IP', () => {
+describe('proxy - Property 11: rate limiter isolates by IP', () => {
   /**
    * Feature: auth-roles, Property 11: Rate limiter isolates by IP
    * Validates: Requirements 8.1, 8.2, 8.3
@@ -178,7 +178,7 @@ describe('proxy — Property 11: rate limiter isolates by IP', () => {
     vi.resetModules()
   })
 
-  it('counts for one IP do not affect another IP — Validates: Requirements 8.1, 8.2, 8.3', async () => {
+  it('counts for one IP do not affect another IP - Validates: Requirements 8.1, 8.2, 8.3', async () => {
     await fc.assert(
       fc.asyncProperty(
         fc.tuple(ipv4Arb, ipv4Arb).filter(([a, b]) => a !== b),
@@ -214,7 +214,7 @@ describe('proxy — Property 11: rate limiter isolates by IP', () => {
     )
   })
 
-  it('returns 429 after 10 requests from the same IP within 60s — Validates: Requirements 8.1', async () => {
+  it('returns 429 after 10 requests from the same IP within 60s - Validates: Requirements 8.1', async () => {
     const { vi } = await import('vitest')
     vi.resetModules()
     const { proxy } = await import('@/proxy')
@@ -238,7 +238,7 @@ describe('proxy — Property 11: rate limiter isolates by IP', () => {
     expect(res.status).toBe(429)
   })
 
-  it('rate limit only applies to /api/auth/* paths — Validates: Requirements 8.3', async () => {
+  it('rate limit only applies to /api/auth/* paths - Validates: Requirements 8.3', async () => {
     const { vi } = await import('vitest')
     vi.resetModules()
     const { proxy } = await import('@/proxy')
@@ -250,7 +250,7 @@ describe('proxy — Property 11: rate limiter isolates by IP', () => {
 
     const ip = '5.6.7.8'
 
-    // Make 20 requests to a non-auth path with a session cookie — should never 429
+    // Make 20 requests to a non-auth path with a session cookie - should never 429
     for (let i = 0; i < 20; i++) {
       const req = new NextRequest('http://localhost/dashboard', {
         headers: {
@@ -264,7 +264,7 @@ describe('proxy — Property 11: rate limiter isolates by IP', () => {
   })
 })
 
-describe('proxy — Property 12: server-side session validation', () => {
+describe('proxy - Property 12: server-side session validation', () => {
   /**
    * Feature: auth-security, Property 12: Server-side session validation
    * Validates: Requirements 1.1
@@ -275,7 +275,7 @@ describe('proxy — Property 12: server-side session validation', () => {
     vi.resetModules()
   })
 
-  it('redirects to /login when session validation returns no user — Validates: Requirements 1.1', async () => {
+  it('redirects to /login when session validation returns no user - Validates: Requirements 1.1', async () => {
     const { vi } = await import('vitest')
     vi.resetModules()
     const { proxy } = await import('@/proxy')
@@ -293,7 +293,7 @@ describe('proxy — Property 12: server-side session validation', () => {
     expect(location).toContain('/login')
   })
 
-  it('redirects to /login when user is inactive — Validates: Requirements 1.1', async () => {
+  it('redirects to /login when user is inactive - Validates: Requirements 1.1', async () => {
     const { vi } = await import('vitest')
     vi.resetModules()
     const { proxy } = await import('@/proxy')
@@ -311,7 +311,7 @@ describe('proxy — Property 12: server-side session validation', () => {
     expect(location).toContain('/login')
   })
 
-  it('passes through when session is valid and user is active — Validates: Requirements 1.1', async () => {
+  it('passes through when session is valid and user is active - Validates: Requirements 1.1', async () => {
     const { vi } = await import('vitest')
     vi.resetModules()
     const { proxy } = await import('@/proxy')

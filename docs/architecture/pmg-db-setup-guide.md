@@ -1,4 +1,4 @@
-# PMG Hub — Database Setup Guide
+# PMG Hub - Database Setup Guide
 
 > **Internal developer reference · Playhouse Media Group**
 > `pmg-hub / docs / pmg-db-setup-guide.md` · March 2026 · v3.0
@@ -12,23 +12,23 @@
 
 1. [Monorepo Structure](#1-monorepo-structure)
 2. [DB Ownership Map](#2-db-ownership-map)
-3. [Step 1 — Scaffold `packages/db`](#3-step-1--scaffold-packagesdb)
-4. [Step 2 — Install Dependencies](#4-step-2--install-dependencies)
-5. [Step 3 — Auth Schema](#5-step-3--auth-schema)
-6. [Step 4 — AWS Pricing Schema](#6-step-4--aws-pricing-schema)
-7. [Step 5 — Core Business Schema](#7-step-5--core-business-schema)
-8. [Step 6 — Withdrawals Schema](#8-step-6--withdrawals-schema)
-9. [Step 7 — Barrel Export](#9-step-7--barrel-export)
-10. [Step 8 — Environment Variables](#10-step-8--environment-variables)
-11. [Step 9 — DB Scripts in Root `package.json`](#11-step-9--db-scripts-in-root-packagejson)
-12. [Step 10 — Run Migrations](#12-step-10--run-migrations)
-13. [Step 11 — Seed Data](#13-step-11--seed-data)
-14. [Step 12 — Connect `apps/admin`](#14-step-12--connect-appsadmin)
-15. [Step 13 — Connect `apps/tes`](#15-step-13--connect-apptes)
-16. [Step 14 — Connect `apps/pmg`](#16-step-14--connect-appspmg)
-17. [Step 15 — Connect `apps/aws`](#17-step-15--connect-appsaws)
-18. [Step 16 — Auth in `apps/admin`](#18-step-16--auth-in-appsadmin)
-19. [Step 17 — Verify](#19-step-17--verify)
+3. [Step 1 - Scaffold `packages/db`](#3-step-1--scaffold-packagesdb)
+4. [Step 2 - Install Dependencies](#4-step-2--install-dependencies)
+5. [Step 3 - Auth Schema](#5-step-3--auth-schema)
+6. [Step 4 - AWS Pricing Schema](#6-step-4--aws-pricing-schema)
+7. [Step 5 - Core Business Schema](#7-step-5--core-business-schema)
+8. [Step 6 - Withdrawals Schema](#8-step-6--withdrawals-schema)
+9. [Step 7 - Barrel Export](#9-step-7--barrel-export)
+10. [Step 8 - Environment Variables](#10-step-8--environment-variables)
+11. [Step 9 - DB Scripts in Root `package.json`](#11-step-9--db-scripts-in-root-packagejson)
+12. [Step 10 - Run Migrations](#12-step-10--run-migrations)
+13. [Step 11 - Seed Data](#13-step-11--seed-data)
+14. [Step 12 - Connect `apps/admin`](#14-step-12--connect-appsadmin)
+15. [Step 13 - Connect `apps/tes`](#15-step-13--connect-apptes)
+16. [Step 14 - Connect `apps/pmg`](#16-step-14--connect-appspmg)
+17. [Step 15 - Connect `apps/aws`](#17-step-15--connect-appsaws)
+18. [Step 16 - Auth in `apps/admin`](#18-step-16--auth-in-appsadmin)
+19. [Step 17 - Verify](#19-step-17--verify)
 20. [Troubleshooting](#20-troubleshooting)
 
 ---
@@ -38,13 +38,13 @@
 ```
 pmg-hub/
 ├── apps/
-│   ├── admin/     ← Next.js 16 — PMG Control Center + auth
-│   ├── aws/       ← Astro 6 — Apex Web Solutions public site
-│   ├── tes/       ← Astro 6 — Tender Edge Solutions public site
-│   └── pmg/       ← Astro 6 — Playhouse Media Group holding site
+│   ├── admin/     ← Next.js 16 - PMG Control Center + auth
+│   ├── aws/       ← Astro 6 - Apex Web Solutions public site
+│   ├── tes/       ← Astro 6 - Tender Edge Solutions public site
+│   └── pmg/       ← Astro 6 - Playhouse Media Group holding site
 │
 └── packages/
-    ├── db/                ← @pmg/db — Drizzle ORM + Neon PostgreSQL
+    ├── db/                ← @pmg/db - Drizzle ORM + Neon PostgreSQL
     ├── eslint-config/     ← @pmg/eslint-config
     ├── tailwind-config/   ← @pmg/tailwind-config
     ├── typescript-config/ ← @pmg/typescript-config
@@ -53,7 +53,7 @@ pmg-hub/
 
 > **Note:** There is no `apps/web`. Auth and admin live in `apps/admin`.
 > Future apps (`apps/launchpad`, `apps/creative`, `apps/studyedge`, `apps/tt360`)
-> do not exist yet — do not reference them in current setup.
+> do not exist yet - do not reference them in current setup.
 
 ---
 
@@ -61,7 +61,7 @@ pmg-hub/
 
 | App | Framework | DB Role |
 |---|---|---|
-| `apps/admin` | Next.js 16 | Full CRUD on all tables — admin dashboard + auth |
+| `apps/admin` | Next.js 16 | Full CRUD on all tables - admin dashboard + auth |
 | `apps/tes` | Astro 6 | Inserts into `leads` (source = "tes") from enquiry form |
 | `apps/aws` | Astro 6 | Inserts into `leads` (source = "aws") from contact/booking forms |
 | `apps/pmg` | Astro 6 | Inserts into `leads` (source = "pmg") from holding site form |
@@ -80,11 +80,11 @@ pmg-hub/
 
 > **Auth tables** (`user`, `session`, `account`, `verification`) will be added
 > when Better Auth setup is completed. They live in the same Neon database but
-> are managed entirely by Better Auth — do not write to them directly.
+> are managed entirely by Better Auth - do not write to them directly.
 
 ---
 
-## 3. Step 1 — Scaffold `packages/db`
+## 3. Step 1 - Scaffold `packages/db`
 
 ### `packages/db/package.json`
 
@@ -138,7 +138,7 @@ export default defineConfig({
   out: "./src/migrations",
   dialect: "postgresql",
   dbCredentials: {
-    url: process.env.DATABASE_URL_UNPOOLED!,   // unpooled — required for migrations
+    url: process.env.DATABASE_URL_UNPOOLED!,   // unpooled - required for migrations
   },
   verbose: true,
 });
@@ -207,7 +207,7 @@ export type { Withdrawal, NewWithdrawal } from './schema/withdrawals';
 
 ---
 
-## 4. Step 2 — Install Dependencies
+## 4. Step 2 - Install Dependencies
 
 Run from the monorepo root:
 
@@ -219,7 +219,7 @@ bun --filter @pmg/db add -D drizzle-kit pg @types/pg dotenv vitest fast-check
 
 ---
 
-## 5. Step 3 — Auth Schema
+## 5. Step 3 - Auth Schema
 
 Auth tables are managed entirely by Better Auth. Do **not** write to these tables directly.
 
@@ -228,7 +228,7 @@ Auth tables are managed entirely by Better Auth. Do **not** write to these table
 ### `packages/db/src/schema/auth.ts`
 
 ```ts
-// DO NOT write to these tables directly — managed by Better Auth.
+// DO NOT write to these tables directly - managed by Better Auth.
 import { boolean, pgTable, text, timestamp } from "drizzle-orm/pg-core";
 
 export const user = pgTable("user", {
@@ -280,7 +280,7 @@ export const verification = pgTable("verification", {
 
 ---
 
-## 6. Step 4 — AWS Pricing Schema
+## 6. Step 4 - AWS Pricing Schema
 
 ### `packages/db/src/schema/aws.ts`
 
@@ -310,7 +310,7 @@ export type NewAwsPricing = typeof awsPricing.$inferInsert;
 
 ---
 
-## 7. Step 5 — Core Business Schema
+## 7. Step 5 - Core Business Schema
 
 These five tables form the heart of the PMG Financial Control System.
 See `packages/db/src/schema/divisions.ts`, `clients.ts`, `income.ts`,
@@ -318,18 +318,18 @@ See `packages/db/src/schema/divisions.ts`, `clients.ts`, `income.ts`,
 from v2.0 of this guide).
 
 Key constraints:
-- `income.division_id` — NOT NULL, FK restrict (no orphan income)
-- `expenses.division_id` — NOT NULL, FK restrict (no orphan expenses)
-- `leads.division_id` — nullable, FK set null (leads can exist without division)
-- `leads` — CHECK: `email IS NOT NULL OR phone IS NOT NULL`
-- All `amount` fields — CHECK: `> 0`
+- `income.division_id` - NOT NULL, FK restrict (no orphan income)
+- `expenses.division_id` - NOT NULL, FK restrict (no orphan expenses)
+- `leads.division_id` - nullable, FK set null (leads can exist without division)
+- `leads` - CHECK: `email IS NOT NULL OR phone IS NOT NULL`
+- All `amount` fields - CHECK: `> 0`
 
 ---
 
-## 8. Step 6 — Withdrawals Schema
+## 8. Step 6 - Withdrawals Schema
 
 The `withdrawals` table tracks salary withdrawals made by the owner each month.
-It is a standalone table with no foreign keys — it is intentionally simple.
+It is a standalone table with no foreign keys - it is intentionally simple.
 
 ### `packages/db/src/schema/withdrawals.ts`
 
@@ -396,7 +396,7 @@ On success it triggers `router.refresh()` (client-side) to reload the page data.
 
 ---
 
-## 9. Step 7 — Barrel Export
+## 9. Step 7 - Barrel Export
 
 ### `packages/db/src/schema/index.ts`
 
@@ -408,34 +408,34 @@ export * from "./income";
 export * from "./expenses";
 export * from "./leads";
 export * from "./withdrawals";
-// Auth tables not yet included — add when Better Auth is wired
+// Auth tables not yet included - add when Better Auth is wired
 ```
 
 ---
 
-## 10. Step 8 — Environment Variables
+## 10. Step 8 - Environment Variables
 
-### `packages/db/.env` (gitignored — used for migrations only)
+### `packages/db/.env` (gitignored - used for migrations only)
 
 ```env
-# Pooled connection — used by the app (neon-http driver)
+# Pooled connection - used by the app (neon-http driver)
 DATABASE_URL=postgresql://USER:PASSWORD@HOST/neondb?sslmode=require
 
-# Unpooled / direct connection — required for migrations (node-postgres driver)
+# Unpooled / direct connection - required for migrations (node-postgres driver)
 DATABASE_URL_UNPOOLED=postgresql://USER:PASSWORD@HOST/neondb?sslmode=require
 ```
 
 > Get both strings from: **Neon dashboard → your project → Connection Details**
 > Select "Pooled" for `DATABASE_URL` and "Direct / Unpooled" for `DATABASE_URL_UNPOOLED`.
-> The env var name is `DATABASE_URL_UNPOOLED` — not `DATABASE_URL_DIRECT`.
+> The env var name is `DATABASE_URL_UNPOOLED` - not `DATABASE_URL_DIRECT`.
 
 ### `apps/admin/.env.local` (gitignored)
 
 ```env
-# DB — pooled connection for Drizzle neon-http
+# DB - pooled connection for Drizzle neon-http
 DATABASE_URL=postgresql://USER:PASSWORD@HOST/neondb?sslmode=require
 
-# Better Auth (not yet wired — add values when Phase 9 begins)
+# Better Auth (not yet wired - add values when Phase 9 begins)
 BETTER_AUTH_SECRET=your_generated_secret   # openssl rand -base64 32
 BETTER_AUTH_URL=http://localhost:3000
 NEXT_PUBLIC_APP_URL=http://localhost:3000
@@ -455,7 +455,7 @@ DATABASE_URL=postgresql://USER:PASSWORD@HOST/neondb?sslmode=require
 
 ---
 
-## 11. Step 9 — DB Scripts in Root `package.json`
+## 11. Step 9 - DB Scripts in Root `package.json`
 
 ```json
 {
@@ -472,7 +472,7 @@ DATABASE_URL=postgresql://USER:PASSWORD@HOST/neondb?sslmode=require
 
 ---
 
-## 12. Step 10 — Run Migrations
+## 12. Step 10 - Run Migrations
 
 ```bash
 # Generate SQL migration files from schema
@@ -492,7 +492,7 @@ Auth tables are added separately when Better Auth is wired.
 
 ---
 
-## 13. Step 11 — Seed Data
+## 13. Step 11 - Seed Data
 
 The seed script is at `packages/db/src/seed.ts`. It provides:
 
@@ -513,9 +513,9 @@ bun db:seed
 
 ---
 
-## 14. Step 12 — Connect `apps/admin`
+## 14. Step 12 - Connect `apps/admin`
 
-### `apps/admin/package.json` — add dependency
+### `apps/admin/package.json` - add dependency
 
 ```json
 {
@@ -526,12 +526,12 @@ bun db:seed
 ```
 
 The admin app imports from `@pmg/db` in two places:
-- `src/lib/financial.ts` — all dashboard data queries
-- `src/app/actions/withdraw.ts` — withdrawal mutation
+- `src/lib/financial.ts` - all dashboard data queries
+- `src/app/actions/withdraw.ts` - withdrawal mutation
 
 ---
 
-## 15. Step 13 — Connect `apps/tes`
+## 15. Step 13 - Connect `apps/tes`
 
 POST handler at `apps/tes/src/pages/api/enquiry.ts`:
 - Accepts: name, email, phone, message, serviceInterest (optional)
@@ -541,7 +541,7 @@ POST handler at `apps/tes/src/pages/api/enquiry.ts`:
 
 ---
 
-## 16. Step 14 — Connect `apps/pmg`
+## 16. Step 14 - Connect `apps/pmg`
 
 POST handler at `apps/pmg/src/pages/api/enquiry.ts`:
 - Accepts: name, email, phone, company, message, serviceInterest
@@ -549,18 +549,18 @@ POST handler at `apps/pmg/src/pages/api/enquiry.ts`:
 
 ---
 
-## 17. Step 15 — Connect `apps/aws`
+## 17. Step 15 - Connect `apps/aws`
 
 Two API routes:
 
-1. `apps/aws/src/pages/api/contact.ts` — source = "aws", serviceInterest = "web_contact"
-2. `apps/aws/src/pages/api/booking.ts` — source = "aws", serviceInterest = "booking:" + packageName
+1. `apps/aws/src/pages/api/contact.ts` - source = "aws", serviceInterest = "web_contact"
+2. `apps/aws/src/pages/api/booking.ts` - source = "aws", serviceInterest = "booking:" + packageName
 
 Both insert into the unified `leads` table.
 
 ---
 
-## 18. Step 16 — Auth in `apps/admin`
+## 18. Step 16 - Auth in `apps/admin`
 
 > **Status:** Not yet implemented. Proxy currently passes all requests through.
 > Complete this in Phase 9 (System Hardening).
@@ -570,17 +570,17 @@ bun --filter admin add better-auth resend
 ```
 
 Files to create:
-- `apps/admin/src/lib/auth.ts` — betterAuth with drizzleAdapter + magicLink plugin
-- `apps/admin/src/lib/auth-client.ts` — createAuthClient with magicLinkClient
-- `apps/admin/src/app/api/auth/[...all]/route.ts` — toNextJsHandler(auth)
-- Update `apps/admin/src/proxy.ts` — check `better-auth.session_token` cookie
+- `apps/admin/src/lib/auth.ts` - betterAuth with drizzleAdapter + magicLink plugin
+- `apps/admin/src/lib/auth-client.ts` - createAuthClient with magicLinkClient
+- `apps/admin/src/app/api/auth/[...all]/route.ts` - toNextJsHandler(auth)
+- Update `apps/admin/src/proxy.ts` - check `better-auth.session_token` cookie
 
 > **Next.js 16:** The auth guard file is `src/proxy.ts`, not `middleware.ts`.
 > Export a named `proxy` function. The `matcher` config is unchanged.
 
 ---
 
-## 19. Step 17 — Verify
+## 19. Step 17 - Verify
 
 ```bash
 bun run check-types
@@ -599,11 +599,11 @@ Run `bun install` from the monorepo root to link workspace packages.
 
 **`DATABASE_URL is not defined`**
 Check `.env` files exist in the right locations:
-- `packages/db/.env` — for migrations (`DATABASE_URL_UNPOOLED` required)
-- `apps/admin/.env.local` — for the admin app (`DATABASE_URL` required)
+- `packages/db/.env` - for migrations (`DATABASE_URL_UNPOOLED` required)
+- `apps/admin/.env.local` - for the admin app (`DATABASE_URL` required)
 
 **`DATABASE_URL_DIRECT is not defined`**
-The env var is `DATABASE_URL_UNPOOLED` — not `DATABASE_URL_DIRECT`.
+The env var is `DATABASE_URL_UNPOOLED` - not `DATABASE_URL_DIRECT`.
 
 **Migration fails with `already exists`**
 Drop existing tables in the Neon dashboard (or run `bun db:reset`), then rerun `bun db:migrate`.

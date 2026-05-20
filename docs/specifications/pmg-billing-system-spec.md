@@ -5,7 +5,7 @@
 ## Part 1: High Level Module Specification
 
 # PMG Invoicing Module
-### Feature Specification — Phase 11 of PMG Control Center
+### Feature Specification - Phase 11 of PMG Control Center
 
 > **Internal developer reference · Playhouse Media Group**
 > `pmg-hub / docs / pmg-invoicing-module.md` · March 2026 · v1.0
@@ -41,7 +41,7 @@
 
 The PMG Invoicing Module lets you create, send, and track financial documents
 (quotes, invoices, statements) from inside the Control Center, with each document
-automatically branded to the division it belongs to — Apex Web Solutions, Tender
+automatically branded to the division it belongs to - Apex Web Solutions, Tender
 Edge Solutions, PMG, or any future division.
 
 **The core workflow:**
@@ -54,7 +54,7 @@ Draft Quote → Send to Client → Accepted → Convert to Invoice → Client Pa
 **What makes this valuable for PMG specifically:**
 - Every invoice you issue currently is a manual document (Word/Canva). This replaces that.
 - Your clients, divisions, and income are already in the database. Invoices close the loop.
-- When an invoice is marked Paid, you can optionally auto-create the corresponding income entry — no double entry.
+- When an invoice is marked Paid, you can optionally auto-create the corresponding income entry - no double entry.
 - The statement feature gives you a clean per-client aged report to send at month end.
 - Multi-brand from day one: switching from an Apex invoice to a TES invoice is just changing the `divisionId`.
 
@@ -74,7 +74,7 @@ The hardest architectural decisions are already made. You have:
 - A working form pattern (`IncomeAddForm` is the starting point for `LineItemForm`)
 - A working page pattern (`/income/page.tsx` → `/invoices/page.tsx`)
 - `formatZAR` already exists
-- `clients` and `divisions` tables already exist — no need to rebuild them
+- `clients` and `divisions` tables already exist - no need to rebuild them
 - Zod validation already wired
 - `revalidatePath` already used correctly throughout
 
@@ -127,7 +127,7 @@ output (letterhead, line items table, total) and iterate. The goal of v1 is corr
 ### Relationship to existing tables
 
 ```
-divisions ──< invoices          (one division, many invoices — brand is determined by division)
+divisions ──< invoices          (one division, many invoices - brand is determined by division)
 clients   ──< invoices          (one client, many invoices)
 invoices  ──< invoice_line_items (one invoice, many line items)
 invoices  ──< invoice_payments  (one invoice, many partial payments)
@@ -143,11 +143,11 @@ income entry, that entry flows into the existing dashboard automatically via
 
 ### What does NOT need to change
 
-- `packages/db/src/schema/` — you add new files, touch nothing existing
-- `lib/financial.ts` — untouched
-- `lib/format.ts` — `formatZAR` is reused directly
-- Dashboard — revalidation handles updates automatically
-- Existing income/expenses flows — fully independent
+- `packages/db/src/schema/` - you add new files, touch nothing existing
+- `lib/financial.ts` - untouched
+- `lib/format.ts` - `formatZAR` is reused directly
+- Dashboard - revalidation handles updates automatically
+- Existing income/expenses flows - fully independent
 
 ---
 
@@ -202,7 +202,7 @@ export const invoiceSettings = pgTable("invoice_settings", {
 ### `invoices.ts`
 
 Single table for both quotes and invoices (document type field).
-Quotes and invoices share the same structure — the `type` field differentiates them.
+Quotes and invoices share the same structure - the `type` field differentiates them.
 
 ```ts
 import { pgEnum, pgTable, text, uuid, date, numeric,
@@ -249,11 +249,11 @@ export const invoices = pgTable(
     // Quote → Invoice link
     // When a quote is converted, a new invoice row is created.
     // The quote's convertedToInvoiceId is set. The invoice's sourceQuoteId is set.
-    // Line items are CLONED — they are not shared.
+    // Line items are CLONED - they are not shared.
     sourceQuoteId:          uuid("source_quote_id"),   // invoice: which quote it came from
     convertedToInvoiceId:   uuid("converted_to_invoice_id"), // quote: which invoice was created
 
-    // Financials (denormalised for fast display — recalculated on every line item save)
+    // Financials (denormalised for fast display - recalculated on every line item save)
     subtotal:       numeric("subtotal", { precision: 12, scale: 2 }).notNull().default("0"),
     discountAmount: numeric("discount_amount", { precision: 12, scale: 2 }).notNull().default("0"),
     vatAmount:      numeric("vat_amount", { precision: 12, scale: 2 }).notNull().default("0"),
@@ -361,7 +361,7 @@ export const invoicePayments = pgTable(
 );
 ```
 
-### Export additions — `packages/db/src/schema/index.ts`
+### Export additions - `packages/db/src/schema/index.ts`
 
 ```ts
 // Add these three lines:
@@ -376,7 +376,7 @@ export * from "./invoice_payments";
 ## 5. Financial Logic
 
 All calculations happen in a utility function called on every line item save.
-**Never trust the client with totals — always recalculate on the server.**
+**Never trust the client with totals - always recalculate on the server.**
 
 ```ts
 // packages/db/src/invoice-calc.ts
@@ -420,7 +420,7 @@ When an invoice is saved, the Server Action must:
 ## 6. Document Number Format
 
 Numbers are generated server-side at creation time. Never auto-increment a DB sequence
-for this — use a query that finds the current max and increments it.
+for this - use a query that finds the current max and increments it.
 
 ```
 Format:  {DIVISION_CODE}-{TYPE_CODE}-{YEAR}-{SEQUENCE}
@@ -434,7 +434,7 @@ Examples:
   PMG-CN-2026-001    Credit Note
 ```
 
-Division codes — derive from division name:
+Division codes - derive from division name:
 - "Apex Web Solutions"    → AWS
 - "Tender Edge Solutions" → TES
 - "Playhouse Media Group" → PMG
@@ -498,7 +498,7 @@ draft → sent → accepted → converted (invoice created)
 ```
 draft → sent → partial (payment received, not full)
             ↘ paid     (full payment received)
-            ↘ overdue  (past due date, not paid — set by cron or manual trigger)
+            ↘ overdue  (past due date, not paid - set by cron or manual trigger)
             ↘ cancelled
 ```
 
@@ -512,7 +512,7 @@ draft → sent → partial (payment received, not full)
 | accepted | converted (system-only), draft |
 | partial | paid, overdue, cancelled |
 | overdue | paid, partial, cancelled |
-| converted / paid / cancelled / archived | none — terminal |
+| converted / paid / cancelled / archived | none - terminal |
 
 ---
 
@@ -614,7 +614,7 @@ export async function GET(_req: Request, { params }: { params: Promise<{ id: str
 ```ts
 // apps/admin/src/components/invoices/invoice-pdf.tsx
 // A React component using @react-pdf/renderer primitives (Document, Page, View, Text, etc.)
-// NOT a standard React component — uses PDF-specific primitives only.
+// NOT a standard React component - uses PDF-specific primitives only.
 
 import { Document, Page, View, Text, StyleSheet } from "@react-pdf/renderer";
 
@@ -637,7 +637,7 @@ import { Document, Page, View, Text, StyleSheet } from "@react-pdf/renderer";
 
 ### V1 rule: keep the PDF simple
 
-For the first working version, text only — no images, no logo files.
+For the first working version, text only - no images, no logo files.
 The division name styled in the brand primary colour is enough to make it
 look professional. Add logo images in v2 once the layout is proven.
 
@@ -807,7 +807,7 @@ export async function upsertInvoiceSettings(settings: NewInvoiceSettings): Promi
 | `InvoicePreview` | `components/invoices/invoice-preview.tsx` | HTML preview (mirrors PDF layout) |
 | `StatementView` | `components/invoices/statement-view.tsx` | Client statement with aging buckets |
 
-### The `LineItemEditor` — the most complex component
+### The `LineItemEditor` - the most complex component
 
 This is the component that needs the most care. It manages a list of line items,
 each with description, qty, unit price, VAT, and discount. It calculates line totals
@@ -910,14 +910,14 @@ This keeps your dashboard financial data in sync without manual double-entry.
 
 **3. Will you send invoices via email from the system?**
 Resend is already in your stack. If yes, add a `sendInvoiceEmail` Server Action in
-Phase 11b. For v1, download PDF and email manually — keeps the scope tight.
+Phase 11b. For v1, download PDF and email manually - keeps the scope tight.
 
-**4. Partial payments — do you need them for v1?**
+**4. Partial payments - do you need them for v1?**
 If most of your clients pay in full, skip `invoice_payments` table complexity for v1.
 Just add a "Mark as Paid" button that sets `status = 'paid'` and optionally creates
 an income entry. Add partial payments in v1.1.
 
-**5. Credit notes — do you need them for v1?**
+**5. Credit notes - do you need them for v1?**
 Probably not. Include the `credit_note` enum value in the schema but don't build the
 UI until you actually need to issue one. Scope creep starts with "just in case".
 
@@ -927,18 +927,18 @@ UI until you actually need to issue one. Scope creep starts with "just in case".
 
 A complete invoicing system that lives inside your existing Control Center:
 
-- **Multi-brand invoices** — switch division, letterhead changes automatically
-- **Quote-to-invoice pipeline** — no re-entering data
-- **PDF download** — branded A4, professional enough to send to a client same day
-- **Payment tracking** — know exactly what is outstanding, what is overdue, what is paid
-- **Auto income sync** — paid invoices feed your financial dashboard without double entry
-- **Client statements** — one-click aged debt report per client for month-end follow-up
-- **All data in one place** — clients, divisions, income, invoices — one database, one system
+- **Multi-brand invoices** - switch division, letterhead changes automatically
+- **Quote-to-invoice pipeline** - no re-entering data
+- **PDF download** - branded A4, professional enough to send to a client same day
+- **Payment tracking** - know exactly what is outstanding, what is overdue, what is paid
+- **Auto income sync** - paid invoices feed your financial dashboard without double entry
+- **Client statements** - one-click aged debt report per client for month-end follow-up
+- **All data in one place** - clients, divisions, income, invoices - one database, one system
 
 **The realistic win:** you stop creating invoices in Word or Canva, you stop maintaining
 a separate spreadsheet of who owes what, and your Control Center becomes the single source
 of financial truth for PMG. Given you generated ~R2.1M in the seed data alone, having
-proper invoice tracking at that scale is not optional — it is overdue.
+proper invoice tracking at that scale is not optional - it is overdue.
 
 ---
 
@@ -957,7 +957,7 @@ CREATE TYPE "public"."document_status" AS ENUM(
 );
 
 -- invoice_settings, invoices, invoice_line_items, invoice_payments
--- (Generated by drizzle-kit generate — do not write by hand)
+-- (Generated by drizzle-kit generate - do not write by hand)
 ```
 
 ---
@@ -981,17 +981,17 @@ The Billing section covers four areas: **Quotations**, **Invoices**, **Statement
 
 | Route | Page | Status |
 |---|---|---|
-| `/billing/quotes` | Quotations list | 🔜 Shell — wire up data |
-| `/billing/quotes/new` | New quote form | 🔜 Shell — wire up form |
-| `/billing/quotes/[id]` | Quote detail + actions | 🔜 Shell — wire up data + actions |
-| `/billing/invoices` | Invoices list | 🔜 Shell — wire up data |
-| `/billing/invoices/new` | New invoice form | 🔜 Shell — wire up form |
-| `/billing/invoices/[id]` | Invoice detail + actions | 🔜 Shell — wire up data + actions |
-| `/billing/statements` | Statements list | 🔜 Shell — wire up data |
-| `/billing/statements/[clientId]` | Client statement | 🔜 Shell — wire up data |
-| `/billing/items` | Items catalogue list | 🔜 Shell — wire up data |
-| `/billing/items/new` | New item form | 🔜 Shell — wire up form |
-| `/billing/items/[id]` | Item detail / edit | 🔜 Shell — wire up data |
+| `/billing/quotes` | Quotations list | 🔜 Shell - wire up data |
+| `/billing/quotes/new` | New quote form | 🔜 Shell - wire up form |
+| `/billing/quotes/[id]` | Quote detail + actions | 🔜 Shell - wire up data + actions |
+| `/billing/invoices` | Invoices list | 🔜 Shell - wire up data |
+| `/billing/invoices/new` | New invoice form | 🔜 Shell - wire up form |
+| `/billing/invoices/[id]` | Invoice detail + actions | 🔜 Shell - wire up data + actions |
+| `/billing/statements` | Statements list | 🔜 Shell - wire up data |
+| `/billing/statements/[clientId]` | Client statement | 🔜 Shell - wire up data |
+| `/billing/items` | Items catalogue list | 🔜 Shell - wire up data |
+| `/billing/items/new` | New item form | 🔜 Shell - wire up form |
+| `/billing/items/[id]` | Item detail / edit | 🔜 Shell - wire up data |
 
 ---
 
@@ -1005,7 +1005,7 @@ lg:grid-cols-3
   └── col-span-1     →  Sidebar cards (Summary, Activity, Client Info)
 ```
 
-The `DocumentPreview` component renders a styled document that looks like the actual printed output. It is shared across quotes, invoices, and statements — `type` prop switches the layout.
+The `DocumentPreview` component renders a styled document that looks like the actual printed output. It is shared across quotes, invoices, and statements - `type` prop switches the layout.
 
 Page headers follow the pattern:
 ```
@@ -1018,7 +1018,7 @@ Action buttons in the header (Print, Send, Convert to Invoice, More) are disable
 
 ## Quotations
 
-### `/billing/quotes` — List
+### `/billing/quotes` - List
 
 **File:** `src/app/(admin)/billing/quotes/page.tsx`
 
@@ -1031,16 +1031,16 @@ Action buttons in the header (Print, Send, Convert to Invoice, More) are disable
 | Accepted | CheckCircle | Converted to invoice |
 | Declined | XCircle | Not accepted |
 
-Stats are currently hardcoded to `'—'`. Wire up to `getAllQuotations()` aggregates when implementing.
+Stats are currently hardcoded to `'-'`. Wire up to `getAllQuotations()` aggregates when implementing.
 
 **Table columns**
 
 | Column | Notes |
 |---|---|
 | Quote # | Monospace, links to `/billing/quotes/{id}` |
-| Client | `clientName ?? '—'` |
+| Client | `clientName ?? '-'` |
 | Issue Date | `quoteDate` |
-| Expiry Date | `expiryDate ?? '—'` |
+| Expiry Date | `expiryDate ?? '-'` |
 | Amount | `formatZAR(total)`, right-aligned, `text-green-500` |
 | Status | `BillingStatusBadge` |
 | Actions | Dropdown: View, Mark Sent, Mark Accepted, Mark Declined, Delete |
@@ -1059,27 +1059,27 @@ const [result, divisions, clients] = await Promise.all([
 
 ---
 
-### `/billing/quotes/new` — Create
+### `/billing/quotes/new` - Create
 
 **File:** `src/app/(admin)/billing/quotes/new/page.tsx`
 
 Two-column layout: `lg:col-span-2` form + `col-span-1` sidebar.
 
-**Main form (left) — three cards:**
+**Main form (left) - three cards:**
 
-1. **Quote Details card** — Client (select, **required** — cannot save without a client), Quote # (auto-generated, read-only), Reference (optional free-text input for client's own reference number), Issue Date, Expiry Date
-2. **Line Items card** — `BillingLineItemsForm` (dynamic rows). All line items must be selected from the pre-saved items catalogue via the item combobox — free-form one-off entries are not permitted. Shell shows dashed placeholder + disabled "+ Add Line Item" button
-3. **Terms & Notes card** — textarea for optional terms and client-facing notes
+1. **Quote Details card** - Client (select, **required** - cannot save without a client), Quote # (auto-generated, read-only), Reference (optional free-text input for client's own reference number), Issue Date, Expiry Date
+2. **Line Items card** - `BillingLineItemsForm` (dynamic rows). All line items must be selected from the pre-saved items catalogue via the item combobox - free-form one-off entries are not permitted. Shell shows dashed placeholder + disabled "+ Add Line Item" button
+3. **Terms & Notes card** - textarea for optional terms and client-facing notes
 
-**Sidebar (right) — two cards (sidebar is `sticky top-6`):**
+**Sidebar (right) - two cards (sidebar is `sticky top-6`):**
 
-- **Summary card** — Subtotal, Discount (optional — see below), VAT toggle (default **off** — owner is not VAT registered; when toggled on, shows VAT at 15%), Total (live-calculated from line items), Save Quote button, Save as Draft button
-- **Status card** — "Quote will be saved as **Draft** until sent to the client."
+- **Summary card** - Subtotal, Discount (optional - see below), VAT toggle (default **off** - owner is not VAT registered; when toggled on, shows VAT at 15%), Total (live-calculated from line items), Save Quote button, Save as Draft button
+- **Status card** - "Quote will be saved as **Draft** until sent to the client."
 
 **Discount field (inside Summary card):**
 - Input with a mode toggle: **%** (percentage) or **R** (fixed amount)
 - Applied after subtotal, before VAT
-- Displayed as a negative line in the summary: `Discount (10%) — R −450.00`
+- Displayed as a negative line in the summary: `Discount (10%) - R −450.00`
 - Stored as `discountType: 'percent' | 'amount'` and `discountValue: number` on the quotation
 
 **VAT toggle (inside Summary card):**
@@ -1092,7 +1092,7 @@ Two-column layout: `lg:col-span-2` form + `col-span-1` sidebar.
 
 **On submit:** call `createQuotation(data)` → redirect to `/billing/quotes/{id}`
 
-**Form state** (controlled React state, not FormData — line items are nested):
+**Form state** (controlled React state, not FormData - line items are nested):
 ```typescript
 {
   divisionId, clientId, quoteDate, expiryDate, reference,
@@ -1105,25 +1105,25 @@ Two-column layout: `lg:col-span-2` form + `col-span-1` sidebar.
 
 ---
 
-### `/billing/quotes/[id]` — Detail
+### `/billing/quotes/[id]` - Detail
 
 **File:** `src/app/(admin)/billing/quotes/[id]/page.tsx`
 
 **Header actions (in order):**
-- Print — disabled (v2: PDF)
-- Send — disabled (v2: email)
-- **Export as PDF** — disabled (v2: PDF generation)
-- **Convert to Invoice** — `ConvertToInvoiceButton`, only active when `status === 'accepted'`
-- More (MoreHorizontal) — disabled
+- Print - disabled (v2: PDF)
+- Send - disabled (v2: email)
+- **Export as PDF** - disabled (v2: PDF generation)
+- **Convert to Invoice** - `ConvertToInvoiceButton`, only active when `status === 'accepted'`
+- More (MoreHorizontal) - disabled
 
 **Edit quote:** An "Edit" button is shown in the header for all non-terminal statuses (`draft`, `sent`). Clicking navigates to `/billing/quotes/{id}/edit`. Quotes with status `accepted`, `converted`, `declined`, `cancelled`, or `expired` cannot be edited (button hidden or disabled with tooltip).
 
-**Main content (left):** `DocumentPreview type="quote"` — renders the styled quotation document including org details, client details, reference (if set), line items table, discount (if set), totals, terms, and banking details.
+**Main content (left):** `DocumentPreview type="quote"` - renders the styled quotation document including org details, client details, reference (if set), line items table, discount (if set), totals, terms, and banking details.
 
 **Sidebar (right, `sticky top-6`):**
 
-- **Summary card** — Subtotal, Discount (if set, shown as negative), VAT (only if `vatEnabled` is true), Total (from denormalised fields)
-- **Activity card** — Timeline of state changes (e.g. "Quote sent to client", "Quote created"). In shell uses mock data; wire to audit log in v2.
+- **Summary card** - Subtotal, Discount (if set, shown as negative), VAT (only if `vatEnabled` is true), Total (from denormalised fields)
+- **Activity card** - Timeline of state changes (e.g. "Quote sent to client", "Quote created"). In shell uses mock data; wire to audit log in v2.
 
 **Action bar (below document) by status:**
 
@@ -1145,7 +1145,7 @@ if (!quote) notFound()
 
 ## Invoices
 
-### `/billing/invoices` — List
+### `/billing/invoices` - List
 
 **File:** `src/app/(admin)/billing/invoices/page.tsx`
 
@@ -1165,9 +1165,9 @@ Same structure as quotes list with invoice-specific columns and stats.
 | Column | Notes |
 |---|---|
 | Invoice # | Monospace, links to `/billing/invoices/{id}` |
-| Client | `clientName ?? '—'` |
+| Client | `clientName ?? '-'` |
 | Issue Date | `invoiceDate` |
-| Due Date | `dueDate ?? '—'` |
+| Due Date | `dueDate ?? '-'` |
 | Amount | `formatZAR(total)`, right-aligned |
 | Status | `BillingStatusBadge` |
 | Actions | Dropdown: View, Issue (if draft), Mark Paid (if issued/overdue), Void |
@@ -1178,7 +1178,7 @@ Includes `Preview mock invoice →` dev link (remove before production).
 
 ---
 
-### `/billing/invoices/new` — Create
+### `/billing/invoices/new` - Create
 
 **File:** `src/app/(admin)/billing/invoices/new/page.tsx`
 
@@ -1186,50 +1186,50 @@ Same two-column layout as quote form with these differences:
 
 **Invoice Details card fields:** Client (select, **required**), Invoice # (auto-generated), Issue Date, Due Date (default +30 days), PO Number (optional)
 
-**Line Items:** All line items must be selected from the pre-saved items catalogue via the item combobox — same constraint as quotes.
+**Line Items:** All line items must be selected from the pre-saved items catalogue via the item combobox - same constraint as quotes.
 
 **Period lock warning:** If `invoiceDate` falls in a grace-period or locked month, show an amber banner:
 ```
 ⚠ This invoice date may fall in a restricted financial period. Marking as paid may be blocked.
 ```
 
-**Sidebar (`sticky top-6`):** Summary card with Subtotal, Discount (optional — same % or R toggle as quotes), VAT toggle (default **off**), Total. Save Invoice button + Save as Draft button. Status card reads "Invoice will be saved as **Draft** until sent."
+**Sidebar (`sticky top-6`):** Summary card with Subtotal, Discount (optional - same % or R toggle as quotes), VAT toggle (default **off**), Total. Save Invoice button + Save as Draft button. Status card reads "Invoice will be saved as **Draft** until sent."
 
 **On submit:** call `createInvoice(data)` → redirect to `/billing/invoices/{id}`
 
 ---
 
-### `/billing/invoices/[id]` — Detail
+### `/billing/invoices/[id]` - Detail
 
 **File:** `src/app/(admin)/billing/invoices/[id]/page.tsx`
 
 **Header actions:**
-- Print — disabled (v2: PDF)
-- Send — disabled (v2: email)
-- **Export as PDF** — disabled (v2: PDF generation)
-- More (MoreHorizontal) — disabled
+- Print - disabled (v2: PDF)
+- Send - disabled (v2: email)
+- **Export as PDF** - disabled (v2: PDF generation)
+- More (MoreHorizontal) - disabled
 
-**Edit invoice:** An "Edit" button is shown in the header **only when the invoice has not been paid** (status is `draft`, `issued`, or `overdue`). Once status is `paid` or `void`, the Edit button is hidden entirely — paid invoices cannot be edited or deleted.
+**Edit invoice:** An "Edit" button is shown in the header **only when the invoice has not been paid** (status is `draft`, `issued`, or `overdue`). Once status is `paid` or `void`, the Edit button is hidden entirely - paid invoices cannot be edited or deleted.
 
-**Main content (left):** `DocumentPreview type="invoice"` — same as quote preview but shows banking details prominently and payment reference instructions.
+**Main content (left):** `DocumentPreview type="invoice"` - same as quote preview but shows banking details prominently and payment reference instructions.
 
 **Sidebar (right, `sticky top-6`):**
-- **Summary card** — Subtotal, Discount (if set, shown as negative), VAT (only if `vatEnabled` is true), Total
-- **Activity card** — timeline (mock in shell, real in v2)
+- **Summary card** - Subtotal, Discount (if set, shown as negative), VAT (only if `vatEnabled` is true), Total
+- **Activity card** - timeline (mock in shell, real in v2)
 
 **Action bar by status:**
 
 | Status | Actions |
 |---|---|
 | `draft` | Issue Invoice, Void |
-| `issued` | **Mark Paid** (MarkPaidButton — disabled if no client), Void |
+| `issued` | **Mark Paid** (MarkPaidButton - disabled if no client), Void |
 | `paid` | "Paid on {paidAt}. Revenue posted to income." + "View in Income →" link. **No edit, no delete.** |
 | `overdue` | Mark Paid, Void. Amber banner: "⚠ This invoice is overdue." |
 | `void` | "This invoice has been voided." (no actions) |
 
 **Critical: Mark Paid flow**
 
-`MarkPaidButton` must be disabled with a tooltip if `invoice.clientId` is null — the `income` table requires a non-null `clientId`. Confirm dialog message: _"Mark this invoice as paid? This will post the revenue to the income ledger and cannot be undone."_
+`MarkPaidButton` must be disabled with a tooltip if `invoice.clientId` is null - the `income` table requires a non-null `clientId`. Confirm dialog message: _"Mark this invoice as paid? This will post the revenue to the income ledger and cannot be undone."_
 
 On success: posts a row to `income` table → `revalidatePath('/income')` + `revalidatePath('/dashboard')`.
 
@@ -1239,7 +1239,7 @@ On success: posts a row to `income` table → `revalidatePath('/income')` + `rev
 
 ## Statements
 
-### `/billing/statements` — List
+### `/billing/statements` - List
 
 **File:** `src/app/(admin)/billing/statements/page.tsx`
 
@@ -1269,13 +1269,13 @@ Includes `Preview mock statement →` dev link (remove before production). "Gene
 
 ---
 
-### `/billing/statements/[clientId]` — Client Statement Detail
+### `/billing/statements/[clientId]` - Client Statement Detail
 
 **File:** `src/app/(admin)/billing/statements/[clientId]/page.tsx`
 
 **Header actions:**
-- Print — disabled (v2)
-- Export PDF — disabled (v2)
+- Print - disabled (v2)
+- Export PDF - disabled (v2)
 
 **Summary cards (3-up row):**
 
@@ -1287,7 +1287,7 @@ Includes `Preview mock statement →` dev link (remove before production). "Gene
 
 **Two-column layout (lg:grid-cols-3):**
 
-**Main content (left) — `DocumentPreview type="statement"`:**
+**Main content (left) - `DocumentPreview type="statement"`:**
 
 The statement document renders a transaction history table:
 
@@ -1303,24 +1303,24 @@ The statement document renders a transaction history table:
 In v1 this table is built from: all `invoices` for this client (each `issued` invoice = a debit row) + all `income` records for this client (each income row = a credit row). Sort by date ascending to compute running balance correctly.
 
 **Sidebar (right):**
-- **Client Info card** — Name, Email, Phone, Address
-- **Statement Period card** — From / To date range. "Change Period" button (disabled in v1, active in v2 with date pickers)
+- **Client Info card** - Name, Email, Phone, Address
+- **Statement Period card** - From / To date range. "Change Period" button (disabled in v1, active in v2 with date pickers)
 
 **Data to fetch:**
 ```typescript
 const [statement, allIncome] = await Promise.all([
   getClientStatement(clientId, { year }),
-  getAllIncome({ clientId }),   // existing function — reused as-is
+  getAllIncome({ clientId }),   // existing function - reused as-is
 ])
 if (!statement.client) notFound()
 ```
 
 **Summary strip** (same card style as `/accounts/[account]`):
-- Total Quoted — sum of all quote totals
-- Total Invoiced — sum of invoice totals
-- Total Paid — sum of paid invoice totals
-- Outstanding — `text-red-500` if > 0, `text-green-500` if 0
-- Conversion Rate — `accepted / sent quotes` as percentage
+- Total Quoted - sum of all quote totals
+- Total Invoiced - sum of invoice totals
+- Total Paid - sum of paid invoice totals
+- Outstanding - `text-red-500` if > 0, `text-green-500` if 0
+- Conversion Rate - `accepted / sent quotes` as percentage
 
 ---
 
@@ -1339,7 +1339,7 @@ interface DocumentPreviewProps {
   dueDate?: string
   periodFrom?: string      // statement only
   periodTo?: string        // statement only
-  reference?: string       // quote only — client's own reference
+  reference?: string       // quote only - client's own reference
   org: OrgDetails
   client: ClientDetails
   lineItems?: LineItem[]   // quote + invoice
@@ -1347,7 +1347,7 @@ interface DocumentPreviewProps {
   notes?: string
   terms?: string           // quote only
   banking?: BankingDetails // invoice + statement
-  vatEnabled?: boolean     // quote + invoice — default false
+  vatEnabled?: boolean     // quote + invoice - default false
   vatRate?: number         // only used when vatEnabled is true, default 15
   discountType?: 'percent' | 'amount'
   discountValue?: number
@@ -1356,9 +1356,9 @@ interface DocumentPreviewProps {
 ```
 
 **Type variants:**
-- `quote` — shows line items, totals, terms, no banking
-- `invoice` — shows line items, totals, notes, banking details
-- `statement` — shows transaction history table (debit / credit / balance), no line items
+- `quote` - shows line items, totals, terms, no banking
+- `invoice` - shows line items, totals, notes, banking details
+- `statement` - shows transaction history table (debit / credit / balance), no line items
 
 ---
 
@@ -1370,14 +1370,14 @@ Quote (draft)
     → Quote (accepted)
       → [Convert to Invoice] → Invoice (draft)
     → Quote (declined)      [terminal]
-    → Quote (expired)       [terminal — auto, past expiry]
+    → Quote (expired)       [terminal - auto, past expiry]
   → Quote (cancelled)       [terminal]
-  → Quote (converted)       [terminal — set when invoice created]
+  → Quote (converted)       [terminal - set when invoice created]
 
 Invoice (draft)
   → Invoice (issued)
-    → Invoice (paid)        [terminal — posts to income table]
-    → Invoice (overdue)     [auto — past due date + not paid]
+    → Invoice (paid)        [terminal - posts to income table]
+    → Invoice (overdue)     [auto - past due date + not paid]
     → Invoice (void)        [terminal]
   → Invoice (void)          [terminal]
 ```
@@ -1388,7 +1388,7 @@ Invoice (draft)
 
 Format: `{DIVISION_PREFIX}-{TYPE}-{YEAR}-{SEQ}`
 
-Prefix derived from division name — first 3 uppercase alpha chars:
+Prefix derived from division name - first 3 uppercase alpha chars:
 - "Apex Web Solutions" → `APX`
 - "TenderEdge Solutions" → `TES`
 - "PMG Services" → `PMG`
@@ -1401,37 +1401,37 @@ Sequence is per-division, per-type, resets each calendar year. Assigned atomical
 
 ## Implementation Notes
 
-- **All billing detail pages** use the `DocumentPreview` component for the main content area — do not build separate line item tables inline in the page.
+- **All billing detail pages** use the `DocumentPreview` component for the main content area - do not build separate line item tables inline in the page.
 - **All create forms** use controlled React state (not FormData) because line items are nested arrays.
-- **Client is required** on both quotes and invoices — the form must not submit without a client selected. Show an inline validation error on the Client field.
+- **Client is required** on both quotes and invoices - the form must not submit without a client selected. Show an inline validation error on the Client field.
 - **All line items must come from the pre-saved items catalogue.** The `BillingLineItemsForm` combobox must only allow selecting from `getActiveItems()`. Free-form one-off text entries are not permitted.
 - **VAT is off by default.** The owner is not VAT registered. The Summary sidebar shows a `Switch` labelled "Include VAT (15%)". When toggled on, VAT is calculated at 15% of (subtotal − discount). The `vatEnabled` boolean is stored on the document.
 - **Discount field** in the Summary sidebar accepts either a percentage or a fixed ZAR amount (toggle between `%` and `R`). Applied after subtotal, before VAT. Stored as `discountType` and `discountValue` on the document.
-- **Reference field** on quotes — a free-text input in the Quote Details card for the client's own reference number (e.g. their PO or job number). Stored as `reference` on the quotation.
+- **Reference field** on quotes - a free-text input in the Quote Details card for the client's own reference number (e.g. their PO or job number). Stored as `reference` on the quotation.
 - **Summary sidebar is sticky** (`sticky top-6`) on both create and detail pages.
 - **Edit quote:** available for `draft` and `sent` statuses only. Terminal statuses (`accepted`, `converted`, `declined`, `cancelled`, `expired`) cannot be edited.
-- **Edit invoice:** available only when status is `draft`, `issued`, or `overdue`. Once `paid`, the invoice cannot be edited or deleted — the Edit button is hidden and the Delete action is removed from the actions dropdown.
+- **Edit invoice:** available only when status is `draft`, `issued`, or `overdue`. Once `paid`, the invoice cannot be edited or deleted - the Edit button is hidden and the Delete action is removed from the actions dropdown.
 - **Export as PDF** button is shown in the header of quote and invoice detail pages (disabled in v1, wired in v2).
 - **Convert to Invoice** button on the quote detail page is the only way to create a linked invoice. The standalone "New Invoice" form creates unlinked invoices.
-- **Mark Paid** inserts into the existing `income` table (not a new table). The `income.clientId` column is `NOT NULL` — always check before enabling the button.
+- **Mark Paid** inserts into the existing `income` table (not a new table). The `income.clientId` column is `NOT NULL` - always check before enabling the button.
 - **Period lock** gates both create and mark-paid actions via `isPeriodClosed(date)` from `lib/date-rules.ts`.
-- **`created_by`** is `text` matching `user.id` in the auth schema — not `uuid`.
-- **`updatedAt`** is application-managed — set explicitly in `.set({ updatedAt: new Date() })`.
+- **`created_by`** is `text` matching `user.id` in the auth schema - not `uuid`.
+- **`updatedAt`** is application-managed - set explicitly in `.set({ updatedAt: new Date() })`.
 - **Banking details and logo** on generated documents come from the division's billing settings at `/settings/billing`.
-- **Dev preview links** (`Preview mock quote →`, `Preview mock invoice →`, `Preview mock statement →`) are in the current shells — remove before production.
-- **Activity card** in the detail sidebar uses mock data in v1 — wire to a real audit log table in v2.
+- **Dev preview links** (`Preview mock quote →`, `Preview mock invoice →`, `Preview mock statement →`) are in the current shells - remove before production.
+- **Activity card** in the detail sidebar uses mock data in v1 - wire to a real audit log table in v2.
 
 
 ---
 
 ## Part 3: Billing Implementation Details (V2)
 
-# PMG Control Hub — Billing Update Spec
+# PMG Control Hub - Billing Update Spec
 ## Precise Changes Based on Actual Codebase
 
 **Date:** May 2026  
-**Based on:** Actual files reviewed — `billing.ts` schema, `billing/queries.ts`, all page and component files  
-**Approach:** Surgical patches only — do not rewrite working files
+**Based on:** Actual files reviewed - `billing.ts` schema, `billing/queries.ts`, all page and component files  
+**Approach:** Surgical patches only - do not rewrite working files
 
 ---
 
@@ -1439,19 +1439,19 @@ Sequence is per-division, per-type, resets each calendar year. Assigned atomical
 
 Reading the actual code, these are already working correctly:
 
-- ✅ Schema: `quotations`, `invoices`, `billing_line_items`, `billing_items`, `document_sequences` — all exist and are correct
-- ✅ `getAllQuotations`, `getAllInvoices`, `getQuotationById`, `getInvoiceById`, `getClientStatement`, `getClientsWithBillingActivity`, `getAllItems`, `getItemById` — all working
-- ✅ Quote list, invoice list, statement list, statement detail — all wired with real data
-- ✅ Quote detail page — real data, action bar, `ConvertToInvoiceButton`
-- ✅ Invoice detail page — real data, `InvoiceDetailActions`, mark paid flow
-- ✅ Items list, item detail edit, new item form — working
-- ✅ `BillingStatusBadge`, `BillingTotalsBlock`, `ConvertToInvoiceButton`, `MarkPaidButton`, `VoidInvoiceButton` — working
+- ✅ Schema: `quotations`, `invoices`, `billing_line_items`, `billing_items`, `document_sequences` - all exist and are correct
+- ✅ `getAllQuotations`, `getAllInvoices`, `getQuotationById`, `getInvoiceById`, `getClientStatement`, `getClientsWithBillingActivity`, `getAllItems`, `getItemById` - all working
+- ✅ Quote list, invoice list, statement list, statement detail - all wired with real data
+- ✅ Quote detail page - real data, action bar, `ConvertToInvoiceButton`
+- ✅ Invoice detail page - real data, `InvoiceDetailActions`, mark paid flow
+- ✅ Items list, item detail edit, new item form - working
+- ✅ `BillingStatusBadge`, `BillingTotalsBlock`, `ConvertToInvoiceButton`, `MarkPaidButton`, `VoidInvoiceButton` - working
 
 ---
 
 ## Changes Required
 
-### Change 1 — Client Is Required on Quotes and Invoices
+### Change 1 - Client Is Required on Quotes and Invoices
 
 **Problem:** Both forms currently allow "No client" via `<SelectItem value="none">No client</SelectItem>` and pass `null` to the server action. The server actions also accept `null`.
 
@@ -1473,7 +1473,7 @@ if (!clientId) {
 
 #### `apps/admin/src/app/(admin)/billing/invoices/new/invoice-form-client.tsx`
 
-Same four changes as above — same file structure.
+Same four changes as above - same file structure.
 
 1. Remove `<SelectItem value="none">No client</SelectItem>`
 2. Change initial state: `const [clientId, setClientId] = useState('')`
@@ -1489,7 +1489,7 @@ if (!data.clientId) {
   return { error: 'A client is required.' };
 }
 ```
-This is the server-side guard — do not rely on frontend only.
+This is the server-side guard - do not rely on frontend only.
 
 #### `apps/admin/src/app/actions/billing-invoices.ts`
 
@@ -1497,7 +1497,7 @@ Same server-side guard in `createInvoice`.
 
 ---
 
-### Change 2 — Line Items Must Come From Saved Items
+### Change 2 - Line Items Must Come From Saved Items
 
 **Problem:** `BillingLineItemsForm` currently renders a plain `Input` for description where users can type anything. Need to replace with a strict item combobox.
 
@@ -1515,7 +1515,7 @@ Add this function at the bottom:
 ```typescript
 /**
  * Returns active billing items for use in line item selectors.
- * Only active items are returned — archived items cannot be selected.
+ * Only active items are returned - archived items cannot be selected.
  */
 export async function getActiveItems(): Promise<
   { id: string; name: string; description: string | null; unitPrice: string; unitLabel: string | null }[]
@@ -1563,7 +1563,7 @@ Pass `activeItems` to `<QuoteFormClient>`.
 
 #### `apps/admin/src/app/(admin)/billing/invoices/new/page.tsx`
 
-Same change — add `getActiveItems` and pass to `<InvoiceFormClient>`.
+Same change - add `getActiveItems` and pass to `<InvoiceFormClient>`.
 
 #### `apps/admin/src/components/billing/billing-line-items-form.tsx`
 
@@ -1642,7 +1642,7 @@ If `activeItems` is empty, show:
 
 Update `QuoteFormClient` and `InvoiceFormClient` to pass `activeItems` to `BillingLineItemsForm`.
 
-**Validation update in both form clients** — remove the description check and add item check:
+**Validation update in both form clients** - remove the description check and add item check:
 ```typescript
 // Replace:
 if (lineItems.some((r) => !r.description.trim())) {
@@ -1655,7 +1655,7 @@ if (lineItems.some((r) => !r.itemId)) {
 
 ---
 
-### Change 3 — Remove Inline VAT, Add Document-Level VAT Toggle to Sidebar
+### Change 3 - Remove Inline VAT, Add Document-Level VAT Toggle to Sidebar
 
 **Problem:** Currently `vatRate` is set per row ('0' or '15'). Need to remove per-row VAT and replace with a single sidebar toggle. Default is OFF (not VAT registered).
 
@@ -1665,7 +1665,7 @@ if (lineItems.some((r) => !r.itemId)) {
 
 #### `apps/admin/src/components/billing/billing-line-items-form.tsx`
 
-Remove the VAT rate select column entirely from the table. Remove `vatRate` from `LineItemFormRow` type (or keep it but don't render it — removing is cleaner):
+Remove the VAT rate select column entirely from the table. Remove `vatRate` from `LineItemFormRow` type (or keep it but don't render it - removing is cleaner):
 
 ```typescript
 // Remove from LineItemFormRow:
@@ -1692,7 +1692,7 @@ interface BillingTotalsBlockProps {
   discountAmount?: number; // ← add (for Change 5)
 }
 
-// In render — show VAT row only when vatEnabled:
+// In render - show VAT row only when vatEnabled:
 {vatEnabled && vatAmount > 0 && (
   <div className="flex justify-between text-sm">
     <span className="text-muted-foreground">VAT (15%)</span>
@@ -1740,15 +1740,15 @@ function calcTotals(lineItems: LineItemFormRow[], vatEnabled: boolean) {
 </div>
 ```
 5. Pass `vatEnabled` to `BillingTotalsBlock`
-6. Pass `vatEnabled` to `createQuotation` call — the action needs to store `vatAmount` and `total` correctly
+6. Pass `vatEnabled` to `createQuotation` call - the action needs to store `vatAmount` and `total` correctly
 
 #### `apps/admin/src/app/(admin)/billing/invoices/new/invoice-form-client.tsx`
 
 Same changes as above.
 
-#### `apps/admin/src/app/actions/billing-quotes.ts` — `createQuotation`
+#### `apps/admin/src/app/actions/billing-quotes.ts` - `createQuotation`
 
-Update totals calculation — remove per-item VAT, use document-level:
+Update totals calculation - remove per-item VAT, use document-level:
 ```typescript
 // Accept vatEnabled in input
 let subtotal = 0;
@@ -1766,7 +1766,7 @@ lineItems: parsed.lineItems.map((item, i) => ({
 }))
 ```
 
-**Schema migration needed** — add `vat_enabled` to both tables:
+**Schema migration needed** - add `vat_enabled` to both tables:
 
 In `packages/db/src/schema/billing.ts`, add to `quotations` and `invoices`:
 ```typescript
@@ -1786,9 +1786,9 @@ vatEnabled: z.boolean().default(false),
 
 ---
 
-### Change 4 — Sticky Summary Sidebar
+### Change 4 - Sticky Summary Sidebar
 
-**Problem:** The sidebar in the create forms (`QuoteFormClient`, `InvoiceFormClient`) is not sticky. The detail pages already have `lg:sticky lg:top-16` on the sidebar wrapper — those are fine.
+**Problem:** The sidebar in the create forms (`QuoteFormClient`, `InvoiceFormClient`) is not sticky. The detail pages already have `lg:sticky lg:top-16` on the sidebar wrapper - those are fine.
 
 **Files to patch:**
 
@@ -1807,13 +1807,13 @@ Change to:
 
 #### `apps/admin/src/app/(admin)/billing/invoices/new/invoice-form-client.tsx`
 
-Same change — same sidebar wrapper div.
+Same change - same sidebar wrapper div.
 
 ---
 
-### Change 5 — Discount Field
+### Change 5 - Discount Field
 
-**Schema migration needed** — add to both `quotations` and `invoices` tables in `packages/db/src/schema/billing.ts`:
+**Schema migration needed** - add to both `quotations` and `invoices` tables in `packages/db/src/schema/billing.ts`:
 
 ```typescript
 // Add to quotations AND invoices:
@@ -1925,9 +1925,9 @@ Update `quotationRowSelect` and `invoiceRowSelect` to include these fields.
 
 ---
 
-### Change 6 — Reference Field on Quotes
+### Change 6 - Reference Field on Quotes
 
-**Schema migration needed** — add to `quotations` in `packages/db/src/schema/billing.ts`:
+**Schema migration needed** - add to `quotations` in `packages/db/src/schema/billing.ts`:
 ```typescript
 reference: text('reference'),  // nullable
 ```
@@ -1969,7 +1969,7 @@ Add `reference: string | null` to `QuotationRow` type.
 
 #### `apps/admin/src/app/(admin)/billing/quotes/[id]/page.tsx`
 
-Pass `quote.reference` to `DocumentPreview` — the `reference` prop already exists on `DocumentPreviewProps`:
+Pass `quote.reference` to `DocumentPreview` - the `reference` prop already exists on `DocumentPreviewProps`:
 ```typescript
 const docPreviewProps = {
   ...
@@ -1980,7 +1980,7 @@ const docPreviewProps = {
 
 ---
 
-### Change 7 — Edit Quotes and Invoices
+### Change 7 - Edit Quotes and Invoices
 
 **New routes needed:**
 - `apps/admin/src/app/(admin)/billing/quotes/[id]/edit/page.tsx`
@@ -1999,7 +1999,7 @@ const docPreviewProps = {
 | Invoice (PAID) | ❌ Cannot edit or delete |
 | Invoice (VOID) | ❌ Cannot edit |
 
-#### `apps/admin/src/app/actions/billing-quotes.ts` — add `updateQuotation`
+#### `apps/admin/src/app/actions/billing-quotes.ts` - add `updateQuotation`
 
 ```typescript
 export async function updateQuotation(
@@ -2053,7 +2053,7 @@ export async function updateQuotation(
 }
 ```
 
-#### `apps/admin/src/app/actions/billing-invoices.ts` — add `updateInvoice`
+#### `apps/admin/src/app/actions/billing-invoices.ts` - add `updateInvoice`
 
 ```typescript
 export async function updateInvoice(
@@ -2137,11 +2137,11 @@ Also add message when paid:
 
 ---
 
-### Change 8 — Export as PDF
+### Change 8 - Export as PDF
 
 **This is the largest change. Break it into two sub-steps.**
 
-#### Sub-step 8A — Install and scaffold
+#### Sub-step 8A - Install and scaffold
 
 ```bash
 npm install @react-pdf/renderer
@@ -2149,7 +2149,7 @@ npm install @react-pdf/renderer
 
 Create `packages/documents/` as a new package (or add directly to `apps/admin` if you want to keep it simple for now):
 
-**Simpler approach — add directly to `apps/admin`:**
+**Simpler approach - add directly to `apps/admin`:**
 
 ```
 apps/admin/src/lib/pdf/
@@ -2158,7 +2158,7 @@ apps/admin/src/lib/pdf/
   generate-pdf.ts     ← server utility
 ```
 
-#### Sub-step 8B — Route handler
+#### Sub-step 8B - Route handler
 
 Create `apps/admin/src/app/api/billing/pdf/[type]/[id]/route.ts`:
 
@@ -2211,7 +2211,7 @@ export async function GET(
 }
 ```
 
-#### Sub-step 8C — Wire the button
+#### Sub-step 8C - Wire the button
 
 In `apps/admin/src/app/(admin)/billing/quotes/[id]/page.tsx`, replace the disabled Print button:
 ```tsx
@@ -2230,7 +2230,7 @@ In `apps/admin/src/app/(admin)/billing/quotes/[id]/page.tsx`, replace the disabl
 </Button>
 ```
 
-Same in `apps/admin/src/app/(admin)/billing/invoices/[id]/page.tsx` — replace disabled Print button with:
+Same in `apps/admin/src/app/(admin)/billing/invoices/[id]/page.tsx` - replace disabled Print button with:
 ```tsx
 <Button variant="outline" size="sm" asChild>
   <a href={`/api/billing/pdf/invoice/${invoice.id}`} download={`${invoice.documentNumber}.pdf`}>
@@ -2240,7 +2240,7 @@ Same in `apps/admin/src/app/(admin)/billing/invoices/[id]/page.tsx` — replace 
 </Button>
 ```
 
-#### Sub-step 8D — PDF template (minimal working version)
+#### Sub-step 8D - PDF template (minimal working version)
 
 Create `apps/admin/src/lib/pdf/quote-pdf.tsx`:
 
@@ -2365,11 +2365,11 @@ export function QuotePDF({ quote }: { quote: QuotationDetail }) {
 }
 ```
 
-Create `apps/admin/src/lib/pdf/invoice-pdf.tsx` — same structure but uses `InvoiceDetail` type, shows PO number, shows "Invoice" instead of "Quotation", includes payment terms and banking details (from settings when available).
+Create `apps/admin/src/lib/pdf/invoice-pdf.tsx` - same structure but uses `InvoiceDetail` type, shows PO number, shows "Invoice" instead of "Quotation", includes payment terms and banking details (from settings when available).
 
 ---
 
-### Change 9 — Items: Remove VAT Applicable Toggle
+### Change 9 - Items: Remove VAT Applicable Toggle
 
 **Files to patch:**
 
@@ -2396,11 +2396,11 @@ Remove the VAT toggle button element. Keep `vatApplicable` in the `updateItem` c
 
 #### `apps/admin/src/app/(admin)/billing/items/[id]/page.tsx`
 
-The Details sidebar card currently shows no VAT row (confirmed from code review — `formatZAR(Number(item.unitPrice))` is shown with "excl. VAT" label, no VAT row). This is already correct — leave as-is.
+The Details sidebar card currently shows no VAT row (confirmed from code review - `formatZAR(Number(item.unitPrice))` is shown with "excl. VAT" label, no VAT row). This is already correct - leave as-is.
 
 ---
 
-### Change 10 — Archive = Deactivate, Restore = Activate (Items)
+### Change 10 - Archive = Deactivate, Restore = Activate (Items)
 
 **Current state:** Looking at `item-edit-client.tsx`, `archiveItem` and `unarchiveItem` are called but we need to confirm what they do in the action file.
 
@@ -2448,7 +2448,7 @@ export async function unarchiveItem(id: string): Promise<{ error?: string }> {
 }
 ```
 
-The `billing_items` schema uses `status` as the single source of truth (no separate `isActive` boolean — confirmed from `schema/billing.ts`). Archiving sets `status = 'archived'`. `getActiveItems()` filters `status = 'active'`. This already means archived items cannot appear in the line item selector. No schema change needed.
+The `billing_items` schema uses `status` as the single source of truth (no separate `isActive` boolean - confirmed from `schema/billing.ts`). Archiving sets `status = 'archived'`. `getActiveItems()` filters `status = 'active'`. This already means archived items cannot appear in the line item selector. No schema change needed.
 
 ---
 
@@ -2463,15 +2463,15 @@ npx drizzle-kit migrate
 ```
 
 **Schema changes required:**
-1. `quotations` — add `vat_enabled boolean NOT NULL default false`
-2. `invoices` — add `vat_enabled boolean NOT NULL default false`
-3. `quotations` — add `reference text nullable`
-4. `quotations` — add `discount_type text nullable`
-5. `quotations` — add `discount_value numeric(12,2) nullable`
-6. `quotations` — add `discount_amount numeric(12,2) NOT NULL default '0'`
-7. `invoices` — add `discount_type text nullable`
-8. `invoices` — add `discount_value numeric(12,2) nullable`
-9. `invoices` — add `discount_amount numeric(12,2) NOT NULL default '0'`
+1. `quotations` - add `vat_enabled boolean NOT NULL default false`
+2. `invoices` - add `vat_enabled boolean NOT NULL default false`
+3. `quotations` - add `reference text nullable`
+4. `quotations` - add `discount_type text nullable`
+5. `quotations` - add `discount_value numeric(12,2) nullable`
+6. `quotations` - add `discount_amount numeric(12,2) NOT NULL default '0'`
+7. `invoices` - add `discount_type text nullable`
+8. `invoices` - add `discount_value numeric(12,2) nullable`
+9. `invoices` - add `discount_amount numeric(12,2) NOT NULL default '0'`
 
 All with `default` values so existing rows are not broken.
 
@@ -2481,7 +2481,7 @@ All with `default` values so existing rows are not broken.
 
 Apply in this exact order to avoid TypeScript errors and broken imports:
 
-1. **Schema + migration** (adds columns with defaults — existing rows stay valid)
+1. **Schema + migration** (adds columns with defaults - existing rows stay valid)
 2. **`packages/db/src/queries/billing.ts`** (add `getActiveItems`, update row types and select shapes)
 3. **`packages/db/src/index.ts`** (add new export)
 4. **`apps/admin/src/app/actions/billing-schema.ts`** (update Zod schemas)
@@ -2493,10 +2493,10 @@ Apply in this exact order to avoid TypeScript errors and broken imports:
 10. **`apps/admin/src/app/(admin)/billing/quotes/new/quote-form-client.tsx`** (client required, items, VAT toggle, discount, reference, sticky sidebar)
 11. **`apps/admin/src/app/(admin)/billing/invoices/new/invoice-form-client.tsx`** (same changes)
 12. **New edit routes** (`quotes/[id]/edit/page.tsx`, `invoices/[id]/edit/page.tsx`)
-13. **Detail pages** (`quotes/[id]/page.tsx`, `invoices/[id]/page.tsx`) — add Edit button, wire reference, fix PDF button
+13. **Detail pages** (`quotes/[id]/page.tsx`, `invoices/[id]/page.tsx`) - add Edit button, wire reference, fix PDF button
 14. **Items forms** (remove VAT toggle from new and edit forms)
 15. **PDF route handler + templates** (install `@react-pdf/renderer`, create route, create templates)
 
 ---
 
-*PMG Control Hub — Billing Update Spec — May 2026*
+*PMG Control Hub - Billing Update Spec - May 2026*

@@ -1,5 +1,5 @@
 /*
-  TES — Global Styles
+  TES - Global Styles
   Tender Edge Solutions · Dark Authority + Gold Precision
   Import base engine, then define TES-specific tokens here.
 */
@@ -50,7 +50,7 @@
   --radius-2xl: calc(var(--radius) + 0.5rem);
 }
 
-/* ── TES Theme — always dark, no light mode ── */
+/* ── TES Theme - always dark, no light mode ── */
 :root,
 .dark {
   /* Page */
@@ -63,7 +63,7 @@
   --popover:              #0f2237;
   --popover-foreground:   #f0f4f8;
 
-  /* Gold — primary brand accent */
+  /* Gold - primary brand accent */
   --primary:              #c9a227;
   --primary-foreground:   #0b1929;
   --primary-hover:        #e0b82e;
@@ -76,12 +76,12 @@
   --accent:               #1a3350;
   --accent-foreground:    #f0f4f8;
 
-  /* Borders & inputs — subtle gold tint */
+  /* Borders & inputs - subtle gold tint */
   --border:               rgba(201, 162, 39, 0.2);
   --input:                rgba(201, 162, 39, 0.15);
   --outline:              rgba(201, 162, 39, 0.4);
 
-  /* WhatsApp — always green, never adapts to gold palette */
+  /* WhatsApp - always green, never adapts to gold palette */
   --whatsapp:             #25D366;
   --whatsapp-hover:       #1fb155;
 

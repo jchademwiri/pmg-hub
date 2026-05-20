@@ -11,7 +11,7 @@ Division Management is Phase 6 of the PMG Control Center admin app. It provides 
 - **Division_Row**: A single row in the Divisions_Table representing one division, with inline rename state.
 - **Add_Form**: The inline form on the Divisions_Page used to create a new division (name only).
 - **Division_Action**: The `createDivision`, `updateDivision`, and `deleteDivision` Server Actions in `actions/divisions.ts`.
-- **DivisionSchema**: The Zod schema that validates division form data — `name` as a string between 1 and 100 characters.
+- **DivisionSchema**: The Zod schema that validates division form data - `name` as a string between 1 and 100 characters.
 - **DivisionRow**: The shape returned by `getDivisionsWithStats()`, containing: `id`, `name`, `totalIncome`, `totalExpenses`, `netProfit`, `leadCount`.
 - **Net_Profit**: The value computed as `totalIncome − totalExpenses` for a given division. Displayed in green when positive, red when negative or zero.
 - **FK_Constraint**: The PostgreSQL foreign key constraint on the `income` and `expenses` tables that references `divisions.id`. Deletion of a division that has associated income or expense records will be rejected by the database.
@@ -91,7 +91,7 @@ Division Management is Phase 6 of the PMG Control Center admin app. It provides 
 2. WHEN DivisionSchema validation fails, THE Division_Action SHALL return `{ error: "<human-readable message>" }` without writing to the database.
 3. WHEN a database error occurs, THE Division_Action SHALL return `{ error: "<human-readable message>" }` without throwing an exception.
 4. WHEN the operation succeeds, THE Division_Action SHALL return `{}`.
-5. THE Add_Form and Division_Row rename form SHALL use the return value of the Division_Action to display inline errors — THE Add_Form and Division_Row SHALL NOT rely on thrown exceptions for user-facing error display.
+5. THE Add_Form and Division_Row rename form SHALL use the return value of the Division_Action to display inline errors - THE Add_Form and Division_Row SHALL NOT rely on thrown exceptions for user-facing error display.
 
 ---
 
@@ -120,7 +120,7 @@ Division Management is Phase 6 of the PMG Control Center admin app. It provides 
 5. WHEN a division has no leads, THE `getDivisionsWithStats()` function SHALL return `leadCount` as `0` for that division.
 6. THE `getDivisionsWithStats()` function SHALL compute `netProfit` as `totalIncome − totalExpenses` for each division.
 7. THE `@pmg/db` package SHALL export the `DivisionRow` type and `getDivisionsWithStats` from `packages/db/src/index.ts`.
-8. WHERE `getAllDivisions()` already exists in `packages/db/src/queries.ts`, THE `@pmg/db` package SHALL NOT add a duplicate — `getDivisionsWithStats()` is a separate, stats-enriched helper.
+8. WHERE `getAllDivisions()` already exists in `packages/db/src/queries.ts`, THE `@pmg/db` package SHALL NOT add a duplicate - `getDivisionsWithStats()` is a separate, stats-enriched helper.
 
 ---
 
@@ -132,7 +132,7 @@ Division Management is Phase 6 of the PMG Control Center admin app. It provides 
 
 1. THE `deleteDivision` Server_Action SHALL attempt the database delete inside a `try/catch` block.
 2. IF the database returns a foreign key constraint violation error, THEN THE `deleteDivision` Server_Action SHALL return `{ error: "Cannot delete division with existing income or expense records" }` without re-throwing.
-3. THE `deleteDivision` Server_Action SHALL NOT perform a pre-check query to determine if records exist before attempting deletion — THE Server_Action SHALL rely on the FK constraint as the authoritative guard.
+3. THE `deleteDivision` Server_Action SHALL NOT perform a pre-check query to determine if records exist before attempting deletion - THE Server_Action SHALL rely on the FK constraint as the authoritative guard.
 4. WHEN `deleteDivision` succeeds, THE Division_Action SHALL call `revalidatePath('/divisions')` and return `{}`.
 
 ---

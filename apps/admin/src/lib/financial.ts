@@ -151,7 +151,7 @@ export async function getRevenueByDivisionSeries(): Promise<DivisionSeriesChart>
   return buildDivisionSeries(rows)
 }
 
-/** All series data for the interactive chart — fetched once, filtered client-side */
+/** All series data for the interactive chart - fetched once, filtered client-side */
 export async function getAllDivisionSeriesData(): Promise<{
   last3:    DivisionSeriesChart
   last6:    DivisionSeriesChart

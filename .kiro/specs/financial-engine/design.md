@@ -1,4 +1,4 @@
-# Design Document — Financial Engine
+# Design Document - Financial Engine
 
 ## Overview
 
@@ -9,7 +9,7 @@ layer for all monetary figures in the PMG Control Center admin UI.
 The module has no UI concerns. It reads from the database via `@pmg/db` query
 helpers, applies the PMG financial model using deterministic arithmetic, and
 returns typed results to Next.js Server Components. It is never imported from
-Client Components — the `server-only` package enforces this at build time.
+Client Components - the `server-only` package enforces this at build time.
 
 ### Scope
 
@@ -45,11 +45,11 @@ apps/admin/src/lib/financial.ts   ← Financial Engine (this module)
         ├──────────────────────────────────────┐
         ▼                                      ▼
 Next.js Server Components          Next.js Server Actions
-(dashboard/page.tsx — reads)       (actions/*.ts — mutate DB,
+(dashboard/page.tsx - reads)       (actions/*.ts - mutate DB,
                                     then revalidatePath())
 ```
 
-The Financial Engine is read-only. Mutation actions do not call it directly —
+The Financial Engine is read-only. Mutation actions do not call it directly -
 they mutate the database and call `revalidatePath()`, which causes the Server
 Component to re-fetch through the Financial Engine on the next render.
 
@@ -95,10 +95,10 @@ Fetches revenue and expenses concurrently, applies the PMG financial model,
 and returns a fully-populated `FinancialSummary`.
 
 Design decisions:
-- `Promise.all([getTotalRevenue(), getTotalExpenses()])` — concurrent fetches
+- `Promise.all([getTotalRevenue(), getTotalExpenses()])` - concurrent fetches
   reduce latency vs sequential awaits. Both queries are independent.
-- No `'use server'` directive — this is a module, not a Server Action.
-- No clamping of negative values — negative `profitPool` is a valid business
+- No `'use server'` directive - this is a module, not a Server Action.
+- No clamping of negative values - negative `profitPool` is a valid business
   state (loss period) and must propagate correctly to all allocations.
 
 ### `getDivisionRevenue()` and `getLeadCounts()`
@@ -133,7 +133,7 @@ hard-asserted in tests.
 ### FinancialSummary
 
 All fields are raw IEEE 754 `number` values. No rounding to the nearest cent
-before returning — that is explicitly out of scope for Phase 1.
+before returning - that is explicitly out of scope for Phase 1.
 
 | Field | Formula | Notes |
 |---|---|---|
@@ -158,7 +158,7 @@ Passthrough from `getLeadsByStatus()`. Shape: `{ status: string; count: number }
 
 ## Correctness Properties
 
-*A property is a characteristic or behavior that should hold true across all valid executions of a system — essentially, a formal statement about what the system should do. Properties serve as the bridge between human-readable specifications and machine-verifiable correctness guarantees.*
+*A property is a characteristic or behavior that should hold true across all valid executions of a system - essentially, a formal statement about what the system should do. Properties serve as the bridge between human-readable specifications and machine-verifiable correctness guarantees.*
 
 ### Property 1: Financial formulas correctness
 
@@ -185,8 +185,8 @@ must equal `profitPool` within a floating-point tolerance of `0.01`.
 `getTotalExpenses()` must each be called exactly once per invocation.
 
 > **Testability note:** With `vi.mock`, tests can verify that each helper is
-> called exactly once (call count assertion). True `Promise.all` concurrency —
-> i.e. that both calls are initiated before either resolves — cannot be
+> called exactly once (call count assertion). True `Promise.all` concurrency -
+> i.e. that both calls are initiated before either resolves - cannot be
 > verified with synchronous mocks. The `Promise.all` usage is verified by
 > code review and is enforced structurally by the implementation; it is not
 > asserted in the test suite.
@@ -250,15 +250,15 @@ structurally identical `FinancialSummary` objects.
 
 ## Error Handling
 
-The Financial Engine has minimal error handling by design — it is a thin
+The Financial Engine has minimal error handling by design - it is a thin
 calculation layer, not a resilience boundary.
 
 | Scenario | Behaviour |
 |---|---|
 | DB query throws | Exception propagates to the calling Server Component, which triggers Next.js error boundaries |
-| `revenue = 0, expenses = 0` | Returns all-zero `FinancialSummary` — no special case needed, arithmetic handles it |
-| `profitPool < 0` | Returns negative allocation values — no clamping, no exception |
-| `formatZAR(NaN)` or `formatZAR(Infinity)` | `Intl.NumberFormat` handles these gracefully (returns `NaN` or `∞` representations) — out of scope for Phase 1 |
+| `revenue = 0, expenses = 0` | Returns all-zero `FinancialSummary` - no special case needed, arithmetic handles it |
+| `profitPool < 0` | Returns negative allocation values - no clamping, no exception |
+| `formatZAR(NaN)` or `formatZAR(Infinity)` | `Intl.NumberFormat` handles these gracefully (returns `NaN` or `∞` representations) - out of scope for Phase 1 |
 
 No input validation or sanitisation is performed inside `financial.ts`. That
 responsibility belongs to database `CHECK` constraints and Zod schemas in
@@ -269,7 +269,7 @@ Server Actions.
 ## Testing Strategy
 
 All tests run in Vitest at `apps/admin/src/__tests__/financial.test.ts`.
-No real database connection is required — all `@pmg/db` query helpers are
+No real database connection is required - all `@pmg/db` query helpers are
 mocked using `vi.mock`.
 
 ### Dual Testing Approach
@@ -283,7 +283,7 @@ mocked using `vi.mock`.
 
 > Property 4 (zero-input edge case) is covered by the "zero case" unit test
 > rather than a property-based test. It targets a single specific input
-> (`revenue = 0, expenses = 0`) rather than a universal range — unit test
+> (`revenue = 0, expenses = 0`) rather than a universal range - unit test
 > coverage is appropriate and sufficient for this case.
 
 **Property-based tests** verify universal properties across many generated inputs.
@@ -322,8 +322,8 @@ describe('getFinancialSummary', () => {
   describe('unit tests', () => {
     it('standard case')
     it('zero case')
-    it('loss case — exact negative values')
-    it('determinism — same inputs produce same output')
+    it('loss case - exact negative values')
+    it('determinism - same inputs produce same output')
   })
   describe('property tests', () => {
     it('Property 1: financial formulas correctness')
@@ -335,11 +335,11 @@ describe('getFinancialSummary', () => {
 })
 
 describe('getDivisionRevenue', () => {
-  it('Property 6: passthrough — returns getRevenueByDivision result unchanged')
+  it('Property 6: passthrough - returns getRevenueByDivision result unchanged')
 })
 
 describe('getLeadCounts', () => {
-  it('Property 7: passthrough — returns getLeadsByStatus result unchanged')
+  it('Property 7: passthrough - returns getLeadsByStatus result unchanged')
 })
 
 describe('formatZAR', () => {
@@ -350,7 +350,7 @@ describe('formatZAR', () => {
   })
   describe('property tests', () => {
     it('Property 8: output correctness for all finite numbers')
-    it('Property 9: determinism — same input always same output')
+    it('Property 9: determinism - same input always same output')
   })
 })
 ```
@@ -365,7 +365,7 @@ exact separator characters. Instead:
 expect(result).toMatch(/R/)
 expect(result).toMatch(/\.\d{2}$|,\d{2}$/)
 
-// incorrect — brittle
+// incorrect - brittle
 expect(result).toBe('R 1 234,50')
 ```
 
@@ -375,11 +375,11 @@ expect(result).toBe('R 1 234,50')
 |---|---|
 | `packages/db/src/index.ts` | Add `export * from './queries'` (prerequisite) |
 | `apps/admin/package.json` | Add to `dependencies`: `"server-only": "^0.0.1"`, `"@pmg/db": "*"`. Add to `devDependencies`: `"vitest": "^1.4.0"`, `"fast-check": "^4.6.0"`. Add scripts: `"test": "vitest run"`, `"test:watch": "vitest"` |
-| `apps/admin/vitest.config.ts` | Create — configures Vitest with `node` environment and the `@/*` path alias pointing to `./src`, so test imports resolve correctly |
+| `apps/admin/vitest.config.ts` | Create - configures Vitest with `node` environment and the `@/*` path alias pointing to `./src`, so test imports resolve correctly |
 | `apps/admin/src/lib/financial.ts` | Create the financial engine module |
 | `apps/admin/src/__tests__/financial.test.ts` | Create Vitest test suite |
 
-### `apps/admin/vitest.config.ts` — content
+### `apps/admin/vitest.config.ts` - content
 
 ```ts
 import { defineConfig } from 'vitest/config'

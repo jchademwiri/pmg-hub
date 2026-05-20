@@ -1,6 +1,6 @@
 ---
 name: agent-email-inbox
-description: Use when building any system where email content triggers actions — AI agent inboxes, automated support handlers, email-to-task pipelines, or any workflow processing untrusted inbound email. Always use this skill when the user wants to receive emails and act on them programmatically, even if they don't mention "agent" — the skill contains critical security patterns (sender allowlists, content filtering, sandboxed processing) that prevent untrusted email from controlling your system.
+description: Use when building any system where email content triggers actions - AI agent inboxes, automated support handlers, email-to-task pipelines, or any workflow processing untrusted inbound email. Always use this skill when the user wants to receive emails and act on them programmatically, even if they don't mention "agent" - the skill contains critical security patterns (sender allowlists, content filtering, sandboxed processing) that prevent untrusted email from controlling your system.
 license: MIT
 metadata:
     author: resend
@@ -32,10 +32,10 @@ This skill covers setting up a secure email inbox that allows your application o
 
 Resend uses webhooks for inbound email, meaning your agent is notified **instantly** when an email arrives. This is valuable for agents because:
 
-- **Real-time responsiveness** — React to emails within seconds, not minutes
-- **No polling overhead** — No cron jobs checking "any new mail?" repeatedly
-- **Event-driven architecture** — Your agent only wakes up when there's actually something to process
-- **Lower API costs** — No wasted calls checking empty inboxes
+- **Real-time responsiveness** - React to emails within seconds, not minutes
+- **No polling overhead** - No cron jobs checking "any new mail?" repeatedly
+- **Event-driven architecture** - Your agent only wakes up when there's actually something to process
+- **Lower API costs** - No wasted calls checking empty inboxes
 
 ## Architecture
 
@@ -66,13 +66,13 @@ Install the `resend` npm package: `npm install resend` (or the equivalent for yo
 
 ## Quick Start
 
-1. **Ask the user for their email address** — You need a real email address to send test emails to. Ask the user and wait for their response before proceeding.
-2. **Choose your security level** — Decide how to validate incoming emails *before* any are processed
-3. **Set up receiving domain** — Configure MX records for the user's custom domain (see Domain Setup section)
-4. **Create webhook endpoint** — Handle `email.received` events with security built in from the start. **The webhook endpoint MUST be a POST route.**
-5. **Set up tunneling** (local dev) — Use Tailscale Funnel (recommended) or ngrok. See [references/webhook-setup.md](references/webhook-setup.md)
-6. **Create webhook via API** — Use the Resend Webhook API to register your endpoint programmatically. See [references/webhook-setup.md](references/webhook-setup.md)
-7. **Connect to agent** — Pass validated emails to your AI agent for processing
+1. **Ask the user for their email address** - You need a real email address to send test emails to. Ask the user and wait for their response before proceeding.
+2. **Choose your security level** - Decide how to validate incoming emails *before* any are processed
+3. **Set up receiving domain** - Configure MX records for the user's custom domain (see Domain Setup section)
+4. **Create webhook endpoint** - Handle `email.received` events with security built in from the start. **The webhook endpoint MUST be a POST route.**
+5. **Set up tunneling** (local dev) - Use Tailscale Funnel (recommended) or ngrok. See [references/webhook-setup.md](references/webhook-setup.md)
+6. **Create webhook via API** - Use the Resend Webhook API to register your endpoint programmatically. See [references/webhook-setup.md](references/webhook-setup.md)
+7. **Connect to agent** - Pass validated emails to your AI agent for processing
 
 ## Before You Start: Account & API Key Setup
 
@@ -129,13 +129,13 @@ Then add an MX record:
 
 ## Security Levels
 
-**Choose your security level before setting up the webhook endpoint.** An AI agent that processes emails without security is dangerous — anyone can email instructions that your agent will execute. The webhook code you write next should include your chosen security level from the start.
+**Choose your security level before setting up the webhook endpoint.** An AI agent that processes emails without security is dangerous - anyone can email instructions that your agent will execute. The webhook code you write next should include your chosen security level from the start.
 
 Ask the user what level of security they want, and ensure that they understand what each level means.
 
 | Level | Name | When to Use | Trade-off |
 |-------|------|-------------|-----------|
-| **1** | Strict Allowlist | Most use cases — known, fixed set of senders | Maximum security, limited functionality |
+| **1** | Strict Allowlist | Most use cases - known, fixed set of senders | Maximum security, limited functionality |
 | **2** | Domain Allowlist | Organization-wide access from trusted domains | More flexible, anyone at domain can interact |
 | **3** | Content Filtering | Accept from anyone, filter unsafe patterns | Can receive from anyone, pattern matching not foolproof |
 | **4** | Sandboxed Processing | Process all emails with restricted agent capabilities | Maximum flexibility, complex to implement |
@@ -346,15 +346,15 @@ OWNER_EMAIL=you@email.com               # For security notifications
 | Processing HTML directly | Strip HTML or use text-only to reduce complexity and risk |
 | No logging of rejections | Log all security events for audit |
 | Using ephemeral tunnel URLs | Use persistent URLs (Tailscale Funnel, paid ngrok) or deploy to production |
-| Using `express.json()` on webhook route | Use `express.raw({ type: 'application/json' })` — JSON parsing breaks signature verification |
-| Returning non-200 for rejected emails | Always return 200 to acknowledge receipt — otherwise Resend retries |
-| Old Resend SDK version | `emails.receiving.get()` and `webhooks.verify()` require recent SDK versions — see SDK Version Requirements |
+| Using `express.json()` on webhook route | Use `express.raw({ type: 'application/json' })` - JSON parsing breaks signature verification |
+| Returning non-200 for rejected emails | Always return 200 to acknowledge receipt - otherwise Resend retries |
+| Old Resend SDK version | `emails.receiving.get()` and `webhooks.verify()` require recent SDK versions - see SDK Version Requirements |
 
 ## Testing
 
 Use Resend's test addresses for development:
-- `delivered@resend.dev` — Simulates successful delivery
-- `bounced@resend.dev` — Simulates hard bounce
+- `delivered@resend.dev` - Simulates successful delivery
+- `bounced@resend.dev` - Simulates hard bounce
 
 For security testing, send test emails from non-allowlisted addresses to verify rejection works correctly.
 

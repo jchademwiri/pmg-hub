@@ -23,7 +23,7 @@ Implement five targeted dashboard enhancements: a withdrawals database table wit
     - Test that `insertWithdrawal` rejects non-positive amounts at the DB constraint level
     - _Requirements: 2.4, 1.4_
 
-- [x] 3. Checkpoint — ensure DB layer compiles cleanly
+- [x] 3. Checkpoint - ensure DB layer compiles cleanly
   - Ensure all tests pass, ask the user if questions arise.
 
 - [x] 4. Add expense sparkline color CSS variable
@@ -46,7 +46,7 @@ Implement five targeted dashboard enhancements: a withdrawals database table wit
     - _Requirements: 5.4_
   - [x] 7.2 Update `DashboardShell` Props type in `apps/admin/src/components/dashboard/dashboard-shell.tsx` to include `prev: DivisionSeriesChart` in the `divisionSeriesData` object, and pass it through to `DivisionAreaChart`
     - _Requirements: 5.6_
-  - [x] 7.3 In `apps/admin/src/app/(admin)/dashboard/page.tsx`, the `getAllDivisionSeriesData()` call already returns all series — no change needed; verify `divisionSeriesData` passed to `DashboardShell` includes `prev`
+  - [x] 7.3 In `apps/admin/src/app/(admin)/dashboard/page.tsx`, the `getAllDivisionSeriesData()` call already returns all series - no change needed; verify `divisionSeriesData` passed to `DashboardShell` includes `prev`
     - _Requirements: 5.6_
 
 - [x] 8. Update DivisionAreaChart to support 'prev' range
@@ -56,18 +56,18 @@ Implement five targeted dashboard enhancements: a withdrawals database table wit
     - Add `prev: DivisionSeriesChart` to the `Props.seriesData` type
   - _Requirements: 5.1, 5.2, 5.3_
 
-- [x] 9. Checkpoint — ensure chart and data layer changes compile and render correctly
+- [x] 9. Checkpoint - ensure chart and data layer changes compile and render correctly
   - Ensure all tests pass, ask the user if questions arise.
 
 - [x] 10. Add SalaryCard ytdSalary prop and YTD sub-label
   - In `apps/admin/src/components/dashboard/salary-card.tsx`:
     - Add `ytdSalary: number` to `SalaryCardProps`
-    - Below the primary salary `<p>` (inside the positive profit-pool branch), render a sub-label `<p>` showing `YTD: {formatZAR(ytdSalary)}` in a smaller muted style — only when `withdrawals !== null` (i.e. current-month tab is active)
+    - Below the primary salary `<p>` (inside the positive profit-pool branch), render a sub-label `<p>` showing `YTD: {formatZAR(ytdSalary)}` in a smaller muted style - only when `withdrawals !== null` (i.e. current-month tab is active)
   - _Requirements: 3.1, 3.2, 3.3, 3.4_
 
 - [x] 11. Pass ytdSalary from DashboardShell to SalaryCard
   - In `apps/admin/src/components/dashboard/dashboard-shell.tsx`, pass `ytdSalary={ytdSummary.salary}` to `<SalaryCard>`
-  - In `apps/admin/src/app/(admin)/dashboard/page.tsx`, `ytdSummary` is already fetched — no additional data fetch needed
+  - In `apps/admin/src/app/(admin)/dashboard/page.tsx`, `ytdSummary` is already fetched - no additional data fetch needed
   - _Requirements: 3.4_
 
 - [x] 12. Create WithdrawModal component
@@ -93,7 +93,7 @@ Implement five targeted dashboard enhancements: a withdrawals database table wit
     - On `onSuccess`: call `router.refresh()` to update the withdrawal total without a full page reload
   - _Requirements: 1.1, 1.6_
 
-- [x] 15. Final checkpoint — ensure all features work end-to-end
+- [x] 15. Final checkpoint - ensure all features work end-to-end
   - Ensure all tests pass, ask the user if questions arise.
 
 ## Notes

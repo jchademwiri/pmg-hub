@@ -187,7 +187,7 @@ describe('Property 1: Uninvited emails are always rejected', () => {
    * if the email exists in the users table. If it returns null, it throws FORBIDDEN.
    * We test this logic directly by simulating the hook's behaviour.
    */
-  it('throws FORBIDDEN when adapter.findOne returns null — Validates: Requirements 1.2, 2.4', async () => {
+  it('throws FORBIDDEN when adapter.findOne returns null - Validates: Requirements 1.2, 2.4', async () => {
     await fc.assert(
       fc.asyncProperty(fc.emailAddress(), async (email) => {
         // Simulate the beforeSignIn hook logic extracted from auth.ts
@@ -247,7 +247,7 @@ describe('Property 1: Uninvited emails are always rejected', () => {
     )
   })
 
-  it('does NOT throw when adapter.findOne returns a user — Validates: Requirements 1.2, 2.4', async () => {
+  it('does NOT throw when adapter.findOne returns a user - Validates: Requirements 1.2, 2.4', async () => {
     await fc.assert(
       fc.asyncProperty(fc.emailAddress(), async (email) => {
         // When user exists, hook should not throw
@@ -292,7 +292,7 @@ describe('Property 1: Uninvited emails are always rejected', () => {
 describe('Property 2: Invitation creation round-trip', () => {
   // Feature: auth-roles, Property 2: Invitation creation round-trip
 
-  it('creates invitation record with non-empty UUID token and ~7-day expiresAt — Validates: Requirements 1.3, 5.2', async () => {
+  it('creates invitation record with non-empty UUID token and ~7-day expiresAt - Validates: Requirements 1.3, 5.2', async () => {
     // Use a simple valid email format that Zod's .email() accepts
     const zodValidEmailArb = fc
       .tuple(
@@ -363,7 +363,7 @@ describe('Property 3: Role is preserved through invitation acceptance', () => {
    * we test the hook logic that ensures the invitation is marked accepted, and separately
    * verify that the role stored on the user matches the invitation role.
    */
-  it('afterSignIn hook marks acceptedAt for the signed-in user email — Validates: Requirements 1.7', async () => {
+  it('afterSignIn hook marks acceptedAt for the signed-in user email - Validates: Requirements 1.7', async () => {
     await fc.assert(
       fc.asyncProperty(
         fc.emailAddress(),
@@ -415,7 +415,7 @@ describe('Property 3: Role is preserved through invitation acceptance', () => {
     )
   })
 
-  it('afterSignIn hook does nothing when path is not magic-link — Validates: Requirements 1.7', async () => {
+  it('afterSignIn hook does nothing when path is not magic-link - Validates: Requirements 1.7', async () => {
     await fc.assert(
       fc.asyncProperty(
         fc.emailAddress(),

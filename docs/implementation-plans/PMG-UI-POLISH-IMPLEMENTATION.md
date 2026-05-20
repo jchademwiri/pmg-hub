@@ -1,4 +1,4 @@
-# PMG Control Center — UI Polish: Collapsible Add Forms
+# PMG Control Center - UI Polish: Collapsible Add Forms
 **Document version:** 1.0  
 **Target codebase:** `pmg-hub` monorepo  
 **Implementing agent:** Kilo-Code (VS Code)
@@ -21,26 +21,26 @@ This document standardises the "add record" UX pattern across all data-entry pag
 
 | Page | Form component | Bug to fix |
 |---|---|---|
-| `/income` | `IncomeAddForm` | **Duplicate render** — form rendered twice, remove the second instance |
-| `/expenses` | `ExpenseAddForm` | — |
-| `/clients` | `ClientAddForm` | — |
-| `/leads` | `LeadAddForm` | — |
-| `/divisions` | `DivisionAddForm` | — |
+| `/income` | `IncomeAddForm` | **Duplicate render** - form rendered twice, remove the second instance |
+| `/expenses` | `ExpenseAddForm` | - |
+| `/clients` | `ClientAddForm` | - |
+| `/leads` | `LeadAddForm` | - |
+| `/divisions` | `DivisionAddForm` | - |
 
 ---
 
 ## Critical Rules for the Implementing Agent
 
 1. **One phase at a time.** Complete all file edits for a phase, then run the build gate, then commit. Do not proceed to the next phase until the build passes.
-2. **Do not touch** `apps/admin/src/app/(admin)/ledger/` — it is the reference and must not be modified.
-3. **Do not touch** any server actions, DB queries, or `financial.ts` — only UI files change.
+2. **Do not touch** `apps/admin/src/app/(admin)/ledger/` - it is the reference and must not be modified.
+3. **Do not touch** any server actions, DB queries, or `financial.ts` - only UI files change.
 4. **Preserve all existing props** passed to form components. Only the visibility / wrapper logic changes.
 5. **TypeScript must compile with zero errors** before each commit.
 6. Each phase has an explicit **Build Gate** command and a **Git Commit** command. Run them exactly as written.
 
 ---
 
-## Phase 1 — Income Page
+## Phase 1 - Income Page
 
 ### Files to edit
 
@@ -49,7 +49,7 @@ This document standardises the "add record" UX pattern across all data-entry pag
 **What to change:**
 - Convert this server component so its `<IncomeAddForm>` is no longer rendered here at all.
 - Instead, render a new client shell component `<IncomePageClient>` that owns the toggle state.
-- Remove the **duplicate** `<IncomeAddForm>` render (there are currently two — both must go).
+- Remove the **duplicate** `<IncomeAddForm>` render (there are currently two - both must go).
 - Keep all data-fetching (`getAllIncome`, `getAllDivisions`, `getAllClients`, `getDistinctIncomeMonths`) in the server component and pass results as props.
 
 **Resulting structure of `page.tsx` (server component):**
@@ -237,7 +237,7 @@ export default function IncomePageClient({
 }
 ```
 
-> **Note on the `createAction` wrapper:** The client shell wraps `createAction` so it can call `setIsAdding(false)` on success. This is the same technique used in the ledger client. The `IncomeAddForm` already calls the action and shows errors — we just intercept the success path.
+> **Note on the `createAction` wrapper:** The client shell wraps `createAction` so it can call `setIsAdding(false)` on success. This is the same technique used in the ledger client. The `IncomeAddForm` already calls the action and shows errors - we just intercept the success path.
 
 ### Phase 1 Build Gate
 
@@ -257,7 +257,7 @@ git commit -m "feat(ui): collapsible add form on income page, fix duplicate form
 
 ---
 
-## Phase 2 — Expenses Page
+## Phase 2 - Expenses Page
 
 ### Files to edit
 
@@ -489,7 +489,7 @@ git commit -m "feat(ui): collapsible add form on expenses page"
 
 ---
 
-## Phase 3 — Clients Page
+## Phase 3 - Clients Page
 
 ### Files to edit
 
@@ -614,7 +614,7 @@ git commit -m "feat(ui): collapsible add form on clients page"
 
 ---
 
-## Phase 4 — Leads Page
+## Phase 4 - Leads Page
 
 ### Files to edit
 
@@ -781,7 +781,7 @@ git commit -m "feat(ui): collapsible add form on leads page"
 
 ---
 
-## Phase 5 — Divisions Page
+## Phase 5 - Divisions Page
 
 ### Files to edit
 
@@ -911,9 +911,9 @@ git commit -m "feat(ui): collapsible add form on divisions page"
 
 ---
 
-## Phase 6 — Ledger Page Label Fix
+## Phase 6 - Ledger Page Label Fix
 
-The current `ledger-client.tsx` has one small inconsistency — the button label says **"Add Withdrawal"** but should say **"Add Ledger Entry"** to match the new terminology.
+The current `ledger-client.tsx` has one small inconsistency - the button label says **"Add Withdrawal"** but should say **"Add Ledger Entry"** to match the new terminology.
 
 ### Files to edit
 
@@ -953,12 +953,12 @@ git commit -m "fix(ui): correct ledger page button label from 'Add Withdrawal' t
 
 | Phase | Files created | Files modified | Bug fixed |
 |---|---|---|---|
-| 1 — Income | `income/income-client.tsx` | `income/page.tsx` | ✅ Duplicate `<IncomeAddForm>` removed |
-| 2 — Expenses | `expenses/expenses-client.tsx` | `expenses/page.tsx` | — |
-| 3 — Clients | `clients/clients-client.tsx` | `clients/page.tsx` | — |
-| 4 — Leads | `leads/leads-client.tsx` | `leads/page.tsx` | — |
-| 5 — Divisions | `divisions/divisions-client.tsx` | `divisions/page.tsx` | — |
-| 6 — Ledger fix | — | `ledger/ledger-client.tsx` | ✅ Wrong button label corrected |
+| 1 - Income | `income/income-client.tsx` | `income/page.tsx` | ✅ Duplicate `<IncomeAddForm>` removed |
+| 2 - Expenses | `expenses/expenses-client.tsx` | `expenses/page.tsx` | - |
+| 3 - Clients | `clients/clients-client.tsx` | `clients/page.tsx` | - |
+| 4 - Leads | `leads/leads-client.tsx` | `leads/page.tsx` | - |
+| 5 - Divisions | `divisions/divisions-client.tsx` | `divisions/page.tsx` | - |
+| 6 - Ledger fix | - | `ledger/ledger-client.tsx` | ✅ Wrong button label corrected |
 
 **Total new files:** 5  
 **Total modified files:** 6  
@@ -983,7 +983,7 @@ export default function XxxPageClient({ ..., createAction, ... }) {
   return (
     <div className="flex flex-col gap-6">
 
-      {/* 1. Header card — always visible */}
+      {/* 1. Header card - always visible */}
       <div className="flex justify-between items-center bg-card p-4 rounded-xl border border-border shadow-sm">
         <h2 className="text-lg font-medium">Page Title</h2>
         <Button onClick={() => setIsAdding(true)} disabled={isAdding}>
@@ -991,7 +991,7 @@ export default function XxxPageClient({ ..., createAction, ... }) {
         </Button>
       </div>
 
-      {/* 2. Collapsible form — only when isAdding */}
+      {/* 2. Collapsible form - only when isAdding */}
       {isAdding && (
         <div className="bg-card rounded-xl border border-border shadow-sm p-4">
           <XxxAddForm

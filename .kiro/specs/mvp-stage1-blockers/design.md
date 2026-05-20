@@ -1,4 +1,4 @@
-# Design Document — MVP Stage 1 Blockers
+# Design Document - MVP Stage 1 Blockers
 
 ## Overview
 
@@ -62,7 +62,7 @@ Page (server component)
 
 ## Components and Interfaces
 
-### B2 — /clients
+### B2 - /clients
 
 #### New files
 
@@ -164,7 +164,7 @@ On success: `router.push('/clients')`. On error: inline error message.
 
 ---
 
-### B1 — Enforce clientId Required on Income
+### B1 - Enforce clientId Required on Income
 
 #### Modified files
 
@@ -218,7 +218,7 @@ will receive a PostgreSQL error code `23503` (foreign key violation) and return
 
 ---
 
-### B3 — Expense Category Management
+### B3 - Expense Category Management
 
 #### New files
 
@@ -318,7 +318,7 @@ pass the `{ id, name }[]` array to the forms.
 
 ---
 
-### B4 — Fix Hardcoded Breadcrumb
+### B4 - Fix Hardcoded Breadcrumb
 
 #### Modified file
 
@@ -364,7 +364,7 @@ Uses existing shadcn components: `Breadcrumb`, `BreadcrumbList`, `BreadcrumbItem
 
 ---
 
-### B5 — Apply formatZAR to Income Table
+### B5 - Apply formatZAR to Income Table
 
 #### Modified file
 
@@ -382,7 +382,7 @@ Single change: import `formatZAR` from `'@/lib/format'` and wrap the amount cell
 <TableCell>{formatZAR(Number(entry.amount))}</TableCell>
 ```
 
-`expense-table.tsx` is verified only — no change required if `formatZAR` is already applied.
+`expense-table.tsx` is verified only - no change required if `formatZAR` is already applied.
 
 ---
 
@@ -391,7 +391,7 @@ Single change: import `formatZAR` from `'@/lib/format'` and wrap the amount cell
 ### Existing schema changes (B1)
 
 ```typescript
-// packages/db/src/schema/income.ts — clientId column
+// packages/db/src/schema/income.ts - clientId column
 // Before:
 clientId: uuid("client_id").references(() => clients.id, { onDelete: "set null" })
 
@@ -466,7 +466,7 @@ ON CONFLICT (name) DO NOTHING;
 ## Correctness Properties
 
 *A property is a characteristic or behavior that should hold true across all valid
-executions of a system — essentially, a formal statement about what the system should
+executions of a system - essentially, a formal statement about what the system should
 do. Properties serve as the bridge between human-readable specifications and
 machine-verifiable correctness guarantees.*
 
@@ -492,8 +492,8 @@ and `phone` fields. Calling `getClientById` with a non-existent id SHALL return 
 
 ### Property 3: Client server actions never throw
 
-*For any* input to `createClient`, `updateClient`, or `deleteClient` — including
-malformed data, duplicate emails, and FK violations — the action SHALL return
+*For any* input to `createClient`, `updateClient`, or `deleteClient` - including
+malformed data, duplicate emails, and FK violations - the action SHALL return
 `{ error?: string }` and SHALL NOT throw an exception.
 
 **Validates: Requirements 2.6, 2.7, 2.8**
@@ -619,43 +619,43 @@ Focus on specific behaviors with concrete inputs:
 Use a property-based testing library (e.g. `fast-check` for TypeScript) with a
 minimum of 100 iterations per property. Each test is tagged with its design property.
 
-**Property 1** — `getClientsWithIncomeCount` round-trip
+**Property 1** - `getClientsWithIncomeCount` round-trip
 - Generate: random clients (1–20), random income rows referencing them
 - Insert all, call `getClientsWithIncomeCount()`
 - Assert: every returned row's `incomeCount` equals the actual count of income rows for that client
 - Tag: `Feature: mvp-stage1-blockers, Property 1: client income count round-trip`
 
-**Property 2** — `getClientById` round-trip
+**Property 2** - `getClientById` round-trip
 - Generate: random client data (name, optional businessName/email/phone)
 - Insert, call `getClientById(insertedId)`
 - Assert: returned row matches inserted data; `getClientById(randomUUID)` returns null
 - Tag: `Feature: mvp-stage1-blockers, Property 2: client lookup round-trip`
 
-**Property 3** — Server actions never throw
+**Property 3** - Server actions never throw
 - Generate: random FormData inputs (valid and invalid)
 - Call each action, wrap in try/catch
 - Assert: no exception thrown; return value is always `{ error?: string }`
 - Tag: `Feature: mvp-stage1-blockers, Property 3: client server actions never throw`
 
-**Property 4** — Income requires clientId
+**Property 4** - Income requires clientId
 - Generate: random income FormData missing `clientId` or with invalid UUID
 - Call `createIncome` / `updateIncome`
 - Assert: returns `{ error: string }`, no DB row inserted/updated
 - Tag: `Feature: mvp-stage1-blockers, Property 4: income requires clientId after B1`
 
-**Property 5** — Expense category query round-trip
+**Property 5** - Expense category query round-trip
 - Generate: random category names (1–30, unique strings)
 - Insert all, call `getAllExpenseCategories()`
 - Assert: all inserted names present, ordered by name ASC, no duplicates
 - Tag: `Feature: mvp-stage1-blockers, Property 5: expense category query round-trip`
 
-**Property 6** — Delete category blocked when in use
+**Property 6** - Delete category blocked when in use
 - Generate: random category + random expense rows referencing it
 - Insert all, call `deleteExpenseCategory(id)`
 - Assert: returns `{ error: 'Category is in use by existing expenses' }`, row still exists
 - Tag: `Feature: mvp-stage1-blockers, Property 6: delete category blocked when in use`
 
-**Property 7** — Breadcrumb label mapping is total
+**Property 7** - Breadcrumb label mapping is total
 - Generate: random pathname strings (known segments, unknown segments, multi-segment paths)
 - Call the label derivation function
 - Assert: always returns non-empty string; known segments return exact mapped label; unknown segments return capitalised segment

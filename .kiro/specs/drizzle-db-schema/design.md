@@ -9,8 +9,8 @@ The feature adds five new schema modules (`divisions`, `clients`, `income`, `exp
 Key design decisions:
 - The existing Neon HTTP driver (`drizzle-orm/neon-http`) in `src/client.ts` is retained unchanged.
 - `src/env.ts`, `src/client.ts`, `src/index.ts`, and `drizzle.config.ts` are not modified.
-- `src/migrations/0000_magical_blade.sql` and `src/migrations/0001_hard_bedlam.sql` are live applied migrations — they must not be touched.
-- `src/schema/tes.ts` and `src/schema/pmg.ts` are deleted — their tables (`tes_leads`, `pmg_leads`) are superseded by the new unified `leads` table.
+- `src/migrations/0000_magical_blade.sql` and `src/migrations/0001_hard_bedlam.sql` are live applied migrations - they must not be touched.
+- `src/schema/tes.ts` and `src/schema/pmg.ts` are deleted - their tables (`tes_leads`, `pmg_leads`) are superseded by the new unified `leads` table.
 - `src/schema/aws.ts` is rewritten to keep only `awsPricing`, `awsPackageTypeEnum`, `AwsPricing`, and `NewAwsPricing`. All messaging and booking tables/enums are removed.
 - `updatedAt` is managed by the application layer only. A code comment is required above every `updatedAt` column definition documenting this tradeoff.
 - All monetary values in Phase 0 are ZAR (South African Rand). No currency column is required (Requirement 12.11).
@@ -22,24 +22,24 @@ Key design decisions:
 
 ```
 packages/db/
-├── drizzle.config.ts          # existing — unchanged, points to src/schema/index.ts
-├── package.json               # existing — add db:seed script
-├── .env.example               # new — environment variable template for onboarding
-├── vitest.config.ts           # existing — unchanged
-├── tsconfig.json              # existing — unchanged
+├── drizzle.config.ts          # existing - unchanged, points to src/schema/index.ts
+├── package.json               # existing - add db:seed script
+├── .env.example               # new - environment variable template for onboarding
+├── vitest.config.ts           # existing - unchanged
+├── tsconfig.json              # existing - unchanged
 └── src/
-    ├── env.ts                 # existing — unchanged, Zod-validated DATABASE_URL
-    ├── client.ts              # existing — unchanged, Neon HTTP driver
-    ├── index.ts               # existing — unchanged, re-exports client + schema
-    ├── seed.ts                # rewrite — preserve aws_pricing block, add financial tables in transaction
-    ├── queries.ts             # new — 5 typed query utility functions
+    ├── env.ts                 # existing - unchanged, Zod-validated DATABASE_URL
+    ├── client.ts              # existing - unchanged, Neon HTTP driver
+    ├── index.ts               # existing - unchanged, re-exports client + schema
+    ├── seed.ts                # rewrite - preserve aws_pricing block, add financial tables in transaction
+    ├── queries.ts             # new - 5 typed query utility functions
     ├── migrations/
-    │   ├── 0000_magical_blade.sql   # existing — DO NOT TOUCH
-    │   ├── 0001_hard_bedlam.sql     # existing — DO NOT TOUCH
-    │   └── 0002_*.sql               # generated after bun db:generate — review before applying
+    │   ├── 0000_magical_blade.sql   # existing - DO NOT TOUCH
+    │   ├── 0001_hard_bedlam.sql     # existing - DO NOT TOUCH
+    │   └── 0002_*.sql               # generated after bun db:generate - review before applying
     └── schema/
-        ├── index.ts           # rewrite — new barrel (aws + 5 new domain files)
-        ├── aws.ts             # rewrite — keep awsPricing + awsPackageTypeEnum only
+        ├── index.ts           # rewrite - new barrel (aws + 5 new domain files)
+        ├── aws.ts             # rewrite - keep awsPricing + awsPackageTypeEnum only
         ├── divisions.ts       # new
         ├── clients.ts         # new
         ├── income.ts          # new
@@ -156,7 +156,7 @@ Each schema module follows the pattern established in `aws.ts`:
 - Inferred types defined immediately after the table definition
 - Index names follow the pattern `{table}_{column}_idx`
 
-**aws.ts** (rewritten — pricing only)
+**aws.ts** (rewritten - pricing only)
 ```typescript
 // Keep only:
 export const awsPackageTypeEnum = pgEnum("aws_package_type", ["monthly", "once_off"])
@@ -222,7 +222,7 @@ All functions use Drizzle's `sql` aggregate helpers (`sum`, `count`) and return 
 ### Barrel Index (`src/schema/index.ts`)
 
 ```typescript
-// src/schema/index.ts — full replacement
+// src/schema/index.ts - full replacement
 export * from "./aws";        // awsPricing + awsPackageTypeEnum only
 export * from "./divisions";
 export * from "./clients";
@@ -235,14 +235,14 @@ export * from "./leads";
 
 The seed script is split into two independent blocks:
 
-**Block 1 — aws_pricing** (preserved exactly as-is): Uses `.onConflictDoNothing()` upsert. Unaffected by Block 2 failures.
+**Block 1 - aws_pricing** (preserved exactly as-is): Uses `.onConflictDoNothing()` upsert. Unaffected by Block 2 failures.
 
-**Block 2 — financial tables** (new, wrapped in `db.transaction()`):
-1. Insert 2 divisions: `TES` and `AWS` — query by name before inserting, skip if exists
-2. Insert 2–3 clients — query by name before inserting, skip if exists
-3. Insert 3 income records referencing seeded divisions and clients — deterministic check before inserting
-4. Insert 3 expense records referencing seeded divisions — deterministic check before inserting
-5. Insert 3 lead records — check by email or phone before inserting
+**Block 2 - financial tables** (new, wrapped in `db.transaction()`):
+1. Insert 2 divisions: `TES` and `AWS` - query by name before inserting, skip if exists
+2. Insert 2–3 clients - query by name before inserting, skip if exists
+3. Insert 3 income records referencing seeded divisions and clients - deterministic check before inserting
+4. Insert 3 expense records referencing seeded divisions - deterministic check before inserting
+5. Insert 3 lead records - check by email or phone before inserting
 
 If any insert in Block 2 fails, the entire Block 2 transaction rolls back. Block 1 is unaffected.
 
@@ -280,7 +280,7 @@ Indexes: `clients_name_idx` on `name`; partial unique index on `email WHERE emai
 | Column      | Type          | Constraints                                              |
 |-------------|---------------|----------------------------------------------------------|
 | id          | uuid          | PK, defaultRandom()                                      |
-| date        | date          | NOT NULL (transaction date — no default)                 |
+| date        | date          | NOT NULL (transaction date - no default)                 |
 | divisionId  | uuid          | NOT NULL, FK → divisions.id, onDelete: RESTRICT (inline comment: // restrict: prevent division deletion while financial records exist) |
 | clientId    | uuid          | nullable, FK → clients.id, onDelete: SET NULL            |
 | description | text          | nullable                                                 |
@@ -295,7 +295,7 @@ Indexes: `income_date_idx` on `date`, `income_division_id_idx` on `divisionId`, 
 | Column      | Type          | Constraints                                              |
 |-------------|---------------|----------------------------------------------------------|
 | id          | uuid          | PK, defaultRandom()                                      |
-| date        | date          | NOT NULL (transaction date — no default)                 |
+| date        | date          | NOT NULL (transaction date - no default)                 |
 | divisionId  | uuid          | NOT NULL, FK → divisions.id, onDelete: RESTRICT (inline comment: // restrict: prevent division deletion while financial records exist) |
 | category    | text          | NOT NULL                                                 |
 | description | text          | nullable                                                 |
@@ -342,7 +342,7 @@ leads      → belongsTo divisions (via divisionId, optional)
 
 ## Correctness Properties
 
-*A property is a characteristic or behavior that should hold true across all valid executions of a system — essentially, a formal statement about what the system should do. Properties serve as the bridge between human-readable specifications and machine-verifiable correctness guarantees.*
+*A property is a characteristic or behavior that should hold true across all valid executions of a system - essentially, a formal statement about what the system should do. Properties serve as the bridge between human-readable specifications and machine-verifiable correctness guarantees.*
 
 ### Property 1: Barrel index completeness
 
@@ -382,7 +382,7 @@ leads      → belongsTo divisions (via divisionId, optional)
 
 ### Property 7: Seed idempotency
 
-*For any* number of sequential seed script executions against the same database, the resulting row counts for `divisions`, `clients`, `income`, `expenses`, and `leads` should be identical after the first run and after all subsequent runs — no duplicate records should be created.
+*For any* number of sequential seed script executions against the same database, the resulting row counts for `divisions`, `clients`, `income`, `expenses`, and `leads` should be identical after the first run and after all subsequent runs - no duplicate records should be created.
 
 **Validates: Requirements 9.7, 9.9**
 
@@ -394,19 +394,19 @@ leads      → belongsTo divisions (via divisionId, optional)
 
 ### Property 9: Leads email normalization
 
-*For any* lead inserted with a mixed-case email address, the value stored in the database should equal the lowercase version of that email — normalization is applied at the application layer before insert.
+*For any* lead inserted with a mixed-case email address, the value stored in the database should equal the lowercase version of that email - normalization is applied at the application layer before insert.
 
 **Validates: Requirements 5.16**
 
 ### Property 10: Seed transaction atomicity
 
-*For any* seed script execution that fails mid-way (e.g., due to a constraint violation on a later insert), no partial records from that run should be committed — the database should remain in its prior state as if the seed had not run.
+*For any* seed script execution that fails mid-way (e.g., due to a constraint violation on a later insert), no partial records from that run should be committed - the database should remain in its prior state as if the seed had not run.
 
 **Validates: Requirements 9.10**
 
 ### Property 11: Grouped query result ordering
 
-*For any* non-empty result set returned by `getRevenueByDivision`, `getExpensesByDivision`, or `getLeadsByStatus`, the results should be ordered in descending order by total amount (or count for leads) — the first element should have the highest value.
+*For any* non-empty result set returned by `getRevenueByDivision`, `getExpensesByDivision`, or `getLeadsByStatus`, the results should be ordered in descending order by total amount (or count for leads) - the first element should have the highest value.
 
 **Validates: Requirements 10.10**
 
@@ -426,7 +426,7 @@ leads      → belongsTo divisions (via divisionId, optional)
 
 ## Error Handling
 
-**Missing environment variable**: `src/env.ts` uses Zod to validate `DATABASE_URL` and `DATABASE_URL_UNPOOLED` at module load time. If either is absent or malformed, a descriptive error is thrown before any connection attempt. No changes needed here — new modules reuse this.
+**Missing environment variable**: `src/env.ts` uses Zod to validate `DATABASE_URL` and `DATABASE_URL_UNPOOLED` at module load time. If either is absent or malformed, a descriptive error is thrown before any connection attempt. No changes needed here - new modules reuse this.
 
 **Database constraint violations**: Drizzle ORM does not catch or transform database errors. Errors from check constraints (`amount > 0`), NOT NULL violations, and foreign key violations are thrown as-is from the underlying driver. Callers are responsible for catching and handling these errors. This is the intended behavior per requirements 2.8, 3.13, 3.14, 4.13.
 
@@ -494,10 +494,10 @@ Unit tests focus on:
 
 ```
 packages/db/__tests__/
-├── db.test.ts          # rewrite — remove deleted table assertions, add new table assertions
-├── schema.test.ts      # new — unit tests for new schema modules
-├── queries.test.ts     # new — unit + property tests for query utilities
-└── seed.test.ts        # new — property test for seed idempotency
+├── db.test.ts          # rewrite - remove deleted table assertions, add new table assertions
+├── schema.test.ts      # new - unit tests for new schema modules
+├── queries.test.ts     # new - unit + property tests for query utilities
+└── seed.test.ts        # new - property test for seed idempotency
 ```
 
 ---

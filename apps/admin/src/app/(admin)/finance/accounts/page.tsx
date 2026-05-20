@@ -41,7 +41,7 @@ export default async function AccountsPage() {
               balance={bucket.available}
               historyCount={histories[key]!.length}
               recordAction={recordAccountWithdrawal}
-              // TODO: make withdrawalLocked dynamic — admin should be able to lock/unlock
+              // TODO: make withdrawalLocked dynamic - admin should be able to lock/unlock
               // any account from settings without a code change.
               withdrawalLocked={(LOCKED_ACCOUNTS as readonly string[]).includes(key)}
             />

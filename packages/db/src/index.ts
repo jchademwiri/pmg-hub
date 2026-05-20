@@ -27,6 +27,11 @@ export type {
   LineItemDetail,
   OrganisationSettings,
   DivisionBillingSettings,
+  AgingBucket,
+  AgingRow,
 } from './queries/billing';
-export { getActiveItems, getUnlinkedIncomeForClient, getStatementYears } from './queries/billing';
+export { getActiveItems, getUnlinkedIncomeForClient, getStatementYears, getAgingReport } from './queries/billing';
+
+// ── Date utilities ────────────────────────────────────────────────────────────
+export { addDays, today } from './lib/date-utils';
 

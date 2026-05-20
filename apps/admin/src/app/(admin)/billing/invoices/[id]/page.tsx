@@ -11,6 +11,7 @@ import { BillingTotalsBlock } from '@/components/billing/billing-totals-block';
 import { getInvoiceById, getDivisionBillingSettings } from '@pmg/db';
 import { issueInvoice, markInvoicePaid, voidInvoice } from '@/app/actions/billing-invoices';
 import { fmtDate } from '@/lib/format';
+import { getDocumentLogoUrl } from '@/lib/document-logo';
 import { InvoiceDetailActions } from './invoice-detail-actions';
 import { PrintButton } from '@/components/billing/print-button';
 
@@ -42,6 +43,7 @@ export default async function InvoiceDetailPage({ params }: Props) {
     dueDate: invoice.dueDate ?? undefined,
     org: {
       name: invoice.divisionName,
+      logoUrl: getDocumentLogoUrl(invoice.divisionName),
       divisionOf: 'Playhouse Media Group',
       email: divSettings?.salesRepEmail ?? undefined,
       phone: divSettings?.salesRepPhone ?? undefined,
@@ -127,7 +129,7 @@ export default async function InvoiceDetailPage({ params }: Props) {
 
       {/* Two-column layout */}
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-3 lg:items-start">
-        {/* Document preview — scrollable on small screens */}
+        {/* Document preview - scrollable on small screens */}
         <div className="lg:col-span-2 overflow-x-auto">
           <DocumentPreview type="invoice" {...docPreviewProps} />
         </div>
@@ -179,7 +181,7 @@ export default async function InvoiceDetailPage({ params }: Props) {
             </CardContent>
           </Card>
 
-          {/* Actions — in sidebar below activity */}
+          {/* Actions - in sidebar below activity */}
           <InvoiceDetailActions
             invoice={{
               id: invoice.id,

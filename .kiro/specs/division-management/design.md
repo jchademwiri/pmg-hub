@@ -2,7 +2,7 @@
 
 ## Overview
 
-Division Management is Phase 6 of the PMG Control Center admin app. It provides a single-route interface at `/divisions` for creating, renaming, and deleting business divisions. Each division row displays a financial summary — total income, total expenses, net profit, and lead count — aggregated via LEFT JOINs in a dedicated query helper.
+Division Management is Phase 6 of the PMG Control Center admin app. It provides a single-route interface at `/divisions` for creating, renaming, and deleting business divisions. Each division row displays a financial summary - total income, total expenses, net profit, and lead count - aggregated via LEFT JOINs in a dedicated query helper.
 
 The feature follows the established PMG admin pattern:
 
@@ -13,7 +13,7 @@ DB query helpers (packages/db/src/queries.ts)
   → Server Component page (apps/admin/src/app/(admin)/divisions/page.tsx)
 ```
 
-No separate detail page is needed — all interactions (add, rename, delete) happen inline on the list page.
+No separate detail page is needed - all interactions (add, rename, delete) happen inline on the list page.
 
 ## Architecture
 
@@ -36,11 +36,11 @@ graph TD
   G -->|revalidatePath| I["/divisions only"]
 ```
 
-The Server Component page fetches all data in a single `getDivisionsWithStats()` call, then passes the result to the two Client Components. No `searchParams` are needed — this page has no filtering. All mutations go through Server Actions that return `Promise<{ error?: string }>` and never throw.
+The Server Component page fetches all data in a single `getDivisionsWithStats()` call, then passes the result to the two Client Components. No `searchParams` are needed - this page has no filtering. All mutations go through Server Actions that return `Promise<{ error?: string }>` and never throw.
 
 ## Components and Interfaces
 
-### DB Query Helper — `packages/db/src/queries.ts`
+### DB Query Helper - `packages/db/src/queries.ts`
 
 ```ts
 export type DivisionRow = {
@@ -57,11 +57,11 @@ getDivisionsWithStats(): Promise<DivisionRow[]>
 
 Uses LEFT JOINs to `income`, `expenses`, and `leads` tables. Groups by `divisions.id` and `divisions.name`. Uses `COALESCE(SUM(...), 0)` for zero defaults. Computes `netProfit` as `totalIncome - totalExpenses` in the query. Orders by `divisions.name ASC`.
 
-`getAllDivisions()` already exists and is NOT replaced or duplicated — `getDivisionsWithStats()` is a separate, stats-enriched helper.
+`getAllDivisions()` already exists and is NOT replaced or duplicated - `getDivisionsWithStats()` is a separate, stats-enriched helper.
 
 Both `DivisionRow` and `getDivisionsWithStats` are exported from `packages/db/src/index.ts`.
 
-### Server Actions — `apps/admin/src/app/actions/divisions.ts`
+### Server Actions - `apps/admin/src/app/actions/divisions.ts`
 
 ```ts
 'use server'
@@ -87,11 +87,11 @@ All three actions follow the same error-handling contract as `income.ts`:
 `createDivision` and `updateDivision` call `revalidatePath('/divisions')` and `revalidatePath('/dashboard')`.
 `deleteDivision` calls `revalidatePath('/divisions')` only.
 
-`deleteDivision` does NOT pre-check for FK references — it attempts the delete directly and catches the FK constraint error, returning `{ error: 'Cannot delete division with existing income or expense records.' }`.
+`deleteDivision` does NOT pre-check for FK references - it attempts the delete directly and catches the FK constraint error, returning `{ error: 'Cannot delete division with existing income or expense records.' }`.
 
-### Client Components — `apps/admin/src/components/divisions/`
+### Client Components - `apps/admin/src/components/divisions/`
 
-**`division-add-form.tsx`** — `'use client'`
+**`division-add-form.tsx`** - `'use client'`
 
 ```ts
 interface DivisionAddFormProps {
@@ -101,7 +101,7 @@ interface DivisionAddFormProps {
 
 Uses `useTransition` + `useRef` pattern (same as `income-add-form.tsx`). Single field: `name`. On success: `formRef.current?.reset()`. On error: inline error display below the submit button. Input and button disabled while `isPending`.
 
-**`divisions-table.tsx`** — `'use client'`
+**`divisions-table.tsx`** - `'use client'`
 
 ```ts
 interface DivisionsTableProps {
@@ -127,10 +127,10 @@ Inline delete state per row:
 - `useTransition` for pending state; buttons disabled while pending
 - Inline error display on failure
 
-### Server Component Page — `apps/admin/src/app/(admin)/divisions/page.tsx`
+### Server Component Page - `apps/admin/src/app/(admin)/divisions/page.tsx`
 
 ```ts
-// No props needed — no searchParams
+// No props needed - no searchParams
 export default async function DivisionsPage() {
   const divisions = await getDivisionsWithStats()
   return (
@@ -148,7 +148,7 @@ export default async function DivisionsPage() {
 
 ## Data Models
 
-### Existing Schema — no changes needed
+### Existing Schema - no changes needed
 
 The `divisions` table already has `id`, `name`, and `updatedAt` columns. No migration is required for this phase.
 
@@ -163,7 +163,7 @@ The `divisions` table already has `id`, `name`, and `updatedAt` columns. No migr
 | netProfit | number | `totalIncome - totalExpenses` |
 | leadCount | number | `COALESCE(COUNT(leads.id), 0)` |
 
-### Export — `packages/db/src/index.ts`
+### Export - `packages/db/src/index.ts`
 
 Add to existing exports:
 ```ts
@@ -174,7 +174,7 @@ export type { DivisionRow } from './queries';
 
 ## Correctness Properties
 
-*A property is a characteristic or behavior that should hold true across all valid executions of a system — essentially, a formal statement about what the system should do. Properties serve as the bridge between human-readable specifications and machine-verifiable correctness guarantees.*
+*A property is a characteristic or behavior that should hold true across all valid executions of a system - essentially, a formal statement about what the system should do. Properties serve as the bridge between human-readable specifications and machine-verifiable correctness guarantees.*
 
 ### Property 1: getDivisionsWithStats shape and sort order
 
@@ -230,7 +230,7 @@ export type { DivisionRow } from './queries';
 
 **Validates: Requirements 6.3**
 
-### Property 10: getDivisionsWithStats after create — newly created division appears sorted
+### Property 10: getDivisionsWithStats after create - newly created division appears sorted
 
 *For any* newly created division name, after `createDivision` succeeds, the division must appear in the results of `getDivisionsWithStats` at the correct position in the name-ascending sort order.
 
@@ -244,10 +244,10 @@ export type { DivisionRow } from './queries';
 
 All three actions follow the same contract:
 
-1. **Validation failure** — `DivisionSchema.safeParse` returns `success: false` → return `{ error: issues[0]?.message ?? 'Validation error' }`. No DB write, no `revalidatePath`.
-2. **FK constraint violation** (`deleteDivision` only) — caught in `catch` block, detected by checking if the error message contains the Postgres FK violation code (`23503`) or message → return `{ error: 'Cannot delete division with existing income or expense records.' }`.
-3. **Other DB error** — `catch` block → return `{ error: err instanceof Error ? err.message : 'Unknown error' }`.
-4. **Success** — call `revalidatePath` for relevant paths, return `{}`.
+1. **Validation failure** - `DivisionSchema.safeParse` returns `success: false` → return `{ error: issues[0]?.message ?? 'Validation error' }`. No DB write, no `revalidatePath`.
+2. **FK constraint violation** (`deleteDivision` only) - caught in `catch` block, detected by checking if the error message contains the Postgres FK violation code (`23503`) or message → return `{ error: 'Cannot delete division with existing income or expense records.' }`.
+3. **Other DB error** - `catch` block → return `{ error: err instanceof Error ? err.message : 'Unknown error' }`.
+4. **Success** - call `revalidatePath` for relevant paths, return `{}`.
 
 None of the three actions throw under any condition.
 

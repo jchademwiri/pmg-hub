@@ -1,4 +1,4 @@
-# Design Document — dashboard-charts
+# Design Document - dashboard-charts
 
 ## Overview
 
@@ -9,10 +9,10 @@ as plain serialisable props to three Client Component chart wrappers built on th
 
 The feature touches four layers:
 
-1. **`@pmg/db`** — three new time-series queries
-2. **`financial.ts`** — three new data-shaping functions
-3. **Chart components** — three new Client Components under `components/reports/`
-4. **App shell** — new `/reports` page and sidebar nav item
+1. **`@pmg/db`** - three new time-series queries
+2. **`financial.ts`** - three new data-shaping functions
+3. **Chart components** - three new Client Components under `components/reports/`
+4. **App shell** - new `/reports` page and sidebar nav item
 
 No existing queries or components are modified; all additions are purely additive.
 
@@ -50,7 +50,7 @@ No existing queries or components are modified; all additions are purely additiv
 ```
 
 Data flows strictly downward. Chart components receive only plain arrays of objects
-(strings and numbers) — no functions, no class instances, no React nodes — satisfying
+(strings and numbers) - no functions, no class instances, no React nodes - satisfying
 the Next.js serialisable-props constraint for the Server→Client boundary.
 
 ---
@@ -107,7 +107,7 @@ export async function getMoMChartData(): Promise<MoMSnapshot[]>
 
 ### Reports Page
 
-`apps/admin/src/app/(admin)/reports/page.tsx` — async Server Component, no `'use client'`.
+`apps/admin/src/app/(admin)/reports/page.tsx` - async Server Component, no `'use client'`.
 
 ### Sidebar
 
@@ -160,7 +160,7 @@ type MoMSnapshot = {
 ## Correctness Properties
 
 *A property is a characteristic or behavior that should hold true across all valid
-executions of a system — essentially, a formal statement about what the system should do.
+executions of a system - essentially, a formal statement about what the system should do.
 Properties serve as the bridge between human-readable specifications and
 machine-verifiable correctness guarantees.*
 
@@ -237,7 +237,7 @@ cycling when there are more than 5 divisions.
   `text-muted-foreground/50 text-xs` message instead of the chart. This prevents
   Recharts from rendering an empty SVG with broken axes.
 - **Sparse DB results** (missing division-month combinations): Handled in
-  `getRevenueByDivisionSeries` by the zero-fill transform — Recharts requires all data
+  `getRevenueByDivisionSeries` by the zero-fill transform - Recharts requires all data
   keys to be present in every entry for stacked areas to render correctly.
 - **More than 5 divisions**: Color token cycling (`i % 5`) prevents an out-of-bounds
   access on the 5-token array.
@@ -271,29 +271,29 @@ Focus on:
 Each property test must be tagged with a comment in the format:
 `// Feature: dashboard-charts, Property N: <property_text>`
 
-**Property 1 test** — Generate arrays of `{ month, divisionName, total }` objects via
+**Property 1 test** - Generate arrays of `{ month, divisionName, total }` objects via
 fast-check, pass through the month-format validator, assert all months match
 `/^\d{4}-\d{2}$/`.
 
-**Property 2 test** — Generate sorted and unsorted arrays of monthly result rows,
+**Property 2 test** - Generate sorted and unsorted arrays of monthly result rows,
 assert that the DB query result (mocked with sorted data) has non-decreasing month
 values across all consecutive pairs.
 
-**Property 3 test** — Generate arbitrary `getMoMSnapshot`-shaped inputs with
+**Property 3 test** - Generate arbitrary `getMoMSnapshot`-shaped inputs with
 non-negative numbers, pass through `getMonthlyFinancialsSeries` transform, assert
 `revenue >= 0` and `expenses >= 0` for every entry.
 
-**Property 4 test** — Generate arbitrary sparse arrays of
+**Property 4 test** - Generate arbitrary sparse arrays of
 `{ month, divisionName, total }` rows with random division names and months, pass
 through the `getRevenueByDivisionSeries` transform, assert that every entry in `series`
 has a defined numeric value for every name in `divisions`.
 
-**Property 5 test** — Generate arbitrary `{ currentRevenue, previousRevenue,
+**Property 5 test** - Generate arbitrary `{ currentRevenue, previousRevenue,
 currentExpenses, previousExpenses }` objects (all non-negative numbers), pass through
 `getMoMChartData`, assert length === 3, correct metric names in order, and
 `result[2].current === result[0].current - result[1].current`.
 
-**Property 6 test** — Generate arrays of 1–20 arbitrary division name strings, compute
+**Property 6 test** - Generate arrays of 1–20 arbitrary division name strings, compute
 the color assignment for each index, assert `color === \`var(--chart-${(i % 5) + 1})\``.
 
 ### Implementation Details
@@ -461,7 +461,7 @@ export function RevenueByDivisionChart({ series, divisions }: Props) {
 
   return (
     <Card className="rounded-xl border border-border bg-card shadow-none">
-      <CardHeader><CardTitle>Revenue by Division — Last 6 Months</CardTitle></CardHeader>
+      <CardHeader><CardTitle>Revenue by Division - Last 6 Months</CardTitle></CardHeader>
       <CardContent>
         {series.length === 0 ? (
           <p className="text-muted-foreground/50 text-xs">No data for the last 6 months.</p>
@@ -507,7 +507,7 @@ type Props = { series: MonthlyFinancials[] }
 export function RevenueVsExpensesChart({ series }: Props) {
   return (
     <Card className="rounded-xl border border-border bg-card shadow-none">
-      <CardHeader><CardTitle>Revenue vs Expenses — Current Year</CardTitle></CardHeader>
+      <CardHeader><CardTitle>Revenue vs Expenses - Current Year</CardTitle></CardHeader>
       <CardContent>
         {series.length === 0 ? (
           <p className="text-muted-foreground/50 text-xs">No data for the current year.</p>

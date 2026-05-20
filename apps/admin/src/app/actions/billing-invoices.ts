@@ -2,7 +2,7 @@
 
 import { revalidatePath } from 'next/cache';
 import { getDb, invoices, quotations, billingLineItems, income, clients, divisionBillingSettings, eq, and } from '@pmg/db';
-import { getNextDocumentNumber } from '@pmg/db';
+import { getNextDocumentNumber, addDays } from '@pmg/db';
 import { getSessionOrRedirect } from '@/lib/auth';
 import { isPeriodClosed, getMinAllowedDate, getMinDateErrorMessage } from '@/lib/date-rules';
 import { CreateInvoiceSchema, type CreateInvoiceInput } from './billing-schema';
@@ -50,7 +50,7 @@ export async function createInvoice(
     const { divisionId, clientId, invoiceDate, dueDate, reference, notes, terms, lineItems, vatEnabled, discountType, discountValue } =
       parsed.data;
 
-    // clientId is required — enforced by Zod but double-check
+    // clientId is required - enforced by Zod but double-check
     if (!clientId) {
       return { error: 'A client is required.' };
     }
@@ -78,7 +78,7 @@ export async function createInvoice(
         documentNumber,
         status: 'draft',
         invoiceDate,
-        dueDate: dueDate ?? null,
+        dueDate: dueDate ?? addDays(invoiceDate, 7),
         reference: reference ?? null,
         subtotal: String(subtotal.toFixed(2)),
         discountType: discountType ?? null,
@@ -232,7 +232,7 @@ export async function convertQuoteToInvoice(
 
     const db = getDb();
 
-    // Load quote — must be accepted
+    // Load quote - must be accepted
     const [quote] = await db
       .select()
       .from(quotations)
@@ -384,7 +384,7 @@ export async function markInvoicePaid(id: string): Promise<{ error?: string }> {
     }
 
     // Period lock is checked against TODAY (the payment date), not the invoice
-    // date. An invoice can be issued in a prior period and paid late — what
+    // date. An invoice can be issued in a prior period and paid late - what
     // matters for the ledger is when the cash was received.
     const paymentDate = new Date().toISOString().split('T')[0]!;
     if (await isPeriodClosed(paymentDate)) {
@@ -401,7 +401,7 @@ export async function markInvoicePaid(id: string): Promise<{ error?: string }> {
     if (!client) return { error: 'Client not found.' };
 
     const clientLabel = client.businessName ?? client.name;
-    const description = `${invoice.documentNumber} — ${clientLabel}`;
+    const description = `${invoice.documentNumber} - ${clientLabel}`;
 
     // Post to income ledger using today as the payment date so late payments
     // land in the correct open period, not the (possibly closed) invoice period.

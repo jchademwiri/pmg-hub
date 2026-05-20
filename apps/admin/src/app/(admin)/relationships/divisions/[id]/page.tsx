@@ -79,8 +79,8 @@ export default async function DivisionDetailPage({ params }: DivisionDetailPageP
               {incomeEntries.data.map((e) => (
                 <TableRow key={e.id}>
                   <TableCell>{fmtDate(e.date)}</TableCell>
-                  <TableCell>{e.clientName ?? '—'}</TableCell>
-                  <TableCell>{e.description ?? '—'}</TableCell>
+                  <TableCell>{e.clientName ?? '-'}</TableCell>
+                  <TableCell>{e.description ?? '-'}</TableCell>
                   <TableCell className="text-right tabular-nums font-medium text-green-500">
                     +{formatZAR(Number(e.amount))}
                   </TableCell>
@@ -114,7 +114,7 @@ export default async function DivisionDetailPage({ params }: DivisionDetailPageP
                 <TableRow key={e.id}>
                   <TableCell>{fmtDate(e.date)}</TableCell>
                   <TableCell>{e.category}</TableCell>
-                  <TableCell>{e.description ?? '—'}</TableCell>
+                  <TableCell>{e.description ?? '-'}</TableCell>
                   <TableCell className="text-right tabular-nums font-medium text-amber-500">
                     −{formatZAR(Number(e.amount))}
                   </TableCell>

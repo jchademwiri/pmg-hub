@@ -8,6 +8,7 @@ import { Separator } from '@/components/ui/separator';
 import { DocumentPreview } from '@/components/billing/document-preview';
 import type { StatementTransaction } from '@/components/billing/document-preview';
 import { getClientStatement, getAllIncome, getStatementYears, getDivisionBillingSettings, getClientById } from '@pmg/db';
+import { getDocumentLogoUrl } from '@/lib/document-logo';
 import { formatZAR, fmtDate } from '@/lib/format';
 import { PrintButton } from '@/components/billing/print-button';
 
@@ -63,7 +64,7 @@ export default async function StatementDetailPage({ params, searchParams }: Prop
       })),
     ...incomeResult.data.map((inc) => ({
       date: inc.date,
-      reference: incomeToInvoiceNumber.get(inc.id) ?? '—',
+      reference: incomeToInvoiceNumber.get(inc.id) ?? '-',
       description: 'Payment received',
       credit: Number(inc.amount),
     })),
@@ -91,18 +92,19 @@ export default async function StatementDetailPage({ params, searchParams }: Prop
     docStatus = hasOverdue ? 'Overdue' : 'Outstanding';
   }
 
-  const ageing = { current: 0, days30: 0, days60: 0, days90: 0, days120: 0 };
+  const ageing = { current: 0, days1_14: 0, days15_30: 0, days31_60: 0, days61_90: 0, days91_120: 0 };
   const _now = new Date();
   for (const inv of invoices) {
     if (inv.status === 'issued' || inv.status === 'overdue') {
       const due = inv.dueDate ? new Date(inv.dueDate) : new Date(inv.invoiceDate);
       const diffTime = _now.getTime() - due.getTime();
       const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-      if (diffDays <= 0) ageing.current += Number(inv.total);
-      else if (diffDays <= 30) ageing.days30 += Number(inv.total);
-      else if (diffDays <= 60) ageing.days60 += Number(inv.total);
-      else if (diffDays <= 90) ageing.days90 += Number(inv.total);
-      else ageing.days120 += Number(inv.total);
+      if (diffDays <= 0)        ageing.current    += Number(inv.total);
+      else if (diffDays <= 14)  ageing.days1_14   += Number(inv.total);
+      else if (diffDays <= 30)  ageing.days15_30  += Number(inv.total);
+      else if (diffDays <= 60)  ageing.days31_60  += Number(inv.total);
+      else if (diffDays <= 90)  ageing.days61_90  += Number(inv.total);
+      else                      ageing.days91_120 += Number(inv.total);
     }
   }
 
@@ -112,6 +114,7 @@ export default async function StatementDetailPage({ params, searchParams }: Prop
 
   const primaryDivisionId = invoices[0]?.divisionId;
   const divSettings = primaryDivisionId ? await getDivisionBillingSettings(primaryDivisionId) : null;
+  const orgName = invoices[0]?.divisionName ?? 'PMG';
 
   const docPreviewProps = {
     number: `STMT-${periodLabel}-${(client.businessName ?? client.name).slice(0, 3).toUpperCase()}`,
@@ -120,7 +123,8 @@ export default async function StatementDetailPage({ params, searchParams }: Prop
     periodFrom: year ? `${year}-03-01` : `${now.getFullYear()}-03-01`,
     periodTo: year ? `${year + 1}-02-28` : now.toISOString().split('T')[0]!,
     org: {
-      name: invoices[0]?.divisionName ?? 'PMG',
+      name: orgName,
+      logoUrl: getDocumentLogoUrl(orgName),
       divisionOf: divSettings ? 'Playhouse Media Group' : undefined,
       email: divSettings?.salesRepEmail ?? undefined,
       phone: divSettings?.salesRepPhone ?? undefined,
@@ -158,7 +162,7 @@ export default async function StatementDetailPage({ params, searchParams }: Prop
               {client.businessName ?? client.name}
             </h2>
             <p className="text-sm text-muted-foreground">
-              Account statement — {periodLabel}
+              Account statement - {periodLabel}
             </p>
           </div>
         </div>
@@ -200,7 +204,7 @@ export default async function StatementDetailPage({ params, searchParams }: Prop
 
       {/* Two-column layout */}
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-3 lg:items-start">
-        {/* Document preview — scrollable on small screens */}
+        {/* Document preview - scrollable on small screens */}
         <div className="lg:col-span-2 overflow-x-auto">
           <DocumentPreview
             type="statement"
@@ -218,8 +222,8 @@ export default async function StatementDetailPage({ params, searchParams }: Prop
               <div className="flex flex-col gap-2">
                 {[
                   { label: 'Name', value: client.businessName ?? client.name },
-                  { label: 'Email', value: client.email ?? '—' },
-                  { label: 'Phone', value: client.phone ?? '—' },
+                  { label: 'Email', value: client.email ?? '-' },
+                  { label: 'Phone', value: client.phone ?? '-' },
                 ].map((f) => (
                   <div key={f.label} className="flex flex-col gap-0.5">
                     <span className="text-xs text-muted-foreground">{f.label}</span>
@@ -278,7 +282,7 @@ export default async function StatementDetailPage({ params, searchParams }: Prop
             <CardHeader>
               <CardTitle>Income Records</CardTitle>
               <p className="text-sm text-muted-foreground">
-                Payments posted to the income ledger for this client —{' '}
+                Payments posted to the income ledger for this client -{' '}
                 <span className="font-medium text-green-600 dark:text-green-400">
                   {formatZAR(incomeResult.sum)} total
                 </span>
@@ -299,7 +303,7 @@ export default async function StatementDetailPage({ params, searchParams }: Prop
                     <tr key={inc.id} className="border-b last:border-0">
                       <td className="px-6 py-3 tabular-nums text-muted-foreground">{fmtDate(inc.date)}</td>
                       <td className="px-6 py-3">{inc.divisionName}</td>
-                      <td className="px-6 py-3 text-muted-foreground">{inc.description ?? '—'}</td>
+                      <td className="px-6 py-3 text-muted-foreground">{inc.description ?? '-'}</td>
                       <td className="px-6 py-3 text-right tabular-nums font-medium text-green-600 dark:text-green-400">
                         +{formatZAR(Number(inc.amount))}
                       </td>

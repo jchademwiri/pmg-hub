@@ -9,8 +9,8 @@ Detailed flag specifications for `resend contact-properties` commands.
 | Flag | Type | Default | Description |
 |------|------|---------|-------------|
 | `--limit <n>` | number | 10 | Max results (1-100) |
-| `--after <cursor>` | string | — | Forward pagination |
-| `--before <cursor>` | string | — | Backward pagination |
+| `--after <cursor>` | string | - | Forward pagination |
+| `--before <cursor>` | string | - | Backward pagination |
 
 ---
 
@@ -28,13 +28,13 @@ Reserved keys: `FIRST_NAME`, `LAST_NAME`, `EMAIL`, `UNSUBSCRIBE_URL`
 
 ## contact-properties get
 
-**Argument:** `<id>` — Property UUID
+**Argument:** `<id>` - Property UUID
 
 ---
 
 ## contact-properties update
 
-**Argument:** `<id>` — Property UUID
+**Argument:** `<id>` - Property UUID
 
 | Flag | Type | Description |
 |------|------|-------------|
@@ -47,7 +47,7 @@ Key and type are immutable after creation.
 
 ## contact-properties delete
 
-**Argument:** `<id>` — Property UUID
+**Argument:** `<id>` - Property UUID
 
 | Flag | Type | Required | Description |
 |------|------|----------|-------------|

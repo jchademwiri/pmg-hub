@@ -10,7 +10,7 @@ database seed.
 The app is a Next.js 15 monorepo app (`apps/admin`) using the App Router, React
 Server Components, Server Actions, shadcn/ui, Tailwind CSS with OKLCH tokens,
 and Drizzle ORM against a Neon PostgreSQL database. All six areas are additive
-hardening — no schema migrations are required.
+hardening - no schema migrations are required.
 
 ---
 
@@ -20,22 +20,22 @@ The admin app follows a layered architecture:
 
 ```
 ┌─────────────────────────────────────────────────────────┐
-│  app/(admin)/  — Route Segments (RSC pages)             │
-│    layout.tsx  — Sidebar + TopNav shell                 │
-│    error.tsx   — Error Boundary (NEW)                   │
-│    loading.tsx — Skeleton Loading UI (NEW)              │
-│    [route]/page.tsx — Async data fetch + render         │
+│  app/(admin)/  - Route Segments (RSC pages)             │
+│    layout.tsx  - Sidebar + TopNav shell                 │
+│    error.tsx   - Error Boundary (NEW)                   │
+│    loading.tsx - Skeleton Loading UI (NEW)              │
+│    [route]/page.tsx - Async data fetch + render         │
 ├─────────────────────────────────────────────────────────┤
-│  components/   — Client Components                      │
-│    ui/         — shadcn primitives (Skeleton, etc.)     │
-│    [domain]/   — Domain-specific forms & tables         │
-│    EmptyState  — Shared empty state component (NEW)     │
+│  components/   - Client Components                      │
+│    ui/         - shadcn primitives (Skeleton, etc.)     │
+│    [domain]/   - Domain-specific forms & tables         │
+│    EmptyState  - Shared empty state component (NEW)     │
 ├─────────────────────────────────────────────────────────┤
-│  app/actions/  — Server Actions ('use server')          │
+│  app/actions/  - Server Actions ('use server')          │
 │    Return type: Promise<{ error?: string }>             │
 ├─────────────────────────────────────────────────────────┤
-│  @pmg/db       — Drizzle queries + schema               │
-│    seed.ts     — Development seed script (UPDATED)      │
+│  @pmg/db       - Drizzle queries + schema               │
+│    seed.ts     - Development seed script (UPDATED)      │
 └─────────────────────────────────────────────────────────┘
 ```
 
@@ -51,7 +51,7 @@ Next.js conventions used:
 
 ## Components and Interfaces
 
-### 1. `app/(admin)/error.tsx` — Error Boundary
+### 1. `app/(admin)/error.tsx` - Error Boundary
 
 A `'use client'` component required by Next.js for error boundary files.
 
@@ -70,7 +70,7 @@ Renders:
 - A "Try again" button that calls `reset()`
 - A link to `/dashboard`
 
-### 2. `app/(admin)/loading.tsx` — Route Group Loading UI
+### 2. `app/(admin)/loading.tsx` - Route Group Loading UI
 
 A server component (no `'use client'` needed) that renders a skeleton matching
 the general admin page layout.
@@ -86,7 +86,7 @@ Uses `<Skeleton>` from `@/components/ui/skeleton` to mirror:
 Preserves the sidebar layout because `loading.tsx` renders inside the
 `(admin)/layout.tsx` shell.
 
-### 3. `components/ui/empty-state.tsx` — Shared Empty State
+### 3. `components/ui/empty-state.tsx` - Shared Empty State
 
 A reusable presentational component.
 
@@ -103,7 +103,7 @@ Renders a centered card with an icon, the descriptive message, and an optional
 CTA link. Accepts an optional `ctaHref` so pages without an add form can omit
 the CTA.
 
-### 4. Inline Error Display — Form Components
+### 4. Inline Error Display - Form Components
 
 All existing form components already follow the pattern:
 
@@ -118,7 +118,7 @@ that calls a Server Action, including edit forms and the division add form.
 Field values are preserved on error because form state is managed in React
 state (not reset on error).
 
-### 5. `LeadStatusForm` — Optimistic Update
+### 5. `LeadStatusForm` - Optimistic Update
 
 The existing `LeadStatusForm` component is upgraded to use `useOptimistic`:
 
@@ -134,7 +134,7 @@ Flow:
 4. On success: `revalidatePath` causes RSC re-render with confirmed status
 5. On error: `useOptimistic` reverts to `currentStatus`; error message shown
 
-### 6. `packages/db/src/seed.ts` — Updated Seed
+### 6. `packages/db/src/seed.ts` - Updated Seed
 
 New seed data added (with upsert semantics via `onConflictDoNothing()`):
 - `expenses`: rows covering PMG, TES, and AWS divisions across categories
@@ -188,7 +188,7 @@ type Snapshot = {
 ### Server Action return contract
 
 All Server Actions in `app/actions/` already return `Promise<{ error?: string }>`.
-The hardening work enforces this contract is complete — no action throws
+The hardening work enforces this contract is complete - no action throws
 unhandled exceptions.
 
 ---
@@ -196,11 +196,11 @@ unhandled exceptions.
 ## Correctness Properties
 
 *A property is a characteristic or behavior that should hold true across all
-valid executions of a system — essentially, a formal statement about what the
+valid executions of a system - essentially, a formal statement about what the
 system should do. Properties serve as the bridge between human-readable
 specifications and machine-verifiable correctness guarantees.*
 
-### Property 1: Server Actions never throw — they always return `{ error? }`
+### Property 1: Server Actions never throw - they always return `{ error? }`
 
 *For any* Server Action in `app/actions/` and *for any* input (valid, invalid,
 or malformed), calling the action must return an object of shape
@@ -223,7 +223,7 @@ output.
 
 ### Server Actions
 
-- All `try/catch` blocks return `{ error: humanReadableMessage }` — never
+- All `try/catch` blocks return `{ error: humanReadableMessage }` - never
   re-throw.
 - Zod `safeParse` is used (not `parse`) so validation failures are caught
   without exceptions.
@@ -292,7 +292,7 @@ Located in `apps/admin/src/__tests__/`.
 
 `fast-check` is already installed in `apps/admin/node_modules/fast-check`.
 
-**Property 1 — Server Actions never throw:**
+**Property 1 - Server Actions never throw:**
 
 ```
 Feature: system-hardening, Property 1: Server Actions never throw
@@ -306,7 +306,7 @@ For each action (`createIncome`, `updateIncome`, `deleteIncome`,
 - Assert the action always returns `{ error?: string }` and never throws
 - Minimum 100 iterations per action
 
-**Property 2 — EmptyState renders message and CTA:**
+**Property 2 - EmptyState renders message and CTA:**
 
 ```
 Feature: system-hardening, Property 2: EmptyState renders message and CTA

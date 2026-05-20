@@ -1,4 +1,4 @@
-# PLAYHOUSE MEDIA GROUP — Chat Handoff Summary
+# PLAYHOUSE MEDIA GROUP - Chat Handoff Summary
 *Copy and paste this at the start of your next conversation with Claude*
 
 ---
@@ -8,13 +8,13 @@
 | Field | Detail |
 |---|---|
 | Company Name | Playhouse Media Group (PTY) Ltd |
-| Registration | CIPC — PTY (Ltd) ✓ Registered |
+| Registration | CIPC - PTY (Ltd) ✓ Registered |
 | Address | 285 Erasmus Ave, Raslouw AH, Centurion, 0157, Gauteng, South Africa |
-| Website | www.playhousemedia.net (live — built on Next.js) |
+| Website | www.playhousemedia.net (live - built on Next.js) |
 | Email | info@playhousemedia.net |
 | Phone | 074 049 1433 / 068 647 8157 |
-| Director | Jacob Chademwiri — Technical Lead (web dev, tendering, strategy) |
-| Co-Director | Youlanda Chademwiri — Operations (registrations, admin, invoicing, social media) |
+| Director | Jacob Chademwiri - Technical Lead (web dev, tendering, strategy) |
+| Co-Director | Youlanda Chademwiri - Operations (registrations, admin, invoicing, social media) |
 
 ---
 
@@ -37,7 +37,7 @@
 | 3 | TenderCore Solutions | tendercore.co.za *(register)* | Tendering compliance & bid preparation | **Active revenue** |
 | 4 | BizStart Hub | bizstarthub.co.za *(register)* | Company registrations & CIPC | Formalising |
 
-> **Group hub domain:** playhousemediagroup.co.za — **register this urgently**
+> **Group hub domain:** playhousemediagroup.co.za - **register this urgently**
 
 ---
 
@@ -50,8 +50,8 @@ Jacob builds with **Next.js, TypeScript, and shadcn/ui**. All division websites 
 ## WHAT HAS BEEN COMPLETED
 
 Three versions of the business plan were produced, ending in a final **Version 3.0**. Two files were delivered:
-- `PMG_Business_Plan_Final.docx` — fully formatted with brand colours, tables, and pricing
-- `PMG_Business_Plan_Final.md` — clean Markdown version
+- `PMG_Business_Plan_Final.docx` - fully formatted with brand colours, tables, and pricing
+- `PMG_Business_Plan_Final.md` - clean Markdown version
 
 The document covers: brand architecture, website structure, Jacob & Youlanda's roles and responsibilities, full pricing tables for all four divisions, 90-day growth plan, compliance calendar, risk register, cross-selling matrix, and long-term vision.
 
@@ -60,12 +60,12 @@ The document covers: brand architecture, website structure, Jacob & Youlanda's r
 ## KEY DECISIONS ALREADY MADE
 
 ### Brand & Structure
-- **House of Brands model** confirmed — each division has its own identity under the PMG parent
-- Division names are **finalised** — no further naming decisions needed
+- **House of Brands model** confirmed - each division has its own identity under the PMG parent
+- Division names are **finalised** - no further naming decisions needed
 - PMG tagline: *"Building Businesses. One Service at a Time."*
 
 ### Revenue Strategy
-- **60/30/10 rule** — 60% focus on TenderCore, 30% on Apex, 10% on everything else
+- **60/30/10 rule** - 60% focus on TenderCore, 30% on Apex, 10% on everything else
 - TenderCore is the primary growth engine (high-ticket, retainer potential)
 - Apex is the recurring income engine (maintenance retainers)
 - BizStart Hub is the lead generation funnel into all other divisions
@@ -80,7 +80,7 @@ The document covers: brand architecture, website structure, Jacob & Youlanda's r
 | E-Commerce | R15,000 | R1,200/mo |
 | Custom Web App | R25,000+ | TBD |
 
-**TenderCore Solutions — Key Services**
+**TenderCore Solutions - Key Services**
 | Service | Price |
 |---|---|
 | CSD Registration | R650 |
@@ -100,7 +100,7 @@ The document covers: brand architecture, website structure, Jacob & Youlanda's r
 **BizStart Hub**
 | Service | Price |
 |---|---|
-| PTY Registration — CIPC | R1,200 |
+| PTY Registration - CIPC | R1,200 |
 | BizStart Starter Bundle (CIPC + CSD + BEE) | R2,200 |
 
 **Playhouse Creative Studio**
@@ -125,15 +125,15 @@ The document covers: brand architecture, website structure, Jacob & Youlanda's r
 
 ### Websites (Jacob builds these)
 - [ ] Register playhousemediagroup.co.za *(urgent)*
-- [ ] Build playhousemediagroup.co.za — group hub (Next.js + shadcn, 6 pages)
+- [ ] Build playhousemediagroup.co.za - group hub (Next.js + shadcn, 6 pages)
 - [ ] Build TenderCore Solutions website (tendercore.co.za)
 - [ ] Build BizStart Hub landing page (bizstarthub.co.za)
-- [ ] Optimise Apex Web Solutions — add pricing page, portfolio, FAQ, WhatsApp float button
+- [ ] Optimise Apex Web Solutions - add pricing page, portfolio, FAQ, WhatsApp float button
 
 ### Marketing Assets
 - [ ] Service brochure PDFs per division (for WhatsApp pitching)
 - [ ] Social media content calendar
-- [ ] Google Business Profile — PMG + Apex Web Solutions
+- [ ] Google Business Profile - PMG + Apex Web Solutions
 
 ### Business Admin
 - [ ] Client contract template for web projects
@@ -146,4 +146,4 @@ The document covers: brand architecture, website structure, Jacob & Youlanda's r
 ---
 
 *Document last updated: March 2025 | Version 3.0*
-*Playhouse Media Group (PTY) Ltd — Jacob & Youlanda Chademwiri*
+*Playhouse Media Group (PTY) Ltd - Jacob & Youlanda Chademwiri*

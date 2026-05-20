@@ -26,7 +26,7 @@ const ledgerSchema = z.object({
 
 function formatDefaultDescription(dateStr: string): string {
   const date = new Date(dateStr + 'T00:00:00');
-  return `Ledger Entry — ${date.toLocaleDateString('en-ZA', { day: 'numeric', month: 'long', year: 'numeric' })}`;
+  return `Ledger Entry - ${date.toLocaleDateString('en-ZA', { day: 'numeric', month: 'long', year: 'numeric' })}`;
 }
 
 async function checkLedgerConstraints(

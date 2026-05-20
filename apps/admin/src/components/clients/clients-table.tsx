@@ -97,7 +97,7 @@ export function ClientsTable({ clients, deleteAction, toggleActiveAction }: Clie
                   <span className="sr-only">{client.isActive ? 'Disable' : 'Activate'}</span>
                 </Button>
 
-                {/* Delete — only allowed if no income records */}
+                {/* Delete - only allowed if no income records */}
                 {client.incomeCount === 0 ? (
                   pendingDeleteId === client.id ? (
                     <>
@@ -134,7 +134,7 @@ export function ClientsTable({ clients, deleteAction, toggleActiveAction }: Clie
                     title="Cannot delete a client with income records"
                   >
                     <Trash2 className="h-4 w-4 text-muted-foreground/30" />
-                    <span className="sr-only">Delete (disabled — has income records)</span>
+                    <span className="sr-only">Delete (disabled - has income records)</span>
                   </Button>
                 )}
               </div>

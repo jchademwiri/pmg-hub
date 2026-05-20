@@ -1,11 +1,11 @@
 # Playhouse Creative Studio
-### Brand Profile — Division 04 of Playhouse Media Group
+### Brand Profile - Division 04 of Playhouse Media Group
 
 ---
 
 ## Who We Are
 
-Playhouse Creative Studio is the graphic design and marketing division of Playhouse Media Group. We help South African businesses look as professional as they perform — from logos and brand identities to company profiles, social media content, and print materials.
+Playhouse Creative Studio is the graphic design and marketing division of Playhouse Media Group. We help South African businesses look as professional as they perform - from logos and brand identities to company profiles, social media content, and print materials.
 
 Creative Studio is the design arm that supports every other PMG division. Every business that registers through LaunchPad SA needs a logo. Every tender client needs a company profile. Every web client needs branding. Playhouse Creative Studio fulfils all of it.
 
@@ -17,13 +17,13 @@ Creative Studio is the design arm that supports every other PMG division. Every 
 |---|---|
 | Brand Name | Playhouse Creative Studio |
 | Parent Company | Playhouse Media Group (PTY) Ltd |
-| Division | 04 — Graphic Design & Marketing |
-| Status | Launching — building after core divisions are stable |
+| Division | 04 - Graphic Design & Marketing |
+| Status | Launching - building after core divisions are stable |
 | Domain | playhousecreative.co.za *(to register)* |
 | Email | info@playhousecreative.co.za |
 | Social Media | @playhousecreativesa |
 | Revenue Model | Project fees + monthly social media retainers |
-| Strategic Focus | Part of the 10% supporting focus — grows organically through internal referrals |
+| Strategic Focus | Part of the 10% supporting focus - grows organically through internal referrals |
 
 ---
 
@@ -120,10 +120,10 @@ Playhouse Creative Studio designs visual identities and marketing assets that he
 
 ## Positioning Statement
 
-> Playhouse Creative Studio helps South African businesses look as professional as they perform. From logos and brand identities to social media content and company profiles — we design visuals that open doors and win contracts.
+> Playhouse Creative Studio helps South African businesses look as professional as they perform. From logos and brand identities to social media content and company profiles - we design visuals that open doors and win contracts.
 
 ---
 
 *Last updated: March 2026 | Version 2.0*
-*Playhouse Creative Studio — a Playhouse Media Group division*
+*Playhouse Creative Studio - a Playhouse Media Group division*
 *playhousecreative.co.za | info@playhousecreative.co.za*

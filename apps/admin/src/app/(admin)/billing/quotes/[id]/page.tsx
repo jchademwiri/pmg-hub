@@ -11,6 +11,7 @@ import { BillingTotalsBlock } from '@/components/billing/billing-totals-block';
 import { getQuotationById, getDivisionBillingSettings } from '@pmg/db';
 import { updateQuotationStatus, deleteQuotation } from '@/app/actions/billing-quotes';
 import { fmtDate } from '@/lib/format';
+import { getDocumentLogoUrl } from '@/lib/document-logo';
 import { QuoteDetailActions } from './quote-detail-actions';
 import { PrintButton } from '@/components/billing/print-button';
 
@@ -44,6 +45,7 @@ export default async function QuoteDetailPage({ params }: Props) {
     reference: quote.reference ?? undefined,
     org: {
       name: quote.divisionName,
+      logoUrl: getDocumentLogoUrl(quote.divisionName),
       divisionOf: 'Playhouse Media Group',
       email: divSettings?.salesRepEmail ?? undefined,
       phone: divSettings?.salesRepPhone ?? undefined,
@@ -116,7 +118,7 @@ export default async function QuoteDetailPage({ params }: Props) {
 
       {/* Two-column layout */}
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-3 lg:items-start">
-        {/* Document preview — scrollable on small screens */}
+        {/* Document preview - scrollable on small screens */}
         <div className="lg:col-span-2 overflow-x-auto">
           <DocumentPreview type="quote" {...docPreviewProps} />
         </div>
@@ -157,7 +159,7 @@ export default async function QuoteDetailPage({ params }: Props) {
             </CardContent>
           </Card>
 
-          {/* Actions — in sidebar below activity */}
+          {/* Actions - in sidebar below activity */}
           <QuoteDetailActions
             quote={{
               id: quote.id,

@@ -189,7 +189,7 @@ export function OrgSettingsForm({ settings, saveAction }: OrgSettingsFormProps) 
 
       <Separator />
 
-      {/* Logo — upload deferred to v2 */}
+      {/* Logo - upload deferred to v2 */}
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
         <div className="lg:col-span-1">
           <h3 className="text-sm font-semibold">Logo</h3>
@@ -207,7 +207,7 @@ export function OrgSettingsForm({ settings, saveAction }: OrgSettingsFormProps) 
                 <Button variant="outline" size="sm" disabled type="button" title="Coming soon">
                   Upload Logo
                 </Button>
-                <p className="text-xs text-muted-foreground">PNG or SVG, max 2 MB — coming soon</p>
+                <p className="text-xs text-muted-foreground">PNG or SVG, max 2 MB - coming soon</p>
               </div>
             </div>
           </CardContent>

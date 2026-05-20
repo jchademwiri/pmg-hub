@@ -60,7 +60,7 @@ export const server = {
           },
           {
             to:      TES_ADMIN_EMAIL,
-            subject: `New TES Enquiry — ${input.name}`,
+            subject: `New TES Enquiry - ${input.name}`,
             react:   React.createElement(AdminNewLeadEmail, {
               name:             input.name,
               email:            input.email || 'Not provided',

@@ -1,4 +1,4 @@
-# PMG Hub — SEO Developer Guide
+# PMG Hub - SEO Developer Guide
 
 > **Playhouse Media Group · Internal Developer Docs**
 > `pmg-hub / docs / pmg-seo-guide.md` · March 2026 · v2.1
@@ -25,14 +25,14 @@
 12. [TenderTrack 360 SEO](#12-tendertrack-360-seo)
 13. [Schema Markup (JSON-LD)](#13-schema-markup-json-ld)
 14. [Monorepo SEO Setup](#14-monorepo-seo-setup)
-15. [Admin App — SEO Notes](#15-admin-app--seo-notes)
+15. [Admin App - SEO Notes](#15-admin-app--seo-notes)
 16. [Pre-Launch SEO Checklist](#16-pre-launch-seo-checklist)
 
 ---
 
 ## 1. PMG Ecosystem Overview
 
-PMG runs a **House of Brands** model — 7 brands, each targeting a distinct market segment,
+PMG runs a **House of Brands** model - 7 brands, each targeting a distinct market segment,
 all feeding back into each other through the PMG flywheel. Every brand deserves its own SEO identity.
 
 | Brand | Domain | Framework | Status |
@@ -80,14 +80,14 @@ Every site should cross-link to at least 2 other division sites using keyword-ri
 ```
 pmg-hub/
 └── apps/
-    ├── pmg/          → playhousemedia.co.za          (Astro — live)
-    ├── admin/        → admin.playhousemedia.co.za    (Next.js 16 — live)
-    ├── tes/          → tenderedgesolutions.co.za     (Astro — live)
-    ├── aws/          → apexwebsolutions.co.za        (Astro — live)
-    ├── launchpad/    → launchpadsa.co.za             (Astro — future)
-    ├── creative/     → playhousecreative.co.za       (Astro — future)
-    ├── studyedge/    → studyedgesa.co.za             (Astro — future)
-    └── tt360/        → tendertrack360.co.za          (Next.js — existing)
+    ├── pmg/          → playhousemedia.co.za          (Astro - live)
+    ├── admin/        → admin.playhousemedia.co.za    (Next.js 16 - live)
+    ├── tes/          → tenderedgesolutions.co.za     (Astro - live)
+    ├── aws/          → apexwebsolutions.co.za        (Astro - live)
+    ├── launchpad/    → launchpadsa.co.za             (Astro - future)
+    ├── creative/     → playhousecreative.co.za       (Astro - future)
+    ├── studyedge/    → studyedgesa.co.za             (Astro - future)
+    └── tt360/        → tendertrack360.co.za          (Next.js - existing)
 ```
 
 ---
@@ -137,17 +137,17 @@ const defaultOg = ogImage ?? `/og-${brand}.png`;
 <meta name="twitter:image"       content={defaultOg} />
 ```
 
-### Title Tag Formula — Per Brand
+### Title Tag Formula - Per Brand
 
 | Brand | Formula | Max |
 |---|---|---|
-| PMG | `{Service} \| Playhouse Media Group — Centurion, Gauteng` | 60 chars |
-| TES | `{Service} \| Tender Edge Solutions — {Location}` | 60 chars |
+| PMG | `{Service} \| Playhouse Media Group - Centurion, Gauteng` | 60 chars |
+| TES | `{Service} \| Tender Edge Solutions - {Location}` | 60 chars |
 | AWS | `{Service} in {Location} \| Apex Web Solutions` | 60 chars |
 | LaunchPad | `Register a {Type} Company in SA \| LaunchPad SA` | 60 chars |
 | Creative | `{Service} for SA Businesses \| Playhouse Creative Studio` | 60 chars |
 | StudyEdge | `{Subject} Tutoring & Support \| StudyEdge SA` | 60 chars |
-| TT360 | `TenderTrack 360 — Tender Management Software for SA` | 60 chars |
+| TT360 | `TenderTrack 360 - Tender Management Software for SA` | 60 chars |
 
 > **Description length:** Keep meta descriptions between 140–160 characters.
 > Always include a call to action and the city/region for local relevance.
@@ -156,14 +156,14 @@ const defaultOg = ogImage ?? `/og-${brand}.png`;
 
 - **Dimensions:** 1200 × 630px
 - **Format:** PNG or JPG
-- **Naming:** `/og-{brand}.png` — one per brand, in `public/` of each app
+- **Naming:** `/og-{brand}.png` - one per brand, in `public/` of each app
 - **Content:** Brand logo + tagline + domain on brand-coloured background
 
 ---
 
 ## 4. Sitemap & Robots
 
-### Install Astro Sitemap — run in each app
+### Install Astro Sitemap - run in each app
 
 ```bash
 bun --filter tes add @astrojs/sitemap
@@ -171,7 +171,7 @@ bun --filter aws add @astrojs/sitemap
 bun --filter pmg add @astrojs/sitemap
 ```
 
-### Astro Config — add per app
+### Astro Config - add per app
 
 **`apps/tes/astro.config.mjs`**
 
@@ -193,7 +193,7 @@ export default defineConfig({
 });
 ```
 
-### `robots.txt` — public-facing apps
+### `robots.txt` - public-facing apps
 
 ```
 User-agent: *
@@ -202,7 +202,7 @@ Allow: /
 Sitemap: https://www.tenderedgesolutions.co.za/sitemap-index.xml
 ```
 
-### `robots.txt` — admin app (block entirely)
+### `robots.txt` - admin app (block entirely)
 
 **`apps/admin/public/robots.txt`**
 
@@ -238,7 +238,7 @@ Disallow: /
 ```astro
 <SEOHead
   brand="pmg"
-  title="Playhouse Media Group — Business Services in Centurion, Gauteng"
+  title="Playhouse Media Group - Business Services in Centurion, Gauteng"
   description="PMG is a family-run business group in Centurion offering tender compliance, web design, company registration, branding, and academic support. Building Businesses. One Service at a Time."
   canonical="https://www.playhousemedia.co.za"
   ogImage="/og-pmg.png"
@@ -247,10 +247,10 @@ Disallow: /
 
 ### Content Priorities
 
-- **H1:** "Business Services in Centurion, Gauteng — Playhouse Media Group"
+- **H1:** "Business Services in Centurion, Gauteng - Playhouse Media Group"
 - **Division cards:** Each card links to the division site with keyword-rich anchor text
-- **About section:** Mention Jacob & Youlanda by name — local trust signal
-- **Address in footer:** 285 Erasmus Ave, Raslouw AH, Centurion — exact NAP
+- **About section:** Mention Jacob & Youlanda by name - local trust signal
+- **Address in footer:** 285 Erasmus Ave, Raslouw AH, Centurion - exact NAP
 - **Google Business Profile:** Create and verify listing for PMG
 - **Cross-links:** Every page links to at least 2 other division sites
 
@@ -276,7 +276,7 @@ Disallow: /
 ```astro
 <SEOHead
   brand="tes"
-  title="CSD Registration & Tender Compliance | Tender Edge Solutions — Centurion"
+  title="CSD Registration & Tender Compliance | Tender Edge Solutions - Centurion"
   description="Get CSD-registered, CIDB-graded, and tender-ready with Tender Edge Solutions. B-BBEE affidavits, SBD forms, and full tender document prep in Gauteng. R650 CSD. Same-day service."
   canonical="https://www.tenderedgesolutions.co.za"
 />
@@ -286,11 +286,11 @@ Disallow: /
 
 ```
 /                       → Homepage: CSD Registration & Tender Compliance
-/csd-registration       → "CSD registration South Africa" — R650
-/cidb-registration      → "CIDB Grade 1 application" — R1,200
-/bbee-affidavit         → "B-BBEE affidavit South Africa" — R550
-/coida-registration     → "COIDA registration" — R750
-/tender-document-prep   → "SBD forms tender documents" — R2,500+
+/csd-registration       → "CSD registration South Africa" - R650
+/cidb-registration      → "CIDB Grade 1 application" - R1,200
+/bbee-affidavit         → "B-BBEE affidavit South Africa" - R550
+/coida-registration     → "COIDA registration" - R750
+/tender-document-prep   → "SBD forms tender documents" - R2,500+
 /tender-ready-packages  → Bundle pages
 /blog/                  → Long-form content
 /contact                → WhatsApp + form CTA
@@ -311,9 +311,9 @@ Disallow: /
 
 ### Blog Content Ideas
 
-- "How to register on CSD in 2026 — step by step"
+- "How to register on CSD in 2026 - step by step"
 - "What is a B-BBEE affidavit and who needs one?"
-- "CIDB grades explained — which grade does your business need?"
+- "CIDB grades explained - which grade does your business need?"
 - "Why businesses lose tenders (and how to fix it)"
 - "What documents do you need for a government tender?"
 
@@ -369,7 +369,7 @@ Disallow: /
 ```astro
 <SEOHead
   brand="launchpad"
-  title="Register a Company in South Africa | LaunchPad SA — Fast & Affordable"
+  title="Register a Company in South Africa | LaunchPad SA - Fast & Affordable"
   description="Register your PTY Ltd in South Africa from R1,200. CIPC company registration, CSD setup, B-BBEE affidavits, and COIDA. Fast turnaround. Centurion-based. Where Every Business Begins."
   canonical="https://www.launchpadsa.co.za"
 />
@@ -438,7 +438,7 @@ Disallow: /
 | academic support South Africa | **HIGH** |
 | assignment help Gauteng | MED |
 
-> **Important:** Always frame content as guided learning and tutoring support —
+> **Important:** Always frame content as guided learning and tutoring support -
 > not ghostwriting or submission services.
 
 ---
@@ -452,12 +452,12 @@ Disallow: /
 ```tsx
 export const metadata: Metadata = {
   metadataBase: new URL('https://www.tendertrack360.co.za'),
-  title: 'TenderTrack 360 — Tender Management Software for South Africa',
+  title: 'TenderTrack 360 - Tender Management Software for South Africa',
   description:
     'Track, manage, and win more tenders with TenderTrack 360. The affordable tender management platform built for South African businesses. Free during beta. From R249/month.',
   alternates: { canonical: 'https://www.tendertrack360.co.za' },
   openGraph: {
-    title: 'TenderTrack 360 — Tender Management Software for SA',
+    title: 'TenderTrack 360 - Tender Management Software for SA',
     siteName: 'TenderTrack 360',
     locale: 'en_ZA',
     type: 'website',
@@ -590,7 +590,7 @@ export const brands = {
   studyedge: {
     name: "StudyEdge SA",
     url: "https://www.studyedgesa.co.za",
-    tagline: "Your Academic Edge — Earned.",
+    tagline: "Your Academic Edge - Earned.",
     phone: "+27745017094",
     email: "info@studyedgesa.co.za",
   },
@@ -608,7 +608,7 @@ export type BrandKey = keyof typeof brands;
 
 ---
 
-## 15. Admin App — SEO Notes
+## 15. Admin App - SEO Notes
 
 > ⚠️ **The admin app must NEVER be indexed by Google.**
 > Use `noindex,nofollow` on all pages and block the entire domain in `robots.txt`.
@@ -645,7 +645,7 @@ Disallow: /
 3. **Auth protection via `src/proxy.ts`** (Next.js 16)
 
 ```ts
-// src/proxy.ts — NOT middleware.ts
+// src/proxy.ts - NOT middleware.ts
 import { NextResponse } from 'next/server'
 import type { NextRequest } from 'next/server'
 
@@ -674,40 +674,40 @@ Work through this checklist for each app before going live.
 
 ### Technical SEO
 
-- [ ] Sitemap installed — `@astrojs/sitemap` configured with correct `site` URL
-- [ ] `robots.txt` present — correct `Allow`/`Disallow` per app
-- [ ] Canonical tags on every page — absolute URL
-- [ ] 301 redirect `.net` → `.co.za` — configured in Vercel/DNS
-- [ ] HTTPS on all domains — Vercel auto-provisions SSL
-- [ ] Core Web Vitals — Lighthouse score > 85 before launch
-- [ ] Mobile responsive — test on 375px viewport
-- [ ] Image `alt` tags — every image has descriptive alt text
-- [ ] No broken links — crawl with Screaming Frog or Ahrefs free tier
+- [ ] Sitemap installed - `@astrojs/sitemap` configured with correct `site` URL
+- [ ] `robots.txt` present - correct `Allow`/`Disallow` per app
+- [ ] Canonical tags on every page - absolute URL
+- [ ] 301 redirect `.net` → `.co.za` - configured in Vercel/DNS
+- [ ] HTTPS on all domains - Vercel auto-provisions SSL
+- [ ] Core Web Vitals - Lighthouse score > 85 before launch
+- [ ] Mobile responsive - test on 375px viewport
+- [ ] Image `alt` tags - every image has descriptive alt text
+- [ ] No broken links - crawl with Screaming Frog or Ahrefs free tier
 
 ### On-Page SEO
 
-- [ ] Title tag — unique, ≤60 chars, includes primary keyword + brand name
-- [ ] Meta description — 140–158 chars, includes a call to action
-- [ ] One `H1` per page — contains primary keyword
+- [ ] Title tag - unique, ≤60 chars, includes primary keyword + brand name
+- [ ] Meta description - 140–158 chars, includes a call to action
+- [ ] One `H1` per page - contains primary keyword
 - [ ] Logical `H2`/`H3` structure throughout
-- [ ] Open Graph image — 1200×630px, per brand
+- [ ] Open Graph image - 1200×630px, per brand
 - [ ] JSON-LD `LocalBusiness` schema on all service sites
-- [ ] NAP consistency — name/address/phone identical across all sites
+- [ ] NAP consistency - name/address/phone identical across all sites
 
 ### Local SEO
 
-- [ ] Google Business Profile — created and verified for PMG
-- [ ] Address in footer of all public sites — 285 Erasmus Ave, Centurion
-- [ ] Phone number — 074 501 7094 clickable (`tel:` link) on mobile
-- [ ] WhatsApp CTA — present on every page
-- [ ] Google Maps embed — on contact page
+- [ ] Google Business Profile - created and verified for PMG
+- [ ] Address in footer of all public sites - 285 Erasmus Ave, Centurion
+- [ ] Phone number - 074 501 7094 clickable (`tel:` link) on mobile
+- [ ] WhatsApp CTA - present on every page
+- [ ] Google Maps embed - on contact page
 
 ### Content
 
 - [ ] Dedicated page per main service
 - [ ] At least 3 blog articles targeting long-tail keywords before launch
-- [ ] Google Search Console — all domains verified, sitemaps submitted
-- [ ] Google Analytics 4 — installed on all public sites
+- [ ] Google Search Console - all domains verified, sitemaps submitted
+- [ ] Google Analytics 4 - installed on all public sites
 
 ### Cross-Brand Linking
 
@@ -720,7 +720,7 @@ Work through this checklist for each app before going live.
 
 ---
 
-## Quick Reference — NAP
+## Quick Reference - NAP
 
 Use this exact format consistently across all sites, Google Business Profile, and directories:
 

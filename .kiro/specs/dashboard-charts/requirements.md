@@ -9,10 +9,10 @@ Components inside a React Server Component page that fetches all data server-sid
 
 The three charts are:
 
-1. **Revenue by Division over Time** — stacked area chart, last 6 calendar months, one
+1. **Revenue by Division over Time** - stacked area chart, last 6 calendar months, one
    area per division.
-2. **Revenue vs Expenses** — dual-line chart, current calendar year by month.
-3. **Month-over-Month KPI Comparison** — grouped bar chart comparing current month vs
+2. **Revenue vs Expenses** - dual-line chart, current calendar year by month.
+3. **Month-over-Month KPI Comparison** - grouped bar chart comparing current month vs
    previous month for Revenue, Expenses, and Profit Pool.
 
 All time-series data requires new DB queries in `@pmg/db`. The existing
@@ -80,7 +80,7 @@ are available.
 
 ---
 
-### Requirement 2: New DB Queries — Monthly Revenue by Division
+### Requirement 2: New DB Queries - Monthly Revenue by Division
 
 **User Story:** As a developer, I want a DB query that returns revenue grouped by division
 and calendar month, so that the stacked area chart has the time-series data it needs.
@@ -104,7 +104,7 @@ and calendar month, so that the stacked area chart has the time-series data it n
 
 ---
 
-### Requirement 3: New DB Queries — Monthly Financials
+### Requirement 3: New DB Queries - Monthly Financials
 
 **User Story:** As a developer, I want a DB query that returns total revenue and expenses
 per calendar month for the current year, so that the dual-line chart has its data.
@@ -128,7 +128,7 @@ per calendar month for the current year, so that the dual-line chart has its dat
 
 ---
 
-### Requirement 4: New DB Queries — Month-over-Month Snapshot
+### Requirement 4: New DB Queries - Month-over-Month Snapshot
 
 **User Story:** As a developer, I want a DB query that returns aggregate revenue and
 expenses for the current and previous calendar months, so that the MoM comparison chart
@@ -231,7 +231,7 @@ the last 6 months, so that I can identify growth or decline per division.
 2. THE RevenueByDivisionChart SHALL accept props:
    `{ series: MonthlyRevenueByDivision[]; divisions: string[] }`.
 3. THE RevenueByDivisionChart SHALL render a `ChartContainer` wrapping a Recharts
-   `AreaChart` with stacked areas — one `Area` per division in the `divisions` array.
+   `AreaChart` with stacked areas - one `Area` per division in the `divisions` array.
 4. THE RevenueByDivisionChart SHALL assign Chart_Tokens to divisions in order:
    division[0] → `var(--chart-1)`, division[1] → `var(--chart-2)`,
    division[2] → `var(--chart-3)`, division[3] → `var(--chart-4)`,
@@ -250,7 +250,7 @@ the last 6 months, so that I can identify growth or decline per division.
     `text-muted-foreground/50 text-xs` message "No data for the last 6 months." inside
     the card body instead of the chart.
 11. THE RevenueByDivisionChart SHALL be wrapped in a shadcn `Card` with
-    `CardHeader` (title "Revenue by Division — Last 6 Months") and `CardContent`.
+    `CardHeader` (title "Revenue by Division - Last 6 Months") and `CardContent`.
 
 ---
 
@@ -277,7 +277,7 @@ revenue.
 7. WHEN the `series` array is empty, THE RevenueVsExpensesChart SHALL render
    "No data for the current year." in `text-muted-foreground/50 text-xs`.
 8. THE RevenueVsExpensesChart SHALL be wrapped in a shadcn `Card` with `CardHeader`
-   (title "Revenue vs Expenses — Current Year") and `CardContent`.
+   (title "Revenue vs Expenses - Current Year") and `CardContent`.
 
 ---
 
@@ -343,10 +343,10 @@ works correctly without making the entire page client-side.
 1. THE RevenueByDivisionChart, RevenueVsExpensesChart, and MoMComparisonChart SHALL each
    contain a `'use client'` directive as their first line.
 2. THE Reports_Page SHALL contain no `'use client'` directive.
-3. THE Reports_Page SHALL import chart components directly — Next.js handles the
+3. THE Reports_Page SHALL import chart components directly - Next.js handles the
    client boundary at the leaf component level automatically.
 4. ALL props passed from Reports_Page to chart components SHALL be plain serialisable
-   values (arrays of objects with string and number fields only) — no functions, no
+   values (arrays of objects with string and number fields only) - no functions, no
    class instances, no React nodes.
 
 ---
@@ -364,7 +364,7 @@ format it expects.
    SHALL be used as-is as object keys (Recharts `dataKey` accepts any string).
 2. FOR ALL valid inputs to `getRevenueByDivisionSeries`, every entry in the returned
    `series` array SHALL contain a numeric value (not `undefined`) for every division in
-   the `divisions` array — missing combinations SHALL be filled with `0`.
+   the `divisions` array - missing combinations SHALL be filled with `0`.
 3. THE `MoMSnapshot` array returned by `getMoMChartData` SHALL always contain exactly
    three entries in the order: Revenue, Expenses, Profit Pool.
 4. THE `MonthlyFinancials` entries returned by `getMonthlyFinancialsSeries` SHALL each

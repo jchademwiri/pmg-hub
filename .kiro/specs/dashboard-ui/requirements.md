@@ -3,7 +3,7 @@
 ## Introduction
 
 Phase 2 of the PMG Control Center admin app. This feature builds the real-time financial
-overview dashboard — the first page an admin sees after login. All data is fetched at
+overview dashboard - the first page an admin sees after login. All data is fetched at
 request time from the live Neon PostgreSQL database via Drizzle ORM. The page is built
 entirely with React Server Components; no client-side state, no loading spinners, and no
 browser-initiated API calls. A sidebar shell layout wraps all admin pages.
@@ -22,7 +22,7 @@ browser-initiated API calls. A sidebar shell layout wraps all admin pages.
 - **AllocationTooltipBar**: The thin `'use client'` boundary component at `components/dashboard/allocation-tooltip-bar.tsx` that wraps the stacked bar segments with Tooltip support.
 - **DivisionRevenue**: The per-division horizontal bar chart at `components/dashboard/division-revenue.tsx`.
 - **LeadsSummary**: The per-status lead count component at `components/dashboard/leads-summary.tsx`.
-- **Financial_Engine**: The server-only module at `lib/financial.ts` (Phase 1 — already complete).
+- **Financial_Engine**: The server-only module at `lib/financial.ts` (Phase 1 - already complete).
 - **FinancialSummary**: The TypeScript type `{ revenue, expenses, pmgShare, profitPool, salary, reinvest, reserve, flex }` returned by `getFinancialSummary()`.
 - **DivisionRevenue_Type**: The TypeScript type `{ divisionName: string; total: number }` returned by `getDivisionRevenue()`.
 - **LeadStatusCount**: The TypeScript type `{ status: string; count: number }` returned by `getLeadCounts()`.
@@ -73,7 +73,7 @@ page, so that I can navigate the app without losing context.
 8. THE NavLink SHALL apply a hover style
    (`hover:bg-sidebar-accent/50 hover:text-sidebar-accent-foreground`) when not active.
 9. THE TopNav SHALL render a page header bar at the top of the main content area with
-   `className="h-12 flex items-center gap-2 px-4 border-b border-border bg-card"` —
+   `className="h-12 flex items-center gap-2 px-4 border-b border-border bg-card"` -
    see Requirement 14 for full TopNav spec.
 10. WHEN a route is protected by the Proxy, THE Admin_Layout SHALL be rendered only for
     authenticated sessions.
@@ -97,7 +97,7 @@ load, so that I always see the current state of the business.
 5. THE Dashboard_Page SHALL be accessible at the route `/dashboard` and SHALL be protected
    by the Proxy matcher.
 6. THE Dashboard_Page SHALL export:
-   `export const metadata: Metadata = { title: 'Dashboard' }` — the root layout's title
+   `export const metadata: Metadata = { title: 'Dashboard' }` - the root layout's title
    template handles the full string "Dashboard · PMG Admin".
 
 ---
@@ -112,7 +112,7 @@ so that I can assess business health immediately.
 1. THE Dashboard_Page SHALL render four KpiCard instances in a responsive grid
    (`grid-cols-2` on mobile, `grid-cols-4` on `lg` breakpoint).
 2. THE KpiCard instances SHALL display: Total Revenue, Total Expenses, PMG Share (20%),
-   and Profit Pool — sourced from the FinancialSummary.
+   and Profit Pool - sourced from the FinancialSummary.
 3. THE KpiCard SHALL format all monetary values using `formatZAR`.
 4. THE KpiCard SHALL render a label in `text-muted-foreground`, the formatted value in
    `text-foreground text-2xl font-semibold`, and an optional sub-label in
@@ -259,7 +259,7 @@ the UI is easy to read in low-light environments.
 
 ---
 
-### Requirement 11: shadcn Block — Sidebar Shell
+### Requirement 11: shadcn Block - Sidebar Shell
 
 **User Story:** As a developer, I want to use a shadcn sidebar block as the structural
 foundation for the admin layout shell so that navigation, responsiveness, and accessibility
@@ -276,16 +276,16 @@ are handled by a proven composition.
    (a) replace placeholder nav items with the five PMG admin routes:
        `/dashboard` (LayoutDashboard icon), `/income` (TrendingUp),
        `/expenses` (TrendingDown), `/leads` (Users), `/divisions` (Layers)
-       — all from `lucide-react`
+       - all from `lucide-react`
    (b) replace the brand label with "PMG / Control Center" in the sidebar header, with
        "PMG" in `text-sidebar-foreground/50 text-xs uppercase tracking-widest` and
        "Control Center" in `text-sidebar-foreground text-sm font-semibold`
    (c) remove or replace the user footer section with a minimal
        `text-sidebar-foreground/50 text-xs` "PMG Admin" label
-   (d) sidebar background uses `bg-sidebar` and border uses `border-sidebar-border` —
+   (d) sidebar background uses `bg-sidebar` and border uses `border-sidebar-border` -
        these are already correctly set by the `.dark` CSS variables in `globals.css` and
        require no additional `className` overrides
-3. THE sidebar block installs the following shadcn primitives automatically — the developer
+3. THE sidebar block installs the following shadcn primitives automatically - the developer
    SHALL NOT install these separately: `sidebar`, `button`, `separator`, `skeleton`,
    `sheet`, `tooltip`, `input`, `avatar`.
 4. THE sidebar SHALL remain collapsible on mobile (sheet/drawer behaviour from the block)
@@ -297,12 +297,12 @@ are handled by a proven composition.
    only provider needed for sidebar state.
 7. THE scaffolded sidebar block SHALL produce a file at `components/layout/app-sidebar.tsx`
    (exported as `AppSidebar`). This is the component referenced as `AppSidebar` in
-   Requirement 21. The developer SHALL customise this file directly — not create a separate
+   Requirement 21. The developer SHALL customise this file directly - not create a separate
    sidebar component alongside it.
 
 ---
 
-### Requirement 12: shadcn Block — Dashboard Layout Reference
+### Requirement 12: shadcn Block - Dashboard Layout Reference
 
 **User Story:** As a developer, I want to use a shadcn dashboard block as the structural
 grid reference for the dashboard page so that the KPI card layout, spacing, and responsive
@@ -312,7 +312,7 @@ grid are consistent with shadcn conventions.
 
 1. THE developer SHALL run `npx shadcn@latest add dashboard-01 --cwd apps/admin` to inspect
    the block's grid and card structure, then use it as a reference for the dashboard page
-   layout — NOT necessarily scaffold it verbatim, since the PMG data model differs from the
+   layout - NOT necessarily scaffold it verbatim, since the PMG data model differs from the
    block's placeholder data.
 2. THE dashboard page grid SHALL follow the block's responsive pattern: single column on
    mobile, 2-column on `md`, 4-column on `lg` for KPI cards.
@@ -323,7 +323,7 @@ grid are consistent with shadcn conventions.
 
 ---
 
-### Requirement 13: shadcn Components — Full Installation List
+### Requirement 13: shadcn Components - Full Installation List
 
 **User Story:** As a developer, I want a single definitive list of every shadcn component
 to install for Phase 2 so that I can run all installs upfront and avoid mid-build
@@ -334,12 +334,12 @@ interruptions.
 1. THE developer SHALL install the following shadcn components before writing any Phase 2
    code, in this order:
 
-   **Step 1 — Sidebar block (installs sidebar + its dependencies automatically):**
+   **Step 1 - Sidebar block (installs sidebar + its dependencies automatically):**
    ```
    npx shadcn@latest add sidebar-08 --cwd apps/admin
    ```
 
-   **Step 2 — Remaining components not covered by the sidebar block:**
+   **Step 2 - Remaining components not covered by the sidebar block:**
    ```
    npx shadcn@latest add progress --cwd apps/admin
    npx shadcn@latest add scroll-area --cwd apps/admin
@@ -369,7 +369,7 @@ that uses shadcn primitives for consistency with the rest of the UI.
    `className="h-4"` between the SidebarTrigger and the breadcrumb.
 3. THE TopNav SHALL display a `Breadcrumb` component (using `BreadcrumbList`,
    `BreadcrumbItem`, `BreadcrumbPage`) showing the current section as static text in
-   Phase 2 — e.g. "Dashboard" for `/dashboard`. Dynamic breadcrumbs come in Phase 9.
+   Phase 2 - e.g. "Dashboard" for `/dashboard`. Dynamic breadcrumbs come in Phase 9.
 4. THE TopNav root element SHALL have
    `className="h-12 flex items-center gap-2 px-4 border-b border-border bg-card"`.
 5. THE TopNav SHALL be a Server Component with no `'use client'` directive. SidebarTrigger
@@ -521,10 +521,10 @@ dashboard so that I am informed without a full page crash.
 1. THE Admin_Layout SHALL render the shadcn `Toaster` component (from sonner) at the root
    level so toasts are available on all admin pages.
 2. THE `Toaster` SHALL use `theme="dark"` and `position="bottom-right"`.
-3. THE Dashboard_Page error boundary (`error.tsx` — Phase 9) SHALL use `toast()` from
-   sonner to surface errors. In Phase 2, this is setup-only — no active error triggering
+3. THE Dashboard_Page error boundary (`error.tsx` - Phase 9) SHALL use `toast()` from
+   sonner to surface errors. In Phase 2, this is setup-only - no active error triggering
    is required yet.
-4. THE `Toaster` component requires `'use client'` internally — it SHALL be imported
+4. THE `Toaster` component requires `'use client'` internally - it SHALL be imported
    directly into Admin_Layout without a wrapper since Next.js handles this boundary
    automatically for leaf client components inside Server layouts.
 
@@ -543,7 +543,7 @@ functional shell.
 2. THE Admin_Layout SHALL render:
    `SidebarProvider` > `AppSidebar` (the customised sidebar-08 component) +
    `SidebarInset` > `TopNav` + `<main>`.
-3. `SidebarInset` SHALL be used as the right content wrapper — it is the correct companion
+3. `SidebarInset` SHALL be used as the right content wrapper - it is the correct companion
    component from the sidebar block, not a plain `div`.
 4. THE `<main>` element inside `SidebarInset` SHALL have
    `className="flex-1 overflow-y-auto p-6 bg-background"`.
@@ -561,10 +561,10 @@ that the app builds and protects routes correctly.
 
 #### Acceptance Criteria
 
-1. THE auth guard file SHALL be named `proxy.ts` at `apps/admin/src/proxy.ts` — NOT
+1. THE auth guard file SHALL be named `proxy.ts` at `apps/admin/src/proxy.ts` - NOT
    `middleware.ts`.
-2. THE exported function SHALL be named `proxy` — NOT `middleware`.
-3. THE proxy SHALL check for `'better-auth.session_token'` cookie only — no DB calls.
+2. THE exported function SHALL be named `proxy` - NOT `middleware`.
+3. THE proxy SHALL check for `'better-auth.session_token'` cookie only - no DB calls.
 4. IF cookie absent → redirect to `/login`. IF present → `NextResponse.next()`.
 5. THE matcher SHALL cover `'/:path*'` only.
 
@@ -610,14 +610,14 @@ Phase 2 so that I never reach for a raw Tailwind palette utility.
    `ring-ring`, `ring-sidebar-ring`
 
    **Data-visualisation tokens:**
-   - `bg-chart-1` / `text-chart-1` — salary card highlight, contacted leads, salary allocation segment
-   - `bg-chart-2` / `text-chart-2` — reinvest allocation, new leads, division revenue bars
-   - `bg-chart-3` / `text-chart-3` — reserve allocation, converted leads
-   - `bg-chart-4` / `text-chart-4` — flex allocation
-   - `bg-chart-5` / `text-chart-5` — reserved for Phase 8 charts
+   - `bg-chart-1` / `text-chart-1` - salary card highlight, contacted leads, salary allocation segment
+   - `bg-chart-2` / `text-chart-2` - reinvest allocation, new leads, division revenue bars
+   - `bg-chart-3` / `text-chart-3` - reserve allocation, converted leads
+   - `bg-chart-4` / `text-chart-4` - flex allocation
+   - `bg-chart-5` / `text-chart-5` - reserved for Phase 8 charts
 
    **State tokens:**
-   `bg-destructive`, `text-destructive` — errors only
+   `bg-destructive`, `text-destructive` - errors only
 
 2. Opacity modifiers on tokens (e.g. `bg-chart-1/20`, `text-chart-1/70`,
    `border-chart-1/30`) ARE permitted as they compose with the CSS variable value.
@@ -641,12 +641,12 @@ metadata, and the title template so that every admin page inherits the correct s
 2. THE `<html>` element SHALL have `className="dark"` and `lang="en"` to activate all
    `.dark` CSS variable overrides from `globals.css`.
 3. THE root layout SHALL import and apply the Noto Sans font from `next/font/google`,
-   assigning it to the `<body>` via the font's `className` — this wires the
+   assigning it to the `<body>` via the font's `className` - this wires the
    `--font-sans` CSS variable used throughout the design system.
 4. THE root layout SHALL export a `metadata` object of type `Metadata` with:
    - `title: { template: '%s · PMG Admin', default: 'PMG Admin' }`
    - `description: 'PMG Control Center'`
-   - `robots: { index: false, follow: false }` — the admin app is not public-facing
+   - `robots: { index: false, follow: false }` - the admin app is not public-facing
 5. THE root layout SHALL import `globals.css` to apply the Tailwind base styles and CSS
    variable declarations.
 6. THE `<body>` element SHALL have `className` including `font-sans antialiased
@@ -667,7 +667,7 @@ target resolves to a valid page rather than a 404.
 
 1. THE login page SHALL be located at `app/(auth)/login/page.tsx` and SHALL be a Server
    Component with no `'use client'` directive.
-2. THE `(auth)` route group SHALL have no layout file in Phase 2 — it inherits the root
+2. THE `(auth)` route group SHALL have no layout file in Phase 2 - it inherits the root
    layout only.
 3. THE login page SHALL render a centred card with:
    - The "PMG / Control Center" brand label using `text-foreground` and
@@ -678,14 +678,14 @@ target resolves to a valid page rather than a 404.
      justify-center bg-background"`
 4. THE login page SHALL export `metadata: Metadata = { title: 'Login' }`.
 5. THE login page SHALL NOT implement any auth form, magic link input, or Better Auth
-   integration in Phase 2 — that is Phase 2.5 / auth setup. Its sole purpose is to
+   integration in Phase 2 - that is Phase 2.5 / auth setup. Its sole purpose is to
    prevent a 404 when the proxy redirects unauthenticated users.
 6. THE login page SHALL NOT use `'use client'`.
 7. THE developer MAY scaffold the login page using
    `npx shadcn@latest add login-01 --cwd apps/admin` as the structural foundation, then
    strip out the form fields and replace the content with the placeholder text per
    criterion 3. The login-01 block provides the correct centred card layout and
-   `bg-muted` background. If scaffolded, the `LoginForm` component SHALL NOT be used —
+   `bg-muted` background. If scaffolded, the `LoginForm` component SHALL NOT be used -
    only the page layout shell.
 
 ---
@@ -699,14 +699,14 @@ that all admin routes are protected before the dashboard goes live.
 
 1. THE file `apps/admin/src/proxy.ts` SHALL be created in Phase 2 if it does not already
    exist.
-2. THE exported function SHALL be named `proxy` — NOT `middleware`. The file SHALL NOT be
+2. THE exported function SHALL be named `proxy` - NOT `middleware`. The file SHALL NOT be
    named `middleware.ts`.
 3. THE proxy SHALL check for the `better-auth.session_token` cookie only. No database
    calls, no heavy logic.
 4. IF the cookie is absent, THE proxy SHALL redirect to `/login` using
    `NextResponse.redirect(new URL('/login', request.url))`.
 5. IF the cookie is present, THE proxy SHALL return `NextResponse.next()`.
-6. THE matcher config SHALL be `['/:path*']` — covering all routes.
+6. THE matcher config SHALL be `['/:path*']` - covering all routes.
 7. THE proxy SHALL import `NextResponse` from `'next/server'` and type the parameter as
    `NextRequest` from `'next/server'`.
 
@@ -730,7 +730,7 @@ component so I know exactly what to build.
 6. EACH segment `div` SHALL be wrapped in the shadcn Tooltip composition:
    `TooltipProvider` > `Tooltip` > `TooltipTrigger asChild` > `TooltipContent`.
 7. THE `TooltipContent` SHALL display the string `"{label}: {formatZAR(amount)} ({pct}%)"`
-   — importing `formatZAR` from `@/lib/financial`.
+   - importing `formatZAR` from `@/lib/financial`.
 8. THE `AllocationBar` Server Component SHALL import and render `AllocationTooltipBar`,
    passing the four allocation objects defined in Requirement 17 criterion 6, with the
    `amount` field sourced from the `FinancialSummary` prop using the matching `key`.

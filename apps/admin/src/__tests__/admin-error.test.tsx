@@ -15,7 +15,7 @@ vi.mock('next/link', () => ({
 describe('AdminError', () => {
   const mockError = new Error('Internal DB failure') as Error & { digest?: string }
 
-  it('renders a safe, non-technical user message — Validates: Requirements 2.2', () => {
+  it('renders a safe, non-technical user message - Validates: Requirements 2.2', () => {
     render(<AdminError error={mockError} reset={() => {}} />)
     // Should show a generic message
     expect(screen.getByText(/something went wrong/i)).toBeDefined()
@@ -23,7 +23,7 @@ describe('AdminError', () => {
     expect(screen.queryByText('Internal DB failure')).toBeNull()
   })
 
-  it('does not render error.message or stack trace — Validates: Requirements 2.2', () => {
+  it('does not render error.message or stack trace - Validates: Requirements 2.2', () => {
     const errorWithStack = Object.assign(new Error('secret stack trace'), {
       stack: 'Error: secret stack trace\n  at someFunction',
     }) as Error & { digest?: string }
@@ -32,7 +32,7 @@ describe('AdminError', () => {
     expect(container.textContent).not.toContain('at someFunction')
   })
 
-  it('"Try again" button calls reset() — Validates: Requirements 2.3', async () => {
+  it('"Try again" button calls reset() - Validates: Requirements 2.3', async () => {
     const reset = vi.fn()
     render(<AdminError error={mockError} reset={reset} />)
     const button = screen.getByRole('button', { name: /try again/i })
@@ -40,14 +40,14 @@ describe('AdminError', () => {
     expect(reset).toHaveBeenCalledTimes(1)
   })
 
-  it('renders a link to /dashboard — Validates: Requirements 2.4', () => {
+  it('renders a link to /dashboard - Validates: Requirements 2.4', () => {
     render(<AdminError error={mockError} reset={() => {}} />)
     const link = screen.getByRole('link', { name: /dashboard/i })
     expect(link).toBeDefined()
     expect((link as HTMLAnchorElement).getAttribute('href')).toBe('/dashboard')
   })
 
-  it('renders the error digest reference when present — Validates: Requirements 2.2', () => {
+  it('renders the error digest reference when present - Validates: Requirements 2.2', () => {
     const errorWithDigest = Object.assign(new Error('oops'), { digest: 'abc123' }) as Error & { digest?: string }
     render(<AdminError error={errorWithDigest} reset={() => {}} />)
     expect(screen.getByText(/abc123/)).toBeDefined()

@@ -50,6 +50,6 @@ export async function autoClosePreviousMonthIfNeeded(): Promise<void> {
     revalidatePath('/dashboard');
     revalidatePath('/insights/snapshots');
   } catch {
-    // Silent — auto-close failure should not break the dashboard
+    // Silent - auto-close failure should not break the dashboard
   }
 }

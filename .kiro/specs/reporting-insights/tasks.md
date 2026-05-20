@@ -6,40 +6,40 @@ Wire the three pre-built chart components to `/reports`, add a year filter, intr
 
 ## Tasks
 
-- [x] 1. DB query helpers — add four new helpers to queries.ts
-  - Add `getExpensesByCategoryForYear(year: number)` — queries `expenses` table, groups by `category`, filters by `EXTRACT(YEAR FROM date) = year`, returns `{ category: string; total: number }[]` ordered by `total` DESC
-  - Add `getDistinctYears()` — returns the union of distinct years from `income.date` and `expenses.date` as `number[]` sorted DESC
-  - Add `getMonthlyFinancialsForYear(year: number)` — returns `{ month: string; revenue: number; expenses: number }[]` for the given calendar year, ordered by month ASC (month = `'YYYY-MM'`)
-  - Add `getMonthlyRevenueByDivisionForYear(year: number)` — returns `{ month: string; divisionName: string; total: number }[]` filtered to the given calendar year
+- [x] 1. DB query helpers - add four new helpers to queries.ts
+  - Add `getExpensesByCategoryForYear(year: number)` - queries `expenses` table, groups by `category`, filters by `EXTRACT(YEAR FROM date) = year`, returns `{ category: string; total: number }[]` ordered by `total` DESC
+  - Add `getDistinctYears()` - returns the union of distinct years from `income.date` and `expenses.date` as `number[]` sorted DESC
+  - Add `getMonthlyFinancialsForYear(year: number)` - returns `{ month: string; revenue: number; expenses: number }[]` for the given calendar year, ordered by month ASC (month = `'YYYY-MM'`)
+  - Add `getMonthlyRevenueByDivisionForYear(year: number)` - returns `{ month: string; divisionName: string; total: number }[]` filtered to the given calendar year
   - Export all four from `packages/db/src/index.ts` via the existing `export * from './queries'`
   - _Requirements: 6.3, 6.4, 6.5, 7.1, 7.5_
 
-- [x] 2. financial.ts wrappers — add four new helpers
-  - Add `getExpensesByCategory(year: number)` — thin wrapper over `getExpensesByCategoryForYear(year)`; returns `{ category: string; total: number }[]`
-  - Add `getDistinctReportYears()` — thin wrapper over `getDistinctYears()`; returns `number[]`
-  - Add `getMonthlyFinancialsSeriesForYear(year: number)` — calls `getMonthlyFinancialsForYear(year)` and returns `MonthlyFinancials[]`
-  - Add `getRevenueByDivisionSeriesForYear(year: number)` — calls `getMonthlyRevenueByDivisionForYear(year)` and passes rows through the existing `buildDivisionSeries` helper; returns `DivisionSeriesChart`
+- [x] 2. financial.ts wrappers - add four new helpers
+  - Add `getExpensesByCategory(year: number)` - thin wrapper over `getExpensesByCategoryForYear(year)`; returns `{ category: string; total: number }[]`
+  - Add `getDistinctReportYears()` - thin wrapper over `getDistinctYears()`; returns `number[]`
+  - Add `getMonthlyFinancialsSeriesForYear(year: number)` - calls `getMonthlyFinancialsForYear(year)` and returns `MonthlyFinancials[]`
+  - Add `getRevenueByDivisionSeriesForYear(year: number)` - calls `getMonthlyRevenueByDivisionForYear(year)` and passes rows through the existing `buildDivisionSeries` helper; returns `DivisionSeriesChart`
   - _Requirements: 3.2, 6.1, 6.2, 7.2, 7.4_
 
-- [x] 3. Checkpoint — ensure DB layer and financial.ts compile and types resolve
+- [x] 3. Checkpoint - ensure DB layer and financial.ts compile and types resolve
   - Ensure all tests pass, ask the user if questions arise.
 
-- [x] 4. Server Action — implement exportFinancialsCsv
+- [x] 4. Server Action - implement exportFinancialsCsv
   - Create `apps/admin/src/app/actions/reports.ts` with `'use server'` directive
   - Validate `year` is an integer in range 1000–9999; return `{ error: 'Invalid year' }` on failure
   - Call `getMonthlyFinancialsForYear(year)` once to get all revenue/expense rows
   - Build a 12-row result (one per calendar month January–December), filling missing months with zeros
   - Compute all Financial_Model fields inline: `pmgShare = revenue × 0.20`, `profitPool = revenue − expenses − pmgShare`, `salary = profitPool × 0.35`, `reinvest = profitPool × 0.30`, `reserve = profitPool × 0.30`, `flex = profitPool × 0.05`
   - Return CSV string with header `Month,Revenue,Expenses,PMG Share,Profit Pool,Salary,Reinvest,Reserve,Flex` followed by 12 data rows
-  - Wrap entire body in try/catch — on DB error return `{ error: err.message }`, never throw
+  - Wrap entire body in try/catch - on DB error return `{ error: err.message }`, never throw
   - _Requirements: 4.1, 4.2, 4.3, 4.4, 4.5, 4.6_
 
   - [x] 4.1 Write property test for CSV export correctness (Property 3)
-    - **Property 3: CSV export correctness — structure and financial model**
+    - **Property 3: CSV export correctness - structure and financial model**
     - **Validates: Requirements 4.2, 4.3, 4.4**
 
   - [x] 4.2 Write property test for CSV export error safety (Property 4)
-    - **Property 4: CSV export error safety — invalid year and never throws**
+    - **Property 4: CSV export error safety - invalid year and never throws**
     - **Validates: Requirements 4.5, 4.6**
 
 - [x] 5. YearFilter client component
@@ -67,10 +67,10 @@ Wire the three pre-built chart components to `/reports`, add a year filter, intr
   - When action returns `{ error }`: call `toast.error(error)` from sonner
   - _Requirements: 4.7, 4.8, 4.9, 4.10_
 
-- [x] 8. Checkpoint — ensure all new components compile
+- [x] 8. Checkpoint - ensure all new components compile
   - Ensure all tests pass, ask the user if questions arise.
 
-- [x] 9. Reports page — replace stub with full implementation
+- [x] 9. Reports page - replace stub with full implementation
   - Replace the stub at `apps/admin/src/app/(admin)/reports/page.tsx` with an async Server Component
   - Read `searchParams.year`; validate it matches `/^\d{4}$/` and parses to a value in 1000–9999; fall back to `new Date().getFullYear()` if absent or invalid
   - Fire all five fetches in a single `Promise.all`: `getDistinctReportYears()`, `getMoMChartData()`, `getMonthlyFinancialsSeriesForYear(year)`, `getRevenueByDivisionSeriesForYear(year)`, `getExpensesByCategory(year)`
@@ -84,7 +84,7 @@ Wire the three pre-built chart components to `/reports`, add a year filter, intr
     - **Property 5: Year filter falls back to current year for invalid query params**
     - **Validates: Requirements 2.3, 2.6**
 
-- [x] 10. Tests — write full test suite
+- [x] 10. Tests - write full test suite
   - [x] 10.1 Create `apps/admin/src/__tests__/reports.test.ts`
     - Write all five property-based tests (P1–P5) using fast-check with minimum 100 iterations each, tagged with their property reference comments
     - Write unit tests: `YearFilter` renders one option per year in the `years` array; `YearFilter` calls `router.push('/reports?year=2024')` when 2024 is selected; `ExpenseByCategoryChart` renders `"No expense data for this year."` when `data = []`; `ExpenseByCategoryChart` renders a bar for each category; `ExportCsvButton` is disabled and shows `"Exporting…"` while `isPending` is true; `ExportCsvButton` calls `toast.error` when action returns `{ error }`; `ExportCsvButton` triggers download with filename `pmg-financials-2025.csv`; reports page renders heading `"Reports & Insights"`; `exportFinancialsCsv(2025)` with no DB data returns a string with 12 zero-value rows
@@ -98,7 +98,7 @@ Wire the three pre-built chart components to `/reports`, add a year filter, intr
     - **Property 2: getExpensesByCategory returns valid, ordered data**
     - **Validates: Requirements 3.2, 6.1, 6.4, 6.6**
 
-- [x] 11. Final checkpoint — ensure all tests pass
+- [x] 11. Final checkpoint - ensure all tests pass
   - Ensure all tests pass, ask the user if questions arise.
 
 ## Notes

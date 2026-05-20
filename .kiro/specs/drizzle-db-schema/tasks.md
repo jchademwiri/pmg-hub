@@ -105,11 +105,11 @@ Establish a domain-oriented schema layer in `packages/db` using Drizzle ORM + Ne
   - _Requirements: 7.1–7.3, 6.7_
 
 - [x] 8. Create `src/queries.ts`
-  - Implement `getTotalRevenue(): Promise<number>` — `coalesce(sum(income.amount), 0)`, cast to number
-  - Implement `getTotalExpenses(): Promise<number>` — `coalesce(sum(expenses.amount), 0)`, cast to number
-  - Implement `getRevenueByDivision(): Promise<{ divisionName: string; total: number }[]>` — join income+divisions, group by division name, order DESC
-  - Implement `getExpensesByDivision(): Promise<{ divisionName: string; total: number }[]>` — join expenses+divisions, group by division name, order DESC
-  - Implement `getLeadsByStatus(): Promise<{ status: string; count: number }[]>` — group leads by status, order DESC
+  - Implement `getTotalRevenue(): Promise<number>` - `coalesce(sum(income.amount), 0)`, cast to number
+  - Implement `getTotalExpenses(): Promise<number>` - `coalesce(sum(expenses.amount), 0)`, cast to number
+  - Implement `getRevenueByDivision(): Promise<{ divisionName: string; total: number }[]>` - join income+divisions, group by division name, order DESC
+  - Implement `getExpensesByDivision(): Promise<{ divisionName: string; total: number }[]>` - join expenses+divisions, group by division name, order DESC
+  - Implement `getLeadsByStatus(): Promise<{ status: string; count: number }[]>` - group leads by status, order DESC
   - All numeric driver values explicitly cast to `number` before returning
   - _Requirements: 10.1–10.10, 12.2–12.3_
 
@@ -133,17 +133,17 @@ Establish a domain-oriented schema layer in `packages/db` using Drizzle ORM + Ne
     - **Validates: Requirements 10.10**
     - Generate non-empty result sets; verify first element has the highest total/count value
 
-- [x] 9. Checkpoint — ensure schema and queries compile
+- [x] 9. Checkpoint - ensure schema and queries compile
   - Ensure all TypeScript types resolve without errors, ask the user if questions arise.
 
 - [x] 10. Rewrite `src/seed.ts`
   - Preserve Block 1 (aws_pricing) exactly as-is using `.onConflictDoNothing()`
   - Add Block 2 wrapped in `db.transaction()`:
-    - Insert 2 divisions (`TES`, `AWS`) — query by name first, skip if exists
-    - Insert 2–3 clients — query by name first, skip if exists
-    - Insert 3 income records referencing seeded divisions and clients — deterministic check before inserting
-    - Insert 3 expense records referencing seeded divisions — deterministic check before inserting
-    - Insert 3 lead records — check by email or phone before inserting; normalize email to lowercase before insert
+    - Insert 2 divisions (`TES`, `AWS`) - query by name first, skip if exists
+    - Insert 2–3 clients - query by name first, skip if exists
+    - Insert 3 income records referencing seeded divisions and clients - deterministic check before inserting
+    - Insert 3 expense records referencing seeded divisions - deterministic check before inserting
+    - Insert 3 lead records - check by email or phone before inserting; normalize email to lowercase before insert
   - Block 2 failure rolls back entirely; Block 1 is unaffected
   - Add `db:seed` script to `package.json`: `"db:seed": "bun src/seed.ts"`
   - _Requirements: 9.1–9.11_
@@ -164,7 +164,7 @@ Establish a domain-oriented schema layer in `packages/db` using Drizzle ORM + Ne
 
 - [x] 12. Generate migration
   - Run `bun db:generate` to produce `src/migrations/0002_*.sql`
-  - Do NOT run `bun db:migrate` — review the generated SQL before applying
+  - Do NOT run `bun db:migrate` - review the generated SQL before applying
   - Confirm the generated migration DROPs `tes_leads`, `aws_messages`, `aws_bookings`, `pmg_leads` and CREATEs `divisions`, `clients`, `income`, `expenses`, `leads` in FK-safe order
   - _Requirements: 8.1–8.5_
 
@@ -192,7 +192,7 @@ Establish a domain-oriented schema layer in `packages/db` using Drizzle ORM + Ne
     - Include property tests from tasks 10.1–10.2
     - _Requirements: 9.7, 9.9, 9.10_
 
-- [x] 14. Final checkpoint — ensure all tests pass
+- [x] 14. Final checkpoint - ensure all tests pass
   - Run `bun test --filter @pmg/db` and confirm all tests pass; ask the user if questions arise.
 
 ## Notes
@@ -200,5 +200,5 @@ Establish a domain-oriented schema layer in `packages/db` using Drizzle ORM + Ne
 - Tasks marked with `*` are optional and can be skipped for a faster MVP
 - Do NOT modify `src/env.ts`, `src/client.ts`, `src/index.ts`, `drizzle.config.ts`, or any existing migration files
 - Run `bun db:generate` (task 12) only after all schema files are finalized
-- Do NOT run `bun db:migrate` automatically — review the generated SQL first
+- Do NOT run `bun db:migrate` automatically - review the generated SQL first
 - Property tests use `fast-check` with `numRuns: 100` minimum; annotate each with `// Feature: drizzle-db-schema, Property {N}: {property_text}`

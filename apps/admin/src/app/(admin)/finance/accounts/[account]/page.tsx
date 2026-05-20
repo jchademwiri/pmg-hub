@@ -76,7 +76,7 @@ export default async function AccountHistoryPage({ params }: AccountHistoryPageP
     events.push({
       date: entry.date,
       type: 'credit',
-      description: `Allocated Income — ${entry.clientName ?? entry.divisionName}${entry.description ? ` · ${entry.description}` : ''}`,
+      description: `Allocated Income - ${entry.clientName ?? entry.divisionName}${entry.description ? ` · ${entry.description}` : ''}`,
       amount: credit,
     });
   }

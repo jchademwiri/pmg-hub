@@ -139,7 +139,7 @@ export default async function ItemsPage({ searchParams }: ItemsPageProps) {
                       </Link>
                     </TableCell>
                     <TableCell className="max-w-xs truncate text-sm text-muted-foreground">
-                      {item.description ?? '—'}
+                      {item.description ?? '-'}
                     </TableCell>
                     <TableCell className="text-right tabular-nums text-sm">
                       {formatZAR(Number(item.unitPrice))}

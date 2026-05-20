@@ -1,4 +1,4 @@
-# PMG Control Center — Navigation Implementation Plan (Next.js)
+# PMG Control Center - Navigation Implementation Plan (Next.js)
 
 Implementation guide for the PMG sidebar + modules in a **Next.js 16+ App
 Router** project.
@@ -48,7 +48,7 @@ render and group headers hide.
 |-------------------|--------------------|---------------------------------------------------------------|---------------------------------|
 | Overview (static) | `Home`             | Dashboard                                                     | ✅ Exists at `/dashboard`       |
 | Finance           | `Banknote`         | Income · Expenses · Categories · Corporate Ledger · Accounts  | ✅ All exist                    |
-| Billing           | `FileSpreadsheet`  | Quotations · Invoices · Statements                            | ❌ **Missing — shell pages added** |
+| Billing           | `FileSpreadsheet`  | Quotations · Invoices · Statements                            | ❌ **Missing - shell pages added** |
 | Relationships     | `Network`          | Clients · Leads · Divisions                                   | ✅ All exist                    |
 | Insights          | `LineChart`        | Snapshots · Reports                                           | ✅ Both exist                   |
 | **System** (bottom) | `Cog`            | Users · Settings                                              | ⚠️ Users ✅, Settings ❌ added  |
@@ -214,7 +214,7 @@ export function AppSidebar({ user }: AppSidebarProps) {
 **Note:** The System group replaces the old conditional `super_admin` check for Users.
 Access control for admin-only pages is enforced at the page/action level, not the nav.
 
-### `src/components/layout/top-nav.tsx` — Route Labels to Update
+### `src/components/layout/top-nav.tsx` - Route Labels to Update
 
 Add billing routes to `ROUTE_LABELS`:
 
@@ -241,7 +241,7 @@ const ROUTE_LABELS: Record<string, string> = {
 
 ### Current Admin Layout (`src/app/(admin)/layout.tsx`)
 
-No changes needed — layout already uses `AppSidebar` with `SidebarProvider`.
+No changes needed - layout already uses `AppSidebar` with `SidebarProvider`.
 
 ---
 
@@ -291,7 +291,7 @@ src/app/(admin)/
 
 ## 2. Overview
 
-### `/dashboard` — Dashboard
+### `/dashboard` - Dashboard
 
 **Status:** ✅ **Implemented**
 
@@ -305,7 +305,7 @@ src/app/(admin)/
 
 ## 3. Finance
 
-### `/income` — Income Tracking
+### `/income` - Income Tracking
 
 **Status:** ✅ **Implemented**
 
@@ -314,7 +314,7 @@ src/app/(admin)/
 - Actions in `src/app/actions/income.ts`
 - Components in `src/components/income/`
 
-### `/expenses` — Expense Tracking
+### `/expenses` - Expense Tracking
 
 **Status:** ✅ **Implemented**
 
@@ -322,14 +322,14 @@ src/app/(admin)/
 - Actions in `src/app/actions/expenses.ts`
 - Components in `src/components/expenses/`
 
-### `/expense-categories` — Categories
+### `/expense-categories` - Categories
 
 **Status:** ✅ **Implemented** (route is `/expense-categories`, not `/categories`)
 
 - Category management with color coding
 - Components in `src/components/expense-categories/`
 
-### `/ledger` — Corporate Ledger
+### `/ledger` - Corporate Ledger
 
 **Status:** ✅ **Implemented**
 
@@ -337,7 +337,7 @@ src/app/(admin)/
 - Actions in `src/app/actions/ledger.ts`
 - Components in `src/components/ledger/`
 
-### `/accounts` — Account Management
+### `/accounts` - Account Management
 
 **Status:** ✅ **Implemented**
 
@@ -349,7 +349,7 @@ src/app/(admin)/
 
 ## 4. Billing *(Next build phase)*
 
-### `/billing/quotes` — Quotations
+### `/billing/quotes` - Quotations
 
 **Status:** 🔲 **Shell page created**
 
@@ -357,7 +357,7 @@ src/app/(admin)/
 - Filters via search params (status, client, division, date range)
 - Row link → `[id]/page.tsx`
 
-### `/billing/quotes/new` — New Quotation
+### `/billing/quotes/new` - New Quotation
 
 **Status:** 🔲 **Shell page created**
 
@@ -365,7 +365,7 @@ src/app/(admin)/
 - Dynamic line items with live totals (subtotal, VAT, total)
 - After insert → `redirect("/billing/quotes/" + id)`
 
-### `/billing/quotes/[id]` — Quote Detail
+### `/billing/quotes/[id]` - Quote Detail
 
 **Status:** 🔲 **Shell page created**
 
@@ -373,21 +373,21 @@ src/app/(admin)/
 - **Convert to invoice** action → `convertQuoteToInvoice(id)`
 - Edit mode when DRAFT; read-only otherwise
 
-### `/billing/invoices` — Invoices
+### `/billing/invoices` - Invoices
 
 **Status:** 🔲 **Shell page created**
 
 - List + metrics (Outstanding, Overdue, Paid, total invoiced)
 - Filters (status, client, division, date range)
 
-### `/billing/invoices/new` — New Invoice
+### `/billing/invoices/new` - New Invoice
 
 **Status:** 🔲 **Shell page created**
 
 - Direct invoice creation (not from quote)
 - Same line items form as quotation
 
-### `/billing/invoices/[id]` — Invoice Detail
+### `/billing/invoices/[id]` - Invoice Detail
 
 **Status:** 🔲 **Shell page created**
 
@@ -395,13 +395,13 @@ src/app/(admin)/
 - Marking paid auto-inserts an `income` row in the same DB transaction
 - Edits locked when status is PAID or VOID
 
-### `/billing/statements` — Client Statements
+### `/billing/statements` - Client Statements
 
 **Status:** 🔲 **Shell page created**
 
 - Per-client summary list
 
-### `/billing/statements/[clientId]` — Client Statement Detail
+### `/billing/statements/[clientId]` - Client Statement Detail
 
 **Status:** 🔲 **Shell page created**
 
@@ -410,22 +410,22 @@ src/app/(admin)/
 
 ### Components to Build (`src/components/billing/`)
 
-- `quote-form.tsx` — Quotation form with dynamic line items
-- `invoice-form.tsx` — Invoice form with dynamic line items
-- `line-items-form.tsx` — Reusable line items editor (qty, unit price, tax rate, total)
-- `status-badge.tsx` — Quote/invoice status display
-- `billing-table.tsx` — Reusable table for quotes/invoices
-- `convert-to-invoice-button.tsx` — Quote → invoice conversion
-- `mark-paid-button.tsx` — Invoice payment action
-- `billing-metrics.tsx` — KPI cards for billing list pages
+- `quote-form.tsx` - Quotation form with dynamic line items
+- `invoice-form.tsx` - Invoice form with dynamic line items
+- `line-items-form.tsx` - Reusable line items editor (qty, unit price, tax rate, total)
+- `status-badge.tsx` - Quote/invoice status display
+- `billing-table.tsx` - Reusable table for quotes/invoices
+- `convert-to-invoice-button.tsx` - Quote → invoice conversion
+- `mark-paid-button.tsx` - Invoice payment action
+- `billing-metrics.tsx` - KPI cards for billing list pages
 
 ### Server Actions to Build (`src/app/actions/`)
 
-- `billing-quotes.ts` — `createQuotation`, `updateQuotation`, `sendQuotation`,
+- `billing-quotes.ts` - `createQuotation`, `updateQuotation`, `sendQuotation`,
   `acceptQuotation`, `declineQuotation`, `cancelQuotation`, `convertQuoteToInvoice`
-- `billing-invoices.ts` — `createInvoice`, `issueInvoice`, `markInvoicePaid`,
+- `billing-invoices.ts` - `createInvoice`, `issueInvoice`, `markInvoicePaid`,
   `voidInvoice` (paid auto-inserts income row in same transaction)
-- `billing-statements.ts` — `getClientStatement`
+- `billing-statements.ts` - `getClientStatement`
 
 ### Server Action Template
 
@@ -471,7 +471,7 @@ export async function createQuotation(input: unknown) {
 
 ## 5. Relationships
 
-### `/clients` — Client Management
+### `/clients` - Client Management
 
 **Status:** ✅ **Implemented**
 
@@ -480,7 +480,7 @@ export async function createQuotation(input: unknown) {
 - Components in `src/components/clients/`
 - **Future:** link to quotes, invoices, statement once billing is live
 
-### `/leads` — Lead Management
+### `/leads` - Lead Management
 
 **Status:** ✅ **Implemented**
 
@@ -489,7 +489,7 @@ export async function createQuotation(input: unknown) {
 - Actions in `src/app/actions/leads.ts`
 - Components in `src/components/leads/`
 
-### `/divisions` — Division Management
+### `/divisions` - Division Management
 
 **Status:** ✅ **Implemented**
 
@@ -501,7 +501,7 @@ export async function createQuotation(input: unknown) {
 
 ## 6. Insights
 
-### `/snapshots` — Financial Snapshots
+### `/snapshots` - Financial Snapshots
 
 **Status:** ✅ **Implemented**
 
@@ -509,7 +509,7 @@ export async function createQuotation(input: unknown) {
 - Automated via cron at `/api/cron/snapshot`
 - Actions in `src/app/actions/snapshots.ts`
 
-### `/reports` — Reports & Analytics
+### `/reports` - Reports & Analytics
 
 **Status:** ✅ **Implemented**
 
@@ -523,7 +523,7 @@ export async function createQuotation(input: unknown) {
 
 ## 7. System *(pinned to sidebar bottom)*
 
-### `/users` — User Management
+### `/users` - User Management
 
 **Status:** ✅ **Implemented**
 
@@ -533,7 +533,7 @@ export async function createQuotation(input: unknown) {
 - Actions in `src/app/actions/users.ts`
 - Components in `src/components/users/`
 
-### `/settings` — System Settings
+### `/settings` - System Settings
 
 **Status:** 🔲 **Shell page created**
 
@@ -566,13 +566,13 @@ Enums: `quote_status` (DRAFT, SENT, ACCEPTED, DECLINED, CANCELLED),
 
 ## 9. Build Order
 
-1. **Phase 0** *(done)* — Core finance, relationships, insights, users.
-2. **Phase 1** — Billing schema in `@pmg/db` + `getNextDocumentNumber`.
-3. **Phase 2** — `/billing/quotes` end-to-end (form, actions, detail, status workflow).
-4. **Phase 3** — `/billing/invoices` + income auto-insert on paid.
-5. **Phase 4** — `/billing/statements` per-client view.
-6. **Phase 5** — `/settings` company profile + document numbering.
-7. **Phase 6** — AR Aging report, VAT report, P&L in `/reports`.
+1. **Phase 0** *(done)* - Core finance, relationships, insights, users.
+2. **Phase 1** - Billing schema in `@pmg/db` + `getNextDocumentNumber`.
+3. **Phase 2** - `/billing/quotes` end-to-end (form, actions, detail, status workflow).
+4. **Phase 3** - `/billing/invoices` + income auto-insert on paid.
+5. **Phase 4** - `/billing/statements` per-client view.
+6. **Phase 5** - `/settings` company profile + document numbering.
+7. **Phase 6** - AR Aging report, VAT report, P&L in `/reports`.
 
 Shell pages for all billing routes and settings already exist so navigation
 never breaks while modules come online.

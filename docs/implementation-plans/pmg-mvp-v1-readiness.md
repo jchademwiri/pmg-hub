@@ -1,11 +1,11 @@
-# PMG Control Center — MVP v1 Readiness Plan
+# PMG Control Center - MVP v1 Readiness Plan
 
 > **Internal developer reference · Playhouse Media Group**
 > `pmg-hub / docs / pmg-mvp-v1-readiness.md` · April 2026 · v1.0
 >
 > Consolidated pre-ship audit. Covers every identified gap, assigns a stage,
 > and includes a self-contained AI prompt per item.
-> Auth (Better Auth / magic link) is out of scope for MVP v1 — tracked in Phase 10.
+> Auth (Better Auth / magic link) is out of scope for MVP v1 - tracked in Phase 10.
 
 ---
 
@@ -13,10 +13,10 @@
 
 1. [Current State Summary](#1-current-state-summary)
 2. [Gap Overview](#2-gap-overview)
-3. [Stage 1 — Blockers](#3-stage-1--blockers-ship-critical)
-4. [Stage 2 — High Priority](#4-stage-2--high-priority)
-5. [Stage 3 — Medium Priority](#5-stage-3--medium-priority)
-6. [Stage 4 — Polish and Scale](#6-stage-4--polish--scale)
+3. [Stage 1 - Blockers](#3-stage-1--blockers-ship-critical)
+4. [Stage 2 - High Priority](#4-stage-2--high-priority)
+5. [Stage 3 - Medium Priority](#5-stage-3--medium-priority)
+6. [Stage 4 - Polish and Scale](#6-stage-4--polish--scale)
 7. [Implementation Order](#7-implementation-order)
 
 ---
@@ -36,7 +36,7 @@ Phases 0–9 are complete. The app is functionally operational.
 | `/reports` | Complete |
 | `/clients` | MISSING entirely |
 | `/withdrawals` | No dedicated page |
-| `/login` | Stub — auth deferred to Phase 10 |
+| `/login` | Stub - auth deferred to Phase 10 |
 
 **Stack:** Next.js 16 · React 19 · TypeScript · Drizzle ORM · Neon PostgreSQL · Tailwind v4 · shadcn/ui · Recharts · Sonner · Zod · Bun · Turborepo
 
@@ -60,36 +60,36 @@ Phases 0–9 are complete. The app is functionally operational.
 
 | # | Gap | Source | Stage |
 |---|---|---|---|
-| 1 | `clientId` is optional on income — must be required | Owner rule | Blocker |
-| 2 | No `/clients` page — cannot add/edit/delete clients | Codebase scan | Blocker |
-| 3 | Expense categories are freetext — typos cause chart drift | Codebase scan | Blocker |
+| 1 | `clientId` is optional on income - must be required | Owner rule | Blocker |
+| 2 | No `/clients` page - cannot add/edit/delete clients | Codebase scan | Blocker |
+| 3 | Expense categories are freetext - typos cause chart drift | Codebase scan | Blocker |
 | 4 | Breadcrumb hardcoded to "Dashboard" on every page | Codebase scan | Blocker |
 | 5 | `formatZAR` missing on income table amount column | Codebase scan | Blocker |
 | 6 | No withdrawal history page or edit/delete | Owner + scan | High |
 | 7 | No lead create or delete in admin | Owner + scan | High |
 | 8 | Delete buttons have no loading/pending state | Codebase scan | High |
-| 9 | No success toast on create/update — only errors shown | Codebase scan | High |
+| 9 | No success toast on create/update - only errors shown | Codebase scan | High |
 | 10 | Date fields do not default to today | Codebase scan | High |
 | 11 | Close month button flashes before snapshot check resolves | Codebase scan | High |
 | 12 | Withdrawal over-limit has no guard | Codebase scan | High |
-| 13 | No pagination — all rows loaded at once | Codebase scan | Medium |
+| 13 | No pagination - all rows loaded at once | Codebase scan | Medium |
 | 14 | Leads notes textarea style inconsistent with other inputs | Codebase scan | Medium |
 | 15 | Dashboard loading skeleton does not match actual layout | Codebase scan | Medium |
 | 16 | No client revenue report | Owner | Medium |
 
 ---
 
-## 3. Stage 1 — Blockers (ship-critical)
+## 3. Stage 1 - Blockers (ship-critical)
 
 Must be resolved before the app handles real financial data.
-B2 and B1 are coupled — build B2 first.
+B2 and B1 are coupled - build B2 first.
 
 ---
 
-### B2 — /clients Page (build first)
+### B2 - /clients Page (build first)
 
 The `clients` table exists with full schema. There is no route, no server actions,
-no UI. Clients can only be selected in the income form — there is no way to add one.
+no UI. Clients can only be selected in the income form - there is no way to add one.
 
 **Files needed:**
 - `apps/admin/src/app/actions/clients.ts`
@@ -101,7 +101,7 @@ no UI. Clients can only be selected in the income form — there is no way to ad
 - Add `Clients` nav item to `app-sidebar.tsx`
 - Add `getClientsWithIncomeCount()` and `getClientById()` to `packages/db/src/queries.ts`
 
-**AI Prompt — B2:**
+**AI Prompt - B2:**
 
     Build a full /clients page for this Next.js 16 app following the exact patterns
     used in /divisions and /income.
@@ -141,7 +141,7 @@ no UI. Clients can only be selected in the income form — there is no way to ad
     6. apps/admin/src/components/clients/client-edit-form.tsx
        'use client'. Pre-populated fields. On success: router.push('/clients').
 
-    7. packages/db/src/queries.ts — add:
+    7. packages/db/src/queries.ts - add:
        getClientsWithIncomeCount(): SELECT clients.*, COUNT(income.id) as incomeCount
          FROM clients LEFT JOIN income ON income.client_id = clients.id
          GROUP BY clients.id ORDER BY clients.name ASC
@@ -155,19 +155,19 @@ no UI. Clients can only be selected in the income form — there is no way to ad
 
 ---
 
-### B1 — Enforce clientId Required on Income (do after B2)
+### B1 - Enforce clientId Required on Income (do after B2)
 
 Owner rule: all income must have a client. Currently clientId is nullable at every
-layer — schema, server action, and UI all allow "No client".
+layer - schema, server action, and UI all allow "No client".
 
 **Files to change:**
-- `packages/db/src/schema/income.ts` — remove nullable on clientId
-- Drizzle migration — handle existing nulls, then ALTER COLUMN SET NOT NULL
-- `apps/admin/src/app/actions/income.ts` — make clientId required in Zod
-- `apps/admin/src/components/income/income-add-form.tsx` — remove NO_CLIENT sentinel
-- `apps/admin/src/components/income/income-edit-form.tsx` — remove "No client" option
+- `packages/db/src/schema/income.ts` - remove nullable on clientId
+- Drizzle migration - handle existing nulls, then ALTER COLUMN SET NOT NULL
+- `apps/admin/src/app/actions/income.ts` - make clientId required in Zod
+- `apps/admin/src/components/income/income-add-form.tsx` - remove NO_CLIENT sentinel
+- `apps/admin/src/components/income/income-edit-form.tsx` - remove "No client" option
 
-**AI Prompt — B1:**
+**AI Prompt - B1:**
 
     Make clientId required on all income entries in this Next.js 16 / Drizzle app.
 
@@ -179,7 +179,7 @@ layer — schema, server action, and UI all allow "No client".
 
     1. packages/db/src/schema/income.ts
        Change: uuid("client_id").notNull().references(() => clients.id, { onDelete: "restrict" })
-       onDelete changes from 'set null' to 'restrict' — cannot delete a client with income.
+       onDelete changes from 'set null' to 'restrict' - cannot delete a client with income.
 
     2. Drizzle migration:
        UPDATE income SET client_id = (SELECT id FROM clients LIMIT 1) WHERE client_id IS NULL
@@ -202,23 +202,23 @@ layer — schema, server action, and UI all allow "No client".
 
 ---
 
-### B3 — Expense Category Management
+### B3 - Expense Category Management
 
 Categories are stored as freetext strings. Typos create phantom categories that
 break the expense-by-category chart grouping (e.g. "Software" vs "software" are
 treated as different categories). A managed table fixes this permanently.
 
 **Files needed:**
-- `packages/db/src/schema/expense-categories.ts` — new table
-- Drizzle migration — create table, seed from existing distinct categories
+- `packages/db/src/schema/expense-categories.ts` - new table
+- Drizzle migration - create table, seed from existing distinct categories
 - `apps/admin/src/app/actions/expense-categories.ts`
 - `apps/admin/src/app/(admin)/expense-categories/page.tsx`
 - `apps/admin/src/components/expense-categories/expense-category-add-form.tsx`
 - `apps/admin/src/components/expense-categories/expense-categories-table.tsx`
-- Update `expense-add-form.tsx` and `expense-edit-form.tsx` — replace datalist with Select
+- Update `expense-add-form.tsx` and `expense-edit-form.tsx` - replace datalist with Select
 - Add Categories nav item to sidebar
 
-**AI Prompt — B3:**
+**AI Prompt - B3:**
 
     Add expense category management to this Next.js 16 / Drizzle app.
 
@@ -233,7 +233,7 @@ treated as different categories). A managed table fixes this permanently.
          SELECT DISTINCT category FROM expenses WHERE category IS NOT NULL ORDER BY category
        (seeds all existing categories automatically)
 
-    3. packages/db/src/queries.ts — add:
+    3. packages/db/src/queries.ts - add:
        getAllExpenseCategories(): SELECT id, name FROM expense_categories ORDER BY name ASC
        getExpenseCategoryById(id): SELECT * WHERE id = $id
 
@@ -251,8 +251,8 @@ treated as different categories). A managed table fixes this permanently.
        Render: add form + table or empty state.
 
     6. apps/admin/src/components/expense-categories/
-       expense-category-add-form.tsx — inline add, name field only
-       expense-categories-table.tsx — columns: Name, Expense Count, Actions (edit/delete)
+       expense-category-add-form.tsx - inline add, name field only
+       expense-categories-table.tsx - columns: Name, Expense Count, Actions (edit/delete)
 
     7. apps/admin/src/components/expenses/expense-add-form.tsx
        Replace the <datalist> text input with a shadcn <Select>.
@@ -271,12 +271,12 @@ treated as different categories). A managed table fixes this permanently.
 
 ---
 
-### B4 — Fix Hardcoded "Dashboard" Breadcrumb
+### B4 - Fix Hardcoded "Dashboard" Breadcrumb
 
 Every page shows "Dashboard" in the breadcrumb regardless of the current route.
 `top-nav.tsx` is already a client component so `usePathname` can be added directly.
 
-**AI Prompt — B4:**
+**AI Prompt - B4:**
 
     Fix the breadcrumb in apps/admin/src/components/layout/top-nav.tsx.
 
@@ -302,12 +302,12 @@ Every page shows "Dashboard" in the breadcrumb regardless of the current route.
 
 ---
 
-### B5 — Apply formatZAR to Income Table Amount Column
+### B5 - Apply formatZAR to Income Table Amount Column
 
 The income table renders raw numeric strings (e.g. "15000.00") instead of
-formatted ZAR amounts. `formatZAR` exists in `lib/format.ts` — it just is not applied.
+formatted ZAR amounts. `formatZAR` exists in `lib/format.ts` - it just is not applied.
 
-**AI Prompt — B5:**
+**AI Prompt - B5:**
 
     In apps/admin/src/components/income/income-table.tsx:
     - Import formatZAR from '@/lib/format'
@@ -321,27 +321,27 @@ formatted ZAR amounts. `formatZAR` exists in `lib/format.ts` — it just is not 
 
 ---
 
-## 4. Stage 2 — High Priority
+## 4. Stage 2 - High Priority
 
 These do not block shipping but will cause friction or data integrity issues
 within the first week of real use.
 
 ---
 
-### H1 — Withdrawal History Page
+### H1 - Withdrawal History Page
 
 No way to view, edit, or delete past withdrawals. The dashboard shows current
 month only. `recordWithdrawal` exists but `updateWithdrawal` and `deleteWithdrawal` do not.
 
-**AI Prompt — H1:**
+**AI Prompt - H1:**
 
     Add a /withdrawals page to this Next.js 16 app.
 
-    1. packages/db/src/queries.ts — add:
+    1. packages/db/src/queries.ts - add:
        getAllWithdrawals(): SELECT * FROM withdrawals ORDER BY date DESC, created_at DESC
        getWithdrawalById(id): SELECT * FROM withdrawals WHERE id = $id
 
-    2. apps/admin/src/app/actions/withdraw.ts — add:
+    2. apps/admin/src/app/actions/withdraw.ts - add:
        updateWithdrawal(id, formData): { date: z.string().min(1),
          amount: z.coerce.number().positive(), description: z.string().optional() }
          Update where id. revalidatePath('/withdrawals'). revalidatePath('/dashboard').
@@ -357,8 +357,8 @@ month only. `recordWithdrawal` exists but `updateWithdrawal` and `deleteWithdraw
        Render: back link + WithdrawalEditForm.
 
     5. apps/admin/src/components/withdrawals/
-       withdrawals-table.tsx — columns: Date, Amount (formatZAR), Description, Actions
-       withdrawal-edit-form.tsx — pre-populated, on success router.push('/withdrawals')
+       withdrawals-table.tsx - columns: Date, Amount (formatZAR), Description, Actions
+       withdrawal-edit-form.tsx - pre-populated, on success router.push('/withdrawals')
 
     6. apps/admin/src/components/layout/app-sidebar.tsx
        Add { href: '/withdrawals', label: 'Withdrawals', icon: Wallet } to navItems.
@@ -367,16 +367,16 @@ month only. `recordWithdrawal` exists but `updateWithdrawal` and `deleteWithdraw
 
 ---
 
-### H2 — Lead Create and Delete in Admin
+### H2 - Lead Create and Delete in Admin
 
 Leads only arrive via public Astro forms. Admin cannot manually add a lead or
 remove a junk entry. `createLead` and `deleteLead` server actions do not exist.
 
-**AI Prompt — H2:**
+**AI Prompt - H2:**
 
     Add lead creation and deletion to the /leads page.
 
-    1. apps/admin/src/app/actions/leads.ts — add:
+    1. apps/admin/src/app/actions/leads.ts - add:
        createLead(formData):
          Schema: { name: z.string().min(1), email: z.string().email().optional(),
            phone: z.string().optional(), source: z.string().optional(),
@@ -404,12 +404,12 @@ remove a junk entry. `createLead` and `deleteLead` server actions do not exist.
 
 ---
 
-### H3 — Delete Button Loading States
+### H3 - Delete Button Loading States
 
 Delete buttons across income, expenses, leads, and divisions have no pending state.
 The UI appears frozen while the server action runs.
 
-**AI Prompt — H3:**
+**AI Prompt - H3:**
 
     Add loading/pending state to all delete buttons in:
     - apps/admin/src/components/income/income-table.tsx
@@ -427,12 +427,12 @@ The UI appears frozen while the server action runs.
 
 ---
 
-### H4 — Success Toasts on Create and Update
+### H4 - Success Toasts on Create and Update
 
-Forms only show errors. Successful creates and updates give no feedback —
+Forms only show errors. Successful creates and updates give no feedback -
 the form just resets silently.
 
-**AI Prompt — H4:**
+**AI Prompt - H4:**
 
     Add success toast notifications to all create and update forms using sonner.
 
@@ -448,16 +448,16 @@ the form just resets silently.
     Pattern: import { toast } from 'sonner'. In the startTransition callback,
     after confirming result.error is falsy, call toast.success('...').
 
-    Do not add toasts to delete actions — the row disappearing is sufficient feedback.
+    Do not add toasts to delete actions - the row disappearing is sufficient feedback.
     Do not change any validation logic or error handling.
 
 ---
 
-### H5 — Date Fields Default to Today
+### H5 - Date Fields Default to Today
 
 All date inputs are blank on open. Users must manually pick today's date every time.
 
-**AI Prompt — H5:**
+**AI Prompt - H5:**
 
     Set the default value of all date inputs to today's date (YYYY-MM-DD).
 
@@ -470,25 +470,25 @@ All date inputs are blank on open. Users must manually pick today's date every t
       const today = new Date().toISOString().split('T')[0]
       Add defaultValue={today} to each <Input type="date" ... /> element.
 
-    Do not touch edit forms — they should show the existing entry date, not today.
+    Do not touch edit forms - they should show the existing entry date, not today.
 
 ---
 
-### H6 — Withdrawal Over-Limit Guard
+### H6 - Withdrawal Over-Limit Guard
 
 The withdrawal modal allows any amount, even exceeding the available salary balance.
 No validation or warning exists.
 
-**AI Prompt — H6:**
+**AI Prompt - H6:**
 
     Add a guard to the withdrawal flow that warns when the entered amount exceeds
     the remaining salary balance.
 
     1. apps/admin/src/components/dashboard/withdraw-modal.tsx
-       Add maxAmount prop (number) — the remaining balance from SalaryCard.
+       Add maxAmount prop (number) - the remaining balance from SalaryCard.
        After the amount input, show a warning if entered amount > maxAmount:
          "This exceeds your remaining balance of {formatZAR(maxAmount)}"
-       Style with text-destructive. Do NOT block submission — warning only.
+       Style with text-destructive. Do NOT block submission - warning only.
        Import formatZAR from '@/lib/format'.
 
     2. apps/admin/src/components/dashboard/salary-card.tsx
@@ -499,12 +499,12 @@ No validation or warning exists.
 
 ---
 
-### H7 — Close Month Button Flash
+### H7 - Close Month Button Flash
 
 The "Close Month" button briefly appears before the snapshot check resolves,
 causing a visual flash on dashboard load.
 
-**AI Prompt — H7:**
+**AI Prompt - H7:**
 
     Fix the close month button flash in the dashboard.
 
@@ -522,17 +522,17 @@ causing a visual flash on dashboard load.
 
 ---
 
-## 5. Stage 3 — Medium Priority
+## 5. Stage 3 - Medium Priority
 
 Quality-of-life improvements. Address after Stage 1 and 2 are complete.
 
 ---
 
-### M1 — Pagination on Income and Expenses Tables
+### M1 - Pagination on Income and Expenses Tables
 
 All rows load in a single query. Will degrade as data grows past a few hundred rows.
 
-**AI Prompt — M1:**
+**AI Prompt - M1:**
 
     Add offset-based pagination to the income and expenses list pages.
 
@@ -556,55 +556,55 @@ All rows load in a single query. Will degrade as data grows past a few hundred r
 
 ---
 
-### M2 — Leads Notes Textarea Style
+### M2 - Leads Notes Textarea Style
 
 The notes textarea on /leads/[id] uses a raw HTML textarea instead of the
 shadcn Textarea component, making it visually inconsistent with all other inputs.
 
-**AI Prompt — M2:**
+**AI Prompt - M2:**
 
     In apps/admin/src/components/leads/lead-notes-form.tsx:
     - Import Textarea from '@/components/ui/textarea'
-      (add via: npx shadcn@latest add textarea — if not already present)
+      (add via: npx shadcn@latest add textarea - if not already present)
     - Replace the raw <textarea> with <Textarea>
     - Keep all existing props (rows, defaultValue, disabled, name, etc.)
     - Do not change any other logic.
 
 ---
 
-### M3 — Dashboard Loading Skeleton Mismatch
+### M3 - Dashboard Loading Skeleton Mismatch
 
 The loading.tsx skeleton shows generic placeholder blocks instead of matching
 the actual dashboard layout, causing a jarring layout shift on navigation.
 
-**AI Prompt — M3:**
+**AI Prompt - M3:**
 
     Update apps/admin/src/app/(admin)/loading.tsx to match the actual dashboard layout.
 
     Dashboard layout structure:
-    - Row 1: 4 KPI cards (2x2 mobile / 1x4 desktop) — each approx 120px tall
-    - Row 2: Salary card (left) + Revenue sparkline (right) — approx 200px
-    - Row 3: Division area chart (full width) — approx 300px
+    - Row 1: 4 KPI cards (2x2 mobile / 1x4 desktop) - each approx 120px tall
+    - Row 2: Salary card (left) + Revenue sparkline (right) - approx 200px
+    - Row 3: Division area chart (full width) - approx 300px
     - Row 4: Division revenue list (left) + Leads summary (right)
     - Row 5: Expense snapshot (full width)
     - Row 6: Allocation bar (full width)
 
     Use shadcn Skeleton component. Match approximate heights and grid classes
     used in the actual dashboard components.
-    Do not import or reference any dashboard components — skeletons only.
+    Do not import or reference any dashboard components - skeletons only.
 
 ---
 
-### M4 — Client Revenue Report
+### M4 - Client Revenue Report
 
 Once clientId is required on income (B1), per-client revenue becomes meaningful.
 The reports page currently has no client dimension.
 
-**AI Prompt — M4:**
+**AI Prompt - M4:**
 
     Add a client revenue section to the /reports page.
 
-    1. packages/db/src/queries.ts — add:
+    1. packages/db/src/queries.ts - add:
        getRevenueByClientForYear(year: number):
          SELECT clients.name, clients.business_name,
                 COALESCE(SUM(income.amount), 0) as total
@@ -628,53 +628,53 @@ The reports page currently has no client dimension.
 
 ---
 
-## 6. Stage 4 — Polish and Scale
+## 6. Stage 4 - Polish and Scale
 
 Low priority. Address post-launch based on real usage feedback.
 
 | # | Item | Notes |
 |---|---|---|
 | P1 | Audit trail | Add createdBy / updatedBy fields once auth is live (Phase 10) |
-| P2 | Bulk import | CSV import for income/expenses — useful for historical data entry |
-| P3 | Mobile form UX | Inline add forms are cramped on small screens — consider modal forms |
-| P4 | Dark mode toggle | Currently hardcoded dark — low demand for MVP |
-| P5 | Email alerts | Notify on large transactions or low reserve — needs auth first |
+| P2 | Bulk import | CSV import for income/expenses - useful for historical data entry |
+| P3 | Mobile form UX | Inline add forms are cramped on small screens - consider modal forms |
+| P4 | Dark mode toggle | Currently hardcoded dark - low demand for MVP |
+| P5 | Email alerts | Notify on large transactions or low reserve - needs auth first |
 | P6 | Lead to Client conversion | One-click convert a lead to a client when status changes to converted |
-| P7 | Snapshot edit/delete | Currently immutable — add admin override with confirmation |
+| P7 | Snapshot edit/delete | Currently immutable - add admin override with confirmation |
 | P8 | Division archiving | Soft-delete divisions instead of hard FK block |
 
 ---
 
 ## 7. Implementation Order
 
-### Stage 1 — Blockers (strict order)
+### Stage 1 - Blockers (strict order)
 
 B2 then B1 then B3 then B4 then B5
 
-1. B2 first — build /clients so the income form has clients to select
-2. B1 second — enforce clientId required now that clients exist
-3. B3 — expense category management (independent, but do before launch)
-4. B4 — fix breadcrumb (quick win, independent)
-5. B5 — apply formatZAR to income table (5-minute fix)
+1. B2 first - build /clients so the income form has clients to select
+2. B1 second - enforce clientId required now that clients exist
+3. B3 - expense category management (independent, but do before launch)
+4. B4 - fix breadcrumb (quick win, independent)
+5. B5 - apply formatZAR to income table (5-minute fix)
 
-### Stage 2 — High Priority (can be parallelised)
+### Stage 2 - High Priority (can be parallelised)
 
-- H1 — withdrawals page (independent)
-- H2 — lead create/delete (independent)
-- H3 — delete loading states (independent)
-- H4 — success toasts (independent)
-- H5 — date defaults (independent)
-- H6 — withdrawal guard (depends on H1)
-- H7 — close month flash (independent)
+- H1 - withdrawals page (independent)
+- H2 - lead create/delete (independent)
+- H3 - delete loading states (independent)
+- H4 - success toasts (independent)
+- H5 - date defaults (independent)
+- H6 - withdrawal guard (depends on H1)
+- H7 - close month flash (independent)
 
-### Stage 3 — Medium Priority
+### Stage 3 - Medium Priority
 
-- M1 — pagination (after Stage 1 and 2 complete)
-- M2 — textarea style (quick win, any time)
-- M3 — loading skeleton (any time)
-- M4 — client revenue report (after B1 and B2 complete)
+- M1 - pagination (after Stage 1 and 2 complete)
+- M2 - textarea style (quick win, any time)
+- M3 - loading skeleton (any time)
+- M4 - client revenue report (after B1 and B2 complete)
 
-### Stage 4 — Post-launch
+### Stage 4 - Post-launch
 
 Address based on real usage data and user feedback.
 

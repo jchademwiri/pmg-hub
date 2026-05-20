@@ -24,7 +24,7 @@ export function BillingTotalsBlock({
         <span className="tabular-nums">{formatZAR(subtotal)}</span>
       </div>
 
-      {/* Discount — only shown when a discount is applied */}
+      {/* Discount - only shown when a discount is applied */}
       {discountAmount > 0 && (
         <div className="flex justify-between text-sm">
           <span className="text-muted-foreground">Discount</span>
@@ -34,7 +34,7 @@ export function BillingTotalsBlock({
         </div>
       )}
 
-      {/* VAT — only shown when vatEnabled is true */}
+      {/* VAT - only shown when vatEnabled is true */}
       {vatEnabled && vatAmount > 0 && (
         <div className="flex justify-between text-sm">
           <span className="text-muted-foreground">VAT (15%)</span>

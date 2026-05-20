@@ -1,5 +1,5 @@
-# PMG Control Center — Financial Statements Module
-### Feature Specification — Phase 11 (Financial Statements)
+# PMG Control Center - Financial Statements Module
+### Feature Specification - Phase 11 (Financial Statements)
 
 > **Internal developer reference · Playhouse Media Group**
 > `pmg-hub / docs / pmg-financial-statements.md` · March 2026 · v1.0
@@ -13,16 +13,16 @@
 
 ## Purpose of This Document
 
-Every registered South African business — including PMG (PTY) Ltd — is legally
+Every registered South African business - including PMG (PTY) Ltd - is legally
 required to maintain financial records and produce financial statements for SARS,
 CIPC, and its own management purposes. This document specifies exactly how the
 PMG Control Center will generate all three core financial statements:
 
-1. **Income Statement (Profit & Loss)** — what came in, what went out, and what
+1. **Income Statement (Profit & Loss)** - what came in, what went out, and what
    was left over for a given period.
-2. **Cash Flow Statement** — the actual movement of cash: how it arrived, how it
+2. **Cash Flow Statement** - the actual movement of cash: how it arrived, how it
    was spent, and what the opening and closing bank balance was.
-3. **Balance Sheet** — a snapshot of what PMG owns (assets), what it owes
+3. **Balance Sheet** - a snapshot of what PMG owns (assets), what it owes
    (liabilities), and the difference between the two (equity/net worth).
 
 These are not dashboard charts. They are formal financial documents that match
@@ -49,24 +49,24 @@ At that scale, informal financial tracking is a liability. SARS provisional tax
 (IRP6) is filed twice a year and requires a reliable P&L. CIPC annual returns
 signal a functioning company. Any future investor, bank loan, or business
 partnership will require formal financial statements as a minimum. Building this
-now — while the data is clean and the system is fresh — is the right time.
+now - while the data is clean and the system is fresh - is the right time.
 
 ### Relationship to Existing Phases
 
 This phase sits on top of everything already built:
 
 ```
-Phase 0  — Foundation (schema, migrations, seed)            ✅ COMPLETE
-Phase 1  — Financial Engine (queries, calculations)         ✅ COMPLETE
-Phase 2  — Dashboard UI                                     ✅ COMPLETE
-Phase 3  — Income Management                                ✅ COMPLETE
-Phase 4  — Expense Management                               (next in queue)
-Phase 5  — Leads Management                                 (planned)
-Phase 6  — Division Management                              (planned)
-Phase 7  — Financial Snapshots                              (critical — lock months)
-Phase 8  — Reporting & Insights                             (charts)
-Phase 9  — System Hardening                                 (auth, error bounds)
-Phase 11 — Financial Statements  ← THIS DOCUMENT
+Phase 0  - Foundation (schema, migrations, seed)            ✅ COMPLETE
+Phase 1  - Financial Engine (queries, calculations)         ✅ COMPLETE
+Phase 2  - Dashboard UI                                     ✅ COMPLETE
+Phase 3  - Income Management                                ✅ COMPLETE
+Phase 4  - Expense Management                               (next in queue)
+Phase 5  - Leads Management                                 (planned)
+Phase 6  - Division Management                              (planned)
+Phase 7  - Financial Snapshots                              (critical - lock months)
+Phase 8  - Reporting & Insights                             (charts)
+Phase 9  - System Hardening                                 (auth, error bounds)
+Phase 11 - Financial Statements  ← THIS DOCUMENT
 ```
 
 > **Important:** Phase 7 (Financial Snapshots) must be completed before
@@ -81,7 +81,7 @@ Phase 11 — Financial Statements  ← THIS DOCUMENT
 
 1. [What We Can Build Right Now vs What We Need to Add](#1-what-we-can-build-right-now-vs-what-we-need-to-add)
 2. [New Database Tables Required](#2-new-database-tables-required)
-3. [Schema — Drizzle Definitions](#3-schema--drizzle-definitions)
+3. [Schema - Drizzle Definitions](#3-schema--drizzle-definitions)
 4. [How Each Statement is Calculated](#4-how-each-statement-is-calculated)
 5. [Query Helpers](#5-query-helpers)
 6. [Route Structure](#6-route-structure)
@@ -96,7 +96,7 @@ Phase 11 — Financial Statements  ← THIS DOCUMENT
 
 ## 1. What We Can Build Right Now vs What We Need to Add
 
-### Income Statement — Buildable Today ✅
+### Income Statement - Buildable Today ✅
 
 All the data required for a formal P&L already exists in the database. The
 `income` table holds all revenue. The `expenses` table holds all costs. The
@@ -106,26 +106,26 @@ document layout with a period selector and PDF export.
 
 **No new tables required for the Income Statement.**
 
-### Cash Flow Statement — Needs One New Table 🟡
+### Cash Flow Statement - Needs One New Table 🟡
 
 PMG's income is recorded on the actual date payment was received (cash basis),
 which is correct. The `withdrawals` table already captures owner salary
 withdrawals. The expenses table captures operating costs. What is missing is:
 
-1. **Bank account balance** — a way to record the opening balance of PMG's bank
+1. **Bank account balance** - a way to record the opening balance of PMG's bank
    account so the system can verify that cash in matches cash out plus the
    closing balance.
-2. **Capital expenditure flag** — the ability to mark an expense as a capital
+2. **Capital expenditure flag** - the ability to mark an expense as a capital
    purchase (equipment, computer) so it flows into the Investing Activities
    section of the cash flow statement rather than Operating Activities.
 
 **New table required: `bank_accounts`**
 **New column required: `is_capital_expenditure` on `expenses`**
 
-### Balance Sheet — Needs Two New Tables 🟡
+### Balance Sheet - Needs Two New Tables 🟡
 
 A balance sheet requires knowing what PMG owns and what it owes. Currently the
-system only tracks money flowing in and out — it has no record of physical assets
+system only tracks money flowing in and out - it has no record of physical assets
 (equipment, computers, vehicles) or liabilities (loans, outstanding payments owed
 to suppliers).
 
@@ -140,8 +140,8 @@ to suppliers).
 | Table | Purpose | Required For |
 |---|---|---|
 | `bank_accounts` | Track PMG's bank account balances | Cash Flow Statement |
-| `assets` | Track what PMG owns — equipment, computers, vehicles | Balance Sheet |
-| `liabilities` | Track what PMG owes — loans, credit, outstanding payables | Balance Sheet |
+| `assets` | Track what PMG owns - equipment, computers, vehicles | Balance Sheet |
+| `liabilities` | Track what PMG owes - loans, credit, outstanding payables | Balance Sheet |
 
 ### New Column on Existing Table
 
@@ -151,14 +151,14 @@ to suppliers).
 
 ---
 
-## 3. Schema — Drizzle Definitions
+## 3. Schema - Drizzle Definitions
 
 Add these files to `packages/db/src/schema/`.
 
 ### `bank_accounts.ts`
 
 Tracks PMG's real-world bank accounts. The balance is updated manually each time
-Jacob reconciles with his actual bank statement. This keeps the system simple —
+Jacob reconciles with his actual bank statement. This keeps the system simple -
 it does not attempt to be a full bank ledger.
 
 ```ts
@@ -183,7 +183,7 @@ export const bankAccounts = pgTable(
     // e.g. "Cheque", "Savings", "Business Current"
     branchCode:   text("branch_code"),
 
-    // Balance tracking — manually updated on reconciliation
+    // Balance tracking - manually updated on reconciliation
     currentBalance:    numeric("current_balance", { precision: 12, scale: 2 })
                          .notNull().default("0"),
     lastReconciledDate: date("last_reconciled_date"),
@@ -211,7 +211,7 @@ export type NewBankAccount = typeof bankAccounts.$inferInsert;
 ### `assets.ts`
 
 Tracks physical and intangible assets that PMG owns. These represent things of
-lasting value — equipment, computers, vehicles. Each asset has a purchase value
+lasting value - equipment, computers, vehicles. Each asset has a purchase value
 and a current estimated value (manually updated). Assets appear on the Balance
 Sheet under Current Assets or Fixed Assets depending on their type.
 
@@ -241,14 +241,14 @@ export const assets = pgTable(
     // Freeform: "Computer Equipment", "Camera & Lenses", "Furniture", "Software Licence"
     type:          assetTypeEnum("type").notNull().default("fixed"),
 
-    // Division ownership — which division this asset primarily serves
+    // Division ownership - which division this asset primarily serves
     divisionId:    uuid("division_id")
                      .references(() => divisions.id, { onDelete: "set null" }),
 
     // Values
     purchaseDate:  date("purchase_date").notNull(),
     purchaseValue: numeric("purchase_value", { precision: 12, scale: 2 }).notNull(),
-    // Original cost paid — never changes after entry
+    // Original cost paid - never changes after entry
     currentValue:  numeric("current_value",  { precision: 12, scale: 2 }).notNull(),
     // Updated manually when Jacob estimates current worth (depreciation)
 
@@ -312,7 +312,7 @@ export const liabilities = pgTable(
     originalAmount:  numeric("original_amount",  { precision: 12, scale: 2 }).notNull(),
     // The full amount when the liability was first recorded
     currentBalance:  numeric("current_balance",  { precision: 12, scale: 2 }).notNull(),
-    // What is still owed — updated manually as payments are made
+    // What is still owed - updated manually as payments are made
     interestRate:    numeric("interest_rate",     { precision: 5, scale: 2 }),
     // Annual interest rate as a percentage, if applicable
 
@@ -342,15 +342,15 @@ export type Liability    = typeof liabilities.$inferSelect;
 export type NewLiability = typeof liabilities.$inferInsert;
 ```
 
-### Expense Table — Add `is_capital_expenditure` Column
+### Expense Table - Add `is_capital_expenditure` Column
 
 This is an ALTER on the existing `expenses` table. Capital expenditure (CapEx)
-expenses are asset purchases — they should not reduce operating profit but
+expenses are asset purchases - they should not reduce operating profit but
 instead appear as Investing Activities in the Cash Flow Statement and as assets
 on the Balance Sheet.
 
 ```ts
-// In packages/db/src/schema/expenses.ts — add this column to the existing definition:
+// In packages/db/src/schema/expenses.ts - add this column to the existing definition:
 
 isCapitalExpenditure: boolean("is_capital_expenditure").notNull().default(false),
 // When true: this expense was an asset purchase (computer, camera, equipment).
@@ -358,7 +358,7 @@ isCapitalExpenditure: boolean("is_capital_expenditure").notNull().default(false)
 // It should also be linked to a corresponding entry in the assets table.
 ```
 
-### Barrel Export — Update `packages/db/src/schema/index.ts`
+### Barrel Export - Update `packages/db/src/schema/index.ts`
 
 ```ts
 export * from "./aws";
@@ -383,7 +383,7 @@ bun db:migrate    # applies it to Neon
 ```
 
 The existing `expenses` table migration will use `ALTER TABLE expenses ADD COLUMN
-is_capital_expenditure boolean NOT NULL DEFAULT false`. This is safe — all
+is_capital_expenditure boolean NOT NULL DEFAULT false`. This is safe - all
 existing expense rows will default to `false`.
 
 ---
@@ -395,7 +395,7 @@ existing expense rows will default to `false`.
 The Income Statement answers: **"Did PMG make money this period?"**
 
 ```
-INCOME STATEMENT — [Period]
+INCOME STATEMENT - [Period]
 ─────────────────────────────────────────────────────────
 
 REVENUE
@@ -433,7 +433,7 @@ PROFIT POOL DISTRIBUTION
   Flex Fund          (5%)                 R XX,XXX
 
 CAPITAL EXPENDITURE (shown for completeness)  R XX,XXX
-  (equipment purchases — not counted as operating expense)
+  (equipment purchases - not counted as operating expense)
 
 OWNER WITHDRAWALS (actual salary taken)       R XX,XXX
 ```
@@ -441,7 +441,7 @@ OWNER WITHDRAWALS (actual salary taken)       R XX,XXX
 **Calculation source:**
 
 ```ts
-// All from existing queries — no new queries needed
+// All from existing queries - no new queries needed
 
 revenue         = SUM(income.amount) for period
 opExpenses      = SUM(expenses.amount WHERE is_capital_expenditure = false) for period
@@ -462,7 +462,7 @@ The Cash Flow Statement answers: **"Where did the cash actually go?"**
 It is structured into three sections matching the international standard:
 
 ```
-CASH FLOW STATEMENT — [Period]
+CASH FLOW STATEMENT - [Period]
 ─────────────────────────────────────────────────────────
 
 OPERATING ACTIVITIES
@@ -512,10 +512,10 @@ CLOSING BANK BALANCE                       R XX,XXX
   (Opening + Net Change in Cash)
 
 ACTUAL BANK BALANCE (from reconciliation)  R XX,XXX
-  (bank_accounts.currentBalance — manually updated)
+  (bank_accounts.currentBalance - manually updated)
 
 VARIANCE                                   R X,XXX
-  (Closing calculated vs Actual — should be R0 if fully reconciled)
+  (Closing calculated vs Actual - should be R0 if fully reconciled)
 ```
 
 **The variance check is the most important number on this statement.**
@@ -526,7 +526,7 @@ If calculated closing balance ≠ actual bank balance, something was not recorde
 The Balance Sheet answers: **"What is PMG worth right now?"**
 
 ```
-BALANCE SHEET — as at [Date]
+BALANCE SHEET - as at [Date]
 ─────────────────────────────────────────────────────────
 
 ASSETS
@@ -564,14 +564,14 @@ LIABILITIES
 EQUITY (Owner's Interest)
   Retained earnings                     R XX,XXX
     (= Total Assets - Total Liabilities)
-    This represents PMG's net worth — what would remain
+    This represents PMG's net worth - what would remain
     if all assets were sold and all debts paid.
 
   TOTAL EQUITY                          R XX,XXX
 
 ─────────────────────────────────────────────────────────
 TOTAL LIABILITIES + EQUITY              R XX,XXX
-  (Must equal TOTAL ASSETS — the Balance Sheet must balance)
+  (Must equal TOTAL ASSETS - the Balance Sheet must balance)
 ```
 
 ---
@@ -703,7 +703,7 @@ export async function getTotalLiabilities(): Promise<{ shortTerm: number; longTe
 Add these routes to `apps/admin/src/app/(admin)/`:
 
 ```
-/reports                      ← existing stub — becomes the reports hub
+/reports                      ← existing stub - becomes the reports hub
 
 /reports/income-statement     ← Income Statement with period selector
 /reports/cash-flow            ← Cash Flow Statement with period selector
@@ -821,7 +821,7 @@ export async function settleLiability(id: string, settledDate: string): Promise<
 ```
 
 **All actions must:**
-- Return `Promise<{ error?: string }>` — never throw
+- Return `Promise<{ error?: string }>` - never throw
 - Call `revalidatePath` on success only, inside the `try` block, never in `catch`
 - Validate with Zod before any DB operation
 - Revalidate: `/bank-accounts`, `/assets`, `/liabilities`, `/reports/balance-sheet`,
@@ -831,7 +831,7 @@ export async function settleLiability(id: string, settledDate: string): Promise<
 
 ## 8. UI Component Breakdown
 
-### Report Pages — Server Components
+### Report Pages - Server Components
 
 Each report page is an async Server Component that fetches data and passes it to
 a client shell component for period switching (same pattern as the dashboard).
@@ -846,14 +846,14 @@ a client shell component for period switching (same pattern as the dashboard).
 
 | Component | File | Description |
 |---|---|---|
-| `IncomeStatementShell` | `components/reports/income-statement-shell.tsx` | Client — period tab switcher, renders `IncomeStatementTable` |
-| `IncomeStatementTable` | `components/reports/income-statement-table.tsx` | Server-safe — the actual formatted P&L with all line items |
-| `CashFlowShell` | `components/reports/cash-flow-shell.tsx` | Client — period tab switcher, renders `CashFlowTable` |
+| `IncomeStatementShell` | `components/reports/income-statement-shell.tsx` | Client - period tab switcher, renders `IncomeStatementTable` |
+| `IncomeStatementTable` | `components/reports/income-statement-table.tsx` | Server-safe - the actual formatted P&L with all line items |
+| `CashFlowShell` | `components/reports/cash-flow-shell.tsx` | Client - period tab switcher, renders `CashFlowTable` |
 | `CashFlowTable` | `components/reports/cash-flow-table.tsx` | The three-section cash flow layout |
 | `BalanceSheetTable` | `components/reports/balance-sheet-table.tsx` | Assets / Liabilities / Equity layout with balance check |
 | `ReportPeriodSelector` | `components/reports/report-period-selector.tsx` | Reusable date range picker used across all three reports |
 
-### Management Pages — follow income management pattern exactly
+### Management Pages - follow income management pattern exactly
 
 | Page | Components | Notes |
 |---|---|---|
@@ -882,7 +882,7 @@ dashboard, plus a custom date range option:
 
 ## 9. PDF Export Strategy
 
-Use the same approach specified in `pmg-invoicing-module.md` — `@react-pdf/renderer`
+Use the same approach specified in `pmg-invoicing-module.md` - `@react-pdf/renderer`
 running inside a Next.js Route Handler.
 
 ```
@@ -948,7 +948,7 @@ Step 3: Asset management (required for balance sheet)
   - /assets page + add form
   - createAsset, updateAsset, updateAssetValue, disposeAsset Server Actions
   - /assets/[id] edit page
-  - Test: add MacBook Pro (Nov 2025 purchase — R28,000 in seed data), update current value
+  - Test: add MacBook Pro (Nov 2025 purchase - R28,000 in seed data), update current value
 
 Step 4: Liability management (required for balance sheet)
   - /liabilities page + add form
@@ -969,7 +969,7 @@ Step 6: Cash Flow Statement
   - /reports/cash-flow page
   - CashFlowShell + CashFlowTable components
   - Test: generate March 2026 cash flow, verify operating section matches income/expenses
-  - Test: variance check — calculated closing balance vs bank_accounts balance
+  - Test: variance check - calculated closing balance vs bank_accounts balance
 
 Step 7: Balance Sheet
   - getBalanceSheetData() query helper
@@ -1005,7 +1005,7 @@ These rules govern how financial statements work and must not be violated:
 1. **Capital expenditure is never an operating expense.** Computers, cameras,
    and equipment purchased must be flagged `is_capital_expenditure = true`. They
    belong in the Investing Activities section of the cash flow statement and as
-   assets on the balance sheet — not as operating costs that reduce the profit
+   assets on the balance sheet - not as operating costs that reduce the profit
    pool.
 
 2. **Bank balance is manually reconciled, not auto-calculated.** The system
@@ -1015,12 +1015,12 @@ These rules govern how financial statements work and must not be violated:
    are clean.
 
 3. **Assets must be entered at purchase cost.** The `purchaseValue` field never
-   changes after the first entry — it is the historical cost. The `currentValue`
+   changes after the first entry - it is the historical cost. The `currentValue`
    field is updated over time to reflect depreciation or revaluation.
 
 4. **Liabilities must be updated when payments are made.** When PMG makes a
    repayment on a loan or pays off a supplier, the `currentBalance` on the
-   liability must be reduced. This is a manual step — the system does not
+   liability must be reduced. This is a manual step - the system does not
    auto-deduct from liabilities when an expense is recorded.
 
 5. **The balance sheet must balance.** Total Assets must equal Total Liabilities
@@ -1030,7 +1030,7 @@ These rules govern how financial statements work and must not be violated:
 6. **Salary withdrawals are a financing activity, not an operating expense.**
    They are sourced from the `withdrawals` table and always appear in the
    Financing Activities section of the cash flow statement. They must never be
-   entered in the `expenses` table. (This rule already exists in Phase 1 — it
+   entered in the `expenses` table. (This rule already exists in Phase 1 - it
    is restated here because it directly affects how the cash flow statement
    balances.)
 
@@ -1048,17 +1048,17 @@ added to the development plan:
 
 ### `docs/pmg-admin-development-phases.md`
 
-**Update Phase 8 — Reporting & Insights** to reflect that the three existing
+**Update Phase 8 - Reporting & Insights** to reflect that the three existing
 chart components (`MoMComparisonChart`, `RevenueByDivisionChart`,
 `RevenueVsExpensesChart`) remain in scope for Phase 8 alongside the wiring of
-`/reports/page.tsx`. Phase 8 is purely charts and trend analysis — Phase 11
+`/reports/page.tsx`. Phase 8 is purely charts and trend analysis - Phase 11
 handles the formal financial statement documents.
 
-**Add Phase 11 — Financial Statements** (this document) to the phase table:
+**Add Phase 11 - Financial Statements** (this document) to the phase table:
 
 | Phase | Name | Summary |
 |---|---|---|
-| 11 | Financial Statements | Income Statement, Cash Flow Statement, Balance Sheet — with PDF export |
+| 11 | Financial Statements | Income Statement, Cash Flow Statement, Balance Sheet - with PDF export |
 
 **Add to Admin URL Structure** (`docs/pmg-admin-specification.md`):
 
@@ -1067,8 +1067,8 @@ handles the formal financial statement documents.
 /reports/cash-flow         → Cash Flow Statement with period selector
 /reports/balance-sheet     → Balance Sheet as at a selected date
 /bank-accounts             → PMG bank account management and reconciliation
-/assets                    → Asset register — equipment and fixed assets
-/liabilities               → Liability register — loans and outstanding payables
+/assets                    → Asset register - equipment and fixed assets
+/liabilities               → Liability register - loans and outstanding payables
 ```
 
 **Add to Database Schema section** (`docs/pmg-admin-specification.md`):
@@ -1099,7 +1099,7 @@ liabilities
     is_capital_expenditure boolean. This separates operating costs from
     asset purchases in both the Income Statement and Cash Flow Statement.
 
-11. Bank account balances are manually reconciled — the system shows what
+11. Bank account balances are manually reconciled - the system shows what
     the balance should be from transactions, and the actual balance is what
     the owner enters after checking their real bank statement.
 
@@ -1115,7 +1115,7 @@ liabilities
 **Update Section 5 (Database Structure)** to mention the three new tables
 and their role in the financial model.
 
-**Add Section 10 — Financial Statements Model:**
+**Add Section 10 - Financial Statements Model:**
 
 The financial model powering the statements is an extension of the existing
 P&L model. The Income Statement is the most direct output of the model as

@@ -8,9 +8,9 @@ sustained real financial data.
 
 The work falls into three buckets:
 
-- **New CRUD surfaces** — Withdrawal History (Req 1 + 2) and Lead Create/Delete (Req 3)
-- **UX feedback** — Delete loading states (Req 4), success toasts (Req 5), date defaults (Req 6)
-- **Data integrity / visual correctness** — Withdrawal over-limit guard (Req 7), close-month flash fix (Req 8)
+- **New CRUD surfaces** - Withdrawal History (Req 1 + 2) and Lead Create/Delete (Req 3)
+- **UX feedback** - Delete loading states (Req 4), success toasts (Req 5), date defaults (Req 6)
+- **Data integrity / visual correctness** - Withdrawal over-limit guard (Req 7), close-month flash fix (Req 8)
 
 All items except Req 7 are independent. Req 7 depends on Req 1+2 (the `WithdrawModal` must
 exist before the `maxAmount` prop can be added).
@@ -54,15 +54,15 @@ graph TD
 
 ## Components and Interfaces
 
-### Req 1 — Withdrawal History Data Layer
+### Req 1 - Withdrawal History Data Layer
 
-**`packages/db/src/queries.ts`** — two new query functions:
+**`packages/db/src/queries.ts`** - two new query functions:
 
 ```ts
 export type WithdrawalRow = {
   id: string;
   date: string;          // ISO date string e.g. "2026-03-15"
-  amount: string;        // numeric from DB — caller converts with Number()
+  amount: string;        // numeric from DB - caller converts with Number()
   description: string | null;
   createdAt: Date | null;
 };
@@ -76,7 +76,7 @@ export async function getWithdrawalById(id: string): Promise<WithdrawalRow | nul
 // returns first row or null
 ```
 
-**`apps/admin/src/app/actions/withdrawals.ts`** — new file, two server actions:
+**`apps/admin/src/app/actions/withdrawals.ts`** - new file, two server actions:
 
 ```ts
 'use server'
@@ -94,14 +94,14 @@ export async function getWithdrawalById(id: string): Promise<WithdrawalRow | nul
 The existing `apps/admin/src/app/actions/withdraw.ts` (`recordWithdrawal`) is left unchanged.
 The new `withdrawals.ts` file handles edit/delete only.
 
-**`packages/db/src/index.ts`** — export `getAllWithdrawals`, `getWithdrawalById`, and
+**`packages/db/src/index.ts`** - export `getAllWithdrawals`, `getWithdrawalById`, and
 `WithdrawalRow` type.
 
 ---
 
-### Req 2 — Withdrawal History Pages and Components
+### Req 2 - Withdrawal History Pages and Components
 
-**`apps/admin/src/app/(admin)/withdrawals/page.tsx`** — server component:
+**`apps/admin/src/app/(admin)/withdrawals/page.tsx`** - server component:
 
 ```ts
 // Fetches: getAllWithdrawals()
@@ -111,7 +111,7 @@ The new `withdrawals.ts` file handles edit/delete only.
 // Renders: page header, Badge with formatZAR(ytdTotal) + "YTD", WithdrawalsTable or EmptyState
 ```
 
-**`apps/admin/src/app/(admin)/withdrawals/[id]/page.tsx`** — server component:
+**`apps/admin/src/app/(admin)/withdrawals/[id]/page.tsx`** - server component:
 
 ```ts
 // Fetches: getWithdrawalById(params.id)
@@ -119,7 +119,7 @@ The new `withdrawals.ts` file handles edit/delete only.
 // Renders: back link to /withdrawals, WithdrawalEditForm
 ```
 
-**`apps/admin/src/components/withdrawals/withdrawals-table.tsx`** — client component:
+**`apps/admin/src/components/withdrawals/withdrawals-table.tsx`** - client component:
 
 ```ts
 interface WithdrawalsTableProps {
@@ -132,7 +132,7 @@ interface WithdrawalsTableProps {
 // isPendingDelete: useState(false), set true before action, false in finally
 ```
 
-**`apps/admin/src/components/withdrawals/withdrawal-edit-form.tsx`** — client component:
+**`apps/admin/src/components/withdrawals/withdrawal-edit-form.tsx`** - client component:
 
 ```ts
 interface WithdrawalEditFormProps {
@@ -142,10 +142,10 @@ interface WithdrawalEditFormProps {
 // Fields: date (pre-populated from entry.date), amount (pre-populated), description (optional)
 // useTransition, on success: router.push('/withdrawals')
 // toast.error on error
-// date defaultValue: entry.date (NOT today — edit forms pre-populate from record)
+// date defaultValue: entry.date (NOT today - edit forms pre-populate from record)
 ```
 
-**`apps/admin/src/components/layout/app-sidebar.tsx`** — add nav item:
+**`apps/admin/src/components/layout/app-sidebar.tsx`** - add nav item:
 
 ```ts
 import { ..., Wallet } from 'lucide-react'
@@ -155,9 +155,9 @@ import { ..., Wallet } from 'lucide-react'
 
 ---
 
-### Req 3 — Lead Create and Delete
+### Req 3 - Lead Create and Delete
 
-**`apps/admin/src/app/actions/leads.ts`** — add two new exports to the existing file:
+**`apps/admin/src/app/actions/leads.ts`** - add two new exports to the existing file:
 
 ```ts
 // createLead(formData: FormData): Promise<{ error?: string }>
@@ -180,7 +180,7 @@ import { ..., Wallet } from 'lucide-react'
 // On error: return { error: string }, never throw
 ```
 
-**`apps/admin/src/components/leads/lead-add-form.tsx`** — new client component:
+**`apps/admin/src/components/leads/lead-add-form.tsx`** - new client component:
 
 ```ts
 interface LeadAddFormProps {
@@ -195,7 +195,7 @@ interface LeadAddFormProps {
 // No success toast (Req 5 does not include createLead)
 ```
 
-**`apps/admin/src/components/leads/leads-table.tsx`** — update existing component:
+**`apps/admin/src/components/leads/leads-table.tsx`** - update existing component:
 
 ```ts
 // Add deleteAction prop: (id: string) => Promise<{ error?: string }>
@@ -204,10 +204,10 @@ interface LeadAddFormProps {
 // toast.error on delete error
 ```
 
-**`apps/admin/src/app/(admin)/leads/page.tsx`** — update existing page:
+**`apps/admin/src/app/(admin)/leads/page.tsx`** - update existing page:
 
 ```ts
-// Add to Promise.all: getAllDivisions() (already fetched — verify it's passed through)
+// Add to Promise.all: getAllDivisions() (already fetched - verify it's passed through)
 // Pass createLead to LeadAddForm
 // Pass deleteLead to LeadsTable
 // Render LeadAddForm above the table
@@ -215,7 +215,7 @@ interface LeadAddFormProps {
 
 ---
 
-### Req 4 — Delete Button Loading States
+### Req 4 - Delete Button Loading States
 
 Three existing client components need the `isPendingDelete` pattern added. The pattern is
 identical in all three:
@@ -247,17 +247,17 @@ try {
 
 Files to update:
 - `apps/admin/src/components/income/income-table.tsx`
-- `apps/admin/src/components/expenses/expense-table.tsx` — already has `inFlightId` / `useTransition`; replace with the simpler `isPendingDelete` boolean pattern for consistency
-- `apps/admin/src/components/divisions/divisions-table.tsx` — already has `isDeletePending` via `useTransition`; already shows "Deleting…" — verify it matches the spec exactly
+- `apps/admin/src/components/expenses/expense-table.tsx` - already has `inFlightId` / `useTransition`; replace with the simpler `isPendingDelete` boolean pattern for consistency
+- `apps/admin/src/components/divisions/divisions-table.tsx` - already has `isDeletePending` via `useTransition`; already shows "Deleting…" - verify it matches the spec exactly
 
 Note: `expense-table.tsx` already has a partial implementation using `useTransition` +
 `inFlightId`. The update aligns it to the canonical `isPendingDelete` boolean pattern.
 `divisions-table.tsx` already uses `isDeletePending` from `useTransition` and shows
-"Deleting…" — it already satisfies Req 4 criteria 5–6 and needs only a review pass.
+"Deleting…" - it already satisfies Req 4 criteria 5–6 and needs only a review pass.
 
 ---
 
-### Req 5 — Success Toasts
+### Req 5 - Success Toasts
 
 Seven existing client components need a single line added after the `!result.error` check:
 
@@ -287,7 +287,7 @@ if (result.error) {
 
 ---
 
-### Req 6 — Date Defaults
+### Req 6 - Date Defaults
 
 Two existing add forms and the new `withdrawal-edit-form.tsx` (for the add/record flow) need
 a `defaultValue` on their date inputs:
@@ -312,9 +312,9 @@ Edit forms (`income-edit-form.tsx`, `expense-edit-form.tsx`) are explicitly NOT 
 
 ---
 
-### Req 7 — Withdrawal Over-Limit Guard
+### Req 7 - Withdrawal Over-Limit Guard
 
-**`apps/admin/src/components/dashboard/withdraw-modal.tsx`** — add `maxAmount` prop:
+**`apps/admin/src/components/dashboard/withdraw-modal.tsx`** - add `maxAmount` prop:
 
 ```ts
 interface WithdrawModalProps {
@@ -348,9 +348,9 @@ const isOverLimit = enteredAmount !== null && enteredAmount > maxAmount
 )}
 ```
 
-The warning is advisory — form submission is not blocked.
+The warning is advisory - form submission is not blocked.
 
-**`apps/admin/src/components/dashboard/salary-card.tsx`** — compute and pass `maxAmount`:
+**`apps/admin/src/components/dashboard/salary-card.tsx`** - compute and pass `maxAmount`:
 
 ```ts
 // Existing: const withdrawn = withdrawals?.total ?? 0
@@ -366,9 +366,9 @@ const remaining = Math.max(0, salary - withdrawn)
 
 ---
 
-### Req 8 — Close Month Flash Fix
+### Req 8 - Close Month Flash Fix
 
-**`apps/admin/src/app/(admin)/dashboard/page.tsx`** — derive `hasSnapshot`:
+**`apps/admin/src/app/(admin)/dashboard/page.tsx`** - derive `hasSnapshot`:
 
 ```ts
 // Already fetches: currentPeriodSnapshot via getSnapshotByPeriod(currentPeriod)
@@ -382,7 +382,7 @@ const hasSnapshot = currentPeriodSnapshot !== null
 />
 ```
 
-**`apps/admin/src/components/dashboard/dashboard-shell.tsx`** — accept and use `hasSnapshot`:
+**`apps/admin/src/components/dashboard/dashboard-shell.tsx`** - accept and use `hasSnapshot`:
 
 ```ts
 type Props = {
@@ -403,7 +403,7 @@ type Props = {
 `currentPeriodSnapshot` prop can be removed from `DashboardShell` if it is no longer used
 elsewhere in the component; otherwise keep it for any other usages.
 
-**`apps/admin/src/components/dashboard/close-month-button.tsx`** — accept `hasSnapshot`:
+**`apps/admin/src/components/dashboard/close-month-button.tsx`** - accept `hasSnapshot`:
 
 ```ts
 export default function CloseMonthButton({
@@ -445,7 +445,7 @@ existing `withdrawals` and `leads` tables.
 export type WithdrawalRow = {
   id: string;
   date: string;           // date::text cast
-  amount: string;         // numeric — caller uses Number()
+  amount: string;         // numeric - caller uses Number()
   description: string | null;
   createdAt: Date | null;
 };
@@ -470,7 +470,7 @@ export type WithdrawalRow = {
 ## Correctness Properties
 
 *A property is a characteristic or behavior that should hold true across all valid executions
-of a system — essentially, a formal statement about what the system should do. Properties
+of a system - essentially, a formal statement about what the system should do. Properties
 serve as the bridge between human-readable specifications and machine-verifiable correctness
 guarantees.*
 
@@ -478,10 +478,10 @@ guarantees.*
 
 Before listing properties, redundancies are eliminated:
 
-- 1.7 (never throw) is subsumed by 1.4 and 1.6 — removed.
-- 7.3 (amount ≤ maxAmount shows no warning) is the complement of 7.2 — merged into Property 5.
-- 7.6 (remaining non-negative) is guaranteed by `Math.max(0, ...)` in Property 6 — removed.
-- 8.3 and 8.4 (hasSnapshot true/false rendering) are two sides of the same conditional — merged into Property 7.
+- 1.7 (never throw) is subsumed by 1.4 and 1.6 - removed.
+- 7.3 (amount ≤ maxAmount shows no warning) is the complement of 7.2 - merged into Property 5.
+- 7.6 (remaining non-negative) is guaranteed by `Math.max(0, ...)` in Property 6 - removed.
+- 8.3 and 8.4 (hasSnapshot true/false rendering) are two sides of the same conditional - merged into Property 7.
 
 ### Property 1: getAllWithdrawals ordering invariant
 
@@ -544,7 +544,7 @@ non-negative.
 
 *For any* value of `hasSnapshot`, `DashboardShell` SHALL render the `"Month closed"` badge
 when `hasSnapshot` is `true` and SHALL render `CloseMonthButton` when `hasSnapshot` is
-`false` — never both simultaneously.
+`false` - never both simultaneously.
 
 **Validates: Requirements 8.3, 8.4**
 
@@ -554,13 +554,13 @@ when `hasSnapshot` is `true` and SHALL render `CloseMonthButton` when `hasSnapsh
 
 All server actions follow the same contract:
 
-1. **Validation errors** — Zod `safeParse` failure → return `{ error: issues[0].message }` immediately, no DB call.
-2. **Constraint errors** — DB throws (e.g. positive-amount check, FK violation) → caught in `try/catch`, return `{ error: 'Failed to save. Please try again.' }`.
-3. **Never throw** — the `try/catch` wraps the entire action body; the catch block always returns `{ error }`.
+1. **Validation errors** - Zod `safeParse` failure → return `{ error: issues[0].message }` immediately, no DB call.
+2. **Constraint errors** - DB throws (e.g. positive-amount check, FK violation) → caught in `try/catch`, return `{ error: 'Failed to save. Please try again.' }`.
+3. **Never throw** - the `try/catch` wraps the entire action body; the catch block always returns `{ error }`.
 
 Client components handle errors in two ways:
-- **Inline error state** — `setErrorMessage(result.error)` displayed below the form.
-- **Toast error** — `toast.error(result.error)` for delete failures in table components.
+- **Inline error state** - `setErrorMessage(result.error)` displayed below the form.
+- **Toast error** - `toast.error(result.error)` for delete failures in table components.
 
 The `createLead` `.refine` check (email or phone required) is evaluated before the DB call
 and returns the specific message `'At least one of email or phone is required'`.
@@ -593,30 +593,30 @@ Each property test runs a minimum of **100 iterations**.
 
 Tag format: `// Feature: mvp-stage2-high-priority, Property {N}: {property_text}`
 
-**Property 1** — `getAllWithdrawals` ordering:
+**Property 1** - `getAllWithdrawals` ordering:
 Generate arbitrary arrays of `{ date, createdAt }` pairs, insert them, call
 `getAllWithdrawals()`, assert the result is sorted by `date DESC` then `createdAt DESC`.
 
-**Property 2** — `getWithdrawalById` round-trip:
+**Property 2** - `getWithdrawalById` round-trip:
 Generate arbitrary `{ date, amount, description }` values, insert, retrieve by id, assert
 field equality. Also assert unknown UUIDs return `null`.
 
-**Property 3** — `updateWithdrawal` validation gate:
+**Property 3** - `updateWithdrawal` validation gate:
 Generate invalid payloads (empty date, non-positive amount), assert `{ error }` returned and
 DB row unchanged.
 
-**Property 4** — `createLead` contact requirement:
+**Property 4** - `createLead` contact requirement:
 Generate lead payloads with `email: undefined` and `phone: undefined`, assert error returned
 and no row inserted.
 
-**Property 5** — `WithdrawModal` warning visibility:
+**Property 5** - `WithdrawModal` warning visibility:
 Generate arbitrary `(maxAmount: number, enteredAmount: number)` pairs, render the component,
 assert warning is shown iff `enteredAmount > maxAmount`.
 
-**Property 6** — `SalaryCard` remaining computation:
+**Property 6** - `SalaryCard` remaining computation:
 Generate arbitrary `(salary: number, withdrawn: number)` pairs (including cases where
 `withdrawn > salary`), assert `remaining === Math.max(0, salary - withdrawn)`.
 
-**Property 7** — `DashboardShell` conditional rendering:
+**Property 7** - `DashboardShell` conditional rendering:
 Generate arbitrary `hasSnapshot: boolean`, render `DashboardShell`, assert exactly one of
 badge or button is rendered, matching the `hasSnapshot` value.

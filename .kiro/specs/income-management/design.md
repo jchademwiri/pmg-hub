@@ -1,4 +1,4 @@
-# Design Document — Income Management
+# Design Document - Income Management
 
 ## Overview
 
@@ -10,7 +10,7 @@ component pages.
 The design follows the established PMG admin pattern: Server Components fetch
 data via `@pmg/db` query helpers, Server Actions mutate data and call
 `revalidatePath`, and client components handle interactivity. No client-side
-data state — the database is the single source of truth.
+data state - the database is the single source of truth.
 
 ### Scope
 
@@ -32,15 +32,15 @@ packages/db (Drizzle + Neon)
   └── queries.ts  ← 5 new helpers: getAllIncome, getIncomeById,
                      getDistinctIncomeMonths, getAllDivisions, getAllClients
          ↓
-app/(admin)/income/page.tsx          [Server Component — parallel fetches]
-app/(admin)/income/[id]/page.tsx     [Server Component — parallel fetches]
+app/(admin)/income/page.tsx          [Server Component - parallel fetches]
+app/(admin)/income/[id]/page.tsx     [Server Component - parallel fetches]
          ↓
-FilterBar          [Client — useRouter().push for URL params]
-IncomeAddForm      [Client — useTransition + createIncome action]
-IncomeTable        [Client — inline delete confirm + deleteIncome action]
-IncomeEditForm     [Client — useTransition + updateIncome action + router.push]
+FilterBar          [Client - useRouter().push for URL params]
+IncomeAddForm      [Client - useTransition + createIncome action]
+IncomeTable        [Client - inline delete confirm + deleteIncome action]
+IncomeEditForm     [Client - useTransition + updateIncome action + router.push]
          ↑
-app/actions/income.ts  [Server Actions — createIncome, updateIncome, deleteIncome]
+app/actions/income.ts  [Server Actions - createIncome, updateIncome, deleteIncome]
 ```
 
 ### Data flow
@@ -56,7 +56,7 @@ app/actions/income.ts  [Server Actions — createIncome, updateIncome, deleteInc
 ### Next.js 16 notes
 
 - Middleware is `proxy.ts` (not `middleware.ts`), exported as `proxy`
-- `searchParams` in Server Components is a `Promise` in Next.js 15+ — must be awaited
+- `searchParams` in Server Components is a `Promise` in Next.js 15+ - must be awaited
 - Server Actions use `'use server'` directive at the top of the file
 
 ---
@@ -75,13 +75,13 @@ type IncomeRow = {
   clientId: string | null
   clientName: string | null
   description: string | null
-  amount: string  // numeric from DB — caller converts with Number()
+  amount: string  // numeric from DB - caller converts with Number()
 }
 
 getAllIncome(filters?: { divisionId?: string; month?: string }): Promise<IncomeRow[]>
 getIncomeById(id: string): Promise<IncomeRow | null>
 getDistinctIncomeMonths(): Promise<string[]>   // YYYY-MM[], sorted DESC
-getAllDivisions(): Promise<{ id: string; name: string }[]>   // CHECK before adding — see note below
+getAllDivisions(): Promise<{ id: string; name: string }[]>   // CHECK before adding - see note below
 getAllClients(): Promise<{ id: string; name: string; businessName: string | null }[]>
 ```
 
@@ -91,7 +91,7 @@ All five are exported from `packages/db/src/index.ts` automatically via
 > **`getAllDivisions()` duplicate guard:** CHECK `packages/db/src/queries.ts` before
 > implementing. If `getAllDivisions` already exists and returns `{ id, name }[]` sorted
 > by name ASC, DO NOT add a duplicate. Only add it if it is absent. The function name
-> and return shape must match exactly — do not create `getAllDivisions2()` or a
+> and return shape must match exactly - do not create `getAllDivisions2()` or a
 > differently-named variant.
 
 ### Server Actions (`apps/admin/src/app/actions/income.ts`)
@@ -124,9 +124,9 @@ const raw = Object.fromEntries(formData)
 if (raw.clientId === '') delete raw.clientId
 ```
 This ensures Zod's `.optional()` accepts the missing key cleanly. Do NOT pass the
-empty string directly to the schema — it will fail UUID validation.
+empty string directly to the schema - it will fail UUID validation.
 
-> See **Error Handling — Server Action errors** for the full normalization pattern
+> See **Error Handling - Server Action errors** for the full normalization pattern
 > embedded in the try/catch block.
 
 ### Page: `/income` (`apps/admin/src/app/(admin)/income/page.tsx`)
@@ -256,7 +256,7 @@ Same fields as IncomeAddForm, pre-populated with `entry` values. Uses `useTransi
 
 ## Data Models
 
-### `income` table (existing — `packages/db/src/schema/income.ts`)
+### `income` table (existing - `packages/db/src/schema/income.ts`)
 
 | Column | Type | Notes |
 |---|---|---|
@@ -305,7 +305,7 @@ round-trip preserves two decimal places as long as the input is a valid decimal.
 ## Correctness Properties
 
 *A property is a characteristic or behavior that should hold true across all valid
-executions of a system — essentially, a formal statement about what the system should
+executions of a system - essentially, a formal statement about what the system should
 do. Properties serve as the bridge between human-readable specifications and
 machine-verifiable correctness guarantees.*
 
@@ -348,7 +348,7 @@ should equal the arithmetic sum of all `amount` values in that result set.
 
 ---
 
-### Property 5: createIncome round-trip — valid input succeeds and entry is retrievable
+### Property 5: createIncome round-trip - valid input succeeds and entry is retrievable
 
 *For any* valid `IncomeSchema` input (non-empty date, valid division UUID, optional
 client UUID, optional description, positive amount), `createIncome` should return `{}`
@@ -359,7 +359,7 @@ correct field values.
 
 ---
 
-### Property 6: updateIncome round-trip — valid input succeeds and changes are reflected
+### Property 6: updateIncome round-trip - valid input succeeds and changes are reflected
 
 *For any* existing income entry and any valid `IncomeSchema` update input,
 `updateIncome(id, formData)` should return `{}` and `getAllIncome()` should
@@ -369,7 +369,7 @@ subsequently reflect the updated field values for that entry.
 
 ---
 
-### Property 7: deleteIncome round-trip — deleted entry is no longer retrievable
+### Property 7: deleteIncome round-trip - deleted entry is no longer retrievable
 
 *For any* existing income entry id, `deleteIncome(id)` should return `{}` and
 `getIncomeById(id)` should return `null` afterwards.
@@ -400,8 +400,8 @@ descending order.
 
 ### Property 10: Invalid input to createIncome/updateIncome always returns an error
 
-*For any* input that violates `IncomeSchema` — including amount ≤ 0, a non-UUID
-`divisionId`, a missing required field, or a non-positive amount string — both
+*For any* input that violates `IncomeSchema` - including amount ≤ 0, a non-UUID
+`divisionId`, a missing required field, or a non-positive amount string - both
 `createIncome` and `updateIncome` should return `{ error: <non-empty string> }` and
 must not write any record to the database.
 
@@ -502,7 +502,7 @@ export async function deleteIncome(id: string): Promise<{ error?: string }> {
 
 Key points:
 - `revalidatePath('/income')` AND `revalidatePath('/dashboard')` are BOTH called on
-  success — this satisfies R11 (dashboard consistency after delete).
+  success - this satisfies R11 (dashboard consistency after delete).
 - `revalidatePath` is only called inside the `try` block, BEFORE `return {}`. It is
   never called when an error is caught.
 - No Zod validation is needed for `deleteIncome` (no FormData input).
@@ -515,7 +515,7 @@ returns `null`. This renders the app's `not-found.tsx` page with a 404 status.
 ### Delete error feedback
 
 `IncomeTable` calls `deleteAction(id)` and on `result.error` shows a sonner
-`toast.error(result.error)`. The table row is not removed optimistically — the
+`toast.error(result.error)`. The table row is not removed optimistically - the
 page revalidation handles the refresh on success.
 
 ### Empty state
@@ -549,7 +549,7 @@ Each property below maps 1:1 to a Correctness Property in this document.
 
 | Test | Property | fast-check arbitraries |
 |---|---|---|
-| P1 | getAllIncome shape + sort | `fc.array(incomeArb)` — insert, query, assert |
+| P1 | getAllIncome shape + sort | `fc.array(incomeArb)` - insert, query, assert |
 | P2 | Division filter | `fc.uuid()` as divisionId filter |
 | P3 | Month filter | `fc.date()` mapped to YYYY-MM |
 | P4 | Running total | `fc.array(fc.float({ min: 0.01 }))` as amounts |
@@ -576,8 +576,8 @@ Focus on specific examples and edge cases not covered by property tests:
 - Empty-state rendering when `entries = []`
 - `IncomeTable` renders edit link with correct href `/income/<id>`
 - `FilterBar` renders "All divisions" and "All months" as default options
-- `deleteIncome` returns `{ error }` when the DB throws (e.g. FK constraint violation or connection error) — verifies R5.6
-- `deleteIncome` calls `revalidatePath('/income')` and `revalidatePath('/dashboard')` on success — verifies R11.1
+- `deleteIncome` returns `{ error }` when the DB throws (e.g. FK constraint violation or connection error) - verifies R5.6
+- `deleteIncome` calls `revalidatePath('/income')` and `revalidatePath('/dashboard')` on success - verifies R11.1
 
 ### Test file location
 

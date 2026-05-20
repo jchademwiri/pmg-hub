@@ -9,7 +9,7 @@ This design extracts the five React Email templates currently living in `apps/aw
 - A `BrandingProps` interface so any consuming app can pass its own branding at call time
 - A `react-email` dev preview server via the `email:dev` script
 
-The package is source-first: Bun resolves `.tsx` files directly via the `exports` map, so no build step is needed for consuming apps. All Resend credentials are supplied by the consuming app at call time — the package itself contains no environment variable reads.
+The package is source-first: Bun resolves `.tsx` files directly via the `exports` map, so no build step is needed for consuming apps. All Resend credentials are supplied by the consuming app at call time - the package itself contains no environment variable reads.
 
 ---
 
@@ -86,7 +86,7 @@ packages/emails/
 
 ## Components and Interfaces
 
-### `src/send.ts` — Full TypeScript Signatures
+### `src/send.ts` - Full TypeScript Signatures
 
 ```typescript
 import { Resend } from "resend";
@@ -112,7 +112,7 @@ export interface SendResult {
 /**
  * Sends a single email via the Resend API.
  * Instantiates a new Resend client per call using the provided config.
- * Never throws — errors are returned in the `error` field.
+ * Never throws - errors are returned in the `error` field.
  */
 export async function sendEmail(
   config: ResendConfig,
@@ -132,13 +132,13 @@ export function createEmailClient(
 - Instantiates `new Resend(config.apiKey)` on each call (stateless, safe for serverless)
 - Calls `resend.emails.send({ from: config.from, to, subject, react })`
 - Wraps the entire call in `try/catch`; returns `{ data: null, error }` on failure
-- Never reads `process.env` — all config comes from the caller
+- Never reads `process.env` - all config comes from the caller
 
 **Implementation notes for `createEmailClient`:**
 - Returns `(payload) => sendEmail(config, payload)`
 - The returned function is typed as `(payload: EmailPayload) => Promise<SendResult>`
 
-### `src/index.ts` — Exports
+### `src/index.ts` - Exports
 
 ```typescript
 // Send utilities
@@ -219,7 +219,7 @@ Each template's full props type is `ContentProps & BrandingProps`:
 ### Branding Rendering Rules
 
 - **`logoUrl` provided**: render `<Img src={logoUrl} alt={companyName} />` in the email header section
-- **`primaryColor` provided**: apply via inline `style={{ color: primaryColor }}` or `style={{ backgroundColor: primaryColor }}` to buttons and headings (inline styles are required for email client compatibility — Tailwind class-based color overrides are unreliable in email clients)
+- **`primaryColor` provided**: apply via inline `style={{ color: primaryColor }}` or `style={{ backgroundColor: primaryColor }}` to buttons and headings (inline styles are required for email client compatibility - Tailwind class-based color overrides are unreliable in email clients)
 - **`companyName` / `websiteUrl`**: used in footer text and `<Link>` href
 
 ### `PreviewProps` (preserved on all templates)
@@ -279,7 +279,7 @@ AdminNewLeadEmail.PreviewProps = {
 }
 ```
 
-**Root `package.json` — additions to `overrides`**
+**Root `package.json` - additions to `overrides`**
 ```json
 {
   "overrides": {
@@ -289,7 +289,7 @@ AdminNewLeadEmail.PreviewProps = {
 }
 ```
 
-**`turbo.json` — new task**
+**`turbo.json` - new task**
 ```json
 {
   "tasks": {
@@ -301,7 +301,7 @@ AdminNewLeadEmail.PreviewProps = {
 }
 ```
 
-**`packages/db/src/reset.ts` — add `withdrawals`**
+**`packages/db/src/reset.ts` - add `withdrawals`**
 ```sql
 drop table if exists
   leads,
@@ -318,7 +318,7 @@ cascade
 
 ## Correctness Properties
 
-*A property is a characteristic or behavior that should hold true across all valid executions of a system — essentially, a formal statement about what the system should do. Properties serve as the bridge between human-readable specifications and machine-verifiable correctness guarantees.*
+*A property is a characteristic or behavior that should hold true across all valid executions of a system - essentially, a formal statement about what the system should do. Properties serve as the bridge between human-readable specifications and machine-verifiable correctness guarantees.*
 
 ### Property 1: Rendered HTML contains all provided props
 
@@ -352,12 +352,12 @@ cascade
 |---|---|
 | Resend API returns error response | `sendEmail` returns `{ data: null, error: { message, name } }` |
 | Resend SDK throws (network failure, timeout) | `try/catch` in `sendEmail` catches and returns `{ data: null, error }` |
-| Missing required content props | TypeScript compile error — no runtime guard needed |
-| Missing `ResendConfig` fields | TypeScript compile error — no runtime guard needed |
+| Missing required content props | TypeScript compile error - no runtime guard needed |
+| Missing `ResendConfig` fields | TypeScript compile error - no runtime guard needed |
 | Invalid `apiKey` | Resend returns 401; surfaced via `error` field |
 | Template renders with partial branding props | Defaults fill in missing fields; no error |
 
-The package deliberately does **not** throw on send failure. This keeps consuming app code simple — callers always check the `error` field rather than wrapping in `try/catch`.
+The package deliberately does **not** throw on send failure. This keeps consuming app code simple - callers always check the `error` field rather than wrapping in `try/catch`.
 
 ---
 
@@ -387,7 +387,7 @@ Each property test runs a minimum of **100 iterations**.
 Each test is tagged with a comment in the format:
 `// Feature: shared-email-package, Property {N}: {property_text}`
 
-**Property 1 test — Rendered HTML contains all provided props**
+**Property 1 test - Rendered HTML contains all provided props**
 ```typescript
 // Feature: shared-email-package, Property 1: rendered HTML contains all provided props
 fc.assert(
@@ -405,7 +405,7 @@ fc.assert(
 );
 ```
 
-**Property 2 test — Branding defaults applied when props omitted**
+**Property 2 test - Branding defaults applied when props omitted**
 ```typescript
 // Feature: shared-email-package, Property 2: branding defaults applied when props omitted
 fc.assert(
@@ -421,7 +421,7 @@ fc.assert(
 );
 ```
 
-**Property 3 test — sendEmail never throws**
+**Property 3 test - sendEmail never throws**
 ```typescript
 // Feature: shared-email-package, Property 3: sendEmail always returns result object, never throws
 fc.assert(
@@ -439,7 +439,7 @@ fc.assert(
 );
 ```
 
-**Property 4 test — createEmailClient closes over config**
+**Property 4 test - createEmailClient closes over config**
 ```typescript
 // Feature: shared-email-package, Property 4: createEmailClient closes over config
 fc.assert(

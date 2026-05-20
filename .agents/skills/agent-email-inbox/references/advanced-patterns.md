@@ -1,4 +1,4 @@
-# Advanced Patterns — Rate Limiting, Content Limits, Troubleshooting
+# Advanced Patterns - Rate Limiting, Content Limits, Troubleshooting
 
 ## Rate Limiting per Sender
 
@@ -64,7 +64,7 @@ This is critical for Level 3+ security. Even emails from trusted senders can con
 
 ### "Cannot read properties of undefined (reading 'verify')"
 
-**Cause:** Resend SDK version too old — `resend.webhooks.verify()` was added in recent versions.
+**Cause:** Resend SDK version too old - `resend.webhooks.verify()` was added in recent versions.
 **Fix:** Update to the latest SDK:
 ```bash
 npm install resend@latest
@@ -73,7 +73,7 @@ Or use the Svix fallback (see [webhook-setup.md](webhook-setup.md)).
 
 ### "Cannot read properties of undefined (reading 'get')"
 
-**Cause:** Resend SDK version too old — `emails.receiving.get()` requires a recent SDK.
+**Cause:** Resend SDK version too old - `emails.receiving.get()` requires a recent SDK.
 **Fix:**
 ```bash
 npm install resend@latest
@@ -84,9 +84,9 @@ npm list resend
 ### Webhook returns 400 errors
 
 **Possible causes:**
-1. **Wrong signing secret** — The signing secret is returned when you create the webhook via the API (`data.signing_secret`). If you've lost it, delete and recreate the webhook to get a new one.
-2. **Body parsing issue** — You must use the raw body for verification. Use `express.raw({ type: 'application/json' })` on the webhook route, not `express.json()`.
-3. **SDK version too old** — Update to `resend@latest`.
+1. **Wrong signing secret** - The signing secret is returned when you create the webhook via the API (`data.signing_secret`). If you've lost it, delete and recreate the webhook to get a new one.
+2. **Body parsing issue** - You must use the raw body for verification. Use `express.raw({ type: 'application/json' })` on the webhook route, not `express.json()`.
+3. **SDK version too old** - Update to `resend@latest`.
 
 ### ngrok connection refused / tunnel died
 
@@ -104,9 +104,9 @@ npm list resend
 ### Security check rejecting all emails
 
 1. Check the sender address is in your `ALLOWED_SENDERS` list
-2. Check for case mismatch — the comparison should be case-insensitive
+2. Check for case mismatch - the comparison should be case-insensitive
 3. Debug by logging: `console.log('Sender:', event.data.from.toLowerCase())`
 
 ### Agent doesn't auto-respond to emails
 
-**This is expected behavior.** The webhook delivers a notification to the user, who then instructs the agent how to respond. This is the safest approach — the user reviews each email before the agent acts on it.
+**This is expected behavior.** The webhook delivers a notification to the user, who then instructs the agent how to respond. This is the safest approach - the user reviews each email before the agent acts on it.

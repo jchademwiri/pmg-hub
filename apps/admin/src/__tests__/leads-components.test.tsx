@@ -183,7 +183,7 @@ describe('LeadStatusForm', () => {
     expect(select).not.toBeDisabled()
   })
 
-  it('applies optimistic update immediately on status change — Validates: Requirements 5.1, 5.2', async () => {
+  it('applies optimistic update immediately on status change - Validates: Requirements 5.1, 5.2', async () => {
     const user = userEvent.setup()
     // Action that never resolves during the test (simulates pending)
     let resolveAction!: (v: { error?: string }) => void
@@ -206,7 +206,7 @@ describe('LeadStatusForm', () => {
     resolveAction({})
   })
 
-  it('selector is disabled while action is pending — Validates: Requirements 5.6', async () => {
+  it('selector is disabled while action is pending - Validates: Requirements 5.6', async () => {
     const user = userEvent.setup()
     let resolveAction!: (v: { error?: string }) => void
     const updateAction = vi.fn().mockReturnValue(
@@ -224,7 +224,7 @@ describe('LeadStatusForm', () => {
     resolveAction({})
   })
 
-  it('shows error and reverts on action failure — Validates: Requirements 5.4, 5.5', async () => {
+  it('shows error and reverts on action failure - Validates: Requirements 5.4, 5.5', async () => {
     const user = userEvent.setup()
     const updateAction = vi.fn().mockResolvedValue({ error: 'Update failed.' })
 
@@ -239,7 +239,7 @@ describe('LeadStatusForm', () => {
     expect(select.value).toBe('new')
   })
 
-  it('retains updated status on successful action — Validates: Requirements 5.3', async () => {
+  it('retains updated status on successful action - Validates: Requirements 5.3', async () => {
     const user = userEvent.setup()
     const updateAction = vi.fn().mockResolvedValue({})
 
@@ -253,7 +253,7 @@ describe('LeadStatusForm', () => {
     const formData: FormData = updateAction.mock.calls[0][0]
     expect(formData.get('status')).toBe('contacted')
 
-    // No error shown — action succeeded
+    // No error shown - action succeeded
     await vi.waitFor(() => {
       expect(screen.queryByText(/error/i)).toBeNull()
     })

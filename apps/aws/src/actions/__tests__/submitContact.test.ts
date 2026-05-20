@@ -35,7 +35,7 @@ async function submitContactHandler(input: ContactInput, deps: HandlerDeps) {
   return { success: true }
 }
 
-// Validation gate — mirrors the zod schema in the Astro action
+// Validation gate - mirrors the zod schema in the Astro action
 function isValidInput(input: Partial<ContactInput>): input is ContactInput {
   return (
     typeof input.name === 'string' &&
@@ -63,7 +63,7 @@ const validPayload = fc.record({
 })
 
 // ── Property 1: Valid form submission persists a lead ──
-describe('submitContact handler — Property 1: Valid form submission persists a lead', () => {
+describe('submitContact handler - Property 1: Valid form submission persists a lead', () => {
   it('inserts a lead with source=aws, status=new, and matching field values', async () => {
     await fc.assert(
       fc.asyncProperty(validPayload, async (input) => {
@@ -88,7 +88,7 @@ describe('submitContact handler — Property 1: Valid form submission persists a
 })
 
 // ── Property 2: Email failure does not prevent lead persistence ──
-describe('submitContact handler — Property 2: Email failure does not prevent lead persistence', () => {
+describe('submitContact handler - Property 2: Email failure does not prevent lead persistence', () => {
   it('still inserts the lead and returns { success: true } even when sendEmail throws', async () => {
     await fc.assert(
       fc.asyncProperty(validPayload, async (input) => {
@@ -106,7 +106,7 @@ describe('submitContact handler — Property 2: Email failure does not prevent l
 })
 
 // ── Property 3: Invalid inputs are rejected ──
-describe('submitContact handler — Property 3: Invalid inputs are rejected', () => {
+describe('submitContact handler - Property 3: Invalid inputs are rejected', () => {
   const invalidPayloads = fc.oneof(
     // Empty name
     fc.record({

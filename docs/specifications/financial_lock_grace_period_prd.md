@@ -1,4 +1,4 @@
-# Financial Lock & Grace Period — PRD + Technical Specification v2
+# Financial Lock & Grace Period - PRD + Technical Specification v2
 
 ---
 
@@ -43,8 +43,8 @@ Current issues in the system:
 
 Users may only create or edit records in:
 
-- **Current month** — always
-- **Previous month only** — between the 1st and 5th of the current month, AND only if that previous month has no snapshot
+- **Current month** - always
+- **Previous month only** - between the 1st and 5th of the current month, AND only if that previous month has no snapshot
 
 Users may NOT:
 
@@ -57,7 +57,7 @@ Users may NOT:
 
 ---
 
-### Grace Period Boundary — Exact Definition
+### Grace Period Boundary - Exact Definition
 
 | Day of Month | Previous Month Allowed? | Notes |
 |---|---|---|
@@ -72,7 +72,7 @@ Users may NOT:
 
 ---
 
-### Period Closure — Precise Definition
+### Period Closure - Precise Definition
 
 A period `YYYY-MM` is considered **closed** when ANY of the following is true:
 
@@ -96,7 +96,7 @@ This applies to: income, expenses, and ledger entries.
 
 ### Snapshot Rules
 
-- Snapshots are **finalized records** — one per period
+- Snapshots are **finalized records** - one per period
 - Cannot be modified or deleted (no UI exists for this, by design)
 - Represent the **authoritative financial state** for that period
 - Creating a snapshot **immediately and irrevocably closes** that period
@@ -161,7 +161,7 @@ Layers:
 - **UI Enforcement** → Disabled actions, hidden buttons, restricted date inputs (secondary)
 - **Data Integrity** → Snapshot locking (no delete/update UI)
 
-Server actions are the **single source of enforcement**. UI restrictions are a UX convenience only — they do not replace server-side validation.
+Server actions are the **single source of enforcement**. UI restrictions are a UX convenience only - they do not replace server-side validation.
 
 ---
 
@@ -169,7 +169,7 @@ Server actions are the **single source of enforcement**. UI restrictions are a U
 
 **File:** `apps/admin/src/lib/date-rules.ts`
 
-**Must include** `import 'server-only'` — this module calls the database and must never run client-side.
+**Must include** `import 'server-only'` - this module calls the database and must never run client-side.
 
 ---
 
@@ -235,7 +235,7 @@ if period === currentPeriod:
 if period < prevPeriod:
   return true
 
-// period === prevPeriod — apply grace + snapshot logic
+// period === prevPeriod - apply grace + snapshot logic
 snapshot = await getSnapshotByPeriod(period)
 if snapshot exists:
   return true
@@ -283,17 +283,17 @@ await isPeriodClosed("2026-05-15")  // → true  (snapshot exists)
 
 ## 2.3 Snapshot Module Fixes
 
-### Dashboard Close Month Button — Critical Bug Fix
+### Dashboard Close Month Button - Critical Bug Fix
 
 **File:** `apps/admin/src/app/(admin)/dashboard/page.tsx`
 
 The `currentPeriod` passed to `CloseMonthButton` must be the **previous month**, not the current month.
 
 ```ts
-// CURRENT (WRONG) — closes current month
+// CURRENT (WRONG) - closes current month
 const currentPeriod = now.toISOString().slice(0, 7)
 
-// FIXED — closes previous month
+// FIXED - closes previous month
 const prev = new Date(now.getFullYear(), now.getMonth() - 1, 1)
 const periodToClose = `${prev.getFullYear()}-${String(prev.getMonth() + 1).padStart(2, '0')}`
 ```
@@ -304,7 +304,7 @@ Pass `periodToClose` to `CloseMonthButton` and `hasSnapshot` should check `perio
 
 ### Snapshot Immutability
 
-No delete or update actions exist in the UI for snapshots. This is correct and intentional — maintain this absence. Do not add delete or update routes for snapshots.
+No delete or update actions exist in the UI for snapshots. This is correct and intentional - maintain this absence. Do not add delete or update routes for snapshots.
 
 The existing guard in `closeMonth()` already prevents duplicate snapshots:
 
@@ -356,7 +356,7 @@ if (await isPeriodClosed(parsed.date)) {
 
 ---
 
-### Delete Pattern — Critical Safety Rule
+### Delete Pattern - Critical Safety Rule
 
 **Never trust a client-provided date for delete operations.**
 Always fetch the record from the database first, then validate using the stored date.
@@ -365,7 +365,7 @@ Always fetch the record from the database first, then validate using the stored 
 // deleteIncome example
 export async function deleteIncome(id: string): Promise<{ error?: string }> {
   try {
-    // 1. Fetch from DB — do not use any client-provided date
+    // 1. Fetch from DB - do not use any client-provided date
     const existing = await getIncomeById(id)
     if (!existing) return { error: 'Record not found.' }
 
@@ -391,11 +391,11 @@ Apply the same pattern to `deleteExpense` (use `getExpenseById`) and `deleteLedg
 
 ## 2.5 UI Enforcement
 
-UI enforcement is **secondary** — it improves UX but does not replace server-side validation.
+UI enforcement is **secondary** - it improves UX but does not replace server-side validation.
 
 ---
 
-### Page Components — Compute `closedPeriods` Server-Side
+### Page Components - Compute `closedPeriods` Server-Side
 
 **Files:** `income/page.tsx`, `expenses/page.tsx`, `ledger/page.tsx`
 
@@ -418,7 +418,7 @@ const closedPeriods = await getClosedPeriodsFromDates(
 
 ---
 
-### Table Components — Conditional Rendering
+### Table Components - Conditional Rendering
 
 **Files:** `income-table.tsx`, `expense-table.tsx`, `ledger-table.tsx`
 
@@ -455,7 +455,7 @@ If `isLocked`:
 
 ---
 
-### Date Inputs — Restrict `min` Attribute
+### Date Inputs - Restrict `min` Attribute
 
 Pass `minDate: string` down from the page through the client component to the add and edit forms.
 
@@ -495,20 +495,20 @@ Server Action receives payload
 
 | Case | Behaviour |
 |------|-----------|
-| Snapshot created on day 2 | Immediately locks that period — grace period irrelevant |
+| Snapshot created on day 2 | Immediately locks that period - grace period irrelevant |
 | Empty month (no income/expenses) | Auto-close skips it; still locked by day ≥ 6 rule via `isPeriodClosed` |
-| Month 2+ months ago | Always closed — no snapshot check needed, `period < prevPeriod` short-circuits |
+| Month 2+ months ago | Always closed - no snapshot check needed, `period < prevPeriod` short-circuits |
 | Timezone offset | Always use server time (`new Date()` in server actions). Never trust client dates |
-| Manual DB edits bypassing the app | Not in scope — requires DB-level triggers if needed in future |
+| Manual DB edits bypassing the app | Not in scope - requires DB-level triggers if needed in future |
 
 ---
 
 ## 2.8 Security & Integrity
 
 - Server actions are the **single source of truth** for enforcement
-- UI is a convenience layer only — never the only guard
+- UI is a convenience layer only - never the only guard
 - Dates for delete operations must always come from the database, not the client
-- `date-rules.ts` must be `server-only` — never runs in the browser
+- `date-rules.ts` must be `server-only` - never runs in the browser
 
 ---
 

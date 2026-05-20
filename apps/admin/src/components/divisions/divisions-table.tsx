@@ -144,7 +144,7 @@ function DivisionTableRow({
                 : <Power className="h-4 w-4 text-green-500" />}
             </Button>
             {hasRecords ? (
-              <Button variant="ghost" size="icon" disabled title="Cannot delete — has financial records">
+              <Button variant="ghost" size="icon" disabled title="Cannot delete - has financial records">
                 <Trash2 className="h-4 w-4 text-muted-foreground/30" />
               </Button>
             ) : (

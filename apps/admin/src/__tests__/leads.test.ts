@@ -204,7 +204,7 @@ describe('leads test setup', () => {
     )
   })
   // Feature: leads-management, Property 6: new+contacted+converted+lost sum equals all
-  it('P6: getLeadCountsByStatus — new+contacted+converted+lost sum equals all', async () => {
+  it('P6: getLeadCountsByStatus - new+contacted+converted+lost sum equals all', async () => {
     // Validates: Requirements 2.2, 10.3
     await fc.assert(
       fc.asyncProperty(
@@ -269,7 +269,7 @@ describe('leads test setup', () => {
     )
   })
   // Feature: leads-management, Property 8: valid status persisted, updatedAt updated
-  it('P8: updateLeadStatus round-trip — valid status persisted, updatedAt updated', async () => {
+  it('P8: updateLeadStatus round-trip - valid status persisted, updatedAt updated', async () => {
     // Validates: Requirements 5.2, 5.3, 6.3
     await fc.assert(
       fc.asyncProperty(
@@ -302,7 +302,7 @@ describe('leads test setup', () => {
     )
   })
   // Feature: leads-management, Property 9: notes persisted, updatedAt updated
-  it('P9: updateLeadNotes round-trip — notes persisted, updatedAt updated', async () => {
+  it('P9: updateLeadNotes round-trip - notes persisted, updatedAt updated', async () => {
     // Validates: Requirements 7.2, 7.3, 8.3, 8.6
     await fc.assert(
       fc.asyncProperty(
@@ -367,7 +367,7 @@ describe('leads test setup', () => {
     )
   })
   // Feature: leads-management, Property 11: LeadStatusSchema round-trip for all four valid values
-  it('P11: LeadStatusSchema round-trip — all four valid status values parse correctly', () => {
+  it('P11: LeadStatusSchema round-trip - all four valid status values parse correctly', () => {
     // Validates: Requirements 9.1, 9.3
     fc.assert(
       fc.property(

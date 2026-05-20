@@ -33,7 +33,7 @@ owner compensation.
 
 - Track all income and expenses per division
 - Ensure each division is self-sustaining
-- Automate financial allocation — salary is calculated, never guessed
+- Automate financial allocation - salary is calculated, never guessed
 - Provide accurate monthly figures with historical snapshots
 - Enable data-driven decisions on reinvestment and growth
 
@@ -43,7 +43,7 @@ owner compensation.
 
 The model runs in two levels:
 
-### Level 1 — Revenue Split
+### Level 1 - Revenue Split
 
 Every rand of gross revenue is split before profit is calculated:
 
@@ -54,7 +54,7 @@ Gross Revenue
   └── Profit Pool: what remains after expenses and PMG share
 ```
 
-### Level 2 — Profit Pool Distribution
+### Level 2 - Profit Pool Distribution
 
 The profit pool is distributed across four allocations:
 
@@ -88,13 +88,13 @@ flex        = profitPool × 0.05
 | Allocation | Base | Rate | Notes |
 |---|---|---|---|
 | PMG Share | Gross revenue | 20% | Deducted before expenses |
-| Salary | Profit pool | 35% | Owner take-home — system-calculated |
+| Salary | Profit pool | 35% | Owner take-home - system-calculated |
 | Reinvest | Profit pool | 30% | Growth spending |
 | Reserve | Profit pool | 30% | Emergency / stability buffer |
-| Flex | Profit pool | 5% | Discretionary — reward system |
+| Flex | Profit pool | 5% | Discretionary - reward system |
 
 **The allocations always sum to 100% of the profit pool.**
-PMG Share is separate — it is taken from gross revenue, not from the profit pool.
+PMG Share is separate - it is taken from gross revenue, not from the profit pool.
 
 ---
 
@@ -103,10 +103,10 @@ PMG Share is separate — it is taken from gross revenue, not from the profit po
 | Allocation | Role | Purpose |
 |---|---|---|
 | **PMG Share (20%)** | Business backbone | Shared infrastructure, admin tools, scalability costs, and the overhead of operating under the PMG umbrella. Every division pays this regardless of profitability. |
-| **Salary (35%)** | Personal stability | The owner's consistent take-home. Because it is calculated from actual profit, it rises when the business performs well and contracts when it does not — giving honest feedback on business health. |
+| **Salary (35%)** | Personal stability | The owner's consistent take-home. Because it is calculated from actual profit, it rises when the business performs well and contracts when it does not - giving honest feedback on business health. |
 | **Reinvest (30%)** | Growth engine | Advertising, new tools, hiring support, product development (e.g. TenderTrack 360). This is the business investing in its own future. |
 | **Reserve (30%)** | Risk protection | Emergency fund and low-income buffer. This allocation is never spent on day-to-day operations. It exists to cover months where revenue dips, unexpected costs hit, or new initiatives require runway. |
-| **Flex (5%)** | Reward system | Controlled discretionary spending — business entertainment, team meals, personal rewards for hitting milestones. Small enough to be sustainable, intentional enough to feel meaningful. |
+| **Flex (5%)** | Reward system | Controlled discretionary spending - business entertainment, team meals, personal rewards for hitting milestones. Small enough to be sustainable, intentional enough to feel meaningful. |
 
 ---
 
@@ -133,7 +133,7 @@ All incoming revenue.
 |---|---|---|
 | `id` | uuid PK | |
 | `date` | date NOT NULL | Actual payment received date |
-| `division_id` | uuid FK → divisions | Required — no orphan income |
+| `division_id` | uuid FK → divisions | Required - no orphan income |
 | `client_id` | uuid FK → clients | Optional |
 | `description` | text | |
 | `amount` | numeric(12,2) NOT NULL | Must be > 0 (CHECK constraint) |
@@ -148,7 +148,7 @@ All outgoing costs.
 |---|---|---|
 | `id` | uuid PK | |
 | `date` | date NOT NULL | Actual payment date |
-| `division_id` | uuid FK → divisions | Required — no orphan expenses |
+| `division_id` | uuid FK → divisions | Required - no orphan expenses |
 | `category` | text NOT NULL | Freeform: "Hosting", "Printing", "Transport"… |
 | `description` | text | |
 | `amount` | numeric(12,2) NOT NULL | Must be > 0 (CHECK constraint) |
@@ -157,7 +157,7 @@ All outgoing costs.
 
 ### `clients`
 
-Optional — links income to a named client for per-client reporting.
+Optional - links income to a named client for per-client reporting.
 
 | Column | Type | Notes |
 |---|---|---|
@@ -174,7 +174,7 @@ Optional — links income to a named client for per-client reporting.
 ## 6. Calculation Engine
 
 The financial engine lives in `apps/admin/src/lib/financial.ts`.
-It is a server-only module — no `'use client'`.
+It is a server-only module - no `'use client'`.
 
 ```ts
 // Simplified representation of the calculation logic
@@ -204,7 +204,7 @@ The underlying database queries (`getTotalRevenue`, `getTotalExpenses`,
 `getRevenueByDivision`, `getLeadsByStatus`) live in `packages/db/src/queries.ts`
 and are re-exported from `@pmg/db`.
 
-All calculations are **runtime** — they are computed fresh on every dashboard load.
+All calculations are **runtime** - they are computed fresh on every dashboard load.
 Historical values are locked by the snapshot system (Phase 7 in `pmg-admin-development-phases.md`).
 
 ---
@@ -225,7 +225,7 @@ These rules are enforced by the system and must not be bypassed:
    deducted. It is not negotiable and does not vary by division.
 
 5. **Expenses are real costs only.** Salary, reinvestment, and reserve are
-   allocations from profit — they are not expenses. Do not enter salary withdrawals
+   allocations from profit - they are not expenses. Do not enter salary withdrawals
    as expenses. Doing so double-counts them and collapses the profit pool.
 
 6. **The `amount` field must be positive.** A CHECK constraint enforces this at the
@@ -233,7 +233,7 @@ These rules are enforced by the system and must not be bypassed:
 
 7. **The `updated_at` field is application-managed.** Any direct SQL edits that
    bypass the admin will leave `updated_at` stale. The financial figures remain
-   correct — only the audit trail is affected.
+   correct - only the audit trail is affected.
 
 ---
 
@@ -249,7 +249,7 @@ divisionMargin   = divisionProfit / divisionRevenue × 100
 ```
 
 A division is self-sustaining when `divisionProfit > 0`.
-The PMG Share (20%) is taken from **total** gross revenue, not per-division —
+The PMG Share (20%) is taken from **total** gross revenue, not per-division -
 so individual division P&L figures do not deduct PMG Share.
 
 ---
@@ -258,9 +258,9 @@ so individual division P&L figures do not deduct PMG Share.
 
 | Mistake | Consequence | Prevention |
 |---|---|---|
-| Entering salary withdrawals as expenses | Profit pool collapses, salary calculation is wrong | Salary is an allocation, not an expense — never enter it in the expenses table |
+| Entering salary withdrawals as expenses | Profit pool collapses, salary calculation is wrong | Salary is an allocation, not an expense - never enter it in the expenses table |
 | Forgetting to assign a division | Insert rejected by DB (NOT NULL) | Division select is required on all income/expense forms |
-| Using `DATABASE_URL_DIRECT` | Migration fails — env var renamed | Use `DATABASE_URL_UNPOOLED` |
+| Using `DATABASE_URL_DIRECT` | Migration fails - env var renamed | Use `DATABASE_URL_UNPOOLED` |
 | Editing past income without snapshots | All historical dashboard numbers shift | Always close the month before editing past entries (Phase 7) |
 | Confusing PMG Share with expenses | PMG Share is 20% of revenue, deducted before profit | PMG Share is calculated, never entered manually |
 

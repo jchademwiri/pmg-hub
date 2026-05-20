@@ -4,9 +4,9 @@
 
 Three targeted enhancements to the PMG Control Center admin dashboard:
 
-1. **Salary Withdrawal Input** — a Withdraw button on the SalaryCard opens a modal dialog that lets the owner record a withdrawal amount directly, persisting it to a dedicated `withdrawals` table. The SalaryCard also gains a YTD salary sub-label alongside the primary current-month figure.
-2. **Expense Sparkline Color Update** — the expense line on the Revenue vs Expenses sparkline is recolored to a soft/muted red so it is visually distinct from the revenue line.
-3. **Division Revenue Chart Time Range Controls** — the DivisionAreaChart gains a "Previous Month" range option to complete the full set of five time ranges.
+1. **Salary Withdrawal Input** - a Withdraw button on the SalaryCard opens a modal dialog that lets the owner record a withdrawal amount directly, persisting it to a dedicated `withdrawals` table. The SalaryCard also gains a YTD salary sub-label alongside the primary current-month figure.
+2. **Expense Sparkline Color Update** - the expense line on the Revenue vs Expenses sparkline is recolored to a soft/muted red so it is visually distinct from the revenue line.
+3. **Division Revenue Chart Time Range Controls** - the DivisionAreaChart gains a "Previous Month" range option to complete the full set of five time ranges.
 
 ## Glossary
 
@@ -76,7 +76,7 @@ Three targeted enhancements to the PMG Control Center admin dashboard:
 4. THE RevenueSparkline tooltip SHALL use the same `--chart-expense` color for the expenses row indicator.
 5. WHEN `--chart-expense` is defined, THE revenue series SHALL continue to use `var(--chart-1)` unchanged.
 
-### Requirement 5: Division Revenue Chart — Previous Month Range
+### Requirement 5: Division Revenue Chart - Previous Month Range
 
 **User Story:** As a dashboard user, I want to view division revenue for the previous calendar month, so that I can compare last month's performance by division without switching to the reports page.
 
