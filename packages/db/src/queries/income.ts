@@ -1,6 +1,7 @@
 import { db } from '../client';
 import { income, divisions, clients } from '../schema/index';
 import { sql, eq, desc, and } from 'drizzle-orm';
+import { getMonthPeriodDates } from './billing';
 
 export type IncomeRow = {
   id: string;
@@ -18,7 +19,13 @@ export type IncomeRow = {
  * with optional filters for divisionId and month (YYYY-MM), sorted by date DESC.
  */
 export async function getAllIncome(
-  filters?: { divisionId?: string; month?: string; year?: number; clientId?: string },
+  filters?: {
+    divisionId?: string;
+    month?: string;
+    year?: number;
+    clientId?: string;
+    monthPeriod?: 'current' | 'previous' | 'past3';
+  },
   pageObj?: { page: number; pageSize: number },
 ): Promise<{ data: IncomeRow[]; total: number; sum: number }> {
   const conditions = [];
@@ -35,6 +42,13 @@ export async function getAllIncome(
     conditions.push(
       sql`${income.date} >= ${`${filters.year}-03-01`}`,
       sql`${income.date} < ${`${filters.year + 1}-03-01`}`
+    );
+  }
+  if (filters?.monthPeriod) {
+    const { startDate, endDate } = getMonthPeriodDates(filters.monthPeriod);
+    conditions.push(
+      sql`${income.date} >= ${startDate}`,
+      sql`${income.date} <= ${endDate}`
     );
   }
 

@@ -26,7 +26,8 @@ export function resolveYear(param: string | undefined): number {
     const n = parseInt(param, 10)
     if (n >= 1000 && n <= 9999) return n
   }
-  return new Date().getFullYear()
+  const now = new Date()
+  return now.getMonth() < 2 ? now.getFullYear() - 1 : now.getFullYear()
 }
 
 export default async function ReportsPage({ searchParams }: ReportsPageProps) {

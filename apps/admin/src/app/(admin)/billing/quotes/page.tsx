@@ -34,13 +34,16 @@ export default async function QuotesPage({ searchParams }: QuotesPageProps) {
   const normalizedStatus = status && VALID_QUOTE_STATUSES.has(status) ? status : undefined;
   const pageSize = 20;
 
-  const result = await getAllQuotations(
-    { divisionId, status: normalizedStatus },
-    { page: currentPage, pageSize },
-  );
+  const now = new Date();
+  const currentFY = now.getMonth() < 2 ? now.getFullYear() - 1 : now.getFullYear();
 
-  // Fetch unfiltered stats in parallel with the paginated result
-  const allResult = await getAllQuotations();
+  const [result, allResult] = await Promise.all([
+    getAllQuotations(
+      { divisionId, status: normalizedStatus, year: currentFY },
+      { page: currentPage, pageSize },
+    ),
+    getAllQuotations({ year: currentFY }),
+  ]);
 
   const totalCount = allResult.total;
   const pendingCount = allResult.data.filter(
@@ -52,7 +55,7 @@ export default async function QuotesPage({ searchParams }: QuotesPageProps) {
   const declinedCount = allResult.data.filter((q) => q.status === 'declined').length;
 
   const stats = [
-    { label: 'Total Quotes', value: String(totalCount), icon: FileText, description: 'All time' },
+    { label: 'Total Quotes', value: String(totalCount), icon: FileText, description: 'Year to Date' },
     { label: 'Pending', value: String(pendingCount), icon: Clock, description: 'Awaiting response' },
     { label: 'Accepted', value: String(acceptedCount), icon: CheckCircle, description: 'Accepted or converted' },
     { label: 'Declined', value: String(declinedCount), icon: XCircle, description: 'Not accepted' },

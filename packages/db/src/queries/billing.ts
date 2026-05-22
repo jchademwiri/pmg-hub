@@ -242,11 +242,41 @@ const invoiceRowSelect = {
   updatedAt: invoices.updatedAt,
 };
 
+export function getMonthPeriodDates(monthPeriod: 'current' | 'previous' | 'past3') {
+  const now = new Date();
+  let startDate: string;
+  let endDate: string;
+
+  const formatDateISO = (d: Date) => {
+    return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+  };
+
+  if (monthPeriod === 'current') {
+    const firstDay = new Date(now.getFullYear(), now.getMonth(), 1);
+    const lastDay = new Date(now.getFullYear(), now.getMonth() + 1, 0);
+    startDate = formatDateISO(firstDay);
+    endDate = formatDateISO(lastDay);
+  } else if (monthPeriod === 'previous') {
+    const firstDay = new Date(now.getFullYear(), now.getMonth() - 1, 1);
+    const lastDay = new Date(now.getFullYear(), now.getMonth(), 0);
+    startDate = formatDateISO(firstDay);
+    endDate = formatDateISO(lastDay);
+  } else {
+    // Past 3 months rolling: from 1st of month 2 months ago to end of current month
+    const firstDay = new Date(now.getFullYear(), now.getMonth() - 2, 1);
+    const lastDay = new Date(now.getFullYear(), now.getMonth() + 1, 0);
+    startDate = formatDateISO(firstDay);
+    endDate = formatDateISO(lastDay);
+  }
+
+  return { startDate, endDate };
+}
+
 // ── getAllQuotations ───────────────────────────────────────────────────────────
 
 /**
  * Returns paginated quotation rows joined to divisions (INNER) and clients (LEFT),
- * with optional filters for divisionId, status, clientId, and month (YYYY-MM).
+ * with optional filters for divisionId, status, clientId, month (YYYY-MM), year, and monthPeriod.
  * Ordered by quote_date DESC, created_at DESC.
  */
 export async function getAllQuotations(
@@ -255,6 +285,8 @@ export async function getAllQuotations(
     status?: string;
     clientId?: string;
     month?: string;
+    year?: number;
+    monthPeriod?: 'current' | 'previous' | 'past3';
   },
   pageObj?: { page: number; pageSize: number },
 ): Promise<{ data: QuotationRow[]; total: number; sum: number }> {
@@ -274,6 +306,15 @@ export async function getAllQuotations(
   }
   if (filters?.month) {
     conditions.push(sql`TO_CHAR(${quotations.quoteDate}, 'YYYY-MM') = ${filters.month}`);
+  }
+  if (filters?.year) {
+    const start = `${filters.year}-03-01`;
+    const end = `${filters.year + 1}-03-01`;
+    conditions.push(sql`${quotations.quoteDate} >= ${start} AND ${quotations.quoteDate} < ${end}`);
+  }
+  if (filters?.monthPeriod) {
+    const { startDate, endDate } = getMonthPeriodDates(filters.monthPeriod);
+    conditions.push(sql`${quotations.quoteDate} >= ${startDate} AND ${quotations.quoteDate} <= ${endDate}`);
   }
 
   const query = db
@@ -320,6 +361,8 @@ export async function getAllInvoices(
     status?: string;
     clientId?: string;
     month?: string;
+    year?: number;
+    monthPeriod?: 'current' | 'previous' | 'past3';
   },
   pageObj?: { page: number; pageSize: number },
 ): Promise<{ data: InvoiceRow[]; total: number; sum: number; outstanding: number }> {
@@ -336,6 +379,15 @@ export async function getAllInvoices(
   }
   if (filters?.month) {
     conditions.push(sql`TO_CHAR(${invoices.invoiceDate}, 'YYYY-MM') = ${filters.month}`);
+  }
+  if (filters?.year) {
+    const start = `${filters.year}-03-01`;
+    const end = `${filters.year + 1}-03-01`;
+    conditions.push(sql`${invoices.invoiceDate} >= ${start} AND ${invoices.invoiceDate} < ${end}`);
+  }
+  if (filters?.monthPeriod) {
+    const { startDate, endDate } = getMonthPeriodDates(filters.monthPeriod);
+    conditions.push(sql`${invoices.invoiceDate} >= ${startDate} AND ${invoices.invoiceDate} <= ${endDate}`);
   }
 
   // Alias quotations for the join
@@ -518,7 +570,7 @@ export async function getInvoiceById(id: string): Promise<InvoiceDetail | null> 
  */
 export async function getClientStatement(
   clientId: string,
-  filters?: { year?: number },
+  filters?: { year?: number; monthPeriod?: 'current' | 'previous' | 'past3' },
 ): Promise<ClientStatement | null> {
   const includeReference = await hasQuotationReferenceColumn();
   // Fetch client
@@ -536,18 +588,29 @@ export async function getClientStatement(
   if (clientRows.length === 0) return null;
   const client = clientRows[0]!;
 
-  // Build year filter condition
-  const quoteYearCondition = filters?.year
-    ? sql`${quotations.quoteDate} >= ${`${filters.year}-03-01`} AND ${quotations.quoteDate} < ${`${filters.year + 1}-03-01`}`
-    : undefined;
-  const invoiceYearCondition = filters?.year
-    ? sql`${invoices.invoiceDate} >= ${`${filters.year}-03-01`} AND ${invoices.invoiceDate} < ${`${filters.year + 1}-03-01`}`
-    : undefined;
+  // Build filter conditions
+  const quoteConditions = [eq(quotations.clientId, clientId)];
+  const invoiceConditions = [
+    eq(invoices.clientId, clientId),
+    sql`${invoices.status} NOT IN ('draft', 'void')`
+  ];
+  const incomeConditions = [eq(income.clientId, clientId)];
+
+  if (filters?.monthPeriod) {
+    const { startDate, endDate } = getMonthPeriodDates(filters.monthPeriod);
+    quoteConditions.push(sql`${quotations.quoteDate} >= ${startDate} AND ${quotations.quoteDate} <= ${endDate}`);
+    invoiceConditions.push(sql`${invoices.invoiceDate} >= ${startDate} AND ${invoices.invoiceDate} <= ${endDate}`);
+    incomeConditions.push(sql`${income.date} >= ${startDate} AND ${income.date} <= ${endDate}`);
+  } else if (filters?.year) {
+    quoteConditions.push(sql`${quotations.quoteDate} >= ${`${filters.year}-03-01`} AND ${quotations.quoteDate} < ${`${filters.year + 1}-03-01`}`);
+    invoiceConditions.push(sql`${invoices.invoiceDate} >= ${`${filters.year}-03-01`} AND ${invoices.invoiceDate} < ${`${filters.year + 1}-03-01`}`);
+    incomeConditions.push(
+      sql`${income.date} >= ${`${filters.year}-03-01`}`,
+      sql`${income.date} < ${`${filters.year + 1}-03-01`}`
+    );
+  }
 
   // Fetch quotes
-  const quoteConditions = [eq(quotations.clientId, clientId)];
-  if (quoteYearCondition) quoteConditions.push(quoteYearCondition);
-
   const quoteRows = await db
     .select(getQuotationRowSelect(includeReference))
     .from(quotations)
@@ -557,12 +620,6 @@ export async function getClientStatement(
     .orderBy(desc(quotations.quoteDate));
 
   // Fetch invoices (excluding draft and void)
-  const invoiceConditions = [
-    eq(invoices.clientId, clientId),
-    sql`${invoices.status} NOT IN ('draft', 'void')`
-  ];
-  if (invoiceYearCondition) invoiceConditions.push(invoiceYearCondition);
-
   const invoiceRows = await db
     .select({
       id: invoices.id,
@@ -615,13 +672,6 @@ export async function getClientStatement(
   const totalInvoiced = invoiceRows.reduce((s, r) => s + Number(r.total), 0);
   
   // For period paid, we sum income records in that period
-  const incomeConditions = [eq(income.clientId, clientId)];
-  if (filters?.year) {
-    incomeConditions.push(
-      sql`${income.date} >= ${`${filters.year}-03-01`}`,
-      sql`${income.date} < ${`${filters.year + 1}-03-01`}`
-    );
-  }
   const periodPaidRes = await db
     .select({ total: sql<number>`COALESCE(SUM(${income.amount}), 0)::numeric` })
     .from(income)
@@ -648,13 +698,15 @@ export async function getClientStatement(
   };
 }
 
-// ── getClientsWithBillingActivity ─────────────────────────────────────────────
+export async function getClientsWithBillingActivity(filters?: { year?: number }): Promise<ClientBillingRow[]> {
+  const year = filters?.year;
+  const start = year ? `${year}-03-01` : null;
+  const end = year ? `${year + 1}-03-01` : null;
 
-/**
- * Returns all clients that have at least one quotation OR one invoice.
- * Each row includes aggregate billing stats.
- */
-export async function getClientsWithBillingActivity(): Promise<ClientBillingRow[]> {
+  const quoteFilter = year ? sql`WHERE quote_date >= ${start} AND quote_date < ${end}` : sql``;
+  const invoiceFilter = year ? sql`WHERE invoice_date >= ${start} AND invoice_date < ${end}` : sql``;
+  const incomeFilter = year ? sql`WHERE date >= ${start} AND date < ${end}` : sql``;
+
   const result = await db.execute(sql`
     SELECT
       c.id,
@@ -673,6 +725,7 @@ export async function getClientsWithBillingActivity(): Promise<ClientBillingRow[
         COUNT(*)::int AS quote_count,
         MAX(quote_date) AS last_quote_date
       FROM quotations
+      ${quoteFilter}
       GROUP BY client_id
     ) q ON q.client_id = c.id
     LEFT JOIN (
@@ -682,6 +735,7 @@ export async function getClientsWithBillingActivity(): Promise<ClientBillingRow[
         MAX(invoice_date) AS last_invoice_date,
         COALESCE(SUM(CASE WHEN status NOT IN ('draft', 'void') THEN total ELSE 0 END), 0) AS total_invoiced
       FROM invoices
+      ${invoiceFilter}
       GROUP BY client_id
     ) inv ON inv.client_id = c.id
     LEFT JOIN (
@@ -689,6 +743,7 @@ export async function getClientsWithBillingActivity(): Promise<ClientBillingRow[
         client_id,
         COALESCE(SUM(amount), 0) AS total_paid
       FROM income
+      ${incomeFilter}
       GROUP BY client_id
     ) inc ON inc.client_id = c.id
     WHERE q.client_id IS NOT NULL OR inv.client_id IS NOT NULL

@@ -19,7 +19,10 @@ export const dynamic = 'force-dynamic';
 export const metadata: Metadata = { title: 'Statements' };
 
 export default async function StatementsPage() {
-  const clients = await getClientsWithBillingActivity();
+  const now = new Date();
+  const currentFY = now.getMonth() < 2 ? now.getFullYear() - 1 : now.getFullYear();
+
+  const clients = await getClientsWithBillingActivity({ year: currentFY });
 
   const totalBilled = clients.reduce((s, c) => s + c.totalInvoiced, 0);
   const totalOutstanding = clients.reduce((s, c) => s + c.totalOutstanding, 0);
@@ -28,7 +31,7 @@ export default async function StatementsPage() {
 
   const stats = [
     { label: 'Active Clients', value: String(activeCount), icon: Users, description: 'With billing activity' },
-    { label: 'Total Billed', value: formatZAR(totalBilled), icon: TrendingUp, description: 'All time' },
+    { label: 'Total Billed', value: formatZAR(totalBilled), icon: TrendingUp, description: 'Year to Date' },
     { label: 'Outstanding', value: formatZAR(totalOutstanding), icon: AlertCircle, description: 'Unpaid invoices' },
     { label: 'Fully Paid', value: String(activeCount - withOutstanding), icon: CheckCircle, description: 'No balance due' },
   ];

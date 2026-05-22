@@ -88,12 +88,12 @@ export async function getMonthlyFinancials(): Promise<
   const result = await db.execute(sql`
     WITH rev AS (
       SELECT TO_CHAR(date, 'YYYY-MM') AS month, COALESCE(SUM(amount), 0) AS revenue
-      FROM income WHERE EXTRACT(YEAR FROM date) = EXTRACT(YEAR FROM NOW())
+      FROM income WHERE EXTRACT(YEAR FROM (date - INTERVAL '2 months')) = EXTRACT(YEAR FROM (NOW() - INTERVAL '2 months'))
       GROUP BY TO_CHAR(date, 'YYYY-MM')
     ),
     exp AS (
       SELECT TO_CHAR(date, 'YYYY-MM') AS month, COALESCE(SUM(amount), 0) AS expenses
-      FROM expenses WHERE EXTRACT(YEAR FROM date) = EXTRACT(YEAR FROM NOW())
+      FROM expenses WHERE EXTRACT(YEAR FROM (date - INTERVAL '2 months')) = EXTRACT(YEAR FROM (NOW() - INTERVAL '2 months'))
       GROUP BY TO_CHAR(date, 'YYYY-MM')
     )
     SELECT COALESCE(rev.month, exp.month) AS month,
@@ -217,7 +217,8 @@ export async function getPreviousYearYTDSummary(): Promise<PeriodSummary> {
 }
 
 /**
- * Returns total expenses grouped by category for the given calendar year,
+/**
+ * Returns total expenses grouped by category for the given financial year,
  * ordered by total descending.
  */
 export async function getExpensesByCategoryForYear(
@@ -229,22 +230,22 @@ export async function getExpensesByCategoryForYear(
       total: sql<string>`COALESCE(SUM(${expenses.amount}), '0')`,
     })
     .from(expenses)
-    .where(sql`EXTRACT(YEAR FROM ${expenses.date}) = ${year}`)
+    .where(sql`EXTRACT(YEAR FROM (${expenses.date} - INTERVAL '2 months')) = ${year}`)
     .groupBy(expenses.category)
     .orderBy(desc(sql`SUM(${expenses.amount})`));
   return result.map((r) => ({ category: r.category, total: Number(r.total) }));
 }
 
 /**
- * Returns the union of distinct calendar years from income.date and
+ * Returns the union of distinct financial years from income.date and
  * expenses.date, sorted descending.
  */
 export async function getDistinctYears(): Promise<number[]> {
   const result = await db.execute(sql`
     SELECT year FROM (
-      SELECT DISTINCT EXTRACT(YEAR FROM date)::integer AS year FROM income
+      SELECT DISTINCT EXTRACT(YEAR FROM (date - INTERVAL '2 months'))::integer AS year FROM income
       UNION
-      SELECT DISTINCT EXTRACT(YEAR FROM date)::integer AS year FROM expenses
+      SELECT DISTINCT EXTRACT(YEAR FROM (date - INTERVAL '2 months'))::integer AS year FROM expenses
     ) combined
     ORDER BY year DESC
   `);
@@ -252,7 +253,7 @@ export async function getDistinctYears(): Promise<number[]> {
 }
 
 /**
- * Returns monthly revenue and expenses for the given calendar year,
+ * Returns monthly revenue and expenses for the given financial year,
  * ordered by month ascending. month format is 'YYYY-MM'.
  */
 export async function getMonthlyFinancialsForYear(
@@ -262,13 +263,13 @@ export async function getMonthlyFinancialsForYear(
     WITH rev AS (
       SELECT TO_CHAR(date, 'YYYY-MM') AS month, COALESCE(SUM(amount), 0) AS revenue
       FROM income
-      WHERE EXTRACT(YEAR FROM date) = ${year}
+      WHERE EXTRACT(YEAR FROM (date - INTERVAL '2 months')) = ${year}
       GROUP BY TO_CHAR(date, 'YYYY-MM')
     ),
     exp AS (
       SELECT TO_CHAR(date, 'YYYY-MM') AS month, COALESCE(SUM(amount), 0) AS expenses
       FROM expenses
-      WHERE EXTRACT(YEAR FROM date) = ${year}
+      WHERE EXTRACT(YEAR FROM (date - INTERVAL '2 months')) = ${year}
       GROUP BY TO_CHAR(date, 'YYYY-MM')
     )
     SELECT COALESCE(rev.month, exp.month) AS month,
@@ -285,7 +286,7 @@ export async function getMonthlyFinancialsForYear(
 }
 
 /**
- * Returns monthly revenue per division for the given calendar year,
+ * Returns monthly revenue per division for the given financial year,
  * ordered by month ascending then division name ascending.
  */
 export async function getMonthlyRevenueByDivisionForYear(
@@ -299,7 +300,7 @@ export async function getMonthlyRevenueByDivisionForYear(
     })
     .from(income)
     .innerJoin(divisions, eq(income.divisionId, divisions.id))
-    .where(sql`EXTRACT(YEAR FROM ${income.date}) = ${year}`)
+    .where(sql`EXTRACT(YEAR FROM (${income.date} - INTERVAL '2 months')) = ${year}`)
     .groupBy(sql`TO_CHAR(${income.date}, 'YYYY-MM')`, divisions.name)
     .orderBy(sql`TO_CHAR(${income.date}, 'YYYY-MM') ASC`, asc(divisions.name));
   return result.map((r) => ({
