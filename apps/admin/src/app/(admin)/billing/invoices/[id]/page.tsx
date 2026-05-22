@@ -10,7 +10,7 @@ import { BillingStatusBadge } from '@/components/billing/billing-status-badge';
 import { BillingTotalsBlock } from '@/components/billing/billing-totals-block';
 import { getInvoiceById, getDivisionBillingSettings } from '@pmg/db';
 import { issueInvoice, markInvoicePaid, voidInvoice } from '@/app/actions/billing-invoices';
-import { fmtDate } from '@/lib/format';
+import { fmtDate, fmtDateTime } from '@/lib/format';
 import { getDocumentLogoUrl } from '@/lib/document-logo';
 import { InvoiceDetailActions } from './invoice-detail-actions';
 import { PrintButton } from '@/components/billing/print-button';
@@ -79,7 +79,7 @@ export default async function InvoiceDetailPage({ params }: Props) {
   return (
     <div className="flex flex-col gap-6">
       {/* Page header */}
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div className="flex items-center gap-4">
           <Button variant="ghost" size="sm" asChild>
             <Link href="/billing/invoices">
@@ -161,20 +161,14 @@ export default async function InvoiceDetailPage({ params }: Props) {
                   <div className="flex flex-col gap-0.5">
                     <span className="text-sm">Invoice paid</span>
                     <span className="text-xs text-muted-foreground">
-                      {new Date(invoice.paidAt).toLocaleString('en-ZA', {
-                        day: '2-digit', month: 'short', year: 'numeric',
-                        hour: '2-digit', minute: '2-digit',
-                      })}
+                    {fmtDateTime(invoice.paidAt)}
                     </span>
                   </div>
                 )}
                 <div className="flex flex-col gap-0.5">
                   <span className="text-sm">Invoice created</span>
                   <span className="text-xs text-muted-foreground">
-                    {new Date(invoice.createdAt).toLocaleString('en-ZA', {
-                      day: '2-digit', month: 'short', year: 'numeric',
-                      hour: '2-digit', minute: '2-digit',
-                    })}
+                    {fmtDateTime(invoice.createdAt)}
                   </span>
                 </div>
               </div>

@@ -148,7 +148,7 @@ export default async function StatementDetailPage({ params, searchParams }: Prop
   return (
     <div className="flex flex-col gap-6">
       {/* Page header */}
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div className="flex items-center gap-4">
           <Button variant="ghost" size="sm" asChild>
             <Link href="/billing/statements">
@@ -277,7 +277,7 @@ export default async function StatementDetailPage({ params, searchParams }: Prop
 
       {/* Income records section */}
       {incomeResult.data.length > 0 && (
-        <div className="overflow-x-auto">
+        <div>
           <Card>
             <CardHeader>
               <CardTitle>Income Records</CardTitle>
@@ -288,8 +288,8 @@ export default async function StatementDetailPage({ params, searchParams }: Prop
                 </span>
               </p>
             </CardHeader>
-            <CardContent className="p-0">
-              <table className="w-full text-sm">
+            <CardContent className="p-0 overflow-x-auto">
+              <table className="w-full min-w-[600px] text-sm">
                 <thead>
                   <tr className="border-b">
                     <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground">Date</th>
