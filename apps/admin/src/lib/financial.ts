@@ -28,6 +28,7 @@ import {
   getMonthlyRevenueByDivisionForYear,
   getAllSnapshots,
 } from '@pmg/db'
+import { fmtMonthYear } from '@/lib/format'
 
 // ── Re-export DB types ────────────────────────────────────────────────────────
 export type { PeriodSummary } from '@pmg/db'
@@ -59,15 +60,15 @@ export type DivisionSeriesChart = {
 
 // ── Period label helpers ──────────────────────────────────────────────────────
 export function getCurrentMonthLabel(): string {
-  return new Date().toLocaleString('en-ZA', { month: 'long', year: 'numeric' })
+  return fmtMonthYear(new Date())
 }
 export function getPreviousMonthLabel(): string {
   const d = new Date()
   d.setMonth(d.getMonth() - 1)
-  return d.toLocaleString('en-ZA', { month: 'long', year: 'numeric' })
+  return fmtMonthYear(d)
 }
 export function getYTDLabel(): string {
-  return `Jan – ${new Date().toLocaleString('en-ZA', { month: 'short', year: 'numeric' })}`
+  return `Jan - ${fmtMonthYear(new Date(), { short: true })}`
 }
 
 // ── All-time summary (YTD shortcut for totals) ────────────────────────────────

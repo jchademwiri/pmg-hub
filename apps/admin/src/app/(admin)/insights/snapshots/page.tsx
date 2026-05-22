@@ -1,6 +1,6 @@
 import type { Metadata } from 'next'
 import { getAllSnapshots } from '@pmg/db'
-import { formatZAR } from '@/lib/format'
+import { formatZAR, fmtMonthYear } from '@/lib/format'
 import {
   Table,
   TableBody,
@@ -47,10 +47,7 @@ export default async function SnapshotsPage() {
             {snapshots.map((row) => (
               <TableRow key={row.id}>
                 <TableCell>
-                  {new Date(row.period + '-01').toLocaleString('en-ZA', {
-                    month: 'long',
-                    year: 'numeric',
-                  })}
+                  {fmtMonthYear(row.period)}
                 </TableCell>
                 <TableCell className="text-green-500 tabular-nums font-medium">{formatZAR(Number(row.revenue))}</TableCell>
                 <TableCell className="text-amber-500 tabular-nums font-medium">{formatZAR(Number(row.expenses))}</TableCell>

@@ -44,3 +44,24 @@ export function fmtDateTime(value: string | Date | null | undefined): string {
   })
 }
 
+/**
+ * Format a date string (YYYY-MM-DD or YYYY-MM) or Date object as "Month YYYY" (e.g. "May 2026").
+ * Safeguards against timezone daylight/offset shifting.
+ */
+export function fmtMonthYear(value: string | Date | null | undefined, options?: { short?: boolean }): string {
+  if (!value) return '-'
+  let date: Date
+  if (typeof value === 'string') {
+    const dateStr = value.includes('-') && value.split('-').length === 2 ? value + '-01' : value
+    const finalStr = dateStr.length === 10 ? dateStr + 'T00:00:00' : dateStr
+    date = new Date(finalStr)
+  } else {
+    date = value
+  }
+  return date.toLocaleString('en-ZA', {
+    month: options?.short ? 'short' : 'long',
+    year: 'numeric'
+  })
+}
+
+
