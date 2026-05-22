@@ -11,9 +11,10 @@ This document outlines the proposal and implementation phases to transition the 
    - Any transaction falling in January or February will automatically be attributed to the *previous* calendar year's financial year (e.g., January 15, 2026 belongs to the 2025 financial year).
 2. **Label Simplification and Rename:**
    - Update standard all-time overview labels that say `"All time"` (signifying inception-to-date aggregates) to `"Year to Date"` (showing statistics for the current financial year).
-   - **Strict Exclusion:** To protect specialized calendar-year-based reporting, no modifications or renamings are to be made within the routes:
+   - **Strict Label Exclusions:** To preserve standard report labels, **no UI label renamings** (e.g. changing "All time" to "Year to Date") will be performed within the routes:
      - `apps/admin/src/app/(admin)/insights/reports/*`
      - `apps/admin/src/app/(admin)/insights/*`
+   - **Calculation Inclusions:** However, **financial year calculations and date-range filters** (March 1 – February 28/29) **will be fully applied** to these routes and their data queries so that insights reports correctly represent fiscal performance rather than calendar-year figures.
 3. **Statement Monthly Period Filtering:**
    - Extend client statement querying and UI filters to support rolling monthly periods:
      - **Current Month:** The 1st day of the current month to the last day of the current month.
@@ -160,6 +161,7 @@ graph TD
   - Change `"All time"` text to `"Year to Date"`.
   - Pass the dynamic `currentFY` parameter to `getClientsWithBillingActivity`.
 * **Task 2.4:** Update the text label formatting logic inside `apps/admin/src/lib/financial.ts:getYTDLabel()` to present dynamic fiscal years starting from March 1st.
+* **Task 2.5:** Refactor `getProfitPoolSeriesForYear` in `apps/admin/src/lib/financial.ts` and `resolveYear` in `apps/admin/src/app/(admin)/insights/reports/page.tsx` to fully align with standard fiscal year reporting boundaries.
 
 ### Phase 3: Statement Filters UI Integration (`apps/admin`)
 * **Task 3.1:** Refactor client statement detail route `apps/admin/src/app/(admin)/billing/statements/[clientId]/page.tsx` to read `monthPeriod` from URL queries in addition to `year`.
