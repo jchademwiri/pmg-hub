@@ -38,21 +38,6 @@ export default function IncomePageClient({
 }: IncomePageClientProps) {
   return (
     <div className="flex flex-col gap-6">
-      {/* Header card */}
-      <div className="flex justify-between items-center bg-card p-4 rounded-xl border border-border shadow-sm">
-        <div className="flex flex-col gap-0.5">
-          <h2 className="text-lg font-medium">Income</h2>
-          <p className="text-xs text-muted-foreground">
-            All income is recorded through invoices. Create an invoice to record revenue.
-          </p>
-        </div>
-        <Button asChild>
-          <Link href="/billing/invoices/new">
-            <Receipt className="h-4 w-4 mr-2" />
-            New Invoice
-          </Link>
-        </Button>
-      </div>
 
       {/* Table or empty state */}
       {entries.length === 0 ? (
