@@ -22,13 +22,15 @@ export default async function InvoicesPage({ searchParams }: InvoicesPageProps) 
   const currentPage = Math.max(1, parseInt(page || '1', 10));
   const pageSize = 20;
 
+  const now = new Date();
+  const currentFY = now.getMonth() < 2 ? now.getFullYear() - 1 : now.getFullYear();
+
   const [result, allResult] = await Promise.all([
-    getAllInvoices({ divisionId, status }, { page: currentPage, pageSize }),
-    getAllInvoices(),
+    getAllInvoices({ divisionId, status, year: currentFY }, { page: currentPage, pageSize }),
+    getAllInvoices({ year: currentFY }),
   ]);
 
   // Stats from full unfiltered result
-  const now = new Date();
   const thisMonth = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
   const paidThisMonth = allResult.data.filter(
     (inv) => inv.status === 'paid' && inv.invoiceDate.startsWith(thisMonth),
@@ -39,7 +41,7 @@ export default async function InvoicesPage({ searchParams }: InvoicesPageProps) 
   ).length;
 
   const stats = [
-    { label: 'Total Invoices', value: String(allResult.total), icon: FileText, description: 'All time' },
+    { label: 'Total Invoices', value: String(allResult.total), icon: FileText, description: 'Year to Date' },
     { label: 'Pending', value: String(pendingCount), icon: Clock, description: 'Awaiting payment' },
     { label: 'Paid', value: String(paidThisMonth), icon: CheckCircle, description: 'This month' },
     { label: 'Overdue', value: String(overdueCount), icon: AlertCircle, description: 'Past due date' },

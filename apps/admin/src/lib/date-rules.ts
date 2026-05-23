@@ -1,5 +1,6 @@
 import 'server-only';
 import { getSnapshotByPeriod } from '@pmg/db';
+import { fmtMonthYear } from '@/lib/format';
 
 export async function getMinAllowedDate(): Promise<string> {
   const now = new Date();
@@ -42,11 +43,7 @@ export async function isPeriodClosed(date: string): Promise<boolean> {
 }
 
 export function getMinDateErrorMessage(minDate: string): string {
-  const [y, m] = minDate.split('-');
-  const label = new Date(Number(y), Number(m) - 1, 1).toLocaleString('en-ZA', {
-    month: 'long',
-    year: 'numeric',
-  });
+  const label = fmtMonthYear(minDate);
   return `Date must be ${label} or later - this financial period is closed.`;
 }
 

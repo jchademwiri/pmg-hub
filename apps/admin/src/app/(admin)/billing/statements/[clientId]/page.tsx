@@ -7,10 +7,11 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Separator } from '@/components/ui/separator';
 import { DocumentPreview } from '@/components/billing/document-preview';
 import type { StatementTransaction } from '@/components/billing/document-preview';
-import { getClientStatement, getAllIncome, getStatementYears, getDivisionBillingSettings, getClientById } from '@pmg/db';
+import { getClientStatement, getAllIncome, getStatementYears, getDivisionBillingSettings, getClientById, getMonthPeriodDates } from '@pmg/db';
 import { getDocumentLogoUrl } from '@/lib/document-logo';
 import { formatZAR, fmtDate } from '@/lib/format';
 import { PrintButton } from '@/components/billing/print-button';
+import { ExportPdfButton } from '@/components/billing/export-pdf-button';
 
 export const dynamic = 'force-dynamic';
 
@@ -25,17 +26,34 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 
 interface Props {
   params: Promise<{ clientId: string }>;
-  searchParams: Promise<{ year?: string }>;
+  searchParams: Promise<{ year?: string; monthPeriod?: string }>;
 }
 
 export default async function StatementDetailPage({ params, searchParams }: Props) {
   const { clientId } = await params;
-  const { year: yearParam } = await searchParams;
-  const year = yearParam ? parseInt(yearParam, 10) : undefined;
+  const { year: yearParam, monthPeriod: monthPeriodParam } = await searchParams;
+
+  const now = new Date();
+  const currentFY = now.getMonth() < 2 ? now.getFullYear() - 1 : now.getFullYear();
+
+  const isMonthPeriodValid = monthPeriodParam === 'current' || 
+                             monthPeriodParam === 'previous' || 
+                             monthPeriodParam === 'past3' || 
+                             monthPeriodParam === 'past6';
+
+  // Default to 'current' monthPeriod if neither monthPeriod nor year filter is specified in URL
+  const monthPeriod = isMonthPeriodValid
+    ? monthPeriodParam
+    : (!yearParam ? 'current' : undefined);
+
+  // Mutual exclusivity: if monthPeriod is active, year is ignored/undefined
+  const year = monthPeriod 
+    ? undefined 
+    : (yearParam ? parseInt(yearParam, 10) : undefined);
 
   const [statement, incomeResult, availableYears] = await Promise.all([
-    getClientStatement(clientId, year ? { year } : undefined),
-    getAllIncome({ clientId, ...(year ? { year } : {}) }),
+    getClientStatement(clientId, monthPeriod ? { monthPeriod } : (year ? { year } : undefined)),
+    getAllIncome({ clientId, ...(monthPeriod ? { monthPeriod } : (year ? { year } : {})) }),
     getStatementYears(clientId),
   ]);
 
@@ -109,19 +127,43 @@ export default async function StatementDetailPage({ params, searchParams }: Prop
   }
 
   // ── DocumentPreview props ─────────────────────────────────────────────────
-  const now = new Date();
-  const periodLabel = year ? String(year) : String(now.getFullYear());
+  let periodLabel = '';
+  if (monthPeriod === 'current') {
+    periodLabel = 'Current Month';
+  } else if (monthPeriod === 'previous') {
+    periodLabel = 'Previous Month';
+  } else if (monthPeriod === 'past3') {
+    periodLabel = 'Past 3 Months';
+  } else if (monthPeriod === 'past6') {
+    periodLabel = 'Past 6 Months';
+  } else {
+    periodLabel = `FY ${year}`;
+  }
+
+  let periodFrom = '';
+  let periodTo = '';
+  if (monthPeriod) {
+    const { startDate, endDate } = getMonthPeriodDates(monthPeriod);
+    periodFrom = startDate;
+    periodTo = endDate;
+  } else {
+    const y = year ?? currentFY;
+    periodFrom = `${y}-03-01`;
+    const nextFYStart = new Date(y + 1, 2, 1);
+    const lastDayOfFY = new Date(nextFYStart.getTime() - 24 * 60 * 60 * 1000);
+    periodTo = `${lastDayOfFY.getFullYear()}-${String(lastDayOfFY.getMonth() + 1).padStart(2, '0')}-${String(lastDayOfFY.getDate()).padStart(2, '0')}`;
+  }
 
   const primaryDivisionId = invoices[0]?.divisionId;
   const divSettings = primaryDivisionId ? await getDivisionBillingSettings(primaryDivisionId) : null;
   const orgName = invoices[0]?.divisionName ?? 'PMG';
 
   const docPreviewProps = {
-    number: `STMT-${periodLabel}-${(client.businessName ?? client.name).slice(0, 3).toUpperCase()}`,
+    number: `STMT-${monthPeriod ? monthPeriod.toUpperCase() : (year ? year : currentFY)}-${(client.businessName ?? client.name).slice(0, 3).toUpperCase()}`,
     status: docStatus,
     issueDate: now.toISOString().split('T')[0]!,
-    periodFrom: year ? `${year}-03-01` : `${now.getFullYear()}-03-01`,
-    periodTo: year ? `${year + 1}-02-28` : now.toISOString().split('T')[0]!,
+    periodFrom,
+    periodTo,
     org: {
       name: orgName,
       logoUrl: getDocumentLogoUrl(orgName),
@@ -148,7 +190,7 @@ export default async function StatementDetailPage({ params, searchParams }: Prop
   return (
     <div className="flex flex-col gap-6">
       {/* Page header */}
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div className="flex items-center gap-4">
           <Button variant="ghost" size="sm" asChild>
             <Link href="/billing/statements">
@@ -167,7 +209,13 @@ export default async function StatementDetailPage({ params, searchParams }: Prop
           </div>
         </div>
         <div className="flex items-center gap-2 flex-wrap justify-end">
-          <PrintButton documentTitle={`Statement-${client.businessName?.replace(/\s+/g, '-') ?? client.name.replace(/\s+/g, '-')}`} />
+          <PrintButton 
+            label="Print"
+            documentTitle={`Statement-${client.businessName?.replace(/\s+/g, '-') ?? client.name.replace(/\s+/g, '-')}`} 
+          />
+          <ExportPdfButton 
+            fileName={`Statement-${client.businessName?.replace(/\s+/g, '-') ?? client.name.replace(/\s+/g, '-')}`}
+          />
         </div>
       </div>
 
@@ -239,10 +287,10 @@ export default async function StatementDetailPage({ params, searchParams }: Prop
               <CardTitle>Statement Period</CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="flex flex-col gap-2">
+              <div className="flex flex-col gap-3">
                 <div className="flex justify-between text-sm">
-                  <span className="text-muted-foreground">Year</span>
-                  <span>{periodLabel}</span>
+                  <span className="text-muted-foreground">Period</span>
+                  <span className="font-medium text-foreground">{periodLabel}</span>
                 </div>
                 <div className="flex justify-between text-sm">
                   <span className="text-muted-foreground">Quotes</span>
@@ -252,22 +300,53 @@ export default async function StatementDetailPage({ params, searchParams }: Prop
                   <span className="text-muted-foreground">Invoices</span>
                   <span>{summary.invoiceCount}</span>
                 </div>
+                
                 <Separator className="my-1" />
-                {/* Year filter links */}
-                <div className="flex gap-2 flex-wrap">
-                  {availableYears.map((y) => (
-                    <Link
-                      key={y}
-                      href={`/billing/statements/${clientId}?year=${y}`}
-                      className={`rounded-md border px-2 py-1 text-xs transition-colors hover:bg-muted ${
-                        String(y) === periodLabel
-                          ? 'border-foreground bg-muted font-medium'
-                          : 'border-border'
-                      }`}
-                    >
-                      {y}
-                    </Link>
-                  ))}
+                
+                <div className="flex flex-col gap-1.5">
+                  <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Rolling Periods</span>
+                  <div className="grid grid-cols-2 gap-1.5">
+                    {[
+                      { value: 'current', label: 'Current' },
+                      { value: 'previous', label: 'Previous' },
+                      { value: 'past3', label: 'Past 3' },
+                      { value: 'past6', label: 'Past 6' },
+                    ].map((p) => (
+                      <Link
+                        key={p.value}
+                        href={`/billing/statements/${clientId}?monthPeriod=${p.value}`}
+                        className={`flex items-center justify-between rounded-md border px-2.5 py-1.5 text-xs transition-all hover:bg-muted ${
+                          monthPeriod === p.value
+                            ? 'border-foreground bg-muted font-medium text-foreground'
+                            : 'border-border text-muted-foreground hover:text-foreground'
+                        }`}
+                      >
+                        <span>{p.label}</span>
+                        {monthPeriod === p.value && (
+                          <span className="h-1.5 w-1.5 rounded-full bg-foreground" />
+                        )}
+                      </Link>
+                    ))}
+                  </div>
+                </div>
+
+                <div className="flex flex-col gap-1.5 mt-1">
+                  <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Fiscal Years</span>
+                  <div className="flex gap-2 flex-wrap">
+                    {availableYears.map((y) => (
+                      <Link
+                        key={y}
+                        href={`/billing/statements/${clientId}?year=${y}`}
+                        className={`rounded-md border px-2.5 py-1 text-xs transition-all hover:bg-muted ${
+                          !monthPeriod && String(y) === String(year)
+                            ? 'border-foreground bg-muted font-medium text-foreground'
+                            : 'border-border text-muted-foreground hover:text-foreground'
+                        }`}
+                      >
+                        FY {y}
+                      </Link>
+                    ))}
+                  </div>
                 </div>
               </div>
             </CardContent>
@@ -277,7 +356,7 @@ export default async function StatementDetailPage({ params, searchParams }: Prop
 
       {/* Income records section */}
       {incomeResult.data.length > 0 && (
-        <div className="overflow-x-auto">
+        <div>
           <Card>
             <CardHeader>
               <CardTitle>Income Records</CardTitle>
@@ -288,8 +367,8 @@ export default async function StatementDetailPage({ params, searchParams }: Prop
                 </span>
               </p>
             </CardHeader>
-            <CardContent className="p-0">
-              <table className="w-full text-sm">
+            <CardContent className="p-0 overflow-x-auto">
+              <table className="w-full min-w-[600px] text-sm">
                 <thead>
                   <tr className="border-b">
                     <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground">Date</th>

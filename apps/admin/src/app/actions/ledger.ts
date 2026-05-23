@@ -11,6 +11,7 @@ import {
 import { getLedgerBalances } from '@/lib/financial';
 import { getSessionOrRedirect } from '@/lib/auth';
 import { isPeriodClosed, getMinAllowedDate, getMinDateErrorMessage } from '@/lib/date-rules';
+import { fmtDateLong } from '@/lib/format';
 
 export async function getLedgerBalancesAction() {
   return await getLedgerBalances();
@@ -25,8 +26,7 @@ const ledgerSchema = z.object({
 });
 
 function formatDefaultDescription(dateStr: string): string {
-  const date = new Date(dateStr + 'T00:00:00');
-  return `Ledger Entry - ${date.toLocaleDateString('en-ZA', { day: 'numeric', month: 'long', year: 'numeric' })}`;
+  return `Ledger Entry - ${fmtDateLong(dateStr)}`;
 }
 
 async function checkLedgerConstraints(
