@@ -14,6 +14,7 @@ import { fmtDate, fmtDateTime } from '@/lib/format';
 import { getDocumentLogoUrl } from '@/lib/document-logo';
 import { QuoteDetailActions } from './quote-detail-actions';
 import { PrintButton } from '@/components/billing/print-button';
+import { ExportPdfButton } from '@/components/billing/export-pdf-button';
 
 export const dynamic = 'force-dynamic';
 
@@ -100,7 +101,13 @@ export default async function QuoteDetailPage({ params }: Props) {
           </div>
         </div>
         <div className="flex items-center gap-2 flex-wrap justify-end">
-          <PrintButton documentTitle={`Quote-${quote.documentNumber}`} />
+          <PrintButton 
+            label="Print"
+            documentTitle={`Quote-${quote.documentNumber}`} 
+          />
+          <ExportPdfButton 
+            fileName={`Quote-${quote.documentNumber}`}
+          />
           <Button variant="outline" size="sm" disabled title="Coming soon">
             <Send className="size-4" />
             Send

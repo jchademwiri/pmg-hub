@@ -242,7 +242,7 @@ const invoiceRowSelect = {
   updatedAt: invoices.updatedAt,
 };
 
-export function getMonthPeriodDates(monthPeriod: 'current' | 'previous' | 'past3') {
+export function getMonthPeriodDates(monthPeriod: 'current' | 'previous' | 'past3' | 'past6') {
   const now = new Date();
   let startDate: string;
   let endDate: string;
@@ -261,9 +261,15 @@ export function getMonthPeriodDates(monthPeriod: 'current' | 'previous' | 'past3
     const lastDay = new Date(now.getFullYear(), now.getMonth(), 0);
     startDate = formatDateISO(firstDay);
     endDate = formatDateISO(lastDay);
-  } else {
+  } else if (monthPeriod === 'past3') {
     // Past 3 months rolling: from 1st of month 2 months ago to end of current month
     const firstDay = new Date(now.getFullYear(), now.getMonth() - 2, 1);
+    const lastDay = new Date(now.getFullYear(), now.getMonth() + 1, 0);
+    startDate = formatDateISO(firstDay);
+    endDate = formatDateISO(lastDay);
+  } else {
+    // Past 6 months rolling: from 1st of month 5 months ago to end of current month
+    const firstDay = new Date(now.getFullYear(), now.getMonth() - 5, 1);
     const lastDay = new Date(now.getFullYear(), now.getMonth() + 1, 0);
     startDate = formatDateISO(firstDay);
     endDate = formatDateISO(lastDay);
@@ -286,7 +292,7 @@ export async function getAllQuotations(
     clientId?: string;
     month?: string;
     year?: number;
-    monthPeriod?: 'current' | 'previous' | 'past3';
+    monthPeriod?: 'current' | 'previous' | 'past3' | 'past6';
   },
   pageObj?: { page: number; pageSize: number },
 ): Promise<{ data: QuotationRow[]; total: number; sum: number }> {
@@ -362,7 +368,7 @@ export async function getAllInvoices(
     clientId?: string;
     month?: string;
     year?: number;
-    monthPeriod?: 'current' | 'previous' | 'past3';
+    monthPeriod?: 'current' | 'previous' | 'past3' | 'past6';
   },
   pageObj?: { page: number; pageSize: number },
 ): Promise<{ data: InvoiceRow[]; total: number; sum: number; outstanding: number }> {
@@ -570,7 +576,7 @@ export async function getInvoiceById(id: string): Promise<InvoiceDetail | null> 
  */
 export async function getClientStatement(
   clientId: string,
-  filters?: { year?: number; monthPeriod?: 'current' | 'previous' | 'past3' },
+  filters?: { year?: number; monthPeriod?: 'current' | 'previous' | 'past3' | 'past6' },
 ): Promise<ClientStatement | null> {
   const includeReference = await hasQuotationReferenceColumn();
   // Fetch client

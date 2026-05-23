@@ -1,5 +1,5 @@
 export const DOCUMENT_LOGOS = {
-  tes: '/logo/tes-logo.svg',
+  tes: '/logo/tes-logo.png',
   pmg: '/logo/pmg-logo.svg',
   apex: '/logo/apex-logo.svg',
   default: '/logo/pmg-logo.svg',
@@ -22,4 +22,23 @@ export function getDocumentLogoUrl(orgName?: string): string {
   }
 
   return DOCUMENT_LOGOS.default;
+}
+
+export function getDocumentLogoText(orgName?: string): string {
+  if (!orgName) return 'PMG';
+
+  const normalized = orgName.toLowerCase();
+  if (/tender edge|edge solutions|tes/.test(normalized)) {
+    return 'TES';
+  }
+
+  if (/apex web|apex|aws/.test(normalized)) {
+    return 'AWS';
+  }
+
+  if (/playhouse media|playhouse|pmg/.test(normalized)) {
+    return 'PMG';
+  }
+
+  return 'PMG';
 }

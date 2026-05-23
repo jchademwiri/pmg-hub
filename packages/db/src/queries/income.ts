@@ -24,7 +24,7 @@ export async function getAllIncome(
     month?: string;
     year?: number;
     clientId?: string;
-    monthPeriod?: 'current' | 'previous' | 'past3';
+    monthPeriod?: 'current' | 'previous' | 'past3' | 'past6';
   },
   pageObj?: { page: number; pageSize: number },
 ): Promise<{ data: IncomeRow[]; total: number; sum: number }> {

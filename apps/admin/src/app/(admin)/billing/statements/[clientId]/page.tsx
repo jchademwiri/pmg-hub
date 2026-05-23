@@ -11,6 +11,7 @@ import { getClientStatement, getAllIncome, getStatementYears, getDivisionBilling
 import { getDocumentLogoUrl } from '@/lib/document-logo';
 import { formatZAR, fmtDate } from '@/lib/format';
 import { PrintButton } from '@/components/billing/print-button';
+import { ExportPdfButton } from '@/components/billing/export-pdf-button';
 
 export const dynamic = 'force-dynamic';
 
@@ -35,14 +36,20 @@ export default async function StatementDetailPage({ params, searchParams }: Prop
   const now = new Date();
   const currentFY = now.getMonth() < 2 ? now.getFullYear() - 1 : now.getFullYear();
 
-  const monthPeriod = (monthPeriodParam === 'current' || monthPeriodParam === 'previous' || monthPeriodParam === 'past3')
+  const isMonthPeriodValid = monthPeriodParam === 'current' || 
+                             monthPeriodParam === 'previous' || 
+                             monthPeriodParam === 'past3' || 
+                             monthPeriodParam === 'past6';
+
+  // Default to 'current' monthPeriod if neither monthPeriod nor year filter is specified in URL
+  const monthPeriod = isMonthPeriodValid
     ? monthPeriodParam
-    : undefined;
+    : (!yearParam ? 'current' : undefined);
 
   // Mutual exclusivity: if monthPeriod is active, year is ignored/undefined
   const year = monthPeriod 
     ? undefined 
-    : (yearParam ? parseInt(yearParam, 10) : currentFY);
+    : (yearParam ? parseInt(yearParam, 10) : undefined);
 
   const [statement, incomeResult, availableYears] = await Promise.all([
     getClientStatement(clientId, monthPeriod ? { monthPeriod } : (year ? { year } : undefined)),
@@ -127,6 +134,8 @@ export default async function StatementDetailPage({ params, searchParams }: Prop
     periodLabel = 'Previous Month';
   } else if (monthPeriod === 'past3') {
     periodLabel = 'Past 3 Months';
+  } else if (monthPeriod === 'past6') {
+    periodLabel = 'Past 6 Months';
   } else {
     periodLabel = `FY ${year}`;
   }
@@ -200,7 +209,13 @@ export default async function StatementDetailPage({ params, searchParams }: Prop
           </div>
         </div>
         <div className="flex items-center gap-2 flex-wrap justify-end">
-          <PrintButton documentTitle={`Statement-${client.businessName?.replace(/\s+/g, '-') ?? client.name.replace(/\s+/g, '-')}`} />
+          <PrintButton 
+            label="Print"
+            documentTitle={`Statement-${client.businessName?.replace(/\s+/g, '-') ?? client.name.replace(/\s+/g, '-')}`} 
+          />
+          <ExportPdfButton 
+            fileName={`Statement-${client.businessName?.replace(/\s+/g, '-') ?? client.name.replace(/\s+/g, '-')}`}
+          />
         </div>
       </div>
 
@@ -290,11 +305,12 @@ export default async function StatementDetailPage({ params, searchParams }: Prop
                 
                 <div className="flex flex-col gap-1.5">
                   <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Rolling Periods</span>
-                  <div className="flex flex-col gap-1">
+                  <div className="grid grid-cols-2 gap-1.5">
                     {[
-                      { value: 'current', label: 'Current Month' },
-                      { value: 'previous', label: 'Previous Month' },
-                      { value: 'past3', label: 'Past 3 Months' },
+                      { value: 'current', label: 'Current' },
+                      { value: 'previous', label: 'Previous' },
+                      { value: 'past3', label: 'Past 3' },
+                      { value: 'past6', label: 'Past 6' },
                     ].map((p) => (
                       <Link
                         key={p.value}
