@@ -62,6 +62,11 @@ To make this a highly premium enterprise solution, we will implement the followi
    - It strips money from the **newest invoice** (the last one that was allocated money) first. This protects your oldest outstanding debts, keeping their paid/prioritized state intact as much as possible.
    - *Example*: A payment of R5,000 was allocated to Invoice A (Oldest: R3,000) and Invoice B (Newer: R2,000). If you adjust the payment down to R3,500, the system deducts the R1,500 reduction from Invoice B first, leaving it at R500 (partially paid), while keeping Invoice A 100% paid at R3,000.
 
+5. **Automated FIFO Upward Adjustment Algorithm (Confirmed)**
+   - When a payment is edited to increase its total value, the system automatically uses **FIFO (First In, First Out)** to distribute the extra cash.
+   - It attempts to pay off any remaining unpaid or `partially_paid` outstanding invoices for that client (starting with the oldest outstanding).
+   - Any leftover amount that cannot be allocated (because all invoices are 100% satisfied) is automatically appended to their **Unallocated Client Credit (Retainer)** balance.
+
 ---
 
 ## Proposed Changes
@@ -155,7 +160,10 @@ This file will contain critical server actions:
    - Runs inside a database transaction (`db.transaction()`).
    - Verifies the payment period is open for the original payment date.
    - Fetches all existing `payment_allocations` for this `incomeId` sorted by `invoices.invoiceDate` desc (newest first).
-   - If `newAmount` is larger, updates the `income.amount` (the excess automatically goes to the client's credit/retainer balance).
+   - If `newAmount` is larger, calculates the increase difference (e.g. `R1,000` increase):
+     - Fetches all remaining unpaid or `partially_paid` outstanding invoices for the client sorted chronologically (oldest first).
+     - Applies the **FIFO spreading algorithm** on the increased difference, creating new `payment_allocations` rows and transitioning invoice statuses to `partially_paid` or `paid` as they are satisfied.
+     - Any remaining unallocated difference automatically increases the client's credit balance.
    - If `newAmount` is smaller, calculates the reduction difference (e.g. `R1,500` reduction):
      - Applies a **LIFO reverse-spreading algorithm**: loops through allocations starting from the newest.
      - Deducts the difference from the allocation. If the allocation drops to zero, deletes the allocation row and transitions the invoice status from `paid` back to `issued`/`overdue`.
@@ -197,3 +205,8 @@ This file will contain critical server actions:
    - Record a payment of R5,000 for a client with Invoice A (Oldest: R3,000) and Invoice B (Newer: R2,000) outstanding.
    - Adjust the payment amount down to R3,500.
    - Verify Invoice B's allocation drops to R500 (transitions to `partially_paid`) and Invoice A stays 100% paid at R3,000.
+5. **FIFO Upward Adjustment Check**:
+   - Record a payment of R3,500 for a client with Invoice A (Oldest: R3,000) and Invoice B (Newer: R2,000) outstanding. (Allocated: R3,000 to A, R500 to B).
+   - Adjust the payment amount up to R5,500 (an increase of R2,000).
+   - Verify Invoice B's allocation increases from R500 to R2,000 (status transitions to `paid`).
+   - Verify the remaining R500 is saved as an unallocated credit retainer on the client's credit ledger.

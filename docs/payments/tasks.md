@@ -23,3 +23,4 @@
   - `[ ]` Manually test multi-invoice auto-allocation (oldest to newest distribution)
   - `[ ]` Verify overpayment creates client credits and correctly applies credit on subsequent invoices
   - `[ ]` Verify LIFO downward adjustment logic correctly strips payment from the newest allocations first
+  - `[ ]` Verify FIFO upward adjustment logic correctly distributes extra funds oldest-first and handles retainer overflow
