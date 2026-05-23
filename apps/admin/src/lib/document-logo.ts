@@ -1,7 +1,7 @@
 export const DOCUMENT_LOGOS = {
   tes: '/logo/tes-logo.png',
   pmg: '/logo/pmg-logo.png',
-  apex: '/logo/apex-logo.svg',
+  aws: '/logo/aws-logo.png',
   default: '/logo/pmg-logo.png',
 } as const;
 
@@ -14,7 +14,7 @@ export function getDocumentLogoUrl(orgName?: string): string {
   }
 
   if (/apex web|apex|aws/.test(normalized)) {
-    return DOCUMENT_LOGOS.apex;
+    return DOCUMENT_LOGOS.aws;
   }
 
   if (/playhouse media|playhouse|pmg/.test(normalized)) {

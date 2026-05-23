@@ -3,7 +3,7 @@ import { getDocumentLogoText, getDocumentLogoUrl } from '@/lib/document-logo'
 
 describe('document logo helpers', () => {
   it('uses AWS abbreviation for Apex/AWS org names', () => {
-    expect(getDocumentLogoUrl('Apex Web Solutions')).toBe('/logo/apex-logo.svg')
+    expect(getDocumentLogoUrl('Apex Web Solutions')).toBe('/logo/aws-logo.png')
     expect(getDocumentLogoText('Apex Web Solutions')).toBe('AWS')
     expect(getDocumentLogoText('AWS Services')).toBe('AWS')
   })
