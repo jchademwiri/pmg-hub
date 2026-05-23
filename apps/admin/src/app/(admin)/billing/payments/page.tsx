@@ -1,11 +1,12 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
-import { Plus, Coins, ArrowUpRight, ShieldCheck, CheckCircle } from 'lucide-react';
+import { Plus } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { getAllIncome, getDb, paymentAllocations, sql, invoices, and, eq } from '@pmg/db';
 import { formatZAR } from '@/lib/format';
 import { PaymentsClient } from './payments-client';
+import { SetPageTotal } from '@/components/navigation/page-header-context';
 
 export const dynamic = 'force-dynamic';
 export const metadata: Metadata = { title: 'Payments Received' };
@@ -92,17 +93,11 @@ export default async function PaymentsPage({ searchParams }: PaymentsPageProps) 
 
   // Calculate totals for stats
   const totalReceived = incomeResult.sum;
-  const totalAllocated = Array.from(allocMap.values()).reduce((a, b) => a + b, 0);
-  const totalUnallocated = Math.max(0, totalReceived - totalAllocated);
-
-  const stats = [
-    { label: 'Total Received', value: formatZAR(totalReceived), icon: Coins, description: 'All time payments' },
-    { label: 'Allocated to Invoices', value: formatZAR(totalAllocated), icon: ShieldCheck, description: 'Matched revenue' },
-    { label: 'Retainer Credits', value: formatZAR(totalUnallocated), icon: ArrowUpRight, description: 'Available client credits' },
-  ];
 
   return (
     <div className="flex flex-col gap-6">
+      <SetPageTotal value={formatZAR(totalReceived)} variant="green" />
+
       {/* Page header */}
       <div className="flex items-center justify-between">
         <div>
@@ -117,24 +112,6 @@ export default async function PaymentsPage({ searchParams }: PaymentsPageProps) 
             </Link>
           </Button>
         </div>
-      </div>
-
-      {/* Stats row */}
-      <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
-        {stats.map((stat) => (
-          <Card key={stat.label} size="sm">
-            <CardHeader>
-              <div className="flex items-center justify-between">
-                <CardDescription>{stat.label}</CardDescription>
-                <stat.icon className="size-4 text-muted-foreground" />
-              </div>
-              <CardTitle className="text-2xl tabular-nums">{stat.value}</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <p className="text-xs text-muted-foreground">{stat.description}</p>
-            </CardContent>
-          </Card>
-        ))}
       </div>
 
       {/* Payments History Table */}

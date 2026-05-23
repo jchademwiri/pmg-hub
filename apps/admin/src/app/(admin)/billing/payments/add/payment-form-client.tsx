@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useTransition } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
+import Link from 'next/link';
 import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -30,7 +31,7 @@ interface UnpaidInvoice {
   id: string;
   documentNumber: string;
   invoiceDate: string;
-  dueDate: string;
+  dueDate: string | null;
   total: number;
   allocated: number;
   outstanding: number;
