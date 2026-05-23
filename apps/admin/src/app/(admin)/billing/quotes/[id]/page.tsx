@@ -15,6 +15,7 @@ import { getDocumentLogoUrl } from '@/lib/document-logo';
 import { QuoteDetailActions } from './quote-detail-actions';
 import { PrintButton } from '@/components/billing/print-button';
 import { ExportPdfButton } from '@/components/billing/export-pdf-button';
+import { EmailDocumentDialog } from '@/components/billing/email-document-dialog';
 
 export const dynamic = 'force-dynamic';
 
@@ -108,10 +109,12 @@ export default async function QuoteDetailPage({ params }: Props) {
           <ExportPdfButton 
             fileName={`Quote-${quote.documentNumber}`}
           />
-          <Button variant="outline" size="sm" disabled title="Coming soon">
-            <Send className="size-4" />
-            Send
-          </Button>
+          <EmailDocumentDialog
+            documentId={quote.id}
+            documentNumber={quote.documentNumber}
+            documentType="quote"
+            defaultRecipientEmail={quote.clientEmail ?? ''}
+          />
           {canEdit && (
             <Button variant="outline" size="sm" asChild>
               <Link href={`/billing/quotes/${quote.id}/edit`}>
