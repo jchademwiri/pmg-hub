@@ -57,6 +57,11 @@ To make this a highly premium enterprise solution, we will implement the followi
    - The "Add Payment" interface will feature a live **Auto-Allocate Switch** (default: `true`).
    - As the admin types the "Total Amount Paid", a reactive client-side algorithm instantly distributes (spreads) the cash down the list of unpaid invoices starting with the oldest based on `invoiceDate`, showing a live visual feedback of how the payment will be allocated.
 
+4. **Automated LIFO Downward Adjustment Algorithm (Confirmed)**
+   - When a payment is edited to reduce its total value, the system automatically uses **LIFO (Last In, First Out)** to reduce the allocations.
+   - It strips money from the **newest invoice** (the last one that was allocated money) first. This protects your oldest outstanding debts, keeping their paid/prioritized state intact as much as possible.
+   - *Example*: A payment of R5,000 was allocated to Invoice A (Oldest: R3,000) and Invoice B (Newer: R2,000). If you adjust the payment down to R3,500, the system deducts the R1,500 reduction from Invoice B first, leaving it at R500 (partially paid), while keeping Invoice A 100% paid at R3,000.
+
 ---
 
 ## Proposed Changes
@@ -146,6 +151,18 @@ This file will contain critical server actions:
        - If `0 < newTotalAllocated < invoice.total`, sets status to `'partially_paid'`.
    - Revalidates the billing, invoices, and ledger paths.
 
+4. **`adjustClientPayment(incomeId: string, newAmount: string)`**:
+   - Runs inside a database transaction (`db.transaction()`).
+   - Verifies the payment period is open for the original payment date.
+   - Fetches all existing `payment_allocations` for this `incomeId` sorted by `invoices.invoiceDate` desc (newest first).
+   - If `newAmount` is larger, updates the `income.amount` (the excess automatically goes to the client's credit/retainer balance).
+   - If `newAmount` is smaller, calculates the reduction difference (e.g. `R1,500` reduction):
+     - Applies a **LIFO reverse-spreading algorithm**: loops through allocations starting from the newest.
+     - Deducts the difference from the allocation. If the allocation drops to zero, deletes the allocation row and transitions the invoice status from `paid` back to `issued`/`overdue`.
+     - Moves to the next newest allocation if further reduction is needed, transitioning status from `paid` to `partially_paid`.
+   - Updates `income.amount` to the new value and commits the transaction.
+   - Revalidates all affected routes.
+
 ---
 
 ## Verification Plan
@@ -176,3 +193,7 @@ This file will contain critical server actions:
 3. **Credit (Overpayment) Creation**:
    - For the same R9,000 total outstanding balance, record a payment of `R10,000`.
    - Verify all invoices are marked `paid`, and a R1,000 credit balance appears on the client's credit ledger.
+4. **LIFO Downward Adjustment Check**:
+   - Record a payment of R5,000 for a client with Invoice A (Oldest: R3,000) and Invoice B (Newer: R2,000) outstanding.
+   - Adjust the payment amount down to R3,500.
+   - Verify Invoice B's allocation drops to R500 (transitions to `partially_paid`) and Invoice A stays 100% paid at R3,000.

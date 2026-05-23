@@ -10,6 +10,7 @@
   - `[ ]` Implement `getClientOutstandingInvoices` to fetch unpaid invoices with remaining balances
   - `[ ]` Implement `getClientCreditBalance` to calculate unallocated payments (retainers)
   - `[ ]` Implement `recordClientPayment` server action managing SQL transactions, period lock checks, allocations inserts, and invoice status transitions
+  - `[ ]` Implement `adjustClientPayment` server action handling LIFO reverse-reduction algorithm for downward payment adjustments
 - `[ ]` **Frontend Layouts & UI Components**
   - `[ ]` Create page route `/billing/payments/add` in Next.js admin app
   - `[ ]` Build the Payment Form card (Client search selection, Date picker, total payment, method, reference)
@@ -21,3 +22,4 @@
   - `[ ]` Manually test a partial payment (status change to `partially_paid`, outstanding balance check)
   - `[ ]` Manually test multi-invoice auto-allocation (oldest to newest distribution)
   - `[ ]` Verify overpayment creates client credits and correctly applies credit on subsequent invoices
+  - `[ ]` Verify LIFO downward adjustment logic correctly strips payment from the newest allocations first
