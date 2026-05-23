@@ -9,7 +9,7 @@ describe('document logo helpers', () => {
   })
 
   it('uses PMG abbreviation for Playhouse Media Group names', () => {
-    expect(getDocumentLogoUrl('Playhouse Media Group')).toBe('/logo/pmg-logo.svg')
+    expect(getDocumentLogoUrl('Playhouse Media Group')).toBe('/logo/pmg-logo.png')
     expect(getDocumentLogoText('Playhouse Media Group')).toBe('PMG')
     expect(getDocumentLogoText('PMG Holdings')).toBe('PMG')
   })

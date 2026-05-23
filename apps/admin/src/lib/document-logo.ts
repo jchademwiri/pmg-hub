@@ -1,8 +1,8 @@
 export const DOCUMENT_LOGOS = {
   tes: '/logo/tes-logo.png',
-  pmg: '/logo/pmg-logo.svg',
+  pmg: '/logo/pmg-logo.png',
   apex: '/logo/apex-logo.svg',
-  default: '/logo/pmg-logo.svg',
+  default: '/logo/pmg-logo.png',
 } as const;
 
 export function getDocumentLogoUrl(orgName?: string): string {
