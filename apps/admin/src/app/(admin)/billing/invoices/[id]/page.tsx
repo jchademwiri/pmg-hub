@@ -8,9 +8,9 @@ import { Separator } from '@/components/ui/separator';
 import { DocumentPreview } from '@/components/billing/document-preview';
 import { BillingStatusBadge } from '@/components/billing/billing-status-badge';
 import { BillingTotalsBlock } from '@/components/billing/billing-totals-block';
-import { getInvoiceById, getDivisionBillingSettings } from '@pmg/db';
+import { getInvoiceById, getDivisionBillingSettings, getDb, paymentAllocations, income, sql, desc, eq } from '@pmg/db';
 import { issueInvoice, markInvoicePaid, voidInvoice } from '@/app/actions/billing-invoices';
-import { fmtDate, fmtDateTime } from '@/lib/format';
+import { fmtDate, fmtDateTime, formatZAR } from '@/lib/format';
 import { getDocumentLogoUrl } from '@/lib/document-logo';
 import { InvoiceDetailActions } from './invoice-detail-actions';
 import { PrintButton } from '@/components/billing/print-button';
@@ -36,6 +36,23 @@ export default async function InvoiceDetailPage({ params }: Props) {
   if (!invoice) notFound();
 
   const divSettings = await getDivisionBillingSettings(invoice.divisionId);
+
+  // Fetch payment allocations for this specific invoice
+  const db = getDb();
+  const allocations = await db
+    .select({
+      id: paymentAllocations.id,
+      amount: paymentAllocations.amount,
+      date: sql<string>`${income.date}::text`,
+      description: income.description,
+    })
+    .from(paymentAllocations)
+    .innerJoin(income, eq(income.id, paymentAllocations.incomeId))
+    .where(eq(paymentAllocations.invoiceId, id))
+    .orderBy(desc(income.date));
+
+  const totalAllocated = allocations.reduce((sum, a) => sum + parseFloat(a.amount), 0);
+  const outstandingBalance = Math.max(0, parseFloat(invoice.total) - totalAllocated);
 
   const docPreviewProps = {
     number: invoice.documentNumber,
@@ -143,6 +160,51 @@ export default async function InvoiceDetailPage({ params }: Props) {
 
         {/* Sidebar */}
         <div className="flex flex-col gap-4 lg:sticky lg:top-16 lg:self-start">
+          {/* Outstanding Balance & Record Payment */}
+          {invoice.status !== 'void' && (
+            <Card size="sm" className="border-amber-200/50 bg-amber-50/10">
+              <CardHeader className="pb-2">
+                <CardTitle className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Outstanding Balance</CardTitle>
+              </CardHeader>
+              <CardContent className="flex flex-col gap-3">
+                <span className="text-2xl font-bold tracking-tight text-amber-600 tabular-nums">
+                  {formatZAR(outstandingBalance)}
+                </span>
+                {outstandingBalance > 0 && invoice.status !== 'draft' && (
+                  <Button asChild size="sm" className="w-full">
+                    <Link href={`/billing/payments/add?clientId=${invoice.clientId}`}>
+                      Record Payment
+                    </Link>
+                  </Button>
+                )}
+              </CardContent>
+            </Card>
+          )}
+
+          {/* Payment History Log */}
+          {allocations.length > 0 && (
+            <Card size="sm">
+              <CardHeader className="pb-2">
+                <CardTitle className="text-sm font-semibold">Payment History</CardTitle>
+              </CardHeader>
+              <CardContent className="p-0 px-6 pb-4">
+                <div className="flex flex-col divide-y divide-border text-xs">
+                  {allocations.map((a) => (
+                    <div key={a.id} className="flex justify-between py-2 items-center gap-2">
+                      <div className="flex flex-col gap-0.5 min-w-0">
+                        <span className="font-semibold truncate text-foreground">{a.description}</span>
+                        <span className="text-muted-foreground text-[10px]">{a.date}</span>
+                      </div>
+                      <span className="font-bold text-emerald-600 shrink-0 tabular-nums">
+                        {formatZAR(parseFloat(a.amount))}
+                      </span>
+                    </div>
+                  ))}
+                </div>
+              </CardContent>
+            </Card>
+          )}
+
           <Card size="sm">
             <CardHeader>
               <CardTitle>Summary</CardTitle>

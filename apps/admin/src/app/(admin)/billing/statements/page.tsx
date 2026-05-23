@@ -1,6 +1,5 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
-import { Users, TrendingUp, AlertCircle, CheckCircle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { EmptyState } from '@/components/ui/empty-state';
@@ -14,6 +13,7 @@ import {
 } from '@/components/ui/table';
 import { getClientsWithBillingActivity } from '@pmg/db';
 import { formatZAR, fmtDate } from '@/lib/format';
+import { SetPageTotal } from '@/components/navigation/page-header-context';
 
 export const dynamic = 'force-dynamic';
 export const metadata: Metadata = { title: 'Statements' };
@@ -24,20 +24,12 @@ export default async function StatementsPage() {
 
   const clients = await getClientsWithBillingActivity({ year: currentFY });
 
-  const totalBilled = clients.reduce((s, c) => s + c.totalInvoiced, 0);
   const totalOutstanding = clients.reduce((s, c) => s + c.totalOutstanding, 0);
-  const activeCount = clients.length;
-  const withOutstanding = clients.filter((c) => c.totalOutstanding > 0).length;
-
-  const stats = [
-    { label: 'Active Clients', value: String(activeCount), icon: Users, description: 'With billing activity' },
-    { label: 'Total Billed', value: formatZAR(totalBilled), icon: TrendingUp, description: 'Year to Date' },
-    { label: 'Outstanding', value: formatZAR(totalOutstanding), icon: AlertCircle, description: 'Unpaid invoices' },
-    { label: 'Fully Paid', value: String(activeCount - withOutstanding), icon: CheckCircle, description: 'No balance due' },
-  ];
 
   return (
     <div className="flex flex-col gap-6">
+      <SetPageTotal value={formatZAR(totalOutstanding)} variant="amber" />
+
       {/* Page header */}
       <div className="flex items-center justify-between">
         <div>
@@ -49,24 +41,6 @@ export default async function StatementsPage() {
             Generate Statement
           </Button>
         </div>
-      </div>
-
-      {/* Stats row */}
-      <div className="grid grid-cols-2 gap-4 sm:grid-cols-4">
-        {stats.map((stat) => (
-          <Card key={stat.label} size="sm">
-            <CardHeader>
-              <div className="flex items-center justify-between">
-                <CardDescription>{stat.label}</CardDescription>
-                <stat.icon className="size-4 text-muted-foreground" />
-              </div>
-              <CardTitle className="text-2xl tabular-nums">{stat.value}</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <p className="text-xs text-muted-foreground">{stat.description}</p>
-            </CardContent>
-          </Card>
-        ))}
       </div>
 
       {/* Clients table */}

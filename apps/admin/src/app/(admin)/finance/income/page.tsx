@@ -1,4 +1,7 @@
 import type { Metadata } from 'next';
+import Link from 'next/link';
+import { Plus } from 'lucide-react';
+import { Button } from '@/components/ui/button';
 import { getAllIncome, getAllDivisions, getAllClients, getDistinctIncomeMonths } from '@pmg/db';
 import { updateIncome, deleteIncome } from '@/app/actions/income';
 import { FilterBar } from '@/components/income/filter-bar';
@@ -32,6 +35,23 @@ export default async function IncomePage({ searchParams }: IncomePageProps) {
   return (
     <div className="flex flex-col gap-6">
       <SetPageTotal value={formatZAR(result.sum)} variant="green" />
+
+      {/* Page header */}
+      <div className="flex items-center justify-between">
+        <div>
+          <h2 className="text-lg font-semibold">Income</h2>
+          <p className="text-sm text-muted-foreground">Monitor general cash entries and record client payments</p>
+        </div>
+        <div className="flex items-center gap-2">
+          <Button asChild size="sm">
+            <Link href="/billing/payments/add">
+              <Plus className="size-4" />
+              Record Payment
+            </Link>
+          </Button>
+        </div>
+      </div>
+
       <FilterBar
         divisions={divisions}
         months={months}

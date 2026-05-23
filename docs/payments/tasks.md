@@ -1,0 +1,26 @@
+# Task Checklist: Partial Payments & Auto-Allocation
+
+- `[ ]` **Database Schema & Migration**
+  - `[ ]` Update `invoiceStatusEnum` in `packages/db/src/schema/billing.ts` to include `'partially_paid'`
+  - `[ ]` Define `paymentAllocations` table in `packages/db/src/schema/billing.ts`
+  - `[ ]` Generate the migration file using `bun db:generate`
+  - `[ ]` Add a custom data backfill script in the migration file to convert existing `invoices.incomeId` links into `payment_allocations` entries
+  - `[ ]` Execute the migrations against the development database using `bun db:migrate`
+- `[ ]` **Core Server Actions & Queries**
+  - `[ ]` Implement `getClientOutstandingInvoices` to fetch unpaid invoices with remaining balances
+  - `[ ]` Implement `getClientCreditBalance` to calculate unallocated payments (retainers)
+  - `[ ]` Implement `recordClientPayment` server action managing SQL transactions, period lock checks, allocations inserts, and invoice status transitions
+  - `[ ]` Implement `adjustClientPayment` server action handling LIFO reverse-reduction algorithm for downward payment adjustments
+- `[ ]` **Frontend Layouts & UI Components**
+  - `[ ]` Create page route `/billing/payments/add` in Next.js admin app
+  - `[ ]` Build the Payment Form card (Client search selection, Date picker, total payment, method, reference)
+  - `[ ]` Build the Unpaid Invoices allocation list card with manual override cells
+  - `[ ]` Implement client-side FIFO auto-allocation spreading algorithm in real-time
+  - `[ ]` Create unallocated credit balance notifications on client and new invoice pages
+- `[ ]` **Verification & Testing**
+  - `[ ]` Write automated tests covering partial allocations, exact invoice match, and overpayment-to-credit scenarios
+  - `[ ]` Manually test a partial payment (status change to `partially_paid`, outstanding balance check)
+  - `[ ]` Manually test multi-invoice auto-allocation (oldest to newest distribution)
+  - `[ ]` Verify overpayment creates client credits and correctly applies credit on subsequent invoices
+  - `[ ]` Verify LIFO downward adjustment logic correctly strips payment from the newest allocations first
+  - `[ ]` Verify FIFO upward adjustment logic correctly distributes extra funds oldest-first and handles retainer overflow

@@ -1,6 +1,6 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
-import { Plus, FileText, Clock, CheckCircle, AlertCircle } from 'lucide-react';
+import { Plus } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { getAllInvoices } from '@pmg/db';
@@ -25,27 +25,10 @@ export default async function InvoicesPage({ searchParams }: InvoicesPageProps) 
   const now = new Date();
   const currentFY = now.getMonth() < 2 ? now.getFullYear() - 1 : now.getFullYear();
 
-  const [result, allResult] = await Promise.all([
-    getAllInvoices({ divisionId, status, year: currentFY }, { page: currentPage, pageSize }),
-    getAllInvoices({ year: currentFY }),
-  ]);
-
-  // Stats from full unfiltered result
-  const thisMonth = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
-  const paidThisMonth = allResult.data.filter(
-    (inv) => inv.status === 'paid' && inv.invoiceDate.startsWith(thisMonth),
-  ).length;
-  const overdueCount = allResult.data.filter((inv) => inv.status === 'overdue').length;
-  const pendingCount = allResult.data.filter(
-    (inv) => inv.status === 'issued' || inv.status === 'overdue',
-  ).length;
-
-  const stats = [
-    { label: 'Total Invoices', value: String(allResult.total), icon: FileText, description: 'Year to Date' },
-    { label: 'Pending', value: String(pendingCount), icon: Clock, description: 'Awaiting payment' },
-    { label: 'Paid', value: String(paidThisMonth), icon: CheckCircle, description: 'This month' },
-    { label: 'Overdue', value: String(overdueCount), icon: AlertCircle, description: 'Past due date' },
-  ];
+  const result = await getAllInvoices(
+    { divisionId, status, year: currentFY },
+    { page: currentPage, pageSize },
+  );
 
   return (
     <div className="flex flex-col gap-6">
@@ -65,24 +48,6 @@ export default async function InvoicesPage({ searchParams }: InvoicesPageProps) 
             </Link>
           </Button>
         </div>
-      </div>
-
-      {/* Stats row */}
-      <div className="grid grid-cols-2 gap-4 sm:grid-cols-4">
-        {stats.map((stat) => (
-          <Card key={stat.label} size="sm">
-            <CardHeader>
-              <div className="flex items-center justify-between">
-                <CardDescription>{stat.label}</CardDescription>
-                <stat.icon className="size-4 text-muted-foreground" />
-              </div>
-              <CardTitle className="text-2xl tabular-nums">{stat.value}</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <p className="text-xs text-muted-foreground">{stat.description}</p>
-            </CardContent>
-          </Card>
-        ))}
       </div>
 
       {/* Invoices table */}

@@ -32,7 +32,9 @@ export const income = pgTable(
 export type Income = typeof income.$inferSelect;
 export type NewIncome = typeof income.$inferInsert;
 
-export const incomeRelations = relations(income, ({ one }) => ({
+import { paymentAllocations } from "./billing";
+
+export const incomeRelations = relations(income, ({ one, many }) => ({
   division: one(divisions, {
     fields: [income.divisionId],
     references: [divisions.id],
@@ -41,4 +43,5 @@ export const incomeRelations = relations(income, ({ one }) => ({
     fields: [income.clientId],
     references: [clients.id],
   }),
+  allocations: many(paymentAllocations),
 }));

@@ -113,16 +113,20 @@ export default async function StatementDetailPage({ params, searchParams }: Prop
   const ageing = { current: 0, days1_14: 0, days15_30: 0, days31_60: 0, days61_90: 0, days91_120: 0 };
   const _now = new Date();
   for (const inv of invoices) {
-    if (inv.status === 'issued' || inv.status === 'overdue') {
+    if (inv.status === 'issued' || inv.status === 'overdue' || inv.status === 'partially_paid') {
       const due = inv.dueDate ? new Date(inv.dueDate) : new Date(inv.invoiceDate);
       const diffTime = _now.getTime() - due.getTime();
       const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-      if (diffDays <= 0)        ageing.current    += Number(inv.total);
-      else if (diffDays <= 14)  ageing.days1_14   += Number(inv.total);
-      else if (diffDays <= 30)  ageing.days15_30  += Number(inv.total);
-      else if (diffDays <= 60)  ageing.days31_60  += Number(inv.total);
-      else if (diffDays <= 90)  ageing.days61_90  += Number(inv.total);
-      else                      ageing.days91_120 += Number(inv.total);
+      
+      const outstanding = Number(inv.total) - Number(inv.allocatedAmount ?? 0);
+      if (outstanding <= 0) continue;
+
+      if (diffDays <= 0)        ageing.current    += outstanding;
+      else if (diffDays <= 14)  ageing.days1_14   += outstanding;
+      else if (diffDays <= 30)  ageing.days15_30  += outstanding;
+      else if (diffDays <= 60)  ageing.days31_60  += outstanding;
+      else if (diffDays <= 90)  ageing.days61_90  += outstanding;
+      else                      ageing.days91_120 += outstanding;
     }
   }
 

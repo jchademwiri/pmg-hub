@@ -1,6 +1,6 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
-import { Plus, Package, CheckCircle, Archive } from 'lucide-react';
+import { Plus } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { EmptyState } from '@/components/ui/empty-state';
@@ -34,12 +34,6 @@ export default async function ItemsPage({ searchParams }: ItemsPageProps) {
 
   const displayItems = showArchived ? archivedItems : activeItems;
 
-  const stats = [
-    { label: 'Total Items', value: String(activeItems.length + archivedItems.length), icon: Package, description: 'All items' },
-    { label: 'Active', value: String(activeItems.length), icon: CheckCircle, description: 'Available for selection' },
-    { label: 'Archived', value: String(archivedItems.length), icon: Archive, description: 'Hidden from selection' },
-  ];
-
   return (
     <div className="flex flex-col gap-6">
       {/* Page header */}
@@ -56,24 +50,6 @@ export default async function ItemsPage({ searchParams }: ItemsPageProps) {
             </Link>
           </Button>
         </div>
-      </div>
-
-      {/* Stats row */}
-      <div className="grid grid-cols-2 gap-4 sm:grid-cols-3">
-        {stats.map((stat) => (
-          <Card key={stat.label} size="sm">
-            <CardHeader>
-              <div className="flex items-center justify-between">
-                <CardDescription>{stat.label}</CardDescription>
-                <stat.icon className="size-4 text-muted-foreground" />
-              </div>
-              <CardTitle className="text-2xl tabular-nums">{stat.value}</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <p className="text-xs text-muted-foreground">{stat.description}</p>
-            </CardContent>
-          </Card>
-        ))}
       </div>
 
       {/* Items table */}

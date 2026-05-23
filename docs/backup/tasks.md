@@ -1,0 +1,27 @@
+# Task Checklist: Backup & Restore
+
+- `[ ]` **Core Setup & Storage Wrapper**
+  - `[ ]` Install `@aws-sdk/client-s3` dependency in `apps/admin`
+  - `[ ]` Configure backup variables in `.env.example` and local `.env.local`
+  - `[ ]` Implement `apps/admin/src/lib/s3.ts` wrapper for initializing the S3 client
+- `[ ]` **Server Actions (`data-actions.ts`)**
+  - `[ ]` Implement Client CSV Export (`exportClientsCsv`)
+  - `[ ]` Implement Invoice CSV Export (`exportInvoicesCsv`)
+  - `[ ]` Implement Income & Expenses CSV Export (`exportIncomeExpensesCsv`)
+  - `[ ]` Implement Full Business Data JSON Export incorporating `payment_allocations` (`exportFullJson`)
+  - `[ ]` Implement Cloud Backup Action with 30-day automatic pruning (`triggerCloudBackup`)
+  - `[ ]` Implement cloud files listing (`listCloudBackups`) and delete (`deleteCloudBackup`)
+  - `[ ]` Implement transactional Restore logic (`restoreFromCloudBackup`) preserving Auth tables and loading `payment_allocations` at the end of the transaction
+- `[ ]` **UI Dashboards & Actions (`apps/admin`)**
+  - `[ ]` Update `/settings/data` UI page to wire Export CSV/JSON click handlers
+  - `[ ]` Build S3 Cloud Backup history table component in the admin settings area
+  - `[ ]` Integrate the "Backup Now" trigger with appropriate toast loading states
+  - `[ ]` Design the warning verification modal for the DB restore operation (confirm with `RESTORE` phrase)
+- `[ ]` **Automated Cron Backup & Alert Notifications**
+  - `[ ]` Create API Cron route (`/api/cron/backup`) with secure token matching
+  - `[ ]` Hook failure catchers to dispatch warning email alerts via Resend on exception
+- `[ ]` **Verification & Validation**
+  - `[ ]` Run test suites and verify proper compilation
+  - `[ ]` Verify ad-hoc downloads (CSVs and JSON) are complete and formatted
+  - `[ ]` Verify backup creation uploads correct payload to Cloudflare R2
+  - `[ ]` Verify successful backup restoration and transactional rollback upon validation errors

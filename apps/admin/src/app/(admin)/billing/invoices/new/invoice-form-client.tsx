@@ -1,7 +1,9 @@
 'use client';
 
-import { useState, useTransition } from 'react';
+import { useState, useTransition, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
+import { formatZAR } from '@/lib/format';
+import { getClientCreditBalance } from '@/app/actions/billing-payments';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import {
@@ -108,11 +110,23 @@ export function InvoiceFormClient({
   );
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [creditBalance, setCreditBalance] = useState<number>(0);
 
   const totals = calcTotals(lineItems, vatEnabled, discountType, discountValue);
 
   // Warn if invoice date is near the period boundary
   const isPeriodWarning = invoiceDate < minDate;
+
+  // Load client unallocated credit retainer balance
+  useEffect(() => {
+    if (!clientId) {
+      setCreditBalance(0);
+      return;
+    }
+    getClientCreditBalance(clientId)
+      .then(setCreditBalance)
+      .catch((err) => console.error('Failed to load client credit balance:', err));
+  }, [clientId]);
 
   function handleSubmit() {
     setError(null);
@@ -228,6 +242,16 @@ export function InvoiceFormClient({
                 ))}
               </SelectContent>
             </Select>
+            {creditBalance > 0 && (
+              <div className="p-3 rounded-md bg-emerald-50 border border-emerald-200 text-emerald-800 text-xs flex flex-col gap-1 mt-1">
+                <span className="font-semibold flex items-center gap-1">
+                  ✨ Client Retainer Credit Available: {formatZAR(creditBalance)}
+                </span>
+                <span className="text-emerald-700">
+                  This client has unallocated payments. You can record payments and apply this credit to the invoice once it is issued.
+                </span>
+              </div>
+            )}
           </div>
 
           <div className="flex flex-col gap-1.5">

@@ -1,6 +1,6 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
-import { Plus, FileText, Clock, CheckCircle, XCircle } from 'lucide-react';
+import { Plus } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { getAllQuotations } from '@pmg/db';
@@ -37,29 +37,10 @@ export default async function QuotesPage({ searchParams }: QuotesPageProps) {
   const now = new Date();
   const currentFY = now.getMonth() < 2 ? now.getFullYear() - 1 : now.getFullYear();
 
-  const [result, allResult] = await Promise.all([
-    getAllQuotations(
-      { divisionId, status: normalizedStatus, year: currentFY },
-      { page: currentPage, pageSize },
-    ),
-    getAllQuotations({ year: currentFY }),
-  ]);
-
-  const totalCount = allResult.total;
-  const pendingCount = allResult.data.filter(
-    (q) => q.status === 'sent',
-  ).length;
-  const acceptedCount = allResult.data.filter(
-    (q) => q.status === 'accepted' || q.status === 'converted',
-  ).length;
-  const declinedCount = allResult.data.filter((q) => q.status === 'declined').length;
-
-  const stats = [
-    { label: 'Total Quotes', value: String(totalCount), icon: FileText, description: 'Year to Date' },
-    { label: 'Pending', value: String(pendingCount), icon: Clock, description: 'Awaiting response' },
-    { label: 'Accepted', value: String(acceptedCount), icon: CheckCircle, description: 'Accepted or converted' },
-    { label: 'Declined', value: String(declinedCount), icon: XCircle, description: 'Not accepted' },
-  ];
+  const result = await getAllQuotations(
+    { divisionId, status: normalizedStatus, year: currentFY },
+    { page: currentPage, pageSize },
+  );
 
   return (
     <div className="flex flex-col gap-6">
@@ -79,24 +60,6 @@ export default async function QuotesPage({ searchParams }: QuotesPageProps) {
             </Link>
           </Button>
         </div>
-      </div>
-
-      {/* Stats row */}
-      <div className="grid grid-cols-2 gap-4 sm:grid-cols-4">
-        {stats.map((stat) => (
-          <Card key={stat.label} size="sm">
-            <CardHeader>
-              <div className="flex items-center justify-between">
-                <CardDescription>{stat.label}</CardDescription>
-                <stat.icon className="size-4 text-muted-foreground" />
-              </div>
-              <CardTitle className="text-2xl tabular-nums">{stat.value}</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <p className="text-xs text-muted-foreground">{stat.description}</p>
-            </CardContent>
-          </Card>
-        ))}
       </div>
 
       {/* Quotes table */}

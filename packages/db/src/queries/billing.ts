@@ -1,5 +1,5 @@
 import { db } from "../client";
-import { quotations, invoices, billingLineItems, billingItems } from "../schema/billing";
+import { quotations, invoices, billingLineItems, billingItems, paymentAllocations } from "../schema/billing";
 import { income } from "../schema/income";
 import { divisions } from "../schema/divisions";
 import { clients } from "../schema/clients";
@@ -85,6 +85,7 @@ export type InvoiceRow = {
   createdBy: string;
   createdAt: Date;
   updatedAt: Date | null;
+  allocatedAmount?: string;
 };
 
 export type InvoiceDetail = InvoiceRow & {
@@ -423,6 +424,7 @@ export async function getAllInvoices(
       createdBy: invoices.createdBy,
       createdAt: invoices.createdAt,
       updatedAt: invoices.updatedAt,
+      allocatedAmount: sql<string>`COALESCE((SELECT SUM(amount) FROM payment_allocations WHERE invoice_id = ${invoices.id}), 0)::text`,
     })
     .from(invoices)
     .innerJoin(divisions, eq(invoices.divisionId, divisions.id))
@@ -437,7 +439,7 @@ export async function getAllInvoices(
     .select({
       count: sql<number>`count(*)::int`,
       sum: sql<number>`COALESCE(SUM(${invoices.total}), 0)::numeric`,
-      outstanding: sql<number>`COALESCE(SUM(CASE WHEN ${invoices.status} IN ('issued', 'overdue') THEN ${invoices.total} ELSE 0 END), 0)::numeric`,
+      outstanding: sql<number>`COALESCE(SUM(CASE WHEN ${invoices.status} IN ('issued', 'overdue', 'partially_paid') THEN ${invoices.total} - COALESCE((SELECT SUM(amount) FROM payment_allocations WHERE invoice_id = ${invoices.id}), 0) ELSE 0 END), 0)::numeric`,
     })
     .from(invoices);
   if (conditions.length > 0) countQuery.where(and(...conditions));
@@ -540,6 +542,7 @@ export async function getInvoiceById(id: string): Promise<InvoiceDetail | null> 
       createdBy: invoices.createdBy,
       createdAt: invoices.createdAt,
       updatedAt: invoices.updatedAt,
+      allocatedAmount: sql<string>`COALESCE((SELECT SUM(amount) FROM payment_allocations WHERE invoice_id = ${invoices.id}), 0)::text`,
     })
     .from(invoices)
     .innerJoin(divisions, eq(invoices.divisionId, divisions.id))
@@ -650,6 +653,7 @@ export async function getClientStatement(
       createdBy: invoices.createdBy,
       createdAt: invoices.createdAt,
       updatedAt: invoices.updatedAt,
+      allocatedAmount: sql<string>`COALESCE((SELECT SUM(amount) FROM payment_allocations WHERE invoice_id = ${invoices.id}), 0)::text`,
     })
     .from(invoices)
     .innerJoin(divisions, eq(invoices.divisionId, divisions.id))
@@ -1009,9 +1013,9 @@ export async function getAgingReport(): Promise<AgingRow[]> {
         ELSE '61_plus'
       END                                                         AS bucket,
       COUNT(*)::int                                               AS count,
-      COALESCE(SUM(invoices.total), 0)                            AS total
+      COALESCE(SUM(invoices.total - COALESCE((SELECT SUM(amount) FROM payment_allocations WHERE invoice_id = invoices.id), 0)), 0) AS total
     FROM invoices
-    WHERE status IN ('issued', 'overdue')
+    WHERE status IN ('issued', 'overdue', 'partially_paid')
       AND due_date IS NOT NULL
     GROUP BY bucket
   `);
