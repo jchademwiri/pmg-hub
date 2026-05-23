@@ -62,6 +62,7 @@ export const GROUPS: NavGroup[] = [
     items: [
       { title: 'Quotations', url: '/billing/quotes',     icon: FileText   },
       { title: 'Invoices',   url: '/billing/invoices',   icon: Receipt    },
+      { title: 'Payments',   url: '/billing/payments',   icon: Banknote   },
       { title: 'Statements', url: '/billing/statements', icon: ScrollText },
       { title: 'Items',      url: '/billing/items',      icon: Package    },
     ],
@@ -117,6 +118,7 @@ for (const group of GROUPS) {
 // Extra routes that exist in the app but are not sidebar items
 const EXTRA_LABELS: Record<string, string> = {
   '/settings/users/invite': 'Invite User',
+  '/billing/payments/add': 'Record Payment',
 }
 
 export const ROUTE_LABELS: Record<string, string> = {

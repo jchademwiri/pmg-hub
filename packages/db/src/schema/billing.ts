@@ -32,6 +32,7 @@ export const quotationStatusEnum = pgEnum("quotation_status", [
 export const invoiceStatusEnum = pgEnum("invoice_status", [
   "draft",
   "issued",
+  "partially_paid",
   "paid",
   "overdue",
   "void",
@@ -267,6 +268,7 @@ export const invoicesRelations = relations(invoices, ({ one, many }) => ({
     fields: [invoices.incomeId],
     references: [income.id],
   }),
+  allocations: many(paymentAllocations),
 }));
 
 // ── organisation_settings ─────────────────────────────────────────────────────
@@ -323,3 +325,40 @@ export const divisionBillingSettings = pgTable(
 
 export type DivisionBillingSettings = typeof divisionBillingSettings.$inferSelect;
 export type NewDivisionBillingSettings = typeof divisionBillingSettings.$inferInsert;
+
+// ── payment_allocations ────────────────────────────────────────────────────────
+// Junction table supporting many-to-many allocations of payments (income) to invoices.
+
+export const paymentAllocations = pgTable(
+  "payment_allocations",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    incomeId: uuid("income_id")
+      .notNull()
+      .references(() => income.id, { onDelete: "cascade" }), // Cascade delete allocations if the payment is removed
+    invoiceId: uuid("invoice_id")
+      .notNull()
+      .references(() => invoices.id, { onDelete: "restrict" }), // Prevent invoice deletion if allocations exist
+    amount: numeric("amount", { precision: 12, scale: 2 }).notNull(),
+    createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
+    updatedAt: timestamp("updated_at", { withTimezone: true }),
+  },
+  (t) => [
+    index("payment_allocations_income_id_idx").on(t.incomeId),
+    index("payment_allocations_invoice_id_idx").on(t.invoiceId),
+  ]
+);
+
+export type PaymentAllocation = typeof paymentAllocations.$inferSelect;
+export type NewPaymentAllocation = typeof paymentAllocations.$inferInsert;
+
+export const paymentAllocationsRelations = relations(paymentAllocations, ({ one }) => ({
+  income: one(income, {
+    fields: [paymentAllocations.incomeId],
+    references: [income.id],
+  }),
+  invoice: one(invoices, {
+    fields: [paymentAllocations.invoiceId],
+    references: [invoices.id],
+  }),
+}));
