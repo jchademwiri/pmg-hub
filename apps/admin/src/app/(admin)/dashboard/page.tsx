@@ -8,7 +8,6 @@ import {
   getDivisionRevenue,
   getLeadCounts,
   getMonthlyFinancialsSeries,
-  getLedgerBalances,
   getAllDivisionSeriesData,
   getMoMChartData,
   getExpensesByDivision,
@@ -16,7 +15,7 @@ import {
   getPreviousMonthLabel,
   getYTDLabel,
 } from '@/lib/financial';
-import { getSnapshotByPeriod } from '@pmg/db';
+import { getSnapshotByPeriod, getAgingReport } from '@pmg/db';
 import { DashboardShell } from '@/components/dashboard/dashboard-shell';
 
 export const dynamic = 'force-dynamic';
@@ -41,7 +40,7 @@ export default async function DashboardPage() {
     divisions,
     leads,
     monthlySeries,
-    ledgerBalances,
+    agingReport,
     divisionSeriesData,
     momData,
     expensesByDivision,
@@ -54,7 +53,7 @@ export default async function DashboardPage() {
     getDivisionRevenue(),
     getLeadCounts(),
     getMonthlyFinancialsSeries(),
-    getLedgerBalances(),
+    getAgingReport(),
     getAllDivisionSeriesData(),
     getMoMChartData(),
     getExpensesByDivision(),
@@ -98,7 +97,7 @@ export default async function DashboardPage() {
       leads={leads}
       monthlySeries={monthlySeries}
       sparklineData={monthlySeries.slice(-6)}
-      ledgerBalances={ledgerBalances}
+      agingReport={agingReport}
       divisionSeriesData={divisionSeriesData}
       expensesByDivision={expensesByDivision}
       // Snapshot

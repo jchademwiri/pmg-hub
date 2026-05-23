@@ -2,13 +2,14 @@
 
 import { useState } from 'react'
 import { KpiGrid } from '@/components/dashboard/kpi-grid'
-import { BudgetCard } from '@/components/dashboard/budget-card'
 import { DivisionAreaChart } from '@/components/dashboard/division-area-chart'
 import { DivisionRevenue } from '@/components/dashboard/division-revenue'
 import { LeadsSummary } from '@/components/dashboard/leads-summary'
 import { ExpenseSnapshot } from '@/components/dashboard/expense-snapshot'
 import CloseMonthButton from '@/components/dashboard/close-month-button'
-import type { PeriodSummary, DivisionRevenue as DivisionRevenueType, LeadStatusCount, MonthlyFinancials, BucketBalances, DivisionSeriesChart } from '@/lib/financial'
+import { AgingReportGrid } from '@/components/dashboard/aging-report-grid'
+import type { AgingRow } from '@pmg/db'
+import type { PeriodSummary, DivisionRevenue as DivisionRevenueType, LeadStatusCount, MonthlyFinancials, DivisionSeriesChart } from '@/lib/financial'
 
 type Tab = 'current' | 'previous' | 'ytd'
 
@@ -28,7 +29,7 @@ type Props = {
   leads: LeadStatusCount[]
   monthlySeries: MonthlyFinancials[]
   sparklineData: MonthlyFinancials[]
-  ledgerBalances: BucketBalances
+  agingReport: AgingRow[]
   divisionSeriesData: {
     last3: DivisionSeriesChart
     last6: DivisionSeriesChart
@@ -59,7 +60,7 @@ export function DashboardShell({
   divisionExpenseMap,
   leads,
   sparklineData,
-  ledgerBalances,
+  agingReport,
   divisionSeriesData,
   expensesByDivision,
   hasSnapshot,
@@ -136,44 +137,8 @@ export function DashboardShell({
         deltaLabel={activeDeltaLabel}
       />
 
-      {/* ── Row 2: Ledger Balances ── */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
-        <BudgetCard
-          title="PMG Share"
-          bucket={ledgerBalances.pmg_share}
-          colorClass="text-violet-500"
-          bgClass="bg-violet-500/10"
-          borderClass="border-violet-500/20"
-        />
-        <BudgetCard
-          title="Salary"
-          bucket={ledgerBalances.salary}
-          colorClass="text-green-500"
-          bgClass="bg-green-500/10"
-          borderClass="border-green-500/20"
-        />
-        <BudgetCard
-          title="Reinvest"
-          bucket={ledgerBalances.reinvest}
-          colorClass="text-blue-500"
-          bgClass="bg-blue-500/10"
-          borderClass="border-blue-500/20"
-        />
-        <BudgetCard
-          title="Reserve"
-          bucket={ledgerBalances.reserve}
-          colorClass="text-amber-500"
-          bgClass="bg-amber-500/10"
-          borderClass="border-amber-500/20"
-        />
-        <BudgetCard
-          title="Flex"
-          bucket={ledgerBalances.flex}
-          colorClass="text-purple-500"
-          bgClass="bg-purple-500/10"
-          borderClass="border-purple-500/20"
-        />
-      </div>
+      {/* ── Row 2: Accounts Receivable Ageing Overview ── */}
+      <AgingReportGrid data={agingReport} />
 
       {/* ── Row 3: Division Area Chart ── */}
       <div className="w-full">
