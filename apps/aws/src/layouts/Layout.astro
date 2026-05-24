@@ -17,6 +17,7 @@ import type {
 const {
   title,
   description = "Premium web design and development for South African SMEs. Affordable, high-performance websites starting from R299/month.",
+  robots,
 } = Astro.props;
 const canonicalURL = new URL(Astro.url.pathname, Astro.site);
 
@@ -29,12 +30,14 @@ const businessSchema: ProfessionalService = {
     "Premium web design and development for South African SMEs. Affordable, high-performance websites.",
   address: {
     "@type": "PostalAddress",
+    addressLocality: "Centurion",
+    addressRegion: "Gauteng",
     addressCountry: "ZA",
   },
   geo: {
     "@type": "GeoCoordinates",
-    latitude: -30.5595,
-    longitude: 22.9375,
+    latitude: -25.8553,
+    longitude: 28.1881,
   },
   areaServed: {
     "@type": "Country",
@@ -84,6 +87,8 @@ const graphSchema: Graph = {
 <link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png">
 <link rel="manifest" href="/site.webmanifest">
     <meta name="generator" content={Astro.generator} />
+    {robots && <meta name="robots" content={robots} />}
+    <link rel="sitemap" href="/sitemap-index.xml" />
     <HeadSEO
     title={title}
     description={description}

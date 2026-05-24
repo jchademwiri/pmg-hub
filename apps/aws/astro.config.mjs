@@ -37,7 +37,12 @@ export default defineConfig({
     react(),
     partytown({ config: { forward: ['dataLayer.push'] } }),
     sitemap({
-      customPages: ['https://apexwebsolutions.co.za/'],
+      filter: (page) => !page.includes('/discovery'),
+      customPages: [
+        'https://apexwebsolutions.co.za/',
+        'https://apexwebsolutions.co.za/privacy',
+        'https://apexwebsolutions.co.za/terms',
+      ],
     }),
   ],
 

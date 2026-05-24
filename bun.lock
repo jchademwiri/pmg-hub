@@ -102,6 +102,7 @@
       "name": "pmg",
       "version": "0.0.1",
       "dependencies": {
+        "@astrojs/sitemap": "^3.7.2",
         "@astrojs/vercel": "^10.0.4",
         "@pmg/tailwind-config": "workspace:*",
         "@vercel/analytics": "^2.0.1",
