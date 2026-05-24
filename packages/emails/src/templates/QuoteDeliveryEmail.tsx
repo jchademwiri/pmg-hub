@@ -59,7 +59,7 @@ const QuoteDeliveryEmail = (props: QuoteDeliveryEmailProps) => {
         <Head />
         <Preview>New Quotation Available: {documentNumber} from {companyName}</Preview>
         <Body className="bg-[#F6F8FA] py-[40px] font-sans">
-          <Container className="mx-auto max-w-[600px] rounded-[8px] bg-[#FFFFFF] p-[32px] shadow-lg">
+          <Container width="600" className="mx-auto rounded-[8px] bg-[#FFFFFF] p-[32px] shadow-lg" style={{ maxWidth: '600px', width: '100%', margin: '0 auto' }}>
             {/* Logo */}
             {logoUrl && (
               <Section className="mb-[24px]">

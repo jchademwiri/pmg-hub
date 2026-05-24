@@ -141,7 +141,9 @@ describe('Billing Quotations Module', () => {
       expect(revalidatePath).toHaveBeenCalledWith('/billing/quotes');
     });
 
-    it('createQuotation - block future date & closed period', async () => {
+    it('createQuotation - allows future date & blocks closed period', async () => {
+      mockDbExecute.mockResolvedValue({ rows: [{ exists: true }] });
+
       // Future date
       const resFuture = await createQuotation({
         divisionId: 'd3b07384-d113-4956-a5db-8f3e58b8d4e6',
@@ -152,7 +154,7 @@ describe('Billing Quotations Module', () => {
         ],
         vatEnabled: true,
       });
-      expect(resFuture.error).toBe('Quote date cannot be in the future.');
+      expect(resFuture).toEqual({ id: 'new-id' });
 
       // Closed period
       mockIsPeriodClosed.mockResolvedValue(true);
@@ -165,7 +167,6 @@ describe('Billing Quotations Module', () => {
         ],
         vatEnabled: true,
       });
-      console.log('CLOSED PERIOD RES IS:', resClosed);
       expect(resClosed.error).toBe('Period is closed.');
     });
 

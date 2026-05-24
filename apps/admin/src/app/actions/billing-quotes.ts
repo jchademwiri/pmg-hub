@@ -94,10 +94,6 @@ export async function createQuotation(
       return { error: 'A client is required.' };
     }
 
-    const today = new Date().toISOString().split('T')[0]!;
-    if (quoteDate > today) {
-      return { error: 'Quote date cannot be in the future.' };
-    }
     if (await isPeriodClosed(quoteDate)) {
       const minDate = await getMinAllowedDate();
       return { error: getMinDateErrorMessage(minDate) };
@@ -197,11 +193,19 @@ export async function updateQuotation(
     const db = getDb();
     const includeReference = await hasQuotationReferenceColumn();
     const [existing] = await db
-      .select({ id: quotations.id, status: quotations.status })
+      .select({ id: quotations.id, status: quotations.status, quoteDate: quotations.quoteDate })
       .from(quotations)
       .where(eq(quotations.id, id));
 
     if (!existing) return { error: 'Quotation not found.' };
+
+    if (await isPeriodClosed(existing.quoteDate)) {
+      return { error: 'Cannot edit a quotation in a closed financial period.' };
+    }
+    if (await isPeriodClosed(quoteDate)) {
+      const minDate = await getMinAllowedDate();
+      return { error: getMinDateErrorMessage(minDate) };
+    }
 
     const editableStatuses = ['draft', 'sent', 'accepted'];
     if (!editableStatuses.includes(existing.status)) {

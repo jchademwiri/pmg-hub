@@ -1,7 +1,7 @@
 'use server';
 
 import { revalidatePath } from 'next/cache';
-import { getDb, invoices, income, clients, paymentAllocations, eq, and, sql, desc, asc, divisions } from '@pmg/db';
+import { getDb, invoices, income, clients, paymentAllocations, eq, and, sql, desc, asc, divisions, divisionBillingSettings } from '@pmg/db';
 import { getSessionOrRedirect } from '@/lib/auth';
 import { isPeriodClosed, getMinAllowedDate, getMinDateErrorMessage } from '@/lib/date-rules';
 
@@ -114,15 +114,20 @@ export async function recordClientPayment(data: PaymentInput): Promise<{ error?:
     await getSessionOrRedirect();
     const db = getDb();
 
-    // 1. Check period lock
+    // 1. Check period lock and future date
+    const today = new Date().toISOString().split('T')[0]!;
+    if (data.date > today) {
+      return { error: 'Payment date cannot be in the future.' };
+    }
+
     if (await isPeriodClosed(data.date)) {
       const minDate = await getMinAllowedDate();
       return { error: getMinDateErrorMessage(minDate) };
     }
 
-    // 2. Fetch client label
+    // 2. Fetch client details
     const [client] = await db
-      .select({ name: clients.name, businessName: clients.businessName })
+      .select({ name: clients.name, businessName: clients.businessName, email: clients.email })
       .from(clients)
       .where(eq(clients.id, data.clientId));
 
@@ -158,6 +163,8 @@ export async function recordClientPayment(data: PaymentInput): Promise<{ error?:
 
     if (!incomeRow) throw new Error('Failed to record cash receipt.');
 
+    const allocatedInvoicesInfo: { documentNumber: string, amount: string }[] = [];
+
     // B. Insert allocations and transition invoice statuses
     for (const alloc of data.allocations) {
       if (alloc.amount <= 0) continue;
@@ -168,6 +175,20 @@ export async function recordClientPayment(data: PaymentInput): Promise<{ error?:
         invoiceId: alloc.invoiceId,
         amount: String(alloc.amount),
       });
+
+      // Fetch invoice document number for thank you email
+      const [invDoc] = await db
+        .select({ documentNumber: invoices.documentNumber })
+        .from(invoices)
+        .where(eq(invoices.id, alloc.invoiceId))
+        .limit(1);
+
+      if (invDoc) {
+        allocatedInvoicesInfo.push({
+          documentNumber: invDoc.documentNumber,
+          amount: `R ${Number(alloc.amount).toLocaleString('en-ZA', { minimumFractionDigits: 2 })}`,
+        });
+      }
 
       // Sum allocations for this invoice
       const [sumAgg] = await db
@@ -212,6 +233,74 @@ export async function recordClientPayment(data: PaymentInput): Promise<{ error?:
     revalidatePath('/billing/invoices');
     revalidatePath('/finance/income');
     revalidatePath('/dashboard');
+
+    // 5. Asynchronously trigger Payment Thank You email receipt via Resend
+    if (client.email) {
+      (async () => {
+        try {
+          // Fetch division billing config and division details
+          const [billingConfig] = await db
+            .select()
+            .from(divisionBillingSettings)
+            .where(eq(divisionBillingSettings.divisionId, finalDivisionId));
+
+          const [divRow] = await db
+            .select({ name: divisions.name })
+            .from(divisions)
+            .where(eq(divisions.id, finalDivisionId));
+
+          // Set up environment config for email dispatcher (matching email-delivery.ts)
+          const isTes = divRow?.name?.toLowerCase().includes('tender') || false;
+          const isAws = divRow?.name?.toLowerCase().includes('apex') || false;
+          const apiKey = (isTes ? process.env.TES_RESEND_API_KEY : isAws ? process.env.AWS_RESEND_API_KEY : undefined) 
+                         || process.env.PMG_RESEND_API_KEY!;
+          
+          const defaultFrom = process.env.EMAIL_FROM_ADDRESS || 'info@playhousemedia.com';
+          const fromName = billingConfig?.salesRepName || 'Playhouse Media Group';
+          
+          // Resolve info subdomain sender (helper matching email-delivery.ts)
+          let fromEmail = defaultFrom;
+          if (billingConfig?.divisionWebsite) {
+            let domain = billingConfig.divisionWebsite.trim()
+              .replace(/^(https?:\/\/)?(www\.)?/, '')
+              .split('/')[0]
+              .toLowerCase();
+            if (domain) {
+              fromEmail = domain.startsWith('info.') ? `noreply@${domain}` : `noreply@info.${domain}`;
+            }
+          }
+
+          const { createEmailClient, PaymentThankYouEmail, DEFAULT_REPLY_TO } = await import('@pmg/emails');
+          const emailClient = createEmailClient({
+            apiKey,
+            from: `${fromName} <${fromEmail}>`,
+            adminEmail: fromEmail,
+          });
+
+          const emailProps = {
+            clientName: client.businessName || client.name,
+            amountPaid: `R ${Number(data.amount).toLocaleString('en-ZA', { minimumFractionDigits: 2 })}`,
+            paymentDate: new Date(data.date).toLocaleDateString('en-ZA', { day: 'numeric', month: 'long', year: 'numeric' }),
+            paymentDescription: data.description || undefined,
+            allocations: allocatedInvoicesInfo,
+            companyName: billingConfig?.salesRepName || 'Playhouse Media Group',
+            primaryColor: '#1d4ed8',
+            websiteUrl: billingConfig?.divisionWebsite || undefined,
+            logoUrl: billingConfig?.logoUrl || undefined,
+          };
+
+          const React = await import('react');
+          await emailClient({
+            to: client.email!,
+            subject: `Payment Receipt Confirmation: Thank you for your payment`,
+            react: React.createElement(PaymentThankYouEmail, emailProps),
+            replyTo: DEFAULT_REPLY_TO,
+          });
+        } catch (mailErr) {
+          console.error('Failed to send Payment Thank You email:', mailErr);
+        }
+      })();
+    }
 
     return { success: true };
   } catch (err) {

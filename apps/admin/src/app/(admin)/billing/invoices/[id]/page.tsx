@@ -161,6 +161,7 @@ export default async function InvoiceDetailPage({ params }: Props) {
     status: invoice.status.charAt(0).toUpperCase() + invoice.status.slice(1),
     issueDate: invoice.invoiceDate,
     dueDate: invoice.dueDate ?? undefined,
+    reference: invoice.reference ?? undefined,
     org: {
       name: invoice.divisionName,
       logoUrl: getDocumentLogoUrl(invoice.divisionName),

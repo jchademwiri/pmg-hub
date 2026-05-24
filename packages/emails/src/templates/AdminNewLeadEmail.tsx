@@ -56,7 +56,7 @@ const AdminNewLeadEmail = (props: AdminNewLeadEmailProps) => {
           New Lead: {package_name} - {name} | {companyName}
         </Preview>
         <Body className="bg-[#F6F8FA] py-[40px] font-sans">
-          <Container className="mx-auto max-w-[600px] rounded-[12px] bg-[#FFFFFF] shadow-lg">
+          <Container width="600" className="mx-auto rounded-[12px] bg-[#FFFFFF] shadow-lg" style={{ maxWidth: '600px', width: '100%', margin: '0 auto' }}>
             {/* Header */}
             <Section
               className="rounded-t-[12px] py-[32px] text-center"
