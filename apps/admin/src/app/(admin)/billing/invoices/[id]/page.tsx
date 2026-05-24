@@ -276,7 +276,7 @@ export default async function InvoiceDetailPage({ params }: Props) {
                 </span>
                 {outstandingBalance > 0 && invoice.status !== 'draft' && (
                   <Button asChild size="sm" className="w-full">
-                    <Link href={`/billing/payments/add?clientId=${invoice.clientId}`}>
+                    <Link href={`/billing/payments/add?clientId=${invoice.clientId}&amount=${outstandingBalance.toFixed(2)}`}>
                       Record Payment
                     </Link>
                   </Button>
@@ -370,7 +370,7 @@ export default async function InvoiceDetailPage({ params }: Props) {
       {statementProps && (
         <div 
           id="printable-statement-area" 
-          className="absolute pointer-events-none opacity-0"
+          className="absolute pointer-events-none"
           style={{ position: 'absolute', left: '-9999px', top: '-9999px', width: '800px' }}
         >
           <DocumentPreview type="statement" {...statementProps} />

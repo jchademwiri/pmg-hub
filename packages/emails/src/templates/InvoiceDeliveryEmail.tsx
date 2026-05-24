@@ -14,6 +14,7 @@ import {
   pixelBasedPreset,
 } from "@react-email/components";
 import type { BrandingProps } from "../types";
+import { DEFAULT_WEBSITE_URL } from "../domains";
 
 export type InvoiceDeliveryEmailProps = {
   clientName: string;
@@ -45,7 +46,7 @@ const InvoiceDeliveryEmail = (props: InvoiceDeliveryEmailProps) => {
     hasStatementAttached = false,
     companyName = "Playhouse Media Group",
     primaryColor = "#1d4ed8",
-    websiteUrl = "https://playhousemedia.co.za",
+    websiteUrl = DEFAULT_WEBSITE_URL,
     logoUrl,
   } = props;
 
@@ -206,7 +207,7 @@ InvoiceDeliveryEmail.PreviewProps = {
   hasStatementAttached: true,
   companyName: "Playhouse Media Group",
   primaryColor: "#1d4ed8",
-  websiteUrl: "https://playhousemedia.co.za",
+  websiteUrl: DEFAULT_WEBSITE_URL,
 };
 
 export default InvoiceDeliveryEmail;

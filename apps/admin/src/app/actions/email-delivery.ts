@@ -1,8 +1,8 @@
 'use server';
 
-import { getDb, invoices, quotations, clients, divisionBillingSettings, eq } from '@pmg/db';
+import { getDb, invoices, quotations, clients, divisionBillingSettings, divisions, eq } from '@pmg/db';
 import { getSessionOrRedirect } from '@/lib/auth';
-import { createEmailClient, InvoiceDeliveryEmail, QuoteDeliveryEmail } from '@pmg/emails';
+import { createEmailClient, InvoiceDeliveryEmail, QuoteDeliveryEmail, DEFAULT_EMAIL_FROM, DEFAULT_REPLY_TO, DEFAULT_WEBSITE_URL } from '@pmg/emails';
 import React from 'react';
 import { z } from 'zod';
 
@@ -21,9 +21,15 @@ function resolveFromEmail(divisionWebsite: string | null, fallbackFrom: string):
   if (!divisionWebsite) return fallbackFrom;
   let domain = divisionWebsite.trim()
     .replace(/^(https?:\/\/)?(www\.)?/, '') // Remove http, https, and www.
-    .split('/')[0]; // Remove any trailing paths
+    .split('/')[0] // Remove any trailing paths
+    .toLowerCase();
   
   if (!domain) return fallbackFrom;
+  
+  if (domain.startsWith('info.')) {
+    return `noreply@${domain}`;
+  }
+  
   return `noreply@info.${domain}`;
 }
 
@@ -54,8 +60,10 @@ export async function sendDocumentEmailAction(rawPayload: unknown) {
           status: invoices.status,
           clientId: invoices.clientId,
           divisionId: invoices.divisionId,
+          divisionName: divisions.name,
         })
         .from(invoices)
+        .innerJoin(divisions, eq(divisions.id, invoices.divisionId))
         .where(eq(invoices.id, documentId));
 
       if (!invoice) return { error: 'Invoice not found.' };
@@ -71,8 +79,11 @@ export async function sendDocumentEmailAction(rawPayload: unknown) {
         .where(eq(divisionBillingSettings.divisionId, invoice.divisionId));
 
       // Load environment variables for email client
-      const apiKey = process.env.RESEND_API_KEY!;
-      const defaultFrom = process.env.EMAIL_FROM_ADDRESS || 'noreply@info.playhousemedia.co.za';
+      const isTes = invoice.divisionName?.toLowerCase().includes('tender') || false;
+      const isAws = invoice.divisionName?.toLowerCase().includes('apex') || false;
+      const apiKey = (isTes ? process.env.TES_RESEND_API_KEY : isAws ? process.env.AWS_RESEND_API_KEY : undefined) 
+                     || process.env.RESEND_API_KEY!;
+      const defaultFrom = process.env.EMAIL_FROM_ADDRESS || DEFAULT_EMAIL_FROM;
       const fromName = billingConfig?.salesRepName || process.env.EMAIL_FROM_NAME || 'PMG Admin';
       
       // Resolve dynamic info. subdomain sender
@@ -95,7 +106,7 @@ export async function sendDocumentEmailAction(rawPayload: unknown) {
         personalMessage: personalMessage || undefined,
         companyName: billingConfig?.salesRepName ? billingConfig.salesRepName : 'Playhouse Media Group',
         primaryColor: '#1d4ed8',
-        websiteUrl: billingConfig?.divisionWebsite || 'https://playhousemedia.co.za',
+        websiteUrl: billingConfig?.divisionWebsite || DEFAULT_WEBSITE_URL,
         logoUrl: billingConfig?.logoUrl || undefined,
         hasStatementAttached: !!base64StatementPdf,
         bankDetails: billingConfig ? {
@@ -128,7 +139,7 @@ export async function sendDocumentEmailAction(rawPayload: unknown) {
         to: recipientEmail,
         subject,
         react: React.createElement(InvoiceDeliveryEmail, emailProps),
-        replyTo: 'info@playhousemedia.co.za',
+        replyTo: DEFAULT_REPLY_TO,
         attachments,
       });
 
@@ -159,8 +170,10 @@ export async function sendDocumentEmailAction(rawPayload: unknown) {
           status: quotations.status,
           clientId: quotations.clientId,
           divisionId: quotations.divisionId,
+          divisionName: divisions.name,
         })
         .from(quotations)
+        .innerJoin(divisions, eq(divisions.id, quotations.divisionId))
         .where(eq(quotations.id, documentId));
 
       if (!quote) return { error: 'Quotation not found.' };
@@ -175,8 +188,11 @@ export async function sendDocumentEmailAction(rawPayload: unknown) {
         .from(divisionBillingSettings)
         .where(eq(divisionBillingSettings.divisionId, quote.divisionId));
 
-      const apiKey = process.env.RESEND_API_KEY!;
-      const defaultFrom = process.env.EMAIL_FROM_ADDRESS || 'noreply@info.playhousemedia.co.za';
+      const isTes = quote.divisionName?.toLowerCase().includes('tender') || false;
+      const isAws = quote.divisionName?.toLowerCase().includes('apex') || false;
+      const apiKey = (isTes ? process.env.TES_RESEND_API_KEY : isAws ? process.env.AWS_RESEND_API_KEY : undefined) 
+                     || process.env.RESEND_API_KEY!;
+      const defaultFrom = process.env.EMAIL_FROM_ADDRESS || DEFAULT_EMAIL_FROM;
       const fromName = billingConfig?.salesRepName || process.env.EMAIL_FROM_NAME || 'PMG Admin';
       
       const fromEmail = resolveFromEmail(billingConfig?.divisionWebsite || null, defaultFrom);
@@ -198,7 +214,7 @@ export async function sendDocumentEmailAction(rawPayload: unknown) {
         personalMessage: personalMessage || undefined,
         companyName: billingConfig?.salesRepName ? billingConfig.salesRepName : 'Playhouse Media Group',
         primaryColor: '#1d4ed8',
-        websiteUrl: billingConfig?.divisionWebsite || 'https://playhousemedia.co.za',
+        websiteUrl: billingConfig?.divisionWebsite || DEFAULT_WEBSITE_URL,
         logoUrl: billingConfig?.logoUrl || undefined,
         bankDetails: billingConfig ? {
           bankName: billingConfig.bankName || '',
@@ -213,7 +229,7 @@ export async function sendDocumentEmailAction(rawPayload: unknown) {
         to: recipientEmail,
         subject,
         react: React.createElement(QuoteDeliveryEmail, emailProps),
-        replyTo: 'info@playhousemedia.co.za',
+        replyTo: DEFAULT_REPLY_TO,
         attachments: [
           {
             filename: `${quote.documentNumber}.pdf`,

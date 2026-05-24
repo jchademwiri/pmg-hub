@@ -7,6 +7,7 @@ import { headers } from 'next/headers'
 import { redirect } from 'next/navigation'
 import { getDb, invitations, user, eq } from '@pmg/db'
 import { Resend } from 'resend'
+import { DEFAULT_EMAIL_FROM } from '@pmg/emails'
 
 // ── Resend client ─────────────────────────────────────────────────────────────
 
@@ -32,7 +33,7 @@ export const auth = betterAuth({
         const resend = getResend()
         try {
           const { error } = await resend.emails.send({
-            from: 'PMG Admin <noreply@info.playhousemedia.co.za>',
+            from: `PMG Admin <${DEFAULT_EMAIL_FROM}>`,
             to: email,
             subject: 'Sign in to PMG Control Center',
             html: `<p>Click the link below to sign in to PMG Control Center:</p><p><a href="${url}">${url}</a></p>`,

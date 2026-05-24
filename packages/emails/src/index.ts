@@ -17,3 +17,6 @@ export type { AutoReplyEmailProps } from "./templates/AutoReplyEmail";
 export type { InvoiceDeliveryEmailProps } from "./templates/InvoiceDeliveryEmail";
 export type { QuoteDeliveryEmailProps } from "./templates/QuoteDeliveryEmail";
 
+// Central config
+export { DOMAINS, DEFAULT_EMAIL_FROM, DEFAULT_REPLY_TO, DEFAULT_WEBSITE_URL } from "./domains";
+

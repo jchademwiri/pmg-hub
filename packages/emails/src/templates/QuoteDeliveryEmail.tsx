@@ -14,6 +14,7 @@ import {
   pixelBasedPreset,
 } from "@react-email/components";
 import type { BrandingProps } from "../types";
+import { DEFAULT_WEBSITE_URL } from "../domains";
 
 export type QuoteDeliveryEmailProps = {
   clientName: string;
@@ -43,7 +44,7 @@ const QuoteDeliveryEmail = (props: QuoteDeliveryEmailProps) => {
     bankDetails,
     companyName = "Playhouse Media Group",
     primaryColor = "#1d4ed8",
-    websiteUrl = "https://playhousemedia.co.za",
+    websiteUrl = DEFAULT_WEBSITE_URL,
     logoUrl,
   } = props;
 
@@ -208,7 +209,7 @@ QuoteDeliveryEmail.PreviewProps = {
   },
   companyName: "Playhouse Media Group",
   primaryColor: "#1d4ed8",
-  websiteUrl: "https://playhousemedia.co.za",
+  websiteUrl: DEFAULT_WEBSITE_URL,
 };
 
 export default QuoteDeliveryEmail;
