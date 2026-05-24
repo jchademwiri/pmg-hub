@@ -26,17 +26,21 @@ const organizationSchema = {
 	url: 'https://playhousemedia.co.za',
 	logo: 'https://playhousemedia.co.za/favicon.svg',
 	description,
+	telephone: '+27740491433',
+	email: 'info@playhousemedia.co.za',
 	address: {
 		'@type': 'PostalAddress',
-		addressLocality: 'Centurion',
+		streetAddress: 'Centurion',
+		addressLocality: 'Pretoria',
 		addressRegion: 'Gauteng',
+		postalCode: '0157',
 		addressCountry: 'ZA',
 	},
 	subOrganization: [
 		{
 			'@type': 'Organization',
 			name: 'Tender Edge Solutions',
-			url: 'https://www.tenderedgesolutions.co.za',
+			url: 'https://tenderedgesolutions.co.za',
 		},
 		{
 			'@type': 'Organization',
@@ -103,8 +107,9 @@ const organizationSchema = {
 	body.pmg-body {
 		margin: 0;
 		width: 100%;
-		height: 100dvh;
-		overflow: hidden;
+		min-height: 100vh;
+		overflow-y: auto;
+		overflow-x: hidden;
 		background: #0d1b2a;
 		color: #f4f4f2;
 		font-family: 'DM Sans', sans-serif;

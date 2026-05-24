@@ -1,0 +1,111 @@
+---
+// apps/pmg/src/components/ContactModal.astro
+---
+
+<div class="contact-modal-overlay" data-contact-modal style="display: none;">
+  <div class="contact-modal-container">
+    <button class="modal-close-btn" data-close-contact-modal aria-label="Close modal">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <line x1="18" y1="6" x2="6" y2="18"></line>
+        <line x1="6" y1="6" x2="18" y2="18"></line>
+      </svg>
+    </button>
+    
+    <div class="modal-header">
+      <span class="section-tag">Direct Inquiry</span>
+      <h2>Start a Project</h2>
+      <p class="modal-desc">
+        Contact Playhouse Media Group corporate office. Fill out the details below to request a service or schedule a discussion.
+      </p>
+    </div>
+
+    <!-- Modal Contact Form -->
+    <form class="contact-form modal-form">
+      <div class="form-group">
+        <label for="modal-name">Full Name</label>
+        <input type="text" id="modal-name" name="name" placeholder="Your Name..." required />
+      </div>
+
+      <div class="form-group">
+        <label for="modal-phone">Phone Number</label>
+        <input type="tel" id="modal-phone" name="phone" placeholder="Phone Number..." required />
+      </div>
+
+      <div class="form-group">
+        <label for="modal-email">Email Address</label>
+        <input type="email" id="modal-email" name="email" placeholder="Email..." required />
+      </div>
+
+      <div class="form-group">
+        <label for="modal-message">Your Message</label>
+        <textarea id="modal-message" name="message" placeholder="How can we assist you today?" rows="4" required></textarea>
+      </div>
+
+      <div class="form-status modal-status"></div>
+
+      <button type="submit" class="submit-btn modal-submit-btn">Submit Inquiry</button>
+    </form>
+  </div>
+</div>
+
+<script>
+  import { actions } from 'astro:actions';
+
+  const modalForm = document.querySelector('.modal-form') as HTMLFormElement;
+  const statusEl = document.querySelector('.modal-status') as HTMLDivElement;
+  const submitBtn = modalForm?.querySelector('.modal-submit-btn') as HTMLButtonElement;
+
+  if (modalForm && statusEl && submitBtn) {
+    modalForm.addEventListener('submit', async (e) => {
+      e.preventDefault();
+
+      // Clear previous status
+      statusEl.style.display = 'none';
+      statusEl.className = 'form-status modal-status';
+      statusEl.textContent = '';
+
+      // Disable button & show loading state
+      const originalText = submitBtn.textContent;
+      submitBtn.disabled = true;
+      submitBtn.textContent = 'Sending Inquiry...';
+
+      const formData = new FormData(modalForm);
+
+      try {
+        const { data, error } = await actions.submitContactForm(formData);
+
+        if (error) {
+          statusEl.style.display = 'block';
+          statusEl.classList.add('error');
+          statusEl.textContent = error.message || 'An unexpected error occurred. Please try again.';
+          return;
+        }
+
+        if (data?.success) {
+          statusEl.style.display = 'block';
+          statusEl.classList.add('success');
+          statusEl.textContent = 'Thank you! Your enquiry has been received successfully.';
+          modalForm.reset();
+          
+          // Auto close modal after 2.5 seconds on success
+          setTimeout(() => {
+            const modal = document.querySelector('[data-contact-modal]') as HTMLDivElement;
+            if (modal) {
+              modal.style.display = 'none';
+              document.body.style.overflow = '';
+            }
+            statusEl.style.display = 'none';
+            statusEl.textContent = '';
+          }, 2500);
+        }
+      } catch (err) {
+        statusEl.style.display = 'block';
+        statusEl.classList.add('error');
+        statusEl.textContent = 'A network error occurred. Please check your connection and try again.';
+      } finally {
+        submitBtn.disabled = false;
+        submitBtn.textContent = originalText || 'Submit Inquiry';
+      }
+    });
+  }
+</script>
