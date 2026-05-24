@@ -259,7 +259,7 @@ export default async function InvoiceDetailPage({ params }: Props) {
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-3 lg:items-start">
         {/* Document preview - scrollable on small screens */}
         <div className="lg:col-span-2 overflow-x-auto">
-          <DocumentPreview type="invoice" {...docPreviewProps} />
+          <DocumentPreview id="printable-area" type="invoice" {...docPreviewProps} />
         </div>
 
         {/* Sidebar */}

@@ -75,14 +75,22 @@ export function EmailDocumentDialog({
 
         const imgWidth = 210;
         const pageHeight = 297;
-        const imgHeight = (canvas.height * imgWidth) / canvas.width;
+        let imgHeight = (canvas.height * imgWidth) / canvas.width;
+
+        // If the captured height is slightly larger than A4 (e.g., within 18mm overflow),
+        // we scale it down slightly so it fits perfectly on a single page instead of spawning a blank page.
+        if (imgHeight > pageHeight && imgHeight < 315) {
+          imgHeight = pageHeight;
+        }
+
         let heightLeft = imgHeight;
         let position = 0;
 
         pdf.addImage(imgData, 'PNG', 0, position, imgWidth, imgHeight, undefined, 'FAST');
         heightLeft -= pageHeight;
 
-        while (heightLeft >= 0) {
+        // Multi-page splitting if height exceeds A4 height with a 10mm safety threshold
+        while (heightLeft > 10) {
           position = heightLeft - imgHeight;
           pdf.addPage();
           pdf.addImage(imgData, 'PNG', 0, position, imgWidth, imgHeight, undefined, 'FAST');

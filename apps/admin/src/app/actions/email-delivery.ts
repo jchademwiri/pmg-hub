@@ -128,8 +128,9 @@ export async function sendDocumentEmailAction(rawPayload: unknown) {
         to: recipientEmail,
         subject,
         react: React.createElement(InvoiceDeliveryEmail, emailProps),
+        replyTo: 'info@playhousemedia.co.za',
         attachments,
-      } as any);
+      });
 
       if (error) {
         return { error: `Failed to deliver email: ${error.message}` };
@@ -212,13 +213,14 @@ export async function sendDocumentEmailAction(rawPayload: unknown) {
         to: recipientEmail,
         subject,
         react: React.createElement(QuoteDeliveryEmail, emailProps),
+        replyTo: 'info@playhousemedia.co.za',
         attachments: [
           {
             filename: `${quote.documentNumber}.pdf`,
             content: Buffer.from(base64Pdf, 'base64'),
           }
         ]
-      } as any);
+      });
 
       if (error) {
         return { error: `Failed to deliver email: ${error.message}` };
