@@ -12,6 +12,7 @@
   },
   "dependencies": {
     "@pmg/db": "*",
+    "@pmg/emails": "*",
     "@pmg/tailwind-config": "workspace:*",
     "@radix-ui/react-select": "^2.2.6",
     "better-auth": "^1.5.6",

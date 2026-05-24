@@ -43,6 +43,7 @@ export function PaymentFormClient({ divisions, clients, minDate }: PaymentFormCl
   const router = useRouter();
   const searchParams = useSearchParams();
   const queryClientId = searchParams?.get('clientId') || '';
+  const queryAmount = searchParams?.get('amount') || '';
   const [isPending, startTransition] = useTransition();
 
   // Core Form States
@@ -50,7 +51,7 @@ export function PaymentFormClient({ divisions, clients, minDate }: PaymentFormCl
   const [divisionId, setDivisionId] = useState(divisions[0]?.id || '');
   const [paymentDate, setPaymentDate] = useState(today);
   const [description, setDescription] = useState('');
-  const [amount, setAmount] = useState('');
+  const [amount, setAmount] = useState(queryAmount);
   const [autoAllocate, setAutoAllocate] = useState(true);
 
   // Loaded Client States

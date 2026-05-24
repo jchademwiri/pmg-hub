@@ -44,13 +44,13 @@ describe('auth config - magicLink plugin enabled', () => {
   })
 })
 
-// ── 3. RESEND_API_KEY is read from env, not hardcoded ─────────────────────────
+// ── 3. PMG_RESEND_API_KEY is read from env, not hardcoded ────────────────────
 // Validates: Requirements 9.3
 
-describe('auth config - RESEND_API_KEY from env', () => {
-  it('auth.ts reads RESEND_API_KEY from process.env - Validates: Requirements 9.3', () => {
+describe('auth config - PMG_RESEND_API_KEY from env', () => {
+  it('auth.ts reads PMG_RESEND_API_KEY from process.env - Validates: Requirements 9.3', () => {
     const src = readAdminSrc('lib/auth.ts')
-    expect(src).toContain('process.env.RESEND_API_KEY')
+    expect(src).toContain('process.env.PMG_RESEND_API_KEY')
   })
 
   it('auth.ts does not contain a hardcoded Resend API key - Validates: Requirements 9.3', () => {

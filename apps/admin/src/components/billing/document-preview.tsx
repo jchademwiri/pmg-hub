@@ -40,6 +40,7 @@ export interface DocumentClient {
 }
 
 export interface DocumentPreviewProps {
+  id?: string
   type: 'invoice' | 'quote' | 'statement'
   number: string
   status: string
@@ -112,6 +113,7 @@ function StatusPill({ status }: { status: string }) {
 // ── Main component ────────────────────────────────────────────────────────────
 
 export function DocumentPreview({
+  id,
   type,
   number,
   status,
@@ -151,7 +153,7 @@ export function DocumentPreview({
   const logoUrl = org.logoUrl ?? getDocumentLogoUrl(org.name)
 
   return (
-    <div className="print-document w-full max-w-[794px] min-h-[1123px] mx-auto flex flex-col bg-white text-zinc-900 shadow-md print:shadow-none ring-1 ring-zinc-200 print:ring-0">
+    <div id={id} className="print-document w-full max-w-[794px] min-h-[1123px] mx-auto flex flex-col bg-white text-zinc-900 shadow-md print:shadow-none ring-1 ring-zinc-200 print:ring-0">
 
       {/* ── Header ─────────────────────────────────────────────────────────── */}
       <div className="flex items-start justify-between gap-6 px-4 sm:px-10 pt-10 pb-6">

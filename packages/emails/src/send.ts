@@ -11,6 +11,12 @@ export interface EmailPayload {
   to: string;
   subject: string;
   react: React.ReactElement;
+  replyTo?: string;
+  attachments?: {
+    filename?: string | false;
+    content?: string | Buffer;
+    path?: string;
+  }[];
 }
 
 export interface SendResult {
@@ -34,6 +40,8 @@ export async function sendEmail(
       to: payload.to,
       subject: payload.subject,
       react: payload.react,
+      attachments: payload.attachments,
+      replyTo: payload.replyTo,
     });
     if (error) {
       return { data: null, error: { message: error.message, name: error.name } };
