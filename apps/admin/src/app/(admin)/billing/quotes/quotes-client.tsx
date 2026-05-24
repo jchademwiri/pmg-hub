@@ -21,6 +21,7 @@ import {
   TableRow,
 } from '@/components/ui/table';
 import { EmptyState } from '@/components/ui/empty-state';
+import { confirm } from '@/components/ui/confirm-dialog';
 import { BillingStatusBadge } from '@/components/billing/billing-status-badge';
 import { formatZAR, fmtDate } from '@/lib/format';
 import type { QuotationRow } from '@pmg/db';
@@ -74,8 +75,14 @@ export function QuotesClient({
     });
   }
 
-  function handleDelete(id: string, docNumber: string) {
-    if (!window.confirm(`Delete quote ${docNumber}? This cannot be undone.`)) return;
+  async function handleDelete(id: string, docNumber: string) {
+    const confirmed = await confirm({
+      title: `Delete quote ${docNumber}?`,
+      description: 'This cannot be undone.',
+      confirmText: 'Delete',
+      variant: 'destructive',
+    });
+    if (!confirmed) return;
     startTransition(async () => {
       const result = await deleteAction(id);
       if (result.error) {

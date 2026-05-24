@@ -2,7 +2,9 @@
 
 import * as React from 'react';
 import { toast } from 'sonner';
+import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
+import { Field, FieldGroup, FieldLabel } from '@/components/ui/field';
 import { Input } from '@/components/ui/input';
 import {
   Select,
@@ -26,7 +28,6 @@ export function LedgerAddForm({ createAction, disabled = false, minDate }: Ledge
   const formRef = React.useRef<HTMLFormElement>(null);
   const [isPending, startTransition] = React.useTransition();
   const [errorMessage, setErrorMessage] = React.useState<string | null>(null);
-  const [selectedDate, setSelectedDate] = React.useState(today);
   const [selectedAllocation, setSelectedAllocation] = React.useState<
     'salary' | 'reinvest' | 'reserve' | 'flex' | 'pmg_share'
   >('salary');
@@ -57,10 +58,8 @@ export function LedgerAddForm({ createAction, disabled = false, minDate }: Ledge
       } else {
         toast.success('Ledger entry recorded');
         formRef.current?.reset();
-        setSelectedDate(today);
         setSelectedAllocation('salary');
         setSelectedEntry('spend');
-        // Refresh balances
         refreshBalances();
       }
     });
@@ -69,108 +68,108 @@ export function LedgerAddForm({ createAction, disabled = false, minDate }: Ledge
   const availableBalance = balances?.[selectedAllocation]?.available ?? 0;
 
   return (
-    <form ref={formRef} onSubmit={handleSubmit} className="flex flex-wrap gap-3 items-end">
-      <div className="flex flex-col gap-1">
-        <label htmlFor="ledger-date" className="text-sm font-medium">
-          Date
-        </label>
-        <Input
-          id="ledger-date"
-          name="date"
-          type="date"
-          required
-          disabled={isPending || disabled}
-          defaultValue={today}
-          max={today}
-          min={minDate}
-          className="w-40"
-          onChange={(e) => setSelectedDate(e.target.value)}
-        />
-      </div>
+    <form ref={formRef} onSubmit={handleSubmit} className="flex flex-col gap-3">
+      <FieldGroup className="flex-row flex-wrap items-end gap-3">
+        <Field>
+          <FieldLabel htmlFor="ledger-date">Date</FieldLabel>
+          <Input
+            id="ledger-date"
+            name="date"
+            type="date"
+            required
+            disabled={isPending || disabled}
+            defaultValue={today}
+            max={today}
+            min={minDate}
+            className="w-40"
+          />
+        </Field>
 
-      <div className="flex flex-col gap-1">
-        <label htmlFor="ledger-allocation" className="text-sm font-medium">
-          Bucket
-        </label>
-        <Select
-          value={selectedAllocation}
-          onValueChange={(val: any) => setSelectedAllocation(val)}
-          disabled={isPending || disabled}
-        >
-          <SelectTrigger id="ledger-allocation" className="w-36">
-            <SelectValue />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="pmg_share">PMG Share</SelectItem>
-            <SelectItem value="salary">Salary</SelectItem>
-            <SelectItem value="reinvest">Reinvest</SelectItem>
-            <SelectItem value="reserve">Reserve</SelectItem>
-            <SelectItem value="flex">Flex</SelectItem>
-          </SelectContent>
-        </Select>
-      </div>
+        <Field>
+          <FieldLabel htmlFor="ledger-allocation">Bucket</FieldLabel>
+          <Select
+            value={selectedAllocation}
+            onValueChange={(val) =>
+              setSelectedAllocation(val as typeof selectedAllocation)
+            }
+            disabled={isPending || disabled}
+          >
+            <SelectTrigger id="ledger-allocation" className="w-36">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="pmg_share">PMG Share</SelectItem>
+              <SelectItem value="salary">Salary</SelectItem>
+              <SelectItem value="reinvest">Reinvest</SelectItem>
+              <SelectItem value="reserve">Reserve</SelectItem>
+              <SelectItem value="flex">Flex</SelectItem>
+            </SelectContent>
+          </Select>
+        </Field>
 
-      <div className="flex flex-col gap-1">
-        <label htmlFor="ledger-entry" className="text-sm font-medium">
-          Entry Type
-        </label>
-        <Select
-          value={selectedEntry}
-          onValueChange={(val: any) => setSelectedEntry(val)}
-          disabled={isPending || disabled}
-        >
-          <SelectTrigger id="ledger-entry" className="w-36">
-            <SelectValue />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="spend">Spend</SelectItem>
-            <SelectItem value="transfer">Transfer</SelectItem>
-            <SelectItem value="adjustment">Adjustment</SelectItem>
-          </SelectContent>
-        </Select>
-      </div>
+        <Field>
+          <FieldLabel htmlFor="ledger-entry">Entry Type</FieldLabel>
+          <Select
+            value={selectedEntry}
+            onValueChange={(val) => setSelectedEntry(val as typeof selectedEntry)}
+            disabled={isPending || disabled}
+          >
+            <SelectTrigger id="ledger-entry" className="w-36">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="spend">Spend</SelectItem>
+              <SelectItem value="transfer">Transfer</SelectItem>
+              <SelectItem value="adjustment">Adjustment</SelectItem>
+            </SelectContent>
+          </Select>
+        </Field>
 
-      <div className="flex flex-col gap-1">
-        <label
-          htmlFor="ledger-amount"
-          className="text-sm font-medium flex items-center justify-between"
-        >
-          Amount
-          <span className="text-xs text-muted-foreground ml-2">
-            (Avail: R{availableBalance.toFixed(2)})
-          </span>
-        </label>
-        <Input
-          id="ledger-amount"
-          name="amount"
-          type="number"
-          min="0.01"
-          step="0.01"
-          required
-          disabled={isPending || disabled}
-          className="w-36"
-        />
-      </div>
+        <Field>
+          <FieldLabel htmlFor="ledger-amount">
+            Amount
+            <span className="ml-2 text-xs font-normal text-muted-foreground">
+              (Avail: R{availableBalance.toFixed(2)})
+            </span>
+          </FieldLabel>
+          <Input
+            id="ledger-amount"
+            name="amount"
+            type="number"
+            min="0.01"
+            step="0.01"
+            required
+            disabled={isPending || disabled}
+            className="w-36"
+          />
+        </Field>
 
-      <div className="flex flex-col gap-1">
-        <label htmlFor="ledger-description" className="text-sm font-medium">
-          Description <span className="text-muted-foreground font-normal">(optional)</span>
-        </label>
-        <Input
-          id="ledger-description"
-          name="description"
-          type="text"
-          placeholder="e.g. Office supplies"
-          disabled={isPending || disabled}
-          className="w-72"
-        />
-      </div>
+        <Field>
+          <FieldLabel htmlFor="ledger-description">
+            Description <span className="font-normal text-muted-foreground">(optional)</span>
+          </FieldLabel>
+          <Input
+            id="ledger-description"
+            name="description"
+            type="text"
+            placeholder="e.g. Office supplies"
+            disabled={isPending || disabled}
+            className="w-72"
+          />
+        </Field>
 
-      <Button type="submit" disabled={isPending || disabled}>
-        {isPending ? 'Saving…' : 'Save Entry'}
-      </Button>
+        <Field>
+          <Button type="submit" disabled={isPending || disabled}>
+            {isPending ? 'Saving…' : 'Save Entry'}
+          </Button>
+        </Field>
+      </FieldGroup>
 
-      {errorMessage && <p className="w-full text-sm text-destructive">{errorMessage}</p>}
+      {errorMessage && (
+        <Alert variant="destructive">
+          <AlertDescription>{errorMessage}</AlertDescription>
+        </Alert>
+      )}
     </form>
   );
 }

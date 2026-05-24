@@ -1,3 +1,4 @@
+import { Badge } from '@/components/ui/badge'
 import { Card, CardHeader, CardDescription, CardContent } from '@/components/ui/card'
 import { formatZAR } from '@/lib/format'
 import { TrendingUp, TrendingDown, Minus } from 'lucide-react'
@@ -40,18 +41,13 @@ function DeltaBadge({
   }
 
   return (
-    <span
-      className={`inline-flex items-center gap-1 text-xs font-medium ${
-        isGood ? 'text-emerald-400' : 'text-red-400'
-      }`}
+    <Badge
+      variant="secondary"
+      className={isGood ? 'text-emerald-400' : 'text-red-400'}
     >
-      {isUp ? (
-        <TrendingUp className="size-3" />
-      ) : (
-        <TrendingDown className="size-3" />
-      )}
+      {isUp ? <TrendingUp className="size-3" /> : <TrendingDown className="size-3" />}
       {isUp ? '+' : '-'}{pct.toFixed(1)}%
-    </span>
+    </Badge>
   )
 }
 
@@ -83,7 +79,7 @@ export function KpiCard({
           {label}
         </CardDescription>
       </CardHeader>
-      <CardContent className="space-y-1">
+      <CardContent className="flex flex-col gap-1">
         <p className={`${valueClass} text-2xl font-semibold tabular-nums`}>
           {formatZAR(value)}
         </p>

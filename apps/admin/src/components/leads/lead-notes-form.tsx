@@ -2,11 +2,13 @@
 
 import * as React from 'react'
 import { toast } from 'sonner'
+import { Alert, AlertDescription } from '@/components/ui/alert'
 import { Button } from '@/components/ui/button'
+import { Field, FieldGroup, FieldLabel } from '@/components/ui/field'
+import { Textarea } from '@/components/ui/textarea'
 
 interface LeadNotesFormProps {
   currentNotes: string | null
-  // updateAction is pre-bound with the lead id: updateLeadNotes.bind(null, id)
   updateAction: (formData: FormData) => Promise<{ error?: string }>
 }
 
@@ -28,28 +30,30 @@ export function LeadNotesForm({ currentNotes, updateAction }: LeadNotesFormProps
 
   return (
     <form onSubmit={handleSubmit} className="flex flex-col gap-3">
-      <div className="flex flex-col gap-1">
-        <label htmlFor="lead-notes" className="text-sm font-medium">
-          Notes
-        </label>
-        <textarea
-          id="lead-notes"
-          name="notes"
-          defaultValue={currentNotes ?? ''}
-          disabled={isPending}
-          rows={5}
-          placeholder="Add internal notes…"
-          className="w-full rounded-md border border-input bg-transparent px-2.5 py-1.5 text-sm shadow-xs transition-[color,box-shadow] outline-none placeholder:text-muted-foreground focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50 disabled:pointer-events-none disabled:cursor-not-allowed disabled:opacity-50 dark:bg-input/30"
-        />
-      </div>
+      <FieldGroup>
+        <Field>
+          <FieldLabel htmlFor="lead-notes">Notes</FieldLabel>
+          <Textarea
+            id="lead-notes"
+            name="notes"
+            defaultValue={currentNotes ?? ''}
+            disabled={isPending}
+            rows={5}
+            placeholder="Add internal notes…"
+          />
+        </Field>
+        <Field>
+          <Button type="submit" disabled={isPending}>
+            {isPending ? 'Saving…' : 'Save Notes'}
+          </Button>
+        </Field>
+      </FieldGroup>
 
-      <div>
-        <Button type="submit" disabled={isPending}>
-          {isPending ? 'Saving…' : 'Save Notes'}
-        </Button>
-      </div>
-
-      {error && <p className="text-sm text-destructive">{error}</p>}
+      {error && (
+        <Alert variant="destructive">
+          <AlertDescription>{error}</AlertDescription>
+        </Alert>
+      )}
     </form>
   )
 }

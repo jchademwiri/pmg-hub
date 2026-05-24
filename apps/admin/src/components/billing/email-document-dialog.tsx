@@ -13,10 +13,12 @@ import {
   DialogTrigger,
 } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
+import { Checkbox } from '@/components/ui/checkbox';
+import { Field, FieldGroup, FieldLabel, FieldSet } from '@/components/ui/field';
 import { Input } from '@/components/ui/input';
+import { Textarea } from '@/components/ui/textarea';
 import { Mail, Loader2 } from 'lucide-react';
 import { sendDocumentEmailAction } from '@/app/actions/email-delivery';
-import { cn } from '@/lib/utils';
 
 interface EmailDocumentDialogProps {
   documentId: string;
@@ -149,8 +151,8 @@ export function EmailDocumentDialog({
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
-        <Button variant="outline" size="sm" className="gap-2">
-          <Mail className="size-4" />
+        <Button variant="outline" size="sm">
+          <Mail data-icon="inline-start" />
           Email {documentType === 'invoice' ? 'Invoice' : 'Quote'}
         </Button>
       </DialogTrigger>
@@ -162,82 +164,79 @@ export function EmailDocumentDialog({
           </DialogDescription>
         </DialogHeader>
 
-        <div className="grid gap-4 py-4">
-          <div className="grid gap-1">
-            <label className="text-xs font-semibold text-muted-foreground">Recipient Email Address</label>
+        <FieldGroup className="py-4">
+          <Field>
+            <FieldLabel htmlFor="email-recipient">Recipient Email Address</FieldLabel>
             <Input
+              id="email-recipient"
               type="email"
               value={recipient}
               onChange={(e) => setRecipient(e.target.value)}
               placeholder="client@company.com"
               disabled={isSending}
             />
-          </div>
+          </Field>
 
-          <div className="grid gap-1">
-            <label className="text-xs font-semibold text-muted-foreground">Email Subject</label>
+          <Field>
+            <FieldLabel htmlFor="email-subject">Email Subject</FieldLabel>
             <Input
+              id="email-subject"
               type="text"
               value={subject}
               onChange={(e) => setSubject(e.target.value)}
               placeholder="Invoice Subject"
               disabled={isSending}
             />
-          </div>
+          </Field>
 
-          <div className="grid gap-1">
-            <label className="text-xs font-semibold text-muted-foreground">Personalized Message (Optional)</label>
-            <textarea
+          <Field>
+            <FieldLabel htmlFor="email-message">Personalized Message (Optional)</FieldLabel>
+            <Textarea
+              id="email-message"
               value={message}
               onChange={(e) => setMessage(e.target.value)}
               placeholder="Hi there, please find our invoice attached. Let us know if you have any questions!"
               rows={3}
               disabled={isSending}
-              className={cn(
-                "w-full rounded-md border border-input bg-transparent px-2.5 py-1.5 text-base shadow-xs transition-[color,box-shadow] outline-none placeholder:text-muted-foreground focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50 disabled:pointer-events-none disabled:cursor-not-allowed disabled:opacity-50 aria-invalid:border-destructive md:text-sm dark:bg-input/30",
-                "resize-none"
-              )}
+              className="resize-none"
             />
-          </div>
+          </Field>
 
           {documentType === 'invoice' && (
-            <div className="flex items-start space-x-3 rounded-md border border-slate-100 bg-slate-50/50 p-3 dark:border-slate-800/40 dark:bg-slate-900/10">
-              <input
-                type="checkbox"
-                id="attach-statement"
-                checked={attachStatement}
-                onChange={(e) => setAttachStatement(e.target.checked)}
-                disabled={isSending}
-                className="mt-0.5 size-4 rounded border-input text-brand focus:ring-brand focus:ring-2 focus:ring-offset-2 accent-blue-600 dark:accent-blue-500 cursor-pointer"
-              />
-              <div className="grid gap-0.5 leading-none">
-                <label
-                  htmlFor="attach-statement"
-                  className="text-xs font-semibold text-foreground cursor-pointer select-none"
-                >
-                  Attach Current Client Statement
-                </label>
-                <p className="text-[10px] text-muted-foreground">
-                  Appends a PDF statement of the client's current ledger activity for this financial year.
-                </p>
-              </div>
-            </div>
+            <FieldSet className="rounded-md border bg-muted/40 p-3">
+              <Field orientation="horizontal">
+                <Checkbox
+                  id="attach-statement"
+                  checked={attachStatement}
+                  onCheckedChange={(checked) => setAttachStatement(checked === true)}
+                  disabled={isSending}
+                />
+                <div className="flex flex-col gap-0.5">
+                  <FieldLabel htmlFor="attach-statement" className="font-medium">
+                    Attach Current Client Statement
+                  </FieldLabel>
+                  <p className="text-[10px] text-muted-foreground">
+                    Appends a PDF statement of the client&apos;s current ledger activity for this financial year.
+                  </p>
+                </div>
+              </Field>
+            </FieldSet>
           )}
-        </div>
+        </FieldGroup>
 
         <DialogFooter>
           <Button variant="outline" onClick={() => setOpen(false)} disabled={isSending}>
             Cancel
           </Button>
-          <Button onClick={handleSend} disabled={isSending} className="gap-2 bg-blue-600 hover:bg-blue-700 text-white dark:bg-blue-600 dark:hover:bg-blue-500">
+          <Button onClick={handleSend} disabled={isSending}>
             {isSending ? (
               <>
-                <Loader2 className="size-4 animate-spin" />
+                <Loader2 data-icon="inline-start" className="animate-spin" />
                 {statusText || 'Sending...'}
               </>
             ) : (
               <>
-                <Mail className="size-4" />
+                <Mail data-icon="inline-start" />
                 Transmit Email
               </>
             )}

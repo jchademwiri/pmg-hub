@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import { CheckCircle } from 'lucide-react';
 import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
+import { confirm } from '@/components/ui/confirm-dialog';
 
 interface ConvertToInvoiceButtonProps {
   quotationId: string;
@@ -19,9 +20,11 @@ export function ConvertToInvoiceButton({
   const [isPending, setIsPending] = useState(false);
 
   async function handleClick() {
-    const confirmed = window.confirm(
-      'Convert this quotation to an invoice? The quote will be marked as converted.',
-    );
+    const confirmed = await confirm({
+      title: 'Convert to invoice?',
+      description: 'The quote will be marked as converted.',
+      confirmText: 'Convert',
+    });
     if (!confirmed) return;
 
     setIsPending(true);
@@ -40,7 +43,7 @@ export function ConvertToInvoiceButton({
 
   return (
     <Button onClick={handleClick} disabled={isPending}>
-      <CheckCircle className="size-4" />
+      <CheckCircle data-icon="inline-start" />
       {isPending ? 'Converting…' : 'Convert to Invoice'}
     </Button>
   );

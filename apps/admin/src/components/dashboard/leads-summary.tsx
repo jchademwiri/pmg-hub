@@ -48,7 +48,7 @@ export function LeadsSummary({ leads }: LeadsSummaryProps) {
         {leads.length === 0 ? (
           <p className="text-muted-foreground/50 text-xs">No leads yet.</p>
         ) : (
-          <div className="space-y-4">
+          <div className="flex flex-col gap-4">
             {/* Summary metrics row */}
             <div className="grid grid-cols-3 gap-2">
               <div className="rounded-lg bg-chart-2/10 border border-chart-2/20 p-2.5 text-center">
@@ -75,13 +75,13 @@ export function LeadsSummary({ leads }: LeadsSummaryProps) {
             </div>
 
             {/* Status breakdown */}
-            <div className="space-y-2.5">
+            <div className="flex flex-col gap-2.5">
               {sorted.map((lead) => {
                 const config = STATUS_CONFIG[lead.status] ?? STATUS_CONFIG.lost
                 const pct = total > 0 ? Math.round((lead.count / total) * 100) : 0
 
                 return (
-                  <div key={lead.status} className="space-y-1">
+                  <div key={lead.status} className="flex flex-col gap-1">
                     <div className="flex items-center justify-between">
                       <Badge
                         variant="secondary"

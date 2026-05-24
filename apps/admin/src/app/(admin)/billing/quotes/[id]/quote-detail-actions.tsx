@@ -6,6 +6,7 @@ import { useState, useTransition } from 'react';
 import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
 import { ConvertToInvoiceButton } from '@/components/billing/convert-to-invoice-button';
+import { confirm } from '@/components/ui/confirm-dialog';
 import { convertQuoteToInvoice } from '@/app/actions/billing-invoices';
 
 interface QuoteDetailActionsProps {
@@ -61,8 +62,14 @@ export function QuoteDetailActions({
     });
   }
 
-  function handleDelete() {
-    if (!window.confirm('Delete this draft quote? This cannot be undone.')) return;
+  async function handleDelete() {
+    const confirmed = await confirm({
+      title: 'Delete this draft quote?',
+      description: 'This cannot be undone.',
+      confirmText: 'Delete',
+      variant: 'destructive',
+    });
+    if (!confirmed) return;
     setIsPending(true);
     startTransition(async () => {
       const result = await deleteAction(quote.id);

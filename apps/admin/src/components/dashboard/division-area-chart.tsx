@@ -6,6 +6,7 @@ import {
   ResponsiveContainer, Tooltip, Legend,
 } from 'recharts'
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card'
+import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { formatZAR } from '@/lib/format'
 import type { DivisionSeriesChart } from '@/lib/financial'
 
@@ -42,7 +43,7 @@ function CustomTooltip({ active, payload, label }: any) {
   if (!active || !payload?.length) return null
   const total = payload.reduce((sum: number, p: any) => sum + (Number(p.value) || 0), 0)
   return (
-    <div className="rounded-lg border border-border bg-card px-3 py-2.5 shadow-xl text-xs space-y-1.5 min-w-44">
+    <div className="rounded-lg border border-border bg-card px-3 py-2.5 shadow-xl text-xs flex flex-col gap-1.5 min-w-44">
       <p className="text-muted-foreground font-medium border-b border-border pb-1.5">{label}</p>
       {[...payload].reverse().map((p: any) => (
         <div key={p.dataKey} className="flex items-center justify-between gap-4">
@@ -116,22 +117,15 @@ export function DivisionAreaChart({ seriesData }: Props) {
             )}
           </div>
 
-          {/* Range selector */}
-          <div className="flex items-center gap-1 p-0.5 bg-muted/40 rounded-lg border border-border self-start sm:self-auto">
-            {RANGE_OPTIONS.map((opt) => (
-              <button
-                key={opt.key}
-                onClick={() => setActiveRange(opt.key)}
-                className={`px-3 py-1 rounded-md text-xs font-medium transition-all duration-150 ${
-                  activeRange === opt.key
-                    ? 'bg-card text-foreground shadow-sm border border-border'
-                    : 'text-muted-foreground hover:text-foreground'
-                }`}
-              >
-                {opt.label}
-              </button>
-            ))}
-          </div>
+          <Tabs value={activeRange} onValueChange={(v) => setActiveRange(v as RangeKey)}>
+            <TabsList className="self-start sm:self-auto">
+              {RANGE_OPTIONS.map((opt) => (
+                <TabsTrigger key={opt.key} value={opt.key} className="text-xs">
+                  {opt.label}
+                </TabsTrigger>
+              ))}
+            </TabsList>
+          </Tabs>
         </div>
       </CardHeader>
 

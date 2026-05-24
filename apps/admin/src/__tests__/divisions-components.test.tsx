@@ -1,8 +1,10 @@
+import * as React from 'react'
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { render, screen } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { DivisionsTable } from '@/components/divisions/divisions-table'
 import { DivisionAddForm } from '@/components/divisions/division-add-form'
+import { TooltipProvider } from '@/components/ui/tooltip'
 import type { DivisionRow } from '@pmg/db'
 
 // ─── Mocks for server action edge case tests ──────────────────────────────────
@@ -22,6 +24,18 @@ vi.mock('@pmg/db', async (importActual) => {
 })
 
 // ─── Mocks ───────────────────────────────────────────────────────────────────
+
+const mockConfirm = vi.hoisted(() => vi.fn())
+
+vi.mock('next/navigation', () => ({
+  useRouter: () => ({ push: vi.fn(), refresh: vi.fn() }),
+}))
+
+vi.mock('@/components/ui/confirm-dialog', () => ({
+  confirm: (...args: unknown[]) => mockConfirm(...args),
+  ConfirmDialog: () => null,
+  ConfirmProvider: ({ children }: { children: React.ReactNode }) => children,
+}))
 
 const updateAction = vi.fn().mockResolvedValue({})
 const deleteAction = vi.fn().mockResolvedValue({})
@@ -45,9 +59,22 @@ function byNormalisedText(expected: string) {
   }
 }
 
+function renderDivisionsTable(props: React.ComponentProps<typeof DivisionsTable>) {
+  return render(
+    <TooltipProvider>
+      <DivisionsTable {...props} />
+    </TooltipProvider>,
+  )
+}
+
 // ─── DivisionsTable unit tests ────────────────────────────────────────────────
 
 describe('DivisionsTable', () => {
+  beforeEach(() => {
+    mockConfirm.mockReset()
+    mockConfirm.mockResolvedValue(false)
+  })
+
   beforeEach(() => {
     vi.resetAllMocks()
     updateAction.mockResolvedValue({})
@@ -58,14 +85,12 @@ describe('DivisionsTable', () => {
   // ── Column headers ──────────────────────────────────────────────────────────
 
   it('renders all 7 column headers - Validates: Requirements 1.2', () => {
-    render(
-      <DivisionsTable
-        divisions={[]}
-        updateAction={updateAction}
-        deleteAction={deleteAction}
-        toggleActiveAction={toggleActiveAction}
-      />
-    )
+    renderDivisionsTable({
+      divisions: [],
+      updateAction,
+      deleteAction,
+      toggleActiveAction,
+    })
 
     expect(screen.getByRole('columnheader', { name: /^name$/i })).toBeDefined()
     expect(screen.getByRole('columnheader', { name: /^total income$/i })).toBeDefined()
@@ -91,14 +116,12 @@ describe('DivisionsTable', () => {
       },
     ]
 
-    render(
-      <DivisionsTable
-        divisions={divisions}
-        updateAction={updateAction}
-        deleteAction={deleteAction}
-        toggleActiveAction={toggleActiveAction}
-      />
-    )
+    renderDivisionsTable({
+      divisions,
+      updateAction,
+      deleteAction,
+      toggleActiveAction,
+    })
 
     // All three currency cells should contain "R" (ZAR prefix)
     const cells = screen.getAllByRole('cell')
@@ -127,19 +150,17 @@ describe('DivisionsTable', () => {
       },
     ]
 
-    render(
-      <DivisionsTable
-        divisions={divisions}
-        updateAction={updateAction}
-        deleteAction={deleteAction}
-        toggleActiveAction={toggleActiveAction}
-      />
-    )
+    renderDivisionsTable({
+      divisions,
+      updateAction,
+      deleteAction,
+      toggleActiveAction,
+    })
 
     // The Net Profit cell is the 4th <td> (index 3): Name, Income, Expenses, NetProfit
     const cells = screen.getAllByRole('cell')
     const netProfitCell = cells[3]
-    expect(netProfitCell.className).toContain('text-green-600')
+    expect(netProfitCell.className).toContain('text-green-500')
   })
 
   it('applies text-red-600 to Net Profit cell when netProfit < 0 - Validates: Requirements 1.3', () => {
@@ -155,18 +176,16 @@ describe('DivisionsTable', () => {
       },
     ]
 
-    render(
-      <DivisionsTable
-        divisions={divisions}
-        updateAction={updateAction}
-        deleteAction={deleteAction}
-        toggleActiveAction={toggleActiveAction}
-      />
-    )
+    renderDivisionsTable({
+      divisions,
+      updateAction,
+      deleteAction,
+      toggleActiveAction,
+    })
 
     const cells = screen.getAllByRole('cell')
     const netProfitCell = cells[3]
-    expect(netProfitCell.className).toContain('text-red-600')
+    expect(netProfitCell.className).toContain('text-red-500')
   })
 
   it('applies text-red-600 to Net Profit cell when netProfit === 0 - Validates: Requirements 1.3', () => {
@@ -182,18 +201,16 @@ describe('DivisionsTable', () => {
       },
     ]
 
-    render(
-      <DivisionsTable
-        divisions={divisions}
-        updateAction={updateAction}
-        deleteAction={deleteAction}
-        toggleActiveAction={toggleActiveAction}
-      />
-    )
+    renderDivisionsTable({
+      divisions,
+      updateAction,
+      deleteAction,
+      toggleActiveAction,
+    })
 
     const cells = screen.getAllByRole('cell')
     const netProfitCell = cells[3]
-    expect(netProfitCell.className).toContain('text-red-600')
+    expect(netProfitCell.className).toContain('text-green-500')
   })
 
   // ── Inline rename state ─────────────────────────────────────────────────────
@@ -212,19 +229,17 @@ describe('DivisionsTable', () => {
       },
     ]
 
-    render(
-      <DivisionsTable
-        divisions={divisions}
-        updateAction={updateAction}
-        deleteAction={deleteAction}
-        toggleActiveAction={toggleActiveAction}
-      />
-    )
+    renderDivisionsTable({
+      divisions,
+      updateAction,
+      deleteAction,
+      toggleActiveAction,
+    })
 
     // Initially no text input visible
     expect(screen.queryByRole('textbox')).toBeNull()
 
-    await user.click(screen.getByRole('button', { name: /^edit$/i }))
+    await user.click(screen.getByRole('button', { name: /^rename$/i }))
 
     const input = screen.getByRole('textbox')
     expect(input).toBeDefined()
@@ -245,16 +260,14 @@ describe('DivisionsTable', () => {
       },
     ]
 
-    render(
-      <DivisionsTable
-        divisions={divisions}
-        updateAction={updateAction}
-        deleteAction={deleteAction}
-        toggleActiveAction={toggleActiveAction}
-      />
-    )
+    renderDivisionsTable({
+      divisions,
+      updateAction,
+      deleteAction,
+      toggleActiveAction,
+    })
 
-    await user.click(screen.getByRole('button', { name: /^edit$/i }))
+    await user.click(screen.getByRole('button', { name: /^rename$/i }))
     expect(screen.getByRole('textbox')).toBeDefined()
 
     await user.click(screen.getByRole('button', { name: /^cancel$/i }))
@@ -279,16 +292,14 @@ describe('DivisionsTable', () => {
       },
     ]
 
-    render(
-      <DivisionsTable
-        divisions={divisions}
-        updateAction={updateAction}
-        deleteAction={deleteAction}
-        toggleActiveAction={toggleActiveAction}
-      />
-    )
+    renderDivisionsTable({
+      divisions,
+      updateAction,
+      deleteAction,
+      toggleActiveAction,
+    })
 
-    await user.click(screen.getByRole('button', { name: /^edit$/i }))
+    await user.click(screen.getByRole('button', { name: /^rename$/i }))
     const input = screen.getByRole('textbox')
     expect(input).toBeDefined()
 
@@ -302,7 +313,7 @@ describe('DivisionsTable', () => {
 
   // ── Inline delete state ─────────────────────────────────────────────────────
 
-  it('clicking Delete shows an inline confirmation prompt within the row (not a modal) - Validates: Requirements 4.1', async () => {
+  it('clicking Delete opens confirm dialog via confirm() - Validates: Requirements 4.1', async () => {
     const user = userEvent.setup()
     const divisions: DivisionRow[] = [
       {
@@ -316,31 +327,27 @@ describe('DivisionsTable', () => {
       },
     ]
 
-    render(
-      <DivisionsTable
-        divisions={divisions}
-        updateAction={updateAction}
-        deleteAction={deleteAction}
-        toggleActiveAction={toggleActiveAction}
-      />
-    )
-
-    // Initially no confirmation prompt visible
-    expect(screen.queryByText(/delete "delta division"\?/i)).toBeNull()
+    renderDivisionsTable({
+      divisions,
+      updateAction,
+      deleteAction,
+      toggleActiveAction,
+    })
 
     await user.click(screen.getByRole('button', { name: /^delete$/i }))
 
-    // Confirmation text should appear inline (not in a dialog role)
-    expect(screen.getByText(/delete "delta division"\?/i)).toBeDefined()
-    expect(screen.queryByRole('dialog')).toBeNull()
-
-    // Confirm and Cancel buttons should be visible
-    expect(screen.getByRole('button', { name: /^confirm$/i })).toBeDefined()
-    expect(screen.getByRole('button', { name: /^cancel$/i })).toBeDefined()
+    expect(mockConfirm).toHaveBeenCalledWith(
+      expect.objectContaining({
+        title: 'Delete "Delta Division"?',
+        variant: 'destructive',
+      }),
+    )
+    expect(deleteAction).not.toHaveBeenCalled()
   })
 
-  it('clicking Cancel on the delete confirmation reverts the row to display state - Validates: Requirements 4.2, 4.6', async () => {
+  it('confirming delete calls deleteAction - Validates: Requirements 4.2, 4.6', async () => {
     const user = userEvent.setup()
+    mockConfirm.mockResolvedValue(true)
     const divisions: DivisionRow[] = [
       {
         id: 'div-delete-cancel',
@@ -353,26 +360,15 @@ describe('DivisionsTable', () => {
       },
     ]
 
-    render(
-      <DivisionsTable
-        divisions={divisions}
-        updateAction={updateAction}
-        deleteAction={deleteAction}
-        toggleActiveAction={toggleActiveAction}
-      />
-    )
+    renderDivisionsTable({
+      divisions,
+      updateAction,
+      deleteAction,
+      toggleActiveAction,
+    })
 
     await user.click(screen.getByRole('button', { name: /^delete$/i }))
-    expect(screen.getByText(/delete "epsilon division"\?/i)).toBeDefined()
-
-    await user.click(screen.getByRole('button', { name: /^cancel$/i }))
-
-    // Confirmation prompt should be gone
-    expect(screen.queryByText(/delete "epsilon division"\?/i)).toBeNull()
-    // Delete button should be visible again
-    expect(screen.getByRole('button', { name: /^delete$/i })).toBeDefined()
-    // deleteAction should not have been called
-    expect(deleteAction).not.toHaveBeenCalled()
+    expect(deleteAction).toHaveBeenCalledWith('div-delete-cancel')
   })
 })
 

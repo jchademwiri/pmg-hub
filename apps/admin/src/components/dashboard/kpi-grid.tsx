@@ -73,7 +73,7 @@ function KpiCard({ label, value, delta, invertDelta, highlight, deltaLabel }: Kp
       <CardHeader className="pb-1">
         <CardDescription className="text-muted-foreground text-sm">{label}</CardDescription>
       </CardHeader>
-      <CardContent className="space-y-1">
+      <CardContent className="flex flex-col gap-1">
         <p className={`${valueClass} text-2xl font-semibold tabular-nums`}>
           {formatZAR(value)}
         </p>

@@ -7,6 +7,7 @@ import { Archive, ArchiveRestore, Trash2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Separator } from '@/components/ui/separator';
+import { confirm } from '@/components/ui/confirm-dialog';
 import { updateItem, archiveItem, unarchiveItem, deleteItem } from '@/app/actions/billing-items';
 import type { BillingItemDetail } from '@pmg/db';
 
@@ -64,8 +65,14 @@ export function ItemEditClient({ item }: ItemEditClientProps) {
     });
   }
 
-  function handleDelete() {
-    if (!window.confirm('Delete this item? This cannot be undone.')) return;
+  async function handleDelete() {
+    const confirmed = await confirm({
+      title: 'Delete this item?',
+      description: 'This cannot be undone.',
+      confirmText: 'Delete',
+      variant: 'destructive',
+    });
+    if (!confirmed) return;
     startTransition(async () => {
       const result = await deleteItem(item.id);
       if (result.error) {
