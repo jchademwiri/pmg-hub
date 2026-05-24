@@ -49,6 +49,9 @@ if (invoiceDate > today) {
 ### 🔓 Gap D: Payment Form Warning is Non-Blocking
 In `apps/admin/src/app/(admin)/billing/payments/add/payment-form-client.tsx`, selecting a date prior to the open period (`paymentDate < minDate`) displays a warning banner but **does not block form submission**. It relies entirely on the backend to throw an error, which creates a poor user experience.
 
+### 📊 Gap E: Future-Dated Invoices in the Aging Report
+In the query `getAgingReport()` inside `packages/db/src/queries/billing.ts`, outstanding invoices with status `'issued'` or `'partially_paid'` are allocated into aging buckets. Since future-dated invoices have a `due_date >= CURRENT_DATE`, they get classified in the `'current'` bucket. This gives a false perspective that this amount is due this month, even if the invoice itself is scheduled for months or years in the future (e.g., January 2027).
+
 ---
 
 ## 3. Proposed Changes
@@ -61,6 +64,7 @@ graph TD
     B -->|Allow Future Periods| C(Invoices & Quotes Backend Actions)
     B -->|Allow Future Periods| D(Payments Backend Actions)
     C -->|Remove Future Capping| E(Invoice & Quote Client Forms)
+    F[Aging Report Query: billing.ts] -->|Exclude Future-Dated| G(Exclude invoice_date > CURRENT_DATE)
 ```
 
 ---
@@ -109,6 +113,13 @@ graph TD
 
 ---
 
+### Component: Aging Classification
+
+#### [MODIFY] [billing.ts](file:///D:/websites/pmg-hub/packages/db/src/queries/billing.ts)
+- Exclude future-dated invoices from the aging report completely by adding `AND invoice_date <= CURRENT_DATE` in the database query. This ensures scheduled invoices do not artificially inflate the active accounts receivable or the `current` aging bucket.
+
+---
+
 ### Component: Unit Tests
 
 #### [MODIFY] [billing-quotes.test.tsx](file:///D:/websites/pmg-hub/apps/admin/src/__tests__/billing-quotes.test.tsx)
@@ -124,7 +135,7 @@ graph TD
 ### Automated Tests
 Run vitest once code modifications are complete to ensure all tests pass and are aligned:
 ```bash
-powershell -ExecutionPolicy Bypass -Command "bun run test"
+powershell -ExecutionPolicy Bypass -Command "npm run test"
 ```
 
 ### Manual Verification
@@ -134,5 +145,7 @@ powershell -ExecutionPolicy Bypass -Command "bun run test"
 2. **Payments:**
    - Navigate to the "Record Payment" page. Verify that the calendar picker does not allow selecting future dates (capped at `today`).
    - Try to manually type a future date or backdate a payment into a closed period. Verify that clicking "Record Payment" is blocked and displays a clear validation error.
-3. **Period Locking:**
+3. **Aging Report:**
+   - Create a future-dated invoice (e.g., dated January 2027). Verify that it does **not** appear on the aging report until the current date reaches January 2027, preventing near-term EXPECTED cash views from being distorted.
+4. **Period Locking:**
    - Select a back date inside a closed period for Invoices, Quotes, and Payments. Verify that the backend rejects it with the closed financial period message.

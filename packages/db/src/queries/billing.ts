@@ -1017,6 +1017,7 @@ export async function getAgingReport(): Promise<AgingRow[]> {
     FROM invoices
     WHERE status IN ('issued', 'overdue', 'partially_paid')
       AND due_date IS NOT NULL
+      AND invoice_date <= CURRENT_DATE
     GROUP BY bucket
   `);
 
