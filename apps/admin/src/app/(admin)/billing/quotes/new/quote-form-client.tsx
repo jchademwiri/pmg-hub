@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useTransition } from 'react';
+import { useState, useTransition, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
@@ -32,6 +32,7 @@ export interface QuoteFormClientProps {
   /** When provided, the form is in edit mode */
   initialData?: QuotationDetail;
   editId?: string;
+  billingSettings?: Record<string, any>;
 }
 
 const today = new Date().toISOString().split('T')[0]!;
@@ -73,9 +74,30 @@ export function QuoteFormClient({
   activeItems,
   initialData,
   editId,
+  billingSettings,
 }: QuoteFormClientProps) {
   const router = useRouter();
   const [, startTransition] = useTransition();
+
+  // Load division default billing settings when divisionId changes (only for new quotes)
+  useEffect(() => {
+    if (editId || !divisionId || !billingSettings) return;
+
+    const settings = billingSettings[divisionId];
+    if (!settings) return;
+
+    // 1. Set default notes
+    if (settings.quoteNotes) {
+      setNotes(settings.quoteNotes);
+    }
+
+    // 2. Set default expiry date based on paymentTermsDays
+    const termsDays = settings.paymentTermsDays ?? 5; // fallback to 5 days
+    const d = new Date(quoteDate);
+    d.setDate(d.getDate() + termsDays);
+    setExpiryDate(d.toISOString().split('T')[0]!);
+    setIsExpiryDateModified(false); // Reset modified status since it's a smart default
+  }, [divisionId, billingSettings, quoteDate, editId]);
 
   // Initialise from existing data when editing
   const [divisionId, setDivisionId] = useState(initialData?.divisionId ?? '');
@@ -234,8 +256,9 @@ export function QuoteFormClient({
                 const newDate = e.target.value;
                 setQuoteDate(newDate);
                 if (!isExpiryDateModified) {
+                  const termsDays = billingSettings?.[divisionId]?.paymentTermsDays ?? 5;
                   const d = new Date(newDate);
-                  d.setDate(d.getDate() + 5);
+                  d.setDate(d.getDate() + termsDays);
                   setExpiryDate(d.toISOString().split('T')[0]!);
                 }
               }}

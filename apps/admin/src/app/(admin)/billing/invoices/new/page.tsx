@@ -4,18 +4,19 @@ import { ChevronLeft } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Separator } from '@/components/ui/separator';
-import { getAllDivisions, getAllClients, getActiveItems } from '@pmg/db';
+import { getAllDivisions, getAllClients, getActiveItems, getAllDivisionBillingSettings } from '@pmg/db';
 import { getMinAllowedDate } from '@/lib/date-rules';
 import { InvoiceFormClient } from './invoice-form-client';
 
 export const metadata: Metadata = { title: 'New Invoice' };
 
 export default async function NewInvoicePage() {
-  const [divisions, clients, activeItems, minDate] = await Promise.all([
+  const [divisions, clients, activeItems, minDate, billingSettings] = await Promise.all([
     getAllDivisions(),
     getAllClients(),
     getActiveItems(),
     getMinAllowedDate(),
+    getAllDivisionBillingSettings(),
   ]);
 
   return (
@@ -41,7 +42,13 @@ export default async function NewInvoicePage() {
           <CardDescription>Fill in the details for this invoice</CardDescription>
         </CardHeader>
         <CardContent>
-          <InvoiceFormClient divisions={divisions} clients={clients} activeItems={activeItems} minDate={minDate} />
+          <InvoiceFormClient
+            divisions={divisions}
+            clients={clients}
+            activeItems={activeItems}
+            minDate={minDate}
+            billingSettings={billingSettings}
+          />
         </CardContent>
       </Card>
     </div>

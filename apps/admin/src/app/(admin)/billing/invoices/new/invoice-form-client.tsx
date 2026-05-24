@@ -35,6 +35,7 @@ export interface InvoiceFormClientProps {
   /** When provided, the form is in edit mode */
   initialData?: InvoiceDetail;
   editId?: string;
+  billingSettings?: Record<string, any>;
 }
 
 const today = new Date().toISOString().split('T')[0]!;
@@ -77,6 +78,7 @@ export function InvoiceFormClient({
   minDate,
   initialData,
   editId,
+  billingSettings,
 }: InvoiceFormClientProps) {
   const router = useRouter();
   const [, startTransition] = useTransition();
@@ -120,6 +122,26 @@ export function InvoiceFormClient({
 
   // Warn if invoice date is near the period boundary
   const isPeriodWarning = invoiceDate < minDate;
+
+  // Load division default billing settings when divisionId changes (only for new invoices)
+  useEffect(() => {
+    if (editId || !divisionId || !billingSettings) return;
+
+    const settings = billingSettings[divisionId];
+    if (!settings) return;
+
+    // 1. Set default notes
+    if (settings.invoiceNotes) {
+      setNotes(settings.invoiceNotes);
+    }
+
+    // 2. Set default due date based on paymentTermsDays
+    const termsDays = settings.paymentTermsDays ?? 5; // fallback to 5 days
+    const d = new Date(invoiceDate);
+    d.setDate(d.getDate() + termsDays);
+    setDueDate(d.toISOString().split('T')[0]!);
+    setIsDueDateModified(false); // Reset modified status since it's a smart default
+  }, [divisionId, billingSettings, invoiceDate, editId]);
 
   // Load client unallocated credit retainer balance
   useEffect(() => {
@@ -271,8 +293,9 @@ export function InvoiceFormClient({
                 const newDate = e.target.value;
                 setInvoiceDate(newDate);
                 if (!isDueDateModified) {
+                  const termsDays = billingSettings?.[divisionId]?.paymentTermsDays ?? 5;
                   const d = new Date(newDate);
-                  d.setDate(d.getDate() + 5);
+                  d.setDate(d.getDate() + termsDays);
                   setDueDate(d.toISOString().split('T')[0]!);
                 }
               }}
