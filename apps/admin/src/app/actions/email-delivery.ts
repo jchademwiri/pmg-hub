@@ -82,7 +82,7 @@ export async function sendDocumentEmailAction(rawPayload: unknown) {
       const isTes = invoice.divisionName?.toLowerCase().includes('tender') || false;
       const isAws = invoice.divisionName?.toLowerCase().includes('apex') || false;
       const apiKey = (isTes ? process.env.TES_RESEND_API_KEY : isAws ? process.env.AWS_RESEND_API_KEY : undefined) 
-                     || process.env.RESEND_API_KEY!;
+                     || process.env.PMG_RESEND_API_KEY!;
       const defaultFrom = process.env.EMAIL_FROM_ADDRESS || DEFAULT_EMAIL_FROM;
       const fromName = billingConfig?.salesRepName || process.env.EMAIL_FROM_NAME || 'PMG Admin';
       
@@ -191,7 +191,7 @@ export async function sendDocumentEmailAction(rawPayload: unknown) {
       const isTes = quote.divisionName?.toLowerCase().includes('tender') || false;
       const isAws = quote.divisionName?.toLowerCase().includes('apex') || false;
       const apiKey = (isTes ? process.env.TES_RESEND_API_KEY : isAws ? process.env.AWS_RESEND_API_KEY : undefined) 
-                     || process.env.RESEND_API_KEY!;
+                     || process.env.PMG_RESEND_API_KEY!;
       const defaultFrom = process.env.EMAIL_FROM_ADDRESS || DEFAULT_EMAIL_FROM;
       const fromName = billingConfig?.salesRepName || process.env.EMAIL_FROM_NAME || 'PMG Admin';
       

@@ -22,7 +22,7 @@ const UpdateRoleSchema = z.object({
 // ── Resend client ─────────────────────────────────────────────────────────────
 
 function getResend() {
-  return new Resend(process.env.RESEND_API_KEY)
+  return new Resend(process.env.PMG_RESEND_API_KEY)
 }
 
 // ── Role guard ────────────────────────────────────────────────────────────────
