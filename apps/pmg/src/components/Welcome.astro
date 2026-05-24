@@ -186,14 +186,25 @@ import ContactModal from './ContactModal.astro';
 
   /* Navigation Header */
   .site-header {
+    position: fixed;
+    top: 0;
+    left: 0;
+    z-index: 100;
     width: 100%;
-    display: flex;
-    align-items: baseline;
-    justify-content: space-between;
-    padding: 40px 0 20px 0;
-    border-bottom: 1px solid var(--faint-border);
-    margin-bottom: 40px;
+    background: rgba(13, 27, 42, 0.75) !important; /* Premium Translucent Glass Navy */
+    backdrop-filter: blur(16px) !important;
+    border-bottom: 1px solid var(--faint-border) !important;
     animation: rise 0.8s ease both;
+  }
+
+  .header-container {
+    max-width: 1200px;
+    width: 100%;
+    margin: 0 auto;
+    padding: 20px 24px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
   }
 
   .logo {
@@ -232,7 +243,7 @@ import ContactModal from './ContactModal.astro';
     min-height: calc(100vh - 180px);
     display: flex;
     align-items: center;
-    padding: 40px 0 80px 0;
+    padding: 120px 0 80px 0; /* Pushes content down to perfectly clear the fixed glass header */
     animation: rise 0.8s 0.05s ease both;
   }
 
@@ -1037,21 +1048,28 @@ import ContactModal from './ContactModal.astro';
     font-family: 'Outfit', sans-serif;
     font-weight: 600;
     font-size: 13.5px;
-    background: transparent !important;
-    border: 1px solid var(--faint-border) !important;
-    color: var(--white) !important;
+    background: var(--orange) !important; /* Premium Primary Color Background */
+    border: 1px solid var(--orange) !important;
+    color: #fff !important;
     padding: 8px 18px !important;
     border-radius: 20px !important;
     cursor: pointer !important;
     transition: all 0.25s ease !important;
     text-transform: uppercase;
     letter-spacing: 0.05em;
+    box-shadow: 0 0 16px rgba(249, 115, 22, 0.2) !important;
   }
 
   .header-contact-btn:hover {
-    border-color: rgba(249, 115, 22, 0.4) !important;
-    background: var(--orange-dim) !important;
-    color: var(--white) !important;
+    background: var(--orange-hover) !important;
+    border-color: var(--orange-hover) !important;
+    color: #fff !important;
+    transform: translateY(-1px) !important;
+    box-shadow: 0 0 24px rgba(249, 115, 22, 0.4) !important;
+  }
+
+  .header-contact-btn:active {
+    transform: scale(0.97) !important;
   }
 
   /* Premium Contact Modal Overlay & Container */
