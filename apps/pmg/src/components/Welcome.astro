@@ -4,8 +4,8 @@ import Header from './Header.astro';
 import Hero from './Hero.astro';
 import Services from './Services.astro';
 import Flywheel from './Flywheel.astro';
-import FAQ from './FAQ.astro';
-import Contact from './Contact.astro';
+// import FAQ from './FAQ.astro';
+// import Contact from './Contact.astro';
 import Footer from './Footer.astro';
 import ContactModal from './ContactModal.astro';
 ---
@@ -210,7 +210,10 @@ import ContactModal from './ContactModal.astro';
     background: transparent !important;
     backdrop-filter: none !important;
     border-bottom: 1px solid transparent !important;
-    transition: background 0.3s ease, backdrop-filter 0.3s ease, border-color 0.3s ease !important;
+    transition:
+      background 0.3s ease,
+      backdrop-filter 0.3s ease,
+      border-color 0.3s ease !important;
     animation: rise 0.8s ease both;
   }
 
