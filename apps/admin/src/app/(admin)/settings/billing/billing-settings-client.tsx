@@ -35,16 +35,12 @@ function divisionPrefix(name: string): string {
 interface DivisionBillingFormProps {
   division: Division;
   currentSettings: DivisionBillingSettings | null;
-  divisions: Division[];
-  allSettings: Record<string, DivisionBillingSettings>;
   saveAction: (divisionId: string, formData: FormData) => Promise<{ error?: string }>;
 }
 
 function DivisionBillingForm({
   division,
   currentSettings,
-  divisions,
-  allSettings,
   saveAction,
 }: DivisionBillingFormProps) {
   const formRef = useRef<HTMLFormElement>(null);
@@ -69,7 +65,6 @@ function DivisionBillingForm({
   const [divisionWebsite, setDivisionWebsite] = useState<string>('');
 
   const [activeTab, setActiveTab] = useState<'general' | 'contact_banking' | 'notes'>('general');
-  const [cloneSourceId, setCloneSourceId] = useState<string>('');
 
   // Sync state when currentSettings changes (on division switch or save)
   useEffect(() => {
@@ -87,35 +82,6 @@ function DivisionBillingForm({
     setDivisionWebsite(s?.divisionWebsite ?? '');
   }, [s]);
 
-  // Clone handling
-  const otherDivisions = divisions.filter((d) => d.id !== division.id);
-
-  function handleClone() {
-    if (!cloneSourceId) return;
-    const sourceSettings = allSettings[cloneSourceId];
-    if (!sourceSettings) {
-      toast.error('No billing settings found for the selected division.');
-      return;
-    }
-
-    setDefaultVatRate(sourceSettings.defaultVatRate ?? '15');
-    setPaymentTermsDays(sourceSettings.paymentTermsDays ?? 30);
-    setBankName(sourceSettings.bankName ?? '');
-    setBankAccountName(sourceSettings.bankAccountName ?? '');
-    setBankAccountNumber(sourceSettings.bankAccountNumber ?? '');
-    setBankBranchCode(sourceSettings.bankBranchCode ?? '');
-    setInvoiceNotes(sourceSettings.invoiceNotes ?? '');
-    setQuoteNotes(sourceSettings.quoteNotes ?? '');
-    setSalesRepName(sourceSettings.salesRepName ?? '');
-    setSalesRepPhone(sourceSettings.salesRepPhone ?? '');
-    setSalesRepEmail(sourceSettings.salesRepEmail ?? '');
-    setDivisionWebsite(sourceSettings.divisionWebsite ?? '');
-
-    const sourceName = divisions.find((d) => d.id === cloneSourceId)?.name ?? 'selected division';
-    toast.success(`Settings cloned from "${sourceName}". Check the tabs to review, then click Save Changes.`);
-    setCloneSourceId('');
-  }
-
   function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     setError(null);
@@ -132,42 +98,6 @@ function DivisionBillingForm({
 
   return (
     <form ref={formRef} onSubmit={handleSubmit} className="flex flex-col gap-6">
-      {/* Clone Settings Banner */}
-      {otherDivisions.length > 0 && (
-        <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between bg-card border border-border p-4 rounded-xl shadow-sm">
-          <div className="space-y-1">
-            <h4 className="text-sm font-semibold text-foreground flex items-center gap-2">
-              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-blue-500"><rect width="14" height="14" x="8" y="8" rx="2" ry="2"/><path d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2"/></svg>
-              Clone settings from another division
-            </h4>
-            <p className="text-xs text-muted-foreground">Copy all general, contact, banking, and notes templates from another division to this form.</p>
-          </div>
-          <div className="flex items-center gap-2">
-            <select
-              value={cloneSourceId}
-              onChange={(e) => setCloneSourceId(e.target.value)}
-              className="h-9 w-[200px] rounded-md border border-input bg-background px-3 py-1 text-sm shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
-            >
-              <option value="">Select a division...</option>
-              {otherDivisions.map((d) => (
-                <option key={d.id} value={d.id}>
-                  {d.name}
-                </option>
-              ))}
-            </select>
-            <Button
-              type="button"
-              variant="outline"
-              size="sm"
-              onClick={handleClone}
-              disabled={!cloneSourceId}
-            >
-              Clone
-            </Button>
-          </div>
-        </div>
-      )}
-
       {/* Settings Form Tabs */}
       <div className="flex items-center gap-1 border-b border-border">
         <button
@@ -506,8 +436,6 @@ export function BillingSettingsClient({
         key={activeDivision.id}
         division={activeDivision}
         currentSettings={allSettings[activeDivision.id] ?? null}
-        divisions={divisions}
-        allSettings={allSettings}
         saveAction={saveAction}
       />
     </div>
