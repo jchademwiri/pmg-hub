@@ -153,7 +153,7 @@ export function DocumentPreview({
   const logoUrl = org.logoUrl ?? getDocumentLogoUrl(org.name)
 
   return (
-    <div id={id} className="print-document w-full max-w-[794px] min-h-[1123px] mx-auto flex flex-col bg-white text-zinc-900 shadow-md print:shadow-none ring-1 ring-zinc-200 print:ring-0">
+    <div id={id} className="print-document w-full max-w-[794px] min-h-[1123px] mx-auto flex flex-col bg-white text-zinc-900 shadow-md print:shadow-none ring-1 ring-zinc-200 print:ring-0 border-t-[4px] border-t-blue-700">
 
       {/* ── Header ─────────────────────────────────────────────────────────── */}
       <div className="flex items-start justify-between gap-6 px-4 sm:px-10 pt-10 pb-6">
@@ -290,7 +290,7 @@ export function DocumentPreview({
             </thead>
             <tbody>
               {lineItems.map((item, i) => (
-                <tr key={i} className="border-b border-zinc-50">
+                <tr key={i} className="border-b border-zinc-50 print:break-inside-avoid">
                   <td className="py-3 pr-4 text-zinc-800">{item.description}</td>
                   <td className="py-3 px-4 text-right tabular-nums text-zinc-600">{item.qty}</td>
                   <td className="py-3 px-4 text-right tabular-nums text-zinc-600">{fmt(item.unitPrice)}</td>
@@ -407,7 +407,7 @@ export function DocumentPreview({
 
       {/* ── Banking details - after line items ──────────────────────────────── */}
       {banking && (
-        <div className="mx-4 sm:mx-10 border-t border-zinc-100 pt-5 pb-4">
+        <div className="mx-4 sm:mx-10 border-t border-zinc-100 pt-5 pb-4 print:break-inside-avoid">
           <p className="text-[10px] font-semibold uppercase tracking-widest text-zinc-400 print:text-zinc-600 mb-3">
             Banking Details
           </p>
@@ -432,7 +432,7 @@ export function DocumentPreview({
 
       {/* ── Statement Ageing - pinned to bottom ─────────────────────────────── */}
       {type === 'statement' && ageing && (
-        <div className="mx-4 sm:mx-10 border-t border-zinc-100 pt-5 pb-4">
+        <div className="mx-4 sm:mx-10 border-t border-zinc-100 pt-5 pb-4 print:break-inside-avoid">
           <p className="text-[10px] font-semibold uppercase tracking-widest text-zinc-400 print:text-zinc-600 mb-3">
             Ageing Summary
           </p>
@@ -463,7 +463,7 @@ export function DocumentPreview({
 
       {/* ── Notes / Terms - fixed just above footer ─────────────────────────── */}
       {(notes || terms) && (
-        <div className="mx-4 sm:mx-10 border-t border-zinc-100 pt-4 pb-4 flex flex-col gap-3">
+        <div className="mx-4 sm:mx-10 border-t border-zinc-100 pt-4 pb-4 flex flex-col gap-3 print:break-inside-avoid">
           {notes && (
             <div>
               <p className="text-[10px] font-semibold uppercase tracking-widest text-zinc-400 print:text-zinc-600">Notes</p>
