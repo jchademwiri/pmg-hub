@@ -4,18 +4,37 @@
 
 <!-- Flywheel Section -->
 <section id="why-pmg" class="section scroll-mt">
-  <div class="section-header">
-    <span class="section-tag">Synergy</span>
-    <h2>The PMG Growth Flywheel</h2>
-    <p class="section-desc">
-      Our business model operates as an integrated ecosystem where each division fuels the next,
-      providing a client for life.
-    </p>
+  <div class="section-header-split">
+    <!-- Left Column: Narrative Context -->
+    <div class="section-header-left">
+      <span class="section-tag">Synergy</span>
+      <h2>The PMG Growth Flywheel</h2>
+      <p class="section-desc">
+        Our business model operates as an integrated ecosystem where each division fuels the next,
+        providing a client for life. Hover over each step below to see the momentum in action.
+      </p>
+    </div>
+
+    <!-- Right Column: Interactive CSS Flywheel Graphic -->
+    <div class="section-header-right">
+      <div class="flywheel-visualizer">
+        <div class="flywheel-outer-ring">
+          <div class="visualizer-node node-1"><span>01</span></div>
+          <div class="visualizer-node node-2"><span>02</span></div>
+          <div class="visualizer-node node-3"><span>03</span></div>
+          <div class="visualizer-node node-4"><span>04</span></div>
+        </div>
+        <div class="flywheel-inner-hub">
+          <span class="hub-logo">PMG</span>
+          <span class="hub-text">momentum</span>
+        </div>
+      </div>
+    </div>
   </div>
 
   <div class="flywheel-container">
     <div class="flywheel-steps">
-      <div class="flywheel-step">
+      <div class="flywheel-step" data-step-card="0">
         <span class="step-num">01</span>
         <div class="step-content">
           <h4>Branding</h4>
@@ -41,7 +60,7 @@
         </svg>
       </div>
 
-      <div class="flywheel-step">
+      <div class="flywheel-step" data-step-card="1">
         <span class="step-num">02</span>
         <div class="step-content">
           <h4>Technology</h4>
@@ -67,8 +86,9 @@
         </svg>
       </div>
 
-      <div class="flywheel-step">
+      <div class="flywheel-step" data-step-card="2">
         <span class="step-num">03</span>
+        <span class="step-num"></span>
         <div class="step-content">
           <h4>Tenders</h4>
           <p>
@@ -93,7 +113,7 @@
         </svg>
       </div>
 
-      <div class="flywheel-step">
+      <div class="flywheel-step" data-step-card="3">
         <span class="step-num">04</span>
         <div class="step-content">
           <h4>Scale</h4>
@@ -105,3 +125,193 @@
     </div>
   </div>
 </section>
+
+<script>
+  // Sync card hovers with nodes in the circular visualization
+  const steps = document.querySelectorAll('.flywheel-step');
+  const nodes = document.querySelectorAll('.visualizer-node');
+
+  steps.forEach((step, idx) => {
+    step.addEventListener('mouseenter', () => {
+      nodes.forEach((node, nIdx) => {
+        if (nIdx === idx) {
+          node.classList.add('active');
+        } else {
+          node.classList.remove('active');
+        }
+      });
+    });
+
+    step.addEventListener('mouseleave', () => {
+      nodes.forEach((node) => node.classList.remove('active'));
+    });
+  });
+
+  // Also vice-versa: hovering nodes highlights step cards
+  nodes.forEach((node, idx) => {
+    node.addEventListener('mouseenter', () => {
+      steps.forEach((step, sIdx) => {
+        if (sIdx === idx) {
+          step.classList.add('active-step');
+          // Dispatch a temporary style scale
+          (step as HTMLElement).style.transform = 'translateY(-4px)';
+          const num = step.querySelector('.step-num') as HTMLElement;
+          if (num) num.style.color = 'var(--orange)';
+        }
+      });
+    });
+
+    node.addEventListener('mouseleave', () => {
+      steps.forEach((step) => {
+        step.classList.remove('active-step');
+        (step as HTMLElement).style.transform = '';
+        const num = step.querySelector('.step-num') as HTMLElement;
+        if (num) num.style.color = '';
+      });
+    });
+  });
+</script>
+
+<style>
+  .flywheel-step {
+    cursor: pointer;
+    transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.3s ease;
+    border-radius: 8px;
+  }
+
+  .flywheel-visualizer {
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    height: 220px;
+    width: 100%;
+    max-width: 300px;
+    margin: 0 auto;
+  }
+
+  .flywheel-outer-ring {
+    width: 170px;
+    height: 170px;
+    border: 1.5px dashed rgba(249, 115, 22, 0.25);
+    border-radius: 50%;
+    position: relative;
+    animation: spin-clockwise 30s linear infinite;
+    transition: border-color 0.3s ease;
+  }
+
+  .flywheel-visualizer:hover .flywheel-outer-ring {
+    border-color: rgba(249, 115, 22, 0.5);
+  }
+
+  .visualizer-node {
+    width: 30px;
+    height: 30px;
+    border-radius: 50%;
+    background: #111d2b;
+    border: 2px solid rgba(244, 244, 242, 0.12);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    position: absolute;
+    color: rgba(244, 244, 242, 0.4);
+    font-size: 11px;
+    font-weight: 700;
+    font-family: 'Outfit', sans-serif;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
+    animation: spin-counter-clockwise 30s linear infinite;
+    transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+    cursor: pointer;
+  }
+
+  .visualizer-node span {
+    line-height: 1;
+  }
+
+  /* Node positions at 0, 90, 180, 270 degrees around the outer ring */
+  .node-1 {
+    top: -15px;
+    left: calc(50% - 15px);
+  }
+  .node-2 {
+    right: -15px;
+    top: calc(50% - 15px);
+  }
+  .node-3 {
+    bottom: -15px;
+    left: calc(50% - 15px);
+  }
+  .node-4 {
+    left: -15px;
+    top: calc(50% - 15px);
+  }
+
+  /* Interactive highlighted state */
+  .visualizer-node.active,
+  .visualizer-node:hover {
+    border-color: var(--orange, #f97316);
+    color: #fff;
+    background: var(--orange, #f97316);
+    box-shadow: 0 0 18px rgba(249, 115, 22, 0.6);
+    transform: scale(1.18);
+  }
+
+  .flywheel-inner-hub {
+    position: absolute;
+    width: 90px;
+    height: 90px;
+    background: rgba(17, 29, 43, 0.85);
+    border: 1px solid rgba(244, 244, 242, 0.08);
+    border-radius: 50%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.4), inset 0 0 12px rgba(249, 115, 22, 0.06);
+    z-index: 2;
+    pointer-events: none;
+    transition: all 0.3s ease;
+  }
+
+  .flywheel-visualizer:hover .flywheel-inner-hub {
+    border-color: rgba(249, 115, 22, 0.25);
+    box-shadow: 0 10px 35px rgba(0, 0, 0, 0.5), 0 0 20px rgba(249, 115, 22, 0.15);
+  }
+
+  .hub-logo {
+    font-family: 'Outfit', sans-serif;
+    font-weight: 900;
+    font-size: 16px;
+    color: #f4f4f2;
+    letter-spacing: 0.08em;
+    line-height: 1;
+  }
+
+  .hub-text {
+    font-size: 8px;
+    color: var(--orange, #f97316);
+    font-weight: 700;
+    letter-spacing: 0.16em;
+    margin-top: 4px;
+    text-transform: uppercase;
+    line-height: 1;
+  }
+
+  @keyframes spin-clockwise {
+    from {
+      transform: rotate(0deg);
+    }
+    to {
+      transform: rotate(360deg);
+    }
+  }
+
+  @keyframes spin-counter-clockwise {
+    from {
+      transform: rotate(360deg);
+    }
+    to {
+      transform: rotate(0deg);
+    }
+  }
+</style>

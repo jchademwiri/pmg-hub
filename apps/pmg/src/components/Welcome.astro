@@ -73,6 +73,21 @@ import ContactModal from './ContactModal.astro';
       }
     });
   }
+
+  // Toggle .scrolled class on header dynamically on scroll
+  const header = document.querySelector('.site-header');
+  if (header) {
+    const handleScroll = () => {
+      if (window.scrollY > 20) {
+        header.classList.add('scrolled');
+      } else {
+        header.classList.remove('scrolled');
+      }
+    };
+    window.addEventListener('scroll', handleScroll, { passive: true });
+    // Check initial scroll state
+    handleScroll();
+  }
 </script>
 
 <style is:global>
@@ -191,10 +206,17 @@ import ContactModal from './ContactModal.astro';
     left: 0;
     z-index: 100;
     width: 100%;
+    background: transparent !important;
+    backdrop-filter: none !important;
+    border-bottom: 1px solid transparent !important;
+    transition: background 0.3s ease, backdrop-filter 0.3s ease, border-color 0.3s ease !important;
+    animation: rise 0.8s ease both;
+  }
+
+  .site-header.scrolled {
     background: rgba(13, 27, 42, 0.75) !important; /* Premium Translucent Glass Navy */
     backdrop-filter: blur(16px) !important;
     border-bottom: 1px solid var(--faint-border) !important;
-    animation: rise 0.8s ease both;
   }
 
   .header-container {
