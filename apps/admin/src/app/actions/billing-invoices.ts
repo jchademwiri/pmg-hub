@@ -55,10 +55,6 @@ export async function createInvoice(
       return { error: 'A client is required.' };
     }
 
-    const today = new Date().toISOString().split('T')[0]!;
-    if (invoiceDate > today) {
-      return { error: 'Invoice date cannot be in the future.' };
-    }
     if (await isPeriodClosed(invoiceDate)) {
       const minDate = await getMinAllowedDate();
       return { error: getMinDateErrorMessage(minDate) };
@@ -149,11 +145,19 @@ export async function updateInvoice(
 
     const db = getDb();
     const [existing] = await db
-      .select({ id: invoices.id, status: invoices.status })
+      .select({ id: invoices.id, status: invoices.status, invoiceDate: invoices.invoiceDate })
       .from(invoices)
       .where(eq(invoices.id, id));
 
     if (!existing) return { error: 'Invoice not found.' };
+
+    if (await isPeriodClosed(existing.invoiceDate)) {
+      return { error: 'Cannot edit an invoice in a closed financial period.' };
+    }
+    if (await isPeriodClosed(invoiceDate)) {
+      const minDate = await getMinAllowedDate();
+      return { error: getMinDateErrorMessage(minDate) };
+    }
 
     // Paid and voided invoices cannot be edited
     if (existing.status === 'paid') {

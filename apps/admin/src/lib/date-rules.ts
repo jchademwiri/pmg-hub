@@ -26,6 +26,9 @@ export async function isPeriodClosed(date: string): Promise<boolean> {
   const now = new Date();
   const currentPeriod = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
 
+  // Future periods are always open
+  if (period > currentPeriod) return false;
+
   if (period === currentPeriod) return false;
 
   const prevDate = new Date(now.getFullYear(), now.getMonth() - 1, 1);

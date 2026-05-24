@@ -230,7 +230,6 @@ export function QuoteFormClient({
             <Input
               type="date"
               value={quoteDate}
-              max={today}
               onChange={(e) => {
                 const newDate = e.target.value;
                 setQuoteDate(newDate);

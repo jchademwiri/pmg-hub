@@ -158,6 +158,15 @@ export function PaymentFormClient({ divisions, clients, minDate }: PaymentFormCl
       toast.error('Please enter a valid payment amount.');
       return;
     }
+    if (paymentDate < minDate) {
+      toast.error('Date is prior to the open ledger period boundary. Payments cannot be backdated to closed periods.');
+      return;
+    }
+    const todayStr = new Date().toISOString().split('T')[0]!;
+    if (paymentDate > todayStr) {
+      toast.error('Payment date cannot be in the future.');
+      return;
+    }
     if (isAllocationExceeded) {
       toast.error('Total allocated amount cannot exceed the payment amount.');
       return;
@@ -222,11 +231,12 @@ export function PaymentFormClient({ divisions, clients, minDate }: PaymentFormCl
           <Input
             type="date"
             value={paymentDate}
+            max={today}
             onChange={(e) => setPaymentDate(e.target.value)}
           />
           {isPeriodWarning && (
-            <span className="text-xs text-amber-600 font-medium">
-              Warning: Date is prior to the open ledger period boundary.
+            <span className="text-xs text-destructive font-medium animate-pulse">
+              Error: Date is prior to the open ledger period boundary.
             </span>
           )}
         </div>

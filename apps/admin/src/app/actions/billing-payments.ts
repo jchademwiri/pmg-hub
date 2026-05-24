@@ -114,7 +114,12 @@ export async function recordClientPayment(data: PaymentInput): Promise<{ error?:
     await getSessionOrRedirect();
     const db = getDb();
 
-    // 1. Check period lock
+    // 1. Check period lock and future date
+    const today = new Date().toISOString().split('T')[0]!;
+    if (data.date > today) {
+      return { error: 'Payment date cannot be in the future.' };
+    }
+
     if (await isPeriodClosed(data.date)) {
       const minDate = await getMinAllowedDate();
       return { error: getMinDateErrorMessage(minDate) };

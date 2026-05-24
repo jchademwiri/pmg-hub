@@ -267,7 +267,6 @@ export function InvoiceFormClient({
             <Input
               type="date"
               value={invoiceDate}
-              max={today}
               onChange={(e) => {
                 const newDate = e.target.value;
                 setInvoiceDate(newDate);
