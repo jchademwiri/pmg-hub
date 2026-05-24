@@ -1,7 +1,9 @@
 'use client'
 
 import * as React from 'react'
+import { Alert, AlertDescription } from '@/components/ui/alert'
 import { Button } from '@/components/ui/button'
+import { Field, FieldGroup, FieldLabel } from '@/components/ui/field'
 import { Input } from '@/components/ui/input'
 import {
   Select,
@@ -52,61 +54,67 @@ export function InviteUserForm() {
   }
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-4 max-w-md">
-      <div className="space-y-1.5">
-        <label htmlFor="name" className="text-sm font-medium leading-none">
-          Full Name
-        </label>
-        <Input
-          id="name"
-          type="text"
-          required
-          placeholder="Jane Smith"
-          value={name}
-          onChange={(e) => setName(e.target.value)}
-          disabled={isPending}
-        />
-      </div>
+    <form onSubmit={handleSubmit} className="flex max-w-md flex-col gap-4">
+      <FieldGroup>
+        <Field>
+          <FieldLabel htmlFor="name">Full Name</FieldLabel>
+          <Input
+            id="name"
+            type="text"
+            required
+            placeholder="Jane Smith"
+            value={name}
+            onChange={(e) => setName(e.target.value)}
+            disabled={isPending}
+          />
+        </Field>
 
-      <div className="space-y-1.5">
-        <label htmlFor="email" className="text-sm font-medium leading-none">
-          Email
-        </label>
-        <Input
-          id="email"
-          type="email"
-          required
-          placeholder="user@example.com"
-          value={email}
-          onChange={(e) => setEmail(e.target.value)}
-          disabled={isPending}
-        />
-      </div>
+        <Field>
+          <FieldLabel htmlFor="email">Email</FieldLabel>
+          <Input
+            id="email"
+            type="email"
+            required
+            placeholder="user@example.com"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+            disabled={isPending}
+          />
+        </Field>
 
-      <div className="space-y-1.5">
-        <label htmlFor="role" className="text-sm font-medium leading-none">
-          Role
-        </label>
-        <Select value={role} onValueChange={(v) => setRole(v as Role)} disabled={isPending}>
-          <SelectTrigger id="role">
-            <SelectValue />
-          </SelectTrigger>
-          <SelectContent>
-            {ROLES.map((r) => (
-              <SelectItem key={r.value} value={r.value}>
-                {r.label}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
-      </div>
+        <Field>
+          <FieldLabel htmlFor="role">Role</FieldLabel>
+          <Select value={role} onValueChange={(v) => setRole(v as Role)} disabled={isPending}>
+            <SelectTrigger id="role">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              {ROLES.map((r) => (
+                <SelectItem key={r.value} value={r.value}>
+                  {r.label}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </Field>
 
-      {error && <p className="text-sm text-destructive">{error}</p>}
-      {success && <p className="text-sm text-green-600">{success}</p>}
+        <Field>
+          <Button type="submit" disabled={isPending}>
+            {isPending ? 'Sending…' : 'Send Invitation'}
+          </Button>
+        </Field>
+      </FieldGroup>
 
-      <Button type="submit" disabled={isPending}>
-        {isPending ? 'Sending…' : 'Send Invitation'}
-      </Button>
+      {error && (
+        <Alert variant="destructive">
+          <AlertDescription>{error}</AlertDescription>
+        </Alert>
+      )}
+      {success && (
+        <Alert>
+          <AlertDescription>{success}</AlertDescription>
+        </Alert>
+      )}
     </form>
   )
 }

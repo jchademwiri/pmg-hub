@@ -2,7 +2,9 @@
 
 import * as React from 'react'
 import { toast } from 'sonner'
+import { Alert, AlertDescription } from '@/components/ui/alert'
 import { Button } from '@/components/ui/button'
+import { Field, FieldGroup, FieldLabel } from '@/components/ui/field'
 import { Input } from '@/components/ui/input'
 
 interface DivisionAddFormProps {
@@ -31,27 +33,31 @@ export function DivisionAddForm({ createAction }: DivisionAddFormProps) {
   }
 
   return (
-    <form ref={formRef} onSubmit={handleSubmit} className="flex flex-wrap gap-3 items-end">
-      <div className="flex flex-col gap-1">
-        <label htmlFor="division-name" className="text-sm font-medium">
-          Name
-        </label>
-        <Input
-          id="division-name"
-          name="name"
-          type="text"
-          required
-          disabled={isPending}
-          className="w-64"
-        />
-      </div>
+    <form ref={formRef} onSubmit={handleSubmit} className="flex flex-col gap-3">
+      <FieldGroup className="flex-row flex-wrap items-end gap-3">
+        <Field>
+          <FieldLabel htmlFor="division-name">Name</FieldLabel>
+          <Input
+            id="division-name"
+            name="name"
+            type="text"
+            required
+            disabled={isPending}
+            className="w-64"
+          />
+        </Field>
 
-      <Button type="submit" disabled={isPending}>
-        {isPending ? 'Adding…' : 'Add Division'}
-      </Button>
+        <Field>
+          <Button type="submit" disabled={isPending}>
+            {isPending ? 'Adding…' : 'Add Division'}
+          </Button>
+        </Field>
+      </FieldGroup>
 
       {errorMessage && (
-        <p className="w-full text-sm text-destructive">{errorMessage}</p>
+        <Alert variant="destructive">
+          <AlertDescription>{errorMessage}</AlertDescription>
+        </Alert>
       )}
     </form>
   )

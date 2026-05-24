@@ -1,6 +1,8 @@
 'use client'
 
 import { useRouter } from 'next/navigation'
+import { Badge } from '@/components/ui/badge'
+import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs'
 
 interface LeadStatusTabsProps {
   counts: { all: number; new: number; contacted: number; converted: number; lost: number }
@@ -31,33 +33,20 @@ export function LeadStatusTabs({
     if (value !== 'all') params.set('status', value)
     if (currentDivisionId) params.set('divisionId', currentDivisionId)
     if (currentSource) params.set('source', currentSource)
-    router.push('/leads?' + params.toString())
+    const qs = params.toString()
+    router.push(qs ? `/relationships/leads?${qs}` : '/relationships/leads')
   }
 
   return (
-    <div className="flex items-center gap-1 p-1 bg-muted/40 rounded-lg w-fit border border-border">
-      {TABS.map((tab) => (
-        <button
-          key={tab.key}
-          onClick={() => handleTabChange(tab.key)}
-          className={`flex items-center gap-1.5 px-4 py-1.5 rounded-md text-sm font-medium transition-all duration-150 ${
-            activeTab === tab.key
-              ? 'bg-card text-foreground shadow-sm border border-border'
-              : 'text-muted-foreground hover:text-foreground hover:bg-muted/60'
-          }`}
-        >
-          {tab.label}
-          <span
-            className={`inline-flex items-center justify-center rounded-full px-1.5 py-0.5 text-xs font-medium min-w-5 ${
-              activeTab === tab.key
-                ? 'bg-primary/10 text-primary'
-                : 'bg-muted text-muted-foreground'
-            }`}
-          >
-            {counts[tab.key as keyof typeof counts]}
-          </span>
-        </button>
-      ))}
-    </div>
+    <Tabs value={activeTab} onValueChange={handleTabChange}>
+      <TabsList>
+        {TABS.map((tab) => (
+          <TabsTrigger key={tab.key} value={tab.key} className="gap-1.5">
+            {tab.label}
+            <Badge variant="secondary">{counts[tab.key as keyof typeof counts]}</Badge>
+          </TabsTrigger>
+        ))}
+      </TabsList>
+    </Tabs>
   )
 }

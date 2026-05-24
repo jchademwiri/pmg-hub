@@ -1,7 +1,9 @@
 'use client'
 
 import * as React from 'react'
+import { Alert, AlertDescription } from '@/components/ui/alert'
 import { Button } from '@/components/ui/button'
+import { Field, FieldGroup, FieldLabel } from '@/components/ui/field'
 import { Input } from '@/components/ui/input'
 import {
   Select,
@@ -10,6 +12,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select'
+import { Textarea } from '@/components/ui/textarea'
 
 interface LeadAddFormProps {
   divisions: { id: string; name: string }[]
@@ -42,101 +45,109 @@ export function LeadAddForm({ divisions, createAction }: LeadAddFormProps) {
   }
 
   return (
-    <form ref={formRef} onSubmit={handleSubmit} className="flex flex-wrap gap-3 items-end">
-      <div className="flex flex-col gap-1">
-        <label htmlFor="lead-name" className="text-sm font-medium">Name *</label>
-        <Input
-          id="lead-name"
-          name="name"
-          type="text"
-          required
-          disabled={isPending}
-          className="w-44"
-        />
-      </div>
+    <form ref={formRef} onSubmit={handleSubmit} className="flex flex-col gap-3">
+      <FieldGroup className="flex-row flex-wrap items-end gap-3">
+        <Field>
+          <FieldLabel htmlFor="lead-name">
+            Name <span className="text-destructive">*</span>
+          </FieldLabel>
+          <Input
+            id="lead-name"
+            name="name"
+            type="text"
+            required
+            disabled={isPending}
+            className="w-44"
+          />
+        </Field>
 
-      <div className="flex flex-col gap-1">
-        <label htmlFor="lead-email" className="text-sm font-medium">Email</label>
-        <Input
-          id="lead-email"
-          name="email"
-          type="email"
-          placeholder="Optional"
-          disabled={isPending}
-          className="w-48"
-        />
-      </div>
+        <Field>
+          <FieldLabel htmlFor="lead-email">Email</FieldLabel>
+          <Input
+            id="lead-email"
+            name="email"
+            type="email"
+            placeholder="Optional"
+            disabled={isPending}
+            className="w-48"
+          />
+        </Field>
 
-      <div className="flex flex-col gap-1">
-        <label htmlFor="lead-phone" className="text-sm font-medium">Phone</label>
-        <Input
-          id="lead-phone"
-          name="phone"
-          type="text"
-          placeholder="Optional"
-          disabled={isPending}
-          className="w-36"
-        />
-      </div>
+        <Field>
+          <FieldLabel htmlFor="lead-phone">Phone</FieldLabel>
+          <Input
+            id="lead-phone"
+            name="phone"
+            type="text"
+            placeholder="Optional"
+            disabled={isPending}
+            className="w-36"
+          />
+        </Field>
 
-      <div className="flex flex-col gap-1">
-        <label htmlFor="lead-source" className="text-sm font-medium">Source</label>
-        <Input
-          id="lead-source"
-          name="source"
-          type="text"
-          placeholder="Optional"
-          disabled={isPending}
-          className="w-36"
-        />
-      </div>
+        <Field>
+          <FieldLabel htmlFor="lead-source">Source</FieldLabel>
+          <Input
+            id="lead-source"
+            name="source"
+            type="text"
+            placeholder="Optional"
+            disabled={isPending}
+            className="w-36"
+          />
+        </Field>
 
-      <div className="flex flex-col gap-1">
-        <label htmlFor="lead-service-interest" className="text-sm font-medium">Service Interest</label>
-        <Input
-          id="lead-service-interest"
-          name="serviceInterest"
-          type="text"
-          placeholder="Optional"
-          disabled={isPending}
-          className="w-44"
-        />
-      </div>
+        <Field>
+          <FieldLabel htmlFor="lead-service-interest">Service Interest</FieldLabel>
+          <Input
+            id="lead-service-interest"
+            name="serviceInterest"
+            type="text"
+            placeholder="Optional"
+            disabled={isPending}
+            className="w-44"
+          />
+        </Field>
 
-      <div className="flex flex-col gap-1">
-        <label htmlFor="lead-division" className="text-sm font-medium">Division</label>
-        <Select value={divisionId} onValueChange={setDivisionId} disabled={isPending}>
-          <SelectTrigger id="lead-division" className="w-44">
-            <SelectValue placeholder="Select division" />
-          </SelectTrigger>
-          <SelectContent>
-            {divisions.map((division) => (
-              <SelectItem key={division.id} value={division.id}>
-                {division.name}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
-      </div>
+        <Field>
+          <FieldLabel htmlFor="lead-division">Division</FieldLabel>
+          <Select value={divisionId} onValueChange={setDivisionId} disabled={isPending}>
+            <SelectTrigger id="lead-division" className="w-44">
+              <SelectValue placeholder="Select division" />
+            </SelectTrigger>
+            <SelectContent>
+              {divisions.map((division) => (
+                <SelectItem key={division.id} value={division.id}>
+                  {division.name}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </Field>
 
-      <div className="flex flex-col gap-1">
-        <label htmlFor="lead-message" className="text-sm font-medium">Message</label>
-        <textarea
-          id="lead-message"
-          name="message"
-          placeholder="Optional"
-          disabled={isPending}
-          rows={3}
-          className="w-64 rounded-md border border-input bg-transparent px-2.5 py-1.5 text-sm shadow-xs outline-none placeholder:text-muted-foreground focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50 disabled:pointer-events-none disabled:opacity-50"
-        />
-      </div>
+        <Field>
+          <FieldLabel htmlFor="lead-message">Message</FieldLabel>
+          <Textarea
+            id="lead-message"
+            name="message"
+            placeholder="Optional"
+            disabled={isPending}
+            rows={3}
+            className="w-64 resize-none"
+          />
+        </Field>
 
-      <Button type="submit" disabled={isPending}>
-        {isPending ? 'Adding…' : 'Add Lead'}
-      </Button>
+        <Field>
+          <Button type="submit" disabled={isPending}>
+            {isPending ? 'Adding…' : 'Add Lead'}
+          </Button>
+        </Field>
+      </FieldGroup>
 
       {errorMessage && (
-        <p className="w-full text-sm text-destructive">{errorMessage}</p>
+        <Alert variant="destructive">
+          <AlertDescription>{errorMessage}</AlertDescription>
+        </Alert>
       )}
     </form>
   )

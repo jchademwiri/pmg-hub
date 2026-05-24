@@ -1,31 +1,10 @@
 ---
-// apps/pmg/src/components/ComingSoon.astro
-// Coming Soon - Playhouse Media Group
-// Brand: Navy #0D1B2A + Orange #F97316
+// Playhouse Media Group — coming soon page content
 ---
 
-<!doctype html>
-<html lang='en'>
-  <head>
-    <meta charset='UTF-8' />
-    <meta name='viewport' content='width=device-width, initial-scale=1.0' />
-    <title>Playhouse Media Group - Coming Soon</title>
-    <meta
-      name='description'
-      content='Playhouse Media Group - A South African holding company for Tender Edge Solutions and Apex Web Solutions. Based in Centurion, Gauteng.'
-    />
-    <link rel='icon' type='image/svg+xml' href='/favicon.svg' />
-    <link rel='preconnect' href='https://fonts.googleapis.com' />
-    <link rel='preconnect' href='https://fonts.gstatic.com' crossorigin />
-    <link
-      href='https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;700;800;900&family=Instrument+Serif:ital@0;1&family=DM+Sans:wght@300;400;500&display=swap'
-      rel='stylesheet'
-    />
-  </head>
-  <body>
-    <div class='noise' aria-hidden='true'></div>
+<div class='noise' aria-hidden='true'></div>
 
-    <main>
+<main>
       <!-- Architectural background lines -->
       <div class='grid-lines' aria-hidden='true'>
         <span></span><span></span><span></span><span></span><span></span>
@@ -167,12 +146,10 @@
           <span class='sep'>·</span>
           <span>playhousemedia.co.za</span>
           <span class='sep'>·</span>
-          <span>© 2023</span>
+          <span>© {new Date().getFullYear()}</span>
         </footer>
       </div>
     </main>
-  </body>
-</html>
 
 <style>
   *,
@@ -200,7 +177,7 @@
     overflow: hidden;
   }
 
-  body {
+  :global(body.pmg-body) {
     background: var(--navy);
     color: var(--white);
     font-family: 'DM Sans', sans-serif;

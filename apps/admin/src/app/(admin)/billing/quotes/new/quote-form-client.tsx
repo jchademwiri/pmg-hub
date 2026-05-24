@@ -2,8 +2,12 @@
 
 import { useState, useTransition } from 'react';
 import { useRouter } from 'next/navigation';
+import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
+import { Field, FieldLabel } from '@/components/ui/field';
 import { Input } from '@/components/ui/input';
+import { Switch } from '@/components/ui/switch';
+import { Textarea } from '@/components/ui/textarea';
 import {
   Select,
   SelectContent,
@@ -283,28 +287,28 @@ export function QuoteFormClient({
 
         {/* Terms & notes */}
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-          <div className="flex flex-col gap-1.5">
-            <label className="text-sm font-medium">Notes</label>
-            <textarea
+          <Field>
+            <FieldLabel htmlFor="quote-notes">Notes</FieldLabel>
+            <Textarea
+              id="quote-notes"
               value={notes}
               onChange={(e) => setNotes(e.target.value)}
               placeholder="Optional notes for the client…"
               rows={4}
               disabled={isSubmitting}
-              className="flex min-h-[80px] w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
             />
-          </div>
-          <div className="flex flex-col gap-1.5">
-            <label className="text-sm font-medium">Terms & Conditions</label>
-            <textarea
+          </Field>
+          <Field>
+            <FieldLabel htmlFor="quote-terms">Terms & Conditions</FieldLabel>
+            <Textarea
+              id="quote-terms"
               value={terms}
               onChange={(e) => setTerms(e.target.value)}
               placeholder="Optional terms and conditions…"
               rows={4}
               disabled={isSubmitting}
-              className="flex min-h-[80px] w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
             />
-          </div>
+          </Field>
         </div>
       </div>
 
@@ -313,26 +317,15 @@ export function QuoteFormClient({
         <div className="rounded-xl border bg-card p-4 flex flex-col gap-3">
           <p className="text-sm font-semibold">Summary</p>
 
-          {/* VAT toggle */}
-          <button
-            type="button"
-            aria-label="Toggle VAT (15%)"
-            onClick={() => setVatEnabled((v) => !v)}
-            className="flex items-center justify-between py-1"
-          >
-            <span className="text-sm text-muted-foreground">VAT (15%)</span>
-            <div
-              className={`relative h-5 w-9 rounded-full transition-colors ${
-                vatEnabled ? 'bg-primary' : 'bg-input'
-              }`}
-            >
-              <div
-                className={`absolute top-0.5 h-4 w-4 rounded-full bg-background shadow-sm transition-transform ${
-                  vatEnabled ? 'translate-x-4' : 'translate-x-0.5'
-                }`}
-              />
-            </div>
-          </button>
+          <Field orientation="horizontal" className="items-center justify-between">
+            <FieldLabel htmlFor="quote-vat-toggle">VAT (15%)</FieldLabel>
+            <Switch
+              id="quote-vat-toggle"
+              checked={vatEnabled}
+              onCheckedChange={setVatEnabled}
+              disabled={isSubmitting}
+            />
+          </Field>
 
           {/* Discount */}
           <div className="flex items-center gap-2">
@@ -366,7 +359,11 @@ export function QuoteFormClient({
 
           <Separator />
 
-          {error && <p className="text-sm text-destructive">{error}</p>}
+          {error && (
+            <Alert variant="destructive">
+              <AlertDescription>{error}</AlertDescription>
+            </Alert>
+          )}
 
           <Button className="w-full" onClick={handleSubmit} disabled={isSubmitting}>
             {isSubmitting ? 'Saving…' : editId ? 'Save Changes' : 'Save Quote'}

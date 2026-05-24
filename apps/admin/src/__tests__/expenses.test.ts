@@ -890,7 +890,7 @@ describe('Expense page empty state', () => {
 
 // ─── Category datalist unit test ─────────────────────────────────────────────
 
-import { ExpenseAddForm } from '@/components/expenses/expense-add-form'
+import { ExpenseEditForm } from '@/components/expenses/expense-edit-form'
 
 describe('Category datalist', () => {
   it('renders datalist with id="category-suggestions" and populated options - Validates: Requirements 4.3', () => {
@@ -898,11 +898,21 @@ describe('Category datalist', () => {
     const categories = ['Travel', 'Software', 'Office']
 
     render(
-      React.createElement(ExpenseAddForm, {
+      React.createElement(ExpenseEditForm, {
+        entry: {
+          id: 'exp-1',
+          date: '2025-01-15',
+          divisionId: 'div-1',
+          divisionName: 'AWS',
+          clientId: null,
+          clientName: null,
+          category: 'Travel',
+          description: null,
+          amount: '100',
+        },
         divisions,
         categories,
-        clients: [],
-        createAction: vi.fn().mockResolvedValue({}),
+        updateAction: vi.fn().mockResolvedValue({}),
       })
     )
 

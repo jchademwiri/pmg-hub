@@ -1,6 +1,7 @@
 'use client'
 
 import { useState } from 'react'
+import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { KpiGrid } from '@/components/dashboard/kpi-grid'
 import { DivisionAreaChart } from '@/components/dashboard/division-area-chart'
 import { DivisionRevenue } from '@/components/dashboard/division-revenue'
@@ -102,7 +103,7 @@ export function DashboardShell({
     'vs prev year'
 
   return (
-    <div className="space-y-5">
+    <div className="flex flex-col gap-5">
 
       {/* ── Close Month button - only shown days 1–5 and only if not yet closed ── */}
       {!hasSnapshot && showCloseMonthButton && (
@@ -110,24 +111,18 @@ export function DashboardShell({
       )}
 
       {/* ── Period tabs ── */}
-      <div className="flex items-center gap-1 p-1 bg-muted/40 rounded-lg w-fit border border-border">
-        {TABS.map((tab) => (
-          <button
-            key={tab.key}
-            onClick={() => setActiveTab(tab.key)}
-            className={`px-4 py-1.5 rounded-md text-sm font-medium transition-all duration-150 ${
-              activeTab === tab.key
-                ? 'bg-card text-foreground shadow-sm border border-border'
-                : 'text-muted-foreground hover:text-foreground hover:bg-muted/60'
-            }`}
-          >
-            {tab.label}
-          </button>
-        ))}
-        <span className="ml-3 pl-3 border-l border-border text-xs text-muted-foreground/70 pr-1">
-          {activeLabel}
-        </span>
-      </div>
+      <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as Tab)}>
+        <div className="flex items-center gap-3">
+          <TabsList>
+            {TABS.map((tab) => (
+              <TabsTrigger key={tab.key} value={tab.key}>
+                {tab.label}
+              </TabsTrigger>
+            ))}
+          </TabsList>
+          <span className="text-xs text-muted-foreground/70">{activeLabel}</span>
+        </div>
+      </Tabs>
 
       {/* ── Row 1: KPI cards ── */}
       <KpiGrid

@@ -15,6 +15,7 @@ export type { Invitation, NewInvitation } from './schema/invitations';
 // ── Billing module ────────────────────────────────────────────────────────────
 export * from './queries/billing';
 export { getNextDocumentNumber } from './lib/document-numbers';
+export { bridgeDatabaseEnv } from './env';
 export type {
   QuotationRow,
   InvoiceRow,

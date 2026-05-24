@@ -1,3 +1,5 @@
+import { Badge } from '@/components/ui/badge';
+
 interface BillingStatusBadgeProps {
   status: string;
 }
@@ -21,11 +23,9 @@ export function BillingStatusBadge({ status }: BillingStatusBadgeProps) {
   const label = status === 'converted' ? 'Invoiced' : status.charAt(0).toUpperCase() + status.slice(1);
 
   return (
-    <span
-      className={`inline-flex items-center gap-1.5 rounded-full px-2 py-0.5 text-xs font-medium ${styles}`}
-    >
+    <Badge variant="secondary" className={styles}>
       <span className="size-1.5 rounded-full bg-current opacity-70" />
       {label}
-    </span>
+    </Badge>
   );
 }
