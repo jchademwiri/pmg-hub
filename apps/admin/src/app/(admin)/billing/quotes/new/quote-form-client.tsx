@@ -79,26 +79,6 @@ export function QuoteFormClient({
   const router = useRouter();
   const [, startTransition] = useTransition();
 
-  // Load division default billing settings when divisionId changes (only for new quotes)
-  useEffect(() => {
-    if (editId || !divisionId || !billingSettings) return;
-
-    const settings = billingSettings[divisionId];
-    if (!settings) return;
-
-    // 1. Set default notes
-    if (settings.quoteNotes) {
-      setNotes(settings.quoteNotes);
-    }
-
-    // 2. Set default expiry date based on paymentTermsDays
-    const termsDays = settings.paymentTermsDays ?? 5; // fallback to 5 days
-    const d = new Date(quoteDate);
-    d.setDate(d.getDate() + termsDays);
-    setExpiryDate(d.toISOString().split('T')[0]!);
-    setIsExpiryDateModified(false); // Reset modified status since it's a smart default
-  }, [divisionId, billingSettings, quoteDate, editId]);
-
   // Initialise from existing data when editing
   const [divisionId, setDivisionId] = useState(initialData?.divisionId ?? '');
   const [clientId, setClientId] = useState(initialData?.clientId ?? '');
@@ -134,6 +114,26 @@ export function QuoteFormClient({
   );
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  // Load division default billing settings when divisionId changes (only for new quotes)
+  useEffect(() => {
+    if (editId || !divisionId || !billingSettings) return;
+
+    const settings = billingSettings[divisionId];
+    if (!settings) return;
+
+    // 1. Set default notes
+    if (settings.quoteNotes) {
+      setNotes(settings.quoteNotes);
+    }
+
+    // 2. Set default expiry date based on paymentTermsDays
+    const termsDays = settings.paymentTermsDays ?? 5; // fallback to 5 days
+    const d = new Date(quoteDate);
+    d.setDate(d.getDate() + termsDays);
+    setExpiryDate(d.toISOString().split('T')[0]!);
+    setIsExpiryDateModified(false); // Reset modified status since it's a smart default
+  }, [divisionId, billingSettings, quoteDate, editId]);
 
   const totals = calcTotals(lineItems, vatEnabled, discountType, discountValue);
 
