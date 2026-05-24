@@ -30,3 +30,9 @@ export {
 } from "./domains";
 export type { BrandKey } from "./domains";
 
+export {
+  resolveBrandEmailConfig,
+  toResendConfig,
+} from "./brand-config";
+export type { BrandEmailConfig } from "./brand-config";
+

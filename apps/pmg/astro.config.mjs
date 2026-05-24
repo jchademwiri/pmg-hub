@@ -6,6 +6,8 @@ import vercel from '@astrojs/vercel';
 
 // https://astro.build/config
 export default defineConfig({
+  site: 'https://playhousemedia.co.za',
+
   vite: {
     plugins: [tailwindcss()],
   },

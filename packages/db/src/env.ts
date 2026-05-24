@@ -18,3 +18,11 @@ export function getEnv() {
 
   return parsedEnv.data;
 }
+
+/** Bridge Astro import.meta.env values into process.env for getDb(). */
+export function bridgeDatabaseEnv(env: Record<string, string | undefined>) {
+  if (env.DATABASE_URL) process.env.DATABASE_URL = env.DATABASE_URL;
+  if (env.DATABASE_URL_UNPOOLED) {
+    process.env.DATABASE_URL_UNPOOLED = env.DATABASE_URL_UNPOOLED;
+  }
+}

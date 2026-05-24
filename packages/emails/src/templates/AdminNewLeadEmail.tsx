@@ -19,11 +19,12 @@ import type { BrandingProps } from "../types";
 export type AdminNewLeadEmailProps = {
   name: string;
   email: string;
-  phone: string;
+  phone?: string;
   companyName_lead?: string;
   package_name: string;
   package_price: string;
   package_type: string;
+  message?: string;
 } & BrandingProps;
 
 const AdminNewLeadEmail = (props: AdminNewLeadEmailProps) => {
@@ -35,6 +36,7 @@ const AdminNewLeadEmail = (props: AdminNewLeadEmailProps) => {
     package_name,
     package_price,
     package_type,
+    message,
     companyName = "Your Company",
     primaryColor = "#1d4ed8",
     websiteUrl = "https://example.com",
@@ -102,6 +104,11 @@ const AdminNewLeadEmail = (props: AdminNewLeadEmailProps) => {
                 <Text className="m-0 mb-0 text-[16px] text-[#020304]">
                   <strong>Type:</strong> {package_type}
                 </Text>
+                {message && (
+                  <Text className="m-0 mt-[12px] whitespace-pre-wrap text-[16px] text-[#020304]">
+                    <strong>Message:</strong> {message}
+                  </Text>
+                )}
               </Section>
 
               <Hr className="my-[24px] border-none border-t border-solid border-gray-200" />
@@ -122,16 +129,18 @@ const AdminNewLeadEmail = (props: AdminNewLeadEmailProps) => {
                     <strong>Company:</strong> {companyName_lead}
                   </Text>
                 )}
-                <Text className="m-0 mb-[8px] text-[16px] text-[#020304]">
-                  <strong>Phone:</strong>{" "}
-                  <Link
-                    href={`tel:${phone}`}
-                    style={{ color: primaryColor }}
-                    className="underline"
-                  >
-                    {phone}
-                  </Link>
-                </Text>
+                {phone && (
+                  <Text className="m-0 mb-[8px] text-[16px] text-[#020304]">
+                    <strong>Phone:</strong>{" "}
+                    <Link
+                      href={`tel:${phone}`}
+                      style={{ color: primaryColor }}
+                      className="underline"
+                    >
+                      {phone}
+                    </Link>
+                  </Text>
+                )}
                 <Text className="m-0 mb-0 text-[16px] text-[#020304]">
                   <strong>Email:</strong>{" "}
                   <Link
