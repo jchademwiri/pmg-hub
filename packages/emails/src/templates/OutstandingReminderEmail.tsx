@@ -16,39 +16,63 @@ import {
 import type { BrandingProps } from "../types";
 import { DEFAULT_WEBSITE_URL } from "../domains";
 
-export type InvoiceDeliveryEmailProps = {
+export type OutstandingReminderEmailProps = {
   clientName: string;
   documentNumber: string;
   invoiceDate: string;
   dueDate: string;
   totalAmount: string;
-  reference?: string;
-  personalMessage?: string;
+  outstandingAmount: string;
+  reminderType: "pre-due" | "due-today" | "overdue";
   bankDetails?: {
     bankName: string;
     accountName: string;
     accountNumber: string;
     branchCode: string;
   };
-  hasStatementAttached?: boolean;
 } & BrandingProps;
 
-const InvoiceDeliveryEmail = (props: InvoiceDeliveryEmailProps) => {
+const OutstandingReminderEmail = (props: OutstandingReminderEmailProps) => {
   const {
     clientName,
     documentNumber,
     invoiceDate,
     dueDate,
     totalAmount,
-    reference,
-    personalMessage,
+    outstandingAmount,
+    reminderType,
     bankDetails,
-    hasStatementAttached = false,
     companyName = "Playhouse Media Group",
     primaryColor = "#1d4ed8",
     websiteUrl = DEFAULT_WEBSITE_URL,
     logoUrl,
   } = props;
+
+  const headerConfigs = {
+    "pre-due": {
+      title: "Upcoming Invoice Reminder",
+      bannerBg: "bg-slate-50 border-slate-200",
+      bannerText: "text-slate-700",
+      previewText: `Friendly reminder: Invoice ${documentNumber} is due soon.`,
+      intro: `This is a friendly reminder that invoice **${documentNumber}** from **${companyName}** is due in 3 days.`,
+    },
+    "due-today": {
+      title: "Invoice Due Today",
+      bannerBg: "bg-blue-50 border-blue-200",
+      bannerText: "text-blue-800",
+      previewText: `Notice: Invoice ${documentNumber} is due for payment today.`,
+      intro: `Please be advised that invoice **${documentNumber}** from **${companyName}** is due for payment today.`,
+    },
+    "overdue": {
+      title: "Overdue Invoice Notice",
+      bannerBg: "bg-red-50 border-red-200",
+      bannerText: "text-red-800",
+      previewText: `Action Required: Invoice ${documentNumber} is past due.`,
+      intro: `We noticed that payment for invoice **${documentNumber}** has not yet been received and is now past due. We kindly request that you settle the outstanding amount as soon as possible.`,
+    },
+  };
+
+  const currentConfig = headerConfigs[reminderType] || headerConfigs["pre-due"];
 
   return (
     <Html lang="en" dir="ltr">
@@ -59,7 +83,7 @@ const InvoiceDeliveryEmail = (props: InvoiceDeliveryEmailProps) => {
         }}
       >
         <Head />
-        <Preview>New Invoice Issued: {documentNumber} from {companyName}</Preview>
+        <Preview>{currentConfig.previewText}</Preview>
         <Body className="bg-[#F6F8FA] py-[40px] font-sans">
           <Container width="600" className="mx-auto rounded-[8px] bg-[#FFFFFF] p-[32px] shadow-lg" style={{ maxWidth: '600px', width: '100%', margin: '0 auto' }}>
             {/* Logo */}
@@ -78,24 +102,20 @@ const InvoiceDeliveryEmail = (props: InvoiceDeliveryEmailProps) => {
               Hello {clientName},
             </Heading>
 
-            <Text className="m-0 mb-[16px] text-[15px] leading-[24px] text-[#334155]">
-              Please find attached invoice **{documentNumber}** issued by **{companyName}**. 
-              {hasStatementAttached && " We have also attached your current account statement for your convenience."}
-            </Text>
-
-            {/* Custom Admin Message */}
-            {personalMessage && (
-              <Section className="mb-[24px] rounded-[6px] border-l-4 border-solid border-brand bg-[#F8FAFC] p-[16px]">
-                <Text className="m-0 text-[14px] italic leading-[22px] text-[#475569]">
-                  "{personalMessage}"
-                </Text>
-              </Section>
-            )}
+            {/* Alert Banner / Title */}
+            <Section className={`mb-[24px] rounded-[6px] border border-solid p-[16px] ${currentConfig.bannerBg}`}>
+              <Heading className={`m-0 mb-[6px] text-[16px] font-bold ${currentConfig.bannerText}`}>
+                {currentConfig.title}
+              </Heading>
+              <Text className="m-0 text-[14px] leading-[22px] text-[#475569]">
+                {currentConfig.intro}
+              </Text>
+            </Section>
 
             {/* Invoice Summary Block */}
             <Section className="mb-[24px] rounded-[8px] border border-solid border-[#E2E8F0] p-[20px]">
               <Heading className="m-0 mb-[12px] text-[16px] font-bold text-[#020304]">
-                Invoice Details
+                Invoice Summary
               </Heading>
               <table className="w-full text-[14px]">
                 <tbody>
@@ -109,17 +129,15 @@ const InvoiceDeliveryEmail = (props: InvoiceDeliveryEmailProps) => {
                   </tr>
                   <tr className="border-b border-solid border-[#F1F5F9]">
                     <td className="py-2 text-[#64748B]">Due Date:</td>
-                    <td className="py-2 font-medium text-[#B91C1C] text-right">{dueDate}</td>
+                    <td className="py-2 font-semibold text-[#B91C1C] text-right">{dueDate}</td>
                   </tr>
-                  {reference && (
-                    <tr className="border-b border-solid border-[#F1F5F9]">
-                      <td className="py-2 text-[#64748B]">Reference:</td>
-                      <td className="py-2 text-[#020304] text-right">{reference}</td>
-                    </tr>
-                  )}
+                  <tr className="border-b border-solid border-[#F1F5F9]">
+                    <td className="py-2 text-[#64748B]">Original Total:</td>
+                    <td className="py-2 text-[#020304] text-right">{totalAmount}</td>
+                  </tr>
                   <tr>
-                    <td className="py-2 font-bold text-[#020304]">Total Amount Due:</td>
-                    <td className="py-2 text-[16px] font-bold text-brand text-right">{totalAmount}</td>
+                    <td className="py-2 font-bold text-[#020304]">Outstanding Balance:</td>
+                    <td className="py-2 text-[16px] font-bold text-brand text-right">{outstandingAmount}</td>
                   </tr>
                 </tbody>
               </table>
@@ -162,7 +180,7 @@ const InvoiceDeliveryEmail = (props: InvoiceDeliveryEmailProps) => {
             {/* Footer Sign-off */}
             <Section className="mb-[24px] border-none border-t border-solid border-[#E2E8F0] pt-[20px]">
               <Text className="m-0 text-[14px] text-[#475569]">
-                If you have any questions, feel free to reply directly to this email.
+                If you have already made payment, please disregard this reminder and we thank you for your payment.
               </Text>
               <Text className="m-0 mt-[12px] text-[14px] text-[#020304]">
                 Kind regards,<br />
@@ -190,24 +208,23 @@ const InvoiceDeliveryEmail = (props: InvoiceDeliveryEmailProps) => {
   );
 };
 
-InvoiceDeliveryEmail.PreviewProps = {
+OutstandingReminderEmail.PreviewProps = {
   clientName: "Acme Corporation",
-  documentNumber: "INV-2026-001",
-  invoiceDate: "2026-05-23",
-  dueDate: "2026-06-23",
-  totalAmount: "R 12,500.00",
-  reference: "REF-9912",
-  personalMessage: "Hi there, thank you for your business. Please find attached our invoice and statement.",
+  documentNumber: "INV-2026-005",
+  invoiceDate: "10 May 2026",
+  dueDate: "24 May 2026",
+  totalAmount: "R 10,000.00",
+  outstandingAmount: "R 5,000.00",
+  reminderType: "overdue",
   bankDetails: {
     bankName: "First National Bank",
     accountName: "Playhouse Media Group",
     accountNumber: "62891234567",
     branchCode: "250655",
   },
-  hasStatementAttached: true,
   companyName: "Playhouse Media Group",
   primaryColor: "#1d4ed8",
   websiteUrl: DEFAULT_WEBSITE_URL,
 };
 
-export default InvoiceDeliveryEmail;
+export default OutstandingReminderEmail;

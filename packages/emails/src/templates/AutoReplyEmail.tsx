@@ -50,7 +50,7 @@ const AutoReplyEmail = (props: AutoReplyEmailProps) => {
           Thank you for contacting {companyName} - we'll be in touch soon.
         </Preview>
         <Body className="bg-[#F6F8FA] py-[40px] font-sans">
-          <Container className="mx-auto max-w-[600px] rounded-[8px] bg-[#FFFFFF] p-[32px] shadow-lg">
+          <Container width="600" className="mx-auto rounded-[8px] bg-[#FFFFFF] p-[32px] shadow-lg" style={{ maxWidth: '600px', width: '100%', margin: '0 auto' }}>
             {/* Header */}
             <Section className="mb-[32px]">
               {logoUrl && (

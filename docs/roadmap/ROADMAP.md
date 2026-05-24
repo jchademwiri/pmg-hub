@@ -17,6 +17,8 @@ gantt
     PDF & Email Automation   :done, 2026-05-15, 10d
     Financial Dashboard & AR :done, 2026-05-20, 5d
     Document Design Polish   :done, 2026-05-24, 1d
+    Billing Settings UI UX   :done, 2026-05-24, 1d
+    Transactional Emails     :done, 2026-05-24, 1d
     
     section Phase 1: Core
     Credit Notes & Ledger    :crit, a2, 2026-06-01, 25d
@@ -34,6 +36,14 @@ gantt
 ---
 
 ## 🚀 Recently Completed (May 2026)
+
+### Billing Settings & Transactional Emails Overhaul
+* **Status**: ✅ **100% Completed**
+* **Delivered Upgrades**:
+  * **Billing Settings Tabs & States:** Overhauled the multi-division settings page into General, Contact, and Notes tabs using synchronized client state inputs.
+  * **Payment "Thank You" Receipts:** Automatically triggers beautifully formatted email receipts upon recording payments, specifying date, amount, and allocations.
+  * **Outstanding Auto-Reminders:** Safe daily cron job endpoint (`/api/cron/outstanding-reminders`) that dispatches reminders at 3 milestones: 3 days pre-due, on the due date, and 7 days past due, embedding dynamic EFT details.
+  * **TypeScript & Ordering Safeties:** Fixed React compiler variable ordering bugs for clean production builds.
 
 ### Core Date Engine, Validation & Layout Polishes
 * **Status**: ✅ **100% Completed**

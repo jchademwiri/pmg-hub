@@ -10,12 +10,16 @@ export { default as AdminNewLeadEmail } from "./templates/AdminNewLeadEmail";
 export { default as AutoReplyEmail } from "./templates/AutoReplyEmail";
 export { default as InvoiceDeliveryEmail } from "./templates/InvoiceDeliveryEmail";
 export { default as QuoteDeliveryEmail } from "./templates/QuoteDeliveryEmail";
+export { default as PaymentThankYouEmail } from "./templates/PaymentThankYouEmail";
+export { default as OutstandingReminderEmail } from "./templates/OutstandingReminderEmail";
 
 // Template prop types
 export type { AdminNewLeadEmailProps } from "./templates/AdminNewLeadEmail";
 export type { AutoReplyEmailProps } from "./templates/AutoReplyEmail";
 export type { InvoiceDeliveryEmailProps } from "./templates/InvoiceDeliveryEmail";
 export type { QuoteDeliveryEmailProps } from "./templates/QuoteDeliveryEmail";
+export type { PaymentThankYouEmailProps } from "./templates/PaymentThankYouEmail";
+export type { OutstandingReminderEmailProps } from "./templates/OutstandingReminderEmail";
 
 // Central config
 export {
