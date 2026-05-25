@@ -31,10 +31,13 @@ export {
   RESEND_API_KEY_ENV,
   BRAND_FROM_EMAIL,
   BRAND_REPLY_TO,
+  BRAND_ADMIN_EMAIL,
   DEFAULT_EMAIL_FROM,
   DEFAULT_REPLY_TO,
+  DEFAULT_ADMIN_EMAIL,
   DEFAULT_WEBSITE_URL,
   getResendApiKey,
+  resolveDivisionAdminEmail,
 } from "./domains";
 export type { BrandKey } from "./domains";
 

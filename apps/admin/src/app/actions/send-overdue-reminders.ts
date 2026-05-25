@@ -17,6 +17,7 @@ import {
   OutstandingReminderEmail,
   DEFAULT_REPLY_TO,
   DEFAULT_EMAIL_FROM,
+  resolveDivisionAdminEmail,
 } from '@pmg/emails';
 import React from 'react';
 
@@ -56,9 +57,6 @@ export async function sendOverdueRemindersAction(): Promise<SendOverdueReminders
     const db = getDb();
 
     const today = new Date().toISOString().split('T')[0]!;
-
-    // Admin CC address — use a dedicated env var if set, otherwise fall back to reply-to
-    const adminCc = process.env.ADMIN_NOTIFICATION_EMAIL || DEFAULT_REPLY_TO;
 
     // 1. Fetch all invoices that are overdue:
     //    - explicitly marked 'overdue', OR
@@ -221,6 +219,9 @@ export async function sendOverdueRemindersAction(): Promise<SendOverdueReminders
         };
 
         const clientLabel = client.businessName ?? client.name;
+
+        // CC the division admin — salesRepEmail takes priority, then brand default
+        const adminCc = resolveDivisionAdminEmail(divRow?.name, billingConfig?.salesRepEmail ?? null);
 
         const { error } = await emailClient({
           to: client.email,

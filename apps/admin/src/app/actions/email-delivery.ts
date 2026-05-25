@@ -2,7 +2,7 @@
 
 import { getDb, invoices, quotations, clients, divisionBillingSettings, divisions, eq } from '@pmg/db';
 import { getSessionOrRedirect } from '@/lib/auth';
-import { createEmailClient, InvoiceDeliveryEmail, QuoteDeliveryEmail, DEFAULT_EMAIL_FROM, DEFAULT_REPLY_TO, DEFAULT_WEBSITE_URL } from '@pmg/emails';
+import { createEmailClient, InvoiceDeliveryEmail, QuoteDeliveryEmail, DEFAULT_EMAIL_FROM, DEFAULT_REPLY_TO, DEFAULT_WEBSITE_URL, resolveDivisionAdminEmail } from '@pmg/emails';
 import React from 'react';
 import { z } from 'zod';
 
@@ -134,10 +134,13 @@ export async function sendDocumentEmailAction(rawPayload: unknown) {
         });
       }
 
+      // CC the division admin so they always have a copy
+      const adminCc = resolveDivisionAdminEmail(invoice.divisionName, billingConfig?.salesRepEmail ?? null);
+
       // Send email via Resend
       const { data, error } = await emailClient({
         to: recipientEmail,
-        cc: fromEmail,
+        cc: adminCc,
         subject,
         react: React.createElement(InvoiceDeliveryEmail, emailProps),
         replyTo: DEFAULT_REPLY_TO,
@@ -225,10 +228,13 @@ export async function sendDocumentEmailAction(rawPayload: unknown) {
         } : undefined,
       };
 
+      // CC the division admin so they always have a copy
+      const adminCc = resolveDivisionAdminEmail(quote.divisionName, billingConfig?.salesRepEmail ?? null);
+
       // Send email via Resend
       const { data, error } = await emailClient({
         to: recipientEmail,
-        cc: fromEmail,
+        cc: adminCc,
         subject,
         react: React.createElement(QuoteDeliveryEmail, emailProps),
         replyTo: DEFAULT_REPLY_TO,

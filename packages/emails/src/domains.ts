@@ -34,9 +34,20 @@ export const BRAND_REPLY_TO: Record<BrandKey, string> = {
   aws: `info@${DOMAINS.aws}`,
 } as const;
 
+// ─── Per-brand admin / CC addresses ──────────────────────────────────────────
+// These are the inboxes that get CC'd on every outbound client email so the
+// division admin always has a copy of what was sent.
+// UPDATE when the admin mailbox for a brand changes.
+export const BRAND_ADMIN_EMAIL: Record<BrandKey, string> = {
+  pmg: `info@${DOMAINS.pmg}`,
+  tes: `tenders@${DOMAINS.tes}`,
+  aws: `info@${DOMAINS.aws}`,
+} as const;
+
 // ─── PMG (admin app) defaults — kept for backward compat ─────────────────────
 export const DEFAULT_EMAIL_FROM  = BRAND_FROM_EMAIL.pmg;
 export const DEFAULT_REPLY_TO    = BRAND_REPLY_TO.pmg;
+export const DEFAULT_ADMIN_EMAIL = BRAND_ADMIN_EMAIL.pmg;
 export const DEFAULT_WEBSITE_URL = `https://${DOMAINS.pmg}`;
 
 // ─── Helper: resolve API key at runtime ───────────────────────────────────────
@@ -57,4 +68,29 @@ export function getResendApiKey(brand: BrandKey): string {
     console.warn(`[emails] ${envVar} is not set – emails from "${brand}" may fail.`);
   }
   return key;
+}
+
+// ─── Helper: resolve admin CC email for a division ───────────────────────────
+/**
+ * Returns the admin CC address for a given division name.
+ * Matches the same brand-detection logic used across all email actions.
+ *
+ * - Division name contains "tender" → TES admin email
+ * - Division name contains "apex"   → AWS admin email
+ * - Everything else                 → PMG admin email
+ *
+ * The division's own salesRepEmail takes priority if provided — that is the
+ * most specific admin contact for that division.
+ */
+export function resolveDivisionAdminEmail(
+  divisionName: string | null | undefined,
+  salesRepEmail: string | null | undefined,
+): string {
+  // If the division has its own admin email configured, use that first
+  if (salesRepEmail) return salesRepEmail;
+
+  const name = divisionName?.toLowerCase() ?? '';
+  if (name.includes('tender')) return BRAND_ADMIN_EMAIL.tes;
+  if (name.includes('apex'))   return BRAND_ADMIN_EMAIL.aws;
+  return BRAND_ADMIN_EMAIL.pmg;
 }

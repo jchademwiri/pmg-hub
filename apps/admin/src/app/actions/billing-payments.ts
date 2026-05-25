@@ -255,7 +255,7 @@ export async function recordClientPayment(data: PaymentInput): Promise<{ error?:
           const apiKey = (isTes ? process.env.TES_RESEND_API_KEY : isAws ? process.env.AWS_RESEND_API_KEY : undefined) 
                          || process.env.PMG_RESEND_API_KEY!;
 
-          const { createEmailClient, PaymentThankYouEmail, DEFAULT_REPLY_TO, DEFAULT_EMAIL_FROM } = await import('@pmg/emails');
+          const { createEmailClient, PaymentThankYouEmail, DEFAULT_REPLY_TO, DEFAULT_EMAIL_FROM, resolveDivisionAdminEmail } = await import('@pmg/emails');
 
           const defaultFrom = process.env.EMAIL_FROM_ADDRESS || DEFAULT_EMAIL_FROM;
           const fromName = billingConfig?.salesRepName || 'Playhouse Media Group';
@@ -272,7 +272,8 @@ export async function recordClientPayment(data: PaymentInput): Promise<{ error?:
             }
           }
 
-          const adminCc = process.env.ADMIN_NOTIFICATION_EMAIL || DEFAULT_REPLY_TO;
+          // CC the division admin — salesRepEmail takes priority, then brand default
+          const adminCc = resolveDivisionAdminEmail(divRow?.name, billingConfig?.salesRepEmail ?? null);
 
           const emailClient = createEmailClient({
             apiKey,

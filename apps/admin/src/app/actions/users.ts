@@ -4,7 +4,7 @@ import { z } from 'zod'
 import { revalidatePath } from 'next/cache'
 import { getDb, invitations, user, session, eq, and } from '@pmg/db'
 import { getSessionOrRedirect, requireRole } from '@/lib/auth'
-import { createEmailClient, InvitationEmail, DEFAULT_EMAIL_FROM, DEFAULT_REPLY_TO } from '@pmg/emails'
+import { createEmailClient, InvitationEmail, DEFAULT_EMAIL_FROM, DEFAULT_REPLY_TO, DEFAULT_ADMIN_EMAIL } from '@pmg/emails'
 import React from 'react'
 
 // ── Zod schemas ───────────────────────────────────────────────────────────────
@@ -92,7 +92,6 @@ export async function inviteUser(formData: FormData): Promise<{ error?: string }
       return { error: 'BETTER_AUTH_URL is not configured' }
     }
     const inviteUrl = `${appUrl}/invite?token=${token}`
-    const adminCc = process.env.ADMIN_NOTIFICATION_EMAIL || DEFAULT_REPLY_TO
 
     const emailClient = createEmailClient({
       apiKey: process.env.PMG_RESEND_API_KEY!,
@@ -102,7 +101,7 @@ export async function inviteUser(formData: FormData): Promise<{ error?: string }
 
     const { error: emailError } = await emailClient({
       to: email,
-      cc: adminCc,
+      cc: DEFAULT_ADMIN_EMAIL,
       subject: 'You have been invited to PMG Control Center',
       react: React.createElement(InvitationEmail, {
         recipientName: name,
@@ -306,12 +305,10 @@ export async function resendInvitation(invitationId: string): Promise<{ error?: 
       expiresAt,
     }).where(eq(invitations.id, invitationId))
 
-    const resend = getResend()
     const appUrl = process.env.BETTER_AUTH_URL
     if (!appUrl) return { error: 'BETTER_AUTH_URL is not configured' }
 
     const inviteUrl = `${appUrl}/invite?token=${token}`
-    const adminCc = process.env.ADMIN_NOTIFICATION_EMAIL || DEFAULT_REPLY_TO
 
     const emailClient = createEmailClient({
       apiKey: process.env.PMG_RESEND_API_KEY!,
@@ -321,7 +318,7 @@ export async function resendInvitation(invitationId: string): Promise<{ error?: 
 
     const { error: emailError } = await emailClient({
       to: invitation.email,
-      cc: adminCc,
+      cc: DEFAULT_ADMIN_EMAIL,
       subject: 'You have been invited to PMG Control Center',
       react: React.createElement(InvitationEmail, {
         recipientName: invitation.name,
