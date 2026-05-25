@@ -12,6 +12,7 @@ export { default as InvoiceDeliveryEmail } from "./templates/InvoiceDeliveryEmai
 export { default as QuoteDeliveryEmail } from "./templates/QuoteDeliveryEmail";
 export { default as PaymentThankYouEmail } from "./templates/PaymentThankYouEmail";
 export { default as OutstandingReminderEmail } from "./templates/OutstandingReminderEmail";
+export { default as MagicLinkEmail } from "./templates/MagicLinkEmail";
 
 // Template prop types
 export type { AdminNewLeadEmailProps } from "./templates/AdminNewLeadEmail";
@@ -20,6 +21,7 @@ export type { InvoiceDeliveryEmailProps } from "./templates/InvoiceDeliveryEmail
 export type { QuoteDeliveryEmailProps } from "./templates/QuoteDeliveryEmail";
 export type { PaymentThankYouEmailProps } from "./templates/PaymentThankYouEmail";
 export type { OutstandingReminderEmailProps } from "./templates/OutstandingReminderEmail";
+export type { MagicLinkEmailProps } from "./templates/MagicLinkEmail";
 
 // Central config
 export {
@@ -39,4 +41,3 @@ export {
   toResendConfig,
 } from "./brand-config";
 export type { BrandEmailConfig } from "./brand-config";
-
