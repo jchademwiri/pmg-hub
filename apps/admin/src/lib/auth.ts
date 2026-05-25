@@ -6,15 +6,8 @@ import { createAuthMiddleware, APIError } from 'better-auth/api'
 import { headers } from 'next/headers'
 import { redirect } from 'next/navigation'
 import { getDb, invitations, user, eq } from '@pmg/db'
-import { Resend } from 'resend'
-import { render } from '@react-email/components'
-import { MagicLinkEmail, DEFAULT_EMAIL_FROM } from '@pmg/emails'
-
-// ── Resend client ─────────────────────────────────────────────────────────────
-
-function getResend() {
-  return new Resend(process.env.PMG_RESEND_API_KEY)
-}
+import React from 'react'
+import { createEmailClient, MagicLinkEmail, DEFAULT_EMAIL_FROM, DEFAULT_REPLY_TO } from '@pmg/emails'
 
 // ── Better Auth config ────────────────────────────────────────────────────────
 
@@ -31,24 +24,26 @@ export const auth = betterAuth({
   plugins: [
     magicLink({
       sendMagicLink: async ({ email, url }) => {
-        const resend = getResend()
         try {
-          const html = await render(
-            MagicLinkEmail({
+          const emailClient = createEmailClient({
+            apiKey: process.env.PMG_RESEND_API_KEY!,
+            from: `PMG Admin <${DEFAULT_EMAIL_FROM}>`,
+            adminEmail: DEFAULT_EMAIL_FROM,
+          })
+
+          const { error } = await emailClient({
+            to: email,
+            subject: 'Sign in to PMG Control Center',
+            react: React.createElement(MagicLinkEmail, {
               url,
               expiresIn: '24 hours',
               companyName: 'Playhouse Media Group',
               primaryColor: '#1d4ed8',
               websiteUrl: 'https://playhousemedia.co.za',
-            })
-          )
-
-          const { error } = await resend.emails.send({
-            from: `PMG Admin <${DEFAULT_EMAIL_FROM}>`,
-            to: email,
-            subject: 'Sign in to PMG Control Center',
-            html,
+            }),
+            replyTo: DEFAULT_REPLY_TO,
           })
+
           if (error) {
             console.error('[MagicLink Error]', error)
             throw new APIError('INTERNAL_SERVER_ERROR', { message: 'Failed to send email' })
