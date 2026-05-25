@@ -7,7 +7,8 @@ import { headers } from 'next/headers'
 import { redirect } from 'next/navigation'
 import { getDb, invitations, user, eq } from '@pmg/db'
 import { Resend } from 'resend'
-import { DEFAULT_EMAIL_FROM } from '@pmg/emails'
+import { render } from '@react-email/components'
+import { MagicLinkEmail, DEFAULT_EMAIL_FROM } from '@pmg/emails'
 
 // ── Resend client ─────────────────────────────────────────────────────────────
 
@@ -32,11 +33,21 @@ export const auth = betterAuth({
       sendMagicLink: async ({ email, url }) => {
         const resend = getResend()
         try {
+          const html = await render(
+            MagicLinkEmail({
+              url,
+              expiresIn: '24 hours',
+              companyName: 'Playhouse Media Group',
+              primaryColor: '#1d4ed8',
+              websiteUrl: 'https://playhousemedia.co.za',
+            })
+          )
+
           const { error } = await resend.emails.send({
             from: `PMG Admin <${DEFAULT_EMAIL_FROM}>`,
             to: email,
             subject: 'Sign in to PMG Control Center',
-            html: `<p>Click the link below to sign in to PMG Control Center:</p><p><a href="${url}">${url}</a></p>`,
+            html,
           })
           if (error) {
             console.error('[MagicLink Error]', error)
