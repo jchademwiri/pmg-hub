@@ -254,14 +254,16 @@ export async function recordClientPayment(data: PaymentInput): Promise<{ error?:
           const isAws = divRow?.name?.toLowerCase().includes('apex') || false;
           const apiKey = (isTes ? process.env.TES_RESEND_API_KEY : isAws ? process.env.AWS_RESEND_API_KEY : undefined) 
                          || process.env.PMG_RESEND_API_KEY!;
-          
-          const defaultFrom = process.env.EMAIL_FROM_ADDRESS || 'info@playhousemedia.com';
+
+          const { createEmailClient, PaymentThankYouEmail, DEFAULT_REPLY_TO, DEFAULT_EMAIL_FROM } = await import('@pmg/emails');
+
+          const defaultFrom = process.env.EMAIL_FROM_ADDRESS || DEFAULT_EMAIL_FROM;
           const fromName = billingConfig?.salesRepName || 'Playhouse Media Group';
-          
+
           // Resolve info subdomain sender (helper matching email-delivery.ts)
           let fromEmail = defaultFrom;
           if (billingConfig?.divisionWebsite) {
-            let domain = billingConfig.divisionWebsite.trim()
+            const domain = billingConfig.divisionWebsite.trim()
               .replace(/^(https?:\/\/)?(www\.)?/, '')
               .split('/')[0]
               .toLowerCase();
@@ -270,7 +272,8 @@ export async function recordClientPayment(data: PaymentInput): Promise<{ error?:
             }
           }
 
-          const { createEmailClient, PaymentThankYouEmail, DEFAULT_REPLY_TO } = await import('@pmg/emails');
+          const adminCc = process.env.ADMIN_NOTIFICATION_EMAIL || DEFAULT_REPLY_TO;
+
           const emailClient = createEmailClient({
             apiKey,
             from: `${fromName} <${fromEmail}>`,
@@ -292,6 +295,7 @@ export async function recordClientPayment(data: PaymentInput): Promise<{ error?:
           const React = await import('react');
           await emailClient({
             to: client.email!,
+            cc: adminCc,
             subject: `Payment Receipt Confirmation: Thank you for your payment`,
             react: React.createElement(PaymentThankYouEmail, emailProps),
             replyTo: DEFAULT_REPLY_TO,

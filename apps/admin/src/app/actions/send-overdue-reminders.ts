@@ -42,50 +42,60 @@ export type SendOverdueRemindersResult = {
 
 /**
  * Sends an overdue payment reminder email to every client that has at least one
- * invoice with status 'issued', 'partially_paid', or 'overdue' and an
- * outstanding balance > 0.
+ * invoice that qualifies as overdue:
+ *   - status = 'overdue', OR
+ *   - status = 'issued' or 'partially_paid' AND dueDate is in the past
  *
- * One email is sent per client (not per invoice). The email uses the
- * OutstandingReminderEmail template with reminderType = "overdue".
- *
- * Clients without an email address are silently skipped and counted in `skipped`.
+ * One email is sent per client summarising their total outstanding balance.
+ * Clients without an email address are silently skipped.
+ * Admin (ADMIN_NOTIFICATION_EMAIL or DEFAULT_REPLY_TO) is CC'd on every email.
  */
 export async function sendOverdueRemindersAction(): Promise<SendOverdueRemindersResult> {
   try {
-    await getSessionOrRedirect();
-
+    const session = await getSessionOrRedirect();
     const db = getDb();
 
-    // 1. Find all clients that have at least one outstanding invoice
-    const overdueInvoices = await db
+    const today = new Date().toISOString().split('T')[0]!;
+
+    // Admin CC address — use a dedicated env var if set, otherwise fall back to reply-to
+    const adminCc = process.env.ADMIN_NOTIFICATION_EMAIL || DEFAULT_REPLY_TO;
+
+    // 1. Fetch all invoices that are overdue:
+    //    - explicitly marked 'overdue', OR
+    //    - 'issued' / 'partially_paid' with a due date that has already passed
+    const eligibleInvoices = await db
       .select({
         id: invoices.id,
         documentNumber: invoices.documentNumber,
         invoiceDate: invoices.invoiceDate,
         dueDate: invoices.dueDate,
         total: invoices.total,
+        status: invoices.status,
         clientId: invoices.clientId,
         divisionId: invoices.divisionId,
       })
       .from(invoices)
       .where(
         and(
-          sql`${invoices.status} IN ('issued', 'partially_paid', 'overdue')`,
           sql`${invoices.clientId} IS NOT NULL`,
+          sql`(
+            ${invoices.status} = 'overdue'
+            OR (
+              ${invoices.status} IN ('issued', 'partially_paid')
+              AND ${invoices.dueDate} IS NOT NULL
+              AND ${invoices.dueDate} < ${today}
+            )
+          )`,
         ),
       );
 
-    if (overdueInvoices.length === 0) {
+    if (eligibleInvoices.length === 0) {
       return { success: true, sent: 0, skipped: 0, errors: [] };
     }
 
-    // 2. Group invoices by client — we send one email per client summarising
-    //    their oldest/most overdue invoice (the one with the earliest due date).
-    const byClient = new Map<
-      string,
-      typeof overdueInvoices
-    >();
-    for (const inv of overdueInvoices) {
+    // 2. Group by client
+    const byClient = new Map<string, typeof eligibleInvoices>();
+    for (const inv of eligibleInvoices) {
       if (!inv.clientId) continue;
       const existing = byClient.get(inv.clientId) ?? [];
       existing.push(inv);
@@ -110,18 +120,16 @@ export async function sendOverdueRemindersAction(): Promise<SendOverdueReminders
           continue;
         }
 
-        // B. Compute outstanding balance per invoice and pick the most overdue one
-        //    (earliest due date) as the "headline" invoice for the email.
-        let totalOutstanding = 0;
-        let headlineInvoice = clientInvoices[0]!;
-        let headlineOutstanding = 0;
-
-        // Sort by due date ascending so the most overdue is first
+        // B. Compute real outstanding balance per invoice (total - allocated payments)
+        //    Sort by due date ascending so the most overdue is the headline.
         const sorted = [...clientInvoices].sort((a, b) => {
           const da = a.dueDate ?? a.invoiceDate;
           const db2 = b.dueDate ?? b.invoiceDate;
           return da.localeCompare(db2);
         });
+
+        let totalOutstanding = 0;
+        const headlineInvoice = sorted[0]!;
 
         for (const inv of sorted) {
           const [sumAlloc] = await db
@@ -132,14 +140,9 @@ export async function sendOverdueRemindersAction(): Promise<SendOverdueReminders
           const allocated = parseFloat(sumAlloc?.sum ?? '0');
           const outstanding = Math.max(0, parseFloat(inv.total) - allocated);
           totalOutstanding += outstanding;
-
-          if (inv === sorted[0]) {
-            headlineInvoice = inv;
-            headlineOutstanding = outstanding;
-          }
         }
 
-        // Skip if nothing is actually owed
+        // Skip if nothing is actually owed after allocations
         if (totalOutstanding <= 0) {
           skipped++;
           continue;
@@ -176,14 +179,18 @@ export async function sendOverdueRemindersAction(): Promise<SendOverdueReminders
           adminEmail: fromEmail,
         });
 
-        // D. Build email props — show total outstanding across all invoices
+        // D. Build email props
+        //    If the client has multiple overdue invoices, show the oldest as headline
+        //    and note the count. The outstanding amount reflects the full total.
         const invoiceTotal = parseFloat(headlineInvoice.total);
+        const docNumberLabel =
+          sorted.length > 1
+            ? `${headlineInvoice.documentNumber} (+${sorted.length - 1} more)`
+            : headlineInvoice.documentNumber;
+
         const emailProps = {
           clientName: client.businessName || client.name,
-          documentNumber:
-            sorted.length > 1
-              ? `${headlineInvoice.documentNumber} (+${sorted.length - 1} more)`
-              : headlineInvoice.documentNumber,
+          documentNumber: docNumberLabel,
           invoiceDate: new Date(headlineInvoice.invoiceDate).toLocaleDateString('en-ZA', {
             day: 'numeric',
             month: 'long',
@@ -213,15 +220,18 @@ export async function sendOverdueRemindersAction(): Promise<SendOverdueReminders
           logoUrl: billingConfig?.logoUrl || undefined,
         };
 
+        const clientLabel = client.businessName ?? client.name;
+
         const { error } = await emailClient({
           to: client.email,
-          subject: `Overdue Payment Reminder — Outstanding Balance: R ${totalOutstanding.toLocaleString('en-ZA', { minimumFractionDigits: 2 })}`,
+          cc: adminCc,
+          subject: `Overdue Payment Reminder — ${clientLabel}: R ${totalOutstanding.toLocaleString('en-ZA', { minimumFractionDigits: 2 })} outstanding`,
           react: React.createElement(OutstandingReminderEmail, emailProps),
           replyTo: DEFAULT_REPLY_TO,
         });
 
         if (error) {
-          errors.push(`${client.businessName ?? client.name}: ${error.message}`);
+          errors.push(`${clientLabel}: ${error.message}`);
         } else {
           sent++;
         }

@@ -137,6 +137,7 @@ export async function sendDocumentEmailAction(rawPayload: unknown) {
       // Send email via Resend
       const { data, error } = await emailClient({
         to: recipientEmail,
+        cc: fromEmail,
         subject,
         react: React.createElement(InvoiceDeliveryEmail, emailProps),
         replyTo: DEFAULT_REPLY_TO,
@@ -227,6 +228,7 @@ export async function sendDocumentEmailAction(rawPayload: unknown) {
       // Send email via Resend
       const { data, error } = await emailClient({
         to: recipientEmail,
+        cc: fromEmail,
         subject,
         react: React.createElement(QuoteDeliveryEmail, emailProps),
         replyTo: DEFAULT_REPLY_TO,
