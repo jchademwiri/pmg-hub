@@ -14,6 +14,7 @@ import {
 import { getClientsWithBillingActivity } from '@pmg/db';
 import { formatZAR, fmtDate } from '@/lib/format';
 import { SetPageTotal } from '@/components/navigation/page-header-context';
+import { SendOverdueRemindersButton } from '@/components/billing/send-overdue-reminders-button';
 
 export const dynamic = 'force-dynamic';
 export const metadata: Metadata = { title: 'Statements' };
@@ -37,9 +38,7 @@ export default async function StatementsPage() {
           <p className="text-sm text-muted-foreground">View account statements per client</p>
         </div>
         <div className="flex items-center gap-2">
-          <Button variant="outline" size="sm" disabled title="Coming soon">
-            Generate Statement
-          </Button>
+          <SendOverdueRemindersButton />
         </div>
       </div>
 

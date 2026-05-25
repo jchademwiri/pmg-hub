@@ -1,7 +1,7 @@
 import type { BrandKey } from "./domains";
 import {
+  BRAND_ADMIN_EMAIL,
   BRAND_FROM_EMAIL,
-  BRAND_REPLY_TO,
   DOMAINS,
   RESEND_API_KEY_ENV,
 } from "./domains";
@@ -63,7 +63,7 @@ export function resolveBrandEmailConfig(
   const apiKeyEnv = RESEND_API_KEY_ENV[brand];
   const apiKey = (env[apiKeyEnv] || env.RESEND_API_KEY || "").trim();
   const from = env[meta.fromEnv] || BRAND_FROM_EMAIL[brand];
-  const adminEmail = env[meta.adminEnv] || BRAND_REPLY_TO[brand];
+  const adminEmail = env[meta.adminEnv] || BRAND_ADMIN_EMAIL[brand];
 
   if (!apiKey) {
     console.warn(
