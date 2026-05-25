@@ -197,7 +197,7 @@ export async function sendOverdueRemindersAction(): Promise<SendOverdueReminders
                 branchCode: billingConfig.bankBranchCode || '',
               }
             : undefined,
-          companyName: billingConfig?.salesRepName || 'Playhouse Media Group',
+          companyName: divRow?.name || 'Playhouse Media Group',
           primaryColor: '#1d4ed8',
           websiteUrl: billingConfig?.divisionWebsite || undefined,
           logoUrl: billingConfig?.logoUrl || undefined,
