@@ -1,5 +1,5 @@
 // Send utilities
-export { sendEmail, createEmailClient } from "./send";
+export { sendEmail, createEmailClient, renderEmailTemplate } from "./send";
 export type { ResendConfig, EmailPayload, SendResult } from "./send";
 
 // Shared branding interface
