@@ -1,5 +1,6 @@
 import { Resend } from "resend";
 import type React from "react";
+import { render } from "@react-email/components";
 
 export interface ResendConfig {
   apiKey: string;
@@ -51,6 +52,16 @@ export async function sendEmail(
     const e = err instanceof Error ? err : new Error(String(err));
     return { data: null, error: { message: e.message, name: e.name } };
   }
+}
+
+/**
+ * Renders a React Email component to HTML string.
+ * Used to pre-render email templates before sending.
+ */
+export async function renderEmailTemplate(
+  component: React.ReactElement
+): Promise<string> {
+  return await render(component);
 }
 
 /**
