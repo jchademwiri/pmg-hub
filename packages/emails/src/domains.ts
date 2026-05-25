@@ -94,3 +94,48 @@ export function resolveDivisionAdminEmail(
   if (name.includes('apex'))   return BRAND_ADMIN_EMAIL.aws;
   return BRAND_ADMIN_EMAIL.pmg;
 }
+
+// ─── Helper: resolve sender email from division website ──────────────────────
+/**
+ * Cleans a division website URL and derives the `noreply@info.<domain>` sender
+ * address.  Falls back to `fallbackFrom` when no website is configured.
+ *
+ * This was previously duplicated in email-delivery.ts, send-overdue-reminders.ts,
+ * billing-payments.ts, and the cron route.
+ */
+export function resolveFromEmail(
+  divisionWebsite: string | null | undefined,
+  fallbackFrom: string,
+): string {
+  if (!divisionWebsite) return fallbackFrom;
+  const domain = divisionWebsite
+    .trim()
+    .replace(/^(https?:\/\/)?(www\.)?/, '')
+    .split('/')[0]
+    .toLowerCase();
+  if (!domain) return fallbackFrom;
+  return domain.startsWith('info.') ? `noreply@${domain}` : `noreply@info.${domain}`;
+}
+
+// ─── Helper: resolve Resend API key by division name ─────────────────────────
+/**
+ * Returns the correct Resend API key for a division by inspecting its name for
+ * brand keywords ("tender" → TES, "apex" → AWS, else PMG).
+ *
+ * Falls back to `PMG_RESEND_API_KEY` when no brand-specific key is set.
+ */
+export function resolveResendApiKey(
+  divisionName: string | null | undefined,
+): string {
+  const name = divisionName?.toLowerCase() ?? '';
+  const key =
+    (name.includes('tender')
+      ? process.env.TES_RESEND_API_KEY
+      : name.includes('apex')
+        ? process.env.AWS_RESEND_API_KEY
+        : undefined) ?? process.env.PMG_RESEND_API_KEY ?? '';
+  if (!key) {
+    console.warn('[emails] No Resend API key resolved for division:', divisionName);
+  }
+  return key;
+}

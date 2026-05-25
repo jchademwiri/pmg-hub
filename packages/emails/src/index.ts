@@ -38,6 +38,8 @@ export {
   DEFAULT_WEBSITE_URL,
   getResendApiKey,
   resolveDivisionAdminEmail,
+  resolveFromEmail,
+  resolveResendApiKey,
 } from "./domains";
 export type { BrandKey } from "./domains";
 

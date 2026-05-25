@@ -1,21 +1,19 @@
 import { NextResponse } from 'next/server';
 import { getDb, invoices, clients, divisions, divisionBillingSettings, paymentAllocations, eq, and, sql } from '@pmg/db';
-import { createEmailClient, OutstandingReminderEmail, DEFAULT_REPLY_TO } from '@pmg/emails';
+import {
+  createEmailClient,
+  OutstandingReminderEmail,
+  DEFAULT_EMAIL_FROM,
+  DEFAULT_REPLY_TO,
+  resolveDivisionAdminEmail,
+  resolveFromEmail,
+  resolveResendApiKey,
+} from '@pmg/emails';
 import * as React from 'react';
 
 export const dynamic = 'force-dynamic'; // Ensure no caching
 
-// Helper to resolve sender email subdomain
-function resolveFromEmail(divisionWebsite: string | null, fallbackFrom: string): string {
-  if (!divisionWebsite) return fallbackFrom;
-  const domain = divisionWebsite.trim()
-    .replace(/^(https?:\/\/)?(www\.)?/, '')
-    .split('/')[0]
-    .toLowerCase();
-  
-  if (!domain) return fallbackFrom;
-  return domain.startsWith('info.') ? `noreply@${domain}` : `noreply@info.${domain}`;
-}
+// resolveFromEmail and resolveResendApiKey are now imported from @pmg/emails
 
 export async function GET(req: Request) {
   // 1. Verify cron authorization
@@ -98,15 +96,12 @@ export async function GET(req: Request) {
         .where(eq(divisions.id, inv.divisionId))
         .limit(1);
 
-      // Determine sub-brand environment keys
-      const isTes = divRow?.name?.toLowerCase().includes('tender') || false;
-      const isAws = divRow?.name?.toLowerCase().includes('apex') || false;
-      const apiKey = (isTes ? process.env.TES_RESEND_API_KEY : isAws ? process.env.AWS_RESEND_API_KEY : undefined) 
-                     || process.env.PMG_RESEND_API_KEY!;
-
-      const defaultFrom = process.env.EMAIL_FROM_ADDRESS || 'info@playhousemedia.com';
+      // Resolve brand-specific API key, sender, and admin CC via shared helpers
+      const apiKey = resolveResendApiKey(divRow?.name);
+      const defaultFrom = process.env.EMAIL_FROM_ADDRESS || DEFAULT_EMAIL_FROM;
       const fromName = billingConfig?.salesRepName || 'Playhouse Media Group';
-      const fromEmail = resolveFromEmail(billingConfig?.divisionWebsite || null, defaultFrom);
+      const fromEmail = resolveFromEmail(billingConfig?.divisionWebsite, defaultFrom);
+      const adminCc = resolveDivisionAdminEmail(divRow?.name, billingConfig?.salesRepEmail ?? null);
 
       const emailClient = createEmailClient({
         apiKey,
@@ -151,6 +146,7 @@ export async function GET(req: Request) {
 
       await emailClient({
         to: client.email,
+        cc: adminCc,
         subject: subjectTexts[reminderType] || subjectTexts["pre-due"],
         react: React.createElement(OutstandingReminderEmail, emailProps),
         replyTo: DEFAULT_REPLY_TO,

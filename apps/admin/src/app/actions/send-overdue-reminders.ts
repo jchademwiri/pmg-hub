@@ -18,20 +18,12 @@ import {
   DEFAULT_REPLY_TO,
   DEFAULT_EMAIL_FROM,
   resolveDivisionAdminEmail,
+  resolveFromEmail,
+  resolveResendApiKey,
 } from '@pmg/emails';
 import React from 'react';
 
-// Helper to resolve sender email from division website (mirrors email-delivery.ts)
-function resolveFromEmail(divisionWebsite: string | null, fallbackFrom: string): string {
-  if (!divisionWebsite) return fallbackFrom;
-  const domain = divisionWebsite
-    .trim()
-    .replace(/^(https?:\/\/)?(www\.)?/, '')
-    .split('/')[0]
-    .toLowerCase();
-  if (!domain) return fallbackFrom;
-  return domain.startsWith('info.') ? `noreply@${domain}` : `noreply@info.${domain}`;
-}
+// resolveFromEmail is now imported from @pmg/emails
 
 export type SendOverdueRemindersResult = {
   success: boolean;
@@ -158,18 +150,11 @@ export async function sendOverdueRemindersAction(): Promise<SendOverdueReminders
           .where(eq(divisions.id, headlineInvoice.divisionId))
           .limit(1);
 
-        const isTes = divRow?.name?.toLowerCase().includes('tender') ?? false;
-        const isAws = divRow?.name?.toLowerCase().includes('apex') ?? false;
-        const apiKey =
-          (isTes
-            ? process.env.TES_RESEND_API_KEY
-            : isAws
-              ? process.env.AWS_RESEND_API_KEY
-              : undefined) ?? process.env.PMG_RESEND_API_KEY!;
+        const apiKey = resolveResendApiKey(divRow?.name);
 
         const defaultFrom = process.env.EMAIL_FROM_ADDRESS || DEFAULT_EMAIL_FROM;
         const fromName = billingConfig?.salesRepName || 'Playhouse Media Group';
-        const fromEmail = resolveFromEmail(billingConfig?.divisionWebsite ?? null, defaultFrom);
+        const fromEmail = resolveFromEmail(billingConfig?.divisionWebsite, defaultFrom);
 
         const emailClient = createEmailClient({
           apiKey,

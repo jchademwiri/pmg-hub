@@ -2,7 +2,17 @@
 
 import { getDb, invoices, quotations, clients, divisionBillingSettings, divisions, eq } from '@pmg/db';
 import { getSessionOrRedirect } from '@/lib/auth';
-import { createEmailClient, InvoiceDeliveryEmail, QuoteDeliveryEmail, DEFAULT_EMAIL_FROM, DEFAULT_REPLY_TO, DEFAULT_WEBSITE_URL, resolveDivisionAdminEmail } from '@pmg/emails';
+import {
+  createEmailClient,
+  InvoiceDeliveryEmail,
+  QuoteDeliveryEmail,
+  DEFAULT_EMAIL_FROM,
+  DEFAULT_REPLY_TO,
+  DEFAULT_WEBSITE_URL,
+  resolveDivisionAdminEmail,
+  resolveFromEmail,
+  resolveResendApiKey,
+} from '@pmg/emails';
 import React from 'react';
 import { z } from 'zod';
 
@@ -16,22 +26,7 @@ const EmailPayloadSchema = z.object({
   base64StatementPdf: z.string().optional(), // Statement PDF is optional and only for Invoices
 });
 
-// Helper to clean division Website and resolve primary info. subdomain
-function resolveFromEmail(divisionWebsite: string | null, fallbackFrom: string): string {
-  if (!divisionWebsite) return fallbackFrom;
-  let domain = divisionWebsite.trim()
-    .replace(/^(https?:\/\/)?(www\.)?/, '') // Remove http, https, and www.
-    .split('/')[0] // Remove any trailing paths
-    .toLowerCase();
-  
-  if (!domain) return fallbackFrom;
-  
-  if (domain.startsWith('info.')) {
-    return `noreply@${domain}`;
-  }
-  
-  return `noreply@info.${domain}`;
-}
+// resolveFromEmail is now imported from @pmg/emails
 
 export async function sendDocumentEmailAction(rawPayload: unknown) {
   try {
@@ -79,15 +74,12 @@ export async function sendDocumentEmailAction(rawPayload: unknown) {
         .where(eq(divisionBillingSettings.divisionId, invoice.divisionId));
 
       // Load environment variables for email client
-      const isTes = invoice.divisionName?.toLowerCase().includes('tender') || false;
-      const isAws = invoice.divisionName?.toLowerCase().includes('apex') || false;
-      const apiKey = (isTes ? process.env.TES_RESEND_API_KEY : isAws ? process.env.AWS_RESEND_API_KEY : undefined) 
-                     || process.env.PMG_RESEND_API_KEY!;
+      const apiKey = resolveResendApiKey(invoice.divisionName);
       const defaultFrom = process.env.EMAIL_FROM_ADDRESS || DEFAULT_EMAIL_FROM;
       const fromName = billingConfig?.salesRepName || process.env.EMAIL_FROM_NAME || 'PMG Admin';
       
       // Resolve dynamic info. subdomain sender
-      const fromEmail = resolveFromEmail(billingConfig?.divisionWebsite || null, defaultFrom);
+      const fromEmail = resolveFromEmail(billingConfig?.divisionWebsite, defaultFrom);
 
       const emailClient = createEmailClient({
         apiKey,
@@ -192,14 +184,11 @@ export async function sendDocumentEmailAction(rawPayload: unknown) {
         .from(divisionBillingSettings)
         .where(eq(divisionBillingSettings.divisionId, quote.divisionId));
 
-      const isTes = quote.divisionName?.toLowerCase().includes('tender') || false;
-      const isAws = quote.divisionName?.toLowerCase().includes('apex') || false;
-      const apiKey = (isTes ? process.env.TES_RESEND_API_KEY : isAws ? process.env.AWS_RESEND_API_KEY : undefined) 
-                     || process.env.PMG_RESEND_API_KEY!;
+      const apiKey = resolveResendApiKey(quote.divisionName);
       const defaultFrom = process.env.EMAIL_FROM_ADDRESS || DEFAULT_EMAIL_FROM;
       const fromName = billingConfig?.salesRepName || process.env.EMAIL_FROM_NAME || 'PMG Admin';
       
-      const fromEmail = resolveFromEmail(billingConfig?.divisionWebsite || null, defaultFrom);
+      const fromEmail = resolveFromEmail(billingConfig?.divisionWebsite, defaultFrom);
 
       const emailClient = createEmailClient({
         apiKey,
