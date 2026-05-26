@@ -10,3 +10,4 @@ export * from "./snapshots";
 export * from "./expense-categories";
 export * from "./invitations";
 export * from "./billing";
+export * from "./email";

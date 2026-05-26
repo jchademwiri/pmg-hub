@@ -1,892 +1,526 @@
 # Interactive Overdue Payment Reminders - Implementation Plan
 
-This plan outlines the changes required to replace the existing "bulk send" overdue payment reminders dialog with an interactive, high-fidelity wizard. This will allow administrators to see exactly what emails will be sent, customize content per recipient, and maintain full audit trails of communications.
+This plan replaces the current blind "send every overdue client now" action with an interactive review-and-send workflow. The first implementation pass should focus on overdue reminders only: administrators must be able to see who will be emailed, adjust recipient details and message content, preview the email, send selected reminders, and keep an audit trail.
+
+Payment confirmations, Resend cloud templates, and a template editor remain valuable, but they should follow after the core reminder workflow is reliable.
 
 ---
 
-## 1. Objectives
+## 1. Goal
 
-- **Visibility:** Provide a comprehensive view of all clients with outstanding, overdue balances before sending any emails.
-- **Customization:** Allow custom message insertion (personal notes) into individual reminder emails (plain text, up to 500 chars, auto-escaped).
-- **Control:** Allow editing target emails and custom subject lines on a per-client basis.
-- **Granularity:** Allow selective dispatching (e.g., send only to specific clients, skip others, or send individually).
-- **Rich Editor Support:** Integrate Resend's native template system for advanced email composition without duplicating templates.
-- **Optional Payment Confirmations:** Send optional thank you payment emails with custom messages explaining payment details or next steps.
-- **Audit & Compliance:** Log all email sends with full customization history and template references for compliance.
+Build an interactive overdue reminder dialog for the admin billing area.
 
----
+The workflow should let an administrator:
 
-## 2. Current State vs. Proposed Architecture
-
-### Current Automated Bulk Flow
-
-```mermaid
-graph TD
-    UI[SendOverdueRemindersButton] -- Triggers Server Action --> Action[sendOverdueRemindersAction]
-    Action -- Queries DB --> DB[(Database)]
-    Action -- Groups Invoices & Generates Standard HTML --> EmailTemplate[OutstandingReminderEmail]
-    Action -- Bulk Dispatches All Emails --> Resend[Resend API]
-```
-
-### Proposed Interactive Flow
-
-```mermaid
-graph TD
-    UI[InteractiveRemindersButton] -- Opens Dialog & Triggers --> FetchAction[getPendingRemindersAction]
-    FetchAction -- Fetches Eligible Clients & Invoices --> UI
-    UI -- Renders Sidebar List & Editable Inputs --> Form[Recipient/Subject/Message Form]
-    Form -- Dynamic Inputs stored in UI state per client --> UI
-    UI -- Preview rendering via renderEmailTemplate --> PreviewPane[Live Email Preview]
-    UI -- Click Send Single/All Selected --> SendAction[sendCustomizedReminderAction]
-    SendAction -- Load Resend Template ID or construct React component --> EmailTemplate[OutstandingReminderEmail with personalMessage]
-    SendAction -- Render to HTML + Add idempotency key --> Resend[Resend API]
-    SendAction -- Log send with audit info --> AuditLog[Email Audit Log]
-```
-
-### Proposed Payment Confirmation Flow
-
-```mermaid
-graph TD
-    PaymentUI[Send Payment Thank You] -- Opens Dialog --> FetchPaymentAction[getPendingPaymentConfirmationsAction]
-    FetchPaymentAction -- Fetches Paid Invoices & Clients --> PaymentUI
-    PaymentUI -- Renders List with Optional Toggle --> PaymentForm[Payment Confirmation Composer]
-    PaymentForm -- Per-payment customization --> PaymentUI
-    PaymentUI -- Live preview rendering --> PreviewPane[Live Email Preview]
-    PaymentUI -- Click Send --> SendPaymentAction[sendPaymentConfirmationAction]
-    SendPaymentAction -- Load Resend Template ID or construct React component --> EmailTemplate[PaymentConfirmationEmail]
-    SendPaymentAction -- Render to HTML + Add idempotency key --> Resend[Resend API]
-    SendPaymentAction -- Log send with audit info --> AuditLog[Email Audit Log]
-```
-
-### Resend Template Strategy (Reduce Duplication)
-
-```mermaid
-graph TD
-    AdminUI[Admin Composer] -- Uses Resend Template ID --> ResendServer[Resend Cloud Templates]
-    AdminUI -- Or uses React Component Template --> ReactComponent[OutstandingReminderEmail.tsx]
-    BothPaths -- Render to HTML --> EmailHTML[Final Email HTML]
-    EmailHTML -- Send via Resend API --> Resend[Resend API]
-```
+- Review all clients with overdue outstanding balances before sending.
+- Inspect the invoices that make up each client's balance.
+- Edit recipient email, subject, and a plain-text personal message per client.
+- Preview the actual email before dispatch.
+- Select exactly which clients receive reminders.
+- Send one reminder or send selected reminders with progress feedback.
+- Record every send attempt in an audit table, including failures.
+- Prevent accidental duplicate sends through stable idempotency keys.
 
 ---
 
-## 3. Detailed Component Plan
+## 2. Current State
 
-### 3.1. Email Template Updates (`@pmg/emails`)
+The current implementation is a bulk confirmation dialog:
 
-#### **[MODIFY]** OutstandingReminderEmail.tsx
+- UI: `apps/admin/src/components/billing/send-overdue-reminders-button.tsx`
+- Action: `apps/admin/src/app/actions/send-overdue-reminders.ts`
+- Template: `packages/emails/src/templates/OutstandingReminderEmail.tsx`
+- Email wrapper: `packages/emails/src/send.ts`
 
-Add an optional `personalMessage` field to `OutstandingReminderEmailProps` and render it as an elegant block callout after the greeting. **Personal messages must be plain text only, HTML-escaped, with a 500 character limit.**
+Current behavior:
 
-```typescript
-export type OutstandingReminderEmailProps = {
-  clientName: string;
-  documentNumber: string;
-  invoiceDate: string;
-  dueDate: string;
-  totalAmount: string;
-  outstandingAmount: string;
-  reminderType: "pre-due" | "due-today" | "overdue";
-  personalMessage?: string; // <-- Plain text only, max 500 chars, auto-escaped
-  bankDetails?: {
-    bankName: string;
-    accountName: string;
-    accountNumber: string;
-    branchCode: string;
-  };
-} & BrandingProps;
+1. Admin clicks **Send Reminders**.
+2. An alert dialog warns that all clients with overdue balances will be emailed.
+3. `sendOverdueRemindersAction` finds eligible invoices.
+4. It groups invoices by client.
+5. It calculates outstanding balances by subtracting `payment_allocations`.
+6. It sends one email per client immediately.
+
+Current gaps:
+
+- No recipient review before sending.
+- No per-client selection.
+- No recipient override.
+- No subject override.
+- No personal message support in `OutstandingReminderEmail`.
+- No live preview.
+- No audit table for sent reminders.
+- No stable idempotency key.
+- No explicit permission check beyond session presence.
+- Query work has some N+1 behavior while calculating balances.
+
+Important existing pieces:
+
+- `InvoiceDeliveryEmail` and `QuoteDeliveryEmail` already support `personalMessage`.
+- `PaymentThankYouEmail` already exists.
+- `recordClientPayment` currently sends `PaymentThankYouEmail` automatically after payment capture.
+- The database schema is Drizzle/Postgres, not MySQL.
+- The shared email wrapper currently sends React Email components through Resend and does not expose idempotency options.
+
+---
+
+## 3. Target Flow
+
+```mermaid
+graph TD
+    Button[Send Reminders Button] --> Fetch[getPendingRemindersAction]
+    Fetch --> Dialog[Review & Send Dialog]
+    Dialog --> List[Client List with Selection]
+    Dialog --> Composer[Recipient, Subject, Personal Message]
+    Composer --> Preview[getReminderPreviewAction]
+    Dialog --> SendOne[sendCustomizedReminderAction]
+    Dialog --> SendMany[Send Selected with Concurrency Limit]
+    SendOne --> Resend[Resend API]
+    SendMany --> Resend
+    SendOne --> Audit[email_audit_log]
+    SendMany --> Audit
 ```
 
-Inside the React render function, insert a dedicated block for `personalMessage` directly after the greeting:
+---
+
+## 4. Phase 1 Scope: Interactive Overdue Reminders
+
+Phase 1 should not include Resend cloud template management, a rich email editor, or a separate payment-confirmation workflow. Those are later phases.
+
+### 4.1 Email Template Update
+
+Modify `packages/emails/src/templates/OutstandingReminderEmail.tsx`.
+
+Add `personalMessage?: string` to `OutstandingReminderEmailProps`.
+
+Render it after the greeting and before the overdue alert block:
 
 ```tsx
-{/* Personalized Message Callout */}
 {personalMessage && (
-  <Section className="mb-[24px] rounded-[6px] border-l-4 border-solid p-[16px] bg-slate-50 border-brand">
-    <Text className="m-0 text-[14px] italic leading-[22px] text-slate-700">
-      {/* Text is automatically escaped by React, no HTML allowed */}
+  <Section className="mb-[24px] rounded-[6px] border-l-4 border-solid border-brand bg-[#F8FAFC] p-[16px]">
+    <Text className="m-0 text-[14px] italic leading-[22px] text-[#475569]">
       "{personalMessage}"
     </Text>
   </Section>
 )}
 ```
 
-#### **[NEW]** PaymentConfirmationEmail.tsx
+Notes:
 
-Create a new email template for sending payment confirmation thank you emails.
+- Treat the message as plain text only.
+- React Email escapes text by default, so do not use `dangerouslySetInnerHTML`.
+- Enforce the 500-character limit on both client and server.
 
-```typescript
-export type PaymentConfirmationEmailProps = {
-  clientName: string;
-  invoiceNumber: string;
-  invoiceDate: string;
-  amountPaid: string;
-  paymentDate: string;
-  referenceNumber?: string;
-  personalMessage?: string; // <-- Plain text only, max 500 chars
-  bankDetails?: {
-    bankName: string;
-    accountName: string;
-    accountNumber: string;
-    branchCode: string;
-  };
-} & BrandingProps;
-```
+### 4.2 Shared Email Send Wrapper
 
-The template should include:
-- A warm greeting and thank you message
-- Invoice and payment details
-- An optional personalized message block (same styling as reminder emails)
-- Next steps or account information (if applicable)
+Modify `packages/emails/src/send.ts` so callers can pass Resend request options.
 
-#### **[MODIFY]** All Email Templates (QuoteEmail, InvoiceEmail, etc.)
+Add support for:
 
-Add optional `personalMessage` field to all transactional email templates for consistency:
-- `QuoteEmail.tsx`
-- `InvoiceEmail.tsx`
-- `InvoiceReceivedEmail.tsx`
-- Any other email templates in `@pmg/emails`
+- `idempotencyKey`
+- Optional pre-rendered `html` later if needed, but Phase 1 can continue using `react`.
 
-```typescript
-export type BaseEmailProps = {
-  // ... existing props
-  personalMessage?: string; // <-- Plain text only, max 500 chars, auto-escaped
-} & BrandingProps;
-```
+Expected shape:
 
----
-
-### 3.2. Typed Email Variable Registry
-
-Define a centralized registry of supported variables for each email context. This prevents invalid variable insertion and improves developer experience.
-
-```typescript
-// @pmg/emails/src/variables.ts
-
-export const EMAIL_VARIABLES = {
-  reminder: {
-    clientName: "Client business name",
-    invoiceNumber: "Invoice document number",
-    outstandingAmount: "Outstanding balance in R",
-    dueDate: "Invoice due date (formatted)",
-    totalAmount: "Total invoice amount",
-  },
-  payment: {
-    clientName: "Client business name",
-    invoiceNumber: "Invoice document number",
-    amountPaid: "Amount received in R",
-    paymentDate: "Payment received date (formatted)",
-    referenceNumber: "Optional payment reference",
-  },
-  invoice: {
-    clientName: "Client business name",
-    invoiceNumber: "Invoice document number",
-    totalAmount: "Invoice total in R",
-    dueDate: "Due date for payment",
-  },
-  quote: {
-    clientName: "Client business name",
-    quoteNumber: "Quote document number",
-    totalAmount: "Quote total in R",
-    validUntilDate: "Quote expiration date",
-  },
-} as const;
-
-export type EmailVariableContext = keyof typeof EMAIL_VARIABLES;
-export type EmailVariables = (typeof EMAIL_VARIABLES)[EmailVariableContext];
-```
-
----
-
-### 3.3. Resend Template Integration Strategy
-
-Instead of storing custom HTML in your database, **use Resend's native template system** with the following hybrid approach:
-
-#### **Option A: React Component Templates (Simple Cases)**
-For standard emails with personal message only, use React Email components (existing approach).
-
-**When to use:**
-- Overdue reminders with personal message
-- Payment confirmations with personal message
-- Standard invoices/quotes with personal message
-
-**Benefits:**
-- No Resend setup needed
-- Version controlled in Git
-- Easy to test and maintain
-
-#### **Option B: Resend Cloud Templates (Advanced Cases)**
-For complex, frequently-reused email designs, create templates in Resend once and reference them by ID/alias.
-
-**When to use:**
-- Custom email designs created by admins
-- Multi-division templates with different branding
-- Emails requiring heavy formatting/design
-
-**Benefits:**
-- Edit in Resend dashboard without code deployment
-- Version history in Resend
-- Reusable across multiple sends
-
-**Database strategy:** Store only the Resend template ID/alias, not the HTML:
-
-```typescript
-// Instead of storing 500KB of HTML in your database...
-{
-  id: "tpl_abc123",
-  template_name: "Premium Overdue Reminder",
-  resend_template_id: "tmpl_xyz789",    // <-- Resend cloud template ID
-  resend_alias: "premium-reminder",      // <-- Or use alias for readability
-  template_type: "reminder",
-  division_id: "div_123",
-  created_by: "user_456",
-  created_at: "2025-01-26T10:00:00Z",
-  updated_at: "2025-01-26T10:00:00Z",
+```ts
+export interface EmailPayload {
+  to: string;
+  subject: string;
+  react: React.ReactElement;
+  replyTo?: string;
+  cc?: string | string[];
+  attachments?: Attachment[];
+  idempotencyKey?: string;
 }
 ```
 
----
+Send with:
 
-### 3.4. Server Actions Update (`apps/admin`)
+```ts
+await resend.emails.send(
+  {
+    from: config.from,
+    to: payload.to,
+    subject: payload.subject,
+    react: payload.react,
+    attachments: payload.attachments,
+    replyTo: payload.replyTo,
+    cc: payload.cc,
+  },
+  payload.idempotencyKey ? { idempotencyKey: payload.idempotencyKey } : undefined,
+);
+```
 
-#### **[NEW]** `getPendingRemindersAction`
+### 4.3 Database: Email Audit Log
 
-Fetch all clients with outstanding overdue invoices, grouped by client, along with default recipient details.
+Add a Drizzle/Postgres table to `packages/db/src/schema`.
 
-```typescript
+Recommended table: `emailAuditLog`.
+
+Fields:
+
+- `id`: uuid primary key
+- `resendEmailId`: text nullable
+- `emailType`: enum or text, initially `overdue_reminder`
+- `recipientEmail`: text not null
+- `subject`: text not null
+- `clientId`: uuid nullable, references clients
+- `divisionId`: uuid nullable, references divisions
+- `sentBy`: text not null
+- `status`: enum or text, values `success`, `failed`, `cancelled`
+- `errorMessage`: text nullable
+- `idempotencyKey`: text not null unique
+- `customizationDetails`: jsonb not null
+- `createdAt`: timestamp with timezone default now not null
+
+Add indexes for:
+
+- `clientId`
+- `divisionId`
+- `status`
+- `createdAt`
+- `idempotencyKey`
+
+Do not use MySQL syntax such as `ON UPDATE CURRENT_TIMESTAMP`.
+
+### 4.4 Validation Helpers
+
+Create focused helpers in the admin app, for example:
+
+- `apps/admin/src/lib/email-validation.ts`
+
+Required helpers:
+
+```ts
+export function validatePersonalMessage(message?: string): {
+  valid: boolean;
+  sanitized?: string;
+  error?: string;
+}
+```
+
+Rules:
+
+- Empty is valid.
+- Max 500 characters after trimming.
+- Reject likely HTML input instead of trying to preserve formatting.
+- Return a trimmed plain-text value.
+
+```ts
+export function validateRecipientEmail(email: string): {
+  valid: boolean;
+  error?: string;
+}
+```
+
+Rules:
+
+- Use a pragmatic email check.
+- Do not add disposable-domain blocking in Phase 1 unless there is a product reason.
+
+### 4.5 Server Actions
+
+Create or extend actions in:
+
+- `apps/admin/src/app/actions/send-overdue-reminders.ts`
+
+#### `getPendingRemindersAction`
+
+Fetch all clients with real overdue outstanding balances.
+
+Return shape:
+
+```ts
 export type PendingReminderClient = {
   clientId: string;
   clientName: string;
   businessName: string | null;
-  email: string;
+  email: string | null;
+  divisionId: string;
+  divisionName: string;
   outstandingBalance: number;
   invoiceCount: number;
   headlineDocumentNumber: string;
   headlineInvoiceDate: string;
-  headlineDueDate: string;
-  divisionId: string;
-  divisionName: string;
+  headlineDueDate: string | null;
+  invoices: {
+    id: string;
+    documentNumber: string;
+    invoiceDate: string;
+    dueDate: string | null;
+    total: number;
+    allocated: number;
+    outstanding: number;
+  }[];
 };
-
-export async function getPendingRemindersAction(): Promise<{
-  success: boolean;
-  data: PendingReminderClient[];
-  error?: string;
-}> {
-  // 1. Authenticate user session and verify permissions (manage_billing)
-  // 2. Fetch overdue invoices matching the criteria
-  // 3. Group by client
-  // 4. For each client:
-  //    - Calculate exact outstanding balance and invoice count
-  //    - Find the highest-amount invoice as "headline" (for preview)
-  // 5. Return grouped items sorted by highest outstanding balance first
-  // 6. Limit to 100 clients per request (pagination)
-}
 ```
 
-#### **[NEW]** `sendCustomizedReminderAction`
+Eligibility:
 
-Send an individual customized email with proper idempotency and audit logging.
+- `clientId IS NOT NULL`
+- `status = 'overdue'`, or `status IN ('issued', 'partially_paid')` with `dueDate < today`
+- Outstanding amount after allocations must be greater than 0.
 
-```typescript
+Implementation notes:
+
+- Avoid per-invoice allocation queries where possible.
+- Use a left join or aggregate subquery against `paymentAllocations`.
+- Sort clients by highest outstanding balance first.
+- Limit to 100 clients in Phase 1.
+- Include clients with missing email in the list, but mark them invalid/unsendable in the UI.
+
+#### `getReminderPreviewAction`
+
+Render the selected client's configured reminder to HTML.
+
+Payload:
+
+```ts
+export type ReminderPreviewPayload = {
+  clientId: string;
+  recipientEmail: string;
+  subject: string;
+  personalMessage?: string;
+};
+```
+
+Behavior:
+
+- Authenticate.
+- Validate personal message.
+- Re-fetch current invoice data for the client.
+- Reuse the same email prop builder as the send action.
+- Render `OutstandingReminderEmail` with `renderEmailTemplate`.
+- Return `{ success: true, html }` or `{ success: false, error }`.
+
+Debounce calls from the client UI.
+
+#### `sendCustomizedReminderAction`
+
+Send one customized reminder.
+
+Payload:
+
+```ts
 export type SendCustomizedReminderPayload = {
   clientId: string;
   recipientEmail: string;
   subject: string;
-  personalMessage?: string; // Plain text, max 500 chars
-  resendTemplateId?: string; // Optional: Use Resend cloud template instead of React component
-};
-
-export async function sendCustomizedReminderAction(
-  payload: SendCustomizedReminderPayload
-): Promise<{ success: boolean; emailId?: string; error?: string }> {
-  // 1. Authenticate user session and verify permissions
-  // 2. Validate inputs:
-  //    - personalMessage max 500 chars, strip unsafe HTML
-  //    - recipientEmail is valid format
-  //    - subject is not empty
-  // 3. Fetch outstanding invoices for this client
-  // 4. If resendTemplateId provided:
-  //    a. Load template details from Resend (or local cache)
-  //    b. Send using resend.emails.send({ template: { id, variables: {...} } })
-  // 5. If no resendTemplateId:
-  //    a. Construct OutstandingReminderEmail React node with personalMessage
-  //    b. Render to HTML using renderEmailTemplate()
-  //    c. Send using resend.emails.send({ html, subject, ... })
-  // 6. Use idempotency key: `reminder-${clientId}-${Date.now()}`
-  // 7. On success, log to email_audit_log with full customization details
-  // 8. Return Resend email ID or error
-}
-```
-
-#### **[NEW]** `getPendingPaymentConfirmationsAction`
-
-Fetch all recently paid invoices (within the last 7 days) grouped by client.
-
-```typescript
-export type PendingPaymentConfirmation = {
-  clientId: string;
-  clientName: string;
-  businessName: string | null;
-  email: string;
-  invoiceNumber: string;
-  invoiceDate: string;
-  amountPaid: string;
-  paymentDate: string;
-  referenceNumber?: string;
-  divisionId: string;
-  divisionName: string;
-};
-
-export async function getPendingPaymentConfirmationsAction(): Promise<{
-  success: boolean;
-  data: PendingPaymentConfirmation[];
-  error?: string;
-}> {
-  // 1. Authenticate user session and verify permissions
-  // 2. Fetch invoices marked as paid in the last 7 days
-  // 3. Group by client
-  // 4. Return with all payment details needed for confirmation email
-  // 5. Limit to 100 payments per request (pagination)
-}
-```
-
-#### **[NEW]** `sendPaymentConfirmationAction`
-
-Send an individual payment confirmation thank you email.
-
-```typescript
-export type SendPaymentConfirmationPayload = {
-  clientId: string;
-  invoiceNumber: string;
-  recipientEmail: string;
-  subject: string;
-  personalMessage?: string; // Plain text, max 500 chars
-  resendTemplateId?: string; // Optional: Use Resend cloud template
-};
-
-export async function sendPaymentConfirmationAction(
-  payload: SendPaymentConfirmationPayload
-): Promise<{ success: boolean; emailId?: string; error?: string }> {
-  // 1. Authenticate user session and verify permissions
-  // 2. Validate inputs (same as sendCustomizedReminderAction)
-  // 3. Fetch payment and invoice details from database
-  // 4. If resendTemplateId provided:
-  //    a. Send using Resend template API
-  // 5. If no resendTemplateId:
-  //    a. Construct PaymentConfirmationEmail React node
-  //    b. Render to HTML
-  //    c. Send with HTML payload
-  // 6. Use idempotency key: `payment-${invoiceNumber}-${Date.now()}`
-  // 7. Log to email_audit_log
-  // 8. Return Resend email ID or error
-}
-```
-
-#### **[NEW]** `saveResendTemplateAction`
-
-Save a reference to a Resend cloud template for future reuse (stores only template ID/alias).
-
-```typescript
-export type SaveResendTemplatePayload = {
-  templateName: string;
-  templateType: "reminder" | "payment" | "invoice" | "quote" | "custom";
-  resendTemplateId: string; // Resend cloud template ID
-  resendAlias: string; // Human-readable alias
-  description?: string;
-};
-
-export async function saveResendTemplateAction(
-  payload: SaveResendTemplatePayload
-): Promise<{ success: boolean; templateId?: string; error?: string }> {
-  // 1. Authenticate user session and verify admin permissions
-  // 2. Validate that template exists in Resend (API call to verify)
-  // 3. Store reference in email_templates table (Resend ID + alias only)
-  // 4. Set as active template for this type/division if requested
-  // 5. Return local template ID for future reference
-  // 6. Log template creation to audit log
-}
-```
-
-#### **[NEW]** `loadResendTemplateAction`
-
-Retrieve a previously saved Resend template reference.
-
-```typescript
-export async function loadResendTemplateAction(
-  templateId: string
-): Promise<{
-  success: boolean;
-  template?: SavedEmailTemplate;
-  error?: string;
-}> {
-  // 1. Fetch template reference from database
-  // 2. Return Resend template ID + alias + metadata
-  // 3. Cache result in memory for 1 hour to avoid redundant lookups
-}
-```
-
-#### **[NEW]** `getEmailPreviewAction`
-
-Render a live preview of the email before sending (critical UX improvement).
-
-```typescript
-export type EmailPreviewPayload = {
-  templateType: "reminder" | "payment" | "invoice" | "quote";
-  clientId?: string;
-  invoiceNumber?: string;
   personalMessage?: string;
-};
-
-export async function getEmailPreviewAction(
-  payload: EmailPreviewPayload
-): Promise<{ success: boolean; html?: string; error?: string }> {
-  // 1. Fetch client/invoice details based on context
-  // 2. Construct appropriate React email component
-  // 3. Render to HTML using renderEmailTemplate()
-  // 4. Return HTML string for display in preview pane
-  // 5. Keep this endpoint fast (<200ms) for real-time preview
-}
-```
-
----
-
-### 3.5. UI Components Update (`apps/admin`)
-
-#### **[MODIFY]** send-overdue-reminders-button.tsx
-
-Replace with a modern **Review & Send Reminders Dialog** using `Dialog` (Shadcn/UI), Tailwind, and Lucide React.
-
-**UI Layout Details:**
-1. **Interactive Trigger:** Clicking "Send Reminders" displays a loader while fetching pending reminder candidates.
-2. **Two-Pane Layout:**
-   - **Left Pane (Recipients List):**
-     - Scrollable table/list showing checkbox, client business name, invoice count, and total outstanding balance.
-     - Search input to filter clients (by name, balance, invoice count).
-     - Checkbox at the top to "Select All / Deselect All".
-     - Sort by balance (ascending/descending).
-   - **Right Pane (Email Composer & Preview):**
-     - When a client is clicked in the left list, load their information into editable states.
-     - **Recipient Email Input:** To modify where the email is sent (default: client's database email, with validation).
-     - **Subject Line Input:** Pre-filled default: `Overdue Payment Reminder — [Client Name]: R [Amount] outstanding`.
-     - **Personal Message Textarea:** Max 500 characters, plain text only, live character counter.
-     - **Live Email Preview:** Real-time rendering showing exactly how the email will look (calls `getEmailPreviewAction`).
-     - **Use Resend Template Toggle:** Optional advanced mode to select a saved Resend template instead of using default.
-3. **Execution Controls:**
-   - **"Send Selected" Button:** Loops through checked clients and dispatches emails sequentially (with concurrency control: max 5 concurrent).
-   - **"Send Single" Button:** Sends only the currently active/selected client.
-   - **Progress Indicator:** Shows how many emails have been sent (e.g., "Sending 3 of 12...").
-   - **Cancel Button:** Stops ongoing sends (marks remaining as cancelled in audit log).
-
-#### **[NEW]** send-payment-confirmation-button.tsx
-
-New component for sending optional payment confirmation thank you emails.
-
-**UI Layout Details:**
-1. **Interactive Trigger:** Clicking "Send Payment Confirmations" displays a loader while fetching recently paid invoices.
-2. **Toggle for Optional Sending:** Checkbox for each payment to enable/disable sending.
-3. **Two-Pane Layout:**
-   - **Left Pane (Payment List):**
-     - List of recently paid invoices with client names, invoice numbers, amounts, and payment dates.
-     - Search and filter options.
-     - Checkbox at the top to "Select All / Deselect All".
-   - **Right Pane (Email Composer):**
-     - **Recipient Email Input:** Pre-filled with client email (editable).
-     - **Subject Line Input:** Default: `Thank You for Your Payment — Invoice [Number]`.
-     - **Personal Message Textarea:** Max 500 chars, plain text only.
-     - **Live Email Preview:** Real-time rendering.
-     - **Use Resend Template Toggle:** Optional advanced mode.
-4. **Execution Controls:**
-   - **"Send Selected" Button:** Sends confirmations for all checked payments (concurrent, max 5).
-   - **"Send Single" Button:** Sends confirmation only for the currently active payment.
-   - **Progress Indicator:** Shows send progress.
-
-#### **[NEW]** resend-email-editor-modal.tsx
-
-Modal component for creating/editing Resend cloud templates (advanced feature, Phase 2).
-
-**Features:**
-- **Rich HTML Editor:** Integrate Resend's editor SDK for intuitive composition
-- **Template Variables Panel:** Display available variables with descriptions
-- **Live Preview Pane:** Real-time preview of how email renders
-- **Save as Template:** Store template in Resend cloud and get back ID/alias
-- **Template Validation:** Verify all required variables are present before saving
-
-**Props:**
-```typescript
-export type ResendEmailEditorModalProps = {
-  isOpen: boolean;
-  onClose: () => void;
-  initialHtml?: string;
-  templateType: "reminder" | "payment" | "invoice" | "quote" | "custom";
-  onSave: (resendTemplateId: string, alias: string) => void;
-  availableVariables: EmailVariables;
+  batchId?: string;
 };
 ```
 
-#### **[NEW]** email-template-library.tsx
+Behavior:
 
-Component for browsing and selecting saved Resend templates.
+1. Authenticate.
+2. Check that the user can manage billing or send billing emails.
+3. Validate recipient email, subject, and personal message.
+4. Re-fetch current eligible invoices for this client.
+5. Recalculate outstanding balance.
+6. Resolve division branding and sender details using the existing `@pmg/emails` helpers.
+7. Preserve the existing admin CC behavior.
+8. Build a stable idempotency key.
+9. Send through Resend.
+10. Insert an audit row for success or failure.
+11. Return Resend email ID or an error.
 
-**Features:**
-- View all saved templates per division
-- Filter by template type (reminder, payment, invoice, quote)
-- Quick preview of template
-- Set as default template for this type
-- Delete template (with confirmation)
+Stable idempotency key:
+
+```ts
+const idempotencyKey = batchId
+  ? `overdue-reminder/${batchId}/${clientId}`
+  : `overdue-reminder/${clientId}/${today}`;
+```
+
+Do not use `Date.now()` in the idempotency key.
+
+### 4.6 UI Component
+
+Replace `apps/admin/src/components/billing/send-overdue-reminders-button.tsx` with a client-side review dialog.
+
+Use existing UI conventions and shadcn components already present in the app.
+
+Dialog layout:
+
+- Trigger button: **Send Reminders**
+- Fetch pending reminders when opened.
+- Left pane:
+  - Search field.
+  - Sort by balance.
+  - Select all / deselect all.
+  - Client rows with business name, invoice count, outstanding amount, and email validity state.
+- Right pane:
+  - Active client details.
+  - Recipient email input.
+  - Subject input.
+  - Personal message textarea with 500-character counter.
+  - Invoice breakdown.
+  - Live preview iframe or sandboxed preview area.
+- Footer/actions:
+  - Send current.
+  - Send selected.
+  - Cancel/close.
+  - Progress text while sending.
+
+Batch send behavior:
+
+- Generate one `batchId` in the UI when sending selected clients.
+- Send sequentially or with a small concurrency limit.
+- Use max concurrency of 3 in Phase 1. Resend's practical default rate limit is lower than the original plan assumed.
+- Show per-client status: pending, sending, sent, failed, skipped.
+- Disable send buttons while sending.
+
+Preview behavior:
+
+- Debounce input changes by roughly 300-500ms.
+- Show a lightweight loading state.
+- If preview fails, show the error without blocking editing.
+
+### 4.7 Permissions
+
+Phase 1 should include a real permission check instead of session-only authorization.
+
+Use the repo's existing auth/role helpers if available. If there is no general helper yet, add a narrowly-scoped helper for billing email actions.
+
+Required rule:
+
+- User must be allowed to manage billing or send billing emails.
+
+Division restriction:
+
+- If the app has division-scoped permissions, enforce that the user can send for the client's division.
+- If division-scoped permissions do not exist yet, document that gap and keep the action admin-only.
 
 ---
 
-### 3.6. Database Schema Updates
+## 5. Phase 1 Verification
 
-#### **[MODIFIED]** `email_templates` Table
+Automated checks:
 
-Store only references to Resend cloud templates (not the HTML itself).
+- Unit tests for `validatePersonalMessage`.
+- Unit tests for `validateRecipientEmail`.
+- Unit or integration test for `getPendingRemindersAction` grouping and outstanding calculation.
+- Test that `sendCustomizedReminderAction` writes audit rows for success and failure.
+- Test that duplicate idempotency keys are handled cleanly.
 
-```sql
-CREATE TABLE email_templates (
-  id VARCHAR(36) PRIMARY KEY,
-  template_name VARCHAR(255) NOT NULL,
-  template_type ENUM('reminder', 'payment', 'invoice', 'quote', 'custom') NOT NULL,
-  resend_template_id VARCHAR(255) NOT NULL,      -- Resend cloud template ID
-  resend_alias VARCHAR(255) NOT NULL,            -- Human-readable alias
-  description TEXT,
-  division_id VARCHAR(36),
-  is_default BOOLEAN DEFAULT FALSE,              -- Set as default for this type/division
-  created_by VARCHAR(36) NOT NULL,
-  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-  updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-  UNIQUE KEY unique_alias_per_type (resend_alias, template_type, division_id),
-  FOREIGN KEY (division_id) REFERENCES divisions(id),
-  FOREIGN KEY (created_by) REFERENCES users(id)
-);
-```
+Manual checks:
 
-#### **[NEW]** `email_audit_log` Table
-
-Comprehensive audit trail for all email sends.
-
-```sql
-CREATE TABLE email_audit_log (
-  id VARCHAR(36) PRIMARY KEY,
-  resend_email_id VARCHAR(255) NOT NULL,        -- Resend's response email ID
-  email_type ENUM('reminder', 'payment', 'invoice', 'quote', 'custom') NOT NULL,
-  recipient_email VARCHAR(255) NOT NULL,
-  subject VARCHAR(255) NOT NULL,
-  template_id VARCHAR(36),                       -- Reference to email_templates.id (if used)
-  template_type VARCHAR(50),                     -- 'react_component' or 'resend_cloud'
-  customization_details JSON NOT NULL,          -- {personalMessage, recipientOverride, subjectOverride}
-  client_id VARCHAR(36),
-  division_id VARCHAR(36),
-  sent_by VARCHAR(36) NOT NULL,
-  sent_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-  status ENUM('success', 'failed', 'cancelled') DEFAULT 'success',
-  error_message TEXT,
-  idempotency_key VARCHAR(255) UNIQUE,         -- Prevent duplicate sends
-  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-  FOREIGN KEY (division_id) REFERENCES divisions(id),
-  FOREIGN KEY (sent_by) REFERENCES users(id),
-  FOREIGN KEY (client_id) REFERENCES clients(id),
-  INDEX idx_resend_id (resend_email_id),
-  INDEX idx_status (status),
-  INDEX idx_sent_at (sent_at),
-  INDEX idx_client_id (client_id)
-);
-```
-
-#### **[NEW]** `resend_template_cache` Table (Optional)
-
-Cache Resend template details locally to avoid repeated API calls.
-
-```sql
-CREATE TABLE resend_template_cache (
-  id VARCHAR(36) PRIMARY KEY,
-  resend_template_id VARCHAR(255) NOT NULL UNIQUE,
-  template_name VARCHAR(255),
-  template_alias VARCHAR(255),
-  variables JSON,                                -- Array of variable names
-  cached_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-  expires_at TIMESTAMP                          -- Cache expires after 1 hour
-);
-```
+- Open billing dashboard and click **Send Reminders**.
+- Confirm overdue clients load before any email is sent.
+- Confirm clients with missing email are visible but cannot be sent until corrected.
+- Select/deselect clients.
+- Edit recipient email and subject.
+- Add a personal message and confirm preview updates.
+- Try HTML in the personal message and confirm it is rejected.
+- Send one reminder to a safe test address.
+- Send selected reminders with a small batch.
+- Confirm Resend logs show the idempotency key.
+- Confirm audit rows exist for success/failure.
+- Confirm admin CC still works.
 
 ---
 
-## 4. Resend Integration Strategy
+## 6. Phase 2: Payment Confirmation Cleanup
 
-### 4.1. Why This Hybrid Approach?
+This codebase already has `PaymentThankYouEmail` and currently sends it automatically from `recordClientPayment`.
 
-**React Email Components:**
-- ✅ Version controlled in Git
-- ✅ Type-safe, easy to test
-- ✅ Works offline
-- ❌ Requires code deployment for changes
+Before building a new payment confirmation UI, decide the desired product behavior:
 
-**Resend Cloud Templates:**
-- ✅ Edit via dashboard without deployment
-- ✅ Version history built-in
-- ✅ Reusable across sends
-- ✅ Can use advanced HTML/CSS features
-- ❌ Requires Resend API calls
-- ❌ Stored outside your codebase
+- Keep automatic thank-you emails after payment capture.
+- Add an opt-in/opt-out checkbox to the payment recording form.
+- Replace automatic sending with a manual review-and-send confirmation flow.
+- Add a resend/send-later confirmation feature.
 
-**Hybrid Strategy:**
-- Start with React components (Phase 1)
-- Add Resend templates for advanced use cases (Phase 2+)
-- Never store large HTML in your database
-- Always store only Resend template IDs/aliases
+Recommended Phase 2:
 
-### 4.2. Template Lifecycle
+1. Stop using fire-and-forget email sending for payment receipts.
+2. Add audit logging for payment thank-you emails.
+3. Add an optional checkbox in the payment form: **Send payment receipt email**.
+4. Add optional `personalMessage` to `PaymentThankYouEmail`, or rename `paymentDescription` if it is intended to be the custom message.
+5. Add idempotency keys for payment receipt emails, for example `payment-receipt/${incomeId}`.
 
-```
-User creates template in Resend editor
-            ↓
-Save in Resend (get back ID/alias)
-            ↓
-Store ID + alias in email_templates table
-            ↓
-Reference by ID when sending
-            ↓
-If template updated in Resend, all future sends use new version
-```
-
-### 4.3. Implementation Checklist
-
-- [ ] Add `resend_template_id` + `resend_alias` columns to `email_templates` table
-- [ ] Remove `email_html` and `subject` storage (these live in Resend now)
-- [ ] Implement idempotency keys in all send actions
-- [ ] Add comprehensive email audit logging
-- [ ] Create email variable registry (EMAIL_VARIABLES constant)
-- [ ] Implement email preview rendering (`getEmailPreviewAction`)
-- [ ] Add concurrency control for batch sends (max 5 concurrent)
-- [ ] Add HTML sanitization for personal messages (strip unsafe HTML, escape)
-- [ ] Cache Resend template details for 1 hour
-- [ ] Implement fallback: if Resend is down, still work with React components
+Only build a separate payment-confirmation review dialog if there is a real workflow need for sending receipts after the payment has already been recorded.
 
 ---
 
-## 5. Security & Validation
+## 7. Phase 3: Resend Cloud Templates
 
-### 5.1. Personal Message Validation
+Do not implement Resend cloud templates in Phase 1.
 
-```typescript
-export function validatePersonalMessage(message: string | undefined): {
-  valid: boolean;
-  error?: string;
-  sanitized?: string;
-} {
-  if (!message) return { valid: true };
-  
-  // Max 500 characters
-  if (message.length > 500) {
-    return { valid: false, error: "Personal message exceeds 500 character limit" };
-  }
-  
-  // Strip any HTML tags (treat as plain text only)
-  const sanitized = message
-    .replace(/<[^>]*>/g, '') // Remove HTML tags
-    .trim();
-  
-  // Reject if sanitization removes more than 10% of content
-  if (sanitized.length < message.length * 0.9) {
-    return { valid: false, error: "Personal message contains HTML, which is not allowed" };
-  }
-  
-  return { valid: true, sanitized };
-}
-```
+When this phase starts, first upgrade and verify the Resend SDK version used by the app and shared email package. The current packages use older `resend` versions, while template/webhook work benefits from a newer SDK.
 
-### 5.2. Email Address Validation
+Scope:
 
-```typescript
-export function validateEmailAddress(email: string): {
-  valid: boolean;
-  error?: string;
-} {
-  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-  
-  if (!email || !emailRegex.test(email)) {
-    return { valid: false, error: "Invalid email address" };
-  }
-  
-  // Reject disposable email domains
-  const disposableDomains = ['temp-mail.org', '10minutemail.com', ...]; // Maintain list
-  const domain = email.split('@')[1].toLowerCase();
-  
-  if (disposableDomains.includes(domain)) {
-    return { valid: false, error: "Disposable email addresses are not allowed" };
-  }
-  
-  return { valid: true };
-}
-```
+- Add Resend template reference storage.
+- Store template IDs and aliases, not large HTML blobs.
+- Add a template variable registry.
+- Add template selection in email composer dialogs.
+- Add send support for either `react` or `template`, never both.
 
-### 5.3. Permission Checks
+Important Resend constraints:
 
-All server actions must verify:
+- `html`, `text`, `react`, and `template` are mutually exclusive send modes.
+- Template variables are case-sensitive.
+- Templates must be published before sending.
+- API errors are returned as `{ data, error }`; always check `error`.
+- Idempotency keys expire after 24 hours and must be stable across retries.
 
-```typescript
-// In sendCustomizedReminderAction, sendPaymentConfirmationAction, etc.
+Suggested schema:
 
-const session = await getSessionOrRedirect();
-const user = session.user;
+- `emailTemplates`
+  - `id`
+  - `templateName`
+  - `templateType`
+  - `resendTemplateId`
+  - `resendAlias`
+  - `description`
+  - `divisionId`
+  - `isDefault`
+  - `createdBy`
+  - `createdAt`
+  - `updatedAt`
 
-// Check permission: must have 'manage_billing' or 'send_emails' permission
-const hasPermission = await checkUserPermission(user.id, ['manage_billing', 'send_emails']);
-if (!hasPermission) {
-  return { error: 'Insufficient permissions to send emails' };
-}
-
-// Check division access: user can only send emails for divisions they manage
-const division = await db.query.divisions.findFirst({
-  where: eq(divisions.id, clientDivisionId),
-});
-
-if (!division || !userManagedDivisions.includes(division.id)) {
-  return { error: 'Access denied: you cannot send emails for this division' };
-}
-```
+This should be implemented as Drizzle/Postgres schema, not raw MySQL SQL.
 
 ---
 
-## 6. Verification Plan
+## 8. Phase 4: Template Library and Editor
 
-### Manual Verification Checklist
+Only after Phase 3 is stable:
 
-#### Overdue Reminders
-- [ ] Open the Billing Dashboard and click **Send Reminders**. Ensure a loading state occurs while fetching pending recipients.
-- [ ] Verify that a list of clients with actual outstanding overdue invoices is loaded on the left pane.
-- [ ] Click a client, modify the recipient email address, and verify it updates the active configuration.
-- [ ] Type a custom note in the **Personal Message** field and check that the live preview updates immediately.
-- [ ] Verify that personal message is plain text only (attempt to paste HTML is stripped/rejected).
-- [ ] Verify character counter shows remaining characters (max 500).
-- [ ] Verify that emails are sent with idempotency keys (check Resend logs).
-- [ ] Uncheck a client, click **Send Selected**, and verify that they are skipped during transmission.
-- [ ] Send a customized reminder to a test client and verify in Resend logs that the email contains your custom message.
-- [ ] Check email_audit_log table to verify all send details are logged with customization.
-- [ ] Verify that concurrent sends respect the max 5 limit (check Resend activity over time).
+- Build an email template library UI.
+- Allow selecting saved templates per email type/division.
+- Consider a Resend template editor or a guided link-out workflow to the Resend dashboard.
+- Add preview support for cloud templates.
+- Add template defaults per division.
 
-#### Payment Confirmations
-- [ ] Click **Send Payment Confirmations** button.
-- [ ] Verify that recently paid invoices are loaded in the left pane.
-- [ ] Uncheck "Send Confirmation" toggle for a payment and verify it's skipped during sending.
-- [ ] Click a payment record, modify the recipient email, and compose a custom thank you message.
-- [ ] Verify live preview updates as you type.
-- [ ] Send a payment confirmation and verify in Resend logs and email_audit_log.
-
-#### Audit & Compliance
-- [ ] Verify email_audit_log records all sends with full details.
-- [ ] Verify idempotency_key prevents duplicate sends if action is retried.
-- [ ] Verify that failed sends are logged with error messages.
-- [ ] Verify customization_details JSON includes personalMessage, recipientOverride, subjectOverride.
-- [ ] Check that user permissions are enforced (attempt to send as non-admin should fail).
-
-#### Performance
-- [ ] Verify getEmailPreviewAction returns preview in <200ms.
-- [ ] Verify template cache is working (repeated template loads use cache).
-- [ ] Verify batch sends of 50+ emails complete within reasonable time (<5 min).
-- [ ] Verify no N+1 queries in getPendingRemindersAction.
+Avoid building a rich editor until the simpler template-reference workflow proves useful.
 
 ---
 
-## 7. Implementation Phases
+## 9. Future Enhancements
 
-### Phase 1: Core Reminder Enhancements + Live Preview (1-2 weeks)
-- [x] Update OutstandingReminderEmail.tsx with personalMessage support
-- [ ] Implement getPendingRemindersAction
-- [ ] Implement sendCustomizedReminderAction with idempotency + audit logging
-- [ ] Implement getEmailPreviewAction for live preview
-- [ ] Update send-overdue-reminders-button.tsx UI with:
-  - Two-pane layout
-  - Personal message textarea (plain text, 500 char limit)
-  - Live email preview
-  - Concurrency-controlled batch send
-  - Progress indicator
-- [ ] Create email_audit_log table
-- [ ] Add validation helpers (validatePersonalMessage, validateEmailAddress)
-- [ ] Add permission checks to all server actions
-- [ ] Comprehensive testing and QA
-
-### Phase 2: Payment Confirmations (1 week)
-- [ ] Create PaymentConfirmationEmail.tsx template
-- [ ] Implement getPendingPaymentConfirmationsAction
-- [ ] Implement sendPaymentConfirmationAction with idempotency + audit logging
-- [ ] Create send-payment-confirmation-button.tsx UI
-- [ ] Add optional toggle for payment confirmation sending
-- [ ] Testing and QA
-
-### Phase 3: Resend Template Integration (1-2 weeks)
-- [ ] Update email_templates table schema (remove HTML, add resend_template_id/alias)
-- [ ] Implement saveResendTemplateAction
-- [ ] Implement loadResendTemplateAction + caching
-- [ ] Create resend-email-editor-modal.tsx component
-- [ ] Create email-template-library.tsx component
-- [ ] Integrate editor into reminder and payment dialogs
-- [ ] Testing with live Resend templates
-
-### Phase 4: Universal Email Template Support (1 week)
-- [ ] Add personalMessage to all email templates (quotes, invoices, etc.)
-- [ ] Extend all email composition dialogs with template selection
-- [ ] Create email-template-manager.tsx full admin interface
-- [ ] Implement template presets and defaults per division
-- [ ] Testing across all email types
+- Scheduled reminder sends.
+- Reminder cadence rules, such as 7/14/30 days overdue.
+- Resend webhook ingestion for delivered, bounced, complained, opened, and clicked events.
+- Dashboard metrics for reminder success/failure.
+- Client communication timeline.
+- Suppression list awareness.
+- SMS or WhatsApp reminders.
+- Multi-language email variants.
 
 ---
 
-## 8. Technical Considerations
+## 10. Success Criteria
 
-### Security
-- **Input Validation:** Sanitize personal messages, reject HTML, validate emails
-- **Permission Checks:** Verify user can send for the division
-- **Idempotency:** Use unique idempotency keys to prevent duplicate sends
-- **Audit Trail:** Log all sends with full details for compliance
+Phase 1 is successful when:
 
-### Performance
-- **Concurrency Control:** Limit to max 5 concurrent sends to avoid Resend rate limits
-- **Caching:** Cache Resend template details for 1 hour
-- **Batch Efficiency:** Use `getEmailPreviewAction` sparingly (debounce previews)
-- **Database Queries:** Optimize with indexes on (client_id, status, sent_at)
-
-### Reliability
-- **Idempotency Keys:** Every send has a unique idempotency key
-- **Fallback:** If Resend is down, still send with React components
-- **Error Handling:** Graceful error messages, log full stack traces
-- **Retry Logic:** Implement exponential backoff for Resend API retries (max 3 retries)
-
-### Maintainability
-- **TypeScript:** Full type safety for email variables and payloads
-- **Testing:** Unit tests for validation helpers, integration tests for sends
-- **Documentation:** Keep EMAIL_VARIABLES registry updated as templates evolve
-- **Monitoring:** Track email metrics (send rate, failure rate, avg time-to-send)
-
-### Scalability
-- **Pagination:** Limit to 100 clients/payments per fetch (pagination support)
-- **Pagination:** Implement cursor-based pagination for large result sets
-- **Background Jobs:** Consider moving batch sends to a background job queue (Phase 4+)
-- **Rate Limiting:** Respect Resend's rate limits (300 emails/second)
-
----
-
-## 9. Future Enhancements (Phase 5+)
-
-- **Scheduled Sends:** Schedule emails to send at a specific time
-- **A/B Testing:** Create multiple versions of reminder emails and track open/click rates
-- **Advanced Analytics:** Track open rates, click rates, bounce rates via Resend webhooks
-- **Bulk Editor:** Batch edit personal messages for multiple clients at once
-- **Email Templates UI:** Full admin interface for managing templates without code
-- **Drip Campaigns:** Automated reminder sequences (day 1, day 5, day 10 after due date)
-- **SMS Integration:** Send SMS reminders in addition to emails
-- **Multi-language Support:** Generate emails in client's preferred language
-
----
-
-## 10. Success Metrics
-
-- ✅ All overdue reminders have live preview before sending
-- ✅ 100% of sends logged with full audit trail
-- ✅ Zero duplicate sends (idempotency working)
-- ✅ Average send time <50ms per email
-- ✅ Batch send of 50 emails completes in <3 minutes
-- ✅ 0 unauthorized sends (permission checks working)
-- ✅ 100% email delivery tracking via Resend webhook
-- ✅ Admin reports show which reminders were customized and by whom
+- No overdue reminder is sent without first being visible in the review dialog.
+- Admins can select exactly which clients receive reminders.
+- Admins can customize recipient email, subject, and personal message per client.
+- The preview matches the sent React Email template.
+- Every send attempt creates an audit record.
+- Retry-safe idempotency keys are used.
+- Existing division branding and admin CC behavior are preserved.
+- Unauthorized users cannot send reminders.

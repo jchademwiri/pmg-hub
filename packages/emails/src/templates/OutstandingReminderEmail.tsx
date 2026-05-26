@@ -24,6 +24,7 @@ export type OutstandingReminderEmailProps = {
   totalAmount: string;
   outstandingAmount: string;
   reminderType: "pre-due" | "due-today" | "overdue";
+  personalMessage?: string;
   bankDetails?: {
     bankName: string;
     accountName: string;
@@ -41,6 +42,7 @@ const OutstandingReminderEmail = (props: OutstandingReminderEmailProps) => {
     totalAmount,
     outstandingAmount,
     reminderType,
+    personalMessage,
     bankDetails,
     companyName = "Playhouse Media Group",
     primaryColor = "#1d4ed8",
@@ -101,6 +103,15 @@ const OutstandingReminderEmail = (props: OutstandingReminderEmailProps) => {
             <Heading className="m-0 mb-[16px] text-[20px] font-bold text-[#020304]">
               Hello {clientName},
             </Heading>
+
+            {/* Personalized Message */}
+            {personalMessage && (
+              <Section className="mb-[24px] rounded-[6px] border-l-4 border-solid border-brand bg-[#F8FAFC] p-[16px]">
+                <Text className="m-0 text-[14px] italic leading-[22px] text-[#475569]">
+                  "{personalMessage}"
+                </Text>
+              </Section>
+            )}
 
             {/* Alert Banner / Title */}
             <Section className={`mb-[24px] rounded-[6px] border border-solid p-[16px] ${currentConfig.bannerBg}`}>
