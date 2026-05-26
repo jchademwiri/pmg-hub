@@ -32,6 +32,7 @@ import {
   type PendingReminderClient,
 } from '@/app/actions/send-overdue-reminders';
 import { validatePersonalMessage, validateRecipientEmail } from '@/lib/email-validation';
+import { EmailPreviewPanel } from '@/components/billing/email-preview-panel';
 
 type ReminderConfig = {
   recipientEmail: string;
@@ -540,32 +541,12 @@ export function SendOverdueRemindersButton() {
           </div>
 
           <div className="min-h-0 bg-muted/20 p-5">
-            <div className="mx-auto flex h-full max-w-[680px] flex-col rounded-md border bg-background">
-              <div className="flex items-center justify-between gap-3 border-b px-3 py-2">
-                <div>
-                  <span className="text-sm font-medium">Preview</span>
-                  <p className="text-xs text-muted-foreground">600px email canvas</p>
-                </div>
-                {isPreviewLoading && (
-                  <span className="flex items-center gap-1 text-xs text-muted-foreground">
-                    <Loader2 className="size-3 animate-spin" />
-                    Rendering
-                  </span>
-                )}
-              </div>
-              {previewError ? (
-                <div className="p-4 text-sm text-destructive">{previewError}</div>
-              ) : previewHtml ? (
-                <iframe
-                  title="Overdue reminder preview"
-                  sandbox=""
-                  srcDoc={previewHtml}
-                  className="min-h-[620px] flex-1 bg-white"
-                />
-              ) : (
-                <div className="p-4 text-sm text-muted-foreground">Preview will appear here.</div>
-              )}
-            </div>
+            <EmailPreviewPanel
+              html={previewHtml}
+              title="Reminder Preview"
+              isLoading={isPreviewLoading}
+              error={previewError}
+            />
           </div>
         </div>
 
