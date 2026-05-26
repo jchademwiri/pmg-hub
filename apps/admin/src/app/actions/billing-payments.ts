@@ -287,7 +287,7 @@ export async function recordClientPayment(data: PaymentInput): Promise<{ error?:
             paymentDate: new Date(data.date).toLocaleDateString('en-ZA', { day: 'numeric', month: 'long', year: 'numeric' }),
             paymentDescription: data.description || undefined,
             allocations: allocatedInvoicesInfo,
-            companyName: billingConfig?.salesRepName || 'Playhouse Media Group',
+            companyName: divRow?.name || 'Playhouse Media Group',
             primaryColor: '#1d4ed8',
             websiteUrl: billingConfig?.divisionWebsite || undefined,
             logoUrl: billingConfig?.logoUrl || undefined,
