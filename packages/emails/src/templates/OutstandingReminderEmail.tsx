@@ -56,21 +56,33 @@ const OutstandingReminderEmail = (props: OutstandingReminderEmailProps) => {
       bannerBg: "bg-slate-50 border-slate-200",
       bannerText: "text-slate-700",
       previewText: `Friendly reminder: Invoice ${documentNumber} is due soon.`,
-      intro: `This is a friendly reminder that invoice **${documentNumber}** from **${companyName}** is due in 3 days.`,
+      intro: (
+        <>
+          This is a friendly reminder that invoice <strong>{documentNumber}</strong> from <strong>{companyName}</strong> is due in 3 days.
+        </>
+      ),
     },
     "due-today": {
       title: "Invoice Due Today",
       bannerBg: "bg-blue-50 border-blue-200",
       bannerText: "text-blue-800",
       previewText: `Notice: Invoice ${documentNumber} is due for payment today.`,
-      intro: `Please be advised that invoice **${documentNumber}** from **${companyName}** is due for payment today.`,
+      intro: (
+        <>
+          Please be advised that invoice <strong>{documentNumber}</strong> from <strong>{companyName}</strong> is due for payment today.
+        </>
+      ),
     },
     "overdue": {
       title: "Overdue Invoice Notice",
       bannerBg: "bg-red-50 border-red-200",
       bannerText: "text-red-800",
       previewText: `Action Required: Invoice ${documentNumber} is past due.`,
-      intro: `We noticed that payment for invoice **${documentNumber}** has not yet been received and is now past due. We kindly request that you settle the outstanding amount as soon as possible.`,
+      intro: (
+        <>
+          We noticed that payment for invoice <strong>{documentNumber}</strong> has not yet been received and is now past due. We kindly request that you settle the outstanding amount as soon as possible.
+        </>
+      ),
     },
   };
 
@@ -161,7 +173,7 @@ const OutstandingReminderEmail = (props: OutstandingReminderEmailProps) => {
                   Payment Instructions (EFT/Bank Transfer)
                 </Heading>
                 <Text className="m-0 mb-[12px] text-[13px] text-green-800">
-                  Please make payment directly to our bank account. Use invoice number **{documentNumber}** as your deposit reference.
+                  Please make payment directly to our bank account. Use invoice number <strong>{documentNumber}</strong> as your deposit reference.
                 </Text>
                 <table className="w-full text-[13px] text-green-950">
                   <tbody>

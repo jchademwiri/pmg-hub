@@ -9,6 +9,7 @@ import {
   DEFAULT_EMAIL_FROM,
   DEFAULT_REPLY_TO,
   DEFAULT_WEBSITE_URL,
+  renderEmailTemplate,
   resolveDivisionAdminEmail,
   resolveFromEmail,
   resolveResendApiKey,
@@ -26,7 +27,147 @@ const EmailPayloadSchema = z.object({
   base64StatementPdf: z.string().optional(), // Statement PDF is optional and only for Invoices
 });
 
+const EmailPreviewPayloadSchema = z.object({
+  documentId: z.string().uuid(),
+  documentType: z.enum(['invoice', 'quote']),
+  personalMessage: z.string().optional(),
+  hasStatementAttached: z.boolean().optional(),
+});
+
 // resolveFromEmail is now imported from @pmg/emails
+
+function formatMoney(amount: string) {
+  return `R ${Number(amount).toLocaleString('en-ZA', { minimumFractionDigits: 2 })}`;
+}
+
+function formatDate(value: string | null | undefined) {
+  if (!value) return undefined;
+  return new Date(value).toLocaleDateString('en-ZA');
+}
+
+export async function getDocumentEmailPreviewAction(rawPayload: unknown): Promise<{
+  success: boolean;
+  html?: string;
+  error?: string;
+}> {
+  try {
+    await getSessionOrRedirect();
+
+    const parsed = EmailPreviewPayloadSchema.safeParse(rawPayload);
+    if (!parsed.success) {
+      return { success: false, error: parsed.error.issues[0]?.message ?? 'Invalid preview request.' };
+    }
+
+    const { documentId, documentType, personalMessage, hasStatementAttached } = parsed.data;
+    const db = getDb();
+
+    if (documentType === 'invoice') {
+      const [invoice] = await db
+        .select({
+          id: invoices.id,
+          documentNumber: invoices.documentNumber,
+          invoiceDate: invoices.invoiceDate,
+          dueDate: invoices.dueDate,
+          reference: invoices.reference,
+          total: invoices.total,
+          clientId: invoices.clientId,
+          divisionId: invoices.divisionId,
+          divisionName: divisions.name,
+        })
+        .from(invoices)
+        .innerJoin(divisions, eq(divisions.id, invoices.divisionId))
+        .where(eq(invoices.id, documentId));
+
+      if (!invoice) return { success: false, error: 'Invoice not found.' };
+
+      const [client] = await db.select().from(clients).where(eq(clients.id, invoice.clientId!));
+      const [billingConfig] = await db
+        .select()
+        .from(divisionBillingSettings)
+        .where(eq(divisionBillingSettings.divisionId, invoice.divisionId));
+
+      const html = await renderEmailTemplate(
+        React.createElement(InvoiceDeliveryEmail, {
+          clientName: client?.businessName || client?.name || 'Client',
+          documentNumber: invoice.documentNumber,
+          invoiceDate: formatDate(invoice.invoiceDate) ?? 'N/A',
+          dueDate: formatDate(invoice.dueDate) ?? 'N/A',
+          totalAmount: formatMoney(invoice.total),
+          reference: invoice.reference || undefined,
+          personalMessage: personalMessage || undefined,
+          companyName: invoice.divisionName || 'Playhouse Media Group',
+          primaryColor: '#1d4ed8',
+          websiteUrl: billingConfig?.divisionWebsite || DEFAULT_WEBSITE_URL,
+          logoUrl: billingConfig?.logoUrl || undefined,
+          hasStatementAttached: Boolean(hasStatementAttached),
+          bankDetails: billingConfig
+            ? {
+                bankName: billingConfig.bankName || '',
+                accountName: billingConfig.bankAccountName || '',
+                accountNumber: billingConfig.bankAccountNumber || '',
+                branchCode: billingConfig.bankBranchCode || '',
+              }
+            : undefined,
+        }),
+      );
+
+      return { success: true, html };
+    }
+
+    const [quote] = await db
+      .select({
+        id: quotations.id,
+        documentNumber: quotations.documentNumber,
+        quoteDate: quotations.quoteDate,
+        expiryDate: quotations.expiryDate,
+        reference: quotations.reference,
+        total: quotations.total,
+        clientId: quotations.clientId,
+        divisionId: quotations.divisionId,
+        divisionName: divisions.name,
+      })
+      .from(quotations)
+      .innerJoin(divisions, eq(divisions.id, quotations.divisionId))
+      .where(eq(quotations.id, documentId));
+
+    if (!quote) return { success: false, error: 'Quotation not found.' };
+
+    const [client] = await db.select().from(clients).where(eq(clients.id, quote.clientId!));
+    const [billingConfig] = await db
+      .select()
+      .from(divisionBillingSettings)
+      .where(eq(divisionBillingSettings.divisionId, quote.divisionId));
+
+    const html = await renderEmailTemplate(
+      React.createElement(QuoteDeliveryEmail, {
+        clientName: client?.businessName || client?.name || 'Client',
+        documentNumber: quote.documentNumber,
+        quoteDate: formatDate(quote.quoteDate) ?? 'N/A',
+        expiryDate: formatDate(quote.expiryDate),
+        totalAmount: formatMoney(quote.total),
+        reference: quote.reference || undefined,
+        personalMessage: personalMessage || undefined,
+        companyName: quote.divisionName || 'Playhouse Media Group',
+        primaryColor: '#1d4ed8',
+        websiteUrl: billingConfig?.divisionWebsite || DEFAULT_WEBSITE_URL,
+        logoUrl: billingConfig?.logoUrl || undefined,
+        bankDetails: billingConfig
+          ? {
+              bankName: billingConfig.bankName || '',
+              accountName: billingConfig.bankAccountName || '',
+              accountNumber: billingConfig.bankAccountNumber || '',
+              branchCode: billingConfig.bankBranchCode || '',
+            }
+          : undefined,
+      }),
+    );
+
+    return { success: true, html };
+  } catch (err) {
+    const error = err instanceof Error ? err : new Error(String(err));
+    return { success: false, error: `Preview failed: ${error.message}` };
+  }
+}
 
 export async function sendDocumentEmailAction(rawPayload: unknown) {
   try {
@@ -93,7 +234,7 @@ export async function sendDocumentEmailAction(rawPayload: unknown) {
         documentNumber: invoice.documentNumber,
         invoiceDate: new Date(invoice.invoiceDate).toLocaleDateString('en-ZA'),
         dueDate: invoice.dueDate ? new Date(invoice.dueDate).toLocaleDateString('en-ZA') : 'N/A',
-        totalAmount: `R ${Number(invoice.total).toLocaleString('en-ZA', { minimumFractionDigits: 2 })}`,
+        totalAmount: formatMoney(invoice.total),
         reference: invoice.reference || undefined,
         personalMessage: personalMessage || undefined,
         companyName: invoice.divisionName || 'Playhouse Media Group',
@@ -202,7 +343,7 @@ export async function sendDocumentEmailAction(rawPayload: unknown) {
         documentNumber: quote.documentNumber,
         quoteDate: new Date(quote.quoteDate).toLocaleDateString('en-ZA'),
         expiryDate: quote.expiryDate ? new Date(quote.expiryDate).toLocaleDateString('en-ZA') : undefined,
-        totalAmount: `R ${Number(quote.total).toLocaleString('en-ZA', { minimumFractionDigits: 2 })}`,
+        totalAmount: formatMoney(quote.total),
         reference: quote.reference || undefined,
         personalMessage: personalMessage || undefined,
         companyName: quote.divisionName || 'Playhouse Media Group',

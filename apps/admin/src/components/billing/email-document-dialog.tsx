@@ -18,7 +18,8 @@ import { Field, FieldGroup, FieldLabel, FieldSet } from '@/components/ui/field';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Mail, Loader2 } from 'lucide-react';
-import { sendDocumentEmailAction } from '@/app/actions/email-delivery';
+import { getDocumentEmailPreviewAction, sendDocumentEmailAction } from '@/app/actions/email-delivery';
+import { EmailPreviewPanel } from '@/components/billing/email-preview-panel';
 
 interface EmailDocumentDialogProps {
   documentId: string;
@@ -42,6 +43,42 @@ export function EmailDocumentDialog({
   const [attachStatement, setAttachStatement] = useState(documentType === 'invoice'); // Default true for invoices
   const [isSending, setIsSending] = useState(false);
   const [statusText, setStatusText] = useState('');
+  const [previewHtml, setPreviewHtml] = useState('');
+  const [previewError, setPreviewError] = useState<string | null>(null);
+  const [isPreviewLoading, setIsPreviewLoading] = useState(false);
+
+  React.useEffect(() => {
+    if (!open) return;
+
+    let cancelled = false;
+    const timeout = window.setTimeout(async () => {
+      setIsPreviewLoading(true);
+      setPreviewError(null);
+
+      const result = await getDocumentEmailPreviewAction({
+        documentId,
+        documentType,
+        personalMessage: message || undefined,
+        hasStatementAttached: attachStatement,
+      });
+
+      if (cancelled) return;
+
+      if (result.success && result.html) {
+        setPreviewHtml(result.html);
+      } else {
+        setPreviewHtml('');
+        setPreviewError(result.error ?? 'Preview failed.');
+      }
+
+      setIsPreviewLoading(false);
+    }, 350);
+
+    return () => {
+      cancelled = true;
+      window.clearTimeout(timeout);
+    };
+  }, [open, documentId, documentType, message, attachStatement]);
 
   async function handleSend() {
     if (!recipient) {
@@ -156,75 +193,88 @@ export function EmailDocumentDialog({
           Email {documentType === 'invoice' ? 'Invoice' : 'Quote'}
         </Button>
       </DialogTrigger>
-      <DialogContent className="sm:max-w-[480px]">
-        <DialogHeader>
+      <DialogContent className="max-h-[94vh] w-[calc(100vw-2rem)] max-w-[1180px] overflow-hidden p-0">
+        <DialogHeader className="border-b px-5 pt-5">
           <DialogTitle>Email {documentType === 'invoice' ? 'Invoice' : 'Quotation'}</DialogTitle>
           <DialogDescription>
             Send document **{documentNumber}** directly to the client as a high-fidelity PDF attachment.
           </DialogDescription>
         </DialogHeader>
 
-        <FieldGroup className="py-4">
-          <Field>
-            <FieldLabel htmlFor="email-recipient">Recipient Email Address</FieldLabel>
-            <Input
-              id="email-recipient"
-              type="email"
-              value={recipient}
-              onChange={(e) => setRecipient(e.target.value)}
-              placeholder="client@company.com"
-              disabled={isSending}
-            />
-          </Field>
-
-          <Field>
-            <FieldLabel htmlFor="email-subject">Email Subject</FieldLabel>
-            <Input
-              id="email-subject"
-              type="text"
-              value={subject}
-              onChange={(e) => setSubject(e.target.value)}
-              placeholder="Invoice Subject"
-              disabled={isSending}
-            />
-          </Field>
-
-          <Field>
-            <FieldLabel htmlFor="email-message">Personalized Message (Optional)</FieldLabel>
-            <Textarea
-              id="email-message"
-              value={message}
-              onChange={(e) => setMessage(e.target.value)}
-              placeholder="Hi there, please find our invoice attached. Let us know if you have any questions!"
-              rows={3}
-              disabled={isSending}
-              className="resize-none"
-            />
-          </Field>
-
-          {documentType === 'invoice' && (
-            <FieldSet className="rounded-md border bg-muted/40 p-3">
-              <Field orientation="horizontal">
-                <Checkbox
-                  id="attach-statement"
-                  checked={attachStatement}
-                  onCheckedChange={(checked) => setAttachStatement(checked === true)}
+        <div className="grid min-h-[680px] grid-cols-1 overflow-hidden lg:grid-cols-[minmax(340px,420px)_1fr]">
+          <div className="min-h-0 overflow-y-auto border-b p-5 lg:border-r lg:border-b-0">
+            <FieldGroup>
+              <Field>
+                <FieldLabel htmlFor="email-recipient">Recipient Email Address</FieldLabel>
+                <Input
+                  id="email-recipient"
+                  type="email"
+                  value={recipient}
+                  onChange={(e) => setRecipient(e.target.value)}
+                  placeholder="client@company.com"
                   disabled={isSending}
                 />
-                <div className="flex flex-col gap-0.5">
-                  <FieldLabel htmlFor="attach-statement" className="font-medium">
-                    Attach Current Client Statement
-                  </FieldLabel>
-                  <p className="text-[10px] text-muted-foreground">
-                    Appends a PDF statement of the client&apos;s current ledger activity for this financial year.
-                  </p>
-                </div>
               </Field>
-            </FieldSet>
-          )}
-        </FieldGroup>
 
-        <DialogFooter>
+              <Field>
+                <FieldLabel htmlFor="email-subject">Email Subject</FieldLabel>
+                <Input
+                  id="email-subject"
+                  type="text"
+                  value={subject}
+                  onChange={(e) => setSubject(e.target.value)}
+                  placeholder="Invoice Subject"
+                  disabled={isSending}
+                />
+              </Field>
+
+              <Field>
+                <FieldLabel htmlFor="email-message">Personalized Message (Optional)</FieldLabel>
+                <Textarea
+                  id="email-message"
+                  value={message}
+                  onChange={(e) => setMessage(e.target.value)}
+                  placeholder="Hi there, please find our invoice attached. Let us know if you have any questions!"
+                  rows={5}
+                  disabled={isSending}
+                  className="resize-none"
+                />
+              </Field>
+
+              {documentType === 'invoice' && (
+                <FieldSet className="rounded-md border bg-muted/40 p-3">
+                  <Field orientation="horizontal">
+                    <Checkbox
+                      id="attach-statement"
+                      checked={attachStatement}
+                      onCheckedChange={(checked) => setAttachStatement(checked === true)}
+                      disabled={isSending}
+                    />
+                    <div className="flex flex-col gap-0.5">
+                      <FieldLabel htmlFor="attach-statement" className="font-medium">
+                        Attach Current Client Statement
+                      </FieldLabel>
+                      <p className="text-[10px] text-muted-foreground">
+                        Appends a PDF statement of the client&apos;s current ledger activity for this financial year.
+                      </p>
+                    </div>
+                  </Field>
+                </FieldSet>
+              )}
+            </FieldGroup>
+          </div>
+
+          <div className="min-h-0 bg-muted/20 p-5">
+            <EmailPreviewPanel
+              html={previewHtml}
+              title={`${documentType === 'invoice' ? 'Invoice' : 'Quote'} Email Preview`}
+              isLoading={isPreviewLoading}
+              error={previewError}
+            />
+          </div>
+        </div>
+
+        <DialogFooter className="border-t px-5 pb-5">
           <Button variant="outline" onClick={() => setOpen(false)} disabled={isSending}>
             Cancel
           </Button>
