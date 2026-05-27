@@ -77,7 +77,7 @@ const QuoteDeliveryEmail = (props: QuoteDeliveryEmailProps) => {
             </Heading>
 
             <Text className="m-0 mb-[16px] text-[15px] leading-[24px] text-[#334155]">
-              Please find attached quotation **{documentNumber}** prepared by **{companyName}**.
+              Please find attached quotation <strong>{documentNumber}</strong> prepared by <strong>{companyName}</strong>.
             </Text>
 
             {/* Custom Admin Message */}
@@ -131,7 +131,7 @@ const QuoteDeliveryEmail = (props: QuoteDeliveryEmailProps) => {
                   Payment Instructions (50% Deposit Required)
                 </Heading>
                 <Text className="m-0 mb-[12px] text-[13px] text-green-800">
-                  To accept this quotation and secure your booking, please pay a **50% deposit** directly to our bank account. Use quotation number **{documentNumber}** as your deposit reference.
+                  To accept this quotation and secure your booking, please pay a <strong>50% deposit</strong> directly to our bank account. Use quotation number <strong>{documentNumber}</strong> as your deposit reference.
                 </Text>
                 <table className="w-full text-[13px] text-green-950">
                   <tbody>

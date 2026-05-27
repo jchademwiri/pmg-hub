@@ -79,7 +79,7 @@ const InvoiceDeliveryEmail = (props: InvoiceDeliveryEmailProps) => {
             </Heading>
 
             <Text className="m-0 mb-[16px] text-[15px] leading-[24px] text-[#334155]">
-              Please find attached invoice **{documentNumber}** issued by **{companyName}**. 
+              Please find attached invoice <strong>{documentNumber}</strong> issued by <strong>{companyName}</strong>.
               {hasStatementAttached && " We have also attached your current account statement for your convenience."}
             </Text>
 
@@ -132,7 +132,7 @@ const InvoiceDeliveryEmail = (props: InvoiceDeliveryEmailProps) => {
                   Payment Instructions (EFT/Bank Transfer)
                 </Heading>
                 <Text className="m-0 mb-[12px] text-[13px] text-green-800">
-                  Please make payment directly to our bank account. Use invoice number **{documentNumber}** as your deposit reference.
+                  Please make payment directly to our bank account. Use invoice number <strong>{documentNumber}</strong> as your deposit reference.
                 </Text>
                 <table className="w-full text-[13px] text-green-950">
                   <tbody>

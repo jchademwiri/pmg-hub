@@ -19,6 +19,7 @@ export interface EmailPayload {
     content?: string | Buffer;
     path?: string;
   }[];
+  idempotencyKey?: string;
 }
 
 export interface SendResult {
@@ -37,15 +38,18 @@ export async function sendEmail(
 ): Promise<SendResult> {
   const resend = new Resend(config.apiKey);
   try {
-    const { data, error } = await resend.emails.send({
-      from: config.from,
-      to: payload.to,
-      subject: payload.subject,
-      react: payload.react,
-      attachments: payload.attachments,
-      replyTo: payload.replyTo,
-      cc: payload.cc,
-    });
+    const { data, error } = await resend.emails.send(
+      {
+        from: config.from,
+        to: payload.to,
+        subject: payload.subject,
+        react: payload.react,
+        attachments: payload.attachments,
+        replyTo: payload.replyTo,
+        cc: payload.cc,
+      },
+      payload.idempotencyKey ? { idempotencyKey: payload.idempotencyKey } : undefined,
+    );
     if (error) {
       return { data: null, error: { message: error.message, name: error.name } };
     }
