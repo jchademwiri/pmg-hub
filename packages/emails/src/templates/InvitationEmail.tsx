@@ -60,11 +60,11 @@ const InvitationEmail = (props: InvitationEmailProps) => {
         <Preview>
           You've been invited to join {companyName} Control Center as {roleLabel}
         </Preview>
-        <Body className="bg-[#F6F8FA] py-[40px] font-sans">
+        <Body className="m-0 bg-[#F6F8FA] py-[40px] font-sans" style={{ margin: "0", padding: "0" }}>
           <Container
             width="600"
             className="mx-auto rounded-[8px] bg-[#FFFFFF] p-[32px] shadow-lg"
-            style={{ maxWidth: "600px", width: "100%", margin: "0 auto" }}
+            style={{ maxWidth: "600px", width: "100%", margin: "0 auto", borderCollapse: "separate" }}
           >
             {/* Header accent bar */}
             <Section
