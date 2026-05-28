@@ -604,18 +604,23 @@ export async function getClientStatement(
     sql`${invoices.status} NOT IN ('draft', 'void')`
   ];
   const incomeConditions = [eq(income.clientId, clientId)];
+  let statementBalanceCutoff: string | null = null;
 
   if (filters?.monthPeriod) {
     const { startDate, endDate } = getMonthPeriodDates(filters.monthPeriod);
+    statementBalanceCutoff = endDate;
     quoteConditions.push(sql`${quotations.quoteDate} >= ${startDate} AND ${quotations.quoteDate} <= ${endDate}`);
     invoiceConditions.push(sql`${invoices.invoiceDate} >= ${startDate} AND ${invoices.invoiceDate} <= ${endDate}`);
     incomeConditions.push(sql`${income.date} >= ${startDate} AND ${income.date} <= ${endDate}`);
   } else if (filters?.year) {
-    quoteConditions.push(sql`${quotations.quoteDate} >= ${`${filters.year}-03-01`} AND ${quotations.quoteDate} < ${`${filters.year + 1}-03-01`}`);
-    invoiceConditions.push(sql`${invoices.invoiceDate} >= ${`${filters.year}-03-01`} AND ${invoices.invoiceDate} < ${`${filters.year + 1}-03-01`}`);
+    const startDate = `${filters.year}-03-01`;
+    const endDateExclusive = `${filters.year + 1}-03-01`;
+    statementBalanceCutoff = endDateExclusive;
+    quoteConditions.push(sql`${quotations.quoteDate} >= ${startDate} AND ${quotations.quoteDate} < ${endDateExclusive}`);
+    invoiceConditions.push(sql`${invoices.invoiceDate} >= ${startDate} AND ${invoices.invoiceDate} < ${endDateExclusive}`);
     incomeConditions.push(
-      sql`${income.date} >= ${`${filters.year}-03-01`}`,
-      sql`${income.date} < ${`${filters.year + 1}-03-01`}`
+      sql`${income.date} >= ${startDate}`,
+      sql`${income.date} < ${endDateExclusive}`
     );
   }
 
@@ -662,16 +667,32 @@ export async function getClientStatement(
     .where(and(...invoiceConditions))
     .orderBy(desc(invoices.invoiceDate));
 
-  // Compute global balance for "Amount Due"
+  // Compute balance for "Amount Due" as of the statement period end.
+  const globalInvoiceConditions = [
+    eq(invoices.clientId, clientId),
+    sql`${invoices.status} NOT IN ('draft', 'void')`,
+  ];
+  const globalIncomeConditions = [eq(income.clientId, clientId)];
+
+  if (statementBalanceCutoff) {
+    if (filters?.year) {
+      globalInvoiceConditions.push(sql`${invoices.invoiceDate} < ${statementBalanceCutoff}`);
+      globalIncomeConditions.push(sql`${income.date} < ${statementBalanceCutoff}`);
+    } else {
+      globalInvoiceConditions.push(sql`${invoices.invoiceDate} <= ${statementBalanceCutoff}`);
+      globalIncomeConditions.push(sql`${income.date} <= ${statementBalanceCutoff}`);
+    }
+  }
+
   const globalInvoicedRes = await db
     .select({ total: sql<number>`COALESCE(SUM(${invoices.total}), 0)::numeric` })
     .from(invoices)
-    .where(and(eq(invoices.clientId, clientId), sql`${invoices.status} NOT IN ('draft', 'void')`));
+    .where(and(...globalInvoiceConditions));
   
   const globalPaidRes = await db
     .select({ total: sql<number>`COALESCE(SUM(${income.amount}), 0)::numeric` })
     .from(income)
-    .where(eq(income.clientId, clientId));
+    .where(and(...globalIncomeConditions));
 
   const globalInvoiced = Number(globalInvoicedRes[0]?.total ?? 0);
   const globalPaid = Number(globalPaidRes[0]?.total ?? 0);
