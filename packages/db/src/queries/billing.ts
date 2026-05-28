@@ -688,9 +688,29 @@ export async function getClientStatement(
     .where(and(...invoiceConditions))
     .orderBy(desc(invoices.invoiceDate));
 
-  // Compute period summary from the same Period To-capped rows used by the
-  // statement document. This keeps Amount Due aligned with the visible
-  // statement period totals instead of pulling in hidden future invoices.
+  // Compute statement balance for "Amount Due" as of Period To.
+  const globalInvoicedRes = await db
+    .select({ total: sql<number>`COALESCE(SUM(${invoices.total}), 0)::numeric` })
+    .from(invoices)
+    .where(and(
+      eq(invoices.clientId, clientId),
+      sql`${invoices.status} NOT IN ('draft', 'void')`,
+      sql`${invoices.invoiceDate} <= ${statementPeriodTo}`,
+    ));
+  
+  const globalPaidRes = await db
+    .select({ total: sql<number>`COALESCE(SUM(${income.amount}), 0)::numeric` })
+    .from(income)
+    .where(and(
+      eq(income.clientId, clientId),
+      sql`${income.date} <= ${statementPeriodTo}`,
+    ));
+
+  const globalInvoiced = Number(globalInvoicedRes[0]?.total ?? 0);
+  const globalPaid = Number(globalPaidRes[0]?.total ?? 0);
+  const totalOutstanding = globalInvoiced - globalPaid;
+
+  // Compute period summary
   const totalQuoted = quoteRows.reduce((s, r) => s + Number(r.total), 0);
   const totalInvoiced = invoiceRows.reduce((s, r) => s + Number(r.total), 0);
   
