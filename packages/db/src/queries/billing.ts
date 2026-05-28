@@ -720,6 +720,7 @@ export async function getClientStatement(
     .from(income)
     .where(and(...incomeConditions));
   const totalPaid = Number(periodPaidRes[0]?.total ?? 0);
+  const totalOutstanding = totalInvoiced - totalPaid;
 
   const sentCount = quoteRows.filter((r) => r.status === "sent" || r.status === "accepted" || r.status === "declined" || r.status === "converted").length;
   const acceptedCount = quoteRows.filter((r) => r.status === "accepted" || r.status === "converted").length;
