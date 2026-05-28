@@ -11,7 +11,7 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table';
-import { getClientsWithBillingActivity } from '@pmg/db';
+import { getClientsWithBillingActivity, getStatementPeriodDates } from '@pmg/db';
 import { formatZAR, fmtDate } from '@/lib/format';
 import { SetPageTotal } from '@/components/navigation/page-header-context';
 import { SendOverdueRemindersButton } from '@/components/billing/send-overdue-reminders-button';
@@ -23,7 +23,8 @@ export default async function StatementsPage() {
   const now = new Date();
   const currentFY = now.getMonth() < 2 ? now.getFullYear() - 1 : now.getFullYear();
 
-  const clients = await getClientsWithBillingActivity({ year: currentFY });
+  const { endDate: asOfDate } = getStatementPeriodDates({ monthPeriod: 'current' });
+  const clients = await getClientsWithBillingActivity({ year: currentFY, asOfDate });
 
   const totalOutstanding = clients.reduce((s, c) => s + c.totalOutstanding, 0);
 

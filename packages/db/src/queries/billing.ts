@@ -243,14 +243,25 @@ const invoiceRowSelect = {
   updatedAt: invoices.updatedAt,
 };
 
+export type StatementPeriodFilter = {
+  year?: number;
+  monthPeriod?: 'current' | 'previous' | 'past3' | 'past6';
+  /** Inclusive statement balance cut-off date (YYYY-MM-DD). Defaults to today when no period is supplied. */
+  asOfDate?: string;
+};
+
+function formatDateISO(d: Date) {
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+}
+
+function todayISO() {
+  return formatDateISO(new Date());
+}
+
 export function getMonthPeriodDates(monthPeriod: 'current' | 'previous' | 'past3' | 'past6') {
   const now = new Date();
   let startDate: string;
   let endDate: string;
-
-  const formatDateISO = (d: Date) => {
-    return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
-  };
 
   if (monthPeriod === 'current') {
     const firstDay = new Date(now.getFullYear(), now.getMonth(), 1);
@@ -277,6 +288,22 @@ export function getMonthPeriodDates(monthPeriod: 'current' | 'previous' | 'past3
   }
 
   return { startDate, endDate };
+}
+
+export function getStatementPeriodDates(filters?: StatementPeriodFilter) {
+  if (filters?.monthPeriod) {
+    return getMonthPeriodDates(filters.monthPeriod);
+  }
+
+  if (filters?.year) {
+    const startDate = `${filters.year}-03-01`;
+    const nextFYStart = new Date(filters.year + 1, 2, 1);
+    const lastDayOfFY = new Date(nextFYStart.getTime() - 24 * 60 * 60 * 1000);
+    return { startDate, endDate: formatDateISO(lastDayOfFY) };
+  }
+
+  const endDate = filters?.asOfDate ?? todayISO();
+  return { startDate: undefined, endDate };
 }
 
 // ── getAllQuotations ───────────────────────────────────────────────────────────
@@ -579,7 +606,7 @@ export async function getInvoiceById(id: string): Promise<InvoiceDetail | null> 
  */
 export async function getClientStatement(
   clientId: string,
-  filters?: { year?: number; monthPeriod?: 'current' | 'previous' | 'past3' | 'past6' },
+  filters?: StatementPeriodFilter,
 ): Promise<ClientStatement | null> {
   const includeReference = await hasQuotationReferenceColumn();
   // Fetch client
@@ -597,31 +624,25 @@ export async function getClientStatement(
   if (clientRows.length === 0) return null;
   const client = clientRows[0]!;
 
-  // Build filter conditions
+  const { startDate: statementPeriodFrom, endDate: statementPeriodTo } = getStatementPeriodDates(filters);
+
+  // Build filter conditions. Transaction rows are shown for the selected period,
+  // while all balance-style totals below are capped to statementPeriodTo.
   const quoteConditions = [eq(quotations.clientId, clientId)];
   const invoiceConditions = [
     eq(invoices.clientId, clientId),
-    sql`${invoices.status} NOT IN ('draft', 'void')`
+    sql`${invoices.status} NOT IN ('draft', 'void')`,
+    sql`${invoices.invoiceDate} <= ${statementPeriodTo}`,
   ];
-  const incomeConditions = [eq(income.clientId, clientId)];
-  let statementBalanceCutoff: string | null = null;
+  const incomeConditions = [
+    eq(income.clientId, clientId),
+    sql`${income.date} <= ${statementPeriodTo}`,
+  ];
 
-  if (filters?.monthPeriod) {
-    const { startDate, endDate } = getMonthPeriodDates(filters.monthPeriod);
-    statementBalanceCutoff = endDate;
-    quoteConditions.push(sql`${quotations.quoteDate} >= ${startDate} AND ${quotations.quoteDate} <= ${endDate}`);
-    invoiceConditions.push(sql`${invoices.invoiceDate} >= ${startDate} AND ${invoices.invoiceDate} <= ${endDate}`);
-    incomeConditions.push(sql`${income.date} >= ${startDate} AND ${income.date} <= ${endDate}`);
-  } else if (filters?.year) {
-    const startDate = `${filters.year}-03-01`;
-    const endDateExclusive = `${filters.year + 1}-03-01`;
-    statementBalanceCutoff = endDateExclusive;
-    quoteConditions.push(sql`${quotations.quoteDate} >= ${startDate} AND ${quotations.quoteDate} < ${endDateExclusive}`);
-    invoiceConditions.push(sql`${invoices.invoiceDate} >= ${startDate} AND ${invoices.invoiceDate} < ${endDateExclusive}`);
-    incomeConditions.push(
-      sql`${income.date} >= ${startDate}`,
-      sql`${income.date} < ${endDateExclusive}`
-    );
+  if (statementPeriodFrom) {
+    quoteConditions.push(sql`${quotations.quoteDate} >= ${statementPeriodFrom} AND ${quotations.quoteDate} <= ${statementPeriodTo}`);
+    invoiceConditions.push(sql`${invoices.invoiceDate} >= ${statementPeriodFrom}`);
+    incomeConditions.push(sql`${income.date} >= ${statementPeriodFrom}`);
   }
 
   // Fetch quotes
@@ -658,7 +679,7 @@ export async function getClientStatement(
       createdBy: invoices.createdBy,
       createdAt: invoices.createdAt,
       updatedAt: invoices.updatedAt,
-      allocatedAmount: sql<string>`COALESCE((SELECT SUM(amount) FROM payment_allocations WHERE invoice_id = ${invoices.id}), 0)::text`,
+      allocatedAmount: sql<string>`COALESCE((SELECT SUM(pa.amount) FROM payment_allocations pa INNER JOIN income inc ON inc.id = pa.income_id WHERE pa.invoice_id = ${invoices.id} AND inc.date <= ${statementPeriodTo}), 0)::text`,
     })
     .from(invoices)
     .innerJoin(divisions, eq(invoices.divisionId, divisions.id))
@@ -667,32 +688,23 @@ export async function getClientStatement(
     .where(and(...invoiceConditions))
     .orderBy(desc(invoices.invoiceDate));
 
-  // Compute balance for "Amount Due" as of the statement period end.
-  const globalInvoiceConditions = [
-    eq(invoices.clientId, clientId),
-    sql`${invoices.status} NOT IN ('draft', 'void')`,
-  ];
-  const globalIncomeConditions = [eq(income.clientId, clientId)];
-
-  if (statementBalanceCutoff) {
-    if (filters?.year) {
-      globalInvoiceConditions.push(sql`${invoices.invoiceDate} < ${statementBalanceCutoff}`);
-      globalIncomeConditions.push(sql`${income.date} < ${statementBalanceCutoff}`);
-    } else {
-      globalInvoiceConditions.push(sql`${invoices.invoiceDate} <= ${statementBalanceCutoff}`);
-      globalIncomeConditions.push(sql`${income.date} <= ${statementBalanceCutoff}`);
-    }
-  }
-
+  // Compute statement balance for "Amount Due" as of Period To.
   const globalInvoicedRes = await db
     .select({ total: sql<number>`COALESCE(SUM(${invoices.total}), 0)::numeric` })
     .from(invoices)
-    .where(and(...globalInvoiceConditions));
+    .where(and(
+      eq(invoices.clientId, clientId),
+      sql`${invoices.status} NOT IN ('draft', 'void')`,
+      sql`${invoices.invoiceDate} <= ${statementPeriodTo}`,
+    ));
   
   const globalPaidRes = await db
     .select({ total: sql<number>`COALESCE(SUM(${income.amount}), 0)::numeric` })
     .from(income)
-    .where(and(...globalIncomeConditions));
+    .where(and(
+      eq(income.clientId, clientId),
+      sql`${income.date} <= ${statementPeriodTo}`,
+    ));
 
   const globalInvoiced = Number(globalInvoicedRes[0]?.total ?? 0);
   const globalPaid = Number(globalPaidRes[0]?.total ?? 0);
@@ -708,6 +720,7 @@ export async function getClientStatement(
     .from(income)
     .where(and(...incomeConditions));
   const totalPaid = Number(periodPaidRes[0]?.total ?? 0);
+  const totalOutstanding = totalInvoiced - totalPaid;
 
   const sentCount = quoteRows.filter((r) => r.status === "sent" || r.status === "accepted" || r.status === "declined" || r.status === "converted").length;
   const acceptedCount = quoteRows.filter((r) => r.status === "accepted" || r.status === "converted").length;
@@ -729,14 +742,18 @@ export async function getClientStatement(
   };
 }
 
-export async function getClientsWithBillingActivity(filters?: { year?: number }): Promise<ClientBillingRow[]> {
+export async function getClientsWithBillingActivity(filters?: { year?: number; asOfDate?: string }): Promise<ClientBillingRow[]> {
   const year = filters?.year;
+  const fiscalPeriodTo = year ? getStatementPeriodDates({ year }).endDate : undefined;
+  const asOfDate = filters?.asOfDate && fiscalPeriodTo
+    ? (filters.asOfDate < fiscalPeriodTo ? filters.asOfDate : fiscalPeriodTo)
+    : (filters?.asOfDate ?? fiscalPeriodTo ?? getStatementPeriodDates().endDate);
   const start = year ? `${year}-03-01` : null;
   const end = year ? `${year + 1}-03-01` : null;
 
-  const quoteFilter = year ? sql`WHERE quote_date >= ${start} AND quote_date < ${end}` : sql``;
-  const invoiceFilter = year ? sql`WHERE invoice_date >= ${start} AND invoice_date < ${end}` : sql``;
-  const incomeFilter = year ? sql`WHERE date >= ${start} AND date < ${end}` : sql``;
+  const quoteFilter = year ? sql`WHERE quote_date >= ${start} AND quote_date < ${end} AND quote_date <= ${asOfDate}` : sql`WHERE quote_date <= ${asOfDate}`;
+  const invoiceFilter = year ? sql`WHERE invoice_date >= ${start} AND invoice_date < ${end} AND invoice_date <= ${asOfDate}` : sql`WHERE invoice_date <= ${asOfDate}`;
+  const incomeFilter = year ? sql`WHERE date >= ${start} AND date < ${end} AND date <= ${asOfDate}` : sql`WHERE date <= ${asOfDate}`;
 
   const result = await db.execute(sql`
     SELECT
