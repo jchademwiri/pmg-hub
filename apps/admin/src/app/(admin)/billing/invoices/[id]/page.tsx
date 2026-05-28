@@ -1,14 +1,26 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
-import { ChevronLeft, Printer, Send, Pencil, FileDown } from 'lucide-react';
+import { ChevronLeft, Pencil } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Separator } from '@/components/ui/separator';
 import { DocumentPreview } from '@/components/billing/document-preview';
 import { BillingStatusBadge } from '@/components/billing/billing-status-badge';
 import { BillingTotalsBlock } from '@/components/billing/billing-totals-block';
-import { getInvoiceById, getDivisionBillingSettings, getDb, paymentAllocations, income, sql, desc, eq, getClientStatement, getAllIncome } from '@pmg/db';
+import {
+  getInvoiceById,
+  getDivisionBillingSettings,
+  getDb,
+  paymentAllocations,
+  income,
+  sql,
+  desc,
+  eq,
+  getClientStatement,
+  getAllIncome,
+  getStatementPeriodDates,
+} from '@pmg/db';
 import { EmailDocumentDialog } from '@/components/billing/email-document-dialog';
 import { issueInvoice, markInvoicePaid, voidInvoice } from '@/app/actions/billing-invoices';
 import { fmtDate, fmtDateTime, formatZAR } from '@/lib/format';
@@ -41,9 +53,13 @@ export default async function InvoiceDetailPage({ params }: Props) {
   // Fetch statement data for client statement compilation
   let statementProps: any = null;
   if (invoice.clientId) {
+    const statementFilter = { monthPeriod: 'current' as const };
+    const { startDate: periodFrom, endDate: periodTo } = getStatementPeriodDates(statementFilter);
+    const statementAsOfDate = new Date(`${periodTo}T00:00:00`);
+
     const [statement, incomeResult] = await Promise.all([
-      getClientStatement(invoice.clientId),
-      getAllIncome({ clientId: invoice.clientId }),
+      getClientStatement(invoice.clientId, statementFilter),
+      getAllIncome({ clientId: invoice.clientId, ...statementFilter }),
     ]);
 
     if (statement) {
@@ -88,19 +104,22 @@ export default async function InvoiceDetailPage({ params }: Props) {
       }
 
       const ageing = { current: 0, days1_14: 0, days15_30: 0, days31_60: 0, days61_90: 0, days91_120: 0 };
-      const _now = new Date();
       for (const inv of statement.invoices) {
         if (inv.status === 'issued' || inv.status === 'overdue' || inv.status === 'partially_paid') {
-          const due = inv.dueDate ? new Date(inv.dueDate) : new Date(inv.invoiceDate);
-          const diffTime = _now.getTime() - due.getTime();
+          if (inv.invoiceDate > periodTo) continue;
+
+          const due = inv.dueDate ? new Date(`${inv.dueDate}T00:00:00`) : new Date(`${inv.invoiceDate}T00:00:00`);
+          const diffTime = statementAsOfDate.getTime() - due.getTime();
           const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+          const outstanding = Number(inv.total) - Number(inv.allocatedAmount ?? 0);
+          if (outstanding <= 0) continue;
           
-          if (diffDays <= 0) ageing.current += parseFloat(inv.total);
-          else if (diffDays <= 14) ageing.days1_14 += parseFloat(inv.total);
-          else if (diffDays <= 30) ageing.days15_30 += parseFloat(inv.total);
-          else if (diffDays <= 60) ageing.days31_60 += parseFloat(inv.total);
-          else if (diffDays <= 90) ageing.days61_90 += parseFloat(inv.total);
-          else ageing.days91_120 += parseFloat(inv.total);
+          if (diffDays <= 0) ageing.current += outstanding;
+          else if (diffDays <= 14) ageing.days1_14 += outstanding;
+          else if (diffDays <= 30) ageing.days15_30 += outstanding;
+          else if (diffDays <= 60) ageing.days31_60 += outstanding;
+          else if (diffDays <= 90) ageing.days61_90 += outstanding;
+          else ageing.days91_120 += outstanding;
         }
       }
 
@@ -109,6 +128,8 @@ export default async function InvoiceDetailPage({ params }: Props) {
         status: docStatus,
         issueDate: new Date().toISOString().split('T')[0]!,
         dueDate: undefined,
+        periodFrom,
+        periodTo,
         org: {
           name: invoice.divisionName,
           logoUrl: getDocumentLogoUrl(invoice.divisionName),
@@ -129,12 +150,8 @@ export default async function InvoiceDetailPage({ params }: Props) {
         terms: undefined,
         vatRate: 15 as const,
         discountAmount: 0,
-        statementSummary: {
-          totalBilled: statement.summary.totalInvoiced,
-          totalPaid: statement.summary.totalPaid,
-          outstanding: statement.summary.totalOutstanding,
-          ageing,
-        },
+        ageing,
+        balanceDue: statement.summary.totalOutstanding,
       };
     }
   }

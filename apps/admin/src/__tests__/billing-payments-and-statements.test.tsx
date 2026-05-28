@@ -36,9 +36,10 @@ vi.mock('@pmg/db', () => ({
   desc: vi.fn(),
   asc: vi.fn(),
   getClientsWithBillingActivity: vi.fn(),
+  getStatementPeriodDates: vi.fn(() => ({ startDate: '2026-05-01', endDate: '2026-05-31' })),
 }));
 
-import { getClientsWithBillingActivity } from '@pmg/db';
+import { getClientsWithBillingActivity, getStatementPeriodDates } from '@pmg/db';
 
 vi.mock('@/lib/auth', () => ({
   getSessionOrRedirect: vi.fn().mockResolvedValue({ user: { id: 'user-1' } }),
@@ -90,6 +91,7 @@ describe('Billing Payments and Statements Module', () => {
     mockIsPeriodClosed.mockResolvedValue(false);
     mockGetMinAllowedDate.mockResolvedValue('2026-01-01');
     mockGetMinDateErrorMessage.mockReturnValue('Period is closed.');
+    vi.mocked(getStatementPeriodDates).mockReturnValue({ startDate: '2026-05-01', endDate: '2026-05-31' });
 
     // Standard chainable mocks
     mockDbInsert.mockReturnValue({
@@ -217,7 +219,7 @@ describe('Billing Payments and Statements Module', () => {
   });
 
   describe('Pages and Client Components', () => {
-    it('StatementsPage - renders list of client statements successfully', async () => {
+    it('StatementsPage - caps list calculations at the current statement Period To', async () => {
       vi.mocked(getClientsWithBillingActivity).mockResolvedValue([
         {
           id: 'client-1',
@@ -233,6 +235,11 @@ describe('Billing Payments and Statements Module', () => {
       const page = await StatementsPage();
       render(page as React.ReactElement);
 
+      const testNow = new Date();
+      const expectedFY = testNow.getMonth() < 2 ? testNow.getFullYear() - 1 : testNow.getFullYear();
+
+      expect(getStatementPeriodDates).toHaveBeenCalledWith({ monthPeriod: 'current' });
+      expect(getClientsWithBillingActivity).toHaveBeenCalledWith({ year: expectedFY, asOfDate: '2026-05-31' });
       expect(screen.getByText('Alpha Corp')).toBeInTheDocument();
       expect(screen.getByText('R 2 000,00')).toBeInTheDocument(); // outstanding format
     });

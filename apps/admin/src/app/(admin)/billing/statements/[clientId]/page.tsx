@@ -1,13 +1,21 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
-import { ChevronLeft, FileDown } from 'lucide-react';
+import { ChevronLeft } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Separator } from '@/components/ui/separator';
 import { DocumentPreview } from '@/components/billing/document-preview';
 import type { StatementTransaction } from '@/components/billing/document-preview';
-import { getClientStatement, getAllIncome, getStatementYears, getDivisionBillingSettings, getClientById, getMonthPeriodDates } from '@pmg/db';
+import {
+  getClientStatement,
+  getAllIncome,
+  getStatementYears,
+  getDivisionBillingSettings,
+  getClientById,
+  getStatementPeriodDates,
+  type StatementPeriodFilter,
+} from '@pmg/db';
 import { getDocumentLogoUrl } from '@/lib/document-logo';
 import { formatZAR, fmtDate } from '@/lib/format';
 import { PrintButton } from '@/components/billing/print-button';
@@ -42,8 +50,8 @@ export default async function StatementDetailPage({ params, searchParams }: Prop
                              monthPeriodParam === 'past6';
 
   // Default to 'current' monthPeriod if neither monthPeriod nor year filter is specified in URL
-  const monthPeriod = isMonthPeriodValid
-    ? monthPeriodParam
+  const monthPeriod: StatementPeriodFilter['monthPeriod'] = isMonthPeriodValid
+    ? monthPeriodParam as StatementPeriodFilter['monthPeriod']
     : (!yearParam ? 'current' : undefined);
 
   // Mutual exclusivity: if monthPeriod is active, year is ignored/undefined
@@ -51,8 +59,12 @@ export default async function StatementDetailPage({ params, searchParams }: Prop
     ? undefined 
     : (yearParam ? parseInt(yearParam, 10) : undefined);
 
+  const statementFilter: StatementPeriodFilter | undefined = monthPeriod ? { monthPeriod } : (year ? { year } : undefined);
+  const { startDate: periodFrom = '', endDate: periodTo } = getStatementPeriodDates(statementFilter);
+  const statementAsOfDate = new Date(`${periodTo}T00:00:00`);
+
   const [statement, incomeResult, availableYears] = await Promise.all([
-    getClientStatement(clientId, monthPeriod ? { monthPeriod } : (year ? { year } : undefined)),
+    getClientStatement(clientId, statementFilter),
     getAllIncome({ clientId, ...(monthPeriod ? { monthPeriod } : (year ? { year } : {})) }),
     getStatementYears(clientId),
   ]);
@@ -111,11 +123,12 @@ export default async function StatementDetailPage({ params, searchParams }: Prop
   }
 
   const ageing = { current: 0, days1_14: 0, days15_30: 0, days31_60: 0, days61_90: 0, days91_120: 0 };
-  const _now = new Date();
   for (const inv of invoices) {
     if (inv.status === 'issued' || inv.status === 'overdue' || inv.status === 'partially_paid') {
-      const due = inv.dueDate ? new Date(inv.dueDate) : new Date(inv.invoiceDate);
-      const diffTime = _now.getTime() - due.getTime();
+      if (inv.invoiceDate > periodTo) continue;
+
+      const due = inv.dueDate ? new Date(`${inv.dueDate}T00:00:00`) : new Date(`${inv.invoiceDate}T00:00:00`);
+      const diffTime = statementAsOfDate.getTime() - due.getTime();
       const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
       
       const outstanding = Number(inv.total) - Number(inv.allocatedAmount ?? 0);
@@ -142,20 +155,6 @@ export default async function StatementDetailPage({ params, searchParams }: Prop
     periodLabel = 'Past 6 Months';
   } else {
     periodLabel = `FY ${year}`;
-  }
-
-  let periodFrom = '';
-  let periodTo = '';
-  if (monthPeriod) {
-    const { startDate, endDate } = getMonthPeriodDates(monthPeriod);
-    periodFrom = startDate;
-    periodTo = endDate;
-  } else {
-    const y = year ?? currentFY;
-    periodFrom = `${y}-03-01`;
-    const nextFYStart = new Date(y + 1, 2, 1);
-    const lastDayOfFY = new Date(nextFYStart.getTime() - 24 * 60 * 60 * 1000);
-    periodTo = `${lastDayOfFY.getFullYear()}-${String(lastDayOfFY.getMonth() + 1).padStart(2, '0')}-${String(lastDayOfFY.getDate()).padStart(2, '0')}`;
   }
 
   const primaryDivisionId = invoices[0]?.divisionId;
