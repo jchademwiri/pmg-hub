@@ -195,6 +195,12 @@ describe('Billing Payments and Statements Module', () => {
         }),
       })).mockImplementationOnce(() => ({
         from: () => ({
+          where: () => ({
+            limit: () => Promise.resolve([{ documentNumber: 'INV-001' }]),
+          }),
+        }),
+      })).mockImplementationOnce(() => ({
+        from: () => ({
           where: () => Promise.resolve([{ sum: '1000.00' }]), // sum allocations equal total
         }),
       }));

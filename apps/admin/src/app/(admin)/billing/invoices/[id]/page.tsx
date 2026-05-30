@@ -72,13 +72,18 @@ export default async function InvoiceDetailPage({ params }: Props) {
       ];
 
       txRaw.sort((a, b) => a.date.localeCompare(b.date));
-      const transactions = txRaw.map((tx) => ({
-        date: tx.date,
-        reference: tx.reference,
-        description: tx.description,
-        debit: tx.debit,
-        credit: tx.credit,
-      }));
+      let currentBalance = statement.summary.openingBalance ?? 0;
+      const transactions = txRaw.map((tx) => {
+        currentBalance = currentBalance + (tx.debit ?? 0) - (tx.credit ?? 0);
+        return {
+          date: tx.date,
+          reference: tx.reference,
+          description: tx.description,
+          debit: tx.debit,
+          credit: tx.credit,
+          balance: currentBalance,
+        };
+      });
       transactions.reverse();
 
       let docStatus = 'Paid';
@@ -129,6 +134,7 @@ export default async function InvoiceDetailPage({ params }: Props) {
         terms: undefined,
         vatRate: 15 as const,
         discountAmount: 0,
+        openingBalance: statement.summary.openingBalance ?? 0,
         statementSummary: {
           totalBilled: statement.summary.totalInvoiced,
           totalPaid: statement.summary.totalPaid,

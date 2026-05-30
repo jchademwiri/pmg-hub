@@ -75,6 +75,8 @@ export interface DocumentPreviewProps {
   }
   /** Global balance due for statement */
   balanceDue?: number
+  /** Balance brought forward for statement period */
+  openingBalance?: number
 }
 
 export interface StatementTransaction {
@@ -83,6 +85,7 @@ export interface StatementTransaction {
   description: string
   debit?: number
   credit?: number
+  balance?: number
 }
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
@@ -134,6 +137,7 @@ export function DocumentPreview({
   href,
   ageing,
   balanceDue,
+  openingBalance,
 }: DocumentPreviewProps) {
   // Totals - discount is applied after subtotal, before VAT
   const subtotal = lineItems.reduce((sum, i) => sum + i.qty * i.unitPrice, 0)
@@ -331,7 +335,7 @@ export function DocumentPreview({
       {/* ── Statement transactions ──────────────────────────────────────────── */}
       {type === 'statement' && (
         <div className="px-4 sm:px-10 pb-6">
-          {transactions.length === 0 ? (
+          {transactions.length === 0 && openingBalance === undefined ? (
             <div className="py-12 border border-dashed border-zinc-200 rounded-lg text-center">
               <p className="text-sm text-zinc-500">No transactions for this period.</p>
             </div>
@@ -339,12 +343,12 @@ export function DocumentPreview({
             <table className="w-full text-sm">
               <thead>
                 <tr className="border-y border-zinc-100 bg-zinc-50">
-                  {['Date', 'Invoice No.', 'Description', 'Debit', 'Credit'].map((h) => (
+                  {['Date', 'Invoice No.', 'Description', 'Debit', 'Credit', 'Balance'].map((h) => (
                     <th
                       key={h}
                       className={cn(
                         'py-2.5 text-[10px] font-semibold uppercase tracking-widest text-zinc-400 print:text-zinc-600',
-                        ['Debit', 'Credit'].includes(h) ? 'text-right' : 'text-left',
+                        ['Debit', 'Credit', 'Balance'].includes(h) ? 'text-right' : 'text-left',
                         h === 'Date' ? 'pr-4' : 'px-4',
                       )}
                     >
@@ -354,6 +358,20 @@ export function DocumentPreview({
                 </tr>
               </thead>
               <tbody>
+                {/* Balance Brought Forward row (at the top with colSpan spanning Invoice No. and Description) */}
+                {openingBalance !== undefined && (
+                  <tr className="border-b border-zinc-100 bg-zinc-50/50">
+                    <td className="py-2.5 pr-4 text-xs text-zinc-500 whitespace-nowrap">{fmtDateLong(periodFrom)}</td>
+                    <td colSpan={2} className="py-2.5 px-4 text-xs text-zinc-500 italic font-normal">
+                      Balance Brought Forward
+                    </td>
+                    <td className="py-2.5 px-4 text-right text-xs text-zinc-500">—</td>
+                    <td className="py-2.5 px-4 text-right text-xs text-zinc-500">—</td>
+                    <td className="py-2.5 px-4 text-right tabular-nums text-xs font-semibold text-zinc-500">
+                      {fmt(openingBalance)}
+                    </td>
+                  </tr>
+                )}
                 {transactions.map((tx, i) => (
                   <tr key={i} className="border-b border-zinc-50">
                     <td className="py-2.5 pr-4 text-xs text-zinc-600 whitespace-nowrap">{fmtDateLong(tx.date)}</td>
@@ -367,6 +385,9 @@ export function DocumentPreview({
                     <td className="py-2.5 px-4 text-right tabular-nums text-xs font-medium text-emerald-600">
                       {tx.credit != null ? fmt(tx.credit) : '-'}
                     </td>
+                    <td className="py-2.5 px-4 text-right tabular-nums text-xs font-semibold text-zinc-800">
+                      {tx.balance != null ? fmt(tx.balance) : '-'}
+                    </td>
                   </tr>
                 ))}
               </tbody>
@@ -379,9 +400,15 @@ export function DocumentPreview({
               {(() => {
                 const totalInvoiced = transactions.reduce((s, t) => s + (t.debit ?? 0), 0)
                 const totalPaid = transactions.reduce((s, t) => s + (t.credit ?? 0), 0)
-                const balanceDueCalc = balanceDue !== undefined ? balanceDue : (totalInvoiced - totalPaid)
+                const balanceDueCalc = balanceDue !== undefined ? balanceDue : ((openingBalance ?? 0) + totalInvoiced - totalPaid)
                 return (
                   <>
+                    {openingBalance !== undefined && (
+                      <div className="flex justify-between text-sm text-zinc-600">
+                        <span>Balance Brought Forward</span>
+                        <span className="tabular-nums">{fmt(openingBalance)}</span>
+                      </div>
+                    )}
                     <div className="flex justify-between text-sm text-zinc-600">
                       <span>Total Invoiced (Period)</span>
                       <span className="tabular-nums">{fmt(totalInvoiced)}</span>
