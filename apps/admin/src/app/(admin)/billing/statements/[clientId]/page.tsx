@@ -90,13 +90,16 @@ export default async function StatementDetailPage({ params, searchParams }: Prop
 
   txRaw.sort((a, b) => a.date.localeCompare(b.date)); // ASC
 
+  let currentBalance = summary.openingBalance;
   const transactions: StatementTransaction[] = txRaw.map((tx) => {
+    currentBalance = currentBalance + (tx.debit ?? 0) - (tx.credit ?? 0);
     return {
       date: tx.date,
       reference: tx.reference,
       description: tx.description,
       debit: tx.debit,
       credit: tx.credit,
+      balance: currentBalance,
     };
   });
 
@@ -189,6 +192,7 @@ export default async function StatementDetailPage({ params, searchParams }: Prop
     transactions,
     ageing,
     balanceDue: summary.totalOutstanding,
+    openingBalance: summary.openingBalance,
   };
 
   return (

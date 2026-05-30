@@ -119,6 +119,7 @@ export type ClientStatement = {
     totalInvoiced: number;
     totalPaid: number;
     totalOutstanding: number;
+    openingBalance: number;
     quoteCount: number;
     invoiceCount: number;
     conversionRate: number;
@@ -605,10 +606,12 @@ export async function getClientStatement(
   ];
   const incomeConditions = [eq(income.clientId, clientId)];
   let statementBalanceCutoff: string | null = null;
+  let periodStartDate: string | null = null;
 
   if (filters?.monthPeriod) {
     const { startDate, endDate } = getMonthPeriodDates(filters.monthPeriod);
     statementBalanceCutoff = endDate;
+    periodStartDate = startDate;
     quoteConditions.push(sql`${quotations.quoteDate} >= ${startDate} AND ${quotations.quoteDate} <= ${endDate}`);
     invoiceConditions.push(sql`${invoices.invoiceDate} >= ${startDate} AND ${invoices.invoiceDate} <= ${endDate}`);
     incomeConditions.push(sql`${income.date} >= ${startDate} AND ${income.date} <= ${endDate}`);
@@ -616,6 +619,7 @@ export async function getClientStatement(
     const startDate = `${filters.year}-03-01`;
     const endDateExclusive = `${filters.year + 1}-03-01`;
     statementBalanceCutoff = endDateExclusive;
+    periodStartDate = startDate;
     quoteConditions.push(sql`${quotations.quoteDate} >= ${startDate} AND ${quotations.quoteDate} < ${endDateExclusive}`);
     invoiceConditions.push(sql`${invoices.invoiceDate} >= ${startDate} AND ${invoices.invoiceDate} < ${endDateExclusive}`);
     incomeConditions.push(
@@ -698,6 +702,35 @@ export async function getClientStatement(
   const globalPaid = Number(globalPaidRes[0]?.total ?? 0);
   const totalOutstanding = globalInvoiced - globalPaid;
 
+  // Compute opening balance (balance prior to the statement period)
+  let openingBalance = 0;
+  if (periodStartDate) {
+    const priorInvoiceConditions = [
+      eq(invoices.clientId, clientId),
+      sql`${invoices.status} NOT IN ('draft', 'void')`,
+      sql`${invoices.invoiceDate} < ${periodStartDate}`,
+    ];
+    const priorIncomeConditions = [
+      eq(income.clientId, clientId),
+      sql`${income.date} < ${periodStartDate}`,
+    ];
+
+    const [priorInvoicedRes, priorPaidRes] = await Promise.all([
+      db
+        .select({ total: sql<number>`COALESCE(SUM(${invoices.total}), 0)::numeric` })
+        .from(invoices)
+        .where(and(...priorInvoiceConditions)),
+      db
+        .select({ total: sql<number>`COALESCE(SUM(${income.amount}), 0)::numeric` })
+        .from(income)
+        .where(and(...priorIncomeConditions)),
+    ]);
+
+    const priorInvoiced = Number(priorInvoicedRes[0]?.total ?? 0);
+    const priorPaid = Number(priorPaidRes[0]?.total ?? 0);
+    openingBalance = priorInvoiced - priorPaid;
+  }
+
   // Compute period summary
   const totalQuoted = quoteRows.reduce((s, r) => s + Number(r.total), 0);
   const totalInvoiced = invoiceRows.reduce((s, r) => s + Number(r.total), 0);
@@ -720,6 +753,7 @@ export async function getClientStatement(
       totalInvoiced,
       totalPaid,
       totalOutstanding,
+      openingBalance,
       quoteCount: quoteRows.length,
       invoiceCount: invoiceRows.length,
       conversionRate,
