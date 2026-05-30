@@ -23,7 +23,7 @@ import {
 
 export interface PaymentFormClientProps {
   divisions: { id: string; name: string }[];
-  clients: { id: string; name: string; businessName: string | null }[];
+  clients: { id: string; name: string; businessName: string | null; email?: string | null }[];
   minDate: string;
 }
 
@@ -35,6 +35,7 @@ interface UnpaidInvoice {
   total: number;
   allocated: number;
   outstanding: number;
+  divisionId: string;
 }
 
 const today = new Date().toISOString().split('T')[0]!;
@@ -53,6 +54,20 @@ export function PaymentFormClient({ divisions, clients, minDate }: PaymentFormCl
   const [description, setDescription] = useState('');
   const [amount, setAmount] = useState(queryAmount);
   const [autoAllocate, setAutoAllocate] = useState(true);
+
+  // Email Notification States
+  const selectedClient = clients.find((c) => c.id === clientId);
+  const selectedClientEmail = selectedClient?.email;
+  const [sendReceiptEmail, setSendReceiptEmail] = useState(true);
+
+  // Sync sendReceiptEmail default based on client email presence
+  useEffect(() => {
+    if (selectedClientEmail) {
+      setSendReceiptEmail(true);
+    } else {
+      setSendReceiptEmail(false);
+    }
+  }, [clientId, selectedClientEmail]);
 
   // Loaded Client States
   const [unpaidInvoices, setUnpaidInvoices] = useState<UnpaidInvoice[]>([]);
@@ -79,6 +94,11 @@ export function PaymentFormClient({ divisions, clients, minDate }: PaymentFormCl
       .then(([invoicesList, credit]) => {
         setUnpaidInvoices(invoicesList);
         setExistingCreditBalance(credit);
+        
+        // Auto-select division from outstanding invoices if present
+        if (invoicesList.length > 0 && invoicesList[0].divisionId) {
+          setDivisionId(invoicesList[0].divisionId);
+        }
         
         // Reset allocations
         const initAllocations: Record<string, string> = {};
@@ -182,6 +202,7 @@ export function PaymentFormClient({ divisions, clients, minDate }: PaymentFormCl
         invoiceId,
         amount: parseFloat(val) || 0,
       })),
+      sendReceiptEmail,
     };
 
     startTransition(async () => {
@@ -225,6 +246,23 @@ export function PaymentFormClient({ divisions, clients, minDate }: PaymentFormCl
           )}
         </div>
 
+        {/* Division Selector */}
+        <div className="flex flex-col gap-1.5">
+          <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Division</label>
+          <Select value={divisionId} onValueChange={setDivisionId}>
+            <SelectTrigger>
+              <SelectValue placeholder="Select Division" />
+            </SelectTrigger>
+            <SelectContent>
+              {divisions.map((d) => (
+                <SelectItem key={d.id} value={d.id}>
+                  {d.name}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+
         {/* Payment Date */}
         <div className="flex flex-col gap-1.5">
           <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Payment Date</label>
@@ -266,6 +304,27 @@ export function PaymentFormClient({ divisions, clients, minDate }: PaymentFormCl
             />
           </div>
         </div>
+
+        {/* Send Thank You / Receipt Email Option */}
+        {clientId && (
+          <div className="flex items-center justify-between p-3 rounded-md bg-muted/40 border border-border">
+            <div className="flex flex-col gap-0.5">
+              <span className="text-sm font-semibold">Send thank you email</span>
+              <span className="text-xs text-muted-foreground">
+                {selectedClientEmail 
+                  ? `Send receipt to ${selectedClientEmail}` 
+                  : "No email address set for client"}
+              </span>
+            </div>
+            <input
+              type="checkbox"
+              className="h-4 w-4 rounded border-gray-300 text-emerald-600 focus:ring-emerald-500 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+              checked={sendReceiptEmail && !!selectedClientEmail}
+              disabled={!selectedClientEmail}
+              onChange={(e) => setSendReceiptEmail(e.target.checked)}
+            />
+          </div>
+        )}
 
         {/* Auto Allocate Switch */}
         {unpaidInvoices.length > 0 && (
