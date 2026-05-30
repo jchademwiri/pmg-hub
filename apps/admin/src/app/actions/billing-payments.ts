@@ -17,6 +17,7 @@ export interface PaymentInput {
   description: string;
   amount: number;
   allocations: PaymentAllocationInput[];
+  sendReceiptEmail?: boolean;
 }
 
 /**
@@ -38,6 +39,7 @@ export async function getClientOutstandingInvoices(clientId: string) {
         invoiceDate: invoices.invoiceDate,
         dueDate: invoices.dueDate,
         total: invoices.total,
+        divisionId: invoices.divisionId,
         allocatedAmount: sql<string>`coalesce(sum(${paymentAllocations.amount}), 0)`,
       })
       .from(invoices)
@@ -48,7 +50,14 @@ export async function getClientOutstandingInvoices(clientId: string) {
           sql`${invoices.status} IN ('issued', 'partially_paid', 'overdue')`
         )
       )
-      .groupBy(invoices.id, invoices.documentNumber, invoices.invoiceDate, invoices.dueDate, invoices.total)
+      .groupBy(
+        invoices.id,
+        invoices.documentNumber,
+        invoices.invoiceDate,
+        invoices.dueDate,
+        invoices.total,
+        invoices.divisionId
+      )
       .orderBy(asc(invoices.invoiceDate));
 
     return rows.map((r) => {
@@ -63,6 +72,7 @@ export async function getClientOutstandingInvoices(clientId: string) {
         total,
         allocated,
         outstanding,
+        divisionId: r.divisionId,
       };
     });
   } catch (err) {
@@ -235,7 +245,7 @@ export async function recordClientPayment(data: PaymentInput): Promise<{ error?:
     revalidatePath('/dashboard');
 
     // 5. Asynchronously trigger Payment Thank You email receipt via Resend
-    if (client.email) {
+    if (data.sendReceiptEmail && client.email) {
       (async () => {
         try {
           // Fetch division billing config and division details

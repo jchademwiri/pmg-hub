@@ -14,14 +14,16 @@ export type ClientWithIncomeCount = {
   incomeCount: number;
 };
 
-/**
- * Returns all clients as { id, name, businessName }[], sorted by name ascending.
- */
 export async function getAllClients(): Promise<
-  { id: string; name: string; businessName: string | null }[]
+  { id: string; name: string; businessName: string | null; email: string | null }[]
 > {
   return db
-    .select({ id: clients.id, name: clients.name, businessName: clients.businessName })
+    .select({
+      id: clients.id,
+      name: clients.name,
+      businessName: clients.businessName,
+      email: clients.email,
+    })
     .from(clients)
     .orderBy(asc(clients.name));
 }
