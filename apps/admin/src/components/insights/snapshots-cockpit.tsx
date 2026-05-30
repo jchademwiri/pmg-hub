@@ -3,29 +3,52 @@
 import { useState } from "react";
 import type { SnapshotRow } from "@pmg/db";
 import { formatZAR, fmtMonthYear } from "@/lib/format";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { cn } from "@/lib/utils";
+import {
+  BarChart,
+  Bar,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Tooltip,
+  Legend,
+  ResponsiveContainer,
+  Area,
+  AreaChart,
+} from "recharts";
+import {
+  ChartContainer,
+  ChartTooltip,
+  ChartTooltipContent,
+  type ChartConfig,
+} from "@/components/ui/chart";
 import {
   TrendingUp,
   TrendingDown,
   Calendar,
   Layers,
+  Globe,
+  BarChart3,
 } from "lucide-react";
 
 interface SnapshotsCockpitProps {
   snapshots: SnapshotRow[];
 }
 
+const chartConfig: ChartConfig = {
+  revenue: { label: "Gross Revenue", color: "var(--chart-1, #10b981)" },
+  expenses: { label: "Operating Expenses", color: "var(--chart-2, #f59e0b)" },
+  profitPool: { label: "Net Profits", color: "var(--chart-3, #3b82f6)" },
+};
+
 export function SnapshotsCockpit({ snapshots }: SnapshotsCockpitProps) {
-  const [selectedId, setSelectedId] = useState<string>(
-    snapshots[0]?.id || ""
-  );
+  // Default to "all-time" as the starting overview
+  const [selectedId, setSelectedId] = useState<string>("all-time");
 
-  const selectedSnapshot = snapshots.find((s) => s.id === selectedId);
-
-  if (snapshots.length === 0 || !selectedSnapshot) {
+  if (snapshots.length === 0) {
     return (
       <div className="py-12 border border-dashed border-zinc-200 rounded-lg text-center bg-white dark:bg-zinc-950">
         <p className="text-sm text-zinc-500">No monthly snapshots exist.</p>
@@ -33,30 +56,104 @@ export function SnapshotsCockpit({ snapshots }: SnapshotsCockpitProps) {
     );
   }
 
-  const snap = selectedSnapshot;
-  const rev = Number(snap.revenue) || 0;
-  const exp = Number(snap.expenses) || 0;
-  const pmg = Number(snap.pmgShare) || 0;
-  const pool = Number(snap.profitPool) || 0;
+  // Calculate cumulative all-time stats
+  const totalAllTimeRevenue = snapshots.reduce((s, r) => s + (Number(r.revenue) || 0), 0);
+  const totalAllTimeExpenses = snapshots.reduce((s, r) => s + (Number(r.expenses) || 0), 0);
+  const totalAllTimePmgShare = snapshots.reduce((s, r) => s + (Number(r.pmgShare) || 0), 0);
+  const totalAllTimeProfit = snapshots.reduce((s, r) => s + (Number(r.profitPool) || 0), 0);
+
+  const selectedSnapshot = selectedId === "all-time" 
+    ? null 
+    : snapshots.find((s) => s.id === selectedId);
+
+  // Set visual variables based on selected state (all-time vs specific month)
+  const isAllTime = selectedId === "all-time";
+  
+  const periodLabel = isAllTime 
+    ? "All-Time Performance" 
+    : selectedSnapshot 
+    ? fmtMonthYear(selectedSnapshot.period) 
+    : "";
+
+  const rev = isAllTime 
+    ? totalAllTimeRevenue 
+    : selectedSnapshot 
+    ? (Number(selectedSnapshot.revenue) || 0) 
+    : 0;
+
+  const exp = isAllTime 
+    ? totalAllTimeExpenses 
+    : selectedSnapshot 
+    ? (Number(selectedSnapshot.expenses) || 0) 
+    : 0;
+
+  const pmg = isAllTime 
+    ? totalAllTimePmgShare 
+    : selectedSnapshot 
+    ? (Number(selectedSnapshot.pmgShare) || 0) 
+    : 0;
+
+  const pool = isAllTime 
+    ? totalAllTimeProfit 
+    : selectedSnapshot 
+    ? (Number(selectedSnapshot.profitPool) || 0) 
+    : 0;
 
   // Level 1 percentage splits of revenue
   const pmgPct = rev > 0 ? (pmg / rev) * 100 : 20;
   const expPct = rev > 0 ? (exp / rev) * 100 : 0;
-  // If pool is negative, we show 0% for the split segment in the visual bar
   const poolPct = rev > 0 ? Math.max(0, (pool / rev) * 100) : 0;
 
-  // Total calculated split percentage to adjust flex values if needed
   const isProfitable = pool > 0;
+
+  // Prepare chronological chart data (oldest to newest)
+  const chartData = [...snapshots]
+    .reverse()
+    .map((s) => ({
+      period: fmtMonthYear(s.period),
+      revenue: Number(s.revenue) || 0,
+      expenses: Number(s.expenses) || 0,
+      profitPool: Number(s.profitPool) || 0,
+    }));
 
   return (
     <div className="grid grid-cols-1 gap-6 lg:grid-cols-4 lg:items-start">
-      {/* ── Left Sidebar (List of Months) ─────────────────────────────────── */}
+      {/* ── Left Sidebar (List of Months & All-Time Card) ────────────────── */}
       <div className="flex flex-col gap-4 lg:col-span-1">
         <div className="flex flex-col gap-2">
           <span className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
-            Closed Periods ({snapshots.length})
+            Closed Periods ({snapshots.length + 1})
           </span>
-          <div className="flex flex-col gap-2 max-h-[400px] overflow-y-auto pr-1">
+          <div className="flex flex-col gap-2 max-h-[500px] overflow-y-auto pr-1">
+            {/* 1. All-Time Overview Card (Always First) */}
+            <Card
+              onClick={() => setSelectedId("all-time")}
+              className={cn(
+                "cursor-pointer transition-all duration-200 border-l-[4px] hover:bg-muted/50 hover:translate-x-0.5",
+                selectedId === "all-time"
+                  ? "border-l-blue-600 border-foreground bg-muted font-medium"
+                  : "border-l-zinc-300 border-border"
+              )}
+            >
+              <CardHeader className="p-3 flex flex-row items-center justify-between gap-2">
+                <div className="flex flex-col gap-0.5 min-w-0">
+                  <span className="text-xs font-bold text-foreground flex items-center gap-1.5">
+                    <Globe className="size-3.5 text-blue-600 shrink-0" />
+                    All-Time Overview
+                  </span>
+                  <span className="text-[10px] text-muted-foreground">
+                    Historical metrics & trends
+                  </span>
+                </div>
+                <Badge variant="secondary" className="shrink-0 text-[9px] px-1.5 py-0.5 font-bold">
+                  All
+                </Badge>
+              </CardHeader>
+            </Card>
+
+            <Separator className="my-1" />
+
+            {/* 2. Monthly List */}
             {snapshots.map((s) => {
               const isActive = s.id === selectedId;
               const sRev = Number(s.revenue) || 0;
@@ -110,10 +207,10 @@ export function SnapshotsCockpit({ snapshots }: SnapshotsCockpitProps) {
               <span>Financial Overview</span>
             </div>
             <h3 className="text-2xl font-bold tracking-tight mt-1 text-foreground">
-              {fmtMonthYear(snap.period)} Snapshot
+              {periodLabel}
             </h3>
             <p className="text-xs text-muted-foreground">
-              Calculated on a monthly basis. Figures locked on {new Date(snap.createdAt).toLocaleDateString()}.
+              Calculated on a monthly basis. {isAllTime ? "Cumulative totals spanning all locked periods." : `Figures locked on ${new Date(selectedSnapshot!.createdAt).toLocaleDateString()}.`}
             </p>
           </CardHeader>
         </Card>
@@ -122,21 +219,21 @@ export function SnapshotsCockpit({ snapshots }: SnapshotsCockpitProps) {
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
           {[
             {
-              label: "Gross Revenue",
+              label: isAllTime ? "Cumulative Revenue" : "Gross Revenue",
               value: formatZAR(rev),
               textColor: "text-emerald-600 dark:text-emerald-400",
               bgColor: "bg-emerald-50 dark:bg-emerald-950/20",
               icon: TrendingUp,
             },
             {
-              label: "Operating Expenses",
+              label: isAllTime ? "Cumulative Expenses" : "Operating Expenses",
               value: formatZAR(exp),
               textColor: "text-amber-600 dark:text-amber-400",
               bgColor: "bg-amber-50 dark:bg-amber-950/20",
               icon: TrendingDown,
             },
             {
-              label: isProfitable ? "Profit Pool" : "Net Loss Pool",
+              label: isAllTime ? "Cumulative Net Profit" : isProfitable ? "Profit Pool" : "Net Loss Pool",
               value: formatZAR(Math.abs(pool)) + (!isProfitable ? " CR" : ""),
               textColor: isProfitable
                 ? "text-emerald-600 dark:text-emerald-400"
@@ -172,9 +269,8 @@ export function SnapshotsCockpit({ snapshots }: SnapshotsCockpitProps) {
             </CardTitle>
           </CardHeader>
           <CardContent className="flex flex-col gap-4">
-            {/* Split bar container */}
             <div className="h-6 w-full rounded-lg overflow-hidden flex bg-zinc-100 dark:bg-zinc-800">
-              {/* PMG Share (20%) */}
+              {/* PMG Share */}
               <div
                 className="bg-blue-600 transition-all duration-300 flex items-center justify-center text-[10px] text-white font-bold px-1"
                 style={{ width: `${pmgPct}%` }}
@@ -223,6 +319,99 @@ export function SnapshotsCockpit({ snapshots }: SnapshotsCockpitProps) {
             </div>
           </CardContent>
         </Card>
+
+        {/* ── New Component: All-Time Months Performance Chart ────────────── */}
+        {isAllTime && (
+          <Card className="rounded-xl border border-border bg-card">
+            <CardHeader className="pb-3">
+              <CardTitle className="text-sm font-semibold flex items-center gap-2">
+                <BarChart3 className="size-4 text-blue-600" />
+                Monthly Financial Performance Trend
+              </CardTitle>
+              <CardDescription>
+                Chronological breakdown indicating monthly Gross Revenue, Operating Expenses, and Net Profits.
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="pt-2">
+              <ChartContainer config={chartConfig} className="w-full h-[320px]">
+                <ResponsiveContainer width="100%" height="100%">
+                  <AreaChart data={chartData} margin={{ top: 10, right: 10, left: -10, bottom: 0 }}>
+                    <defs>
+                      <linearGradient id="colorRev" x1="0" y1="0" x2="0" y2="1">
+                        <stop offset="5%" stopColor="#10b981" stopOpacity={0.2}/>
+                        <stop offset="95%" stopColor="#10b981" stopOpacity={0}/>
+                      </linearGradient>
+                      <linearGradient id="colorExp" x1="0" y1="0" x2="0" y2="1">
+                        <stop offset="5%" stopColor="#f59e0b" stopOpacity={0.2}/>
+                        <stop offset="95%" stopColor="#f59e0b" stopOpacity={0}/>
+                      </linearGradient>
+                      <linearGradient id="colorPool" x1="0" y1="0" x2="0" y2="1">
+                        <stop offset="5%" stopColor="#3b82f6" stopOpacity={0.2}/>
+                        <stop offset="95%" stopColor="#3b82f6" stopOpacity={0}/>
+                      </linearGradient>
+                    </defs>
+                    <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="var(--border)" />
+                    <XAxis 
+                      dataKey="period" 
+                      tick={{ fill: "var(--muted-foreground)", fontSize: 10 }}
+                      tickLine={false}
+                      axisLine={false}
+                    />
+                    <YAxis 
+                      tickFormatter={(v) => `R${(v / 1000).toFixed(0)}k`}
+                      tick={{ fill: "var(--muted-foreground)", fontSize: 10 }}
+                      tickLine={false}
+                      axisLine={false}
+                    />
+                    <ChartTooltip 
+                      content={<ChartTooltipContent formatter={(v) => formatZAR(Number(v))} />} 
+                    />
+                    <Area 
+                      type="monotone" 
+                      dataKey="revenue" 
+                      stroke="#10b981" 
+                      fillOpacity={1} 
+                      fill="url(#colorRev)" 
+                      strokeWidth={2}
+                    />
+                    <Area 
+                      type="monotone" 
+                      dataKey="expenses" 
+                      stroke="#f59e0b" 
+                      fillOpacity={1} 
+                      fill="url(#colorExp)" 
+                      strokeWidth={2}
+                    />
+                    <Area 
+                      type="monotone" 
+                      dataKey="profitPool" 
+                      stroke="#3b82f6" 
+                      fillOpacity={1} 
+                      fill="url(#colorPool)" 
+                      strokeWidth={2.5}
+                    />
+                  </AreaChart>
+                </ResponsiveContainer>
+              </ChartContainer>
+
+              {/* Chart Legend */}
+              <div className="flex justify-center items-center gap-6 mt-4 text-xs font-semibold">
+                <div className="flex items-center gap-1.5">
+                  <span className="h-2.5 w-2.5 rounded-full bg-[#10b981]" />
+                  <span className="text-zinc-600 dark:text-zinc-400">Gross Revenue</span>
+                </div>
+                <div className="flex items-center gap-1.5">
+                  <span className="h-2.5 w-2.5 rounded-full bg-[#f59e0b]" />
+                  <span className="text-zinc-600 dark:text-zinc-400">Operating Expenses</span>
+                </div>
+                <div className="flex items-center gap-1.5">
+                  <span className="h-2.5 w-2.5 rounded-full bg-[#3b82f6]" />
+                  <span className="text-zinc-900 dark:text-zinc-100">Net Profits</span>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        )}
       </div>
     </div>
   );
