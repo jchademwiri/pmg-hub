@@ -45,8 +45,8 @@ export function LeadAddForm({ divisions, createAction }: LeadAddFormProps) {
   }
 
   return (
-    <form ref={formRef} onSubmit={handleSubmit} className="flex flex-col gap-3">
-      <FieldGroup className="flex-row flex-wrap items-end gap-3">
+    <form ref={formRef} onSubmit={handleSubmit} className="flex flex-col gap-4">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 items-start">
         <Field>
           <FieldLabel htmlFor="lead-name">
             Name <span className="text-destructive">*</span>
@@ -57,7 +57,6 @@ export function LeadAddForm({ divisions, createAction }: LeadAddFormProps) {
             type="text"
             required
             disabled={isPending}
-            className="w-44"
           />
         </Field>
 
@@ -69,7 +68,6 @@ export function LeadAddForm({ divisions, createAction }: LeadAddFormProps) {
             type="email"
             placeholder="Optional"
             disabled={isPending}
-            className="w-48"
           />
         </Field>
 
@@ -81,7 +79,6 @@ export function LeadAddForm({ divisions, createAction }: LeadAddFormProps) {
             type="text"
             placeholder="Optional"
             disabled={isPending}
-            className="w-36"
           />
         </Field>
 
@@ -93,7 +90,6 @@ export function LeadAddForm({ divisions, createAction }: LeadAddFormProps) {
             type="text"
             placeholder="Optional"
             disabled={isPending}
-            className="w-36"
           />
         </Field>
 
@@ -105,14 +101,13 @@ export function LeadAddForm({ divisions, createAction }: LeadAddFormProps) {
             type="text"
             placeholder="Optional"
             disabled={isPending}
-            className="w-44"
           />
         </Field>
 
         <Field>
           <FieldLabel htmlFor="lead-division">Division</FieldLabel>
           <Select value={divisionId} onValueChange={setDivisionId} disabled={isPending}>
-            <SelectTrigger id="lead-division" className="w-44">
+            <SelectTrigger id="lead-division">
               <SelectValue placeholder="Select division" />
             </SelectTrigger>
             <SelectContent>
@@ -125,24 +120,26 @@ export function LeadAddForm({ divisions, createAction }: LeadAddFormProps) {
           </Select>
         </Field>
 
-        <Field>
-          <FieldLabel htmlFor="lead-message">Message</FieldLabel>
-          <Textarea
-            id="lead-message"
-            name="message"
-            placeholder="Optional"
-            disabled={isPending}
-            rows={3}
-            className="w-64 resize-none"
-          />
-        </Field>
+        <div className="md:col-span-2 lg:col-span-3">
+          <Field>
+            <FieldLabel htmlFor="lead-message">Message</FieldLabel>
+            <Textarea
+              id="lead-message"
+              name="message"
+              placeholder="Optional"
+              disabled={isPending}
+              rows={2}
+              className="resize-none"
+            />
+          </Field>
+        </div>
+      </div>
 
-        <Field>
-          <Button type="submit" disabled={isPending}>
-            {isPending ? 'Adding…' : 'Add Lead'}
-          </Button>
-        </Field>
-      </FieldGroup>
+      <div className="flex justify-end">
+        <Button type="submit" disabled={isPending} className="w-full sm:w-auto px-6">
+          {isPending ? 'Adding…' : 'Add Lead'}
+        </Button>
+      </div>
 
       {errorMessage && (
         <Alert variant="destructive">

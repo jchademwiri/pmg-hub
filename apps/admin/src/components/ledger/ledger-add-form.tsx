@@ -69,7 +69,7 @@ export function LedgerAddForm({ createAction, disabled = false, minDate }: Ledge
 
   return (
     <form ref={formRef} onSubmit={handleSubmit} className="flex flex-col gap-3">
-      <FieldGroup className="flex-row flex-wrap items-end gap-3">
+      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4 items-end">
         <Field>
           <FieldLabel htmlFor="ledger-date">Date</FieldLabel>
           <Input
@@ -81,7 +81,6 @@ export function LedgerAddForm({ createAction, disabled = false, minDate }: Ledge
             defaultValue={today}
             max={today}
             min={minDate}
-            className="w-40"
           />
         </Field>
 
@@ -94,7 +93,7 @@ export function LedgerAddForm({ createAction, disabled = false, minDate }: Ledge
             }
             disabled={isPending || disabled}
           >
-            <SelectTrigger id="ledger-allocation" className="w-36">
+            <SelectTrigger id="ledger-allocation">
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
@@ -114,7 +113,7 @@ export function LedgerAddForm({ createAction, disabled = false, minDate }: Ledge
             onValueChange={(val) => setSelectedEntry(val as typeof selectedEntry)}
             disabled={isPending || disabled}
           >
-            <SelectTrigger id="ledger-entry" className="w-36">
+            <SelectTrigger id="ledger-entry">
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
@@ -128,7 +127,7 @@ export function LedgerAddForm({ createAction, disabled = false, minDate }: Ledge
         <Field>
           <FieldLabel htmlFor="ledger-amount">
             Amount
-            <span className="ml-2 text-xs font-normal text-muted-foreground">
+            <span className="ml-1 text-[10px] font-normal text-muted-foreground whitespace-nowrap">
               (Avail: R{availableBalance.toFixed(2)})
             </span>
           </FieldLabel>
@@ -140,7 +139,6 @@ export function LedgerAddForm({ createAction, disabled = false, minDate }: Ledge
             step="0.01"
             required
             disabled={isPending || disabled}
-            className="w-36"
           />
         </Field>
 
@@ -154,16 +152,15 @@ export function LedgerAddForm({ createAction, disabled = false, minDate }: Ledge
             type="text"
             placeholder="e.g. Office supplies"
             disabled={isPending || disabled}
-            className="w-72"
           />
         </Field>
 
-        <Field>
-          <Button type="submit" disabled={isPending || disabled}>
+        <div className="flex">
+          <Button type="submit" disabled={isPending || disabled} className="w-full">
             {isPending ? 'Saving…' : 'Save Entry'}
           </Button>
-        </Field>
-      </FieldGroup>
+        </div>
+      </div>
 
       {errorMessage && (
         <Alert variant="destructive">

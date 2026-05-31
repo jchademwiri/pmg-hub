@@ -32,7 +32,7 @@ export function ClientAddForm({ createAction }: ClientAddFormProps) {
 
   return (
     <form ref={formRef} onSubmit={handleSubmit} className="flex flex-col gap-3">
-      <FieldGroup className="flex-row flex-wrap items-end gap-3">
+      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4 items-end">
         <Field>
           <FieldLabel htmlFor="client-name">
             Name <span className="text-destructive">*</span>
@@ -44,7 +44,6 @@ export function ClientAddForm({ createAction }: ClientAddFormProps) {
             placeholder="Client name"
             required
             disabled={isPending}
-            className="w-48"
           />
         </Field>
 
@@ -56,7 +55,6 @@ export function ClientAddForm({ createAction }: ClientAddFormProps) {
             type="text"
             placeholder="Optional"
             disabled={isPending}
-            className="w-48"
           />
         </Field>
 
@@ -68,7 +66,6 @@ export function ClientAddForm({ createAction }: ClientAddFormProps) {
             type="email"
             placeholder="Optional"
             disabled={isPending}
-            className="w-48"
           />
         </Field>
 
@@ -80,16 +77,15 @@ export function ClientAddForm({ createAction }: ClientAddFormProps) {
             type="text"
             placeholder="Optional"
             disabled={isPending}
-            className="w-40"
           />
         </Field>
 
-        <Field>
-          <Button type="submit" disabled={isPending}>
+        <div className="flex">
+          <Button type="submit" disabled={isPending} className="w-full">
             {isPending ? 'Adding…' : 'Add Client'}
           </Button>
-        </Field>
-      </FieldGroup>
+        </div>
+      </div>
 
       {errorMessage && (
         <Alert variant="destructive">

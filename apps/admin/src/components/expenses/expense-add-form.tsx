@@ -53,7 +53,7 @@ export function ExpenseAddForm({
 
   return (
     <form ref={formRef} onSubmit={handleSubmit} className="flex flex-col gap-3">
-      <FieldGroup className="flex-row flex-wrap items-end gap-3">
+      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-7 gap-4 items-end">
         <Field>
           <FieldLabel htmlFor="expense-date">Date</FieldLabel>
           <Input
@@ -62,7 +62,6 @@ export function ExpenseAddForm({
             type="date"
             required
             disabled={isPending}
-            className="w-40"
             defaultValue={today}
             max={today}
             min={minDate}
@@ -72,7 +71,7 @@ export function ExpenseAddForm({
         <Field>
           <FieldLabel htmlFor="expense-division">Division</FieldLabel>
           <Select name="divisionId" required disabled={isPending}>
-            <SelectTrigger id="expense-division" className="w-44">
+            <SelectTrigger id="expense-division">
               <SelectValue placeholder="Select division" />
             </SelectTrigger>
             <SelectContent>
@@ -88,7 +87,7 @@ export function ExpenseAddForm({
         <Field>
           <FieldLabel htmlFor="expense-client">Client (Optional)</FieldLabel>
           <Select name="clientId" disabled={isPending}>
-            <SelectTrigger id="expense-client" className="w-44">
+            <SelectTrigger id="expense-client">
               <SelectValue placeholder="No client" />
             </SelectTrigger>
             <SelectContent>
@@ -105,7 +104,7 @@ export function ExpenseAddForm({
         <Field>
           <FieldLabel htmlFor="expense-category">Category</FieldLabel>
           <Select name="category" required disabled={isPending}>
-            <SelectTrigger id="expense-category" className="w-44">
+            <SelectTrigger id="expense-category">
               <SelectValue placeholder="Select category" />
             </SelectTrigger>
             <SelectContent>
@@ -126,7 +125,6 @@ export function ExpenseAddForm({
             type="text"
             placeholder="Optional"
             disabled={isPending}
-            className="w-48"
           />
         </Field>
 
@@ -140,16 +138,15 @@ export function ExpenseAddForm({
             step="0.01"
             required
             disabled={isPending}
-            className="w-36"
           />
         </Field>
 
-        <Field>
-          <Button type="submit" disabled={isPending}>
+        <div className="flex">
+          <Button type="submit" disabled={isPending} className="w-full">
             {isPending ? 'Adding…' : 'Add Expense'}
           </Button>
-        </Field>
-      </FieldGroup>
+        </div>
+      </div>
 
       {errorMessage && (
         <Alert variant="destructive">

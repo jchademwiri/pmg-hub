@@ -34,25 +34,26 @@ export function DivisionAddForm({ createAction }: DivisionAddFormProps) {
 
   return (
     <form ref={formRef} onSubmit={handleSubmit} className="flex flex-col gap-3">
-      <FieldGroup className="flex-row flex-wrap items-end gap-3">
-        <Field>
-          <FieldLabel htmlFor="division-name">Name</FieldLabel>
-          <Input
-            id="division-name"
-            name="name"
-            type="text"
-            required
-            disabled={isPending}
-            className="w-64"
-          />
-        </Field>
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 items-end max-w-xl">
+        <div className="sm:col-span-2">
+          <Field>
+            <FieldLabel htmlFor="division-name">Name</FieldLabel>
+            <Input
+              id="division-name"
+              name="name"
+              type="text"
+              required
+              disabled={isPending}
+            />
+          </Field>
+        </div>
 
-        <Field>
-          <Button type="submit" disabled={isPending}>
+        <div className="flex">
+          <Button type="submit" disabled={isPending} className="w-full">
             {isPending ? 'Adding…' : 'Add Division'}
           </Button>
-        </Field>
-      </FieldGroup>
+        </div>
+      </div>
 
       {errorMessage && (
         <Alert variant="destructive">
