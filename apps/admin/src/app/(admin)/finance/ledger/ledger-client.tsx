@@ -36,11 +36,17 @@ export default function LedgerClient({
     <div className="flex flex-col gap-6">
       <SetPageTotal value={formatZAR(sum) + ' All-time'} variant="amber" />
 
-      <div className="flex justify-between items-center bg-card p-4 rounded-xl border border-border shadow-sm">
-        <h2 className="text-lg font-medium">Ledger Entries</h2>
-        <Button onClick={() => setIsAdding(true)} disabled={isAdding}>
-          <Plus className="h-4 w-4 mr-2" /> Add Ledger Entry
-        </Button>
+      {/* Page header */}
+      <div className="flex items-center justify-between">
+        <div>
+          <h2 className="text-lg font-semibold">Ledger Entries</h2>
+          <p className="text-sm text-muted-foreground">Monitor allocation buckets, transfer logs and adjustment entries</p>
+        </div>
+        <div className="flex items-center gap-2">
+          <Button onClick={() => setIsAdding(true)} disabled={isAdding} size="sm">
+            <Plus className="h-4 w-4 mr-2" /> Add Ledger Entry
+          </Button>
+        </div>
       </div>
 
       {isAdding && (

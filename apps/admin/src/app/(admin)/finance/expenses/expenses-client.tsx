@@ -48,12 +48,17 @@ export default function ExpensesPageClient({
 
   return (
     <div className="flex flex-col gap-6">
-      {/* Header card */}
-      <div className="flex justify-between items-center bg-card p-4 rounded-xl border border-border shadow-sm">
-        <h2 className="text-lg font-medium">Expenses</h2>
-        <Button onClick={() => setIsAdding(true)} disabled={isAdding}>
-          <Plus className="h-4 w-4 mr-2" /> Add Expense
-        </Button>
+      {/* Page header */}
+      <div className="flex items-center justify-between">
+        <div>
+          <h2 className="text-lg font-semibold">Expenses</h2>
+          <p className="text-sm text-muted-foreground">Monitor general expense entries and record outgoing cash</p>
+        </div>
+        <div className="flex items-center gap-2">
+          <Button onClick={() => setIsAdding(true)} disabled={isAdding} size="sm">
+            <Plus className="h-4 w-4 mr-2" /> Add Expense
+          </Button>
+        </div>
       </div>
 
       {/* Collapsible add form */}

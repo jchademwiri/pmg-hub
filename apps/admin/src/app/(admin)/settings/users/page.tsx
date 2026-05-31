@@ -32,11 +32,17 @@ export default async function UsersPage() {
 
   return (
     <div className="flex flex-col gap-6">
-      <div className="flex justify-between items-center bg-card p-4 rounded-xl border border-border shadow-sm">
-        <h2 className="text-lg font-medium">Users</h2>
-        <Button asChild>
-          <Link href="/settings/users/invite">Invite User</Link>
-        </Button>
+      {/* Page header */}
+      <div className="flex items-center justify-between">
+        <div>
+          <h2 className="text-lg font-semibold">Users</h2>
+          <p className="text-sm text-muted-foreground">Manage organization users, roles, and pending invitations</p>
+        </div>
+        <div className="flex items-center gap-2">
+          <Button asChild size="sm">
+            <Link href="/settings/users/invite">Invite User</Link>
+          </Button>
+        </div>
       </div>
       {pending && pending.length > 0 && <PendingInvitationsTable pending={pending} />}
       <UserTable users={users} />

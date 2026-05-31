@@ -35,12 +35,17 @@ export default function DivisionsPageClient({
 
   return (
     <div className="flex flex-col gap-6">
-      {/* Header card */}
-      <div className="flex justify-between items-center bg-card p-4 rounded-xl border border-border shadow-sm">
-        <h2 className="text-lg font-medium">Divisions</h2>
-        <Button onClick={() => setIsAdding(true)} disabled={isAdding}>
-          <Plus className="h-4 w-4 mr-2" /> Add Division
-        </Button>
+      {/* Page header */}
+      <div className="flex items-center justify-between">
+        <div>
+          <h2 className="text-lg font-semibold">Divisions</h2>
+          <p className="text-sm text-muted-foreground">Manage organization divisions, branding, and performance metrics</p>
+        </div>
+        <div className="flex items-center gap-2">
+          <Button onClick={() => setIsAdding(true)} disabled={isAdding} size="sm">
+            <Plus className="h-4 w-4 mr-2" /> Add Division
+          </Button>
+        </div>
       </div>
 
       {/* Combined totals */}
