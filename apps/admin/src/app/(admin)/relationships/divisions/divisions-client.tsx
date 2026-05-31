@@ -67,19 +67,19 @@ export default function DivisionsPageClient({
 
       {/* Collapsible add form */}
       {isAdding && (
-        <div className="bg-card rounded-xl border border-border shadow-sm p-4">
+        <div className="bg-card rounded-xl border border-border shadow-sm p-5">
+          <div className="mb-4">
+            <h3 className="text-sm font-semibold text-foreground">Add New Division</h3>
+            <p className="text-xs text-muted-foreground">Create a new organizational business division for tracking financials and leads</p>
+          </div>
           <DivisionAddForm
             createAction={async (fd) => {
               const result = await createAction(fd);
               if (!result.error) setIsAdding(false);
               return result;
             }}
+            onCancel={() => setIsAdding(false)}
           />
-          <div className="mt-2 flex justify-end">
-            <Button variant="outline" onClick={() => setIsAdding(false)}>
-              Cancel
-            </Button>
-          </div>
         </div>
       )}
 

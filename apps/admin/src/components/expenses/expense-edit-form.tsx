@@ -6,7 +6,7 @@ import { toast } from 'sonner';
 import type { ExpenseRow } from '@pmg/db';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
-import { Field, FieldGroup, FieldLabel } from '@/components/ui/field';
+import { Field, FieldLabel } from '@/components/ui/field';
 import { Input } from '@/components/ui/input';
 import {
   Select,
@@ -52,10 +52,12 @@ export function ExpenseEditForm({
   }
 
   return (
-    <form onSubmit={handleSubmit} className="flex flex-col gap-3">
-      <FieldGroup className="flex-row flex-wrap items-end gap-3">
+    <form onSubmit={handleSubmit} className="flex flex-col gap-6">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         <Field>
-          <FieldLabel htmlFor="expense-date">Date</FieldLabel>
+          <FieldLabel htmlFor="expense-date">
+            Date <span className="text-destructive">*</span>
+          </FieldLabel>
           <Input
             id="expense-date"
             name="date"
@@ -65,14 +67,32 @@ export function ExpenseEditForm({
             min={minDate}
             required
             disabled={isPending}
-            className="w-40"
           />
         </Field>
 
         <Field>
-          <FieldLabel htmlFor="expense-division">Division</FieldLabel>
+          <FieldLabel htmlFor="expense-amount">
+            Amount (ZAR) <span className="text-destructive">*</span>
+          </FieldLabel>
+          <Input
+            id="expense-amount"
+            name="amount"
+            type="number"
+            min="0.01"
+            step="0.01"
+            defaultValue={entry.amount}
+            required
+            disabled={isPending}
+            placeholder="e.g. 150.50"
+          />
+        </Field>
+
+        <Field>
+          <FieldLabel htmlFor="expense-division">
+            Division <span className="text-destructive">*</span>
+          </FieldLabel>
           <Select name="divisionId" defaultValue={entry.divisionId} required disabled={isPending}>
-            <SelectTrigger id="expense-division" className="w-44">
+            <SelectTrigger id="expense-division">
               <SelectValue placeholder="Select division" />
             </SelectTrigger>
             <SelectContent>
@@ -86,7 +106,9 @@ export function ExpenseEditForm({
         </Field>
 
         <Field>
-          <FieldLabel htmlFor="expense-category">Category</FieldLabel>
+          <FieldLabel htmlFor="expense-category">
+            Category <span className="text-destructive">*</span>
+          </FieldLabel>
           <Input
             id="expense-category"
             name="category"
@@ -95,7 +117,7 @@ export function ExpenseEditForm({
             defaultValue={entry.category}
             required
             disabled={isPending}
-            className="w-44"
+            placeholder="e.g. Software, Office Supplies"
           />
           <datalist id="category-suggestions">
             {categories.map((category) => (
@@ -104,43 +126,27 @@ export function ExpenseEditForm({
           </datalist>
         </Field>
 
-        <Field>
+        <Field className="md:col-span-2">
           <FieldLabel htmlFor="expense-description">Description</FieldLabel>
           <Input
             id="expense-description"
             name="description"
             type="text"
-            placeholder="Optional"
+            placeholder="e.g. Monthly server hosting subscription"
             defaultValue={entry.description ?? ''}
             disabled={isPending}
-            className="w-48"
           />
         </Field>
+      </div>
 
-        <Field>
-          <FieldLabel htmlFor="expense-amount">Amount</FieldLabel>
-          <Input
-            id="expense-amount"
-            name="amount"
-            type="number"
-            min="0.01"
-            step="0.01"
-            defaultValue={entry.amount}
-            required
-            disabled={isPending}
-            className="w-36"
-          />
-        </Field>
-
-        <Field>
-          <Button type="submit" disabled={isPending}>
-            {isPending ? 'Saving…' : 'Save Changes'}
-          </Button>
-        </Field>
-      </FieldGroup>
+      <div className="flex items-center justify-end gap-3 border-t border-border/50 pt-4 mt-2">
+        <Button type="submit" disabled={isPending}>
+          {isPending ? 'Saving…' : 'Save Changes'}
+        </Button>
+      </div>
 
       {errorMessage && (
-        <Alert variant="destructive">
+        <Alert variant="destructive" className="mt-2">
           <AlertDescription>{errorMessage}</AlertDescription>
         </Alert>
       )}

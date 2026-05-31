@@ -50,13 +50,16 @@ export default function LedgerClient({
       </div>
 
       {isAdding && (
-        <div className="bg-card rounded-xl border border-border shadow-sm p-4">
-          <LedgerAddForm createAction={createLedgerEntry} minDate={minDate} />
-          <div className="mt-2 flex justify-end">
-            <Button variant="outline" onClick={() => setIsAdding(false)}>
-              Cancel
-            </Button>
+        <div className="bg-card rounded-xl border border-border shadow-sm p-5">
+          <div className="mb-4">
+            <h3 className="text-sm font-semibold text-foreground">Add Ledger Entry</h3>
+            <p className="text-xs text-muted-foreground">Record bucket spends, bucket-to-bucket transfers, or balance adjustments</p>
           </div>
+          <LedgerAddForm
+            createAction={createLedgerEntry}
+            minDate={minDate}
+            onCancel={() => setIsAdding(false)}
+          />
         </div>
       )}
 

@@ -63,7 +63,11 @@ export default function ExpensesPageClient({
 
       {/* Collapsible add form */}
       {isAdding && (
-        <div className="bg-card rounded-xl border border-border shadow-sm p-4">
+        <div className="bg-card rounded-xl border border-border shadow-sm p-5">
+          <div className="mb-4">
+            <h3 className="text-sm font-semibold text-foreground">Record New Expense</h3>
+            <p className="text-xs text-muted-foreground">Log a general business expense, category, and associated division</p>
+          </div>
           <ExpenseAddForm
             divisions={divisions}
             categories={categories}
@@ -74,12 +78,8 @@ export default function ExpensesPageClient({
               if (!result.error) setIsAdding(false);
               return result;
             }}
+            onCancel={() => setIsAdding(false)}
           />
-          <div className="mt-2 flex justify-end">
-            <Button variant="outline" onClick={() => setIsAdding(false)}>
-              Cancel
-            </Button>
-          </div>
         </div>
       )}
 

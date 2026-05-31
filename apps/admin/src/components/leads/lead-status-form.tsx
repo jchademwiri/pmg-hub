@@ -3,7 +3,7 @@
 import * as React from 'react'
 import { toast } from 'sonner'
 import { Alert, AlertDescription } from '@/components/ui/alert'
-import { Field, FieldGroup, FieldLabel } from '@/components/ui/field'
+import { Field, FieldLabel } from '@/components/ui/field'
 import {
   Select,
   SelectContent,
@@ -39,11 +39,11 @@ export function LeadStatusForm({ currentStatus, updateAction }: LeadStatusFormPr
 
   return (
     <div className="flex flex-col gap-3">
-      <FieldGroup className="flex-row flex-wrap items-end gap-3">
+      <div className="max-w-xs">
         <Field>
-          <FieldLabel htmlFor="lead-status">Status</FieldLabel>
+          <FieldLabel htmlFor="lead-status">Lead Status</FieldLabel>
           <Select value={optimisticStatus} onValueChange={handleStatusChange} disabled={isPending}>
-            <SelectTrigger id="lead-status" className="w-40">
+            <SelectTrigger id="lead-status">
               <SelectValue placeholder="Select status" />
             </SelectTrigger>
             <SelectContent>
@@ -54,10 +54,10 @@ export function LeadStatusForm({ currentStatus, updateAction }: LeadStatusFormPr
             </SelectContent>
           </Select>
         </Field>
-      </FieldGroup>
+      </div>
 
       {error && (
-        <Alert variant="destructive">
+        <Alert variant="destructive" className="mt-2">
           <AlertDescription>{error}</AlertDescription>
         </Alert>
       )}

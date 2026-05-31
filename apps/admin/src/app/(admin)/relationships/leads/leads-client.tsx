@@ -46,7 +46,11 @@ export default function LeadsPageClient({
 
       {/* Collapsible add form */}
       {isAdding && (
-        <div className="bg-card rounded-xl border border-border shadow-sm p-4">
+        <div className="bg-card rounded-xl border border-border shadow-sm p-5">
+          <div className="mb-4">
+            <h3 className="text-sm font-semibold text-foreground">Add New Lead</h3>
+            <p className="text-xs text-muted-foreground">Capture prospective client details, services of interest, and sales referral sources</p>
+          </div>
           <LeadAddForm
             divisions={divisions}
             createAction={async (fd) => {
@@ -54,12 +58,8 @@ export default function LeadsPageClient({
               if (!result.error) setIsAdding(false);
               return result;
             }}
+            onCancel={() => setIsAdding(false)}
           />
-          <div className="mt-2 flex justify-end">
-            <Button variant="outline" onClick={() => setIsAdding(false)}>
-              Cancel
-            </Button>
-          </div>
         </div>
       )}
 

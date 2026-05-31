@@ -3,7 +3,7 @@
 import * as React from 'react'
 import { Alert, AlertDescription } from '@/components/ui/alert'
 import { Button } from '@/components/ui/button'
-import { Field, FieldGroup, FieldLabel } from '@/components/ui/field'
+import { Field, FieldLabel } from '@/components/ui/field'
 import { Input } from '@/components/ui/input'
 import {
   Select,
@@ -54,10 +54,12 @@ export function InviteUserForm() {
   }
 
   return (
-    <form onSubmit={handleSubmit} className="flex max-w-md flex-col gap-4">
-      <FieldGroup>
-        <Field>
-          <FieldLabel htmlFor="name">Full Name</FieldLabel>
+    <form onSubmit={handleSubmit} className="flex flex-col gap-6 max-w-xl">
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
+        <Field className="sm:col-span-2">
+          <FieldLabel htmlFor="name">
+            Full Name <span className="text-destructive">*</span>
+          </FieldLabel>
           <Input
             id="name"
             type="text"
@@ -69,8 +71,10 @@ export function InviteUserForm() {
           />
         </Field>
 
-        <Field>
-          <FieldLabel htmlFor="email">Email</FieldLabel>
+        <Field className="sm:col-span-2">
+          <FieldLabel htmlFor="email">
+            Email Address <span className="text-destructive">*</span>
+          </FieldLabel>
           <Input
             id="email"
             type="email"
@@ -82,8 +86,10 @@ export function InviteUserForm() {
           />
         </Field>
 
-        <Field>
-          <FieldLabel htmlFor="role">Role</FieldLabel>
+        <Field className="sm:col-span-2">
+          <FieldLabel htmlFor="role">
+            Role <span className="text-destructive">*</span>
+          </FieldLabel>
           <Select value={role} onValueChange={(v) => setRole(v as Role)} disabled={isPending}>
             <SelectTrigger id="role">
               <SelectValue />
@@ -97,21 +103,21 @@ export function InviteUserForm() {
             </SelectContent>
           </Select>
         </Field>
+      </div>
 
-        <Field>
-          <Button type="submit" disabled={isPending}>
-            {isPending ? 'Sending…' : 'Send Invitation'}
-          </Button>
-        </Field>
-      </FieldGroup>
+      <div className="flex items-center justify-end gap-3 border-t border-border/50 pt-4 mt-2">
+        <Button type="submit" disabled={isPending}>
+          {isPending ? 'Sending…' : 'Send Invitation'}
+        </Button>
+      </div>
 
       {error && (
-        <Alert variant="destructive">
+        <Alert variant="destructive" className="mt-2">
           <AlertDescription>{error}</AlertDescription>
         </Alert>
       )}
       {success && (
-        <Alert>
+        <Alert className="mt-2">
           <AlertDescription>{success}</AlertDescription>
         </Alert>
       )}
