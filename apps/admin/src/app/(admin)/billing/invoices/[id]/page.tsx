@@ -11,7 +11,7 @@ import { BillingTotalsBlock } from '@/components/billing/billing-totals-block';
 import { getInvoiceById, getDivisionBillingSettings, getDb, paymentAllocations, income, sql, desc, eq, getClientStatement, getAllIncome } from '@pmg/db';
 import { EmailDocumentDialog } from '@/components/billing/email-document-dialog';
 import { issueInvoice, markInvoicePaid, voidInvoice } from '@/app/actions/billing-invoices';
-import { fmtDate, fmtDateTime, formatZAR } from '@/lib/format';
+import { fmtDate, fmtDateTime, formatZAR, getSASTParts, getSASTToday } from '@/lib/format';
 import { getDocumentLogoUrl } from '@/lib/document-logo';
 import { InvoiceDetailActions } from './invoice-detail-actions';
 import { PrintButton } from '@/components/billing/print-button';
@@ -109,10 +109,13 @@ export default async function InvoiceDetailPage({ params }: Props) {
         }
       }
 
+      const { year } = getSASTParts();
+      const today = getSASTToday();
+
       statementProps = {
-        number: `ST-${statement.client.name.toUpperCase().substring(0, 3)}-${new Date().getFullYear()}`,
+        number: `ST-${statement.client.name.toUpperCase().substring(0, 3)}-${year}`,
         status: docStatus,
-        issueDate: new Date().toISOString().split('T')[0]!,
+        issueDate: today,
         dueDate: undefined,
         org: {
           name: invoice.divisionName,

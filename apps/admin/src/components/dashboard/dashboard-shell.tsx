@@ -105,22 +105,24 @@ export function DashboardShell({
   return (
     <div className="flex flex-col gap-5">
 
-      {/* ── Close Month button - only shown days 1–5 and only if not yet closed ── */}
-      {!hasSnapshot && showCloseMonthButton && (
-        <CloseMonthButton period={currentPeriod} />
-      )}
-
       {/* ── Period tabs ── */}
       <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as Tab)}>
-        <div className="flex items-center gap-3">
-          <TabsList>
-            {TABS.map((tab) => (
-              <TabsTrigger key={tab.key} value={tab.key}>
-                {tab.label}
-              </TabsTrigger>
-            ))}
-          </TabsList>
-          <span className="text-xs text-muted-foreground/70">{activeLabel}</span>
+        <div className="flex items-center justify-between gap-3">
+          <div className="flex items-center gap-3">
+            <TabsList>
+              {TABS.map((tab) => (
+                <TabsTrigger key={tab.key} value={tab.key}>
+                  {tab.label}
+                </TabsTrigger>
+              ))}
+            </TabsList>
+            <span className="text-xs text-muted-foreground/70">{activeLabel}</span>
+          </div>
+
+          {/* Close Month button on the far right of the tabs bar */}
+          {!hasSnapshot && showCloseMonthButton && (
+            <CloseMonthButton period={currentPeriod} />
+          )}
         </div>
       </Tabs>
 
