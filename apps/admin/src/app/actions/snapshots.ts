@@ -3,7 +3,7 @@
 import { z } from 'zod';
 import { revalidatePath } from 'next/cache';
 import { getSnapshotByPeriod, getFinancialSummaryForPeriod, insertSnapshot } from '@pmg/db';
-import { getSASTParts } from '@/lib/date-rules';
+import { getSASTParts } from '@/lib/format';
 
 const periodSchema = z.string().regex(/^\d{4}-\d{2}$/);
 

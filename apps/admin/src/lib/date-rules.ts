@@ -1,21 +1,6 @@
 import 'server-only';
 import { getSnapshotByPeriod } from '@pmg/db';
-import { fmtMonthYear } from '@/lib/format';
-
-/** Get the current Date parts in South African Standard Time (SAST, UTC+2) */
-export function getSASTParts(date: Date = new Date()) {
-  const formatter = new Intl.DateTimeFormat('en-US', {
-    timeZone: 'Africa/Johannesburg',
-    year: 'numeric',
-    month: 'numeric',
-    day: 'numeric',
-  });
-  const parts = formatter.formatToParts(date);
-  const year = Number(parts.find((p) => p.type === 'year')?.value);
-  const month = Number(parts.find((p) => p.type === 'month')?.value) - 1; // 0-indexed
-  const day = Number(parts.find((p) => p.type === 'day')?.value);
-  return { year, month, day };
-}
+import { fmtMonthYear, getSASTParts } from '@/lib/format';
 
 export async function getMinAllowedDate(): Promise<string> {
   const { year, month, day } = getSASTParts();

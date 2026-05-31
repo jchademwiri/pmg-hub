@@ -4,6 +4,7 @@ import { z } from 'zod';
 import { revalidatePath } from 'next/cache';
 import { db, expenses, eq, getExpenseById } from '@pmg/db';
 import { isPeriodClosed, getMinAllowedDate, getMinDateErrorMessage } from '@/lib/date-rules';
+import { getSASTToday } from '@/lib/format';
 
 const ExpenseSchema = z.object({
   date: z.string().min(1),
@@ -25,7 +26,7 @@ export async function createExpense(formData: FormData): Promise<{ error?: strin
       return { error: result.error.issues[0]?.message ?? 'Validation error' };
     }
     const parsed = result.data;
-    const today = new Date().toISOString().split('T')[0]!;
+    const today = getSASTToday();
     if (parsed.date > today) {
       return { error: 'Expense date cannot be in the future.' };
     }
@@ -57,7 +58,7 @@ export async function updateExpense(id: string, formData: FormData): Promise<{ e
       return { error: result.error.issues[0]?.message ?? 'Validation error' };
     }
     const parsed = result.data;
-    const today = new Date().toISOString().split('T')[0]!;
+    const today = getSASTToday();
     if (parsed.date > today) {
       return { error: 'Expense date cannot be in the future.' };
     }

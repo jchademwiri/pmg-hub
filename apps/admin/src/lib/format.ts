@@ -64,4 +64,25 @@ export function fmtMonthYear(value: string | Date | null | undefined, options?: 
   })
 }
 
+/** Get the current Date parts in South African Standard Time (SAST, UTC+2) */
+export function getSASTParts(date: Date = new Date()) {
+  const formatter = new Intl.DateTimeFormat('en-US', {
+    timeZone: 'Africa/Johannesburg',
+    year: 'numeric',
+    month: 'numeric',
+    day: 'numeric',
+  });
+  const parts = formatter.formatToParts(date);
+  const year = Number(parts.find((p) => p.type === 'year')?.value);
+  const month = Number(parts.find((p) => p.type === 'month')?.value) - 1; // 0-indexed
+  const day = Number(parts.find((p) => p.type === 'day')?.value);
+  return { year, month, day };
+}
+
+/** Get today's date in YYYY-MM-DD format in South African Standard Time (SAST, UTC+2) */
+export function getSASTToday(): string {
+  const { year, month, day } = getSASTParts();
+  return `${year}-${String(month + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+}
+
 

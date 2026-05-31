@@ -17,7 +17,7 @@ import {
 } from '@/lib/financial';
 import { getSnapshotByPeriod, getAgingReport } from '@pmg/db';
 import { DashboardShell } from '@/components/dashboard/dashboard-shell';
-import { getSASTParts } from '@/lib/date-rules';
+import { getSASTParts } from '@/lib/format';
 
 export const dynamic = 'force-dynamic';
 export const metadata: Metadata = { title: 'Dashboard' };
