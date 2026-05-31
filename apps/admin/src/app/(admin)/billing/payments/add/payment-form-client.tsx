@@ -16,6 +16,14 @@ import {
 import { Separator } from '@/components/ui/separator';
 import { formatZAR } from '@/lib/format';
 import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from '@/components/ui/table';
+import {
   getClientOutstandingInvoices,
   getClientCreditBalance,
   recordClientPayment,
@@ -368,31 +376,30 @@ export function PaymentFormClient({ divisions, clients, minDate }: PaymentFormCl
         ) : (
           <div className="flex flex-col gap-4">
             {/* Table of Invoices */}
-            <div className="rounded-md border border-border overflow-hidden">
-              <table className="w-full text-sm">
-                <thead>
-                  <tr className="bg-muted/50 border-b border-border text-xs font-semibold text-muted-foreground uppercase tracking-wider text-left">
-                    <th className="p-3">Invoice #</th>
-                    <th className="p-3">Date</th>
-                    <th className="p-3 text-right">Total</th>
-                    <th className="p-3 text-right">Outstanding</th>
-                    <th className="p-3 text-right w-36">Allocated</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-border">
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Invoice #</TableHead>
+                  <TableHead>Date</TableHead>
+                  <TableHead className="text-right">Total</TableHead>
+                  <TableHead className="text-right">Outstanding</TableHead>
+                  <TableHead className="text-right w-36">Allocated</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
                   {unpaidInvoices.map((inv) => {
                     const currentAlloc = manualAllocations[inv.id] || '0';
                     const outstandingAfterThis = Math.max(0, inv.outstanding - (parseFloat(currentAlloc) || 0));
 
                     return (
-                      <tr key={inv.id} className="hover:bg-muted/10">
-                        <td className="p-3 font-medium">{inv.documentNumber}</td>
-                        <td className="p-3 text-muted-foreground">{inv.invoiceDate}</td>
-                        <td className="p-3 text-right tabular-nums">{formatZAR(inv.total)}</td>
-                        <td className="p-3 text-right tabular-nums font-medium text-amber-600">
+                      <TableRow key={inv.id}>
+                        <TableCell className="font-medium">{inv.documentNumber}</TableCell>
+                        <TableCell className="text-muted-foreground">{inv.invoiceDate}</TableCell>
+                        <TableCell className="text-right tabular-nums">{formatZAR(inv.total)}</TableCell>
+                        <TableCell className="text-right tabular-nums font-medium text-amber-600">
                           {formatZAR(inv.outstanding)}
-                        </td>
-                        <td className="p-3 text-right">
+                        </TableCell>
+                        <TableCell className="text-right">
                           <div className="relative inline-block w-full">
                             <span className="absolute left-2.5 top-2 text-xs font-medium text-muted-foreground">R</span>
                             <Input
@@ -410,13 +417,12 @@ export function PaymentFormClient({ divisions, clients, minDate }: PaymentFormCl
                               Remaining: {formatZAR(outstandingAfterThis)}
                             </span>
                           )}
-                        </td>
-                      </tr>
+                        </TableCell>
+                      </TableRow>
                     );
                   })}
-                </tbody>
-              </table>
-            </div>
+                </TableBody>
+              </Table>
 
             {/* Calculations Summary */}
             <div className="flex flex-col gap-2 p-4 rounded-md bg-muted/30 border border-border text-sm">

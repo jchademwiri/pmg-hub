@@ -5,6 +5,14 @@ import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card'
 import { Separator } from '@/components/ui/separator'
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from '@/components/ui/table'
 
 export const metadata: Metadata = { title: 'Security Settings' }
 
@@ -152,30 +160,28 @@ export default function SecuritySettingsPage() {
             Recent actions taken in the system.
           </p>
         </div>
-        <Card className="lg:col-span-2">
-          <CardContent className="p-0">
-            <table className="w-full text-sm">
-              <thead>
-                <tr className="border-b border-border">
-                  <th className="px-4 py-3 text-left text-xs font-medium text-muted-foreground">Action</th>
-                  <th className="px-4 py-3 text-left text-xs font-medium text-muted-foreground">User</th>
-                  <th className="px-4 py-3 text-left text-xs font-medium text-muted-foreground">Time</th>
-                  <th className="px-4 py-3 text-left text-xs font-medium text-muted-foreground">IP</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-border">
-                {auditLog.map((entry, i) => (
-                  <tr key={i}>
-                    <td className="px-4 py-3 text-sm">{entry.action}</td>
-                    <td className="px-4 py-3 text-sm text-muted-foreground">{entry.user}</td>
-                    <td className="px-4 py-3 text-sm text-muted-foreground">{entry.timestamp}</td>
-                    <td className="px-4 py-3 text-sm text-muted-foreground">{entry.ip}</td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </CardContent>
-        </Card>
+        <div className="lg:col-span-2">
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead className="pl-4">Action</TableHead>
+                <TableHead>User</TableHead>
+                <TableHead>Time</TableHead>
+                <TableHead>IP</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {auditLog.map((entry, i) => (
+                <TableRow key={i}>
+                  <TableCell className="pl-4 text-sm font-medium">{entry.action}</TableCell>
+                  <TableCell className="text-sm text-muted-foreground">{entry.user}</TableCell>
+                  <TableCell className="text-sm text-muted-foreground">{entry.timestamp}</TableCell>
+                  <TableCell className="text-sm text-muted-foreground">{entry.ip}</TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
+        </div>
       </div>
     </div>
   )
