@@ -14,7 +14,16 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { Separator } from '@/components/ui/separator';
+import { Field, FieldLabel } from '@/components/ui/field';
 import { formatZAR } from '@/lib/format';
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from '@/components/ui/table';
 import {
   getClientOutstandingInvoices,
   getClientCreditBalance,
@@ -225,8 +234,8 @@ export function PaymentFormClient({ divisions, clients, minDate }: PaymentFormCl
         <h3 className="text-sm font-semibold">Payment Details</h3>
         
         {/* Client Selector */}
-        <div className="flex flex-col gap-1.5">
-          <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Client</label>
+        <Field>
+          <FieldLabel className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Client</FieldLabel>
           <Select value={clientId} onValueChange={setClientId}>
             <SelectTrigger>
               <SelectValue placeholder="Select Client" />
@@ -244,11 +253,11 @@ export function PaymentFormClient({ divisions, clients, minDate }: PaymentFormCl
               Current Retainer Credit: <span className="font-semibold text-emerald-600">{formatZAR(existingCreditBalance)}</span>
             </div>
           )}
-        </div>
+        </Field>
 
         {/* Division Selector */}
-        <div className="flex flex-col gap-1.5">
-          <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Division</label>
+        <Field>
+          <FieldLabel className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Division</FieldLabel>
           <Select value={divisionId} onValueChange={setDivisionId}>
             <SelectTrigger>
               <SelectValue placeholder="Select Division" />
@@ -261,11 +270,11 @@ export function PaymentFormClient({ divisions, clients, minDate }: PaymentFormCl
               ))}
             </SelectContent>
           </Select>
-        </div>
+        </Field>
 
         {/* Payment Date */}
-        <div className="flex flex-col gap-1.5">
-          <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Payment Date</label>
+        <Field>
+          <FieldLabel className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Payment Date</FieldLabel>
           <Input
             type="date"
             value={paymentDate}
@@ -277,21 +286,21 @@ export function PaymentFormClient({ divisions, clients, minDate }: PaymentFormCl
               Error: Date is prior to the open ledger period boundary.
             </span>
           )}
-        </div>
+        </Field>
 
         {/* Payment Reference */}
-        <div className="flex flex-col gap-1.5">
-          <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Reference / EFT Reference</label>
+        <Field>
+          <FieldLabel className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Reference / EFT Reference</FieldLabel>
           <Input
             placeholder="e.g. EFT-89201"
             value={description}
             onChange={(e) => setDescription(e.target.value)}
           />
-        </div>
+        </Field>
 
         {/* Total Amount Paid */}
-        <div className="flex flex-col gap-1.5">
-          <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Total Amount Paid (ZAR)</label>
+        <Field>
+          <FieldLabel className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Total Amount Paid (ZAR)</FieldLabel>
           <div className="relative">
             <span className="absolute left-3 top-2.5 text-sm font-semibold text-muted-foreground">R</span>
             <Input
@@ -303,7 +312,7 @@ export function PaymentFormClient({ divisions, clients, minDate }: PaymentFormCl
               onChange={(e) => setAmount(e.target.value)}
             />
           </div>
-        </div>
+        </Field>
 
         {/* Send Thank You / Receipt Email Option */}
         {clientId && (
@@ -368,31 +377,30 @@ export function PaymentFormClient({ divisions, clients, minDate }: PaymentFormCl
         ) : (
           <div className="flex flex-col gap-4">
             {/* Table of Invoices */}
-            <div className="rounded-md border border-border overflow-hidden">
-              <table className="w-full text-sm">
-                <thead>
-                  <tr className="bg-muted/50 border-b border-border text-xs font-semibold text-muted-foreground uppercase tracking-wider text-left">
-                    <th className="p-3">Invoice #</th>
-                    <th className="p-3">Date</th>
-                    <th className="p-3 text-right">Total</th>
-                    <th className="p-3 text-right">Outstanding</th>
-                    <th className="p-3 text-right w-36">Allocated</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-border">
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Invoice #</TableHead>
+                  <TableHead>Date</TableHead>
+                  <TableHead className="text-right">Total</TableHead>
+                  <TableHead className="text-right">Outstanding</TableHead>
+                  <TableHead className="text-right w-36">Allocated</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
                   {unpaidInvoices.map((inv) => {
                     const currentAlloc = manualAllocations[inv.id] || '0';
                     const outstandingAfterThis = Math.max(0, inv.outstanding - (parseFloat(currentAlloc) || 0));
 
                     return (
-                      <tr key={inv.id} className="hover:bg-muted/10">
-                        <td className="p-3 font-medium">{inv.documentNumber}</td>
-                        <td className="p-3 text-muted-foreground">{inv.invoiceDate}</td>
-                        <td className="p-3 text-right tabular-nums">{formatZAR(inv.total)}</td>
-                        <td className="p-3 text-right tabular-nums font-medium text-amber-600">
+                      <TableRow key={inv.id}>
+                        <TableCell className="font-medium">{inv.documentNumber}</TableCell>
+                        <TableCell className="text-muted-foreground">{inv.invoiceDate}</TableCell>
+                        <TableCell className="text-right tabular-nums">{formatZAR(inv.total)}</TableCell>
+                        <TableCell className="text-right tabular-nums font-medium text-amber-600">
                           {formatZAR(inv.outstanding)}
-                        </td>
-                        <td className="p-3 text-right">
+                        </TableCell>
+                        <TableCell className="text-right">
                           <div className="relative inline-block w-full">
                             <span className="absolute left-2.5 top-2 text-xs font-medium text-muted-foreground">R</span>
                             <Input
@@ -410,13 +418,12 @@ export function PaymentFormClient({ divisions, clients, minDate }: PaymentFormCl
                               Remaining: {formatZAR(outstandingAfterThis)}
                             </span>
                           )}
-                        </td>
-                      </tr>
+                        </TableCell>
+                      </TableRow>
                     );
                   })}
-                </tbody>
-              </table>
-            </div>
+                </TableBody>
+              </Table>
 
             {/* Calculations Summary */}
             <div className="flex flex-col gap-2 p-4 rounded-md bg-muted/30 border border-border text-sm">

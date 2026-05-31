@@ -3,14 +3,15 @@
 import * as React from 'react'
 import { Alert, AlertDescription } from '@/components/ui/alert'
 import { Button } from '@/components/ui/button'
-import { Field, FieldGroup, FieldLabel } from '@/components/ui/field'
+import { Field, FieldLabel } from '@/components/ui/field'
 import { Input } from '@/components/ui/input'
 
 interface ClientAddFormProps {
   createAction: (formData: FormData) => Promise<{ error?: string }>
+  onCancel?: () => void
 }
 
-export function ClientAddForm({ createAction }: ClientAddFormProps) {
+export function ClientAddForm({ createAction, onCancel }: ClientAddFormProps) {
   const formRef = React.useRef<HTMLFormElement>(null)
   const [isPending, startTransition] = React.useTransition()
   const [errorMessage, setErrorMessage] = React.useState<string | null>(null)
@@ -31,8 +32,8 @@ export function ClientAddForm({ createAction }: ClientAddFormProps) {
   }
 
   return (
-    <form ref={formRef} onSubmit={handleSubmit} className="flex flex-col gap-3">
-      <FieldGroup className="flex-row flex-wrap items-end gap-3">
+    <form ref={formRef} onSubmit={handleSubmit} className="flex flex-col gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         <Field>
           <FieldLabel htmlFor="client-name">
             Name <span className="text-destructive">*</span>
@@ -41,10 +42,9 @@ export function ClientAddForm({ createAction }: ClientAddFormProps) {
             id="client-name"
             name="name"
             type="text"
-            placeholder="Client name"
+            placeholder="e.g. Acme Corp"
             required
             disabled={isPending}
-            className="w-48"
           />
         </Field>
 
@@ -54,45 +54,53 @@ export function ClientAddForm({ createAction }: ClientAddFormProps) {
             id="client-business-name"
             name="businessName"
             type="text"
-            placeholder="Optional"
+            placeholder="e.g. Acme Pty Ltd"
             disabled={isPending}
-            className="w-48"
           />
         </Field>
 
         <Field>
-          <FieldLabel htmlFor="client-email">Email</FieldLabel>
+          <FieldLabel htmlFor="client-email">Email Address</FieldLabel>
           <Input
             id="client-email"
             name="email"
             type="email"
-            placeholder="Optional"
+            placeholder="e.g. billing@acme.com"
             disabled={isPending}
-            className="w-48"
           />
         </Field>
 
         <Field>
-          <FieldLabel htmlFor="client-phone">Phone</FieldLabel>
+          <FieldLabel htmlFor="client-phone">Phone Number</FieldLabel>
           <Input
             id="client-phone"
             name="phone"
             type="text"
-            placeholder="Optional"
+            placeholder="e.g. +27 82 123 4567"
             disabled={isPending}
-            className="w-40"
           />
         </Field>
+      </div>
 
-        <Field>
-          <Button type="submit" disabled={isPending}>
-            {isPending ? 'Adding…' : 'Add Client'}
+      <div className="flex items-center justify-end gap-3 border-t border-border/50 pt-4 mt-2">
+        {onCancel && (
+          <Button
+            type="button"
+            variant="outline"
+            onClick={onCancel}
+            disabled={isPending}
+            size="sm"
+          >
+            Cancel
           </Button>
-        </Field>
-      </FieldGroup>
+        )}
+        <Button type="submit" disabled={isPending} size="sm">
+          {isPending ? 'Adding…' : 'Add Client'}
+        </Button>
+      </div>
 
       {errorMessage && (
-        <Alert variant="destructive">
+        <Alert variant="destructive" className="mt-2">
           <AlertDescription>{errorMessage}</AlertDescription>
         </Alert>
       )}

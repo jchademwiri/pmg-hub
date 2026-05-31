@@ -4,6 +4,7 @@ import { z } from 'zod';
 import { revalidatePath } from 'next/cache';
 import { db, income, eq, getIncomeById, invoices, paymentAllocations, and, sql } from '@pmg/db';
 import { isPeriodClosed, getMinAllowedDate, getMinDateErrorMessage } from '@/lib/date-rules';
+import { getSASTToday } from '@/lib/format';
 
 const IncomeSchema = z.object({
   date: z.string().min(1),
@@ -21,7 +22,7 @@ export async function createIncome(formData: FormData): Promise<{ error?: string
       return { error: result.error.issues[0]?.message ?? 'Validation error' };
     }
     const parsed = result.data;
-    const today = new Date().toISOString().split('T')[0]!;
+    const today = getSASTToday();
     if (parsed.date > today) {
       return { error: 'Income date cannot be in the future.' };
     }
@@ -52,7 +53,7 @@ export async function updateIncome(id: string, formData: FormData): Promise<{ er
       return { error: result.error.issues[0]?.message ?? 'Validation error' };
     }
     const parsed = result.data;
-    const today = new Date().toISOString().split('T')[0]!;
+    const today = getSASTToday();
     if (parsed.date > today) {
       return { error: 'Income date cannot be in the future.' };
     }

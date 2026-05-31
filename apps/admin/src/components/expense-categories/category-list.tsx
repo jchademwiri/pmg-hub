@@ -83,11 +83,17 @@ export function CategoryList({ initialCategories }: CategoryListProps) {
 
   return (
     <div className="space-y-4">
-      <div className="flex justify-between items-center bg-card p-4 rounded-xl border border-border shadow-sm">
-        <h2 className="text-lg font-medium">Manage Categories</h2>
-        <Button onClick={() => setIsAdding(true)} disabled={isAdding || isSaving}>
-          <Plus className="h-4 w-4 mr-2" /> Add Category
-        </Button>
+      {/* Page header */}
+      <div className="flex items-center justify-between">
+        <div>
+          <h2 className="text-lg font-semibold">Expense Categories</h2>
+          <p className="text-sm text-muted-foreground">Manage expense allocation categories and items</p>
+        </div>
+        <div className="flex items-center gap-2">
+          <Button onClick={() => setIsAdding(true)} disabled={isAdding || isSaving} size="sm">
+            <Plus className="h-4 w-4 mr-2" /> Add Category
+          </Button>
+        </div>
       </div>
 
       <Table>

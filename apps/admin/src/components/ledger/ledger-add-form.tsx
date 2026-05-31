@@ -4,7 +4,7 @@ import * as React from 'react';
 import { toast } from 'sonner';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
-import { Field, FieldGroup, FieldLabel } from '@/components/ui/field';
+import { Field, FieldLabel } from '@/components/ui/field';
 import { Input } from '@/components/ui/input';
 import {
   Select,
@@ -20,11 +20,17 @@ interface LedgerAddFormProps {
   createAction: (formData: FormData) => Promise<{ error?: string }>;
   disabled?: boolean;
   minDate?: string;
+  onCancel?: () => void;
 }
 
 const today = new Date().toISOString().split('T')[0]!;
 
-export function LedgerAddForm({ createAction, disabled = false, minDate }: LedgerAddFormProps) {
+export function LedgerAddForm({
+  createAction,
+  disabled = false,
+  minDate,
+  onCancel,
+}: LedgerAddFormProps) {
   const formRef = React.useRef<HTMLFormElement>(null);
   const [isPending, startTransition] = React.useTransition();
   const [errorMessage, setErrorMessage] = React.useState<string | null>(null);
@@ -68,10 +74,12 @@ export function LedgerAddForm({ createAction, disabled = false, minDate }: Ledge
   const availableBalance = balances?.[selectedAllocation]?.available ?? 0;
 
   return (
-    <form ref={formRef} onSubmit={handleSubmit} className="flex flex-col gap-3">
-      <FieldGroup className="flex-row flex-wrap items-end gap-3">
+    <form ref={formRef} onSubmit={handleSubmit} className="flex flex-col gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
         <Field>
-          <FieldLabel htmlFor="ledger-date">Date</FieldLabel>
+          <FieldLabel htmlFor="ledger-date">
+            Date <span className="text-destructive">*</span>
+          </FieldLabel>
           <Input
             id="ledger-date"
             name="date"
@@ -81,12 +89,13 @@ export function LedgerAddForm({ createAction, disabled = false, minDate }: Ledge
             defaultValue={today}
             max={today}
             min={minDate}
-            className="w-40"
           />
         </Field>
 
         <Field>
-          <FieldLabel htmlFor="ledger-allocation">Bucket</FieldLabel>
+          <FieldLabel htmlFor="ledger-allocation">
+            Bucket <span className="text-destructive">*</span>
+          </FieldLabel>
           <Select
             value={selectedAllocation}
             onValueChange={(val) =>
@@ -94,7 +103,7 @@ export function LedgerAddForm({ createAction, disabled = false, minDate }: Ledge
             }
             disabled={isPending || disabled}
           >
-            <SelectTrigger id="ledger-allocation" className="w-36">
+            <SelectTrigger id="ledger-allocation">
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
@@ -108,13 +117,15 @@ export function LedgerAddForm({ createAction, disabled = false, minDate }: Ledge
         </Field>
 
         <Field>
-          <FieldLabel htmlFor="ledger-entry">Entry Type</FieldLabel>
+          <FieldLabel htmlFor="ledger-entry">
+            Entry Type <span className="text-destructive">*</span>
+          </FieldLabel>
           <Select
             value={selectedEntry}
             onValueChange={(val) => setSelectedEntry(val as typeof selectedEntry)}
             disabled={isPending || disabled}
           >
-            <SelectTrigger id="ledger-entry" className="w-36">
+            <SelectTrigger id="ledger-entry">
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
@@ -126,9 +137,9 @@ export function LedgerAddForm({ createAction, disabled = false, minDate }: Ledge
         </Field>
 
         <Field>
-          <FieldLabel htmlFor="ledger-amount">
-            Amount
-            <span className="ml-2 text-xs font-normal text-muted-foreground">
+          <FieldLabel htmlFor="ledger-amount" className="flex items-center justify-between">
+            <span>Amount <span className="text-destructive">*</span></span>
+            <span className="text-[10px] font-normal text-muted-foreground">
               (Avail: R{availableBalance.toFixed(2)})
             </span>
           </FieldLabel>
@@ -140,33 +151,41 @@ export function LedgerAddForm({ createAction, disabled = false, minDate }: Ledge
             step="0.01"
             required
             disabled={isPending || disabled}
-            className="w-36"
+            placeholder="e.g. 500.00"
           />
         </Field>
 
-        <Field>
-          <FieldLabel htmlFor="ledger-description">
-            Description <span className="font-normal text-muted-foreground">(optional)</span>
-          </FieldLabel>
+        <Field className="sm:col-span-2">
+          <FieldLabel htmlFor="ledger-description">Description</FieldLabel>
           <Input
             id="ledger-description"
             name="description"
             type="text"
-            placeholder="e.g. Office supplies"
+            placeholder="e.g. Monthly cloud server costs"
             disabled={isPending || disabled}
-            className="w-72"
           />
         </Field>
+      </div>
 
-        <Field>
-          <Button type="submit" disabled={isPending || disabled}>
-            {isPending ? 'Saving…' : 'Save Entry'}
+      <div className="flex items-center justify-end gap-3 border-t border-border/50 pt-4 mt-2">
+        {onCancel && (
+          <Button
+            type="button"
+            variant="outline"
+            onClick={onCancel}
+            disabled={isPending || disabled}
+            size="sm"
+          >
+            Cancel
           </Button>
-        </Field>
-      </FieldGroup>
+        )}
+        <Button type="submit" disabled={isPending || disabled} size="sm">
+          {isPending ? 'Saving…' : 'Save Entry'}
+        </Button>
+      </div>
 
       {errorMessage && (
-        <Alert variant="destructive">
+        <Alert variant="destructive" className="mt-2">
           <AlertDescription>{errorMessage}</AlertDescription>
         </Alert>
       )}

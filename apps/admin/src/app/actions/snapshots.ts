@@ -3,6 +3,7 @@
 import { z } from 'zod';
 import { revalidatePath } from 'next/cache';
 import { getSnapshotByPeriod, getFinancialSummaryForPeriod, insertSnapshot } from '@pmg/db';
+import { getSASTParts } from '@/lib/format';
 
 const periodSchema = z.string().regex(/^\d{4}-\d{2}$/);
 
@@ -31,11 +32,10 @@ export async function closeMonth(period: string): Promise<{} | { error: string }
 }
 
 export async function autoClosePreviousMonthIfNeeded(): Promise<void> {
-  const now = new Date();
-  const day = now.getDate();
+  const { year, month, day } = getSASTParts();
   if (day < 5) return;
 
-  const prev = new Date(now.getFullYear(), now.getMonth() - 1, 1);
+  const prev = new Date(year, month - 1, 1);
   const period = `${prev.getFullYear()}-${String(prev.getMonth() + 1).padStart(2, '0')}`;
 
   const existing = await getSnapshotByPeriod(period);

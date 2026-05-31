@@ -71,7 +71,7 @@ export async function getMonthlyRevenueByDivision(
     .from(income)
     .innerJoin(divisions, eq(income.divisionId, divisions.id))
     .where(
-      sql`${income.date} >= DATE_TRUNC('month', NOW()) - INTERVAL '${sql.raw(String(months - 1))} months'`,
+      sql`${income.date} >= DATE_TRUNC('month', timezone('Africa/Johannesburg', now())) - INTERVAL '${sql.raw(String(months - 1))} months'`,
     )
     .groupBy(sql`TO_CHAR(${income.date}, 'YYYY-MM')`, divisions.name)
     .orderBy(sql`TO_CHAR(${income.date}, 'YYYY-MM') ASC`, asc(divisions.name));
@@ -88,12 +88,12 @@ export async function getMonthlyFinancials(): Promise<
   const result = await db.execute(sql`
     WITH rev AS (
       SELECT TO_CHAR(date, 'YYYY-MM') AS month, COALESCE(SUM(amount), 0) AS revenue
-      FROM income WHERE EXTRACT(YEAR FROM (date - INTERVAL '2 months')) = EXTRACT(YEAR FROM (NOW() - INTERVAL '2 months'))
+      FROM income WHERE EXTRACT(YEAR FROM (date - INTERVAL '2 months')) = EXTRACT(YEAR FROM (timezone('Africa/Johannesburg', now()) - INTERVAL '2 months'))
       GROUP BY TO_CHAR(date, 'YYYY-MM')
     ),
     exp AS (
       SELECT TO_CHAR(date, 'YYYY-MM') AS month, COALESCE(SUM(amount), 0) AS expenses
-      FROM expenses WHERE EXTRACT(YEAR FROM (date - INTERVAL '2 months')) = EXTRACT(YEAR FROM (NOW() - INTERVAL '2 months'))
+      FROM expenses WHERE EXTRACT(YEAR FROM (date - INTERVAL '2 months')) = EXTRACT(YEAR FROM (timezone('Africa/Johannesburg', now()) - INTERVAL '2 months'))
       GROUP BY TO_CHAR(date, 'YYYY-MM')
     )
     SELECT COALESCE(rev.month, exp.month) AS month,
@@ -126,21 +126,21 @@ export async function getMoMSnapshot(): Promise<{
 }> {
   const result = await db.execute(sql`
     SELECT
-      COALESCE(SUM(CASE WHEN date >= DATE_TRUNC('month', NOW())
-                         AND date <  DATE_TRUNC('month', NOW()) + INTERVAL '1 month'
+      COALESCE(SUM(CASE WHEN date >= DATE_TRUNC('month', timezone('Africa/Johannesburg', now()))
+                         AND date <  DATE_TRUNC('month', timezone('Africa/Johannesburg', now())) + INTERVAL '1 month'
                          THEN amount END), 0) AS current_revenue,
-      COALESCE(SUM(CASE WHEN date >= DATE_TRUNC('month', NOW()) - INTERVAL '1 month'
-                         AND date <  DATE_TRUNC('month', NOW())
+      COALESCE(SUM(CASE WHEN date >= DATE_TRUNC('month', timezone('Africa/Johannesburg', now())) - INTERVAL '1 month'
+                         AND date <  DATE_TRUNC('month', timezone('Africa/Johannesburg', now()))
                          THEN amount END), 0) AS previous_revenue
     FROM income
   `);
   const expResult = await db.execute(sql`
     SELECT
-      COALESCE(SUM(CASE WHEN date >= DATE_TRUNC('month', NOW())
-                         AND date <  DATE_TRUNC('month', NOW()) + INTERVAL '1 month'
+      COALESCE(SUM(CASE WHEN date >= DATE_TRUNC('month', timezone('Africa/Johannesburg', now()))
+                         AND date <  DATE_TRUNC('month', timezone('Africa/Johannesburg', now())) + INTERVAL '1 month'
                          THEN amount END), 0) AS current_expenses,
-      COALESCE(SUM(CASE WHEN date >= DATE_TRUNC('month', NOW()) - INTERVAL '1 month'
-                         AND date <  DATE_TRUNC('month', NOW())
+      COALESCE(SUM(CASE WHEN date >= DATE_TRUNC('month', timezone('Africa/Johannesburg', now())) - INTERVAL '1 month'
+                         AND date <  DATE_TRUNC('month', timezone('Africa/Johannesburg', now()))
                          THEN amount END), 0) AS previous_expenses
     FROM expenses
   `);
@@ -187,32 +187,32 @@ export async function getFinancialSummaryForPeriod(
 /** Current month summary */
 export async function getCurrentMonthSummary(): Promise<PeriodSummary> {
   return getFinancialSummaryForPeriod(
-    "DATE_TRUNC('month', NOW())",
-    "DATE_TRUNC('month', NOW()) + INTERVAL '1 month'",
+    "DATE_TRUNC('month', timezone('Africa/Johannesburg', now()))",
+    "DATE_TRUNC('month', timezone('Africa/Johannesburg', now())) + INTERVAL '1 month'",
   );
 }
 
 /** Previous month summary */
 export async function getPreviousMonthSummary(): Promise<PeriodSummary> {
   return getFinancialSummaryForPeriod(
-    "DATE_TRUNC('month', NOW()) - INTERVAL '1 month'",
-    "DATE_TRUNC('month', NOW())",
+    "DATE_TRUNC('month', timezone('Africa/Johannesburg', now())) - INTERVAL '1 month'",
+    "DATE_TRUNC('month', timezone('Africa/Johannesburg', now()))",
   );
 }
 
 /** Year-to-date summary (Mar 1 → now) */
 export async function getYTDSummary(): Promise<PeriodSummary> {
   return getFinancialSummaryForPeriod(
-    "DATE_TRUNC('year', NOW() - INTERVAL '2 months') + INTERVAL '2 months'",
-    "NOW() + INTERVAL '1 day'"
+    "DATE_TRUNC('year', timezone('Africa/Johannesburg', now()) - INTERVAL '2 months') + INTERVAL '2 months'",
+    "timezone('Africa/Johannesburg', now()) + INTERVAL '1 day'"
   );
 }
 
 /** Same Mar 1–month-day range but for the previous year */
 export async function getPreviousYearYTDSummary(): Promise<PeriodSummary> {
   return getFinancialSummaryForPeriod(
-    "DATE_TRUNC('year', NOW() - INTERVAL '2 months') - INTERVAL '1 year' + INTERVAL '2 months'",
-    "NOW() - INTERVAL '1 year' + INTERVAL '1 day'"
+    "DATE_TRUNC('year', timezone('Africa/Johannesburg', now()) - INTERVAL '2 months') - INTERVAL '1 year' + INTERVAL '2 months'",
+    "timezone('Africa/Johannesburg', now()) - INTERVAL '1 year' + INTERVAL '1 day'"
   );
 }
 

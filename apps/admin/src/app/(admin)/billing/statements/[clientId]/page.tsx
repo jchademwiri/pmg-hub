@@ -12,6 +12,14 @@ import { getDocumentLogoUrl } from '@/lib/document-logo';
 import { formatZAR, fmtDate } from '@/lib/format';
 import { PrintButton } from '@/components/billing/print-button';
 import { ExportPdfButton } from '@/components/billing/export-pdf-button';
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from '@/components/ui/table';
 
 export const dynamic = 'force-dynamic';
 
@@ -364,42 +372,38 @@ export default async function StatementDetailPage({ params, searchParams }: Prop
 
       {/* Income records section */}
       {incomeResult.data.length > 0 && (
-        <div>
-          <Card>
-            <CardHeader>
-              <CardTitle>Income Records</CardTitle>
-              <p className="text-sm text-muted-foreground">
-                Payments posted to the income ledger for this client -{' '}
-                <span className="font-medium text-green-600 dark:text-green-400">
-                  {formatZAR(incomeResult.sum)} total
-                </span>
-              </p>
-            </CardHeader>
-            <CardContent className="p-0 overflow-x-auto">
-              <table className="w-full min-w-[600px] text-sm">
-                <thead>
-                  <tr className="border-b">
-                    <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground">Date</th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground">Division</th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground">Description</th>
-                    <th className="px-6 py-3 text-right text-xs font-medium text-muted-foreground">Amount</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {incomeResult.data.map((inc) => (
-                    <tr key={inc.id} className="border-b last:border-0">
-                      <td className="px-6 py-3 tabular-nums text-muted-foreground">{fmtDate(inc.date)}</td>
-                      <td className="px-6 py-3">{inc.divisionName}</td>
-                      <td className="px-6 py-3 text-muted-foreground">{inc.description ?? '-'}</td>
-                      <td className="px-6 py-3 text-right tabular-nums font-medium text-green-600 dark:text-green-400">
-                        +{formatZAR(Number(inc.amount))}
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </CardContent>
-          </Card>
+        <div className="space-y-4">
+          <div>
+            <h3 className="text-lg font-semibold">Income Records</h3>
+            <p className="text-sm text-muted-foreground">
+              Payments posted to the income ledger for this client -{' '}
+              <span className="font-medium text-green-600 dark:text-green-400">
+                {formatZAR(incomeResult.sum)} total
+              </span>
+            </p>
+          </div>
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead className="pl-6">Date</TableHead>
+                <TableHead>Division</TableHead>
+                <TableHead>Description</TableHead>
+                <TableHead className="text-right pr-6">Amount</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {incomeResult.data.map((inc) => (
+                <TableRow key={inc.id}>
+                  <TableCell className="pl-6 tabular-nums text-muted-foreground">{fmtDate(inc.date)}</TableCell>
+                  <TableCell>{inc.divisionName}</TableCell>
+                  <TableCell className="text-muted-foreground">{inc.description ?? '-'}</TableCell>
+                  <TableCell className="text-right pr-6 tabular-nums font-medium text-green-600 dark:text-green-400">
+                    +{formatZAR(Number(inc.amount))}
+                  </TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
         </div>
       )}
     </div>

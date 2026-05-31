@@ -54,7 +54,7 @@ export function IncomeAddForm({ divisions, clients, createAction, minDate }: Inc
 
   return (
     <form ref={formRef} onSubmit={handleSubmit} className="flex flex-col gap-3">
-      <FieldGroup className="flex-row flex-wrap items-end gap-3">
+      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4 items-end">
         <Field>
           <FieldLabel htmlFor="income-date">Date</FieldLabel>
           <Input
@@ -66,14 +66,13 @@ export function IncomeAddForm({ divisions, clients, createAction, minDate }: Inc
             defaultValue={today}
             max={today}
             min={minDate}
-            className="w-40"
           />
         </Field>
 
         <Field>
           <FieldLabel htmlFor="income-division">Division</FieldLabel>
           <Select name="divisionId" required disabled={isPending}>
-            <SelectTrigger id="income-division" className="w-44">
+            <SelectTrigger id="income-division">
               <SelectValue placeholder="Select division" />
             </SelectTrigger>
             <SelectContent>
@@ -89,7 +88,7 @@ export function IncomeAddForm({ divisions, clients, createAction, minDate }: Inc
         <Field>
           <FieldLabel htmlFor="income-client">Client</FieldLabel>
           <Select value={clientId} onValueChange={setClientId} disabled={isPending}>
-            <SelectTrigger id="income-client" className="w-44">
+            <SelectTrigger id="income-client">
               <SelectValue placeholder="Select client" />
             </SelectTrigger>
             <SelectContent>
@@ -110,7 +109,6 @@ export function IncomeAddForm({ divisions, clients, createAction, minDate }: Inc
             type="text"
             placeholder="Optional"
             disabled={isPending}
-            className="w-48"
           />
         </Field>
 
@@ -124,16 +122,15 @@ export function IncomeAddForm({ divisions, clients, createAction, minDate }: Inc
             step="0.01"
             required
             disabled={isPending}
-            className="w-36"
           />
         </Field>
 
-        <Field>
-          <Button type="submit" disabled={isPending}>
+        <div className="flex">
+          <Button type="submit" disabled={isPending} className="w-full">
             {isPending ? 'Adding…' : 'Add Income'}
           </Button>
-        </Field>
-      </FieldGroup>
+        </div>
+      </div>
 
       {errorMessage && (
         <Alert variant="destructive">

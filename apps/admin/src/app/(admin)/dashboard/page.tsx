@@ -17,19 +17,19 @@ import {
 } from '@/lib/financial';
 import { getSnapshotByPeriod, getAgingReport } from '@pmg/db';
 import { DashboardShell } from '@/components/dashboard/dashboard-shell';
+import { getSASTParts } from '@/lib/format';
 
 export const dynamic = 'force-dynamic';
 export const metadata: Metadata = { title: 'Dashboard' };
 
 export default async function DashboardPage() {
-  const now = new Date();
-  const dayOfMonth = now.getDate();
+  const { year, month, day: dayOfMonth } = getSASTParts();
 
   // Close Month button is only shown between the 1st and 5th of the month
   const showCloseMonthButton = dayOfMonth >= 1 && dayOfMonth <= 5;
 
   // The period to close is ALWAYS the previous month, not the current one
-  const prevDate = new Date(now.getFullYear(), now.getMonth() - 1, 1);
+  const prevDate = new Date(year, month - 1, 1);
   const periodToClose = `${prevDate.getFullYear()}-${String(prevDate.getMonth() + 1).padStart(2, '0')}`;
 
   const [

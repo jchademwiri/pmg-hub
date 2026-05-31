@@ -209,10 +209,10 @@ export function QuoteFormClient({
       <div className="flex flex-col gap-6 lg:col-span-2">
         {/* Quote details */}
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-          <div className="flex flex-col gap-1.5">
-            <label className="text-sm font-medium">
+          <Field>
+            <FieldLabel>
               Division <span className="text-destructive">*</span>
-            </label>
+            </FieldLabel>
             <Select value={divisionId} onValueChange={setDivisionId} disabled={isSubmitting || !!editId}>
               <SelectTrigger>
                 <SelectValue placeholder="Select a division…" />
@@ -225,12 +225,12 @@ export function QuoteFormClient({
                 ))}
               </SelectContent>
             </Select>
-          </div>
+          </Field>
 
-          <div className="flex flex-col gap-1.5">
-            <label className="text-sm font-medium">
+          <Field>
+            <FieldLabel>
               Client <span className="text-destructive">*</span>
-            </label>
+            </FieldLabel>
             <Select value={clientId} onValueChange={setClientId} disabled={isSubmitting}>
               <SelectTrigger>
                 <SelectValue placeholder="Select a client… *" />
@@ -243,12 +243,12 @@ export function QuoteFormClient({
                 ))}
               </SelectContent>
             </Select>
-          </div>
+          </Field>
 
-          <div className="flex flex-col gap-1.5">
-            <label className="text-sm font-medium">
+          <Field>
+            <FieldLabel>
               Issue Date <span className="text-destructive">*</span>
-            </label>
+            </FieldLabel>
             <Input
               type="date"
               value={quoteDate}
@@ -264,10 +264,10 @@ export function QuoteFormClient({
               }}
               disabled={isSubmitting}
             />
-          </div>
+          </Field>
 
-          <div className="flex flex-col gap-1.5">
-            <label className="text-sm font-medium">Expiry Date</label>
+          <Field>
+            <FieldLabel>Expiry Date</FieldLabel>
             <Input
               type="date"
               value={expiryDate}
@@ -277,10 +277,10 @@ export function QuoteFormClient({
               }}
               disabled={isSubmitting}
             />
-          </div>
+          </Field>
 
-          <div className="flex flex-col gap-1.5 sm:col-span-2">
-            <label className="text-sm font-medium">Reference</label>
+          <Field className="sm:col-span-2">
+            <FieldLabel>Reference</FieldLabel>
             <Input
               value={reference}
               onChange={(e) => setReference(e.target.value)}
@@ -288,14 +288,14 @@ export function QuoteFormClient({
               disabled={isSubmitting}
             />
             <p className="text-xs text-muted-foreground">Optional internal or client reference</p>
-          </div>
+          </Field>
 
-          <div className="flex flex-col gap-1.5">
-            <label className="text-sm font-medium">Quote #</label>
+          <Field>
+            <FieldLabel>Quote #</FieldLabel>
             <div className="h-9 rounded-md border border-input bg-muted/40 px-3 flex items-center text-sm text-muted-foreground">
               {editId ? 'Existing number preserved' : 'Auto-generated on save'}
             </div>
-          </div>
+          </Field>
         </div>
 
         {/* Line items */}

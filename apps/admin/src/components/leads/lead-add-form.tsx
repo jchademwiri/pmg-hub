@@ -3,7 +3,7 @@
 import * as React from 'react'
 import { Alert, AlertDescription } from '@/components/ui/alert'
 import { Button } from '@/components/ui/button'
-import { Field, FieldGroup, FieldLabel } from '@/components/ui/field'
+import { Field, FieldLabel } from '@/components/ui/field'
 import { Input } from '@/components/ui/input'
 import {
   Select,
@@ -17,9 +17,10 @@ import { Textarea } from '@/components/ui/textarea'
 interface LeadAddFormProps {
   divisions: { id: string; name: string }[]
   createAction: (formData: FormData) => Promise<{ error?: string }>
+  onCancel?: () => void
 }
 
-export function LeadAddForm({ divisions, createAction }: LeadAddFormProps) {
+export function LeadAddForm({ divisions, createAction, onCancel }: LeadAddFormProps) {
   const formRef = React.useRef<HTMLFormElement>(null)
   const [isPending, startTransition] = React.useTransition()
   const [errorMessage, setErrorMessage] = React.useState<string | null>(null)
@@ -45,8 +46,8 @@ export function LeadAddForm({ divisions, createAction }: LeadAddFormProps) {
   }
 
   return (
-    <form ref={formRef} onSubmit={handleSubmit} className="flex flex-col gap-3">
-      <FieldGroup className="flex-row flex-wrap items-end gap-3">
+    <form ref={formRef} onSubmit={handleSubmit} className="flex flex-col gap-4">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 items-start">
         <Field>
           <FieldLabel htmlFor="lead-name">
             Name <span className="text-destructive">*</span>
@@ -55,33 +56,31 @@ export function LeadAddForm({ divisions, createAction }: LeadAddFormProps) {
             id="lead-name"
             name="name"
             type="text"
+            placeholder="e.g. John Doe"
             required
             disabled={isPending}
-            className="w-44"
           />
         </Field>
 
         <Field>
-          <FieldLabel htmlFor="lead-email">Email</FieldLabel>
+          <FieldLabel htmlFor="lead-email">Email Address</FieldLabel>
           <Input
             id="lead-email"
             name="email"
             type="email"
-            placeholder="Optional"
+            placeholder="e.g. john@example.com"
             disabled={isPending}
-            className="w-48"
           />
         </Field>
 
         <Field>
-          <FieldLabel htmlFor="lead-phone">Phone</FieldLabel>
+          <FieldLabel htmlFor="lead-phone">Phone Number</FieldLabel>
           <Input
             id="lead-phone"
             name="phone"
             type="text"
-            placeholder="Optional"
+            placeholder="e.g. +27 82 123 4567"
             disabled={isPending}
-            className="w-36"
           />
         </Field>
 
@@ -91,9 +90,8 @@ export function LeadAddForm({ divisions, createAction }: LeadAddFormProps) {
             id="lead-source"
             name="source"
             type="text"
-            placeholder="Optional"
+            placeholder="e.g. Referral, Website"
             disabled={isPending}
-            className="w-36"
           />
         </Field>
 
@@ -103,16 +101,15 @@ export function LeadAddForm({ divisions, createAction }: LeadAddFormProps) {
             id="lead-service-interest"
             name="serviceInterest"
             type="text"
-            placeholder="Optional"
+            placeholder="e.g. Web Design"
             disabled={isPending}
-            className="w-44"
           />
         </Field>
 
         <Field>
           <FieldLabel htmlFor="lead-division">Division</FieldLabel>
           <Select value={divisionId} onValueChange={setDivisionId} disabled={isPending}>
-            <SelectTrigger id="lead-division" className="w-44">
+            <SelectTrigger id="lead-division">
               <SelectValue placeholder="Select division" />
             </SelectTrigger>
             <SelectContent>
@@ -125,27 +122,40 @@ export function LeadAddForm({ divisions, createAction }: LeadAddFormProps) {
           </Select>
         </Field>
 
-        <Field>
-          <FieldLabel htmlFor="lead-message">Message</FieldLabel>
-          <Textarea
-            id="lead-message"
-            name="message"
-            placeholder="Optional"
-            disabled={isPending}
-            rows={3}
-            className="w-64 resize-none"
-          />
-        </Field>
+        <div className="md:col-span-2 lg:col-span-3">
+          <Field>
+            <FieldLabel htmlFor="lead-message">Message</FieldLabel>
+            <Textarea
+              id="lead-message"
+              name="message"
+              placeholder="e.g. Interested in custom development for e-commerce website..."
+              disabled={isPending}
+              rows={2}
+              className="resize-none"
+            />
+          </Field>
+        </div>
+      </div>
 
-        <Field>
-          <Button type="submit" disabled={isPending}>
-            {isPending ? 'Adding…' : 'Add Lead'}
+      <div className="flex items-center justify-end gap-3 border-t border-border/50 pt-4 mt-2">
+        {onCancel && (
+          <Button
+            type="button"
+            variant="outline"
+            onClick={onCancel}
+            disabled={isPending}
+            size="sm"
+          >
+            Cancel
           </Button>
-        </Field>
-      </FieldGroup>
+        )}
+        <Button type="submit" disabled={isPending} size="sm">
+          {isPending ? 'Adding…' : 'Add Lead'}
+        </Button>
+      </div>
 
       {errorMessage && (
-        <Alert variant="destructive">
+        <Alert variant="destructive" className="mt-2">
           <AlertDescription>{errorMessage}</AlertDescription>
         </Alert>
       )}

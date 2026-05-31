@@ -4,7 +4,7 @@ import * as React from 'react';
 import { toast } from 'sonner';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
-import { Field, FieldGroup, FieldLabel } from '@/components/ui/field';
+import { Field, FieldLabel } from '@/components/ui/field';
 import { Input } from '@/components/ui/input';
 import {
   Select,
@@ -22,6 +22,7 @@ interface ExpenseAddFormProps {
   clients: { id: string; name: string }[];
   createAction: (formData: FormData) => Promise<{ error?: string }>;
   minDate?: string;
+  onCancel?: () => void;
 }
 
 export function ExpenseAddForm({
@@ -30,6 +31,7 @@ export function ExpenseAddForm({
   clients,
   createAction,
   minDate,
+  onCancel,
 }: ExpenseAddFormProps) {
   const formRef = React.useRef<HTMLFormElement>(null);
   const [isPending, startTransition] = React.useTransition();
@@ -52,17 +54,18 @@ export function ExpenseAddForm({
   }
 
   return (
-    <form ref={formRef} onSubmit={handleSubmit} className="flex flex-col gap-3">
-      <FieldGroup className="flex-row flex-wrap items-end gap-3">
+    <form ref={formRef} onSubmit={handleSubmit} className="flex flex-col gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
         <Field>
-          <FieldLabel htmlFor="expense-date">Date</FieldLabel>
+          <FieldLabel htmlFor="expense-date">
+            Date <span className="text-destructive">*</span>
+          </FieldLabel>
           <Input
             id="expense-date"
             name="date"
             type="date"
             required
             disabled={isPending}
-            className="w-40"
             defaultValue={today}
             max={today}
             min={minDate}
@@ -70,9 +73,11 @@ export function ExpenseAddForm({
         </Field>
 
         <Field>
-          <FieldLabel htmlFor="expense-division">Division</FieldLabel>
+          <FieldLabel htmlFor="expense-division">
+            Division <span className="text-destructive">*</span>
+          </FieldLabel>
           <Select name="divisionId" required disabled={isPending}>
-            <SelectTrigger id="expense-division" className="w-44">
+            <SelectTrigger id="expense-division">
               <SelectValue placeholder="Select division" />
             </SelectTrigger>
             <SelectContent>
@@ -88,7 +93,7 @@ export function ExpenseAddForm({
         <Field>
           <FieldLabel htmlFor="expense-client">Client (Optional)</FieldLabel>
           <Select name="clientId" disabled={isPending}>
-            <SelectTrigger id="expense-client" className="w-44">
+            <SelectTrigger id="expense-client">
               <SelectValue placeholder="No client" />
             </SelectTrigger>
             <SelectContent>
@@ -103,9 +108,11 @@ export function ExpenseAddForm({
         </Field>
 
         <Field>
-          <FieldLabel htmlFor="expense-category">Category</FieldLabel>
+          <FieldLabel htmlFor="expense-category">
+            Category <span className="text-destructive">*</span>
+          </FieldLabel>
           <Select name="category" required disabled={isPending}>
-            <SelectTrigger id="expense-category" className="w-44">
+            <SelectTrigger id="expense-category">
               <SelectValue placeholder="Select category" />
             </SelectTrigger>
             <SelectContent>
@@ -124,14 +131,15 @@ export function ExpenseAddForm({
             id="expense-description"
             name="description"
             type="text"
-            placeholder="Optional"
+            placeholder="e.g. Server hosting"
             disabled={isPending}
-            className="w-48"
           />
         </Field>
 
         <Field>
-          <FieldLabel htmlFor="expense-amount">Amount</FieldLabel>
+          <FieldLabel htmlFor="expense-amount">
+            Amount (ZAR) <span className="text-destructive">*</span>
+          </FieldLabel>
           <Input
             id="expense-amount"
             name="amount"
@@ -140,19 +148,30 @@ export function ExpenseAddForm({
             step="0.01"
             required
             disabled={isPending}
-            className="w-36"
+            placeholder="e.g. 250.00"
           />
         </Field>
+      </div>
 
-        <Field>
-          <Button type="submit" disabled={isPending}>
-            {isPending ? 'Adding…' : 'Add Expense'}
+      <div className="flex items-center justify-end gap-3 border-t border-border/50 pt-4 mt-2">
+        {onCancel && (
+          <Button
+            type="button"
+            variant="outline"
+            onClick={onCancel}
+            disabled={isPending}
+            size="sm"
+          >
+            Cancel
           </Button>
-        </Field>
-      </FieldGroup>
+        )}
+        <Button type="submit" disabled={isPending} size="sm">
+          {isPending ? 'Adding…' : 'Add Expense'}
+        </Button>
+      </div>
 
       {errorMessage && (
-        <Alert variant="destructive">
+        <Alert variant="destructive" className="mt-2">
           <AlertDescription>{errorMessage}</AlertDescription>
         </Alert>
       )}

@@ -4,6 +4,7 @@ import { revalidatePath } from 'next/cache';
 import { getDb, invoices, income, clients, paymentAllocations, eq, and, sql, desc, asc, divisions, divisionBillingSettings } from '@pmg/db';
 import { getSessionOrRedirect } from '@/lib/auth';
 import { isPeriodClosed, getMinAllowedDate, getMinDateErrorMessage } from '@/lib/date-rules';
+import { getSASTToday } from '@/lib/format';
 
 export interface PaymentAllocationInput {
   invoiceId: string;
@@ -125,7 +126,7 @@ export async function recordClientPayment(data: PaymentInput): Promise<{ error?:
     const db = getDb();
 
     // 1. Check period lock and future date
-    const today = new Date().toISOString().split('T')[0]!;
+    const today = getSASTToday();
     if (data.date > today) {
       return { error: 'Payment date cannot be in the future.' };
     }

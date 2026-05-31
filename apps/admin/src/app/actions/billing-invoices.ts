@@ -5,6 +5,7 @@ import { getDb, invoices, quotations, billingLineItems, income, clients, divisio
 import { getNextDocumentNumber, addDays } from '@pmg/db';
 import { getSessionOrRedirect } from '@/lib/auth';
 import { isPeriodClosed, getMinAllowedDate, getMinDateErrorMessage } from '@/lib/date-rules';
+import { getSASTParts, getSASTToday } from '@/lib/format';
 import { CreateInvoiceSchema, type CreateInvoiceInput } from './billing-schema';
 
 // ── Shared totals helper ──────────────────────────────────────────────────────
@@ -247,7 +248,8 @@ export async function convertQuoteToInvoice(
       return { error: 'Only accepted quotations can be converted to invoices.' };
     }
 
-    const today = new Date().toISOString().split('T')[0]!;
+    const { year } = getSASTParts();
+    const today = getSASTToday();
     if (await isPeriodClosed(today)) {
       const minDate = await getMinAllowedDate();
       return { error: getMinDateErrorMessage(minDate) };
@@ -275,7 +277,6 @@ export async function convertQuoteToInvoice(
     dueDateObj.setDate(dueDateObj.getDate() + paymentTermsDays);
     const calculatedDueDate = dueDateObj.toISOString().split('T')[0];
 
-    const year = new Date().getFullYear();
     const documentNumber = await getNextDocumentNumber(quote.divisionId, 'invoice', year);
 
     // Create invoice from quote
@@ -390,7 +391,7 @@ export async function markInvoicePaid(id: string): Promise<{ error?: string }> {
     // Period lock is checked against TODAY (the payment date), not the invoice
     // date. An invoice can be issued in a prior period and paid late - what
     // matters for the ledger is when the cash was received.
-    const paymentDate = new Date().toISOString().split('T')[0]!;
+    const paymentDate = getSASTToday();
     if (await isPeriodClosed(paymentDate)) {
       const minDate = await getMinAllowedDate();
       return { error: getMinDateErrorMessage(minDate) };
