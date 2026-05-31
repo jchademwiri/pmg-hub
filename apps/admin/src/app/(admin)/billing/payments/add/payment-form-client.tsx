@@ -14,6 +14,7 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { Separator } from '@/components/ui/separator';
+import { Field, FieldLabel } from '@/components/ui/field';
 import { formatZAR } from '@/lib/format';
 import {
   Table,
@@ -233,8 +234,8 @@ export function PaymentFormClient({ divisions, clients, minDate }: PaymentFormCl
         <h3 className="text-sm font-semibold">Payment Details</h3>
         
         {/* Client Selector */}
-        <div className="flex flex-col gap-1.5">
-          <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Client</label>
+        <Field>
+          <FieldLabel className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Client</FieldLabel>
           <Select value={clientId} onValueChange={setClientId}>
             <SelectTrigger>
               <SelectValue placeholder="Select Client" />
@@ -252,11 +253,11 @@ export function PaymentFormClient({ divisions, clients, minDate }: PaymentFormCl
               Current Retainer Credit: <span className="font-semibold text-emerald-600">{formatZAR(existingCreditBalance)}</span>
             </div>
           )}
-        </div>
+        </Field>
 
         {/* Division Selector */}
-        <div className="flex flex-col gap-1.5">
-          <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Division</label>
+        <Field>
+          <FieldLabel className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Division</FieldLabel>
           <Select value={divisionId} onValueChange={setDivisionId}>
             <SelectTrigger>
               <SelectValue placeholder="Select Division" />
@@ -269,11 +270,11 @@ export function PaymentFormClient({ divisions, clients, minDate }: PaymentFormCl
               ))}
             </SelectContent>
           </Select>
-        </div>
+        </Field>
 
         {/* Payment Date */}
-        <div className="flex flex-col gap-1.5">
-          <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Payment Date</label>
+        <Field>
+          <FieldLabel className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Payment Date</FieldLabel>
           <Input
             type="date"
             value={paymentDate}
@@ -285,21 +286,21 @@ export function PaymentFormClient({ divisions, clients, minDate }: PaymentFormCl
               Error: Date is prior to the open ledger period boundary.
             </span>
           )}
-        </div>
+        </Field>
 
         {/* Payment Reference */}
-        <div className="flex flex-col gap-1.5">
-          <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Reference / EFT Reference</label>
+        <Field>
+          <FieldLabel className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Reference / EFT Reference</FieldLabel>
           <Input
             placeholder="e.g. EFT-89201"
             value={description}
             onChange={(e) => setDescription(e.target.value)}
           />
-        </div>
+        </Field>
 
         {/* Total Amount Paid */}
-        <div className="flex flex-col gap-1.5">
-          <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Total Amount Paid (ZAR)</label>
+        <Field>
+          <FieldLabel className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Total Amount Paid (ZAR)</FieldLabel>
           <div className="relative">
             <span className="absolute left-3 top-2.5 text-sm font-semibold text-muted-foreground">R</span>
             <Input
@@ -311,7 +312,7 @@ export function PaymentFormClient({ divisions, clients, minDate }: PaymentFormCl
               onChange={(e) => setAmount(e.target.value)}
             />
           </div>
-        </div>
+        </Field>
 
         {/* Send Thank You / Receipt Email Option */}
         {clientId && (

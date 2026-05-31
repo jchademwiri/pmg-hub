@@ -2,11 +2,23 @@ import 'server-only';
 import { getSnapshotByPeriod } from '@pmg/db';
 import { fmtMonthYear } from '@/lib/format';
 
+/** Get the current Date parts in South African Standard Time (SAST, UTC+2) */
+export function getSASTParts(date: Date = new Date()) {
+  const formatter = new Intl.DateTimeFormat('en-US', {
+    timeZone: 'Africa/Johannesburg',
+    year: 'numeric',
+    month: 'numeric',
+    day: 'numeric',
+  });
+  const parts = formatter.formatToParts(date);
+  const year = Number(parts.find((p) => p.type === 'year')?.value);
+  const month = Number(parts.find((p) => p.type === 'month')?.value) - 1; // 0-indexed
+  const day = Number(parts.find((p) => p.type === 'day')?.value);
+  return { year, month, day };
+}
+
 export async function getMinAllowedDate(): Promise<string> {
-  const now = new Date();
-  const day = now.getDate();
-  const year = now.getFullYear();
-  const month = now.getMonth();
+  const { year, month, day } = getSASTParts();
 
   const currentMonthStart = `${year}-${String(month + 1).padStart(2, '0')}-01`;
 
@@ -23,15 +35,15 @@ export async function getMinAllowedDate(): Promise<string> {
 
 export async function isPeriodClosed(date: string): Promise<boolean> {
   const period = date.slice(0, 7);
-  const now = new Date();
-  const currentPeriod = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
+  const { year, month, day } = getSASTParts();
+  const currentPeriod = `${year}-${String(month + 1).padStart(2, '0')}`;
 
   // Future periods are always open
   if (period > currentPeriod) return false;
 
   if (period === currentPeriod) return false;
 
-  const prevDate = new Date(now.getFullYear(), now.getMonth() - 1, 1);
+  const prevDate = new Date(year, month - 1, 1);
   const prevPeriod = `${prevDate.getFullYear()}-${String(prevDate.getMonth() + 1).padStart(2, '0')}`;
 
   if (period < prevPeriod) return true;
@@ -39,7 +51,6 @@ export async function isPeriodClosed(date: string): Promise<boolean> {
   const snapshot = await getSnapshotByPeriod(period);
   if (snapshot) return true;
 
-  const day = now.getDate();
   if (day > 5) return true;
 
   return false;

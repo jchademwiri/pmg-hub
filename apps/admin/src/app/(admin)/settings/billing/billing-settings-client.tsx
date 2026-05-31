@@ -7,6 +7,7 @@ import { Input } from '@/components/ui/input';
 import { Separator } from '@/components/ui/separator';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
+import { Field, FieldLabel } from '@/components/ui/field';
 import type { DivisionBillingSettings } from '@pmg/db';
 
 interface Division {
@@ -152,20 +153,20 @@ function DivisionBillingForm({
             <Card className="lg:col-span-2">
               <CardContent className="flex flex-col gap-4 pt-6">
                 <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-                  <div className="flex flex-col gap-1.5">
-                    <label className="text-sm font-medium">Invoice Prefix</label>
+                  <Field>
+                    <FieldLabel>Invoice Prefix</FieldLabel>
                     <div className="h-9 rounded-md border border-input bg-muted/40 px-3 flex items-center text-sm text-muted-foreground">
                       {prefix}-INV-
                     </div>
                     <p className="text-xs text-muted-foreground">e.g. {prefix}-INV-2026-001</p>
-                  </div>
-                  <div className="flex flex-col gap-1.5">
-                    <label className="text-sm font-medium">Quote Prefix</label>
+                  </Field>
+                  <Field>
+                    <FieldLabel>Quote Prefix</FieldLabel>
                     <div className="h-9 rounded-md border border-input bg-muted/40 px-3 flex items-center text-sm text-muted-foreground">
                       {prefix}-Q-
                     </div>
                     <p className="text-xs text-muted-foreground">e.g. {prefix}-Q-2026-001</p>
-                  </div>
+                  </Field>
                 </div>
               </CardContent>
             </Card>
@@ -184,8 +185,8 @@ function DivisionBillingForm({
             <Card className="lg:col-span-2">
               <CardContent className="flex flex-col gap-4 pt-6">
                 <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-                  <div className="flex flex-col gap-1.5">
-                    <label className="text-sm font-medium">Default VAT Rate (%)</label>
+                  <Field>
+                    <FieldLabel>Default VAT Rate (%)</FieldLabel>
                     <Input
                       name="defaultVatRate"
                       type="number"
@@ -196,9 +197,9 @@ function DivisionBillingForm({
                       onChange={(e) => setDefaultVatRate(e.target.value)}
                       disabled={isPending}
                     />
-                  </div>
-                  <div className="flex flex-col gap-1.5">
-                    <label className="text-sm font-medium">Payment Terms (days)</label>
+                  </Field>
+                  <Field>
+                    <FieldLabel>Payment Terms (days)</FieldLabel>
                     <Input
                       name="paymentTermsDays"
                       type="number"
@@ -208,13 +209,13 @@ function DivisionBillingForm({
                       onChange={(e) => setPaymentTermsDays(e.target.value)}
                       disabled={isPending}
                     />
-                  </div>
-                  <div className="flex flex-col gap-1.5">
-                    <label className="text-sm font-medium">Currency</label>
+                  </Field>
+                  <Field>
+                    <FieldLabel>Currency</FieldLabel>
                     <div className="h-9 rounded-md border border-input bg-muted/40 px-3 flex items-center text-sm text-muted-foreground">
                       ZAR - South African Rand
                     </div>
-                  </div>
+                  </Field>
                 </div>
               </CardContent>
             </Card>
@@ -235,8 +236,8 @@ function DivisionBillingForm({
             <Card className="lg:col-span-2">
               <CardContent className="flex flex-col gap-4 pt-6">
                 <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-                  <div className="flex flex-col gap-1.5 sm:col-span-2">
-                    <label className="text-sm font-medium">Sales Rep Name</label>
+                  <Field className="sm:col-span-2">
+                    <FieldLabel>Sales Rep Name</FieldLabel>
                     <Input
                       name="salesRepName"
                       value={salesRepName}
@@ -244,9 +245,9 @@ function DivisionBillingForm({
                       placeholder="e.g. Jacob Chademwiri"
                       disabled={isPending}
                     />
-                  </div>
-                  <div className="flex flex-col gap-1.5">
-                    <label className="text-sm font-medium">Phone Number</label>
+                  </Field>
+                  <Field>
+                    <FieldLabel>Phone Number</FieldLabel>
                     <Input
                       name="salesRepPhone"
                       value={salesRepPhone}
@@ -254,9 +255,9 @@ function DivisionBillingForm({
                       placeholder="+27 21 000 0000"
                       disabled={isPending}
                     />
-                  </div>
-                  <div className="flex flex-col gap-1.5">
-                    <label className="text-sm font-medium">Email Address</label>
+                  </Field>
+                  <Field>
+                    <FieldLabel>Email Address</FieldLabel>
                     <Input
                       name="salesRepEmail"
                       type="email"
@@ -265,9 +266,9 @@ function DivisionBillingForm({
                       placeholder="sales@example.co.za"
                       disabled={isPending}
                     />
-                  </div>
-                  <div className="flex flex-col gap-1.5">
-                    <label className="text-sm font-medium">Division Website</label>
+                  </Field>
+                  <Field>
+                    <FieldLabel>Division Website</FieldLabel>
                     <Input
                       name="divisionWebsite"
                       value={divisionWebsite}
@@ -275,7 +276,7 @@ function DivisionBillingForm({
                       placeholder="www.example.co.za"
                       disabled={isPending}
                     />
-                  </div>
+                  </Field>
                 </div>
               </CardContent>
             </Card>
@@ -294,8 +295,8 @@ function DivisionBillingForm({
             <Card className="lg:col-span-2">
               <CardContent className="flex flex-col gap-4 pt-6">
                 <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-                  <div className="flex flex-col gap-1.5">
-                    <label className="text-sm font-medium">Bank Name</label>
+                  <Field>
+                    <FieldLabel>Bank Name</FieldLabel>
                     <Input
                       name="bankName"
                       value={bankName}
@@ -303,9 +304,9 @@ function DivisionBillingForm({
                       placeholder="e.g. First National Bank"
                       disabled={isPending}
                     />
-                  </div>
-                  <div className="flex flex-col gap-1.5">
-                    <label className="text-sm font-medium">Account Name</label>
+                  </Field>
+                  <Field>
+                    <FieldLabel>Account Name</FieldLabel>
                     <Input
                       name="bankAccountName"
                       value={bankAccountName}
@@ -313,9 +314,9 @@ function DivisionBillingForm({
                       placeholder="e.g. PMG Media (Pty) Ltd"
                       disabled={isPending}
                     />
-                  </div>
-                  <div className="flex flex-col gap-1.5">
-                    <label className="text-sm font-medium">Account Number</label>
+                  </Field>
+                  <Field>
+                    <FieldLabel>Account Number</FieldLabel>
                     <Input
                       name="bankAccountNumber"
                       value={bankAccountNumber}
@@ -323,9 +324,9 @@ function DivisionBillingForm({
                       placeholder="e.g. 62012345678"
                       disabled={isPending}
                     />
-                  </div>
-                  <div className="flex flex-col gap-1.5">
-                    <label className="text-sm font-medium">Branch Code</label>
+                  </Field>
+                  <Field>
+                    <FieldLabel>Branch Code</FieldLabel>
                     <Input
                       name="bankBranchCode"
                       value={bankBranchCode}
@@ -333,7 +334,7 @@ function DivisionBillingForm({
                       placeholder="e.g. 250655"
                       disabled={isPending}
                     />
-                  </div>
+                  </Field>
                 </div>
               </CardContent>
             </Card>
@@ -353,8 +354,8 @@ function DivisionBillingForm({
             </div>
             <Card className="lg:col-span-2">
               <CardContent className="flex flex-col gap-4 pt-6">
-                <div className="flex flex-col gap-1.5">
-                  <label className="text-sm font-medium">Invoice Notes</label>
+                <Field className="w-full">
+                  <FieldLabel>Invoice Notes</FieldLabel>
                   <textarea
                     name="invoiceNotes"
                     value={invoiceNotes}
@@ -364,9 +365,9 @@ function DivisionBillingForm({
                     placeholder="e.g. Payment due within 30 days. Please use invoice number as reference."
                     className="flex min-h-[80px] w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
                   />
-                </div>
-                <div className="flex flex-col gap-1.5 mt-4">
-                  <label className="text-sm font-medium">Quote Notes / Terms</label>
+                </Field>
+                <Field className="w-full mt-4">
+                  <FieldLabel>Quote Notes / Terms</FieldLabel>
                   <textarea
                     name="quoteNotes"
                     value={quoteNotes}
@@ -376,7 +377,7 @@ function DivisionBillingForm({
                     placeholder="e.g. 50% deposit required. Quotation valid for 30 days."
                     className="flex min-h-[80px] w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
                   />
-                </div>
+                </Field>
               </CardContent>
             </Card>
           </div>

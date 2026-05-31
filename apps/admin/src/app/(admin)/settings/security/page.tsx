@@ -5,6 +5,7 @@ import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card'
 import { Separator } from '@/components/ui/separator'
+import { Field, FieldLabel } from '@/components/ui/field'
 import {
   Table,
   TableBody,
@@ -63,24 +64,24 @@ export default function SecuritySettingsPage() {
         <Card className="lg:col-span-2">
           <CardContent className="flex flex-col gap-4 pt-6">
             <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-              <div className="flex flex-col gap-1.5 sm:col-span-2">
-                <label className="text-sm font-medium">Current Password</label>
+              <Field className="sm:col-span-2">
+                <FieldLabel>Current Password</FieldLabel>
                 <div className="h-9 rounded-md border border-input bg-muted/40 px-3 flex items-center text-sm text-muted-foreground">
                   ••••••••
                 </div>
-              </div>
-              <div className="flex flex-col gap-1.5">
-                <label className="text-sm font-medium">New Password</label>
+              </Field>
+              <Field>
+                <FieldLabel>New Password</FieldLabel>
                 <div className="h-9 rounded-md border border-input bg-muted/40 px-3 flex items-center text-sm text-muted-foreground">
                   -
                 </div>
-              </div>
-              <div className="flex flex-col gap-1.5">
-                <label className="text-sm font-medium">Confirm New Password</label>
+              </Field>
+              <Field>
+                <FieldLabel>Confirm New Password</FieldLabel>
                 <div className="h-9 rounded-md border border-input bg-muted/40 px-3 flex items-center text-sm text-muted-foreground">
                   -
                 </div>
-              </div>
+              </Field>
             </div>
             <div className="flex justify-end">
               <Button variant="outline" size="sm" disabled title="Coming soon">

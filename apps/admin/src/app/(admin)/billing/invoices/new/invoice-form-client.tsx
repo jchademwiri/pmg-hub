@@ -236,10 +236,10 @@ export function InvoiceFormClient({
 
         {/* Invoice details */}
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-          <div className="flex flex-col gap-1.5">
-            <label className="text-sm font-medium">
+          <Field>
+            <FieldLabel>
               Division <span className="text-destructive">*</span>
-            </label>
+            </FieldLabel>
             <Select value={divisionId} onValueChange={setDivisionId} disabled={isSubmitting || !!editId}>
               <SelectTrigger>
                 <SelectValue placeholder="Select a division…" />
@@ -252,12 +252,12 @@ export function InvoiceFormClient({
                 ))}
               </SelectContent>
             </Select>
-          </div>
+          </Field>
 
-          <div className="flex flex-col gap-1.5">
-            <label className="text-sm font-medium">
+          <Field>
+            <FieldLabel>
               Client <span className="text-destructive">*</span>
-            </label>
+            </FieldLabel>
             <Select value={clientId} onValueChange={setClientId} disabled={isSubmitting}>
               <SelectTrigger>
                 <SelectValue placeholder="Select a client… *" />
@@ -280,12 +280,12 @@ export function InvoiceFormClient({
                 </span>
               </div>
             )}
-          </div>
+          </Field>
 
-          <div className="flex flex-col gap-1.5">
-            <label className="text-sm font-medium">
+          <Field>
+            <FieldLabel>
               Invoice Date <span className="text-destructive">*</span>
-            </label>
+            </FieldLabel>
             <Input
               type="date"
               value={invoiceDate}
@@ -301,10 +301,10 @@ export function InvoiceFormClient({
               }}
               disabled={isSubmitting}
             />
-          </div>
+          </Field>
 
-          <div className="flex flex-col gap-1.5">
-            <label className="text-sm font-medium">Due Date</label>
+          <Field>
+            <FieldLabel>Due Date</FieldLabel>
             <Input
               type="date"
               value={dueDate}
@@ -314,24 +314,24 @@ export function InvoiceFormClient({
               }}
               disabled={isSubmitting}
             />
-          </div>
+          </Field>
 
-          <div className="flex flex-col gap-1.5">
-            <label className="text-sm font-medium">Reference</label>
+          <Field>
+            <FieldLabel>Reference</FieldLabel>
             <Input
               value={reference}
               onChange={(e) => setReference(e.target.value)}
               placeholder="Optional reference number"
               disabled={isSubmitting}
             />
-          </div>
+          </Field>
 
-          <div className="flex flex-col gap-1.5">
-            <label className="text-sm font-medium">Invoice #</label>
+          <Field>
+            <FieldLabel>Invoice #</FieldLabel>
             <div className="h-9 rounded-md border border-input bg-muted/40 px-3 flex items-center text-sm text-muted-foreground">
               {editId ? 'Existing number preserved' : 'Auto-generated on save'}
             </div>
-          </div>
+          </Field>
         </div>
 
         {/* Line items */}
