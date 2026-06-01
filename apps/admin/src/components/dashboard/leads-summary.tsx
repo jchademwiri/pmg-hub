@@ -31,14 +31,14 @@ export function LeadsSummary({ leads }: LeadsSummaryProps) {
   )
 
   return (
-    <Card className="rounded-xl border border-border bg-card shadow-none">
+    <Card className="rounded-xl border border-border bg-gradient-to-tr from-card to-card/75 backdrop-blur-md shadow-none hover:-translate-y-0.5 hover:shadow-md hover:shadow-primary/5 transition-all duration-300 group">
       <CardHeader className="pb-3">
         <div className="flex items-start justify-between">
-          <CardTitle className="text-card-foreground text-sm font-medium">
+          <CardTitle className="text-card-foreground text-sm font-semibold tracking-tight">
             Leads by Status
           </CardTitle>
           {total > 0 && (
-            <span className="text-xs text-muted-foreground">
+            <span className="text-xs text-muted-foreground/75 font-medium">
               {total} total
             </span>
           )}
@@ -51,24 +51,24 @@ export function LeadsSummary({ leads }: LeadsSummaryProps) {
           <div className="flex flex-col gap-4">
             {/* Summary metrics row */}
             <div className="grid grid-cols-3 gap-2">
-              <div className="rounded-lg bg-chart-2/10 border border-chart-2/20 p-2.5 text-center">
+              <div className="rounded-lg bg-chart-2/10 border border-chart-2/20 p-2.5 text-center transition-transform duration-300 hover:scale-[1.02]">
                 <p className="text-chart-2 text-xl font-bold tabular-nums">{newLeads}</p>
-                <p className="text-chart-2/70 text-xs mt-0.5">New</p>
+                <p className="text-chart-2/70 text-[10px] sm:text-xs font-medium mt-0.5">New</p>
               </div>
-              <div className="rounded-lg bg-emerald-500/10 border border-emerald-500/20 p-2.5 text-center">
+              <div className="rounded-lg bg-emerald-500/10 border border-emerald-500/20 p-2.5 text-center transition-transform duration-300 hover:scale-[1.02]">
                 <p className="text-emerald-400 text-xl font-bold tabular-nums">{converted}</p>
-                <p className="text-emerald-400/70 text-xs mt-0.5">Converted</p>
+                <p className="text-emerald-400/70 text-[10px] sm:text-xs font-medium mt-0.5">Converted</p>
               </div>
-              <div className="rounded-lg bg-muted/50 border border-border p-2.5 text-center">
+              <div className="rounded-lg bg-muted/50 border border-border p-2.5 text-center transition-transform duration-300 hover:scale-[1.02]">
                 {conversionRate !== null ? (
                   <>
                     <p className="text-foreground text-xl font-bold tabular-nums">{conversionRate}%</p>
-                    <p className="text-muted-foreground text-xs mt-0.5">Win rate</p>
+                    <p className="text-muted-foreground text-[10px] sm:text-xs font-medium mt-0.5">Win rate</p>
                   </>
                 ) : (
                   <>
                     <p className="text-muted-foreground text-xl font-bold">-</p>
-                    <p className="text-muted-foreground text-xs mt-0.5">Win rate</p>
+                    <p className="text-muted-foreground text-[10px] sm:text-xs font-medium mt-0.5">Win rate</p>
                   </>
                 )}
               </div>
@@ -81,7 +81,7 @@ export function LeadsSummary({ leads }: LeadsSummaryProps) {
                 const pct = total > 0 ? Math.round((lead.count / total) * 100) : 0
 
                 return (
-                  <div key={lead.status} className="flex flex-col gap-1">
+                  <div key={lead.status} className="flex flex-col gap-1 transition-transform duration-200 hover:translate-x-0.5">
                     <div className="flex items-center justify-between">
                       <Badge
                         variant="secondary"

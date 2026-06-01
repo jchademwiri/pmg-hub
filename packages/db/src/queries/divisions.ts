@@ -159,7 +159,7 @@ export async function getDivisionRevenueSeries(
     .from(income)
     .innerJoin(divisions, eq(income.divisionId, divisions.id))
     .where(
-      sql`${income.date} >= DATE_TRUNC('month', NOW()) - INTERVAL '${sql.raw(String(months - 1))} months'`,
+      sql`${income.date} >= DATE_TRUNC('month', timezone('Africa/Johannesburg', now())) - INTERVAL '${sql.raw(String(months - 1))} months'`,
     )
     .groupBy(sql`TO_CHAR(${income.date}, 'YYYY-MM')`, divisions.name)
     .orderBy(sql`TO_CHAR(${income.date}, 'YYYY-MM') ASC`, asc(divisions.name));
@@ -185,7 +185,7 @@ export async function getDivisionRevenueCurrentMonth(): Promise<
     .from(income)
     .innerJoin(divisions, eq(income.divisionId, divisions.id))
     .where(
-      sql`${income.date} >= DATE_TRUNC('month', NOW()) AND ${income.date} < DATE_TRUNC('month', NOW()) + INTERVAL '1 month'`,
+      sql`${income.date} >= DATE_TRUNC('month', timezone('Africa/Johannesburg', now())) AND ${income.date} < DATE_TRUNC('month', timezone('Africa/Johannesburg', now())) + INTERVAL '1 month'`,
     )
     .groupBy(sql`TO_CHAR(${income.date}, 'YYYY-MM')`, divisions.name)
     .orderBy(asc(divisions.name));
@@ -211,7 +211,7 @@ export async function getDivisionRevenuePreviousMonth(): Promise<
     .from(income)
     .innerJoin(divisions, eq(income.divisionId, divisions.id))
     .where(
-      sql`${income.date} >= DATE_TRUNC('month', NOW()) - INTERVAL '1 month' AND ${income.date} < DATE_TRUNC('month', NOW())`,
+      sql`${income.date} >= DATE_TRUNC('month', timezone('Africa/Johannesburg', now())) - INTERVAL '1 month' AND ${income.date} < DATE_TRUNC('month', timezone('Africa/Johannesburg', now()))`,
     )
     .groupBy(sql`TO_CHAR(${income.date}, 'YYYY-MM')`, divisions.name)
     .orderBy(asc(divisions.name));
@@ -236,7 +236,7 @@ export async function getDivisionRevenueYTD(): Promise<
     })
     .from(income)
     .innerJoin(divisions, eq(income.divisionId, divisions.id))
-    .where(sql`${income.date} >= DATE_TRUNC('year', NOW() - INTERVAL '2 months') + INTERVAL '2 months'`)
+    .where(sql`${income.date} >= DATE_TRUNC('year', timezone('Africa/Johannesburg', now()) - INTERVAL '2 months') + INTERVAL '2 months'`)
     .groupBy(sql`TO_CHAR(${income.date}, 'YYYY-MM')`, divisions.name)
     .orderBy(sql`TO_CHAR(${income.date}, 'YYYY-MM') ASC`, asc(divisions.name));
   return result.map((r) => ({

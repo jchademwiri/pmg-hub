@@ -35,18 +35,18 @@ export function DivisionRevenue({ divisions, divisionExpenseMap }: DivisionReven
   })
 
   return (
-    <Card className="rounded-xl border border-border bg-card shadow-none">
+    <Card className="rounded-xl border border-border bg-gradient-to-tr from-card to-card/75 backdrop-blur-md shadow-none hover:-translate-y-0.5 hover:shadow-md hover:shadow-primary/5 transition-all duration-300 group">
       <CardHeader className="pb-3">
         <div className="flex items-center justify-between">
-          <CardTitle className="text-card-foreground text-sm font-medium">
+          <CardTitle className="text-card-foreground text-sm font-semibold tracking-tight">
             Revenue by Division
           </CardTitle>
           <div className="flex items-center gap-3">
-            <span className="flex items-center gap-1.5 text-xs text-muted-foreground">
+            <span className="flex items-center gap-1.5 text-xs text-muted-foreground/75 font-medium">
               <span className="inline-block h-2 w-2 rounded-full bg-chart-2" />
               Revenue
             </span>
-            <span className="flex items-center gap-1.5 text-xs text-muted-foreground">
+            <span className="flex items-center gap-1.5 text-xs text-muted-foreground/75 font-medium">
               <span className="inline-block h-2 w-2 rounded-full bg-chart-3" />
               Expenses
             </span>
@@ -62,10 +62,10 @@ export function DivisionRevenue({ divisions, divisionExpenseMap }: DivisionReven
               const isProfit = div.net >= 0
 
               return (
-                <div key={div.divisionName} className="space-y-1.5">
+                <div key={div.divisionName} className="space-y-1.5 transition-transform duration-200 hover:translate-x-0.5">
                   {/* Header row */}
                   <div className="flex items-center justify-between">
-                    <span className="text-card-foreground text-sm">{div.divisionName}</span>
+                    <span className="text-card-foreground text-sm font-medium">{div.divisionName}</span>
                     <span
                       className={`text-xs font-semibold tabular-nums ${
                         isProfit ? 'text-emerald-400' : 'text-red-400'
@@ -83,7 +83,7 @@ export function DivisionRevenue({ divisions, divisionExpenseMap }: DivisionReven
                           style={{ width: `${revPct}%` }}
                         />
                       </div>
-                      <span className="text-xs text-green-500 tabular-nums w-24 text-right">
+                      <span className="text-xs text-green-500 font-semibold tabular-nums w-24 text-right">
                         {formatZAR(div.total)}
                       </span>
                     </div>
@@ -95,7 +95,7 @@ export function DivisionRevenue({ divisions, divisionExpenseMap }: DivisionReven
                           style={{ width: `${expPct}%` }}
                         />
                       </div>
-                      <span className="text-xs text-amber-500 tabular-nums w-24 text-right">
+                      <span className="text-xs text-amber-500 font-semibold tabular-nums w-24 text-right">
                         {formatZAR(div.expenses)}
                       </span>
                     </div>
