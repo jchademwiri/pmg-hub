@@ -9,7 +9,7 @@ import { DocumentPreview } from '@/components/billing/document-preview';
 import type { StatementTransaction } from '@/components/billing/document-preview';
 import { getClientStatement, getAllIncome, getStatementYears, getDivisionBillingSettings, getClientById, getMonthPeriodDates } from '@pmg/db';
 import { getDocumentLogoUrl } from '@/lib/document-logo';
-import { formatZAR, fmtDate } from '@/lib/format';
+import { formatZAR, fmtDate, getSASTToday } from '@/lib/format';
 import { PrintButton } from '@/components/billing/print-button';
 import { ExportPdfButton } from '@/components/billing/export-pdf-button';
 import {
@@ -121,12 +121,14 @@ export default async function StatementDetailPage({ params, searchParams }: Prop
     docStatus = hasOverdue ? 'Overdue' : 'Outstanding';
   }
 
+  const todayStr = getSASTToday();
   const ageing = { current: 0, days1_14: 0, days15_30: 0, days31_60: 0, days61_90: 0, days91_120: 0 };
-  const _now = new Date();
   for (const inv of invoices) {
     if (inv.status === 'issued' || inv.status === 'overdue' || inv.status === 'partially_paid') {
-      const due = inv.dueDate ? new Date(inv.dueDate) : new Date(inv.invoiceDate);
-      const diffTime = _now.getTime() - due.getTime();
+      const dueStr = inv.dueDate ?? inv.invoiceDate;
+      const tDate = new Date(todayStr);
+      const dDate = new Date(dueStr);
+      const diffTime = tDate.getTime() - dDate.getTime();
       const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
       
       const outstanding = Number(inv.total) - Number(inv.allocatedAmount ?? 0);
@@ -292,6 +294,32 @@ export default async function StatementDetailPage({ params, searchParams }: Prop
                   <div key={f.label} className="flex flex-col gap-0.5">
                     <span className="text-xs text-muted-foreground">{f.label}</span>
                     <span className="text-sm">{f.value}</span>
+                  </div>
+                ))}
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Ageing Breakdown Card */}
+          <Card size="sm">
+            <CardHeader>
+              <CardTitle>Ageing Breakdown</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="flex flex-col gap-2">
+                {[
+                  { label: 'Current', value: formatZAR(ageing.current) },
+                  { label: '1–14 Days', value: formatZAR(ageing.days1_14), highlight: ageing.days1_14 > 0 },
+                  { label: '15–30 Days', value: formatZAR(ageing.days15_30), highlight: ageing.days15_30 > 0 },
+                  { label: '31–60 Days', value: formatZAR(ageing.days31_60), highlight: ageing.days31_60 > 0 },
+                  { label: '61–90 Days', value: formatZAR(ageing.days61_90), highlight: ageing.days61_90 > 0 },
+                  { label: '91–120 Days', value: formatZAR(ageing.days91_120), highlight: ageing.days91_120 > 0 },
+                ].map((bucket) => (
+                  <div key={bucket.label} className="flex justify-between items-center text-sm py-0.5 border-b border-border/40 last:border-b-0">
+                    <span className="text-muted-foreground">{bucket.label}</span>
+                    <span className={`font-semibold tabular-nums ${bucket.highlight ? 'text-red-500 font-bold' : 'text-foreground'}`}>
+                      {bucket.value}
+                    </span>
                   </div>
                 ))}
               </div>

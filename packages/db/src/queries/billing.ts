@@ -244,37 +244,48 @@ const invoiceRowSelect = {
   updatedAt: invoices.updatedAt,
 };
 
+function getSASTParts(date: Date = new Date()) {
+  const formatter = new Intl.DateTimeFormat('en-US', {
+    timeZone: 'Africa/Johannesburg',
+    year: 'numeric',
+    month: 'numeric',
+    day: 'numeric',
+  });
+  const parts = formatter.formatToParts(date);
+  const year = Number(parts.find((p) => p.type === 'year')?.value);
+  const month = Number(parts.find((p) => p.type === 'month')?.value) - 1; // 0-indexed
+  const day = Number(parts.find((p) => p.type === 'day')?.value);
+  return { year, month, day };
+}
+
 export function getMonthPeriodDates(monthPeriod: 'current' | 'previous' | 'past3' | 'past6') {
-  const now = new Date();
+  const { year, month } = getSASTParts();
   let startDate: string;
   let endDate: string;
 
-  const formatDateISO = (d: Date) => {
-    return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+  const formatDateISO = (y: number, m: number, d: number) => {
+    return `${y}-${String(m + 1).padStart(2, '0')}-${String(d).padStart(2, '0')}`;
   };
 
   if (monthPeriod === 'current') {
-    const firstDay = new Date(now.getFullYear(), now.getMonth(), 1);
-    const lastDay = new Date(now.getFullYear(), now.getMonth() + 1, 0);
-    startDate = formatDateISO(firstDay);
-    endDate = formatDateISO(lastDay);
+    startDate = formatDateISO(year, month, 1);
+    const lastDay = new Date(year, month + 1, 0).getDate();
+    endDate = formatDateISO(year, month, lastDay);
   } else if (monthPeriod === 'previous') {
-    const firstDay = new Date(now.getFullYear(), now.getMonth() - 1, 1);
-    const lastDay = new Date(now.getFullYear(), now.getMonth(), 0);
-    startDate = formatDateISO(firstDay);
-    endDate = formatDateISO(lastDay);
+    const prevDateStart = new Date(year, month - 1, 1);
+    const prevDateEnd = new Date(year, month, 0);
+    startDate = formatDateISO(prevDateStart.getFullYear(), prevDateStart.getMonth(), prevDateStart.getDate());
+    endDate = formatDateISO(prevDateEnd.getFullYear(), prevDateEnd.getMonth(), prevDateEnd.getDate());
   } else if (monthPeriod === 'past3') {
-    // Past 3 months rolling: from 1st of month 2 months ago to end of current month
-    const firstDay = new Date(now.getFullYear(), now.getMonth() - 2, 1);
-    const lastDay = new Date(now.getFullYear(), now.getMonth() + 1, 0);
-    startDate = formatDateISO(firstDay);
-    endDate = formatDateISO(lastDay);
+    const firstDay = new Date(year, month - 2, 1);
+    startDate = formatDateISO(firstDay.getFullYear(), firstDay.getMonth(), firstDay.getDate());
+    const lastDay = new Date(year, month + 1, 0).getDate();
+    endDate = formatDateISO(year, month, lastDay);
   } else {
-    // Past 6 months rolling: from 1st of month 5 months ago to end of current month
-    const firstDay = new Date(now.getFullYear(), now.getMonth() - 5, 1);
-    const lastDay = new Date(now.getFullYear(), now.getMonth() + 1, 0);
-    startDate = formatDateISO(firstDay);
-    endDate = formatDateISO(lastDay);
+    const firstDay = new Date(year, month - 5, 1);
+    startDate = formatDateISO(firstDay.getFullYear(), firstDay.getMonth(), firstDay.getDate());
+    const lastDay = new Date(year, month + 1, 0).getDate();
+    endDate = formatDateISO(year, month, lastDay);
   }
 
   return { startDate, endDate };
@@ -602,7 +613,8 @@ export async function getClientStatement(
   const quoteConditions = [eq(quotations.clientId, clientId)];
   const invoiceConditions = [
     eq(invoices.clientId, clientId),
-    sql`${invoices.status} NOT IN ('draft', 'void')`
+    sql`${invoices.status} NOT IN ('draft', 'void')`,
+    sql`${invoices.invoiceDate} <= timezone('Africa/Johannesburg', now())::date`
   ];
   const incomeConditions = [eq(income.clientId, clientId)];
   let statementBalanceCutoff: string | null = null;
@@ -675,6 +687,7 @@ export async function getClientStatement(
   const globalInvoiceConditions = [
     eq(invoices.clientId, clientId),
     sql`${invoices.status} NOT IN ('draft', 'void')`,
+    sql`${invoices.invoiceDate} <= timezone('Africa/Johannesburg', now())::date`
   ];
   const globalIncomeConditions = [eq(income.clientId, clientId)];
 
@@ -769,7 +782,9 @@ export async function getClientsWithBillingActivity(filters?: { year?: number })
   const end = year ? `${year + 1}-03-01` : null;
 
   const quoteFilter = year ? sql`WHERE quote_date >= ${start} AND quote_date < ${end}` : sql``;
-  const invoiceFilter = year ? sql`WHERE invoice_date >= ${start} AND invoice_date < ${end}` : sql``;
+  const invoiceFilter = year
+    ? sql`WHERE invoice_date >= ${start} AND invoice_date < ${end} AND invoice_date <= timezone('Africa/Johannesburg', now())::date`
+    : sql`WHERE invoice_date <= timezone('Africa/Johannesburg', now())::date`;
   const incomeFilter = year ? sql`WHERE date >= ${start} AND date < ${end}` : sql``;
 
   const result = await db.execute(sql`
@@ -1018,7 +1033,8 @@ export async function getStatementYears(clientId: string): Promise<number[]> {
   for (const r of invYears.rows) years.add(Number(r.year));
   for (const r of incYears.rows) years.add(Number(r.year));
 
-  const currentFY = new Date().getMonth() < 2 ? new Date().getFullYear() - 1 : new Date().getFullYear();
+  const { year: sastYear, month: sastMonth } = getSASTParts();
+  const currentFY = sastMonth < 2 ? sastYear - 1 : sastYear;
   years.add(currentFY); // Always include current FY
 
   return Array.from(years).sort((a, b) => b - a);
@@ -1061,10 +1077,10 @@ export async function getAgingReport(): Promise<AgingRow[]> {
   const result = await db.execute(sql`
     SELECT
       CASE
-        WHEN due_date >= CURRENT_DATE                             THEN 'current'
-        WHEN CURRENT_DATE - due_date BETWEEN 1  AND 14           THEN '1_14'
-        WHEN CURRENT_DATE - due_date BETWEEN 15 AND 30           THEN '15_30'
-        WHEN CURRENT_DATE - due_date BETWEEN 31 AND 60           THEN '31_60'
+        WHEN due_date >= timezone('Africa/Johannesburg', now())::date                             THEN 'current'
+        WHEN timezone('Africa/Johannesburg', now())::date - due_date BETWEEN 1  AND 14           THEN '1_14'
+        WHEN timezone('Africa/Johannesburg', now())::date - due_date BETWEEN 15 AND 30           THEN '15_30'
+        WHEN timezone('Africa/Johannesburg', now())::date - due_date BETWEEN 31 AND 60           THEN '31_60'
         ELSE '61_plus'
       END                                                         AS bucket,
       COUNT(*)::int                                               AS count,
@@ -1072,7 +1088,7 @@ export async function getAgingReport(): Promise<AgingRow[]> {
     FROM invoices
     WHERE status IN ('issued', 'overdue', 'partially_paid')
       AND due_date IS NOT NULL
-      AND invoice_date <= CURRENT_DATE
+      AND invoice_date <= timezone('Africa/Johannesburg', now())::date
     GROUP BY bucket
   `);
 

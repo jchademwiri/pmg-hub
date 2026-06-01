@@ -132,6 +132,7 @@ export function DashboardShell({
         deltas={activeDeltas}
         previousSummary={activePreviousSummary}
         deltaLabel={activeDeltaLabel}
+        sparklineData={sparklineData}
       />
 
       {/* ── Row 2: Accounts Receivable Ageing Overview ── */}
