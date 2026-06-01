@@ -613,7 +613,8 @@ export async function getClientStatement(
   const quoteConditions = [eq(quotations.clientId, clientId)];
   const invoiceConditions = [
     eq(invoices.clientId, clientId),
-    sql`${invoices.status} NOT IN ('draft', 'void')`
+    sql`${invoices.status} NOT IN ('draft', 'void')`,
+    sql`${invoices.invoiceDate} <= timezone('Africa/Johannesburg', now())::date`
   ];
   const incomeConditions = [eq(income.clientId, clientId)];
   let statementBalanceCutoff: string | null = null;
@@ -686,6 +687,7 @@ export async function getClientStatement(
   const globalInvoiceConditions = [
     eq(invoices.clientId, clientId),
     sql`${invoices.status} NOT IN ('draft', 'void')`,
+    sql`${invoices.invoiceDate} <= timezone('Africa/Johannesburg', now())::date`
   ];
   const globalIncomeConditions = [eq(income.clientId, clientId)];
 
@@ -780,7 +782,9 @@ export async function getClientsWithBillingActivity(filters?: { year?: number })
   const end = year ? `${year + 1}-03-01` : null;
 
   const quoteFilter = year ? sql`WHERE quote_date >= ${start} AND quote_date < ${end}` : sql``;
-  const invoiceFilter = year ? sql`WHERE invoice_date >= ${start} AND invoice_date < ${end}` : sql``;
+  const invoiceFilter = year
+    ? sql`WHERE invoice_date >= ${start} AND invoice_date < ${end} AND invoice_date <= timezone('Africa/Johannesburg', now())::date`
+    : sql`WHERE invoice_date <= timezone('Africa/Johannesburg', now())::date`;
   const incomeFilter = year ? sql`WHERE date >= ${start} AND date < ${end}` : sql``;
 
   const result = await db.execute(sql`
