@@ -6,6 +6,7 @@ import { getNextDocumentNumber, addDays } from '@pmg/db';
 import { getSessionOrRedirect } from '@/lib/auth';
 import { isPeriodClosed, getMinAllowedDate, getMinDateErrorMessage } from '@/lib/date-rules';
 import { CreateQuotationSchema, type CreateQuotationInput } from './billing-schema';
+import { hasBillingLineItemItemIdColumn, lineItemInsertValues } from './billing-line-item-compat';
 
 let hasQuotationReferenceColumnPromise: Promise<boolean> | null = null;
 
@@ -23,9 +24,14 @@ async function hasQuotationReferenceColumn() {
       `)
       .then((res) => {
         const rows = (res as { rows?: Array<{ exists?: boolean }> }).rows;
-        return Boolean(rows?.[0]?.exists);
+        const exists = Boolean(rows?.[0]?.exists);
+        if (!exists) hasQuotationReferenceColumnPromise = null;
+        return exists;
       })
-      .catch(() => false);
+      .catch(() => {
+        hasQuotationReferenceColumnPromise = null;
+        return false;
+      });
   }
   return hasQuotationReferenceColumnPromise;
 }
@@ -111,6 +117,7 @@ export async function createQuotation(
 
     const db = getDb();
     const includeReference = await hasQuotationReferenceColumn();
+    const includeLineItemItemId = await hasBillingLineItemItemIdColumn();
 
     const [inserted] = await db
       .insert(quotations)
@@ -193,6 +200,7 @@ export async function updateQuotation(
 
     const db = getDb();
     const includeReference = await hasQuotationReferenceColumn();
+    const includeLineItemItemId = await hasBillingLineItemItemIdColumn();
     const [existing] = await db
       .select({ id: quotations.id, status: quotations.status, quoteDate: quotations.quoteDate })
       .from(quotations)

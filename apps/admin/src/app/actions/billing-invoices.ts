@@ -7,6 +7,7 @@ import { getSessionOrRedirect } from '@/lib/auth';
 import { isPeriodClosed, getMinAllowedDate, getMinDateErrorMessage } from '@/lib/date-rules';
 import { getSASTParts, getSASTToday } from '@/lib/format';
 import { CreateInvoiceSchema, type CreateInvoiceInput } from './billing-schema';
+import { hasBillingLineItemItemIdColumn, lineItemInsertValues } from './billing-line-item-compat';
 
 // ── Shared totals helper ──────────────────────────────────────────────────────
 
@@ -66,6 +67,7 @@ export async function createInvoice(
     const documentNumber = await getNextDocumentNumber(divisionId, 'invoice', year);
 
     const db = getDb();
+    const includeLineItemItemId = await hasBillingLineItemItemIdColumn();
 
     const [inserted] = await db
       .insert(invoices)
@@ -146,6 +148,7 @@ export async function updateInvoice(
     }
 
     const db = getDb();
+    const includeLineItemItemId = await hasBillingLineItemItemIdColumn();
     const [existing] = await db
       .select({ id: invoices.id, status: invoices.status, invoiceDate: invoices.invoiceDate })
       .from(invoices)
@@ -257,9 +260,19 @@ export async function convertQuoteToInvoice(
       return { error: getMinDateErrorMessage(minDate) };
     }
 
+    const includeLineItemItemId = await hasBillingLineItemItemIdColumn();
+
     // Load quote line items
     const quoteLineItems = await db
-      .select()
+      .select({
+        sortOrder: billingLineItems.sortOrder,
+        ...(includeLineItemItemId ? { itemId: billingLineItems.itemId } : {}),
+        description: billingLineItems.description,
+        quantity: billingLineItems.quantity,
+        unitPrice: billingLineItems.unitPrice,
+        vatRate: billingLineItems.vatRate,
+        lineTotal: billingLineItems.lineTotal,
+      })
       .from(billingLineItems)
       .where(
         and(

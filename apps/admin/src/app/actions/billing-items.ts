@@ -2,8 +2,9 @@
 
 import { z } from 'zod';
 import { revalidatePath } from 'next/cache';
-import { getDb, billingItems, billingLineItems, eq, and } from '@pmg/db';
+import { getDb, billingItems, billingLineItems, eq, and, or } from '@pmg/db';
 import { getSessionOrRedirect } from '@/lib/auth';
+import { hasBillingLineItemItemIdColumn } from './billing-line-item-compat';
 
 // ── Schema ────────────────────────────────────────────────────────────────────
 

@@ -2,7 +2,7 @@ export * from "./client";
 export * from "./schema";
 export * from "./queries";
 export * from "./accounts";
-export { eq, and, desc, asc, sql } from "drizzle-orm";
+export { eq, and, or, desc, asc, sql } from "drizzle-orm";
 export type { PeriodSummary, LeadRow, DivisionRow, SnapshotRow, ClientWithIncomeCount, LedgerEntryRow } from './queries';
 export { getAllLedgerEntries, getLedgerById, getLedgerByAllocation, getLedgerByAllocationYTD } from './queries';
 export { getAllSnapshots, getSnapshotByPeriod, insertSnapshot } from './queries';

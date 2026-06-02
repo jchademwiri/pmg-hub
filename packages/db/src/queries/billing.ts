@@ -160,6 +160,7 @@ const VALID_QUOTE_STATUSES = new Set([
 ]);
 
 let hasQuotationReferenceColumnPromise: Promise<boolean> | null = null;
+let hasBillingLineItemItemIdColumnPromise: Promise<boolean> | null = null;
 
 async function hasQuotationReferenceColumn(): Promise<boolean> {
   if (!hasQuotationReferenceColumnPromise) {
@@ -175,14 +176,108 @@ async function hasQuotationReferenceColumn(): Promise<boolean> {
       `)
       .then((res) => {
         const row = res.rows[0] as { exists?: boolean } | undefined;
-        return Boolean(row?.exists);
+        const exists = Boolean(row?.exists);
+        if (!exists) hasQuotationReferenceColumnPromise = null;
+        return exists;
       })
-      .catch(() => false);
+      .catch(() => {
+        hasQuotationReferenceColumnPromise = null;
+        return false;
+      });
   }
   return hasQuotationReferenceColumnPromise;
 }
 
+async function hasBillingLineItemItemIdColumn(): Promise<boolean> {
+  if (!hasBillingLineItemItemIdColumnPromise) {
+    hasBillingLineItemItemIdColumnPromise = db
+      .execute(sql`
+        SELECT EXISTS (
+          SELECT 1
+          FROM information_schema.columns
+          WHERE table_schema = 'public'
+            AND table_name = 'billing_line_items'
+            AND column_name = 'item_id'
+        ) AS "exists"
+      `)
+      .then((res) => {
+        const row = res.rows[0] as { exists?: boolean } | undefined;
+        const exists = Boolean(row?.exists);
+        if (!exists) hasBillingLineItemItemIdColumnPromise = null;
+        return exists;
+      })
+      .catch(() => {
+        hasBillingLineItemItemIdColumnPromise = null;
+        return false;
+      });
+  }
+  return hasBillingLineItemItemIdColumnPromise;
+}
+
 // ── Helpers ───────────────────────────────────────────────────────────────────
+
+
+async function getLineItemsForDocument(
+  documentType: "quote" | "invoice",
+  documentId: string,
+): Promise<LineItemDetail[]> {
+  const hasItemId = await hasBillingLineItemItemIdColumn();
+
+  if (!hasItemId) {
+    const lineItems = await db
+      .select({
+        id: billingLineItems.id,
+        documentType: billingLineItems.documentType,
+        documentId: billingLineItems.documentId,
+        itemId: sql<string | null>`NULL`,
+        itemName: sql<string | null>`NULL`,
+        sortOrder: billingLineItems.sortOrder,
+        description: billingLineItems.description,
+        quantity: billingLineItems.quantity,
+        unitPrice: billingLineItems.unitPrice,
+        vatRate: billingLineItems.vatRate,
+        lineTotal: billingLineItems.lineTotal,
+        createdAt: billingLineItems.createdAt,
+      })
+      .from(billingLineItems)
+      .where(
+        and(
+          eq(billingLineItems.documentType, documentType),
+          eq(billingLineItems.documentId, documentId),
+        ),
+      )
+      .orderBy(asc(billingLineItems.sortOrder));
+
+    return lineItems as LineItemDetail[];
+  }
+
+  const lineItems = await db
+    .select({
+      id: billingLineItems.id,
+      documentType: billingLineItems.documentType,
+      documentId: billingLineItems.documentId,
+      itemId: billingLineItems.itemId,
+      itemName: billingItems.name,
+      sortOrder: billingLineItems.sortOrder,
+      description: billingLineItems.description,
+      quantity: billingLineItems.quantity,
+      unitPrice: billingLineItems.unitPrice,
+      vatRate: billingLineItems.vatRate,
+      lineTotal: billingLineItems.lineTotal,
+      createdAt: billingLineItems.createdAt,
+    })
+    .from(billingLineItems)
+    .leftJoin(billingItems, eq(billingLineItems.itemId, billingItems.id))
+    .where(
+      and(
+        eq(billingLineItems.documentType, documentType),
+        eq(billingLineItems.documentId, documentId),
+      ),
+    )
+    .orderBy(asc(billingLineItems.sortOrder));
+
+  return lineItems as LineItemDetail[];
+}
 
 /** Shared select shape for quotation rows */
 function getQuotationRowSelect(includeReference: boolean) {
@@ -908,7 +1003,9 @@ export async function getItemById(id: string): Promise<BillingItemDetail | null>
   if (rows.length === 0) return null;
   const item = rows[0]!;
 
-  // Count usage in invoice line items
+  const hasItemId = await hasBillingLineItemItemIdColumn();
+
+  // Count usage in invoice line items. Fall back to legacy description matching until the migration runs.
   const invoiceUsageResult = await db
     .select({ count: sql<number>`count(*)::int` })
     .from(billingLineItems)
@@ -919,7 +1016,7 @@ export async function getItemById(id: string): Promise<BillingItemDetail | null>
       ),
     );
 
-  // Count usage in quote line items
+  // Count usage in quote line items. Fall back to legacy description matching until the migration runs.
   const quoteUsageResult = await db
     .select({ count: sql<number>`count(*)::int` })
     .from(billingLineItems)
