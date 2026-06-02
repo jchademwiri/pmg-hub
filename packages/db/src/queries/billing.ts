@@ -11,6 +11,8 @@ export type LineItemDetail = {
   id: string;
   documentType: string;
   documentId: string;
+  itemId: string | null;
+  itemName: string | null;
   sortOrder: number;
   description: string;
   quantity: string;   // numeric from DB - caller converts with Number()
@@ -489,10 +491,24 @@ export async function getQuotationById(id: string): Promise<QuotationDetail | nu
   if (rows.length === 0) return null;
   const row = rows[0] as QuotationRow;
 
-  // Fetch line items sorted by sort_order
+  // Fetch line items sorted by sort_order, keeping the saved description and catalogue name separate.
   const lineItems = await db
-    .select()
+    .select({
+      id: billingLineItems.id,
+      documentType: billingLineItems.documentType,
+      documentId: billingLineItems.documentId,
+      itemId: billingLineItems.itemId,
+      itemName: billingItems.name,
+      sortOrder: billingLineItems.sortOrder,
+      description: billingLineItems.description,
+      quantity: billingLineItems.quantity,
+      unitPrice: billingLineItems.unitPrice,
+      vatRate: billingLineItems.vatRate,
+      lineTotal: billingLineItems.lineTotal,
+      createdAt: billingLineItems.createdAt,
+    })
     .from(billingLineItems)
+    .leftJoin(billingItems, eq(billingLineItems.itemId, billingItems.id))
     .where(
       and(
         eq(billingLineItems.documentType, "quote"),
@@ -566,8 +582,22 @@ export async function getInvoiceById(id: string): Promise<InvoiceDetail | null> 
   const row = rows[0] as InvoiceRow;
 
   const lineItems = await db
-    .select()
+    .select({
+      id: billingLineItems.id,
+      documentType: billingLineItems.documentType,
+      documentId: billingLineItems.documentId,
+      itemId: billingLineItems.itemId,
+      itemName: billingItems.name,
+      sortOrder: billingLineItems.sortOrder,
+      description: billingLineItems.description,
+      quantity: billingLineItems.quantity,
+      unitPrice: billingLineItems.unitPrice,
+      vatRate: billingLineItems.vatRate,
+      lineTotal: billingLineItems.lineTotal,
+      createdAt: billingLineItems.createdAt,
+    })
     .from(billingLineItems)
+    .leftJoin(billingItems, eq(billingLineItems.itemId, billingItems.id))
     .where(
       and(
         eq(billingLineItems.documentType, "invoice"),
@@ -867,11 +897,7 @@ export async function getAllItems(
 
 /**
  * Returns a single billing item with usage counts (how many line items reference
- * this item by matching description + unit_price), or null if not found.
- *
- * Note: billing_line_items has no FK to billing_items (polymorphic design).
- * Usage is approximated by matching on description. For exact tracking, a
- * billing_item_id column should be added to billing_line_items in v2.
+ * this catalogue item), or null if not found.
  */
 export async function getItemById(id: string): Promise<BillingItemDetail | null> {
   const rows = await db
@@ -889,7 +915,7 @@ export async function getItemById(id: string): Promise<BillingItemDetail | null>
     .where(
       and(
         eq(billingLineItems.documentType, "invoice"),
-        eq(billingLineItems.description, item.name),
+        eq(billingLineItems.itemId, id),
       ),
     );
 
@@ -900,7 +926,7 @@ export async function getItemById(id: string): Promise<BillingItemDetail | null>
     .where(
       and(
         eq(billingLineItems.documentType, "quote"),
-        eq(billingLineItems.description, item.name),
+        eq(billingLineItems.itemId, id),
       ),
     );
 

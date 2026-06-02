@@ -137,19 +137,14 @@ export async function deleteItem(id: string): Promise<{ error?: string }> {
 
     const db = getDb();
 
-    // Check if item is referenced in any line items (by name match - no FK)
+    // Check if item is referenced in any invoice line items.
     const [usedInInvoice] = await db
       .select({ id: billingLineItems.id })
       .from(billingLineItems)
       .where(
         and(
           eq(billingLineItems.documentType, 'invoice'),
-          eq(billingLineItems.description, (
-            await db
-              .select({ name: billingItems.name })
-              .from(billingItems)
-              .where(eq(billingItems.id, id))
-          )[0]?.name ?? ''),
+          eq(billingLineItems.itemId, id),
         ),
       )
       .limit(1);
