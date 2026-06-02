@@ -4,13 +4,13 @@
 
 Financial Snapshots (Phase 7) adds point-in-time locking of monthly financial figures to the PMG Control Center. Without snapshots, any retroactive edit to income or expense data silently changes every historical dashboard number. This feature solves that by persisting a computed `PeriodSummary` into a dedicated `snapshots` table when an admin explicitly closes a month.
 
-The feature is deliberately narrow in scope: one new DB table, three query helpers, one Server Action, one client component, and one new page. No existing financial logic is modified — snapshots sit alongside live data and are read instead of recomputed when they exist.
+The feature is deliberately narrow in scope: one new DB table, three query helpers, one Server Action, one client component, and one new page. No existing financial logic is modified - snapshots sit alongside live data and are read instead of recomputed when they exist.
 
 ### Key Design Decisions
 
 - **Immutability by omission**: No `updateSnapshot` or `deleteSnapshot` helpers are exposed. The unique constraint on `period` enforces one-snapshot-per-month at the DB level.
 - **No separate read path on dashboard**: The dashboard continues to show live-computed figures for the current period. The snapshot is only used to determine whether the "Close Month" button or "Month closed" badge is shown.
-- **Parallel fetch**: `getSnapshotByPeriod(currentPeriod)` is added as the 11th entry in the dashboard's existing `Promise.all` — no sequential round-trips added.
+- **Parallel fetch**: `getSnapshotByPeriod(currentPeriod)` is added as the 11th entry in the dashboard's existing `Promise.all` - no sequential round-trips added.
 - **Zod validation in Server Action**: The `closeMonth` action validates the `YYYY-MM` format before touching the DB, consistent with all other Server Actions in the codebase.
 
 ---
@@ -63,7 +63,7 @@ export const snapshots = pgTable(
 )
 ```
 
-### packages/db/src/queries.ts — new additions
+### packages/db/src/queries.ts - new additions
 
 Three new helpers appended to the existing file:
 
@@ -98,7 +98,7 @@ Server Action with Zod validation and duplicate-check guard:
 - Validates `period` matches `/^\d{4}-\d{2}$/`
 - Checks for existing snapshot via `getSnapshotByPeriod` before inserting
 - Calls `revalidatePath('/dashboard')` and `revalidatePath('/snapshots')` on success
-- Never throws — all errors returned as `{ error: string }`
+- Never throws - all errors returned as `{ error: string }`
 
 ### apps/admin/src/components/dashboard/close-month-button.tsx
 
@@ -128,7 +128,7 @@ Server Component. Calls `getAllSnapshots()` and renders either a table (rows ord
 | `flex` | `numeric(12,2)` | NOT NULL |
 | `created_at` | `timestamptz` | NOT NULL, default `now()` |
 
-The `period` unique constraint is the primary integrity mechanism — it prevents duplicate snapshots at the DB level, independent of application-layer checks.
+The `period` unique constraint is the primary integrity mechanism - it prevents duplicate snapshots at the DB level, independent of application-layer checks.
 
 ### Financial Model (read-only reference)
 
@@ -147,7 +147,7 @@ flex       = profitPool × 0.05
 
 ## Correctness Properties
 
-*A property is a characteristic or behavior that should hold true across all valid executions of a system — essentially, a formal statement about what the system should do. Properties serve as the bridge between human-readable specifications and machine-verifiable correctness guarantees.*
+*A property is a characteristic or behavior that should hold true across all valid executions of a system - essentially, a formal statement about what the system should do. Properties serve as the bridge between human-readable specifications and machine-verifiable correctness guarantees.*
 
 ### Property 1: getAllSnapshots ordering invariant
 
@@ -161,7 +161,7 @@ flex       = profitPool × 0.05
 
 **Validates: Requirements 2.2, 2.4**
 
-### Property 3: Numeric round-trip — insert then retrieve preserves values
+### Property 3: Numeric round-trip - insert then retrieve preserves values
 
 *For any* valid `PeriodSummary` object with finite numeric fields, inserting it as a snapshot via `insertSnapshot(period, summary)` and then retrieving it via `getSnapshotByPeriod(period)` SHALL return a row where `Number(row.revenue) === summary.revenue`, `Number(row.expenses) === summary.expenses`, and the same equality holds for all eight numeric fields (`pmgShare`, `profitPool`, `salary`, `reinvest`, `reserve`, `flex`).
 
@@ -179,7 +179,7 @@ flex       = profitPool × 0.05
 
 **Validates: Requirements 3.5, 3.6**
 
-### Property 6: closeMonth success — valid period returns {} and snapshot is retrievable
+### Property 6: closeMonth success - valid period returns {} and snapshot is retrievable
 
 *For any* valid `YYYY-MM` period string for which no snapshot yet exists, calling `closeMonth(period)` SHALL return `{}` and a subsequent call to `getSnapshotByPeriod(period)` SHALL return a non-null `SnapshotRow`.
 
@@ -214,9 +214,9 @@ flex       = profitPool × 0.05
 | `closeMonth` called for already-closed period | `getSnapshotByPeriod` returns non-null → return `{ error: 'Month already closed' }` |
 | DB error during `insertSnapshot` | Caught in try/catch → return `{ error: err.message }` |
 | `getAllSnapshots` DB error | Propagates as Next.js error boundary (Server Component) |
-| `getSnapshotByPeriod` called with non-existent period | Returns `null` — not an error |
+| `getSnapshotByPeriod` called with non-existent period | Returns `null` - not an error |
 | CloseMonthButton receives `{ error }` | `toast.error(error)` via sonner |
-| CloseMonthButton receives `{}` | `router.refresh()` — page re-fetches, button replaced by badge |
+| CloseMonthButton receives `{}` | `router.refresh()` - page re-fetches, button replaced by badge |
 
 The Server Action never throws. All error paths return `{ error: string }`. This is consistent with `recordWithdrawal` and other existing Server Actions in the codebase.
 
@@ -232,7 +232,7 @@ The Server Action never throws. All error paths return `{ error: string }`. This
 
 fast-check is the property-based testing library for TypeScript. Each test is tagged with its design property reference.
 
-**P1 — getAllSnapshots ordering invariant**
+**P1 - getAllSnapshots ordering invariant**
 ```
 // Feature: financial-snapshots, Property 1: getAllSnapshots ordering invariant
 fc.assert(fc.asyncProperty(
@@ -243,7 +243,7 @@ fc.assert(fc.asyncProperty(
 ), { numRuns: 100 })
 ```
 
-**P2 — getSnapshotByPeriod returns null for non-existent period**
+**P2 - getSnapshotByPeriod returns null for non-existent period**
 ```
 // Feature: financial-snapshots, Property 2: getSnapshotByPeriod returns null for non-existent period
 fc.assert(fc.asyncProperty(
@@ -255,7 +255,7 @@ fc.assert(fc.asyncProperty(
 ), { numRuns: 100 })
 ```
 
-**P3 — Numeric round-trip**
+**P3 - Numeric round-trip**
 ```
 // Feature: financial-snapshots, Property 3: Numeric round-trip
 fc.assert(fc.asyncProperty(
@@ -269,7 +269,7 @@ fc.assert(fc.asyncProperty(
 ), { numRuns: 100 })
 ```
 
-**P4 — Duplicate period returns 'Month already closed'**
+**P4 - Duplicate period returns 'Month already closed'**
 ```
 // Feature: financial-snapshots, Property 4: Duplicate period returns 'Month already closed'
 fc.assert(fc.asyncProperty(
@@ -282,7 +282,7 @@ fc.assert(fc.asyncProperty(
 ), { numRuns: 100 })
 ```
 
-**P5 — Invalid period format returns error**
+**P5 - Invalid period format returns error**
 ```
 // Feature: financial-snapshots, Property 5: Invalid period format returns error
 fc.assert(fc.asyncProperty(
@@ -294,7 +294,7 @@ fc.assert(fc.asyncProperty(
 ), { numRuns: 100 })
 ```
 
-**P6 — closeMonth success round-trip**
+**P6 - closeMonth success round-trip**
 ```
 // Feature: financial-snapshots, Property 6: closeMonth success round-trip
 fc.assert(fc.asyncProperty(
@@ -308,7 +308,7 @@ fc.assert(fc.asyncProperty(
 ), { numRuns: 100 })
 ```
 
-**P7 — Period formatting**
+**P7 - Period formatting**
 ```
 // Feature: financial-snapshots, Property 7: Period formatting
 fc.assert(fc.property(
@@ -322,7 +322,7 @@ fc.assert(fc.property(
 ), { numRuns: 100 })
 ```
 
-**P8 — Financial model formula invariants**
+**P8 - Financial model formula invariants**
 ```
 // Feature: financial-snapshots, Property 8: Financial model formula invariants
 fc.assert(fc.property(
@@ -360,7 +360,7 @@ fc.assert(fc.property(
 
 ### What is NOT tested with PBT
 
-- UI rendering and layout (snapshot page table structure) — use snapshot tests
-- Nav item wiring — smoke test (import check)
-- Schema column definitions — smoke test (Drizzle introspection)
-- `revalidatePath` calls — mock-based unit test
+- UI rendering and layout (snapshot page table structure) - use snapshot tests
+- Nav item wiring - smoke test (import check)
+- Schema column definitions - smoke test (Drizzle introspection)
+- `revalidatePath` calls - mock-based unit test

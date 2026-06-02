@@ -14,7 +14,7 @@ vi.mock('next/cache', () => ({
 }))
 
 // ─── Mock @pmg/db ─────────────────────────────────────────────────────────────
-// db.insert(table).values(data) — chainable thenable
+// db.insert(table).values(data) - chainable thenable
 vi.mock('@pmg/db', () => {
   function makeChain(): Record<string, unknown> {
     const chain: Record<string, unknown> = {
@@ -69,7 +69,7 @@ describe('Property 4: createLead contact requirement', () => {
    */
 
   it(
-    'returns contact-required error and does not call db.insert when both email and phone are absent — Validates: Requirements 3.2',
+    'returns contact-required error and does not call db.insert when both email and phone are absent - Validates: Requirements 3.2',
     async () => {
       await fc.assert(
         fc.asyncProperty(
@@ -102,7 +102,7 @@ describe('Property 4: createLead contact requirement', () => {
   )
 
   it(
-    'returns contact-required error and does not call db.insert when phone is empty string and email is absent — Validates: Requirements 3.2',
+    'returns contact-required error and does not call db.insert when phone is empty string and email is absent - Validates: Requirements 3.2',
     async () => {
       await fc.assert(
         fc.asyncProperty(

@@ -28,6 +28,7 @@ import {
   getMonthlyRevenueByDivisionForYear,
   getAllSnapshots,
 } from '@pmg/db'
+import { fmtMonthYear, getSASTParts } from '@/lib/format'
 
 // ── Re-export DB types ────────────────────────────────────────────────────────
 export type { PeriodSummary } from '@pmg/db'
@@ -59,15 +60,17 @@ export type DivisionSeriesChart = {
 
 // ── Period label helpers ──────────────────────────────────────────────────────
 export function getCurrentMonthLabel(): string {
-  return new Date().toLocaleString('en-ZA', { month: 'long', year: 'numeric' })
+  const { year, month } = getSASTParts()
+  return fmtMonthYear(new Date(year, month, 1))
 }
 export function getPreviousMonthLabel(): string {
-  const d = new Date()
-  d.setMonth(d.getMonth() - 1)
-  return d.toLocaleString('en-ZA', { month: 'long', year: 'numeric' })
+  const { year, month } = getSASTParts()
+  return fmtMonthYear(new Date(year, month - 1, 1))
 }
 export function getYTDLabel(): string {
-  return `Jan – ${new Date().toLocaleString('en-ZA', { month: 'short', year: 'numeric' })}`
+  const { year, month } = getSASTParts()
+  const startYear = month < 2 ? year - 1 : year
+  return `Mar ${startYear} - ${fmtMonthYear(new Date(year, month, 1), { short: true })}`
 }
 
 // ── All-time summary (YTD shortcut for totals) ────────────────────────────────
@@ -151,7 +154,7 @@ export async function getRevenueByDivisionSeries(): Promise<DivisionSeriesChart>
   return buildDivisionSeries(rows)
 }
 
-/** All series data for the interactive chart — fetched once, filtered client-side */
+/** All series data for the interactive chart - fetched once, filtered client-side */
 export async function getAllDivisionSeriesData(): Promise<{
   last3:    DivisionSeriesChart
   last6:    DivisionSeriesChart
@@ -232,7 +235,11 @@ export type ProfitPoolRow = {
 export async function getProfitPoolSeriesForYear(year: number): Promise<ProfitPoolRow[]> {
   const all = await getAllSnapshots()
   return all
-    .filter((s) => s.period.startsWith(String(year)))
+    .filter((s) => {
+      const [pYear, pMonth] = s.period.split('-').map(Number)
+      const fy = pMonth <= 2 ? pYear - 1 : pYear
+      return fy === year
+    })
     .map((s) => ({
       period: s.period,
       profitPool: Number(s.profitPool),

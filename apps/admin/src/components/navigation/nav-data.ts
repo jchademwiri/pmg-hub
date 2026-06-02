@@ -62,6 +62,7 @@ export const GROUPS: NavGroup[] = [
     items: [
       { title: 'Quotations', url: '/billing/quotes',     icon: FileText   },
       { title: 'Invoices',   url: '/billing/invoices',   icon: Receipt    },
+      { title: 'Payments',   url: '/billing/payments',   icon: Banknote   },
       { title: 'Statements', url: '/billing/statements', icon: ScrollText },
       { title: 'Items',      url: '/billing/items',      icon: Package    },
     ],
@@ -100,7 +101,7 @@ export const GROUPS: NavGroup[] = [
   },
 ]
 
-// ── Route labels (derived — do not edit manually) ─────────────────────────────
+// ── Route labels (derived - do not edit manually) ─────────────────────────────
 // Built from GROUPS + OVERVIEW so top-nav breadcrumbs always match the sidebar.
 
 const derivedLabels: Record<string, string> = {}
@@ -117,6 +118,7 @@ for (const group of GROUPS) {
 // Extra routes that exist in the app but are not sidebar items
 const EXTRA_LABELS: Record<string, string> = {
   '/settings/users/invite': 'Invite User',
+  '/billing/payments/add': 'Record Payment',
 }
 
 export const ROUTE_LABELS: Record<string, string> = {

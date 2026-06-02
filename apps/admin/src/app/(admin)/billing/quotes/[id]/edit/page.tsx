@@ -5,7 +5,7 @@ import { ChevronLeft } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Separator } from '@/components/ui/separator';
-import { getAllDivisions, getAllClients, getActiveItems, getQuotationById } from '@pmg/db';
+import { getAllDivisions, getAllClients, getActiveItems, getQuotationById, getAllDivisionBillingSettings } from '@pmg/db';
 import { QuoteFormClient } from '../../new/quote-form-client';
 
 export const dynamic = 'force-dynamic';
@@ -18,11 +18,12 @@ interface Props {
 export default async function EditQuotePage({ params }: Props) {
   const { id } = await params;
 
-  const [quote, divisions, clients, activeItems] = await Promise.all([
+  const [quote, divisions, clients, activeItems, billingSettings] = await Promise.all([
     getQuotationById(id),
     getAllDivisions(),
     getAllClients(),
     getActiveItems(),
+    getAllDivisionBillingSettings(),
   ]);
 
   if (!quote) notFound();
@@ -59,6 +60,7 @@ export default async function EditQuotePage({ params }: Props) {
             activeItems={activeItems}
             initialData={quote}
             editId={id}
+            billingSettings={billingSettings}
           />
         </CardContent>
       </Card>

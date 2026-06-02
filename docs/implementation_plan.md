@@ -1,46 +1,87 @@
-# Complete System Overhaul Implementation Plan
+# Fix Email Issues + Build Error
 
-This implementation plan thoroughly integrates your requirements for withdrawal constraints and expense management with the 14 critical issues identified in `docs/notes.md`.
+5 issues to fix: 4 email consistency/duplication bugs + 1 build-breaking bug.
 
-## User Review Required
+## Build Error — Root Cause
 
-> [!IMPORTANT]
-> This is a significant refactoring plan addressing auth security, raw SQL vulnerabilities, database schema changes, and UI optimizations. Please review the organized phases to confirm you agree with the prioritization.
+The `alert-dialog.tsx` file was **committed as empty** to git (`e69de29` = empty blob). The content exists only locally — Vercel clones from git and sees an empty file, hence "The module has no exports at all." Fix: commit the file.
+
+---
 
 ## Proposed Changes
 
-### Phase 1: Security, Auth & Tests
-- **Create/Update Tests:** Set up Vitest/Playwright tests securing withdrawal validation, category constraints, and authentication.
-- ✅ **Auth Middleware Check (Issue #1):** Upgraded `proxy.ts` to validate sessions server-side via internal fetch to `/api/auth/get-session`. Also rejects inactive users.
-- ✅ **Raw SQL Removal (Issue #5):** Refactored `users.ts` — `revokeUser`, `updateUserName`, `updateUserRole` now use Drizzle `db.update(user)` / `db.delete(session)` instead of raw SQL.
-- ✅ **Missing `/invite` Route (Issue #14):** Built `(auth)/invite/page.tsx` with token validation, expiry checks, and magic link sign-in flow.
+### Build Fix
 
-### Phase 2: Database & Core Domain
-- ✅ **Expense Client Linking (New Req):** Update `expenses` schema with an optional `client_id`.
-- ✅ **Run Migrations:** Pushed db changes via `drizzle-kit push`.
+#### [MODIFY] [alert-dialog.tsx](file:///d:/dev/websites/pmg-hub/apps/admin/src/components/ui/alert-dialog.tsx)
+No code change needed — just needs to be `git add`'d and committed. The file has the correct content locally.
 
-### Phase 3: Withdrawals & Accounts Logic
-- **Consolidate Withdrawals (Issue #4 & 7):** Delete the redundant `withdraw.ts`. Standardize on `withdrawals.ts`. Ensure the account parameter is passed explicitly and the hardcoded `'salary'` fallback is removed.
-- **Withdrawal Rules (New Req):** Enforce the R20 minimum balance checks and maximum available balance constraints within this consolidated Server Action.
-- **Account Rates Bug (Issue #6):** Fix the math/documentation for `ACCOUNT_RATES` in `accounts.ts` so `pmg_share` (revenue based) and the profit pool allocations sum up consistently.
-- **Statement Labeling (Issue #8):** Update the UI and localization in `accounts/[account]/page.tsx` to explicitly label the `effectiveRate` calculations as "Allocated" rather than "Deposited" to reflect synthetic flows.
+---
 
-### Phase 4: UI Cleanup & Performance
-- **Dashboard Refactor (New Req & Issue #3, 12, 13):** 
-  - Completely remove the withdrawal functional UI forms/buttons from the dashboard.
-  - Fix `autoClosePreviousMonthIfNeeded` so it doesn't query the DB on every request. Implement a cron job that auto-closes at 00:00 on the 6th of each month. It must write to database snapshots when it auto-closes, locking up to the last date of the previous month. Ensure users can also manually close the month.
-  - Clean up dead code by removing `revenue-sparkline.tsx` and `allocation-bar.tsx`.
-- **Pagination (Issue #9):** Add cursor or offset-based pagination to `getAllIncome()`, `getAllExpenses()`, and `getAllWithdrawals()` queries, and implement a data table capability.
-- **Expenses Form (New Req):** Add our `shadcn` select/combobox for optionally linking specific clients.
-- **Categories Page (New Req & Issue #11):** Build the `/expense-categories` route and sidebar link. Protect in-use categories from deletion, but permit renaming.
-- **Styling Fixes (Issue #10):** Update the `leads-table.tsx` badge classes (`bg-blue-100`) to strictly use CSS variable-based patterns designed for the forced dark mode UI.
-- **Sidebar Mobile UX (Issue #11):** Auto-close the sidebar on mobile when a navigation link is selected.
-- **Sidebar Logo Link (Issue #12):** Make the "PMG Control Center" title/logo clickable, linking to `/dashboard`.
+### Issue 1 — Cron route: no CC + hardcoded from address
 
-### Phase 5: Build & Final Polish
-- Ensure the Turborepo `bun run build` completely passes.
-- Fix any TypeScript definitions adjusted across schemas.
+#### [MODIFY] [route.ts](file:///d:/dev/websites/pmg-hub/apps/admin/src/app/api/cron/outstanding-reminders/route.ts)
+- Replace `process.env.EMAIL_FROM_ADDRESS || 'info@playhousemedia.com'` → use `DEFAULT_EMAIL_FROM`
+- Import `DEFAULT_EMAIL_FROM` and `resolveDivisionAdminEmail` from `@pmg/emails`
+- Add `cc: adminCc` to the `emailClient()` call (matching the pattern in all other senders)
+- Replace inline `resolveFromEmail` + brand-detection with the new shared helpers (see Issues 3 & 4)
+
+---
+
+### Issue 2 — brand-config.ts uses wrong constant for adminEmail
+
+#### [MODIFY] [brand-config.ts](file:///d:/dev/websites/pmg-hub/packages/emails/src/brand-config.ts)
+- Line 66: Change `BRAND_REPLY_TO[brand]` → `BRAND_ADMIN_EMAIL[brand]`
+- Add `BRAND_ADMIN_EMAIL` to the import from `./domains`
+
+---
+
+### Issue 3 — Extract shared `resolveFromEmail` helper
+
+#### [MODIFY] [domains.ts](file:///d:/dev/websites/pmg-hub/packages/emails/src/domains.ts)
+Add exported `resolveFromEmail(divisionWebsite, fallbackFrom)` function — same logic currently duplicated in 4 files.
+
+#### [MODIFY] [index.ts](file:///d:/dev/websites/pmg-hub/packages/emails/src/index.ts)
+Re-export `resolveFromEmail` from domains.ts.
+
+Then remove the local copies from:
+- [email-delivery.ts](file:///d:/dev/websites/pmg-hub/apps/admin/src/app/actions/email-delivery.ts) — lines 19-34
+- [send-overdue-reminders.ts](file:///d:/dev/websites/pmg-hub/apps/admin/src/app/actions/send-overdue-reminders.ts) — lines 24-34
+- [route.ts](file:///d:/dev/websites/pmg-hub/apps/admin/src/app/api/cron/outstanding-reminders/route.ts) — lines 8-18
+- [page.tsx](file:///d:/dev/websites/pmg-hub/apps/admin/src/app/(admin)/settings/billing/page.tsx) — lines 16-26
+
+All 4 will import from `@pmg/emails` instead.
+
+---
+
+### Issue 4 — Extract shared `resolveResendApiKey` helper
+
+#### [MODIFY] [domains.ts](file:///d:/dev/websites/pmg-hub/packages/emails/src/domains.ts)
+Add exported `resolveResendApiKey(divisionName)` function that encapsulates:
+```ts
+const name = divisionName?.toLowerCase() ?? '';
+const isTes = name.includes('tender');
+const isAws = name.includes('apex');
+return (isTes ? process.env.TES_RESEND_API_KEY : isAws ? process.env.AWS_RESEND_API_KEY : undefined)
+       ?? process.env.PMG_RESEND_API_KEY!;
+```
+
+#### [MODIFY] [index.ts](file:///d:/dev/websites/pmg-hub/packages/emails/src/index.ts)
+Re-export `resolveResendApiKey`.
+
+Then replace the inline brand-detection in:
+- [email-delivery.ts](file:///d:/dev/websites/pmg-hub/apps/admin/src/app/actions/email-delivery.ts) — 2 occurrences (lines 82-85, 195-198)
+- [send-overdue-reminders.ts](file:///d:/dev/websites/pmg-hub/apps/admin/src/app/actions/send-overdue-reminders.ts) — lines 161-168
+- [billing-payments.ts](file:///d:/dev/websites/pmg-hub/apps/admin/src/app/actions/billing-payments.ts) — lines 253-256
+- [route.ts](file:///d:/dev/websites/pmg-hub/apps/admin/src/app/api/cron/outstanding-reminders/route.ts) — lines 102-105
+
+---
 
 ## Verification Plan
-- Unit tests run confirming withdrawal logic, missing routes, and database models.
-- Manual execution of the app to confirm proper auth intercepts and visual data formatting (Pagination, Dark Mode).
+
+### Automated Tests
+- `git diff` to confirm alert-dialog.tsx is staged
+- Build locally with `npx turbo run build --filter=admin` to confirm the Turbopack error is resolved
+
+### Manual Verification
+- Push to `dev` branch and verify Vercel build passes
+- Spot-check that email flows still work (invoice delivery, payment receipt, overdue reminders)

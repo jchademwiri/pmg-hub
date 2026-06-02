@@ -5,7 +5,7 @@ import { ChevronLeft } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Separator } from '@/components/ui/separator';
-import { getAllDivisions, getAllClients, getActiveItems, getInvoiceById } from '@pmg/db';
+import { getAllDivisions, getAllClients, getActiveItems, getInvoiceById, getAllDivisionBillingSettings } from '@pmg/db';
 import { getMinAllowedDate } from '@/lib/date-rules';
 import { InvoiceFormClient } from '../../new/invoice-form-client';
 
@@ -19,12 +19,13 @@ interface Props {
 export default async function EditInvoicePage({ params }: Props) {
   const { id } = await params;
 
-  const [invoice, divisions, clients, activeItems, minDate] = await Promise.all([
+  const [invoice, divisions, clients, activeItems, minDate, billingSettings] = await Promise.all([
     getInvoiceById(id),
     getAllDivisions(),
     getAllClients(),
     getActiveItems(),
     getMinAllowedDate(),
+    getAllDivisionBillingSettings(),
   ]);
 
   if (!invoice) notFound();
@@ -62,6 +63,7 @@ export default async function EditInvoicePage({ params }: Props) {
             minDate={minDate}
             initialData={invoice}
             editId={id}
+            billingSettings={billingSettings}
           />
         </CardContent>
       </Card>

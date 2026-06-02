@@ -1,7 +1,9 @@
 'use client'
 
 import * as React from 'react'
+import { Alert, AlertDescription } from '@/components/ui/alert'
 import { Button } from '@/components/ui/button'
+import { Field, FieldLabel } from '@/components/ui/field'
 import { Input } from '@/components/ui/input'
 import {
   Select,
@@ -52,61 +54,73 @@ export function InviteUserForm() {
   }
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-4 max-w-md">
-      <div className="space-y-1.5">
-        <label htmlFor="name" className="text-sm font-medium leading-none">
-          Full Name
-        </label>
-        <Input
-          id="name"
-          type="text"
-          required
-          placeholder="Jane Smith"
-          value={name}
-          onChange={(e) => setName(e.target.value)}
-          disabled={isPending}
-        />
+    <form onSubmit={handleSubmit} className="flex flex-col gap-6 max-w-xl">
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
+        <Field className="sm:col-span-2">
+          <FieldLabel htmlFor="name">
+            Full Name <span className="text-destructive">*</span>
+          </FieldLabel>
+          <Input
+            id="name"
+            type="text"
+            required
+            placeholder="Jane Smith"
+            value={name}
+            onChange={(e) => setName(e.target.value)}
+            disabled={isPending}
+          />
+        </Field>
+
+        <Field className="sm:col-span-2">
+          <FieldLabel htmlFor="email">
+            Email Address <span className="text-destructive">*</span>
+          </FieldLabel>
+          <Input
+            id="email"
+            type="email"
+            required
+            placeholder="user@example.com"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+            disabled={isPending}
+          />
+        </Field>
+
+        <Field className="sm:col-span-2">
+          <FieldLabel htmlFor="role">
+            Role <span className="text-destructive">*</span>
+          </FieldLabel>
+          <Select value={role} onValueChange={(v) => setRole(v as Role)} disabled={isPending}>
+            <SelectTrigger id="role">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              {ROLES.map((r) => (
+                <SelectItem key={r.value} value={r.value}>
+                  {r.label}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </Field>
       </div>
 
-      <div className="space-y-1.5">
-        <label htmlFor="email" className="text-sm font-medium leading-none">
-          Email
-        </label>
-        <Input
-          id="email"
-          type="email"
-          required
-          placeholder="user@example.com"
-          value={email}
-          onChange={(e) => setEmail(e.target.value)}
-          disabled={isPending}
-        />
+      <div className="flex items-center justify-end gap-3 border-t border-border/50 pt-4 mt-2">
+        <Button type="submit" disabled={isPending}>
+          {isPending ? 'Sending…' : 'Send Invitation'}
+        </Button>
       </div>
 
-      <div className="space-y-1.5">
-        <label htmlFor="role" className="text-sm font-medium leading-none">
-          Role
-        </label>
-        <Select value={role} onValueChange={(v) => setRole(v as Role)} disabled={isPending}>
-          <SelectTrigger id="role">
-            <SelectValue />
-          </SelectTrigger>
-          <SelectContent>
-            {ROLES.map((r) => (
-              <SelectItem key={r.value} value={r.value}>
-                {r.label}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
-      </div>
-
-      {error && <p className="text-sm text-destructive">{error}</p>}
-      {success && <p className="text-sm text-green-600">{success}</p>}
-
-      <Button type="submit" disabled={isPending}>
-        {isPending ? 'Sending…' : 'Send Invitation'}
-      </Button>
+      {error && (
+        <Alert variant="destructive" className="mt-2">
+          <AlertDescription>{error}</AlertDescription>
+        </Alert>
+      )}
+      {success && (
+        <Alert className="mt-2">
+          <AlertDescription>{success}</AlertDescription>
+        </Alert>
+      )}
     </form>
   )
 }

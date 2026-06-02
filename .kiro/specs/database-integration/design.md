@@ -48,8 +48,8 @@ graph TD
 
 Two environment variables are required:
 
-- `DATABASE_URL` — Neon pooled connection string (PgBouncer). Used by the runtime `db` client for all application queries.
-- `DATABASE_URL_UNPOOLED` — Neon direct connection string. Used exclusively by `drizzle.config.ts` for `drizzle-kit` commands, because Neon's PgBouncer pooler does not support DDL transactions.
+- `DATABASE_URL` - Neon pooled connection string (PgBouncer). Used by the runtime `db` client for all application queries.
+- `DATABASE_URL_UNPOOLED` - Neon direct connection string. Used exclusively by `drizzle.config.ts` for `drizzle-kit` commands, because Neon's PgBouncer pooler does not support DDL transactions.
 
 No build step is needed. Bun resolves workspace packages directly to `src/index.ts` via the `exports` field in `package.json`.
 
@@ -57,19 +57,19 @@ No build step is needed. Bun resolves workspace packages directly to `src/index.
 
 ## Components and Interfaces
 
-### `src/env.ts` — Environment Validator
+### `src/env.ts` - Environment Validator
 
 Validates both connection strings at import time using Zod. Throws immediately with a descriptive error if either variable is missing or not a valid URL. All other modules import `env` from here rather than reading `process.env` directly.
 
 ```ts
 // Public shape
 export const env: {
-  DATABASE_URL: string;        // pooled — runtime queries
-  DATABASE_URL_UNPOOLED: string; // direct — migrations only
+  DATABASE_URL: string;        // pooled - runtime queries
+  DATABASE_URL_UNPOOLED: string; // direct - migrations only
 }
 ```
 
-### `src/client.ts` — Drizzle Client
+### `src/client.ts` - Drizzle Client
 
 Constructs the Drizzle ORM client using the `neon-http` driver and `DATABASE_URL`.
 
@@ -77,53 +77,53 @@ Constructs the Drizzle ORM client using the `neon-http` driver and `DATABASE_URL
 export const db: NeonHttpDatabase<typeof schema>
 ```
 
-### `src/schema/tes.ts` — TES Schema
+### `src/schema/tes.ts` - TES Schema
 
 Exports:
-- `tesServiceEnum` — `pgEnum("tes_service", [...])`
-- `tesLeadStatusEnum` — `pgEnum("tes_lead_status", [...])`
-- `tesLeads` — `pgTable("tes_leads", {...})`
-- `TesLead` — `typeof tesLeads.$inferSelect`
-- `NewTesLead` — `typeof tesLeads.$inferInsert`
+- `tesServiceEnum` - `pgEnum("tes_service", [...])`
+- `tesLeadStatusEnum` - `pgEnum("tes_lead_status", [...])`
+- `tesLeads` - `pgTable("tes_leads", {...})`
+- `TesLead` - `typeof tesLeads.$inferSelect`
+- `NewTesLead` - `typeof tesLeads.$inferInsert`
 
-### `src/schema/aws.ts` — AWS Schema
+### `src/schema/aws.ts` - AWS Schema
 
 Exports:
-- `awsPackageTypeEnum` — `pgEnum("aws_package_type", [...])`
-- `awsMessageStatusEnum` — `pgEnum("aws_message_status", [...])`
-- `awsBookingStatusEnum` — `pgEnum("aws_booking_status", [...])`
-- `awsMessages` — `pgTable("aws_messages", {...})`
-- `awsBookings` — `pgTable("aws_bookings", {...})`
-- `awsPricing` — `pgTable("aws_pricing", {...})`
+- `awsPackageTypeEnum` - `pgEnum("aws_package_type", [...])`
+- `awsMessageStatusEnum` - `pgEnum("aws_message_status", [...])`
+- `awsBookingStatusEnum` - `pgEnum("aws_booking_status", [...])`
+- `awsMessages` - `pgTable("aws_messages", {...})`
+- `awsBookings` - `pgTable("aws_bookings", {...})`
+- `awsPricing` - `pgTable("aws_pricing", {...})`
 - `AwsMessage`, `NewAwsMessage`
 - `AwsBooking`, `NewAwsBooking`
 - `AwsPricing`, `NewAwsPricing`
 
-### `src/schema/pmg.ts` — PMG Schema
+### `src/schema/pmg.ts` - PMG Schema
 
 Exports:
-- `pmgLeadServiceEnum` — `pgEnum("pmg_lead_service", [...])`
-- `pmgLeadStatusEnum` — `pgEnum("pmg_lead_status", [...])`
-- `pmgLeads` — `pgTable("pmg_leads", {...})`
-- `PmgLead` — `typeof pmgLeads.$inferSelect`
-- `NewPmgLead` — `typeof pmgLeads.$inferInsert`
+- `pmgLeadServiceEnum` - `pgEnum("pmg_lead_service", [...])`
+- `pmgLeadStatusEnum` - `pgEnum("pmg_lead_status", [...])`
+- `pmgLeads` - `pgTable("pmg_leads", {...})`
+- `PmgLead` - `typeof pmgLeads.$inferSelect`
+- `NewPmgLead` - `typeof pmgLeads.$inferInsert`
 
-### `src/schema/index.ts` — Schema Barrel
+### `src/schema/index.ts` - Schema Barrel
 
 Re-exports everything from `tes.ts`, `aws.ts`, and `pmg.ts`. The `connection_test` table is removed entirely.
 
-### `src/index.ts` — Public Entry Point
+### `src/index.ts` - Public Entry Point
 
 ```ts
 export * from "./client";
 export * from "./schema";
 ```
 
-### `src/seed.ts` — Seed Script
+### `src/seed.ts` - Seed Script
 
 Standalone script (run directly with `bun packages/db/src/seed.ts`). Inserts initial `aws_pricing` rows using `onConflictDoNothing()` for idempotence. Does not export anything.
 
-### `drizzle.config.ts` — Drizzle Kit Config
+### `drizzle.config.ts` - Drizzle Kit Config
 
 ```ts
 export default defineConfig({
@@ -244,15 +244,15 @@ Indexes: `status`, `email`
 
 Indexes: `status`, `email`
 
-### Seed Data — `aws_pricing`
+### Seed Data - `aws_pricing`
 
 | name | price (cents) | period | upfront (cents) | type | popular |
 |---|---|---|---|---|---|
-| Starter | 29900 | /month | — | monthly | false |
+| Starter | 29900 | /month | - | monthly | false |
 | Growth | 59900 | /month | 150000 | monthly | true |
 | Pro | 99900 | /month | 250000 | monthly | false |
-| Landing Page | 250000 | — | — | once_off | false |
-| Business Website | 650000 | — | — | once_off | false |
+| Landing Page | 250000 | - | - | once_off | false |
+| Business Website | 650000 | - | - | once_off | false |
 
 Idempotence is achieved via `onConflictDoNothing()` keyed on `name`.
 
@@ -288,7 +288,7 @@ Root `package.json` scripts delegate to the `@pmg/db` package:
 
 ## Correctness Properties
 
-*A property is a characteristic or behavior that should hold true across all valid executions of a system — essentially, a formal statement about what the system should do. Properties serve as the bridge between human-readable specifications and machine-verifiable correctness guarantees.*
+*A property is a characteristic or behavior that should hold true across all valid executions of a system - essentially, a formal statement about what the system should do. Properties serve as the bridge between human-readable specifications and machine-verifiable correctness guarantees.*
 
 ### Property 1: Env validator rejects invalid inputs
 
@@ -298,7 +298,7 @@ Root `package.json` scripts delegate to the `@pmg/db` package:
 
 ### Property 2: Seed script is idempotent
 
-*For any* initial state of the `aws_pricing` table, running the seed logic twice SHALL produce the same set of rows as running it once — no duplicate rows are created on the second run.
+*For any* initial state of the `aws_pricing` table, running the seed logic twice SHALL produce the same set of rows as running it once - no duplicate rows are created on the second run.
 
 **Validates: Requirements 11.5**
 
@@ -336,7 +336,7 @@ Uses [fast-check](https://fast-check.io) with vitest. Minimum 100 runs per prope
 Each property test is tagged with a comment in the format:
 `// Feature: database-integration, Property {N}: {property_text}`
 
-**Property 1 — Env validator rejects invalid inputs**
+**Property 1 - Env validator rejects invalid inputs**
 
 ```
 // Feature: database-integration, Property 1: Env validator rejects invalid inputs
@@ -344,7 +344,7 @@ Each property test is tagged with a comment in the format:
 
 Generate arbitrary objects where one or both URL fields are: absent, empty string, non-URL string, or a number. Assert the validator throws and the error message contains the offending field name. Also generate valid URL pairs and assert the validator succeeds.
 
-**Property 2 — Seed script is idempotent**
+**Property 2 - Seed script is idempotent**
 
 ```
 // Feature: database-integration, Property 2: Seed script is idempotent

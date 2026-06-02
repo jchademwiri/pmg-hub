@@ -197,7 +197,7 @@ beforeEach(() => {
 describe('Property 7: Viewer role is denied all mutations', () => {
   // Feature: auth-roles, Property 7: Viewer role is denied all mutations
 
-  it('inviteUser returns Forbidden for viewer — Validates: Requirements 4.1, 4.2', async () => {
+  it('inviteUser returns Forbidden for viewer - Validates: Requirements 4.1, 4.2', async () => {
     await fc.assert(
       fc.asyncProperty(
         fc.emailAddress(),
@@ -216,7 +216,7 @@ describe('Property 7: Viewer role is denied all mutations', () => {
     )
   })
 
-  it('revokeUser returns Forbidden for viewer — Validates: Requirements 4.1, 4.2', async () => {
+  it('revokeUser returns Forbidden for viewer - Validates: Requirements 4.1, 4.2', async () => {
     await fc.assert(
       fc.asyncProperty(fc.uuid(), async (userId) => {
         mockSession.mockResolvedValue(makeSession('viewer'))
@@ -230,7 +230,7 @@ describe('Property 7: Viewer role is denied all mutations', () => {
     )
   })
 
-  it('updateUserRole returns Forbidden for viewer — Validates: Requirements 4.1, 4.2', async () => {
+  it('updateUserRole returns Forbidden for viewer - Validates: Requirements 4.1, 4.2', async () => {
     await fc.assert(
       fc.asyncProperty(
         fc.uuid(),
@@ -255,7 +255,7 @@ describe('Property 7: Viewer role is denied all mutations', () => {
 describe('Property 8: Non-super_admin is denied user management', () => {
   // Feature: auth-roles, Property 8: Non-super_admin is denied user management
 
-  it('inviteUser returns Forbidden for admin and viewer — Validates: Requirements 4.3, 5.7', async () => {
+  it('inviteUser returns Forbidden for admin and viewer - Validates: Requirements 4.3, 5.7', async () => {
     await fc.assert(
       fc.asyncProperty(
         fc.constantFrom(...nonSuperAdminRoles),
@@ -275,7 +275,7 @@ describe('Property 8: Non-super_admin is denied user management', () => {
     )
   })
 
-  it('revokeUser returns Forbidden for admin and viewer — Validates: Requirements 4.3, 5.7', async () => {
+  it('revokeUser returns Forbidden for admin and viewer - Validates: Requirements 4.3, 5.7', async () => {
     await fc.assert(
       fc.asyncProperty(
         fc.constantFrom(...nonSuperAdminRoles),
@@ -293,7 +293,7 @@ describe('Property 8: Non-super_admin is denied user management', () => {
     )
   })
 
-  it('updateUserRole returns Forbidden for admin and viewer — Validates: Requirements 4.3, 5.7', async () => {
+  it('updateUserRole returns Forbidden for admin and viewer - Validates: Requirements 4.3, 5.7', async () => {
     await fc.assert(
       fc.asyncProperty(
         fc.constantFrom(...nonSuperAdminRoles),
@@ -319,7 +319,7 @@ describe('Property 8: Non-super_admin is denied user management', () => {
 describe('Property 9: Invalid invite inputs are rejected before DB operations', () => {
   // Feature: auth-roles, Property 9: Invalid invite inputs are rejected before DB operations
 
-  it('inviteUser rejects malformed email without touching DB — Validates: Requirements 5.5, 5.6', async () => {
+  it('inviteUser rejects malformed email without touching DB - Validates: Requirements 5.5, 5.6', async () => {
     // Generate strings that are NOT valid emails
     const invalidEmailArb = fc.string({ minLength: 1, maxLength: 50 }).filter(
       (s) => !s.includes('@') || s.startsWith('@') || s.endsWith('@')
@@ -344,7 +344,7 @@ describe('Property 9: Invalid invite inputs are rejected before DB operations', 
     )
   })
 
-  it('inviteUser rejects invalid role without touching DB — Validates: Requirements 5.5, 5.6', async () => {
+  it('inviteUser rejects invalid role without touching DB - Validates: Requirements 5.5, 5.6', async () => {
     // Generate strings that are NOT valid roles
     const invalidRoleArb = fc.string({ minLength: 1, maxLength: 30 }).filter(
       (s) => !['super_admin', 'admin', 'viewer'].includes(s)
@@ -375,7 +375,7 @@ describe('Property 9: Invalid invite inputs are rejected before DB operations', 
 describe('Property 10: Role update round-trip', () => {
   // Feature: auth-roles, Property 10: Role update round-trip
 
-  it('updateUserRole succeeds for any valid role with super_admin session — Validates: Requirements 5.4', async () => {
+  it('updateUserRole succeeds for any valid role with super_admin session - Validates: Requirements 5.4', async () => {
     await fc.assert(
       fc.asyncProperty(
         fc.uuid(),
@@ -398,7 +398,7 @@ describe('Property 10: Role update round-trip', () => {
     )
   })
 
-  it('updateUserRole rejects invalid role values — Validates: Requirements 5.4', async () => {
+  it('updateUserRole rejects invalid role values - Validates: Requirements 5.4', async () => {
     const invalidRoleArb = fc.string({ minLength: 1, maxLength: 30 }).filter(
       (s) => !['super_admin', 'admin', 'viewer'].includes(s)
     )
@@ -427,7 +427,7 @@ describe('Property 10: Role update round-trip', () => {
 describe('Property 12: Resend errors never propagate as exceptions', () => {
   // Feature: auth-roles, Property 12: Resend errors never propagate as exceptions
 
-  it('inviteUser returns { error } when Resend throws — Validates: Requirements 9.4', async () => {
+  it('inviteUser returns { error } when Resend throws - Validates: Requirements 9.4', async () => {
     // Use a simple valid email format that Zod's .email() accepts
     const zodValidEmailArb = fc
       .tuple(
@@ -452,7 +452,7 @@ describe('Property 12: Resend errors never propagate as exceptions', () => {
           const fd = buildFormData({ email, role })
           const result = await inviteUser(fd)
 
-          // Must not throw — must return { error }
+          // Must not throw - must return { error }
           assertActionResult(result)
           expect(result).toHaveProperty('error')
         }
@@ -461,7 +461,7 @@ describe('Property 12: Resend errors never propagate as exceptions', () => {
     )
   })
 
-  it('inviteUser returns { error: "Failed to send email" } when Resend returns error object — Validates: Requirements 9.4', async () => {
+  it('inviteUser returns { error: "Failed to send email" } when Resend returns error object - Validates: Requirements 9.4', async () => {
     // Use a simple valid email format that Zod's .email() accepts
     const zodValidEmailArb = fc
       .tuple(

@@ -1,7 +1,7 @@
 /**
  * Property-Based Tests for Server Actions
  *
- * Property 1: Server Actions never throw — they always return `{ error? }`
+ * Property 1: Server Actions never throw - they always return `{ error? }`
  * Validates: Requirements 1.1, 1.2, 1.6
  */
 
@@ -20,7 +20,7 @@ vi.mock('next/cache', () => ({
 
 // ─── Mock @pmg/db ─────────────────────────────────────────────────────────────
 // The Drizzle db object uses a chainable builder: db.insert(t).values(v)
-// We create a "thenable chain" — an object that:
+// We create a "thenable chain" - an object that:
 //   1. Returns itself for any method call (so chaining works)
 //   2. Is a thenable (has .then/.catch) so `await chain` calls mockDbExecute
 vi.mock('@pmg/db', () => {
@@ -111,12 +111,12 @@ beforeEach(() => {
 
 // ─── Tests ───────────────────────────────────────────────────────────────────
 
-describe('Server Actions — Property 1: never throw, always return { error? }', () => {
+describe('Server Actions - Property 1: never throw, always return { error? }', () => {
   /**
    * Validates: Requirements 1.1, 1.2, 1.6
    */
 
-  it('createIncome never throws and always returns { error? } — Validates: Requirements 1.1, 1.2, 1.6', async () => {
+  it('createIncome never throws and always returns { error? } - Validates: Requirements 1.1, 1.2, 1.6', async () => {
     await fc.assert(
       fc.asyncProperty(formDataArb, dbBehaviourArb, async (formData, shouldThrow) => {
         mockDbExecute.mockImplementation(() =>
@@ -129,7 +129,7 @@ describe('Server Actions — Property 1: never throw, always return { error? }',
     )
   })
 
-  it('updateIncome never throws and always returns { error? } — Validates: Requirements 1.1, 1.2, 1.6', async () => {
+  it('updateIncome never throws and always returns { error? } - Validates: Requirements 1.1, 1.2, 1.6', async () => {
     await fc.assert(
       fc.asyncProperty(fc.uuid(), formDataArb, dbBehaviourArb, async (id, formData, shouldThrow) => {
         mockDbExecute.mockImplementation(() =>
@@ -142,7 +142,7 @@ describe('Server Actions — Property 1: never throw, always return { error? }',
     )
   })
 
-  it('deleteIncome never throws and always returns { error? } — Validates: Requirements 1.1, 1.2, 1.6', async () => {
+  it('deleteIncome never throws and always returns { error? } - Validates: Requirements 1.1, 1.2, 1.6', async () => {
     await fc.assert(
       fc.asyncProperty(fc.uuid(), dbBehaviourArb, async (id, shouldThrow) => {
         mockDbExecute.mockImplementation(() =>
@@ -155,7 +155,7 @@ describe('Server Actions — Property 1: never throw, always return { error? }',
     )
   })
 
-  it('createExpense never throws and always returns { error? } — Validates: Requirements 1.1, 1.2, 1.6', async () => {
+  it('createExpense never throws and always returns { error? } - Validates: Requirements 1.1, 1.2, 1.6', async () => {
     await fc.assert(
       fc.asyncProperty(formDataArb, dbBehaviourArb, async (formData, shouldThrow) => {
         mockDbExecute.mockImplementation(() =>
@@ -168,7 +168,7 @@ describe('Server Actions — Property 1: never throw, always return { error? }',
     )
   })
 
-  it('updateExpense never throws and always returns { error? } — Validates: Requirements 1.1, 1.2, 1.6', async () => {
+  it('updateExpense never throws and always returns { error? } - Validates: Requirements 1.1, 1.2, 1.6', async () => {
     await fc.assert(
       fc.asyncProperty(fc.uuid(), formDataArb, dbBehaviourArb, async (id, formData, shouldThrow) => {
         mockDbExecute.mockImplementation(() =>
@@ -181,7 +181,7 @@ describe('Server Actions — Property 1: never throw, always return { error? }',
     )
   })
 
-  it('deleteExpense never throws and always returns { error? } — Validates: Requirements 1.1, 1.2, 1.6', async () => {
+  it('deleteExpense never throws and always returns { error? } - Validates: Requirements 1.1, 1.2, 1.6', async () => {
     await fc.assert(
       fc.asyncProperty(fc.uuid(), dbBehaviourArb, async (id, shouldThrow) => {
         mockDbExecute.mockImplementation(() =>
@@ -194,7 +194,7 @@ describe('Server Actions — Property 1: never throw, always return { error? }',
     )
   })
 
-  it('updateLeadStatus never throws and always returns { error? } — Validates: Requirements 1.1, 1.2, 1.6', async () => {
+  it('updateLeadStatus never throws and always returns { error? } - Validates: Requirements 1.1, 1.2, 1.6', async () => {
     await fc.assert(
       fc.asyncProperty(fc.uuid(), formDataArb, dbBehaviourArb, async (id, formData, shouldThrow) => {
         mockDbExecute.mockImplementation(() =>
@@ -207,7 +207,7 @@ describe('Server Actions — Property 1: never throw, always return { error? }',
     )
   })
 
-  it('updateLeadNotes never throws and always returns { error? } — Validates: Requirements 1.1, 1.2, 1.6', async () => {
+  it('updateLeadNotes never throws and always returns { error? } - Validates: Requirements 1.1, 1.2, 1.6', async () => {
     await fc.assert(
       fc.asyncProperty(fc.uuid(), formDataArb, dbBehaviourArb, async (id, formData, shouldThrow) => {
         mockDbExecute.mockImplementation(() =>
@@ -220,7 +220,7 @@ describe('Server Actions — Property 1: never throw, always return { error? }',
     )
   })
 
-  it('createDivision never throws and always returns { error? } — Validates: Requirements 1.1, 1.2, 1.6', async () => {
+  it('createDivision never throws and always returns { error? } - Validates: Requirements 1.1, 1.2, 1.6', async () => {
     await fc.assert(
       fc.asyncProperty(formDataArb, dbBehaviourArb, async (formData, shouldThrow) => {
         mockDbExecute.mockImplementation(() =>

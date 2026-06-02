@@ -19,7 +19,7 @@ describe('getFinancialSummary', () => {
       vi.resetAllMocks()
     })
 
-    it('standard case — revenue=100000, expenses=40000 produces correct eight fields', async () => {
+    it('standard case - revenue=100000, expenses=40000 produces correct eight fields', async () => {
       vi.mocked(getTotalRevenue).mockResolvedValue(100000)
       vi.mocked(getTotalExpenses).mockResolvedValue(40000)
 
@@ -35,7 +35,7 @@ describe('getFinancialSummary', () => {
       expect(result.flex).toBe(2000)
     })
 
-    it('zero case — revenue=0, expenses=0 returns all eight fields as 0 without error', async () => {
+    it('zero case - revenue=0, expenses=0 returns all eight fields as 0 without error', async () => {
       vi.mocked(getTotalRevenue).mockResolvedValue(0)
       vi.mocked(getTotalExpenses).mockResolvedValue(0)
 
@@ -51,7 +51,7 @@ describe('getFinancialSummary', () => {
       expect(result.flex).toBe(0)
     })
 
-    it('loss case — revenue=10000, expenses=15000 produces correct negative values', async () => {
+    it('loss case - revenue=10000, expenses=15000 produces correct negative values', async () => {
       vi.mocked(getTotalRevenue).mockResolvedValue(10000)
       vi.mocked(getTotalExpenses).mockResolvedValue(15000)
 
@@ -65,7 +65,7 @@ describe('getFinancialSummary', () => {
       expect(result.flex).toBe(-350)
     })
 
-    it('determinism — same mocked inputs called twice produce structurally identical results', async () => {
+    it('determinism - same mocked inputs called twice produce structurally identical results', async () => {
       vi.mocked(getTotalRevenue).mockResolvedValue(50000)
       vi.mocked(getTotalExpenses).mockResolvedValue(20000)
 
@@ -218,7 +218,7 @@ describe('getDivisionRevenue', () => {
     vi.resetAllMocks()
   })
 
-  it('Property 6: passthrough — returns getRevenueByDivision result unchanged', async () => {
+  it('Property 6: passthrough - returns getRevenueByDivision result unchanged', async () => {
     // Feature: financial-engine, Property 6: getDivisionRevenue passthrough
     // Validates: Requirements 3.1
     await fc.assert(
@@ -244,7 +244,7 @@ describe('getLeadCounts', () => {
     vi.resetAllMocks()
   })
 
-  it('Property 7: passthrough — returns getLeadsByStatus result unchanged', async () => {
+  it('Property 7: passthrough - returns getLeadsByStatus result unchanged', async () => {
     // Feature: financial-engine, Property 7: getLeadCounts passthrough
     // Validates: Requirements 4.1
     await fc.assert(

@@ -2,13 +2,13 @@
 
 ## Overview
 
-Resend processes incoming emails for your domain and sends webhook events to your endpoint. **Webhooks contain metadata only** — you must call separate APIs to retrieve email body and attachments.
+Resend processes incoming emails for your domain and sends webhook events to your endpoint. **Webhooks contain metadata only** - you must call separate APIs to retrieve email body and attachments.
 
 ## Quick Start
 
-1. **Configure receiving domain** — Use Resend's `.resend.app` domain or add MX record for custom domain
-2. **Set up webhook** — Subscribe to `email.received` event
-3. **Retrieve content** — Call Receiving API for body, Attachments API for files
+1. **Configure receiving domain** - Use Resend's `.resend.app` domain or add MX record for custom domain
+2. **Set up webhook** - Subscribe to `email.received` event
+3. **Retrieve content** - Call Receiving API for body, Attachments API for files
 
 ## Domain Setup
 
@@ -196,7 +196,7 @@ export async function POST(req: Request) {
       })
     );
 
-    // 4. Forward the email (single send — batch doesn't support attachments)
+    // 4. Forward the email (single send - batch doesn't support attachments)
     await resend.emails.send({
       from: 'Support System <system@acme.com>',
       to: ['team@acme.com'],
@@ -233,11 +233,11 @@ if (event.type === 'email.received') {
 
 | Mistake | Fix |
 |---------|-----|
-| Expecting body in webhook payload | Webhook has metadata only — call `resend.emails.receiving.get()` for body |
+| Expecting body in webhook payload | Webhook has metadata only - call `resend.emails.receiving.get()` for body |
 | MX record not lowest priority | Ensure Resend's MX has lowest number (highest priority) |
 | Adding MX to root domain with existing email | Use subdomain to avoid breaking existing email service |
-| Using expired download_url | URLs expire after 1 hour — call attachments API again for fresh URL |
-| Not verifying webhook signatures | Always verify — unverified events can't be trusted |
+| Using expired download_url | URLs expire after 1 hour - call attachments API again for fresh URL |
+| Not verifying webhook signatures | Always verify - unverified events can't be trusted |
 | Forgetting to return 200 OK | Resend retries on non-200 responses |
 
 ## Storage Note

@@ -24,7 +24,7 @@ export default function NotFound() {
             <span className="text-6xl font-semibold tracking-tight">404</span>
           </div>
           <p className="text-muted-foreground text-sm leading-relaxed">
-            You've wandered off the map. This page doesn't exist or was moved —
+            You've wandered off the map. This page doesn't exist or was moved -
             happens to the best of us.
           </p>
         </div>

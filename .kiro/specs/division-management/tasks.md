@@ -6,7 +6,7 @@ Implement the division management feature following the established PMG admin pa
 
 ## Tasks
 
-- [x] 1. DB query helper — `packages/db/src/queries.ts`
+- [x] 1. DB query helper - `packages/db/src/queries.ts`
   - [x] 1.1 Add `DivisionRow` type and `getDivisionsWithStats` to `packages/db/src/queries.ts`
     - Export `DivisionRow` type with all six fields: `id` (string), `name` (string), `totalIncome` (number), `totalExpenses` (number), `netProfit` (number), `leadCount` (number)
     - Implement `getDivisionsWithStats()` using raw SQL with LEFT JOINs to `income`, `expenses`, and `leads` tables
@@ -20,7 +20,7 @@ Implement the division management feature following the established PMG admin pa
     - Add `export type { DivisionRow } from './queries'` (functions are already covered by `export * from './queries'`)
     - _Requirements: 7.7_
 
-- [x] 2. Server Actions — `apps/admin/src/app/actions/divisions.ts`
+- [x] 2. Server Actions - `apps/admin/src/app/actions/divisions.ts`
   - [x] 2.1 Create `divisions.ts` server actions file with `DivisionSchema`
     - Create `apps/admin/src/app/actions/divisions.ts` with `'use server'`
     - Define named `DivisionSchema` with `z.object({ name: z.string().min(1, { message: 'Division name is required.' }).max(100, { message: 'Division name must be 100 characters or fewer.' }) })`
@@ -44,16 +44,16 @@ Implement the division management feature following the established PMG admin pa
 
   - [x] 2.4 Implement `deleteDivision` server action
     - `deleteDivision(id: string): Promise<{ error?: string }>`
-    - Attempt Drizzle delete inside try/catch — NO pre-check query
+    - Attempt Drizzle delete inside try/catch - NO pre-check query
     - On FK constraint violation: return `{ error: 'Cannot delete division with existing income or expense records.' }`
     - On success: `revalidatePath('/divisions')` inside try → return `{}`
     - Never throw; detect FK violation by checking error message for Postgres code `23503`
     - _Requirements: 4.3, 4.4, 4.5, 4.7, 5.1, 5.3, 5.4, 8.1, 8.2, 8.3, 8.4_
 
-- [x] 3. Checkpoint — Ensure all tests pass
+- [x] 3. Checkpoint - Ensure all tests pass
   - Ensure all tests pass, ask the user if questions arise.
 
-- [x] 4. Client Components — `apps/admin/src/components/divisions/`
+- [x] 4. Client Components - `apps/admin/src/components/divisions/`
   - [x] 4.1 Implement `DivisionAddForm` (`division-add-form.tsx`)
     - `'use client'`; accepts `createAction: (formData: FormData) => Promise<{ error?: string }>`
     - `useTransition` + `useRef` pattern (same as `income-add-form.tsx`)
@@ -71,16 +71,16 @@ Implement the division management feature following the established PMG admin pa
     - Inline delete: Delete button → inline confirmation within the row (NOT a modal) → Confirm + Cancel buttons; `useTransition` for pending state; disable buttons while pending; inline error on failure
     - _Requirements: 1.2, 1.3, 1.5, 3.1, 3.2, 3.4, 3.6, 3.7, 4.1, 4.2, 4.4, 4.6, 5.5_
 
-- [x] 5. Server Component Page — `apps/admin/src/app/(admin)/divisions/page.tsx`
+- [x] 5. Server Component Page - `apps/admin/src/app/(admin)/divisions/page.tsx`
   - Replace the existing stub (returns null) with a full async Server Component
   - Fetch `getDivisionsWithStats()` at the top of the component
   - Render: page header, `DivisionAddForm` with `createAction={createDivision}`, empty-state message when `divisions.length === 0`, or `DivisionsTable` with `divisions`, `updateAction={updateDivision}`, `deleteAction={deleteDivision}`
   - _Requirements: 1.1, 1.4, 2.1, 4.1_
 
-- [x] 6. Checkpoint — Ensure all tests pass
+- [x] 6. Checkpoint - Ensure all tests pass
   - Ensure all tests pass, ask the user if questions arise.
 
-- [x] 7. Tests — `apps/admin/src/__tests__/divisions.test.ts`
+- [x] 7. Tests - `apps/admin/src/__tests__/divisions.test.ts`
   - [x] 7.1 Set up test file with mocks and `divisionRowArb` arbitrary
     - Create `apps/admin/src/__tests__/divisions.test.ts`
     - `vi.mock('@pmg/db')` for all DB helpers; `vi.mock('@/app/actions/divisions')` for server actions
@@ -123,7 +123,7 @@ Implement the division management feature following the established PMG admin pa
     - **Property 9: parsing { name } with DivisionSchema for any valid name (length 1–100) produces output with the same name value**
     - **Validates: Requirements 6.3**
 
-  - [x] 7.11 Write property test P10: getDivisionsWithStats after create — appears sorted
+  - [x] 7.11 Write property test P10: getDivisionsWithStats after create - appears sorted
     - **Property 10: after createDivision succeeds, the new division appears in getDivisionsWithStats at the correct name-ascending sort position**
     - **Validates: Requirements 1.5, 2.3, 7.1**
 
@@ -156,7 +156,7 @@ Implement the division management feature following the established PMG admin pa
     - `updateDivision` returns `{ error }` on validation failure
     - _Requirements: 1.4, 4.4, 2.4, 3.4_
 
-- [x] 8. Final checkpoint — Ensure all tests pass
+- [x] 8. Final checkpoint - Ensure all tests pass
   - Ensure all tests pass, ask the user if questions arise.
 
 ## Notes
@@ -165,8 +165,8 @@ Implement the division management feature following the established PMG admin pa
 - Each task references specific requirements for traceability
 - Checkpoints ensure incremental validation
 - Property tests (P1–P10) validate universal correctness properties; unit tests validate specific UI states and error branches
-- All DB functions and server actions are mocked in tests — no live DB connection required
+- All DB functions and server actions are mocked in tests - no live DB connection required
 - `getDivisionsWithStats()` is a separate helper and must NOT replace or duplicate `getAllDivisions()`
-- Server Actions return `Promise<{ error?: string }>` always — never throw
-- `revalidatePath` is called inside try on success only — never in catch
-- `deleteDivision` relies solely on FK constraint — no pre-check query
+- Server Actions return `Promise<{ error?: string }>` always - never throw
+- `revalidatePath` is called inside try on success only - never in catch
+- `deleteDivision` relies solely on FK constraint - no pre-check query

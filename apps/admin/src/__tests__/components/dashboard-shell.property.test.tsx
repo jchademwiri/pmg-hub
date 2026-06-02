@@ -110,7 +110,7 @@ describe('Property 7: DashboardShell snapshot-conditional rendering', () => {
    * - Never both simultaneously
    */
   it(
-    'renders exactly one of badge or button based on hasSnapshot — Validates: Requirements 8.3, 8.4',
+    'renders exactly one of badge or button based on hasSnapshot - Validates: Requirements 8.3, 8.4',
     () => {
       fc.assert(
         fc.property(fc.boolean(), (hasSnapshot) => {

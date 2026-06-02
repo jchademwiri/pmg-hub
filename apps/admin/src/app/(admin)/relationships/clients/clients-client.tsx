@@ -25,29 +25,34 @@ export default function ClientsPageClient({
 
   return (
     <div className="flex flex-col gap-6">
-      {/* Header card */}
-      <div className="flex justify-between items-center bg-card p-4 rounded-xl border border-border shadow-sm">
-        <h2 className="text-lg font-medium">Clients</h2>
-        <Button onClick={() => setIsAdding(true)} disabled={isAdding}>
-          <Plus className="h-4 w-4 mr-2" /> Add Client
-        </Button>
+      {/* Page header */}
+      <div className="flex items-center justify-between">
+        <div>
+          <h2 className="text-lg font-semibold">Clients</h2>
+          <p className="text-sm text-muted-foreground">Manage client relationships, billing details, and outstanding balances</p>
+        </div>
+        <div className="flex items-center gap-2">
+          <Button onClick={() => setIsAdding(true)} disabled={isAdding} size="sm">
+            <Plus className="h-4 w-4 mr-2" /> Add Client
+          </Button>
+        </div>
       </div>
 
       {/* Collapsible add form */}
       {isAdding && (
-        <div className="bg-card rounded-xl border border-border shadow-sm p-4">
+        <div className="bg-card rounded-xl border border-border shadow-sm p-5">
+          <div className="mb-4">
+            <h3 className="text-sm font-semibold text-foreground">Add New Client</h3>
+            <p className="text-xs text-muted-foreground">Create a new client profile for billing and activity tracking</p>
+          </div>
           <ClientAddForm
             createAction={async (fd) => {
               const result = await createAction(fd);
               if (!result.error) setIsAdding(false);
               return result;
             }}
+            onCancel={() => setIsAdding(false)}
           />
-          <div className="mt-2 flex justify-end">
-            <Button variant="outline" onClick={() => setIsAdding(false)}>
-              Cancel
-            </Button>
-          </div>
         </div>
       )}
 

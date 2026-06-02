@@ -3,10 +3,10 @@
 import { useState } from 'react';
 import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
+import { confirm } from '@/components/ui/confirm-dialog';
 import {
   Tooltip,
   TooltipContent,
-  TooltipProvider,
   TooltipTrigger,
 } from '@/components/ui/tooltip';
 
@@ -20,9 +20,12 @@ export function MarkPaidButton({ invoiceId, hasClient, markPaidAction }: MarkPai
   const [isPending, setIsPending] = useState(false);
 
   async function handleClick() {
-    const confirmed = window.confirm(
-      'Mark this invoice as paid? This will post the revenue to the income ledger using today\'s date as the payment date. This cannot be undone.',
-    );
+    const confirmed = await confirm({
+      title: 'Mark invoice as paid?',
+      description:
+        "This will post revenue to the income ledger using today's date. This cannot be undone.",
+      confirmText: 'Mark Paid',
+    });
     if (!confirmed) return;
 
     setIsPending(true);
@@ -40,18 +43,16 @@ export function MarkPaidButton({ invoiceId, hasClient, markPaidAction }: MarkPai
 
   if (!hasClient) {
     return (
-      <TooltipProvider>
-        <Tooltip>
-          <TooltipTrigger asChild>
-            <span className="w-full">
-              <Button disabled className="w-full">Mark Paid</Button>
-            </span>
-          </TooltipTrigger>
-          <TooltipContent>
-            Add a client to this invoice before marking as paid.
-          </TooltipContent>
-        </Tooltip>
-      </TooltipProvider>
+      <Tooltip>
+        <TooltipTrigger asChild>
+          <span className="w-full">
+            <Button disabled className="w-full">Mark Paid</Button>
+          </span>
+        </TooltipTrigger>
+        <TooltipContent>
+          Add a client to this invoice before marking as paid.
+        </TooltipContent>
+      </Tooltip>
     );
   }
 

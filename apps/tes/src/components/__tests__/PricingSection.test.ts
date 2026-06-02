@@ -6,7 +6,7 @@ import { describe, it, expect } from 'vitest'
 import * as fc from 'fast-check'
 import { pricingRows } from '../../data/pricing'
 
-describe('PricingSection — Property 6: Pricing table row completeness', () => {
+describe('PricingSection - Property 6: Pricing table row completeness', () => {
   it('should have exactly eleven pricing rows', () => {
     expect(pricingRows).toHaveLength(11)
   })

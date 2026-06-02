@@ -33,7 +33,7 @@ integration tests.
 
 - [x] 2. Add `error.tsx` error boundary to `app/(admin)/`
   - Create `apps/admin/src/app/(admin)/error.tsx` as a `'use client'` component
-  - Display a safe, non-technical user message — no `error.message` or stack
+  - Display a safe, non-technical user message - no `error.message` or stack
     trace in the UI
   - Render a "Try again" button that calls `reset()`
   - Render a navigation link to `/dashboard`
@@ -56,18 +56,18 @@ integration tests.
     - Render and assert `Skeleton` elements are present
     - _Requirements: 3.3_
 
-- [x] 4. Harden Server Actions — wrap all actions in try/catch returning `{ error? }`
+- [x] 4. Harden Server Actions - wrap all actions in try/catch returning `{ error? }`
   - Audit every action in `apps/admin/src/app/actions/` (`createIncome`,
     `updateIncome`, `deleteIncome`, `createExpense`, `updateExpense`,
     `deleteExpense`, `updateLeadStatus`, `updateLeadNotes`, `createDivision`)
   - Replace any `parse()` calls with `safeParse()` and return
     `{ error: validationMessage }` on failure
   - Wrap database calls in `try/catch`; return `{ error: humanReadableMessage }`
-    on failure — never re-throw
+    on failure - never re-throw
   - _Requirements: 1.1, 1.2, 1.6_
 
   - [x] 4.1 Write property test for Server Actions (Property 1)
-    - **Property 1: Server Actions never throw — they always return `{ error? }`**
+    - **Property 1: Server Actions never throw - they always return `{ error? }`**
     - For each action, generate arbitrary `FormData` payloads with
       `fc.dictionary(fc.string(), fc.string())`; mock `db` to succeed or throw
       randomly; assert return value always matches `{ error?: string }` and
@@ -75,7 +75,7 @@ integration tests.
     - Minimum 100 iterations per action
     - **Validates: Requirements 1.1, 1.2, 1.6**
 
-- [x] 5. Checkpoint — ensure all tests pass
+- [x] 5. Checkpoint - ensure all tests pass
   - Ensure all tests pass, ask the user if questions arise.
 
 - [x] 6. Apply inline error display to all form components
@@ -111,15 +111,15 @@ integration tests.
     - _Requirements: 5.1, 5.2, 5.3, 5.4, 5.5, 5.6_
 
 - [x] 8. Integrate `EmptyState` into list pages
-  - `/income` — render `EmptyState` when `getAllIncome()` returns `[]`; include
+  - `/income` - render `EmptyState` when `getAllIncome()` returns `[]`; include
     CTA to add income form; render filtered-empty variant when filter active
-  - `/expenses` — render `EmptyState` when `getAllExpenses()` returns `[]`;
+  - `/expenses` - render `EmptyState` when `getAllExpenses()` returns `[]`;
     include CTA to add expense form; filtered-empty variant
-  - `/leads` — render `EmptyState` when `getAllLeads()` returns `[]`; include
+  - `/leads` - render `EmptyState` when `getAllLeads()` returns `[]`; include
     CTA to add lead; filtered-empty variant
-  - `/divisions` — render `EmptyState` when `getAllDivisions()` returns `[]`;
+  - `/divisions` - render `EmptyState` when `getAllDivisions()` returns `[]`;
     include CTA to add division
-  - `/reports` — render `EmptyState` when no snapshot data is available
+  - `/reports` - render `EmptyState` when no snapshot data is available
   - _Requirements: 4.1, 4.2, 4.3, 4.4, 4.5, 4.8_
 
 - [x] 9. Update database seed in `packages/db/src/seed.ts`
@@ -142,7 +142,7 @@ integration tests.
     - Run seed a second time; assert no errors and row counts unchanged
     - _Requirements: 6.1, 6.2, 6.3, 6.4, 6.5_
 
-- [x] 10. Final checkpoint — ensure all tests pass
+- [x] 10. Final checkpoint - ensure all tests pass
   - Ensure all tests pass, ask the user if questions arise.
 
 ## Notes
@@ -151,4 +151,4 @@ integration tests.
 - Each task references specific requirements for traceability
 - Property tests use `fast-check` (already installed in `apps/admin`)
 - Integration tests for the seed live in `packages/db/__tests__/seed.test.ts`
-- No schema migrations are required — all six areas are additive hardening
+- No schema migrations are required - all six areas are additive hardening

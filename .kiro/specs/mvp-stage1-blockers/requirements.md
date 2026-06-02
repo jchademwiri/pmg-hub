@@ -6,11 +6,11 @@ This document covers the five Stage 1 blockers from the PMG MVP v1 Readiness Pla
 These items must be resolved before the PMG Control Center handles real financial data.
 They are implemented in strict dependency order: B2 → B1 → B3 → B4 → B5.
 
-- **B2** — Build the `/clients` page (full CRUD) so clients can be created and managed
-- **B1** — Enforce `clientId` as required on all income entries (depends on B2)
-- **B3** — Replace freetext expense categories with a managed `expense_categories` table
-- **B4** — Fix the hardcoded "Dashboard" breadcrumb in `top-nav.tsx`
-- **B5** — Apply `formatZAR` to the income table amount column
+- **B2** - Build the `/clients` page (full CRUD) so clients can be created and managed
+- **B1** - Enforce `clientId` as required on all income entries (depends on B2)
+- **B3** - Replace freetext expense categories with a managed `expense_categories` table
+- **B4** - Fix the hardcoded "Dashboard" breadcrumb in `top-nav.tsx`
+- **B5** - Apply `formatZAR` to the income table amount column
 
 All implementation must follow the existing patterns established in `/income`, `/expenses`,
 and `/divisions`: Zod validation, `revalidatePath`, `useTransition`, sonner toasts, shadcn/ui
@@ -50,7 +50,7 @@ components, and server actions that never throw.
 
 ## Requirements
 
-### Requirement 1: Client CRUD — Database Queries
+### Requirement 1: Client CRUD - Database Queries
 
 **User Story:** As a developer, I want query helpers for the clients table, so that
 server components and server actions can read client data without writing raw SQL inline.
@@ -70,7 +70,7 @@ server components and server actions can read client data without writing raw SQ
 
 ---
 
-### Requirement 2: Client CRUD — Server Actions
+### Requirement 2: Client CRUD - Server Actions
 
 **User Story:** As an admin user, I want to create, update, and delete clients via
 server actions, so that client data is validated and persisted consistently.
@@ -92,11 +92,11 @@ server actions, so that client data is validated and persisted consistently.
    SHALL return `{ error: 'Failed to save. Please try again.' }` without throwing.
 7. IF ClientsActions Zod validation fails, THEN THE ClientsActions SHALL return
    `{ error: <first validation message> }` without throwing.
-8. THE ClientsActions SHALL never throw — all error paths return `{ error?: string }`.
+8. THE ClientsActions SHALL never throw - all error paths return `{ error?: string }`.
 
 ---
 
-### Requirement 3: Client CRUD — Add Form
+### Requirement 3: Client CRUD - Add Form
 
 **User Story:** As an admin user, I want an inline form to add a new client, so that
 I can create clients without leaving the clients list page.
@@ -116,7 +116,7 @@ I can create clients without leaving the clients list page.
 
 ---
 
-### Requirement 4: Client CRUD — Clients Table
+### Requirement 4: Client CRUD - Clients Table
 
 **User Story:** As an admin user, I want to see all clients in a table with their income
 count, so that I can manage clients and navigate to edit or delete them.
@@ -136,7 +136,7 @@ count, so that I can manage clients and navigate to edit or delete them.
 
 ---
 
-### Requirement 5: Client CRUD — List Page
+### Requirement 5: Client CRUD - List Page
 
 **User Story:** As an admin user, I want a `/clients` page that lists all clients and
 lets me add new ones, so that I have a central place to manage client records.
@@ -153,7 +153,7 @@ lets me add new ones, so that I have a central place to manage client records.
 
 ---
 
-### Requirement 6: Client CRUD — Edit Page
+### Requirement 6: Client CRUD - Edit Page
 
 **User Story:** As an admin user, I want a `/clients/[id]` edit page, so that I can
 update a client's details after creation.
@@ -174,7 +174,7 @@ update a client's details after creation.
 
 ---
 
-### Requirement 7: Client CRUD — Sidebar Navigation
+### Requirement 7: Client CRUD - Sidebar Navigation
 
 **User Story:** As an admin user, I want a Clients link in the sidebar, so that I can
 navigate to the clients page from anywhere in the app.
@@ -188,14 +188,14 @@ navigate to the clients page from anywhere in the app.
 
 ---
 
-### Requirement 8: Enforce clientId Required on Income — Schema
+### Requirement 8: Enforce clientId Required on Income - Schema
 
 **User Story:** As a business owner, I want every income entry to be linked to a client,
 so that revenue is always attributable and client reporting is accurate.
 
 #### Acceptance Criteria
 
-1. THE DB income schema SHALL define `clientId` as `NOT NULL` — the column SHALL NOT
+1. THE DB income schema SHALL define `clientId` as `NOT NULL` - the column SHALL NOT
    accept null values after the migration is applied.
 2. THE DB income schema SHALL define the `clientId` foreign key with `onDelete: 'restrict'`
    so that a client with associated income entries cannot be deleted.
@@ -205,7 +205,7 @@ so that revenue is always attributable and client reporting is accurate.
 
 ---
 
-### Requirement 9: Enforce clientId Required on Income — Server Action
+### Requirement 9: Enforce clientId Required on Income - Server Action
 
 **User Story:** As a developer, I want the income server action to require a valid
 clientId, so that the application layer enforces the same constraint as the database.
@@ -221,7 +221,7 @@ clientId, so that the application layer enforces the same constraint as the data
 
 ---
 
-### Requirement 10: Enforce clientId Required on Income — Forms
+### Requirement 10: Enforce clientId Required on Income - Forms
 
 **User Story:** As an admin user, I want the income add and edit forms to require a
 client selection, so that I cannot accidentally save income without a client.
@@ -241,7 +241,7 @@ client selection, so that I cannot accidentally save income without a client.
 
 ---
 
-### Requirement 11: Expense Category Management — Schema and Migration
+### Requirement 11: Expense Category Management - Schema and Migration
 
 **User Story:** As a developer, I want a managed `expense_categories` table, so that
 expense categories are controlled vocabulary and cannot drift due to typos.
@@ -260,7 +260,7 @@ expense categories are controlled vocabulary and cannot drift due to typos.
 
 ---
 
-### Requirement 12: Expense Category Management — Queries
+### Requirement 12: Expense Category Management - Queries
 
 **User Story:** As a developer, I want query helpers for expense categories, so that
 server components and actions can read category data without inline SQL.
@@ -275,7 +275,7 @@ server components and actions can read category data without inline SQL.
 
 ---
 
-### Requirement 13: Expense Category Management — Server Actions
+### Requirement 13: Expense Category Management - Server Actions
 
 **User Story:** As an admin user, I want to create, update, and delete expense categories
 via server actions, so that the category list stays accurate and consistent.
@@ -302,7 +302,7 @@ via server actions, so that the category list stays accurate and consistent.
 
 ---
 
-### Requirement 14: Expense Category Management — UI Components
+### Requirement 14: Expense Category Management - UI Components
 
 **User Story:** As an admin user, I want an `/expense-categories` page where I can
 add, rename, and delete categories, so that the category list stays clean and accurate.
@@ -325,7 +325,7 @@ add, rename, and delete categories, so that the category list stays clean and ac
 
 ---
 
-### Requirement 15: Expense Category Management — Replace Datalist with Select
+### Requirement 15: Expense Category Management - Replace Datalist with Select
 
 **User Story:** As an admin user, I want the expense add and edit forms to use a
 controlled Select for category, so that I can only choose from valid managed categories.
@@ -385,7 +385,7 @@ currency, so that the income table is consistent with the rest of the app.
 1. THE IncomeTable SHALL import `formatZAR` from `'@/lib/format'`.
 2. THE IncomeTable SHALL render each `entry.amount` cell as
    `{formatZAR(Number(entry.amount))}` instead of the raw numeric string.
-3. THE ExpenseTable amount column SHALL already use `formatZAR` — no change required
+3. THE ExpenseTable amount column SHALL already use `formatZAR` - no change required
    if it is already applied (verify only).
 4. THE IncomeTable SHALL not change any other column rendering, sorting, filtering,
    or action logic.

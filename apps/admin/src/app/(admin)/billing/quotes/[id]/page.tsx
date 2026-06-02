@@ -10,9 +10,12 @@ import { BillingStatusBadge } from '@/components/billing/billing-status-badge';
 import { BillingTotalsBlock } from '@/components/billing/billing-totals-block';
 import { getQuotationById, getDivisionBillingSettings } from '@pmg/db';
 import { updateQuotationStatus, deleteQuotation } from '@/app/actions/billing-quotes';
-import { fmtDate } from '@/lib/format';
+import { fmtDate, fmtDateTime } from '@/lib/format';
+import { getDocumentLogoUrl } from '@/lib/document-logo';
 import { QuoteDetailActions } from './quote-detail-actions';
 import { PrintButton } from '@/components/billing/print-button';
+import { ExportPdfButton } from '@/components/billing/export-pdf-button';
+import { EmailDocumentDialog } from '@/components/billing/email-document-dialog';
 
 export const dynamic = 'force-dynamic';
 
@@ -44,6 +47,7 @@ export default async function QuoteDetailPage({ params }: Props) {
     reference: quote.reference ?? undefined,
     org: {
       name: quote.divisionName,
+      logoUrl: getDocumentLogoUrl(quote.divisionName),
       divisionOf: 'Playhouse Media Group',
       email: divSettings?.salesRepEmail ?? undefined,
       phone: divSettings?.salesRepPhone ?? undefined,
@@ -78,7 +82,7 @@ export default async function QuoteDetailPage({ params }: Props) {
   return (
     <div className="flex flex-col gap-6">
       {/* Page header */}
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div className="flex items-center gap-4">
           <Button variant="ghost" size="sm" asChild>
             <Link href="/billing/quotes">
@@ -98,11 +102,19 @@ export default async function QuoteDetailPage({ params }: Props) {
           </div>
         </div>
         <div className="flex items-center gap-2 flex-wrap justify-end">
-          <PrintButton documentTitle={`Quote-${quote.documentNumber}`} />
-          <Button variant="outline" size="sm" disabled title="Coming soon">
-            <Send className="size-4" />
-            Send
-          </Button>
+          <PrintButton 
+            label="Print"
+            documentTitle={`Quote-${quote.documentNumber}`} 
+          />
+          <ExportPdfButton 
+            fileName={`Quote-${quote.documentNumber}`}
+          />
+          <EmailDocumentDialog
+            documentId={quote.id}
+            documentNumber={quote.documentNumber}
+            documentType="quote"
+            defaultRecipientEmail={quote.clientEmail ?? ''}
+          />
           {canEdit && (
             <Button variant="outline" size="sm" asChild>
               <Link href={`/billing/quotes/${quote.id}/edit`}>
@@ -116,9 +128,9 @@ export default async function QuoteDetailPage({ params }: Props) {
 
       {/* Two-column layout */}
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-3 lg:items-start">
-        {/* Document preview — scrollable on small screens */}
+        {/* Document preview - scrollable on small screens */}
         <div className="lg:col-span-2 overflow-x-auto">
-          <DocumentPreview type="quote" {...docPreviewProps} />
+          <DocumentPreview id="printable-area" type="quote" {...docPreviewProps} />
         </div>
 
         {/* Sidebar */}
@@ -147,17 +159,14 @@ export default async function QuoteDetailPage({ params }: Props) {
                 <div className="flex flex-col gap-0.5">
                   <span className="text-sm">Quote created</span>
                   <span className="text-xs text-muted-foreground">
-                    {new Date(quote.createdAt).toLocaleString('en-ZA', {
-                      day: '2-digit', month: 'short', year: 'numeric',
-                      hour: '2-digit', minute: '2-digit',
-                    })}
+                    {fmtDateTime(quote.createdAt)}
                   </span>
                 </div>
               </div>
             </CardContent>
           </Card>
 
-          {/* Actions — in sidebar below activity */}
+          {/* Actions - in sidebar below activity */}
           <QuoteDetailActions
             quote={{
               id: quote.id,

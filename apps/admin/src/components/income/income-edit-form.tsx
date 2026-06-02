@@ -4,7 +4,9 @@ import * as React from 'react';
 import { useRouter } from 'next/navigation';
 import { toast } from 'sonner';
 import type { IncomeRow } from '@pmg/db';
+import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
+import { Field, FieldLabel } from '@/components/ui/field';
 import { Input } from '@/components/ui/input';
 import {
   Select,
@@ -52,97 +54,99 @@ export function IncomeEditForm({
   }
 
   return (
-    <form onSubmit={handleSubmit} className="flex flex-wrap gap-3 items-end">
-      <div className="flex flex-col gap-1">
-        <label htmlFor="income-date" className="text-sm font-medium">
-          Date
-        </label>
-        <Input
-          id="income-date"
-          name="date"
-          type="date"
-          defaultValue={entry.date}
-          max={new Date().toISOString().split('T')[0]}
-          min={minDate}
-          required
-          disabled={isPending}
-          className="w-40"
-        />
+    <form onSubmit={handleSubmit} className="flex flex-col gap-6">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <Field>
+          <FieldLabel htmlFor="income-date">
+            Date <span className="text-destructive">*</span>
+          </FieldLabel>
+          <Input
+            id="income-date"
+            name="date"
+            type="date"
+            defaultValue={entry.date}
+            max={new Date().toISOString().split('T')[0]}
+            min={minDate}
+            required
+            disabled={isPending}
+          />
+        </Field>
+
+        <Field>
+          <FieldLabel htmlFor="income-amount">
+            Amount (ZAR) <span className="text-destructive">*</span>
+          </FieldLabel>
+          <Input
+            id="income-amount"
+            name="amount"
+            type="number"
+            min="0.01"
+            step="0.01"
+            defaultValue={entry.amount}
+            required
+            disabled={isPending}
+            placeholder="e.g. 5000"
+          />
+        </Field>
+
+        <Field>
+          <FieldLabel htmlFor="income-division">
+            Division <span className="text-destructive">*</span>
+          </FieldLabel>
+          <Select name="divisionId" defaultValue={entry.divisionId} required disabled={isPending}>
+            <SelectTrigger id="income-division">
+              <SelectValue placeholder="Select division" />
+            </SelectTrigger>
+            <SelectContent>
+              {divisions.map((division) => (
+                <SelectItem key={division.id} value={division.id}>
+                  {division.name}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </Field>
+
+        <Field>
+          <FieldLabel htmlFor="income-client">Client</FieldLabel>
+          <Select value={clientId} onValueChange={setClientId} disabled={isPending}>
+            <SelectTrigger id="income-client">
+              <SelectValue placeholder="Select client" />
+            </SelectTrigger>
+            <SelectContent>
+              {clients.map((client) => (
+                <SelectItem key={client.id} value={client.id}>
+                  {client.businessName ?? client.name}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </Field>
+
+        <Field className="md:col-span-2">
+          <FieldLabel htmlFor="income-description">Description</FieldLabel>
+          <Input
+            id="income-description"
+            name="description"
+            type="text"
+            placeholder="e.g. Payment for monthly maintenance"
+            defaultValue={entry.description ?? ''}
+            disabled={isPending}
+          />
+        </Field>
       </div>
 
-      <div className="flex flex-col gap-1">
-        <label htmlFor="income-division" className="text-sm font-medium">
-          Division
-        </label>
-        <Select name="divisionId" defaultValue={entry.divisionId} required disabled={isPending}>
-          <SelectTrigger id="income-division" className="w-44">
-            <SelectValue placeholder="Select division" />
-          </SelectTrigger>
-          <SelectContent>
-            {divisions.map((division) => (
-              <SelectItem key={division.id} value={division.id}>
-                {division.name}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
+      <div className="flex items-center justify-end gap-3 border-t border-border/50 pt-4 mt-2">
+        <Button type="submit" disabled={isPending}>
+          {isPending ? 'Saving…' : 'Save Changes'}
+        </Button>
       </div>
 
-      <div className="flex flex-col gap-1">
-        <label htmlFor="income-client" className="text-sm font-medium">
-          Client
-        </label>
-        <Select value={clientId} onValueChange={setClientId} disabled={isPending}>
-          <SelectTrigger id="income-client" className="w-44">
-            <SelectValue placeholder="Select client" />
-          </SelectTrigger>
-          <SelectContent>
-            {clients.map((client) => (
-              <SelectItem key={client.id} value={client.id}>
-                {client.businessName ?? client.name}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
-      </div>
-
-      <div className="flex flex-col gap-1">
-        <label htmlFor="income-description" className="text-sm font-medium">
-          Description
-        </label>
-        <Input
-          id="income-description"
-          name="description"
-          type="text"
-          placeholder="Optional"
-          defaultValue={entry.description ?? ''}
-          disabled={isPending}
-          className="w-48"
-        />
-      </div>
-
-      <div className="flex flex-col gap-1">
-        <label htmlFor="income-amount" className="text-sm font-medium">
-          Amount
-        </label>
-        <Input
-          id="income-amount"
-          name="amount"
-          type="number"
-          min="0.01"
-          step="0.01"
-          defaultValue={entry.amount}
-          required
-          disabled={isPending}
-          className="w-36"
-        />
-      </div>
-
-      <Button type="submit" disabled={isPending}>
-        {isPending ? 'Saving…' : 'Save Changes'}
-      </Button>
-
-      {errorMessage && <p className="w-full text-sm text-destructive">{errorMessage}</p>}
+      {errorMessage && (
+        <Alert variant="destructive" className="mt-2">
+          <AlertDescription>{errorMessage}</AlertDescription>
+        </Alert>
+      )}
     </form>
   );
 }

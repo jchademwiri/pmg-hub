@@ -1,16 +1,16 @@
-# Design Document — Auth, Roles & Advanced Features
+# Design Document - Auth, Roles & Advanced Features
 
 ## Overview
 
-Phase 10 adds invitation-only authentication, role-based access control (RBAC), and a user management interface to the PMG Control Center admin app. The system uses Better Auth with the magic link plugin as the sole authentication method — no passwords, no public registration.
+Phase 10 adds invitation-only authentication, role-based access control (RBAC), and a user management interface to the PMG Control Center admin app. The system uses Better Auth with the magic link plugin as the sole authentication method - no passwords, no public registration.
 
 The architecture follows a strict layered model:
 
-- **Proxy** (`proxy.ts`) — fast cookie presence check only, no DB calls, no role logic
-- **Route/Page level** — session fetch + role enforcement via `auth.api.getSession()`
-- **Server Actions** — role check before any mutation, return `{ error: 'Forbidden' }` if denied
-- **Better Auth** — handles magic link flow, session lifecycle, and the Drizzle adapter
-- **Resend** — delivers magic link and invitation emails
+- **Proxy** (`proxy.ts`) - fast cookie presence check only, no DB calls, no role logic
+- **Route/Page level** - session fetch + role enforcement via `auth.api.getSession()`
+- **Server Actions** - role check before any mutation, return `{ error: 'Forbidden' }` if denied
+- **Better Auth** - handles magic link flow, session lifecycle, and the Drizzle adapter
+- **Resend** - delivers magic link and invitation emails
 
 All new files fit into the existing monorepo structure without restructuring. Better Auth auto-creates `users` and `sessions` tables via its Drizzle adapter; the only new schema file is `packages/db/src/schema/invitations.ts`.
 
@@ -25,7 +25,7 @@ All new files fit into the existing monorepo structure without restructuring. Be
 └────────────────────────────┬────────────────────────────────────┘
                              │ HTTP
 ┌────────────────────────────▼────────────────────────────────────┐
-│  proxy.ts  (Next.js 16 — was middleware.ts)                     │
+│  proxy.ts  (Next.js 16 - was middleware.ts)                     │
 │  • Cookie presence check only (better-auth.session_token)       │
 │  • In-memory rate limiter for /api/auth/* (10 req / 60s / IP)   │
 │  • No DB calls, no role checks                                  │
@@ -61,9 +61,9 @@ All new files fit into the existing monorepo structure without restructuring. Be
 
 ### Key Design Decisions
 
-**Why cookie-only proxy?** The proxy runs on every request. DB calls in the proxy would add latency to every page load. The session cookie is cryptographically signed by Better Auth — its presence is sufficient to allow the request through. Role enforcement happens at the page/action level where the full session is already fetched.
+**Why cookie-only proxy?** The proxy runs on every request. DB calls in the proxy would add latency to every page load. The session cookie is cryptographically signed by Better Auth - its presence is sufficient to allow the request through. Role enforcement happens at the page/action level where the full session is already fetched.
 
-**Why `beforeSignIn` hook for invitation check?** Better Auth's `beforeSignIn` hook runs before a session is created. Returning an error here prevents the magic link from being consumed, which is the correct behavior — an uninvited email should never get a session.
+**Why `beforeSignIn` hook for invitation check?** Better Auth's `beforeSignIn` hook runs before a session is created. Returning an error here prevents the magic link from being consumed, which is the correct behavior - an uninvited email should never get a session.
 
 **Why in-memory rate limiter in proxy?** The proxy cannot make DB calls. In-memory rate limiting is fast and sufficient for a low-traffic internal admin tool. The trade-off (resets on restart, not shared across instances) is acceptable for this use case.
 
@@ -73,7 +73,7 @@ All new files fit into the existing monorepo structure without restructuring. Be
 
 ## Components and Interfaces
 
-### `lib/auth.ts` — Better Auth server config
+### `lib/auth.ts` - Better Auth server config
 
 ```ts
 import { betterAuth } from 'better-auth'
@@ -118,7 +118,7 @@ export const auth = betterAuth({
 export type Session = typeof auth.$Infer.Session
 ```
 
-### `lib/auth-client.ts` — Better Auth browser client
+### `lib/auth-client.ts` - Better Auth browser client
 
 ```ts
 import { createAuthClient } from 'better-auth/react'
@@ -131,7 +131,7 @@ export const authClient = createAuthClient({
 export const { signIn, signOut, useSession } = authClient
 ```
 
-### `app/api/auth/[...all]/route.ts` — Next.js catch-all route
+### `app/api/auth/[...all]/route.ts` - Next.js catch-all route
 
 ```ts
 import { auth } from '@/lib/auth'
@@ -140,11 +140,11 @@ import { toNextJsHandler } from 'better-auth/next-js'
 export const { GET, POST } = toNextJsHandler(auth)
 ```
 
-### `proxy.ts` — Updated session guard + rate limiter
+### `proxy.ts` - Updated session guard + rate limiter
 
 The proxy gains two responsibilities:
-1. **Session check** — redirect to `/login` if `better-auth.session_token` cookie is absent and the path is not in the allowlist
-2. **Rate limiter** — in-memory `Map<string, { count: number; windowStart: number }>` keyed by IP, applied only to `/api/auth/*` paths
+1. **Session check** - redirect to `/login` if `better-auth.session_token` cookie is absent and the path is not in the allowlist
+2. **Rate limiter** - in-memory `Map<string, { count: number; windowStart: number }>` keyed by IP, applied only to `/api/auth/*` paths
 
 ```ts
 export function proxy(request: NextRequest): NextResponse {
@@ -175,7 +175,7 @@ export function proxy(request: NextRequest): NextResponse {
 }
 ```
 
-### `app/(admin)/layout.tsx` — Updated admin layout
+### `app/(admin)/layout.tsx` - Updated admin layout
 
 ```ts
 import { auth } from '@/lib/auth'
@@ -197,11 +197,11 @@ export default async function AdminLayout({ children }) {
 }
 ```
 
-### `components/layout/app-sidebar.tsx` — Updated with user info
+### `components/layout/app-sidebar.tsx` - Updated with user info
 
 AppSidebar gains a `user` prop of type `{ name: string; email: string; role: string }`. The footer is replaced with a user display showing name/email and a sign-out button that calls `authClient.signOut()` then redirects to `/login`.
 
-### `app/actions/users.ts` — User management Server Actions
+### `app/actions/users.ts` - User management Server Actions
 
 ```ts
 'use server'
@@ -216,10 +216,10 @@ export async function updateUserRole(userId: string, formData: FormData): Promis
 
 All three actions call `requireSuperAdmin()` first. `inviteUser` validates with Zod before any DB operation.
 
-### `app/(admin)/users/` — User management pages
+### `app/(admin)/users/` - User management pages
 
-- `page.tsx` — Server Component, fetches all users, renders `UsersTable`
-- `invite/page.tsx` — Server Component, renders `InviteUserForm`
+- `page.tsx` - Server Component, fetches all users, renders `UsersTable`
+- `invite/page.tsx` - Server Component, renders `InviteUserForm`
 
 Both pages call `getSession()` and `notFound()` if the user is not `super_admin`.
 
@@ -248,7 +248,7 @@ export function requireRole(
 
 ## Data Models
 
-### `invitations` table — `packages/db/src/schema/invitations.ts`
+### `invitations` table - `packages/db/src/schema/invitations.ts`
 
 ```ts
 import { pgTable, uuid, text, timestamp } from 'drizzle-orm/pg-core'
@@ -316,7 +316,7 @@ const UpdateRoleSchema = z.object({
 
 ## Correctness Properties
 
-*A property is a characteristic or behavior that should hold true across all valid executions of a system — essentially, a formal statement about what the system should do. Properties serve as the bridge between human-readable specifications and machine-verifiable correctness guarantees.*
+*A property is a characteristic or behavior that should hold true across all valid executions of a system - essentially, a formal statement about what the system should do. Properties serve as the bridge between human-readable specifications and machine-verifiable correctness guarantees.*
 
 ### Property 1: Uninvited emails are always rejected
 
@@ -400,7 +400,7 @@ const UpdateRoleSchema = z.object({
 
 ## Error Handling
 
-All Server Actions follow the established `Promise<{ error?: string }>` pattern — never throw.
+All Server Actions follow the established `Promise<{ error?: string }>` pattern - never throw.
 
 | Scenario | Behavior |
 |---|---|

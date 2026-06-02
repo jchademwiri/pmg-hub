@@ -20,12 +20,12 @@ vi.mock('next/link', () => ({
 /** Arbitrary that produces non-empty strings */
 const nonEmptyString = fc.string({ minLength: 1 })
 
-describe('EmptyState — Property 2: renders message and CTA for any input', () => {
+describe('EmptyState - Property 2: renders message and CTA for any input', () => {
   /**
    * For any non-empty message string, the rendered output must contain that message.
    * Validates: Requirements 4.6
    */
-  it('always renders the message text — Validates: Requirements 4.6', () => {
+  it('always renders the message text - Validates: Requirements 4.6', () => {
     fc.assert(
       fc.property(nonEmptyString, (message) => {
         const { container, unmount } = render(<EmptyState message={message} />)
@@ -42,7 +42,7 @@ describe('EmptyState — Property 2: renders message and CTA for any input', () 
    * output must contain a link with the correct href and label text.
    * Validates: Requirements 4.7
    */
-  it('always renders the CTA link when ctaLabel and ctaHref are provided — Validates: Requirements 4.7', () => {
+  it('always renders the CTA link when ctaLabel and ctaHref are provided - Validates: Requirements 4.7', () => {
     fc.assert(
       fc.property(
         nonEmptyString,

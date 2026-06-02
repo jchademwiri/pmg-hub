@@ -37,19 +37,19 @@ export default async function LeadDetailPage({ params }: LeadDetailPageProps) {
           <dl className="grid gap-2 text-sm">
             <div className="flex flex-col gap-0.5">
               <dt className="text-muted-foreground">Name</dt>
-              <dd>{lead.name ?? '—'}</dd>
+              <dd>{lead.name ?? '-'}</dd>
             </div>
             <div className="flex flex-col gap-0.5">
               <dt className="text-muted-foreground">Email</dt>
-              <dd>{lead.email ?? '—'}</dd>
+              <dd>{lead.email ?? '-'}</dd>
             </div>
             <div className="flex flex-col gap-0.5">
               <dt className="text-muted-foreground">Phone</dt>
-              <dd>{lead.phone ?? '—'}</dd>
+              <dd>{lead.phone ?? '-'}</dd>
             </div>
             <div className="flex flex-col gap-0.5">
               <dt className="text-muted-foreground">Message</dt>
-              <dd className="whitespace-pre-wrap">{lead.message ?? '—'}</dd>
+              <dd className="whitespace-pre-wrap">{lead.message ?? '-'}</dd>
             </div>
           </dl>
         </div>
@@ -59,15 +59,15 @@ export default async function LeadDetailPage({ params }: LeadDetailPageProps) {
           <dl className="grid gap-2 text-sm">
             <div className="flex flex-col gap-0.5">
               <dt className="text-muted-foreground">Source</dt>
-              <dd>{lead.source ?? '—'}</dd>
+              <dd>{lead.source ?? '-'}</dd>
             </div>
             <div className="flex flex-col gap-0.5">
               <dt className="text-muted-foreground">Service Interest</dt>
-              <dd>{lead.serviceInterest ?? '—'}</dd>
+              <dd>{lead.serviceInterest ?? '-'}</dd>
             </div>
             <div className="flex flex-col gap-0.5">
               <dt className="text-muted-foreground">Division</dt>
-              <dd>{lead.divisionName ?? '—'}</dd>
+              <dd>{lead.divisionName ?? '-'}</dd>
             </div>
             <div className="flex flex-col gap-0.5">
               <dt className="text-muted-foreground">Status</dt>

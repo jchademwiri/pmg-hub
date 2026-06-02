@@ -22,6 +22,12 @@ import {
   TableRow,
 } from '@/components/ui/table';
 import { formatZAR, fmtDate } from '@/lib/format';
+import { confirm } from '@/components/ui/confirm-dialog';
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from '@/components/ui/tooltip';
 
 const today = new Date().toISOString().split('T')[0]!;
 
@@ -54,7 +60,7 @@ function ExpenseTableRow({
 }) {
   const period = entry.date.slice(0, 7);
   const isLocked = closedPeriods?.includes(period);
-  const [mode, setMode] = React.useState<'display' | 'edit' | 'confirm-delete'>('display');
+  const [mode, setMode] = React.useState<'display' | 'edit'>('display');
   const [editDate, setEditDate] = React.useState(entry.date);
   const [editDivisionId, setEditDivisionId] = React.useState(entry.divisionId);
   const [editClientId, setEditClientId] = React.useState(entry.clientId ?? '');
@@ -63,7 +69,6 @@ function ExpenseTableRow({
   const [editAmount, setEditAmount] = React.useState(entry.amount);
   const [error, setError] = React.useState<string | null>(null);
   const [isSaving, startSaveTransition] = React.useTransition();
-  const [isDeleting, setIsDeleting] = React.useState(false);
 
   function startEdit() {
     setEditDate(entry.date);
@@ -92,17 +97,16 @@ function ExpenseTableRow({
     });
   }
 
-  async function handleDelete() {
-    setIsDeleting(true);
-    try {
-      const result = await deleteAction(entry.id);
-      if (result.error) {
-        toast.error(result.error);
-        setMode('display');
-      }
-    } finally {
-      setIsDeleting(false);
-    }
+  async function handleDeleteClick() {
+    const confirmed = await confirm({
+      title: 'Delete expense?',
+      description: 'This action cannot be undone.',
+      confirmText: 'Delete',
+      variant: 'destructive',
+    });
+    if (!confirmed) return;
+    const result = await deleteAction(entry.id);
+    if (result.error) toast.error(result.error);
   }
 
   if (mode === 'edit') {
@@ -191,7 +195,7 @@ function ExpenseTableRow({
           <TableCell>
             <div className="flex items-center gap-2">
               <Button size="sm" onClick={handleSave} disabled={isSaving}>
-                <Check className="h-4 w-4 mr-1" />
+                <Check data-icon="inline-start" />
                 {isSaving ? 'Saving…' : 'Save'}
               </Button>
               <Button
@@ -200,7 +204,7 @@ function ExpenseTableRow({
                 onClick={() => setMode('display')}
                 disabled={isSaving}
               >
-                <X className="h-4 w-4" />
+                <X data-icon />
               </Button>
             </div>
           </TableCell>
@@ -220,7 +224,7 @@ function ExpenseTableRow({
     <TableRow>
       <TableCell>{fmtDate(entry.date)}</TableCell>
       <TableCell>{entry.divisionName}</TableCell>
-      <TableCell className="text-muted-foreground">{entry.clientName ?? '—'}</TableCell>
+      <TableCell className="text-muted-foreground">{entry.clientName ?? '-'}</TableCell>
       <TableCell>{entry.category}</TableCell>
       <TableCell>{entry.description ?? ''}</TableCell>
       <TableCell className="tabular-nums font-medium text-amber-500">
@@ -229,31 +233,23 @@ function ExpenseTableRow({
       <TableCell>
         <div className="flex items-center gap-2">
           {isLocked ? (
-            <Button variant="ghost" size="icon" disabled title="Period is closed">
-              <Lock className="h-4 w-4 text-muted-foreground/30" />
-            </Button>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button variant="ghost" size="icon" disabled>
+                  <Lock data-icon className="text-muted-foreground/30" />
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent>Period is closed</TooltipContent>
+            </Tooltip>
           ) : (
             <Button variant="ghost" size="icon" onClick={startEdit}>
-              <Pencil className="h-4 w-4" />
+              <Pencil data-icon />
               <span className="sr-only">Edit</span>
             </Button>
           )}
-          {mode === 'confirm-delete' ? (
-            <>
-              <Button variant="destructive" size="sm" disabled={isDeleting} onClick={handleDelete}>
-                {isDeleting ? 'Deleting…' : 'Confirm'}
-              </Button>
-              <Button variant="outline" size="sm" onClick={() => setMode('display')}>
-                Cancel
-              </Button>
-            </>
-          ) : isLocked ? (
-            <Button variant="ghost" size="icon" disabled title="Period is closed">
-              <Lock className="h-4 w-4 text-muted-foreground/30" />
-            </Button>
-          ) : (
-            <Button variant="ghost" size="icon" onClick={() => setMode('confirm-delete')}>
-              <Trash2 className="h-4 w-4" />
+          {!isLocked && (
+            <Button variant="ghost" size="icon" onClick={handleDeleteClick}>
+              <Trash2 data-icon />
               <span className="sr-only">Delete</span>
             </Button>
           )}

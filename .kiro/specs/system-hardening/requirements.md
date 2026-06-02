@@ -9,7 +9,7 @@ skeletons, graceful empty states on every list page, optimistic UI for lead
 status changes, and an updated database seed that reflects all schema additions
 from Phases 4–8.
 
-Auth is explicitly out of scope — it is deferred to Phase 10.
+Auth is explicitly out of scope - it is deferred to Phase 10.
 
 ---
 
@@ -55,7 +55,7 @@ field that caused them, so that I can correct my input without losing context.
    NOT navigate away from the current page.
 5. WHEN a Server_Action succeeds, THE form component SHALL clear any previously
    displayed Inline_Error messages.
-6. THE Server_Action SHALL NOT throw an unhandled exception — all errors MUST be
+6. THE Server_Action SHALL NOT throw an unhandled exception - all errors MUST be
    caught and returned as `{ error: string }`.
 7. WHEN a Server_Action returns `{ error: string }`, THE form component SHALL
    preserve the user's existing field values so the user does not need to

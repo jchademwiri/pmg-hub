@@ -4,7 +4,8 @@ import { z } from 'zod'
 import { revalidatePath } from 'next/cache'
 import { getDb, invitations, user, session, eq, and } from '@pmg/db'
 import { getSessionOrRedirect, requireRole } from '@/lib/auth'
-import { Resend } from 'resend'
+import { createEmailClient, InvitationEmail, DEFAULT_EMAIL_FROM, DEFAULT_REPLY_TO, DEFAULT_ADMIN_EMAIL } from '@pmg/emails'
+import React from 'react'
 
 // ── Zod schemas ───────────────────────────────────────────────────────────────
 
@@ -17,12 +18,6 @@ const InviteSchema = z.object({
 const UpdateRoleSchema = z.object({
   role: z.enum(['super_admin', 'admin', 'viewer']),
 })
-
-// ── Resend client ─────────────────────────────────────────────────────────────
-
-function getResend() {
-  return new Resend(process.env.RESEND_API_KEY)
-}
 
 // ── Role guard ────────────────────────────────────────────────────────────────
 
@@ -91,25 +86,34 @@ export async function inviteUser(formData: FormData): Promise<{ error?: string }
       invitedBy,
     })
 
-    // Send invitation email via Resend
-    const resend = getResend()
+    // Send invitation email via Resend using the InvitationEmail template
     const appUrl = process.env.BETTER_AUTH_URL
     if (!appUrl) {
       return { error: 'BETTER_AUTH_URL is not configured' }
     }
     const inviteUrl = `${appUrl}/invite?token=${token}`
-    const { error: emailError } = await resend.emails.send({
-      from: 'PMG Admin <noreply@playhousemedia.co.za>',
+
+    const emailClient = createEmailClient({
+      apiKey: process.env.PMG_RESEND_API_KEY!,
+      from: `PMG Admin <${DEFAULT_EMAIL_FROM}>`,
+      adminEmail: DEFAULT_EMAIL_FROM,
+    })
+
+    const { error: emailError } = await emailClient({
       to: email,
+      cc: DEFAULT_ADMIN_EMAIL,
       subject: 'You have been invited to PMG Control Center',
-      html: `
-        <p>Hi ${name},</p>
-        <p>You have been invited to join PMG Control Center as <strong>${role}</strong>.</p>
-        <p><a href="${inviteUrl}" style="background:#1a1a1a;color:#ffffff;padding:12px 24px;border-radius:6px;text-decoration:none;display:inline-block;">Accept Invitation</a></p>
-        <p>Or copy this link into your browser:</p>
-        <p style="word-break:break-all;color:#555;">${inviteUrl}</p>
-        <p>This invitation expires in 7 days.</p>
-      `,
+      react: React.createElement(InvitationEmail, {
+        recipientName: name,
+        role,
+        inviteUrl,
+        expiresIn: '7 days',
+        invitedByName: currentSession.user.name ?? undefined,
+        companyName: 'Playhouse Media Group',
+        primaryColor: '#1d4ed8',
+        websiteUrl: 'https://playhousemedia.co.za',
+      }),
+      replyTo: DEFAULT_REPLY_TO,
     })
 
     if (emailError) {
@@ -301,23 +305,31 @@ export async function resendInvitation(invitationId: string): Promise<{ error?: 
       expiresAt,
     }).where(eq(invitations.id, invitationId))
 
-    const resend = getResend()
     const appUrl = process.env.BETTER_AUTH_URL
     if (!appUrl) return { error: 'BETTER_AUTH_URL is not configured' }
 
     const inviteUrl = `${appUrl}/invite?token=${token}`
-    const { error: emailError } = await resend.emails.send({
-      from: 'PMG Admin <noreply@playhousemedia.co.za>',
+
+    const emailClient = createEmailClient({
+      apiKey: process.env.PMG_RESEND_API_KEY!,
+      from: `PMG Admin <${DEFAULT_EMAIL_FROM}>`,
+      adminEmail: DEFAULT_EMAIL_FROM,
+    })
+
+    const { error: emailError } = await emailClient({
       to: invitation.email,
+      cc: DEFAULT_ADMIN_EMAIL,
       subject: 'You have been invited to PMG Control Center',
-      html: `
-        <p>Hi ${invitation.name},</p>
-        <p>You have been invited to join PMG Control Center as <strong>${invitation.role}</strong>.</p>
-        <p><a href="${inviteUrl}" style="background:#1a1a1a;color:#ffffff;padding:12px 24px;border-radius:6px;text-decoration:none;display:inline-block;">Accept Invitation</a></p>
-        <p>Or copy this link into your browser:</p>
-        <p style="word-break:break-all;color:#555;">${inviteUrl}</p>
-        <p>This invitation expires in 7 days.</p>
-      `,
+      react: React.createElement(InvitationEmail, {
+        recipientName: invitation.name,
+        role: invitation.role,
+        inviteUrl,
+        expiresIn: '7 days',
+        companyName: 'Playhouse Media Group',
+        primaryColor: '#1d4ed8',
+        websiteUrl: 'https://playhousemedia.co.za',
+      }),
+      replyTo: DEFAULT_REPLY_TO,
     })
 
     if (emailError) return { error: 'Failed to resend email' }

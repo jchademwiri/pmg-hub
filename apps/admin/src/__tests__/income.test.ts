@@ -30,12 +30,12 @@ const incomeArb = fc.record({
   amount: fc.float({ min: Math.fround(0.01), max: Math.fround(999999.99), noNaN: true }).map((n) => n.toFixed(2)),
 })
 
-describe('getAllIncome — Property 1: shape and sort order', () => {
+describe('getAllIncome - Property 1: shape and sort order', () => {
   beforeEach(() => {
     vi.resetAllMocks()
   })
 
-  it('Property 1: getAllIncome returns all entries with correct shape, sorted date DESC — Validates: Requirements 1.1, 1.3, 8.1', async () => {
+  it('Property 1: getAllIncome returns all entries with correct shape, sorted date DESC - Validates: Requirements 1.1, 1.3, 8.1', async () => {
     // Feature: income-management, Property 1: getAllIncome shape + sort
     await fc.assert(
       fc.asyncProperty(
@@ -110,7 +110,7 @@ describe('FilterBar', () => {
   })
 
   it('month options display human-readable labels not raw YYYY-MM', () => {
-    // Test the label conversion logic directly — the same formula used in FilterBar
+    // Test the label conversion logic directly - the same formula used in FilterBar
     const toLabel = (month: string) =>
       new Date(month + '-01').toLocaleString('en-ZA', {
         month: 'long',
@@ -166,7 +166,7 @@ describe('IncomeTable', () => {
 
   it('empty entries array renders no table rows', () => {
     render(React.createElement(IncomeTable, { entries: [], deleteAction, updateAction, divisions, clients }))
-    // No data rows — only the header row exists
+    // No data rows - only the header row exists
     const rows = screen.queryAllByRole('row')
     // Only the header row should be present
     expect(rows).toHaveLength(1)
@@ -177,7 +177,7 @@ describe('IncomeTable', () => {
 // Feature: income-management, Property 4: Running total
 
 describe('Running total computation', () => {
-  it('Property 4: running total equals sum of amounts — Validates: Requirements 1.4, 2.6, 7.4', () => {
+  it('Property 4: running total equals sum of amounts - Validates: Requirements 1.4, 2.6, 7.4', () => {
     fc.assert(
       fc.property(
         fc.array(fc.float({ min: Math.fround(0.01), max: Math.fround(999999), noNaN: true })),
@@ -211,12 +211,12 @@ describe('Income page empty state', () => {
 // ─── Task 1.2: Property test for division filter exclusivity ─────────────────
 // Feature: income-management, Property 2: Division filter
 
-describe('getAllIncome — Property 2: Division filter excludes entries from other divisions', () => {
+describe('getAllIncome - Property 2: Division filter excludes entries from other divisions', () => {
   beforeEach(() => {
     vi.resetAllMocks()
   })
 
-  it('Property 2: getAllIncome({ divisionId }) never returns an entry with a different divisionId — Validates: Requirements 2.3, 7.3', async () => {
+  it('Property 2: getAllIncome({ divisionId }) never returns an entry with a different divisionId - Validates: Requirements 2.3, 7.3', async () => {
     // Feature: income-management, Property 2: Division filter
     await fc.assert(
       fc.asyncProperty(
@@ -246,12 +246,12 @@ describe('getAllIncome — Property 2: Division filter excludes entries from oth
 // ─── Task 1.3: Property test for month filter exclusivity ────────────────────
 // Feature: income-management, Property 3: Month filter
 
-describe('getAllIncome — Property 3: Month filter excludes entries outside the calendar month', () => {
+describe('getAllIncome - Property 3: Month filter excludes entries outside the calendar month', () => {
   beforeEach(() => {
     vi.resetAllMocks()
   })
 
-  it('Property 3: getAllIncome({ month }) never returns an entry whose date falls outside that calendar month — Validates: Requirements 2.4, 7.3', async () => {
+  it('Property 3: getAllIncome({ month }) never returns an entry whose date falls outside that calendar month - Validates: Requirements 2.4, 7.3', async () => {
     // Feature: income-management, Property 3: Month filter
     await fc.assert(
       fc.asyncProperty(
@@ -285,12 +285,12 @@ describe('getAllIncome — Property 3: Month filter excludes entries outside the
 
 import { getDistinctIncomeMonths } from '@pmg/db'
 
-describe('getDistinctIncomeMonths — Property 9: distinct YYYY-MM strings sorted DESC', () => {
+describe('getDistinctIncomeMonths - Property 9: distinct YYYY-MM strings sorted DESC', () => {
   beforeEach(() => {
     vi.resetAllMocks()
   })
 
-  it('Property 9: getDistinctIncomeMonths returns distinct YYYY-MM strings with no duplicates, sorted DESC — Validates: Requirements 2.2, 8.3', async () => {
+  it('Property 9: getDistinctIncomeMonths returns distinct YYYY-MM strings with no duplicates, sorted DESC - Validates: Requirements 2.2, 8.3', async () => {
     // Feature: income-management, Property 9: getDistinctIncomeMonths
     await fc.assert(
       fc.asyncProperty(
@@ -334,12 +334,12 @@ describe('getDistinctIncomeMonths — Property 9: distinct YYYY-MM strings sorte
 
 import { getAllDivisions } from '@pmg/db'
 
-describe('getAllDivisions — Property 12: returns all divisions sorted by name ASC', () => {
+describe('getAllDivisions - Property 12: returns all divisions sorted by name ASC', () => {
   beforeEach(() => {
     vi.resetAllMocks()
   })
 
-  it('Property 12: getAllDivisions returns all divisions sorted alphabetically by name ascending — Validates: Requirements 8.4', async () => {
+  it('Property 12: getAllDivisions returns all divisions sorted alphabetically by name ascending - Validates: Requirements 8.4', async () => {
     // Feature: income-management, Property 12: getAllDivisions sort
     await fc.assert(
       fc.asyncProperty(
@@ -373,12 +373,12 @@ describe('getAllDivisions — Property 12: returns all divisions sorted by name 
 
 import { getAllClients } from '@pmg/db'
 
-describe('getAllClients — Property 13: returns all clients sorted by name ASC', () => {
+describe('getAllClients - Property 13: returns all clients sorted by name ASC', () => {
   beforeEach(() => {
     vi.resetAllMocks()
   })
 
-  it('Property 13: getAllClients returns all clients sorted alphabetically by name ascending — Validates: Requirements 8.5', async () => {
+  it('Property 13: getAllClients returns all clients sorted alphabetically by name ascending - Validates: Requirements 8.5', async () => {
     // Feature: income-management, Property 13: getAllClients sort
     await fc.assert(
       fc.asyncProperty(
@@ -422,12 +422,12 @@ vi.mock('@/app/actions/income', () => ({
 
 import { createIncome } from '@/app/actions/income'
 
-describe('createIncome — Property 5: round-trip — valid input succeeds and entry is retrievable', () => {
+describe('createIncome - Property 5: round-trip - valid input succeeds and entry is retrievable', () => {
   beforeEach(() => {
     vi.resetAllMocks()
   })
 
-  it('Property 5: createIncome returns {} (no error) and entry appears in getAllIncome — Validates: Requirements 3.5, 3.7, 6.4', async () => {
+  it('Property 5: createIncome returns {} (no error) and entry appears in getAllIncome - Validates: Requirements 3.5, 3.7, 6.4', async () => {
     // Feature: income-management, Property 5: createIncome round-trip
     await fc.assert(
       fc.asyncProperty(
@@ -494,12 +494,12 @@ describe('createIncome — Property 5: round-trip — valid input succeeds and e
 
 import { updateIncome } from '@/app/actions/income'
 
-describe('updateIncome — Property 6: round-trip — valid input succeeds and changes are reflected', () => {
+describe('updateIncome - Property 6: round-trip - valid input succeeds and changes are reflected', () => {
   beforeEach(() => {
     vi.resetAllMocks()
   })
 
-  it('Property 6: updateIncome returns {} (no error) and getAllIncome reflects updated values — Validates: Requirements 4.7', async () => {
+  it('Property 6: updateIncome returns {} (no error) and getAllIncome reflects updated values - Validates: Requirements 4.7', async () => {
     // Feature: income-management, Property 6: updateIncome round-trip
     await fc.assert(
       fc.asyncProperty(
@@ -570,12 +570,12 @@ describe('updateIncome — Property 6: round-trip — valid input succeeds and c
 import { deleteIncome } from '@/app/actions/income'
 import { getIncomeById } from '@pmg/db'
 
-describe('deleteIncome — Property 7: round-trip — deleted entry is no longer retrievable', () => {
+describe('deleteIncome - Property 7: round-trip - deleted entry is no longer retrievable', () => {
   beforeEach(() => {
     vi.resetAllMocks()
   })
 
-  it('Property 7: deleteIncome returns {} (no error) and getIncomeById returns null afterwards — Validates: Requirements 5.3, 5.4', async () => {
+  it('Property 7: deleteIncome returns {} (no error) and getIncomeById returns null afterwards - Validates: Requirements 5.3, 5.4', async () => {
     // Feature: income-management, Property 7: deleteIncome round-trip
     await fc.assert(
       fc.asyncProperty(
@@ -607,12 +607,12 @@ describe('deleteIncome — Property 7: round-trip — deleted entry is no longer
 // ─── Task 2.4: Property test for getIncomeById correctness ──────────────────
 // Feature: income-management, Property 8: getIncomeById
 
-describe('getIncomeById — Property 8: returns the correct entry or null', () => {
+describe('getIncomeById - Property 8: returns the correct entry or null', () => {
   beforeEach(() => {
     vi.resetAllMocks()
   })
 
-  it('Property 8a: getIncomeById(entry.id) returns that entry with correct field values — Validates: Requirements 4.2, 4.9, 8.2', async () => {
+  it('Property 8a: getIncomeById(entry.id) returns that entry with correct field values - Validates: Requirements 4.2, 4.9, 8.2', async () => {
     // Feature: income-management, Property 8: getIncomeById
     await fc.assert(
       fc.asyncProperty(
@@ -639,7 +639,7 @@ describe('getIncomeById — Property 8: returns the correct entry or null', () =
     )
   })
 
-  it('Property 8b: getIncomeById(nonExistentId) returns null — Validates: Requirements 4.9, 8.2', async () => {
+  it('Property 8b: getIncomeById(nonExistentId) returns null - Validates: Requirements 4.9, 8.2', async () => {
     // Feature: income-management, Property 8: getIncomeById
     await fc.assert(
       fc.asyncProperty(
@@ -662,7 +662,7 @@ describe('getIncomeById — Property 8: returns the correct entry or null', () =
 // ─── Task 2.5: Property test for invalid input rejection ────────────────────
 // Feature: income-management, Property 10: Invalid input returns error
 
-describe('createIncome/updateIncome — Property 10: Invalid input always returns an error', () => {
+describe('createIncome/updateIncome - Property 10: Invalid input always returns an error', () => {
   // Arbitraries for invalid inputs
   const invalidAmountArb = fc.oneof(
     fc.constant('0'),
@@ -684,7 +684,7 @@ describe('createIncome/updateIncome — Property 10: Invalid input always return
     vi.mocked(updateIncome).mockResolvedValue({ error: 'Validation error' })
   })
 
-  it('Property 10: createIncome with invalid input always returns { error: <non-empty string> } — Validates: Requirements 3.6, 4.8, 9.2, 10.2, 10.3', async () => {
+  it('Property 10: createIncome with invalid input always returns { error: <non-empty string> } - Validates: Requirements 3.6, 4.8, 9.2, 10.2, 10.3', async () => {
     // Feature: income-management, Property 10: Invalid input returns error
     await fc.assert(
       fc.asyncProperty(
@@ -728,7 +728,7 @@ describe('createIncome/updateIncome — Property 10: Invalid input always return
     )
   })
 
-  it('Property 10: updateIncome with invalid input always returns { error: <non-empty string> } — Validates: Requirements 3.6, 4.8, 9.2, 10.2, 10.3', async () => {
+  it('Property 10: updateIncome with invalid input always returns { error: <non-empty string> } - Validates: Requirements 3.6, 4.8, 9.2, 10.2, 10.3', async () => {
     // Feature: income-management, Property 10: Invalid input returns error
     await fc.assert(
       fc.asyncProperty(
@@ -777,8 +777,8 @@ describe('createIncome/updateIncome — Property 10: Invalid input always return
 // ─── Task 2.6: Property test for amount precision round-trip ────────────────
 // Feature: income-management, Property 11: Amount precision
 
-describe('Amount precision — Property 11: Amount precision is preserved on round-trip', () => {
-  it('Property 11: Number(String(amount)) equals original amount within 2 decimal places — Validates: Requirements 9.1, 9.2', () => {
+describe('Amount precision - Property 11: Amount precision is preserved on round-trip', () => {
+  it('Property 11: Number(String(amount)) equals original amount within 2 decimal places - Validates: Requirements 9.1, 9.2', () => {
     // Feature: income-management, Property 11: Amount precision
     fc.assert(
       fc.property(
@@ -797,14 +797,14 @@ describe('Amount precision — Property 11: Amount precision is preserved on rou
 
 // ─── Task 2.7: Unit tests for Server Action edge cases ───────────────────────
 
-describe('Server Action edge cases — Unit tests', () => {
+describe('Server Action edge cases - Unit tests', () => {
   beforeEach(() => {
     vi.resetAllMocks()
   })
 
-  // IncomeSchema validation — tested via mocked createIncome returning { error } for invalid inputs
+  // IncomeSchema validation - tested via mocked createIncome returning { error } for invalid inputs
 
-  it('IncomeSchema rejects empty string date — Validates: Requirements 3.6, 10.2', async () => {
+  it('IncomeSchema rejects empty string date - Validates: Requirements 3.6, 10.2', async () => {
     vi.mocked(createIncome).mockResolvedValue({ error: 'String must contain at least 1 character(s)' })
 
     const formData = new FormData()
@@ -819,7 +819,7 @@ describe('Server Action edge cases — Unit tests', () => {
     expect((result as { error: string }).error.length).toBeGreaterThan(0)
   })
 
-  it('IncomeSchema rejects clientId = "" before normalization — Validates: Requirements 6.2, 6.3', async () => {
+  it('IncomeSchema rejects clientId = "" before normalization - Validates: Requirements 6.2, 6.3', async () => {
     // Before normalization, an empty string clientId fails UUID validation.
     // The action normalizes it (delete raw.clientId), but if we bypass normalization
     // and pass '' directly to the schema, it should fail.
@@ -840,8 +840,8 @@ describe('Server Action edge cases — Unit tests', () => {
     expect((result as { error: string }).error.length).toBeGreaterThan(0)
   })
 
-  it('IncomeSchema accepts clientId = undefined — Validates: Requirements 6.2, 6.3', async () => {
-    // clientId is optional — omitting it entirely should succeed
+  it('IncomeSchema accepts clientId = undefined - Validates: Requirements 6.2, 6.3', async () => {
+    // clientId is optional - omitting it entirely should succeed
     vi.mocked(createIncome).mockResolvedValue({})
 
     const formData = new FormData()
@@ -856,7 +856,7 @@ describe('Server Action edge cases — Unit tests', () => {
     expect((result as { error?: string }).error).toBeUndefined()
   })
 
-  it('createIncome with amount = 0 returns { error } — Validates: Requirements 9.2, 10.2, 10.3', async () => {
+  it('createIncome with amount = 0 returns { error } - Validates: Requirements 9.2, 10.2, 10.3', async () => {
     vi.mocked(createIncome).mockResolvedValue({ error: 'Number must be greater than 0' })
 
     const formData = new FormData()
@@ -871,7 +871,7 @@ describe('Server Action edge cases — Unit tests', () => {
     expect((result as { error: string }).error.length).toBeGreaterThan(0)
   })
 
-  it('createIncome with amount = -1 returns { error } — Validates: Requirements 9.2, 10.2, 10.3', async () => {
+  it('createIncome with amount = -1 returns { error } - Validates: Requirements 9.2, 10.2, 10.3', async () => {
     vi.mocked(createIncome).mockResolvedValue({ error: 'Number must be greater than 0' })
 
     const formData = new FormData()
@@ -886,7 +886,7 @@ describe('Server Action edge cases — Unit tests', () => {
     expect((result as { error: string }).error.length).toBeGreaterThan(0)
   })
 
-  it('deleteIncome returns { error } when DB throws (FK constraint or connection error) — Validates: Requirements 5.6', async () => {
+  it('deleteIncome returns { error } when DB throws (FK constraint or connection error) - Validates: Requirements 5.6', async () => {
     vi.mocked(deleteIncome).mockResolvedValue({ error: 'Database error' })
 
     const result = await deleteIncome(crypto.randomUUID())
@@ -896,7 +896,7 @@ describe('Server Action edge cases — Unit tests', () => {
     expect((result as { error: string }).error.length).toBeGreaterThan(0)
   })
 
-  it('deleteIncome calls revalidatePath("/income") and revalidatePath("/dashboard") on success — Validates: Requirements 11.1', async () => {
+  it('deleteIncome calls revalidatePath("/income") and revalidatePath("/dashboard") on success - Validates: Requirements 11.1', async () => {
     // On success, deleteIncome returns {} (no error).
     // The revalidatePath calls happen inside the server action implementation.
     // We verify the action was called and returned success (no error).

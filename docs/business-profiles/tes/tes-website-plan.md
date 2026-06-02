@@ -1,4 +1,4 @@
-# Tender Edge Solutions — Website Content & Development Plan
+# Tender Edge Solutions - Website Content & Development Plan
 ### `apps/tes` · Single-Page Site · Astro 6 + Tailwind v4
 
 > **Internal reference · Playhouse Media Group**
@@ -26,7 +26,7 @@
    - S8 · Case Study
    - S9 · Lead Form
    - S10 · Footer
-5. [Astro Actions — Lead Form](#5-astro-actions--lead-form)
+5. [Astro Actions - Lead Form](#5-astro-actions--lead-form)
 6. [Component File Structure](#6-component-file-structure)
 7. [Build Sequence & AI Prompts](#7-build-sequence--ai-prompts)
 8. [Copy Reference](#8-copy-reference)
@@ -39,17 +39,17 @@
 |---|---|---|
 | Framework | Astro 6 | Hybrid (SSG + SSR for form action via `getActionResult`) |
 | Styling | Tailwind v4 + `@pmg/tailwind-config` | Inherits base config from monorepo |
-| Form handling | **Astro Actions** | No API endpoints — all form logic via `src/actions/index.ts` |
+| Form handling | **Astro Actions** | No API endpoints - all form logic via `src/actions/index.ts` |
 | Fonts | Barlow Condensed (display) + DM Sans (body) | Already loaded in existing `ComingSoon.astro` |
-| Database | `@pmg/db` — writes to `leads` table | `source = "tes"` |
-| Email | `@pmg/emails` — `AdminNewLeadEmail` template | Notifies Jacob on new lead |
+| Database | `@pmg/db` - writes to `leads` table | `source = "tes"` |
+| Email | `@pmg/emails` - `AdminNewLeadEmail` template | Notifies Jacob on new lead |
 | Analytics | `@vercel/analytics` | Already in `package.json` |
 | Deployment | Vercel | `tenderedgesolutions.co.za` |
 
 ### Key Constraints
 - **No API endpoint files** (`src/pages/api/`). All form submissions use Astro Actions exclusively.
 - Single `.astro` page file. Components are broken into `src/components/` but the page is one scrolling document.
-- Smooth scroll navigation — all section links use `#section-id` anchors.
+- Smooth scroll navigation - all section links use `#section-id` anchors.
 - WhatsApp is the **primary CTA** everywhere. The form is the secondary capture.
 - Mobile-first. The majority of SA tender clients browse on phones.
 
@@ -59,15 +59,15 @@
 
 ### Aesthetic: Dark Authority + Gold Precision
 
-TES operates in a sector built on credibility, compliance, and results. The design should feel like a law firm crossed with a specialist consultancy — serious, precise, authoritative. Not corporate-bland. Not startup-bubbly.
+TES operates in a sector built on credibility, compliance, and results. The design should feel like a law firm crossed with a specialist consultancy - serious, precise, authoritative. Not corporate-bland. Not startup-bubbly.
 
 **Palette**
 
 | Token | Value | Usage |
 |---|---|---|
-| `--background` | `#0b1929` | Near-black navy — page background |
+| `--background` | `#0b1929` | Near-black navy - page background |
 | `--foreground` | `#f0f4f8` | Off-white body text |
-| `--primary` | `#c9a227` | Gold accent — CTAs, highlights, underlines |
+| `--primary` | `#c9a227` | Gold accent - CTAs, highlights, underlines |
 | `--primary-foreground` | `#0b1929` | Text on gold buttons |
 | `--primary-hover` | `#e0b82e` | Gold hover state |
 | `--secondary` | `#1a3350` | Supporting surface |
@@ -81,13 +81,13 @@ TES operates in a sector built on credibility, compliance, and results. The desi
 
 **Typography**
 
-- Display / Hero: `Barlow Condensed` — Bold/700, uppercase, tight tracking. Very large scale (clamp 72px–120px for hero H1).
-- Body / UI: `DM Sans` — Light/300 for paragraphs, Medium/500 for labels.
-- Section labels: 10–11px all-caps tracking-widest in gold — used as eyebrow text above each section headline.
+- Display / Hero: `Barlow Condensed` - Bold/700, uppercase, tight tracking. Very large scale (clamp 72px–120px for hero H1).
+- Body / UI: `DM Sans` - Light/300 for paragraphs, Medium/500 for labels.
+- Section labels: 10–11px all-caps tracking-widest in gold - used as eyebrow text above each section headline.
 
 **Atmosphere**
 
-- Grain noise overlay at 4% opacity (already in `ComingSoon.astro` — reuse).
+- Grain noise overlay at 4% opacity (already in `ComingSoon.astro` - reuse).
 - Radial gold glow behind hero headline.
 - Subtle horizontal rule dividers between sections using a thin gold line.
 - Section backgrounds alternate between `--background` and `--card` to create rhythm without heavy borders.
@@ -102,10 +102,10 @@ Always green (#25D366). Never adapts to the gold palette. Muscle-memory recognit
 
 ```
 / (index.astro)
-├── <head> — SEO, fonts, analytics
+├── <head> - SEO, fonts, analytics
 ├── <Nav>             id="top"
 ├── <Hero>            id="hero"
-├── <TrustBar>        id="trust"         (no anchor needed — visual only)
+├── <TrustBar>        id="trust"         (no anchor needed - visual only)
 ├── <ProblemSection>  id="problem"
 ├── <ServicesSection> id="services"
 ├── <HowItWorks>      id="process"
@@ -115,12 +115,12 @@ Always green (#25D366). Never adapts to the gold palette. Muscle-memory recognit
 └── <Footer>
 ```
 
-**Smooth scroll setup** — add to `<html>` tag:
+**Smooth scroll setup** - add to `<html>` tag:
 ```html
 <html lang="en" class="dark" style="scroll-behavior: smooth;">
 ```
 
-**Section spacing** — every section uses `py-20 md:py-28` as a base. The hero uses `min-h-screen`.
+**Section spacing** - every section uses `py-20 md:py-28` as a base. The hero uses `min-h-screen`.
 
 ---
 
@@ -134,10 +134,10 @@ Always green (#25D366). Never adapts to the gold palette. Muscle-memory recognit
 
 **Behaviour:**
 - Transparent on load, transitions to `bg-background/90 backdrop-blur` on scroll (JS scroll listener or CSS scroll-driven animation).
-- Logo left: "TenderEdge **Solutions**" wordmark — "TenderEdge" in foreground, "Solutions" in gold.
+- Logo left: "TenderEdge **Solutions**" wordmark - "TenderEdge" in foreground, "Solutions" in gold.
 - Nav links centre (desktop): Services · Process · Pricing · Results · Contact.
 - On mobile: hamburger → slide-down menu. Nav links stack vertically.
-- Right: WhatsApp button — compact, icon + "WhatsApp Us" label.
+- Right: WhatsApp button - compact, icon + "WhatsApp Us" label.
 
 **Content:**
 ```
@@ -165,7 +165,7 @@ H1:           WIN MORE
 
 Subheadline:  We handle the compliance. You focus on the work.
               CSD registration, CIDB grading, B-BBEE affidavits,
-              and full tender document compilation — done right,
+              and full tender document compilation - done right,
               on deadline, every time.
 
 Primary CTA:  [WhatsApp icon]  WhatsApp Us Now
@@ -180,8 +180,8 @@ Trust note:   Based in Centurion · Serving all of South Africa
 **Design notes:**
 - H1 uses Barlow Condensed at `clamp(72px, 14vw, 120px)`, uppercase, line-height 0.9.
 - "TENDERS." renders in gold (`--primary`).
-- Animate in: eyebrow fades up (0ms), H1 fades up (100ms), sub + CTAs (250ms). CSS `@keyframes up` — already in `ComingSoon.astro`.
-- WhatsApp button: `bg-[#25D366]` — full green, no gold.
+- Animate in: eyebrow fades up (0ms), H1 fades up (100ms), sub + CTAs (250ms). CSS `@keyframes up` - already in `ComingSoon.astro`.
+- WhatsApp button: `bg-[#25D366]` - full green, no gold.
 
 **File:** `src/components/Hero.astro`
 
@@ -218,22 +218,22 @@ Trust note:   Based in Centurion · Serving all of South Africa
 ```
 Eyebrow:  THE PROBLEM
 
-H2:       Businesses lose tenders every day —
+H2:       Businesses lose tenders every day -
           not because they can't do the work,
           but because of paperwork.
 
 Body:     A missing COIDA certificate. An expired B-BBEE affidavit.
           An incorrectly completed SBD4. A CSD profile that was never
-          updated. These are the reasons businesses — capable businesses
-          — get disqualified before evaluators ever read a single line
+          updated. These are the reasons businesses - capable businesses
+          - get disqualified before evaluators ever read a single line
           about their experience or pricing.
 
           Government procurement is unforgiving. One wrong box, one
-          outdated document, one missing signature — and your submission
+          outdated document, one missing signature - and your submission
           is out. Not because you weren't qualified. Because you weren't
           compliant.
 
-Right column — 4 failure points as visual cards:
+Right column - 4 failure points as visual cards:
   [!] Expired compliance documents
   [!] Incorrectly completed returnables
   [!] Poor document structure
@@ -272,7 +272,7 @@ Service Cards (6):
    Price tag: From R650
 
 2. CIDB Grading
-   Apply for or upgrade your CIDB contractor grading — Grade 1 through
+   Apply for or upgrade your CIDB contractor grading - Grade 1 through
    to Grade 3. We handle the application, documentation, and submission.
    Price tag: From R1,200
 
@@ -283,11 +283,11 @@ Service Cards (6):
 
 4. COIDA Registration
    Register with the Compensation Fund and obtain your Letter of Good
-   Standing — required on virtually every government tender.
+   Standing - required on virtually every government tender.
    Price tag: R750
 
 5. SBD Forms & Returnables
-   Full completion of SBD1, SBD4, SBD6.1, SBD8, and SBD9 — formatted
+   Full completion of SBD1, SBD4, SBD6.1, SBD8, and SBD9 - formatted
    to evaluator standards, with every field accounted for.
    Price tag: R950
 
@@ -296,7 +296,7 @@ Service Cards (6):
    BoQ pricing support, and professional submission packaging.
    Price tag: From R2,500
 
-Teaser card (7th — full width or highlighted):
+Teaser card (7th - full width or highlighted):
   "Rather bundle it all?"
   → See our Tender-Ready Packages ↓
   [View Packages] → smooth scroll to #pricing
@@ -321,20 +321,20 @@ Eyebrow:  THE PROCESS
 
 H2:       Simple. Fast. Submission-ready.
 
-Step 1 — Send Your Documents
+Step 1 - Send Your Documents
   WhatsApp or email us your ID, company registration, and any
   existing compliance documents. We'll review them within 24 hours
   and tell you exactly what's missing.
 
   [WhatsApp icon]  Start on WhatsApp
 
-Step 2 — We Handle Everything
+Step 2 - We Handle Everything
   Our team processes every registration, completes every form, and
-  compiles your full tender submission — formatted to evaluator
+  compiles your full tender submission - formatted to evaluator
   standards and checked against the tender specification.
 
-Step 3 — You Submit With Confidence
-  Receive your complete, professionally packaged submission —
+Step 3 - You Submit With Confidence
+  Receive your complete, professionally packaged submission -
   ready to hand in. No last-minute scrambles. No disqualifications
   for missing documents.
 
@@ -399,10 +399,10 @@ Tender-Ready Professional               R5,500
   [Get Started on WhatsApp]
 
 Note at bottom:
-  "First Tender Readiness Assessment is FREE — no commitment required."
+  "First Tender Readiness Assessment is FREE - no commitment required."
 ```
 
-**Design notes:** The featured Starter bundle has a gold border and a small "MOST POPULAR" pill badge. The individual services table is clean — service name left, price centre-right, turnaround right. Alternating row backgrounds. The Professional package has a dark card with gold border. Both package CTAs are WhatsApp green.
+**Design notes:** The featured Starter bundle has a gold border and a small "MOST POPULAR" pill badge. The individual services table is clean - service name left, price centre-right, turnaround right. Alternating row backgrounds. The Professional package has a dark card with gold border. Both package CTAs are WhatsApp green.
 
 **File:** `src/components/PricingSection.astro`
 
@@ -438,7 +438,7 @@ Client:   Basadipele Cleaning & Hygiene
   ✓ Business now positioned for a consistent pipeline of opportunities
 
 Pull quote (centred below card):
-  "We don't just prepare paperwork —
+  "We don't just prepare paperwork -
    we position businesses to win."
 
 CTA:
@@ -446,7 +446,7 @@ CTA:
   [Start Your Free Assessment]  → smooth scroll to #contact
 ```
 
-**Design notes:** Challenge panel uses `border-l-4 border-red-500/40` tint. Outcome panel uses `border-l-4 border-[--primary]`. The ✗ items are `text-red-400`. The ✓ items are `text-[--primary]`. The pull quote is large, italic, Barlow Condensed, centred, gold. The CTA button is gold (not WhatsApp green — this is a secondary, reflective CTA).
+**Design notes:** Challenge panel uses `border-l-4 border-red-500/40` tint. Outcome panel uses `border-l-4 border-[--primary]`. The ✗ items are `text-red-400`. The ✓ items are `text-[--primary]`. The pull quote is large, italic, Barlow Condensed, centred, gold. The CTA button is gold (not WhatsApp green - this is a secondary, reflective CTA).
 
 **File:** `src/components/CaseStudy.astro`
 
@@ -456,7 +456,7 @@ CTA:
 
 **Purpose:** Capture leads for people who prefer email over WhatsApp, or who are browsing after hours. Short. Low friction. Feeds directly into the `leads` table via Astro Actions.
 
-**Layout:** Two-column on desktop — form left, contact details + WhatsApp right. Card background.
+**Layout:** Two-column on desktop - form left, contact details + WhatsApp right. Card background.
 
 **Content:**
 
@@ -472,9 +472,9 @@ Subheading:
 
 Form fields:
   Name *                  (text input)
-  Company name            (text input — optional, improves lead quality)
+  Company name            (text input - optional, improves lead quality)
   Phone number *          (tel input)
-  Email address           (email input — optional)
+  Email address           (email input - optional)
   What do you need help with? *  (select dropdown)
     Options:
     - CSD Registration
@@ -483,7 +483,7 @@ Form fields:
     - COIDA Registration
     - Full Tender Compilation
     - Complete Compliance Package
-    - I'm not sure — please advise
+    - I'm not sure - please advise
 
   Submit button:          [Send My Enquiry]
 
@@ -510,7 +510,7 @@ Error state:
   General error: "Something went wrong. Please WhatsApp us directly."
 ```
 
-**Astro Action:** `enquireLead` — defined in `src/actions/index.ts`. See Section 5.
+**Astro Action:** `enquireLead` - defined in `src/actions/index.ts`. See Section 5.
 
 **File:** `src/components/LeadForm.astro`
 
@@ -525,7 +525,7 @@ Error state:
 **Content:**
 
 ```
-Column 1 — Brand
+Column 1 - Brand
   TenderEdge Solutions
   A Division of Playhouse Media Group (PTY) Ltd
 
@@ -533,14 +533,14 @@ Column 1 — Brand
 
   [WhatsApp Us Now]
 
-Column 2 — Quick Links
+Column 2 - Quick Links
   Services
   Process
   Pricing
   Results
   Contact
 
-Column 3 — Contact
+Column 3 - Contact
   📞  074 501 7094
   ✉   tenders@tenderedgesolutions.co.za
   📍  Centurion, Pretoria, Gauteng
@@ -554,7 +554,7 @@ Bottom bar:
 
 ---
 
-## 5. Astro Actions — Lead Form
+## 5. Astro Actions - Lead Form
 
 Astro Actions handle form submission server-side without API routes. The action validates input, writes to the `leads` table via `@pmg/db`, and sends an email notification via `@pmg/emails`.
 
@@ -590,7 +590,7 @@ export const server = {
       });
 
       // 2. Send admin notification email
-      // Wrap in try/catch — email failure must never break lead capture
+      // Wrap in try/catch - email failure must never break lead capture
       try {
         await sendEmail(
           {
@@ -600,7 +600,7 @@ export const server = {
           },
           {
             to: import.meta.env.TES_ADMIN_EMAIL,
-            subject: `New TES Lead: ${input.name} — ${input.serviceInterest}`,
+            subject: `New TES Lead: ${input.name} - ${input.serviceInterest}`,
             react: React.createElement(AdminNewLeadEmail, {
               name:          input.name,
               email:         input.email || 'Not provided',
@@ -616,7 +616,7 @@ export const server = {
         );
       } catch (emailErr) {
         console.error('Admin notification email failed:', emailErr);
-        // Do not rethrow — lead is already saved
+        // Do not rethrow - lead is already saved
       }
 
       return { success: true };
@@ -650,11 +650,11 @@ const submitted = result?.data?.success === true;
 Each app uses a site prefix to avoid collisions when running multiple apps locally.
 
 ```env
-# Database — shared across all apps
+# Database - shared across all apps
 DATABASE_URL=postgresql://USER:PASSWORD@HOST/neondb?sslmode=require
 DATABASE_URL_UNPOOLED=postgresql://USER:PASSWORD@HOST/neondb?sslmode=require
 
-# Resend — TES sending identity (TES_ prefix)
+# Resend - TES sending identity (TES_ prefix)
 TES_RESEND_API_KEY=re_xxxxxxxxxxxx
 TES_FROM_EMAIL=noreply@tenderedgesolutions.co.za
 TES_ADMIN_EMAIL=tenders@tenderedgesolutions.co.za
@@ -687,13 +687,13 @@ Mark `index.astro` as prerendered except the action route:
 ```astro
 ---
 export const prerender = false;
-// Required for Astro Actions — getActionResult reads the POST response server-side.
+// Required for Astro Actions - getActionResult reads the POST response server-side.
 // This means index.astro is SSR on every request (no CDN edge cache for this page).
 // All other pages in the app remain statically generated.
 ---
 ```
 
-> **Note:** Setting `prerender = false` on `index.astro` is intentional. The `getActionResult` API requires a server context to read the form POST response. The tradeoff is acceptable for a single-page lead-gen site — Vercel's edge network still handles routing efficiently.
+> **Note:** Setting `prerender = false` on `index.astro` is intentional. The `getActionResult` API requires a server context to read the form POST response. The tradeoff is acceptable for a single-page lead-gen site - Vercel's edge network still handles routing efficiently.
 
 ---
 
@@ -734,7 +734,7 @@ Build in this order. Each step is independently testable.
 
 ---
 
-### Step 0 — Astro Config & Dependencies
+### Step 0 - Astro Config & Dependencies
 
 **Tasks:**
 - Update `astro.config.mjs` to add `output: 'hybrid'` and Vercel adapter.
@@ -742,7 +742,7 @@ Build in this order. Each step is independently testable.
 - Create `src/actions/index.ts` with the `enquireLead` action stub.
 - Set up `src/styles/globals.css` with TES colour tokens.
 
-**AI Prompt — Step 0:**
+**AI Prompt - Step 0:**
 
 ```
 Update apps/tes for Astro 6 with Actions support.
@@ -804,7 +804,7 @@ package.json has astro, @astrojs/vercel, @pmg/tailwind-config, @vercel/analytics
      --whatsapp: #25D366;
      --whatsapp-hover: #1fb155;
    }
-   /* Scroll offset for sticky nav — prevents section headings hiding behind nav */
+   /* Scroll offset for sticky nav - prevents section headings hiding behind nav */
    section[id] { scroll-margin-top: 72px; }
    /* Hide scrollbar utility (used by TrustBar) */
    .scrollbar-hide { scrollbar-width: none; }
@@ -813,11 +813,11 @@ package.json has astro, @astrojs/vercel, @pmg/tailwind-config, @vercel/analytics
 
 ---
 
-### Step 1 — Layout.astro
+### Step 1 - Layout.astro
 
 **Tasks:** Global head, fonts, analytics, dark class, scroll-behaviour.
 
-**AI Prompt — Step 1:**
+**AI Prompt - Step 1:**
 
 ```
 Rewrite apps/tes/src/layouts/Layout.astro for the TES site.
@@ -829,7 +829,7 @@ Requirements:
 - Google Fonts: preconnect + load "Barlow+Condensed:wght@600;700&family=DM+Sans:wght@300;400;500"
 - SEO meta tags as props: title, description, canonical
 - Defaults:
-    title: "CSD Registration & Tender Compliance | Tender Edge Solutions — Centurion"
+    title: "CSD Registration & Tender Compliance | Tender Edge Solutions - Centurion"
     description: "Get CSD-registered, CIDB-graded, and tender-ready. B-BBEE affidavits,
       SBD forms, and full tender document prep in Gauteng. Free assessment."
     canonical: "https://www.tenderedgesolutions.co.za"
@@ -842,9 +842,9 @@ Requirements:
 
 ---
 
-### Step 2 — Nav.astro
+### Step 2 - Nav.astro
 
-**AI Prompt — Step 2:**
+**AI Prompt - Step 2:**
 
 ```
 Build apps/tes/src/components/Nav.astro.
@@ -854,7 +854,7 @@ Uses Tailwind v4 CSS variables from globals.css.
 
 Structure:
 - <nav> fixed top-0 w-full z-50 transition-colors
-- Left: logo wordmark — "TenderEdge" text-foreground + "Solutions" text-primary,
+- Left: logo wordmark - "TenderEdge" text-foreground + "Solutions" text-primary,
   font-condensed font-bold text-xl tracking-wide
 - Centre (desktop only, hidden mobile): anchor links to
   #services, #process, #pricing, #results, #contact
@@ -880,9 +880,9 @@ Scroll behaviour:
 
 ---
 
-### Step 3 — Hero.astro
+### Step 3 - Hero.astro
 
-**AI Prompt — Step 3:**
+**AI Prompt - Step 3:**
 
 ```
 Build apps/tes/src/components/Hero.astro.
@@ -905,9 +905,9 @@ Content (max-w-[640px], flex flex-col, justify-center, min-h-screen, px-6 py-20)
     Text: "WIN MORE" line break then "<span class='text-primary'>TENDERS.</span>"
   - Sub: text-base md:text-lg text-muted-foreground leading-relaxed font-light max-w-[480px] mb-10
     "We handle the compliance. You focus on the work. CSD registration, CIDB grading,
-    B-BBEE affidavits, and full tender document compilation — done right, on deadline, every time."
+    B-BBEE affidavits, and full tender document compilation - done right, on deadline, every time."
   - CTAs (flex gap-4 flex-wrap items-center):
-    Primary: WhatsApp button — bg-whatsapp hover:bg-whatsapp-hover text-white
+    Primary: WhatsApp button - bg-whatsapp hover:bg-whatsapp-hover text-white
       inline-flex items-center gap-2.5 px-7 py-3.5 rounded-md text-[15px] font-semibold
       [WhatsApp SVG] "WhatsApp Us Now"
     Secondary: <a href="#services" class="text-sm text-muted-foreground border-b
@@ -927,9 +927,9 @@ Entrance animations: reuse @keyframes up from ComingSoon.astro
 
 ---
 
-### Step 4 — TrustBar.astro
+### Step 4 - TrustBar.astro
 
-**AI Prompt — Step 4:**
+**AI Prompt - Step 4:**
 
 ```
 Build apps/tes/src/components/TrustBar.astro.
@@ -940,7 +940,7 @@ Section: bg-card border-y border-[--border] py-5.
 Inner: flex flex-nowrap gap-3 overflow-x-auto px-6 md:justify-center
 Hide scrollbar: scrollbar-hide (add to globals.css: .scrollbar-hide { scrollbar-width: none; })
 
-5 pills — each:
+5 pills - each:
   class="flex-shrink-0 inline-flex items-center gap-2 border border-[--border]
          rounded-full px-4 py-2 text-sm text-muted-foreground"
 
@@ -957,9 +957,9 @@ The ✓ renders as:
 
 ---
 
-### Step 5 — ProblemSection.astro
+### Step 5 - ProblemSection.astro
 
-**AI Prompt — Step 5:**
+**AI Prompt - Step 5:**
 
 ```
 Build apps/tes/src/components/ProblemSection.astro. id="problem".
@@ -971,14 +971,14 @@ Left column:
   - Eyebrow: text-[11px] tracking-[0.16em] uppercase text-primary font-medium mb-5
     "THE PROBLEM"
   - H2: font-condensed font-bold text-4xl md:text-5xl leading-tight text-foreground mb-6
-    "Businesses lose tenders every day — not because they can't do the work, but because of paperwork."
+    "Businesses lose tenders every day - not because they can't do the work, but because of paperwork."
   - Body (2 paragraphs): text-base text-muted-foreground leading-relaxed font-light
     Para 1: "A missing COIDA certificate. An expired B-BBEE affidavit. An incorrectly completed
-    SBD4. A CSD profile that was never updated. These are the reasons businesses — capable
-    businesses — get disqualified before evaluators ever read a single line about their
+    SBD4. A CSD profile that was never updated. These are the reasons businesses - capable
+    businesses - get disqualified before evaluators ever read a single line about their
     experience or pricing."
     Para 2: "Government procurement is unforgiving. One wrong box, one outdated document,
-    one missing signature — and your submission is out. Not because you weren't qualified.
+    one missing signature - and your submission is out. Not because you weren't qualified.
     Because you weren't compliant."
 
 Right column: 4 failure-point cards
@@ -999,9 +999,9 @@ Closing statement (below grid, full width, text-center, mt-12):
 
 ---
 
-### Step 6 — ServicesSection.astro
+### Step 6 - ServicesSection.astro
 
-**AI Prompt — Step 6:**
+**AI Prompt - Step 6:**
 
 ```
 Build apps/tes/src/components/ServicesSection.astro. id="services".
@@ -1013,7 +1013,7 @@ Header (text-center max-w-2xl mx-auto mb-14):
 
 Grid: max-w-5xl mx-auto grid md:grid-cols-2 gap-5
 
-6 service cards — each: bg-background border border-[--border] hover:border-primary/50
+6 service cards - each: bg-background border border-[--border] hover:border-primary/50
   rounded-xl p-6 transition-colors duration-200
 
 Card anatomy:
@@ -1027,23 +1027,23 @@ Services data (use a const array in the frontmatter):
       body: "Get registered on the Central Supplier Database and keep your profile accurate,
              current, and compliant. New registrations, amendments, and annual renewals." },
     { title: "CIDB Grading",                  price: "From R1,200",
-      body: "Apply for or upgrade your CIDB contractor grading — Grade 1 through to Grade 3.
+      body: "Apply for or upgrade your CIDB contractor grading - Grade 1 through to Grade 3.
              We handle the application, documentation, and submission." },
     { title: "B-BBEE Affidavits",             price: "R550",
       body: "EME and QSE affidavits for businesses with turnover under R10 million. Prepared
              correctly, signed, and ready for submission." },
     { title: "COIDA Registration",            price: "R750",
-      body: "Register with the Compensation Fund and obtain your Letter of Good Standing —
+      body: "Register with the Compensation Fund and obtain your Letter of Good Standing -
              required on virtually every government tender." },
     { title: "SBD Forms & Returnables",       price: "R950",
-      body: "Full completion of SBD1, SBD4, SBD6.1, SBD8, and SBD9 — formatted to evaluator
+      body: "Full completion of SBD1, SBD4, SBD6.1, SBD8, and SBD9 - formatted to evaluator
              standards, with every field accounted for." },
     { title: "Full Tender Compilation",       price: "From R2,500",
       body: "End-to-end tender preparation: returnables, schedules, annexures, BoQ pricing
              support, and professional submission packaging." },
   ]
 
-7th card — full width (md:col-span-2):
+7th card - full width (md:col-span-2):
   bg-[color-mix(in_srgb,#c9a227_8%,#0b1929)] border border-primary/40 rounded-xl p-6
   flex flex-col md:flex-row items-center justify-between gap-4
   Left: <h3>"Rather bundle it all?"</h3>
@@ -1053,9 +1053,9 @@ Services data (use a const array in the frontmatter):
 
 ---
 
-### Step 7 — HowItWorks.astro
+### Step 7 - HowItWorks.astro
 
-**AI Prompt — Step 7:**
+**AI Prompt - Step 7:**
 
 ```
 Build apps/tes/src/components/HowItWorks.astro. id="process".
@@ -1072,7 +1072,7 @@ Steps container: max-w-4xl mx-auto relative
       right-[calc(16.67%+1rem)] h-px border-t border-dashed border-primary/30"
       aria-hidden="true" />
 
-3 step cards — each: text-center md:text-left relative
+3 step cards - each: text-center md:text-left relative
   <div class="font-condensed font-bold text-7xl text-primary/20 leading-none mb-3">0{n}</div>
   <h3 class="font-condensed font-bold text-xl text-foreground mb-2">{title}</h3>
   <p class="text-sm text-muted-foreground leading-relaxed font-light">{body}</p>
@@ -1083,22 +1083,22 @@ Steps data:
      documents. We'll review them within 24 hours and tell you exactly what's missing."
   2: title "We Handle Everything"
      body "Our team processes every registration, completes every form, and compiles your
-     full tender submission — formatted to evaluator standards and checked against the
+     full tender submission - formatted to evaluator standards and checked against the
      tender specification."
   3: title "You Submit With Confidence"
-     body "Receive your complete, professionally packaged submission — ready to hand in.
+     body "Receive your complete, professionally packaged submission - ready to hand in.
      No last-minute scrambles. No disqualifications for missing documents."
 
 Bottom CTA (text-center mt-14):
   <p class="text-muted-foreground mb-5 text-sm">Ready to get started?</p>
-  WhatsApp button linking to wa.me — same styles as Hero primary CTA
+  WhatsApp button linking to wa.me - same styles as Hero primary CTA
 ```
 
 ---
 
-### Step 8 — PricingSection.astro
+### Step 8 - PricingSection.astro
 
-**AI Prompt — Step 8:**
+**AI Prompt - Step 8:**
 
 ```
 Build apps/tes/src/components/PricingSection.astro. id="pricing".
@@ -1117,15 +1117,15 @@ Max-w-4xl mx-auto:
    Title: font-condensed text-3xl font-bold
    Price: text-5xl font-condensed font-bold text-primary "R2,500"
    Includes list (4 items with gold ✓)
-   "Saves R400 vs individual pricing" — text-sm text-muted-foreground
+   "Saves R400 vs individual pricing" - text-sm text-muted-foreground
    WhatsApp CTA button
 
 2. Individual services table:
    <table class="w-full mt-8 mb-8 text-sm">
-     thead: Service | Price | Turnaround — text-muted-foreground text-xs uppercase
+     thead: Service | Price | Turnaround - text-muted-foreground text-xs uppercase
      tbody rows: alternating bg-background/30 and transparent
        Each row: service name | price in gold font-medium | turnaround text-muted-foreground
-   11 rows (see Section 4 pricing content above for all 11 services — matches individual services table exactly)
+   11 rows (see Section 4 pricing content above for all 11 services - matches individual services table exactly)
 
 3. Tender-Ready Professional bundle:
    class="border border-primary/50 rounded-2xl p-8 mt-6"
@@ -1134,14 +1134,14 @@ Max-w-4xl mx-auto:
 
 4. Free assessment note (text-center mt-8):
    text-sm text-muted-foreground italic
-   "Your first Tender Readiness Assessment is FREE — no commitment required."
+   "Your first Tender Readiness Assessment is FREE - no commitment required."
 ```
 
 ---
 
-### Step 9 — CaseStudy.astro
+### Step 9 - CaseStudy.astro
 
-**AI Prompt — Step 9:**
+**AI Prompt - Step 9:**
 
 ```
 Build apps/tes/src/components/CaseStudy.astro. id="results".
@@ -1159,7 +1159,7 @@ Case study card: max-w-4xl mx-auto rounded-2xl overflow-hidden border border-[--
     Client name: font-condensed font-bold text-2xl text-foreground mb-6
     "Basadipele Cleaning & Hygiene"
 
-    "The situation before TES:" — text-sm font-medium text-muted-foreground mb-3
+    "The situation before TES:" - text-sm font-medium text-muted-foreground mb-3
     3 challenge items (each: flex gap-2 mb-2):
       <span class="text-red-400 font-bold mt-0.5">✗</span>
       <span class="text-sm text-foreground/80">{challenge}</span>
@@ -1169,7 +1169,7 @@ Case study card: max-w-4xl mx-auto rounded-2xl overflow-hidden border border-[--
       - High risk of automatic disqualification on any submission
 
   Right panel (bg-card/50 p-8):
-    "After TenderEdge Solutions:" — text-sm font-medium text-muted-foreground mb-3
+    "After TenderEdge Solutions:" - text-sm font-medium text-muted-foreground mb-3
     4 outcome items (each: flex gap-2 mb-2):
       <span class="text-primary font-bold mt-0.5">✓</span>
       <span class="text-sm text-foreground/80">{outcome}</span>
@@ -1181,11 +1181,11 @@ Case study card: max-w-4xl mx-auto rounded-2xl overflow-hidden border border-[--
 
 Pull quote (text-center mt-12 max-w-2xl mx-auto):
   <blockquote class="font-condensed text-2xl md:text-3xl italic text-primary leading-snug">
-    "We don't just prepare paperwork —<br/>we position businesses to win."
+    "We don't just prepare paperwork -<br/>we position businesses to win."
   </blockquote>
 
 CTA (text-center mt-8):
-  Gold button (not green — secondary CTA):
+  Gold button (not green - secondary CTA):
     class="inline-flex items-center gap-2 bg-primary hover:bg-primary-hover
            text-black font-semibold px-7 py-3.5 rounded-md text-[15px] transition-colors"
     href="#contact" "Start Your Free Assessment"
@@ -1193,13 +1193,13 @@ CTA (text-center mt-8):
 
 ---
 
-### Step 10 — LeadForm.astro
+### Step 10 - LeadForm.astro
 
-**AI Prompt — Step 10:**
+**AI Prompt - Step 10:**
 
 ```
 Build apps/tes/src/components/LeadForm.astro. id="contact".
-Uses Astro Actions — import { actions, isInputError } from 'astro:actions'.
+Uses Astro Actions - import { actions, isInputError } from 'astro:actions'.
 
 Section: py-20 md:py-28 bg-card px-6.
 
@@ -1210,7 +1210,7 @@ Header (text-center max-w-2xl mx-auto mb-14):
 
 Grid: max-w-4xl mx-auto grid md:grid-cols-[1fr_320px] gap-12
 
-Left — Form:
+Left - Form:
   const result = Astro.getActionResult(actions.enquireLead);
   const inputErrors = isInputError(result?.error) ? result.error.fields : {};
   const submitted = result?.data?.success === true;
@@ -1228,34 +1228,34 @@ Left — Form:
     Label styles: "block text-xs uppercase tracking-widest text-muted-foreground mb-2 font-medium"
 
     Fields:
-      Name * — text input, name="name", placeholder="Your full name"
-      Company name — text input, name="companyName", placeholder="Your company name (optional)"
-      Phone * — tel input, name="phone", placeholder="074 501 7094"
-      Email — email input, name="email", placeholder="you@company.co.za (optional)"
-      Service interest * — <select name="serviceInterest">
+      Name * - text input, name="name", placeholder="Your full name"
+      Company name - text input, name="companyName", placeholder="Your company name (optional)"
+      Phone * - tel input, name="phone", placeholder="074 501 7094"
+      Email - email input, name="email", placeholder="you@company.co.za (optional)"
+      Service interest * - <select name="serviceInterest">
         Options: "Select a service...", "CSD Registration", "CIDB Grading",
           "B-BBEE Affidavit", "COIDA Registration", "Full Tender Compilation",
-          "Complete Compliance Package", "I'm not sure — please advise"
+          "Complete Compliance Package", "I'm not sure - please advise"
 
     Submit button: bg-primary hover:bg-primary-hover text-black font-semibold
       w-full py-3.5 rounded-lg text-[15px] transition-colors
       "Send My Enquiry"
 
-Right column — contact details:
-  h3: "Or reach us directly" — font-condensed font-bold text-xl mb-6
+Right column - contact details:
+  h3: "Or reach us directly" - font-condensed font-bold text-xl mb-6
   3 contact rows (flex gap-3 items-start mb-5):
     WhatsApp: icon + "074 501 7094" (link to wa.me) + subtext "WhatsApp is fastest"
     Email: icon + "tenders@tenderedgesolutions.co.za" (mailto link)
     Location: icon + "Centurion, Gauteng" + "Serving all of South Africa"
 
-  icons: simple SVG — phone, mail, map-pin in text-primary
+  icons: simple SVG - phone, mail, map-pin in text-primary
 ```
 
 ---
 
-### Step 11 — Footer.astro
+### Step 11 - Footer.astro
 
-**AI Prompt — Step 11:**
+**AI Prompt - Step 11:**
 
 ```
 Build apps/tes/src/components/Footer.astro.
@@ -1263,20 +1263,20 @@ Section: bg-background border-t border-[--border] py-14 px-6.
 
 Grid: max-w-5xl mx-auto grid md:grid-cols-3 gap-10
 
-Col 1 — Brand:
+Col 1 - Brand:
   Logo wordmark (same as Nav)
-  "A Division of Playhouse Media Group (PTY) Ltd" — text-xs text-muted-foreground/60 mt-1 mb-6
-  Tagline: "Your Edge in Every Tender" — text-sm italic text-muted-foreground mb-6
-  WhatsApp button (compact — same styles as Nav)
+  "A Division of Playhouse Media Group (PTY) Ltd" - text-xs text-muted-foreground/60 mt-1 mb-6
+  Tagline: "Your Edge in Every Tender" - text-sm italic text-muted-foreground mb-6
+  WhatsApp button (compact - same styles as Nav)
 
-Col 2 — Quick Links:
-  "Quick Links" label — text-xs uppercase tracking-widest text-muted-foreground mb-4
+Col 2 - Quick Links:
+  "Quick Links" label - text-xs uppercase tracking-widest text-muted-foreground mb-4
   Links: Services, Process, Pricing, Results, Contact
   Each: block text-sm text-muted-foreground hover:text-foreground py-1 transition-colors
   href="#services", "#process", "#pricing", "#results", "#contact"
 
-Col 3 — Contact:
-  "Contact" label — same style as Quick Links label
+Col 3 - Contact:
+  "Contact" label - same style as Quick Links label
   3 items: phone, email, address
   Same icon + text pattern as LeadForm right column but smaller text
 
@@ -1290,12 +1290,12 @@ Bottom bar (border-t border-[--border] mt-10 pt-8 flex flex-col md:flex-row
 
 ---
 
-### Step 12 — index.astro (Assembly)
+### Step 12 - index.astro (Assembly)
 
-**AI Prompt — Step 12:**
+**AI Prompt - Step 12:**
 
 ```
-Build apps/tes/src/pages/index.astro — the final page assembly.
+Build apps/tes/src/pages/index.astro - the final page assembly.
 
 ---
 export const prerender = false;
@@ -1328,7 +1328,7 @@ import Footer from '@/components/Footer.astro';
 Notes:
 - export const prerender = false is required for Astro Actions to work
 - The Layout component wraps everything with the full HTML document
-- No additional wrapper divs needed — each component is self-contained
+- No additional wrapper divs needed - each component is self-contained
 ```
 
 ---
@@ -1357,7 +1357,7 @@ Process CTA:   ?text=Hi%2C+I'd+like+to+start+my+free+Tender+Readiness+Assessment
 
 ### SEO Strings
 ```
-Title:    CSD Registration & Tender Compliance | Tender Edge Solutions — Centurion
+Title:    CSD Registration & Tender Compliance | Tender Edge Solutions - Centurion
 Desc:     Get CSD-registered, CIDB-graded, and tender-ready with Tender Edge Solutions.
           B-BBEE affidavits, SBD forms, and full tender document prep in Gauteng. Free assessment.
 H1:       WIN MORE TENDERS.

@@ -1,4 +1,4 @@
-# Security Levels — Detailed Implementation
+# Security Levels - Detailed Implementation
 
 This reference contains full implementation code for each security level. See the main SKILL.md for a summary and when to use each level.
 
@@ -104,7 +104,7 @@ function stripQuotedContent(text: string): string {
 
 ### Content Safety Filtering
 
-Build a detection function that checks email content against known unsafe patterns. Store your patterns in a separate config file — see the [OWASP LLM Top 10](https://owasp.org/www-project-top-10-for-large-language-model-applications/) for categories to cover.
+Build a detection function that checks email content against known unsafe patterns. Store your patterns in a separate config file - see the [OWASP LLM Top 10](https://owasp.org/www-project-top-10-for-large-language-model-applications/) for categories to cover.
 
 ```typescript
 // Store patterns in a separate config file or environment variable.
@@ -254,7 +254,7 @@ async function processEmailForAgent(eventData: EmailReceivedEvent, emailContent:
 
 For complex use cases, combine levels:
 
-- **Level 2 (domain allowlist)** + **Level 3 (content filtering)** — Allow known domains but still filter content
+- **Level 2 (domain allowlist)** + **Level 3 (content filtering)** - Allow known domains but still filter content
 - **Level 1 (strict allowlist)** for trusted senders + **Level 4 (sandboxed)** for everyone else
 - **Level 3 (content filtering)** + **Level 5 (human-in-the-loop)** for flagged content
 

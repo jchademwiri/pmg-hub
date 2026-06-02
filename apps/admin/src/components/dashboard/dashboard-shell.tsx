@@ -1,14 +1,16 @@
 'use client'
 
 import { useState } from 'react'
+import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { KpiGrid } from '@/components/dashboard/kpi-grid'
-import { BudgetCard } from '@/components/dashboard/budget-card'
 import { DivisionAreaChart } from '@/components/dashboard/division-area-chart'
 import { DivisionRevenue } from '@/components/dashboard/division-revenue'
 import { LeadsSummary } from '@/components/dashboard/leads-summary'
 import { ExpenseSnapshot } from '@/components/dashboard/expense-snapshot'
 import CloseMonthButton from '@/components/dashboard/close-month-button'
-import type { PeriodSummary, DivisionRevenue as DivisionRevenueType, LeadStatusCount, MonthlyFinancials, BucketBalances, DivisionSeriesChart } from '@/lib/financial'
+import { AgingReportGrid } from '@/components/dashboard/aging-report-grid'
+import type { AgingRow } from '@pmg/db'
+import type { PeriodSummary, DivisionRevenue as DivisionRevenueType, LeadStatusCount, MonthlyFinancials, DivisionSeriesChart } from '@/lib/financial'
 
 type Tab = 'current' | 'previous' | 'ytd'
 
@@ -28,7 +30,7 @@ type Props = {
   leads: LeadStatusCount[]
   monthlySeries: MonthlyFinancials[]
   sparklineData: MonthlyFinancials[]
-  ledgerBalances: BucketBalances
+  agingReport: AgingRow[]
   divisionSeriesData: {
     last3: DivisionSeriesChart
     last6: DivisionSeriesChart
@@ -59,7 +61,7 @@ export function DashboardShell({
   divisionExpenseMap,
   leads,
   sparklineData,
-  ledgerBalances,
+  agingReport,
   divisionSeriesData,
   expensesByDivision,
   hasSnapshot,
@@ -101,32 +103,28 @@ export function DashboardShell({
     'vs prev year'
 
   return (
-    <div className="space-y-5">
-
-      {/* ── Close Month button — only shown days 1–5 and only if not yet closed ── */}
-      {!hasSnapshot && showCloseMonthButton && (
-        <CloseMonthButton period={currentPeriod} />
-      )}
+    <div className="flex flex-col gap-5">
 
       {/* ── Period tabs ── */}
-      <div className="flex items-center gap-1 p-1 bg-muted/40 rounded-lg w-fit border border-border">
-        {TABS.map((tab) => (
-          <button
-            key={tab.key}
-            onClick={() => setActiveTab(tab.key)}
-            className={`px-4 py-1.5 rounded-md text-sm font-medium transition-all duration-150 ${
-              activeTab === tab.key
-                ? 'bg-card text-foreground shadow-sm border border-border'
-                : 'text-muted-foreground hover:text-foreground hover:bg-muted/60'
-            }`}
-          >
-            {tab.label}
-          </button>
-        ))}
-        <span className="ml-3 pl-3 border-l border-border text-xs text-muted-foreground/70 pr-1">
-          {activeLabel}
-        </span>
-      </div>
+      <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as Tab)}>
+        <div className="flex items-center justify-between gap-3">
+          <div className="flex items-center gap-3">
+            <TabsList>
+              {TABS.map((tab) => (
+                <TabsTrigger key={tab.key} value={tab.key}>
+                  {tab.label}
+                </TabsTrigger>
+              ))}
+            </TabsList>
+            <span className="text-xs text-muted-foreground/70">{activeLabel}</span>
+          </div>
+
+          {/* Close Month button on the far right of the tabs bar */}
+          {!hasSnapshot && showCloseMonthButton && (
+            <CloseMonthButton period={currentPeriod} />
+          )}
+        </div>
+      </Tabs>
 
       {/* ── Row 1: KPI cards ── */}
       <KpiGrid
@@ -134,46 +132,11 @@ export function DashboardShell({
         deltas={activeDeltas}
         previousSummary={activePreviousSummary}
         deltaLabel={activeDeltaLabel}
+        sparklineData={sparklineData}
       />
 
-      {/* ── Row 2: Ledger Balances ── */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
-        <BudgetCard
-          title="PMG Share"
-          bucket={ledgerBalances.pmg_share}
-          colorClass="text-violet-500"
-          bgClass="bg-violet-500/10"
-          borderClass="border-violet-500/20"
-        />
-        <BudgetCard
-          title="Salary"
-          bucket={ledgerBalances.salary}
-          colorClass="text-green-500"
-          bgClass="bg-green-500/10"
-          borderClass="border-green-500/20"
-        />
-        <BudgetCard
-          title="Reinvest"
-          bucket={ledgerBalances.reinvest}
-          colorClass="text-blue-500"
-          bgClass="bg-blue-500/10"
-          borderClass="border-blue-500/20"
-        />
-        <BudgetCard
-          title="Reserve"
-          bucket={ledgerBalances.reserve}
-          colorClass="text-amber-500"
-          bgClass="bg-amber-500/10"
-          borderClass="border-amber-500/20"
-        />
-        <BudgetCard
-          title="Flex"
-          bucket={ledgerBalances.flex}
-          colorClass="text-purple-500"
-          bgClass="bg-purple-500/10"
-          borderClass="border-purple-500/20"
-        />
-      </div>
+      {/* ── Row 2: Accounts Receivable Ageing Overview ── */}
+      <AgingReportGrid data={agingReport} />
 
       {/* ── Row 3: Division Area Chart ── */}
       <div className="w-full">

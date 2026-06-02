@@ -47,10 +47,10 @@ const AutoReplyEmail = (props: AutoReplyEmailProps) => {
       >
         <Head />
         <Preview>
-          Thank you for contacting {companyName} — we'll be in touch soon.
+          Thank you for contacting {companyName} - we'll be in touch soon.
         </Preview>
-        <Body className="bg-[#F6F8FA] py-[40px] font-sans">
-          <Container className="mx-auto max-w-[600px] rounded-[8px] bg-[#FFFFFF] p-[32px] shadow-lg">
+        <Body className="m-0 bg-[#F6F8FA] py-[40px] font-sans" style={{ margin: "0", padding: "0" }}>
+          <Container width="600" className="mx-auto rounded-[8px] bg-[#FFFFFF] p-[32px] shadow-lg" style={{ maxWidth: '600px', width: '100%', margin: '0 auto', borderCollapse: 'separate' }}>
             {/* Header */}
             <Section className="mb-[32px]">
               {logoUrl && (
@@ -72,7 +72,7 @@ const AutoReplyEmail = (props: AutoReplyEmailProps) => {
               </Text>
             </Section>
 
-            {/* WhatsApp CTA — only rendered if a number is provided */}
+            {/* WhatsApp CTA - only rendered if a number is provided */}
             {waHref && (
               <Section className="mb-[32px]">
                 <Section className="rounded-[8px] border border-solid border-[#BBF7D0] bg-[#F0FDF4] p-[24px]">
@@ -80,7 +80,7 @@ const AutoReplyEmail = (props: AutoReplyEmailProps) => {
                     Need a faster response?
                   </Text>
                   <Text className="m-0 mb-[20px] text-[15px] text-[#15803D]">
-                    WhatsApp us directly — we respond within the hour during
+                    WhatsApp us directly - we respond within the hour during
                     business hours.
                   </Text>
                   <Button

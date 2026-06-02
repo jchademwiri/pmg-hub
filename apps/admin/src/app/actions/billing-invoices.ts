@@ -1,11 +1,13 @@
 'use server';
 
 import { revalidatePath } from 'next/cache';
-import { getDb, invoices, quotations, billingLineItems, income, clients, eq, and } from '@pmg/db';
-import { getNextDocumentNumber } from '@pmg/db';
+import { getDb, invoices, quotations, billingLineItems, income, clients, divisionBillingSettings, eq, and } from '@pmg/db';
+import { getNextDocumentNumber, addDays } from '@pmg/db';
 import { getSessionOrRedirect } from '@/lib/auth';
 import { isPeriodClosed, getMinAllowedDate, getMinDateErrorMessage } from '@/lib/date-rules';
+import { getSASTParts, getSASTToday } from '@/lib/format';
 import { CreateInvoiceSchema, type CreateInvoiceInput } from './billing-schema';
+import { hasBillingLineItemItemIdColumn, lineItemInsertValues } from './billing-line-item-compat';
 
 // ── Shared totals helper ──────────────────────────────────────────────────────
 
@@ -47,18 +49,14 @@ export async function createInvoice(
     if (!parsed.success) {
       return { error: parsed.error.issues[0]?.message ?? 'Validation error' };
     }
-    const { divisionId, clientId, invoiceDate, dueDate, poNumber, notes, terms, lineItems, vatEnabled, discountType, discountValue } =
+    const { divisionId, clientId, invoiceDate, dueDate, reference, notes, terms, lineItems, vatEnabled, discountType, discountValue } =
       parsed.data;
 
-    // clientId is required — enforced by Zod but double-check
+    // clientId is required - enforced by Zod but double-check
     if (!clientId) {
       return { error: 'A client is required.' };
     }
 
-    const today = new Date().toISOString().split('T')[0]!;
-    if (invoiceDate > today) {
-      return { error: 'Invoice date cannot be in the future.' };
-    }
     if (await isPeriodClosed(invoiceDate)) {
       const minDate = await getMinAllowedDate();
       return { error: getMinDateErrorMessage(minDate) };
@@ -69,6 +67,7 @@ export async function createInvoice(
     const documentNumber = await getNextDocumentNumber(divisionId, 'invoice', year);
 
     const db = getDb();
+    const includeLineItemItemId = await hasBillingLineItemItemIdColumn();
 
     const [inserted] = await db
       .insert(invoices)
@@ -78,8 +77,8 @@ export async function createInvoice(
         documentNumber,
         status: 'draft',
         invoiceDate,
-        dueDate: dueDate ?? null,
-        poNumber: poNumber ?? null,
+        dueDate: dueDate ?? addDays(invoiceDate, 7),
+        reference: reference ?? null,
         subtotal: String(subtotal.toFixed(2)),
         discountType: discountType ?? null,
         discountValue: discountValue != null ? String(discountValue) : null,
@@ -96,10 +95,11 @@ export async function createInvoice(
     if (!inserted) return { error: 'Failed to create invoice.' };
 
     await db.insert(billingLineItems).values(
-      lineItems.map((item: { itemId: string; description: string; quantity: number; unitPrice: number; vatRate: number }, i: number) => ({
+      lineItems.map((item: { itemId?: string | null; description: string; quantity: number; unitPrice: number; vatRate: number }, i: number) => ({
         documentType: 'invoice' as const,
         documentId: inserted.id,
         sortOrder: i,
+        itemId: item.itemId ?? null,
         description: item.description,
         quantity: String(item.quantity),
         unitPrice: String(item.unitPrice.toFixed(2)),
@@ -134,7 +134,7 @@ export async function updateInvoice(
       clientId,
       invoiceDate,
       dueDate,
-      poNumber,
+      reference,
       notes,
       terms,
       lineItems,
@@ -148,12 +148,21 @@ export async function updateInvoice(
     }
 
     const db = getDb();
+    const includeLineItemItemId = await hasBillingLineItemItemIdColumn();
     const [existing] = await db
-      .select({ id: invoices.id, status: invoices.status })
+      .select({ id: invoices.id, status: invoices.status, invoiceDate: invoices.invoiceDate })
       .from(invoices)
       .where(eq(invoices.id, id));
 
     if (!existing) return { error: 'Invoice not found.' };
+
+    if (await isPeriodClosed(existing.invoiceDate)) {
+      return { error: 'Cannot edit an invoice in a closed financial period.' };
+    }
+    if (await isPeriodClosed(invoiceDate)) {
+      const minDate = await getMinAllowedDate();
+      return { error: getMinDateErrorMessage(minDate) };
+    }
 
     // Paid and voided invoices cannot be edited
     if (existing.status === 'paid') {
@@ -186,7 +195,7 @@ export async function updateInvoice(
         clientId,
         invoiceDate,
         dueDate: dueDate ?? null,
-        poNumber: poNumber ?? null,
+        reference: reference ?? null,
         subtotal: String(subtotal.toFixed(2)),
         discountType: discountType ?? null,
         discountValue: discountValue != null ? String(discountValue) : null,
@@ -201,10 +210,11 @@ export async function updateInvoice(
       .where(eq(invoices.id, id));
 
     await db.insert(billingLineItems).values(
-      lineItems.map((item: { itemId: string; description: string; quantity: number; unitPrice: number; vatRate: number }, i: number) => ({
+      lineItems.map((item: { itemId?: string | null; description: string; quantity: number; unitPrice: number; vatRate: number }, i: number) => ({
         documentType: 'invoice' as const,
         documentId: id,
         sortOrder: i,
+        itemId: item.itemId ?? null,
         description: item.description,
         quantity: String(item.quantity),
         unitPrice: String(item.unitPrice.toFixed(2)),
@@ -232,7 +242,7 @@ export async function convertQuoteToInvoice(
 
     const db = getDb();
 
-    // Load quote — must be accepted
+    // Load quote - must be accepted
     const [quote] = await db
       .select()
       .from(quotations)
@@ -243,15 +253,26 @@ export async function convertQuoteToInvoice(
       return { error: 'Only accepted quotations can be converted to invoices.' };
     }
 
-    const today = new Date().toISOString().split('T')[0]!;
+    const { year } = getSASTParts();
+    const today = getSASTToday();
     if (await isPeriodClosed(today)) {
       const minDate = await getMinAllowedDate();
       return { error: getMinDateErrorMessage(minDate) };
     }
 
+    const includeLineItemItemId = await hasBillingLineItemItemIdColumn();
+
     // Load quote line items
     const quoteLineItems = await db
-      .select()
+      .select({
+        sortOrder: billingLineItems.sortOrder,
+        ...(includeLineItemItemId ? { itemId: billingLineItems.itemId } : {}),
+        description: billingLineItems.description,
+        quantity: billingLineItems.quantity,
+        unitPrice: billingLineItems.unitPrice,
+        vatRate: billingLineItems.vatRate,
+        lineTotal: billingLineItems.lineTotal,
+      })
       .from(billingLineItems)
       .where(
         and(
@@ -260,7 +281,17 @@ export async function convertQuoteToInvoice(
         ),
       );
 
-    const year = new Date().getFullYear();
+    // Fetch division payment terms to calculate due date
+    const [settings] = await db
+      .select({ paymentTermsDays: divisionBillingSettings.paymentTermsDays })
+      .from(divisionBillingSettings)
+      .where(eq(divisionBillingSettings.divisionId, quote.divisionId));
+
+    const paymentTermsDays = settings?.paymentTermsDays ?? 30;
+    const dueDateObj = new Date(today);
+    dueDateObj.setDate(dueDateObj.getDate() + paymentTermsDays);
+    const calculatedDueDate = dueDateObj.toISOString().split('T')[0];
+
     const documentNumber = await getNextDocumentNumber(quote.divisionId, 'invoice', year);
 
     // Create invoice from quote
@@ -272,6 +303,8 @@ export async function convertQuoteToInvoice(
         documentNumber,
         status: 'draft',
         invoiceDate: today,
+        dueDate: calculatedDueDate,
+        reference: quote.reference,
         quotationId: quote.id,
         subtotal: quote.subtotal,
         discountType: quote.discountType,
@@ -295,6 +328,7 @@ export async function convertQuoteToInvoice(
           documentType: 'invoice' as const,
           documentId: inserted.id,
           sortOrder: li.sortOrder,
+          itemId: li.itemId,
           description: li.description,
           quantity: li.quantity,
           unitPrice: li.unitPrice,
@@ -371,9 +405,9 @@ export async function markInvoicePaid(id: string): Promise<{ error?: string }> {
     }
 
     // Period lock is checked against TODAY (the payment date), not the invoice
-    // date. An invoice can be issued in a prior period and paid late — what
+    // date. An invoice can be issued in a prior period and paid late - what
     // matters for the ledger is when the cash was received.
-    const paymentDate = new Date().toISOString().split('T')[0]!;
+    const paymentDate = getSASTToday();
     if (await isPeriodClosed(paymentDate)) {
       const minDate = await getMinAllowedDate();
       return { error: getMinDateErrorMessage(minDate) };
@@ -388,7 +422,7 @@ export async function markInvoicePaid(id: string): Promise<{ error?: string }> {
     if (!client) return { error: 'Client not found.' };
 
     const clientLabel = client.businessName ?? client.name;
-    const description = `${invoice.documentNumber} — ${clientLabel}`;
+    const description = `${invoice.documentNumber} - ${clientLabel}`;
 
     // Post to income ledger using today as the payment date so late payments
     // land in the correct open period, not the (possibly closed) invoice period.

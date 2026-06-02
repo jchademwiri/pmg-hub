@@ -1,11 +1,11 @@
 # LaunchPad SA
-### Brand Profile — Division 03 of Playhouse Media Group
+### Brand Profile - Division 03 of Playhouse Media Group
 
 ---
 
 ## Who We Are
 
-LaunchPad SA is the company registration and business compliance division of Playhouse Media Group. We help new and aspiring entrepreneurs in South Africa make their business idea official — quickly, affordably, and correctly.
+LaunchPad SA is the company registration and business compliance division of Playhouse Media Group. We help new and aspiring entrepreneurs in South Africa make their business idea official - quickly, affordably, and correctly.
 
 LaunchPad SA is the **lead generation engine** of the PMG group. Every client who registers a company through us is a future candidate for a website, logo, company profile, or tender service from our other divisions.
 
@@ -17,13 +17,13 @@ LaunchPad SA is the **lead generation engine** of the PMG group. Every client wh
 |---|---|
 | Brand Name | LaunchPad SA |
 | Parent Company | Playhouse Media Group (PTY) Ltd |
-| Division | 03 — Company Registrations & Compliance |
-| Status | Formalising — launching as standalone brand |
+| Division | 03 - Company Registrations & Compliance |
+| Status | Formalising - launching as standalone brand |
 | Domain | launchpadsa.co.za *(to register)* |
 | Email | info@launchpadsa.co.za |
 | Social Media | @launchpadsa |
 | Revenue Model | Per-service fees + bundle packages |
-| Strategic Focus | Part of the 10% supporting focus — critical as the entry funnel into PMG |
+| Strategic Focus | Part of the 10% supporting focus - critical as the entry funnel into PMG |
 
 ---
 
@@ -35,7 +35,7 @@ LaunchPad SA is the **lead generation engine** of the PMG group. Every client wh
 
 ## What We Do
 
-LaunchPad SA guides first-time entrepreneurs and new business owners through formally establishing their company in South Africa. We handle all CIPC, SARS, and government database registrations so clients can focus on building their business — not fighting bureaucracy.
+LaunchPad SA guides first-time entrepreneurs and new business owners through formally establishing their company in South Africa. We handle all CIPC, SARS, and government database registrations so clients can focus on building their business - not fighting bureaucracy.
 
 ---
 
@@ -45,7 +45,7 @@ LaunchPad SA guides first-time entrepreneurs and new business owners through for
 
 | Service | Price |
 |---|---|
-| PTY (Ltd) Registration — CIPC | R1,200 |
+| PTY (Ltd) Registration - CIPC | R1,200 |
 | Non-Profit Company (NPC) Registration | POA |
 | Business name reservation | R350 |
 
@@ -95,11 +95,11 @@ Current name **LaunchPad SA** is retained. Alternatives researched from top Goog
 
 | # | Name | Domain | Keyword Strength | Why Consider It |
 |---|---|---|---|---|
-| 1 | **RegisterFast SA** | registerfastsa.co.za | ★★★★★ | "Register" + "fast" — the two highest-intent modifiers people search. Direct keyword match. Top recommendation. |
+| 1 | **RegisterFast SA** | registerfastsa.co.za | ★★★★★ | "Register" + "fast" - the two highest-intent modifiers people search. Direct keyword match. Top recommendation. |
 | 2 | **PTYdone SA** | ptydone.co.za | ★★★★★ | "PTY registration" is a top-3 search term. "Done" promises completion. Punchy and unique. |
 | 3 | **BizRegister SA** | bizregistersa.co.za | ★★★★☆ | Targets "business registration South Africa". Professional yet approachable. |
 | 4 | **CompanyGo SA** | companygosa.co.za | ★★★★☆ | "Company" is the #1 search anchor. "Go" signals speed and action. |
-| 5 | **FoundIt Co.** | foundit.co.za | ★★★☆☆ | Double meaning — "founded it" and "found it". Smart and memorable for social media. |
+| 5 | **FoundIt Co.** | foundit.co.za | ★★★☆☆ | Double meaning - "founded it" and "found it". Smart and memorable for social media. |
 
 > **Top search keywords:** company registration South Africa · CIPC registration · PTY registration · how to register a company SA · register Pty Ltd online · company registration Gauteng · start a business South Africa · register company online fast
 
@@ -119,10 +119,10 @@ Current name **LaunchPad SA** is retained. Alternatives researched from top Goog
 
 ## Positioning Statement
 
-> LaunchPad SA makes starting a business in South Africa simple. We handle the registrations, the compliance documents, and the paperwork — so you can focus on what you actually want to do: build something great.
+> LaunchPad SA makes starting a business in South Africa simple. We handle the registrations, the compliance documents, and the paperwork - so you can focus on what you actually want to do: build something great.
 
 ---
 
 *Last updated: March 2026 | Version 2.0*
-*LaunchPad SA — a Playhouse Media Group division*
+*LaunchPad SA - a Playhouse Media Group division*
 *launchpadsa.co.za | info@launchpadsa.co.za*

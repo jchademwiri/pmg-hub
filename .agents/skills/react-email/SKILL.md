@@ -306,7 +306,7 @@ export default EmailTemplate;
 Use the Tailwind component for styling if the user is actively using Tailwind CSS in their project. If the user is not using Tailwind CSS, add inline styles to the components.
 
 - Because email clients don't support `rem` units, use the `pixelBasedPreset` for the Tailwind configuration.
-- **Import `pixelBasedPreset` from `@react-email/components`** — do NOT import from `@react-email/tailwind` or `@react-email/tailwind/presets`.
+- **Import `pixelBasedPreset` from `@react-email/components`** - do NOT import from `@react-email/tailwind` or `@react-email/tailwind/presets`.
 - Never use flexbox or grid for layout, use table-based layouts instead.
 - Each component must be styled with inline styles or utility classes.
 
@@ -320,7 +320,7 @@ Use the Tailwind component for styling if the user is actively using Tailwind CS
 
 ### Required Classes
 
-These classes are **always required** on their respective components — omitting them causes rendering bugs across email clients:
+These classes are **always required** on their respective components - omitting them causes rendering bugs across email clients:
 
 | Component | Required Class | Why |
 |-----------|---------------|-----|

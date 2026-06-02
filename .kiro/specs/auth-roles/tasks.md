@@ -20,7 +20,7 @@ Implement invitation-only authentication, role-based access control, and user ma
     - Add `user.additionalFields` for `role` (default `'viewer'`) and `isActive` (default `true`)
     - Add `beforeSignIn` hook on `/sign-in/magic-link` that rejects emails not in the `users` table with "Not invited"
     - Add `afterSignIn` hook on `/sign-in/magic-link` that marks `invitation.acceptedAt`
-    - Read `RESEND_API_KEY` from env — never hardcode
+    - Read `RESEND_API_KEY` from env - never hardcode
     - Export `getSessionOrRedirect()` and `requireRole()` helpers
     - _Requirements: 1.1, 1.2, 1.6, 1.7, 2.1, 2.2, 9.1, 9.3, 10.3_
   - [x] 2.2 Create `apps/admin/src/lib/auth-client.ts`
@@ -71,7 +71,7 @@ Implement invitation-only authentication, role-based access control, and user ma
   - Implement `inviteUser(formData)`: validate with `InviteSchema` (Zod), check for duplicate email, insert `invitations` record with unique token and 7-day `expiresAt`, send invitation email via Resend, `revalidatePath('/users')` inside `try` on success only
   - Implement `revokeUser(userId)`: invalidate all sessions for the user, set `isActive = false`, `revalidatePath('/users')` inside `try` on success only
   - Implement `updateUserRole(userId, formData)`: validate with `UpdateRoleSchema` (Zod), update `users.role`, `revalidatePath('/users')` inside `try` on success only
-  - All actions follow `Promise<{ error?: string }>` — never throw
+  - All actions follow `Promise<{ error?: string }>` - never throw
   - _Requirements: 1.3, 1.4, 1.5, 5.2, 5.3, 5.4, 5.5, 5.6, 5.7, 9.2, 9.4_
   - [x] 8.1 Write property tests for user actions (P7, P8, P9, P10, P12)
     - **Property 7: Viewer role is denied all mutations**
@@ -86,7 +86,7 @@ Implement invitation-only authentication, role-based access control, and user ma
     - **Validates: Requirements 9.4**
     - File: `apps/admin/src/__tests__/auth-actions.property.test.ts`
 
-- [x] 9. Checkpoint — Ensure all tests pass
+- [x] 9. Checkpoint - Ensure all tests pass
   - Ensure all tests pass, ask the user if questions arise.
 
 - [x] 10. Implement invitation property tests
@@ -128,13 +128,13 @@ Implement invitation-only authentication, role-based access control, and user ma
     - Proxy contains no role-checking logic
   - _Requirements: 1.1, 2.1, 9.3, 10.1, 10.2, 6.1_
 
-- [x] 14. Final checkpoint — Ensure all tests pass
+- [x] 14. Final checkpoint - Ensure all tests pass
   - Ensure all tests pass, ask the user if questions arise.
 
 ## Notes
 
 - Tasks marked with `*` are optional and can be skipped for faster MVP
 - `revalidatePath` is always called inside `try` on success only, never in `catch`
-- The proxy must never contain role-checking logic — role enforcement is route/action level only
+- The proxy must never contain role-checking logic - role enforcement is route/action level only
 - Better Auth auto-creates `users` and `sessions` tables via the Drizzle adapter; no manual schema needed for those
 - Property tests use fast-check with 100 iterations; tag format: `// Feature: auth-roles, Property N: <property_text>`

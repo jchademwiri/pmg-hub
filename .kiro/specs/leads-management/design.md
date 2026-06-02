@@ -13,7 +13,7 @@ DB query helpers (packages/db/src/queries.ts)
   → Server Component pages (apps/admin/src/app/(admin)/leads/)
 ```
 
-No lead creation or deletion exists in the admin — this is a read-and-update interface only.
+No lead creation or deletion exists in the admin - this is a read-and-update interface only.
 
 ## Architecture
 
@@ -47,7 +47,7 @@ URL search params drive filtering: `?status=`, `?divisionId=`, `?source=`. The S
 
 ## Components and Interfaces
 
-### DB Query Helpers — `packages/db/src/queries.ts`
+### DB Query Helpers - `packages/db/src/queries.ts`
 
 ```ts
 export type LeadRow = {
@@ -74,7 +74,7 @@ getDistinctLeadSources(): Promise<string[]>
 
 `getAllLeads` uses a LEFT JOIN to `divisions` (leads may have no division), applies `and(...conditions)` for active filters, and orders by `createdAt DESC`. `getLeadCountsByStatus` uses a single SQL query with conditional aggregation to return all five counts in one round-trip.
 
-### Server Actions — `apps/admin/src/app/actions/leads.ts`
+### Server Actions - `apps/admin/src/app/actions/leads.ts`
 
 ```ts
 'use server'
@@ -96,9 +96,9 @@ Both actions follow the same pattern as `updateIncome`: parse FormData with `Obj
 `updateLeadStatus` revalidates `/leads`, `/leads/${id}`, and `/dashboard`.
 `updateLeadNotes` revalidates `/leads/${id}` only.
 
-### Client Components — `apps/admin/src/components/leads/`
+### Client Components - `apps/admin/src/components/leads/`
 
-**`lead-status-tabs.tsx`** — `'use client'`
+**`lead-status-tabs.tsx`** - `'use client'`
 ```ts
 interface LeadStatusTabsProps {
   counts: { all: number; new: number; contacted: number; converted: number; lost: number }
@@ -121,7 +121,7 @@ function handleTabChange(value: string) {
 
 The `/leads/page.tsx` must pass `currentDivisionId={divisionId}` and `currentSource={source}` from `searchParams` into `LeadStatusTabs` alongside `counts` and `currentStatus`.
 
-**`leads-filter-bar.tsx`** — `'use client'`
+**`leads-filter-bar.tsx`** - `'use client'`
 ```ts
 interface LeadsFilterBarProps {
   divisions: { id: string; name: string }[]
@@ -132,15 +132,15 @@ interface LeadsFilterBarProps {
 ```
 Mirrors `income/filter-bar.tsx`. Two shadcn `Select` controls. On change, reconstructs the full query string preserving other active params and calls `router.push`.
 
-**`leads-table.tsx`** — `'use client'`
+**`leads-table.tsx`** - `'use client'`
 ```ts
 interface LeadsTableProps {
   entries: LeadRow[]
 }
 ```
-Renders a shadcn `Table`. Columns: name, email/phone (email preferred, phone as fallback), division name, source, status badge (colour-coded by status), detail link (`/leads/${entry.id}`). Read-only — no delete or inline edit.
+Renders a shadcn `Table`. Columns: name, email/phone (email preferred, phone as fallback), division name, source, status badge (colour-coded by status), detail link (`/leads/${entry.id}`). Read-only - no delete or inline edit.
 
-**`lead-status-form.tsx`** — `'use client'`
+**`lead-status-form.tsx`** - `'use client'`
 ```ts
 interface LeadStatusFormProps {
   id: string
@@ -150,7 +150,7 @@ interface LeadStatusFormProps {
 ```
 Uses `useTransition`. Select pre-populated with `currentStatus`. Disables select and submit while `isPending`. Displays inline error on failure.
 
-**`lead-notes-form.tsx`** — `'use client'`
+**`lead-notes-form.tsx`** - `'use client'`
 ```ts
 interface LeadNotesFormProps {
   id: string
@@ -180,7 +180,7 @@ Awaits `params`, calls `getLeadById(id)`, calls `notFound()` if null. Renders ba
 
 ## Data Models
 
-### Schema Change — `packages/db/src/schema/leads.ts`
+### Schema Change - `packages/db/src/schema/leads.ts`
 
 Add `notes` column after `updatedAt`:
 
@@ -193,10 +193,10 @@ Nullable, no default. Existing rows will have `notes = null` after migration.
 ### Migration Steps
 
 1. Add `notes: text("notes")` to `packages/db/src/schema/leads.ts`
-2. Run `bun db:generate` — produces migration SQL: `ALTER TABLE leads ADD COLUMN notes text;`
-3. Run `bun db:migrate` — applies the migration to Neon PostgreSQL
+2. Run `bun db:generate` - produces migration SQL: `ALTER TABLE leads ADD COLUMN notes text;`
+3. Run `bun db:migrate` - applies the migration to Neon PostgreSQL
 
-### Export — `packages/db/src/index.ts`
+### Export - `packages/db/src/index.ts`
 
 Add to existing exports:
 ```ts
@@ -225,7 +225,7 @@ export type { LeadRow } from './queries';
 
 ## Correctness Properties
 
-*A property is a characteristic or behavior that should hold true across all valid executions of a system — essentially, a formal statement about what the system should do. Properties serve as the bridge between human-readable specifications and machine-verifiable correctness guarantees.*
+*A property is a characteristic or behavior that should hold true across all valid executions of a system - essentially, a formal statement about what the system should do. Properties serve as the bridge between human-readable specifications and machine-verifiable correctness guarantees.*
 
 ### Property 1: getAllLeads shape and sort order
 
@@ -269,13 +269,13 @@ export type { LeadRow } from './queries';
 
 **Validates: Requirements 3.2, 10.4**
 
-### Property 8: updateLeadStatus round-trip — valid status persisted, updatedAt updated
+### Property 8: updateLeadStatus round-trip - valid status persisted, updatedAt updated
 
 *For any* valid status value (`new`, `contacted`, `converted`, `lost`) submitted to `updateLeadStatus`, the action shall return `{}` (no error), and a subsequent `getLeadById` call shall return the lead with the updated `status` and a non-null `updatedAt`.
 
 **Validates: Requirements 5.2, 5.3, 6.3**
 
-### Property 9: updateLeadNotes round-trip — notes persisted, updatedAt updated
+### Property 9: updateLeadNotes round-trip - notes persisted, updatedAt updated
 
 *For any* notes string (including empty string) submitted to `updateLeadNotes`, the action shall return `{}` (no error), and a subsequent `getLeadById` call shall return the lead with the updated `notes` value and a non-null `updatedAt`.
 
@@ -293,7 +293,7 @@ export type { LeadRow } from './queries';
 
 **Validates: Requirements 9.1, 9.3**
 
-### Property 12: Notes column nullable — existing leads unaffected after migration
+### Property 12: Notes column nullable - existing leads unaffected after migration
 
 *For any* lead row that existed before the `notes` column migration, the `notes` field shall be `null` after migration, and all other fields shall be unchanged.
 
@@ -305,9 +305,9 @@ export type { LeadRow } from './queries';
 
 Both `updateLeadStatus` and `updateLeadNotes` follow the same error-handling contract:
 
-1. **Validation failure** — Zod `safeParse` returns `success: false` → return `{ error: issues[0]?.message ?? 'Validation error' }`. No DB write, no `revalidatePath`.
-2. **DB error** — `try/catch` around the Drizzle update → return `{ error: err instanceof Error ? err.message : 'Unknown error' }`. No `revalidatePath`.
-3. **Success** — call `revalidatePath` for all relevant paths, return `{}`.
+1. **Validation failure** - Zod `safeParse` returns `success: false` → return `{ error: issues[0]?.message ?? 'Validation error' }`. No DB write, no `revalidatePath`.
+2. **DB error** - `try/catch` around the Drizzle update → return `{ error: err instanceof Error ? err.message : 'Unknown error' }`. No `revalidatePath`.
+3. **Success** - call `revalidatePath` for all relevant paths, return `{}`.
 
 Neither action throws under any condition.
 
@@ -315,7 +315,7 @@ Neither action throws under any condition.
 
 - `LeadStatusForm` and `LeadNotesForm` display the `error` string inline below the submit button when the action returns `{ error }`.
 - Controls are disabled via `useTransition`'s `isPending` flag during submission.
-- No toast notifications for leads forms (status/notes updates are silent on success — the page revalidates and reflects the change).
+- No toast notifications for leads forms (status/notes updates are silent on success - the page revalidates and reflects the change).
 
 ### Page-level
 

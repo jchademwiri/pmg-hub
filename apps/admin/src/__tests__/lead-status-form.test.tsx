@@ -30,8 +30,8 @@ vi.mock('@/components/ui/select', () => ({
 
 // ─── Tests ────────────────────────────────────────────────────────────────────
 
-describe('LeadStatusForm — optimistic update', () => {
-  it('shows optimistic status immediately before action resolves — Validates: Requirements 5.1, 5.2', async () => {
+describe('LeadStatusForm - optimistic update', () => {
+  it('shows optimistic status immediately before action resolves - Validates: Requirements 5.1, 5.2', async () => {
     const user = userEvent.setup()
 
     // Action that never resolves during the test (simulates a pending transition)
@@ -47,7 +47,7 @@ describe('LeadStatusForm — optimistic update', () => {
     const select = screen.getByTestId('select-wrapper') as HTMLSelectElement
     expect(select.value).toBe('new')
 
-    // Select 'contacted' — optimistic update should apply immediately
+    // Select 'contacted' - optimistic update should apply immediately
     await user.selectOptions(select, 'contacted')
 
     // UI reflects the optimistic value before the action resolves
@@ -58,7 +58,7 @@ describe('LeadStatusForm — optimistic update', () => {
     resolveAction({})
   })
 
-  it('reverts status to original and shows error when action returns { error } — Validates: Requirements 5.4, 5.5', async () => {
+  it('reverts status to original and shows error when action returns { error } - Validates: Requirements 5.4, 5.5', async () => {
     const user = userEvent.setup()
     const updateAction = vi.fn().mockResolvedValue({ error: 'Status update failed.' })
 
@@ -74,7 +74,7 @@ describe('LeadStatusForm — optimistic update', () => {
     expect(select.value).toBe('new')
   })
 
-  it('calls action with new status and shows no error on success — Validates: Requirements 5.3', async () => {
+  it('calls action with new status and shows no error on success - Validates: Requirements 5.3', async () => {
     const user = userEvent.setup()
     const updateAction = vi.fn().mockResolvedValue({})
 
@@ -88,13 +88,13 @@ describe('LeadStatusForm — optimistic update', () => {
     const formData: FormData = updateAction.mock.calls[0][0]
     expect(formData.get('status')).toBe('contacted')
 
-    // No error shown — action succeeded
+    // No error shown - action succeeded
     await vi.waitFor(() => {
       expect(screen.queryByText(/failed|error/i)).toBeNull()
     })
   })
 
-  it('disables the selector while action is pending — Validates: Requirements 5.6', async () => {
+  it('disables the selector while action is pending - Validates: Requirements 5.6', async () => {
     const user = userEvent.setup()
 
     let resolveAction!: (v: { error?: string }) => void

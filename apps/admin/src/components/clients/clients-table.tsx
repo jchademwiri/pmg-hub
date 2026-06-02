@@ -7,6 +7,7 @@ import { toast } from 'sonner'
 import type { ClientWithIncomeCount } from '@pmg/db'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
+import { ConfirmDialog } from '@/components/ui/confirm-dialog'
 import {
   Table,
   TableBody,
@@ -15,6 +16,11 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table'
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from '@/components/ui/tooltip'
 
 interface ClientsTableProps {
   clients: ClientWithIncomeCount[]
@@ -24,15 +30,16 @@ interface ClientsTableProps {
 
 export function ClientsTable({ clients, deleteAction, toggleActiveAction }: ClientsTableProps) {
   const router = useRouter()
-  const [pendingDeleteId, setPendingDeleteId] = React.useState<string | null>(null)
+  const [deleteId, setDeleteId] = React.useState<string | null>(null)
   const [pendingToggleId, setPendingToggleId] = React.useState<string | null>(null)
 
-  async function handleConfirmDelete(id: string) {
-    const result = await deleteAction(id)
+  async function handleDelete() {
+    if (!deleteId) return
+    const result = await deleteAction(deleteId)
     if (result.error) {
       toast.error(result.error)
     }
-    setPendingDeleteId(null)
+    setDeleteId(null)
   }
 
   async function handleToggleActive(id: string, currentlyActive: boolean) {
@@ -50,98 +57,96 @@ export function ClientsTable({ clients, deleteAction, toggleActiveAction }: Clie
   }
 
   return (
-    <Table>
-      <TableHeader>
-        <TableRow>
-          <TableHead>Name</TableHead>
-          <TableHead>Business Name</TableHead>
-          <TableHead>Email</TableHead>
-          <TableHead>Phone</TableHead>
-          <TableHead>Income Records</TableHead>
-          <TableHead>Status</TableHead>
-          <TableHead>Actions</TableHead>
-        </TableRow>
-      </TableHeader>
-      <TableBody>
-        {clients.map((client) => (
-          <TableRow
+    <>
+      <ConfirmDialog
+        open={!!deleteId}
+        onOpenChange={(open) => {
+          if (!open) setDeleteId(null)
+        }}
+        onConfirm={handleDelete}
+        title="Delete client?"
+        description="This action cannot be undone."
+        confirmText="Delete"
+        variant="destructive"
+      />
+      <Table>
+        <TableHeader>
+          <TableRow>
+            <TableHead>Name</TableHead>
+            <TableHead>Business Name</TableHead>
+            <TableHead>Email</TableHead>
+            <TableHead>Phone</TableHead>
+            <TableHead>Income Records</TableHead>
+            <TableHead>Status</TableHead>
+            <TableHead>Actions</TableHead>
+          </TableRow>
+        </TableHeader>
+        <TableBody>
+          {clients.map((client) => (
+            <TableRow
               key={client.id}
               className={`cursor-pointer ${!client.isActive ? 'opacity-60' : ''}`}
               onClick={() => router.push('/clients/' + client.id)}
             >
-            <TableCell>{client.name}</TableCell>
-            <TableCell>{client.businessName ?? ''}</TableCell>
-            <TableCell>{client.email ?? ''}</TableCell>
-            <TableCell>{client.phone ?? ''}</TableCell>
-            <TableCell>{client.incomeCount}</TableCell>
-            <TableCell>
-              <Badge variant={client.isActive ? 'default' : 'secondary'}>
-                {client.isActive ? 'Active' : 'Disabled'}
-              </Badge>
-            </TableCell>
-            <TableCell onClick={(e) => e.stopPropagation()}>
-              <div className="flex items-center gap-2">
-                {/* Disable / Activate toggle */}
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  disabled={pendingToggleId === client.id}
-                  onClick={() => handleToggleActive(client.id, client.isActive)}
-                  title={client.isActive ? 'Disable client' : 'Activate client'}
-                >
-                  {client.isActive ? (
-                    <PowerOff className="h-4 w-4 text-muted-foreground" />
-                  ) : (
-                    <Power className="h-4 w-4 text-green-500" />
-                  )}
-                  <span className="sr-only">{client.isActive ? 'Disable' : 'Activate'}</span>
-                </Button>
+              <TableCell>{client.name}</TableCell>
+              <TableCell>{client.businessName ?? ''}</TableCell>
+              <TableCell>{client.email ?? ''}</TableCell>
+              <TableCell>{client.phone ?? ''}</TableCell>
+              <TableCell>{client.incomeCount}</TableCell>
+              <TableCell>
+                <Badge variant={client.isActive ? 'default' : 'secondary'}>
+                  {client.isActive ? 'Active' : 'Disabled'}
+                </Badge>
+              </TableCell>
+              <TableCell onClick={(e) => e.stopPropagation()}>
+                <div className="flex items-center gap-2">
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        disabled={pendingToggleId === client.id}
+                        onClick={() => handleToggleActive(client.id, client.isActive)}
+                      >
+                        {client.isActive ? (
+                          <PowerOff data-icon className="text-muted-foreground" />
+                        ) : (
+                          <Power data-icon className="text-green-500" />
+                        )}
+                        <span className="sr-only">{client.isActive ? 'Disable' : 'Activate'}</span>
+                      </Button>
+                    </TooltipTrigger>
+                    <TooltipContent>
+                      {client.isActive ? 'Disable client' : 'Activate client'}
+                    </TooltipContent>
+                  </Tooltip>
 
-                {/* Delete — only allowed if no income records */}
-                {client.incomeCount === 0 ? (
-                  pendingDeleteId === client.id ? (
-                    <>
-                      <Button
-                        variant="destructive"
-                        size="sm"
-                        onClick={() => handleConfirmDelete(client.id)}
-                      >
-                        Confirm
-                      </Button>
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => setPendingDeleteId(null)}
-                      >
-                        Cancel
-                      </Button>
-                    </>
-                  ) : (
+                  {client.incomeCount === 0 ? (
                     <Button
                       variant="ghost"
                       size="icon"
-                      onClick={() => setPendingDeleteId(client.id)}
+                      onClick={() => setDeleteId(client.id)}
                     >
-                      <Trash2 className="h-4 w-4" />
+                      <Trash2 data-icon />
                       <span className="sr-only">Delete</span>
                     </Button>
-                  )
-                ) : (
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    disabled
-                    title="Cannot delete a client with income records"
-                  >
-                    <Trash2 className="h-4 w-4 text-muted-foreground/30" />
-                    <span className="sr-only">Delete (disabled — has income records)</span>
-                  </Button>
-                )}
-              </div>
-            </TableCell>
-          </TableRow>
-        ))}
-      </TableBody>
-    </Table>
+                  ) : (
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <Button variant="ghost" size="icon" disabled>
+                          <Trash2 data-icon className="text-muted-foreground/30" />
+                          <span className="sr-only">Delete (disabled - has income records)</span>
+                        </Button>
+                      </TooltipTrigger>
+                      <TooltipContent>Cannot delete a client with income records</TooltipContent>
+                    </Tooltip>
+                  )}
+                </div>
+              </TableCell>
+            </TableRow>
+          ))}
+        </TableBody>
+      </Table>
+    </>
   )
 }

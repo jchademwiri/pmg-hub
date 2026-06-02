@@ -56,7 +56,7 @@ away from the dashboard.
 
 1. THE Reports_Page SHALL render `MoMComparisonChart`, `RevenueByDivisionChart`,
    and `RevenueVsExpensesChart` in a single-column layout.
-2. THE Reports_Page SHALL fetch all chart data in a single `Promise.all` call —
+2. THE Reports_Page SHALL fetch all chart data in a single `Promise.all` call -
    no sequential round-trips.
 3. THE Reports_Page SHALL pass `getMoMChartData()` results to `MoMComparisonChart`
    as the `data` prop.
@@ -65,7 +65,7 @@ away from the dashboard.
 5. THE Reports_Page SHALL pass `getMonthlyFinancialsSeries()` results to
    `RevenueVsExpensesChart` as the `series` prop.
 6. WHEN any chart's data array is empty, THE Reports_Page SHALL render the chart
-   component regardless — each chart already handles its own empty state.
+   component regardless - each chart already handles its own empty state.
 
 ---
 
@@ -140,7 +140,7 @@ spreadsheet.
    include that month's row with zero values for all fields.
 5. IF the `year` argument is not a valid four-digit integer (1000–9999), THEN THE
    CSV_Export_Action SHALL return `{ error: 'Invalid year' }`.
-6. THE CSV_Export_Action SHALL never throw — all errors MUST be returned as
+6. THE CSV_Export_Action SHALL never throw - all errors MUST be returned as
    `{ error: string }`.
 7. THE Reports_Page SHALL render an "Export CSV" button that, when clicked, calls
    `exportFinancialsCsv(year)`, creates a `Blob` from the returned CSV string,

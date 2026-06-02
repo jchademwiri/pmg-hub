@@ -2,8 +2,9 @@
 
 import { z } from 'zod';
 import { revalidatePath } from 'next/cache';
-import { getDb, billingItems, billingLineItems, eq, and } from '@pmg/db';
+import { getDb, billingItems, billingLineItems, eq, and, or } from '@pmg/db';
 import { getSessionOrRedirect } from '@/lib/auth';
+import { hasBillingLineItemItemIdColumn } from './billing-line-item-compat';
 
 // ── Schema ────────────────────────────────────────────────────────────────────
 
@@ -12,7 +13,7 @@ const ItemSchema = z.object({
   description: z.string().optional().nullable(),
   unitPrice: z.coerce.number().min(0, 'Unit price cannot be negative'),
   unitLabel: z.string().optional().nullable(),
-  // vatApplicable removed from UI — VAT is document-level. Kept in DB for
+  // vatApplicable removed from UI - VAT is document-level. Kept in DB for
   // backward compatibility; always passed as true so existing records are stable.
 });
 
@@ -40,7 +41,7 @@ export async function createItem(
         description: description ?? null,
         unitPrice: String(unitPrice.toFixed(2)),
         unitLabel: unitLabel ?? null,
-        vatApplicable: true, // always true — VAT is document-level
+        vatApplicable: true, // always true - VAT is document-level
       })
       .returning({ id: billingItems.id });
 
@@ -76,7 +77,7 @@ export async function updateItem(
         description: description ?? null,
         unitPrice: String(unitPrice.toFixed(2)),
         unitLabel: unitLabel ?? null,
-        // vatApplicable: preserve existing value — not changed from UI
+        // vatApplicable: preserve existing value - not changed from UI
         updatedAt: new Date(),
       })
       .where(eq(billingItems.id, id));
@@ -137,19 +138,14 @@ export async function deleteItem(id: string): Promise<{ error?: string }> {
 
     const db = getDb();
 
-    // Check if item is referenced in any line items (by name match — no FK)
+    // Check if item is referenced in any invoice line items.
     const [usedInInvoice] = await db
       .select({ id: billingLineItems.id })
       .from(billingLineItems)
       .where(
         and(
           eq(billingLineItems.documentType, 'invoice'),
-          eq(billingLineItems.description, (
-            await db
-              .select({ name: billingItems.name })
-              .from(billingItems)
-              .where(eq(billingItems.id, id))
-          )[0]?.name ?? ''),
+          eq(billingLineItems.itemId, id),
         ),
       )
       .limit(1);

@@ -2,7 +2,7 @@
 
 ## Introduction
 
-Phase 10 adds invitation-only authentication, role-based access control, and a user management interface to the PMG Control Center admin app. There is no public sign-up — all users are pre-created by a super-admin via email invite. Authentication uses Better Auth with magic links only (no passwords). The proxy enforces session presence; role enforcement happens at the route and Server Action level.
+Phase 10 adds invitation-only authentication, role-based access control, and a user management interface to the PMG Control Center admin app. There is no public sign-up - all users are pre-created by a super-admin via email invite. Authentication uses Better Auth with magic links only (no passwords). The proxy enforces session presence; role enforcement happens at the route and Server Action level.
 
 ## Glossary
 
@@ -15,7 +15,7 @@ Phase 10 adds invitation-only authentication, role-based access control, and a u
 - **Session_Token**: The `better-auth.session_token` cookie set by Better Auth after successful authentication
 - **super_admin**: A role with full access including user management at `/users`
 - **admin**: A role with full access to all data routes but no user management
-- **viewer**: A role with read-only access — no mutations, no CSV export, no withdrawals
+- **viewer**: A role with read-only access - no mutations, no CSV export, no withdrawals
 - **Resend**: The transactional email service used to deliver magic links and invitations
 - **Drizzle_Adapter**: The Better Auth database adapter that auto-creates `users` and `sessions` tables via Drizzle ORM
 - **User_Management**: The `/users` and `/users/invite` routes restricted to `super_admin` only
@@ -65,7 +65,7 @@ Phase 10 adds invitation-only authentication, role-based access control, and a u
 1. WHEN an unauthenticated request is made to any route that is not `/login` or `/api/auth/*`, THE Proxy SHALL redirect the request to `/login`.
 2. WHEN a request includes a valid `better-auth.session_token` cookie, THE Proxy SHALL allow the request to proceed without redirection.
 3. WHEN a request targets `/login` or any path under `/api/auth/`, THE Proxy SHALL allow the request to proceed regardless of session state.
-4. THE Proxy SHALL NOT perform role-based access checks — role enforcement is handled at the route and Server Action level.
+4. THE Proxy SHALL NOT perform role-based access checks - role enforcement is handled at the route and Server Action level.
 
 ---
 

@@ -1,5 +1,5 @@
 # StudyEdge SA
-### Brand Profile — Division 05 of Playhouse Media Group
+### Brand Profile - Division 05 of Playhouse Media Group
 
 ---
 
@@ -7,7 +7,7 @@
 
 StudyEdge SA is the academic support division of Playhouse Media Group. We provide guided academic assistance, tutoring, research support, and study coaching to university and college students across South Africa.
 
-StudyEdge SA is currently the smallest and newest division in the PMG group. In 2025, Jacob provided academic support to 1 student informally. The service is proven at a small scale — formalising it under a brand creates the structure to grow it intentionally alongside the other divisions.
+StudyEdge SA is currently the smallest and newest division in the PMG group. In 2025, Jacob provided academic support to 1 student informally. The service is proven at a small scale - formalising it under a brand creates the structure to grow it intentionally alongside the other divisions.
 
 ---
 
@@ -17,8 +17,8 @@ StudyEdge SA is currently the smallest and newest division in the PMG group. In 
 |---|---|
 | Brand Name | StudyEdge SA |
 | Parent Company | Playhouse Media Group (PTY) Ltd |
-| Division | 05 — Academic Support & Tutoring |
-| Status | Active — 1 client in 2025, formalising for growth |
+| Division | 05 - Academic Support & Tutoring |
+| Status | Active - 1 client in 2025, formalising for growth |
 | Domain | studyedgesa.co.za *(to register)* |
 | Email | info@studyedgesa.co.za |
 | Social Media | @studyedgesa |
@@ -29,19 +29,19 @@ StudyEdge SA is currently the smallest and newest division in the PMG group. In 
 
 ## Tagline
 
-> *"Your Academic Edge — Earned."*
+> *"Your Academic Edge - Earned."*
 
 ---
 
 ## What We Do
 
-StudyEdge SA helps South African students navigate the pressures of tertiary education through guided academic support, tutoring, research assistance, and structured study coaching. We work alongside students — helping them understand their material, structure their thinking, and produce work they are genuinely proud of.
+StudyEdge SA helps South African students navigate the pressures of tertiary education through guided academic support, tutoring, research assistance, and structured study coaching. We work alongside students - helping them understand their material, structure their thinking, and produce work they are genuinely proud of.
 
 ---
 
 ## Important Positioning Note
 
-StudyEdge SA is positioned as an **academic support and guided learning service** — not a ghostwriting or submission service. Services are framed around tutoring, guidance, editing, and support rather than producing work for direct student submission.
+StudyEdge SA is positioned as an **academic support and guided learning service** - not a ghostwriting or submission service. Services are framed around tutoring, guidance, editing, and support rather than producing work for direct student submission.
 
 This positioning protects the business legally, is sustainable long-term, and opens doors to institutional partnerships and corporate learnerships that a ghostwriting-framed business cannot access.
 
@@ -63,7 +63,7 @@ This positioning protects the business legally, is sustainable long-term, and op
 | Service | Price |
 |---|---|
 | Assignment structure & guidance consultation | R300–R500 |
-| Research support — topic, sources, and outline | R400–R700 |
+| Research support - topic, sources, and outline | R400–R700 |
 | Draft review, feedback & editing | R350–R600 |
 | Full research assistance (complex assignments) | R800–R2,500 |
 | Data analysis support (Excel, SPSS, basic stats) | R500–R1,500 |
@@ -105,7 +105,7 @@ This positioning protects the business legally, is sustainable long-term, and op
 - University and college students across South Africa
 - Distance learning students (UNISA) studying without campus support
 - Working adults studying part-time who need help managing deadlines
-- Students in research-heavy disciplines — Business, Law, Education, Social Sciences
+- Students in research-heavy disciplines - Business, Law, Education, Social Sciences
 - Matric students preparing for university-level study
 
 ---
@@ -153,10 +153,10 @@ Current name **StudyEdge SA** is retained. Alternatives researched for future co
 
 ## Positioning Statement
 
-> StudyEdge SA gives South African students the academic support they need to understand their material, structure their thinking, and perform at their best — tutoring, research guidance, and academic coaching from people who genuinely want to see you succeed.
+> StudyEdge SA gives South African students the academic support they need to understand their material, structure their thinking, and perform at their best - tutoring, research guidance, and academic coaching from people who genuinely want to see you succeed.
 
 ---
 
 *Last updated: March 2026 | Version 2.0*
-*StudyEdge SA — a Playhouse Media Group division*
+*StudyEdge SA - a Playhouse Media Group division*
 *studyedgesa.co.za | info@studyedgesa.co.za*

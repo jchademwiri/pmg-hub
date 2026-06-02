@@ -7,7 +7,7 @@ Shared email templates and send wrapper for the PMG monorepo. Built with [React 
 The monorepo uses a two-level env strategy:
 
 ```
-.env.local                 ← root, shared — DATABASE_URL lives here
+.env.local                 ← root, shared - DATABASE_URL lives here
 apps/tes/.env.local        ← TES-specific only
 apps/aws/.env.local        ← AWS-specific only
 apps/pmg/.env.local        ← PMG-specific only
@@ -16,7 +16,7 @@ apps/pmg/.env.local        ← PMG-specific only
 Each app uses a site prefix so variables are unambiguous when running multiple apps locally:
 
 ```env
-# .env.local (root — shared)
+# .env.local (root - shared)
 DATABASE_URL=postgresql://...
 DATABASE_URL_UNPOOLED=postgresql://...
 ```
@@ -52,7 +52,7 @@ Each app's `.env.example` documents its own variables. The root `.env.example` d
 Each app passes its own prefixed env vars at call time. The package never reads `process.env` directly.
 
 ```typescript
-// apps/tes — uses TES_ prefix
+// apps/tes - uses TES_ prefix
 import { createEmailClient, AdminNewLeadEmail } from "@pmg/emails";
 import React from "react";
 
@@ -81,9 +81,9 @@ if (error) {
 | `AutoReplyEmail` | Auto-reply to the person who submitted a form | TES lead form goes live |
 
 ### Planned (add when the relevant site section is built)
-- `BookingConfirmationEmail` — AWS booking dialog
-- `ContactFormEmail` — AWS contact form
-- `WaitlistEmail` — AWS waitlist form
+- `BookingConfirmationEmail` - AWS booking dialog
+- `ContactFormEmail` - AWS contact form
+- `WaitlistEmail` - AWS waitlist form
 
 ## Preview Server
 

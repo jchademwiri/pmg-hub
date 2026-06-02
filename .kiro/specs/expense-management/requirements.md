@@ -16,10 +16,10 @@ Expense Management is Phase 4 of the PMG Control Center admin app. It provides a
 - **Server_Action**: A Next.js `'use server'` function that validates input, mutates the database, and returns `Promise<{ error?: string }>`.
 - **ExpenseSchema**: The Zod schema that validates expense form data: `date`, `divisionId`, `category`, `amount` (required); `description` (optional).
 - **Division**: A business unit record with `id` (UUID) and `name`, sourced from the `divisions` table.
-- **Category**: A freeform text label for an expense (e.g. "Software", "Travel"). Not a foreign key — stored as plain text on the expense row.
+- **Category**: A freeform text label for an expense (e.g. "Software", "Travel"). Not a foreign key - stored as plain text on the expense row.
 - **Running_Total**: The sum of `amount` for all expense entries currently displayed (after filters are applied).
 - **Category_Breakdown**: A per-category aggregation of amounts for the currently displayed entries.
-- **ZAR**: South African Rand — the currency used for all monetary display values.
+- **ZAR**: South African Rand - the currency used for all monetary display values.
 
 ---
 

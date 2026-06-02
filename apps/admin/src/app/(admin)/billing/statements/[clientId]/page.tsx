@@ -7,9 +7,19 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Separator } from '@/components/ui/separator';
 import { DocumentPreview } from '@/components/billing/document-preview';
 import type { StatementTransaction } from '@/components/billing/document-preview';
-import { getClientStatement, getAllIncome, getStatementYears, getDivisionBillingSettings, getClientById } from '@pmg/db';
-import { formatZAR, fmtDate } from '@/lib/format';
+import { getClientStatement, getAllIncome, getStatementYears, getDivisionBillingSettings, getClientById, getMonthPeriodDates } from '@pmg/db';
+import { getDocumentLogoUrl } from '@/lib/document-logo';
+import { formatZAR, fmtDate, getSASTToday } from '@/lib/format';
 import { PrintButton } from '@/components/billing/print-button';
+import { ExportPdfButton } from '@/components/billing/export-pdf-button';
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from '@/components/ui/table';
 
 export const dynamic = 'force-dynamic';
 
@@ -24,17 +34,34 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 
 interface Props {
   params: Promise<{ clientId: string }>;
-  searchParams: Promise<{ year?: string }>;
+  searchParams: Promise<{ year?: string; monthPeriod?: string }>;
 }
 
 export default async function StatementDetailPage({ params, searchParams }: Props) {
   const { clientId } = await params;
-  const { year: yearParam } = await searchParams;
-  const year = yearParam ? parseInt(yearParam, 10) : undefined;
+  const { year: yearParam, monthPeriod: monthPeriodParam } = await searchParams;
+
+  const now = new Date();
+  const currentFY = now.getMonth() < 2 ? now.getFullYear() - 1 : now.getFullYear();
+
+  const isMonthPeriodValid = monthPeriodParam === 'current' || 
+                             monthPeriodParam === 'previous' || 
+                             monthPeriodParam === 'past3' || 
+                             monthPeriodParam === 'past6';
+
+  // Default to 'current' monthPeriod if neither monthPeriod nor year filter is specified in URL
+  const monthPeriod = isMonthPeriodValid
+    ? monthPeriodParam
+    : (!yearParam ? 'current' : undefined);
+
+  // Mutual exclusivity: if monthPeriod is active, year is ignored/undefined
+  const year = monthPeriod 
+    ? undefined 
+    : (yearParam ? parseInt(yearParam, 10) : undefined);
 
   const [statement, incomeResult, availableYears] = await Promise.all([
-    getClientStatement(clientId, year ? { year } : undefined),
-    getAllIncome({ clientId, ...(year ? { year } : {}) }),
+    getClientStatement(clientId, monthPeriod ? { monthPeriod } : (year ? { year } : undefined)),
+    getAllIncome({ clientId, ...(monthPeriod ? { monthPeriod } : (year ? { year } : {})) }),
     getStatementYears(clientId),
   ]);
 
@@ -58,12 +85,12 @@ export default async function StatementDetailPage({ params, searchParams }: Prop
       .map((inv) => ({
         date: inv.invoiceDate,
         reference: inv.documentNumber,
-        description: inv.poNumber ?? 'Invoice',
+        description: inv.reference ?? 'Invoice',
         debit: Number(inv.total),
       })),
     ...incomeResult.data.map((inc) => ({
       date: inc.date,
-      reference: incomeToInvoiceNumber.get(inc.id) ?? '—',
+      reference: incomeToInvoiceNumber.get(inc.id) ?? '-',
       description: 'Payment received',
       credit: Number(inc.amount),
     })),
@@ -71,13 +98,16 @@ export default async function StatementDetailPage({ params, searchParams }: Prop
 
   txRaw.sort((a, b) => a.date.localeCompare(b.date)); // ASC
 
+  let currentBalance = summary.openingBalance;
   const transactions: StatementTransaction[] = txRaw.map((tx) => {
+    currentBalance = currentBalance + (tx.debit ?? 0) - (tx.credit ?? 0);
     return {
       date: tx.date,
       reference: tx.reference,
       description: tx.description,
       debit: tx.debit,
       credit: tx.credit,
+      balance: currentBalance,
     };
   });
 
@@ -91,36 +121,69 @@ export default async function StatementDetailPage({ params, searchParams }: Prop
     docStatus = hasOverdue ? 'Overdue' : 'Outstanding';
   }
 
-  const ageing = { current: 0, days30: 0, days60: 0, days90: 0, days120: 0 };
-  const _now = new Date();
+  const todayStr = getSASTToday();
+  const ageing = { current: 0, days1_14: 0, days15_30: 0, days31_60: 0, days61_90: 0, days91_120: 0 };
   for (const inv of invoices) {
-    if (inv.status === 'issued' || inv.status === 'overdue') {
-      const due = inv.dueDate ? new Date(inv.dueDate) : new Date(inv.invoiceDate);
-      const diffTime = _now.getTime() - due.getTime();
+    if (inv.status === 'issued' || inv.status === 'overdue' || inv.status === 'partially_paid') {
+      const dueStr = inv.dueDate ?? inv.invoiceDate;
+      const tDate = new Date(todayStr);
+      const dDate = new Date(dueStr);
+      const diffTime = tDate.getTime() - dDate.getTime();
       const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-      if (diffDays <= 0) ageing.current += Number(inv.total);
-      else if (diffDays <= 30) ageing.days30 += Number(inv.total);
-      else if (diffDays <= 60) ageing.days60 += Number(inv.total);
-      else if (diffDays <= 90) ageing.days90 += Number(inv.total);
-      else ageing.days120 += Number(inv.total);
+      
+      const outstanding = Number(inv.total) - Number(inv.allocatedAmount ?? 0);
+      if (outstanding <= 0) continue;
+
+      if (diffDays <= 0)        ageing.current    += outstanding;
+      else if (diffDays <= 14)  ageing.days1_14   += outstanding;
+      else if (diffDays <= 30)  ageing.days15_30  += outstanding;
+      else if (diffDays <= 60)  ageing.days31_60  += outstanding;
+      else if (diffDays <= 90)  ageing.days61_90  += outstanding;
+      else                      ageing.days91_120 += outstanding;
     }
   }
 
   // ── DocumentPreview props ─────────────────────────────────────────────────
-  const now = new Date();
-  const periodLabel = year ? String(year) : String(now.getFullYear());
+  let periodLabel = '';
+  if (monthPeriod === 'current') {
+    periodLabel = 'Current Month';
+  } else if (monthPeriod === 'previous') {
+    periodLabel = 'Previous Month';
+  } else if (monthPeriod === 'past3') {
+    periodLabel = 'Past 3 Months';
+  } else if (monthPeriod === 'past6') {
+    periodLabel = 'Past 6 Months';
+  } else {
+    periodLabel = `FY ${year}`;
+  }
+
+  let periodFrom = '';
+  let periodTo = '';
+  if (monthPeriod) {
+    const { startDate, endDate } = getMonthPeriodDates(monthPeriod);
+    periodFrom = startDate;
+    periodTo = endDate;
+  } else {
+    const y = year ?? currentFY;
+    periodFrom = `${y}-03-01`;
+    const nextFYStart = new Date(y + 1, 2, 1);
+    const lastDayOfFY = new Date(nextFYStart.getTime() - 24 * 60 * 60 * 1000);
+    periodTo = `${lastDayOfFY.getFullYear()}-${String(lastDayOfFY.getMonth() + 1).padStart(2, '0')}-${String(lastDayOfFY.getDate()).padStart(2, '0')}`;
+  }
 
   const primaryDivisionId = invoices[0]?.divisionId;
   const divSettings = primaryDivisionId ? await getDivisionBillingSettings(primaryDivisionId) : null;
+  const orgName = invoices[0]?.divisionName ?? 'PMG';
 
   const docPreviewProps = {
-    number: `STMT-${periodLabel}-${(client.businessName ?? client.name).slice(0, 3).toUpperCase()}`,
+    number: `STMT-${monthPeriod ? monthPeriod.toUpperCase() : (year ? year : currentFY)}-${(client.businessName ?? client.name).slice(0, 3).toUpperCase()}`,
     status: docStatus,
     issueDate: now.toISOString().split('T')[0]!,
-    periodFrom: year ? `${year}-03-01` : `${now.getFullYear()}-03-01`,
-    periodTo: year ? `${year + 1}-02-28` : now.toISOString().split('T')[0]!,
+    periodFrom,
+    periodTo,
     org: {
-      name: invoices[0]?.divisionName ?? 'PMG',
+      name: orgName,
+      logoUrl: getDocumentLogoUrl(orgName),
       divisionOf: divSettings ? 'Playhouse Media Group' : undefined,
       email: divSettings?.salesRepEmail ?? undefined,
       phone: divSettings?.salesRepPhone ?? undefined,
@@ -139,12 +202,13 @@ export default async function StatementDetailPage({ params, searchParams }: Prop
     transactions,
     ageing,
     balanceDue: summary.totalOutstanding,
+    openingBalance: summary.openingBalance,
   };
 
   return (
     <div className="flex flex-col gap-6">
       {/* Page header */}
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div className="flex items-center gap-4">
           <Button variant="ghost" size="sm" asChild>
             <Link href="/billing/statements">
@@ -158,12 +222,18 @@ export default async function StatementDetailPage({ params, searchParams }: Prop
               {client.businessName ?? client.name}
             </h2>
             <p className="text-sm text-muted-foreground">
-              Account statement — {periodLabel}
+              Account statement - {periodLabel}
             </p>
           </div>
         </div>
         <div className="flex items-center gap-2 flex-wrap justify-end">
-          <PrintButton documentTitle={`Statement-${client.businessName?.replace(/\s+/g, '-') ?? client.name.replace(/\s+/g, '-')}`} />
+          <PrintButton 
+            label="Print"
+            documentTitle={`Statement-${client.businessName?.replace(/\s+/g, '-') ?? client.name.replace(/\s+/g, '-')}`} 
+          />
+          <ExportPdfButton 
+            fileName={`Statement-${client.businessName?.replace(/\s+/g, '-') ?? client.name.replace(/\s+/g, '-')}`}
+          />
         </div>
       </div>
 
@@ -200,7 +270,7 @@ export default async function StatementDetailPage({ params, searchParams }: Prop
 
       {/* Two-column layout */}
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-3 lg:items-start">
-        {/* Document preview — scrollable on small screens */}
+        {/* Document preview - scrollable on small screens */}
         <div className="lg:col-span-2 overflow-x-auto">
           <DocumentPreview
             type="statement"
@@ -218,12 +288,38 @@ export default async function StatementDetailPage({ params, searchParams }: Prop
               <div className="flex flex-col gap-2">
                 {[
                   { label: 'Name', value: client.businessName ?? client.name },
-                  { label: 'Email', value: client.email ?? '—' },
-                  { label: 'Phone', value: client.phone ?? '—' },
+                  { label: 'Email', value: client.email ?? '-' },
+                  { label: 'Phone', value: client.phone ?? '-' },
                 ].map((f) => (
                   <div key={f.label} className="flex flex-col gap-0.5">
                     <span className="text-xs text-muted-foreground">{f.label}</span>
                     <span className="text-sm">{f.value}</span>
+                  </div>
+                ))}
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Ageing Breakdown Card */}
+          <Card size="sm">
+            <CardHeader>
+              <CardTitle>Ageing Breakdown</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="flex flex-col gap-2">
+                {[
+                  { label: 'Current', value: formatZAR(ageing.current) },
+                  { label: '1–14 Days', value: formatZAR(ageing.days1_14), highlight: ageing.days1_14 > 0 },
+                  { label: '15–30 Days', value: formatZAR(ageing.days15_30), highlight: ageing.days15_30 > 0 },
+                  { label: '31–60 Days', value: formatZAR(ageing.days31_60), highlight: ageing.days31_60 > 0 },
+                  { label: '61–90 Days', value: formatZAR(ageing.days61_90), highlight: ageing.days61_90 > 0 },
+                  { label: '91–120 Days', value: formatZAR(ageing.days91_120), highlight: ageing.days91_120 > 0 },
+                ].map((bucket) => (
+                  <div key={bucket.label} className="flex justify-between items-center text-sm py-0.5 border-b border-border/40 last:border-b-0">
+                    <span className="text-muted-foreground">{bucket.label}</span>
+                    <span className={`font-semibold tabular-nums ${bucket.highlight ? 'text-red-500 font-bold' : 'text-foreground'}`}>
+                      {bucket.value}
+                    </span>
                   </div>
                 ))}
               </div>
@@ -235,10 +331,10 @@ export default async function StatementDetailPage({ params, searchParams }: Prop
               <CardTitle>Statement Period</CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="flex flex-col gap-2">
+              <div className="flex flex-col gap-3">
                 <div className="flex justify-between text-sm">
-                  <span className="text-muted-foreground">Year</span>
-                  <span>{periodLabel}</span>
+                  <span className="text-muted-foreground">Period</span>
+                  <span className="font-medium text-foreground">{periodLabel}</span>
                 </div>
                 <div className="flex justify-between text-sm">
                   <span className="text-muted-foreground">Quotes</span>
@@ -248,22 +344,53 @@ export default async function StatementDetailPage({ params, searchParams }: Prop
                   <span className="text-muted-foreground">Invoices</span>
                   <span>{summary.invoiceCount}</span>
                 </div>
+                
                 <Separator className="my-1" />
-                {/* Year filter links */}
-                <div className="flex gap-2 flex-wrap">
-                  {availableYears.map((y) => (
-                    <Link
-                      key={y}
-                      href={`/billing/statements/${clientId}?year=${y}`}
-                      className={`rounded-md border px-2 py-1 text-xs transition-colors hover:bg-muted ${
-                        String(y) === periodLabel
-                          ? 'border-foreground bg-muted font-medium'
-                          : 'border-border'
-                      }`}
-                    >
-                      {y}
-                    </Link>
-                  ))}
+                
+                <div className="flex flex-col gap-1.5">
+                  <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Rolling Periods</span>
+                  <div className="grid grid-cols-2 gap-1.5">
+                    {[
+                      { value: 'current', label: 'Current' },
+                      { value: 'previous', label: 'Previous' },
+                      { value: 'past3', label: 'Past 3' },
+                      { value: 'past6', label: 'Past 6' },
+                    ].map((p) => (
+                      <Link
+                        key={p.value}
+                        href={`/billing/statements/${clientId}?monthPeriod=${p.value}`}
+                        className={`flex items-center justify-between rounded-md border px-2.5 py-1.5 text-xs transition-all hover:bg-muted ${
+                          monthPeriod === p.value
+                            ? 'border-foreground bg-muted font-medium text-foreground'
+                            : 'border-border text-muted-foreground hover:text-foreground'
+                        }`}
+                      >
+                        <span>{p.label}</span>
+                        {monthPeriod === p.value && (
+                          <span className="h-1.5 w-1.5 rounded-full bg-foreground" />
+                        )}
+                      </Link>
+                    ))}
+                  </div>
+                </div>
+
+                <div className="flex flex-col gap-1.5 mt-1">
+                  <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Fiscal Years</span>
+                  <div className="flex gap-2 flex-wrap">
+                    {availableYears.map((y) => (
+                      <Link
+                        key={y}
+                        href={`/billing/statements/${clientId}?year=${y}`}
+                        className={`rounded-md border px-2.5 py-1 text-xs transition-all hover:bg-muted ${
+                          !monthPeriod && String(y) === String(year)
+                            ? 'border-foreground bg-muted font-medium text-foreground'
+                            : 'border-border text-muted-foreground hover:text-foreground'
+                        }`}
+                      >
+                        FY {y}
+                      </Link>
+                    ))}
+                  </div>
                 </div>
               </div>
             </CardContent>
@@ -273,42 +400,38 @@ export default async function StatementDetailPage({ params, searchParams }: Prop
 
       {/* Income records section */}
       {incomeResult.data.length > 0 && (
-        <div className="overflow-x-auto">
-          <Card>
-            <CardHeader>
-              <CardTitle>Income Records</CardTitle>
-              <p className="text-sm text-muted-foreground">
-                Payments posted to the income ledger for this client —{' '}
-                <span className="font-medium text-green-600 dark:text-green-400">
-                  {formatZAR(incomeResult.sum)} total
-                </span>
-              </p>
-            </CardHeader>
-            <CardContent className="p-0">
-              <table className="w-full text-sm">
-                <thead>
-                  <tr className="border-b">
-                    <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground">Date</th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground">Division</th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground">Description</th>
-                    <th className="px-6 py-3 text-right text-xs font-medium text-muted-foreground">Amount</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {incomeResult.data.map((inc) => (
-                    <tr key={inc.id} className="border-b last:border-0">
-                      <td className="px-6 py-3 tabular-nums text-muted-foreground">{fmtDate(inc.date)}</td>
-                      <td className="px-6 py-3">{inc.divisionName}</td>
-                      <td className="px-6 py-3 text-muted-foreground">{inc.description ?? '—'}</td>
-                      <td className="px-6 py-3 text-right tabular-nums font-medium text-green-600 dark:text-green-400">
-                        +{formatZAR(Number(inc.amount))}
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </CardContent>
-          </Card>
+        <div className="space-y-4">
+          <div>
+            <h3 className="text-lg font-semibold">Income Records</h3>
+            <p className="text-sm text-muted-foreground">
+              Payments posted to the income ledger for this client -{' '}
+              <span className="font-medium text-green-600 dark:text-green-400">
+                {formatZAR(incomeResult.sum)} total
+              </span>
+            </p>
+          </div>
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead className="pl-6">Date</TableHead>
+                <TableHead>Division</TableHead>
+                <TableHead>Description</TableHead>
+                <TableHead className="text-right pr-6">Amount</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {incomeResult.data.map((inc) => (
+                <TableRow key={inc.id}>
+                  <TableCell className="pl-6 tabular-nums text-muted-foreground">{fmtDate(inc.date)}</TableCell>
+                  <TableCell>{inc.divisionName}</TableCell>
+                  <TableCell className="text-muted-foreground">{inc.description ?? '-'}</TableCell>
+                  <TableCell className="text-right pr-6 tabular-nums font-medium text-green-600 dark:text-green-400">
+                    +{formatZAR(Number(inc.amount))}
+                  </TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
         </div>
       )}
     </div>

@@ -2,7 +2,7 @@ export * from "./client";
 export * from "./schema";
 export * from "./queries";
 export * from "./accounts";
-export { eq, and, desc, asc, sql } from "drizzle-orm";
+export { eq, and, or, desc, asc, sql } from "drizzle-orm";
 export type { PeriodSummary, LeadRow, DivisionRow, SnapshotRow, ClientWithIncomeCount, LedgerEntryRow } from './queries';
 export { getAllLedgerEntries, getLedgerById, getLedgerByAllocation, getLedgerByAllocationYTD } from './queries';
 export { getAllSnapshots, getSnapshotByPeriod, insertSnapshot } from './queries';
@@ -15,6 +15,7 @@ export type { Invitation, NewInvitation } from './schema/invitations';
 // ── Billing module ────────────────────────────────────────────────────────────
 export * from './queries/billing';
 export { getNextDocumentNumber } from './lib/document-numbers';
+export { bridgeDatabaseEnv } from './env';
 export type {
   QuotationRow,
   InvoiceRow,
@@ -27,6 +28,11 @@ export type {
   LineItemDetail,
   OrganisationSettings,
   DivisionBillingSettings,
+  AgingBucket,
+  AgingRow,
 } from './queries/billing';
-export { getActiveItems, getUnlinkedIncomeForClient, getStatementYears } from './queries/billing';
+export { getActiveItems, getUnlinkedIncomeForClient, getStatementYears, getAgingReport } from './queries/billing';
+
+// ── Date utilities ────────────────────────────────────────────────────────────
+export { addDays, today } from './lib/date-utils';
 

@@ -32,6 +32,7 @@ export const quotationStatusEnum = pgEnum("quotation_status", [
 export const invoiceStatusEnum = pgEnum("invoice_status", [
   "draft",
   "issued",
+  "partially_paid",
   "paid",
   "overdue",
   "void",
@@ -91,18 +92,18 @@ export const quotations = pgTable(
     quoteDate: date("quote_date").notNull(),
     expiryDate: date("expiry_date"),
     subtotal: numeric("subtotal", { precision: 12, scale: 2 }).notNull().default("0"),
-    // Discount fields — both nullable; discountAmount is always stored (0 when no discount)
+    // Discount fields - both nullable; discountAmount is always stored (0 when no discount)
     discountType: text("discount_type"),   // 'percent' | 'amount' | null
     discountValue: numeric("discount_value", { precision: 12, scale: 2 }),  // nullable
     discountAmount: numeric("discount_amount", { precision: 12, scale: 2 }).notNull().default("0"),
     vatEnabled: boolean("vat_enabled").notNull().default(false),
     vatAmount: numeric("vat_amount", { precision: 12, scale: 2 }).notNull().default("0"),
     total: numeric("total", { precision: 12, scale: 2 }).notNull().default("0"),
-    // reference — optional client-facing reference (PO number, tender ref, etc.)
+    // reference - optional client-facing reference (PO number, tender ref, etc.)
     reference: text("reference"),
     notes: text("notes"),
     terms: text("terms"),
-    // created_by stores session.user.id which is text (not uuid) — matches Better Auth user table
+    // created_by stores session.user.id which is text (not uuid) - matches Better Auth user table
     createdBy: text("created_by").notNull(),
     createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
     // updatedAt is managed by the application layer on update. Any database-level operation
@@ -138,14 +139,15 @@ export const invoices = pgTable(
     invoiceDate: date("invoice_date").notNull(),
     dueDate: date("due_date"),
     poNumber: text("po_number"),
-    // quotation_id: soft reference to quotations.id — no FK constraint in schema to avoid
+    reference: text("reference"),
+    // quotation_id: soft reference to quotations.id - no FK constraint in schema to avoid
     // circular dependency issues and to allow invoices to exist independently.
     // Application layer enforces referential integrity.
     quotationId: uuid("quotation_id"),
-    // income_id: FK to income table — set when invoice is marked paid and revenue is posted
+    // income_id: FK to income table - set when invoice is marked paid and revenue is posted
     incomeId: uuid("income_id").references(() => income.id, { onDelete: "set null" }),
     subtotal: numeric("subtotal", { precision: 12, scale: 2 }).notNull().default("0"),
-    // Discount fields — both nullable; discountAmount is always stored (0 when no discount)
+    // Discount fields - both nullable; discountAmount is always stored (0 when no discount)
     discountType: text("discount_type"),   // 'percent' | 'amount' | null
     discountValue: numeric("discount_value", { precision: 12, scale: 2 }),  // nullable
     discountAmount: numeric("discount_amount", { precision: 12, scale: 2 }).notNull().default("0"),
@@ -155,7 +157,7 @@ export const invoices = pgTable(
     notes: text("notes"),
     terms: text("terms"),
     paidAt: timestamp("paid_at", { withTimezone: true }),
-    // created_by stores session.user.id which is text (not uuid) — matches Better Auth user table
+    // created_by stores session.user.id which is text (not uuid) - matches Better Auth user table
     createdBy: text("created_by").notNull(),
     createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
     // updatedAt is managed by the application layer on update. Any database-level operation
@@ -188,9 +190,10 @@ export const billingLineItems = pgTable(
   {
     id: uuid("id").primaryKey().defaultRandom(),
     documentType: billingDocumentTypeEnum("document_type").notNull(),
-    // NO FK — polymorphic reference: points to quotations.id or invoices.id
+    // NO FK - polymorphic reference: points to quotations.id or invoices.id
     // depending on document_type. Application layer enforces integrity.
     documentId: uuid("document_id").notNull(),
+    itemId: uuid("item_id").references(() => billingItems.id, { onDelete: "set null" }),
     sortOrder: integer("sort_order").notNull().default(0),
     description: text("description").notNull(),
     quantity: numeric("quantity", { precision: 10, scale: 2 }).notNull(),
@@ -203,6 +206,7 @@ export const billingLineItems = pgTable(
     check("billing_line_items_quantity_positive", sql`${t.quantity} > 0`),
     check("billing_line_items_unit_price_non_negative", sql`"unit_price" >= 0`),
     index("billing_line_items_document_idx").on(t.documentType, t.documentId),
+    index("billing_line_items_item_id_idx").on(t.itemId),
   ],
 );
 
@@ -266,10 +270,11 @@ export const invoicesRelations = relations(invoices, ({ one, many }) => ({
     fields: [invoices.incomeId],
     references: [income.id],
   }),
+  allocations: many(paymentAllocations),
 }));
 
 // ── organisation_settings ─────────────────────────────────────────────────────
-// Singleton table — always exactly one row. Use upsert on a fixed id.
+// Singleton table - always exactly one row. Use upsert on a fixed id.
 
 export const organisationSettings = pgTable("organisation_settings", {
   id: uuid("id").primaryKey().defaultRandom(),
@@ -311,7 +316,7 @@ export const divisionBillingSettings = pgTable(
     invoiceNotes: text("invoice_notes"),
     quoteNotes: text("quote_notes"),
     logoUrl: text("logo_url"),
-    // Division contact details — appear on invoices and quotes
+    // Division contact details - appear on invoices and quotes
     salesRepName: text("sales_rep_name"),
     salesRepPhone: text("sales_rep_phone"),
     salesRepEmail: text("sales_rep_email"),
@@ -322,3 +327,40 @@ export const divisionBillingSettings = pgTable(
 
 export type DivisionBillingSettings = typeof divisionBillingSettings.$inferSelect;
 export type NewDivisionBillingSettings = typeof divisionBillingSettings.$inferInsert;
+
+// ── payment_allocations ────────────────────────────────────────────────────────
+// Junction table supporting many-to-many allocations of payments (income) to invoices.
+
+export const paymentAllocations = pgTable(
+  "payment_allocations",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    incomeId: uuid("income_id")
+      .notNull()
+      .references(() => income.id, { onDelete: "cascade" }), // Cascade delete allocations if the payment is removed
+    invoiceId: uuid("invoice_id")
+      .notNull()
+      .references(() => invoices.id, { onDelete: "restrict" }), // Prevent invoice deletion if allocations exist
+    amount: numeric("amount", { precision: 12, scale: 2 }).notNull(),
+    createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
+    updatedAt: timestamp("updated_at", { withTimezone: true }),
+  },
+  (t) => [
+    index("payment_allocations_income_id_idx").on(t.incomeId),
+    index("payment_allocations_invoice_id_idx").on(t.invoiceId),
+  ]
+);
+
+export type PaymentAllocation = typeof paymentAllocations.$inferSelect;
+export type NewPaymentAllocation = typeof paymentAllocations.$inferInsert;
+
+export const paymentAllocationsRelations = relations(paymentAllocations, ({ one }) => ({
+  income: one(income, {
+    fields: [paymentAllocations.incomeId],
+    references: [income.id],
+  }),
+  invoice: one(invoices, {
+    fields: [paymentAllocations.invoiceId],
+    references: [invoices.id],
+  }),
+}));

@@ -12,13 +12,20 @@
     "astro": "astro"
   },
   "dependencies": {
+    "@astrojs/sitemap": "^3.7.2",
     "@astrojs/vercel": "^10.0.4",
     "@pmg/tailwind-config": "workspace:*",
+    "@pmg/emails": "workspace:*",
+    "@pmg/db": "workspace:*",
     "@vercel/analytics": "^2.0.1",
-    "astro": "^6.0.8"
+    "astro": "^6.0.8",
+    "react": "^19.2.4",
+    "react-dom": "^19.2.4"
   },
   "devDependencies": {
     "@tailwindcss/vite": "catalog:",
+    "@types/react": "^19.2.14",
+    "@types/react-dom": "^19.2.3",
     "tailwindcss": "catalog:"
   }
 }

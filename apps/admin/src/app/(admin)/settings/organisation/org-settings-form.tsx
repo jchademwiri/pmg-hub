@@ -6,6 +6,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Separator } from '@/components/ui/separator';
+import { Field, FieldLabel } from '@/components/ui/field';
 import type { OrganisationSettings } from '@pmg/db';
 
 interface OrgSettingsFormProps {
@@ -47,33 +48,33 @@ export function OrgSettingsForm({ settings, saveAction }: OrgSettingsFormProps) 
         <Card className="lg:col-span-2">
           <CardContent className="flex flex-col gap-4 pt-6">
             <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-              <div className="flex flex-col gap-1.5 sm:col-span-2">
-                <label className="text-sm font-medium">Company Name</label>
+              <Field className="sm:col-span-2">
+                <FieldLabel>Company Name</FieldLabel>
                 <Input
                   name="companyName"
                   defaultValue={s?.companyName ?? ''}
                   placeholder="e.g. Playhouse Media Group"
                   disabled={isPending}
                 />
-              </div>
-              <div className="flex flex-col gap-1.5">
-                <label className="text-sm font-medium">Registration Number</label>
+              </Field>
+              <Field>
+                <FieldLabel>Registration Number</FieldLabel>
                 <Input
                   name="registrationNumber"
                   defaultValue={s?.registrationNumber ?? ''}
                   placeholder="e.g. 2018/123456/07"
                   disabled={isPending}
                 />
-              </div>
-              <div className="flex flex-col gap-1.5">
-                <label className="text-sm font-medium">VAT Number</label>
+              </Field>
+              <Field>
+                <FieldLabel>VAT Number</FieldLabel>
                 <Input
                   name="vatNumber"
                   defaultValue={s?.vatNumber ?? ''}
                   placeholder="e.g. 4560123456"
                   disabled={isPending}
                 />
-              </div>
+              </Field>
             </div>
           </CardContent>
         </Card>
@@ -92,8 +93,8 @@ export function OrgSettingsForm({ settings, saveAction }: OrgSettingsFormProps) 
         <Card className="lg:col-span-2">
           <CardContent className="flex flex-col gap-4 pt-6">
             <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-              <div className="flex flex-col gap-1.5">
-                <label className="text-sm font-medium">Email</label>
+              <Field>
+                <FieldLabel>Email</FieldLabel>
                 <Input
                   name="email"
                   type="email"
@@ -101,25 +102,25 @@ export function OrgSettingsForm({ settings, saveAction }: OrgSettingsFormProps) 
                   placeholder="billing@example.co.za"
                   disabled={isPending}
                 />
-              </div>
-              <div className="flex flex-col gap-1.5">
-                <label className="text-sm font-medium">Phone</label>
+              </Field>
+              <Field>
+                <FieldLabel>Phone</FieldLabel>
                 <Input
                   name="phone"
                   defaultValue={s?.phone ?? ''}
                   placeholder="+27 21 000 0000"
                   disabled={isPending}
                 />
-              </div>
-              <div className="flex flex-col gap-1.5">
-                <label className="text-sm font-medium">Website</label>
+              </Field>
+              <Field>
+                <FieldLabel>Website</FieldLabel>
                 <Input
                   name="website"
                   defaultValue={s?.website ?? ''}
                   placeholder="www.example.co.za"
                   disabled={isPending}
                 />
-              </div>
+              </Field>
             </div>
           </CardContent>
         </Card>
@@ -138,50 +139,50 @@ export function OrgSettingsForm({ settings, saveAction }: OrgSettingsFormProps) 
         <Card className="lg:col-span-2">
           <CardContent className="flex flex-col gap-4 pt-6">
             <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-              <div className="flex flex-col gap-1.5 sm:col-span-2">
-                <label className="text-sm font-medium">Street Address</label>
+              <Field className="sm:col-span-2">
+                <FieldLabel>Street Address</FieldLabel>
                 <Input
                   name="addressStreet"
                   defaultValue={s?.addressStreet ?? ''}
                   placeholder="12 Media Park, Century City"
                   disabled={isPending}
                 />
-              </div>
-              <div className="flex flex-col gap-1.5">
-                <label className="text-sm font-medium">City</label>
+              </Field>
+              <Field>
+                <FieldLabel>City</FieldLabel>
                 <Input
                   name="addressCity"
                   defaultValue={s?.addressCity ?? ''}
                   placeholder="Cape Town"
                   disabled={isPending}
                 />
-              </div>
-              <div className="flex flex-col gap-1.5">
-                <label className="text-sm font-medium">Postal Code</label>
+              </Field>
+              <Field>
+                <FieldLabel>Postal Code</FieldLabel>
                 <Input
                   name="addressPostal"
                   defaultValue={s?.addressPostal ?? ''}
                   placeholder="7441"
                   disabled={isPending}
                 />
-              </div>
-              <div className="flex flex-col gap-1.5">
-                <label className="text-sm font-medium">Province</label>
+              </Field>
+              <Field>
+                <FieldLabel>Province</FieldLabel>
                 <Input
                   name="addressProvince"
                   defaultValue={s?.addressProvince ?? ''}
                   placeholder="Western Cape"
                   disabled={isPending}
                 />
-              </div>
-              <div className="flex flex-col gap-1.5">
-                <label className="text-sm font-medium">Country</label>
+              </Field>
+              <Field>
+                <FieldLabel>Country</FieldLabel>
                 <Input
                   name="country"
                   defaultValue={s?.country ?? 'South Africa'}
                   disabled={isPending}
                 />
-              </div>
+              </Field>
             </div>
           </CardContent>
         </Card>
@@ -189,7 +190,7 @@ export function OrgSettingsForm({ settings, saveAction }: OrgSettingsFormProps) 
 
       <Separator />
 
-      {/* Logo — upload deferred to v2 */}
+      {/* Logo - upload deferred to v2 */}
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
         <div className="lg:col-span-1">
           <h3 className="text-sm font-semibold">Logo</h3>
@@ -207,7 +208,7 @@ export function OrgSettingsForm({ settings, saveAction }: OrgSettingsFormProps) 
                 <Button variant="outline" size="sm" disabled type="button" title="Coming soon">
                   Upload Logo
                 </Button>
-                <p className="text-xs text-muted-foreground">PNG or SVG, max 2 MB — coming soon</p>
+                <p className="text-xs text-muted-foreground">PNG or SVG, max 2 MB - coming soon</p>
               </div>
             </div>
           </CardContent>

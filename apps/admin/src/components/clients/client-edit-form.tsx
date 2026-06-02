@@ -3,7 +3,9 @@
 import * as React from 'react'
 import { useRouter } from 'next/navigation'
 import type { Client } from '@pmg/db'
+import { Alert, AlertDescription } from '@/components/ui/alert'
 import { Button } from '@/components/ui/button'
+import { Field, FieldLabel } from '@/components/ui/field'
 import { Input } from '@/components/ui/input'
 
 interface ClientEditFormProps {
@@ -32,73 +34,70 @@ export function ClientEditForm({ client, updateAction }: ClientEditFormProps) {
   }
 
   return (
-    <form onSubmit={handleSubmit} className="flex flex-wrap gap-3 items-end">
-      <div className="flex flex-col gap-1">
-        <label htmlFor="client-name" className="text-sm font-medium">
-          Name
-        </label>
-        <Input
-          id="client-name"
-          name="name"
-          type="text"
-          defaultValue={client.name}
-          required
-          disabled={isPending}
-          className="w-48"
-        />
+    <form onSubmit={handleSubmit} className="flex flex-col gap-6">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <Field>
+          <FieldLabel htmlFor="client-name">
+            Name <span className="text-destructive">*</span>
+          </FieldLabel>
+          <Input
+            id="client-name"
+            name="name"
+            type="text"
+            defaultValue={client.name}
+            required
+            disabled={isPending}
+            placeholder="e.g. Acme Corp"
+          />
+        </Field>
+
+        <Field>
+          <FieldLabel htmlFor="client-business-name">Business Name</FieldLabel>
+          <Input
+            id="client-business-name"
+            name="businessName"
+            type="text"
+            placeholder="e.g. Acme Pty Ltd"
+            defaultValue={client.businessName ?? ''}
+            disabled={isPending}
+          />
+        </Field>
+
+        <Field>
+          <FieldLabel htmlFor="client-email">Email Address</FieldLabel>
+          <Input
+            id="client-email"
+            name="email"
+            type="email"
+            placeholder="e.g. billing@acme.com"
+            defaultValue={client.email ?? ''}
+            disabled={isPending}
+          />
+        </Field>
+
+        <Field>
+          <FieldLabel htmlFor="client-phone">Phone Number</FieldLabel>
+          <Input
+            id="client-phone"
+            name="phone"
+            type="text"
+            placeholder="e.g. +27 82 123 4567"
+            defaultValue={client.phone ?? ''}
+            disabled={isPending}
+          />
+        </Field>
       </div>
 
-      <div className="flex flex-col gap-1">
-        <label htmlFor="client-business-name" className="text-sm font-medium">
-          Business Name
-        </label>
-        <Input
-          id="client-business-name"
-          name="businessName"
-          type="text"
-          placeholder="Optional"
-          defaultValue={client.businessName ?? ''}
-          disabled={isPending}
-          className="w-48"
-        />
+      <div className="flex items-center justify-end gap-3 border-t border-border/50 pt-4 mt-2">
+        <Button type="submit" disabled={isPending}>
+          {isPending ? 'Saving…' : 'Save Changes'}
+        </Button>
       </div>
-
-      <div className="flex flex-col gap-1">
-        <label htmlFor="client-email" className="text-sm font-medium">
-          Email
-        </label>
-        <Input
-          id="client-email"
-          name="email"
-          type="email"
-          placeholder="Optional"
-          defaultValue={client.email ?? ''}
-          disabled={isPending}
-          className="w-48"
-        />
-      </div>
-
-      <div className="flex flex-col gap-1">
-        <label htmlFor="client-phone" className="text-sm font-medium">
-          Phone
-        </label>
-        <Input
-          id="client-phone"
-          name="phone"
-          type="text"
-          placeholder="Optional"
-          defaultValue={client.phone ?? ''}
-          disabled={isPending}
-          className="w-40"
-        />
-      </div>
-
-      <Button type="submit" disabled={isPending}>
-        {isPending ? 'Saving…' : 'Save Changes'}
-      </Button>
 
       {errorMessage && (
-        <p className="w-full text-sm text-destructive">{errorMessage}</p>
+        <Alert variant="destructive" className="mt-2">
+          <AlertDescription>{errorMessage}</AlertDescription>
+        </Alert>
       )}
     </form>
   )

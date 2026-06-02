@@ -26,7 +26,8 @@ export function resolveYear(param: string | undefined): number {
     const n = parseInt(param, 10)
     if (n >= 1000 && n <= 9999) return n
   }
-  return new Date().getFullYear()
+  const now = new Date()
+  return now.getMonth() < 2 ? now.getFullYear() - 1 : now.getFullYear()
 }
 
 export default async function ReportsPage({ searchParams }: ReportsPageProps) {
@@ -50,21 +51,32 @@ export default async function ReportsPage({ searchParams }: ReportsPageProps) {
 
   return (
     <div className="flex flex-col gap-6">
-      <div className="flex items-center justify-end gap-2">
-        <YearFilter years={years} currentYear={year} />
-        <ExportCsvButton year={year} />
+      <div className="flex items-center justify-between gap-3">
+        <div>
+          <h2 className="text-lg font-semibold">Reports & Insights</h2>
+          <p className="text-sm text-muted-foreground">Analyze revenue streams, expense distributions, and monthly profit splits</p>
+        </div>
+        <div className="flex items-center gap-2 shrink-0">
+          <YearFilter years={years} currentYear={year} />
+          <ExportCsvButton year={year} />
+        </div>
       </div>
 
       {hasData ? (
-        <>
-          <MoMComparisonChart data={momData} />
-          <RevenueByDivisionChart
-            series={divisionSeries.series}
-            divisions={divisionSeries.divisions}
-          />
-          <ProfitPoolChart data={profitPoolSeries} />
-          <ExpenseByCategoryChart data={expensesByCategory} />
-        </>
+        <div className="flex flex-col gap-6">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            <MoMComparisonChart data={momData} />
+            <ProfitPoolChart data={profitPoolSeries} />
+          </div>
+
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            <RevenueByDivisionChart
+              series={divisionSeries.series}
+              divisions={divisionSeries.divisions}
+            />
+            <ExpenseByCategoryChart data={expensesByCategory} />
+          </div>
+        </div>
       ) : (
         <EmptyState message="No snapshot data available yet. Add income and expenses to generate reports." />
       )}

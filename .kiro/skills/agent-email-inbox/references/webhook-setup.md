@@ -1,4 +1,4 @@
-# Webhook Setup — Tunneling, Registration, and Local Dev
+# Webhook Setup - Tunneling, Registration, and Local Dev
 
 ## Table of Contents
 
@@ -18,7 +18,7 @@ The API endpoint is `POST https://api.resend.com/webhooks`. You need:
 - `endpoint` (string, required): Your full public webhook URL (e.g., `https://<your-tunnel-domain>/webhook`)
 - `events` (string[], required): Event types to subscribe to. For an agent inbox, use `["email.received"]`
 
-The response includes a `signing_secret` (format: `whsec_xxxxxxxxxx`) — **store this immediately** as `RESEND_WEBHOOK_SECRET`. This is the only time you'll see it in the response.
+The response includes a `signing_secret` (format: `whsec_xxxxxxxxxx`) - **store this immediately** as `RESEND_WEBHOOK_SECRET`. This is the only time you'll see it in the response.
 
 ### Node.js
 
@@ -37,7 +37,7 @@ if (error) {
   throw error;
 }
 
-// IMPORTANT: Store the signing secret — you need it to verify incoming webhooks
+// IMPORTANT: Store the signing secret - you need it to verify incoming webhooks
 // Write it directly to .env, never log it
 console.log('Webhook created:', data.id);
 ```
@@ -78,7 +78,7 @@ curl -X POST 'https://api.resend.com/webhooks' \
 
 ### Other SDKs
 
-The webhook creation API is available in all Resend SDKs: Go, Ruby, PHP, Rust, Java, and .NET. The pattern is the same — pass `endpoint` and `events`, and read `signing_secret` from the response.
+The webhook creation API is available in all Resend SDKs: Go, Ruby, PHP, Rust, Java, and .NET. The pattern is the same - pass `endpoint` and `events`, and read `signing_secret` from the response.
 
 ## Webhook Signing Secret and Verification
 
@@ -92,7 +92,7 @@ Every webhook request includes three headers:
 | `svix-timestamp` | Unix timestamp when the webhook was sent |
 | `svix-signature` | Cryptographic signature for verification |
 
-Use `resend.webhooks.verify()` to validate these headers against the raw request body. The verification is sensitive to the exact bytes — if your framework parses and re-stringifies the JSON before you verify, the signature check will fail.
+Use `resend.webhooks.verify()` to validate these headers against the raw request body. The verification is sensitive to the exact bytes - if your framework parses and re-stringifies the JSON before you verify, the signature check will fail.
 
 ### Webhook Verification Fallback (Svix)
 
@@ -130,7 +130,7 @@ Resend automatically retries failed webhook deliveries with exponential backoff:
 - Your endpoint must return 2xx status to acknowledge receipt
 - If an endpoint is removed or disabled, retry attempts stop automatically
 - Failed deliveries are visible in the Webhooks dashboard, where you can also manually replay events
-- Emails are stored even if webhooks fail — you won't lose messages
+- Emails are stored even if webhooks fail - you won't lose messages
 
 ## Local Development with Tunneling
 
@@ -144,14 +144,14 @@ Your local server isn't accessible from the internet. Use tunneling to expose it
 
 ### Tailscale Funnel (Recommended)
 
-**Tailscale Funnel is the best solution for webhook development and persistent agent setups.** It provides a permanent, stable HTTPS URL with valid certificates — completely free, with no timeouts or session limits.
+**Tailscale Funnel is the best solution for webhook development and persistent agent setups.** It provides a permanent, stable HTTPS URL with valid certificates - completely free, with no timeouts or session limits.
 
 **Why Tailscale Funnel is better than ngrok for webhooks:**
-- Permanent URL — Never changes, even across restarts
-- No timeouts — Free tier has no 8-hour session limits
-- Auto-reconnects — Survives machine reboots via systemd service
-- Valid HTTPS certificates — Automatic, trusted TLS certificates
-- Free forever — No paid tier required
+- Permanent URL - Never changes, even across restarts
+- No timeouts - Free tier has no 8-hour session limits
+- Auto-reconnects - Survives machine reboots via systemd service
+- Valid HTTPS certificates - Automatic, trusted TLS certificates
+- Free forever - No paid tier required
 
 **Quick setup:**
 ```bash
@@ -212,7 +212,7 @@ ngrok http --domain=myagent.ngrok.io 3000
 
 ### Cloudflare Tunnel (Alternative)
 
-**Named tunnel (persistent — recommended):**
+**Named tunnel (persistent - recommended):**
 ```bash
 # Install
 brew install cloudflared  # macOS

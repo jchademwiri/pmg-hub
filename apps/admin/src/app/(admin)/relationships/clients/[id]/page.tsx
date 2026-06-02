@@ -90,7 +90,7 @@ export default async function ClientDetailPage({ params }: ClientDetailPageProps
                 <TableRow key={entry.id}>
                   <TableCell>{fmtDate(entry.date)}</TableCell>
                   <TableCell>{entry.divisionName}</TableCell>
-                  <TableCell>{entry.description ?? '—'}</TableCell>
+                  <TableCell>{entry.description ?? '-'}</TableCell>
                   <TableCell className="text-right tabular-nums font-medium text-green-500">
                     +{formatZAR(Number(entry.amount))}
                   </TableCell>

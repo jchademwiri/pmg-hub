@@ -9,8 +9,8 @@ Detailed flag specifications for `resend templates` commands.
 | Flag | Type | Default | Description |
 |------|------|---------|-------------|
 | `--limit <n>` | number | 10 | Max results (1-100) |
-| `--after <cursor>` | string | — | Forward pagination |
-| `--before <cursor>` | string | — | Backward pagination |
+| `--after <cursor>` | string | - | Forward pagination |
+| `--before <cursor>` | string | - | Backward pagination |
 
 ---
 
@@ -21,7 +21,7 @@ Detailed flag specifications for `resend templates` commands.
 | `--name <name>` | string | Yes | Template name |
 | `--html <html>` | string | One of html/html-file/react-email | HTML body with `{{{VAR_NAME}}}` placeholders |
 | `--html-file <path>` | string | One of html/html-file/react-email | Path to HTML file (use `"-"` for stdin) |
-| `--react-email <path>` | string | One of html/html-file/react-email | Path to React Email template (.tsx) — bundles and renders to HTML |
+| `--react-email <path>` | string | One of html/html-file/react-email | Path to React Email template (.tsx) - bundles and renders to HTML |
 | `--subject <subject>` | string | No | Email subject |
 | `--text <text>` | string | No | Plain-text body |
 | `--text-file <path>` | string | No | Path to plain-text file (use `"-"` for stdin) |
@@ -36,13 +36,13 @@ Variable types: `string`, `number`
 
 ## templates get
 
-**Argument:** `<id|alias>` — Template ID or alias
+**Argument:** `<id|alias>` - Template ID or alias
 
 ---
 
 ## templates update
 
-**Argument:** `<id|alias>` — Template ID or alias
+**Argument:** `<id|alias>` - Template ID or alias
 
 Same optional flags as `create` (including `--react-email`, `--text-file`, and `--html-file` with stdin support). At least one required.
 
@@ -50,13 +50,13 @@ Same optional flags as `create` (including `--react-email`, `--text-file`, and `
 
 ## templates publish
 
-**Argument:** `<id|alias>` — Promotes draft to published.
+**Argument:** `<id|alias>` - Promotes draft to published.
 
 ---
 
 ## templates duplicate
 
-**Argument:** `<id|alias>` — Creates a copy as draft.
+**Argument:** `<id|alias>` - Creates a copy as draft.
 
 ---
 
@@ -74,4 +74,4 @@ Same optional flags as `create` (including `--react-email`, `--text-file`, and `
 
 Open a template (or the templates list) in the Resend dashboard.
 
-**Argument:** `[id]` — Template ID (omit to open the list)
+**Argument:** `[id]` - Template ID (omit to open the list)

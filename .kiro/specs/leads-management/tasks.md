@@ -6,7 +6,7 @@ Implement the leads management feature following the established PMG admin patte
 
 ## Tasks
 
-- [x] 1. Database layer — schema, migration, and query helpers
+- [x] 1. Database layer - schema, migration, and query helpers
   - [x] 1.1 Add `notes` column to leads schema
     - Add `notes: text("notes")` to `packages/db/src/schema/leads.ts` after `updatedAt` (nullable, no default, no `.notNull()`, no `.default()`)
     - _Requirements: 11.1_
@@ -18,20 +18,20 @@ Implement the leads management feature following the established PMG admin patte
 
   - [x] 1.3 Add `LeadRow` type and `getAllLeads` to `packages/db/src/queries.ts`
     - Export `LeadRow` type with all fields: `id`, `name`, `email`, `phone`, `message`, `source`, `serviceInterest`, `status`, `divisionId`, `divisionName`, `notes`, `createdAt`, `updatedAt`
-    - Implement `getAllLeads(filters?)` — LEFT JOIN divisions, optional `status`/`divisionId`/`source` filters using `and(...conditions)`, ORDER BY `createdAt DESC`
+    - Implement `getAllLeads(filters?)` - LEFT JOIN divisions, optional `status`/`divisionId`/`source` filters using `and(...conditions)`, ORDER BY `createdAt DESC`
     - _Requirements: 10.1, 10.5, 10.6, 10.7_
 
   - [x] 1.4 Add `getLeadById`, `getLeadCountsByStatus`, and `getDistinctLeadSources` to `packages/db/src/queries.ts`
-    - `getLeadById(id)` — LEFT JOIN divisions, WHERE id, returns `LeadRow | null`
-    - `getLeadCountsByStatus()` — single query with conditional aggregation, returns `{ all, new, contacted, converted, lost }`
-    - `getDistinctLeadSources()` — SELECT DISTINCT non-null sources, ORDER BY ASC
+    - `getLeadById(id)` - LEFT JOIN divisions, WHERE id, returns `LeadRow | null`
+    - `getLeadCountsByStatus()` - single query with conditional aggregation, returns `{ all, new, contacted, converted, lost }`
+    - `getDistinctLeadSources()` - SELECT DISTINCT non-null sources, ORDER BY ASC
     - _Requirements: 10.2, 10.3, 10.4_
 
   - [x] 1.5 Export `LeadRow` type from `packages/db/src/index.ts`
     - Add `export type { LeadRow } from './queries'` (the functions are already covered by `export * from './queries'`)
     - _Requirements: 10.5, 10.8_
 
-- [x] 2. Server Actions — `apps/admin/src/app/actions/leads.ts`
+- [x] 2. Server Actions - `apps/admin/src/app/actions/leads.ts`
   - [x] 2.1 Implement `updateLeadStatus` server action
     - Create `apps/admin/src/app/actions/leads.ts` with `'use server'`
     - Define `LeadStatusSchema` with `z.enum(['new', 'contacted', 'converted', 'lost'])` and custom `errorMap`
@@ -41,14 +41,14 @@ Implement the leads management feature following the established PMG admin patte
 
   - [x] 2.2 Implement `updateLeadNotes` server action
     - Define `LeadNotesSchema` with `z.object({ notes: z.string().optional() })`
-    - Implement `updateLeadNotes(id, formData)`: same pattern — `Object.fromEntries` → `safeParse` → Drizzle update (`notes` + `updatedAt`) → `revalidatePath('/leads/${id}')` → return `{}`
+    - Implement `updateLeadNotes(id, formData)`: same pattern - `Object.fromEntries` → `safeParse` → Drizzle update (`notes` + `updatedAt`) → `revalidatePath('/leads/${id}')` → return `{}`
     - Never throw; return `{ error }` on validation failure or DB error
     - _Requirements: 8.1, 8.2, 8.3, 8.4, 8.5, 8.6_
 
-- [x] 3. Client Components — `apps/admin/src/components/leads/`
+- [x] 3. Client Components - `apps/admin/src/components/leads/`
   - [x] 3.1 Implement `LeadStatusTabs` (`lead-status-tabs.tsx`)
     - `'use client'`; accepts `counts`, `currentStatus?`, `currentDivisionId?`, `currentSource?`
-    - Render five shadcn `Tabs` items: All, New, Contacted, Converted, Lost — each with count badge
+    - Render five shadcn `Tabs` items: All, New, Contacted, Converted, Lost - each with count badge
     - `handleTabChange`: build `URLSearchParams` preserving `currentDivisionId` and `currentSource`, set `status` (omit for "all"), call `router.push('/leads?' + params.toString())`
     - Active tab derived from `currentStatus` prop
     - _Requirements: 2.1, 2.2, 2.3, 2.4, 2.5_
@@ -63,7 +63,7 @@ Implement the leads management feature following the established PMG admin patte
     - `'use client'`; accepts `entries: LeadRow[]`
     - Columns: name, email (fallback phone), divisionName, source, status badge, detail link (`/leads/${entry.id}`)
     - Status badge colour-coded: new=blue, contacted=amber, converted=green, lost=red
-    - Read-only — no delete, no inline edit
+    - Read-only - no delete, no inline edit
     - _Requirements: 1.4_
 
   - [x] 3.4 Implement `LeadStatusForm` (`lead-status-form.tsx`)
@@ -94,10 +94,10 @@ Implement the leads management feature following the established PMG admin patte
     - Render `LeadNotesForm` with `updateAction={updateLeadNotes.bind(null, id)}`
     - _Requirements: 4.1, 4.2, 4.3, 4.4, 5.3, 7.3, 12.2_
 
-- [x] 5. Checkpoint — Ensure all tests pass
+- [x] 5. Checkpoint - Ensure all tests pass
   - Ensure all tests pass, ask the user if questions arise.
 
-- [x] 6. Tests — `apps/admin/src/__tests__/leads.test.ts`
+- [x] 6. Tests - `apps/admin/src/__tests__/leads.test.ts`
   - [x] 6.1 Set up test file with mocks and `leadArb` arbitrary
     - Create `apps/admin/src/__tests__/leads.test.ts`
     - `vi.mock('@pmg/db')` for all DB helpers; `vi.mock('@/app/actions/leads')` for server actions
@@ -128,7 +128,7 @@ Implement the leads management feature following the established PMG admin patte
     - **Property 6: new+contacted+converted+lost sum equals all**
     - **Validates: Requirements 2.2, 10.3**
 
-  - [x] 6.8 Write property test P7: getDistinctLeadSources — non-null, no duplicates, sorted ASC
+  - [x] 6.8 Write property test P7: getDistinctLeadSources - non-null, no duplicates, sorted ASC
     - **Property 7: getDistinctLeadSources returns only non-null sources, no duplicates, sorted ASC**
     - **Validates: Requirements 3.2, 10.4**
 
@@ -173,7 +173,7 @@ Implement the leads management feature following the established PMG admin patte
     - `LeadStatusSchema` produces descriptive error for invalid status value
     - _Requirements: 6.5, 8.5, 1.3, 9.2_
 
-- [x] 7. Final checkpoint — Ensure all tests pass
+- [x] 7. Final checkpoint - Ensure all tests pass
   - Ensure all tests pass, ask the user if questions arise.
 
 ## Notes
@@ -182,4 +182,4 @@ Implement the leads management feature following the established PMG admin patte
 - Each task references specific requirements for traceability
 - Checkpoints ensure incremental validation
 - Property tests (P1–P12) validate universal correctness properties; unit tests validate specific UI states and error branches
-- All DB functions and server actions are mocked in tests — no live DB connection required
+- All DB functions and server actions are mocked in tests - no live DB connection required

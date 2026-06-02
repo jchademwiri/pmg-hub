@@ -60,12 +60,12 @@ describe('division-management tests', () => {
 // ─── Task 7.2: Property test P1: getDivisionsWithStats shape and sort order ──
 // Feature: division-management, Property 1: getDivisionsWithStats shape and sort order
 
-describe('getDivisionsWithStats — Property 1: shape and sort order (name ASC)', () => {
+describe('getDivisionsWithStats - Property 1: shape and sort order (name ASC)', () => {
   beforeEach(() => {
     vi.resetAllMocks()
   })
 
-  it('Property 1: getDivisionsWithStats returns all entries with correct DivisionRow shape, sorted by name ASC — Validates: Requirements 1.1, 1.2, 1.5, 7.1, 7.2', async () => {
+  it('Property 1: getDivisionsWithStats returns all entries with correct DivisionRow shape, sorted by name ASC - Validates: Requirements 1.1, 1.2, 1.5, 7.1, 7.2', async () => {
     // Feature: division-management, Property 1: getDivisionsWithStats shape and sort order
     await fc.assert(
       fc.asyncProperty(
@@ -101,12 +101,12 @@ describe('getDivisionsWithStats — Property 1: shape and sort order (name ASC)'
 // ─── Task 7.3: Property test P2: getDivisionsWithStats zero defaults ──────────
 // Feature: division-management, Property 2: getDivisionsWithStats zero defaults
 
-describe('getDivisionsWithStats — Property 2: zero defaults for divisions with no income, expenses, or leads', () => {
+describe('getDivisionsWithStats - Property 2: zero defaults for divisions with no income, expenses, or leads', () => {
   beforeEach(() => {
     vi.resetAllMocks()
   })
 
-  it('Property 2: getDivisionsWithStats returns 0 for totalIncome, totalExpenses, and leadCount when division has no records — Validates: Requirements 7.3, 7.4, 7.5', async () => {
+  it('Property 2: getDivisionsWithStats returns 0 for totalIncome, totalExpenses, and leadCount when division has no records - Validates: Requirements 7.3, 7.4, 7.5', async () => {
     // Feature: division-management, Property 2: getDivisionsWithStats zero defaults
     await fc.assert(
       fc.asyncProperty(
@@ -138,12 +138,12 @@ describe('getDivisionsWithStats — Property 2: zero defaults for divisions with
 // ─── Task 7.4: Property test P3: netProfit computed correctly ────────────────
 // Feature: division-management, Property 3: netProfit computed correctly
 
-describe('getDivisionsWithStats — Property 3: netProfit equals totalIncome - totalExpenses', () => {
+describe('getDivisionsWithStats - Property 3: netProfit equals totalIncome - totalExpenses', () => {
   beforeEach(() => {
     vi.resetAllMocks()
   })
 
-  it('Property 3: netProfit equals totalIncome - totalExpenses for every DivisionRow — Validates: Requirements 7.6', async () => {
+  it('Property 3: netProfit equals totalIncome - totalExpenses for every DivisionRow - Validates: Requirements 7.6', async () => {
     // Feature: division-management, Property 3: netProfit computed correctly
     await fc.assert(
       fc.asyncProperty(
@@ -168,12 +168,12 @@ describe('getDivisionsWithStats — Property 3: netProfit equals totalIncome - t
 // ─── Task 7.5: Property test P4: createDivision round-trip ──────────────────
 // Feature: division-management, Property 4: createDivision round-trip
 
-describe('createDivision — Property 4: round-trip with valid name', () => {
+describe('createDivision - Property 4: round-trip with valid name', () => {
   beforeEach(() => {
     vi.resetAllMocks()
   })
 
-  it('Property 4: createDivision with valid name returns {} and division appears in getDivisionsWithStats — Validates: Requirements 2.3, 2.5, 5.4', async () => {
+  it('Property 4: createDivision with valid name returns {} and division appears in getDivisionsWithStats - Validates: Requirements 2.3, 2.5, 5.4', async () => {
     // Feature: division-management, Property 4: createDivision round-trip
     await fc.assert(
       fc.asyncProperty(
@@ -217,12 +217,12 @@ describe('createDivision — Property 4: round-trip with valid name', () => {
 // ─── Task 7.6: Property test P5: updateDivision round-trip ──────────────────
 // Feature: division-management, Property 5: updateDivision round-trip
 
-describe('updateDivision — Property 5: round-trip with valid name', () => {
+describe('updateDivision - Property 5: round-trip with valid name', () => {
   beforeEach(() => {
     vi.resetAllMocks()
   })
 
-  it('Property 5: updateDivision with valid name returns {} and getDivisionsWithStats reflects updated name — Validates: Requirements 3.3, 3.5, 5.4', async () => {
+  it('Property 5: updateDivision with valid name returns {} and getDivisionsWithStats reflects updated name - Validates: Requirements 3.3, 3.5, 5.4', async () => {
     // Feature: division-management, Property 5: updateDivision round-trip
     await fc.assert(
       fc.asyncProperty(
@@ -266,12 +266,12 @@ describe('updateDivision — Property 5: round-trip with valid name', () => {
 // ─── Task 7.7: Property test P6: deleteDivision round-trip ──────────────────
 // Feature: division-management, Property 6: deleteDivision round-trip
 
-describe('deleteDivision — Property 6: round-trip with no FK references', () => {
+describe('deleteDivision - Property 6: round-trip with no FK references', () => {
   beforeEach(() => {
     vi.resetAllMocks()
   })
 
-  it('Property 6: deleteDivision with no FK references returns {} and division no longer appears in getDivisionsWithStats — Validates: Requirements 4.3, 4.5, 8.4', async () => {
+  it('Property 6: deleteDivision with no FK references returns {} and division no longer appears in getDivisionsWithStats - Validates: Requirements 4.3, 4.5, 8.4', async () => {
     // Feature: division-management, Property 6: deleteDivision round-trip
     await fc.assert(
       fc.asyncProperty(
@@ -307,12 +307,12 @@ describe('deleteDivision — Property 6: round-trip with no FK references', () =
 // ─── Task 7.8: Property test P7: deleteDivision FK block ────────────────────
 // Feature: division-management, Property 7: deleteDivision FK block
 
-describe('deleteDivision — Property 7: FK block returns error without throwing', () => {
+describe('deleteDivision - Property 7: FK block returns error without throwing', () => {
   beforeEach(() => {
     vi.resetAllMocks()
   })
 
-  it('Property 7: deleteDivision returns { error: "Cannot delete division with existing income or expense records." } on FK violation without throwing — Validates: Requirements 4.4, 4.7, 8.1, 8.2, 8.3', async () => {
+  it('Property 7: deleteDivision returns { error: "Cannot delete division with existing income or expense records." } on FK violation without throwing - Validates: Requirements 4.4, 4.7, 8.1, 8.2, 8.3', async () => {
     // Feature: division-management, Property 7: deleteDivision FK block
     await fc.assert(
       fc.asyncProperty(
@@ -342,12 +342,12 @@ describe('deleteDivision — Property 7: FK block returns error without throwing
 // ─── Task 7.9: Property test P8: invalid input always returns { error } ─────
 // Feature: division-management, Property 8: invalid input always returns { error }
 
-describe('createDivision / updateDivision — Property 8: invalid input always returns { error }', () => {
+describe('createDivision / updateDivision - Property 8: invalid input always returns { error }', () => {
   beforeEach(() => {
     vi.resetAllMocks()
   })
 
-  it('Property 8: empty name or name > 100 chars to createDivision/updateDivision always returns { error } without DB write and without throwing — Validates: Requirements 2.4, 3.4, 5.2, 6.1, 6.2', async () => {
+  it('Property 8: empty name or name > 100 chars to createDivision/updateDivision always returns { error } without DB write and without throwing - Validates: Requirements 2.4, 3.4, 5.2, 6.1, 6.2', async () => {
     // Feature: division-management, Property 8: invalid input always returns { error }
     const invalidNameArb = fc.oneof(
       fc.constant(''),
@@ -405,8 +405,8 @@ describe('createDivision / updateDivision — Property 8: invalid input always r
 // ─── Task 7.10: Property test P9: DivisionSchema round-trip ─────────────────
 // Feature: division-management, Property 9: DivisionSchema round-trip
 
-describe('DivisionSchema — Property 9: round-trip for any valid name', () => {
-  it('Property 9: parsing { name } with DivisionSchema for any valid name (length 1–100) produces output with the same name value — Validates: Requirements 6.3', () => {
+describe('DivisionSchema - Property 9: round-trip for any valid name', () => {
+  it('Property 9: parsing { name } with DivisionSchema for any valid name (length 1–100) produces output with the same name value - Validates: Requirements 6.3', () => {
     // Feature: division-management, Property 9: DivisionSchema round-trip
     fc.assert(
       fc.property(
@@ -424,16 +424,16 @@ describe('DivisionSchema — Property 9: round-trip for any valid name', () => {
   })
 })
 
-// ─── Task 7.11: Property test P10: getDivisionsWithStats after create — appears sorted ──
-// Feature: division-management, Property 10: getDivisionsWithStats after create — appears sorted
+// ─── Task 7.11: Property test P10: getDivisionsWithStats after create - appears sorted ──
+// Feature: division-management, Property 10: getDivisionsWithStats after create - appears sorted
 
-describe('getDivisionsWithStats after createDivision — Property 10: new division appears at correct sorted position', () => {
+describe('getDivisionsWithStats after createDivision - Property 10: new division appears at correct sorted position', () => {
   beforeEach(() => {
     vi.resetAllMocks()
   })
 
-  it('Property 10: after createDivision succeeds, the new division appears in getDivisionsWithStats at the correct name-ascending sort position — Validates: Requirements 1.5, 2.3, 7.1', async () => {
-    // Feature: division-management, Property 10: getDivisionsWithStats after create — appears sorted
+  it('Property 10: after createDivision succeeds, the new division appears in getDivisionsWithStats at the correct name-ascending sort position - Validates: Requirements 1.5, 2.3, 7.1', async () => {
+    // Feature: division-management, Property 10: getDivisionsWithStats after create - appears sorted
     await fc.assert(
       fc.asyncProperty(
         fc.tuple(fc.array(divisionRowArb, { minLength: 0, maxLength: 10 }), fc.string({ minLength: 1, maxLength: 100 })),

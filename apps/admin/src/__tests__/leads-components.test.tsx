@@ -8,8 +8,10 @@ import { LeadNotesForm } from '@/components/leads/lead-notes-form'
 
 // ─── Mocks ───────────────────────────────────────────────────────────────────
 
+const mockPush = vi.fn()
+
 vi.mock('next/navigation', () => ({
-  useRouter: vi.fn(),
+  useRouter: () => ({ push: mockPush }),
 }))
 
 vi.mock('@/components/ui/select', () => ({
@@ -45,38 +47,29 @@ const defaultCounts = { all: 10, new: 3, contacted: 4, converted: 2, lost: 1 }
 
 describe('LeadStatusTabs', () => {
   beforeEach(() => {
-    vi.resetAllMocks()
+    vi.clearAllMocks()
+    mockPush.mockReset()
   })
 
   it('renders the correct tab as active based on currentStatus prop', () => {
     // Validates: Requirements 2.3, 2.5
     render(<LeadStatusTabs counts={defaultCounts} currentStatus="contacted" />)
 
-    // The "Contacted" button should have the active styling class
-    const contactedBtn = screen.getByRole('button', { name: /contacted/i })
-    expect(contactedBtn.className).toContain('bg-card')
-
-    // The "New" button should NOT have the active styling class
-    const newBtn = screen.getByRole('button', { name: /^new/i })
-    expect(newBtn.className).not.toContain('bg-card')
+    expect(screen.getByRole('tab', { name: /contacted/i })).toHaveAttribute('data-state', 'active')
+    expect(screen.getByRole('tab', { name: /^new/i })).toHaveAttribute('data-state', 'inactive')
   })
 
   it('defaults to "all" tab when currentStatus is undefined', () => {
     // Validates: Requirements 2.3, 2.5
     render(<LeadStatusTabs counts={defaultCounts} />)
 
-    const allBtn = screen.getByRole('button', { name: /^all/i })
-    expect(allBtn.className).toContain('bg-card')
-
-    const newBtn = screen.getByRole('button', { name: /^new/i })
-    expect(newBtn.className).not.toContain('bg-card')
+    expect(screen.getByRole('tab', { name: /^all/i })).toHaveAttribute('data-state', 'active')
+    expect(screen.getByRole('tab', { name: /^new/i })).toHaveAttribute('data-state', 'inactive')
   })
 
   it('tab change preserves currentDivisionId and currentSource in URL', async () => {
     // Validates: Requirements 2.3, 2.5
-    const mockPush = vi.fn()
-    const { useRouter } = await import('next/navigation')
-    vi.mocked(useRouter).mockReturnValue({ push: mockPush } as any)
+    const user = userEvent.setup()
 
     render(
       <LeadStatusTabs
@@ -87,7 +80,7 @@ describe('LeadStatusTabs', () => {
       />
     )
 
-    fireEvent.click(screen.getByRole('button', { name: /contacted/i }))
+    await user.click(screen.getByRole('tab', { name: /contacted/i }))
 
     expect(mockPush).toHaveBeenCalledWith(
       expect.stringContaining('status=contacted')
@@ -102,13 +95,11 @@ describe('LeadStatusTabs', () => {
 
   it('tab change to "all" omits status param from URL', async () => {
     // Validates: Requirements 2.3, 2.5
-    const mockPush = vi.fn()
-    const { useRouter } = await import('next/navigation')
-    vi.mocked(useRouter).mockReturnValue({ push: mockPush } as any)
+    const user = userEvent.setup()
 
     render(<LeadStatusTabs counts={defaultCounts} currentStatus="new" />)
 
-    fireEvent.click(screen.getByRole('button', { name: /^all/i }))
+    await user.click(screen.getByRole('tab', { name: /^all/i }))
 
     const calledWith: string = mockPush.mock.calls[0][0]
     expect(calledWith).not.toContain('status=')
@@ -183,7 +174,7 @@ describe('LeadStatusForm', () => {
     expect(select).not.toBeDisabled()
   })
 
-  it('applies optimistic update immediately on status change — Validates: Requirements 5.1, 5.2', async () => {
+  it('applies optimistic update immediately on status change - Validates: Requirements 5.1, 5.2', async () => {
     const user = userEvent.setup()
     // Action that never resolves during the test (simulates pending)
     let resolveAction!: (v: { error?: string }) => void
@@ -206,7 +197,7 @@ describe('LeadStatusForm', () => {
     resolveAction({})
   })
 
-  it('selector is disabled while action is pending — Validates: Requirements 5.6', async () => {
+  it('selector is disabled while action is pending - Validates: Requirements 5.6', async () => {
     const user = userEvent.setup()
     let resolveAction!: (v: { error?: string }) => void
     const updateAction = vi.fn().mockReturnValue(
@@ -224,7 +215,7 @@ describe('LeadStatusForm', () => {
     resolveAction({})
   })
 
-  it('shows error and reverts on action failure — Validates: Requirements 5.4, 5.5', async () => {
+  it('shows error and reverts on action failure - Validates: Requirements 5.4, 5.5', async () => {
     const user = userEvent.setup()
     const updateAction = vi.fn().mockResolvedValue({ error: 'Update failed.' })
 
@@ -239,7 +230,7 @@ describe('LeadStatusForm', () => {
     expect(select.value).toBe('new')
   })
 
-  it('retains updated status on successful action — Validates: Requirements 5.3', async () => {
+  it('retains updated status on successful action - Validates: Requirements 5.3', async () => {
     const user = userEvent.setup()
     const updateAction = vi.fn().mockResolvedValue({})
 
@@ -253,7 +244,7 @@ describe('LeadStatusForm', () => {
     const formData: FormData = updateAction.mock.calls[0][0]
     expect(formData.get('status')).toBe('contacted')
 
-    // No error shown — action succeeded
+    // No error shown - action succeeded
     await vi.waitFor(() => {
       expect(screen.queryByText(/error/i)).toBeNull()
     })

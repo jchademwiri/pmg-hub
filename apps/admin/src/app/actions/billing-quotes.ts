@@ -2,10 +2,11 @@
 
 import { revalidatePath } from 'next/cache';
 import { getDb, quotations, billingLineItems, eq, and } from '@pmg/db';
-import { getNextDocumentNumber } from '@pmg/db';
+import { getNextDocumentNumber, addDays } from '@pmg/db';
 import { getSessionOrRedirect } from '@/lib/auth';
 import { isPeriodClosed, getMinAllowedDate, getMinDateErrorMessage } from '@/lib/date-rules';
 import { CreateQuotationSchema, type CreateQuotationInput } from './billing-schema';
+import { hasBillingLineItemItemIdColumn, lineItemInsertValues } from './billing-line-item-compat';
 
 let hasQuotationReferenceColumnPromise: Promise<boolean> | null = null;
 
@@ -23,9 +24,14 @@ async function hasQuotationReferenceColumn() {
       `)
       .then((res) => {
         const rows = (res as { rows?: Array<{ exists?: boolean }> }).rows;
-        return Boolean(rows?.[0]?.exists);
+        const exists = Boolean(rows?.[0]?.exists);
+        if (!exists) hasQuotationReferenceColumnPromise = null;
+        return exists;
       })
-      .catch(() => false);
+      .catch(() => {
+        hasQuotationReferenceColumnPromise = null;
+        return false;
+      });
   }
   return hasQuotationReferenceColumnPromise;
 }
@@ -89,15 +95,11 @@ export async function createQuotation(
       discountValue,
     } = parsed.data;
 
-    // clientId is required — enforced by Zod but double-check
+    // clientId is required - enforced by Zod but double-check
     if (!clientId) {
       return { error: 'A client is required.' };
     }
 
-    const today = new Date().toISOString().split('T')[0]!;
-    if (quoteDate > today) {
-      return { error: 'Quote date cannot be in the future.' };
-    }
     if (await isPeriodClosed(quoteDate)) {
       const minDate = await getMinAllowedDate();
       return { error: getMinDateErrorMessage(minDate) };
@@ -115,6 +117,7 @@ export async function createQuotation(
 
     const db = getDb();
     const includeReference = await hasQuotationReferenceColumn();
+    const includeLineItemItemId = await hasBillingLineItemItemIdColumn();
 
     const [inserted] = await db
       .insert(quotations)
@@ -124,7 +127,7 @@ export async function createQuotation(
         documentNumber,
         status: 'draft',
         quoteDate,
-        expiryDate: expiryDate ?? null,
+        expiryDate: expiryDate ?? addDays(quoteDate, 30),
         ...(includeReference ? { reference: reference ?? null } : {}),
         subtotal: String(subtotal.toFixed(2)),
         discountType: discountType ?? null,
@@ -141,12 +144,13 @@ export async function createQuotation(
 
     if (!inserted) return { error: 'Failed to create quotation.' };
 
-    // Insert line items — vatRate always 0 (VAT is document-level)
+    // Insert line items - vatRate always 0 (VAT is document-level)
     await db.insert(billingLineItems).values(
-      lineItems.map((item: { itemId: string; description: string; quantity: number; unitPrice: number; vatRate: number }, i: number) => ({
+      lineItems.map((item: { itemId?: string | null; description: string; quantity: number; unitPrice: number; vatRate: number }, i: number) => ({
         documentType: 'quote' as const,
         documentId: inserted.id,
         sortOrder: i,
+        itemId: item.itemId ?? null,
         description: item.description,
         quantity: String(item.quantity),
         unitPrice: String(item.unitPrice.toFixed(2)),
@@ -196,12 +200,21 @@ export async function updateQuotation(
 
     const db = getDb();
     const includeReference = await hasQuotationReferenceColumn();
+    const includeLineItemItemId = await hasBillingLineItemItemIdColumn();
     const [existing] = await db
-      .select({ id: quotations.id, status: quotations.status })
+      .select({ id: quotations.id, status: quotations.status, quoteDate: quotations.quoteDate })
       .from(quotations)
       .where(eq(quotations.id, id));
 
     if (!existing) return { error: 'Quotation not found.' };
+
+    if (await isPeriodClosed(existing.quoteDate)) {
+      return { error: 'Cannot edit a quotation in a closed financial period.' };
+    }
+    if (await isPeriodClosed(quoteDate)) {
+      const minDate = await getMinAllowedDate();
+      return { error: getMinDateErrorMessage(minDate) };
+    }
 
     const editableStatuses = ['draft', 'sent', 'accepted'];
     if (!editableStatuses.includes(existing.status)) {
@@ -246,10 +259,11 @@ export async function updateQuotation(
       .where(eq(quotations.id, id));
 
     await db.insert(billingLineItems).values(
-      lineItems.map((item: { itemId: string; description: string; quantity: number; unitPrice: number; vatRate: number }, i: number) => ({
+      lineItems.map((item: { itemId?: string | null; description: string; quantity: number; unitPrice: number; vatRate: number }, i: number) => ({
         documentType: 'quote' as const,
         documentId: id,
         sortOrder: i,
+        itemId: item.itemId ?? null,
         description: item.description,
         quantity: String(item.quantity),
         unitPrice: String(item.unitPrice.toFixed(2)),
@@ -325,7 +339,7 @@ export async function deleteQuotation(id: string): Promise<{ error?: string }> {
       return { error: 'Only draft quotations can be deleted.' };
     }
 
-    // Delete line items first (no FK cascade — polymorphic)
+    // Delete line items first (no FK cascade - polymorphic)
     await db
       .delete(billingLineItems)
       .where(

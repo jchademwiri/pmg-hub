@@ -56,7 +56,7 @@ export async function proxy(request: NextRequest): Promise<NextResponse> {
     return NextResponse.redirect(new URL('/login', request.url))
   }
 
-  // Validate session directly via the DB adapter — no internal HTTP fetch
+  // Validate session directly via the DB adapter - no internal HTTP fetch
   try {
     const session = await auth.api.getSession({
       headers: request.headers,
@@ -74,7 +74,7 @@ export async function proxy(request: NextRequest): Promise<NextResponse> {
       return response
     }
   } catch {
-    // Session validation failed — redirect to login
+    // Session validation failed - redirect to login
     return NextResponse.redirect(new URL('/login', request.url))
   }
 

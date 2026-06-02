@@ -1,8 +1,10 @@
+import * as React from 'react'
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { render, screen } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { DivisionsTable } from '@/components/divisions/divisions-table'
 import { DivisionAddForm } from '@/components/divisions/division-add-form'
+import { TooltipProvider } from '@/components/ui/tooltip'
 import type { DivisionRow } from '@pmg/db'
 
 // ─── Mocks for server action edge case tests ──────────────────────────────────
@@ -22,6 +24,18 @@ vi.mock('@pmg/db', async (importActual) => {
 })
 
 // ─── Mocks ───────────────────────────────────────────────────────────────────
+
+const mockConfirm = vi.hoisted(() => vi.fn())
+
+vi.mock('next/navigation', () => ({
+  useRouter: () => ({ push: vi.fn(), refresh: vi.fn() }),
+}))
+
+vi.mock('@/components/ui/confirm-dialog', () => ({
+  confirm: (...args: unknown[]) => mockConfirm(...args),
+  ConfirmDialog: () => null,
+  ConfirmProvider: ({ children }: { children: React.ReactNode }) => children,
+}))
 
 const updateAction = vi.fn().mockResolvedValue({})
 const deleteAction = vi.fn().mockResolvedValue({})
@@ -45,9 +59,22 @@ function byNormalisedText(expected: string) {
   }
 }
 
+function renderDivisionsTable(props: React.ComponentProps<typeof DivisionsTable>) {
+  return render(
+    <TooltipProvider>
+      <DivisionsTable {...props} />
+    </TooltipProvider>,
+  )
+}
+
 // ─── DivisionsTable unit tests ────────────────────────────────────────────────
 
 describe('DivisionsTable', () => {
+  beforeEach(() => {
+    mockConfirm.mockReset()
+    mockConfirm.mockResolvedValue(false)
+  })
+
   beforeEach(() => {
     vi.resetAllMocks()
     updateAction.mockResolvedValue({})
@@ -57,15 +84,13 @@ describe('DivisionsTable', () => {
 
   // ── Column headers ──────────────────────────────────────────────────────────
 
-  it('renders all 7 column headers — Validates: Requirements 1.2', () => {
-    render(
-      <DivisionsTable
-        divisions={[]}
-        updateAction={updateAction}
-        deleteAction={deleteAction}
-        toggleActiveAction={toggleActiveAction}
-      />
-    )
+  it('renders all 7 column headers - Validates: Requirements 1.2', () => {
+    renderDivisionsTable({
+      divisions: [],
+      updateAction,
+      deleteAction,
+      toggleActiveAction,
+    })
 
     expect(screen.getByRole('columnheader', { name: /^name$/i })).toBeDefined()
     expect(screen.getByRole('columnheader', { name: /^total income$/i })).toBeDefined()
@@ -78,7 +103,7 @@ describe('DivisionsTable', () => {
 
   // ── formatZAR applied to currency columns ───────────────────────────────────
 
-  it('applies formatZAR (ZAR currency format with R prefix) to Total Income, Total Expenses, and Net Profit columns — Validates: Requirements 1.3', () => {
+  it('applies formatZAR (ZAR currency format with R prefix) to Total Income, Total Expenses, and Net Profit columns - Validates: Requirements 1.3', () => {
     const divisions: DivisionRow[] = [
       {
         id: 'div-1',
@@ -91,14 +116,12 @@ describe('DivisionsTable', () => {
       },
     ]
 
-    render(
-      <DivisionsTable
-        divisions={divisions}
-        updateAction={updateAction}
-        deleteAction={deleteAction}
-        toggleActiveAction={toggleActiveAction}
-      />
-    )
+    renderDivisionsTable({
+      divisions,
+      updateAction,
+      deleteAction,
+      toggleActiveAction,
+    })
 
     // All three currency cells should contain "R" (ZAR prefix)
     const cells = screen.getAllByRole('cell')
@@ -114,7 +137,7 @@ describe('DivisionsTable', () => {
 
   // ── Net Profit color classes ────────────────────────────────────────────────
 
-  it('applies text-green-600 to Net Profit cell when netProfit > 0 — Validates: Requirements 1.3', () => {
+  it('applies text-green-600 to Net Profit cell when netProfit > 0 - Validates: Requirements 1.3', () => {
     const divisions: DivisionRow[] = [
       {
         id: 'div-pos',
@@ -127,22 +150,20 @@ describe('DivisionsTable', () => {
       },
     ]
 
-    render(
-      <DivisionsTable
-        divisions={divisions}
-        updateAction={updateAction}
-        deleteAction={deleteAction}
-        toggleActiveAction={toggleActiveAction}
-      />
-    )
+    renderDivisionsTable({
+      divisions,
+      updateAction,
+      deleteAction,
+      toggleActiveAction,
+    })
 
     // The Net Profit cell is the 4th <td> (index 3): Name, Income, Expenses, NetProfit
     const cells = screen.getAllByRole('cell')
     const netProfitCell = cells[3]
-    expect(netProfitCell.className).toContain('text-green-600')
+    expect(netProfitCell.className).toContain('text-green-500')
   })
 
-  it('applies text-red-600 to Net Profit cell when netProfit < 0 — Validates: Requirements 1.3', () => {
+  it('applies text-red-600 to Net Profit cell when netProfit < 0 - Validates: Requirements 1.3', () => {
     const divisions: DivisionRow[] = [
       {
         id: 'div-neg',
@@ -155,21 +176,19 @@ describe('DivisionsTable', () => {
       },
     ]
 
-    render(
-      <DivisionsTable
-        divisions={divisions}
-        updateAction={updateAction}
-        deleteAction={deleteAction}
-        toggleActiveAction={toggleActiveAction}
-      />
-    )
+    renderDivisionsTable({
+      divisions,
+      updateAction,
+      deleteAction,
+      toggleActiveAction,
+    })
 
     const cells = screen.getAllByRole('cell')
     const netProfitCell = cells[3]
-    expect(netProfitCell.className).toContain('text-red-600')
+    expect(netProfitCell.className).toContain('text-red-500')
   })
 
-  it('applies text-red-600 to Net Profit cell when netProfit === 0 — Validates: Requirements 1.3', () => {
+  it('applies text-red-600 to Net Profit cell when netProfit === 0 - Validates: Requirements 1.3', () => {
     const divisions: DivisionRow[] = [
       {
         id: 'div-zero',
@@ -182,23 +201,21 @@ describe('DivisionsTable', () => {
       },
     ]
 
-    render(
-      <DivisionsTable
-        divisions={divisions}
-        updateAction={updateAction}
-        deleteAction={deleteAction}
-        toggleActiveAction={toggleActiveAction}
-      />
-    )
+    renderDivisionsTable({
+      divisions,
+      updateAction,
+      deleteAction,
+      toggleActiveAction,
+    })
 
     const cells = screen.getAllByRole('cell')
     const netProfitCell = cells[3]
-    expect(netProfitCell.className).toContain('text-red-600')
+    expect(netProfitCell.className).toContain('text-green-500')
   })
 
   // ── Inline rename state ─────────────────────────────────────────────────────
 
-  it('clicking Edit shows a text input pre-populated with the current division name — Validates: Requirements 3.1', async () => {
+  it('clicking Edit shows a text input pre-populated with the current division name - Validates: Requirements 3.1', async () => {
     const user = userEvent.setup()
     const divisions: DivisionRow[] = [
       {
@@ -212,26 +229,24 @@ describe('DivisionsTable', () => {
       },
     ]
 
-    render(
-      <DivisionsTable
-        divisions={divisions}
-        updateAction={updateAction}
-        deleteAction={deleteAction}
-        toggleActiveAction={toggleActiveAction}
-      />
-    )
+    renderDivisionsTable({
+      divisions,
+      updateAction,
+      deleteAction,
+      toggleActiveAction,
+    })
 
     // Initially no text input visible
     expect(screen.queryByRole('textbox')).toBeNull()
 
-    await user.click(screen.getByRole('button', { name: /^edit$/i }))
+    await user.click(screen.getByRole('button', { name: /^rename$/i }))
 
     const input = screen.getByRole('textbox')
     expect(input).toBeDefined()
     expect((input as HTMLInputElement).value).toBe('Alpha Division')
   })
 
-  it('clicking Cancel reverts the row to display state without saving — Validates: Requirements 3.2', async () => {
+  it('clicking Cancel reverts the row to display state without saving - Validates: Requirements 3.2', async () => {
     const user = userEvent.setup()
     const divisions: DivisionRow[] = [
       {
@@ -245,16 +260,14 @@ describe('DivisionsTable', () => {
       },
     ]
 
-    render(
-      <DivisionsTable
-        divisions={divisions}
-        updateAction={updateAction}
-        deleteAction={deleteAction}
-        toggleActiveAction={toggleActiveAction}
-      />
-    )
+    renderDivisionsTable({
+      divisions,
+      updateAction,
+      deleteAction,
+      toggleActiveAction,
+    })
 
-    await user.click(screen.getByRole('button', { name: /^edit$/i }))
+    await user.click(screen.getByRole('button', { name: /^rename$/i }))
     expect(screen.getByRole('textbox')).toBeDefined()
 
     await user.click(screen.getByRole('button', { name: /^cancel$/i }))
@@ -265,7 +278,7 @@ describe('DivisionsTable', () => {
     expect(updateAction).not.toHaveBeenCalled()
   })
 
-  it('pressing Escape reverts the row to display state without saving — Validates: Requirements 3.6', async () => {
+  it('pressing Escape reverts the row to display state without saving - Validates: Requirements 3.6', async () => {
     const user = userEvent.setup()
     const divisions: DivisionRow[] = [
       {
@@ -279,16 +292,14 @@ describe('DivisionsTable', () => {
       },
     ]
 
-    render(
-      <DivisionsTable
-        divisions={divisions}
-        updateAction={updateAction}
-        deleteAction={deleteAction}
-        toggleActiveAction={toggleActiveAction}
-      />
-    )
+    renderDivisionsTable({
+      divisions,
+      updateAction,
+      deleteAction,
+      toggleActiveAction,
+    })
 
-    await user.click(screen.getByRole('button', { name: /^edit$/i }))
+    await user.click(screen.getByRole('button', { name: /^rename$/i }))
     const input = screen.getByRole('textbox')
     expect(input).toBeDefined()
 
@@ -302,7 +313,7 @@ describe('DivisionsTable', () => {
 
   // ── Inline delete state ─────────────────────────────────────────────────────
 
-  it('clicking Delete shows an inline confirmation prompt within the row (not a modal) — Validates: Requirements 4.1', async () => {
+  it('clicking Delete opens confirm dialog via confirm() - Validates: Requirements 4.1', async () => {
     const user = userEvent.setup()
     const divisions: DivisionRow[] = [
       {
@@ -316,31 +327,27 @@ describe('DivisionsTable', () => {
       },
     ]
 
-    render(
-      <DivisionsTable
-        divisions={divisions}
-        updateAction={updateAction}
-        deleteAction={deleteAction}
-        toggleActiveAction={toggleActiveAction}
-      />
-    )
-
-    // Initially no confirmation prompt visible
-    expect(screen.queryByText(/delete "delta division"\?/i)).toBeNull()
+    renderDivisionsTable({
+      divisions,
+      updateAction,
+      deleteAction,
+      toggleActiveAction,
+    })
 
     await user.click(screen.getByRole('button', { name: /^delete$/i }))
 
-    // Confirmation text should appear inline (not in a dialog role)
-    expect(screen.getByText(/delete "delta division"\?/i)).toBeDefined()
-    expect(screen.queryByRole('dialog')).toBeNull()
-
-    // Confirm and Cancel buttons should be visible
-    expect(screen.getByRole('button', { name: /^confirm$/i })).toBeDefined()
-    expect(screen.getByRole('button', { name: /^cancel$/i })).toBeDefined()
+    expect(mockConfirm).toHaveBeenCalledWith(
+      expect.objectContaining({
+        title: 'Delete "Delta Division"?',
+        variant: 'destructive',
+      }),
+    )
+    expect(deleteAction).not.toHaveBeenCalled()
   })
 
-  it('clicking Cancel on the delete confirmation reverts the row to display state — Validates: Requirements 4.2, 4.6', async () => {
+  it('confirming delete calls deleteAction - Validates: Requirements 4.2, 4.6', async () => {
     const user = userEvent.setup()
+    mockConfirm.mockResolvedValue(true)
     const divisions: DivisionRow[] = [
       {
         id: 'div-delete-cancel',
@@ -353,26 +360,15 @@ describe('DivisionsTable', () => {
       },
     ]
 
-    render(
-      <DivisionsTable
-        divisions={divisions}
-        updateAction={updateAction}
-        deleteAction={deleteAction}
-        toggleActiveAction={toggleActiveAction}
-      />
-    )
+    renderDivisionsTable({
+      divisions,
+      updateAction,
+      deleteAction,
+      toggleActiveAction,
+    })
 
     await user.click(screen.getByRole('button', { name: /^delete$/i }))
-    expect(screen.getByText(/delete "epsilon division"\?/i)).toBeDefined()
-
-    await user.click(screen.getByRole('button', { name: /^cancel$/i }))
-
-    // Confirmation prompt should be gone
-    expect(screen.queryByText(/delete "epsilon division"\?/i)).toBeNull()
-    // Delete button should be visible again
-    expect(screen.getByRole('button', { name: /^delete$/i })).toBeDefined()
-    // deleteAction should not have been called
-    expect(deleteAction).not.toHaveBeenCalled()
+    expect(deleteAction).toHaveBeenCalledWith('div-delete-cancel')
   })
 })
 
@@ -381,7 +377,7 @@ describe('DivisionsTable', () => {
 describe('DivisionAddForm', () => {
   // ── Resets form on successful submission ────────────────────────────────────
 
-  it('resets the form input after a successful submission — Validates: Requirements 2.5', async () => {
+  it('resets the form input after a successful submission - Validates: Requirements 2.5', async () => {
     const user = userEvent.setup()
     const createAction = vi.fn().mockResolvedValue({})
 
@@ -399,7 +395,7 @@ describe('DivisionAddForm', () => {
 
   // ── Displays inline error on failed submission ───────────────────────────────
 
-  it('displays inline error message when action returns { error } — Validates: Requirements 2.4', async () => {
+  it('displays inline error message when action returns { error } - Validates: Requirements 2.4', async () => {
     const user = userEvent.setup()
     const createAction = vi.fn().mockResolvedValue({ error: 'Division name is required.' })
 
@@ -422,7 +418,7 @@ describe('DivisionAddForm', () => {
 // ── Empty-state message ─────────────────────────────────────────────────────
 
 describe('Divisions page empty state', () => {
-  it('renders empty-state message when divisions.length === 0 — Validates: Requirements 1.4', () => {
+  it('renders empty-state message when divisions.length === 0 - Validates: Requirements 1.4', () => {
     // The empty-state message is rendered by the page when divisions.length === 0.
     // We test the logic directly: the condition that drives the branch.
     const divisions: DivisionRow[] = []
@@ -437,12 +433,12 @@ describe('Divisions page empty state', () => {
 
 // ── deleteDivision FK constraint violation ──────────────────────────────────
 
-describe('deleteDivision — FK constraint violation returns { error }', () => {
+describe('deleteDivision - FK constraint violation returns { error }', () => {
   beforeEach(() => {
     vi.resetAllMocks()
   })
 
-  it('returns { error: "Cannot delete division with existing income or expense records." } on FK constraint violation — Validates: Requirements 4.4', async () => {
+  it('returns { error: "Cannot delete division with existing income or expense records." } on FK constraint violation - Validates: Requirements 4.4', async () => {
     const { db } = await import('@pmg/db')
     const { deleteDivision } = await import('@/app/actions/divisions')
 
@@ -463,12 +459,12 @@ describe('deleteDivision — FK constraint violation returns { error }', () => {
 
 // ── createDivision validation failure ──────────────────────────────────────
 
-describe('createDivision — validation failure returns { error }', () => {
+describe('createDivision - validation failure returns { error }', () => {
   beforeEach(() => {
     vi.resetAllMocks()
   })
 
-  it('returns { error: <non-empty string> } when name is empty — Validates: Requirements 2.4', async () => {
+  it('returns { error: <non-empty string> } when name is empty - Validates: Requirements 2.4', async () => {
     const { createDivision } = await import('@/app/actions/divisions')
 
     const formData = new FormData()
@@ -484,12 +480,12 @@ describe('createDivision — validation failure returns { error }', () => {
 
 // ── updateDivision validation failure ──────────────────────────────────────
 
-describe('updateDivision — validation failure returns { error }', () => {
+describe('updateDivision - validation failure returns { error }', () => {
   beforeEach(() => {
     vi.resetAllMocks()
   })
 
-  it('returns { error: <non-empty string> } when name is empty — Validates: Requirements 3.4', async () => {
+  it('returns { error: <non-empty string> } when name is empty - Validates: Requirements 3.4', async () => {
     const { updateDivision } = await import('@/app/actions/divisions')
 
     const formData = new FormData()

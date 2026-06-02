@@ -1,5 +1,5 @@
 import { db } from "../client";
-import { quotations, invoices, billingLineItems, billingItems } from "../schema/billing";
+import { quotations, invoices, billingLineItems, billingItems, paymentAllocations } from "../schema/billing";
 import { income } from "../schema/income";
 import { divisions } from "../schema/divisions";
 import { clients } from "../schema/clients";
@@ -11,9 +11,11 @@ export type LineItemDetail = {
   id: string;
   documentType: string;
   documentId: string;
+  itemId: string | null;
+  itemName: string | null;
   sortOrder: number;
   description: string;
-  quantity: string;   // numeric from DB — caller converts with Number()
+  quantity: string;   // numeric from DB - caller converts with Number()
   unitPrice: string;
   vatRate: string;
   lineTotal: string;
@@ -68,7 +70,7 @@ export type InvoiceRow = {
   status: string;
   invoiceDate: string;
   dueDate: string | null;
-  poNumber: string | null;
+  reference: string | null;
   quotationId: string | null;
   quotationNumber: string | null;
   incomeId: string | null;
@@ -85,6 +87,7 @@ export type InvoiceRow = {
   createdBy: string;
   createdAt: Date;
   updatedAt: Date | null;
+  allocatedAmount?: string;
 };
 
 export type InvoiceDetail = InvoiceRow & {
@@ -118,6 +121,7 @@ export type ClientStatement = {
     totalInvoiced: number;
     totalPaid: number;
     totalOutstanding: number;
+    openingBalance: number;
     quoteCount: number;
     invoiceCount: number;
     conversionRate: number;
@@ -156,6 +160,7 @@ const VALID_QUOTE_STATUSES = new Set([
 ]);
 
 let hasQuotationReferenceColumnPromise: Promise<boolean> | null = null;
+let hasBillingLineItemItemIdColumnPromise: Promise<boolean> | null = null;
 
 async function hasQuotationReferenceColumn(): Promise<boolean> {
   if (!hasQuotationReferenceColumnPromise) {
@@ -171,14 +176,108 @@ async function hasQuotationReferenceColumn(): Promise<boolean> {
       `)
       .then((res) => {
         const row = res.rows[0] as { exists?: boolean } | undefined;
-        return Boolean(row?.exists);
+        const exists = Boolean(row?.exists);
+        if (!exists) hasQuotationReferenceColumnPromise = null;
+        return exists;
       })
-      .catch(() => false);
+      .catch(() => {
+        hasQuotationReferenceColumnPromise = null;
+        return false;
+      });
   }
   return hasQuotationReferenceColumnPromise;
 }
 
+async function hasBillingLineItemItemIdColumn(): Promise<boolean> {
+  if (!hasBillingLineItemItemIdColumnPromise) {
+    hasBillingLineItemItemIdColumnPromise = db
+      .execute(sql`
+        SELECT EXISTS (
+          SELECT 1
+          FROM information_schema.columns
+          WHERE table_schema = 'public'
+            AND table_name = 'billing_line_items'
+            AND column_name = 'item_id'
+        ) AS "exists"
+      `)
+      .then((res) => {
+        const row = res.rows[0] as { exists?: boolean } | undefined;
+        const exists = Boolean(row?.exists);
+        if (!exists) hasBillingLineItemItemIdColumnPromise = null;
+        return exists;
+      })
+      .catch(() => {
+        hasBillingLineItemItemIdColumnPromise = null;
+        return false;
+      });
+  }
+  return hasBillingLineItemItemIdColumnPromise;
+}
+
 // ── Helpers ───────────────────────────────────────────────────────────────────
+
+
+async function getLineItemsForDocument(
+  documentType: "quote" | "invoice",
+  documentId: string,
+): Promise<LineItemDetail[]> {
+  const hasItemId = await hasBillingLineItemItemIdColumn();
+
+  if (!hasItemId) {
+    const lineItems = await db
+      .select({
+        id: billingLineItems.id,
+        documentType: billingLineItems.documentType,
+        documentId: billingLineItems.documentId,
+        itemId: sql<string | null>`NULL`,
+        itemName: sql<string | null>`NULL`,
+        sortOrder: billingLineItems.sortOrder,
+        description: billingLineItems.description,
+        quantity: billingLineItems.quantity,
+        unitPrice: billingLineItems.unitPrice,
+        vatRate: billingLineItems.vatRate,
+        lineTotal: billingLineItems.lineTotal,
+        createdAt: billingLineItems.createdAt,
+      })
+      .from(billingLineItems)
+      .where(
+        and(
+          eq(billingLineItems.documentType, documentType),
+          eq(billingLineItems.documentId, documentId),
+        ),
+      )
+      .orderBy(asc(billingLineItems.sortOrder));
+
+    return lineItems as LineItemDetail[];
+  }
+
+  const lineItems = await db
+    .select({
+      id: billingLineItems.id,
+      documentType: billingLineItems.documentType,
+      documentId: billingLineItems.documentId,
+      itemId: billingLineItems.itemId,
+      itemName: billingItems.name,
+      sortOrder: billingLineItems.sortOrder,
+      description: billingLineItems.description,
+      quantity: billingLineItems.quantity,
+      unitPrice: billingLineItems.unitPrice,
+      vatRate: billingLineItems.vatRate,
+      lineTotal: billingLineItems.lineTotal,
+      createdAt: billingLineItems.createdAt,
+    })
+    .from(billingLineItems)
+    .leftJoin(billingItems, eq(billingLineItems.itemId, billingItems.id))
+    .where(
+      and(
+        eq(billingLineItems.documentType, documentType),
+        eq(billingLineItems.documentId, documentId),
+      ),
+    )
+    .orderBy(asc(billingLineItems.sortOrder));
+
+  return lineItems as LineItemDetail[];
+}
 
 /** Shared select shape for quotation rows */
 function getQuotationRowSelect(includeReference: boolean) {
@@ -223,7 +322,7 @@ const invoiceRowSelect = {
   status: invoices.status,
   invoiceDate: sql<string>`${invoices.invoiceDate}::text`,
   dueDate: sql<string | null>`${invoices.dueDate}::text`,
-  poNumber: invoices.poNumber,
+  reference: invoices.reference,
   quotationId: invoices.quotationId,
   quotationNumber: sql<string | null>`NULL::text`,
   incomeId: invoices.incomeId,
@@ -242,11 +341,58 @@ const invoiceRowSelect = {
   updatedAt: invoices.updatedAt,
 };
 
+function getSASTParts(date: Date = new Date()) {
+  const formatter = new Intl.DateTimeFormat('en-US', {
+    timeZone: 'Africa/Johannesburg',
+    year: 'numeric',
+    month: 'numeric',
+    day: 'numeric',
+  });
+  const parts = formatter.formatToParts(date);
+  const year = Number(parts.find((p) => p.type === 'year')?.value);
+  const month = Number(parts.find((p) => p.type === 'month')?.value) - 1; // 0-indexed
+  const day = Number(parts.find((p) => p.type === 'day')?.value);
+  return { year, month, day };
+}
+
+export function getMonthPeriodDates(monthPeriod: 'current' | 'previous' | 'past3' | 'past6') {
+  const { year, month } = getSASTParts();
+  let startDate: string;
+  let endDate: string;
+
+  const formatDateISO = (y: number, m: number, d: number) => {
+    return `${y}-${String(m + 1).padStart(2, '0')}-${String(d).padStart(2, '0')}`;
+  };
+
+  if (monthPeriod === 'current') {
+    startDate = formatDateISO(year, month, 1);
+    const lastDay = new Date(year, month + 1, 0).getDate();
+    endDate = formatDateISO(year, month, lastDay);
+  } else if (monthPeriod === 'previous') {
+    const prevDateStart = new Date(year, month - 1, 1);
+    const prevDateEnd = new Date(year, month, 0);
+    startDate = formatDateISO(prevDateStart.getFullYear(), prevDateStart.getMonth(), prevDateStart.getDate());
+    endDate = formatDateISO(prevDateEnd.getFullYear(), prevDateEnd.getMonth(), prevDateEnd.getDate());
+  } else if (monthPeriod === 'past3') {
+    const firstDay = new Date(year, month - 2, 1);
+    startDate = formatDateISO(firstDay.getFullYear(), firstDay.getMonth(), firstDay.getDate());
+    const lastDay = new Date(year, month + 1, 0).getDate();
+    endDate = formatDateISO(year, month, lastDay);
+  } else {
+    const firstDay = new Date(year, month - 5, 1);
+    startDate = formatDateISO(firstDay.getFullYear(), firstDay.getMonth(), firstDay.getDate());
+    const lastDay = new Date(year, month + 1, 0).getDate();
+    endDate = formatDateISO(year, month, lastDay);
+  }
+
+  return { startDate, endDate };
+}
+
 // ── getAllQuotations ───────────────────────────────────────────────────────────
 
 /**
  * Returns paginated quotation rows joined to divisions (INNER) and clients (LEFT),
- * with optional filters for divisionId, status, clientId, and month (YYYY-MM).
+ * with optional filters for divisionId, status, clientId, month (YYYY-MM), year, and monthPeriod.
  * Ordered by quote_date DESC, created_at DESC.
  */
 export async function getAllQuotations(
@@ -255,6 +401,8 @@ export async function getAllQuotations(
     status?: string;
     clientId?: string;
     month?: string;
+    year?: number;
+    monthPeriod?: 'current' | 'previous' | 'past3' | 'past6';
   },
   pageObj?: { page: number; pageSize: number },
 ): Promise<{ data: QuotationRow[]; total: number; sum: number }> {
@@ -274,6 +422,15 @@ export async function getAllQuotations(
   }
   if (filters?.month) {
     conditions.push(sql`TO_CHAR(${quotations.quoteDate}, 'YYYY-MM') = ${filters.month}`);
+  }
+  if (filters?.year) {
+    const start = `${filters.year}-03-01`;
+    const end = `${filters.year + 1}-03-01`;
+    conditions.push(sql`${quotations.quoteDate} >= ${start} AND ${quotations.quoteDate} < ${end}`);
+  }
+  if (filters?.monthPeriod) {
+    const { startDate, endDate } = getMonthPeriodDates(filters.monthPeriod);
+    conditions.push(sql`${quotations.quoteDate} >= ${startDate} AND ${quotations.quoteDate} <= ${endDate}`);
   }
 
   const query = db
@@ -320,6 +477,8 @@ export async function getAllInvoices(
     status?: string;
     clientId?: string;
     month?: string;
+    year?: number;
+    monthPeriod?: 'current' | 'previous' | 'past3' | 'past6';
   },
   pageObj?: { page: number; pageSize: number },
 ): Promise<{ data: InvoiceRow[]; total: number; sum: number; outstanding: number }> {
@@ -337,6 +496,15 @@ export async function getAllInvoices(
   if (filters?.month) {
     conditions.push(sql`TO_CHAR(${invoices.invoiceDate}, 'YYYY-MM') = ${filters.month}`);
   }
+  if (filters?.year) {
+    const start = `${filters.year}-03-01`;
+    const end = `${filters.year + 1}-03-01`;
+    conditions.push(sql`${invoices.invoiceDate} >= ${start} AND ${invoices.invoiceDate} < ${end}`);
+  }
+  if (filters?.monthPeriod) {
+    const { startDate, endDate } = getMonthPeriodDates(filters.monthPeriod);
+    conditions.push(sql`${invoices.invoiceDate} >= ${startDate} AND ${invoices.invoiceDate} <= ${endDate}`);
+  }
 
   // Alias quotations for the join
   const q = quotations;
@@ -352,7 +520,7 @@ export async function getAllInvoices(
       status: invoices.status,
       invoiceDate: sql<string>`${invoices.invoiceDate}::text`,
       dueDate: sql<string | null>`${invoices.dueDate}::text`,
-      poNumber: invoices.poNumber,
+      reference: invoices.reference,
       quotationId: invoices.quotationId,
       quotationNumber: sql<string | null>`${q.documentNumber}`,
       incomeId: invoices.incomeId,
@@ -365,6 +533,7 @@ export async function getAllInvoices(
       createdBy: invoices.createdBy,
       createdAt: invoices.createdAt,
       updatedAt: invoices.updatedAt,
+      allocatedAmount: sql<string>`COALESCE((SELECT SUM(amount) FROM payment_allocations WHERE invoice_id = ${invoices.id}), 0)::text`,
     })
     .from(invoices)
     .innerJoin(divisions, eq(invoices.divisionId, divisions.id))
@@ -379,7 +548,7 @@ export async function getAllInvoices(
     .select({
       count: sql<number>`count(*)::int`,
       sum: sql<number>`COALESCE(SUM(${invoices.total}), 0)::numeric`,
-      outstanding: sql<number>`COALESCE(SUM(CASE WHEN ${invoices.status} IN ('issued', 'overdue') THEN ${invoices.total} ELSE 0 END), 0)::numeric`,
+      outstanding: sql<number>`COALESCE(SUM(CASE WHEN ${invoices.status} IN ('issued', 'overdue', 'partially_paid') THEN ${invoices.total} - COALESCE((SELECT SUM(amount) FROM payment_allocations WHERE invoice_id = ${invoices.id}), 0) ELSE 0 END), 0)::numeric`,
     })
     .from(invoices);
   if (conditions.length > 0) countQuery.where(and(...conditions));
@@ -417,10 +586,24 @@ export async function getQuotationById(id: string): Promise<QuotationDetail | nu
   if (rows.length === 0) return null;
   const row = rows[0] as QuotationRow;
 
-  // Fetch line items sorted by sort_order
+  // Fetch line items sorted by sort_order, keeping the saved description and catalogue name separate.
   const lineItems = await db
-    .select()
+    .select({
+      id: billingLineItems.id,
+      documentType: billingLineItems.documentType,
+      documentId: billingLineItems.documentId,
+      itemId: billingLineItems.itemId,
+      itemName: billingItems.name,
+      sortOrder: billingLineItems.sortOrder,
+      description: billingLineItems.description,
+      quantity: billingLineItems.quantity,
+      unitPrice: billingLineItems.unitPrice,
+      vatRate: billingLineItems.vatRate,
+      lineTotal: billingLineItems.lineTotal,
+      createdAt: billingLineItems.createdAt,
+    })
     .from(billingLineItems)
+    .leftJoin(billingItems, eq(billingLineItems.itemId, billingItems.id))
     .where(
       and(
         eq(billingLineItems.documentType, "quote"),
@@ -465,7 +648,7 @@ export async function getInvoiceById(id: string): Promise<InvoiceDetail | null> 
       status: invoices.status,
       invoiceDate: sql<string>`${invoices.invoiceDate}::text`,
       dueDate: sql<string | null>`${invoices.dueDate}::text`,
-      poNumber: invoices.poNumber,
+      reference: invoices.reference,
       quotationId: invoices.quotationId,
       quotationNumber: sql<string | null>`${quotations.documentNumber}`,
       incomeId: invoices.incomeId,
@@ -482,6 +665,7 @@ export async function getInvoiceById(id: string): Promise<InvoiceDetail | null> 
       createdBy: invoices.createdBy,
       createdAt: invoices.createdAt,
       updatedAt: invoices.updatedAt,
+      allocatedAmount: sql<string>`COALESCE((SELECT SUM(amount) FROM payment_allocations WHERE invoice_id = ${invoices.id}), 0)::text`,
     })
     .from(invoices)
     .innerJoin(divisions, eq(invoices.divisionId, divisions.id))
@@ -493,8 +677,22 @@ export async function getInvoiceById(id: string): Promise<InvoiceDetail | null> 
   const row = rows[0] as InvoiceRow;
 
   const lineItems = await db
-    .select()
+    .select({
+      id: billingLineItems.id,
+      documentType: billingLineItems.documentType,
+      documentId: billingLineItems.documentId,
+      itemId: billingLineItems.itemId,
+      itemName: billingItems.name,
+      sortOrder: billingLineItems.sortOrder,
+      description: billingLineItems.description,
+      quantity: billingLineItems.quantity,
+      unitPrice: billingLineItems.unitPrice,
+      vatRate: billingLineItems.vatRate,
+      lineTotal: billingLineItems.lineTotal,
+      createdAt: billingLineItems.createdAt,
+    })
     .from(billingLineItems)
+    .leftJoin(billingItems, eq(billingLineItems.itemId, billingItems.id))
     .where(
       and(
         eq(billingLineItems.documentType, "invoice"),
@@ -518,7 +716,7 @@ export async function getInvoiceById(id: string): Promise<InvoiceDetail | null> 
  */
 export async function getClientStatement(
   clientId: string,
-  filters?: { year?: number },
+  filters?: { year?: number; monthPeriod?: 'current' | 'previous' | 'past3' | 'past6' },
 ): Promise<ClientStatement | null> {
   const includeReference = await hasQuotationReferenceColumn();
   // Fetch client
@@ -536,18 +734,38 @@ export async function getClientStatement(
   if (clientRows.length === 0) return null;
   const client = clientRows[0]!;
 
-  // Build year filter condition
-  const quoteYearCondition = filters?.year
-    ? sql`${quotations.quoteDate} >= ${`${filters.year}-03-01`} AND ${quotations.quoteDate} < ${`${filters.year + 1}-03-01`}`
-    : undefined;
-  const invoiceYearCondition = filters?.year
-    ? sql`${invoices.invoiceDate} >= ${`${filters.year}-03-01`} AND ${invoices.invoiceDate} < ${`${filters.year + 1}-03-01`}`
-    : undefined;
+  // Build filter conditions
+  const quoteConditions = [eq(quotations.clientId, clientId)];
+  const invoiceConditions = [
+    eq(invoices.clientId, clientId),
+    sql`${invoices.status} NOT IN ('draft', 'void')`,
+    sql`${invoices.invoiceDate} <= timezone('Africa/Johannesburg', now())::date`
+  ];
+  const incomeConditions = [eq(income.clientId, clientId)];
+  let statementBalanceCutoff: string | null = null;
+  let periodStartDate: string | null = null;
+
+  if (filters?.monthPeriod) {
+    const { startDate, endDate } = getMonthPeriodDates(filters.monthPeriod);
+    statementBalanceCutoff = endDate;
+    periodStartDate = startDate;
+    quoteConditions.push(sql`${quotations.quoteDate} >= ${startDate} AND ${quotations.quoteDate} <= ${endDate}`);
+    invoiceConditions.push(sql`${invoices.invoiceDate} >= ${startDate} AND ${invoices.invoiceDate} <= ${endDate}`);
+    incomeConditions.push(sql`${income.date} >= ${startDate} AND ${income.date} <= ${endDate}`);
+  } else if (filters?.year) {
+    const startDate = `${filters.year}-03-01`;
+    const endDateExclusive = `${filters.year + 1}-03-01`;
+    statementBalanceCutoff = endDateExclusive;
+    periodStartDate = startDate;
+    quoteConditions.push(sql`${quotations.quoteDate} >= ${startDate} AND ${quotations.quoteDate} < ${endDateExclusive}`);
+    invoiceConditions.push(sql`${invoices.invoiceDate} >= ${startDate} AND ${invoices.invoiceDate} < ${endDateExclusive}`);
+    incomeConditions.push(
+      sql`${income.date} >= ${startDate}`,
+      sql`${income.date} < ${endDateExclusive}`
+    );
+  }
 
   // Fetch quotes
-  const quoteConditions = [eq(quotations.clientId, clientId)];
-  if (quoteYearCondition) quoteConditions.push(quoteYearCondition);
-
   const quoteRows = await db
     .select(getQuotationRowSelect(includeReference))
     .from(quotations)
@@ -557,12 +775,6 @@ export async function getClientStatement(
     .orderBy(desc(quotations.quoteDate));
 
   // Fetch invoices (excluding draft and void)
-  const invoiceConditions = [
-    eq(invoices.clientId, clientId),
-    sql`${invoices.status} NOT IN ('draft', 'void')`
-  ];
-  if (invoiceYearCondition) invoiceConditions.push(invoiceYearCondition);
-
   const invoiceRows = await db
     .select({
       id: invoices.id,
@@ -574,7 +786,7 @@ export async function getClientStatement(
       status: invoices.status,
       invoiceDate: sql<string>`${invoices.invoiceDate}::text`,
       dueDate: sql<string | null>`${invoices.dueDate}::text`,
-      poNumber: invoices.poNumber,
+      reference: invoices.reference,
       quotationId: invoices.quotationId,
       quotationNumber: sql<string | null>`${quotations.documentNumber}`,
       incomeId: invoices.incomeId,
@@ -587,6 +799,7 @@ export async function getClientStatement(
       createdBy: invoices.createdBy,
       createdAt: invoices.createdAt,
       updatedAt: invoices.updatedAt,
+      allocatedAmount: sql<string>`COALESCE((SELECT SUM(amount) FROM payment_allocations WHERE invoice_id = ${invoices.id}), 0)::text`,
     })
     .from(invoices)
     .innerJoin(divisions, eq(invoices.divisionId, divisions.id))
@@ -595,33 +808,72 @@ export async function getClientStatement(
     .where(and(...invoiceConditions))
     .orderBy(desc(invoices.invoiceDate));
 
-  // Compute global balance for "Amount Due"
+  // Compute balance for "Amount Due" as of the statement period end.
+  const globalInvoiceConditions = [
+    eq(invoices.clientId, clientId),
+    sql`${invoices.status} NOT IN ('draft', 'void')`,
+    sql`${invoices.invoiceDate} <= timezone('Africa/Johannesburg', now())::date`
+  ];
+  const globalIncomeConditions = [eq(income.clientId, clientId)];
+
+  if (statementBalanceCutoff) {
+    if (filters?.year) {
+      globalInvoiceConditions.push(sql`${invoices.invoiceDate} < ${statementBalanceCutoff}`);
+      globalIncomeConditions.push(sql`${income.date} < ${statementBalanceCutoff}`);
+    } else {
+      globalInvoiceConditions.push(sql`${invoices.invoiceDate} <= ${statementBalanceCutoff}`);
+      globalIncomeConditions.push(sql`${income.date} <= ${statementBalanceCutoff}`);
+    }
+  }
+
   const globalInvoicedRes = await db
     .select({ total: sql<number>`COALESCE(SUM(${invoices.total}), 0)::numeric` })
     .from(invoices)
-    .where(and(eq(invoices.clientId, clientId), sql`${invoices.status} NOT IN ('draft', 'void')`));
+    .where(and(...globalInvoiceConditions));
   
   const globalPaidRes = await db
     .select({ total: sql<number>`COALESCE(SUM(${income.amount}), 0)::numeric` })
     .from(income)
-    .where(eq(income.clientId, clientId));
+    .where(and(...globalIncomeConditions));
 
   const globalInvoiced = Number(globalInvoicedRes[0]?.total ?? 0);
   const globalPaid = Number(globalPaidRes[0]?.total ?? 0);
   const totalOutstanding = globalInvoiced - globalPaid;
+
+  // Compute opening balance (balance prior to the statement period)
+  let openingBalance = 0;
+  if (periodStartDate) {
+    const priorInvoiceConditions = [
+      eq(invoices.clientId, clientId),
+      sql`${invoices.status} NOT IN ('draft', 'void')`,
+      sql`${invoices.invoiceDate} < ${periodStartDate}`,
+    ];
+    const priorIncomeConditions = [
+      eq(income.clientId, clientId),
+      sql`${income.date} < ${periodStartDate}`,
+    ];
+
+    const [priorInvoicedRes, priorPaidRes] = await Promise.all([
+      db
+        .select({ total: sql<number>`COALESCE(SUM(${invoices.total}), 0)::numeric` })
+        .from(invoices)
+        .where(and(...priorInvoiceConditions)),
+      db
+        .select({ total: sql<number>`COALESCE(SUM(${income.amount}), 0)::numeric` })
+        .from(income)
+        .where(and(...priorIncomeConditions)),
+    ]);
+
+    const priorInvoiced = Number(priorInvoicedRes[0]?.total ?? 0);
+    const priorPaid = Number(priorPaidRes[0]?.total ?? 0);
+    openingBalance = priorInvoiced - priorPaid;
+  }
 
   // Compute period summary
   const totalQuoted = quoteRows.reduce((s, r) => s + Number(r.total), 0);
   const totalInvoiced = invoiceRows.reduce((s, r) => s + Number(r.total), 0);
   
   // For period paid, we sum income records in that period
-  const incomeConditions = [eq(income.clientId, clientId)];
-  if (filters?.year) {
-    incomeConditions.push(
-      sql`${income.date} >= ${`${filters.year}-03-01`}`,
-      sql`${income.date} < ${`${filters.year + 1}-03-01`}`
-    );
-  }
   const periodPaidRes = await db
     .select({ total: sql<number>`COALESCE(SUM(${income.amount}), 0)::numeric` })
     .from(income)
@@ -639,6 +891,7 @@ export async function getClientStatement(
       totalInvoiced,
       totalPaid,
       totalOutstanding,
+      openingBalance,
       quoteCount: quoteRows.length,
       invoiceCount: invoiceRows.length,
       conversionRate,
@@ -648,13 +901,17 @@ export async function getClientStatement(
   };
 }
 
-// ── getClientsWithBillingActivity ─────────────────────────────────────────────
+export async function getClientsWithBillingActivity(filters?: { year?: number }): Promise<ClientBillingRow[]> {
+  const year = filters?.year;
+  const start = year ? `${year}-03-01` : null;
+  const end = year ? `${year + 1}-03-01` : null;
 
-/**
- * Returns all clients that have at least one quotation OR one invoice.
- * Each row includes aggregate billing stats.
- */
-export async function getClientsWithBillingActivity(): Promise<ClientBillingRow[]> {
+  const quoteFilter = year ? sql`WHERE quote_date >= ${start} AND quote_date < ${end}` : sql``;
+  const invoiceFilter = year
+    ? sql`WHERE invoice_date >= ${start} AND invoice_date < ${end} AND invoice_date <= timezone('Africa/Johannesburg', now())::date`
+    : sql`WHERE invoice_date <= timezone('Africa/Johannesburg', now())::date`;
+  const incomeFilter = year ? sql`WHERE date >= ${start} AND date < ${end}` : sql``;
+
   const result = await db.execute(sql`
     SELECT
       c.id,
@@ -673,6 +930,7 @@ export async function getClientsWithBillingActivity(): Promise<ClientBillingRow[
         COUNT(*)::int AS quote_count,
         MAX(quote_date) AS last_quote_date
       FROM quotations
+      ${quoteFilter}
       GROUP BY client_id
     ) q ON q.client_id = c.id
     LEFT JOIN (
@@ -682,6 +940,7 @@ export async function getClientsWithBillingActivity(): Promise<ClientBillingRow[
         MAX(invoice_date) AS last_invoice_date,
         COALESCE(SUM(CASE WHEN status NOT IN ('draft', 'void') THEN total ELSE 0 END), 0) AS total_invoiced
       FROM invoices
+      ${invoiceFilter}
       GROUP BY client_id
     ) inv ON inv.client_id = c.id
     LEFT JOIN (
@@ -689,6 +948,7 @@ export async function getClientsWithBillingActivity(): Promise<ClientBillingRow[
         client_id,
         COALESCE(SUM(amount), 0) AS total_paid
       FROM income
+      ${incomeFilter}
       GROUP BY client_id
     ) inc ON inc.client_id = c.id
     WHERE q.client_id IS NOT NULL OR inv.client_id IS NOT NULL
@@ -732,11 +992,7 @@ export async function getAllItems(
 
 /**
  * Returns a single billing item with usage counts (how many line items reference
- * this item by matching description + unit_price), or null if not found.
- *
- * Note: billing_line_items has no FK to billing_items (polymorphic design).
- * Usage is approximated by matching on description. For exact tracking, a
- * billing_item_id column should be added to billing_line_items in v2.
+ * this catalogue item), or null if not found.
  */
 export async function getItemById(id: string): Promise<BillingItemDetail | null> {
   const rows = await db
@@ -747,25 +1003,27 @@ export async function getItemById(id: string): Promise<BillingItemDetail | null>
   if (rows.length === 0) return null;
   const item = rows[0]!;
 
-  // Count usage in invoice line items
+  const hasItemId = await hasBillingLineItemItemIdColumn();
+
+  // Count usage in invoice line items. Fall back to legacy description matching until the migration runs.
   const invoiceUsageResult = await db
     .select({ count: sql<number>`count(*)::int` })
     .from(billingLineItems)
     .where(
       and(
         eq(billingLineItems.documentType, "invoice"),
-        eq(billingLineItems.description, item.name),
+        eq(billingLineItems.itemId, id),
       ),
     );
 
-  // Count usage in quote line items
+  // Count usage in quote line items. Fall back to legacy description matching until the migration runs.
   const quoteUsageResult = await db
     .select({ count: sql<number>`count(*)::int` })
     .from(billingLineItems)
     .where(
       and(
         eq(billingLineItems.documentType, "quote"),
-        eq(billingLineItems.description, item.name),
+        eq(billingLineItems.itemId, id),
       ),
     );
 
@@ -780,7 +1038,7 @@ export async function getItemById(id: string): Promise<BillingItemDetail | null>
 
 /**
  * Returns active billing items for use in line item selectors.
- * Only active items are returned — archived items cannot be selected.
+ * Only active items are returned - archived items cannot be selected.
  */
 export async function getActiveItems(): Promise<
   { id: string; name: string; description: string | null; unitPrice: string; unitLabel: string | null }[]
@@ -898,8 +1156,77 @@ export async function getStatementYears(clientId: string): Promise<number[]> {
   for (const r of invYears.rows) years.add(Number(r.year));
   for (const r of incYears.rows) years.add(Number(r.year));
 
-  const currentFY = new Date().getMonth() < 2 ? new Date().getFullYear() - 1 : new Date().getFullYear();
+  const { year: sastYear, month: sastMonth } = getSASTParts();
+  const currentFY = sastMonth < 2 ? sastYear - 1 : sastYear;
   years.add(currentFY); // Always include current FY
 
   return Array.from(years).sort((a, b) => b - a);
 }
+
+// ── Aging report ──────────────────────────────────────────────────────────────
+
+export type AgingBucket = 'current' | '1_14' | '15_30' | '31_60' | '61_plus';
+
+export type AgingRow = {
+  bucket: AgingBucket;
+  label: string;
+  total: number;
+  count: number;
+};
+
+const AGING_BUCKETS: AgingBucket[] = ['current', '1_14', '15_30', '31_60', '61_plus'];
+
+const AGING_LABELS: Record<AgingBucket, string> = {
+  current:  'Current',
+  '1_14':   '1–14 days',
+  '15_30':  '15–30 days',
+  '31_60':  '31–60 days',
+  '61_plus': '61+ days',
+};
+
+/**
+ * Returns the aging report for all outstanding invoices (status = 'issued' or
+ * 'overdue') across 5 buckets. Buckets with no invoices are returned with
+ * total = 0 and count = 0.
+ *
+ * Bucket rules:
+ *   current   dueDate >= today
+ *   1_14      1–14 days past due
+ *   15_30     15–30 days past due
+ *   31_60     31–60 days past due
+ *   61_plus   61+ days past due
+ */
+export async function getAgingReport(): Promise<AgingRow[]> {
+  const result = await db.execute(sql`
+    SELECT
+      CASE
+        WHEN due_date >= timezone('Africa/Johannesburg', now())::date                             THEN 'current'
+        WHEN timezone('Africa/Johannesburg', now())::date - due_date BETWEEN 1  AND 14           THEN '1_14'
+        WHEN timezone('Africa/Johannesburg', now())::date - due_date BETWEEN 15 AND 30           THEN '15_30'
+        WHEN timezone('Africa/Johannesburg', now())::date - due_date BETWEEN 31 AND 60           THEN '31_60'
+        ELSE '61_plus'
+      END                                                         AS bucket,
+      COUNT(*)::int                                               AS count,
+      COALESCE(SUM(invoices.total - COALESCE((SELECT SUM(amount) FROM payment_allocations WHERE invoice_id = invoices.id), 0)), 0) AS total
+    FROM invoices
+    WHERE status IN ('issued', 'overdue', 'partially_paid')
+      AND due_date IS NOT NULL
+      AND invoice_date <= timezone('Africa/Johannesburg', now())::date
+    GROUP BY bucket
+  `);
+
+  const map = Object.fromEntries(
+    (result.rows as { bucket: string; total: string; count: number }[]).map((r) => [
+      r.bucket,
+      { total: Number(r.total), count: Number(r.count) },
+    ]),
+  );
+
+  return AGING_BUCKETS.map((bucket) => ({
+    bucket,
+    label: AGING_LABELS[bucket],
+    total: map[bucket]?.total ?? 0,
+    count: map[bucket]?.count ?? 0,
+  }));
+}
+

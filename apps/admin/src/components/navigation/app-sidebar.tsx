@@ -145,7 +145,7 @@ export function AppSidebar({ user }: AppSidebarProps) {
       </SidebarHeader>
 
       <SidebarContent>
-        {/* Overview — static, no toggle */}
+        {/* Overview - static, no toggle */}
         <SidebarGroup>
           <SidebarGroupLabel className="flex items-center gap-2">
             <Home className="size-3.5" />

@@ -4,17 +4,18 @@ import { ChevronLeft } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Separator } from '@/components/ui/separator';
-import { getAllDivisions, getAllClients, getActiveItems } from '@pmg/db';
+import { getAllDivisions, getAllClients, getActiveItems, getAllDivisionBillingSettings } from '@pmg/db';
 import { QuoteFormClient } from './quote-form-client';
 
 export const dynamic = 'force-dynamic';
 export const metadata: Metadata = { title: 'New Quotation' };
 
 export default async function NewQuotePage() {
-  const [divisions, clients, activeItems] = await Promise.all([
+  const [divisions, clients, activeItems, billingSettings] = await Promise.all([
     getAllDivisions(),
     getAllClients(),
     getActiveItems(),
+    getAllDivisionBillingSettings(),
   ]);
 
   return (
@@ -40,7 +41,12 @@ export default async function NewQuotePage() {
           <CardDescription>Fill in the details for this quotation</CardDescription>
         </CardHeader>
         <CardContent>
-          <QuoteFormClient divisions={divisions} clients={clients} activeItems={activeItems} />
+          <QuoteFormClient
+            divisions={divisions}
+            clients={clients}
+            activeItems={activeItems}
+            billingSettings={billingSettings}
+          />
         </CardContent>
       </Card>
     </div>

@@ -12,6 +12,12 @@ import {
   Table, TableBody, TableCell, TableHead, TableHeader, TableRow,
 } from '@/components/ui/table'
 import { formatZAR } from '@/lib/format'
+import { confirm } from '@/components/ui/confirm-dialog'
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from '@/components/ui/tooltip'
 
 interface DivisionsTableProps {
   divisions: DivisionRow[]
@@ -29,12 +35,10 @@ function DivisionTableRow({
   toggleActiveAction: (id: string, isActive: boolean) => Promise<{ error?: string }>
 }) {
   const router = useRouter()
-  const [mode, setMode] = React.useState<'display' | 'edit' | 'confirm-delete'>('display')
+  const [mode, setMode] = React.useState<'display' | 'edit'>('display')
   const [editName, setEditName] = React.useState(division.name)
   const [editError, setEditError] = React.useState<string | null>(null)
-  const [deleteError, setDeleteError] = React.useState<string | null>(null)
   const [isRenamePending, startRenameTransition] = React.useTransition()
-  const [isPendingDelete, setIsPendingDelete] = React.useState(false)
   const [isPendingToggle, setIsPendingToggle] = React.useState(false)
 
   const hasRecords = division.totalIncome > 0 || division.totalExpenses > 0
@@ -62,15 +66,17 @@ function DivisionTableRow({
     }
   }
 
-  async function handleConfirmDelete() {
-    setDeleteError(null)
-    setIsPendingDelete(true)
-    try {
-      const result = await deleteAction(division.id)
-      if (result.error) { setDeleteError(result.error); setMode('confirm-delete') }
-    } finally {
-      setIsPendingDelete(false)
-    }
+  async function handleDeleteClick(e: React.MouseEvent) {
+    e.stopPropagation()
+    const confirmed = await confirm({
+      title: `Delete "${division.name}"?`,
+      description: 'This action cannot be undone.',
+      confirmText: 'Delete',
+      variant: 'destructive',
+    })
+    if (!confirmed) return
+    const result = await deleteAction(division.id)
+    if (result.error) toast.error(result.error)
   }
 
   const netProfitClass = division.netProfit >= 0 ? 'text-green-500' : 'text-red-500'
@@ -115,45 +121,43 @@ function DivisionTableRow({
         </Badge>
       </TableCell>
       <TableCell onClick={(e) => e.stopPropagation()}>
-        {mode === 'confirm-delete' ? (
-          <div className="flex flex-col gap-1">
-            <div className="flex items-center gap-2">
-              <span className="text-sm text-muted-foreground">Delete &quot;{division.name}&quot;?</span>
-              <Button size="sm" variant="destructive" onClick={handleConfirmDelete} disabled={isPendingDelete}>
-                {isPendingDelete ? 'Deleting…' : 'Confirm'}
+        <div className="flex items-center gap-2">
+          <Button size="sm" variant="outline" onClick={(e) => { e.stopPropagation(); setEditName(division.name); setEditError(null); setMode('edit') }}>
+            Rename
+          </Button>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Button
+                variant="ghost"
+                size="icon"
+                disabled={isPendingToggle}
+                onClick={handleToggleActive}
+              >
+                {division.isActive
+                  ? <PowerOff data-icon className="text-muted-foreground" />
+                  : <Power data-icon className="text-green-500" />}
               </Button>
-              <Button size="sm" variant="outline" onClick={() => setMode('display')} disabled={isPendingDelete}>
-                Cancel
-              </Button>
-            </div>
-            {deleteError && <p className="text-sm text-destructive">{deleteError}</p>}
-          </div>
-        ) : (
-          <div className="flex items-center gap-2">
-            <Button size="sm" variant="outline" onClick={(e) => { e.stopPropagation(); setEditName(division.name); setEditError(null); setMode('edit') }}>
-              Rename
+            </TooltipTrigger>
+            <TooltipContent>
+              {division.isActive ? 'Disable division' : 'Activate division'}
+            </TooltipContent>
+          </Tooltip>
+          {hasRecords ? (
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button variant="ghost" size="icon" disabled>
+                  <Trash2 data-icon className="text-muted-foreground/30" />
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent>Cannot delete — has financial records</TooltipContent>
+            </Tooltip>
+          ) : (
+            <Button variant="ghost" size="icon" onClick={handleDeleteClick}>
+              <Trash2 data-icon />
+              <span className="sr-only">Delete</span>
             </Button>
-            <Button
-              variant="ghost" size="icon"
-              disabled={isPendingToggle}
-              onClick={handleToggleActive}
-              title={division.isActive ? 'Disable division' : 'Activate division'}
-            >
-              {division.isActive
-                ? <PowerOff className="h-4 w-4 text-muted-foreground" />
-                : <Power className="h-4 w-4 text-green-500" />}
-            </Button>
-            {hasRecords ? (
-              <Button variant="ghost" size="icon" disabled title="Cannot delete — has financial records">
-                <Trash2 className="h-4 w-4 text-muted-foreground/30" />
-              </Button>
-            ) : (
-              <Button variant="ghost" size="icon" onClick={(e) => { e.stopPropagation(); setDeleteError(null); setMode('confirm-delete') }}>
-                <Trash2 className="h-4 w-4" />
-              </Button>
-            )}
-          </div>
-        )}
+          )}
+        </div>
       </TableCell>
     </TableRow>
   )

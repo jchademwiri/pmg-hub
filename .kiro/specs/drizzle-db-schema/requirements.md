@@ -77,7 +77,7 @@ DATABASE_URL=postgres://user:password@localhost:5432/pmg_db
 2. THE Schema_Module SHALL define a Table named `income` using Drizzle ORM's `pgTable`.
 3. THE `income` Table SHALL include an `id` column of type `uuid` that is the primary key and defaults to a random UUID.
 4. THE `income` Table SHALL include a `date` column of type `date` that is not null.
-4a. THE `date` column SHALL represent the transaction date — the date on which money was received — and SHALL NOT default to the current time.
+4a. THE `date` column SHALL represent the transaction date - the date on which money was received - and SHALL NOT default to the current time.
 5. THE `income` Table SHALL include a `divisionId` column of type `uuid` that is a foreign key referencing `divisions.id`, is not null, and defines `onDelete: "restrict"`.
 6. THE `income` Table SHALL include a `clientId` column of type `uuid` that is a nullable foreign key referencing `clients.id` and defines `onDelete: "set null"`.
 7. THE `income` Table SHALL include a `description` column of type `text` that is nullable.
@@ -123,7 +123,7 @@ DATABASE_URL=postgres://user:password@localhost:5432/pmg_db
 2. THE Schema_Module SHALL define a Table named `expenses` using Drizzle ORM's `pgTable`.
 3. THE `expenses` Table SHALL include an `id` column of type `uuid` that is the primary key and defaults to a random UUID.
 4. THE `expenses` Table SHALL include a `date` column of type `date` that is not null.
-4a. THE `date` column SHALL represent the transaction date — the date on which money was spent — and SHALL NOT default to the current time.
+4a. THE `date` column SHALL represent the transaction date - the date on which money was spent - and SHALL NOT default to the current time.
 5. THE `expenses` Table SHALL include a `divisionId` column of type `uuid` that is a foreign key referencing `divisions.id`, is not null, and defines `onDelete: "restrict"`.
 6. THE `expenses` Table SHALL include a `category` column of type `text` that is not null.
 7. THE `expenses` Table SHALL include a `description` column of type `text` that is nullable.
@@ -278,4 +278,4 @@ DATABASE_URL=postgres://user:password@localhost:5432/pmg_db
 8. THE `divisions.name` column SHALL be unique across all rows in the `divisions` table.
 9. THE `leads` Table SHALL enforce a CHECK constraint ensuring that at least one of `email` or `phone` is not null.
 10. ALL foreign key columns and frequently queried columns (including `date`, `status`, `divisionId`, `clientId`, `email`) SHALL have database indexes defined to support efficient query execution.
-11. ALL monetary values in Phase 0 are assumed to be in a single currency (ZAR — South African Rand). No currency column is required at this stage.
+11. ALL monetary values in Phase 0 are assumed to be in a single currency (ZAR - South African Rand). No currency column is required at this stage.

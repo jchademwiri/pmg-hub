@@ -1,16 +1,16 @@
-# Design Document — dashboard-ui
+# Design Document - dashboard-ui
 
 ## Overview
 
 Phase 2 of the PMG Control Center admin app. This phase builds the admin shell layout
-(sidebar + top nav) and the financial overview dashboard — the first page an admin sees
+(sidebar + top nav) and the financial overview dashboard - the first page an admin sees
 after login. All data is fetched server-side at request time from Neon PostgreSQL via
 Drizzle ORM. The page is built entirely with React Server Components; no client-side
 state, no loading spinners, no browser-initiated API calls.
 
 The two client component boundaries are:
-- `NavLink` — needs `usePathname` for active route highlighting
-- `AllocationTooltipBar` — needs shadcn Tooltip (which requires client interactivity)
+- `NavLink` - needs `usePathname` for active route highlighting
+- `AllocationTooltipBar` - needs shadcn Tooltip (which requires client interactivity)
 
 Everything else is a Server Component.
 
@@ -80,7 +80,7 @@ app/(admin)/dashboard/page.tsx  [async Server Component]
   └── <LeadsSummary />      (pure props)
 ```
 
-All dashboard components are pure presentational — they receive props and render. No
+All dashboard components are pure presentational - they receive props and render. No
 component below `dashboard/page.tsx` performs any data fetching or holds state.
 
 ### Client/Server Boundary Map
@@ -112,14 +112,14 @@ Client Components ('use client'):
 
 Run these commands before writing any Phase 2 code:
 
-**Step 1 — Sidebar block (auto-installs sidebar + all its dependencies):**
+**Step 1 - Sidebar block (auto-installs sidebar + all its dependencies):**
 ```bash
 npx shadcn@latest add sidebar-08 --cwd apps/admin
 ```
 This automatically installs: `sidebar`, `button`, `separator`, `skeleton`, `sheet`,
 `tooltip`, `input`, `avatar`. Do NOT install these separately.
 
-**Step 2 — Remaining components:**
+**Step 2 - Remaining components:**
 ```bash
 npx shadcn@latest add progress --cwd apps/admin
 npx shadcn@latest add scroll-area --cwd apps/admin
@@ -179,7 +179,7 @@ No database calls. Cookie check only.
 > The existing `layout.tsx` imports `Geist` and `Geist_Mono` from `next/font/google`.
 > These SHALL be removed entirely. The replacement file imports only `Noto_Sans`.
 > The Geist CSS variables (`--font-geist-sans`, `--font-geist-mono`) are not
-> referenced by `globals.css` or any Phase 2 component — removing them has no
+> referenced by `globals.css` or any Phase 2 component - removing them has no
 > styling impact. Remove the Geist variable assignments from the `html` className
 > as well.
 
@@ -229,7 +229,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
 > This file lives at the root `app/` level, not inside `app/(admin)/`. The root
 > redirect sends unauthenticated and authenticated users alike to `/dashboard`,
 > which is then handled by the `(admin)` layout. Placing this redirect inside
-> `(admin)` would create a circular route — `/dashboard` redirecting to `/dashboard`.
+> `(admin)` would create a circular route - `/dashboard` redirecting to `/dashboard`.
 
 ```typescript
 import { redirect } from 'next/navigation'
@@ -274,7 +274,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
 }
 ```
 
-`Toaster` is a leaf client component — Next.js handles the client boundary automatically
+`Toaster` is a leaf client component - Next.js handles the client boundary automatically
 when it is imported into a Server layout.
 
 ---
@@ -284,7 +284,7 @@ when it is imported into a Server layout.
 **Location:** `apps/admin/src/components/layout/app-sidebar.tsx`
 **Action:** Scaffold via `sidebar-08` block, then customise directly
 
-The `sidebar-08` block scaffolds this file. Customise it in place — do not create a
+The `sidebar-08` block scaffolds this file. Customise it in place - do not create a
 separate sidebar component alongside it.
 
 Nav items:
@@ -317,7 +317,7 @@ Sidebar footer (replace user section):
 
 Nav items use `NavLink` as the link renderer inside the sidebar block's nav item slots.
 The sidebar is collapsible on mobile (sheet/drawer from block) and fixed `w-56` on `lg+`.
-Sidebar background: `bg-sidebar`, border: `border-sidebar-border` — set by `.dark` CSS
+Sidebar background: `bg-sidebar`, border: `border-sidebar-border` - set by `.dark` CSS
 variables, no additional className overrides needed.
 
 ---
@@ -354,7 +354,7 @@ export function TopNav() {
 ```
 
 `SidebarTrigger` is a client component from the sidebar block. Importing it into a Server
-Component is valid — Next.js handles the boundary at the leaf level.
+Component is valid - Next.js handles the boundary at the leaf level.
 
 Dynamic breadcrumbs (Phase 9) will replace the static "Dashboard" text.
 
@@ -397,7 +397,7 @@ export function NavLink({ href, label, icon }: NavLinkProps) {
 }
 ```
 
-Active condition: `pathname === href || pathname.startsWith(href + '/')` — exact match or
+Active condition: `pathname === href || pathname.startsWith(href + '/')` - exact match or
 sub-route match. This prevents `/dashboard` matching `/dashboard-settings`.
 
 
@@ -458,7 +458,7 @@ export default async function DashboardPage() {
 
 Error propagation: any throw from `getFinancialSummary`, `getDivisionRevenue`, or
 `getLeadCounts` propagates naturally to the Next.js error boundary. No try/catch in the
-page component itself — that is handled by `error.tsx` in Phase 9.
+page component itself - that is handled by `error.tsx` in Phase 9.
 
 ---
 
@@ -600,7 +600,7 @@ type AllocationItem = {
 type AllocationTooltipBarProps = { allocations: AllocationItem[] }
 ```
 
-Rendering — outer container is a flex row, each segment is a raw `div` (not `Progress`)
+Rendering - outer container is a flex row, each segment is a raw `div` (not `Progress`)
 to avoid flush-gap issues in stacked layout:
 
 ```tsx
@@ -792,14 +792,14 @@ export default function LoginPage() {
 }
 ```
 
-No `'use client'`. No layout file in `(auth)` — inherits root layout only.
+No `'use client'`. No layout file in `(auth)` - inherits root layout only.
 
 
 ---
 
 ## Data Models
 
-All types are defined in `apps/admin/src/lib/financial.ts` (Phase 1 — already complete).
+All types are defined in `apps/admin/src/lib/financial.ts` (Phase 1 - already complete).
 Phase 2 components consume these types as read-only props.
 
 ```typescript
@@ -822,7 +822,7 @@ type LeadStatusCount = { status: string; count: number }
 
 ### Allocation Constant
 
-Defined in `allocation-bar.tsx`. Static — percentages never change at runtime.
+Defined in `allocation-bar.tsx`. Static - percentages never change at runtime.
 
 ```typescript
 const ALLOCATIONS = [
@@ -873,7 +873,7 @@ type NavLinkProps = { href: string; label: string; icon?: React.ReactNode }
 ## Correctness Properties
 
 *A property is a characteristic or behavior that should hold true across all valid
-executions of a system — essentially, a formal statement about what the system should do.
+executions of a system - essentially, a formal statement about what the system should do.
 Properties serve as the bridge between human-readable specifications and machine-verifiable
 correctness guarantees.*
 
@@ -914,7 +914,7 @@ throw.
 ### Property 5: Allocation percentages sum to 100
 
 The `ALLOCATIONS` constant has exactly four entries whose `pct` values sum to 100.
-This is a static invariant — the constant never changes at runtime.
+This is a static invariant - the constant never changes at runtime.
 
 **Validates: Requirements 6.1, 17.6**
 
@@ -942,7 +942,7 @@ string `"{label}: {formatZAR(amount)} ({pct}%)"`.
 
 `dashboard/page.tsx` uses `Promise.all` with no try/catch. Any rejection from
 `getFinancialSummary`, `getDivisionRevenue`, or `getLeadCounts` propagates to the
-nearest Next.js error boundary. In Phase 2 there is no `error.tsx` — the default Next.js
+nearest Next.js error boundary. In Phase 2 there is no `error.tsx` - the default Next.js
 error page is shown. Phase 9 adds `error.tsx` with `toast()` from sonner.
 
 ### Empty Arrays
@@ -977,7 +977,7 @@ export function proxy(request: NextRequest) {
 ### Bar Width Edge Cases
 
 `DivisionRevenue` computes `max` only when `divisions.length > 0` (guarded by the empty
-check). `LeadsSummary` computes `total` as `leads.reduce(...)` — if all counts are 0,
+check). `LeadsSummary` computes `total` as `leads.reduce(...)` - if all counts are 0,
 `total` is 0 and bar widths are 0 (no division-by-zero since `Progress value={0}` is
 valid).
 
@@ -1043,7 +1043,7 @@ import '@testing-library/jest-dom'
 
 Each property test must include a comment referencing the design property:
 
-**Property 1 — formatZAR output correctness**
+**Property 1 - formatZAR output correctness**
 ```typescript
 // Feature: dashboard-ui, Property 1: formatZAR output correctness
 fc.assert(fc.property(
@@ -1056,7 +1056,7 @@ fc.assert(fc.property(
 ))
 ```
 
-**Property 2 — Proportional bar width invariant**
+**Property 2 - Proportional bar width invariant**
 ```typescript
 // Feature: dashboard-ui, Property 2: Proportional bar width invariant
 fc.assert(fc.property(
@@ -1070,7 +1070,7 @@ fc.assert(fc.property(
 ))
 ```
 
-**Property 3 — Array length preservation**
+**Property 3 - Array length preservation**
 ```typescript
 // Feature: dashboard-ui, Property 3: Array length preservation
 fc.assert(fc.property(
@@ -1083,7 +1083,7 @@ fc.assert(fc.property(
 ))
 ```
 
-**Property 4 — Empty state rendering**
+**Property 4 - Empty state rendering**
 ```typescript
 // Feature: dashboard-ui, Property 4: Empty state rendering
 it('DivisionRevenue renders empty state for empty array', () => {
@@ -1096,7 +1096,7 @@ it('LeadsSummary renders empty state for empty array', () => {
 })
 ```
 
-**Property 5 — Allocation percentages sum to 100**
+**Property 5 - Allocation percentages sum to 100**
 ```typescript
 // Feature: dashboard-ui, Property 5: Allocation percentages sum to 100
 it('ALLOCATIONS pct values sum to 100', () => {
@@ -1105,7 +1105,7 @@ it('ALLOCATIONS pct values sum to 100', () => {
 })
 ```
 
-**Property 6 — Proxy cookie check**
+**Property 6 - Proxy cookie check**
 ```typescript
 // Feature: dashboard-ui, Property 6: Proxy cookie check
 fc.assert(fc.property(
@@ -1123,7 +1123,7 @@ fc.assert(fc.property(
 ))
 ```
 
-**Property 7 — AllocationTooltipBar tooltip content**
+**Property 7 - AllocationTooltipBar tooltip content**
 ```typescript
 // Feature: dashboard-ui, Property 7: AllocationTooltipBar tooltip content
 fc.assert(fc.property(
@@ -1192,7 +1192,7 @@ The `[&>div]` selector targets the inner fill div. `bg-muted` sets the track col
 
 After running `npx shadcn@latest add sidebar-08 --cwd apps/admin`, the scaffolded file
 at `components/layout/app-sidebar.tsx` will contain placeholder nav items and a user
-footer. Customise this file directly — do not create a parallel component. The scaffolded
+footer. Customise this file directly - do not create a parallel component. The scaffolded
 `AppSidebar` export name must be preserved as it is referenced in `Admin_Layout`.
 
 ### Next.js 16 proxy.ts vs middleware.ts
@@ -1204,14 +1204,14 @@ will cause the guard to be silently ignored.
 ### Toaster in Server Layout
 
 `Toaster` from `sonner` is a client component. Importing it directly into a Server
-Component layout is valid in Next.js App Router — the framework handles the client
+Component layout is valid in Next.js App Router - the framework handles the client
 boundary at the leaf level. No wrapper component is needed.
 
 ### `(admin)` and `(auth)` Route Groups
 
 Parenthesised route groups do not appear in the URL. `(admin)/dashboard/page.tsx` is
 accessible at `/dashboard`. `(auth)/login/page.tsx` is accessible at `/login`. The
-`(auth)` group has no `layout.tsx` — it inherits the root layout only.
+`(auth)` group has no `layout.tsx` - it inherits the root layout only.
 
 ### Title Template
 

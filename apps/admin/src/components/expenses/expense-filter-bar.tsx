@@ -8,6 +8,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select'
+import { fmtMonthYear } from '@/lib/format'
 
 interface ExpenseFilterBarProps {
   divisions: { id: string; name: string }[]
@@ -99,10 +100,7 @@ export function ExpenseFilterBar({
           <SelectItem value="all">All months</SelectItem>
           {months.map((month) => (
             <SelectItem key={month} value={month}>
-              {new Date(month + '-01').toLocaleString('en-ZA', {
-                month: 'long',
-                year: 'numeric',
-              })}
+              {fmtMonthYear(month)}
             </SelectItem>
           ))}
         </SelectContent>

@@ -64,7 +64,7 @@ Financial Engine.
     - `<main className="flex-1 overflow-y-auto p-6 bg-background">`
     - _Requirements: 2.1, 2.4, 9.2, 20.1–20.4, 21.1–21.6_
 
-- [x] 4. Checkpoint — verify layout shell renders
+- [x] 4. Checkpoint - verify layout shell renders
   - Ensure all tests pass, ask the user if questions arise.
 
 - [x] 5. Build dashboard presentational components
@@ -141,7 +141,7 @@ Financial Engine.
     - **Property 4: Empty state rendering (LeadsSummary)**
     - **Validates: Requirements 8.4**
 
-- [x] 6. Checkpoint — ensure all component tests pass
+- [x] 6. Checkpoint - ensure all component tests pass
   - Ensure all tests pass, ask the user if questions arise.
 
 - [x] 7. Build dashboard page and login placeholder
@@ -163,7 +163,7 @@ Financial Engine.
   - Replace any found instances with the correct semantic token from Requirement 24
   - _Requirements: 10.8, 24.1–24.4_
 
-- [x] 9. Final checkpoint — ensure all tests pass
+- [x] 9. Final checkpoint - ensure all tests pass
   - Ensure all tests pass, ask the user if questions arise.
 
 ## Notes
@@ -172,4 +172,4 @@ Financial Engine.
 - Each task references specific requirements for traceability
 - Property tests use `fast-check` (already installed); component render tests require `@testing-library/react`
 - If `@testing-library` setup is out of scope, Properties 3, 4, and 7 can be deferred to Phase 9
-- All color tokens must come from `globals.css` semantic variables — no raw Tailwind palette utilities
+- All color tokens must come from `globals.css` semantic variables - no raw Tailwind palette utilities

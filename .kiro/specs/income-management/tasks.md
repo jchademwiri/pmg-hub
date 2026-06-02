@@ -9,19 +9,19 @@ Each layer builds on the previous; no orphaned code.
 ## Tasks
 
 - [x] 1. Add DB query helpers to `packages/db/src/queries.ts`
-  - Add `getAllIncome(filters?)` — INNER JOIN divisions, LEFT JOIN clients, optional WHERE clauses, ORDER BY date DESC
-  - Add `getIncomeById(id)` — same joins, WHERE income.id = id, returns single row or null
-  - Add `getDistinctIncomeMonths()` — SELECT DISTINCT TO_CHAR(date, 'YYYY-MM') ORDER BY 1 DESC
-  - Add `getAllDivisions()` — SELECT id, name FROM divisions ORDER BY name ASC. CHECK first: if it already exists with matching signature, skip
-  - Add `getAllClients()` — SELECT id, name, business_name FROM clients ORDER BY name ASC
+  - Add `getAllIncome(filters?)` - INNER JOIN divisions, LEFT JOIN clients, optional WHERE clauses, ORDER BY date DESC
+  - Add `getIncomeById(id)` - same joins, WHERE income.id = id, returns single row or null
+  - Add `getDistinctIncomeMonths()` - SELECT DISTINCT TO_CHAR(date, 'YYYY-MM') ORDER BY 1 DESC
+  - Add `getAllDivisions()` - SELECT id, name FROM divisions ORDER BY name ASC. CHECK first: if it already exists with matching signature, skip
+  - Add `getAllClients()` - SELECT id, name, business_name FROM clients ORDER BY name ASC
   - All five must be exported; `packages/db/src/index.ts` already re-exports via `export * from './queries'`
-  - amount column returns string from Drizzle numeric — do NOT coerce to number in the query helper
+  - amount column returns string from Drizzle numeric - do NOT coerce to number in the query helper
   - _Requirements: 8.1, 8.2, 8.3, 8.4, 8.5, 8.6_
 
   - [x] 1.1 Write property test for `getAllIncome` shape and sort order
     - **Property 1: getAllIncome returns all entries with correct shape, sorted date DESC**
     - **Validates: Requirements 1.1, 1.3, 8.1**
-    - Use `fc.array(incomeArb)` — mock DB, assert shape and descending date order
+    - Use `fc.array(incomeArb)` - mock DB, assert shape and descending date order
     - Tag: `// Feature: income-management, Property 1: getAllIncome shape + sort`
     - Minimum 100 iterations
 
@@ -63,30 +63,30 @@ Each layer builds on the previous; no orphaned code.
 - [x] 2. Implement Server Actions in `apps/admin/src/app/actions/income.ts`
   - Add `'use server'` directive at top of file
   - Define `IncomeSchema` with Zod: date (string min 1), divisionId (uuid), clientId (uuid optional), description (string optional), amount (coerce number positive)
-  - Implement `createIncome(formData)` — normalize `clientId = ''` → delete key, parse, insert, `revalidatePath('/income')` + `revalidatePath('/dashboard')` inside try before `return {}`
-  - Implement `updateIncome(id, formData)` — same normalization + parse, update with `updatedAt: new Date()`, revalidate inside try
-  - Implement `deleteIncome(id)` — no FormData, delete by id, revalidate inside try
-  - All three return `Promise<{ error?: string }>` — never throw
+  - Implement `createIncome(formData)` - normalize `clientId = ''` → delete key, parse, insert, `revalidatePath('/income')` + `revalidatePath('/dashboard')` inside try before `return {}`
+  - Implement `updateIncome(id, formData)` - same normalization + parse, update with `updatedAt: new Date()`, revalidate inside try
+  - Implement `deleteIncome(id)` - no FormData, delete by id, revalidate inside try
+  - All three return `Promise<{ error?: string }>` - never throw
   - `revalidatePath` MUST only be called inside try block on success, never in catch
-  - amount stored as `String(parsed.amount)` — never raw JS number
+  - amount stored as `String(parsed.amount)` - never raw JS number
   - _Requirements: 3.5, 3.6, 3.7, 4.7, 4.8, 5.3, 5.6, 6.1, 6.2, 6.3, 6.4, 9.1, 9.2, 10.1, 10.2, 10.3, 10.4, 10.5, 11.1_
 
   - [x] 2.1 Write property test for `createIncome` round-trip
-    - **Property 5: createIncome round-trip — valid input succeeds and entry is retrievable**
+    - **Property 5: createIncome round-trip - valid input succeeds and entry is retrievable**
     - **Validates: Requirements 3.5, 3.7, 6.4**
     - Use `fc.record({ date, divisionId: fc.uuid(), amount: fc.float({ min: 0.01 }), ... })`
     - Tag: `// Feature: income-management, Property 5: createIncome round-trip`
     - Minimum 100 iterations
 
   - [x] 2.2 Write property test for `updateIncome` round-trip
-    - **Property 6: updateIncome round-trip — valid input succeeds and changes are reflected**
+    - **Property 6: updateIncome round-trip - valid input succeeds and changes are reflected**
     - **Validates: Requirements 4.7**
     - Use existing entry + `fc.record(...)` for new values; assert getAllIncome reflects update
     - Tag: `// Feature: income-management, Property 6: updateIncome round-trip`
     - Minimum 100 iterations
 
   - [x] 2.3 Write property test for `deleteIncome` round-trip
-    - **Property 7: deleteIncome round-trip — deleted entry is no longer retrievable**
+    - **Property 7: deleteIncome round-trip - deleted entry is no longer retrievable**
     - **Validates: Requirements 5.3, 5.4**
     - Assert `getIncomeById(id)` returns null after `deleteIncome(id)` returns `{}`
     - Tag: `// Feature: income-management, Property 7: deleteIncome round-trip`
@@ -102,7 +102,7 @@ Each layer builds on the previous; no orphaned code.
   - [x] 2.5 Write property test for invalid input rejection
     - **Property 10: Invalid input to createIncome/updateIncome always returns an error**
     - **Validates: Requirements 3.6, 4.8, 9.2, 10.2, 10.3**
-    - Use `fc.oneof(invalidAmountArb, invalidUuidArb, missingFieldArb)` — assert `{ error: <non-empty string> }` and no DB write
+    - Use `fc.oneof(invalidAmountArb, invalidUuidArb, missingFieldArb)` - assert `{ error: <non-empty string> }` and no DB write
     - Tag: `// Feature: income-management, Property 10: Invalid input returns error`
     - Minimum 100 iterations
 
@@ -119,18 +119,18 @@ Each layer builds on the previous; no orphaned code.
     - `IncomeSchema` accepts `clientId = undefined`
     - `createIncome` with `amount = 0` returns `{ error }`
     - `createIncome` with `amount = -1` returns `{ error }`
-    - `deleteIncome` returns `{ error }` when DB throws (FK constraint or connection error) — verifies R5.6
-    - `deleteIncome` calls `revalidatePath('/income')` and `revalidatePath('/dashboard')` on success — verifies R11.1
+    - `deleteIncome` returns `{ error }` when DB throws (FK constraint or connection error) - verifies R5.6
+    - `deleteIncome` calls `revalidatePath('/income')` and `revalidatePath('/dashboard')` on success - verifies R11.1
     - _Requirements: 3.6, 5.6, 6.2, 6.3, 9.2, 10.2, 10.3, 11.1_
 
-- [x] 3. Checkpoint — Ensure all tests pass
+- [x] 3. Checkpoint - Ensure all tests pass
   - Ensure all tests pass, ask the user if questions arise.
 
 - [x] 4. Implement `FilterBar` client component at `apps/admin/src/components/income/filter-bar.tsx`
   - `'use client'` directive
   - Props: `divisions`, `months`, `currentDivisionId?`, `currentMonth?`
   - Two shadcn `<Select>` controls: division (default "All divisions") and month (default "All months")
-  - Month options display as human-readable labels via `new Date(month + '-01').toLocaleString('en-ZA', { month: 'long', year: 'numeric' })` — option value stays YYYY-MM
+  - Month options display as human-readable labels via `new Date(month + '-01').toLocaleString('en-ZA', { month: 'long', year: 'numeric' })` - option value stays YYYY-MM
   - On select change: build new URLSearchParams, call `router.push('/income?' + params.toString())`
   - _Requirements: 2.1, 2.2, 2.3, 2.4, 2.5, 7.1, 7.2_
 
@@ -154,11 +154,11 @@ Each layer builds on the previous; no orphaned code.
   - Props: `entries: IncomeRow[]`, `deleteAction`
   - State: `pendingDeleteId: string | null`
   - Renders shadcn `<Table>` with columns: Date | Division | Client | Description | Amount | Actions
-  - Edit action: `<Link href={'/income/' + entry.id}>` with Pencil icon button — verifies R4.1
+  - Edit action: `<Link href={'/income/' + entry.id}>` with Pencil icon button - verifies R4.1
   - Delete action: trash icon sets `pendingDeleteId = entry.id`; when `pendingDeleteId === entry.id` show "Confirm" + "Cancel" buttons
   - "Confirm": calls `deleteAction(id)`, on `result.error` shows `toast.error(result.error)` via sonner
   - "Cancel": sets `pendingDeleteId = null`
-  - No optimistic removal — page revalidation handles refresh on success
+  - No optimistic removal - page revalidation handles refresh on success
   - _Requirements: 1.2, 1.3, 4.1, 5.1, 5.2, 5.4, 5.5, 5.6_
 
   - [x] 6.1 Write unit tests for `IncomeTable`
@@ -180,7 +180,7 @@ Each layer builds on the previous; no orphaned code.
   - Await `searchParams`, then `Promise.all([getAllIncome({ divisionId, month }), getAllDivisions(), getAllClients(), getDistinctIncomeMonths()])`
   - Compute `runningTotal = entries.reduce((sum, e) => sum + Number(e.amount), 0)`
   - Render: page header + `formatZAR(runningTotal)`, `<FilterBar>`, `<IncomeAddForm createAction={createIncome}>`, `<IncomeTable deleteAction={deleteIncome}>` or empty-state message when `entries.length === 0`
-  - Filter values read exclusively from `searchParams` — no client-side state
+  - Filter values read exclusively from `searchParams` - no client-side state
   - _Requirements: 1.1, 1.4, 1.5, 2.1, 2.2, 2.5, 2.6, 2.7, 2.8, 3.1, 3.3, 3.4, 7.1, 7.3, 7.4_
 
   - [x] 8.1 Write property test for running total computation
@@ -202,14 +202,14 @@ Each layer builds on the previous; no orphaned code.
   - Render: back link to `/income` + `<IncomeEditForm updateAction={updateIncome.bind(null, id)}>`
   - _Requirements: 4.2, 4.3, 4.5, 4.6, 4.9_
 
-- [x] 10. Final checkpoint — Ensure all tests pass
+- [x] 10. Final checkpoint - Ensure all tests pass
   - Ensure all tests pass, ask the user if questions arise.
 
 ## Notes
 
 - Tasks marked with `*` are optional and can be skipped for faster MVP
 - Each task references specific requirements for traceability
-- `getAllDivisions` must be checked for existence before adding — do not duplicate
+- `getAllDivisions` must be checked for existence before adding - do not duplicate
 - Property tests use fast-check with minimum 100 iterations each
-- Test file location: `apps/admin/src/__tests__/income.test.ts` — follow pattern from `financial.test.ts`
+- Test file location: `apps/admin/src/__tests__/income.test.ts` - follow pattern from `financial.test.ts`
 - `revalidatePath` is only ever called inside the try block on success, never in catch

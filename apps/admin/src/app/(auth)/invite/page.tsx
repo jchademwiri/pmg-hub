@@ -46,7 +46,7 @@ export default async function InvitePage({ searchParams }: InvitePageProps) {
 
   // Check if already accepted
   if (invitation.acceptedAt) {
-    // Already accepted — just redirect to login
+    // Already accepted - just redirect to login
     redirect('/login')
   }
 
@@ -64,7 +64,7 @@ export default async function InvitePage({ searchParams }: InvitePageProps) {
     )
   }
 
-  // Valid invitation — show the accept UI which triggers the magic link sign-in
+  // Valid invitation - show the accept UI which triggers the magic link sign-in
   return (
     <div className="flex min-h-svh flex-col items-center justify-center gap-6 bg-muted p-6 md:p-10">
       <div className="flex w-full max-w-sm flex-col gap-6">
