@@ -93,18 +93,13 @@ export function InvoiceFormClient({
   const [terms, setTerms] = useState(initialData?.terms ?? '');
   const [lineItems, setLineItems] = useState<LineItemFormRow[]>(
     initialData?.lineItems.length
-      ? initialData.lineItems.map((li) => {
-          const matched = activeItems.find(
-            (item) => item.name === li.description || (item.description ?? '') === li.description,
-          );
-          return {
-            id: crypto.randomUUID(),
-            itemId: matched?.id ?? '',
-            description: li.description,
-            quantity: li.quantity,
-            unitPrice: li.unitPrice,
-          };
-        })
+      ? initialData.lineItems.map((li) => ({
+          id: crypto.randomUUID(),
+          itemId: li.itemId ?? '',
+          description: li.description,
+          quantity: li.quantity,
+          unitPrice: li.unitPrice,
+        }))
       : [blankRow()],
   );
   const [vatEnabled, setVatEnabled] = useState(initialData?.vatEnabled ?? false);
@@ -165,10 +160,6 @@ export function InvoiceFormClient({
       setError('A client is required.');
       return;
     }
-    if (lineItems.some((r) => !r.itemId)) {
-      setError('All line items must have an item selected from the catalogue.');
-      return;
-    }
     if (lineItems.some((r) => !r.unitPrice || parseFloat(r.unitPrice) < 0)) {
       setError('All line items must have a valid unit price.');
       return;
@@ -183,7 +174,7 @@ export function InvoiceFormClient({
       notes: notes || null,
       terms: terms || null,
       lineItems: lineItems.map((r) => ({
-        itemId: r.itemId,
+        itemId: r.itemId || null,
         description: r.description,
         quantity: parseFloat(r.quantity) || 1,
         unitPrice: parseFloat(r.unitPrice) || 0,

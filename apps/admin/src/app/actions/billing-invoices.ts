@@ -93,10 +93,11 @@ export async function createInvoice(
     if (!inserted) return { error: 'Failed to create invoice.' };
 
     await db.insert(billingLineItems).values(
-      lineItems.map((item: { itemId: string; description: string; quantity: number; unitPrice: number; vatRate: number }, i: number) => ({
+      lineItems.map((item: { itemId?: string | null; description: string; quantity: number; unitPrice: number; vatRate: number }, i: number) => ({
         documentType: 'invoice' as const,
         documentId: inserted.id,
         sortOrder: i,
+        itemId: item.itemId ?? null,
         description: item.description,
         quantity: String(item.quantity),
         unitPrice: String(item.unitPrice.toFixed(2)),
@@ -206,10 +207,11 @@ export async function updateInvoice(
       .where(eq(invoices.id, id));
 
     await db.insert(billingLineItems).values(
-      lineItems.map((item: { itemId: string; description: string; quantity: number; unitPrice: number; vatRate: number }, i: number) => ({
+      lineItems.map((item: { itemId?: string | null; description: string; quantity: number; unitPrice: number; vatRate: number }, i: number) => ({
         documentType: 'invoice' as const,
         documentId: id,
         sortOrder: i,
+        itemId: item.itemId ?? null,
         description: item.description,
         quantity: String(item.quantity),
         unitPrice: String(item.unitPrice.toFixed(2)),
@@ -313,6 +315,7 @@ export async function convertQuoteToInvoice(
           documentType: 'invoice' as const,
           documentId: inserted.id,
           sortOrder: li.sortOrder,
+          itemId: li.itemId,
           description: li.description,
           quantity: li.quantity,
           unitPrice: li.unitPrice,

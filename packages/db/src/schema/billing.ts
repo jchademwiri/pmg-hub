@@ -193,6 +193,7 @@ export const billingLineItems = pgTable(
     // NO FK - polymorphic reference: points to quotations.id or invoices.id
     // depending on document_type. Application layer enforces integrity.
     documentId: uuid("document_id").notNull(),
+    itemId: uuid("item_id").references(() => billingItems.id, { onDelete: "set null" }),
     sortOrder: integer("sort_order").notNull().default(0),
     description: text("description").notNull(),
     quantity: numeric("quantity", { precision: 10, scale: 2 }).notNull(),
@@ -205,6 +206,7 @@ export const billingLineItems = pgTable(
     check("billing_line_items_quantity_positive", sql`${t.quantity} > 0`),
     check("billing_line_items_unit_price_non_negative", sql`"unit_price" >= 0`),
     index("billing_line_items_document_idx").on(t.documentType, t.documentId),
+    index("billing_line_items_item_id_idx").on(t.itemId),
   ],
 );
 
