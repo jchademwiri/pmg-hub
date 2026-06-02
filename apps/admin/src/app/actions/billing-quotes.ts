@@ -8,6 +8,7 @@ import { isPeriodClosed, getMinAllowedDate, getMinDateErrorMessage } from '@/lib
 import { CreateQuotationSchema, type CreateQuotationInput } from './billing-schema';
 
 let hasQuotationReferenceColumnPromise: Promise<boolean> | null = null;
+let hasBillingLineItemItemIdColumnPromise: Promise<boolean> | null = null;
 
 async function hasQuotationReferenceColumn() {
   if (!hasQuotationReferenceColumnPromise) {
@@ -23,11 +24,62 @@ async function hasQuotationReferenceColumn() {
       `)
       .then((res) => {
         const rows = (res as { rows?: Array<{ exists?: boolean }> }).rows;
-        return Boolean(rows?.[0]?.exists);
+        const exists = Boolean(rows?.[0]?.exists);
+        if (!exists) hasQuotationReferenceColumnPromise = null;
+        return exists;
       })
-      .catch(() => false);
+      .catch(() => {
+        hasQuotationReferenceColumnPromise = null;
+        return false;
+      });
   }
   return hasQuotationReferenceColumnPromise;
+}
+
+async function hasBillingLineItemItemIdColumn() {
+  if (!hasBillingLineItemItemIdColumnPromise) {
+    hasBillingLineItemItemIdColumnPromise = getDb()
+      .execute(`
+        SELECT EXISTS (
+          SELECT 1
+          FROM information_schema.columns
+          WHERE table_schema = 'public'
+            AND table_name = 'billing_line_items'
+            AND column_name = 'item_id'
+        ) AS "exists"
+      `)
+      .then((res) => {
+        const rows = (res as { rows?: Array<{ exists?: boolean }> }).rows;
+        const exists = Boolean(rows?.[0]?.exists);
+        if (!exists) hasBillingLineItemItemIdColumnPromise = null;
+        return exists;
+      })
+      .catch(() => {
+        hasBillingLineItemItemIdColumnPromise = null;
+        return false;
+      });
+  }
+  return hasBillingLineItemItemIdColumnPromise;
+}
+
+function lineItemInsertValues(
+  item: { itemId?: string | null; description: string; quantity: number; unitPrice: number },
+  documentType: 'quote',
+  documentId: string,
+  sortOrder: number,
+  includeItemId: boolean,
+) {
+  return {
+    documentType,
+    documentId,
+    sortOrder,
+    ...(includeItemId ? { itemId: item.itemId ?? null } : {}),
+    description: item.description,
+    quantity: String(item.quantity),
+    unitPrice: String(item.unitPrice.toFixed(2)),
+    vatRate: '0',
+    lineTotal: String((item.quantity * item.unitPrice).toFixed(2)),
+  };
 }
 
 // ── Shared discount + totals helper ──────────────────────────────────────────
@@ -111,6 +163,7 @@ export async function createQuotation(
 
     const db = getDb();
     const includeReference = await hasQuotationReferenceColumn();
+    const includeLineItemItemId = await hasBillingLineItemItemIdColumn();
 
     const [inserted] = await db
       .insert(quotations)
@@ -139,16 +192,13 @@ export async function createQuotation(
 
     // Insert line items - vatRate always 0 (VAT is document-level)
     await db.insert(billingLineItems).values(
-      lineItems.map((item: { itemId: string; description: string; quantity: number; unitPrice: number; vatRate: number }, i: number) => ({
-        documentType: 'quote' as const,
-        documentId: inserted.id,
-        sortOrder: i,
-        description: item.description,
-        quantity: String(item.quantity),
-        unitPrice: String(item.unitPrice.toFixed(2)),
-        vatRate: '0',
-        lineTotal: String((item.quantity * item.unitPrice).toFixed(2)),
-      })),
+      lineItems.map((item, i) => lineItemInsertValues(
+        item,
+        'quote',
+        inserted.id,
+        i,
+        includeLineItemItemId,
+      )),
     );
 
     revalidatePath('/billing/quotes');
@@ -192,6 +242,7 @@ export async function updateQuotation(
 
     const db = getDb();
     const includeReference = await hasQuotationReferenceColumn();
+    const includeLineItemItemId = await hasBillingLineItemItemIdColumn();
     const [existing] = await db
       .select({ id: quotations.id, status: quotations.status, quoteDate: quotations.quoteDate })
       .from(quotations)
@@ -250,16 +301,13 @@ export async function updateQuotation(
       .where(eq(quotations.id, id));
 
     await db.insert(billingLineItems).values(
-      lineItems.map((item: { itemId: string; description: string; quantity: number; unitPrice: number; vatRate: number }, i: number) => ({
-        documentType: 'quote' as const,
-        documentId: id,
-        sortOrder: i,
-        description: item.description,
-        quantity: String(item.quantity),
-        unitPrice: String(item.unitPrice.toFixed(2)),
-        vatRate: '0',
-        lineTotal: String((item.quantity * item.unitPrice).toFixed(2)),
-      })),
+      lineItems.map((item, i) => lineItemInsertValues(
+        item,
+        'quote',
+        id,
+        i,
+        includeLineItemItemId,
+      )),
     );
 
     revalidatePath('/billing/quotes');

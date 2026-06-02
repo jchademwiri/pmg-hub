@@ -22,7 +22,7 @@ import { formatZAR } from '@/lib/format';
 
 export interface LineItemFormRow {
   id: string;
-  itemId: string;        // required - must select from catalogue
+  itemId: string;        // optional catalogue item link
   description: string;
   quantity: string;
   unitPrice: string;
@@ -88,20 +88,6 @@ export function BillingLineItemsForm({ value, onChange, activeItems }: BillingLi
     onChange(value.filter((row) => row.id !== id));
   }
 
-  if (activeItems.length === 0) {
-    return (
-      <div className="rounded-md border border-dashed p-6 text-center">
-        <p className="text-sm text-muted-foreground">
-          No active items found.{' '}
-          <a href="/billing/items/new" className="underline hover:text-foreground">
-            Create an item
-          </a>{' '}
-          before adding line items.
-        </p>
-      </div>
-    );
-  }
-
   return (
     <div className="flex flex-col gap-3">
       <Table>
@@ -123,8 +109,8 @@ export function BillingLineItemsForm({ value, onChange, activeItems }: BillingLi
                   value={row.itemId}
                   onValueChange={(itemId) => selectItem(row.id, itemId)}
                 >
-                  <SelectTrigger className={`w-[200px] ${!row.itemId ? 'border-destructive/50' : ''}`}>
-                    <SelectValue placeholder="Select an item…" />
+                  <SelectTrigger className="w-[200px]">
+                    <SelectValue placeholder="Optional item…" />
                   </SelectTrigger>
                   <SelectContent>
                     {activeItems.map((item) => (

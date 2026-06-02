@@ -8,6 +8,54 @@ import { isPeriodClosed, getMinAllowedDate, getMinDateErrorMessage } from '@/lib
 import { getSASTParts, getSASTToday } from '@/lib/format';
 import { CreateInvoiceSchema, type CreateInvoiceInput } from './billing-schema';
 
+let hasBillingLineItemItemIdColumnPromise: Promise<boolean> | null = null;
+
+async function hasBillingLineItemItemIdColumn() {
+  if (!hasBillingLineItemItemIdColumnPromise) {
+    hasBillingLineItemItemIdColumnPromise = getDb()
+      .execute(`
+        SELECT EXISTS (
+          SELECT 1
+          FROM information_schema.columns
+          WHERE table_schema = 'public'
+            AND table_name = 'billing_line_items'
+            AND column_name = 'item_id'
+        ) AS "exists"
+      `)
+      .then((res) => {
+        const rows = (res as { rows?: Array<{ exists?: boolean }> }).rows;
+        const exists = Boolean(rows?.[0]?.exists);
+        if (!exists) hasBillingLineItemItemIdColumnPromise = null;
+        return exists;
+      })
+      .catch(() => {
+        hasBillingLineItemItemIdColumnPromise = null;
+        return false;
+      });
+  }
+  return hasBillingLineItemItemIdColumnPromise;
+}
+
+function lineItemInsertValues(
+  item: { itemId?: string | null; description: string; quantity: number; unitPrice: number },
+  documentType: 'invoice',
+  documentId: string,
+  sortOrder: number,
+  includeItemId: boolean,
+) {
+  return {
+    documentType,
+    documentId,
+    sortOrder,
+    ...(includeItemId ? { itemId: item.itemId ?? null } : {}),
+    description: item.description,
+    quantity: String(item.quantity),
+    unitPrice: String(item.unitPrice.toFixed(2)),
+    vatRate: '0',
+    lineTotal: String((item.quantity * item.unitPrice).toFixed(2)),
+  };
+}
+
 // ── Shared totals helper ──────────────────────────────────────────────────────
 
 function calcTotals(
@@ -66,6 +114,7 @@ export async function createInvoice(
     const documentNumber = await getNextDocumentNumber(divisionId, 'invoice', year);
 
     const db = getDb();
+    const includeLineItemItemId = await hasBillingLineItemItemIdColumn();
 
     const [inserted] = await db
       .insert(invoices)
@@ -93,16 +142,13 @@ export async function createInvoice(
     if (!inserted) return { error: 'Failed to create invoice.' };
 
     await db.insert(billingLineItems).values(
-      lineItems.map((item: { itemId: string; description: string; quantity: number; unitPrice: number; vatRate: number }, i: number) => ({
-        documentType: 'invoice' as const,
-        documentId: inserted.id,
-        sortOrder: i,
-        description: item.description,
-        quantity: String(item.quantity),
-        unitPrice: String(item.unitPrice.toFixed(2)),
-        vatRate: '0',
-        lineTotal: String((item.quantity * item.unitPrice).toFixed(2)),
-      })),
+      lineItems.map((item, i) => lineItemInsertValues(
+        item,
+        'invoice',
+        inserted.id,
+        i,
+        includeLineItemItemId,
+      )),
     );
 
     revalidatePath('/billing/invoices');
@@ -145,6 +191,7 @@ export async function updateInvoice(
     }
 
     const db = getDb();
+    const includeLineItemItemId = await hasBillingLineItemItemIdColumn();
     const [existing] = await db
       .select({ id: invoices.id, status: invoices.status, invoiceDate: invoices.invoiceDate })
       .from(invoices)
@@ -206,16 +253,13 @@ export async function updateInvoice(
       .where(eq(invoices.id, id));
 
     await db.insert(billingLineItems).values(
-      lineItems.map((item: { itemId: string; description: string; quantity: number; unitPrice: number; vatRate: number }, i: number) => ({
-        documentType: 'invoice' as const,
-        documentId: id,
-        sortOrder: i,
-        description: item.description,
-        quantity: String(item.quantity),
-        unitPrice: String(item.unitPrice.toFixed(2)),
-        vatRate: '0',
-        lineTotal: String((item.quantity * item.unitPrice).toFixed(2)),
-      })),
+      lineItems.map((item, i) => lineItemInsertValues(
+        item,
+        'invoice',
+        id,
+        i,
+        includeLineItemItemId,
+      )),
     );
 
     revalidatePath('/billing/invoices');
@@ -255,9 +299,19 @@ export async function convertQuoteToInvoice(
       return { error: getMinDateErrorMessage(minDate) };
     }
 
+    const includeLineItemItemId = await hasBillingLineItemItemIdColumn();
+
     // Load quote line items
     const quoteLineItems = await db
-      .select()
+      .select({
+        sortOrder: billingLineItems.sortOrder,
+        ...(includeLineItemItemId ? { itemId: billingLineItems.itemId } : {}),
+        description: billingLineItems.description,
+        quantity: billingLineItems.quantity,
+        unitPrice: billingLineItems.unitPrice,
+        vatRate: billingLineItems.vatRate,
+        lineTotal: billingLineItems.lineTotal,
+      })
       .from(billingLineItems)
       .where(
         and(
@@ -313,6 +367,7 @@ export async function convertQuoteToInvoice(
           documentType: 'invoice' as const,
           documentId: inserted.id,
           sortOrder: li.sortOrder,
+          ...(includeLineItemItemId ? { itemId: li.itemId ?? null } : {}),
           description: li.description,
           quantity: li.quantity,
           unitPrice: li.unitPrice,

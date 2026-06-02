@@ -2,7 +2,7 @@
 
 import { z } from 'zod';
 import { revalidatePath } from 'next/cache';
-import { getDb, billingItems, billingLineItems, eq, and } from '@pmg/db';
+import { getDb, billingItems, billingLineItems, eq, and, or } from '@pmg/db';
 import { getSessionOrRedirect } from '@/lib/auth';
 
 // ── Schema ────────────────────────────────────────────────────────────────────
@@ -17,6 +17,34 @@ const ItemSchema = z.object({
 });
 
 type ItemInput = z.infer<typeof ItemSchema>;
+
+let hasBillingLineItemItemIdColumnPromise: Promise<boolean> | null = null;
+
+async function hasBillingLineItemItemIdColumn() {
+  if (!hasBillingLineItemItemIdColumnPromise) {
+    hasBillingLineItemItemIdColumnPromise = getDb()
+      .execute(`
+        SELECT EXISTS (
+          SELECT 1
+          FROM information_schema.columns
+          WHERE table_schema = 'public'
+            AND table_name = 'billing_line_items'
+            AND column_name = 'item_id'
+        ) AS "exists"
+      `)
+      .then((res) => {
+        const rows = (res as { rows?: Array<{ exists?: boolean }> }).rows;
+        const exists = Boolean(rows?.[0]?.exists);
+        if (!exists) hasBillingLineItemItemIdColumnPromise = null;
+        return exists;
+      })
+      .catch(() => {
+        hasBillingLineItemItemIdColumnPromise = null;
+        return false;
+      });
+  }
+  return hasBillingLineItemItemIdColumnPromise;
+}
 
 // ── createItem ────────────────────────────────────────────────────────────────
 
@@ -137,19 +165,28 @@ export async function deleteItem(id: string): Promise<{ error?: string }> {
 
     const db = getDb();
 
-    // Check if item is referenced in any line items (by name match - no FK)
+    const hasItemId = await hasBillingLineItemItemIdColumn();
+    const [item] = hasItemId
+      ? []
+      : await db
+          .select({ name: billingItems.name, description: billingItems.description })
+          .from(billingItems)
+          .where(eq(billingItems.id, id));
+
+    // Check if item is referenced in any invoice line items. Fall back to legacy
+    // description matching until the item_id migration has been applied.
     const [usedInInvoice] = await db
       .select({ id: billingLineItems.id })
       .from(billingLineItems)
       .where(
         and(
           eq(billingLineItems.documentType, 'invoice'),
-          eq(billingLineItems.description, (
-            await db
-              .select({ name: billingItems.name })
-              .from(billingItems)
-              .where(eq(billingItems.id, id))
-          )[0]?.name ?? ''),
+          hasItemId
+            ? eq(billingLineItems.itemId, id)
+            : or(
+                eq(billingLineItems.description, item?.name ?? ''),
+                eq(billingLineItems.description, item?.description ?? ''),
+              ),
         ),
       )
       .limit(1);
