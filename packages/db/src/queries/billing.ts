@@ -587,7 +587,30 @@ export async function getQuotationById(id: string): Promise<QuotationDetail | nu
   const row = rows[0] as QuotationRow;
 
   // Fetch line items sorted by sort_order, keeping the saved description and catalogue name separate.
-  const lineItems = await getLineItemsForDocument("quote", id);
+  const lineItems = await db
+    .select({
+      id: billingLineItems.id,
+      documentType: billingLineItems.documentType,
+      documentId: billingLineItems.documentId,
+      itemId: billingLineItems.itemId,
+      itemName: billingItems.name,
+      sortOrder: billingLineItems.sortOrder,
+      description: billingLineItems.description,
+      quantity: billingLineItems.quantity,
+      unitPrice: billingLineItems.unitPrice,
+      vatRate: billingLineItems.vatRate,
+      lineTotal: billingLineItems.lineTotal,
+      createdAt: billingLineItems.createdAt,
+    })
+    .from(billingLineItems)
+    .leftJoin(billingItems, eq(billingLineItems.itemId, billingItems.id))
+    .where(
+      and(
+        eq(billingLineItems.documentType, "quote"),
+        eq(billingLineItems.documentId, id),
+      ),
+    )
+    .orderBy(asc(billingLineItems.sortOrder));
 
   // Reverse lookup: find the invoice that was converted from this quote
   const convertedInvoiceRows = await db
@@ -653,7 +676,30 @@ export async function getInvoiceById(id: string): Promise<InvoiceDetail | null> 
   if (rows.length === 0) return null;
   const row = rows[0] as InvoiceRow;
 
-  const lineItems = await getLineItemsForDocument("invoice", id);
+  const lineItems = await db
+    .select({
+      id: billingLineItems.id,
+      documentType: billingLineItems.documentType,
+      documentId: billingLineItems.documentId,
+      itemId: billingLineItems.itemId,
+      itemName: billingItems.name,
+      sortOrder: billingLineItems.sortOrder,
+      description: billingLineItems.description,
+      quantity: billingLineItems.quantity,
+      unitPrice: billingLineItems.unitPrice,
+      vatRate: billingLineItems.vatRate,
+      lineTotal: billingLineItems.lineTotal,
+      createdAt: billingLineItems.createdAt,
+    })
+    .from(billingLineItems)
+    .leftJoin(billingItems, eq(billingLineItems.itemId, billingItems.id))
+    .where(
+      and(
+        eq(billingLineItems.documentType, "invoice"),
+        eq(billingLineItems.documentId, id),
+      ),
+    )
+    .orderBy(asc(billingLineItems.sortOrder));
 
   return {
     ...row,
@@ -966,12 +1012,7 @@ export async function getItemById(id: string): Promise<BillingItemDetail | null>
     .where(
       and(
         eq(billingLineItems.documentType, "invoice"),
-        hasItemId
-          ? eq(billingLineItems.itemId, id)
-          : or(
-              eq(billingLineItems.description, item.name),
-              eq(billingLineItems.description, item.description ?? ""),
-            ),
+        eq(billingLineItems.itemId, id),
       ),
     );
 
@@ -982,12 +1023,7 @@ export async function getItemById(id: string): Promise<BillingItemDetail | null>
     .where(
       and(
         eq(billingLineItems.documentType, "quote"),
-        hasItemId
-          ? eq(billingLineItems.itemId, id)
-          : or(
-              eq(billingLineItems.description, item.name),
-              eq(billingLineItems.description, item.description ?? ""),
-            ),
+        eq(billingLineItems.itemId, id),
       ),
     );
 

@@ -95,13 +95,17 @@ export async function createInvoice(
     if (!inserted) return { error: 'Failed to create invoice.' };
 
     await db.insert(billingLineItems).values(
-      lineItems.map((item, i) => lineItemInsertValues(
-        item,
-        'invoice',
-        inserted.id,
-        i,
-        includeLineItemItemId,
-      )),
+      lineItems.map((item: { itemId?: string | null; description: string; quantity: number; unitPrice: number; vatRate: number }, i: number) => ({
+        documentType: 'invoice' as const,
+        documentId: inserted.id,
+        sortOrder: i,
+        itemId: item.itemId ?? null,
+        description: item.description,
+        quantity: String(item.quantity),
+        unitPrice: String(item.unitPrice.toFixed(2)),
+        vatRate: '0',
+        lineTotal: String((item.quantity * item.unitPrice).toFixed(2)),
+      })),
     );
 
     revalidatePath('/billing/invoices');
@@ -206,13 +210,17 @@ export async function updateInvoice(
       .where(eq(invoices.id, id));
 
     await db.insert(billingLineItems).values(
-      lineItems.map((item, i) => lineItemInsertValues(
-        item,
-        'invoice',
-        id,
-        i,
-        includeLineItemItemId,
-      )),
+      lineItems.map((item: { itemId?: string | null; description: string; quantity: number; unitPrice: number; vatRate: number }, i: number) => ({
+        documentType: 'invoice' as const,
+        documentId: id,
+        sortOrder: i,
+        itemId: item.itemId ?? null,
+        description: item.description,
+        quantity: String(item.quantity),
+        unitPrice: String(item.unitPrice.toFixed(2)),
+        vatRate: '0',
+        lineTotal: String((item.quantity * item.unitPrice).toFixed(2)),
+      })),
     );
 
     revalidatePath('/billing/invoices');
@@ -320,7 +328,7 @@ export async function convertQuoteToInvoice(
           documentType: 'invoice' as const,
           documentId: inserted.id,
           sortOrder: li.sortOrder,
-          ...(includeLineItemItemId ? { itemId: li.itemId ?? null } : {}),
+          itemId: li.itemId,
           description: li.description,
           quantity: li.quantity,
           unitPrice: li.unitPrice,

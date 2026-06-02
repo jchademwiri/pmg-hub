@@ -138,28 +138,14 @@ export async function deleteItem(id: string): Promise<{ error?: string }> {
 
     const db = getDb();
 
-    const hasItemId = await hasBillingLineItemItemIdColumn();
-    const [item] = hasItemId
-      ? []
-      : await db
-          .select({ name: billingItems.name, description: billingItems.description })
-          .from(billingItems)
-          .where(eq(billingItems.id, id));
-
-    // Check if item is referenced in any invoice line items. Fall back to legacy
-    // description matching until the item_id migration has been applied.
+    // Check if item is referenced in any invoice line items.
     const [usedInInvoice] = await db
       .select({ id: billingLineItems.id })
       .from(billingLineItems)
       .where(
         and(
           eq(billingLineItems.documentType, 'invoice'),
-          hasItemId
-            ? eq(billingLineItems.itemId, id)
-            : or(
-                eq(billingLineItems.description, item?.name ?? ''),
-                eq(billingLineItems.description, item?.description ?? ''),
-              ),
+          eq(billingLineItems.itemId, id),
         ),
       )
       .limit(1);
