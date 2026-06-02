@@ -603,7 +603,16 @@ export async function getQuotationById(id: string): Promise<QuotationDetail | nu
       createdAt: billingLineItems.createdAt,
     })
     .from(billingLineItems)
-    .leftJoin(billingItems, eq(billingLineItems.itemId, billingItems.id))
+    .leftJoin(
+      billingItems,
+      or(
+        eq(billingLineItems.itemId, billingItems.id),
+        and(
+          sql`${billingLineItems.itemId} IS NULL`,
+          sql`${billingLineItems.description} ILIKE ${billingItems.name} || '%'`
+        )
+      )
+    )
     .where(
       and(
         eq(billingLineItems.documentType, "quote"),
@@ -692,7 +701,16 @@ export async function getInvoiceById(id: string): Promise<InvoiceDetail | null> 
       createdAt: billingLineItems.createdAt,
     })
     .from(billingLineItems)
-    .leftJoin(billingItems, eq(billingLineItems.itemId, billingItems.id))
+    .leftJoin(
+      billingItems,
+      or(
+        eq(billingLineItems.itemId, billingItems.id),
+        and(
+          sql`${billingLineItems.itemId} IS NULL`,
+          sql`${billingLineItems.description} ILIKE ${billingItems.name} || '%'`
+        )
+      )
+    )
     .where(
       and(
         eq(billingLineItems.documentType, "invoice"),

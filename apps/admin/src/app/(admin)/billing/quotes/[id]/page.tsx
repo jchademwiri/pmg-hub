@@ -1,4 +1,5 @@
 import type { Metadata } from 'next';
+// Trigger Next.js cache reload
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import { ChevronLeft, Printer, Send, Pencil, FileDown } from 'lucide-react';
@@ -60,6 +61,7 @@ export default async function QuoteDetailPage({ params }: Props) {
       phone: quote.clientPhone ?? undefined,
     },
     lineItems: quote.lineItems.map((li) => ({
+      itemName: li.itemName,
       description: li.description,
       qty: Number(li.quantity),
       unitPrice: Number(li.unitPrice),
