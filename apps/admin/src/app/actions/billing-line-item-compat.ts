@@ -1,5 +1,3 @@
-'use server';
-
 import { getDb } from '@pmg/db';
 
 let hasBillingLineItemItemIdColumnPromise: Promise<boolean> | null = null;
