@@ -93,13 +93,26 @@ export function InvoiceFormClient({
   const [terms, setTerms] = useState(initialData?.terms ?? '');
   const [lineItems, setLineItems] = useState<LineItemFormRow[]>(
     initialData?.lineItems.length
-      ? initialData.lineItems.map((li) => ({
-          id: crypto.randomUUID(),
-          itemId: li.itemId ?? '',
-          description: li.description,
-          quantity: li.quantity,
-          unitPrice: li.unitPrice,
-        }))
+      ? initialData.lineItems.map((li) => {
+          // Try to match to a catalogue item by database itemId, fallback to description matching (exact or prefix)
+          let itemId = li.itemId ?? '';
+          if (!itemId) {
+            const matched = activeItems.find(
+              (item) =>
+                item.name === li.description ||
+                (item.description ?? '') === li.description ||
+                (li.description && li.description.startsWith(item.name)),
+            );
+            itemId = matched?.id ?? '';
+          }
+          return {
+            id: crypto.randomUUID(),
+            itemId,
+            description: li.description,
+            quantity: li.quantity,
+            unitPrice: li.unitPrice,
+          };
+        })
       : [blankRow()],
   );
   const [vatEnabled, setVatEnabled] = useState(initialData?.vatEnabled ?? false);
