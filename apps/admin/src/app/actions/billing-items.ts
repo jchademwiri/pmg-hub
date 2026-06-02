@@ -4,6 +4,7 @@ import { z } from 'zod';
 import { revalidatePath } from 'next/cache';
 import { getDb, billingItems, billingLineItems, eq, and, or } from '@pmg/db';
 import { getSessionOrRedirect } from '@/lib/auth';
+import { hasBillingLineItemItemIdColumn } from './billing-line-item-compat';
 
 // ── Schema ────────────────────────────────────────────────────────────────────
 
@@ -17,34 +18,6 @@ const ItemSchema = z.object({
 });
 
 type ItemInput = z.infer<typeof ItemSchema>;
-
-let hasBillingLineItemItemIdColumnPromise: Promise<boolean> | null = null;
-
-async function hasBillingLineItemItemIdColumn() {
-  if (!hasBillingLineItemItemIdColumnPromise) {
-    hasBillingLineItemItemIdColumnPromise = getDb()
-      .execute(`
-        SELECT EXISTS (
-          SELECT 1
-          FROM information_schema.columns
-          WHERE table_schema = 'public'
-            AND table_name = 'billing_line_items'
-            AND column_name = 'item_id'
-        ) AS "exists"
-      `)
-      .then((res) => {
-        const rows = (res as { rows?: Array<{ exists?: boolean }> }).rows;
-        const exists = Boolean(rows?.[0]?.exists);
-        if (!exists) hasBillingLineItemItemIdColumnPromise = null;
-        return exists;
-      })
-      .catch(() => {
-        hasBillingLineItemItemIdColumnPromise = null;
-        return false;
-      });
-  }
-  return hasBillingLineItemItemIdColumnPromise;
-}
 
 // ── createItem ────────────────────────────────────────────────────────────────
 
