@@ -36,9 +36,10 @@ vi.mock('@pmg/db', () => ({
   desc: vi.fn(),
   asc: vi.fn(),
   getClientsWithBillingActivity: vi.fn(),
+  getAgingReport: vi.fn().mockResolvedValue([]),
 }));
 
-import { getClientsWithBillingActivity } from '@pmg/db';
+import { getClientsWithBillingActivity, getAgingReport } from '@pmg/db';
 
 vi.mock('@/lib/auth', () => ({
   getSessionOrRedirect: vi.fn().mockResolvedValue({ user: { id: 'user-1' } }),
@@ -87,6 +88,7 @@ describe('Billing Payments and Statements Module', () => {
   beforeEach(() => {
     vi.resetAllMocks();
     vi.mocked(getSessionOrRedirect).mockResolvedValue({ user: { id: 'user-1' } } as any);
+    vi.mocked(getAgingReport).mockResolvedValue([]);
     mockIsPeriodClosed.mockResolvedValue(false);
     mockGetMinAllowedDate.mockResolvedValue('2026-01-01');
     mockGetMinDateErrorMessage.mockReturnValue('Period is closed.');
@@ -240,7 +242,7 @@ describe('Billing Payments and Statements Module', () => {
       render(page as React.ReactElement);
 
       expect(screen.getByText('Alpha Corp')).toBeInTheDocument();
-      expect(screen.getByText('R 2 000,00')).toBeInTheDocument(); // outstanding format
+      expect(screen.getAllByText('R 2 000,00')[0]).toBeInTheDocument(); // outstanding format
     });
 
     it('StatementsPage - renders empty state', async () => {

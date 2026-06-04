@@ -128,6 +128,7 @@ export type ClientStatement = {
   };
   quotes: QuotationRow[];
   invoices: InvoiceRow[];
+  outstandingInvoices: InvoiceRow[];
 };
 
 // ── Billing item types ────────────────────────────────────────────────────────
@@ -902,6 +903,46 @@ export async function getClientStatement(
   const acceptedCount = quoteRows.filter((r) => r.status === "accepted" || r.status === "converted").length;
   const conversionRate = sentCount > 0 ? acceptedCount / sentCount : 0;
 
+  // Fetch all outstanding/unpaid invoices (all-time) for the ageing report
+  const outstandingInvoices = await db
+    .select({
+      id: invoices.id,
+      divisionId: invoices.divisionId,
+      divisionName: divisions.name,
+      clientId: invoices.clientId,
+      clientName: sql<string | null>`COALESCE(${clients.businessName}, ${clients.name})`,
+      documentNumber: invoices.documentNumber,
+      status: invoices.status,
+      invoiceDate: sql<string>`${invoices.invoiceDate}::text`,
+      dueDate: sql<string | null>`${invoices.dueDate}::text`,
+      reference: invoices.reference,
+      quotationId: invoices.quotationId,
+      quotationNumber: sql<string | null>`${quotations.documentNumber}`,
+      incomeId: invoices.incomeId,
+      subtotal: invoices.subtotal,
+      vatAmount: invoices.vatAmount,
+      total: invoices.total,
+      notes: invoices.notes,
+      terms: invoices.terms,
+      paidAt: invoices.paidAt,
+      createdBy: invoices.createdBy,
+      createdAt: invoices.createdAt,
+      updatedAt: invoices.updatedAt,
+      allocatedAmount: sql<string>`COALESCE((SELECT SUM(amount) FROM payment_allocations WHERE invoice_id = ${invoices.id}), 0)::text`,
+    })
+    .from(invoices)
+    .innerJoin(divisions, eq(invoices.divisionId, divisions.id))
+    .leftJoin(clients, eq(invoices.clientId, clients.id))
+    .leftJoin(quotations, eq(invoices.quotationId, quotations.id))
+    .where(
+      and(
+        eq(invoices.clientId, clientId),
+        inArray(invoices.status, ['issued', 'overdue', 'partially_paid']),
+        sql`${invoices.invoiceDate} <= timezone('Africa/Johannesburg', now())::date`
+      )
+    )
+    .orderBy(desc(invoices.invoiceDate));
+
   return {
     client,
     summary: {
@@ -916,6 +957,7 @@ export async function getClientStatement(
     },
     quotes: quoteRows as QuotationRow[],
     invoices: invoiceRows as InvoiceRow[],
+    outstandingInvoices: outstandingInvoices as InvoiceRow[],
   };
 }
 
