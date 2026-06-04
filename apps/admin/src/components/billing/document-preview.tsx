@@ -1,4 +1,5 @@
 import Link from 'next/link'
+// Trigger Next.js cache reload
 import { cn } from '@/lib/utils'
 import { fmtDateLong, formatZAR } from '@/lib/format'
 import { getDocumentLogoUrl } from '@/lib/document-logo'
@@ -6,6 +7,7 @@ import { getDocumentLogoUrl } from '@/lib/document-logo'
 // ── Types ─────────────────────────────────────────────────────────────────────
 
 export interface LineItem {
+  itemName?: string | null
   description: string
   qty: number
   unitPrice: number
@@ -293,14 +295,25 @@ export function DocumentPreview({
               </tr>
             </thead>
             <tbody>
-              {lineItems.map((item, i) => (
-                <tr key={i} className="border-b border-zinc-50 print:break-inside-avoid">
-                  <td className="py-3 pr-4 text-zinc-800">{item.description}</td>
-                  <td className="py-3 px-4 text-right tabular-nums text-zinc-600">{item.qty}</td>
-                  <td className="py-3 px-4 text-right tabular-nums text-zinc-600">{fmt(item.unitPrice)}</td>
-                  <td className="py-3 pl-4 text-right tabular-nums font-medium">{fmt(item.qty * item.unitPrice)}</td>
-                </tr>
-              ))}
+              {lineItems.map((item, i) => {
+                const primaryText = item.itemName || item.description;
+                const hasSecondary = !!item.itemName && !!item.description && item.description.trim().toLowerCase() !== item.itemName.trim().toLowerCase();
+                return (
+                  <tr key={i} className="border-b border-zinc-100 print:break-inside-avoid">
+                    <td className="py-3 pr-4 text-zinc-800">
+                      <div className="text-zinc-900">{primaryText}</div>
+                      {hasSecondary && (
+                        <div className="mt-0.5 text-[11px] text-zinc-500 italic">
+                          {item.description}
+                        </div>
+                      )}
+                    </td>
+                    <td className="py-3 px-4 text-right tabular-nums text-zinc-600">{item.qty}</td>
+                    <td className="py-3 px-4 text-right tabular-nums text-zinc-600">{fmt(item.unitPrice)}</td>
+                    <td className="py-3 pl-4 text-right tabular-nums font-medium">{fmt(item.qty * item.unitPrice)}</td>
+                  </tr>
+                );
+              })}
             </tbody>
           </table>
 

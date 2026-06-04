@@ -3,7 +3,10 @@ import { z } from 'zod';
 // ── Line item ─────────────────────────────────────────────────────────────────
 
 export const LineItemSchema = z.object({
-  itemId: z.string().uuid('An item must be selected'),
+  itemId: z.preprocess(
+    (value) => value === '' ? null : value,
+    z.string().uuid().nullable().optional(),
+  ),
   description: z.string().min(1, 'Description is required'),
   quantity: z.coerce.number().positive('Quantity must be greater than 0'),
   unitPrice: z.coerce.number().min(0, 'Unit price cannot be negative'),
