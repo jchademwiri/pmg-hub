@@ -123,7 +123,7 @@ export default async function StatementDetailPage({ params, searchParams }: Prop
 
   const todayStr = getSASTToday();
   const ageing = { current: 0, days1_14: 0, days15_30: 0, days31_60: 0, days61_90: 0, days91_120: 0 };
-  for (const inv of invoices) {
+  for (const inv of (statement.outstandingInvoices ?? invoices)) {
     if (inv.status === 'issued' || inv.status === 'overdue' || inv.status === 'partially_paid') {
       const dueStr = inv.dueDate ?? inv.invoiceDate;
       const tDate = new Date(todayStr);
@@ -327,25 +327,8 @@ export default async function StatementDetailPage({ params, searchParams }: Prop
           </Card>
 
           <Card size="sm">
-            <CardHeader>
-              <CardTitle>Statement Period</CardTitle>
-            </CardHeader>
-            <CardContent>
+            <CardContent className="pt-4">
               <div className="flex flex-col gap-3">
-                <div className="flex justify-between text-sm">
-                  <span className="text-muted-foreground">Period</span>
-                  <span className="font-medium text-foreground">{periodLabel}</span>
-                </div>
-                <div className="flex justify-between text-sm">
-                  <span className="text-muted-foreground">Quotes</span>
-                  <span>{summary.quoteCount}</span>
-                </div>
-                <div className="flex justify-between text-sm">
-                  <span className="text-muted-foreground">Invoices</span>
-                  <span>{summary.invoiceCount}</span>
-                </div>
-                
-                <Separator className="my-1" />
                 
                 <div className="flex flex-col gap-1.5">
                   <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Rolling Periods</span>
