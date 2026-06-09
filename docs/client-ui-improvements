@@ -1,207 +1,407 @@
-# Client Financial Dashboard
+# PMG Control Center — Client Billing Workspace
+## Complete Implementation Plan (v2)
 
-## Purpose
-
-Provide an at-a-glance financial summary of the client account without requiring users to review invoices, payments, or statements individually.
-
-The dashboard should appear at the top of the Client Billing Workspace and serve as the primary financial overview for the client.
+**Scope:** Three interrelated features to improve client-facing billing operations, triggered by a client requesting copies of all their invoices.
 
 ---
 
-## Dashboard KPIs
+## Problem Statement
 
-### Revenue Metrics
+### Gap 1 — No bulk invoice operations
+The current invoices list (`/billing/invoices`) has no way to:
+- Select multiple invoices (checkboxes)
+- Bulk-download PDFs as a ZIP archive
+- Bulk-email a batch to a client
+- Bulk-issue or bulk-void multiple documents at once
 
-| Metric                | Description                          |
-| --------------------- | ------------------------------------ |
-| Total Quoted          | Total value of all quotations issued |
-| Total Invoiced        | Total value of all invoices issued   |
-| Total Paid            | Total payments received              |
-| Outstanding Balance   | Amount still owed                    |
-| Overdue Balance       | Total overdue amount                 |
-| Average Invoice Value | Average invoice amount               |
-| Largest Invoice       | Largest invoice issued               |
+### Gap 2 — Client detail page is incomplete
+`/relationships/clients/[id]/page.tsx` shows only **income records**. A client record has no visibility into:
+- Quotations created for that client
+- Invoices raised for that client (draft or otherwise)
+- A client statement
+- Any way to open the actual document without navigating away
 
----
-
-## Invoice Metrics
-
-| Metric           | Description                       |
-| ---------------- | --------------------------------- |
-| Total Invoices   | Number of invoices created        |
-| Draft Invoices   | Number of draft invoices          |
-| Sent Invoices    | Number of sent invoices           |
-| Paid Invoices    | Number of fully paid invoices     |
-| Partially Paid   | Number of partially paid invoices |
-| Overdue Invoices | Number of overdue invoices        |
+### Gap 3 — No client financial overview
+There is no at-a-glance financial summary for a client account. Users must manually cross-reference invoices, payments, and statements to understand client health, payment behaviour, or outstanding risk.
 
 ---
 
-## Quotation Metrics
+## Feature 1 — Bulk Invoice Actions
 
-| Metric              | Description                           |
-| ------------------- | ------------------------------------- |
-| Total Quotations    | Number of quotations issued           |
-| Draft Quotations    | Number of draft quotations            |
-| Accepted Quotations | Number accepted                       |
-| Rejected Quotations | Number rejected                       |
-| Expired Quotations  | Number expired                        |
-| Conversion Rate     | Accepted quotes converted to invoices |
+### What to build
 
----
+Add a checkbox-based multi-select layer to `InvoicesClient` (and optionally `QuotesClient`) that unlocks a floating action bar when one or more rows are selected.
 
-# Accounts Receivable Ageing Analysis
+### Bulk actions to support
 
-Provide a dedicated ageing section.
+| Action | Description |
+|---|---|
+| **Bulk Download (ZIP)** | Generate a PDF per selected invoice client-side (reusing the existing `html2canvas` + `jsPDF` logic in `ExportPdfButton`), then package all PDFs into a `.zip` using `jszip`. Trigger a single browser download. |
+| **Bulk Email** | For each selected invoice that has a client email, call the existing `sendDocumentEmailAction` with the generated PDF. Show a progress dialog with per-invoice status. |
+| **Bulk Issue** | Transition all selected `draft` invoices to `issued` status in a single batch server action. |
+| **Bulk Void** | Confirm once, then void all selected eligible invoices. |
 
-## Ageing Buckets
+### Files to touch
 
-| Bucket            | Amount |
-| ----------------- | ------ |
-| Current           | R0.00  |
-| 1 - 30 Days       | R0.00  |
-| 31 - 60 Days      | R0.00  |
-| 61+ Days          | R0.00  |
-|                   |        |
-| Total Outstanding | R0.00  |
+```
+apps/admin/src/app/(admin)/billing/invoices/
+  invoices-client.tsx          — add checkbox column, selection state, action bar
+  page.tsx                     — no change needed
 
----
+apps/admin/src/app/actions/
+  billing-invoices.ts          — add bulkIssueInvoices(ids[]) and bulkVoidInvoices(ids[])
 
-## Ageing Visualization
-
-Display as:
-
-### Option A (Recommended)
-
-Horizontal stacked progress bar
-
-```text
-Current      ██████████
-1-30 Days    ████
-31-60 Days   ██
-61+ Days     █
+apps/admin/src/components/billing/
+  bulk-invoice-action-bar.tsx  — NEW floating bar component (shown when selection > 0)
+  bulk-pdf-downloader.ts       — NEW utility: renders off-screen, zips, triggers download
 ```
 
-### Option B
+### UI sketch
 
-Simple doughnut chart showing debt distribution by ageing category.
+```
+┌──────────────────────────────────────────────────────────┐
+│ ☑ │ Invoice #  │ Client   │ Date │ Due │ Amount │ Status │
+│───┼────────────┼──────────┼──────┼─────┼────────┼────────│
+│ ☑ │ AWS-INV-… │ Acme     │ …    │ …   │ R 5 000│ Issued │
+│ ☑ │ TES-INV-… │ Acme     │ …    │ …   │ R 2 500│ Draft  │
+│ ☐ │ AWS-INV-… │ BopheloM │ …    │ …   │ R 8 000│ Paid   │
+└──────────────────────────────────────────────────────────┘
 
----
+▼  Floating bar appears when ≥ 1 selected
 
-# Client Health Score
+┌──────────────────────────────────────────────────────────┐
+│  2 selected   [Download PDFs]  [Email]  [Issue]  [Void]  │
+└──────────────────────────────────────────────────────────┘
+```
 
-Provide a calculated client health indicator.
+### Key implementation notes
 
-## Excellent
-
-* No overdue invoices
-* Pays on time
-
-Green
-
----
-
-## Good
-
-* Minor overdue balances
-* Usually pays on time
-
-Blue
-
----
-
-## At Risk
-
-* Consistent overdue invoices
-* Increasing outstanding balance
-
-Orange
+- Checkbox state lives in `InvoicesClient` as `Set<string>` (invoice IDs).
+- A "select all on page" master checkbox sits in the `<TableHead>`.
+- The floating bar is absolutely positioned at the bottom of the table card, hidden when the set is empty.
+- PDF generation for bulk download must render documents not currently in the DOM. Mount a `DocumentPreview` per selected invoice in a hidden off-screen `<div>`, capture each with `html2canvas`, then remove them.
+- Bulk email fires sequentially (not in parallel) with a progress indicator to avoid rate-limiting Resend.
 
 ---
 
-## Critical
+## Feature 2 — Client Detail Page Overhaul
 
-* Multiple invoices older than 90 days
-* Collection action required
+### What to build
 
-Red
+Replace the single income table on `/relationships/clients/[id]/page.tsx` with a **Client Billing Workspace** consisting of:
 
----
+1. A **Client Financial Dashboard** (mini-dashboard at the top — see Feature 3)
+2. A **split-pane document browser** below it
+   - **Left pane** — tabbed list of Quotations / Invoices / Payments / Statement
+   - **Right pane** — live `DocumentPreview` of whichever document is selected
 
-# Payment Behaviour Analytics
+### Layout
 
-Provide payment performance metrics.
+```
+┌─────────────────────────────────────────────────────────────────────┐
+│  Client: Acme Corp                              [Edit]              │
+├─────────────────────────────────────────────────────────────────────┤
+│  CLIENT FINANCIAL DASHBOARD (KPI strip + ageing + health score)     │
+│  See Feature 3 for full spec                                        │
+├─────────────────────────────────────────────────────────────────────┤
+│  QUICK ACTIONS: [New Invoice] [New Quote] [Record Payment]          │
+│                 [Generate Statement] [Download All] [Send Reminder] │
+├─────────────────────────────────────────────────────────────────────┤
+│  [Quotations]  [Invoices]  [Payments]  [Statement]                  │
+├──────────────────────┬──────────────────────────────────────────────┤
+│  LEFT — Document List│  RIGHT — Document Preview                    │
+│                      │                                              │
+│  ☑ AWS-Q-2026-003 ←──│  ┌────────────────────────────────────────┐ │
+│  ☐ AWS-Q-2026-002    │  │                                        │ │
+│  ☐ TES-Q-2026-001    │  │   DocumentPreview renders here         │ │
+│                      │  │   (invoice or quotation)               │ │
+│  [Download Selected] │  │                                        │ │
+│                      │  └────────────────────────────────────────┘ │
+└──────────────────────┴──────────────────────────────────────────────┘
+```
 
-| Metric                  | Description                           |
-| ----------------------- | ------------------------------------- |
-| Average Days to Pay     | Average time taken to settle invoices |
-| Last Payment Date       | Most recent payment                   |
-| Largest Payment         | Largest payment received              |
-| Total Payments Received | Lifetime payment total                |
-| Collection Efficiency   | Paid ÷ Invoiced                       |
+On mobile (< 1024px): layout collapses to list-only. Tapping a row navigates to the existing full detail page.
 
----
+### Tabs
 
-# Recent Activity Feed
+| Tab | Content |
+|---|---|
+| **Quotations** | All quotes for this client (any status), sorted by date desc. Columns: doc number, date, total, status badge. Checkboxes for bulk download. |
+| **Invoices** | All invoices for this client (any status), same columns plus outstanding balance. Checkboxes for bulk download. |
+| **Payments** | Existing income/payment records — keep current display. |
+| **Statement** | Renders `DocumentPreview` with `type="statement"`. Includes Print and Export PDF buttons. Defaults to current FY. |
 
-Display latest client activity.
+### Document preview pane behaviour
 
-Examples:
+- Clicking a row updates React state: `selectedDocId` + `selectedDocType`.
+- All document detail data (including line items) is pre-loaded upfront in the server component via `Promise.all`. This avoids waterfall fetches and is appropriate for clients with < 100 documents. Add a TODO comment for pagination if needed.
+- The pane mirrors the sidebar action buttons from the existing detail pages (Issue, Mark Paid, Void, etc.).
 
-* Invoice INV-0042 created
-* Invoice INV-0040 paid
-* Payment received R12,000
-* Statement generated
-* Quotation QUO-0021 accepted
+### Data loading in `page.tsx`
 
-Limit to latest 10 activities.
+```ts
+const [client, quotes, invoices, payments] = await Promise.all([
+  getClientById(id),
+  getAllQuotations({ clientId: id }),           // already exists
+  getAllInvoices({ clientId: id }),             // already exists
+  getAllIncome({ clientId: id }),               // already exists
+]);
+```
 
----
+No new DB queries needed — all data fetchers already accept `clientId` as a filter.
 
-# Dashboard Quick Actions
+### Files to touch
 
-Provide quick actions at the top-right.
-
-* Create Invoice
-* Create Quotation
-* Record Payment
-* Generate Statement
-* Download All Invoices
-* Download All Quotations
-* Send Reminder
-
----
-
-# Dashboard Layout
-
-```text
-┌─────────────────────────────────────────────────────────────┐
-│ CLIENT DASHBOARD                                            │
-├─────────────────────────────────────────────────────────────┤
-│ Outstanding │ Paid │ Invoiced │ Overdue │ Quotes Accepted   │
-│   R12,500   │R80k  │  R92k    │ R2,000  │ 87%              │
-├─────────────────────────────────────────────────────────────┤
-│ AGEING ANALYSIS                                             │
-│ Current | 1-30 | 31-60 | 61-90 | 90+                      │
-├─────────────────────────────────────────────────────────────┤
-│ PAYMENT BEHAVIOUR     │ CLIENT HEALTH SCORE                │
-├───────────────────────┼────────────────────────────────────┤
-│ Avg Days: 18          │ 🟢 Excellent                       │
-│ Last Payment: 5 days  │                                    │
-├───────────────────────┴────────────────────────────────────┤
-│ Recent Activity Feed                                       │
-└─────────────────────────────────────────────────────────────┘
+```
+apps/admin/src/app/(admin)/relationships/clients/[id]/
+  page.tsx                          — restructure: load quotes + invoices + payments
+  client-billing-workspace.tsx      — NEW 'use client' top-level workspace component
+  client-document-browser.tsx       — NEW split-pane document browser
+  client-document-list.tsx          — NEW left-pane list with tabs + checkboxes
+  client-document-preview-pane.tsx  — NEW right-pane wrapper around DocumentPreview
+  client-financial-dashboard.tsx    — NEW dashboard strip (see Feature 3)
 ```
 
 ---
 
-## Future Enhancements
+## Feature 3 — Client Financial Dashboard (Mini-Dashboard)
 
-* Credit limit management
-* Collection notes
-* Automated payment reminders
-* Client profitability analysis
-* Revenue trends
-* Monthly spend graphs
-* AI-powered payment risk prediction
-I would actually place this dashboard above the Overview tab and make it the default landing section when opening a client. For PMG Control Hub, this becomes a mini Accounts Receivable dashboard for each customer, which aligns very well with your Accounts Receivable management role and would make collection follow-ups much easier.
+Positioned at the top of the Client Billing Workspace. Provides an at-a-glance financial summary without requiring users to review documents individually.
+
+---
+
+### Section A — KPI Strip
+
+Top row of summary cards (matches the existing `KpiGrid` visual language on the main dashboard):
+
+| Metric | Value | Colour |
+|---|---|---|
+| Outstanding Balance | Amount still owed | Amber |
+| Total Paid | Lifetime payments received | Green |
+| Total Invoiced | Sum of all non-void invoices | Default |
+| Overdue Balance | Sum of overdue invoices | Red (if > 0) |
+| Quote Conversion Rate | Accepted ÷ Sent quotes | Default |
+
+```
+┌───────────────────────────────────────────────────────────────────┐
+│ Outstanding │ Total Paid │ Total Invoiced │ Overdue  │ Conv. Rate │
+│  R 12,500   │  R 80,000  │   R 92,500     │ R 2,000  │   87%      │
+└───────────────────────────────────────────────────────────────────┘
+```
+
+---
+
+### Section B — Revenue Metrics (expandable or always-visible)
+
+| Metric | Description |
+|---|---|
+| Total Quoted | Total value of all quotations issued |
+| Average Invoice Value | Mean invoice amount |
+| Largest Invoice | Highest single invoice value |
+| Total Invoices | Count of all invoices |
+| Draft / Issued / Paid / Overdue | Count per status |
+| Total Quotations | Count of all quotes |
+| Draft / Accepted / Declined / Expired | Count per status |
+
+---
+
+### Section C — Accounts Receivable Ageing Analysis
+
+Dedicated ageing section using client-specific data (not the global ageing report).
+
+**Buckets:**
+
+| Bucket | Amount |
+|---|---|
+| Current (not yet due) | R 0.00 |
+| 1–30 Days overdue | R 0.00 |
+| 31–60 Days overdue | R 0.00 |
+| 61+ Days overdue | R 0.00 |
+| **Total Outstanding** | R 0.00 |
+
+**Visualisation (Option A — recommended):**
+
+Horizontal stacked progress bar, one segment per bucket, colour-coded green → amber → orange → red:
+
+```
+Current   ██████████████████  R 5,000
+1-30 Days ████████            R 2,500
+31-60 Days ████               R 1,000
+61+ Days  ██                  R 500
+```
+
+This reuses the existing `AllocationTooltipBar` pattern from the dashboard.
+
+---
+
+### Section D — Client Health Score
+
+A single calculated indicator shown as a coloured badge + label.
+
+| Score | Criteria | Colour |
+|---|---|---|
+| **Excellent** | No overdue invoices, average days-to-pay ≤ 30 | Green |
+| **Good** | Minor overdue balance (< 20% of outstanding), avg days ≤ 45 | Blue |
+| **At Risk** | Consistent overdue, increasing outstanding balance | Orange |
+| **Critical** | Multiple invoices > 90 days overdue | Red |
+
+Calculation logic lives in a pure `calculateClientHealth(invoices, payments)` utility function — no DB query needed, computed from already-loaded data.
+
+---
+
+### Section E — Payment Behaviour Analytics
+
+| Metric | Description |
+|---|---|
+| Average Days to Pay | Mean gap between invoice date and payment date |
+| Last Payment Date | Most recent payment received |
+| Largest Single Payment | Largest payment amount |
+| Total Payments Received | Count of payment records |
+| Collection Efficiency | Total paid ÷ Total invoiced (as %) |
+
+Displayed as a compact stat grid (2 columns on mobile, 5 on desktop).
+
+---
+
+### Section F — Recent Activity Feed
+
+Latest 10 activity events for this client, derived from the already-loaded quotes, invoices, and payments data (no additional DB call). Each event shows an icon, description, and relative timestamp.
+
+Example events:
+- Invoice `AWS-INV-2026-042` created
+- Invoice `AWS-INV-2026-040` paid — R 12,000
+- Payment received — R 12,000
+- Quotation `TES-Q-2026-021` accepted
+- Statement generated
+
+Activity is synthesised from `createdAt` / `paidAt` / `updatedAt` timestamps on documents already in memory. No audit log table required for this feature.
+
+---
+
+### Dashboard Layout
+
+```
+┌─────────────────────────────────────────────────────────────────────┐
+│  SECTION A — KPI STRIP                                              │
+│  Outstanding │ Paid │ Invoiced │ Overdue │ Conv. Rate               │
+├─────────────────────────────────────────────────────────────────────┤
+│  SECTION C — AGEING ANALYSIS (stacked progress bar)                 │
+│  Current ████████████  1-30 ████  31-60 ██  61+ █                   │
+├─────────────────────────┬───────────────────────────────────────────┤
+│  SECTION D              │  SECTION E                                │
+│  Client Health Score    │  Payment Behaviour                        │
+│  🟢 Excellent           │  Avg Days: 18  │  Last: 5 days ago        │
+│                         │  Collection: 97%│  Payments: 24           │
+├─────────────────────────┴───────────────────────────────────────────┤
+│  SECTION F — RECENT ACTIVITY FEED (latest 10 events)               │
+└─────────────────────────────────────────────────────────────────────┘
+```
+
+Section B (detailed invoice/quote counts) is shown as a secondary expandable panel or as a secondary tab below the KPI strip — keep the primary dashboard compact.
+
+---
+
+### Dashboard files
+
+```
+apps/admin/src/app/(admin)/relationships/clients/[id]/
+  client-financial-dashboard.tsx     — NEW 'use client' dashboard component
+  client-health-score.tsx            — NEW health score badge
+  client-ageing-bar.tsx              — NEW stacked ageing bar (reuses AllocationTooltipBar)
+  client-activity-feed.tsx           — NEW activity feed
+
+apps/admin/src/lib/
+  client-health.ts                   — NEW pure utility: calculateClientHealth()
+  client-activity.ts                 — NEW pure utility: buildActivityFeed()
+```
+
+All data is derived from documents already loaded in `page.tsx` — **zero additional DB queries** for the dashboard.
+
+---
+
+## Suggested Build Order
+
+```
+Phase 1 — Client page tabs (1–2 days)
+  ├─ Add Quotations + Invoices + Payments tabs to client detail page
+  ├─ No split pane or dashboard yet — just tabbed tables with links
+  └─ Immediately solves "I can't see quotes/invoices on the client page"
+
+Phase 2 — Bulk selection infrastructure (1–2 days)
+  ├─ Checkbox + selection state in InvoicesClient
+  ├─ BulkInvoiceActionBar component
+  └─ bulkIssueInvoices() + bulkVoidInvoices() server actions
+
+Phase 3 — Client Financial Dashboard (2–3 days)
+  ├─ KPI strip (Section A)
+  ├─ Ageing bar (Section C)
+  ├─ Health score (Section D)
+  ├─ Payment behaviour (Section E)
+  └─ Activity feed (Section F)
+
+Phase 4 — Split-pane document browser (1–2 days)
+  ├─ Left-pane document list with tabs + checkboxes
+  └─ Right-pane DocumentPreview with action buttons
+
+Phase 5 — Bulk PDF + Email (2–3 days)
+  ├─ Off-screen render utility + jszip packaging
+  └─ Bulk email with per-invoice progress indicator
+```
+
+---
+
+## Dependencies to add
+
+| Package | Purpose |
+|---|---|
+| `jszip` | Client-side ZIP creation for bulk PDF download |
+| `file-saver` | `saveAs()` helper to trigger browser download of the ZIP blob |
+
+```bash
+pnpm add jszip file-saver
+pnpm add -D @types/file-saver
+```
+
+---
+
+## Open Questions / Decisions Needed
+
+1. **Bulk email UX** — Simplified "send to all selected" confirmation modal (recommended, mirrors `SendOverdueRemindersButton` pattern) vs per-document preview dialog.
+
+2. **Off-screen PDF rendering** — Render all selected documents in hidden containers at once (simpler, may be slow for > 10 docs) vs render one at a time in a recycled container (better performance, more code).
+
+3. **Statement tab default period** — Current FY recommended for the client detail page (vs the global statement page which defaults to current month).
+
+4. **Section B visibility** — Show revenue metric counts always-visible below the KPI strip, or collapsed behind an "expand" toggle? Recommend collapsed by default to keep the dashboard compact.
+
+5. **Health score thresholds** — The criteria above (e.g. "avg days ≤ 30 = Excellent") are starting points. Confirm these thresholds match your business expectations before building.
+
+---
+
+## Components Already Available (No Re-build Needed)
+
+| Component | Reuse |
+|---|---|
+| `DocumentPreview` | Renders invoice, quote, or statement from props |
+| `BillingStatusBadge` | Status chips |
+| `ExportPdfButton` | Single-doc PDF export — reuse internals for bulk |
+| `PrintButton` | Browser print trigger |
+| `EmailDocumentDialog` | Per-document email — reuse in bulk loop |
+| `BillingTotalsBlock` | Totals display |
+| `AllocationTooltipBar` | Stacked bar — reuse for ageing visualisation |
+| `KpiCard` / `KpiGrid` | KPI cards — reuse visual pattern for client KPI strip |
+| `confirm` | Confirmation dialogs |
+| `AgingReportGrid` | Ageing buckets display — adapt for per-client data |
+
+All work is **additive** — no existing pages or routes are broken.
+
+---
+
+## Future Enhancements (Out of Scope for This Build)
+
+- Credit limit management
+- Collection notes per client
+- Automated payment reminder scheduling
+- Client profitability analysis (revenue vs expenses attributed to client)
+- Monthly spend/revenue trend graphs
+- AI-powered payment risk prediction
