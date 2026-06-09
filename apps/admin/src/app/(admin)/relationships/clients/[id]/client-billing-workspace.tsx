@@ -52,7 +52,6 @@ import { PaymentReceiptPreview } from '@/components/billing/payment-receipt-prev
 import { EmailReceiptDialog } from '@/components/billing/email-receipt-dialog';
 import { ClientEditForm } from '@/components/clients/client-edit-form';
 import { ClientFinancialDashboard } from './client-financial-dashboard';
-import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription } from '@/components/ui/sheet';
 import { formatZAR, fmtDate } from '@/lib/format';
 import { getSASTToday } from '@/lib/format';
 import { getDocumentLogoUrl } from '@/lib/document-logo';
@@ -133,7 +132,7 @@ export function ClientBillingWorkspace({
   // Checkbox Multiselect Layer
   const [selectedInvoiceIds, setSelectedInvoiceIds] = useState<Set<string>>(new Set());
   const [selectedQuoteIds, setSelectedQuoteIds] = useState<Set<string>>(new Set());
-  const [isDrawerOpen, setIsDrawerOpen] = useState(false);
+  const [isPreviewOpen, setIsPreviewOpen] = useState(false);
 
   // Sequential Queue Render State (Recommendations implemented)
   const [activeRenderingDocId, setActiveRenderingDocId] = useState<string | null>(null);
@@ -810,7 +809,7 @@ export function ClientBillingWorkspace({
         // Reset selections when switching tabs
         setSelectedInvoiceIds(new Set());
         setSelectedQuoteIds(new Set());
-        setIsDrawerOpen(false);
+        setIsPreviewOpen(false);
         if (val === 'invoices' && invoices.length > 0) {
           setSelectedDocId(invoices[0]!.id);
           setSelectedDocType('invoice');
@@ -881,7 +880,7 @@ export function ClientBillingWorkspace({
                           onClick={() => {
                             setSelectedDocId(inv.id);
                             setSelectedDocType('invoice');
-                            setIsDrawerOpen(true);
+                            setIsPreviewOpen(true);
                           }}
                         >
                           <TableCell onClick={(e) => e.stopPropagation()}>
@@ -933,7 +932,7 @@ export function ClientBillingWorkspace({
                           onClick={() => {
                             setSelectedDocId(q.id);
                             setSelectedDocType('quote');
-                            setIsDrawerOpen(true);
+                            setIsPreviewOpen(true);
                           }}
                         >
                           <TableCell onClick={(e) => e.stopPropagation()}>
@@ -978,7 +977,7 @@ export function ClientBillingWorkspace({
                           onClick={() => {
                             setSelectedDocId(entry.id);
                             setSelectedDocType('payment');
-                            setIsDrawerOpen(true);
+                            setIsPreviewOpen(true);
                           }}
                         >
                           <TableCell className="tabular-nums">{fmtDate(entry.date)}</TableCell>
@@ -994,90 +993,114 @@ export function ClientBillingWorkspace({
               </TabsContent>
 
               {/* STATEMENT FILTER PANEL TAB */}
-              <TabsContent value="statement" className="m-0 p-4 flex flex-col lg:flex-row gap-6">
-                {/* Statement Filters (Left/Top) */}
-                <div className="w-full lg:w-80 shrink-0 flex flex-col gap-4">
-                  <div className="flex flex-col gap-3">
+              <TabsContent value="statement" className="m-0 flex flex-col gap-4">
+                {/* Horizontal Filter Bar at the Top */}
+                <div className="p-4 border-b flex flex-col md:flex-row md:items-center justify-between gap-4 bg-muted/5">
+                  <div className="flex flex-col gap-2">
                     <span className="text-xs font-semibold text-muted-foreground">Select Statement Period</span>
-                    <div className="grid grid-cols-2 gap-2">
+                    <div className="flex flex-wrap gap-2">
                       <Button
                         variant={statementPeriodParam === 'current' || (!statementPeriodParam && !statementYearParam) ? 'default' : 'outline'}
-                        size="sm"
+                        size="xs"
                         onClick={() => updateStatementFilter('monthPeriod', 'current')}
-                        className="text-xs"
+                        className="text-xs px-3 py-1.5 h-8"
                       >
                         Current Month
                       </Button>
                       <Button
                         variant={statementPeriodParam === 'previous' ? 'default' : 'outline'}
-                        size="sm"
+                        size="xs"
                         onClick={() => updateStatementFilter('monthPeriod', 'previous')}
-                        className="text-xs"
+                        className="text-xs px-3 py-1.5 h-8"
                       >
                         Previous Month
                       </Button>
                       <Button
                         variant={statementPeriodParam === 'past3' ? 'default' : 'outline'}
-                        size="sm"
+                        size="xs"
                         onClick={() => updateStatementFilter('monthPeriod', 'past3')}
-                        className="text-xs"
+                        className="text-xs px-3 py-1.5 h-8"
                       >
                         Past 3 Months
                       </Button>
                       <Button
                         variant={statementPeriodParam === 'past6' ? 'default' : 'outline'}
-                        size="sm"
+                        size="xs"
                         onClick={() => updateStatementFilter('monthPeriod', 'past6')}
-                        className="text-xs"
+                        className="text-xs px-3 py-1.5 h-8"
                       >
                         Past 6 Months
                       </Button>
                     </div>
-                    <div className="flex flex-col gap-1.5 mt-2">
-                      <span className="text-xs font-medium text-muted-foreground">Or Filter by Fiscal Year</span>
-                      <Select
-                        value={statementYearParam ?? String(currentFY)}
-                        onValueChange={(val) => updateStatementFilter('year', val)}
-                      >
-                        <SelectTrigger className="text-xs h-9">
-                          <SelectValue placeholder="Select Year" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          {availableYears.map((year) => (
-                            <SelectItem key={year} value={String(year)} className="text-xs">
-                              FY {year}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                    </div>
+                  </div>
+
+                  <div className="flex flex-col gap-2 min-w-[150px]">
+                    <span className="text-xs font-medium text-muted-foreground">Or Fiscal Year</span>
+                    <Select
+                      value={statementYearParam ?? String(currentFY)}
+                      onValueChange={(val) => updateStatementFilter('year', val)}
+                    >
+                      <SelectTrigger className="text-xs h-8">
+                        <SelectValue placeholder="Select Year" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {availableYears.map((year) => (
+                          <SelectItem key={year} value={String(year)} className="text-xs">
+                            FY {year}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+
+                  <div className="flex items-end mt-4 md:mt-0">
+                    <Button
+                      variant="default"
+                      size="sm"
+                      className="flex items-center gap-1.5 shadow-sm h-8"
+                      onClick={() => setIsPreviewOpen(true)}
+                    >
+                      <Eye className="size-4" /> Preview Statement PDF
+                    </Button>
                   </div>
                 </div>
 
-                {/* Statement Preview (Right/Bottom) */}
-                <div className="flex-1 min-w-0 flex flex-col gap-4">
-                  <Card className="shadow-sm border-muted-foreground/10 bg-card overflow-hidden">
-                    <CardHeader className="p-4 border-b flex flex-row items-center justify-between">
-                      <div>
-                        <CardTitle className="text-sm font-semibold">Statement Preview</CardTitle>
-                        <CardDescription className="text-xs">{statementPeriodLabel}</CardDescription>
-                      </div>
-                      
-                      {/* Statement Action buttons directly on the preview card header */}
-                      <div className="flex items-center gap-2 print:hidden">
-                        <PrintButton
-                          label="Print"
-                          documentTitle={`Statement-${client.businessName?.replace(/\s+/g, '-') ?? client.name.replace(/\s+/g, '-')}`}
-                        />
-                        <ExportPdfButton
-                          fileName={`Statement-${client.businessName?.replace(/\s+/g, '-') ?? client.name.replace(/\s+/g, '-')}`}
-                        />
-                      </div>
-                    </CardHeader>
-                    <CardContent className="p-4 overflow-x-auto bg-muted/5">
-                      <DocumentPreview type="statement" {...statementPreviewProps} />
-                    </CardContent>
-                  </Card>
+                {/* Statement Transactions Table */}
+                <div className="p-0">
+                  {statementTransactions.length === 0 ? (
+                    <p className="text-xs text-muted-foreground text-center py-8">No transactions for the selected period.</p>
+                  ) : (
+                    <Table className="text-xs">
+                      <TableHeader>
+                        <TableRow>
+                          <TableHead>Date</TableHead>
+                          <TableHead>Reference</TableHead>
+                          <TableHead>Description</TableHead>
+                          <TableHead className="text-right">Debit (+)</TableHead>
+                          <TableHead className="text-right">Credit (-)</TableHead>
+                          <TableHead className="text-right">Balance</TableHead>
+                        </TableRow>
+                      </TableHeader>
+                      <TableBody>
+                        {statementTransactions.map((tx, idx) => (
+                          <TableRow key={idx} className="hover:bg-muted/30 transition-colors">
+                            <TableCell className="tabular-nums">{fmtDate(tx.date)}</TableCell>
+                            <TableCell className="font-semibold">{tx.reference}</TableCell>
+                            <TableCell className="text-muted-foreground">{tx.description}</TableCell>
+                            <TableCell className="text-right tabular-nums text-red-500 font-semibold">
+                              {tx.debit ? formatZAR(tx.debit) : '-'}
+                            </TableCell>
+                            <TableCell className="text-right tabular-nums text-emerald-500 font-semibold">
+                              {tx.credit ? formatZAR(tx.credit) : '-'}
+                            </TableCell>
+                            <TableCell className="text-right tabular-nums font-bold">
+                              {formatZAR(tx.balance)}
+                            </TableCell>
+                          </TableRow>
+                        ))}
+                      </TableBody>
+                    </Table>
+                  )}
                 </div>
               </TabsContent>
             </CardContent>
@@ -1085,11 +1108,11 @@ export function ClientBillingWorkspace({
 
         </div>
 
-      <Sheet open={isDrawerOpen} onOpenChange={setIsDrawerOpen}>
-        <SheetContent side="right" className="fixed inset-y-0 right-0 w-full sm:max-w-3xl lg:max-w-4xl p-0 flex flex-col h-full bg-background border-l shadow-2xl">
-          <SheetHeader className="p-4 border-b flex flex-row items-center justify-between shrink-0 bg-muted/20">
+      <Dialog open={isPreviewOpen} onOpenChange={setIsPreviewOpen}>
+        <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto p-6 bg-background rounded-lg shadow-2xl">
+          <DialogHeader className="p-0 pb-4 border-b flex flex-row items-center justify-between shrink-0">
             <div className="flex flex-col gap-1">
-              <SheetTitle className="text-base font-bold flex gap-2 items-center">
+              <DialogTitle className="text-base font-bold flex gap-2 items-center">
                 {selectedDocType === 'invoice' && activeInvoice?.documentNumber}
                 {selectedDocType === 'quote' && activeQuote?.documentNumber}
                 {selectedDocType === 'payment' && activePayment && `REC-${activePayment.id.slice(0, 8).toUpperCase()}`}
@@ -1103,13 +1126,13 @@ export function ClientBillingWorkspace({
                 >
                   {selectedDocType}
                 </Badge>
-              </SheetTitle>
-              <SheetDescription className="text-xs">
+              </DialogTitle>
+              <DialogDescription className="text-xs">
                 {selectedDocType === 'statement' ? statementPeriodLabel : "Document Inspection & Operations"}
-              </SheetDescription>
+              </DialogDescription>
             </div>
             
-            {/* Action buttons inside sheet header */}
+            {/* Action buttons inside dialog header */}
             <div className="flex items-center gap-2 shrink-0 mr-8 print:hidden">
               {selectedDocType !== 'statement' && selectedDocId && (
                 <>
@@ -1163,15 +1186,15 @@ export function ClientBillingWorkspace({
                 />
               )}
             </div>
-          </SheetHeader>
+          </DialogHeader>
           
-          <div className="flex-1 overflow-y-auto p-6 bg-muted/10">
+          <div className="mt-4 overflow-x-auto bg-muted/5 p-4 rounded border">
             {selectedDocType === 'statement' ? (
-              <div className="bg-card rounded-lg border shadow-sm p-4 overflow-x-auto">
+              <div className="bg-card rounded-lg p-4 overflow-x-auto">
                 <DocumentPreview type="statement" {...statementPreviewProps} />
               </div>
             ) : selectedDocId ? (
-              <div className="bg-card rounded-lg border shadow-sm p-4 overflow-x-auto">
+              <div className="bg-card rounded-lg p-4 overflow-x-auto">
                 {selectedDocType === 'invoice' && activeInvoice && (
                   <DocumentPreview type="invoice" {...getInvoicePreviewProps(activeInvoice)} />
                 )}
@@ -1192,8 +1215,11 @@ export function ClientBillingWorkspace({
               </div>
             )}
           </div>
-        </SheetContent>
-      </Sheet>
+          <div className="mt-4 overflow-x-auto bg-muted/5 p-4 rounded border">
+            <DocumentPreview type="statement" {...statementPreviewProps} />
+          </div>
+        </DialogContent>
+      </Dialog>
       </Tabs>
 
       {/* Checkbox Floating Action Bar */}
