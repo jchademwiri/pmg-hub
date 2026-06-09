@@ -208,14 +208,6 @@ export async function updateQuotation(
 
     if (!existing) return { error: 'Quotation not found.' };
 
-    if (await isPeriodClosed(existing.quoteDate)) {
-      return { error: 'Cannot edit a quotation in a closed financial period.' };
-    }
-    if (await isPeriodClosed(quoteDate)) {
-      const minDate = await getMinAllowedDate();
-      return { error: getMinDateErrorMessage(minDate) };
-    }
-
     const editableStatuses = ['draft', 'sent', 'accepted'];
     if (!editableStatuses.includes(existing.status)) {
       return { error: 'This quotation can no longer be edited.' };

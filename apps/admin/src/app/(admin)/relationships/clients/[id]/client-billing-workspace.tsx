@@ -844,7 +844,9 @@ export function ClientBillingWorkspace({
               <div>
                 <CardTitle className="text-sm font-semibold capitalize">{activeTab}</CardTitle>
                 <CardDescription className="text-xs">
-                  Select documents to view or batch process
+                  {activeTab === 'statement'
+                    ? 'Configure and preview the client account statement'
+                    : 'Select documents to view or batch process'}
                 </CardDescription>
               </div>
             </CardHeader>
@@ -992,74 +994,90 @@ export function ClientBillingWorkspace({
               </TabsContent>
 
               {/* STATEMENT FILTER PANEL TAB */}
-              <TabsContent value="statement" className="m-0 p-4 flex flex-col gap-4">
-                <div className="flex flex-col gap-3">
-                  <span className="text-xs font-semibold text-muted-foreground">Select Statement Period</span>
-                  <div className="grid grid-cols-2 gap-2">
-                    <Button
-                      variant={statementPeriodParam === 'current' || (!statementPeriodParam && !statementYearParam) ? 'default' : 'outline'}
-                      size="sm"
-                      onClick={() => updateStatementFilter('monthPeriod', 'current')}
-                      className="text-xs"
-                    >
-                      Current Month
-                    </Button>
-                    <Button
-                      variant={statementPeriodParam === 'previous' ? 'default' : 'outline'}
-                      size="sm"
-                      onClick={() => updateStatementFilter('monthPeriod', 'previous')}
-                      className="text-xs"
-                    >
-                      Previous Month
-                    </Button>
-                    <Button
-                      variant={statementPeriodParam === 'past3' ? 'default' : 'outline'}
-                      size="sm"
-                      onClick={() => updateStatementFilter('monthPeriod', 'past3')}
-                      className="text-xs"
-                    >
-                      Past 3 Months
-                    </Button>
-                    <Button
-                      variant={statementPeriodParam === 'past6' ? 'default' : 'outline'}
-                      size="sm"
-                      onClick={() => updateStatementFilter('monthPeriod', 'past6')}
-                      className="text-xs"
-                    >
-                      Past 6 Months
-                    </Button>
+              <TabsContent value="statement" className="m-0 p-4 flex flex-col lg:flex-row gap-6">
+                {/* Statement Filters (Left/Top) */}
+                <div className="w-full lg:w-80 shrink-0 flex flex-col gap-4">
+                  <div className="flex flex-col gap-3">
+                    <span className="text-xs font-semibold text-muted-foreground">Select Statement Period</span>
+                    <div className="grid grid-cols-2 gap-2">
+                      <Button
+                        variant={statementPeriodParam === 'current' || (!statementPeriodParam && !statementYearParam) ? 'default' : 'outline'}
+                        size="sm"
+                        onClick={() => updateStatementFilter('monthPeriod', 'current')}
+                        className="text-xs"
+                      >
+                        Current Month
+                      </Button>
+                      <Button
+                        variant={statementPeriodParam === 'previous' ? 'default' : 'outline'}
+                        size="sm"
+                        onClick={() => updateStatementFilter('monthPeriod', 'previous')}
+                        className="text-xs"
+                      >
+                        Previous Month
+                      </Button>
+                      <Button
+                        variant={statementPeriodParam === 'past3' ? 'default' : 'outline'}
+                        size="sm"
+                        onClick={() => updateStatementFilter('monthPeriod', 'past3')}
+                        className="text-xs"
+                      >
+                        Past 3 Months
+                      </Button>
+                      <Button
+                        variant={statementPeriodParam === 'past6' ? 'default' : 'outline'}
+                        size="sm"
+                        onClick={() => updateStatementFilter('monthPeriod', 'past6')}
+                        className="text-xs"
+                      >
+                        Past 6 Months
+                      </Button>
+                    </div>
+                    <div className="flex flex-col gap-1.5 mt-2">
+                      <span className="text-xs font-medium text-muted-foreground">Or Filter by Fiscal Year</span>
+                      <Select
+                        value={statementYearParam ?? String(currentFY)}
+                        onValueChange={(val) => updateStatementFilter('year', val)}
+                      >
+                        <SelectTrigger className="text-xs h-9">
+                          <SelectValue placeholder="Select Year" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {availableYears.map((year) => (
+                            <SelectItem key={year} value={String(year)} className="text-xs">
+                              FY {year}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
                   </div>
-                  <div className="flex flex-col gap-1.5 mt-2">
-                    <span className="text-xs font-medium text-muted-foreground">Or Filter by Fiscal Year</span>
-                    <Select
-                      value={statementYearParam ?? String(currentFY)}
-                      onValueChange={(val) => updateStatementFilter('year', val)}
-                    >
-                      <SelectTrigger className="text-xs h-9">
-                        <SelectValue placeholder="Select Year" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {availableYears.map((year) => (
-                          <SelectItem key={year} value={String(year)} className="text-xs">
-                            FY {year}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  </div>
+                </div>
 
-                  <Button
-                    variant="default"
-                    size="sm"
-                    className="w-full mt-4 flex items-center justify-center gap-1.5"
-                    onClick={() => {
-                      setSelectedDocType('statement');
-                      setSelectedDocId(null);
-                      setIsDrawerOpen(true);
-                    }}
-                  >
-                    <Eye className="size-4" /> Preview Statement
-                  </Button>
+                {/* Statement Preview (Right/Bottom) */}
+                <div className="flex-1 min-w-0 flex flex-col gap-4">
+                  <Card className="shadow-sm border-muted-foreground/10 bg-card overflow-hidden">
+                    <CardHeader className="p-4 border-b flex flex-row items-center justify-between">
+                      <div>
+                        <CardTitle className="text-sm font-semibold">Statement Preview</CardTitle>
+                        <CardDescription className="text-xs">{statementPeriodLabel}</CardDescription>
+                      </div>
+                      
+                      {/* Statement Action buttons directly on the preview card header */}
+                      <div className="flex items-center gap-2 print:hidden">
+                        <PrintButton
+                          label="Print"
+                          documentTitle={`Statement-${client.businessName?.replace(/\s+/g, '-') ?? client.name.replace(/\s+/g, '-')}`}
+                        />
+                        <ExportPdfButton
+                          fileName={`Statement-${client.businessName?.replace(/\s+/g, '-') ?? client.name.replace(/\s+/g, '-')}`}
+                        />
+                      </div>
+                    </CardHeader>
+                    <CardContent className="p-4 overflow-x-auto bg-muted/5">
+                      <DocumentPreview type="statement" {...statementPreviewProps} />
+                    </CardContent>
+                  </Card>
                 </div>
               </TabsContent>
             </CardContent>
@@ -1068,7 +1086,7 @@ export function ClientBillingWorkspace({
         </div>
 
       <Sheet open={isDrawerOpen} onOpenChange={setIsDrawerOpen}>
-        <SheetContent side="right" className="w-full sm:max-w-3xl lg:max-w-4xl p-0 flex flex-col h-full bg-background border-l shadow-2xl">
+        <SheetContent side="right" className="fixed inset-y-0 right-0 w-full sm:max-w-3xl lg:max-w-4xl p-0 flex flex-col h-full bg-background border-l shadow-2xl">
           <SheetHeader className="p-4 border-b flex flex-row items-center justify-between shrink-0 bg-muted/20">
             <div className="flex flex-col gap-1">
               <SheetTitle className="text-base font-bold flex gap-2 items-center">

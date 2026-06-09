@@ -156,20 +156,24 @@ export async function updateInvoice(
 
     if (!existing) return { error: 'Invoice not found.' };
 
-    if (await isPeriodClosed(existing.invoiceDate)) {
-      return { error: 'Cannot edit an invoice in a closed financial period.' };
-    }
-    if (await isPeriodClosed(invoiceDate)) {
-      const minDate = await getMinAllowedDate();
-      return { error: getMinDateErrorMessage(minDate) };
-    }
-
     // Paid and voided invoices cannot be edited
     if (existing.status === 'paid') {
       return { error: 'Paid invoices cannot be edited.' };
     }
     if (existing.status === 'void') {
       return { error: 'Voided invoices cannot be edited.' };
+    }
+
+    // We allow editing of draft, issued, or overdue invoices in closed periods
+    const isInvoiceEditable = existing.status === 'draft' || existing.status === 'issued' || existing.status === 'overdue';
+    if (!isInvoiceEditable) {
+      if (await isPeriodClosed(existing.invoiceDate)) {
+        return { error: 'Cannot edit an invoice in a closed financial period.' };
+      }
+      if (await isPeriodClosed(invoiceDate)) {
+        const minDate = await getMinAllowedDate();
+        return { error: getMinDateErrorMessage(minDate) };
+      }
     }
 
     const { subtotal, discountAmount, vatAmount, total } = calcTotals(

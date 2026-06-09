@@ -5,7 +5,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/com
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
-import { formatZAR, fmtDate } from '@/lib/format';
+import { formatZAR, fmtDate, getSASTToday } from '@/lib/format';
 import {
   calculateAverageDaysToPay,
   calculateClientHealth,
@@ -29,19 +29,21 @@ export function ClientFinancialDashboard({
   const [isActivityExpanded, setIsActivityExpanded] = useState(false);
 
   // 1. Calculate Metrics
-  const nonVoidInvoices = invoices.filter((inv) => inv.status !== 'void');
-  const totalInvoiced = nonVoidInvoices.reduce((sum, inv) => sum + Number(inv.total), 0);
+  const todayStr = getSASTToday();
+  const activeInvoices = invoices.filter(
+    (inv) => inv.status !== 'void' && inv.status !== 'draft' && inv.invoiceDate <= todayStr
+  );
+  const totalInvoiced = activeInvoices.reduce((sum, inv) => sum + Number(inv.total), 0);
   const totalPaid = payments.reduce((sum, pay) => sum + Number(pay.amount), 0);
-  const outstandingBalance = nonVoidInvoices.reduce(
+  const outstandingBalance = activeInvoices.reduce(
     (sum, inv) => sum + (Number(inv.total) - Number(inv.allocatedAmount ?? 0)),
     0
   );
 
   // Overdue Balance Calculation
-  const todayStr = new Date().toISOString().split('T')[0]!;
-  const overdueInvoices = nonVoidInvoices.filter(
+  const overdueInvoices = activeInvoices.filter(
     (inv) =>
-      (inv.status === 'overdue' || inv.status === 'issued') &&
+      (inv.status === 'overdue' || inv.status === 'issued' || inv.status === 'partially_paid') &&
       inv.dueDate &&
       inv.dueDate < todayStr
   );
@@ -67,7 +69,7 @@ export function ClientFinancialDashboard({
   const ageing = { current: 0, days1_30: 0, days31_60: 0, days61_plus: 0 };
   const today = new Date(todayStr);
 
-  for (const inv of nonVoidInvoices) {
+  for (const inv of activeInvoices) {
     const balance = Number(inv.total) - Number(inv.allocatedAmount ?? 0);
     if (balance <= 0) continue;
 
