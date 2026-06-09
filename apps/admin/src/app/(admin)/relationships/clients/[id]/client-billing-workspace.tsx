@@ -1,9 +1,10 @@
 'use client';
 
-import React, { useState, useTransition } from 'react';
+import React, { useState, useEffect, useTransition } from 'react';
 import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { toast } from 'sonner';
+import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Checkbox } from '@/components/ui/checkbox';
@@ -47,6 +48,8 @@ import { DocumentPreview } from '@/components/billing/document-preview';
 import { PrintButton } from '@/components/billing/print-button';
 import { ExportPdfButton } from '@/components/billing/export-pdf-button';
 import { EmailDocumentDialog } from '@/components/billing/email-document-dialog';
+import { PaymentReceiptPreview } from '@/components/billing/payment-receipt-preview';
+import { EmailReceiptDialog } from '@/components/billing/email-receipt-dialog';
 import { ClientEditForm } from '@/components/clients/client-edit-form';
 import { ClientFinancialDashboard } from './client-financial-dashboard';
 import { formatZAR, fmtDate } from '@/lib/format';
@@ -108,10 +111,22 @@ export function ClientBillingWorkspace({
 
   // Split-Pane Preview Selection
   const [selectedDocId, setSelectedDocId] = useState<string | null>(
-    invoices.length > 0 ? invoices[0]!.id : quotes.length > 0 ? quotes[0]!.id : null
+    invoices.length > 0
+      ? invoices[0]!.id
+      : quotes.length > 0
+      ? quotes[0]!.id
+      : (payments?.data && payments.data.length > 0)
+      ? payments.data[0]!.id
+      : null
   );
-  const [selectedDocType, setSelectedDocType] = useState<'invoice' | 'quote' | 'statement'>(
-    invoices.length > 0 ? 'invoice' : quotes.length > 0 ? 'quote' : 'statement'
+  const [selectedDocType, setSelectedDocType] = useState<'invoice' | 'quote' | 'statement' | 'payment'>(
+    invoices.length > 0
+      ? 'invoice'
+      : quotes.length > 0
+      ? 'quote'
+      : (payments?.data && payments.data.length > 0)
+      ? 'payment'
+      : 'statement'
   );
 
   // Checkbox Multiselect Layer
@@ -131,9 +146,60 @@ export function ClientBillingWorkspace({
   // Active Tab
   const [activeTab, setActiveTab] = useState<string>('invoices');
 
+  // Handle initialization/selection from URL search parameters (e.g. navigation from payments page)
+  useEffect(() => {
+    const tabParam = searchParams.get('tab');
+    const paymentIdParam = searchParams.get('paymentId');
+    const invoiceIdParam = searchParams.get('invoiceId');
+    const quoteIdParam = searchParams.get('quoteId');
+
+    if (tabParam === 'payments' || paymentIdParam) {
+      setActiveTab('payments');
+      if (paymentIdParam) {
+        const hasPayment = (payments?.data || []).some((p: any) => p.id === paymentIdParam);
+        if (hasPayment) {
+          setSelectedDocId(paymentIdParam);
+          setSelectedDocType('payment');
+        }
+      }
+    } else if (tabParam === 'invoices' || invoiceIdParam) {
+      setActiveTab('invoices');
+      if (invoiceIdParam) {
+        const hasInvoice = invoices.some((inv) => inv.id === invoiceIdParam);
+        if (hasInvoice) {
+          setSelectedDocId(invoiceIdParam);
+          setSelectedDocType('invoice');
+        }
+      }
+    } else if (tabParam === 'quotes' || quoteIdParam) {
+      setActiveTab('quotes');
+      if (quoteIdParam) {
+        const hasQuote = quotes.some((q) => q.id === quoteIdParam);
+        if (hasQuote) {
+          setSelectedDocId(quoteIdParam);
+          setSelectedDocType('quote');
+        }
+      }
+    } else if (tabParam === 'statement') {
+      setActiveTab('statement');
+      setSelectedDocType('statement');
+      setSelectedDocId(null);
+    }
+  }, [searchParams, invoices, quotes, payments]);
+
   // Find selected document detail in memory
   const activeInvoice = invoices.find((i) => i.id === selectedDocId);
   const activeQuote = quotes.find((q) => q.id === selectedDocId);
+  const activePayment = (payments?.data || []).find((p: any) => p.id === selectedDocId);
+
+  let documentTitle = 'Document';
+  if (selectedDocType === 'invoice' && activeInvoice) {
+    documentTitle = `Invoice-${activeInvoice.documentNumber}`;
+  } else if (selectedDocType === 'quote' && activeQuote) {
+    documentTitle = `Quote-${activeQuote.documentNumber}`;
+  } else if (selectedDocType === 'payment' && activePayment) {
+    documentTitle = `Receipt-${activePayment.id.slice(0, 8).toUpperCase()}`;
+  }
 
   // Helper to compile preview props in memory
   const getInvoicePreviewProps = (inv: InvoiceDetail) => ({
@@ -748,6 +814,9 @@ export function ClientBillingWorkspace({
         } else if (val === 'quotes' && quotes.length > 0) {
           setSelectedDocId(quotes[0]!.id);
           setSelectedDocType('quote');
+        } else if (val === 'payments' && payments?.data && payments.data.length > 0) {
+          setSelectedDocId(payments.data[0]!.id);
+          setSelectedDocType('payment');
         } else if (val === 'statement') {
           setSelectedDocType('statement');
           setSelectedDocId(null);
@@ -899,10 +968,19 @@ export function ClientBillingWorkspace({
                     </TableHeader>
                     <TableBody>
                       {payments.data.map((entry: any) => (
-                        <TableRow key={entry.id}>
+                        <TableRow
+                          key={entry.id}
+                          className={`cursor-pointer hover:bg-muted/30 transition-colors ${
+                            selectedDocId === entry.id && selectedDocType === 'payment' ? 'bg-muted/50 font-medium' : ''
+                          }`}
+                          onClick={() => {
+                            setSelectedDocId(entry.id);
+                            setSelectedDocType('payment');
+                          }}
+                        >
                           <TableCell className="tabular-nums">{fmtDate(entry.date)}</TableCell>
                           <TableCell className="font-semibold">{extractInvoiceNumber(entry.description)}</TableCell>
-                          <TableCell className="text-right tabular-nums font-semibold text-green-500">
+                          <TableCell className="text-right tabular-nums font-semibold text-emerald-500">
                             +{formatZAR(Number(entry.amount))}
                           </TableCell>
                         </TableRow>
@@ -976,8 +1054,8 @@ export function ClientBillingWorkspace({
           {/* Right Pane (Document Previewer / Split Pane) */}
           <div className="lg:col-span-7 flex flex-col gap-4 w-full lg:sticky lg:top-16 lg:self-start">
             {selectedDocType === 'statement' ? (
-              <Card className="shadow-sm border-muted-foreground/10 bg-card overflow-hidden">
-                <CardHeader className="p-4 border-b flex flex-row items-center justify-between sticky top-16 z-10 bg-card/90 backdrop-blur-md">
+              <Card className="shadow-sm border-muted-foreground/10 bg-card">
+                <CardHeader className="p-4 border-b flex flex-row items-center justify-between sticky top-16 z-20 bg-card/90 backdrop-blur-md rounded-t-lg">
                   <div>
                     <CardTitle className="text-sm font-semibold">Statement Preview</CardTitle>
                     <CardDescription className="text-xs">{statementPeriodLabel}</CardDescription>
@@ -997,12 +1075,20 @@ export function ClientBillingWorkspace({
                 </CardContent>
               </Card>
             ) : selectedDocId ? (
-              <Card className="shadow-sm border-muted-foreground/10 bg-card overflow-hidden">
-                <CardHeader className="p-4 border-b flex flex-col sm:flex-row sm:items-center justify-between gap-2 sticky top-16 z-10 bg-card/90 backdrop-blur-md">
+              <Card className="shadow-sm border-muted-foreground/10 bg-card">
+                <CardHeader className="p-4 border-b flex flex-col sm:flex-row sm:items-center justify-between gap-2 sticky top-16 z-20 bg-card/90 backdrop-blur-md rounded-t-lg">
                   <div>
                     <CardTitle className="text-sm font-bold flex gap-2 items-center">
-                      {selectedDocType === 'invoice' ? activeInvoice?.documentNumber : activeQuote?.documentNumber}
-                      <Badge variant="outline" className="capitalize text-[10px]">
+                      {selectedDocType === 'invoice' && activeInvoice?.documentNumber}
+                      {selectedDocType === 'quote' && activeQuote?.documentNumber}
+                      {selectedDocType === 'payment' && activePayment && `REC-${activePayment.id.slice(0, 8).toUpperCase()}`}
+                      <Badge
+                        variant="outline"
+                        className={cn(
+                          "capitalize text-[10px]",
+                          selectedDocType === 'payment' && "bg-emerald-50 text-emerald-700 border-emerald-200"
+                        )}
+                      >
                         {selectedDocType}
                       </Badge>
                     </CardTitle>
@@ -1015,10 +1101,10 @@ export function ClientBillingWorkspace({
                   <div className="flex items-center gap-2 flex-wrap sm:justify-end">
                     <PrintButton
                       label="Print"
-                      documentTitle={`${selectedDocType === 'invoice' ? 'Invoice' : 'Quote'}-${selectedDocType === 'invoice' ? activeInvoice?.documentNumber : activeQuote?.documentNumber}`}
+                      documentTitle={documentTitle}
                     />
                     <ExportPdfButton
-                      fileName={`${selectedDocType === 'invoice' ? 'Invoice' : 'Quote'}-${selectedDocType === 'invoice' ? activeInvoice?.documentNumber : activeQuote?.documentNumber}`}
+                      fileName={documentTitle}
                     />
                     {selectedDocType === 'invoice' && activeInvoice && (
                       <EmailDocumentDialog
@@ -1033,6 +1119,13 @@ export function ClientBillingWorkspace({
                         documentId={activeQuote.id}
                         documentNumber={activeQuote.documentNumber}
                         documentType="quote"
+                        defaultRecipientEmail={client.email ?? ''}
+                      />
+                    )}
+                    {selectedDocType === 'payment' && activePayment && (
+                      <EmailReceiptDialog
+                        incomeId={activePayment.id}
+                        receiptNumber={`REC-${activePayment.id.slice(0, 8).toUpperCase()}`}
                         defaultRecipientEmail={client.email ?? ''}
                       />
                     )}
@@ -1054,6 +1147,13 @@ export function ClientBillingWorkspace({
                   )}
                   {selectedDocType === 'quote' && activeQuote && (
                     <DocumentPreview type="quote" {...getQuotePreviewProps(activeQuote)} />
+                  )}
+                  {selectedDocType === 'payment' && activePayment && (
+                    <PaymentReceiptPreview
+                      payment={activePayment}
+                      client={client}
+                      divSettings={divSettings}
+                    />
                   )}
                 </CardContent>
               </Card>

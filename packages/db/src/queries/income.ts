@@ -1,5 +1,5 @@
 import { db } from '../client';
-import { income, divisions, clients } from '../schema/index';
+import { income, divisions, clients, paymentAllocations, invoices } from '../schema/index';
 import { sql, eq, desc, and } from 'drizzle-orm';
 import { getMonthPeriodDates } from './billing';
 
@@ -129,4 +129,27 @@ export async function getDistinctIncomeMonths(): Promise<string[]> {
     .orderBy(sql`TO_CHAR(${income.date}, 'YYYY-MM') DESC`);
 
   return result.map((r) => r.month);
+}
+
+/**
+ * Returns all payment allocations for a given income/payment entry.
+ */
+export async function getIncomeAllocations(incomeId: string): Promise<{
+  id: string;
+  invoiceId: string;
+  invoiceNumber: string;
+  amount: string;
+  createdAt: Date;
+}[]> {
+  return await db
+    .select({
+      id: paymentAllocations.id,
+      invoiceId: paymentAllocations.invoiceId,
+      invoiceNumber: invoices.documentNumber,
+      amount: paymentAllocations.amount,
+      createdAt: paymentAllocations.createdAt,
+    })
+    .from(paymentAllocations)
+    .innerJoin(invoices, eq(invoices.id, paymentAllocations.invoiceId))
+    .where(eq(paymentAllocations.incomeId, incomeId));
 }

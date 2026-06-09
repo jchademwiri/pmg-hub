@@ -1,7 +1,8 @@
 'use client';
 
 import Link from 'next/link';
-import { FileEdit, Info, Calendar } from 'lucide-react';
+import { useRouter } from 'next/navigation';
+import { Calendar } from 'lucide-react';
 import { formatZAR } from '@/lib/format';
 import { Button } from '@/components/ui/button';
 import {
@@ -34,6 +35,7 @@ interface PaymentsClientProps {
 
 export function PaymentsClient({ entries, total, currentPage, pageSize }: PaymentsClientProps) {
   const totalPages = Math.ceil(total / pageSize);
+  const router = useRouter();
 
   return (
     <div className="flex flex-col gap-4">
@@ -58,7 +60,15 @@ export function PaymentsClient({ entries, total, currentPage, pageSize }: Paymen
             </TableRow>
           ) : (
             entries.map((p) => (
-              <TableRow key={p.id}>
+              <TableRow
+                key={p.id}
+                className="cursor-pointer hover:bg-muted/30 transition-colors"
+                onClick={() => {
+                  if (p.clientId) {
+                    router.push(`/relationships/clients/${p.clientId}?tab=payments&paymentId=${p.id}`);
+                  }
+                }}
+              >
                 <TableCell className="font-medium text-muted-foreground">
                   <span className="flex items-center gap-1.5">
                     <Calendar className="size-3.5" />

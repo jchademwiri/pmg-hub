@@ -10,6 +10,7 @@ import {
   getClientStatement,
   getStatementYears,
   getDivisionBillingSettings,
+  getIncomeAllocations,
   type InvoiceDetail,
   type QuotationDetail,
 } from '@pmg/db';
@@ -66,13 +67,27 @@ export default async function ClientDetailPage({ params, searchParams }: ClientD
   if (!client) notFound();
 
   // Load full document details (including line items) concurrently
-  const [invoicesWithDetails, quotesWithDetails] = await Promise.all([
+  const [invoicesWithDetails, quotesWithDetails, paymentsWithAllocations] = await Promise.all([
     Promise.all(invoicesList.data.map((inv) => getInvoiceById(inv.id))),
     Promise.all(quotesList.data.map((q) => getQuotationById(q.id))),
+    Promise.all(
+      incomeEntries.data.map(async (pay) => {
+        const allocations = await getIncomeAllocations(pay.id);
+        return {
+          ...pay,
+          allocations,
+        };
+      })
+    ),
   ]);
 
   const cleanInvoices = invoicesWithDetails.filter((i): i is InvoiceDetail => i !== null);
   const cleanQuotes = quotesWithDetails.filter((q): q is QuotationDetail => q !== null);
+
+  const cleanPayments = {
+    ...incomeEntries,
+    data: paymentsWithAllocations,
+  };
 
   const primaryDivisionId = cleanInvoices[0]?.divisionId ?? cleanQuotes[0]?.divisionId;
   const divSettings = primaryDivisionId
@@ -84,7 +99,7 @@ export default async function ClientDetailPage({ params, searchParams }: ClientD
       client={client}
       invoices={cleanInvoices}
       quotes={cleanQuotes}
-      payments={incomeEntries}
+      payments={cleanPayments}
       statement={statement}
       availableYears={availableYears}
       currentFY={currentFY}
