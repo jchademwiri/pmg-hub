@@ -52,6 +52,7 @@ import { PaymentReceiptPreview } from '@/components/billing/payment-receipt-prev
 import { EmailReceiptDialog } from '@/components/billing/email-receipt-dialog';
 import { ClientEditForm } from '@/components/clients/client-edit-form';
 import { ClientFinancialDashboard } from './client-financial-dashboard';
+import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription } from '@/components/ui/sheet';
 import { formatZAR, fmtDate } from '@/lib/format';
 import { getSASTToday } from '@/lib/format';
 import { getDocumentLogoUrl } from '@/lib/document-logo';
@@ -132,6 +133,7 @@ export function ClientBillingWorkspace({
   // Checkbox Multiselect Layer
   const [selectedInvoiceIds, setSelectedInvoiceIds] = useState<Set<string>>(new Set());
   const [selectedQuoteIds, setSelectedQuoteIds] = useState<Set<string>>(new Set());
+  const [isDrawerOpen, setIsDrawerOpen] = useState(false);
 
   // Sequential Queue Render State (Recommendations implemented)
   const [activeRenderingDocId, setActiveRenderingDocId] = useState<string | null>(null);
@@ -808,6 +810,7 @@ export function ClientBillingWorkspace({
         // Reset selections when switching tabs
         setSelectedInvoiceIds(new Set());
         setSelectedQuoteIds(new Set());
+        setIsDrawerOpen(false);
         if (val === 'invoices' && invoices.length > 0) {
           setSelectedDocId(invoices[0]!.id);
           setSelectedDocType('invoice');
@@ -830,67 +833,13 @@ export function ClientBillingWorkspace({
             <TabsTrigger value="statement" className="bg-transparent border-b-2 border-transparent data-[state=active]:border-amber-500 rounded-none shadow-none px-4 py-2 text-sm font-medium">Statement</TabsTrigger>
           </TabsList>
 
-          {/* Action buttons aligned on the same line as the tabs */}
-          <div className="flex items-center gap-2 flex-wrap sm:justify-end print:hidden">
-            {selectedDocType !== 'statement' && selectedDocId && (
-              <>
-                <PrintButton label="Print" documentTitle={documentTitle} />
-                <ExportPdfButton fileName={documentTitle} />
-              </>
-            )}
-            {selectedDocType === 'statement' && (
-              <>
-                <PrintButton
-                  label="Print"
-                  documentTitle={`Statement-${client.businessName?.replace(/\s+/g, '-') ?? client.name.replace(/\s+/g, '-')}`}
-                />
-                <ExportPdfButton
-                  fileName={`Statement-${client.businessName?.replace(/\s+/g, '-') ?? client.name.replace(/\s+/g, '-')}`}
-                />
-              </>
-            )}
-
-            {selectedDocType === 'invoice' && activeInvoice && (
-              <EmailDocumentDialog
-                documentId={activeInvoice.id}
-                documentNumber={activeInvoice.documentNumber}
-                documentType="invoice"
-                defaultRecipientEmail={client.email ?? ''}
-              />
-            )}
-            {selectedDocType === 'quote' && activeQuote && (
-              <EmailDocumentDialog
-                documentId={activeQuote.id}
-                documentNumber={activeQuote.documentNumber}
-                documentType="quote"
-                defaultRecipientEmail={client.email ?? ''}
-              />
-            )}
-            {selectedDocType === 'payment' && activePayment && (
-              <EmailReceiptDialog
-                incomeId={activePayment.id}
-                receiptNumber={`REC-${activePayment.id.slice(0, 8).toUpperCase()}`}
-                defaultRecipientEmail={client.email ?? ''}
-              />
-            )}
-
-            {selectedDocType === 'invoice' && activeInvoice && (
-              <Button variant="outline" size="sm" asChild>
-                <Link href={`/billing/invoices/${activeInvoice.id}/edit`}>Edit</Link>
-              </Button>
-            )}
-            {selectedDocType === 'quote' && activeQuote && (
-              <Button variant="outline" size="sm" asChild>
-                <Link href={`/billing/quotes/${activeQuote.id}/edit`}>Edit</Link>
-              </Button>
-            )}
-          </div>
+          {/* Action buttons are displayed contextually inside the slide-over drawer */}
         </div>
 
         {/* Tab content wrappers */}
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
+        <div className="w-full">
           {/* Left Pane (Document lists) */}
-          <Card className="lg:col-span-5 shadow-sm border-muted-foreground/10 bg-card overflow-hidden">
+          <Card className="w-full shadow-sm border-muted-foreground/10 bg-card overflow-hidden">
             <CardHeader className="p-4 border-b flex flex-row items-center justify-between">
               <div>
                 <CardTitle className="text-sm font-semibold capitalize">{activeTab}</CardTitle>
@@ -930,6 +879,7 @@ export function ClientBillingWorkspace({
                           onClick={() => {
                             setSelectedDocId(inv.id);
                             setSelectedDocType('invoice');
+                            setIsDrawerOpen(true);
                           }}
                         >
                           <TableCell onClick={(e) => e.stopPropagation()}>
@@ -981,6 +931,7 @@ export function ClientBillingWorkspace({
                           onClick={() => {
                             setSelectedDocId(q.id);
                             setSelectedDocType('quote');
+                            setIsDrawerOpen(true);
                           }}
                         >
                           <TableCell onClick={(e) => e.stopPropagation()}>
@@ -1025,6 +976,7 @@ export function ClientBillingWorkspace({
                           onClick={() => {
                             setSelectedDocId(entry.id);
                             setSelectedDocType('payment');
+                            setIsDrawerOpen(true);
                           }}
                         >
                           <TableCell className="tabular-nums">{fmtDate(entry.date)}</TableCell>
@@ -1095,71 +1047,135 @@ export function ClientBillingWorkspace({
                       </SelectContent>
                     </Select>
                   </div>
+
+                  <Button
+                    variant="default"
+                    size="sm"
+                    className="w-full mt-4 flex items-center justify-center gap-1.5"
+                    onClick={() => {
+                      setSelectedDocType('statement');
+                      setSelectedDocId(null);
+                      setIsDrawerOpen(true);
+                    }}
+                  >
+                    <Eye className="size-4" /> Preview Statement
+                  </Button>
                 </div>
               </TabsContent>
             </CardContent>
           </Card>
 
-          {/* Right Pane (Document Previewer / Split Pane) */}
-          <div className="lg:col-span-7 flex flex-col gap-4 w-full lg:sticky lg:top-[6.5rem] lg:self-start">
+        </div>
+
+      <Sheet open={isDrawerOpen} onOpenChange={setIsDrawerOpen}>
+        <SheetContent side="right" className="w-full sm:max-w-3xl lg:max-w-4xl p-0 flex flex-col h-full bg-background border-l shadow-2xl">
+          <SheetHeader className="p-4 border-b flex flex-row items-center justify-between shrink-0 bg-muted/20">
+            <div className="flex flex-col gap-1">
+              <SheetTitle className="text-base font-bold flex gap-2 items-center">
+                {selectedDocType === 'invoice' && activeInvoice?.documentNumber}
+                {selectedDocType === 'quote' && activeQuote?.documentNumber}
+                {selectedDocType === 'payment' && activePayment && `REC-${activePayment.id.slice(0, 8).toUpperCase()}`}
+                {selectedDocType === 'statement' && "Statement"}
+                <Badge
+                  variant="outline"
+                  className={cn(
+                    "capitalize text-[10px]",
+                    selectedDocType === 'payment' && "bg-emerald-50 text-emerald-700 border-emerald-200"
+                  )}
+                >
+                  {selectedDocType}
+                </Badge>
+              </SheetTitle>
+              <SheetDescription className="text-xs">
+                {selectedDocType === 'statement' ? statementPeriodLabel : "Document Inspection & Operations"}
+              </SheetDescription>
+            </div>
+            
+            {/* Action buttons inside sheet header */}
+            <div className="flex items-center gap-2 shrink-0 mr-8 print:hidden">
+              {selectedDocType !== 'statement' && selectedDocId && (
+                <>
+                  <PrintButton label="Print" documentTitle={documentTitle} />
+                  <ExportPdfButton fileName={documentTitle} />
+                </>
+              )}
+              {selectedDocType === 'statement' && (
+                <>
+                  <PrintButton
+                    label="Print"
+                    documentTitle={`Statement-${client.businessName?.replace(/\s+/g, '-') ?? client.name.replace(/\s+/g, '-')}`}
+                  />
+                  <ExportPdfButton
+                    fileName={`Statement-${client.businessName?.replace(/\s+/g, '-') ?? client.name.replace(/\s+/g, '-')}`}
+                  />
+                </>
+              )}
+
+              {selectedDocType === 'invoice' && activeInvoice && (
+                <>
+                  <EmailDocumentDialog
+                    documentId={activeInvoice.id}
+                    documentNumber={activeInvoice.documentNumber}
+                    documentType="invoice"
+                    defaultRecipientEmail={client.email ?? ''}
+                  />
+                  <Button variant="outline" size="sm" asChild>
+                    <Link href={`/billing/invoices/${activeInvoice.id}/edit`}>Edit</Link>
+                  </Button>
+                </>
+              )}
+              {selectedDocType === 'quote' && activeQuote && (
+                <>
+                  <EmailDocumentDialog
+                    documentId={activeQuote.id}
+                    documentNumber={activeQuote.documentNumber}
+                    documentType="quote"
+                    defaultRecipientEmail={client.email ?? ''}
+                  />
+                  <Button variant="outline" size="sm" asChild>
+                    <Link href={`/billing/quotes/${activeQuote.id}/edit`}>Edit</Link>
+                  </Button>
+                </>
+              )}
+              {selectedDocType === 'payment' && activePayment && (
+                <EmailReceiptDialog
+                  incomeId={activePayment.id}
+                  receiptNumber={`REC-${activePayment.id.slice(0, 8).toUpperCase()}`}
+                  defaultRecipientEmail={client.email ?? ''}
+                />
+              )}
+            </div>
+          </SheetHeader>
+          
+          <div className="flex-1 overflow-y-auto p-6 bg-muted/10">
             {selectedDocType === 'statement' ? (
-              <Card className="shadow-sm border-muted-foreground/10 bg-card overflow-hidden">
-                <CardHeader className="p-4 border-b flex flex-row items-center justify-between">
-                  <div>
-                    <CardTitle className="text-sm font-semibold">Statement Preview</CardTitle>
-                    <CardDescription className="text-xs">{statementPeriodLabel}</CardDescription>
-                  </div>
-                </CardHeader>
-                <CardContent className="p-4 overflow-x-auto">
-                  <DocumentPreview type="statement" {...statementPreviewProps} />
-                </CardContent>
-              </Card>
+              <div className="bg-card rounded-lg border shadow-sm p-4 overflow-x-auto">
+                <DocumentPreview type="statement" {...statementPreviewProps} />
+              </div>
             ) : selectedDocId ? (
-              <Card className="shadow-sm border-muted-foreground/10 bg-card overflow-hidden">
-                <CardHeader className="p-4 border-b flex flex-row items-center justify-between">
-                  <div>
-                    <CardTitle className="text-sm font-bold flex gap-2 items-center">
-                      {selectedDocType === 'invoice' && activeInvoice?.documentNumber}
-                      {selectedDocType === 'quote' && activeQuote?.documentNumber}
-                      {selectedDocType === 'payment' && activePayment && `REC-${activePayment.id.slice(0, 8).toUpperCase()}`}
-                      <Badge
-                        variant="outline"
-                        className={cn(
-                          "capitalize text-[10px]",
-                          selectedDocType === 'payment' && "bg-emerald-50 text-emerald-700 border-emerald-200"
-                        )}
-                      >
-                        {selectedDocType}
-                      </Badge>
-                    </CardTitle>
-                    <CardDescription className="text-xs">
-                      Inline document inspection
-                    </CardDescription>
-                  </div>
-                </CardHeader>
-                <CardContent className="p-4 overflow-x-auto">
-                  {selectedDocType === 'invoice' && activeInvoice && (
-                    <DocumentPreview type="invoice" {...getInvoicePreviewProps(activeInvoice)} />
-                  )}
-                  {selectedDocType === 'quote' && activeQuote && (
-                    <DocumentPreview type="quote" {...getQuotePreviewProps(activeQuote)} />
-                  )}
-                  {selectedDocType === 'payment' && activePayment && (
-                    <PaymentReceiptPreview
-                      payment={activePayment}
-                      client={client}
-                      divSettings={divSettings}
-                    />
-                  )}
-                </CardContent>
-              </Card>
+              <div className="bg-card rounded-lg border shadow-sm p-4 overflow-x-auto">
+                {selectedDocType === 'invoice' && activeInvoice && (
+                  <DocumentPreview type="invoice" {...getInvoicePreviewProps(activeInvoice)} />
+                )}
+                {selectedDocType === 'quote' && activeQuote && (
+                  <DocumentPreview type="quote" {...getQuotePreviewProps(activeQuote)} />
+                )}
+                {selectedDocType === 'payment' && activePayment && (
+                  <PaymentReceiptPreview
+                    payment={activePayment}
+                    client={client}
+                    divSettings={divSettings}
+                  />
+                )}
+              </div>
             ) : (
               <div className="h-64 flex items-center justify-center border border-dashed rounded-lg bg-card shadow-sm">
-                <span className="text-sm text-muted-foreground">Select a document from the left list to inspect it.</span>
+                <span className="text-sm text-muted-foreground">No document details found.</span>
               </div>
             )}
           </div>
-        </div>
+        </SheetContent>
+      </Sheet>
       </Tabs>
 
       {/* Checkbox Floating Action Bar */}
