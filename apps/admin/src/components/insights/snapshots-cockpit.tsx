@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import type { SnapshotRow } from "@pmg/db";
-import { formatZAR, fmtMonthYear } from "@/lib/format";
+import { formatZAR, fmtMonthYear, fmtDate } from "@/lib/format";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
@@ -210,7 +210,7 @@ export function SnapshotsCockpit({ snapshots }: SnapshotsCockpitProps) {
               {periodLabel}
             </h3>
             <p className="text-xs text-muted-foreground">
-              Calculated on a monthly basis. {isAllTime ? "Cumulative totals spanning all locked periods." : `Figures locked on ${new Date(selectedSnapshot!.createdAt).toLocaleDateString()}.`}
+              Calculated on a monthly basis. {isAllTime ? "Cumulative totals spanning all locked periods." : `Figures locked on ${fmtDate(selectedSnapshot!.createdAt)}.`}
             </p>
           </CardHeader>
         </Card>

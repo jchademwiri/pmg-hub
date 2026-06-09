@@ -1,7 +1,8 @@
 'use server';
 
-import { getDb, invoices, quotations, clients, divisionBillingSettings, divisions, eq } from '@pmg/db';
+import { getDb, invoices, quotations, clients, divisionBillingSettings, divisions, eq, income, sql } from '@pmg/db';
 import { getSessionOrRedirect } from '@/lib/auth';
+import { fmtDate } from '@/lib/format';
 import {
   createEmailClient,
   InvoiceDeliveryEmail,
@@ -40,10 +41,7 @@ function formatMoney(amount: string) {
   return `R ${Number(amount).toLocaleString('en-ZA', { minimumFractionDigits: 2 })}`;
 }
 
-function formatDate(value: string | null | undefined) {
-  if (!value) return undefined;
-  return new Date(value).toLocaleDateString('en-ZA');
-}
+
 
 export async function getDocumentEmailPreviewAction(rawPayload: unknown): Promise<{
   success: boolean;
@@ -90,8 +88,8 @@ export async function getDocumentEmailPreviewAction(rawPayload: unknown): Promis
         React.createElement(InvoiceDeliveryEmail, {
           clientName: client?.businessName || client?.name || 'Client',
           documentNumber: invoice.documentNumber,
-          invoiceDate: formatDate(invoice.invoiceDate) ?? 'N/A',
-          dueDate: formatDate(invoice.dueDate) ?? 'N/A',
+          invoiceDate: fmtDate(invoice.invoiceDate),
+          dueDate: fmtDate(invoice.dueDate),
           totalAmount: formatMoney(invoice.total),
           reference: invoice.reference || undefined,
           personalMessage: personalMessage || undefined,
@@ -142,8 +140,8 @@ export async function getDocumentEmailPreviewAction(rawPayload: unknown): Promis
       React.createElement(QuoteDeliveryEmail, {
         clientName: client?.businessName || client?.name || 'Client',
         documentNumber: quote.documentNumber,
-        quoteDate: formatDate(quote.quoteDate) ?? 'N/A',
-        expiryDate: formatDate(quote.expiryDate),
+        quoteDate: fmtDate(quote.quoteDate),
+        expiryDate: quote.expiryDate ? fmtDate(quote.expiryDate) : undefined,
         totalAmount: formatMoney(quote.total),
         reference: quote.reference || undefined,
         personalMessage: personalMessage || undefined,
@@ -232,8 +230,8 @@ export async function sendDocumentEmailAction(rawPayload: unknown) {
       const emailProps = {
         clientName: client?.businessName || client?.name || 'Client',
         documentNumber: invoice.documentNumber,
-        invoiceDate: new Date(invoice.invoiceDate).toLocaleDateString('en-ZA'),
-        dueDate: invoice.dueDate ? new Date(invoice.dueDate).toLocaleDateString('en-ZA') : 'N/A',
+        invoiceDate: fmtDate(invoice.invoiceDate),
+        dueDate: fmtDate(invoice.dueDate),
         totalAmount: formatMoney(invoice.total),
         reference: invoice.reference || undefined,
         personalMessage: personalMessage || undefined,
@@ -341,8 +339,8 @@ export async function sendDocumentEmailAction(rawPayload: unknown) {
       const emailProps = {
         clientName: client?.businessName || client?.name || 'Client',
         documentNumber: quote.documentNumber,
-        quoteDate: new Date(quote.quoteDate).toLocaleDateString('en-ZA'),
-        expiryDate: quote.expiryDate ? new Date(quote.expiryDate).toLocaleDateString('en-ZA') : undefined,
+        quoteDate: fmtDate(quote.quoteDate),
+        expiryDate: quote.expiryDate ? fmtDate(quote.expiryDate) : undefined,
         totalAmount: formatMoney(quote.total),
         reference: quote.reference || undefined,
         personalMessage: personalMessage || undefined,
@@ -393,5 +391,212 @@ export async function sendDocumentEmailAction(rawPayload: unknown) {
   } catch (err) {
     const error = err instanceof Error ? err : new Error(String(err));
     return { error: `Server exception: ${error.message}` };
+  }
+}
+
+// ── sendReceiptEmailAction ───────────────────────────────────────────────────
+
+const ReceiptEmailPayloadSchema = z.object({
+  incomeId: z.string().uuid(),
+  recipientEmail: z.string().email(),
+  subject: z.string().min(3),
+  personalMessage: z.string().optional(),
+  base64Pdf: z.string().min(100),
+});
+
+export async function sendReceiptEmailAction(rawPayload: unknown) {
+  try {
+    await getSessionOrRedirect();
+
+    const parsed = ReceiptEmailPayloadSchema.safeParse(rawPayload);
+    if (!parsed.success) {
+      return { error: parsed.error.issues[0]?.message ?? 'Invalid request parameters.' };
+    }
+
+    const { incomeId, recipientEmail, subject, personalMessage, base64Pdf } = parsed.data;
+    const db = getDb();
+
+    // Fetch income details
+    const [incomeRow] = await db
+      .select({
+        id: income.id,
+        date: sql<string>`${income.date}::text`,
+        amount: income.amount,
+        description: income.description,
+        clientId: income.clientId,
+        divisionId: income.divisionId,
+        divisionName: divisions.name,
+      })
+      .from(income)
+      .innerJoin(divisions, eq(divisions.id, income.divisionId))
+      .where(eq(income.id, incomeId));
+
+    if (!incomeRow) return { error: 'Payment receipt not found.' };
+
+    const [client] = await db
+      .select()
+      .from(clients)
+      .where(eq(clients.id, incomeRow.clientId!));
+
+    const [billingConfig] = await db
+      .select()
+      .from(divisionBillingSettings)
+      .where(eq(divisionBillingSettings.divisionId, incomeRow.divisionId));
+
+    const apiKey = resolveResendApiKey(incomeRow.divisionName);
+    const defaultFrom = process.env.EMAIL_FROM_ADDRESS || DEFAULT_EMAIL_FROM;
+    const fromName = billingConfig?.salesRepName || process.env.EMAIL_FROM_NAME || 'PMG Admin';
+    const fromEmail = resolveFromEmail(billingConfig?.divisionWebsite, defaultFrom);
+
+    const emailClient = createEmailClient({
+      apiKey,
+      from: `${fromName} <${fromEmail}>`,
+      adminEmail: fromEmail,
+    });
+
+    const attachments = [
+      {
+        filename: `Receipt-${incomeRow.id.slice(0, 8).toUpperCase()}.pdf`,
+        content: Buffer.from(base64Pdf, 'base64'),
+      }
+    ];
+
+    const adminCc = resolveDivisionAdminEmail(incomeRow.divisionName, billingConfig?.salesRepEmail ?? null);
+
+    const clientName = client?.businessName || client?.name || 'Client';
+    const htmlBody = `
+      <div style="font-family: sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #e5e7eb; border-radius: 8px;">
+        <h2 style="color: #1d4ed8; margin-top: 0;">Payment Receipt</h2>
+        <p>Dear ${clientName},</p>
+        <p>Thank you for your payment. Please find attached your official payment receipt for payment reference <strong>${incomeRow.id.slice(0, 8).toUpperCase()}</strong>.</p>
+        
+        <div style="background-color: #f3f4f6; padding: 15px; border-radius: 6px; margin: 20px 0;">
+          <table style="width: 100%; font-size: 14px;">
+            <tr>
+              <td style="padding: 4px 0; color: #4b5563;"><strong>Receipt Number:</strong></td>
+              <td style="padding: 4px 0;">REC-${incomeRow.id.slice(0, 8).toUpperCase()}</td>
+            </tr>
+            <tr>
+              <td style="padding: 4px 0; color: #4b5563;"><strong>Date Received:</strong></td>
+              <td style="padding: 4px 0;">${fmtDate(incomeRow.date)}</td>
+            </tr>
+            <tr>
+              <td style="padding: 4px 0; color: #4b5563;"><strong>Amount Paid:</strong></td>
+              <td style="padding: 4px 0; font-weight: bold; color: #10b981;">R ${Number(incomeRow.amount).toLocaleString('en-ZA', { minimumFractionDigits: 2 })}</td>
+            </tr>
+            <tr>
+              <td style="padding: 4px 0; color: #4b5563;"><strong>Payment Description:</strong></td>
+              <td style="padding: 4px 0;">${incomeRow.description ?? 'Client payment'}</td>
+            </tr>
+          </table>
+        </div>
+
+        ${personalMessage ? `<p style="white-space: pre-wrap; font-style: italic; border-left: 3px solid #d1d5db; padding-left: 10px; color: #4b5563;">${personalMessage}</p>` : ''}
+
+        <p>If you have any questions regarding this payment, please reply directly to this email.</p>
+        <p style="margin-bottom: 0;">Kind regards,<br><strong>${incomeRow.divisionName}</strong></p>
+      </div>
+    `;
+
+    const { data, error } = await emailClient({
+      to: recipientEmail,
+      cc: adminCc,
+      subject,
+      react: React.createElement('div', { dangerouslySetInnerHTML: { __html: htmlBody } }),
+      replyTo: DEFAULT_REPLY_TO,
+      attachments,
+    });
+
+    if (error) {
+      return { error: `Failed to deliver receipt email: ${error.message}` };
+    }
+
+    return { success: true, sendId: data?.id };
+  } catch (err) {
+    const error = err instanceof Error ? err : new Error(String(err));
+    return { error: `Server exception: ${error.message}` };
+  }
+}
+
+export async function getReceiptEmailPreviewAction(rawPayload: unknown): Promise<{
+  success: boolean;
+  html?: string;
+  error?: string;
+}> {
+  try {
+    await getSessionOrRedirect();
+
+    const parsed = z.object({
+      incomeId: z.string().uuid(),
+      personalMessage: z.string().optional(),
+    }).safeParse(rawPayload);
+
+    if (!parsed.success) {
+      return { success: false, error: parsed.error.issues[0]?.message ?? 'Invalid preview request.' };
+    }
+
+    const { incomeId, personalMessage } = parsed.data;
+    const db = getDb();
+
+    const [incomeRow] = await db
+      .select({
+        id: income.id,
+        date: sql<string>`${income.date}::text`,
+        amount: income.amount,
+        description: income.description,
+        clientId: income.clientId,
+        divisionId: income.divisionId,
+        divisionName: divisions.name,
+      })
+      .from(income)
+      .innerJoin(divisions, eq(divisions.id, income.divisionId))
+      .where(eq(income.id, incomeId));
+
+    if (!incomeRow) return { success: false, error: 'Payment receipt not found.' };
+
+    const [client] = await db
+      .select()
+      .from(clients)
+      .where(eq(clients.id, incomeRow.clientId!));
+
+    const clientName = client?.businessName || client?.name || 'Client';
+    const htmlBody = `
+      <div style="font-family: sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #e5e7eb; border-radius: 8px;">
+        <h2 style="color: #10b981; margin-top: 0;">Payment Receipt</h2>
+        <p>Dear ${clientName},</p>
+        <p>Thank you for your payment. Please find attached your official payment receipt for payment reference <strong>${incomeRow.id.slice(0, 8).toUpperCase()}</strong>.</p>
+        
+        <div style="background-color: #f3f4f6; padding: 15px; border-radius: 6px; margin: 20px 0;">
+          <table style="width: 100%; font-size: 14px;">
+            <tr>
+              <td style="padding: 4px 0; color: #4b5563;"><strong>Receipt Number:</strong></td>
+              <td style="padding: 4px 0;">REC-${incomeRow.id.slice(0, 8).toUpperCase()}</td>
+            </tr>
+            <tr>
+              <td style="padding: 4px 0; color: #4b5563;"><strong>Date Received:</strong></td>
+              <td style="padding: 4px 0;">${fmtDate(incomeRow.date)}</td>
+            </tr>
+            <tr>
+              <td style="padding: 4px 0; color: #4b5563;"><strong>Amount Paid:</strong></td>
+              <td style="padding: 4px 0; font-weight: bold; color: #10b981;">R ${Number(incomeRow.amount).toLocaleString('en-ZA', { minimumFractionDigits: 2 })}</td>
+            </tr>
+            <tr>
+              <td style="padding: 4px 0; color: #4b5563;"><strong>Payment Description:</strong></td>
+              <td style="padding: 4px 0;">${incomeRow.description ?? 'Client payment'}</td>
+            </tr>
+          </table>
+        </div>
+
+        ${personalMessage ? `<p style="white-space: pre-wrap; font-style: italic; border-left: 3px solid #d1d5db; padding-left: 10px; color: #4b5563;">${personalMessage}</p>` : ''}
+
+        <p>If you have any questions regarding this payment, please reply directly to this email.</p>
+        <p style="margin-bottom: 0;">Kind regards,<br><strong>${incomeRow.divisionName}</strong></p>
+      </div>
+    `;
+
+    return { success: true, html: htmlBody };
+  } catch (err) {
+    const error = err instanceof Error ? err : new Error(String(err));
+    return { success: false, error: `Preview failed: ${error.message}` };
   }
 }

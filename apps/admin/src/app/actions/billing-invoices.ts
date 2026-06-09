@@ -1,7 +1,7 @@
 'use server';
 
 import { revalidatePath } from 'next/cache';
-import { getDb, invoices, quotations, billingLineItems, income, clients, divisionBillingSettings, eq, and } from '@pmg/db';
+import { getDb, invoices, quotations, billingLineItems, income, clients, divisionBillingSettings, eq, and, inArray } from '@pmg/db';
 import { getNextDocumentNumber, addDays } from '@pmg/db';
 import { getSessionOrRedirect } from '@/lib/auth';
 import { isPeriodClosed, getMinAllowedDate, getMinDateErrorMessage } from '@/lib/date-rules';
@@ -489,5 +489,77 @@ export async function voidInvoice(id: string): Promise<{ error?: string }> {
     return {};
   } catch {
     return { error: 'Failed to void invoice. Please try again.' };
+  }
+}
+
+// ── bulkIssueInvoices ─────────────────────────────────────────────────────────
+
+export async function bulkIssueInvoices(ids: string[]): Promise<{ error?: string; successCount?: number }> {
+  try {
+    await getSessionOrRedirect();
+
+    if (ids.length === 0) return { successCount: 0 };
+
+    const db = getDb();
+    
+    // Find eligible draft invoices in the selected set
+    const eligible = await db
+      .select({ id: invoices.id })
+      .from(invoices)
+      .where(and(
+        inArray(invoices.id, ids),
+        eq(invoices.status, 'draft')
+      ));
+
+    const eligibleIds = eligible.map(inv => inv.id);
+    if (eligibleIds.length === 0) {
+      return { error: 'No draft invoices selected.' };
+    }
+
+    await db
+      .update(invoices)
+      .set({ status: 'issued', updatedAt: new Date() })
+      .where(inArray(invoices.id, eligibleIds));
+
+    revalidatePath('/billing/invoices');
+    return { successCount: eligibleIds.length };
+  } catch {
+    return { error: 'Failed to bulk issue invoices.' };
+  }
+}
+
+// ── bulkVoidInvoices ──────────────────────────────────────────────────────────
+
+export async function bulkVoidInvoices(ids: string[]): Promise<{ error?: string; successCount?: number }> {
+  try {
+    await getSessionOrRedirect();
+
+    if (ids.length === 0) return { successCount: 0 };
+
+    const db = getDb();
+
+    // Find eligible invoices to void (draft, issued, overdue - NOT paid or void)
+    const eligible = await db
+      .select({ id: invoices.id })
+      .from(invoices)
+      .where(and(
+        inArray(invoices.id, ids),
+        inArray(invoices.status, ['draft', 'issued', 'overdue'])
+      ));
+
+    const eligibleIds = eligible.map(inv => inv.id);
+    if (eligibleIds.length === 0) {
+      return { error: 'No voidable invoices selected.' };
+    }
+
+    await db
+      .update(invoices)
+      .set({ status: 'void', updatedAt: new Date() })
+      .where(inArray(invoices.id, eligibleIds));
+
+    revalidatePath('/billing/invoices');
+    return { successCount: eligibleIds.length };
+  } catch {
+    return { error: 'Failed to bulk void invoices.' };
   }
 }

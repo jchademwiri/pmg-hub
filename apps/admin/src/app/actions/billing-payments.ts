@@ -4,7 +4,7 @@ import { revalidatePath } from 'next/cache';
 import { getDb, invoices, income, clients, paymentAllocations, eq, and, sql, desc, asc, divisions, divisionBillingSettings } from '@pmg/db';
 import { getSessionOrRedirect } from '@/lib/auth';
 import { isPeriodClosed, getMinAllowedDate, getMinDateErrorMessage } from '@/lib/date-rules';
-import { getSASTToday } from '@/lib/format';
+import { getSASTToday, fmtDateLong } from '@/lib/format';
 
 export interface PaymentAllocationInput {
   invoiceId: string;
@@ -295,7 +295,7 @@ export async function recordClientPayment(data: PaymentInput): Promise<{ error?:
           const emailProps = {
             clientName: client.businessName || client.name,
             amountPaid: `R ${Number(data.amount).toLocaleString('en-ZA', { minimumFractionDigits: 2 })}`,
-            paymentDate: new Date(data.date).toLocaleDateString('en-ZA', { day: 'numeric', month: 'long', year: 'numeric' }),
+            paymentDate: fmtDateLong(data.date),
             paymentDescription: data.description || undefined,
             allocations: allocatedInvoicesInfo,
             companyName: divRow?.name || 'Playhouse Media Group',
