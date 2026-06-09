@@ -2,6 +2,7 @@
 
 import { getDb, invoices, quotations, clients, divisionBillingSettings, divisions, eq, income, sql } from '@pmg/db';
 import { getSessionOrRedirect } from '@/lib/auth';
+import { fmtDate } from '@/lib/format';
 import {
   createEmailClient,
   InvoiceDeliveryEmail,
@@ -40,10 +41,7 @@ function formatMoney(amount: string) {
   return `R ${Number(amount).toLocaleString('en-ZA', { minimumFractionDigits: 2 })}`;
 }
 
-function formatDate(value: string | null | undefined) {
-  if (!value) return undefined;
-  return new Date(value).toLocaleDateString('en-ZA');
-}
+
 
 export async function getDocumentEmailPreviewAction(rawPayload: unknown): Promise<{
   success: boolean;
@@ -90,8 +88,8 @@ export async function getDocumentEmailPreviewAction(rawPayload: unknown): Promis
         React.createElement(InvoiceDeliveryEmail, {
           clientName: client?.businessName || client?.name || 'Client',
           documentNumber: invoice.documentNumber,
-          invoiceDate: formatDate(invoice.invoiceDate) ?? 'N/A',
-          dueDate: formatDate(invoice.dueDate) ?? 'N/A',
+          invoiceDate: fmtDate(invoice.invoiceDate),
+          dueDate: fmtDate(invoice.dueDate),
           totalAmount: formatMoney(invoice.total),
           reference: invoice.reference || undefined,
           personalMessage: personalMessage || undefined,
@@ -142,8 +140,8 @@ export async function getDocumentEmailPreviewAction(rawPayload: unknown): Promis
       React.createElement(QuoteDeliveryEmail, {
         clientName: client?.businessName || client?.name || 'Client',
         documentNumber: quote.documentNumber,
-        quoteDate: formatDate(quote.quoteDate) ?? 'N/A',
-        expiryDate: formatDate(quote.expiryDate),
+        quoteDate: fmtDate(quote.quoteDate),
+        expiryDate: quote.expiryDate ? fmtDate(quote.expiryDate) : undefined,
         totalAmount: formatMoney(quote.total),
         reference: quote.reference || undefined,
         personalMessage: personalMessage || undefined,
@@ -232,8 +230,8 @@ export async function sendDocumentEmailAction(rawPayload: unknown) {
       const emailProps = {
         clientName: client?.businessName || client?.name || 'Client',
         documentNumber: invoice.documentNumber,
-        invoiceDate: new Date(invoice.invoiceDate).toLocaleDateString('en-ZA'),
-        dueDate: invoice.dueDate ? new Date(invoice.dueDate).toLocaleDateString('en-ZA') : 'N/A',
+        invoiceDate: fmtDate(invoice.invoiceDate),
+        dueDate: fmtDate(invoice.dueDate),
         totalAmount: formatMoney(invoice.total),
         reference: invoice.reference || undefined,
         personalMessage: personalMessage || undefined,
@@ -341,8 +339,8 @@ export async function sendDocumentEmailAction(rawPayload: unknown) {
       const emailProps = {
         clientName: client?.businessName || client?.name || 'Client',
         documentNumber: quote.documentNumber,
-        quoteDate: new Date(quote.quoteDate).toLocaleDateString('en-ZA'),
-        expiryDate: quote.expiryDate ? new Date(quote.expiryDate).toLocaleDateString('en-ZA') : undefined,
+        quoteDate: fmtDate(quote.quoteDate),
+        expiryDate: quote.expiryDate ? fmtDate(quote.expiryDate) : undefined,
         totalAmount: formatMoney(quote.total),
         reference: quote.reference || undefined,
         personalMessage: personalMessage || undefined,
@@ -480,7 +478,7 @@ export async function sendReceiptEmailAction(rawPayload: unknown) {
             </tr>
             <tr>
               <td style="padding: 4px 0; color: #4b5563;"><strong>Date Received:</strong></td>
-              <td style="padding: 4px 0;">${new Date(incomeRow.date).toLocaleDateString('en-ZA')}</td>
+              <td style="padding: 4px 0;">${fmtDate(incomeRow.date)}</td>
             </tr>
             <tr>
               <td style="padding: 4px 0; color: #4b5563;"><strong>Amount Paid:</strong></td>
@@ -576,7 +574,7 @@ export async function getReceiptEmailPreviewAction(rawPayload: unknown): Promise
             </tr>
             <tr>
               <td style="padding: 4px 0; color: #4b5563;"><strong>Date Received:</strong></td>
-              <td style="padding: 4px 0;">${new Date(incomeRow.date).toLocaleDateString('en-ZA')}</td>
+              <td style="padding: 4px 0;">${fmtDate(incomeRow.date)}</td>
             </tr>
             <tr>
               <td style="padding: 4px 0; color: #4b5563;"><strong>Amount Paid:</strong></td>

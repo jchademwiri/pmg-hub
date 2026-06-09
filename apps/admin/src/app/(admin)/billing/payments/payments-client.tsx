@@ -3,7 +3,7 @@
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { Calendar } from 'lucide-react';
-import { formatZAR } from '@/lib/format';
+import { formatZAR, fmtDate } from '@/lib/format';
 import { Button } from '@/components/ui/button';
 import {
   Table,
@@ -64,15 +64,13 @@ export function PaymentsClient({ entries, total, currentPage, pageSize }: Paymen
                 key={p.id}
                 className="cursor-pointer hover:bg-muted/30 transition-colors"
                 onClick={() => {
-                  if (p.clientId) {
-                    router.push(`/relationships/clients/${p.clientId}?tab=payments&paymentId=${p.id}`);
-                  }
+                  router.push(`/billing/payments/${p.id}`);
                 }}
               >
                 <TableCell className="font-medium text-muted-foreground">
                   <span className="flex items-center gap-1.5">
                     <Calendar className="size-3.5" />
-                    {p.date}
+                    {fmtDate(p.date)}
                   </span>
                 </TableCell>
                 <TableCell>

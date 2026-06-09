@@ -25,6 +25,7 @@ import {
 } from '@pmg/emails';
 import type { OutstandingReminderEmailProps } from '@pmg/emails';
 import { getSessionOrRedirect, requireRole } from '@/lib/auth';
+import { fmtDateLong } from '@/lib/format';
 import { validatePersonalMessage, validateRecipientEmail } from '@/lib/email-validation';
 
 export type PendingReminderInvoice = {
@@ -87,11 +88,8 @@ function formatMoney(amount: number) {
 
 function formatDate(value: string | null) {
   if (!value) return 'N/A';
-  return new Date(value).toLocaleDateString('en-ZA', {
-    day: 'numeric',
-    month: 'long',
-    year: 'numeric',
-  });
+  const formatted = fmtDateLong(value);
+  return formatted === '-' ? 'N/A' : formatted;
 }
 
 function roleError(session: Awaited<ReturnType<typeof getSessionOrRedirect>>) {

@@ -13,8 +13,15 @@ export function formatZAR(amount: number): string {
  */
 export function fmtDate(value: string | Date | null | undefined): string {
   if (!value) return '-'
-  const date = typeof value === 'string' ? new Date(value + 'T00:00:00') : value
-  return date.toLocaleDateString('en-ZA', { day: '2-digit', month: 'short', year: 'numeric' })
+  try {
+    const date = typeof value === 'string'
+      ? (value.length === 10 ? new Date(value + 'T00:00:00') : new Date(value))
+      : value
+    if (isNaN(date.getTime())) return '-'
+    return date.toLocaleDateString('en-ZA', { day: '2-digit', month: 'short', year: 'numeric' })
+  } catch {
+    return '-'
+  }
 }
 
 /**
@@ -24,8 +31,15 @@ export function fmtDate(value: string | Date | null | undefined): string {
  */
 export function fmtDateLong(value: string | Date | null | undefined): string {
   if (!value) return '-'
-  const date = typeof value === 'string' ? new Date(value + 'T00:00:00') : value
-  return date.toLocaleDateString('en-ZA', { day: '2-digit', month: 'long', year: 'numeric' })
+  try {
+    const date = typeof value === 'string'
+      ? (value.length === 10 ? new Date(value + 'T00:00:00') : new Date(value))
+      : value
+    if (isNaN(date.getTime())) return '-'
+    return date.toLocaleDateString('en-ZA', { day: '2-digit', month: 'long', year: 'numeric' })
+  } catch {
+    return '-'
+  }
 }
 
 /**
@@ -34,14 +48,21 @@ export function fmtDateLong(value: string | Date | null | undefined): string {
  */
 export function fmtDateTime(value: string | Date | null | undefined): string {
   if (!value) return '-'
-  const date = typeof value === 'string' ? new Date(value) : value
-  return date.toLocaleString('en-ZA', {
-    day: '2-digit',
-    month: 'short',
-    year: 'numeric',
-    hour: '2-digit',
-    minute: '2-digit',
-  })
+  try {
+    const date = typeof value === 'string'
+      ? (value.length === 10 ? new Date(value + 'T00:00:00') : new Date(value))
+      : value
+    if (isNaN(date.getTime())) return '-'
+    return date.toLocaleString('en-ZA', {
+      day: '2-digit',
+      month: 'short',
+      year: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit',
+    })
+  } catch {
+    return '-'
+  }
 }
 
 /**
@@ -50,18 +71,23 @@ export function fmtDateTime(value: string | Date | null | undefined): string {
  */
 export function fmtMonthYear(value: string | Date | null | undefined, options?: { short?: boolean }): string {
   if (!value) return '-'
-  let date: Date
-  if (typeof value === 'string') {
-    const dateStr = value.includes('-') && value.split('-').length === 2 ? value + '-01' : value
-    const finalStr = dateStr.length === 10 ? dateStr + 'T00:00:00' : dateStr
-    date = new Date(finalStr)
-  } else {
-    date = value
+  try {
+    let date: Date
+    if (typeof value === 'string') {
+      const dateStr = value.includes('-') && value.split('-').length === 2 ? value + '-01' : value
+      const finalStr = dateStr.length === 10 ? dateStr + 'T00:00:00' : dateStr
+      date = new Date(finalStr)
+    } else {
+      date = value
+    }
+    if (isNaN(date.getTime())) return '-'
+    return date.toLocaleString('en-ZA', {
+      month: options?.short ? 'short' : 'long',
+      year: 'numeric'
+    })
+  } catch {
+    return '-'
   }
-  return date.toLocaleString('en-ZA', {
-    month: options?.short ? 'short' : 'long',
-    year: 'numeric'
-  })
 }
 
 /** Get the current Date parts in South African Standard Time (SAST, UTC+2) */

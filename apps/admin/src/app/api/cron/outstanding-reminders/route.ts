@@ -10,6 +10,7 @@ import {
   resolveResendApiKey,
 } from '@pmg/emails';
 import * as React from 'react';
+import { fmtDateLong } from '@/lib/format';
 
 export const dynamic = 'force-dynamic'; // Ensure no caching
 
@@ -121,8 +122,8 @@ export async function GET(req: Request) {
       const emailProps = {
         clientName: client.businessName || client.name,
         documentNumber: inv.documentNumber,
-        invoiceDate: new Date(inv.invoiceDate).toLocaleDateString('en-ZA', { day: 'numeric', month: 'long', year: 'numeric' }),
-        dueDate: inv.dueDate ? new Date(inv.dueDate).toLocaleDateString('en-ZA', { day: 'numeric', month: 'long', year: 'numeric' }) : 'N/A',
+        invoiceDate: fmtDateLong(inv.invoiceDate),
+        dueDate: inv.dueDate ? fmtDateLong(inv.dueDate) : 'N/A',
         totalAmount: `R ${invoiceTotal.toLocaleString('en-ZA', { minimumFractionDigits: 2 })}`,
         outstandingAmount: `R ${outstandingVal.toLocaleString('en-ZA', { minimumFractionDigits: 2 })}`,
         reminderType,

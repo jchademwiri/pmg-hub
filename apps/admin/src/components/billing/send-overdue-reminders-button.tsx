@@ -33,6 +33,7 @@ import {
 } from '@/app/actions/send-overdue-reminders';
 import { validatePersonalMessage, validateRecipientEmail } from '@/lib/email-validation';
 import { EmailPreviewPanel } from '@/components/billing/email-preview-panel';
+import { fmtDate } from '@/lib/format';
 
 type ReminderConfig = {
   recipientEmail: string;
@@ -47,12 +48,8 @@ function formatMoney(amount: number) {
 }
 
 function formatDate(value: string | null) {
-  if (!value) return 'N/A';
-  return new Date(value).toLocaleDateString('en-ZA', {
-    day: 'numeric',
-    month: 'short',
-    year: 'numeric',
-  });
+  const formatted = fmtDate(value);
+  return formatted === '-' ? 'N/A' : formatted;
 }
 
 function defaultSubject(item: PendingReminderClient) {
