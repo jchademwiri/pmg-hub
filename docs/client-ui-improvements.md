@@ -10,7 +10,7 @@
 ### Gap 1 — No bulk invoice operations
 The current invoices list (`/billing/invoices`) has no way to:
 - Select multiple invoices (checkboxes)
-- Bulk-download PDFs as a ZIP archive
+- Bulk-download multiple quotes/invoices combined into a single multi-page PDF document
 - Bulk-email a batch to a client
 - Bulk-issue or bulk-void multiple documents at once
 
@@ -36,7 +36,7 @@ Add a checkbox-based multi-select layer to `InvoicesClient` (and optionally `Quo
 
 | Action | Description |
 |---|---|
-| **Bulk Download (ZIP)** | Generate a PDF per selected invoice client-side (reusing the existing `html2canvas` + `jsPDF` logic in `ExportPdfButton`), then package all PDFs into a `.zip` using `jszip`. Trigger a single browser download. |
+| **Bulk Download (Combined PDF)** | Generate a single multi-page PDF combining all selected documents client-side. Render each document sequentially off-screen using `html2canvas`, and append it as a new page onto a single `jsPDF` document. |
 | **Bulk Email** | For each selected invoice that has a client email, call the existing `sendDocumentEmailAction` with the generated PDF. Show a progress dialog with per-invoice status. |
 | **Bulk Issue** | Transition all selected `draft` invoices to `issued` status in a single batch server action. |
 | **Bulk Void** | Confirm once, then void all selected eligible invoices. |
@@ -53,7 +53,7 @@ apps/admin/src/app/actions/
 
 apps/admin/src/components/billing/
   bulk-invoice-action-bar.tsx  — NEW floating bar component (shown when selection > 0)
-  bulk-pdf-downloader.ts       — NEW utility: renders off-screen, zips, triggers download
+  bulk-pdf-downloader.ts       — NEW utility: renders off-screen, compiles multi-page PDF, triggers download
 ```
 
 ### UI sketch
@@ -344,7 +344,7 @@ Phase 4 — Split-pane document browser (1–2 days)
   └─ Right-pane DocumentPreview with action buttons
 
 Phase 5 — Bulk PDF + Email (2–3 days)
-  ├─ Off-screen render utility + jszip packaging
+  ├─ Off-screen render utility + multi-page PDF compilation (jsPDF)
   └─ Bulk email with per-invoice progress indicator
 ```
 
@@ -352,15 +352,7 @@ Phase 5 — Bulk PDF + Email (2–3 days)
 
 ## Dependencies to add
 
-| Package | Purpose |
-|---|---|
-| `jszip` | Client-side ZIP creation for bulk PDF download |
-| `file-saver` | `saveAs()` helper to trigger browser download of the ZIP blob |
-
-```bash
-pnpm add jszip file-saver
-pnpm add -D @types/file-saver
-```
+No new external dependencies are required. The existing `html2canvas` and `jsPDF` libraries in the project (used by `ExportPdfButton`) are sufficient to perform off-screen rendering and append canvas captures to a single multi-page PDF document.
 
 ---
 
@@ -375,6 +367,15 @@ pnpm add -D @types/file-saver
 4. **Section B visibility** — Show revenue metric counts always-visible below the KPI strip, or collapsed behind an "expand" toggle? Recommend collapsed by default to keep the dashboard compact.
 
 5. **Health score thresholds** — The criteria above (e.g. "avg days ≤ 30 = Excellent") are starting points. Confirm these thresholds match your business expectations before building.
+
+---
+
+## Recommendations & Considerations
+
+1. **Off-Screen PDF Rendering (Performance):** Re-rendering multiple PDFs client-side using `html2canvas` is CPU-intensive. Instead of rendering all selected documents in parallel, a sequential queue pattern should be used to prevent browser crashes/hanging.
+2. **Bulk Email Partial Failures:** Sequential sending must handle API rate limits and partial successes. The UI should display progress and show status per document (e.g. Success vs Failed) with the ability to retry only failed items.
+3. **Statement Date Selection:** The Statement tab should support custom Date Range selection (using a date range picker) rather than only displaying a static Current FY default.
+4. **Mobile Layout Constraints:** The dashboard metrics panel should collapse gracefully on screens under `1024px` width to avoid excessive vertical scrolling before reaching the list tabs.
 
 ---
 
