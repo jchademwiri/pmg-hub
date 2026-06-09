@@ -822,13 +822,69 @@ export function ClientBillingWorkspace({
           setSelectedDocId(null);
         }
       }} className="flex flex-col gap-4">
-        <div className="border-b">
-          <TabsList className="bg-transparent h-10 p-0 flex gap-2">
+        <div className="sticky top-[3.25rem] z-30 bg-background -mx-6 px-6 pb-2 border-b flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+          <TabsList className="bg-transparent h-10 p-0 flex gap-2 shrink-0">
             <TabsTrigger value="invoices" className="bg-transparent border-b-2 border-transparent data-[state=active]:border-amber-500 rounded-none shadow-none px-4 py-2 text-sm font-medium">Invoices</TabsTrigger>
             <TabsTrigger value="quotes" className="bg-transparent border-b-2 border-transparent data-[state=active]:border-amber-500 rounded-none shadow-none px-4 py-2 text-sm font-medium">Quotations</TabsTrigger>
             <TabsTrigger value="payments" className="bg-transparent border-b-2 border-transparent data-[state=active]:border-amber-500 rounded-none shadow-none px-4 py-2 text-sm font-medium">Payments</TabsTrigger>
             <TabsTrigger value="statement" className="bg-transparent border-b-2 border-transparent data-[state=active]:border-amber-500 rounded-none shadow-none px-4 py-2 text-sm font-medium">Statement</TabsTrigger>
           </TabsList>
+
+          {/* Action buttons aligned on the same line as the tabs */}
+          <div className="flex items-center gap-2 flex-wrap sm:justify-end print:hidden">
+            {selectedDocType !== 'statement' && selectedDocId && (
+              <>
+                <PrintButton label="Print" documentTitle={documentTitle} />
+                <ExportPdfButton fileName={documentTitle} />
+              </>
+            )}
+            {selectedDocType === 'statement' && (
+              <>
+                <PrintButton
+                  label="Print"
+                  documentTitle={`Statement-${client.businessName?.replace(/\s+/g, '-') ?? client.name.replace(/\s+/g, '-')}`}
+                />
+                <ExportPdfButton
+                  fileName={`Statement-${client.businessName?.replace(/\s+/g, '-') ?? client.name.replace(/\s+/g, '-')}`}
+                />
+              </>
+            )}
+
+            {selectedDocType === 'invoice' && activeInvoice && (
+              <EmailDocumentDialog
+                documentId={activeInvoice.id}
+                documentNumber={activeInvoice.documentNumber}
+                documentType="invoice"
+                defaultRecipientEmail={client.email ?? ''}
+              />
+            )}
+            {selectedDocType === 'quote' && activeQuote && (
+              <EmailDocumentDialog
+                documentId={activeQuote.id}
+                documentNumber={activeQuote.documentNumber}
+                documentType="quote"
+                defaultRecipientEmail={client.email ?? ''}
+              />
+            )}
+            {selectedDocType === 'payment' && activePayment && (
+              <EmailReceiptDialog
+                incomeId={activePayment.id}
+                receiptNumber={`REC-${activePayment.id.slice(0, 8).toUpperCase()}`}
+                defaultRecipientEmail={client.email ?? ''}
+              />
+            )}
+
+            {selectedDocType === 'invoice' && activeInvoice && (
+              <Button variant="outline" size="sm" asChild>
+                <Link href={`/billing/invoices/${activeInvoice.id}/edit`}>Edit</Link>
+              </Button>
+            )}
+            {selectedDocType === 'quote' && activeQuote && (
+              <Button variant="outline" size="sm" asChild>
+                <Link href={`/billing/quotes/${activeQuote.id}/edit`}>Edit</Link>
+              </Button>
+            )}
+          </div>
         </div>
 
         {/* Tab content wrappers */}
@@ -842,13 +898,6 @@ export function ClientBillingWorkspace({
                   Select documents to view or batch process
                 </CardDescription>
               </div>
-              {activeTab === 'payments' && (
-                <Button asChild size="xs" variant="outline" className="h-7 text-[10px] border-green-200 hover:bg-green-50/50 dark:border-green-900/30">
-                  <Link href={`/billing/payments/add?clientId=${client.id}`}>
-                    <Plus className="size-3 mr-1 text-green-600 dark:text-green-400" /> Record Payment
-                  </Link>
-                </Button>
-              )}
             </CardHeader>
             <CardContent className="p-0">
               {/* INVOICES TAB */}
@@ -1052,22 +1101,13 @@ export function ClientBillingWorkspace({
           </Card>
 
           {/* Right Pane (Document Previewer / Split Pane) */}
-          <div className="lg:col-span-7 flex flex-col gap-4 w-full lg:sticky lg:top-16 lg:self-start">
+          <div className="lg:col-span-7 flex flex-col gap-4 w-full lg:sticky lg:top-[6.5rem] lg:self-start">
             {selectedDocType === 'statement' ? (
-              <Card className="shadow-sm border-muted-foreground/10 bg-card">
-                <CardHeader className="p-4 border-b flex flex-row items-center justify-between sticky top-16 z-20 bg-card/90 backdrop-blur-md rounded-t-lg">
+              <Card className="shadow-sm border-muted-foreground/10 bg-card overflow-hidden">
+                <CardHeader className="p-4 border-b flex flex-row items-center justify-between">
                   <div>
                     <CardTitle className="text-sm font-semibold">Statement Preview</CardTitle>
                     <CardDescription className="text-xs">{statementPeriodLabel}</CardDescription>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <PrintButton
-                      label="Print"
-                      documentTitle={`Statement-${client.businessName?.replace(/\s+/g, '-') ?? client.name.replace(/\s+/g, '-')}`}
-                    />
-                    <ExportPdfButton
-                      fileName={`Statement-${client.businessName?.replace(/\s+/g, '-') ?? client.name.replace(/\s+/g, '-')}`}
-                    />
                   </div>
                 </CardHeader>
                 <CardContent className="p-4 overflow-x-auto">
@@ -1075,8 +1115,8 @@ export function ClientBillingWorkspace({
                 </CardContent>
               </Card>
             ) : selectedDocId ? (
-              <Card className="shadow-sm border-muted-foreground/10 bg-card">
-                <CardHeader className="p-4 border-b flex flex-col sm:flex-row sm:items-center justify-between gap-2 sticky top-16 z-20 bg-card/90 backdrop-blur-md rounded-t-lg">
+              <Card className="shadow-sm border-muted-foreground/10 bg-card overflow-hidden">
+                <CardHeader className="p-4 border-b flex flex-row items-center justify-between">
                   <div>
                     <CardTitle className="text-sm font-bold flex gap-2 items-center">
                       {selectedDocType === 'invoice' && activeInvoice?.documentNumber}
@@ -1095,50 +1135,6 @@ export function ClientBillingWorkspace({
                     <CardDescription className="text-xs">
                       Inline document inspection
                     </CardDescription>
-                  </div>
-
-                  {/* Actions for previewed document */}
-                  <div className="flex items-center gap-2 flex-wrap sm:justify-end">
-                    <PrintButton
-                      label="Print"
-                      documentTitle={documentTitle}
-                    />
-                    <ExportPdfButton
-                      fileName={documentTitle}
-                    />
-                    {selectedDocType === 'invoice' && activeInvoice && (
-                      <EmailDocumentDialog
-                        documentId={activeInvoice.id}
-                        documentNumber={activeInvoice.documentNumber}
-                        documentType="invoice"
-                        defaultRecipientEmail={client.email ?? ''}
-                      />
-                    )}
-                    {selectedDocType === 'quote' && activeQuote && (
-                      <EmailDocumentDialog
-                        documentId={activeQuote.id}
-                        documentNumber={activeQuote.documentNumber}
-                        documentType="quote"
-                        defaultRecipientEmail={client.email ?? ''}
-                      />
-                    )}
-                    {selectedDocType === 'payment' && activePayment && (
-                      <EmailReceiptDialog
-                        incomeId={activePayment.id}
-                        receiptNumber={`REC-${activePayment.id.slice(0, 8).toUpperCase()}`}
-                        defaultRecipientEmail={client.email ?? ''}
-                      />
-                    )}
-                    {selectedDocType === 'invoice' && activeInvoice && (
-                      <Button variant="outline" size="sm" asChild>
-                        <Link href={`/billing/invoices/${activeInvoice.id}/edit`}>Edit</Link>
-                      </Button>
-                    )}
-                    {selectedDocType === 'quote' && activeQuote && (
-                      <Button variant="outline" size="sm" asChild>
-                        <Link href={`/billing/quotes/${activeQuote.id}/edit`}>Edit</Link>
-                      </Button>
-                    )}
                   </div>
                 </CardHeader>
                 <CardContent className="p-4 overflow-x-auto">

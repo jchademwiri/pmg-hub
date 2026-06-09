@@ -3,7 +3,6 @@ import { AppSidebar } from '@/components/navigation/app-sidebar';
 import { TopNav } from '@/components/navigation/top-nav';
 import { PageHeaderProvider } from '@/components/navigation/page-header-context';
 import { Toaster } from '@/components/ui/sonner';
-import { TooltipProvider } from '@/components/ui/tooltip';
 import { ConfirmProvider } from '@/components/ui/confirm-dialog';
 import { auth } from '@/lib/auth';
 import { headers } from 'next/headers';
@@ -20,21 +19,19 @@ export default async function AdminLayout({ children }: { children: React.ReactN
   };
 
   return (
-    <TooltipProvider>
-      <SidebarProvider>
-        <AppSidebar user={user} />
-        <SidebarInset>
-          <PageHeaderProvider>
-            <TopNav />
-            <main className="flex-1 p-6 bg-background">
-              <div className="mx-auto w-full max-w-7xl">
-                <ConfirmProvider>{children}</ConfirmProvider>
-              </div>
-            </main>
-          </PageHeaderProvider>
-        </SidebarInset>
-      </SidebarProvider>
+    <SidebarProvider>
+      <AppSidebar user={user} />
+      <SidebarInset>
+        <PageHeaderProvider>
+          <TopNav />
+          <main className="flex-1 p-6 bg-background">
+            <div className="mx-auto w-full max-w-7xl">
+              <ConfirmProvider>{children}</ConfirmProvider>
+            </div>
+          </main>
+        </PageHeaderProvider>
+      </SidebarInset>
       <Toaster theme="dark" position="bottom-right" />
-    </TooltipProvider>
+    </SidebarProvider>
   );
 }

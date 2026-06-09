@@ -35,7 +35,7 @@ export function TopNav() {
   }[totalVariant]
 
   return (
-    <header className="sticky top-0 z-30 h-13 flex items-center border-b border-border bg-card px-6 gap-2">
+    <header className="sticky top-0 z-40 h-13 flex items-center border-b border-border bg-card px-6 gap-2">
       <SidebarTrigger className="shrink-0" />
       <Separator orientation="vertical" className="h-4 shrink-0" />
       <div className="flex items-center gap-3">

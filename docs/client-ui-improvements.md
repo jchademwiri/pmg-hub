@@ -152,7 +152,7 @@ No new DB queries needed — all data fetchers already accept `clientId` as a fi
 
 ### Files to touch
 
-```
+```ts
 apps/admin/src/app/(admin)/relationships/clients/[id]/
   page.tsx                          — restructure: load quotes + invoices + payments
   client-billing-workspace.tsx      — NEW 'use client' top-level workspace component
