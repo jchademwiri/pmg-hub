@@ -1,0 +1,207 @@
+# Client Financial Dashboard
+
+## Purpose
+
+Provide an at-a-glance financial summary of the client account without requiring users to review invoices, payments, or statements individually.
+
+The dashboard should appear at the top of the Client Billing Workspace and serve as the primary financial overview for the client.
+
+---
+
+## Dashboard KPIs
+
+### Revenue Metrics
+
+| Metric                | Description                          |
+| --------------------- | ------------------------------------ |
+| Total Quoted          | Total value of all quotations issued |
+| Total Invoiced        | Total value of all invoices issued   |
+| Total Paid            | Total payments received              |
+| Outstanding Balance   | Amount still owed                    |
+| Overdue Balance       | Total overdue amount                 |
+| Average Invoice Value | Average invoice amount               |
+| Largest Invoice       | Largest invoice issued               |
+
+---
+
+## Invoice Metrics
+
+| Metric           | Description                       |
+| ---------------- | --------------------------------- |
+| Total Invoices   | Number of invoices created        |
+| Draft Invoices   | Number of draft invoices          |
+| Sent Invoices    | Number of sent invoices           |
+| Paid Invoices    | Number of fully paid invoices     |
+| Partially Paid   | Number of partially paid invoices |
+| Overdue Invoices | Number of overdue invoices        |
+
+---
+
+## Quotation Metrics
+
+| Metric              | Description                           |
+| ------------------- | ------------------------------------- |
+| Total Quotations    | Number of quotations issued           |
+| Draft Quotations    | Number of draft quotations            |
+| Accepted Quotations | Number accepted                       |
+| Rejected Quotations | Number rejected                       |
+| Expired Quotations  | Number expired                        |
+| Conversion Rate     | Accepted quotes converted to invoices |
+
+---
+
+# Accounts Receivable Ageing Analysis
+
+Provide a dedicated ageing section.
+
+## Ageing Buckets
+
+| Bucket            | Amount |
+| ----------------- | ------ |
+| Current           | R0.00  |
+| 1 - 30 Days       | R0.00  |
+| 31 - 60 Days      | R0.00  |
+| 61+ Days          | R0.00  |
+|                   |        |
+| Total Outstanding | R0.00  |
+
+---
+
+## Ageing Visualization
+
+Display as:
+
+### Option A (Recommended)
+
+Horizontal stacked progress bar
+
+```text
+Current      ██████████
+1-30 Days    ████
+31-60 Days   ██
+61+ Days     █
+```
+
+### Option B
+
+Simple doughnut chart showing debt distribution by ageing category.
+
+---
+
+# Client Health Score
+
+Provide a calculated client health indicator.
+
+## Excellent
+
+* No overdue invoices
+* Pays on time
+
+Green
+
+---
+
+## Good
+
+* Minor overdue balances
+* Usually pays on time
+
+Blue
+
+---
+
+## At Risk
+
+* Consistent overdue invoices
+* Increasing outstanding balance
+
+Orange
+
+---
+
+## Critical
+
+* Multiple invoices older than 90 days
+* Collection action required
+
+Red
+
+---
+
+# Payment Behaviour Analytics
+
+Provide payment performance metrics.
+
+| Metric                  | Description                           |
+| ----------------------- | ------------------------------------- |
+| Average Days to Pay     | Average time taken to settle invoices |
+| Last Payment Date       | Most recent payment                   |
+| Largest Payment         | Largest payment received              |
+| Total Payments Received | Lifetime payment total                |
+| Collection Efficiency   | Paid ÷ Invoiced                       |
+
+---
+
+# Recent Activity Feed
+
+Display latest client activity.
+
+Examples:
+
+* Invoice INV-0042 created
+* Invoice INV-0040 paid
+* Payment received R12,000
+* Statement generated
+* Quotation QUO-0021 accepted
+
+Limit to latest 10 activities.
+
+---
+
+# Dashboard Quick Actions
+
+Provide quick actions at the top-right.
+
+* Create Invoice
+* Create Quotation
+* Record Payment
+* Generate Statement
+* Download All Invoices
+* Download All Quotations
+* Send Reminder
+
+---
+
+# Dashboard Layout
+
+```text
+┌─────────────────────────────────────────────────────────────┐
+│ CLIENT DASHBOARD                                            │
+├─────────────────────────────────────────────────────────────┤
+│ Outstanding │ Paid │ Invoiced │ Overdue │ Quotes Accepted   │
+│   R12,500   │R80k  │  R92k    │ R2,000  │ 87%              │
+├─────────────────────────────────────────────────────────────┤
+│ AGEING ANALYSIS                                             │
+│ Current | 1-30 | 31-60 | 61-90 | 90+                      │
+├─────────────────────────────────────────────────────────────┤
+│ PAYMENT BEHAVIOUR     │ CLIENT HEALTH SCORE                │
+├───────────────────────┼────────────────────────────────────┤
+│ Avg Days: 18          │ 🟢 Excellent                       │
+│ Last Payment: 5 days  │                                    │
+├───────────────────────┴────────────────────────────────────┤
+│ Recent Activity Feed                                       │
+└─────────────────────────────────────────────────────────────┘
+```
+
+---
+
+## Future Enhancements
+
+* Credit limit management
+* Collection notes
+* Automated payment reminders
+* Client profitability analysis
+* Revenue trends
+* Monthly spend graphs
+* AI-powered payment risk prediction
+I would actually place this dashboard above the Overview tab and make it the default landing section when opening a client. For PMG Control Hub, this becomes a mini Accounts Receivable dashboard for each customer, which aligns very well with your Accounts Receivable management role and would make collection follow-ups much easier.
