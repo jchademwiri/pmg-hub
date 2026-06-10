@@ -1215,9 +1215,6 @@ export function ClientBillingWorkspace({
               </div>
             )}
           </div>
-          <div className="mt-4 overflow-x-auto bg-muted/5 p-4 rounded border">
-            <DocumentPreview type="statement" {...statementPreviewProps} />
-          </div>
         </DialogContent>
       </Dialog>
       </Tabs>
