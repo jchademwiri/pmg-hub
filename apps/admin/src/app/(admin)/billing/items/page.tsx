@@ -4,17 +4,8 @@ import { Plus } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { EmptyState } from '@/components/ui/empty-state';
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from '@/components/ui/table';
 import { getAllItems } from '@pmg/db';
-import { BillingStatusBadge } from '@/components/billing/billing-status-badge';
-import { formatZAR } from '@/lib/format';
+import { ItemsTable } from './items-table';
 
 export const dynamic = 'force-dynamic';
 export const metadata: Metadata = { title: 'Items' };
@@ -93,48 +84,7 @@ export default async function ItemsPage({ searchParams }: ItemsPageProps) {
               />
             </div>
           ) : (
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Name</TableHead>
-                  <TableHead>Description</TableHead>
-                  <TableHead className="text-right">Unit Price (excl. VAT)</TableHead>
-                  <TableHead>Status</TableHead>
-                  <TableHead className="w-16" />
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {displayItems.map((item) => (
-                  <TableRow key={item.id}>
-                    <TableCell>
-                      <Link
-                        href={`/billing/items/${item.id}`}
-                        className="font-medium hover:underline"
-                      >
-                        {item.name}
-                      </Link>
-                    </TableCell>
-                    <TableCell className="max-w-xs truncate text-sm text-muted-foreground">
-                      {item.description ?? '-'}
-                    </TableCell>
-                    <TableCell className="text-right tabular-nums text-sm">
-                      {formatZAR(Number(item.unitPrice))}
-                      {item.unitLabel && (
-                        <span className="text-muted-foreground"> / {item.unitLabel}</span>
-                      )}
-                    </TableCell>
-                    <TableCell>
-                      <BillingStatusBadge status={item.status} />
-                    </TableCell>
-                    <TableCell>
-                      <Button variant="outline" size="sm" asChild>
-                        <Link href={`/billing/items/${item.id}`}>Edit</Link>
-                      </Button>
-                    </TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
+            <ItemsTable items={displayItems} />
           )}
         </CardContent>
       </Card>
