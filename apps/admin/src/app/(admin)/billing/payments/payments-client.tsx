@@ -2,18 +2,11 @@
 
 import * as React from 'react';
 import Link from 'next/link';
-import { Calendar, Pencil, Trash2, X, Check, Lock, Eye } from 'lucide-react';
+import { useRouter } from 'next/navigation';
+import { Calendar, Trash2, Lock } from 'lucide-react';
 import { formatZAR, fmtDate } from '@/lib/format';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
 import { toast } from 'sonner';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select';
 import {
   Table,
   TableBody,
@@ -29,8 +22,6 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from '@/components/ui/tooltip';
-
-const today = new Date().toISOString().split('T')[0]!;
 
 interface PaymentEntry {
   id: string;
@@ -70,66 +61,19 @@ interface PaymentsClientProps {
 
 function PaymentRow({
   entry,
-  divisions,
-  clients,
   closedPeriods,
-  updateAction,
   deleteAction,
 }: {
   entry: PaymentEntry;
-  divisions: { id: string; name: string }[];
-  clients: { id: string; name: string; businessName: string | null }[];
   closedPeriods: string[];
-  updateAction: PaymentsClientProps['updateAction'];
   deleteAction: PaymentsClientProps['deleteAction'];
 }) {
+  const router = useRouter();
   const period = entry.date.slice(0, 7);
   const isLocked = closedPeriods.includes(period);
-  const [mode, setMode] = React.useState<'display' | 'edit'>('display');
-  const [editDate, setEditDate] = React.useState(entry.date);
-  const [editDivisionId, setEditDivisionId] = React.useState(entry.divisionId);
-  const [editClientId, setEditClientId] = React.useState(entry.clientId ?? '');
-  const [editDesc, setEditDesc] = React.useState(entry.description);
-  const [editAmount, setEditAmount] = React.useState(String(entry.amount));
-  const [error, setError] = React.useState<string | null>(null);
-  const [isSaving, startSaveTransition] = React.useTransition();
 
-  function startEdit() {
-    setEditDate(entry.date);
-    setEditDivisionId(entry.divisionId);
-    setEditClientId(entry.clientId ?? '');
-    setEditDesc(entry.description);
-    setEditAmount(String(entry.amount));
-    setError(null);
-    setMode('edit');
-  }
-
-  function handleSave() {
-    setError(null);
-    const amountVal = parseFloat(editAmount);
-    if (isNaN(amountVal) || amountVal <= 0) {
-      setError('Amount must be a positive number.');
-      return;
-    }
-    if (!editClientId || editClientId === 'none') {
-      setError('Please select a client.');
-      return;
-    }
-
-    startSaveTransition(async () => {
-      const result = await updateAction(entry.id, {
-        date: editDate,
-        divisionId: editDivisionId,
-        clientId: editClientId,
-        description: editDesc,
-        amount: amountVal,
-      });
-      if (result.error) setError(result.error);
-      else setMode('display');
-    });
-  }
-
-  async function handleDeleteClick() {
+  async function handleDeleteClick(e: React.MouseEvent) {
+    e.stopPropagation();
     const confirmed = await confirm({
       title: 'Delete payment record?',
       description: 'This action cannot be undone and will revert all allocations to invoices.',
@@ -142,153 +86,32 @@ function PaymentRow({
     else toast.success('Payment deleted successfully.');
   }
 
-  if (mode === 'edit') {
-    return (
-      <>
-        <TableRow className="bg-muted/30">
-          <TableCell>
-            <Input
-              type="date"
-              value={editDate}
-              max={today}
-              min={isLocked ? entry.date : undefined}
-              onChange={(e) => setEditDate(e.target.value)}
-              className="w-36 text-xs h-8"
-              disabled={isSaving}
-            />
-          </TableCell>
-          <TableCell>
-            <Select value={editClientId || undefined} onValueChange={setEditClientId} disabled={isSaving}>
-              <SelectTrigger className="w-40 text-xs h-8">
-                <SelectValue placeholder="Select Client" />
-              </SelectTrigger>
-              <SelectContent>
-                {clients.map((c) => (
-                  <SelectItem key={c.id} value={c.id} className="text-xs">
-                    {c.businessName ?? c.name}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </TableCell>
-          <TableCell>
-            <Select value={editDivisionId} onValueChange={setEditDivisionId} disabled={isSaving}>
-              <SelectTrigger className="w-36 text-xs h-8">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                {divisions.map((d) => (
-                  <SelectItem key={d.id} value={d.id} className="text-xs">
-                    {d.name}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </TableCell>
-          <TableCell>
-            <Input
-              type="text"
-              value={editDesc}
-              onChange={(e) => setEditDesc(e.target.value)}
-              placeholder="Description"
-              className="w-44 text-xs h-8"
-              disabled={isSaving}
-            />
-          </TableCell>
-          <TableCell>
-            <Input
-              type="number"
-              min="0.01"
-              step="0.01"
-              value={editAmount}
-              onChange={(e) => setEditAmount(e.target.value)}
-              className="w-28 text-right font-semibold text-xs h-8"
-              disabled={isSaving}
-            />
-          </TableCell>
-          <TableCell className="text-right text-muted-foreground tabular-nums text-xs">
-            {formatZAR(entry.allocated)}
-          </TableCell>
-          <TableCell className="text-right tabular-nums text-xs">
-            {entry.credit > 0 ? (
-              <span className="font-bold text-emerald-600 bg-emerald-50 dark:bg-emerald-950/30 px-2 py-0.5 rounded text-[11px]">
-                {formatZAR(entry.credit)}
-              </span>
-            ) : (
-              <span className="text-[11px] text-muted-foreground">-</span>
-            )}
-          </TableCell>
-          <TableCell>
-            <div className="flex items-center gap-2">
-              <Button size="xs" onClick={handleSave} disabled={isSaving}>
-                <Check className="size-3.5 mr-0.5" />
-                {isSaving ? 'Saving…' : 'Save'}
-              </Button>
-              <Button
-                size="xs"
-                variant="outline"
-                onClick={() => setMode('display')}
-                disabled={isSaving}
-              >
-                <X className="size-3.5" />
-              </Button>
-            </div>
-          </TableCell>
-        </TableRow>
-        {error && (
-          <TableRow>
-            <TableCell colSpan={8} className="py-1">
-              <p className="text-xs text-destructive">{error}</p>
-            </TableCell>
-          </TableRow>
-        )}
-      </>
-    );
-  }
-
   return (
-    <TableRow className="hover:bg-muted/10 transition-colors">
-      <TableCell className="font-medium">
-        <Link
-          href={`/billing/payments/${entry.id}`}
-          className="flex items-center gap-1.5 whitespace-nowrap text-xs text-primary hover:underline"
-        >
-          <Calendar className="size-3.5" />
+    <TableRow 
+      className="cursor-pointer hover:bg-muted/40 transition-colors border-b border-border"
+      onClick={() => router.push(`/billing/payments/${entry.id}`)}
+    >
+      <TableCell className="font-medium text-xs py-3">
+        <div className="flex items-center gap-1.5 whitespace-nowrap">
+          <Calendar className="size-3.5 text-muted-foreground" />
           {fmtDate(entry.date)}
-        </Link>
+        </div>
       </TableCell>
-      <TableCell>
-        {entry.clientId ? (
-          <Link
-            href={`/relationships/clients/${entry.clientId}`}
-            className="font-medium text-primary hover:underline text-xs"
-          >
-            {entry.clientName}
-          </Link>
-        ) : (
-          <span className="font-medium text-foreground text-xs">{entry.clientName}</span>
-        )}
+      <TableCell className="text-xs py-3">
+        {entry.clientName}
       </TableCell>
-      <TableCell>
+      <TableCell className="py-3">
         <span className="inline-flex items-center px-2 py-0.5 rounded text-[11px] font-medium bg-secondary text-secondary-foreground">
           {entry.divisionName}
         </span>
       </TableCell>
-      <TableCell className="truncate max-w-xs text-xs" title={entry.description}>
-        <Link
-          href={`/billing/payments/${entry.id}`}
-          className="hover:text-primary hover:underline"
-        >
-          {entry.description || '-'}
-        </Link>
+      <TableCell className="truncate max-w-xs text-xs py-3" title={entry.description}>
+        {entry.description || '-'}
       </TableCell>
-      <TableCell className="text-right tabular-nums font-semibold text-xs">
+      <TableCell className="text-right tabular-nums font-semibold text-xs py-3">
         {formatZAR(entry.amount)}
       </TableCell>
-      <TableCell className="text-right tabular-nums text-muted-foreground text-xs">
-        {formatZAR(entry.allocated)}
-      </TableCell>
-      <TableCell className="text-right tabular-nums text-xs">
+      <TableCell className="text-right tabular-nums text-xs py-3">
         {entry.credit > 0 ? (
           <span className="font-bold text-emerald-600 bg-emerald-50 dark:bg-emerald-950/30 px-2 py-0.5 rounded text-[11px]">
             {formatZAR(entry.credit)}
@@ -297,14 +120,8 @@ function PaymentRow({
           <span className="text-[11px] text-muted-foreground">-</span>
         )}
       </TableCell>
-      <TableCell>
-        <div className="flex items-center gap-1">
-          <Button variant="ghost" size="icon-sm" asChild>
-            <Link href={`/billing/payments/${entry.id}`}>
-              <Eye className="size-3.5" />
-              <span className="sr-only">View</span>
-            </Link>
-          </Button>
+      <TableCell className="py-3 w-16" onClick={(e) => e.stopPropagation()}>
+        <div className="flex items-center gap-1 justify-end">
           {isLocked ? (
             <Tooltip>
               <TooltipTrigger asChild>
@@ -315,16 +132,10 @@ function PaymentRow({
               <TooltipContent>Period is closed</TooltipContent>
             </Tooltip>
           ) : (
-            <>
-              <Button variant="ghost" size="icon-sm" onClick={startEdit}>
-                <Pencil className="size-3.5" />
-                <span className="sr-only">Edit</span>
-              </Button>
-              <Button variant="ghost" size="icon-sm" onClick={handleDeleteClick}>
-                <Trash2 className="size-3.5 text-destructive" />
-                <span className="sr-only">Delete</span>
-              </Button>
-            </>
+            <Button variant="ghost" size="icon-sm" onClick={handleDeleteClick} title="Delete">
+              <Trash2 className="size-3.5 text-destructive" />
+              <span className="sr-only">Delete</span>
+            </Button>
           )}
         </div>
       </TableCell>
@@ -349,42 +160,40 @@ export function PaymentsClient({
 
   return (
     <TooltipProvider>
-      <div className="flex flex-col gap-4">
-        <Table>
-          <TableHeader>
-            <TableRow>
-              <TableHead>Date</TableHead>
-              <TableHead>Client</TableHead>
-              <TableHead>Division</TableHead>
-              <TableHead>Reference / Description</TableHead>
-              <TableHead className="text-right">Amount</TableHead>
-              <TableHead className="text-right">Allocated</TableHead>
-              <TableHead className="text-right">Credit Balance</TableHead>
-              <TableHead>Actions</TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {entries.length === 0 ? (
+      <div className="flex flex-col gap-4 overflow-hidden">
+        <div className="overflow-x-auto">
+          <Table>
+            <TableHeader>
               <TableRow>
-                <TableCell colSpan={8} className="h-24 text-center text-muted-foreground text-xs">
-                  No payments recorded yet. Click &quot;Record Payment&quot; above to get started.
-                </TableCell>
+                <TableHead>Date</TableHead>
+                <TableHead>Client</TableHead>
+                <TableHead>Division</TableHead>
+                <TableHead>Reference / Description</TableHead>
+                <TableHead className="text-right">Amount</TableHead>
+                <TableHead className="text-right">Credit Balance</TableHead>
+                <TableHead className="text-right w-16">Actions</TableHead>
               </TableRow>
-            ) : (
-              entries.map((p) => (
-                <PaymentRow
-                  key={p.id}
-                  entry={p}
-                  divisions={divisions}
-                  clients={clients}
-                  closedPeriods={closedPeriods}
-                  updateAction={updateAction}
-                  deleteAction={deleteAction}
-                />
-              ))
-            )}
-          </TableBody>
-        </Table>
+            </TableHeader>
+            <TableBody>
+              {entries.length === 0 ? (
+                <TableRow>
+                  <TableCell colSpan={7} className="h-24 text-center text-muted-foreground text-xs">
+                    No payments recorded yet. Click &quot;Record Payment&quot; above to get started.
+                  </TableCell>
+                </TableRow>
+              ) : (
+                entries.map((p) => (
+                  <PaymentRow
+                    key={p.id}
+                    entry={p}
+                    closedPeriods={closedPeriods}
+                    deleteAction={deleteAction}
+                  />
+                ))
+              )}
+            </TableBody>
+          </Table>
+        </div>
 
         {/* Pagination */}
         {totalPages > 1 && (

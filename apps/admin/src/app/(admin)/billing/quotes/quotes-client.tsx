@@ -1,6 +1,7 @@
 'use client';
 
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import { useState, useTransition } from 'react';
 import { MoreHorizontal } from 'lucide-react';
 import { toast } from 'sonner';
@@ -50,6 +51,7 @@ export function QuotesClient({
   deleteAction,
   updateStatusAction,
 }: QuotesClientProps) {
+  const router = useRouter();
   const [, startTransition] = useTransition();
 
   function buildHref(page: number) {
@@ -124,14 +126,13 @@ export function QuotesClient({
         </TableHeader>
         <TableBody>
           {entries.map((quote) => (
-            <TableRow key={quote.id}>
-              <TableCell>
-                <Link
-                  href={`/billing/quotes/${quote.id}`}
-                  className="font-medium hover:underline"
-                >
-                  {quote.documentNumber}
-                </Link>
+            <TableRow 
+              key={quote.id}
+              className="cursor-pointer hover:bg-muted/40 transition-colors border-b border-border"
+              onClick={() => router.push(`/billing/quotes/${quote.id}`)}
+            >
+              <TableCell className="font-medium">
+                {quote.documentNumber}
               </TableCell>
               <TableCell className="text-muted-foreground">
                 {quote.clientName ?? <span className="italic">No client</span>}
@@ -148,10 +149,10 @@ export function QuotesClient({
               <TableCell>
                 <BillingStatusBadge status={quote.status} />
               </TableCell>
-              <TableCell>
+              <TableCell onClick={(e) => e.stopPropagation()}>
                 <DropdownMenu>
                   <DropdownMenuTrigger asChild>
-                    <Button variant="ghost" size="icon" className="size-8">
+                    <Button variant="ghost" size="icon" className="size-8" title="Actions">
                       <MoreHorizontal className="size-4" />
                       <span className="sr-only">Actions</span>
                     </Button>

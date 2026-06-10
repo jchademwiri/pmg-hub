@@ -1,6 +1,7 @@
 'use client';
 
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import { useTransition } from 'react';
 import { MoreHorizontal } from 'lucide-react';
 import { toast } from 'sonner';
@@ -47,6 +48,7 @@ export function InvoicesClient({
   issueAction,
   voidAction,
 }: InvoicesClientProps) {
+  const router = useRouter();
   const [, startTransition] = useTransition();
 
   function buildHref(page: number) {
@@ -114,11 +116,13 @@ export function InvoicesClient({
         </TableHeader>
         <TableBody>
           {entries.map((inv) => (
-            <TableRow key={inv.id}>
-              <TableCell>
-                <Link href={`/billing/invoices/${inv.id}`} className="font-medium hover:underline">
-                  {inv.documentNumber}
-                </Link>
+            <TableRow 
+              key={inv.id}
+              className="cursor-pointer hover:bg-muted/40 transition-colors border-b border-border"
+              onClick={() => router.push(`/billing/invoices/${inv.id}`)}
+            >
+              <TableCell className="font-medium">
+                {inv.documentNumber}
               </TableCell>
               <TableCell className="text-muted-foreground">
                 {inv.clientName ?? <span className="italic">No client</span>}
@@ -135,10 +139,10 @@ export function InvoicesClient({
               <TableCell>
                 <BillingStatusBadge status={inv.status} />
               </TableCell>
-              <TableCell>
+              <TableCell onClick={(e) => e.stopPropagation()}>
                 <DropdownMenu>
                   <DropdownMenuTrigger asChild>
-                    <Button variant="ghost" size="icon" className="size-8">
+                    <Button variant="ghost" size="icon" className="size-8" title="Actions">
                       <MoreHorizontal className="size-4" />
                       <span className="sr-only">Actions</span>
                     </Button>
