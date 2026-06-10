@@ -23,7 +23,7 @@ export function FilterBar({
   months,
   currentDivisionId,
   currentMonth,
-  baseUrl = '/income',
+  baseUrl = '/billing/payments',
 }: FilterBarProps) {
   const router = useRouter()
 

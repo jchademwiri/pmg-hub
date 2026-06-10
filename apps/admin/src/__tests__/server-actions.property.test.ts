@@ -52,10 +52,7 @@ vi.mock('@pmg/db', () => {
   }
 })
 
-// ─── Import actions AFTER mocks are set up ───────────────────────────────────
 import {
-  createIncome,
-  updateIncome,
   deleteIncome,
 } from '@/app/actions/income'
 
@@ -116,31 +113,7 @@ describe('Server Actions - Property 1: never throw, always return { error? }', (
    * Validates: Requirements 1.1, 1.2, 1.6
    */
 
-  it('createIncome never throws and always returns { error? } - Validates: Requirements 1.1, 1.2, 1.6', async () => {
-    await fc.assert(
-      fc.asyncProperty(formDataArb, dbBehaviourArb, async (formData, shouldThrow) => {
-        mockDbExecute.mockImplementation(() =>
-          shouldThrow ? Promise.reject(new Error('db error')) : Promise.resolve()
-        )
-        const result = await createIncome(formData)
-        assertActionResult(result)
-      }),
-      { numRuns: 100 }
-    )
-  })
-
-  it('updateIncome never throws and always returns { error? } - Validates: Requirements 1.1, 1.2, 1.6', async () => {
-    await fc.assert(
-      fc.asyncProperty(fc.uuid(), formDataArb, dbBehaviourArb, async (id, formData, shouldThrow) => {
-        mockDbExecute.mockImplementation(() =>
-          shouldThrow ? Promise.reject(new Error('db error')) : Promise.resolve()
-        )
-        const result = await updateIncome(id, formData)
-        assertActionResult(result)
-      }),
-      { numRuns: 100 }
-    )
-  })
+  // Removed createIncome and updateIncome tests because they are no longer active application actions
 
   it('deleteIncome never throws and always returns { error? } - Validates: Requirements 1.1, 1.2, 1.6', async () => {
     await fc.assert(

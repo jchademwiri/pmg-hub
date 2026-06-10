@@ -7,7 +7,7 @@ import { getAllIncome, getDb, paymentAllocations, sql, invoices, and, eq, getAll
 import { formatZAR } from '@/lib/format';
 import { PaymentsClient } from './payments-client';
 import { SetPageTotal } from '@/components/navigation/page-header-context';
-import { FilterBar } from '@/components/income/filter-bar';
+import { FilterBar } from '@/components/billing/filter-bar';
 import { getClosedPeriodsFromDates } from '@/lib/date-rules';
 import { updateClientPayment, deleteClientPayment } from '@/app/actions/billing-payments';
 
