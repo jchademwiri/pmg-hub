@@ -1,21 +1,11 @@
 import type { Metadata } from 'next';
-import Link from 'next/link';
-import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
-import { EmptyState } from '@/components/ui/empty-state';
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from '@/components/ui/table';
+import { Card, CardContent, CardHeader } from '@/components/ui/card';
 import { getClientsWithBillingActivity, getAgingReport } from '@pmg/db';
-import { formatZAR, fmtDate } from '@/lib/format';
+import { formatZAR } from '@/lib/format';
 import { SetPageTotal } from '@/components/navigation/page-header-context';
 import { SendOverdueRemindersButton } from '@/components/billing/send-overdue-reminders-button';
 import { ShieldCheck, Clock, AlertTriangle, AlertCircle, LucideIcon } from 'lucide-react';
+import { StatementsClient } from './statements-client';
 
 export const dynamic = 'force-dynamic';
 export const metadata: Metadata = { title: 'Statements' };
@@ -125,72 +115,14 @@ export default async function StatementsPage() {
         </div>
       </div>
 
-      {/* Clients table */}
-      <Card>
-        <CardHeader>
-          <CardTitle>Client Statements</CardTitle>
-          <CardDescription>Select a client to view their full account statement</CardDescription>
-        </CardHeader>
-        <CardContent className="p-0">
-          {clients.length === 0 ? (
-            <div className="px-6 pb-4">
-              <EmptyState message="No client statements available yet. Statements are generated from invoices." />
-            </div>
-          ) : (
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Client</TableHead>
-                  <TableHead className="text-right">Total Invoiced</TableHead>
-                  <TableHead className="text-right">Total Paid</TableHead>
-                  <TableHead className="text-right">Outstanding</TableHead>
-                  <TableHead>Last Activity</TableHead>
-                  <TableHead className="w-20" />
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {clients.map((client) => (
-                  <TableRow key={client.id}>
-                    <TableCell>
-                      <Link
-                        href={`/billing/statements/${client.id}`}
-                        className="font-medium hover:underline"
-                      >
-                        {client.businessName ?? client.name}
-                      </Link>
-                    </TableCell>
-                    <TableCell className="text-right tabular-nums text-sm">
-                      {formatZAR(client.totalInvoiced)}
-                    </TableCell>
-                    <TableCell className="text-right tabular-nums text-sm text-green-600 dark:text-green-400">
-                      {formatZAR(client.totalPaid)}
-                    </TableCell>
-                    <TableCell className="text-right tabular-nums text-sm">
-                      <span
-                        className={
-                          client.totalOutstanding > 0
-                            ? 'text-red-500'
-                            : 'text-muted-foreground'
-                        }
-                      >
-                        {formatZAR(client.totalOutstanding)}
-                      </span>
-                    </TableCell>
-                    <TableCell className="text-sm text-muted-foreground">
-                      {fmtDate(client.lastActivityDate)}
-                    </TableCell>
-                    <TableCell>
-                      <Button variant="outline" size="sm" asChild>
-                        <Link href={`/billing/statements/${client.id}`}>View</Link>
-                      </Button>
-                    </TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          )}
-        </CardContent>
-      </Card>
+      {/* Client Statements Table */}
+      <div className="space-y-4">
+        <div>
+          <h3 className="text-sm font-semibold">Client Statements</h3>
+          <p className="text-xs text-muted-foreground">Select a client to view their full account statement</p>
+        </div>
+        <StatementsClient initialClients={clients} />
+      </div>
     </div>
   );
 }

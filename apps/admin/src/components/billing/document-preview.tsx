@@ -88,6 +88,8 @@ export interface StatementTransaction {
   debit?: number
   credit?: number
   balance?: number
+  invoiceId?: string
+  paymentId?: string
 }
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
@@ -388,7 +390,25 @@ export function DocumentPreview({
                 {transactions.map((tx, i) => (
                   <tr key={i} className="border-b border-zinc-50">
                     <td className="py-2.5 pr-4 text-xs text-zinc-600 whitespace-nowrap">{fmtDateLong(tx.date)}</td>
-                    <td className="py-2.5 px-4 text-xs text-zinc-600 whitespace-nowrap">{tx.reference}</td>
+                    <td className="py-2.5 px-4 text-xs text-zinc-600 whitespace-nowrap">
+                      {tx.invoiceId ? (
+                        <Link
+                          href={`/billing/invoices/${tx.invoiceId}`}
+                          className="text-blue-700 hover:underline print:text-zinc-600 print:no-underline font-medium"
+                        >
+                          {tx.reference}
+                        </Link>
+                      ) : tx.paymentId ? (
+                        <Link
+                          href={`/billing/payments/${tx.paymentId}`}
+                          className="text-blue-700 hover:underline print:text-zinc-600 print:no-underline font-medium"
+                        >
+                          {tx.reference}
+                        </Link>
+                      ) : (
+                        tx.reference
+                      )}
+                    </td>
                     <td className={cn('py-2.5 px-4 text-xs', tx.credit != null ? 'text-emerald-600 font-medium' : 'text-zinc-800')}>
                       {tx.description}
                     </td>
