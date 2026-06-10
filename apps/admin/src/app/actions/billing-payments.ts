@@ -244,7 +244,7 @@ export async function recordClientPayment(data: PaymentInput): Promise<{ error?:
 
     // 4. Revalidate cache
     revalidatePath('/billing/invoices');
-    revalidatePath('/finance/income');
+    revalidatePath('/billing/payments');
     revalidatePath('/dashboard');
 
     // 5. Asynchronously trigger Payment Thank You email receipt via Resend
@@ -518,7 +518,7 @@ export async function adjustClientPayment(incomeId: string, newAmount: number): 
 
     // 4. Revalidate cache
     revalidatePath('/billing/invoices');
-    revalidatePath('/finance/income');
+    revalidatePath('/billing/payments');
     revalidatePath('/dashboard');
 
     return { success: true };
@@ -790,7 +790,6 @@ export async function updateClientPayment(
 
     // 5. Revalidate cache
     revalidatePath('/billing/payments');
-    revalidatePath('/finance/income');
     revalidatePath('/billing/invoices');
     revalidatePath('/dashboard');
 

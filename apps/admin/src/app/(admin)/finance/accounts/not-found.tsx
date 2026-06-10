@@ -6,7 +6,7 @@ export default function AccountsNotFound() {
       noun="account"
       links={[
         { label: 'Accounts',   href: '/finance/accounts'   },
-        { label: 'Income',     href: '/finance/income'     },
+        { label: 'Payments',   href: '/billing/payments'   },
         { label: 'Expenses',   href: '/finance/expenses'   },
         { label: 'Ledger',     href: '/finance/ledger'     },
       ]}
