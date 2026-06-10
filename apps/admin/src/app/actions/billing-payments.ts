@@ -633,6 +633,7 @@ export async function updateClientPayment(
     clientId: string;
     description: string;
     amount: number;
+    allocations?: PaymentAllocationInput[];
   }
 ): Promise<{ error?: string; success?: boolean }> {
   try {
@@ -660,7 +661,32 @@ export async function updateClientPayment(
     const newAmount = data.amount;
 
     // 3. Handle allocations update based on client/amount changes
-    if (oldClientId !== data.clientId) {
+    if (data.allocations) {
+      // Strip allocations for the old client's/current invoices
+      const oldAllocations = await db
+        .select({ invoiceId: paymentAllocations.invoiceId })
+        .from(paymentAllocations)
+        .where(eq(paymentAllocations.incomeId, id));
+
+      await db.delete(paymentAllocations).where(eq(paymentAllocations.incomeId, id));
+
+      for (const alloc of oldAllocations) {
+        await recalculateInvoiceStatus(alloc.invoiceId);
+      }
+
+      // Insert new allocations
+      for (const alloc of data.allocations) {
+        if (alloc.amount <= 0) continue;
+
+        await db.insert(paymentAllocations).values({
+          incomeId: id,
+          invoiceId: alloc.invoiceId,
+          amount: String(alloc.amount),
+        });
+
+        await recalculateInvoiceStatus(alloc.invoiceId, id);
+      }
+    } else if (oldClientId !== data.clientId) {
       // Client changed or was removed
       if (oldClientId) {
         // Strip allocations for the old client's invoices
@@ -807,4 +833,97 @@ export async function updateClientPayment(
  */
 export async function deleteClientPayment(id: string): Promise<{ error?: string }> {
   return deleteIncome(id);
+}
+
+/**
+ * ── getClientOutstandingInvoicesForEdit ───────────────────────────────────────────────
+ * Fetches all invoices for a client that are unpaid or partially paid, plus any invoices
+ * that are currently allocated to the specified payment, adjusting their outstanding balances.
+ */
+export async function getClientOutstandingInvoicesForEdit(clientId: string, currentPaymentId: string) {
+  try {
+    await getSessionOrRedirect();
+    const db = getDb();
+
+    // 1. Fetch outstanding invoices
+    const unpaidInvoices = await getClientOutstandingInvoices(clientId);
+
+    // 2. Fetch allocations for the current payment
+    const currentAllocations = await db
+      .select({
+        id: paymentAllocations.id,
+        invoiceId: paymentAllocations.invoiceId,
+        amount: paymentAllocations.amount,
+        invoiceNumber: invoices.documentNumber,
+        invoiceDate: invoices.invoiceDate,
+        dueDate: invoices.dueDate,
+        total: invoices.total,
+        divisionId: invoices.divisionId,
+      })
+      .from(paymentAllocations)
+      .innerJoin(invoices, eq(invoices.id, paymentAllocations.invoiceId))
+      .where(eq(paymentAllocations.incomeId, currentPaymentId));
+
+    // 3. Create a map of unpaid invoices for quick lookup
+    const unpaidMap = new Map<string, typeof unpaidInvoices[0]>();
+    for (const inv of unpaidInvoices) {
+      unpaidMap.set(inv.id, inv);
+    }
+
+    // 4. Merge current allocations into unpaid invoices list
+    for (const alloc of currentAllocations) {
+      const allocatedAmount = parseFloat(alloc.amount);
+      const existingUnpaid = unpaidMap.get(alloc.invoiceId);
+
+      if (existingUnpaid) {
+        existingUnpaid.outstanding = parseFloat((existingUnpaid.outstanding + allocatedAmount).toFixed(2));
+      } else {
+        unpaidInvoices.push({
+          id: alloc.invoiceId,
+          documentNumber: alloc.invoiceNumber,
+          invoiceDate: alloc.invoiceDate,
+          dueDate: alloc.dueDate,
+          total: parseFloat(alloc.total),
+          allocated: 0,
+          outstanding: allocatedAmount,
+          divisionId: alloc.divisionId,
+        });
+      }
+    }
+
+    return unpaidInvoices.sort((a, b) => a.invoiceDate.localeCompare(b.invoiceDate));
+  } catch (err) {
+    console.error('Failed to fetch client outstanding invoices for edit:', err);
+    throw new Error('Failed to load invoices.');
+  }
+}
+
+/**
+ * ── getClientCreditBalanceForEdit ─────────────────────────────────────────────────────
+ * Calculates the unallocated credit balance for a client excluding the specified payment.
+ */
+export async function getClientCreditBalanceForEdit(clientId: string, currentPaymentId: string): Promise<number> {
+  try {
+    await getSessionOrRedirect();
+    const db = getDb();
+
+    const [incomeAgg] = await db
+      .select({ totalPaid: sql<string>`coalesce(sum(${income.amount}), 0)` })
+      .from(income)
+      .where(and(eq(income.clientId, clientId), sql`${income.id} != ${currentPaymentId}`));
+
+    const [allocationAgg] = await db
+      .select({ totalAllocated: sql<string>`coalesce(sum(${paymentAllocations.amount}), 0)` })
+      .from(paymentAllocations)
+      .innerJoin(invoices, eq(invoices.id, paymentAllocations.invoiceId))
+      .where(and(eq(invoices.clientId, clientId), sql`${paymentAllocations.incomeId} != ${currentPaymentId}`));
+
+    const totalPaid = parseFloat(incomeAgg?.totalPaid ?? '0');
+    const totalAllocated = parseFloat(allocationAgg?.totalAllocated ?? '0');
+
+    return Math.max(0, totalPaid - totalAllocated);
+  } catch (err) {
+    console.error('Failed to calculate client credit balance for edit:', err);
+    return 0;
+  }
 }
