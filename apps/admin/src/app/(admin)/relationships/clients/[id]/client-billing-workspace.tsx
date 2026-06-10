@@ -1179,11 +1179,16 @@ export function ClientBillingWorkspace({
                 </>
               )}
               {selectedDocType === 'payment' && activePayment && (
-                <EmailReceiptDialog
-                  incomeId={activePayment.id}
-                  receiptNumber={`REC-${activePayment.id.slice(0, 8).toUpperCase()}`}
-                  defaultRecipientEmail={client.email ?? ''}
-                />
+                <>
+                  <EmailReceiptDialog
+                    incomeId={activePayment.id}
+                    receiptNumber={`REC-${activePayment.id.slice(0, 8).toUpperCase()}`}
+                    defaultRecipientEmail={client.email ?? ''}
+                  />
+                  <Button variant="outline" size="sm" asChild>
+                    <Link href={`/billing/payments/${activePayment.id}`}>View Page</Link>
+                  </Button>
+                </>
               )}
             </div>
           </DialogHeader>
