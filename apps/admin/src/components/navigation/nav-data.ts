@@ -48,7 +48,6 @@ export const GROUPS: NavGroup[] = [
     label: 'Finance',
     icon: Banknote,
     items: [
-      { title: 'Income',     url: '/finance/income',     icon: TrendingUp   },
       { title: 'Expenses',   url: '/finance/expenses',   icon: TrendingDown },
       { title: 'Categories', url: '/finance/categories', icon: Tags         },
       { title: 'Ledger',     url: '/finance/ledger',     icon: BookOpen     },

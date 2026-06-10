@@ -40,6 +40,13 @@ These rules are **always enforced**. Each links to a file with Incorrect/Correct
 - **Use `cn()` for conditional classes.** Don't write manual template literal ternaries.
 - **No manual `z-index` on overlay components.** Dialog, Sheet, Popover, etc. handle their own stacking.
 
+### Tables → [tables.md](./rules/tables.md)
+
+- **Interactive Rows use custom click handlers.** Use `useRouter` on `<TableRow>`. Never nest `<Link>` or `<a>` tags inside.
+- **Spacious Cell Padding.** Always add `py-4` padding to all `<TableCell>` and `<TableHead>` elements.
+- **Consistent Font Sizes.** Default to `text-sm` for normal cell data and `tabular-nums` for figures/dates.
+- **Flat Layouts for Dashboards.** Render list views directly with only border-bottom separators instead of card wrappers.
+
 ### Forms & Inputs → [forms.md](./rules/forms.md)
 
 - **Forms use `FieldGroup` + `Field`.** Never use raw `div` with `space-y-*` or `grid gap-*` for form layout.

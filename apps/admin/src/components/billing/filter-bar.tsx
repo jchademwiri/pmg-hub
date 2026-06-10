@@ -15,6 +15,7 @@ interface FilterBarProps {
   months: string[]
   currentDivisionId?: string
   currentMonth?: string
+  baseUrl?: string
 }
 
 export function FilterBar({
@@ -22,6 +23,7 @@ export function FilterBar({
   months,
   currentDivisionId,
   currentMonth,
+  baseUrl = '/billing/payments',
 }: FilterBarProps) {
   const router = useRouter()
 
@@ -29,14 +31,14 @@ export function FilterBar({
     const params = new URLSearchParams()
     if (value !== 'all') params.set('divisionId', value)
     if (currentMonth) params.set('month', currentMonth)
-    router.push('/income?' + params.toString())
+    router.push(baseUrl + '?' + params.toString())
   }
 
   function handleMonthChange(value: string) {
     const params = new URLSearchParams()
     if (currentDivisionId) params.set('divisionId', currentDivisionId)
     if (value !== 'all') params.set('month', value)
-    router.push('/income?' + params.toString())
+    router.push(baseUrl + '?' + params.toString())
   }
 
   return (

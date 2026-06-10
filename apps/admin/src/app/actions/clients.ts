@@ -82,7 +82,7 @@ export async function deleteClient(id: string): Promise<{ error?: string }> {
       .limit(1);
 
     if (incomeCount) {
-      return { error: 'Cannot delete a client that has income records. Disable the client instead.' };
+      return { error: 'Cannot delete a client that has payment records. Disable the client instead.' };
     }
 
     await db.delete(clients).where(eq(clients.id, id));

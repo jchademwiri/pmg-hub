@@ -84,7 +84,7 @@ export function InvoiceDetailActions({
               {fmtDate(invoice.paidAt ?? undefined)}. Revenue posted to income.
             </p>
             <Button variant="outline" size="sm" className="w-full" asChild>
-              <Link href="/finance/income">View in Income →</Link>
+              <Link href="/billing/payments">View in Payments →</Link>
             </Button>
           </div>
         )}

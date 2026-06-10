@@ -3,26 +3,29 @@ import Link from 'next/link';
 import { Plus } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
-import { getAllIncome, getDb, paymentAllocations, sql, invoices, and, eq } from '@pmg/db';
+import { getAllIncome, getDb, paymentAllocations, sql, invoices, and, eq, getAllDivisions, getAllClients, getDistinctIncomeMonths } from '@pmg/db';
 import { formatZAR } from '@/lib/format';
 import { PaymentsClient } from './payments-client';
 import { SetPageTotal } from '@/components/navigation/page-header-context';
+import { FilterBar } from '@/components/billing/filter-bar';
+import { getClosedPeriodsFromDates } from '@/lib/date-rules';
+import { updateClientPayment, deleteClientPayment } from '@/app/actions/billing-payments';
 
 export const dynamic = 'force-dynamic';
 export const metadata: Metadata = { title: 'Payments Received' };
 
 interface PaymentsPageProps {
-  searchParams: Promise<{ page?: string }>;
+  searchParams: Promise<{ page?: string; divisionId?: string; month?: string }>;
 }
 
 export default async function PaymentsPage({ searchParams }: PaymentsPageProps) {
-  const { page } = await searchParams;
+  const { page, divisionId, month } = await searchParams;
   const currentPage = Math.max(1, parseInt(page || '1', 10));
   const pageSize = 20;
 
   const db = getDb();
 
-  // 1. Self-healing backfill check (covers cases where db:push generated the schema but skipped the data backfill script)
+  // 1. Self-healing backfill check
   const [allocCountRow] = await db
     .select({ count: sql<number>`count(*)::int` })
     .from(paymentAllocations);
@@ -55,9 +58,9 @@ export default async function PaymentsPage({ searchParams }: PaymentsPageProps) 
     }
   }
 
-  // 2. Fetch payments (income records) and allocations aggregate
-  const [incomeResult, allocationSums] = await Promise.all([
-    getAllIncome(undefined, { page: currentPage, pageSize }),
+  // 2. Fetch payments, divisions, clients, months and allocations aggregate
+  const [incomeResult, allocationSums, divisions, clients, months] = await Promise.all([
+    getAllIncome({ divisionId, month }, { page: currentPage, pageSize }),
     db
       .select({
         incomeId: paymentAllocations.incomeId,
@@ -65,6 +68,9 @@ export default async function PaymentsPage({ searchParams }: PaymentsPageProps) 
       })
       .from(paymentAllocations)
       .groupBy(paymentAllocations.incomeId),
+    getAllDivisions(),
+    getAllClients(),
+    getDistinctIncomeMonths(),
   ]);
 
   // 3. Map allocations for fast lookup
@@ -81,6 +87,7 @@ export default async function PaymentsPage({ searchParams }: PaymentsPageProps) 
     return {
       id: r.id,
       date: r.date,
+      divisionId: r.divisionId,
       divisionName: r.divisionName,
       clientName: r.clientName ?? 'General / Non-Client',
       clientId: r.clientId,
@@ -90,6 +97,8 @@ export default async function PaymentsPage({ searchParams }: PaymentsPageProps) 
       credit,
     };
   });
+
+  const closedPeriods = await getClosedPeriodsFromDates(payments.map((p) => p.date));
 
   // Calculate totals for stats
   const totalReceived = incomeResult.sum;
@@ -114,6 +123,14 @@ export default async function PaymentsPage({ searchParams }: PaymentsPageProps) 
         </div>
       </div>
 
+      <FilterBar
+        divisions={divisions}
+        months={months}
+        currentDivisionId={divisionId}
+        currentMonth={month}
+        baseUrl="/billing/payments"
+      />
+
       {/* Payments History Table */}
       <Card>
         <CardHeader>
@@ -126,6 +143,13 @@ export default async function PaymentsPage({ searchParams }: PaymentsPageProps) 
             total={incomeResult.total}
             currentPage={currentPage}
             pageSize={pageSize}
+            divisions={divisions}
+            clients={clients}
+            divisionId={divisionId}
+            month={month}
+            closedPeriods={closedPeriods}
+            updateAction={updateClientPayment}
+            deleteAction={deleteClientPayment}
           />
         </CardContent>
       </Card>

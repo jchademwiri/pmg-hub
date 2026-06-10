@@ -7,7 +7,7 @@ export default function CategoriesNotFound() {
       links={[
         { label: 'Categories', href: '/finance/categories' },
         { label: 'Expenses',   href: '/finance/expenses'   },
-        { label: 'Income',     href: '/finance/income'     },
+        { label: 'Payments',   href: '/billing/payments'   },
         { label: 'Ledger',     href: '/finance/ledger'     },
       ]}
     />

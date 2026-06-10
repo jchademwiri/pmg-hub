@@ -8,7 +8,11 @@ let _db: ReturnType<typeof drizzle> | null = null;
 export function getDb() {
   if (!_db) {
     const env = getEnv();
-    const sql = neon(env.DATABASE_URL);
+    const sql = neon(env.DATABASE_URL, {
+      fetchOptions: {
+        cache: 'no-store',
+      },
+    });
     _db = drizzle(sql, { schema });
   }
   return _db;

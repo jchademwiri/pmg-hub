@@ -71,7 +71,15 @@ export default async function StatementDetailPage({ params, searchParams }: Prop
 
   // ── Build transaction history ─────────────────────────────────────────────
   // Each non-void invoice = debit; each income record for this client = credit
-  type TxRaw = { date: string; reference: string; description: string; debit?: number; credit?: number };
+  type TxRaw = {
+    date: string;
+    reference: string;
+    description: string;
+    debit?: number;
+    credit?: number;
+    invoiceId?: string;
+    paymentId?: string;
+  };
 
   // Build a map of incomeId → invoice document number for cross-referencing payments
   const incomeToInvoiceNumber = new Map<string, string>();
@@ -87,12 +95,14 @@ export default async function StatementDetailPage({ params, searchParams }: Prop
         reference: inv.documentNumber,
         description: inv.reference ?? 'Invoice',
         debit: Number(inv.total),
+        invoiceId: inv.id,
       })),
     ...incomeResult.data.map((inc) => ({
       date: inc.date,
       reference: incomeToInvoiceNumber.get(inc.id) ?? '-',
       description: 'Payment received',
       credit: Number(inc.amount),
+      paymentId: inc.id,
     })),
   ];
 
@@ -108,6 +118,8 @@ export default async function StatementDetailPage({ params, searchParams }: Prop
       debit: tx.debit,
       credit: tx.credit,
       balance: currentBalance,
+      invoiceId: tx.invoiceId,
+      paymentId: tx.paymentId,
     };
   });
 

@@ -6,7 +6,7 @@ import { Badge } from "@/components/ui/badge";
 const quickLinks = [
   { label: "Leads", href: "/relationships/leads" },
   { label: "Clients", href: "/relationships/clients" },
-  { label: "Income", href: "/finance/income" },
+  { label: "Payments", href: "/billing/payments" },
   { label: "Expenses", href: "/finance/expenses" },
 ];
 

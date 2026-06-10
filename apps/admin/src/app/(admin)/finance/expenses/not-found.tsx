@@ -6,7 +6,7 @@ export default function ExpensesNotFound() {
       noun="expense record"
       links={[
         { label: 'Expenses',   href: '/finance/expenses'   },
-        { label: 'Income',     href: '/finance/income'     },
+        { label: 'Payments',   href: '/billing/payments'   },
         { label: 'Categories', href: '/finance/categories' },
         { label: 'Ledger',     href: '/finance/ledger'     },
         { label: 'Accounts',   href: '/finance/accounts'   },

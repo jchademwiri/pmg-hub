@@ -5,6 +5,7 @@ import { getDb, invoices, income, clients, paymentAllocations, eq, and, sql, des
 import { getSessionOrRedirect } from '@/lib/auth';
 import { isPeriodClosed, getMinAllowedDate, getMinDateErrorMessage } from '@/lib/date-rules';
 import { getSASTToday, fmtDateLong } from '@/lib/format';
+import { deleteIncome } from './income';
 
 export interface PaymentAllocationInput {
   invoiceId: string;
@@ -144,6 +145,7 @@ export async function recordClientPayment(data: PaymentInput): Promise<{ error?:
 
     if (!client) return { error: 'Client not found.' };
     const clientLabel = client.businessName ?? client.name;
+
     const finalDescription = data.description 
       ? `${data.description} - ${clientLabel}`
       : `Payment received - ${clientLabel}`;
@@ -242,7 +244,7 @@ export async function recordClientPayment(data: PaymentInput): Promise<{ error?:
 
     // 4. Revalidate cache
     revalidatePath('/billing/invoices');
-    revalidatePath('/finance/income');
+    revalidatePath('/billing/payments');
     revalidatePath('/dashboard');
 
     // 5. Asynchronously trigger Payment Thank You email receipt via Resend
@@ -516,7 +518,7 @@ export async function adjustClientPayment(incomeId: string, newAmount: number): 
 
     // 4. Revalidate cache
     revalidatePath('/billing/invoices');
-    revalidatePath('/finance/income');
+    revalidatePath('/billing/payments');
     revalidatePath('/dashboard');
 
     return { success: true };
@@ -524,4 +526,285 @@ export async function adjustClientPayment(incomeId: string, newAmount: number): 
     console.error('Failed to adjust client payment:', err);
     return { error: 'Failed to adjust payment.' };
   }
+}
+
+/**
+ * Helper to fetch client's outstanding invoices (internally bypasses auth redirect overhead)
+ */
+async function getClientOutstandingInvoicesInternal(clientId: string) {
+  const db = getDb();
+  const rows = await db
+    .select({
+      id: invoices.id,
+      documentNumber: invoices.documentNumber,
+      invoiceDate: invoices.invoiceDate,
+      total: invoices.total,
+      allocatedAmount: sql<string>`coalesce(sum(${paymentAllocations.amount}), 0)`,
+    })
+    .from(invoices)
+    .leftJoin(paymentAllocations, eq(paymentAllocations.invoiceId, invoices.id))
+    .where(
+      and(
+        eq(invoices.clientId, clientId),
+        sql`${invoices.status} IN ('issued', 'partially_paid', 'overdue')`
+      )
+    )
+    .groupBy(invoices.id, invoices.documentNumber, invoices.invoiceDate, invoices.total)
+    .orderBy(asc(invoices.invoiceDate));
+
+  return rows.map((r) => {
+    const total = parseFloat(r.total);
+    const allocated = parseFloat(r.allocatedAmount);
+    return {
+      id: r.id,
+      total,
+      outstanding: Math.max(0, total - allocated),
+    };
+  });
+}
+
+/**
+ * Helper to recalculate invoice status, paidAt date and link based on its remaining allocations
+ */
+async function recalculateInvoiceStatus(invoiceId: string, currentIncomeId?: string) {
+  const db = getDb();
+  
+  // Sum allocations for this invoice
+  const [sumAgg] = await db
+    .select({ sum: sql<string>`coalesce(sum(${paymentAllocations.amount}), 0)` })
+    .from(paymentAllocations)
+    .where(eq(paymentAllocations.invoiceId, invoiceId));
+
+  const [invoiceRow] = await db
+    .select({ total: invoices.total })
+    .from(invoices)
+    .where(eq(invoices.id, invoiceId));
+
+  if (invoiceRow) {
+    const invoiceTotal = parseFloat(invoiceRow.total);
+    const totalAllocated = parseFloat(sumAgg?.sum ?? '0');
+
+    if (totalAllocated >= invoiceTotal) {
+      await db
+        .update(invoices)
+        .set({
+          status: 'paid',
+          paidAt: new Date(),
+          incomeId: currentIncomeId ?? null,
+          updatedAt: new Date(),
+        })
+        .where(eq(invoices.id, invoiceId));
+    } else if (totalAllocated > 0) {
+      await db
+        .update(invoices)
+        .set({
+          status: 'partially_paid',
+          paidAt: null,
+          incomeId: null,
+          updatedAt: new Date(),
+        })
+        .where(eq(invoices.id, invoiceId));
+    } else {
+      await db
+        .update(invoices)
+        .set({
+          status: 'issued',
+          paidAt: null,
+          incomeId: null,
+          updatedAt: new Date(),
+        })
+        .where(eq(invoices.id, invoiceId));
+    }
+  }
+}
+
+/**
+ * ── updateClientPayment ────────────────────────────────────────────────────────
+ * Transactionally updates a payment record (amount, description, date, client, division)
+ * and applies cascading invoice status updates:
+ * - Client Changed: deletes old client allocations and spreads to new client's outstanding invoices (FIFO).
+ * - Amount Changed: adjusts current allocations up (FIFO) or down (LIFO).
+ */
+export async function updateClientPayment(
+  id: string,
+  data: {
+    date: string;
+    divisionId: string;
+    clientId: string;
+    description: string;
+    amount: number;
+  }
+): Promise<{ error?: string; success?: boolean }> {
+  try {
+    await getSessionOrRedirect();
+    const db = getDb();
+
+    // 1. Fetch existing payment/income record
+    const [existing] = await db.select().from(income).where(eq(income.id, id));
+    if (!existing) return { error: 'Payment record not found.' };
+
+    // 2. Validate dates and period lock
+    const today = getSASTToday();
+    if (data.date > today) return { error: 'Payment date cannot be in the future.' };
+
+    if (await isPeriodClosed(existing.date)) {
+      return { error: 'Cannot update payments in a closed financial period.' };
+    }
+    if (await isPeriodClosed(data.date)) {
+      const minDate = await getMinAllowedDate();
+      return { error: getMinDateErrorMessage(minDate) };
+    }
+
+    const oldClientId = existing.clientId;
+    const oldAmount = parseFloat(existing.amount);
+    const newAmount = data.amount;
+
+    // 3. Handle allocations update based on client/amount changes
+    if (oldClientId !== data.clientId) {
+      // Client changed or was removed
+      if (oldClientId) {
+        // Strip allocations for the old client's invoices
+        const oldAllocations = await db
+          .select({ invoiceId: paymentAllocations.invoiceId })
+          .from(paymentAllocations)
+          .where(eq(paymentAllocations.incomeId, id));
+
+        await db.delete(paymentAllocations).where(eq(paymentAllocations.incomeId, id));
+
+        for (const alloc of oldAllocations) {
+          await recalculateInvoiceStatus(alloc.invoiceId);
+        }
+      }
+
+      if (data.clientId) {
+        // Apply FIFO allocation to the new client's outstanding invoices
+        let remainingToAllocate = newAmount;
+        const unpaidInvoices = await getClientOutstandingInvoicesInternal(data.clientId);
+
+        for (const inv of unpaidInvoices) {
+          if (remainingToAllocate <= 0) break;
+          const allocAmount = Math.min(inv.outstanding, remainingToAllocate);
+          remainingToAllocate -= allocAmount;
+
+          await db.insert(paymentAllocations).values({
+            incomeId: id,
+            invoiceId: inv.id,
+            amount: String(allocAmount),
+          });
+
+          await recalculateInvoiceStatus(inv.id, id);
+        }
+      }
+    } else if (data.clientId && newAmount !== oldAmount) {
+      // Client stayed the same, but amount changed
+      if (newAmount < oldAmount) {
+        // Downward adjustment (LIFO)
+        let reductionNeeded = oldAmount - newAmount;
+
+        const allocations = await db
+          .select({
+            id: paymentAllocations.id,
+            invoiceId: paymentAllocations.invoiceId,
+            amount: paymentAllocations.amount,
+          })
+          .from(paymentAllocations)
+          .innerJoin(invoices, eq(invoices.id, paymentAllocations.invoiceId))
+          .where(eq(paymentAllocations.incomeId, id))
+          .orderBy(desc(invoices.invoiceDate));
+
+        for (const alloc of allocations) {
+          if (reductionNeeded <= 0) break;
+          const allocAmount = parseFloat(alloc.amount);
+
+          if (allocAmount <= reductionNeeded) {
+            await db.delete(paymentAllocations).where(eq(paymentAllocations.id, alloc.id));
+            reductionNeeded -= allocAmount;
+            await recalculateInvoiceStatus(alloc.invoiceId);
+          } else {
+            const newAllocAmount = allocAmount - reductionNeeded;
+            reductionNeeded = 0;
+            await db
+              .update(paymentAllocations)
+              .set({ amount: String(newAllocAmount) })
+              .where(eq(paymentAllocations.id, alloc.id));
+            await recalculateInvoiceStatus(alloc.invoiceId);
+          }
+        }
+      } else {
+        // Upward adjustment (FIFO)
+        let increaseAvailable = newAmount - oldAmount;
+        const unpaidInvoices = await getClientOutstandingInvoicesInternal(data.clientId);
+
+        for (const inv of unpaidInvoices) {
+          if (increaseAvailable <= 0) break;
+          const outstanding = inv.outstanding;
+          if (outstanding <= 0) continue;
+
+          const [existingAlloc] = await db
+            .select()
+            .from(paymentAllocations)
+            .where(
+              and(
+                eq(paymentAllocations.incomeId, id),
+                eq(paymentAllocations.invoiceId, inv.id)
+              )
+            )
+            .limit(1);
+
+          const extraAllocAmount = Math.min(outstanding, increaseAvailable);
+          increaseAvailable -= extraAllocAmount;
+
+          if (existingAlloc) {
+            const currentAllocVal = parseFloat(existingAlloc.amount);
+            await db
+              .update(paymentAllocations)
+              .set({ amount: String(currentAllocVal + extraAllocAmount) })
+              .where(eq(paymentAllocations.id, existingAlloc.id));
+          } else {
+            await db.insert(paymentAllocations).values({
+              incomeId: id,
+              invoiceId: inv.id,
+              amount: String(extraAllocAmount),
+            });
+          }
+
+          await recalculateInvoiceStatus(inv.id, id);
+        }
+      }
+    }
+
+    // 4. Update core payment/income row
+    const finalDescription = data.description.trim() || 'Payment received';
+
+    await db
+      .update(income)
+      .set({
+        date: data.date,
+        divisionId: data.divisionId,
+        clientId: data.clientId,
+        description: finalDescription,
+        amount: String(newAmount),
+        updatedAt: new Date(),
+      })
+      .where(eq(income.id, id));
+
+    // 5. Revalidate cache
+    revalidatePath('/billing/payments');
+    revalidatePath('/billing/invoices');
+    revalidatePath('/dashboard');
+
+    return { success: true };
+  } catch (err) {
+    console.error('Failed to update client payment:', err);
+    return { error: 'Failed to update payment record.' };
+  }
+}
+
+/**
+ * ── deleteClientPayment ────────────────────────────────────────────────────────
+ * Wraps the existing deleteIncome function to securely delete a payment,
+ * clear allocations, and recalculate invoice statuses.
+ */
+export async function deleteClientPayment(id: string): Promise<{ error?: string }> {
+  return deleteIncome(id);
 }
