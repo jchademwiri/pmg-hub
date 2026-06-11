@@ -19,6 +19,7 @@
     "@pmg/db": "workspace:*",
     "@pmg/emails": "workspace:*",
     "@pmg/tailwind-config": "workspace:*",
+    "@pmg/utils": "workspace:*",
     "@types/react": "^19.2.14",
     "@types/react-dom": "^19.2.3",
     "@vercel/analytics": "^2.0.1",
