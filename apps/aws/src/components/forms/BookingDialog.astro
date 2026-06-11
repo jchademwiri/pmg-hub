@@ -104,6 +104,18 @@ const plansData = {
       </div>
 
       <form id='booking-form' class='space-y-4'>
+        <!-- Honeypot - hidden from real users, catches bots -->
+        <div style='position: absolute; left: -9999px;' aria-hidden='true'>
+          <input type='text' name='_company_url' tabindex='-1' autocomplete='off' />
+        </div>
+
+        <!-- Timestamp for time-based bot detection -->
+        <input type='hidden' name='_loadedAt' id='booking-loaded-at' value='' />
+
+        <!-- Cloudflare Turnstile -->
+        {import.meta.env.TURNSTILE_SITE_KEY && (
+          <div class='cf-turnstile' data-sitekey={import.meta.env.TURNSTILE_SITE_KEY} data-action='_turnstile' data-theme='auto'></div>
+        )}
         <input type='hidden' name='package' id='input-package' />
         <input type='hidden' name='price' id='input-price' />
         <input type='hidden' name='type' id='input-type' />
@@ -332,6 +344,10 @@ const plansData = {
       setTimeout(resetForm, 500);
     });
   }
+
+  // Set timestamp on page load for time-based bot detection
+  const loadedAtEl = document.getElementById('booking-loaded-at');
+  if (loadedAtEl && !loadedAtEl.value) loadedAtEl.value = new Date().toISOString();
 
   if (form) {
     form.addEventListener('submit', async (e) => {

@@ -142,9 +142,17 @@ const submitted = result?.data?.success === true;
               </div>
 
               <!-- Honeypot - hidden from real users, catches bots -->
-              <div style="display:none" aria-hidden="true">
-                <input type="text" name="_gotcha" tabindex="-1" autocomplete="off" />
+              <div style="position: absolute; left: -9999px;" aria-hidden="true">
+                <input type="text" name="_website" tabindex="-1" autocomplete="off" />
               </div>
+
+              <!-- Timestamp for time-based bot detection -->
+              <input type="hidden" name="_loadedAt" id="loaded-at" value="" />
+
+              <!-- Cloudflare Turnstile -->
+              {import.meta.env.TURNSTILE_SITE_KEY && (
+                <div class="cf-turnstile" data-sitekey={import.meta.env.TURNSTILE_SITE_KEY} data-action="_turnstile" data-theme="auto"></div>
+              )}
 
               <!-- Submit -->
               <button
@@ -267,13 +275,14 @@ const submitted = result?.data?.success === true;
   const btnText = document.getElementById('btn-text');
   const btnLoading = document.getElementById('btn-loading');
 
+  // Set timestamp on page load for time-based bot detection
+  const loadedAtEl = document.getElementById('loaded-at');
+  if (loadedAtEl && !loadedAtEl.value) {
+    loadedAtEl.value = new Date().toISOString();
+  }
+
   if (form && btn && btnText && btnLoading) {
     form.addEventListener('submit', (e) => {
-      const honeypot = form.querySelector<HTMLInputElement>('input[name="_gotcha"]');
-      if (honeypot?.value) {
-        e.preventDefault();
-        return;
-      }
       btn.disabled = true;
       btnText.classList.add('hidden');
       btnLoading.classList.remove('hidden');

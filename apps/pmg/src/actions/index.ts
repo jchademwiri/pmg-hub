@@ -34,12 +34,48 @@ export const server = {
   submitContactForm: defineAction({
     accept: 'form',
     input: z.object({
-      name: z.string().min(1, 'Name is required'),
-      phone: z.string().optional(),
-      email: z.string().email('Invalid email address'),
-      message: z.string().min(1, 'Message is required'),
+      name:         z.string().min(1, 'Name is required'),
+      phone:        z.string().optional(),
+      email:        z.string().email('Invalid email address'),
+      message:      z.string().min(1, 'Message is required'),
+      _company_url: z.string().optional().or(z.literal('')),
+      _loadedAt:    z.string().optional().or(z.literal('')),
+      _turnstile:   z.string().optional().or(z.literal('')),
     }),
     handler: async (input) => {
+      // ── Bot protection ──────────────────────────────────────────────
+      // Turnstile verification (strongest signal, check first)
+      if (input._turnstile) {
+        const secretKey = import.meta.env.TURNSTILE_SECRET_KEY;
+        if (secretKey) {
+          const res = await fetch('https://challenges.cloudflare.com/turnstile/v0/siteverify', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+            body: new URLSearchParams({ secret: secretKey, response: input._turnstile }),
+          });
+          const data = await res.json();
+          if (!data.success) {
+            console.log('[bot-check] Turnstile verification failed');
+            return { success: true, message: 'Submission received.' };
+          }
+        } else {
+          console.warn('[bot-check] TURNSTILE_SECRET_KEY not configured — skipping verification');
+        }
+      }
+      // Honeypot: reject if filled
+      if (input._company_url && input._company_url.length > 0) {
+        console.log('[bot-check] Honeypot triggered');
+        return { success: true, message: 'Submission received.' };
+      }
+      // Time check: reject if < 3 seconds from page load
+      if (input._loadedAt) {
+        const elapsed = Date.now() - new Date(input._loadedAt).getTime();
+        if (elapsed < 3000) {
+          console.log(`[bot-check] Too fast: ${elapsed}ms`);
+          return { success: true, message: 'Submission received.' };
+        }
+      }
+
       // Load environment variables for the database
       const env = import.meta.env as Record<string, string | undefined>;
       bridgeDatabaseEnv(env);
