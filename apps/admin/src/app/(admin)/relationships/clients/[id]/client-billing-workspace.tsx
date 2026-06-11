@@ -985,7 +985,7 @@ export function ClientBillingWorkspace({
         <div className="flex flex-col lg:flex-row gap-4 items-start w-full">
 
           {/* Document list — 40% on lg+, full width on mobile */}
-          <div className="w-full lg:w-[40%] shrink-0">
+          <div className={cn("w-full shrink-0", activeTab !== 'analytics' && "lg:w-[40%]")}>
             <Card className="w-full shadow-sm border-muted-foreground/10 bg-card overflow-hidden">
             <CardHeader className="p-4 border-b flex flex-row items-center justify-between">
               <div>
@@ -1241,7 +1241,6 @@ export function ClientBillingWorkspace({
                         <TableRow>
                           <TableHead>Date</TableHead>
                           <TableHead>Reference</TableHead>
-                          <TableHead>Description</TableHead>
                           <TableHead className="text-right">Debit (+)</TableHead>
                           <TableHead className="text-right">Credit (-)</TableHead>
                           <TableHead className="text-right">Balance</TableHead>
@@ -1251,13 +1250,14 @@ export function ClientBillingWorkspace({
                         {statementTransactions.map((tx, idx) => (
                           <TableRow key={idx} className="hover:bg-muted/30 transition-colors">
                             <TableCell className="tabular-nums">{fmtDate(tx.date)}</TableCell>
-                            <TableCell className="font-semibold">{tx.reference}</TableCell>
-                            <TableCell className="text-muted-foreground">{tx.description}</TableCell>
+                            <TableCell className="font-semibold">
+                              {tx.reference === '-' ? '' : tx.reference}
+                            </TableCell>
                             <TableCell className="text-right tabular-nums text-red-500 font-semibold">
-                              {tx.debit ? formatZAR(tx.debit) : '-'}
+                              {tx.debit ? formatZAR(tx.debit) : ''}
                             </TableCell>
                             <TableCell className="text-right tabular-nums text-emerald-500 font-semibold">
-                              {tx.credit ? formatZAR(tx.credit) : '-'}
+                              {tx.credit ? formatZAR(tx.credit) : ''}
                             </TableCell>
                             <TableCell className="text-right tabular-nums font-bold">
                               {formatZAR(tx.balance)}
@@ -1283,10 +1283,11 @@ export function ClientBillingWorkspace({
           </div>
 
           {/* Preview panel — 60% on lg+, hidden on mobile (uses Dialog instead) */}
-          <div
-            ref={previewPanelRef}
-            className="hidden lg:flex lg:flex-col lg:w-[60%] sticky top-[3.25rem] max-h-[calc(100vh-4rem)] overflow-y-auto w-full"
-          >
+          {activeTab !== 'analytics' && (
+            <div
+              ref={previewPanelRef}
+              className="hidden lg:flex lg:flex-col lg:w-[60%] sticky top-[3.25rem] max-h-[calc(100vh-4rem)] overflow-y-auto w-full"
+            >
             {/* ── Inline Preview Panel (lg+ only) ─────────────────────── */}
             <Card className="shadow-sm border-muted-foreground/10 bg-card overflow-hidden text-card-foreground">
               {/* Panel header with action buttons */}
@@ -1395,6 +1396,7 @@ export function ClientBillingWorkspace({
               </div>
             </Card>
           </div>
+          )}
 
         </div>
 
