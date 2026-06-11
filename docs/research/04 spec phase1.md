@@ -248,24 +248,24 @@ The FY Select dropdown does not need changes — when a year param is present, `
 ```
 Phase 1 — Complete when all boxes are checked:
 
-[ ] client-edit-form.tsx
+[x] client-edit-form.tsx
     - router.push('/relationships/clients') replaced with router.refresh()
     - Saving valid form stays on client detail page
     - Error handling unchanged
 
-[ ] client-billing-workspace.tsx — Header
+[x] client-billing-workspace.tsx — Header
     - Email displayed below client name (if present)
     - Phone displayed below client name (if present)
     - Neither renders if both are null
     - No layout regression on mobile
 
-[ ] client-billing-workspace.tsx — Payments table
+[x] client-billing-workspace.tsx — Payments table
     - 4 columns: Date, Receipt #, Invoice Number, Amount
     - Receipt # = REC- + first 8 chars of entry.id uppercased
     - font-mono, text-muted-foreground styling
     - Clicking row still opens preview
 
-[ ] client-billing-workspace.tsx — Statement period
+[x] client-billing-workspace.tsx — Statement period
     - effectivePeriod derived immediately after searchParams.get calls
     - All 4 month period buttons use effectivePeriod for variant
     - Current Month highlighted on first load (no params)

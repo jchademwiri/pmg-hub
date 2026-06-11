@@ -52,6 +52,8 @@ import { PaymentReceiptPreview } from '@/components/billing/payment-receipt-prev
 import { EmailReceiptDialog } from '@/components/billing/email-receipt-dialog';
 import { ClientEditForm } from '@/components/clients/client-edit-form';
 import { ClientFinancialDashboard } from './client-financial-dashboard';
+import { ClientMetricStrip } from './client-metric-strip';
+import { calculateClientHealth, calculateAverageDaysToPay } from '@/lib/client-billing-helpers';
 import { formatZAR, fmtDate } from '@/lib/format';
 import { getSASTToday } from '@/lib/format';
 import { getDocumentLogoUrl } from '@/lib/document-logo';
@@ -146,6 +148,34 @@ export function ClientBillingWorkspace({
 
   // Active Tab
   const [activeTab, setActiveTab] = useState<string>('invoices');
+  const [metricFilter, setMetricFilter] = useState<'all' | 'paid' | 'outstanding' | 'overdue'>('all');
+
+  // ── Metric Strip Computations ──────────────────────────────────────────────
+  const todayStrWS = getSASTToday();
+  const activeInvoicesWS = invoices.filter(
+    (inv) => inv.status !== 'void' && inv.status !== 'draft' && inv.invoiceDate <= todayStrWS
+  );
+  const totalInvoicedWS = activeInvoicesWS.reduce((sum, inv) => sum + Number(inv.total), 0);
+  const totalPaidWS = (payments?.data ?? []).reduce((sum: number, pay: any) => sum + Number(pay.amount), 0);
+  const outstandingBalanceWS = activeInvoicesWS.reduce(
+    (sum, inv) => sum + (Number(inv.total) - Number(inv.allocatedAmount ?? 0)),
+    0
+  );
+  const overdueBalanceWS = activeInvoicesWS
+    .filter(
+      (inv) =>
+        (inv.status === 'overdue' || inv.status === 'issued' || inv.status === 'partially_paid') &&
+        inv.dueDate &&
+        inv.dueDate < todayStrWS
+    )
+    .reduce((sum, inv) => sum + (Number(inv.total) - Number(inv.allocatedAmount ?? 0)), 0);
+
+  const healthWS = calculateClientHealth(invoices, outstandingBalanceWS, overdueBalanceWS);
+  const avgDaysToPayWS = calculateAverageDaysToPay(invoices);
+  const sortedPaymentsWS = [...(payments?.data ?? [])].sort((a: any, b: any) =>
+    b.date.localeCompare(a.date)
+  );
+  const lastPaymentWS = sortedPaymentsWS[0] ?? null;
 
   // Handle initialization/selection from URL search parameters (e.g. navigation from payments page)
   useEffect(() => {
@@ -184,6 +214,9 @@ export function ClientBillingWorkspace({
     } else if (tabParam === 'statement') {
       setActiveTab('statement');
       setSelectedDocType('statement');
+      setSelectedDocId(null);
+    } else if (tabParam === 'analytics') {
+      setActiveTab('analytics');
       setSelectedDocId(null);
     }
   }, [searchParams, invoices, quotes, payments]);
@@ -796,14 +829,21 @@ export function ClientBillingWorkspace({
         </CollapsibleContent>
       </Collapsible>
 
-      {/* Financial Overview Dashboard */}
-      <ClientFinancialDashboard
-        invoices={invoices}
-        quotes={quotes}
-        payments={payments.data}
+      {/* Metric Strip */}
+      <ClientMetricStrip
+        totalInvoiced={totalInvoicedWS}
+        totalPaid={totalPaidWS}
+        outstandingBalance={outstandingBalanceWS}
+        overdueBalance={overdueBalanceWS}
+        healthScore={healthWS.score}
+        avgDaysToPay={avgDaysToPayWS}
+        lastPaymentDate={lastPaymentWS?.date ?? null}
+        lastPaymentAmount={lastPaymentWS ? Number(lastPaymentWS.amount) : null}
+        onFilterChange={setMetricFilter}
+        activeFilter={metricFilter}
       />
 
-      {/* Quick actions panel */}
+      {/* Quick Actions */}
       <div className="flex flex-wrap gap-2 items-center">
         <Button asChild size="sm" variant="default" className="shadow-sm">
           <Link href="/billing/invoices/new">
@@ -841,6 +881,11 @@ export function ClientBillingWorkspace({
         } else if (val === 'statement') {
           setSelectedDocType('statement');
           setSelectedDocId(null);
+        } else if (val === 'analytics') {
+          // No document selection change needed for analytics tab
+          setSelectedInvoiceIds(new Set());
+          setSelectedQuoteIds(new Set());
+          setIsPreviewOpen(false);
         }
       }} className="flex flex-col gap-4">
         <div className="sticky top-[3.25rem] z-30 bg-background -mx-6 px-6 pb-2 border-b flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
@@ -849,6 +894,9 @@ export function ClientBillingWorkspace({
             <TabsTrigger value="quotes" className="bg-transparent border-b-2 border-transparent data-[state=active]:border-amber-500 rounded-none shadow-none px-4 py-2 text-sm font-medium">Quotations</TabsTrigger>
             <TabsTrigger value="payments" className="bg-transparent border-b-2 border-transparent data-[state=active]:border-amber-500 rounded-none shadow-none px-4 py-2 text-sm font-medium">Payments</TabsTrigger>
             <TabsTrigger value="statement" className="bg-transparent border-b-2 border-transparent data-[state=active]:border-amber-500 rounded-none shadow-none px-4 py-2 text-sm font-medium">Statement</TabsTrigger>
+            <TabsTrigger value="analytics" className="bg-transparent border-b-2 border-transparent data-[state=active]:border-amber-500 rounded-none shadow-none px-4 py-2 text-sm font-medium">
+              Analytics
+            </TabsTrigger>
           </TabsList>
 
           {/* Action buttons are displayed contextually inside the slide-over drawer */}
@@ -860,10 +908,14 @@ export function ClientBillingWorkspace({
           <Card className="w-full shadow-sm border-muted-foreground/10 bg-card overflow-hidden">
             <CardHeader className="p-4 border-b flex flex-row items-center justify-between">
               <div>
-                <CardTitle className="text-sm font-semibold capitalize">{activeTab}</CardTitle>
+                <CardTitle className="text-sm font-semibold capitalize">
+                  {activeTab === 'analytics' ? 'Client Analytics' : activeTab}
+                </CardTitle>
                 <CardDescription className="text-xs">
                   {activeTab === 'statement'
                     ? 'Configure and preview the client account statement'
+                    : activeTab === 'analytics'
+                    ? 'Full financial health, ageing analysis, and billing activity'
                     : 'Select documents to view or batch process'}
                 </CardDescription>
               </div>
@@ -1125,6 +1177,15 @@ export function ClientBillingWorkspace({
                     </Table>
                   )}
                 </div>
+              </TabsContent>
+
+              {/* ANALYTICS TAB */}
+              <TabsContent value="analytics" className="m-0 p-4">
+                <ClientFinancialDashboard
+                  invoices={invoices}
+                  quotes={quotes}
+                  payments={payments.data}
+                />
               </TabsContent>
             </CardContent>
           </Card>

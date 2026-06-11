@@ -357,32 +357,32 @@ const [showAllActivity, setShowAllActivity] = useState(false);
 ```
 Phase 2 — Complete when all boxes are checked:
 
-[ ] New file: client-metric-strip.tsx
+[x] New file: client-metric-strip.tsx
     - 4 KPI tiles: Total Invoiced, Total Paid, Outstanding, Overdue
     - Info row: Health badge · Avg Pay · Last Payment
     - onFilterChange prop accepted (wired up in Phase 4)
     - activeFilter prop accepted (visual ring on active tile)
     - Renders correctly with all null/zero values
 
-[ ] client-billing-workspace.tsx — Metric strip computations
+[x] client-billing-workspace.tsx — Metric strip computations
     - ClientMetricStrip and helper imports added
     - All 6 computed values derived correctly
     - metricFilter state declared
 
-[ ] client-billing-workspace.tsx — Layout
+[x] client-billing-workspace.tsx — Layout
     - ClientFinancialDashboard removed from main layout body
     - Quick action buttons removed from old position
     - Metric strip renders between collapsible form and tabs
     - Quick action buttons render below metric strip
     - Page no longer shows full dashboard before the tab browser
 
-[ ] client-billing-workspace.tsx — Analytics tab
+[x] client-billing-workspace.tsx — Analytics tab
     - "Analytics" TabsTrigger added to TabsList
     - TabsContent for analytics renders ClientFinancialDashboard
     - CardHeader description handles analytics tab
     - onValueChange handles 'analytics' tab value
 
-[ ] client-financial-dashboard.tsx — Activity feed
+[x] client-financial-dashboard.tsx — Activity feed
     - Activity accordion expanded by default
     - First 5 events shown by default
     - "Show all N events" / "Show less" toggle works
