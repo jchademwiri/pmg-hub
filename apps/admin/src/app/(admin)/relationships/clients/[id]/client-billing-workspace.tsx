@@ -347,6 +347,7 @@ export function ClientBillingWorkspace({
 
   const statementPeriodParam = searchParams.get('monthPeriod');
   const statementYearParam = searchParams.get('year');
+  const effectivePeriod = statementPeriodParam ?? (!statementYearParam ? 'current' : null);
   let statementPeriodLabel = '';
   if (statementPeriodParam === 'current') statementPeriodLabel = 'Current Month';
   else if (statementPeriodParam === 'previous') statementPeriodLabel = 'Previous Month';
@@ -734,19 +735,37 @@ export function ClientBillingWorkspace({
 
       {/* Header panel */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b pb-4">
-        <div className="flex items-center gap-4">
-          <Link
-            href="/relationships/clients"
-            className="text-sm text-muted-foreground hover:text-foreground transition-colors"
-          >
-            ← Back to Clients
-          </Link>
-          <h1 className="text-2xl font-bold tracking-tight">
-            {client.businessName ?? client.name}
-          </h1>
-          <Badge variant={client.isActive ? 'default' : 'secondary'}>
-            {client.isActive ? 'Active' : 'Disabled'}
-          </Badge>
+        <div className="flex flex-col gap-1">
+          <div className="flex items-center gap-3">
+            <Link
+              href="/relationships/clients"
+              className="text-sm text-muted-foreground hover:text-foreground transition-colors"
+            >
+              ← Back to Clients
+            </Link>
+            <h1 className="text-2xl font-bold tracking-tight">
+              {client.businessName ?? client.name}
+            </h1>
+            <Badge variant={client.isActive ? 'default' : 'secondary'}>
+              {client.isActive ? 'Active' : 'Disabled'}
+            </Badge>
+          </div>
+          {(client.email || client.phone) && (
+            <div className="flex items-center gap-4 pl-0 text-sm text-muted-foreground">
+              {client.email && (
+                <span className="flex items-center gap-1">
+                  <span className="text-xs">✉</span>
+                  {client.email}
+                </span>
+              )}
+              {client.phone && (
+                <span className="flex items-center gap-1">
+                  <span className="text-xs">📞</span>
+                  {client.phone}
+                </span>
+              )}
+            </div>
+          )}
         </div>
         <Button
           variant="outline"
@@ -963,6 +982,7 @@ export function ClientBillingWorkspace({
                     <TableHeader>
                       <TableRow>
                         <TableHead>Date</TableHead>
+                        <TableHead>Receipt #</TableHead>
                         <TableHead>Invoice Number</TableHead>
                         <TableHead className="text-right">Amount</TableHead>
                       </TableRow>
@@ -981,6 +1001,9 @@ export function ClientBillingWorkspace({
                           }}
                         >
                           <TableCell className="tabular-nums">{fmtDate(entry.date)}</TableCell>
+                          <TableCell className="font-mono text-xs text-muted-foreground">
+                            REC-{entry.id.slice(0, 8).toUpperCase()}
+                          </TableCell>
                           <TableCell className="font-semibold">{extractInvoiceNumber(entry.description)}</TableCell>
                           <TableCell className="text-right tabular-nums font-semibold text-emerald-500">
                             +{formatZAR(Number(entry.amount))}
@@ -1000,7 +1023,7 @@ export function ClientBillingWorkspace({
                     <span className="text-xs font-semibold text-muted-foreground">Select Statement Period</span>
                     <div className="flex flex-wrap gap-2">
                       <Button
-                        variant={statementPeriodParam === 'current' || (!statementPeriodParam && !statementYearParam) ? 'default' : 'outline'}
+                        variant={effectivePeriod === 'current' ? 'default' : 'outline'}
                         size="xs"
                         onClick={() => updateStatementFilter('monthPeriod', 'current')}
                         className="text-xs px-3 py-1.5 h-8"
@@ -1008,7 +1031,7 @@ export function ClientBillingWorkspace({
                         Current Month
                       </Button>
                       <Button
-                        variant={statementPeriodParam === 'previous' ? 'default' : 'outline'}
+                        variant={effectivePeriod === 'previous' ? 'default' : 'outline'}
                         size="xs"
                         onClick={() => updateStatementFilter('monthPeriod', 'previous')}
                         className="text-xs px-3 py-1.5 h-8"
@@ -1016,7 +1039,7 @@ export function ClientBillingWorkspace({
                         Previous Month
                       </Button>
                       <Button
-                        variant={statementPeriodParam === 'past3' ? 'default' : 'outline'}
+                        variant={effectivePeriod === 'past3' ? 'default' : 'outline'}
                         size="xs"
                         onClick={() => updateStatementFilter('monthPeriod', 'past3')}
                         className="text-xs px-3 py-1.5 h-8"
@@ -1024,7 +1047,7 @@ export function ClientBillingWorkspace({
                         Past 3 Months
                       </Button>
                       <Button
-                        variant={statementPeriodParam === 'past6' ? 'default' : 'outline'}
+                        variant={effectivePeriod === 'past6' ? 'default' : 'outline'}
                         size="xs"
                         onClick={() => updateStatementFilter('monthPeriod', 'past6')}
                         className="text-xs px-3 py-1.5 h-8"
