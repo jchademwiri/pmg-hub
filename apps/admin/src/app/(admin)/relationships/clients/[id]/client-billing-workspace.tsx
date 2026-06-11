@@ -153,6 +153,39 @@ export function ClientBillingWorkspace({
   const [activeTab, setActiveTab] = useState<string>('invoices');
   const [metricFilter, setMetricFilter] = useState<'all' | 'paid' | 'outstanding' | 'overdue'>('all');
 
+  // ── Filtered document lists (driven by metric strip tile selection) ────────
+  const filteredInvoices = (() => {
+    switch (metricFilter) {
+      case 'paid':
+        return invoices.filter((inv) => inv.status === 'paid');
+      case 'outstanding':
+        return invoices.filter(
+          (inv) => inv.status === 'issued' || inv.status === 'partially_paid'
+        );
+      case 'overdue':
+        return invoices.filter((inv) => inv.status === 'overdue');
+      case 'all':
+      default:
+        return invoices;
+    }
+  })();
+
+  const filteredQuotes = (() => {
+    switch (metricFilter) {
+      case 'paid':
+        return quotes.filter(
+          (q) => q.status === 'accepted' || q.status === 'converted'
+        );
+      case 'outstanding':
+        return quotes.filter((q) => q.status === 'sent');
+      case 'overdue':
+        return quotes.filter((q) => q.status === 'declined');
+      case 'all':
+      default:
+        return quotes;
+    }
+  })();
+
   // ── Metric Strip Computations ──────────────────────────────────────────────
   const todayStrWS = getSASTToday();
   const activeInvoicesWS = invoices.filter(
@@ -497,7 +530,7 @@ export function ClientBillingWorkspace({
 
   const handleSelectAllInvoices = (checked: boolean) => {
     if (checked) {
-      setSelectedInvoiceIds(new Set(invoices.map((inv) => inv.id)));
+      setSelectedInvoiceIds(new Set(filteredInvoices.map((inv) => inv.id)));
     } else {
       setSelectedInvoiceIds(new Set());
     }
@@ -505,7 +538,7 @@ export function ClientBillingWorkspace({
 
   const handleSelectAllQuotes = (checked: boolean) => {
     if (checked) {
-      setSelectedQuoteIds(new Set(quotes.map((q) => q.id)));
+      setSelectedQuoteIds(new Set(filteredQuotes.map((q) => q.id)));
     } else {
       setSelectedQuoteIds(new Set());
     }
@@ -864,7 +897,11 @@ export function ClientBillingWorkspace({
         avgDaysToPay={avgDaysToPayWS}
         lastPaymentDate={lastPaymentWS?.date ?? null}
         lastPaymentAmount={lastPaymentWS ? Number(lastPaymentWS.amount) : null}
-        onFilterChange={setMetricFilter}
+        onFilterChange={(filter) => {
+          setMetricFilter(filter);
+          setSelectedInvoiceIds(new Set());
+          setSelectedQuoteIds(new Set());
+        }}
         activeFilter={metricFilter}
       />
 
@@ -887,8 +924,25 @@ export function ClientBillingWorkspace({
         </Button>
       </div>
 
+      {metricFilter !== 'all' && (activeTab === 'invoices' || activeTab === 'quotes') && (
+        <div className="flex items-center gap-2 text-xs text-muted-foreground bg-muted/30 rounded-md px-3 py-1.5 border border-muted-foreground/10 self-start">
+          <span>
+            Showing <span className="font-semibold text-foreground capitalize">{metricFilter}</span>{' '}
+            {activeTab} only
+          </span>
+          <button
+            onClick={() => setMetricFilter('all')}
+            className="text-muted-foreground hover:text-foreground transition-colors ml-1 font-medium"
+            aria-label="Clear filter"
+          >
+            ✕
+          </button>
+        </div>
+      )}
+
       {/* Tabbed Document split-pane browser */}
       <Tabs value={activeTab} onValueChange={(val) => {
+        setMetricFilter('all');
         setActiveTab(val);
         // Reset selections when switching tabs
         setSelectedInvoiceIds(new Set());
@@ -950,15 +1004,19 @@ export function ClientBillingWorkspace({
             <CardContent className="p-0">
               {/* INVOICES TAB */}
               <TabsContent value="invoices" className="m-0">
-                {invoices.length === 0 ? (
-                  <p className="text-xs text-muted-foreground text-center py-8">No invoices for this client.</p>
+                {filteredInvoices.length === 0 ? (
+                  <p className="text-xs text-muted-foreground text-center py-8">
+                    {metricFilter === 'all'
+                      ? 'No invoices for this client.'
+                      : `No ${metricFilter} invoices.`}
+                  </p>
                 ) : (
                   <Table className="text-xs">
                     <TableHeader>
                       <TableRow>
                         <TableHead className="w-10">
                           <Checkbox
-                            checked={selectedInvoiceIds.size === invoices.length}
+                            checked={filteredInvoices.length > 0 && selectedInvoiceIds.size === filteredInvoices.length}
                             onCheckedChange={handleSelectAllInvoices}
                           />
                         </TableHead>
@@ -969,7 +1027,7 @@ export function ClientBillingWorkspace({
                       </TableRow>
                     </TableHeader>
                     <TableBody>
-                      {invoices.map((inv) => (
+                      {filteredInvoices.map((inv) => (
                         <TableRow
                           key={inv.id}
                           className={`cursor-pointer hover:bg-muted/30 transition-colors ${
@@ -1002,15 +1060,19 @@ export function ClientBillingWorkspace({
 
               {/* QUOTATIONS TAB */}
               <TabsContent value="quotes" className="m-0">
-                {quotes.length === 0 ? (
-                  <p className="text-xs text-muted-foreground text-center py-8">No quotations for this client.</p>
+                {filteredQuotes.length === 0 ? (
+                  <p className="text-xs text-muted-foreground text-center py-8">
+                    {metricFilter === 'all'
+                      ? 'No quotations for this client.'
+                      : `No ${metricFilter} quotations.`}
+                  </p>
                 ) : (
                   <Table className="text-xs">
                     <TableHeader>
                       <TableRow>
                         <TableHead className="w-10">
                           <Checkbox
-                            checked={selectedQuoteIds.size === quotes.length}
+                            checked={filteredQuotes.length > 0 && selectedQuoteIds.size === filteredQuotes.length}
                             onCheckedChange={handleSelectAllQuotes}
                           />
                         </TableHead>
@@ -1021,7 +1083,7 @@ export function ClientBillingWorkspace({
                       </TableRow>
                     </TableHeader>
                     <TableBody>
-                      {quotes.map((q) => (
+                      {filteredQuotes.map((q) => (
                         <TableRow
                           key={q.id}
                           className={`cursor-pointer hover:bg-muted/30 transition-colors ${

@@ -235,29 +235,29 @@ onFilterChange={(filter) => {
 ```
 Phase 4 — Complete when all boxes are checked:
 
-[ ] client-billing-workspace.tsx — Filtered lists
+[x] client-billing-workspace.tsx — Filtered lists
     - filteredInvoices derived from metricFilter
     - filteredQuotes derived from metricFilter
     - 'all' returns full unfiltered list
     - 'paid' / 'outstanding' / 'overdue' return correct status subsets
 
-[ ] client-billing-workspace.tsx — Invoices tab
+[x] client-billing-workspace.tsx — Invoices tab
     - Table renders filteredInvoices (not invoices)
     - Empty state message reflects active filter
     - Select all checkbox uses filteredInvoices.length
     - handleSelectAllInvoices selects only filteredInvoices
 
-[ ] client-billing-workspace.tsx — Quotes tab
+[x] client-billing-workspace.tsx — Quotes tab
     - Table renders filteredQuotes (not quotes)
     - Empty state message reflects active filter
     - Select all checkbox uses filteredQuotes.length
     - handleSelectAllQuotes selects only filteredQuotes
 
-[ ] client-billing-workspace.tsx — Filter resets
+[x] client-billing-workspace.tsx — Filter resets
     - metricFilter resets to 'all' on tab switch
     - Checkbox selections clear when filter changes
 
-[ ] client-billing-workspace.tsx — Filter indicator
+[x] client-billing-workspace.tsx — Filter indicator
     - Indicator shown when metricFilter !== 'all' and on invoices/quotes tab
     - Shows which filter is active ("Showing overdue invoices only")
     - ✕ button clears filter back to 'all'
