@@ -26,7 +26,8 @@ export function ClientFinancialDashboard({
   quotes,
   payments,
 }: ClientFinancialDashboardProps) {
-  const [isActivityExpanded, setIsActivityExpanded] = useState(false);
+  const [isActivityExpanded, setIsActivityExpanded] = useState(true);
+  const [showAllActivity, setShowAllActivity] = useState(false);
 
   // 1. Calculate Metrics
   const todayStr = getSASTToday();
@@ -35,19 +36,26 @@ export function ClientFinancialDashboard({
   );
   const totalInvoiced = activeInvoices.reduce((sum, inv) => sum + Number(inv.total), 0);
   const totalPaid = payments.reduce((sum, pay) => sum + Number(pay.amount), 0);
-  const outstandingBalance = activeInvoices.reduce(
-    (sum, inv) => sum + (Number(inv.total) - Number(inv.allocatedAmount ?? 0)),
-    0
-  );
 
-  // Overdue Balance Calculation
+  // Overdue Balance Calculation (strictly unpaid invoices where due date is in the past)
   const overdueInvoices = activeInvoices.filter(
     (inv) =>
-      (inv.status === 'overdue' || inv.status === 'issued' || inv.status === 'partially_paid') &&
+      inv.status !== 'paid' &&
       inv.dueDate &&
       inv.dueDate < todayStr
   );
   const overdueBalance = overdueInvoices.reduce(
+    (sum, inv) => sum + (Number(inv.total) - Number(inv.allocatedAmount ?? 0)),
+    0
+  );
+
+  // Outstanding Balance Calculation (strictly unpaid invoices that are not overdue yet)
+  const outstandingInvoices = activeInvoices.filter(
+    (inv) =>
+      inv.status !== 'paid' &&
+      (!inv.dueDate || inv.dueDate >= todayStr)
+  );
+  const outstandingBalance = outstandingInvoices.reduce(
     (sum, inv) => sum + (Number(inv.total) - Number(inv.allocatedAmount ?? 0)),
     0
   );
@@ -62,8 +70,8 @@ export function ClientFinancialDashboard({
       ? Math.round((acceptedQuotes.length / sentOrAcceptedQuotes.length) * 100)
       : 0;
 
-  // 2. Client Health Score
-  const health = calculateClientHealth(invoices, outstandingBalance, overdueBalance);
+  // 2. Client Health Score (pass total outstanding to preserve score ratios)
+  const health = calculateClientHealth(invoices, outstandingBalance + overdueBalance, overdueBalance);
 
   // 3. Ageing Buckets
   const ageing = { current: 0, days1_30: 0, days31_60: 0, days61_plus: 0 };
@@ -324,33 +332,43 @@ export function ClientFinancialDashboard({
               {activityEvents.length === 0 ? (
                 <p className="text-xs text-muted-foreground text-center py-4">No recent activity found.</p>
               ) : (
-                activityEvents.map((evt) => (
-                  <div key={evt.id} className="flex items-center justify-between text-xs py-2 border-b border-muted-foreground/5 last:border-0">
-                    <div className="flex items-center gap-3">
-                      <span className={`p-1.5 rounded-full ${
-                        evt.type === 'payment' 
-                          ? 'bg-green-500/10 text-green-600 dark:text-green-400' 
-                          : evt.type === 'invoice' 
-                          ? 'bg-amber-500/10 text-amber-600 dark:text-amber-400'
-                          : 'bg-blue-500/10 text-blue-600 dark:text-blue-400'
-                      }`}>
-                        {evt.type === 'payment' ? '📥' : evt.type === 'invoice' ? '📄' : '📜'}
-                      </span>
-                      <div className="flex flex-col">
-                        <span className="font-semibold text-foreground/90">{evt.title} ({evt.docNumber})</span>
-                        <span className="text-muted-foreground text-[10px]">{evt.description}</span>
+                <>
+                  {(showAllActivity ? activityEvents : activityEvents.slice(0, 5)).map((evt) => (
+                    <div key={evt.id} className="flex items-center justify-between text-xs py-2 border-b border-muted-foreground/5 last:border-0">
+                      <div className="flex items-center gap-3">
+                        <span className={`p-1.5 rounded-full ${
+                          evt.type === 'payment' 
+                            ? 'bg-green-500/10 text-green-600 dark:text-green-400' 
+                            : evt.type === 'invoice' 
+                            ? 'bg-amber-500/10 text-amber-600 dark:text-amber-400'
+                            : 'bg-blue-500/10 text-blue-600 dark:text-blue-400'
+                        }`}>
+                          {evt.type === 'payment' ? '📥' : evt.type === 'invoice' ? '📄' : '📜'}
+                        </span>
+                        <div className="flex flex-col">
+                          <span className="font-semibold text-foreground/90">{evt.title} ({evt.docNumber})</span>
+                          <span className="text-muted-foreground text-[10px]">{evt.description}</span>
+                        </div>
+                      </div>
+                      <div className="flex flex-col items-end gap-1">
+                        {evt.amount !== undefined && (
+                          <span className={`font-semibold tabular-nums ${evt.type === 'payment' ? 'text-green-600 dark:text-green-400' : ''}`}>
+                            {evt.type === 'payment' ? '+' : ''}{formatZAR(evt.amount)}
+                          </span>
+                        )}
+                        <span className="text-muted-foreground text-[10px]">{fmtDate(evt.date.split('T')[0])}</span>
                       </div>
                     </div>
-                    <div className="flex flex-col items-end gap-1">
-                      {evt.amount !== undefined && (
-                        <span className={`font-semibold tabular-nums ${evt.type === 'payment' ? 'text-green-600 dark:text-green-400' : ''}`}>
-                          {evt.type === 'payment' ? '+' : ''}{formatZAR(evt.amount)}
-                        </span>
-                      )}
-                      <span className="text-muted-foreground text-[10px]">{fmtDate(evt.date.split('T')[0])}</span>
-                    </div>
-                  </div>
-                ))
+                  ))}
+                  {activityEvents.length > 5 && (
+                    <button
+                      onClick={() => setShowAllActivity(!showAllActivity)}
+                      className="text-xs text-muted-foreground hover:text-foreground transition-colors mt-1 self-start"
+                    >
+                      {showAllActivity ? 'Show less' : `Show all ${activityEvents.length} events`}
+                    </button>
+                  )}
+                </>
               )}
             </div>
           </CardContent>

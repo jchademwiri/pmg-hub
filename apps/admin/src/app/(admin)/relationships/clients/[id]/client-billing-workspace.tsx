@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect, useTransition } from 'react';
+import React, { useState, useEffect, useTransition, useRef } from 'react';
 import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { toast } from 'sonner';
@@ -52,6 +52,8 @@ import { PaymentReceiptPreview } from '@/components/billing/payment-receipt-prev
 import { EmailReceiptDialog } from '@/components/billing/email-receipt-dialog';
 import { ClientEditForm } from '@/components/clients/client-edit-form';
 import { ClientFinancialDashboard } from './client-financial-dashboard';
+import { ClientMetricStrip } from './client-metric-strip';
+import { calculateClientHealth, calculateAverageDaysToPay } from '@/lib/client-billing-helpers';
 import { formatZAR, fmtDate } from '@/lib/format';
 import { getSASTToday } from '@/lib/format';
 import { getDocumentLogoUrl } from '@/lib/document-logo';
@@ -109,6 +111,9 @@ export function ClientBillingWorkspace({
   // Collapsible Details
   const [isDetailsOpen, setIsDetailsOpen] = useState(false);
 
+  const previewPanelRef = useRef<HTMLDivElement>(null);
+  const [isLargeScreen, setIsLargeScreen] = useState(false);
+
   // Split-Pane Preview Selection
   const [selectedDocId, setSelectedDocId] = useState<string | null>(
     invoices.length > 0
@@ -146,6 +151,77 @@ export function ClientBillingWorkspace({
 
   // Active Tab
   const [activeTab, setActiveTab] = useState<string>('invoices');
+  const [metricFilter, setMetricFilter] = useState<'all' | 'paid' | 'outstanding' | 'overdue'>('all');
+
+  const todayStrWS = getSASTToday();
+
+  // ── Filtered document lists (driven by metric strip tile selection) ────────
+  const filteredInvoices = (() => {
+    switch (metricFilter) {
+      case 'paid':
+        return invoices.filter((inv) => inv.status === 'paid');
+      case 'outstanding':
+        return invoices.filter(
+          (inv) =>
+            inv.status !== 'paid' &&
+            inv.status !== 'void' &&
+            inv.status !== 'draft' &&
+            (!inv.dueDate || inv.dueDate >= todayStrWS)
+        );
+      case 'overdue':
+        return invoices.filter(
+          (inv) =>
+            inv.status !== 'paid' &&
+            inv.status !== 'void' &&
+            inv.status !== 'draft' &&
+            inv.dueDate &&
+            inv.dueDate < todayStrWS
+        );
+      case 'all':
+      default:
+        return invoices;
+    }
+  })();
+
+  const filteredQuotes = (() => {
+    switch (metricFilter) {
+      case 'paid':
+        return quotes.filter(
+          (q) => q.status === 'accepted' || q.status === 'converted'
+        );
+      case 'outstanding':
+        return quotes.filter((q) => q.status === 'sent');
+      case 'overdue':
+        return quotes.filter((q) => q.status === 'declined');
+      case 'all':
+      default:
+        return quotes;
+    }
+  })();
+
+  // ── Metric Strip Computations ──────────────────────────────────────────────
+  const activeInvoicesWS = invoices.filter(
+    (inv) => inv.status !== 'void' && inv.status !== 'draft' && inv.invoiceDate <= todayStrWS
+  );
+  const totalInvoicedWS = activeInvoicesWS.reduce((sum, inv) => sum + Number(inv.total), 0);
+  const totalPaidWS = (payments?.data ?? []).reduce((sum: number, pay: any) => sum + Number(pay.amount), 0);
+
+  // Overdue Balance Calculation (strictly unpaid invoices where due date is in the past)
+  const overdueBalanceWS = activeInvoicesWS
+    .filter((inv) => inv.status !== 'paid' && inv.dueDate && inv.dueDate < todayStrWS)
+    .reduce((sum, inv) => sum + (Number(inv.total) - Number(inv.allocatedAmount ?? 0)), 0);
+
+  // Outstanding Balance Calculation (strictly unpaid invoices that are not overdue yet)
+  const outstandingBalanceWS = activeInvoicesWS
+    .filter((inv) => inv.status !== 'paid' && (!inv.dueDate || inv.dueDate >= todayStrWS))
+    .reduce((sum, inv) => sum + (Number(inv.total) - Number(inv.allocatedAmount ?? 0)), 0);
+
+  const healthWS = calculateClientHealth(invoices, outstandingBalanceWS + overdueBalanceWS, overdueBalanceWS);
+  const avgDaysToPayWS = calculateAverageDaysToPay(invoices);
+  const sortedPaymentsWS = [...(payments?.data ?? [])].sort((a: any, b: any) =>
+    b.date.localeCompare(a.date)
+  );
+  const lastPaymentWS = sortedPaymentsWS[0] ?? null;
 
   // Handle initialization/selection from URL search parameters (e.g. navigation from payments page)
   useEffect(() => {
@@ -185,8 +261,25 @@ export function ClientBillingWorkspace({
       setActiveTab('statement');
       setSelectedDocType('statement');
       setSelectedDocId(null);
+    } else if (tabParam === 'analytics') {
+      setActiveTab('analytics');
+      setSelectedDocId(null);
     }
   }, [searchParams, invoices, quotes, payments]);
+
+  useEffect(() => {
+    const mq = window.matchMedia('(min-width: 1024px)');
+    setIsLargeScreen(mq.matches);
+    const handler = (e: MediaQueryListEvent) => setIsLargeScreen(e.matches);
+    mq.addEventListener('change', handler);
+    return () => mq.removeEventListener('change', handler);
+  }, []);
+
+  useEffect(() => {
+    if (previewPanelRef.current) {
+      previewPanelRef.current.scrollTop = 0;
+    }
+  }, [selectedDocId]);
 
   // Find selected document detail in memory
   const activeInvoice = invoices.find((i) => i.id === selectedDocId);
@@ -201,6 +294,14 @@ export function ClientBillingWorkspace({
   } else if (selectedDocType === 'payment' && activePayment) {
     documentTitle = `Receipt-${activePayment.id.slice(0, 8).toUpperCase()}`;
   }
+
+  const navigableIds = (() => {
+    if (selectedDocType === 'invoice') return invoices.map(i => i.id);
+    if (selectedDocType === 'quote') return quotes.map(q => q.id);
+    if (selectedDocType === 'payment') return (payments?.data ?? []).map((p: any) => p.id);
+    return [];
+  })();
+  const currentNavIndex = selectedDocId ? navigableIds.indexOf(selectedDocId) : -1;
 
   // Helper to compile preview props in memory
   const getInvoicePreviewProps = (inv: InvoiceDetail) => ({
@@ -347,6 +448,7 @@ export function ClientBillingWorkspace({
 
   const statementPeriodParam = searchParams.get('monthPeriod');
   const statementYearParam = searchParams.get('year');
+  const effectivePeriod = statementPeriodParam ?? (!statementYearParam ? 'current' : null);
   let statementPeriodLabel = '';
   if (statementPeriodParam === 'current') statementPeriodLabel = 'Current Month';
   else if (statementPeriodParam === 'previous') statementPeriodLabel = 'Previous Month';
@@ -438,7 +540,7 @@ export function ClientBillingWorkspace({
 
   const handleSelectAllInvoices = (checked: boolean) => {
     if (checked) {
-      setSelectedInvoiceIds(new Set(invoices.map((inv) => inv.id)));
+      setSelectedInvoiceIds(new Set(filteredInvoices.map((inv) => inv.id)));
     } else {
       setSelectedInvoiceIds(new Set());
     }
@@ -446,7 +548,7 @@ export function ClientBillingWorkspace({
 
   const handleSelectAllQuotes = (checked: boolean) => {
     if (checked) {
-      setSelectedQuoteIds(new Set(quotes.map((q) => q.id)));
+      setSelectedQuoteIds(new Set(filteredQuotes.map((q) => q.id)));
     } else {
       setSelectedQuoteIds(new Set());
     }
@@ -734,19 +836,37 @@ export function ClientBillingWorkspace({
 
       {/* Header panel */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b pb-4">
-        <div className="flex items-center gap-4">
-          <Link
-            href="/relationships/clients"
-            className="text-sm text-muted-foreground hover:text-foreground transition-colors"
-          >
-            ← Back to Clients
-          </Link>
-          <h1 className="text-2xl font-bold tracking-tight">
-            {client.businessName ?? client.name}
-          </h1>
-          <Badge variant={client.isActive ? 'default' : 'secondary'}>
-            {client.isActive ? 'Active' : 'Disabled'}
-          </Badge>
+        <div className="flex flex-col gap-1">
+          <div className="flex items-center gap-3">
+            <Link
+              href="/relationships/clients"
+              className="text-sm text-muted-foreground hover:text-foreground transition-colors"
+            >
+              ← Back to Clients
+            </Link>
+            <h1 className="text-2xl font-bold tracking-tight">
+              {client.businessName ?? client.name}
+            </h1>
+            <Badge variant={client.isActive ? 'default' : 'secondary'}>
+              {client.isActive ? 'Active' : 'Disabled'}
+            </Badge>
+          </div>
+          {(client.email || client.phone) && (
+            <div className="flex items-center gap-4 pl-0 text-sm text-muted-foreground">
+              {client.email && (
+                <span className="flex items-center gap-1">
+                  <span className="text-xs">✉</span>
+                  {client.email}
+                </span>
+              )}
+              {client.phone && (
+                <span className="flex items-center gap-1">
+                  <span className="text-xs">📞</span>
+                  {client.phone}
+                </span>
+              )}
+            </div>
+          )}
         </div>
         <Button
           variant="outline"
@@ -777,14 +897,25 @@ export function ClientBillingWorkspace({
         </CollapsibleContent>
       </Collapsible>
 
-      {/* Financial Overview Dashboard */}
-      <ClientFinancialDashboard
-        invoices={invoices}
-        quotes={quotes}
-        payments={payments.data}
+      {/* Metric Strip */}
+      <ClientMetricStrip
+        totalInvoiced={totalInvoicedWS}
+        totalPaid={totalPaidWS}
+        outstandingBalance={outstandingBalanceWS}
+        overdueBalance={overdueBalanceWS}
+        healthScore={healthWS.score}
+        avgDaysToPay={avgDaysToPayWS}
+        lastPaymentDate={lastPaymentWS?.date ?? null}
+        lastPaymentAmount={lastPaymentWS ? Number(lastPaymentWS.amount) : null}
+        onFilterChange={(filter) => {
+          setMetricFilter(filter);
+          setSelectedInvoiceIds(new Set());
+          setSelectedQuoteIds(new Set());
+        }}
+        activeFilter={metricFilter}
       />
 
-      {/* Quick actions panel */}
+      {/* Quick Actions */}
       <div className="flex flex-wrap gap-2 items-center">
         <Button asChild size="sm" variant="default" className="shadow-sm">
           <Link href="/billing/invoices/new">
@@ -803,8 +934,25 @@ export function ClientBillingWorkspace({
         </Button>
       </div>
 
+      {metricFilter !== 'all' && (activeTab === 'invoices' || activeTab === 'quotes') && (
+        <div className="flex items-center gap-2 text-xs text-muted-foreground bg-muted/30 rounded-md px-3 py-1.5 border border-muted-foreground/10 self-start">
+          <span>
+            Showing <span className="font-semibold text-foreground capitalize">{metricFilter}</span>{' '}
+            {activeTab} only
+          </span>
+          <button
+            onClick={() => setMetricFilter('all')}
+            className="text-muted-foreground hover:text-foreground transition-colors ml-1 font-medium"
+            aria-label="Clear filter"
+          >
+            ✕
+          </button>
+        </div>
+      )}
+
       {/* Tabbed Document split-pane browser */}
       <Tabs value={activeTab} onValueChange={(val) => {
+        setMetricFilter('all');
         setActiveTab(val);
         // Reset selections when switching tabs
         setSelectedInvoiceIds(new Set());
@@ -822,6 +970,11 @@ export function ClientBillingWorkspace({
         } else if (val === 'statement') {
           setSelectedDocType('statement');
           setSelectedDocId(null);
+        } else if (val === 'analytics') {
+          // No document selection change needed for analytics tab
+          setSelectedInvoiceIds(new Set());
+          setSelectedQuoteIds(new Set());
+          setIsPreviewOpen(false);
         }
       }} className="flex flex-col gap-4">
         <div className="sticky top-[3.25rem] z-30 bg-background -mx-6 px-6 pb-2 border-b flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
@@ -830,21 +983,30 @@ export function ClientBillingWorkspace({
             <TabsTrigger value="quotes" className="bg-transparent border-b-2 border-transparent data-[state=active]:border-amber-500 rounded-none shadow-none px-4 py-2 text-sm font-medium">Quotations</TabsTrigger>
             <TabsTrigger value="payments" className="bg-transparent border-b-2 border-transparent data-[state=active]:border-amber-500 rounded-none shadow-none px-4 py-2 text-sm font-medium">Payments</TabsTrigger>
             <TabsTrigger value="statement" className="bg-transparent border-b-2 border-transparent data-[state=active]:border-amber-500 rounded-none shadow-none px-4 py-2 text-sm font-medium">Statement</TabsTrigger>
+            <TabsTrigger value="analytics" className="bg-transparent border-b-2 border-transparent data-[state=active]:border-amber-500 rounded-none shadow-none px-4 py-2 text-sm font-medium">
+              Analytics
+            </TabsTrigger>
           </TabsList>
 
           {/* Action buttons are displayed contextually inside the slide-over drawer */}
         </div>
 
-        {/* Tab content wrappers */}
-        <div className="w-full">
-          {/* Left Pane (Document lists) */}
-          <Card className="w-full shadow-sm border-muted-foreground/10 bg-card overflow-hidden">
+        {/* Split pane: list (left) + preview (right on lg+) */}
+        <div className="flex flex-col lg:flex-row gap-4 items-start w-full">
+
+          {/* Document list — 40% on lg+, full width on mobile */}
+          <div className={cn("w-full shrink-0", activeTab !== 'analytics' && "lg:w-[40%]")}>
+            <Card className="w-full shadow-sm border-muted-foreground/10 bg-card overflow-hidden">
             <CardHeader className="p-4 border-b flex flex-row items-center justify-between">
               <div>
-                <CardTitle className="text-sm font-semibold capitalize">{activeTab}</CardTitle>
+                <CardTitle className="text-sm font-semibold capitalize">
+                  {activeTab === 'analytics' ? 'Client Analytics' : activeTab}
+                </CardTitle>
                 <CardDescription className="text-xs">
                   {activeTab === 'statement'
                     ? 'Configure and preview the client account statement'
+                    : activeTab === 'analytics'
+                    ? 'Full financial health, ageing analysis, and billing activity'
                     : 'Select documents to view or batch process'}
                 </CardDescription>
               </div>
@@ -852,15 +1014,19 @@ export function ClientBillingWorkspace({
             <CardContent className="p-0">
               {/* INVOICES TAB */}
               <TabsContent value="invoices" className="m-0">
-                {invoices.length === 0 ? (
-                  <p className="text-xs text-muted-foreground text-center py-8">No invoices for this client.</p>
+                {filteredInvoices.length === 0 ? (
+                  <p className="text-xs text-muted-foreground text-center py-8">
+                    {metricFilter === 'all'
+                      ? 'No invoices for this client.'
+                      : `No ${metricFilter} invoices.`}
+                  </p>
                 ) : (
                   <Table className="text-xs">
                     <TableHeader>
                       <TableRow>
                         <TableHead className="w-10">
                           <Checkbox
-                            checked={selectedInvoiceIds.size === invoices.length}
+                            checked={filteredInvoices.length > 0 && selectedInvoiceIds.size === filteredInvoices.length}
                             onCheckedChange={handleSelectAllInvoices}
                           />
                         </TableHead>
@@ -871,7 +1037,7 @@ export function ClientBillingWorkspace({
                       </TableRow>
                     </TableHeader>
                     <TableBody>
-                      {invoices.map((inv) => (
+                      {filteredInvoices.map((inv) => (
                         <TableRow
                           key={inv.id}
                           className={`cursor-pointer hover:bg-muted/30 transition-colors ${
@@ -880,7 +1046,7 @@ export function ClientBillingWorkspace({
                           onClick={() => {
                             setSelectedDocId(inv.id);
                             setSelectedDocType('invoice');
-                            setIsPreviewOpen(true);
+                            if (!isLargeScreen) setIsPreviewOpen(true);
                           }}
                         >
                           <TableCell onClick={(e) => e.stopPropagation()}>
@@ -904,15 +1070,19 @@ export function ClientBillingWorkspace({
 
               {/* QUOTATIONS TAB */}
               <TabsContent value="quotes" className="m-0">
-                {quotes.length === 0 ? (
-                  <p className="text-xs text-muted-foreground text-center py-8">No quotations for this client.</p>
+                {filteredQuotes.length === 0 ? (
+                  <p className="text-xs text-muted-foreground text-center py-8">
+                    {metricFilter === 'all'
+                      ? 'No quotations for this client.'
+                      : `No ${metricFilter} quotations.`}
+                  </p>
                 ) : (
                   <Table className="text-xs">
                     <TableHeader>
                       <TableRow>
                         <TableHead className="w-10">
                           <Checkbox
-                            checked={selectedQuoteIds.size === quotes.length}
+                            checked={filteredQuotes.length > 0 && selectedQuoteIds.size === filteredQuotes.length}
                             onCheckedChange={handleSelectAllQuotes}
                           />
                         </TableHead>
@@ -923,7 +1093,7 @@ export function ClientBillingWorkspace({
                       </TableRow>
                     </TableHeader>
                     <TableBody>
-                      {quotes.map((q) => (
+                      {filteredQuotes.map((q) => (
                         <TableRow
                           key={q.id}
                           className={`cursor-pointer hover:bg-muted/30 transition-colors ${
@@ -932,7 +1102,7 @@ export function ClientBillingWorkspace({
                           onClick={() => {
                             setSelectedDocId(q.id);
                             setSelectedDocType('quote');
-                            setIsPreviewOpen(true);
+                            if (!isLargeScreen) setIsPreviewOpen(true);
                           }}
                         >
                           <TableCell onClick={(e) => e.stopPropagation()}>
@@ -963,6 +1133,7 @@ export function ClientBillingWorkspace({
                     <TableHeader>
                       <TableRow>
                         <TableHead>Date</TableHead>
+                        <TableHead>Receipt #</TableHead>
                         <TableHead>Invoice Number</TableHead>
                         <TableHead className="text-right">Amount</TableHead>
                       </TableRow>
@@ -977,10 +1148,13 @@ export function ClientBillingWorkspace({
                           onClick={() => {
                             setSelectedDocId(entry.id);
                             setSelectedDocType('payment');
-                            setIsPreviewOpen(true);
+                            if (!isLargeScreen) setIsPreviewOpen(true);
                           }}
                         >
                           <TableCell className="tabular-nums">{fmtDate(entry.date)}</TableCell>
+                          <TableCell className="font-mono text-xs text-muted-foreground">
+                            REC-{entry.id.slice(0, 8).toUpperCase()}
+                          </TableCell>
                           <TableCell className="font-semibold">{extractInvoiceNumber(entry.description)}</TableCell>
                           <TableCell className="text-right tabular-nums font-semibold text-emerald-500">
                             +{formatZAR(Number(entry.amount))}
@@ -1000,7 +1174,7 @@ export function ClientBillingWorkspace({
                     <span className="text-xs font-semibold text-muted-foreground">Select Statement Period</span>
                     <div className="flex flex-wrap gap-2">
                       <Button
-                        variant={statementPeriodParam === 'current' || (!statementPeriodParam && !statementYearParam) ? 'default' : 'outline'}
+                        variant={effectivePeriod === 'current' ? 'default' : 'outline'}
                         size="xs"
                         onClick={() => updateStatementFilter('monthPeriod', 'current')}
                         className="text-xs px-3 py-1.5 h-8"
@@ -1008,7 +1182,7 @@ export function ClientBillingWorkspace({
                         Current Month
                       </Button>
                       <Button
-                        variant={statementPeriodParam === 'previous' ? 'default' : 'outline'}
+                        variant={effectivePeriod === 'previous' ? 'default' : 'outline'}
                         size="xs"
                         onClick={() => updateStatementFilter('monthPeriod', 'previous')}
                         className="text-xs px-3 py-1.5 h-8"
@@ -1016,7 +1190,7 @@ export function ClientBillingWorkspace({
                         Previous Month
                       </Button>
                       <Button
-                        variant={statementPeriodParam === 'past3' ? 'default' : 'outline'}
+                        variant={effectivePeriod === 'past3' ? 'default' : 'outline'}
                         size="xs"
                         onClick={() => updateStatementFilter('monthPeriod', 'past3')}
                         className="text-xs px-3 py-1.5 h-8"
@@ -1024,7 +1198,7 @@ export function ClientBillingWorkspace({
                         Past 3 Months
                       </Button>
                       <Button
-                        variant={statementPeriodParam === 'past6' ? 'default' : 'outline'}
+                        variant={effectivePeriod === 'past6' ? 'default' : 'outline'}
                         size="xs"
                         onClick={() => updateStatementFilter('monthPeriod', 'past6')}
                         className="text-xs px-3 py-1.5 h-8"
@@ -1053,16 +1227,18 @@ export function ClientBillingWorkspace({
                     </Select>
                   </div>
 
-                  <div className="flex items-end mt-4 md:mt-0">
-                    <Button
-                      variant="default"
-                      size="sm"
-                      className="flex items-center gap-1.5 shadow-sm h-8"
-                      onClick={() => setIsPreviewOpen(true)}
-                    >
-                      <Eye className="size-4" /> Preview Statement PDF
-                    </Button>
-                  </div>
+                  {!isLargeScreen && (
+                    <div className="flex items-end mt-4 md:mt-0">
+                      <Button
+                        variant="default"
+                        size="sm"
+                        className="flex items-center gap-1.5 shadow-sm h-8"
+                        onClick={() => setIsPreviewOpen(true)}
+                      >
+                        <Eye className="size-4" /> Preview Statement PDF
+                      </Button>
+                    </div>
+                  )}
                 </div>
 
                 {/* Statement Transactions Table */}
@@ -1075,7 +1251,6 @@ export function ClientBillingWorkspace({
                         <TableRow>
                           <TableHead>Date</TableHead>
                           <TableHead>Reference</TableHead>
-                          <TableHead>Description</TableHead>
                           <TableHead className="text-right">Debit (+)</TableHead>
                           <TableHead className="text-right">Credit (-)</TableHead>
                           <TableHead className="text-right">Balance</TableHead>
@@ -1085,13 +1260,14 @@ export function ClientBillingWorkspace({
                         {statementTransactions.map((tx, idx) => (
                           <TableRow key={idx} className="hover:bg-muted/30 transition-colors">
                             <TableCell className="tabular-nums">{fmtDate(tx.date)}</TableCell>
-                            <TableCell className="font-semibold">{tx.reference}</TableCell>
-                            <TableCell className="text-muted-foreground">{tx.description}</TableCell>
+                            <TableCell className="font-semibold">
+                              {tx.reference === '-' ? '' : tx.reference}
+                            </TableCell>
                             <TableCell className="text-right tabular-nums text-red-500 font-semibold">
-                              {tx.debit ? formatZAR(tx.debit) : '-'}
+                              {tx.debit ? formatZAR(tx.debit) : ''}
                             </TableCell>
                             <TableCell className="text-right tabular-nums text-emerald-500 font-semibold">
-                              {tx.credit ? formatZAR(tx.credit) : '-'}
+                              {tx.credit ? formatZAR(tx.credit) : ''}
                             </TableCell>
                             <TableCell className="text-right tabular-nums font-bold">
                               {formatZAR(tx.balance)}
@@ -1103,8 +1279,134 @@ export function ClientBillingWorkspace({
                   )}
                 </div>
               </TabsContent>
+
+              {/* ANALYTICS TAB */}
+              <TabsContent value="analytics" className="m-0 p-4">
+                <ClientFinancialDashboard
+                  invoices={invoices}
+                  quotes={quotes}
+                  payments={payments.data}
+                />
+              </TabsContent>
             </CardContent>
           </Card>
+          </div>
+
+          {/* Preview panel — 60% on lg+, hidden on mobile (uses Dialog instead) */}
+          {activeTab !== 'analytics' && (
+            <div
+              ref={previewPanelRef}
+              className="hidden lg:flex lg:flex-col lg:w-[60%] sticky top-[3.25rem] max-h-[calc(100vh-4rem)] overflow-y-auto w-full"
+            >
+            {/* ── Inline Preview Panel (lg+ only) ─────────────────────── */}
+            <Card className="shadow-sm border-muted-foreground/10 bg-card overflow-hidden text-card-foreground">
+              {/* Panel header with action buttons */}
+              <div className="p-4 border-b flex flex-row items-center justify-between shrink-0">
+                <div className="flex flex-col gap-0.5">
+                  <span className="text-sm font-semibold">
+                    {selectedDocType === 'invoice' && activeInvoice?.documentNumber}
+                    {selectedDocType === 'quote' && activeQuote?.documentNumber}
+                    {selectedDocType === 'payment' && activePayment && `REC-${activePayment.id.slice(0, 8).toUpperCase()}`}
+                    {selectedDocType === 'statement' && 'Statement'}
+                    {!selectedDocId && selectedDocType !== 'statement' && 'No document selected'}
+                  </span>
+                  <span className="text-xs text-muted-foreground capitalize">
+                    {selectedDocType === 'statement' ? statementPeriodLabel : selectedDocType}
+                  </span>
+                </div>
+
+                {/* Action buttons — same as Dialog header */}
+                <div className="flex items-center gap-2 print:hidden">
+                  {selectedDocType !== 'statement' && selectedDocId && (
+                    <>
+                      <PrintButton label="Print" documentTitle={documentTitle} />
+                      <ExportPdfButton fileName={documentTitle} />
+                    </>
+                  )}
+                  {selectedDocType === 'statement' && (
+                    <>
+                      <PrintButton
+                        label="Print"
+                        documentTitle={`Statement-${client.businessName?.replace(/\s+/g, '-') ?? client.name.replace(/\s+/g, '-')}`}
+                      />
+                      <ExportPdfButton
+                        fileName={`Statement-${client.businessName?.replace(/\s+/g, '-') ?? client.name.replace(/\s+/g, '-')}`}
+                      />
+                    </>
+                  )}
+
+                  {selectedDocType === 'invoice' && activeInvoice && (
+                    <>
+                      <EmailDocumentDialog
+                        documentId={activeInvoice.id}
+                        documentNumber={activeInvoice.documentNumber}
+                        documentType="invoice"
+                        defaultRecipientEmail={client.email ?? ''}
+                      />
+                      <Button variant="outline" size="sm" asChild>
+                        <Link href={`/billing/invoices/${activeInvoice.id}/edit`}>Edit</Link>
+                      </Button>
+                    </>
+                  )}
+                  {selectedDocType === 'quote' && activeQuote && (
+                    <>
+                      <EmailDocumentDialog
+                        documentId={activeQuote.id}
+                        documentNumber={activeQuote.documentNumber}
+                        documentType="quote"
+                        defaultRecipientEmail={client.email ?? ''}
+                      />
+                      <Button variant="outline" size="sm" asChild>
+                        <Link href={`/billing/quotes/${activeQuote.id}/edit`}>Edit</Link>
+                      </Button>
+                    </>
+                  )}
+                  {selectedDocType === 'payment' && activePayment && (
+                    <>
+                      <EmailReceiptDialog
+                        incomeId={activePayment.id}
+                        receiptNumber={`REC-${activePayment.id.slice(0, 8).toUpperCase()}`}
+                        defaultRecipientEmail={client.email ?? ''}
+                      />
+                      <Button variant="outline" size="sm" asChild>
+                        <Link href={`/billing/payments/${activePayment.id}`}>View Page</Link>
+                      </Button>
+                    </>
+                  )}
+                </div>
+              </div>
+
+              {/* Document render area */}
+              <div className="p-4 bg-muted/5">
+                {selectedDocType === 'statement' ? (
+                  <div className="bg-card rounded-lg p-4 overflow-x-auto">
+                    <DocumentPreview type="statement" {...statementPreviewProps} />
+                  </div>
+                ) : selectedDocId ? (
+                  <div className="bg-card rounded-lg p-4 overflow-x-auto">
+                    {selectedDocType === 'invoice' && activeInvoice && (
+                      <DocumentPreview type="invoice" {...getInvoicePreviewProps(activeInvoice)} />
+                    )}
+                    {selectedDocType === 'quote' && activeQuote && (
+                      <DocumentPreview type="quote" {...getQuotePreviewProps(activeQuote)} />
+                    )}
+                    {selectedDocType === 'payment' && activePayment && (
+                      <PaymentReceiptPreview
+                        payment={activePayment}
+                        client={client}
+                        divSettings={divSettings}
+                      />
+                    )}
+                  </div>
+                ) : (
+                  <div className="h-64 flex items-center justify-center border border-dashed rounded-lg bg-card shadow-sm">
+                    <span className="text-sm text-muted-foreground">Select a document to preview</span>
+                  </div>
+                )}
+              </div>
+            </Card>
+          </div>
+          )}
 
         </div>
 
@@ -1220,6 +1522,36 @@ export function ClientBillingWorkspace({
               </div>
             )}
           </div>
+
+          {navigableIds.length > 1 && currentNavIndex >= 0 && (
+            <div className="flex items-center justify-between pt-3 border-t mt-2">
+              <Button
+                variant="ghost"
+                size="sm"
+                disabled={currentNavIndex === 0}
+                onClick={() => {
+                  const prevId = navigableIds[currentNavIndex - 1];
+                  if (prevId) setSelectedDocId(prevId);
+                }}
+              >
+                ← Previous
+              </Button>
+              <span className="text-xs text-muted-foreground">
+                {currentNavIndex + 1} of {navigableIds.length}
+              </span>
+              <Button
+                variant="ghost"
+                size="sm"
+                disabled={currentNavIndex === navigableIds.length - 1}
+                onClick={() => {
+                  const nextId = navigableIds[currentNavIndex + 1];
+                  if (nextId) setSelectedDocId(nextId);
+                }}
+              >
+                Next →
+              </Button>
+            </div>
+          )}
         </DialogContent>
       </Dialog>
       </Tabs>
