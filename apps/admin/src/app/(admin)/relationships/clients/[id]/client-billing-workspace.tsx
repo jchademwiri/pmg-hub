@@ -153,6 +153,8 @@ export function ClientBillingWorkspace({
   const [activeTab, setActiveTab] = useState<string>('invoices');
   const [metricFilter, setMetricFilter] = useState<'all' | 'paid' | 'outstanding' | 'overdue'>('all');
 
+  const todayStrWS = getSASTToday();
+
   // ── Filtered document lists (driven by metric strip tile selection) ────────
   const filteredInvoices = (() => {
     switch (metricFilter) {
@@ -160,10 +162,21 @@ export function ClientBillingWorkspace({
         return invoices.filter((inv) => inv.status === 'paid');
       case 'outstanding':
         return invoices.filter(
-          (inv) => inv.status === 'issued' || inv.status === 'partially_paid'
+          (inv) =>
+            inv.status !== 'paid' &&
+            inv.status !== 'void' &&
+            inv.status !== 'draft' &&
+            (!inv.dueDate || inv.dueDate >= todayStrWS)
         );
       case 'overdue':
-        return invoices.filter((inv) => inv.status === 'overdue');
+        return invoices.filter(
+          (inv) =>
+            inv.status !== 'paid' &&
+            inv.status !== 'void' &&
+            inv.status !== 'draft' &&
+            inv.dueDate &&
+            inv.dueDate < todayStrWS
+        );
       case 'all':
       default:
         return invoices;
@@ -187,26 +200,23 @@ export function ClientBillingWorkspace({
   })();
 
   // ── Metric Strip Computations ──────────────────────────────────────────────
-  const todayStrWS = getSASTToday();
   const activeInvoicesWS = invoices.filter(
     (inv) => inv.status !== 'void' && inv.status !== 'draft' && inv.invoiceDate <= todayStrWS
   );
   const totalInvoicedWS = activeInvoicesWS.reduce((sum, inv) => sum + Number(inv.total), 0);
   const totalPaidWS = (payments?.data ?? []).reduce((sum: number, pay: any) => sum + Number(pay.amount), 0);
-  const outstandingBalanceWS = activeInvoicesWS.reduce(
-    (sum, inv) => sum + (Number(inv.total) - Number(inv.allocatedAmount ?? 0)),
-    0
-  );
+
+  // Overdue Balance Calculation (strictly unpaid invoices where due date is in the past)
   const overdueBalanceWS = activeInvoicesWS
-    .filter(
-      (inv) =>
-        (inv.status === 'overdue' || inv.status === 'issued' || inv.status === 'partially_paid') &&
-        inv.dueDate &&
-        inv.dueDate < todayStrWS
-    )
+    .filter((inv) => inv.status !== 'paid' && inv.dueDate && inv.dueDate < todayStrWS)
     .reduce((sum, inv) => sum + (Number(inv.total) - Number(inv.allocatedAmount ?? 0)), 0);
 
-  const healthWS = calculateClientHealth(invoices, outstandingBalanceWS, overdueBalanceWS);
+  // Outstanding Balance Calculation (strictly unpaid invoices that are not overdue yet)
+  const outstandingBalanceWS = activeInvoicesWS
+    .filter((inv) => inv.status !== 'paid' && (!inv.dueDate || inv.dueDate >= todayStrWS))
+    .reduce((sum, inv) => sum + (Number(inv.total) - Number(inv.allocatedAmount ?? 0)), 0);
+
+  const healthWS = calculateClientHealth(invoices, outstandingBalanceWS + overdueBalanceWS, overdueBalanceWS);
   const avgDaysToPayWS = calculateAverageDaysToPay(invoices);
   const sortedPaymentsWS = [...(payments?.data ?? [])].sort((a: any, b: any) =>
     b.date.localeCompare(a.date)

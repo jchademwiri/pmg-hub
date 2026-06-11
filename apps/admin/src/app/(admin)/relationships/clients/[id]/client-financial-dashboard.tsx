@@ -36,19 +36,26 @@ export function ClientFinancialDashboard({
   );
   const totalInvoiced = activeInvoices.reduce((sum, inv) => sum + Number(inv.total), 0);
   const totalPaid = payments.reduce((sum, pay) => sum + Number(pay.amount), 0);
-  const outstandingBalance = activeInvoices.reduce(
-    (sum, inv) => sum + (Number(inv.total) - Number(inv.allocatedAmount ?? 0)),
-    0
-  );
 
-  // Overdue Balance Calculation
+  // Overdue Balance Calculation (strictly unpaid invoices where due date is in the past)
   const overdueInvoices = activeInvoices.filter(
     (inv) =>
-      (inv.status === 'overdue' || inv.status === 'issued' || inv.status === 'partially_paid') &&
+      inv.status !== 'paid' &&
       inv.dueDate &&
       inv.dueDate < todayStr
   );
   const overdueBalance = overdueInvoices.reduce(
+    (sum, inv) => sum + (Number(inv.total) - Number(inv.allocatedAmount ?? 0)),
+    0
+  );
+
+  // Outstanding Balance Calculation (strictly unpaid invoices that are not overdue yet)
+  const outstandingInvoices = activeInvoices.filter(
+    (inv) =>
+      inv.status !== 'paid' &&
+      (!inv.dueDate || inv.dueDate >= todayStr)
+  );
+  const outstandingBalance = outstandingInvoices.reduce(
     (sum, inv) => sum + (Number(inv.total) - Number(inv.allocatedAmount ?? 0)),
     0
   );
@@ -63,8 +70,8 @@ export function ClientFinancialDashboard({
       ? Math.round((acceptedQuotes.length / sentOrAcceptedQuotes.length) * 100)
       : 0;
 
-  // 2. Client Health Score
-  const health = calculateClientHealth(invoices, outstandingBalance, overdueBalance);
+  // 2. Client Health Score (pass total outstanding to preserve score ratios)
+  const health = calculateClientHealth(invoices, outstandingBalance + overdueBalance, overdueBalance);
 
   // 3. Ageing Buckets
   const ageing = { current: 0, days1_30: 0, days31_60: 0, days61_plus: 0 };
