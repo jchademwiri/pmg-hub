@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect, useTransition } from 'react';
+import React, { useState, useEffect, useTransition, useRef } from 'react';
 import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { toast } from 'sonner';
@@ -110,6 +110,9 @@ export function ClientBillingWorkspace({
 
   // Collapsible Details
   const [isDetailsOpen, setIsDetailsOpen] = useState(false);
+
+  const previewPanelRef = useRef<HTMLDivElement>(null);
+  const [isLargeScreen, setIsLargeScreen] = useState(false);
 
   // Split-Pane Preview Selection
   const [selectedDocId, setSelectedDocId] = useState<string | null>(
@@ -221,6 +224,20 @@ export function ClientBillingWorkspace({
     }
   }, [searchParams, invoices, quotes, payments]);
 
+  useEffect(() => {
+    const mq = window.matchMedia('(min-width: 1024px)');
+    setIsLargeScreen(mq.matches);
+    const handler = (e: MediaQueryListEvent) => setIsLargeScreen(e.matches);
+    mq.addEventListener('change', handler);
+    return () => mq.removeEventListener('change', handler);
+  }, []);
+
+  useEffect(() => {
+    if (previewPanelRef.current) {
+      previewPanelRef.current.scrollTop = 0;
+    }
+  }, [selectedDocId]);
+
   // Find selected document detail in memory
   const activeInvoice = invoices.find((i) => i.id === selectedDocId);
   const activeQuote = quotes.find((q) => q.id === selectedDocId);
@@ -234,6 +251,14 @@ export function ClientBillingWorkspace({
   } else if (selectedDocType === 'payment' && activePayment) {
     documentTitle = `Receipt-${activePayment.id.slice(0, 8).toUpperCase()}`;
   }
+
+  const navigableIds = (() => {
+    if (selectedDocType === 'invoice') return invoices.map(i => i.id);
+    if (selectedDocType === 'quote') return quotes.map(q => q.id);
+    if (selectedDocType === 'payment') return (payments?.data ?? []).map((p: any) => p.id);
+    return [];
+  })();
+  const currentNavIndex = selectedDocId ? navigableIds.indexOf(selectedDocId) : -1;
 
   // Helper to compile preview props in memory
   const getInvoicePreviewProps = (inv: InvoiceDetail) => ({
@@ -902,10 +927,12 @@ export function ClientBillingWorkspace({
           {/* Action buttons are displayed contextually inside the slide-over drawer */}
         </div>
 
-        {/* Tab content wrappers */}
-        <div className="w-full">
-          {/* Left Pane (Document lists) */}
-          <Card className="w-full shadow-sm border-muted-foreground/10 bg-card overflow-hidden">
+        {/* Split pane: list (left) + preview (right on lg+) */}
+        <div className="flex flex-col lg:flex-row gap-4 items-start w-full">
+
+          {/* Document list — 40% on lg+, full width on mobile */}
+          <div className="w-full lg:w-[40%] shrink-0">
+            <Card className="w-full shadow-sm border-muted-foreground/10 bg-card overflow-hidden">
             <CardHeader className="p-4 border-b flex flex-row items-center justify-between">
               <div>
                 <CardTitle className="text-sm font-semibold capitalize">
@@ -951,7 +978,7 @@ export function ClientBillingWorkspace({
                           onClick={() => {
                             setSelectedDocId(inv.id);
                             setSelectedDocType('invoice');
-                            setIsPreviewOpen(true);
+                            if (!isLargeScreen) setIsPreviewOpen(true);
                           }}
                         >
                           <TableCell onClick={(e) => e.stopPropagation()}>
@@ -1003,7 +1030,7 @@ export function ClientBillingWorkspace({
                           onClick={() => {
                             setSelectedDocId(q.id);
                             setSelectedDocType('quote');
-                            setIsPreviewOpen(true);
+                            if (!isLargeScreen) setIsPreviewOpen(true);
                           }}
                         >
                           <TableCell onClick={(e) => e.stopPropagation()}>
@@ -1049,7 +1076,7 @@ export function ClientBillingWorkspace({
                           onClick={() => {
                             setSelectedDocId(entry.id);
                             setSelectedDocType('payment');
-                            setIsPreviewOpen(true);
+                            if (!isLargeScreen) setIsPreviewOpen(true);
                           }}
                         >
                           <TableCell className="tabular-nums">{fmtDate(entry.date)}</TableCell>
@@ -1128,16 +1155,18 @@ export function ClientBillingWorkspace({
                     </Select>
                   </div>
 
-                  <div className="flex items-end mt-4 md:mt-0">
-                    <Button
-                      variant="default"
-                      size="sm"
-                      className="flex items-center gap-1.5 shadow-sm h-8"
-                      onClick={() => setIsPreviewOpen(true)}
-                    >
-                      <Eye className="size-4" /> Preview Statement PDF
-                    </Button>
-                  </div>
+                  {!isLargeScreen && (
+                    <div className="flex items-end mt-4 md:mt-0">
+                      <Button
+                        variant="default"
+                        size="sm"
+                        className="flex items-center gap-1.5 shadow-sm h-8"
+                        onClick={() => setIsPreviewOpen(true)}
+                      >
+                        <Eye className="size-4" /> Preview Statement PDF
+                      </Button>
+                    </div>
+                  )}
                 </div>
 
                 {/* Statement Transactions Table */}
@@ -1189,6 +1218,121 @@ export function ClientBillingWorkspace({
               </TabsContent>
             </CardContent>
           </Card>
+          </div>
+
+          {/* Preview panel — 60% on lg+, hidden on mobile (uses Dialog instead) */}
+          <div
+            ref={previewPanelRef}
+            className="hidden lg:flex lg:flex-col lg:w-[60%] sticky top-[3.25rem] max-h-[calc(100vh-4rem)] overflow-y-auto w-full"
+          >
+            {/* ── Inline Preview Panel (lg+ only) ─────────────────────── */}
+            <Card className="shadow-sm border-muted-foreground/10 bg-card overflow-hidden text-card-foreground">
+              {/* Panel header with action buttons */}
+              <div className="p-4 border-b flex flex-row items-center justify-between shrink-0">
+                <div className="flex flex-col gap-0.5">
+                  <span className="text-sm font-semibold">
+                    {selectedDocType === 'invoice' && activeInvoice?.documentNumber}
+                    {selectedDocType === 'quote' && activeQuote?.documentNumber}
+                    {selectedDocType === 'payment' && activePayment && `REC-${activePayment.id.slice(0, 8).toUpperCase()}`}
+                    {selectedDocType === 'statement' && 'Statement'}
+                    {!selectedDocId && selectedDocType !== 'statement' && 'No document selected'}
+                  </span>
+                  <span className="text-xs text-muted-foreground capitalize">
+                    {selectedDocType === 'statement' ? statementPeriodLabel : selectedDocType}
+                  </span>
+                </div>
+
+                {/* Action buttons — same as Dialog header */}
+                <div className="flex items-center gap-2 print:hidden">
+                  {selectedDocType !== 'statement' && selectedDocId && (
+                    <>
+                      <PrintButton label="Print" documentTitle={documentTitle} />
+                      <ExportPdfButton fileName={documentTitle} />
+                    </>
+                  )}
+                  {selectedDocType === 'statement' && (
+                    <>
+                      <PrintButton
+                        label="Print"
+                        documentTitle={`Statement-${client.businessName?.replace(/\s+/g, '-') ?? client.name.replace(/\s+/g, '-')}`}
+                      />
+                      <ExportPdfButton
+                        fileName={`Statement-${client.businessName?.replace(/\s+/g, '-') ?? client.name.replace(/\s+/g, '-')}`}
+                      />
+                    </>
+                  )}
+
+                  {selectedDocType === 'invoice' && activeInvoice && (
+                    <>
+                      <EmailDocumentDialog
+                        documentId={activeInvoice.id}
+                        documentNumber={activeInvoice.documentNumber}
+                        documentType="invoice"
+                        defaultRecipientEmail={client.email ?? ''}
+                      />
+                      <Button variant="outline" size="sm" asChild>
+                        <Link href={`/billing/invoices/${activeInvoice.id}/edit`}>Edit</Link>
+                      </Button>
+                    </>
+                  )}
+                  {selectedDocType === 'quote' && activeQuote && (
+                    <>
+                      <EmailDocumentDialog
+                        documentId={activeQuote.id}
+                        documentNumber={activeQuote.documentNumber}
+                        documentType="quote"
+                        defaultRecipientEmail={client.email ?? ''}
+                      />
+                      <Button variant="outline" size="sm" asChild>
+                        <Link href={`/billing/quotes/${activeQuote.id}/edit`}>Edit</Link>
+                      </Button>
+                    </>
+                  )}
+                  {selectedDocType === 'payment' && activePayment && (
+                    <>
+                      <EmailReceiptDialog
+                        incomeId={activePayment.id}
+                        receiptNumber={`REC-${activePayment.id.slice(0, 8).toUpperCase()}`}
+                        defaultRecipientEmail={client.email ?? ''}
+                      />
+                      <Button variant="outline" size="sm" asChild>
+                        <Link href={`/billing/payments/${activePayment.id}`}>View Page</Link>
+                      </Button>
+                    </>
+                  )}
+                </div>
+              </div>
+
+              {/* Document render area */}
+              <div className="p-4 bg-muted/5">
+                {selectedDocType === 'statement' ? (
+                  <div className="bg-card rounded-lg p-4 overflow-x-auto">
+                    <DocumentPreview type="statement" {...statementPreviewProps} />
+                  </div>
+                ) : selectedDocId ? (
+                  <div className="bg-card rounded-lg p-4 overflow-x-auto">
+                    {selectedDocType === 'invoice' && activeInvoice && (
+                      <DocumentPreview type="invoice" {...getInvoicePreviewProps(activeInvoice)} />
+                    )}
+                    {selectedDocType === 'quote' && activeQuote && (
+                      <DocumentPreview type="quote" {...getQuotePreviewProps(activeQuote)} />
+                    )}
+                    {selectedDocType === 'payment' && activePayment && (
+                      <PaymentReceiptPreview
+                        payment={activePayment}
+                        client={client}
+                        divSettings={divSettings}
+                      />
+                    )}
+                  </div>
+                ) : (
+                  <div className="h-64 flex items-center justify-center border border-dashed rounded-lg bg-card shadow-sm">
+                    <span className="text-sm text-muted-foreground">Select a document to preview</span>
+                  </div>
+                )}
+              </div>
+            </Card>
+          </div>
 
         </div>
 
@@ -1304,6 +1448,36 @@ export function ClientBillingWorkspace({
               </div>
             )}
           </div>
+
+          {navigableIds.length > 1 && currentNavIndex >= 0 && (
+            <div className="flex items-center justify-between pt-3 border-t mt-2">
+              <Button
+                variant="ghost"
+                size="sm"
+                disabled={currentNavIndex === 0}
+                onClick={() => {
+                  const prevId = navigableIds[currentNavIndex - 1];
+                  if (prevId) setSelectedDocId(prevId);
+                }}
+              >
+                ← Previous
+              </Button>
+              <span className="text-xs text-muted-foreground">
+                {currentNavIndex + 1} of {navigableIds.length}
+              </span>
+              <Button
+                variant="ghost"
+                size="sm"
+                disabled={currentNavIndex === navigableIds.length - 1}
+                onClick={() => {
+                  const nextId = navigableIds[currentNavIndex + 1];
+                  if (nextId) setSelectedDocId(nextId);
+                }}
+              >
+                Next →
+              </Button>
+            </div>
+          )}
         </DialogContent>
       </Dialog>
       </Tabs>

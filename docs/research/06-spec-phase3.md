@@ -379,31 +379,31 @@ const currentNavIndex = selectedDocId ? navigableIds.indexOf(selectedDocId) : -1
 ```
 Phase 3 — Complete when all boxes are checked:
 
-[ ] client-billing-workspace.tsx — Layout
+[x] client-billing-workspace.tsx — Layout
     - Two-column flex layout: list (40%) + preview panel (60%) at lg+
     - Mobile: list full width, Dialog unchanged
     - Preview panel is sticky and scrollable
     - previewPanelRef scrolls to top on selectedDocId change
 
-[ ] client-billing-workspace.tsx — Inline preview panel
+[x] client-billing-workspace.tsx — Inline preview panel
     - Panel header shows document number + type
     - All action buttons (Print, PDF, Email, Edit) present
     - DocumentPreview renders inline for invoice/quote/statement
     - PaymentReceiptPreview renders inline for payments
     - Empty state shows "Select a document to preview"
 
-[ ] client-billing-workspace.tsx — Row click behaviour
+[x] client-billing-workspace.tsx — Row click behaviour
     - isLargeScreen state tracks window.matchMedia('(min-width: 1024px)')
     - On lg+ screens, row click updates selection only (no dialog)
     - On < lg screens, row click still opens Dialog
     - Invoices, Quotes, and Payments rows all updated
 
-[ ] client-billing-workspace.tsx — Statement
+[x] client-billing-workspace.tsx — Statement
     - Statement tab auto-shows in right pane on desktop (no button needed)
     - "Preview Statement PDF" button hidden on lg+ screens
     - Period filter changes update the right pane immediately
 
-[ ] client-billing-workspace.tsx — Mobile Dialog
+[x] client-billing-workspace.tsx — Mobile Dialog
     - Prev/Next buttons in Dialog footer
     - Correct document count label (N of M)
     - Prev disabled at index 0, Next disabled at last index
