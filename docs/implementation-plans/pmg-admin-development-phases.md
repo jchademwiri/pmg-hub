@@ -337,7 +337,7 @@ Four cards in a 2×2 (mobile) / 1×4 (desktop) grid:
 |---|---|---|
 | Total Revenue | `summary.revenue` | MoM vs previous month revenue |
 | Total Expenses | `summary.expenses` | MoM inverted (up = bad) |
-| PMG Share (20%) | `summary.pmgShare` | MoM |
+| PMG Share (25%) | `summary.pmgShare` | MoM |
 | Profit Pool | `summary.profitPool` | MoM - red border when negative |
 
 `DeltaBadge` shows TrendingUp/TrendingDown icon + percentage vs previous month.
@@ -959,7 +959,7 @@ if (session.user.role === 'viewer') notFound()  // or return { error: 'Forbidden
    table, not in `expenses`. Entering salary withdrawals as expenses double-counts
    them and collapses the profit pool.
 
-6. **PMG always takes 20% of gross revenue.** This happens before expenses.
+6. **PMG always takes 25% of gross revenue.** This happens before expenses.
 
 7. **No client state for data.** Server Components fetch data. Server Actions mutate
    data. `revalidatePath` refreshes the page. The database is the single source of

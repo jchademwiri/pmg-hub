@@ -22,7 +22,7 @@ This update draws a hard line between two fundamentally different kinds of spend
 ### Current Financial Engine
 
 ```
-Gross Revenue − PMG Share (20%) − Expenses = Profit Pool
+Gross Revenue − PMG Share (25%) − Expenses = Profit Pool
 ```
 
 The Profit Pool is then split:
@@ -71,7 +71,7 @@ The existing `/accounts` page and `recordAccountWithdrawal` server action both c
 
 | Term | Formula |
 |---|---|
-| Net Revenue | Gross Revenue − PMG Share (20%) |
+| Net Revenue | Gross Revenue − PMG Share (25%) |
 | Profit Pool | Net Revenue − Expenses |
 | Expected Bucket Allocation | Cumulative All-Time Profit Pool × Bucket % |
 | Available Bucket Balance | Expected Allocation − Sum of Ledger entries for that bucket |

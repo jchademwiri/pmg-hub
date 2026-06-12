@@ -276,7 +276,7 @@ export function SnapshotsCockpit({ snapshots }: SnapshotsCockpitProps) {
                 style={{ width: `${pmgPct}%` }}
                 title={`PMG Contribution: ${pmgPct.toFixed(0)}%`}
               >
-                {pmgPct >= 15 ? "PMG (20%)" : "PMG"}
+                {pmgPct >= 15 ? "PMG (25%)" : "PMG"}
               </div>
 
               {/* Expenses */}

@@ -434,7 +434,7 @@ export default async function DashboardPage() {
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
         <KpiCard label="Total Revenue"   value={summary.revenue}  />
         <KpiCard label="Total Expenses"  value={summary.expenses} />
-        <KpiCard label="PMG Share (20%)" value={summary.pmgShare} />
+        <KpiCard label="PMG Share (25%)" value={summary.pmgShare} />
         <KpiCard label="Profit Pool"     value={summary.profitPool} />
       </div>
 

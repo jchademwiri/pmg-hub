@@ -111,7 +111,7 @@ so that I can assess business health immediately.
 
 1. THE Dashboard_Page SHALL render four KpiCard instances in a responsive grid
    (`grid-cols-2` on mobile, `grid-cols-4` on `lg` breakpoint).
-2. THE KpiCard instances SHALL display: Total Revenue, Total Expenses, PMG Share (20%),
+2. THE KpiCard instances SHALL display: Total Revenue, Total Expenses, PMG Share (25%),
    and Profit Pool - sourced from the FinancialSummary.
 3. THE KpiCard SHALL format all monetary values using `formatZAR`.
 4. THE KpiCard SHALL render a label in `text-muted-foreground`, the formatted value in

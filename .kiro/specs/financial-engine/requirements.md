@@ -82,7 +82,7 @@ The four required exports are: `getTotalRevenue`, `getTotalExpenses`,
 | **DivisionRevenue** | A TypeScript type with fields `divisionName: string` and `total: number`, representing income attributed to a single business division. |
 | **LeadStatusCount** | A TypeScript type with fields `status: string` and `count: number`, representing the number of leads in a given pipeline status. |
 | **Profit_Pool** | The distributable profit after deducting both expenses and PMG Share from gross revenue: `revenue − expenses − pmgShare`. |
-| **PMG_Share** | 20% of gross revenue retained for shared infrastructure and admin overhead. Calculated from revenue only, before expenses. |
+| **PMG_Share** | 25% of gross revenue retained for shared infrastructure and admin overhead. Calculated from revenue only, before expenses. |
 | **Formatter** | The `formatZAR(amount: number): string` function that converts a numeric amount to a South African Rand currency string. |
 
 ---

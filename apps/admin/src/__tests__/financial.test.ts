@@ -8,6 +8,19 @@ vi.mock('@pmg/db', () => ({
   getTotalExpenses: vi.fn(),
   getRevenueByDivision: vi.fn(),
   getLeadsByStatus: vi.fn(),
+  ACCOUNT_RATES: {
+    salary: 0.35,
+    reinvest: 0.30,
+    reserve: 0.30,
+    flex: 0.05,
+    pmg_share: 0.25,
+  },
+  PROFIT_POOL_RATES: {
+    salary: 0.35,
+    reinvest: 0.30,
+    reserve: 0.30,
+    flex: 0.05,
+  },
 }))
 
 import { getTotalRevenue, getTotalExpenses, getRevenueByDivision, getLeadsByStatus } from '@pmg/db'
@@ -27,12 +40,12 @@ describe('getFinancialSummary', () => {
 
       expect(result.revenue).toBe(100000)
       expect(result.expenses).toBe(40000)
-      expect(result.pmgShare).toBe(20000)
-      expect(result.profitPool).toBe(40000)
-      expect(result.salary).toBe(14000)
-      expect(result.reinvest).toBe(12000)
-      expect(result.reserve).toBe(12000)
-      expect(result.flex).toBe(2000)
+      expect(result.pmgShare).toBe(25000)
+      expect(result.profitPool).toBe(35000)
+      expect(result.salary).toBe(12250)
+      expect(result.reinvest).toBe(10500)
+      expect(result.reserve).toBe(10500)
+      expect(result.flex).toBe(1750)
     })
 
     it('zero case - revenue=0, expenses=0 returns all eight fields as 0 without error', async () => {
@@ -57,12 +70,12 @@ describe('getFinancialSummary', () => {
 
       const result = await getFinancialSummary()
 
-      expect(result.pmgShare).toBe(2000)
-      expect(result.profitPool).toBe(-7000)
-      expect(result.salary).toBe(-2450)
-      expect(result.reinvest).toBe(-2100)
-      expect(result.reserve).toBe(-2100)
-      expect(result.flex).toBe(-350)
+      expect(result.pmgShare).toBe(2500)
+      expect(result.profitPool).toBe(-7500)
+      expect(result.salary).toBe(-2625)
+      expect(result.reinvest).toBe(-2250)
+      expect(result.reserve).toBe(-2250)
+      expect(result.flex).toBe(-375)
     })
 
     it('determinism - same mocked inputs called twice produce structurally identical results', async () => {
@@ -97,7 +110,7 @@ describe('getFinancialSummary', () => {
 
             const result = await getFinancialSummary()
 
-            const pmgShare = revenue * 0.20
+            const pmgShare = revenue * 0.25
             const profitPool = revenue - expenses - pmgShare
 
             expect(result.pmgShare).toBeCloseTo(pmgShare, 10)
@@ -120,7 +133,7 @@ describe('getFinancialSummary', () => {
           fc.double({ noNaN: true, noDefaultInfinity: true }),
           async (revenue, expenses) => {
             // Skip cases where arithmetic would overflow to Infinity/NaN before running any side effects
-            const pmgShare = revenue * 0.20
+            const pmgShare = revenue * 0.25
             const profitPool = revenue - expenses - pmgShare
             fc.pre(isFinite(profitPool))
 

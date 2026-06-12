@@ -25,7 +25,7 @@ The foundation of the system is a five-bucket profit allocation model. Every ran
 
 ```
 Revenue − Expenses = Base
-Base × 20% → PMG Share (taken off the top, before profit)
+Base × 25% → PMG Share (taken off the top, before profit)
 Remaining → Profit Pool
   Profit Pool × 35% → Salary
   Profit Pool × 30% → Reinvest

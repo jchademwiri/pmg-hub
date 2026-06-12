@@ -422,7 +422,7 @@ OPERATING EXPENSES
 
 GROSS PROFIT (Revenue − Operating Expenses)   R XX,XXX
 
-PMG GROUP ALLOCATION (20% of Revenue)         R XX,XXX
+PMG GROUP ALLOCATION (25% of Revenue)         R XX,XXX
 
 PROFIT POOL (Gross Profit − PMG Allocation)   R XX,XXX
 

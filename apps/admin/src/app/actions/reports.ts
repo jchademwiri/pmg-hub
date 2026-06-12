@@ -28,7 +28,7 @@ export async function exportFinancialsCsv(
       const monthKey = `${year}-${String(i + 1).padStart(2, '0')}`;
       const { revenue, expenses } = dataByMonth.get(monthKey) ?? { revenue: 0, expenses: 0 };
 
-      const pmgShare   = revenue * 0.20;
+      const pmgShare   = revenue * 0.25;
       const profitPool = revenue - expenses - pmgShare;
       const salary     = profitPool * 0.35;
       const reinvest   = profitPool * 0.30;

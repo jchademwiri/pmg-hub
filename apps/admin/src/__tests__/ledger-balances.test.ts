@@ -6,6 +6,19 @@ vi.mock('@pmg/db', () => ({
   getTotalRevenue: vi.fn(),
   getTotalExpenses: vi.fn(),
   getLedgerTotalByAllocation: vi.fn(),
+  ACCOUNT_RATES: {
+    salary: 0.35,
+    reinvest: 0.30,
+    reserve: 0.30,
+    flex: 0.05,
+    pmg_share: 0.25,
+  },
+  PROFIT_POOL_RATES: {
+    salary: 0.35,
+    reinvest: 0.30,
+    reserve: 0.30,
+    flex: 0.05,
+  },
 }));
 
 import { getTotalRevenue, getTotalExpenses, getLedgerTotalByAllocation } from '@pmg/db';
@@ -18,12 +31,12 @@ describe('getLedgerBalances', () => {
 
   it('calculates available balances correctly including pmg_share if implemented', async () => {
     // Mock revenue and expenses for getFinancialSummary
-    vi.mocked(getTotalRevenue).mockResolvedValue(100000); // pmg_share expected = 20000
-    vi.mocked(getTotalExpenses).mockResolvedValue(40000); // profit pool = 40000
-    // salary (35%) = 14000
-    // reinvest (30%) = 12000
-    // reserve (30%) = 12000
-    // flex (5%) = 2000
+    vi.mocked(getTotalRevenue).mockResolvedValue(100000); // pmg_share expected = 25000
+    vi.mocked(getTotalExpenses).mockResolvedValue(40000); // profit pool = 35000
+    // salary (35%) = 12250
+    // reinvest (30%) = 10500
+    // reserve (30%) = 10500
+    // flex (5%) = 1750
 
     // Mock ledger totals (spends)
     vi.mocked(getLedgerTotalByAllocation).mockImplementation(async (type) => {
@@ -41,14 +54,14 @@ describe('getLedgerBalances', () => {
     // Before implementation, this test might fail or not have the property.
     // I will write it as it should be AFTER Fix 1.
     
-    expect(result.salary).toEqual({ expected: 14000, spent: 5000, available: 9000 });
-    expect(result.reinvest).toEqual({ expected: 12000, spent: 2000, available: 10000 });
-    expect(result.reserve).toEqual({ expected: 12000, spent: 1000, available: 11000 });
-    expect(result.flex).toEqual({ expected: 2000, spent: 500, available: 1500 });
+    expect(result.salary).toEqual({ expected: 12250, spent: 5000, available: 7250 });
+    expect(result.reinvest).toEqual({ expected: 10500, spent: 2000, available: 8500 });
+    expect(result.reserve).toEqual({ expected: 10500, spent: 1000, available: 9500 });
+    expect(result.flex).toEqual({ expected: 1750, spent: 500, available: 1250 });
     
     // This will error until we update the type and implementation
     if ('pmg_share' in result) {
-      expect((result as any).pmg_share).toEqual({ expected: 20000, spent: 3000, available: 17000 });
+      expect((result as any).pmg_share).toEqual({ expected: 25000, spent: 3000, available: 22000 });
     }
   });
 });

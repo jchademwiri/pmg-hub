@@ -295,7 +295,7 @@ describe('P3: CSV export correctness - structure and financial model', () => {
               i === 0 ? v : Number(v)
             ) as [string, number, number, number, number, number, number, number, number]
 
-            if (Math.abs(pmg - rev * 0.20) > eps) return false
+            if (Math.abs(pmg - rev * 0.25) > eps) return false
             if (Math.abs(profit - (rev - exp - pmg)) > eps) return false
             if (Math.abs(sal - profit * 0.35) > eps) return false
             if (Math.abs(reinv - profit * 0.30) > eps) return false
