@@ -1,0 +1,178 @@
+---
+// apps/pmg/src/components/About.astro
+---
+
+<!-- Why PMG Section -->
+<section id="about" class="section scroll-mt">
+  <div class="section-header-split">
+    <!-- Left Column: Narrative -->
+    <div class="section-header-left">
+      <span class="section-tag">Who We Are</span>
+      <h2>Why Playhouse Media Group</h2>
+      <p class="section-desc">
+        We're not just a holding company — we're an integrated growth engine for South African businesses.
+        From brand creation to tender execution, every division works together so our clients never have to
+        start from scratch.
+      </p>
+    </div>
+
+    <!-- Right Column: Key Stats -->
+    <div class="section-header-right">
+      <div class="about-stats-grid">
+        <div class="about-stat-card">
+          <span class="about-stat-num">3</span>
+          <span class="about-stat-label">Operating Divisions</span>
+          <span class="about-stat-desc">Branding, Web Tech & Tender Compliance</span>
+        </div>
+        <div class="about-stat-card">
+          <span class="about-stat-num">1</span>
+          <span class="about-stat-label">SaaS Platform</span>
+          <span class="about-stat-desc">TenderTrack 360 — built in-house</span>
+        </div>
+        <div class="about-stat-card">
+          <span class="about-stat-num">ZA</span>
+          <span class="about-stat-label">Proudly South African</span>
+          <span class="about-stat-desc">Centurion, Gauteng — serving nationally</span>
+        </div>
+        <div class="about-stat-card">
+          <span class="about-stat-num">24h</span>
+          <span class="about-stat-label">Response Guarantee</span>
+          <span class="about-stat-desc">We follow up within one business day</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Value Propositions Row -->
+  <div class="about-values-row">
+    <div class="about-value-item">
+      <div class="about-value-icon">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path>
+        </svg>
+      </div>
+      <div>
+        <h4>One Relationship, Full Stack</h4>
+        <p>Brand your business, build your website, win government tenders, and manage it all on one platform — under one roof.</p>
+      </div>
+    </div>
+    <div class="about-value-item">
+      <div class="about-value-icon">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <circle cx="12" cy="12" r="10"></circle>
+          <path d="M8 14s1.5 2 4 2 4-2 4-2"></path>
+          <line x1="9" y1="9" x2="9.01" y2="9"></line>
+          <line x1="15" y1="9" x2="15.01" y2="9"></line>
+        </svg>
+      </div>
+      <div>
+        <h4>Built by Founders, for Founders</h4>
+        <p>Every product and service exists because we solved the same problem in our own businesses first.</p>
+      </div>
+    </div>
+    <div class="about-value-item">
+      <div class="about-value-icon">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <polyline points="22 12 18 12 15 21 9 3 6 12 2 12"></polyline>
+        </svg>
+      </div>
+      <div>
+        <h4>Measurable Outcomes</h4>
+        <p>40% higher tender win rates, 60% less admin time, and 25% lower operational costs — tracked on TenderTrack 360.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<style>
+  .about-stats-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+  }
+
+  .about-stat-card {
+    background: var(--glass-bg);
+    border: 1px solid var(--glass-border);
+    border-radius: 12px;
+    padding: 24px;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    transition: all 0.3s ease;
+  }
+
+  .about-stat-card:hover {
+    border-color: var(--glass-border-hover);
+    transform: translateY(-2px);
+  }
+
+  .about-stat-num {
+    font-family: 'Outfit', sans-serif;
+    font-size: 28px;
+    font-weight: 900;
+    color: var(--orange);
+    line-height: 1;
+  }
+
+  .about-stat-label {
+    font-family: 'Outfit', sans-serif;
+    font-size: 14px;
+    font-weight: 700;
+    color: var(--white);
+    margin-top: 4px;
+  }
+
+  .about-stat-desc {
+    font-size: 12px;
+    color: var(--muted);
+    font-weight: 300;
+    line-height: 1.4;
+  }
+
+  .about-values-row {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 24px;
+    margin-top: 56px;
+  }
+
+  @media (min-width: 768px) {
+    .about-values-row {
+      grid-template-columns: repeat(3, 1fr);
+    }
+  }
+
+  .about-value-item {
+    display: flex;
+    gap: 16px;
+    align-items: flex-start;
+  }
+
+  .about-value-icon {
+    width: 40px;
+    height: 40px;
+    background: var(--orange-dim);
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--orange);
+    flex-shrink: 0;
+  }
+
+  .about-value-item h4 {
+    font-family: 'Outfit', sans-serif;
+    font-size: 15px;
+    font-weight: 700;
+    color: var(--white);
+    margin-bottom: 6px;
+  }
+
+  .about-value-item p {
+    font-size: 13px;
+    color: var(--muted);
+    line-height: 1.5;
+    font-weight: 300;
+  }
+</style>

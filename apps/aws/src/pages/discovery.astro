@@ -45,6 +45,10 @@ import Layout from '@/layouts/Layout.astro';
         </div>
 
         <form id='discoveryForm' class='space-y-10'>
+          <!-- Honeypot - hidden from real users, catches bots -->
+          <div style='position: absolute; left: -9999px;' aria-hidden='true'>
+            <input type='text' name='_company_url' tabindex='-1' autocomplete='off' />
+          </div>
           <!-- 01: Identity -->
           <section class='space-y-4'>
             <label
@@ -325,10 +329,14 @@ import Layout from '@/layouts/Layout.astro';
   </style>
 
   <script>
+    // Bot protection: reject honeypot submissions silently
     document
       .getElementById('discoveryForm')
       ?.addEventListener('submit', (e) => {
         e.preventDefault();
+        const form = e.currentTarget as HTMLFormElement;
+        const honeypot = form?.querySelector<HTMLInputElement>('input[name="_company_url"]');
+        if (honeypot?.value) return;
         document.getElementById('success')?.classList.remove('hidden');
         window.scrollTo({ top: 0, behavior: 'smooth' });
       });

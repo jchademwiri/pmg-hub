@@ -4,7 +4,7 @@ const rateLimitStore = new Map<string, { count: number; resetAt: number }>();
 const RATE_LIMIT = 5;
 const RATE_WINDOW_MS = 60 * 1000;
 
-const RATE_LIMITED_ACTIONS = new Set(['submitContact', 'bookService']);
+const RATE_LIMITED_ACTIONS = new Set(['submitContactForm']);
 
 function getClientId(context: { request: { ip: string; headers: Headers } }): string {
   return context.request.ip || 'unknown';
@@ -34,28 +34,15 @@ export const onRequest = defineMiddleware(async (context, next) => {
 
   if (RATE_LIMITED_ACTIONS.has(actionName) && context.request.method === 'POST') {
     if (isRateLimited(clientId)) {
-      return new Response(JSON.stringify({ error: 'Too many requests. Please try again later.' }), {
-        status: 429,
-        headers: { 'Content-Type': 'application/json' },
-      });
+      return new Response(
+        JSON.stringify({ error: 'Too many requests. Please try again later.' }),
+        {
+          status: 429,
+          headers: { 'Content-Type': 'application/json' },
+        }
+      );
     }
   }
 
-  const response = await next();
-
-  const cacheControlValue =
-    pathname.startsWith('/_astro') || pathname.match(/\.(js|css|png|jpg|jpeg|gif|svg|ico|woff2?)$/)
-      ? 'public, max-age=31536000, immutable'
-      : 'no-cache, no-store, must-revalidate';
-
-  response.headers.set('Cache-Control', cacheControlValue);
-
-  if (pathname === '/') {
-    response.headers.set('X-Frame-Options', 'DENY');
-    response.headers.set('X-Content-Type-Options', 'nosniff');
-    response.headers.set('Referrer-Policy', 'strict-origin-when-cross-origin');
-    response.headers.set('Permissions-Policy', 'camera=(), microphone=(), geolocation=()');
-  }
-
-  return response;
+  return next();
 });

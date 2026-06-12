@@ -65,6 +65,19 @@
       placeholder="Tell us about your project..."></textarea>
   </div>
 
+  <!-- Honeypot - hidden from real users, catches bots -->
+  <div style="position: absolute; left: -9999px;" aria-hidden="true">
+    <input type="text" name="_company_url" tabindex="-1" autocomplete="off" />
+  </div>
+
+  <!-- Timestamp for time-based bot detection -->
+  <input type="hidden" name="_loadedAt" id="contact-loaded-at" value="" />
+
+  <!-- Cloudflare Turnstile -->
+  {import.meta.env.TURNSTILE_SITE_KEY && (
+    <div class="cf-turnstile" data-sitekey={import.meta.env.TURNSTILE_SITE_KEY} data-action="_turnstile" data-theme="auto"></div>
+  )}
+
   <button
     type="submit"
     class="ring-offset-background focus-visible:ring-ring bg-primary text-primary-foreground hover:bg-primary/90 inline-flex h-10 w-full items-center justify-center rounded-md px-4 py-2 text-sm font-medium transition-colors focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:outline-none disabled:pointer-events-none disabled:opacity-50"
@@ -102,6 +115,12 @@
   const btnText = document.getElementById("btn-text");
   const btnLoader = document.getElementById("btn-loader");
   const formMessage = document.getElementById("contact-message");
+
+  // Set timestamp on page load for time-based bot detection
+  const loadedAtEl = document.getElementById('contact-loaded-at');
+  if (loadedAtEl && !loadedAtEl.value) {
+    loadedAtEl.value = new Date().toISOString();
+  }
 
   if (form) {
     form.addEventListener("submit", async (e) => {

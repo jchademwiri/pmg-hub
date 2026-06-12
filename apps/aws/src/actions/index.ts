@@ -2,6 +2,7 @@ import { defineAction } from 'astro:actions';
 import { z } from 'astro:schema';
 import { getDb, leads, divisions, bridgeDatabaseEnv } from '@pmg/db';
 import { eq } from '@pmg/db';
+import { checkBotProtection } from '@pmg/utils';
 import {
   sendEmail,
   AdminNewLeadEmail,
@@ -23,13 +24,26 @@ export const server = {
   submitContact: defineAction({
     accept: 'form',
     input: z.object({
-      name:    z.string().min(1, 'Name is required'),
-      email:   z.string().email('Keep it valid'),
-      subject: z.string().min(1, 'Subject is required'),
-      message: z.string().min(1, 'Message is required'),
+      name:         z.string().min(1, 'Name is required'),
+      email:        z.string().email('Keep it valid'),
+      subject:      z.string().min(1, 'Subject is required'),
+      message:      z.string().min(1, 'Message is required'),
+      _company_url: z.string().optional().or(z.literal('')).nullable(),
+      _loadedAt:    z.string().optional().or(z.literal('')).nullable(),
+      _turnstile:   z.string().optional().or(z.literal('')).nullable(),
     }),
     handler: async (input) => {
       try {
+        // ── Bot protection ──────────────────────────────────────────
+        const botCheck = await checkBotProtection({
+          honeypot: input._company_url,
+          loadedAt: input._loadedAt,
+          turnstile: input._turnstile,
+          honeypotFieldName: '_company_url',
+          successMessage: 'Submission received.',
+        });
+        if (botCheck.blocked) return botCheck.response!;
+
         const env = import.meta.env as Record<string, string | undefined>;
         bridgeDatabaseEnv(env);
 
@@ -141,15 +155,28 @@ export const server = {
   bookService: defineAction({
     accept: 'form',
     input: z.object({
-      name:    z.string().min(1, 'Name is required'),
-      email:   z.string().email('Valid email required'),
-      phone:   z.string().min(7, 'Phone number is required'),
-      package: z.string().min(1, 'Package is required'),
-      price:   z.string().min(1, 'Price is required'),
-      type:    z.string().min(1, 'Type is required'),
+      name:         z.string().min(1, 'Name is required'),
+      email:        z.string().email('Valid email required'),
+      phone:        z.string().min(7, 'Phone number is required'),
+      package:      z.string().min(1, 'Package is required'),
+      price:        z.string().min(1, 'Price is required'),
+      type:         z.string().min(1, 'Type is required'),
+      _company_url: z.string().optional().or(z.literal('')).nullable(),
+      _loadedAt:    z.string().optional().or(z.literal('')).nullable(),
+      _turnstile:   z.string().optional().or(z.literal('')).nullable(),
     }),
     handler: async (input) => {
       try {
+        // ── Bot protection ──────────────────────────────────────────
+        const botCheck = await checkBotProtection({
+          honeypot: input._company_url,
+          loadedAt: input._loadedAt,
+          turnstile: input._turnstile,
+          honeypotFieldName: '_company_url',
+          successMessage: 'Submission received.',
+        });
+        if (botCheck.blocked) return botCheck.response!;
+
         const env = import.meta.env as Record<string, string | undefined>;
         bridgeDatabaseEnv(env);
 

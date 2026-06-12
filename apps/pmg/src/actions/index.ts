@@ -1,5 +1,6 @@
 import { defineAction } from 'astro:actions';
 import { z } from 'astro:schema';
+import { checkBotProtection } from '@pmg/utils';
 import {
   createEmailClient,
   AdminNewLeadEmail,
@@ -34,12 +35,25 @@ export const server = {
   submitContactForm: defineAction({
     accept: 'form',
     input: z.object({
-      name: z.string().min(1, 'Name is required'),
-      phone: z.string().optional(),
-      email: z.string().email('Invalid email address'),
-      message: z.string().min(1, 'Message is required'),
+      name:         z.string().min(1, 'Name is required'),
+      phone:        z.string().optional().nullable(),
+      email:        z.string().email('Invalid email address'),
+      message:      z.string().min(1, 'Message is required'),
+      _company_url: z.string().optional().or(z.literal('')).nullable(),
+      _loadedAt:    z.string().optional().or(z.literal('')).nullable(),
+      _turnstile:   z.string().optional().or(z.literal('')).nullable(),
     }),
     handler: async (input) => {
+      // ── Bot protection ──────────────────────────────────────────────
+      const botCheck = await checkBotProtection({
+        honeypot: input._company_url,
+        loadedAt: input._loadedAt,
+        turnstile: input._turnstile,
+        honeypotFieldName: '_company_url',
+        successMessage: 'Submission received.',
+      });
+      if (botCheck.blocked) return botCheck.response!;
+
       // Load environment variables for the database
       const env = import.meta.env as Record<string, string | undefined>;
       bridgeDatabaseEnv(env);

@@ -22,6 +22,7 @@
     "@pmg/db": "workspace:*",
     "@pmg/emails": "workspace:*",
     "@pmg/tailwind-config": "workspace:*",
+    "@pmg/utils": "workspace:*",
     "@react-email/components": "^1.0.1",
     "@tailwindcss/vite": "^4.1.17",
     "@vercel/analytics": "^2.0.1",

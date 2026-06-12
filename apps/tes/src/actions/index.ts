@@ -2,6 +2,7 @@ import { defineAction } from 'astro:actions';
 import { z } from 'astro:schema';
 import { getDb, leads, divisions, bridgeDatabaseEnv } from '@pmg/db';
 import { eq } from '@pmg/db';
+import { checkBotProtection } from '@pmg/utils';
 import {
   sendEmail,
   AdminNewLeadEmail,
@@ -19,11 +20,24 @@ export const server = {
     input: z.object({
       name:            z.string().min(1, 'Name is required'),
       phone:           z.string().min(7, 'Phone number is required'),
-      email:           z.string().email().optional().or(z.literal('')),
-      companyName:     z.string().optional().or(z.literal('')),
+      email:           z.string().email().optional().or(z.literal('')).nullable(),
+      companyName:     z.string().optional().or(z.literal('')).nullable(),
       serviceInterest: z.string().min(1, 'Please select a service'),
+      _website:        z.string().optional().or(z.literal('')).nullable(),
+      _loadedAt:       z.string().optional().or(z.literal('')).nullable(),
+      _turnstile:      z.string().optional().or(z.literal('')).nullable(),
     }),
     handler: async (input) => {
+      // ── Bot protection ──────────────────────────────────────────────
+      const botCheck = await checkBotProtection({
+        honeypot: input._website,
+        loadedAt: input._loadedAt,
+        turnstile: input._turnstile,
+        honeypotFieldName: '_website',
+        successMessage: 'Enquiry sent successfully.',
+      });
+      if (botCheck.blocked) return botCheck.response!;
+
       const env = import.meta.env as Record<string, string | undefined>;
       bridgeDatabaseEnv(env);
 

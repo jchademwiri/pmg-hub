@@ -23,6 +23,14 @@ import { ArrowRight, CheckCircle2, Loader2, Mail } from "lucide-astro";
       />
     </div>
 
+    <!-- Honeypot - hidden from real users, catches bots -->
+    <div style="position: absolute; left: -9999px;" aria-hidden="true">
+      <input type="text" name="_company_url" tabindex="-1" autocomplete="off" />
+    </div>
+
+    <!-- Timestamp for time-based bot detection -->
+    <input type="hidden" name="_loadedAt" id="loaded-at" value="" />
+
     <button
       type="submit"
       id="waitlist-submit-btn"
@@ -60,12 +68,20 @@ import { ArrowRight, CheckCircle2, Loader2, Mail } from "lucide-astro";
     const btnLoader = submitBtn?.querySelector(".btn-loader");
     const emailInput = document.getElementById("waitlist-email");
 
+    // Set timestamp on page load for time-based bot detection
+    const loadedAtEl = document.getElementById('loaded-at');
+    if (loadedAtEl && !loadedAtEl.value) loadedAtEl.value = new Date().toISOString();
+
     function handleSubmit(e) {
       e.preventDefault();
 
       if (!form || !messageEl || !submitBtn || !emailInput) return;
 
       const formData = new FormData(form);
+
+      // Bot protection: reject honeypot submissions silently
+      const honeypot = formData.get("_company_url");
+      if (honeypot) return;
       const email = formData.get("email");
 
       // Reset state
