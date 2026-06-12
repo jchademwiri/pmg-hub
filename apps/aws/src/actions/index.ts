@@ -28,9 +28,9 @@ export const server = {
       email:        z.string().email('Keep it valid'),
       subject:      z.string().min(1, 'Subject is required'),
       message:      z.string().min(1, 'Message is required'),
-      _company_url: z.string().optional().or(z.literal('')),
-      _loadedAt:    z.string().optional().or(z.literal('')),
-      _turnstile:   z.string().optional().or(z.literal('')),
+      _company_url: z.string().optional().or(z.literal('')).nullable(),
+      _loadedAt:    z.string().optional().or(z.literal('')).nullable(),
+      _turnstile:   z.string().optional().or(z.literal('')).nullable(),
     }),
     handler: async (input) => {
       try {
@@ -161,9 +161,9 @@ export const server = {
       package:      z.string().min(1, 'Package is required'),
       price:        z.string().min(1, 'Price is required'),
       type:         z.string().min(1, 'Type is required'),
-      _company_url: z.string().optional().or(z.literal('')),
-      _loadedAt:    z.string().optional().or(z.literal('')),
-      _turnstile:   z.string().optional().or(z.literal('')),
+      _company_url: z.string().optional().or(z.literal('')).nullable(),
+      _loadedAt:    z.string().optional().or(z.literal('')).nullable(),
+      _turnstile:   z.string().optional().or(z.literal('')).nullable(),
     }),
     handler: async (input) => {
       try {

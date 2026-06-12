@@ -20,12 +20,12 @@ export const server = {
     input: z.object({
       name:            z.string().min(1, 'Name is required'),
       phone:           z.string().min(7, 'Phone number is required'),
-      email:           z.string().email().optional().or(z.literal('')),
-      companyName:     z.string().optional().or(z.literal('')),
+      email:           z.string().email().optional().or(z.literal('')).nullable(),
+      companyName:     z.string().optional().or(z.literal('')).nullable(),
       serviceInterest: z.string().min(1, 'Please select a service'),
-      _website:        z.string().optional().or(z.literal('')),
-      _loadedAt:       z.string().optional().or(z.literal('')),
-      _turnstile:      z.string().optional().or(z.literal('')),
+      _website:        z.string().optional().or(z.literal('')).nullable(),
+      _loadedAt:       z.string().optional().or(z.literal('')).nullable(),
+      _turnstile:      z.string().optional().or(z.literal('')).nullable(),
     }),
     handler: async (input) => {
       // ── Bot protection ──────────────────────────────────────────────

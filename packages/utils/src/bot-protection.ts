@@ -8,11 +8,11 @@
 
 interface BotCheckOptions {
   /** The honeypot field value from the form input */
-  honeypot?: string;
+  honeypot?: string | null;
   /** The timestamp field value from the form input (ISO string) */
-  loadedAt?: string;
+  loadedAt?: string | null;
   /** The Turnstile token from the form input */
-  turnstile?: string;
+  turnstile?: string | null;
   /** The honeypot field name for logging (e.g. '_website', '_company_url') */
   honeypotFieldName: string;
   /** The success message to return to rejected submissions */

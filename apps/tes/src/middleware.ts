@@ -25,11 +25,14 @@ function isRateLimited(clientId: string): boolean {
   return false;
 }
 
+const RATE_LIMITED_ACTIONS = new Set(['enquireLead']);
+
 export const onRequest = defineMiddleware(async (context, next) => {
   const clientId = getClientId(context);
   const pathname = context.url.pathname;
+  const actionName = pathname.replace(/^\/?_?actions\//, '');
 
-  if (pathname === '/actions/enquireLead' && context.request.method === 'POST') {
+  if (RATE_LIMITED_ACTIONS.has(actionName) && context.request.method === 'POST') {
     if (isRateLimited(clientId)) {
       return new Response(JSON.stringify({ error: 'Too many requests. Please try again later.' }), {
         status: 429,

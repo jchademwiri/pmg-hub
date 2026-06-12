@@ -36,12 +36,12 @@ export const server = {
     accept: 'form',
     input: z.object({
       name:         z.string().min(1, 'Name is required'),
-      phone:        z.string().optional(),
+      phone:        z.string().optional().nullable(),
       email:        z.string().email('Invalid email address'),
       message:      z.string().min(1, 'Message is required'),
-      _company_url: z.string().optional().or(z.literal('')),
-      _loadedAt:    z.string().optional().or(z.literal('')),
-      _turnstile:   z.string().optional().or(z.literal('')),
+      _company_url: z.string().optional().or(z.literal('')).nullable(),
+      _loadedAt:    z.string().optional().or(z.literal('')).nullable(),
+      _turnstile:   z.string().optional().or(z.literal('')).nullable(),
     }),
     handler: async (input) => {
       // ── Bot protection ──────────────────────────────────────────────

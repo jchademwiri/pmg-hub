@@ -4,10 +4,7 @@ const rateLimitStore = new Map<string, { count: number; resetAt: number }>();
 const RATE_LIMIT = 5;
 const RATE_WINDOW_MS = 60 * 1000;
 
-const RATE_LIMITED_ACTIONS = new Set([
-  '/actions/submitContact',
-  '/actions/bookService',
-]);
+const RATE_LIMITED_ACTIONS = new Set(['submitContact', 'bookService']);
 
 function getClientId(context: { request: { ip: string; headers: Headers } }): string {
   return context.request.ip || 'unknown';
@@ -33,8 +30,9 @@ function isRateLimited(clientId: string): boolean {
 export const onRequest = defineMiddleware(async (context, next) => {
   const clientId = getClientId(context);
   const pathname = context.url.pathname;
+  const actionName = pathname.replace(/^\/?_?actions\//, '');
 
-  if (RATE_LIMITED_ACTIONS.has(pathname) && context.request.method === 'POST') {
+  if (RATE_LIMITED_ACTIONS.has(actionName) && context.request.method === 'POST') {
     if (isRateLimited(clientId)) {
       return new Response(JSON.stringify({ error: 'Too many requests. Please try again later.' }), {
         status: 429,
