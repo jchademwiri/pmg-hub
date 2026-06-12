@@ -151,11 +151,12 @@ The following table details the implementation status of 45 core features scanne
 
 ---
 
-## 6. Open Questions for Jacob
+## 6. Resolved Business Policies
 
-Before beginning the database schema design and implementation, we need to clarify the following business policies:
-1. **Accounts Receivable ledger behavior:** On invoice issue, should we write an accrual journal entry (Dr Accounts Receivable / Cr Revenue) and clear it on payment, or should we keep invoice issue operational-only (no journals) and post journals *only* when cash is received (Dr Bank / Cr Revenue)? *The latter is simpler for cash-basis accounting.*
-2. **Division Tagging on Journal Entries:** Should every single journal entry line be tagged to a division, or only revenue, expense, and allocation accounts? (For example, should cash in the bank be split by division, or is the bank account global?)
-3. **Chart of Accounts editing:** Can the user add custom accounts to the Chart of Accounts, or should we lock the COA to the standard 20 seeded accounts for simplicity?
-4. **Loan Tracking:** Should the existing loans module create liability journal entries (Dr Bank / Cr Loans Payable) or remains separate?
-5. **Accountant Export format:** What export format does your accountant prefer (e.g. CSV of all journal entry lines, or structured P&L totals)?
+The following business rules have been established by Jacob for the MVP implementation:
+1. **Accounts Receivable ledger behavior:** Keep invoice issue operational-only. Do not write journal entries on invoice issue. Post ledger transactions *only* when payment is recorded (`Dr Bank / Cr Revenue`). This preserves the cash-basis P&L model.
+2. **Division Tagging on Cash Accounts:** Bank and cash accounts are global to PMG. Division tagging applies to revenue, expenses, allocations, drawings/withdrawals, and profit pool lines, but does not split the actual cash/bank accounts by division.
+3. **Chart of Accounts editing:** Restrict the Chart of Accounts to the seeded standard list. No custom accounts can be created by the user for now to prevent accounting errors and keep reporting consistent.
+4. **Loan Tracking:** Keep the loan module entirely separate and operational for now. Do not write journal entries for loans or repayments. Automated accounting integration can be deferred to a later phase.
+5. **Accountant Export format:** Implement a simple CSV export of all transaction/journal lines including date, reference, division, account code, account name, description, debit, credit, VAT, payment method, and created-by details.
+

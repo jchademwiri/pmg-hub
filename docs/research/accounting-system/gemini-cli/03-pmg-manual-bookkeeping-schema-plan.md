@@ -300,9 +300,48 @@ export const journalEntryLinesRelations = relations(journalEntryLines, ({ one })
 
 ---
 
-## 5. Migration & Integrity Plan
+## 5. Posting Rules Reference Card
 
-### 1. Verification of Transaction balance
+For the PMG Manual Bookkeeping MVP, all accounting postings are **cash-basis**. Journal entries are generated ONLY on cash transactions.
+
+### 1. Invoice Creation
+* **Posting:** None. Invoice remains operational-only in the billing module.
+* **AR Subledger:** Unpaid invoices are tracked via client statements and aging reports, but no double-entry ledger entries are created.
+
+### 2. Payment Received against Invoice
+* **Trigger:** An invoice is marked paid or a partial payment is recorded.
+* **Double-entry post:**
+  * **Debit:** `1001 - Business Bank Account` (global cash asset) — amount paid.
+  * **Credit:** `4000 - Service Revenue` (revenue, tagged to invoice's client/division) — amount paid.
+
+### 3. Manual Income Recorded (Without Invoice)
+* **Trigger:** User manually registers non-invoice income.
+* **Double-entry post:**
+  * **Debit:** `1001 - Business Bank Account` or `1002 - Cash on Hand` — amount received.
+  * **Credit:** `4900 - Other Income` or `4000 - Service Revenue` (revenue, tagged to division) — amount received.
+
+### 4. Expense Paid
+* **Trigger:** User records an expense.
+* **Double-entry post:**
+  * **Debit:** `5xxx - [Expense Account]` (e.g., `5100 - Software & Subscriptions`, tagged to division) — amount spent.
+  * **Credit:** `1001 - Business Bank Account` or `1002 - Cash on Hand` — amount spent.
+
+### 5. Owner Withdrawal (Drawings)
+* **Trigger:** Owner draws funds from the business bank account.
+* **Double-entry post:**
+  * **Debit:** `3200 - Owner Drawings` (equity, tagged to PMG global) — amount drawn.
+  * **Credit:** `1001 - Business Bank Account` — amount drawn.
+* **Warning:** Drawings must not be categorized as an expense and do not affect the P&L.
+
+### 6. PMG Internal Share Allocations
+* **Rule:** Internal profit pool allocations (salary, reinvest, reserve, flex) are managerial metrics and should **not** write journal entries or be double-counted as P&L expenses.
+* **Spending Allocations:** If cash is actually spent *out* of an allocation (e.g. paying professional fees or buying software), it should be posted as a standard expense (Dr Expense / Cr Bank) and categorized appropriately in the P&L.
+
+---
+
+## 6. Migration & Integrity Plan
+
+### 1. Verification of Transaction Balance
 Before inserting any journal entry, verify that:
 $$\sum Debits = \sum Credits$$
 Any transaction where $\sum Debits \neq \sum Credits$ must throw an error, aborting the write.
@@ -313,11 +352,13 @@ All postings (creating a payment, recording an expense) must wrap the core write
 await db.transaction(async (tx) => {
   // 1. Write the payment/expense row
   // 2. Write the journal Entry header
-  // 3. Write the journal Entry lines
+  // 3. Write the journal Entry lines (Dr Bank / Cr Revenue)
   // 4. Assert totals balance
 });
 ```
 
-### 3. Migration Risks
-- **Data Backfill:** When deploying the new tables, existing `income` and `expenses` tables will have no matching journal entries. We must write a migration script to backfill journal entries for historically closed periods.
-- **Period Locks:** Ensure backfilling is not blocked by the `isPeriodClosed` engine. Disable period locking temporarily during the backfill script execution.
+### 3. Migration Risks & Backfill
+- **Data Backfill:** Existing historical `income` and `expenses` must be converted to balanced journal entries. We must execute a migration script that queries all historical records and writes matching journal entries.
+- **Period Locks:** Disable the `isPeriodClosed` check temporarily during the execution of the backfill migration script.
+- **Loans module:** The loans module remains purely operational in the MVP. Repayments and draws will not post journal entries to the ledger for now.
+

@@ -42,13 +42,13 @@ The roadmap is divided into 10 development phases to allow a solo developer to i
 - **Acceptance Criteria:** Outstanding AR matches the sum of unpaid invoice totals minus active payment allocations.
 
 ### Phase 4: Chart of Accounts (COA)
-- **Objective:** Create and seed the Chart of Accounts table.
+- **Objective:** Create and seed the Chart of Accounts table (strictly restricted to the seeded standard list for the MVP to reduce errors and keep reporting consistent).
 - **Files to Change:** `packages/db/src/schema/accounting.ts` (new schema), `packages/db/src/queries/accounting.ts` (new queries), seeding script.
 - **Database Changes:** Add `chart_of_accounts` and `bank_accounts` tables.
 - **UI Changes:** Add Account dropdowns to Income and Expense forms.
 - **Server Actions:** Update `createExpense` and `createIncome` to require account assignment.
 - **Validation Rules:** Check that chosen account code exists in COA and matches the category type (e.g. expenses link to `5xxx` codes).
-- **Reports Added:** Chart of Accounts List.
+- **Reports Added:** Chart of Accounts List (read-only list, no UI for custom account creation in MVP).
 - **Testing Checklist:** Run seed command. Select accounts on expense page.
 - **Acceptance Criteria:** Every expense is successfully associated with a COA code.
 
@@ -57,19 +57,19 @@ The roadmap is divided into 10 development phases to allow a solo developer to i
 - **Files to Change:** `packages/db/src/schema/accounting.ts` (`journalEntries`, `journalEntryLines`), `apps/admin/src/app/actions/billing-payments.ts` (insert postings), `apps/admin/src/app/actions/expenses.ts` (insert postings).
 - **Database Changes:** Add `journal_entries` and `journal_entry_lines` tables.
 - **Server Actions:** Implement `postJournalEntry(tx, header, lines)` helper called from inside DB transactions.
-- **Validation Rules:** Assert that total Debits equal total Credits for each post.
-- **Testing Checklist:** Record a payment and check that a balanced journal entry (Dr Bank 1001, Cr Service Revenue 4000) is written.
+- **Validation Rules:** Assert that total Debits equal total Credits for each post. Ensure no journal entries are posted on invoice issue (operational-only AR). `Dr Bank / Cr Revenue` should be posted *only* when payment is actually recorded.
+- **Testing Checklist:** Record a payment and check that a balanced journal entry (Dr Bank 1001, Cr Service Revenue 4000) is written. Confirm invoice creation generates no journal entries.
 - **Acceptance Criteria:** Financial writes fail (rollback) if journal entry lines do not balance.
 
-### Phase 6: General Ledger & Trial Balance
-- **Objective:** Build queries summarizing journals into account activity logs.
-- **Files to Change:** `packages/db/src/queries/accounting.ts`, `apps/admin/src/app/(admin)/finance/ledger/page.tsx`, `apps/admin/src/app/(admin)/finance/accounts/page.tsx`.
+### Phase 6: General Ledger & Trial Balance & Export
+- **Objective:** Build queries summarizing journals into account activity logs, and provide CSV exports for accountants.
+- **Files to Change:** `packages/db/src/queries/accounting.ts`, `apps/admin/src/app/(admin)/finance/ledger/page.tsx`, `apps/admin/src/app/(admin)/finance/accounts/page.tsx`, new export API or Server Action.
 - **Database Changes:** None.
-- **UI Changes:** Add Ledger detail tables and Trial Balance pages.
+- **UI Changes:** Add Ledger detail tables, Trial Balance pages, and a "Download CSV" button.
 - **Query Helpers:** Implement `getGeneralLedger(filters)` and `getTrialBalance()`.
-- **Reports Added:** General Ledger (`/reports/general-ledger`), Trial Balance (`/reports/trial-balance`).
-- **Testing Checklist:** Verify Trial Balance sum totals. Check that debit and credit columns match perfectly.
-- **Acceptance Criteria:** Trial Balance Debits minus Credits equals `0.00`.
+- **Reports Added:** General Ledger (`/reports/general-ledger`), Trial Balance (`/reports/trial-balance`), and CSV transaction export including: date, reference, division, account code, name, description, debit, credit, VAT, payment method, and created-by.
+- **Testing Checklist:** Verify Trial Balance sum totals. Verify CSV export outputs correct columns and transaction rows.
+- **Acceptance Criteria:** Trial Balance Debits minus Credits equals `0.00`. CSV output contains all required fields and matches GL.
 
 ### Phase 7: Profit & Loss Report
 - **Objective:** Construct cash-basis Profit & Loss statement based on journal line items.
@@ -99,13 +99,13 @@ The roadmap is divided into 10 development phases to allow a solo developer to i
 - **Testing Checklist:** Attempt to inject database writes into closed periods using raw actions.
 - **Acceptance Criteria:** All mutations trigger audit log writes; locked periods are completely immutable.
 
-### Phase 10: Future Accounting Reports
-- **Objective:** Support advanced reports (Balance Sheet, Cash Flow, Accounts Payable, supplier registries) for future business expansion.
-- **Files to Change:** Future schema files.
-- **Database Changes:** Add AP tables, VAT logs, credit notes, refunds.
+### Phase 10: Future Accounting & Loan Integration
+- **Objective:** Support advanced reports (Balance Sheet, Cash Flow, Accounts Payable, supplier registries) and automate loan module journal postings.
+- **Files to Change:** Future schema files, loan query helpers.
+- **Database Changes:** Add AP tables, VAT logs, credit notes, refunds, loan liabilities.
 - **Reports Added:** Balance Sheet, Cash Flow Statement, Aged Payables.
 - **Testing Checklist:** Standard tests for future features.
-- **Acceptance Criteria:** Defer implementation to future phase; plan structural hooks now.
+- **Acceptance Criteria:** Defer implementation to future phase; keep loan tracking purely operational in MVP stage.
 
 ---
 
