@@ -293,6 +293,7 @@ Use this revised build order:
 * Audit current invoice, payment, income, expense, and report flows
 * Identify bugs and inconsistencies
 * Confirm what already exists vs documented only
+* update what needs fixing to meet basic bookkeeping needs, such as: we have a ledger already but may not meet the accounting needs, instead of building a new one from scratch, we can adapt the existing ledger to serve as a simple General Ledger and refactor it as needed to better fit accounting principles, without overhauling the whole system
 * Fix obvious calculation and status issues
 
 ## Phase 2: Non-VAT setting and invoice simplification
