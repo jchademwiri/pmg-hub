@@ -8,6 +8,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 import { SnapshotComparisonPanel } from "./snapshot-comparison-panel";
+import { SnapshotDeltaBadge } from "./snapshot-delta-badge";
 import { cn } from "@/lib/utils";
 import {
   ResponsiveContainer,
@@ -31,6 +32,7 @@ import {
   Globe,
   BarChart3,
   ArrowLeftRight,
+  Lock,
 } from "lucide-react";
 
 interface SnapshotsCockpitProps {
@@ -120,6 +122,14 @@ export function SnapshotsCockpit({ snapshots }: SnapshotsCockpitProps) {
   const poolPct = rev > 0 ? Math.max(0, (pool / rev) * 100) : 0;
 
   const isProfitable = pool > 0;
+
+  // Find the previous snapshot for delta calculations
+  const previousSnapshot = !isAllTime && selectedSnapshot
+    ? snapshots.find((s) => s.period < selectedSnapshot.period) ?? null
+    : null;
+  const prevRev = previousSnapshot ? (Number(previousSnapshot.revenue) || 0) : 0;
+  const prevExp = previousSnapshot ? (Number(previousSnapshot.expenses) || 0) : 0;
+  const prevPool = previousSnapshot ? (Number(previousSnapshot.profitPool) || 0) : 0;
 
   // Prepare chronological chart data (oldest to newest)
   const chartData = [...snapshots]
@@ -219,6 +229,7 @@ export function SnapshotsCockpit({ snapshots }: SnapshotsCockpitProps) {
                   <CardHeader className="p-3 flex flex-row items-center justify-between gap-2">
                     <div className="flex flex-col gap-0.5 min-w-0">
                       <span className="text-xs font-semibold truncate text-foreground flex items-center gap-1.5">
+                        <Lock className="size-3 text-muted-foreground shrink-0" />
                         {compareMode && isActive && (
                           <Badge variant="default" className="shrink-0 text-[8px] px-1 py-0 h-4">
                             {compareIndex === 0 ? "A" : "B"}
@@ -273,6 +284,8 @@ export function SnapshotsCockpit({ snapshots }: SnapshotsCockpitProps) {
               textColor: "text-emerald-600 dark:text-emerald-400",
               bgColor: "bg-emerald-50 dark:bg-emerald-950/20",
               icon: TrendingUp,
+              delta: !isAllTime && previousSnapshot ? { current: rev, previous: prevRev } : null,
+              invertDelta: false,
             },
             {
               label: isAllTime ? "Cumulative Expenses" : "Operating Expenses",
@@ -280,6 +293,8 @@ export function SnapshotsCockpit({ snapshots }: SnapshotsCockpitProps) {
               textColor: "text-amber-600 dark:text-amber-400",
               bgColor: "bg-amber-50 dark:bg-amber-950/20",
               icon: TrendingDown,
+              delta: !isAllTime && previousSnapshot ? { current: exp, previous: prevExp } : null,
+              invertDelta: true,
             },
             {
               label: isAllTime ? "Cumulative Net Profit" : isProfitable ? "Profit Pool" : "Net Loss Pool",
@@ -291,6 +306,8 @@ export function SnapshotsCockpit({ snapshots }: SnapshotsCockpitProps) {
                 ? "bg-emerald-50 dark:bg-emerald-950/20"
                 : "bg-red-50 dark:bg-red-950/20",
               icon: isProfitable ? TrendingUp : TrendingDown,
+              delta: !isAllTime && previousSnapshot ? { current: pool, previous: prevPool } : null,
+              invertDelta: false,
             },
           ].map((k) => (
             <Card key={k.label} className={cn("overflow-hidden")}>
@@ -300,6 +317,14 @@ export function SnapshotsCockpit({ snapshots }: SnapshotsCockpitProps) {
                   <span className={cn("text-lg font-bold tabular-nums tracking-tight", k.textColor)}>
                     {k.value}
                   </span>
+                  {!isAllTime && k.delta && previousSnapshot && (
+                    <SnapshotDeltaBadge
+                      current={k.delta.current}
+                      previous={k.delta.previous}
+                      invertDelta={k.invertDelta}
+                      label="vs prev"
+                    />
+                  )}
                 </div>
                 <div className={cn("p-2 rounded-lg shrink-0", k.bgColor)}>
                   <k.icon className={cn("size-4", k.textColor)} />

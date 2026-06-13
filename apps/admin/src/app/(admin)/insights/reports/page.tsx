@@ -5,6 +5,7 @@ import {
   getRevenueByDivisionSeriesForYear,
   getExpensesByCategory,
   getProfitPoolSeriesForYear,
+  getMonthlyFinancialsSeriesForYear,
 } from '@/lib/financial'
 import { MoMComparisonChart } from '@/components/reports/mom-comparison-chart'
 import { RevenueByDivisionChart } from '@/components/reports/revenue-by-division-chart'
@@ -13,6 +14,7 @@ import { ProfitPoolChart } from '@/components/reports/profit-pool-chart'
 import { YearFilter } from '@/components/reports/year-filter'
 import { ExportCsvButton } from '@/components/reports/export-csv-button'
 import { EmptyState } from '@/components/ui/empty-state'
+import { ReportKpiStrip } from '@/components/reports/report-kpi-strip'
 
 export const dynamic = 'force-dynamic'
 export const metadata: Metadata = { title: 'Reports & Insights' }
@@ -34,13 +36,14 @@ export default async function ReportsPage({ searchParams }: ReportsPageProps) {
   const { year: yearParam } = await searchParams
   const year = resolveYear(yearParam)
 
-  const [years, momData, divisionSeries, expensesByCategory, profitPoolSeries] =
+  const [years, momData, divisionSeries, expensesByCategory, profitPoolSeries, monthlyFinancials] =
     await Promise.all([
       getDistinctReportYears().catch((e) => { console.error('getDistinctReportYears failed:', e); return [] as number[] }),
       getMoMChartData().catch((e) => { console.error('getMoMChartData failed:', e); return [] }),
       getRevenueByDivisionSeriesForYear(year).catch((e) => { console.error('getRevenueByDivisionSeriesForYear failed:', e); return { series: [], divisions: [] } }),
       getExpensesByCategory(year).catch((e) => { console.error('getExpensesByCategory failed:', e); return [] }),
       getProfitPoolSeriesForYear(year).catch((e) => { console.error('getProfitPoolSeriesForYear failed:', e); return [] }),
+      getMonthlyFinancialsSeriesForYear(year).catch((e) => { console.error('getMonthlyFinancialsSeriesForYear failed:', e); return [] }),
     ])
 
   const hasData =
@@ -64,6 +67,14 @@ export default async function ReportsPage({ searchParams }: ReportsPageProps) {
 
       {hasData ? (
         <div className="flex flex-col gap-6">
+          <ReportKpiStrip data={{
+            revenue: monthlyFinancials.reduce((s, m) => s + m.revenue, 0),
+            expenses: monthlyFinancials.reduce((s, m) => s + m.expenses, 0),
+            pmgShare: monthlyFinancials.reduce((s, m) => s + m.revenue, 0) * 0.25,
+            profitPool: monthlyFinancials.reduce((s, m) => s + (m.revenue * 0.75 - m.expenses), 0),
+            monthlyRevenue: monthlyFinancials.map((m) => m.revenue),
+            monthlyExpenses: monthlyFinancials.map((m) => m.expenses),
+          }} />
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
             <MoMComparisonChart data={momData} />
             <ProfitPoolChart data={profitPoolSeries} />
