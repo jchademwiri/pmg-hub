@@ -123,6 +123,28 @@ export function SnapshotsCockpit({ snapshots }: SnapshotsCockpitProps) {
 
   const isProfitable = pool > 0;
 
+  // Level 2 allocation values (from snapshot data or computed for all-time)
+  const salary = isAllTime
+    ? snapshots.reduce((s, r) => s + (Number(r.salary) || 0), 0)
+    : selectedSnapshot
+    ? (Number(selectedSnapshot.salary) || 0)
+    : 0;
+  const reinvest = isAllTime
+    ? snapshots.reduce((s, r) => s + (Number(r.reinvest) || 0), 0)
+    : selectedSnapshot
+    ? (Number(selectedSnapshot.reinvest) || 0)
+    : 0;
+  const reserve = isAllTime
+    ? snapshots.reduce((s, r) => s + (Number(r.reserve) || 0), 0)
+    : selectedSnapshot
+    ? (Number(selectedSnapshot.reserve) || 0)
+    : 0;
+  const flex = isAllTime
+    ? snapshots.reduce((s, r) => s + (Number(r.flex) || 0), 0)
+    : selectedSnapshot
+    ? (Number(selectedSnapshot.flex) || 0)
+    : 0;
+
   // Find the previous snapshot for delta calculations
   const previousSnapshot = !isAllTime && selectedSnapshot
     ? snapshots.find((s) => s.period < selectedSnapshot.period) ?? null
@@ -130,6 +152,16 @@ export function SnapshotsCockpit({ snapshots }: SnapshotsCockpitProps) {
   const prevRev = previousSnapshot ? (Number(previousSnapshot.revenue) || 0) : 0;
   const prevExp = previousSnapshot ? (Number(previousSnapshot.expenses) || 0) : 0;
   const prevPool = previousSnapshot ? (Number(previousSnapshot.profitPool) || 0) : 0;
+  const prevSalary = previousSnapshot ? (Number(previousSnapshot.salary) || 0) : 0;
+  const prevReinvest = previousSnapshot ? (Number(previousSnapshot.reinvest) || 0) : 0;
+  const prevReserve = previousSnapshot ? (Number(previousSnapshot.reserve) || 0) : 0;
+  const prevFlex = previousSnapshot ? (Number(previousSnapshot.flex) || 0) : 0;
+
+  // Level 2 allocation percentages (of profit pool)
+  const salaryPct = pool > 0 ? (salary / pool) * 100 : 0;
+  const reinvestPct = pool > 0 ? (reinvest / pool) * 100 : 0;
+  const reservePct = pool > 0 ? (reserve / pool) * 100 : 0;
+  const flexPct = pool > 0 ? (flex / pool) * 100 : 0;
 
   // Prepare chronological chart data (oldest to newest)
   const chartData = [...snapshots]
@@ -393,6 +425,75 @@ export function SnapshotsCockpit({ snapshots }: SnapshotsCockpitProps) {
                 </span>
               </div>
             </div>
+
+            {/* Level 2: Profit Pool Allocation */}
+            {isProfitable && !isAllTime && (
+              <div className="flex flex-col gap-3 pt-2 border-t border-border/50">
+                <span className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+                  Level 2 - Profit Pool Allocation
+                </span>
+                <div className="h-5 w-full rounded-md overflow-hidden flex bg-zinc-100 dark:bg-zinc-800">
+                  <div
+                    className="bg-violet-500 transition-all duration-300 flex items-center justify-center text-[9px] text-white font-bold"
+                    style={{ width: `${salaryPct}%` }}
+                    title={`Salary: ${formatZAR(salary)} (${salaryPct.toFixed(0)}%)`}
+                  >
+                    {salaryPct >= 12 && `Salary (${salaryPct.toFixed(0)}%)`}
+                  </div>
+                  <div
+                    className="bg-cyan-500 transition-all duration-300 flex items-center justify-center text-[9px] text-white font-bold border-l border-white/10"
+                    style={{ width: `${reinvestPct}%` }}
+                    title={`Reinvest: ${formatZAR(reinvest)} (${reinvestPct.toFixed(0)}%)`}
+                  >
+                    {reinvestPct >= 12 && `Reinvest (${reinvestPct.toFixed(0)}%)`}
+                  </div>
+                  <div
+                    className="bg-sky-600 transition-all duration-300 flex items-center justify-center text-[9px] text-white font-bold border-l border-white/10"
+                    style={{ width: `${reservePct}%` }}
+                    title={`Reserve: ${formatZAR(reserve)} (${reservePct.toFixed(0)}%)`}
+                  >
+                    {reservePct >= 12 && `Reserve (${reservePct.toFixed(0)}%)`}
+                  </div>
+                  <div
+                    className="bg-rose-400 transition-all duration-300 flex items-center justify-center text-[9px] text-white font-bold border-l border-white/10"
+                    style={{ width: `${flexPct}%` }}
+                    title={`Flex: ${formatZAR(flex)} (${flexPct.toFixed(0)}%)`}
+                  >
+                    {flexPct >= 12 && `Flex (${flexPct.toFixed(0)}%)`}
+                  </div>
+                </div>
+                <div className="grid grid-cols-4 gap-2 text-xs">
+                  <div className="flex flex-col gap-0.5 border-l-2 border-l-violet-500 pl-2">
+                    <span className="text-muted-foreground font-medium">Salary</span>
+                    <span className="font-semibold text-violet-600 tabular-nums">{formatZAR(salary)}</span>
+                    {!isAllTime && previousSnapshot && (
+                      <SnapshotDeltaBadge current={salary} previous={prevSalary} invertDelta={false} label="vs prev" />
+                    )}
+                  </div>
+                  <div className="flex flex-col gap-0.5 border-l-2 border-l-cyan-500 pl-2">
+                    <span className="text-muted-foreground font-medium">Reinvest</span>
+                    <span className="font-semibold text-cyan-600 tabular-nums">{formatZAR(reinvest)}</span>
+                    {!isAllTime && previousSnapshot && (
+                      <SnapshotDeltaBadge current={reinvest} previous={prevReinvest} invertDelta={false} label="vs prev" />
+                    )}
+                  </div>
+                  <div className="flex flex-col gap-0.5 border-l-2 border-l-sky-600 pl-2">
+                    <span className="text-muted-foreground font-medium">Reserve</span>
+                    <span className="font-semibold text-sky-600 tabular-nums">{formatZAR(reserve)}</span>
+                    {!isAllTime && previousSnapshot && (
+                      <SnapshotDeltaBadge current={reserve} previous={prevReserve} invertDelta={false} label="vs prev" />
+                    )}
+                  </div>
+                  <div className="flex flex-col gap-0.5 border-l-2 border-l-rose-400 pl-2">
+                    <span className="text-muted-foreground font-medium">Flex</span>
+                    <span className="font-semibold text-rose-500 tabular-nums">{formatZAR(flex)}</span>
+                    {!isAllTime && previousSnapshot && (
+                      <SnapshotDeltaBadge current={flex} previous={prevFlex} invertDelta={false} label="vs prev" />
+                    )}
+                  </div>
+                </div>
+              </div>
+            )}
           </CardContent>
         </Card>
         )}

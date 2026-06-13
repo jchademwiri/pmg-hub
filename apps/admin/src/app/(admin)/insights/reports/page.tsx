@@ -7,14 +7,11 @@ import {
   getProfitPoolSeriesForYear,
   getMonthlyFinancialsSeriesForYear,
 } from '@/lib/financial'
-import { MoMComparisonChart } from '@/components/reports/mom-comparison-chart'
-import { RevenueByDivisionChart } from '@/components/reports/revenue-by-division-chart'
-import { ExpenseByCategoryChart } from '@/components/reports/expense-by-category-chart'
-import { ProfitPoolChart } from '@/components/reports/profit-pool-chart'
 import { YearFilter } from '@/components/reports/year-filter'
 import { ExportCsvButton } from '@/components/reports/export-csv-button'
 import { EmptyState } from '@/components/ui/empty-state'
 import { ReportKpiStrip } from '@/components/reports/report-kpi-strip'
+import { ReportsTabs } from '@/components/reports/reports-tabs'
 
 export const dynamic = 'force-dynamic'
 export const metadata: Metadata = { title: 'Reports & Insights' }
@@ -54,14 +51,17 @@ export default async function ReportsPage({ searchParams }: ReportsPageProps) {
 
   return (
     <div className="flex flex-col gap-6">
-      <div className="flex items-center justify-between gap-3">
-        <div>
-          <h2 className="text-lg font-semibold">Reports & Insights</h2>
-          <p className="text-sm text-muted-foreground">Analyze revenue streams, expense distributions, and monthly profit splits</p>
-        </div>
-        <div className="flex items-center gap-2 shrink-0">
-          <YearFilter years={years} currentYear={year} />
-          <ExportCsvButton year={year} />
+      {/* Sticky header */}
+      <div className="sticky top-0 z-20 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 border-b border-border/40 -mx-6 px-6 py-4 -mt-6">
+        <div className="flex items-center justify-between gap-3">
+          <div>
+            <h2 className="text-lg font-semibold">Reports & Insights</h2>
+            <p className="text-sm text-muted-foreground">Analyze revenue streams, expense distributions, and monthly profit splits</p>
+          </div>
+          <div className="flex items-center gap-2 shrink-0">
+            <YearFilter years={years} currentYear={year} />
+            <ExportCsvButton year={year} />
+          </div>
         </div>
       </div>
 
@@ -75,18 +75,12 @@ export default async function ReportsPage({ searchParams }: ReportsPageProps) {
             monthlyRevenue: monthlyFinancials.map((m) => m.revenue),
             monthlyExpenses: monthlyFinancials.map((m) => m.expenses),
           }} />
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            <MoMComparisonChart data={momData} />
-            <ProfitPoolChart data={profitPoolSeries} />
-          </div>
-
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            <RevenueByDivisionChart
-              series={divisionSeries.series}
-              divisions={divisionSeries.divisions}
-            />
-            <ExpenseByCategoryChart data={expensesByCategory} />
-          </div>
+          <ReportsTabs
+            momData={momData}
+            divisionSeries={divisionSeries}
+            expensesByCategory={expensesByCategory}
+            profitPoolSeries={profitPoolSeries}
+          />
         </div>
       ) : (
         <EmptyState message="No snapshot data available yet. Add income and expenses to generate reports." />
