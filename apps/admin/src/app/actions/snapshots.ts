@@ -2,12 +2,56 @@
 
 import { z } from 'zod';
 import { revalidatePath } from 'next/cache';
-import { getSnapshotByPeriod, getFinancialSummaryForPeriod, insertSnapshot } from '@pmg/db';
+import {
+  getSnapshotByPeriod,
+  getFinancialSummaryForPeriod,
+  insertSnapshot,
+  getUncategorizedExpensesCount,
+  getDraftInvoicesCount,
+  getPeriodTotals,
+} from '@pmg/db';
 import { getSASTParts } from '@/lib/format';
 
 const periodSchema = z.string().regex(/^\d{4}-\d{2}$/);
 
-export async function closeMonth(period: string): Promise<{} | { error: string }> {
+export async function getPeriodSummary(period: string): Promise<{
+  revenue: number; expenses: number; pmgShare: number; profitPool: number;
+  salary: number; reinvest: number; reserve: number; flex: number;
+} | { error: string }> {
+  const parsed = periodSchema.safeParse(period);
+  if (!parsed.success) return { error: 'Period must be YYYY-MM' };
+  try {
+    const startExpr = "DATE_TRUNC('month', TIMESTAMP '" + period + "-01')";
+    const endExpr = "DATE_TRUNC('month', TIMESTAMP '" + period + "-01') + INTERVAL '1 month'";
+    return await getFinancialSummaryForPeriod(startExpr, endExpr);
+  } catch (err) {
+    return { error: (err as Error).message };
+  }
+}
+
+export async function runPreCloseChecks(period: string): Promise<{
+  uncategorizedExpenses: number;
+  draftInvoices: number;
+  incomeTotal: number;
+  expenseTotal: number;
+}> {
+  const [uncategorizedExpenses, draftInvoices, totals] = await Promise.all([
+    getUncategorizedExpensesCount(period),
+    getDraftInvoicesCount(parseInt(period.split('-')[0], 10)),
+    getPeriodTotals(period),
+  ]);
+  return {
+    uncategorizedExpenses,
+    draftInvoices,
+    incomeTotal: totals.income,
+    expenseTotal: totals.expenses,
+  };
+}
+
+export async function closeMonth(
+  period: string,
+  opts?: { notes?: string },
+): Promise<{} | { error: string }> {
   const parsed = periodSchema.safeParse(period);
   if (!parsed.success) {
     return { error: 'Period must be YYYY-MM' };
@@ -22,7 +66,7 @@ export async function closeMonth(period: string): Promise<{} | { error: string }
     const startExpr = "DATE_TRUNC('month', TIMESTAMP '" + period + "-01')";
     const endExpr = "DATE_TRUNC('month', TIMESTAMP '" + period + "-01') + INTERVAL '1 month'";
     const summary = await getFinancialSummaryForPeriod(startExpr, endExpr);
-    await insertSnapshot(period, summary);
+    await insertSnapshot(period, summary, { notes: opts?.notes });
     revalidatePath('/dashboard');
     revalidatePath('/insights/snapshots');
     return {};

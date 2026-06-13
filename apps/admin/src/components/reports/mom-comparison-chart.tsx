@@ -6,16 +6,16 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { formatZAR } from '@/lib/format'
 import type { MoMSnapshot } from '@/lib/financial'
 
-const config: ChartConfig = {
-  current:  { label: 'Current Month',  color: 'var(--chart-1)' },
-  previous: { label: 'Previous Month', color: 'var(--chart-4)' },
-}
-
 const NEG_COLOR = 'var(--color-destructive, #ef4444)'
 
-type Props = { data: MoMSnapshot[] }
+type Props = { data: MoMSnapshot[]; currentMonthLabel?: string; previousMonthLabel?: string; onBarClick?: (metric: string) => void }
 
-export function MoMComparisonChart({ data }: Props) {
+export function MoMComparisonChart({ data, currentMonthLabel, previousMonthLabel, onBarClick }: Props) {
+  const config: ChartConfig = {
+    current:  { label: currentMonthLabel ?? 'Current Month',  color: 'var(--chart-1)' },
+    previous: { label: previousMonthLabel ?? 'Previous Month', color: 'var(--chart-4)' },
+  }
+
   return (
     <Card className="rounded-xl border border-border bg-card shadow-none">
       <CardHeader><CardTitle>Month-over-Month Comparison</CardTitle></CardHeader>
@@ -28,16 +28,16 @@ export function MoMComparisonChart({ data }: Props) {
               <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" />
               <XAxis dataKey="metric" tick={{ fill: 'var(--muted-foreground)' }} />
               <YAxis tickFormatter={formatZAR} tick={{ fill: 'var(--muted-foreground)' }} />
-              <ChartTooltip content={<ChartTooltipContent formatter={(v) => formatZAR(Number(v))} />} />
+              <ChartTooltip content={<ChartTooltipContent indicator="dot" formatter={(v) => formatZAR(Number(v))} />} />
               <ChartLegend content={<ChartLegendContent />} />
-              <Bar dataKey="current">
+              <Bar dataKey="current" fill="var(--color-current)" onClick={onBarClick ? (_data, index) => onBarClick(data[index]?.metric ?? '') : undefined} className={onBarClick ? 'cursor-pointer' : undefined}>
                 {data.map((entry, i) => (
-                  <Cell key={i} fill={entry.current < 0 ? NEG_COLOR : 'var(--chart-1)'} />
+                  <Cell key={i} fill={entry.current < 0 ? NEG_COLOR : 'var(--color-current)'} />
                 ))}
               </Bar>
-              <Bar dataKey="previous">
+              <Bar dataKey="previous" fill="var(--color-previous)" onClick={onBarClick ? (_data, index) => onBarClick(data[index]?.metric ?? '') : undefined} className={onBarClick ? 'cursor-pointer' : undefined}>
                 {data.map((entry, i) => (
-                  <Cell key={i} fill={entry.previous < 0 ? NEG_COLOR : 'var(--chart-4)'} />
+                  <Cell key={i} fill={entry.previous < 0 ? NEG_COLOR : 'var(--color-previous)'} />
                 ))}
               </Bar>
             </BarChart>

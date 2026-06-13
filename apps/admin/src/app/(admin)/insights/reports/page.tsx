@@ -12,6 +12,7 @@ import { ExportCsvButton } from '@/components/reports/export-csv-button'
 import { EmptyState } from '@/components/ui/empty-state'
 import { ReportKpiStrip } from '@/components/reports/report-kpi-strip'
 import { ReportsTabs } from '@/components/reports/reports-tabs'
+import { fmtMonthYear, getSASTParts } from '@/lib/format'
 
 export const dynamic = 'force-dynamic'
 export const metadata: Metadata = { title: 'Reports & Insights' }
@@ -32,6 +33,14 @@ export function resolveYear(param: string | undefined): number {
 export default async function ReportsPage({ searchParams }: ReportsPageProps) {
   const { year: yearParam } = await searchParams
   const year = resolveYear(yearParam)
+
+  // Current period for drill-down (YYYY-MM) in SAST
+  const { year: sastYear, month: sastMonth } = getSASTParts()
+  const currentPeriod = `${sastYear}-${String(sastMonth + 1).padStart(2, '0')}`
+
+  // Human-readable month labels for MoM chart legend
+  const currentMonthLabel = fmtMonthYear(new Date(sastYear, sastMonth, 1))
+  const previousMonthLabel = fmtMonthYear(new Date(sastYear, sastMonth - 1, 1))
 
   const [years, momData, divisionSeries, expensesByCategory, profitPoolSeries, monthlyFinancials] =
     await Promise.all([
@@ -80,6 +89,9 @@ export default async function ReportsPage({ searchParams }: ReportsPageProps) {
             divisionSeries={divisionSeries}
             expensesByCategory={expensesByCategory}
             profitPoolSeries={profitPoolSeries}
+            currentPeriod={currentPeriod}
+            currentMonthLabel={currentMonthLabel}
+            previousMonthLabel={previousMonthLabel}
           />
         </div>
       ) : (

@@ -7,7 +7,7 @@ import {
 } from 'recharts'
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card'
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs'
-import { formatZAR } from '@/lib/format'
+import { formatZAR, fmtMonthYear } from '@/lib/format'
 import type { DivisionSeriesChart } from '@/lib/financial'
 
 type RangeKey = 'current' | 'prev' | 'last3' | 'last6' | 'ytd'
@@ -44,7 +44,7 @@ function CustomTooltip({ active, payload, label }: any) {
   const total = payload.reduce((sum: number, p: any) => sum + (Number(p.value) || 0), 0)
   return (
     <div className="rounded-lg border border-border bg-card px-3 py-2.5 shadow-xl text-xs flex flex-col gap-1.5 min-w-44">
-      <p className="text-muted-foreground font-medium border-b border-border pb-1.5">{label}</p>
+      <p className="text-muted-foreground font-medium border-b border-border pb-1.5">{fmtMonthYear(label)}</p>
       {[...payload].reverse().map((p: any) => (
         <div key={p.dataKey} className="flex items-center justify-between gap-4">
           <span className="flex items-center gap-1.5">
@@ -152,6 +152,7 @@ export function DivisionAreaChart({ seriesData }: Props) {
                 <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border) / 0.4)" vertical={false} />
                 <XAxis
                   dataKey="month"
+                  tickFormatter={(v) => fmtMonthYear(v, { short: true })}
                   tick={{ fill: 'var(--muted-foreground)', fontSize: 11 }}
                   axisLine={false}
                   tickLine={false}

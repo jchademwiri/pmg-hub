@@ -10,7 +10,7 @@ import {
   type ChartConfig,
 } from '@/components/ui/chart'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
-import { formatZAR } from '@/lib/format'
+import { formatZAR, fmtMonthYear } from '@/lib/format'
 import type { ProfitPoolRow } from '@/lib/financial'
 
 const config: ChartConfig = {
@@ -25,9 +25,12 @@ const NEG_COLOR = 'var(--color-destructive, #ef4444)'
 const KEYS = ['salary', 'reinvest', 'reserve', 'flex'] as const
 const COLORS = ['var(--chart-1)', 'var(--chart-2)', 'var(--chart-3)', 'var(--chart-4)']
 
-type Props = { data: ProfitPoolRow[] }
+type Props = {
+  data: ProfitPoolRow[]
+  onBarClick?: (type: 'salary' | 'reinvest' | 'reserve' | 'flex', period: string) => void
+}
 
-export function ProfitPoolChart({ data }: Props) {
+export function ProfitPoolChart({ data, onBarClick }: Props) {
   return (
     <Card className="rounded-xl border border-border bg-card shadow-none">
       <CardHeader>
@@ -43,6 +46,7 @@ export function ProfitPoolChart({ data }: Props) {
               <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" vertical={false} />
               <XAxis
                 dataKey="period"
+                tickFormatter={(v) => fmtMonthYear(v, { short: true })}
                 tick={{ fill: 'var(--muted-foreground)' }}
                 tickLine={false}
                 axisLine={false}
@@ -55,7 +59,12 @@ export function ProfitPoolChart({ data }: Props) {
                 width={52}
               />
               <ChartTooltip
-                content={<ChartTooltipContent formatter={(v) => formatZAR(Number(v))} />}
+                content={
+                  <ChartTooltipContent
+                    labelFormatter={(v) => fmtMonthYear(v)}
+                    formatter={(v) => formatZAR(Number(v))}
+                  />
+                }
               />
               <ChartLegend content={<ChartLegendContent />} />
               {KEYS.map((key, ki) => (
@@ -65,6 +74,8 @@ export function ProfitPoolChart({ data }: Props) {
                   stackId="a"
                   fill={COLORS[ki]}
                   radius={ki === KEYS.length - 1 ? [4, 4, 0, 0] : [0, 0, 0, 0]}
+                  onClick={onBarClick ? (_data, index) => onBarClick(key, data[index]?.period ?? '') : undefined}
+                  className={onBarClick ? 'cursor-pointer' : undefined}
                 >
                   {data.map((entry, i) => (
                     <Cell key={i} fill={(entry[key] as number) < 0 ? NEG_COLOR : COLORS[ki]} />

@@ -14,9 +14,9 @@ const config: ChartConfig = {
   total: { label: 'Total', color: 'var(--chart-3)' },
 }
 
-type Props = { data: { category: string; total: number }[] }
+type Props = { data: { category: string; total: number }[]; onBarClick?: (category: string) => void }
 
-export function ExpenseByCategoryChart({ data }: Props) {
+export function ExpenseByCategoryChart({ data, onBarClick }: Props) {
   return (
     <Card className="rounded-xl border border-border bg-card shadow-none">
       <CardHeader>
@@ -43,7 +43,7 @@ export function ExpenseByCategoryChart({ data }: Props) {
               <ChartTooltip
                 content={<ChartTooltipContent formatter={(v) => formatZAR(Number(v))} />}
               />
-              <Bar dataKey="total" fill="var(--chart-3)" />
+              <Bar dataKey="total" fill="var(--chart-3)" onClick={onBarClick ? (_data, index) => onBarClick(data[index]?.category ?? '') : undefined} className={onBarClick ? 'cursor-pointer' : undefined} />
             </BarChart>
           </ChartContainer>
         )}

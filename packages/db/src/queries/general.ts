@@ -288,6 +288,48 @@ export async function getMonthlyFinancialsForYear(
 }
 
 /**
+ * Pre-close integrity check: count expenses with no category for a given period.
+ */
+export async function getUncategorizedExpensesCount(period: string): Promise<number> {
+  const result = await db
+    .select({ count: sql<number>`COUNT(*)::int` })
+    .from(expenses)
+    .where(sql`TO_CHAR(${expenses.date}, 'YYYY-MM') = ${period} AND (${expenses.category} IS NULL OR ${expenses.category} = '')`);
+  return result[0]?.count ?? 0;
+}
+
+/**
+ * Pre-close integrity check: count draft invoices for a given fiscal year.
+ */
+export async function getDraftInvoicesCount(year: number): Promise<number> {
+  const result = await db.execute(sql`
+    SELECT COUNT(*)::int AS count FROM invoices
+    WHERE status = 'draft'
+    AND EXTRACT(YEAR FROM (invoice_date - INTERVAL '2 months')) = ${year}
+  `);
+  return (result.rows[0] as { count: number })?.count ?? 0;
+}
+
+/**
+ * Pre-close integrity check: return total income and total expenses for a period.
+ * Used for variance check between revenue and expense entries.
+ */
+export async function getPeriodTotals(period: string): Promise<{ income: number; expenses: number }> {
+  const incResult = await db
+    .select({ total: sql<string>`COALESCE(SUM(${income.amount}), '0')` })
+    .from(income)
+    .where(sql`TO_CHAR(${income.date}, 'YYYY-MM') = ${period}`);
+  const expResult = await db
+    .select({ total: sql<string>`COALESCE(SUM(${expenses.amount}), '0')` })
+    .from(expenses)
+    .where(sql`TO_CHAR(${expenses.date}, 'YYYY-MM') = ${period}`);
+  return {
+    income: Number(incResult[0]?.total ?? 0),
+    expenses: Number(expResult[0]?.total ?? 0),
+  };
+}
+
+/**
  * Returns individual income rows for a specific YYYY-MM period,
  * joined with division and client names.
  */

@@ -13,6 +13,10 @@ export const snapshots = pgTable(
     reinvest:   numeric("reinvest",    { precision: 12, scale: 2 }).notNull(),
     reserve:    numeric("reserve",     { precision: 12, scale: 2 }).notNull(),
     flex:       numeric("flex",        { precision: 12, scale: 2 }).notNull(),
+    createdBy:  uuid("created_by"),
+    status:     text("status").notNull().default("locked"),
+    notes:      text("notes"),
+    closedAt:   timestamp("closed_at", { withTimezone: true }).defaultNow().notNull(),
     createdAt:  timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
   },
   (t) => [

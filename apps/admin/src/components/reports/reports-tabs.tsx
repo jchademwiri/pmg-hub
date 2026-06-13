@@ -1,10 +1,13 @@
 'use client'
 
+import { useState } from 'react'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { MoMComparisonChart } from './mom-comparison-chart'
 import { RevenueByDivisionChart } from './revenue-by-division-chart'
 import { ExpenseByCategoryChart } from './expense-by-category-chart'
 import { ProfitPoolChart } from './profit-pool-chart'
+import { FinancialDrilldownSheet } from '@/components/insights/financial-drilldown-sheet'
+import type { DrilldownType } from '@/app/actions/drilldown'
 import { TrendingUp, DollarSign, Receipt, PiggyBank } from 'lucide-react'
 import type { MoMSnapshot, DivisionSeriesChart, ProfitPoolRow } from '@/lib/financial'
 
@@ -13,6 +16,9 @@ interface ReportsTabsProps {
   divisionSeries: DivisionSeriesChart
   expensesByCategory: { category: string; total: number }[]
   profitPoolSeries: ProfitPoolRow[]
+  currentPeriod: string
+  currentMonthLabel: string
+  previousMonthLabel: string
 }
 
 export function ReportsTabs({
@@ -20,8 +26,34 @@ export function ReportsTabs({
   divisionSeries,
   expensesByCategory,
   profitPoolSeries,
+  currentPeriod,
+  currentMonthLabel,
+  previousMonthLabel,
 }: ReportsTabsProps) {
+  const [drillOpen, setDrillOpen] = useState(false)
+  const [drillPeriod, setDrillPeriod] = useState<string | null>(null)
+  const [drillType, setDrillType] = useState<DrilldownType | null>(null)
+
+  const openDrill = (type: DrilldownType, period: string) => {
+    setDrillType(type)
+    setDrillPeriod(period)
+    setDrillOpen(true)
+  }
+
+  // Map MoM metric names to drill-down types
+  const metricToDrillType: Record<string, DrilldownType> = {
+    'Revenue': 'revenue',
+    'Expenses': 'expenses',
+  }
+
   return (
+    <>
+    <FinancialDrilldownSheet
+      open={drillOpen}
+      onOpenChange={setDrillOpen}
+      period={drillPeriod}
+      drillType={drillType}
+    />
     <Tabs defaultValue="overview" className="w-full">
       <TabsList className="mb-4">
         <TabsTrigger value="overview" className="gap-1.5">
@@ -45,7 +77,10 @@ export function ReportsTabs({
       {/* ── Overview Tab ───────────────────────────────────────────────── */}
       <TabsContent value="overview">
         <div className="grid grid-cols-1 gap-6">
-          <MoMComparisonChart data={momData} />
+          <MoMComparisonChart data={momData} currentMonthLabel={currentMonthLabel} previousMonthLabel={previousMonthLabel} onBarClick={(metric) => {
+            const type = metricToDrillType[metric]
+            if (type) openDrill(type, currentPeriod)
+          }} />
         </div>
       </TabsContent>
 
@@ -62,16 +97,20 @@ export function ReportsTabs({
       {/* ── Expenses Tab ───────────────────────────────────────────────── */}
       <TabsContent value="expenses">
         <div className="grid grid-cols-1 gap-6">
-          <ExpenseByCategoryChart data={expensesByCategory} />
+          <ExpenseByCategoryChart data={expensesByCategory} onBarClick={() => openDrill('expenses', currentPeriod)} />
         </div>
       </TabsContent>
 
       {/* ── Profit Pool Tab ────────────────────────────────────────────── */}
       <TabsContent value="profit">
         <div className="grid grid-cols-1 gap-6">
-          <ProfitPoolChart data={profitPoolSeries} />
+          <ProfitPoolChart
+            data={profitPoolSeries}
+            onBarClick={(type, period) => openDrill(type, period)}
+          />
         </div>
       </TabsContent>
     </Tabs>
+    </>
   )
 }

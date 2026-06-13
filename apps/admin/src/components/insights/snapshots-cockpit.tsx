@@ -254,9 +254,16 @@ export function SnapshotsCockpit({ snapshots }: SnapshotsCockpitProps) {
                         )}
                         {fmtMonthYear(s.period)}
                       </span>
-                      <span className="text-[10px] text-muted-foreground tabular-nums">
-                        Rev: {formatZAR(sRev)}
-                      </span>
+                      <div className="flex items-center gap-1.5">
+                        <span className="text-[10px] text-muted-foreground tabular-nums">
+                          Rev: {formatZAR(sRev)}
+                        </span>
+                        {s.status && s.status !== "locked" && (
+                          <Badge variant="outline" className="text-[8px] px-1 py-0 h-3.5 border-amber-300 text-amber-600">
+                            {s.status}
+                          </Badge>
+                        )}
+                      </div>
                     </div>
                     <Badge
                       variant={sIsProfitable ? "success" : "destructive"}
