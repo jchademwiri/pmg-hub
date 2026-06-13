@@ -9,6 +9,8 @@ import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 import { SnapshotComparisonPanel } from "./snapshot-comparison-panel";
 import { SnapshotDeltaBadge } from "./snapshot-delta-badge";
+import { FinancialDrilldownSheet } from "./financial-drilldown-sheet";
+import type { DrilldownType } from "@/app/actions/drilldown";
 import { cn } from "@/lib/utils";
 import {
   ResponsiveContainer,
@@ -50,6 +52,15 @@ export function SnapshotsCockpit({ snapshots }: SnapshotsCockpitProps) {
   const [selectedId, setSelectedId] = useState<string>("all-time");
   const [compareMode, setCompareMode] = useState(false);
   const [compareIds, setCompareIds] = useState<string[]>([]);
+  const [drillOpen, setDrillOpen] = useState(false);
+  const [drillPeriod, setDrillPeriod] = useState<string | null>(null);
+  const [drillType, setDrillType] = useState<DrilldownType | null>(null);
+
+  const openDrill = (period: string, type: DrilldownType) => {
+    setDrillPeriod(period);
+    setDrillType(type);
+    setDrillOpen(true);
+  };
 
   const toggleCompareMode = useCallback(() => {
     setCompareMode((prev) => !prev);
@@ -73,48 +84,32 @@ export function SnapshotsCockpit({ snapshots }: SnapshotsCockpitProps) {
     );
   }
 
-  // Calculate cumulative all-time stats
-  const totalAllTimeRevenue = snapshots.reduce((s, r) => s + (Number(r.revenue) || 0), 0);
-  const totalAllTimeExpenses = snapshots.reduce((s, r) => s + (Number(r.expenses) || 0), 0);
-  const totalAllTimePmgShare = snapshots.reduce((s, r) => s + (Number(r.pmgShare) || 0), 0);
-  const totalAllTimeProfit = snapshots.reduce((s, r) => s + (Number(r.profitPool) || 0), 0);
-
-  const selectedSnapshot = selectedId === "all-time" 
-    ? null 
+  const selectedSnapshot = selectedId === "all-time"
+    ? null
     : snapshots.find((s) => s.id === selectedId);
 
-  // Set visual variables based on selected state (all-time vs specific month)
   const isAllTime = selectedId === "all-time";
-  
-  const periodLabel = isAllTime 
-    ? "All-Time Performance" 
-    : selectedSnapshot 
-    ? fmtMonthYear(selectedSnapshot.period) 
+
+  // Helper: get a numeric value from the current selection (all-time sum or single snapshot)
+  const val = (key: keyof SnapshotRow): number => {
+    if (isAllTime) return snapshots.reduce((s, r) => s + (Number(r[key]) || 0), 0);
+    return selectedSnapshot ? (Number(selectedSnapshot[key]) || 0) : 0;
+  };
+
+  const periodLabel = isAllTime
+    ? "All-Time Performance"
+    : selectedSnapshot
+    ? fmtMonthYear(selectedSnapshot.period)
     : "";
 
-  const rev = isAllTime 
-    ? totalAllTimeRevenue 
-    : selectedSnapshot 
-    ? (Number(selectedSnapshot.revenue) || 0) 
-    : 0;
-
-  const exp = isAllTime 
-    ? totalAllTimeExpenses 
-    : selectedSnapshot 
-    ? (Number(selectedSnapshot.expenses) || 0) 
-    : 0;
-
-  const pmg = isAllTime 
-    ? totalAllTimePmgShare 
-    : selectedSnapshot 
-    ? (Number(selectedSnapshot.pmgShare) || 0) 
-    : 0;
-
-  const pool = isAllTime 
-    ? totalAllTimeProfit 
-    : selectedSnapshot 
-    ? (Number(selectedSnapshot.profitPool) || 0) 
-    : 0;
+  const rev = val("revenue");
+  const exp = val("expenses");
+  const pmg = val("pmgShare");
+  const pool = val("profitPool");
+  const salary = val("salary");
+  const reinvest = val("reinvest");
+  const reserve = val("reserve");
+  const flex = val("flex");
 
   // Level 1 percentage splits of revenue
   const pmgPct = rev > 0 ? (pmg / rev) * 100 : 20;
@@ -123,39 +118,22 @@ export function SnapshotsCockpit({ snapshots }: SnapshotsCockpitProps) {
 
   const isProfitable = pool > 0;
 
-  // Level 2 allocation values (from snapshot data or computed for all-time)
-  const salary = isAllTime
-    ? snapshots.reduce((s, r) => s + (Number(r.salary) || 0), 0)
-    : selectedSnapshot
-    ? (Number(selectedSnapshot.salary) || 0)
-    : 0;
-  const reinvest = isAllTime
-    ? snapshots.reduce((s, r) => s + (Number(r.reinvest) || 0), 0)
-    : selectedSnapshot
-    ? (Number(selectedSnapshot.reinvest) || 0)
-    : 0;
-  const reserve = isAllTime
-    ? snapshots.reduce((s, r) => s + (Number(r.reserve) || 0), 0)
-    : selectedSnapshot
-    ? (Number(selectedSnapshot.reserve) || 0)
-    : 0;
-  const flex = isAllTime
-    ? snapshots.reduce((s, r) => s + (Number(r.flex) || 0), 0)
-    : selectedSnapshot
-    ? (Number(selectedSnapshot.flex) || 0)
-    : 0;
-
   // Find the previous snapshot for delta calculations
   const previousSnapshot = !isAllTime && selectedSnapshot
     ? snapshots.find((s) => s.period < selectedSnapshot.period) ?? null
     : null;
-  const prevRev = previousSnapshot ? (Number(previousSnapshot.revenue) || 0) : 0;
-  const prevExp = previousSnapshot ? (Number(previousSnapshot.expenses) || 0) : 0;
-  const prevPool = previousSnapshot ? (Number(previousSnapshot.profitPool) || 0) : 0;
-  const prevSalary = previousSnapshot ? (Number(previousSnapshot.salary) || 0) : 0;
-  const prevReinvest = previousSnapshot ? (Number(previousSnapshot.reinvest) || 0) : 0;
-  const prevReserve = previousSnapshot ? (Number(previousSnapshot.reserve) || 0) : 0;
-  const prevFlex = previousSnapshot ? (Number(previousSnapshot.flex) || 0) : 0;
+
+  // Helper: get a numeric value from the previous snapshot (or 0)
+  const prevVal = (key: keyof SnapshotRow): number =>
+    previousSnapshot ? (Number(previousSnapshot[key]) || 0) : 0;
+
+  const prevRev = prevVal("revenue");
+  const prevExp = prevVal("expenses");
+  const prevPool = prevVal("profitPool");
+  const prevSalary = prevVal("salary");
+  const prevReinvest = prevVal("reinvest");
+  const prevReserve = prevVal("reserve");
+  const prevFlex = prevVal("flex");
 
   // Level 2 allocation percentages (of profit pool)
   const salaryPct = pool > 0 ? (salary / pool) * 100 : 0;
@@ -175,6 +153,13 @@ export function SnapshotsCockpit({ snapshots }: SnapshotsCockpitProps) {
 
   return (
     <div className="grid grid-cols-1 gap-6 lg:grid-cols-4 lg:items-start">
+      {/* Drill-down side sheet */}
+      <FinancialDrilldownSheet
+        open={drillOpen}
+        onOpenChange={setDrillOpen}
+        period={drillPeriod}
+        drillType={drillType}
+      />
       {/* ── Left Sidebar (List of Months & All-Time Card) ────────────────── */}
       <div className="flex flex-col gap-4 lg:col-span-1">
         <div className="flex flex-col gap-2">
@@ -309,7 +294,7 @@ export function SnapshotsCockpit({ snapshots }: SnapshotsCockpitProps) {
         {/* Level 1 KPI Strip (hidden in compare mode) */}
         {!compareMode && (
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
-          {[
+          {([
             {
               label: isAllTime ? "Cumulative Revenue" : "Gross Revenue",
               value: formatZAR(rev),
@@ -318,6 +303,7 @@ export function SnapshotsCockpit({ snapshots }: SnapshotsCockpitProps) {
               icon: TrendingUp,
               delta: !isAllTime && previousSnapshot ? { current: rev, previous: prevRev } : null,
               invertDelta: false,
+              drillType: "revenue" as const,
             },
             {
               label: isAllTime ? "Cumulative Expenses" : "Operating Expenses",
@@ -327,6 +313,7 @@ export function SnapshotsCockpit({ snapshots }: SnapshotsCockpitProps) {
               icon: TrendingDown,
               delta: !isAllTime && previousSnapshot ? { current: exp, previous: prevExp } : null,
               invertDelta: true,
+              drillType: "expenses" as const,
             },
             {
               label: isAllTime ? "Cumulative Net Profit" : isProfitable ? "Profit Pool" : "Net Loss Pool",
@@ -340,9 +327,10 @@ export function SnapshotsCockpit({ snapshots }: SnapshotsCockpitProps) {
               icon: isProfitable ? TrendingUp : TrendingDown,
               delta: !isAllTime && previousSnapshot ? { current: pool, previous: prevPool } : null,
               invertDelta: false,
+              drillType: null,
             },
-          ].map((k) => (
-            <Card key={k.label} className={cn("overflow-hidden")}>
+          ]).map((k) => (
+            <Card key={k.label} className={cn("overflow-hidden", !isAllTime && k.drillType && "cursor-pointer hover:bg-muted/50 transition-colors")} onClick={!isAllTime && k.drillType && selectedSnapshot ? () => openDrill(selectedSnapshot.period, k.drillType!) : undefined}>
               <CardHeader className="p-4 flex flex-row items-start justify-between gap-2">
                 <div className="flex flex-col gap-1 min-w-0">
                   <span className="text-xs text-muted-foreground font-medium">{k.label}</span>
@@ -389,9 +377,10 @@ export function SnapshotsCockpit({ snapshots }: SnapshotsCockpitProps) {
 
               {/* Expenses */}
               <div
-                className="bg-amber-500 transition-all duration-300 flex items-center justify-center text-[10px] text-white font-bold px-1 border-l border-white/10"
+                className={cn("bg-amber-500 transition-all duration-300 flex items-center justify-center text-[10px] text-white font-bold px-1 border-l border-white/10", !isAllTime && selectedSnapshot && "cursor-pointer hover:brightness-110")}
                 style={{ width: `${Math.min(100 - pmgPct, expPct)}%` }}
                 title={`Expenses: ${expPct.toFixed(0)}%`}
+                onClick={!isAllTime && selectedSnapshot ? () => openDrill(selectedSnapshot.period, "expenses") : undefined}
               >
                 {expPct >= 15 ? `Expenses (${expPct.toFixed(0)}%)` : "Exp"}
               </div>
@@ -434,30 +423,34 @@ export function SnapshotsCockpit({ snapshots }: SnapshotsCockpitProps) {
                 </span>
                 <div className="h-5 w-full rounded-md overflow-hidden flex bg-zinc-100 dark:bg-zinc-800">
                   <div
-                    className="bg-violet-500 transition-all duration-300 flex items-center justify-center text-[9px] text-white font-bold"
+                    className={cn("bg-violet-500 transition-all duration-300 flex items-center justify-center text-[9px] text-white font-bold", selectedSnapshot && "cursor-pointer hover:brightness-110")}
                     style={{ width: `${salaryPct}%` }}
-                    title={`Salary: ${formatZAR(salary)} (${salaryPct.toFixed(0)}%)`}
+                    title={`Salary: ${formatZAR(salary)} (${salaryPct.toFixed(0)}%) — click to drill down`}
+                    onClick={selectedSnapshot ? () => openDrill(selectedSnapshot.period, "salary") : undefined}
                   >
                     {salaryPct >= 12 && `Salary (${salaryPct.toFixed(0)}%)`}
                   </div>
                   <div
-                    className="bg-cyan-500 transition-all duration-300 flex items-center justify-center text-[9px] text-white font-bold border-l border-white/10"
+                    className={cn("bg-cyan-500 transition-all duration-300 flex items-center justify-center text-[9px] text-white font-bold border-l border-white/10", selectedSnapshot && "cursor-pointer hover:brightness-110")}
                     style={{ width: `${reinvestPct}%` }}
-                    title={`Reinvest: ${formatZAR(reinvest)} (${reinvestPct.toFixed(0)}%)`}
+                    title={`Reinvest: ${formatZAR(reinvest)} (${reinvestPct.toFixed(0)}%) — click to drill down`}
+                    onClick={selectedSnapshot ? () => openDrill(selectedSnapshot.period, "reinvest") : undefined}
                   >
                     {reinvestPct >= 12 && `Reinvest (${reinvestPct.toFixed(0)}%)`}
                   </div>
                   <div
-                    className="bg-sky-600 transition-all duration-300 flex items-center justify-center text-[9px] text-white font-bold border-l border-white/10"
+                    className={cn("bg-sky-600 transition-all duration-300 flex items-center justify-center text-[9px] text-white font-bold border-l border-white/10", selectedSnapshot && "cursor-pointer hover:brightness-110")}
                     style={{ width: `${reservePct}%` }}
-                    title={`Reserve: ${formatZAR(reserve)} (${reservePct.toFixed(0)}%)`}
+                    title={`Reserve: ${formatZAR(reserve)} (${reservePct.toFixed(0)}%) — click to drill down`}
+                    onClick={selectedSnapshot ? () => openDrill(selectedSnapshot.period, "reserve") : undefined}
                   >
                     {reservePct >= 12 && `Reserve (${reservePct.toFixed(0)}%)`}
                   </div>
                   <div
-                    className="bg-rose-400 transition-all duration-300 flex items-center justify-center text-[9px] text-white font-bold border-l border-white/10"
+                    className={cn("bg-rose-400 transition-all duration-300 flex items-center justify-center text-[9px] text-white font-bold border-l border-white/10", selectedSnapshot && "cursor-pointer hover:brightness-110")}
                     style={{ width: `${flexPct}%` }}
-                    title={`Flex: ${formatZAR(flex)} (${flexPct.toFixed(0)}%)`}
+                    title={`Flex: ${formatZAR(flex)} (${flexPct.toFixed(0)}%) — click to drill down`}
+                    onClick={selectedSnapshot ? () => openDrill(selectedSnapshot.period, "flex") : undefined}
                   >
                     {flexPct >= 12 && `Flex (${flexPct.toFixed(0)}%)`}
                   </div>

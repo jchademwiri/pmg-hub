@@ -4,8 +4,10 @@ import {
   expenses,
   leads,
   divisions,
+  clients,
+  ledger,
 } from '../schema/index';
-import { sql, eq, desc, asc } from 'drizzle-orm';
+import { sql, eq, and, desc, asc } from 'drizzle-orm';
 import { ACCOUNT_RATES } from '../accounts';
 
 export type PeriodSummary = {
@@ -283,6 +285,98 @@ export async function getMonthlyFinancialsForYear(
     revenue: Number(r.revenue),
     expenses: Number(r.expenses),
   }));
+}
+
+/**
+ * Returns individual income rows for a specific YYYY-MM period,
+ * joined with division and client names.
+ */
+export async function getIncomeByPeriod(
+  period: string,
+): Promise<{ date: string; divisionName: string; clientName: string; description: string | null; amount: number }[]> {
+  const result = await db
+    .select({
+      date: sql<string>`${income.date}::text`,
+      divisionName: divisions.name,
+      clientName: clients.businessName,
+      description: income.description,
+      amount: income.amount,
+    })
+    .from(income)
+    .innerJoin(divisions, eq(income.divisionId, divisions.id))
+    .leftJoin(clients, eq(income.clientId, clients.id))
+    .where(sql`TO_CHAR(${income.date}, 'YYYY-MM') = ${period}`)
+    .orderBy(desc(income.date));
+  return result.map((r) => ({
+    date: r.date,
+    divisionName: r.divisionName,
+    clientName: r.clientName ?? '—',
+    description: r.description,
+    amount: Number(r.amount),
+  }));
+}
+
+/**
+ * Returns individual expense rows for a specific YYYY-MM period,
+ * joined with division and client names.
+ */
+export async function getExpensesByPeriod(
+  period: string,
+): Promise<{ date: string; divisionName: string; category: string; clientName: string; description: string | null; amount: number }[]> {
+  const result = await db
+    .select({
+      date: sql<string>`${expenses.date}::text`,
+      divisionName: divisions.name,
+      category: expenses.category,
+      clientName: clients.businessName,
+      description: expenses.description,
+      amount: expenses.amount,
+    })
+    .from(expenses)
+    .innerJoin(divisions, eq(expenses.divisionId, divisions.id))
+    .leftJoin(clients, eq(expenses.clientId, clients.id))
+    .where(sql`TO_CHAR(${expenses.date}, 'YYYY-MM') = ${period}`)
+    .orderBy(desc(expenses.date));
+  return result.map((r) => ({
+    date: r.date,
+    divisionName: r.divisionName,
+    category: r.category,
+    clientName: r.clientName ?? '—',
+    description: r.description,
+    amount: Number(r.amount),
+  }));
+}
+
+/**
+ * Returns ledger entries for a specific period (YYYY-MM) and optional allocation type.
+ */
+export async function getLedgerEntriesByPeriod(
+  period: string,
+  allocationType?: 'salary' | 'reinvest' | 'reserve' | 'flex' | 'pmg_share',
+): Promise<{ total: number; entries: { date: string; description: string | null; amount: number; entryType: string }[] }> {
+  const conditions = [
+    sql`TO_CHAR(${ledger.date}, 'YYYY-MM') = ${period}`,
+  ];
+  if (allocationType) {
+    conditions.push(eq(ledger.allocationType, allocationType));
+  }
+  const result = await db
+    .select({
+      date: sql<string>`${ledger.date}::text`,
+      description: ledger.description,
+      amount: ledger.amount,
+      entryType: ledger.entryType,
+    })
+    .from(ledger)
+    .where(and(...conditions))
+    .orderBy(desc(ledger.date));
+  const entries = result.map((r) => ({
+    date: r.date,
+    description: r.description,
+    amount: Number(r.amount),
+    entryType: r.entryType,
+  }));
+  return { total: entries.reduce((sum, e) => sum + e.amount, 0), entries };
 }
 
 /**

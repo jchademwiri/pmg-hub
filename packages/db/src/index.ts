@@ -6,6 +6,7 @@ export { eq, and, or, desc, asc, sql, inArray } from "drizzle-orm";
 export type { PeriodSummary, LeadRow, DivisionRow, SnapshotRow, ClientWithIncomeCount, LedgerEntryRow } from './queries';
 export { getAllLedgerEntries, getLedgerById, getLedgerByAllocation, getLedgerByAllocationYTD } from './queries';
 export { getAllSnapshots, getSnapshotByPeriod, insertSnapshot } from './queries';
+export { getIncomeByPeriod, getExpensesByPeriod, getLedgerEntriesByPeriod } from './queries/general';
 export { getClientsWithIncomeCount, getClientById, setClientActive } from './queries';
 export { getDivisionWithStatsById, setDivisionActive } from './queries';
 export { getAllExpenseCategories, getExpenseCategoryById } from './queries';
