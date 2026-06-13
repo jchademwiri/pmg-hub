@@ -65,7 +65,7 @@ export default async function ReportsPage({ searchParams }: ReportsPageProps) {
   return (
     <div className="flex flex-col gap-6">
       {/* Sticky header */}
-      <div className="sticky top-0 z-20 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 border-b border-border/40 -mx-6 px-6 py-4 -mt-6">
+      <div className="sticky top-[3.25rem] z-20 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 border-b border-border/40 -mx-6 px-6 py-4 -mt-6">
         <div className="flex items-center justify-between gap-3">
           <div>
             <h1 className="text-lg font-semibold">Reports & Insights</h1>

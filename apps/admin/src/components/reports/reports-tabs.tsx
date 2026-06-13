@@ -1,6 +1,7 @@
 'use client'
 
 import { useState } from 'react'
+import { useRouter, usePathname, useSearchParams } from 'next/navigation'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { MoMComparisonChart } from './mom-comparison-chart'
 import { RevenueByDivisionChart } from './revenue-by-division-chart'
@@ -43,6 +44,18 @@ export function ReportsTabs({
   const [drillPeriod, setDrillPeriod] = useState<string | null>(null)
   const [drillType, setDrillType] = useState<DrilldownType | null>(null)
 
+  const router = useRouter()
+  const pathname = usePathname()
+  const searchParams = useSearchParams()
+
+  const activeTab = searchParams.get('tab') || 'overview'
+
+  const handleTabChange = (val: string) => {
+    const params = new URLSearchParams(searchParams.toString())
+    params.set('tab', val)
+    router.replace(`${pathname}?${params.toString()}`, { scroll: false })
+  }
+
   const openDrill = (type: DrilldownType, period: string) => {
     setDrillType(type)
     setDrillPeriod(period)
@@ -73,7 +86,7 @@ export function ReportsTabs({
       period={drillPeriod}
       drillType={drillType}
     />
-    <Tabs defaultValue="overview" className="w-full">
+    <Tabs value={activeTab} onValueChange={handleTabChange} className="w-full">
       <TabsList className="mb-4">
         <TabsTrigger value="overview" className="gap-1.5">
           <TrendingUp className="size-3.5" />

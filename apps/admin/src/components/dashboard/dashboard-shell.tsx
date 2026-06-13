@@ -1,6 +1,7 @@
 'use client'
 
 import { useState } from 'react'
+import { useRouter, usePathname, useSearchParams } from 'next/navigation'
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { KpiGrid } from '@/components/dashboard/kpi-grid'
 import { DivisionAreaChart } from '@/components/dashboard/division-area-chart'
@@ -69,7 +70,17 @@ export function DashboardShell({
   currentPeriod,
   showCloseMonthButton,
 }: Props) {
-  const [activeTab, setActiveTab] = useState<Tab>('current')
+  const router = useRouter()
+  const pathname = usePathname()
+  const searchParams = useSearchParams()
+ 
+  const activeTab = (searchParams.get('tab') as Tab) || 'current'
+ 
+  const handleTabChange = (val: string) => {
+    const params = new URLSearchParams(searchParams.toString())
+    params.set('tab', val)
+    router.replace(`${pathname}?${params.toString()}`, { scroll: false })
+  }
 
   const summaryMap: Record<Tab, PeriodSummary> = {
     current:  currentMonthSummary,
@@ -107,7 +118,7 @@ export function DashboardShell({
     <div className="flex flex-col gap-5">
 
       {/* ── Period tabs ── */}
-      <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as Tab)}>
+      <Tabs value={activeTab} onValueChange={handleTabChange}>
         <div className="flex items-center justify-between gap-3">
           <div className="flex items-center gap-3">
             <TabsList>
