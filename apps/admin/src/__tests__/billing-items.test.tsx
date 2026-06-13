@@ -308,8 +308,6 @@ describe('Billing Items Module', () => {
         expect(toast.success).toHaveBeenCalledWith('Item deleted.');
         expect(mockPush).toHaveBeenCalledWith('/billing/items');
       });
-
-      confirmSpy.mockRestore();
     });
   });
 });

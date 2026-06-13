@@ -16,6 +16,18 @@
 
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { NextRequest } from 'next/server'
+
+vi.mock('server-only', () => ({}))
+
+const mockGetSession = vi.fn()
+vi.mock('@/lib/auth', () => ({
+  auth: {
+    api: {
+      getSession: (...args: any[]) => mockGetSession(...args),
+    },
+  },
+}))
+
 import { proxy } from '@/proxy'
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
@@ -47,10 +59,7 @@ describe('magic-link-redirect-fix - Property 1: Bug Condition - Secure-Prefixed 
    *   returns redirect to /login instead of NextResponse.next()
    */
   beforeEach(() => {
-    // Mock fetch for server-side session validation - return a valid active session
-    vi.stubGlobal('fetch', vi.fn().mockResolvedValue(
-      new Response(JSON.stringify({ user: { id: '1', name: 'Test', email: 'test@test.com', isActive: true } }), { status: 200 })
-    ))
+    mockGetSession.mockResolvedValue({ user: { id: '1', name: 'Test', email: 'test@test.com', isActive: true } })
   })
 
   it(

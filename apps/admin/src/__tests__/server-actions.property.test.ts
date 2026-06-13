@@ -5,8 +5,13 @@
  * Validates: Requirements 1.1, 1.2, 1.6
  */
 
-import { describe, it, vi, beforeEach } from 'vitest'
+import { describe, it, vi, beforeEach, expect } from 'vitest'
 import * as fc from 'fast-check'
+
+vi.mock('server-only', () => ({}))
+vi.mock('@/lib/auth', () => ({
+  getSessionOrRedirect: vi.fn().mockResolvedValue({ user: { id: 'user-1' } }),
+}))
 
 // ─── Hoist mock state so it's available when vi.mock factories run ────────────
 const { mockDbExecute } = vi.hoisted(() => {
