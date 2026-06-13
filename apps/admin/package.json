@@ -11,10 +11,12 @@
     "test:watch": "vitest"
   },
   "dependencies": {
+    "@ai-sdk/openai": "^3.0.71",
     "@pmg/db": "*",
     "@pmg/emails": "*",
     "@pmg/tailwind-config": "workspace:*",
     "@radix-ui/react-select": "^2.2.6",
+    "ai": "^6.0.204",
     "better-auth": "^1.5.6",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",

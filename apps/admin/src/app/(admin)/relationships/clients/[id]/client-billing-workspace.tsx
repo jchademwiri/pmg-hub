@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect, useTransition, useRef } from 'react';
 import Link from 'next/link';
-import { useRouter, useSearchParams } from 'next/navigation';
+import { useRouter, useSearchParams, usePathname } from 'next/navigation';
 import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
@@ -106,6 +106,7 @@ export function ClientBillingWorkspace({
 }: ClientBillingWorkspaceProps) {
   const router = useRouter();
   const searchParams = useSearchParams();
+  const pathname = usePathname();
   const [, startTransition] = useTransition();
 
   // Collapsible Details
@@ -150,8 +151,43 @@ export function ClientBillingWorkspace({
   const [bulkLog, setBulkLog] = useState<BulkLogEntry[]>([]);
 
   // Active Tab
-  const [activeTab, setActiveTab] = useState<string>('invoices');
+  const [activeTab, setActiveTab] = useState<string>(searchParams.get('tab') || 'invoices');
   const [metricFilter, setMetricFilter] = useState<'all' | 'paid' | 'outstanding' | 'overdue'>('all');
+
+  const activeTabFromUrl = searchParams.get('tab') || 'invoices';
+
+  useEffect(() => {
+    if (activeTabFromUrl !== activeTab) {
+      setMetricFilter('all');
+      setActiveTab(activeTabFromUrl);
+      setSelectedInvoiceIds(new Set());
+      setSelectedQuoteIds(new Set());
+      setIsPreviewOpen(false);
+      if (activeTabFromUrl === 'invoices' && invoices.length > 0) {
+        setSelectedDocId(invoices[0]!.id);
+        setSelectedDocType('invoice');
+      } else if (activeTabFromUrl === 'quotes' && quotes.length > 0) {
+        setSelectedDocId(quotes[0]!.id);
+        setSelectedDocType('quote');
+      } else if (activeTabFromUrl === 'payments' && payments?.data && payments.data.length > 0) {
+        setSelectedDocId(payments.data[0]!.id);
+        setSelectedDocType('payment');
+      } else if (activeTabFromUrl === 'statement') {
+        setSelectedDocType('statement');
+        setSelectedDocId(null);
+      } else if (activeTabFromUrl === 'analytics') {
+        setSelectedInvoiceIds(new Set());
+        setSelectedQuoteIds(new Set());
+        setIsPreviewOpen(false);
+      }
+    }
+  }, [activeTabFromUrl, invoices, quotes, payments]);
+
+  const handleTabChange = (val: string) => {
+    const params = new URLSearchParams(searchParams.toString());
+    params.set('tab', val);
+    router.replace(`${pathname}?${params.toString()}`, { scroll: false });
+  };
 
   const todayStrWS = getSASTToday();
 
@@ -951,32 +987,7 @@ export function ClientBillingWorkspace({
       )}
 
       {/* Tabbed Document split-pane browser */}
-      <Tabs value={activeTab} onValueChange={(val) => {
-        setMetricFilter('all');
-        setActiveTab(val);
-        // Reset selections when switching tabs
-        setSelectedInvoiceIds(new Set());
-        setSelectedQuoteIds(new Set());
-        setIsPreviewOpen(false);
-        if (val === 'invoices' && invoices.length > 0) {
-          setSelectedDocId(invoices[0]!.id);
-          setSelectedDocType('invoice');
-        } else if (val === 'quotes' && quotes.length > 0) {
-          setSelectedDocId(quotes[0]!.id);
-          setSelectedDocType('quote');
-        } else if (val === 'payments' && payments?.data && payments.data.length > 0) {
-          setSelectedDocId(payments.data[0]!.id);
-          setSelectedDocType('payment');
-        } else if (val === 'statement') {
-          setSelectedDocType('statement');
-          setSelectedDocId(null);
-        } else if (val === 'analytics') {
-          // No document selection change needed for analytics tab
-          setSelectedInvoiceIds(new Set());
-          setSelectedQuoteIds(new Set());
-          setIsPreviewOpen(false);
-        }
-      }} className="flex flex-col gap-4">
+      <Tabs value={activeTab} onValueChange={handleTabChange} className="flex flex-col gap-4">
         <div className="sticky top-[3.25rem] z-30 bg-background -mx-6 px-6 pb-2 border-b flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
           <TabsList className="bg-transparent h-10 p-0 flex gap-2 shrink-0">
             <TabsTrigger value="invoices" className="bg-transparent border-b-2 border-transparent data-[state=active]:border-amber-500 rounded-none shadow-none px-4 py-2 text-sm font-medium">Invoices</TabsTrigger>

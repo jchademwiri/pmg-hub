@@ -4,6 +4,18 @@ import { describe, it, vi } from 'vitest'
 import { render } from '@testing-library/react'
 import * as fc from 'fast-check'
 
+// ─── Mock next/navigation ───────────────────────────────────────────────────
+vi.mock('next/navigation', () => ({
+  useRouter: vi.fn().mockReturnValue({
+    replace: vi.fn(),
+  }),
+  usePathname: vi.fn().mockReturnValue('/dashboard'),
+  useSearchParams: vi.fn().mockReturnValue({
+    get: vi.fn().mockReturnValue('current'),
+    toString: vi.fn().mockReturnValue(''),
+  }),
+}))
+
 // ─── Mock all heavy child components ─────────────────────────────────────────
 
 vi.mock('@/components/dashboard/kpi-grid', () => ({

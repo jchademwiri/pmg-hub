@@ -49,7 +49,7 @@ Every rand of gross revenue is split before profit is calculated:
 
 ```
 Gross Revenue
-  └── PMG Contribution: 20%   (taken first, off the top)
+  └── PMG Contribution: 25%   (taken first, off the top)
   └── Operating Expenses: remainder − profit pool
   └── Profit Pool: what remains after expenses and PMG share
 ```
@@ -87,7 +87,7 @@ flex        = profitPool × 0.05
 
 | Allocation | Base | Rate | Notes |
 |---|---|---|---|
-| PMG Share | Gross revenue | 20% | Deducted before expenses |
+| PMG Share | Gross revenue | 25% | Deducted before expenses |
 | Salary | Profit pool | 35% | Owner take-home - system-calculated |
 | Reinvest | Profit pool | 30% | Growth spending |
 | Reserve | Profit pool | 30% | Emergency / stability buffer |
@@ -102,7 +102,7 @@ PMG Share is separate - it is taken from gross revenue, not from the profit pool
 
 | Allocation | Role | Purpose |
 |---|---|---|
-| **PMG Share (20%)** | Business backbone | Shared infrastructure, admin tools, scalability costs, and the overhead of operating under the PMG umbrella. Every division pays this regardless of profitability. |
+| **PMG Share (25%)** | Business backbone | Shared infrastructure, admin tools, scalability costs, and the overhead of operating under the PMG umbrella. Every division pays this regardless of profitability. |
 | **Salary (35%)** | Personal stability | The owner's consistent take-home. Because it is calculated from actual profit, it rises when the business performs well and contracts when it does not - giving honest feedback on business health. |
 | **Reinvest (30%)** | Growth engine | Advertising, new tools, hiring support, product development (e.g. TenderTrack 360). This is the business investing in its own future. |
 | **Reserve (30%)** | Risk protection | Emergency fund and low-income buffer. This allocation is never spent on day-to-day operations. It exists to cover months where revenue dips, unexpected costs hit, or new initiatives require runway. |
@@ -221,7 +221,7 @@ These rules are enforced by the system and must not be bypassed:
 3. **Salary is calculated, not manually entered.** There is no salary input field.
    The system derives it from real profit figures.
 
-4. **PMG always takes 20% of gross revenue.** This happens before expenses are
+4. **PMG always takes 25% of gross revenue.** This happens before expenses are
    deducted. It is not negotiable and does not vary by division.
 
 5. **Expenses are real costs only.** Salary, reinvestment, and reserve are
@@ -249,7 +249,7 @@ divisionMargin   = divisionProfit / divisionRevenue × 100
 ```
 
 A division is self-sustaining when `divisionProfit > 0`.
-The PMG Share (20%) is taken from **total** gross revenue, not per-division -
+The PMG Share (25%) is taken from **total** gross revenue, not per-division -
 so individual division P&L figures do not deduct PMG Share.
 
 ---
@@ -262,7 +262,7 @@ so individual division P&L figures do not deduct PMG Share.
 | Forgetting to assign a division | Insert rejected by DB (NOT NULL) | Division select is required on all income/expense forms |
 | Using `DATABASE_URL_DIRECT` | Migration fails - env var renamed | Use `DATABASE_URL_UNPOOLED` |
 | Editing past income without snapshots | All historical dashboard numbers shift | Always close the month before editing past entries (Phase 7) |
-| Confusing PMG Share with expenses | PMG Share is 20% of revenue, deducted before profit | PMG Share is calculated, never entered manually |
+| Confusing PMG Share with expenses | PMG Share is 25% of revenue, deducted before profit | PMG Share is calculated, never entered manually |
 
 ---
 

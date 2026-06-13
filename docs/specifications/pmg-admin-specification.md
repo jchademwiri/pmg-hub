@@ -264,7 +264,7 @@ without any new fetch. MoM deltas only display on the Current Month tab.
 **KPI grid (4 cards)**
 - Total Revenue - with MoM delta badge vs previous month
 - Total Expenses - with MoM delta badge (inverted: up is bad)
-- PMG Share (20%) - with MoM delta badge
+- PMG Share (25%) - with MoM delta badge
 - Profit Pool - highlighted red when negative
 
 **Salary card**
@@ -350,7 +350,7 @@ are expenses in the active period. Sorted by total descending.
 1. Every income entry must have a division (`NOT NULL` enforced by DB)
 2. Every expense entry must have a division (`NOT NULL` enforced by DB)
 3. Salary is system-calculated - there is no salary input field
-4. PMG always takes 20% of gross revenue - not configurable
+4. PMG always takes 25% of gross revenue - not configurable
 5. Expenses are real costs only - salary withdrawals are tracked in the `withdrawals` table, never in expenses
 6. Withdrawal tracking is current-month only on the dashboard; historical withdrawals are in the DB but not surfaced in the UI yet
 7. All allocation calculations are dynamic (runtime) until a month is closed (Phase 7)

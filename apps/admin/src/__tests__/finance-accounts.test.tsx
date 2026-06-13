@@ -33,7 +33,7 @@ vi.mock('@pmg/db', () => {
     getTotalRevenue: vi.fn(),
     getTotalExpenses: vi.fn(),
     ACCOUNT_RATES: {
-      pmg_share: 0.20,
+      pmg_share: 0.25,
       salary: 0.35,
       reinvest: 0.30,
       reserve: 0.30,

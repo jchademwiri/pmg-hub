@@ -24,7 +24,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select'
-import { formatZAR } from '@/lib/format'
+import { formatZAR, fmtMonthYear } from '@/lib/format'
 import type { MonthlyRevenueByDivision } from '@/lib/financial'
 
 const CHART_TOKENS = [
@@ -87,6 +87,7 @@ export function RevenueByDivisionChart({ series, divisions }: Props) {
               <CartesianGrid vertical={false} />
               <XAxis
                 dataKey="month"
+                tickFormatter={(v) => fmtMonthYear(v, { short: true })}
                 tickLine={false}
                 axisLine={false}
                 tickMargin={8}
@@ -96,7 +97,7 @@ export function RevenueByDivisionChart({ series, divisions }: Props) {
                 cursor={false}
                 content={
                   <ChartTooltipContent
-                    labelFormatter={(value) => value}
+                    labelFormatter={(value) => fmtMonthYear(value)}
                     formatter={(v) => formatZAR(Number(v))}
                     indicator="dot"
                   />

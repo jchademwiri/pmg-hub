@@ -241,7 +241,7 @@ A single calculated indicator shown as a coloured badge + label.
 | Score | Criteria | Colour |
 |---|---|---|
 | **Excellent** | No overdue invoices, average days-to-pay ≤ 30 | Green |
-| **Good** | Minor overdue balance (< 20% of outstanding), avg days ≤ 45 | Blue |
+| **Good** | Minor overdue balance (< 25% of outstanding), avg days ≤ 45 | Blue |
 | **At Risk** | Consistent overdue, increasing outstanding balance | Orange |
 | **Critical** | Multiple invoices > 90 days overdue | Red |
 

@@ -14,6 +14,10 @@ export type SnapshotRow = {
   reinvest: string;
   reserve: string;
   flex: string;
+  createdBy: string | null;
+  status: string;
+  notes: string | null;
+  closedAt: Date;
   createdAt: Date;
 };
 
@@ -36,7 +40,11 @@ export async function getSnapshotByPeriod(period: string): Promise<SnapshotRow |
 /**
  * Inserts a new snapshot row and returns the inserted row.
  */
-export async function insertSnapshot(period: string, summary: PeriodSummary): Promise<SnapshotRow> {
+export async function insertSnapshot(
+  period: string,
+  summary: PeriodSummary,
+  opts?: { createdBy?: string; notes?: string },
+): Promise<SnapshotRow> {
   const rows = await db
     .insert(snapshots)
     .values({
@@ -49,7 +57,21 @@ export async function insertSnapshot(period: string, summary: PeriodSummary): Pr
       reinvest: String(summary.reinvest),
       reserve: String(summary.reserve),
       flex: String(summary.flex),
+      createdBy: opts?.createdBy ?? null,
+      notes: opts?.notes ?? null,
     })
     .returning();
   return rows[0]!;
+}
+
+/**
+ * Returns true if a snapshot already exists for the given period.
+ */
+export async function isPeriodLocked(period: string): Promise<boolean> {
+  const result = await db
+    .select({ id: snapshots.id })
+    .from(snapshots)
+    .where(eq(snapshots.period, period))
+    .limit(1);
+  return result.length > 0;
 }
