@@ -6,16 +6,20 @@ import { MoMComparisonChart } from './mom-comparison-chart'
 import { RevenueByDivisionChart } from './revenue-by-division-chart'
 import { ExpenseByCategoryChart } from './expense-by-category-chart'
 import { ProfitPoolChart } from './profit-pool-chart'
+import { WaterfallChart } from './waterfall-chart'
+import { SankeyDiagram } from './sankey-diagram'
+import { ReportCommentary } from './report-commentary'
 import { FinancialDrilldownSheet } from '@/components/insights/financial-drilldown-sheet'
 import type { DrilldownType } from '@/app/actions/drilldown'
 import { TrendingUp, DollarSign, Receipt, PiggyBank } from 'lucide-react'
-import type { MoMSnapshot, DivisionSeriesChart, ProfitPoolRow } from '@/lib/financial'
+import type { MoMSnapshot, DivisionSeriesChart, ProfitPoolRow, MonthlyFinancials } from '@/lib/financial'
 
 interface ReportsTabsProps {
   momData: MoMSnapshot[]
   divisionSeries: DivisionSeriesChart
   expensesByCategory: { category: string; total: number }[]
   profitPoolSeries: ProfitPoolRow[]
+  monthlyFinancials: MonthlyFinancials[]
   currentPeriod: string
   previousPeriod: string
   currentMonthLabel: string
@@ -27,6 +31,7 @@ export function ReportsTabs({
   divisionSeries,
   expensesByCategory,
   profitPoolSeries,
+  monthlyFinancials,
   currentPeriod,
   previousPeriod,
   currentMonthLabel,
@@ -47,6 +52,16 @@ export function ReportsTabs({
     'Revenue': 'revenue',
     'Expenses': 'expenses',
   }
+
+  // Calculate annual totals for waterfall and sankey flow diagram
+  const totalRevenue = monthlyFinancials.reduce((sum, m) => sum + m.revenue, 0)
+  const totalExpenses = monthlyFinancials.reduce((sum, m) => sum + m.expenses, 0)
+  const totalPmgShare = totalRevenue * 0.25
+  const totalProfitPool = profitPoolSeries.reduce((sum, p) => sum + p.profitPool, 0)
+  const totalSalary = profitPoolSeries.reduce((sum, p) => sum + p.salary, 0)
+  const totalReinvest = profitPoolSeries.reduce((sum, p) => sum + p.reinvest, 0)
+  const totalReserve = profitPoolSeries.reduce((sum, p) => sum + p.reserve, 0)
+  const totalFlex = profitPoolSeries.reduce((sum, p) => sum + p.flex, 0)
 
   return (
     <>
@@ -79,13 +94,22 @@ export function ReportsTabs({
       {/* ── Overview Tab ───────────────────────────────────────────────── */}
       <TabsContent value="overview">
         <div className="grid grid-cols-1 gap-6">
-          <MoMComparisonChart data={momData} currentMonthLabel={currentMonthLabel} previousMonthLabel={previousMonthLabel} onBarClick={(metric, periodType) => {
-            const type = metricToDrillType[metric]
-            if (type) {
-              const targetPeriod = periodType === 'current' ? currentPeriod : previousPeriod
-              openDrill(type, targetPeriod)
-            }
-          }} />
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            <MoMComparisonChart data={momData} currentMonthLabel={currentMonthLabel} previousMonthLabel={previousMonthLabel} onBarClick={(metric, periodType) => {
+              const type = metricToDrillType[metric]
+              if (type) {
+                const targetPeriod = periodType === 'current' ? currentPeriod : previousPeriod
+                openDrill(type, targetPeriod)
+              }
+            }} />
+            <WaterfallChart
+              revenue={totalRevenue}
+              expenses={totalExpenses}
+              pmgShare={totalPmgShare}
+              profitPool={totalProfitPool}
+            />
+          </div>
+          <ReportCommentary momData={momData} />
         </div>
       </TabsContent>
 
@@ -109,6 +133,16 @@ export function ReportsTabs({
       {/* ── Profit Pool Tab ────────────────────────────────────────────── */}
       <TabsContent value="profit">
         <div className="grid grid-cols-1 gap-6">
+          <SankeyDiagram
+            revenue={totalRevenue}
+            expenses={totalExpenses}
+            pmgShare={totalPmgShare}
+            profitPool={totalProfitPool}
+            salary={totalSalary}
+            reinvest={totalReinvest}
+            reserve={totalReserve}
+            flex={totalFlex}
+          />
           <ProfitPoolChart
             data={profitPoolSeries}
             onBarClick={(type, period) => openDrill(type, period)}

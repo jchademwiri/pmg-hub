@@ -119,10 +119,10 @@
 
 | # | Update | File(s) | Effort | Status |
 |---|--------|---------|--------|--------|
-| R11 | **Add waterfall chart** for cash flow visualization | New: `waterfall-chart.tsx` | Medium | ⏳ Remaining |
-| R12 | **Add Sankey diagram** for allocation flow visualization | New: `sankey-diagram.tsx` | High | ⏳ Remaining |
+| R11 | **Add waterfall chart** for cash flow visualization | New: `waterfall-chart.tsx` | Medium | ✅ Implemented |
+| R12 | **Add Sankey diagram** for allocation flow visualization | New: `sankey-diagram.tsx` | High | ✅ Implemented |
 | R13 | **Add cross-chart filtering** (click month in one chart → highlight everywhere) | Reports page state | Medium | ⏳ Remaining |
-| R14 | **Add deterministic commentary** ("Revenue increased R24k vs March, mainly from Apex") | New: `report-commentary.tsx` | Medium | ⏳ Remaining |
+| R14 | **Add deterministic commentary** ("Revenue increased R24k vs March, mainly from Apex") | New: `report-commentary.tsx` | Medium | ✅ Implemented |
 | R15 | **Add heatmap** for monthly division performance | New: `division-heatmap.tsx` | High | ⏳ Remaining |
 
 ---
@@ -167,8 +167,8 @@
 15. **S15** — Status badges on snapshot cards (✅ Implemented)
 
 ### Sprint 5 (Week 5-6): Advanced Features
-16. **R11-R13** — Waterfall chart, Sankey diagram, cross-chart filtering (⏳ Remaining)
-17. **R14** — Deterministic commentary (⏳ Remaining)
+16. **R11-R13** — Waterfall chart & Sankey diagram (✅ Implemented), cross-chart filtering (⏳ Remaining)
+17. **R14** — Deterministic commentary (✅ Implemented)
 18. **X5-X6** — Keyboard shortcuts, accessibility (⏳ Remaining)
 
 ---

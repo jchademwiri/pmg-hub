@@ -91,6 +91,7 @@ export default async function ReportsPage({ searchParams }: ReportsPageProps) {
             divisionSeries={divisionSeries}
             expensesByCategory={expensesByCategory}
             profitPoolSeries={profitPoolSeries}
+            monthlyFinancials={monthlyFinancials}
             currentPeriod={currentPeriod}
             previousPeriod={previousPeriod}
             currentMonthLabel={currentMonthLabel}
