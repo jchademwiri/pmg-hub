@@ -6,6 +6,7 @@ import {
   getExpensesByCategory,
   getProfitPoolSeriesForYear,
   getMonthlyFinancialsSeriesForYear,
+  getLedgerBalances,
 } from '@/lib/financial'
 import { YearFilter } from '@/components/reports/year-filter'
 import { ExportCsvButton } from '@/components/reports/export-csv-button'
@@ -44,7 +45,7 @@ export default async function ReportsPage({ searchParams }: ReportsPageProps) {
   const currentMonthLabel = fmtMonthYear(new Date(sastYear, sastMonth, 1))
   const previousMonthLabel = fmtMonthYear(new Date(sastYear, sastMonth - 1, 1))
 
-  const [years, momData, divisionSeries, expensesByCategory, profitPoolSeries, monthlyFinancials] =
+  const [years, momData, divisionSeries, expensesByCategory, profitPoolSeries, monthlyFinancials, ledgerBalances] =
     await Promise.all([
       getDistinctReportYears().catch((e) => { console.error('getDistinctReportYears failed:', e); return [] as number[] }),
       getMoMChartData().catch((e) => { console.error('getMoMChartData failed:', e); return [] }),
@@ -52,6 +53,7 @@ export default async function ReportsPage({ searchParams }: ReportsPageProps) {
       getExpensesByCategory(year).catch((e) => { console.error('getExpensesByCategory failed:', e); return [] }),
       getProfitPoolSeriesForYear(year).catch((e) => { console.error('getProfitPoolSeriesForYear failed:', e); return [] }),
       getMonthlyFinancialsSeriesForYear(year).catch((e) => { console.error('getMonthlyFinancialsSeriesForYear failed:', e); return [] }),
+      getLedgerBalances().catch((e) => { console.error('getLedgerBalances failed:', e); return undefined }),
     ])
 
   const hasData =
@@ -96,6 +98,7 @@ export default async function ReportsPage({ searchParams }: ReportsPageProps) {
             previousPeriod={previousPeriod}
             currentMonthLabel={currentMonthLabel}
             previousMonthLabel={previousMonthLabel}
+            ledgerBalances={ledgerBalances}
           />
         </div>
       ) : (

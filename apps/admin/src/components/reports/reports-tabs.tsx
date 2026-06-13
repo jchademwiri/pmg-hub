@@ -12,7 +12,7 @@ import { ReportCommentary } from './report-commentary'
 import { FinancialDrilldownSheet } from '@/components/insights/financial-drilldown-sheet'
 import type { DrilldownType } from '@/app/actions/drilldown'
 import { TrendingUp, DollarSign, Receipt, PiggyBank } from 'lucide-react'
-import type { MoMSnapshot, DivisionSeriesChart, ProfitPoolRow, MonthlyFinancials } from '@/lib/financial'
+import type { MoMSnapshot, DivisionSeriesChart, ProfitPoolRow, MonthlyFinancials, BucketBalances } from '@/lib/financial'
 
 interface ReportsTabsProps {
   momData: MoMSnapshot[]
@@ -24,6 +24,7 @@ interface ReportsTabsProps {
   previousPeriod: string
   currentMonthLabel: string
   previousMonthLabel: string
+  ledgerBalances?: BucketBalances
 }
 
 export function ReportsTabs({
@@ -36,6 +37,7 @@ export function ReportsTabs({
   previousPeriod,
   currentMonthLabel,
   previousMonthLabel,
+  ledgerBalances,
 }: ReportsTabsProps) {
   const [drillOpen, setDrillOpen] = useState(false)
   const [drillPeriod, setDrillPeriod] = useState<string | null>(null)
@@ -142,6 +144,7 @@ export function ReportsTabs({
             reinvest={totalReinvest}
             reserve={totalReserve}
             flex={totalFlex}
+            ledgerBalances={ledgerBalances}
           />
           <ProfitPoolChart
             data={profitPoolSeries}

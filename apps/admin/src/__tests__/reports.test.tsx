@@ -104,6 +104,13 @@ vi.mock('@/lib/financial', () => ({
   getRevenueByDivisionSeriesForYear: vi.fn().mockResolvedValue({ series: [], divisions: [] }),
   getExpensesByCategory: vi.fn().mockResolvedValue([]),
   getProfitPoolSeriesForYear: vi.fn().mockResolvedValue([]),
+  getLedgerBalances: vi.fn().mockResolvedValue({
+    salary:    { expected: 0, spent: 0, available: 0 },
+    reinvest:  { expected: 0, spent: 0, available: 0 },
+    reserve:   { expected: 0, spent: 0, available: 0 },
+    flex:      { expected: 0, spent: 0, available: 0 },
+    pmg_share: { expected: 0, spent: 0, available: 0 },
+  }),
 }))
 
 // Mock chart components used by the Reports page (they use recharts internally,
@@ -618,6 +625,13 @@ describe('Reports page', () => {
     vi.mocked(financial.getRevenueByDivisionSeriesForYear).mockResolvedValue({ series: [], divisions: [] })
     vi.mocked(financial.getExpensesByCategory).mockResolvedValue([])
     vi.mocked(financial.getProfitPoolSeriesForYear).mockResolvedValue([])
+    vi.mocked(financial.getLedgerBalances).mockResolvedValue({
+      salary:    { expected: 0, spent: 0, available: 0 },
+      reinvest:  { expected: 0, spent: 0, available: 0 },
+      reserve:   { expected: 0, spent: 0, available: 0 },
+      flex:      { expected: 0, spent: 0, available: 0 },
+      pmg_share: { expected: 0, spent: 0, available: 0 },
+    })
   })
 
   it('renders heading "Reports & Insights" - Validates: Requirements 5.3', async () => {
