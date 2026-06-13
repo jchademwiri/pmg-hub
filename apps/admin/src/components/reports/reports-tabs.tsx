@@ -57,11 +57,11 @@ export function ReportsTabs({
   const totalRevenue = monthlyFinancials.reduce((sum, m) => sum + m.revenue, 0)
   const totalExpenses = monthlyFinancials.reduce((sum, m) => sum + m.expenses, 0)
   const totalPmgShare = totalRevenue * 0.25
-  const totalProfitPool = profitPoolSeries.reduce((sum, p) => sum + p.profitPool, 0)
-  const totalSalary = profitPoolSeries.reduce((sum, p) => sum + p.salary, 0)
-  const totalReinvest = profitPoolSeries.reduce((sum, p) => sum + p.reinvest, 0)
-  const totalReserve = profitPoolSeries.reduce((sum, p) => sum + p.reserve, 0)
-  const totalFlex = profitPoolSeries.reduce((sum, p) => sum + p.flex, 0)
+  const totalProfitPool = totalRevenue - totalExpenses - totalPmgShare
+  const totalSalary = totalProfitPool * 0.35
+  const totalReinvest = totalProfitPool * 0.30
+  const totalReserve = totalProfitPool * 0.30
+  const totalFlex = totalProfitPool * 0.05
 
   return (
     <>

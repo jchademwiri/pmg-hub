@@ -8,6 +8,7 @@ import { DivisionRevenue } from '@/components/dashboard/division-revenue'
 import { LeadsSummary } from '@/components/dashboard/leads-summary'
 import { ExpenseSnapshot } from '@/components/dashboard/expense-snapshot'
 import CloseMonthButton from '@/components/dashboard/close-month-button'
+import { Badge } from '@/components/ui/badge'
 import { AgingReportGrid } from '@/components/dashboard/aging-report-grid'
 import type { AgingRow } from '@pmg/db'
 import type { PeriodSummary, DivisionRevenue as DivisionRevenueType, LeadStatusCount, MonthlyFinancials, DivisionSeriesChart } from '@/lib/financial'
@@ -120,8 +121,12 @@ export function DashboardShell({
           </div>
 
           {/* Close Month button on the far right of the tabs bar */}
-          {!hasSnapshot && showCloseMonthButton && (
-            <CloseMonthButton period={currentPeriod} />
+          {hasSnapshot ? (
+            <Badge variant="secondary">Month closed</Badge>
+          ) : (
+            showCloseMonthButton && (
+              <CloseMonthButton period={currentPeriod} />
+            )
           )}
         </div>
       </Tabs>

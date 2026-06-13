@@ -66,7 +66,7 @@ export default async function ReportsPage({ searchParams }: ReportsPageProps) {
       <div className="sticky top-0 z-20 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 border-b border-border/40 -mx-6 px-6 py-4 -mt-6">
         <div className="flex items-center justify-between gap-3">
           <div>
-            <h2 className="text-lg font-semibold">Reports & Insights</h2>
+            <h1 className="text-lg font-semibold">Reports & Insights</h1>
             <p className="text-sm text-muted-foreground">Analyze revenue streams, expense distributions, and monthly profit splits</p>
           </div>
           <div className="flex items-center gap-2 shrink-0">
