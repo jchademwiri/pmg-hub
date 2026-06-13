@@ -108,13 +108,13 @@ function KpiCard({
     invertDelta ? 'text-amber-500' : 'text-green-500'
 
   return (
-    <Card className={`rounded-xl border ${borderClass} bg-gradient-to-tr from-card to-card/75 backdrop-blur-md shadow-none hover:-translate-y-1 hover:shadow-md hover:shadow-primary/5 transition-all duration-300 group`}>
+    <Card size="sm" className={`rounded-xl border ${borderClass} bg-gradient-to-tr from-card to-card/75 backdrop-blur-md shadow-none hover:-translate-y-1 hover:shadow-md hover:shadow-primary/5 transition-all duration-300 group`}>
       <CardHeader className="pb-1">
-        <CardDescription className="text-muted-foreground text-xs font-medium tracking-wide uppercase group-hover:text-foreground/80 transition-colors duration-200">{label}</CardDescription>
+        <CardDescription className="text-muted-foreground text-[10px] sm:text-xs font-medium tracking-wide uppercase group-hover:text-foreground/80 transition-colors duration-200">{label}</CardDescription>
       </CardHeader>
-      <CardContent className="flex items-end justify-between gap-1.5 pt-0.5">
-        <div className="flex flex-col gap-0.5 min-w-0">
-          <p className={`${valueClass} text-lg sm:text-2xl font-bold tabular-nums tracking-tight truncate`}>
+      <CardContent className="flex flex-col items-start gap-2 pt-0.5 w-full xl:flex-row xl:items-end xl:justify-between xl:gap-1.5">
+        <div className="flex flex-col gap-0.5 min-w-0 w-full xl:w-auto">
+          <p className={`${valueClass} text-base sm:text-lg lg:text-xl xl:text-2xl font-bold tabular-nums tracking-tight whitespace-nowrap`}>
             {formatZAR(value)}
           </p>
           {delta && (
@@ -127,7 +127,7 @@ function KpiCard({
           )}
         </div>
         {sparklineData && sparklineData.length > 0 && (
-          <div className="mb-1 opacity-75 group-hover:opacity-100 group-hover:scale-105 transition-all duration-300 shrink-0">
+          <div className="opacity-75 group-hover:opacity-100 group-hover:scale-105 transition-all duration-300 shrink-0 mt-1 xl:mt-0">
             <Sparkline data={sparklineData} colorClass={sparklineColor} />
           </div>
         )}

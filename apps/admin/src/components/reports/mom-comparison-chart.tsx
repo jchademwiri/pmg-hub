@@ -8,7 +8,12 @@ import type { MoMSnapshot } from '@/lib/financial'
 
 const NEG_COLOR = 'var(--color-destructive, #ef4444)'
 
-type Props = { data: MoMSnapshot[]; currentMonthLabel?: string; previousMonthLabel?: string; onBarClick?: (metric: string) => void }
+type Props = {
+  data: MoMSnapshot[]
+  currentMonthLabel?: string
+  previousMonthLabel?: string
+  onBarClick?: (metric: string, periodType: 'current' | 'previous') => void
+}
 
 export function MoMComparisonChart({ data, currentMonthLabel, previousMonthLabel, onBarClick }: Props) {
   const config: ChartConfig = {
@@ -30,12 +35,12 @@ export function MoMComparisonChart({ data, currentMonthLabel, previousMonthLabel
               <YAxis tickFormatter={formatZAR} tick={{ fill: 'var(--muted-foreground)' }} />
               <ChartTooltip content={<ChartTooltipContent indicator="dot" formatter={(v) => formatZAR(Number(v))} />} />
               <ChartLegend content={<ChartLegendContent />} />
-              <Bar dataKey="current" fill="var(--color-current)" onClick={onBarClick ? (_data, index) => onBarClick(data[index]?.metric ?? '') : undefined} className={onBarClick ? 'cursor-pointer' : undefined}>
+              <Bar dataKey="current" fill="var(--color-current)" onClick={onBarClick ? (_data, index) => onBarClick(data[index]?.metric ?? '', 'current') : undefined} className={onBarClick ? 'cursor-pointer' : undefined}>
                 {data.map((entry, i) => (
                   <Cell key={i} fill={entry.current < 0 ? NEG_COLOR : 'var(--color-current)'} />
                 ))}
               </Bar>
-              <Bar dataKey="previous" fill="var(--color-previous)" onClick={onBarClick ? (_data, index) => onBarClick(data[index]?.metric ?? '') : undefined} className={onBarClick ? 'cursor-pointer' : undefined}>
+              <Bar dataKey="previous" fill="var(--color-previous)" onClick={onBarClick ? (_data, index) => onBarClick(data[index]?.metric ?? '', 'previous') : undefined} className={onBarClick ? 'cursor-pointer' : undefined}>
                 {data.map((entry, i) => (
                   <Cell key={i} fill={entry.previous < 0 ? NEG_COLOR : 'var(--color-previous)'} />
                 ))}

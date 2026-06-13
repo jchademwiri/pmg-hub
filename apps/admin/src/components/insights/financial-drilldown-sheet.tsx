@@ -9,7 +9,7 @@ import {
   SheetDescription,
 } from '@/components/ui/sheet'
 import { Badge } from '@/components/ui/badge'
-import { formatZAR } from '@/lib/format'
+import { formatZAR, fmtDate, fmtMonthYear } from '@/lib/format'
 import { cn } from '@/lib/utils'
 import { getDrilldownData, type DrilldownType, type DrilldownResult } from '@/app/actions/drilldown'
 import { TrendingUp, TrendingDown, Wallet, RefreshCw, Shield, Zap, Loader2 } from 'lucide-react'
@@ -67,7 +67,7 @@ export function FinancialDrilldownSheet({
             {meta?.label ?? 'Detail'}
           </SheetTitle>
           <SheetDescription>
-            {meta?.description ?? ''} — {period ?? ''}
+            {meta?.description ?? ''} — {period ? fmtMonthYear(period) : ''}
           </SheetDescription>
         </SheetHeader>
 
@@ -122,7 +122,7 @@ function IncomeTable({ rows, total }: { rows: { date: string; divisionName: stri
               {row.description && (
                 <span className="text-[10px] text-muted-foreground truncate">{row.description}</span>
               )}
-              <span className="text-[10px] text-muted-foreground">{row.date}</span>
+              <span className="text-[10px] text-muted-foreground">{fmtDate(row.date)}</span>
             </div>
             <span className="text-xs font-semibold text-emerald-600 tabular-nums shrink-0">+{formatZAR(row.amount)}</span>
           </div>
@@ -152,7 +152,7 @@ function ExpenseTable({ rows, total }: { rows: { date: string; divisionName: str
               {row.description && (
                 <span className="text-[10px] text-muted-foreground truncate">{row.description}</span>
               )}
-              <span className="text-[10px] text-muted-foreground">{row.date}</span>
+              <span className="text-[10px] text-muted-foreground">{fmtDate(row.date)}</span>
             </div>
             <span className="text-xs font-semibold text-amber-600 tabular-nums shrink-0">-{formatZAR(row.amount)}</span>
           </div>
@@ -179,7 +179,7 @@ function LedgerTable({ rows, total }: { rows: { date: string; description: strin
                 <span className="text-xs font-medium text-foreground truncate">{row.description ?? '—'}</span>
                 <Badge variant="outline" className="text-[9px] shrink-0 capitalize">{row.entryType}</Badge>
               </div>
-              <span className="text-[10px] text-muted-foreground">{row.date}</span>
+              <span className="text-[10px] text-muted-foreground">{fmtDate(row.date)}</span>
             </div>
             <span className="text-xs font-semibold text-foreground tabular-nums shrink-0">-{formatZAR(row.amount)}</span>
           </div>

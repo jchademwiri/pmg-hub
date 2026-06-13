@@ -37,6 +37,8 @@ export default async function ReportsPage({ searchParams }: ReportsPageProps) {
   // Current period for drill-down (YYYY-MM) in SAST
   const { year: sastYear, month: sastMonth } = getSASTParts()
   const currentPeriod = `${sastYear}-${String(sastMonth + 1).padStart(2, '0')}`
+  const prevDate = new Date(sastYear, sastMonth - 1, 1)
+  const previousPeriod = `${prevDate.getFullYear()}-${String(prevDate.getMonth() + 1).padStart(2, '0')}`
 
   // Human-readable month labels for MoM chart legend
   const currentMonthLabel = fmtMonthYear(new Date(sastYear, sastMonth, 1))
@@ -90,6 +92,7 @@ export default async function ReportsPage({ searchParams }: ReportsPageProps) {
             expensesByCategory={expensesByCategory}
             profitPoolSeries={profitPoolSeries}
             currentPeriod={currentPeriod}
+            previousPeriod={previousPeriod}
             currentMonthLabel={currentMonthLabel}
             previousMonthLabel={previousMonthLabel}
           />

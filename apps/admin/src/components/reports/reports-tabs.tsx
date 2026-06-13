@@ -17,6 +17,7 @@ interface ReportsTabsProps {
   expensesByCategory: { category: string; total: number }[]
   profitPoolSeries: ProfitPoolRow[]
   currentPeriod: string
+  previousPeriod: string
   currentMonthLabel: string
   previousMonthLabel: string
 }
@@ -27,6 +28,7 @@ export function ReportsTabs({
   expensesByCategory,
   profitPoolSeries,
   currentPeriod,
+  previousPeriod,
   currentMonthLabel,
   previousMonthLabel,
 }: ReportsTabsProps) {
@@ -77,9 +79,12 @@ export function ReportsTabs({
       {/* ── Overview Tab ───────────────────────────────────────────────── */}
       <TabsContent value="overview">
         <div className="grid grid-cols-1 gap-6">
-          <MoMComparisonChart data={momData} currentMonthLabel={currentMonthLabel} previousMonthLabel={previousMonthLabel} onBarClick={(metric) => {
+          <MoMComparisonChart data={momData} currentMonthLabel={currentMonthLabel} previousMonthLabel={previousMonthLabel} onBarClick={(metric, periodType) => {
             const type = metricToDrillType[metric]
-            if (type) openDrill(type, currentPeriod)
+            if (type) {
+              const targetPeriod = periodType === 'current' ? currentPeriod : previousPeriod
+              openDrill(type, targetPeriod)
+            }
           }} />
         </div>
       </TabsContent>
