@@ -1,23 +1,21 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useCallback } from "react";
 import type { SnapshotRow } from "@pmg/db";
 import { formatZAR, fmtMonthYear, fmtDate } from "@/lib/format";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
+import { SnapshotComparisonPanel } from "./snapshot-comparison-panel";
 import { cn } from "@/lib/utils";
 import {
-  BarChart,
-  Bar,
-  XAxis,
-  YAxis,
-  CartesianGrid,
-  Tooltip,
-  Legend,
   ResponsiveContainer,
   Area,
   AreaChart,
+  CartesianGrid,
+  XAxis,
+  YAxis,
 } from "recharts";
 import {
   ChartContainer,
@@ -32,6 +30,7 @@ import {
   Layers,
   Globe,
   BarChart3,
+  ArrowLeftRight,
 } from "lucide-react";
 
 interface SnapshotsCockpitProps {
@@ -47,6 +46,22 @@ const chartConfig: ChartConfig = {
 export function SnapshotsCockpit({ snapshots }: SnapshotsCockpitProps) {
   // Default to "all-time" as the starting overview
   const [selectedId, setSelectedId] = useState<string>("all-time");
+  const [compareMode, setCompareMode] = useState(false);
+  const [compareIds, setCompareIds] = useState<string[]>([]);
+
+  const toggleCompareMode = useCallback(() => {
+    setCompareMode((prev) => !prev);
+    setCompareIds([]);
+    if (!compareMode) setSelectedId("all-time");
+  }, [compareMode]);
+
+  const toggleCompareSelection = useCallback((id: string) => {
+    setCompareIds((prev) => {
+      if (prev.includes(id)) return prev.filter((x) => x !== id);
+      if (prev.length >= 2) return [prev[1], id];
+      return [...prev, id];
+    });
+  }, []);
 
   if (snapshots.length === 0) {
     return (
@@ -121,53 +136,81 @@ export function SnapshotsCockpit({ snapshots }: SnapshotsCockpitProps) {
       {/* ── Left Sidebar (List of Months & All-Time Card) ────────────────── */}
       <div className="flex flex-col gap-4 lg:col-span-1">
         <div className="flex flex-col gap-2">
-          <span className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
-            Closed Periods ({snapshots.length + 1})
-          </span>
-          <div className="flex flex-col gap-2 max-h-[500px] overflow-y-auto pr-1">
-            {/* 1. All-Time Overview Card (Always First) */}
-            <Card
-              onClick={() => setSelectedId("all-time")}
-              className={cn(
-                "cursor-pointer transition-all duration-200 border-l-[4px] hover:bg-muted/50 hover:translate-x-0.5",
-                selectedId === "all-time"
-                  ? "border-l-blue-600 border-foreground bg-muted font-medium"
-                  : "border-l-zinc-300 border-border"
-              )}
+          <div className="flex items-center justify-between">
+            <span className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+              Closed Periods ({snapshots.length})
+            </span>
+            <Button
+              variant={compareMode ? "default" : "outline"}
+              size="sm"
+              className="h-7 text-xs gap-1.5"
+              onClick={toggleCompareMode}
             >
-              <CardHeader className="p-3 flex flex-row items-center justify-between gap-2">
-                <div className="flex flex-col gap-0.5 min-w-0">
-                  <span className="text-xs font-bold text-foreground flex items-center gap-1.5">
-                    <Globe className="size-3.5 text-blue-600 shrink-0" />
-                    All-Time Overview
-                  </span>
-                  <span className="text-[10px] text-muted-foreground">
-                    Historical metrics & trends
-                  </span>
-                </div>
-                <Badge variant="secondary" className="shrink-0 text-[9px] px-1.5 py-0.5 font-bold">
-                  All
-                </Badge>
-              </CardHeader>
-            </Card>
-
-            <Separator className="my-1" />
+              <ArrowLeftRight className="size-3" />
+              {compareMode ? "Cancel" : "Compare"}
+            </Button>
+          </div>
+          <div className="flex flex-col gap-2 max-h-[500px] overflow-y-auto pr-1">
+            {!compareMode && (
+              <>
+                {/* 1. All-Time Overview Card (Always First) */}
+                <Card
+                  onClick={() => setSelectedId("all-time")}
+                  className={cn(
+                    "cursor-pointer transition-all duration-200 border-l-[4px] hover:bg-muted/50 hover:translate-x-0.5",
+                    selectedId === "all-time"
+                      ? "border-l-blue-600 border-foreground bg-muted font-medium"
+                      : "border-l-zinc-300 border-border"
+                  )}
+                >
+                  <CardHeader className="p-3 flex flex-row items-center justify-between gap-2">
+                    <div className="flex flex-col gap-0.5 min-w-0">
+                      <span className="text-xs font-bold text-foreground flex items-center gap-1.5">
+                        <Globe className="size-3.5 text-blue-600 shrink-0" />
+                        All-Time Overview
+                      </span>
+                      <span className="text-[10px] text-muted-foreground">
+                        Historical metrics & trends
+                      </span>
+                    </div>
+                    <Badge variant="secondary" className="shrink-0 text-[9px] px-1.5 py-0.5 font-bold">
+                      All
+                    </Badge>
+                  </CardHeader>
+                </Card>
+                <Separator className="my-1" />
+              </>
+            )}
+            {compareMode && (
+              <p className="text-[10px] text-muted-foreground">
+                Select 2 periods to compare ({compareIds.length}/2 selected)
+              </p>
+            )}
 
             {/* 2. Monthly List */}
             {snapshots.map((s) => {
-              const isActive = s.id === selectedId;
+              const isActive = compareMode
+                ? compareIds.includes(s.id)
+                : s.id === selectedId;
               const sRev = Number(s.revenue) || 0;
               const sPool = Number(s.profitPool) || 0;
               const sIsProfitable = sPool > 0;
+              const compareIndex = compareIds.indexOf(s.id);
 
               return (
                 <Card
                   key={s.id}
-                  onClick={() => setSelectedId(s.id)}
+                  onClick={() =>
+                    compareMode
+                      ? toggleCompareSelection(s.id)
+                      : setSelectedId(s.id)
+                  }
                   className={cn(
                     "cursor-pointer transition-all duration-200 border-l-[4px] hover:bg-muted/50 hover:translate-x-0.5",
                     isActive
-                      ? "border-l-blue-600 border-foreground bg-muted font-medium"
+                      ? compareMode
+                        ? "border-l-blue-600 border-foreground bg-blue-50/50 dark:bg-blue-950/20 font-medium"
+                        : "border-l-blue-600 border-foreground bg-muted font-medium"
                       : sIsProfitable
                       ? "border-l-emerald-500 border-border"
                       : "border-l-red-500 border-border"
@@ -175,7 +218,12 @@ export function SnapshotsCockpit({ snapshots }: SnapshotsCockpitProps) {
                 >
                   <CardHeader className="p-3 flex flex-row items-center justify-between gap-2">
                     <div className="flex flex-col gap-0.5 min-w-0">
-                      <span className="text-xs font-semibold truncate text-foreground">
+                      <span className="text-xs font-semibold truncate text-foreground flex items-center gap-1.5">
+                        {compareMode && isActive && (
+                          <Badge variant="default" className="shrink-0 text-[8px] px-1 py-0 h-4">
+                            {compareIndex === 0 ? "A" : "B"}
+                          </Badge>
+                        )}
                         {fmtMonthYear(s.period)}
                       </span>
                       <span className="text-[10px] text-muted-foreground tabular-nums">
@@ -195,11 +243,10 @@ export function SnapshotsCockpit({ snapshots }: SnapshotsCockpitProps) {
             })}
           </div>
         </div>
-      </div>
-
-      {/* ── Right Panel (Details Cockpit) ─────────────────────────────────── */}
+      </div>        {/* ── Right Panel (Details Cockpit) ─────────────────────────────────── */}
       <div className="flex flex-col gap-6 lg:col-span-3">
-        {/* Cockpit Header */}
+        {/* Cockpit Header (hidden in compare mode) */}
+        {!compareMode && (
         <Card className="border-t-[4px] border-t-blue-600">
           <CardHeader className="pb-4">
             <div className="flex items-center gap-2 text-muted-foreground text-xs font-semibold uppercase tracking-wider">
@@ -210,12 +257,14 @@ export function SnapshotsCockpit({ snapshots }: SnapshotsCockpitProps) {
               {periodLabel}
             </h3>
             <p className="text-xs text-muted-foreground">
-              Calculated on a monthly basis. {isAllTime ? "Cumulative totals spanning all locked periods." : `Figures locked on ${fmtDate(selectedSnapshot!.createdAt)}.`}
+              Calculated on a monthly basis. {isAllTime ? "Cumulative totals spanning all locked periods." : selectedSnapshot ? `Figures locked on ${fmtDate(selectedSnapshot.createdAt)}.` : ''}
             </p>
           </CardHeader>
         </Card>
+        )}
 
-        {/* Level 1 KPI Strip */}
+        {/* Level 1 KPI Strip (hidden in compare mode) */}
+        {!compareMode && (
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
           {[
             {
@@ -259,8 +308,10 @@ export function SnapshotsCockpit({ snapshots }: SnapshotsCockpitProps) {
             </Card>
           ))}
         </div>
+        )}
 
-        {/* Level 1 Visual Split Bar */}
+        {/* Level 1 Visual Split Bar (hidden in compare mode) */}
+        {!compareMode && (
         <Card>
           <CardHeader className="pb-3">
             <CardTitle className="text-sm font-semibold flex items-center gap-2">
@@ -319,6 +370,7 @@ export function SnapshotsCockpit({ snapshots }: SnapshotsCockpitProps) {
             </div>
           </CardContent>
         </Card>
+        )}
 
         {/* ── New Component: All-Time Months Performance Chart ────────────── */}
         {isAllTime && (
@@ -409,6 +461,28 @@ export function SnapshotsCockpit({ snapshots }: SnapshotsCockpitProps) {
                   <span className="text-zinc-900 dark:text-zinc-100">Net Profits</span>
                 </div>
               </div>
+            </CardContent>
+          </Card>
+        )}
+        {/* ── Comparison Mode ───────────────────────────────────────────────── */}
+        {compareMode && compareIds.length === 2 && (
+          <SnapshotComparisonPanel
+            left={snapshots.find((s) => s.id === compareIds[0])!}
+            right={snapshots.find((s) => s.id === compareIds[1])!}
+            allSnapshots={snapshots}
+          />
+        )}
+
+        {/* ── Comparison mode: waiting for selection ──────────────────────────── */}
+        {compareMode && compareIds.length < 2 && (
+          <Card className="border-dashed border-2 border-border/50">
+            <CardContent className="flex flex-col items-center justify-center py-12 gap-3">
+              <div className="p-3 rounded-full bg-muted/50">
+                <ArrowLeftRight className="size-6 text-muted-foreground" />
+              </div>
+              <p className="text-sm text-muted-foreground text-center">
+                Select {compareIds.length === 0 ? "2 periods" : "1 more period"} from the sidebar to compare
+              </p>
             </CardContent>
           </Card>
         )}
