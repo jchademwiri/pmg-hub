@@ -169,6 +169,7 @@ const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f
 
 beforeEach(() => {
   vi.clearAllMocks()
+  process.env.BETTER_AUTH_URL = 'http://localhost:3000'
   capturedInsertValues = null
   mockDbInsert.mockResolvedValue(undefined)
   mockDbSelect.mockResolvedValue([])
@@ -306,7 +307,8 @@ describe('Property 2: Invitation creation round-trip', () => {
       fc.asyncProperty(
         zodValidEmailArb,
         fc.constantFrom(...validRoles),
-        async (email, role) => {
+        fc.string({ minLength: 1, maxLength: 100 }),
+        async (email, role, name) => {
           capturedInsertValues = null
           mockSession.mockResolvedValue(makeSession('super_admin'))
           mockDbSelect.mockResolvedValue([]) // no duplicate
@@ -314,7 +316,7 @@ describe('Property 2: Invitation creation round-trip', () => {
           mockResendSend.mockResolvedValue({ data: { id: 'email-id' }, error: null })
 
           const before = Date.now()
-          const fd = buildFormData({ email, role })
+          const fd = buildFormData({ name, email, role })
           const result = await inviteUser(fd)
           const after = Date.now()
 

@@ -251,7 +251,7 @@ describe('Billing Payments and Statements Module', () => {
       const page = await StatementsPage();
       render(page as React.ReactElement);
 
-      expect(screen.getByText('No client statements available yet. Statements are generated from invoices.')).toBeInTheDocument();
+      expect(screen.getByText('No client statements available yet.')).toBeInTheDocument();
     });
   });
 });

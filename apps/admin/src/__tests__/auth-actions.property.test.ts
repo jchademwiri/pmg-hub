@@ -185,6 +185,7 @@ const nonSuperAdminRoles = ['admin', 'viewer'] as const
 
 beforeEach(() => {
   vi.clearAllMocks()
+  process.env.BETTER_AUTH_URL = 'http://localhost:3000'
   // Default: no-op DB operations
   mockDbInsert.mockResolvedValue(undefined)
   mockDbSelect.mockResolvedValue([])
@@ -476,14 +477,15 @@ describe('Property 12: Resend errors never propagate as exceptions', () => {
         zodValidEmailArb,
         fc.constantFrom(...validRoles),
         fc.string({ minLength: 1, maxLength: 100 }),
-        async (email, role, errorMessage) => {
+        fc.string({ minLength: 1, maxLength: 100 }),
+        async (email, role, name, errorMessage) => {
           mockSession.mockResolvedValue(makeSession('super_admin'))
           mockDbSelect.mockResolvedValue([]) // no duplicate
           mockDbInsert.mockResolvedValue(undefined)
           // Resend returns an error object (not a throw)
           mockResendSend.mockResolvedValue({ data: null, error: { message: errorMessage } })
 
-          const fd = buildFormData({ email, role })
+          const fd = buildFormData({ name, email, role })
           const result = await inviteUser(fd)
 
           assertActionResult(result)

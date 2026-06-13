@@ -1,6 +1,17 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { NextRequest, NextResponse } from 'next/server'
 
+vi.mock('server-only', () => ({}))
+
+const mockGetSession = vi.fn()
+vi.mock('@/lib/auth', () => ({
+  auth: {
+    api: {
+      getSession: (...args: any[]) => mockGetSession(...args),
+    },
+  },
+}))
+
 // Mocks
 vi.mock('next/server', () => {
   return {
@@ -28,10 +39,7 @@ vi.mock('next/server', () => {
 
 describe('proxy() function in proxy.ts', () => {
   beforeEach(() => {
-    // Mock fetch for server-side session validation
-    vi.stubGlobal('fetch', vi.fn().mockResolvedValue(
-      new Response(JSON.stringify({ user: { id: '1', name: 'Test', email: 'test@test.com', isActive: true } }), { status: 200 })
-    ))
+    mockGetSession.mockResolvedValue({ user: { id: '1', name: 'Test', email: 'test@test.com', isActive: true } })
   })
 
   it('1. Request has __Secure-better-auth.session_token cookie → NextResponse.next()', async () => {

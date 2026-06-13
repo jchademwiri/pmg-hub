@@ -117,6 +117,7 @@ describe('Billing Invoices Module', () => {
     mockGetMinDateErrorMessage.mockReturnValue('Period is closed.');
 
     // Standard chainable mocks
+    mockDbExecute.mockResolvedValue({ rows: [{ exists: true }] });
     mockDbInsert.mockReturnValue({
       values: vi.fn().mockReturnValue({
         returning: vi.fn().mockResolvedValue([{ id: 'new-invoice-id' }]),
