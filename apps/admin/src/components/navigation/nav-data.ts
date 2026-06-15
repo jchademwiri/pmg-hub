@@ -13,7 +13,7 @@ import {
   LayoutDashboard, TrendingUp, TrendingDown, Tags, BookOpen,
   FileText, Receipt, ScrollText, Users, UserPlus, Building2,
   Camera, BarChart3, Settings, UserCog, PiggyBank,
-  Package, Shield, Database,
+  Package, Shield, Database, Wallet,
 } from 'lucide-react'
 import type { LucideIcon } from 'lucide-react'
 
@@ -63,6 +63,7 @@ export const GROUPS: NavGroup[] = [
       { title: 'Invoices',   url: '/billing/invoices',   icon: Receipt    },
       { title: 'Payments',   url: '/billing/payments',   icon: Banknote   },
       { title: 'Statements', url: '/billing/statements', icon: ScrollText },
+      { title: 'Credits',    url: '/billing/credits',    icon: Wallet     },
       { title: 'Items',      url: '/billing/items',      icon: Package    },
     ],
   },

@@ -28,6 +28,8 @@ vi.mock('@pmg/db', () => ({
   income: { id: 'income_id' },
   clients: { id: 'clients_id', name: 'name', businessName: 'businessName' },
   divisionBillingSettings: { divisionId: 'divisionId', paymentTermsDays: 'paymentTermsDays' },
+  creditNotes: { id: 'id' },
+  creditApplications: { id: 'id' },
   eq: vi.fn(),
   and: vi.fn(),
   getAllInvoices: vi.fn(),
@@ -37,6 +39,11 @@ vi.mock('@pmg/db', () => ({
     d.setDate(d.getDate() + days);
     return d.toISOString().split('T')[0];
   },
+}));
+
+vi.mock('@/app/actions/credit-management', () => ({
+  reverseCreditApplication: vi.fn().mockResolvedValue({}),
+  getClientCreditBalanceV2: vi.fn().mockResolvedValue(0),
 }));
 
 import { getAllInvoices, getNextDocumentNumber } from '@pmg/db';

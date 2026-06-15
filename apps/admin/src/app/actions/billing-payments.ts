@@ -242,6 +242,24 @@ export async function recordClientPayment(data: PaymentInput): Promise<{ error?:
       }
     }
 
+    // C. Check for overpayment and create credit note
+    const totalAllocated = data.allocations.reduce((sum, a) => sum + a.amount, 0);
+    const excessAmount = data.amount - totalAllocated;
+    if (excessAmount > 0) {
+      const { createCreditNote } = await import('./credit-management');
+      const creditNoteRes = await createCreditNote({
+        clientId: data.clientId,
+        divisionId: finalDivisionId,
+        type: 'overpayment',
+        amount: excessAmount,
+        reason: data.description ? `Overpayment from: ${data.description}` : 'Client payment overpayment',
+        originalPaymentId: incomeRow.id,
+      });
+      if (creditNoteRes.error) {
+        console.error('Failed to create credit note for overpayment:', creditNoteRes.error);
+      }
+    }
+
     // 4. Revalidate cache
     revalidatePath('/billing/invoices');
     revalidatePath('/billing/payments');

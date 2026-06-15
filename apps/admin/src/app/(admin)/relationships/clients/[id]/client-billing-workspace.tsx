@@ -57,7 +57,8 @@ import { calculateClientHealth, calculateAverageDaysToPay } from '@/lib/client-b
 import { formatZAR, fmtDate } from '@/lib/format';
 import { getSASTToday } from '@/lib/format';
 import { getDocumentLogoUrl } from '@/lib/document-logo';
-import { ChevronDown, ChevronUp, FileDown, Mail, Loader2, Eye, Plus, CheckCircle2, XCircle } from 'lucide-react';
+import { ChevronDown, ChevronUp, FileDown, Mail, Loader2, Eye, Plus, CheckCircle2, XCircle, Wallet, Clock, AlertCircle } from 'lucide-react';
+import { IssueCreditNoteDialog } from '@/components/billing/issue-credit-note-dialog';
 import { bulkIssueInvoices, bulkVoidInvoices, issueInvoice, voidInvoice } from '@/app/actions/billing-invoices';
 import { sendDocumentEmailAction } from '@/app/actions/email-delivery';
 import { updateQuotationStatus } from '@/app/actions/billing-quotes';
@@ -84,6 +85,7 @@ interface ClientBillingWorkspaceProps {
   currentFY: number;
   divSettings: any;
   updateClientAction: any;
+  creditSummary?: any;
 }
 
 interface BulkLogEntry {
@@ -103,6 +105,7 @@ export function ClientBillingWorkspace({
   currentFY,
   divSettings,
   updateClientAction,
+  creditSummary,
 }: ClientBillingWorkspaceProps) {
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -153,6 +156,21 @@ export function ClientBillingWorkspace({
   // Active Tab
   const [activeTab, setActiveTab] = useState<string>(searchParams.get('tab') || 'invoices');
   const [metricFilter, setMetricFilter] = useState<'all' | 'paid' | 'outstanding' | 'overdue'>('all');
+  const [showIssueCreditDialog, setShowIssueCreditDialog] = useState(false);
+
+  const clientDivisions = React.useMemo(() => {
+    const map = new Map<string, string>();
+    for (const inv of invoices) {
+      if (inv.divisionId && inv.divisionName) map.set(inv.divisionId, inv.divisionName);
+    }
+    for (const q of quotes) {
+      if (q.divisionId && q.divisionName) map.set(q.divisionId, q.divisionName);
+    }
+    if (map.size === 0 && divSettings?.divisionId) {
+      map.set(divSettings.divisionId, divSettings.salesRepName || 'Primary Division');
+    }
+    return Array.from(map.entries()).map(([id, name]) => ({ id, name }));
+  }, [invoices, quotes, divSettings]);
 
   const activeTabFromUrl = searchParams.get('tab') || 'invoices';
 
@@ -175,7 +193,7 @@ export function ClientBillingWorkspace({
       } else if (activeTabFromUrl === 'statement') {
         setSelectedDocType('statement');
         setSelectedDocId(null);
-      } else if (activeTabFromUrl === 'analytics') {
+      } else if (activeTabFromUrl === 'analytics' || activeTabFromUrl === 'credits') {
         setSelectedInvoiceIds(new Set());
         setSelectedQuoteIds(new Set());
         setIsPreviewOpen(false);
@@ -994,6 +1012,7 @@ export function ClientBillingWorkspace({
             <TabsTrigger value="quotes" className="bg-transparent border-b-2 border-transparent data-[state=active]:border-amber-500 rounded-none shadow-none px-4 py-2 text-sm font-medium">Quotations</TabsTrigger>
             <TabsTrigger value="payments" className="bg-transparent border-b-2 border-transparent data-[state=active]:border-amber-500 rounded-none shadow-none px-4 py-2 text-sm font-medium">Payments</TabsTrigger>
             <TabsTrigger value="statement" className="bg-transparent border-b-2 border-transparent data-[state=active]:border-amber-500 rounded-none shadow-none px-4 py-2 text-sm font-medium">Statement</TabsTrigger>
+            <TabsTrigger value="credits" className="bg-transparent border-b-2 border-transparent data-[state=active]:border-amber-500 rounded-none shadow-none px-4 py-2 text-sm font-medium">Credits</TabsTrigger>
             <TabsTrigger value="analytics" className="bg-transparent border-b-2 border-transparent data-[state=active]:border-amber-500 rounded-none shadow-none px-4 py-2 text-sm font-medium">
               Analytics
             </TabsTrigger>
@@ -1006,7 +1025,7 @@ export function ClientBillingWorkspace({
         <div className="flex flex-col lg:flex-row gap-4 items-start w-full">
 
           {/* Document list — 40% on lg+, full width on mobile */}
-          <div className={cn("w-full shrink-0", activeTab !== 'analytics' && "lg:w-[40%]")}>
+          <div className={cn("w-full shrink-0", !['analytics', 'credits'].includes(activeTab) && "lg:w-[40%]")}>
             <Card className="w-full shadow-sm border-muted-foreground/10 bg-card overflow-hidden">
             <CardHeader className="p-4 border-b flex flex-row items-center justify-between">
               <div>
@@ -1299,12 +1318,130 @@ export function ClientBillingWorkspace({
                   payments={payments.data}
                 />
               </TabsContent>
+
+              {/* CREDITS TAB */}
+              <TabsContent value="credits" className="m-0 p-6 flex flex-col gap-6">
+                <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+                  <div className="flex flex-col gap-1">
+                    <h3 className="text-base font-semibold">Client Credits</h3>
+                    <p className="text-xs text-muted-foreground">Manage credit notes and unallocated overpayments for this client</p>
+                  </div>
+                  <Button size="sm" onClick={() => setShowIssueCreditDialog(true)}>
+                    <Plus className="size-4 mr-1" />
+                    Issue Credit Note
+                  </Button>
+                </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                  <div className="flex flex-col gap-1 p-4 rounded-lg border bg-muted/20">
+                    <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Total Issued</span>
+                    <span className="text-xl font-bold tabular-nums">
+                      {formatZAR(
+                        creditSummary?.creditNotes.reduce((sum: number, n: any) => sum + n.amount, 0) ?? 0
+                      )}
+                    </span>
+                  </div>
+                  <div className="flex flex-col gap-1 p-4 rounded-lg border bg-emerald-50/50 border-emerald-100 dark:bg-emerald-950/20 dark:border-emerald-800/20">
+                    <span className="text-xs font-semibold text-emerald-700 dark:text-emerald-400 uppercase tracking-wider">Active Credits</span>
+                    <span className="text-xl font-bold text-emerald-600 dark:text-emerald-400 tabular-nums">
+                      {formatZAR(creditSummary?.activeCredit ?? 0)}
+                    </span>
+                  </div>
+                  <div className="flex flex-col gap-1 p-4 rounded-lg border bg-amber-50/50 border-amber-100 dark:bg-amber-950/20 dark:border-amber-800/20">
+                    <span className="text-xs font-semibold text-amber-700 dark:text-amber-400 uppercase tracking-wider">Expired Credits</span>
+                    <span className="text-xl font-bold text-amber-600 dark:text-amber-400 tabular-nums">
+                      {formatZAR(creditSummary?.expiredCredit ?? 0)}
+                    </span>
+                  </div>
+                </div>
+
+                <div className="border rounded-md">
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead>Document #</TableHead>
+                        <TableHead>Type</TableHead>
+                        <TableHead>Reason</TableHead>
+                        <TableHead className="text-right">Amount</TableHead>
+                        <TableHead className="text-right">Remaining</TableHead>
+                        <TableHead>Status</TableHead>
+                        <TableHead>Date</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {!creditSummary?.creditNotes || creditSummary.creditNotes.length === 0 ? (
+                        <TableRow>
+                          <TableCell colSpan={7} className="h-24 text-center text-muted-foreground text-xs">
+                            No credit notes found for this client.
+                          </TableCell>
+                        </TableRow>
+                      ) : (
+                        creditSummary.creditNotes.map((note: any) => (
+                          <TableRow key={note.id} className="hover:bg-muted/40 transition-colors">
+                            <TableCell className="font-medium text-xs">{note.documentNumber}</TableCell>
+                            <TableCell className="text-xs">
+                              {note.type === 'overpayment' && 'Overpayment'}
+                              {note.type === 'manual_adjustment' && 'Manual Adjustment'}
+                              {note.type === 'credit_note' && 'Credit Note'}
+                              {note.type === 'promotional' && 'Promotional'}
+                              {note.type === 'refund_reversal' && 'Refund Reversal'}
+                            </TableCell>
+                            <TableCell className="text-xs truncate max-w-[200px]" title={note.reason ?? ''}>
+                              {note.reason ?? '-'}
+                            </TableCell>
+                            <TableCell className="text-right tabular-nums font-semibold text-xs">
+                              {formatZAR(note.amount)}
+                            </TableCell>
+                            <TableCell className="text-right tabular-nums text-xs">
+                              {note.amountRemaining > 0 ? (
+                                <span className="font-bold text-emerald-600">{formatZAR(note.amountRemaining)}</span>
+                              ) : (
+                                <span className="text-muted-foreground">-</span>
+                              )}
+                            </TableCell>
+                            <TableCell>
+                              {note.status === 'active' && (
+                                <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-medium bg-emerald-50 text-emerald-700 dark:bg-emerald-950/30 dark:text-emerald-400">
+                                  <CheckCircle2 className="size-3" /> Active
+                                </span>
+                              )}
+                              {note.status === 'partially_applied' && (
+                                <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-medium bg-blue-50 text-blue-700 dark:bg-blue-950/30 dark:text-blue-400">
+                                  <Clock className="size-3" /> Partial
+                                </span>
+                              )}
+                              {note.status === 'fully_applied' && (
+                                <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-medium bg-zinc-100 text-zinc-600 dark:bg-zinc-800 dark:text-zinc-400">
+                                  Used
+                                </span>
+                              )}
+                              {note.status === 'expired' && (
+                                <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-medium bg-amber-50 text-amber-700 dark:bg-amber-950/30 dark:text-amber-400">
+                                  <AlertCircle className="size-3" /> Expired
+                                </span>
+                              )}
+                              {note.status === 'void' && (
+                                <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-medium bg-red-50 text-red-600 dark:bg-red-950/30 dark:text-red-400">
+                                  Void
+                                </span>
+                              )}
+                            </TableCell>
+                            <TableCell className="text-xs text-muted-foreground">
+                              {fmtDate(note.createdAt)}
+                            </TableCell>
+                          </TableRow>
+                        ))
+                      )}
+                    </TableBody>
+                  </Table>
+                </div>
+              </TabsContent>
             </CardContent>
           </Card>
           </div>
 
           {/* Preview panel — 60% on lg+, hidden on mobile (uses Dialog instead) */}
-          {activeTab !== 'analytics' && (
+          {!['analytics', 'credits'].includes(activeTab) && (
             <div
               ref={previewPanelRef}
               className="hidden lg:flex lg:flex-col lg:w-[60%] sticky top-[3.25rem] max-h-[calc(100vh-4rem)] overflow-y-auto w-full"
@@ -1671,6 +1808,20 @@ export function ClientBillingWorkspace({
           </div>
         </DialogContent>
       </Dialog>
+
+      {/* Issue Credit Note Dialog */}
+      <IssueCreditNoteDialog
+        open={showIssueCreditDialog}
+        onOpenChange={setShowIssueCreditDialog}
+        clients={[
+          {
+            id: client.id,
+            name: client.name,
+            businessName: client.businessName,
+          },
+        ]}
+        divisions={clientDivisions}
+      />
     </div>
   );
 }
