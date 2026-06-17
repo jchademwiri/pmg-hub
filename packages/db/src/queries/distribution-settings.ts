@@ -1,6 +1,6 @@
 import { db } from "../client";
 import { distributionSettings } from "../schema/distribution-settings";
-import { eq, and, lte, or, isNull, desc, sql } from "drizzle-orm";
+import { eq, and, desc, sql } from "drizzle-orm";
 
 /**
  * Rate keys that are managed in the distribution_settings table.
@@ -45,8 +45,9 @@ export async function getActiveRates(
       )
     )
     .orderBy(desc(distributionSettings.effectiveFrom));
-  } catch {
+  } catch (e) {
     // Table may not exist yet (e.g. before migration runs on Vercel) — fall back to defaults
+    console.warn('[distribution-settings] Falling back to default rates:', e);
     return {
       pmg_share: getDefaultRate('pmg_share'),
       salary: getDefaultRate('salary'),
@@ -105,43 +106,60 @@ export async function getAllDistributionSettings() {
 export async function getCurrentRates(): Promise<
   { rateKey: string; rateValue: number; effectiveFrom: string; description: string | null }[]
 > {
-  // For each rate key, get the most recent active rate
-  const results = await Promise.all(
-    RATE_KEYS.map(async (key) => {
-      const [row] = await db
-        .select({
-          rateKey: distributionSettings.rateKey,
-          rateValue: distributionSettings.rateValue,
-          effectiveFrom: distributionSettings.effectiveFrom,
-          description: distributionSettings.description,
-        })
-        .from(distributionSettings)
-        .where(
-          and(
-            eq(distributionSettings.rateKey, key),
-            eq(distributionSettings.isActive, true)
-          )
-        )
-        .orderBy(desc(distributionSettings.effectiveFrom))
-        .limit(1);
+  // Single query: fetch all active rates, grouped by rateKey
+  let rows;
+  try {
+    rows = await db
+      .select({
+        rateKey: distributionSettings.rateKey,
+        rateValue: distributionSettings.rateValue,
+        effectiveFrom: distributionSettings.effectiveFrom,
+        description: distributionSettings.description,
+      })
+      .from(distributionSettings)
+      .where(eq(distributionSettings.isActive, true))
+      .orderBy(desc(distributionSettings.effectiveFrom));
+  } catch (e) {
+    // Table may not exist yet — return defaults
+    console.warn('[distribution-settings] Falling back to default rates for getCurrentRates:', e);
+    return RATE_KEYS.map((key) => ({
+      rateKey: key,
+      rateValue: getDefaultRate(key),
+      effectiveFrom: '2026-03-01',
+      description: 'System default',
+    }));
+  }
 
-      return row ?? {
+  // Take the most recent rate for each key (first row per key after ORDER BY desc)
+  const seen = new Set<string>();
+  const results: { rateKey: string; rateValue: number; effectiveFrom: string; description: string | null }[] = [];
+
+  for (const row of rows) {
+    if (seen.has(row.rateKey)) continue;
+    seen.add(row.rateKey);
+    results.push({
+      rateKey: row.rateKey,
+      rateValue: parseFloat(row.rateValue),
+      effectiveFrom: row.effectiveFrom instanceof Date
+        ? row.effectiveFrom.toISOString().slice(0, 10)
+        : String(row.effectiveFrom),
+      description: row.description,
+    });
+  }
+
+  // Fill in any missing keys with defaults
+  for (const key of RATE_KEYS) {
+    if (!seen.has(key)) {
+      results.push({
         rateKey: key,
-        rateValue: String(getDefaultRate(key)),
-        effectiveFrom: new Date('2026-03-01'),
+        rateValue: getDefaultRate(key),
+        effectiveFrom: '2026-03-01',
         description: 'System default',
-      };
-    })
-  );
+      });
+    }
+  }
 
-  return results.map((r) => ({
-    rateKey: r.rateKey,
-    rateValue: parseFloat(r.rateValue),
-    effectiveFrom: r.effectiveFrom instanceof Date
-      ? r.effectiveFrom.toISOString().slice(0, 10)
-      : String(r.effectiveFrom),
-    description: r.description,
-  }));
+  return results;
 }
 
 /**

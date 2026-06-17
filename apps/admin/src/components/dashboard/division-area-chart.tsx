@@ -1,213 +1,175 @@
 'use client'
 
-import { useState, useMemo } from 'react'
+import { useMemo } from 'react'
 import {
-  AreaChart, Area, XAxis, YAxis, CartesianGrid,
-  ResponsiveContainer, Tooltip, Legend,
+  Bar,
+  BarChart,
+  CartesianGrid,
+  ResponsiveContainer,
+  Tooltip,
+  XAxis,
+  YAxis,
 } from 'recharts'
-import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card'
-import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs'
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { formatZAR, fmtMonthYear } from '@/lib/format'
-import type { DivisionSeriesChart } from '@/lib/financial'
-
-type RangeKey = 'current' | 'prev' | 'last3' | 'last6' | 'ytd'
-
-const RANGE_OPTIONS: { key: RangeKey; label: string }[] = [
-  { key: 'current', label: 'This Month' },
-  { key: 'prev',    label: 'Prev Month' },
-  { key: 'last3',   label: 'Last 3 Months' },
-  { key: 'last6',   label: 'Last 6 Months' },
-  { key: 'ytd',     label: 'Year to Date' },
-]
-
-// Tailwind CSS variables mapped to chart colours
-const DIVISION_COLORS = [
-  'var(--chart-1)',
-  'var(--chart-2)',
-  'var(--chart-3)',
-  'var(--chart-4)',
-  'var(--chart-5)',
-]
+import type { MonthlyBudgetChartRow } from '@/lib/financial'
 
 type Props = {
-  seriesData: {
-    current: DivisionSeriesChart
-    prev:    DivisionSeriesChart
-    last3:   DivisionSeriesChart
-    last6:   DivisionSeriesChart
-    ytd:     DivisionSeriesChart
-  }
+  data: MonthlyBudgetChartRow[]
 }
 
-function CustomTooltip({ active, payload, label }: any) {
+const SERIES = [
+  { key: 'revenue', label: 'Revenue', color: 'oklch(0.72 0.16 150)' },
+  { key: 'invoiced', label: 'Invoiced', color: 'var(--chart-1)' },
+  { key: 'expenses', label: 'Expenses', color: 'var(--chart-expense)' },
+] as const
+
+type TooltipPayload = {
+  dataKey: string
+  name?: string
+  value: number | string
+  color?: string
+}
+
+function formatYAxis(value: number) {
+  if (Math.abs(value) >= 1000) return `R${Math.round(value / 1000)}k`
+  return `R${value}`
+}
+
+function CustomTooltip({
+  active,
+  payload,
+  label,
+}: {
+  active?: boolean
+  payload?: TooltipPayload[]
+  label?: string
+}) {
   if (!active || !payload?.length) return null
-  const total = payload.reduce((sum: number, p: any) => sum + (Number(p.value) || 0), 0)
+
   return (
-    <div className="rounded-lg border border-border bg-card px-3 py-2.5 shadow-xl text-xs flex flex-col gap-1.5 min-w-44">
-      <p className="text-muted-foreground font-medium border-b border-border pb-1.5">{fmtMonthYear(label)}</p>
-      {[...payload].reverse().map((p: any) => (
-        <div key={p.dataKey} className="flex items-center justify-between gap-4">
-          <span className="flex items-center gap-1.5">
-            <span className="inline-block h-2 w-2 rounded-sm" style={{ background: p.color }} />
-            <span className="text-muted-foreground truncate max-w-28">{p.dataKey}</span>
-          </span>
-          <span className="font-semibold tabular-nums text-foreground">
-            {formatZAR(Number(p.value))}
-          </span>
-        </div>
-      ))}
-      <div className="border-t border-border pt-1.5 flex justify-between">
-        <span className="text-muted-foreground">Total</span>
-        <span className="font-bold text-foreground tabular-nums">{formatZAR(total)}</span>
+    <div className="rounded-lg border border-border bg-card px-3 py-2.5 text-xs shadow-xl">
+      <p className="mb-2 border-b border-border pb-1.5 font-medium text-muted-foreground">
+        {fmtMonthYear(label)}
+      </p>
+      <div className="flex min-w-40 flex-col gap-1.5">
+        {payload.map((entry) => (
+          <div key={entry.dataKey} className="flex items-center justify-between gap-4">
+            <span className="flex items-center gap-1.5 text-muted-foreground">
+              <span
+                className="inline-block size-2 rounded-sm"
+                style={{ background: entry.color }}
+              />
+              {entry.name ?? entry.dataKey}
+            </span>
+            <span className="font-semibold tabular-nums text-foreground">
+              {formatZAR(Number(entry.value))}
+            </span>
+          </div>
+        ))}
       </div>
     </div>
   )
 }
 
-function CustomLegend({ payload }: any) {
-  if (!payload?.length) return null
-  return (
-    <div className="flex flex-wrap items-center justify-center gap-4 pt-2">
-      {payload.map((entry: any) => (
-        <span key={entry.value} className="flex items-center gap-1.5 text-xs text-muted-foreground">
-          <span
-            className="inline-block h-2.5 w-2.5 rounded-sm"
-            style={{ background: entry.color }}
-          />
-          {entry.value}
-        </span>
-      ))}
-    </div>
+export function DivisionAreaChart({ data }: Props) {
+  const totals = useMemo(
+    () =>
+      data.reduce(
+        (acc, row) => ({
+          revenue: acc.revenue + row.revenue,
+          invoiced: acc.invoiced + row.invoiced,
+          expenses: acc.expenses + row.expenses,
+        }),
+        { revenue: 0, invoiced: 0, expenses: 0 },
+      ),
+    [data],
   )
-}
 
-export function DivisionAreaChart({ seriesData }: Props) {
-  const [activeRange, setActiveRange] = useState<RangeKey>('last6')
-
-  const { series, divisions } = seriesData[activeRange]
-
-  // For single-month view: show day-of-month or just the single bar
-  const isSingleMonth = activeRange === 'current'
-
-  // Calculate totals per division for the selected period
-  const divisionTotals = useMemo(() => {
-    const totals: Record<string, number> = {}
-    for (const row of series) {
-      for (const div of divisions) {
-        totals[div] = (totals[div] ?? 0) + (Number(row[div]) || 0)
-      }
-    }
-    return totals
-  }, [series, divisions])
-
-  const grandTotal = Object.values(divisionTotals).reduce((a, b) => a + b, 0)
+  const hasData = data.some((row) => row.revenue > 0 || row.invoiced > 0 || row.expenses > 0)
 
   return (
     <Card className="rounded-xl border border-border bg-card shadow-none">
-      <CardHeader className="pb-3">
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-          <div>
-            <CardTitle className="text-card-foreground text-sm font-medium">
-              Revenue by Division
-            </CardTitle>
-            {grandTotal > 0 && (
-              <p className="text-muted-foreground text-xs mt-0.5">
-                Total: <span className="text-foreground font-semibold tabular-nums">{formatZAR(grandTotal)}</span>
-              </p>
-            )}
-          </div>
-
-          <Tabs value={activeRange} onValueChange={(v) => setActiveRange(v as RangeKey)}>
-            <TabsList className="self-start sm:self-auto">
-              {RANGE_OPTIONS.map((opt) => (
-                <TabsTrigger key={opt.key} value={opt.key} className="text-xs">
-                  {opt.label}
-                </TabsTrigger>
-              ))}
-            </TabsList>
-          </Tabs>
+      <CardHeader className="border-b border-border/50 pb-4">
+        <div className="flex items-center justify-between gap-3">
+          <CardTitle className="text-sm font-medium text-card-foreground">
+            Revenue, Invoiced, and Expenses
+          </CardTitle>
+          <span className="text-xs text-muted-foreground">This Fiscal Year</span>
         </div>
       </CardHeader>
 
-      <CardContent className="pt-0">
-        {series.length === 0 ? (
-          <div className="flex items-center justify-center h-52 text-muted-foreground/50 text-xs">
-            No income data for this period.
+      <CardContent className="pt-5">
+        {!hasData ? (
+          <div className="flex h-64 items-center justify-center text-xs text-muted-foreground/50">
+            No revenue, invoiced, or expense data for this fiscal year.
           </div>
         ) : (
-          <>
-            <ResponsiveContainer width="100%" height={220}>
-              <AreaChart
-                data={series}
-                margin={{ top: 4, right: 4, left: 0, bottom: 0 }}
-              >
-                <defs>
-                  {divisions.map((div, i) => (
-                    <linearGradient key={div} id={`divGrad${i}`} x1="0" y1="0" x2="0" y2="1">
-                      <stop offset="5%"  stopColor={DIVISION_COLORS[i % 5]} stopOpacity={0.3} />
-                      <stop offset="95%" stopColor={DIVISION_COLORS[i % 5]} stopOpacity={0.05} />
-                    </linearGradient>
-                  ))}
-                </defs>
-                <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border) / 0.4)" vertical={false} />
-                <XAxis
-                  dataKey="month"
-                  tickFormatter={(v) => fmtMonthYear(v, { short: true })}
-                  tick={{ fill: 'var(--muted-foreground)', fontSize: 11 }}
-                  axisLine={false}
-                  tickLine={false}
-                  tickMargin={8}
-                />
-                <YAxis
-                  tickFormatter={(v) => `R${(v / 1000).toFixed(0)}k`}
-                  tick={{ fill: 'var(--muted-foreground)', fontSize: 11 }}
-                  axisLine={false}
-                  tickLine={false}
-                  width={52}
-                />
-                <Tooltip content={<CustomTooltip />} cursor={{ stroke: 'var(--border)', strokeWidth: 1 }} />
-                <Legend content={<CustomLegend />} />
-                {divisions.map((div, i) => (
-                  <Area
-                    key={div}
-                    type="monotone"
-                    dataKey={div}
-                    stackId="divisions"
-                    stroke={DIVISION_COLORS[i % 5]}
-                    strokeWidth={1.5}
-                    fill={`url(#divGrad${i})`}
-                    activeDot={{ r: 4, strokeWidth: 0, fill: DIVISION_COLORS[i % 5] }}
+          <div className="grid gap-5 lg:grid-cols-[minmax(0,1fr)_180px]">
+            <div className="min-w-0 rounded-md border border-border bg-background p-4">
+              <ResponsiveContainer width="100%" height={230}>
+                <BarChart data={data} margin={{ top: 4, right: 12, left: 0, bottom: 0 }}>
+                  <CartesianGrid
+                    strokeDasharray="2 4"
+                    stroke="hsl(var(--border) / 0.55)"
+                    vertical={false}
                   />
-                ))}
-              </AreaChart>
-            </ResponsiveContainer>
+                  <XAxis
+                    dataKey="month"
+                    tickFormatter={(value) => fmtMonthYear(value, { short: true })}
+                    tick={{ fill: 'var(--muted-foreground)', fontSize: 11 }}
+                    axisLine={false}
+                    tickLine={false}
+                    tickMargin={8}
+                  />
+                  <YAxis
+                    tickFormatter={(value) => formatYAxis(Number(value))}
+                    tick={{ fill: 'var(--muted-foreground)', fontSize: 11 }}
+                    axisLine={false}
+                    tickLine={false}
+                    width={46}
+                  />
+                  <Tooltip content={<CustomTooltip />} cursor={{ fill: 'hsl(var(--muted) / 0.35)' }} />
+                  {SERIES.map((item) => (
+                    <Bar
+                      key={item.key}
+                      dataKey={item.key}
+                      name={item.label}
+                      fill={item.color}
+                      radius={[3, 3, 0, 0]}
+                      maxBarSize={18}
+                    />
+                  ))}
+                </BarChart>
+              </ResponsiveContainer>
+            </div>
 
-            {/* Division summary pills below chart */}
-            {divisions.length > 0 && grandTotal > 0 && (
-              <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 mt-3 pt-3 border-t border-border">
-                {divisions.map((div, i) => {
-                  const total = divisionTotals[div] ?? 0
-                  const pct   = grandTotal > 0 ? Math.round((total / grandTotal) * 100) : 0
-                  return (
-                    <div key={div} className="flex items-center gap-2 px-3 py-2 rounded-lg bg-muted/30 border border-border/50">
-                      <span
-                        className="inline-block h-2.5 w-2.5 rounded-sm flex-shrink-0"
-                        style={{ background: DIVISION_COLORS[i % 5] }}
-                      />
-                      <div className="min-w-0 flex-1">
-                        <p className="text-xs text-muted-foreground truncate">{div}</p>
-                        <p className="text-xs font-semibold text-foreground tabular-nums">
-                          {formatZAR(total)}
-                          <span className="text-muted-foreground/60 font-normal ml-1">({pct}%)</span>
-                        </p>
-                      </div>
-                    </div>
-                  )
-                })}
+            <div className="flex flex-col justify-center gap-6 text-right">
+              <div>
+                <p className="text-xs font-medium text-[color:oklch(0.72_0.16_150)]">Total Revenue</p>
+                <p className="mt-1 text-xl font-semibold tabular-nums text-foreground">
+                  {formatZAR(totals.revenue)}
+                </p>
               </div>
-            )}
-          </>
+              <div>
+                <p className="text-xs font-medium text-[color:var(--chart-1)]">Total Invoiced</p>
+                <p className="mt-1 text-xl font-semibold tabular-nums text-foreground">
+                  {formatZAR(totals.invoiced)}
+                </p>
+              </div>
+              <div>
+                <p className="text-xs font-medium text-[color:var(--chart-expense)]">Total Expenses</p>
+                <p className="mt-1 text-xl font-semibold tabular-nums text-foreground">
+                  {formatZAR(totals.expenses)}
+                </p>
+              </div>
+            </div>
+          </div>
         )}
+
+        <p className="mt-5 text-xs text-muted-foreground">
+          Revenue is payments received. Invoiced is client-facing invoice totals. Expenses are recorded expenses.
+        </p>
       </CardContent>
     </Card>
   )

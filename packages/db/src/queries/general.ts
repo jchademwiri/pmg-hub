@@ -243,8 +243,8 @@ export async function getExpensesByCategoryForYear(
 }
 
 /**
- * Returns the union of distinct financial years from income.date and
- * expenses.date, sorted descending.
+ * Returns the union of distinct financial years from income.date,
+ * expenses.date, and invoice dates, sorted descending.
  */
 export async function getDistinctYears(): Promise<number[]> {
   const result = await db.execute(sql`
@@ -252,6 +252,8 @@ export async function getDistinctYears(): Promise<number[]> {
       SELECT DISTINCT EXTRACT(YEAR FROM (date - INTERVAL '2 months'))::integer AS year FROM income
       UNION
       SELECT DISTINCT EXTRACT(YEAR FROM (date - INTERVAL '2 months'))::integer AS year FROM expenses
+      UNION
+      SELECT DISTINCT EXTRACT(YEAR FROM (invoice_date - INTERVAL '2 months'))::integer AS year FROM invoices
     ) combined
     ORDER BY year DESC
   `);
@@ -288,6 +290,40 @@ export async function getMonthlyFinancialsForYear(
     month: r.month,
     revenue: Number(r.revenue),
     expenses: Number(r.expenses),
+  }));
+}
+
+/**
+ * Returns monthly received income and client-facing invoice totals for the
+ * given financial year, ordered by month ascending. Month format is 'YYYY-MM'.
+ */
+export async function getMonthlyRevenueVsInvoicedForYear(
+  year: number,
+): Promise<{ month: string; received: number; invoiced: number }[]> {
+  const result = await db.execute(sql`
+    WITH received AS (
+      SELECT TO_CHAR(date, 'YYYY-MM') AS month, COALESCE(SUM(amount), 0) AS received
+      FROM income
+      WHERE EXTRACT(YEAR FROM (date - INTERVAL '2 months')) = ${year}
+      GROUP BY TO_CHAR(date, 'YYYY-MM')
+    ),
+    invoiced AS (
+      SELECT TO_CHAR(invoice_date, 'YYYY-MM') AS month, COALESCE(SUM(total), 0) AS invoiced
+      FROM invoices
+      WHERE EXTRACT(YEAR FROM (invoice_date - INTERVAL '2 months')) = ${year}
+        AND status IN ('issued', 'partially_paid', 'paid', 'overdue')
+      GROUP BY TO_CHAR(invoice_date, 'YYYY-MM')
+    )
+    SELECT COALESCE(received.month, invoiced.month) AS month,
+           COALESCE(received.received, 0) AS received,
+           COALESCE(invoiced.invoiced, 0) AS invoiced
+    FROM received FULL OUTER JOIN invoiced ON received.month = invoiced.month
+    ORDER BY 1 ASC
+  `);
+  return (result.rows as { month: string; received: string; invoiced: string }[]).map((r) => ({
+    month: r.month,
+    received: Number(r.received),
+    invoiced: Number(r.invoiced),
   }));
 }
 

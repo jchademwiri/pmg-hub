@@ -1,6 +1,5 @@
 import type { Metadata } from 'next';
 import {
-  getFinancialSummary,
   getCurrentMonthSummary,
   getPreviousMonthSummary,
   getYTDSummary,
@@ -8,7 +7,7 @@ import {
   getDivisionRevenue,
   getLeadCounts,
   getMonthlyFinancialsSeries,
-  getAllDivisionSeriesData,
+  getBudgetChartSeriesForYear,
   getMoMChartData,
   getExpensesByDivision,
   getCurrentMonthLabel,
@@ -24,6 +23,7 @@ export const metadata: Metadata = { title: 'Dashboard' };
 
 export default async function DashboardPage() {
   const { year, month, day: dayOfMonth } = getSASTParts();
+  const fiscalYear = month < 2 ? year - 1 : year;
 
   // Close Month button is only shown between the 1st and 5th of the month
   const showCloseMonthButton = dayOfMonth >= 1 && dayOfMonth <= 5;
@@ -41,7 +41,7 @@ export default async function DashboardPage() {
     leads,
     monthlySeries,
     agingReport,
-    divisionSeriesData,
+    budgetChartSeries,
     momData,
     expensesByDivision,
     currentPeriodSnapshot,
@@ -54,7 +54,7 @@ export default async function DashboardPage() {
     getLeadCounts(),
     getMonthlyFinancialsSeries(),
     getAgingReport(),
-    getAllDivisionSeriesData(),
+    getBudgetChartSeriesForYear(fiscalYear),
     getMoMChartData(),
     getExpensesByDivision(),
     getSnapshotByPeriod(periodToClose),
@@ -98,7 +98,7 @@ export default async function DashboardPage() {
       monthlySeries={monthlySeries}
       sparklineData={monthlySeries.slice(-6)}
       agingReport={agingReport}
-      divisionSeriesData={divisionSeriesData}
+      budgetChartSeries={budgetChartSeries}
       expensesByDivision={expensesByDivision}
       // Snapshot
       currentPeriod={periodToClose}

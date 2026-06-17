@@ -13,11 +13,11 @@ import { ReportCommentary } from './report-commentary'
 import { FinancialDrilldownSheet } from '@/components/insights/financial-drilldown-sheet'
 import type { DrilldownType } from '@/app/actions/drilldown'
 import { TrendingUp, DollarSign, Receipt, PiggyBank } from 'lucide-react'
-import type { MoMSnapshot, DivisionSeriesChart, ProfitPoolRow, MonthlyFinancials, BucketBalances } from '@/lib/financial'
+import type { MoMSnapshot, ProfitPoolRow, MonthlyFinancials, MonthlyBudgetChartRow, BucketBalances } from '@/lib/financial'
 
 interface ReportsTabsProps {
   momData: MoMSnapshot[]
-  divisionSeries: DivisionSeriesChart
+  budgetChartSeries: MonthlyBudgetChartRow[]
   expensesByCategory: { category: string; total: number }[]
   profitPoolSeries: ProfitPoolRow[]
   monthlyFinancials: MonthlyFinancials[]
@@ -30,7 +30,7 @@ interface ReportsTabsProps {
 
 export function ReportsTabs({
   momData,
-  divisionSeries,
+  budgetChartSeries,
   expensesByCategory,
   profitPoolSeries,
   monthlyFinancials,
@@ -136,8 +136,7 @@ export function ReportsTabs({
       <TabsContent value="revenue">
         <div className="grid grid-cols-1 gap-6">
           <RevenueByDivisionChart
-            series={divisionSeries.series}
-            divisions={divisionSeries.divisions}
+            data={budgetChartSeries}
           />
         </div>
       </TabsContent>
