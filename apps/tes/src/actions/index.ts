@@ -2,7 +2,7 @@ import { defineAction } from 'astro:actions';
 import { z } from 'astro:schema';
 import { getDb, leads, divisions, bridgeDatabaseEnv } from '@pmg/db';
 import { eq } from '@pmg/db';
-import { checkBotProtection } from '@pmg/utils';
+import { checkBotProtection } from '@pmg/utils/bot-protection';
 import {
   sendEmail,
   AdminNewLeadEmail,
