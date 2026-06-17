@@ -70,7 +70,7 @@ export function AccountCard({
         <div className="flex items-center justify-between">
           <CardTitle className="text-sm font-medium text-muted-foreground">{label}</CardTitle>
           <Link
-            href={`/accounts/${accountKey}`}
+            href={`/finance/distributions?tab=activity`}
             className="flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground transition-colors"
           >
             <History className="h-3.5 w-3.5" />

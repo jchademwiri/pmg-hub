@@ -107,7 +107,7 @@ import {
   updateLedgerEntry,
   deleteLedgerEntry
 } from '@/app/actions/ledger';
-import LedgerPage from '@/app/(admin)/finance/ledger/page';
+import DistributionsPage from '@/app/(admin)/finance/distributions/page';
 
 describe('Finance Ledger Module', () => {
   beforeEach(() => {
@@ -208,7 +208,7 @@ describe('Finance Ledger Module', () => {
   });
 
   describe('Pages and Client Components', () => {
-    it('LedgerPage - renders page with LedgerClient successfully', async () => {
+    it('DistributionsPage - renders page with ledger entries', async () => {
       vi.mocked(getAllLedgerEntries).mockResolvedValue({
         data: [
           { id: 'led-1', date: '2026-05-01', amount: '1200.00', allocationType: 'salary', entryType: 'spend', description: 'Hosting' },
@@ -217,7 +217,7 @@ describe('Finance Ledger Module', () => {
         sum: 1200,
       } as any);
 
-      const page = await LedgerPage({ searchParams: Promise.resolve({ page: '1' }) });
+      const page = await DistributionsPage({ searchParams: Promise.resolve({ tab: 'activity' }) });
       render(page as React.ReactElement);
 
       expect(screen.getByTestId('ledger-table')).toBeInTheDocument();
