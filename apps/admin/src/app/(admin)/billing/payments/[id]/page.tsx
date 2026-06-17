@@ -9,6 +9,7 @@ import {
   getAllClients,
 } from '@pmg/db';
 import { getMinAllowedDate, isPeriodClosed } from '@/lib/date-rules';
+import { generateReceiptNumber } from '@/lib/document-helpers';
 import { PaymentDetailClient } from './payment-detail-client';
 
 export const dynamic = 'force-dynamic';
@@ -21,8 +22,14 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { id } = await params;
   const payment = await getIncomeById(id);
   if (!payment) return { title: 'Payment Receipt' };
-  
-  return { title: `Receipt REC-${payment.id.slice(0, 8).toUpperCase()}` };
+
+  // Fetch division name for prefix
+  const divisions = await getAllDivisions();
+  const division = divisions.find((d) => d.id === payment.divisionId);
+  const divisionName = division?.name ?? 'DIV';
+  const receiptNumber = generateReceiptNumber(payment.id, divisionName);
+
+  return { title: `Receipt ${receiptNumber}` };
 }
 
 export default async function PaymentDetailPage({ params }: Props) {
@@ -53,7 +60,8 @@ export default async function PaymentDetailPage({ params }: Props) {
     allocations,
   };
 
-  const receiptNumber = `REC-${payment.id.slice(0, 8).toUpperCase()}`;
+  const division = divisions.find((d) => d.id === payment.divisionId);
+  const receiptNumber = generateReceiptNumber(payment.id, division?.name ?? 'DIV');
   const amount = Number(payment.amount);
   const allocatedSum = allocations.reduce((sum, a) => sum + Number(a.amount), 0);
   const creditBalance = Math.max(0, amount - allocatedSum);

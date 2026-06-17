@@ -15,7 +15,7 @@ import { divisions } from "../schema/divisions";
  *   "Apex Web Solutions"   → "AWS"
  *   "Test"                 → "T"  (single word, single initial)
  */
-function deriveDivisionPrefix(divisionName: string): string {
+export function deriveDivisionPrefix(divisionName: string): string {
   const words = divisionName.trim().split(/\s+/);
   const first = words[0] ?? "DIV";
 

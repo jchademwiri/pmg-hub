@@ -1,6 +1,7 @@
 'use server';
 
 import { getDb, invoices, quotations, clients, divisionBillingSettings, divisions, eq, income, sql } from '@pmg/db';
+import { generateReceiptNumber } from '@/lib/document-helpers';
 import { getSessionOrRedirect } from '@/lib/auth';
 import { fmtDate } from '@/lib/format';
 import {
@@ -456,7 +457,7 @@ export async function sendReceiptEmailAction(rawPayload: unknown) {
 
     const attachments = [
       {
-        filename: `Receipt-${incomeRow.id.slice(0, 8).toUpperCase()}.pdf`,
+        filename: `Receipt-${generateReceiptNumber(incomeRow.id, incomeRow.divisionName)}.pdf`,
         content: Buffer.from(base64Pdf, 'base64'),
       }
     ];
@@ -468,13 +469,13 @@ export async function sendReceiptEmailAction(rawPayload: unknown) {
       <div style="font-family: sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #e5e7eb; border-radius: 8px;">
         <h2 style="color: #1d4ed8; margin-top: 0;">Payment Receipt</h2>
         <p>Dear ${clientName},</p>
-        <p>Thank you for your payment. Please find attached your official payment receipt for payment reference <strong>${incomeRow.id.slice(0, 8).toUpperCase()}</strong>.</p>
+        <p>Thank you for your payment. Please find attached your official payment receipt for payment reference <strong>${generateReceiptNumber(incomeRow.id, incomeRow.divisionName)}</strong>.</p>
         
         <div style="background-color: #f3f4f6; padding: 15px; border-radius: 6px; margin: 20px 0;">
           <table style="width: 100%; font-size: 14px;">
             <tr>
               <td style="padding: 4px 0; color: #4b5563;"><strong>Receipt Number:</strong></td>
-              <td style="padding: 4px 0;">REC-${incomeRow.id.slice(0, 8).toUpperCase()}</td>
+              <td style="padding: 4px 0;">${generateReceiptNumber(incomeRow.id, incomeRow.divisionName)}</td>
             </tr>
             <tr>
               <td style="padding: 4px 0; color: #4b5563;"><strong>Date Received:</strong></td>
@@ -564,13 +565,13 @@ export async function getReceiptEmailPreviewAction(rawPayload: unknown): Promise
       <div style="font-family: sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #e5e7eb; border-radius: 8px;">
         <h2 style="color: #10b981; margin-top: 0;">Payment Receipt</h2>
         <p>Dear ${clientName},</p>
-        <p>Thank you for your payment. Please find attached your official payment receipt for payment reference <strong>${incomeRow.id.slice(0, 8).toUpperCase()}</strong>.</p>
+        <p>Thank you for your payment. Please find attached your official payment receipt for payment reference <strong>${generateReceiptNumber(incomeRow.id, incomeRow.divisionName)}</strong>.</p>
         
         <div style="background-color: #f3f4f6; padding: 15px; border-radius: 6px; margin: 20px 0;">
           <table style="width: 100%; font-size: 14px;">
             <tr>
               <td style="padding: 4px 0; color: #4b5563;"><strong>Receipt Number:</strong></td>
-              <td style="padding: 4px 0;">REC-${incomeRow.id.slice(0, 8).toUpperCase()}</td>
+              <td style="padding: 4px 0;">${generateReceiptNumber(incomeRow.id, incomeRow.divisionName)}</td>
             </tr>
             <tr>
               <td style="padding: 4px 0; color: #4b5563;"><strong>Date Received:</strong></td>

@@ -58,6 +58,7 @@ import { formatZAR, fmtDate } from '@/lib/format';
 import { getSASTToday } from '@/lib/format';
 import { getDocumentLogoUrl } from '@/lib/document-logo';
 import { ChevronDown, ChevronUp, FileDown, Mail, Loader2, Eye, Plus, CheckCircle2, XCircle, Wallet, Clock, AlertCircle } from 'lucide-react';
+import { generateReceiptNumber } from '@/lib/document-helpers';
 import { IssueCreditNoteDialog } from '@/components/billing/issue-credit-note-dialog';
 import { CreditHistoryTable } from '@/components/billing/credit-history-table';
 import { bulkIssueInvoices, bulkVoidInvoices, issueInvoice, voidInvoice } from '@/app/actions/billing-invoices';
@@ -349,7 +350,7 @@ export function ClientBillingWorkspace({
   } else if (selectedDocType === 'quote' && activeQuote) {
     documentTitle = `Quote-${activeQuote.documentNumber}`;
   } else if (selectedDocType === 'payment' && activePayment) {
-    documentTitle = `Receipt-${activePayment.id.slice(0, 8).toUpperCase()}`;
+    documentTitle = generateReceiptNumber(activePayment.id, activePayment.divisionName);
   }
 
   const navigableIds = (() => {
@@ -1186,7 +1187,7 @@ export function ClientBillingWorkspace({
                         >
                           <TableCell className="tabular-nums">{fmtDate(entry.date)}</TableCell>
                           <TableCell className="font-mono text-xs text-muted-foreground">
-                            REC-{entry.id.slice(0, 8).toUpperCase()}
+                            {generateReceiptNumber(entry.id, entry.divisionName)}
                           </TableCell>
                           <TableCell className="font-semibold">{extractInvoiceNumber(entry.description)}</TableCell>
                           <TableCell className="text-right tabular-nums font-semibold text-emerald-500">
@@ -1466,68 +1467,68 @@ export function ClientBillingWorkspace({
                   <span className="text-sm font-semibold">
                     {selectedDocType === 'invoice' && activeInvoice?.documentNumber}
                     {selectedDocType === 'quote' && activeQuote?.documentNumber}
-                    {selectedDocType === 'payment' && activePayment && `REC-${activePayment.id.slice(0, 8).toUpperCase()}`}
-                    {selectedDocType === 'statement' && 'Statement'}
-                    {!selectedDocId && selectedDocType !== 'statement' && 'No document selected'}
-                  </span>
-                  <span className="text-xs text-muted-foreground capitalize">
-                    {selectedDocType === 'statement' ? statementPeriodLabel : selectedDocType}
-                  </span>
-                </div>
+                  {selectedDocType === 'payment' && activePayment && generateReceiptNumber(activePayment.id, activePayment.divisionName)}
+                  {selectedDocType === 'statement' && 'Statement'}
+                  {!selectedDocId && selectedDocType !== 'statement' && 'No document selected'}
+                </span>
+                <span className="text-xs text-muted-foreground capitalize">
+                  {selectedDocType === 'statement' ? statementPeriodLabel : selectedDocType}
+                </span>
+              </div>
 
-                {/* Action buttons — same as Dialog header */}
-                <div className="flex items-center gap-2 print:hidden">
-                  {selectedDocType !== 'statement' && selectedDocId && (
-                    <>
-                      <PrintButton label="Print" documentTitle={documentTitle} />
-                      <ExportPdfButton fileName={documentTitle} />
-                    </>
-                  )}
-                  {selectedDocType === 'statement' && (
-                    <>
-                      <PrintButton
-                        label="Print"
-                        documentTitle={`Statement-${client.businessName?.replace(/\s+/g, '-') ?? client.name.replace(/\s+/g, '-')}`}
-                      />
-                      <ExportPdfButton
-                        fileName={`Statement-${client.businessName?.replace(/\s+/g, '-') ?? client.name.replace(/\s+/g, '-')}`}
-                      />
-                    </>
-                  )}
+              {/* Action buttons — same as Dialog header */}
+              <div className="flex items-center gap-2 print:hidden">
+                {selectedDocType !== 'statement' && selectedDocId && (
+                  <>
+                    <PrintButton label="Print" documentTitle={documentTitle} />
+                    <ExportPdfButton fileName={documentTitle} />
+                  </>
+                )}
+                {selectedDocType === 'statement' && (
+                  <>
+                    <PrintButton
+                      label="Print"
+                      documentTitle={`Statement-${client.businessName?.replace(/\s+/g, '-') ?? client.name.replace(/\s+/g, '-')}`}
+                    />
+                    <ExportPdfButton
+                      fileName={`Statement-${client.businessName?.replace(/\s+/g, '-') ?? client.name.replace(/\s+/g, '-')}`}
+                    />
+                  </>
+                )}
 
-                  {selectedDocType === 'invoice' && activeInvoice && (
-                    <>
-                      <EmailDocumentDialog
-                        documentId={activeInvoice.id}
-                        documentNumber={activeInvoice.documentNumber}
-                        documentType="invoice"
-                        defaultRecipientEmail={client.email ?? ''}
-                      />
-                      <Button variant="outline" size="sm" asChild>
-                        <Link href={`/billing/invoices/${activeInvoice.id}/edit`}>Edit</Link>
-                      </Button>
-                    </>
-                  )}
-                  {selectedDocType === 'quote' && activeQuote && (
-                    <>
-                      <EmailDocumentDialog
-                        documentId={activeQuote.id}
-                        documentNumber={activeQuote.documentNumber}
-                        documentType="quote"
-                        defaultRecipientEmail={client.email ?? ''}
-                      />
-                      <Button variant="outline" size="sm" asChild>
-                        <Link href={`/billing/quotes/${activeQuote.id}/edit`}>Edit</Link>
-                      </Button>
-                    </>
-                  )}
-                  {selectedDocType === 'payment' && activePayment && (
-                    <>
-                      <EmailReceiptDialog
-                        incomeId={activePayment.id}
-                        receiptNumber={`REC-${activePayment.id.slice(0, 8).toUpperCase()}`}
-                        defaultRecipientEmail={client.email ?? ''}
-                      />
+                {selectedDocType === 'invoice' && activeInvoice && (
+                  <>
+                    <EmailDocumentDialog
+                      documentId={activeInvoice.id}
+                      documentNumber={activeInvoice.documentNumber}
+                      documentType="invoice"
+                      defaultRecipientEmail={client.email ?? ''}
+                    />
+                    <Button variant="outline" size="sm" asChild>
+                      <Link href={`/billing/invoices/${activeInvoice.id}/edit`}>Edit</Link>
+                    </Button>
+                  </>
+                )}
+                {selectedDocType === 'quote' && activeQuote && (
+                  <>
+                    <EmailDocumentDialog
+                      documentId={activeQuote.id}
+                      documentNumber={activeQuote.documentNumber}
+                      documentType="quote"
+                      defaultRecipientEmail={client.email ?? ''}
+                    />
+                    <Button variant="outline" size="sm" asChild>
+                      <Link href={`/billing/quotes/${activeQuote.id}/edit`}>Edit</Link>
+                    </Button>
+                  </>
+                )}
+                {selectedDocType === 'payment' && activePayment && (
+                  <>
+                    <EmailReceiptDialog
+                      incomeId={activePayment.id}
+                      receiptNumber={generateReceiptNumber(activePayment.id, activePayment.divisionName)}
+                      defaultRecipientEmail={client.email ?? ''}
+                    />
                       <Button variant="outline" size="sm" asChild>
                         <Link href={`/billing/payments/${activePayment.id}`}>View Page</Link>
                       </Button>
@@ -1576,9 +1577,8 @@ export function ClientBillingWorkspace({
             <div className="flex flex-col gap-1">
               <DialogTitle className="text-base font-bold flex gap-2 items-center">
                 {selectedDocType === 'invoice' && activeInvoice?.documentNumber}
-                {selectedDocType === 'quote' && activeQuote?.documentNumber}
-                {selectedDocType === 'payment' && activePayment && `REC-${activePayment.id.slice(0, 8).toUpperCase()}`}
-                {selectedDocType === 'statement' && "Statement"}
+                {selectedDocType === 'quote' && activeQuote?.documentNumber}                  {selectedDocType === 'payment' && activePayment && generateReceiptNumber(activePayment.id, activePayment.divisionName)}
+                  {selectedDocType === 'statement' && "Statement"}
                 <Badge
                   variant="outline"
                   className={cn(
@@ -1639,19 +1639,18 @@ export function ClientBillingWorkspace({
                     <Link href={`/billing/quotes/${activeQuote.id}/edit`}>Edit</Link>
                   </Button>
                 </>
-              )}
-              {selectedDocType === 'payment' && activePayment && (
-                <>
-                  <EmailReceiptDialog
-                    incomeId={activePayment.id}
-                    receiptNumber={`REC-${activePayment.id.slice(0, 8).toUpperCase()}`}
-                    defaultRecipientEmail={client.email ?? ''}
-                  />
-                  <Button variant="outline" size="sm" asChild>
-                    <Link href={`/billing/payments/${activePayment.id}`}>View Page</Link>
-                  </Button>
-                </>
-              )}
+              )}                {selectedDocType === 'payment' && activePayment && (
+                  <>
+                    <EmailReceiptDialog
+                      incomeId={activePayment.id}
+                      receiptNumber={generateReceiptNumber(activePayment.id, activePayment.divisionName)}
+                      defaultRecipientEmail={client.email ?? ''}
+                    />
+                    <Button variant="outline" size="sm" asChild>
+                      <Link href={`/billing/payments/${activePayment.id}`}>View Page</Link>
+                    </Button>
+                  </>
+                )}
             </div>
           </DialogHeader>
           

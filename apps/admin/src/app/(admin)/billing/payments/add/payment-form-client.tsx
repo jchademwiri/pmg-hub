@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useTransition } from 'react';
+import React, { useState, useEffect, useTransition } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import { toast } from 'sonner';
@@ -188,6 +188,31 @@ export function PaymentFormClient({ divisions, clients, minDate }: PaymentFormCl
   const isAllocationExceeded = useExistingCredit
     ? totalAllocatedInForm > creditToUseNum
     : totalAllocatedInForm > totalPaidNum;
+
+  // Auto-reference preview from invoice document numbers
+  const allocatedInvoiceNumbers = React.useMemo(() => {
+    return unpaidInvoices
+      .filter((inv) => {
+        const alloc = parseFloat(manualAllocations[inv.id] || '0');
+        return alloc > 0;
+      })
+      .map((inv) => inv.documentNumber);
+  }, [unpaidInvoices, manualAllocations]);
+
+  const autoReference = React.useMemo(() => {
+    if (allocatedInvoiceNumbers.length === 0) {
+      if (!useExistingCredit && totalPaidNum > 0) {
+        return 'Unallocated client credit / deposit';
+      }
+      return '';
+    }
+    const invoiceList = allocatedInvoiceNumbers.join(', ');
+    const base = `Payment for ${invoiceList}`;
+    const hasUnallocated = unallocatedCreditValue > 0;
+    const withCredit = hasUnallocated ? `${base}; Unallocated credit ${formatZAR(unallocatedCreditValue)}` : base;
+    const withBankRef = description.trim() ? `${withCredit} | Bank ref: ${description.trim()}` : withCredit;
+    return withBankRef;
+  }, [allocatedInvoiceNumbers, unallocatedCreditValue, description, totalPaidNum, useExistingCredit]);
 
   const isPeriodWarning = paymentDate < minDate;
   const hasAvailableCredit = existingCreditBalance > 0;
@@ -398,16 +423,29 @@ export function PaymentFormClient({ divisions, clients, minDate }: PaymentFormCl
           </Field>
         )}
 
-        {/* Payment Reference - Only show when recording cash payment */}
+        {/* Payment Note / Bank Reference - Only show when recording cash payment */}
         {!useExistingCredit && (
           <Field>
-            <FieldLabel className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Reference / EFT Reference</FieldLabel>
+            <FieldLabel className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Payment Note / Bank Reference</FieldLabel>
             <Input
-              placeholder="e.g. EFT-89201"
+              placeholder="Optional — e.g. EFT-89201"
               value={description}
               onChange={(e) => setDescription(e.target.value)}
             />
+            <span className="text-[10px] text-muted-foreground">Optional — a bank or EFT reference for your records</span>
           </Field>
+        )}
+
+        {/* Auto Reference Preview */}
+        {!useExistingCredit && allocatedInvoiceNumbers.length > 0 && (
+          <div className="rounded-md bg-muted/50 border border-border p-3">
+            <span className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider block mb-1">
+              Auto Reference
+            </span>
+            <p className="text-xs text-foreground font-medium break-words">
+              {autoReference}
+            </p>
+          </div>
         )}
 
         {/* Total Amount Paid (Cash) or Credit Amount to Apply */}

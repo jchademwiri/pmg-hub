@@ -20,6 +20,8 @@ import {
 import { getSessionOrRedirect } from '@/lib/auth';
 import { isPeriodClosed, getMinAllowedDate, getMinDateErrorMessage } from '@/lib/date-rules';
 import { getSASTToday } from '@/lib/format';
+import { generateCreditNoteNumber } from '@/lib/document-helpers';
+import { deriveDivisionPrefix } from '@pmg/db';
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 
@@ -615,22 +617,33 @@ export async function createCreditNote(data: {
       return { error: getMinDateErrorMessage(minDate) };
     }
 
-    // Generate document number
+    // Generate document number with division prefix
     const year = new Date().getFullYear();
+
+    // Fetch division name for prefix
+    const { divisions: divisionsTable } = await import('@pmg/db');
+    const [divRow] = await db
+      .select({ name: divisionsTable.name })
+      .from(divisionsTable)
+      .where(eq(divisionsTable.id, data.divisionId))
+      .limit(1);
+    const divisionName = divRow?.name ?? 'DIV';
+    const prefix = deriveDivisionPrefix(divisionName);
+
     const [lastNote] = await db
       .select({ documentNumber: creditNotes.documentNumber })
       .from(creditNotes)
-      .where(sql`${creditNotes.documentNumber} LIKE ${`CN-${year}-%`}`)
+      .where(sql`${creditNotes.documentNumber} LIKE ${`${prefix}-CN-${year}-%`}`)
       .orderBy(desc(creditNotes.documentNumber))
       .limit(1);
 
     let nextSeq = 1;
     if (lastNote) {
-      const match = lastNote.documentNumber.match(/CN-\d{4}-(\d+)/);
+      const match = lastNote.documentNumber.match(/[A-Z]+-CN-\d{4}-(\d+)/);
       if (match) nextSeq = parseInt(match[1], 10) + 1;
     }
 
-    const documentNumber = `CN-${year}-${String(nextSeq).padStart(4, '0')}`;
+    const documentNumber = generateCreditNoteNumber(divisionName, year, nextSeq);
 
     const [inserted] = await db
       .insert(creditNotes)
