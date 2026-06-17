@@ -58,7 +58,7 @@ import { formatZAR, fmtDate } from '@/lib/format';
 import { getSASTToday } from '@/lib/format';
 import { getDocumentLogoUrl } from '@/lib/document-logo';
 import { ChevronDown, ChevronUp, FileDown, Mail, Loader2, Eye, Plus, CheckCircle2, XCircle, Wallet, Clock, AlertCircle } from 'lucide-react';
-import { generateReceiptNumber } from '@/lib/document-helpers';
+import { generateReceiptNumber } from '@pmg/utils';
 import { IssueCreditNoteDialog } from '@/components/billing/issue-credit-note-dialog';
 import { CreditHistoryTable } from '@/components/billing/credit-history-table';
 import { bulkIssueInvoices, bulkVoidInvoices, issueInvoice, voidInvoice } from '@/app/actions/billing-invoices';

@@ -2,7 +2,7 @@ import React from 'react';
 import { cn } from '@/lib/utils';
 import { fmtDateLong, formatZAR } from '@/lib/format';
 import { getDocumentLogoUrl } from '@/lib/document-logo';
-import { generateReceiptNumber } from '@/lib/document-helpers';
+import { generateReceiptNumber } from '@pmg/utils';
 
 interface Allocation {
   id: string;

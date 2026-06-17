@@ -20,8 +20,7 @@ import {
 import { getSessionOrRedirect } from '@/lib/auth';
 import { isPeriodClosed, getMinAllowedDate, getMinDateErrorMessage } from '@/lib/date-rules';
 import { getSASTToday } from '@/lib/format';
-import { generateCreditNoteNumber } from '@/lib/document-helpers';
-import { deriveDivisionPrefix } from '@pmg/db';
+import { generateCreditNoteNumber, deriveDivisionPrefix } from '@pmg/utils';
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 

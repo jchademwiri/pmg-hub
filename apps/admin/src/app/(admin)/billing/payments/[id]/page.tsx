@@ -9,7 +9,7 @@ import {
   getAllClients,
 } from '@pmg/db';
 import { getMinAllowedDate, isPeriodClosed } from '@/lib/date-rules';
-import { generateReceiptNumber } from '@/lib/document-helpers';
+import { generateReceiptNumber } from '@pmg/utils';
 import { PaymentDetailClient } from './payment-detail-client';
 
 export const dynamic = 'force-dynamic';

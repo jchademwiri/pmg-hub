@@ -1,7 +1,7 @@
 'use server';
 
 import { getDb, invoices, quotations, clients, divisionBillingSettings, divisions, eq, income, sql } from '@pmg/db';
-import { generateReceiptNumber } from '@/lib/document-helpers';
+import { generateReceiptNumber } from '@pmg/utils';
 import { getSessionOrRedirect } from '@/lib/auth';
 import { fmtDate } from '@/lib/format';
 import {

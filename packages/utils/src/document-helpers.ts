@@ -1,19 +1,23 @@
 /**
  * Client-safe document number helpers.
- * These are pure string-manipulation functions that don't import from @pmg/db,
- * so they can be safely used in both server and client components.
+ * These are pure string-manipulation functions that can be safely used in
+ * both server and client components without pulling in database dependencies.
  */
 
 /**
  * Derives a short uppercase prefix from a division name.
- * Mirrors deriveDivisionPrefix from @pmg/db but is client-safe.
+ *
+ * Logic (mirrors billing-settings-client.tsx divisionPrefix()):
+ *   - If the first word is already 2–5 uppercase letters (e.g. "PMG"), use it as-is.
+ *   - Otherwise take the first letter of each of the first 3 words and uppercase them.
  *
  * Examples:
  *   "PMG Solutions"        → "PMG"
  *   "Apex Web Solutions"   → "AWS"
  *   "Tender Edge Solutions" → "TES"
+ *   "Test"                 → "T"
  */
-function deriveDivisionPrefix(divisionName: string): string {
+export function deriveDivisionPrefix(divisionName: string): string {
   const words = divisionName.trim().split(/\s+/);
   const first = words[0] ?? 'DIV';
 
