@@ -19,6 +19,26 @@ This revision corrects the following gaps found during review of v1:
 6. Phase 5 credit handling now has an explicit append-only rule for partial applications spanning closed/open period boundaries — section 5.4.
 7. Phase 2's test-rename step now explicitly sequences new-tests-pass-first, old-routes-deleted-later, to avoid a CI blind spot.
 
+## Revision Note (v3) — Implementation Progress Update
+
+Phases 0–4 and a cross-cutting document number prefix refactor are now complete.
+
+### Completed phases
+
+| Phase | Status | Summary |
+|---|---|---|
+| Phase 0 — Pre-implementation Audit | ✅ Done | All old route references mapped; `ACCOUNT_RATES`, `PROFIT_POOL_RATES`, and `general.ts` consumer identified. |
+| Phase 1 — Route Skeleton & Coming Soon | ✅ Done | New route groups added; Coming Soon pages created for all accounting and finance routes. |
+| Phase 2 — Replace Old Accounts/Ledger | ✅ Done | `/finance/distributions` built with PMG Share, Owner Drawings, Reinvestment, Activity, Rules tabs. Old `/finance/accounts`, `/finance/accounts/[account]`, `/finance/ledger` deleted. All internal links updated. Tests renamed. |
+| Phase 3 — Payment Reference Automation | ✅ Done | Field renamed to "Payment Note / Bank Reference Optional". Auto-reference preview added. `recordClientPayment()` generates trusted invoice-based reference server-side. |
+| Phase 4 — Finance Income Page | ✅ Done | `/finance/income` page built with allocation tracking (allocated vs unallocated), filters (month, division, client), source badges, closed period indicator, and links to billing payment detail. |
+| Phase 5 — Billing Credits MVP | ✅ Done | Credit schema (`credit_notes`, `credit_applications`, `credit_refunds`) implemented. Server actions: `createCreditNote`, `applyCreditToInvoice`, `applyCreditToInvoices`, `getClientCreditSummary`, `getClientCreditBalanceV2`, `getClientCreditHistory`, `voidCreditNote`, `refundCredit`, `expireCreditNotes`. UI: `/billing/credits` page, `IssueCreditNoteDialog`, `CreditRefundDialog`, `CreditHistoryTable`, credits tab in client billing workspace. Cron job for credit expiry. Tests for credit management. |
+| **Cross-cutting: Document Number Prefixes** | ✅ Done | Shared `@pmg/utils` package created with `deriveDivisionPrefix`, `generateReceiptNumber`, `generateCreditNoteNumber`. All receipts now show division prefix (e.g., `TES-REC-A1B2C3D4`). Credit notes show division prefix (e.g., `PMG-CN-2026-0042`). Invoices/quotes already had division prefixes. |
+
+### Next phase
+
+**Phase 6 — Distribution Rules and Settings** is the next priority. This moves hardcoded distribution rates (PMG Share: 25%) into a `distribution_settings` database table with effective dates, enabling future rate changes from the UI while preserving historical accuracy.
+
 ---
 
 ## 1. Executive Summary
@@ -414,7 +434,7 @@ If `/finance/income` is not fully ready in the first deploy, it can also start a
 
 ## 8. Phased Implementation Plan
 
-## Phase 0 — Pre-implementation Audit
+## Phase 0 — Pre-implementation Audit ✅ DONE
 
 **Goal:** identify all references before changing routes.
 
@@ -460,7 +480,7 @@ No production behavior changes in this phase.
 
 ---
 
-## Phase 1 — Route Skeleton and Coming Soon Pages
+## Phase 1 — Route Skeleton and Coming Soon Pages ✅ DONE
 
 **Goal:** introduce the new route structure without breaking the current working modules.
 
@@ -502,7 +522,7 @@ Existing routes continue to work while new route skeletons are added.
 
 ---
 
-## Phase 2 — Replace Old Accounts/Ledger With Distributions
+## Phase 2 — Replace Old Accounts/Ledger With Distributions ✅ DONE
 
 **Goal:** remove misleading route names and move useful bucket logic to `/finance/distributions`.
 
@@ -548,7 +568,7 @@ Do the move in small commits:
 
 ---
 
-## Phase 3 — Payment Reference Automation
+## Phase 3 — Payment Reference Automation ✅ DONE
 
 **Goal:** automatically generate payment references from invoice allocations.
 
@@ -585,7 +605,7 @@ Payment received - Client Name
 
 ---
 
-## Phase 4 — Finance Income Page
+## Phase 4 — Finance Income Page ✅ DONE
 
 **Goal:** give Finance its own view of money received while Billing Payments remains focused on invoice allocation.
 
@@ -623,7 +643,7 @@ This phase is read-heavy and should not change payment recording behavior except
 
 ---
 
-## Phase 5 — Billing Credits MVP
+## Phase 5 — Billing Credits MVP ✅ DONE
 
 **Goal:** fix the credit application gap and introduce a proper credit lifecycle.
 

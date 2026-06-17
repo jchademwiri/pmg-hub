@@ -71,7 +71,7 @@ export function CreditRefundDialog({
     refundMethod;
 
   function handleSubmit() {
-    if (!isValid) return;
+    if (!isValid || !creditNote) return;
 
     startTransition(async () => {
       const result = await refundCredit({
