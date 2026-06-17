@@ -322,14 +322,15 @@ export function PaymentDetailClient({
               )}
             </Field>
 
-            {/* Reference */}
+            {/* Payment Note / Bank Reference */}
             <Field>
-              <FieldLabel className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Reference / EFT Reference</FieldLabel>
+              <FieldLabel className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Payment Note / Bank Reference</FieldLabel>
               <Input
-                placeholder="e.g. EFT-89201"
+                placeholder="Optional — e.g. EFT-89201"
                 value={description}
                 onChange={(e) => setDescription(e.target.value)}
               />
+              <span className="text-[10px] text-muted-foreground">Optional — a bank or EFT reference for your records</span>
             </Field>
 
             {/* Total Amount Paid */}

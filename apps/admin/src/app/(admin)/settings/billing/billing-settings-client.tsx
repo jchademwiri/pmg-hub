@@ -64,6 +64,8 @@ function DivisionBillingForm({
   const [salesRepPhone, setSalesRepPhone] = useState<string>('');
   const [salesRepEmail, setSalesRepEmail] = useState<string>('');
   const [divisionWebsite, setDivisionWebsite] = useState<string>('');
+  const [creditExpiryMonths, setCreditExpiryMonths] = useState<string | number>(12);
+  const [autoApplyCredits, setAutoApplyCredits] = useState<boolean>(true);
 
   const [activeTab, setActiveTab] = useState<'general' | 'contact_banking' | 'notes'>('general');
 
@@ -81,6 +83,10 @@ function DivisionBillingForm({
     setSalesRepPhone(s?.salesRepPhone ?? '');
     setSalesRepEmail(s?.salesRepEmail ?? '');
     setDivisionWebsite(s?.divisionWebsite ?? '');
+    // @ts-ignore
+    setCreditExpiryMonths(s?.creditExpiryMonths ?? 12);
+    // @ts-ignore
+    setAutoApplyCredits(s?.autoApplyCredits ?? true);
   }, [s]);
 
   function handleSubmit(e: React.FormEvent) {
@@ -215,6 +221,55 @@ function DivisionBillingForm({
                     <div className="h-9 rounded-md border border-input bg-muted/40 px-3 flex items-center text-sm text-muted-foreground">
                       ZAR - South African Rand
                     </div>
+                  </Field>
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+
+          <Separator />
+
+          {/* Credit Policy */}
+          <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
+            <div className="lg:col-span-1">
+              <h3 className="text-sm font-semibold">Credit Policy</h3>
+              <p className="mt-1 text-sm text-muted-foreground">
+                Configure default client credit settings and auto-application rules.
+              </p>
+            </div>
+            <Card className="lg:col-span-2">
+              <CardContent className="flex flex-col gap-4 pt-6">
+                <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                  <Field>
+                    <FieldLabel>Credit Expiry (months)</FieldLabel>
+                    <Input
+                      name="creditExpiryMonths"
+                      type="number"
+                      min="0"
+                      max="120"
+                      value={creditExpiryMonths}
+                      onChange={(e) => setCreditExpiryMonths(e.target.value)}
+                      disabled={isPending}
+                    />
+                    <p className="text-xs text-muted-foreground mt-1">
+                      Set to 0 for credit notes that never expire.
+                    </p>
+                  </Field>
+                  <Field className="flex flex-col justify-end pb-1">
+                    <label className="flex items-center gap-2 cursor-pointer select-none text-sm font-medium">
+                      <input
+                        type="checkbox"
+                        name="autoApplyCredits"
+                        checked={autoApplyCredits}
+                        onChange={(e) => setAutoApplyCredits(e.target.checked)}
+                        disabled={isPending}
+                        className="size-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                      />
+                      <span>Auto-apply Credit to Invoices</span>
+                    </label>
+                    <p className="text-xs text-muted-foreground mt-1 ml-6">
+                      Automatically apply outstanding client credits to new invoices FIFO.
+                    </p>
                   </Field>
                 </div>
               </CardContent>

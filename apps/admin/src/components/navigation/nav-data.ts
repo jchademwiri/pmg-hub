@@ -13,7 +13,9 @@ import {
   LayoutDashboard, TrendingUp, TrendingDown, Tags, BookOpen,
   FileText, Receipt, ScrollText, Users, UserPlus, Building2,
   Camera, BarChart3, Settings, UserCog, PiggyBank,
-  Package, Shield, Database,
+  Package, Shield, Database, Wallet, ArrowDownLeft,
+  PieChart, Calculator, BookMarked, NotebookPen, Scale,
+  Calendar, Download,
 } from 'lucide-react'
 import type { LucideIcon } from 'lucide-react'
 
@@ -25,7 +27,7 @@ export type NavItem = {
   icon: LucideIcon
 }
 
-export type GroupKey = 'finance' | 'billing' | 'relationships' | 'insights' | 'system'
+export type GroupKey = 'billing' | 'finance' | 'accounting' | 'relationships' | 'insights' | 'system'
 
 export type NavGroup = {
   key: GroupKey
@@ -44,26 +46,42 @@ export const OVERVIEW: NavItem[] = [
 
 export const GROUPS: NavGroup[] = [
   {
-    key: 'finance',
-    label: 'Finance',
-    icon: Banknote,
-    items: [
-      { title: 'Expenses',   url: '/finance/expenses',   icon: TrendingDown },
-      { title: 'Categories', url: '/finance/categories', icon: Tags         },
-      { title: 'Ledger',     url: '/finance/ledger',     icon: BookOpen     },
-      { title: 'Accounts',   url: '/finance/accounts',   icon: PiggyBank    },
-    ],
-  },
-  {
     key: 'billing',
     label: 'Billing',
     icon: FileSpreadsheet,
     items: [
+      { title: 'Accounts',   url: '/billing/accounts',   icon: PiggyBank  },
       { title: 'Quotations', url: '/billing/quotes',     icon: FileText   },
       { title: 'Invoices',   url: '/billing/invoices',   icon: Receipt    },
       { title: 'Payments',   url: '/billing/payments',   icon: Banknote   },
+      { title: 'Credits',    url: '/billing/credits',    icon: Wallet     },
       { title: 'Statements', url: '/billing/statements', icon: ScrollText },
       { title: 'Items',      url: '/billing/items',      icon: Package    },
+    ],
+  },
+  {
+    key: 'finance',
+    label: 'Finance',
+    icon: Banknote,
+    items: [
+      { title: 'Income',       url: '/finance/income',       icon: ArrowDownLeft },
+      { title: 'Expenses',     url: '/finance/expenses',     icon: TrendingDown   },
+      { title: 'Categories',   url: '/finance/categories',   icon: Tags           },
+      { title: 'Distributions', url: '/finance/distributions', icon: PieChart      },
+    ],
+  },
+  {
+    key: 'accounting',
+    label: 'Accounting',
+    icon: Calculator,
+    items: [
+      { title: 'Chart of Accounts', url: '/accounting/chart-of-accounts', icon: BookMarked   },
+      { title: 'Journals',          url: '/accounting/journals',          icon: NotebookPen  },
+      { title: 'General Ledger',    url: '/accounting/general-ledger',    icon: BookOpen     },
+      { title: 'Trial Balance',     url: '/accounting/trial-balance',     icon: Scale        },
+      { title: 'Profit & Loss',     url: '/accounting/profit-and-loss',   icon: TrendingUp   },
+      { title: 'Periods',           url: '/accounting/periods',           icon: Calendar     },
+      { title: 'Exports',           url: '/accounting/exports',           icon: Download    },
     ],
   },
   {
@@ -116,8 +134,12 @@ for (const group of GROUPS) {
 
 // Extra routes that exist in the app but are not sidebar items
 const EXTRA_LABELS: Record<string, string> = {
+  '/billing': 'Billing',
+  '/finance': 'Finance',
+  '/accounting': 'Accounting',
   '/settings/users/invite': 'Invite User',
   '/billing/payments/add': 'Record Payment',
+  '/billing/accounts': 'Accounts',
 }
 
 export const ROUTE_LABELS: Record<string, string> = {

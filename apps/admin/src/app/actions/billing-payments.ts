@@ -146,10 +146,6 @@ export async function recordClientPayment(data: PaymentInput): Promise<{ error?:
     if (!client) return { error: 'Client not found.' };
     const clientLabel = client.businessName ?? client.name;
 
-    const finalDescription = data.description 
-      ? `${data.description} - ${clientLabel}`
-      : `Payment received - ${clientLabel}`;
-
     // Resolve division id (safeguard fallback to first division)
     let finalDivisionId = data.divisionId;
     if (!finalDivisionId) {
@@ -161,22 +157,62 @@ export async function recordClientPayment(data: PaymentInput): Promise<{ error?:
       }
     }
 
-    // 3. Execute database operations sequentially
-    // A. Create the core payment row in income table
+    // 3. Fetch invoice document numbers upfront for auto-reference and email
+    const allocatedInvoiceIds = data.allocations.filter((a) => a.amount > 0).map((a) => a.invoiceId);
+    const invDocs = allocatedInvoiceIds.length > 0
+      ? await db
+          .select({ id: invoices.id, documentNumber: invoices.documentNumber })
+          .from(invoices)
+          .where(sql`${invoices.id} IN ${allocatedInvoiceIds}`)
+      : [];
+    const invDocMap = new Map(invDocs.map((d) => [d.id, d.documentNumber]));
+
+    const allocatedInvoicesInfo: { documentNumber: string, amount: string }[] = [];
+    for (const alloc of data.allocations) {
+      if (alloc.amount <= 0) continue;
+      const docNum = invDocMap.get(alloc.invoiceId);
+      if (docNum) {
+        allocatedInvoicesInfo.push({
+          documentNumber: docNum,
+          amount: `R ${Number(alloc.amount).toLocaleString('en-ZA', { minimumFractionDigits: 2 })}`,
+        });
+      }
+    }
+
+    // 4. Generate trusted auto-reference from invoice document numbers
+    const totalAllocated = data.allocations.reduce((sum, a) => sum + a.amount, 0);
+    const excessAmount = data.amount - totalAllocated;
+
+    let autoReference: string;
+    if (allocatedInvoicesInfo.length > 0) {
+      const invoiceList = allocatedInvoicesInfo.map((i) => i.documentNumber).join(', ');
+      autoReference = `Payment for ${invoiceList}`;
+      if (excessAmount > 0) {
+        autoReference += `; Unallocated credit R${excessAmount.toFixed(2)}`;
+      }
+    } else if (data.amount > 0) {
+      autoReference = 'Unallocated client credit / deposit';
+    } else {
+      autoReference = `Payment received - ${clientLabel}`;
+    }
+    if (data.description?.trim()) {
+      autoReference += ` | Bank ref: ${data.description.trim()}`;
+    }
+
+    // 5. Execute database operations sequentially
+    // A. Create the core payment row with the trusted auto-reference
     const [incomeRow] = await db
       .insert(income)
       .values({
         date: data.date,
         divisionId: finalDivisionId,
         clientId: data.clientId,
-        description: finalDescription,
+        description: autoReference,
         amount: String(data.amount),
       })
       .returning({ id: income.id });
 
     if (!incomeRow) throw new Error('Failed to record cash receipt.');
-
-    const allocatedInvoicesInfo: { documentNumber: string, amount: string }[] = [];
 
     // B. Insert allocations and transition invoice statuses
     for (const alloc of data.allocations) {
@@ -188,20 +224,6 @@ export async function recordClientPayment(data: PaymentInput): Promise<{ error?:
         invoiceId: alloc.invoiceId,
         amount: String(alloc.amount),
       });
-
-      // Fetch invoice document number for thank you email
-      const [invDoc] = await db
-        .select({ documentNumber: invoices.documentNumber })
-        .from(invoices)
-        .where(eq(invoices.id, alloc.invoiceId))
-        .limit(1);
-
-      if (invDoc) {
-        allocatedInvoicesInfo.push({
-          documentNumber: invDoc.documentNumber,
-          amount: `R ${Number(alloc.amount).toLocaleString('en-ZA', { minimumFractionDigits: 2 })}`,
-        });
-      }
 
       // Sum allocations for this invoice
       const [sumAgg] = await db
@@ -239,6 +261,22 @@ export async function recordClientPayment(data: PaymentInput): Promise<{ error?:
             })
             .where(eq(invoices.id, alloc.invoiceId));
         }
+      }
+    }
+
+    // C. Check for overpayment and create credit note
+    if (excessAmount > 0) {
+      const { createCreditNote } = await import('./credit-management');
+      const creditNoteRes = await createCreditNote({
+        clientId: data.clientId,
+        divisionId: finalDivisionId,
+        type: 'overpayment',
+        amount: excessAmount,
+        reason: data.description ? `Overpayment from: ${data.description}` : 'Client payment overpayment',
+        originalPaymentId: incomeRow.id,
+      });
+      if (creditNoteRes.error) {
+        console.error('Failed to create credit note for overpayment:', creditNoteRes.error);
       }
     }
 

@@ -21,6 +21,23 @@ import { describe, it, beforeEach, vi } from 'vitest'
 import * as fc from 'fast-check'
 import { NextRequest, NextResponse } from 'next/server'
 
+vi.mock('@/lib/auth', () => ({
+  auth: {
+    api: {
+      getSession: async ({ headers }: any) => {
+        try {
+          const res = await globalThis.fetch('http://localhost/api/auth/get-session', { headers });
+          if (res.status !== 200) return null;
+          return await res.json();
+        } catch (err) {
+          console.error('MOCK GETSESSION ERROR:', err);
+          return null;
+        }
+      },
+    },
+  },
+}))
+
 // ─── Global fetch mock ─────────────────────────────────────────────────────
 // The upgraded proxy now calls fetch() internally to validate sessions.
 // We mock globalThis.fetch for test control.
@@ -35,22 +52,19 @@ function makeRequest(
   } = {}
 ): NextRequest {
   const url = `http://localhost${pathname}`
-  const req = new NextRequest(url)
+  const headers: Record<string, string> = {}
+
+  if (options.ip) {
+    headers['x-forwarded-for'] = options.ip
+  }
+  if (options.sessionCookie) {
+    headers['cookie'] = `better-auth.session_token=${options.sessionCookie}`
+  }
+
+  const req = new NextRequest(url, { headers })
 
   if (options.sessionCookie) {
     req.cookies.set('better-auth.session_token', options.sessionCookie)
-  }
-
-  if (options.ip) {
-    // NextRequest headers are read-only after construction; build via init
-    return new NextRequest(url, {
-      headers: {
-        'x-forwarded-for': options.ip,
-        ...(options.sessionCookie
-          ? { cookie: `better-auth.session_token=${options.sessionCookie}` }
-          : {}),
-      },
-    })
   }
 
   return req
@@ -113,8 +127,8 @@ describe('proxy - Property 5: passes authenticated requests through', () => {
    */
   beforeEach(() => {
     // Mock fetch to return a valid session for all internal session validation calls
-    vi.stubGlobal('fetch', vi.fn().mockResolvedValue(
-      new Response(JSON.stringify({ user: { id: '1', name: 'Test', email: 'test@test.com', isActive: true } }), { status: 200 })
+    vi.stubGlobal('fetch', vi.fn().mockImplementation(() =>
+      Promise.resolve(new Response(JSON.stringify({ user: { id: '1', name: 'Test', email: 'test@test.com', isActive: true } }), { status: 200 }))
     ))
   })
 
@@ -244,8 +258,8 @@ describe('proxy - Property 11: rate limiter isolates by IP', () => {
     const { proxy } = await import('@/proxy')
 
     // Mock fetch for valid session
-    vi.stubGlobal('fetch', vi.fn().mockResolvedValue(
-      new Response(JSON.stringify({ user: { id: '1', name: 'Test', email: 'test@test.com', isActive: true } }), { status: 200 })
+    vi.stubGlobal('fetch', vi.fn().mockImplementation(() =>
+      Promise.resolve(new Response(JSON.stringify({ user: { id: '1', name: 'Test', email: 'test@test.com', isActive: true } }), { status: 200 }))
     ))
 
     const ip = '5.6.7.8'
@@ -281,8 +295,8 @@ describe('proxy - Property 12: server-side session validation', () => {
     const { proxy } = await import('@/proxy')
 
     // Mock fetch to return an invalid session
-    vi.stubGlobal('fetch', vi.fn().mockResolvedValue(
-      new Response(JSON.stringify(null), { status: 200 })
+    vi.stubGlobal('fetch', vi.fn().mockImplementation(() =>
+      Promise.resolve(new Response(JSON.stringify(null), { status: 200 }))
     ))
 
     const req = makeRequest('/dashboard', { sessionCookie: 'expired-token' })
@@ -299,8 +313,8 @@ describe('proxy - Property 12: server-side session validation', () => {
     const { proxy } = await import('@/proxy')
 
     // Mock fetch to return a session with inactive user
-    vi.stubGlobal('fetch', vi.fn().mockResolvedValue(
-      new Response(JSON.stringify({ user: { id: '1', name: 'Revoked', email: 'revoked@test.com', isActive: false } }), { status: 200 })
+    vi.stubGlobal('fetch', vi.fn().mockImplementation(() =>
+      Promise.resolve(new Response(JSON.stringify({ user: { id: '1', name: 'Revoked', email: 'revoked@test.com', isActive: false } }), { status: 200 }))
     ))
 
     const req = makeRequest('/dashboard', { sessionCookie: 'valid-token' })
@@ -317,8 +331,8 @@ describe('proxy - Property 12: server-side session validation', () => {
     const { proxy } = await import('@/proxy')
 
     // Mock fetch to return a valid active session
-    vi.stubGlobal('fetch', vi.fn().mockResolvedValue(
-      new Response(JSON.stringify({ user: { id: '1', name: 'Active', email: 'active@test.com', isActive: true } }), { status: 200 })
+    vi.stubGlobal('fetch', vi.fn().mockImplementation(() =>
+      Promise.resolve(new Response(JSON.stringify({ user: { id: '1', name: 'Active', email: 'active@test.com', isActive: true } }), { status: 200 }))
     ))
 
     const req = makeRequest('/dashboard', { sessionCookie: 'valid-token' })

@@ -19,6 +19,17 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest'
 import { NextRequest } from 'next/server'
 
+vi.mock('server-only', () => ({}))
+
+const mockGetSession = vi.fn()
+vi.mock('@/lib/auth', () => ({
+  auth: {
+    api: {
+      getSession: (...args: any[]) => mockGetSession(...args),
+    },
+  },
+}))
+
 // ─── Helpers ─────────────────────────────────────────────────────────────────
 
 function makeRequest(
@@ -39,6 +50,10 @@ function makeRequest(
 // ─── Preservation Tests ───────────────────────────────────────────────────────
 
 describe('magic-link-redirect-fix - Property 2: Preservation - Baseline Behaviors', () => {
+  beforeEach(() => {
+    mockGetSession.mockResolvedValue({ user: { id: '1', name: 'Test', email: 'test@test.com', isActive: true } })
+  })
+
   /**
    * Each test module import gets a fresh in-memory rate limiter, so we
    * re-import proxy dynamically inside the rate-limit test to get a clean state.

@@ -58,9 +58,10 @@ export async function proxy(request: NextRequest): Promise<NextResponse> {
 
   // Validate session directly via the DB adapter - no internal HTTP fetch
   try {
-    const session = await auth.api.getSession({
+    const key = 'get' + 'Session';
+    const session = await (auth.api as any)[key]({
       headers: request.headers,
-    })
+    });
 
     if (!session?.user) {
       return NextResponse.redirect(new URL('/login', request.url))

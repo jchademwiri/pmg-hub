@@ -7,7 +7,21 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Separator } from '@/components/ui/separator';
 import { DocumentPreview } from '@/components/billing/document-preview';
 import type { StatementTransaction } from '@/components/billing/document-preview';
-import { getClientStatement, getAllIncome, getStatementYears, getDivisionBillingSettings, getClientById, getMonthPeriodDates } from '@pmg/db';
+import {
+  getClientStatement,
+  getAllIncome,
+  getStatementYears,
+  getDivisionBillingSettings,
+  getClientById,
+  getMonthPeriodDates,
+  getDb,
+  creditNotes,
+  creditRefunds,
+  eq,
+  and,
+  sql,
+} from '@pmg/db';
+import { getClientCreditBalanceV2 } from '@/app/actions/credit-management';
 import { getDocumentLogoUrl } from '@/lib/document-logo';
 import { formatZAR, fmtDate, getSASTToday } from '@/lib/format';
 import { PrintButton } from '@/components/billing/print-button';
@@ -59,15 +73,71 @@ export default async function StatementDetailPage({ params, searchParams }: Prop
     ? undefined 
     : (yearParam ? parseInt(yearParam, 10) : undefined);
 
-  const [statement, incomeResult, availableYears] = await Promise.all([
+  const db = getDb();
+  const [statement, incomeResult, availableYears, creditBalance, dbCreditNotes, dbRefunds] = await Promise.all([
     getClientStatement(clientId, monthPeriod ? { monthPeriod } : (year ? { year } : undefined)),
     getAllIncome({ clientId, ...(monthPeriod ? { monthPeriod } : (year ? { year } : {})) }),
     getStatementYears(clientId),
+    getClientCreditBalanceV2(clientId),
+    db.select().from(creditNotes).where(and(eq(creditNotes.clientId, clientId), sql`${creditNotes.status} != 'void'`)),
+    db.select().from(creditRefunds).where(eq(creditRefunds.clientId, clientId)),
   ]);
 
   if (!statement) notFound();
 
   const { client, summary, invoices } = statement;
+
+  // ── DocumentPreview props ─────────────────────────────────────────────────
+  let periodLabel = '';
+  if (monthPeriod === 'current') {
+    periodLabel = 'Current Month';
+  } else if (monthPeriod === 'previous') {
+    periodLabel = 'Previous Month';
+  } else if (monthPeriod === 'past3') {
+    periodLabel = 'Past 3 Months';
+  } else if (monthPeriod === 'past6') {
+    periodLabel = 'Past 6 Months';
+  } else {
+    periodLabel = `FY ${year}`;
+  }
+
+  let periodFrom = '';
+  let periodTo = '';
+  if (monthPeriod) {
+    const { startDate, endDate } = getMonthPeriodDates(monthPeriod);
+    periodFrom = startDate;
+    periodTo = endDate;
+  } else {
+    const y = year ?? currentFY;
+    periodFrom = `${y}-03-01`;
+    const nextFYStart = new Date(y + 1, 2, 1);
+    const lastDayOfFY = new Date(nextFYStart.getTime() - 24 * 60 * 60 * 1000);
+    periodTo = `${lastDayOfFY.getFullYear()}-${String(lastDayOfFY.getMonth() + 1).padStart(2, '0')}-${String(lastDayOfFY.getDate()).padStart(2, '0')}`;
+  }
+
+  // Adjust opening balance with historical credit notes and refunds
+  let adjustedOpeningBalance = summary.openingBalance;
+  for (const n of dbCreditNotes) {
+    const dateStr = n.createdAt.toISOString().split('T')[0];
+    if (dateStr < periodFrom && n.type !== 'overpayment') {
+      adjustedOpeningBalance -= Number(n.amount);
+    }
+  }
+  for (const r of dbRefunds) {
+    if (r.refundDate < periodFrom) {
+      adjustedOpeningBalance += Number(r.amount);
+    }
+  }
+
+  // Filter credit notes and refunds within the current period
+  const filteredNotes = dbCreditNotes.filter(n => {
+    const dateStr = n.createdAt.toISOString().split('T')[0];
+    return dateStr >= periodFrom && dateStr <= periodTo;
+  });
+
+  const filteredRefunds = dbRefunds.filter(r => {
+    return r.refundDate >= periodFrom && r.refundDate <= periodTo;
+  });
 
   // ── Build transaction history ─────────────────────────────────────────────
   // Each non-void invoice = debit; each income record for this client = credit
@@ -79,6 +149,8 @@ export default async function StatementDetailPage({ params, searchParams }: Prop
     credit?: number;
     invoiceId?: string;
     paymentId?: string;
+    creditNoteId?: string;
+    refundId?: string;
   };
 
   // Build a map of incomeId → invoice document number for cross-referencing payments
@@ -104,11 +176,27 @@ export default async function StatementDetailPage({ params, searchParams }: Prop
       credit: Number(inc.amount),
       paymentId: inc.id,
     })),
+    ...filteredNotes
+      .filter((n) => n.type !== 'overpayment')
+      .map((n) => ({
+        date: n.createdAt.toISOString().split('T')[0],
+        reference: n.documentNumber,
+        description: n.reason ?? 'Credit Note',
+        credit: Number(n.amount),
+        creditNoteId: n.id,
+      })),
+    ...filteredRefunds.map((r) => ({
+      date: r.refundDate,
+      reference: r.reference ?? '-',
+      description: r.description ?? 'Credit refund',
+      debit: Number(r.amount),
+      refundId: r.id,
+    })),
   ];
 
   txRaw.sort((a, b) => a.date.localeCompare(b.date)); // ASC
 
-  let currentBalance = summary.openingBalance;
+  let currentBalance = adjustedOpeningBalance;
   const transactions: StatementTransaction[] = txRaw.map((tx) => {
     currentBalance = currentBalance + (tx.debit ?? 0) - (tx.credit ?? 0);
     return {
@@ -120,6 +208,8 @@ export default async function StatementDetailPage({ params, searchParams }: Prop
       balance: currentBalance,
       invoiceId: tx.invoiceId,
       paymentId: tx.paymentId,
+      creditNoteId: tx.creditNoteId,
+      refundId: tx.refundId,
     };
   });
 
@@ -155,34 +245,6 @@ export default async function StatementDetailPage({ params, searchParams }: Prop
     }
   }
 
-  // ── DocumentPreview props ─────────────────────────────────────────────────
-  let periodLabel = '';
-  if (monthPeriod === 'current') {
-    periodLabel = 'Current Month';
-  } else if (monthPeriod === 'previous') {
-    periodLabel = 'Previous Month';
-  } else if (monthPeriod === 'past3') {
-    periodLabel = 'Past 3 Months';
-  } else if (monthPeriod === 'past6') {
-    periodLabel = 'Past 6 Months';
-  } else {
-    periodLabel = `FY ${year}`;
-  }
-
-  let periodFrom = '';
-  let periodTo = '';
-  if (monthPeriod) {
-    const { startDate, endDate } = getMonthPeriodDates(monthPeriod);
-    periodFrom = startDate;
-    periodTo = endDate;
-  } else {
-    const y = year ?? currentFY;
-    periodFrom = `${y}-03-01`;
-    const nextFYStart = new Date(y + 1, 2, 1);
-    const lastDayOfFY = new Date(nextFYStart.getTime() - 24 * 60 * 60 * 1000);
-    periodTo = `${lastDayOfFY.getFullYear()}-${String(lastDayOfFY.getMonth() + 1).padStart(2, '0')}-${String(lastDayOfFY.getDate()).padStart(2, '0')}`;
-  }
-
   const primaryDivisionId = invoices[0]?.divisionId;
   const divSettings = primaryDivisionId ? await getDivisionBillingSettings(primaryDivisionId) : null;
   const orgName = invoices[0]?.divisionName ?? 'PMG';
@@ -213,8 +275,8 @@ export default async function StatementDetailPage({ params, searchParams }: Prop
     },
     transactions,
     ageing,
-    balanceDue: summary.totalOutstanding,
-    openingBalance: summary.openingBalance,
+    balanceDue: currentBalance,
+    openingBalance: adjustedOpeningBalance,
   };
 
   return (
@@ -250,15 +312,20 @@ export default async function StatementDetailPage({ params, searchParams }: Prop
       </div>
 
       {/* Summary strip */}
-      <div className="grid grid-cols-2 gap-4 sm:grid-cols-5">
+      <div className="grid grid-cols-2 gap-4 sm:grid-cols-6">
         {[
           { label: 'Total Quoted', value: formatZAR(summary.totalQuoted) },
           { label: 'Total Invoiced', value: formatZAR(summary.totalInvoiced) },
           { label: 'Total Paid', value: formatZAR(summary.totalPaid) },
           {
             label: 'Outstanding',
-            value: formatZAR(summary.totalOutstanding),
-            highlight: summary.totalOutstanding > 0,
+            value: formatZAR(currentBalance),
+            highlight: currentBalance > 0,
+          },
+          {
+            label: 'Available Credit',
+            value: formatZAR(creditBalance),
+            highlightGreen: creditBalance > 0,
           },
           {
             label: 'Conversion Rate',
@@ -270,7 +337,8 @@ export default async function StatementDetailPage({ params, searchParams }: Prop
               <p className="text-xs text-muted-foreground">{s.label}</p>
               <p
                 className={`text-lg font-semibold tabular-nums ${
-                  'highlight' in s && s.highlight ? 'text-red-500' : ''
+                  'highlight' in s && s.highlight ? 'text-red-500' :
+                  'highlightGreen' in s && s.highlightGreen ? 'text-emerald-600' : ''
                 }`}
               >
                 {s.value}

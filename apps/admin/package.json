@@ -14,6 +14,7 @@
     "@ai-sdk/openai": "^3.0.71",
     "@pmg/db": "*",
     "@pmg/emails": "*",
+    "@pmg/utils": "workspace:*",
     "@pmg/tailwind-config": "workspace:*",
     "@radix-ui/react-select": "^2.2.6",
     "ai": "^6.0.204",

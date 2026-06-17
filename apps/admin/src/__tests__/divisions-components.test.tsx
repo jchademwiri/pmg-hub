@@ -16,6 +16,13 @@ vi.mock('@pmg/db', async (importActual) => {
   return {
     ...actual,
     db: {
+      select: vi.fn().mockReturnValue({
+        from: vi.fn().mockReturnValue({
+          where: vi.fn().mockReturnValue({
+            limit: vi.fn().mockResolvedValue([]),
+          }),
+        }),
+      }),
       insert: vi.fn().mockReturnValue({ values: vi.fn().mockResolvedValue(undefined) }),
       update: vi.fn().mockReturnValue({ set: vi.fn().mockReturnValue({ where: vi.fn().mockResolvedValue(undefined) }) }),
       delete: vi.fn().mockReturnValue({ where: vi.fn().mockResolvedValue(undefined) }),

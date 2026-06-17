@@ -62,7 +62,12 @@ vi.mock('sonner', () => ({
   },
 }));
 
+vi.mock('@/components/ui/confirm-dialog', () => ({
+  confirm: vi.fn().mockResolvedValue(true),
+}));
+
 import { toast } from 'sonner';
+import { confirm } from '@/components/ui/confirm-dialog';
 
 // ─── Import Code Under Test ──────────────────────────────────────────────────
 import { createItem, updateItem, archiveItem, unarchiveItem, deleteItem } from '@/app/actions/billing-items';
@@ -249,7 +254,7 @@ describe('Billing Items Module', () => {
       };
 
       // Mock confirmation dialog for delete
-      const confirmSpy = vi.spyOn(window, 'confirm').mockReturnValue(true);
+      vi.mocked(confirm).mockResolvedValue(true);
 
       render(<ItemEditClient item={mockItem} />);
 
@@ -299,12 +304,10 @@ describe('Billing Items Module', () => {
       await user.click(deleteBtn);
 
       await waitFor(() => {
-        expect(confirmSpy).toHaveBeenCalled();
+        expect(confirm).toHaveBeenCalled();
         expect(toast.success).toHaveBeenCalledWith('Item deleted.');
         expect(mockPush).toHaveBeenCalledWith('/billing/items');
       });
-
-      confirmSpy.mockRestore();
     });
   });
 });

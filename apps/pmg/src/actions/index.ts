@@ -1,6 +1,6 @@
 import { defineAction } from 'astro:actions';
 import { z } from 'astro:schema';
-import { checkBotProtection } from '@pmg/utils';
+import { checkBotProtection } from '@pmg/utils/bot-protection';
 import {
   createEmailClient,
   AdminNewLeadEmail,

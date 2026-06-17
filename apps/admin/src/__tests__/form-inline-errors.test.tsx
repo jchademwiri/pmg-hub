@@ -17,22 +17,42 @@ vi.mock('next/navigation', () => ({
   useRouter: () => ({ push: mockPush }),
 }))
 
-vi.mock('@/components/ui/select', () => ({
-  Select: ({ children, value, onValueChange, disabled }: any) => (
-    <select
-      data-testid="select-wrapper"
-      value={value}
-      disabled={disabled}
-      onChange={(e) => onValueChange?.(e.target.value)}
-    >
-      {children}
-    </select>
-  ),
-  SelectTrigger: ({ children, id }: any) => <>{children}</>,
-  SelectContent: ({ children }: any) => <>{children}</>,
-  SelectItem: ({ value, children }: any) => <option value={value}>{children}</option>,
-  SelectValue: ({ placeholder }: any) => <span>{placeholder}</span>,
-}))
+vi.mock('@/components/ui/select', () => {
+  const React = require('react');
+  const SelectContext = React.createContext(null);
+
+  return {
+    Select: ({ children, value, onValueChange, disabled, name }: any) => {
+      const [triggerId, setTriggerId] = React.useState(undefined);
+      return (
+        <SelectContext.Provider value={{ triggerId, setTriggerId }}>
+          <select
+            data-testid="select-wrapper"
+            id={triggerId}
+            name={name}
+            value={value}
+            disabled={disabled}
+            onChange={(e: any) => onValueChange?.(e.target.value)}
+          >
+            {children}
+          </select>
+        </SelectContext.Provider>
+      );
+    },
+    SelectTrigger: ({ children, id }: any) => {
+      const ctx = React.useContext(SelectContext);
+      React.useEffect(() => {
+        if (id && ctx) {
+          ctx.setTriggerId(id);
+        }
+      }, [id, ctx]);
+      return <>{children}</>;
+    },
+    SelectContent: ({ children }: any) => <>{children}</>,
+    SelectItem: ({ value, children }: any) => <option value={value}>{children}</option>,
+    SelectValue: ({ placeholder }: any) => <span>{placeholder}</span>,
+  };
+})
 
 // ─── Expense Add Form ─────────────────────────────────────────────────────────
 
@@ -49,8 +69,9 @@ describe('ExpenseAddForm - inline error display', () => {
     render(<ExpenseAddForm divisions={divisions} categories={categories} clients={[]} createAction={createAction} />)
 
     // Fill required fields so native validation doesn't block submit
+    await user.clear(screen.getByLabelText(/date/i))
     await user.type(screen.getByLabelText(/date/i), '2025-01-15')
-    await user.type(screen.getByLabelText(/category/i), 'Salaries')
+    await user.selectOptions(screen.getByLabelText(/category/i), 'Salaries')
     await user.type(screen.getByLabelText(/amount/i), '100')
 
     await user.click(screen.getByRole('button', { name: /add expense/i }))
@@ -67,14 +88,16 @@ describe('ExpenseAddForm - inline error display', () => {
 
     render(<ExpenseAddForm divisions={divisions} categories={categories} clients={[]} createAction={createAction} />)
 
+    await user.clear(screen.getByLabelText(/date/i))
     await user.type(screen.getByLabelText(/date/i), '2025-01-15')
-    await user.type(screen.getByLabelText(/category/i), 'Salaries')
+    await user.selectOptions(screen.getByLabelText(/category/i), 'Salaries')
     await user.type(screen.getByLabelText(/amount/i), '100')
 
     await user.click(screen.getByRole('button', { name: /add expense/i }))
     expect(await screen.findByText('First error.')).toBeDefined()
 
-    await user.click(screen.getByRole('button', { name: /add expense/i }))
+    const submitBtn = await screen.findByRole('button', { name: /add expense/i })
+    await user.click(submitBtn)
     await vi.waitFor(() => {
       expect(screen.queryByText('First error.')).toBeNull()
     })
@@ -86,8 +109,9 @@ describe('ExpenseAddForm - inline error display', () => {
 
     render(<ExpenseAddForm divisions={divisions} categories={categories} clients={[]} createAction={createAction} />)
 
+    await user.clear(screen.getByLabelText(/date/i))
     await user.type(screen.getByLabelText(/date/i), '2025-01-15')
-    await user.type(screen.getByLabelText(/category/i), 'Salaries')
+    await user.selectOptions(screen.getByLabelText(/category/i), 'Salaries')
     const amountInput = screen.getByLabelText(/amount/i) as HTMLInputElement
     await user.type(amountInput, '250')
 
@@ -177,7 +201,8 @@ describe('ExpenseEditForm - inline error display', () => {
     await user.click(screen.getByRole('button', { name: /save changes/i }))
     expect(await screen.findByText('First error.')).toBeDefined()
 
-    await user.click(screen.getByRole('button', { name: /save changes/i }))
+    const submitBtn = await screen.findByRole('button', { name: /save changes/i })
+    await user.click(submitBtn)
     await vi.waitFor(() => {
       expect(screen.queryByText('First error.')).toBeNull()
     })
@@ -294,7 +319,8 @@ describe('LeadNotesForm - inline error display', () => {
     await user.click(screen.getByRole('button', { name: /save notes/i }))
     expect(await screen.findByText('First error.')).toBeDefined()
 
-    await user.click(screen.getByRole('button', { name: /save notes/i }))
+    const submitBtn = await screen.findByRole('button', { name: /save notes/i })
+    await user.click(submitBtn)
     await vi.waitFor(() => {
       expect(screen.queryByText('First error.')).toBeNull()
     })

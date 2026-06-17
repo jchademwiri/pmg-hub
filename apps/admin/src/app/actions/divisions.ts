@@ -65,7 +65,15 @@ export async function deleteDivision(id: string): Promise<{ error?: string }> {
     await db.delete(divisions).where(eq(divisions.id, id));
     revalidatePath('/relationships/divisions');
     return {};
-  } catch {
+  } catch (err: any) {
+    const msg = err instanceof Error ? err.message : String(err);
+    if (
+      msg.includes('foreign key') ||
+      msg.includes('violates foreign key constraint') ||
+      msg.includes('23503')
+    ) {
+      return { error: 'Cannot delete division with existing income or expense records.' };
+    }
     return { error: 'Failed to delete division. Please try again.' };
   }
 }

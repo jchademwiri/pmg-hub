@@ -2,6 +2,7 @@ import React from 'react';
 import { cn } from '@/lib/utils';
 import { fmtDateLong, formatZAR } from '@/lib/format';
 import { getDocumentLogoUrl } from '@/lib/document-logo';
+import { generateReceiptNumber } from '@pmg/utils';
 
 interface Allocation {
   id: string;
@@ -47,7 +48,7 @@ export function PaymentReceiptPreview({
   divSettings,
 }: PaymentReceiptPreviewProps) {
   const logoUrl = divSettings?.logoUrl ?? getDocumentLogoUrl(payment.divisionName);
-  const receiptNumber = `REC-${payment.id.slice(0, 8).toUpperCase()}`;
+  const receiptNumber = generateReceiptNumber(payment.id, payment.divisionName);
 
   return (
     <div
@@ -131,7 +132,7 @@ export function PaymentReceiptPreview({
       {payment.description && (
         <div className="px-4 sm:px-10 pb-6">
           <span className="text-[10px] font-semibold uppercase tracking-widest text-zinc-400 print:text-zinc-600">
-            Payment Reference / Description
+            Payment Reference
           </span>
           <p className="mt-0.5 text-xs text-zinc-600">{payment.description}</p>
         </div>

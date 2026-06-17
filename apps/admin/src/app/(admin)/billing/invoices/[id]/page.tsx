@@ -17,6 +17,8 @@ import { getDocumentLogoUrl } from '@/lib/document-logo';
 import { InvoiceDetailActions } from './invoice-detail-actions';
 import { PrintButton } from '@/components/billing/print-button';
 import { ExportPdfButton } from '@/components/billing/export-pdf-button';
+import { getClientCreditBalanceV2 } from '@/app/actions/credit-management';
+import { ApplyCreditButton } from '@/components/billing/apply-credit-button';
 
 export const dynamic = 'force-dynamic';
 
@@ -168,6 +170,7 @@ export default async function InvoiceDetailPage({ params }: Props) {
 
   const totalAllocated = allocations.reduce((sum, a) => sum + parseFloat(a.amount), 0);
   const outstandingBalance = Math.max(0, parseFloat(invoice.total) - totalAllocated);
+  const availableCredit = invoice.clientId ? await getClientCreditBalanceV2(invoice.clientId) : 0;
 
   const docPreviewProps = {
     number: invoice.documentNumber,
@@ -290,11 +293,19 @@ export default async function InvoiceDetailPage({ params }: Props) {
                   {formatZAR(outstandingBalance)}
                 </span>
                 {outstandingBalance > 0 && invoice.status !== 'draft' && (
-                  <Button asChild size="sm" className="w-full">
-                    <Link href={`/billing/payments/add?clientId=${invoice.clientId}&amount=${outstandingBalance.toFixed(2)}`}>
-                      Record Payment
-                    </Link>
-                  </Button>
+                  <div className="flex flex-col gap-2 w-full">
+                    <Button asChild size="sm" className="w-full">
+                      <Link href={`/billing/payments/add?clientId=${invoice.clientId}&amount=${outstandingBalance.toFixed(2)}`}>
+                        Record Payment
+                      </Link>
+                    </Button>
+                    <ApplyCreditButton
+                      invoiceId={invoice.id}
+                      availableCredit={availableCredit}
+                      outstandingBalance={outstandingBalance}
+                      clientId={invoice.clientId!}
+                    />
+                  </div>
                 )}
               </CardContent>
             </Card>

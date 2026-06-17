@@ -79,6 +79,7 @@ const DivisionBillingSchema = z.object({
   salesRepPhone:     z.string().max(50).optional().nullable(),
   salesRepEmail:     z.string().email().optional().nullable().or(z.literal('')),
   divisionWebsite:   z.string().max(200).optional().nullable(),
+  creditExpiryMonths: z.coerce.number().int().min(0).max(120).optional(),
 });
 
 export async function saveDivisionBillingSettings(
@@ -120,6 +121,8 @@ export async function saveDivisionBillingSettings(
       salesRepPhone:     parsed.data.salesRepPhone ?? null,
       salesRepEmail:     parsed.data.salesRepEmail || null,
       divisionWebsite:   parsed.data.divisionWebsite ?? null,
+      creditExpiryMonths: parsed.data.creditExpiryMonths ?? 12,
+      autoApplyCredits:  raw.autoApplyCredits === 'on',
       updatedAt:         new Date(),
     };
 

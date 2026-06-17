@@ -321,6 +321,8 @@ export const divisionBillingSettings = pgTable(
     salesRepPhone: text("sales_rep_phone"),
     salesRepEmail: text("sales_rep_email"),
     divisionWebsite: text("division_website"),
+    creditExpiryMonths: integer("credit_expiry_months").default(12),
+    autoApplyCredits: boolean("auto_apply_credits").default(true),
     updatedAt: timestamp("updated_at", { withTimezone: true }),
   },
 );

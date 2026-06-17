@@ -96,8 +96,7 @@ vi.mock('@/components/accounts/account-card', () => ({
 
 // ─── Import Code Under Test ──────────────────────────────────────────────────
 import { recordAccountWithdrawal } from '@/app/actions/account-withdrawal';
-import AccountsPage from '@/app/(admin)/finance/accounts/page';
-import AccountHistoryPage from '@/app/(admin)/finance/accounts/[account]/page';
+import DistributionsPage from '@/app/(admin)/finance/distributions/page';
 
 describe('Finance Accounts Module', () => {
   beforeEach(() => {
@@ -176,52 +175,14 @@ describe('Finance Accounts Module', () => {
   });
 
   describe('Pages and Layouts', () => {
-    it('AccountsPage - renders page with AccountCards and correct total balance', async () => {
-      const page = await AccountsPage();
+    it('DistributionsPage - renders page with distribution buckets', async () => {
+      const page = await DistributionsPage({
+        searchParams: Promise.resolve({ tab: 'overview' }),
+      });
       render(page as React.ReactElement);
 
       const cards = screen.getAllByTestId('account-card');
       expect(cards.length).toBe(5); // 5 buckets
-      expect(screen.getByText('Salary Account')).toBeInTheDocument();
-      expect(screen.getByText('PMG Share Account')).toBeInTheDocument();
-    });
-
-    it('AccountHistoryPage - throws notFound if key is invalid', async () => {
-      await expect(
-        AccountHistoryPage({ params: Promise.resolve({ account: 'invalid-key' }) })
-      ).rejects.toThrow('NEXT_NOT_FOUND');
-    });
-
-    it('AccountHistoryPage - renders running balances, details, and statement table', async () => {
-      // Mock income and history events
-      vi.mocked(getAllIncome).mockResolvedValue({
-        data: [
-          {
-            id: 'inc-1',
-            date: '2026-05-01',
-            amount: '10000.00',
-            clientName: 'Client Alpha',
-            divisionName: 'AWS',
-            description: 'Monthly Maintenance',
-          },
-        ],
-      } as any);
-
-      vi.mocked(getLedgerByAllocation).mockResolvedValue([
-        {
-          id: 'led-1',
-          date: '2026-05-10',
-          amount: '1500.00',
-          description: 'Hosting Expense',
-        },
-      ] as any);
-
-      const page = await AccountHistoryPage({ params: Promise.resolve({ account: 'salary' }) });
-      render(page as React.ReactElement);
-
-      expect(screen.getByText('Salary Account Statement')).toBeInTheDocument();
-      expect(screen.getByText('Allocated Income - Client Alpha · Monthly Maintenance')).toBeInTheDocument();
-      expect(screen.getByText('Hosting Expense')).toBeInTheDocument();
     });
   });
 });

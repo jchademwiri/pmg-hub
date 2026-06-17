@@ -482,6 +482,13 @@ export async function voidInvoice(id: string): Promise<{ error?: string }> {
       return { error: 'Cannot void a paid invoice.' };
     }
 
+    // Reverse any credit applications
+    const { reverseCreditApplication } = await import('./credit-management');
+    const reverseRes = await reverseCreditApplication(id);
+    if (reverseRes.error) {
+      return { error: reverseRes.error };
+    }
+
     await db
       .update(invoices)
       .set({ status: 'void', updatedAt: new Date() })

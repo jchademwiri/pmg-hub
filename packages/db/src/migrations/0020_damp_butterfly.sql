@@ -1,0 +1,2 @@
+ALTER TABLE "division_billing_settings" ADD COLUMN "credit_expiry_months" integer DEFAULT 12;--> statement-breakpoint
+ALTER TABLE "division_billing_settings" ADD COLUMN "auto_apply_credits" boolean DEFAULT true;

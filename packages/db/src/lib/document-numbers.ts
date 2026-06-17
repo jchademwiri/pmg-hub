@@ -2,6 +2,7 @@ import { eq, and, sql } from "drizzle-orm";
 import { getDb } from "../client";
 import { documentSequences } from "../schema/billing";
 import { divisions } from "../schema/divisions";
+import { deriveDivisionPrefix as _deriveDivisionPrefix } from "@pmg/utils";
 
 /**
  * Derives a short uppercase prefix from a division name.
@@ -15,21 +16,10 @@ import { divisions } from "../schema/divisions";
  *   "Apex Web Solutions"   → "AWS"
  *   "Test"                 → "T"  (single word, single initial)
  */
-function deriveDivisionPrefix(divisionName: string): string {
-  const words = divisionName.trim().split(/\s+/);
-  const first = words[0] ?? "DIV";
-
-  // If first word is already a 2–5 char all-caps abbreviation, use it
-  if (/^[A-Z]{2,5}$/.test(first)) {
-    return first;
-  }
-
-  // Otherwise take initials of first 3 words
-  return words
-    .slice(0, 3)
-    .map((w) => w[0]?.toUpperCase() ?? "")
-    .join("");
-}
+/**
+ * Re-export deriveDivisionPrefix from @pmg/utils for backward compatibility.
+ */
+export const deriveDivisionPrefix = _deriveDivisionPrefix;
 
 /**
  * Returns the next formatted document number for a given division, document
