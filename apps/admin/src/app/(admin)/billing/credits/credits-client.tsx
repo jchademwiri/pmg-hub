@@ -21,7 +21,8 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { IssueCreditNoteDialog } from '@/components/billing/issue-credit-note-dialog';
-import { Wallet, AlertCircle, Clock, CheckCircle2 } from 'lucide-react';
+import { CreditRefundDialog } from '@/components/billing/credit-refund-dialog';
+import { Wallet, AlertCircle, Clock, CheckCircle2, Download } from 'lucide-react';
 
 interface CreditNoteEntry {
   id: string;
@@ -115,10 +116,42 @@ export function CreditsClient({
   const [typeFilter, setTypeFilter] = useState('all');
   const [searchQuery, setSearchQuery] = useState('');
   const [showIssueDialog, setShowIssueDialog] = useState(false);
+  const [showRefundDialog, setShowRefundDialog] = useState(false);
+  const [selectedNoteForRefund, setSelectedNoteForRefund] = useState<{
+    id: string;
+    documentNumber: string;
+    amountRemaining: number;
+    clientId: string;
+    clientName: string;
+  } | null>(null);
 
   // Build lookup maps
   const clientMap = new Map(clients.map((c) => [c.id, c.businessName ?? c.name]));
   const divisionMap = new Map(divisions.map((d) => [d.id, d.name]));
+
+  function exportCreditsToCSV() {
+    const headers = ['Document #', 'Client', 'Type', 'Reason', 'Amount', 'Remaining', 'Status', 'Date'];
+    const rows = filteredNotes.map((note) => [
+      note.documentNumber,
+      clientMap.get(note.clientId) ?? 'Unknown',
+      getTypeLabel(note.type),
+      `"${(note.reason ?? '').replace(/"/g, '""')}"`,
+      note.amount,
+      note.amountRemaining,
+      note.status,
+      fmtDate(note.createdAt),
+    ]);
+    const csvContent =
+      'data:text/csv;charset=utf-8,' +
+      [headers.join(','), ...rows.map((e) => e.join(','))].join('\n');
+    const encodedUri = encodeURI(csvContent);
+    const link = document.createElement('a');
+    link.setAttribute('href', encodedUri);
+    link.setAttribute('download', `credit-notes-${new Date().toISOString().split('T')[0]}.csv`);
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  }
 
   // Filter credit notes
   const filteredNotes = creditNotes.filter((note) => {
@@ -214,9 +247,17 @@ export function CreditsClient({
             </SelectContent>
           </Select>
         </div>
-        <Button size="sm" onClick={() => setShowIssueDialog(true)}>
-          Issue Credit Note
-        </Button>
+        <div className="flex items-center gap-2">
+          {filteredNotes.length > 0 && (
+            <Button variant="outline" size="sm" onClick={exportCreditsToCSV} className="gap-1.5">
+              <Download className="size-4" />
+              Export CSV
+            </Button>
+          )}
+          <Button size="sm" onClick={() => setShowIssueDialog(true)}>
+            Issue Credit Note
+          </Button>
+        </div>
       </div>
 
       {/* Credit Notes Table */}
@@ -238,42 +279,69 @@ export function CreditsClient({
                   <TableHead className="text-right">Remaining</TableHead>
                   <TableHead>Status</TableHead>
                   <TableHead>Date</TableHead>
+                  <TableHead className="w-20"></TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
                 {filteredNotes.length === 0 ? (
                   <TableRow>
-                    <TableCell colSpan={8} className="h-24 text-center text-muted-foreground text-xs">
+                    <TableCell colSpan={9} className="h-24 text-center text-muted-foreground text-xs">
                       {creditNotes.length === 0
                         ? 'No credit notes found. Click "Issue Credit Note" to create one.'
                         : 'No credit notes match the current filters.'}
                     </TableCell>
                   </TableRow>
                 ) : (
-                  filteredNotes.map((note) => (
-                    <TableRow key={note.id} className="hover:bg-muted/40 transition-colors">
-                      <TableCell className="font-medium text-xs">{note.documentNumber}</TableCell>
-                      <TableCell className="text-xs">{clientMap.get(note.clientId) ?? 'Unknown'}</TableCell>
-                      <TableCell className="text-xs">{getTypeLabel(note.type)}</TableCell>
-                      <TableCell className="text-xs truncate max-w-[200px]" title={note.reason ?? ''}>
-                        {note.reason ?? '-'}
-                      </TableCell>
-                      <TableCell className="text-right tabular-nums font-semibold text-xs">
-                        {formatZAR(note.amount)}
-                      </TableCell>
-                      <TableCell className="text-right tabular-nums text-xs">
-                        {note.amountRemaining > 0 ? (
-                          <span className="font-bold text-emerald-600">{formatZAR(note.amountRemaining)}</span>
-                        ) : (
-                          <span className="text-muted-foreground">-</span>
-                        )}
-                      </TableCell>
-                      <TableCell>{getStatusBadge(note.status)}</TableCell>
-                      <TableCell className="text-xs text-muted-foreground">
-                        {fmtDate(note.createdAt)}
-                      </TableCell>
-                    </TableRow>
-                  ))
+                  filteredNotes.map((note) => {
+                    const amountRemainingNum = typeof note.amountRemaining === 'number' ? note.amountRemaining : parseFloat(note.amountRemaining);
+                    const isRefundable = note.status !== 'void' && note.status !== 'expired' && amountRemainingNum > 0;
+
+                    return (
+                      <TableRow key={note.id} className="hover:bg-muted/40 transition-colors">
+                        <TableCell className="font-medium text-xs">{note.documentNumber}</TableCell>
+                        <TableCell className="text-xs">{clientMap.get(note.clientId) ?? 'Unknown'}</TableCell>
+                        <TableCell className="text-xs">{getTypeLabel(note.type)}</TableCell>
+                        <TableCell className="text-xs truncate max-w-[200px]" title={note.reason ?? ''}>
+                          {note.reason ?? '-'}
+                        </TableCell>
+                        <TableCell className="text-right tabular-nums font-semibold text-xs">
+                          {formatZAR(note.amount)}
+                        </TableCell>
+                        <TableCell className="text-right tabular-nums text-xs">
+                          {amountRemainingNum > 0 ? (
+                            <span className="font-bold text-emerald-600">{formatZAR(amountRemainingNum)}</span>
+                          ) : (
+                            <span className="text-muted-foreground">-</span>
+                          )}
+                        </TableCell>
+                        <TableCell>{getStatusBadge(note.status)}</TableCell>
+                        <TableCell className="text-xs text-muted-foreground">
+                          {fmtDate(note.createdAt)}
+                        </TableCell>
+                        <TableCell className="text-right py-1">
+                          {isRefundable && (
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              className="text-xs text-blue-600 hover:text-blue-700 h-7 px-2"
+                              onClick={() => {
+                                setSelectedNoteForRefund({
+                                  id: note.id,
+                                  documentNumber: note.documentNumber,
+                                  amountRemaining: amountRemainingNum,
+                                  clientId: note.clientId,
+                                  clientName: clientMap.get(note.clientId) ?? 'Unknown',
+                                });
+                                setShowRefundDialog(true);
+                              }}
+                            >
+                              Refund
+                            </Button>
+                          )}
+                        </TableCell>
+                      </TableRow>
+                    );
+                  })
                 )}
               </TableBody>
             </Table>
@@ -287,6 +355,13 @@ export function CreditsClient({
         onOpenChange={setShowIssueDialog}
         clients={clients}
         divisions={divisions}
+      />
+
+      {/* Credit Refund Dialog */}
+      <CreditRefundDialog
+        open={showRefundDialog}
+        onOpenChange={setShowRefundDialog}
+        creditNote={selectedNoteForRefund}
       />
     </div>
   );

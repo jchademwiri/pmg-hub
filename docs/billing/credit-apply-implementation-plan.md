@@ -185,7 +185,7 @@ active ──▶ partially_applied ──▶ applied (fully consumed)
 1. **FIFO Order:** Credits are always applied oldest-first by default.
 2. **Same Client:** Credits can only be applied to invoices belonging to the same client.
 3. **Same Division (Optional):** Configurable — some businesses want credits restricted to the same division.
-4. **Period Lock:** Cannot apply credits that reference income in closed financial periods.
+4. **Period Lock:** allow applying active credits after lock period, but record the application in the current period.
 5. **Partial Application:** Credits can be partially applied (e.g., apply R200 of a R500 credit).
 6. **No Double-Apply:** System prevents applying the same credit amount to multiple invoices.
 
@@ -747,13 +747,13 @@ Admin voids an invoice that had credit applied
 ### Phase 1: Core Credit Application (Fixes the Immediate Bug)
 **Priority: CRITICAL — Addresses the user's reported issue**
 
-- [ ] Create `credit_notes` and `credit_applications` tables (migration)
-- [ ] Implement `applyCreditToInvoice()` server action
-- [ ] Implement `getClientCreditSummary()` server action
-- [ ] Create `ApplyCreditDialog` component
-- [ ] Add "Apply Credit" button to invoice detail sidebar
-- [ ] Backfill existing overpayments as credit_notes
-- [ ] Write unit tests
+- [x] Create `credit_notes` and `credit_applications` tables (migration)
+- [x] Implement `applyCreditToInvoice()` server action
+- [x] Implement `getClientCreditSummary()` server action
+- [x] Create `ApplyCreditDialog` component
+- [x] Add "Apply Credit" button to invoice detail sidebar
+- [x] Backfill existing overpayments as credit_notes
+- [x] Write unit tests
 
 **Files:**
 - `packages/db/src/migrations/XXXX_add_credit_tables.sql` (new)
@@ -768,10 +768,10 @@ Admin voids an invoice that had credit applied
 ### Phase 2: Payment Form Integration
 **Priority: HIGH — Prevents duplicate payments**
 
-- [ ] Add "Apply Existing Credit" toggle to payment recording form
-- [ ] Implement `applyCreditToInvoices()` batch server action
-- [ ] Update payment form to call credit actions when toggle is on
-- [ ] Write tests
+- [x] Add "Apply Existing Credit" toggle to payment recording form
+- [x] Implement `applyCreditToInvoices()` batch server action
+- [x] Update payment form to call credit actions when toggle is on
+- [x] Write tests
 
 **Files:**
 - `apps/admin/src/app/(admin)/billing/payments/add/payment-form-client.tsx` (modify)
@@ -780,13 +780,13 @@ Admin voids an invoice that had credit applied
 ### Phase 3: Credit Management Dashboard
 **Priority: MEDIUM — Visibility and control**
 
-- [ ] Create `/billing/credits` page
-- [ ] Create `IssueCreditNoteDialog` component
-- [ ] Create `CreditHistoryTable` component
-- [ ] Create credit summary cards (total, active, expired, pending refunds)
-- [ ] Add "Credits" tab to client billing workspace
-- [ ] Update navigation
-- [ ] Write tests
+- [x] Create `/billing/credits` page
+- [x] Create `IssueCreditNoteDialog` component
+- [x] Create `CreditHistoryTable` component
+- [x] Create credit summary cards (total, active, expired, pending refunds)
+- [x] Add "Credits" tab to client billing workspace
+- [x] Update navigation
+- [x] Write tests
 
 **Files:**
 - `apps/admin/src/app/(admin)/billing/credits/page.tsx` (new)
@@ -799,11 +799,11 @@ Admin voids an invoice that had credit applied
 ### Phase 4: Refunds & Expiry
 **Priority: MEDIUM — Complete credit lifecycle**
 
-- [ ] Implement `refundCredit()` server action
-- [ ] Implement `expireCreditNotes()` cron job
-- [ ] Create refund dialog component
-- [ ] Add credit expiry settings to billing settings page
-- [ ] Write tests
+- [x] Implement `refundCredit()` server action
+- [x] Implement `expireCreditNotes()` cron job
+- [x] Create refund dialog component
+- [x] Add credit expiry settings to billing settings page
+- [x] Write tests
 
 **Files:**
 - `apps/admin/src/app/actions/credit-management.ts` (modify — add refund/expire)
@@ -814,12 +814,12 @@ Admin voids an invoice that had credit applied
 ### Phase 5: Reports & Polish
 **Priority: LOW — Advanced features**
 
-- [ ] Credit aging report
-- [ ] Credit utilization report
-- [ ] Credit exposure by client
-- [ ] Email notifications for expiring credits
-- [ ] Export credit history to CSV
-- [ ] Client-facing credit statement (PDF)
+- [x] Credit aging report
+- [x] Credit utilization report
+- [x] Credit exposure by client
+- [x] Email notifications for expiring credits
+- [x] Export credit history to CSV
+- [x] Client-facing credit statement (PDF)
 
 ---
 

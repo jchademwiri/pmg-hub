@@ -59,6 +59,7 @@ import { getSASTToday } from '@/lib/format';
 import { getDocumentLogoUrl } from '@/lib/document-logo';
 import { ChevronDown, ChevronUp, FileDown, Mail, Loader2, Eye, Plus, CheckCircle2, XCircle, Wallet, Clock, AlertCircle } from 'lucide-react';
 import { IssueCreditNoteDialog } from '@/components/billing/issue-credit-note-dialog';
+import { CreditHistoryTable } from '@/components/billing/credit-history-table';
 import { bulkIssueInvoices, bulkVoidInvoices, issueInvoice, voidInvoice } from '@/app/actions/billing-invoices';
 import { sendDocumentEmailAction } from '@/app/actions/email-delivery';
 import { updateQuotationStatus } from '@/app/actions/billing-quotes';
@@ -86,6 +87,7 @@ interface ClientBillingWorkspaceProps {
   divSettings: any;
   updateClientAction: any;
   creditSummary?: any;
+  creditHistory?: any;
 }
 
 interface BulkLogEntry {
@@ -106,6 +108,7 @@ export function ClientBillingWorkspace({
   divSettings,
   updateClientAction,
   creditSummary,
+  creditHistory,
 }: ClientBillingWorkspaceProps) {
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -1355,86 +1358,95 @@ export function ClientBillingWorkspace({
                   </div>
                 </div>
 
-                <div className="border rounded-md">
-                  <Table>
-                    <TableHeader>
-                      <TableRow>
-                        <TableHead>Document #</TableHead>
-                        <TableHead>Type</TableHead>
-                        <TableHead>Reason</TableHead>
-                        <TableHead className="text-right">Amount</TableHead>
-                        <TableHead className="text-right">Remaining</TableHead>
-                        <TableHead>Status</TableHead>
-                        <TableHead>Date</TableHead>
-                      </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                      {!creditSummary?.creditNotes || creditSummary.creditNotes.length === 0 ? (
+                <Tabs defaultValue="notes" className="w-full">
+                  <TabsList className="grid grid-cols-2 w-[300px]">
+                    <TabsTrigger value="notes">Issued Notes</TabsTrigger>
+                    <TabsTrigger value="history">Transaction Feed</TabsTrigger>
+                  </TabsList>
+                  <TabsContent value="notes" className="mt-4 border rounded-md overflow-hidden bg-card">
+                    <Table>
+                      <TableHeader>
                         <TableRow>
-                          <TableCell colSpan={7} className="h-24 text-center text-muted-foreground text-xs">
-                            No credit notes found for this client.
-                          </TableCell>
+                          <TableHead>Document #</TableHead>
+                          <TableHead>Type</TableHead>
+                          <TableHead>Reason</TableHead>
+                          <TableHead className="text-right">Amount</TableHead>
+                          <TableHead className="text-right">Remaining</TableHead>
+                          <TableHead>Status</TableHead>
+                          <TableHead>Date</TableHead>
                         </TableRow>
-                      ) : (
-                        creditSummary.creditNotes.map((note: any) => (
-                          <TableRow key={note.id} className="hover:bg-muted/40 transition-colors">
-                            <TableCell className="font-medium text-xs">{note.documentNumber}</TableCell>
-                            <TableCell className="text-xs">
-                              {note.type === 'overpayment' && 'Overpayment'}
-                              {note.type === 'manual_adjustment' && 'Manual Adjustment'}
-                              {note.type === 'credit_note' && 'Credit Note'}
-                              {note.type === 'promotional' && 'Promotional'}
-                              {note.type === 'refund_reversal' && 'Refund Reversal'}
-                            </TableCell>
-                            <TableCell className="text-xs truncate max-w-[200px]" title={note.reason ?? ''}>
-                              {note.reason ?? '-'}
-                            </TableCell>
-                            <TableCell className="text-right tabular-nums font-semibold text-xs">
-                              {formatZAR(note.amount)}
-                            </TableCell>
-                            <TableCell className="text-right tabular-nums text-xs">
-                              {note.amountRemaining > 0 ? (
-                                <span className="font-bold text-emerald-600">{formatZAR(note.amountRemaining)}</span>
-                              ) : (
-                                <span className="text-muted-foreground">-</span>
-                              )}
-                            </TableCell>
-                            <TableCell>
-                              {note.status === 'active' && (
-                                <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-medium bg-emerald-50 text-emerald-700 dark:bg-emerald-950/30 dark:text-emerald-400">
-                                  <CheckCircle2 className="size-3" /> Active
-                                </span>
-                              )}
-                              {note.status === 'partially_applied' && (
-                                <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-medium bg-blue-50 text-blue-700 dark:bg-blue-950/30 dark:text-blue-400">
-                                  <Clock className="size-3" /> Partial
-                                </span>
-                              )}
-                              {note.status === 'fully_applied' && (
-                                <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-medium bg-zinc-100 text-zinc-600 dark:bg-zinc-800 dark:text-zinc-400">
-                                  Used
-                                </span>
-                              )}
-                              {note.status === 'expired' && (
-                                <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-medium bg-amber-50 text-amber-700 dark:bg-amber-950/30 dark:text-amber-400">
-                                  <AlertCircle className="size-3" /> Expired
-                                </span>
-                              )}
-                              {note.status === 'void' && (
-                                <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-medium bg-red-50 text-red-600 dark:bg-red-950/30 dark:text-red-400">
-                                  Void
-                                </span>
-                              )}
-                            </TableCell>
-                            <TableCell className="text-xs text-muted-foreground">
-                              {fmtDate(note.createdAt)}
+                      </TableHeader>
+                      <TableBody>
+                        {!creditSummary?.creditNotes || creditSummary.creditNotes.length === 0 ? (
+                          <TableRow>
+                            <TableCell colSpan={7} className="h-24 text-center text-muted-foreground text-xs">
+                              No credit notes found for this client.
                             </TableCell>
                           </TableRow>
-                        ))
-                      )}
-                    </TableBody>
-                  </Table>
-                </div>
+                        ) : (
+                          creditSummary.creditNotes.map((note: any) => (
+                            <TableRow key={note.id} className="hover:bg-muted/40 transition-colors">
+                              <TableCell className="font-medium text-xs">{note.documentNumber}</TableCell>
+                              <TableCell className="text-xs">
+                                {note.type === 'overpayment' && 'Overpayment'}
+                                {note.type === 'manual_adjustment' && 'Manual Adjustment'}
+                                {note.type === 'credit_note' && 'Credit Note'}
+                                {note.type === 'promotional' && 'Promotional'}
+                                {note.type === 'refund_reversal' && 'Refund Reversal'}
+                              </TableCell>
+                              <TableCell className="text-xs truncate max-w-[200px]" title={note.reason ?? ''}>
+                                {note.reason ?? '-'}
+                              </TableCell>
+                              <TableCell className="text-right tabular-nums font-semibold text-xs">
+                                {formatZAR(note.amount)}
+                              </TableCell>
+                              <TableCell className="text-right tabular-nums text-xs">
+                                {note.amountRemaining > 0 ? (
+                                  <span className="font-bold text-emerald-600">{formatZAR(note.amountRemaining)}</span>
+                                ) : (
+                                  <span className="text-muted-foreground">-</span>
+                                )}
+                              </TableCell>
+                              <TableCell>
+                                {note.status === 'active' && (
+                                  <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-medium bg-emerald-50 text-emerald-700 dark:bg-emerald-950/30 dark:text-emerald-400">
+                                    <CheckCircle2 className="size-3" /> Active
+                                  </span>
+                                )}
+                                {note.status === 'partially_applied' && (
+                                  <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-medium bg-blue-50 text-blue-700 dark:bg-blue-950/30 dark:text-blue-400">
+                                    <Clock className="size-3" /> Partial
+                                  </span>
+                                )}
+                                {note.status === 'fully_applied' && (
+                                  <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-medium bg-zinc-100 text-zinc-600 dark:bg-zinc-800 dark:text-zinc-400">
+                                    Used
+                                  </span>
+                                )}
+                                {note.status === 'expired' && (
+                                  <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-medium bg-amber-50 text-amber-700 dark:bg-amber-950/30 dark:text-amber-400">
+                                    <AlertCircle className="size-3" /> Expired
+                                  </span>
+                                )}
+                                {note.status === 'void' && (
+                                  <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-medium bg-red-50 text-red-600 dark:bg-red-950/30 dark:text-red-400">
+                                    Void
+                                  </span>
+                                )}
+                              </TableCell>
+                              <TableCell className="text-xs text-muted-foreground">
+                                {fmtDate(note.createdAt)}
+                              </TableCell>
+                            </TableRow>
+                          ))
+                        )}
+                      </TableBody>
+                    </Table>
+                  </TabsContent>
+                  <TabsContent value="history" className="mt-4">
+                    <CreditHistoryTable entries={creditHistory ?? []} />
+                  </TabsContent>
+                </Tabs>
               </TabsContent>
             </CardContent>
           </Card>

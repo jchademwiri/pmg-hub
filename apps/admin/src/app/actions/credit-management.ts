@@ -5,6 +5,7 @@ import {
   getDb,
   creditNotes,
   creditApplications,
+  creditRefunds,
   invoices,
   income,
   paymentAllocations,
@@ -14,6 +15,7 @@ import {
   sql,
   asc,
   desc,
+  inArray,
 } from '@pmg/db';
 import { getSessionOrRedirect } from '@/lib/auth';
 import { isPeriodClosed, getMinAllowedDate, getMinDateErrorMessage } from '@/lib/date-rules';
@@ -151,6 +153,91 @@ export async function getClientCreditBalanceV2(clientId: string): Promise<number
   } catch (err) {
     console.error('Failed to calculate client credit balance v2:', err);
     return 0;
+  }
+}
+
+// ── getClientCreditHistory ───────────────────────────────────────────────────
+// Fetches the chronological credit history for a client.
+// Combines issued credit notes (+) and invoice credit applications (-).
+
+export async function getClientCreditHistory(clientId: string): Promise<CreditHistoryEntry[]> {
+  try {
+    await getSessionOrRedirect();
+    const db = getDb();
+
+    // 1. Fetch all credit notes for this client
+    const notes = await db
+      .select({
+        id: creditNotes.id,
+        createdAt: creditNotes.createdAt,
+        type: creditNotes.type,
+        reason: creditNotes.reason,
+        amount: creditNotes.amount,
+        documentNumber: creditNotes.documentNumber,
+      })
+      .from(creditNotes)
+      .where(eq(creditNotes.clientId, clientId));
+
+    // 2. Fetch all credit applications for this client's credit notes
+    const noteIds = notes.map((n) => n.id);
+    let apps: any[] = [];
+    if (noteIds.length > 0) {
+      apps = await db
+        .select({
+          id: creditApplications.id,
+          appliedAt: creditApplications.appliedAt,
+          amount: creditApplications.amount,
+          invoiceNumber: invoices.documentNumber,
+        })
+        .from(creditApplications)
+        .innerJoin(invoices, eq(invoices.id, creditApplications.invoiceId))
+        .where(inArray(creditApplications.creditNoteId, noteIds));
+    }
+
+    // 3. Construct chronological feed
+    const entries: CreditHistoryEntry[] = [];
+
+    // Add credit note issuances
+    for (const note of notes) {
+      entries.push({
+        id: note.id,
+        date: note.createdAt.toISOString(),
+        type: note.type === 'overpayment' ? 'Overpayment' : 'Credit Note',
+        description: note.reason || `Credit Note ${note.documentNumber} issued`,
+        amount: parseFloat(note.amount),
+        balanceAfter: 0,
+        documentNumber: note.documentNumber,
+      });
+    }
+
+    // Add credit applications
+    for (const app of apps) {
+      entries.push({
+        id: app.id,
+        date: app.appliedAt.toISOString(),
+        type: 'Application',
+        description: `Applied to invoice ${app.invoiceNumber}`,
+        amount: -parseFloat(app.amount),
+        balanceAfter: 0,
+        linkedInvoiceNumber: app.invoiceNumber,
+      });
+    }
+
+    // Sort chronologically (oldest first to compute running balance correctly)
+    entries.sort((a, b) => a.date.localeCompare(b.date));
+
+    // Compute running balance
+    let runningBalance = 0;
+    for (const entry of entries) {
+      runningBalance += entry.amount;
+      entry.balanceAfter = parseFloat(runningBalance.toFixed(2));
+    }
+
+    // Return reversed (newest first for display)
+    return entries.reverse();
+  } catch (err) {
+    console.error('Failed to fetch client credit history:', err);
+    return [];
   }
 }
 
@@ -679,5 +766,144 @@ export async function voidCreditNote(creditNoteId: string): Promise<{ error?: st
   } catch (err) {
     console.error('Failed to void credit note:', err);
     return { error: 'Failed to void credit note.' };
+  }
+}
+
+// ── refundCredit ─────────────────────────────────────────────────────────────
+// Issues a cash refund against available credit.
+// Reduces credit balance and creates a refund record.
+
+export async function refundCredit(data: {
+  creditNoteId: string;
+  amount: number;
+  refundDate: string;
+  refundMethod: 'bank_transfer' | 'cash' | 'other';
+  reference?: string;
+  description?: string;
+}): Promise<{ error?: string; refundId?: string }> {
+  try {
+    const session = await getSessionOrRedirect();
+    const db = getDb();
+
+    if (data.amount <= 0) {
+      return { error: 'Refund amount must be greater than zero.' };
+    }
+
+    // Check if the refund date is in a closed period
+    if (await isPeriodClosed(data.refundDate)) {
+      const minDate = await getMinAllowedDate();
+      return { error: getMinDateErrorMessage(minDate) };
+    }
+
+    // Fetch the credit note
+    const [note] = await db
+      .select()
+      .from(creditNotes)
+      .where(eq(creditNotes.id, data.creditNoteId));
+
+    if (!note) {
+      return { error: 'Credit note not found.' };
+    }
+
+    if (note.status === 'void') {
+      return { error: 'Cannot refund a voided credit note.' };
+    }
+
+    if (note.status === 'expired') {
+      return { error: 'Cannot refund an expired credit note.' };
+    }
+
+    const remaining = parseFloat(note.amountRemaining);
+    if (remaining < data.amount) {
+      return { error: `Insufficient credit. Available remaining: R${remaining.toFixed(2)}` };
+    }
+
+    let refundId: string | undefined;
+
+    await db.transaction(async (tx) => {
+      // 1. Create the refund record
+      const [insertedRefund] = await tx
+        .insert(creditRefunds)
+        .values({
+          creditNoteId: data.creditNoteId,
+          clientId: note.clientId,
+          amount: String(data.amount.toFixed(2)),
+          refundDate: data.refundDate,
+          refundMethod: data.refundMethod,
+          reference: data.reference ?? null,
+          description: data.description ?? null,
+          createdBy: session.user.id,
+        })
+        .returning({ id: creditRefunds.id });
+
+      refundId = insertedRefund?.id;
+
+      // 2. Update the credit note amount remaining and status
+      const newRemaining = remaining - data.amount;
+      const newStatus = newRemaining <= 0 ? 'fully_applied' : 'partially_applied';
+
+      await tx
+        .update(creditNotes)
+        .set({
+          amountRemaining: String(newRemaining.toFixed(2)),
+          status: newStatus,
+          updatedAt: new Date(),
+        })
+        .where(eq(creditNotes.id, data.creditNoteId));
+    });
+
+    // Revalidate paths
+    revalidatePath('/billing/credits');
+    revalidatePath('/billing/payments');
+    revalidatePath('/dashboard');
+
+    return { refundId };
+  } catch (err) {
+    console.error('Failed to refund credit:', err);
+    return { error: 'Failed to issue refund. Please try again.' };
+  }
+}
+
+// ── expireCreditNotes ─────────────────────────────────────────────────────────
+// Checks and expires credit notes past their expiry date.
+// Intended to run as a cron job or manual batch.
+
+export async function expireCreditNotes(): Promise<{ expired?: number; error?: string }> {
+  try {
+    const db = getDb();
+    const now = new Date();
+
+    const expiredNotes = await db
+      .select()
+      .from(creditNotes)
+      .where(
+        and(
+          sql`${creditNotes.status} IN ('active', 'partially_applied')`,
+          sql`${creditNotes.amountRemaining} > 0`,
+          sql`${creditNotes.expiresAt} < ${now}`
+        )
+      );
+
+    let count = 0;
+    for (const note of expiredNotes) {
+      await db
+        .update(creditNotes)
+        .set({
+          status: 'expired',
+          updatedAt: now,
+        })
+        .where(eq(creditNotes.id, note.id));
+      count++;
+    }
+
+    if (count > 0) {
+      revalidatePath('/billing/credits');
+      revalidatePath('/dashboard');
+    }
+
+    return { expired: count };
+  } catch (err) {
+    console.error('Failed to expire credit notes:', err);
+    return { error: 'Failed to expire credit notes.' };
   }
 }

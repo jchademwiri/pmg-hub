@@ -8,12 +8,14 @@ const mockDbInsert = vi.fn();
 const mockDbSelect = vi.fn();
 const mockDbUpdate = vi.fn();
 const mockDbDelete = vi.fn();
+const mockDbTransaction = vi.fn().mockImplementation(async (callback) => await callback(dbMock));
 
 const dbMock = {
   insert: mockDbInsert,
   select: mockDbSelect,
   update: mockDbUpdate,
   delete: mockDbDelete,
+  transaction: mockDbTransaction,
 };
 
 vi.mock('@pmg/db', () => ({
@@ -40,6 +42,18 @@ vi.mock('@pmg/db', () => ({
     amount: 'amount',
     appliedAt: 'appliedAt',
     appliedBy: 'appliedBy',
+  },
+  creditRefunds: {
+    id: 'id',
+    creditNoteId: 'creditNoteId',
+    clientId: 'clientId',
+    amount: 'amount',
+    refundDate: 'refundDate',
+    refundMethod: 'refundMethod',
+    reference: 'reference',
+    description: 'description',
+    createdBy: 'createdBy',
+    createdAt: 'createdAt',
   },
   invoices: {
     id: 'id',
@@ -103,11 +117,14 @@ import {
   getClientCreditBalanceV2,
   applyCreditToInvoice,
   createCreditNote,
+  refundCredit,
+  expireCreditNotes,
 } from '@/app/actions/credit-management';
 
 describe('Credit Management Server Actions', () => {
   beforeEach(() => {
     vi.resetAllMocks();
+    mockDbTransaction.mockImplementation(async (callback) => await callback(dbMock));
     vi.mocked(getSessionOrRedirect).mockResolvedValue({ user: { id: 'user-1' } } as any);
     mockIsPeriodClosed.mockResolvedValue(false);
     mockGetMinAllowedDate.mockResolvedValue('2026-01-01');
@@ -208,6 +225,128 @@ describe('Credit Management Server Actions', () => {
       });
 
       expect(res.error).toBe('Credit amount must be greater than zero.');
+    });
+  });
+
+  describe('refundCredit', () => {
+    it('returns error if amount is zero or negative', async () => {
+      const res = await refundCredit({
+        creditNoteId: 'cn-1',
+        amount: 0,
+        refundDate: '2026-06-15',
+        refundMethod: 'bank_transfer',
+      });
+      expect(res.error).toBe('Refund amount must be greater than zero.');
+    });
+
+    it('returns error if period is closed', async () => {
+      mockIsPeriodClosed.mockResolvedValue(true);
+      const res = await refundCredit({
+        creditNoteId: 'cn-1',
+        amount: 100,
+        refundDate: '2026-06-15',
+        refundMethod: 'bank_transfer',
+      });
+      expect(res.error).toBe('Period is closed.');
+    });
+
+    it('returns error if credit note not found', async () => {
+      mockDbSelect.mockReturnValue({
+        from: vi.fn().mockReturnValue({
+          where: vi.fn().mockResolvedValue([]),
+        }),
+      });
+
+      const res = await refundCredit({
+        creditNoteId: 'cn-1',
+        amount: 100,
+        refundDate: '2026-06-15',
+        refundMethod: 'bank_transfer',
+      });
+      expect(res.error).toBe('Credit note not found.');
+    });
+
+    it('returns error if credit note is voided', async () => {
+      mockDbSelect.mockReturnValue({
+        from: vi.fn().mockReturnValue({
+          where: vi.fn().mockResolvedValue([{ id: 'cn-1', status: 'void', amountRemaining: '500.00' }]),
+        }),
+      });
+
+      const res = await refundCredit({
+        creditNoteId: 'cn-1',
+        amount: 100,
+        refundDate: '2026-06-15',
+        refundMethod: 'bank_transfer',
+      });
+      expect(res.error).toBe('Cannot refund a voided credit note.');
+    });
+
+    it('returns error if credit note is expired', async () => {
+      mockDbSelect.mockReturnValue({
+        from: vi.fn().mockReturnValue({
+          where: vi.fn().mockResolvedValue([{ id: 'cn-1', status: 'expired', amountRemaining: '500.00' }]),
+        }),
+      });
+
+      const res = await refundCredit({
+        creditNoteId: 'cn-1',
+        amount: 100,
+        refundDate: '2026-06-15',
+        refundMethod: 'bank_transfer',
+      });
+      expect(res.error).toBe('Cannot refund an expired credit note.');
+    });
+
+    it('returns error if amount exceeds available credit', async () => {
+      mockDbSelect.mockReturnValue({
+        from: vi.fn().mockReturnValue({
+          where: vi.fn().mockResolvedValue([{ id: 'cn-1', status: 'active', amountRemaining: '50.00' }]),
+        }),
+      });
+
+      const res = await refundCredit({
+        creditNoteId: 'cn-1',
+        amount: 100,
+        refundDate: '2026-06-15',
+        refundMethod: 'bank_transfer',
+      });
+      expect(res.error).toBe('Insufficient credit. Available remaining: R50.00');
+    });
+
+    it('creates refund record and updates credit note successfully', async () => {
+      mockDbSelect.mockReturnValue({
+        from: vi.fn().mockReturnValue({
+          where: vi.fn().mockResolvedValue([{ id: 'cn-1', clientId: 'client-1', status: 'active', amountRemaining: '500.00' }]),
+        }),
+      });
+
+      const res = await refundCredit({
+        creditNoteId: 'cn-1',
+        amount: 200,
+        refundDate: '2026-06-15',
+        refundMethod: 'bank_transfer',
+      });
+
+      expect(res).toEqual({ refundId: 'new-id' });
+      expect(mockDbInsert).toHaveBeenCalled();
+      expect(mockDbUpdate).toHaveBeenCalled();
+    });
+  });
+
+  describe('expireCreditNotes', () => {
+    it('expires expired credit notes successfully', async () => {
+      mockDbSelect.mockReturnValue({
+        from: vi.fn().mockReturnValue({
+          where: vi.fn().mockResolvedValue([
+            { id: 'cn-expired', status: 'active', amountRemaining: '100.00' },
+          ]),
+        }),
+      });
+
+      const res = await expireCreditNotes();
+      expect(res).toEqual({ expired: 1 });
+      expect(mockDbUpdate).toHaveBeenCalled();
     });
   });
 });

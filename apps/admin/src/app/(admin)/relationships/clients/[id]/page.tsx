@@ -16,7 +16,7 @@ import {
 } from '@pmg/db';
 import { updateClient } from '@/app/actions/clients';
 import { ClientBillingWorkspace } from './client-billing-workspace';
-import { getClientCreditSummary } from '@/app/actions/credit-management';
+import { getClientCreditSummary, getClientCreditHistory } from '@/app/actions/credit-management';
 
 export const dynamic = 'force-dynamic';
 
@@ -55,7 +55,7 @@ export default async function ClientDetailPage({ params, searchParams }: ClientD
   const year = monthPeriod ? undefined : yearParam ? parseInt(yearParam, 10) : undefined;
 
   // Parallel server data fetching
-  const [client, incomeEntries, quotesList, invoicesList, statement, availableYears, creditSummary] =
+  const [client, incomeEntries, quotesList, invoicesList, statement, availableYears, creditSummary, creditHistory] =
     await Promise.all([
       getClientById(id),
       getAllIncome({ clientId: id }),
@@ -64,6 +64,7 @@ export default async function ClientDetailPage({ params, searchParams }: ClientD
       getClientStatement(id, monthPeriod ? { monthPeriod } : year ? { year } : undefined),
       getStatementYears(id),
       getClientCreditSummary(id),
+      getClientCreditHistory(id),
     ]);
 
   if (!client) notFound();
@@ -108,6 +109,7 @@ export default async function ClientDetailPage({ params, searchParams }: ClientD
       divSettings={divSettings}
       updateClientAction={updateClient.bind(null, id)}
       creditSummary={creditSummary}
+      creditHistory={creditHistory}
     />
   );
 }

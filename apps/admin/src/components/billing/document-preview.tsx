@@ -90,6 +90,8 @@ export interface StatementTransaction {
   balance?: number
   invoiceId?: string
   paymentId?: string
+  creditNoteId?: string
+  refundId?: string
 }
 
 // ── Helpers ───────────────────────────────────────────────────────────────────

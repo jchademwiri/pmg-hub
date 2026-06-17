@@ -1,4 +1,4 @@
-import { check, index, numeric, pgEnum, pgTable, text, timestamp, uuid } from "drizzle-orm/pg-core";
+import { check, date, index, numeric, pgEnum, pgTable, text, timestamp, uuid } from "drizzle-orm/pg-core";
 import { relations, sql } from "drizzle-orm";
 import { clients } from "./clients";
 import { divisions } from "./divisions";
@@ -96,6 +96,37 @@ export const creditApplications = pgTable(
 export type CreditApplication = typeof creditApplications.$inferSelect;
 export type NewCreditApplication = typeof creditApplications.$inferInsert;
 
+// ── credit_refunds ───────────────────────────────────────────────────────────
+// Tracks cash refunds issued against credits.
+
+export const creditRefunds = pgTable(
+  "credit_refunds",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    creditNoteId: uuid("credit_note_id")
+      .notNull()
+      .references(() => creditNotes.id, { onDelete: "restrict" }),
+    clientId: uuid("client_id")
+      .notNull()
+      .references(() => clients.id, { onDelete: "restrict" }),
+    amount: numeric("amount", { precision: 12, scale: 2 }).notNull(),
+    refundDate: date("refund_date").notNull(),
+    refundMethod: text("refund_method").notNull().default("bank_transfer"), // bank_transfer | cash | other
+    reference: text("reference"),
+    description: text("description"),
+    createdBy: text("created_by").notNull(),
+    createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
+  },
+  (t) => [
+    check("credit_refunds_amount_positive", sql`${t.amount} > 0`),
+    index("credit_refunds_client_id_idx").on(t.clientId),
+    index("credit_refunds_credit_note_id_idx").on(t.creditNoteId),
+  ],
+);
+
+export type CreditRefund = typeof creditRefunds.$inferSelect;
+export type NewCreditRefund = typeof creditRefunds.$inferInsert;
+
 // ── Relations ─────────────────────────────────────────────────────────────────
 
 export const creditNotesRelations = relations(creditNotes, ({ one, many }) => ({
@@ -116,6 +147,7 @@ export const creditNotesRelations = relations(creditNotes, ({ one, many }) => ({
     references: [income.id],
   }),
   applications: many(creditApplications),
+  refunds: many(creditRefunds),
 }));
 
 export const creditApplicationsRelations = relations(creditApplications, ({ one }) => ({
@@ -126,5 +158,16 @@ export const creditApplicationsRelations = relations(creditApplications, ({ one 
   invoice: one(invoices, {
     fields: [creditApplications.invoiceId],
     references: [invoices.id],
+  }),
+}));
+
+export const creditRefundsRelations = relations(creditRefunds, ({ one }) => ({
+  creditNote: one(creditNotes, {
+    fields: [creditRefunds.creditNoteId],
+    references: [creditNotes.id],
+  }),
+  client: one(clients, {
+    fields: [creditRefunds.clientId],
+    references: [clients.id],
   }),
 }));
