@@ -8,7 +8,8 @@ import {
   ledger,
 } from '../schema/index';
 import { sql, eq, and, desc, asc } from 'drizzle-orm';
-import { ACCOUNT_RATES } from '../accounts';
+import { getActiveRates } from './distribution-settings';
+import type { ActiveRates } from './distribution-settings';
 
 export type PeriodSummary = {
   revenue: number;
@@ -159,7 +160,10 @@ export async function getMoMSnapshot(): Promise<{
 export async function getFinancialSummaryForPeriod(
   startExpr: string,
   endExpr: string,
+  rates?: ActiveRates,
 ): Promise<PeriodSummary> {
+  // Use provided rates or fetch current active rates
+  const effectiveRates = rates ?? await getActiveRates();
   const revResult = await db.execute(sql`
     SELECT COALESCE(SUM(amount), 0) AS total
     FROM income
@@ -172,17 +176,17 @@ export async function getFinancialSummaryForPeriod(
   `);
   const revenue = Number((revResult.rows[0] as { total: string }).total);
   const expTotal = Number((expResult.rows[0] as { total: string }).total);
-  const pmgShare = revenue * ACCOUNT_RATES.pmg_share;
+  const pmgShare = revenue * effectiveRates.pmg_share;
   const profitPool = revenue - expTotal - pmgShare;
   return {
     revenue,
     expenses: expTotal,
     pmgShare,
     profitPool,
-    salary: profitPool * ACCOUNT_RATES.salary,
-    reinvest: profitPool * ACCOUNT_RATES.reinvest,
-    reserve: profitPool * ACCOUNT_RATES.reserve,
-    flex: profitPool * ACCOUNT_RATES.flex,
+    salary: profitPool * effectiveRates.salary,
+    reinvest: profitPool * effectiveRates.reinvest,
+    reserve: profitPool * effectiveRates.reserve,
+    flex: profitPool * effectiveRates.flex,
   };
 }
 

@@ -34,6 +34,10 @@ export type {
 } from './queries/billing';
 export { getActiveItems, getUnlinkedIncomeForClient, getStatementYears, getAgingReport } from './queries/billing';
 
+// ── Distribution Settings ──────────────────────────────────────────────────────
+export { getActiveRates, getActiveRateForKey, getCurrentRates, getAllDistributionSettings } from './queries/distribution-settings';
+export type { ActiveRates, RateKey } from './queries/distribution-settings';
+
 // ── Date utilities ────────────────────────────────────────────────────────────
 export { addDays, today } from './lib/date-utils';
 

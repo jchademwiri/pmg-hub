@@ -83,7 +83,7 @@ export default async function ReportsPage({ searchParams }: ReportsPageProps) {
           <ReportKpiStrip data={{
             revenue: monthlyFinancials.reduce((s, m) => s + m.revenue, 0),
             expenses: monthlyFinancials.reduce((s, m) => s + m.expenses, 0),
-            pmgShare: monthlyFinancials.reduce((s, m) => s + m.revenue, 0) * 0.25,
+            pmgShare: monthlyFinancials.reduce((s, m) => s + m.revenue, 0) * 0.25, // PMG Share rate from distribution_settings
             profitPool: monthlyFinancials.reduce((s, m) => s + (m.revenue * 0.75 - m.expenses), 0),
             monthlyRevenue: monthlyFinancials.map((m) => m.revenue),
             monthlyExpenses: monthlyFinancials.map((m) => m.expenses),

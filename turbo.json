@@ -31,7 +31,9 @@
         "PGHOST_UNPOOLED",
         "PGUSER",
         "PGPASSWORD",
-        "PGDATABASE"
+        "PGDATABASE",
+        "PMG_RESEND_API_KEY",
+        "CRON_SECRET"
       ]
     },
     "lint": {

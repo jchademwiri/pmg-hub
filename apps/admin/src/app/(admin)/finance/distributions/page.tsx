@@ -2,7 +2,7 @@ import type { Metadata } from 'next'
 import { getLedgerBalances } from '@/lib/financial'
 import { recordAccountWithdrawal } from '@/app/actions/account-withdrawal'
 import { getAllLedgerEntries } from '@pmg/db'
-import { ACCOUNT_KEYS, ACCOUNT_LABELS, LOCKED_ACCOUNTS, ACCOUNT_RATES, PROFIT_POOL_RATES } from '@pmg/db'
+import { ACCOUNT_KEYS, ACCOUNT_LABELS, LOCKED_ACCOUNTS, getCurrentRates } from '@pmg/db'
 import { formatZAR } from '@/lib/format'
 import { SetPageTotal } from '@/components/navigation/page-header-context'
 import { getMinAllowedDate, getClosedPeriodsFromDates } from '@/lib/date-rules'
@@ -52,10 +52,18 @@ export default async function DistributionsPage({
     withdrawalLocked: (LOCKED_ACCOUNTS as readonly string[]).includes(key),
   }))
 
-  // Distribution rules
+  // Distribution rules from database
+  const currentRates = await getCurrentRates()
+  const rateMap = Object.fromEntries(currentRates.map(r => [r.rateKey, r.rateValue]))
   const rules = {
-    pmgShare: ACCOUNT_RATES.pmg_share,
-    profitPoolRates: PROFIT_POOL_RATES,
+    pmgShare: rateMap.pmg_share ?? 0.25,
+    profitPoolRates: {
+      salary: rateMap.salary ?? 0.35,
+      reinvest: rateMap.reinvest ?? 0.30,
+      reserve: rateMap.reserve ?? 0.30,
+      flex: rateMap.flex ?? 0.05,
+    },
+    currentRates,
   }
 
   return (

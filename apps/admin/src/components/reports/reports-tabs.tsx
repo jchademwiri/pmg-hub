@@ -71,12 +71,16 @@ export function ReportsTabs({
   // Calculate annual totals for waterfall and sankey flow diagram
   const totalRevenue = monthlyFinancials.reduce((sum, m) => sum + m.revenue, 0)
   const totalExpenses = monthlyFinancials.reduce((sum, m) => sum + m.expenses, 0)
-  const totalPmgShare = totalRevenue * 0.25
+  // Use 25% PMG Share and profit pool splits as display defaults.
+  // These match the current active rates in the database.
+  const PMG_SHARE_RATE = 0.25
+  const PROFIT_POOL_SPLITS = { salary: 0.35, reinvest: 0.30, reserve: 0.30, flex: 0.05 }
+  const totalPmgShare = totalRevenue * PMG_SHARE_RATE
   const totalProfitPool = totalRevenue - totalExpenses - totalPmgShare
-  const totalSalary = totalProfitPool * 0.35
-  const totalReinvest = totalProfitPool * 0.30
-  const totalReserve = totalProfitPool * 0.30
-  const totalFlex = totalProfitPool * 0.05
+  const totalSalary = totalProfitPool * PROFIT_POOL_SPLITS.salary
+  const totalReinvest = totalProfitPool * PROFIT_POOL_SPLITS.reinvest
+  const totalReserve = totalProfitPool * PROFIT_POOL_SPLITS.reserve
+  const totalFlex = totalProfitPool * PROFIT_POOL_SPLITS.flex
 
   return (
     <>
