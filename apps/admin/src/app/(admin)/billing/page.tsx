@@ -8,11 +8,11 @@ export const metadata: Metadata = { title: 'Billing' }
 
 export default async function BillingOverviewPage() {
   const [invoiceData, aging, items, clients, quoteData] = await Promise.all([
-    getAllInvoices(),
+    getAllInvoices({}, { page: 1, pageSize: 5 }),
     getAgingReport(),
     getAllItems(),
     getClientsWithBillingActivity(),
-    getAllQuotations(),
+    getAllQuotations({}, { page: 1, pageSize: 1 }),
   ])
 
   const paidCount = invoiceData.data.filter((i) => i.status === 'paid').length
@@ -39,7 +39,7 @@ export default async function BillingOverviewPage() {
         clientCount={clients.length}
         quoteCount={quoteData.total}
         itemCount={items.length}
-        recentInvoices={invoiceData.data.slice(0, 5)}
+        recentInvoices={invoiceData.data}
       />
     </div>
   )
