@@ -9,8 +9,8 @@ export default function FinanceOverviewPage() {
       title="Finance"
       purpose="Cash movement and business financial management."
       description="This overview will provide a detailed financial view including month-over-month trends, revenue by division, expenses by category breakdown, distribution history, and links into Income, Expenses, Categories, and Distributions for full detail."
-      backHref="/dashboard"
-      backLabel="Back to Dashboard"
+      backHref="/finance"
+      backLabel="Back to Finance"
     />
   )
 }

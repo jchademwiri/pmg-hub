@@ -9,8 +9,8 @@ export default function BillingOverviewPage() {
       title="Billing"
       purpose="Client-facing invoicing and accounts receivable management."
       description="This overview will summarise your billing health including outstanding receivables, recent invoices, payment activity, and credit balances with quick links into Accounts, Quotes, Invoices, Payments, Credits, Statements, and Items."
-      backHref="/dashboard"
-      backLabel="Back to Dashboard"
+      backHref="/billing"
+      backLabel="Back to Billing"
     />
   )
 }
