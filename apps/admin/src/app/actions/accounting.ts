@@ -7,6 +7,7 @@ import {
   chartAccounts,
   journalEntries,
   journalLines,
+  accountingPeriods,
   eq,
   and,
   sql,
@@ -15,6 +16,10 @@ import {
   validateJournalLines,
   getNextJournalEntryNumber,
   isPeriodOpen,
+  ensureOpenPeriod,
+  closePeriod,
+  lockPeriod,
+  reopenPeriod,
 } from '@pmg/db';
 import { getSessionOrRedirect } from '@/lib/auth';
 
@@ -167,6 +172,9 @@ export async function createJournalEntry(data: {
       return { error: `Period ${period} is closed. Cannot create journal entries in a closed period.` };
     }
 
+    // Auto-create period record if it doesn't exist
+    await ensureOpenPeriod(period);
+
     const db = getDb();
     const entryNumber = await getNextJournalEntryNumber();
 
@@ -202,5 +210,151 @@ export async function createJournalEntry(data: {
   } catch (err) {
     console.error('Failed to create journal entry:', err);
     return { error: 'Failed to create journal entry. Please try again.' };
+  }
+}
+
+// ── Journal Entry Posting ─────────────────────────────────────────────────────
+
+/**
+ * Posts a draft journal entry (changes status from draft to posted).
+ */
+export async function postJournalEntry(id: string): Promise<{ error?: string }> {
+  try {
+    await getSessionOrRedirect();
+    const db = getDb();
+
+    const [entry] = await db
+      .select()
+      .from(journalEntries)
+      .where(eq(journalEntries.id, id))
+      .limit(1);
+
+    if (!entry) return { error: 'Journal entry not found.' };
+    if (entry.status !== 'draft') return { error: 'Only draft entries can be posted.' };
+
+    // Verify lines balance
+    const lines = await db
+      .select()
+      .from(journalLines)
+      .where(eq(journalLines.journalEntryId, id));
+
+    const validation = validateJournalLines(lines);
+    if (!validation.valid) return { error: validation.error };
+
+    // Check period is open
+    if (!(await isPeriodOpen(entry.period))) {
+      return { error: `Period ${entry.period} is closed.` };
+    }
+
+    await db
+      .update(journalEntries)
+      .set({
+        status: 'posted',
+        postedAt: new Date(),
+        postedBy: entry.createdBy,
+        updatedAt: new Date(),
+      })
+      .where(eq(journalEntries.id, id));
+
+    revalidatePath('/accounting/journals');
+    revalidatePath('/accounting/trial-balance');
+    revalidatePath('/accounting/general-ledger');
+    revalidatePath('/accounting/profit-and-loss');
+    return {};
+  } catch (err) {
+    console.error('Failed to post journal entry:', err);
+    return { error: 'Failed to post journal entry.' };
+  }
+}
+
+/**
+ * Voids a journal entry (posted or draft).
+ */
+export async function voidJournalEntry(id: string, reason: string): Promise<{ error?: string }> {
+  try {
+    const session = await getSessionOrRedirect();
+    const db = getDb();
+
+    const [entry] = await db
+      .select()
+      .from(journalEntries)
+      .where(eq(journalEntries.id, id))
+      .limit(1);
+
+    if (!entry) return { error: 'Journal entry not found.' };
+    if (entry.status === 'void') return { error: 'Entry is already voided.' };
+
+    await db
+      .update(journalEntries)
+      .set({
+        status: 'void',
+        voidedAt: new Date(),
+        voidedBy: session.user.id,
+        voidReason: reason || null,
+        updatedAt: new Date(),
+      })
+      .where(eq(journalEntries.id, id));
+
+    revalidatePath('/accounting/journals');
+    // Only revalidate report pages if the entry was posted (affects balances)
+    if (entry.status === 'posted') {
+      revalidatePath('/accounting/trial-balance');
+      revalidatePath('/accounting/general-ledger');
+      revalidatePath('/accounting/profit-and-loss');
+    }
+    return {};
+  } catch (err) {
+    console.error('Failed to void journal entry:', err);
+    return { error: 'Failed to void journal entry.' };
+  }
+}
+
+// ── Accounting Periods ────────────────────────────────────────────────────────
+
+/**
+ * Closes an accounting period.
+ */
+export async function closeAccountingPeriod(period: string): Promise<{ error?: string }> {
+  try {
+    const session = await getSessionOrRedirect();
+    await closePeriod(period, session.user.id);
+    revalidatePath('/accounting/periods');
+    revalidatePath('/accounting/journals');
+    return {};
+  } catch (err) {
+    console.error('Failed to close period:', err);
+    return { error: 'Failed to close period.' };
+  }
+}
+
+/**
+ * Locks an accounting period permanently.
+ */
+export async function lockAccountingPeriod(period: string): Promise<{ error?: string }> {
+  try {
+    const session = await getSessionOrRedirect();
+    await lockPeriod(period, session.user.id);
+    revalidatePath('/accounting/periods');
+    revalidatePath('/accounting/journals');
+    return {};
+  } catch (err) {
+    console.error('Failed to lock period:', err);
+    return { error: 'Failed to lock period.' };
+  }
+}
+
+/**
+ * Reopens a closed accounting period.
+ */
+export async function reopenAccountingPeriod(period: string): Promise<{ error?: string }> {
+  try {
+    await getSessionOrRedirect();
+    await reopenPeriod(period);
+    revalidatePath('/accounting/periods');
+    revalidatePath('/accounting/journals');
+    return {};
+  } catch (err) {
+    console.error('Failed to reopen period:', err);
+    return { error: 'Failed to reopen period.' };
   }
 }

@@ -1,16 +1,36 @@
 import type { Metadata } from 'next'
-import { ComingSoonPage } from '@/components/coming-soon-page'
+import { getAllAccountingPeriods } from '@pmg/db'
+import { SetPageTotal } from '@/components/navigation/page-header-context'
+import {
+  closeAccountingPeriod,
+  lockAccountingPeriod,
+  reopenAccountingPeriod,
+} from '@/app/actions/accounting'
+import { PeriodsClient } from './periods-client'
 
+export const dynamic = 'force-dynamic'
 export const metadata: Metadata = { title: 'Accounting Periods' }
 
-export default function AccountingPeriodsPage() {
+export default async function AccountingPeriodsPage() {
+  const periods = await getAllAccountingPeriods()
+
   return (
-    <ComingSoonPage
-      title="Accounting Periods"
-      purpose="Open, close, and lock accounting months for period-end control."
-      description="This page will manage accounting periods allowing you to open new months, close completed months, and lock periods to prevent further journal postings. Closed periods will maintain historical accuracy while allowing active credits to be applied in open periods."
-      backHref="/accounting"
-      backLabel="Back to Accounting"
-    />
+    <div className="flex flex-col gap-6">
+      <SetPageTotal value={`${periods.length} periods`} />
+
+      <div>
+        <h2 className="text-lg font-semibold">Accounting Periods</h2>
+        <p className="text-sm text-muted-foreground">
+          Open, close, and lock accounting months for period-end control.
+        </p>
+      </div>
+
+      <PeriodsClient
+        periods={periods}
+        closeAction={closeAccountingPeriod}
+        lockAction={lockAccountingPeriod}
+        reopenAction={reopenAccountingPeriod}
+      />
+    </div>
   )
 }

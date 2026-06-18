@@ -52,6 +52,21 @@ export {
   getAllAccountingPeriods,
   getCurrentOpenPeriod,
   isPeriodOpen,
+  getTrialBalance,
+  getProfitAndLoss,
+  getGeneralLedger,
+  getAccountingOverview,
+  ensureOpenPeriod,
+  closePeriod,
+  lockPeriod,
+  reopenPeriod,
+} from './queries/accounting';
+export type {
+  TrialBalanceRow,
+  ProfitAndLossRow,
+  ProfitAndLossResult,
+  GeneralLedgerRow,
+  AccountingOverview,
 } from './queries/accounting';
 export type {
   ChartAccount,

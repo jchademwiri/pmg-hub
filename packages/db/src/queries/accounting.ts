@@ -243,3 +243,329 @@ export async function isPeriodOpen(period: string): Promise<boolean> {
   // If period doesn't exist in the table, treat it as open
   return !row || row.status === "open";
 }
+
+// ── Trial Balance ─────────────────────────────────────────────────────────────
+
+export type TrialBalanceRow = {
+  accountId: string;
+  accountCode: string;
+  accountName: string;
+  accountType: string;
+  totalDebits: number;
+  totalCredits: number;
+  balance: number;
+};
+
+/**
+ * Returns trial balance data: for each posting account, the sum of debits and
+ * credits across all posted journal lines, optionally filtered by period.
+ */
+export async function getTrialBalance(period?: string): Promise<TrialBalanceRow[]> {
+  const joinConditions = [
+    eq(journalEntries.status, "posted"),
+  ];
+  if (period) joinConditions.push(eq(journalEntries.period, period));
+
+  const accountConditions = [
+    eq(chartAccounts.isPostingAccount, true),
+    eq(chartAccounts.isActive, true),
+  ];
+
+  const rows = await db
+    .select({
+      accountId: chartAccounts.id,
+      accountCode: chartAccounts.code,
+      accountName: chartAccounts.name,
+      accountType: chartAccounts.type,
+      totalDebits: sql<string>`COALESCE(SUM(${journalLines.debit}::numeric), 0)`,
+      totalCredits: sql<string>`COALESCE(SUM(${journalLines.credit}::numeric), 0)`,
+    })
+    .from(chartAccounts)
+    .leftJoin(journalLines, eq(journalLines.accountId, chartAccounts.id))
+    .leftJoin(journalEntries, and(
+      eq(journalLines.journalEntryId, journalEntries.id),
+      ...joinConditions,
+    ))
+    .where(and(...accountConditions))
+    .groupBy(chartAccounts.id, chartAccounts.code, chartAccounts.name, chartAccounts.type)
+    .orderBy(asc(chartAccounts.code));
+
+  return rows.map((r) => ({
+    ...r,
+    totalDebits: Number(r.totalDebits),
+    totalCredits: Number(r.totalCredits),
+    balance: Number(r.totalDebits) - Number(r.totalCredits),
+  }));
+}
+
+// ── Profit & Loss ─────────────────────────────────────────────────────────────
+
+export type ProfitAndLossRow = {
+  accountId: string;
+  accountCode: string;
+  accountName: string;
+  accountType: string;
+  amount: number;
+};
+
+export type ProfitAndLossResult = {
+  revenue: ProfitAndLossRow[];
+  totalRevenue: number;
+  expenses: ProfitAndLossRow[];
+  totalExpenses: number;
+  netProfit: number;
+};
+
+/**
+ * Returns Profit & Loss data for a given period.
+ * Revenue accounts: credits - debits (positive = income)
+ * Expense accounts: debits - credits (positive = expense)
+ */
+export async function getProfitAndLoss(period?: string): Promise<ProfitAndLossResult> {
+  const joinConditions = [
+    eq(journalEntries.status, "posted"),
+  ];
+  if (period) joinConditions.push(eq(journalEntries.period, period));
+
+  const accountConditions = [
+    eq(chartAccounts.isPostingAccount, true),
+    eq(chartAccounts.isActive, true),
+  ];
+
+  const rows = await db
+    .select({
+      accountId: chartAccounts.id,
+      accountCode: chartAccounts.code,
+      accountName: chartAccounts.name,
+      accountType: chartAccounts.type,
+      totalDebits: sql<string>`COALESCE(SUM(${journalLines.debit}::numeric), 0)`,
+      totalCredits: sql<string>`COALESCE(SUM(${journalLines.credit}::numeric), 0)`,
+    })
+    .from(chartAccounts)
+    .leftJoin(journalLines, eq(journalLines.accountId, chartAccounts.id))
+    .leftJoin(journalEntries, and(
+      eq(journalLines.journalEntryId, journalEntries.id),
+      ...joinConditions,
+    ))
+    .where(and(...accountConditions))
+    .groupBy(chartAccounts.id, chartAccounts.code, chartAccounts.name, chartAccounts.type)
+    .orderBy(asc(chartAccounts.code));
+
+  const revenue: ProfitAndLossRow[] = [];
+  const expenses: ProfitAndLossRow[] = [];
+
+  for (const r of rows) {
+    const debits = Number(r.totalDebits);
+    const credits = Number(r.totalCredits);
+    if (r.accountType === "revenue") {
+      const amount = credits - debits;
+      if (Math.abs(amount) > 0.01) revenue.push({ ...r, amount });
+    } else if (r.accountType === "expense") {
+      const amount = debits - credits;
+      if (Math.abs(amount) > 0.01) expenses.push({ ...r, amount });
+    }
+  }
+
+  const totalRevenue = revenue.reduce((s, r) => s + r.amount, 0);
+  const totalExpenses = expenses.reduce((s, r) => s + r.amount, 0);
+
+  return {
+    revenue,
+    totalRevenue,
+    expenses,
+    totalExpenses,
+    netProfit: totalRevenue - totalExpenses,
+  };
+}
+
+// ── General Ledger ────────────────────────────────────────────────────────────
+
+export type GeneralLedgerRow = {
+  id: string;
+  entryNumber: string;
+  entryDate: string;
+  description: string | null;
+  accountId: string;
+  accountCode: string;
+  accountName: string;
+  debit: number;
+  credit: number;
+  lineDescription: string | null;
+  sourceModule: string | null;
+  sourceDocumentNumber: string | null;
+};
+
+/**
+ * Returns general ledger lines with account info, for a date range and/or account.
+ * Ordered by date, then entry number.
+ */
+export async function getGeneralLedger({
+  startDate,
+  endDate,
+  accountId,
+  page = 1,
+  pageSize = 50,
+}: {
+  startDate?: string;
+  endDate?: string;
+  accountId?: string;
+  page?: number;
+  pageSize?: number;
+} = {}) {
+  const conditions = [
+    eq(journalEntries.status, "posted"),
+  ];
+  if (startDate) conditions.push(sql`${journalEntries.entryDate} >= ${startDate}`);
+  if (endDate) conditions.push(sql`${journalEntries.entryDate} <= ${endDate}`);
+  if (accountId) conditions.push(eq(journalLines.accountId, accountId));
+
+  const where = and(...conditions);
+
+  const [countResult] = await db
+    .select({ count: sql<number>`count(*)::int` })
+    .from(journalLines)
+    .innerJoin(journalEntries, eq(journalLines.journalEntryId, journalEntries.id))
+    .where(where);
+
+  const rows = await db
+    .select({
+      id: journalLines.id,
+      entryNumber: journalEntries.entryNumber,
+      entryDate: journalEntries.entryDate,
+      description: journalEntries.description,
+      accountId: journalLines.accountId,
+      accountCode: chartAccounts.code,
+      accountName: chartAccounts.name,
+      debit: sql<string>`COALESCE(${journalLines.debit}, '0')`,
+      credit: sql<string>`COALESCE(${journalLines.credit}, '0')`,
+      lineDescription: journalLines.description,
+      sourceModule: journalEntries.sourceModule,
+      sourceDocumentNumber: journalEntries.sourceDocumentNumber,
+    })
+    .from(journalLines)
+    .innerJoin(journalEntries, eq(journalLines.journalEntryId, journalEntries.id))
+    .innerJoin(chartAccounts, eq(journalLines.accountId, chartAccounts.id))
+    .where(where)
+    .orderBy(asc(journalEntries.entryDate), asc(journalEntries.entryNumber))
+    .offset((page - 1) * pageSize)
+    .limit(pageSize);
+
+  return {
+    data: rows.map((r) => ({
+      ...r,
+      debit: Number(r.debit),
+      credit: Number(r.credit),
+    })),
+    total: countResult?.count ?? 0,
+    page,
+    pageSize,
+  };
+}
+
+// ── Accounting Overview ───────────────────────────────────────────────────────
+
+export type AccountingOverview = {
+  totalAccounts: number;
+  totalPostedEntries: number;
+  totalDraftEntries: number;
+  currentPeriod: string | null;
+  currentPeriodStatus: string | null;
+};
+
+/**
+ * Returns summary stats for the accounting overview page.
+ */
+export async function getAccountingOverview(): Promise<AccountingOverview> {
+  const [accountCount] = await db
+    .select({ count: sql<number>`count(*)::int` })
+    .from(chartAccounts)
+    .where(eq(chartAccounts.isActive, true));
+
+  const [postedCount] = await db
+    .select({ count: sql<number>`count(*)::int` })
+    .from(journalEntries)
+    .where(eq(journalEntries.status, "posted"));
+
+  const [draftCount] = await db
+    .select({ count: sql<number>`count(*)::int` })
+    .from(journalEntries)
+    .where(eq(journalEntries.status, "draft"));
+
+  const period = await getCurrentOpenPeriod();
+
+  return {
+    totalAccounts: accountCount?.count ?? 0,
+    totalPostedEntries: postedCount?.count ?? 0,
+    totalDraftEntries: draftCount?.count ?? 0,
+    currentPeriod: period?.period ?? null,
+    currentPeriodStatus: period?.status ?? null,
+  };
+}
+
+// ── Period Management ────────────────────────────────────────────────────────
+
+/**
+ * Creates a new open period or returns the existing one.
+ */
+export async function ensureOpenPeriod(period: string) {
+  const [existing] = await db
+    .select()
+    .from(accountingPeriods)
+    .where(eq(accountingPeriods.period, period))
+    .limit(1);
+
+  if (existing) return existing;
+
+  const [created] = await db
+    .insert(accountingPeriods)
+    .values({ period, status: "open" })
+    .returning();
+
+  return created;
+}
+
+/**
+ * Closes a period (prevents new journal entries).
+ */
+export async function closePeriod(period: string, closedBy: string) {
+  await ensureOpenPeriod(period);
+  await db
+    .update(accountingPeriods)
+    .set({
+      status: "closed",
+      closedAt: new Date(),
+      closedBy,
+      updatedAt: new Date(),
+    })
+    .where(eq(accountingPeriods.period, period));
+}
+
+/**
+ * Locks a period permanently (cannot be reopened).
+ */
+export async function lockPeriod(period: string, lockedBy: string) {
+  await db
+    .update(accountingPeriods)
+    .set({
+      status: "locked",
+      lockedAt: new Date(),
+      lockedBy,
+      updatedAt: new Date(),
+    })
+    .where(eq(accountingPeriods.period, period));
+}
+
+/**
+ * Reopens a closed period (not locked).
+ */
+export async function reopenPeriod(period: string) {
+  await db
+    .update(accountingPeriods)
+    .set({
+      status: "open",
+      closedAt: null,
+      closedBy: null,
+      updatedAt: new Date(),
+    })
+    .where(eq(accountingPeriods.period, period));
+}
