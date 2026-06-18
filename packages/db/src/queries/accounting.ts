@@ -286,18 +286,40 @@ export type TrialBalanceRow = {
 
 /**
  * Returns trial balance data: for each posting account, the sum of debits and
- * credits across all posted journal lines, optionally filtered by period.
+ * credits across only posted journal lines, optionally filtered by period.
+ * Uses a subquery to ensure only journal lines belonging to posted entries
+ * are aggregated — void/draft entries are excluded.
  */
 export async function getTrialBalance(period?: string): Promise<TrialBalanceRow[]> {
-  const joinConditions = [
+  const entryConditions = [
     eq(journalEntries.status, "posted"),
   ];
-  if (period) joinConditions.push(eq(journalEntries.period, period));
+  if (period) entryConditions.push(eq(journalEntries.period, period));
 
   const accountConditions = [
     eq(chartAccounts.isPostingAccount, true),
     eq(chartAccounts.isActive, true),
   ];
+
+  // Subquery: aggregate debits/credits only from posted journal entries
+  // Note: raw SQL fields in subqueries MUST have an explicit .as('alias')
+  // for Drizzle ORM to be able to reference them from the outer query.
+  const postedLineTotals = db
+    .select({
+      accountId: journalLines.accountId,
+      totalDebits: sql<string>`COALESCE(SUM(${journalLines.debit}::numeric), 0)`.as("totalDebits"),
+      totalCredits: sql<string>`COALESCE(SUM(${journalLines.credit}::numeric), 0)`.as("totalCredits"),
+    })
+    .from(journalLines)
+    .innerJoin(
+      journalEntries,
+      and(
+        eq(journalLines.journalEntryId, journalEntries.id),
+        ...entryConditions
+      )
+    )
+    .groupBy(journalLines.accountId)
+    .as("posted_line_totals");
 
   const rows = await db
     .select({
@@ -305,17 +327,12 @@ export async function getTrialBalance(period?: string): Promise<TrialBalanceRow[
       accountCode: chartAccounts.code,
       accountName: chartAccounts.name,
       accountType: chartAccounts.type,
-      totalDebits: sql<string>`COALESCE(SUM(${journalLines.debit}::numeric), 0)`,
-      totalCredits: sql<string>`COALESCE(SUM(${journalLines.credit}::numeric), 0)`,
+      totalDebits: sql<string>`COALESCE(${postedLineTotals.totalDebits}, 0)`,
+      totalCredits: sql<string>`COALESCE(${postedLineTotals.totalCredits}, 0)`,
     })
     .from(chartAccounts)
-    .leftJoin(journalLines, eq(journalLines.accountId, chartAccounts.id))
-    .leftJoin(journalEntries, and(
-      eq(journalLines.journalEntryId, journalEntries.id),
-      ...joinConditions,
-    ))
+    .leftJoin(postedLineTotals, eq(postedLineTotals.accountId, chartAccounts.id))
     .where(and(...accountConditions))
-    .groupBy(chartAccounts.id, chartAccounts.code, chartAccounts.name, chartAccounts.type)
     .orderBy(asc(chartAccounts.code));
 
   return rows.map((r) => ({
@@ -348,17 +365,39 @@ export type ProfitAndLossResult = {
  * Returns Profit & Loss data for a given period.
  * Revenue accounts: credits - debits (positive = income)
  * Expense accounts: debits - credits (positive = expense)
+ * Uses a subquery to ensure only journal lines belonging to posted entries
+ * are aggregated — void/draft entries are excluded.
  */
 export async function getProfitAndLoss(period?: string): Promise<ProfitAndLossResult> {
-  const joinConditions = [
+  const entryConditions = [
     eq(journalEntries.status, "posted"),
   ];
-  if (period) joinConditions.push(eq(journalEntries.period, period));
+  if (period) entryConditions.push(eq(journalEntries.period, period));
 
   const accountConditions = [
     eq(chartAccounts.isPostingAccount, true),
     eq(chartAccounts.isActive, true),
   ];
+
+  // Subquery: aggregate debits/credits only from posted journal entries
+  // Note: raw SQL fields in subqueries MUST have an explicit .as('alias')
+  // for Drizzle ORM to be able to reference them from the outer query.
+  const postedLineTotals = db
+    .select({
+      accountId: journalLines.accountId,
+      totalDebits: sql<string>`COALESCE(SUM(${journalLines.debit}::numeric), 0)`.as("totalDebits"),
+      totalCredits: sql<string>`COALESCE(SUM(${journalLines.credit}::numeric), 0)`.as("totalCredits"),
+    })
+    .from(journalLines)
+    .innerJoin(
+      journalEntries,
+      and(
+        eq(journalLines.journalEntryId, journalEntries.id),
+        ...entryConditions
+      )
+    )
+    .groupBy(journalLines.accountId)
+    .as("posted_line_totals");
 
   const rows = await db
     .select({
@@ -366,17 +405,12 @@ export async function getProfitAndLoss(period?: string): Promise<ProfitAndLossRe
       accountCode: chartAccounts.code,
       accountName: chartAccounts.name,
       accountType: chartAccounts.type,
-      totalDebits: sql<string>`COALESCE(SUM(${journalLines.debit}::numeric), 0)`,
-      totalCredits: sql<string>`COALESCE(SUM(${journalLines.credit}::numeric), 0)`,
+      totalDebits: sql<string>`COALESCE(${postedLineTotals.totalDebits}, 0)`,
+      totalCredits: sql<string>`COALESCE(${postedLineTotals.totalCredits}, 0)`,
     })
     .from(chartAccounts)
-    .leftJoin(journalLines, eq(journalLines.accountId, chartAccounts.id))
-    .leftJoin(journalEntries, and(
-      eq(journalLines.journalEntryId, journalEntries.id),
-      ...joinConditions,
-    ))
+    .leftJoin(postedLineTotals, eq(postedLineTotals.accountId, chartAccounts.id))
     .where(and(...accountConditions))
-    .groupBy(chartAccounts.id, chartAccounts.code, chartAccounts.name, chartAccounts.type)
     .orderBy(asc(chartAccounts.code));
 
   const revenue: ProfitAndLossRow[] = [];
