@@ -6,6 +6,7 @@ import { getSessionOrRedirect } from '@/lib/auth';
 import { isPeriodClosed, getMinAllowedDate, getMinDateErrorMessage } from '@/lib/date-rules';
 import { getSASTToday, fmtDateLong } from '@/lib/format';
 import { deleteIncome } from './income';
+import { postPaymentJournalEntries, updatePaymentJournalEntries, voidPaymentJournalEntries } from './accounting-auto-post';
 
 export interface PaymentAllocationInput {
   invoiceId: string;
@@ -280,12 +281,29 @@ export async function recordClientPayment(data: PaymentInput): Promise<{ error?:
       }
     }
 
-    // 4. Revalidate cache
+    // 4. Auto-post double-entry journal entries (Dr Bank / Cr Revenue + Dr Savings / Cr PMG Share)
+    const journalResult = await postPaymentJournalEntries({
+      incomeId: incomeRow.id,
+      amount: data.amount,
+      date: data.date,
+      description: autoReference,
+      divisionId: finalDivisionId,
+    });
+    if (journalResult.error) {
+      console.warn('Journal auto-post warning:', journalResult.error);
+      // Non-fatal: payment was recorded, journal posting failed
+    }
+
+    // 5. Revalidate cache
     revalidatePath('/billing/invoices');
     revalidatePath('/billing/payments');
     revalidatePath('/dashboard');
+    revalidatePath('/accounting/journals');
+    revalidatePath('/accounting/trial-balance');
+    revalidatePath('/accounting/general-ledger');
+    revalidatePath('/accounting/profit-and-loss');
 
-    // 5. Asynchronously trigger Payment Thank You email receipt via Resend
+    // 6. Asynchronously trigger Payment Thank You email receipt via Resend
     if (data.sendReceiptEmail && client.email) {
       (async () => {
         try {
@@ -554,10 +572,23 @@ export async function adjustClientPayment(incomeId: string, newAmount: number): 
       .set({ amount: String(newAmount) })
       .where(eq(income.id, incomeId));
 
-    // 4. Revalidate cache
+    // 4. Update journal entries to reflect new amount
+    await updatePaymentJournalEntries({
+      incomeId,
+      newAmount,
+      date: payment.date,
+      description: payment.description || 'Payment adjusted',
+      divisionId: payment.divisionId,
+    });
+
+    // 5. Revalidate cache
     revalidatePath('/billing/invoices');
     revalidatePath('/billing/payments');
     revalidatePath('/dashboard');
+    revalidatePath('/accounting/journals');
+    revalidatePath('/accounting/trial-balance');
+    revalidatePath('/accounting/general-ledger');
+    revalidatePath('/accounting/profit-and-loss');
 
     return { success: true };
   } catch (err) {
@@ -852,10 +883,23 @@ export async function updateClientPayment(
       })
       .where(eq(income.id, id));
 
-    // 5. Revalidate cache
+    // 5. Update journal entries to reflect new amount/description
+    await updatePaymentJournalEntries({
+      incomeId: id,
+      newAmount,
+      date: data.date,
+      description: finalDescription,
+      divisionId: data.divisionId,
+    });
+
+    // 6. Revalidate cache
     revalidatePath('/billing/payments');
     revalidatePath('/billing/invoices');
     revalidatePath('/dashboard');
+    revalidatePath('/accounting/journals');
+    revalidatePath('/accounting/trial-balance');
+    revalidatePath('/accounting/general-ledger');
+    revalidatePath('/accounting/profit-and-loss');
 
     return { success: true };
   } catch (err) {

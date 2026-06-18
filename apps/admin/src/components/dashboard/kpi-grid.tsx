@@ -157,7 +157,7 @@ export function KpiGrid({ summary, deltas, previousSummary, deltaLabel, sparklin
   const revenueTrends = sparklineData.map((d) => d.revenue)
   const expensesTrends = sparklineData.map((d) => d.expenses)
   const pmgShareTrends = sparklineData.map((d) => d.revenue * 0.25)
-  const profitPoolTrends = sparklineData.map((d) => d.revenue * 0.75 - d.expenses)
+  const profitPoolTrends = sparklineData.map((d) => d.revenue * 0.75 - d.expenses) // 0.75 = 1 - pmg_share
 
   return (
     <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">

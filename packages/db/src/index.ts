@@ -34,6 +34,52 @@ export type {
 } from './queries/billing';
 export { getActiveItems, getUnlinkedIncomeForClient, getStatementYears, getAgingReport } from './queries/billing';
 
+// ── Distribution Settings ──────────────────────────────────────────────────────
+export { getActiveRates, getActiveRateForKey, getCurrentRates, getAllDistributionSettings } from './queries/distribution-settings';
+export type { ActiveRates, RateKey } from './queries/distribution-settings';
+
+// ── Accounting ───────────────────────────────────────────────────────────────
+export {
+  getAllChartAccounts,
+  getActiveChartAccounts,
+  getChartAccountsByType,
+  getChartAccountById,
+  getNextAccountCode,
+  getJournalEntries,
+  getJournalEntryWithLines,
+  validateJournalLines,
+  getNextJournalEntryNumber,
+  getAllAccountingPeriods,
+  getCurrentOpenPeriod,
+  isPeriodOpen,
+  getTrialBalance,
+  getProfitAndLoss,
+  getGeneralLedger,
+  getAccountingOverview,
+  ensureOpenPeriod,
+  closePeriod,
+  lockPeriod,
+  reopenPeriod,
+} from './queries/accounting';
+export type {
+  TrialBalanceRow,
+  ProfitAndLossRow,
+  ProfitAndLossResult,
+  GeneralLedgerRow,
+  AccountingOverview,
+  AccountingPeriodWithNames,
+} from './queries/accounting';
+export type {
+  ChartAccount,
+  NewChartAccount,
+  JournalEntry,
+  NewJournalEntry,
+  JournalLine,
+  NewJournalLine,
+  AccountingPeriod,
+  NewAccountingPeriod,
+} from './schema/accounting';
+
 // ── Date utilities ────────────────────────────────────────────────────────────
 export { addDays, today } from './lib/date-utils';
 

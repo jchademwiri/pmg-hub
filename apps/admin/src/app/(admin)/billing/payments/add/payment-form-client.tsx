@@ -15,7 +15,7 @@ import {
 } from '@/components/ui/select';
 import { Separator } from '@/components/ui/separator';
 import { Field, FieldLabel } from '@/components/ui/field';
-import { formatZAR } from '@/lib/format';
+import { fmtDate, formatZAR } from '@/lib/format';
 import {
   Table,
   TableBody,
@@ -580,7 +580,7 @@ export function PaymentFormClient({ divisions, clients, minDate }: PaymentFormCl
                     return (
                       <TableRow key={inv.id}>
                         <TableCell className="font-medium">{inv.documentNumber}</TableCell>
-                        <TableCell className="text-muted-foreground">{inv.invoiceDate}</TableCell>
+                        <TableCell className="text-muted-foreground">{fmtDate(inv.invoiceDate)}</TableCell>
                         <TableCell className="text-right tabular-nums">{formatZAR(inv.total)}</TableCell>
                         <TableCell className="text-right tabular-nums font-medium text-amber-600">
                           {formatZAR(inv.outstanding)}

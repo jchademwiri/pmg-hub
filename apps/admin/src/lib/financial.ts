@@ -1,6 +1,6 @@
 import 'server-only'
 
-import { ACCOUNT_RATES, PROFIT_POOL_RATES } from '@pmg/db'
+import { getActiveRates } from '@pmg/db'
 import {
   getTotalRevenue,
   getTotalExpenses,
@@ -26,6 +26,7 @@ import {
   getDistinctYears,
   getMonthlyFinancialsForYear,
   getMonthlyRevenueByDivisionForYear,
+  getMonthlyRevenueVsInvoicedForYear,
   getAllSnapshots,
 } from '@pmg/db'
 import { fmtMonthYear, getSASTParts } from '@/lib/format'
@@ -36,6 +37,8 @@ export type { PeriodSummary } from '@pmg/db'
 // ── Local types ───────────────────────────────────────────────────────────────
 export type MonthlyRevenueByDivision = { month: string; [divisionName: string]: number | string }
 export type MonthlyFinancials = { month: string; revenue: number; expenses: number }
+export type MonthlyRevenueVsInvoiced = { month: string; received: number; invoiced: number }
+export type MonthlyBudgetChartRow = { month: string; revenue: number; invoiced: number; expenses: number }
 export type MoMSnapshot = { metric: string; current: number; previous: number }
 export type FinancialSummary = {
   revenue: number; expenses: number; pmgShare: number; profitPool: number;
@@ -75,15 +78,15 @@ export function getYTDLabel(): string {
 
 // ── All-time summary (YTD shortcut for totals) ────────────────────────────────
 export async function getFinancialSummary(): Promise<FinancialSummary> {
-  const [revenue, expenses] = await Promise.all([getTotalRevenue(), getTotalExpenses()])
-  const pmgShare   = revenue * ACCOUNT_RATES.pmg_share
+  const [revenue, expenses, rates] = await Promise.all([getTotalRevenue(), getTotalExpenses(), getActiveRates()])
+  const pmgShare   = revenue * rates.pmg_share
   const profitPool = revenue - expenses - pmgShare
   return {
     revenue, expenses, pmgShare, profitPool,
-    salary:   profitPool * PROFIT_POOL_RATES.salary,
-    reinvest: profitPool * PROFIT_POOL_RATES.reinvest,
-    reserve:  profitPool * PROFIT_POOL_RATES.reserve,
-    flex:     profitPool * PROFIT_POOL_RATES.flex,
+    salary:   profitPool * rates.salary,
+    reinvest: profitPool * rates.reinvest,
+    reserve:  profitPool * rates.reserve,
+    flex:     profitPool * rates.flex,
   }
 }
 
@@ -183,14 +186,14 @@ export async function getMonthlyFinancialsSeries(): Promise<MonthlyFinancials[]>
 }
 
 export async function getMoMChartData(): Promise<MoMSnapshot[]> {
-  const snap = await getMoMSnapshot()
+  const [snap, rates] = await Promise.all([getMoMSnapshot(), getActiveRates()])
   return [
     { metric: 'Revenue',     current: snap.currentRevenue,  previous: snap.previousRevenue },
     { metric: 'Expenses',    current: snap.currentExpenses, previous: snap.previousExpenses },
     {
       metric: 'Profit Pool',
-      current:  snap.currentRevenue  - snap.currentExpenses  - (snap.currentRevenue  * ACCOUNT_RATES.pmg_share),
-      previous: snap.previousRevenue - snap.previousExpenses - (snap.previousRevenue * ACCOUNT_RATES.pmg_share),
+      current:  snap.currentRevenue  - snap.currentExpenses  - (snap.currentRevenue  * rates.pmg_share),
+      previous: snap.previousRevenue - snap.previousExpenses - (snap.previousRevenue * rates.pmg_share),
     },
   ]
 }
@@ -220,6 +223,43 @@ export async function getRevenueByDivisionSeriesForYear(
 ): Promise<DivisionSeriesChart> {
   const rows = await getMonthlyRevenueByDivisionForYear(year)
   return buildDivisionSeries(rows)
+}
+
+export async function getRevenueVsInvoicedSeriesForYear(
+  year: number
+): Promise<MonthlyRevenueVsInvoiced[]> {
+  return getMonthlyRevenueVsInvoicedForYear(year)
+}
+
+export async function getBudgetChartSeriesForYear(
+  year: number
+): Promise<MonthlyBudgetChartRow[]> {
+  const [revenueVsInvoiced, monthlyFinancials] = await Promise.all([
+    getRevenueVsInvoicedSeriesForYear(year),
+    getMonthlyFinancialsSeriesForYear(year),
+  ])
+
+  const monthMap = new Map<string, MonthlyBudgetChartRow>()
+  for (let i = 0; i < 12; i += 1) {
+    const date = new Date(year, 2 + i, 1)
+    const month = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`
+    monthMap.set(month, { month, revenue: 0, invoiced: 0, expenses: 0 })
+  }
+
+  for (const row of revenueVsInvoiced) {
+    const entry = monthMap.get(row.month) ?? { month: row.month, revenue: 0, invoiced: 0, expenses: 0 }
+    entry.revenue = row.received
+    entry.invoiced = row.invoiced
+    monthMap.set(row.month, entry)
+  }
+
+  for (const row of monthlyFinancials) {
+    const entry = monthMap.get(row.month) ?? { month: row.month, revenue: 0, invoiced: 0, expenses: 0 }
+    entry.expenses = row.expenses
+    monthMap.set(row.month, entry)
+  }
+
+  return [...monthMap.values()].sort((a, b) => a.month.localeCompare(b.month))
 }
 
 // ── Profit Pool split series ──────────────────────────────────────────────────

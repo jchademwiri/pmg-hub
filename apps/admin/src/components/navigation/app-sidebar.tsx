@@ -47,9 +47,13 @@ function NavMenu({ items, pathname, onNavigate }: NavMenuProps) {
   return (
     <SidebarMenu>
       {items.map((item) => {
-        // Exact match for root-level settings to avoid /settings matching /settings/users etc.
-        const isActive = item.url === '/settings'
-          ? pathname === '/settings'
+        // Exact match for group-root "Overview" items (e.g. /billing, /finance,
+        // /accounting, /settings) to avoid them showing active on every sub-route
+        // (e.g. /billing matching /billing/invoices). Sub-routes always have a
+        // path segment after the group root, so segment count is the reliable check.
+        const isGroupRoot = item.url.split('/').filter(Boolean).length === 1
+        const isActive = isGroupRoot
+          ? pathname === item.url
           : pathname.startsWith(item.url)
         return (
           <SidebarMenuItem key={item.url}>

@@ -47,11 +47,6 @@ function formatMoney(amount: number) {
   return `R ${amount.toLocaleString('en-ZA', { minimumFractionDigits: 2 })}`;
 }
 
-function formatDate(value: string | null) {
-  const formatted = fmtDate(value);
-  return formatted === '-' ? 'N/A' : formatted;
-}
-
 function defaultSubject(item: PendingReminderClient) {
   const clientLabel = item.businessName ?? item.clientName;
   return `Overdue Payment Reminder - ${clientLabel}: ${formatMoney(item.outstandingBalance)} outstanding`;
@@ -525,7 +520,7 @@ export function SendOverdueRemindersButton() {
                           <div className="min-w-0">
                             <p className="truncate font-medium">{invoice.documentNumber}</p>
                             <p className="text-xs text-muted-foreground">
-                              Due {formatDate(invoice.dueDate)} · Total {formatMoney(invoice.total)}
+                              Due {fmtDate(invoice.dueDate) === '-' ? 'N/A' : fmtDate(invoice.dueDate)} · Total {formatMoney(invoice.total)}
                             </p>
                           </div>
                           <div className="text-right font-medium">{formatMoney(invoice.outstanding)}</div>

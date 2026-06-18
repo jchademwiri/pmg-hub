@@ -62,6 +62,8 @@ vi.mock('recharts', () => ({
 
 vi.mock('@/components/ui/chart', () => ({
   ChartContainer: ({ children }: any) => <div data-testid="chart-container">{children}</div>,
+  ChartLegend: ({ content }: { content: React.ReactNode }) => <div data-testid="chart-legend">{content}</div>,
+  ChartLegendContent: () => <div data-testid="chart-legend-content" />,
   ChartTooltip: () => null,
   ChartTooltipContent: () => null,
 }))
@@ -101,7 +103,7 @@ vi.mock('@/lib/financial', () => ({
   getDistinctReportYears: vi.fn().mockResolvedValue([2025]),
   getMoMChartData: vi.fn().mockResolvedValue([]),
   getMonthlyFinancialsSeriesForYear: vi.fn().mockResolvedValue([]),
-  getRevenueByDivisionSeriesForYear: vi.fn().mockResolvedValue({ series: [], divisions: [] }),
+  getBudgetChartSeriesForYear: vi.fn().mockResolvedValue([]),
   getExpensesByCategory: vi.fn().mockResolvedValue([]),
   getProfitPoolSeriesForYear: vi.fn().mockResolvedValue([]),
   getLedgerBalances: vi.fn().mockResolvedValue({
@@ -622,7 +624,7 @@ describe('Reports page', () => {
     vi.mocked(financial.getDistinctReportYears).mockResolvedValue([2025])
     vi.mocked(financial.getMoMChartData).mockResolvedValue([])
     vi.mocked(financial.getMonthlyFinancialsSeriesForYear).mockResolvedValue([])
-    vi.mocked(financial.getRevenueByDivisionSeriesForYear).mockResolvedValue({ series: [], divisions: [] })
+    vi.mocked(financial.getBudgetChartSeriesForYear).mockResolvedValue([])
     vi.mocked(financial.getExpensesByCategory).mockResolvedValue([])
     vi.mocked(financial.getProfitPoolSeriesForYear).mockResolvedValue([])
     vi.mocked(financial.getLedgerBalances).mockResolvedValue({

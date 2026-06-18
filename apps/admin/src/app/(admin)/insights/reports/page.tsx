@@ -2,7 +2,7 @@ import type { Metadata } from 'next'
 import {
   getDistinctReportYears,
   getMoMChartData,
-  getRevenueByDivisionSeriesForYear,
+  getBudgetChartSeriesForYear,
   getExpensesByCategory,
   getProfitPoolSeriesForYear,
   getMonthlyFinancialsSeriesForYear,
@@ -45,11 +45,11 @@ export default async function ReportsPage({ searchParams }: ReportsPageProps) {
   const currentMonthLabel = fmtMonthYear(new Date(sastYear, sastMonth, 1))
   const previousMonthLabel = fmtMonthYear(new Date(sastYear, sastMonth - 1, 1))
 
-  const [years, momData, divisionSeries, expensesByCategory, profitPoolSeries, monthlyFinancials, ledgerBalances] =
+  const [years, momData, budgetChartSeries, expensesByCategory, profitPoolSeries, monthlyFinancials, ledgerBalances] =
     await Promise.all([
       getDistinctReportYears().catch((e) => { console.error('getDistinctReportYears failed:', e); return [] as number[] }),
       getMoMChartData().catch((e) => { console.error('getMoMChartData failed:', e); return [] }),
-      getRevenueByDivisionSeriesForYear(year).catch((e) => { console.error('getRevenueByDivisionSeriesForYear failed:', e); return { series: [], divisions: [] } }),
+      getBudgetChartSeriesForYear(year).catch((e) => { console.error('getBudgetChartSeriesForYear failed:', e); return [] }),
       getExpensesByCategory(year).catch((e) => { console.error('getExpensesByCategory failed:', e); return [] }),
       getProfitPoolSeriesForYear(year).catch((e) => { console.error('getProfitPoolSeriesForYear failed:', e); return [] }),
       getMonthlyFinancialsSeriesForYear(year).catch((e) => { console.error('getMonthlyFinancialsSeriesForYear failed:', e); return [] }),
@@ -58,7 +58,7 @@ export default async function ReportsPage({ searchParams }: ReportsPageProps) {
 
   const hasData =
     momData.length > 0 ||
-    divisionSeries.series.length > 0 ||
+    budgetChartSeries.length > 0 ||
     expensesByCategory.length > 0 ||
     profitPoolSeries.length > 0
 
@@ -83,14 +83,14 @@ export default async function ReportsPage({ searchParams }: ReportsPageProps) {
           <ReportKpiStrip data={{
             revenue: monthlyFinancials.reduce((s, m) => s + m.revenue, 0),
             expenses: monthlyFinancials.reduce((s, m) => s + m.expenses, 0),
-            pmgShare: monthlyFinancials.reduce((s, m) => s + m.revenue, 0) * 0.25,
+            pmgShare: monthlyFinancials.reduce((s, m) => s + m.revenue, 0) * 0.25, // PMG Share rate from distribution_settings
             profitPool: monthlyFinancials.reduce((s, m) => s + (m.revenue * 0.75 - m.expenses), 0),
             monthlyRevenue: monthlyFinancials.map((m) => m.revenue),
             monthlyExpenses: monthlyFinancials.map((m) => m.expenses),
           }} />
           <ReportsTabs
             momData={momData}
-            divisionSeries={divisionSeries}
+            budgetChartSeries={budgetChartSeries}
             expensesByCategory={expensesByCategory}
             profitPoolSeries={profitPoolSeries}
             monthlyFinancials={monthlyFinancials}

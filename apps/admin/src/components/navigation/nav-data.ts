@@ -15,7 +15,7 @@ import {
   Camera, BarChart3, Settings, UserCog, PiggyBank,
   Package, Shield, Database, Wallet, ArrowDownLeft,
   PieChart, Calculator, BookMarked, NotebookPen, Scale,
-  Calendar, Download,
+  Calendar, Download, LayoutGrid,
 } from 'lucide-react'
 import type { LucideIcon } from 'lucide-react'
 
@@ -50,6 +50,7 @@ export const GROUPS: NavGroup[] = [
     label: 'Billing',
     icon: FileSpreadsheet,
     items: [
+      { title: 'Overview',   url: '/billing',            icon: LayoutGrid },
       { title: 'Accounts',   url: '/billing/accounts',   icon: PiggyBank  },
       { title: 'Quotations', url: '/billing/quotes',     icon: FileText   },
       { title: 'Invoices',   url: '/billing/invoices',   icon: Receipt    },
@@ -64,6 +65,7 @@ export const GROUPS: NavGroup[] = [
     label: 'Finance',
     icon: Banknote,
     items: [
+      { title: 'Overview',     url: '/finance',              icon: LayoutGrid    },
       { title: 'Income',       url: '/finance/income',       icon: ArrowDownLeft },
       { title: 'Expenses',     url: '/finance/expenses',     icon: TrendingDown   },
       { title: 'Categories',   url: '/finance/categories',   icon: Tags           },
@@ -75,6 +77,7 @@ export const GROUPS: NavGroup[] = [
     label: 'Accounting',
     icon: Calculator,
     items: [
+      { title: 'Overview',          url: '/accounting',                   icon: LayoutGrid   },
       { title: 'Chart of Accounts', url: '/accounting/chart-of-accounts', icon: BookMarked   },
       { title: 'Journals',          url: '/accounting/journals',          icon: NotebookPen  },
       { title: 'General Ledger',    url: '/accounting/general-ledger',    icon: BookOpen     },
@@ -89,6 +92,7 @@ export const GROUPS: NavGroup[] = [
     label: 'Relationships',
     icon: Network,
     items: [
+      { title: 'Overview',  url: '/relationships',           icon: LayoutGrid },
       { title: 'Clients',   url: '/relationships/clients',   icon: Users     },
       { title: 'Leads',     url: '/relationships/leads',     icon: UserPlus  },
       { title: 'Divisions', url: '/relationships/divisions', icon: Building2 },
@@ -134,12 +138,8 @@ for (const group of GROUPS) {
 
 // Extra routes that exist in the app but are not sidebar items
 const EXTRA_LABELS: Record<string, string> = {
-  '/billing': 'Billing',
-  '/finance': 'Finance',
-  '/accounting': 'Accounting',
   '/settings/users/invite': 'Invite User',
   '/billing/payments/add': 'Record Payment',
-  '/billing/accounts': 'Accounts',
 }
 
 export const ROUTE_LABELS: Record<string, string> = {

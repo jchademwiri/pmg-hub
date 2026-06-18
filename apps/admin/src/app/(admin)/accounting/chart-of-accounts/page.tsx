@@ -1,16 +1,36 @@
 import type { Metadata } from 'next'
-import { ComingSoonPage } from '@/components/coming-soon-page'
+import { getChartAccountsByType } from '@pmg/db'
+import { SetPageTotal } from '@/components/navigation/page-header-context'
+import { createChartAccount, updateChartAccount } from '@/app/actions/accounting'
+import { ChartOfAccountsClient } from './chart-of-accounts-client'
 
+export const dynamic = 'force-dynamic'
 export const metadata: Metadata = { title: 'Chart of Accounts' }
 
-export default function ChartOfAccountsPage() {
+export default async function ChartOfAccountsPage() {
+  const accountsByType = await getChartAccountsByType()
+
+  const totalAccounts = Object.values(accountsByType).reduce(
+    (sum, accounts) => sum + accounts.length,
+    0
+  )
+
   return (
-    <ComingSoonPage
-      title="Chart of Accounts"
-      purpose="Define and manage your accounting account structure."
-      description="This page will provide a real accounting Chart of Accounts with account types (Assets, Liabilities, Equity, Revenue, Expenses), account codes, and the ability to create, edit, and organise accounts for proper double-entry bookkeeping."
-      backHref="/accounting"
-      backLabel="Back to Accounting"
-    />
+    <div className="flex flex-col gap-6">
+      <SetPageTotal value={`${totalAccounts} accounts`} />
+
+      <div>
+        <h2 className="text-lg font-semibold">Chart of Accounts</h2>
+        <p className="text-sm text-muted-foreground">
+          Define and manage your accounting account structure for double-entry bookkeeping
+        </p>
+      </div>
+
+      <ChartOfAccountsClient
+        accountsByType={accountsByType}
+        createAction={createChartAccount}
+        updateAction={updateChartAccount}
+      />
+    </div>
   )
 }

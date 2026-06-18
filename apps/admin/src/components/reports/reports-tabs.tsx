@@ -13,11 +13,11 @@ import { ReportCommentary } from './report-commentary'
 import { FinancialDrilldownSheet } from '@/components/insights/financial-drilldown-sheet'
 import type { DrilldownType } from '@/app/actions/drilldown'
 import { TrendingUp, DollarSign, Receipt, PiggyBank } from 'lucide-react'
-import type { MoMSnapshot, DivisionSeriesChart, ProfitPoolRow, MonthlyFinancials, BucketBalances } from '@/lib/financial'
+import type { MoMSnapshot, ProfitPoolRow, MonthlyFinancials, MonthlyBudgetChartRow, BucketBalances } from '@/lib/financial'
 
 interface ReportsTabsProps {
   momData: MoMSnapshot[]
-  divisionSeries: DivisionSeriesChart
+  budgetChartSeries: MonthlyBudgetChartRow[]
   expensesByCategory: { category: string; total: number }[]
   profitPoolSeries: ProfitPoolRow[]
   monthlyFinancials: MonthlyFinancials[]
@@ -30,7 +30,7 @@ interface ReportsTabsProps {
 
 export function ReportsTabs({
   momData,
-  divisionSeries,
+  budgetChartSeries,
   expensesByCategory,
   profitPoolSeries,
   monthlyFinancials,
@@ -71,12 +71,16 @@ export function ReportsTabs({
   // Calculate annual totals for waterfall and sankey flow diagram
   const totalRevenue = monthlyFinancials.reduce((sum, m) => sum + m.revenue, 0)
   const totalExpenses = monthlyFinancials.reduce((sum, m) => sum + m.expenses, 0)
-  const totalPmgShare = totalRevenue * 0.25
+  // Use 25% PMG Share and profit pool splits as display defaults.
+  // These match the current active rates in the database.
+  const PMG_SHARE_RATE = 0.25
+  const PROFIT_POOL_SPLITS = { salary: 0.35, reinvest: 0.30, reserve: 0.30, flex: 0.05 }
+  const totalPmgShare = totalRevenue * PMG_SHARE_RATE
   const totalProfitPool = totalRevenue - totalExpenses - totalPmgShare
-  const totalSalary = totalProfitPool * 0.35
-  const totalReinvest = totalProfitPool * 0.30
-  const totalReserve = totalProfitPool * 0.30
-  const totalFlex = totalProfitPool * 0.05
+  const totalSalary = totalProfitPool * PROFIT_POOL_SPLITS.salary
+  const totalReinvest = totalProfitPool * PROFIT_POOL_SPLITS.reinvest
+  const totalReserve = totalProfitPool * PROFIT_POOL_SPLITS.reserve
+  const totalFlex = totalProfitPool * PROFIT_POOL_SPLITS.flex
 
   return (
     <>
@@ -132,8 +136,7 @@ export function ReportsTabs({
       <TabsContent value="revenue">
         <div className="grid grid-cols-1 gap-6">
           <RevenueByDivisionChart
-            series={divisionSeries.series}
-            divisions={divisionSeries.divisions}
+            data={budgetChartSeries}
           />
         </div>
       </TabsContent>

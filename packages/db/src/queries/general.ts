@@ -8,7 +8,8 @@ import {
   ledger,
 } from '../schema/index';
 import { sql, eq, and, desc, asc } from 'drizzle-orm';
-import { ACCOUNT_RATES } from '../accounts';
+import { getActiveRates } from './distribution-settings';
+import type { ActiveRates } from './distribution-settings';
 
 export type PeriodSummary = {
   revenue: number;
@@ -159,7 +160,10 @@ export async function getMoMSnapshot(): Promise<{
 export async function getFinancialSummaryForPeriod(
   startExpr: string,
   endExpr: string,
+  rates?: ActiveRates,
 ): Promise<PeriodSummary> {
+  // Use provided rates or fetch current active rates
+  const effectiveRates = rates ?? await getActiveRates();
   const revResult = await db.execute(sql`
     SELECT COALESCE(SUM(amount), 0) AS total
     FROM income
@@ -172,17 +176,17 @@ export async function getFinancialSummaryForPeriod(
   `);
   const revenue = Number((revResult.rows[0] as { total: string }).total);
   const expTotal = Number((expResult.rows[0] as { total: string }).total);
-  const pmgShare = revenue * ACCOUNT_RATES.pmg_share;
+  const pmgShare = revenue * effectiveRates.pmg_share;
   const profitPool = revenue - expTotal - pmgShare;
   return {
     revenue,
     expenses: expTotal,
     pmgShare,
     profitPool,
-    salary: profitPool * ACCOUNT_RATES.salary,
-    reinvest: profitPool * ACCOUNT_RATES.reinvest,
-    reserve: profitPool * ACCOUNT_RATES.reserve,
-    flex: profitPool * ACCOUNT_RATES.flex,
+    salary: profitPool * effectiveRates.salary,
+    reinvest: profitPool * effectiveRates.reinvest,
+    reserve: profitPool * effectiveRates.reserve,
+    flex: profitPool * effectiveRates.flex,
   };
 }
 
@@ -239,8 +243,8 @@ export async function getExpensesByCategoryForYear(
 }
 
 /**
- * Returns the union of distinct financial years from income.date and
- * expenses.date, sorted descending.
+ * Returns the union of distinct financial years from income.date,
+ * expenses.date, and invoice dates, sorted descending.
  */
 export async function getDistinctYears(): Promise<number[]> {
   const result = await db.execute(sql`
@@ -248,6 +252,8 @@ export async function getDistinctYears(): Promise<number[]> {
       SELECT DISTINCT EXTRACT(YEAR FROM (date - INTERVAL '2 months'))::integer AS year FROM income
       UNION
       SELECT DISTINCT EXTRACT(YEAR FROM (date - INTERVAL '2 months'))::integer AS year FROM expenses
+      UNION
+      SELECT DISTINCT EXTRACT(YEAR FROM (invoice_date - INTERVAL '2 months'))::integer AS year FROM invoices
     ) combined
     ORDER BY year DESC
   `);
@@ -284,6 +290,40 @@ export async function getMonthlyFinancialsForYear(
     month: r.month,
     revenue: Number(r.revenue),
     expenses: Number(r.expenses),
+  }));
+}
+
+/**
+ * Returns monthly received income and client-facing invoice totals for the
+ * given financial year, ordered by month ascending. Month format is 'YYYY-MM'.
+ */
+export async function getMonthlyRevenueVsInvoicedForYear(
+  year: number,
+): Promise<{ month: string; received: number; invoiced: number }[]> {
+  const result = await db.execute(sql`
+    WITH received AS (
+      SELECT TO_CHAR(date, 'YYYY-MM') AS month, COALESCE(SUM(amount), 0) AS received
+      FROM income
+      WHERE EXTRACT(YEAR FROM (date - INTERVAL '2 months')) = ${year}
+      GROUP BY TO_CHAR(date, 'YYYY-MM')
+    ),
+    invoiced AS (
+      SELECT TO_CHAR(invoice_date, 'YYYY-MM') AS month, COALESCE(SUM(total), 0) AS invoiced
+      FROM invoices
+      WHERE EXTRACT(YEAR FROM (invoice_date - INTERVAL '2 months')) = ${year}
+        AND status IN ('issued', 'partially_paid', 'paid', 'overdue')
+      GROUP BY TO_CHAR(invoice_date, 'YYYY-MM')
+    )
+    SELECT COALESCE(received.month, invoiced.month) AS month,
+           COALESCE(received.received, 0) AS received,
+           COALESCE(invoiced.invoiced, 0) AS invoiced
+    FROM received FULL OUTER JOIN invoiced ON received.month = invoiced.month
+    ORDER BY 1 ASC
+  `);
+  return (result.rows as { month: string; received: string; invoiced: string }[]).map((r) => ({
+    month: r.month,
+    received: Number(r.received),
+    invoiced: Number(r.invoiced),
   }));
 }
 

@@ -323,7 +323,7 @@ export default async function InvoiceDetailPage({ params }: Props) {
                     <div key={a.id} className="flex justify-between py-2 items-center gap-2">
                       <div className="flex flex-col gap-0.5 min-w-0">
                         <span className="font-semibold truncate text-foreground">{a.description}</span>
-                        <span className="text-muted-foreground text-[10px]">{a.date}</span>
+                        <span className="text-muted-foreground text-[10px]">{fmtDate(a.date)}</span>
                       </div>
                       <span className="font-bold text-emerald-600 shrink-0 tabular-nums">
                         {formatZAR(parseFloat(a.amount))}

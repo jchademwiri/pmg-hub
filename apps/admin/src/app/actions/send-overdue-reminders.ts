@@ -86,12 +86,6 @@ function formatMoney(amount: number) {
   return `R ${amount.toLocaleString('en-ZA', { minimumFractionDigits: 2 })}`;
 }
 
-function formatDate(value: string | null) {
-  if (!value) return 'N/A';
-  const formatted = fmtDateLong(value);
-  return formatted === '-' ? 'N/A' : formatted;
-}
-
 function roleError(session: Awaited<ReturnType<typeof getSessionOrRedirect>>) {
   return requireRole(session, 'admin') ? null : 'Insufficient permissions to send billing emails.';
 }
@@ -249,8 +243,8 @@ async function buildReminderEmailContext(
     emailProps: {
       clientName: pending.businessName || pending.clientName,
       documentNumber,
-      invoiceDate: formatDate(headlineInvoice.invoiceDate),
-      dueDate: formatDate(headlineInvoice.dueDate),
+      invoiceDate: fmtDateLong(headlineInvoice.invoiceDate) === '-' ? 'N/A' : fmtDateLong(headlineInvoice.invoiceDate),
+      dueDate: fmtDateLong(headlineInvoice.dueDate) === '-' ? 'N/A' : fmtDateLong(headlineInvoice.dueDate),
       totalAmount: formatMoney(headlineInvoice.total),
       outstandingAmount: formatMoney(pending.outstandingBalance),
       reminderType: 'overdue',

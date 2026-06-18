@@ -21,7 +21,7 @@ This revision corrects the following gaps found during review of v1:
 
 ## Revision Note (v3) — Implementation Progress Update
 
-Phases 0–4 and a cross-cutting document number prefix refactor are now complete.
+Phases 0–6 and a cross-cutting document number prefix refactor are now complete.
 
 ### Completed phases
 
@@ -33,11 +33,12 @@ Phases 0–4 and a cross-cutting document number prefix refactor are now complet
 | Phase 3 — Payment Reference Automation | ✅ Done | Field renamed to "Payment Note / Bank Reference Optional". Auto-reference preview added. `recordClientPayment()` generates trusted invoice-based reference server-side. |
 | Phase 4 — Finance Income Page | ✅ Done | `/finance/income` page built with allocation tracking (allocated vs unallocated), filters (month, division, client), source badges, closed period indicator, and links to billing payment detail. |
 | Phase 5 — Billing Credits MVP | ✅ Done | Credit schema (`credit_notes`, `credit_applications`, `credit_refunds`) implemented. Server actions: `createCreditNote`, `applyCreditToInvoice`, `applyCreditToInvoices`, `getClientCreditSummary`, `getClientCreditBalanceV2`, `getClientCreditHistory`, `voidCreditNote`, `refundCredit`, `expireCreditNotes`. UI: `/billing/credits` page, `IssueCreditNoteDialog`, `CreditRefundDialog`, `CreditHistoryTable`, credits tab in client billing workspace. Cron job for credit expiry. Tests for credit management. |
+| Phase 6 — Distribution Rules and Settings | ✅ Done | `distribution_settings` table with effective dates seeded. Server action `updateDistributionRate` for rate changes from UI. Editable Rules tab with inline rate editors, effective date pickers, descriptions, and rate history. Dynamic text replaces hardcoded percentages. Historical rates preserved via effective_from/effective_to. |
 | **Cross-cutting: Document Number Prefixes** | ✅ Done | Shared `@pmg/utils` package created with `deriveDivisionPrefix`, `generateReceiptNumber`, `generateCreditNoteNumber`. All receipts now show division prefix (e.g., `TES-REC-A1B2C3D4`). Credit notes show division prefix (e.g., `PMG-CN-2026-0042`). Invoices/quotes already had division prefixes. |
 
 ### Next phase
 
-**Phase 6 — Distribution Rules and Settings** is the next priority. This moves hardcoded distribution rates (PMG Share: 25%) into a `distribution_settings` database table with effective dates, enabling future rate changes from the UI while preserving historical accuracy.
+**Phase 7 — Accounting Foundation Skeleton** is the next priority. This prepares the real accounting system with Chart of Accounts, journal entries, and accounting periods without forcing it into current workflows yet.
 
 ---
 

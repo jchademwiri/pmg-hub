@@ -2,12 +2,13 @@ import type { Metadata } from 'next'
 import { getLedgerBalances } from '@/lib/financial'
 import { recordAccountWithdrawal } from '@/app/actions/account-withdrawal'
 import { getAllLedgerEntries } from '@pmg/db'
-import { ACCOUNT_KEYS, ACCOUNT_LABELS, LOCKED_ACCOUNTS, ACCOUNT_RATES, PROFIT_POOL_RATES } from '@pmg/db'
+import { ACCOUNT_KEYS, ACCOUNT_LABELS, LOCKED_ACCOUNTS, getCurrentRates } from '@pmg/db'
 import { formatZAR } from '@/lib/format'
 import { SetPageTotal } from '@/components/navigation/page-header-context'
 import { getMinAllowedDate, getClosedPeriodsFromDates } from '@/lib/date-rules'
 import { getLedgerByAllocation } from '@pmg/db'
 import { updateLedgerEntry, deleteLedgerEntry, createLedgerEntry } from '@/app/actions/ledger'
+import { getAllDistributionSettingsForUI } from '@/app/actions/distribution-settings'
 import { DistributionsClient } from './distributions-client'
 
 export const dynamic = 'force-dynamic'
@@ -52,11 +53,22 @@ export default async function DistributionsPage({
     withdrawalLocked: (LOCKED_ACCOUNTS as readonly string[]).includes(key),
   }))
 
-  // Distribution rules
+  // Distribution rules from database
+  const currentRates = await getCurrentRates()
+  const rateMap = Object.fromEntries(currentRates.map(r => [r.rateKey, r.rateValue]))
   const rules = {
-    pmgShare: ACCOUNT_RATES.pmg_share,
-    profitPoolRates: PROFIT_POOL_RATES,
+    pmgShare: rateMap.pmg_share ?? 0.25,
+    profitPoolRates: {
+      salary: rateMap.salary ?? 0.35,
+      reinvest: rateMap.reinvest ?? 0.30,
+      reserve: rateMap.reserve ?? 0.30,
+      flex: rateMap.flex ?? 0.05,
+    },
+    currentRates,
   }
+
+  // Full settings history for the Rules tab
+  const settingsHistory = await getAllDistributionSettingsForUI()
 
   return (
     <div className="flex flex-col gap-6">
@@ -79,6 +91,7 @@ export default async function DistributionsPage({
         minDate={minDate}
         closedPeriods={closedPeriods}
         rules={rules}
+        settingsHistory={settingsHistory}
         activeTab={tab}
         recordAction={recordAccountWithdrawal}
         createLedgerAction={createLedgerEntry}

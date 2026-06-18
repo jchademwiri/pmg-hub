@@ -1,7 +1,7 @@
 'use client'
 
 import * as React from 'react'
-import { Area, AreaChart, CartesianGrid, XAxis } from 'recharts'
+import { Bar, BarChart, CartesianGrid, XAxis } from 'recharts'
 import {
   ChartContainer,
   ChartLegend,
@@ -25,36 +25,30 @@ import {
   SelectValue,
 } from '@/components/ui/select'
 import { formatZAR, fmtMonthYear } from '@/lib/format'
-import type { MonthlyRevenueByDivision } from '@/lib/financial'
+import type { MonthlyBudgetChartRow } from '@/lib/financial'
 
-const CHART_TOKENS = [
-  'var(--chart-1)',
-  'var(--chart-2)',
-  'var(--chart-3)',
-  'var(--chart-4)',
-  'var(--chart-5)',
-]
+type Props = { data: MonthlyBudgetChartRow[] }
 
-type Props = { series: MonthlyRevenueByDivision[]; divisions: string[] }
-
-export function RevenueByDivisionChart({ series, divisions }: Props) {
+export function RevenueByDivisionChart({ data }: Props) {
   const [monthRange, setMonthRange] = React.useState('6')
 
   const filteredSeries = React.useMemo(() => {
     const months = parseInt(monthRange, 10)
-    return series.slice(-months)
-  }, [series, monthRange])
+    return data.slice(-months)
+  }, [data, monthRange])
 
-  const config: ChartConfig = Object.fromEntries(
-    divisions.map((d, i) => [d, { label: d, color: CHART_TOKENS[i % 5] }])
-  )
+  const config: ChartConfig = {
+    revenue: { label: 'Revenue', color: 'oklch(0.72 0.16 150)' },
+    invoiced: { label: 'Invoiced', color: 'var(--chart-1)' },
+    expenses: { label: 'Expenses', color: 'var(--chart-expense)' },
+  }
 
   return (
     <Card className="pt-0">
       <CardHeader className="flex items-center gap-2 space-y-0 border-b py-5 sm:flex-row">
         <div className="grid flex-1 gap-1">
-          <CardTitle>Revenue by Division</CardTitle>
-          <CardDescription>Stacked area - monthly revenue per division</CardDescription>
+          <CardTitle>Revenue, Invoiced, and Expenses</CardTitle>
+          <CardDescription>Monthly payments received, invoices raised, and expenses incurred</CardDescription>
         </div>
         <Select value={monthRange} onValueChange={setMonthRange}>
           <SelectTrigger
@@ -71,19 +65,13 @@ export function RevenueByDivisionChart({ series, divisions }: Props) {
         </Select>
       </CardHeader>
       <CardContent className="px-2 pt-4 sm:px-6 sm:pt-6">
-        {series.length === 0 ? (
-          <p className="text-muted-foreground/50 text-xs">No data for the last 6 months.</p>
+        {data.length === 0 ? (
+          <p className="text-muted-foreground/50 text-xs">
+            No revenue, invoiced, or expense data for this period.
+          </p>
         ) : (
           <ChartContainer config={config} className="aspect-auto h-[250px] w-full">
-            <AreaChart data={filteredSeries}>
-              <defs>
-                {divisions.map((d, i) => (
-                  <linearGradient key={d} id={`fill-${i}`} x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="5%"  stopColor={CHART_TOKENS[i % 5]} stopOpacity={0.8} />
-                    <stop offset="95%" stopColor={CHART_TOKENS[i % 5]} stopOpacity={0.1} />
-                  </linearGradient>
-                ))}
-              </defs>
+            <BarChart data={filteredSeries}>
               <CartesianGrid vertical={false} />
               <XAxis
                 dataKey="month"
@@ -99,22 +87,15 @@ export function RevenueByDivisionChart({ series, divisions }: Props) {
                   <ChartTooltipContent
                     labelFormatter={(value) => fmtMonthYear(value)}
                     formatter={(v) => formatZAR(Number(v))}
-                    indicator="dot"
+                    indicator="dashed"
                   />
                 }
               />
-              {divisions.map((d, i) => (
-                <Area
-                  key={d}
-                  type="natural"
-                  dataKey={d}
-                  stackId="a"
-                  stroke={CHART_TOKENS[i % 5]}
-                  fill={`url(#fill-${i})`}
-                />
-              ))}
+              <Bar dataKey="revenue" fill="var(--color-revenue)" radius={[4, 4, 0, 0]} />
+              <Bar dataKey="invoiced" fill="var(--color-invoiced)" radius={[4, 4, 0, 0]} />
+              <Bar dataKey="expenses" fill="var(--color-expenses)" radius={[4, 4, 0, 0]} />
               <ChartLegend content={<ChartLegendContent />} />
-            </AreaChart>
+            </BarChart>
           </ChartContainer>
         )}
       </CardContent>

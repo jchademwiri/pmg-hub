@@ -5,6 +5,7 @@ import { revalidatePath } from 'next/cache';
 import { db, expenses, eq, getExpenseById } from '@pmg/db';
 import { isPeriodClosed, getMinAllowedDate, getMinDateErrorMessage } from '@/lib/date-rules';
 import { getSASTToday } from '@/lib/format';
+import { postExpenseJournalEntry, voidExpenseJournalEntries, updateExpenseJournalEntry } from './accounting-auto-post';
 
 const ExpenseSchema = z.object({
   date: z.string().min(1),
@@ -34,16 +35,35 @@ export async function createExpense(formData: FormData): Promise<{ error?: strin
       const minDate = await getMinAllowedDate();
       return { error: getMinDateErrorMessage(minDate) };
     }
-    await db.insert(expenses).values({
+    const [inserted] = await db.insert(expenses).values({
       date: parsed.date,
       divisionId: parsed.divisionId,
       clientId: parsed.clientId ?? null,
       category: parsed.category,
       description: parsed.description ?? null,
       amount: String(parsed.amount),
-    });
+    }).returning({ id: expenses.id });
+
+    // Auto-post: Dr Expense / Cr Bank
+    if (inserted) {
+      const journalResult = await postExpenseJournalEntry({
+        expenseId: inserted.id,
+        amount: parsed.amount,
+        date: parsed.date,
+        category: parsed.category,
+        description: parsed.description || undefined,
+      });
+      if (journalResult.error) {
+        console.warn('Expense auto-post warning:', journalResult.error);
+      }
+    }
+
     revalidatePath('/finance/expenses');
     revalidatePath('/dashboard');
+    revalidatePath('/accounting/journals');
+    revalidatePath('/accounting/trial-balance');
+    revalidatePath('/accounting/general-ledger');
+    revalidatePath('/accounting/profit-and-loss');
     return {};
   } catch {
     return { error: 'Failed to save. Please try again.' };
@@ -78,8 +98,22 @@ export async function updateExpense(id: string, formData: FormData): Promise<{ e
         updatedAt: new Date(),
       })
       .where(eq(expenses.id, id));
+
+    // Auto-post: void old entry, post new one
+    await updateExpenseJournalEntry({
+      expenseId: id,
+      newAmount: parsed.amount,
+      date: parsed.date,
+      category: parsed.category,
+      description: parsed.description || undefined,
+    });
+
     revalidatePath('/finance/expenses');
     revalidatePath('/dashboard');
+    revalidatePath('/accounting/journals');
+    revalidatePath('/accounting/trial-balance');
+    revalidatePath('/accounting/general-ledger');
+    revalidatePath('/accounting/profit-and-loss');
     return {};
   } catch {
     return { error: 'Failed to save. Please try again.' };
@@ -95,9 +129,16 @@ export async function deleteExpense(id: string): Promise<{ error?: string }> {
       return { error: 'Cannot delete records from a closed financial period.' };
     }
 
+    // Void the expense journal entry before deleting
+    await voidExpenseJournalEntries(id);
+
     await db.delete(expenses).where(eq(expenses.id, id));
     revalidatePath('/finance/expenses');
     revalidatePath('/dashboard');
+    revalidatePath('/accounting/journals');
+    revalidatePath('/accounting/trial-balance');
+    revalidatePath('/accounting/general-ledger');
+    revalidatePath('/accounting/profit-and-loss');
     return {};
   } catch {
     return { error: 'Failed to delete. Please try again.' };

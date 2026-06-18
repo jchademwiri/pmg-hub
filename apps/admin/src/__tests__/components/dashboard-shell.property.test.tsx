@@ -71,11 +71,6 @@ const emptyWithdrawals = {
   entries: [],
 }
 
-const emptyDivisionSeries = {
-  series: [],
-  divisions: [],
-}
-
 const baseProps = {
   ytdSummary: emptySummary,
   previousYearYTDSummary: emptySummary,
@@ -91,13 +86,7 @@ const baseProps = {
   withdrawals: emptyWithdrawals,
   withdrawalsPrevMonth: emptyWithdrawals,
   withdrawalsYTD: emptyWithdrawals,
-  divisionSeriesData: {
-    last3: emptyDivisionSeries,
-    last6: emptyDivisionSeries,
-    ytd: emptyDivisionSeries,
-    current: emptyDivisionSeries,
-    prev: emptyDivisionSeries,
-  },
+  budgetChartSeries: [],
   expensesByDivision: [],
   currentPeriod: '2025-01',
   showCloseMonthButton: true,

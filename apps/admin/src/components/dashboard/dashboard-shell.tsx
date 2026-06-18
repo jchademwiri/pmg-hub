@@ -1,6 +1,5 @@
 'use client'
 
-import { useState } from 'react'
 import { useRouter, usePathname, useSearchParams } from 'next/navigation'
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { KpiGrid } from '@/components/dashboard/kpi-grid'
@@ -12,7 +11,7 @@ import CloseMonthButton from '@/components/dashboard/close-month-button'
 import { Badge } from '@/components/ui/badge'
 import { AgingReportGrid } from '@/components/dashboard/aging-report-grid'
 import type { AgingRow } from '@pmg/db'
-import type { PeriodSummary, DivisionRevenue as DivisionRevenueType, LeadStatusCount, MonthlyFinancials, DivisionSeriesChart } from '@/lib/financial'
+import type { PeriodSummary, DivisionRevenue as DivisionRevenueType, LeadStatusCount, MonthlyFinancials, MonthlyBudgetChartRow } from '@/lib/financial'
 
 type Tab = 'current' | 'previous' | 'ytd'
 
@@ -33,13 +32,7 @@ type Props = {
   monthlySeries: MonthlyFinancials[]
   sparklineData: MonthlyFinancials[]
   agingReport: AgingRow[]
-  divisionSeriesData: {
-    last3: DivisionSeriesChart
-    last6: DivisionSeriesChart
-    ytd:   DivisionSeriesChart
-    current: DivisionSeriesChart
-    prev:    DivisionSeriesChart
-  }
+  budgetChartSeries: MonthlyBudgetChartRow[]
   expensesByDivision: { divisionName: string; total: number }[]
   hasSnapshot: boolean
   currentPeriod: string
@@ -64,7 +57,7 @@ export function DashboardShell({
   leads,
   sparklineData,
   agingReport,
-  divisionSeriesData,
+  budgetChartSeries,
   expensesByDivision,
   hasSnapshot,
   currentPeriod,
@@ -154,9 +147,9 @@ export function DashboardShell({
       {/* ── Row 2: Accounts Receivable Ageing Overview ── */}
       <AgingReportGrid data={agingReport} />
 
-      {/* ── Row 3: Division Area Chart ── */}
+      {/* ── Row 3: Sales, receipts, and expenses budget chart ── */}
       <div className="w-full">
-        <DivisionAreaChart seriesData={divisionSeriesData} />
+        <DivisionAreaChart data={budgetChartSeries} />
       </div>
 
       {/* ── Row 4: Division revenue with expenses + Leads ── */}
