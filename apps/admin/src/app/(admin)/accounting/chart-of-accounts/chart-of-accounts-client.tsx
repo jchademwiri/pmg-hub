@@ -4,11 +4,14 @@ import * as React from 'react'
 import { useRouter } from 'next/navigation'
 import { Plus, Pencil, Check, X, BookOpen, ChevronDown, ChevronRight } from 'lucide-react'
 import { Button } from '@/components/ui/button'
+import { Switch } from '@/components/ui/switch'
 import { EmptyState } from '@/components/ui/empty-state'
 import { toast } from 'sonner'
 import type { ChartAccount } from '@pmg/db'
 
 // ── Types ────────────────────────────────────────────────────────────────────
+
+type FilterValue = 'all' | 'active' | 'inactive'
 
 interface ChartOfAccountsClientProps {
   accountsByType: Record<string, ChartAccount[]>
@@ -128,15 +131,15 @@ function AccountRow({
   const [active, setActive] = React.useState(account.isActive)
   const router = useRouter()
 
-  async function handleToggle() {
+  async function handleToggle(checked: boolean) {
     const formData = new FormData()
-    formData.set('isActive', active ? 'off' : 'on')
+    formData.set('isActive', checked ? 'on' : 'off')
     const result = await updateAction(account.id, formData)
     if (result.error) {
       toast.error(result.error)
     } else {
-      setActive(!active)
-      toast.success(active ? 'Account deactivated' : 'Account activated')
+      setActive(checked)
+      toast.success(checked ? 'Account activated' : 'Account deactivated')
       router.refresh()
     }
   }
@@ -156,16 +159,21 @@ function AccountRow({
   }
 
   return (
-    <div className="flex items-center gap-3 px-4 py-3 border-b last:border-b-0 hover:bg-muted/30 transition-colors">
-      <span className="text-xs font-mono text-muted-foreground w-16 shrink-0">{account.code}</span>
+    <div className={`flex items-center gap-3 px-4 py-3 border-b last:border-b-0 transition-colors ${
+      active ? 'hover:bg-muted/30' : 'bg-muted/20 opacity-60'
+    }`}>
+      <span className={`text-xs font-mono w-16 shrink-0 ${active ? 'text-muted-foreground' : 'text-muted-foreground/60'}`}>{account.code}</span>
       <div className="flex-1 min-w-0">
-        <span className="text-sm font-medium">{account.name}</span>
+        <span className={`text-sm font-medium ${!active ? 'line-through decoration-muted-foreground/40' : ''}`}>{account.name}</span>
         {account.description && (
           <span className="text-xs text-muted-foreground ml-2 truncate">— {account.description}</span>
         )}
       </div>
       {!account.isPostingAccount && (
         <span className="text-xs text-muted-foreground bg-muted px-2 py-0.5 rounded">Header</span>
+      )}
+      {!active && (
+        <span className="text-xs text-amber-600 bg-amber-500/15 px-2 py-0.5 rounded font-medium">Inactive</span>
       )}
       <Button
         variant="ghost"
@@ -175,18 +183,12 @@ function AccountRow({
       >
         <Pencil className="h-3.5 w-3.5" />
       </Button>
-      <button
-        onClick={handleToggle}
-        className={`shrink-0 h-5 w-9 rounded-full transition-colors relative ${
-          active ? 'bg-green-500' : 'bg-muted-foreground/30'
-        }`}
-      >
-        <span
-          className={`absolute top-0.5 h-4 w-4 rounded-full bg-white shadow transition-transform ${
-            active ? 'translate-x-4' : 'translate-x-0.5'
-          }`}
-        />
-      </button>
+      <Switch
+        size="sm"
+        checked={active}
+        onCheckedChange={handleToggle}
+        aria-label={`Toggle ${account.name} active status`}
+      />
     </div>
   )
 }
@@ -339,12 +341,38 @@ function TypeSection({
 
 // ── Main Component ───────────────────────────────────────────────────────────
 
+const FILTER_OPTIONS: { value: FilterValue; label: string }[] = [
+  { value: 'all', label: 'All' },
+  { value: 'active', label: 'Active Only' },
+  { value: 'inactive', label: 'Inactive Only' },
+]
+
+function filterAccounts(accounts: ChartAccount[], filter: FilterValue): ChartAccount[] {
+  if (filter === 'active') return accounts.filter((a) => a.isActive)
+  if (filter === 'inactive') return accounts.filter((a) => !a.isActive)
+  return accounts
+}
+
 export function ChartOfAccountsClient({
   accountsByType,
   createAction,
   updateAction,
 }: ChartOfAccountsClientProps) {
-  const hasAccounts = Object.values(accountsByType).some((a) => a.length > 0)
+  const [filter, setFilter] = React.useState<FilterValue>('all')
+
+  // Filter accounts within each type
+  const filteredByType = React.useMemo(() => {
+    const result: Record<string, ChartAccount[]> = {}
+    for (const type of TYPE_ORDER) {
+      result[type] = filterAccounts(accountsByType[type] || [], filter)
+    }
+    return result
+  }, [accountsByType, filter])
+
+  const totalAll = Object.values(accountsByType).reduce((s, a) => s + a.length, 0)
+  const totalActive = Object.values(accountsByType).reduce((s, a) => s + a.filter((x) => x.isActive).length, 0)
+  const totalInactive = totalAll - totalActive
+  const hasAccounts = totalAll > 0
 
   if (!hasAccounts) {
     return (
@@ -354,15 +382,44 @@ export function ChartOfAccountsClient({
 
   return (
     <div className="flex flex-col gap-4">
-      {TYPE_ORDER.map((type) => (
-        <TypeSection
-          key={type}
-          type={type}
-          accounts={accountsByType[type] || []}
-          createAction={createAction}
-          updateAction={updateAction}
-        />
-      ))}
+      {/* Filter bar */}
+      <div className="flex items-center gap-3">
+        <div className="flex items-center rounded-lg border bg-muted/30 p-0.5">
+          {FILTER_OPTIONS.map((opt) => (
+            <button
+              key={opt.value}
+              onClick={() => setFilter(opt.value)}
+              className={`px-3 py-1.5 text-xs font-medium rounded-md transition-colors ${
+                filter === opt.value
+                  ? 'bg-background text-foreground shadow-sm'
+                  : 'text-muted-foreground hover:text-foreground'
+              }`}
+            >
+              {opt.label}
+            </button>
+          ))}
+        </div>
+        <span className="text-xs text-muted-foreground">
+          {filter === 'all' && `${totalActive} active, ${totalInactive} inactive`}
+          {filter === 'active' && `${totalActive} active accounts`}
+          {filter === 'inactive' && `${totalInactive} inactive accounts`}
+        </span>
+      </div>
+
+      {TYPE_ORDER.map((type) => {
+        const filtered = filteredByType[type] || []
+        // Hide type sections with no accounts when a filter is active
+        if (filter !== 'all' && filtered.length === 0) return null
+        return (
+          <TypeSection
+            key={type}
+            type={type}
+            accounts={filtered}
+            createAction={createAction}
+            updateAction={updateAction}
+          />
+        )
+      })}
     </div>
   )
 }

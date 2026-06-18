@@ -31,10 +31,11 @@ export async function getActiveChartAccounts() {
 }
 
 /**
- * Returns chart accounts grouped by type for the UI.
+ * Returns ALL chart accounts grouped by type for the UI.
+ * Includes both active and inactive accounts so deactivating doesn't hide them.
  */
 export async function getChartAccountsByType() {
-  const accounts = await getActiveChartAccounts();
+  const accounts = await getAllChartAccounts();
   const grouped: Record<string, typeof accounts> = {
     asset: [],
     liability: [],
@@ -446,7 +447,7 @@ export async function getGeneralLedger({
     .innerJoin(journalEntries, eq(journalLines.journalEntryId, journalEntries.id))
     .innerJoin(chartAccounts, eq(journalLines.accountId, chartAccounts.id))
     .where(where)
-    .orderBy(asc(journalEntries.entryDate), asc(journalEntries.entryNumber))
+    .orderBy(desc(journalEntries.entryDate), desc(journalEntries.entryNumber))
     .offset((page - 1) * pageSize)
     .limit(pageSize);
 
