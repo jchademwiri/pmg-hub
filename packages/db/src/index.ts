@@ -67,6 +67,7 @@ export type {
   ProfitAndLossResult,
   GeneralLedgerRow,
   AccountingOverview,
+  AccountingPeriodWithNames,
 } from './queries/accounting';
 export type {
   ChartAccount,

@@ -5,7 +5,8 @@ import {
   journalLines,
   accountingPeriods,
 } from "../schema/accounting";
-import { eq, and, desc, asc, sql } from "drizzle-orm";
+import { user } from "../schema/auth";
+import { eq, and, desc, asc, sql, inArray } from "drizzle-orm";
 
 // ── Chart of Accounts ─────────────────────────────────────────────────────────
 
@@ -210,13 +211,39 @@ export async function getNextJournalEntryNumber(): Promise<string> {
 
 /**
  * Returns all accounting periods ordered by period descending.
+ * Resolves closedBy/lockedBy user IDs to user names.
  */
 export async function getAllAccountingPeriods() {
-  return db
+  const rows = await db
     .select()
     .from(accountingPeriods)
     .orderBy(desc(accountingPeriods.period));
+
+  // Collect unique user IDs to batch-resolve names
+  const userIds = [...new Set(
+    [...rows.map((r) => r.closedBy), ...rows.map((r) => r.lockedBy)]
+      .filter((id): id is string => !!id)
+  )];
+
+  if (userIds.length === 0) {
+    return rows.map((r) => ({ ...r, closedByName: null, lockedByName: null }));
+  }
+
+  const users = await db
+    .select({ id: user.id, name: user.name })
+    .from(user)
+    .where(inArray(user.id, userIds));
+
+  const userMap = new Map(users.map((u) => [u.id, u.name]));
+
+  return rows.map((r) => ({
+    ...r,
+    closedByName: r.closedBy ? (userMap.get(r.closedBy) ?? r.closedBy) : null,
+    lockedByName: r.lockedBy ? (userMap.get(r.lockedBy) ?? r.lockedBy) : null,
+  }));
 }
+
+export type AccountingPeriodWithNames = Awaited<ReturnType<typeof getAllAccountingPeriods>>[number];
 
 /**
  * Returns the current open period (YYYY-MM) or null.

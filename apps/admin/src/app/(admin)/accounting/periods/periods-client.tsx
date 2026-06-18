@@ -14,10 +14,10 @@ import {
 } from '@/components/ui/table'
 import { fmtDateTime, fmtMonthYear } from '@/lib/format'
 import { toast } from 'sonner'
-import type { AccountingPeriod } from '@pmg/db'
+import type { AccountingPeriodWithNames } from '@pmg/db'
 
 interface PeriodsClientProps {
-  periods: AccountingPeriod[]
+  periods: AccountingPeriodWithNames[]
   closeAction: (period: string) => Promise<{ error?: string }>
   lockAction: (period: string) => Promise<{ error?: string }>
   reopenAction: (period: string) => Promise<{ error?: string }>
@@ -81,9 +81,9 @@ export function PeriodsClient({ periods, closeAction, lockAction, reopenAction }
                   </span>
                 </TableCell>
                 <TableCell className="text-sm">{period.closedAt ? fmtDateTime(period.closedAt) : '—'}</TableCell>
-                <TableCell className="text-sm">{period.closedBy ?? '—'}</TableCell>
+                <TableCell className="text-sm">{period.closedByName ?? '—'}</TableCell>
                 <TableCell className="text-sm">{period.lockedAt ? fmtDateTime(period.lockedAt) : '—'}</TableCell>
-                <TableCell className="text-sm">{period.lockedBy ?? '—'}</TableCell>
+                <TableCell className="text-sm">{period.lockedByName ?? '—'}</TableCell>
                 <TableCell className="text-right">
                   <div className="flex items-center justify-end gap-1">
                     {period.status === 'open' && (
