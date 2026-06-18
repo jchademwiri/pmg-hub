@@ -1,16 +1,38 @@
 import type { Metadata } from 'next'
-import { ComingSoonPage } from '@/components/coming-soon-page'
+import { getAllClients, getAllDivisions, getDivisionsWithStats, getLeadCountsByStatus, getAllLeads } from '@pmg/db'
+import { SetPageTotal } from '@/components/navigation/page-header-context'
+import { RelationshipsOverviewClient } from './relationships-overview-client'
 
+export const dynamic = 'force-dynamic'
 export const metadata: Metadata = { title: 'Relationships' }
 
-export default function RelationshipsOverviewPage() {
+export default async function RelationshipsOverviewPage() {
+  const [clients, divisions, divisionsWithStats, leadCounts, allLeads] = await Promise.all([
+    getAllClients(),
+    getAllDivisions(),
+    getDivisionsWithStats(),
+    getLeadCountsByStatus(),
+    getAllLeads(),
+  ])
+
   return (
-    <ComingSoonPage
-      title="Relationships"
-      purpose="Client, lead, and division relationship management."
-      description="This overview will summarise relationship activity across clients, leads, and divisions with quick links into each relationship workspace."
-      backHref="/relationships"
-      backLabel="Back to Relationships"
-    />
+    <div className="flex flex-col gap-6">
+      <SetPageTotal value={`${clients.length} clients, ${leadCounts.all} leads`} />
+
+      <div>
+        <h2 className="text-lg font-semibold">Relationships Overview</h2>
+        <p className="text-sm text-muted-foreground">
+          Client, lead, and division relationship management.
+        </p>
+      </div>
+
+      <RelationshipsOverviewClient
+        clientCount={clients.length}
+        divisionCount={divisions.length}
+        leadCounts={leadCounts}
+        divisions={divisionsWithStats}
+        recentLeads={allLeads.slice(0, 5)}
+      />
+    </div>
   )
 }
