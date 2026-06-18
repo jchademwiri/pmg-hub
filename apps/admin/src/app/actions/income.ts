@@ -3,6 +3,7 @@
 import { revalidatePath } from 'next/cache';
 import { db, income, eq, getIncomeById, invoices, paymentAllocations, sql } from '@pmg/db';
 import { isPeriodClosed } from '@/lib/date-rules';
+import { voidPaymentJournalEntries } from './accounting-auto-post';
 
 export async function deleteIncome(id: string): Promise<{ error?: string }> {
   try {
@@ -33,7 +34,13 @@ export async function deleteIncome(id: string): Promise<{ error?: string }> {
       .delete(paymentAllocations)
       .where(eq(paymentAllocations.incomeId, id));
 
-    // 4. Delete the income record
+    // 4. Void linked journal entries (Dr Bank / Cr Revenue + PMG Share)
+    const journalResult = await voidPaymentJournalEntries(id);
+    if (journalResult.error) {
+      console.warn('Journal void warning:', journalResult.error);
+    }
+
+    // 5. Delete the income record
     await db.delete(income).where(eq(income.id, id));
 
     // 5. Recalculate status and paidAt for all affected invoices based on remaining allocations
@@ -89,6 +96,10 @@ export async function deleteIncome(id: string): Promise<{ error?: string }> {
     revalidatePath('/finance/income');
     revalidatePath('/billing/invoices');
     revalidatePath('/dashboard');
+    revalidatePath('/accounting/journals');
+    revalidatePath('/accounting/trial-balance');
+    revalidatePath('/accounting/general-ledger');
+    revalidatePath('/accounting/profit-and-loss');
     return {};
   } catch (err) {
     console.error('Failed to delete income record:', err);

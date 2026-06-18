@@ -8,16 +8,38 @@ vi.mock('server-only', () => ({}));
 
 vi.mock('@pmg/db', () => {
   const mockDb = {
-    insert: vi.fn(),
-    select: vi.fn(),
-    update: vi.fn(),
-    delete: vi.fn(),
+    insert: vi.fn().mockReturnValue({
+      values: vi.fn().mockResolvedValue([{}]),
+    }),
+    select: vi.fn().mockReturnValue({
+      from: vi.fn().mockReturnValue({
+        where: vi.fn().mockResolvedValue([]),
+      }),
+    }),
+    update: vi.fn().mockReturnValue({
+      set: vi.fn().mockReturnValue({
+        where: vi.fn().mockResolvedValue({}),
+      }),
+    }),
+    delete: vi.fn().mockReturnValue({
+      where: vi.fn().mockResolvedValue({}),
+    }),
+    batch: vi.fn().mockResolvedValue([]),
   };
   return {
     db: mockDb,
     getDb: () => mockDb,
     expenses: { id: 'expenses_id' },
-    eq: vi.fn(),
+    chartAccounts: { id: 'chart_id', code: 'code', name: 'name' },
+    journalEntries: { id: 'je_id', status: 'status', sourceModule: 'source_module', sourceTable: 'source_table', sourceId: 'source_id' },
+    journalLines: { id: 'jl_id', journalEntryId: 'je_id', accountId: 'account_id', debit: 'debit', credit: 'credit' },
+    paymentAllocations: { id: 'pa_id', invoiceId: 'invoice_id', incomeId: 'income_id' },
+    eq: vi.fn().mockReturnValue({}),
+    and: vi.fn().mockReturnValue({}),
+    sql: vi.fn().mockReturnValue({}),
+    ACCOUNT_RATES: { pmg_share: 0.25 },
+    getNextJournalEntryNumber: vi.fn().mockResolvedValue('JE-001'),
+    ensureOpenPeriod: vi.fn().mockResolvedValue(undefined),
     getAllExpenses: vi.fn(),
     getAllDivisions: vi.fn(),
     getAllExpenseCategories: vi.fn(),
@@ -131,15 +153,24 @@ describe('Finance Expenses Module', () => {
   const validClientId = 'c3b07384-d113-4956-a5db-8f3e58b8d4e7';
 
   beforeEach(() => {
-    vi.resetAllMocks();
+    vi.clearAllMocks();
 
     mockIsPeriodClosed.mockResolvedValue(false);
     mockGetMinAllowedDate.mockResolvedValue('2026-01-01');
     mockGetMinDateErrorMessage.mockReturnValue('Period is closed.');
     mockGetClosedPeriodsFromDates.mockResolvedValue([]);
 
+    // Re-establish mock chains after clearAllMocks
     vi.mocked(db.insert).mockReturnValue({
-      values: vi.fn().mockResolvedValue({}),
+      values: vi.fn().mockReturnValue({
+        returning: vi.fn().mockResolvedValue([{ id: 'mock-expense-id' }]),
+      }),
+    } as any);
+
+    vi.mocked(db.select).mockReturnValue({
+      from: vi.fn().mockReturnValue({
+        where: vi.fn().mockResolvedValue([]),
+      }),
     } as any);
 
     vi.mocked(db.update).mockReturnValue({
@@ -151,6 +182,8 @@ describe('Finance Expenses Module', () => {
     vi.mocked(db.delete).mockReturnValue({
       where: vi.fn().mockResolvedValue({}),
     } as any);
+
+    vi.mocked(db.batch).mockResolvedValue([]);
   });
 
   describe('Server Actions', () => {

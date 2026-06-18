@@ -4,6 +4,7 @@ import { revalidatePath } from 'next/cache';
 import { getDb, invoices, quotations, billingLineItems, income, clients, divisionBillingSettings, eq, and, inArray } from '@pmg/db';
 import { getNextDocumentNumber, addDays } from '@pmg/db';
 import { getSessionOrRedirect } from '@/lib/auth';
+import { postInvoiceIssueJournalEntry, voidInvoiceJournalEntries, postPaymentJournalEntries, updateInvoiceJournalEntry } from './accounting-auto-post';
 import { isPeriodClosed, getMinAllowedDate, getMinDateErrorMessage } from '@/lib/date-rules';
 import { getSASTParts, getSASTToday } from '@/lib/format';
 import { CreateInvoiceSchema, type CreateInvoiceInput } from './billing-schema';
@@ -150,7 +151,7 @@ export async function updateInvoice(
     const db = getDb();
     const includeLineItemItemId = await hasBillingLineItemItemIdColumn();
     const [existing] = await db
-      .select({ id: invoices.id, status: invoices.status, invoiceDate: invoices.invoiceDate })
+      .select({ id: invoices.id, status: invoices.status, invoiceDate: invoices.invoiceDate, total: invoices.total, documentNumber: invoices.documentNumber })
       .from(invoices)
       .where(eq(invoices.id, id));
 
@@ -227,8 +228,25 @@ export async function updateInvoice(
       })),
     );
 
+    // If an issued/overdue invoice's total changed, void the old AR entry and repost
+    if ((existing.status === 'issued' || existing.status === 'overdue') && existing.total !== String(total.toFixed(2))) {
+      const journalResult = await updateInvoiceJournalEntry({
+        invoiceId: id,
+        newAmount: total,
+        date: existing.invoiceDate,
+        description: `Invoice ${existing.documentNumber}`,
+      });
+      if (journalResult.error) {
+        console.warn('Invoice AR update warning:', journalResult.error);
+      }
+    }
+
     revalidatePath('/billing/invoices');
     revalidatePath(`/billing/invoices/${id}`);
+    revalidatePath('/accounting/journals');
+    revalidatePath('/accounting/trial-balance');
+    revalidatePath('/accounting/general-ledger');
+    revalidatePath('/accounting/profit-and-loss');
 
     return {};
   } catch {
@@ -375,13 +393,35 @@ export async function issueInvoice(id: string): Promise<{ error?: string }> {
       return { error: 'Only draft invoices can be issued.' };
     }
 
+    // Fetch invoice details for the journal entry
+    const [invoiceDetail] = await db
+      .select({ total: invoices.total, invoiceDate: invoices.invoiceDate, documentNumber: invoices.documentNumber })
+      .from(invoices)
+      .where(eq(invoices.id, id));
+
     await db
       .update(invoices)
       .set({ status: 'issued', updatedAt: new Date() })
       .where(eq(invoices.id, id));
 
+    // Auto-post: Dr AR (1100) / Cr Revenue (4010)
+    if (invoiceDetail) {
+      const journalResult = await postInvoiceIssueJournalEntry({
+        invoiceId: id,
+        amount: parseFloat(invoiceDetail.total),
+        date: invoiceDetail.invoiceDate,
+        description: `Invoice ${invoiceDetail.documentNumber}`,
+      });
+      if (journalResult.error) {
+        console.warn('Invoice AR auto-post warning:', journalResult.error);
+      }
+    }
+
     revalidatePath('/billing/invoices');
     revalidatePath(`/billing/invoices/${id}`);
+    revalidatePath('/accounting/journals');
+    revalidatePath('/accounting/trial-balance');
+    revalidatePath('/accounting/general-ledger');
 
     return {};
   } catch {
@@ -454,10 +494,26 @@ export async function markInvoicePaid(id: string): Promise<{ error?: string }> {
       })
       .where(eq(invoices.id, id));
 
+    // Auto-post: Dr Bank (1010) / Cr AR (1100) + Dr Savings / Cr Bank (PMG share)
+    const journalResult = await postPaymentJournalEntries({
+      incomeId: incomeRow.id,
+      amount: parseFloat(invoice.total),
+      date: paymentDate,
+      description,
+      divisionId: invoice.divisionId,
+    });
+    if (journalResult.error) {
+      console.warn('Payment AR auto-post warning:', journalResult.error);
+    }
+
     revalidatePath('/billing/invoices');
     revalidatePath(`/billing/invoices/${id}`);
     revalidatePath('/billing/payments');
     revalidatePath('/dashboard');
+    revalidatePath('/accounting/journals');
+    revalidatePath('/accounting/trial-balance');
+    revalidatePath('/accounting/general-ledger');
+    revalidatePath('/accounting/profit-and-loss');
 
     return {};
   } catch {
@@ -494,8 +550,17 @@ export async function voidInvoice(id: string): Promise<{ error?: string }> {
       .set({ status: 'void', updatedAt: new Date() })
       .where(eq(invoices.id, id));
 
+    // Void the AR journal entry (Dr AR / Cr Revenue)
+    const journalResult = await voidInvoiceJournalEntries(id);
+    if (journalResult.error) {
+      console.warn('Invoice AR void warning:', journalResult.error);
+    }
+
     revalidatePath('/billing/invoices');
     revalidatePath(`/billing/invoices/${id}`);
+    revalidatePath('/accounting/journals');
+    revalidatePath('/accounting/trial-balance');
+    revalidatePath('/accounting/general-ledger');
 
     return {};
   } catch {
@@ -527,12 +592,33 @@ export async function bulkIssueInvoices(ids: string[]): Promise<{ error?: string
       return { error: 'No draft invoices selected.' };
     }
 
+    // Fetch invoice details for journal entries
+    const invoiceDetails = await db
+      .select({ id: invoices.id, total: invoices.total, invoiceDate: invoices.invoiceDate, documentNumber: invoices.documentNumber })
+      .from(invoices)
+      .where(inArray(invoices.id, eligibleIds));
+
     await db
       .update(invoices)
       .set({ status: 'issued', updatedAt: new Date() })
       .where(inArray(invoices.id, eligibleIds));
 
+    // Auto-post AR for each issued invoice
+    for (const inv of invoiceDetails) {
+      const journalResult = await postInvoiceIssueJournalEntry({
+        invoiceId: inv.id,
+        amount: parseFloat(inv.total),
+        date: inv.invoiceDate,
+        description: `Invoice ${inv.documentNumber}`,
+      });
+      if (journalResult.error) {
+        console.warn('Bulk issue AR auto-post warning:', journalResult.error);
+      }
+    }
+
     revalidatePath('/billing/invoices');
+    revalidatePath('/accounting/journals');
+    revalidatePath('/accounting/trial-balance');
     return { successCount: eligibleIds.length };
   } catch {
     return { error: 'Failed to bulk issue invoices.' };
@@ -568,7 +654,17 @@ export async function bulkVoidInvoices(ids: string[]): Promise<{ error?: string;
       .set({ status: 'void', updatedAt: new Date() })
       .where(inArray(invoices.id, eligibleIds));
 
+    // Void AR journal entries for each voided invoice
+    for (const invId of eligibleIds) {
+      const journalResult = await voidInvoiceJournalEntries(invId);
+      if (journalResult.error) {
+        console.warn('Bulk void AR warning:', journalResult.error);
+      }
+    }
+
     revalidatePath('/billing/invoices');
+    revalidatePath('/accounting/journals');
+    revalidatePath('/accounting/trial-balance');
     return { successCount: eligibleIds.length };
   } catch {
     return { error: 'Failed to bulk void invoices.' };
