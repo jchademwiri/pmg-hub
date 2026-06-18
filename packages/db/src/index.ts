@@ -38,6 +38,32 @@ export { getActiveItems, getUnlinkedIncomeForClient, getStatementYears, getAging
 export { getActiveRates, getActiveRateForKey, getCurrentRates, getAllDistributionSettings } from './queries/distribution-settings';
 export type { ActiveRates, RateKey } from './queries/distribution-settings';
 
+// ── Accounting ───────────────────────────────────────────────────────────────
+export {
+  getAllChartAccounts,
+  getActiveChartAccounts,
+  getChartAccountsByType,
+  getChartAccountById,
+  getNextAccountCode,
+  getJournalEntries,
+  getJournalEntryWithLines,
+  validateJournalLines,
+  getNextJournalEntryNumber,
+  getAllAccountingPeriods,
+  getCurrentOpenPeriod,
+  isPeriodOpen,
+} from './queries/accounting';
+export type {
+  ChartAccount,
+  NewChartAccount,
+  JournalEntry,
+  NewJournalEntry,
+  JournalLine,
+  NewJournalLine,
+  AccountingPeriod,
+  NewAccountingPeriod,
+} from './schema/accounting';
+
 // ── Date utilities ────────────────────────────────────────────────────────────
 export { addDays, today } from './lib/date-utils';
 
