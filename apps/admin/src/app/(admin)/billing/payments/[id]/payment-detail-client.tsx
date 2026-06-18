@@ -408,7 +408,7 @@ export function PaymentDetailClient({
                       return (
                         <TableRow key={inv.id}>
                           <TableCell className="font-medium">{inv.documentNumber}</TableCell>
-                          <TableCell className="text-muted-foreground">{inv.invoiceDate}</TableCell>
+                          <TableCell className="text-muted-foreground">{fmtDate(inv.invoiceDate)}</TableCell>
                           <TableCell className="text-right tabular-nums">{formatZAR(inv.total)}</TableCell>
                           <TableCell className="text-right tabular-nums font-medium text-amber-600">
                             {formatZAR(inv.outstanding)}
