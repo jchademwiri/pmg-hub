@@ -1,13 +1,22 @@
 import type { Metadata } from 'next'
+import { getAllAccountingPeriods, getActiveChartAccounts } from '@pmg/db'
 import { SetPageTotal } from '@/components/navigation/page-header-context'
+import { ExportsClient } from './exports-client'
 
 export const dynamic = 'force-dynamic'
 export const metadata: Metadata = { title: 'Accounting Exports' }
 
 export default async function AccountingExportsPage() {
+  const [allPeriods, accounts] = await Promise.all([
+    getAllAccountingPeriods(),
+    getActiveChartAccounts(),
+  ])
+
+  const periods = allPeriods.map((p) => p.period)
+
   return (
     <div className="flex flex-col gap-6">
-      <SetPageTotal value="Coming soon" />
+      <SetPageTotal value="5 export types" />
 
       <div>
         <h2 className="text-lg font-semibold">Accounting Exports</h2>
@@ -16,13 +25,11 @@ export default async function AccountingExportsPage() {
         </p>
       </div>
 
-      <div className="rounded-xl border bg-card p-8 text-center">
-        <p className="text-sm text-muted-foreground">
-          Export functionality will be available once the accounting module is fully operational.
-          This will include CSV, PDF, and structured data exports for the general ledger, trial balance,
-          and profit &amp; loss reports.
-        </p>
-      </div>
+      <ExportsClient
+        periods={periods}
+        accounts={accounts}
+        selectedPeriod=""
+      />
     </div>
   )
 }

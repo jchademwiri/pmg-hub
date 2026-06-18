@@ -12,7 +12,7 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table'
-import { fmtDateTime } from '@/lib/format'
+import { fmtDateTime, fmtMonthYear } from '@/lib/format'
 import { toast } from 'sonner'
 import type { AccountingPeriod } from '@pmg/db'
 
@@ -35,7 +35,7 @@ export function PeriodsClient({ periods, closeAction, lockAction, reopenAction }
 
   async function handleAction(action: 'close' | 'lock' | 'reopen', period: string) {
     const labels = { close: 'Close', lock: 'Lock', reopen: 'Reopen' }
-    if (action === 'lock' && !confirm(`Permanently lock period ${period}? This cannot be undone.`)) return
+    if (action === 'lock' && !confirm(`Permanently lock period ${fmtMonthYear(period)}? This cannot be undone.`)) return
 
     setProcessing(period)
     let result: { error?: string }
@@ -47,7 +47,7 @@ export function PeriodsClient({ periods, closeAction, lockAction, reopenAction }
     if (result.error) {
       toast.error(result.error)
     } else {
-      toast.success(`Period ${period} ${action === 'close' ? 'closed' : action === 'lock' ? 'locked' : 'reopened'}`)
+      toast.success(`Period ${fmtMonthYear(period)} ${action === 'close' ? 'closed' : action === 'lock' ? 'locked' : 'reopened'}`)
       router.refresh()
     }
   }
@@ -74,7 +74,7 @@ export function PeriodsClient({ periods, closeAction, lockAction, reopenAction }
           <TableBody>
             {periods.map((period) => (
               <TableRow key={period.id}>
-                <TableCell className="text-sm font-semibold">{period.period}</TableCell>
+                <TableCell className="text-sm font-semibold">{fmtMonthYear(period.period)}</TableCell>
                 <TableCell>
                   <span className={`inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium ${STATUS_STYLES[period.status] ?? ''}`}>
                     {period.status}

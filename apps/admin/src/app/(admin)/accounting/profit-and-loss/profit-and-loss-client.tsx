@@ -17,7 +17,7 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table'
-import { formatZAR } from '@/lib/format'
+import { formatZAR, fmtMonthYear } from '@/lib/format'
 import type { ProfitAndLossResult } from '@pmg/db'
 
 interface ProfitAndLossClientProps {
@@ -53,7 +53,7 @@ export function ProfitAndLossClient({ data, periods, selectedPeriod }: ProfitAnd
           <SelectContent>
             <SelectItem value="all">All Time</SelectItem>
             {periods.map((p) => (
-              <SelectItem key={p} value={p}>{p}</SelectItem>
+              <SelectItem key={p} value={p}>{fmtMonthYear(p)}</SelectItem>
             ))}
           </SelectContent>
         </Select>

@@ -19,7 +19,7 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table'
-import { fmtDate, fmtDateTime } from '@/lib/format'
+import { fmtDate, fmtDateTime, fmtMonthYear } from '@/lib/format'
 import { toast } from 'sonner'
 import type { JournalEntry } from '@pmg/db'
 
@@ -124,7 +124,7 @@ export function JournalsClient({
           <SelectContent>
             <SelectItem value="all">All Periods</SelectItem>
             {periods.map((p) => (
-              <SelectItem key={p} value={p}>{p}</SelectItem>
+              <SelectItem key={p} value={p}>{fmtMonthYear(p)}</SelectItem>
             ))}
           </SelectContent>
         </Select>
@@ -172,7 +172,7 @@ export function JournalsClient({
                   <TableCell className="text-sm max-w-[300px] truncate" title={entry.description}>
                     {entry.description}
                   </TableCell>
-                  <TableCell className="text-sm">{entry.period}</TableCell>
+                  <TableCell className="text-sm">{fmtMonthYear(entry.period)}</TableCell>
                   <TableCell>
                     {entry.sourceModule && (
                       <span className="inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium bg-blue-500/15 text-blue-500">

@@ -2,6 +2,7 @@ import type { Metadata } from 'next'
 import Link from 'next/link'
 import { getAccountingOverview, getCurrentOpenPeriod } from '@pmg/db'
 import { SetPageTotal } from '@/components/navigation/page-header-context'
+import { fmtMonthYear } from '@/lib/format'
 import { BookOpen, FileText, Scale, TrendingUp, Calendar, Download, ArrowRight } from 'lucide-react'
 
 export const dynamic = 'force-dynamic'
@@ -51,7 +52,7 @@ export default async function AccountingOverviewPage() {
         <div className="rounded-xl border bg-card p-5">
           <p className="text-xs font-medium text-muted-foreground">Current Period</p>
           <p className="text-2xl font-bold mt-1">
-            {currentPeriod?.period ?? '—'}
+            {currentPeriod ? fmtMonthYear(currentPeriod.period) : '—'}
           </p>
           {currentPeriod && (
             <span className={`inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium mt-1 ${
