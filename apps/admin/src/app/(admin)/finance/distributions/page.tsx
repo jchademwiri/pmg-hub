@@ -8,6 +8,7 @@ import { SetPageTotal } from '@/components/navigation/page-header-context'
 import { getMinAllowedDate, getClosedPeriodsFromDates } from '@/lib/date-rules'
 import { getLedgerByAllocation } from '@pmg/db'
 import { updateLedgerEntry, deleteLedgerEntry, createLedgerEntry } from '@/app/actions/ledger'
+import { getAllDistributionSettingsForUI } from '@/app/actions/distribution-settings'
 import { DistributionsClient } from './distributions-client'
 
 export const dynamic = 'force-dynamic'
@@ -66,6 +67,9 @@ export default async function DistributionsPage({
     currentRates,
   }
 
+  // Full settings history for the Rules tab
+  const settingsHistory = await getAllDistributionSettingsForUI()
+
   return (
     <div className="flex flex-col gap-6">
       <SetPageTotal value={formatZAR(totalBalance)} variant="green" />
@@ -87,6 +91,7 @@ export default async function DistributionsPage({
         minDate={minDate}
         closedPeriods={closedPeriods}
         rules={rules}
+        settingsHistory={settingsHistory}
         activeTab={tab}
         recordAction={recordAccountWithdrawal}
         createLedgerAction={createLedgerEntry}
