@@ -79,12 +79,12 @@ function DivisionTableRow({
     if (result.error) toast.error(result.error)
   }
 
-  const netProfitClass = division.netProfit >= 0 ? 'text-green-500' : 'text-red-500'
+  const netProfitClass = division.netProfit >= 0 ? 'text-emerald-600' : 'text-red-600'
 
   return (
     <TableRow
       className={`cursor-pointer ${!division.isActive ? 'opacity-60' : ''}`}
-      onClick={() => mode === 'display' && router.push('/divisions/' + division.id)}
+      onClick={() => mode === 'display' && router.push('/relationships/divisions/' + division.id)}
     >
       <TableCell onClick={mode === 'edit' ? (e) => e.stopPropagation() : undefined}>
         {mode === 'edit' ? (
@@ -111,8 +111,8 @@ function DivisionTableRow({
           division.name
         )}
       </TableCell>
-      <TableCell className="text-green-500 tabular-nums font-medium">{formatZAR(division.totalIncome)}</TableCell>
-      <TableCell className="text-amber-500 tabular-nums font-medium">{formatZAR(division.totalExpenses)}</TableCell>
+      <TableCell className="text-emerald-600 tabular-nums font-medium">{formatZAR(division.totalIncome)}</TableCell>
+      <TableCell className="text-red-600 tabular-nums font-medium">{formatZAR(division.totalExpenses)}</TableCell>
       <TableCell className={`tabular-nums font-medium ${netProfitClass}`}>{formatZAR(division.netProfit)}</TableCell>
       <TableCell>{division.leadCount}</TableCell>
       <TableCell>
