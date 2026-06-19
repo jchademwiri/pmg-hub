@@ -67,6 +67,7 @@ gantt
 
 ## 📂 Detailed Module Audits
 
+*   View the [Calculations & Reconciliation Audit](file:///D:/websites/pmg-hub/docs/final-audit/calculations_audit.md)
 *   View the [Billing Audit](file:///D:/websites/pmg-hub/docs/final-audit/billing/audit.md)
 *   View the [Accounting Audit](file:///D:/websites/pmg-hub/docs/final-audit/accounting/audit.md)
 *   View the [Finance Audit](file:///D:/websites/pmg-hub/docs/final-audit/finance/audit.md)
