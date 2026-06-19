@@ -87,6 +87,7 @@ type KpiCardProps = {
   deltaLabel?: string
   sparklineData?: number[]
   sparklineColor?: string
+  textColorClass?: string
 }
 
 function KpiCard({
@@ -98,14 +99,16 @@ function KpiCard({
   deltaLabel,
   sparklineData,
   sparklineColor,
+  textColorClass,
 }: KpiCardProps) {
   const borderClass =
     highlight === 'danger'  ? 'border-red-500/30 hover:border-red-500/50' :
     highlight === 'success' ? 'border-emerald-500/30 hover:border-emerald-500/50' : 'border-border/60 hover:border-border/100'
-  const valueClass =
-    highlight === 'danger'  ? 'text-red-500' :
-    highlight === 'success' ? 'text-green-500' :
-    invertDelta ? 'text-amber-500' : 'text-green-500'
+  const valueClass = textColorClass || (
+    highlight === 'danger'  ? 'text-red-600' :
+    highlight === 'success' ? 'text-emerald-600' :
+    invertDelta ? 'text-amber-600' : 'text-emerald-600'
+  )
 
   return (
     <Card size="sm" className={`rounded-xl border ${borderClass} bg-gradient-to-tr from-card to-card/75 backdrop-blur-md shadow-none hover:-translate-y-1 hover:shadow-md hover:shadow-primary/5 transition-all duration-300 group`}>
@@ -168,6 +171,7 @@ export function KpiGrid({ summary, deltas, previousSummary, deltaLabel, sparklin
         deltaLabel={deltaLabel}
         sparklineData={revenueTrends}
         sparklineColor="text-emerald-500"
+        textColorClass="text-emerald-600"
       />
       <KpiCard
         label="Total Expenses"
@@ -177,6 +181,7 @@ export function KpiGrid({ summary, deltas, previousSummary, deltaLabel, sparklin
         deltaLabel={deltaLabel}
         sparklineData={expensesTrends}
         sparklineColor="text-amber-500"
+        textColorClass="text-red-600"
       />
       <KpiCard
         label="PMG Share (25%)"
@@ -185,6 +190,7 @@ export function KpiGrid({ summary, deltas, previousSummary, deltaLabel, sparklin
         deltaLabel={deltaLabel}
         sparklineData={pmgShareTrends}
         sparklineColor="text-blue-500"
+        textColorClass="text-blue-600"
       />
       <KpiCard
         label="Profit Pool"
@@ -194,6 +200,7 @@ export function KpiGrid({ summary, deltas, previousSummary, deltaLabel, sparklin
         deltaLabel={deltaLabel}
         sparklineData={profitPoolTrends}
         sparklineColor={summary.profitPool < 0 ? 'text-red-500' : 'text-teal-500'}
+        textColorClass={summary.profitPool < 0 ? 'text-red-600' : 'text-emerald-600'}
       />
     </div>
   )

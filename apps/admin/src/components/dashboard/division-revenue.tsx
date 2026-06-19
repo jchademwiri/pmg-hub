@@ -68,7 +68,7 @@ export function DivisionRevenue({ divisions, divisionExpenseMap }: DivisionReven
                     <span className="text-card-foreground text-sm font-medium">{div.divisionName}</span>
                     <span
                       className={`text-xs font-semibold tabular-nums ${
-                        isProfit ? 'text-emerald-400' : 'text-red-400'
+                        isProfit ? 'text-emerald-600' : 'text-red-600'
                       }`}
                     >
                       {isProfit ? '+' : ''}{formatZAR(div.net)} net
@@ -83,7 +83,7 @@ export function DivisionRevenue({ divisions, divisionExpenseMap }: DivisionReven
                           style={{ width: `${revPct}%` }}
                         />
                       </div>
-                      <span className="text-xs text-green-500 font-semibold tabular-nums w-24 text-right">
+                      <span className="text-xs text-emerald-600 font-semibold tabular-nums w-24 text-right">
                         {formatZAR(div.total)}
                       </span>
                     </div>
@@ -95,7 +95,7 @@ export function DivisionRevenue({ divisions, divisionExpenseMap }: DivisionReven
                           style={{ width: `${expPct}%` }}
                         />
                       </div>
-                      <span className="text-xs text-amber-500 font-semibold tabular-nums w-24 text-right">
+                      <span className="text-xs text-red-600 font-semibold tabular-nums w-24 text-right">
                         {formatZAR(div.expenses)}
                       </span>
                     </div>

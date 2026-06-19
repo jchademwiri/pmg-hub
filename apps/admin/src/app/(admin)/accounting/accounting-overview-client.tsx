@@ -137,10 +137,10 @@ export function AccountingOverviewClient({
             </p>
             <div className="flex items-center gap-3 mt-2">
               <span className="text-xs text-muted-foreground">
-                Rev <span className="font-medium text-foreground">{formatZAR(profitAndLoss.totalRevenue)}</span>
+                Rev <span className="font-medium text-emerald-600">{formatZAR(profitAndLoss.totalRevenue)}</span>
               </span>
               <span className="text-xs text-muted-foreground">
-                Exp <span className="font-medium text-foreground">{formatZAR(profitAndLoss.totalExpenses)}</span>
+                Exp <span className="font-medium text-red-600">{formatZAR(profitAndLoss.totalExpenses)}</span>
               </span>
             </div>
           </div>
@@ -154,7 +154,7 @@ export function AccountingOverviewClient({
               <DollarSign className="h-4 w-4 text-emerald-600" />
             </div>
           </div>
-          <p className="text-2xl font-bold mt-2 tabular-nums">{formatZAR(profitAndLoss.totalRevenue)}</p>
+          <p className="text-2xl font-bold mt-2 tabular-nums text-emerald-600">{formatZAR(profitAndLoss.totalRevenue)}</p>
           <div className="flex items-center gap-1 mt-2">
             <span className="text-xs text-muted-foreground">
               {activeTypeCounts.revenue} revenue account{activeTypeCounts.revenue !== 1 ? 's' : ''} with activity
@@ -170,7 +170,7 @@ export function AccountingOverviewClient({
               <FileText className="h-4 w-4 text-blue-600" />
             </div>
           </div>
-          <p className="text-2xl font-bold mt-2 tabular-nums">{formatZAR(Math.abs(accountsReceivableBalance))}</p>
+          <p className="text-2xl font-bold mt-2 tabular-nums text-blue-600">{formatZAR(Math.abs(accountsReceivableBalance))}</p>
           <div className="flex items-center gap-1 mt-2">
             <span className="text-xs text-muted-foreground">
               1100 · {accountsReceivableLabel}
@@ -186,7 +186,7 @@ export function AccountingOverviewClient({
               <Receipt className="h-4 w-4 text-red-600" />
             </div>
           </div>
-          <p className="text-2xl font-bold mt-2 tabular-nums">{formatZAR(profitAndLoss.totalExpenses)}</p>
+          <p className="text-2xl font-bold mt-2 tabular-nums text-red-600">{formatZAR(profitAndLoss.totalExpenses)}</p>
           <div className="flex items-center gap-1 mt-2">
             <span className="text-xs text-muted-foreground">
               {activeTypeCounts.expense} expense account{activeTypeCounts.expense !== 1 ? 's' : ''} with activity

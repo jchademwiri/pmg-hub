@@ -12,6 +12,7 @@ import {
   MessageSquare,
   ArrowUpRight,
 } from 'lucide-react'
+import type { DivisionRow } from '@pmg/db'
 
 interface RelationshipsOverviewClientProps {
   clientCount: number
@@ -23,14 +24,7 @@ interface RelationshipsOverviewClientProps {
     converted: number
     lost: number
   }
-  divisions: Array<{
-    id: string
-    name: string
-    totalIncome: number
-    totalExpenses: number
-    netProfit: number
-    leadCount: number
-  }>
+  divisions: DivisionRow[]
   topClients: Array<{
     id: string
     name: string
@@ -149,7 +143,7 @@ export function RelationshipsOverviewClient({
                         <span className="text-xs text-muted-foreground">{div.leadCount} lead{div.leadCount !== 1 ? 's' : ''}</span>
                       ) : (
                         <span className="text-xs text-muted-foreground">
-                          {div.paymentCount ?? 0} payment{(div.paymentCount ?? 0) !== 1 ? 's' : ''}
+                          {div.invoiceCount ?? 0} invoice{(div.invoiceCount ?? 0) !== 1 ? 's' : ''}
                         </span>
                       )}
                       <span className={`text-xs ${div.netProfit >= 0 ? 'text-emerald-600' : 'text-red-600'}`}>

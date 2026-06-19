@@ -38,6 +38,15 @@ interface InvoicesClientProps {
   voidAction: (id: string) => Promise<{ error?: string }>;
 }
 
+const INVOICE_STATUS_COLORS: Record<string, string> = {
+  paid: 'text-emerald-600',
+  partially_paid: 'text-amber-600',
+  issued: 'text-blue-600',
+  overdue: 'text-red-600',
+  draft: 'text-zinc-600',
+  void: 'text-zinc-600 line-through',
+};
+
 export function InvoicesClient({
   entries,
   total,
@@ -133,7 +142,7 @@ export function InvoicesClient({
               <TableCell className="tabular-nums text-sm text-muted-foreground">
                 {fmtDate(inv.dueDate)}
               </TableCell>
-              <TableCell className="text-right tabular-nums text-sm font-medium">
+              <TableCell className={`text-right tabular-nums text-sm font-medium ${INVOICE_STATUS_COLORS[inv.status] || ''}`}>
                 {formatZAR(Number(inv.total))}
               </TableCell>
               <TableCell>

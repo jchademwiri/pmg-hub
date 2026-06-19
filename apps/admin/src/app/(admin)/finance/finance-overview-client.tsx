@@ -85,7 +85,7 @@ export function FinanceOverviewClient({
               <PieChart className="h-4 w-4 text-blue-600" />
             </div>
           </div>
-          <p className="text-2xl font-bold mt-2 tabular-nums">{formatZAR(summary.pmgShare)}</p>
+          <p className="text-2xl font-bold mt-2 tabular-nums text-blue-600">{formatZAR(summary.pmgShare)}</p>
           <p className="text-xs text-muted-foreground mt-1">25% of revenue</p>
         </div>
       </div>

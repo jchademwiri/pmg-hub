@@ -108,7 +108,7 @@ function PaymentRow({
       <TableCell className="truncate max-w-xs text-xs py-3" title={entry.description}>
         {entry.description || '-'}
       </TableCell>
-      <TableCell className="text-right tabular-nums font-semibold text-xs py-3">
+      <TableCell className="text-right tabular-nums font-semibold text-xs py-3 text-emerald-600">
         {formatZAR(entry.amount)}
       </TableCell>
       <TableCell className="text-right tabular-nums text-xs py-3">

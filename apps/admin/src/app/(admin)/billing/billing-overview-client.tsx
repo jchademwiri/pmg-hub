@@ -48,6 +48,15 @@ const STATUS_STYLES: Record<string, string> = {
   void: 'bg-zinc-500/10 text-zinc-600',
 }
 
+const STATUS_TEXT_COLORS: Record<string, string> = {
+  paid: 'text-emerald-600',
+  partially_paid: 'text-amber-600',
+  issued: 'text-blue-600',
+  overdue: 'text-red-600',
+  draft: 'text-zinc-600',
+  void: 'text-zinc-600 line-through',
+}
+
 export function BillingOverviewClient({
   invoiceSummary,
   aging,
@@ -70,7 +79,7 @@ export function BillingOverviewClient({
               <FileText className="h-4 w-4 text-blue-600" />
             </div>
           </div>
-          <p className="text-2xl font-bold mt-2 tabular-nums">{formatZAR(totalInvoiced)}</p>
+          <p className="text-2xl font-bold mt-2 tabular-nums text-blue-600">{formatZAR(totalInvoiced)}</p>
           <p className="text-xs text-muted-foreground mt-1">{invoiceSummary.total} invoices</p>
         </div>
 
@@ -82,7 +91,7 @@ export function BillingOverviewClient({
               <Receipt className="h-4 w-4 text-violet-600" />
             </div>
           </div>
-          <p className="text-2xl font-bold mt-2 tabular-nums">{formatZAR(currentMonthInvoiced)}</p>
+          <p className="text-2xl font-bold mt-2 tabular-nums text-violet-600">{formatZAR(currentMonthInvoiced)}</p>
           <p className="text-xs text-muted-foreground mt-1">current billing period</p>
         </div>
 
@@ -94,7 +103,7 @@ export function BillingOverviewClient({
               <Wallet className="h-4 w-4 text-emerald-600" />
             </div>
           </div>
-          <p className="text-2xl font-bold mt-2 tabular-nums">
+          <p className="text-2xl font-bold mt-2 tabular-nums text-emerald-600">
             {formatZAR(currentMonthPayments.sum)}
           </p>
           <p className="text-xs text-muted-foreground mt-1">
@@ -218,7 +227,7 @@ export function BillingOverviewClient({
                     </div>
                   </div>
                   <div className="text-right shrink-0 ml-4 flex items-center gap-2">
-                    <span className="text-sm font-medium tabular-nums">{formatZAR(Number(inv.total))}</span>
+                    <span className={`text-sm font-medium tabular-nums ${STATUS_TEXT_COLORS[inv.status] || ''}`}>{formatZAR(Number(inv.total))}</span>
                     <span className={`inline-flex items-center rounded-full px-1.5 py-0.5 text-[10px] font-medium ${
                       STATUS_STYLES[inv.status] || 'bg-zinc-500/10 text-zinc-600'
                     }`}>
