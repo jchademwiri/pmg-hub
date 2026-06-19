@@ -86,7 +86,7 @@ export function ClientsTable({ clients, deleteAction, toggleActiveAction }: Clie
             <TableRow
               key={client.id}
               className={`cursor-pointer ${!client.isActive ? 'opacity-60' : ''}`}
-              onClick={() => router.push('/clients/' + client.id)}
+              onClick={() => router.push('/relationships/clients/' + client.id)}
             >
               <TableCell>{client.name}</TableCell>
               <TableCell>{client.businessName ?? ''}</TableCell>

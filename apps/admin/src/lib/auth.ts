@@ -6,7 +6,7 @@ import { createAuthMiddleware, APIError } from 'better-auth/api'
 import { headers } from 'next/headers'
 import { redirect } from 'next/navigation'
 import { getDb, invitations, user, eq } from '@pmg/db'
-import React from 'react'
+import React, { cache } from 'react'
 import { createEmailClient, MagicLinkEmail, DEFAULT_EMAIL_FROM, DEFAULT_REPLY_TO } from '@pmg/emails'
 
 // ── Better Auth config ────────────────────────────────────────────────────────
@@ -144,11 +144,11 @@ type Role = keyof typeof ROLE_HIERARCHY
  * Fetches the current session server-side.
  * Redirects to /login if no session exists.
  */
-export async function getSessionOrRedirect() {
+export const getSessionOrRedirect = cache(async () => {
   const session = await auth.api.getSession({ headers: await headers() })
   if (!session) redirect('/login')
   return session
-}
+})
 
 /**
  * Returns true if the session user's role meets or exceeds the required role.
