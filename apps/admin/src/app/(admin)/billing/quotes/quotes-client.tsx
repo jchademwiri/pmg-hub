@@ -41,6 +41,16 @@ interface QuotesClientProps {
   ) => Promise<{ error?: string }>;
 }
 
+const QUOTE_STATUS_COLORS: Record<string, string> = {
+  draft: 'text-zinc-600',
+  sent: 'text-blue-600',
+  accepted: 'text-emerald-600',
+  declined: 'text-red-600',
+  expired: 'text-amber-600',
+  void: 'text-zinc-600 line-through',
+  cancelled: 'text-zinc-600 line-through',
+};
+
 export function QuotesClient({
   entries,
   total,
@@ -143,7 +153,7 @@ export function QuotesClient({
               <TableCell className="tabular-nums text-sm text-muted-foreground">
                 {fmtDate(quote.expiryDate)}
               </TableCell>
-              <TableCell className="text-right tabular-nums text-sm font-medium">
+              <TableCell className={`text-right tabular-nums text-sm font-medium ${QUOTE_STATUS_COLORS[quote.status] || ''}`}>
                 {formatZAR(Number(quote.total))}
               </TableCell>
               <TableCell>

@@ -27,7 +27,7 @@ export function ExpenseSnapshot({ expensesByDivision, totalExpenses }: ExpenseSn
           <CardTitle className="text-card-foreground text-sm font-medium">
             Expense Breakdown by Division
           </CardTitle>
-          <span className="text-xs text-amber-500 tabular-nums font-medium">
+          <span className="text-xs text-red-600 tabular-nums font-medium">
             {formatZAR(totalExpenses)}
           </span>
         </div>
@@ -67,7 +67,7 @@ export function ExpenseSnapshot({ expensesByDivision, totalExpenses }: ExpenseSn
                     <span className={`inline-block h-2 w-2 rounded-full ${colorClass}`} />
                     <span className="text-xs text-muted-foreground truncate">{div.divisionName}</span>
                   </div>
-                  <p className="text-amber-500 text-base font-semibold tabular-nums">
+                  <p className="text-red-600 text-base font-semibold tabular-nums">
                     {formatZAR(div.total)}
                   </p>
                   <p className="text-muted-foreground/60 text-xs">{pct}% of total</p>

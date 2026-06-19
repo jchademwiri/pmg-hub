@@ -13,6 +13,7 @@ import {
   AlertTriangle,
   ArrowUpRight,
   ArrowDownRight,
+  Wallet,
 } from 'lucide-react'
 import type { AgingRow } from '@pmg/db'
 
@@ -21,12 +22,13 @@ interface BillingOverviewClientProps {
     total: number
     sum: number
     outstanding: number
-    paidCount: number
   }
   aging: AgingRow[]
-  clientCount: number
-  quoteCount: number
-  itemCount: number
+  currentMonthPayments: {
+    sum: number
+    count: number
+  }
+  currentMonthInvoiced: number
   recentInvoices: Array<{
     id: string
     documentNumber: string
@@ -46,12 +48,20 @@ const STATUS_STYLES: Record<string, string> = {
   void: 'bg-zinc-500/10 text-zinc-600',
 }
 
+const STATUS_TEXT_COLORS: Record<string, string> = {
+  paid: 'text-emerald-600',
+  partially_paid: 'text-amber-600',
+  issued: 'text-blue-600',
+  overdue: 'text-red-600',
+  draft: 'text-zinc-600',
+  void: 'text-zinc-600 line-through',
+}
+
 export function BillingOverviewClient({
   invoiceSummary,
   aging,
-  clientCount,
-  quoteCount,
-  itemCount,
+  currentMonthPayments,
+  currentMonthInvoiced,
   recentInvoices,
 }: BillingOverviewClientProps) {
   const outstanding = invoiceSummary.outstanding
@@ -61,6 +71,7 @@ export function BillingOverviewClient({
     <div className="flex flex-col gap-6">
       {/* Dashboard Cards */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+        {/* Total Invoiced */}
         <div className="rounded-xl border bg-card p-5 hover:shadow-md transition-all duration-200">
           <div className="flex items-center justify-between">
             <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider">Total Invoiced</p>
@@ -68,13 +79,42 @@ export function BillingOverviewClient({
               <FileText className="h-4 w-4 text-blue-600" />
             </div>
           </div>
-          <p className="text-2xl font-bold mt-2 tabular-nums">{formatZAR(totalInvoiced)}</p>
+          <p className="text-2xl font-bold mt-2 tabular-nums text-blue-600">{formatZAR(totalInvoiced)}</p>
           <p className="text-xs text-muted-foreground mt-1">{invoiceSummary.total} invoices</p>
         </div>
 
+        {/* Invoiced This Month */}
         <div className="rounded-xl border bg-card p-5 hover:shadow-md transition-all duration-200">
           <div className="flex items-center justify-between">
-            <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider">Outstanding</p>
+            <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider">Invoiced This Month</p>
+            <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-violet-500/10">
+              <Receipt className="h-4 w-4 text-violet-600" />
+            </div>
+          </div>
+          <p className="text-2xl font-bold mt-2 tabular-nums text-violet-600">{formatZAR(currentMonthInvoiced)}</p>
+          <p className="text-xs text-muted-foreground mt-1">current billing period</p>
+        </div>
+
+        {/* Payments This Month */}
+        <div className="rounded-xl border bg-card p-5 hover:shadow-md transition-all duration-200">
+          <div className="flex items-center justify-between">
+            <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider">Payments This Month</p>
+            <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-emerald-500/10">
+              <Wallet className="h-4 w-4 text-emerald-600" />
+            </div>
+          </div>
+          <p className="text-2xl font-bold mt-2 tabular-nums text-emerald-600">
+            {formatZAR(currentMonthPayments.sum)}
+          </p>
+          <p className="text-xs text-muted-foreground mt-1">
+            {currentMonthPayments.count} transaction{currentMonthPayments.count !== 1 ? 's' : ''} recorded
+          </p>
+        </div>
+
+        {/* Accounts Receivables */}
+        <div className="rounded-xl border bg-card p-5 hover:shadow-md transition-all duration-200">
+          <div className="flex items-center justify-between">
+            <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider">Accounts Receivables</p>
             <div className={`flex h-8 w-8 items-center justify-center rounded-lg ${outstanding > 0 ? 'bg-red-500/10' : 'bg-emerald-500/10'}`}>
               <DollarSign className={`h-4 w-4 ${outstanding > 0 ? 'text-red-600' : 'text-emerald-600'}`} />
             </div>
@@ -85,31 +125,6 @@ export function BillingOverviewClient({
           <p className="text-xs text-muted-foreground mt-1">
             {totalInvoiced > 0 ? `${Math.round((outstanding / totalInvoiced) * 100)}% uncollected` : 'No invoices'}
           </p>
-        </div>
-
-        <div className="rounded-xl border bg-card p-5 hover:shadow-md transition-all duration-200">
-          <div className="flex items-center justify-between">
-            <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider">Clients</p>
-            <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-violet-500/10">
-              <CreditCard className="h-4 w-4 text-violet-600" />
-            </div>
-          </div>
-          <div className="flex items-baseline gap-3 mt-2">
-            <span className="text-2xl font-bold tabular-nums">{clientCount}</span>
-            <span className="text-xs text-muted-foreground">active clients</span>
-          </div>
-          <p className="text-xs text-muted-foreground mt-1">{quoteCount} quotes · {invoiceSummary.paidCount} paid invoices</p>
-        </div>
-
-        <div className="rounded-xl border bg-card p-5 hover:shadow-md transition-all duration-200">
-          <div className="flex items-center justify-between">
-            <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider">Items</p>
-            <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-amber-500/10">
-              <Receipt className="h-4 w-4 text-amber-600" />
-            </div>
-          </div>
-          <p className="text-2xl font-bold mt-2 tabular-nums">{itemCount}</p>
-          <p className="text-xs text-muted-foreground mt-1">active billing items</p>
         </div>
       </div>
 
@@ -212,7 +227,7 @@ export function BillingOverviewClient({
                     </div>
                   </div>
                   <div className="text-right shrink-0 ml-4 flex items-center gap-2">
-                    <span className="text-sm font-medium tabular-nums">{formatZAR(Number(inv.total))}</span>
+                    <span className={`text-sm font-medium tabular-nums ${STATUS_TEXT_COLORS[inv.status] || ''}`}>{formatZAR(Number(inv.total))}</span>
                     <span className={`inline-flex items-center rounded-full px-1.5 py-0.5 text-[10px] font-medium ${
                       STATUS_STYLES[inv.status] || 'bg-zinc-500/10 text-zinc-600'
                     }`}>

@@ -61,7 +61,7 @@ export function AgingReportGrid({ data = [] }: AgingReportGridProps) {
           Accounts Receivable Ageing
         </h3>
         <span className="text-xs text-muted-foreground bg-muted border border-border px-2.5 py-1 rounded-full font-medium">
-          Total Expected: <span className="font-semibold text-foreground">{formatZAR(totalOutstanding)}</span>
+          Total Expected: <span className="font-bold text-emerald-600">{formatZAR(totalOutstanding)}</span>
         </span>
       </div>
 
@@ -87,7 +87,7 @@ export function AgingReportGrid({ data = [] }: AgingReportGridProps) {
                 </div>
               </CardHeader>
               <CardContent className="pb-4 pt-1 px-4 space-y-1">
-                <p className="text-2xl font-bold tabular-nums tracking-tight">
+                <p className={`text-2xl font-bold tabular-nums tracking-tight ${hasTotal ? theme.colorClass : 'text-muted-foreground/40'}`}>
                   {formatZAR(r.total)}
                 </p>
                 <p className="text-xs text-muted-foreground">

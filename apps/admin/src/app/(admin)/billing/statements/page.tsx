@@ -48,7 +48,7 @@ export default async function StatementsPage() {
   const currentFY = now.getMonth() < 2 ? now.getFullYear() - 1 : now.getFullYear();
 
   const [clients, agingReport] = await Promise.all([
-    getClientsWithBillingActivity({ year: currentFY }),
+    getClientsWithBillingActivity(),
     getAgingReport(),
   ]);
 
