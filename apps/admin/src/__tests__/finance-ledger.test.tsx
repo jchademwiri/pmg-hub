@@ -24,9 +24,34 @@ vi.mock('@pmg/db', () => {
     updateLedgerEntry: vi.fn(),
     deleteLedgerEntry: vi.fn(),
     getLedgerBalances: vi.fn(),
+    getLedgerByAllocation: vi.fn(),
+    getLedgerByAllocationYTD: vi.fn(),
     getTotalRevenue: vi.fn(),
     getTotalExpenses: vi.fn(),
     getLedgerTotalByAllocation: vi.fn(),
+    getCurrentRates: vi.fn().mockResolvedValue([
+      { rateKey: 'pmg_share', rateValue: '0.25' },
+      { rateKey: 'salary', rateValue: '0.35' },
+      { rateKey: 'reinvest', rateValue: '0.30' },
+      { rateKey: 'reserve', rateValue: '0.30' },
+      { rateKey: 'flex', rateValue: '0.05' },
+    ]),
+    ACCOUNT_KEYS: ['salary', 'reinvest', 'reserve', 'flex', 'pmg_share'],
+    ACCOUNT_LABELS: {
+      salary: 'Salary Account',
+      reinvest: 'Reinvestment Account',
+      reserve: 'Reserve Account',
+      flex: 'Flex Account',
+      pmg_share: 'PMG Share Account',
+    },
+    LOCKED_ACCOUNTS: ['pmg_share'],
+    getActiveRates: vi.fn().mockResolvedValue({
+      pmg_share: 0.25,
+      salary: 0.35,
+      reinvest: 0.30,
+      reserve: 0.30,
+      flex: 0.05,
+    }),
     ACCOUNT_RATES: {
       pmg_share: 0.25,
       salary: 0.35,
@@ -49,7 +74,11 @@ import {
   getAllLedgerEntries,
   insertLedgerEntry,
   updateLedgerEntry as dbUpdateLedgerEntry,
-  deleteLedgerEntry as dbDeleteLedgerEntry
+  deleteLedgerEntry as dbDeleteLedgerEntry,
+  getLedgerByAllocation,
+  getLedgerByAllocationYTD,
+  getLedgerBalances as dbGetLedgerBalances,
+  getCurrentRates,
 } from '@pmg/db';
 
 vi.mock('@/lib/financial', () => ({
@@ -69,6 +98,18 @@ vi.mock('next/cache', () => ({
 }));
 
 import { revalidatePath } from 'next/cache';
+
+vi.mock('next/navigation', () => ({
+  notFound: () => {
+    throw new Error('NEXT_NOT_FOUND');
+  },
+  useRouter: () => ({
+    push: vi.fn(),
+    refresh: vi.fn(),
+  }),
+  usePathname: () => '/finance/distributions',
+  useSearchParams: () => new URLSearchParams(),
+}));
 
 const mockIsPeriodClosed = vi.fn().mockResolvedValue(false);
 const mockGetMinAllowedDate = vi.fn().mockResolvedValue('2026-01-01');
@@ -126,6 +167,16 @@ describe('Finance Ledger Module', () => {
       pmg_share: { expected: 20000, spent: 5000, available: 15000 },
     });
 
+    vi.mocked(getLedgerByAllocation).mockResolvedValue([]);
+    vi.mocked(getLedgerByAllocationYTD).mockResolvedValue({});
+    vi.mocked(getAllLedgerEntries).mockResolvedValue({ data: [], total: 0 });
+    vi.mocked(getCurrentRates).mockResolvedValue([
+      { rateKey: 'pmg_share', rateValue: '0.25' },
+      { rateKey: 'salary', rateValue: '0.35' },
+      { rateKey: 'reinvest', rateValue: '0.30' },
+      { rateKey: 'reserve', rateValue: '0.30' },
+      { rateKey: 'flex', rateValue: '0.05' },
+    ]);
     vi.mocked(insertLedgerEntry).mockResolvedValue({} as any);
     vi.mocked(dbUpdateLedgerEntry).mockResolvedValue({} as any);
     vi.mocked(dbDeleteLedgerEntry).mockResolvedValue({} as any);
@@ -144,7 +195,7 @@ describe('Finance Ledger Module', () => {
 
       expect(res).toEqual({});
       expect(insertLedgerEntry).toHaveBeenCalled();
-      expect(revalidatePath).toHaveBeenCalledWith('/finance/ledger');
+      expect(revalidatePath).toHaveBeenCalledWith('/finance/distributions');
     });
 
     it('createLedgerEntry - restricts future dates and closed periods', async () => {

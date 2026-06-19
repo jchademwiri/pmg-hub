@@ -8,6 +8,13 @@ vi.mock('@pmg/db', () => ({
   getTotalExpenses: vi.fn(),
   getRevenueByDivision: vi.fn(),
   getLeadsByStatus: vi.fn(),
+  getActiveRates: vi.fn().mockResolvedValue({
+    pmg_share: 0.25,
+    salary: 0.35,
+    reinvest: 0.30,
+    reserve: 0.30,
+    flex: 0.05,
+  }),
   ACCOUNT_RATES: {
     salary: 0.35,
     reinvest: 0.30,
@@ -23,13 +30,20 @@ vi.mock('@pmg/db', () => ({
   },
 }))
 
-import { getTotalRevenue, getTotalExpenses, getRevenueByDivision, getLeadsByStatus } from '@pmg/db'
+import { getTotalRevenue, getTotalExpenses, getRevenueByDivision, getLeadsByStatus, getActiveRates } from '@pmg/db'
 import { getFinancialSummary, getDivisionRevenue, getLeadCounts, formatZAR } from '@/lib/financial'
 
 describe('getFinancialSummary', () => {
   describe('unit tests', () => {
     beforeEach(() => {
       vi.resetAllMocks()
+      vi.mocked(getActiveRates).mockResolvedValue({
+        pmg_share: 0.25,
+        salary: 0.35,
+        reinvest: 0.30,
+        reserve: 0.30,
+        flex: 0.05,
+      })
     })
 
     it('standard case - revenue=100000, expenses=40000 produces correct eight fields', async () => {
@@ -96,6 +110,13 @@ describe('getFinancialSummary', () => {
   describe('property tests', () => {
     beforeEach(() => {
       vi.resetAllMocks()
+      vi.mocked(getActiveRates).mockResolvedValue({
+        pmg_share: 0.25,
+        salary: 0.35,
+        reinvest: 0.30,
+        reserve: 0.30,
+        flex: 0.05,
+      })
     })
 
     it('Property 1: financial formulas correctness', async () => {
@@ -160,6 +181,13 @@ describe('getFinancialSummary', () => {
           fc.double({ noNaN: true, noDefaultInfinity: true }),
           async (revenue, expenses) => {
             vi.resetAllMocks()
+            vi.mocked(getActiveRates).mockResolvedValue({
+              pmg_share: 0.25,
+              salary: 0.35,
+              reinvest: 0.30,
+              reserve: 0.30,
+              flex: 0.05,
+            })
             vi.mocked(getTotalRevenue).mockResolvedValue(revenue)
             vi.mocked(getTotalExpenses).mockResolvedValue(expenses)
 

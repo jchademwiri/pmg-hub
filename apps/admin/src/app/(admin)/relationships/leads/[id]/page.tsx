@@ -6,6 +6,7 @@ import { updateLeadStatus, updateLeadNotes } from '@/app/actions/leads'
 import { fmtDate } from '@/lib/format'
 import { LeadStatusForm } from '@/components/leads/lead-status-form'
 import { LeadNotesForm } from '@/components/leads/lead-notes-form'
+import { ConvertToClientButton } from '@/components/leads/convert-to-client-button'
 
 export const dynamic = 'force-dynamic'
 export const metadata: Metadata = { title: 'Lead Detail' }
@@ -80,6 +81,22 @@ export default async function LeadDetailPage({ params }: LeadDetailPageProps) {
           </dl>
         </div>
       </div>
+
+      {lead.status !== 'converted' ? (
+        <div className="flex flex-col gap-4 rounded-lg border p-4 bg-emerald-500/5 border-emerald-500/20">
+          <h2 className="text-lg font-medium text-emerald-800">Actions</h2>
+          <div className="max-w-xs">
+            <ConvertToClientButton leadId={id} leadStatus={lead.status} />
+          </div>
+        </div>
+      ) : (
+        <div className="flex flex-col gap-4 rounded-lg border p-4 bg-muted/20">
+          <h2 className="text-lg font-medium text-muted-foreground">Actions</h2>
+          <p className="text-sm text-muted-foreground">
+            This lead has been successfully converted into an active client profile.
+          </p>
+        </div>
+      )}
 
       <div className="flex flex-col gap-4 rounded-lg border p-4">
         <h2 className="text-lg font-medium">Update Status</h2>

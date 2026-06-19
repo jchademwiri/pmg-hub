@@ -32,11 +32,6 @@ interface AccountingOverviewClientProps {
   profitAndLoss: ProfitAndLossResult
   recentEntries: GeneralLedgerRow[]
   currentPeriod: { period: string; status: string } | null
-  overview: {
-    totalAccounts: number
-    totalPostedEntries: number
-    totalDraftEntries: number
-  }
 }
 
 const TYPE_LABELS: Record<string, string> = {
@@ -54,7 +49,6 @@ export function AccountingOverviewClient({
   profitAndLoss,
   recentEntries,
   currentPeriod,
-  overview,
 }: AccountingOverviewClientProps) {
   const router = useRouter()
   const searchParams = useSearchParams()
@@ -73,6 +67,14 @@ export function AccountingOverviewClient({
   const trialTotalCredits = trialBalance.reduce((s, r) => s + r.totalCredits, 0)
   const isBalanced = Math.abs(trialTotalDebits - trialTotalCredits) < 0.01
   const isProfit = profitAndLoss.netProfit >= 0
+  const accountsReceivable = trialBalance.find((r) => r.accountCode === '1100')
+  const accountsReceivableBalance = accountsReceivable?.balance ?? 0
+  const accountsReceivableLabel =
+    accountsReceivableBalance > 0.01
+      ? 'owed by clients'
+      : accountsReceivableBalance < -0.01
+        ? 'credit balance'
+        : 'no open AR'
 
   // Count accounts by type that have activity
   const activeTypeCounts = {
@@ -160,6 +162,22 @@ export function AccountingOverviewClient({
           </div>
         </div>
 
+        {/* Accounts Receivable */}
+        <div className="rounded-xl border bg-card p-5 hover:shadow-md transition-all duration-200">
+          <div className="flex items-center justify-between">
+            <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider">Accounts Receivable</p>
+            <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-blue-500/10">
+              <FileText className="h-4 w-4 text-blue-600" />
+            </div>
+          </div>
+          <p className="text-2xl font-bold mt-2 tabular-nums">{formatZAR(Math.abs(accountsReceivableBalance))}</p>
+          <div className="flex items-center gap-1 mt-2">
+            <span className="text-xs text-muted-foreground">
+              1100 · {accountsReceivableLabel}
+            </span>
+          </div>
+        </div>
+
         {/* Total Expenses */}
         <div className="rounded-xl border bg-card p-5 hover:shadow-md transition-all duration-200">
           <div className="flex items-center justify-between">
@@ -172,31 +190,6 @@ export function AccountingOverviewClient({
           <div className="flex items-center gap-1 mt-2">
             <span className="text-xs text-muted-foreground">
               {activeTypeCounts.expense} expense account{activeTypeCounts.expense !== 1 ? 's' : ''} with activity
-            </span>
-          </div>
-        </div>
-
-        {/* Entry Counts */}
-        <div className="rounded-xl border bg-card p-5 hover:shadow-md transition-all duration-200">
-          <div className="flex items-center justify-between">
-            <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider">Entries</p>
-            <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-blue-500/10">
-              <FileText className="h-4 w-4 text-blue-600" />
-            </div>
-          </div>
-          <div className="flex items-baseline gap-3 mt-2">
-            <div>
-              <span className="text-2xl font-bold tabular-nums">{overview.totalPostedEntries}</span>
-              <span className="text-xs text-muted-foreground ml-1">posted</span>
-            </div>
-            <div>
-              <span className="text-xl font-bold text-muted-foreground tabular-nums">{overview.totalDraftEntries}</span>
-              <span className="text-xs text-muted-foreground ml-1">draft</span>
-            </div>
-          </div>
-          <div className="flex items-center gap-1 mt-2">
-            <span className="text-xs text-muted-foreground">
-              {overview.totalAccounts} active accounts
             </span>
           </div>
         </div>

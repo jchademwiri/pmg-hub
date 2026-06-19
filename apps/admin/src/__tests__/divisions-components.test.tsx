@@ -441,8 +441,16 @@ describe('Divisions page empty state', () => {
 // ── deleteDivision FK constraint violation ──────────────────────────────────
 
 describe('deleteDivision - FK constraint violation returns { error }', () => {
-  beforeEach(() => {
+  beforeEach(async () => {
     vi.resetAllMocks()
+    const { db } = await import('@pmg/db')
+    vi.mocked(db.select).mockReturnValue({
+      from: vi.fn().mockReturnValue({
+        where: vi.fn().mockReturnValue({
+          limit: vi.fn().mockResolvedValue([]),
+        }),
+      }),
+    } as any)
   })
 
   it('returns { error: "Cannot delete division with existing income or expense records." } on FK constraint violation - Validates: Requirements 4.4', async () => {

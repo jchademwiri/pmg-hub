@@ -1,0 +1,1 @@
+CREATE INDEX "journal_lines_account_id_created_at_idx" ON "journal_lines" USING btree ("account_id","created_at");

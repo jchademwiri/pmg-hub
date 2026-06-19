@@ -51,6 +51,10 @@ export function TrialBalanceClient({ data, periods, selectedPeriod }: TrialBalan
   const totalDebits = data.reduce((s, r) => s + r.totalDebits, 0)
   const totalCredits = data.reduce((s, r) => s + r.totalCredits, 0)
   const isBalanced = Math.abs(totalDebits - totalCredits) < 0.01
+  const visibleRows = data.filter(
+    (row) => row.totalDebits > 0 || row.totalCredits > 0 || Math.abs(row.balance) > 0.01
+  )
+  const hiddenZeroRows = data.length - visibleRows.length
 
   return (
     <div className="flex flex-col gap-4">
@@ -75,11 +79,17 @@ export function TrialBalanceClient({ data, periods, selectedPeriod }: TrialBalan
           ? 'bg-emerald-500/10 border-emerald-500/30 text-emerald-600'
           : 'bg-destructive/10 border-destructive/30 text-destructive'
       }`}>
-        <span>{isBalanced ? '✓ Trial balance is in balance' : '✗ Trial balance does not balance'}</span>
+        <span>{isBalanced ? 'Trial balance is in balance' : 'Trial balance does not balance'}</span>
       </div>
 
+      {hiddenZeroRows > 0 && (
+        <div className="rounded-lg border bg-muted/30 px-4 py-3 text-sm text-muted-foreground">
+          Showing {visibleRows.length} account{visibleRows.length !== 1 ? 's' : ''} with activity. Hidden {hiddenZeroRows} zero-balance account{hiddenZeroRows !== 1 ? 's' : ''}.
+        </div>
+      )}
+
       {/* Table */}
-      {data.length === 0 ? (
+      {visibleRows.length === 0 ? (
         <div className="text-sm text-muted-foreground border rounded-md p-8 text-center bg-card">
           No posted journal entries found for the selected period.
         </div>
@@ -96,7 +106,7 @@ export function TrialBalanceClient({ data, periods, selectedPeriod }: TrialBalan
             </TableRow>
           </TableHeader>
           <TableBody>
-            {data.map((row) => (
+            {visibleRows.map((row) => (
               <TableRow key={row.accountId}>
                 <TableCell className="text-sm font-mono">{row.accountCode}</TableCell>
                 <TableCell className="text-sm font-medium">{row.accountName}</TableCell>

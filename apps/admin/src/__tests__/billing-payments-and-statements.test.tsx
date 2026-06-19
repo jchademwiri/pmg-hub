@@ -37,6 +37,7 @@ vi.mock('@pmg/db', () => ({
   asc: vi.fn(),
   getClientsWithBillingActivity: vi.fn(),
   getAgingReport: vi.fn().mockResolvedValue([]),
+  getSnapshotByPeriod: vi.fn().mockResolvedValue(null),
 }));
 
 import { getClientsWithBillingActivity, getAgingReport } from '@pmg/db';
@@ -197,9 +198,7 @@ describe('Billing Payments and Statements Module', () => {
         }),
       })).mockImplementationOnce(() => ({
         from: () => ({
-          where: () => ({
-            limit: () => Promise.resolve([{ documentNumber: 'INV-001' }]),
-          }),
+          where: () => Promise.resolve([{ id: 'inv-1', documentNumber: 'INV-001' }]),
         }),
       })).mockImplementationOnce(() => ({
         from: () => ({

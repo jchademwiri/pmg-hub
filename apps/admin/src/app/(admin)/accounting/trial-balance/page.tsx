@@ -18,10 +18,13 @@ export default async function TrialBalancePage({
   ])
 
   const periods = allPeriods.map((p) => p.period)
+  const visibleAccountCount = data.filter(
+    (row) => row.totalDebits > 0 || row.totalCredits > 0 || Math.abs(row.balance) > 0.01
+  ).length
 
   return (
     <div className="flex flex-col gap-6">
-      <SetPageTotal value={`${data.length} accounts`} />
+      <SetPageTotal value={`${visibleAccountCount} active accounts`} />
 
       <div>
         <h2 className="text-lg font-semibold">Trial Balance</h2>
