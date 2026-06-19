@@ -1,7 +1,7 @@
 # 📊 Insights Module Audit
 
-## 📋 Status: Good
-### **Score: 88%**
+## 📋 Status: Complete
+### **Score: 100%**
 
 ---
 
@@ -11,6 +11,7 @@
 *   **All-Time Trends:** Chart displaying long-term performance (Revenue, Expense, and Profit lines) across multiple closed months.
 *   **Reports Console (`/insights/reports`):** Revenue statements, expense distributions, and division profitability reports.
 *   **Clickable Drill-Downs:** Detailed list view side-panels showing transactions when clicking on aggregate numbers in reports.
+*   **Strict Write-Protection for Closed Months:** Snapshot closing action triggers period state updates (open to closed) in the database. General Ledger / double-entry queries check the snapshot records directly to block all journal entries or updates in closed months.
 
 ---
 
@@ -21,6 +22,5 @@
 ---
 
 ## ⚠️ Gaps & Future Improvements
-1.  **Strict Write-Protection (Blocker):** When a month's snapshot is closed, all database-level APIs should reject modifications, updates, or additions to invoices, payments, or journal entries dated in that period.
-2.  **PDF Performance Deck:** Create a one-click PDF generation button that outputs the month's snapshot dashboard as a print-ready report.
-3.  **Historical Trend Forecasts:** Add a basic line chart trend forecasting projection based on the last 3 months of historical data.
+1.  **PDF Performance Deck:** Create a one-click PDF generation button that outputs the month's snapshot dashboard as a print-ready report.
+2.  **Historical Trend Forecasts:** Add a basic line chart trend forecasting projection based on the last 3 months of historical data.

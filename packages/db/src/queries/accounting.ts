@@ -6,6 +6,7 @@ import {
   accountingPeriods,
 } from "../schema/accounting";
 import { user } from "../schema/auth";
+import { snapshots } from "../schema/snapshots";
 import { eq, and, desc, asc, sql, inArray } from "drizzle-orm";
 
 // ── Chart of Accounts ─────────────────────────────────────────────────────────
@@ -262,6 +263,17 @@ export async function getCurrentOpenPeriod() {
  * Checks if a given period (YYYY-MM) is open for journal entries.
  */
 export async function isPeriodOpen(period: string): Promise<boolean> {
+  // Check if a snapshot exists for this period. If so, it is closed/locked.
+  const [snapshot] = await db
+    .select({ id: snapshots.id })
+    .from(snapshots)
+    .where(eq(snapshots.period, period))
+    .limit(1);
+
+  if (snapshot) {
+    return false;
+  }
+
   const [row] = await db
     .select({ status: accountingPeriods.status })
     .from(accountingPeriods)

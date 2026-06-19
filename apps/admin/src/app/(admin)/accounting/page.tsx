@@ -1,6 +1,7 @@
 import type { Metadata } from 'next'
-import { getAccountingOverview, getCurrentOpenPeriod, getAllAccountingPeriods, getTrialBalance, getProfitAndLoss, getGeneralLedger } from '@pmg/db'
+import { getCurrentOpenPeriod, getAllAccountingPeriods, getTrialBalance, getProfitAndLoss, getGeneralLedger } from '@pmg/db'
 import { SetPageTotal } from '@/components/navigation/page-header-context'
+import { formatZAR } from '@/lib/format'
 import { AccountingOverviewClient } from './accounting-overview-client'
 
 export const dynamic = 'force-dynamic'
@@ -24,8 +25,7 @@ export default async function AccountingOverviewPage({
     glFilters.endDate = new Date(Number(year), Number(month), 0).toISOString().split('T')[0]
   }
 
-  const [overview, currentPeriod, periods, trialBalance, profitAndLoss, { data: recentEntries }] = await Promise.all([
-    getAccountingOverview(),
+  const [currentPeriod, periods, trialBalance, profitAndLoss, { data: recentEntries }] = await Promise.all([
     getCurrentOpenPeriod(),
     getAllAccountingPeriods(),
     getTrialBalance(period),
@@ -34,10 +34,11 @@ export default async function AccountingOverviewPage({
   ])
 
   const periodList = periods.map((p) => p.period)
+  const accountsReceivableBalance = trialBalance.find((r) => r.accountCode === '1100')?.balance ?? 0
 
   return (
     <div className="flex flex-col gap-6">
-      <SetPageTotal value={`${overview.totalAccounts} accounts, ${overview.totalPostedEntries} entries`} />
+      <SetPageTotal value={`AR ${formatZAR(Math.abs(accountsReceivableBalance))}`} />
 
       <div>
         <h2 className="text-lg font-semibold">Accounting Overview</h2>
@@ -53,7 +54,6 @@ export default async function AccountingOverviewPage({
         profitAndLoss={profitAndLoss}
         recentEntries={recentEntries}
         currentPeriod={currentPeriod ? { period: currentPeriod.period, status: currentPeriod.status } : null}
-        overview={overview}
       />
     </div>
   )

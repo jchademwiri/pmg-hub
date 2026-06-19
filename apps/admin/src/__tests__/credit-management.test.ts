@@ -89,6 +89,7 @@ vi.mock('@pmg/db', () => ({
   ),
   desc: vi.fn(),
   asc: vi.fn(),
+  getSnapshotByPeriod: vi.fn().mockResolvedValue(null),
 }));
 
 vi.mock('@/lib/auth', () => ({
@@ -194,7 +195,13 @@ describe('Credit Management Server Actions', () => {
   describe('createCreditNote', () => {
     it('creates credit note successfully when parameters are valid', async () => {
       // Setup sequence mock
-      mockDbSelect.mockReturnValue({
+      mockDbSelect.mockImplementationOnce(() => ({
+        from: vi.fn().mockReturnValue({
+          where: vi.fn().mockReturnValue({
+            limit: vi.fn().mockResolvedValue([{ name: 'Playhouse Media Group' }]),
+          }),
+        }),
+      })).mockImplementationOnce(() => ({
         from: vi.fn().mockReturnValue({
           where: vi.fn().mockReturnValue({
             orderBy: vi.fn().mockReturnValue({
@@ -202,7 +209,7 @@ describe('Credit Management Server Actions', () => {
             }),
           }),
         }),
-      });
+      }));
 
       const res = await createCreditNote({
         clientId: 'client-1',

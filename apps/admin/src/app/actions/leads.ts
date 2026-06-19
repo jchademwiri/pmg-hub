@@ -2,7 +2,7 @@
 
 import { z } from 'zod';
 import { revalidatePath } from 'next/cache';
-import { db, leads, eq } from '@pmg/db';
+import { db, leads, clients, eq } from '@pmg/db';
 
 const LeadStatusSchema = z.object({
   status: z.enum(['new', 'contacted', 'converted', 'lost'], {
@@ -96,5 +96,47 @@ export async function deleteLead(id: string): Promise<{ error?: string }> {
     return {};
   } catch {
     return { error: 'Failed to delete. Please try again.' };
+  }
+}
+
+export async function convertLeadToClient(id: string): Promise<{ error?: string; clientId?: string }> {
+  try {
+    const lead = await db.select().from(leads).where(eq(leads.id, id)).then(rows => rows[0]);
+    if (!lead) return { error: 'Lead not found.' };
+    if (lead.status === 'converted') return { error: 'Lead is already converted.' };
+
+    if (lead.email) {
+      const [existingClient] = await db
+        .select()
+        .from(clients)
+        .where(eq(clients.email, lead.email));
+      if (existingClient) {
+        return { error: `A client with the email "${lead.email}" already exists.` };
+      }
+    }
+
+    const [inserted] = await db.insert(clients).values({
+      name: lead.name || 'Converted Lead',
+      email: lead.email ?? null,
+      phone: lead.phone ?? null,
+      isActive: true,
+    }).returning({ id: clients.id });
+
+    if (!inserted) {
+      return { error: 'Failed to create client record.' };
+    }
+
+    await db.update(leads)
+      .set({ status: 'converted', updatedAt: new Date() })
+      .where(eq(leads.id, id));
+
+    revalidatePath('/relationships/leads');
+    revalidatePath('/relationships/clients');
+    revalidatePath(`/relationships/leads/${id}`);
+    revalidatePath('/dashboard');
+
+    return { clientId: inserted.id };
+  } catch {
+    return { error: 'Failed to convert lead to client. Please try again.' };
   }
 }

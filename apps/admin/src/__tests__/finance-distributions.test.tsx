@@ -32,6 +32,14 @@ vi.mock('@pmg/db', () => {
     getYTDSummary: vi.fn().mockResolvedValue({ revenue: 0 }),
     getTotalRevenue: vi.fn(),
     getTotalExpenses: vi.fn(),
+    getAllLedgerEntries: vi.fn().mockResolvedValue({ data: [], total: 0 }),
+    getActiveRates: vi.fn().mockResolvedValue({
+      pmg_share: 0.25,
+      salary: 0.35,
+      reinvest: 0.30,
+      reserve: 0.30,
+      flex: 0.05,
+    }),
     ACCOUNT_RATES: {
       pmg_share: 0.25,
       salary: 0.35,
@@ -46,6 +54,13 @@ vi.mock('@pmg/db', () => {
       flex: 0.05,
     },
     getLedgerTotalByAllocation: vi.fn(),
+    getCurrentRates: vi.fn().mockResolvedValue([
+      { rateKey: 'pmg_share', rateValue: '0.25' },
+      { rateKey: 'salary', rateValue: '0.35' },
+      { rateKey: 'reinvest', rateValue: '0.30' },
+      { rateKey: 'reserve', rateValue: '0.30' },
+      { rateKey: 'flex', rateValue: '0.05' },
+    ]),
     eq: vi.fn(),
     and: vi.fn(),
   };
@@ -57,7 +72,10 @@ import {
   getLedgerByAllocation,
   getLedgerByAllocationYTD,
   getAllIncome,
-  getYTDSummary
+  getYTDSummary,
+  getActiveRates,
+  getAllLedgerEntries,
+  getCurrentRates,
 } from '@pmg/db';
 
 vi.mock('next/cache', () => ({
@@ -72,13 +90,17 @@ vi.mock('next/navigation', () => ({
     push: vi.fn(),
     refresh: vi.fn(),
   }),
+  usePathname: () => '/finance/distributions',
+  useSearchParams: () => new URLSearchParams(),
 }));
 
 vi.mock('@/app/actions/ledger', () => ({
   createLedgerEntry: vi.fn().mockResolvedValue({}),
+  updateLedgerEntry: vi.fn().mockResolvedValue({}),
+  deleteLedgerEntry: vi.fn().mockResolvedValue({}),
 }));
 
-import { createLedgerEntry } from '@/app/actions/ledger';
+import { createLedgerEntry, updateLedgerEntry, deleteLedgerEntry } from '@/app/actions/ledger';
 
 vi.mock('@/components/navigation/page-header-context', () => ({
   SetPageTotal: () => React.createElement('div', { 'data-testid': 'page-total' }),
@@ -101,6 +123,21 @@ import DistributionsPage from '@/app/(admin)/finance/distributions/page';
 describe('Finance Accounts Module', () => {
   beforeEach(() => {
     vi.resetAllMocks();
+    vi.mocked(getActiveRates).mockResolvedValue({
+      pmg_share: 0.25,
+      salary: 0.35,
+      reinvest: 0.30,
+      reserve: 0.30,
+      flex: 0.05,
+    });
+    vi.mocked(getAllLedgerEntries).mockResolvedValue({ data: [], total: 0 });
+    vi.mocked(getCurrentRates).mockResolvedValue([
+      { rateKey: 'pmg_share', rateValue: '0.25' },
+      { rateKey: 'salary', rateValue: '0.35' },
+      { rateKey: 'reinvest', rateValue: '0.30' },
+      { rateKey: 'reserve', rateValue: '0.30' },
+      { rateKey: 'flex', rateValue: '0.05' },
+    ]);
     vi.mocked(getLedgerBalances).mockResolvedValue({
       salary: { expected: 10000, spent: 2000, available: 8000 },
       reinvest: { expected: 5000, spent: 1000, available: 4000 },

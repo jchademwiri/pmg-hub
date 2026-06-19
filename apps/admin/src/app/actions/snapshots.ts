@@ -9,8 +9,10 @@ import {
   getUncategorizedExpensesCount,
   getDraftInvoicesCount,
   getPeriodTotals,
+  closePeriod,
 } from '@pmg/db';
 import { getSASTParts } from '@/lib/format';
+import { getSessionOrRedirect } from '@/lib/auth';
 
 const periodSchema = z.string().regex(/^\d{4}-\d{2}$/);
 
@@ -63,10 +65,12 @@ export async function closeMonth(
   }
 
   try {
+    const session = await getSessionOrRedirect();
     const startExpr = "DATE_TRUNC('month', TIMESTAMP '" + period + "-01')";
     const endExpr = "DATE_TRUNC('month', TIMESTAMP '" + period + "-01') + INTERVAL '1 month'";
     const summary = await getFinancialSummaryForPeriod(startExpr, endExpr);
-    await insertSnapshot(period, summary, { notes: opts?.notes });
+    await insertSnapshot(period, summary, { createdBy: session.user.id, notes: opts?.notes });
+    await closePeriod(period, session.user.id);
     revalidatePath('/dashboard');
     revalidatePath('/insights/snapshots');
     return {};
@@ -90,7 +94,8 @@ export async function autoClosePreviousMonthIfNeeded(): Promise<void> {
     const endExpr = "DATE_TRUNC('month', TIMESTAMP '" + period + "-01') + INTERVAL '1 month'";
     const summary = await getFinancialSummaryForPeriod(startExpr, endExpr);
     if (summary.revenue === 0 && summary.expenses === 0) return;
-    await insertSnapshot(period, summary);
+    await insertSnapshot(period, summary, { createdBy: 'system' });
+    await closePeriod(period, 'system');
     revalidatePath('/dashboard');
     revalidatePath('/insights/snapshots');
   } catch {
