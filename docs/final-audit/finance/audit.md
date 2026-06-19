@@ -1,7 +1,7 @@
 # 💰 Finance Module Audit
 
 ## 📋 Status: Excellent
-### **Score: 94%**
+### **Score: 96%**
 
 ---
 
@@ -16,12 +16,12 @@
 
 ## ⚙️ Accounting & System Integration
 *   **Auto-Translation Engine:** Converts non-accountant categories (e.g. "Stationery", "Uber", "Domain") into accounting debit codes (5030, 5070, 5010) automatically when saving or editing records.
+*   **Category Renaming Safety Warnings:** Warns users inside the Admin UI if they rename an expense category, letting them confirm the renaming will apply to all historical records and potentially change future auto-posting mappings.
 *   **Idempotent Backfilling:** The system safely reconciles legacy table records with the new general ledger without duplicating entries.
 *   **PMG Share Automated Cash Flow:** Triggers a 25% savings transfer immediately upon recording a client payment receipt, maintaining cash reserve balances in real-time.
 
 ---
 
 ## ⚠️ Gaps & Future Improvements
-1.  **Category Mapping Integrity:** Warn users when editing category name keywords, as modifying them could change how the system maps incoming expenses to chart accounts.
-2.  **Receipt Attachments:** Let users upload and attach PDF/image invoices/receipts directly to expense records for tax audit compliance.
-3.  **Bulk Expense Import:** Implement a CSV importer for bank statements, automatically suggesting matching expense categories based on transaction descriptions.
+1.  **Receipt Attachments:** Let users upload and attach PDF/image invoices/receipts directly to expense records for tax audit compliance.
+2.  **Bulk Expense Import:** Implement a CSV importer for bank statements, automatically suggesting matching expense categories based on transaction descriptions.

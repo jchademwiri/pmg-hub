@@ -25,4 +25,4 @@
 ## ⚠️ Gaps & Future Improvements
 1.  **Export to Email:** Connect data exports to email notifications, sending generated SQL/CSV backups directly to the administrator's email.
 2.  **Activity Logs:** Add a user action audit log showing who updated system-wide variables (such as billing terms or bank details).
-3.  **MFA Toggle:** Implement a user-facing toggle to enforce Multi-Factor Authentication (MFA/2FA) across all team member profiles.
+<!-- 3.  **MFA Toggle:** Implement a user-facing toggle to enforce Multi-Factor Authentication (MFA/2FA) across all team member profiles. -->

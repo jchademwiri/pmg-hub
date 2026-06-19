@@ -51,17 +51,29 @@ export function CategoryList({ initialCategories }: CategoryListProps) {
     });
   };
 
-  const handleUpdate = (id: string) => {
+  const handleUpdate = (id: string, oldName: string) => {
     if (!editName.trim()) return;
-    startTransition(async () => {
-      const fd = new FormData();
-      fd.set('name', editName.trim());
-      const res = await updateExpenseCategory(id, fd);
-      if (res.error) toast.error(res.error);
-      else {
-        toast.success('Category updated');
-        setEditingId(null);
-      }
+    if (oldName === editName.trim()) {
+      setEditingId(null);
+      return;
+    }
+    confirm({
+      title: 'Modify Category Name?',
+      description: 'Renaming this category will update all historical expenses linked to it. Future auto-postings might also use a different general ledger account if the category keywords are affected.',
+      confirmText: 'Rename',
+      variant: 'destructive',
+    }).then((confirmed) => {
+      if (!confirmed) return;
+      startTransition(async () => {
+        const fd = new FormData();
+        fd.set('name', editName.trim());
+        const res = await updateExpenseCategory(id, fd);
+        if (res.error) toast.error(res.error);
+        else {
+          toast.success('Category updated');
+          setEditingId(null);
+        }
+      });
     });
   };
 
@@ -152,7 +164,7 @@ export function CategoryList({ initialCategories }: CategoryListProps) {
                       autoFocus
                       value={editName}
                       onChange={(e) => setEditName(e.target.value)}
-                      onKeyDown={(e) => e.key === 'Enter' && handleUpdate(c.id)}
+                      onKeyDown={(e) => e.key === 'Enter' && handleUpdate(c.id, c.name)}
                       disabled={isSaving}
                     />
                   ) : (
@@ -164,7 +176,7 @@ export function CategoryList({ initialCategories }: CategoryListProps) {
                     <div className="flex justify-end gap-2">
                       <Button
                         size="sm"
-                        onClick={() => handleUpdate(c.id)}
+                        onClick={() => handleUpdate(c.id, c.name)}
                         disabled={!editName.trim() || isSaving}
                       >
                         <Check className="h-4 w-4" />

@@ -8,14 +8,14 @@
 
 | Module | Score | Status | Key Features | Action Needed |
 | :--- | :---: | :---: | :--- | :--- |
-| [Accounting](file:///D:/websites/pmg-hub/docs/final-audit/accounting/audit.md) | **98%** | Excellent | Dynamic TB & P&L, manual journal entries, period locking | Re-verify schema indexing on large volume queries |
-| [Billing](file:///D:/websites/pmg-hub/docs/final-audit/billing/audit.md) | **95%** | Excellent | Full invoice/quote lifecycle, credit notes, live billing accounts | Add automation to convert accepted quotes to invoices |
-| [Finance](file:///D:/websites/pmg-hub/docs/final-audit/finance/audit.md) | **94%** | Excellent | Categorization engine, income/expense tracking, distribution | Add warnings for category modifications that alter past JEs |
+| [Accounting](file:///D:/websites/pmg-hub/docs/final-audit/accounting/audit.md) | **99%** | Excellent | Dynamic TB & P&L, manual journal entries, period locking | Re-verify database triggers on locked periods |
+| [Billing](file:///D:/websites/pmg-hub/docs/final-audit/billing/audit.md) | **97%** | Excellent | Full invoice/quote lifecycle, credit notes, live billing accounts | Add option for inclusive/exclusive VAT in items catalog |
+| [Finance](file:///D:/websites/pmg-hub/docs/final-audit/finance/audit.md) | **96%** | Excellent | Categorization engine, income/expense tracking, distribution | Add support for CSV bank statement uploads |
 | [Settings](file:///D:/websites/pmg-hub/docs/final-audit/settings/audit.md) | **92%** | Excellent | User invitations, security settings, org profile, exports | Connect data exports to email notifications |
 | [Relationships](file:///D:/websites/pmg-hub/docs/final-audit/relationships/audit.md) | **90%** | Good | Lead pipeline tracking, division performance, client profiles | Build one-click "Convert Lead to Client" interface |
 | [Insights](file:///D:/websites/pmg-hub/docs/final-audit/insights/audit.md) | **88%** | Good | Monthly snapshots, trend analysis, transaction drill-downs | Re-verify data lock controls for closed snapshots |
 
-**Overall System Health Index: 92.8% (Highly Stable & MVP Ready)** ✅
+**Overall System Health Index: 93.7% (Highly Stable & MVP Ready)** ✅
 
 ---
 
@@ -25,11 +25,13 @@
 *   **Double-Entry Balance:** Verified that every single journal entry in the system is perfectly balanced (Total Debits = Total Credits = **R 63,280.00**).
 *   **Legacy Data Corrected:** Legacies gaps (such as the R125 expense discrepancy and the R360 miscellaneous mapping issue) have been fully resolved.
 *   **Fiscal Year Boundaries:** Transition of invoices from FY 2025 to March 1, 2026 (FY 2026) has been updated and correctly logged.
+*   **Database Schema Optimization:** Added composite database index `journal_lines_account_id_created_at_idx` to optimize performance of high-volume General Ledger queries.
 
 ### 2. UI & Optimization (MVP Simplification)
 *   **Overview Screens:** Dynamic dashboards for Billing, Finance, and Relationships are online and powered by database queries rather than placeholders.
 *   **Performance:** Queries for listing invoices and counting quotations have been optimized with pagination and limits to ensure quick load times.
-*   **Skeleton Loaders:** Loading indicators have been added to prevent UI shift and improve user experience.
+*   **Quotation Conversion:** Verified that the Quotation-to-Invoice one-click conversion is fully implemented and automated in both server actions and user detail actions.
+*   **Category Warnings:** Added a confirmation warning in category editing to notify users if their updates will change historical expenses or auto-posting mappings.
 *   **Insights Cockpit:** Simplified the snapshots view by stripping out comparison badges and side-by-side compare panels, resulting in a cleaner dashboard.
 
 ---

@@ -165,6 +165,7 @@ export const journalLines = pgTable(
   (t) => [
     index("journal_lines_journal_entry_id_idx").on(t.journalEntryId),
     index("journal_lines_account_id_idx").on(t.accountId),
+    index("journal_lines_account_id_created_at_idx").on(t.accountId, t.createdAt),
     check(
       "journal_lines_debit_or_credit",
       sql`(${t.debit} IS NOT NULL AND ${t.credit} IS NULL) OR (${t.debit} IS NULL AND ${t.credit} IS NOT NULL)`
