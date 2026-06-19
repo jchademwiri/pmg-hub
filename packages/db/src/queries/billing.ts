@@ -554,7 +554,7 @@ export async function getAllInvoices(
     .select({
       count: sql<number>`count(*)::int`,
       sum: sql<number>`COALESCE(SUM(${invoices.total}), 0)::numeric`,
-      outstanding: sql<number>`COALESCE(SUM(CASE WHEN ${invoices.status} IN ('issued', 'overdue', 'partially_paid') THEN ${invoices.total} - COALESCE((SELECT SUM(amount) FROM payment_allocations WHERE invoice_id = ${invoices.id}), 0) ELSE 0 END), 0)::numeric`,
+      outstanding: sql<number>`COALESCE(SUM(CASE WHEN ${invoices.status} IN ('issued', 'overdue', 'partially_paid') THEN ${invoices.total} - COALESCE((SELECT SUM(amount) FROM payment_allocations WHERE invoice_id = invoices.id), 0) ELSE 0 END), 0)::numeric`,
     })
     .from(invoices);
   if (countConditions.length > 0) countQuery.where(and(...countConditions));

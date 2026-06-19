@@ -90,6 +90,69 @@ export function FinanceOverviewClient({
         </div>
       </div>
 
+      {/* Recent Activity */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+        {/* Recent Income */}
+        <div className="rounded-xl border bg-card overflow-hidden">
+          <div className="px-5 py-3.5 border-b bg-muted/30 flex items-center justify-between">
+            <h3 className="text-sm font-semibold">Recent Income</h3>
+            <Link href="/finance/income" className="text-xs text-muted-foreground hover:text-foreground transition-colors flex items-center gap-1">
+              View all <ArrowUpRight className="h-3 w-3" />
+            </Link>
+          </div>
+          {recentIncome.length === 0 ? (
+            <div className="px-5 py-8 text-center text-sm text-muted-foreground">No income recorded yet.</div>
+          ) : (
+            <div className="divide-y">
+              {recentIncome.map((inc) => (
+                <div key={inc.id} className="px-5 py-3 flex items-start justify-between hover:bg-muted/20 transition-colors">
+                  <div className="min-w-0">
+                    <p className="text-sm font-medium truncate">{inc.description || 'Income entry'}</p>
+                    <div className="flex items-center gap-2 mt-0.5">
+                      <span className="text-xs text-muted-foreground">{fmtDate(inc.date)}</span>
+                      <span className="inline-flex items-center rounded-full px-1.5 py-0.5 text-[10px] font-medium bg-emerald-500/10 text-emerald-600">
+                        {inc.divisionName}
+                      </span>
+                    </div>
+                  </div>
+                  <p className="text-sm font-medium tabular-nums text-emerald-600 shrink-0 ml-4">{formatZAR(inc.amount)}</p>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+
+        {/* Recent Expenses */}
+        <div className="rounded-xl border bg-card overflow-hidden">
+          <div className="px-5 py-3.5 border-b bg-muted/30 flex items-center justify-between">
+            <h3 className="text-sm font-semibold">Recent Expenses</h3>
+            <Link href="/finance/expenses" className="text-xs text-muted-foreground hover:text-foreground transition-colors flex items-center gap-1">
+              View all <ArrowUpRight className="h-3 w-3" />
+            </Link>
+          </div>
+          {recentExpenses.length === 0 ? (
+            <div className="px-5 py-8 text-center text-sm text-muted-foreground">No expenses recorded yet.</div>
+          ) : (
+            <div className="divide-y">
+              {recentExpenses.map((exp) => (
+                <div key={exp.id} className="px-5 py-3 flex items-start justify-between hover:bg-muted/20 transition-colors">
+                  <div className="min-w-0">
+                    <p className="text-sm font-medium truncate">{exp.description || 'Expense entry'}</p>
+                    <div className="flex items-center gap-2 mt-0.5">
+                      <span className="text-xs text-muted-foreground">{fmtDate(exp.date)}</span>
+                      <span className="inline-flex items-center rounded-full px-1.5 py-0.5 text-[10px] font-medium bg-red-500/10 text-red-600">
+                        {exp.category}
+                      </span>
+                    </div>
+                  </div>
+                  <p className="text-sm font-medium tabular-nums text-red-600 shrink-0 ml-4">{formatZAR(exp.amount)}</p>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      </div>
+
       {/* Division Revenue + Category Breakdown */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
         {/* Revenue by Division */}
@@ -150,69 +213,6 @@ export function FinanceOverviewClient({
                   </div>
                 )
               })}
-            </div>
-          )}
-        </div>
-      </div>
-
-      {/* Recent Activity */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-        {/* Recent Income */}
-        <div className="rounded-xl border bg-card overflow-hidden">
-          <div className="px-5 py-3.5 border-b bg-muted/30 flex items-center justify-between">
-            <h3 className="text-sm font-semibold">Recent Income</h3>
-            <Link href="/finance/income" className="text-xs text-muted-foreground hover:text-foreground transition-colors flex items-center gap-1">
-              View all <ArrowUpRight className="h-3 w-3" />
-            </Link>
-          </div>
-          {recentIncome.length === 0 ? (
-            <div className="px-5 py-8 text-center text-sm text-muted-foreground">No income recorded yet.</div>
-          ) : (
-            <div className="divide-y">
-              {recentIncome.map((inc) => (
-                <div key={inc.id} className="px-5 py-3 flex items-start justify-between hover:bg-muted/20 transition-colors">
-                  <div className="min-w-0">
-                    <p className="text-sm font-medium truncate">{inc.description || 'Income entry'}</p>
-                    <div className="flex items-center gap-2 mt-0.5">
-                      <span className="text-xs text-muted-foreground">{fmtDate(inc.date)}</span>
-                      <span className="inline-flex items-center rounded-full px-1.5 py-0.5 text-[10px] font-medium bg-emerald-500/10 text-emerald-600">
-                        {inc.divisionName}
-                      </span>
-                    </div>
-                  </div>
-                  <p className="text-sm font-medium tabular-nums text-emerald-600 shrink-0 ml-4">{formatZAR(inc.amount)}</p>
-                </div>
-              ))}
-            </div>
-          )}
-        </div>
-
-        {/* Recent Expenses */}
-        <div className="rounded-xl border bg-card overflow-hidden">
-          <div className="px-5 py-3.5 border-b bg-muted/30 flex items-center justify-between">
-            <h3 className="text-sm font-semibold">Recent Expenses</h3>
-            <Link href="/finance/expenses" className="text-xs text-muted-foreground hover:text-foreground transition-colors flex items-center gap-1">
-              View all <ArrowUpRight className="h-3 w-3" />
-            </Link>
-          </div>
-          {recentExpenses.length === 0 ? (
-            <div className="px-5 py-8 text-center text-sm text-muted-foreground">No expenses recorded yet.</div>
-          ) : (
-            <div className="divide-y">
-              {recentExpenses.map((exp) => (
-                <div key={exp.id} className="px-5 py-3 flex items-start justify-between hover:bg-muted/20 transition-colors">
-                  <div className="min-w-0">
-                    <p className="text-sm font-medium truncate">{exp.description || 'Expense entry'}</p>
-                    <div className="flex items-center gap-2 mt-0.5">
-                      <span className="text-xs text-muted-foreground">{fmtDate(exp.date)}</span>
-                      <span className="inline-flex items-center rounded-full px-1.5 py-0.5 text-[10px] font-medium bg-red-500/10 text-red-600">
-                        {exp.category}
-                      </span>
-                    </div>
-                  </div>
-                  <p className="text-sm font-medium tabular-nums text-red-600 shrink-0 ml-4">{formatZAR(exp.amount)}</p>
-                </div>
-              ))}
             </div>
           )}
         </div>

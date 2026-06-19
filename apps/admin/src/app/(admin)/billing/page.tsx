@@ -1,5 +1,5 @@
 import type { Metadata } from 'next'
-import { getAllInvoices, getAgingReport, getAllItems, getClientsWithBillingActivity, getAllQuotations } from '@pmg/db'
+import { getAllInvoices, getAgingReport, getAllItems, getClientsWithBillingActivity, getAllQuotations, getAllIncome } from '@pmg/db'
 import { SetPageTotal } from '@/components/navigation/page-header-context'
 import { BillingOverviewClient } from './billing-overview-client'
 
@@ -7,15 +7,19 @@ export const dynamic = 'force-dynamic'
 export const metadata: Metadata = { title: 'Billing' }
 
 export default async function BillingOverviewPage() {
-  const [invoiceData, aging, items, clients, quoteData] = await Promise.all([
+  const [
+    invoiceData,
+    currentMonthInvoiceData,
+    aging,
+    clients,
+    currentMonthPayments
+  ] = await Promise.all([
     getAllInvoices({}, { page: 1, pageSize: 5 }),
+    getAllInvoices({ monthPeriod: 'current' }, { page: 1, pageSize: 1 }),
     getAgingReport(),
-    getAllItems(),
     getClientsWithBillingActivity(),
-    getAllQuotations({}, { page: 1, pageSize: 1 }),
+    getAllIncome({ monthPeriod: 'current' }),
   ])
-
-  const paidCount = invoiceData.data.filter((i) => i.status === 'paid').length
 
   return (
     <div className="flex flex-col gap-6">
@@ -33,12 +37,13 @@ export default async function BillingOverviewPage() {
           total: invoiceData.total,
           sum: invoiceData.sum,
           outstanding: invoiceData.outstanding,
-          paidCount,
         }}
         aging={aging}
-        clientCount={clients.length}
-        quoteCount={quoteData.total}
-        itemCount={items.length}
+        currentMonthPayments={{
+          sum: currentMonthPayments.sum,
+          count: currentMonthPayments.total,
+        }}
+        currentMonthInvoiced={currentMonthInvoiceData.sum}
         recentInvoices={invoiceData.data}
       />
     </div>
