@@ -545,6 +545,11 @@ export async function getAllInvoices(
   let finalQuery = conditions.length > 0 ? query.where(and(...conditions)) : query;
 
   // Count + sum query (unfiltered outstanding is always across all invoices matching filters)
+  const countConditions = [...conditions];
+  if (!filters?.status) {
+    countConditions.push(sql`${invoices.status} NOT IN ('draft', 'void')`);
+  }
+
   const countQuery = db
     .select({
       count: sql<number>`count(*)::int`,
@@ -552,7 +557,7 @@ export async function getAllInvoices(
       outstanding: sql<number>`COALESCE(SUM(CASE WHEN ${invoices.status} IN ('issued', 'overdue', 'partially_paid') THEN ${invoices.total} - COALESCE((SELECT SUM(amount) FROM payment_allocations WHERE invoice_id = ${invoices.id}), 0) ELSE 0 END), 0)::numeric`,
     })
     .from(invoices);
-  if (conditions.length > 0) countQuery.where(and(...conditions));
+  if (countConditions.length > 0) countQuery.where(and(...countConditions));
 
   const [totalRes] = await countQuery;
   const total = totalRes?.count ?? 0;
@@ -968,8 +973,8 @@ export async function getClientsWithBillingActivity(filters?: { year?: number })
 
   const quoteFilter = year ? sql`WHERE quote_date >= ${start} AND quote_date < ${end}` : sql``;
   const invoiceFilter = year
-    ? sql`WHERE invoice_date >= ${start} AND invoice_date < ${end} AND invoice_date <= timezone('Africa/Johannesburg', now())::date`
-    : sql`WHERE invoice_date <= timezone('Africa/Johannesburg', now())::date`;
+    ? sql`WHERE status NOT IN ('draft', 'void') AND invoice_date >= ${start} AND invoice_date < ${end} AND invoice_date <= timezone('Africa/Johannesburg', now())::date`
+    : sql`WHERE status NOT IN ('draft', 'void') AND invoice_date <= timezone('Africa/Johannesburg', now())::date`;
   const incomeFilter = year ? sql`WHERE date >= ${start} AND date < ${end}` : sql``;
 
   const result = await db.execute(sql`
@@ -981,7 +986,7 @@ export async function getClientsWithBillingActivity(filters?: { year?: number })
       COALESCE(inv.invoice_count, 0)::int AS "invoiceCount",
       COALESCE(inv.total_invoiced, 0)::numeric AS "totalInvoiced",
       COALESCE(inc.total_paid, 0)::numeric AS "totalPaid",
-      (COALESCE(inv.total_invoiced, 0) - COALESCE(inc.total_paid, 0))::numeric AS "totalOutstanding",
+      (COALESCE(inv_all.total_invoiced, 0) - COALESCE(inc_all.total_paid, 0))::numeric AS "totalOutstanding",
       GREATEST(q.last_quote_date, inv.last_invoice_date)::text AS "lastActivityDate"
     FROM clients c
     LEFT JOIN (
@@ -998,7 +1003,7 @@ export async function getClientsWithBillingActivity(filters?: { year?: number })
         client_id,
         COUNT(*)::int AS invoice_count,
         MAX(invoice_date) AS last_invoice_date,
-        COALESCE(SUM(CASE WHEN status NOT IN ('draft', 'void') THEN total ELSE 0 END), 0) AS total_invoiced
+        COALESCE(SUM(total), 0) AS total_invoiced
       FROM invoices
       ${invoiceFilter}
       GROUP BY client_id
@@ -1011,7 +1016,22 @@ export async function getClientsWithBillingActivity(filters?: { year?: number })
       ${incomeFilter}
       GROUP BY client_id
     ) inc ON inc.client_id = c.id
-    WHERE q.client_id IS NOT NULL OR inv.client_id IS NOT NULL
+    LEFT JOIN (
+      SELECT
+        client_id,
+        COALESCE(SUM(total), 0) AS total_invoiced
+      FROM invoices
+      WHERE status NOT IN ('draft', 'void') AND invoice_date <= timezone('Africa/Johannesburg', now())::date
+      GROUP BY client_id
+    ) inv_all ON inv_all.client_id = c.id
+    LEFT JOIN (
+      SELECT
+        client_id,
+        COALESCE(SUM(amount), 0) AS total_paid
+      FROM income
+      GROUP BY client_id
+    ) inc_all ON inc_all.client_id = c.id
+    WHERE q.client_id IS NOT NULL OR inv.client_id IS NOT NULL OR (COALESCE(inv_all.total_invoiced, 0) - COALESCE(inc_all.total_paid, 0)) > 0
     ORDER BY GREATEST(q.last_quote_date, inv.last_invoice_date) DESC NULLS LAST
   `);
 
