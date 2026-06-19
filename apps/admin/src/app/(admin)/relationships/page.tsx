@@ -1,5 +1,5 @@
 import type { Metadata } from 'next'
-import { getAllClients, getAllDivisions, getDivisionsWithStats, getLeadCountsByStatus, getAllLeads } from '@pmg/db'
+import { getAllClients, getAllDivisions, getDivisionsWithStats, getLeadCountsByStatus, getClientsWithBillingActivity } from '@pmg/db'
 import { SetPageTotal } from '@/components/navigation/page-header-context'
 import { RelationshipsOverviewClient } from './relationships-overview-client'
 
@@ -7,13 +7,18 @@ export const dynamic = 'force-dynamic'
 export const metadata: Metadata = { title: 'Relationships' }
 
 export default async function RelationshipsOverviewPage() {
-  const [clients, divisions, divisionsWithStats, leadCounts, allLeads] = await Promise.all([
+  const [clients, divisions, divisionsWithStats, leadCounts, clientActivity] = await Promise.all([
     getAllClients(),
     getAllDivisions(),
     getDivisionsWithStats(),
     getLeadCountsByStatus(),
-    getAllLeads(),
+    getClientsWithBillingActivity(),
   ])
+
+  // Get top 3 profitable clients based on totalPaid (income received)
+  const topClients = [...clientActivity]
+    .sort((a, b) => b.totalPaid - a.totalPaid)
+    .slice(0, 3)
 
   return (
     <div className="flex flex-col gap-6">
@@ -31,7 +36,7 @@ export default async function RelationshipsOverviewPage() {
         divisionCount={divisions.length}
         leadCounts={leadCounts}
         divisions={divisionsWithStats}
-        recentLeads={allLeads.slice(0, 5)}
+        topClients={topClients}
       />
     </div>
   )

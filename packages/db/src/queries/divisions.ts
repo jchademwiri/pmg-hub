@@ -10,6 +10,7 @@ export type DivisionRow = {
   totalExpenses: number;
   netProfit: number;
   leadCount: number;
+  paymentCount?: number;
 };
 
 /**
@@ -35,10 +36,11 @@ export async function getDivisionsWithStats(): Promise<DivisionRow[]> {
       COALESCE(i.total_income,   0)::numeric AS "totalIncome",
       COALESCE(e.total_expenses, 0)::numeric AS "totalExpenses",
       (COALESCE(i.total_income, 0) - COALESCE(e.total_expenses, 0))::numeric AS "netProfit",
-      COALESCE(l.lead_count,     0)::integer AS "leadCount"
+      COALESCE(l.lead_count,     0)::integer AS "leadCount",
+      COALESCE(i.payment_count,  0)::integer AS "paymentCount"
     FROM divisions d
     LEFT JOIN (
-      SELECT division_id, SUM(amount) AS total_income
+      SELECT division_id, SUM(amount) AS total_income, COUNT(*) AS payment_count
       FROM income
       GROUP BY division_id
     ) i ON i.division_id = d.id
@@ -64,6 +66,7 @@ export async function getDivisionsWithStats(): Promise<DivisionRow[]> {
       totalExpenses: string;
       netProfit: string;
       leadCount: string;
+      paymentCount: string;
     }>
   ).map((row) => ({
     id:            row.id,
@@ -73,6 +76,7 @@ export async function getDivisionsWithStats(): Promise<DivisionRow[]> {
     totalExpenses: Number(row.totalExpenses),
     netProfit:     Number(row.netProfit),
     leadCount:     Number(row.leadCount),
+    paymentCount:  Number(row.paymentCount),
   }));
 }
 
@@ -88,10 +92,11 @@ export async function getDivisionWithStatsById(id: string): Promise<DivisionRow 
       COALESCE(i.total_income,   0)::numeric AS "totalIncome",
       COALESCE(e.total_expenses, 0)::numeric AS "totalExpenses",
       (COALESCE(i.total_income, 0) - COALESCE(e.total_expenses, 0))::numeric AS "netProfit",
-      COALESCE(l.lead_count,     0)::integer AS "leadCount"
+      COALESCE(l.lead_count,     0)::integer AS "leadCount",
+      COALESCE(i.payment_count,  0)::integer AS "paymentCount"
     FROM divisions d
     LEFT JOIN (
-      SELECT division_id, SUM(amount) AS total_income
+      SELECT division_id, SUM(amount) AS total_income, COUNT(*) AS payment_count
       FROM income
       WHERE division_id = ${id}
       GROUP BY division_id
@@ -120,6 +125,7 @@ export async function getDivisionWithStatsById(id: string): Promise<DivisionRow 
         totalExpenses: string;
         netProfit: string;
         leadCount: string;
+        paymentCount: string;
       }
     | undefined;
 
@@ -133,6 +139,7 @@ export async function getDivisionWithStatsById(id: string): Promise<DivisionRow 
     totalExpenses: Number(row.totalExpenses),
     netProfit:     Number(row.netProfit),
     leadCount:     Number(row.leadCount),
+    paymentCount:  Number(row.paymentCount),
   };
 }
 

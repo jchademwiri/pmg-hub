@@ -31,13 +31,12 @@ interface RelationshipsOverviewClientProps {
     netProfit: number
     leadCount: number
   }>
-  recentLeads: Array<{
+  topClients: Array<{
     id: string
-    name: string | null
-    email: string | null
-    status: string
-    divisionName: string | null
-    createdAt: Date
+    name: string
+    businessName: string | null
+    totalInvoiced: number
+    totalPaid: number
   }>
 }
 
@@ -53,8 +52,9 @@ export function RelationshipsOverviewClient({
   divisionCount,
   leadCounts,
   divisions,
-  recentLeads,
+  topClients,
 }: RelationshipsOverviewClientProps) {
+  const sortedDivisions = [...divisions].sort((a, b) => b.netProfit - a.netProfit)
   return (
     <div className="flex flex-col gap-6">
       {/* Dashboard Cards */}
@@ -122,7 +122,7 @@ export function RelationshipsOverviewClient({
         </div>
       </div>
 
-      {/* Division Performance + Recent Leads */}
+      {/* Division Performance + Top Profitable Clients */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
         {/* Division Performance */}
         <div className="rounded-xl border bg-card overflow-hidden">
@@ -132,11 +132,11 @@ export function RelationshipsOverviewClient({
               View all <ArrowUpRight className="h-3 w-3" />
             </Link>
           </div>
-          {divisions.length === 0 ? (
+          {sortedDivisions.length === 0 ? (
             <div className="px-5 py-8 text-center text-sm text-muted-foreground">No divisions configured.</div>
           ) : (
             <div className="divide-y">
-              {divisions.map((div) => (
+              {sortedDivisions.map((div) => (
                 <Link
                   key={div.id}
                   href={`/relationships/divisions/${div.id}`}
@@ -145,7 +145,13 @@ export function RelationshipsOverviewClient({
                   <div className="min-w-0">
                     <p className="text-sm font-medium group-hover:underline">{div.name}</p>
                     <div className="flex items-center gap-2 mt-0.5">
-                      <span className="text-xs text-muted-foreground">{div.leadCount} leads</span>
+                      {div.leadCount > 0 ? (
+                        <span className="text-xs text-muted-foreground">{div.leadCount} lead{div.leadCount !== 1 ? 's' : ''}</span>
+                      ) : (
+                        <span className="text-xs text-muted-foreground">
+                          {div.paymentCount ?? 0} payment{(div.paymentCount ?? 0) !== 1 ? 's' : ''}
+                        </span>
+                      )}
                       <span className={`text-xs ${div.netProfit >= 0 ? 'text-emerald-600' : 'text-red-600'}`}>
                         {div.netProfit >= 0 ? 'Profitable' : 'Loss'}
                       </span>
@@ -163,45 +169,53 @@ export function RelationshipsOverviewClient({
           )}
         </div>
 
-        {/* Recent Leads */}
+        {/* Top 3 Profitable Clients */}
         <div className="rounded-xl border bg-card overflow-hidden">
           <div className="px-5 py-3.5 border-b bg-muted/30 flex items-center justify-between">
-            <h3 className="text-sm font-semibold">Recent Leads</h3>
-            <Link href="/relationships/leads" className="text-xs text-muted-foreground hover:text-foreground transition-colors flex items-center gap-1">
+            <h3 className="text-sm font-semibold">Top Profitable Clients</h3>
+            <Link href="/relationships/clients" className="text-xs text-muted-foreground hover:text-foreground transition-colors flex items-center gap-1">
               View all <ArrowUpRight className="h-3 w-3" />
             </Link>
           </div>
-          {recentLeads.length === 0 ? (
-            <div className="px-5 py-8 text-center text-sm text-muted-foreground">No leads yet.</div>
+          {topClients.length === 0 ? (
+            <div className="px-5 py-8 text-center text-sm text-muted-foreground">No client activity yet.</div>
           ) : (
             <div className="divide-y">
-              {recentLeads.map((lead) => (
-                <Link
-                  key={lead.id}
-                  href={`/relationships/leads/${lead.id}`}
-                  className="px-5 py-3 flex items-center justify-between hover:bg-muted/20 transition-colors group"
-                >
-                  <div className="flex items-center gap-3 min-w-0">
-                    <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-md bg-muted">
-                      <MessageSquare className="h-3.5 w-3.5 text-muted-foreground" />
-                    </div>
-                    <div className="min-w-0">
-                      <p className="text-sm font-medium truncate group-hover:underline">{lead.name || lead.email || 'Unknown'}</p>
-                      <div className="flex items-center gap-2 mt-0.5">
-                        <span className="text-xs text-muted-foreground">{fmtDate(lead.createdAt)}</span>
-                        {lead.divisionName && (
-                          <span className="text-[11px] text-muted-foreground">· {lead.divisionName}</span>
-                        )}
+              {topClients.map((client, index) => {
+                const displayName = client.businessName || client.name
+                const rankColors = [
+                  'bg-amber-500/10 text-amber-600', // Gold for 1st
+                  'bg-zinc-400/10 text-zinc-600',   // Silver for 2nd
+                  'bg-orange-600/10 text-orange-600' // Bronze for 3rd
+                ]
+                const rankColor = rankColors[index] || 'bg-muted text-muted-foreground'
+                
+                return (
+                  <Link
+                    key={client.id}
+                    href={`/relationships/clients/${client.id}`}
+                    className="px-5 py-3 flex items-center justify-between hover:bg-muted/20 transition-colors group"
+                  >
+                    <div className="flex items-center gap-3 min-w-0">
+                      <div className={`flex h-7 w-7 shrink-0 items-center justify-center rounded-md font-bold text-xs ${rankColor}`}>
+                        {index + 1}
+                      </div>
+                      <div className="min-w-0">
+                        <p className="text-sm font-medium truncate group-hover:underline">{displayName}</p>
+                        <p className="text-xs text-muted-foreground mt-0.5">
+                          Invoiced: {formatZAR(client.totalInvoiced)}
+                        </p>
                       </div>
                     </div>
-                  </div>
-                  <span className={`inline-flex items-center rounded-full px-1.5 py-0.5 text-[10px] font-medium shrink-0 ${
-                    LEAD_STATUS_STYLES[lead.status] || 'bg-zinc-500/10 text-zinc-600'
-                  }`}>
-                    {lead.status}
-                  </span>
-                </Link>
-              ))}
+                    <div className="text-right shrink-0 ml-4">
+                      <p className="text-sm font-semibold tabular-nums text-emerald-600">
+                        {formatZAR(client.totalPaid)}
+                      </p>
+                      <p className="text-[10px] text-muted-foreground">Total Paid</p>
+                    </div>
+                  </Link>
+                )
+              })}
             </div>
           )}
         </div>
