@@ -1,11 +1,12 @@
 import type { Metadata } from 'next'
-import Link from 'next/link'
-import { ChevronLeft, Shield, LogOut, KeyRound, Activity } from 'lucide-react'
+import { Shield, LogOut, KeyRound } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card'
 import { Separator } from '@/components/ui/separator'
 import { Field, FieldLabel } from '@/components/ui/field'
+import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert'
+import { SettingsPageHeader } from '@/components/settings/settings-page-header'
+import { SettingsSection } from '@/components/settings/settings-section'
 import {
   Table,
   TableBody,
@@ -32,37 +33,22 @@ const auditLog = [
 export default function SecuritySettingsPage() {
   return (
     <div className="flex flex-col gap-6">
-      {/* Page header */}
-      <div className="flex items-center gap-4">
-        <Button variant="ghost" size="sm" asChild>
-          <Link href="/settings">
-            <ChevronLeft className="size-4" />
-            Settings
-          </Link>
-        </Button>
-        <Separator orientation="vertical" className="h-5" />
-        <div className="flex items-center gap-2">
-          <Shield className="size-4 text-muted-foreground" />
-          <div>
-            <div className="flex items-center gap-2">
-              <h2 className="text-lg font-semibold">Security</h2>
-              <Badge variant="secondary" className="text-xs">Soon</Badge>
-            </div>
-            <p className="text-sm text-muted-foreground">Sessions, authentication, and audit log</p>
-          </div>
-        </div>
-      </div>
+      <SettingsPageHeader
+        title="Security"
+        description="Sessions, authentication, and audit log"
+        icon={Shield}
+        badge="Soon"
+      />
+      <Alert>
+        <Shield />
+        <AlertTitle>Security controls are read-only for now</AlertTitle>
+        <AlertDescription>
+          This page previews the controls that will live here. Nothing can be changed yet.
+        </AlertDescription>
+      </Alert>
 
       {/* Password */}
-      <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
-        <div className="lg:col-span-1">
-          <h3 className="text-sm font-semibold">Password</h3>
-          <p className="mt-1 text-sm text-muted-foreground">
-            Update your account password.
-          </p>
-        </div>
-        <Card className="lg:col-span-2">
-          <CardContent className="flex flex-col gap-4 pt-6">
+      <SettingsSection title="Password" description="Update your account password.">
             <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
               <Field className="sm:col-span-2">
                 <FieldLabel>Current Password</FieldLabel>
@@ -85,47 +71,36 @@ export default function SecuritySettingsPage() {
             </div>
             <div className="flex justify-end">
               <Button variant="outline" size="sm" disabled title="Coming soon">
-                <KeyRound className="size-4" />
+                <KeyRound data-icon="inline-start" />
                 Update Password
               </Button>
             </div>
-          </CardContent>
-        </Card>
-      </div>
+      </SettingsSection>
 
       <Separator />
 
       {/* Two-factor auth */}
-      <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
-        <div className="lg:col-span-1">
-          <h3 className="text-sm font-semibold">Two-Factor Authentication</h3>
-          <p className="mt-1 text-sm text-muted-foreground">
-            Add an extra layer of security to your account.
-          </p>
-        </div>
-        <Card className="lg:col-span-2">
-          <CardContent className="flex items-center justify-between gap-4 pt-6 pb-6">
+      <SettingsSection
+        title="Two-Factor Authentication"
+        description="Add an extra layer of security to your account."
+      >
+          <div className="flex items-center justify-between gap-4">
             <div className="flex flex-col gap-0.5">
               <span className="text-sm font-medium">Authenticator App</span>
               <span className="text-xs text-muted-foreground">Use an app like Google Authenticator or Authy</span>
             </div>
             <Button variant="outline" size="sm" disabled title="Coming soon">Enable 2FA</Button>
-          </CardContent>
-        </Card>
-      </div>
+          </div>
+      </SettingsSection>
 
       <Separator />
 
       {/* Active sessions */}
-      <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
-        <div className="lg:col-span-1">
-          <h3 className="text-sm font-semibold">Active Sessions</h3>
-          <p className="mt-1 text-sm text-muted-foreground">
-            Devices currently signed in to your account.
-          </p>
-        </div>
-        <Card className="lg:col-span-2">
-          <CardContent className="flex flex-col divide-y divide-border pt-2 pb-2">
+      <SettingsSection
+        title="Active Sessions"
+        description="Devices currently signed in to your account."
+      >
+          <div className="flex flex-col divide-y divide-border">
             {sessions.map((session) => (
               <div key={session.device} className="flex items-center justify-between gap-4 py-3">
                 <div className="flex flex-col gap-0.5">
@@ -141,49 +116,40 @@ export default function SecuritySettingsPage() {
                 </div>
                 {!session.current && (
                   <Button variant="ghost" size="sm" disabled title="Coming soon">
-                    <LogOut className="size-4" />
+                    <LogOut data-icon="inline-start" />
                     Revoke
                   </Button>
                 )}
               </div>
             ))}
-          </CardContent>
-        </Card>
-      </div>
+          </div>
+      </SettingsSection>
 
       <Separator />
 
       {/* Audit log */}
-      <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
-        <div className="lg:col-span-1">
-          <h3 className="text-sm font-semibold">Audit Log</h3>
-          <p className="mt-1 text-sm text-muted-foreground">
-            Recent actions taken in the system.
-          </p>
-        </div>
-        <div className="lg:col-span-2">
+      <SettingsSection title="Audit Log" description="Recent actions taken in the system.">
           <Table>
             <TableHeader>
               <TableRow>
-                <TableHead className="pl-4">Action</TableHead>
-                <TableHead>User</TableHead>
-                <TableHead>Time</TableHead>
-                <TableHead>IP</TableHead>
+                <TableHead className="py-4 pl-4">Action</TableHead>
+                <TableHead className="py-4">User</TableHead>
+                <TableHead className="py-4">Time</TableHead>
+                <TableHead className="py-4">IP</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
               {auditLog.map((entry, i) => (
                 <TableRow key={i}>
-                  <TableCell className="pl-4 text-sm font-medium">{entry.action}</TableCell>
-                  <TableCell className="text-sm text-muted-foreground">{entry.user}</TableCell>
-                  <TableCell className="text-sm text-muted-foreground">{entry.timestamp}</TableCell>
-                  <TableCell className="text-sm text-muted-foreground">{entry.ip}</TableCell>
+                  <TableCell className="py-4 pl-4 text-sm font-medium">{entry.action}</TableCell>
+                  <TableCell className="py-4 text-sm text-muted-foreground">{entry.user}</TableCell>
+                  <TableCell className="py-4 text-sm text-muted-foreground">{entry.timestamp}</TableCell>
+                  <TableCell className="py-4 text-sm text-muted-foreground">{entry.ip}</TableCell>
                 </TableRow>
               ))}
             </TableBody>
           </Table>
-        </div>
-      </div>
+      </SettingsSection>
     </div>
   )
 }

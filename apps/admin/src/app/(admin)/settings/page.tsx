@@ -19,6 +19,7 @@ const sections = [
     icon: Building2,
     title: 'Organisation',
     description: 'Company name, logo, address, and contact details',
+    status: 'Core company profile',
     badge: null,
   },
   {
@@ -26,6 +27,7 @@ const sections = [
     icon: Receipt,
     title: 'Billing & Invoicing',
     description: 'Invoice numbering, VAT rate, payment terms, and default notes',
+    status: 'Division defaults',
     badge: null,
   },
   {
@@ -33,6 +35,7 @@ const sections = [
     icon: Users,
     title: 'Users',
     description: 'Manage team members, roles, and send invitations',
+    status: 'Team access',
     badge: null,
   },
   {
@@ -40,6 +43,7 @@ const sections = [
     icon: Shield,
     title: 'Security',
     description: 'Session management, two-factor authentication, and audit log',
+    status: 'Read-only preview',
     badge: 'Soon',
   },
   {
@@ -47,6 +51,7 @@ const sections = [
     icon: Database,
     title: 'Data & Exports',
     description: 'Export financial data, manage backups, and data retention policies',
+    status: 'Read-only preview',
     badge: 'Soon',
   },
 ]
@@ -74,7 +79,7 @@ export default function SettingsPage() {
                 <div className="flex items-start justify-between gap-4">
                   <div className="flex items-start gap-3">
                     <div className="mt-0.5 flex size-9 shrink-0 items-center justify-center rounded-lg bg-muted">
-                      <section.icon className="size-4 text-muted-foreground" />
+                      <section.icon className="text-muted-foreground" />
                     </div>
                     <div className="flex flex-col gap-0.5">
                       <div className="flex items-center gap-2">
@@ -86,9 +91,10 @@ export default function SettingsPage() {
                         )}
                       </div>
                       <CardDescription>{section.description}</CardDescription>
+                      <p className="text-xs text-muted-foreground">{section.status}</p>
                     </div>
                   </div>
-                  <ChevronRight className="mt-1 size-4 shrink-0 text-muted-foreground" />
+                  <ChevronRight className="mt-1 shrink-0 text-muted-foreground" />
                 </div>
               </CardHeader>
             </Card>
