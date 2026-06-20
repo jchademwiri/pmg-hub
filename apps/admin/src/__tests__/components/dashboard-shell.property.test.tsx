@@ -83,6 +83,7 @@ const baseProps = {
   leads: [],
   monthlySeries: [],
   sparklineData: [],
+  agingReport: [],
   withdrawals: emptyWithdrawals,
   withdrawalsPrevMonth: emptyWithdrawals,
   withdrawalsYTD: emptyWithdrawals,
@@ -106,8 +107,8 @@ describe('Property 7: DashboardShell snapshot-conditional rendering', () => {
    * Validates: Requirements 8.3, 8.4
    *
    * For any boolean value of hasSnapshot:
-   * - When true:  "Month closed" badge is rendered, CloseMonthButton is NOT rendered
-   * - When false: CloseMonthButton IS rendered, "Month closed" badge is NOT rendered
+   * - When true:  period-specific closed badge is rendered, CloseMonthButton is NOT rendered
+   * - When false: CloseMonthButton IS rendered, closed badge is NOT rendered
    * - Never both simultaneously
    */
   it(
@@ -119,7 +120,7 @@ describe('Property 7: DashboardShell snapshot-conditional rendering', () => {
             <DashboardShell {...baseProps} hasSnapshot={hasSnapshot} />,
           )
 
-          const hasBadge = container.textContent?.includes('Month closed') ?? false
+          const hasBadge = container.textContent?.includes('January 2025 closed') ?? false
           const hasButton = container.querySelector('[data-testid="close-month-button"]') !== null
 
           unmount()
