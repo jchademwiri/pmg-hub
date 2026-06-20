@@ -149,6 +149,7 @@ export function DivisionAreaChart({ data }: Props) {
           <div className="flex flex-wrap items-center gap-1 bg-muted/50 p-0.5 rounded-lg border border-border/50 text-[10px] font-medium text-muted-foreground select-none">
             <button
               type="button"
+              aria-pressed={chartType === 'line'}
               onClick={() => setChartType('line')}
               className={`px-3 py-1 rounded-md transition-all cursor-pointer ${
                 chartType === 'line' ? 'bg-background text-foreground shadow-xs font-semibold' : 'hover:text-foreground'
@@ -158,6 +159,7 @@ export function DivisionAreaChart({ data }: Props) {
             </button>
             <button
               type="button"
+              aria-pressed={chartType === 'bar'}
               onClick={() => setChartType('bar')}
               className={`px-3 py-1 rounded-md transition-all cursor-pointer ${
                 chartType === 'bar' ? 'bg-background text-foreground shadow-xs font-semibold' : 'hover:text-foreground'
@@ -167,6 +169,7 @@ export function DivisionAreaChart({ data }: Props) {
             </button>
             <button
               type="button"
+              aria-pressed={chartType === 'both'}
               onClick={() => setChartType('both')}
               className={`px-3 py-1 rounded-md transition-all cursor-pointer ${
                 chartType === 'both' ? 'bg-background text-foreground shadow-xs font-semibold' : 'hover:text-foreground'
