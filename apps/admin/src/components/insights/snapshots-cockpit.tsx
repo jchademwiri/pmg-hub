@@ -55,6 +55,8 @@ type SnapshotView = {
   closedAt: Date
 }
 
+type AmountTone = "default" | "revenue" | "expense" | "positive" | "negative"
+
 const chartConfig = {
   revenue: { label: "Revenue", color: "var(--chart-1)" },
   expenses: { label: "Expenses", color: "var(--chart-expense)" },
@@ -63,6 +65,15 @@ const chartConfig = {
 
 function toMoney(value: string) {
   return Number(value) || 0
+}
+
+function amountToneClass(tone: AmountTone) {
+  return cn(
+    tone === "revenue" && "text-primary",
+    tone === "expense" && "text-destructive",
+    tone === "positive" && "text-primary",
+    tone === "negative" && "text-destructive",
+  )
 }
 
 export function SnapshotsCockpit({ snapshots }: SnapshotsCockpitProps) {
@@ -130,8 +141,18 @@ export function SnapshotsCockpit({ snapshots }: SnapshotsCockpitProps) {
     <div className="flex flex-col gap-5">
       <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
         <SummaryMetric label="Closed months" value={String(rows.length)} icon={CalendarCheck} />
-        <SummaryMetric label="Total revenue" value={formatZAR(totals.revenue)} icon={TrendingUp} />
-        <SummaryMetric label="Total expenses" value={formatZAR(totals.expenses)} icon={TrendingDown} />
+        <SummaryMetric
+          label="Total revenue"
+          value={formatZAR(totals.revenue)}
+          icon={TrendingUp}
+          tone="revenue"
+        />
+        <SummaryMetric
+          label="Total expenses"
+          value={formatZAR(totals.expenses)}
+          icon={TrendingDown}
+          tone="expense"
+        />
         <SummaryMetric
           label="Total profit/loss"
           value={formatZAR(totals.profitPool)}
@@ -233,9 +254,17 @@ export function SnapshotsCockpit({ snapshots }: SnapshotsCockpitProps) {
                       <TableCell>
                         <Badge variant="secondary">{row.status}</Badge>
                       </TableCell>
-                      <TableCell className="text-right tabular-nums">{formatZAR(row.revenue)}</TableCell>
-                      <TableCell className="text-right tabular-nums">{formatZAR(row.expenses)}</TableCell>
-                      <TableCell className="text-right tabular-nums">{formatZAR(row.profitPool)}</TableCell>
+                      <TableCell className="text-right tabular-nums">
+                        <span className={amountToneClass("revenue")}>{formatZAR(row.revenue)}</span>
+                      </TableCell>
+                      <TableCell className="text-right tabular-nums">
+                        <span className={amountToneClass("expense")}>{formatZAR(row.expenses)}</span>
+                      </TableCell>
+                      <TableCell className="text-right tabular-nums">
+                        <span className={amountToneClass(row.profitPool >= 0 ? "positive" : "negative")}>
+                          {formatZAR(row.profitPool)}
+                        </span>
+                      </TableCell>
                       <TableCell className="tabular-nums">{fmtDate(row.closedAt)}</TableCell>
                       <TableCell>
                         {row.notes ? (
@@ -267,7 +296,12 @@ export function SnapshotsCockpit({ snapshots }: SnapshotsCockpitProps) {
                     <span className="truncate font-medium">{row.periodLabel}</span>
                     <span className="text-xs text-muted-foreground">{fmtDate(row.closedAt)}</span>
                   </span>
-                  <span className="text-right text-sm font-semibold tabular-nums">
+                  <span
+                    className={cn(
+                      "text-right text-sm font-semibold tabular-nums",
+                      amountToneClass(row.profitPool >= 0 ? "positive" : "negative"),
+                    )}
+                  >
                     {formatZAR(row.profitPool)}
                   </span>
                 </Button>
@@ -291,7 +325,7 @@ function SummaryMetric({
   label: string
   value: string
   icon: React.ComponentType<{ className?: string }>
-  tone?: "default" | "positive" | "negative"
+  tone?: AmountTone
 }) {
   return (
     <Card>
@@ -301,7 +335,7 @@ function SummaryMetric({
           <CardTitle
             className={cn(
               "truncate text-xl tabular-nums",
-              tone === "negative" && "text-destructive",
+              amountToneClass(tone),
             )}
           >
             {value}
@@ -331,10 +365,14 @@ function SnapshotDetail({ snapshot }: { snapshot: SnapshotView }) {
       </CardHeader>
       <CardContent className="flex flex-col gap-4">
         <div className="grid grid-cols-2 gap-3">
-          <DetailMetric label="Revenue" value={snapshot.revenue} />
-          <DetailMetric label="Expenses" value={snapshot.expenses} />
-          <DetailMetric label="PMG Share" value={snapshot.pmgShare} />
-          <DetailMetric label={isProfitable ? "Profit Pool" : "Net Loss"} value={snapshot.profitPool} />
+          <DetailMetric label="Revenue" value={snapshot.revenue} tone="revenue" />
+          <DetailMetric label="Expenses" value={snapshot.expenses} tone="expense" />
+          <DetailMetric label="PMG Share" value={snapshot.pmgShare} tone="default" />
+          <DetailMetric
+            label={isProfitable ? "Profit Pool" : "Net Loss"}
+            value={snapshot.profitPool}
+            tone={isProfitable ? "positive" : "negative"}
+          />
         </div>
 
         <div className="rounded-md border border-border p-3">
@@ -365,15 +403,23 @@ function DetailMetric({
   label,
   value,
   compact = false,
+  tone = "default",
 }: {
   label: string
   value: number
   compact?: boolean
+  tone?: AmountTone
 }) {
   return (
     <div className="flex flex-col gap-1">
       <span className="text-xs text-muted-foreground">{label}</span>
-      <span className={cn("font-semibold tabular-nums", compact ? "text-sm" : "text-base")}>
+      <span
+        className={cn(
+          "font-semibold tabular-nums",
+          compact ? "text-sm" : "text-base",
+          amountToneClass(tone),
+        )}
+      >
         {formatZAR(value)}
       </span>
     </div>

@@ -49,6 +49,17 @@ interface CloseMonthWizardProps {
   }
 }
 
+type AmountTone = 'default' | 'revenue' | 'expense' | 'positive' | 'negative'
+
+function amountToneClass(tone: AmountTone) {
+  return cn(
+    tone === 'revenue' && 'text-primary',
+    tone === 'expense' && 'text-destructive',
+    tone === 'positive' && 'text-primary',
+    tone === 'negative' && 'text-destructive',
+  )
+}
+
 export function CloseMonthWizard({
   open,
   onOpenChange,
@@ -190,13 +201,13 @@ function ReviewFigures({
   return (
     <div className="flex flex-col gap-4">
       <div className="grid gap-3 sm:grid-cols-2">
-        <FigureTile label="Revenue" value={summary.revenue} />
-        <FigureTile label="Expenses" value={summary.expenses} />
+        <FigureTile label="Revenue" value={summary.revenue} tone="revenue" />
+        <FigureTile label="Expenses" value={summary.expenses} tone="expense" />
         <FigureTile label="PMG Share" value={summary.pmgShare} />
         <FigureTile
           label={isProfitable ? 'Profit Pool' : 'Net Loss'}
           value={summary.profitPool}
-          tone={isProfitable ? 'default' : 'negative'}
+          tone={isProfitable ? 'positive' : 'negative'}
         />
       </div>
 
@@ -314,7 +325,7 @@ function FigureTile({
 }: {
   label: string
   value: number
-  tone?: 'default' | 'negative'
+  tone?: AmountTone
   compact?: boolean
 }) {
   return (
@@ -324,7 +335,7 @@ function FigureTile({
         className={cn(
           'font-semibold tabular-nums',
           compact ? 'text-sm' : 'text-lg',
-          tone === 'negative' && 'text-destructive',
+          amountToneClass(tone),
         )}
       >
         {formatZAR(value)}
