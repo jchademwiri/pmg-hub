@@ -2,6 +2,7 @@
 
 import * as React from 'react';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import { Search, ArrowUpDown, ArrowUp, ArrowDown, Mail, FileText } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -27,6 +28,7 @@ type SortField = 'name' | 'totalOutstanding' | 'current' | 'bucket_1_14' | 'buck
 type SortOrder = 'asc' | 'desc';
 
 export function AgingReportClient({ clientAging, globalAging }: AgingReportClientProps) {
+  const router = useRouter();
   const [searchTerm, setSearchTerm] = React.useState('');
   const [sortField, setSortField] = React.useState<SortField>('totalOutstanding');
   const [sortOrder, setSortOrder] = React.useState<SortOrder>('desc');
@@ -253,11 +255,13 @@ export function AgingReportClient({ clientAging, globalAging }: AgingReportClien
                   {sortedClients.map((client) => {
                     const hasOverdue = client.bucket_1_14 > 0 || client.bucket_15_30 > 0 || client.bucket_31_60 > 0 || client.bucket_61_plus > 0;
                     return (
-                      <TableRow key={client.clientId}>
-                        <TableCell className="font-medium">
-                          <Link href={`/billing/statements/${client.clientId}`} className="hover:underline text-primary">
-                            {client.businessName || client.clientName}
-                          </Link>
+                      <TableRow
+                        key={client.clientId}
+                        className="cursor-pointer hover:bg-muted/50 transition-colors"
+                        onClick={() => router.push(`/billing/aging/${client.clientId}`)}
+                      >
+                        <TableCell className="font-medium text-primary hover:underline">
+                          {client.businessName || client.clientName}
                         </TableCell>
                         <TableCell className="text-right font-bold tabular-nums">
                           {formatZAR(client.totalOutstanding)}
@@ -277,7 +281,7 @@ export function AgingReportClient({ clientAging, globalAging }: AgingReportClien
                         <TableCell className="text-right tabular-nums text-red-600 font-semibold">
                           {client.bucket_61_plus > 0 ? formatZAR(client.bucket_61_plus) : '—'}
                         </TableCell>
-                        <TableCell>
+                        <TableCell onClick={(e) => e.stopPropagation()}>
                           <div className="flex items-center justify-center gap-2">
                             <Link href={`/billing/statements/${client.clientId}`}>
                               <Button size="icon" variant="ghost" className="size-8" title="View Statement">

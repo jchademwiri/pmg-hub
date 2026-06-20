@@ -1,0 +1,340 @@
+'use client';
+
+import * as React from 'react';
+import Link from 'next/link';
+import { Mail, FileText, ExternalLink, ArrowUpDown, ArrowUp, ArrowDown } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from '@/components/ui/table';
+import { formatZAR, fmtDate, getSASTParts } from '@/lib/format';
+import { SendOverdueRemindersButton } from '@/components/billing/send-overdue-reminders-button';
+import type { OutstandingInvoiceRow } from '@pmg/db';
+
+interface ClientAgingDetailClientProps {
+  client: {
+    id: string;
+    name: string;
+    businessName: string | null;
+    email: string | null;
+    phone: string | null;
+  };
+  invoices: OutstandingInvoiceRow[];
+  totalOutstanding: number;
+}
+
+type SortField = 'invoiceDate' | 'documentNumber' | 'dueDate' | 'daysPastDue' | 'total' | 'outstanding';
+type SortOrder = 'asc' | 'desc';
+
+export function ClientAgingDetailClient({ client, invoices, totalOutstanding }: ClientAgingDetailClientProps) {
+  const [sortField, setSortField] = React.useState<SortField>('daysPastDue');
+  const [sortOrder, setSortOrder] = React.useState<SortOrder>('desc');
+
+  const today = React.useMemo(() => {
+    const { year, month, day } = getSASTParts();
+    return new Date(year, month, day);
+  }, []);
+
+  const getDaysPastDue = React.useCallback((dueDateStr: string | null): number => {
+    if (!dueDateStr) return 0;
+    const dueDate = new Date(dueDateStr);
+    const due = new Date(dueDate.getFullYear(), dueDate.getMonth(), dueDate.getDate());
+    const tod = new Date(today.getFullYear(), today.getMonth(), today.getDate());
+    if (due >= tod) return 0;
+    const diffTime = tod.getTime() - due.getTime();
+    return Math.floor(diffTime / (1000 * 60 * 60 * 24));
+  }, [today]);
+
+  const invoiceData = React.useMemo(() => {
+    return invoices.map((inv) => {
+      const outstanding = Number(inv.total) - Number(inv.allocatedAmount);
+      const daysPastDue = getDaysPastDue(inv.dueDate);
+      return {
+        ...inv,
+        outstanding,
+        daysPastDue,
+      };
+    });
+  }, [invoices, getDaysPastDue]);
+
+  const { current, bucket_1_14, bucket_15_30, bucket_31_60, bucket_61_plus } = React.useMemo(() => {
+    let current = 0;
+    let bucket_1_14 = 0;
+    let bucket_15_30 = 0;
+    let bucket_31_60 = 0;
+    let bucket_61_plus = 0;
+
+    invoiceData.forEach((inv) => {
+      if (inv.daysPastDue <= 0) {
+        current += inv.outstanding;
+      } else if (inv.daysPastDue <= 14) {
+        bucket_1_14 += inv.outstanding;
+      } else if (inv.daysPastDue <= 30) {
+        bucket_15_30 += inv.outstanding;
+      } else if (inv.daysPastDue <= 60) {
+        bucket_31_60 += inv.outstanding;
+      } else {
+        bucket_61_plus += inv.outstanding;
+      }
+    });
+
+    return {
+      current,
+      bucket_1_14,
+      bucket_15_30,
+      bucket_31_60,
+      bucket_61_plus,
+    };
+  }, [invoiceData]);
+
+  const bucketColors: Record<string, string> = {
+    current: 'bg-emerald-500 dark:bg-emerald-600',
+    '1_14': 'bg-amber-400 dark:bg-amber-500',
+    '15_30': 'bg-orange-500 dark:bg-orange-600',
+    '31_60': 'bg-rose-500 dark:bg-rose-600',
+    '61_plus': 'bg-red-600 dark:bg-red-700',
+  };
+
+  const segments = React.useMemo(() => {
+    const buckets = [
+      { bucket: 'current', label: 'Current', total: current },
+      { bucket: '1_14', label: '1–14 Days', total: bucket_1_14 },
+      { bucket: '15_30', label: '15–30 Days', total: bucket_15_30 },
+      { bucket: '31_60', label: '31–60 Days', total: bucket_31_60 },
+      { bucket: '61_plus', label: '61+ Days', total: bucket_61_plus },
+    ];
+    return buckets.map((b) => ({
+      ...b,
+      percent: totalOutstanding > 0 ? (b.total / totalOutstanding) * 100 : 0,
+    }));
+  }, [current, bucket_1_14, bucket_15_30, bucket_31_60, bucket_61_plus, totalOutstanding]);
+
+  // Handle Sort
+  const handleSort = (field: SortField) => {
+    if (sortField === field) {
+      setSortOrder(sortOrder === 'asc' ? 'desc' : 'asc');
+    } else {
+      setSortField(field);
+      setSortOrder('desc');
+    }
+  };
+
+  // Sort Invoices
+  const sortedInvoices = React.useMemo(() => {
+    return [...invoiceData].sort((a, b) => {
+      let valA: any = '';
+      let valB: any = '';
+
+      if (sortField === 'documentNumber') {
+        valA = a.documentNumber.toLowerCase();
+        valB = b.documentNumber.toLowerCase();
+      } else {
+        valA = a[sortField];
+        valB = b[sortField];
+      }
+
+      if (valA < valB) return sortOrder === 'asc' ? -1 : 1;
+      if (valA > valB) return sortOrder === 'asc' ? 1 : -1;
+      return 0;
+    });
+  }, [invoiceData, sortField, sortOrder]);
+
+  const SortIcon = ({ field }: { field: SortField }) => {
+    if (sortField !== field) return <ArrowUpDown className="ml-1 size-3 text-muted-foreground/50 opacity-0 group-hover:opacity-100 transition-opacity" />;
+    return sortOrder === 'asc' ? (
+      <ArrowUp className="ml-1 size-3 text-foreground" />
+    ) : (
+      <ArrowDown className="ml-1 size-3 text-foreground" />
+    );
+  };
+
+  const overdueInvoices = invoiceData.filter(inv => inv.daysPastDue > 0);
+
+  return (
+    <div className="space-y-6">
+      {/* Client Aging Summary Row */}
+      <Card className="shadow-none">
+        <CardContent className="p-0">
+          <div className="overflow-x-auto">
+            <Table>
+              <TableHeader>
+                <TableRow className="hover:bg-transparent bg-muted/20">
+                  <TableHead className="text-center font-semibold h-10">Outstanding</TableHead>
+                  <TableHead className="text-center font-semibold h-10">Current</TableHead>
+                  <TableHead className="text-center font-semibold h-10">1–14 Days</TableHead>
+                  <TableHead className="text-center font-semibold h-10">15–30 Days</TableHead>
+                  <TableHead className="text-center font-semibold h-10">31–60 Days</TableHead>
+                  <TableHead className="text-center font-semibold h-10">61+ Days</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                <TableRow className="hover:bg-transparent text-center font-medium tabular-nums">
+                  <TableCell className="font-bold text-base h-12">{formatZAR(totalOutstanding)}</TableCell>
+                  <TableCell className="text-emerald-600 h-12">{current > 0 ? formatZAR(current) : '—'}</TableCell>
+                  <TableCell className="text-amber-600 h-12">{bucket_1_14 > 0 ? formatZAR(bucket_1_14) : '—'}</TableCell>
+                  <TableCell className="text-orange-600 h-12">{bucket_15_30 > 0 ? formatZAR(bucket_15_30) : '—'}</TableCell>
+                  <TableCell className="text-rose-600 h-12">{bucket_31_60 > 0 ? formatZAR(bucket_31_60) : '—'}</TableCell>
+                  <TableCell className="text-red-600 font-semibold h-12">{bucket_61_plus > 0 ? formatZAR(bucket_61_plus) : '—'}</TableCell>
+                </TableRow>
+              </TableBody>
+            </Table>
+          </div>
+          {totalOutstanding > 0 && (
+            <div className="h-1.5 w-full flex bg-muted overflow-hidden rounded-b-xl">
+              {segments.map((segment) => {
+                if (segment.percent === 0) return null;
+                return (
+                  <div
+                    key={segment.bucket}
+                    style={{ width: `${segment.percent}%` }}
+                    className={`${bucketColors[segment.bucket]} transition-all duration-300`}
+                    title={`${segment.label}: ${formatZAR(segment.total)} (${Math.round(segment.percent)}%)`}
+                  />
+                );
+              })}
+            </div>
+          )}
+        </CardContent>
+      </Card>
+
+      {/* Invoice Breakdown List */}
+      <Card className="shadow-none">
+        <CardHeader className="border-b px-5 py-4 flex flex-row items-center justify-between gap-3">
+          <CardTitle className="text-sm font-semibold">Unpaid Invoices</CardTitle>
+          <div className="flex items-center gap-2">
+            {overdueInvoices.length > 0 && (
+              <SendOverdueRemindersButton
+                clientId={client.id}
+                trigger={
+                  <Button variant="outline" size="sm" className="gap-1.5 text-xs text-red-600 border-red-200 hover:bg-red-50 hover:text-red-700">
+                    <Mail className="size-3.5" />
+                    Send Overdue Reminder
+                  </Button>
+                }
+              />
+            )}
+            <Link href={`/billing/statements/${client.id}`}>
+              <Button variant="outline" size="sm" className="gap-1.5 text-xs">
+                <FileText className="size-3.5" />
+                View Full Statement
+                <ExternalLink className="size-3" />
+              </Button>
+            </Link>
+          </div>
+        </CardHeader>
+        <CardContent className="p-0">
+          {sortedInvoices.length === 0 ? (
+            <div className="px-5 py-8 text-center text-sm text-muted-foreground">All caught up! No outstanding invoices found.</div>
+          ) : (
+            <div className="overflow-x-auto">
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>
+                      <button onClick={() => handleSort('invoiceDate')} className="group flex items-center hover:text-foreground font-semibold">
+                        Invoice Date
+                        <SortIcon field="invoiceDate" />
+                      </button>
+                    </TableHead>
+                    <TableHead>
+                      <button onClick={() => handleSort('documentNumber')} className="group flex items-center hover:text-foreground font-semibold">
+                        Invoice #
+                        <SortIcon field="documentNumber" />
+                      </button>
+                    </TableHead>
+                    <TableHead>Reference</TableHead>
+                    <TableHead>
+                      <button onClick={() => handleSort('dueDate')} className="group flex items-center hover:text-foreground font-semibold">
+                        Due Date
+                        <SortIcon field="dueDate" />
+                      </button>
+                    </TableHead>
+                    <TableHead className="text-center">
+                      <button onClick={() => handleSort('daysPastDue')} className="group mx-auto flex items-center hover:text-foreground font-semibold">
+                        Days Overdue
+                        <SortIcon field="daysPastDue" />
+                      </button>
+                    </TableHead>
+                    <TableHead className="text-right">
+                      <button onClick={() => handleSort('total')} className="group ml-auto flex items-center hover:text-foreground font-semibold">
+                        Total Amount
+                        <SortIcon field="total" />
+                      </button>
+                    </TableHead>
+                    <TableHead className="text-right">Paid</TableHead>
+                    <TableHead className="text-right">
+                      <button onClick={() => handleSort('outstanding')} className="group ml-auto flex items-center hover:text-foreground font-semibold">
+                        Unpaid Balance
+                        <SortIcon field="outstanding" />
+                      </button>
+                    </TableHead>
+                    <TableHead className="w-[80px] text-center">Actions</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {sortedInvoices.map((inv) => {
+                    const isOverdue = inv.daysPastDue > 0;
+                    const isCritical = inv.daysPastDue > 60;
+                    const isWarning = inv.daysPastDue > 30;
+
+                    return (
+                      <TableRow key={inv.id}>
+                        <TableCell className="tabular-nums">
+                          {fmtDate(inv.invoiceDate)}
+                        </TableCell>
+                        <TableCell className="font-mono text-[13px] font-medium text-primary hover:underline">
+                          <Link href={`/billing/invoices/${inv.id}`}>
+                            {inv.documentNumber}
+                          </Link>
+                        </TableCell>
+                        <TableCell className="max-w-[150px] truncate text-muted-foreground">
+                          {inv.reference || '—'}
+                        </TableCell>
+                        <TableCell className="tabular-nums">
+                          {fmtDate(inv.dueDate)}
+                        </TableCell>
+                        <TableCell className="text-center font-semibold tabular-nums">
+                          {isOverdue ? (
+                            <span className={isCritical ? 'text-red-600 font-bold' : isWarning ? 'text-rose-500' : 'text-amber-500'}>
+                              {inv.daysPastDue} days
+                            </span>
+                          ) : (
+                            <span className="text-emerald-600 font-normal">Current</span>
+                          )}
+                        </TableCell>
+                        <TableCell className="text-right tabular-nums">
+                          {formatZAR(Number(inv.total))}
+                        </TableCell>
+                        <TableCell className="text-right tabular-nums text-emerald-600">
+                          {Number(inv.allocatedAmount) > 0 ? formatZAR(Number(inv.allocatedAmount)) : '—'}
+                        </TableCell>
+                        <TableCell className="text-right tabular-nums font-bold text-red-600">
+                          {formatZAR(inv.outstanding)}
+                        </TableCell>
+                        <TableCell>
+                          <div className="flex items-center justify-center">
+                            <Link href={`/billing/invoices/${inv.id}`}>
+                              <Button size="icon" variant="ghost" className="size-8" title="View Invoice Detail">
+                                <FileText className="size-4 text-muted-foreground" />
+                              </Button>
+                            </Link>
+                          </div>
+                        </TableCell>
+                      </TableRow>
+                    );
+                  })}
+                </TableBody>
+              </Table>
+            </div>
+          )}
+        </CardContent>
+      </Card>
+    </div>
+  );
+}

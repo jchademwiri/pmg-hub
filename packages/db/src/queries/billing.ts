@@ -1383,4 +1383,40 @@ export async function getClientAgingReport(filters?: { year?: number }): Promise
   }));
 }
 
+export interface OutstandingInvoiceRow {
+  id: string;
+  documentNumber: string;
+  reference: string | null;
+  invoiceDate: string;
+  dueDate: string | null;
+  status: string;
+  total: string;
+  allocatedAmount: string;
+}
+
+export async function getClientOutstandingInvoices(clientId: string): Promise<OutstandingInvoiceRow[]> {
+  const data = await db
+    .select({
+      id: invoices.id,
+      documentNumber: invoices.documentNumber,
+      reference: invoices.reference,
+      invoiceDate: sql<string>`${invoices.invoiceDate}::text`,
+      dueDate: sql<string | null>`${invoices.dueDate}::text`,
+      status: invoices.status,
+      total: invoices.total,
+      allocatedAmount: sql<string>`COALESCE((SELECT SUM(amount) FROM payment_allocations WHERE invoice_id = ${invoices.id}), 0)::text`,
+    })
+    .from(invoices)
+    .where(
+      and(
+        eq(invoices.clientId, clientId),
+        inArray(invoices.status, ['issued', 'overdue', 'partially_paid'])
+      )
+    )
+    .orderBy(desc(invoices.invoiceDate));
+
+  return data as OutstandingInvoiceRow[];
+}
+
+
 
