@@ -44,8 +44,7 @@ export async function exportFinancialsCsv(
   }
 }
 
-import { generateText } from 'ai'
-import { openai } from '@ai-sdk/openai'
+import { gateway, generateText } from 'ai'
 import { formatZAR } from '@/lib/format'
 
 export type CommentaryResult = {
@@ -120,7 +119,7 @@ export async function generateCommentaryAction(
   momData: CommentaryInput[],
   context: CommentaryContext = {},
 ): Promise<CommentaryResult> {
-  const apiKey = process.env.OPENAI_API_KEY
+  const apiKey = process.env.AI_GATEWAY_API_KEY
   const rows = getVarianceRows(momData)
 
   if (!apiKey) {
@@ -143,7 +142,7 @@ Requirements:
 - Write one professional paragraph with no markdown bullets or greeting.`
 
     const { text } = await generateText({
-      model: openai('gpt-4o-mini'),
+      model: gateway('openai/gpt-4o-mini'),
       system: 'You are a careful financial controller. Ground every statement in the provided figures and avoid unsupported causal claims.',
       prompt,
       temperature: 0.2,
@@ -151,8 +150,8 @@ Requirements:
 
     return { text, isAi: true }
   } catch (err) {
-    console.error('AI commentary generation failed:', err)
-    return { text: 'AI generation failed. Please check your API configuration.', isAi: false }
+    console.error('AI Gateway commentary generation failed:', err)
+    return { text: 'AI Gateway generation failed. Please check your AI_GATEWAY_API_KEY configuration.', isAi: false }
   }
 }
 
