@@ -36,30 +36,32 @@ export async function getTotalExpenses(): Promise<number> {
   return Number(result[0]!.total);
 }
 
-export async function getRevenueByDivision(): Promise<{ divisionName: string; total: number }[]> {
-  const result: { divisionName: string; total: string }[] = await db
+export async function getRevenueByDivision(): Promise<{ divisionId: string; divisionName: string; total: number }[]> {
+  const result: { divisionId: string; divisionName: string; total: string }[] = await db
     .select({
+      divisionId: divisions.id,
       divisionName: divisions.name,
       total: sql<string>`COALESCE(SUM(${income.amount}), '0')`,
     })
     .from(income)
     .innerJoin(divisions, eq(income.divisionId, divisions.id))
-    .groupBy(divisions.name)
+    .groupBy(divisions.id, divisions.name)
     .orderBy(desc(sql`SUM(${income.amount})`));
-  return result.map((row) => ({ divisionName: row.divisionName, total: Number(row.total) }));
+  return result.map((row) => ({ divisionId: row.divisionId, divisionName: row.divisionName, total: Number(row.total) }));
 }
 
-export async function getExpensesByDivision(): Promise<{ divisionName: string; total: number }[]> {
-  const result: { divisionName: string; total: string }[] = await db
+export async function getExpensesByDivision(): Promise<{ divisionId: string; divisionName: string; total: number }[]> {
+  const result: { divisionId: string; divisionName: string; total: string }[] = await db
     .select({
+      divisionId: divisions.id,
       divisionName: divisions.name,
       total: sql<string>`COALESCE(SUM(${expenses.amount}), '0')`,
     })
     .from(expenses)
     .innerJoin(divisions, eq(expenses.divisionId, divisions.id))
-    .groupBy(divisions.name)
+    .groupBy(divisions.id, divisions.name)
     .orderBy(desc(sql`SUM(${expenses.amount})`));
-  return result.map((row) => ({ divisionName: row.divisionName, total: Number(row.total) }));
+  return result.map((row) => ({ divisionId: row.divisionId, divisionName: row.divisionName, total: Number(row.total) }));
 }
 
 export async function getMonthlyRevenueByDivision(

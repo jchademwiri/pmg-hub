@@ -286,7 +286,7 @@ function resendKeyHint(divisionName: string) {
   return 'PMG_RESEND_API_KEY';
 }
 
-export async function getPendingRemindersAction(): Promise<{
+export async function getPendingRemindersAction(filters?: { clientId?: string; divisionId?: string }): Promise<{
   success: boolean;
   data: PendingReminderClient[];
   error?: string;
@@ -296,7 +296,7 @@ export async function getPendingRemindersAction(): Promise<{
     const forbidden = roleError(session);
     if (forbidden) return { success: false, data: [], error: forbidden };
 
-    return { success: true, data: await getPendingReminderClients() };
+    return { success: true, data: await getPendingReminderClients(filters?.clientId, filters?.divisionId) };
   } catch (err) {
     const message = err instanceof Error ? err.message : String(err);
     return { success: false, data: [], error: message };

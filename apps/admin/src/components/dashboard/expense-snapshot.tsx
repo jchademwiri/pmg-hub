@@ -1,8 +1,9 @@
+import Link from 'next/link'
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card'
 import { formatZAR } from '@/lib/format'
 
 type ExpenseSnapshotProps = {
-  expensesByDivision: { divisionName: string; total: number }[]
+  expensesByDivision: { divisionId?: string; divisionName: string; total: number }[]
   totalExpenses: number
 }
 
@@ -59,19 +60,24 @@ export function ExpenseSnapshot({ expensesByDivision, totalExpenses }: ExpenseSn
                 DIVISION_COLORS[div.divisionName] ?? DEFAULT_COLORS[i % DEFAULT_COLORS.length]
 
               return (
-                <div
+                <Link
                   key={div.divisionName}
-                  className="rounded-lg bg-muted/30 border border-border/50 p-3"
+                  href={div.divisionId ? `/finance/expenses?divisionId=${div.divisionId}` : '#'}
+                  className="block group"
                 >
-                  <div className="flex items-center gap-1.5 mb-1">
-                    <span className={`inline-block h-2 w-2 rounded-full ${colorClass}`} />
-                    <span className="text-xs text-muted-foreground truncate">{div.divisionName}</span>
+                  <div
+                    className="rounded-lg bg-muted/30 border border-border/50 p-3 transition-all duration-200 group-hover:scale-[1.01] group-hover:bg-muted/50 group-hover:border-primary/20 group-hover:shadow-sm"
+                  >
+                    <div className="flex items-center gap-1.5 mb-1">
+                      <span className={`inline-block h-2 w-2 rounded-full ${colorClass}`} />
+                      <span className="text-xs text-muted-foreground truncate group-hover:text-primary transition-colors">{div.divisionName}</span>
+                    </div>
+                    <p className="text-red-600 text-base font-semibold tabular-nums">
+                      {formatZAR(div.total)}
+                    </p>
+                    <p className="text-muted-foreground/60 text-xs">{pct}% of total</p>
                   </div>
-                  <p className="text-red-600 text-base font-semibold tabular-nums">
-                    {formatZAR(div.total)}
-                  </p>
-                  <p className="text-muted-foreground/60 text-xs">{pct}% of total</p>
-                </div>
+                </Link>
               )
             })}
           </div>

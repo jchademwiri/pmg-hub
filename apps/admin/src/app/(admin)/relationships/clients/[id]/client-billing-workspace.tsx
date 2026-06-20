@@ -274,6 +274,51 @@ export function ClientBillingWorkspace({
     .filter((inv) => inv.status !== 'paid' && (!inv.dueDate || inv.dueDate >= todayStrWS))
     .reduce((sum, inv) => sum + (Number(inv.total) - Number(inv.allocatedAmount ?? 0)), 0);
 
+  // Client specific aging buckets calculation
+  const agingBuckets = React.useMemo(() => {
+    let current = 0;
+    let bucket_1_14 = 0;
+    let bucket_15_30 = 0;
+    let bucket_31_60 = 0;
+    let bucket_61_plus = 0;
+
+    const todayVal = new Date(todayStrWS);
+    const getDaysPastDue = (dueDateStr: string | null): number => {
+      if (!dueDateStr) return 0;
+      const dueDate = new Date(`${dueDateStr}T00:00:00`);
+      const due = new Date(dueDate.getFullYear(), dueDate.getMonth(), dueDate.getDate());
+      const tod = new Date(todayVal.getFullYear(), todayVal.getMonth(), todayVal.getDate());
+      if (due >= tod) return 0;
+      const diffTime = tod.getTime() - due.getTime();
+      return Math.floor(diffTime / (1000 * 60 * 60 * 24));
+    };
+
+    activeInvoicesWS.forEach((inv) => {
+      if (inv.status === 'paid') return;
+      const outstanding = Number(inv.total) - Number(inv.allocatedAmount ?? 0);
+      const daysPastDue = getDaysPastDue(inv.dueDate);
+      if (daysPastDue <= 0) {
+        current += outstanding;
+      } else if (daysPastDue <= 14) {
+        bucket_1_14 += outstanding;
+      } else if (daysPastDue <= 30) {
+        bucket_15_30 += outstanding;
+      } else if (daysPastDue <= 60) {
+        bucket_31_60 += outstanding;
+      } else {
+        bucket_61_plus += outstanding;
+      }
+    });
+
+    return {
+      current,
+      bucket_1_14,
+      bucket_15_30,
+      bucket_31_60,
+      bucket_61_plus,
+    };
+  }, [activeInvoicesWS, todayStrWS]);
+
   const healthWS = calculateClientHealth(invoices, outstandingBalanceWS + overdueBalanceWS, overdueBalanceWS);
   const avgDaysToPayWS = calculateAverageDaysToPay(invoices);
   const sortedPaymentsWS = [...(payments?.data ?? [])].sort((a: any, b: any) =>
@@ -965,6 +1010,7 @@ export function ClientBillingWorkspace({
         avgDaysToPay={avgDaysToPayWS}
         lastPaymentDate={lastPaymentWS?.date ?? null}
         lastPaymentAmount={lastPaymentWS ? Number(lastPaymentWS.amount) : null}
+        agingBuckets={agingBuckets}
         onFilterChange={(filter) => {
           setMetricFilter(filter);
           setSelectedInvoiceIds(new Set());

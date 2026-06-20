@@ -145,16 +145,13 @@ export function SendOverdueRemindersButton({ clientId, trigger }: { clientId?: s
     setPreviewHtml('');
     setPreviewError(null);
     try {
-      const result = await getPendingRemindersAction();
+      const result = await getPendingRemindersAction(clientId ? { clientId } : undefined);
       if (!result.success) {
         toast.error(result.error ?? 'Failed to load overdue reminders.');
         return;
       }
 
-      let data = result.data;
-      if (clientId) {
-        data = data.filter((item) => item.clientId === clientId);
-      }
+      const data = result.data;
       setItems(data);
       setActiveKey(data[0]?.reminderKey ?? null);
       setSelected(

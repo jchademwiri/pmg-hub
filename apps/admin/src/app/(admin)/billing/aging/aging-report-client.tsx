@@ -34,6 +34,13 @@ export function AgingReportClient({ clientAging, globalAging }: AgingReportClien
   const [sortOrder, setSortOrder] = React.useState<SortOrder>('desc');
   const [activeBucket, setActiveBucket] = React.useState<string | null>(null);
 
+  React.useEffect(() => {
+    const filter = new URLSearchParams(window.location.search).get('filter');
+    if (filter) {
+      setActiveBucket(filter);
+    }
+  }, []);
+
   // Totals
   const totalAR = React.useMemo(() => clientAging.reduce((s, c) => s + c.totalOutstanding, 0), [clientAging]);
   const totalCurrent = React.useMemo(() => globalAging.find(b => b.bucket === 'current')?.total ?? 0, [globalAging]);
@@ -295,8 +302,16 @@ export function AgingReportClient({ clientAging, globalAging }: AgingReportClien
                     return (
                       <TableRow
                         key={client.clientId}
-                        className="cursor-pointer hover:bg-muted/50 transition-colors"
+                        className="cursor-pointer hover:bg-muted/50 transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
                         onClick={() => router.push(`/billing/aging/${client.clientId}`)}
+                        tabIndex={0}
+                        role="button"
+                        onKeyDown={(e) => {
+                          if (e.key === 'Enter' || e.key === ' ') {
+                            e.preventDefault();
+                            router.push(`/billing/aging/${client.clientId}`);
+                          }
+                        }}
                       >
                         <TableCell className="font-medium text-primary hover:underline">
                           {client.businessName || client.clientName}
@@ -321,11 +336,11 @@ export function AgingReportClient({ clientAging, globalAging }: AgingReportClien
                         </TableCell>
                         <TableCell onClick={(e) => e.stopPropagation()}>
                           <div className="flex items-center justify-center gap-2">
-                            <Link href={`/billing/statements/${client.clientId}`}>
-                              <Button size="icon" variant="ghost" className="size-8" title="View Statement">
+                            <Button asChild size="icon" variant="ghost" className="size-8" title="View Statement">
+                              <Link href={`/billing/statements/${client.clientId}`}>
                                 <FileText className="size-4 text-muted-foreground" />
-                              </Button>
-                            </Link>
+                              </Link>
+                            </Button>
                             {hasOverdue ? (
                               <SendOverdueRemindersButton
                                 clientId={client.clientId}

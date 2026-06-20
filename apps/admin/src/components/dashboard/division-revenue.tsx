@@ -1,3 +1,4 @@
+import Link from 'next/link'
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card'
 import { ScrollArea } from '@/components/ui/scroll-area'
 import { formatZAR } from '@/lib/format'
@@ -62,10 +63,14 @@ export function DivisionRevenue({ divisions, divisionExpenseMap }: DivisionReven
               const isProfit = div.net >= 0
 
               return (
-                <div key={div.divisionName} className="space-y-1.5 transition-transform duration-200 hover:translate-x-0.5">
+                <Link
+                  key={div.divisionName}
+                  href={div.divisionId ? `/billing/invoices?divisionId=${div.divisionId}` : '#'}
+                  className="block space-y-1.5 transition-all duration-200 hover:translate-x-0.5 group"
+                >
                   {/* Header row */}
                   <div className="flex items-center justify-between">
-                    <span className="text-card-foreground text-sm font-medium">{div.divisionName}</span>
+                    <span className="text-card-foreground text-sm font-medium group-hover:text-primary transition-colors">{div.divisionName}</span>
                     <span
                       className={`text-xs font-semibold tabular-nums ${
                         isProfit ? 'text-emerald-600' : 'text-red-600'
@@ -100,7 +105,7 @@ export function DivisionRevenue({ divisions, divisionExpenseMap }: DivisionReven
                       </span>
                     </div>
                   </div>
-                </div>
+                </Link>
               )
             })}
           </div>

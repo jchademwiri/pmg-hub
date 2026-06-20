@@ -1410,7 +1410,9 @@ export async function getClientOutstandingInvoices(clientId: string): Promise<Ou
     .where(
       and(
         eq(invoices.clientId, clientId),
-        inArray(invoices.status, ['issued', 'overdue', 'partially_paid'])
+        inArray(invoices.status, ['issued', 'overdue', 'partially_paid']),
+        sql`${invoices.dueDate} IS NOT NULL`,
+        sql`${invoices.invoiceDate} <= timezone('Africa/Johannesburg', now())::date`
       )
     )
     .orderBy(desc(invoices.invoiceDate));

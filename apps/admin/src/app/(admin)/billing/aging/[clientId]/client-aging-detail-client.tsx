@@ -44,7 +44,7 @@ export function ClientAgingDetailClient({ client, invoices, totalOutstanding }: 
 
   const getDaysPastDue = React.useCallback((dueDateStr: string | null): number => {
     if (!dueDateStr) return 0;
-    const dueDate = new Date(dueDateStr);
+    const dueDate = new Date(`${dueDateStr}T00:00:00`);
     const due = new Date(dueDate.getFullYear(), dueDate.getMonth(), dueDate.getDate());
     const tod = new Date(today.getFullYear(), today.getMonth(), today.getDate());
     if (due >= tod) return 0;
@@ -307,13 +307,13 @@ export function ClientAgingDetailClient({ client, invoices, totalOutstanding }: 
                 }
               />
             )}
-            <Link href={`/billing/statements/${client.id}`}>
-              <Button variant="outline" size="sm" className="gap-1.5 text-xs">
+            <Button asChild variant="outline" size="sm" className="gap-1.5 text-xs">
+              <Link href={`/billing/statements/${client.id}`}>
                 <FileText className="size-3.5" />
                 View Full Statement
                 <ExternalLink className="size-3" />
-              </Button>
-            </Link>
+              </Link>
+            </Button>
           </div>
         </CardHeader>
         <CardContent className="p-0">
@@ -407,11 +407,11 @@ export function ClientAgingDetailClient({ client, invoices, totalOutstanding }: 
                         </TableCell>
                         <TableCell>
                           <div className="flex items-center justify-center">
-                            <Link href={`/billing/invoices/${inv.id}`}>
-                              <Button size="icon" variant="ghost" className="size-8" title="View Invoice Detail">
+                            <Button asChild size="icon" variant="ghost" className="size-8" title="View Invoice Detail">
+                              <Link href={`/billing/invoices/${inv.id}`}>
                                 <FileText className="size-4 text-muted-foreground" />
-                              </Button>
-                            </Link>
+                              </Link>
+                            </Button>
                           </div>
                         </TableCell>
                       </TableRow>
