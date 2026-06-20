@@ -53,9 +53,9 @@ type AmountTone = 'default' | 'revenue' | 'expense' | 'positive' | 'negative' | 
 
 function amountToneClass(tone: AmountTone) {
   return cn(
-    tone === 'revenue' && 'text-primary',
+    tone === 'revenue' && 'text-emerald-600',
     tone === 'expense' && 'text-destructive',
-    tone === 'positive' && 'text-primary',
+    tone === 'positive' && 'text-emerald-600',
     tone === 'negative' && 'text-destructive',
     tone === 'share' && 'text-[color:var(--chart-3)]',
     tone === 'allocation' && 'text-[color:var(--chart-4)]',
