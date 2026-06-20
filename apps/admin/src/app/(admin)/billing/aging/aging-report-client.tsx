@@ -37,6 +37,10 @@ export function AgingReportClient({ clientAging, globalAging }: AgingReportClien
   const [sortOrder, setSortOrder] = React.useState<SortOrder>('desc');
   const [activeBucket, setActiveBucket] = React.useState<string | null>(filterParam);
 
+  React.useEffect(() => {
+    setActiveBucket(filterParam);
+  }, [filterParam]);
+
 
   // Totals
   const totalAR = React.useMemo(() => clientAging.reduce((s, c) => s + c.totalOutstanding, 0), [clientAging]);

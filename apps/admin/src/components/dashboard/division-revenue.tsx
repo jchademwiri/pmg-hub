@@ -66,7 +66,7 @@ export function DivisionRevenue({ divisions, divisionExpenseMap }: DivisionReven
                 <>
                   {/* Header row */}
                   <div className="flex items-center justify-between">
-                    <span className="text-card-foreground text-sm font-medium group-hover:text-primary transition-colors">
+                    <span className="text-card-foreground text-sm font-medium group-hover/row:text-primary transition-colors">
                       {div.divisionName}
                     </span>
                     <span
@@ -111,7 +111,7 @@ export function DivisionRevenue({ divisions, divisionExpenseMap }: DivisionReven
                   <Link
                     key={div.divisionName}
                     href={`/billing/invoices?divisionId=${div.divisionId}`}
-                    className="block space-y-1.5 transition-all duration-200 hover:translate-x-0.5 group"
+                    className="block space-y-1.5 transition-all duration-200 hover:translate-x-0.5 group/row"
                   >
                     {content}
                   </Link>
