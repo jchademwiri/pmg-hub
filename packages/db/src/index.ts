@@ -31,8 +31,9 @@ export type {
   DivisionBillingSettings,
   AgingBucket,
   AgingRow,
+  ClientAgingRow,
 } from './queries/billing';
-export { getActiveItems, getUnlinkedIncomeForClient, getStatementYears, getAgingReport } from './queries/billing';
+export { getActiveItems, getUnlinkedIncomeForClient, getStatementYears, getAgingReport, getClientAgingReport } from './queries/billing';
 
 // ── Distribution Settings ──────────────────────────────────────────────────────
 export { getActiveRates, getActiveRateForKey, getCurrentRates, getAllDistributionSettings } from './queries/distribution-settings';

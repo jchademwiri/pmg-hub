@@ -154,7 +154,7 @@ export function BillingOverviewClient({
         <div className="rounded-xl border bg-card overflow-hidden">
           <div className="px-5 py-3.5 border-b bg-muted/30 flex items-center justify-between">
             <h3 className="text-sm font-semibold">Aging Report</h3>
-            <Link href="/billing/accounts" className="text-xs text-muted-foreground hover:text-foreground transition-colors flex items-center gap-1">
+            <Link href="/billing/aging" className="text-xs text-muted-foreground hover:text-foreground transition-colors flex items-center gap-1">
               View all <ArrowUpRight className="h-3 w-3" />
             </Link>
           </div>

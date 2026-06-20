@@ -88,7 +88,7 @@ function StatusBadge({ status }: { status: SendStatus }) {
   return null;
 }
 
-export function SendOverdueRemindersButton() {
+export function SendOverdueRemindersButton({ clientId, trigger }: { clientId?: string; trigger?: React.ReactNode } = {}) {
   const [open, setOpen] = React.useState(false);
   const [isLoading, setIsLoading] = React.useState(false);
   const [isSending, setIsSending] = React.useState(false);
@@ -151,8 +151,12 @@ export function SendOverdueRemindersButton() {
         return;
       }
 
-      setItems(result.data);
-      setActiveKey(result.data[0]?.reminderKey ?? null);
+      let data = result.data;
+      if (clientId) {
+        data = data.filter((item) => item.clientId === clientId);
+      }
+      setItems(data);
+      setActiveKey(data[0]?.reminderKey ?? null);
       setSelected(
         Object.fromEntries(result.data.map((item) => [item.reminderKey, Boolean(item.email)])),
       );
@@ -338,10 +342,12 @@ export function SendOverdueRemindersButton() {
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
-        <Button variant="outline" size="sm">
-          <Mail data-icon="inline-start" />
-          Send Reminders
-        </Button>
+        {trigger ?? (
+          <Button variant="outline" size="sm">
+            <Mail data-icon="inline-start" />
+            Send Reminders
+          </Button>
+        )}
       </DialogTrigger>
       <DialogContent className="max-h-[94vh] w-[calc(100vw-2rem)] max-w-[1500px] overflow-hidden p-0">
         <DialogHeader className="border-b px-5 pt-5">
