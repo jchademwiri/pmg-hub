@@ -2,7 +2,7 @@
 
 import * as React from 'react';
 import Link from 'next/link';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { Search, ArrowUpDown, ArrowUp, ArrowDown, Mail, FileText } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -29,10 +29,14 @@ type SortOrder = 'asc' | 'desc';
 
 export function AgingReportClient({ clientAging, globalAging }: AgingReportClientProps) {
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const filterParam = searchParams.get('filter');
+  
   const [searchTerm, setSearchTerm] = React.useState('');
   const [sortField, setSortField] = React.useState<SortField>('totalOutstanding');
   const [sortOrder, setSortOrder] = React.useState<SortOrder>('desc');
-  const [activeBucket, setActiveBucket] = React.useState<string | null>(null);
+  const [activeBucket, setActiveBucket] = React.useState<string | null>(filterParam);
+
 
   // Totals
   const totalAR = React.useMemo(() => clientAging.reduce((s, c) => s + c.totalOutstanding, 0), [clientAging]);
@@ -295,8 +299,16 @@ export function AgingReportClient({ clientAging, globalAging }: AgingReportClien
                     return (
                       <TableRow
                         key={client.clientId}
-                        className="cursor-pointer hover:bg-muted/50 transition-colors"
+                        className="cursor-pointer hover:bg-muted/50 transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
                         onClick={() => router.push(`/billing/aging/${client.clientId}`)}
+                        tabIndex={0}
+                        role="button"
+                        onKeyDown={(e) => {
+                          if (e.key === 'Enter' || e.key === ' ') {
+                            e.preventDefault();
+                            router.push(`/billing/aging/${client.clientId}`);
+                          }
+                        }}
                       >
                         <TableCell className="font-medium text-primary hover:underline">
                           {client.businessName || client.clientName}
@@ -321,11 +333,11 @@ export function AgingReportClient({ clientAging, globalAging }: AgingReportClien
                         </TableCell>
                         <TableCell onClick={(e) => e.stopPropagation()}>
                           <div className="flex items-center justify-center gap-2">
-                            <Link href={`/billing/statements/${client.clientId}`}>
-                              <Button size="icon" variant="ghost" className="size-8" title="View Statement">
+                            <Button asChild size="icon" variant="ghost" className="size-8" title="View Statement">
+                              <Link href={`/billing/statements/${client.clientId}`}>
                                 <FileText className="size-4 text-muted-foreground" />
-                              </Button>
-                            </Link>
+                              </Link>
+                            </Button>
                             {hasOverdue ? (
                               <SendOverdueRemindersButton
                                 clientId={client.clientId}

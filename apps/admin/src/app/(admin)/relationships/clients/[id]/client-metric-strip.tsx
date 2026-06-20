@@ -17,6 +17,13 @@ interface ClientMetricStripProps {
   lastPaymentAmount: number | null;
   onFilterChange?: (filter: 'all' | 'paid' | 'outstanding' | 'overdue') => void;
   activeFilter?: 'all' | 'paid' | 'outstanding' | 'overdue';
+  agingBuckets?: {
+    current: number;
+    bucket_1_14: number;
+    bucket_15_30: number;
+    bucket_31_60: number;
+    bucket_61_plus: number;
+  };
 }
 
 export function ClientMetricStrip({
@@ -30,6 +37,7 @@ export function ClientMetricStrip({
   lastPaymentAmount,
   onFilterChange,
   activeFilter = 'all',
+  agingBuckets,
 }: ClientMetricStripProps) {
   const tiles = [
     {
@@ -121,6 +129,63 @@ export function ClientMetricStrip({
           </span>
         </span>
       </div>
+
+      {/* Visual Buckets Card if outstanding/overdue exists */}
+      {(outstandingBalance > 0 || overdueBalance > 0) && agingBuckets && (
+        <Card className="shadow-none bg-muted/20 border border-muted-foreground/10 p-3.5 mt-1.5 rounded-xl">
+          <div className="flex flex-col gap-2">
+            <div className="flex items-center justify-between">
+              <span className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider">
+                Accounts Receivable Ageing Breakdown
+              </span>
+            </div>
+            
+            {/* Visual proportions bar */}
+            <div className="h-1.5 w-full flex bg-muted rounded-full overflow-hidden">
+              {(() => {
+                const total = outstandingBalance + overdueBalance;
+                const segments = [
+                  { bucket: 'current', label: 'Current', total: agingBuckets.current, colorClass: 'bg-emerald-500' },
+                  { bucket: '1_14', label: '1–14 Days', total: agingBuckets.bucket_1_14, colorClass: 'bg-amber-400' },
+                  { bucket: '15_30', label: '15–30 Days', total: agingBuckets.bucket_15_30, colorClass: 'bg-orange-500' },
+                  { bucket: '31_60', label: '31–60 Days', total: agingBuckets.bucket_31_60, colorClass: 'bg-rose-500' },
+                  { bucket: '61_plus', label: '61+ Days', total: agingBuckets.bucket_61_plus, colorClass: 'bg-red-600' },
+                ];
+                return segments.map((seg) => {
+                  const percent = total > 0 ? (seg.total / total) * 100 : 0;
+                  if (percent === 0) return null;
+                  return (
+                    <div
+                      key={seg.bucket}
+                      style={{ width: `${percent}%` }}
+                      className={`${seg.colorClass} transition-all duration-300`}
+                      title={`${seg.label}: ${formatZAR(seg.total)} (${Math.round(percent)}%)`}
+                    />
+                  );
+                });
+              })()}
+            </div>
+
+            {/* Legend with values */}
+            <div className="grid grid-cols-2 sm:grid-cols-5 gap-2 pt-1 text-[11px]">
+              {[
+                { label: 'Current', total: agingBuckets.current, colorClass: 'text-emerald-600 font-semibold' },
+                { label: '1–14 Days', total: agingBuckets.bucket_1_14, colorClass: 'text-amber-600 font-semibold' },
+                { label: '15–30 Days', total: agingBuckets.bucket_15_30, colorClass: 'text-orange-600 font-semibold' },
+                { label: '31–60 Days', total: agingBuckets.bucket_31_60, colorClass: 'text-rose-600 font-semibold' },
+                { label: '61+ Days', total: agingBuckets.bucket_61_plus, colorClass: 'text-red-600 font-semibold' },
+              ].map((seg, idx) => (
+                <div key={idx} className="flex justify-between items-center sm:block">
+                  <span className="text-[10px] text-muted-foreground uppercase font-bold tracking-wider">{seg.label}</span>
+                  <p className={cn('tabular-nums sm:mt-0.5', seg.total > 0 ? seg.colorClass : 'text-muted-foreground/35')}>
+                    {seg.total > 0 ? formatZAR(seg.total) : '—'}
+                  </p>
+                </div>
+              ))}
+            </div>
+          </div>
+        </Card>
+      )}
     </div>
   );
 }

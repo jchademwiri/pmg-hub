@@ -293,7 +293,19 @@ export function JournalEntryForm({ accounts, createAction }: JournalEntryFormPro
       </div>
 
       {/* Balance indicator & submit */}
-      <div className="rounded-xl border bg-card p-5">
+      <div className="rounded-xl border bg-card p-5 space-y-4">
+        {!isBalanced && (totalDebits > 0 || totalCredits > 0) && (
+          <div className="bg-destructive/5 border border-destructive/20 text-destructive p-4 rounded-xl text-xs space-y-1 animate-in fade-in slide-in-from-top-1 duration-200">
+            <p className="font-semibold flex items-center gap-1.5">
+              <X className="h-3.5 w-3.5" /> Unbalanced Entry
+            </p>
+            <p className="opacity-90">
+              Debits and Credits must be equal to maintain a balanced double-entry ledger. Currently off by{' '}
+              <span className="font-bold">{formatZAR(difference)}</span>.
+            </p>
+          </div>
+        )}
+
         <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
           <div className="flex items-center gap-6 text-sm">
             <div>

@@ -1,6 +1,7 @@
 'use client';
 
 import React from 'react';
+import Link from 'next/link';
 import { Card, CardHeader, CardContent } from '@/components/ui/card';
 import { formatZAR } from '@/lib/format';
 import { ShieldCheck, Clock, AlertTriangle, AlertCircle, LucideIcon } from 'lucide-react';
@@ -73,30 +74,35 @@ export function AgingReportGrid({ data = [] }: AgingReportGridProps) {
           const hasTotal = r.total > 0;
 
           return (
-            <Card
+            <Link
+              href={`/billing/aging?filter=${r.bucket}`}
               key={r.bucket}
-              size="sm"
-              className={`rounded-xl border transition-all duration-200 hover:shadow-sm ${theme.borderClass} ${theme.bgClass} shadow-none`}
+              className="block group"
             >
-              <CardHeader className="pb-1.5 pt-4 px-4">
-                <div className="flex items-center justify-between">
-                  <span className={`text-[10px] font-bold uppercase tracking-wider ${theme.colorClass} opacity-85`}>
-                    {r.label}
-                  </span>
-                  <Icon className={`size-3.5 ${theme.colorClass}`} />
-                </div>
-              </CardHeader>
-              <CardContent className="pb-4 pt-1 px-4 space-y-1">
-                <p className={`text-2xl font-bold tabular-nums tracking-tight ${hasTotal ? theme.colorClass : 'text-muted-foreground/40'}`}>
-                  {formatZAR(r.total)}
-                </p>
-                <p className="text-xs text-muted-foreground">
-                  <span className={hasTotal ? 'font-medium text-foreground/75' : 'opacity-55'}>
-                    {r.count} {r.count === 1 ? 'invoice' : 'invoices'}
-                  </span>
-                </p>
-              </CardContent>
-            </Card>
+              <Card
+                size="sm"
+                className={`rounded-xl border transition-all duration-200 group-hover:scale-[1.01] group-hover:border-primary/20 group-hover:shadow-sm ${theme.borderClass} ${theme.bgClass} shadow-none cursor-pointer`}
+              >
+                <CardHeader className="pb-1.5 pt-4 px-4">
+                  <div className="flex items-center justify-between">
+                    <span className={`text-[10px] font-bold uppercase tracking-wider ${theme.colorClass} opacity-85 group-hover:underline`}>
+                      {r.label}
+                    </span>
+                    <Icon className={`size-3.5 ${theme.colorClass}`} />
+                  </div>
+                </CardHeader>
+                <CardContent className="pb-4 pt-1 px-4 space-y-1">
+                  <p className={`text-2xl font-bold tabular-nums tracking-tight ${hasTotal ? theme.colorClass : 'text-muted-foreground/40'}`}>
+                    {formatZAR(r.total)}
+                  </p>
+                  <p className="text-xs text-muted-foreground">
+                    <span className={hasTotal ? 'font-medium text-foreground/75' : 'opacity-55'}>
+                      {r.count} {r.count === 1 ? 'invoice' : 'invoices'}
+                    </span>
+                  </p>
+                </CardContent>
+              </Card>
+            </Link>
           );
         })}
       </div>

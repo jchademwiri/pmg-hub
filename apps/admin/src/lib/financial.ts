@@ -44,7 +44,7 @@ export type FinancialSummary = {
   revenue: number; expenses: number; pmgShare: number; profitPool: number;
   salary: number; reinvest: number; reserve: number; flex: number;
 }
-export type DivisionRevenue = { divisionName: string; total: number }
+export type DivisionRevenue = { divisionId?: string; divisionName: string; total: number }
 export type LeadStatusCount = { status: string; count: number }
 
 export type BucketBalances = {

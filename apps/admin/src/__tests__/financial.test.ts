@@ -266,6 +266,7 @@ describe('getDivisionRevenue', () => {
       fc.asyncProperty(
         fc.array(
           fc.record({
+            divisionId: fc.string(),
             divisionName: fc.string(),
             total: fc.double({ noNaN: true, noDefaultInfinity: true }),
           })

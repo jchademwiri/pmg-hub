@@ -167,7 +167,7 @@ describe('DivisionsTable', () => {
     // The Net Profit cell is the 4th <td> (index 3): Name, Income, Expenses, NetProfit
     const cells = screen.getAllByRole('cell')
     const netProfitCell = cells[3]
-    expect(netProfitCell.className).toContain('text-green-500')
+    expect(netProfitCell.className).toContain('text-emerald-600')
   })
 
   it('applies text-red-600 to Net Profit cell when netProfit < 0 - Validates: Requirements 1.3', () => {
@@ -192,7 +192,7 @@ describe('DivisionsTable', () => {
 
     const cells = screen.getAllByRole('cell')
     const netProfitCell = cells[3]
-    expect(netProfitCell.className).toContain('text-red-500')
+    expect(netProfitCell.className).toContain('text-red-600')
   })
 
   it('applies text-red-600 to Net Profit cell when netProfit === 0 - Validates: Requirements 1.3', () => {
@@ -217,7 +217,7 @@ describe('DivisionsTable', () => {
 
     const cells = screen.getAllByRole('cell')
     const netProfitCell = cells[3]
-    expect(netProfitCell.className).toContain('text-green-500')
+    expect(netProfitCell.className).toContain('text-emerald-600')
   })
 
   // ── Inline rename state ─────────────────────────────────────────────────────
