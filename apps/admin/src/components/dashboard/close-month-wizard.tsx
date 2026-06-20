@@ -92,6 +92,8 @@ export function CloseMonthWizard({
       const result = await runPreCloseChecks(period)
       setChecks(result)
       setStep(1)
+    } catch {
+      toast.error('Unable to run pre-close checks. Please try again.')
     } finally {
       setChecksLoading(false)
     }
