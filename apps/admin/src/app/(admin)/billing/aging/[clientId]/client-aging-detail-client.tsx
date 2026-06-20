@@ -35,6 +35,7 @@ type SortOrder = 'asc' | 'desc';
 export function ClientAgingDetailClient({ client, invoices, totalOutstanding }: ClientAgingDetailClientProps) {
   const [sortField, setSortField] = React.useState<SortField>('daysPastDue');
   const [sortOrder, setSortOrder] = React.useState<SortOrder>('desc');
+  const [activeBucket, setActiveBucket] = React.useState<string | null>(null);
 
   const today = React.useMemo(() => {
     const { year, month, day } = getSASTParts();
@@ -125,9 +126,22 @@ export function ClientAgingDetailClient({ client, invoices, totalOutstanding }: 
     }
   };
 
+  // Filter Invoices by Active Bucket
+  const filteredInvoices = React.useMemo(() => {
+    return invoiceData.filter((inv) => {
+      if (!activeBucket) return true;
+      if (activeBucket === 'current') return inv.daysPastDue <= 0;
+      if (activeBucket === '1_14') return inv.daysPastDue >= 1 && inv.daysPastDue <= 14;
+      if (activeBucket === '15_30') return inv.daysPastDue >= 15 && inv.daysPastDue <= 30;
+      if (activeBucket === '31_60') return inv.daysPastDue >= 31 && inv.daysPastDue <= 60;
+      if (activeBucket === '61_plus') return inv.daysPastDue >= 61;
+      return true;
+    });
+  }, [invoiceData, activeBucket]);
+
   // Sort Invoices
   const sortedInvoices = React.useMemo(() => {
-    return [...invoiceData].sort((a, b) => {
+    return [...filteredInvoices].sort((a, b) => {
       let valA: any = '';
       let valB: any = '';
 
@@ -143,7 +157,7 @@ export function ClientAgingDetailClient({ client, invoices, totalOutstanding }: 
       if (valA > valB) return sortOrder === 'asc' ? 1 : -1;
       return 0;
     });
-  }, [invoiceData, sortField, sortOrder]);
+  }, [filteredInvoices, sortField, sortOrder]);
 
   const SortIcon = ({ field }: { field: SortField }) => {
     if (sortField !== field) return <ArrowUpDown className="ml-1 size-3 text-muted-foreground/50 opacity-0 group-hover:opacity-100 transition-opacity" />;
@@ -164,23 +178,83 @@ export function ClientAgingDetailClient({ client, invoices, totalOutstanding }: 
           <div className="overflow-x-auto">
             <Table>
               <TableHeader>
-                <TableRow className="hover:bg-transparent bg-muted/20">
-                  <TableHead className="text-center font-semibold h-10">Outstanding</TableHead>
-                  <TableHead className="text-center font-semibold h-10">Current</TableHead>
-                  <TableHead className="text-center font-semibold h-10">1–14 Days</TableHead>
-                  <TableHead className="text-center font-semibold h-10">15–30 Days</TableHead>
-                  <TableHead className="text-center font-semibold h-10">31–60 Days</TableHead>
-                  <TableHead className="text-center font-semibold h-10">61+ Days</TableHead>
+                <TableRow className="hover:bg-transparent bg-muted/20 select-none">
+                  <TableHead
+                    onClick={() => setActiveBucket(null)}
+                    className="text-center font-semibold h-10 cursor-pointer hover:text-foreground transition-colors"
+                  >
+                    Outstanding
+                  </TableHead>
+                  <TableHead
+                    onClick={() => setActiveBucket(activeBucket === 'current' ? null : 'current')}
+                    className={`text-center font-semibold h-10 cursor-pointer transition-colors ${activeBucket === 'current' ? 'text-foreground font-bold bg-muted/30' : 'hover:text-foreground'}`}
+                  >
+                    Current
+                  </TableHead>
+                  <TableHead
+                    onClick={() => setActiveBucket(activeBucket === '1_14' ? null : '1_14')}
+                    className={`text-center font-semibold h-10 cursor-pointer transition-colors ${activeBucket === '1_14' ? 'text-foreground font-bold bg-muted/30' : 'hover:text-foreground'}`}
+                  >
+                    1–14 Days
+                  </TableHead>
+                  <TableHead
+                    onClick={() => setActiveBucket(activeBucket === '15_30' ? null : '15_30')}
+                    className={`text-center font-semibold h-10 cursor-pointer transition-colors ${activeBucket === '15_30' ? 'text-foreground font-bold bg-muted/30' : 'hover:text-foreground'}`}
+                  >
+                    15–30 Days
+                  </TableHead>
+                  <TableHead
+                    onClick={() => setActiveBucket(activeBucket === '31_60' ? null : '31_60')}
+                    className={`text-center font-semibold h-10 cursor-pointer transition-colors ${activeBucket === '31_60' ? 'text-foreground font-bold bg-muted/30' : 'hover:text-foreground'}`}
+                  >
+                    31–60 Days
+                  </TableHead>
+                  <TableHead
+                    onClick={() => setActiveBucket(activeBucket === '61_plus' ? null : '61_plus')}
+                    className={`text-center font-semibold h-10 cursor-pointer transition-colors ${activeBucket === '61_plus' ? 'text-foreground font-bold bg-muted/30' : 'hover:text-foreground'}`}
+                  >
+                    61+ Days
+                  </TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
-                <TableRow className="hover:bg-transparent text-center font-medium tabular-nums">
-                  <TableCell className="font-bold text-base h-12">{formatZAR(totalOutstanding)}</TableCell>
-                  <TableCell className="text-emerald-600 h-12">{current > 0 ? formatZAR(current) : '—'}</TableCell>
-                  <TableCell className="text-amber-600 h-12">{bucket_1_14 > 0 ? formatZAR(bucket_1_14) : '—'}</TableCell>
-                  <TableCell className="text-orange-600 h-12">{bucket_15_30 > 0 ? formatZAR(bucket_15_30) : '—'}</TableCell>
-                  <TableCell className="text-rose-600 h-12">{bucket_31_60 > 0 ? formatZAR(bucket_31_60) : '—'}</TableCell>
-                  <TableCell className="text-red-600 font-semibold h-12">{bucket_61_plus > 0 ? formatZAR(bucket_61_plus) : '—'}</TableCell>
+                <TableRow className="hover:bg-transparent text-center font-medium tabular-nums select-none">
+                  <TableCell
+                    onClick={() => setActiveBucket(null)}
+                    className={`font-bold text-base h-12 cursor-pointer transition-colors ${!activeBucket ? 'bg-muted/10' : 'opacity-50 hover:opacity-100'}`}
+                  >
+                    {formatZAR(totalOutstanding)}
+                  </TableCell>
+                  <TableCell
+                    onClick={() => setActiveBucket(activeBucket === 'current' ? null : 'current')}
+                    className={`text-emerald-600 h-12 cursor-pointer transition-colors ${activeBucket === 'current' ? 'bg-emerald-500/10 font-bold' : activeBucket ? 'opacity-50 hover:opacity-100' : ''}`}
+                  >
+                    {current > 0 ? formatZAR(current) : '—'}
+                  </TableCell>
+                  <TableCell
+                    onClick={() => setActiveBucket(activeBucket === '1_14' ? null : '1_14')}
+                    className={`text-amber-600 h-12 cursor-pointer transition-colors ${activeBucket === '1_14' ? 'bg-amber-500/10 font-bold' : activeBucket ? 'opacity-50 hover:opacity-100' : ''}`}
+                  >
+                    {bucket_1_14 > 0 ? formatZAR(bucket_1_14) : '—'}
+                  </TableCell>
+                  <TableCell
+                    onClick={() => setActiveBucket(activeBucket === '15_30' ? null : '15_30')}
+                    className={`text-orange-600 h-12 cursor-pointer transition-colors ${activeBucket === '15_30' ? 'bg-orange-500/10 font-bold' : activeBucket ? 'opacity-50 hover:opacity-100' : ''}`}
+                  >
+                    {bucket_15_30 > 0 ? formatZAR(bucket_15_30) : '—'}
+                  </TableCell>
+                  <TableCell
+                    onClick={() => setActiveBucket(activeBucket === '31_60' ? null : '31_60')}
+                    className={`text-rose-600 h-12 cursor-pointer transition-colors ${activeBucket === '31_60' ? 'bg-rose-500/10 font-bold' : activeBucket ? 'opacity-50 hover:opacity-100' : ''}`}
+                  >
+                    {bucket_31_60 > 0 ? formatZAR(bucket_31_60) : '—'}
+                  </TableCell>
+                  <TableCell
+                    onClick={() => setActiveBucket(activeBucket === '61_plus' ? null : '61_plus')}
+                    className={`text-red-600 font-semibold h-12 cursor-pointer transition-colors ${activeBucket === '61_plus' ? 'bg-red-500/10 font-bold' : activeBucket ? 'opacity-50 hover:opacity-100' : ''}`}
+                  >
+                    {bucket_61_plus > 0 ? formatZAR(bucket_61_plus) : '—'}
+                  </TableCell>
                 </TableRow>
               </TableBody>
             </Table>
@@ -206,7 +280,21 @@ export function ClientAgingDetailClient({ client, invoices, totalOutstanding }: 
       {/* Invoice Breakdown List */}
       <Card className="shadow-none">
         <CardHeader className="border-b px-5 py-4 flex flex-row items-center justify-between gap-3">
-          <CardTitle className="text-sm font-semibold">Unpaid Invoices</CardTitle>
+          <div className="flex items-center gap-2">
+            <CardTitle className="text-sm font-semibold">Unpaid Invoices</CardTitle>
+            {activeBucket && (
+              <span className="text-[11px] font-medium bg-muted text-muted-foreground px-2 py-0.5 rounded-full flex items-center gap-1 animate-in fade-in duration-200">
+                Filtered: {activeBucket === 'current' ? 'Current' : activeBucket === '1_14' ? '1–14 Days' : activeBucket === '15_30' ? '15–30 Days' : activeBucket === '31_60' ? '31–60 Days' : '61+ Days'}
+                <button
+                  onClick={() => setActiveBucket(null)}
+                  className="hover:text-foreground font-bold ml-1 text-sm leading-none"
+                  title="Clear Filter"
+                >
+                  &times;
+                </button>
+              </span>
+            )}
+          </div>
           <div className="flex items-center gap-2">
             {overdueInvoices.length > 0 && (
               <SendOverdueRemindersButton

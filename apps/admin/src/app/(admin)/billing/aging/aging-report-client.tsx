@@ -32,6 +32,7 @@ export function AgingReportClient({ clientAging, globalAging }: AgingReportClien
   const [searchTerm, setSearchTerm] = React.useState('');
   const [sortField, setSortField] = React.useState<SortField>('totalOutstanding');
   const [sortOrder, setSortOrder] = React.useState<SortOrder>('desc');
+  const [activeBucket, setActiveBucket] = React.useState<string | null>(null);
 
   // Totals
   const totalAR = React.useMemo(() => clientAging.reduce((s, c) => s + c.totalOutstanding, 0), [clientAging]);
@@ -54,9 +55,19 @@ export function AgingReportClient({ clientAging, globalAging }: AgingReportClien
       const nameMatch = (client.businessName ?? client.clientName)
         .toLowerCase()
         .includes(searchTerm.toLowerCase());
-      return nameMatch;
+      if (!nameMatch) return false;
+
+      if (activeBucket) {
+        if (activeBucket === 'current') return client.current > 0;
+        if (activeBucket === '1_14') return client.bucket_1_14 > 0;
+        if (activeBucket === '15_30') return client.bucket_15_30 > 0;
+        if (activeBucket === '31_60') return client.bucket_31_60 > 0;
+        if (activeBucket === '61_plus') return client.bucket_61_plus > 0;
+      }
+
+      return true;
     });
-  }, [clientAging, searchTerm]);
+  }, [clientAging, searchTerm, activeBucket]);
 
   // Sort Clients
   const sortedClients = React.useMemo(() => {
@@ -165,18 +176,31 @@ export function AgingReportClient({ clientAging, globalAging }: AgingReportClien
 
             {/* Legend */}
             <div className="grid grid-cols-2 sm:grid-cols-5 gap-3 pt-1">
-              {segments.map((segment) => (
-                <div key={segment.bucket} className={`rounded-xl border px-3 py-2 text-left ${bucketBorderColors[segment.bucket]} border`}>
-                  <div className="flex items-center gap-1.5">
-                    <div className={`size-2.5 rounded-full ${bucketColors[segment.bucket]} shrink-0`} />
-                    <span className="text-[10px] font-bold uppercase tracking-wider">
-                      {segment.label}
-                    </span>
-                  </div>
-                  <p className="text-sm font-bold tabular-nums mt-1">{formatZAR(segment.total)}</p>
-                  <p className="text-[10px] opacity-80 mt-0.5">{Math.round(segment.percent)}% of total</p>
-                </div>
-              ))}
+              {segments.map((segment) => {
+                const isActive = activeBucket === segment.bucket;
+                const isAnyActive = activeBucket !== null;
+                const opacityClass = isAnyActive && !isActive ? 'opacity-40 hover:opacity-75' : 'opacity-100';
+                const borderClass = isActive
+                  ? 'ring-2 ring-primary ring-offset-2 scale-[1.02] shadow-sm'
+                  : 'hover:scale-[1.01]';
+                
+                return (
+                  <button
+                    key={segment.bucket}
+                    onClick={() => setActiveBucket(isActive ? null : segment.bucket)}
+                    className={`rounded-xl border px-3 py-2 text-left transition-all duration-200 cursor-pointer ${bucketBorderColors[segment.bucket]} ${borderClass} ${opacityClass}`}
+                  >
+                    <div className="flex items-center gap-1.5">
+                      <div className={`size-2.5 rounded-full ${bucketColors[segment.bucket]} shrink-0`} />
+                      <span className="text-[10px] font-bold uppercase tracking-wider">
+                        {segment.label}
+                      </span>
+                    </div>
+                    <p className="text-sm font-bold tabular-nums mt-1">{formatZAR(segment.total)}</p>
+                    <p className="text-[10px] opacity-80 mt-0.5">{Math.round(segment.percent)}% of total</p>
+                  </button>
+                );
+              })}
             </div>
           </div>
         ) : (
@@ -187,7 +211,21 @@ export function AgingReportClient({ clientAging, globalAging }: AgingReportClien
       {/* Client Table Section */}
       <Card className="shadow-none">
         <CardHeader className="border-b px-5 py-4 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
-          <CardTitle className="text-sm font-semibold">Client Aging Breakdown</CardTitle>
+          <div className="flex items-center gap-2">
+            <CardTitle className="text-sm font-semibold">Client Aging Breakdown</CardTitle>
+            {activeBucket && (
+              <span className="text-[11px] font-medium bg-muted text-muted-foreground px-2 py-0.5 rounded-full flex items-center gap-1 animate-in fade-in duration-200">
+                Filtered: {segments.find(s => s.bucket === activeBucket)?.label}
+                <button
+                  onClick={() => setActiveBucket(null)}
+                  className="hover:text-foreground font-bold ml-1 text-sm leading-none"
+                  title="Clear Filter"
+                >
+                  &times;
+                </button>
+              </span>
+            )}
+          </div>
           <div className="relative w-full sm:w-72">
             <Search className="pointer-events-none absolute top-1/2 left-2.5 size-4 -translate-y-1/2 text-muted-foreground" />
             <Input
