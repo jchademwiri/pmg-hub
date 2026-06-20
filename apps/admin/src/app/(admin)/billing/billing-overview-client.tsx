@@ -73,7 +73,6 @@ export function BillingOverviewClient({
   recentInvoices,
 }: BillingOverviewClientProps) {
   const outstanding = invoiceSummary.outstanding
-  const totalInvoiced = invoiceSummary.sum
   const ytdTotalInvoiced = ytdInvoiced.sum
   const ytdOutstanding = ytdInvoiced.outstanding
   const ytdInvoiceCount = ytdInvoiced.total
