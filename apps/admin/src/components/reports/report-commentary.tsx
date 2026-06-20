@@ -5,21 +5,32 @@ import type { MoMSnapshot } from '@/lib/financial'
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card'
 import { Info, Sparkles, Loader2 } from 'lucide-react'
 import { generateCommentaryAction } from '@/app/actions/reports'
-import { cn } from '@/lib/utils'
 
 interface ReportCommentaryProps {
   momData: MoMSnapshot[]
+  currentMonthLabel: string
+  previousMonthLabel: string
 }
 
-export function ReportCommentary({ momData }: ReportCommentaryProps) {
-  const [loading, setLoading] = useState(true)
+export function ReportCommentary({
+  momData,
+  currentMonthLabel,
+  previousMonthLabel,
+}: ReportCommentaryProps) {
+  const [loading, setLoading] = useState(momData.length > 0)
   const [commentary, setCommentary] = useState<string | null>(null)
   const [isAi, setIsAi] = useState(false)
 
   useEffect(() => {
     let active = true
-    setLoading(true)
-    generateCommentaryAction(momData)
+
+    if (momData.length === 0) {
+      return () => {
+        active = false
+      }
+    }
+
+    generateCommentaryAction(momData, { currentMonthLabel, previousMonthLabel })
       .then((res) => {
         if (active) {
           setCommentary(res.text)
@@ -41,7 +52,7 @@ export function ReportCommentary({ momData }: ReportCommentaryProps) {
     return () => {
       active = false
     }
-  }, [momData])
+  }, [currentMonthLabel, momData, previousMonthLabel])
 
   if (momData.length === 0) return null
 

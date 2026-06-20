@@ -44,8 +44,7 @@ export async function exportFinancialsCsv(
   }
 }
 
-import { generateText } from 'ai'
-import { openai } from '@ai-sdk/openai'
+import { gateway, generateText } from 'ai'
 import { formatZAR } from '@/lib/format'
 
 export type CommentaryResult = {
@@ -53,64 +52,106 @@ export type CommentaryResult = {
   isAi: boolean
 }
 
+type CommentaryInput = { metric: string; current: number; previous: number }
+
+type CommentaryContext = {
+  currentMonthLabel?: string
+  previousMonthLabel?: string
+}
+
+type VarianceRow = CommentaryInput & {
+  diff: number
+  pct: number | null
+  direction: 'up' | 'down' | 'flat'
+  percentText: string
+}
+
+function getVarianceRows(momData: CommentaryInput[]): VarianceRow[] {
+  return momData.map((item) => {
+    const diff = item.current - item.previous
+    const direction = Math.abs(diff) < 0.01 ? 'flat' : diff > 0 ? 'up' : 'down'
+    const pct = item.previous !== 0 ? (diff / Math.abs(item.previous)) * 100 : null
+    const percentText = pct === null
+      ? item.current === 0 ? '0.0%' : 'not comparable from a zero base'
+      : `${diff >= 0 ? '+' : ''}${pct.toFixed(1)}%`
+
+    return { ...item, diff, pct, direction, percentText }
+  })
+}
+
+function signedCurrency(value: number): string {
+  if (Math.abs(value) < 0.01) return formatZAR(0)
+  return `${value > 0 ? '+' : '-'}${formatZAR(Math.abs(value))}`
+}
+
+function findMetric(rows: VarianceRow[], metric: string): VarianceRow | undefined {
+  return rows.find((row) => row.metric === metric)
+}
+
+function buildFallbackCommentary(
+  rows: VarianceRow[],
+  context: CommentaryContext,
+): string {
+  const revenue = findMetric(rows, 'Revenue')
+  const expenses = findMetric(rows, 'Expenses')
+  const profitPool = findMetric(rows, 'Profit Pool')
+
+  if (!revenue || !expenses || !profitPool) {
+    return 'No sufficient data to generate commentary.'
+  }
+
+  const currentLabel = context.currentMonthLabel ?? 'the current period'
+  const previousLabel = context.previousMonthLabel ?? 'the previous period'
+  const revenuePhrase = revenue.direction === 'flat'
+    ? 'was flat'
+    : revenue.direction === 'up' ? 'increased' : 'decreased'
+  const expensePhrase = expenses.direction === 'flat'
+    ? 'were flat'
+    : expenses.direction === 'up' ? 'increased' : 'decreased'
+  const profitPhrase = profitPool.direction === 'flat'
+    ? 'held steady'
+    : profitPool.direction === 'up' ? 'improved' : 'weakened'
+
+  return `${currentLabel} revenue was ${formatZAR(revenue.current)}, ${revenuePhrase} by ${signedCurrency(revenue.diff)} (${revenue.percentText}) versus ${previousLabel}. Expenses were ${formatZAR(expenses.current)}, ${expensePhrase} by ${signedCurrency(expenses.diff)} (${expenses.percentText}). Profit/Loss ${profitPhrase} to ${formatZAR(profitPool.current)}, a ${signedCurrency(profitPool.diff)} (${profitPool.percentText}) movement from ${formatZAR(profitPool.previous)}.`
+}
+
 export async function generateCommentaryAction(
-  momData: { metric: string; current: number; previous: number }[]
+  momData: CommentaryInput[],
+  context: CommentaryContext = {},
 ): Promise<CommentaryResult> {
-  const apiKey = process.env.OPENAI_API_KEY
+  const apiKey = process.env.AI_GATEWAY_API_KEY
+  const rows = getVarianceRows(momData)
 
   if (!apiKey) {
-    const revItem = momData.find((d) => d.metric === 'Revenue')
-    const expItem = momData.find((d) => d.metric === 'Expenses')
-    const poolItem = momData.find((d) => d.metric === 'Profit Pool')
-
-    if (!revItem || !expItem || !poolItem) {
-      return { text: 'No sufficient data to generate commentary.', isAi: false }
-    }
-
-    const getDetails = (item: typeof revItem) => {
-      const diff = item.current - item.previous
-      const pct = item.previous !== 0 ? (diff / item.previous) * 100 : 0
-      const isUp = diff > 0
-      const isFlat = Math.abs(diff) < 0.01
-      return { diff, pct, isUp, isFlat }
-    }
-
-    const rev = getDetails(revItem)
-    const exp = getDetails(expItem)
-    const pool = getDetails(poolItem)
-
-    const text = `Gross Revenue is ${formatZAR(revItem.current)} this period, representing a ${
-      rev.isFlat ? 'flat performance' : rev.isUp ? 'growth' : 'contraction'
-    } of ${formatZAR(Math.abs(rev.diff))} (${rev.isUp ? '+' : ''}${rev.pct.toFixed(1)}%) against the previous period of ${formatZAR(
-      revItem.previous
-    )}. Operating expenses rose or fell to ${formatZAR(expItem.current)}. This is a spending ${
-      exp.isFlat ? 'change of 0%' : exp.isUp ? 'increase' : 'decrease'
-    } of ${formatZAR(Math.abs(exp.diff))} (${exp.isUp ? '+' : ''}${exp.pct.toFixed(1)}%) compared to the previous period's expense load of ${formatZAR(
-      expItem.previous
-    )}. The Net Profit Pool split is computed at ${formatZAR(poolItem.current)} yielding a net variance of ${formatZAR(
-      pool.diff
-    )} (${pool.isUp ? '+' : ''}${pool.pct.toFixed(1)}%) relative to last month's yield of ${formatZAR(
-      poolItem.previous
-    )}. ${pool.isUp ? 'Margin expansion driven by revenue outperformance.' : 'Profit contraction relative to previous period.'}`
-
-    return { text, isAi: false }
+    return { text: buildFallbackCommentary(rows, context), isAi: false }
   }
 
   try {
-    const prompt = `You are a professional financial controller. Analyze this Month-over-Month (MoM) financial data:
-${momData.map((d) => `- ${d.metric}: Current = ${formatZAR(d.current)}, Previous = ${formatZAR(d.previous)}`).join('\n')}
+    const currentLabel = context.currentMonthLabel ?? 'Current period'
+    const previousLabel = context.previousMonthLabel ?? 'Previous period'
+    const prompt = `Write executive commentary using only these actual Month-over-Month figures.
 
-Provide a concise, professional, and clear executive commentary analyzing the variances. Detail the absolute change and percentage change for Revenue, Expenses, and Profit Pool (Net Profit). Make it engaging, and keep it under 150 words. Do not use markdown bullet points, just provide a unified, professional paragraph. Do not start with generic greetings, just write the commentary.`
+Comparison: ${currentLabel} vs ${previousLabel}
+${rows.map((row) => `- ${row.metric}: ${currentLabel} = ${formatZAR(row.current)}; ${previousLabel} = ${formatZAR(row.previous)}; variance = ${signedCurrency(row.diff)}; percent variance = ${row.percentText}; direction = ${row.direction}.`).join('\n')}
+
+Requirements:
+- Use the exact supplied numbers and percentage variances.
+- Explain Revenue, Expenses, and Profit Pool / Profit-Loss.
+- Do not invent causes, clients, categories, or operational drivers not present in the figures.
+- Keep it under 150 words.
+- Write one professional paragraph with no markdown bullets or greeting.`
 
     const { text } = await generateText({
-      model: openai('gpt-4o-mini'),
+      model: gateway('openai/gpt-4o-mini'),
+      system: 'You are a careful financial controller. Ground every statement in the provided figures and avoid unsupported causal claims.',
       prompt,
+      temperature: 0.2,
     })
 
     return { text, isAi: true }
   } catch (err) {
-    console.error('AI commentary generation failed:', err)
-    return { text: 'AI generation failed. Please check your API configuration.', isAi: false }
+    console.error('AI Gateway commentary generation failed:', err)
+    return { text: 'AI Gateway generation failed. Please check your AI_GATEWAY_API_KEY configuration.', isAi: false }
   }
 }
 

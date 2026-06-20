@@ -4,6 +4,7 @@ import { useState } from 'react'
 import { Button } from '@/components/ui/button'
 import { CloseMonthWizard } from '@/components/dashboard/close-month-wizard'
 import { getPeriodSummary } from '@/app/actions/snapshots'
+import { fmtMonthYear } from '@/lib/format'
 import { Lock } from 'lucide-react'
 
 interface CloseMonthButtonProps {
@@ -16,6 +17,7 @@ export default function CloseMonthButton({ period }: CloseMonthButtonProps) {
     revenue: number; expenses: number; pmgShare: number; profitPool: number;
     salary: number; reinvest: number; reserve: number; flex: number;
   } | null>(null)
+  const periodLabel = fmtMonthYear(period)
 
   async function handleClick() {
     const result = await getPeriodSummary(period)
@@ -27,8 +29,8 @@ export default function CloseMonthButton({ period }: CloseMonthButtonProps) {
   return (
     <>
       <Button onClick={handleClick} variant="outline" size="sm" className="gap-1.5">
-        <Lock className="size-3.5" />
-        Close Month
+        <Lock data-icon="inline-start" />
+        Close {periodLabel}
       </Button>
       {summary && (
         <CloseMonthWizard
