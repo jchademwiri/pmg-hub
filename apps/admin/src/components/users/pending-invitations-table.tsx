@@ -112,8 +112,8 @@ export function PendingInvitationsTable({ pending }: { pending: PendingInvitatio
   }
 
   return (
-    <div className="space-y-4 mb-8">
-      <h2 className="text-lg font-semibold border-b pb-2">Pending Invitations</h2>
+    <div className="mb-8 flex flex-col gap-4">
+      <h2 className="border-b pb-2 text-lg font-semibold">Pending Invitations</h2>
       <Table>
         <TableHeader>
           <TableRow>

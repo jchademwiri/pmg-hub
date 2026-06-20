@@ -1,12 +1,15 @@
 'use client';
 
-import { useRef, useTransition, useState } from 'react';
+import { useRef, useTransition, useState, type FormEvent } from 'react';
 import { toast } from 'sonner';
+import { AlertCircle } from 'lucide-react';
+
+import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Separator } from '@/components/ui/separator';
 import { Field, FieldLabel } from '@/components/ui/field';
+import { SettingsSection } from '@/components/settings/settings-section';
 import type { OrganisationSettings } from '@pmg/db';
 
 interface OrgSettingsFormProps {
@@ -18,8 +21,9 @@ export function OrgSettingsForm({ settings, saveAction }: OrgSettingsFormProps) 
   const formRef = useRef<HTMLFormElement>(null);
   const [isPending, startTransition] = useTransition();
   const [error, setError] = useState<string | null>(null);
+  const [isDirty, setIsDirty] = useState(false);
 
-  function handleSubmit(e: React.FormEvent) {
+  function handleSubmit(e: FormEvent) {
     e.preventDefault();
     setError(null);
     startTransition(async () => {
@@ -28,6 +32,7 @@ export function OrgSettingsForm({ settings, saveAction }: OrgSettingsFormProps) 
       if (result.error) {
         setError(result.error);
       } else {
+        setIsDirty(false);
         toast.success('Organisation settings saved.');
       }
     });
@@ -36,17 +41,17 @@ export function OrgSettingsForm({ settings, saveAction }: OrgSettingsFormProps) 
   const s = settings;
 
   return (
-    <form ref={formRef} onSubmit={handleSubmit} className="flex flex-col gap-6">
+    <form
+      ref={formRef}
+      onSubmit={handleSubmit}
+      onChange={() => setIsDirty(true)}
+      className="flex flex-col gap-6"
+    >
       {/* Company identity */}
-      <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
-        <div className="lg:col-span-1">
-          <h3 className="text-sm font-semibold">Company Identity</h3>
-          <p className="mt-1 text-sm text-muted-foreground">
-            Your registered company name and legal identifiers.
-          </p>
-        </div>
-        <Card className="lg:col-span-2">
-          <CardContent className="flex flex-col gap-4 pt-6">
+      <SettingsSection
+        title="Company Identity"
+        description="Your registered company name and legal identifiers."
+      >
             <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
               <Field className="sm:col-span-2">
                 <FieldLabel>Company Name</FieldLabel>
@@ -76,22 +81,15 @@ export function OrgSettingsForm({ settings, saveAction }: OrgSettingsFormProps) 
                 />
               </Field>
             </div>
-          </CardContent>
-        </Card>
-      </div>
+      </SettingsSection>
 
       <Separator />
 
       {/* Contact details */}
-      <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
-        <div className="lg:col-span-1">
-          <h3 className="text-sm font-semibold">Contact Details</h3>
-          <p className="mt-1 text-sm text-muted-foreground">
-            How clients can reach you. Appears in document footers.
-          </p>
-        </div>
-        <Card className="lg:col-span-2">
-          <CardContent className="flex flex-col gap-4 pt-6">
+      <SettingsSection
+        title="Contact Details"
+        description="How clients can reach you. Appears in document footers."
+      >
             <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
               <Field>
                 <FieldLabel>Email</FieldLabel>
@@ -122,22 +120,15 @@ export function OrgSettingsForm({ settings, saveAction }: OrgSettingsFormProps) 
                 />
               </Field>
             </div>
-          </CardContent>
-        </Card>
-      </div>
+      </SettingsSection>
 
       <Separator />
 
       {/* Address */}
-      <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
-        <div className="lg:col-span-1">
-          <h3 className="text-sm font-semibold">Address</h3>
-          <p className="mt-1 text-sm text-muted-foreground">
-            Physical or postal address printed on documents.
-          </p>
-        </div>
-        <Card className="lg:col-span-2">
-          <CardContent className="flex flex-col gap-4 pt-6">
+      <SettingsSection
+        title="Address"
+        description="Physical or postal address printed on documents."
+      >
             <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
               <Field className="sm:col-span-2">
                 <FieldLabel>Street Address</FieldLabel>
@@ -184,22 +175,15 @@ export function OrgSettingsForm({ settings, saveAction }: OrgSettingsFormProps) 
                 />
               </Field>
             </div>
-          </CardContent>
-        </Card>
-      </div>
+      </SettingsSection>
 
       <Separator />
 
       {/* Logo - upload deferred to v2 */}
-      <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
-        <div className="lg:col-span-1">
-          <h3 className="text-sm font-semibold">Logo</h3>
-          <p className="mt-1 text-sm text-muted-foreground">
-            Displayed on invoices, quotes, and statements.
-          </p>
-        </div>
-        <Card className="lg:col-span-2">
-          <CardContent className="flex flex-col gap-4 pt-6">
+      <SettingsSection
+        title="Logo"
+        description="Displayed on invoices, quotes, and statements."
+      >
             <div className="flex items-center gap-4">
               <div className="flex size-20 items-center justify-center rounded-lg border border-dashed border-border bg-muted/40 text-xs text-muted-foreground">
                 No logo
@@ -211,13 +195,20 @@ export function OrgSettingsForm({ settings, saveAction }: OrgSettingsFormProps) 
                 <p className="text-xs text-muted-foreground">PNG or SVG, max 2 MB - coming soon</p>
               </div>
             </div>
-          </CardContent>
-        </Card>
-      </div>
+      </SettingsSection>
 
       {/* Save */}
-      {error && <p className="text-sm text-destructive text-right">{error}</p>}
-      <div className="flex justify-end">
+      {error && (
+        <Alert variant="destructive">
+          <AlertCircle />
+          <AlertTitle>Could not save organisation settings</AlertTitle>
+          <AlertDescription>{error}</AlertDescription>
+        </Alert>
+      )}
+      <div className="sticky bottom-4 flex items-center justify-between gap-4 rounded-lg border bg-background/95 p-3 shadow-sm backdrop-blur">
+        <p className="text-sm text-muted-foreground">
+          {isDirty ? 'Unsaved changes' : 'All organisation changes are saved'}
+        </p>
         <Button type="submit" disabled={isPending}>
           {isPending ? 'Saving…' : 'Save Changes'}
         </Button>
