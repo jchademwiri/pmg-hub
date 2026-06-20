@@ -84,12 +84,19 @@ function CustomTooltip({
 export function DivisionAreaChart({ data }: Props) {
   const [chartType, setChartType] = useState<'line' | 'bar' | 'both'>('line')
 
+  const currentMonthStr = useMemo(() => {
+    const now = new Date()
+    return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`
+  }, [])
+
+  const elapsedData = useMemo(
+    () => data.filter((row) => row.month <= currentMonthStr),
+    [currentMonthStr, data],
+  )
+
   // Prepare chartData to keep all 12 months for X-Axis, but set future values to undefined
   // so Recharts does not draw lines or bars for them.
   const chartData = useMemo(() => {
-    const now = new Date()
-    const currentMonthStr = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`
-
     return data.map((row) => {
       const isFuture = row.month > currentMonthStr
       return {
@@ -99,11 +106,11 @@ export function DivisionAreaChart({ data }: Props) {
         expenses: isFuture ? undefined : row.expenses,
       }
     })
-  }, [data])
+  }, [currentMonthStr, data])
 
   const totals = useMemo(
     () =>
-      data.reduce(
+      elapsedData.reduce(
         (acc, row) => ({
           revenue: acc.revenue + row.revenue,
           invoiced: acc.invoiced + row.invoiced,
@@ -111,20 +118,17 @@ export function DivisionAreaChart({ data }: Props) {
         }),
         { revenue: 0, invoiced: 0, expenses: 0 },
       ),
-    [data],
+    [elapsedData],
   )
 
   const averages = useMemo(() => {
-    const now = new Date()
-    const currentMonthStr = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`
-    const elapsedMonths = data.filter((row) => row.month <= currentMonthStr)
-    const n = elapsedMonths.length || 1
+    const n = elapsedData.length || 1
     return {
-      revenue: elapsedMonths.reduce((sum, row) => sum + row.revenue, 0) / n,
-      invoiced: elapsedMonths.reduce((sum, row) => sum + row.invoiced, 0) / n,
-      expenses: elapsedMonths.reduce((sum, row) => sum + row.expenses, 0) / n,
+      revenue: elapsedData.reduce((sum, row) => sum + row.revenue, 0) / n,
+      invoiced: elapsedData.reduce((sum, row) => sum + row.invoiced, 0) / n,
+      expenses: elapsedData.reduce((sum, row) => sum + row.expenses, 0) / n,
     }
-  }, [data])
+  }, [elapsedData])
 
   const hasData = data.some((row) => row.revenue > 0 || row.invoiced > 0 || row.expenses > 0)
 
