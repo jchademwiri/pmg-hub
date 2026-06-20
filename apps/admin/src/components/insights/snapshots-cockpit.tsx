@@ -1,26 +1,11 @@
 "use client"
 
 import { useMemo, useState } from "react"
-import {
-  Area,
-  AreaChart,
-  CartesianGrid,
-  XAxis,
-  YAxis,
-} from "recharts"
 import { CalendarCheck, FileText, LockKeyhole, TrendingDown, TrendingUp } from "lucide-react"
 import type { SnapshotRow } from "@pmg/db"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import {
-  ChartContainer,
-  ChartLegend,
-  ChartLegendContent,
-  ChartTooltip,
-  ChartTooltipContent,
-  type ChartConfig,
-} from "@/components/ui/chart"
 import { EmptyState } from "@/components/ui/empty-state"
 import {
   Table,
@@ -55,13 +40,7 @@ type SnapshotView = {
   closedAt: Date
 }
 
-type AmountTone = "default" | "revenue" | "expense" | "positive" | "negative"
-
-const chartConfig = {
-  revenue: { label: "Revenue", color: "var(--chart-1)" },
-  expenses: { label: "Expenses", color: "var(--chart-expense)" },
-  profitPool: { label: "Profit/Loss", color: "var(--chart-3)" },
-} satisfies ChartConfig
+type AmountTone = "default" | "revenue" | "expense" | "positive" | "negative" | "share" | "allocation"
 
 function toMoney(value: string) {
   return Number(value) || 0
@@ -73,6 +52,8 @@ function amountToneClass(tone: AmountTone) {
     tone === "expense" && "text-destructive",
     tone === "positive" && "text-primary",
     tone === "negative" && "text-destructive",
+    tone === "share" && "text-[color:var(--chart-3)]",
+    tone === "allocation" && "text-[color:var(--chart-4)]",
   )
 }
 
@@ -115,17 +96,6 @@ export function SnapshotsCockpit({ snapshots }: SnapshotsCockpitProps) {
     [rows],
   )
 
-  const chartData = useMemo(
-    () =>
-      [...rows].reverse().map((row) => ({
-        period: row.shortPeriodLabel,
-        revenue: row.revenue,
-        expenses: row.expenses,
-        profitPool: row.profitPool,
-      })),
-    [rows],
-  )
-
   if (rows.length === 0) {
     return (
       <EmptyState
@@ -160,59 +130,6 @@ export function SnapshotsCockpit({ snapshots }: SnapshotsCockpitProps) {
           tone={totals.profitPool >= 0 ? "positive" : "negative"}
         />
       </div>
-
-      <Card>
-        <CardHeader>
-          <CardTitle className="text-base">Monthly trend</CardTitle>
-          <CardDescription>Revenue, expenses, and profit/loss across closed months.</CardDescription>
-        </CardHeader>
-        <CardContent>
-          <ChartContainer config={chartConfig} className="h-[280px] w-full">
-            <AreaChart data={chartData} margin={{ top: 12, right: 12, left: 0, bottom: 0 }}>
-              <CartesianGrid strokeDasharray="3 3" vertical={false} />
-              <XAxis dataKey="period" tickLine={false} axisLine={false} tickMargin={8} />
-              <YAxis
-                tickFormatter={(value) => `R${Math.round(Number(value) / 1000)}k`}
-                tickLine={false}
-                axisLine={false}
-                width={48}
-              />
-              <ChartTooltip
-                content={
-                  <ChartTooltipContent
-                    formatter={(value) => formatZAR(Number(value))}
-                  />
-                }
-              />
-              <ChartLegend content={<ChartLegendContent />} />
-              <Area
-                type="monotone"
-                dataKey="revenue"
-                stroke="var(--color-revenue)"
-                fill="var(--color-revenue)"
-                fillOpacity={0.12}
-                strokeWidth={2}
-              />
-              <Area
-                type="monotone"
-                dataKey="expenses"
-                stroke="var(--color-expenses)"
-                fill="var(--color-expenses)"
-                fillOpacity={0.1}
-                strokeWidth={2}
-              />
-              <Area
-                type="monotone"
-                dataKey="profitPool"
-                stroke="var(--color-profitPool)"
-                fill="var(--color-profitPool)"
-                fillOpacity={0.1}
-                strokeWidth={2}
-              />
-            </AreaChart>
-          </ChartContainer>
-        </CardContent>
-      </Card>
 
       <div className="grid gap-5 xl:grid-cols-[minmax(0,1fr)_320px]">
         <Card>
@@ -367,7 +284,7 @@ function SnapshotDetail({ snapshot }: { snapshot: SnapshotView }) {
         <div className="grid grid-cols-2 gap-3">
           <DetailMetric label="Revenue" value={snapshot.revenue} tone="revenue" />
           <DetailMetric label="Expenses" value={snapshot.expenses} tone="expense" />
-          <DetailMetric label="PMG Share" value={snapshot.pmgShare} tone="default" />
+          <DetailMetric label="PMG Share" value={snapshot.pmgShare} tone="share" />
           <DetailMetric
             label={isProfitable ? "Profit Pool" : "Net Loss"}
             value={snapshot.profitPool}
@@ -381,10 +298,10 @@ function SnapshotDetail({ snapshot }: { snapshot: SnapshotView }) {
             Allocation
           </div>
           <div className="grid grid-cols-2 gap-3 text-sm">
-            <DetailMetric label="Salary" value={snapshot.salary} compact />
-            <DetailMetric label="Reinvest" value={snapshot.reinvest} compact />
-            <DetailMetric label="Reserve" value={snapshot.reserve} compact />
-            <DetailMetric label="Flex" value={snapshot.flex} compact />
+            <DetailMetric label="Salary" value={snapshot.salary} tone="allocation" compact />
+            <DetailMetric label="Reinvest" value={snapshot.reinvest} tone="allocation" compact />
+            <DetailMetric label="Reserve" value={snapshot.reserve} tone="allocation" compact />
+            <DetailMetric label="Flex" value={snapshot.flex} tone="allocation" compact />
           </div>
         </div>
 

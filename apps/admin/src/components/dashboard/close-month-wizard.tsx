@@ -49,7 +49,7 @@ interface CloseMonthWizardProps {
   }
 }
 
-type AmountTone = 'default' | 'revenue' | 'expense' | 'positive' | 'negative'
+type AmountTone = 'default' | 'revenue' | 'expense' | 'positive' | 'negative' | 'share' | 'allocation'
 
 function amountToneClass(tone: AmountTone) {
   return cn(
@@ -57,6 +57,8 @@ function amountToneClass(tone: AmountTone) {
     tone === 'expense' && 'text-destructive',
     tone === 'positive' && 'text-primary',
     tone === 'negative' && 'text-destructive',
+    tone === 'share' && 'text-[color:var(--chart-3)]',
+    tone === 'allocation' && 'text-[color:var(--chart-4)]',
   )
 }
 
@@ -203,7 +205,7 @@ function ReviewFigures({
       <div className="grid gap-3 sm:grid-cols-2">
         <FigureTile label="Revenue" value={summary.revenue} tone="revenue" />
         <FigureTile label="Expenses" value={summary.expenses} tone="expense" />
-        <FigureTile label="PMG Share" value={summary.pmgShare} />
+        <FigureTile label="PMG Share" value={summary.pmgShare} tone="share" />
         <FigureTile
           label={isProfitable ? 'Profit Pool' : 'Net Loss'}
           value={summary.profitPool}
@@ -214,10 +216,10 @@ function ReviewFigures({
       <div className="rounded-md border border-border p-3">
         <p className="mb-3 text-sm font-medium">Profit pool allocation</p>
         <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
-          <FigureTile label="Salary" value={summary.salary} compact />
-          <FigureTile label="Reinvest" value={summary.reinvest} compact />
-          <FigureTile label="Reserve" value={summary.reserve} compact />
-          <FigureTile label="Flex" value={summary.flex} compact />
+          <FigureTile label="Salary" value={summary.salary} tone="allocation" compact />
+          <FigureTile label="Reinvest" value={summary.reinvest} tone="allocation" compact />
+          <FigureTile label="Reserve" value={summary.reserve} tone="allocation" compact />
+          <FigureTile label="Flex" value={summary.flex} tone="allocation" compact />
         </div>
       </div>
 
