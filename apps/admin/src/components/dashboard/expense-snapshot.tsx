@@ -59,25 +59,43 @@ export function ExpenseSnapshot({ expensesByDivision, totalExpenses }: ExpenseSn
               const colorClass =
                 DIVISION_COLORS[div.divisionName] ?? DEFAULT_COLORS[i % DEFAULT_COLORS.length]
 
-              return (
-                <Link
-                  key={div.divisionName}
-                  href={div.divisionId ? `/finance/expenses?divisionId=${div.divisionId}` : '#'}
-                  className="block group"
+              const content = (
+                <div
+                  className={`rounded-lg bg-muted/30 border border-border/50 p-3 transition-all duration-200 ${
+                    div.divisionId
+                      ? 'group-hover:scale-[1.01] group-hover:bg-muted/50 group-hover:border-primary/20 group-hover:shadow-sm'
+                      : ''
+                  }`}
                 >
-                  <div
-                    className="rounded-lg bg-muted/30 border border-border/50 p-3 transition-all duration-200 group-hover:scale-[1.01] group-hover:bg-muted/50 group-hover:border-primary/20 group-hover:shadow-sm"
-                  >
-                    <div className="flex items-center gap-1.5 mb-1">
-                      <span className={`inline-block h-2 w-2 rounded-full ${colorClass}`} />
-                      <span className="text-xs text-muted-foreground truncate group-hover:text-primary transition-colors">{div.divisionName}</span>
-                    </div>
-                    <p className="text-red-600 text-base font-semibold tabular-nums">
-                      {formatZAR(div.total)}
-                    </p>
-                    <p className="text-muted-foreground/60 text-xs">{pct}% of total</p>
+                  <div className="flex items-center gap-1.5 mb-1">
+                    <span className={`inline-block h-2 w-2 rounded-full ${colorClass}`} />
+                    <span className={`text-xs text-muted-foreground truncate ${div.divisionId ? 'group-hover:text-primary transition-colors' : ''}`}>
+                      {div.divisionName}
+                    </span>
                   </div>
-                </Link>
+                  <p className="text-red-600 text-base font-semibold tabular-nums">
+                    {formatZAR(div.total)}
+                  </p>
+                  <p className="text-muted-foreground/60 text-xs">{pct}% of total</p>
+                </div>
+              )
+
+              if (div.divisionId) {
+                return (
+                  <Link
+                    key={div.divisionName}
+                    href={`/finance/expenses?divisionId=${div.divisionId}`}
+                    className="block group"
+                  >
+                    {content}
+                  </Link>
+                )
+              }
+
+              return (
+                <div key={div.divisionName} className="block">
+                  {content}
+                </div>
               )
             })}
           </div>

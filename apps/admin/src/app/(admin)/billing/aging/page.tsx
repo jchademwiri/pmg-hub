@@ -1,3 +1,4 @@
+import { Suspense } from 'react';
 import type { Metadata } from 'next';
 import { getClientAgingReport, getAgingReport } from '@pmg/db';
 import { SetPageTotal } from '@/components/navigation/page-header-context';
@@ -28,7 +29,10 @@ export default async function ARAgingReportPage() {
         </div>
       </div>
 
-      <AgingReportClient clientAging={clientAging} globalAging={globalAging} />
+      <Suspense fallback={<div className="h-96 w-full animate-pulse bg-muted/10 rounded-lg" />}>
+        <AgingReportClient clientAging={clientAging} globalAging={globalAging} />
+      </Suspense>
     </div>
   );
 }
+

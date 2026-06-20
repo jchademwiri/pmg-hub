@@ -62,15 +62,13 @@ export function DivisionRevenue({ divisions, divisionExpenseMap }: DivisionReven
               const expPct  = (div.expenses / maxRevenue) * 100
               const isProfit = div.net >= 0
 
-              return (
-                <Link
-                  key={div.divisionName}
-                  href={div.divisionId ? `/billing/invoices?divisionId=${div.divisionId}` : '#'}
-                  className="block space-y-1.5 transition-all duration-200 hover:translate-x-0.5 group"
-                >
+              const content = (
+                <>
                   {/* Header row */}
                   <div className="flex items-center justify-between">
-                    <span className="text-card-foreground text-sm font-medium group-hover:text-primary transition-colors">{div.divisionName}</span>
+                    <span className="text-card-foreground text-sm font-medium group-hover:text-primary transition-colors">
+                      {div.divisionName}
+                    </span>
                     <span
                       className={`text-xs font-semibold tabular-nums ${
                         isProfit ? 'text-emerald-600' : 'text-red-600'
@@ -105,7 +103,28 @@ export function DivisionRevenue({ divisions, divisionExpenseMap }: DivisionReven
                       </span>
                     </div>
                   </div>
-                </Link>
+                </>
+              )
+
+              if (div.divisionId) {
+                return (
+                  <Link
+                    key={div.divisionName}
+                    href={`/billing/invoices?divisionId=${div.divisionId}`}
+                    className="block space-y-1.5 transition-all duration-200 hover:translate-x-0.5 group"
+                  >
+                    {content}
+                  </Link>
+                )
+              }
+
+              return (
+                <div
+                  key={div.divisionName}
+                  className="block space-y-1.5"
+                >
+                  {content}
+                </div>
               )
             })}
           </div>

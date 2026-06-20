@@ -282,7 +282,7 @@ export function ClientBillingWorkspace({
     let bucket_31_60 = 0;
     let bucket_61_plus = 0;
 
-    const todayVal = new Date(todayStrWS);
+    const todayVal = new Date(`${todayStrWS}T00:00:00`);
     const getDaysPastDue = (dueDateStr: string | null): number => {
       if (!dueDateStr) return 0;
       const dueDate = new Date(`${dueDateStr}T00:00:00`);

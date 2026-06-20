@@ -2,7 +2,7 @@
 
 import * as React from 'react';
 import Link from 'next/link';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { Search, ArrowUpDown, ArrowUp, ArrowDown, Mail, FileText } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -29,17 +29,14 @@ type SortOrder = 'asc' | 'desc';
 
 export function AgingReportClient({ clientAging, globalAging }: AgingReportClientProps) {
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const filterParam = searchParams.get('filter');
+  
   const [searchTerm, setSearchTerm] = React.useState('');
   const [sortField, setSortField] = React.useState<SortField>('totalOutstanding');
   const [sortOrder, setSortOrder] = React.useState<SortOrder>('desc');
-  const [activeBucket, setActiveBucket] = React.useState<string | null>(null);
+  const [activeBucket, setActiveBucket] = React.useState<string | null>(filterParam);
 
-  React.useEffect(() => {
-    const filter = new URLSearchParams(window.location.search).get('filter');
-    if (filter) {
-      setActiveBucket(filter);
-    }
-  }, []);
 
   // Totals
   const totalAR = React.useMemo(() => clientAging.reduce((s, c) => s + c.totalOutstanding, 0), [clientAging]);
