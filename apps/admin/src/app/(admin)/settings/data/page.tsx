@@ -1,73 +1,51 @@
 import type { Metadata } from 'next'
-import { Database, Download, Trash2, FileJson, FileSpreadsheet } from 'lucide-react'
+import { Database, Trash2 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Separator } from '@/components/ui/separator'
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert'
 import { Field, FieldLabel } from '@/components/ui/field'
 import { SettingsPageHeader } from '@/components/settings/settings-page-header'
 import { SettingsSection } from '@/components/settings/settings-section'
+import { getBackupStorageStatus } from '@/lib/data-export'
+import { DataExportList, DatabaseBackupPanel } from './data-settings-client'
 
 export const metadata: Metadata = { title: 'Data & Exports Settings' }
 
-const exportOptions = [
-  {
-    icon: FileSpreadsheet,
-    label: 'Income & Expenses (CSV)',
-    description: 'All income and expense records as a spreadsheet',
-  },
-  {
-    icon: FileSpreadsheet,
-    label: 'Invoices (CSV)',
-    description: 'Full invoice history with line items',
-  },
-  {
-    icon: FileSpreadsheet,
-    label: 'Clients (CSV)',
-    description: 'Client list with contact details',
-  },
-  {
-    icon: FileJson,
-    label: 'Full Data Export (JSON)',
-    description: 'Complete export of all data in JSON format',
-  },
-]
-
 export default function DataSettingsPage() {
+  const backupStorage = getBackupStorageStatus()
+
   return (
     <div className="flex flex-col gap-6">
       <SettingsPageHeader
         title="Data & Exports"
         description="Export data, manage backups, and retention"
         icon={Database}
-        badge="Soon"
       />
       <Alert>
         <Database />
-        <AlertTitle>Exports are read-only for now</AlertTitle>
+        <AlertTitle>Exports are live</AlertTitle>
         <AlertDescription>
-          This page shows the planned export and retention controls. Export actions are not enabled yet.
+          CSV exports download immediately. Full JSON exports and Cloudflare backups include all public database tables.
         </AlertDescription>
       </Alert>
 
       {/* Exports */}
       <SettingsSection title="Export Data" description="Download your data in various formats.">
-        <div className="flex flex-col divide-y divide-border">
-          {exportOptions.map((opt) => (
-            <div key={opt.label} className="flex items-center justify-between gap-4 py-3">
-              <div className="flex items-center gap-3">
-                <opt.icon className="shrink-0 text-muted-foreground" />
-                <div className="flex flex-col gap-0.5">
-                  <span className="text-sm font-medium">{opt.label}</span>
-                  <span className="text-xs text-muted-foreground">{opt.description}</span>
-                </div>
-              </div>
-              <Button variant="outline" size="sm" disabled title="Coming soon">
-                <Download data-icon="inline-start" />
-                Export
-              </Button>
-            </div>
-          ))}
-        </div>
+        <DataExportList />
+      </SettingsSection>
+
+      <Separator />
+
+      {/* Backups */}
+      <SettingsSection
+        title="Database Backup"
+        description="Upload a complete JSON backup to Cloudflare R2 storage."
+      >
+        <DatabaseBackupPanel
+          backupConfigured={backupStorage.configured}
+          backupBucket={backupStorage.bucket}
+          backupPrefix={backupStorage.prefix}
+        />
       </SettingsSection>
 
       <Separator />
