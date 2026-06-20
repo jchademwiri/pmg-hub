@@ -130,7 +130,9 @@ export function DivisionAreaChart({ data }: Props) {
     }
   }, [elapsedData])
 
-  const hasData = data.some((row) => row.revenue > 0 || row.invoiced > 0 || row.expenses > 0)
+  const hasData = chartData.some(
+    (row) => (row.revenue ?? 0) > 0 || (row.invoiced ?? 0) > 0 || (row.expenses ?? 0) > 0,
+  )
 
   return (
     <Card className="rounded-xl border border-border bg-card shadow-none">
