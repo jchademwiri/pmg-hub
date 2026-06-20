@@ -295,7 +295,11 @@ export function JournalEntryForm({ accounts, createAction }: JournalEntryFormPro
       {/* Balance indicator & submit */}
       <div className="rounded-xl border bg-card p-5 space-y-4">
         {!isBalanced && (totalDebits > 0 || totalCredits > 0) && (
-          <div className="bg-destructive/5 border border-destructive/20 text-destructive p-4 rounded-xl text-xs space-y-1 animate-in fade-in slide-in-from-top-1 duration-200">
+          <div
+            role="alert"
+            aria-live="assertive"
+            className="bg-destructive/5 border border-destructive/20 text-destructive p-4 rounded-xl text-xs space-y-1 animate-in fade-in slide-in-from-top-1 duration-200"
+          >
             <p className="font-semibold flex items-center gap-1.5">
               <X className="h-3.5 w-3.5" /> Unbalanced Entry
             </p>
