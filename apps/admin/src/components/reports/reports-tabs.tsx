@@ -128,7 +128,11 @@ export function ReportsTabs({
               profitPool={totalProfitPool}
             />
           </div>
-          <ReportCommentary momData={momData} />
+          <ReportCommentary
+            momData={momData}
+            currentMonthLabel={currentMonthLabel}
+            previousMonthLabel={previousMonthLabel}
+          />
         </div>
       </TabsContent>
 
