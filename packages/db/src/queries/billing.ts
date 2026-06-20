@@ -470,6 +470,7 @@ export async function getAllQuotations(
 /**
  * Returns paginated invoice rows joined to divisions (INNER), clients (LEFT),
  * and quotations (LEFT for quotation document number).
+ * Optional invoiceDateTo caps invoice_date inclusively for YTD-style aggregates.
  * outstanding = SUM(total) WHERE status IN ('issued', 'overdue').
  */
 export async function getAllInvoices(
@@ -479,6 +480,7 @@ export async function getAllInvoices(
     clientId?: string;
     month?: string;
     year?: number;
+    invoiceDateTo?: string;
     monthPeriod?: 'current' | 'previous' | 'past3' | 'past6';
   },
   pageObj?: { page: number; pageSize: number },
@@ -501,6 +503,9 @@ export async function getAllInvoices(
     const start = `${filters.year}-03-01`;
     const end = `${filters.year + 1}-03-01`;
     conditions.push(sql`${invoices.invoiceDate} >= ${start} AND ${invoices.invoiceDate} < ${end}`);
+  }
+  if (filters?.invoiceDateTo) {
+    conditions.push(sql`${invoices.invoiceDate} <= ${filters.invoiceDateTo}`);
   }
   if (filters?.monthPeriod) {
     const { startDate, endDate } = getMonthPeriodDates(filters.monthPeriod);
@@ -1309,4 +1314,109 @@ export async function getAgingReport(): Promise<AgingRow[]> {
     count: map[bucket]?.count ?? 0,
   }));
 }
+
+export interface ClientAgingRow {
+  clientId: string;
+  clientName: string;
+  businessName: string | null;
+  totalOutstanding: number;
+  current: number;
+  bucket_1_14: number;
+  bucket_15_30: number;
+  bucket_31_60: number;
+  bucket_61_plus: number;
+}
+
+export async function getClientAgingReport(filters?: { year?: number }): Promise<ClientAgingRow[]> {
+  const year = filters?.year;
+  const start = year ? `${year}-03-01` : null;
+  const end = year ? `${year + 1}-03-01` : null;
+
+  const dateFilter = year
+    ? sql`AND invoice_date >= ${start} AND invoice_date < ${end}`
+    : sql``;
+
+  const result = await db.execute(sql`
+    SELECT
+      c.id                                                        AS client_id,
+      c.name                                                      AS client_name,
+      c.business_name                                             AS business_name,
+      COALESCE(SUM(inv.outstanding), 0)::numeric                 AS total_outstanding,
+      COALESCE(SUM(CASE WHEN inv.bucket = 'current'  THEN inv.outstanding ELSE 0 END), 0)::numeric AS current,
+      COALESCE(SUM(CASE WHEN inv.bucket = '1_14'     THEN inv.outstanding ELSE 0 END), 0)::numeric AS bucket_1_14,
+      COALESCE(SUM(CASE WHEN inv.bucket = '15_30'    THEN inv.outstanding ELSE 0 END), 0)::numeric AS bucket_15_30,
+      COALESCE(SUM(CASE WHEN inv.bucket = '31_60'    THEN inv.outstanding ELSE 0 END), 0)::numeric AS bucket_31_60,
+      COALESCE(SUM(CASE WHEN inv.bucket = '61_plus'  THEN inv.outstanding ELSE 0 END), 0)::numeric AS bucket_61_plus
+    FROM clients c
+    JOIN (
+      SELECT
+        invoices.client_id,
+        invoices.total - COALESCE((SELECT SUM(amount) FROM payment_allocations WHERE invoice_id = invoices.id), 0) AS outstanding,
+        CASE
+          WHEN due_date >= timezone('Africa/Johannesburg', now())::date                             THEN 'current'
+          WHEN timezone('Africa/Johannesburg', now())::date - due_date BETWEEN 1  AND 14           THEN '1_14'
+          WHEN timezone('Africa/Johannesburg', now())::date - due_date BETWEEN 15 AND 30           THEN '15_30'
+          WHEN timezone('Africa/Johannesburg', now())::date - due_date BETWEEN 31 AND 60           THEN '31_60'
+          ELSE '61_plus'
+        END AS bucket
+      FROM invoices
+      WHERE status IN ('issued', 'overdue', 'partially_paid')
+        AND due_date IS NOT NULL
+        AND invoice_date <= timezone('Africa/Johannesburg', now())::date
+        ${dateFilter}
+    ) inv ON inv.client_id = c.id
+    GROUP BY c.id, c.name, c.business_name
+    HAVING COALESCE(SUM(inv.outstanding), 0) > 0
+    ORDER BY total_outstanding DESC
+  `);
+
+  return (result.rows as any[]).map((r) => ({
+    clientId: r.client_id as string,
+    clientName: r.client_name as string,
+    businessName: r.business_name as string | null,
+    totalOutstanding: Number(r.total_outstanding),
+    current: Number(r.current),
+    bucket_1_14: Number(r.bucket_1_14),
+    bucket_15_30: Number(r.bucket_15_30),
+    bucket_31_60: Number(r.bucket_31_60),
+    bucket_61_plus: Number(r.bucket_61_plus),
+  }));
+}
+
+export interface OutstandingInvoiceRow {
+  id: string;
+  documentNumber: string;
+  reference: string | null;
+  invoiceDate: string;
+  dueDate: string | null;
+  status: string;
+  total: string;
+  allocatedAmount: string;
+}
+
+export async function getClientOutstandingInvoices(clientId: string): Promise<OutstandingInvoiceRow[]> {
+  const data = await db
+    .select({
+      id: invoices.id,
+      documentNumber: invoices.documentNumber,
+      reference: invoices.reference,
+      invoiceDate: sql<string>`${invoices.invoiceDate}::text`,
+      dueDate: sql<string | null>`${invoices.dueDate}::text`,
+      status: invoices.status,
+      total: invoices.total,
+      allocatedAmount: sql<string>`COALESCE((SELECT SUM(amount) FROM payment_allocations WHERE invoice_id = ${invoices.id}), 0)::text`,
+    })
+    .from(invoices)
+    .where(
+      and(
+        eq(invoices.clientId, clientId),
+        inArray(invoices.status, ['issued', 'overdue', 'partially_paid'])
+      )
+    )
+    .orderBy(desc(invoices.invoiceDate));
+
+  return data as OutstandingInvoiceRow[];
+}
+
+
 

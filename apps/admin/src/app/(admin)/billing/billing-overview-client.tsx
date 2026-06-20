@@ -154,7 +154,7 @@ export function BillingOverviewClient({
         <div className="rounded-xl border bg-card overflow-hidden">
           <div className="px-5 py-3.5 border-b bg-muted/30 flex items-center justify-between">
             <h3 className="text-sm font-semibold">Aging Report</h3>
-            <Link href="/billing/accounts" className="text-xs text-muted-foreground hover:text-foreground transition-colors flex items-center gap-1">
+            <Link href="/billing/aging" className="text-xs text-muted-foreground hover:text-foreground transition-colors flex items-center gap-1">
               View all <ArrowUpRight className="h-3 w-3" />
             </Link>
           </div>
@@ -267,6 +267,7 @@ export function BillingOverviewClient({
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
           {[
             { href: '/billing/accounts', label: 'Accounts', description: 'Client billing accounts', color: 'bg-blue-500/10 text-blue-600' },
+            { href: '/billing/aging', label: 'Aging Report', description: 'AR aging analysis', color: 'bg-indigo-500/10 text-indigo-600' },
             { href: '/billing/quotes', label: 'Quotes', description: 'Create and manage quotations', color: 'bg-violet-500/10 text-violet-600' },
             { href: '/billing/invoices', label: 'Invoices', description: 'Issue and track invoices', color: 'bg-emerald-500/10 text-emerald-600' },
             { href: '/billing/payments', label: 'Payments', description: 'Record incoming payments', color: 'bg-cyan-500/10 text-cyan-600' },

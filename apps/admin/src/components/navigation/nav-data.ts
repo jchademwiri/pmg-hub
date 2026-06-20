@@ -36,6 +36,7 @@ export type NavGroup = {
   items: NavItem[]
 }
 
+
 // ── Overview (non-grouped) ────────────────────────────────────────────────────
 
 export const OVERVIEW: NavItem[] = [
@@ -50,14 +51,15 @@ export const GROUPS: NavGroup[] = [
     label: 'Billing',
     icon: FileSpreadsheet,
     items: [
-      { title: 'Overview',   url: '/billing',            icon: LayoutGrid },
-      { title: 'Accounts',   url: '/billing/accounts',   icon: PiggyBank  },
-      { title: 'Quotations', url: '/billing/quotes',     icon: FileText   },
-      { title: 'Invoices',   url: '/billing/invoices',   icon: Receipt    },
-      { title: 'Payments',   url: '/billing/payments',   icon: Banknote   },
-      { title: 'Credits',    url: '/billing/credits',    icon: Wallet     },
-      { title: 'Statements', url: '/billing/statements', icon: ScrollText },
-      { title: 'Items',      url: '/billing/items',      icon: Package    },
+      { title: 'Overview',     url: '/billing',            icon: LayoutGrid },
+      { title: 'Accounts',     url: '/billing/accounts',   icon: PiggyBank  },
+      { title: 'Aging Report', url: '/billing/aging',      icon: Calendar   },
+      { title: 'Quotations',   url: '/billing/quotes',     icon: FileText   },
+      { title: 'Invoices',     url: '/billing/invoices',   icon: Receipt    },
+      { title: 'Payments',     url: '/billing/payments',   icon: Banknote   },
+      { title: 'Credits',      url: '/billing/credits',    icon: Wallet     },
+      { title: 'Statements',   url: '/billing/statements', icon: ScrollText },
+      { title: 'Items',        url: '/billing/items',      icon: Package    },
     ],
   },
   {
