@@ -12,7 +12,7 @@ import {
   YAxis,
 } from 'recharts'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
-import { formatZAR, fmtMonthYear } from '@/lib/format'
+import { formatZAR, fmtMonthYear, getSASTParts } from '@/lib/format'
 import type { MonthlyBudgetChartRow } from '@/lib/financial'
 
 type Props = {
@@ -85,8 +85,8 @@ export function DivisionAreaChart({ data }: Props) {
   const [chartType, setChartType] = useState<'line' | 'bar' | 'both'>('line')
 
   const currentMonthStr = useMemo(() => {
-    const now = new Date()
-    return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`
+    const { year, month } = getSASTParts()
+    return `${year}-${String(month + 1).padStart(2, '0')}`
   }, [])
 
   const elapsedData = useMemo(
