@@ -53,6 +53,10 @@ function quoteIdent(identifier: string) {
   return `"${identifier.replace(/"/g, '""')}"`;
 }
 
+function quoteSqlLiteral(value: string) {
+  return `'${value.replace(/'/g, "''")}'`;
+}
+
 function sha256Hex(input: string | Buffer) {
   return createHash('sha256').update(input).digest('hex');
 }
@@ -490,6 +494,35 @@ async function getTableDependencies(tableNames: string[]) {
   return dependencies;
 }
 
+async function getCascadeTruncatedTables(tableNames: string[]) {
+  const selectedTables = tableNames.map((table) => `(${quoteSqlLiteral(table)})`).join(', ');
+  const rows = await getRows(sql.raw(`
+    WITH RECURSIVE truncate_targets(table_name) AS (
+      SELECT selected.table_name
+      FROM (VALUES ${selectedTables}) AS selected(table_name)
+      UNION
+      SELECT tc.table_name
+      FROM information_schema.table_constraints tc
+      JOIN information_schema.key_column_usage kcu
+        ON tc.constraint_name = kcu.constraint_name
+        AND tc.table_schema = kcu.table_schema
+      JOIN information_schema.constraint_column_usage ccu
+        ON ccu.constraint_name = tc.constraint_name
+        AND ccu.table_schema = tc.table_schema
+      JOIN truncate_targets target
+        ON ccu.table_name = target.table_name
+      WHERE tc.constraint_type = 'FOREIGN KEY'
+        AND tc.table_schema = 'public'
+        AND ccu.table_schema = 'public'
+    )
+    SELECT table_name AS name
+    FROM truncate_targets
+    ORDER BY table_name ASC
+  `));
+
+  return rows.map((row) => String(row.name));
+}
+
 function sortTablesByDependencies(tableNames: string[], dependencies: Map<string, Set<string>>) {
   const sorted: string[] = [];
   const remaining = new Set(tableNames);
@@ -547,10 +580,19 @@ export async function restoreDatabaseBackup(key: string) {
   }
 
   const db = getDb();
-  const quotedTables = backupTables.map(quoteIdent).join(', ');
-
   const dependencies = await getTableDependencies(backupTables);
+  const backupTableSet = new Set(backupTables);
+  const cascadeTables = await getCascadeTruncatedTables(backupTables);
+  const missingCascadeTables = cascadeTables.filter((table) => !backupTableSet.has(table));
+
+  if (missingCascadeTables.length > 0) {
+    throw new Error(
+      `Selected backup cannot be restored because TRUNCATE CASCADE would also clear tables missing from the backup: ${missingCascadeTables.join(', ')}.`,
+    );
+  }
+
   const restoreOrder = sortTablesByDependencies(backupTables, dependencies);
+  const quotedTables = backupTables.map(quoteIdent).join(', ');
 
   await db.transaction(async (tx) => {
     await tx.execute(sql.raw(`TRUNCATE TABLE ${quotedTables} RESTART IDENTITY CASCADE`));

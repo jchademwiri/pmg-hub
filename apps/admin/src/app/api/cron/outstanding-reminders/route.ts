@@ -11,6 +11,7 @@ import {
 } from '@pmg/emails';
 import * as React from 'react';
 import { fmtDateLong } from '@/lib/format';
+import { authorizeCronRequest } from '@/lib/cron-auth';
 
 export const dynamic = 'force-dynamic'; // Ensure no caching
 
@@ -18,10 +19,8 @@ export const dynamic = 'force-dynamic'; // Ensure no caching
 
 export async function GET(req: Request) {
   // 1. Verify cron authorization
-  const authHeader = req.headers.get('authorization');
-  if (process.env.CRON_SECRET && authHeader !== `Bearer ${process.env.CRON_SECRET}`) {
-    return new NextResponse('Unauthorized', { status: 401 });
-  }
+  const unauthorized = authorizeCronRequest(req);
+  if (unauthorized) return unauthorized;
 
   try {
     const db = getDb();
@@ -157,8 +156,11 @@ export async function GET(req: Request) {
     }
 
     return NextResponse.json({ success: true, processed: outstandingInvoices.length, sent: reminderCount });
-  } catch (err: any) {
+  } catch (err: unknown) {
     console.error('Error in outstanding reminders auto cron:', err);
-    return NextResponse.json({ success: false, error: err.message }, { status: 500 });
+    return NextResponse.json(
+      { success: false, error: err instanceof Error ? err.message : 'Failed to send outstanding reminders.' },
+      { status: 500 },
+    );
   }
 }

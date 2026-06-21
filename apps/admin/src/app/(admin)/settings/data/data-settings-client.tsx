@@ -114,6 +114,7 @@ export function DatabaseBackupPanel({
   const [isRestorePending, startRestoreTransition] = useTransition();
   const [selectedBackupKey, setSelectedBackupKey] = useState(backups[0]?.key ?? '');
   const [confirmation, setConfirmation] = useState('');
+  const visibleBackups = backups.slice(0, 8);
 
   function handleBackup() {
     startBackupTransition(async () => {
@@ -215,9 +216,9 @@ export function DatabaseBackupPanel({
               Recent JSON backups found in Cloudflare R2.
             </p>
           </div>
-          {backups.length > 0 ? (
+          {visibleBackups.length > 0 ? (
             <div className="flex flex-col divide-y divide-border">
-              {backups.slice(0, 8).map((backup) => (
+              {visibleBackups.map((backup) => (
                 <button
                   key={backup.key}
                   type="button"
@@ -253,14 +254,14 @@ export function DatabaseBackupPanel({
             <Select
               value={selectedBackupKey}
               onValueChange={setSelectedBackupKey}
-              disabled={!backupConfigured || backups.length === 0}
+              disabled={!backupConfigured || visibleBackups.length === 0}
             >
               <SelectTrigger className="w-full">
                 <SelectValue placeholder="Choose backup" />
               </SelectTrigger>
               <SelectContent>
                 <SelectGroup>
-                  {backups.map((backup) => (
+                  {visibleBackups.map((backup) => (
                     <SelectItem key={backup.key} value={backup.key}>
                       {backup.key.replace(`${backupPrefix}/`, '')}
                     </SelectItem>
