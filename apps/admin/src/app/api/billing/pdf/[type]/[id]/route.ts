@@ -24,8 +24,9 @@ export async function GET(
   const url = new URL(req.url);
   const year = url.searchParams.get('year');
   const monthPeriod = url.searchParams.get('monthPeriod');
+  const yearNum = year ? Number(year) : undefined;
   const filters = {
-    ...(year ? { year: Number(year) } : {}),
+    ...(yearNum != null && !Number.isNaN(yearNum) ? { year: yearNum } : {}),
     ...(monthPeriod && PERIODS.has(monthPeriod) ? { monthPeriod: monthPeriod as 'current' | 'previous' | 'past3' | 'past6' } : {}),
   };
 
