@@ -15,6 +15,18 @@ The **Billing** module is where you:
 
 Think of it as your **cash register** — this is where money starts its journey into the accounting system.
 
+### The Three Divisions
+
+Quotes and invoices show a **Division** column so you can quickly see which business unit owns the document:
+
+| Acronym | Division |
+|---------|----------|
+| **AWS** | Apex Web Solutions |
+| **TES** | Tender Edge Solutions |
+| **PMG** | Playhouse Media Group |
+
+Always choose the correct division when creating a quote or invoice. It affects document numbering, logos, reporting, income, and division performance.
+
 ---
 
 ## Table of Contents
@@ -70,6 +82,18 @@ CR  Accounts Receivable (1100)      →  R5,000  (the client no longer owes)
 
 Invoices are auto-numbered: `DIV-INV-YYYY-NNN` (e.g., `PMG-INV-2026-001`).
 
+### How to Read the Invoice List
+
+| Column | Meaning |
+|--------|---------|
+| Invoice # | The unique invoice number |
+| Division | `AWS`, `TES`, or `PMG` |
+| Client | Who the invoice is for |
+| Issue Date | The invoice date |
+| Due Date | When payment is expected |
+| Amount | The invoice total |
+| Status | Draft, issued, paid, overdue, etc. |
+
 ---
 
 ## 2. Quotes
@@ -87,6 +111,18 @@ A **quote** (or quotation) is a price estimate you send to a potential client **
 | **Accepted** | The client agreed — now create an invoice from this quote |
 | **Declined** | The client said no |
 | **Expired** | The quote's validity period has passed |
+
+### How to Read the Quote List
+
+| Column | Meaning |
+|--------|---------|
+| Quote # | The unique quote number |
+| Division | `AWS`, `TES`, or `PMG` |
+| Client | Who the quote is for |
+| Issue Date | The quote date |
+| Expiry Date | When the quote stops being valid |
+| Amount | The quoted total |
+| Status | Draft, sent, accepted, declined, etc. |
 
 ### Quotes vs Invoices
 
@@ -259,6 +295,7 @@ Everything flows from **Billing → Income → Accounting** automatically.
 | View payment history | `/billing/statements` | Generate a client statement |
 | Manage your service catalogue | `/billing/items` | Add/edit your products/services |
 | Check who's overdue | Billing Overview | Aging report on the overview page |
+| Check which division owns a document | Quotes or Invoices list | Look for the Division column |
 
 ---
 
@@ -272,3 +309,4 @@ Everything flows from **Billing → Income → Accounting** automatically.
 | "A client wants a refund" | Create a credit note against the original invoice |
 | "My quote was accepted, now what?" | Convert the quote to an invoice from the quotes page |
 | "The aging report doesn't look right" | Check that all payments are allocated correctly |
+| "The wrong division is showing" | Check the quote/invoice division. If the document is already issued, create a corrected document instead of editing history. |

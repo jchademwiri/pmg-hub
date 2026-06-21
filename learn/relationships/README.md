@@ -10,7 +10,7 @@ The **Relationships** module is your **address book and sales pipeline** combine
 
 - **Clients** — People and businesses you work with (past and present)
 - **Leads** — Potential clients you're trying to win
-- **Divisions** — Your business units (PMG, TES, etc.)
+- **Divisions** — Your business units (`AWS`, `TES`, and `PMG`)
 
 Think of it as **your business's relationship brain** — knowing who you work with, who you want to work with, and how each part of your business is performing.
 
@@ -36,7 +36,7 @@ A **client** is any person or business you've done work for. They're the reason 
 
 Each client record contains:
 - **Name** and **contact details**
-- **Division** they belong to (PMG, TES, etc.)
+- **Division** they belong to (`AWS`, `TES`, or `PMG`)
 - **Billing history** — invoices, payments, outstanding balances
 - **Activity timeline** — quotes sent, work done, communications
 
@@ -130,6 +130,7 @@ A **division** is a business unit within the PMG group. Each division operates s
 
 | Division | Description |
 |----------|-------------|
+| **AWS** | Apex Web Solutions — web, digital, and technical services |
 | **PMG** | Playhouse Media Group — core business services |
 | **TES** | Tender Edge Solutions — tender support services |
 
@@ -203,3 +204,4 @@ The Relationships overview shows how each division is performing:
 | "The division looks wrong" | Check the client's assigned division |
 | "I need to merge duplicate clients" | Currently not supported in the UI — contact support |
 | "A client's balance doesn't look right" | Check their invoices and payments in the Billing module |
+| "A client has work under more than one division" | Keep the client record consistent, then choose the correct division on each quote or invoice |

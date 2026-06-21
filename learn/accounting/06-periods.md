@@ -44,18 +44,6 @@ Open → Closed → Locked
 
 ---
 
-## Your Current Periods
-
-| Period | Status |
-|--------|--------|
-| 2026-06 | Open |
-| 2026-05 | Open |
-| 2026-04 | Open |
-
-All three periods are currently open, meaning you can post transactions to any of them.
-
----
-
 ## When to Close a Period
 
 Close a period at the end of the month when:
@@ -94,6 +82,21 @@ If you try to post a journal entry to a **closed** period, the system will rejec
 | **Close** | Prevents new entries in this period | End of month, after review |
 | **Reopen** | Allows entries again in a closed period | If you need to add a missed transaction |
 | **Lock** | Permanently seals the period | Year-end, after accountant sign-off |
+
+---
+
+## Periods vs Snapshots
+
+Periods and snapshots are related, but they are not the same thing.
+
+| Item | Meaning |
+|------|---------|
+| Accounting period | Controls whether accounting entries can be posted into a month |
+| Snapshot | A locked monthly financial record used for business review |
+
+For normal month-end, use the dashboard close-month flow to lock the completed month as a snapshot. Use `/accounting/periods` when you specifically need to review or control accounting period status.
+
+Example: if you are working in June, June should remain open. The completed month to close is usually May.
 
 ---
 

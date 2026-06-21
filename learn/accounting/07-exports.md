@@ -14,6 +14,8 @@ Sometimes you need your accounting data outside of this system:
 
 **Navigate to:** `/accounting/exports`
 
+For full database backups and restore points, use **Settings -> Data**. Accounting exports are readable CSV files; database backups are recoverable system backups.
+
 ---
 
 ## What Can You Export?
@@ -40,6 +42,7 @@ The Exports page lets you export:
 | **Bank reconciliation** | General Ledger filtered to bank account |
 | **Audit preparation** | General Ledger + Journal Entries |
 | **Personal records** | Full backup periodically |
+| **Disaster recovery** | Database backup from Settings -> Data |
 
 ---
 
@@ -53,12 +56,12 @@ The Exports page lets you export:
 
 ---
 
-## Tips for Working with Exports
+## Tips for Working with Exports And Backups
 
 1. **Always export in CSV format** — CSV is universal and opens in any spreadsheet software
 2. **Add filters before exporting** — Export only what you need to keep files manageable
 3. **Label your files** — Name them clearly (e.g., "PMG_TrialBalance_June2026.csv")
-4. **Keep backups** — Export and save monthly backups even if you don't need them right now
+4. **Keep backups** — Confirm automatic database backups are running in Settings -> Data
 5. **Share securely** — When sending to your accountant, use encrypted email or a secure file sharing service
 
 ---
@@ -84,11 +87,11 @@ A: CSV (Comma-Separated Values), which opens in Excel, Google Sheets, Numbers, a
 **Q: Can I export for a specific period only?**
 A: Yes. Use the date range or period filters before exporting to limit the data to what you need.
 
-**Q: Is there an auto-export feature?**
-A: Not currently. You'll need to manually export when needed. Consider setting a monthly reminder to export and backup your data.
+**Q: Is there an automatic backup feature?**
+A: Yes, if Cloudflare R2 backup storage is configured. Check Settings -> Data to confirm backups and retention.
 
-**Q: Can I import data back into the system?**
-A: Not currently through the Exports page. If you need to bulk-import data, contact your system administrator.
+**Q: Can I restore data back into the system?**
+A: Exports are not restore files. Use a database backup from Settings -> Data if an admin needs to restore the system.
 
 ---
 
@@ -96,7 +99,8 @@ A: Not currently through the Exports page. If you need to bulk-import data, cont
 
 | Frequency | What | Why |
 |-----------|------|-----|
-| **Monthly** | Trial Balance + P&L | Keep monthly records |
-| **Quarterly** | Full export | Comprehensive backup |
+| **Monthly** | Trial Balance + P&L | Keep readable monthly records |
+| **Quarterly** | Full accounting export | Shareable accountant backup |
 | **Annually** | Everything | Year-end records for accountant |
 | **On demand** | As needed | Ad-hoc requests from accountant/SARS |
+| **Daily, automated** | Database backup | Recovery point, configured in Settings -> Data |

@@ -30,61 +30,61 @@ Think of it as your **financial rearview mirror and GPS combined** — it shows 
 
 ### What Is a Snapshot?
 
-A **snapshot** is a frozen record of your financial position for a specific month. Once a month is closed:
+A **snapshot** is a locked monthly financial record. Once a month is closed:
 
 - **The numbers can't change** — they're locked forever
 - **You can compare months** — see how April compares to May
-- **You can see trends** — Is revenue growing? Are expenses under control?
+- **You can trust the history** — reports for closed months do not shift every time new data is entered
 
 ### How Snapshots Are Created
 
-At the end of each month:
+At the end of each month, you normally close the month that just finished.
+
+Example: if today is in June, June is still open. The close-month button should say something like **Close May 2026**, because May is the completed month being locked.
 
 1. You review your income and expenses
-2. You click **Close Month** on the dashboard
+2. You click the period-specific close button on the dashboard, for example **Close May 2026**
 3. The system calculates:
-   - **Gross Revenue** — Total income received
-   - **Operating Expenses** — Total costs incurred
-   - **PMG Share** — The group's 25% share
-   - **Profit Pool** — What's left after expenses and PMG share
-   - **Salary, Reinvest, Reserve, Flex** — How the profit pool is allocated
+   - **Revenue** — Total income received
+   - **Expenses** — Total costs incurred
+   - **PMG Share** — The group's configured share
+   - **Profit/Loss** — What remains after expenses and PMG share
 4. The numbers are locked and stored as a snapshot
 
-### The Two Views
+### The Snapshots Page
 
-**All-Time Overview** — Shows cumulative totals across ALL closed months:
-- Total revenue across every closed period
+The Snapshots page is a financial history view.
+
+At the top, you see summary totals across closed months:
+
+- Closed months count
+- Total revenue
 - Total expenses
-- Total profit
-- A trend chart showing month-by-month performance
+- Total profit or loss
 
-**Single Month View** — Focuses on one specific month:
-- Revenue, expenses, and profit for that month
-- Revenue breakdown bar chart (Revenue vs PMG Share vs Expenses vs Profit)
-- Comparison with previous periods
+Below that, you see the closed-month list. Select a month to open its detail panel.
+
+The detail panel shows the selected period and its locked figures without competing charts or busy layouts.
 
 ### What Snapshots Tell You
 
 | Question | Look At |
 |----------|---------|
-| "How much did we make in total?" | All-Time Overview |
-| "Was April better than May?" | Select each month and compare |
-| "Are we growing?" | The trend chart on All-Time |
-| "Where did the money go?" | Revenue breakdown for a single month |
-| "How much is profit?" | Net Profit card |
+| "Which months are closed?" | Snapshot list |
+| "How much did we make in total?" | Top summary strip |
+| "Was April profitable?" | Select April and check Profit/Loss |
+| "What did we spend?" | Expenses in the summary or detail panel |
+| "Can this month still change?" | If it is not in the snapshot list, it is still open |
 
-### Understanding the Revenue Breakdown
+### Understanding Profit/Loss
 
-When you select a single month, you see a bar chart showing 4 bars:
+Profit/Loss is based on the locked month:
 
-| Bar | What It Represents | Colour |
-|-----|-------------------|--------|
-| **Revenue** | Total money that came in | Green |
-| **PMG Share** | The group's 25% share | Blue |
-| **Expenses** | What was spent running the business | Amber |
-| **Profit Pool** | What's left as profit | Purple |
+```text
+Revenue - Expenses - PMG Share = Profit/Loss
+```
 
-The relationship is: **Revenue − PMG Share − Expenses = Profit Pool**
+Positive profit is good. A loss means the month spent more than it retained after PMG share.
 
 ---
 
@@ -101,7 +101,8 @@ The relationship is: **Revenue − PMG Share − Expenses = Profit Pool**
 | **Revenue Report** | All income broken down by client, division, and month |
 | **Expenses Report** | All costs broken down by category and division |
 | **Profit & Loss** | Full income statement for a period |
-| **Division Report** | Performance by business unit (PMG vs TES) |
+| **Division Report** | Performance by business unit (`AWS`, `TES`, and `PMG`) |
+| **Executive Commentary** | AI-assisted month-over-month review based on the actual report numbers |
 
 ### When to Use Reports
 
@@ -109,8 +110,9 @@ The relationship is: **Revenue − PMG Share − Expenses = Profit Pool**
 |-----------|----------------|
 | "Which client pays us the most?" | Revenue Report, sorted by client |
 | "What's our biggest expense?" | Expenses Report, sorted by category |
-| "Is PMG or TES more profitable?" | Division Report |
+| "Which division is most profitable?" | Division Report |
 | "I need the full monthly P&L" | Profit & Loss Report |
+| "I need a plain-English review" | Executive Commentary |
 | "I need to drill into a specific number" | Click any drill-down link in a report |
 
 ### Drill-Downs
@@ -123,24 +125,11 @@ Many numbers in the reports are **clickable**. Clicking a number opens a side pa
 
 ### What Trends Tell You
 
-Trends show how your business is performing over time. The main trend chart in the Snapshots page shows:
+Trends show how your business is performing over time. Use reports, dashboard charts, and closed snapshots together:
 
-- **Revenue line** — Are you earning more or less?
-- **Expenses line** — Are costs going up or down?
-- **Profit line** — Is the bottom line improving?
-
-### Reading the Trend Chart
-
-```
-        Revenue  ───────  (green, top line)
-        Expenses ─ . . .  (amber, middle line)
-        Profit   ───────  (blue, bottom line)
-              ↗
-              │
-    Revenue is growing ↗
-    Expenses are stable →
-    Profit is growing ↗
-```
+- **Revenue** — Are you earning more or less?
+- **Expenses** — Are costs going up or down?
+- **Profit/Loss** — Is the bottom line improving?
 
 ### What to Look For
 
@@ -166,7 +155,7 @@ Before closing, run the pre-close checks:
 ### Step 2: Close the Month
 
 1. Go to the **Dashboard** or **Insights → Snapshots**
-2. Click **Close Month**
+2. Click the close button for the completed period, for example **Close May 2026**
 3. Review the summary
 4. Confirm
 
@@ -181,7 +170,7 @@ Before closing, run the pre-close checks:
 
 - The **P&L for that month is final** — no more changes
 - The snapshot becomes a permanent record
-- The dashboard updates to reflect the locked figures
+- The dashboard badge shows the actual closed period, for example **May 2026 closed**
 
 ---
 
@@ -207,12 +196,13 @@ Before closing, run the pre-close checks:
 
 | I want to... | Go to... | Notes |
 |-------------|----------|-------|
-| View all closed months | `/insights/snapshots` | Select All-Time or a specific month |
-| See overall performance | Snapshots → All-Time | Cumulative totals + trend chart |
-| See one month's breakdown | Snapshots → select a month | Revenue breakdown bar chart |
-| Close the current month | Dashboard → Close Month | Reviews data before locking |
+| View all closed months | `/insights/snapshots` | Use the snapshot list |
+| See overall performance | Snapshots summary strip | Cumulative totals across closed months |
+| See one month's breakdown | Snapshots → select a month | Opens the detail panel |
+| Close the completed month | Dashboard close button | Usually closes the previous month |
 | Run a detailed report | `/insights/reports` | Revenue, expenses, P&L, divisions |
-| Compare months | Select a closed month | The simplified view shows key metrics |
+| Get a plain-English review | Reports → Executive Commentary | Uses the actual report numbers |
+| Compare months | Select closed months and compare figures | The simplified view shows key metrics |
 | Check if my books are balanced | `/accounting/trial-balance` | Run before closing the month |
 
 ---
@@ -223,7 +213,7 @@ Before closing, run the pre-close checks:
 |---------|----------|
 | "I closed a month but the numbers look wrong" | You can't edit a closed month — adjust in the current month |
 | "The snapshot shows zero revenue" | Check that journal entries for that month are posted (not draft) |
-| "I can't see the current month" | Current month isn't closed yet — close it first |
-| "The trend chart looks flat" | You may only have one closed month; trends need 2+ months |
+| "I can't see the current month" | Current month is open. It appears after it is closed. |
+| "The dashboard says May closed but we are in June" | That is expected. It means May is locked and June is still open. |
 | "My P&L doesn't match the snapshot" | The snapshot is based on data at the time of closing — recent entries after closing won't affect it |
 | "I accidentally closed a month" | Contact support — snapshots are designed to be permanent and cannot be reopened |

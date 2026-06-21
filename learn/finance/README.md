@@ -44,7 +44,7 @@ Most income starts in **Billing**:
 
 Every income record is linked to:
 - A **client** (who paid)
-- A **division** (PMG, TES, etc.)
+- A **division** (`AWS`, `TES`, or `PMG`)
 - An **invoice** (what they paid for)
 - A **description** (what the payment was for)
 
@@ -189,6 +189,7 @@ Each division has its own distribution rates. For example:
 |----------|-----------|----------|
 | PMG | 25% | 75% |
 | TES | 15% | 85% |
+| AWS | Configured in settings | Configured in settings |
 
 The **PMG Share** is the portion of revenue that goes to Playhouse Media Group. The **Retained** portion stays with the division to cover expenses and profit.
 
@@ -265,3 +266,4 @@ Go to **Finance → Distributions** to see:
 | "I see duplicate income" | Check if the payment was recorded twice in Billing |
 | "An expense shows the wrong amount" | Edit it — the system voids the old JE and creates a new one |
 | "Where's my PMG Share?" | Check the Distributions page for the expected vs actual allocation |
+| "A report shows the wrong division" | Check the original invoice, payment, or expense division first. Finance follows the source record. |
