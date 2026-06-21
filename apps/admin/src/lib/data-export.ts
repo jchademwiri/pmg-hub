@@ -19,6 +19,12 @@ interface BackupPayload {
   tables: Record<string, unknown[]>;
 }
 
+export interface BackupObject {
+  key: string;
+  lastModified: string;
+  sizeBytes: number;
+}
+
 interface R2Config {
   accountId: string;
   accessKeyId: string;
@@ -63,6 +69,10 @@ function amzDate(date: Date) {
   return date.toISOString().replace(/[:-]|\.\d{3}/g, '');
 }
 
+function normalizePrefix(prefix: string) {
+  return prefix.replace(/^\/+|\/+$/g, '');
+}
+
 function getR2Config(): R2Config | null {
   const {
     CLOUDFLARE_R2_ACCOUNT_ID,
@@ -90,12 +100,18 @@ function getR2Config(): R2Config | null {
   };
 }
 
+function getRetentionDays() {
+  const value = Number(process.env.CLOUDFLARE_R2_BACKUP_RETENTION_DAYS ?? 90);
+  return Number.isFinite(value) && value > 0 ? value : 90;
+}
+
 export function getBackupStorageStatus() {
   const config = getR2Config();
   return {
     configured: Boolean(config),
     bucket: config?.bucket ?? null,
     prefix: config?.prefix ?? 'database-backups',
+    retentionDays: getRetentionDays(),
   };
 }
 
@@ -197,6 +213,29 @@ export async function buildDatabaseBackupPayload(): Promise<BackupPayload> {
   };
 }
 
+function parseXmlTag(value: string, tag: string) {
+  const match = value.match(new RegExp(`<${tag}>([\\s\\S]*?)<\\/${tag}>`));
+  return match?.[1]
+    ?.replace(/&amp;/g, '&')
+    .replace(/&lt;/g, '<')
+    .replace(/&gt;/g, '>')
+    .replace(/&quot;/g, '"')
+    .replace(/&apos;/g, "'") ?? '';
+}
+
+function parseR2ListObjects(xml: string): BackupObject[] {
+  return [...xml.matchAll(/<Contents>([\s\S]*?)<\/Contents>/g)]
+    .map((match) => {
+      const content = match[1] ?? '';
+      return {
+        key: parseXmlTag(content, 'Key'),
+        lastModified: parseXmlTag(content, 'LastModified'),
+        sizeBytes: Number(parseXmlTag(content, 'Size') || 0),
+      };
+    })
+    .filter((object) => object.key.endsWith('.json'));
+}
+
 export async function buildExport(type: ExportType) {
   if (type === 'income-expenses') {
     return {
@@ -230,7 +269,19 @@ export async function buildExport(type: ExportType) {
   };
 }
 
-async function uploadToR2(key: string, body: string, contentType: string) {
+async function signedR2Request({
+  method,
+  key,
+  query = '',
+  body = '',
+  contentType = 'application/octet-stream',
+}: {
+  method: 'DELETE' | 'GET' | 'PUT';
+  key?: string;
+  query?: string;
+  body?: string;
+  contentType?: string;
+}) {
   const config = getR2Config();
   if (!config) throw new Error('Cloudflare R2 backup storage is not configured.');
 
@@ -241,7 +292,8 @@ async function uploadToR2(key: string, body: string, contentType: string) {
   const region = 'auto';
   const service = 's3';
   const scope = `${shortDate}/${region}/${service}/aws4_request`;
-  const path = `/${config.bucket}/${key.split('/').map(encodeURIComponent).join('/')}`;
+  const objectPath = key ? `/${key.split('/').map(encodeURIComponent).join('/')}` : '';
+  const path = `/${config.bucket}${objectPath}`;
   const payloadHash = sha256Hex(body);
   const signedHeaders = 'content-type;host;x-amz-content-sha256;x-amz-date';
   const canonicalHeaders = [
@@ -252,9 +304,9 @@ async function uploadToR2(key: string, body: string, contentType: string) {
     '',
   ].join('\n');
   const canonicalRequest = [
-    'PUT',
+    method,
     path,
-    '',
+    query,
     canonicalHeaders,
     signedHeaders,
     payloadHash,
@@ -277,15 +329,27 @@ async function uploadToR2(key: string, body: string, contentType: string) {
     `Signature=${signature}`,
   ].join(', ');
 
-  const response = await fetch(`https://${host}${path}`, {
-    method: 'PUT',
+  const init: RequestInit = {
+    method,
     headers: {
       Authorization: authorization,
       'Content-Type': contentType,
       'x-amz-content-sha256': payloadHash,
       'x-amz-date': timestamp,
     },
+  };
+
+  if (method === 'PUT') init.body = body;
+
+  return fetch(`https://${host}${path}${query ? `?${query}` : ''}`, init);
+}
+
+async function uploadToR2(key: string, body: string, contentType: string) {
+  const response = await signedR2Request({
+    method: 'PUT',
+    key,
     body,
+    contentType,
   });
 
   if (!response.ok) {
@@ -301,7 +365,7 @@ export async function createDatabaseBackup() {
   const payload = await buildDatabaseBackupPayload();
   const body = JSON.stringify(payload, null, 2);
   const timestamp = payload.exportedAt.replace(/[:.]/g, '-');
-  const key = `${config.prefix.replace(/^\/+|\/+$/g, '')}/pmg-hub-${timestamp}.json`;
+  const key = `${normalizePrefix(config.prefix)}/pmg-hub-${timestamp}.json`;
 
   await uploadToR2(key, body, 'application/json; charset=utf-8');
 
@@ -310,5 +374,204 @@ export async function createDatabaseBackup() {
     sizeBytes: Buffer.byteLength(body),
     tableCount: Object.keys(payload.tables).length,
     exportedAt: payload.exportedAt,
+  };
+}
+
+export async function listDatabaseBackups(): Promise<BackupObject[]> {
+  const config = getR2Config();
+  if (!config) return [];
+
+  const prefix = normalizePrefix(config.prefix);
+  const query = new URLSearchParams({
+    'list-type': '2',
+    prefix: `${prefix}/`,
+  }).toString();
+
+  const response = await signedR2Request({
+    method: 'GET',
+    query,
+    contentType: 'application/octet-stream',
+  });
+
+  if (!response.ok) {
+    const detail = await response.text().catch(() => '');
+    throw new Error(`Cloudflare R2 list failed (${response.status}). ${detail}`.trim());
+  }
+
+  const xml = await response.text();
+  return parseR2ListObjects(xml).sort((a, b) => b.lastModified.localeCompare(a.lastModified));
+}
+
+async function getBackupObject(key: string) {
+  const response = await signedR2Request({
+    method: 'GET',
+    key,
+    contentType: 'application/octet-stream',
+  });
+
+  if (!response.ok) {
+    const detail = await response.text().catch(() => '');
+    throw new Error(`Cloudflare R2 download failed (${response.status}). ${detail}`.trim());
+  }
+
+  return response.text();
+}
+
+async function deleteBackupObject(key: string) {
+  const response = await signedR2Request({
+    method: 'DELETE',
+    key,
+    contentType: 'application/octet-stream',
+  });
+
+  if (!response.ok) {
+    const detail = await response.text().catch(() => '');
+    throw new Error(`Cloudflare R2 delete failed (${response.status}). ${detail}`.trim());
+  }
+}
+
+export async function deleteOldDatabaseBackups(retentionDays?: number) {
+  const days = retentionDays ?? getRetentionDays();
+  const cutoff = Date.now() - days * 24 * 60 * 60 * 1000;
+  const backups = await listDatabaseBackups();
+  const expired = backups.filter((backup) => new Date(backup.lastModified).getTime() < cutoff);
+
+  for (const backup of expired) {
+    await deleteBackupObject(backup.key);
+  }
+
+  return {
+    retentionDays: days,
+    deletedCount: expired.length,
+    deletedKeys: expired.map((backup) => backup.key),
+  };
+}
+
+async function getPublicTableNames() {
+  const rows = await getRows(sql`
+    SELECT table_name AS name
+    FROM information_schema.tables
+    WHERE table_schema = 'public'
+      AND table_type = 'BASE TABLE'
+    ORDER BY table_name ASC
+  `);
+
+  return rows.map((row) => String(row.name));
+}
+
+async function getTableDependencies(tableNames: string[]) {
+  const rows = await getRows(sql`
+    SELECT
+      tc.table_name AS "tableName",
+      ccu.table_name AS "referencedTable"
+    FROM information_schema.table_constraints tc
+    JOIN information_schema.key_column_usage kcu
+      ON tc.constraint_name = kcu.constraint_name
+      AND tc.table_schema = kcu.table_schema
+    JOIN information_schema.constraint_column_usage ccu
+      ON ccu.constraint_name = tc.constraint_name
+      AND ccu.table_schema = tc.table_schema
+    WHERE tc.constraint_type = 'FOREIGN KEY'
+      AND tc.table_schema = 'public'
+  `);
+  const known = new Set(tableNames);
+  const dependencies = new Map<string, Set<string>>();
+
+  for (const name of tableNames) dependencies.set(name, new Set());
+
+  for (const row of rows) {
+    const tableName = String(row.tableName);
+    const referencedTable = String(row.referencedTable);
+    if (known.has(tableName) && known.has(referencedTable) && tableName !== referencedTable) {
+      dependencies.get(tableName)?.add(referencedTable);
+    }
+  }
+
+  return dependencies;
+}
+
+function sortTablesByDependencies(tableNames: string[], dependencies: Map<string, Set<string>>) {
+  const sorted: string[] = [];
+  const remaining = new Set(tableNames);
+
+  while (remaining.size > 0) {
+    const ready = [...remaining].filter((table) => {
+      const deps = dependencies.get(table) ?? new Set();
+      return [...deps].every((dep) => !remaining.has(dep));
+    });
+
+    if (ready.length === 0) {
+      sorted.push(...remaining);
+      break;
+    }
+
+    for (const table of ready.sort()) {
+      sorted.push(table);
+      remaining.delete(table);
+    }
+  }
+
+  return sorted;
+}
+
+function isBackupPayload(value: unknown): value is BackupPayload {
+  if (!value || typeof value !== 'object') return false;
+  const payload = value as BackupPayload;
+  return (
+    typeof payload.exportedAt === 'string' &&
+    typeof payload.source === 'string' &&
+    Boolean(payload.tables) &&
+    typeof payload.tables === 'object'
+  );
+}
+
+export async function restoreDatabaseBackup(key: string) {
+  const config = getR2Config();
+  if (!config) throw new Error('Cloudflare R2 backup storage is not configured.');
+
+  const allowedPrefix = `${normalizePrefix(config.prefix)}/`;
+  if (!key.startsWith(allowedPrefix) || !key.endsWith('.json')) {
+    throw new Error('Backup key is outside the configured backup prefix.');
+  }
+
+  const raw = await getBackupObject(key);
+  const parsed = JSON.parse(raw) as unknown;
+  if (!isBackupPayload(parsed)) {
+    throw new Error('Selected backup file is not a valid PMG backup.');
+  }
+
+  const publicTables = new Set(await getPublicTableNames());
+  const backupTables = Object.keys(parsed.tables).filter((table) => publicTables.has(table));
+  if (backupTables.length === 0) {
+    throw new Error('Selected backup does not contain restorable public tables.');
+  }
+
+  const db = getDb();
+  const quotedTables = backupTables.map(quoteIdent).join(', ');
+  await db.execute(sql.raw(`TRUNCATE TABLE ${quotedTables} RESTART IDENTITY CASCADE`));
+
+  const dependencies = await getTableDependencies(backupTables);
+  const restoreOrder = sortTablesByDependencies(backupTables, dependencies);
+
+  for (const table of restoreOrder) {
+    const rows = parsed.tables[table] as Record<string, unknown>[];
+    if (!Array.isArray(rows) || rows.length === 0) continue;
+
+    await db.execute(sql`
+      INSERT INTO ${sql.raw(quoteIdent(table))}
+      SELECT *
+      FROM json_populate_recordset(NULL::${sql.raw(quoteIdent(table))}, ${JSON.stringify(rows)}::json)
+    `);
+  }
+
+  return {
+    key,
+    restoredAt: new Date().toISOString(),
+    backupExportedAt: parsed.exportedAt,
+    tableCount: restoreOrder.length,
+    rowCount: restoreOrder.reduce((sum, table) => {
+      const rows = parsed.tables[table];
+      return sum + (Array.isArray(rows) ? rows.length : 0);
+    }, 0),
   };
 }

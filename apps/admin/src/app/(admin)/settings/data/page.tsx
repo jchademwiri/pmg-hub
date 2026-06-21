@@ -6,13 +6,14 @@ import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert'
 import { Field, FieldLabel } from '@/components/ui/field'
 import { SettingsPageHeader } from '@/components/settings/settings-page-header'
 import { SettingsSection } from '@/components/settings/settings-section'
-import { getBackupStorageStatus } from '@/lib/data-export'
+import { getBackupStorageStatus, listDatabaseBackups } from '@/lib/data-export'
 import { DataExportList, DatabaseBackupPanel } from './data-settings-client'
 
 export const metadata: Metadata = { title: 'Data & Exports Settings' }
 
-export default function DataSettingsPage() {
+export default async function DataSettingsPage() {
   const backupStorage = getBackupStorageStatus()
+  const backups = backupStorage.configured ? await listDatabaseBackups().catch(() => []) : []
 
   return (
     <div className="flex flex-col gap-6">
@@ -45,6 +46,8 @@ export default function DataSettingsPage() {
           backupConfigured={backupStorage.configured}
           backupBucket={backupStorage.bucket}
           backupPrefix={backupStorage.prefix}
+          retentionDays={backupStorage.retentionDays}
+          backups={backups}
         />
       </SettingsSection>
 
