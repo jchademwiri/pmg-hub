@@ -125,7 +125,9 @@ function drawCenteredLogo(doc: jsPDF, orgName: string) {
   }
 
   const logoData = `data:image/png;base64,${readFileSync(logoPath).toString('base64')}`;
-  doc.addImage(logoData, 'PNG', PAGE.width / 2 - 20, 11, 40, 18, undefined, 'FAST');
+  const normalized = orgName.toLowerCase();
+  const size = /tender edge|tes/.test(normalized) ? 22 : 20;
+  doc.addImage(logoData, 'PNG', PAGE.width / 2 - size / 2, 10, size, size, undefined, 'FAST');
 }
 
 function drawFooter(doc: jsPDF, data: PdfDocumentData) {
