@@ -6,12 +6,14 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { ExportPdfButton } from './export-pdf-button';
 
-const { downloadElementPdfMock } = vi.hoisted(() => ({
+const { downloadElementPdfMock, downloadServerPdfMock } = vi.hoisted(() => ({
   downloadElementPdfMock: vi.fn(),
+  downloadServerPdfMock: vi.fn(),
 }));
 
 vi.mock('@/lib/pdf-export', () => ({
   downloadElementPdf: downloadElementPdfMock,
+  downloadServerPdf: downloadServerPdfMock,
 }));
 
 vi.mock('sonner', () => ({
@@ -25,7 +27,9 @@ vi.mock('sonner', () => ({
 describe('ExportPdfButton', () => {
   beforeEach(() => {
     downloadElementPdfMock.mockReset();
+    downloadServerPdfMock.mockReset();
     downloadElementPdfMock.mockResolvedValue(undefined);
+    downloadServerPdfMock.mockResolvedValue(undefined);
   });
 
   it('exports the explicit printable element id', async () => {
@@ -46,5 +50,16 @@ describe('ExportPdfButton', () => {
     await waitFor(() => {
       expect(downloadElementPdfMock).toHaveBeenCalledWith('printable-area', 'Invoice PMG');
     });
+  });
+
+  it('uses the server PDF URL when provided', async () => {
+    render(<ExportPdfButton pdfUrl="/api/billing/pdf/invoice/123" fileName="Invoice PMG" />);
+
+    await userEvent.click(screen.getByRole('button', { name: /export pdf/i }));
+
+    await waitFor(() => {
+      expect(downloadServerPdfMock).toHaveBeenCalledWith('/api/billing/pdf/invoice/123', 'Invoice PMG');
+    });
+    expect(downloadElementPdfMock).not.toHaveBeenCalled();
   });
 });

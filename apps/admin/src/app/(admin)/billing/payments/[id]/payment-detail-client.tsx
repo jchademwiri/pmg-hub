@@ -47,6 +47,7 @@ interface PaymentDetailClientProps {
   allocatedSum: number;
   creditBalance: number;
   isLocked: boolean;
+  pdfUrl: string;
   
   // Data for editing
   divisions: { id: string; name: string }[];
@@ -65,6 +66,7 @@ export function PaymentDetailClient({
   allocatedSum,
   creditBalance,
   isLocked,
+  pdfUrl,
   divisions,
   clients,
   minDate,
@@ -520,11 +522,13 @@ export function PaymentDetailClient({
           />
           <ExportPdfButton 
             fileName={`Receipt-${payment.id.slice(0, 8).toUpperCase()}`}
+            pdfUrl={pdfUrl}
           />
           <EmailReceiptDialog
             incomeId={payment.id}
             receiptNumber={receiptNumber}
             defaultRecipientEmail={client?.email ?? ''}
+            pdfUrl={pdfUrl}
           />
         </div>
       </div>

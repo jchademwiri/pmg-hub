@@ -171,6 +171,8 @@ export default async function InvoiceDetailPage({ params }: Props) {
   const totalAllocated = allocations.reduce((sum, a) => sum + parseFloat(a.amount), 0);
   const outstandingBalance = Math.max(0, parseFloat(invoice.total) - totalAllocated);
   const availableCredit = invoice.clientId ? await getClientCreditBalanceV2(invoice.clientId) : 0;
+  const invoicePdfUrl = `/api/billing/pdf/invoice/${invoice.id}`;
+  const statementPdfUrl = invoice.clientId ? `/api/billing/pdf/statement/${invoice.clientId}` : undefined;
 
   const docPreviewProps = {
     number: invoice.documentNumber,
@@ -252,12 +254,15 @@ export default async function InvoiceDetailPage({ params }: Props) {
           />
           <ExportPdfButton 
             fileName={`Invoice-${invoice.documentNumber}`}
+            pdfUrl={invoicePdfUrl}
           />
           <EmailDocumentDialog
             documentId={invoice.id}
             documentNumber={invoice.documentNumber}
             documentType="invoice"
             defaultRecipientEmail={invoice.clientEmail ?? ''}
+            pdfUrl={invoicePdfUrl}
+            statementPdfUrl={statementPdfUrl}
           />
           {canEdit && (
             <Button variant="outline" size="sm" asChild>

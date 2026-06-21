@@ -866,6 +866,20 @@ export function ClientBillingWorkspace({
       : selectedDocType === 'payment'
       ? 'dialog-receipt-printable'
       : 'dialog-document-printable';
+  const statementPdfParams = new URLSearchParams();
+  if (statementPeriodParam) statementPdfParams.set('monthPeriod', statementPeriodParam);
+  if (statementYearParam) statementPdfParams.set('year', statementYearParam);
+  const statementPdfUrl = `/api/billing/pdf/statement/${client.id}${statementPdfParams.size ? `?${statementPdfParams.toString()}` : ''}`;
+  const activePdfUrl =
+    selectedDocType === 'invoice' && activeInvoice
+      ? `/api/billing/pdf/invoice/${activeInvoice.id}`
+      : selectedDocType === 'quote' && activeQuote
+      ? `/api/billing/pdf/quote/${activeQuote.id}`
+      : selectedDocType === 'payment' && activePayment
+      ? `/api/billing/pdf/receipt/${activePayment.id}`
+      : selectedDocType === 'statement'
+      ? statementPdfUrl
+      : undefined;
 
   return (
     <div className="flex flex-col gap-8">
@@ -1479,7 +1493,7 @@ export function ClientBillingWorkspace({
                 {selectedDocType !== 'statement' && selectedDocId && (
                   <>
                     <PrintButton label="Print" documentTitle={documentTitle} />
-                    <ExportPdfButton fileName={documentTitle} elementId={workspacePrintableElementId} />
+                    <ExportPdfButton fileName={documentTitle} elementId={workspacePrintableElementId} pdfUrl={activePdfUrl} />
                   </>
                 )}
                 {selectedDocType === 'statement' && (
@@ -1491,6 +1505,7 @@ export function ClientBillingWorkspace({
                     <ExportPdfButton
                       fileName={`Statement-${client.businessName?.replace(/\s+/g, '-') ?? client.name.replace(/\s+/g, '-')}`}
                       elementId={workspacePrintableElementId}
+                      pdfUrl={statementPdfUrl}
                     />
                   </>
                 )}
@@ -1503,6 +1518,8 @@ export function ClientBillingWorkspace({
                       documentType="invoice"
                       defaultRecipientEmail={client.email ?? ''}
                       printableElementId={workspacePrintableElementId}
+                      pdfUrl={activePdfUrl}
+                      statementPdfUrl={statementPdfUrl}
                     />
                     <Button variant="outline" size="sm" asChild>
                       <Link href={`/billing/invoices/${activeInvoice.id}/edit`}>Edit</Link>
@@ -1517,6 +1534,7 @@ export function ClientBillingWorkspace({
                       documentType="quote"
                       defaultRecipientEmail={client.email ?? ''}
                       printableElementId={workspacePrintableElementId}
+                      pdfUrl={activePdfUrl}
                     />
                     <Button variant="outline" size="sm" asChild>
                       <Link href={`/billing/quotes/${activeQuote.id}/edit`}>Edit</Link>
@@ -1530,6 +1548,7 @@ export function ClientBillingWorkspace({
                       receiptNumber={generateReceiptNumber(activePayment.id, activePayment.divisionName)}
                       defaultRecipientEmail={client.email ?? ''}
                       printableElementId={workspacePrintableElementId}
+                      pdfUrl={activePdfUrl}
                     />
                       <Button variant="outline" size="sm" asChild>
                         <Link href={`/billing/payments/${activePayment.id}`}>View Page</Link>
@@ -1602,7 +1621,7 @@ export function ClientBillingWorkspace({
               {selectedDocType !== 'statement' && selectedDocId && (
                 <>
                   <PrintButton label="Print" documentTitle={documentTitle} />
-                  <ExportPdfButton fileName={documentTitle} elementId={dialogPrintableElementId} />
+                  <ExportPdfButton fileName={documentTitle} elementId={dialogPrintableElementId} pdfUrl={activePdfUrl} />
                 </>
               )}
               {selectedDocType === 'statement' && (
@@ -1614,6 +1633,7 @@ export function ClientBillingWorkspace({
                   <ExportPdfButton
                     fileName={`Statement-${client.businessName?.replace(/\s+/g, '-') ?? client.name.replace(/\s+/g, '-')}`}
                     elementId={dialogPrintableElementId}
+                    pdfUrl={statementPdfUrl}
                   />
                 </>
               )}
@@ -1626,6 +1646,8 @@ export function ClientBillingWorkspace({
                     documentType="invoice"
                     defaultRecipientEmail={client.email ?? ''}
                     printableElementId={dialogPrintableElementId}
+                    pdfUrl={activePdfUrl}
+                    statementPdfUrl={statementPdfUrl}
                   />
                   <Button variant="outline" size="sm" asChild>
                     <Link href={`/billing/invoices/${activeInvoice.id}/edit`}>Edit</Link>
@@ -1640,6 +1662,7 @@ export function ClientBillingWorkspace({
                     documentType="quote"
                     defaultRecipientEmail={client.email ?? ''}
                     printableElementId={dialogPrintableElementId}
+                    pdfUrl={activePdfUrl}
                   />
                   <Button variant="outline" size="sm" asChild>
                     <Link href={`/billing/quotes/${activeQuote.id}/edit`}>Edit</Link>
@@ -1652,6 +1675,7 @@ export function ClientBillingWorkspace({
                       receiptNumber={generateReceiptNumber(activePayment.id, activePayment.divisionName)}
                       defaultRecipientEmail={client.email ?? ''}
                       printableElementId={dialogPrintableElementId}
+                      pdfUrl={activePdfUrl}
                     />
                     <Button variant="outline" size="sm" asChild>
                       <Link href={`/billing/payments/${activePayment.id}`}>View Page</Link>

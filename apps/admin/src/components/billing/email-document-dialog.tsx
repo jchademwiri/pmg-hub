@@ -20,7 +20,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Mail, Loader2 } from 'lucide-react';
 import { getDocumentEmailPreviewAction, sendDocumentEmailAction } from '@/app/actions/email-delivery';
 import { EmailPreviewPanel } from '@/components/billing/email-preview-panel';
-import { elementToPdfBase64 } from '@/lib/pdf-export';
+import { elementToPdfBase64, serverPdfUrlToBase64 } from '@/lib/pdf-export';
 
 interface EmailDocumentDialogProps {
   documentId: string;
@@ -29,6 +29,8 @@ interface EmailDocumentDialogProps {
   defaultRecipientEmail: string;
   printableElementId?: string;
   statementElementId?: string;
+  pdfUrl?: string;
+  statementPdfUrl?: string;
   onSuccess?: () => void;
 }
 
@@ -39,6 +41,8 @@ export function EmailDocumentDialog({
   defaultRecipientEmail,
   printableElementId = 'printable-area',
   statementElementId = 'printable-statement-area',
+  pdfUrl,
+  statementPdfUrl,
   onSuccess,
 }: EmailDocumentDialogProps) {
   const [open, setOpen] = useState(false);
@@ -94,13 +98,17 @@ export function EmailDocumentDialog({
     setIsSending(true);
     try {
       setStatusText(`Compiling ${documentType === 'invoice' ? 'invoice' : 'quotation'} PDF...`);
-      const pdfBase64 = await elementToPdfBase64(printableElementId, `${documentType === 'invoice' ? 'Invoice' : 'Quote'} PDF`);
+      const pdfBase64 = pdfUrl
+        ? await serverPdfUrlToBase64(pdfUrl, `${documentType === 'invoice' ? 'Invoice' : 'Quote'} PDF`)
+        : await elementToPdfBase64(printableElementId, `${documentType === 'invoice' ? 'Invoice' : 'Quote'} PDF`);
 
       let statementBase64: string | undefined;
       if (documentType === 'invoice' && attachStatement) {
         setStatusText('Compiling account statement PDF...');
         try {
-          statementBase64 = await elementToPdfBase64(statementElementId, 'Statement PDF');
+          statementBase64 = statementPdfUrl
+            ? await serverPdfUrlToBase64(statementPdfUrl, 'Statement PDF')
+            : await elementToPdfBase64(statementElementId, 'Statement PDF');
         } catch (err) {
           console.error("Statement compile failed:", err);
           toast.warning("Failed to render client statement. Emailing invoice only.");

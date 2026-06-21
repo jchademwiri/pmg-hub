@@ -86,6 +86,10 @@ export default async function StatementDetailPage({ params, searchParams }: Prop
   if (!statement) notFound();
 
   const { client, summary, invoices } = statement;
+  const statementPdfParams = new URLSearchParams();
+  if (monthPeriod) statementPdfParams.set('monthPeriod', monthPeriod);
+  if (year) statementPdfParams.set('year', String(year));
+  const statementPdfUrl = `/api/billing/pdf/statement/${clientId}${statementPdfParams.size ? `?${statementPdfParams.toString()}` : ''}`;
 
   // ── DocumentPreview props ─────────────────────────────────────────────────
   let periodLabel = '';
@@ -307,6 +311,7 @@ export default async function StatementDetailPage({ params, searchParams }: Prop
           />
           <ExportPdfButton 
             fileName={`Statement-${client.businessName?.replace(/\s+/g, '-') ?? client.name.replace(/\s+/g, '-')}`}
+            pdfUrl={statementPdfUrl}
           />
         </div>
       </div>

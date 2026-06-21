@@ -19,13 +19,14 @@ import { Textarea } from '@/components/ui/textarea';
 import { Mail, Loader2 } from 'lucide-react';
 import { getReceiptEmailPreviewAction, sendReceiptEmailAction } from '@/app/actions/email-delivery';
 import { EmailPreviewPanel } from '@/components/billing/email-preview-panel';
-import { elementToPdfBase64 } from '@/lib/pdf-export';
+import { elementToPdfBase64, serverPdfUrlToBase64 } from '@/lib/pdf-export';
 
 interface EmailReceiptDialogProps {
   incomeId: string;
   receiptNumber: string;
   defaultRecipientEmail: string;
   printableElementId?: string;
+  pdfUrl?: string;
   onSuccess?: () => void;
 }
 
@@ -34,6 +35,7 @@ export function EmailReceiptDialog({
   receiptNumber,
   defaultRecipientEmail,
   printableElementId = 'printable-area',
+  pdfUrl,
   onSuccess,
 }: EmailReceiptDialogProps) {
   const [open, setOpen] = useState(false);
@@ -86,7 +88,9 @@ export function EmailReceiptDialog({
     setIsSending(true);
     try {
       setStatusText('Compiling receipt PDF...');
-      const pdfBase64 = await elementToPdfBase64(printableElementId, 'Receipt PDF');
+      const pdfBase64 = pdfUrl
+        ? await serverPdfUrlToBase64(pdfUrl, 'Receipt PDF')
+        : await elementToPdfBase64(printableElementId, 'Receipt PDF');
 
       setStatusText('Transmitting receipt via Resend...');
       const result = await sendReceiptEmailAction({

@@ -38,6 +38,7 @@ export default async function QuoteDetailPage({ params }: Props) {
   if (!quote) notFound();
 
   const divSettings = await getDivisionBillingSettings(quote.divisionId);
+  const quotePdfUrl = `/api/billing/pdf/quote/${quote.id}`;
 
   // Build DocumentPreview props from real data
   const docPreviewProps = {
@@ -110,12 +111,14 @@ export default async function QuoteDetailPage({ params }: Props) {
           />
           <ExportPdfButton 
             fileName={`Quote-${quote.documentNumber}`}
+            pdfUrl={quotePdfUrl}
           />
           <EmailDocumentDialog
             documentId={quote.id}
             documentNumber={quote.documentNumber}
             documentType="quote"
             defaultRecipientEmail={quote.clientEmail ?? ''}
+            pdfUrl={quotePdfUrl}
           />
           {canEdit && (
             <Button variant="outline" size="sm" asChild>
