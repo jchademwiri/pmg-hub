@@ -587,7 +587,6 @@ async function buildStatementPdfData(
     issueDate: getSASTToday(),
     org: {
       name: 'Playhouse Media Group',
-      divisionOf: 'Playhouse Media Group',
     },
     client: {
       name: statement.client.businessName ?? statement.client.name,
