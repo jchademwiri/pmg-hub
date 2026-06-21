@@ -12,7 +12,7 @@ const settingsNavItems = [
   { href: '/settings/billing', label: 'Billing', icon: Receipt },
   { href: '/settings/users', label: 'Users', icon: Users },
   { href: '/settings/security', label: 'Security', icon: Shield, badge: 'Soon' },
-  { href: '/settings/data', label: 'Data', icon: Database, badge: 'Soon' },
+  { href: '/settings/data', label: 'Data', icon: Database },
 ];
 
 export function SettingsNav() {
