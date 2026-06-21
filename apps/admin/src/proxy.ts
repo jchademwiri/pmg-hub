@@ -1,6 +1,12 @@
 import { NextResponse, type NextRequest } from 'next/server'
 import { auth } from '@/lib/auth'
 
+type AuthSession = {
+  user?: {
+    isActive?: boolean
+  }
+} | null
+
 // In-memory rate limiter: 10 requests / 60 seconds per IP
 const rateLimitMap = new Map<string, { count: number; windowStart: number }>()
 
@@ -38,8 +44,12 @@ export async function proxy(request: NextRequest): Promise<NextResponse> {
     }
   }
 
-  // Allow auth routes through unconditionally
-  if (pathname === '/login' || pathname.startsWith('/api/auth/')) {
+  // Allow auth and cron routes through. Cron routes enforce CRON_SECRET internally.
+  if (
+    pathname === '/login' ||
+    pathname.startsWith('/api/auth/') ||
+    pathname.startsWith('/api/cron/')
+  ) {
     return NextResponse.next()
   }
 
@@ -58,10 +68,10 @@ export async function proxy(request: NextRequest): Promise<NextResponse> {
 
   // Validate session directly via the DB adapter - no internal HTTP fetch
   try {
-    const key = 'get' + 'Session';
-    const session = await (auth.api as any)[key]({
+    const getSession = auth.api.getSession as (args: { headers: Headers }) => Promise<AuthSession>
+    const session = await getSession({
       headers: request.headers,
-    });
+    })
 
     if (!session?.user) {
       return NextResponse.redirect(new URL('/login', request.url))
