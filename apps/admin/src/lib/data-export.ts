@@ -548,21 +548,24 @@ export async function restoreDatabaseBackup(key: string) {
 
   const db = getDb();
   const quotedTables = backupTables.map(quoteIdent).join(', ');
-  await db.execute(sql.raw(`TRUNCATE TABLE ${quotedTables} RESTART IDENTITY CASCADE`));
 
   const dependencies = await getTableDependencies(backupTables);
   const restoreOrder = sortTablesByDependencies(backupTables, dependencies);
 
-  for (const table of restoreOrder) {
-    const rows = parsed.tables[table] as Record<string, unknown>[];
-    if (!Array.isArray(rows) || rows.length === 0) continue;
+  await db.transaction(async (tx) => {
+    await tx.execute(sql.raw(`TRUNCATE TABLE ${quotedTables} RESTART IDENTITY CASCADE`));
 
-    await db.execute(sql`
-      INSERT INTO ${sql.raw(quoteIdent(table))}
-      SELECT *
-      FROM json_populate_recordset(NULL::${sql.raw(quoteIdent(table))}, ${JSON.stringify(rows)}::json)
-    `);
-  }
+    for (const table of restoreOrder) {
+      const rows = parsed.tables[table] as Record<string, unknown>[];
+      if (!Array.isArray(rows) || rows.length === 0) continue;
+
+      await tx.execute(sql`
+        INSERT INTO ${sql.raw(quoteIdent(table))}
+        SELECT *
+        FROM json_populate_recordset(NULL::${sql.raw(quoteIdent(table))}, ${JSON.stringify(rows)}::json)
+      `);
+    }
+  });
 
   return {
     key,
