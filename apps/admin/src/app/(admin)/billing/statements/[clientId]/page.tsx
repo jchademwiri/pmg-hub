@@ -1,7 +1,7 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
-import { ChevronLeft, FileDown } from 'lucide-react';
+import { ChevronLeft } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Separator } from '@/components/ui/separator';
@@ -353,6 +353,7 @@ export default async function StatementDetailPage({ params, searchParams }: Prop
         {/* Document preview - scrollable on small screens */}
         <div className="lg:col-span-2 overflow-x-auto">
           <DocumentPreview
+            id="printable-area"
             type="statement"
             {...docPreviewProps}
           />

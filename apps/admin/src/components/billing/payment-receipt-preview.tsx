@@ -1,5 +1,4 @@
 import React from 'react';
-import { cn } from '@/lib/utils';
 import { fmtDateLong, formatZAR } from '@/lib/format';
 import { getDocumentLogoUrl } from '@/lib/document-logo';
 import { generateReceiptNumber } from '@pmg/utils';
@@ -56,17 +55,9 @@ export function PaymentReceiptPreview({
       className="print-document w-full max-w-[794px] min-h-[1123px] mx-auto flex flex-col bg-white text-zinc-900 shadow-md print:shadow-none ring-1 ring-zinc-200 print:ring-0 border-t-[4px] border-t-emerald-600"
     >
       {/* ── Header ─────────────────────────────────────────────────────────── */}
-      <div className="flex items-start justify-between gap-6 px-4 sm:px-10 pt-10 pb-6">
-        {/* Left: Logo + Company info */}
-        <div className="flex items-start gap-4">
-          <div className="flex size-14 shrink-0 items-center justify-center rounded-lg bg-zinc-100 text-zinc-800 text-xs font-bold overflow-hidden">
-            {logoUrl ? (
-              <img src={logoUrl} alt={payment.divisionName} className="w-full h-full object-contain" />
-            ) : (
-              payment.divisionName.slice(0, 3).toUpperCase()
-            )}
-          </div>
-
+      <div className="grid grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)] items-start gap-6 px-4 sm:px-10 pt-10 pb-6">
+        {/* Left: Company info */}
+        <div className="flex max-w-[16rem] items-start gap-4">
           <div className="flex flex-col gap-0.5">
             <span className="text-lg font-bold tracking-tight">{payment.divisionName}</span>
             <span className="text-xs text-zinc-500">Playhouse Media Group</span>
@@ -76,8 +67,17 @@ export function PaymentReceiptPreview({
           </div>
         </div>
 
+        {/* Center: Logo */}
+        <div className="flex h-16 w-40 items-center justify-center overflow-hidden bg-transparent">
+          {logoUrl ? (
+            <img src={logoUrl} alt={payment.divisionName} className="max-h-full max-w-full object-contain" />
+          ) : (
+            <span className="text-xs font-bold text-zinc-800">{payment.divisionName.slice(0, 3).toUpperCase()}</span>
+          )}
+        </div>
+
         {/* Right: Document type + number + status */}
-        <div className="flex flex-col items-end gap-1.5 shrink-0">
+        <div className="flex flex-col items-end gap-1.5 justify-self-end">
           <span className="text-2xl font-bold uppercase tracking-widest text-zinc-300 print:text-zinc-600">
             Receipt
           </span>
@@ -145,7 +145,7 @@ export function PaymentReceiptPreview({
         </span>
 
         {!payment.allocations || payment.allocations.length === 0 ? (
-          <div className="rounded-lg border border-dashed border-zinc-200 p-6 text-center text-xs text-zinc-500">
+          <div className="rounded-lg border border-dashed border-zinc-200 p-6 text-center text-xs text-zinc-500 print:break-inside-avoid [break-inside:avoid]">
             This payment is currently unallocated, or recorded as a general retainer.
           </div>
         ) : (
@@ -165,7 +165,7 @@ export function PaymentReceiptPreview({
             </thead>
             <tbody>
               {payment.allocations.map((alloc) => (
-                <tr key={alloc.id} className="border-b border-zinc-100 print:break-inside-avoid">
+                <tr key={alloc.id} className="border-b border-zinc-100 print:break-inside-avoid [break-inside:avoid]">
                   <td className="py-3 pr-4 text-zinc-900 font-medium">{alloc.invoiceNumber}</td>
                   <td className="py-3 px-4 text-zinc-500 text-xs">
                     {fmtDateLong(alloc.createdAt ? new Date(alloc.createdAt) : payment.date)}
@@ -181,7 +181,7 @@ export function PaymentReceiptPreview({
       </div>
 
       {/* Footer / Notes */}
-      <div className="mt-auto px-4 sm:px-10 pb-10 pt-4 border-t border-zinc-100 text-center text-[10px] text-zinc-400">
+      <div className="mt-auto px-4 sm:px-10 pb-10 pt-4 border-t border-zinc-100 text-center text-[10px] text-zinc-400 print:break-inside-avoid [break-inside:avoid]">
         <p>This is an official payment receipt issued by {payment.divisionName}.</p>
         <p className="mt-0.5">Thank you for your valued business!</p>
       </div>

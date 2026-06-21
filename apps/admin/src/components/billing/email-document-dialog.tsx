@@ -20,12 +20,15 @@ import { Textarea } from '@/components/ui/textarea';
 import { Mail, Loader2 } from 'lucide-react';
 import { getDocumentEmailPreviewAction, sendDocumentEmailAction } from '@/app/actions/email-delivery';
 import { EmailPreviewPanel } from '@/components/billing/email-preview-panel';
+import { elementToPdfBase64 } from '@/lib/pdf-export';
 
 interface EmailDocumentDialogProps {
   documentId: string;
   documentNumber: string;
   documentType: 'invoice' | 'quote';
   defaultRecipientEmail: string;
+  printableElementId?: string;
+  statementElementId?: string;
   onSuccess?: () => void;
 }
 
@@ -34,6 +37,8 @@ export function EmailDocumentDialog({
   documentNumber,
   documentType,
   defaultRecipientEmail,
+  printableElementId = 'printable-area',
+  statementElementId = 'printable-statement-area',
   onSuccess,
 }: EmailDocumentDialogProps) {
   const [open, setOpen] = useState(false);
@@ -88,76 +93,20 @@ export function EmailDocumentDialog({
     
     setIsSending(true);
     try {
-      const { jsPDF } = await import('jspdf');
-      const html2canvas = (await import('html2canvas-pro')).default;
-
-      // Helper function to compile an HTML Element to a Base64 PDF
-      async function compileToPdfBase64(elementId: string): Promise<string> {
-        const targetElement = document.getElementById(elementId);
-        if (!targetElement) {
-          throw new Error(`Printable element '#${elementId}' not found.`);
-        }
-
-        const canvas = await html2canvas(targetElement, {
-          scale: 2, // Sharp high-quality vector rendering
-          useCORS: true,
-          logging: false,
-          backgroundColor: '#FFFFFF',
-        });
-
-        const imgData = canvas.toDataURL('image/png');
-        const pdf = new jsPDF({
-          orientation: 'portrait',
-          unit: 'mm',
-          format: 'a4',
-        });
-
-        const imgWidth = 210;
-        const pageHeight = 297;
-        let imgHeight = (canvas.height * imgWidth) / canvas.width;
-
-        // If the captured height is slightly larger than A4 (e.g., within 18mm overflow),
-        // we scale it down slightly so it fits perfectly on a single page instead of spawning a blank page.
-        if (imgHeight > pageHeight && imgHeight < 315) {
-          imgHeight = pageHeight;
-        }
-
-        let heightLeft = imgHeight;
-        let position = 0;
-
-        pdf.addImage(imgData, 'PNG', 0, position, imgWidth, imgHeight, undefined, 'FAST');
-        heightLeft -= pageHeight;
-
-        // Multi-page splitting if height exceeds A4 height with a 10mm safety threshold
-        while (heightLeft > 10) {
-          position = heightLeft - imgHeight;
-          pdf.addPage();
-          pdf.addImage(imgData, 'PNG', 0, position, imgWidth, imgHeight, undefined, 'FAST');
-          heightLeft -= pageHeight;
-        }
-
-        const base64 = pdf.output('datauristring').split(',')[1];
-        if (!base64) throw new Error(`Base64 conversion failed for element: ${elementId}`);
-        return base64;
-      }
-
-      // 1. Generate primary Invoice/Quote PDF
       setStatusText(`Compiling ${documentType === 'invoice' ? 'invoice' : 'quotation'} PDF...`);
-      const pdfBase64 = await compileToPdfBase64('printable-area');
+      const pdfBase64 = await elementToPdfBase64(printableElementId, `${documentType === 'invoice' ? 'Invoice' : 'Quote'} PDF`);
 
-      // 2. Generate Client Statement PDF if selected (Invoice only)
       let statementBase64: string | undefined;
       if (documentType === 'invoice' && attachStatement) {
         setStatusText('Compiling account statement PDF...');
         try {
-          statementBase64 = await compileToPdfBase64('printable-statement-area');
+          statementBase64 = await elementToPdfBase64(statementElementId, 'Statement PDF');
         } catch (err) {
           console.error("Statement compile failed:", err);
           toast.warning("Failed to render client statement. Emailing invoice only.");
         }
       }
 
-      // 3. Dispatch Server action
       setStatusText('Transmitting documents via Resend...');
       const result = await sendDocumentEmailAction({
         documentId,

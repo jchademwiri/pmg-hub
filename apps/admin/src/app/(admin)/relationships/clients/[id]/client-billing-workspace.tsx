@@ -57,6 +57,11 @@ import { calculateClientHealth, calculateAverageDaysToPay } from '@/lib/client-b
 import { formatZAR, fmtDate } from '@/lib/format';
 import { getSASTToday } from '@/lib/format';
 import { getDocumentLogoUrl } from '@/lib/document-logo';
+import {
+  appendElementToPdf,
+  elementToPdfBase64,
+  sanitizePdfFileName,
+} from '@/lib/pdf-export';
 import { ChevronDown, ChevronUp, FileDown, Mail, Loader2, Eye, Plus, CheckCircle2, XCircle, Wallet, Clock, AlertCircle } from 'lucide-react';
 import { generateReceiptNumber } from '@pmg/utils';
 import { IssueCreditNoteDialog } from '@/components/billing/issue-credit-note-dialog';
@@ -681,10 +686,9 @@ export function ClientBillingWorkspace({
 
     try {
       const { jsPDF } = await import('jspdf');
-      const html2canvas = (await import('html2canvas-pro')).default;
 
       const pdf = new jsPDF({
-        orientation: 'p',
+        orientation: 'portrait',
         unit: 'mm',
         format: 'a4',
       });
@@ -702,48 +706,16 @@ export function ClientBillingWorkspace({
         // Delay to allow React mounting/rendering
         await new Promise((resolve) => setTimeout(resolve, 250));
 
-        const element = document.getElementById(`offscreen-doc-${id}`);
-        if (!element) {
+        const elementId = `offscreen-doc-${id}`;
+        if (!document.getElementById(elementId)) {
           setBulkLog((prev) =>
             prev.map((e) => (e.id === id ? { ...e, status: 'failed', error: 'Render container missing' } : e))
           );
           continue;
         }
 
-        const canvas = await html2canvas(element, {
-          scale: 2,
-          useCORS: true,
-          logging: false,
-          backgroundColor: '#ffffff',
-        });
-
-        const imgData = canvas.toDataURL('image/png');
-        const imgWidth = 210;
-        const pageHeight = 297;
-        let imgHeight = (canvas.height * imgWidth) / canvas.width;
-
-        if (imgHeight > pageHeight && imgHeight < 315) {
-          imgHeight = pageHeight;
-        }
-
-        if (pageAdded) {
-          pdf.addPage();
-        } else {
-          pageAdded = true;
-        }
-
-        let heightLeft = imgHeight;
-        let position = 0;
-
-        pdf.addImage(imgData, 'PNG', 0, position, imgWidth, imgHeight, undefined, 'FAST');
-        heightLeft -= pageHeight;
-
-        while (heightLeft > 10) {
-          position = heightLeft - imgHeight;
-          pdf.addPage();
-          pdf.addImage(imgData, 'PNG', 0, position, imgWidth, imgHeight, undefined, 'FAST');
-          heightLeft -= pageHeight;
-        }
+        await appendElementToPdf(pdf, elementId, pageAdded);
+        pageAdded = true;
 
         // Success for this item
         setBulkLog((prev) =>
@@ -752,7 +724,7 @@ export function ClientBillingWorkspace({
       }
 
       setBulkProgress(100);
-      pdf.save(`Combined_${activeTab === 'invoices' ? 'Invoices' : 'Quotes'}_${client.businessName?.replace(/\s+/g, '_') ?? 'Client'}.pdf`);
+      pdf.save(sanitizePdfFileName(`Combined_${activeTab === 'invoices' ? 'Invoices' : 'Quotes'}_${client.businessName ?? 'Client'}`));
       toast.success('Combined PDF compiled successfully!');
     } catch (err) {
       console.error(err);
@@ -789,8 +761,6 @@ export function ClientBillingWorkspace({
     setIsBulkDialogOpen(true);
 
     try {
-      const { jsPDF } = await import('jspdf');
-      const html2canvas = (await import('html2canvas-pro')).default;
       setActiveRenderingDocType(activeTab === 'invoices' ? 'invoice' : 'quote');
 
       for (let i = 0; i < selectedIds.length; i++) {
@@ -803,55 +773,24 @@ export function ClientBillingWorkspace({
 
         await new Promise((resolve) => setTimeout(resolve, 250));
 
-        const element = document.getElementById(`offscreen-doc-${id}`);
-        if (!element) {
+        const elementId = `offscreen-doc-${id}`;
+        if (!document.getElementById(elementId)) {
           setBulkLog((prev) =>
             prev.map((e) => (e.id === id ? { ...e, status: 'failed', error: 'Render error' } : e))
           );
           continue;
         }
 
-        // Render PDF to canvas
-        const canvas = await html2canvas(element, {
-          scale: 2,
-          useCORS: true,
-          logging: false,
-          backgroundColor: '#ffffff',
-        });
-
-        const imgData = canvas.toDataURL('image/png');
-        const pdf = new jsPDF({
-          orientation: 'portrait',
-          unit: 'mm',
-          format: 'a4',
-        });
-
-        const imgWidth = 210;
-        const pageHeight = 297;
-        let imgHeight = (canvas.height * imgWidth) / canvas.width;
-
-        if (imgHeight > pageHeight && imgHeight < 315) {
-          imgHeight = pageHeight;
-        }
-
-        let heightLeft = imgHeight;
-        let position = 0;
-
-        pdf.addImage(imgData, 'PNG', 0, position, imgWidth, imgHeight, undefined, 'FAST');
-        heightLeft -= pageHeight;
-
-        while (heightLeft > 10) {
-          position = heightLeft - imgHeight;
-          pdf.addPage();
-          pdf.addImage(imgData, 'PNG', 0, position, imgWidth, imgHeight, undefined, 'FAST');
-          heightLeft -= pageHeight;
-        }
-
-        // Get raw base64 string
-        const base64Pdf = pdf.output('datauristring').split(',')[1];
-        if (!base64Pdf) {
+        let base64Pdf: string;
+        try {
+          base64Pdf = await elementToPdfBase64(elementId, `${activeTab === 'invoices' ? 'Invoice' : 'Quote'} PDF`);
+        } catch (error) {
           setBulkLog((prev) =>
-            prev.map((e) => (e.id === id ? { ...e, status: 'failed', error: 'Base64 failure' } : e))
+            prev.map((e) => (
+              e.id === id
+                ? { ...e, status: 'failed', error: error instanceof Error ? error.message : 'PDF generation failed' }
+                : e
+            ))
           );
           continue;
         }
@@ -914,6 +853,19 @@ export function ClientBillingWorkspace({
       }
     });
   };
+
+  const workspacePrintableElementId =
+    selectedDocType === 'statement'
+      ? 'workspace-statement-printable'
+      : selectedDocType === 'payment'
+      ? 'workspace-receipt-printable'
+      : 'workspace-document-printable';
+  const dialogPrintableElementId =
+    selectedDocType === 'statement'
+      ? 'dialog-statement-printable'
+      : selectedDocType === 'payment'
+      ? 'dialog-receipt-printable'
+      : 'dialog-document-printable';
 
   return (
     <div className="flex flex-col gap-8">
@@ -1527,7 +1479,7 @@ export function ClientBillingWorkspace({
                 {selectedDocType !== 'statement' && selectedDocId && (
                   <>
                     <PrintButton label="Print" documentTitle={documentTitle} />
-                    <ExportPdfButton fileName={documentTitle} />
+                    <ExportPdfButton fileName={documentTitle} elementId={workspacePrintableElementId} />
                   </>
                 )}
                 {selectedDocType === 'statement' && (
@@ -1538,6 +1490,7 @@ export function ClientBillingWorkspace({
                     />
                     <ExportPdfButton
                       fileName={`Statement-${client.businessName?.replace(/\s+/g, '-') ?? client.name.replace(/\s+/g, '-')}`}
+                      elementId={workspacePrintableElementId}
                     />
                   </>
                 )}
@@ -1549,6 +1502,7 @@ export function ClientBillingWorkspace({
                       documentNumber={activeInvoice.documentNumber}
                       documentType="invoice"
                       defaultRecipientEmail={client.email ?? ''}
+                      printableElementId={workspacePrintableElementId}
                     />
                     <Button variant="outline" size="sm" asChild>
                       <Link href={`/billing/invoices/${activeInvoice.id}/edit`}>Edit</Link>
@@ -1562,6 +1516,7 @@ export function ClientBillingWorkspace({
                       documentNumber={activeQuote.documentNumber}
                       documentType="quote"
                       defaultRecipientEmail={client.email ?? ''}
+                      printableElementId={workspacePrintableElementId}
                     />
                     <Button variant="outline" size="sm" asChild>
                       <Link href={`/billing/quotes/${activeQuote.id}/edit`}>Edit</Link>
@@ -1574,6 +1529,7 @@ export function ClientBillingWorkspace({
                       incomeId={activePayment.id}
                       receiptNumber={generateReceiptNumber(activePayment.id, activePayment.divisionName)}
                       defaultRecipientEmail={client.email ?? ''}
+                      printableElementId={workspacePrintableElementId}
                     />
                       <Button variant="outline" size="sm" asChild>
                         <Link href={`/billing/payments/${activePayment.id}`}>View Page</Link>
@@ -1587,18 +1543,19 @@ export function ClientBillingWorkspace({
               <div className="p-4 bg-muted/5">
                 {selectedDocType === 'statement' ? (
                   <div className="bg-card rounded-lg p-4 overflow-x-auto">
-                    <DocumentPreview type="statement" {...statementPreviewProps} />
+                    <DocumentPreview id={workspacePrintableElementId} type="statement" {...statementPreviewProps} />
                   </div>
                 ) : selectedDocId ? (
                   <div className="bg-card rounded-lg p-4 overflow-x-auto">
                     {selectedDocType === 'invoice' && activeInvoice && (
-                      <DocumentPreview type="invoice" {...getInvoicePreviewProps(activeInvoice)} />
+                      <DocumentPreview id={workspacePrintableElementId} type="invoice" {...getInvoicePreviewProps(activeInvoice)} />
                     )}
                     {selectedDocType === 'quote' && activeQuote && (
-                      <DocumentPreview type="quote" {...getQuotePreviewProps(activeQuote)} />
+                      <DocumentPreview id={workspacePrintableElementId} type="quote" {...getQuotePreviewProps(activeQuote)} />
                     )}
                     {selectedDocType === 'payment' && activePayment && (
                       <PaymentReceiptPreview
+                        id={workspacePrintableElementId}
                         payment={activePayment}
                         client={client}
                         divSettings={divSettings}
@@ -1645,7 +1602,7 @@ export function ClientBillingWorkspace({
               {selectedDocType !== 'statement' && selectedDocId && (
                 <>
                   <PrintButton label="Print" documentTitle={documentTitle} />
-                  <ExportPdfButton fileName={documentTitle} />
+                  <ExportPdfButton fileName={documentTitle} elementId={dialogPrintableElementId} />
                 </>
               )}
               {selectedDocType === 'statement' && (
@@ -1656,6 +1613,7 @@ export function ClientBillingWorkspace({
                   />
                   <ExportPdfButton
                     fileName={`Statement-${client.businessName?.replace(/\s+/g, '-') ?? client.name.replace(/\s+/g, '-')}`}
+                    elementId={dialogPrintableElementId}
                   />
                 </>
               )}
@@ -1667,6 +1625,7 @@ export function ClientBillingWorkspace({
                     documentNumber={activeInvoice.documentNumber}
                     documentType="invoice"
                     defaultRecipientEmail={client.email ?? ''}
+                    printableElementId={dialogPrintableElementId}
                   />
                   <Button variant="outline" size="sm" asChild>
                     <Link href={`/billing/invoices/${activeInvoice.id}/edit`}>Edit</Link>
@@ -1680,6 +1639,7 @@ export function ClientBillingWorkspace({
                     documentNumber={activeQuote.documentNumber}
                     documentType="quote"
                     defaultRecipientEmail={client.email ?? ''}
+                    printableElementId={dialogPrintableElementId}
                   />
                   <Button variant="outline" size="sm" asChild>
                     <Link href={`/billing/quotes/${activeQuote.id}/edit`}>Edit</Link>
@@ -1691,6 +1651,7 @@ export function ClientBillingWorkspace({
                       incomeId={activePayment.id}
                       receiptNumber={generateReceiptNumber(activePayment.id, activePayment.divisionName)}
                       defaultRecipientEmail={client.email ?? ''}
+                      printableElementId={dialogPrintableElementId}
                     />
                     <Button variant="outline" size="sm" asChild>
                       <Link href={`/billing/payments/${activePayment.id}`}>View Page</Link>
@@ -1703,18 +1664,19 @@ export function ClientBillingWorkspace({
           <div className="mt-4 overflow-x-auto bg-muted/5 p-4 rounded border">
             {selectedDocType === 'statement' ? (
               <div className="bg-card rounded-lg p-4 overflow-x-auto">
-                <DocumentPreview type="statement" {...statementPreviewProps} />
+                <DocumentPreview id={dialogPrintableElementId} type="statement" {...statementPreviewProps} />
               </div>
             ) : selectedDocId ? (
               <div className="bg-card rounded-lg p-4 overflow-x-auto">
                 {selectedDocType === 'invoice' && activeInvoice && (
-                  <DocumentPreview type="invoice" {...getInvoicePreviewProps(activeInvoice)} />
+                  <DocumentPreview id={dialogPrintableElementId} type="invoice" {...getInvoicePreviewProps(activeInvoice)} />
                 )}
                 {selectedDocType === 'quote' && activeQuote && (
-                  <DocumentPreview type="quote" {...getQuotePreviewProps(activeQuote)} />
+                  <DocumentPreview id={dialogPrintableElementId} type="quote" {...getQuotePreviewProps(activeQuote)} />
                 )}
                 {selectedDocType === 'payment' && activePayment && (
                   <PaymentReceiptPreview
+                    id={dialogPrintableElementId}
                     payment={activePayment}
                     client={client}
                     divSettings={divSettings}

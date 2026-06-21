@@ -19,11 +19,13 @@ import { Textarea } from '@/components/ui/textarea';
 import { Mail, Loader2 } from 'lucide-react';
 import { getReceiptEmailPreviewAction, sendReceiptEmailAction } from '@/app/actions/email-delivery';
 import { EmailPreviewPanel } from '@/components/billing/email-preview-panel';
+import { elementToPdfBase64 } from '@/lib/pdf-export';
 
 interface EmailReceiptDialogProps {
   incomeId: string;
   receiptNumber: string;
   defaultRecipientEmail: string;
+  printableElementId?: string;
   onSuccess?: () => void;
 }
 
@@ -31,6 +33,7 @@ export function EmailReceiptDialog({
   incomeId,
   receiptNumber,
   defaultRecipientEmail,
+  printableElementId = 'printable-area',
   onSuccess,
 }: EmailReceiptDialogProps) {
   const [open, setOpen] = useState(false);
@@ -82,59 +85,8 @@ export function EmailReceiptDialog({
     
     setIsSending(true);
     try {
-      const { jsPDF } = await import('jspdf');
-      const html2canvas = (await import('html2canvas-pro')).default;
-
-      // Helper function to compile an HTML Element to a Base64 PDF
-      async function compileToPdfBase64(elementId: string): Promise<string> {
-        const targetElement = document.getElementById(elementId);
-        if (!targetElement) {
-          throw new Error(`Printable element '#${elementId}' not found.`);
-        }
-
-        const canvas = await html2canvas(targetElement, {
-          scale: 2, // Sharp high-quality vector rendering
-          useCORS: true,
-          logging: false,
-          backgroundColor: '#FFFFFF',
-        });
-
-        const imgData = canvas.toDataURL('image/png');
-        const pdf = new jsPDF({
-          orientation: 'portrait',
-          unit: 'mm',
-          format: 'a4',
-        });
-
-        const imgWidth = 210;
-        const pageHeight = 297;
-        let imgHeight = (canvas.height * imgWidth) / canvas.width;
-
-        // Scale down slightly to fit on a single page if minor overflow
-        if (imgHeight > pageHeight && imgHeight < 315) {
-          imgHeight = pageHeight;
-        }
-
-        let heightLeft = imgHeight;
-        let position = 0;
-
-        pdf.addImage(imgData, 'PNG', 0, position, imgWidth, imgHeight, undefined, 'FAST');
-        heightLeft -= pageHeight;
-
-        while (heightLeft > 10) {
-          position = heightLeft - imgHeight;
-          pdf.addPage();
-          pdf.addImage(imgData, 'PNG', 0, position, imgWidth, imgHeight, undefined, 'FAST');
-          heightLeft -= pageHeight;
-        }
-
-        const base64 = pdf.output('datauristring').split(',')[1];
-        if (!base64) throw new Error(`Base64 conversion failed for element: ${elementId}`);
-        return base64;
-      }
-
       setStatusText('Compiling receipt PDF...');
-      const pdfBase64 = await compileToPdfBase64('printable-area');
+      const pdfBase64 = await elementToPdfBase64(printableElementId, 'Receipt PDF');
 
       setStatusText('Transmitting receipt via Resend...');
       const result = await sendReceiptEmailAction({
