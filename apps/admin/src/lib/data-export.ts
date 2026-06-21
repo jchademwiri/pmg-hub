@@ -77,6 +77,10 @@ function normalizePrefix(prefix: string) {
   return prefix.replace(/^\/+|\/+$/g, '');
 }
 
+function canonicalQueryString(params: Record<string, string>) {
+  return new URLSearchParams(Object.entries(params).sort(([a], [b]) => a.localeCompare(b))).toString();
+}
+
 function getR2Config(): R2Config | null {
   const {
     CLOUDFLARE_R2_ACCOUNT_ID,
@@ -386,10 +390,10 @@ export async function listDatabaseBackups(): Promise<BackupObject[]> {
   if (!config) return [];
 
   const prefix = normalizePrefix(config.prefix);
-  const query = new URLSearchParams({
+  const query = canonicalQueryString({
     'list-type': '2',
     prefix: `${prefix}/`,
-  }).toString();
+  });
 
   const response = await signedR2Request({
     method: 'GET',
