@@ -4,13 +4,20 @@ import { existsSync, readFileSync } from 'fs';
 import { join } from 'path';
 
 import {
+  and,
+  creditNotes,
+  creditRefunds,
+  eq,
   getAllIncome,
   getClientStatement,
+  getDb,
   getDivisionBillingSettings,
   getIncomeAllocations,
   getIncomeById,
   getInvoiceById,
+  getMonthPeriodDates,
   getQuotationById,
+  sql,
 } from '@pmg/db';
 import { generateReceiptNumber } from '@pmg/utils';
 import { jsPDF } from 'jspdf';
@@ -546,7 +553,42 @@ async function buildStatementPdfData(
 ): Promise<PdfDocumentData | null> {
   const statement = await getClientStatement(clientId, filters);
   if (!statement) return null;
-  const incomeResult = await getAllIncome({ clientId, ...filters });
+  const db = getDb();
+  const [incomeResult, dbCreditNotes, dbRefunds] = await Promise.all([
+    getAllIncome({ clientId, ...filters }),
+    db.select().from(creditNotes).where(and(eq(creditNotes.clientId, clientId), sql`${creditNotes.status} != 'void'`)),
+    db.select().from(creditRefunds).where(eq(creditRefunds.clientId, clientId)),
+  ]);
+
+  const { year: currentYear, month } = getSASTParts();
+  const currentFY = month < 2 ? currentYear - 1 : currentYear;
+  let periodFrom: string;
+  let periodTo: string;
+  if (filters?.monthPeriod) {
+    const { startDate, endDate } = getMonthPeriodDates(filters.monthPeriod);
+    periodFrom = startDate;
+    periodTo = endDate;
+  } else {
+    const y = filters?.year ?? currentFY;
+    periodFrom = `${y}-03-01`;
+    const nextFYStart = new Date(y + 1, 2, 1);
+    const lastDayOfFY = new Date(nextFYStart.getTime() - 24 * 60 * 60 * 1000);
+    periodTo = `${lastDayOfFY.getFullYear()}-${String(lastDayOfFY.getMonth() + 1).padStart(2, '0')}-${String(lastDayOfFY.getDate()).padStart(2, '0')}`;
+  }
+
+  let openingBalance = statement.summary.openingBalance ?? 0;
+  for (const note of dbCreditNotes) {
+    const date = note.createdAt.toISOString().split('T')[0];
+    if (date < periodFrom && note.type !== 'overpayment') {
+      openingBalance -= safeNumber(note.amount);
+    }
+  }
+  for (const refund of dbRefunds) {
+    if (refund.refundDate < periodFrom) {
+      openingBalance += safeNumber(refund.amount);
+    }
+  }
+
   const invoiceToIncome = new Map<string, string>();
   for (const invoice of statement.invoices) {
     if (invoice.incomeId) invoiceToIncome.set(invoice.incomeId, invoice.documentNumber);
@@ -569,20 +611,40 @@ async function buildStatementPdfData(
       debit: undefined,
       credit: safeNumber(payment.amount),
     })),
+    ...dbCreditNotes
+      .filter((note) => {
+        const date = note.createdAt.toISOString().split('T')[0];
+        return note.type !== 'overpayment' && date >= periodFrom && date <= periodTo;
+      })
+      .map((note) => ({
+        date: note.createdAt.toISOString().split('T')[0],
+        reference: note.documentNumber,
+        description: note.reason ?? 'Credit Note',
+        debit: undefined,
+        credit: safeNumber(note.amount),
+      })),
+    ...dbRefunds
+      .filter((refund) => refund.refundDate >= periodFrom && refund.refundDate <= periodTo)
+      .map((refund) => ({
+        date: refund.refundDate,
+        reference: refund.reference ?? '-',
+        description: refund.description ?? 'Credit refund',
+        debit: safeNumber(refund.amount),
+        credit: undefined,
+      })),
   ].sort((a, b) => a.date.localeCompare(b.date));
 
-  let balance = statement.summary.openingBalance ?? 0;
+  let balance = openingBalance;
   const transactions = raw.map((tx) => {
     balance = balance + (tx.debit ?? 0) - (tx.credit ?? 0);
     return { ...tx, balance };
   }).reverse();
 
-  const { year } = getSASTParts();
   const status = statement.summary.totalOutstanding > 0 ? 'Outstanding' : 'Paid';
   return {
     type: 'statement',
     title: 'Statement',
-    number: `ST-${statement.client.name.toUpperCase().substring(0, 3)}-${filters?.year ?? year}`,
+    number: `ST-${statement.client.name.toUpperCase().substring(0, 3)}-${filters?.year ?? currentYear}`,
     status,
     issueDate: getSASTToday(),
     org: {
