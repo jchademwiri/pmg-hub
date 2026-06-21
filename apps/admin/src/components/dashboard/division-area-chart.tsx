@@ -188,12 +188,13 @@ export function DivisionAreaChart({ data }: Props) {
           </div>
         ) : (
           <div className="grid gap-3 lg:grid-cols-[minmax(0,1fr)_140px]">
-            <div className="min-w-0 rounded-md border border-border bg-background p-4">
+            <div className="min-w-0 rounded-md border border-border bg-muted/20 p-4">
               <ResponsiveContainer width="100%" height={230}>
                 <ComposedChart data={chartData} barGap={0} barCategoryGap="25%" margin={{ top: 12, right: 12, left: 0, bottom: 0 }}>
                   <CartesianGrid
                     strokeDasharray="2 4"
-                    stroke="hsl(var(--border) / 0.55)"
+                    stroke="var(--border)"
+                    opacity={0.6}
                     vertical={false}
                   />
                   <XAxis
@@ -211,7 +212,14 @@ export function DivisionAreaChart({ data }: Props) {
                     tickLine={false}
                     width={46}
                   />
-                  <Tooltip content={<CustomTooltip />} cursor={chartType === 'bar' ? { fill: 'hsl(var(--muted) / 0.35)' } : { stroke: 'hsl(var(--muted))', strokeWidth: 1, strokeDasharray: '2 2' }} />
+                  <Tooltip
+                    content={<CustomTooltip />}
+                    cursor={
+                      chartType === 'bar'
+                        ? { fill: 'var(--muted)', opacity: 0.35 }
+                        : { stroke: 'var(--border)', strokeWidth: 1, strokeDasharray: '2 2', opacity: 0.8 }
+                    }
+                  />
                   
                   {/* Column Bars */}
                   {(chartType === 'bar' || chartType === 'both') &&
