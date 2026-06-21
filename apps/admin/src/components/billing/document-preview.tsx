@@ -166,16 +166,7 @@ export function DocumentPreview({
     <div id={id} className="print-document w-full max-w-[794px] min-h-[1123px] mx-auto flex flex-col bg-white text-zinc-900 shadow-md print:shadow-none ring-1 ring-zinc-200 print:ring-0 border-t-[4px] border-t-blue-700">
 
       {/* ── Header ─────────────────────────────────────────────────────────── */}
-      <div className="relative flex items-start justify-between gap-6 px-4 sm:px-10 pt-10 pb-6">
-
-        {/* Center: Logo */}
-        <div className="absolute left-1/2 top-8 flex h-16 w-40 -translate-x-1/2 items-center justify-center overflow-hidden bg-transparent">
-          {logoUrl ? (
-            <img src={logoUrl} alt={org.name} className="max-h-full max-w-full object-contain" />
-          ) : (
-            <span className="text-xs font-bold text-zinc-800">{org.name.slice(0, 3).toUpperCase()}</span>
-          )}
-        </div>
+      <div className="grid grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)] items-start gap-6 px-4 sm:px-10 pt-10 pb-6">
 
         {/* Left: Company info */}
         <div className="flex max-w-[16rem] items-start gap-4">
@@ -199,8 +190,17 @@ export function DocumentPreview({
           </div>
         </div>
 
+        {/* Center: Logo */}
+        <div className="flex h-16 w-40 items-center justify-center overflow-hidden bg-transparent">
+          {logoUrl ? (
+            <img src={logoUrl} alt={org.name} className="max-h-full max-w-full object-contain" />
+          ) : (
+            <span className="text-xs font-bold text-zinc-800">{org.name.slice(0, 3).toUpperCase()}</span>
+          )}
+        </div>
+
         {/* Right: Document type + number + status + amount due */}
-        <div className="flex flex-col items-end gap-2 shrink-0">
+        <div className="flex flex-col items-end gap-2 justify-self-end">
           <span className="text-2xl font-bold uppercase tracking-widest text-zinc-300 print:text-zinc-600">
             {typeLabel}
           </span>
