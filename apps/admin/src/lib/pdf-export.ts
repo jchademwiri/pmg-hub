@@ -2,6 +2,9 @@
 
 import type { jsPDF as JsPdfConstructor } from 'jspdf';
 
+export { getBase64ByteSize, MAX_EMAIL_PDF_BYTES } from './pdf-email-size';
+import { getBase64ByteSize, MAX_EMAIL_PDF_BYTES } from './pdf-email-size';
+
 export const PDF_A4 = {
   widthMm: 210,
   heightMm: 297,
@@ -10,8 +13,6 @@ export const PDF_A4 = {
   canvasScale: 2,
   backgroundColor: '#ffffff',
 } as const;
-
-export const MAX_EMAIL_PDF_BYTES = 8 * 1024 * 1024;
 
 type JsPdfInstance = InstanceType<typeof JsPdfConstructor>;
 
@@ -39,12 +40,6 @@ export function extractPdfBase64(dataUri: string) {
   const base64 = dataUri.split(',')[1];
   if (!base64) throw new Error('PDF base64 conversion failed.');
   return base64;
-}
-
-export function getBase64ByteSize(base64: string) {
-  const normalized = base64.replace(/\s/g, '');
-  const padding = normalized.endsWith('==') ? 2 : normalized.endsWith('=') ? 1 : 0;
-  return Math.max(0, Math.ceil((normalized.length * 3) / 4) - padding);
 }
 
 export function assertEmailPdfSize(base64: string, label = 'PDF attachment') {
