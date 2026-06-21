@@ -1,5 +1,8 @@
 import 'server-only';
 
+import { existsSync, readFileSync } from 'fs';
+import { join } from 'path';
+
 import {
   getAllIncome,
   getClientStatement,
@@ -99,6 +102,32 @@ function ensurePage(doc: jsPDF, y: number, needed = 16) {
   return PAGE.margin;
 }
 
+function getLogoPath(orgName: string) {
+  const normalized = orgName.toLowerCase();
+  const fileName = /tender edge|tes/.test(normalized)
+    ? 'tes-logo.png'
+    : /apex|aws/.test(normalized)
+    ? 'aws-logo.png'
+    : 'pmg-logo.png';
+
+  const fullPath = join(process.cwd(), 'public', 'logo', fileName);
+  return existsSync(fullPath) ? fullPath : null;
+}
+
+function drawCenteredLogo(doc: jsPDF, orgName: string) {
+  const logoPath = getLogoPath(orgName);
+  if (!logoPath) {
+    doc.setFont('helvetica', 'bold');
+    doc.setFontSize(10);
+    doc.setTextColor(39, 39, 42);
+    doc.text(split(doc, orgName, 42), PAGE.width / 2, 18, { align: 'center' });
+    return;
+  }
+
+  const logoData = `data:image/png;base64,${readFileSync(logoPath).toString('base64')}`;
+  doc.addImage(logoData, 'PNG', PAGE.width / 2 - 20, 11, 40, 18, undefined, 'FAST');
+}
+
 function drawFooter(doc: jsPDF, data: PdfDocumentData) {
   const pageCount = doc.getNumberOfPages();
   for (let i = 1; i <= pageCount; i++) {
@@ -134,10 +163,7 @@ function drawHeader(doc: jsPDF, data: PdfDocumentData) {
   ].filter(Boolean) as string[];
   orgLines.slice(0, 5).forEach((line, index) => doc.text(line, PAGE.margin, 24 + index * 4));
 
-  doc.setFont('helvetica', 'bold');
-  doc.setFontSize(12);
-  doc.setTextColor(39, 39, 42);
-  doc.text(data.org.name.slice(0, 18), PAGE.width / 2, 20, { align: 'center' });
+  drawCenteredLogo(doc, data.org.name);
 
   doc.setFontSize(20);
   doc.setTextColor(161, 161, 170);
@@ -189,6 +215,8 @@ function drawMeta(doc: jsPDF, data: PdfDocumentData) {
     doc.text(fmtDate(data.dueDate), PAGE.width - PAGE.margin, y + 7, { align: 'right' });
   }
 
+  let bottomY = 78;
+
   if (data.reference) {
     y += 27;
     doc.setFont('helvetica', 'bold');
@@ -198,10 +226,12 @@ function drawMeta(doc: jsPDF, data: PdfDocumentData) {
     doc.setFont('helvetica', 'normal');
     doc.setFontSize(8);
     doc.setTextColor(82, 82, 91);
-    doc.text(split(doc, data.reference, 160), PAGE.margin, y + 5);
+    const referenceLines = split(doc, data.reference, 160);
+    doc.text(referenceLines, PAGE.margin, y + 5);
+    bottomY = Math.max(bottomY, y + 8 + referenceLines.length * 4);
   }
 
-  return 88;
+  return bottomY + 8;
 }
 
 function drawLineItems(doc: jsPDF, data: PdfDocumentData, startY: number) {
