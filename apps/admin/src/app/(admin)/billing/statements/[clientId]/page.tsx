@@ -248,9 +248,13 @@ export default async function StatementDetailPage({ params, searchParams }: Prop
     }
   }
 
-  const primaryDivisionId = invoices[0]?.divisionId;
-  const divSettings = primaryDivisionId ? await getDivisionBillingSettings(primaryDivisionId) : null;
-  const orgName = invoices[0]?.divisionName ?? 'PMG';
+  // Use client's linked division if set, otherwise fall back to first invoice's division
+  const clientRecord = await getClientById(clientId);
+  const linkedDivisionId = clientRecord?.divisionId ?? null;
+  const effectiveDivisionId = linkedDivisionId ?? invoices[0]?.divisionId;
+  const divSettings = effectiveDivisionId ? await getDivisionBillingSettings(effectiveDivisionId) : null;
+  const linkedInvoice = invoices.find((inv) => inv.divisionId === linkedDivisionId);
+  const orgName = linkedInvoice?.divisionName ?? invoices[0]?.divisionName ?? 'PMG';
 
   const docPreviewProps = {
     number: `STMT-${monthPeriod ? monthPeriod.toUpperCase() : (year ? year : currentFY)}-${(client.businessName ?? client.name).slice(0, 3).toUpperCase()}`,
