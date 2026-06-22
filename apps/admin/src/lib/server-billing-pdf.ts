@@ -310,7 +310,7 @@ function drawTransactions(doc: jsPDF, data: PdfDocumentData, startY: number) {
   doc.text('BALANCE', PAGE.width - PAGE.margin - 2, y + 6, { align: 'right' });
   y += 12;
 
-  if (data.openingBalance != null) {
+  if (data.openingBalance != null && data.openingBalance !== 0) {
     y = ensurePage(doc, y, 9);
     doc.setFillColor(249, 250, 251);
     doc.rect(PAGE.margin, y - 2, PAGE.width - PAGE.margin * 2, 8, 'F');
@@ -342,7 +342,11 @@ function drawTransactions(doc: jsPDF, data: PdfDocumentData, startY: number) {
     doc.text(referenceLines, 45, y + 4);
     doc.text(descriptionLines, 78, y + 4);
     doc.text(tx.debit != null ? formatZAR(tx.debit) : '-', 145, y + 4, { align: 'right' });
+    if (tx.credit != null) {
+      doc.setTextColor(5, 150, 105); // green for credit/paid
+    }
     doc.text(tx.credit != null ? formatZAR(tx.credit) : '-', 170, y + 4, { align: 'right' });
+    doc.setTextColor(24, 24, 27);
     doc.setFont('helvetica', 'bold');
     doc.text(
       tx.balance != null ? formatZAR(tx.balance) : '-',
@@ -374,7 +378,11 @@ function drawTotals(doc: jsPDF, data: PdfDocumentData, startY: number) {
   for (const [label, amount] of rows) {
     doc.setFont('helvetica', label === 'Total' || label === 'Balance Due' ? 'bold' : 'normal');
     doc.setFontSize(label === 'Total' || label === 'Balance Due' ? 10 : 8);
-    doc.setTextColor(24, 24, 27);
+    if (label === 'Total Paid') {
+      doc.setTextColor(5, 150, 105); // green for paid
+    } else {
+      doc.setTextColor(24, 24, 27);
+    }
     doc.text(label, 132, y);
     doc.text(formatZAR(amount), PAGE.width - PAGE.margin, y, { align: 'right' });
     y += 7;
@@ -420,11 +428,21 @@ function drawAgeingSummary(doc: jsPDF, data: PdfDocumentData, startY: number) {
     doc.text(label, x + colWidth / 2, headerY + 5, { align: 'center' });
   });
 
-  doc.setFont('helvetica', 'bold');
-  doc.setFontSize(7);
-  doc.setTextColor(24, 24, 27);
   buckets.forEach(([, amount], index) => {
     const x = PAGE.margin + index * colWidth;
+    // Colour-code overdue buckets
+    if (index <= 2 && amount > 0) {
+      // 91+, 61-90, 31-60 → red shades (deepest for furthest overdue)
+      const redIntensity = Math.min(255, 180 + index * 25);
+      doc.setTextColor(redIntensity, 50 + index * 10, 50);
+    } else if ((index === 3 || index === 4) && amount > 0) {
+      // 15-30, 1-14 → amber
+      doc.setTextColor(217, 119, 6);
+    } else {
+      doc.setTextColor(24, 24, 27);
+    }
+    doc.setFont('helvetica', 'bold');
+    doc.setFontSize(7);
     doc.text(formatZAR(amount), x + colWidth / 2, headerY + 13, { align: 'center' });
   });
 
@@ -480,8 +498,8 @@ function renderPdf(data: PdfDocumentData) {
   }
 
   y = drawTotals(doc, data, y);
+  y = drawTextBlocks(doc, data, y);
   y = drawAgeingSummary(doc, data, y);
-  drawTextBlocks(doc, data, y);
   drawFooter(doc, data);
   return Buffer.from(doc.output('arraybuffer'));
 }

@@ -377,7 +377,7 @@ export function DocumentPreview({
               </thead>
               <tbody>
                 {/* Balance Brought Forward row (at the top with colSpan spanning Invoice No. and Description) */}
-                {openingBalance !== undefined && (
+                {openingBalance !== undefined && openingBalance !== 0 && (
                   <tr className="border-b border-zinc-100 bg-zinc-50/50 print:break-inside-avoid [break-inside:avoid]">
                     <td className="py-2.5 pr-4 text-xs text-zinc-500 whitespace-nowrap">{fmtDateLong(periodFrom)}</td>
                     <td colSpan={2} className="py-2.5 px-4 text-xs text-zinc-500 italic font-normal">
@@ -439,7 +439,7 @@ export function DocumentPreview({
                 const balanceDueCalc = balanceDue !== undefined ? balanceDue : ((openingBalance ?? 0) + totalInvoiced - totalPaid)
                 return (
                   <>
-                    {openingBalance !== undefined && (
+                    {openingBalance !== undefined && openingBalance !== 0 && (
                       <div className="flex justify-between text-sm text-zinc-600">
                         <span>Balance Brought Forward</span>
                         <span className="tabular-nums">{fmt(openingBalance)}</span>
@@ -513,11 +513,11 @@ export function DocumentPreview({
             </thead>
             <tbody>
               <tr>
-                <td className={cn('py-3 tabular-nums font-semibold', ageing.days91_120 > 0 ? 'text-red-700' : '')}>{fmt(ageing.days91_120)}</td>
-                <td className={cn('py-3 tabular-nums font-semibold border-l border-zinc-200', ageing.days61_90 > 0 ? 'text-red-600' : '')}>{fmt(ageing.days61_90)}</td>
-                <td className={cn('py-3 tabular-nums font-semibold border-l border-zinc-200', ageing.days31_60 > 0 ? 'text-red-500' : '')}>{fmt(ageing.days31_60)}</td>
-                <td className={cn('py-3 tabular-nums font-semibold border-l border-zinc-200', ageing.days15_30 > 0 ? 'text-orange-600' : '')}>{fmt(ageing.days15_30)}</td>
-                <td className={cn('py-3 tabular-nums font-semibold border-l border-zinc-200', ageing.days1_14 > 0 ? 'text-amber-600' : '')}>{fmt(ageing.days1_14)}</td>
+                <td className={cn('py-3 tabular-nums font-semibold', ageing.days91_120 > 0 ? 'text-red-700' : 'text-zinc-500')}>{fmt(ageing.days91_120)}</td>
+                <td className={cn('py-3 tabular-nums font-semibold border-l border-zinc-200', ageing.days61_90 > 0 ? 'text-red-600' : 'text-zinc-500')}>{fmt(ageing.days61_90)}</td>
+                <td className={cn('py-3 tabular-nums font-semibold border-l border-zinc-200', ageing.days31_60 > 0 ? 'text-red-500' : 'text-zinc-500')}>{fmt(ageing.days31_60)}</td>
+                <td className={cn('py-3 tabular-nums font-semibold border-l border-zinc-200', ageing.days15_30 > 0 ? 'text-amber-600' : 'text-zinc-500')}>{fmt(ageing.days15_30)}</td>
+                <td className={cn('py-3 tabular-nums font-semibold border-l border-zinc-200', ageing.days1_14 > 0 ? 'text-amber-600' : 'text-zinc-500')}>{fmt(ageing.days1_14)}</td>
                 <td className="py-3 tabular-nums font-semibold border-l border-zinc-200">{fmt(ageing.current)}</td>
                 <td className="py-3 tabular-nums font-bold border-l border-zinc-200 text-zinc-900">{fmt(totalAgeingDue(ageing))}</td>
               </tr>
