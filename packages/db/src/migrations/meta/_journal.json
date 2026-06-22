@@ -162,6 +162,13 @@
       "when": 1781842551841,
       "tag": "0022_numerous_logan",
       "breakpoints": true
+    },
+    {
+      "idx": 23,
+      "version": "7",
+      "when": 1782158185977,
+      "tag": "0023_wooden_true_believers",
+      "breakpoints": true
     }
   ]
 }

@@ -105,7 +105,7 @@ export function ClientEditForm({ client, divisions, updateAction }: ClientEditFo
               <SelectValue placeholder="No division linked (auto-detect)" />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value=" " className="text-xs text-muted-foreground">No division linked</SelectItem>
+              <SelectItem value="__none__" className="text-xs text-muted-foreground">No division linked</SelectItem>
               {divisions.map((d) => (
                 <SelectItem key={d.id} value={d.id} className="text-xs">
                   {d.name}

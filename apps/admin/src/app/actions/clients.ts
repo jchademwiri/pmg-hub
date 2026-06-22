@@ -19,6 +19,7 @@ export async function createClient(formData: FormData): Promise<{ error?: string
     if (raw.businessName === '') delete raw.businessName;
     if (raw.email === '') delete raw.email;
     if (raw.phone === '') delete raw.phone;
+    if (raw.divisionId === '__none__') delete raw.divisionId;
     const result = ClientSchema.safeParse(raw);
     if (!result.success) {
       return { error: result.error.issues[0]?.message ?? 'Validation error' };
@@ -44,6 +45,7 @@ export async function updateClient(id: string, formData: FormData): Promise<{ er
     if (raw.businessName === '') delete raw.businessName;
     if (raw.email === '') delete raw.email;
     if (raw.phone === '') delete raw.phone;
+    if (raw.divisionId === '__none__') delete raw.divisionId;
     const result = ClientSchema.safeParse(raw);
     if (!result.success) {
       return { error: result.error.issues[0]?.message ?? 'Validation error' };
