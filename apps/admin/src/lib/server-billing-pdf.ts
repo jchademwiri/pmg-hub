@@ -299,17 +299,28 @@ function drawTransactions(doc: jsPDF, data: PdfDocumentData, startY: number) {
   doc.setFont('helvetica', 'normal');
   doc.setFontSize(7.5);
   for (const tx of transactions) {
-    y = ensurePage(doc, y, 9);
+    const referenceLines = split(doc, tx.reference, 26);
+    const descriptionLines = split(doc, tx.description, 52);
+    const rowHeight = Math.max(
+      9,
+      Math.max(referenceLines.length, descriptionLines.length, 1) * 4 + 5,
+    );
+    y = ensurePage(doc, y, rowHeight);
     doc.setTextColor(24, 24, 27);
     doc.text(fmtDate(tx.date), PAGE.margin + 2, y + 4);
-    doc.text(split(doc, tx.reference, 26), 45, y + 4);
-    doc.text(split(doc, tx.description, 52), 78, y + 4);
+    doc.text(referenceLines, 45, y + 4);
+    doc.text(descriptionLines, 78, y + 4);
     doc.text(tx.debit != null ? formatZAR(tx.debit) : '-', 145, y + 4, { align: 'right' });
     doc.text(tx.credit != null ? formatZAR(tx.credit) : '-', 170, y + 4, { align: 'right' });
     doc.setFont('helvetica', 'bold');
-    doc.text(tx.balance != null ? formatZAR(tx.balance) : '-', PAGE.width - PAGE.margin - 2, y + 4, { align: 'right' });
+    doc.text(
+      tx.balance != null ? formatZAR(tx.balance) : '-',
+      PAGE.width - PAGE.margin - 2,
+      y + 4,
+      { align: 'right' },
+    );
     doc.setFont('helvetica', 'normal');
-    y += 9;
+    y += rowHeight;
   }
 
   return y + 6;

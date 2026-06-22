@@ -31,7 +31,7 @@
 
 **"What's the flow of data?"**
 
-```
+```txt
 You record a quote, invoice, payment, income, expense, or journal
         ↓
   Journal Entry (usually created automatically)
