@@ -65,9 +65,12 @@ type PdfDocumentData = {
   org: {
     name: string;
     divisionOf?: string;
+    registrationNumber?: string;
+    vatNumber?: string;
     email?: string;
     phone?: string;
     website?: string;
+    address?: string;
     salesRep?: string;
   };
   client: {
@@ -232,9 +235,12 @@ function drawHeader(doc: jsPDF, data: PdfDocumentData) {
   doc.setTextColor(82, 82, 91);
   const orgLines = [
     data.org.divisionOf ? `A division of ${data.org.divisionOf}` : undefined,
+    data.org.registrationNumber ? `Reg: ${data.org.registrationNumber}` : undefined,
+    data.org.vatNumber ? `VAT: ${data.org.vatNumber}` : undefined,
     data.org.email,
     data.org.phone,
     data.org.website,
+    data.org.address,
     data.org.salesRep ? `Rep: ${data.org.salesRep}` : undefined,
   ].filter(Boolean) as string[];
   orgLines.slice(0, 5).forEach((line, index) => doc.text(line, PAGE.margin, 24 + index * 4));
@@ -271,24 +277,44 @@ function drawMeta(doc: jsPDF, data: PdfDocumentData) {
   if (data.client.email) doc.text(data.client.email, PAGE.margin, y + 12);
   if (data.client.phone) doc.text(data.client.phone, PAGE.margin, y + 17);
 
-  doc.setFont('helvetica', 'bold');
-  doc.setFontSize(7);
-  doc.setTextColor(113, 113, 122);
-  doc.text('ISSUE DATE', PAGE.width - PAGE.margin - 45, y);
-  doc.setFont('helvetica', 'normal');
-  doc.setFontSize(9);
-  doc.setTextColor(24, 24, 27);
-  doc.text(fmtDate(data.issueDate), PAGE.width - PAGE.margin, y, { align: 'right' });
-
-  if (data.dueDateLabel && data.dueDate) {
+  if (data.type === 'statement' && data.periodFrom && data.periodTo) {
     doc.setFont('helvetica', 'bold');
     doc.setFontSize(7);
     doc.setTextColor(113, 113, 122);
-    doc.text(data.dueDateLabel.toUpperCase(), PAGE.width - PAGE.margin - 45, y + 7);
+    doc.text('PERIOD FROM', PAGE.width - PAGE.margin - 45, y);
     doc.setFont('helvetica', 'normal');
     doc.setFontSize(9);
     doc.setTextColor(24, 24, 27);
-    doc.text(fmtDate(data.dueDate), PAGE.width - PAGE.margin, y + 7, { align: 'right' });
+    doc.text(fmtDate(data.periodFrom), PAGE.width - PAGE.margin, y, { align: 'right' });
+
+    doc.setFont('helvetica', 'bold');
+    doc.setFontSize(7);
+    doc.setTextColor(113, 113, 122);
+    doc.text('PERIOD TO', PAGE.width - PAGE.margin - 45, y + 7);
+    doc.setFont('helvetica', 'normal');
+    doc.setFontSize(9);
+    doc.setTextColor(24, 24, 27);
+    doc.text(fmtDate(data.periodTo), PAGE.width - PAGE.margin, y + 7, { align: 'right' });
+  } else {
+    doc.setFont('helvetica', 'bold');
+    doc.setFontSize(7);
+    doc.setTextColor(113, 113, 122);
+    doc.text('ISSUE DATE', PAGE.width - PAGE.margin - 45, y);
+    doc.setFont('helvetica', 'normal');
+    doc.setFontSize(9);
+    doc.setTextColor(24, 24, 27);
+    doc.text(fmtDate(data.issueDate), PAGE.width - PAGE.margin, y, { align: 'right' });
+
+    if (data.dueDateLabel && data.dueDate) {
+      doc.setFont('helvetica', 'bold');
+      doc.setFontSize(7);
+      doc.setTextColor(113, 113, 122);
+      doc.text(data.dueDateLabel.toUpperCase(), PAGE.width - PAGE.margin - 45, y + 7);
+      doc.setFont('helvetica', 'normal');
+      doc.setFontSize(9);
+      doc.setTextColor(24, 24, 27);
+      doc.text(fmtDate(data.dueDate), PAGE.width - PAGE.margin, y + 7, { align: 'right' });
+    }
   }
 
   let bottomY = 78;
@@ -749,6 +775,11 @@ async function buildStatementPdfData(
     todayStr,
   );
 
+  // Fetch division settings from the first invoice's division for branding
+  const firstDivisionId = statement.invoices.length > 0 ? statement.invoices[0]!.divisionId : null;
+  const settings = firstDivisionId ? await getDivisionBillingSettings(firstDivisionId) : null;
+  const divisionName = statement.invoices.length > 0 ? statement.invoices[0]!.divisionName : 'Playhouse Media Group';
+
   const status = statement.summary.totalOutstanding > 0 ? 'Outstanding' : 'Paid';
   return {
     type: 'statement',
@@ -759,7 +790,12 @@ async function buildStatementPdfData(
     periodFrom,
     periodTo,
     org: {
-      name: 'Playhouse Media Group',
+      name: divisionName,
+      divisionOf: 'Playhouse Media Group',
+      email: settings?.salesRepEmail ?? undefined,
+      phone: settings?.salesRepPhone ?? undefined,
+      website: settings?.divisionWebsite ?? undefined,
+      salesRep: settings?.salesRepName ?? undefined,
     },
     client: {
       name: statement.client.businessName ?? statement.client.name,
@@ -769,6 +805,14 @@ async function buildStatementPdfData(
     transactions,
     openingBalance,
     ageing,
+    banking: settings?.bankName
+      ? {
+          bankName: settings.bankName,
+          accountName: settings.bankAccountName ?? '',
+          accountNumber: settings.bankAccountNumber ?? '',
+          branchCode: settings.bankBranchCode ?? '',
+        }
+      : undefined,
     totals: {
       subtotal: safeNumber(statement.summary.totalInvoiced),
       paid: safeNumber(statement.summary.totalPaid),
