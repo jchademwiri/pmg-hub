@@ -9,6 +9,7 @@ import {
   creditRefunds,
   eq,
   getAllIncome,
+  getClientById,
   getClientStatement,
   getDb,
   getDivisionBillingSettings,
@@ -48,8 +49,7 @@ type PdfAgeing = {
   days1_14: number;
   days15_30: number;
   days31_60: number;
-  days61_90: number;
-  days91_120: number;
+  days61plus: number;
 };
 
 type PdfDocumentData = {
@@ -164,8 +164,7 @@ function drawFooter(doc: jsPDF, data: PdfDocumentData) {
       const ageing = data.ageing;
       const totalDue = totalAgeingDue(ageing);
       const buckets = [
-        ['91+ Days', ageing.days91_120],
-        ['61-90 Days', ageing.days61_90],
+        ['61+ Days', ageing.days61plus],
         ['31-60 Days', ageing.days31_60],
         ['15-30 Days', ageing.days15_30],
         ['1-14 Days', ageing.days1_14],
@@ -197,10 +196,11 @@ function drawFooter(doc: jsPDF, data: PdfDocumentData) {
 
       buckets.forEach(([, amount], index) => {
         const x = PAGE.margin + index * colWidth;
-        if (index <= 2 && amount > 0) {
+        // 0=61+ Days, 1=31-60 Days → red; 2=15-30 Days, 3=1-14 Days → amber; rest → default
+        if (index <= 1 && amount > 0) {
           const redIntensity = Math.min(255, 180 + index * 25);
           doc.setTextColor(redIntensity, 50 + index * 10, 50);
-        } else if ((index === 3 || index === 4) && amount > 0) {
+        } else if ((index === 2 || index === 3) && amount > 0) {
           doc.setTextColor(217, 119, 6);
         } else {
           doc.setTextColor(24, 24, 27);
@@ -775,10 +775,17 @@ async function buildStatementPdfData(
     todayStr,
   );
 
-  // Fetch division settings from the first invoice's division for branding
-  const firstDivisionId = statement.invoices.length > 0 ? statement.invoices[0]!.divisionId : null;
-  const settings = firstDivisionId ? await getDivisionBillingSettings(firstDivisionId) : null;
-  const divisionName = statement.invoices.length > 0 ? statement.invoices[0]!.divisionName : 'Playhouse Media Group';
+  // Use client's linked division if set, otherwise fall back to first invoice's division
+  const clientRecord = await getClientById(clientId);
+  const linkedDivisionId = clientRecord?.divisionId ?? null;
+  const firstInvoiceDivisionId = statement.invoices.length > 0 ? statement.invoices[0]!.divisionId : null;
+  const effectiveDivisionId = linkedDivisionId ?? firstInvoiceDivisionId;
+  const settings = effectiveDivisionId ? await getDivisionBillingSettings(effectiveDivisionId) : null;
+  // Resolve division name: find invoice matching linked division, or use first invoice's
+  const linkedInvoice = statement.invoices.find((inv) => inv.divisionId === linkedDivisionId);
+  const divisionName = linkedInvoice?.divisionName
+    ?? statement.invoices[0]?.divisionName
+    ?? 'Playhouse Media Group';
 
   const status = statement.summary.totalOutstanding > 0 ? 'Outstanding' : 'Paid';
   return {

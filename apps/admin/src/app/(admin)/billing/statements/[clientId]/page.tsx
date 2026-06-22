@@ -228,7 +228,7 @@ export default async function StatementDetailPage({ params, searchParams }: Prop
   }
 
   const todayStr = getSASTToday();
-  const ageing = { current: 0, days1_14: 0, days15_30: 0, days31_60: 0, days61_90: 0, days91_120: 0 };
+  const ageing = { current: 0, days1_14: 0, days15_30: 0, days31_60: 0, days61plus: 0 };
   for (const inv of (statement.outstandingInvoices ?? invoices)) {
     if (inv.status === 'issued' || inv.status === 'overdue' || inv.status === 'partially_paid') {
       const dueStr = inv.dueDate ?? inv.invoiceDate;
@@ -244,8 +244,7 @@ export default async function StatementDetailPage({ params, searchParams }: Prop
       else if (diffDays <= 14)  ageing.days1_14   += outstanding;
       else if (diffDays <= 30)  ageing.days15_30  += outstanding;
       else if (diffDays <= 60)  ageing.days31_60  += outstanding;
-      else if (diffDays <= 90)  ageing.days61_90  += outstanding;
-      else                      ageing.days91_120 += outstanding;
+      else                      ageing.days61plus += outstanding;
     }
   }
 
@@ -398,8 +397,7 @@ export default async function StatementDetailPage({ params, searchParams }: Prop
                   { label: '1–14 Days', value: formatZAR(ageing.days1_14), highlight: ageing.days1_14 > 0 },
                   { label: '15–30 Days', value: formatZAR(ageing.days15_30), highlight: ageing.days15_30 > 0 },
                   { label: '31–60 Days', value: formatZAR(ageing.days31_60), highlight: ageing.days31_60 > 0 },
-                  { label: '61–90 Days', value: formatZAR(ageing.days61_90), highlight: ageing.days61_90 > 0 },
-                  { label: '91–120 Days', value: formatZAR(ageing.days91_120), highlight: ageing.days91_120 > 0 },
+                  { label: '61+ Days', value: formatZAR(ageing.days61plus), highlight: ageing.days61plus > 0 },
                 ].map((bucket) => (
                   <div key={bucket.label} className="flex justify-between items-center text-sm py-0.5 border-b border-border/40 last:border-b-0">
                     <span className="text-muted-foreground">{bucket.label}</span>

@@ -21,8 +21,7 @@ describe('calculateAgeing', () => {
     expect(result.days1_14).toBe(0);
     expect(result.days15_30).toBe(0);
     expect(result.days31_60).toBe(0);
-    expect(result.days61_90).toBe(0);
-    expect(result.days91_120).toBe(0);
+    expect(result.days61plus).toBe(0);
   });
 
   it('places invoice not yet due in Current', () => {
@@ -63,21 +62,20 @@ describe('calculateAgeing', () => {
     expect(result.days31_60).toBe(1000);
   });
 
-  it('places 61-day overdue in 61-90 Days', () => {
+  it('places 61+ day overdue in 61+ Days', () => {
     const result = calculateAgeing([inv({ dueDate: '2026-04-22' })], today);
-    expect(result.days61_90).toBe(1000);
+    expect(result.days61plus).toBe(1000);
     expect(result.days31_60).toBe(0);
   });
 
-  it('places 90-day overdue in 61-90 Days', () => {
+  it('places 90+ day overdue in 61+ Days', () => {
     const result = calculateAgeing([inv({ dueDate: '2026-03-24' })], today);
-    expect(result.days61_90).toBe(1000);
+    expect(result.days61plus).toBe(1000);
   });
 
-  it('places 91-day overdue in 91+ Days', () => {
+  it('places very old invoice in 61+ Days', () => {
     const result = calculateAgeing([inv({ dueDate: '2026-03-23' })], today);
-    expect(result.days91_120).toBe(1000);
-    expect(result.days61_90).toBe(0);
+    expect(result.days61plus).toBe(1000);
   });
 
   it('excludes paid invoice', () => {
@@ -124,8 +122,8 @@ describe('calculateAgeing', () => {
         inv({ dueDate: '2026-06-10', total: 300 }),           // 1-14
         inv({ dueDate: '2026-05-25', total: 200, status: 'overdue' }), // 15-30
         inv({ dueDate: '2026-04-25', total: 400 }),           // 31-60
-        inv({ dueDate: '2026-03-25', total: 100 }),           // 61-90
-        inv({ dueDate: '2026-01-01', total: 600 }),           // 91+
+        inv({ dueDate: '2026-03-25', total: 100 }),           // 61+
+        inv({ dueDate: '2026-01-01', total: 600 }),           // 61+
         inv({ dueDate: '2026-06-01', total: 999, status: 'paid' }), // excluded
       ],
       today,
@@ -134,8 +132,7 @@ describe('calculateAgeing', () => {
     expect(result.days1_14).toBe(300);
     expect(result.days15_30).toBe(200);
     expect(result.days31_60).toBe(400);
-    expect(result.days61_90).toBe(100);
-    expect(result.days91_120).toBe(600);
+    expect(result.days61plus).toBe(700);
     expect(totalAgeingDue(result)).toBe(500 + 300 + 200 + 400 + 100 + 600);
   });
 
@@ -146,22 +143,20 @@ describe('calculateAgeing', () => {
     expect(result.days1_14).toBe(0);
     expect(result.days15_30).toBe(0);
     expect(result.days31_60).toBe(0);
-    expect(result.days61_90).toBe(0);
-    expect(result.days91_120).toBe(0);
+    expect(result.days61plus).toBe(0);
   });
 });
 
 describe('totalAgeingDue', () => {
-  it('sums all six buckets correctly', () => {
+  it('sums all five buckets correctly', () => {
     const result = totalAgeingDue({
       current: 100,
       days1_14: 200,
       days15_30: 300,
       days31_60: 400,
-      days61_90: 500,
-      days91_120: 600,
+      days61plus: 500,
     });
-    expect(result).toBe(2100);
+    expect(result).toBe(1500);
   });
 
   it('returns 0 for all-zero buckets', () => {
@@ -170,8 +165,7 @@ describe('totalAgeingDue', () => {
       days1_14: 0,
       days15_30: 0,
       days31_60: 0,
-      days61_90: 0,
-      days91_120: 0,
+      days61plus: 0,
     });
     expect(result).toBe(0);
   });
@@ -182,8 +176,7 @@ describe('totalAgeingDue', () => {
       days1_14: 0.01,
       days15_30: 0,
       days31_60: 0,
-      days61_90: 0,
-      days91_120: 0,
+      days61plus: 0,
     });
     expect(result).toBeCloseTo(100, 2);
   });

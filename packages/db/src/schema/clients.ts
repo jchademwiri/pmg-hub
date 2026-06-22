@@ -2,6 +2,7 @@ import { boolean, index, pgTable, text, timestamp, uniqueIndex, uuid } from "dri
 import { relations, sql } from "drizzle-orm";
 import { income } from "./income";
 import { expenses } from "./expenses";
+import { divisions } from "./divisions";
 
 export const clients = pgTable(
   "clients",
@@ -11,6 +12,7 @@ export const clients = pgTable(
     businessName: text("business_name"),
     email: text("email"),
     phone: text("phone"),
+    divisionId: uuid("division_id").references(() => divisions.id),
     isActive: boolean("is_active").notNull().default(true),
     createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
     // updatedAt is managed by the application layer on update. Any database-level operation
@@ -28,7 +30,11 @@ export const clients = pgTable(
 export type Client = typeof clients.$inferSelect;
 export type NewClient = typeof clients.$inferInsert;
 
-export const clientsRelations = relations(clients, ({ many }) => ({
+export const clientsRelations = relations(clients, ({ one, many }) => ({
   income: many(income),
   expenses: many(expenses),
+  division: one(divisions, {
+    fields: [clients.divisionId],
+    references: [divisions.id],
+  }),
 }));

@@ -90,6 +90,7 @@ interface ClientBillingWorkspaceProps {
   statement: any;
   availableYears: number[];
   currentFY: number;
+  divisions: { id: string; name: string }[];
   divSettings: any;
   updateClientAction: any;
   creditSummary?: any;
@@ -115,6 +116,7 @@ export function ClientBillingWorkspace({
   updateClientAction,
   creditSummary,
   creditHistory,
+  divisions,
 }: ClientBillingWorkspaceProps) {
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -576,6 +578,10 @@ export function ClientBillingWorkspace({
     periodTo = `${y + 1}-02-28`;
   }
 
+  // Determine statement division branding — use linked division if set, otherwise fall back to first invoice's division
+  const linkedDivision = divisions.find(d => d.id === client.divisionId);
+  const statementDivisionName = linkedDivision?.name ?? invoices[0]?.divisionName ?? 'Playhouse Media Group';
+
   const statementPreviewProps = {
     number: `STMT-${statementPeriodParam ? statementPeriodParam.toUpperCase() : (statementYearParam ? statementYearParam : currentFY)}-${(client.businessName ?? client.name).slice(0, 3).toUpperCase()}`,
     status: statementStatus,
@@ -583,8 +589,8 @@ export function ClientBillingWorkspace({
     periodFrom,
     periodTo,
     org: {
-      name: invoices[0]?.divisionName ?? 'Playhouse Media Group',
-      logoUrl: getDocumentLogoUrl(invoices[0]?.divisionName ?? 'Playhouse Media Group'),
+      name: statementDivisionName,
+      logoUrl: getDocumentLogoUrl(statementDivisionName),
       divisionOf: 'Playhouse Media Group',
       email: divSettings?.salesRepEmail ?? undefined,
       phone: divSettings?.salesRepPhone ?? undefined,
@@ -942,11 +948,11 @@ export function ClientBillingWorkspace({
       {/* Collapsible Edit form */}
       <Collapsible open={isDetailsOpen} onOpenChange={setIsDetailsOpen}>
         <CollapsibleContent className="rounded-lg border p-5 bg-card flex flex-col gap-4 shadow-sm transition-all duration-300">
-          <h2 className="text-base font-semibold">Client Details</h2>
-          <ClientEditForm
-            client={client}
-            updateAction={updateClientAction}
-          />
+          <h2 className="text-base font-semibold">Client Details</h2>            <ClientEditForm
+              client={client}
+              divisions={divisions}
+              updateAction={updateClientAction}
+            />
         </CollapsibleContent>
       </Collapsible>
 

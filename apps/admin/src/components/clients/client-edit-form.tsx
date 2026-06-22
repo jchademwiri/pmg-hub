@@ -7,13 +7,15 @@ import { Alert, AlertDescription } from '@/components/ui/alert'
 import { Button } from '@/components/ui/button'
 import { Field, FieldLabel } from '@/components/ui/field'
 import { Input } from '@/components/ui/input'
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 
 interface ClientEditFormProps {
   client: Client
+  divisions: { id: string; name: string }[]
   updateAction: (formData: FormData) => Promise<{ error?: string }>
 }
 
-export function ClientEditForm({ client, updateAction }: ClientEditFormProps) {
+export function ClientEditForm({ client, divisions, updateAction }: ClientEditFormProps) {
   const router = useRouter()
   const [isPending, startTransition] = React.useTransition()
   const [errorMessage, setErrorMessage] = React.useState<string | null>(null)
@@ -85,6 +87,42 @@ export function ClientEditForm({ client, updateAction }: ClientEditFormProps) {
             defaultValue={client.phone ?? ''}
             disabled={isPending}
           />
+        </Field>
+
+        <Field>
+          <FieldLabel htmlFor="client-division">Linked Division</FieldLabel>
+          <Select
+            name="divisionId"
+            defaultValue={client.divisionId ?? ''}
+            disabled={isPending}
+            onValueChange={(value) => {
+              // Sync the hidden input for FormData
+              const input = document.getElementById('client-division-hidden') as HTMLInputElement | null;
+              if (input) input.value = value;
+            }}
+          >
+            <SelectTrigger id="client-division" className="text-sm h-9">
+              <SelectValue placeholder="No division linked (auto-detect)" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value=" " className="text-xs text-muted-foreground">No division linked</SelectItem>
+              {divisions.map((d) => (
+                <SelectItem key={d.id} value={d.id} className="text-xs">
+                  {d.name}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+          {/* Hidden input to carry the value in FormData */}
+          <input
+            id="client-division-hidden"
+            type="hidden"
+            name="divisionId"
+            defaultValue={client.divisionId ?? ''}
+          />
+          <p className="text-xs text-muted-foreground mt-1">
+            When set, statements will use this division&apos;s branding. If unset, the first invoice&apos;s division is used.
+          </p>
         </Field>
       </div>
 

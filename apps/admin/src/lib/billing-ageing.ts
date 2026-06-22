@@ -10,8 +10,8 @@ export type AgeingBucket = {
   days1_14: number;
   days15_30: number;
   days31_60: number;
-  days61_90: number;
-  days91_120: number;
+  /** 61+ days (merged 61-90 and 91-120 for compact layout) */
+  days61plus: number;
 };
 
 export type AgeingInvoice = {
@@ -38,8 +38,7 @@ export function calculateAgeing(
     days1_14: 0,
     days15_30: 0,
     days31_60: 0,
-    days61_90: 0,
-    days91_120: 0,
+    days61plus: 0,
   };
 
   for (const invoice of invoices) {
@@ -65,10 +64,8 @@ export function calculateAgeing(
       ageing.days15_30 += outstanding;
     } else if (diffDays <= 60) {
       ageing.days31_60 += outstanding;
-    } else if (diffDays <= 90) {
-      ageing.days61_90 += outstanding;
     } else {
-      ageing.days91_120 += outstanding;
+      ageing.days61plus += outstanding;
     }
   }
 
@@ -84,7 +81,6 @@ export function totalAgeingDue(ageing: AgeingBucket): number {
     ageing.days1_14 +
     ageing.days15_30 +
     ageing.days31_60 +
-    ageing.days61_90 +
-    ageing.days91_120
+    ageing.days61plus
   );
 }
