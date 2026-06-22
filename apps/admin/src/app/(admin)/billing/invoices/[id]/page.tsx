@@ -130,12 +130,8 @@ export default async function InvoiceDetailPage({ params }: Props) {
         vatRate: 15 as const,
         discountAmount: 0,
         openingBalance: statement.summary.openingBalance ?? 0,
-        statementSummary: {
-          totalBilled: statement.summary.totalInvoiced,
-          totalPaid: statement.summary.totalPaid,
-          outstanding: statement.summary.totalOutstanding,
-          ageing,
-        },
+        ageing,
+        balanceDue: statement.summary.totalOutstanding ?? 0,
       };
     }
   }
