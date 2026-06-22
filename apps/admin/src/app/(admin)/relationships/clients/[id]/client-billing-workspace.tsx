@@ -54,8 +54,8 @@ import { ClientEditForm } from '@/components/clients/client-edit-form';
 import { ClientFinancialDashboard } from './client-financial-dashboard';
 import { ClientMetricStrip } from './client-metric-strip';
 import { calculateClientHealth, calculateAverageDaysToPay } from '@/lib/client-billing-helpers';
-import { formatZAR, fmtDate } from '@/lib/format';
-import { getSASTToday } from '@/lib/format';
+import { formatZAR, fmtDate, getSASTToday } from '@/lib/format';
+import { calculateAgeing } from '@/lib/billing-ageing';
 import { getDocumentLogoUrl } from '@/lib/document-logo';
 import {
   appendElementToPdf,
@@ -533,26 +533,10 @@ export function ClientBillingWorkspace({
     statementStatus = hasOverdue ? 'Overdue' : 'Outstanding';
   }
 
-  const todayStr = getSASTToday();
-  const statementAgeing = { current: 0, days1_14: 0, days15_30: 0, days31_60: 0, days61_90: 0, days91_120: 0 };
-  for (const inv of statement?.outstandingInvoices ?? statement?.invoices ?? []) {
-    if (inv.status === 'issued' || inv.status === 'overdue' || inv.status === 'partially_paid') {
-      const dueStr = inv.dueDate ?? inv.invoiceDate;
-      const tDate = new Date(todayStr);
-      const dDate = new Date(dueStr);
-      const diffTime = tDate.getTime() - dDate.getTime();
-      const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-      const outstanding = Number(inv.total) - Number(inv.allocatedAmount ?? 0);
-      if (outstanding <= 0) continue;
-
-      if (diffDays <= 0) statementAgeing.current += outstanding;
-      else if (diffDays <= 14) statementAgeing.days1_14 += outstanding;
-      else if (diffDays <= 30) statementAgeing.days15_30 += outstanding;
-      else if (diffDays <= 60) statementAgeing.days31_60 += outstanding;
-      else if (diffDays <= 90) statementAgeing.days61_90 += outstanding;
-      else statementAgeing.days91_120 += outstanding;
-    }
-  }
+  const statementAgeing = calculateAgeing(
+    statement?.outstandingInvoices ?? statement?.invoices ?? [],
+    getSASTToday(),
+  );
 
   const statementPeriodParam = searchParams.get('monthPeriod');
   const statementYearParam = searchParams.get('year');
@@ -595,7 +579,7 @@ export function ClientBillingWorkspace({
   const statementPreviewProps = {
     number: `STMT-${statementPeriodParam ? statementPeriodParam.toUpperCase() : (statementYearParam ? statementYearParam : currentFY)}-${(client.businessName ?? client.name).slice(0, 3).toUpperCase()}`,
     status: statementStatus,
-    issueDate: todayStr,
+    issueDate: getSASTToday(),
     periodFrom,
     periodTo,
     org: {

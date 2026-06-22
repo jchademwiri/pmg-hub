@@ -23,6 +23,7 @@ import { generateReceiptNumber } from '@pmg/utils';
 import { jsPDF } from 'jspdf';
 
 import { fmtDate, formatZAR, getSASTParts, getSASTToday } from '@/lib/format';
+import { calculateAgeing } from '@/lib/billing-ageing';
 
 type BillingPdfType = 'invoice' | 'quote' | 'statement' | 'receipt';
 
@@ -40,6 +41,15 @@ type PdfTransaction = {
   debit?: number;
   credit?: number;
   balance?: number;
+};
+
+type PdfAgeing = {
+  current: number;
+  days1_14: number;
+  days15_30: number;
+  days31_60: number;
+  days61_90: number;
+  days91_120: number;
 };
 
 type PdfDocumentData = {
@@ -69,6 +79,7 @@ type PdfDocumentData = {
   lineItems?: PdfLineItem[];
   transactions?: PdfTransaction[];
   openingBalance?: number;
+  ageing?: PdfAgeing;
   notes?: string | null;
   terms?: string | null;
   banking?: {
@@ -372,6 +383,51 @@ function drawTotals(doc: jsPDF, data: PdfDocumentData, startY: number) {
   return y + 4;
 }
 
+function drawAgeingSummary(doc: jsPDF, data: PdfDocumentData, startY: number) {
+  if (data.type !== 'statement' || !data.ageing) return startY;
+
+  let y = ensurePage(doc, startY, 30);
+  const buckets = [
+    ['91+ Days', data.ageing.days91_120],
+    ['61-90 Days', data.ageing.days61_90],
+    ['31-60 Days', data.ageing.days31_60],
+    ['15-30 Days', data.ageing.days15_30],
+    ['1-14 Days', data.ageing.days1_14],
+    ['Current', data.ageing.current],
+  ] as const;
+
+  doc.setFont('helvetica', 'bold');
+  doc.setFontSize(7);
+  doc.setTextColor(113, 113, 122);
+  doc.text('AGEING SUMMARY', PAGE.margin, y);
+  y += 5;
+
+  const tableWidth = PAGE.width - PAGE.margin * 2;
+  const colWidth = tableWidth / buckets.length;
+  const headerY = y;
+  doc.setFillColor(249, 250, 251);
+  doc.rect(PAGE.margin, headerY, tableWidth, 8, 'F');
+  doc.setDrawColor(229, 231, 235);
+  doc.rect(PAGE.margin, headerY, tableWidth, 16);
+
+  doc.setFontSize(6.5);
+  buckets.forEach(([label], index) => {
+    const x = PAGE.margin + index * colWidth;
+    if (index > 0) doc.line(x, headerY, x, headerY + 16);
+    doc.text(label, x + colWidth / 2, headerY + 5, { align: 'center' });
+  });
+
+  doc.setFont('helvetica', 'bold');
+  doc.setFontSize(7);
+  doc.setTextColor(24, 24, 27);
+  buckets.forEach(([, amount], index) => {
+    const x = PAGE.margin + index * colWidth;
+    doc.text(formatZAR(amount), x + colWidth / 2, headerY + 13, { align: 'center' });
+  });
+
+  return y + 22;
+}
+
 function drawTextBlocks(doc: jsPDF, data: PdfDocumentData, startY: number) {
   let y = startY;
   const blocks = [
@@ -421,6 +477,7 @@ function renderPdf(data: PdfDocumentData) {
   }
 
   y = drawTotals(doc, data, y);
+  y = drawAgeingSummary(doc, data, y);
   drawTextBlocks(doc, data, y);
   drawFooter(doc, data);
   return Buffer.from(doc.output('arraybuffer'));
@@ -671,6 +728,12 @@ async function buildStatementPdfData(
     return { ...tx, balance };
   }).reverse();
 
+  const todayStr = getSASTToday();
+  const ageing = calculateAgeing(
+    statement.outstandingInvoices ?? statement.invoices,
+    todayStr,
+  );
+
   const status = statement.summary.totalOutstanding > 0 ? 'Outstanding' : 'Paid';
   return {
     type: 'statement',
@@ -690,6 +753,7 @@ async function buildStatementPdfData(
     },
     transactions,
     openingBalance,
+    ageing,
     totals: {
       subtotal: safeNumber(statement.summary.totalInvoiced),
       paid: safeNumber(statement.summary.totalPaid),
