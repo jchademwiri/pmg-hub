@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
+import { headers } from 'next/headers';
 
-import { getSessionOrRedirect } from '@/lib/auth';
+import { auth } from '@/lib/auth';
 import { generateBillingPdf } from '@/lib/server-billing-pdf';
 
 type PdfType = 'invoice' | 'quote' | 'statement' | 'receipt';
@@ -14,7 +15,10 @@ export async function GET(
   req: Request,
   { params }: { params: Promise<{ type: string; id: string }> },
 ) {
-  await getSessionOrRedirect();
+  const session = await auth.api.getSession({ headers: await headers() });
+  if (!session) {
+    return NextResponse.json({ error: 'Unauthorized.' }, { status: 401 });
+  }
 
   const { type, id } = await params;
   if (!TYPES.has(type as PdfType)) {
@@ -24,10 +28,16 @@ export async function GET(
   const url = new URL(req.url);
   const year = url.searchParams.get('year');
   const monthPeriod = url.searchParams.get('monthPeriod');
-  const yearNum = year ? Number(year) : undefined;
+  const yearNum = year == null ? undefined : Number(year);
+  if (year != null && (year.trim() === '' || !Number.isFinite(yearNum) || !Number.isInteger(yearNum))) {
+    return NextResponse.json({ error: 'Invalid year parameter.' }, { status: 400 });
+  }
+
   const filters = {
-    ...(yearNum != null && !Number.isNaN(yearNum) ? { year: yearNum } : {}),
-    ...(monthPeriod && PERIODS.has(monthPeriod) ? { monthPeriod: monthPeriod as 'current' | 'previous' | 'past3' | 'past6' } : {}),
+    ...(yearNum != null ? { year: yearNum } : {}),
+    ...(monthPeriod && PERIODS.has(monthPeriod)
+      ? { monthPeriod: monthPeriod as 'current' | 'previous' | 'past3' | 'past6' }
+      : {}),
   };
 
   const result = await generateBillingPdf(type as PdfType, id, filters);
