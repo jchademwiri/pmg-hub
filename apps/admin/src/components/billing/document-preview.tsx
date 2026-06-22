@@ -3,6 +3,7 @@ import Link from 'next/link'
 import { cn } from '@/lib/utils'
 import { fmtDateLong, formatZAR } from '@/lib/format'
 import { getDocumentLogoUrl } from '@/lib/document-logo'
+import { totalAgeingDue } from '@/lib/billing-ageing'
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 
@@ -507,6 +508,7 @@ export function DocumentPreview({
                 <th className="py-2 font-medium text-zinc-500 uppercase tracking-wide border-l border-zinc-200">15–30 Days</th>
                 <th className="py-2 font-medium text-zinc-500 uppercase tracking-wide border-l border-zinc-200">1–14 Days</th>
                 <th className="py-2 font-medium text-zinc-500 uppercase tracking-wide border-l border-zinc-200">Current</th>
+                <th className="py-2 font-medium text-zinc-500 uppercase tracking-wide border-l border-zinc-200">Total Due</th>
               </tr>
             </thead>
             <tbody>
@@ -517,6 +519,7 @@ export function DocumentPreview({
                 <td className={cn('py-3 tabular-nums font-semibold border-l border-zinc-200', ageing.days15_30 > 0 ? 'text-orange-600' : '')}>{fmt(ageing.days15_30)}</td>
                 <td className={cn('py-3 tabular-nums font-semibold border-l border-zinc-200', ageing.days1_14 > 0 ? 'text-amber-600' : '')}>{fmt(ageing.days1_14)}</td>
                 <td className="py-3 tabular-nums font-semibold border-l border-zinc-200">{fmt(ageing.current)}</td>
+                <td className="py-3 tabular-nums font-bold border-l border-zinc-200 text-zinc-900">{fmt(totalAgeingDue(ageing))}</td>
               </tr>
             </tbody>
           </table>

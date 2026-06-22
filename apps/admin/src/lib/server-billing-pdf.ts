@@ -23,7 +23,7 @@ import { generateReceiptNumber } from '@pmg/utils';
 import { jsPDF } from 'jspdf';
 
 import { fmtDate, formatZAR, getSASTParts, getSASTToday } from '@/lib/format';
-import { calculateAgeing } from '@/lib/billing-ageing';
+import { calculateAgeing, totalAgeingDue } from '@/lib/billing-ageing';
 
 type BillingPdfType = 'invoice' | 'quote' | 'statement' | 'receipt';
 
@@ -387,13 +387,16 @@ function drawAgeingSummary(doc: jsPDF, data: PdfDocumentData, startY: number) {
   if (data.type !== 'statement' || !data.ageing) return startY;
 
   let y = ensurePage(doc, startY, 30);
+  const ageing = data.ageing;
+  const totalDue = totalAgeingDue(ageing);
   const buckets = [
-    ['91+ Days', data.ageing.days91_120],
-    ['61-90 Days', data.ageing.days61_90],
-    ['31-60 Days', data.ageing.days31_60],
-    ['15-30 Days', data.ageing.days15_30],
-    ['1-14 Days', data.ageing.days1_14],
-    ['Current', data.ageing.current],
+    ['91+ Days', ageing.days91_120],
+    ['61-90 Days', ageing.days61_90],
+    ['31-60 Days', ageing.days31_60],
+    ['15-30 Days', ageing.days15_30],
+    ['1-14 Days', ageing.days1_14],
+    ['Current', ageing.current],
+    ['Total Due', totalDue],
   ] as const;
 
   doc.setFont('helvetica', 'bold');
