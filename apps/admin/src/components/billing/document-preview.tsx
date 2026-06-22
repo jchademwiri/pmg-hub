@@ -508,48 +508,49 @@ export function DocumentPreview({
         </div>
       )}
 
-      {/* ── Spacer - pushes ageing + footer to the bottom ──────────────────── */}
+      {/* ── Spacer - pushes footer area to the bottom ─────────────────────── */}
       <div className="flex-1" />
 
-      {/* ── Statement Ageing - just above footer ────────────────────────────── */}
-      {type === 'statement' && ageing && (
-        <div className="mx-4 sm:mx-10 border-t border-zinc-100 pt-5 pb-4 print:break-inside-avoid [break-inside:avoid]">
-          <p className="text-[10px] font-semibold uppercase tracking-widest text-zinc-400 print:text-zinc-600 mb-3">
-            Ageing Summary
-          </p>
-          <table className="w-full text-xs text-center border border-zinc-200">
-            <thead>
-              <tr className="bg-zinc-50 border-b border-zinc-200">
-                <th className="py-2 font-medium text-zinc-500 uppercase tracking-wide">91+ Days</th>
-                <th className="py-2 font-medium text-zinc-500 uppercase tracking-wide border-l border-zinc-200">61–90 Days</th>
-                <th className="py-2 font-medium text-zinc-500 uppercase tracking-wide border-l border-zinc-200">31–60 Days</th>
-                <th className="py-2 font-medium text-zinc-500 uppercase tracking-wide border-l border-zinc-200">15–30 Days</th>
-                <th className="py-2 font-medium text-zinc-500 uppercase tracking-wide border-l border-zinc-200">1–14 Days</th>
-                <th className="py-2 font-medium text-zinc-500 uppercase tracking-wide border-l border-zinc-200">Current</th>
-                <th className="py-2 font-medium text-zinc-500 uppercase tracking-wide border-l border-zinc-200">Total Due</th>
-              </tr>
-            </thead>
-            <tbody>
-              <tr>
-                <td className={cn('py-3 tabular-nums font-semibold', ageing.days91_120 > 0 ? 'text-red-700' : 'text-zinc-500')}>{fmt(ageing.days91_120)}</td>
-                <td className={cn('py-3 tabular-nums font-semibold border-l border-zinc-200', ageing.days61_90 > 0 ? 'text-red-600' : 'text-zinc-500')}>{fmt(ageing.days61_90)}</td>
-                <td className={cn('py-3 tabular-nums font-semibold border-l border-zinc-200', ageing.days31_60 > 0 ? 'text-red-500' : 'text-zinc-500')}>{fmt(ageing.days31_60)}</td>
-                <td className={cn('py-3 tabular-nums font-semibold border-l border-zinc-200', ageing.days15_30 > 0 ? 'text-amber-600' : 'text-zinc-500')}>{fmt(ageing.days15_30)}</td>
-                <td className={cn('py-3 tabular-nums font-semibold border-l border-zinc-200', ageing.days1_14 > 0 ? 'text-amber-600' : 'text-zinc-500')}>{fmt(ageing.days1_14)}</td>
-                <td className="py-3 tabular-nums font-semibold border-l border-zinc-200">{fmt(ageing.current)}</td>
-                <td className="py-3 tabular-nums font-bold border-l border-zinc-200 text-zinc-900">{fmt(totalAgeingDue(ageing))}</td>
-              </tr>
-            </tbody>
-          </table>
-        </div>
-      )}
+      {/* ── Footer area (ageing summary + footer line) - repeats on each page ── */}
+      <div className="print:break-inside-avoid [break-inside:avoid]">
+        {type === 'statement' && ageing && (
+          <div className="mx-4 sm:mx-10 pt-5 pb-3">
+            <p className="text-[10px] font-semibold uppercase tracking-widest text-zinc-400 print:text-zinc-600 mb-3">
+              Ageing Summary
+            </p>
+            <table className="w-full text-xs text-center border border-zinc-200">
+              <thead>
+                <tr className="bg-zinc-50 border-b border-zinc-200">
+                  <th className="py-2 font-medium text-zinc-500 uppercase tracking-wide">91+ Days</th>
+                  <th className="py-2 font-medium text-zinc-500 uppercase tracking-wide border-l border-zinc-200">61–90 Days</th>
+                  <th className="py-2 font-medium text-zinc-500 uppercase tracking-wide border-l border-zinc-200">31–60 Days</th>
+                  <th className="py-2 font-medium text-zinc-500 uppercase tracking-wide border-l border-zinc-200">15–30 Days</th>
+                  <th className="py-2 font-medium text-zinc-500 uppercase tracking-wide border-l border-zinc-200">1–14 Days</th>
+                  <th className="py-2 font-medium text-zinc-500 uppercase tracking-wide border-l border-zinc-200">Current</th>
+                  <th className="py-2 font-medium text-zinc-500 uppercase tracking-wide border-l border-zinc-200">Total Due</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td className={cn('py-3 tabular-nums font-semibold', ageing.days91_120 > 0 ? 'text-red-700' : 'text-zinc-500')}>{fmt(ageing.days91_120)}</td>
+                  <td className={cn('py-3 tabular-nums font-semibold border-l border-zinc-200', ageing.days61_90 > 0 ? 'text-red-600' : 'text-zinc-500')}>{fmt(ageing.days61_90)}</td>
+                  <td className={cn('py-3 tabular-nums font-semibold border-l border-zinc-200', ageing.days31_60 > 0 ? 'text-red-500' : 'text-zinc-500')}>{fmt(ageing.days31_60)}</td>
+                  <td className={cn('py-3 tabular-nums font-semibold border-l border-zinc-200', ageing.days15_30 > 0 ? 'text-amber-600' : 'text-zinc-500')}>{fmt(ageing.days15_30)}</td>
+                  <td className={cn('py-3 tabular-nums font-semibold border-l border-zinc-200', ageing.days1_14 > 0 ? 'text-amber-600' : 'text-zinc-500')}>{fmt(ageing.days1_14)}</td>
+                  <td className="py-3 tabular-nums font-semibold border-l border-zinc-200">{fmt(ageing.current)}</td>
+                  <td className="py-3 tabular-nums font-bold border-l border-zinc-200 text-zinc-900">{fmt(totalAgeingDue(ageing))}</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        )}
 
-      {/* ── Footer - pinned to bottom ───────────────────────────────────── */}
-      <div className="mx-4 sm:mx-10 border-t border-zinc-100 py-4 flex items-center justify-between">
-        <span className="text-[10px] text-zinc-400">
-          {org.divisionOf ? `A division of ${org.divisionOf}` : ''}
-        </span>
-        <span className="text-[10px] text-zinc-400">Thank you for your business.</span>
+        <div className="mx-4 sm:mx-10 border-t border-zinc-100 py-4 flex items-center justify-between">
+          <span className="text-[10px] text-zinc-400">
+            {org.divisionOf ? `A division of ${org.divisionOf}` : ''}
+          </span>
+          <span className="text-[10px] text-zinc-400">Thank you for your business.</span>
+        </div>
       </div>
     </div>
   )

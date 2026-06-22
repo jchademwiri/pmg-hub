@@ -155,6 +155,59 @@ function drawFooter(doc: jsPDF, data: PdfDocumentData) {
   const pageCount = doc.getNumberOfPages();
   for (let i = 1; i <= pageCount; i++) {
     doc.setPage(i);
+
+    // Draw ageing summary on every page for statements
+    if (data.type === 'statement' && data.ageing) {
+      const ageing = data.ageing;
+      const totalDue = totalAgeingDue(ageing);
+      const buckets = [
+        ['91+ Days', ageing.days91_120],
+        ['61-90 Days', ageing.days61_90],
+        ['31-60 Days', ageing.days31_60],
+        ['15-30 Days', ageing.days15_30],
+        ['1-14 Days', ageing.days1_14],
+        ['Current', ageing.current],
+        ['Total Due', totalDue],
+      ] as const;
+
+      const tableWidth = PAGE.width - PAGE.margin * 2;
+      const colWidth = tableWidth / buckets.length;
+      const headerY = 261;
+
+      doc.setFont('helvetica', 'bold');
+      doc.setFontSize(7);
+      doc.setTextColor(113, 113, 122);
+      doc.text('AGEING SUMMARY', PAGE.margin, headerY);
+
+      const tableY = headerY + 2;
+      doc.setFillColor(249, 250, 251);
+      doc.rect(PAGE.margin, tableY, tableWidth, 8, 'F');
+      doc.setDrawColor(229, 231, 235);
+      doc.rect(PAGE.margin, tableY, tableWidth, 16);
+
+      doc.setFontSize(6);
+      buckets.forEach(([label], index) => {
+        const x = PAGE.margin + index * colWidth;
+        if (index > 0) doc.line(x, tableY, x, tableY + 16);
+        doc.text(label, x + colWidth / 2, tableY + 5, { align: 'center' });
+      });
+
+      buckets.forEach(([, amount], index) => {
+        const x = PAGE.margin + index * colWidth;
+        if (index <= 2 && amount > 0) {
+          const redIntensity = Math.min(255, 180 + index * 25);
+          doc.setTextColor(redIntensity, 50 + index * 10, 50);
+        } else if ((index === 3 || index === 4) && amount > 0) {
+          doc.setTextColor(217, 119, 6);
+        } else {
+          doc.setTextColor(24, 24, 27);
+        }
+        doc.setFont('helvetica', 'bold');
+        doc.setFontSize(6.5);
+        doc.text(formatZAR(amount), x + colWidth / 2, tableY + 13, { align: 'center' });
+      });
+    }
+
     doc.setDrawColor(229, 231, 235);
     doc.line(PAGE.margin, 282, PAGE.width - PAGE.margin, 282);
     doc.setFont('helvetica', 'normal');
@@ -391,64 +444,6 @@ function drawTotals(doc: jsPDF, data: PdfDocumentData, startY: number) {
   return y + 4;
 }
 
-function drawAgeingSummary(doc: jsPDF, data: PdfDocumentData, startY: number) {
-  if (data.type !== 'statement' || !data.ageing) return startY;
-
-  let y = ensurePage(doc, startY, 30);
-  const ageing = data.ageing;
-  const totalDue = totalAgeingDue(ageing);
-  const buckets = [
-    ['91+ Days', ageing.days91_120],
-    ['61-90 Days', ageing.days61_90],
-    ['31-60 Days', ageing.days31_60],
-    ['15-30 Days', ageing.days15_30],
-    ['1-14 Days', ageing.days1_14],
-    ['Current', ageing.current],
-    ['Total Due', totalDue],
-  ] as const;
-
-  doc.setFont('helvetica', 'bold');
-  doc.setFontSize(7);
-  doc.setTextColor(113, 113, 122);
-  doc.text('AGEING SUMMARY', PAGE.margin, y);
-  y += 5;
-
-  const tableWidth = PAGE.width - PAGE.margin * 2;
-  const colWidth = tableWidth / buckets.length;
-  const headerY = y;
-  doc.setFillColor(249, 250, 251);
-  doc.rect(PAGE.margin, headerY, tableWidth, 8, 'F');
-  doc.setDrawColor(229, 231, 235);
-  doc.rect(PAGE.margin, headerY, tableWidth, 16);
-
-  doc.setFontSize(6.5);
-  buckets.forEach(([label], index) => {
-    const x = PAGE.margin + index * colWidth;
-    if (index > 0) doc.line(x, headerY, x, headerY + 16);
-    doc.text(label, x + colWidth / 2, headerY + 5, { align: 'center' });
-  });
-
-  buckets.forEach(([, amount], index) => {
-    const x = PAGE.margin + index * colWidth;
-    // Colour-code overdue buckets
-    if (index <= 2 && amount > 0) {
-      // 91+, 61-90, 31-60 → red shades (deepest for furthest overdue)
-      const redIntensity = Math.min(255, 180 + index * 25);
-      doc.setTextColor(redIntensity, 50 + index * 10, 50);
-    } else if ((index === 3 || index === 4) && amount > 0) {
-      // 15-30, 1-14 → amber
-      doc.setTextColor(217, 119, 6);
-    } else {
-      doc.setTextColor(24, 24, 27);
-    }
-    doc.setFont('helvetica', 'bold');
-    doc.setFontSize(7);
-    doc.text(formatZAR(amount), x + colWidth / 2, headerY + 13, { align: 'center' });
-  });
-
-  return y + 22;
-}
-
 function drawTextBlocks(doc: jsPDF, data: PdfDocumentData, startY: number) {
   let y = startY;
   const blocks = [
@@ -499,7 +494,6 @@ function renderPdf(data: PdfDocumentData) {
 
   y = drawTotals(doc, data, y);
   y = drawTextBlocks(doc, data, y);
-  y = drawAgeingSummary(doc, data, y);
   drawFooter(doc, data);
   return Buffer.from(doc.output('arraybuffer'));
 }
