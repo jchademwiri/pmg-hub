@@ -1,0 +1,162 @@
+'use client';
+
+import type { jsPDF as JsPdfConstructor } from 'jspdf';
+
+export { getBase64ByteSize, MAX_EMAIL_PDF_BYTES } from './pdf-email-size';
+import { getBase64ByteSize, MAX_EMAIL_PDF_BYTES } from './pdf-email-size';
+
+export const PDF_A4 = {
+  widthMm: 210,
+  heightMm: 297,
+  minorOverflowHeightMm: 315,
+  trailingPageThresholdMm: 10,
+  canvasScale: 2,
+  backgroundColor: '#ffffff',
+} as const;
+
+type JsPdfInstance = InstanceType<typeof JsPdfConstructor>;
+
+export function getPrintableElementById(elementId: string): HTMLElement {
+  const element = document.getElementById(elementId);
+  if (!element) {
+    throw new Error(`Printable element '#${elementId}' not found.`);
+  }
+
+  return element;
+}
+
+export function sanitizePdfFileName(fileName: string) {
+  const cleaned = fileName
+    .replace(/\.pdf$/i, '')
+    .replace(/[<>:"/\\|?*\x00-\x1f]/g, '-')
+    .replace(/\s+/g, '-')
+    .replace(/-+/g, '-')
+    .replace(/^-|-$/g, '');
+
+  return `${cleaned || 'document'}.pdf`;
+}
+
+export function extractPdfBase64(dataUri: string) {
+  const base64 = dataUri.split(',')[1];
+  if (!base64) throw new Error('PDF base64 conversion failed.');
+  return base64;
+}
+
+export function assertEmailPdfSize(base64: string, label = 'PDF attachment') {
+  const size = getBase64ByteSize(base64);
+  if (size > MAX_EMAIL_PDF_BYTES) {
+    throw new Error(`${label} is too large to email. Try printing/downloading it instead.`);
+  }
+}
+
+function downloadBlob(blob: Blob, fileName: string) {
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement('a');
+  link.href = url;
+  link.download = sanitizePdfFileName(fileName);
+  document.body.appendChild(link);
+  link.click();
+  link.remove();
+  URL.revokeObjectURL(url);
+}
+
+export async function downloadServerPdf(pdfUrl: string, fileName: string) {
+  const response = await fetch(pdfUrl, { credentials: 'same-origin' });
+  if (!response.ok) {
+    throw new Error(`PDF download failed (${response.status}).`);
+  }
+
+  downloadBlob(await response.blob(), fileName);
+}
+
+export async function serverPdfUrlToBase64(pdfUrl: string, label?: string) {
+  const response = await fetch(pdfUrl, { credentials: 'same-origin' });
+  if (!response.ok) {
+    throw new Error(`PDF generation failed (${response.status}).`);
+  }
+
+  const buffer = await response.arrayBuffer();
+  const bytes = new Uint8Array(buffer);
+  let binary = '';
+  for (let i = 0; i < bytes.length; i += 1) {
+    binary += String.fromCharCode(bytes[i]!);
+  }
+
+  const base64 = window.btoa(binary);
+  if (label) assertEmailPdfSize(base64, label);
+  return base64;
+}
+
+function addCanvasImageToPdf(pdf: JsPdfInstance, canvas: HTMLCanvasElement) {
+  const imgData = canvas.toDataURL('image/png');
+  let imgHeight = (canvas.height * PDF_A4.widthMm) / canvas.width;
+
+  if (imgHeight > PDF_A4.heightMm && imgHeight < PDF_A4.minorOverflowHeightMm) {
+    imgHeight = PDF_A4.heightMm;
+  }
+
+  let heightLeft = imgHeight;
+  let position = 0;
+
+  pdf.addImage(imgData, 'PNG', 0, position, PDF_A4.widthMm, imgHeight, undefined, 'FAST');
+  heightLeft -= PDF_A4.heightMm;
+
+  while (heightLeft > PDF_A4.trailingPageThresholdMm) {
+    position = heightLeft - imgHeight;
+    pdf.addPage();
+    pdf.addImage(imgData, 'PNG', 0, position, PDF_A4.widthMm, imgHeight, undefined, 'FAST');
+    heightLeft -= PDF_A4.heightMm;
+  }
+}
+
+export async function renderElementToPdf(elementId: string): Promise<JsPdfInstance> {
+  const [{ jsPDF }, html2canvasModule] = await Promise.all([
+    import('jspdf'),
+    import('html2canvas-pro'),
+  ]);
+  const element = getPrintableElementById(elementId);
+  const canvas = await html2canvasModule.default(element, {
+    scale: PDF_A4.canvasScale,
+    useCORS: true,
+    logging: false,
+    backgroundColor: PDF_A4.backgroundColor,
+  });
+  const pdf = new jsPDF({
+    orientation: 'portrait',
+    unit: 'mm',
+    format: 'a4',
+  });
+
+  addCanvasImageToPdf(pdf, canvas);
+  return pdf;
+}
+
+export async function appendElementToPdf(
+  pdf: JsPdfInstance,
+  elementId: string,
+  shouldAddPage: boolean,
+) {
+  const html2canvas = (await import('html2canvas-pro')).default;
+  const element = getPrintableElementById(elementId);
+  const canvas = await html2canvas(element, {
+    scale: PDF_A4.canvasScale,
+    useCORS: true,
+    logging: false,
+    backgroundColor: PDF_A4.backgroundColor,
+  });
+
+  if (shouldAddPage) pdf.addPage();
+  addCanvasImageToPdf(pdf, canvas);
+}
+
+export async function downloadElementPdf(elementId: string, fileName: string) {
+  const pdf = await renderElementToPdf(elementId);
+  pdf.save(sanitizePdfFileName(fileName));
+}
+
+export async function elementToPdfBase64(elementId: string, label?: string) {
+  const pdf = await renderElementToPdf(elementId);
+  const base64 = extractPdfBase64(pdf.output('datauristring'));
+  if (label) assertEmailPdfSize(base64, label);
+  return base64;
+}

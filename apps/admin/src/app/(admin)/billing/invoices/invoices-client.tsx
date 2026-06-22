@@ -24,6 +24,8 @@ import {
 } from '@/components/ui/table';
 import { EmptyState } from '@/components/ui/empty-state';
 import { BillingStatusBadge } from '@/components/billing/billing-status-badge';
+import { Badge } from '@/components/ui/badge';
+import { getDocumentLogoText } from '@/lib/document-logo';
 import { formatZAR, fmtDate } from '@/lib/format';
 import type { InvoiceRow } from '@pmg/db';
 
@@ -115,6 +117,7 @@ export function InvoicesClient({
         <TableHeader>
           <TableRow>
             <TableHead>Invoice #</TableHead>
+            <TableHead>Division</TableHead>
             <TableHead>Client</TableHead>
             <TableHead>Issue Date</TableHead>
             <TableHead>Due Date</TableHead>
@@ -132,6 +135,11 @@ export function InvoicesClient({
             >
               <TableCell className="font-medium">
                 {inv.documentNumber}
+              </TableCell>
+              <TableCell>
+                <Badge variant="outline" className="font-mono text-[10px] tracking-wide">
+                  {getDocumentLogoText(inv.divisionName)}
+                </Badge>
               </TableCell>
               <TableCell className="text-muted-foreground">
                 {inv.clientName ?? <span className="italic">No client</span>}

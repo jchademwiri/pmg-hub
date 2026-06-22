@@ -2,7 +2,7 @@
 
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { useState, useTransition } from 'react';
+import { useTransition } from 'react';
 import { MoreHorizontal } from 'lucide-react';
 import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
@@ -24,6 +24,8 @@ import {
 import { EmptyState } from '@/components/ui/empty-state';
 import { confirm } from '@/components/ui/confirm-dialog';
 import { BillingStatusBadge } from '@/components/billing/billing-status-badge';
+import { Badge } from '@/components/ui/badge';
+import { getDocumentLogoText } from '@/lib/document-logo';
 import { formatZAR, fmtDate } from '@/lib/format';
 import type { QuotationRow } from '@pmg/db';
 
@@ -126,6 +128,7 @@ export function QuotesClient({
         <TableHeader>
           <TableRow>
             <TableHead>Quote #</TableHead>
+            <TableHead>Division</TableHead>
             <TableHead>Client</TableHead>
             <TableHead>Issue Date</TableHead>
             <TableHead>Expiry Date</TableHead>
@@ -143,6 +146,11 @@ export function QuotesClient({
             >
               <TableCell className="font-medium">
                 {quote.documentNumber}
+              </TableCell>
+              <TableCell>
+                <Badge variant="outline" className="font-mono text-[10px] tracking-wide">
+                  {getDocumentLogoText(quote.divisionName)}
+                </Badge>
               </TableCell>
               <TableCell className="text-muted-foreground">
                 {quote.clientName ?? <span className="italic">No client</span>}

@@ -166,19 +166,10 @@ export function DocumentPreview({
     <div id={id} className="print-document w-full max-w-[794px] min-h-[1123px] mx-auto flex flex-col bg-white text-zinc-900 shadow-md print:shadow-none ring-1 ring-zinc-200 print:ring-0 border-t-[4px] border-t-blue-700">
 
       {/* ── Header ─────────────────────────────────────────────────────────── */}
-      <div className="flex items-start justify-between gap-6 px-4 sm:px-10 pt-10 pb-6">
+      <div className="grid grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)] items-start gap-6 px-4 sm:px-10 pt-10 pb-6">
 
-        {/* Left: Logo + Company info */}
-        <div className="flex items-start gap-4">
-          {/* Logo placeholder - shows initials if no logo */}
-          <div className="flex size-14 shrink-0 items-center justify-center rounded-lg bg-zinc-100 text-zinc-800 text-xs font-bold overflow-hidden">
-            {logoUrl ? (
-              <img src={logoUrl} alt={org.name} className="w-full h-full object-contain" />
-            ) : (
-              org.name.slice(0, 3).toUpperCase()
-            )}
-          </div>
-
+        {/* Left: Company info */}
+        <div className="flex max-w-[16rem] items-start gap-4">
           <div className="flex flex-col gap-0.5">
             <span className="text-lg font-bold tracking-tight">{org.name}</span>
             {org.registrationNumber && (
@@ -199,8 +190,17 @@ export function DocumentPreview({
           </div>
         </div>
 
+        {/* Center: Logo */}
+        <div className="flex h-16 w-40 items-center justify-center overflow-hidden bg-transparent">
+          {logoUrl ? (
+            <img src={logoUrl} alt={org.name} className="max-h-full max-w-full object-contain" />
+          ) : (
+            <span className="text-xs font-bold text-zinc-800">{org.name.slice(0, 3).toUpperCase()}</span>
+          )}
+        </div>
+
         {/* Right: Document type + number + status + amount due */}
-        <div className="flex flex-col items-end gap-2 shrink-0">
+        <div className="flex flex-col items-end gap-2 justify-self-end">
           <span className="text-2xl font-bold uppercase tracking-widest text-zinc-300 print:text-zinc-600">
             {typeLabel}
           </span>
@@ -303,7 +303,7 @@ export function DocumentPreview({
                 const primaryText = item.itemName || item.description;
                 const hasSecondary = !!item.itemName && !!item.description && item.description.trim().toLowerCase() !== item.itemName.trim().toLowerCase();
                 return (
-                  <tr key={i} className="border-b border-zinc-100 print:break-inside-avoid">
+                  <tr key={i} className="border-b border-zinc-100 print:break-inside-avoid [break-inside:avoid]">
                     <td className="py-3 pr-4 text-zinc-800">
                       <div className="text-zinc-900">{primaryText}</div>
                       {hasSecondary && (
@@ -322,7 +322,7 @@ export function DocumentPreview({
           </table>
 
           {/* Totals */}
-          <div className="mt-4 flex justify-end">
+          <div className="mt-4 flex justify-end print:break-inside-avoid [break-inside:avoid]">
             <div className="flex w-64 flex-col gap-2">
               <div className="flex justify-between text-sm text-zinc-600">
                 <span>Subtotal</span>
@@ -353,7 +353,7 @@ export function DocumentPreview({
       {type === 'statement' && (
         <div className="px-4 sm:px-10 pb-6">
           {transactions.length === 0 && openingBalance === undefined ? (
-            <div className="py-12 border border-dashed border-zinc-200 rounded-lg text-center">
+            <div className="py-12 border border-dashed border-zinc-200 rounded-lg text-center print:break-inside-avoid [break-inside:avoid]">
               <p className="text-sm text-zinc-500">No transactions for this period.</p>
             </div>
           ) : (
@@ -377,7 +377,7 @@ export function DocumentPreview({
               <tbody>
                 {/* Balance Brought Forward row (at the top with colSpan spanning Invoice No. and Description) */}
                 {openingBalance !== undefined && (
-                  <tr className="border-b border-zinc-100 bg-zinc-50/50">
+                  <tr className="border-b border-zinc-100 bg-zinc-50/50 print:break-inside-avoid [break-inside:avoid]">
                     <td className="py-2.5 pr-4 text-xs text-zinc-500 whitespace-nowrap">{fmtDateLong(periodFrom)}</td>
                     <td colSpan={2} className="py-2.5 px-4 text-xs text-zinc-500 italic font-normal">
                       Balance Brought Forward
@@ -390,7 +390,7 @@ export function DocumentPreview({
                   </tr>
                 )}
                 {transactions.map((tx, i) => (
-                  <tr key={i} className="border-b border-zinc-50">
+                  <tr key={i} className="border-b border-zinc-50 print:break-inside-avoid [break-inside:avoid]">
                     <td className="py-2.5 pr-4 text-xs text-zinc-600 whitespace-nowrap">{fmtDateLong(tx.date)}</td>
                     <td className="py-2.5 px-4 text-xs text-zinc-600 whitespace-nowrap">
                       {tx.invoiceId ? (
@@ -430,7 +430,7 @@ export function DocumentPreview({
           )}
 
           {/* Statement summary */}
-          <div className="mt-4 flex justify-end">
+          <div className="mt-4 flex justify-end print:break-inside-avoid [break-inside:avoid]">
             <div className="flex w-64 flex-col gap-2">
               {(() => {
                 const totalInvoiced = transactions.reduce((s, t) => s + (t.debit ?? 0), 0)
@@ -469,7 +469,7 @@ export function DocumentPreview({
 
       {/* ── Banking details - after line items ──────────────────────────────── */}
       {banking && (
-        <div className="mx-4 sm:mx-10 border-t border-zinc-100 pt-5 pb-4 print:break-inside-avoid">
+        <div className="mx-4 sm:mx-10 border-t border-zinc-100 pt-5 pb-4 print:break-inside-avoid [break-inside:avoid]">
           <p className="text-[10px] font-semibold uppercase tracking-widest text-zinc-400 print:text-zinc-600 mb-3">
             Banking Details
           </p>
@@ -494,7 +494,7 @@ export function DocumentPreview({
 
       {/* ── Statement Ageing - pinned to bottom ─────────────────────────────── */}
       {type === 'statement' && ageing && (
-        <div className="mx-4 sm:mx-10 border-t border-zinc-100 pt-5 pb-4 print:break-inside-avoid">
+        <div className="mx-4 sm:mx-10 border-t border-zinc-100 pt-5 pb-4 print:break-inside-avoid [break-inside:avoid]">
           <p className="text-[10px] font-semibold uppercase tracking-widest text-zinc-400 print:text-zinc-600 mb-3">
             Ageing Summary
           </p>
@@ -525,7 +525,7 @@ export function DocumentPreview({
 
       {/* ── Notes / Terms - fixed just above footer ─────────────────────────── */}
       {(notes || terms) && (
-        <div className="mx-4 sm:mx-10 border-t border-zinc-100 pt-4 pb-4 flex flex-col gap-3 print:break-inside-avoid">
+        <div className="mx-4 sm:mx-10 border-t border-zinc-100 pt-4 pb-4 flex flex-col gap-3 print:break-inside-avoid [break-inside:avoid]">
           {notes && (
             <div>
               <p className="text-[10px] font-semibold uppercase tracking-widest text-zinc-400 print:text-zinc-600">Notes</p>

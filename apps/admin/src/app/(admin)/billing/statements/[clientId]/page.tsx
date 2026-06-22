@@ -1,7 +1,7 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
-import { ChevronLeft, FileDown } from 'lucide-react';
+import { ChevronLeft } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Separator } from '@/components/ui/separator';
@@ -86,6 +86,10 @@ export default async function StatementDetailPage({ params, searchParams }: Prop
   if (!statement) notFound();
 
   const { client, summary, invoices } = statement;
+  const statementPdfParams = new URLSearchParams();
+  if (monthPeriod) statementPdfParams.set('monthPeriod', monthPeriod);
+  if (year) statementPdfParams.set('year', String(year));
+  const statementPdfUrl = `/api/billing/pdf/statement/${clientId}${statementPdfParams.size ? `?${statementPdfParams.toString()}` : ''}`;
 
   // ── DocumentPreview props ─────────────────────────────────────────────────
   let periodLabel = '';
@@ -307,6 +311,7 @@ export default async function StatementDetailPage({ params, searchParams }: Prop
           />
           <ExportPdfButton 
             fileName={`Statement-${client.businessName?.replace(/\s+/g, '-') ?? client.name.replace(/\s+/g, '-')}`}
+            pdfUrl={statementPdfUrl}
           />
         </div>
       </div>
@@ -353,6 +358,7 @@ export default async function StatementDetailPage({ params, searchParams }: Prop
         {/* Document preview - scrollable on small screens */}
         <div className="lg:col-span-2 overflow-x-auto">
           <DocumentPreview
+            id="printable-area"
             type="statement"
             {...docPreviewProps}
           />

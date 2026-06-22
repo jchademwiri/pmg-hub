@@ -11,15 +11,18 @@
 **What happened:** A client paid you for services.
 
 **What to do:**
-1. Go to **Income** page and record the income
-2. The system automatically creates a journal entry:
-   - DR Business Cheque Account (money came in)
-   - CR Sales Revenue (you earned it)
-3. Check the **Journals** page to see the created entry
-4. The entry appears in the **General Ledger** automatically
-5. The **Trial Balance** and **P&L** update automatically
+1. If the payment belongs to an invoice, go to **Billing → Payments** and record it there
+2. Allocate the payment to the correct invoice
+3. If it is not invoice-related income, go to **Finance → Income** and record it there
+4. The system automatically creates the accounting entries
 
-**You don't need to manually create journal entries for income.** The income page handles it.
+For normal invoice payments, Billing is the best starting point because it updates the invoice status and the client balance.
+
+The system automatically creates a journal entry:
+   - DR Business Cheque Account (money came in)
+   - CR Sales Revenue or Accounts Receivable (depending on the source)
+
+**You don't need to manually create journal entries for normal income.** Billing and Finance handle it.
 
 ---
 
@@ -28,14 +31,16 @@
 **What happened:** You paid for something business-related.
 
 **What to do:**
-1. Go to **Expenses** page and record the expense
-2. Select the correct expense category (e.g., Office & Supplies, Travel)
-3. The system automatically creates a journal entry:
+1. Go to **Finance → Expenses**
+2. Record the expense
+3. Select the correct expense category (e.g., Office & Supplies, Travel)
+4. Choose the correct division (`AWS`, `TES`, or `PMG`)
+5. The system automatically creates a journal entry:
    - DR Expense Account (you spent it)
    - CR Business Cheque Account (money left the bank)
-4. The rest updates automatically
+6. The rest updates automatically
 
-**You don't need to manually create journal entries for expenses.** The expense page handles it.
+**You don't need to manually create journal entries for normal expenses.** The expense page handles it.
 
 ---
 
@@ -98,14 +103,14 @@ Spend 30 minutes at the end of each month:
 - Ask yourself: "Does this match what I know about this month?"
 
 ### Step 5: Close the Period
-- Navigate to `/accounting/periods`
-- Close the previous month's period
-- This prevents accidental changes to last month's data
+- Use the dashboard close-month flow to close the completed month and create a snapshot
+- Use `/accounting/periods` when an accounting period itself needs to be closed or reviewed
+- Keep the current month open
 
 ### Step 6: Export a Backup
-- Navigate to `/accounting/exports`
-- Export the Trial Balance and P&L for the month
-- Save the files in a backup folder
+- Navigate to Settings → Data for database backups
+- Use Accounting Exports when your accountant needs CSV files
+- Confirm automatic backups are running if Cloudflare R2 is configured
 
 ---
 
@@ -139,8 +144,9 @@ At the end of the financial year:
 
 | I want to... | Go to... |
 |-------------|----------|
-| Record income | `/income` |
-| Record an expense | `/expenses` |
+| Record invoice payment | `/billing/payments` |
+| Record non-invoice income | `/finance/income` |
+| Record an expense | `/finance/expenses` |
 | Create a manual journal entry | `/accounting/journals/new` |
 | View all journal entries | `/accounting/journals` |
 | See all transactions | `/accounting/general-ledger` |
@@ -148,6 +154,7 @@ At the end of the financial year:
 | See if I'm making money | `/accounting/profit-and-loss` |
 | Manage accounting periods | `/accounting/periods` |
 | Export data | `/accounting/exports` |
+| Manage backups | Settings → Data |
 | View/edit account categories | `/accounting/chart-of-accounts` |
 
 ---

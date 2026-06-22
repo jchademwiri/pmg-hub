@@ -23,17 +23,18 @@
 
 **"I just logged in. Where do I start?"**
 
-1. **Check the Accounting Overview** (`/accounting`) — this is your dashboard showing totals at a glance.
-2. **Record a journal entry** (`/accounting/journals/new`) — every transaction starts here.
-3. **Check the Trial Balance** (`/accounting/trial-balance`) — confirms your books are balanced.
-4. **View the Profit & Loss** (`/accounting/profit-and-loss`) — see how your business is performing.
+1. **Use Billing and Finance for daily work** — quotes, invoices, payments, income, and expenses should start there.
+2. **Check the Accounting Overview** (`/accounting`) — this shows accounting totals at a glance.
+3. **Review Journals** (`/accounting/journals`) — confirms automatic entries were created.
+4. **Check the Trial Balance** (`/accounting/trial-balance`) — confirms your books are balanced.
+5. **View the Profit & Loss** (`/accounting/profit-and-loss`) — see how the business is performing.
 
 **"What's the flow of data?"**
 
 ```
-You record a transaction
+You record a quote, invoice, payment, income, expense, or journal
         ↓
-  Journal Entry (Journals page)
+  Journal Entry (usually created automatically)
         ↓
   Flows into ──→ General Ledger (master record)
         ↓
@@ -42,7 +43,7 @@ You record a transaction
   Flows into ──→ Profit & Loss (income statement)
 ```
 
-Every transaction goes through the journal first, then automatically appears in the ledger, trial balance, and P&L.
+Most day-to-day transactions are posted automatically from Billing or Finance. Manual journals are for special accounting corrections and adjustments.
 
 ---
 
@@ -61,45 +62,44 @@ If you receive R5,000 from a client:
 
 Both sides are R5,000. The books are balanced. ✅
 
-**You never need to manually balance anything.** The system enforces that every journal entry has equal debits and credits before you can save it.
+**You never need to manually balance normal billing or expense entries.** The system enforces that every journal entry has equal debits and credits before it can be saved or posted.
 
 ---
 
-## Your Business at a Glance
+## What New Users Should Know
 
-Based on your current data (as of setup):
-
-| Metric | Value |
-|--------|-------|
-| Total Chart Accounts | 34 (29 active, 5 inactive) |
-| Journal Entries | 27 posted |
-| Total Debits | R22,860.00 |
-| Total Credits | R22,860.00 |
-| Net Profit (to date) | R18,140.00 |
-| Accounting Periods | 3 open (2026-04, 2026-05, 2026-06) |
+| Area | What To Remember |
+|------|------------------|
+| Billing | Issued invoices and payments create accounting activity |
+| Finance | Expenses and non-invoice income create accounting activity |
+| Journals | This is where accounting entries live |
+| General Ledger | This is the detailed transaction history by account |
+| Trial Balance | Debits and credits should match |
+| Profit & Loss | Revenue minus expenses shows performance |
+| Periods | Close completed months so old data does not change unexpectedly |
+| Snapshots | Locked monthly records live in Insights |
 
 ---
 
-## Accounts You're Currently Using
-
-These accounts have actual data (journal entries posted):
+## Common Accounts You'll See
 
 | Code | Account | Type | What It Means |
 |------|---------|------|---------------|
 | **1010** | Business Cheque Account | Asset | Your main bank account — where money comes in and goes out |
-| **4010** | Sales Revenue | Revenue | All income you've earned (R20,500) |
-| **5030** | Office & Supplies | Expense | Office-related expenses (R1,785) — printing, stationery, etc. |
-| **5070** | Travel & Transport | Expense | Travel expenses (R215) — Uber, petrol, etc. |
-| **5140** | Miscellaneous Expense | Expense | General/unclassified expenses (R360) |
+| **1020** | Savings Account | Asset | PMG share transfers or savings movement |
+| **1030** | Accounts Receivable | Asset | Money clients owe after invoices are issued |
+| **4010** | Sales Revenue | Revenue | Income earned from sales |
+| **4020** | PMG Share Revenue | Revenue | Revenue allocated to PMG share |
+| **5030** | Office & Supplies | Expense | Printing, stationery, document costs |
+| **5070** | Travel & Transport | Expense | Uber, petrol, flights, tolls |
+| **5140** | Miscellaneous Expense | Expense | General expenses that do not fit a better category |
 
-## Accounts Available But Not Yet Used
+## Other Accounts Available
 
 These are seeded and ready when you need them:
 
 | Code | Account | Type | When You'd Use It |
 |------|---------|------|-------------------|
-| 1020 | Savings Account | Asset | When you move money to savings |
-| 1030 | Accounts Receivable | Asset | When a client owes you money (invoice sent but not yet paid) |
 | 1040 | Client Deposits | Asset | Money clients pay upfront before work starts |
 | 1050 | Petty Cash | Asset | Small cash purchases (office snacks, parking, etc.) |
 | 1060 | Prepaid Expenses | Asset | Expenses paid in advance (e.g., annual software subscription) |
@@ -109,7 +109,6 @@ These are seeded and ready when you need them:
 | 3010 | Owner's Capital | Equity | Money the owner has invested into the business |
 | 3020 | Retained Earnings | Equity | Profits kept in the business (not withdrawn) |
 | 3030 | Owner's Drawings | Equity | Money the owner takes out of the business |
-| 4020 | PMG Share Revenue | Revenue | Revenue that belongs to PMG's share specifically |
 | 4030 | Interest Income | Revenue | Interest earned on bank accounts |
 | 4040 | Other Income | Revenue | Any other income not from sales |
 | 5010 | Hosting & Internet | Expense | Website hosting, domain fees, internet |

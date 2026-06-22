@@ -76,6 +76,7 @@ export default async function PaymentDetailPage({ params }: Props) {
       allocatedSum={allocatedSum}
       creditBalance={creditBalance}
       isLocked={isLocked}
+      pdfUrl={`/api/billing/pdf/receipt/${payment.id}`}
       divisions={divisions}
       clients={clients}
       minDate={minDate}

@@ -18,6 +18,7 @@ import {
 } from '@pmg/emails';
 import React from 'react';
 import { z } from 'zod';
+import { validateEmailPdfAttachment } from '@/lib/pdf-attachments';
 
 const EmailPayloadSchema = z.object({
   documentId: z.string().uuid(),
@@ -40,6 +41,11 @@ const EmailPreviewPayloadSchema = z.object({
 
 function formatMoney(amount: string) {
   return `R ${Number(amount).toLocaleString('en-ZA', { minimumFractionDigits: 2 })}`;
+}
+
+function getPdfAttachmentError(base64: string | undefined, label: string) {
+  if (!base64) return null;
+  return validateEmailPdfAttachment(base64, label);
 }
 
 
@@ -180,6 +186,11 @@ export async function sendDocumentEmailAction(rawPayload: unknown) {
     }
     
     const { documentId, documentType, recipientEmail, subject, personalMessage, base64Pdf, base64StatementPdf } = parsed.data;
+    const pdfError =
+      getPdfAttachmentError(base64Pdf, `${documentType === 'invoice' ? 'Invoice' : 'Quote'} PDF`) ??
+      getPdfAttachmentError(base64StatementPdf, 'Statement PDF');
+    if (pdfError) return { error: pdfError };
+
     const db = getDb();
 
     // ── INVOICE DELIVERY FLOW ────────────────────────────────────────────────
@@ -415,6 +426,9 @@ export async function sendReceiptEmailAction(rawPayload: unknown) {
     }
 
     const { incomeId, recipientEmail, subject, personalMessage, base64Pdf } = parsed.data;
+    const pdfError = getPdfAttachmentError(base64Pdf, 'Receipt PDF');
+    if (pdfError) return { error: pdfError };
+
     const db = getDb();
 
     // Fetch income details
