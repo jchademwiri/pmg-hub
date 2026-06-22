@@ -50,6 +50,8 @@ type PdfDocumentData = {
   issueDate: string;
   dueDateLabel?: string;
   dueDate?: string | null;
+  periodFrom?: string;
+  periodTo?: string;
   org: {
     name: string;
     divisionOf?: string;
@@ -66,6 +68,7 @@ type PdfDocumentData = {
   reference?: string | null;
   lineItems?: PdfLineItem[];
   transactions?: PdfTransaction[];
+  openingBalance?: number;
   notes?: string | null;
   terms?: string | null;
   banking?: {
@@ -295,6 +298,23 @@ function drawTransactions(doc: jsPDF, data: PdfDocumentData, startY: number) {
   doc.text('CREDIT', 170, y + 6, { align: 'right' });
   doc.text('BALANCE', PAGE.width - PAGE.margin - 2, y + 6, { align: 'right' });
   y += 12;
+
+  if (data.openingBalance != null) {
+    y = ensurePage(doc, y, 9);
+    doc.setFillColor(249, 250, 251);
+    doc.rect(PAGE.margin, y - 2, PAGE.width - PAGE.margin * 2, 8, 'F');
+    doc.setFont('helvetica', 'normal');
+    doc.setFontSize(7.5);
+    doc.setTextColor(82, 82, 91);
+    doc.text(fmtDate(data.periodFrom ?? data.issueDate), PAGE.margin + 2, y + 3);
+    doc.text('Balance Brought Forward', 78, y + 3);
+    doc.text('-', 145, y + 3, { align: 'right' });
+    doc.text('-', 170, y + 3, { align: 'right' });
+    doc.setFont('helvetica', 'bold');
+    doc.text(formatZAR(data.openingBalance), PAGE.width - PAGE.margin - 2, y + 3, { align: 'right' });
+    doc.setFont('helvetica', 'normal');
+    y += 9;
+  }
 
   doc.setFont('helvetica', 'normal');
   doc.setFontSize(7.5);
@@ -658,6 +678,8 @@ async function buildStatementPdfData(
     number: `ST-${statement.client.name.toUpperCase().substring(0, 3)}-${filters?.year ?? currentYear}`,
     status,
     issueDate: getSASTToday(),
+    periodFrom,
+    periodTo,
     org: {
       name: 'Playhouse Media Group',
     },
@@ -667,10 +689,11 @@ async function buildStatementPdfData(
       phone: statement.client.phone,
     },
     transactions,
+    openingBalance,
     totals: {
       subtotal: safeNumber(statement.summary.totalInvoiced),
       paid: safeNumber(statement.summary.totalPaid),
-      balanceDue: safeNumber(statement.summary.totalOutstanding),
+      balanceDue: balance,
     },
   };
 }
