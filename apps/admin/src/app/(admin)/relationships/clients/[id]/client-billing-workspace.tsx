@@ -596,16 +596,20 @@ export function ClientBillingWorkspace({
       phone: divSettings?.salesRepPhone ?? undefined,
       website: divSettings?.divisionWebsite ?? undefined,
       salesRep: divSettings?.salesRepName ?? undefined,
-      bankName: divSettings?.bankName ?? undefined,
-      accountName: divSettings?.bankAccountName ?? undefined,
-      accountNumber: divSettings?.bankAccountNumber ?? undefined,
-      branchCode: divSettings?.bankBranchCode ?? undefined,
     },
     client: {
       name: client.businessName ?? client.name,
       email: client.email ?? undefined,
       phone: client.phone ?? undefined,
     },
+    banking: divSettings?.bankName
+      ? {
+          bankName: divSettings.bankName,
+          accountName: divSettings.bankAccountName ?? '',
+          accountNumber: divSettings.bankAccountNumber ?? '',
+          branchCode: divSettings.bankBranchCode ?? '',
+        }
+      : undefined,
     transactions: statementTransactions,
     ageing: statementAgeing,
     balanceDue: statement?.summary.totalOutstanding ?? 0,

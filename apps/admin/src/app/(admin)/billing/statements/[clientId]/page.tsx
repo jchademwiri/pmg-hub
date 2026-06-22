@@ -14,6 +14,7 @@ import {
   getDivisionBillingSettings,
   getClientById,
   getMonthPeriodDates,
+  getAllDivisions,
   getDb,
   creditNotes,
   creditRefunds,
@@ -253,8 +254,15 @@ export default async function StatementDetailPage({ params, searchParams }: Prop
   const linkedDivisionId = clientRecord?.divisionId ?? null;
   const effectiveDivisionId = linkedDivisionId ?? invoices[0]?.divisionId;
   const divSettings = effectiveDivisionId ? await getDivisionBillingSettings(effectiveDivisionId) : null;
+  const allDivisions = await getAllDivisions();
+  const linkedDivisionName = linkedDivisionId
+    ? allDivisions.find((d) => d.id === linkedDivisionId)?.name
+    : undefined;
   const linkedInvoice = invoices.find((inv) => inv.divisionId === linkedDivisionId);
-  const orgName = linkedInvoice?.divisionName ?? invoices[0]?.divisionName ?? 'PMG';
+  const orgName = linkedInvoice?.divisionName
+    ?? linkedDivisionName
+    ?? invoices[0]?.divisionName
+    ?? 'Playhouse Media Group';
 
   const docPreviewProps = {
     number: `STMT-${monthPeriod ? monthPeriod.toUpperCase() : (year ? year : currentFY)}-${(client.businessName ?? client.name).slice(0, 3).toUpperCase()}`,
@@ -270,16 +278,20 @@ export default async function StatementDetailPage({ params, searchParams }: Prop
       phone: divSettings?.salesRepPhone ?? undefined,
       website: divSettings?.divisionWebsite ?? undefined,
       salesRep: divSettings?.salesRepName ?? undefined,
-      bankName: divSettings?.bankName ?? undefined,
-      accountName: divSettings?.bankAccountName ?? undefined,
-      accountNumber: divSettings?.bankAccountNumber ?? undefined,
-      branchCode: divSettings?.bankBranchCode ?? undefined,
     },
     client: {
       name: client.businessName ?? client.name,
       email: client.email ?? undefined,
       phone: client.phone ?? undefined,
     },
+    banking: divSettings?.bankName
+      ? {
+          bankName: divSettings.bankName,
+          accountName: divSettings.bankAccountName ?? '',
+          accountNumber: divSettings.bankAccountNumber ?? '',
+          branchCode: divSettings.bankBranchCode ?? '',
+        }
+      : undefined,
     transactions,
     ageing,
     balanceDue: currentBalance,

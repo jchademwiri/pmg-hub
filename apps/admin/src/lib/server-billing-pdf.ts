@@ -13,6 +13,7 @@ import {
   getClientStatement,
   getDb,
   getDivisionBillingSettings,
+  getAllDivisions,
   getIncomeAllocations,
   getIncomeById,
   getInvoiceById,
@@ -781,9 +782,14 @@ async function buildStatementPdfData(
   const firstInvoiceDivisionId = statement.invoices.length > 0 ? statement.invoices[0]!.divisionId : null;
   const effectiveDivisionId = linkedDivisionId ?? firstInvoiceDivisionId;
   const settings = effectiveDivisionId ? await getDivisionBillingSettings(effectiveDivisionId) : null;
-  // Resolve division name: find invoice matching linked division, or use first invoice's
+  // Resolve division name: find invoice matching linked division, or look up from DB
+  const allDivisions = await getAllDivisions();
+  const linkedDivisionName = linkedDivisionId
+    ? allDivisions.find((d) => d.id === linkedDivisionId)?.name
+    : undefined;
   const linkedInvoice = statement.invoices.find((inv) => inv.divisionId === linkedDivisionId);
   const divisionName = linkedInvoice?.divisionName
+    ?? linkedDivisionName
     ?? statement.invoices[0]?.divisionName
     ?? 'Playhouse Media Group';
 
