@@ -490,10 +490,28 @@ export function DocumentPreview({
         </div>
       )}
 
-      {/* ── Spacer - pushes notes + footer to the bottom of the page ────────── */}
+      {/* ── Notes / Terms ─────────────────────────────────────────────────── */}
+      {(notes || terms) && (
+        <div className="mx-4 sm:mx-10 border-t border-zinc-100 pt-4 pb-4 flex flex-col gap-3 print:break-inside-avoid [break-inside:avoid]">
+          {notes && (
+            <div>
+              <p className="text-[10px] font-semibold uppercase tracking-widest text-zinc-400 print:text-zinc-600">Notes</p>
+              <p className="mt-1 text-xs text-zinc-600 whitespace-pre-line">{notes}</p>
+            </div>
+          )}
+          {terms && (
+            <div>
+              <p className="text-[10px] font-semibold uppercase tracking-widest text-zinc-400 print:text-zinc-600">Terms & Conditions</p>
+              <p className="mt-1 text-xs text-zinc-600 whitespace-pre-line">{terms}</p>
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* ── Spacer - pushes ageing + footer to the bottom ──────────────────── */}
       <div className="flex-1" />
 
-      {/* ── Statement Ageing - pinned to bottom ─────────────────────────────── */}
+      {/* ── Statement Ageing - just above footer ────────────────────────────── */}
       {type === 'statement' && ageing && (
         <div className="mx-4 sm:mx-10 border-t border-zinc-100 pt-5 pb-4 print:break-inside-avoid [break-inside:avoid]">
           <p className="text-[10px] font-semibold uppercase tracking-widest text-zinc-400 print:text-zinc-600 mb-3">
@@ -523,24 +541,6 @@ export function DocumentPreview({
               </tr>
             </tbody>
           </table>
-        </div>
-      )}
-
-      {/* ── Notes / Terms - fixed just above footer ─────────────────────────── */}
-      {(notes || terms) && (
-        <div className="mx-4 sm:mx-10 border-t border-zinc-100 pt-4 pb-4 flex flex-col gap-3 print:break-inside-avoid [break-inside:avoid]">
-          {notes && (
-            <div>
-              <p className="text-[10px] font-semibold uppercase tracking-widest text-zinc-400 print:text-zinc-600">Notes</p>
-              <p className="mt-1 text-xs text-zinc-600 whitespace-pre-line">{notes}</p>
-            </div>
-          )}
-          {terms && (
-            <div>
-              <p className="text-[10px] font-semibold uppercase tracking-widest text-zinc-400 print:text-zinc-600">Terms & Conditions</p>
-              <p className="mt-1 text-xs text-zinc-600 whitespace-pre-line">{terms}</p>
-            </div>
-          )}
         </div>
       )}
 
