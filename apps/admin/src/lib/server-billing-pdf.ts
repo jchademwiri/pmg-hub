@@ -27,7 +27,7 @@ import { jsPDF } from 'jspdf';
 
 import { fmtDate, formatZAR, getSASTParts, getSASTToday } from '@/lib/format';
 import { calculateAgeing, totalAgeingDue } from '@/lib/billing-ageing';
-import { buildOrgProps } from '@/lib/client-billing-helpers';
+import { buildOrgProps, determineStatementStatus, buildIncomeInvoiceMap } from '@/lib/client-billing-helpers';
 
 type BillingPdfType = 'invoice' | 'quote' | 'statement' | 'receipt';
 
@@ -713,10 +713,7 @@ async function buildStatementPdfData(
     }
   }
 
-  const invoiceToIncome = new Map<string, string>();
-  for (const invoice of statement.invoices) {
-    if (invoice.incomeId) invoiceToIncome.set(invoice.incomeId, invoice.documentNumber);
-  }
+  const invoiceToIncome = buildIncomeInvoiceMap(statement.invoices);
 
   const raw = [
     ...statement.invoices
@@ -787,7 +784,7 @@ async function buildStatementPdfData(
     ?? statement.invoices[0]?.divisionName
     ?? 'Playhouse Media Group';
 
-  const status = statement.summary.totalOutstanding > 0 ? 'Outstanding' : 'Paid';
+  const status = determineStatementStatus(statement.summary.totalOutstanding, statement.invoices);
   return {
     type: 'statement',
     title: 'Statement',

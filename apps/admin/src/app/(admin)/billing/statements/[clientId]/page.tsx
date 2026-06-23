@@ -25,7 +25,7 @@ import {
 } from '@pmg/db';
 import { getClientCreditBalanceV2 } from '@/app/actions/credit-management';
 import { formatZAR, fmtDate, getSASTToday } from '@/lib/format';
-import { buildOrgProps } from '@/lib/client-billing-helpers';
+import { buildOrgProps, determineStatementStatus, buildIncomeInvoiceMap } from '@/lib/client-billing-helpers';
 import { PrintButton } from '@/components/billing/print-button';
 import { ExportPdfButton } from '@/components/billing/export-pdf-button';
 import {
@@ -160,11 +160,7 @@ export default async function StatementDetailPage({ params, searchParams }: Prop
     refundId?: string;
   };
 
-  // Build a map of incomeId → invoice document number for cross-referencing payments
-  const incomeToInvoiceNumber = new Map<string, string>();
-  for (const inv of invoices) {
-    if (inv.incomeId) incomeToInvoiceNumber.set(inv.incomeId, inv.documentNumber);
-  }
+  const incomeToInvoiceNumber = buildIncomeInvoiceMap(invoices);
 
   const txRaw: TxRaw[] = [
     ...invoices
@@ -224,11 +220,7 @@ export default async function StatementDetailPage({ params, searchParams }: Prop
   transactions.reverse();
 
   // ── Calculate dynamic status and ageing ──────────────────────────────────
-  let docStatus = 'Paid';
-  if (summary.totalOutstanding > 0) {
-    const hasOverdue = invoices.some(i => i.status === 'overdue');
-    docStatus = hasOverdue ? 'Overdue' : 'Outstanding';
-  }
+  const docStatus = determineStatementStatus(summary.totalOutstanding, invoices);
 
   const todayStr = getSASTToday();
   const ageing = { current: 0, days1_14: 0, days15_30: 0, days31_60: 0, days61plus: 0 };

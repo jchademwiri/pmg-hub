@@ -29,6 +29,19 @@ export function determineStatementStatus(
 }
 
 /**
+ * Build a map of incomeId → invoice document number for cross-referencing payments in statements.
+ */
+export function buildIncomeInvoiceMap(
+  invoices: { incomeId?: string | null; documentNumber: string }[],
+): Map<string, string> {
+  const map = new Map<string, string>();
+  for (const inv of invoices) {
+    if (inv.incomeId) map.set(inv.incomeId, inv.documentNumber);
+  }
+  return map;
+}
+
+/**
  * Build a DocumentPreview org object from division + org-level settings.
  * Falls back through the chain: division sales rep → org settings → undefined.
  */

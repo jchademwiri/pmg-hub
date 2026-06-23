@@ -53,7 +53,7 @@ import { EmailReceiptDialog } from '@/components/billing/email-receipt-dialog';
 import { ClientEditForm } from '@/components/clients/client-edit-form';
 import { ClientFinancialDashboard } from './client-financial-dashboard';
 import { ClientMetricStrip } from './client-metric-strip';
-import { calculateClientHealth, calculateAverageDaysToPay, buildOrgProps } from '@/lib/client-billing-helpers';
+import { calculateClientHealth, calculateAverageDaysToPay, buildOrgProps, determineStatementStatus, buildIncomeInvoiceMap } from '@/lib/client-billing-helpers';
 import { formatZAR, fmtDate, getSASTToday } from '@/lib/format';
 import { calculateAgeing } from '@/lib/billing-ageing';
 import {
@@ -478,10 +478,7 @@ export function ClientBillingWorkspace({
   });
 
   // Statement preparation
-  const statementToInvoiceNumber = new Map<string, string>();
-  for (const inv of statement?.invoices ?? []) {
-    if (inv.incomeId) statementToInvoiceNumber.set(inv.incomeId, inv.documentNumber);
-  }
+  const statementToInvoiceNumber = buildIncomeInvoiceMap(statement?.invoices ?? []);
 
   const statementTxRaw = [
     ...(statement?.invoices ?? [])
@@ -514,11 +511,7 @@ export function ClientBillingWorkspace({
   });
   statementTransactions.reverse();
 
-  let statementStatus = 'Paid';
-  if (statement?.summary.totalOutstanding > 0) {
-    const hasOverdue = (statement?.invoices ?? []).some((i: any) => i.status === 'overdue');
-    statementStatus = hasOverdue ? 'Overdue' : 'Outstanding';
-  }
+  const statementStatus = determineStatementStatus(statement?.summary.totalOutstanding ?? 0, statement?.invoices ?? []);
 
   const statementAgeing = calculateAgeing(
     statement?.outstandingInvoices ?? statement?.invoices ?? [],

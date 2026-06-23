@@ -13,7 +13,7 @@ import { getInvoiceById, getDivisionBillingSettings, getDb, paymentAllocations, 
 import { EmailDocumentDialog } from '@/components/billing/email-document-dialog';
 import { issueInvoice, markInvoicePaid, voidInvoice } from '@/app/actions/billing-invoices';
 import { fmtDate, fmtDateTime, formatZAR, getSASTParts, getSASTToday } from '@/lib/format';
-import { buildOrgProps } from '@/lib/client-billing-helpers';
+import { buildOrgProps, determineStatementStatus, buildIncomeInvoiceMap } from '@/lib/client-billing-helpers';
 import { calculateAgeing } from '@/lib/billing-ageing';
 import { InvoiceDetailActions } from './invoice-detail-actions';
 import { PrintButton } from '@/components/billing/print-button';
@@ -54,10 +54,7 @@ export default async function InvoiceDetailPage({ params }: Props) {
     ]);
 
     if (statement) {
-      const incomeToInvoiceNumber = new Map<string, string>();
-      for (const inv of statement.invoices) {
-        if (inv.incomeId) incomeToInvoiceNumber.set(inv.incomeId, inv.documentNumber);
-      }
+      const incomeToInvoiceNumber = buildIncomeInvoiceMap(statement.invoices);
 
       const txRaw = [
         ...statement.invoices
@@ -93,11 +90,7 @@ export default async function InvoiceDetailPage({ params }: Props) {
       });
       transactions.reverse();
 
-      let docStatus = 'Paid';
-      if (statement.summary.totalOutstanding > 0) {
-        const hasOverdue = statement.invoices.some(i => i.status === 'overdue');
-        docStatus = hasOverdue ? 'Overdue' : 'Outstanding';
-      }
+      const docStatus = determineStatementStatus(statement.summary.totalOutstanding, statement.invoices);
 
       const ageing = calculateAgeing(
         statement.outstandingInvoices ?? statement.invoices,
