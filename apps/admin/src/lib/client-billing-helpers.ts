@@ -155,6 +155,28 @@ export function buildOrgProps(
   };
 }
 
+/**
+ * Build a banking details object from division billing settings.
+ * Returns undefined if no bank name is configured, so the UI can
+ * conditionally show or hide the banking details section.
+ */
+export function buildBankingProps(
+  settings?: {
+    bankName?: string | null;
+    bankAccountName?: string | null;
+    bankAccountNumber?: string | null;
+    bankBranchCode?: string | null;
+  } | null,
+): { bankName: string; accountName: string; accountNumber: string; branchCode: string } | undefined {
+  if (!settings?.bankName) return undefined;
+  return {
+    bankName: settings.bankName,
+    accountName: settings.bankAccountName ?? '',
+    accountNumber: settings.bankAccountNumber ?? '',
+    branchCode: settings.bankBranchCode ?? '',
+  };
+}
+
 export interface ActivityEvent {
   id: string;
   type: 'invoice' | 'quote' | 'payment';

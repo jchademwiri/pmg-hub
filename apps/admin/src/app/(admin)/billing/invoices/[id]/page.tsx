@@ -13,7 +13,7 @@ import { getInvoiceById, getDivisionBillingSettings, getDb, paymentAllocations, 
 import { EmailDocumentDialog } from '@/components/billing/email-document-dialog';
 import { issueInvoice, markInvoicePaid, voidInvoice } from '@/app/actions/billing-invoices';
 import { fmtDate, fmtDateTime, formatZAR, getSASTParts, getSASTToday } from '@/lib/format';
-import { buildOrgProps, determineStatementStatus, buildIncomeInvoiceMap, buildTransactionHistory } from '@/lib/client-billing-helpers';
+import { buildOrgProps, determineStatementStatus, buildIncomeInvoiceMap, buildTransactionHistory, buildBankingProps } from '@/lib/client-billing-helpers';
 import { calculateAgeing } from '@/lib/billing-ageing';
 import { InvoiceDetailActions } from './invoice-detail-actions';
 import { PrintButton } from '@/components/billing/print-button';
@@ -154,12 +154,7 @@ export default async function InvoiceDetailPage({ params }: Props) {
     terms: invoice.terms ?? undefined,
     vatRate: 15 as const,
     discountAmount: Number(invoice.discountAmount ?? 0),
-    banking: divSettings?.bankName ? {
-      bankName: divSettings.bankName,
-      accountName: divSettings.bankAccountName ?? '',
-      accountNumber: divSettings.bankAccountNumber ?? '',
-      branchCode: divSettings.bankBranchCode ?? '',
-    } : undefined,
+    banking: buildBankingProps(divSettings),
   };
 
   // Paid and voided invoices cannot be edited

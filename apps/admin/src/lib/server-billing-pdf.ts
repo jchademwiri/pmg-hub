@@ -27,7 +27,7 @@ import { jsPDF } from 'jspdf';
 
 import { fmtDate, formatZAR, getSASTParts, getSASTToday } from '@/lib/format';
 import { calculateAgeing, totalAgeingDue } from '@/lib/billing-ageing';
-import { buildOrgProps, determineStatementStatus, buildIncomeInvoiceMap, buildTransactionHistory, adjustOpeningBalance, resolveDivisionBranding } from '@/lib/client-billing-helpers';
+import { buildOrgProps, determineStatementStatus, buildIncomeInvoiceMap, buildTransactionHistory, adjustOpeningBalance, resolveDivisionBranding, buildBankingProps } from '@/lib/client-billing-helpers';
 
 type BillingPdfType = 'invoice' | 'quote' | 'statement' | 'receipt';
 
@@ -565,14 +565,7 @@ async function buildInvoicePdfData(id: string): Promise<PdfDocumentData | null> 
     })),
     notes: invoice.notes ?? settings?.invoiceNotes,
     terms: invoice.terms,
-    banking: settings?.bankName
-      ? {
-          bankName: settings.bankName,
-          accountName: settings.bankAccountName ?? '',
-          accountNumber: settings.bankAccountNumber ?? '',
-          branchCode: settings.bankBranchCode ?? '',
-        }
-      : undefined,
+    banking: buildBankingProps(settings),
     totals: {
       subtotal: safeNumber(invoice.subtotal),
       discount: safeNumber(invoice.discountAmount),
@@ -611,14 +604,7 @@ async function buildQuotePdfData(id: string): Promise<PdfDocumentData | null> {
     })),
     notes: quote.notes ?? settings?.quoteNotes,
     terms: quote.terms,
-    banking: settings?.bankName
-      ? {
-          bankName: settings.bankName,
-          accountName: settings.bankAccountName ?? '',
-          accountNumber: settings.bankAccountNumber ?? '',
-          branchCode: settings.bankBranchCode ?? '',
-        }
-      : undefined,
+    banking: buildBankingProps(settings),
     totals: {
       subtotal: safeNumber(quote.subtotal),
       discount: safeNumber(quote.discountAmount),
@@ -785,14 +771,7 @@ async function buildStatementPdfData(
     transactions,
     openingBalance,
     ageing,
-    banking: settings?.bankName
-      ? {
-          bankName: settings.bankName,
-          accountName: settings.bankAccountName ?? '',
-          accountNumber: settings.bankAccountNumber ?? '',
-          branchCode: settings.bankBranchCode ?? '',
-        }
-      : undefined,
+    banking: buildBankingProps(settings),
     totals: {
       subtotal: safeNumber(statement.summary.totalInvoiced),
       paid: safeNumber(statement.summary.totalPaid),

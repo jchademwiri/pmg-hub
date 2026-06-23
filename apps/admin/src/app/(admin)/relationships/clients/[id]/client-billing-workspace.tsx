@@ -53,7 +53,7 @@ import { EmailReceiptDialog } from '@/components/billing/email-receipt-dialog';
 import { ClientEditForm } from '@/components/clients/client-edit-form';
 import { ClientFinancialDashboard } from './client-financial-dashboard';
 import { ClientMetricStrip } from './client-metric-strip';
-import { calculateClientHealth, calculateAverageDaysToPay, buildOrgProps, determineStatementStatus, buildIncomeInvoiceMap, buildTransactionHistory, resolveDivisionBranding } from '@/lib/client-billing-helpers';
+import { calculateClientHealth, calculateAverageDaysToPay, buildOrgProps, determineStatementStatus, buildIncomeInvoiceMap, buildTransactionHistory, resolveDivisionBranding, buildBankingProps } from '@/lib/client-billing-helpers';
 import { formatZAR, fmtDate, getSASTToday } from '@/lib/format';
 import { calculateAgeing } from '@/lib/billing-ageing';
 import {
@@ -438,12 +438,7 @@ export function ClientBillingWorkspace({
     terms: inv.terms ?? undefined,
     vatRate: 15 as const,
     discountAmount: Number(inv.discountAmount ?? 0),
-    banking: divSettings?.bankName ? {
-      bankName: divSettings.bankName,
-      accountName: divSettings.bankAccountName ?? '',
-      accountNumber: divSettings.bankAccountNumber ?? '',
-      branchCode: divSettings.bankBranchCode ?? '',
-    } : undefined,
+    banking: buildBankingProps(divSettings),
   });
 
   const getQuotePreviewProps = (q: QuotationDetail) => ({
@@ -469,12 +464,7 @@ export function ClientBillingWorkspace({
     terms: q.terms ?? undefined,
     vatRate: 15 as const,
     discountAmount: Number(q.discountAmount ?? 0),
-    banking: divSettings?.bankName ? {
-      bankName: divSettings.bankName,
-      accountName: divSettings.bankAccountName ?? '',
-      accountNumber: divSettings.bankAccountNumber ?? '',
-      branchCode: divSettings.bankBranchCode ?? '',
-    } : undefined,
+    banking: buildBankingProps(divSettings),
   });
 
   // Statement preparation

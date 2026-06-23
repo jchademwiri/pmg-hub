@@ -25,7 +25,7 @@ import {
 } from '@pmg/db';
 import { getClientCreditBalanceV2 } from '@/app/actions/credit-management';
 import { formatZAR, fmtDate, getSASTToday } from '@/lib/format';
-import { buildOrgProps, determineStatementStatus, buildIncomeInvoiceMap, buildTransactionHistory, adjustOpeningBalance, resolveDivisionBranding } from '@/lib/client-billing-helpers';
+import { buildOrgProps, determineStatementStatus, buildIncomeInvoiceMap, buildTransactionHistory, adjustOpeningBalance, resolveDivisionBranding, buildBankingProps } from '@/lib/client-billing-helpers';
 import { PrintButton } from '@/components/billing/print-button';
 import { ExportPdfButton } from '@/components/billing/export-pdf-button';
 import {
@@ -238,14 +238,7 @@ export default async function StatementDetailPage({ params, searchParams }: Prop
       email: client.email ?? undefined,
       phone: client.phone ?? undefined,
     },
-    banking: divSettings?.bankName
-      ? {
-          bankName: divSettings.bankName,
-          accountName: divSettings.bankAccountName ?? '',
-          accountNumber: divSettings.bankAccountNumber ?? '',
-          branchCode: divSettings.bankBranchCode ?? '',
-        }
-      : undefined,
+    banking: buildBankingProps(divSettings),
     transactions,
     ageing,
     balanceDue: currentBalance,

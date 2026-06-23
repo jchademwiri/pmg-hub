@@ -12,7 +12,7 @@ import { BillingTotalsBlock } from '@/components/billing/billing-totals-block';
 import { getQuotationById, getDivisionBillingSettings } from '@pmg/db';
 import { updateQuotationStatus, deleteQuotation } from '@/app/actions/billing-quotes';
 import { fmtDate, fmtDateTime } from '@/lib/format';
-import { buildOrgProps } from '@/lib/client-billing-helpers';
+import { buildOrgProps, buildBankingProps } from '@/lib/client-billing-helpers';
 import { QuoteDetailActions } from './quote-detail-actions';
 import { PrintButton } from '@/components/billing/print-button';
 import { ExportPdfButton } from '@/components/billing/export-pdf-button';
@@ -64,12 +64,7 @@ export default async function QuoteDetailPage({ params }: Props) {
     terms: quote.terms ?? undefined,
     vatRate: 15 as const,
     discountAmount: Number(quote.discountAmount ?? 0),
-    banking: divSettings?.bankName ? {
-      bankName: divSettings.bankName,
-      accountName: divSettings.bankAccountName ?? '',
-      accountNumber: divSettings.bankAccountNumber ?? '',
-      branchCode: divSettings.bankBranchCode ?? '',
-    } : undefined,
+    banking: buildBankingProps(divSettings),
   };
 
   const canEdit = ['draft', 'sent', 'accepted'].includes(quote.status);
