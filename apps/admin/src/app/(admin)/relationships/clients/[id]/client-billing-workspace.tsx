@@ -552,14 +552,7 @@ export function ClientBillingWorkspace({
       email: client.email ?? undefined,
       phone: client.phone ?? undefined,
     },
-    banking: divSettings?.bankName
-      ? {
-          bankName: divSettings.bankName,
-          accountName: divSettings.bankAccountName ?? '',
-          accountNumber: divSettings.bankAccountNumber ?? '',
-          branchCode: divSettings.bankBranchCode ?? '',
-        }
-      : undefined,
+    banking: buildBankingProps(divSettings),
     transactions: statementTransactions,
     ageing: statementAgeing,
     balanceDue: statement?.summary.totalOutstanding ?? 0,
