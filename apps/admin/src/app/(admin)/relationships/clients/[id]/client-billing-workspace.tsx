@@ -53,7 +53,7 @@ import { EmailReceiptDialog } from '@/components/billing/email-receipt-dialog';
 import { ClientEditForm } from '@/components/clients/client-edit-form';
 import { ClientFinancialDashboard } from './client-financial-dashboard';
 import { ClientMetricStrip } from './client-metric-strip';
-import { calculateClientHealth, calculateAverageDaysToPay, buildOrgProps, determineStatementStatus, buildIncomeInvoiceMap } from '@/lib/client-billing-helpers';
+import { calculateClientHealth, calculateAverageDaysToPay, buildOrgProps, determineStatementStatus, buildIncomeInvoiceMap, buildTransactionHistory, resolveDivisionBranding } from '@/lib/client-billing-helpers';
 import { formatZAR, fmtDate, getSASTToday } from '@/lib/format';
 import { calculateAgeing } from '@/lib/billing-ageing';
 import {
@@ -495,21 +495,9 @@ export function ClientBillingWorkspace({
       description: 'Payment received',
       credit: Number(inc.amount),
     })),
-  ].sort((a, b) => a.date.localeCompare(b.date));
+  ];
 
-  let currentBal = statement?.summary.openingBalance ?? 0;
-  const statementTransactions = statementTxRaw.map((tx) => {
-    currentBal = currentBal + (tx.debit ?? 0) - (tx.credit ?? 0);
-    return {
-      date: tx.date,
-      reference: tx.reference,
-      description: tx.description,
-      debit: tx.debit,
-      credit: tx.credit,
-      balance: currentBal,
-    };
-  });
-  statementTransactions.reverse();
+  const statementTransactions = buildTransactionHistory(statementTxRaw, statement?.summary.openingBalance ?? 0);
 
   const statementStatus = determineStatementStatus(statement?.summary.totalOutstanding ?? 0, statement?.invoices ?? []);
 
@@ -556,9 +544,11 @@ export function ClientBillingWorkspace({
     periodTo = `${y + 1}-02-28`;
   }
 
-  // Determine statement division branding — use linked division if set, otherwise fall back to first invoice's division
-  const linkedDivision = divisions.find(d => d.id === client.divisionId);
-  const statementDivisionName = linkedDivision?.name ?? invoices[0]?.divisionName ?? 'Playhouse Media Group';
+  const { divisionName: statementDivisionName } = resolveDivisionBranding(
+    client.divisionId,
+    invoices,
+    divisions,
+  );
 
   const statementPreviewProps = {
     number: `STMT-${statementPeriodParam ? statementPeriodParam.toUpperCase() : (statementYearParam ? statementYearParam : currentFY)}-${(client.businessName ?? client.name).slice(0, 3).toUpperCase()}`,

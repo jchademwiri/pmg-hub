@@ -25,7 +25,7 @@ import {
 } from '@pmg/db';
 import { getClientCreditBalanceV2 } from '@/app/actions/credit-management';
 import { formatZAR, fmtDate, getSASTToday } from '@/lib/format';
-import { buildOrgProps, determineStatementStatus, buildIncomeInvoiceMap } from '@/lib/client-billing-helpers';
+import { buildOrgProps, determineStatementStatus, buildIncomeInvoiceMap, buildTransactionHistory, adjustOpeningBalance, resolveDivisionBranding } from '@/lib/client-billing-helpers';
 import { PrintButton } from '@/components/billing/print-button';
 import { ExportPdfButton } from '@/components/billing/export-pdf-button';
 import {
@@ -122,19 +122,12 @@ export default async function StatementDetailPage({ params, searchParams }: Prop
     periodTo = `${lastDayOfFY.getFullYear()}-${String(lastDayOfFY.getMonth() + 1).padStart(2, '0')}-${String(lastDayOfFY.getDate()).padStart(2, '0')}`;
   }
 
-  // Adjust opening balance with historical credit notes and refunds
-  let adjustedOpeningBalance = summary.openingBalance;
-  for (const n of dbCreditNotes) {
-    const dateStr = n.createdAt.toISOString().split('T')[0];
-    if (dateStr < periodFrom && n.type !== 'overpayment') {
-      adjustedOpeningBalance -= Number(n.amount);
-    }
-  }
-  for (const r of dbRefunds) {
-    if (r.refundDate < periodFrom) {
-      adjustedOpeningBalance += Number(r.amount);
-    }
-  }
+  const adjustedOpeningBalance = adjustOpeningBalance(
+    summary.openingBalance,
+    dbCreditNotes,
+    dbRefunds,
+    periodFrom,
+  );
 
   // Filter credit notes and refunds within the current period
   const filteredNotes = dbCreditNotes.filter(n => {
@@ -197,27 +190,8 @@ export default async function StatementDetailPage({ params, searchParams }: Prop
     })),
   ];
 
-  txRaw.sort((a, b) => a.date.localeCompare(b.date)); // ASC
-
-  let currentBalance = adjustedOpeningBalance;
-  const transactions: StatementTransaction[] = txRaw.map((tx) => {
-    currentBalance = currentBalance + (tx.debit ?? 0) - (tx.credit ?? 0);
-    return {
-      date: tx.date,
-      reference: tx.reference,
-      description: tx.description,
-      debit: tx.debit,
-      credit: tx.credit,
-      balance: currentBalance,
-      invoiceId: tx.invoiceId,
-      paymentId: tx.paymentId,
-      creditNoteId: tx.creditNoteId,
-      refundId: tx.refundId,
-    };
-  });
-
-  // Reverse to show newest first in the document
-  transactions.reverse();
+  const transactions = buildTransactionHistory(txRaw, adjustedOpeningBalance);
+  const currentBalance = transactions.length > 0 ? transactions[0]!.balance : adjustedOpeningBalance;
 
   // ── Calculate dynamic status and ageing ──────────────────────────────────
   const docStatus = determineStatementStatus(summary.totalOutstanding, invoices);
@@ -243,20 +217,14 @@ export default async function StatementDetailPage({ params, searchParams }: Prop
     }
   }
 
-  // Use client's linked division if set, otherwise fall back to first invoice's division
   const clientRecord = await getClientById(clientId);
-  const linkedDivisionId = clientRecord?.divisionId ?? null;
-  const effectiveDivisionId = linkedDivisionId ?? invoices[0]?.divisionId;
-  const divSettings = effectiveDivisionId ? await getDivisionBillingSettings(effectiveDivisionId) : null;
   const allDivisions = await getAllDivisions();
-  const linkedDivisionName = linkedDivisionId
-    ? allDivisions.find((d) => d.id === linkedDivisionId)?.name
-    : undefined;
-  const linkedInvoice = invoices.find((inv) => inv.divisionId === linkedDivisionId);
-  const orgName = linkedInvoice?.divisionName
-    ?? linkedDivisionName
-    ?? invoices[0]?.divisionName
-    ?? 'Playhouse Media Group';
+  const { divisionName: orgName, effectiveDivisionId } = resolveDivisionBranding(
+    clientRecord?.divisionId,
+    invoices,
+    allDivisions,
+  );
+  const divSettings = effectiveDivisionId ? await getDivisionBillingSettings(effectiveDivisionId) : null;
 
   const docPreviewProps = {
     number: `STMT-${monthPeriod ? monthPeriod.toUpperCase() : (year ? year : currentFY)}-${(client.businessName ?? client.name).slice(0, 3).toUpperCase()}`,

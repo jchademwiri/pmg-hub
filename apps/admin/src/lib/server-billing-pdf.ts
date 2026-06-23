@@ -27,7 +27,7 @@ import { jsPDF } from 'jspdf';
 
 import { fmtDate, formatZAR, getSASTParts, getSASTToday } from '@/lib/format';
 import { calculateAgeing, totalAgeingDue } from '@/lib/billing-ageing';
-import { buildOrgProps, determineStatementStatus, buildIncomeInvoiceMap } from '@/lib/client-billing-helpers';
+import { buildOrgProps, determineStatementStatus, buildIncomeInvoiceMap, buildTransactionHistory, adjustOpeningBalance, resolveDivisionBranding } from '@/lib/client-billing-helpers';
 
 type BillingPdfType = 'invoice' | 'quote' | 'statement' | 'receipt';
 
@@ -700,18 +700,12 @@ async function buildStatementPdfData(
     periodTo = `${lastDayOfFY.getFullYear()}-${String(lastDayOfFY.getMonth() + 1).padStart(2, '0')}-${String(lastDayOfFY.getDate()).padStart(2, '0')}`;
   }
 
-  let openingBalance = statement.summary.openingBalance ?? 0;
-  for (const note of dbCreditNotes) {
-    const date = note.createdAt.toISOString().split('T')[0];
-    if (date < periodFrom && note.type !== 'overpayment') {
-      openingBalance -= safeNumber(note.amount);
-    }
-  }
-  for (const refund of dbRefunds) {
-    if (refund.refundDate < periodFrom) {
-      openingBalance += safeNumber(refund.amount);
-    }
-  }
+  const openingBalance = adjustOpeningBalance(
+    statement.summary.openingBalance,
+    dbCreditNotes,
+    dbRefunds,
+    periodFrom,
+  );
 
   const invoiceToIncome = buildIncomeInvoiceMap(statement.invoices);
 
@@ -753,13 +747,10 @@ async function buildStatementPdfData(
         debit: safeNumber(refund.amount),
         credit: undefined,
       })),
-  ].sort((a, b) => a.date.localeCompare(b.date));
+  ];
 
-  let balance = openingBalance;
-  const transactions = raw.map((tx) => {
-    balance = balance + (tx.debit ?? 0) - (tx.credit ?? 0);
-    return { ...tx, balance };
-  }).reverse();
+  const transactions = buildTransactionHistory(raw, openingBalance);
+  const finalBalance = transactions.length > 0 ? transactions[0]!.balance : openingBalance;
 
   const todayStr = getSASTToday();
   const ageing = calculateAgeing(
@@ -767,22 +758,14 @@ async function buildStatementPdfData(
     todayStr,
   );
 
-  // Use client's linked division if set, otherwise fall back to first invoice's division
   const clientRecord = await getClientById(clientId);
-  const linkedDivisionId = clientRecord?.divisionId ?? null;
-  const firstInvoiceDivisionId = statement.invoices.length > 0 ? statement.invoices[0]!.divisionId : null;
-  const effectiveDivisionId = linkedDivisionId ?? firstInvoiceDivisionId;
-  const settings = effectiveDivisionId ? await getDivisionBillingSettings(effectiveDivisionId) : null;
-  // Resolve division name: find invoice matching linked division, or look up from DB
   const allDivisions = await getAllDivisions();
-  const linkedDivisionName = linkedDivisionId
-    ? allDivisions.find((d) => d.id === linkedDivisionId)?.name
-    : undefined;
-  const linkedInvoice = statement.invoices.find((inv) => inv.divisionId === linkedDivisionId);
-  const divisionName = linkedInvoice?.divisionName
-    ?? linkedDivisionName
-    ?? statement.invoices[0]?.divisionName
-    ?? 'Playhouse Media Group';
+  const { divisionName, effectiveDivisionId } = resolveDivisionBranding(
+    clientRecord?.divisionId,
+    statement.invoices,
+    allDivisions,
+  );
+  const settings = effectiveDivisionId ? await getDivisionBillingSettings(effectiveDivisionId) : null;
 
   const status = determineStatementStatus(statement.summary.totalOutstanding, statement.invoices);
   return {
@@ -813,7 +796,7 @@ async function buildStatementPdfData(
     totals: {
       subtotal: safeNumber(statement.summary.totalInvoiced),
       paid: safeNumber(statement.summary.totalPaid),
-      balanceDue: balance,
+      balanceDue: finalBalance,
     },
   };
 }

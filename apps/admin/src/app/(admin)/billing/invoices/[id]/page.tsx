@@ -13,7 +13,7 @@ import { getInvoiceById, getDivisionBillingSettings, getDb, paymentAllocations, 
 import { EmailDocumentDialog } from '@/components/billing/email-document-dialog';
 import { issueInvoice, markInvoicePaid, voidInvoice } from '@/app/actions/billing-invoices';
 import { fmtDate, fmtDateTime, formatZAR, getSASTParts, getSASTToday } from '@/lib/format';
-import { buildOrgProps, determineStatementStatus, buildIncomeInvoiceMap } from '@/lib/client-billing-helpers';
+import { buildOrgProps, determineStatementStatus, buildIncomeInvoiceMap, buildTransactionHistory } from '@/lib/client-billing-helpers';
 import { calculateAgeing } from '@/lib/billing-ageing';
 import { InvoiceDetailActions } from './invoice-detail-actions';
 import { PrintButton } from '@/components/billing/print-button';
@@ -75,20 +75,7 @@ export default async function InvoiceDetailPage({ params }: Props) {
         })),
       ];
 
-      txRaw.sort((a, b) => a.date.localeCompare(b.date));
-      let currentBalance = statement.summary.openingBalance ?? 0;
-      const transactions = txRaw.map((tx) => {
-        currentBalance = currentBalance + (tx.debit ?? 0) - (tx.credit ?? 0);
-        return {
-          date: tx.date,
-          reference: tx.reference,
-          description: tx.description,
-          debit: tx.debit,
-          credit: tx.credit,
-          balance: currentBalance,
-        };
-      });
-      transactions.reverse();
+      const transactions = buildTransactionHistory(txRaw, statement.summary.openingBalance ?? 0);
 
       const docStatus = determineStatementStatus(statement.summary.totalOutstanding, statement.invoices);
 
