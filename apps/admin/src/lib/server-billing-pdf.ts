@@ -258,6 +258,15 @@ function drawHeader(doc: jsPDF, data: PdfDocumentData) {
   doc.setFontSize(8);
   doc.text(data.status, PAGE.width - PAGE.margin, 31, { align: 'right' });
 
+  // Total Due line (only for statements, below the status badge)
+  if (data.type === 'statement' && data.totals?.balanceDue != null) {
+    doc.setFont('helvetica', 'bold');
+    doc.setFontSize(8);
+    doc.setTextColor(220, 38, 38);
+    doc.text(`Total Due: ${formatZAR(data.totals.balanceDue)}`, PAGE.width - PAGE.margin, 37, { align: 'right' });
+    doc.setFont('helvetica', 'normal');
+  }
+
   doc.setDrawColor(229, 231, 235);
   doc.line(PAGE.margin, 60, PAGE.width - PAGE.margin, 60);
 }
