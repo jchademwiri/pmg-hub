@@ -54,7 +54,7 @@ import { ClientEditForm } from '@/components/clients/client-edit-form';
 import { ClientFinancialDashboard } from './client-financial-dashboard';
 import { ClientMetricStrip } from './client-metric-strip';
 import { calculateClientHealth, calculateAverageDaysToPay } from '@/lib/client-billing-helpers';
-import { formatZAR, fmtDate, getSASTToday } from '@/lib/format';
+import { formatZAR, fmtDate, formatOrgAddress, getSASTToday } from '@/lib/format';
 import { calculateAgeing } from '@/lib/billing-ageing';
 import { getDocumentLogoUrl } from '@/lib/document-logo';
 import {
@@ -92,6 +92,7 @@ interface ClientBillingWorkspaceProps {
   currentFY: number;
   divisions: { id: string; name: string }[];
   divSettings: any;
+  orgSettings?: any;
   updateClientAction: any;
   creditSummary?: any;
   creditHistory?: any;
@@ -113,6 +114,7 @@ export function ClientBillingWorkspace({
   availableYears,
   currentFY,
   divSettings,
+  orgSettings,
   updateClientAction,
   creditSummary,
   creditHistory,
@@ -424,9 +426,12 @@ export function ClientBillingWorkspace({
       name: inv.divisionName,
       logoUrl: getDocumentLogoUrl(inv.divisionName),
       divisionOf: 'Playhouse Media Group',
-      email: divSettings?.salesRepEmail ?? undefined,
-      phone: divSettings?.salesRepPhone ?? undefined,
-      website: divSettings?.divisionWebsite ?? undefined,
+      registrationNumber: orgSettings?.registrationNumber ?? undefined,
+      vatNumber: orgSettings?.vatNumber ?? undefined,
+      email: divSettings?.salesRepEmail ?? orgSettings?.email ?? undefined,
+      phone: divSettings?.salesRepPhone ?? orgSettings?.phone ?? undefined,
+      website: divSettings?.divisionWebsite ?? orgSettings?.website ?? undefined,
+      address: formatOrgAddress(orgSettings),
       salesRep: divSettings?.salesRepName ?? undefined,
     },
     client: {
@@ -463,9 +468,12 @@ export function ClientBillingWorkspace({
       name: q.divisionName,
       logoUrl: getDocumentLogoUrl(q.divisionName),
       divisionOf: 'Playhouse Media Group',
-      email: divSettings?.salesRepEmail ?? undefined,
-      phone: divSettings?.salesRepPhone ?? undefined,
-      website: divSettings?.divisionWebsite ?? undefined,
+      registrationNumber: orgSettings?.registrationNumber ?? undefined,
+      vatNumber: orgSettings?.vatNumber ?? undefined,
+      email: divSettings?.salesRepEmail ?? orgSettings?.email ?? undefined,
+      phone: divSettings?.salesRepPhone ?? orgSettings?.phone ?? undefined,
+      website: divSettings?.divisionWebsite ?? orgSettings?.website ?? undefined,
+      address: formatOrgAddress(orgSettings),
       salesRep: divSettings?.salesRepName ?? undefined,
     },
     client: {
@@ -592,9 +600,12 @@ export function ClientBillingWorkspace({
       name: statementDivisionName,
       logoUrl: getDocumentLogoUrl(statementDivisionName),
       divisionOf: 'Playhouse Media Group',
-      email: divSettings?.salesRepEmail ?? undefined,
-      phone: divSettings?.salesRepPhone ?? undefined,
-      website: divSettings?.divisionWebsite ?? undefined,
+      registrationNumber: orgSettings?.registrationNumber ?? undefined,
+      vatNumber: orgSettings?.vatNumber ?? undefined,
+      email: divSettings?.salesRepEmail ?? orgSettings?.email ?? undefined,
+      phone: divSettings?.salesRepPhone ?? orgSettings?.phone ?? undefined,
+      website: divSettings?.divisionWebsite ?? orgSettings?.website ?? undefined,
+      address: formatOrgAddress(orgSettings),
       salesRep: divSettings?.salesRepName ?? undefined,
     },
     client: {

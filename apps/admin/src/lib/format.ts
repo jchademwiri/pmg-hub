@@ -111,4 +111,13 @@ export function getSASTToday(): string {
   return `${year}-${String(month + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
 }
 
-
+/**
+ * Format an organisation's address from its street/city/postal fields into a single string.
+ * Returns `undefined` if no address parts are available.
+ */
+export function formatOrgAddress(
+  settings?: { addressStreet?: string | null; addressCity?: string | null; addressPostal?: string | null } | null,
+): string | undefined {
+  const parts = [settings?.addressStreet, settings?.addressCity, settings?.addressPostal].filter(Boolean);
+  return parts.length > 0 ? parts.join(', ') : undefined;
+}

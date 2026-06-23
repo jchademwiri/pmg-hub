@@ -9,10 +9,10 @@ import { Separator } from '@/components/ui/separator';
 import { DocumentPreview } from '@/components/billing/document-preview';
 import { BillingStatusBadge } from '@/components/billing/billing-status-badge';
 import { BillingTotalsBlock } from '@/components/billing/billing-totals-block';
-import { getInvoiceById, getDivisionBillingSettings, getDb, paymentAllocations, income, sql, desc, eq, getClientStatement, getAllIncome } from '@pmg/db';
+import { getInvoiceById, getDivisionBillingSettings, getDb, paymentAllocations, income, sql, desc, eq, getClientStatement, getAllIncome, getOrganisationSettings } from '@pmg/db';
 import { EmailDocumentDialog } from '@/components/billing/email-document-dialog';
 import { issueInvoice, markInvoicePaid, voidInvoice } from '@/app/actions/billing-invoices';
-import { fmtDate, fmtDateTime, formatZAR, getSASTParts, getSASTToday } from '@/lib/format';
+import { fmtDate, fmtDateTime, formatZAR, formatOrgAddress, getSASTParts, getSASTToday } from '@/lib/format';
 import { calculateAgeing } from '@/lib/billing-ageing';
 import { getDocumentLogoUrl } from '@/lib/document-logo';
 import { InvoiceDetailActions } from './invoice-detail-actions';
@@ -41,6 +41,9 @@ export default async function InvoiceDetailPage({ params }: Props) {
   if (!invoice) notFound();
 
   const divSettings = await getDivisionBillingSettings(invoice.divisionId);
+
+  // Fetch organisation settings
+  const orgSettings = await getOrganisationSettings();
 
   // Fetch statement data for client statement compilation
   let statementProps: any = null;
@@ -113,9 +116,12 @@ export default async function InvoiceDetailPage({ params }: Props) {
           name: invoice.divisionName,
           logoUrl: getDocumentLogoUrl(invoice.divisionName),
           divisionOf: 'Playhouse Media Group',
-          email: divSettings?.salesRepEmail ?? undefined,
-          phone: divSettings?.salesRepPhone ?? undefined,
-          website: divSettings?.divisionWebsite ?? undefined,
+          registrationNumber: orgSettings?.registrationNumber ?? undefined,
+          vatNumber: orgSettings?.vatNumber ?? undefined,
+          email: divSettings?.salesRepEmail ?? orgSettings?.email ?? undefined,
+          phone: divSettings?.salesRepPhone ?? orgSettings?.phone ?? undefined,
+          website: divSettings?.divisionWebsite ?? orgSettings?.website ?? undefined,
+          address: formatOrgAddress(orgSettings),
           salesRep: divSettings?.salesRepName ?? undefined,
         },
         client: {
@@ -166,9 +172,12 @@ export default async function InvoiceDetailPage({ params }: Props) {
       name: invoice.divisionName,
       logoUrl: getDocumentLogoUrl(invoice.divisionName),
       divisionOf: 'Playhouse Media Group',
-      email: divSettings?.salesRepEmail ?? undefined,
-      phone: divSettings?.salesRepPhone ?? undefined,
-      website: divSettings?.divisionWebsite ?? undefined,
+      registrationNumber: orgSettings?.registrationNumber ?? undefined,
+      vatNumber: orgSettings?.vatNumber ?? undefined,
+      email: divSettings?.salesRepEmail ?? orgSettings?.email ?? undefined,
+      phone: divSettings?.salesRepPhone ?? orgSettings?.phone ?? undefined,
+      website: divSettings?.divisionWebsite ?? orgSettings?.website ?? undefined,
+      address: formatOrgAddress(orgSettings),
       salesRep: divSettings?.salesRepName ?? undefined,
     },
     client: {

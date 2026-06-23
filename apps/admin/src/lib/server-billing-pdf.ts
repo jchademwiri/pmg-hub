@@ -18,13 +18,14 @@ import {
   getIncomeById,
   getInvoiceById,
   getMonthPeriodDates,
+  getOrganisationSettings,
   getQuotationById,
   sql,
 } from '@pmg/db';
 import { generateReceiptNumber } from '@pmg/utils';
 import { jsPDF } from 'jspdf';
 
-import { fmtDate, formatZAR, getSASTParts, getSASTToday } from '@/lib/format';
+import { fmtDate, formatZAR, formatOrgAddress, getSASTParts, getSASTToday } from '@/lib/format';
 import { calculateAgeing, totalAgeingDue } from '@/lib/billing-ageing';
 
 type BillingPdfType = 'invoice' | 'quote' | 'statement' | 'receipt';
@@ -244,7 +245,7 @@ function drawHeader(doc: jsPDF, data: PdfDocumentData) {
     data.org.address,
     data.org.salesRep ? `Rep: ${data.org.salesRep}` : undefined,
   ].filter(Boolean) as string[];
-  orgLines.slice(0, 5).forEach((line, index) => doc.text(line, PAGE.margin, 24 + index * 4));
+  orgLines.slice(0, 8).forEach((line, index) => doc.text(line, PAGE.margin, 24 + index * 4));
 
   drawCenteredLogo(doc, data.org.name);
 
@@ -258,11 +259,11 @@ function drawHeader(doc: jsPDF, data: PdfDocumentData) {
   doc.text(data.status, PAGE.width - PAGE.margin, 31, { align: 'right' });
 
   doc.setDrawColor(229, 231, 235);
-  doc.line(PAGE.margin, 45, PAGE.width - PAGE.margin, 45);
+  doc.line(PAGE.margin, 60, PAGE.width - PAGE.margin, 60);
 }
 
 function drawMeta(doc: jsPDF, data: PdfDocumentData) {
-  let y = 57;
+  let y = 72;
   doc.setFont('helvetica', 'bold');
   doc.setFontSize(7);
   doc.setTextColor(113, 113, 122);
@@ -318,7 +319,7 @@ function drawMeta(doc: jsPDF, data: PdfDocumentData) {
     }
   }
 
-  let bottomY = 78;
+  let bottomY = 96;
 
   if (data.reference) {
     y += 27;
@@ -529,6 +530,7 @@ async function buildInvoicePdfData(id: string): Promise<PdfDocumentData | null> 
   const invoice = await getInvoiceById(id);
   if (!invoice) return null;
   const settings = await getDivisionBillingSettings(invoice.divisionId);
+  const orgSettings = await getOrganisationSettings();
 
   return {
     type: 'invoice',
@@ -542,9 +544,12 @@ async function buildInvoicePdfData(id: string): Promise<PdfDocumentData | null> 
     org: {
       name: invoice.divisionName,
       divisionOf: 'Playhouse Media Group',
-      email: settings?.salesRepEmail ?? undefined,
-      phone: settings?.salesRepPhone ?? undefined,
-      website: settings?.divisionWebsite ?? undefined,
+      registrationNumber: orgSettings?.registrationNumber ?? undefined,
+      vatNumber: orgSettings?.vatNumber ?? undefined,
+      email: settings?.salesRepEmail ?? orgSettings?.email ?? undefined,
+      phone: settings?.salesRepPhone ?? orgSettings?.phone ?? undefined,
+      website: settings?.divisionWebsite ?? orgSettings?.website ?? undefined,
+      address: formatOrgAddress(orgSettings),
       salesRep: settings?.salesRepName ?? undefined,
     },
     client: {
@@ -581,6 +586,7 @@ async function buildQuotePdfData(id: string): Promise<PdfDocumentData | null> {
   const quote = await getQuotationById(id);
   if (!quote) return null;
   const settings = await getDivisionBillingSettings(quote.divisionId);
+  const orgSettings = await getOrganisationSettings();
 
   return {
     type: 'quote',
@@ -594,9 +600,12 @@ async function buildQuotePdfData(id: string): Promise<PdfDocumentData | null> {
     org: {
       name: quote.divisionName,
       divisionOf: 'Playhouse Media Group',
-      email: settings?.salesRepEmail ?? undefined,
-      phone: settings?.salesRepPhone ?? undefined,
-      website: settings?.divisionWebsite ?? undefined,
+      registrationNumber: orgSettings?.registrationNumber ?? undefined,
+      vatNumber: orgSettings?.vatNumber ?? undefined,
+      email: settings?.salesRepEmail ?? orgSettings?.email ?? undefined,
+      phone: settings?.salesRepPhone ?? orgSettings?.phone ?? undefined,
+      website: settings?.divisionWebsite ?? orgSettings?.website ?? undefined,
+      address: formatOrgAddress(orgSettings),
       salesRep: settings?.salesRepName ?? undefined,
     },
     client: {
@@ -632,9 +641,10 @@ async function buildQuotePdfData(id: string): Promise<PdfDocumentData | null> {
 async function buildReceiptPdfData(id: string): Promise<PdfDocumentData | null> {
   const payment = await getIncomeById(id);
   if (!payment) return null;
-  const [settings, allocations] = await Promise.all([
+  const [settings, allocations, orgSettings] = await Promise.all([
     getDivisionBillingSettings(payment.divisionId),
     getIncomeAllocations(id),
+    getOrganisationSettings(),
   ]);
 
   return {
@@ -646,9 +656,12 @@ async function buildReceiptPdfData(id: string): Promise<PdfDocumentData | null> 
     org: {
       name: payment.divisionName,
       divisionOf: 'Playhouse Media Group',
-      email: settings?.salesRepEmail ?? undefined,
-      phone: settings?.salesRepPhone ?? undefined,
-      website: settings?.divisionWebsite ?? undefined,
+      registrationNumber: orgSettings?.registrationNumber ?? undefined,
+      vatNumber: orgSettings?.vatNumber ?? undefined,
+      email: settings?.salesRepEmail ?? orgSettings?.email ?? undefined,
+      phone: settings?.salesRepPhone ?? orgSettings?.phone ?? undefined,
+      website: settings?.divisionWebsite ?? orgSettings?.website ?? undefined,
+      address: formatOrgAddress(orgSettings),
       salesRep: settings?.salesRepName ?? undefined,
     },
     client: {
@@ -684,6 +697,7 @@ async function buildStatementPdfData(
   const statement = await getClientStatement(clientId, filters);
   if (!statement) return null;
   const db = getDb();
+  const orgSettings = await getOrganisationSettings();
   const [incomeResult, dbCreditNotes, dbRefunds] = await Promise.all([
     getAllIncome({ clientId, ...filters }),
     db.select().from(creditNotes).where(and(eq(creditNotes.clientId, clientId), sql`${creditNotes.status} != 'void'`)),
@@ -805,9 +819,12 @@ async function buildStatementPdfData(
     org: {
       name: divisionName,
       divisionOf: 'Playhouse Media Group',
-      email: settings?.salesRepEmail ?? undefined,
-      phone: settings?.salesRepPhone ?? undefined,
-      website: settings?.divisionWebsite ?? undefined,
+      registrationNumber: orgSettings?.registrationNumber ?? undefined,
+      vatNumber: orgSettings?.vatNumber ?? undefined,
+      email: settings?.salesRepEmail ?? orgSettings?.email ?? undefined,
+      phone: settings?.salesRepPhone ?? orgSettings?.phone ?? undefined,
+      website: settings?.divisionWebsite ?? orgSettings?.website ?? undefined,
+      address: formatOrgAddress(orgSettings),
       salesRep: settings?.salesRepName ?? undefined,
     },
     client: {

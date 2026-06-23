@@ -18,13 +18,14 @@ import {
   getDb,
   creditNotes,
   creditRefunds,
+  getOrganisationSettings,
   eq,
   and,
   sql,
 } from '@pmg/db';
 import { getClientCreditBalanceV2 } from '@/app/actions/credit-management';
 import { getDocumentLogoUrl } from '@/lib/document-logo';
-import { formatZAR, fmtDate, getSASTToday } from '@/lib/format';
+import { formatZAR, fmtDate, formatOrgAddress, getSASTToday } from '@/lib/format';
 import { PrintButton } from '@/components/billing/print-button';
 import { ExportPdfButton } from '@/components/billing/export-pdf-button';
 import {
@@ -75,13 +76,14 @@ export default async function StatementDetailPage({ params, searchParams }: Prop
     : (yearParam ? parseInt(yearParam, 10) : undefined);
 
   const db = getDb();
-  const [statement, incomeResult, availableYears, creditBalance, dbCreditNotes, dbRefunds] = await Promise.all([
+  const [statement, incomeResult, availableYears, creditBalance, dbCreditNotes, dbRefunds, orgSettings] = await Promise.all([
     getClientStatement(clientId, monthPeriod ? { monthPeriod } : (year ? { year } : undefined)),
     getAllIncome({ clientId, ...(monthPeriod ? { monthPeriod } : (year ? { year } : {})) }),
     getStatementYears(clientId),
     getClientCreditBalanceV2(clientId),
     db.select().from(creditNotes).where(and(eq(creditNotes.clientId, clientId), sql`${creditNotes.status} != 'void'`)),
     db.select().from(creditRefunds).where(eq(creditRefunds.clientId, clientId)),
+    getOrganisationSettings(),
   ]);
 
   if (!statement) notFound();
@@ -274,9 +276,12 @@ export default async function StatementDetailPage({ params, searchParams }: Prop
       name: orgName,
       logoUrl: getDocumentLogoUrl(orgName),
       divisionOf: divSettings ? 'Playhouse Media Group' : undefined,
-      email: divSettings?.salesRepEmail ?? undefined,
-      phone: divSettings?.salesRepPhone ?? undefined,
-      website: divSettings?.divisionWebsite ?? undefined,
+      registrationNumber: orgSettings?.registrationNumber ?? undefined,
+      vatNumber: orgSettings?.vatNumber ?? undefined,
+      email: divSettings?.salesRepEmail ?? orgSettings?.email ?? undefined,
+      phone: divSettings?.salesRepPhone ?? orgSettings?.phone ?? undefined,
+      website: divSettings?.divisionWebsite ?? orgSettings?.website ?? undefined,
+      address: formatOrgAddress(orgSettings),
       salesRep: divSettings?.salesRepName ?? undefined,
     },
     client: {

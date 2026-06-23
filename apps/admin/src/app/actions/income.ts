@@ -3,7 +3,7 @@
 import { revalidatePath } from 'next/cache';
 import { db, income, eq, getIncomeById, invoices, paymentAllocations, sql } from '@pmg/db';
 import { isPeriodClosed } from '@/lib/date-rules';
-import { voidPaymentJournalEntries } from './accounting-auto-post';
+import { voidPaymentJournalEntries } from '@/lib/accounting/posting';
 
 export async function deleteIncome(id: string): Promise<{ error?: string }> {
   try {
