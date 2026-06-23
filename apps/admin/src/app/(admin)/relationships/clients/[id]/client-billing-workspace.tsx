@@ -53,10 +53,9 @@ import { EmailReceiptDialog } from '@/components/billing/email-receipt-dialog';
 import { ClientEditForm } from '@/components/clients/client-edit-form';
 import { ClientFinancialDashboard } from './client-financial-dashboard';
 import { ClientMetricStrip } from './client-metric-strip';
-import { calculateClientHealth, calculateAverageDaysToPay } from '@/lib/client-billing-helpers';
-import { formatZAR, fmtDate, formatOrgAddress, getSASTToday } from '@/lib/format';
+import { calculateClientHealth, calculateAverageDaysToPay, buildOrgProps } from '@/lib/client-billing-helpers';
+import { formatZAR, fmtDate, getSASTToday } from '@/lib/format';
 import { calculateAgeing } from '@/lib/billing-ageing';
-import { getDocumentLogoUrl } from '@/lib/document-logo';
 import {
   appendElementToPdf,
   elementToPdfBase64,
@@ -422,18 +421,7 @@ export function ClientBillingWorkspace({
     issueDate: inv.invoiceDate,
     dueDate: inv.dueDate ?? undefined,
     reference: inv.reference ?? undefined,
-    org: {
-      name: inv.divisionName,
-      logoUrl: getDocumentLogoUrl(inv.divisionName),
-      divisionOf: 'Playhouse Media Group',
-      registrationNumber: orgSettings?.registrationNumber ?? undefined,
-      vatNumber: orgSettings?.vatNumber ?? undefined,
-      email: divSettings?.salesRepEmail ?? orgSettings?.email ?? undefined,
-      phone: divSettings?.salesRepPhone ?? orgSettings?.phone ?? undefined,
-      website: divSettings?.divisionWebsite ?? orgSettings?.website ?? undefined,
-      address: formatOrgAddress(orgSettings),
-      salesRep: divSettings?.salesRepName ?? undefined,
-    },
+    org: buildOrgProps(inv.divisionName, divSettings, orgSettings),
     client: {
       name: inv.clientName ?? 'No client',
       email: inv.clientEmail ?? undefined,
@@ -464,18 +452,7 @@ export function ClientBillingWorkspace({
     issueDate: q.quoteDate,
     dueDate: q.expiryDate ?? undefined,
     reference: q.reference ?? undefined,
-    org: {
-      name: q.divisionName,
-      logoUrl: getDocumentLogoUrl(q.divisionName),
-      divisionOf: 'Playhouse Media Group',
-      registrationNumber: orgSettings?.registrationNumber ?? undefined,
-      vatNumber: orgSettings?.vatNumber ?? undefined,
-      email: divSettings?.salesRepEmail ?? orgSettings?.email ?? undefined,
-      phone: divSettings?.salesRepPhone ?? orgSettings?.phone ?? undefined,
-      website: divSettings?.divisionWebsite ?? orgSettings?.website ?? undefined,
-      address: formatOrgAddress(orgSettings),
-      salesRep: divSettings?.salesRepName ?? undefined,
-    },
+    org: buildOrgProps(q.divisionName, divSettings, orgSettings),
     client: {
       name: q.clientName ?? 'No client',
       email: q.clientEmail ?? undefined,
@@ -596,18 +573,7 @@ export function ClientBillingWorkspace({
     issueDate: getSASTToday(),
     periodFrom,
     periodTo,
-    org: {
-      name: statementDivisionName,
-      logoUrl: getDocumentLogoUrl(statementDivisionName),
-      divisionOf: 'Playhouse Media Group',
-      registrationNumber: orgSettings?.registrationNumber ?? undefined,
-      vatNumber: orgSettings?.vatNumber ?? undefined,
-      email: divSettings?.salesRepEmail ?? orgSettings?.email ?? undefined,
-      phone: divSettings?.salesRepPhone ?? orgSettings?.phone ?? undefined,
-      website: divSettings?.divisionWebsite ?? orgSettings?.website ?? undefined,
-      address: formatOrgAddress(orgSettings),
-      salesRep: divSettings?.salesRepName ?? undefined,
-    },
+    org: buildOrgProps(statementDivisionName, divSettings, orgSettings),
     client: {
       name: client.businessName ?? client.name,
       email: client.email ?? undefined,

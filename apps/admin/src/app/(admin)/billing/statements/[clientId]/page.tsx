@@ -24,8 +24,8 @@ import {
   sql,
 } from '@pmg/db';
 import { getClientCreditBalanceV2 } from '@/app/actions/credit-management';
-import { getDocumentLogoUrl } from '@/lib/document-logo';
-import { formatZAR, fmtDate, formatOrgAddress, getSASTToday } from '@/lib/format';
+import { formatZAR, fmtDate, getSASTToday } from '@/lib/format';
+import { buildOrgProps } from '@/lib/client-billing-helpers';
 import { PrintButton } from '@/components/billing/print-button';
 import { ExportPdfButton } from '@/components/billing/export-pdf-button';
 import {
@@ -272,18 +272,7 @@ export default async function StatementDetailPage({ params, searchParams }: Prop
     issueDate: now.toISOString().split('T')[0]!,
     periodFrom,
     periodTo,
-    org: {
-      name: orgName,
-      logoUrl: getDocumentLogoUrl(orgName),
-      divisionOf: divSettings ? 'Playhouse Media Group' : undefined,
-      registrationNumber: orgSettings?.registrationNumber ?? undefined,
-      vatNumber: orgSettings?.vatNumber ?? undefined,
-      email: divSettings?.salesRepEmail ?? orgSettings?.email ?? undefined,
-      phone: divSettings?.salesRepPhone ?? orgSettings?.phone ?? undefined,
-      website: divSettings?.divisionWebsite ?? orgSettings?.website ?? undefined,
-      address: formatOrgAddress(orgSettings),
-      salesRep: divSettings?.salesRepName ?? undefined,
-    },
+    org: buildOrgProps(orgName, divSettings, orgSettings, divSettings ? 'Playhouse Media Group' : null),
     client: {
       name: client.businessName ?? client.name,
       email: client.email ?? undefined,

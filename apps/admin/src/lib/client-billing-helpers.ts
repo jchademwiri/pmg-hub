@@ -1,4 +1,57 @@
 import type { InvoiceDetail, QuotationDetail, InvoiceRow, QuotationRow } from '@pmg/db';
+import { getDocumentLogoUrl } from '@/lib/document-logo';
+import { formatOrgAddress } from '@/lib/format';
+
+export interface OrgPreviewProps {
+  name: string;
+  logoUrl: string;
+  divisionOf?: string;
+  registrationNumber?: string;
+  vatNumber?: string;
+  email?: string;
+  phone?: string;
+  website?: string;
+  address?: string;
+  salesRep?: string;
+}
+
+/**
+ * Determine the display status for a client statement based on outstanding balance
+ * and whether any invoices are overdue.
+ */
+export function determineStatementStatus(
+  totalOutstanding: number,
+  invoices: { status: string }[],
+): 'Paid' | 'Outstanding' | 'Overdue' {
+  if (totalOutstanding <= 0) return 'Paid';
+  const hasOverdue = invoices.some(i => i.status === 'overdue');
+  return hasOverdue ? 'Overdue' : 'Outstanding';
+}
+
+/**
+ * Build a DocumentPreview org object from division + org-level settings.
+ * Falls back through the chain: division sales rep → org settings → undefined.
+ */
+export function buildOrgProps(
+  divisionName: string,
+  divSettings?: { salesRepEmail?: string | null; salesRepPhone?: string | null; divisionWebsite?: string | null; salesRepName?: string | null } | null,
+  orgSettings?: { registrationNumber?: string | null; vatNumber?: string | null; email?: string | null; phone?: string | null; website?: string | null; addressStreet?: string | null; addressCity?: string | null; addressPostal?: string | null } | null,
+  /** Pass `null` to suppress the "A division of..." line entirely; omit or pass `undefined` to use the default `'Playhouse Media Group'` */
+  divisionOf?: string | null,
+): OrgPreviewProps {
+  return {
+    name: divisionName,
+    logoUrl: getDocumentLogoUrl(divisionName),
+    divisionOf: divisionOf !== null ? (divisionOf ?? 'Playhouse Media Group') : undefined,
+    registrationNumber: orgSettings?.registrationNumber ?? undefined,
+    vatNumber: orgSettings?.vatNumber ?? undefined,
+    email: divSettings?.salesRepEmail ?? orgSettings?.email ?? undefined,
+    phone: divSettings?.salesRepPhone ?? orgSettings?.phone ?? undefined,
+    website: divSettings?.divisionWebsite ?? orgSettings?.website ?? undefined,
+    address: formatOrgAddress(orgSettings),
+    salesRep: divSettings?.salesRepName ?? undefined,
+  };
+}
 
 export interface ActivityEvent {
   id: string;

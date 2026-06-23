@@ -25,8 +25,9 @@ import {
 import { generateReceiptNumber } from '@pmg/utils';
 import { jsPDF } from 'jspdf';
 
-import { fmtDate, formatZAR, formatOrgAddress, getSASTParts, getSASTToday } from '@/lib/format';
+import { fmtDate, formatZAR, getSASTParts, getSASTToday } from '@/lib/format';
 import { calculateAgeing, totalAgeingDue } from '@/lib/billing-ageing';
+import { buildOrgProps } from '@/lib/client-billing-helpers';
 
 type BillingPdfType = 'invoice' | 'quote' | 'statement' | 'receipt';
 
@@ -550,17 +551,7 @@ async function buildInvoicePdfData(id: string): Promise<PdfDocumentData | null> 
     dueDateLabel: 'Due Date',
     dueDate: invoice.dueDate,
     reference: invoice.reference,
-    org: {
-      name: invoice.divisionName,
-      divisionOf: 'Playhouse Media Group',
-      registrationNumber: orgSettings?.registrationNumber ?? undefined,
-      vatNumber: orgSettings?.vatNumber ?? undefined,
-      email: settings?.salesRepEmail ?? orgSettings?.email ?? undefined,
-      phone: settings?.salesRepPhone ?? orgSettings?.phone ?? undefined,
-      website: settings?.divisionWebsite ?? orgSettings?.website ?? undefined,
-      address: formatOrgAddress(orgSettings),
-      salesRep: settings?.salesRepName ?? undefined,
-    },
+    org: buildOrgProps(invoice.divisionName, settings, orgSettings),
     client: {
       name: invoice.clientName ?? 'No client',
       email: invoice.clientEmail,
@@ -606,17 +597,7 @@ async function buildQuotePdfData(id: string): Promise<PdfDocumentData | null> {
     dueDateLabel: 'Expiry Date',
     dueDate: quote.expiryDate,
     reference: quote.reference,
-    org: {
-      name: quote.divisionName,
-      divisionOf: 'Playhouse Media Group',
-      registrationNumber: orgSettings?.registrationNumber ?? undefined,
-      vatNumber: orgSettings?.vatNumber ?? undefined,
-      email: settings?.salesRepEmail ?? orgSettings?.email ?? undefined,
-      phone: settings?.salesRepPhone ?? orgSettings?.phone ?? undefined,
-      website: settings?.divisionWebsite ?? orgSettings?.website ?? undefined,
-      address: formatOrgAddress(orgSettings),
-      salesRep: settings?.salesRepName ?? undefined,
-    },
+    org: buildOrgProps(quote.divisionName, settings, orgSettings),
     client: {
       name: quote.clientName ?? 'No client',
       email: quote.clientEmail,
@@ -662,17 +643,7 @@ async function buildReceiptPdfData(id: string): Promise<PdfDocumentData | null> 
     number: generateReceiptNumber(payment.id, payment.divisionName),
     status: 'Paid',
     issueDate: payment.date,
-    org: {
-      name: payment.divisionName,
-      divisionOf: 'Playhouse Media Group',
-      registrationNumber: orgSettings?.registrationNumber ?? undefined,
-      vatNumber: orgSettings?.vatNumber ?? undefined,
-      email: settings?.salesRepEmail ?? orgSettings?.email ?? undefined,
-      phone: settings?.salesRepPhone ?? orgSettings?.phone ?? undefined,
-      website: settings?.divisionWebsite ?? orgSettings?.website ?? undefined,
-      address: formatOrgAddress(orgSettings),
-      salesRep: settings?.salesRepName ?? undefined,
-    },
+    org: buildOrgProps(payment.divisionName, settings, orgSettings),
     client: {
       name: payment.clientName ?? 'Client',
     },
@@ -825,17 +796,7 @@ async function buildStatementPdfData(
     issueDate: getSASTToday(),
     periodFrom,
     periodTo,
-    org: {
-      name: divisionName,
-      divisionOf: 'Playhouse Media Group',
-      registrationNumber: orgSettings?.registrationNumber ?? undefined,
-      vatNumber: orgSettings?.vatNumber ?? undefined,
-      email: settings?.salesRepEmail ?? orgSettings?.email ?? undefined,
-      phone: settings?.salesRepPhone ?? orgSettings?.phone ?? undefined,
-      website: settings?.divisionWebsite ?? orgSettings?.website ?? undefined,
-      address: formatOrgAddress(orgSettings),
-      salesRep: settings?.salesRepName ?? undefined,
-    },
+    org: buildOrgProps(divisionName, settings, orgSettings),
     client: {
       name: statement.client.businessName ?? statement.client.name,
       email: statement.client.email,
