@@ -274,13 +274,15 @@ describe('Finance Expenses Module', () => {
         id: 'exp-1',
         date: '2026-05-15',
         divisionId: validDivisionId,
+        divisionName: 'Engineering',
         category: 'Software',
         amount: '120.00',
         clientId: null,
+        clientName: null,
         description: null,
         createdAt: new Date(),
         updatedAt: null,
-      });
+      } as any);
 
       const res = await deleteExpense('exp-1');
       expect(res).toEqual({});
@@ -292,13 +294,15 @@ describe('Finance Expenses Module', () => {
         id: 'exp-1',
         date: '2025-12-15',
         divisionId: validDivisionId,
+        divisionName: 'Engineering',
         category: 'Software',
         amount: '120.00',
         clientId: null,
+        clientName: null,
         description: null,
         createdAt: new Date(),
         updatedAt: null,
-      });
+      } as any);
       mockIsPeriodClosed.mockResolvedValue(true);
 
       const res = await deleteExpense('exp-1');
@@ -332,7 +336,7 @@ describe('Finance Expenses Module', () => {
       vi.mocked(getAllDivisions).mockResolvedValue([{ id: validDivisionId, name: 'Engineering' }]);
       vi.mocked(getAllExpenseCategories).mockResolvedValue([{ id: 'cat-1', name: 'Software' }]);
       vi.mocked(getDistinctExpenseMonths).mockResolvedValue(['2026-05']);
-      vi.mocked(getAllClients).mockResolvedValue([{ id: validClientId, name: 'Google' }]);
+      vi.mocked(getAllClients).mockResolvedValue([{ id: validClientId, name: 'Google', businessName: null, email: null }]);
 
       const searchParams = Promise.resolve({ divisionId: validDivisionId });
       const jsx = await ExpensePage({ searchParams });

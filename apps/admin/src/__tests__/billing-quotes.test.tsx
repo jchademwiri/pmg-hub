@@ -185,6 +185,7 @@ describe('Billing Quotations Module', () => {
         clientId: 'c3b07384-d113-4956-a5db-8f3e58b8d4e7',
         quoteDate: '2026-05-01',
         lineItems: [{ itemId: 'e3b07384-d113-4956-a5db-8f3e58b8d4e8', description: 'Item 1', quantity: 2, unitPrice: 250, vatRate: 0 }],
+        vatEnabled: false,
       });
       expect(resBlocked.error).toBe('This quotation can no longer be edited.');
 
@@ -200,6 +201,7 @@ describe('Billing Quotations Module', () => {
         clientId: 'c3b07384-d113-4956-a5db-8f3e58b8d4e7',
         quoteDate: '2026-05-01',
         lineItems: [{ itemId: 'e3b07384-d113-4956-a5db-8f3e58b8d4e8', description: 'Item 1', quantity: 2, unitPrice: 250, vatRate: 0 }],
+        vatEnabled: false,
       });
       expect(resSuccess).toEqual({});
       expect(mockDbUpdate).toHaveBeenCalled();

@@ -774,7 +774,7 @@ async function buildStatementPdfData(
     totals: {
       subtotal: safeNumber(statement.summary.totalInvoiced) + openingBalance,
       paid: safeNumber(statement.summary.totalPaid),
-      balanceDue: balance,
+      balanceDue: finalBalance,
     },
   };
 }
