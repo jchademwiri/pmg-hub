@@ -69,7 +69,7 @@ export async function getAllTenderScheduleEntries(
 
   if (filters?.status?.length) {
     conditions.push(
-      sql`${tenderScheduleEntries.status} = ANY(ARRAY[${sql.join(
+      sql`${tenderScheduleEntries.status}::text = ANY(ARRAY[${sql.join(
         filters.status.map((s) => sql`${s}`),
         sql`, `,
       )}])`,
@@ -110,7 +110,7 @@ export async function getActiveTenderScheduleEntries(): Promise<
     .select()
     .from(tenderScheduleEntries)
     .where(
-      sql`${tenderScheduleEntries.status} = ANY(ARRAY['planned', 'in_progress', 'completed']::text[])`,
+      sql`${tenderScheduleEntries.status}::text = ANY(ARRAY['planned', 'in_progress', 'completed'])`,
     )
     .orderBy(
       asc(SORT_ORDER),
@@ -199,7 +199,7 @@ export async function getCurrentWorkload(): Promise<CurrentWorkload> {
     .select()
     .from(tenderScheduleEntries)
     .where(
-      sql`${tenderScheduleEntries.status} = ANY(ARRAY['planned', 'in_progress']::text[])`,
+      sql`${tenderScheduleEntries.status}::text = ANY(ARRAY['planned', 'in_progress'])`,
     )
     .orderBy(
       asc(SORT_ORDER),
@@ -220,7 +220,7 @@ export async function getTendersAtRisk(): Promise<TenderScheduleEntry[]> {
     .from(tenderScheduleEntries)
     .where(
       and(
-        sql`${tenderScheduleEntries.status} = ANY(ARRAY['planned', 'in_progress']::text[])`,
+        sql`${tenderScheduleEntries.status}::text = ANY(ARRAY['planned', 'in_progress'])`,
         or(
           // Start overdue: today > start_date and still planned
           and(
@@ -249,7 +249,7 @@ export async function getOverlappingTenders(
     .from(tenderScheduleEntries)
     .where(
       and(
-        sql`${tenderScheduleEntries.status} = ANY(ARRAY['planned', 'in_progress']::text[])`,
+        sql`${tenderScheduleEntries.status}::text = ANY(ARRAY['planned', 'in_progress'])`,
         // Date range overlap: A.start <= B.end AND B.start <= A.end
         sql`${tenderScheduleEntries.startDate} <= ${endDate}`,
         sql`${startDate} <= ${tenderScheduleEntries.targetCompletionDate}`,
@@ -266,7 +266,7 @@ export async function detectOverlaps(): Promise<OverlapWarning[]> {
     .select()
     .from(tenderScheduleEntries)
     .where(
-      sql`${tenderScheduleEntries.status} = ANY(ARRAY['planned', 'in_progress']::text[])`,
+      sql`${tenderScheduleEntries.status}::text = ANY(ARRAY['planned', 'in_progress'])`,
     )
     .orderBy(asc(tenderScheduleEntries.startDate));
 
@@ -305,7 +305,7 @@ export async function getTenderScheduleSummary(): Promise<TenderScheduleSummary>
     .select()
     .from(tenderScheduleEntries)
     .where(
-      sql`${tenderScheduleEntries.status} = ANY(ARRAY['planned', 'in_progress', 'completed']::text[])`,
+      sql`${tenderScheduleEntries.status}::text = ANY(ARRAY['planned', 'in_progress', 'completed'])`,
     );
 
   const today = new Date().toISOString().split("T")[0];
