@@ -10,6 +10,8 @@ import { ExpenseSnapshot } from '@/components/dashboard/expense-snapshot'
 import CloseMonthButton from '@/components/dashboard/close-month-button'
 import { Badge } from '@/components/ui/badge'
 import { AgingReportGrid } from '@/components/dashboard/aging-report-grid'
+import { TenderSummaryCard } from '@/components/dashboard/tender-summary-card'
+import type { TenderSummaryData } from '@/components/dashboard/tender-summary-card'
 import { fmtMonthYear } from '@/lib/format'
 import type { AgingRow } from '@pmg/db'
 import type { PeriodSummary, DivisionRevenue as DivisionRevenueType, LeadStatusCount, MonthlyFinancials, MonthlyBudgetChartRow } from '@/lib/financial'
@@ -38,6 +40,7 @@ type Props = {
   hasSnapshot: boolean
   currentPeriod: string
   showCloseMonthButton: boolean
+  tenderScheduleSummary: TenderSummaryData
 }
 
 const TABS: { key: Tab; label: string }[] = [
@@ -60,6 +63,7 @@ export function DashboardShell({
   agingReport,
   budgetChartSeries,
   expensesByDivision,
+  tenderScheduleSummary,
   hasSnapshot,
   currentPeriod,
   showCloseMonthButton,
@@ -162,7 +166,10 @@ export function DashboardShell({
         <LeadsSummary leads={leads} />
       </div>
 
-      {/* ── Row 5: Expense breakdown ── */}
+      {/* ── Row 5: Tender scheduling summary ── */}
+      <TenderSummaryCard data={tenderScheduleSummary} />
+
+      {/* ── Row 6: Expense breakdown ── */}
       <ExpenseSnapshot
         expensesByDivision={expensesByDivision}
         totalExpenses={activeSummary.expenses}

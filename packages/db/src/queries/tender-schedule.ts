@@ -77,7 +77,7 @@ export async function getAllTenderScheduleEntries(
   }
   if (filters?.priority?.length) {
     conditions.push(
-      sql`${tenderScheduleEntries.priority} = ANY(ARRAY[${sql.join(
+      sql`${tenderScheduleEntries.priority}::text = ANY(ARRAY[${sql.join(
         filters.priority.map((p) => sql`${p}`),
         sql`, `,
       )}])`,

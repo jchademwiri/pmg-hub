@@ -40,7 +40,8 @@ export type NavGroup = {
 // ── Overview (non-grouped) ────────────────────────────────────────────────────
 
 export const OVERVIEW: NavItem[] = [
-  { title: 'Dashboard', url: '/dashboard', icon: LayoutDashboard },
+  { title: 'Dashboard',  url: '/dashboard',       icon: LayoutDashboard },
+  { title: 'Scheduling', url: '/scheduling',      icon: CalendarClock },
 ]
 
 // ── Groups ────────────────────────────────────────────────────────────────────
