@@ -32,6 +32,15 @@ interface StatementsClientProps {
 type SortField = 'name' | 'totalInvoiced' | 'totalPaid' | 'totalOutstanding' | 'lastActivityDate';
 type SortOrder = 'asc' | 'desc';
 
+function SortIcon({ field, currentField, order }: { field: SortField; currentField: SortField; order: SortOrder }) {
+  if (currentField !== field) return <ArrowUpDown className="ml-1 size-3 text-muted-foreground/50 opacity-0 group-hover:opacity-100 transition-opacity" />;
+  return order === 'asc' ? (
+    <ArrowUp className="ml-1 size-3 text-foreground" />
+  ) : (
+    <ArrowDown className="ml-1 size-3 text-foreground" />
+  );
+}
+
 export function StatementsClient({ initialClients }: StatementsClientProps) {
   const router = useRouter();
   const [searchTerm, setSearchTerm] = React.useState('');
@@ -85,15 +94,6 @@ export function StatementsClient({ initialClients }: StatementsClientProps) {
     });
   }, [filteredClients, sortField, sortOrder]);
 
-  const SortIcon = ({ field }: { field: SortField }) => {
-    if (sortField !== field) return <ArrowUpDown className="ml-1 size-3 text-muted-foreground/50 opacity-0 group-hover:opacity-100 transition-opacity" />;
-    return sortOrder === 'asc' ? (
-      <ArrowUp className="ml-1 size-3 text-foreground" />
-    ) : (
-      <ArrowDown className="ml-1 size-3 text-foreground" />
-    );
-  };
-
   return (
     <div className="space-y-4">
       {/* Search and Filters Bar */}
@@ -138,7 +138,7 @@ export function StatementsClient({ initialClients }: StatementsClientProps) {
                   className="group inline-flex items-center text-xs font-semibold hover:text-foreground text-left"
                 >
                   Client
-                  <SortIcon field="name" />
+                  <SortIcon field="name" currentField={sortField} order={sortOrder} />
                 </button>
               </TableHead>
               <TableHead className="text-right py-4">
@@ -147,7 +147,7 @@ export function StatementsClient({ initialClients }: StatementsClientProps) {
                   className="group inline-flex items-center text-xs font-semibold hover:text-foreground"
                 >
                   Total Invoiced
-                  <SortIcon field="totalInvoiced" />
+                  <SortIcon field="totalInvoiced" currentField={sortField} order={sortOrder} />
                 </button>
               </TableHead>
               <TableHead className="text-right py-4">
@@ -156,7 +156,7 @@ export function StatementsClient({ initialClients }: StatementsClientProps) {
                   className="group inline-flex items-center text-xs font-semibold hover:text-foreground"
                 >
                   Total Paid
-                  <SortIcon field="totalPaid" />
+                  <SortIcon field="totalPaid" currentField={sortField} order={sortOrder} />
                 </button>
               </TableHead>
               <TableHead className="text-right py-4">
@@ -165,7 +165,7 @@ export function StatementsClient({ initialClients }: StatementsClientProps) {
                   className="group inline-flex items-center text-xs font-semibold hover:text-foreground"
                 >
                   Outstanding
-                  <SortIcon field="totalOutstanding" />
+                  <SortIcon field="totalOutstanding" currentField={sortField} order={sortOrder} />
                 </button>
               </TableHead>
               <TableHead className="py-4">
@@ -174,7 +174,7 @@ export function StatementsClient({ initialClients }: StatementsClientProps) {
                   className="group inline-flex items-center text-xs font-semibold hover:text-foreground"
                 >
                   Last Activity
-                  <SortIcon field="lastActivityDate" />
+                  <SortIcon field="lastActivityDate" currentField={sortField} order={sortOrder} />
                 </button>
               </TableHead>
             </TableRow>

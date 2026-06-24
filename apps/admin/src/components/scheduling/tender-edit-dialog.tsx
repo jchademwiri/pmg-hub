@@ -55,17 +55,16 @@ export function TenderEditDialog({ tender, clients, divisions, onClose }: Tender
   // Section state
   const [activeSection, setActiveSection] = React.useState<'details' | 'tracking'>('details')
 
+  // Client/division selection state (survives React re-renders)
+  const [editClientId, setEditClientId] = React.useState(tender.clientId)
+  const [editDivisionId, setEditDivisionId] = React.useState(tender.divisionId ?? '__none__')
+
   async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault()
     setErrorMessage(null)
 
     startTransition(async () => {
       const fd = new FormData(formRef.current!)
-      // Fix hidden inputs
-      const clientInput = document.getElementById('edit-client-hidden') as HTMLInputElement | null
-      if (clientInput && clientInput.value) fd.set('clientId', clientInput.value)
-      const divInput = document.getElementById('edit-division-hidden') as HTMLInputElement | null
-      if (divInput && divInput.value && divInput.value !== '__none__') fd.set('divisionId', divInput.value)
 
       // Also update tracking-only fields (outcome, actualEffortDays)
       const outcome = fd.get('outcome') as string
@@ -150,13 +149,9 @@ export function TenderEditDialog({ tender, clients, divisions, onClose }: Tender
               <Field>
                 <FieldLabel htmlFor="edit-client">Client <span className="text-destructive">*</span></FieldLabel>
                 <Select
-                  name="clientId"
                   required
-                  defaultValue={tender.clientId}
-                  onValueChange={(value) => {
-                    const input = document.getElementById('edit-client-hidden') as HTMLInputElement | null
-                    if (input) input.value = value
-                  }}
+                  defaultValue={editClientId}
+                  onValueChange={(value) => setEditClientId(value)}
                 >
                   <SelectTrigger id="edit-client" className="text-sm h-9">
                     <SelectValue />
@@ -167,7 +162,7 @@ export function TenderEditDialog({ tender, clients, divisions, onClose }: Tender
                     ))}
                   </SelectContent>
                 </Select>
-                <input id="edit-client-hidden" type="hidden" name="clientId" value={tender.clientId} />
+                <input id="edit-client-hidden" type="hidden" name="clientId" value={editClientId} />
               </Field>
 
               {/* Tender Reference */}
@@ -209,12 +204,8 @@ export function TenderEditDialog({ tender, clients, divisions, onClose }: Tender
               <Field>
                 <FieldLabel htmlFor="edit-division">Division</FieldLabel>
                 <Select
-                  name="divisionId"
-                  defaultValue={tender.divisionId ?? '__none__'}
-                  onValueChange={(value) => {
-                    const input = document.getElementById('edit-division-hidden') as HTMLInputElement | null
-                    if (input) input.value = value
-                  }}
+                  defaultValue={editDivisionId}
+                  onValueChange={(value) => setEditDivisionId(value)}
                 >
                   <SelectTrigger id="edit-division" className="text-sm h-9"><SelectValue /></SelectTrigger>
                   <SelectContent>
@@ -224,7 +215,7 @@ export function TenderEditDialog({ tender, clients, divisions, onClose }: Tender
                     ))}
                   </SelectContent>
                 </Select>
-                <input id="edit-division-hidden" type="hidden" name="divisionId" value={tender.divisionId ?? '__none__'} />
+                <input id="edit-division-hidden" type="hidden" name="divisionId" value={editDivisionId} />
               </Field>
 
               {/* Start Date */}

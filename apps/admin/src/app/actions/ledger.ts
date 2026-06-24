@@ -2,7 +2,7 @@
 
 import { z } from 'zod';
 import { revalidatePath } from 'next/cache';
-import { db, ledger, eq, getLedgerById } from '@pmg/db';
+import { getLedgerById } from '@pmg/db';
 import {
   insertLedgerEntry,
   updateLedgerEntry as dbUpdateLedgerEntry,

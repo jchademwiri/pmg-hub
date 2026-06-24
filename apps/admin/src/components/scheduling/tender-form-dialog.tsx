@@ -61,6 +61,10 @@ export function TenderFormDialog({ clients, divisions, open, onOpenChange }: Ten
   const [calculatedTargetDate, setCalculatedTargetDate] = React.useState('')
   const [manualStartOverride, setManualStartOverride] = React.useState(false)
 
+  // Selection state (in state to survive React re-renders)
+  const [selectedClientId, setSelectedClientId] = React.useState('')
+  const [selectedDivisionId, setSelectedDivisionId] = React.useState('')
+
   function handleDateChange(closing: string, effort: string) {
     setClosingDate(closing)
     setEffortDays(effort)
@@ -80,6 +84,8 @@ export function TenderFormDialog({ clients, divisions, open, onOpenChange }: Ten
     setCalculatedStartDate('')
     setCalculatedTargetDate('')
     setManualStartOverride(false)
+    setSelectedClientId('')
+    setSelectedDivisionId('')
     setErrorMessage(null)
   }
 
@@ -132,12 +138,8 @@ export function TenderFormDialog({ clients, divisions, open, onOpenChange }: Ten
                 Client <span className="text-destructive">*</span>
               </FieldLabel>
               <Select
-                name="clientId"
                 required
-                onValueChange={(value) => {
-                  const input = document.getElementById('tender-client-hidden') as HTMLInputElement | null
-                  if (input) input.value = value
-                }}
+                onValueChange={(value) => setSelectedClientId(value)}
               >
                 <SelectTrigger id="tender-client" className="text-sm h-9">
                   <SelectValue placeholder="Select a client" />
@@ -150,7 +152,7 @@ export function TenderFormDialog({ clients, divisions, open, onOpenChange }: Ten
                   ))}
                 </SelectContent>
               </Select>
-              <input id="tender-client-hidden" type="hidden" name="clientId" value="" />
+              <input id="tender-client-hidden" type="hidden" name="clientId" value={selectedClientId} />
             </Field>
 
             {/* Tender Reference */}
@@ -222,11 +224,7 @@ export function TenderFormDialog({ clients, divisions, open, onOpenChange }: Ten
             <Field>
               <FieldLabel htmlFor="tender-division">Division</FieldLabel>
               <Select
-                name="divisionId"
-                onValueChange={(value) => {
-                  const input = document.getElementById('tender-division-hidden') as HTMLInputElement | null
-                  if (input) input.value = value
-                }}
+                onValueChange={(value) => setSelectedDivisionId(value)}
               >
                 <SelectTrigger id="tender-division" className="text-sm h-9">
                   <SelectValue placeholder="Tender Edge Solutions (default)" />
@@ -242,7 +240,7 @@ export function TenderFormDialog({ clients, divisions, open, onOpenChange }: Ten
                   ))}
                 </SelectContent>
               </Select>
-              <input id="tender-division-hidden" type="hidden" name="divisionId" value="" />
+              <input id="tender-division-hidden" type="hidden" name="divisionId" value={selectedDivisionId} />
             </Field>
 
             {/* Start Date (auto-calculated, editable) */}

@@ -8,7 +8,7 @@ import { postInvoiceIssueJournalEntry, voidInvoiceJournalEntries, postPaymentJou
 import { isPeriodClosed, getMinAllowedDate, getMinDateErrorMessage } from '@/lib/date-rules';
 import { getSASTParts, getSASTToday } from '@/lib/format';
 import { CreateInvoiceSchema, type CreateInvoiceInput } from './billing-schema';
-import { hasBillingLineItemItemIdColumn, lineItemInsertValues } from './billing-line-item-compat';
+import { hasBillingLineItemItemIdColumn } from './billing-line-item-compat';
 
 // ── Shared totals helper ──────────────────────────────────────────────────────
 
