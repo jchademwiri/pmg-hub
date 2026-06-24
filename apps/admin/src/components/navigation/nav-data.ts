@@ -41,7 +41,6 @@ export type NavGroup = {
 
 export const OVERVIEW: NavItem[] = [
   { title: 'Dashboard', url: '/dashboard', icon: LayoutDashboard },
-  { title: 'Scheduling', url: '/scheduling', icon: CalendarClock },
 ]
 
 // ── Groups ────────────────────────────────────────────────────────────────────
@@ -61,6 +60,16 @@ export const GROUPS: NavGroup[] = [
       { title: 'Credits',      url: '/billing/credits',    icon: Wallet     },
       { title: 'Statements',   url: '/billing/statements', icon: ScrollText },
       { title: 'Items',        url: '/billing/items',      icon: Package    },
+    ],
+  },
+  {
+    key: 'scheduling',
+    label: 'Scheduling',
+    icon: CalendarClock,
+    items: [
+      { title: 'Overview',      url: '/scheduling',       icon: LayoutGrid },
+      { title: 'Schedule List', url: '/scheduling/list',  icon: ListTodo },
+      { title: 'Timeline',      url: '/scheduling/timeline', icon: CalendarRange },
     ],
   },
   {
@@ -108,16 +117,6 @@ export const GROUPS: NavGroup[] = [
     items: [
       { title: 'Snapshots', url: '/insights/snapshots', icon: Camera   },
       { title: 'Reports',   url: '/insights/reports',   icon: BarChart3 },
-    ],
-  },
-  {
-    key: 'scheduling',
-    label: 'Scheduling',
-    icon: CalendarClock,
-    items: [
-      { title: 'Overview',      url: '/scheduling',       icon: LayoutGrid },
-      { title: 'Schedule List', url: '/scheduling/list',  icon: ListTodo },
-      { title: 'Timeline',      url: '/scheduling/timeline', icon: CalendarRange },
     ],
   },
   {

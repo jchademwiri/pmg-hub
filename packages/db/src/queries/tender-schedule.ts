@@ -41,7 +41,24 @@ const PRIORITY_ORDER = sql`CASE ${tenderScheduleEntries.priority}
   WHEN 'low' THEN 3
 END`;
 
+// Custom sort_order takes priority; nulls fall back to default sort
+const SORT_ORDER = sql`${tenderScheduleEntries.sortOrder}`;
+
 const ACTIVE_STATUSES: string[] = ["planned", "in_progress"];
+
+// ── Reorder ───────────────────────────────────────────────────────────────────
+
+export async function reorderTenderQueue(
+  orderedIds: string[],
+): Promise<void> {
+  const dbInstance = db;
+  for (let i = 0; i < orderedIds.length; i++) {
+    await dbInstance
+      .update(tenderScheduleEntries)
+      .set({ sortOrder: i + 1, updatedAt: new Date() })
+      .where(eq(tenderScheduleEntries.id, orderedIds[i]));
+  }
+}
 
 // ── Basic CRUD ────────────────────────────────────────────────────────────────
 
@@ -80,9 +97,9 @@ export async function getAllTenderScheduleEntries(
     .from(tenderScheduleEntries)
     .where(where)
     .orderBy(
+      asc(SORT_ORDER),
       asc(PRIORITY_ORDER),
       asc(tenderScheduleEntries.closingDate),
-      desc(tenderScheduleEntries.createdAt),
     );
 }
 
@@ -96,9 +113,9 @@ export async function getActiveTenderScheduleEntries(): Promise<
       sql`${tenderScheduleEntries.status} = ANY(ARRAY['planned', 'in_progress', 'completed']::text[])`,
     )
     .orderBy(
+      asc(SORT_ORDER),
       asc(PRIORITY_ORDER),
       asc(tenderScheduleEntries.closingDate),
-      desc(tenderScheduleEntries.createdAt),
     );
 }
 
@@ -185,9 +202,9 @@ export async function getCurrentWorkload(): Promise<CurrentWorkload> {
       sql`${tenderScheduleEntries.status} = ANY(ARRAY['planned', 'in_progress']::text[])`,
     )
     .orderBy(
+      asc(SORT_ORDER),
       asc(PRIORITY_ORDER),
       asc(tenderScheduleEntries.closingDate),
-      desc(tenderScheduleEntries.createdAt),
     );
 
   return {

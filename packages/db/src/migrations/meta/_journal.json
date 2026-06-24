@@ -176,6 +176,13 @@
       "when": 1782275376405,
       "tag": "0024_careless_tombstone",
       "breakpoints": true
+    },
+    {
+      "idx": 25,
+      "version": "7",
+      "when": 1782278220205,
+      "tag": "0025_bright_maelstrom",
+      "breakpoints": true
     }
   ]
 }

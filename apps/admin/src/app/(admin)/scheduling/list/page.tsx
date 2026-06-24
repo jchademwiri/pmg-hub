@@ -1,32 +1,41 @@
 import type { Metadata } from 'next'
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
+import Link from 'next/link'
+import { Plus } from 'lucide-react'
+import { Button } from '@/components/ui/button'
+import { getAllClients } from '@pmg/db'
+import { getAllTenderScheduleEntries } from '@pmg/db'
+import { SetPageTotal } from '@/components/navigation/page-header-context'
+import { ScheduleListClient } from './schedule-list-client'
 
+export const dynamic = 'force-dynamic'
 export const metadata: Metadata = { title: 'Schedule List' }
 
-export default function ScheduleListPage() {
+export default async function ScheduleListPage() {
+  const [entries, clients] = await Promise.all([
+    getAllTenderScheduleEntries(),
+    getAllClients(),
+  ])
+
   return (
     <div className="flex flex-col gap-6">
-      <div>
-        <h2 className="text-lg font-semibold">Schedule List</h2>
-        <p className="text-sm text-muted-foreground">Full list of all tender schedule entries</p>
+      <SetPageTotal value={`${entries.length} total entries`} />
+
+      <div className="flex items-center justify-between">
+        <div>
+          <h2 className="text-lg font-semibold">Schedule List</h2>
+          <p className="text-sm text-muted-foreground">
+            Full list of all tender schedule entries with filtering and search
+          </p>
+        </div>
+        <Button asChild size="sm">
+          <Link href="/scheduling">
+            <Plus className="size-4" />
+            Back to Overview
+          </Link>
+        </Button>
       </div>
 
-      <Card>
-        <CardHeader>
-          <CardTitle>Coming Soon</CardTitle>
-          <CardDescription>
-            A full filterable and searchable list view of all tender schedule entries will be
-            available here in a future update. For now, use the Scheduling Overview page to see your
-            active tenders.
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <p className="text-sm text-muted-foreground">
-            Planned features: pagination, advanced filtering by status/priority/date range, search by
-            client or reference, bulk archive, and CSV export.
-          </p>
-        </CardContent>
-      </Card>
+      <ScheduleListClient entries={entries} clients={clients} />
     </div>
   )
 }

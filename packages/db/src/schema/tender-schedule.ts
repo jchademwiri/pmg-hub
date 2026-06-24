@@ -61,6 +61,7 @@ export const tenderScheduleEntries = pgTable(
       .notNull()
       .default("normal"),
     notes: text("notes"),
+    sortOrder: integer("sort_order"),
     blockers: text("blockers"),
     outcome: tenderScheduleOutcomeEnum("outcome"),
     createdBy: text("created_by").notNull(),
