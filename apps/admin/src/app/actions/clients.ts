@@ -2,7 +2,7 @@
 
 import { z } from 'zod';
 import { revalidatePath } from 'next/cache';
-import { db, clients, income, eq } from '@pmg/db';
+import { db, clients, income, eq, quotations, invoices, tenderScheduleEntries } from '@pmg/db';
 import { setClientActive } from '@pmg/db';
 
 const ClientSchema = z.object({
@@ -34,7 +34,8 @@ export async function createClient(formData: FormData): Promise<{ error?: string
     });
     revalidatePath('/relationships/clients');
     return {};
-  } catch {
+  } catch (e) {
+    console.error('createClient failed:', e);
     return { error: 'Failed to save. Please try again.' };
   }
 }
@@ -63,7 +64,8 @@ export async function updateClient(id: string, formData: FormData): Promise<{ er
       .where(eq(clients.id, id));
     revalidatePath('/relationships/clients');
     return {};
-  } catch {
+  } catch (e) {
+    console.error('updateClient failed:', e);
     return { error: 'Failed to save. Please try again.' };
   }
 }
@@ -73,27 +75,59 @@ export async function toggleClientActive(id: string, isActive: boolean): Promise
     await setClientActive(id, isActive);
     revalidatePath('/relationships/clients');
     return {};
-  } catch {
+  } catch (e) {
+    console.error('toggleClientActive failed:', e);
     return { error: 'Failed to update client status.' };
   }
 }
 
 export async function deleteClient(id: string): Promise<{ error?: string }> {
   try {
+    // Check for income records
     const [incomeCount] = await db
       .select({ id: income.id })
       .from(income)
       .where(eq(income.clientId, id))
       .limit(1);
-
     if (incomeCount) {
       return { error: 'Cannot delete a client that has payment records. Disable the client instead.' };
+    }
+
+    // Check for invoices
+    const [invoiceCount] = await db
+      .select({ id: invoices.id })
+      .from(invoices)
+      .where(eq(invoices.clientId, id))
+      .limit(1);
+    if (invoiceCount) {
+      return { error: 'Cannot delete a client that has invoices. Disable the client instead.' };
+    }
+
+    // Check for quotes
+    const [quoteCount] = await db
+      .select({ id: quotations.id })
+      .from(quotations)
+      .where(eq(quotations.clientId, id))
+      .limit(1);
+    if (quoteCount) {
+      return { error: 'Cannot delete a client that has quotes. Disable the client instead.' };
+    }
+
+    // Check for tender schedule entries
+    const [tenderCount] = await db
+      .select({ id: tenderScheduleEntries.id })
+      .from(tenderScheduleEntries)
+      .where(eq(tenderScheduleEntries.clientId, id))
+      .limit(1);
+    if (tenderCount) {
+      return { error: 'Cannot delete a client that has tender schedule entries. Disable the client instead.' };
     }
 
     await db.delete(clients).where(eq(clients.id, id));
     revalidatePath('/relationships/clients');
     return {};
-  } catch {
+  } catch (e) {
+    console.error('deleteClient failed:', e);
     return { error: 'Failed to delete. Please try again.' };
   }
 }
