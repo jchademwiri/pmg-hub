@@ -771,11 +771,10 @@ async function buildStatementPdfData(
     transactions,
     openingBalance,
     ageing,
-    banking: buildBankingProps(settings),
     totals: {
-      subtotal: safeNumber(statement.summary.totalInvoiced),
+      subtotal: safeNumber(statement.summary.totalInvoiced) + openingBalance,
       paid: safeNumber(statement.summary.totalPaid),
-      balanceDue: finalBalance,
+      balanceDue: balance,
     },
   };
 }
