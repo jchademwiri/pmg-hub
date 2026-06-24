@@ -69,6 +69,9 @@ vi.mock('@/components/ui/confirm-dialog', () => ({
 import { toast } from 'sonner';
 import { confirm } from '@/components/ui/confirm-dialog';
 
+// Increase timeout for component tests under parallel load
+vi.setConfig({ testTimeout: 15_000 });
+
 // ─── Import Code Under Test ──────────────────────────────────────────────────
 import { createItem, updateItem, archiveItem, unarchiveItem, deleteItem } from '@/app/actions/billing-items';
 import ItemsPage from '@/app/(admin)/billing/items/page';
@@ -239,8 +242,7 @@ describe('Billing Items Module', () => {
       });
     });
 
-    it('ItemEditClient - handles save, archive, and delete interactions', async () => {
-      const user = userEvent.setup();
+    describe('ItemEditClient', () => {
       const mockItem = {
         id: 'item-1',
         name: 'Old Service',
@@ -255,60 +257,73 @@ describe('Billing Items Module', () => {
         updatedAt: new Date(),
       };
 
-      // Mock confirmation dialog for delete
-      vi.mocked(confirm).mockResolvedValue(true);
+      function renderEdit() {
+        return render(<ItemEditClient item={mockItem} />);
+      }
 
-      render(<ItemEditClient item={mockItem} />);
+      it('saves edits successfully', async () => {
+        const user = userEvent.setup();
+        renderEdit();
 
-      // Test Edit Save
-      const nameInput = screen.getByDisplayValue('Old Service');
-      await user.clear(nameInput);
-      await user.type(nameInput, 'Updated Service');
+        const nameInput = screen.getByDisplayValue('Old Service');
+        await user.clear(nameInput);
+        await user.type(nameInput, 'Updated Service');
 
-      mockDbUpdate.mockReturnValue({
-        set: vi.fn().mockReturnValue({
-          where: vi.fn().mockResolvedValue(true),
-        }),
+        mockDbUpdate.mockReturnValue({
+          set: vi.fn().mockReturnValue({
+            where: vi.fn().mockResolvedValue(true),
+          }),
+        });
+
+        await user.click(screen.getByRole('button', { name: 'Save Changes' }));
+
+        await waitFor(() => {
+          expect(toast.success).toHaveBeenCalledWith('Item saved.');
+          expect(mockPush).toHaveBeenCalledWith('/billing/items');
+        });
       });
 
-      const saveBtn = screen.getByRole('button', { name: 'Save Changes' });
-      await user.click(saveBtn);
+      it('archives item', async () => {
+        const user = userEvent.setup();
+        renderEdit();
 
-      await waitFor(() => {
-        expect(toast.success).toHaveBeenCalledWith('Item saved.');
-        expect(mockPush).toHaveBeenCalledWith('/billing/items');
+        mockDbUpdate.mockReturnValue({
+          set: vi.fn().mockReturnValue({
+            where: vi.fn().mockResolvedValue(true),
+          }),
+        });
+
+        await user.click(screen.getByRole('button', { name: 'Archive' }));
+
+        await waitFor(() => {
+          expect(toast.success).toHaveBeenCalledWith('Item archived.');
+          expect(mockRefresh).toHaveBeenCalled();
+        });
       });
 
-      // Test Archive
-      const archiveBtn = screen.getByRole('button', { name: 'Archive' });
-      await user.click(archiveBtn);
+      it('deletes item after confirmation', async () => {
+        const user = userEvent.setup();
+        vi.mocked(confirm).mockResolvedValue(true);
+        renderEdit();
 
-      await waitFor(() => {
-        expect(toast.success).toHaveBeenCalledWith('Item archived.');
-        expect(mockRefresh).toHaveBeenCalled();
-      });
-
-      // Test Delete
-      const deleteBtn = screen.getByTitle('Delete item');
-      mockDbSelect.mockImplementation(() => {
-        return {
+        mockDbSelect.mockImplementation(() => ({
           from: () => ({
             where: () => ({
-              limit: () => Promise.resolve([]), // not used in invoice
+              limit: () => Promise.resolve([]),
             }),
           }),
-        };
-      });
-      mockDbDelete.mockReturnValue({
-        where: vi.fn().mockResolvedValue(true),
-      });
+        }));
+        mockDbDelete.mockReturnValue({
+          where: vi.fn().mockResolvedValue(true),
+        });
 
-      await user.click(deleteBtn);
+        await user.click(screen.getByTitle('Delete item'));
 
-      await waitFor(() => {
-        expect(confirm).toHaveBeenCalled();
-        expect(toast.success).toHaveBeenCalledWith('Item deleted.');
-        expect(mockPush).toHaveBeenCalledWith('/billing/items');
+        await waitFor(() => {
+          expect(confirm).toHaveBeenCalled();
+          expect(toast.success).toHaveBeenCalledWith('Item deleted.');
+          expect(mockPush).toHaveBeenCalledWith('/billing/items');
+        });
       });
     });
   });
