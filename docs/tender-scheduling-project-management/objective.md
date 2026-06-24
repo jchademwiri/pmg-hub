@@ -54,21 +54,24 @@ The feature should answer these questions at a glance:
 |---|---|
 | Tender schedule CRUD (create, read, update, delete) | Full project management (tasks, subtasks, milestones, Gantt charts) |
 | Status tracking (planned → in progress → completed → submitted) | Team collaboration / multi-user assignments |
-| Effort and duration estimation (days) | Time tracking / timesheets |
-| Start date, target completion date, closing date tracking | Automated notifications / email reminders (future enhancement) |
-| Basic workload view (current, next, queue) | Kanban board with drag-and-drop |
-| Deadline risk indicators (buffer warnings, overlap detection) | Calendar integration (Google Calendar, Outlook) |
-| Integration with existing clients and divisions | File uploads / document management per tender |
-| Notes and blockers per tender | Resource leveling / auto-scheduling |
-| Overdue/warning states in UI | Reporting / historical analysis |
-| Mobile-friendly responsive layout | Public client-facing portal for tender tracking |
+| Effort estimation (days) + actual effort tracking | Automated notifications / email reminders (future enhancement) |
+| Start date, target completion date, closing date tracking | Kanban board with drag-and-drop |
+| Basic workload view (current, next, queue) | Calendar integration (Google Calendar, Outlook) |
+| Deadline risk indicators (buffer warnings, overlap detection) | File uploads / document management per tender |
+| Integration with existing clients (must link to client record) | Resource leveling / auto-scheduling |
+| Structured notes and blockers (separate fields) | Reporting / historical analysis |
+| Overdue/warning states in UI | Public client-facing portal |
+| Mobile-friendly responsive layout (desktop primary) | Time tracking / timesheets |
+| Priority levels (urgent/high first, then by closing date) | |
+| Outcome tracking (won / lost / pending after submission) | |
+| Fixed 2-day buffer (global default, not configurable per tender) | |
 
 ## Non-Scope (Explicitly Avoided)
 
 - Building a full project management system (Gantt charts, critical path, resource management, etc.)
-- Multi-user collaboration (Jacob works alone on tender prep)
-- Time tracking (effort is estimated in days, not tracked hourly)
-- Notification/reminder system (future enhancement — MVP should be in-app visual flags only)
+- Multi-user collaboration (Jacob works solo on tender prep — others are only involved in waiting periods)
+- Time tracking (effort is estimated and tracked in days, not hours)
+- Notification/reminder system (future enhancement — MVP uses in-app visual flags only)
 - File storage/management within PMG Hub (tender documents are managed externally in Google Drive / file system)
 - Integration with tender portals or external APIs
-- Historical analytics or win/loss tracking (beyond basic status tracking)
+- Historical analytics or win/loss analysis (beyond basic outcome tracking)

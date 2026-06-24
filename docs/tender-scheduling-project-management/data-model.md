@@ -11,20 +11,22 @@ The tender scheduling feature requires a single new database table (`tender_sche
 | Column | Type | Constraints | Description |
 |---|---|---|---|
 | `id` | `uuid` | PK, default `gen_random_uuid()` | Primary key |
-| `client_id` | `uuid` | FK → `clients.id` (nullable) | Optional link to an existing client in PMG Hub |
-| `client_name` | `text` | Not null | Redundant denormalised client name (useful even when client_id is null for one-off tenders) |
+| `client_id` | `uuid` | FK → `clients.id`, NOT NULL | Link to an existing client in PMG Hub (every tender must be linked to a client record) |
 | `division_id` | `uuid` | FK → `divisions.id` (nullable) | Which PMG division this tender belongs to (defaults to TES) |
 | `tender_reference` | `text` | Not null | Tender number, description, or reference (e.g. "T12/2026") |
 | `closing_date` | `date` | Not null | Hard deadline — tender must be submitted by this date |
 | `effort_days` | `integer` | Not null, > 0 | Estimated number of working days required to complete preparation |
-| `buffer_days` | `integer` | Not null, default 2 | Safety buffer between target completion and closing date |
+| `actual_effort_days` | `integer` | Nullable, > 0 | Actual days spent (filled on completion — for future estimation accuracy) |
+| `buffer_days` | `integer` | Not null, default 2 | Safety buffer between target completion and closing date (global default, not per-tender configurable) |
 | `start_date` | `date` | Not null | Planned or actual start date |
 | `target_completion_date` | `date` | Not null | Planned completion date (before closing date) |
 | `actual_completion_date` | `date` | Nullable | When preparation was actually completed |
 | `submission_date` | `date` | Nullable | When the tender was actually submitted |
 | `status` | `text` | Not null, default `'planned'` | Current status (see status enum below) |
 | `priority` | `text` | default `'normal'` | Priority: `'low'`, `'normal'`, `'high'`, `'urgent'` |
-| `notes` | `text` | Nullable | Free-text notes, blockers, or observations |
+| `notes` | `text` | Nullable | Free-text notes about the tender (requirements, observations, etc.) |
+| `blockers` | `text` | Nullable | Structured field for any blockers or issues delaying progress |
+| `outcome` | `text` | Nullable, default `'pending'` | Outcome after submission: `'won'`, `'lost'`, `'pending'` |
 | `created_by` | `text` | Not null | Session user ID (matches Better Auth user table pattern) |
 | `created_at` | `timestamp with tz` | default `now()` | Record creation timestamp |
 | `updated_at` | `timestamp with tz` | Nullable | Last update timestamp (application-managed) |
@@ -49,16 +51,22 @@ export const tenderSchedulePriorityEnum = pgEnum("tender_schedule_priority", [
   "urgent",
 ]);
 
+export const tenderScheduleOutcomeEnum = pgEnum("tender_schedule_outcome", [
+  "won",
+  "lost",
+  "pending",
+]);
+
 export const tenderScheduleEntries = pgTable(
   "tender_schedule_entries",
   {
     id: uuid("id").primaryKey().defaultRandom(),
-    clientId: uuid("client_id").references(() => clients.id, { onDelete: "set null" }),
-    clientName: text("client_name").notNull(),
+    clientId: uuid("client_id").notNull().references(() => clients.id, { onDelete: "restrict" }),
     divisionId: uuid("division_id").references(() => divisions.id, { onDelete: "restrict" }),
     tenderReference: text("tender_reference").notNull(),
     closingDate: date("closing_date").notNull(),
     effortDays: integer("effort_days").notNull(),
+    actualEffortDays: integer("actual_effort_days"),
     bufferDays: integer("buffer_days").notNull().default(2),
     startDate: date("start_date").notNull(),
     targetCompletionDate: date("target_completion_date").notNull(),
@@ -67,6 +75,8 @@ export const tenderScheduleEntries = pgTable(
     status: tenderScheduleEntryStatusEnum("status").notNull().default("planned"),
     priority: tenderSchedulePriorityEnum("priority").notNull().default("normal"),
     notes: text("notes"),
+    blockers: text("blockers"),
+    outcome: tenderScheduleOutcomeEnum("outcome"),
     createdBy: text("created_by").notNull(),
     createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
     updatedAt: timestamp("updated_at", { withTimezone: true }),
@@ -106,13 +116,12 @@ export const tenderScheduleEntriesRelations = relations(tenderScheduleEntries, (
 
 ```
 clients ────< tender_schedule_entries >──── divisions
-   │                                            │
-   │  (optional FK)                    (optional FK, defaults to TES)
+   │            (FK, NOT NULL)       (optional FK, defaults to TES)
    │                                            │
    └──┴── income, expenses, billing...    ── leads, income, expenses...
 ```
 
-- A tender schedule entry **optionally links** to a client record in PMG Hub. If the client is new or not yet in the system, the `client_name` field serves as a free-text fallback.
+- A tender schedule entry **must link** to a client record in PMG Hub (no free-text fallback — every tender is associated with an existing client).
 - A tender schedule entry **optionally links** to a division record. By default, tenders belong to Tender Edge Solutions (TES), but the model allows for future multi-division scheduling.
 - There is **no direct relationship** to billing data (invoices, quotes) at this stage. A future enhancement could link a completed/submitted tender to a generated invoice or quote.
 
@@ -145,6 +154,15 @@ target_completion_date = start_date + effort_days
 ```
 
 This should be strictly `< closing_date`. If it's not, the buffer is effectively zero or negative, and an "at risk" warning is shown.
+
+### Priority Ordering Rule (application-level)
+
+```
+1. Sort by priority tier (urgent > high > normal > low)
+2. Within the same priority tier, sort by closing_date (ascending, nearest first)
+```
+
+This ensures the most urgent, soonest-closing tenders appear at the top of the queue.
 
 ### WIP Overlap Detection (application-level query)
 

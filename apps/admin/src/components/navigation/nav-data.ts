@@ -15,7 +15,7 @@ import {
   Camera, BarChart3, Settings, UserCog, PiggyBank,
   Package, Shield, Database, Wallet, ArrowDownLeft,
   PieChart, Calculator, BookMarked, NotebookPen, Scale,
-  Calendar, Download, LayoutGrid,
+  Calendar, Download, LayoutGrid, CalendarClock, ListTodo, CalendarRange,
 } from 'lucide-react'
 import type { LucideIcon } from 'lucide-react'
 
@@ -27,7 +27,7 @@ export type NavItem = {
   icon: LucideIcon
 }
 
-export type GroupKey = 'billing' | 'finance' | 'accounting' | 'relationships' | 'insights' | 'system'
+export type GroupKey = 'billing' | 'finance' | 'accounting' | 'relationships' | 'insights' | 'system' | 'scheduling'
 
 export type NavGroup = {
   key: GroupKey
@@ -41,6 +41,7 @@ export type NavGroup = {
 
 export const OVERVIEW: NavItem[] = [
   { title: 'Dashboard', url: '/dashboard', icon: LayoutDashboard },
+  { title: 'Scheduling', url: '/scheduling', icon: CalendarClock },
 ]
 
 // ── Groups ────────────────────────────────────────────────────────────────────
@@ -110,6 +111,16 @@ export const GROUPS: NavGroup[] = [
     ],
   },
   {
+    key: 'scheduling',
+    label: 'Scheduling',
+    icon: CalendarClock,
+    items: [
+      { title: 'Overview',      url: '/scheduling',       icon: LayoutGrid },
+      { title: 'Schedule List', url: '/scheduling/list',  icon: ListTodo },
+      { title: 'Timeline',      url: '/scheduling/timeline', icon: CalendarRange },
+    ],
+  },
+  {
     key: 'system',
     label: 'System',
     icon: Cog,
@@ -142,6 +153,8 @@ for (const group of GROUPS) {
 const EXTRA_LABELS: Record<string, string> = {
   '/settings/users/invite': 'Invite User',
   '/billing/payments/add': 'Record Payment',
+  '/scheduling/list': 'Schedule List',
+  '/scheduling/timeline': 'Timeline',
 }
 
 export const ROUTE_LABELS: Record<string, string> = {
