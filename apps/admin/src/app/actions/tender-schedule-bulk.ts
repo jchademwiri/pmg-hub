@@ -28,7 +28,8 @@ export async function bulkArchiveTenders(ids: string[]): Promise<{ error?: strin
     revalidatePath('/scheduling/list');
 
     return { count: result.length };
-  } catch {
+  } catch (e) {
+    console.error('bulkArchiveTenders failed:', e);
     return { error: 'Failed to archive tenders.' };
   }
 }
@@ -59,7 +60,8 @@ export async function bulkDeleteTenders(ids: string[]): Promise<{ error?: string
     revalidatePath('/scheduling/list');
 
     return { count: result.length };
-  } catch {
+  } catch (e) {
+    console.error('bulkDeleteTenders failed:', e);
     return { error: 'Failed to delete tenders.' };
   }
 }

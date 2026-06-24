@@ -17,6 +17,7 @@ export function ClientAddForm({ createAction, onCancel, divisions }: ClientAddFo
   const formRef = React.useRef<HTMLFormElement>(null)
   const [isPending, startTransition] = React.useTransition()
   const [errorMessage, setErrorMessage] = React.useState<string | null>(null)
+  const [divisionId, setDivisionId] = React.useState('__none__')
 
   function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault()
@@ -86,12 +87,8 @@ export function ClientAddForm({ createAction, onCancel, divisions }: ClientAddFo
         <Field>
           <FieldLabel htmlFor="client-division">Linked Division</FieldLabel>
           <Select
-            name="divisionId"
             disabled={isPending}
-            onValueChange={(value) => {
-              const input = document.getElementById('client-add-division-hidden') as HTMLInputElement | null;
-              if (input) input.value = value;
-            }}
+            onValueChange={(value) => setDivisionId(value)}
           >
             <SelectTrigger id="client-division" className="text-sm h-9">
               <SelectValue placeholder="No division linked (auto-detect)" />
@@ -105,7 +102,7 @@ export function ClientAddForm({ createAction, onCancel, divisions }: ClientAddFo
               ))}
             </SelectContent>
           </Select>
-          <input id="client-add-division-hidden" type="hidden" name="divisionId" value="__none__" />
+          <input id="client-add-division-hidden" type="hidden" name="divisionId" value={divisionId} />
           <p className="text-xs text-muted-foreground mt-1">
             When set, statements will use this division&apos;s branding. If unset, the first invoice&apos;s division is used.
           </p>

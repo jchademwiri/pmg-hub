@@ -3,6 +3,7 @@
 import { z } from 'zod';
 import { revalidatePath } from 'next/cache';
 import { getDb, tenderScheduleEntries, clients, eq } from '@pmg/db';
+import type { NewTenderScheduleEntry } from '@pmg/db';
 import {
   createTenderScheduleEntry as createEntry,
   updateTenderScheduleEntry as updateEntry,
@@ -107,7 +108,8 @@ export async function createTenderScheduleEntry(
 
     revalidatePath('/scheduling');
     return {};
-  } catch {
+  } catch (e) {
+    console.error('createTenderScheduleEntry failed:', e);
     return { error: 'Failed to save. Please try again.' };
   }
 }
@@ -151,7 +153,8 @@ export async function updateTenderScheduleEntry(
 
     revalidatePath('/scheduling');
     return {};
-  } catch {
+  } catch (e) {
+    console.error('updateTenderScheduleEntry failed:', e);
     return { error: 'Failed to save. Please try again.' };
   }
 }
@@ -164,18 +167,19 @@ export async function updateTenderScheduleEntryJson(
     await getSessionOrRedirect();
 
     // Build partial update from the provided data object
-    const update: Record<string, unknown> = {};
-    if (data.notes !== undefined) update.notes = data.notes;
-    if (data.blockers !== undefined) update.blockers = data.blockers;
-    if (data.actualEffortDays !== undefined) update.actualEffortDays = data.actualEffortDays;
-    if (data.outcome !== undefined) update.outcome = data.outcome;
-    if (data.priority !== undefined) update.priority = data.priority;
+    const update: Partial<NewTenderScheduleEntry> = {};
+    if (data.notes !== undefined) update.notes = data.notes as string;
+    if (data.blockers !== undefined) update.blockers = data.blockers as string;
+    if (data.actualEffortDays !== undefined) update.actualEffortDays = data.actualEffortDays as number;
+    if (data.outcome !== undefined) update.outcome = data.outcome as 'won' | 'lost' | 'pending';
+    if (data.priority !== undefined) update.priority = data.priority as 'low' | 'normal' | 'high' | 'urgent';
 
-    await updateEntry(id, update as any);
+    await updateEntry(id, update);
 
     revalidatePath('/scheduling');
     return {};
-  } catch {
+  } catch (e) {
+    console.error('updateTenderScheduleEntryJson failed:', e);
     return { error: 'Failed to update. Please try again.' };
   }
 }
@@ -188,7 +192,8 @@ export async function cancelTenderScheduleEntry(
     await cancelEntry(id);
     revalidatePath('/scheduling');
     return {};
-  } catch {
+  } catch (e) {
+    console.error('cancelTenderScheduleEntry failed:', e);
     return { error: 'Failed to cancel tender.' };
   }
 }
@@ -219,7 +224,7 @@ export async function transitionTenderStatusAction(
       planned: ['in_progress', 'cancelled'],
       in_progress: ['completed', 'cancelled'],
       completed: ['submitted', 'cancelled'],
-      submitted: [],
+      submitted: ['planned'],
       cancelled: [],
     };
 
@@ -232,7 +237,8 @@ export async function transitionTenderStatusAction(
 
     revalidatePath('/scheduling');
     return {};
-  } catch {
+  } catch (e) {
+    console.error('transitionTenderStatusAction failed:', e);
     return { error: 'Failed to update status.' };
   }
 }
