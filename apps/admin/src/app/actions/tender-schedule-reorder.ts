@@ -16,7 +16,8 @@ export async function reorderTenderQueue(
     await reorderTenderQueueDb(orderedIds);
     revalidatePath('/scheduling');
     return {};
-  } catch {
+  } catch (e) {
+    console.error('reorderTenderQueue failed:', e);
     return { error: 'Failed to reorder queue.' };
   }
 }

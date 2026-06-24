@@ -296,7 +296,7 @@ export function ScheduleListClient({ entries, clients }: ScheduleListClientProps
               <Button
                 variant="ghost"
                 size="sm"
-                className="h-7 text-xs text-destructive hover:text-destructive"
+                className="h-7 text-xs text-destructive hover:text-destructive disabled:text-muted-foreground/50 disabled:opacity-50"
                 disabled={isBulkPending || !Array.from(selectedIds).every(id => {
                   const entry = entries.find(e => e.id === id)
                   return entry?.status === 'cancelled'

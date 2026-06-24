@@ -19,6 +19,7 @@ export function ClientEditForm({ client, divisions, updateAction }: ClientEditFo
   const router = useRouter()
   const [isPending, startTransition] = React.useTransition()
   const [errorMessage, setErrorMessage] = React.useState<string | null>(null)
+  const [divisionId, setDivisionId] = React.useState(client.divisionId ?? '')
 
   function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault()
@@ -92,14 +93,9 @@ export function ClientEditForm({ client, divisions, updateAction }: ClientEditFo
         <Field>
           <FieldLabel htmlFor="client-division">Linked Division</FieldLabel>
           <Select
-            name="divisionId"
-            defaultValue={client.divisionId ?? ''}
+            defaultValue={divisionId}
             disabled={isPending}
-            onValueChange={(value) => {
-              // Sync the hidden input for FormData
-              const input = document.getElementById('client-division-hidden') as HTMLInputElement | null;
-              if (input) input.value = value;
-            }}
+            onValueChange={(value) => setDivisionId(value)}
           >
             <SelectTrigger id="client-division" className="text-sm h-9">
               <SelectValue placeholder="No division linked (auto-detect)" />
@@ -118,7 +114,7 @@ export function ClientEditForm({ client, divisions, updateAction }: ClientEditFo
             id="client-division-hidden"
             type="hidden"
             name="divisionId"
-            defaultValue={client.divisionId ?? ''}
+            value={divisionId}
           />
           <p className="text-xs text-muted-foreground mt-1">
             When set, statements will use this division&apos;s branding. If unset, the first invoice&apos;s division is used.

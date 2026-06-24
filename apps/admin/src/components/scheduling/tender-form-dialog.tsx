@@ -139,6 +139,7 @@ export function TenderFormDialog({ clients, divisions, open, onOpenChange }: Ten
               </FieldLabel>
               <Select
                 required
+                value={selectedClientId}
                 onValueChange={(value) => setSelectedClientId(value)}
               >
                 <SelectTrigger id="tender-client" className="text-sm h-9">
@@ -224,6 +225,7 @@ export function TenderFormDialog({ clients, divisions, open, onOpenChange }: Ten
             <Field>
               <FieldLabel htmlFor="tender-division">Division</FieldLabel>
               <Select
+                value={selectedDivisionId}
                 onValueChange={(value) => setSelectedDivisionId(value)}
               >
                 <SelectTrigger id="tender-division" className="text-sm h-9">

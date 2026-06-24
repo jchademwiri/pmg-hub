@@ -31,7 +31,7 @@ vi.mock('@/components/ui/select', () => {
   const Ctx = React.createContext(null)
   return {
     Select: ({ children, value, defaultValue, onValueChange, disabled, name }: any) => {
-      const [triggerId, setTriggerId] = React.useState<string | undefined>(undefined)
+      const [triggerId, setTriggerId] = React.useState(undefined as string | undefined)
       const [v, setV] = React.useState(value ?? defaultValue ?? '')
       React.useEffect(() => { if (value !== undefined) setV(value) }, [value])
       return (
