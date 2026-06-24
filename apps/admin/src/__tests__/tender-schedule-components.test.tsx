@@ -101,8 +101,7 @@ describe('TenderFormDialog', () => {
 
   // Helper: fill required fields for form submission (bypasses native validation)
   async function fillRequiredFields(user: ReturnType<typeof userEvent.setup>) {
-    // Client (selects[0])
-    await user.selectOptions(screen.getAllByTestId('select-wrapper')[0], 'client-1')
+    await user.selectOptions(screen.getByLabelText(/client/i), 'client-1')
     // Tender Reference
     await user.type(screen.getByPlaceholderText('e.g. T12/2026'), 'T12/2026')
     // Closing Date — fireEvent.change is more reliable in jsdom than userEvent.type for type="date"
@@ -163,8 +162,7 @@ describe('TenderFormDialog', () => {
   it('preserves client selection after re-render from effort change', async () => {
     const user = userEvent.setup()
     await renderFormDialog()
-    // selects: [0]=client, [1]=priority, [2]=division
-    await user.selectOptions(screen.getAllByTestId('select-wrapper')[0], 'client-1')
+    await user.selectOptions(screen.getByLabelText(/client/i), 'client-1')
     const hidden = document.getElementById('tender-client-hidden') as HTMLInputElement
     expect(hidden?.value).toBe('client-1')
     // Trigger re-render via effort number input
@@ -176,8 +174,7 @@ describe('TenderFormDialog', () => {
   it('preserves division selection after re-render from effort change', async () => {
     const user = userEvent.setup()
     await renderFormDialog()
-    // selects: [0]=client, [1]=priority, [2]=division
-    await user.selectOptions(screen.getAllByTestId('select-wrapper')[2], 'div-1')
+    await user.selectOptions(screen.getByLabelText(/division/i), 'div-1')
     const hidden = document.getElementById('tender-division-hidden') as HTMLInputElement
     expect(hidden?.value).toBe('div-1')
     await user.clear(screen.getByRole('spinbutton'))
@@ -232,7 +229,7 @@ describe('TenderEditDialog', () => {
 
   it('renders with pre-filled client', async () => {
     await renderEditDialog()
-    expect(screen.getAllByTestId('select-wrapper')[0]).toHaveValue('client-1')
+    expect(screen.getByLabelText(/client/i)).toHaveValue('client-1')
   })
 
   it('preserves client selection after tab switch', async () => {
@@ -240,7 +237,7 @@ describe('TenderEditDialog', () => {
     mockEditUpdate.mockResolvedValue({})
     await renderEditDialog()
 
-    await user.selectOptions(screen.getAllByTestId('select-wrapper')[0], 'client-2')
+    await user.selectOptions(screen.getByLabelText(/client/i), 'client-2')
     const hidden = document.getElementById('edit-client-hidden') as HTMLInputElement
     expect(hidden?.value).toBe('client-2')
 
@@ -255,8 +252,7 @@ describe('TenderEditDialog', () => {
     mockEditUpdate.mockResolvedValue({})
     await renderEditDialog()
 
-    // Details tab selects: [0]=client, [1]=priority, [2]=division
-    await user.selectOptions(screen.getAllByTestId('select-wrapper')[2], 'div-2')
+    await user.selectOptions(screen.getByLabelText(/division/i), 'div-2')
     const hidden = document.getElementById('edit-division-hidden') as HTMLInputElement
     expect(hidden?.value).toBe('div-2')
 
