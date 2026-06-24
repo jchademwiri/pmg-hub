@@ -12,7 +12,7 @@ import { BillingTotalsBlock } from '@/components/billing/billing-totals-block';
 import { getQuotationById, getDivisionBillingSettings } from '@pmg/db';
 import { updateQuotationStatus, deleteQuotation } from '@/app/actions/billing-quotes';
 import { fmtDate, fmtDateTime } from '@/lib/format';
-import { getDocumentLogoUrl } from '@/lib/document-logo';
+import { buildOrgProps, buildBankingProps } from '@/lib/client-billing-helpers';
 import { QuoteDetailActions } from './quote-detail-actions';
 import { PrintButton } from '@/components/billing/print-button';
 import { ExportPdfButton } from '@/components/billing/export-pdf-button';
@@ -47,15 +47,7 @@ export default async function QuoteDetailPage({ params }: Props) {
     issueDate: quote.quoteDate,
     dueDate: quote.expiryDate ?? undefined,
     reference: quote.reference ?? undefined,
-    org: {
-      name: quote.divisionName,
-      logoUrl: getDocumentLogoUrl(quote.divisionName),
-      divisionOf: 'Playhouse Media Group',
-      email: divSettings?.salesRepEmail ?? undefined,
-      phone: divSettings?.salesRepPhone ?? undefined,
-      website: divSettings?.divisionWebsite ?? undefined,
-      salesRep: divSettings?.salesRepName ?? undefined,
-    },
+    org: buildOrgProps(quote.divisionName, divSettings, undefined),
     client: {
       name: quote.clientName ?? 'No client',
       email: quote.clientEmail ?? undefined,
@@ -72,12 +64,7 @@ export default async function QuoteDetailPage({ params }: Props) {
     terms: quote.terms ?? undefined,
     vatRate: 15 as const,
     discountAmount: Number(quote.discountAmount ?? 0),
-    banking: divSettings?.bankName ? {
-      bankName: divSettings.bankName,
-      accountName: divSettings.bankAccountName ?? '',
-      accountNumber: divSettings.bankAccountNumber ?? '',
-      branchCode: divSettings.bankBranchCode ?? '',
-    } : undefined,
+    banking: buildBankingProps(divSettings),
   };
 
   const canEdit = ['draft', 'sent', 'accepted'].includes(quote.status);

@@ -11,6 +11,8 @@ import {
   getStatementYears,
   getDivisionBillingSettings,
   getIncomeAllocations,
+  getAllDivisions,
+  getOrganisationSettings,
   type InvoiceDetail,
   type QuotationDetail,
 } from '@pmg/db';
@@ -55,7 +57,7 @@ export default async function ClientDetailPage({ params, searchParams }: ClientD
   const year = monthPeriod ? undefined : yearParam ? parseInt(yearParam, 10) : undefined;
 
   // Parallel server data fetching
-  const [client, incomeEntries, quotesList, invoicesList, statement, availableYears, creditSummary, creditHistory] =
+  const [client, incomeEntries, quotesList, invoicesList, statement, availableYears, creditSummary, creditHistory, divisions, orgSettings] =
     await Promise.all([
       getClientById(id),
       getAllIncome({ clientId: id }),
@@ -65,6 +67,8 @@ export default async function ClientDetailPage({ params, searchParams }: ClientD
       getStatementYears(id),
       getClientCreditSummary(id),
       getClientCreditHistory(id),
+      getAllDivisions(),
+      getOrganisationSettings(),
     ]);
 
   if (!client) notFound();
@@ -92,7 +96,8 @@ export default async function ClientDetailPage({ params, searchParams }: ClientD
     data: paymentsWithAllocations,
   };
 
-  const primaryDivisionId = cleanInvoices[0]?.divisionId ?? cleanQuotes[0]?.divisionId;
+  // If client has a linked division, use that for branding, otherwise use first invoice's
+  const primaryDivisionId = client.divisionId ?? cleanInvoices[0]?.divisionId ?? cleanQuotes[0]?.divisionId;
   const divSettings = primaryDivisionId
     ? await getDivisionBillingSettings(primaryDivisionId)
     : null;
@@ -106,7 +111,9 @@ export default async function ClientDetailPage({ params, searchParams }: ClientD
       statement={statement}
       availableYears={availableYears}
       currentFY={currentFY}
+      divisions={divisions}
       divSettings={divSettings}
+      orgSettings={orgSettings}
       updateClientAction={updateClient.bind(null, id)}
       creditSummary={creditSummary}
       creditHistory={creditHistory}

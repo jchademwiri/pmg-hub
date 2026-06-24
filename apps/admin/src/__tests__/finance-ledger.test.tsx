@@ -23,7 +23,6 @@ vi.mock('@pmg/db', () => {
     insertLedgerEntry: vi.fn(),
     updateLedgerEntry: vi.fn(),
     deleteLedgerEntry: vi.fn(),
-    getLedgerBalances: vi.fn(),
     getLedgerByAllocation: vi.fn(),
     getLedgerByAllocationYTD: vi.fn(),
     getTotalRevenue: vi.fn(),
@@ -77,7 +76,6 @@ import {
   deleteLedgerEntry as dbDeleteLedgerEntry,
   getLedgerByAllocation,
   getLedgerByAllocationYTD,
-  getLedgerBalances as dbGetLedgerBalances,
   getCurrentRates,
 } from '@pmg/db';
 
@@ -159,7 +157,7 @@ describe('Finance Ledger Module', () => {
     mockGetMinDateErrorMessage.mockReturnValue('Period is closed.');
     mockGetClosedPeriodsFromDates.mockResolvedValue([]);
 
-    vi.mocked(getLedgerBalances).mockResolvedValue({
+    (getLedgerBalances as any).mockResolvedValue({
       salary: { expected: 10000, spent: 2000, available: 8000 },
       reinvest: { expected: 5000, spent: 1000, available: 4000 },
       reserve: { expected: 5000, spent: 500, available: 4500 },
@@ -167,15 +165,15 @@ describe('Finance Ledger Module', () => {
       pmg_share: { expected: 20000, spent: 5000, available: 15000 },
     });
 
-    vi.mocked(getLedgerByAllocation).mockResolvedValue([]);
-    vi.mocked(getLedgerByAllocationYTD).mockResolvedValue({});
-    vi.mocked(getAllLedgerEntries).mockResolvedValue({ data: [], total: 0 });
-    vi.mocked(getCurrentRates).mockResolvedValue([
-      { rateKey: 'pmg_share', rateValue: '0.25' },
-      { rateKey: 'salary', rateValue: '0.35' },
-      { rateKey: 'reinvest', rateValue: '0.30' },
-      { rateKey: 'reserve', rateValue: '0.30' },
-      { rateKey: 'flex', rateValue: '0.05' },
+    (getLedgerByAllocation as any).mockResolvedValue([]);
+    (getLedgerByAllocationYTD as any).mockResolvedValue({});
+    vi.mocked(getAllLedgerEntries).mockResolvedValue({ data: [], total: 0, sum: 0 });
+    (getCurrentRates as any).mockResolvedValue([
+      { rateKey: 'pmg_share', rateValue: 0.25 },
+      { rateKey: 'salary', rateValue: 0.35 },
+      { rateKey: 'reinvest', rateValue: 0.30 },
+      { rateKey: 'reserve', rateValue: 0.30 },
+      { rateKey: 'flex', rateValue: 0.05 },
     ]);
     vi.mocked(insertLedgerEntry).mockResolvedValue({} as any);
     vi.mocked(dbUpdateLedgerEntry).mockResolvedValue({} as any);

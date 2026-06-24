@@ -1,4 +1,181 @@
 import type { InvoiceDetail, QuotationDetail, InvoiceRow, QuotationRow } from '@pmg/db';
+import { getDocumentLogoUrl } from '@/lib/document-logo';
+import { formatOrgAddress } from '@/lib/format';
+
+export interface OrgPreviewProps {
+  name: string;
+  logoUrl: string;
+  divisionOf?: string;
+  registrationNumber?: string;
+  vatNumber?: string;
+  email?: string;
+  phone?: string;
+  website?: string;
+  address?: string;
+  salesRep?: string;
+}
+
+/**
+ * Determine the display status for a client statement based on outstanding balance
+ * and whether any invoices are overdue.
+ */
+export function determineStatementStatus(
+  totalOutstanding: number,
+  invoices: { status: string }[],
+): 'Paid' | 'Outstanding' | 'Overdue' {
+  if (totalOutstanding <= 0) return 'Paid';
+  const hasOverdue = invoices.some(i => i.status === 'overdue');
+  return hasOverdue ? 'Overdue' : 'Outstanding';
+}
+
+/**
+ * Build a chronological transaction history with running balance.
+ * Takes raw transaction items, sorts them by date ASC, computes a running
+ * balance from the opening balance, then reverses to show newest first.
+ * Preserves any additional fields on the items (e.g. invoiceId, paymentId).
+ */
+export function buildTransactionHistory<
+  T extends { date: string; debit?: number; credit?: number },
+>(
+  items: T[],
+  openingBalance: number,
+): (T & { balance: number })[] {
+  const sorted = [...items].sort((a, b) => a.date.localeCompare(b.date));
+  let balance = openingBalance;
+  const withBalance = sorted.map((item) => {
+    balance = balance + (item.debit ?? 0) - (item.credit ?? 0);
+    return { ...item, balance };
+  });
+  return withBalance.reverse();
+}
+
+/**
+ * Adjust an opening balance by deducting credit notes and adding refunds
+ * that fall before the statement period. Overpayment-type credit notes are
+ * excluded from the adjustment since they represent unallocated payments.
+ */
+export function adjustOpeningBalance(
+  baseBalance: number | null | undefined,
+  creditNotes: { createdAt: { toISOString(): string }; type: string; amount: number | string }[],
+  refunds: { refundDate: string; amount: number | string }[],
+  periodFrom: string,
+): number {
+  let balance = Number(baseBalance ?? 0);
+  for (const note of creditNotes) {
+    const date = note.createdAt.toISOString().split('T')[0];
+    if (date < periodFrom && note.type !== 'overpayment') {
+      balance -= Number(note.amount);
+    }
+  }
+  for (const refund of refunds) {
+    if (refund.refundDate < periodFrom) {
+      balance += Number(refund.amount);
+    }
+  }
+  return balance;
+}
+
+/**
+ * Build a map of incomeId → invoice document number for cross-referencing payments in statements.
+ */
+export function buildIncomeInvoiceMap(
+  invoices: { incomeId?: string | null; documentNumber: string }[],
+): Map<string, string> {
+  const map = new Map<string, string>();
+  for (const inv of invoices) {
+    if (inv.incomeId) map.set(inv.incomeId, inv.documentNumber);
+  }
+  return map;
+}
+
+export interface DivisionBrandingResult {
+  /** Resolved division name to display on the statement */
+  divisionName: string;
+  /** The effective division ID to use for loading billing settings */
+  effectiveDivisionId: string | null;
+}
+
+/**
+ * Resolve the division branding for a statement by chaining through:
+ * 1. An invoice that belongs to the client's linked division (its divisionName
+ *    is the most specific and should override the division list lookup)
+ * 2. The linked division name from the divisions list
+ * 3. The first invoice's division name
+ * 4. A configured default fallback name
+ *
+ * Also computes the effective division ID (linked ?? first invoice) for use
+ * in loading billing settings.
+ */
+export function resolveDivisionBranding(
+  linkedDivisionId: string | null | undefined,
+  invoices: { divisionId?: string | null; divisionName: string }[],
+  allDivisions?: { id: string; name: string }[],
+  defaultName: string = 'Playhouse Media Group',
+): DivisionBrandingResult {
+  const linkedId = linkedDivisionId ?? null;
+  const firstInvoiceDivId = invoices.length > 0 ? (invoices[0]!.divisionId ?? null) : null;
+  const effectiveDivisionId = linkedId ?? firstInvoiceDivId;
+
+  // Try linked invoice first (its divisionName is the most authoritative)
+  const linkedInvoice = invoices.find((inv) => inv.divisionId === linkedId);
+  const linkedDivName = linkedId && allDivisions
+    ? allDivisions.find((d) => d.id === linkedId)?.name
+    : undefined;
+
+  const divisionName = linkedInvoice?.divisionName
+    ?? linkedDivName
+    ?? invoices[0]?.divisionName
+    ?? defaultName;
+
+  return { divisionName, effectiveDivisionId };
+}
+
+/**
+ * Build a DocumentPreview org object from division + org-level settings.
+ * Falls back through the chain: division sales rep → org settings → undefined.
+ */
+export function buildOrgProps(
+  divisionName: string,
+  divSettings?: { salesRepEmail?: string | null; salesRepPhone?: string | null; divisionWebsite?: string | null; salesRepName?: string | null } | null,
+  orgSettings?: { registrationNumber?: string | null; vatNumber?: string | null; email?: string | null; phone?: string | null; website?: string | null; addressStreet?: string | null; addressCity?: string | null; addressPostal?: string | null } | null,
+  /** Pass `null` to suppress the "A division of..." line entirely; omit or pass `undefined` to use the default `'Playhouse Media Group'` */
+  divisionOf?: string | null,
+): OrgPreviewProps {
+  return {
+    name: divisionName,
+    logoUrl: getDocumentLogoUrl(divisionName),
+    divisionOf: divisionOf !== null ? (divisionOf ?? 'Playhouse Media Group') : undefined,
+    registrationNumber: orgSettings?.registrationNumber ?? undefined,
+    vatNumber: orgSettings?.vatNumber ?? undefined,
+    email: divSettings?.salesRepEmail ?? orgSettings?.email ?? undefined,
+    phone: divSettings?.salesRepPhone ?? orgSettings?.phone ?? undefined,
+    website: divSettings?.divisionWebsite ?? orgSettings?.website ?? undefined,
+    address: formatOrgAddress(orgSettings),
+    salesRep: divSettings?.salesRepName ?? undefined,
+  };
+}
+
+/**
+ * Build a banking details object from division billing settings.
+ * Returns undefined if no bank name is configured, so the UI can
+ * conditionally show or hide the banking details section.
+ */
+export function buildBankingProps(
+  settings?: {
+    bankName?: string | null;
+    bankAccountName?: string | null;
+    bankAccountNumber?: string | null;
+    bankBranchCode?: string | null;
+  } | null,
+): { bankName: string; accountName: string; accountNumber: string; branchCode: string } | undefined {
+  if (!settings?.bankName) return undefined;
+  return {
+    bankName: settings.bankName,
+    accountName: settings.bankAccountName ?? '',
+    accountNumber: settings.bankAccountNumber ?? '',
+    branchCode: settings.bankBranchCode ?? '',
+  };
+}
 
 export interface ActivityEvent {
   id: string;

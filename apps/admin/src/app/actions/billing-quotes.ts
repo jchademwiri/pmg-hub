@@ -6,7 +6,7 @@ import { getNextDocumentNumber, addDays } from '@pmg/db';
 import { getSessionOrRedirect } from '@/lib/auth';
 import { isPeriodClosed, getMinAllowedDate, getMinDateErrorMessage } from '@/lib/date-rules';
 import { CreateQuotationSchema, type CreateQuotationInput } from './billing-schema';
-import { hasBillingLineItemItemIdColumn, lineItemInsertValues } from './billing-line-item-compat';
+import { hasBillingLineItemItemIdColumn } from './billing-line-item-compat';
 
 let hasQuotationReferenceColumnPromise: Promise<boolean> | null = null;
 

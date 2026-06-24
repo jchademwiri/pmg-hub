@@ -5,7 +5,7 @@ import { revalidatePath } from 'next/cache';
 import { db, expenses, eq, getExpenseById } from '@pmg/db';
 import { isPeriodClosed, getMinAllowedDate, getMinDateErrorMessage } from '@/lib/date-rules';
 import { getSASTToday } from '@/lib/format';
-import { postExpenseJournalEntry, voidExpenseJournalEntries, updateExpenseJournalEntry } from './accounting-auto-post';
+import { postExpenseJournalEntry, voidExpenseJournalEntries, updateExpenseJournalEntry } from '@/lib/accounting/posting';
 
 const ExpenseSchema = z.object({
   date: z.string().min(1),

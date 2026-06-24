@@ -10,6 +10,7 @@ import type { ClientWithIncomeCount } from '@pmg/db';
 
 interface ClientsPageClientProps {
   clients: ClientWithIncomeCount[];
+  divisions: { id: string; name: string }[];
   createAction: (formData: FormData) => Promise<{ error?: string }>;
   deleteAction: (id: string) => Promise<{ error?: string }>;
   toggleActiveAction: (id: string, isActive: boolean) => Promise<{ error?: string }>;
@@ -17,6 +18,7 @@ interface ClientsPageClientProps {
 
 export default function ClientsPageClient({
   clients,
+  divisions,
   createAction,
   deleteAction,
   toggleActiveAction,
@@ -46,6 +48,7 @@ export default function ClientsPageClient({
             <p className="text-xs text-muted-foreground">Create a new client profile for billing and activity tracking</p>
           </div>
           <ClientAddForm
+            divisions={divisions}
             createAction={async (fd) => {
               const result = await createAction(fd);
               if (!result.error) setIsAdding(false);

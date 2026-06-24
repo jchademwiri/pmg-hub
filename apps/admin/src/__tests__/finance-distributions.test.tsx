@@ -25,14 +25,13 @@ vi.mock('@pmg/db', () => {
       pmg_share: 'PMG Share Account',
     },
     LOCKED_ACCOUNTS: ['pmg_share'],
-    getLedgerBalances: vi.fn(),
-    getLedgerByAllocation: vi.fn().mockResolvedValue([]),
-    getLedgerByAllocationYTD: vi.fn().mockResolvedValue({}),
-    getAllIncome: vi.fn().mockResolvedValue({ data: [] }),
-    getYTDSummary: vi.fn().mockResolvedValue({ revenue: 0 }),
+    getLedgerByAllocation: vi.fn(),
+    getLedgerByAllocationYTD: vi.fn(),
+    getAllIncome: vi.fn(),
+    getYTDSummary: vi.fn(),
     getTotalRevenue: vi.fn(),
     getTotalExpenses: vi.fn(),
-    getAllLedgerEntries: vi.fn().mockResolvedValue({ data: [], total: 0 }),
+    getAllLedgerEntries: vi.fn(),
     getActiveRates: vi.fn().mockResolvedValue({
       pmg_share: 0.25,
       salary: 0.35,
@@ -66,9 +65,14 @@ vi.mock('@pmg/db', () => {
   };
 });
 
+vi.mock('@/lib/financial', () => ({
+  getLedgerBalances: vi.fn(),
+}));
+
+import { getLedgerBalances } from '@/lib/financial';
+
 import {
   db,
-  getLedgerBalances,
   getLedgerByAllocation,
   getLedgerByAllocationYTD,
   getAllIncome,
@@ -130,38 +134,38 @@ describe('Finance Accounts Module', () => {
       reserve: 0.30,
       flex: 0.05,
     });
-    vi.mocked(getAllLedgerEntries).mockResolvedValue({ data: [], total: 0 });
-    vi.mocked(getCurrentRates).mockResolvedValue([
-      { rateKey: 'pmg_share', rateValue: '0.25' },
-      { rateKey: 'salary', rateValue: '0.35' },
-      { rateKey: 'reinvest', rateValue: '0.30' },
-      { rateKey: 'reserve', rateValue: '0.30' },
-      { rateKey: 'flex', rateValue: '0.05' },
+    vi.mocked(getAllLedgerEntries).mockResolvedValue({ data: [], total: 0, sum: 0 });
+    (getCurrentRates as any).mockResolvedValue([
+      { rateKey: 'pmg_share', rateValue: 0.25 },
+      { rateKey: 'salary', rateValue: 0.35 },
+      { rateKey: 'reinvest', rateValue: 0.30 },
+      { rateKey: 'reserve', rateValue: 0.30 },
+      { rateKey: 'flex', rateValue: 0.05 },
     ]);
-    vi.mocked(getLedgerBalances).mockResolvedValue({
+    (getLedgerBalances as any).mockResolvedValue({
       salary: { expected: 10000, spent: 2000, available: 8000 },
       reinvest: { expected: 5000, spent: 1000, available: 4000 },
       reserve: { expected: 5000, spent: 500, available: 4500 },
       flex: { expected: 2000, spent: 200, available: 1800 },
       pmg_share: { expected: 20000, spent: 5000, available: 15000 },
     });
-    vi.mocked(getLedgerByAllocation).mockResolvedValue([]);
-    vi.mocked(getLedgerByAllocationYTD).mockResolvedValue({
+    (getLedgerByAllocation as any).mockResolvedValue([]);
+    (getLedgerByAllocationYTD as any).mockResolvedValue({
       salary: 2000,
       reinvest: 1000,
       reserve: 500,
       flex: 200,
       pmg_share: 5000,
     });
-    vi.mocked(getAllIncome).mockResolvedValue({ data: [] });
-    vi.mocked(getYTDSummary).mockResolvedValue({
+    (getAllIncome as any).mockResolvedValue({ data: [], total: 0, sum: 0 });
+    (getYTDSummary as any).mockResolvedValue({
       revenue: 100000,
       salary: 35000,
       reinvest: 30000,
       reserve: 30000,
       flex: 5000,
       pmgShare: 20000,
-    } as any);
+    });
 
     // Standard chainable mocks
     vi.mocked(db.insert).mockReturnValue({

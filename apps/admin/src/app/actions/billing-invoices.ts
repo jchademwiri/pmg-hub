@@ -4,11 +4,11 @@ import { revalidatePath } from 'next/cache';
 import { getDb, invoices, quotations, billingLineItems, income, clients, divisionBillingSettings, eq, and, inArray } from '@pmg/db';
 import { getNextDocumentNumber, addDays } from '@pmg/db';
 import { getSessionOrRedirect } from '@/lib/auth';
-import { postInvoiceIssueJournalEntry, voidInvoiceJournalEntries, postPaymentJournalEntries, updateInvoiceJournalEntry } from './accounting-auto-post';
+import { postInvoiceIssueJournalEntry, voidInvoiceJournalEntries, postPaymentJournalEntries, updateInvoiceJournalEntry } from '@/lib/accounting/posting';
 import { isPeriodClosed, getMinAllowedDate, getMinDateErrorMessage } from '@/lib/date-rules';
 import { getSASTParts, getSASTToday } from '@/lib/format';
 import { CreateInvoiceSchema, type CreateInvoiceInput } from './billing-schema';
-import { hasBillingLineItemItemIdColumn, lineItemInsertValues } from './billing-line-item-compat';
+import { hasBillingLineItemItemIdColumn } from './billing-line-item-compat';
 
 // ── Shared totals helper ──────────────────────────────────────────────────────
 

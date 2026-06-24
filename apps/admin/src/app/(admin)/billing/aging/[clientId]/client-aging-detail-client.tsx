@@ -32,6 +32,15 @@ interface ClientAgingDetailClientProps {
 type SortField = 'invoiceDate' | 'documentNumber' | 'dueDate' | 'daysPastDue' | 'total' | 'outstanding';
 type SortOrder = 'asc' | 'desc';
 
+function SortIcon({ field, currentField, order }: { field: SortField; currentField: SortField; order: SortOrder }) {
+  if (currentField !== field) return <ArrowUpDown className="ml-1 size-3 text-muted-foreground/50 opacity-0 group-hover:opacity-100 transition-opacity" />;
+  return order === 'asc' ? (
+    <ArrowUp className="ml-1 size-3 text-foreground" />
+  ) : (
+    <ArrowDown className="ml-1 size-3 text-foreground" />
+  );
+}
+
 export function ClientAgingDetailClient({ client, invoices, totalOutstanding }: ClientAgingDetailClientProps) {
   const [sortField, setSortField] = React.useState<SortField>('daysPastDue');
   const [sortOrder, setSortOrder] = React.useState<SortOrder>('desc');
@@ -158,15 +167,6 @@ export function ClientAgingDetailClient({ client, invoices, totalOutstanding }: 
       return 0;
     });
   }, [filteredInvoices, sortField, sortOrder]);
-
-  const SortIcon = ({ field }: { field: SortField }) => {
-    if (sortField !== field) return <ArrowUpDown className="ml-1 size-3 text-muted-foreground/50 opacity-0 group-hover:opacity-100 transition-opacity" />;
-    return sortOrder === 'asc' ? (
-      <ArrowUp className="ml-1 size-3 text-foreground" />
-    ) : (
-      <ArrowDown className="ml-1 size-3 text-foreground" />
-    );
-  };
 
   const overdueInvoices = invoiceData.filter(inv => inv.daysPastDue > 0);
 
@@ -327,39 +327,39 @@ export function ClientAgingDetailClient({ client, invoices, totalOutstanding }: 
                     <TableHead>
                       <button onClick={() => handleSort('invoiceDate')} className="group flex items-center hover:text-foreground font-semibold">
                         Invoice Date
-                        <SortIcon field="invoiceDate" />
+                        <SortIcon field="invoiceDate" currentField={sortField} order={sortOrder} />
                       </button>
                     </TableHead>
                     <TableHead>
                       <button onClick={() => handleSort('documentNumber')} className="group flex items-center hover:text-foreground font-semibold">
                         Invoice #
-                        <SortIcon field="documentNumber" />
+                        <SortIcon field="documentNumber" currentField={sortField} order={sortOrder} />
                       </button>
                     </TableHead>
                     <TableHead>Reference</TableHead>
                     <TableHead>
                       <button onClick={() => handleSort('dueDate')} className="group flex items-center hover:text-foreground font-semibold">
                         Due Date
-                        <SortIcon field="dueDate" />
+                        <SortIcon field="dueDate" currentField={sortField} order={sortOrder} />
                       </button>
                     </TableHead>
                     <TableHead className="text-center">
                       <button onClick={() => handleSort('daysPastDue')} className="group mx-auto flex items-center hover:text-foreground font-semibold">
                         Days Overdue
-                        <SortIcon field="daysPastDue" />
+                        <SortIcon field="daysPastDue" currentField={sortField} order={sortOrder} />
                       </button>
                     </TableHead>
                     <TableHead className="text-right">
                       <button onClick={() => handleSort('total')} className="group ml-auto flex items-center hover:text-foreground font-semibold">
                         Total Amount
-                        <SortIcon field="total" />
+                        <SortIcon field="total" currentField={sortField} order={sortOrder} />
                       </button>
                     </TableHead>
                     <TableHead className="text-right">Paid</TableHead>
                     <TableHead className="text-right">
                       <button onClick={() => handleSort('outstanding')} className="group ml-auto flex items-center hover:text-foreground font-semibold">
                         Unpaid Balance
-                        <SortIcon field="outstanding" />
+                        <SortIcon field="outstanding" currentField={sortField} order={sortOrder} />
                       </button>
                     </TableHead>
                     <TableHead className="w-[80px] text-center">Actions</TableHead>

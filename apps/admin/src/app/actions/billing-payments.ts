@@ -6,7 +6,7 @@ import { getSessionOrRedirect } from '@/lib/auth';
 import { isPeriodClosed, getMinAllowedDate, getMinDateErrorMessage } from '@/lib/date-rules';
 import { getSASTToday, fmtDateLong } from '@/lib/format';
 import { deleteIncome } from './income';
-import { postPaymentJournalEntries, updatePaymentJournalEntries, voidPaymentJournalEntries } from './accounting-auto-post';
+import { postPaymentJournalEntries, updatePaymentJournalEntries, voidPaymentJournalEntries } from '@/lib/accounting/posting';
 
 export interface PaymentAllocationInput {
   invoiceId: string;

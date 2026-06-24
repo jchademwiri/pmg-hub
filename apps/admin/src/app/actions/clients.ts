@@ -10,6 +10,7 @@ const ClientSchema = z.object({
   businessName: z.string().optional(),
   email:        z.string().email().optional(),
   phone:        z.string().optional(),
+  divisionId:   z.string().optional(),
 });
 
 export async function createClient(formData: FormData): Promise<{ error?: string }> {
@@ -18,6 +19,7 @@ export async function createClient(formData: FormData): Promise<{ error?: string
     if (raw.businessName === '') delete raw.businessName;
     if (raw.email === '') delete raw.email;
     if (raw.phone === '') delete raw.phone;
+    if (raw.divisionId === '__none__') delete raw.divisionId;
     const result = ClientSchema.safeParse(raw);
     if (!result.success) {
       return { error: result.error.issues[0]?.message ?? 'Validation error' };
@@ -28,6 +30,7 @@ export async function createClient(formData: FormData): Promise<{ error?: string
       businessName: parsed.businessName ?? null,
       email: parsed.email ?? null,
       phone: parsed.phone ?? null,
+      divisionId: parsed.divisionId ?? null,
     });
     revalidatePath('/relationships/clients');
     return {};
@@ -42,6 +45,7 @@ export async function updateClient(id: string, formData: FormData): Promise<{ er
     if (raw.businessName === '') delete raw.businessName;
     if (raw.email === '') delete raw.email;
     if (raw.phone === '') delete raw.phone;
+    if (raw.divisionId === '__none__') delete raw.divisionId;
     const result = ClientSchema.safeParse(raw);
     if (!result.success) {
       return { error: result.error.issues[0]?.message ?? 'Validation error' };
@@ -53,6 +57,7 @@ export async function updateClient(id: string, formData: FormData): Promise<{ er
         businessName: parsed.businessName ?? null,
         email: parsed.email ?? null,
         phone: parsed.phone ?? null,
+        divisionId: parsed.divisionId ?? null,
         updatedAt: new Date(),
       })
       .where(eq(clients.id, id));

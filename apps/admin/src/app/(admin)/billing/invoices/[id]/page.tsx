@@ -9,11 +9,12 @@ import { Separator } from '@/components/ui/separator';
 import { DocumentPreview } from '@/components/billing/document-preview';
 import { BillingStatusBadge } from '@/components/billing/billing-status-badge';
 import { BillingTotalsBlock } from '@/components/billing/billing-totals-block';
-import { getInvoiceById, getDivisionBillingSettings, getDb, paymentAllocations, income, sql, desc, eq, getClientStatement, getAllIncome } from '@pmg/db';
+import { getInvoiceById, getDivisionBillingSettings, getDb, paymentAllocations, income, sql, desc, eq, getClientStatement, getAllIncome, getOrganisationSettings } from '@pmg/db';
 import { EmailDocumentDialog } from '@/components/billing/email-document-dialog';
 import { issueInvoice, markInvoicePaid, voidInvoice } from '@/app/actions/billing-invoices';
 import { fmtDate, fmtDateTime, formatZAR, getSASTParts, getSASTToday } from '@/lib/format';
-import { getDocumentLogoUrl } from '@/lib/document-logo';
+import { buildOrgProps, determineStatementStatus, buildIncomeInvoiceMap, buildTransactionHistory, buildBankingProps } from '@/lib/client-billing-helpers';
+import { calculateAgeing } from '@/lib/billing-ageing';
 import { InvoiceDetailActions } from './invoice-detail-actions';
 import { PrintButton } from '@/components/billing/print-button';
 import { ExportPdfButton } from '@/components/billing/export-pdf-button';
@@ -41,6 +42,9 @@ export default async function InvoiceDetailPage({ params }: Props) {
 
   const divSettings = await getDivisionBillingSettings(invoice.divisionId);
 
+  // Fetch organisation settings
+  const orgSettings = await getOrganisationSettings();
+
   // Fetch statement data for client statement compilation
   let statementProps: any = null;
   if (invoice.clientId) {
@@ -50,10 +54,7 @@ export default async function InvoiceDetailPage({ params }: Props) {
     ]);
 
     if (statement) {
-      const incomeToInvoiceNumber = new Map<string, string>();
-      for (const inv of statement.invoices) {
-        if (inv.incomeId) incomeToInvoiceNumber.set(inv.incomeId, inv.documentNumber);
-      }
+      const incomeToInvoiceNumber = buildIncomeInvoiceMap(statement.invoices);
 
       const txRaw = [
         ...statement.invoices
@@ -74,46 +75,14 @@ export default async function InvoiceDetailPage({ params }: Props) {
         })),
       ];
 
-      txRaw.sort((a, b) => a.date.localeCompare(b.date));
-      let currentBalance = statement.summary.openingBalance ?? 0;
-      const transactions = txRaw.map((tx) => {
-        currentBalance = currentBalance + (tx.debit ?? 0) - (tx.credit ?? 0);
-        return {
-          date: tx.date,
-          reference: tx.reference,
-          description: tx.description,
-          debit: tx.debit,
-          credit: tx.credit,
-          balance: currentBalance,
-        };
-      });
-      transactions.reverse();
+      const transactions = buildTransactionHistory(txRaw, statement.summary.openingBalance ?? 0);
 
-      let docStatus = 'Paid';
-      if (statement.summary.totalOutstanding > 0) {
-        const hasOverdue = statement.invoices.some(i => i.status === 'overdue');
-        docStatus = hasOverdue ? 'Overdue' : 'Outstanding';
-      }
+      const docStatus = determineStatementStatus(statement.summary.totalOutstanding, statement.invoices);
 
-      const ageing = { current: 0, days1_14: 0, days15_30: 0, days31_60: 0, days61_90: 0, days91_120: 0 };
-      const _now = new Date();
-      for (const inv of (statement.outstandingInvoices ?? statement.invoices)) {
-        if (inv.status === 'issued' || inv.status === 'overdue' || inv.status === 'partially_paid') {
-          const due = inv.dueDate ? new Date(inv.dueDate) : new Date(inv.invoiceDate);
-          const diffTime = _now.getTime() - due.getTime();
-          const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-          
-          const outstanding = Number(inv.total) - Number(inv.allocatedAmount ?? 0);
-          if (outstanding <= 0) continue;
-
-          if (diffDays <= 0) ageing.current += outstanding;
-          else if (diffDays <= 14) ageing.days1_14 += outstanding;
-          else if (diffDays <= 30) ageing.days15_30 += outstanding;
-          else if (diffDays <= 60) ageing.days31_60 += outstanding;
-          else if (diffDays <= 90) ageing.days61_90 += outstanding;
-          else ageing.days91_120 += outstanding;
-        }
-      }
+      const ageing = calculateAgeing(
+        statement.outstandingInvoices ?? statement.invoices,
+        getSASTToday(),
+      );
 
       const { year } = getSASTParts();
       const today = getSASTToday();
@@ -123,15 +92,7 @@ export default async function InvoiceDetailPage({ params }: Props) {
         status: docStatus,
         issueDate: today,
         dueDate: undefined,
-        org: {
-          name: invoice.divisionName,
-          logoUrl: getDocumentLogoUrl(invoice.divisionName),
-          divisionOf: 'Playhouse Media Group',
-          email: divSettings?.salesRepEmail ?? undefined,
-          phone: divSettings?.salesRepPhone ?? undefined,
-          website: divSettings?.divisionWebsite ?? undefined,
-          salesRep: divSettings?.salesRepName ?? undefined,
-        },
+        org: buildOrgProps(invoice.divisionName, divSettings, orgSettings),
         client: {
           name: statement.client.businessName ?? statement.client.name,
           email: statement.client.email ?? undefined,
@@ -144,12 +105,8 @@ export default async function InvoiceDetailPage({ params }: Props) {
         vatRate: 15 as const,
         discountAmount: 0,
         openingBalance: statement.summary.openingBalance ?? 0,
-        statementSummary: {
-          totalBilled: statement.summary.totalInvoiced,
-          totalPaid: statement.summary.totalPaid,
-          outstanding: statement.summary.totalOutstanding,
-          ageing,
-        },
+        ageing,
+        balanceDue: statement.summary.totalOutstanding ?? 0,
       };
     }
   }
@@ -180,15 +137,7 @@ export default async function InvoiceDetailPage({ params }: Props) {
     issueDate: invoice.invoiceDate,
     dueDate: invoice.dueDate ?? undefined,
     reference: invoice.reference ?? undefined,
-    org: {
-      name: invoice.divisionName,
-      logoUrl: getDocumentLogoUrl(invoice.divisionName),
-      divisionOf: 'Playhouse Media Group',
-      email: divSettings?.salesRepEmail ?? undefined,
-      phone: divSettings?.salesRepPhone ?? undefined,
-      website: divSettings?.divisionWebsite ?? undefined,
-      salesRep: divSettings?.salesRepName ?? undefined,
-    },
+    org: buildOrgProps(invoice.divisionName, divSettings, orgSettings),
     client: {
       name: invoice.clientName ?? 'No client',
       email: invoice.clientEmail ?? undefined,
@@ -205,12 +154,7 @@ export default async function InvoiceDetailPage({ params }: Props) {
     terms: invoice.terms ?? undefined,
     vatRate: 15 as const,
     discountAmount: Number(invoice.discountAmount ?? 0),
-    banking: divSettings?.bankName ? {
-      bankName: divSettings.bankName,
-      accountName: divSettings.bankAccountName ?? '',
-      accountNumber: divSettings.bankAccountNumber ?? '',
-      branchCode: divSettings.bankBranchCode ?? '',
-    } : undefined,
+    banking: buildBankingProps(divSettings),
   };
 
   // Paid and voided invoices cannot be edited

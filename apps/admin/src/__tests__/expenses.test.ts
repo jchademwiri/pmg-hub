@@ -909,6 +909,8 @@ describe('Category datalist', () => {
           category: 'Travel',
           description: null,
           amount: '100',
+          createdAt: new Date('2025-01-15'),
+          updatedAt: null,
         },
         divisions,
         categories,

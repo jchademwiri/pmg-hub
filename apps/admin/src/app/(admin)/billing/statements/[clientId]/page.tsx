@@ -14,16 +14,18 @@ import {
   getDivisionBillingSettings,
   getClientById,
   getMonthPeriodDates,
+  getAllDivisions,
   getDb,
   creditNotes,
   creditRefunds,
+  getOrganisationSettings,
   eq,
   and,
   sql,
 } from '@pmg/db';
 import { getClientCreditBalanceV2 } from '@/app/actions/credit-management';
-import { getDocumentLogoUrl } from '@/lib/document-logo';
 import { formatZAR, fmtDate, getSASTToday } from '@/lib/format';
+import { buildOrgProps, determineStatementStatus, buildIncomeInvoiceMap, buildTransactionHistory, adjustOpeningBalance, resolveDivisionBranding, buildBankingProps } from '@/lib/client-billing-helpers';
 import { PrintButton } from '@/components/billing/print-button';
 import { ExportPdfButton } from '@/components/billing/export-pdf-button';
 import {
@@ -74,13 +76,14 @@ export default async function StatementDetailPage({ params, searchParams }: Prop
     : (yearParam ? parseInt(yearParam, 10) : undefined);
 
   const db = getDb();
-  const [statement, incomeResult, availableYears, creditBalance, dbCreditNotes, dbRefunds] = await Promise.all([
+  const [statement, incomeResult, availableYears, creditBalance, dbCreditNotes, dbRefunds, orgSettings] = await Promise.all([
     getClientStatement(clientId, monthPeriod ? { monthPeriod } : (year ? { year } : undefined)),
     getAllIncome({ clientId, ...(monthPeriod ? { monthPeriod } : (year ? { year } : {})) }),
     getStatementYears(clientId),
     getClientCreditBalanceV2(clientId),
     db.select().from(creditNotes).where(and(eq(creditNotes.clientId, clientId), sql`${creditNotes.status} != 'void'`)),
     db.select().from(creditRefunds).where(eq(creditRefunds.clientId, clientId)),
+    getOrganisationSettings(),
   ]);
 
   if (!statement) notFound();
@@ -119,19 +122,12 @@ export default async function StatementDetailPage({ params, searchParams }: Prop
     periodTo = `${lastDayOfFY.getFullYear()}-${String(lastDayOfFY.getMonth() + 1).padStart(2, '0')}-${String(lastDayOfFY.getDate()).padStart(2, '0')}`;
   }
 
-  // Adjust opening balance with historical credit notes and refunds
-  let adjustedOpeningBalance = summary.openingBalance;
-  for (const n of dbCreditNotes) {
-    const dateStr = n.createdAt.toISOString().split('T')[0];
-    if (dateStr < periodFrom && n.type !== 'overpayment') {
-      adjustedOpeningBalance -= Number(n.amount);
-    }
-  }
-  for (const r of dbRefunds) {
-    if (r.refundDate < periodFrom) {
-      adjustedOpeningBalance += Number(r.amount);
-    }
-  }
+  const adjustedOpeningBalance = adjustOpeningBalance(
+    summary.openingBalance,
+    dbCreditNotes,
+    dbRefunds,
+    periodFrom,
+  );
 
   // Filter credit notes and refunds within the current period
   const filteredNotes = dbCreditNotes.filter(n => {
@@ -157,11 +153,7 @@ export default async function StatementDetailPage({ params, searchParams }: Prop
     refundId?: string;
   };
 
-  // Build a map of incomeId → invoice document number for cross-referencing payments
-  const incomeToInvoiceNumber = new Map<string, string>();
-  for (const inv of invoices) {
-    if (inv.incomeId) incomeToInvoiceNumber.set(inv.incomeId, inv.documentNumber);
-  }
+  const incomeToInvoiceNumber = buildIncomeInvoiceMap(invoices);
 
   const txRaw: TxRaw[] = [
     ...invoices
@@ -198,37 +190,14 @@ export default async function StatementDetailPage({ params, searchParams }: Prop
     })),
   ];
 
-  txRaw.sort((a, b) => a.date.localeCompare(b.date)); // ASC
-
-  let currentBalance = adjustedOpeningBalance;
-  const transactions: StatementTransaction[] = txRaw.map((tx) => {
-    currentBalance = currentBalance + (tx.debit ?? 0) - (tx.credit ?? 0);
-    return {
-      date: tx.date,
-      reference: tx.reference,
-      description: tx.description,
-      debit: tx.debit,
-      credit: tx.credit,
-      balance: currentBalance,
-      invoiceId: tx.invoiceId,
-      paymentId: tx.paymentId,
-      creditNoteId: tx.creditNoteId,
-      refundId: tx.refundId,
-    };
-  });
-
-  // Reverse to show newest first in the document
-  transactions.reverse();
+  const transactions = buildTransactionHistory(txRaw, adjustedOpeningBalance);
+  const currentBalance = transactions.length > 0 ? transactions[0]!.balance : adjustedOpeningBalance;
 
   // ── Calculate dynamic status and ageing ──────────────────────────────────
-  let docStatus = 'Paid';
-  if (summary.totalOutstanding > 0) {
-    const hasOverdue = invoices.some(i => i.status === 'overdue');
-    docStatus = hasOverdue ? 'Overdue' : 'Outstanding';
-  }
+  const docStatus = determineStatementStatus(summary.totalOutstanding, invoices);
 
   const todayStr = getSASTToday();
-  const ageing = { current: 0, days1_14: 0, days15_30: 0, days31_60: 0, days61_90: 0, days91_120: 0 };
+  const ageing = { current: 0, days1_14: 0, days15_30: 0, days31_60: 0, days61plus: 0 };
   for (const inv of (statement.outstandingInvoices ?? invoices)) {
     if (inv.status === 'issued' || inv.status === 'overdue' || inv.status === 'partially_paid') {
       const dueStr = inv.dueDate ?? inv.invoiceDate;
@@ -244,14 +213,18 @@ export default async function StatementDetailPage({ params, searchParams }: Prop
       else if (diffDays <= 14)  ageing.days1_14   += outstanding;
       else if (diffDays <= 30)  ageing.days15_30  += outstanding;
       else if (diffDays <= 60)  ageing.days31_60  += outstanding;
-      else if (diffDays <= 90)  ageing.days61_90  += outstanding;
-      else                      ageing.days91_120 += outstanding;
+      else                      ageing.days61plus += outstanding;
     }
   }
 
-  const primaryDivisionId = invoices[0]?.divisionId;
-  const divSettings = primaryDivisionId ? await getDivisionBillingSettings(primaryDivisionId) : null;
-  const orgName = invoices[0]?.divisionName ?? 'PMG';
+  const clientRecord = await getClientById(clientId);
+  const allDivisions = await getAllDivisions();
+  const { divisionName: orgName, effectiveDivisionId } = resolveDivisionBranding(
+    clientRecord?.divisionId,
+    invoices,
+    allDivisions,
+  );
+  const divSettings = effectiveDivisionId ? await getDivisionBillingSettings(effectiveDivisionId) : null;
 
   const docPreviewProps = {
     number: `STMT-${monthPeriod ? monthPeriod.toUpperCase() : (year ? year : currentFY)}-${(client.businessName ?? client.name).slice(0, 3).toUpperCase()}`,
@@ -259,24 +232,13 @@ export default async function StatementDetailPage({ params, searchParams }: Prop
     issueDate: now.toISOString().split('T')[0]!,
     periodFrom,
     periodTo,
-    org: {
-      name: orgName,
-      logoUrl: getDocumentLogoUrl(orgName),
-      divisionOf: divSettings ? 'Playhouse Media Group' : undefined,
-      email: divSettings?.salesRepEmail ?? undefined,
-      phone: divSettings?.salesRepPhone ?? undefined,
-      website: divSettings?.divisionWebsite ?? undefined,
-      salesRep: divSettings?.salesRepName ?? undefined,
-      bankName: divSettings?.bankName ?? undefined,
-      accountName: divSettings?.bankAccountName ?? undefined,
-      accountNumber: divSettings?.bankAccountNumber ?? undefined,
-      branchCode: divSettings?.bankBranchCode ?? undefined,
-    },
+    org: buildOrgProps(orgName, divSettings, orgSettings, divSettings ? 'Playhouse Media Group' : null),
     client: {
       name: client.businessName ?? client.name,
       email: client.email ?? undefined,
       phone: client.phone ?? undefined,
     },
+    banking: buildBankingProps(divSettings),
     transactions,
     ageing,
     balanceDue: currentBalance,
@@ -398,8 +360,7 @@ export default async function StatementDetailPage({ params, searchParams }: Prop
                   { label: '1–14 Days', value: formatZAR(ageing.days1_14), highlight: ageing.days1_14 > 0 },
                   { label: '15–30 Days', value: formatZAR(ageing.days15_30), highlight: ageing.days15_30 > 0 },
                   { label: '31–60 Days', value: formatZAR(ageing.days31_60), highlight: ageing.days31_60 > 0 },
-                  { label: '61–90 Days', value: formatZAR(ageing.days61_90), highlight: ageing.days61_90 > 0 },
-                  { label: '91–120 Days', value: formatZAR(ageing.days91_120), highlight: ageing.days91_120 > 0 },
+                  { label: '61+ Days', value: formatZAR(ageing.days61plus), highlight: ageing.days61plus > 0 },
                 ].map((bucket) => (
                   <div key={bucket.label} className="flex justify-between items-center text-sm py-0.5 border-b border-border/40 last:border-b-0">
                     <span className="text-muted-foreground">{bucket.label}</span>

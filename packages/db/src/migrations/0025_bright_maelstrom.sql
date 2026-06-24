@@ -1,0 +1,1 @@
+ALTER TABLE "tender_schedule_entries" ADD COLUMN "sort_order" integer;

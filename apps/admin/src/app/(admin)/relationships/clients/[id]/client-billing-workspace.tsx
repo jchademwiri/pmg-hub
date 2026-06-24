@@ -53,10 +53,9 @@ import { EmailReceiptDialog } from '@/components/billing/email-receipt-dialog';
 import { ClientEditForm } from '@/components/clients/client-edit-form';
 import { ClientFinancialDashboard } from './client-financial-dashboard';
 import { ClientMetricStrip } from './client-metric-strip';
-import { calculateClientHealth, calculateAverageDaysToPay } from '@/lib/client-billing-helpers';
-import { formatZAR, fmtDate } from '@/lib/format';
-import { getSASTToday } from '@/lib/format';
-import { getDocumentLogoUrl } from '@/lib/document-logo';
+import { calculateClientHealth, calculateAverageDaysToPay, buildOrgProps, determineStatementStatus, buildIncomeInvoiceMap, buildTransactionHistory, resolveDivisionBranding, buildBankingProps } from '@/lib/client-billing-helpers';
+import { formatZAR, fmtDate, getSASTToday } from '@/lib/format';
+import { calculateAgeing } from '@/lib/billing-ageing';
 import {
   appendElementToPdf,
   elementToPdfBase64,
@@ -90,7 +89,9 @@ interface ClientBillingWorkspaceProps {
   statement: any;
   availableYears: number[];
   currentFY: number;
+  divisions: { id: string; name: string }[];
   divSettings: any;
+  orgSettings?: any;
   updateClientAction: any;
   creditSummary?: any;
   creditHistory?: any;
@@ -112,9 +113,11 @@ export function ClientBillingWorkspace({
   availableYears,
   currentFY,
   divSettings,
+  orgSettings,
   updateClientAction,
   creditSummary,
   creditHistory,
+  divisions,
 }: ClientBillingWorkspaceProps) {
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -418,15 +421,7 @@ export function ClientBillingWorkspace({
     issueDate: inv.invoiceDate,
     dueDate: inv.dueDate ?? undefined,
     reference: inv.reference ?? undefined,
-    org: {
-      name: inv.divisionName,
-      logoUrl: getDocumentLogoUrl(inv.divisionName),
-      divisionOf: 'Playhouse Media Group',
-      email: divSettings?.salesRepEmail ?? undefined,
-      phone: divSettings?.salesRepPhone ?? undefined,
-      website: divSettings?.divisionWebsite ?? undefined,
-      salesRep: divSettings?.salesRepName ?? undefined,
-    },
+    org: buildOrgProps(inv.divisionName, divSettings, orgSettings),
     client: {
       name: inv.clientName ?? 'No client',
       email: inv.clientEmail ?? undefined,
@@ -443,12 +438,7 @@ export function ClientBillingWorkspace({
     terms: inv.terms ?? undefined,
     vatRate: 15 as const,
     discountAmount: Number(inv.discountAmount ?? 0),
-    banking: divSettings?.bankName ? {
-      bankName: divSettings.bankName,
-      accountName: divSettings.bankAccountName ?? '',
-      accountNumber: divSettings.bankAccountNumber ?? '',
-      branchCode: divSettings.bankBranchCode ?? '',
-    } : undefined,
+    banking: buildBankingProps(divSettings),
   });
 
   const getQuotePreviewProps = (q: QuotationDetail) => ({
@@ -457,15 +447,7 @@ export function ClientBillingWorkspace({
     issueDate: q.quoteDate,
     dueDate: q.expiryDate ?? undefined,
     reference: q.reference ?? undefined,
-    org: {
-      name: q.divisionName,
-      logoUrl: getDocumentLogoUrl(q.divisionName),
-      divisionOf: 'Playhouse Media Group',
-      email: divSettings?.salesRepEmail ?? undefined,
-      phone: divSettings?.salesRepPhone ?? undefined,
-      website: divSettings?.divisionWebsite ?? undefined,
-      salesRep: divSettings?.salesRepName ?? undefined,
-    },
+    org: buildOrgProps(q.divisionName, divSettings, orgSettings),
     client: {
       name: q.clientName ?? 'No client',
       email: q.clientEmail ?? undefined,
@@ -482,19 +464,11 @@ export function ClientBillingWorkspace({
     terms: q.terms ?? undefined,
     vatRate: 15 as const,
     discountAmount: Number(q.discountAmount ?? 0),
-    banking: divSettings?.bankName ? {
-      bankName: divSettings.bankName,
-      accountName: divSettings.bankAccountName ?? '',
-      accountNumber: divSettings.bankAccountNumber ?? '',
-      branchCode: divSettings.bankBranchCode ?? '',
-    } : undefined,
+    banking: buildBankingProps(divSettings),
   });
 
   // Statement preparation
-  const statementToInvoiceNumber = new Map<string, string>();
-  for (const inv of statement?.invoices ?? []) {
-    if (inv.incomeId) statementToInvoiceNumber.set(inv.incomeId, inv.documentNumber);
-  }
+  const statementToInvoiceNumber = buildIncomeInvoiceMap(statement?.invoices ?? []);
 
   const statementTxRaw = [
     ...(statement?.invoices ?? [])
@@ -511,48 +485,16 @@ export function ClientBillingWorkspace({
       description: 'Payment received',
       credit: Number(inc.amount),
     })),
-  ].sort((a, b) => a.date.localeCompare(b.date));
+  ];
 
-  let currentBal = statement?.summary.openingBalance ?? 0;
-  const statementTransactions = statementTxRaw.map((tx) => {
-    currentBal = currentBal + (tx.debit ?? 0) - (tx.credit ?? 0);
-    return {
-      date: tx.date,
-      reference: tx.reference,
-      description: tx.description,
-      debit: tx.debit,
-      credit: tx.credit,
-      balance: currentBal,
-    };
-  });
-  statementTransactions.reverse();
+  const statementTransactions = buildTransactionHistory(statementTxRaw, statement?.summary.openingBalance ?? 0);
 
-  let statementStatus = 'Paid';
-  if (statement?.summary.totalOutstanding > 0) {
-    const hasOverdue = (statement?.invoices ?? []).some((i: any) => i.status === 'overdue');
-    statementStatus = hasOverdue ? 'Overdue' : 'Outstanding';
-  }
+  const statementStatus = determineStatementStatus(statement?.summary.totalOutstanding ?? 0, statement?.invoices ?? []);
 
-  const todayStr = getSASTToday();
-  const statementAgeing = { current: 0, days1_14: 0, days15_30: 0, days31_60: 0, days61_90: 0, days91_120: 0 };
-  for (const inv of statement?.outstandingInvoices ?? statement?.invoices ?? []) {
-    if (inv.status === 'issued' || inv.status === 'overdue' || inv.status === 'partially_paid') {
-      const dueStr = inv.dueDate ?? inv.invoiceDate;
-      const tDate = new Date(todayStr);
-      const dDate = new Date(dueStr);
-      const diffTime = tDate.getTime() - dDate.getTime();
-      const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-      const outstanding = Number(inv.total) - Number(inv.allocatedAmount ?? 0);
-      if (outstanding <= 0) continue;
-
-      if (diffDays <= 0) statementAgeing.current += outstanding;
-      else if (diffDays <= 14) statementAgeing.days1_14 += outstanding;
-      else if (diffDays <= 30) statementAgeing.days15_30 += outstanding;
-      else if (diffDays <= 60) statementAgeing.days31_60 += outstanding;
-      else if (diffDays <= 90) statementAgeing.days61_90 += outstanding;
-      else statementAgeing.days91_120 += outstanding;
-    }
-  }
+  const statementAgeing = calculateAgeing(
+    statement?.outstandingInvoices ?? statement?.invoices ?? [],
+    getSASTToday(),
+  );
 
   const statementPeriodParam = searchParams.get('monthPeriod');
   const statementYearParam = searchParams.get('year');
@@ -592,30 +534,25 @@ export function ClientBillingWorkspace({
     periodTo = `${y + 1}-02-28`;
   }
 
+  const { divisionName: statementDivisionName } = resolveDivisionBranding(
+    client.divisionId,
+    invoices,
+    divisions,
+  );
+
   const statementPreviewProps = {
     number: `STMT-${statementPeriodParam ? statementPeriodParam.toUpperCase() : (statementYearParam ? statementYearParam : currentFY)}-${(client.businessName ?? client.name).slice(0, 3).toUpperCase()}`,
     status: statementStatus,
-    issueDate: todayStr,
+    issueDate: getSASTToday(),
     periodFrom,
     periodTo,
-    org: {
-      name: invoices[0]?.divisionName ?? 'Playhouse Media Group',
-      logoUrl: getDocumentLogoUrl(invoices[0]?.divisionName ?? 'Playhouse Media Group'),
-      divisionOf: 'Playhouse Media Group',
-      email: divSettings?.salesRepEmail ?? undefined,
-      phone: divSettings?.salesRepPhone ?? undefined,
-      website: divSettings?.divisionWebsite ?? undefined,
-      salesRep: divSettings?.salesRepName ?? undefined,
-      bankName: divSettings?.bankName ?? undefined,
-      accountName: divSettings?.bankAccountName ?? undefined,
-      accountNumber: divSettings?.bankAccountNumber ?? undefined,
-      branchCode: divSettings?.bankBranchCode ?? undefined,
-    },
+    org: buildOrgProps(statementDivisionName, divSettings, orgSettings),
     client: {
       name: client.businessName ?? client.name,
       email: client.email ?? undefined,
       phone: client.phone ?? undefined,
     },
+    banking: buildBankingProps(divSettings),
     transactions: statementTransactions,
     ageing: statementAgeing,
     balanceDue: statement?.summary.totalOutstanding ?? 0,
@@ -958,11 +895,11 @@ export function ClientBillingWorkspace({
       {/* Collapsible Edit form */}
       <Collapsible open={isDetailsOpen} onOpenChange={setIsDetailsOpen}>
         <CollapsibleContent className="rounded-lg border p-5 bg-card flex flex-col gap-4 shadow-sm transition-all duration-300">
-          <h2 className="text-base font-semibold">Client Details</h2>
-          <ClientEditForm
-            client={client}
-            updateAction={updateClientAction}
-          />
+          <h2 className="text-base font-semibold">Client Details</h2>            <ClientEditForm
+              client={client}
+              divisions={divisions}
+              updateAction={updateClientAction}
+            />
         </CollapsibleContent>
       </Collapsible>
 

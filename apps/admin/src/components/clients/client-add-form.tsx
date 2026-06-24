@@ -5,13 +5,15 @@ import { Alert, AlertDescription } from '@/components/ui/alert'
 import { Button } from '@/components/ui/button'
 import { Field, FieldLabel } from '@/components/ui/field'
 import { Input } from '@/components/ui/input'
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 
 interface ClientAddFormProps {
   createAction: (formData: FormData) => Promise<{ error?: string }>
   onCancel?: () => void
+  divisions: { id: string; name: string }[]
 }
 
-export function ClientAddForm({ createAction, onCancel }: ClientAddFormProps) {
+export function ClientAddForm({ createAction, onCancel, divisions }: ClientAddFormProps) {
   const formRef = React.useRef<HTMLFormElement>(null)
   const [isPending, startTransition] = React.useTransition()
   const [errorMessage, setErrorMessage] = React.useState<string | null>(null)
@@ -79,6 +81,34 @@ export function ClientAddForm({ createAction, onCancel }: ClientAddFormProps) {
             placeholder="e.g. +27 82 123 4567"
             disabled={isPending}
           />
+        </Field>
+
+        <Field>
+          <FieldLabel htmlFor="client-division">Linked Division</FieldLabel>
+          <Select
+            name="divisionId"
+            disabled={isPending}
+            onValueChange={(value) => {
+              const input = document.getElementById('client-add-division-hidden') as HTMLInputElement | null;
+              if (input) input.value = value;
+            }}
+          >
+            <SelectTrigger id="client-division" className="text-sm h-9">
+              <SelectValue placeholder="No division linked (auto-detect)" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="__none__" className="text-xs text-muted-foreground">No division linked</SelectItem>
+              {divisions.map((d) => (
+                <SelectItem key={d.id} value={d.id} className="text-xs">
+                  {d.name}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+          <input id="client-add-division-hidden" type="hidden" name="divisionId" value="__none__" />
+          <p className="text-xs text-muted-foreground mt-1">
+            When set, statements will use this division&apos;s branding. If unset, the first invoice&apos;s division is used.
+          </p>
         </Field>
       </div>
 

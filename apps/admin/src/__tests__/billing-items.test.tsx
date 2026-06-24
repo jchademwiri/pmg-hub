@@ -249,6 +249,8 @@ describe('Billing Items Module', () => {
         status: 'active' as const,
         unitLabel: 'hour',
         vatApplicable: true,
+        usageInvoices: 0,
+        usageQuotes: 0,
         createdAt: new Date(),
         updatedAt: new Date(),
       };

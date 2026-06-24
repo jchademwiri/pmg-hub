@@ -1,11 +1,12 @@
 'use server';
 
 /**
- * accounting-auto-post.ts
+ * posting.ts
  *
- * Automatically creates balanced double-entry journal entries for the billing lifecycle.
- * All posting functions use db.batch() with pre-generated UUIDs for atomicity —
- * either all queries succeed or none do, in a single HTTP round trip.
+ * Dedicated accounting posting module for creating balanced double-entry journal
+ * entries across the billing lifecycle. All posting functions use db.batch() with
+ * pre-generated UUIDs for atomicity — either all queries succeed or none do, in a
+ * single HTTP round trip.
  *
  * On invoice ISSUED:
  *   Dr Accounts Receivable (1100) / Cr Sales Revenue (4010)

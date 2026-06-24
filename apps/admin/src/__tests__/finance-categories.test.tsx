@@ -7,7 +7,7 @@ import React from 'react';
 vi.mock('server-only', () => ({}));
 
 vi.mock('@pmg/db', () => {
-  const mockDb = {
+  const mockDb: Record<string, any> = {
     insert: vi.fn(),
     select: vi.fn(),
     update: vi.fn(),
@@ -70,7 +70,7 @@ describe('Finance Categories Module', () => {
     vi.mocked(db.delete).mockReturnValue({
       where: vi.fn().mockResolvedValue(true),
     } as any);
-    vi.mocked(db.transaction).mockImplementation(async (cb) => cb(db));
+    vi.mocked(db.transaction).mockImplementation(async (cb: any) => cb(db as any));
   });
 
   describe('Server Actions', () => {

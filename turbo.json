@@ -33,7 +33,13 @@
         "PGPASSWORD",
         "PGDATABASE",
         "PMG_RESEND_API_KEY",
-        "CRON_SECRET"
+        "CRON_SECRET",
+        "CLOUDFLARE_R2_ACCOUNT_ID",
+        "CLOUDFLARE_R2_ACCESS_KEY_ID",
+        "CLOUDFLARE_R2_SECRET_ACCESS_KEY",
+        "CLOUDFLARE_R2_BUCKET",
+        "CLOUDFLARE_R2_BACKUP_PREFIX",
+        "CLOUDFLARE_R2_BACKUP_RETENTION_DAYS"
       ]
     },
     "lint": {
