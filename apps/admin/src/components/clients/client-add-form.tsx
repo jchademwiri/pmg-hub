@@ -30,6 +30,7 @@ export function ClientAddForm({ createAction, onCancel, divisions }: ClientAddFo
         setErrorMessage(result.error)
       } else {
         formRef.current?.reset()
+        setDivisionId('__none__')
       }
     })
   }
@@ -87,6 +88,7 @@ export function ClientAddForm({ createAction, onCancel, divisions }: ClientAddFo
         <Field>
           <FieldLabel htmlFor="client-division">Linked Division</FieldLabel>
           <Select
+            value={divisionId}
             disabled={isPending}
             onValueChange={(value) => setDivisionId(value)}
           >
