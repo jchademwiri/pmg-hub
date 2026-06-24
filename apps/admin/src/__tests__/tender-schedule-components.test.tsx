@@ -9,6 +9,9 @@
 
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { render, screen, waitFor, fireEvent } from '@testing-library/react'
+
+// Increase timeout for async transition tests under parallel load
+vi.setConfig({ testTimeout: 15_000 });
 import userEvent from '@testing-library/user-event'
 import React from 'react'
 

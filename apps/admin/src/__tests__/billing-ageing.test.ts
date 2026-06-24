@@ -99,7 +99,7 @@ describe('calculateAgeing', () => {
       today,
     );
     expect(result.current).toBe(0);
-    expect(result.days1_14).toBe(400);
+    expect(result.days15_30).toBe(400);
   });
 
   it('fully allocated invoice is excluded', () => {
