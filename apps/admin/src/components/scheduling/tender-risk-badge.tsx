@@ -24,8 +24,8 @@ function calculateRisk(
     return { label: 'Cancelled', variant: 'secondary' }
   }
 
-  // Overdue: past closing date and not submitted
-  if (today > closing && tender.status !== 'submitted') {
+  // Overdue: past closing date (submitted/completed already handled above)
+  if (today > closing) {
     return { label: 'Overdue', variant: 'destructive' }
   }
 
