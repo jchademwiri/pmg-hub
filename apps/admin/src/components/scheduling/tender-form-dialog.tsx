@@ -63,7 +63,7 @@ export function TenderFormDialog({ clients, divisions, open, onOpenChange }: Ten
 
   // Selection state (in state to survive React re-renders)
   const [selectedClientId, setSelectedClientId] = React.useState('')
-  const [selectedDivisionId, setSelectedDivisionId] = React.useState('')
+  const [selectedDivisionId, setSelectedDivisionId] = React.useState('__none__')
 
   function handleDateChange(closing: string, effort: string) {
     setClosingDate(closing)
@@ -85,7 +85,7 @@ export function TenderFormDialog({ clients, divisions, open, onOpenChange }: Ten
     setCalculatedTargetDate('')
     setManualStartOverride(false)
     setSelectedClientId('')
-    setSelectedDivisionId('')
+    setSelectedDivisionId('__none__')
     setErrorMessage(null)
   }
 
