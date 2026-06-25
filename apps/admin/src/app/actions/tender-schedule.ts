@@ -245,7 +245,7 @@ export async function transitionTenderStatusAction(
       in_progress: ['completed', 'cancelled'],
       completed: ['submitted', 'cancelled'],
       submitted: ['planned'],
-      cancelled: [],
+      cancelled: ['planned'],
     };
 
     const allowed = transitions[entry.status] ?? [];

@@ -2,7 +2,7 @@
 
 import * as React from 'react'
 import { useRouter } from 'next/navigation'
-import { Search, X, Filter, Archive, Trash2, CheckSquare } from 'lucide-react'
+import { Search, X, Filter, Archive, Trash2, CheckSquare, ChevronDown } from 'lucide-react'
 import { toast } from 'sonner'
 import type { TenderScheduleEntry } from '@pmg/db'
 import { Button } from '@/components/ui/button'
@@ -21,11 +21,43 @@ import {
 import { Checkbox } from '@/components/ui/checkbox'
 import {
   cancelTenderScheduleEntry,
+  transitionTenderStatusAction,
 } from '@/app/actions/tender-schedule'
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu'
 import { bulkArchiveTenders, bulkDeleteTenders } from '@/app/actions/tender-schedule-bulk'
 import { TenderStatusBadge } from '@/components/scheduling/tender-status-badge'
 import { TenderRiskBadge } from '@/components/scheduling/tender-risk-badge'
 import { ConfirmDialog } from '@/components/ui/confirm-dialog'
+
+const STATUS_TRANSITIONS: Record<string, { value: string; label: string }[]> = {
+  planned: [
+    { value: 'in_progress', label: 'Start Work' },
+    { value: 'cancelled', label: 'Cancel' },
+  ],
+  in_progress: [
+    { value: 'completed', label: 'Complete' },
+    { value: 'cancelled', label: 'Cancel' },
+  ],
+  completed: [
+    { value: 'submitted', label: 'Submit' },
+    { value: 'cancelled', label: 'Cancel' },
+  ],
+  submitted: [
+    { value: 'planned', label: 'Re-plan' },
+  ],
+  cancelled: [
+    { value: 'planned', label: 'Reinstate' },
+  ],
+}
+
+function getNextStatuses(status: string) {
+  return STATUS_TRANSITIONS[status] ?? []
+}
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 
@@ -49,6 +81,21 @@ export function ScheduleListClient({ entries, clients }: ScheduleListClientProps
     () => new Map(clients.map((c) => [c.id, c])),
     [clients],
   )
+
+  // Status Transition
+  const [isPending, setIsPending] = React.useState<string | null>(null)
+
+  const handleStatusTransition = async (id: string, newStatus: string) => {
+    setIsPending(id)
+    const res = await transitionTenderStatusAction(id, newStatus)
+    setIsPending(null)
+    if (res?.error) {
+      toast.error(res.error)
+    } else {
+      toast.success(`Status updated to ${newStatus.replace('_', ' ')}`)
+      router.refresh()
+    }
+  }
 
   // Filters
   const [searchQuery, setSearchQuery] = React.useState('')
@@ -320,80 +367,111 @@ export function ScheduleListClient({ entries, clients }: ScheduleListClientProps
               )}
             </div>
           ) : (
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead className="w-10">
-                    <Checkbox
-                      checked={allSelected}
-                      onCheckedChange={toggleSelectAll}
-                      aria-label="Select all"
-                    />
-                  </TableHead>
-                  <TableHead>Client</TableHead>
-                  <TableHead>Reference</TableHead>
-                  <TableHead>Status</TableHead>
-                  <TableHead>Priority</TableHead>
-                  <TableHead>Start</TableHead>
-                  <TableHead>Target</TableHead>
-                  <TableHead>Closes</TableHead>
-                  <TableHead>Risk</TableHead>
-                  <TableHead>Effort</TableHead>
-                  <TableHead>Actual</TableHead>
-                  <TableHead>Outcome</TableHead>
-                  <TableHead>Actions</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {filtered.map((entry) => {
-                  const client = clientMap.get(entry.clientId)
-                  const isSelected = selectedIds.has(entry.id)
-                  return (
-                    <TableRow
-                      key={entry.id}
-                      className={`${entry.status === 'cancelled' ? 'opacity-60' : ''} ${isSelected ? 'bg-muted/30' : ''}`}
-                    >
-                      <TableCell>
-                        <Checkbox
-                          checked={isSelected}
-                          onCheckedChange={() => toggleSelect(entry.id)}
-                          aria-label={`Select ${entry.tenderReference}`}
-                        />
-                      </TableCell>
-                      <TableCell className="font-medium text-xs">{client?.name ?? '—'}</TableCell>
-                      <TableCell className="text-xs">{entry.tenderReference}</TableCell>
-                      <TableCell><TenderStatusBadge status={entry.status} /></TableCell>
-                      <TableCell>
-                        <Badge
-                          variant={entry.priority === 'urgent' ? 'destructive' : 'secondary'}
-                          className="text-xs capitalize"
-                        >
-                          {entry.priority}
-                        </Badge>
-                      </TableCell>
-                      <TableCell className="text-xs">{new Date(entry.startDate).toLocaleDateString()}</TableCell>
-                      <TableCell className="text-xs">{new Date(entry.targetCompletionDate).toLocaleDateString()}</TableCell>
-                      <TableCell className="text-xs">{new Date(entry.closingDate).toLocaleDateString()}</TableCell>
-                      <TableCell><TenderRiskBadge tender={entry} /></TableCell>
-                      <TableCell className="text-xs">{entry.effortDays}d</TableCell>
-                      <TableCell className="text-xs">{entry.actualEffortDays ? `${entry.actualEffortDays}d` : '—'}</TableCell>
-                      <TableCell className="text-xs capitalize">{entry.outcome ?? '—'}</TableCell>
-                      <TableCell>
-                        {entry.status !== 'submitted' && entry.status !== 'cancelled' && (
-                          <Button
-                            variant="ghost"
-                            size="xs"
-                            onClick={() => setCancelId(entry.id)}
+            <div className="w-full overflow-hidden">
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead className="w-10">
+                      <Checkbox
+                        checked={allSelected}
+                        onCheckedChange={toggleSelectAll}
+                        aria-label="Select all"
+                      />
+                    </TableHead>
+                    <TableHead>Client</TableHead>
+                    <TableHead className="hidden md:table-cell">Reference</TableHead>
+                    <TableHead>Status</TableHead>
+                    <TableHead className="hidden sm:table-cell">Priority</TableHead>
+                    <TableHead className="hidden md:table-cell">Start</TableHead>
+                    <TableHead className="hidden md:table-cell">Target</TableHead>
+                    <TableHead>Closes</TableHead>
+                    <TableHead className="hidden sm:table-cell">Risk</TableHead>
+                    <TableHead className="hidden sm:table-cell">Effort</TableHead>
+                    <TableHead className="hidden lg:table-cell">Actual</TableHead>
+                    <TableHead className="hidden lg:table-cell">Outcome</TableHead>
+                    <TableHead>Actions</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {filtered.map((entry) => {
+                    const client = clientMap.get(entry.clientId)
+                    const isSelected = selectedIds.has(entry.id)
+                    return (
+                      <TableRow
+                        key={entry.id}
+                        className={`${entry.status === 'cancelled' ? 'opacity-60' : ''} ${isSelected ? 'bg-muted/30' : ''}`}
+                      >
+                        <TableCell>
+                          <Checkbox
+                            checked={isSelected}
+                            onCheckedChange={() => toggleSelect(entry.id)}
+                            aria-label={`Select ${entry.tenderReference}`}
+                          />
+                        </TableCell>
+                        <TableCell className="font-medium text-xs">{client?.name ?? '—'}</TableCell>
+                        <TableCell className="hidden md:table-cell text-xs">{entry.tenderReference}</TableCell>
+                        <TableCell>
+                          {getNextStatuses(entry.status).length === 0 ? (
+                            <TenderStatusBadge status={entry.status} />
+                          ) : (
+                            <DropdownMenu>
+                              <DropdownMenuTrigger asChild>
+                                <Button
+                                  variant="ghost"
+                                  size="xs"
+                                  className="h-auto p-1 font-normal hover:bg-muted/50 gap-1"
+                                  disabled={isPending === entry.id}
+                                >
+                                  <TenderStatusBadge status={entry.status} />
+                                  <ChevronDown className="size-3 text-muted-foreground" />
+                                </Button>
+                              </DropdownMenuTrigger>
+                              <DropdownMenuContent align="start">
+                                {getNextStatuses(entry.status).map((opt) => (
+                                  <DropdownMenuItem
+                                    key={opt.value}
+                                    onClick={() => handleStatusTransition(entry.id, opt.value)}
+                                    className="text-xs"
+                                  >
+                                    {opt.label}
+                                  </DropdownMenuItem>
+                                ))}
+                              </DropdownMenuContent>
+                            </DropdownMenu>
+                          )}
+                        </TableCell>
+                        <TableCell className="hidden sm:table-cell">
+                          <Badge
+                            variant={entry.priority === 'urgent' ? 'destructive' : 'secondary'}
+                            className="text-xs capitalize"
                           >
-                            Cancel
-                          </Button>
-                        )}
-                      </TableCell>
-                    </TableRow>
-                  )
-                })}
-              </TableBody>
-            </Table>
+                            {entry.priority}
+                          </Badge>
+                        </TableCell>
+                        <TableCell className="hidden md:table-cell text-xs">{new Date(entry.startDate).toLocaleDateString()}</TableCell>
+                        <TableCell className="hidden md:table-cell text-xs">{new Date(entry.targetCompletionDate).toLocaleDateString()}</TableCell>
+                        <TableCell className="text-xs">{new Date(entry.closingDate).toLocaleDateString()}</TableCell>
+                        <TableCell className="hidden sm:table-cell"><TenderRiskBadge tender={entry} /></TableCell>
+                        <TableCell className="hidden sm:table-cell text-xs">{entry.effortDays}d</TableCell>
+                        <TableCell className="hidden lg:table-cell text-xs">{entry.actualEffortDays ? `${entry.actualEffortDays}d` : '—'}</TableCell>
+                        <TableCell className="hidden lg:table-cell text-xs capitalize">{entry.outcome ?? '—'}</TableCell>
+                        <TableCell>
+                          {entry.status !== 'submitted' && entry.status !== 'cancelled' && (
+                            <Button
+                              variant="ghost"
+                              size="xs"
+                              onClick={() => setCancelId(entry.id)}
+                            >
+                              Cancel
+                            </Button>
+                          )}
+                        </TableCell>
+                      </TableRow>
+                    )
+                  })}
+                </TableBody>
+              </Table>
+            </div>
           )}
         </CardContent>
       </Card>

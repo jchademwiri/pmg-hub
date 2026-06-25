@@ -1,11 +1,47 @@
 'use client'
 
 import * as React from 'react'
+import { useRouter } from 'next/navigation'
+import { ChevronDown } from 'lucide-react'
 import type { TenderScheduleEntry } from '@pmg/db'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
+import { Button } from '@/components/ui/button'
 import { TenderStatusBadge } from '@/components/scheduling/tender-status-badge'
 import { TenderRiskBadge } from '@/components/scheduling/tender-risk-badge'
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu'
+import { transitionTenderStatusAction } from '@/app/actions/tender-schedule'
+import { toast } from 'sonner'
+
+const STATUS_TRANSITIONS: Record<string, { value: string; label: string }[]> = {
+  planned: [
+    { value: 'in_progress', label: 'Start Work' },
+    { value: 'cancelled', label: 'Cancel' },
+  ],
+  in_progress: [
+    { value: 'completed', label: 'Complete' },
+    { value: 'cancelled', label: 'Cancel' },
+  ],
+  completed: [
+    { value: 'submitted', label: 'Submit' },
+    { value: 'cancelled', label: 'Cancel' },
+  ],
+  submitted: [
+    { value: 'planned', label: 'Re-plan' },
+  ],
+  cancelled: [
+    { value: 'planned', label: 'Reinstate' },
+  ],
+}
+
+function getNextStatuses(status: string) {
+  return STATUS_TRANSITIONS[status] ?? []
+}
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 
@@ -44,6 +80,21 @@ function daysBetween(a: string, b: string): number {
 // ── Timeline Client ───────────────────────────────────────────────────────────
 
 export function TimelineClient({ entries, clients }: TimelineClientProps) {
+  const router = useRouter()
+  const [isPending, setIsPending] = React.useState<string | null>(null)
+
+  const handleStatusTransition = async (id: string, newStatus: string) => {
+    setIsPending(id)
+    const res = await transitionTenderStatusAction(id, newStatus)
+    setIsPending(null)
+    if (res?.error) {
+      toast.error(res.error)
+    } else {
+      toast.success(`Status updated to ${newStatus.replace('_', ' ')}`)
+      router.refresh()
+    }
+  }
+
   const clientMap = React.useMemo(
     () => new Map(clients.map((c) => [c.id, c])),
     [clients],
@@ -131,10 +182,10 @@ export function TimelineClient({ entries, clients }: TimelineClientProps) {
         </div>
       </CardHeader>
       <CardContent>
-        <div className="overflow-x-auto">
-          <div className="min-w-[600px]">
+        <div className="w-full overflow-hidden">
+          <div className="w-full">
             {/* Week headers */}
-            <div className="relative mb-1 flex h-6" style={{ width: `${totalDays * 24}px` }}>
+            <div className="relative mb-1 flex h-6 w-full">
               {weekMarkers.map((marker, i) => (
                 <div
                   key={i}
@@ -240,7 +291,34 @@ export function TimelineClient({ entries, clients }: TimelineClientProps) {
 
                     {/* Status + Risk badges */}
                     <div className="flex shrink-0 items-center gap-1.5">
-                      <TenderStatusBadge status={entry.status} />
+                      {getNextStatuses(entry.status).length === 0 ? (
+                        <TenderStatusBadge status={entry.status} />
+                      ) : (
+                        <DropdownMenu>
+                          <DropdownMenuTrigger asChild>
+                            <Button
+                              variant="ghost"
+                              size="xs"
+                              className="h-auto p-1 font-normal hover:bg-muted/50 gap-1"
+                              disabled={isPending === entry.id}
+                            >
+                              <TenderStatusBadge status={entry.status} />
+                              <ChevronDown className="size-3 text-muted-foreground" />
+                            </Button>
+                          </DropdownMenuTrigger>
+                          <DropdownMenuContent align="end">
+                            {getNextStatuses(entry.status).map((opt) => (
+                              <DropdownMenuItem
+                                key={opt.value}
+                                onClick={() => handleStatusTransition(entry.id, opt.value)}
+                                className="text-xs"
+                              >
+                                {opt.label}
+                              </DropdownMenuItem>
+                            ))}
+                          </DropdownMenuContent>
+                        </DropdownMenu>
+                      )}
                       <TenderRiskBadge tender={entry} />
                     </div>
                   </div>

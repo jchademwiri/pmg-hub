@@ -502,24 +502,24 @@ function ScheduleTable({
                 <TableHead className="cursor-pointer select-none" onClick={() => toggleSort('status')}>
                   <span className={`inline-block transition-transform ${sortDirIcon('status')}`}>▼</span> Status
                 </TableHead>
-                <TableHead className="cursor-pointer select-none" onClick={() => toggleSort('priority')}>
+                <TableHead className="hidden sm:table-cell cursor-pointer select-none" onClick={() => toggleSort('priority')}>
                   <span className={`inline-block transition-transform ${sortDirIcon('priority')}`}>▼</span> Priority
                 </TableHead>
-                <TableHead className="cursor-pointer select-none" onClick={() => toggleSort('startDate')}>
+                <TableHead className="hidden md:table-cell cursor-pointer select-none" onClick={() => toggleSort('startDate')}>
                   <span className={`inline-block transition-transform ${sortDirIcon('startDate')}`}>▼</span> Start
                 </TableHead>
-                <TableHead className="cursor-pointer select-none" onClick={() => toggleSort('targetCompletionDate')}>
+                <TableHead className="hidden md:table-cell cursor-pointer select-none" onClick={() => toggleSort('targetCompletionDate')}>
                   <span className={`inline-block transition-transform ${sortDirIcon('targetCompletionDate')}`}>▼</span> Target
                 </TableHead>
                 <TableHead className="cursor-pointer select-none" onClick={() => toggleSort('closingDate')}>
                   <span className={`inline-block transition-transform ${sortDirIcon('closingDate')}`}>▼</span> Closes
                 </TableHead>
                 <TableHead>Risk</TableHead>
-                <TableHead className="cursor-pointer select-none" onClick={() => toggleSort('effortDays')}>
+                <TableHead className="hidden sm:table-cell cursor-pointer select-none" onClick={() => toggleSort('effortDays')}>
                   <span className={`inline-block transition-transform ${sortDirIcon('effortDays')}`}>▼</span> Effort
                 </TableHead>
-                <TableHead>Actual</TableHead>
-                <TableHead>Outcome</TableHead>
+                <TableHead className="hidden lg:table-cell">Actual</TableHead>
+                <TableHead className="hidden lg:table-cell">Outcome</TableHead>
                 <TableHead>Edit</TableHead>
               </TableRow>
             </TableHeader>
@@ -531,7 +531,7 @@ function ScheduleTable({
                     <TableCell className="font-medium text-xs">{client?.name ?? '—'}</TableCell>
                     <TableCell className="text-xs">{entry.tenderReference}</TableCell>
                     <TableCell><TenderStatusBadge status={entry.status} /></TableCell>
-                    <TableCell>
+                    <TableCell className="hidden sm:table-cell">
                       <Badge
                         variant={entry.priority === 'urgent' ? 'destructive' : 'secondary'}
                         className="text-xs capitalize"
@@ -539,13 +539,13 @@ function ScheduleTable({
                         {entry.priority}
                       </Badge>
                     </TableCell>
-                    <TableCell className="text-xs">{new Date(entry.startDate).toLocaleDateString()}</TableCell>
-                    <TableCell className="text-xs">{new Date(entry.targetCompletionDate).toLocaleDateString()}</TableCell>
+                    <TableCell className="hidden md:table-cell text-xs">{new Date(entry.startDate).toLocaleDateString()}</TableCell>
+                    <TableCell className="hidden md:table-cell text-xs">{new Date(entry.targetCompletionDate).toLocaleDateString()}</TableCell>
                     <TableCell className="text-xs">{new Date(entry.closingDate).toLocaleDateString()}</TableCell>
                     <TableCell><TenderRiskBadge tender={entry} /></TableCell>
-                    <TableCell className="text-xs">{entry.effortDays}d</TableCell>
-                    <TableCell className="text-xs">{entry.actualEffortDays ? `${entry.actualEffortDays}d` : '—'}</TableCell>
-                    <TableCell className="text-xs capitalize">{entry.outcome ?? '—'}</TableCell>
+                    <TableCell className="hidden sm:table-cell text-xs">{entry.effortDays}d</TableCell>
+                    <TableCell className="hidden lg:table-cell text-xs">{entry.actualEffortDays ? `${entry.actualEffortDays}d` : '—'}</TableCell>
+                    <TableCell className="hidden lg:table-cell text-xs capitalize">{entry.outcome ?? '—'}</TableCell>
                     <TableCell>
                       <Button variant="ghost" size="icon" className="size-7" onClick={() => setEditingTender(entry)}>
                         <svg className="size-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M17 3a2.85 2.85 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z"/></svg>
