@@ -29,6 +29,7 @@ function makeMockDb(entryStatus: string) {
 
 const mockGetDb = vi.fn().mockReturnValue(makeMockDb('planned'))
 const mockTransitionStatus = vi.fn()
+const mockRecalculateWaterfall = vi.fn()
 const mockRevalidatePath = vi.fn()
 const mockGetSession = vi.fn().mockResolvedValue({ user: { id: 'user-1' } })
 
@@ -37,6 +38,7 @@ vi.mock('@pmg/db', () => ({
   tenderScheduleEntries: { id: 'tender_schedule_entries_id', status: 'tender_schedule_entries_status' },
   eq: vi.fn(),
   transitionTenderStatus: mockTransitionStatus,
+  recalculateTenderWaterfall: mockRecalculateWaterfall,
 }))
 
 vi.mock('next/cache', () => ({ revalidatePath: mockRevalidatePath }))
@@ -54,6 +56,7 @@ describe('transitionTenderStatusAction — validation', () => {
   beforeEach(() => {
     vi.clearAllMocks()
     mockGetSession.mockResolvedValue({ user: { id: 'user-1' } })
+    mockRecalculateWaterfall.mockResolvedValue(undefined)
   })
 
   it('rejects an invalid status string', async () => {
@@ -84,6 +87,7 @@ describe('transitionTenderStatusAction — allowed transitions', () => {
     vi.clearAllMocks()
     mockGetSession.mockResolvedValue({ user: { id: 'user-1' } })
     mockTransitionStatus.mockResolvedValue({ id: 'tender-1' })
+    mockRecalculateWaterfall.mockResolvedValue(undefined)
   })
 
   const allowedCases: [string, string][] = [

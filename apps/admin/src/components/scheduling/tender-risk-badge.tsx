@@ -34,15 +34,19 @@ function calculateRisk(
     return { label: 'At Risk', variant: 'warning' }
   }
 
+  if (target > closing) {
+    return { label: 'Impossible', variant: 'destructive' }
+  }
+
   // Start overdue: past start date but still planned
   if (today > start && tender.status === 'planned') {
     return { label: 'Start Due', variant: 'warning' }
   }
 
-  // Tight buffer: target completion within 2 days of closing
-  const twoDaysBeforeClosing = new Date(closing)
-  twoDaysBeforeClosing.setDate(twoDaysBeforeClosing.getDate() - 2)
-  if (target >= twoDaysBeforeClosing) {
+  // Tight buffer: target completion does not leave the configured buffer.
+  const bufferStart = new Date(closing)
+  bufferStart.setDate(bufferStart.getDate() - tender.bufferDays)
+  if (target > bufferStart) {
     return { label: 'Tight', variant: 'warning' }
   }
 

@@ -23,6 +23,7 @@ const mockDbReturn = {
 
 const mockGetDb = vi.fn().mockReturnValue(mockDbReturn)
 const mockDbCreateEntry = vi.fn()
+const mockRecalculateWaterfall = vi.fn()
 const mockRevalidatePath = vi.fn()
 const mockGetSession = vi.fn().mockResolvedValue({ user: { id: 'user-1' } })
 
@@ -31,6 +32,7 @@ vi.mock('@pmg/db', () => ({
   clients: { id: 'clients_id' },
   eq: vi.fn(),
   createTenderScheduleEntry: mockDbCreateEntry,
+  recalculateTenderWaterfall: mockRecalculateWaterfall,
   tenderScheduleEntries: {},
 }))
 
@@ -44,6 +46,7 @@ describe('createTenderScheduleEntry — validation', () => {
     vi.clearAllMocks()
     mockGetSession.mockResolvedValue({ user: { id: 'user-1' } })
     mockGetDb.mockReturnValue(mockDbReturn)
+    mockRecalculateWaterfall.mockResolvedValue(undefined)
   })
 
   it('rejects empty clientId', async () => {
@@ -105,6 +108,7 @@ describe('createTenderScheduleEntry — success & date calc', () => {
     mockGetSession.mockResolvedValue({ user: { id: 'user-1' } })
     mockGetDb.mockReturnValue(mockDbReturn)
     mockDbCreateEntry.mockResolvedValue({ id: 'new-tender-id' })
+    mockRecalculateWaterfall.mockResolvedValue(undefined)
   })
 
   it('succeeds with valid data', async () => {
@@ -153,6 +157,55 @@ describe('createTenderScheduleEntry — success & date calc', () => {
         effortDays: 5,
       }),
     )
+  })
+
+  it('defaults bufferDays to 5 when omitted', async () => {
+    const { createTenderScheduleEntry } = await import('@/app/actions/tender-schedule')
+    const fd = new FormData()
+    fd.set('clientId', 'client-1')
+    fd.set('tenderReference', 'T12/2026')
+    fd.set('closingDate', '2026-07-14')
+    fd.set('effortDays', '5')
+
+    await createTenderScheduleEntry(fd)
+    expect(mockDbCreateEntry).toHaveBeenCalledWith(
+      expect.objectContaining({
+        bufferDays: 5,
+        startDate: '2026-07-04',
+        targetCompletionDate: '2026-07-09',
+      }),
+    )
+  })
+
+  it('accepts custom bufferDays', async () => {
+    const { createTenderScheduleEntry } = await import('@/app/actions/tender-schedule')
+    const fd = new FormData()
+    fd.set('clientId', 'client-1')
+    fd.set('tenderReference', 'T12/2026')
+    fd.set('closingDate', '2026-07-14')
+    fd.set('effortDays', '5')
+    fd.set('bufferDays', '1')
+
+    await createTenderScheduleEntry(fd)
+    expect(mockDbCreateEntry).toHaveBeenCalledWith(
+      expect.objectContaining({
+        bufferDays: 1,
+        startDate: '2026-07-08',
+        targetCompletionDate: '2026-07-13',
+      }),
+    )
+  })
+
+  it('recalculates the waterfall after creation', async () => {
+    const { createTenderScheduleEntry } = await import('@/app/actions/tender-schedule')
+    const fd = new FormData()
+    fd.set('clientId', 'client-1')
+    fd.set('tenderReference', 'T12/2026')
+    fd.set('closingDate', '2026-07-14')
+    fd.set('effortDays', '3')
+
+    await createTenderScheduleEntry(fd)
+    expect(mockRecalculateWaterfall).toHaveBeenCalled()
   })
 
   it('converts __none__ divisionId to null', async () => {

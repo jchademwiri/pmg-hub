@@ -35,14 +35,6 @@ interface TenderEditDialogProps {
   onClose?: () => void
 }
 
-// ── Date helpers ──────────────────────────────────────────────────────────────
-
-function addDays(dateStr: string, days: number): string {
-  const d = new Date(dateStr)
-  d.setDate(d.getDate() + days)
-  return d.toISOString().split('T')[0]
-}
-
 // ── Component ─────────────────────────────────────────────────────────────────
 
 export function TenderEditDialog({ tender, clients, divisions, onClose }: TenderEditDialogProps) {

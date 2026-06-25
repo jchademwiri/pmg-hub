@@ -32,6 +32,7 @@ const mockBulkDb = {
 
 const mockGetDbBulk = vi.fn().mockReturnValue(mockBulkDb)
 const mockReorderDb = vi.fn()
+const mockRecalculateWaterfall = vi.fn()
 const mockRevalidatePath = vi.fn()
 const mockGetSessionBulk = vi.fn().mockResolvedValue({ user: { id: 'user-1' } })
 
@@ -42,6 +43,7 @@ vi.mock('@pmg/db', () => ({
   and: vi.fn(),
   inArray: vi.fn(),
   reorderTenderQueue: mockReorderDb,
+  recalculateTenderWaterfall: mockRecalculateWaterfall,
 }))
 
 vi.mock('next/cache', () => ({ revalidatePath: mockRevalidatePath }))
@@ -57,6 +59,7 @@ describe('bulkArchiveTenders', () => {
     mockGetSessionBulk.mockResolvedValue({ user: { id: 'user-1' } })
     mockGetDbBulk.mockReturnValue(mockBulkDb)
     mockBulkReturning.mockResolvedValue([{ id: 'tender-1' }, { id: 'tender-2' }])
+    mockRecalculateWaterfall.mockResolvedValue(undefined)
   })
 
   it('returns count 0 for empty IDs', async () => {
@@ -91,6 +94,7 @@ describe('bulkDeleteTenders', () => {
     vi.clearAllMocks()
     mockGetSessionBulk.mockResolvedValue({ user: { id: 'user-1' } })
     mockGetDbBulk.mockReturnValue(mockBulkDb)
+    mockRecalculateWaterfall.mockResolvedValue(undefined)
   })
 
   it('returns count 0 for empty IDs', async () => {

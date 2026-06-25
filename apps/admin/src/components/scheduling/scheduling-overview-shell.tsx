@@ -2,7 +2,7 @@
 
 import * as React from 'react'
 import { useRouter } from 'next/navigation'
-import { CalendarClock, AlertTriangle, ListOrdered, Plus, Search } from 'lucide-react'
+import { CalendarClock, AlertTriangle, ListOrdered, Plus, Search, Flame, Clock } from 'lucide-react'
 import { toast } from 'sonner'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
@@ -20,7 +20,6 @@ import {
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert'
 import type { TenderScheduleEntry } from '@pmg/db'
 import {
-  cancelTenderScheduleEntry,
   transitionTenderStatusAction,
 } from '@/app/actions/tender-schedule'
 import { TenderFormDialog } from '@/components/scheduling/tender-form-dialog'
@@ -64,7 +63,75 @@ interface SchedulingOverviewClientProps {
 type SortField = 'client' | 'reference' | 'status' | 'priority' | 'startDate' | 'targetCompletionDate' | 'closingDate' | 'effortDays'
 type SortDir = 'asc' | 'desc'
 
-const SORTABLE_COLUMNS: SortField[] = ['client', 'reference', 'status', 'priority', 'startDate', 'targetCompletionDate', 'closingDate', 'effortDays']
+function daysBetween(a: string, b: string): number {
+  const start = new Date(a)
+  const end = new Date(b)
+  return Math.ceil((end.getTime() - start.getTime()) / (1000 * 60 * 60 * 24))
+}
+
+function SchedulingSummaryCards({
+  activeEntries,
+  atRiskCount,
+}: {
+  activeEntries: TenderScheduleEntry[]
+  atRiskCount: number
+}) {
+  const urgentCount = activeEntries.filter((entry) => entry.priority === 'urgent').length
+  const nextClosing = activeEntries
+    .filter((entry) => entry.status !== 'completed' && entry.status !== 'submitted')
+    .sort((a, b) => a.closingDate.localeCompare(b.closingDate))[0]
+
+  const cards = [
+    {
+      label: 'Active Tenders',
+      value: activeEntries.length,
+      hint: 'planned or in progress',
+      icon: ListOrdered,
+    },
+    {
+      label: 'Urgent',
+      value: urgentCount,
+      hint: 'scheduled first',
+      icon: Flame,
+    },
+    {
+      label: 'Next Closing',
+      value: nextClosing ? new Date(nextClosing.closingDate).toLocaleDateString() : 'None',
+      hint: nextClosing?.tenderReference ?? 'no active deadline',
+      icon: Clock,
+    },
+    {
+      label: 'At Risk',
+      value: atRiskCount,
+      hint: 'needs attention',
+      icon: AlertTriangle,
+    },
+  ]
+
+  return (
+    <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-4">
+      {cards.map((card) => {
+        const Icon = card.icon
+        return (
+          <Card key={card.label} size="sm">
+            <CardContent className="flex items-center justify-between gap-3 p-4">
+              <div className="min-w-0">
+                <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
+                  {card.label}
+                </p>
+                <p className="mt-1 truncate text-xl font-semibold tabular-nums">{card.value}</p>
+                <p className="truncate text-xs text-muted-foreground">{card.hint}</p>
+              </div>
+              <div className="flex size-9 shrink-0 items-center justify-center rounded-md bg-muted">
+                <Icon className="size-4 text-muted-foreground" />
+              </div>
+            </CardContent>
+          </Card>
+        )
+      })}
+    </div>
+  )
+}
 
 // ── Current Workload Card ─────────────────────────────────────────────────────
 
@@ -196,6 +263,46 @@ function WarningsPanel({
 
         {/* At risk / tight buffer warnings */}
         {atRiskTenders
+          .filter(
+            (t) =>
+              t.status !== 'submitted' &&
+              t.status !== 'completed' &&
+              new Date(t.targetCompletionDate) > new Date(t.closingDate),
+          )
+          .map((t) => (
+            <Alert key={`impossible-${t.id}`} variant="destructive" className="py-2">
+              <AlertTriangle className="size-4" />
+              <AlertTitle className="text-sm">Impossible deadline</AlertTitle>
+              <AlertDescription className="text-xs">
+                &quot;{t.tenderReference}&quot; is scheduled to finish after its closing date.
+                Reduce effort, increase urgency, or renegotiate the deadline.
+              </AlertDescription>
+            </Alert>
+          ))}
+
+        {atRiskTenders
+          .filter((t) => {
+            const gap = daysBetween(t.targetCompletionDate, t.closingDate)
+            return (
+              t.status !== 'submitted' &&
+              t.status !== 'completed' &&
+              gap >= 0 &&
+              gap < t.bufferDays
+            )
+          })
+          .map((t) => (
+            <Alert key={`tight-${t.id}`} variant="warning" className="py-2">
+              <AlertTriangle className="size-4" />
+              <AlertTitle className="text-sm">Tight buffer</AlertTitle>
+              <AlertDescription className="text-xs">
+                &quot;{t.tenderReference}&quot; leaves {daysBetween(t.targetCompletionDate, t.closingDate)} day
+                {daysBetween(t.targetCompletionDate, t.closingDate) !== 1 ? 's' : ''} before closing,
+                below the configured {t.bufferDays} day buffer.
+              </AlertDescription>
+            </Alert>
+          ))}
+
+        {atRiskTenders
           .filter((t) => t.status === 'in_progress' && new Date(t.targetCompletionDate) < new Date())
           .map((t) => (
             <Alert key={`risk-${t.id}`} variant="warning" className="py-2">
@@ -250,12 +357,10 @@ function ScheduleTable({
   entries,
   clients,
   divisions,
-  onCancel,
 }: {
   entries: TenderScheduleEntry[]
   clients: ClientSummary[]
   divisions: DivisionSummary[]
-  onCancel: (id: string) => Promise<string | undefined>
 }) {
   const clientMap = React.useMemo(
     () => new Map(clients.map((c) => [c.id, c])),
@@ -427,7 +532,12 @@ function ScheduleTable({
                     <TableCell className="text-xs">{entry.tenderReference}</TableCell>
                     <TableCell><TenderStatusBadge status={entry.status} /></TableCell>
                     <TableCell>
-                      <Badge variant="secondary" className="text-xs capitalize">{entry.priority}</Badge>
+                      <Badge
+                        variant={entry.priority === 'urgent' ? 'destructive' : 'secondary'}
+                        className="text-xs capitalize"
+                      >
+                        {entry.priority}
+                      </Badge>
                     </TableCell>
                     <TableCell className="text-xs">{new Date(entry.startDate).toLocaleDateString()}</TableCell>
                     <TableCell className="text-xs">{new Date(entry.targetCompletionDate).toLocaleDateString()}</TableCell>
@@ -477,6 +587,10 @@ export function SchedulingOverviewClient({
 }: SchedulingOverviewClientProps) {
   const router = useRouter()
   const [formOpen, setFormOpen] = React.useState(false)
+  const activeEntries = React.useMemo(
+    () => [inProgress, ...planned].filter(Boolean) as TenderScheduleEntry[],
+    [inProgress, planned],
+  )
 
   async function handleStatusChange(id: string, newStatus: string): Promise<string | undefined> {
     try {
@@ -501,21 +615,6 @@ export function SchedulingOverviewClient({
     }
   }
 
-  async function handleCancel(id: string): Promise<string | undefined> {
-    try {
-      const result = await cancelTenderScheduleEntry(id)
-      if (result.error) {
-        toast.error(result.error)
-        return result.error
-      }
-      toast.success('Tender cancelled')
-      router.refresh()
-      return undefined
-    } finally {
-      // no-op
-    }
-  }
-
   return (
     <div className="flex flex-col gap-6">
       {/* Add Tender button */}
@@ -526,8 +625,13 @@ export function SchedulingOverviewClient({
         </Button>
       </div>
 
-      {/* Workload: Now Working + Up Next */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+      <SchedulingSummaryCards
+        activeEntries={activeEntries}
+        atRiskCount={atRiskTenders.length}
+      />
+
+      {/* Workload: current anchor + automatic waterfall */}
+      <div className="grid grid-cols-1 gap-4 lg:grid-cols-[minmax(0,0.85fr)_minmax(0,1.35fr)]">
         <CurrentWorkloadCard
           tender={inProgress}
           onStatusChange={handleStatusChange}
@@ -542,7 +646,7 @@ export function SchedulingOverviewClient({
       <WarningsPanel atRiskTenders={atRiskTenders} overlaps={overlaps} />
 
       {/* Schedule Table */}
-      <ScheduleTable entries={allEntries} clients={clients} divisions={divisions} onCancel={handleCancel} />
+      <ScheduleTable entries={allEntries} clients={clients} divisions={divisions} />
 
       {/* Tender Form Dialog */}
       <TenderFormDialog

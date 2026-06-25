@@ -3,12 +3,13 @@
 import { z } from 'zod';
 import { revalidatePath } from 'next/cache';
 import { getDb, tenderScheduleEntries, clients, eq } from '@pmg/db';
-import type { NewTenderScheduleEntry } from '@pmg/db';
+import type { NewTenderScheduleEntry, TenderScheduleEntry } from '@pmg/db';
 import {
   createTenderScheduleEntry as createEntry,
   updateTenderScheduleEntry as updateEntry,
   cancelTenderScheduleEntry as cancelEntry,
   transitionTenderStatus as transitionStatus,
+  recalculateTenderWaterfall,
 } from '@pmg/db';
 import { getSessionOrRedirect } from '@/lib/auth';
 
@@ -20,19 +21,27 @@ const TenderScheduleSchema = z.object({
   tenderReference: z.string().min(1, 'Tender reference is required.'),
   closingDate: z.string().min(1, 'Closing date is required.'),
   effortDays: z.coerce.number().int().positive('Effort must be greater than 0.'),
-  bufferDays: z.coerce.number().int().min(0).default(2),
-  startDate: z.string().min(1, 'Start date is required.'),
+  bufferDays: z.coerce.number().int().min(0).default(5),
+  startDate: z.string().optional(),
   priority: z.enum(['low', 'normal', 'high', 'urgent']).default('normal'),
   notes: z.string().optional(),
   blockers: z.string().optional(),
 });
+
+const validStatuses = ['planned', 'in_progress', 'completed', 'submitted', 'cancelled'] as const;
+
+function isTenderScheduleStatus(
+  status: string,
+): status is TenderScheduleEntry['status'] {
+  return validStatuses.includes(status as TenderScheduleEntry['status']);
+}
 
 // ── Date calculation helpers ──────────────────────────────────────────────────
 
 function calculateDates(
   closingDate: string,
   effortDays: number,
-  bufferDays: number = 2,
+  bufferDays: number = 5,
 ): { startDate: string; targetCompletionDate: string } {
   const closing = new Date(closingDate);
 
@@ -82,10 +91,10 @@ export async function createTenderScheduleEntry(
       return { error: 'Selected client not found.' };
     }
 
-    // Calculate dates
+    // Calculate provisional dates. The queue is normalized by the waterfall
+    // recalculation below after the row exists.
     const dates = calculateDates(closingDate, effortDays, bufferDays);
 
-    // Auto-calculated dates can be overridden by the user-provided startDate
     const finalStartDate = startDate || dates.startDate;
     const completionDate = new Date(finalStartDate);
     completionDate.setDate(completionDate.getDate() + effortDays);
@@ -106,7 +115,10 @@ export async function createTenderScheduleEntry(
       createdBy: session.user.id,
     });
 
+    await recalculateTenderWaterfall();
     revalidatePath('/scheduling');
+    revalidatePath('/scheduling/list');
+    revalidatePath('/scheduling/timeline');
     return {};
   } catch (e) {
     console.error('createTenderScheduleEntry failed:', e);
@@ -133,8 +145,8 @@ export async function updateTenderScheduleEntry(
 
     const { clientId, divisionId, tenderReference, closingDate, effortDays, bufferDays, startDate, priority, notes, blockers } = parsed.data;
 
-    // Calculate target completion date from start + effort
-    const completionDate = new Date(startDate);
+    const finalStartDate = startDate || calculateDates(closingDate, effortDays, bufferDays).startDate;
+    const completionDate = new Date(finalStartDate);
     completionDate.setDate(completionDate.getDate() + effortDays);
 
     await updateEntry(id, {
@@ -144,14 +156,17 @@ export async function updateTenderScheduleEntry(
       closingDate,
       effortDays,
       bufferDays,
-      startDate,
+      startDate: finalStartDate,
       targetCompletionDate: completionDate.toISOString().split('T')[0],
       priority,
       notes: notes ?? null,
       blockers: blockers ?? null,
     });
 
+    await recalculateTenderWaterfall();
     revalidatePath('/scheduling');
+    revalidatePath('/scheduling/list');
+    revalidatePath('/scheduling/timeline');
     return {};
   } catch (e) {
     console.error('updateTenderScheduleEntry failed:', e);
@@ -176,7 +191,10 @@ export async function updateTenderScheduleEntryJson(
 
     await updateEntry(id, update);
 
+    await recalculateTenderWaterfall();
     revalidatePath('/scheduling');
+    revalidatePath('/scheduling/list');
+    revalidatePath('/scheduling/timeline');
     return {};
   } catch (e) {
     console.error('updateTenderScheduleEntryJson failed:', e);
@@ -190,7 +208,10 @@ export async function cancelTenderScheduleEntry(
   try {
     await getSessionOrRedirect();
     await cancelEntry(id);
+    await recalculateTenderWaterfall();
     revalidatePath('/scheduling');
+    revalidatePath('/scheduling/list');
+    revalidatePath('/scheduling/timeline');
     return {};
   } catch (e) {
     console.error('cancelTenderScheduleEntry failed:', e);
@@ -205,8 +226,7 @@ export async function transitionTenderStatusAction(
   try {
     await getSessionOrRedirect();
 
-    const validStatuses = ['planned', 'in_progress', 'completed', 'submitted', 'cancelled'] as const;
-    if (!validStatuses.includes(newStatus as any)) {
+    if (!isTenderScheduleStatus(newStatus)) {
       return { error: 'Invalid status transition.' };
     }
 
@@ -233,9 +253,12 @@ export async function transitionTenderStatusAction(
       return { error: `Cannot transition from '${entry.status}' to '${newStatus}'.` };
     }
 
-    await transitionStatus(id, newStatus as any);
+    await transitionStatus(id, newStatus);
 
+    await recalculateTenderWaterfall();
     revalidatePath('/scheduling');
+    revalidatePath('/scheduling/list');
+    revalidatePath('/scheduling/timeline');
     return {};
   } catch (e) {
     console.error('transitionTenderStatusAction failed:', e);

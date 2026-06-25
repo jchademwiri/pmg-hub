@@ -40,7 +40,7 @@ function addDays(dateStr: string, days: number): string {
   return d.toISOString().split('T')[0]
 }
 
-function calcDates(closingDate: string, effortDays: number, bufferDays: number = 2) {
+function calcDates(closingDate: string, effortDays: number, bufferDays: number = 5) {
   const start = addDays(closingDate, -(effortDays + bufferDays))
   const completion = addDays(start, effortDays)
   return { startDate: start, targetCompletionDate: completion }
@@ -57,33 +57,38 @@ export function TenderFormDialog({ clients, divisions, open, onOpenChange }: Ten
   // Date auto-calc state
   const [closingDate, setClosingDate] = React.useState('')
   const [effortDays, setEffortDays] = React.useState('')
+  const [bufferDays, setBufferDays] = React.useState('5')
   const [calculatedStartDate, setCalculatedStartDate] = React.useState('')
   const [calculatedTargetDate, setCalculatedTargetDate] = React.useState('')
-  const [manualStartOverride, setManualStartOverride] = React.useState(false)
 
   // Selection state (in state to survive React re-renders)
   const [selectedClientId, setSelectedClientId] = React.useState('')
   const [selectedDivisionId, setSelectedDivisionId] = React.useState('__none__')
 
-  function handleDateChange(closing: string, effort: string) {
+  function handleScheduleInputChange(closing: string, effort: string, buffer: string) {
     setClosingDate(closing)
     setEffortDays(effort)
-    if (closing && effort && !manualStartOverride) {
+    setBufferDays(buffer)
+    if (closing && effort) {
       const effortNum = parseInt(effort, 10)
-      if (!isNaN(effortNum) && effortNum > 0) {
-        const dates = calcDates(closing, effortNum)
+      const bufferNum = buffer === '' ? 5 : parseInt(buffer, 10)
+      if (!isNaN(effortNum) && effortNum > 0 && !isNaN(bufferNum) && bufferNum >= 0) {
+        const dates = calcDates(closing, effortNum, bufferNum)
         setCalculatedStartDate(dates.startDate)
         setCalculatedTargetDate(dates.targetCompletionDate)
       }
+    } else {
+      setCalculatedStartDate('')
+      setCalculatedTargetDate('')
     }
   }
 
   function resetForm() {
     setClosingDate('')
     setEffortDays('')
+    setBufferDays('5')
     setCalculatedStartDate('')
     setCalculatedTargetDate('')
-    setManualStartOverride(false)
     setSelectedClientId('')
     setSelectedDivisionId('__none__')
     setErrorMessage(null)
@@ -96,8 +101,7 @@ export function TenderFormDialog({ clients, divisions, open, onOpenChange }: Ten
     startTransition(async () => {
       const fd = new FormData(formRef.current!)
 
-      // If user didn't override start date, set the auto-calculated one
-      if (!manualStartOverride && calculatedStartDate) {
+      if (calculatedStartDate) {
         fd.set('startDate', calculatedStartDate)
       }
 
@@ -183,7 +187,7 @@ export function TenderFormDialog({ clients, divisions, open, onOpenChange }: Ten
                 required
                 disabled={isPending}
                 value={closingDate}
-                onChange={(e) => handleDateChange(e.target.value, effortDays)}
+                onChange={(e) => handleScheduleInputChange(e.target.value, effortDays, bufferDays)}
               />
             </Field>
 
@@ -201,7 +205,22 @@ export function TenderFormDialog({ clients, divisions, open, onOpenChange }: Ten
                 required
                 disabled={isPending}
                 value={effortDays}
-                onChange={(e) => handleDateChange(closingDate, e.target.value)}
+                onChange={(e) => handleScheduleInputChange(closingDate, e.target.value, bufferDays)}
+              />
+            </Field>
+
+            {/* Buffer Days */}
+            <Field>
+              <FieldLabel htmlFor="tender-buffer">Buffer (days)</FieldLabel>
+              <Input
+                id="tender-buffer"
+                name="bufferDays"
+                type="number"
+                min="0"
+                required
+                disabled={isPending}
+                value={bufferDays}
+                onChange={(e) => handleScheduleInputChange(closingDate, effortDays, e.target.value)}
               />
             </Field>
 
@@ -245,24 +264,23 @@ export function TenderFormDialog({ clients, divisions, open, onOpenChange }: Ten
               <input id="tender-division-hidden" type="hidden" name="divisionId" value={selectedDivisionId} />
             </Field>
 
-            {/* Start Date (auto-calculated, editable) */}
+            {/* Start Date (auto-calculated) */}
             <Field>
               <FieldLabel htmlFor="tender-start">
-                Start Date <span className="text-destructive">*</span>
+                Scheduled Start
               </FieldLabel>
               <Input
                 id="tender-start"
                 name="startDate"
                 type="date"
-                required
-                disabled={isPending}
-                defaultValue={calculatedStartDate || ''}
-                placeholder={calculatedStartDate || 'Auto-calculated'}
-                onChange={() => setManualStartOverride(true)}
+                value={calculatedStartDate}
+                readOnly
+                disabled={!calculatedStartDate}
+                className="text-muted-foreground"
               />
-              {calculatedStartDate && !manualStartOverride && (
+              {calculatedStartDate && (
                 <p className="text-xs text-muted-foreground mt-1">
-                  Auto-calculated: closing - effort - 2 days buffer
+                  Preview: closing - effort - {bufferDays || 5} day buffer
                 </p>
               )}
             </Field>

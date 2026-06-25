@@ -3,6 +3,7 @@
 import * as React from 'react'
 import type { TenderScheduleEntry } from '@pmg/db'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+import { Badge } from '@/components/ui/badge'
 import { TenderStatusBadge } from '@/components/scheduling/tender-status-badge'
 import { TenderRiskBadge } from '@/components/scheduling/tender-risk-badge'
 
@@ -185,9 +186,14 @@ export function TimelineClient({ entries, clients }: TimelineClientProps) {
                   <div key={entry.id} className="group relative flex items-center gap-3 rounded-md px-1 py-2 hover:bg-muted/30">
                     {/* Label */}
                     <div className="w-48 shrink-0 truncate">
-                      <p className="truncate text-sm font-medium leading-tight">
-                        {client?.name ?? '—'}
-                      </p>
+                      <div className="flex items-center gap-2">
+                        <p className="truncate text-sm font-medium leading-tight">
+                          {client?.name ?? '—'}
+                        </p>
+                        {entry.priority === 'urgent' && (
+                          <Badge variant="destructive" className="shrink-0 text-xs">Urgent</Badge>
+                        )}
+                      </div>
                       <p className="truncate text-[11px] text-muted-foreground leading-tight">
                         {entry.tenderReference}
                       </p>

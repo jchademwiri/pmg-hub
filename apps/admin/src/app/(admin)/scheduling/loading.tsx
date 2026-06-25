@@ -9,7 +9,7 @@ export default function SchedulingLoading() {
         <Skeleton className="h-4 w-72" />
       </div>
 
-      {/* Now Working + Up Next */}
+      {/* Now Working + Waterfall Queue */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
         <div className="rounded-xl border bg-card p-5">
           <Skeleton className="h-4 w-24 mb-4" />

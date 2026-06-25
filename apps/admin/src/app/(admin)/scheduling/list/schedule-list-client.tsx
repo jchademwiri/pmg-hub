@@ -21,7 +21,6 @@ import {
 import { Checkbox } from '@/components/ui/checkbox'
 import {
   cancelTenderScheduleEntry,
-  transitionTenderStatusAction,
 } from '@/app/actions/tender-schedule'
 import { bulkArchiveTenders, bulkDeleteTenders } from '@/app/actions/tender-schedule-bulk'
 import { TenderStatusBadge } from '@/components/scheduling/tender-status-badge'
@@ -365,7 +364,12 @@ export function ScheduleListClient({ entries, clients }: ScheduleListClientProps
                       <TableCell className="text-xs">{entry.tenderReference}</TableCell>
                       <TableCell><TenderStatusBadge status={entry.status} /></TableCell>
                       <TableCell>
-                        <Badge variant="secondary" className="text-xs capitalize">{entry.priority}</Badge>
+                        <Badge
+                          variant={entry.priority === 'urgent' ? 'destructive' : 'secondary'}
+                          className="text-xs capitalize"
+                        >
+                          {entry.priority}
+                        </Badge>
                       </TableCell>
                       <TableCell className="text-xs">{new Date(entry.startDate).toLocaleDateString()}</TableCell>
                       <TableCell className="text-xs">{new Date(entry.targetCompletionDate).toLocaleDateString()}</TableCell>
