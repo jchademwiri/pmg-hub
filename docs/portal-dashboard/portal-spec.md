@@ -1,4 +1,4 @@
-# PMG Hub — Client Portal Specification
+# PMG Hub — Portal Specification
 
 **Status:** Approved  
 **Date:** 2026-06-27  
@@ -9,9 +9,9 @@
 
 ## 1. Executive Summary
 
-PMG Hub has a fully functional internal admin app for billing, quotes, invoices, payments, and credits. Clients receive documents by email but have no self-service interface. This specification defines the **PMG Client Portal** — a dedicated, authenticated portal where clients can view their billing history, download documents, and accept or decline quotes.
+PMG Hub has a fully functional internal admin app for billing, quotes, invoices, payments, and credits. Clients receive documents by email but have no self-service interface. This specification defines the **PMG Portal** — a dedicated, authenticated portal where clients can view their billing history, download documents, and accept or decline quotes.
 
-The portal reuses the **existing Better Auth magic-link infrastructure** already powering the admin app. No new auth library is needed. Clients log in via a magic link sent to the email address stored on their `clients` record. The portal lives at `https://portal.playhousemedia.co.za` as a separate Next.js app inside the existing monorepo (`apps/client`).
+The portal reuses the **existing Better Auth magic-link infrastructure** already powering the admin app. No new auth library is needed. Clients log in via a magic link sent to the email address stored on their `clients` record. The portal lives at `https://portal.playhousemedia.co.za` as a separate Next.js app inside the existing monorepo (`apps/portal`).
 
 ---
 
@@ -76,14 +76,14 @@ Every major app either sends a **magic link** in every document email (Invoice N
 
 ---
 
-## 3. PMG Client Portal — Product Design
+## 3. PMG Portal — Product Design
 
 ### 3.1 Goals
 
 1. Allow clients to view and download invoices, quotes, statements, and credit notes without contacting PMG.
 2. Allow clients to **accept or decline quotes** directly in the portal.
 3. Reuse the existing Better Auth magic-link flow — no new auth dependency.
-4. Keep the portal separate from the admin app but within the same monorepo (`apps/client`).
+4. Keep the portal separate from the admin app but within the same monorepo (`apps/portal`).
 5. Scope all data strictly to the authenticated client — a client must only ever see their own records.
 
 ### 3.2 Out of Scope (V1)
@@ -102,7 +102,7 @@ Every major app either sends a **magic link** in every document email (Invoice N
 
 ### 4.1 Two Doors, One House
 
-The admin app and the client portal each have their **own `betterAuth(...)` instance** with separate configurations. They share the same underlying PostgreSQL database — the same `user`, `session`, `account`, and `verification` tables. Think of it as two doors into the same house: same locks, different keys, different doormen checking different guest lists.
+The admin app and the portal each have their **own `betterAuth(...)` instance** with separate configurations. They share the same underlying PostgreSQL database — the same `user`, `session`, `account`, and `verification` tables. Think of it as two doors into the same house: same locks, different keys, different doormen checking different guest lists.
 
 **What is shared (database layer):**
 
@@ -117,7 +117,7 @@ The admin app and the client portal each have their **own `betterAuth(...)` inst
 
 ### 4.2 Portal Auth Instance
 
-`apps/client/src/lib/auth.ts`:
+`apps/portal/src/lib/auth.ts`:
 
 ```typescript
 export const portalAuth = betterAuth({
@@ -155,10 +155,10 @@ export const portalAuth = betterAuth({
 });
 ```
 
-The API route in `apps/client`:
+The API route in `apps/portal`:
 
 ```typescript
-// apps/client/src/app/api/auth/[...all]/route.ts
+// apps/portal/src/app/api/auth/[...all]/route.ts
 import { portalAuth } from '@/lib/auth';
 import { toNextJsHandler } from 'better-auth/next-js';
 export const { GET, POST } = toNextJsHandler(portalAuth);
@@ -209,7 +209,7 @@ In V1, portal access is scoped to the single `clients.email` — one login per c
 
 ## 5. Portal Pages & Routes
 
-The portal lives at `apps/client`. Route structure:
+The portal lives at `apps/portal`. Route structure:
 
 ### 5.1 Public Routes (no auth required)
 
@@ -318,7 +318,7 @@ All routes below are under a shared layout (`(portal)/layout.tsx`) that validate
 2. Confirms quote status is `sent` (expired quotes are allowed — warning is shown but action is not blocked)
 3. Updates `quotations.status` → `accepted`, writes `acceptedAt`, `clientActionBy`
 4. Sends notification email to `division_billing_settings.salesRepEmail` for the quote's division (fallback: `organisation_settings.email` if `salesRepEmail` is null)
-5. Returns updated quote to the client UI
+5. Returns updated quote to the portal UI
 
 **Server action — Decline Quote:**
 
@@ -326,7 +326,7 @@ All routes below are under a shared layout (`(portal)/layout.tsx`) that validate
 2. Confirms quote status is `sent`
 3. Updates `quotations.status` → `declined`, writes `declinedAt`, `declineReason` (nullable), `clientActionBy`
 4. Sends same notification email as Accept, with "declined" wording
-5. Returns updated quote to the client UI
+5. Returns updated quote to the portal UI
 
 ---
 
@@ -357,7 +357,7 @@ All routes below are under a shared layout (`(portal)/layout.tsx`) that validate
 
 ---
 
-#### `/profile` — Client Profile
+#### `/profile` — Profile
 
 **Purpose:** View the contact information PMG holds on record.
 
@@ -400,7 +400,7 @@ Provides full audit trail for quote accept/decline actions initiated from the po
 
 ### 6.3 Migration
 
-Both changes are delivered as a single Drizzle migration file in `packages/db/src/migrations/`. The migration runs before the client portal is deployed. The admin app is unaffected by either column addition.
+Both changes are delivered as a single Drizzle migration file in `packages/db/src/migrations/`. The migration runs before the portal is deployed. The admin app is unaffected by either column addition.
 
 ---
 
@@ -408,10 +408,12 @@ Both changes are delivered as a single Drizzle migration file in `packages/db/sr
 
 ### 7.1 Monorepo Placement
 
+The existing empty `apps/client` folder is renamed to `apps/portal`.
+
 ```
 apps/
   admin/                        ← existing internal admin app (unchanged)
-  client/                       ← new client portal
+  portal/                       ← renamed from apps/client
     src/
       proxy.ts                  ← session guard, rate limiting, route protection
                                    (Next.js v16+ — replaces middleware.ts)
@@ -462,7 +464,7 @@ apps/
 
 **Decision: PDFs are generated on demand from live data. No file storage required.**
 
-The existing `server-billing-pdf.ts` and `pdf-export.ts` utilities in `apps/admin` are extracted into a new shared package `packages/billing-pdf`. Both the admin app and the client portal import from this package. The client portal generates PDFs fresh on each request — no S3, no CDN, no sync problem.
+The existing `server-billing-pdf.ts` and `pdf-export.ts` utilities in `apps/admin` are extracted into a new shared package `packages/billing-pdf`. Both the admin app and the portal import from this package. The portal generates PDFs fresh on each request — no S3, no CDN, no sync problem.
 
 This is better than a "Share to portal" admin button because:
 
@@ -480,7 +482,7 @@ Route protection and rate limiting happen in `proxy.ts`. The `clientId` is resol
 `proxy.ts` is the Next.js v16+ replacement for `middleware.ts`. The function export is named `proxy` (not `middleware`). It mirrors the exact pattern already used in `apps/admin/src/proxy.ts`.
 
 ```typescript
-// apps/client/src/proxy.ts
+// apps/portal/src/proxy.ts
 import { NextResponse, type NextRequest } from 'next/server';
 import { portalAuth } from '@/lib/auth';
 
@@ -542,10 +544,10 @@ export const config = {
 };
 ```
 
-The `isActive` check and `clientId` resolution happen in `getPortalSessionOrRedirect()` inside the `(portal)` layout — keeping the proxy lean and the business logic in the app layer:
+The `isActive` check and `clientId` resolution happen in `getPortalSessionOrRedirect()` inside the `(portal)` layout — keeping the proxy lean and business logic in the app layer:
 
 ```typescript
-// apps/client/src/lib/portal-session.ts
+// apps/portal/src/lib/portal-session.ts
 export async function getPortalSessionOrRedirect() {
   const session = await portalAuth.api.getSession({ headers: await headers() });
   if (!session) redirect('/login');
@@ -628,7 +630,7 @@ Every list page has a clear, friendly empty state:
 
 - Template: existing `MagicLinkEmail` from `@pmg/emails`
 - Subject: "Access your PMG billing portal"
-- Copy: updated to mention client portal context (not admin control center)
+- Copy: updated to mention portal context (not admin control center)
 - Expiry copy: "This link expires in 24 hours"
 
 ### 9.2 Quote Action Notification (New — admin-facing)
@@ -654,9 +656,10 @@ Every invoice/quote email sent from the admin app will include a pre-authenticat
 
 ### Phase 1 — Foundation (weeks 1–2)
 
-- [ ] Scaffold `apps/client` Next.js app in the Turbo monorepo pipeline
+- [ ] Rename `apps/client` → `apps/portal` in the monorepo
+- [ ] Scaffold `apps/portal` as a Next.js app in the Turbo pipeline
 - [ ] Add `userId` column to `clients` schema + Drizzle migration
-- [ ] Configure `portalAuth` Better Auth instance (`apps/client/src/lib/auth.ts`)
+- [ ] Configure `portalAuth` Better Auth instance (`apps/portal/src/lib/auth.ts`)
 - [ ] Implement `proxy.ts` — session cookie check, rate limiting, public route allowlist (mirrors `apps/admin/src/proxy.ts`)
 - [ ] Implement `/login` page and magic link request flow
 - [ ] Implement `/login/verify` callback handler (session creation + `clients.userId` linking)
@@ -702,6 +705,7 @@ All open questions from the initial draft have been resolved:
 | Question                     | Decision                                                                             |
 | ---------------------------- | ------------------------------------------------------------------------------------ |
 | Portal URL                   | `https://portal.playhousemedia.co.za`                                                |
+| Monorepo folder name         | `apps/portal` (renamed from empty `apps/client`)                                     |
 | Auth approach                | Separate `portalAuth` instance, shared database — two doors, one house               |
 | Route protection file        | `proxy.ts` — Next.js v16+ replacement for deprecated `middleware.ts`                 |
 | PDF delivery                 | Generated on demand from `packages/billing-pdf` — no file storage needed             |
