@@ -26,10 +26,12 @@ const STATUS_TRANSITIONS: Record<string, { value: string; label: string }[]> = {
   in_progress: [
     { value: 'completed', label: 'Complete' },
     { value: 'cancelled', label: 'Cancel' },
+    { value: 'planned', label: 'Re-plan' },
   ],
   completed: [
     { value: 'submitted', label: 'Submit' },
     { value: 'cancelled', label: 'Cancel' },
+    { value: 'planned', label: 'Re-plan' },
   ],
   submitted: [
     { value: 'planned', label: 'Re-plan' },

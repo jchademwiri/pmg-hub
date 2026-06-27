@@ -124,7 +124,7 @@ describe('TenderFormDialog', () => {
   it('renders title and description', async () => {
     await renderFormDialog()
     expect(screen.getByText('New Tender Schedule Entry')).toBeInTheDocument()
-    expect(screen.getByText(/Add a tender to your schedule/)).toBeInTheDocument()
+    expect(screen.getByText(/Add a tender/)).toBeInTheDocument()
   })
 
   it('shows inline error when action returns { error }', async () => {
@@ -193,19 +193,15 @@ describe('TenderFormDialog', () => {
     expect(screen.getByLabelText(/buffer/i)).toHaveValue(5)
   })
 
-  it('updates the schedule preview when buffer changes', async () => {
+  it('updates the schedule preview when effort changes', async () => {
     const user = userEvent.setup()
     await renderFormDialog()
     fireEvent.change(screen.getByLabelText(/closing date/i), { target: { value: '2026-07-14' } })
     await user.clear(screen.getByLabelText(/effort/i))
     await user.type(screen.getByLabelText(/effort/i), '3')
 
-    expect(screen.getByLabelText(/scheduled start/i)).toHaveValue('2026-07-06')
-
-    await user.clear(screen.getByLabelText(/buffer/i))
-    await user.type(screen.getByLabelText(/buffer/i), '1')
-
-    expect(screen.getByLabelText(/scheduled start/i)).toHaveValue('2026-07-10')
+    expect(screen.getByText(/Start \+ 3 days/i)).toBeInTheDocument()
+    expect(screen.getByText(/14 Jul 2026/i)).toBeInTheDocument()
   })
 })
 

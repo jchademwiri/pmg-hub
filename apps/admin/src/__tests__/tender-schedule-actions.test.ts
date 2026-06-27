@@ -7,7 +7,7 @@
  * - Division __none__ → null passthrough
  */
 
-import { describe, it, expect, vi, beforeEach } from 'vitest'
+import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
 
 // ─── Mocks ───────────────────────────────────────────────────────────────────
 
@@ -109,6 +109,12 @@ describe('createTenderScheduleEntry — success & date calc', () => {
     mockGetDb.mockReturnValue(mockDbReturn)
     mockDbCreateEntry.mockResolvedValue({ id: 'new-tender-id' })
     mockRecalculateWaterfall.mockResolvedValue(undefined)
+    vi.useFakeTimers()
+    vi.setSystemTime(new Date('2026-07-01'))
+  })
+
+  afterEach(() => {
+    vi.useRealTimers()
   })
 
   it('succeeds with valid data', async () => {
@@ -118,7 +124,6 @@ describe('createTenderScheduleEntry — success & date calc', () => {
     fd.set('tenderReference', 'T12/2026')
     fd.set('closingDate', '2026-07-14')
     fd.set('effortDays', '3')
-    fd.set('startDate', '2026-07-01')
     fd.set('priority', 'high')
     fd.set('notes', 'Test notes')
     fd.set('blockers', 'No blockers')
@@ -140,14 +145,13 @@ describe('createTenderScheduleEntry — success & date calc', () => {
     )
   })
 
-  it('calculates targetCompletionDate = startDate + effortDays', async () => {
+  it('calculates targetCompletionDate = today + effortDays', async () => {
     const { createTenderScheduleEntry } = await import('@/app/actions/tender-schedule')
     const fd = new FormData()
     fd.set('clientId', 'client-1')
     fd.set('tenderReference', 'T12/2026')
     fd.set('closingDate', '2026-07-14')
     fd.set('effortDays', '5')
-    fd.set('startDate', '2026-07-01')
 
     await createTenderScheduleEntry(fd)
     expect(mockDbCreateEntry).toHaveBeenCalledWith(
@@ -171,8 +175,8 @@ describe('createTenderScheduleEntry — success & date calc', () => {
     expect(mockDbCreateEntry).toHaveBeenCalledWith(
       expect.objectContaining({
         bufferDays: 5,
-        startDate: '2026-07-04',
-        targetCompletionDate: '2026-07-09',
+        startDate: '2026-07-01',
+        targetCompletionDate: '2026-07-06',
       }),
     )
   })
@@ -190,8 +194,8 @@ describe('createTenderScheduleEntry — success & date calc', () => {
     expect(mockDbCreateEntry).toHaveBeenCalledWith(
       expect.objectContaining({
         bufferDays: 1,
-        startDate: '2026-07-08',
-        targetCompletionDate: '2026-07-13',
+        startDate: '2026-07-01',
+        targetCompletionDate: '2026-07-06',
       }),
     )
   })

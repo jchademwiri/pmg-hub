@@ -95,9 +95,12 @@ describe('transitionTenderStatusAction — allowed transitions', () => {
     ['planned', 'cancelled'],
     ['in_progress', 'completed'],
     ['in_progress', 'cancelled'],
+    ['in_progress', 'planned'],
     ['completed', 'submitted'],
     ['completed', 'cancelled'],
+    ['completed', 'planned'],
     ['submitted', 'planned'],
+    ['cancelled', 'planned'],
   ]
 
   it.each(allowedCases)('allows %s → %s', async (from, to) => {
@@ -120,9 +123,7 @@ describe('transitionTenderStatusAction — blocked transitions', () => {
   const blockedCases: [string, string, string][] = [
     ['planned', 'completed', "'planned' to 'completed'"],
     ['planned', 'submitted', "'planned' to 'submitted'"],
-    ['in_progress', 'planned', "'in_progress' to 'planned'"],
     ['in_progress', 'submitted', "'in_progress' to 'submitted'"],
-    ['completed', 'planned', "'completed' to 'planned'"],
     ['completed', 'in_progress', "'completed' to 'in_progress'"],
     ['submitted', 'in_progress', "'submitted' to 'in_progress'"],
     ['submitted', 'completed', "'submitted' to 'completed'"],
@@ -137,16 +138,14 @@ describe('transitionTenderStatusAction — blocked transitions', () => {
     expect(mockTransitionStatus).not.toHaveBeenCalled()
   })
 
-  it('blocks all transitions from cancelled status', async () => {
+  it('blocks all transitions from cancelled status except planned', async () => {
     const { transitionTenderStatusAction } = await import('@/app/actions/tender-schedule')
     await setupEntryStatus('cancelled')
 
-    const result1 = await transitionTenderStatusAction('tender-1', 'planned')
     const result2 = await transitionTenderStatusAction('tender-1', 'in_progress')
     const result3 = await transitionTenderStatusAction('tender-1', 'completed')
     const result4 = await transitionTenderStatusAction('tender-1', 'submitted')
 
-    expect(result1.error).toContain("Cannot transition from 'cancelled'")
     expect(result2.error).toContain("Cannot transition from 'cancelled'")
     expect(result3.error).toContain("Cannot transition from 'cancelled'")
     expect(result4.error).toContain("Cannot transition from 'cancelled'")
