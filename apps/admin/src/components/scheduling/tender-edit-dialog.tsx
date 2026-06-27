@@ -27,6 +27,7 @@ import type { TenderScheduleEntry } from '@pmg/db';
 import {
   updateTenderScheduleEntry,
   updateTenderScheduleEntryJson,
+  transitionTenderStatusAction,
 } from '@/app/actions/tender-schedule';
 import { TenderStatusBadge } from '@/components/scheduling/tender-status-badge';
 
@@ -73,6 +74,7 @@ export function TenderEditDialog({
   // Client/division selection state (survives React re-renders)
   const [editClientId, setEditClientId] = React.useState(tender.clientId);
   const [editDivisionId, setEditDivisionId] = React.useState(tender.divisionId ?? '__none__');
+  const [editStatus, setEditStatus] = React.useState(tender.status);
 
   async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
@@ -80,6 +82,15 @@ export function TenderEditDialog({
 
     startTransition(async () => {
       const fd = new FormData(formRef.current!);
+
+      // Update status if it changed
+      if (editStatus !== tender.status) {
+        const transitionResult = await transitionTenderStatusAction(tender.id, editStatus);
+        if (transitionResult.error) {
+          setErrorMessage(transitionResult.error);
+          return;
+        }
+      }
 
       // Also update tracking-only fields (outcome, actualEffortDays)
       const outcome = fd.get('outcome') as string;
@@ -311,13 +322,38 @@ export function TenderEditDialog({
 
           {activeSection === 'tracking' && (
             <div className="flex flex-col gap-4">
-              {/* Status display */}
-              <div className="flex items-center gap-2">
-                <span className="text-xs text-muted-foreground">Current status:</span>
-                <TenderStatusBadge status={tender.status} />
-              </div>
-
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                {/* Status selection */}
+                <Field>
+                  <FieldLabel htmlFor="edit-status">Status</FieldLabel>
+                  <Select
+                    name="status"
+                    defaultValue={editStatus}
+                    onValueChange={(value) => setEditStatus(value as any)}
+                  >
+                    <SelectTrigger id="edit-status" className="text-sm h-9">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="planned" className="text-xs">
+                        Planned
+                      </SelectItem>
+                      <SelectItem value="in_progress" className="text-xs">
+                        In Progress
+                      </SelectItem>
+                      <SelectItem value="completed" className="text-xs">
+                        Completed
+                      </SelectItem>
+                      <SelectItem value="submitted" className="text-xs">
+                        Submitted
+                      </SelectItem>
+                      <SelectItem value="cancelled" className="text-xs">
+                        Cancelled
+                      </SelectItem>
+                    </SelectContent>
+                  </Select>
+                </Field>
+
                 {/* Actual Effort */}
                 <Field>
                   <FieldLabel htmlFor="edit-actual">Actual Effort (days)</FieldLabel>
@@ -328,17 +364,21 @@ export function TenderEditDialog({
                     min="0"
                     defaultValue={tender.actualEffortDays ?? ''}
                     placeholder="e.g. 4"
-                    disabled={isPending}
+                    disabled={isPending || (editStatus !== 'completed' && editStatus !== 'submitted')}
                   />
                   <p className="text-xs text-muted-foreground mt-1">
-                    Fill in when tender is completed
+                    Enabled only when status is Completed or Submitted
                   </p>
                 </Field>
 
                 {/* Outcome */}
                 <Field>
                   <FieldLabel htmlFor="edit-outcome">Outcome</FieldLabel>
-                  <Select name="outcome" defaultValue={tender.outcome ?? ''}>
+                  <Select
+                    name="outcome"
+                    defaultValue={tender.outcome ?? ''}
+                    disabled={isPending || (editStatus !== 'completed' && editStatus !== 'submitted')}
+                  >
                     <SelectTrigger id="edit-outcome" className="text-sm h-9">
                       <SelectValue placeholder="Pending" />
                     </SelectTrigger>

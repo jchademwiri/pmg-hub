@@ -17,6 +17,7 @@ import {
 } from '@/components/ui/dropdown-menu'
 import { transitionTenderStatusAction } from '@/app/actions/tender-schedule'
 import { toast } from 'sonner'
+import { Tooltip, TooltipTrigger, TooltipContent, TooltipProvider } from '@/components/ui/tooltip'
 
 const STATUS_TRANSITIONS: Record<string, { value: string; label: string }[]> = {
   planned: [
@@ -163,7 +164,8 @@ export function TimelineClient({ entries, clients }: TimelineClientProps) {
   )
 
   return (
-    <Card>
+    <TooltipProvider>
+      <Card>
       <CardHeader>
         <div className="flex items-center justify-between">
           <CardTitle>Schedule Timeline</CardTitle>
@@ -252,44 +254,63 @@ export function TimelineClient({ entries, clients }: TimelineClientProps) {
                       </p>
                     </div>
 
-                    {/* Bar area */}
-                    <div className="relative flex-1" style={{ height: '28px' }}>
-                      {/* Main work bar */}
-                      <div
-                        className={`absolute top-1 h-5 rounded-sm transition-all ${STATUS_COLORS[entry.status] ?? 'bg-muted'}`}
-                        style={{
-                          left: `${(startOffset / totalDays) * 100}%`,
-                          width: `${(workDays / totalDays) * 100}%`,
-                          minWidth: '4px',
-                        }}
-                      />
+                    {/* Bar area with Tooltip */}
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <div className="relative flex-1 cursor-help" style={{ height: '28px' }}>
+                          {/* Main work bar */}
+                          <div
+                            className={`absolute top-1 h-5 rounded-sm transition-all ${STATUS_COLORS[entry.status] ?? 'bg-muted'}`}
+                            style={{
+                              left: `${(startOffset / totalDays) * 100}%`,
+                              width: `${(workDays / totalDays) * 100}%`,
+                              minWidth: '4px',
+                            }}
+                          />
 
-                      {/* Buffer extension */}
-                      {bufferDays > 0 && entry.status !== 'submitted' && (
-                        <div
-                          className="absolute top-1 h-5 rounded-sm border border-dashed border-amber-400/40 bg-amber-400/10"
-                          style={{
-                            left: `${((startOffset + workDays) / totalDays) * 100}%`,
-                            width: `${(bufferDays / totalDays) * 100}%`,
-                            minWidth: '4px',
-                          }}
-                        />
-                      )}
+                          {/* Buffer extension */}
+                          {bufferDays > 0 && entry.status !== 'submitted' && (
+                            <div
+                              className="absolute top-1 h-5 rounded-sm border border-dashed border-amber-400/40 bg-amber-400/10"
+                              style={{
+                                left: `${((startOffset + workDays) / totalDays) * 100}%`,
+                                width: `${(bufferDays / totalDays) * 100}%`,
+                                minWidth: '4px',
+                              }}
+                            />
+                          )}
 
-                      {/* Closing date marker */}
-                      <div
-                        className="absolute top-0.5 h-6 w-0.5 bg-red-500"
-                        style={{ left: `${closeDayPct}%`, zIndex: 10 }}
-                        title={`Closes: ${new Date(entry.closingDate).toLocaleDateString()}`}
-                      />
+                          {/* Closing date marker */}
+                          <div
+                            className="absolute top-0.5 h-6 w-0.5 bg-red-500"
+                            style={{ left: `${closeDayPct}%`, zIndex: 10 }}
+                          />
+                        </div>
+                      </TooltipTrigger>
+                      <TooltipContent className="p-3 max-w-xs flex flex-col gap-1.5 bg-popover text-popover-foreground border shadow-md">
+                        <p className="font-semibold text-xs">{client?.name ?? 'Unknown Client'}</p>
+                        <div className="text-[11px] text-muted-foreground grid grid-cols-2 gap-x-4 gap-y-0.5">
+                          <span>Reference:</span>
+                          <span className="font-medium text-foreground text-right">{entry.tenderReference}</span>
+                          
+                          <span>Working Window:</span>
+                          <span className="font-medium text-foreground text-right">
+                            {formatDate(entry.startDate)} → {formatDate(entry.targetCompletionDate)}
+                          </span>
 
-                      {/* Date labels on hover */}
-                      <div className="absolute -bottom-4 left-0 right-0 flex text-[10px] text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity">
-                        <span>{formatDate(entry.startDate)}</span>
-                        <span className="ml-auto">{formatDate(entry.targetCompletionDate)}</span>
-                        <span className="ml-auto text-red-500">{formatDate(entry.closingDate)}</span>
-                      </div>
-                    </div>
+                          <span>Closing Date:</span>
+                          <span className="font-medium text-red-500 text-right">{formatDate(entry.closingDate)}</span>
+
+                          <span>Effort:</span>
+                          <span className="font-medium text-foreground text-right">{workDays} days</span>
+
+                          <span>Buffer:</span>
+                          <span className={`font-medium text-right ${bufferDays < entry.bufferDays ? 'text-amber-500 font-semibold' : 'text-foreground'}`}>
+                            {bufferDays} days (req: {entry.bufferDays}d)
+                          </span>
+                        </div>
+                      </TooltipContent>
+                    </Tooltip>
 
                     {/* Status + Risk badges */}
                     <div className="flex shrink-0 items-center gap-1.5">
@@ -344,5 +365,6 @@ export function TimelineClient({ entries, clients }: TimelineClientProps) {
         </div>
       </CardContent>
     </Card>
+    </TooltipProvider>
   )
 }

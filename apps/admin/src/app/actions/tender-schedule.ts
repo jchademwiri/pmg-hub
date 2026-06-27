@@ -241,7 +241,6 @@ export async function transitionTenderStatusAction(
     }
 
     await transitionStatus(id, newStatus);
-
     await recalculateTenderWaterfall();
     revalidatePath('/scheduling');
     revalidatePath('/scheduling/list');
@@ -250,5 +249,30 @@ export async function transitionTenderStatusAction(
   } catch (e) {
     console.error('transitionTenderStatusAction failed:', e);
     return { error: 'Failed to update status.' };
+  }
+}
+
+export async function reorderTendersAction(ids: string[]): Promise<{ error?: string }> {
+  try {
+    await getSessionOrRedirect();
+
+    const db = getDb();
+    for (let i = 0; i < ids.length; i++) {
+      const id = ids[i];
+      if (!id) continue;
+      await db
+        .update(tenderScheduleEntries)
+        .set({ sortOrder: i + 1, updatedAt: new Date() })
+        .where(eq(tenderScheduleEntries.id, id));
+    }
+
+    await recalculateTenderWaterfall();
+    revalidatePath('/scheduling');
+    revalidatePath('/scheduling/list');
+    revalidatePath('/scheduling/timeline');
+    return {};
+  } catch (e) {
+    console.error('reorderTendersAction failed:', e);
+    return { error: 'Failed to reorder queue.' };
   }
 }
