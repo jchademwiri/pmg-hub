@@ -1,23 +1,51 @@
-future, add steps or sections for each tender for progress traking, such as:
+## Future Enhancements
 
-- document created
-- document initialised
-- document inked
+### Tender Progress Tracking
 
-Returnable list progress status:
-- key personnel CV completed
-- company experience completed
-- method statement completed
-- pricing schedule completed etc
+Add progress tracking to each tender by allowing users to create sections (categories) and add custom checklist items under each section.
 
+Example sections:
 
-i need to be able to add this based on the tender requirement , so i need to be able to add items to each category in the tender tracking system.
+**Document Progress**
 
-Future, add a progress bar to each tender based on the progress status.
+* Document created
+* Document initialised
+* Document inked
 
-tender status options:
-- not started
-- in progress
-- completed
+**Returnable List Progress**
 
-progress bar will show % based on the completed steps/tasks for each tender
+* Key personnel CV completed
+* Company experience completed
+* Method statement completed
+* Pricing schedule completed
+* etc.
+
+Each tender has different requirements, so the system should allow users to:
+
+* Add custom sections/categories
+* Add custom checklist items under each section
+* Edit or remove sections and checklist items as needed
+
+This allows each tender to have its own unique progress checklist based on its specific requirements.
+
+### Progress Bar
+
+Add a progress bar to each tender.
+
+The progress percentage should be calculated automatically based on completed checklist items.
+
+Example:
+
+* Total checklist items: 20
+* Completed: 15
+* Progress: 75%
+
+### Tender Status
+
+Each tender should have an overall status that is independent of the progress bar.
+
+Status options:
+
+* Not Started
+* In Progress
+* Completed
