@@ -3,6 +3,7 @@ import { relations, sql } from "drizzle-orm";
 import { income } from "./income";
 import { expenses } from "./expenses";
 import { divisions } from "./divisions";
+import { user } from "./auth";
 
 export const clients = pgTable(
   "clients",
@@ -14,6 +15,7 @@ export const clients = pgTable(
     phone: text("phone"),
     divisionId: uuid("division_id").references(() => divisions.id),
     isActive: boolean("is_active").notNull().default(true),
+    userId: text("user_id").references(() => user.id, { onDelete: "set null" }),
     createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
     // updatedAt is managed by the application layer on update. Any database-level operation
     // that bypasses the application (direct SQL fixes, migrations, external services) will
@@ -24,6 +26,7 @@ export const clients = pgTable(
   (t) => [
     index("clients_name_idx").on(t.name),
     uniqueIndex("clients_email_unique_idx").on(t.email).where(sql`${t.email} IS NOT NULL`),
+    uniqueIndex("clients_user_id_unique_idx").on(t.userId).where(sql`${t.userId} IS NOT NULL`),
   ],
 );
 
