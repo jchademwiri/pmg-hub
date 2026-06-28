@@ -3,7 +3,7 @@ import { betterAuth } from 'better-auth';
 import { drizzleAdapter } from 'better-auth/adapters/drizzle';
 import { magicLink } from 'better-auth/plugins';
 import { createAuthMiddleware, APIError } from 'better-auth/api';
-import { getDb, clients, eq, and } from '@pmg/db';
+import { getDb, clients, user, eq, and } from '@pmg/db';
 import React from 'react';
 import { createEmailClient, MagicLinkEmail, DEFAULT_EMAIL_FROM, DEFAULT_REPLY_TO } from '@pmg/emails';
 
@@ -68,7 +68,16 @@ export const portalAuth = betterAuth({
         .limit(1);
 
       if (!client) {
-        throw new APIError('FORBIDDEN', { message: 'No active client account found for this email.' });
+        // Also check if they are an admin/super_admin in the user table
+        const [adminUser] = await db
+          .select()
+          .from(user)
+          .where(eq(user.email, email))
+          .limit(1);
+
+        if (!adminUser || !['admin', 'super_admin'].includes(adminUser.role || '')) {
+          throw new APIError('FORBIDDEN', { message: 'No active client account found for this email.' });
+        }
       }
     }),
 
