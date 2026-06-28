@@ -41,3 +41,32 @@ export const clientsRelations = relations(clients, ({ one, many }) => ({
     references: [divisions.id],
   }),
 }));
+
+export const clientChangeRequests = pgTable("client_change_requests", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  clientId: uuid("client_id")
+    .notNull()
+    .references(() => clients.id, { onDelete: "cascade" }),
+  proposedBusinessName: text("proposed_business_name"),
+  proposedVatNumber: text("proposed_vat_number"),
+  proposedRegistrationNumber: text("proposed_registration_number"),
+  proposedBillingEmail: text("proposed_billing_email"),
+  proposedBillingAddress: text("proposed_billing_address"),
+  status: text("status", { enum: ["pending", "approved", "rejected"] }).default("pending").notNull(),
+  rejectionReason: text("rejection_reason"),
+  reviewedBy: text("reviewed_by").references(() => user.id, { onDelete: "set null" }),
+  reviewedAt: timestamp("reviewed_at", { withTimezone: true }),
+  createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
+  updatedAt: timestamp("updated_at", { withTimezone: true }),
+});
+
+export const clientChangeRequestsRelations = relations(clientChangeRequests, ({ one }) => ({
+  client: one(clients, {
+    fields: [clientChangeRequests.clientId],
+    references: [clients.id],
+  }),
+  reviewer: one(user, {
+    fields: [clientChangeRequests.reviewedBy],
+    references: [user.id],
+  }),
+}));
