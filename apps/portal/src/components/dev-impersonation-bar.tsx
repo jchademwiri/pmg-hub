@@ -11,15 +11,27 @@ interface ClientOption {
 interface DevImpersonationBarProps {
   clients: ClientOption[];
   currentClientId: string;
+  cookieName?: 'dev_impersonate_client_id' | 'impersonate_client_id';
+  label?: string;
 }
 
-export function DevImpersonationBar({ clients, currentClientId }: DevImpersonationBarProps) {
+export function DevImpersonationBar({ 
+  clients, 
+  currentClientId,
+  cookieName = 'dev_impersonate_client_id',
+  label = 'Dev Impersonation'
+}: DevImpersonationBarProps) {
   const [selectedId, setSelectedId] = React.useState(currentClientId);
+
+  const isAdmin = label.toLowerCase().includes('admin');
+  const borderClass = isAdmin ? 'border-amber-500/30' : 'border-blue-500/30';
+  const dotClass = isAdmin ? 'bg-amber-500' : 'bg-blue-500';
+  const textClass = isAdmin ? 'text-amber-400' : 'text-blue-400';
 
   function handleImpersonate(clientId: string) {
     setSelectedId(clientId);
     // Set the impersonation cookie
-    document.cookie = `dev_impersonate_client_id=${clientId}; path=/; max-age=86400; SameSite=Lax`;
+    document.cookie = `${cookieName}=${clientId}; path=/; max-age=86400; SameSite=Lax`;
     
     // Redirect to dashboard if currently viewing a specific document detail page
     const pathname = window.location.pathname;
@@ -35,7 +47,7 @@ export function DevImpersonationBar({ clients, currentClientId }: DevImpersonati
 
   function handleClear() {
     // Delete the cookie by setting max-age to 0
-    document.cookie = 'dev_impersonate_client_id=; path=/; max-age=0; SameSite=Lax';
+    document.cookie = `${cookieName}=; path=/; max-age=0; SameSite=Lax`;
     
     const pathname = window.location.pathname;
     const segments = pathname.split('/').filter(Boolean);
@@ -49,10 +61,10 @@ export function DevImpersonationBar({ clients, currentClientId }: DevImpersonati
   }
 
   return (
-    <div className="fixed bottom-4 right-4 z-50 flex items-center gap-3 rounded-xl border border-blue-500/30 bg-[#0a0f1d]/95 p-3.5 shadow-2xl backdrop-blur-md animate-in slide-in-from-bottom-5 duration-300 text-xs text-white print:hidden">
+    <div className={`fixed bottom-4 right-4 z-50 flex items-center gap-3 rounded-xl border ${borderClass} bg-[#0a0f1d]/95 p-3.5 shadow-2xl backdrop-blur-md animate-in slide-in-from-bottom-5 duration-300 text-xs text-white print:hidden`}>
       <div className="flex items-center gap-2">
-        <span className="flex h-2 w-2 rounded-full bg-blue-500 animate-pulse" />
-        <span className="font-semibold text-blue-400">Dev Impersonation</span>
+        <span className={`flex h-2 w-2 rounded-full ${dotClass} animate-pulse`} />
+        <span className={`font-semibold ${textClass}`}>{label}</span>
       </div>
 
       <select
