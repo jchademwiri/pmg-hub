@@ -35,6 +35,7 @@ export async function getPortalSession() {
             },
           },
           client,
+          isAdmin: true,
         };
       }
     }
@@ -64,6 +65,7 @@ export async function getPortalSession() {
           },
         },
         client: fallbackClient,
+        isAdmin: true,
       };
     }
   }
@@ -78,40 +80,39 @@ export async function getPortalSession() {
     .where(eq(clients.userId, session.user.id))
     .limit(1);
 
-  // If no client is associated with this userId, check if they are an admin/super_admin
-  if (!client) {
-    const [adminUser] = await db
-      .select()
-      .from(user)
-      .where(eq(user.id, session.user.id))
-      .limit(1);
+  // Check if they are an admin/super_admin in the user table
+  const [dbUser] = await db
+    .select()
+    .from(user)
+    .where(eq(user.id, session.user.id))
+    .limit(1);
+  const isAdmin = !!(dbUser && ['admin', 'super_admin'].includes(dbUser.role || ''));
 
-    if (adminUser && ['admin', 'super_admin'].includes(adminUser.role || '')) {
-      // Admin is logged in! Allow impersonation.
-      const cookieStore = await cookies();
-      const impersonateId = cookieStore.get('impersonate_client_id')?.value;
+  // If they are an admin/super_admin, allow impersonation
+  if (isAdmin) {
+    const cookieStore = await cookies();
+    const impersonateId = cookieStore.get('impersonate_client_id')?.value;
 
-      if (impersonateId) {
-        const [targetClient] = await db
-          .select()
-          .from(clients)
-          .where(and(eq(clients.id, impersonateId), eq(clients.isActive, true)))
-          .limit(1);
-        if (targetClient) {
-          client = targetClient;
-        }
+    if (impersonateId) {
+      const [targetClient] = await db
+        .select()
+        .from(clients)
+        .where(and(eq(clients.id, impersonateId), eq(clients.isActive, true)))
+        .limit(1);
+      if (targetClient) {
+        client = targetClient;
       }
+    }
 
-      // If no impersonate cookie is set, default to the first active client
-      if (!client) {
-        const [fallbackClient] = await db
-          .select()
-          .from(clients)
-          .where(eq(clients.isActive, true))
-          .limit(1);
-        if (fallbackClient) {
-          client = fallbackClient;
-        }
+    // If no impersonate cookie is set and we didn't match a client yet, default to the first active client
+    if (!client) {
+      const [fallbackClient] = await db
+        .select()
+        .from(clients)
+        .where(eq(clients.isActive, true))
+        .limit(1);
+      if (fallbackClient) {
+        client = fallbackClient;
       }
     }
   }
@@ -119,7 +120,7 @@ export async function getPortalSession() {
   // Enforce that only active clients (or impersonated clients) can access the portal
   if (!client || !client.isActive) return null;
 
-  return { session, client };
+  return { session, client, isAdmin };
 }
 
 export async function getPortalSessionOrRedirect() {

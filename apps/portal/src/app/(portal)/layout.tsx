@@ -5,13 +5,15 @@ import { DevImpersonationBar } from '@/components/dev-impersonation-bar';
 import { PortalShell } from '@/components/portal-shell';
 
 export default async function PortalLayout({ children }: { children: React.ReactNode }) {
-  const { client } = await getPortalSessionOrRedirect();
+  const { client, isAdmin } = await getPortalSessionOrRedirect();
+  const isDev = process.env.NODE_ENV === 'development';
+  const showImpersonation = isDev || isAdmin;
 
-  // Fetch all active clients for impersonation in development mode
-  let devClients: { id: string; name: string; businessName: string | null }[] = [];
-  if (process.env.NODE_ENV === 'development') {
+  // Fetch all active clients for impersonation if in development or if user is an admin
+  let impersonationClients: { id: string; name: string; businessName: string | null }[] = [];
+  if (showImpersonation) {
     const db = getDb();
-    devClients = await db
+    impersonationClients = await db
       .select({ id: clients.id, name: clients.name, businessName: clients.businessName })
       .from(clients)
       .where(eq(clients.isActive, true));
@@ -23,9 +25,14 @@ export default async function PortalLayout({ children }: { children: React.React
         {children}
       </PortalShell>
 
-      {/* Dev Impersonation Bar */}
-      {process.env.NODE_ENV === 'development' && devClients.length > 0 && (
-        <DevImpersonationBar clients={devClients} currentClientId={client.id} />
+      {/* Impersonation Bar */}
+      {showImpersonation && impersonationClients.length > 0 && (
+        <DevImpersonationBar 
+          clients={impersonationClients} 
+          currentClientId={client.id} 
+          cookieName={isDev ? 'dev_impersonate_client_id' : 'impersonate_client_id'}
+          label={isDev ? 'Dev Impersonation' : 'Admin Impersonation'}
+        />
       )}
     </>
   );
