@@ -1,4 +1,5 @@
 import * as React from 'react';
+import Link from 'next/link';
 import type { TenderScheduleEntry } from '@pmg/db';
 import { CalendarDays, ListOrdered, GripVertical, Loader2, ChevronDown } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
@@ -26,6 +27,7 @@ interface DraggableUpNextProps {
   tenders: TenderScheduleEntry[];
   clients: ClientSummary[];
   onStatusChange: (id: string, status: string) => Promise<string | undefined>;
+  progressMap?: Record<string, { total: number; completed: number }>;
 }
 
 function formatDate(date: string): string {
@@ -38,7 +40,7 @@ function daysBetween(a: string, b: string): number {
   return Math.ceil((end.getTime() - start.getTime()) / (1000 * 60 * 60 * 24));
 }
 
-export function DraggableUpNext({ tenders, clients, onStatusChange }: DraggableUpNextProps) {
+export function DraggableUpNext({ tenders, clients, onStatusChange, progressMap = {} }: DraggableUpNextProps) {
   const clientMap = new Map(clients.map((c) => [c.id, c]));
   const [items, setItems] = React.useState(tenders);
   const [draggedIndex, setDraggedIndex] = React.useState<number | null>(null);
@@ -171,18 +173,33 @@ export function DraggableUpNext({ tenders, clients, onStatusChange }: DraggableU
                 </div>
                 <div className="min-w-0 flex-1">
                   <div className="flex flex-wrap items-center gap-1.5">
-                    <p className="truncate text-sm font-medium">{tender.tenderReference}</p>
+                    <Link href={`/scheduling/${tender.id}`} className="hover:underline">
+                      <p className="truncate text-sm font-medium">{tender.tenderReference}</p>
+                    </Link>
                     {tender.priority === 'urgent' && (
                       <Badge variant="destructive" className="text-xs">
                         Urgent
                       </Badge>
                     )}
                   </div>
-                  {client && (
-                    <p className="truncate text-xs text-muted-foreground leading-tight">
-                      {client.name}
-                    </p>
-                  )}
+                  {(() => {
+                    const progress = progressMap[tender.id] || { total: 0, completed: 0 };
+                    const percent = progress.total > 0 ? Math.round((progress.completed / progress.total) * 100) : 0;
+                    return (
+                      <div className="flex items-center gap-2 mt-1">
+                        {client && (
+                          <p className="truncate text-xs text-muted-foreground leading-tight flex-1">
+                            {client.name}
+                          </p>
+                        )}
+                        {progress.total > 0 && (
+                          <span className="text-[10px] font-medium text-emerald-600 dark:text-emerald-400 bg-emerald-500/10 px-1.5 py-0.5 rounded shrink-0">
+                            {percent}% ({progress.completed}/{progress.total})
+                          </span>
+                        )}
+                      </div>
+                    );
+                  })()}
                   <div className="mt-1 flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
                     <span className="inline-flex items-center gap-1">
                       <CalendarDays className="size-3" />

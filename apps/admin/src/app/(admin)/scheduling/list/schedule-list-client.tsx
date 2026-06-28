@@ -57,11 +57,12 @@ interface ScheduleListClientProps {
   entries: TenderScheduleEntry[];
   clients: ClientSummary[];
   divisions: DivisionSummary[];
+  progressMap?: Record<string, { total: number; completed: number }>;
 }
 
 // ── Component ─────────────────────────────────────────────────────────────────
 
-export function ScheduleListClient({ entries, clients, divisions }: ScheduleListClientProps) {
+export function ScheduleListClient({ entries, clients, divisions, progressMap = {} }: ScheduleListClientProps) {
   const router = useRouter();
   const clientMap = React.useMemo(() => new Map(clients.map((c) => [c.id, c])), [clients]);
 
@@ -422,6 +423,7 @@ export function ScheduleListClient({ entries, clients, divisions }: ScheduleList
                   {/* Client + Reference merged into one column */}
                   <TableHead>Client</TableHead>
                   <TableHead>Status</TableHead>
+                  <TableHead>Progress</TableHead>
                   <TableHead className="hidden sm:table-cell">Priority</TableHead>
                   {/* Start + Target merged into one "Window" column */}
                   <TableHead className="hidden md:table-cell">Window</TableHead>
@@ -440,7 +442,18 @@ export function ScheduleListClient({ entries, clients, divisions }: ScheduleList
                   return (
                     <TableRow
                       key={entry.id}
-                      className={`${entry.status === 'cancelled' ? 'opacity-60' : ''} ${isSelected ? 'bg-muted/30' : ''}`}
+                      className={`${entry.status === 'cancelled' ? 'opacity-60' : ''} ${isSelected ? 'bg-muted/30' : ''} cursor-pointer hover:bg-muted/20 transition-colors`}
+                      onClick={(e) => {
+                        // Prevent navigation if clicking interactive elements
+                        if (
+                          (e.target as HTMLElement).closest(
+                            'button, input[type="checkbox"], [role="menuitem"], a, [data-slot="checkbox"]'
+                          )
+                        ) {
+                          return;
+                        }
+                        router.push(`/scheduling/${entry.id}`);
+                      }}
                     >
                       <TableCell className="w-10">
                         <Checkbox
@@ -488,6 +501,30 @@ export function ScheduleListClient({ entries, clients, divisions }: ScheduleList
                             </DropdownMenuContent>
                           </DropdownMenu>
                         )}
+                      </TableCell>
+
+                      {/* Progress bar */}
+                      <TableCell>
+                        {(() => {
+                          const progress = progressMap[entry.id] || { total: 0, completed: 0 };
+                          const percent = progress.total > 0 ? Math.round((progress.completed / progress.total) * 100) : 0;
+                          if (progress.total === 0) {
+                            return <span className="text-[10px] text-muted-foreground">—</span>;
+                          }
+                          return (
+                            <div className="flex flex-col gap-1 w-24">
+                              <span className="text-[10px] font-medium text-muted-foreground leading-none">
+                                {percent}% ({progress.completed}/{progress.total})
+                              </span>
+                              <div className="w-full bg-muted rounded-full h-1 overflow-hidden">
+                                <div
+                                  className="bg-emerald-500 h-full rounded-full"
+                                  style={{ width: `${percent}%` }}
+                                />
+                              </div>
+                            </div>
+                          );
+                        })()}
                       </TableCell>
 
                       {/* Priority */}

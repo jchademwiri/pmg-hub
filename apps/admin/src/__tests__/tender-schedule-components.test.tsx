@@ -75,6 +75,28 @@ vi.mock('@/app/actions/tender-schedule', () => ({
   updateTenderScheduleEntryJson: (...args: any[]) => mockEditUpdateJson(...args),
 }))
 
+// ─── Progress Action mocks ───────────────────────────────────────────────────
+
+const mockGetChecklist = vi.fn(() => Promise.resolve({ success: true, checklist: [] }))
+const mockAddSection = vi.fn()
+const mockDeleteSection = vi.fn()
+const mockRenameSection = vi.fn()
+const mockAddItem = vi.fn()
+const mockDeleteItem = vi.fn()
+const mockToggleItem = vi.fn()
+const mockUpdateItemText = vi.fn()
+
+vi.mock('@/app/actions/tender-progress', () => ({
+  getTenderChecklistAction: (...args: any[]) => mockGetChecklist(...args),
+  addProgressSectionAction: (...args: any[]) => mockAddSection(...args),
+  deleteProgressSectionAction: (...args: any[]) => mockDeleteSection(...args),
+  renameProgressSectionAction: (...args: any[]) => mockRenameSection(...args),
+  addProgressItemAction: (...args: any[]) => mockAddItem(...args),
+  deleteProgressItemAction: (...args: any[]) => mockDeleteItem(...args),
+  toggleProgressItemAction: (...args: any[]) => mockToggleItem(...args),
+  updateProgressItemTextAction: (...args: any[]) => mockUpdateItemText(...args),
+}))
+
 // ─── Test data ────────────────────────────────────────────────────────────────
 
 const mockClients = [

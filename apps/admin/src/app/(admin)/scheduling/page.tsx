@@ -1,6 +1,6 @@
 import type { Metadata } from 'next'
 import { getAllClients, getAllDivisions } from '@pmg/db'
-import { getActiveTenderScheduleEntries, getCurrentWorkload, getTendersAtRisk, detectOverlaps } from '@pmg/db'
+import { getActiveTenderScheduleEntries, getCurrentWorkload, getTendersAtRisk, detectOverlaps, getTendersProgressMap } from '@pmg/db'
 import { SetPageTotal } from '@/components/navigation/page-header-context'
 import { SchedulingOverviewClient } from '@/components/scheduling/scheduling-overview-shell'
 
@@ -23,6 +23,15 @@ export default async function SchedulingPage() {
     .sort((a, b) => a.closingDate.localeCompare(b.closingDate))
     .slice(0, 5)
 
+  // Fetch progress map for all active and upcoming projects
+  const activeIds = [
+    ...(workload.inProgress ? [workload.inProgress.id] : []),
+    ...workload.planned.map((p) => p.id),
+    ...upcomingEntries.map((u) => u.id),
+  ]
+  const progressMap = await getTendersProgressMap(activeIds)
+  const progressObj = Object.fromEntries(progressMap.entries())
+
   return (
     <div className="flex flex-col gap-6">
       <SetPageTotal value={`${totalActive} active project${totalActive !== 1 ? 's' : ''}`} />
@@ -36,6 +45,7 @@ export default async function SchedulingPage() {
         clients={clients}
         divisions={divisions}
         upcomingTenders={upcomingEntries}
+        progressMap={progressObj}
       />
     </div>
   )

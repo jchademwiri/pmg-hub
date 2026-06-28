@@ -31,6 +31,7 @@ interface ClientSummary {
 interface TimelineClientProps {
   entries: TenderScheduleEntry[]
   clients: ClientSummary[]
+  progressMap?: Record<string, { total: number; completed: number }>
 }
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
@@ -55,7 +56,7 @@ function daysBetween(a: string, b: string): number {
 
 // ── Timeline Client ───────────────────────────────────────────────────────────
 
-export function TimelineClient({ entries, clients }: TimelineClientProps) {
+export function TimelineClient({ entries, clients, progressMap = {} }: TimelineClientProps) {
   const router = useRouter()
   const [isPending, setIsPending] = React.useState<string | null>(null)
 
@@ -233,12 +234,13 @@ export function TimelineClient({ entries, clients }: TimelineClientProps) {
                         <div className="relative flex-1 cursor-help" style={{ height: '28px' }}>
                           {/* Main work bar */}
                           <div
-                            className={`absolute top-1 h-5 rounded-sm transition-all ${STATUS_COLORS[entry.status] ?? 'bg-muted'}`}
+                            className={`absolute top-1 h-5 rounded-sm transition-all ${STATUS_COLORS[entry.status] ?? 'bg-muted'} cursor-pointer hover:brightness-110 active:scale-[0.99]`}
                             style={{
                               left: `${(startOffset / totalDays) * 100}%`,
                               width: `${(workDays / totalDays) * 100}%`,
                               minWidth: '4px',
                             }}
+                            onClick={() => router.push(`/scheduling/${entry.id}`)}
                           />
 
                           {/* Buffer extension */}
@@ -262,26 +264,39 @@ export function TimelineClient({ entries, clients }: TimelineClientProps) {
                       </TooltipTrigger>
                       <TooltipContent className="p-3 max-w-xs flex flex-col gap-1.5 bg-popover text-popover-foreground border shadow-md">
                         <p className="font-semibold text-xs">{client?.name ?? 'Unknown Client'}</p>
-                        <div className="text-[11px] text-muted-foreground grid grid-cols-2 gap-x-4 gap-y-0.5">
-                          <span>Reference:</span>
-                          <span className="font-medium text-foreground text-right">{entry.tenderReference}</span>
-                          
-                          <span>Working Window:</span>
-                          <span className="font-medium text-foreground text-right">
-                            {formatDate(entry.startDate)} → {formatDate(entry.targetCompletionDate)}
-                          </span>
+                        {(() => {
+                          const progress = progressMap[entry.id] || { total: 0, completed: 0 };
+                          const percent = progress.total > 0 ? Math.round((progress.completed / progress.total) * 100) : 0;
+                          return (
+                            <div className="text-[11px] text-muted-foreground grid grid-cols-2 gap-x-4 gap-y-0.5">
+                              <span>Reference:</span>
+                              <span className="font-medium text-foreground text-right">{entry.tenderReference}</span>
+                              
+                              {progress.total > 0 && (
+                                <>
+                                  <span>Progress:</span>
+                                  <span className="font-medium text-emerald-500 text-right">{percent}% ({progress.completed}/{progress.total})</span>
+                                </>
+                              )}
 
-                          <span>Closing Date:</span>
-                          <span className="font-medium text-red-500 text-right">{formatDate(entry.closingDate)}</span>
+                              <span>Working Window:</span>
+                              <span className="font-medium text-foreground text-right">
+                                {formatDate(entry.startDate)} → {formatDate(entry.targetCompletionDate)}
+                              </span>
 
-                          <span>Effort:</span>
-                          <span className="font-medium text-foreground text-right">{workDays} days</span>
+                              <span>Closing Date:</span>
+                              <span className="font-medium text-red-500 text-right">{formatDate(entry.closingDate)}</span>
 
-                          <span>Buffer:</span>
-                          <span className={`font-medium text-right ${bufferDays < entry.bufferDays ? 'text-amber-500 font-semibold' : 'text-foreground'}`}>
-                            {bufferDays} days (req: {entry.bufferDays}d)
-                          </span>
-                        </div>
+                              <span>Effort:</span>
+                              <span className="font-medium text-foreground text-right">{workDays} days</span>
+
+                              <span>Buffer:</span>
+                              <span className={`font-medium text-right ${bufferDays < entry.bufferDays ? 'text-amber-500 font-semibold' : 'text-foreground'}`}>
+                                {bufferDays} days (req: {entry.bufferDays}d)
+                              </span>
+                            </div>
+                          );
+                        })()}
                       </TooltipContent>
                     </Tooltip>
 
