@@ -15,6 +15,7 @@ import {
   LogOut,
   ShieldCheck,
   X,
+  CalendarDays,
 } from 'lucide-react';
 import Link from 'next/link';
 
@@ -30,6 +31,7 @@ export function PortalShell({ client, children }: PortalShellProps) {
 
   const NAV_ITEMS = [
     { label: 'Dashboard', href: '/dashboard', icon: LayoutDashboard },
+    { label: 'Projects', href: '/projects', icon: CalendarDays },
     { label: 'Invoices', href: '/invoices', icon: FileText },
     { label: 'Quotes', href: '/quotes', icon: FileSpreadsheet },
     { label: 'Statements', href: '/statements', icon: Receipt },

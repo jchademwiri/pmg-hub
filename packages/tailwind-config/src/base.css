@@ -20,7 +20,12 @@
     @apply scheme-light dark:scheme-dark;
   }
 
-  button {
+  a,
+  button,
+  select,
+  input[type="submit"],
+  input[type="button"],
+  [role="button"] {
     @apply cursor-pointer;
   }
 }

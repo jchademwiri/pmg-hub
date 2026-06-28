@@ -223,9 +223,21 @@ export function TimelineClient({ entries, clients, progressMap = {} }: TimelineC
                           <Badge variant="destructive" className="shrink-0 text-xs">Urgent</Badge>
                         )}
                       </div>
-                      <p className="truncate text-[11px] text-muted-foreground leading-tight">
-                        {entry.tenderReference}
-                      </p>
+                      <div className="flex items-center gap-1.5 mt-0.5">
+                        <p className="truncate text-[11px] text-muted-foreground leading-tight flex-1">
+                          {entry.tenderReference}
+                        </p>
+                        {(() => {
+                          const progress = progressMap[entry.id] || { total: 0, completed: 0 };
+                          const percent = progress.total > 0 ? Math.round((progress.completed / progress.total) * 100) : 0;
+                          if (progress.total === 0) return null;
+                          return (
+                            <span className="text-[9px] font-semibold text-emerald-600 dark:text-emerald-400 bg-emerald-500/10 px-1 rounded shrink-0">
+                              {percent}%
+                            </span>
+                          );
+                        })()}
+                      </div>
                     </div>
 
                     {/* Bar area with Tooltip */}
@@ -234,14 +246,25 @@ export function TimelineClient({ entries, clients, progressMap = {} }: TimelineC
                         <div className="relative flex-1 cursor-help" style={{ height: '28px' }}>
                           {/* Main work bar */}
                           <div
-                            className={`absolute top-1 h-5 rounded-sm transition-all ${STATUS_COLORS[entry.status] ?? 'bg-muted'} cursor-pointer hover:brightness-110 active:scale-[0.99]`}
+                            className={`absolute top-1 h-5 rounded-sm transition-all ${STATUS_COLORS[entry.status] ?? 'bg-muted'} cursor-pointer hover:brightness-110 active:scale-[0.99] flex items-center justify-end pr-1`}
                             style={{
                               left: `${(startOffset / totalDays) * 100}%`,
                               width: `${(workDays / totalDays) * 100}%`,
                               minWidth: '4px',
                             }}
                             onClick={() => router.push(`/scheduling/${entry.id}`)}
-                          />
+                          >
+                            {(() => {
+                              const progress = progressMap[entry.id] || { total: 0, completed: 0 };
+                              const percent = progress.total > 0 ? Math.round((progress.completed / progress.total) * 100) : 0;
+                              if (percent === 0) return null;
+                              return (
+                                <span className="text-[9px] font-bold text-white/90 select-none hidden sm:inline">
+                                  {percent}%
+                                </span>
+                              );
+                            })()}
+                          </div>
 
                           {/* Buffer extension */}
                           {bufferDays > 0 && entry.status !== 'submitted' && (

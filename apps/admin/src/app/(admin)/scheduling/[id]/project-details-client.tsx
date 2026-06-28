@@ -571,17 +571,23 @@ export function ProjectDetailsClient({
               {/* Dates Timeline */}
               <div className="space-y-3">
                 <div className="flex flex-col gap-1">
-                  <span className="text-muted-foreground font-medium">Working Window</span>
+                  <span className="text-muted-foreground font-medium">Project Start Date</span>
                   <div className="flex items-center gap-1.5 text-foreground font-semibold">
                     <Calendar className="size-3.5 text-muted-foreground" />
                     <span>{formatDate(project.startDate)}</span>
-                    <span className="text-muted-foreground font-normal">to</span>
+                  </div>
+                </div>
+
+                <div className="flex flex-col gap-1 pt-1 border-t border-border/10">
+                  <span className="text-muted-foreground font-medium">Target Completion Date (Internal)</span>
+                  <div className="flex items-center gap-1.5 text-emerald-600 dark:text-emerald-400 font-semibold">
+                    <Calendar className="size-3.5 text-muted-foreground" />
                     <span>{formatDate(project.targetCompletionDate)}</span>
                   </div>
                 </div>
 
                 <div className="flex flex-col gap-1 pt-1 border-t border-border/10">
-                  <span className="text-muted-foreground font-medium">Closing Date (Deadline)</span>
+                  <span className="text-muted-foreground font-medium">Tender Closing Date (Submission)</span>
                   <div className="flex items-center gap-1.5 text-red-500 dark:text-red-400 font-semibold">
                     <Calendar className="size-3.5" />
                     <span>{formatDate(project.closingDate)}</span>
