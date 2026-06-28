@@ -103,6 +103,10 @@ export const quotations = pgTable(
     reference: text("reference"),
     notes: text("notes"),
     terms: text("terms"),
+    acceptedAt: timestamp("accepted_at", { withTimezone: true }),
+    declinedAt: timestamp("declined_at", { withTimezone: true }),
+    declineReason: text("decline_reason"),
+    clientActionBy: text("client_action_by"),
     // created_by stores session.user.id which is text (not uuid) - matches Better Auth user table
     createdBy: text("created_by").notNull(),
     createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
