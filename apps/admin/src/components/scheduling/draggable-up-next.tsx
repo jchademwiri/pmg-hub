@@ -1,10 +1,17 @@
 import * as React from 'react';
 import type { TenderScheduleEntry } from '@pmg/db';
-import { CalendarDays, ListOrdered, GripVertical, Loader2 } from 'lucide-react';
+import { CalendarDays, ListOrdered, GripVertical, Loader2, ChevronDown } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { TenderRiskBadge } from '@/components/scheduling/tender-risk-badge';
+import { TenderStatusBadge, getNextStatuses } from '@/components/scheduling/tender-status-badge';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
 import { reorderTendersAction } from '@/app/actions/tender-schedule';
 import { toast } from 'sonner';
 
@@ -193,16 +200,30 @@ export function DraggableUpNext({ tenders, clients, onStatusChange }: DraggableU
               </div>
               <div className="ml-3 flex shrink-0 items-center gap-2">
                 <TenderRiskBadge tender={tender} />
-                {tender.status === 'planned' && (
-                  <Button
-                    size="sm"
-                    variant="outline"
-                    disabled={isPending}
-                    onClick={() => onStatusChange(tender.id, 'in_progress')}
-                  >
-                    Start
-                  </Button>
-                )}
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <Button
+                      variant="ghost"
+                      size="xs"
+                      className="h-auto p-1 font-normal hover:bg-muted/50 gap-1"
+                      disabled={isPending}
+                    >
+                      <TenderStatusBadge status={tender.status} />
+                      <ChevronDown className="size-3 text-muted-foreground" />
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="end">
+                    {getNextStatuses(tender.status).map((opt) => (
+                      <DropdownMenuItem
+                        key={opt.value}
+                        onClick={() => onStatusChange(tender.id, opt.value)}
+                        className="text-xs"
+                      >
+                        {opt.label}
+                      </DropdownMenuItem>
+                    ))}
+                  </DropdownMenuContent>
+                </DropdownMenu>
               </div>
             </div>
           );

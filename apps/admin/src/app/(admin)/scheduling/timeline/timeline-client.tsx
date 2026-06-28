@@ -7,44 +7,17 @@ import type { TenderScheduleEntry } from '@pmg/db'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
-import { TenderStatusBadge } from '@/components/scheduling/tender-status-badge'
+import { TenderStatusBadge, getNextStatuses } from '@/components/scheduling/tender-status-badge'
 import { TenderRiskBadge } from '@/components/scheduling/tender-risk-badge'
+import { transitionTenderStatusAction } from '@/app/actions/tender-schedule'
+import { toast } from 'sonner'
+import { Tooltip, TooltipTrigger, TooltipContent, TooltipProvider } from '@/components/ui/tooltip'
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu'
-import { transitionTenderStatusAction } from '@/app/actions/tender-schedule'
-import { toast } from 'sonner'
-import { Tooltip, TooltipTrigger, TooltipContent, TooltipProvider } from '@/components/ui/tooltip'
-
-const STATUS_TRANSITIONS: Record<string, { value: string; label: string }[]> = {
-  planned: [
-    { value: 'in_progress', label: 'Start Work' },
-    { value: 'cancelled', label: 'Cancel' },
-  ],
-  in_progress: [
-    { value: 'completed', label: 'Complete' },
-    { value: 'cancelled', label: 'Cancel' },
-    { value: 'planned', label: 'Re-plan' },
-  ],
-  completed: [
-    { value: 'submitted', label: 'Submit' },
-    { value: 'cancelled', label: 'Cancel' },
-    { value: 'planned', label: 'Re-plan' },
-  ],
-  submitted: [
-    { value: 'planned', label: 'Re-plan' },
-  ],
-  cancelled: [
-    { value: 'planned', label: 'Reinstate' },
-  ],
-}
-
-function getNextStatuses(status: string) {
-  return STATUS_TRANSITIONS[status] ?? []
-}
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 
@@ -186,8 +159,8 @@ export function TimelineClient({ entries, clients }: TimelineClientProps) {
         </div>
       </CardHeader>
       <CardContent>
-        <div className="w-full overflow-hidden">
-          <div className="w-full">
+        <div className="w-full overflow-x-auto scrollbar-thin scrollbar-thumb-muted-foreground/20 relative group">
+          <div className="relative pb-4" style={{ minWidth: `${Math.max(totalDays * 8, 800)}px` }}>
             {/* Week headers */}
             <div className="relative mb-1 flex h-6 w-full">
               {weekMarkers.map((marker, i) => (
@@ -362,6 +335,8 @@ export function TimelineClient({ entries, clients }: TimelineClientProps) {
               ))}
             </div>
           </div>
+          {/* Subtle fade gradient overlay on the right edge */}
+          <div className="absolute right-0 top-0 bottom-0 w-8 bg-gradient-to-l from-card to-transparent pointer-events-none opacity-0 group-hover:opacity-100 transition-opacity" />
         </div>
       </CardContent>
     </Card>

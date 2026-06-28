@@ -21,13 +21,6 @@ export default async function TimelinePage() {
     <div className="flex flex-col gap-6">
       <SetPageTotal value={`${activeEntries.length} active`} />
 
-      <div>
-        <h2 className="text-lg font-semibold">Timeline</h2>
-        <p className="text-sm text-muted-foreground">
-          Visual timeline of tender schedules — bars show your working window, markers show closing dates
-        </p>
-      </div>
-
       <TimelineClient entries={activeEntries} clients={clients} />
     </div>
   )

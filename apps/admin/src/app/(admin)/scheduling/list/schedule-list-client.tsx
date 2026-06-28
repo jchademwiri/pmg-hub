@@ -36,33 +36,10 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { bulkArchiveTenders, bulkDeleteTenders } from '@/app/actions/tender-schedule-bulk';
-import { TenderStatusBadge } from '@/components/scheduling/tender-status-badge';
+import { TenderStatusBadge, getNextStatuses } from '@/components/scheduling/tender-status-badge';
 import { TenderRiskBadge } from '@/components/scheduling/tender-risk-badge';
 import { ConfirmDialog } from '@/components/ui/confirm-dialog';
 import { TenderEditDialog } from '@/components/scheduling/tender-edit-dialog';
-
-const STATUS_TRANSITIONS: Record<string, { value: string; label: string }[]> = {
-  planned: [
-    { value: 'in_progress', label: 'Start Work' },
-    { value: 'cancelled', label: 'Cancel' },
-  ],
-  in_progress: [
-    { value: 'completed', label: 'Complete' },
-    { value: 'cancelled', label: 'Cancel' },
-    { value: 'planned', label: 'Re-plan' },
-  ],
-  completed: [
-    { value: 'submitted', label: 'Submit' },
-    { value: 'cancelled', label: 'Cancel' },
-    { value: 'planned', label: 'Re-plan' },
-  ],
-  submitted: [{ value: 'planned', label: 'Re-plan' }],
-  cancelled: [{ value: 'planned', label: 'Reinstate' }],
-};
-
-function getNextStatuses(status: string) {
-  return STATUS_TRANSITIONS[status] ?? [];
-}
 
 interface ClientSummary {
   id: string;

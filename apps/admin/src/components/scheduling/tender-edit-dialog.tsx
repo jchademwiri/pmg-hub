@@ -2,7 +2,7 @@
 
 import * as React from 'react';
 import { useRouter } from 'next/navigation';
-import { Pencil } from 'lucide-react';
+import { Pencil, CalendarClock } from 'lucide-react';
 import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
 import {
@@ -23,6 +23,7 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import type { TenderScheduleEntry } from '@pmg/db';
 import {
   updateTenderScheduleEntry,
@@ -53,6 +54,16 @@ interface TenderEditDialogProps {
   showTrigger?: boolean;
 }
 
+// ── Helpers ───────────────────────────────────────────────────────────────────
+
+function formatDate(dateStr: string): string {
+  return new Date(dateStr).toLocaleDateString('en-GB', {
+    day: 'numeric',
+    month: 'short',
+    year: 'numeric',
+  });
+}
+
 // ── Component ─────────────────────────────────────────────────────────────────
 
 export function TenderEditDialog({
@@ -67,9 +78,6 @@ export function TenderEditDialog({
   const [isPending, startTransition] = React.useTransition();
   const [errorMessage, setErrorMessage] = React.useState<string | null>(null);
   const formRef = React.useRef<HTMLFormElement>(null);
-
-  // Section state
-  const [activeSection, setActiveSection] = React.useState<'details' | 'tracking'>('details');
 
   // Client/division selection state (survives React re-renders)
   const [editClientId, setEditClientId] = React.useState(tender.clientId);
@@ -116,7 +124,7 @@ export function TenderEditDialog({
         }
       }
 
-      toast.success('Tender updated');
+      toast.success('Project updated');
       setOpen(false);
       onClose?.();
       router.refresh();
@@ -135,193 +143,198 @@ export function TenderEditDialog({
         <DialogTrigger asChild>
           <Button variant="ghost" size="icon" className="size-7">
             <Pencil className="size-3.5" />
-            <span className="sr-only">Edit tender</span>
+            <span className="sr-only">Edit project</span>
           </Button>
         </DialogTrigger>
       )}
       <DialogContent className="sm:max-w-[600px] max-h-[80vh] overflow-y-auto">
         <DialogHeader>
           <div className="flex items-center gap-2">
-            <DialogTitle>Edit Tender</DialogTitle>
+            <DialogTitle>Edit Project</DialogTitle>
             <TenderStatusBadge status={tender.status} />
           </div>
           <DialogDescription>
-            Update tender details, tracking information, and outcome.
+            Update project details, tracking information, and outcome.
           </DialogDescription>
         </DialogHeader>
 
-        {/* Section tabs */}
-        <div className="flex gap-1 border-b border-border pb-1">
-          <button
-            type="button"
-            className={`px-3 py-1.5 text-xs font-medium rounded-t transition-colors ${
-              activeSection === 'details'
-                ? 'bg-muted text-foreground border border-border border-b-background -mb-px'
-                : 'text-muted-foreground hover:text-foreground'
-            }`}
-            onClick={() => setActiveSection('details')}
-          >
-            Details
-          </button>
-          <button
-            type="button"
-            className={`px-3 py-1.5 text-xs font-medium rounded-t transition-colors ${
-              activeSection === 'tracking'
-                ? 'bg-muted text-foreground border border-border border-b-background -mb-px'
-                : 'text-muted-foreground hover:text-foreground'
-            }`}
-            onClick={() => setActiveSection('tracking')}
-          >
-            Tracking & Outcome
-          </button>
-        </div>
+        <Tabs defaultValue="details" className="w-full">
+          <TabsList className="grid w-full grid-cols-2 mb-4">
+            <TabsTrigger value="details" className="text-xs">Details</TabsTrigger>
+            <TabsTrigger value="tracking" className="text-xs">Tracking & Outcome</TabsTrigger>
+          </TabsList>
 
-        <form ref={formRef} onSubmit={handleSubmit} className="flex flex-col gap-4 pt-2">
-          {activeSection === 'details' && (
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              {/* Client selection */}
-              <Field>
-                <FieldLabel htmlFor="edit-client">
-                  Client <span className="text-destructive">*</span>
-                </FieldLabel>
-                <Select
-                  required
-                  defaultValue={editClientId}
-                  onValueChange={(value) => setEditClientId(value)}
-                >
-                  <SelectTrigger id="edit-client" className="text-sm h-9">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {clients.map((c) => (
-                      <SelectItem key={c.id} value={c.id} className="text-xs">
-                        {c.name}
+          <form ref={formRef} onSubmit={handleSubmit} className="flex flex-col gap-4">
+            <TabsContent value="details" className="space-y-4 outline-none">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                {/* Client selection */}
+                <Field>
+                  <FieldLabel htmlFor="edit-client">
+                    Client <span className="text-destructive">*</span>
+                  </FieldLabel>
+                  <Select
+                    required
+                    defaultValue={editClientId}
+                    onValueChange={(value) => setEditClientId(value)}
+                  >
+                    <SelectTrigger id="edit-client" className="text-sm h-9">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {clients.map((c) => (
+                        <SelectItem key={c.id} value={c.id} className="text-xs">
+                          {c.name}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  <input id="edit-client-hidden" type="hidden" name="clientId" value={editClientId} />
+                </Field>
+
+                {/* Tender Reference */}
+                <Field>
+                  <FieldLabel htmlFor="edit-ref">
+                    Project Reference <span className="text-destructive">*</span>
+                  </FieldLabel>
+                  <Input
+                    id="edit-ref"
+                    name="tenderReference"
+                    type="text"
+                    required
+                    defaultValue={tender.tenderReference}
+                    disabled={isPending}
+                  />
+                </Field>
+
+                {/* Closing Date */}
+                <Field>
+                  <FieldLabel htmlFor="edit-closing">
+                    Closing Date <span className="text-destructive">*</span>
+                  </FieldLabel>
+                  <Input
+                    id="edit-closing"
+                    name="closingDate"
+                    type="date"
+                    required
+                    defaultValue={tender.closingDate}
+                    disabled={isPending}
+                  />
+                </Field>
+
+                {/* Effort Days */}
+                <Field>
+                  <FieldLabel htmlFor="edit-effort">
+                    Effort (days) <span className="text-destructive">*</span>
+                  </FieldLabel>
+                  <Input
+                    id="edit-effort"
+                    name="effortDays"
+                    type="number"
+                    min="1"
+                    required
+                    defaultValue={tender.effortDays}
+                    disabled={isPending}
+                  />
+                </Field>
+
+                {/* Priority */}
+                <Field>
+                  <FieldLabel htmlFor="edit-priority">Priority</FieldLabel>
+                  <Select name="priority" defaultValue={tender.priority}>
+                    <SelectTrigger id="edit-priority" className="text-sm h-9">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="low" className="text-xs">
+                        Low
                       </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-                <input id="edit-client-hidden" type="hidden" name="clientId" value={editClientId} />
-              </Field>
-
-              {/* Tender Reference */}
-              <Field>
-                <FieldLabel htmlFor="edit-ref">
-                  Tender Reference <span className="text-destructive">*</span>
-                </FieldLabel>
-                <Input
-                  id="edit-ref"
-                  name="tenderReference"
-                  type="text"
-                  required
-                  defaultValue={tender.tenderReference}
-                  disabled={isPending}
-                />
-              </Field>
-
-              {/* Closing Date */}
-              <Field>
-                <FieldLabel htmlFor="edit-closing">
-                  Closing Date <span className="text-destructive">*</span>
-                </FieldLabel>
-                <Input
-                  id="edit-closing"
-                  name="closingDate"
-                  type="date"
-                  required
-                  defaultValue={tender.closingDate}
-                  disabled={isPending}
-                />
-              </Field>
-
-              {/* Effort Days */}
-              <Field>
-                <FieldLabel htmlFor="edit-effort">
-                  Effort (days) <span className="text-destructive">*</span>
-                </FieldLabel>
-                <Input
-                  id="edit-effort"
-                  name="effortDays"
-                  type="number"
-                  min="1"
-                  required
-                  defaultValue={tender.effortDays}
-                  disabled={isPending}
-                />
-              </Field>
-
-              {/* Priority */}
-              <Field>
-                <FieldLabel htmlFor="edit-priority">Priority</FieldLabel>
-                <Select name="priority" defaultValue={tender.priority}>
-                  <SelectTrigger id="edit-priority" className="text-sm h-9">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="low" className="text-xs">
-                      Low
-                    </SelectItem>
-                    <SelectItem value="normal" className="text-xs">
-                      Normal
-                    </SelectItem>
-                    <SelectItem value="high" className="text-xs">
-                      High
-                    </SelectItem>
-                    <SelectItem value="urgent" className="text-xs">
-                      Urgent
-                    </SelectItem>
-                  </SelectContent>
-                </Select>
-              </Field>
-
-              {/* Division */}
-              <Field>
-                <FieldLabel htmlFor="edit-division">Division</FieldLabel>
-                <Select
-                  defaultValue={editDivisionId}
-                  onValueChange={(value) => setEditDivisionId(value)}
-                >
-                  <SelectTrigger id="edit-division" className="text-sm h-9">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="__none__" className="text-xs text-muted-foreground">
-                      Default division
-                    </SelectItem>
-                    {divisions.map((d) => (
-                      <SelectItem key={d.id} value={d.id} className="text-xs">
-                        {d.name}
+                      <SelectItem value="normal" className="text-xs">
+                        Normal
                       </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-                <input
-                  id="edit-division-hidden"
-                  type="hidden"
-                  name="divisionId"
-                  value={editDivisionId}
-                />
-              </Field>
+                      <SelectItem value="high" className="text-xs">
+                        High
+                      </SelectItem>
+                      <SelectItem value="urgent" className="text-xs">
+                        Urgent
+                      </SelectItem>
+                    </SelectContent>
+                  </Select>
+                </Field>
 
-              {/* Buffer Days — warning threshold only */}
-              <Field>
-                <FieldLabel htmlFor="edit-buffer">Buffer Days</FieldLabel>
-                <Input
-                  id="edit-buffer"
-                  name="bufferDays"
-                  type="number"
-                  min="0"
-                  defaultValue={tender.bufferDays}
-                  disabled={isPending}
-                />
-                <p className="text-xs text-muted-foreground mt-1">
-                  Warning threshold — not used in date calculation
-                </p>
-              </Field>
-            </div>
-          )}
+                {/* Division */}
+                <Field>
+                  <FieldLabel htmlFor="edit-division">Division</FieldLabel>
+                  <Select
+                    defaultValue={editDivisionId}
+                    onValueChange={(value) => setEditDivisionId(value)}
+                  >
+                    <SelectTrigger id="edit-division" className="text-sm h-9">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="__none__" className="text-xs text-muted-foreground">
+                        Default division
+                      </SelectItem>
+                      {divisions.map((d) => (
+                        <SelectItem key={d.id} value={d.id} className="text-xs">
+                          {d.name}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  <input
+                    id="edit-division-hidden"
+                    type="hidden"
+                    name="divisionId"
+                    value={editDivisionId}
+                  />
+                </Field>
 
-          {activeSection === 'tracking' && (
-            <div className="flex flex-col gap-4">
+                {/* Buffer Days — warning threshold only */}
+                <Field className="sm:col-span-2">
+                  <FieldLabel htmlFor="edit-buffer">Buffer Days</FieldLabel>
+                  <Input
+                    id="edit-buffer"
+                    name="bufferDays"
+                    type="number"
+                    min="0"
+                    defaultValue={tender.bufferDays}
+                    disabled={isPending}
+                  />
+                  <p className="text-xs text-muted-foreground mt-1">
+                    Warning threshold — not used in date calculation
+                  </p>
+                </Field>
+
+                {/* Calculated Schedule Preview */}
+                <div className="sm:col-span-2 rounded-md border border-dashed border-border bg-muted/30 px-4 py-3">
+                  <div className="flex items-center gap-2 mb-2">
+                    <CalendarClock className="size-3.5 text-muted-foreground" />
+                    <p className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wide">
+                      Calculated Schedule Preview
+                    </p>
+                  </div>
+                  <div className="flex flex-wrap items-center gap-x-6 gap-y-2 text-xs">
+                    <div>
+                      <p className="text-[9px] text-muted-foreground uppercase tracking-wide">Start Date</p>
+                      <p className="font-medium">{formatDate(tender.startDate)}</p>
+                    </div>
+                    <span className="text-muted-foreground/40">→</span>
+                    <div>
+                      <p className="text-[9px] text-muted-foreground uppercase tracking-wide">Target Completion</p>
+                      <p className="font-medium">{formatDate(tender.targetCompletionDate)}</p>
+                    </div>
+                    <span className="text-muted-foreground/40">→</span>
+                    <div>
+                      <p className="text-[9px] text-muted-foreground uppercase tracking-wide">Closing Date</p>
+                      <p className="font-medium text-muted-foreground">{formatDate(tender.closingDate)}</p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </TabsContent>
+
+            <TabsContent value="tracking" className="space-y-4 outline-none">
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 {/* Status selection */}
                 <Field>
@@ -372,7 +385,7 @@ export function TenderEditDialog({
                 </Field>
 
                 {/* Outcome */}
-                <Field>
+                <Field className="sm:col-span-2">
                   <FieldLabel htmlFor="edit-outcome">Outcome</FieldLabel>
                   <Select
                     name="outcome"
@@ -425,29 +438,29 @@ export function TenderEditDialog({
                   placeholder="Issues delaying progress..."
                 />
               </Field>
+            </TabsContent>
+
+            {errorMessage && <p className="text-sm text-destructive">{errorMessage}</p>}
+
+            <div className="flex items-center justify-end gap-3 border-t border-border/50 pt-4">
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                onClick={() => {
+                  setOpen(false);
+                  onClose?.();
+                }}
+                disabled={isPending}
+              >
+                Cancel
+              </Button>
+              <Button type="submit" disabled={isPending} size="sm">
+                {isPending ? 'Saving…' : 'Save Changes'}
+              </Button>
             </div>
-          )}
-
-          {errorMessage && <p className="text-sm text-destructive">{errorMessage}</p>}
-
-          <div className="flex items-center justify-end gap-3 border-t border-border/50 pt-4">
-            <Button
-              type="button"
-              variant="outline"
-              size="sm"
-              onClick={() => {
-                setOpen(false);
-                onClose?.();
-              }}
-              disabled={isPending}
-            >
-              Cancel
-            </Button>
-            <Button type="submit" disabled={isPending} size="sm">
-              {isPending ? 'Saving…' : 'Save Changes'}
-            </Button>
-          </div>
-        </form>
+          </form>
+        </Tabs>
       </DialogContent>
     </Dialog>
   );

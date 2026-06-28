@@ -2,7 +2,7 @@
 
 import * as React from 'react';
 import { useRouter } from 'next/navigation';
-import { CalendarClock, AlertTriangle, ListOrdered, Plus, Flame, Clock } from 'lucide-react';
+import { CalendarClock, AlertTriangle, ListOrdered, Plus, Flame, Clock, ChevronDown } from 'lucide-react';
 import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -11,6 +11,13 @@ import { transitionTenderStatusAction } from '@/app/actions/tender-schedule';
 import { TenderFormDialog } from '@/components/scheduling/tender-form-dialog';
 import { DraggableUpNext } from '@/components/scheduling/draggable-up-next';
 import { TenderRiskBadge } from '@/components/scheduling/tender-risk-badge';
+import { TenderStatusBadge } from '@/components/scheduling/tender-status-badge';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 
@@ -40,6 +47,7 @@ interface SchedulingOverviewClientProps {
   overlaps: OverlapWarning[];
   clients: ClientSummary[];
   divisions: DivisionSummary[];
+  upcomingTenders: TenderScheduleEntry[];
 }
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
@@ -187,13 +195,22 @@ function CurrentWorkloadCard({
             >
               Mark Complete
             </Button>
-            <Button
-              size="sm"
-              variant="ghost"
-              onClick={() => onStatusChange(tender.id, 'cancelled')}
-            >
-              Cancel
-            </Button>
+            
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="outline" size="sm" className="gap-1">
+                  Other Actions <ChevronDown className="size-3.5 text-muted-foreground" />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="start">
+                <DropdownMenuItem onClick={() => onStatusChange(tender.id, 'cancelled')} className="text-xs text-red-600 dark:text-red-400">
+                  Cancel Project
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={() => onStatusChange(tender.id, 'planned')} className="text-xs">
+                  Re-plan (Pause)
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
           </div>
         </div>
       </CardContent>
@@ -346,6 +363,7 @@ export function SchedulingOverviewClient({
   overlaps,
   clients,
   divisions,
+  upcomingTenders,
 }: SchedulingOverviewClientProps) {
   const router = useRouter();
   const [formOpen, setFormOpen] = React.useState(false);
@@ -400,6 +418,48 @@ export function SchedulingOverviewClient({
 
       {/* Compact warnings */}
       <WarningsPanel atRiskTenders={atRiskTenders} overlaps={overlaps} />
+
+      {/* Upcoming Deadlines Widget */}
+      <Card size="sm">
+        <CardHeader className="pb-2">
+          <div className="flex items-center gap-2">
+            <CalendarClock className="size-4 text-blue-500" />
+            <CardTitle>Upcoming Deadlines</CardTitle>
+          </div>
+        </CardHeader>
+        <CardContent className="pt-0">
+          {upcomingTenders.length === 0 ? (
+            <p className="text-xs text-muted-foreground py-4 text-center">No upcoming deadlines.</p>
+          ) : (
+            <ul className="flex flex-col divide-y divide-border/50">
+              {upcomingTenders.map((t) => {
+                const client = clientMap.get(t.clientId);
+                return (
+                  <li key={t.id} className="flex items-center justify-between py-2.5 first:pt-0 last:pb-0">
+                    <div className="min-w-0 flex-1">
+                      <p className="text-xs font-medium truncate">{t.tenderReference}</p>
+                      {client && (
+                        <p className="text-[10px] text-muted-foreground truncate mt-0.5">
+                          {client.name}
+                        </p>
+                      )}
+                    </div>
+                    <div className="flex items-center gap-4 shrink-0 text-right">
+                      <div className="text-right">
+                        <p className="text-[11px] font-medium">Closes {formatDate(t.closingDate)}</p>
+                        <p className="text-[10px] text-muted-foreground mt-0.5">
+                          Target: {formatDate(t.targetCompletionDate)}
+                        </p>
+                      </div>
+                      <TenderStatusBadge status={t.status} />
+                    </div>
+                  </li>
+                );
+              })}
+            </ul>
+          )}
+        </CardContent>
+      </Card>
 
       {/* Tender Form Dialog */}
       <TenderFormDialog

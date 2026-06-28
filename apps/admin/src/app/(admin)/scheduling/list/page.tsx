@@ -22,21 +22,6 @@ export default async function ScheduleListPage() {
     <div className="flex flex-col gap-6">
       <SetPageTotal value={`${activeEntriesCount} total entries`} />
 
-      <div className="flex items-center justify-between">
-        <div>
-          <h2 className="text-lg font-semibold">Schedule List</h2>
-          <p className="text-sm text-muted-foreground">
-            Full list of all tender schedule entries with filtering and search
-          </p>
-        </div>
-        <Button asChild size="sm">
-          <Link href="/scheduling">
-            <ArrowLeft className="size-4" />
-            Back to Overview
-          </Link>
-        </Button>
-      </div>
-
       <ScheduleListClient entries={entries} clients={clients} divisions={divisions} />
     </div>
   );
