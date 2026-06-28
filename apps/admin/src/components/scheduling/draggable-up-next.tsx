@@ -1,33 +1,48 @@
-'use client'
+import * as React from 'react';
+import type { TenderScheduleEntry } from '@pmg/db';
+import { CalendarDays, ListOrdered, GripVertical, Loader2 } from 'lucide-react';
+import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { TenderRiskBadge } from '@/components/scheduling/tender-risk-badge';
+import { reorderTendersAction } from '@/app/actions/tender-schedule';
+import { toast } from 'sonner';
 
-import * as React from 'react'
-import { useRouter } from 'next/navigation'
-import { GripVertical, ListOrdered } from 'lucide-react'
-import { toast } from 'sonner'
-import type { TenderScheduleEntry } from '@pmg/db'
-import { Button } from '@/components/ui/button'
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
-import { TenderRiskBadge } from '@/components/scheduling/tender-risk-badge'
-import { reorderTenderQueue } from '@/app/actions/tender-schedule-reorder'
-
-interface DraggableUpNextProps {
-  tenders: TenderScheduleEntry[]
-  onStatusChange: (id: string, status: string) => Promise<string | undefined>
+interface ClientSummary {
+  id: string;
+  name: string;
+  businessName: string | null;
+  email: string | null;
 }
 
-export function DraggableUpNext({ tenders, onStatusChange }: DraggableUpNextProps) {
-  const router = useRouter()
-  const [items, setItems] = React.useState(tenders)
-  const [dragIndex, setDragIndex] = React.useState<number | null>(null)
-  const [isReordering, setIsReordering] = React.useState(false)
-  const dragOverIndexRef = React.useRef<number | null>(null)
+interface DraggableUpNextProps {
+  tenders: TenderScheduleEntry[];
+  clients: ClientSummary[];
+  onStatusChange: (id: string, status: string) => Promise<string | undefined>;
+}
 
-  // Keep items in sync when props change
+function formatDate(date: string): string {
+  return new Date(date).toLocaleDateString('en-GB', { day: 'numeric', month: 'short' });
+}
+
+function daysBetween(a: string, b: string): number {
+  const start = new Date(a);
+  const end = new Date(b);
+  return Math.ceil((end.getTime() - start.getTime()) / (1000 * 60 * 60 * 24));
+}
+
+export function DraggableUpNext({ tenders, clients, onStatusChange }: DraggableUpNextProps) {
+  const clientMap = new Map(clients.map((c) => [c.id, c]));
+  const [items, setItems] = React.useState(tenders);
+  const [draggedIndex, setDraggedIndex] = React.useState<number | null>(null);
+  const [dragOverIndex, setDragOverIndex] = React.useState<number | null>(null);
+  const [isPending, startTransition] = React.useTransition();
+
   React.useEffect(() => {
-    setItems(tenders)
-  }, [tenders])
+    setItems(tenders);
+  }, [tenders]);
 
-  if (items.length === 0) {
+  if (tenders.length === 0) {
     return (
       <Card size="sm">
         <CardHeader>
@@ -39,107 +54,150 @@ export function DraggableUpNext({ tenders, onStatusChange }: DraggableUpNextProp
         <CardContent>
           <div className="flex flex-col items-center gap-2 py-6 text-center">
             <p className="text-sm text-muted-foreground">No upcoming tenders</p>
-            <p className="text-xs text-muted-foreground">Add a new tender to build your queue.</p>
+            <p className="text-xs text-muted-foreground">
+              Add a tender to build the automatic queue.
+            </p>
           </div>
         </CardContent>
       </Card>
-    )
+    );
   }
 
-  async function handleDragEnd() {
-    if (dragIndex === null || dragOverIndexRef.current === null) return
-    if (dragIndex === dragOverIndexRef.current) {
-      setDragIndex(null)
-      return
+  const handleDragStart = (e: React.DragEvent, index: number) => {
+    setDraggedIndex(index);
+    e.dataTransfer.effectAllowed = 'move';
+  };
+
+  const handleDragOver = (e: React.DragEvent, index: number) => {
+    e.preventDefault();
+    if (draggedIndex === null || draggedIndex === index) return;
+    setDragOverIndex(index);
+  };
+
+  const handleDragEnd = () => {
+    setDraggedIndex(null);
+    setDragOverIndex(null);
+  };
+
+  const handleDrop = async (e: React.DragEvent, dropIndex: number) => {
+    e.preventDefault();
+    if (draggedIndex === null || draggedIndex === dropIndex) return;
+
+    const newItems = [...items];
+    const [draggedItem] = newItems.splice(draggedIndex, 1);
+    if (draggedItem) {
+      newItems.splice(dropIndex, 0, draggedItem);
     }
 
-    const newItems = [...items]
-    const [moved] = newItems.splice(dragIndex, 1)
-    newItems.splice(dragOverIndexRef.current, 0, moved)
-    setItems(newItems)
-    setDragIndex(null)
+    setItems(newItems);
+    setDraggedIndex(null);
+    setDragOverIndex(null);
 
-    // Persist the new order
-    setIsReordering(true)
-    try {
-      const result = await reorderTenderQueue(newItems.map((i) => i.id))
-      if (result.error) {
-        toast.error(result.error)
-        setItems(tenders) // revert on error
+    startTransition(async () => {
+      const ids = newItems.map((item) => item.id);
+      const res = await reorderTendersAction(ids);
+      if (res.error) {
+        toast.error(res.error);
+        setItems(tenders); // revert on error
       } else {
-        router.refresh()
+        toast.success('Queue reordered');
       }
-    } finally {
-      setIsReordering(false)
-    }
-  }
+    });
+  };
 
   return (
-    <Card size="sm" className={isReordering ? 'opacity-70' : ''}>
+    <Card size="sm" className="relative">
+      {isPending && (
+        <div className="absolute inset-0 z-10 flex items-center justify-center bg-background/50 backdrop-blur-[1px] rounded-lg">
+          <div className="flex items-center gap-2 rounded-md border bg-popover px-3 py-2 shadow-md">
+            <Loader2 className="size-4 animate-spin text-primary" />
+            <span className="text-xs font-medium">Saving queue order…</span>
+          </div>
+        </div>
+      )}
+
       <CardHeader>
         <div className="flex items-center gap-2">
           <ListOrdered className="size-4 text-muted-foreground" />
-          <CardTitle>Up Next ({items.length})</CardTitle>
+          <CardTitle>Up Next ({tenders.length})</CardTitle>
         </div>
       </CardHeader>
-      <CardContent className="flex flex-col gap-0">
+      <CardContent className="flex flex-col gap-0 select-none">
         {items.map((tender, index) => {
-          const startOverdue =
-            tender.status === 'planned' && new Date(tender.startDate) < new Date()
-          const isDragging = dragIndex === index
+          const client = clientMap.get(tender.clientId);
+          const bufferGap = daysBetween(tender.targetCompletionDate, tender.closingDate);
+          const daysToClose = daysBetween(
+            new Date().toISOString().split('T')[0],
+            tender.closingDate,
+          );
+
+          const isDragging = draggedIndex === index;
+          const isDragOver = dragOverIndex === index;
 
           return (
             <div
               key={tender.id}
-              draggable
-              onDragStart={(e) => {
-                setDragIndex(index)
-                e.dataTransfer.effectAllowed = 'move'
-                e.dataTransfer.setData('text/plain', tender.id)
-              }}
-              onDragOver={(e) => {
-                e.preventDefault()
-                e.dataTransfer.dropEffect = 'move'
-                dragOverIndexRef.current = index
-              }}
+              draggable={!isPending}
+              onDragStart={(e) => handleDragStart(e, index)}
+              onDragOver={(e) => handleDragOver(e, index)}
               onDragEnd={handleDragEnd}
-              onDragLeave={() => {
-                // no-op
-              }}
-              className={`flex items-center justify-between border-b py-2.5 last:border-0 transition-all ${
-                isDragging
-                  ? 'opacity-40 scale-[1.02] bg-muted/30 rounded-sm'
-                  : dragOverIndexRef.current === index && dragIndex !== null && dragIndex !== index
-                    ? 'border-t-2 border-t-blue-500/50'
-                    : ''
+              onDrop={(e) => handleDrop(e, index)}
+              className={`flex items-center justify-between border-b py-3 last:border-0 transition-all ${
+                isDragging ? 'opacity-40 bg-muted/20' : ''
+              } ${
+                isDragOver ? 'border-t-2 border-t-primary/70 bg-primary/5 pt-4' : ''
               }`}
             >
-              <div className="flex items-center gap-2 min-w-0 flex-1">
-                <button
-                  type="button"
-                  className="cursor-grab active:cursor-grabbing shrink-0 text-muted-foreground/40 hover:text-muted-foreground transition-colors"
-                  aria-label={`Drag to reorder ${tender.tenderReference}`}
+              <div className="flex min-w-0 flex-1 items-start gap-2">
+                {/* Drag Handle */}
+                <div
+                  className={`flex h-7 shrink-0 items-center justify-center text-muted-foreground/40 hover:text-muted-foreground transition-colors cursor-grab active:cursor-grabbing ${
+                    isPending ? 'pointer-events-none opacity-20' : ''
+                  }`}
                   title="Drag to reorder"
                 >
-                  <GripVertical className="size-3.5" />
-                </button>
+                  <GripVertical className="size-4" />
+                </div>
+
+                <div className="flex size-7 shrink-0 items-center justify-center rounded-md border bg-muted text-xs font-medium tabular-nums">
+                  {index + 1}
+                </div>
                 <div className="min-w-0 flex-1">
-                  <p className="truncate text-sm font-medium">{tender.tenderReference}</p>
-                  <p className="text-xs text-muted-foreground">
-                    Closes: {new Date(tender.closingDate).toLocaleDateString()} · Effort:{' '}
-                    {tender.effortDays}d
-                    {startOverdue && (
-                      <span className="ml-1 text-amber-500">· Start overdue</span>
+                  <div className="flex flex-wrap items-center gap-1.5">
+                    <p className="truncate text-sm font-medium">{tender.tenderReference}</p>
+                    {tender.priority === 'urgent' && (
+                      <Badge variant="destructive" className="text-xs">
+                        Urgent
+                      </Badge>
                     )}
-                  </p>
+                  </div>
+                  {client && (
+                    <p className="truncate text-xs text-muted-foreground leading-tight">
+                      {client.name}
+                    </p>
+                  )}
+                  <div className="mt-1 flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
+                    <span className="inline-flex items-center gap-1">
+                      <CalendarDays className="size-3" />
+                      {formatDate(tender.startDate)} → {formatDate(tender.targetCompletionDate)}
+                    </span>
+                    <span>{tender.effortDays}d effort</span>
+                    <span className={bufferGap < tender.bufferDays ? 'text-amber-500' : ''}>
+                      {Math.max(0, bufferGap)}d buffer
+                    </span>
+                    <span className={daysToClose <= 7 ? 'text-amber-500 font-medium' : ''}>
+                      closes {formatDate(tender.closingDate)}
+                    </span>
+                  </div>
                 </div>
               </div>
-              <div className="ml-3 flex items-center gap-2 shrink-0">
+              <div className="ml-3 flex shrink-0 items-center gap-2">
                 <TenderRiskBadge tender={tender} />
                 {tender.status === 'planned' && (
                   <Button
                     size="sm"
                     variant="outline"
+                    disabled={isPending}
                     onClick={() => onStatusChange(tender.id, 'in_progress')}
                   >
                     Start
@@ -147,9 +205,9 @@ export function DraggableUpNext({ tenders, onStatusChange }: DraggableUpNextProp
                 )}
               </div>
             </div>
-          )
+          );
         })}
       </CardContent>
     </Card>
-  )
+  );
 }

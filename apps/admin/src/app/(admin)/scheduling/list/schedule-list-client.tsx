@@ -1,15 +1,21 @@
-'use client'
+'use client';
 
-import * as React from 'react'
-import { useRouter } from 'next/navigation'
-import { Search, X, Filter, Archive, Trash2, CheckSquare } from 'lucide-react'
-import { toast } from 'sonner'
-import type { TenderScheduleEntry } from '@pmg/db'
-import { Button } from '@/components/ui/button'
-import { Badge } from '@/components/ui/badge'
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
-import { Input } from '@/components/ui/input'
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
+import * as React from 'react';
+import { useRouter } from 'next/navigation';
+import { Search, X, Filter, Archive, Trash2, CheckSquare, ChevronDown } from 'lucide-react';
+import { toast } from 'sonner';
+import type { TenderScheduleEntry } from '@pmg/db';
+import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Input } from '@/components/ui/input';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
 import {
   Table,
   TableBody,
@@ -17,173 +23,239 @@ import {
   TableHead,
   TableHeader,
   TableRow,
-} from '@/components/ui/table'
-import { Checkbox } from '@/components/ui/checkbox'
+} from '@/components/ui/table';
+import { Checkbox } from '@/components/ui/checkbox';
 import {
   cancelTenderScheduleEntry,
   transitionTenderStatusAction,
-} from '@/app/actions/tender-schedule'
-import { bulkArchiveTenders, bulkDeleteTenders } from '@/app/actions/tender-schedule-bulk'
-import { TenderStatusBadge } from '@/components/scheduling/tender-status-badge'
-import { TenderRiskBadge } from '@/components/scheduling/tender-risk-badge'
-import { ConfirmDialog } from '@/components/ui/confirm-dialog'
+} from '@/app/actions/tender-schedule';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
+import { bulkArchiveTenders, bulkDeleteTenders } from '@/app/actions/tender-schedule-bulk';
+import { TenderStatusBadge } from '@/components/scheduling/tender-status-badge';
+import { TenderRiskBadge } from '@/components/scheduling/tender-risk-badge';
+import { ConfirmDialog } from '@/components/ui/confirm-dialog';
+import { TenderEditDialog } from '@/components/scheduling/tender-edit-dialog';
 
-// ── Types ─────────────────────────────────────────────────────────────────────
+const STATUS_TRANSITIONS: Record<string, { value: string; label: string }[]> = {
+  planned: [
+    { value: 'in_progress', label: 'Start Work' },
+    { value: 'cancelled', label: 'Cancel' },
+  ],
+  in_progress: [
+    { value: 'completed', label: 'Complete' },
+    { value: 'cancelled', label: 'Cancel' },
+    { value: 'planned', label: 'Re-plan' },
+  ],
+  completed: [
+    { value: 'submitted', label: 'Submit' },
+    { value: 'cancelled', label: 'Cancel' },
+    { value: 'planned', label: 'Re-plan' },
+  ],
+  submitted: [{ value: 'planned', label: 'Re-plan' }],
+  cancelled: [{ value: 'planned', label: 'Reinstate' }],
+};
+
+function getNextStatuses(status: string) {
+  return STATUS_TRANSITIONS[status] ?? [];
+}
 
 interface ClientSummary {
-  id: string
-  name: string
-  businessName: string | null
-  email: string | null
+  id: string;
+  name: string;
+  businessName: string | null;
+  email: string | null;
+}
+
+interface DivisionSummary {
+  id: string;
+  name: string;
 }
 
 interface ScheduleListClientProps {
-  entries: TenderScheduleEntry[]
-  clients: ClientSummary[]
+  entries: TenderScheduleEntry[];
+  clients: ClientSummary[];
+  divisions: DivisionSummary[];
 }
 
 // ── Component ─────────────────────────────────────────────────────────────────
 
-export function ScheduleListClient({ entries, clients }: ScheduleListClientProps) {
-  const router = useRouter()
-  const clientMap = React.useMemo(
-    () => new Map(clients.map((c) => [c.id, c])),
-    [clients],
-  )
+export function ScheduleListClient({ entries, clients, divisions }: ScheduleListClientProps) {
+  const router = useRouter();
+  const clientMap = React.useMemo(() => new Map(clients.map((c) => [c.id, c])), [clients]);
+
+  // Edit dialog state
+  const [editingTender, setEditingTender] = React.useState<TenderScheduleEntry | null>(null);
+
+  // Status Transition
+  const [isPending, setIsPending] = React.useState<string | null>(null);
+
+  const handleStatusTransition = async (id: string, newStatus: string) => {
+    setIsPending(id);
+    const res = await transitionTenderStatusAction(id, newStatus);
+    setIsPending(null);
+    if (res?.error) {
+      toast.error(res.error);
+    } else {
+      toast.success(`Status updated to ${newStatus.replace('_', ' ')}`);
+      router.refresh();
+    }
+  };
 
   // Filters
-  const [searchQuery, setSearchQuery] = React.useState('')
-  const [statusFilter, setStatusFilter] = React.useState<string>('all')
-  const [priorityFilter, setPriorityFilter] = React.useState<string>('all')
-  const [dateFilter, setDateFilter] = React.useState<string>('all')
-  const [cancelId, setCancelId] = React.useState<string | null>(null)
+  const [searchQuery, setSearchQuery] = React.useState('');
+  const [statusFilter, setStatusFilter] = React.useState<string>('all');
+  const [priorityFilter, setPriorityFilter] = React.useState<string>('all');
+  const [dateFilter, setDateFilter] = React.useState<string>('all');
+  const [cancelId, setCancelId] = React.useState<string | null>(null);
 
   // Bulk selection
-  const [selectedIds, setSelectedIds] = React.useState<Set<string>>(new Set())
-  const [bulkAction, setBulkAction] = React.useState<'archive' | 'delete' | null>(null)
-  const [isBulkPending, setIsBulkPending] = React.useState(false)
+  const [selectedIds, setSelectedIds] = React.useState<Set<string>>(new Set());
+  const [bulkAction, setBulkAction] = React.useState<'archive' | 'delete' | null>(null);
+  const [isBulkPending, setIsBulkPending] = React.useState(false);
 
   // Filtered entries
   const filtered = React.useMemo(() => {
-    return entries.filter((e) => {
-      const client = clientMap.get(e.clientId)
+    const list = entries.filter((e) => {
+      const client = clientMap.get(e.clientId);
 
       // Search
       if (searchQuery) {
-        const q = searchQuery.toLowerCase()
-        const matchClient = client?.name.toLowerCase().includes(q)
-        const matchRef = e.tenderReference.toLowerCase().includes(q)
-        if (!matchClient && !matchRef) return false
+        const q = searchQuery.toLowerCase();
+        const matchClient = client?.name.toLowerCase().includes(q);
+        const matchRef = e.tenderReference.toLowerCase().includes(q);
+        if (!matchClient && !matchRef) return false;
       }
 
-      // Status filter
-      if (statusFilter !== 'all' && e.status !== statusFilter) return false
+      // Status filter: hide cancelled by default in "All" view
+      if (statusFilter === 'all') {
+        if (e.status === 'cancelled') return false;
+      } else {
+        if (e.status !== statusFilter) return false;
+      }
 
       // Priority filter
-      if (priorityFilter !== 'all' && e.priority !== priorityFilter) return false
+      if (priorityFilter !== 'all' && e.priority !== priorityFilter) return false;
 
       // Date range filter
       if (dateFilter !== 'all') {
-        const today = new Date()
-        today.setHours(0, 0, 0, 0)
-        const closing = new Date(e.closingDate)
-        const daysToClose = Math.ceil((closing.getTime() - today.getTime()) / (1000 * 60 * 60 * 24))
+        const today = new Date();
+        today.setHours(0, 0, 0, 0);
+        const closing = new Date(e.closingDate);
+        const daysToClose = Math.ceil(
+          (closing.getTime() - today.getTime()) / (1000 * 60 * 60 * 24),
+        );
 
         switch (dateFilter) {
           case 'overdue':
-            if (closing >= today || e.status === 'submitted' || e.status === 'completed') return false
-            break
+            if (closing >= today || e.status === 'submitted' || e.status === 'completed')
+              return false;
+            break;
           case 'this_week':
-            if (daysToClose > 7 || daysToClose < 0) return false
-            break
+            if (daysToClose > 7 || daysToClose < 0) return false;
+            break;
           case 'this_month':
-            if (daysToClose > 30 || daysToClose < 0) return false
-            break
+            if (daysToClose > 30 || daysToClose < 0) return false;
+            break;
           case 'future':
-            if (daysToClose <= 30) return false
-            break
+            if (daysToClose <= 30) return false;
+            break;
         }
       }
 
-      return true
-    })
-  }, [entries, searchQuery, statusFilter, priorityFilter, dateFilter, clientMap])
+      return true;
+    });
+
+    // Sort cancelled tenders to the bottom
+    return [...list].sort((a, b) => {
+      if (a.status === 'cancelled' && b.status !== 'cancelled') return 1;
+      if (a.status !== 'cancelled' && b.status === 'cancelled') return -1;
+      return 0;
+    });
+  }, [entries, searchQuery, statusFilter, priorityFilter, dateFilter, clientMap]);
 
   const clearFilters = () => {
-    setSearchQuery('')
-    setStatusFilter('all')
-    setPriorityFilter('all')
-    setDateFilter('all')
-  }
+    setSearchQuery('');
+    setStatusFilter('all');
+    setPriorityFilter('all');
+    setDateFilter('all');
+  };
 
-  const hasFilters = searchQuery || statusFilter !== 'all' || priorityFilter !== 'all' || dateFilter !== 'all'
+  const hasFilters =
+    searchQuery || statusFilter !== 'all' || priorityFilter !== 'all' || dateFilter !== 'all';
 
   // Toggle select all / individual
-  const allFilteredIds = React.useMemo(() => filtered.map((e) => e.id), [filtered])
-  const allSelected = filtered.length > 0 && selectedIds.size === filtered.length
+  const allFilteredIds = React.useMemo(() => filtered.map((e) => e.id), [filtered]);
+  const allSelected = filtered.length > 0 && selectedIds.size === filtered.length;
 
   function toggleSelectAll() {
     if (allSelected) {
-      setSelectedIds(new Set())
+      setSelectedIds(new Set());
     } else {
-      setSelectedIds(new Set(allFilteredIds))
+      setSelectedIds(new Set(allFilteredIds));
     }
   }
 
   function toggleSelect(id: string) {
-    const next = new Set(selectedIds)
+    const next = new Set(selectedIds);
     if (next.has(id)) {
-      next.delete(id)
+      next.delete(id);
     } else {
-      next.add(id)
+      next.add(id);
     }
-    setSelectedIds(next)
+    setSelectedIds(next);
   }
 
   async function handleCancel(id: string) {
-    const result = await cancelTenderScheduleEntry(id)
+    const result = await cancelTenderScheduleEntry(id);
     if (result.error) {
-      toast.error(result.error)
+      toast.error(result.error);
     } else {
-      toast.success('Tender cancelled')
-      router.refresh()
+      toast.success('Tender cancelled');
+      router.refresh();
     }
-    setCancelId(null)
+    setCancelId(null);
   }
 
   async function handleBulkArchive() {
-    setIsBulkPending(true)
-    const result = await bulkArchiveTenders(Array.from(selectedIds))
+    setIsBulkPending(true);
+    const result = await bulkArchiveTenders(Array.from(selectedIds));
     if (result.error) {
-      toast.error(result.error)
+      toast.error(result.error);
     } else {
-      toast.success(`${result.count} tender${result.count !== 1 ? 's' : ''} archived`)
-      setSelectedIds(new Set())
-      router.refresh()
+      toast.success(`${result.count} tender${result.count !== 1 ? 's' : ''} archived`);
+      setSelectedIds(new Set());
+      router.refresh();
     }
-    setIsBulkPending(false)
-    setBulkAction(null)
+    setIsBulkPending(false);
+    setBulkAction(null);
   }
 
   async function handleBulkDelete() {
-    setIsBulkPending(true)
-    const result = await bulkDeleteTenders(Array.from(selectedIds))
+    setIsBulkPending(true);
+    const result = await bulkDeleteTenders(Array.from(selectedIds));
     if (result.error) {
-      toast.error(result.error)
+      toast.error(result.error);
     } else {
-      toast.success(`${result.count} tender${result.count !== 1 ? 's' : ''} permanently deleted`)
-      setSelectedIds(new Set())
-      router.refresh()
+      toast.success(`${result.count} tender${result.count !== 1 ? 's' : ''} permanently deleted`);
+      setSelectedIds(new Set());
+      router.refresh();
     }
-    setIsBulkPending(false)
-    setBulkAction(null)
+    setIsBulkPending(false);
+    setBulkAction(null);
   }
 
   return (
     <>
       <ConfirmDialog
         open={!!cancelId}
-        onOpenChange={(open) => { if (!open) setCancelId(null) }}
+        onOpenChange={(open) => {
+          if (!open) setCancelId(null);
+        }}
         onConfirm={() => cancelId && handleCancel(cancelId)}
         title="Cancel tender?"
         description="This will mark the tender as cancelled."
@@ -193,7 +265,9 @@ export function ScheduleListClient({ entries, clients }: ScheduleListClientProps
 
       <ConfirmDialog
         open={bulkAction === 'archive'}
-        onOpenChange={(open) => { if (!open) setBulkAction(null) }}
+        onOpenChange={(open) => {
+          if (!open) setBulkAction(null);
+        }}
         onConfirm={handleBulkArchive}
         title={`Archive ${selectedIds.size} tender${selectedIds.size !== 1 ? 's' : ''}?`}
         description="Archived tenders will be cancelled and removed from active views."
@@ -203,7 +277,9 @@ export function ScheduleListClient({ entries, clients }: ScheduleListClientProps
 
       <ConfirmDialog
         open={bulkAction === 'delete'}
-        onOpenChange={(open) => { if (!open) setBulkAction(null) }}
+        onOpenChange={(open) => {
+          if (!open) setBulkAction(null);
+        }}
         onConfirm={handleBulkDelete}
         title={`Permanently delete ${selectedIds.size} tender${selectedIds.size !== 1 ? 's' : ''}?`}
         description="This action cannot be undone. Only cancelled tenders should be deleted."
@@ -211,11 +287,11 @@ export function ScheduleListClient({ entries, clients }: ScheduleListClientProps
         variant="destructive"
       />
 
-      <Card>
+      <Card className="overflow-hidden">
         <CardHeader className="flex flex-row items-center justify-between gap-4">
           <CardTitle>All Tender Schedule Entries ({filtered.length})</CardTitle>
         </CardHeader>
-        <CardContent className="flex flex-col gap-4">
+        <CardContent className="flex flex-col gap-4 p-0 px-6 pb-6">
           {/* Filter bar */}
           <div className="flex flex-wrap items-center gap-2">
             <div className="relative flex-1 min-w-[200px]">
@@ -233,12 +309,24 @@ export function ScheduleListClient({ entries, clients }: ScheduleListClientProps
                 <SelectValue placeholder="All statuses" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="all" className="text-xs">All statuses</SelectItem>
-                <SelectItem value="planned" className="text-xs">Planned</SelectItem>
-                <SelectItem value="in_progress" className="text-xs">In Progress</SelectItem>
-                <SelectItem value="completed" className="text-xs">Completed</SelectItem>
-                <SelectItem value="submitted" className="text-xs">Submitted</SelectItem>
-                <SelectItem value="cancelled" className="text-xs">Cancelled</SelectItem>
+                <SelectItem value="all" className="text-xs">
+                  All statuses
+                </SelectItem>
+                <SelectItem value="planned" className="text-xs">
+                  Planned
+                </SelectItem>
+                <SelectItem value="in_progress" className="text-xs">
+                  In Progress
+                </SelectItem>
+                <SelectItem value="completed" className="text-xs">
+                  Completed
+                </SelectItem>
+                <SelectItem value="submitted" className="text-xs">
+                  Submitted
+                </SelectItem>
+                <SelectItem value="cancelled" className="text-xs">
+                  Cancelled
+                </SelectItem>
               </SelectContent>
             </Select>
 
@@ -247,11 +335,21 @@ export function ScheduleListClient({ entries, clients }: ScheduleListClientProps
                 <SelectValue placeholder="All priorities" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="all" className="text-xs">All priorities</SelectItem>
-                <SelectItem value="urgent" className="text-xs">Urgent</SelectItem>
-                <SelectItem value="high" className="text-xs">High</SelectItem>
-                <SelectItem value="normal" className="text-xs">Normal</SelectItem>
-                <SelectItem value="low" className="text-xs">Low</SelectItem>
+                <SelectItem value="all" className="text-xs">
+                  All priorities
+                </SelectItem>
+                <SelectItem value="urgent" className="text-xs">
+                  Urgent
+                </SelectItem>
+                <SelectItem value="high" className="text-xs">
+                  High
+                </SelectItem>
+                <SelectItem value="normal" className="text-xs">
+                  Normal
+                </SelectItem>
+                <SelectItem value="low" className="text-xs">
+                  Low
+                </SelectItem>
               </SelectContent>
             </Select>
 
@@ -260,11 +358,21 @@ export function ScheduleListClient({ entries, clients }: ScheduleListClientProps
                 <SelectValue placeholder="All dates" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="all" className="text-xs">All dates</SelectItem>
-                <SelectItem value="overdue" className="text-xs">Overdue</SelectItem>
-                <SelectItem value="this_week" className="text-xs">This week</SelectItem>
-                <SelectItem value="this_month" className="text-xs">This month</SelectItem>
-                <SelectItem value="future" className="text-xs">Future</SelectItem>
+                <SelectItem value="all" className="text-xs">
+                  All dates
+                </SelectItem>
+                <SelectItem value="overdue" className="text-xs">
+                  Overdue
+                </SelectItem>
+                <SelectItem value="this_week" className="text-xs">
+                  This week
+                </SelectItem>
+                <SelectItem value="this_month" className="text-xs">
+                  This month
+                </SelectItem>
+                <SelectItem value="future" className="text-xs">
+                  Future
+                </SelectItem>
               </SelectContent>
             </Select>
 
@@ -297,10 +405,13 @@ export function ScheduleListClient({ entries, clients }: ScheduleListClientProps
                 variant="ghost"
                 size="sm"
                 className="h-7 text-xs text-destructive hover:text-destructive disabled:text-muted-foreground/50 disabled:opacity-50"
-                disabled={isBulkPending || !Array.from(selectedIds).every(id => {
-                  const entry = entries.find(e => e.id === id)
-                  return entry?.status === 'cancelled'
-                })}
+                disabled={
+                  isBulkPending ||
+                  !Array.from(selectedIds).every((id) => {
+                    const entry = entries.find((e) => e.id === id);
+                    return entry?.status === 'cancelled';
+                  })
+                }
                 onClick={() => setBulkAction('delete')}
               >
                 <Trash2 className="size-3 mr-1" />
@@ -331,68 +442,184 @@ export function ScheduleListClient({ entries, clients }: ScheduleListClientProps
                       aria-label="Select all"
                     />
                   </TableHead>
+                  {/* Client + Reference merged into one column */}
                   <TableHead>Client</TableHead>
-                  <TableHead>Reference</TableHead>
                   <TableHead>Status</TableHead>
-                  <TableHead>Priority</TableHead>
-                  <TableHead>Start</TableHead>
-                  <TableHead>Target</TableHead>
+                  <TableHead className="hidden sm:table-cell">Priority</TableHead>
+                  {/* Start + Target merged into one "Window" column */}
+                  <TableHead className="hidden md:table-cell">Window</TableHead>
                   <TableHead>Closes</TableHead>
-                  <TableHead>Risk</TableHead>
-                  <TableHead>Effort</TableHead>
-                  <TableHead>Actual</TableHead>
-                  <TableHead>Outcome</TableHead>
-                  <TableHead>Actions</TableHead>
+                  <TableHead className="hidden sm:table-cell">Risk</TableHead>
+                  <TableHead className="hidden sm:table-cell">Effort</TableHead>
+                  {/* Actions: icon kebab menu — no wide text button */}
+                  <TableHead className="w-10" />
                 </TableRow>
               </TableHeader>
               <TableBody>
                 {filtered.map((entry) => {
-                  const client = clientMap.get(entry.clientId)
-                  const isSelected = selectedIds.has(entry.id)
+                  const client = clientMap.get(entry.clientId);
+                  const isSelected = selectedIds.has(entry.id);
+                  const transitions = getNextStatuses(entry.status);
                   return (
                     <TableRow
                       key={entry.id}
                       className={`${entry.status === 'cancelled' ? 'opacity-60' : ''} ${isSelected ? 'bg-muted/30' : ''}`}
                     >
-                      <TableCell>
+                      <TableCell className="w-10">
                         <Checkbox
                           checked={isSelected}
                           onCheckedChange={() => toggleSelect(entry.id)}
                           aria-label={`Select ${entry.tenderReference}`}
                         />
                       </TableCell>
-                      <TableCell className="font-medium text-xs">{client?.name ?? '—'}</TableCell>
-                      <TableCell className="text-xs">{entry.tenderReference}</TableCell>
-                      <TableCell><TenderStatusBadge status={entry.status} /></TableCell>
+
+                      {/* Client name + reference stacked */}
                       <TableCell>
-                        <Badge variant="secondary" className="text-xs capitalize">{entry.priority}</Badge>
+                        <p className="text-xs font-medium leading-tight">{client?.name ?? '—'}</p>
+                        <p className="text-[11px] text-muted-foreground leading-tight mt-0.5">
+                          {entry.tenderReference}
+                        </p>
                       </TableCell>
-                      <TableCell className="text-xs">{new Date(entry.startDate).toLocaleDateString()}</TableCell>
-                      <TableCell className="text-xs">{new Date(entry.targetCompletionDate).toLocaleDateString()}</TableCell>
-                      <TableCell className="text-xs">{new Date(entry.closingDate).toLocaleDateString()}</TableCell>
-                      <TableCell><TenderRiskBadge tender={entry} /></TableCell>
-                      <TableCell className="text-xs">{entry.effortDays}d</TableCell>
-                      <TableCell className="text-xs">{entry.actualEffortDays ? `${entry.actualEffortDays}d` : '—'}</TableCell>
-                      <TableCell className="text-xs capitalize">{entry.outcome ?? '—'}</TableCell>
+
+                      {/* Status — clickable dropdown */}
                       <TableCell>
-                        {entry.status !== 'submitted' && entry.status !== 'cancelled' && (
-                          <Button
-                            variant="ghost"
-                            size="xs"
-                            onClick={() => setCancelId(entry.id)}
-                          >
-                            Cancel
-                          </Button>
+                        {transitions.length === 0 ? (
+                          <TenderStatusBadge status={entry.status} />
+                        ) : (
+                          <DropdownMenu>
+                            <DropdownMenuTrigger asChild>
+                              <Button
+                                variant="ghost"
+                                size="xs"
+                                className="h-auto p-1 font-normal hover:bg-muted/50 gap-1"
+                                disabled={isPending === entry.id}
+                              >
+                                <TenderStatusBadge status={entry.status} />
+                                <ChevronDown className="size-3 text-muted-foreground" />
+                              </Button>
+                            </DropdownMenuTrigger>
+                            <DropdownMenuContent align="start">
+                              {transitions.map((opt) => (
+                                <DropdownMenuItem
+                                  key={opt.value}
+                                  onClick={() => handleStatusTransition(entry.id, opt.value)}
+                                  className="text-xs"
+                                >
+                                  {opt.label}
+                                </DropdownMenuItem>
+                              ))}
+                            </DropdownMenuContent>
+                          </DropdownMenu>
                         )}
                       </TableCell>
+
+                      {/* Priority */}
+                      <TableCell className="hidden sm:table-cell">
+                        <Badge
+                          variant={entry.priority === 'urgent' ? 'destructive' : 'secondary'}
+                          className="text-xs capitalize"
+                        >
+                          {entry.priority}
+                        </Badge>
+                      </TableCell>
+
+                      {/* Window: start → target in one cell */}
+                      <TableCell className="hidden md:table-cell text-xs text-muted-foreground">
+                        {new Date(entry.startDate).toLocaleDateString('en-GB', {
+                          day: 'numeric',
+                          month: 'short',
+                        })}
+                        {' → '}
+                        {new Date(entry.targetCompletionDate).toLocaleDateString('en-GB', {
+                          day: 'numeric',
+                          month: 'short',
+                        })}
+                      </TableCell>
+
+                      {/* Closes */}
+                      <TableCell className="text-xs">
+                        {new Date(entry.closingDate).toLocaleDateString('en-GB', {
+                          day: 'numeric',
+                          month: 'short',
+                          year: '2-digit',
+                        })}
+                      </TableCell>
+
+                      {/* Risk */}
+                      <TableCell className="hidden sm:table-cell">
+                        <TenderRiskBadge tender={entry} />
+                      </TableCell>
+
+                      {/* Effort */}
+                      <TableCell className="hidden sm:table-cell text-xs">
+                        {entry.effortDays}d
+                      </TableCell>
+
+                      {/* Actions: kebab menu */}
+                      <TableCell>
+                        <DropdownMenu>
+                          <DropdownMenuTrigger asChild>
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              className="size-7"
+                              aria-label="Row actions"
+                            >
+                              <svg
+                                viewBox="0 0 24 24"
+                                fill="currentColor"
+                                className="size-3.5 text-muted-foreground"
+                              >
+                                <circle cx="12" cy="5" r="1.5" />
+                                <circle cx="12" cy="12" r="1.5" />
+                                <circle cx="12" cy="19" r="1.5" />
+                              </svg>
+                            </Button>
+                          </DropdownMenuTrigger>
+                          <DropdownMenuContent align="end">
+                            {transitions.map((opt) => (
+                              <DropdownMenuItem
+                                key={opt.value}
+                                onClick={() => handleStatusTransition(entry.id, opt.value)}
+                                className="text-xs"
+                              >
+                                {opt.label}
+                              </DropdownMenuItem>
+                            ))}
+                            <DropdownMenuItem
+                              className="text-xs"
+                              onClick={() => setEditingTender(entry)}
+                            >
+                              Edit tender
+                            </DropdownMenuItem>
+                            {entry.status !== 'submitted' && entry.status !== 'cancelled' && (
+                              <DropdownMenuItem
+                                className="text-xs text-destructive focus:text-destructive"
+                                onClick={() => setCancelId(entry.id)}
+                              >
+                                Cancel tender
+                              </DropdownMenuItem>
+                            )}
+                          </DropdownMenuContent>
+                        </DropdownMenu>
+                      </TableCell>
                     </TableRow>
-                  )
+                  );
                 })}
               </TableBody>
             </Table>
           )}
         </CardContent>
       </Card>
+      {editingTender && (
+        <TenderEditDialog
+          tender={editingTender}
+          clients={clients}
+          divisions={divisions}
+          onClose={() => setEditingTender(null)}
+          showTrigger={false}
+        />
+      )}
     </>
-  )
+  );
 }

@@ -51,7 +51,7 @@ export const tenderScheduleEntries = pgTable(
     closingDate: date("closing_date").notNull(),
     effortDays: integer("effort_days").notNull(),
     actualEffortDays: integer("actual_effort_days"),
-    bufferDays: integer("buffer_days").notNull().default(2),
+    bufferDays: integer("buffer_days").notNull().default(5),
     startDate: date("start_date").notNull(),
     targetCompletionDate: date("target_completion_date").notNull(),
     actualCompletionDate: date("actual_completion_date"),

@@ -1,7 +1,7 @@
 'use server';
 
 import { revalidatePath } from 'next/cache';
-import { getDb, tenderScheduleEntries, eq, and, inArray } from '@pmg/db';
+import { getDb, tenderScheduleEntries, eq, and, inArray, recalculateTenderWaterfall } from '@pmg/db';
 import { getSessionOrRedirect } from '@/lib/auth';
 
 /**
@@ -24,8 +24,10 @@ export async function bulkArchiveTenders(ids: string[]): Promise<{ error?: strin
       .where(inArray(tenderScheduleEntries.id, ids))
       .returning({ id: tenderScheduleEntries.id });
 
+    await recalculateTenderWaterfall();
     revalidatePath('/scheduling');
     revalidatePath('/scheduling/list');
+    revalidatePath('/scheduling/timeline');
 
     return { count: result.length };
   } catch (e) {
@@ -56,8 +58,10 @@ export async function bulkDeleteTenders(ids: string[]): Promise<{ error?: string
       )
       .returning({ id: tenderScheduleEntries.id });
 
+    await recalculateTenderWaterfall();
     revalidatePath('/scheduling');
     revalidatePath('/scheduling/list');
+    revalidatePath('/scheduling/timeline');
 
     return { count: result.length };
   } catch (e) {

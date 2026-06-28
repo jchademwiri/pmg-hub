@@ -1,147 +1,137 @@
-'use client'
+'use client';
 
-import * as React from 'react'
-import { useRouter } from 'next/navigation'
-import { toast } from 'sonner'
-import { Button } from '@/components/ui/button'
-import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog'
-import { Field, FieldLabel } from '@/components/ui/field'
-import { Input } from '@/components/ui/input'
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
-import { Textarea } from '@/components/ui/textarea'
-import { createTenderScheduleEntry } from '@/app/actions/tender-schedule'
+import * as React from 'react';
+import { useRouter } from 'next/navigation';
+import { CalendarClock } from 'lucide-react';
+import { toast } from 'sonner';
+import { Button } from '@/components/ui/button';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog';
+import { Field, FieldLabel } from '@/components/ui/field';
+import { Input } from '@/components/ui/input';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
+import { Textarea } from '@/components/ui/textarea';
+import { createTenderScheduleEntry } from '@/app/actions/tender-schedule';
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 
 interface ClientSummary {
-  id: string
-  name: string
-  businessName: string | null
-  email: string | null
+  id: string;
+  name: string;
+  businessName: string | null;
+  email: string | null;
 }
 
 interface DivisionSummary {
-  id: string
-  name: string
+  id: string;
+  name: string;
 }
 
 interface TenderFormDialogProps {
-  clients: ClientSummary[]
-  divisions: DivisionSummary[]
-  open: boolean
-  onOpenChange: (open: boolean) => void
+  clients: ClientSummary[];
+  divisions: DivisionSummary[];
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
 }
 
-// ── Date helpers ──────────────────────────────────────────────────────────────
+// ── Helpers ───────────────────────────────────────────────────────────────────
 
-function addDays(dateStr: string, days: number): string {
-  const d = new Date(dateStr)
-  d.setDate(d.getDate() + days)
-  return d.toISOString().split('T')[0]
-}
-
-function calcDates(closingDate: string, effortDays: number, bufferDays: number = 2) {
-  const start = addDays(closingDate, -(effortDays + bufferDays))
-  const completion = addDays(start, effortDays)
-  return { startDate: start, targetCompletionDate: completion }
+function formatDate(dateStr: string): string {
+  return new Date(dateStr).toLocaleDateString('en-GB', {
+    day: 'numeric',
+    month: 'short',
+    year: 'numeric',
+  });
 }
 
 // ── Component ─────────────────────────────────────────────────────────────────
 
-export function TenderFormDialog({ clients, divisions, open, onOpenChange }: TenderFormDialogProps) {
-  const router = useRouter()
-  const [isPending, startTransition] = React.useTransition()
-  const [errorMessage, setErrorMessage] = React.useState<string | null>(null)
-  const formRef = React.useRef<HTMLFormElement>(null)
+export function TenderFormDialog({
+  clients,
+  divisions,
+  open,
+  onOpenChange,
+}: TenderFormDialogProps) {
+  const router = useRouter();
+  const [isPending, startTransition] = React.useTransition();
+  const [errorMessage, setErrorMessage] = React.useState<string | null>(null);
+  const formRef = React.useRef<HTMLFormElement>(null);
 
-  // Date auto-calc state
-  const [closingDate, setClosingDate] = React.useState('')
-  const [effortDays, setEffortDays] = React.useState('')
-  const [calculatedStartDate, setCalculatedStartDate] = React.useState('')
-  const [calculatedTargetDate, setCalculatedTargetDate] = React.useState('')
-  const [manualStartOverride, setManualStartOverride] = React.useState(false)
+  // Controlled fields needed only for the schedule preview callout
+  const [closingDate, setClosingDate] = React.useState('');
+  const [effortDays, setEffortDays] = React.useState('');
 
-  // Selection state (in state to survive React re-renders)
-  const [selectedClientId, setSelectedClientId] = React.useState('')
-  const [selectedDivisionId, setSelectedDivisionId] = React.useState('__none__')
-
-  function handleDateChange(closing: string, effort: string) {
-    setClosingDate(closing)
-    setEffortDays(effort)
-    if (closing && effort && !manualStartOverride) {
-      const effortNum = parseInt(effort, 10)
-      if (!isNaN(effortNum) && effortNum > 0) {
-        const dates = calcDates(closing, effortNum)
-        setCalculatedStartDate(dates.startDate)
-        setCalculatedTargetDate(dates.targetCompletionDate)
-      }
-    }
-  }
+  // Select state (survives React re-renders)
+  const [selectedClientId, setSelectedClientId] = React.useState('');
+  const [selectedDivisionId, setSelectedDivisionId] = React.useState('__none__');
 
   function resetForm() {
-    setClosingDate('')
-    setEffortDays('')
-    setCalculatedStartDate('')
-    setCalculatedTargetDate('')
-    setManualStartOverride(false)
-    setSelectedClientId('')
-    setSelectedDivisionId('__none__')
-    setErrorMessage(null)
+    setClosingDate('');
+    setEffortDays('');
+    setSelectedClientId('');
+    setSelectedDivisionId('__none__');
+    setErrorMessage(null);
+    formRef.current?.reset();
   }
 
   function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
-    e.preventDefault()
-    setErrorMessage(null)
+    e.preventDefault();
+    setErrorMessage(null);
 
     startTransition(async () => {
-      const fd = new FormData(formRef.current!)
-
-      // If user didn't override start date, set the auto-calculated one
-      if (!manualStartOverride && calculatedStartDate) {
-        fd.set('startDate', calculatedStartDate)
-      }
-
-      const result = await createTenderScheduleEntry(fd)
+      const fd = new FormData(formRef.current!);
+      const result = await createTenderScheduleEntry(fd);
       if (result.error) {
-        setErrorMessage(result.error)
+        setErrorMessage(result.error);
       } else {
-        toast.success('Tender added to schedule')
-        onOpenChange(false)
-        resetForm()
-        router.refresh()
+        toast.success('Tender added to schedule');
+        onOpenChange(false);
+        resetForm();
+        router.refresh();
       }
-    })
+    });
   }
+
+  // Schedule preview: shown once both closing date and effort are filled
+  const effortNum = parseInt(effortDays, 10);
+  const showPreview = closingDate && effortNum > 0;
 
   return (
     <Dialog
       open={open}
       onOpenChange={(newOpen) => {
-        onOpenChange(newOpen)
-        if (!newOpen) resetForm()
+        onOpenChange(newOpen);
+        if (!newOpen) resetForm();
       }}
     >
       <DialogContent className="sm:max-w-[600px]">
         <DialogHeader>
           <DialogTitle>New Tender Schedule Entry</DialogTitle>
           <DialogDescription>
-            Add a tender to your schedule. Dates are auto-calculated based on closing date and
-            effort.
+            Add a tender. Start date is automatically assigned based on your queue — just set the
+            closing date and effort days.
           </DialogDescription>
         </DialogHeader>
 
         <form ref={formRef} onSubmit={handleSubmit} className="flex flex-col gap-4">
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            {/* Client selection */}
+            {/* Client */}
             <Field>
               <FieldLabel htmlFor="tender-client">
                 Client <span className="text-destructive">*</span>
               </FieldLabel>
-              <Select
-                required
-                value={selectedClientId}
-                onValueChange={(value) => setSelectedClientId(value)}
-              >
+              <Select required value={selectedClientId} onValueChange={setSelectedClientId}>
                 <SelectTrigger id="tender-client" className="text-sm h-9">
                   <SelectValue placeholder="Select a client" />
                 </SelectTrigger>
@@ -183,7 +173,7 @@ export function TenderFormDialog({ clients, divisions, open, onOpenChange }: Ten
                 required
                 disabled={isPending}
                 value={closingDate}
-                onChange={(e) => handleDateChange(e.target.value, effortDays)}
+                onChange={(e) => setClosingDate(e.target.value)}
               />
             </Field>
 
@@ -201,8 +191,24 @@ export function TenderFormDialog({ clients, divisions, open, onOpenChange }: Ten
                 required
                 disabled={isPending}
                 value={effortDays}
-                onChange={(e) => handleDateChange(closingDate, e.target.value)}
+                onChange={(e) => setEffortDays(e.target.value)}
               />
+            </Field>
+
+            {/* Buffer Days — warning threshold only, not used in date calc */}
+            <Field>
+              <FieldLabel htmlFor="tender-buffer">Buffer (days)</FieldLabel>
+              <Input
+                id="tender-buffer"
+                name="bufferDays"
+                type="number"
+                min="0"
+                defaultValue="5"
+                disabled={isPending}
+              />
+              <p className="text-xs text-muted-foreground mt-1">
+                Warning threshold — days between target and closing
+              </p>
             </Field>
 
             {/* Priority */}
@@ -210,26 +216,31 @@ export function TenderFormDialog({ clients, divisions, open, onOpenChange }: Ten
               <FieldLabel htmlFor="tender-priority">Priority</FieldLabel>
               <Select name="priority" defaultValue="normal">
                 <SelectTrigger id="tender-priority" className="text-sm h-9">
-                  <SelectValue placeholder="Normal" />
+                  <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="low" className="text-xs">Low</SelectItem>
-                  <SelectItem value="normal" className="text-xs">Normal</SelectItem>
-                  <SelectItem value="high" className="text-xs">High</SelectItem>
-                  <SelectItem value="urgent" className="text-xs">Urgent</SelectItem>
+                  <SelectItem value="low" className="text-xs">
+                    Low
+                  </SelectItem>
+                  <SelectItem value="normal" className="text-xs">
+                    Normal
+                  </SelectItem>
+                  <SelectItem value="high" className="text-xs">
+                    High
+                  </SelectItem>
+                  <SelectItem value="urgent" className="text-xs">
+                    Urgent
+                  </SelectItem>
                 </SelectContent>
               </Select>
             </Field>
 
             {/* Division */}
-            <Field>
+            <Field className="sm:col-span-2">
               <FieldLabel htmlFor="tender-division">Division</FieldLabel>
-              <Select
-                value={selectedDivisionId}
-                onValueChange={(value) => setSelectedDivisionId(value)}
-              >
+              <Select value={selectedDivisionId} onValueChange={setSelectedDivisionId}>
                 <SelectTrigger id="tender-division" className="text-sm h-9">
-                  <SelectValue placeholder="Tender Edge Solutions (default)" />
+                  <SelectValue placeholder="Default division" />
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="__none__" className="text-xs text-muted-foreground">
@@ -244,44 +255,39 @@ export function TenderFormDialog({ clients, divisions, open, onOpenChange }: Ten
               </Select>
               <input id="tender-division-hidden" type="hidden" name="divisionId" value={selectedDivisionId} />
             </Field>
-
-            {/* Start Date (auto-calculated, editable) */}
-            <Field>
-              <FieldLabel htmlFor="tender-start">
-                Start Date <span className="text-destructive">*</span>
-              </FieldLabel>
-              <Input
-                id="tender-start"
-                name="startDate"
-                type="date"
-                required
-                disabled={isPending}
-                defaultValue={calculatedStartDate || ''}
-                placeholder={calculatedStartDate || 'Auto-calculated'}
-                onChange={() => setManualStartOverride(true)}
-              />
-              {calculatedStartDate && !manualStartOverride && (
-                <p className="text-xs text-muted-foreground mt-1">
-                  Auto-calculated: closing - effort - 2 days buffer
-                </p>
-              )}
-            </Field>
-
-            {/* Target Completion (read-only display) */}
-            <Field>
-              <FieldLabel>Target Completion</FieldLabel>
-              <Input
-                type="date"
-                value={calculatedTargetDate}
-                readOnly
-                disabled
-                className="text-muted-foreground"
-              />
-              <p className="text-xs text-muted-foreground mt-1">
-                Auto-calculated: start + effort (read-only)
-              </p>
-            </Field>
           </div>
+
+          {/* Schedule preview — output, not input */}
+          {showPreview && (
+            <div className="rounded-md border border-dashed border-border bg-muted/40 px-4 py-3">
+              <div className="flex items-center gap-2 mb-2">
+                <CalendarClock className="size-3.5 text-muted-foreground" />
+                <p className="text-[11px] font-medium text-muted-foreground uppercase tracking-wide">
+                  Schedule preview
+                </p>
+              </div>
+              <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-sm">
+                <span>
+                  <span className="text-xs text-muted-foreground">Start: </span>
+                  <span className="font-medium">Auto-assigned from queue</span>
+                </span>
+                <span className="text-muted-foreground/40">→</span>
+                <span>
+                  <span className="text-xs text-muted-foreground">Target: </span>
+                  <span className="font-medium">Start + {effortNum} days</span>
+                </span>
+                <span className="text-muted-foreground/40">→</span>
+                <span>
+                  <span className="text-xs text-muted-foreground">Closes: </span>
+                  <span className="font-medium">{formatDate(closingDate)}</span>
+                </span>
+              </div>
+              <p className="mt-2 text-[11px] text-muted-foreground">
+                Start date is set automatically when saved — it chains directly after the last
+                scheduled tender.
+              </p>
+            </div>
+          )}
 
           {/* Notes */}
           <Field>
@@ -307,9 +313,7 @@ export function TenderFormDialog({ clients, divisions, open, onOpenChange }: Ten
             />
           </Field>
 
-          {errorMessage && (
-            <p className="text-sm text-destructive">{errorMessage}</p>
-          )}
+          {errorMessage && <p className="text-sm text-destructive">{errorMessage}</p>}
 
           <div className="flex items-center justify-end gap-3 border-t border-border/50 pt-4">
             <Button
@@ -328,5 +332,5 @@ export function TenderFormDialog({ clients, divisions, open, onOpenChange }: Ten
         </form>
       </DialogContent>
     </Dialog>
-  )
+  );
 }

@@ -7,7 +7,7 @@
  * - past closing date → "Overdue"
  * - past target + in_progress → "At Risk"
  * - past start + planned → "Start Due"
- * - tight buffer (target ≤ 2 days before closing) → "Tight"
+ * - tight buffer (target leaves less than configured buffer) → "Tight"
  * - on track → "On Track"
  */
 
@@ -29,6 +29,7 @@ interface TenderOverride {
   closingDate?: string
   targetCompletionDate?: string
   startDate?: string
+  bufferDays?: number
 }
 
 function makeTender(overrides: TenderOverride) {
@@ -39,7 +40,7 @@ function makeTender(overrides: TenderOverride) {
     tenderReference: 'T01/2026',
     closingDate: overrides.closingDate ?? '2026-07-14',
     effortDays: 3,
-    bufferDays: 2,
+    bufferDays: overrides.bufferDays ?? 5,
     startDate: overrides.startDate ?? '2026-07-01',
     targetCompletionDate: overrides.targetCompletionDate ?? '2026-07-04',
     status: (overrides.status ?? 'planned') as any,
@@ -134,15 +135,31 @@ describe('TenderRiskBadge — time-based risk', () => {
     expect(screen.getByTestId('badge')).toHaveTextContent('Start Due')
   })
 
-  it('shows "Tight" when target completion is within 2 days of closing', async () => {
+  it('shows "Impossible" when target completion is after closing', async () => {
     const { TenderRiskBadge } = await import('@/components/scheduling/tender-risk-badge')
 
     render(
       <TenderRiskBadge
         tender={makeTender({
           status: 'planned',
-          closingDate: '2026-07-06', // target = '2026-07-04' which is 2 days before closing
-          targetCompletionDate: '2026-07-04', // exactly 2 days before closing
+          closingDate: '2026-07-06',
+          targetCompletionDate: '2026-07-07',
+        })}
+      />,
+    )
+    expect(screen.getByTestId('badge')).toHaveTextContent('Impossible')
+  })
+
+  it('shows "Tight" when target completion leaves less than the configured buffer', async () => {
+    const { TenderRiskBadge } = await import('@/components/scheduling/tender-risk-badge')
+
+    render(
+      <TenderRiskBadge
+        tender={makeTender({
+          status: 'planned',
+          bufferDays: 5,
+          closingDate: '2026-07-10',
+          targetCompletionDate: '2026-07-07',
         })}
       />,
     )

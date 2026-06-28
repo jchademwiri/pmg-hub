@@ -1,0 +1,1 @@
+ALTER TABLE "tender_schedule_entries" ALTER COLUMN "buffer_days" SET DEFAULT 5;

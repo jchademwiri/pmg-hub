@@ -29,6 +29,7 @@ function makeMockDb(entryStatus: string) {
 
 const mockGetDb = vi.fn().mockReturnValue(makeMockDb('planned'))
 const mockTransitionStatus = vi.fn()
+const mockRecalculateWaterfall = vi.fn()
 const mockRevalidatePath = vi.fn()
 const mockGetSession = vi.fn().mockResolvedValue({ user: { id: 'user-1' } })
 
@@ -37,6 +38,7 @@ vi.mock('@pmg/db', () => ({
   tenderScheduleEntries: { id: 'tender_schedule_entries_id', status: 'tender_schedule_entries_status' },
   eq: vi.fn(),
   transitionTenderStatus: mockTransitionStatus,
+  recalculateTenderWaterfall: mockRecalculateWaterfall,
 }))
 
 vi.mock('next/cache', () => ({ revalidatePath: mockRevalidatePath }))
@@ -54,6 +56,7 @@ describe('transitionTenderStatusAction — validation', () => {
   beforeEach(() => {
     vi.clearAllMocks()
     mockGetSession.mockResolvedValue({ user: { id: 'user-1' } })
+    mockRecalculateWaterfall.mockResolvedValue(undefined)
   })
 
   it('rejects an invalid status string', async () => {
@@ -84,6 +87,7 @@ describe('transitionTenderStatusAction — allowed transitions', () => {
     vi.clearAllMocks()
     mockGetSession.mockResolvedValue({ user: { id: 'user-1' } })
     mockTransitionStatus.mockResolvedValue({ id: 'tender-1' })
+    mockRecalculateWaterfall.mockResolvedValue(undefined)
   })
 
   const allowedCases: [string, string][] = [
@@ -91,9 +95,12 @@ describe('transitionTenderStatusAction — allowed transitions', () => {
     ['planned', 'cancelled'],
     ['in_progress', 'completed'],
     ['in_progress', 'cancelled'],
+    ['in_progress', 'planned'],
     ['completed', 'submitted'],
     ['completed', 'cancelled'],
+    ['completed', 'planned'],
     ['submitted', 'planned'],
+    ['cancelled', 'planned'],
   ]
 
   it.each(allowedCases)('allows %s → %s', async (from, to) => {
@@ -116,9 +123,7 @@ describe('transitionTenderStatusAction — blocked transitions', () => {
   const blockedCases: [string, string, string][] = [
     ['planned', 'completed', "'planned' to 'completed'"],
     ['planned', 'submitted', "'planned' to 'submitted'"],
-    ['in_progress', 'planned', "'in_progress' to 'planned'"],
     ['in_progress', 'submitted', "'in_progress' to 'submitted'"],
-    ['completed', 'planned', "'completed' to 'planned'"],
     ['completed', 'in_progress', "'completed' to 'in_progress'"],
     ['submitted', 'in_progress', "'submitted' to 'in_progress'"],
     ['submitted', 'completed', "'submitted' to 'completed'"],
@@ -133,16 +138,14 @@ describe('transitionTenderStatusAction — blocked transitions', () => {
     expect(mockTransitionStatus).not.toHaveBeenCalled()
   })
 
-  it('blocks all transitions from cancelled status', async () => {
+  it('blocks all transitions from cancelled status except planned', async () => {
     const { transitionTenderStatusAction } = await import('@/app/actions/tender-schedule')
     await setupEntryStatus('cancelled')
 
-    const result1 = await transitionTenderStatusAction('tender-1', 'planned')
     const result2 = await transitionTenderStatusAction('tender-1', 'in_progress')
     const result3 = await transitionTenderStatusAction('tender-1', 'completed')
     const result4 = await transitionTenderStatusAction('tender-1', 'submitted')
 
-    expect(result1.error).toContain("Cannot transition from 'cancelled'")
     expect(result2.error).toContain("Cannot transition from 'cancelled'")
     expect(result3.error).toContain("Cannot transition from 'cancelled'")
     expect(result4.error).toContain("Cannot transition from 'cancelled'")

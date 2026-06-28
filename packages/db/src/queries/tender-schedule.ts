@@ -1,8 +1,8 @@
-import { db } from "../client";
-import { tenderScheduleEntries } from "../schema/tender-schedule";
-import type { TenderScheduleEntry, NewTenderScheduleEntry } from "../schema/tender-schedule";
-import { eq, asc, desc, and, or, sql } from "drizzle-orm";
-import { addDays } from "../lib/date-utils";
+import { db } from '../client';
+import { tenderScheduleEntries } from '../schema/tender-schedule';
+import type { TenderScheduleEntry, NewTenderScheduleEntry } from '../schema/tender-schedule';
+import { eq, asc, and, or, sql } from 'drizzle-orm';
+import { addDays, today as getToday } from '../lib/date-utils';
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 
@@ -32,31 +32,126 @@ export interface OverlapWarning {
   overlapDays: number;
 }
 
+export interface TenderWaterfallUpdate {
+  id: string;
+  sortOrder: number;
+  startDate: string;
+  targetCompletionDate: string;
+}
+
 // ── Helpers ───────────────────────────────────────────────────────────────────
 
 const PRIORITY_ORDER = sql`CASE ${tenderScheduleEntries.priority}
   WHEN 'urgent' THEN 0
-  WHEN 'high' THEN 1
-  WHEN 'normal' THEN 2
-  WHEN 'low' THEN 3
+  ELSE 1
 END`;
 
 // Custom sort_order takes priority; nulls fall back to default sort
 const SORT_ORDER = sql`${tenderScheduleEntries.sortOrder}`;
 
-const ACTIVE_STATUSES: string[] = ["planned", "in_progress"];
+function compareWaterfallEntries(a: TenderScheduleEntry, b: TenderScheduleEntry): number {
+  const urgentA = a.priority === 'urgent' ? 0 : 1;
+  const urgentB = b.priority === 'urgent' ? 0 : 1;
+  if (urgentA !== urgentB) return urgentA - urgentB;
+
+  const closing = a.closingDate.localeCompare(b.closingDate);
+  if (closing !== 0) return closing;
+
+  const createdA = a.createdAt?.getTime?.() ?? 0;
+  const createdB = b.createdAt?.getTime?.() ?? 0;
+  if (createdA !== createdB) return createdA - createdB;
+
+  return a.id.localeCompare(b.id);
+}
+
+export function calculateTenderWaterfallUpdates(
+  entries: TenderScheduleEntry[],
+): TenderWaterfallUpdate[] {
+  // in_progress entry keeps its actual startDate (it has already started).
+  // planned entries chain sequentially: each starts the day after the previous
+  // entry's targetCompletionDate. The first planned entry anchors to today.
+  // bufferDays is a warning threshold only — it does NOT affect scheduling.
+  const inProgress = entries
+    .filter((entry) => entry.status === 'in_progress')
+    .sort(compareWaterfallEntries);
+  const planned = entries
+    .filter((entry) => entry.status === 'planned')
+    .sort(compareWaterfallEntries);
+  const ordered = [...inProgress, ...planned];
+
+  // cursor = targetCompletionDate of the last processed entry.
+  // null = nothing scheduled yet; next planned entry starts today.
+  let cursor: string | null = null;
+
+  return ordered.map((entry, index) => {
+    let startDate: string;
+
+    if (entry.status === 'in_progress') {
+      // Already started — preserve the real start date
+      startDate = entry.startDate;
+    } else if (cursor === null) {
+      // First planned entry: start today (no backdate, no float)
+      startDate = getToday();
+    } else {
+      // Each subsequent planned entry starts the day after the previous ends
+      startDate = addDays(cursor, 1);
+    }
+
+    const targetCompletionDate = addDays(startDate, entry.effortDays);
+    cursor = targetCompletionDate;
+
+    return {
+      id: entry.id,
+      sortOrder: index + 1,
+      startDate,
+      targetCompletionDate,
+    };
+  });
+}
 
 // ── Reorder ───────────────────────────────────────────────────────────────────
 
-export async function reorderTenderQueue(
-  orderedIds: string[],
-): Promise<void> {
+export async function reorderTenderQueue(orderedIds: string[]): Promise<void> {
   const dbInstance = db;
   for (let i = 0; i < orderedIds.length; i++) {
+    const id = orderedIds[i];
+    if (!id) continue;
     await dbInstance
       .update(tenderScheduleEntries)
       .set({ sortOrder: i + 1, updatedAt: new Date() })
-      .where(eq(tenderScheduleEntries.id, orderedIds[i]));
+      .where(eq(tenderScheduleEntries.id, id));
+  }
+}
+
+export async function recalculateTenderWaterfall(): Promise<void> {
+  const active = await db
+    .select()
+    .from(tenderScheduleEntries)
+    .where(sql`${tenderScheduleEntries.status}::text = ANY(ARRAY['planned', 'in_progress'])`);
+
+  const updates = calculateTenderWaterfallUpdates(active);
+  const activeById = new Map(active.map((entry) => [entry.id, entry]));
+
+  for (const update of updates) {
+    const entry = activeById.get(update.id);
+    if (!entry) continue;
+    if (
+      entry.sortOrder === update.sortOrder &&
+      entry.startDate === update.startDate &&
+      entry.targetCompletionDate === update.targetCompletionDate
+    ) {
+      continue;
+    }
+
+    await db
+      .update(tenderScheduleEntries)
+      .set({
+        sortOrder: update.sortOrder,
+        startDate: update.startDate,
+        targetCompletionDate: update.targetCompletionDate,
+        updatedAt: new Date(),
+      })
+      .where(eq(tenderScheduleEntries.id, update.id));
   }
 }
 
@@ -100,12 +195,11 @@ export async function getAllTenderScheduleEntries(
       asc(SORT_ORDER),
       asc(PRIORITY_ORDER),
       asc(tenderScheduleEntries.closingDate),
+      asc(tenderScheduleEntries.createdAt),
     );
 }
 
-export async function getActiveTenderScheduleEntries(): Promise<
-  TenderScheduleEntry[]
-> {
+export async function getActiveTenderScheduleEntries(): Promise<TenderScheduleEntry[]> {
   return db
     .select()
     .from(tenderScheduleEntries)
@@ -116,12 +210,11 @@ export async function getActiveTenderScheduleEntries(): Promise<
       asc(SORT_ORDER),
       asc(PRIORITY_ORDER),
       asc(tenderScheduleEntries.closingDate),
+      asc(tenderScheduleEntries.createdAt),
     );
 }
 
-export async function getTenderScheduleEntryById(
-  id: string,
-): Promise<TenderScheduleEntry | null> {
+export async function getTenderScheduleEntryById(id: string): Promise<TenderScheduleEntry | null> {
   const result = await db
     .select()
     .from(tenderScheduleEntries)
@@ -133,11 +226,12 @@ export async function getTenderScheduleEntryById(
 export async function createTenderScheduleEntry(
   data: NewTenderScheduleEntry,
 ): Promise<TenderScheduleEntry> {
-  const result = await db
-    .insert(tenderScheduleEntries)
-    .values(data)
-    .returning();
-  return result[0];
+  const result = await db.insert(tenderScheduleEntries).values(data).returning();
+  const created = result[0];
+  if (!created) {
+    throw new Error('Failed to create tender schedule entry.');
+  }
+  return created;
 }
 
 export async function updateTenderScheduleEntry(
@@ -152,12 +246,10 @@ export async function updateTenderScheduleEntry(
   return result[0] ?? null;
 }
 
-export async function cancelTenderScheduleEntry(
-  id: string,
-): Promise<TenderScheduleEntry | null> {
+export async function cancelTenderScheduleEntry(id: string): Promise<TenderScheduleEntry | null> {
   const result = await db
     .update(tenderScheduleEntries)
-    .set({ status: "cancelled", updatedAt: new Date() })
+    .set({ status: 'cancelled', updatedAt: new Date() })
     .where(eq(tenderScheduleEntries.id, id))
     .returning();
   return result[0] ?? null;
@@ -165,7 +257,7 @@ export async function cancelTenderScheduleEntry(
 
 export async function transitionTenderStatus(
   id: string,
-  newStatus: TenderScheduleEntry["status"],
+  newStatus: TenderScheduleEntry['status'],
 ): Promise<TenderScheduleEntry | null> {
   const now = new Date();
   const updates: Partial<NewTenderScheduleEntry> = {
@@ -174,14 +266,14 @@ export async function transitionTenderStatus(
   };
 
   // Auto-set timestamp fields on specific transitions
-  if (newStatus === "in_progress") {
-    updates.startDate = now.toISOString().split("T")[0];
+  if (newStatus === 'in_progress') {
+    updates.startDate = now.toISOString().split('T')[0];
   }
-  if (newStatus === "completed") {
-    updates.actualCompletionDate = now.toISOString().split("T")[0];
+  if (newStatus === 'completed') {
+    updates.actualCompletionDate = now.toISOString().split('T')[0];
   }
-  if (newStatus === "submitted") {
-    updates.submissionDate = now.toISOString().split("T")[0];
+  if (newStatus === 'submitted') {
+    updates.submissionDate = now.toISOString().split('T')[0];
   }
 
   const result = await db
@@ -198,23 +290,22 @@ export async function getCurrentWorkload(): Promise<CurrentWorkload> {
   const entries = await db
     .select()
     .from(tenderScheduleEntries)
-    .where(
-      sql`${tenderScheduleEntries.status}::text = ANY(ARRAY['planned', 'in_progress'])`,
-    )
+    .where(sql`${tenderScheduleEntries.status}::text = ANY(ARRAY['planned', 'in_progress'])`)
     .orderBy(
       asc(SORT_ORDER),
       asc(PRIORITY_ORDER),
       asc(tenderScheduleEntries.closingDate),
+      asc(tenderScheduleEntries.createdAt),
     );
 
   return {
-    inProgress: entries.find((e) => e.status === "in_progress") ?? null,
-    planned: entries.filter((e) => e.status === "planned"),
+    inProgress: entries.find((e) => e.status === 'in_progress') ?? null,
+    planned: entries.filter((e) => e.status === 'planned'),
   };
 }
 
 export async function getTendersAtRisk(): Promise<TenderScheduleEntry[]> {
-  const today = new Date().toISOString().split("T")[0];
+  const today = new Date().toISOString().split('T')[0];
   return db
     .select()
     .from(tenderScheduleEntries)
@@ -224,19 +315,20 @@ export async function getTendersAtRisk(): Promise<TenderScheduleEntry[]> {
         or(
           // Start overdue: today > start_date and still planned
           and(
-            eq(tenderScheduleEntries.status, "planned"),
+            eq(tenderScheduleEntries.status, 'planned'),
             sql`${tenderScheduleEntries.startDate} < ${today}`,
           ),
           // Past target completion
           sql`${tenderScheduleEntries.targetCompletionDate} < ${today}`,
-          // Tight buffer: target completion within 2 days of closing
-          sql`${tenderScheduleEntries.targetCompletionDate} >= ${tenderScheduleEntries.closingDate} - INTERVAL '2 days'`,
+          // Tight buffer: scheduled target does not leave the tender's configured buffer.
+          sql`${tenderScheduleEntries.targetCompletionDate} > ${tenderScheduleEntries.closingDate} - (${tenderScheduleEntries.bufferDays} * INTERVAL '1 day')`,
         ),
       ),
     )
     .orderBy(
       asc(PRIORITY_ORDER),
       asc(tenderScheduleEntries.closingDate),
+      asc(tenderScheduleEntries.createdAt),
     );
 }
 
@@ -258,6 +350,7 @@ export async function getOverlappingTenders(
     .orderBy(
       asc(PRIORITY_ORDER),
       asc(tenderScheduleEntries.closingDate),
+      asc(tenderScheduleEntries.createdAt),
     );
 }
 
@@ -265,32 +358,33 @@ export async function detectOverlaps(): Promise<OverlapWarning[]> {
   const active = await db
     .select()
     .from(tenderScheduleEntries)
-    .where(
-      sql`${tenderScheduleEntries.status}::text = ANY(ARRAY['planned', 'in_progress'])`,
-    )
+    .where(sql`${tenderScheduleEntries.status}::text = ANY(ARRAY['planned', 'in_progress'])`)
     .orderBy(asc(tenderScheduleEntries.startDate));
 
   const warnings: OverlapWarning[] = [];
 
   for (let i = 0; i < active.length; i++) {
     for (let j = i + 1; j < active.length; j++) {
-      const a = active[i];
-      const b = active[j];
+      const a = active[i]!;
+      const b = active[j]!;
 
-      // Check overlap: A.start <= B.target AND B.start <= A.target
-      if (a.startDate <= b.targetCompletionDate && b.startDate <= a.targetCompletionDate) {
-        // Calculate overlap days
-        const overlapStart =
-          a.startDate > b.startDate ? a.startDate : b.startDate;
+      // In the waterfall chain each planned entry starts the day AFTER the
+      // previous entry's targetCompletionDate (startDate = targetCompletion + 1).
+      // Use strict inequality so that back-to-back sequential entries — where
+      // B.startDate = A.targetCompletionDate + 1 day — are NOT flagged.
+      // Real overlaps only exist when B starts ON or BEFORE A ends.
+      if (a.startDate < b.targetCompletionDate && b.startDate < a.targetCompletionDate) {
+        const overlapStart = a.startDate > b.startDate ? a.startDate : b.startDate;
         const overlapEnd =
           a.targetCompletionDate < b.targetCompletionDate
             ? a.targetCompletionDate
             : b.targetCompletionDate;
-        const overlapMs =
-          new Date(overlapEnd).getTime() - new Date(overlapStart).getTime();
-        const overlapDays = Math.max(1, Math.ceil(overlapMs / (1000 * 60 * 60 * 24)));
-
-        warnings.push({ tenderA: a, tenderB: b, overlapDays });
+        const overlapMs = new Date(overlapEnd).getTime() - new Date(overlapStart).getTime();
+        // Only report if the overlap is at least 1 full day (86400000 ms)
+        const overlapDays = Math.ceil(overlapMs / (1000 * 60 * 60 * 24));
+        if (overlapDays > 0) {
+          warnings.push({ tenderA: a, tenderB: b, overlapDays });
+        }
       }
     }
   }
@@ -308,27 +402,21 @@ export async function getTenderScheduleSummary(): Promise<TenderScheduleSummary>
       sql`${tenderScheduleEntries.status}::text = ANY(ARRAY['planned', 'in_progress', 'completed'])`,
     );
 
-  const today = new Date().toISOString().split("T")[0];
+  const today = new Date().toISOString().slice(0, 10);
 
-  const inProgress = all.filter((e) => e.status === "in_progress").length;
-  const planned = all.filter((e) => e.status === "planned").length;
+  const inProgress = all.filter((e) => e.status === 'in_progress').length;
+  const planned = all.filter((e) => e.status === 'planned').length;
   const upcomingDeadlines = all.filter(
     (e) =>
-      e.status !== "completed" &&
+      e.status !== 'completed' &&
       e.closingDate >= today &&
-      new Date(e.closingDate).getTime() - new Date(today).getTime() <=
-        7 * 24 * 60 * 60 * 1000, // within 7 days
+      new Date(e.closingDate).getTime() - new Date(today).getTime() <= 7 * 24 * 60 * 60 * 1000, // within 7 days
   ).length;
   const atRisk = all.filter(
-    (e) =>
-      (e.status === "planned" || e.status === "in_progress") &&
-      e.targetCompletionDate < today,
+    (e) => (e.status === 'planned' || e.status === 'in_progress') && e.targetCompletionDate < today,
   ).length;
   const overdue = all.filter(
-    (e) =>
-      e.status !== "submitted" &&
-      e.status !== "completed" &&
-      e.closingDate < today,
+    (e) => e.status !== 'submitted' && e.status !== 'completed' && e.closingDate < today,
   ).length;
 
   return { inProgress, planned, upcomingDeadlines, atRisk, overdue };

@@ -110,10 +110,8 @@ describe('TenderFormDialog', () => {
     // Closing Date — fireEvent.change is more reliable in jsdom than userEvent.type for type="date"
     fireEvent.change(screen.getByLabelText(/closing date/i), { target: { value: '2026-07-14' } })
     // Effort Days
-    await user.clear(screen.getByRole('spinbutton'))
-    await user.type(screen.getByRole('spinbutton'), '3')
-    // Start Date (uncontrolled)
-    fireEvent.change(screen.getByLabelText(/start date/i), { target: { value: '2026-07-01' } })
+    await user.clear(screen.getByLabelText(/effort/i))
+    await user.type(screen.getByLabelText(/effort/i), '3')
   }
 
   async function renderFormDialog() {
@@ -126,7 +124,7 @@ describe('TenderFormDialog', () => {
   it('renders title and description', async () => {
     await renderFormDialog()
     expect(screen.getByText('New Tender Schedule Entry')).toBeInTheDocument()
-    expect(screen.getByText(/Add a tender to your schedule/)).toBeInTheDocument()
+    expect(screen.getByText(/Add a tender/)).toBeInTheDocument()
   })
 
   it('shows inline error when action returns { error }', async () => {
@@ -169,8 +167,8 @@ describe('TenderFormDialog', () => {
     const hidden = document.getElementById('tender-client-hidden') as HTMLInputElement
     expect(hidden?.value).toBe('client-1')
     // Trigger re-render via effort number input
-    await user.clear(screen.getByRole('spinbutton'))
-    await user.type(screen.getByRole('spinbutton'), '5')
+    await user.clear(screen.getByLabelText(/effort/i))
+    await user.type(screen.getByLabelText(/effort/i), '5')
     expect(hidden?.value).toBe('client-1')
   })
 
@@ -180,14 +178,30 @@ describe('TenderFormDialog', () => {
     await user.selectOptions(screen.getByLabelText(/division/i), 'div-1')
     const hidden = document.getElementById('tender-division-hidden') as HTMLInputElement
     expect(hidden?.value).toBe('div-1')
-    await user.clear(screen.getByRole('spinbutton'))
-    await user.type(screen.getByRole('spinbutton'), '5')
+    await user.clear(screen.getByLabelText(/effort/i))
+    await user.type(screen.getByLabelText(/effort/i), '5')
     expect(hidden?.value).toBe('div-1')
   })
 
   it('defaults division to __none__', async () => {
     await renderFormDialog()
     expect((document.getElementById('tender-division-hidden') as HTMLInputElement)?.value).toBe('__none__')
+  })
+
+  it('defaults buffer to 5 days', async () => {
+    await renderFormDialog()
+    expect(screen.getByLabelText(/buffer/i)).toHaveValue(5)
+  })
+
+  it('updates the schedule preview when effort changes', async () => {
+    const user = userEvent.setup()
+    await renderFormDialog()
+    fireEvent.change(screen.getByLabelText(/closing date/i), { target: { value: '2026-07-14' } })
+    await user.clear(screen.getByLabelText(/effort/i))
+    await user.type(screen.getByLabelText(/effort/i), '3')
+
+    expect(screen.getByText(/Start \+ 3 days/i)).toBeInTheDocument()
+    expect(screen.getByText(/14 Jul 2026/i)).toBeInTheDocument()
   })
 })
 
