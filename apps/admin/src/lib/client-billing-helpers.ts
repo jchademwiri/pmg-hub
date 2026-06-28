@@ -168,12 +168,11 @@ export function buildBankingProps(
     bankBranchCode?: string | null;
   } | null,
 ): { bankName: string; accountName: string; accountNumber: string; branchCode: string } | undefined {
-  if (!settings?.bankName) return undefined;
   return {
-    bankName: settings.bankName,
-    accountName: settings.bankAccountName ?? '',
-    accountNumber: settings.bankAccountNumber ?? '',
-    branchCode: settings.bankBranchCode ?? '',
+    bankName: settings?.bankName || 'Standard Bank',
+    accountName: settings?.bankAccountName || 'Playhouse Media Group',
+    accountNumber: settings?.bankAccountNumber || '10123456789',
+    branchCode: settings?.bankBranchCode || '051001',
   };
 }
 

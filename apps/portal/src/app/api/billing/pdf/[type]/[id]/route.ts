@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import { headers } from 'next/headers';
-import { portalAuth } from '@/lib/auth';
+import { getPortalSession } from '@/lib/portal-session';
 import { getDb, clients, invoices, quotations, eq, and } from '@pmg/db';
 import { generateBillingPdf } from '@/lib/server-billing-pdf';
 
@@ -14,28 +14,18 @@ export async function GET(
   req: Request,
   { params }: { params: Promise<{ type: string; id: string }> },
 ) {
-  const session = await portalAuth.api.getSession({ headers: await headers() });
-  if (!session) {
+  const portalSession = await getPortalSession();
+  if (!portalSession) {
     return NextResponse.json({ error: 'Unauthorized.' }, { status: 401 });
   }
 
+  const { client } = portalSession;
   const { type, id } = await params;
   if (!TYPES.has(type as PdfType)) {
     return NextResponse.json({ error: 'Unsupported PDF type.' }, { status: 400 });
   }
 
   const db = getDb();
-
-  // Fetch and verify the client associated with the authenticated user
-  const [client] = await db
-    .select()
-    .from(clients)
-    .where(eq(clients.userId, session.user.id))
-    .limit(1);
-
-  if (!client || !client.isActive) {
-    return NextResponse.json({ error: 'Unauthorized.' }, { status: 401 });
-  }
 
   // Enforce document ownership checks to prevent IDOR
   if (type === 'invoice') {
@@ -67,9 +57,24 @@ export async function GET(
 
   // Read the monthPeriod search parameter for statements
   const url = new URL(req.url);
-  const monthPeriod = url.searchParams.get('monthPeriod');
+  const monthPeriodParam = url.searchParams.get('monthPeriod');
+  
+  // If no parameter is provided, default to 'current' to match the admin panel.
+  // Otherwise, only apply if it's one of the valid period buckets.
+  let monthPeriod: 'current' | 'previous' | 'past3' | 'past6' | undefined = undefined;
+  if (monthPeriodParam === null) {
+    monthPeriod = 'current';
+  } else if (
+    monthPeriodParam === 'current' ||
+    monthPeriodParam === 'previous' ||
+    monthPeriodParam === 'past3' ||
+    monthPeriodParam === 'past6'
+  ) {
+    monthPeriod = monthPeriodParam;
+  }
+
   const filters = {
-    ...(monthPeriod ? { monthPeriod: monthPeriod as 'current' | 'previous' | 'past3' | 'past6' } : {}),
+    ...(monthPeriod ? { monthPeriod } : {}),
   };
 
   // Generate the PDF

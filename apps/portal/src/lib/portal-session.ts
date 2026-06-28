@@ -1,9 +1,9 @@
 import { headers, cookies } from 'next/headers';
 import { redirect } from 'next/navigation';
-import { getDb, clients, eq, and } from '@pmg/db';
+import { getDb, clients, user, eq, and } from '@pmg/db';
 import { portalAuth } from './auth';
 
-export async function getPortalSessionOrRedirect() {
+export async function getPortalSession() {
   const db = getDb();
 
   // Impersonation / Bypass Auth helper in development
@@ -70,16 +70,62 @@ export async function getPortalSessionOrRedirect() {
 
   // Production authentication check
   const session = await portalAuth.api.getSession({ headers: await headers() });
-  if (!session) redirect('/login');
+  if (!session) return null;
 
-  const [client] = await db
+  let [client] = await db
     .select()
     .from(clients)
     .where(eq(clients.userId, session.user.id))
     .limit(1);
 
-  // Enforce that only active clients can access the portal
-  if (!client || !client.isActive) redirect('/login');
+  // If no client is associated with this userId, check if they are an admin/super_admin
+  if (!client) {
+    const [adminUser] = await db
+      .select()
+      .from(user)
+      .where(eq(user.id, session.user.id))
+      .limit(1);
+
+    if (adminUser && ['admin', 'super_admin'].includes(adminUser.role || '')) {
+      // Admin is logged in! Allow impersonation.
+      const cookieStore = await cookies();
+      const impersonateId = cookieStore.get('impersonate_client_id')?.value;
+
+      if (impersonateId) {
+        const [targetClient] = await db
+          .select()
+          .from(clients)
+          .where(and(eq(clients.id, impersonateId), eq(clients.isActive, true)))
+          .limit(1);
+        if (targetClient) {
+          client = targetClient;
+        }
+      }
+
+      // If no impersonate cookie is set, default to the first active client
+      if (!client) {
+        const [fallbackClient] = await db
+          .select()
+          .from(clients)
+          .where(eq(clients.isActive, true))
+          .limit(1);
+        if (fallbackClient) {
+          client = fallbackClient;
+        }
+      }
+    }
+  }
+
+  // Enforce that only active clients (or impersonated clients) can access the portal
+  if (!client || !client.isActive) return null;
 
   return { session, client };
+}
+
+export async function getPortalSessionOrRedirect() {
+  const result = await getPortalSession();
+  if (!result) {
+    redirect('/login');
+  }
+  return result;
 }

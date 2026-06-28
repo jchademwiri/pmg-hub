@@ -233,7 +233,6 @@ export default async function StatementsPage({ searchParams }: PageProps) {
         <PrintButton
           type="statement"
           id={`${client.id}?monthPeriod=${currentPeriod}`}
-          label="Print Statement"
         />
       </div>
 
