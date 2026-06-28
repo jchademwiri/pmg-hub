@@ -9,8 +9,11 @@ import { createEmailClient, MagicLinkEmail, DEFAULT_EMAIL_FROM, DEFAULT_REPLY_TO
 
 export const portalAuth = betterAuth({
   secret: process.env.BETTER_AUTH_SECRET,
-  baseURL: process.env.PORTAL_AUTH_URL || 'http://localhost:3001',
-  trustedOrigins: process.env.PORTAL_AUTH_URL ? [process.env.PORTAL_AUTH_URL] : [],
+  baseURL: process.env.PORTAL_AUTH_URL || process.env.BETTER_AUTH_URL || 'http://localhost:3001',
+  trustedOrigins: [
+    ...(process.env.PORTAL_AUTH_URL ? [process.env.PORTAL_AUTH_URL] : []),
+    ...(process.env.BETTER_AUTH_URL ? [process.env.BETTER_AUTH_URL] : []),
+  ],
   database: drizzleAdapter(getDb(), { provider: 'pg' }),
 
   emailAndPassword: {
