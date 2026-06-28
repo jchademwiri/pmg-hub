@@ -61,7 +61,7 @@ import {
   elementToPdfBase64,
   sanitizePdfFileName,
 } from '@/lib/pdf-export';
-import { ChevronDown, ChevronUp, FileDown, Mail, Loader2, Eye, Plus, CheckCircle2, XCircle, Wallet, Clock, AlertCircle } from 'lucide-react';
+import { ChevronDown, ChevronUp, FileDown, Mail, Loader2, Eye, Plus, CheckCircle2, XCircle, Wallet, Clock, AlertCircle, FileText, FileSignature, Coins, FileSpreadsheet, BarChart3 } from 'lucide-react';
 import { generateReceiptNumber } from '@pmg/utils';
 import { IssueCreditNoteDialog } from '@/components/billing/issue-credit-note-dialog';
 import { CreditHistoryTable } from '@/components/billing/credit-history-table';
@@ -126,9 +126,6 @@ export function ClientBillingWorkspace({
 
   // Collapsible Details
   const [isDetailsOpen, setIsDetailsOpen] = useState(false);
-
-  const previewPanelRef = useRef<HTMLDivElement>(null);
-  const [isLargeScreen, setIsLargeScreen] = useState(false);
 
   // Split-Pane Preview Selection
   const [selectedDocId, setSelectedDocId] = useState<string | null>(
@@ -378,19 +375,7 @@ export function ClientBillingWorkspace({
     }
   }, [searchParams, invoices, quotes, payments]);
 
-  useEffect(() => {
-    const mq = window.matchMedia('(min-width: 1024px)');
-    setIsLargeScreen(mq.matches);
-    const handler = (e: MediaQueryListEvent) => setIsLargeScreen(e.matches);
-    mq.addEventListener('change', handler);
-    return () => mq.removeEventListener('change', handler);
-  }, []);
 
-  useEffect(() => {
-    if (previewPanelRef.current) {
-      previewPanelRef.current.scrollTop = 0;
-    }
-  }, [selectedDocId]);
 
   // Find selected document detail in memory
   const activeInvoice = invoices.find((i) => i.id === selectedDocId);
@@ -961,13 +946,67 @@ export function ClientBillingWorkspace({
       <Tabs value={activeTab} onValueChange={handleTabChange} className="flex flex-col gap-4">
         <div className="sticky top-[3.25rem] z-30 bg-background -mx-6 px-6 pb-2 border-b flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
           <TabsList className="bg-transparent h-10 p-0 flex gap-2 shrink-0">
-            <TabsTrigger value="invoices" className="bg-transparent border-b-2 border-transparent data-[state=active]:border-amber-500 rounded-none shadow-none px-4 py-2 text-sm font-medium">Invoices</TabsTrigger>
-            <TabsTrigger value="quotes" className="bg-transparent border-b-2 border-transparent data-[state=active]:border-amber-500 rounded-none shadow-none px-4 py-2 text-sm font-medium">Quotations</TabsTrigger>
-            <TabsTrigger value="payments" className="bg-transparent border-b-2 border-transparent data-[state=active]:border-amber-500 rounded-none shadow-none px-4 py-2 text-sm font-medium">Payments</TabsTrigger>
-            <TabsTrigger value="statement" className="bg-transparent border-b-2 border-transparent data-[state=active]:border-amber-500 rounded-none shadow-none px-4 py-2 text-sm font-medium">Statement</TabsTrigger>
-            <TabsTrigger value="credits" className="bg-transparent border-b-2 border-transparent data-[state=active]:border-amber-500 rounded-none shadow-none px-4 py-2 text-sm font-medium">Credits</TabsTrigger>
-            <TabsTrigger value="analytics" className="bg-transparent border-b-2 border-transparent data-[state=active]:border-amber-500 rounded-none shadow-none px-4 py-2 text-sm font-medium">
-              Analytics
+            <TabsTrigger 
+              value="invoices" 
+              className="group bg-transparent border-b-2 border-transparent data-[state=active]:border-amber-500 data-[state=active]:text-foreground rounded-none shadow-none px-4 py-2 text-sm font-medium flex items-center gap-2 transition-all hover:text-foreground/80"
+            >
+              <FileText className="size-4 text-muted-foreground group-data-[state=active]:text-amber-500 transition-colors" />
+              <span>Invoices</span>
+              {invoices.length > 0 && (
+                <span className="text-[10px] font-semibold bg-muted group-data-[state=active]:bg-amber-500/10 group-data-[state=active]:text-amber-600 px-1.5 py-0.5 rounded-full text-muted-foreground transition-colors">
+                  {invoices.length}
+                </span>
+              )}
+            </TabsTrigger>
+            <TabsTrigger 
+              value="quotes" 
+              className="group bg-transparent border-b-2 border-transparent data-[state=active]:border-amber-500 data-[state=active]:text-foreground rounded-none shadow-none px-4 py-2 text-sm font-medium flex items-center gap-2 transition-all hover:text-foreground/80"
+            >
+              <FileSignature className="size-4 text-muted-foreground group-data-[state=active]:text-amber-500 transition-colors" />
+              <span>Quotations</span>
+              {quotes.length > 0 && (
+                <span className="text-[10px] font-semibold bg-muted group-data-[state=active]:bg-amber-500/10 group-data-[state=active]:text-amber-600 px-1.5 py-0.5 rounded-full text-muted-foreground transition-colors">
+                  {quotes.length}
+                </span>
+              )}
+            </TabsTrigger>
+            <TabsTrigger 
+              value="payments" 
+              className="group bg-transparent border-b-2 border-transparent data-[state=active]:border-amber-500 data-[state=active]:text-foreground rounded-none shadow-none px-4 py-2 text-sm font-medium flex items-center gap-2 transition-all hover:text-foreground/80"
+            >
+              <Coins className="size-4 text-muted-foreground group-data-[state=active]:text-amber-500 transition-colors" />
+              <span>Payments</span>
+              {payments.data.length > 0 && (
+                <span className="text-[10px] font-semibold bg-muted group-data-[state=active]:bg-amber-500/10 group-data-[state=active]:text-amber-600 px-1.5 py-0.5 rounded-full text-muted-foreground transition-colors">
+                  {payments.data.length}
+                </span>
+              )}
+            </TabsTrigger>
+            <TabsTrigger 
+              value="statement" 
+              className="group bg-transparent border-b-2 border-transparent data-[state=active]:border-amber-500 data-[state=active]:text-foreground rounded-none shadow-none px-4 py-2 text-sm font-medium flex items-center gap-2 transition-all hover:text-foreground/80"
+            >
+              <FileSpreadsheet className="size-4 text-muted-foreground group-data-[state=active]:text-amber-500 transition-colors" />
+              <span>Statement</span>
+            </TabsTrigger>
+            <TabsTrigger 
+              value="credits" 
+              className="group bg-transparent border-b-2 border-transparent data-[state=active]:border-amber-500 data-[state=active]:text-foreground rounded-none shadow-none px-4 py-2 text-sm font-medium flex items-center gap-2 transition-all hover:text-foreground/80"
+            >
+              <Wallet className="size-4 text-muted-foreground group-data-[state=active]:text-amber-500 transition-colors" />
+              <span>Credits</span>
+              {creditSummary?.creditNotes && creditSummary.creditNotes.length > 0 && (
+                <span className="text-[10px] font-semibold bg-muted group-data-[state=active]:bg-amber-500/10 group-data-[state=active]:text-amber-600 px-1.5 py-0.5 rounded-full text-muted-foreground transition-colors">
+                  {creditSummary.creditNotes.length}
+                </span>
+              )}
+            </TabsTrigger>
+            <TabsTrigger 
+              value="analytics" 
+              className="group bg-transparent border-b-2 border-transparent data-[state=active]:border-amber-500 data-[state=active]:text-foreground rounded-none shadow-none px-4 py-2 text-sm font-medium flex items-center gap-2 transition-all hover:text-foreground/80"
+            >
+              <BarChart3 className="size-4 text-muted-foreground group-data-[state=active]:text-amber-500 transition-colors" />
+              <span>Analytics</span>
             </TabsTrigger>
           </TabsList>
 
@@ -977,8 +1016,8 @@ export function ClientBillingWorkspace({
         {/* Split pane: list (left) + preview (right on lg+) */}
         <div className="flex flex-col lg:flex-row gap-4 items-start w-full">
 
-          {/* Document list — 40% on lg+, full width on mobile */}
-          <div className={cn("w-full shrink-0", !['analytics', 'credits'].includes(activeTab) && "lg:w-[40%]")}>
+          {/* Document list — full width */}
+          <div className="w-full shrink-0">
             <Card className="w-full shadow-sm border-muted-foreground/10 bg-card overflow-hidden">
             <CardHeader className="p-4 border-b flex flex-row items-center justify-between">
               <div>
@@ -1014,7 +1053,10 @@ export function ClientBillingWorkspace({
                           />
                         </TableHead>
                         <TableHead>Invoice #</TableHead>
+                        <TableHead>Reference</TableHead>
                         <TableHead>Date</TableHead>
+                        <TableHead>Due Date</TableHead>
+                        <TableHead>Division</TableHead>
                         <TableHead className="text-right">Amount</TableHead>
                         <TableHead>Status</TableHead>
                       </TableRow>
@@ -1029,7 +1071,7 @@ export function ClientBillingWorkspace({
                           onClick={() => {
                             setSelectedDocId(inv.id);
                             setSelectedDocType('invoice');
-                            if (!isLargeScreen) setIsPreviewOpen(true);
+                            setIsPreviewOpen(true);
                           }}
                         >
                           <TableCell onClick={(e) => e.stopPropagation()}>
@@ -1039,7 +1081,22 @@ export function ClientBillingWorkspace({
                             />
                           </TableCell>
                           <TableCell className="font-semibold">{inv.documentNumber}</TableCell>
+                          <TableCell className="text-muted-foreground truncate max-w-[150px]" title={inv.reference ?? ''}>
+                            {inv.reference ?? '-'}
+                          </TableCell>
                           <TableCell className="tabular-nums">{fmtDate(inv.invoiceDate)}</TableCell>
+                          <TableCell className="tabular-nums">
+                            {inv.dueDate ? (
+                              <span className={cn(
+                                inv.status !== 'paid' && inv.status !== 'void' && inv.dueDate < todayStrWS && "text-red-500 font-medium"
+                              )}>
+                                {fmtDate(inv.dueDate)}
+                              </span>
+                            ) : '-'}
+                          </TableCell>
+                          <TableCell>
+                            <span className="text-muted-foreground">{inv.divisionName ?? '-'}</span>
+                          </TableCell>
                           <TableCell className="text-right tabular-nums font-semibold">{formatZAR(Number(inv.total))}</TableCell>
                           <TableCell>
                             <BillingStatusBadge status={inv.status} />
@@ -1070,7 +1127,10 @@ export function ClientBillingWorkspace({
                           />
                         </TableHead>
                         <TableHead>Quote #</TableHead>
+                        <TableHead>Reference</TableHead>
                         <TableHead>Date</TableHead>
+                        <TableHead>Expiry Date</TableHead>
+                        <TableHead>Division</TableHead>
                         <TableHead className="text-right">Amount</TableHead>
                         <TableHead>Status</TableHead>
                       </TableRow>
@@ -1085,7 +1145,7 @@ export function ClientBillingWorkspace({
                           onClick={() => {
                             setSelectedDocId(q.id);
                             setSelectedDocType('quote');
-                            if (!isLargeScreen) setIsPreviewOpen(true);
+                            setIsPreviewOpen(true);
                           }}
                         >
                           <TableCell onClick={(e) => e.stopPropagation()}>
@@ -1095,7 +1155,22 @@ export function ClientBillingWorkspace({
                             />
                           </TableCell>
                           <TableCell className="font-semibold">{q.documentNumber}</TableCell>
+                          <TableCell className="text-muted-foreground truncate max-w-[150px]" title={q.reference ?? ''}>
+                            {q.reference ?? '-'}
+                          </TableCell>
                           <TableCell className="tabular-nums">{fmtDate(q.quoteDate)}</TableCell>
+                          <TableCell className="tabular-nums">
+                            {q.expiryDate ? (
+                              <span className={cn(
+                                q.status === 'sent' && q.expiryDate < todayStrWS && "text-red-500 font-medium"
+                              )}>
+                                {fmtDate(q.expiryDate)}
+                              </span>
+                            ) : '-'}
+                          </TableCell>
+                          <TableCell>
+                            <span className="text-muted-foreground">{q.divisionName ?? '-'}</span>
+                          </TableCell>
                           <TableCell className="text-right tabular-nums font-semibold">{formatZAR(Number(q.total))}</TableCell>
                           <TableCell>
                             <BillingStatusBadge status={q.status} />
@@ -1118,6 +1193,7 @@ export function ClientBillingWorkspace({
                         <TableHead>Date</TableHead>
                         <TableHead>Receipt #</TableHead>
                         <TableHead>Invoice Number</TableHead>
+                        <TableHead>Division</TableHead>
                         <TableHead className="text-right">Amount</TableHead>
                       </TableRow>
                     </TableHeader>
@@ -1131,7 +1207,7 @@ export function ClientBillingWorkspace({
                           onClick={() => {
                             setSelectedDocId(entry.id);
                             setSelectedDocType('payment');
-                            if (!isLargeScreen) setIsPreviewOpen(true);
+                            setIsPreviewOpen(true);
                           }}
                         >
                           <TableCell className="tabular-nums">{fmtDate(entry.date)}</TableCell>
@@ -1139,6 +1215,9 @@ export function ClientBillingWorkspace({
                             {generateReceiptNumber(entry.id, entry.divisionName)}
                           </TableCell>
                           <TableCell className="font-semibold">{extractInvoiceNumber(entry.description)}</TableCell>
+                          <TableCell>
+                            <span className="text-muted-foreground">{entry.divisionName ?? '-'}</span>
+                          </TableCell>
                           <TableCell className="text-right tabular-nums font-semibold text-emerald-500">
                             +{formatZAR(Number(entry.amount))}
                           </TableCell>
@@ -1210,18 +1289,16 @@ export function ClientBillingWorkspace({
                     </Select>
                   </div>
 
-                  {!isLargeScreen && (
-                    <div className="flex items-end mt-4 md:mt-0">
-                      <Button
-                        variant="default"
-                        size="sm"
-                        className="flex items-center gap-1.5 shadow-sm h-8"
-                        onClick={() => setIsPreviewOpen(true)}
-                      >
-                        <Eye className="size-4" /> Preview Statement PDF
-                      </Button>
-                    </div>
-                  )}
+                  <div className="flex items-end mt-4 md:mt-0">
+                    <Button
+                      variant="default"
+                      size="sm"
+                      className="flex items-center gap-1.5 shadow-sm h-8"
+                      onClick={() => setIsPreviewOpen(true)}
+                    >
+                      <Eye className="size-4" /> Preview Statement PDF
+                    </Button>
+                  </div>
                 </div>
 
                 {/* Statement Transactions Table */}
@@ -1402,131 +1479,7 @@ export function ClientBillingWorkspace({
           </Card>
           </div>
 
-          {/* Preview panel — 60% on lg+, hidden on mobile (uses Dialog instead) */}
-          {!['analytics', 'credits'].includes(activeTab) && (
-            <div
-              ref={previewPanelRef}
-              className="hidden lg:flex lg:flex-col lg:w-[60%] sticky top-[3.25rem] max-h-[calc(100vh-4rem)] overflow-y-auto w-full"
-            >
-            {/* ── Inline Preview Panel (lg+ only) ─────────────────────── */}
-            <Card className="shadow-sm border-muted-foreground/10 bg-card overflow-hidden text-card-foreground">
-              {/* Panel header with action buttons */}
-              <div className="p-4 border-b flex flex-row items-center justify-between shrink-0">
-                <div className="flex flex-col gap-0.5">
-                  <span className="text-sm font-semibold">
-                    {selectedDocType === 'invoice' && activeInvoice?.documentNumber}
-                    {selectedDocType === 'quote' && activeQuote?.documentNumber}
-                  {selectedDocType === 'payment' && activePayment && generateReceiptNumber(activePayment.id, activePayment.divisionName)}
-                  {selectedDocType === 'statement' && 'Statement'}
-                  {!selectedDocId && selectedDocType !== 'statement' && 'No document selected'}
-                </span>
-                <span className="text-xs text-muted-foreground capitalize">
-                  {selectedDocType === 'statement' ? statementPeriodLabel : selectedDocType}
-                </span>
-              </div>
 
-              {/* Action buttons — same as Dialog header */}
-              <div className="flex items-center gap-2 print:hidden">
-                {selectedDocType !== 'statement' && selectedDocId && (
-                  <>
-                    <PrintButton label="Print" documentTitle={documentTitle} />
-                    <ExportPdfButton fileName={documentTitle} elementId={workspacePrintableElementId} pdfUrl={activePdfUrl} />
-                  </>
-                )}
-                {selectedDocType === 'statement' && (
-                  <>
-                    <PrintButton
-                      label="Print"
-                      documentTitle={`Statement-${client.businessName?.replace(/\s+/g, '-') ?? client.name.replace(/\s+/g, '-')}`}
-                    />
-                    <ExportPdfButton
-                      fileName={`Statement-${client.businessName?.replace(/\s+/g, '-') ?? client.name.replace(/\s+/g, '-')}`}
-                      elementId={workspacePrintableElementId}
-                      pdfUrl={statementPdfUrl}
-                    />
-                  </>
-                )}
-
-                {selectedDocType === 'invoice' && activeInvoice && (
-                  <>
-                    <EmailDocumentDialog
-                      documentId={activeInvoice.id}
-                      documentNumber={activeInvoice.documentNumber}
-                      documentType="invoice"
-                      defaultRecipientEmail={client.email ?? ''}
-                      printableElementId={workspacePrintableElementId}
-                      pdfUrl={activePdfUrl}
-                      statementPdfUrl={statementPdfUrl}
-                    />
-                    <Button variant="outline" size="sm" asChild>
-                      <Link href={`/billing/invoices/${activeInvoice.id}/edit`}>Edit</Link>
-                    </Button>
-                  </>
-                )}
-                {selectedDocType === 'quote' && activeQuote && (
-                  <>
-                    <EmailDocumentDialog
-                      documentId={activeQuote.id}
-                      documentNumber={activeQuote.documentNumber}
-                      documentType="quote"
-                      defaultRecipientEmail={client.email ?? ''}
-                      printableElementId={workspacePrintableElementId}
-                      pdfUrl={activePdfUrl}
-                    />
-                    <Button variant="outline" size="sm" asChild>
-                      <Link href={`/billing/quotes/${activeQuote.id}/edit`}>Edit</Link>
-                    </Button>
-                  </>
-                )}
-                {selectedDocType === 'payment' && activePayment && (
-                  <>
-                    <EmailReceiptDialog
-                      incomeId={activePayment.id}
-                      receiptNumber={generateReceiptNumber(activePayment.id, activePayment.divisionName)}
-                      defaultRecipientEmail={client.email ?? ''}
-                      printableElementId={workspacePrintableElementId}
-                      pdfUrl={activePdfUrl}
-                    />
-                      <Button variant="outline" size="sm" asChild>
-                        <Link href={`/billing/payments/${activePayment.id}`}>View Page</Link>
-                      </Button>
-                    </>
-                  )}
-                </div>
-              </div>
-
-              {/* Document render area */}
-              <div className="p-4 bg-muted/5">
-                {selectedDocType === 'statement' ? (
-                  <div className="bg-card rounded-lg p-4 overflow-x-auto">
-                    <DocumentPreview id={workspacePrintableElementId} type="statement" {...statementPreviewProps} />
-                  </div>
-                ) : selectedDocId ? (
-                  <div className="bg-card rounded-lg p-4 overflow-x-auto">
-                    {selectedDocType === 'invoice' && activeInvoice && (
-                      <DocumentPreview id={workspacePrintableElementId} type="invoice" {...getInvoicePreviewProps(activeInvoice)} />
-                    )}
-                    {selectedDocType === 'quote' && activeQuote && (
-                      <DocumentPreview id={workspacePrintableElementId} type="quote" {...getQuotePreviewProps(activeQuote)} />
-                    )}
-                    {selectedDocType === 'payment' && activePayment && (
-                      <PaymentReceiptPreview
-                        id={workspacePrintableElementId}
-                        payment={activePayment}
-                        client={client}
-                        divSettings={divSettings}
-                      />
-                    )}
-                  </div>
-                ) : (
-                  <div className="h-64 flex items-center justify-center border border-dashed rounded-lg bg-card shadow-sm">
-                    <span className="text-sm text-muted-foreground">Select a document to preview</span>
-                  </div>
-                )}
-              </div>
-            </Card>
-          </div>
-          )}
 
         </div>
 
