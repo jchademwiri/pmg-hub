@@ -258,9 +258,9 @@ describe('TenderEditDialog', () => {
     const hidden = document.getElementById('edit-client-hidden') as HTMLInputElement
     expect(hidden?.value).toBe('client-2')
 
-    // Tab buttons are <button> elements (not role="tab")
-    await user.click(screen.getByRole('button', { name: /tracking/i }))
-    await user.click(screen.getByRole('button', { name: /details/i }))
+    // Tab triggers are role="tab"
+    await user.click(screen.getByRole('tab', { name: /tracking/i }))
+    await user.click(screen.getByRole('tab', { name: /details/i }))
     expect(hidden?.value).toBe('client-2')
   })
 
@@ -273,8 +273,8 @@ describe('TenderEditDialog', () => {
     const hidden = document.getElementById('edit-division-hidden') as HTMLInputElement
     expect(hidden?.value).toBe('div-2')
 
-    await user.click(screen.getByRole('button', { name: /tracking/i }))
-    await user.click(screen.getByRole('button', { name: /details/i }))
+    await user.click(screen.getByRole('tab', { name: /tracking/i }))
+    await user.click(screen.getByRole('tab', { name: /details/i }))
     expect(hidden?.value).toBe('div-2')
   })
 
@@ -304,7 +304,7 @@ describe('TenderEditDialog', () => {
     mockEditUpdate.mockResolvedValue({})
     await renderEditDialog()
     await user.click(screen.getByRole('button', { name: /save changes/i }))
-    await waitFor(() => expect(toast.success).toHaveBeenCalledWith('Tender updated'))
+    await waitFor(() => expect(toast.success).toHaveBeenCalledWith('Project updated'))
     expect(mockOnClose).toHaveBeenCalled()
   })
 })
