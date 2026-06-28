@@ -9,6 +9,7 @@
     "lint": "eslint"
   },
   "dependencies": {
+    "@pmg/billing": "workspace:*",
     "@pmg/db": "*",
     "@pmg/emails": "*",
     "@pmg/tailwind-config": "workspace:*",

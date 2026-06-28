@@ -41,7 +41,7 @@ export function PortalShell({ client, children }: PortalShellProps) {
     <div className="flex min-h-screen bg-[#080c14] text-foreground font-sans selection:bg-blue-500/30">
       {/* Desktop Sidebar */}
       <aside
-        className={`hidden md:flex md:flex-col shrink-0 border-r border-white/5 bg-[#0a0f1d] sticky top-0 h-screen transition-all duration-300 ${
+        className={`hidden md:flex md:flex-col shrink-0 border-r border-white/5 bg-[#0a0f1d] sticky top-0 h-screen transition-all duration-300 print:hidden ${
           isCollapsed ? 'w-16' : 'w-64'
         }`}
       >
@@ -200,7 +200,7 @@ export function PortalShell({ client, children }: PortalShellProps) {
       {/* Main Content Area */}
       <div className="flex flex-1 flex-col min-w-0">
         {/* Header */}
-        <header className="flex h-16 shrink-0 items-center justify-between border-b border-white/5 bg-[#0a0f1d] px-6 sticky top-0 z-30">
+        <header className="flex h-16 shrink-0 items-center justify-between border-b border-white/5 bg-[#0a0f1d] px-6 sticky top-0 z-30 print:hidden">
           <div className="flex items-center gap-4">
             <button
               type="button"

@@ -380,20 +380,40 @@ describe('buildOrgProps', () => {
 // buildBankingProps
 // ---------------------------------------------------------------------------
 describe('buildBankingProps', () => {
-  it('returns undefined when settings is null', () => {
-    expect(buildBankingProps(null)).toBeUndefined();
+  it('returns default banking details when settings is null', () => {
+    expect(buildBankingProps(null)).toEqual({
+      bankName: 'Standard Bank',
+      accountName: 'Playhouse Media Group',
+      accountNumber: '10123456789',
+      branchCode: '051001',
+    });
   });
 
-  it('returns undefined when settings is undefined', () => {
-    expect(buildBankingProps(undefined)).toBeUndefined();
+  it('returns default banking details when settings is undefined', () => {
+    expect(buildBankingProps(undefined)).toEqual({
+      bankName: 'Standard Bank',
+      accountName: 'Playhouse Media Group',
+      accountNumber: '10123456789',
+      branchCode: '051001',
+    });
   });
 
-  it('returns undefined when bankName is null', () => {
-    expect(buildBankingProps({ bankName: null })).toBeUndefined();
+  it('returns default banking details when bankName is null', () => {
+    expect(buildBankingProps({ bankName: null })).toEqual({
+      bankName: 'Standard Bank',
+      accountName: 'Playhouse Media Group',
+      accountNumber: '10123456789',
+      branchCode: '051001',
+    });
   });
 
-  it('returns undefined when bankName is empty string', () => {
-    expect(buildBankingProps({ bankName: '' })).toBeUndefined();
+  it('returns default banking details when bankName is empty string', () => {
+    expect(buildBankingProps({ bankName: '' })).toEqual({
+      bankName: 'Standard Bank',
+      accountName: 'Playhouse Media Group',
+      accountNumber: '10123456789',
+      branchCode: '051001',
+    });
   });
 
   it('returns banking object with all fields when fully provided', () => {
@@ -411,19 +431,19 @@ describe('buildBankingProps', () => {
     });
   });
 
-  it('falls back to empty string for missing account fields', () => {
+  it('falls back to default values for missing account fields', () => {
     const result = buildBankingProps({
       bankName: 'Test Bank',
     });
     expect(result).toEqual({
       bankName: 'Test Bank',
-      accountName: '',
-      accountNumber: '',
-      branchCode: '',
+      accountName: 'Playhouse Media Group',
+      accountNumber: '10123456789',
+      branchCode: '051001',
     });
   });
 
-  it('handles null account fields gracefully', () => {
+  it('handles null account fields gracefully by falling back to defaults', () => {
     const result = buildBankingProps({
       bankName: 'Test Bank',
       bankAccountName: null,
@@ -432,9 +452,9 @@ describe('buildBankingProps', () => {
     });
     expect(result).toEqual({
       bankName: 'Test Bank',
-      accountName: '',
-      accountNumber: '',
-      branchCode: '',
+      accountName: 'Playhouse Media Group',
+      accountNumber: '10123456789',
+      branchCode: '051001',
     });
   });
 });

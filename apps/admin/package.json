@@ -11,6 +11,7 @@
     "test:watch": "vitest"
   },
   "dependencies": {
+    "@pmg/billing": "workspace:*",
     "@pmg/db": "*",
     "@pmg/emails": "*",
     "@pmg/utils": "workspace:*",

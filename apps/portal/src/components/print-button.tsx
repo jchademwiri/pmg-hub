@@ -9,6 +9,31 @@ interface DocumentActionsProps {
   label?: string;
 }
 
+function printPdf(type: string, id: string) {
+  if (typeof window === 'undefined') return;
+
+  const iframe = document.createElement('iframe');
+  iframe.style.display = 'none';
+  iframe.src = `/api/billing/pdf/${type}/${id}`;
+  document.body.appendChild(iframe);
+
+  iframe.onload = () => {
+    try {
+      iframe.contentWindow?.focus();
+      iframe.contentWindow?.print();
+    } catch (e) {
+      console.error('Failed to print PDF via iframe, falling back to opening in a new tab', e);
+      window.open(`/api/billing/pdf/${type}/${id}`, '_blank');
+    }
+    // Clean up the iframe after a short delay
+    setTimeout(() => {
+      if (document.body.contains(iframe)) {
+        document.body.removeChild(iframe);
+      }
+    }, 5000);
+  };
+}
+
 export function DocumentActions({ type, id }: Omit<DocumentActionsProps, 'label'>) {
   const handleDownload = () => {
     if (typeof window !== 'undefined') {
@@ -17,9 +42,7 @@ export function DocumentActions({ type, id }: Omit<DocumentActionsProps, 'label'
   };
 
   const handlePrint = () => {
-    if (typeof window !== 'undefined') {
-      window.print();
-    }
+    printPdf(type, id);
   };
 
   return (
@@ -52,7 +75,7 @@ export function PrintButton({ type, id, label }: DocumentActionsProps) {
     return (
       <button
         type="button"
-        onClick={() => typeof window !== 'undefined' && window.print()}
+        onClick={() => printPdf(type, id)}
         className="inline-flex items-center gap-2 px-3.5 py-1.5 text-xs font-medium text-white bg-blue-600 hover:bg-blue-500 rounded-lg shadow-md transition-all active:scale-[0.98]"
       >
         <Printer className="size-3.5" />

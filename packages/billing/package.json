@@ -1,0 +1,23 @@
+{
+  "name": "@pmg/billing",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "exports": {
+    "./format": "./src/format.ts",
+    "./billing-ageing": "./src/billing-ageing.ts",
+    "./client-billing-helpers": "./src/client-billing-helpers.ts",
+    "./document-logo": "./src/document-logo.ts",
+    "./server-billing-pdf": "./src/server-billing-pdf.ts"
+  },
+  "dependencies": {
+    "@pmg/db": "workspace:*",
+    "@pmg/utils": "workspace:*",
+    "jspdf": "^4.2.1",
+    "server-only": "^0.0.1"
+  },
+  "devDependencies": {
+    "@pmg/typescript-config": "workspace:*",
+    "typescript": "^5.4.0"
+  }
+}
