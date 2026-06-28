@@ -3,7 +3,7 @@ import { redirect } from 'next/navigation';
 import { getDb, clients, eq, and } from '@pmg/db';
 import { portalAuth } from './auth';
 
-export async function getPortalSessionOrRedirect() {
+export async function getPortalSession() {
   const db = getDb();
 
   // Impersonation / Bypass Auth helper in development
@@ -70,7 +70,7 @@ export async function getPortalSessionOrRedirect() {
 
   // Production authentication check
   const session = await portalAuth.api.getSession({ headers: await headers() });
-  if (!session) redirect('/login');
+  if (!session) return null;
 
   const [client] = await db
     .select()
@@ -79,7 +79,15 @@ export async function getPortalSessionOrRedirect() {
     .limit(1);
 
   // Enforce that only active clients can access the portal
-  if (!client || !client.isActive) redirect('/login');
+  if (!client || !client.isActive) return null;
 
   return { session, client };
+}
+
+export async function getPortalSessionOrRedirect() {
+  const result = await getPortalSession();
+  if (!result) {
+    redirect('/login');
+  }
+  return result;
 }
