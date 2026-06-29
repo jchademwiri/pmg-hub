@@ -124,9 +124,16 @@ interface CurrentWorkloadCardProps {
   client: ClientSummary | null;
   onStatusChange: (id: string, status: string) => void;
   progressMap: Record<string, { total: number; completed: number }>;
+  defaultExpanded?: boolean;
 }
 
-function CurrentWorkloadCard({ tender, client, onStatusChange, progressMap }: CurrentWorkloadCardProps) {
+function CurrentWorkloadCard({ tender, client, onStatusChange, progressMap, defaultExpanded = true }: CurrentWorkloadCardProps) {
+  const [expanded, setExpanded] = React.useState(defaultExpanded);
+
+  React.useEffect(() => {
+    setExpanded(defaultExpanded);
+  }, [defaultExpanded]);
+
   if (!tender) {
     return (
       <Card size="sm">
@@ -154,24 +161,40 @@ function CurrentWorkloadCard({ tender, client, onStatusChange, progressMap }: Cu
   const percent = progress.total > 0 ? Math.round((progress.completed / progress.total) * 100) : 0;
 
   return (
-    <Card className="border-blue-500/30 shadow-[0_0_15px_rgba(59,130,246,0.05)]">
-      <CardHeader className="pb-2">
+    <Card className="border-blue-500/30 shadow-[0_0_15px_rgba(59,130,246,0.05)] transition-all duration-200">
+      <CardHeader 
+        className="pb-2 cursor-pointer select-none hover:bg-muted/10 transition-colors rounded-t-lg"
+        onClick={() => setExpanded((e) => !e)}
+      >
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
             <Flame className="size-4 text-blue-500 animate-pulse" />
             <CardTitle className="text-sm font-semibold">Now Working On</CardTitle>
           </div>
-          <ProjectRiskBadge tender={tender} />
+          <div className="flex items-center gap-2" onClick={(e) => e.stopPropagation()}>
+            <ProjectRiskBadge tender={tender} />
+            <Button
+              variant="ghost"
+              size="icon"
+              className="size-7 hover:bg-muted/80 text-muted-foreground hover:text-foreground"
+              onClick={() => setExpanded((e) => !e)}
+              title={expanded ? "Collapse Details" : "Expand Details"}
+            >
+              {expanded ? <ChevronUp className="size-4" /> : <ChevronDown className="size-4" />}
+            </Button>
+          </div>
         </div>
       </CardHeader>
       <CardContent className="space-y-3">
-        <div>
-          <Link href={`/projects/${tender.id}`} className="hover:underline">
-            <h3 className="font-semibold text-base tracking-tight">{tender.projectReference}</h3>
-          </Link>
-          {client && (
-            <p className="text-xs text-muted-foreground mt-0.5">{client.name}</p>
-          )}
+        <div className="flex items-start justify-between gap-4">
+          <div className="min-w-0">
+            <Link href={`/projects/${tender.id}`} className="hover:underline">
+              <h3 className="font-semibold text-base tracking-tight truncate">{tender.projectReference}</h3>
+            </Link>
+            {client && (
+              <p className="text-xs text-muted-foreground mt-0.5 truncate">{client.name}</p>
+            )}
+          </div>
         </div>
 
         {progress.total > 0 && (
@@ -189,54 +212,58 @@ function CurrentWorkloadCard({ tender, client, onStatusChange, progressMap }: Cu
           </div>
         )}
 
-        <div className="flex items-center gap-6 text-xs text-muted-foreground border-t border-border/50 pt-2.5">
-          {formatDate(tender.closingDate)} ·{' '}
-          {daysToClosing > 0
-            ? `${daysToClosing} day${daysToClosing !== 1 ? 's' : ''} remaining`
-            : daysToClosing === 0
-              ? 'Closing today'
-              : `Overdue by ${Math.abs(daysToClosing)} day${Math.abs(daysToClosing) !== 1 ? 's' : ''}`}
-        </div>
-        
-        {tender.blockers && (
-          <div className="flex items-start gap-1.5 rounded-md bg-amber-500/10 p-2">
-            <AlertTriangle className="mt-0.5 size-3 shrink-0 text-amber-500" />
-            <p className="text-xs text-amber-600 dark:text-amber-400">{tender.blockers}</p>
+        {expanded && (
+          <div className="space-y-3 pt-3 border-t border-border/50 animate-in fade-in slide-in-from-top-1 duration-200">
+            <div className="flex items-center gap-6 text-xs text-muted-foreground">
+              {formatDate(tender.closingDate)} ·{' '}
+              {daysToClosing > 0
+                ? `${daysToClosing} day${daysToClosing !== 1 ? 's' : ''} remaining`
+                : daysToClosing === 0
+                  ? 'Closing today'
+                  : `Overdue by ${Math.abs(daysToClosing)} day${Math.abs(daysToClosing) !== 1 ? 's' : ''}`}
+            </div>
+            
+            {tender.blockers && (
+              <div className="flex items-start gap-1.5 rounded-md bg-amber-500/10 p-2">
+                <AlertTriangle className="mt-0.5 size-3 shrink-0 text-amber-500" />
+                <p className="text-xs text-amber-600 dark:text-amber-400">{tender.blockers}</p>
+              </div>
+            )}
+            <div className="flex items-center gap-2 pt-1" onClick={(e) => e.stopPropagation()}>
+              <Button
+                size="sm"
+                variant="default"
+                onClick={() => onStatusChange(tender.id, 'completed')}
+              >
+                Mark Complete
+              </Button>
+              <Button
+                size="sm"
+                variant="outline"
+                onClick={() => onStatusChange(tender.id, 'planned')}
+              >
+                Re-plan (Pause)
+              </Button>
+              <Button
+                size="sm"
+                variant="ghost"
+                className="text-destructive hover:text-destructive"
+                onClick={async () => {
+                  const confirmed = await confirm({
+                    title: 'Cancel Project',
+                    description: `Are you sure you want to cancel "${tender.projectReference}"? This will move it back to the planned queue.`,
+                    confirmText: 'Cancel Project',
+                    cancelText: 'Keep Working',
+                    variant: 'destructive',
+                  });
+                  if (confirmed) onStatusChange(tender.id, 'cancelled');
+                }}
+              >
+                Cancel Project
+              </Button>
+            </div>
           </div>
         )}
-        <div className="flex items-center gap-2 pt-1">
-          <Button
-            size="sm"
-            variant="default"
-            onClick={() => onStatusChange(tender.id, 'completed')}
-          >
-            Mark Complete
-          </Button>
-          <Button
-            size="sm"
-            variant="outline"
-            onClick={() => onStatusChange(tender.id, 'planned')}
-          >
-            Re-plan (Pause)
-          </Button>
-          <Button
-            size="sm"
-            variant="ghost"
-            className="text-destructive hover:text-destructive"
-            onClick={async () => {
-              const confirmed = await confirm({
-                title: 'Cancel Project',
-                description: `Are you sure you want to cancel "${tender.projectReference}"? This will move it back to the planned queue.`,
-                confirmText: 'Cancel Project',
-                cancelText: 'Keep Working',
-                variant: 'destructive',
-              });
-              if (confirmed) onStatusChange(tender.id, 'cancelled');
-            }}
-          >
-            Cancel Project
-          </Button>
-        </div>
       </CardContent>
     </Card>
   );
@@ -447,13 +474,14 @@ export function ProjectOverviewClient({
               progressMap={progressMap}
             />
           ) : (
-            inProgress.map((tender) => (
+            inProgress.map((tender, idx) => (
               <CurrentWorkloadCard
                 key={tender.id}
                 tender={tender}
                 client={clientMap.get(tender.clientId) || null}
                 onStatusChange={handleStatusChange}
                 progressMap={progressMap}
+                defaultExpanded={idx === 0}
               />
             ))
           )}
