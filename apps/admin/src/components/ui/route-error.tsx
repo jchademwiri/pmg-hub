@@ -1,6 +1,5 @@
 'use client'
 
-import { useEffect } from 'react'
 import { AlertTriangle } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 
@@ -11,10 +10,6 @@ interface RouteErrorProps {
 }
 
 export function RouteError({ routeName, error, reset }: RouteErrorProps) {
-  useEffect(() => {
-    console.error(`${routeName} error:`, error)
-  }, [error, routeName])
-
   return (
     <div className="flex flex-col items-center justify-center gap-4 py-16 text-center">
       <AlertTriangle className="size-10 text-destructive" />

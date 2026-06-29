@@ -148,7 +148,7 @@ export function ProjectListClient({ entries, clients, divisions, progressMap = {
       return true;
     });
 
-    // Sort cancelled tenders to the bottom
+    // Sort cancelled projects to the bottom
     return [...list].sort((a, b) => {
       if (a.status === 'cancelled' && b.status !== 'cancelled') return 1;
       if (a.status !== 'cancelled' && b.status === 'cancelled') return -1;
@@ -193,7 +193,7 @@ export function ProjectListClient({ entries, clients, divisions, progressMap = {
     if (result.error) {
       toast.error(result.error);
     } else {
-      toast.success('Tender cancelled');
+      toast.success('Project cancelled');
       router.refresh();
     }
     setCancelId(null);
@@ -205,7 +205,7 @@ export function ProjectListClient({ entries, clients, divisions, progressMap = {
     if (result.error) {
       toast.error(result.error);
     } else {
-      toast.success(`${result.count} tender${result.count !== 1 ? 's' : ''} archived`);
+      toast.success(`${result.count} project${result.count !== 1 ? 's' : ''} archived`);
       setSelectedIds(new Set());
       router.refresh();
     }
@@ -219,7 +219,7 @@ export function ProjectListClient({ entries, clients, divisions, progressMap = {
     if (result.error) {
       toast.error(result.error);
     } else {
-      toast.success(`${result.count} tender${result.count !== 1 ? 's' : ''} permanently deleted`);
+      toast.success(`${result.count} project${result.count !== 1 ? 's' : ''} permanently deleted`);
       setSelectedIds(new Set());
       router.refresh();
     }
@@ -235,9 +235,9 @@ export function ProjectListClient({ entries, clients, divisions, progressMap = {
           if (!open) setCancelId(null);
         }}
         onConfirm={() => cancelId && handleCancel(cancelId)}
-        title="Cancel tender?"
-        description="This will mark the tender as cancelled."
-        confirmText="Cancel Tender"
+        title="Cancel project?"
+        description="This will mark the project as cancelled."
+        confirmText="Cancel Project"
         variant="destructive"
       />
 
@@ -247,8 +247,8 @@ export function ProjectListClient({ entries, clients, divisions, progressMap = {
           if (!open) setBulkAction(null);
         }}
         onConfirm={handleBulkArchive}
-        title={`Archive ${selectedIds.size} tender${selectedIds.size !== 1 ? 's' : ''}?`}
-        description="Archived tenders will be cancelled and removed from active views."
+        title={`Archive ${selectedIds.size} project${selectedIds.size !== 1 ? 's' : ''}?`}
+        description="Archived projects will be cancelled and removed from active views."
         confirmText="Archive"
         variant="destructive"
       />
@@ -259,15 +259,15 @@ export function ProjectListClient({ entries, clients, divisions, progressMap = {
           if (!open) setBulkAction(null);
         }}
         onConfirm={handleBulkDelete}
-        title={`Permanently delete ${selectedIds.size} tender${selectedIds.size !== 1 ? 's' : ''}?`}
-        description="This action cannot be undone. Only cancelled tenders should be deleted."
+        title={`Permanently delete ${selectedIds.size} project${selectedIds.size !== 1 ? 's' : ''}?`}
+        description="This action cannot be undone. Only cancelled projects should be deleted."
         confirmText="Delete"
         variant="destructive"
       />
 
       <Card className="overflow-hidden">
         <CardHeader className="flex flex-row items-center justify-between gap-4">
-          <CardTitle>All Tender Schedule Entries ({filtered.length})</CardTitle>
+          <CardTitle>All Project Schedule Entries ({filtered.length})</CardTitle>
         </CardHeader>
         <CardContent className="flex flex-col gap-4 p-0 px-6 pb-6">
           {/* Filter bar */}
@@ -402,7 +402,7 @@ export function ProjectListClient({ entries, clients, divisions, progressMap = {
           {filtered.length === 0 ? (
             <div className="flex flex-col items-center gap-2 py-8 text-center">
               <Filter className="size-6 text-muted-foreground/50" />
-              <p className="text-sm text-muted-foreground">No tenders match your filters</p>
+              <p className="text-sm text-muted-foreground">No projects match your filters</p>
               {hasFilters && (
                 <Button variant="link" size="sm" onClick={clearFilters}>
                   Clear filters
@@ -604,14 +604,14 @@ export function ProjectListClient({ entries, clients, divisions, progressMap = {
                               className="text-xs"
                               onClick={() => setEditingTender(entry)}
                             >
-                              Edit tender
+                              Edit project
                             </DropdownMenuItem>
                             {entry.status !== 'submitted' && entry.status !== 'cancelled' && (
                               <DropdownMenuItem
                                 className="text-xs text-destructive focus:text-destructive"
                                 onClick={() => setCancelId(entry.id)}
                               >
-                                Cancel tender
+                                Cancel project
                               </DropdownMenuItem>
                             )}
                           </DropdownMenuContent>
