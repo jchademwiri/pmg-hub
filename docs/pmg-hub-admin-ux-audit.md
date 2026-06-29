@@ -8,7 +8,7 @@
 
 ## Implementation Status
 
-> **Last updated:** 2026-06-29 — All 5 phases completed and committed to `dev`.
+> **Last updated:** 2026-06-29 — All 5 phases + backlog items completed and committed to `dev`.
 
 | Phase | Scope | Commits | Status |
 |-------|-------|---------|--------|
@@ -17,6 +17,7 @@
 | Phase 3 | Critical UX: BackButton component, Lucide module icons | `2f526b0` | ✅ Complete |
 | Phase 4 | Medium priority: sidebar logo, login branding, empty states, status filters, breadcrumbs, avatar dropdown, dashboard headings | `af8264d`, `237b1d3` | ✅ Complete |
 | Phase 5 | Polish: dark mode toggle, responsive padding, settings icon sizes, login form cleanup | `237b1d3`, `f213b3f` | ✅ Complete |
+| Backlog | Warnings panel chevron, inline action buttons with confirm dialog | `a593a0f` | ✅ Complete |
 
 ---
 
@@ -559,7 +560,7 @@ Already documented in [1.1](#11-bug-projects-appears-twice-in-the-sidebar-and-mu
 
 ### 8.5 🟢 Warnings panel expand/collapse is a plain `<button>` with no chevron icon
 
-**Status:** 🔲 Not addressed (backlog)
+**Status:** ✅ Fixed in backlog (`a593a0f`)
 
 **Location:** `components/projects/project-overview-shell.tsx` — `WarningsPanel`  
 **Finding:** The expand trigger is a text-only button: "Show less" / "+3 more". For accessibility and visual affordance it should include a chevron icon matching the app's collapsible pattern.
@@ -568,7 +569,7 @@ Already documented in [1.1](#11-bug-projects-appears-twice-in-the-sidebar-and-mu
 
 ### 8.6 🟢 "Other Actions" dropdown in `CurrentWorkloadCard` should be inline buttons
 
-**Status:** 🔲 Not addressed (backlog)
+**Status:** ✅ Fixed in backlog (`a593a0f`)
 
 **Location:** `components/projects/project-overview-shell.tsx` — `CurrentWorkloadCard`  
 **Finding:** The card has a primary "Mark Complete" button and a secondary `<DropdownMenu>` labelled "Other Actions" containing "Cancel Project" and "Re-plan (Pause)". These secondary actions are important enough to be inline buttons, especially since this is the primary working state for the user.
@@ -577,6 +578,8 @@ Already documented in [1.1](#11-bug-projects-appears-twice-in-the-sidebar-and-mu
 - `Mark Complete` → `variant="default"` (primary)
 - `Re-plan (Pause)` → `variant="outline"` (secondary)
 - `Cancel Project` → `variant="ghost"` with `text-destructive` (tertiary, destructive)
+
+Added `confirm()` dialog to Cancel Project to prevent accidental cancellations.
 
 ---
 
@@ -812,8 +815,8 @@ Items sorted by impact. Tackle 🔴 first, then 🐛, then 🟡 in order.
 | 24 | 🟢 Remove Terms/Privacy placeholder links from login form | `login-form.tsx` | XS | ✅ `af8264d` |
 | 25 | 🟢 Change login button label to "Send sign-in link" | `login-form.tsx` | XS | ✅ `237b1d3` |
 | 26 | 🟢 Fix `partially_paid` label capitalisation in status badge | `billing-status-badge.tsx` | XS | ✅ `53a86bd` |
-| 27 | 🟢 Add chevron icon to Projects warnings panel expand button | `components/projects/project-overview-shell.tsx` | XS | 🔲 Backlog |
-| 28 | 🟢 Elevate project "Other Actions" dropdown to inline buttons | `components/projects/project-overview-shell.tsx` | S | 🔲 Backlog |
+| 27 | 🟢 Add chevron icon to Projects warnings panel expand button | `components/projects/project-overview-shell.tsx` | XS | ✅ `a593a0f` |
+| 28 | 🟢 Elevate project "Other Actions" dropdown to inline buttons | `components/projects/project-overview-shell.tsx` | S | ✅ `a593a0f` |
 
 ---
 
