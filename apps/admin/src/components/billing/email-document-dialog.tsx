@@ -2,6 +2,7 @@
 
 import * as React from 'react';
 import { useState } from 'react';
+import { useRouter } from 'next/navigation';
 import { toast } from 'sonner';
 import {
   Dialog,
@@ -45,6 +46,7 @@ export function EmailDocumentDialog({
   statementPdfUrl,
   onSuccess,
 }: EmailDocumentDialogProps) {
+  const router = useRouter();
   const [open, setOpen] = useState(false);
   const [recipient, setRecipient] = useState(defaultRecipientEmail || '');
   const [subject, setSubject] = useState(`New ${documentType === 'invoice' ? 'Invoice' : 'Quotation'} ${documentNumber}`);
@@ -131,6 +133,7 @@ export function EmailDocumentDialog({
       } else {
         toast.success(`${documentType === 'invoice' ? 'Invoice' : 'Quote'} emailed successfully!`);
         setOpen(false);
+        router.refresh();
         if (onSuccess) onSuccess();
       }
     } catch (err) {
