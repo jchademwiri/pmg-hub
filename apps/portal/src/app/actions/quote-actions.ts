@@ -5,10 +5,19 @@ import { getDb, quotations, divisionBillingSettings, organisationSettings, divis
 import { revalidatePath } from 'next/cache';
 import { createEmailClient, DEFAULT_EMAIL_FROM, AdminQuoteAcceptedEmail } from '@pmg/emails';
 import React from 'react';
+import { getClientIp, checkRateLimit } from '@/lib/rate-limit';
 
 export async function acceptQuoteAction(quoteId: string): Promise<{ error?: string }> {
   try {
     const { client, session } = await getPortalSessionOrRedirect();
+    
+    // Rate limit quote responses (max 5 per minute per IP/Client)
+    const ip = await getClientIp();
+    const limitResult = await checkRateLimit(`quote-respond:${client.id}:${ip}`, 5, '60 s');
+    if (!limitResult.success) {
+      return { error: 'Too many requests. Please try again in a minute.' };
+    }
+
     const db = getDb();
 
     // Verify quote ownership
@@ -99,6 +108,14 @@ export async function declineQuoteAction(
 ): Promise<{ error?: string }> {
   try {
     const { client, session } = await getPortalSessionOrRedirect();
+
+    // Rate limit quote responses (max 5 per minute per IP/Client)
+    const ip = await getClientIp();
+    const limitResult = await checkRateLimit(`quote-respond:${client.id}:${ip}`, 5, '60 s');
+    if (!limitResult.success) {
+      return { error: 'Too many requests. Please try again in a minute.' };
+    }
+
     const db = getDb();
 
     // Verify quote ownership
