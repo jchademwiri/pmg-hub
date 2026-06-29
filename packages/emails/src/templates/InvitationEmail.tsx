@@ -136,7 +136,7 @@ const InvitationEmail = (props: InvitationEmailProps) => {
                 Questions? Reply to this email and we'll help you get set up.
               </Text>
               <Text className="m-0 mt-[12px] text-[13px] text-[#020304]">
-                The {companyName} Team
+                {companyName}
               </Text>
               <Text className="m-0 mt-[16px] text-[11px] text-[#94A3B8]">
                 © {new Date().getFullYear()} {companyName}. All rights reserved.

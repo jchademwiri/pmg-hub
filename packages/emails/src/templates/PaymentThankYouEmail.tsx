@@ -126,7 +126,7 @@ const PaymentThankYouEmail = (props: PaymentThankYouEmailProps) => {
               </Text>
               <Text className="m-0 mt-[12px] text-[14px] text-[#020304]">
                 Kind regards,<br />
-                <strong>The {companyName} Team</strong>
+                <strong>{companyName}</strong>
               </Text>
             </Section>
 
