@@ -14,6 +14,7 @@ import {
   ArrowDownLeft,
   Tags,
 } from 'lucide-react'
+import { EmptyState } from '@/components/ui/empty-state'
 
 interface FinanceOverviewClientProps {
   summary: {
@@ -103,7 +104,9 @@ export function FinanceOverviewClient({
             </Link>
           </div>
           {recentIncome.length === 0 ? (
-            <div className="px-5 py-8 text-center text-sm text-muted-foreground">No income recorded yet.</div>
+            <div className="px-5 py-6">
+              <EmptyState message="No income recorded yet. Add your first income entry to get started." ctaLabel="Add Income" ctaHref="/finance/income" filtered={false} />
+            </div>
           ) : (
             <div className="divide-y">
               {recentIncome.map((inc) => (
@@ -133,7 +136,9 @@ export function FinanceOverviewClient({
             </Link>
           </div>
           {recentExpenses.length === 0 ? (
-            <div className="px-5 py-8 text-center text-sm text-muted-foreground">No expenses recorded yet.</div>
+            <div className="px-5 py-6">
+              <EmptyState message="No expenses recorded yet. Add your first expense entry to get started." ctaLabel="Add Expense" ctaHref="/finance/expenses" filtered={false} />
+            </div>
           ) : (
             <div className="divide-y">
               {recentExpenses.map((exp) => (
@@ -166,7 +171,9 @@ export function FinanceOverviewClient({
             </Link>
           </div>
           {revenueByDivision.length === 0 ? (
-            <div className="px-5 py-8 text-center text-sm text-muted-foreground">No revenue recorded.</div>
+            <div className="px-5 py-6">
+              <EmptyState message="No revenue recorded yet. Income entries will appear here once added." filtered={false} />
+            </div>
           ) : (
             <div className="divide-y">
               {revenueByDivision.map((div) => {
@@ -197,7 +204,9 @@ export function FinanceOverviewClient({
             </Link>
           </div>
           {expensesByCategory.length === 0 ? (
-            <div className="px-5 py-8 text-center text-sm text-muted-foreground">No expenses recorded.</div>
+            <div className="px-5 py-6">
+              <EmptyState message="No expenses recorded yet. Expense entries will appear here once added." filtered={false} />
+            </div>
           ) : (
             <div className="divide-y">
               {expensesByCategory.map((cat) => {

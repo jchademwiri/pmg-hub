@@ -20,7 +20,8 @@ import {
   Package,
 } from 'lucide-react'
 import type { AgingRow } from '@pmg/db'
-import { STATUS_STYLES, STATUS_TEXT_COLORS } from '@/lib/billing-status'
+import { STATUS_STYLES, STATUS_TEXT_COLORS, formatStatusLabel } from '@/lib/billing-status'
+import { EmptyState } from '@/components/ui/empty-state'
 
 interface BillingOverviewClientProps {
   invoiceSummary: {
@@ -148,8 +149,8 @@ export function BillingOverviewClient({
             </Link>
           </div>
           {aging.every((a) => a.count === 0) ? (
-            <div className="px-5 py-8 text-center text-sm text-muted-foreground">
-              No outstanding invoices. All caught up!
+            <div className="px-5 py-6">
+              <EmptyState message="All caught up! No outstanding invoices across any aging buckets." filtered={false} />
             </div>
           ) : (
             <div className="divide-y">
@@ -200,8 +201,8 @@ export function BillingOverviewClient({
             </Link>
           </div>
           {recentInvoices.length === 0 ? (
-            <div className="px-5 py-8 text-center text-sm text-muted-foreground">
-              No invoices yet.
+            <div className="px-5 py-6">
+              <EmptyState message="No invoices yet. Create your first invoice to get started." ctaLabel="New Invoice" ctaHref="/billing/invoices/new" filtered={false} />
             </div>
           ) : (
             <div className="divide-y">
@@ -240,7 +241,7 @@ export function BillingOverviewClient({
                     <span className={`inline-flex items-center rounded-full px-1.5 py-0.5 text-[10px] font-medium ${
                       STATUS_STYLES[inv.status] || 'bg-zinc-500/10 text-zinc-600'
                     }`}>
-                      {inv.status.replace('_', ' ')}
+                      {formatStatusLabel(inv.status)}
                     </span>
                   </div>
                 </Link>

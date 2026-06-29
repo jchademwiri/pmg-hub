@@ -71,13 +71,9 @@ export function LoginForm({
       <form onSubmit={handleSubmit}>
         <FieldGroup>
           <div className="flex flex-col items-center gap-2 text-center">
-            <div className="flex flex-col items-center gap-2 font-medium">
-              <div className="flex size-8 items-center justify-center rounded-md bg-primary text-primary-foreground">
-                <GalleryVerticalEndIcon className="size-5" />
-              </div>
-            <span className="sr-only">PMG Control Center</span>
-          </div>
-          <h1 className="text-xl font-bold">PMG Control Center</h1>
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img src="/logo/pmg-logo.svg" alt="PMG" width={40} height={40} />
+            <h1 className="text-xl font-bold">PMG Control Center</h1>
           <FieldDescription>
             Sign in to manage billing, finance, and projects
           </FieldDescription>

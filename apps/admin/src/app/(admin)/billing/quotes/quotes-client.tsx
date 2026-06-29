@@ -1,7 +1,6 @@
 'use client';
 
 import Link from 'next/link';
-import { useRouter } from 'next/navigation';
 import { useTransition } from 'react';
 import { MoreHorizontal } from 'lucide-react';
 import { toast } from 'sonner';
@@ -63,7 +62,6 @@ export function QuotesClient({
   deleteAction,
   updateStatusAction,
 }: QuotesClientProps) {
-  const router = useRouter();
   const [, startTransition] = useTransition();
 
   function buildHref(page: number) {
@@ -141,10 +139,14 @@ export function QuotesClient({
           {entries.map((quote) => (
             <TableRow 
               key={quote.id}
-              className="cursor-pointer hover:bg-muted/40 transition-colors border-b border-border"
-              onClick={() => router.push(`/billing/quotes/${quote.id}`)}
+              className="hover:bg-muted/40 transition-colors border-b border-border relative"
             >
               <TableCell className="font-medium">
+                <Link
+                  href={`/billing/quotes/${quote.id}`}
+                  className="absolute inset-0 focus:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-1 rounded-sm"
+                  aria-label={`View quote ${quote.documentNumber}`}
+                />
                 {quote.documentNumber}
               </TableCell>
               <TableCell>
@@ -167,7 +169,7 @@ export function QuotesClient({
               <TableCell>
                 <BillingStatusBadge status={quote.status} />
               </TableCell>
-              <TableCell onClick={(e) => e.stopPropagation()}>
+              <TableCell className="relative z-10">
                 <DropdownMenu>
                   <DropdownMenuTrigger asChild>
                     <Button variant="ghost" size="icon" className="size-8" title="Actions">

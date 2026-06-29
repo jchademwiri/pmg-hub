@@ -153,7 +153,12 @@ export function DashboardShell({
       />
 
       {/* ── Row 2: Accounts Receivable Ageing Overview ── */}
-      <AgingReportGrid data={agingReport} />
+      <section className="flex flex-col gap-2">
+        <h2 className="text-xs font-medium text-muted-foreground uppercase tracking-wider">
+          Accounts Receivable Ageing
+        </h2>
+        <AgingReportGrid data={agingReport} />
+      </section>
 
       {/* ── Row 3: Sales, receipts, and expenses budget chart ── */}
       <div className="w-full">
@@ -161,22 +166,37 @@ export function DashboardShell({
       </div>
 
       {/* ── Row 4: Division revenue with expenses + Leads ── */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-        <DivisionRevenue
-          divisions={divisions}
-          divisionExpenseMap={new Map(Object.entries(divisionExpenseMap))}
-        />
-        <LeadsSummary leads={leads} />
+      <div className="flex flex-col gap-2">
+        <h2 className="text-xs font-medium text-muted-foreground uppercase tracking-wider">
+          Revenue & Leads
+        </h2>
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+          <DivisionRevenue
+            divisions={divisions}
+            divisionExpenseMap={new Map(Object.entries(divisionExpenseMap))}
+          />
+          <LeadsSummary leads={leads} />
+        </div>
       </div>
 
-      {/* ── Row 5: Tender scheduling summary ── */}
-      <ProjectSummaryCard data={projectScheduleSummary} />
+      {/* ── Row 5: Project schedule summary ── */}
+      <section className="flex flex-col gap-2">
+        <h2 className="text-xs font-medium text-muted-foreground uppercase tracking-wider">
+          Project Schedule
+        </h2>
+        <ProjectSummaryCard data={projectScheduleSummary} />
+      </section>
 
       {/* ── Row 6: Expense breakdown ── */}
-      <ExpenseSnapshot
-        expensesByDivision={expensesByDivision}
-        totalExpenses={activeSummary.expenses}
-      />
+      <section className="flex flex-col gap-2">
+        <h2 className="text-xs font-medium text-muted-foreground uppercase tracking-wider">
+          Expense Breakdown
+        </h2>
+        <ExpenseSnapshot
+          expensesByDivision={expensesByDivision}
+          totalExpenses={activeSummary.expenses}
+        />
+      </section>
 
     </div>
   )

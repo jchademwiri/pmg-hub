@@ -3,6 +3,7 @@ import Link from 'next/link';
 import { Plus } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
+import { StatusFilter } from '@/components/ui/status-filter';
 import { getAllInvoices } from '@pmg/db';
 import { SetPageTotal } from '@/components/navigation/page-header-context';
 import { formatZAR } from '@/lib/format';
@@ -41,6 +42,18 @@ export default async function InvoicesPage({ searchParams }: InvoicesPageProps) 
           <p className="text-sm text-muted-foreground">Manage and track client invoices</p>
         </div>
         <div className="flex items-center gap-2">
+          <StatusFilter
+            status={status}
+            basePath="/billing/invoices"
+            preserveParams={{ divisionId }}
+            options={[
+              { value: 'draft', label: 'Draft' },
+              { value: 'issued', label: 'Issued' },
+              { value: 'overdue', label: 'Overdue' },
+              { value: 'paid', label: 'Paid' },
+              { value: 'void', label: 'Void' },
+            ]}
+          />
           <Button asChild size="sm">
             <Link href="/billing/invoices/new">
               <Plus className="size-4" />
