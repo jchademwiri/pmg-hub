@@ -1,20 +1,12 @@
 import {
-  Body,
-  Container,
-  Head,
   Heading,
-  Html,
-  Img,
-  Preview,
   Section,
   Text,
-  Hr,
-  Link,
-  Tailwind,
-  pixelBasedPreset,
+  Button,
 } from "@react-email/components";
 import * as React from "react";
 import type { BrandingProps } from "../types";
+import { EmailLayout } from "./EmailLayout";
 
 export type AdminNewLeadEmailProps = {
   name: string;
@@ -37,153 +29,107 @@ const AdminNewLeadEmail = (props: AdminNewLeadEmailProps) => {
     package_price,
     package_type,
     message,
-    companyName = "Your Company",
+    companyName = "Playhouse Media Group",
     primaryColor = "#1d4ed8",
-    websiteUrl = "https://example.com",
-    logoUrl = undefined,
+    websiteUrl = "https://playhousemedia.co.za",
+    logoUrl,
   } = props;
 
   return (
-    <Html lang="en" dir="ltr">
-      <Tailwind
-        config={{
-          presets: [pixelBasedPreset],
-          theme: { extend: { colors: { brand: primaryColor } } },
-        }}
-      >
-        <Head />
-        <Preview>
-          New Lead: {package_name} - {name} | {companyName}
-        </Preview>
-        <Body className="m-0 bg-[#F6F8FA] py-[40px] font-sans" style={{ margin: "0", padding: "0" }}>
-          <Container width="600" className="mx-auto rounded-[12px] bg-[#FFFFFF] shadow-lg" style={{ maxWidth: '600px', width: '100%', margin: '0 auto', borderCollapse: 'separate' }}>
-            {/* Header */}
-            <Section
-              className="rounded-t-[12px] py-[32px] text-center"
-              style={{ backgroundColor: primaryColor }}
-            >
-              {logoUrl && (
-                <Img
-                  src={logoUrl}
-                  alt={companyName}
-                  className="mx-auto mb-[16px]"
-                />
-              )}
-              <Heading className="m-0 text-[28px] font-bold text-white">
-                🎯 New Lead Alert
-              </Heading>
-              <Text className="m-0 mt-[8px] text-[16px] text-white opacity-80">
-                {companyName} · Lead Notification
-              </Text>
-            </Section>
+    <EmailLayout
+      previewText={`New Lead: ${package_name} - ${name} | ${companyName}`}
+      companyName={companyName}
+      primaryColor={primaryColor}
+      websiteUrl={websiteUrl}
+      logoUrl={logoUrl}
+      showFooterButton={false}
+    >
+      {/* Heading */}
+      <Heading className="m-0 mb-[16px] text-[20px] font-bold text-[#020304]">
+        🎯 New Lead Alert
+      </Heading>
 
-            {/* Main Content */}
-            <Section className="px-[32px] py-[32px]">
-              <Text className="mb-[24px] text-[18px] font-medium text-[#020304]">
-                A new enquiry has come in. Follow up promptly to maximise
-                conversion.
-              </Text>
+      <Text className="m-0 mb-[24px] text-[15px] leading-[24px] text-[#334155]">
+        A new enquiry has been received. Please follow up promptly to maximize conversion.
+      </Text>
 
-              {/* Package Information */}
-              <Section className="mb-[24px] rounded-[8px] border border-solid border-gray-200 bg-[#F6F8FA] p-[24px]">
-                <Heading
-                  className="m-0 mb-[16px] text-[20px] font-bold"
-                  style={{ color: primaryColor }}
-                >
-                  📋 Enquiry Details
-                </Heading>
-                <Text className="m-0 mb-[8px] text-[16px] text-[#020304]">
-                  <strong>Service:</strong> {package_name}
-                </Text>
-                <Text className="m-0 mb-[8px] text-[16px] text-[#020304]">
-                  <strong>Price:</strong>{" "}
-                  <span style={{ color: primaryColor, fontWeight: 600 }}>
-                    {package_price}
-                  </span>
-                </Text>
-                <Text className="m-0 mb-0 text-[16px] text-[#020304]">
-                  <strong>Type:</strong> {package_type}
-                </Text>
-                {message && (
-                  <Text className="m-0 mt-[12px] whitespace-pre-wrap text-[16px] text-[#020304]">
-                    <strong>Message:</strong> {message}
-                  </Text>
-                )}
-              </Section>
+      {/* Package Information */}
+      <Section className="mb-[24px] rounded-[6px] border-l-4 border-solid border-brand bg-[#F8FAFC] p-[20px]">
+        <Heading className="m-0 mb-[12px] text-[15px] font-bold text-[#020304]">
+          📋 Enquiry Details
+        </Heading>
+        <table className="w-full text-[14px]">
+          <tbody>
+            <tr className="border-b border-solid border-[#F1F5F9]">
+              <td className="py-2 text-[#64748B]">Service:</td>
+              <td className="py-2 text-[#020304] font-semibold text-right">{package_name}</td>
+            </tr>
+            <tr className="border-b border-solid border-[#F1F5F9]">
+              <td className="py-2 text-[#64748B]">Price:</td>
+              <td className="py-2 text-brand font-semibold text-right">{package_price}</td>
+            </tr>
+            <tr className={message ? "border-b border-solid border-[#F1F5F9]" : ""}>
+              <td className="py-2 text-[#64748B]">Type:</td>
+              <td className="py-2 text-[#020304] text-right">{package_type}</td>
+            </tr>
+            {message && (
+              <tr>
+                <td colSpan={2} className="py-2 text-[#020304] leading-[20px] whitespace-pre-wrap">
+                  <strong>Message:</strong><br />
+                  <span className="text-[#475569] italic">"{message}"</span>
+                </td>
+              </tr>
+            )}
+          </tbody>
+        </table>
+      </Section>
 
-              <Hr className="my-[24px] border-none border-t border-solid border-gray-200" />
+      {/* Contact Information */}
+      <Section className="mb-[24px] rounded-[6px] border-l-4 border-solid border-slate-400 bg-[#F8FAFC] p-[20px]">
+        <Heading className="m-0 mb-[12px] text-[15px] font-bold text-[#020304]">
+          👤 Contact Details
+        </Heading>
+        <table className="w-full text-[14px]">
+          <tbody>
+            <tr className="border-b border-solid border-[#F1F5F9]">
+              <td className="py-2 text-[#64748B]">Name:</td>
+              <td className="py-2 text-[#020304] font-medium text-right">{name}</td>
+            </tr>
+            {companyName_lead && (
+              <tr className="border-b border-solid border-[#F1F5F9]">
+                <td className="py-2 text-[#64748B]">Company:</td>
+                <td className="py-2 text-[#020304] text-right">{companyName_lead}</td>
+              </tr>
+            )}
+            {phone && (
+              <tr className="border-b border-solid border-[#F1F5F9]">
+                <td className="py-2 text-[#64748B]">Phone:</td>
+                <td className="py-2 text-[#020304] text-right">
+                  <a href={`tel:${phone}`} className="text-brand no-underline hover:underline font-mono">{phone}</a>
+                </td>
+              </tr>
+            )}
+            <tr>
+              <td className="py-2 text-[#64748B]">Email:</td>
+              <td className="py-2 text-right">
+                <a href={`mailto:${email}`} className="text-brand no-underline hover:underline">{email}</a>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </Section>
 
-              {/* Contact Information */}
-              <Section className="mb-[24px] rounded-[8px] border border-solid border-gray-200 bg-[#F6F8FA] p-[24px]">
-                <Heading
-                  className="m-0 mb-[16px] text-[20px] font-bold"
-                  style={{ color: primaryColor }}
-                >
-                  👤 Contact Details
-                </Heading>
-                <Text className="m-0 mb-[8px] text-[16px] text-[#020304]">
-                  <strong>Name:</strong> {name}
-                </Text>
-                {companyName_lead && (
-                  <Text className="m-0 mb-[8px] text-[16px] text-[#020304]">
-                    <strong>Company:</strong> {companyName_lead}
-                  </Text>
-                )}
-                {phone && (
-                  <Text className="m-0 mb-[8px] text-[16px] text-[#020304]">
-                    <strong>Phone:</strong>{" "}
-                    <Link
-                      href={`tel:${phone}`}
-                      style={{ color: primaryColor }}
-                      className="underline"
-                    >
-                      {phone}
-                    </Link>
-                  </Text>
-                )}
-                <Text className="m-0 mb-0 text-[16px] text-[#020304]">
-                  <strong>Email:</strong>{" "}
-                  <Link
-                    href={`mailto:${email}`}
-                    style={{ color: primaryColor }}
-                    className="underline"
-                  >
-                    {email}
-                  </Link>
-                </Text>
-              </Section>
-
-              {/* Call to Action */}
-              <Section className="py-[24px] text-center">
-                <Link
-                  href={`mailto:${email}`}
-                  className="box-border inline-block rounded-[6px] px-[32px] py-[12px] text-[16px] font-semibold text-white no-underline"
-                  style={{ backgroundColor: primaryColor }}
-                >
-                  Reply to Lead
-                </Link>
-              </Section>
-            </Section>
-
-            {/* Footer */}
-            <Section className="rounded-b-[12px] border-none border-t border-solid border-gray-200 bg-[#F6F8FA] px-[32px] py-[24px]">
-              <Text className="m-0 mb-[8px] text-center text-[12px] text-gray-500">
-                <Link
-                  href={websiteUrl}
-                  style={{ color: primaryColor }}
-                  className="no-underline"
-                >
-                  {websiteUrl.replace(/^https?:\/\//, "")}
-                </Link>
-              </Text>
-              <Text className="m-0 text-center text-[12px] text-gray-500">
-                © {new Date().getFullYear()} {companyName}. All rights reserved.
-              </Text>
-            </Section>
-          </Container>
-        </Body>
-      </Tailwind>
-    </Html>
+      {/* Call to Action */}
+      <Section className="py-[16px] text-center">
+        <Button
+          href={`mailto:${email}`}
+          className="box-border inline-block rounded-[6px] px-[24px] py-[12px] text-[14px] font-semibold text-white no-underline"
+          style={{ backgroundColor: primaryColor }}
+        >
+          Reply to Lead
+        </Button>
+      </Section>
+    </EmailLayout>
   );
 };
 

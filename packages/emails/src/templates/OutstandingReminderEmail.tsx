@@ -72,7 +72,7 @@ const OutstandingReminderEmail = (props: OutstandingReminderEmailProps) => {
       previewText: `Action Required: Invoice ${documentNumber} is past due.`,
       intro: (
         <>
-          We noticed that payment for invoice <strong>{documentNumber}</strong> has not yet been received and is now past due. We kindly request that you settle the outstanding amount as soon as possible.
+          We noticed that payment for invoice <strong>{documentNumber}</strong> has not yet been received and is now past due. We kindly request that you settle the outstanding amount as soon as possible. <em>If you have already made payment, please disregard this notice as we may still be processing it.</em>
         </>
       ),
     },
