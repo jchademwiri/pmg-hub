@@ -36,7 +36,7 @@ interface OverlapWarning {
 }
 
 interface ProjectOverviewClientProps {
-  inProgress: ProjectScheduleEntry | null;
+  inProgress: ProjectScheduleEntry[];
   planned: ProjectScheduleEntry[];
   allEntries: ProjectScheduleEntry[];
   atRiskTenders: ProjectScheduleEntry[];
@@ -400,7 +400,7 @@ export function ProjectOverviewClient({
   const clientMap = React.useMemo(() => new Map(clients.map((c) => [c.id, c])), [clients]);
 
   const activeEntries = React.useMemo(
-    () => [inProgress, ...planned].filter(Boolean) as ProjectScheduleEntry[],
+    () => [...inProgress, ...planned],
     [inProgress, planned],
   );
 
@@ -439,12 +439,24 @@ export function ProjectOverviewClient({
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Main Column (Left - 2/3 width) */}
         <div className="lg:col-span-2 space-y-6">
-          <CurrentWorkloadCard
-            tender={inProgress}
-            client={inProgress ? clientMap.get(inProgress.clientId) || null : null}
-            onStatusChange={handleStatusChange}
-            progressMap={progressMap}
-          />
+          {inProgress.length === 0 ? (
+            <CurrentWorkloadCard
+              tender={null}
+              client={null}
+              onStatusChange={handleStatusChange}
+              progressMap={progressMap}
+            />
+          ) : (
+            inProgress.map((tender) => (
+              <CurrentWorkloadCard
+                key={tender.id}
+                tender={tender}
+                client={clientMap.get(tender.clientId) || null}
+                onStatusChange={handleStatusChange}
+                progressMap={progressMap}
+              />
+            ))
+          )}
 
           <DraggableUpNext
             tenders={planned}
