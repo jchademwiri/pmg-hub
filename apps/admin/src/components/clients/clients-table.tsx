@@ -94,7 +94,14 @@ export function ClientsTable({ clients, deleteAction, toggleActiveAction }: Clie
               <TableCell>{client.phone ?? ''}</TableCell>
               <TableCell>{client.incomeCount}</TableCell>
               <TableCell>
-                <Badge variant={client.isActive ? 'default' : 'secondary'}>
+                <Badge
+                  variant="secondary"
+                  className={`border font-medium shadow-none ${
+                    client.isActive
+                      ? 'bg-emerald-500/15 text-emerald-700 dark:text-emerald-400 border-emerald-500/30'
+                      : 'bg-muted text-muted-foreground border-border'
+                  }`}
+                >
                   {client.isActive ? 'Active' : 'Disabled'}
                 </Badge>
               </TableCell>
