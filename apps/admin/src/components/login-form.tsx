@@ -11,7 +11,6 @@ import {
   FieldLabel,
 } from "@/components/ui/field"
 import { Input } from "@/components/ui/input"
-import Image from "next/image"
 import { signIn } from "@/lib/auth-client"
 
 export function LoginForm({
