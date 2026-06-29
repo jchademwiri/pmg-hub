@@ -1,0 +1,2 @@
+CREATE TYPE "public"."project_task_status" AS ENUM('backlog', 'in_progress', 'completed');--> statement-breakpoint
+ALTER TABLE "tender_progress_sections" ADD COLUMN "status" "project_task_status" DEFAULT 'backlog' NOT NULL;

@@ -36,6 +36,12 @@ export const projectScheduleOutcomeEnum = pgEnum("tender_schedule_outcome", [
   "pending",
 ]);
 
+export const projectTaskStatusEnum = pgEnum("project_task_status", [
+  "backlog",
+  "in_progress",
+  "completed",
+]);
+
 // ── Main table ────────────────────────────────────────────────────────────────
 
 export const projectScheduleEntries = pgTable(
@@ -90,6 +96,7 @@ export const projectProgressSections = pgTable(
       .references(() => projectScheduleEntries.id, { onDelete: "cascade" }),
     title: text("title").notNull(),
     sortOrder: integer("sort_order").notNull(),
+    status: projectTaskStatusEnum("status").notNull().default("backlog"),
     createdAt: timestamp("created_at", { withTimezone: true })
       .defaultNow()
       .notNull(),

@@ -27,6 +27,7 @@ import type { ProjectScheduleEntry } from '@pmg/db';
 import { ProjectStatusBadge } from '@/components/projects/project-status-badge';
 import { ProjectRiskBadge } from '@/components/projects/project-risk-badge';
 import { ProjectEditDialog } from '@/components/projects/project-edit-dialog';
+import { TaskBoard } from '@/components/projects/task-board';
 import {
   addProgressSectionAction,
   deleteProgressSectionAction,
@@ -97,6 +98,7 @@ export function ProjectDetailsClient({
   const router = useRouter();
   const [isPending, startTransition] = React.useTransition();
   const [editDialogOpen, setEditDialogOpen] = React.useState(false);
+  const [viewMode, setViewMode] = React.useState<'board' | 'list'>('board');
 
   // Checklist State
   const [checklist, setChecklist] = React.useState<ProgressSection[]>(
@@ -108,6 +110,18 @@ export function ProjectDetailsClient({
       })),
     })),
   );
+
+  React.useEffect(() => {
+    setChecklist(
+      initialChecklist.map((s) => ({
+        ...s,
+        items: s.items.map((i: any) => ({
+          ...i,
+          completedAt: i.completedAt ? new Date(i.completedAt) : null,
+        })),
+      }))
+    );
+  }, [initialChecklist]);
 
   // Notes & Blockers State
   const [notes, setNotes] = React.useState(project.notes ?? '');
@@ -300,11 +314,39 @@ export function ProjectDetailsClient({
                 <CheckSquare className="size-4 text-emerald-500" />
                 <CardTitle className="text-sm font-semibold">Project Checklist Workspace</CardTitle>
               </div>
-              {totalItems > 0 && (
-                <Badge variant="secondary" className="text-xs font-medium">
-                  {completedItems}/{totalItems} Done ({progressPercent}%)
-                </Badge>
-              )}
+              <div className="flex items-center gap-3">
+                {/* View Mode Toggle */}
+                <div className="flex rounded-lg border border-border bg-background p-0.5 text-xs font-medium">
+                  <button
+                    type="button"
+                    onClick={() => setViewMode('board')}
+                    className={`px-2.5 py-1 rounded-md transition-all ${
+                      viewMode === 'board'
+                        ? 'bg-primary text-primary-foreground shadow-sm'
+                        : 'text-muted-foreground hover:text-foreground'
+                    }`}
+                  >
+                    Board
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setViewMode('list')}
+                    className={`px-2.5 py-1 rounded-md transition-all ${
+                      viewMode === 'list'
+                        ? 'bg-primary text-primary-foreground shadow-sm'
+                        : 'text-muted-foreground hover:text-foreground'
+                    }`}
+                  >
+                    List
+                  </button>
+                </div>
+
+                {totalItems > 0 && (
+                  <Badge variant="secondary" className="text-xs font-medium">
+                    {completedItems}/{totalItems} Done ({progressPercent}%)
+                  </Badge>
+                )}
+              </div>
             </CardHeader>
             <CardContent className="space-y-6">
               {/* Overall Progress Bar */}
@@ -321,193 +363,202 @@ export function ProjectDetailsClient({
                 </div>
               </div>
 
-              {/* Checklist Sections */}
-              <div className="space-y-5">
-                {checklist.map((section) => (
-                  <div
-                    key={section.id}
-                    className="border border-border/40 rounded-lg p-4 space-y-3.5 bg-muted/5 hover:bg-muted/10 transition-colors"
-                  >
-                    {/* Section Header */}
-                    <div className="flex items-center justify-between gap-3 border-b border-border/30 pb-2.5">
-                      {editingSectionId === section.id ? (
-                        <div className="flex items-center gap-2 flex-1">
-                          <Input
-                            className="h-8 text-xs max-w-sm"
-                            value={editingSectionTitle}
-                            onChange={(e) => setEditingSectionTitle(e.target.value)}
-                            autoFocus
-                          />
-                          <Button size="sm" onClick={() => handleRenameSection(section.id)}>
-                            <Check className="size-3.5" />
-                          </Button>
-                          <Button variant="ghost" size="sm" onClick={() => setEditingSectionId(null)}>
-                            <X className="size-3.5" />
-                          </Button>
-                        </div>
-                      ) : (
-                        <>
-                          <h3 className="text-xs font-bold uppercase tracking-wider text-muted-foreground/90 flex-1">
-                            {section.title}
-                          </h3>
-                          <div className="flex items-center gap-1">
-                            <Button
-                              variant="ghost"
-                              size="icon"
-                              className="size-7 text-muted-foreground hover:text-foreground hover:bg-muted"
-                              onClick={() => {
-                                setEditingSectionId(section.id);
-                                setEditingSectionTitle(section.title);
-                              }}
-                            >
-                              <Edit2 className="size-3.5" />
-                            </Button>
-                            <Button
-                              variant="ghost"
-                              size="icon"
-                              className="size-7 text-destructive/80 hover:text-destructive hover:bg-destructive/10"
-                              onClick={() => handleDeleteSection(section.id)}
-                            >
-                              <Trash2 className="size-3.5" />
-                            </Button>
-                          </div>
-                        </>
-                      )}
-                    </div>
-
-                    {/* Section Items */}
-                    <ul className="space-y-2.5">
-                      {section.items.map((item) => (
-                        <li
-                          key={item.id}
-                          className="flex items-center justify-between gap-3 text-xs group/item py-1 px-2 rounded-md hover:bg-muted/30 transition-colors"
-                        >
-                          <div className="flex items-center gap-2.5 flex-1 min-w-0">
-                            <input
-                              type="checkbox"
-                              checked={item.isCompleted}
-                              onChange={(e) => handleToggleItem(item.id, e.target.checked)}
-                              className="size-4 rounded border-border text-emerald-600 focus:ring-emerald-500/30 cursor-pointer"
-                            />
-                            {editingItemId === item.id ? (
-                              <div className="flex items-center gap-2 flex-1">
-                                <Input
-                                  className="h-8 text-xs py-0 max-w-md"
-                                  value={editingItemText}
-                                  onChange={(e) => setEditingItemText(e.target.value)}
-                                  autoFocus
-                                />
+              {viewMode === 'board' ? (
+                <TaskBoard 
+                  projectId={project.id} 
+                  initialSections={checklist as any}
+                />
+              ) : (
+                <>
+                  {/* Checklist Sections */}
+                  <div className="space-y-5">
+                    {checklist.map((section) => (
+                      <div
+                        key={section.id}
+                        className="border border-border/40 rounded-lg p-4 space-y-3.5 bg-muted/5 hover:bg-muted/10 transition-colors"
+                      >
+                        {/* Section Header */}
+                        <div className="flex items-center justify-between gap-3 border-b border-border/30 pb-2.5">
+                          {editingSectionId === section.id ? (
+                            <div className="flex items-center gap-2 flex-1">
+                              <Input
+                                className="h-8 text-xs max-w-sm"
+                                value={editingSectionTitle}
+                                onChange={(e) => setEditingSectionTitle(e.target.value)}
+                                autoFocus
+                              />
+                              <Button size="sm" onClick={() => handleRenameSection(section.id)}>
+                                <Check className="size-3.5" />
+                              </Button>
+                              <Button variant="ghost" size="sm" onClick={() => setEditingSectionId(null)}>
+                                <X className="size-3.5" />
+                              </Button>
+                            </div>
+                          ) : (
+                            <>
+                              <h3 className="text-xs font-bold uppercase tracking-wider text-muted-foreground/90 flex-1">
+                                {section.title}
+                              </h3>
+                              <div className="flex items-center gap-1">
                                 <Button
-                                  size="sm"
-                                  onClick={() => handleUpdateItemText(section.id, item.id)}
+                                  variant="ghost"
+                                  size="icon"
+                                  className="size-7 text-muted-foreground hover:text-foreground hover:bg-muted"
+                                  onClick={() => {
+                                    setEditingSectionId(section.id);
+                                    setEditingSectionTitle(section.title);
+                                  }}
                                 >
-                                  <Check className="size-3.5" />
+                                  <Edit2 className="size-3.5" />
                                 </Button>
                                 <Button
                                   variant="ghost"
-                                  size="sm"
-                                  onClick={() => setEditingItemId(null)}
+                                  size="icon"
+                                  className="size-7 text-destructive/80 hover:text-destructive hover:bg-destructive/10"
+                                  onClick={() => handleDeleteSection(section.id)}
                                 >
-                                  <X className="size-3.5" />
+                                  <Trash2 className="size-3.5" />
                                 </Button>
                               </div>
-                            ) : (
-                              <span
-                                className={`text-xs cursor-pointer hover:underline truncate flex-1 ${
-                                  item.isCompleted
-                                    ? 'text-muted-foreground line-through decoration-muted-foreground/45'
-                                    : 'text-foreground font-medium'
-                                  }`}
-                                onDoubleClick={() => {
-                                  setEditingItemId(item.id);
-                                  setEditingItemText(item.task);
-                                }}
-                              >
-                                {item.task}
-                              </span>
-                            )}
-                          </div>
-                          {editingItemId !== item.id && (
-                            <div className="flex items-center gap-1 opacity-0 group-hover/item:opacity-100 transition-opacity">
-                              <Button
-                                variant="ghost"
-                                size="icon"
-                                className="size-6 text-muted-foreground hover:text-foreground hover:bg-muted"
-                                onClick={() => {
-                                  setEditingItemId(item.id);
-                                  setEditingItemText(item.task);
-                                }}
-                              >
-                                <Edit2 className="size-3" />
-                              </Button>
-                              <Button
-                                variant="ghost"
-                                size="icon"
-                                className="size-6 text-destructive/80 hover:text-destructive hover:bg-destructive/10"
-                                onClick={() => handleDeleteItem(section.id, item.id)}
-                              >
-                                <Trash2 className="size-3" />
-                              </Button>
-                            </div>
+                            </>
                           )}
-                        </li>
-                      ))}
-                    </ul>
+                        </div>
 
-                    {/* Add Item to Section */}
-                    <div className="flex gap-2 pt-2 border-t border-border/10">
-                      <Input
-                        placeholder="Add new task..."
-                        className="h-8 text-xs flex-1"
-                        value={newItemTexts[section.id] || ''}
-                        onChange={(e) =>
-                          setNewItemTexts((prev) => ({ ...prev, [section.id]: e.target.value }))
+                        {/* Section Items */}
+                        <ul className="space-y-2.5">
+                          {section.items.map((item) => (
+                            <li
+                              key={item.id}
+                              className="flex items-center justify-between gap-3 text-xs group/item py-1 px-2 rounded-md hover:bg-muted/30 transition-colors"
+                            >
+                              <div className="flex items-center gap-2.5 flex-1 min-w-0">
+                                <input
+                                  type="checkbox"
+                                  checked={item.isCompleted}
+                                  onChange={(e) => handleToggleItem(item.id, e.target.checked)}
+                                  className="size-4 rounded border-border text-emerald-600 focus:ring-emerald-500/30 cursor-pointer"
+                                />
+                                {editingItemId === item.id ? (
+                                  <div className="flex items-center gap-2 flex-1">
+                                    <Input
+                                      className="h-8 text-xs py-0 max-w-md"
+                                      value={editingItemText}
+                                      onChange={(e) => setEditingItemText(e.target.value)}
+                                      autoFocus
+                                    />
+                                    <Button
+                                      size="sm"
+                                      onClick={() => handleUpdateItemText(section.id, item.id)}
+                                    >
+                                      <Check className="size-3.5" />
+                                    </Button>
+                                    <Button
+                                      variant="ghost"
+                                      size="sm"
+                                      onClick={() => setEditingItemId(null)}
+                                    >
+                                      <X className="size-3.5" />
+                                    </Button>
+                                  </div>
+                                ) : (
+                                  <span
+                                    className={`text-xs cursor-pointer hover:underline truncate flex-1 ${
+                                      item.isCompleted
+                                        ? 'text-muted-foreground line-through decoration-muted-foreground/45'
+                                        : 'text-foreground font-medium'
+                                      }`}
+                                    onDoubleClick={() => {
+                                      setEditingItemId(item.id);
+                                      setEditingItemText(item.task);
+                                    }}
+                                  >
+                                    {item.task}
+                                  </span>
+                                )}
+                              </div>
+                              {editingItemId !== item.id && (
+                                <div className="flex items-center gap-1 opacity-0 group-hover/item:opacity-100 transition-opacity">
+                                  <Button
+                                    variant="ghost"
+                                    size="icon"
+                                    className="size-6 text-muted-foreground hover:text-foreground hover:bg-muted"
+                                    onClick={() => {
+                                      setEditingItemId(item.id);
+                                      setEditingItemText(item.task);
+                                    }}
+                                  >
+                                    <Edit2 className="size-3" />
+                                  </Button>
+                                  <Button
+                                    variant="ghost"
+                                    size="icon"
+                                    className="size-6 text-destructive/80 hover:text-destructive hover:bg-destructive/10"
+                                    onClick={() => handleDeleteItem(section.id, item.id)}
+                                  >
+                                    <Trash2 className="size-3" />
+                                  </Button>
+                                </div>
+                              )}
+                            </li>
+                          ))}
+                        </ul>
+
+                        {/* Add Item to Section */}
+                        <div className="flex gap-2 pt-2 border-t border-border/10">
+                          <Input
+                            placeholder="Add new task..."
+                            className="h-8 text-xs flex-1"
+                            value={newItemTexts[section.id] || ''}
+                            onChange={(e) =>
+                              setNewItemTexts((prev) => ({ ...prev, [section.id]: e.target.value }))
+                            }
+                            onKeyDown={(e) => {
+                              if (e.key === 'Enter') {
+                                e.preventDefault();
+                                handleAddItem(section.id);
+                              }
+                            }}
+                          />
+                          <Button
+                            type="button"
+                            size="sm"
+                            className="h-8 gap-1.5"
+                            onClick={() => handleAddItem(section.id)}
+                          >
+                            <Plus className="size-3.5" /> Add Task
+                          </Button>
+                        </div>
+                      </div>
+                    ))}
+
+                    {checklist.length === 0 && (
+                      <div className="text-center py-10 text-muted-foreground text-xs border border-dashed rounded-lg flex flex-col items-center justify-center gap-2">
+                        <CheckSquare className="size-8 text-muted-foreground/30" />
+                        <span>No checklist sections created yet. Add one below to start tracking.</span>
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Add New Section */}
+                  <div className="flex gap-2 pt-4 border-t">
+                    <Input
+                      placeholder="New checklist section name (e.g. Returnable List)..."
+                      className="h-10 text-xs flex-1"
+                      value={newSectionTitle}
+                      onChange={(e) => setNewSectionTitle(e.target.value)}
+                      onKeyDown={(e) => {
+                        if (e.key === 'Enter') {
+                          e.preventDefault();
+                          handleAddSection();
                         }
-                        onKeyDown={(e) => {
-                          if (e.key === 'Enter') {
-                            e.preventDefault();
-                            handleAddItem(section.id);
-                          }
-                        }}
-                      />
-                      <Button
-                        type="button"
-                        size="sm"
-                        className="h-8 gap-1.5"
-                        onClick={() => handleAddItem(section.id)}
-                      >
-                        <Plus className="size-3.5" /> Add Task
-                      </Button>
-                    </div>
+                      }}
+                    />
+                    <Button type="button" className="gap-1.5 h-10" onClick={handleAddSection}>
+                      <Plus className="size-4" /> Add Section
+                    </Button>
                   </div>
-                ))}
-
-                {checklist.length === 0 && (
-                  <div className="text-center py-10 text-muted-foreground text-xs border border-dashed rounded-lg flex flex-col items-center justify-center gap-2">
-                    <CheckSquare className="size-8 text-muted-foreground/30" />
-                    <span>No checklist sections created yet. Add one below to start tracking.</span>
-                  </div>
-                )}
-              </div>
-
-              {/* Add New Section */}
-              <div className="flex gap-2 pt-4 border-t">
-                <Input
-                  placeholder="New checklist section name (e.g. Returnable List)..."
-                  className="h-10 text-xs flex-1"
-                  value={newSectionTitle}
-                  onChange={(e) => setNewSectionTitle(e.target.value)}
-                  onKeyDown={(e) => {
-                    if (e.key === 'Enter') {
-                      e.preventDefault();
-                      handleAddSection();
-                    }
-                  }}
-                />
-                <Button type="button" className="gap-1.5 h-10" onClick={handleAddSection}>
-                  <Plus className="size-4" /> Add Section
-                </Button>
-              </div>
+                </>
+              )}
             </CardContent>
           </Card>
 
