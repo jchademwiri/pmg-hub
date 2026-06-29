@@ -45,8 +45,8 @@ const OutstandingReminderEmail = (props: OutstandingReminderEmailProps) => {
   const headerConfigs = {
     "pre-due": {
       title: "Upcoming Invoice Reminder",
-      bannerBg: "bg-slate-50 border-slate-200",
-      bannerText: "text-slate-700",
+      bannerBg: "bg-[#F8FAFC] border-l-4 border-solid border-slate-400",
+      bannerText: "text-[#020304]",
       previewText: `Friendly reminder: Invoice ${documentNumber} is due soon.`,
       intro: (
         <>
@@ -56,8 +56,8 @@ const OutstandingReminderEmail = (props: OutstandingReminderEmailProps) => {
     },
     "due-today": {
       title: "Invoice Due Today",
-      bannerBg: "bg-blue-50 border-blue-200",
-      bannerText: "text-blue-800",
+      bannerBg: "bg-[#F8FAFC] border-l-4 border-solid border-brand",
+      bannerText: "text-[#020304]",
       previewText: `Notice: Invoice ${documentNumber} is due for payment today.`,
       intro: (
         <>
@@ -67,8 +67,8 @@ const OutstandingReminderEmail = (props: OutstandingReminderEmailProps) => {
     },
     "overdue": {
       title: "Overdue Invoice Notice",
-      bannerBg: "bg-red-50 border-red-200",
-      bannerText: "text-red-800",
+      bannerBg: "bg-[#F8FAFC] border-l-4 border-solid border-red-500",
+      bannerText: "text-[#020304]",
       previewText: `Action Required: Invoice ${documentNumber} is past due.`,
       intro: (
         <>
@@ -145,30 +145,30 @@ const OutstandingReminderEmail = (props: OutstandingReminderEmailProps) => {
 
       {/* Bank/EFT details block */}
       {bankDetails && bankDetails.accountNumber && (
-        <Section className="mb-[24px] rounded-[8px] border border-solid border-green-200 bg-green-50/50 p-[20px]">
-          <Heading className="m-0 mb-[10px] text-[15px] font-bold text-green-900">
+        <Section className="mb-[24px] rounded-[6px] border-l-4 border-solid border-brand bg-[#F8FAFC] p-[20px]">
+          <Heading className="m-0 mb-[10px] text-[15px] font-bold text-[#020304]">
             Payment Instructions (EFT/Bank Transfer)
           </Heading>
-          <Text className="m-0 mb-[12px] text-[13px] text-green-800">
+          <Text className="m-0 mb-[12px] text-[13px] leading-[20px] text-[#475569]">
             Please make payment directly to our bank account. Use invoice number <strong>{documentNumber}</strong> as your deposit reference.
           </Text>
-          <table className="w-full text-[13px] text-green-950">
+          <table className="w-full text-[13px] text-[#020304]">
             <tbody>
               <tr>
-                <td className="py-1 font-semibold">Bank Name:</td>
+                <td className="py-1 font-semibold text-[#64748B]">Bank Name:</td>
                 <td className="py-1 text-right">{bankDetails.bankName}</td>
               </tr>
               <tr>
-                <td className="py-1 font-semibold">Account Name:</td>
+                <td className="py-1 font-semibold text-[#64748B]">Account Name:</td>
                 <td className="py-1 text-right">{bankDetails.accountName}</td>
               </tr>
               <tr>
-                <td className="py-1 font-semibold">Account Number:</td>
-                <td className="py-1 text-right">{bankDetails.accountNumber}</td>
+                <td className="py-1 font-semibold text-[#64748B]">Account Number:</td>
+                <td className="py-1 text-right font-mono">{bankDetails.accountNumber}</td>
               </tr>
               {bankDetails.branchCode && (
                 <tr>
-                  <td className="py-1 font-semibold">Branch Code:</td>
+                  <td className="py-1 font-semibold text-[#64748B]">Branch Code:</td>
                   <td className="py-1 text-right">{bankDetails.branchCode}</td>
                 </tr>
               )}

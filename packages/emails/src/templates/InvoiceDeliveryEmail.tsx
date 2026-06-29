@@ -104,30 +104,30 @@ const InvoiceDeliveryEmail = (props: InvoiceDeliveryEmailProps) => {
 
       {/* Bank/EFT details block */}
       {bankDetails && bankDetails.accountNumber && (
-        <Section className="mb-[24px] rounded-[8px] border border-solid border-green-200 bg-green-50/50 p-[20px]">
-          <Heading className="m-0 mb-[10px] text-[15px] font-bold text-green-900">
+        <Section className="mb-[24px] rounded-[6px] border-l-4 border-solid border-brand bg-[#F8FAFC] p-[20px]">
+          <Heading className="m-0 mb-[10px] text-[15px] font-bold text-[#020304]">
             Payment Instructions (EFT/Bank Transfer)
           </Heading>
-          <Text className="m-0 mb-[12px] text-[13px] text-green-800">
+          <Text className="m-0 mb-[12px] text-[13px] leading-[20px] text-[#475569]">
             Please make payment directly to our bank account. Use invoice number <strong>{documentNumber}</strong> as your deposit reference.
           </Text>
-          <table className="w-full text-[13px] text-green-950">
+          <table className="w-full text-[13px] text-[#020304]">
             <tbody>
               <tr>
-                <td className="py-1 font-semibold">Bank Name:</td>
+                <td className="py-1 font-semibold text-[#64748B]">Bank Name:</td>
                 <td className="py-1 text-right">{bankDetails.bankName}</td>
               </tr>
               <tr>
-                <td className="py-1 font-semibold">Account Name:</td>
+                <td className="py-1 font-semibold text-[#64748B]">Account Name:</td>
                 <td className="py-1 text-right">{bankDetails.accountName}</td>
               </tr>
               <tr>
-                <td className="py-1 font-semibold">Account Number:</td>
-                <td className="py-1 text-right">{bankDetails.accountNumber}</td>
+                <td className="py-1 font-semibold text-[#64748B]">Account Number:</td>
+                <td className="py-1 text-right font-mono">{bankDetails.accountNumber}</td>
               </tr>
               {bankDetails.branchCode && (
                 <tr>
-                  <td className="py-1 font-semibold">Branch Code:</td>
+                  <td className="py-1 font-semibold text-[#64748B]">Branch Code:</td>
                   <td className="py-1 text-right">{bankDetails.branchCode}</td>
                 </tr>
               )}
