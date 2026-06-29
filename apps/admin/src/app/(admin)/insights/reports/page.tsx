@@ -11,6 +11,7 @@ import {
 import { YearFilter } from '@/components/reports/year-filter'
 import { ExportCsvButton } from '@/components/reports/export-csv-button'
 import { EmptyState } from '@/components/ui/empty-state'
+import { StickyPageHeader } from '@/components/ui/sticky-page-header'
 import { ReportKpiStrip } from '@/components/reports/report-kpi-strip'
 import { ReportsTabs } from '@/components/reports/reports-tabs'
 import { fmtMonthYear, getSASTParts } from '@/lib/format'
@@ -68,19 +69,16 @@ export default async function ReportsPage({ searchParams }: ReportsPageProps) {
 
   return (
     <div className="flex flex-col gap-6">
-      {/* Sticky header */}
-      <div className="sticky top-[3.25rem] z-20 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 border-b border-border/40 -mx-6 px-6 py-4 -mt-6">
-        <div className="flex items-center justify-between gap-3">
-          <div>
-            <h1 className="text-lg font-semibold">Reports & Insights</h1>
-            <p className="text-sm text-muted-foreground">Analyze revenue streams, expense distributions, and monthly profit splits</p>
-          </div>
-          <div className="flex items-center gap-2 shrink-0">
+      <StickyPageHeader
+        title="Reports & Insights"
+        description="Analyze revenue streams, expense distributions, and monthly profit splits"
+        actions={
+          <>
             <YearFilter years={years} currentYear={year} />
             <ExportCsvButton year={year} />
-          </div>
-        </div>
-      </div>
+          </>
+        }
+      />
 
       {hasData ? (
         <div className="flex flex-col gap-6">
