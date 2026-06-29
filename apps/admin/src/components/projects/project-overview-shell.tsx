@@ -120,21 +120,17 @@ function SchedulingSummaryCards({
 // ── Current Workload Card ─────────────────────────────────────────────────────
 
 interface CurrentWorkloadCardProps {
-  tender: ProjectScheduleEntry | null;
-  client: ClientSummary | null;
+  tenders: ProjectScheduleEntry[];
+  clients: ClientSummary[];
   onStatusChange: (id: string, status: string) => void;
   progressMap: Record<string, { total: number; completed: number }>;
-  defaultExpanded?: boolean;
 }
 
-function CurrentWorkloadCard({ tender, client, onStatusChange, progressMap, defaultExpanded = true }: CurrentWorkloadCardProps) {
-  const [expanded, setExpanded] = React.useState(defaultExpanded);
+function CurrentWorkloadCard({ tenders, clients, onStatusChange, progressMap }: CurrentWorkloadCardProps) {
+  const [showOthers, setShowOthers] = React.useState(false);
+  const clientMap = React.useMemo(() => new Map(clients.map((c) => [c.id, c])), [clients]);
 
-  React.useEffect(() => {
-    setExpanded(defaultExpanded);
-  }, [defaultExpanded]);
-
-  if (!tender) {
+  if (tenders.length === 0) {
     return (
       <Card size="sm">
         <CardHeader>
@@ -153,115 +149,193 @@ function CurrentWorkloadCard({ tender, client, onStatusChange, progressMap, defa
     );
   }
 
+  const primaryTender = tenders[0]!;
+  const primaryClient = clientMap.get(primaryTender.clientId) || null;
   const daysToClosing = Math.ceil(
-    (new Date(tender.closingDate).getTime() - new Date().getTime()) / (1000 * 60 * 60 * 24),
+    (new Date(primaryTender.closingDate).getTime() - new Date().getTime()) / (1000 * 60 * 60 * 24),
   );
 
-  const progress = progressMap[tender.id] || { total: 0, completed: 0 };
-  const percent = progress.total > 0 ? Math.round((progress.completed / progress.total) * 100) : 0;
+  const primaryProgress = progressMap[primaryTender.id] || { total: 0, completed: 0 };
+  const primaryPercent = primaryProgress.total > 0 ? Math.round((primaryProgress.completed / primaryProgress.total) * 100) : 0;
 
   return (
-    <Card className="border-blue-500/30 shadow-[0_0_15px_rgba(59,130,246,0.05)] transition-all duration-200">
-      <CardHeader 
-        className="pb-2 cursor-pointer select-none hover:bg-muted/10 transition-colors rounded-t-lg"
-        onClick={() => setExpanded((e) => !e)}
-      >
+    <Card className="border-blue-500/30 shadow-[0_0_15px_rgba(59,130,246,0.05)]">
+      <CardHeader className="pb-2">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
             <Flame className="size-4 text-blue-500 animate-pulse" />
-            <CardTitle className="text-sm font-semibold">Now Working On</CardTitle>
+            <CardTitle className="text-sm font-semibold flex items-center gap-2">
+              Now Working On
+              {tenders.length > 1 && (
+                <span className="text-[10px] font-bold bg-blue-500/10 text-blue-600 dark:text-blue-400 px-2 py-0.5 rounded-full animate-pulse">
+                  {tenders.length} Active
+                </span>
+              )}
+            </CardTitle>
           </div>
-          <div className="flex items-center gap-2" onClick={(e) => e.stopPropagation()}>
-            <ProjectRiskBadge tender={tender} />
+          <ProjectRiskBadge tender={primaryTender} />
+        </div>
+      </CardHeader>
+      <CardContent className="space-y-4">
+        {/* Primary Project */}
+        <div className="space-y-3">
+          <div className="min-w-0">
+            <Link href={`/projects/${primaryTender.id}`} className="hover:underline">
+              <h3 className="font-semibold text-base tracking-tight truncate">{primaryTender.projectReference}</h3>
+            </Link>
+            {primaryClient && (
+              <p className="text-xs text-muted-foreground mt-0.5 truncate">{primaryClient.name}</p>
+            )}
+          </div>
+
+          {primaryProgress.total > 0 && (
+            <div className="flex flex-col gap-1.5">
+              <div className="flex justify-between text-[11px] font-medium text-muted-foreground">
+                <span>Task Progress</span>
+                <span>{primaryProgress.completed}/{primaryProgress.total} completed ({primaryPercent}%)</span>
+              </div>
+              <div className="w-full bg-muted rounded-full h-1.5 overflow-hidden">
+                <div
+                  className="bg-emerald-500 h-full transition-all duration-300 rounded-full shadow-[0_0_6px_rgba(16,185,129,0.2)]"
+                  style={{ width: `${primaryPercent}%` }}
+                />
+              </div>
+            </div>
+          )}
+
+          <div className="flex items-center gap-6 text-xs text-muted-foreground pt-1">
+            {formatDate(primaryTender.closingDate)} ·{' '}
+            {daysToClosing > 0
+              ? `${daysToClosing} day${daysToClosing !== 1 ? 's' : ''} remaining`
+              : daysToClosing === 0
+                ? 'Closing today'
+                : `Overdue by ${Math.abs(daysToClosing)} day${Math.abs(daysToClosing) !== 1 ? 's' : ''}`}
+          </div>
+          
+          {primaryTender.blockers && (
+            <div className="flex items-start gap-1.5 rounded-md bg-amber-500/10 p-2">
+              <AlertTriangle className="mt-0.5 size-3 shrink-0 text-amber-500" />
+              <p className="text-xs text-amber-600 dark:text-amber-400">{primaryTender.blockers}</p>
+            </div>
+          )}
+
+          <div className="flex items-center gap-2 pt-1">
             <Button
-              variant="ghost"
-              size="icon"
-              className="size-7 hover:bg-muted/80 text-muted-foreground hover:text-foreground"
-              onClick={() => setExpanded((e) => !e)}
-              title={expanded ? "Collapse Details" : "Expand Details"}
+              size="sm"
+              variant="default"
+              onClick={() => onStatusChange(primaryTender.id, 'completed')}
             >
-              {expanded ? <ChevronUp className="size-4" /> : <ChevronDown className="size-4" />}
+              Mark Complete
+            </Button>
+            <Button
+              size="sm"
+              variant="outline"
+              onClick={() => onStatusChange(primaryTender.id, 'planned')}
+            >
+              Re-plan (Pause)
+            </Button>
+            <Button
+              size="sm"
+              variant="ghost"
+              className="text-destructive hover:text-destructive text-xs"
+              onClick={async () => {
+                const confirmed = await confirm({
+                  title: 'Cancel Project',
+                  description: `Are you sure you want to cancel "${primaryTender.projectReference}"? This will move it back to the planned queue.`,
+                  confirmText: 'Cancel Project',
+                  cancelText: 'Keep Working',
+                  variant: 'destructive',
+                });
+                if (confirmed) onStatusChange(primaryTender.id, 'cancelled');
+              }}
+            >
+              Cancel Project
             </Button>
           </div>
         </div>
-      </CardHeader>
-      <CardContent className="space-y-3">
-        <div className="flex items-start justify-between gap-4">
-          <div className="min-w-0">
-            <Link href={`/projects/${tender.id}`} className="hover:underline">
-              <h3 className="font-semibold text-base tracking-tight truncate">{tender.projectReference}</h3>
-            </Link>
-            {client && (
-              <p className="text-xs text-muted-foreground mt-0.5 truncate">{client.name}</p>
-            )}
-          </div>
-        </div>
 
-        {progress.total > 0 && (
-          <div className="flex flex-col gap-1.5">
-            <div className="flex justify-between text-[11px] font-medium text-muted-foreground">
-              <span>Task Progress</span>
-              <span>{progress.completed}/{progress.total} completed ({percent}%)</span>
-            </div>
-            <div className="w-full bg-muted rounded-full h-1.5 overflow-hidden">
-              <div
-                className="bg-emerald-500 h-full transition-all duration-300 rounded-full shadow-[0_0_6px_rgba(16,185,129,0.2)]"
-                style={{ width: `${percent}%` }}
-              />
-            </div>
-          </div>
-        )}
+        {/* Collapsible section for other projects */}
+        {tenders.length > 1 && (
+          <div className="border-t border-border/50 pt-3">
+            <Button
+              variant="ghost"
+              size="sm"
+              className="w-full justify-between h-8 text-xs text-muted-foreground hover:text-foreground hover:bg-muted/50 px-2"
+              onClick={() => setShowOthers(s => !s)}
+            >
+              <span className="font-medium">
+                {showOthers ? "Hide" : "Show"} other active projects ({tenders.length - 1})
+              </span>
+              {showOthers ? <ChevronUp className="size-4" /> : <ChevronDown className="size-4" />}
+            </Button>
 
-        {expanded && (
-          <div className="space-y-3 pt-3 border-t border-border/50 animate-in fade-in slide-in-from-top-1 duration-200">
-            <div className="flex items-center gap-6 text-xs text-muted-foreground">
-              {formatDate(tender.closingDate)} ·{' '}
-              {daysToClosing > 0
-                ? `${daysToClosing} day${daysToClosing !== 1 ? 's' : ''} remaining`
-                : daysToClosing === 0
-                  ? 'Closing today'
-                  : `Overdue by ${Math.abs(daysToClosing)} day${Math.abs(daysToClosing) !== 1 ? 's' : ''}`}
-            </div>
-            
-            {tender.blockers && (
-              <div className="flex items-start gap-1.5 rounded-md bg-amber-500/10 p-2">
-                <AlertTriangle className="mt-0.5 size-3 shrink-0 text-amber-500" />
-                <p className="text-xs text-amber-600 dark:text-amber-400">{tender.blockers}</p>
+            {showOthers && (
+              <div className="space-y-4 mt-3 animate-in fade-in slide-in-from-top-2 duration-200">
+                {tenders.slice(1).map((tender) => {
+                  const client = clientMap.get(tender.clientId) || null;
+                  const progress = progressMap[tender.id] || { total: 0, completed: 0 };
+                  const percent = progress.total > 0 ? Math.round((progress.completed / progress.total) * 100) : 0;
+                  const daysLeft = Math.ceil(
+                    (new Date(tender.closingDate).getTime() - new Date().getTime()) / (1000 * 60 * 60 * 24),
+                  );
+
+                  return (
+                    <div key={tender.id} className="p-3 rounded-lg border border-border/65 bg-muted/25 space-y-2.5">
+                      <div className="flex items-start justify-between gap-3">
+                        <div className="min-w-0 flex-1">
+                          <Link href={`/projects/${tender.id}`} className="hover:underline">
+                            <h4 className="font-semibold text-sm truncate">{tender.projectReference}</h4>
+                          </Link>
+                          {client && (
+                            <p className="text-[11px] text-muted-foreground truncate mt-0.5">{client.name}</p>
+                          )}
+                        </div>
+                        <ProjectRiskBadge tender={tender} />
+                      </div>
+
+                      {progress.total > 0 && (
+                        <div className="flex flex-col gap-1">
+                          <div className="flex justify-between text-[10px] text-muted-foreground">
+                            <span>Progress</span>
+                            <span>{progress.completed}/{progress.total} ({percent}%)</span>
+                          </div>
+                          <div className="w-full bg-muted rounded-full h-1 overflow-hidden">
+                            <div
+                              className="bg-emerald-500 h-full transition-all duration-300 rounded-full"
+                              style={{ width: `${percent}%` }}
+                            />
+                          </div>
+                        </div>
+                      )}
+
+                      <div className="flex items-center justify-between gap-4 pt-1.5 border-t border-border/30">
+                        <span className="text-[10px] text-muted-foreground">
+                          Closes: {formatDate(tender.closingDate)} ({daysLeft > 0 ? `${daysLeft}d left` : "Closing today"})
+                        </span>
+                        <div className="flex items-center gap-1.5">
+                          <Button
+                            size="xs"
+                            variant="outline"
+                            className="h-7 text-[10px] px-2"
+                            onClick={() => onStatusChange(tender.id, 'completed')}
+                          >
+                            Complete
+                          </Button>
+                          <Button
+                            size="xs"
+                            variant="ghost"
+                            className="h-7 text-[10px] px-2 text-muted-foreground hover:text-foreground"
+                            onClick={() => onStatusChange(tender.id, 'planned')}
+                          >
+                            Pause
+                          </Button>
+                        </div>
+                      </div>
+                    </div>
+                  );
+                })}
               </div>
             )}
-            <div className="flex items-center gap-2 pt-1" onClick={(e) => e.stopPropagation()}>
-              <Button
-                size="sm"
-                variant="default"
-                onClick={() => onStatusChange(tender.id, 'completed')}
-              >
-                Mark Complete
-              </Button>
-              <Button
-                size="sm"
-                variant="outline"
-                onClick={() => onStatusChange(tender.id, 'planned')}
-              >
-                Re-plan (Pause)
-              </Button>
-              <Button
-                size="sm"
-                variant="ghost"
-                className="text-destructive hover:text-destructive"
-                onClick={async () => {
-                  const confirmed = await confirm({
-                    title: 'Cancel Project',
-                    description: `Are you sure you want to cancel "${tender.projectReference}"? This will move it back to the planned queue.`,
-                    confirmText: 'Cancel Project',
-                    cancelText: 'Keep Working',
-                    variant: 'destructive',
-                  });
-                  if (confirmed) onStatusChange(tender.id, 'cancelled');
-                }}
-              >
-                Cancel Project
-              </Button>
-            </div>
           </div>
         )}
       </CardContent>
@@ -466,25 +540,12 @@ export function ProjectOverviewClient({
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Main Column (Left - 2/3 width) */}
         <div className="lg:col-span-2 space-y-6">
-          {inProgress.length === 0 ? (
-            <CurrentWorkloadCard
-              tender={null}
-              client={null}
-              onStatusChange={handleStatusChange}
-              progressMap={progressMap}
-            />
-          ) : (
-            inProgress.map((tender, idx) => (
-              <CurrentWorkloadCard
-                key={tender.id}
-                tender={tender}
-                client={clientMap.get(tender.clientId) || null}
-                onStatusChange={handleStatusChange}
-                progressMap={progressMap}
-                defaultExpanded={idx === 0}
-              />
-            ))
-          )}
+          <CurrentWorkloadCard
+            tenders={inProgress}
+            clients={clients}
+            onStatusChange={handleStatusChange}
+            progressMap={progressMap}
+          />
 
           <DraggableUpNext
             tenders={planned}
