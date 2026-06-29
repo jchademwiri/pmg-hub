@@ -200,70 +200,74 @@ export async function recordClientPayment(data: PaymentInput): Promise<{ error?:
       autoReference += ` | Bank ref: ${data.description.trim()}`;
     }
 
-    // 5. Execute database operations sequentially
-    // A. Create the core payment row with the trusted auto-reference
-    const [incomeRow] = await db
-      .insert(income)
-      .values({
-        date: data.date,
-        divisionId: finalDivisionId,
-        clientId: data.clientId,
-        description: autoReference,
-        amount: String(data.amount),
-      })
-      .returning({ id: income.id });
+    // 5. Execute database operations in a transaction
+    const recordedIncomeId = await db.transaction(async (tx) => {
+      // A. Create the core payment row with the trusted auto-reference
+      const [incomeRow] = await tx
+        .insert(income)
+        .values({
+          date: data.date,
+          divisionId: finalDivisionId,
+          clientId: data.clientId,
+          description: autoReference,
+          amount: String(data.amount),
+        })
+        .returning({ id: income.id });
 
-    if (!incomeRow) throw new Error('Failed to record cash receipt.');
+      if (!incomeRow) throw new Error('Failed to record cash receipt.');
 
-    // B. Insert allocations and transition invoice statuses
-    for (const alloc of data.allocations) {
-      if (alloc.amount <= 0) continue;
+      // B. Insert allocations and transition invoice statuses
+      for (const alloc of data.allocations) {
+        if (alloc.amount <= 0) continue;
 
-      // Insert allocation link
-      await db.insert(paymentAllocations).values({
-        incomeId: incomeRow.id,
-        invoiceId: alloc.invoiceId,
-        amount: String(alloc.amount),
-      });
+        // Insert allocation link
+        await tx.insert(paymentAllocations).values({
+          incomeId: incomeRow.id,
+          invoiceId: alloc.invoiceId,
+          amount: String(alloc.amount),
+        });
 
-      // Sum allocations for this invoice
-      const [sumAgg] = await db
-        .select({ sum: sql<string>`coalesce(sum(${paymentAllocations.amount}), 0)` })
-        .from(paymentAllocations)
-        .where(eq(paymentAllocations.invoiceId, alloc.invoiceId));
+        // Sum allocations for this invoice
+        const [sumAgg] = await tx
+          .select({ sum: sql<string>`coalesce(sum(${paymentAllocations.amount}), 0)` })
+          .from(paymentAllocations)
+          .where(eq(paymentAllocations.invoiceId, alloc.invoiceId));
 
-      const [invoiceRow] = await db
-        .select({ total: invoices.total })
-        .from(invoices)
-        .where(eq(invoices.id, alloc.invoiceId));
+        const [invoiceRow] = await tx
+          .select({ total: invoices.total })
+          .from(invoices)
+          .where(eq(invoices.id, alloc.invoiceId));
 
-      if (invoiceRow) {
-        const invoiceTotal = parseFloat(invoiceRow.total);
-        const totalAllocated = parseFloat(sumAgg?.sum ?? '0');
+        if (invoiceRow) {
+          const invoiceTotal = parseFloat(invoiceRow.total);
+          const totalAllocated = parseFloat(sumAgg?.sum ?? '0');
 
-        if (totalAllocated >= invoiceTotal) {
-          await db
-            .update(invoices)
-            .set({
-              status: 'paid',
-              paidAt: new Date(),
-              incomeId: incomeRow.id, // Legacy backwards compatibility
-              updatedAt: new Date(),
-            })
-            .where(eq(invoices.id, alloc.invoiceId));
-        } else {
-          await db
-            .update(invoices)
-            .set({
-              status: 'partially_paid',
-              paidAt: null,
-              incomeId: null,
-              updatedAt: new Date(),
-            })
-            .where(eq(invoices.id, alloc.invoiceId));
+          if (totalAllocated >= invoiceTotal) {
+            await tx
+              .update(invoices)
+              .set({
+                status: 'paid',
+                paidAt: new Date(),
+                incomeId: incomeRow.id, // Legacy backwards compatibility
+                updatedAt: new Date(),
+              })
+              .where(eq(invoices.id, alloc.invoiceId));
+          } else {
+            await tx
+              .update(invoices)
+              .set({
+                status: 'partially_paid',
+                paidAt: null,
+                incomeId: null,
+                updatedAt: new Date(),
+              })
+              .where(eq(invoices.id, alloc.invoiceId));
+          }
         }
       }
-    }
+
+      return incomeRow.id;
+    });
 
     // C. Check for overpayment and create credit note
     if (excessAmount > 0) {
@@ -274,7 +278,7 @@ export async function recordClientPayment(data: PaymentInput): Promise<{ error?:
         type: 'overpayment',
         amount: excessAmount,
         reason: data.description ? `Overpayment from: ${data.description}` : 'Client payment overpayment',
-        originalPaymentId: incomeRow.id,
+        originalPaymentId: recordedIncomeId,
       });
       if (creditNoteRes.error) {
         console.error('Failed to create credit note for overpayment:', creditNoteRes.error);
@@ -283,7 +287,7 @@ export async function recordClientPayment(data: PaymentInput): Promise<{ error?:
 
     // 4. Auto-post double-entry journal entries (Dr Bank / Cr Revenue + Dr Savings / Cr PMG Share)
     const journalResult = await postPaymentJournalEntries({
-      incomeId: incomeRow.id,
+      incomeId: recordedIncomeId,
       amount: data.amount,
       date: data.date,
       description: autoReference,
