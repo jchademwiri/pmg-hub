@@ -3,13 +3,11 @@ import type { Duration } from "@upstash/ratelimit";
 import { Redis } from "@upstash/redis";
 import { headers } from "next/headers";
 
-const redis =
-  process.env.UPSTASH_REDIS_REST_URL && process.env.UPSTASH_REDIS_REST_TOKEN
-    ? new Redis({
-        url: process.env.UPSTASH_REDIS_REST_URL,
-        token: process.env.UPSTASH_REDIS_REST_TOKEN,
-      })
-    : null;
+// Support both standard Upstash variables and Vercel KV native variables
+const url = process.env.UPSTASH_REDIS_REST_URL || process.env.KV_REST_API_URL;
+const token = process.env.UPSTASH_REDIS_REST_TOKEN || process.env.KV_REST_API_TOKEN;
+
+const redis = url && token ? new Redis({ url, token }) : null;
 
 /**
  * Resolves the client's IP address from request headers.
@@ -25,7 +23,7 @@ export async function getClientIp(): Promise<string> {
 
 /**
  * Checks the rate limit for a given identifier (e.g., IP address + action name).
- * Falls back to allowing the request if Upstash is not configured.
+ * Falls back to allowing the request if Upstash/Vercel KV is not configured.
  */
 export async function checkRateLimit(
   identifier: string,
