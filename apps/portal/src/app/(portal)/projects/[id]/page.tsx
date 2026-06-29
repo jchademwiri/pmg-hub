@@ -15,16 +15,27 @@ export default async function PortalProjectDetailsPage({ params }: PageProps) {
   const { id } = await params;
 
   // Fetch project details and verify it belongs to this client (security check)
-  const [project] = await db
-    .select()
-    .from(tenderScheduleEntries)
-    .where(
-      and(
-        eq(tenderScheduleEntries.id, id),
-        eq(tenderScheduleEntries.clientId, client.id)
+  let project;
+  try {
+    const [row] = await db
+      .select()
+      .from(tenderScheduleEntries)
+      .where(
+        and(
+          eq(tenderScheduleEntries.id, id),
+          eq(tenderScheduleEntries.clientId, client.id)
+        )
       )
-    )
-    .limit(1);
+      .limit(1);
+    project = row;
+  } catch (error: any) {
+    console.error("❌ Error fetching project details in PortalProjectDetailsPage:", {
+      message: error.message,
+      stack: error.stack,
+      cause: error.cause,
+    });
+    throw error;
+  }
 
   if (!project) {
     notFound();
