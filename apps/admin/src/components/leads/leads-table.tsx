@@ -23,10 +23,10 @@ interface LeadsTableProps {
 }
 
 const statusBadgeClasses: Record<string, string> = {
-  new: 'bg-blue-500/10 text-blue-600 dark:text-blue-400 border-blue-500/20',
-  contacted: 'bg-amber-500/10 text-amber-600 dark:text-amber-400 border-amber-500/20',
-  converted: 'bg-green-500/10 text-green-600 dark:text-green-400 border-green-500/20',
-  lost: 'bg-red-500/10 text-red-600 dark:text-red-400 border-red-500/20',
+  new: 'bg-blue-500/15 text-blue-700 dark:text-blue-400 border-blue-500/30',
+  contacted: 'bg-amber-500/15 text-amber-700 dark:text-amber-400 border-amber-500/30',
+  converted: 'bg-emerald-500/15 text-emerald-700 dark:text-emerald-400 border-emerald-500/30',
+  lost: 'bg-red-500/15 text-red-700 dark:text-red-400 border-red-500/30',
 }
 
 export function LeadsTable({ entries, deleteAction }: LeadsTableProps) {
@@ -82,7 +82,7 @@ export function LeadsTable({ entries, deleteAction }: LeadsTableProps) {
               <TableCell>
                 <Badge
                   variant="secondary"
-                  className={statusBadgeClasses[entry.status] ?? 'border border-border'}
+                  className={`border font-medium shadow-none capitalize ${statusBadgeClasses[entry.status] ?? 'border-border text-muted-foreground'}`}
                 >
                   {entry.status}
                 </Badge>
