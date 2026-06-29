@@ -7,44 +7,17 @@ import type { TenderScheduleEntry } from '@pmg/db'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
-import { TenderStatusBadge } from '@/components/scheduling/tender-status-badge'
+import { TenderStatusBadge, getNextStatuses } from '@/components/scheduling/tender-status-badge'
 import { TenderRiskBadge } from '@/components/scheduling/tender-risk-badge'
+import { transitionTenderStatusAction } from '@/app/actions/tender-schedule'
+import { toast } from 'sonner'
+import { Tooltip, TooltipTrigger, TooltipContent, TooltipProvider } from '@/components/ui/tooltip'
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu'
-import { transitionTenderStatusAction } from '@/app/actions/tender-schedule'
-import { toast } from 'sonner'
-import { Tooltip, TooltipTrigger, TooltipContent, TooltipProvider } from '@/components/ui/tooltip'
-
-const STATUS_TRANSITIONS: Record<string, { value: string; label: string }[]> = {
-  planned: [
-    { value: 'in_progress', label: 'Start Work' },
-    { value: 'cancelled', label: 'Cancel' },
-  ],
-  in_progress: [
-    { value: 'completed', label: 'Complete' },
-    { value: 'cancelled', label: 'Cancel' },
-    { value: 'planned', label: 'Re-plan' },
-  ],
-  completed: [
-    { value: 'submitted', label: 'Submit' },
-    { value: 'cancelled', label: 'Cancel' },
-    { value: 'planned', label: 'Re-plan' },
-  ],
-  submitted: [
-    { value: 'planned', label: 'Re-plan' },
-  ],
-  cancelled: [
-    { value: 'planned', label: 'Reinstate' },
-  ],
-}
-
-function getNextStatuses(status: string) {
-  return STATUS_TRANSITIONS[status] ?? []
-}
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 
@@ -58,6 +31,7 @@ interface ClientSummary {
 interface TimelineClientProps {
   entries: TenderScheduleEntry[]
   clients: ClientSummary[]
+  progressMap?: Record<string, { total: number; completed: number }>
 }
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
@@ -82,7 +56,7 @@ function daysBetween(a: string, b: string): number {
 
 // ── Timeline Client ───────────────────────────────────────────────────────────
 
-export function TimelineClient({ entries, clients }: TimelineClientProps) {
+export function TimelineClient({ entries, clients, progressMap = {} }: TimelineClientProps) {
   const router = useRouter()
   const [isPending, setIsPending] = React.useState<string | null>(null)
 
@@ -186,8 +160,8 @@ export function TimelineClient({ entries, clients }: TimelineClientProps) {
         </div>
       </CardHeader>
       <CardContent>
-        <div className="w-full overflow-hidden">
-          <div className="w-full">
+        <div className="w-full overflow-x-auto scrollbar-thin scrollbar-thumb-muted-foreground/20 relative group">
+          <div className="relative pb-4" style={{ minWidth: `${Math.max(totalDays * 8, 800)}px` }}>
             {/* Week headers */}
             <div className="relative mb-1 flex h-6 w-full">
               {weekMarkers.map((marker, i) => (
@@ -249,9 +223,21 @@ export function TimelineClient({ entries, clients }: TimelineClientProps) {
                           <Badge variant="destructive" className="shrink-0 text-xs">Urgent</Badge>
                         )}
                       </div>
-                      <p className="truncate text-[11px] text-muted-foreground leading-tight">
-                        {entry.tenderReference}
-                      </p>
+                      <div className="flex items-center gap-1.5 mt-0.5">
+                        <p className="truncate text-[11px] text-muted-foreground leading-tight flex-1">
+                          {entry.tenderReference}
+                        </p>
+                        {(() => {
+                          const progress = progressMap[entry.id] || { total: 0, completed: 0 };
+                          const percent = progress.total > 0 ? Math.round((progress.completed / progress.total) * 100) : 0;
+                          if (progress.total === 0) return null;
+                          return (
+                            <span className="text-[9px] font-semibold text-emerald-600 dark:text-emerald-400 bg-emerald-500/10 px-1 rounded shrink-0">
+                              {percent}%
+                            </span>
+                          );
+                        })()}
+                      </div>
                     </div>
 
                     {/* Bar area with Tooltip */}
@@ -260,13 +246,25 @@ export function TimelineClient({ entries, clients }: TimelineClientProps) {
                         <div className="relative flex-1 cursor-help" style={{ height: '28px' }}>
                           {/* Main work bar */}
                           <div
-                            className={`absolute top-1 h-5 rounded-sm transition-all ${STATUS_COLORS[entry.status] ?? 'bg-muted'}`}
+                            className={`absolute top-1 h-5 rounded-sm transition-all ${STATUS_COLORS[entry.status] ?? 'bg-muted'} cursor-pointer hover:brightness-110 active:scale-[0.99] flex items-center justify-end pr-1`}
                             style={{
                               left: `${(startOffset / totalDays) * 100}%`,
                               width: `${(workDays / totalDays) * 100}%`,
                               minWidth: '4px',
                             }}
-                          />
+                            onClick={() => router.push(`/scheduling/${entry.id}`)}
+                          >
+                            {(() => {
+                              const progress = progressMap[entry.id] || { total: 0, completed: 0 };
+                              const percent = progress.total > 0 ? Math.round((progress.completed / progress.total) * 100) : 0;
+                              if (percent === 0) return null;
+                              return (
+                                <span className="text-[9px] font-bold text-white/90 select-none hidden sm:inline">
+                                  {percent}%
+                                </span>
+                              );
+                            })()}
+                          </div>
 
                           {/* Buffer extension */}
                           {bufferDays > 0 && entry.status !== 'submitted' && (
@@ -289,26 +287,39 @@ export function TimelineClient({ entries, clients }: TimelineClientProps) {
                       </TooltipTrigger>
                       <TooltipContent className="p-3 max-w-xs flex flex-col gap-1.5 bg-popover text-popover-foreground border shadow-md">
                         <p className="font-semibold text-xs">{client?.name ?? 'Unknown Client'}</p>
-                        <div className="text-[11px] text-muted-foreground grid grid-cols-2 gap-x-4 gap-y-0.5">
-                          <span>Reference:</span>
-                          <span className="font-medium text-foreground text-right">{entry.tenderReference}</span>
-                          
-                          <span>Working Window:</span>
-                          <span className="font-medium text-foreground text-right">
-                            {formatDate(entry.startDate)} → {formatDate(entry.targetCompletionDate)}
-                          </span>
+                        {(() => {
+                          const progress = progressMap[entry.id] || { total: 0, completed: 0 };
+                          const percent = progress.total > 0 ? Math.round((progress.completed / progress.total) * 100) : 0;
+                          return (
+                            <div className="text-[11px] text-muted-foreground grid grid-cols-2 gap-x-4 gap-y-0.5">
+                              <span>Reference:</span>
+                              <span className="font-medium text-foreground text-right">{entry.tenderReference}</span>
+                              
+                              {progress.total > 0 && (
+                                <>
+                                  <span>Progress:</span>
+                                  <span className="font-medium text-emerald-500 text-right">{percent}% ({progress.completed}/{progress.total})</span>
+                                </>
+                              )}
 
-                          <span>Closing Date:</span>
-                          <span className="font-medium text-red-500 text-right">{formatDate(entry.closingDate)}</span>
+                              <span>Working Window:</span>
+                              <span className="font-medium text-foreground text-right">
+                                {formatDate(entry.startDate)} → {formatDate(entry.targetCompletionDate)}
+                              </span>
 
-                          <span>Effort:</span>
-                          <span className="font-medium text-foreground text-right">{workDays} days</span>
+                              <span>Closing Date:</span>
+                              <span className="font-medium text-red-500 text-right">{formatDate(entry.closingDate)}</span>
 
-                          <span>Buffer:</span>
-                          <span className={`font-medium text-right ${bufferDays < entry.bufferDays ? 'text-amber-500 font-semibold' : 'text-foreground'}`}>
-                            {bufferDays} days (req: {entry.bufferDays}d)
-                          </span>
-                        </div>
+                              <span>Effort:</span>
+                              <span className="font-medium text-foreground text-right">{workDays} days</span>
+
+                              <span>Buffer:</span>
+                              <span className={`font-medium text-right ${bufferDays < entry.bufferDays ? 'text-amber-500 font-semibold' : 'text-foreground'}`}>
+                                {bufferDays} days (req: {entry.bufferDays}d)
+                              </span>
+                            </div>
+                          );
+                        })()}
                       </TooltipContent>
                     </Tooltip>
 
@@ -362,6 +373,8 @@ export function TimelineClient({ entries, clients }: TimelineClientProps) {
               ))}
             </div>
           </div>
+          {/* Subtle fade gradient overlay on the right edge */}
+          <div className="absolute right-0 top-0 bottom-0 w-8 bg-gradient-to-l from-card to-transparent pointer-events-none opacity-0 group-hover:opacity-100 transition-opacity" />
         </div>
       </CardContent>
     </Card>

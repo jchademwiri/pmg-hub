@@ -2,7 +2,7 @@ import type { Metadata } from 'next';
 import Link from 'next/link';
 import { ArrowLeft } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { getAllClients, getAllDivisions, getAllTenderScheduleEntries } from '@pmg/db';
+import { getAllTenderScheduleEntries, getAllClients, getAllDivisions, getTendersProgressMap } from '@pmg/db';
 import { SetPageTotal } from '@/components/navigation/page-header-context';
 import { ScheduleListClient } from './schedule-list-client';
 
@@ -18,26 +18,19 @@ export default async function ScheduleListPage() {
 
   const activeEntriesCount = entries.filter((e) => e.status !== 'cancelled').length;
 
+  const progressMap = await getTendersProgressMap(entries.map((e) => e.id));
+  const progressObj = Object.fromEntries(progressMap.entries());
+
   return (
     <div className="flex flex-col gap-6">
       <SetPageTotal value={`${activeEntriesCount} total entries`} />
 
-      <div className="flex items-center justify-between">
-        <div>
-          <h2 className="text-lg font-semibold">Schedule List</h2>
-          <p className="text-sm text-muted-foreground">
-            Full list of all tender schedule entries with filtering and search
-          </p>
-        </div>
-        <Button asChild size="sm">
-          <Link href="/scheduling">
-            <ArrowLeft className="size-4" />
-            Back to Overview
-          </Link>
-        </Button>
-      </div>
-
-      <ScheduleListClient entries={entries} clients={clients} divisions={divisions} />
+      <ScheduleListClient 
+        entries={entries} 
+        clients={clients} 
+        divisions={divisions} 
+        progressMap={progressObj}
+      />
     </div>
   );
 }

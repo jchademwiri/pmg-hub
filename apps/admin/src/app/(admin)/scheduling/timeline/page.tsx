@@ -1,34 +1,29 @@
 import type { Metadata } from 'next'
-import { getAllClients } from '@pmg/db'
-import { getAllTenderScheduleEntries } from '@pmg/db'
+import { getActiveTenderScheduleEntries, getAllClients, getTendersProgressMap } from '@pmg/db'
 import { SetPageTotal } from '@/components/navigation/page-header-context'
 import { TimelineClient } from './timeline-client'
 
 export const dynamic = 'force-dynamic'
-export const metadata: Metadata = { title: 'Timeline' }
+export const metadata: Metadata = { title: 'Project Schedule Timeline' }
 
-export default async function TimelinePage() {
-  const [entries, clients] = await Promise.all([
-    getAllTenderScheduleEntries(),
+export default async function SchedulingTimelinePage() {
+  const [activeEntries, clients] = await Promise.all([
+    getActiveTenderScheduleEntries(),
     getAllClients(),
   ])
 
-  const activeEntries = entries.filter(
-    (e) => e.status !== 'cancelled' && e.status !== 'submitted',
-  )
+  const progressMap = await getTendersProgressMap(activeEntries.map((e) => e.id))
+  const progressObj = Object.fromEntries(progressMap.entries())
 
   return (
     <div className="flex flex-col gap-6">
       <SetPageTotal value={`${activeEntries.length} active`} />
 
-      <div>
-        <h2 className="text-lg font-semibold">Timeline</h2>
-        <p className="text-sm text-muted-foreground">
-          Visual timeline of tender schedules — bars show your working window, markers show closing dates
-        </p>
-      </div>
-
-      <TimelineClient entries={activeEntries} clients={clients} />
+      <TimelineClient
+        entries={activeEntries}
+        clients={clients}
+        progressMap={progressObj}
+      />
     </div>
   )
 }

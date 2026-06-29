@@ -1,6 +1,6 @@
 import type { Metadata } from 'next'
 import { getAllClients, getAllDivisions } from '@pmg/db'
-import { getActiveTenderScheduleEntries, getCurrentWorkload, getTendersAtRisk, detectOverlaps } from '@pmg/db'
+import { getActiveTenderScheduleEntries, getCurrentWorkload, getTendersAtRisk, detectOverlaps, getTendersProgressMap } from '@pmg/db'
 import { SetPageTotal } from '@/components/navigation/page-header-context'
 import { SchedulingOverviewClient } from '@/components/scheduling/scheduling-overview-shell'
 
@@ -18,18 +18,23 @@ export default async function SchedulingPage() {
   ])
 
   const totalActive = workload.planned.length + (workload.inProgress ? 1 : 0)
+  const upcomingEntries = allEntries
+    .filter((e) => e.status === 'planned' || e.status === 'in_progress')
+    .sort((a, b) => a.closingDate.localeCompare(b.closingDate))
+    .slice(0, 5)
+
+  // Fetch progress map for all active and upcoming projects
+  const activeIds = [
+    ...(workload.inProgress ? [workload.inProgress.id] : []),
+    ...workload.planned.map((p) => p.id),
+    ...upcomingEntries.map((u) => u.id),
+  ]
+  const progressMap = await getTendersProgressMap(activeIds)
+  const progressObj = Object.fromEntries(progressMap.entries())
 
   return (
     <div className="flex flex-col gap-6">
-      <SetPageTotal value={`${totalActive} active tender${totalActive !== 1 ? 's' : ''}`} />
-
-      {/* Page header */}
-      <div>
-        <h2 className="text-lg font-semibold">Tender Scheduling</h2>
-        <p className="text-sm text-muted-foreground">
-          Plan, track, and manage tender preparation deadlines
-        </p>
-      </div>
+      <SetPageTotal value={`${totalActive} active project${totalActive !== 1 ? 's' : ''}`} />
 
       <SchedulingOverviewClient
         inProgress={workload.inProgress}
@@ -39,6 +44,8 @@ export default async function SchedulingPage() {
         overlaps={overlaps}
         clients={clients}
         divisions={divisions}
+        upcomingTenders={upcomingEntries}
+        progressMap={progressObj}
       />
     </div>
   )

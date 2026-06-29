@@ -2,7 +2,8 @@
 
 import * as React from 'react';
 import { useRouter } from 'next/navigation';
-import { CalendarClock, AlertTriangle, ListOrdered, Plus, Flame, Clock } from 'lucide-react';
+import Link from 'next/link';
+import { CalendarClock, AlertTriangle, ListOrdered, Plus, Flame, Clock, ChevronDown } from 'lucide-react';
 import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -11,6 +12,13 @@ import { transitionTenderStatusAction } from '@/app/actions/tender-schedule';
 import { TenderFormDialog } from '@/components/scheduling/tender-form-dialog';
 import { DraggableUpNext } from '@/components/scheduling/draggable-up-next';
 import { TenderRiskBadge } from '@/components/scheduling/tender-risk-badge';
+import { TenderStatusBadge } from '@/components/scheduling/tender-status-badge';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 
@@ -40,6 +48,8 @@ interface SchedulingOverviewClientProps {
   overlaps: OverlapWarning[];
   clients: ClientSummary[];
   divisions: DivisionSummary[];
+  upcomingTenders: TenderScheduleEntry[];
+  progressMap: Record<string, { total: number; completed: number }>;
 }
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
@@ -114,15 +124,14 @@ function SchedulingSummaryCards({
 
 // ── Current Workload Card ─────────────────────────────────────────────────────
 
-function CurrentWorkloadCard({
-  tender,
-  clientName,
-  onStatusChange,
-}: {
+interface CurrentWorkloadCardProps {
   tender: TenderScheduleEntry | null;
-  clientName: string | null;
-  onStatusChange: (id: string, status: string) => Promise<string | undefined>;
-}) {
+  client: ClientSummary | null;
+  onStatusChange: (id: string, status: string) => void;
+  progressMap: Record<string, { total: number; completed: number }>;
+}
+
+function CurrentWorkloadCard({ tender, client, onStatusChange, progressMap }: CurrentWorkloadCardProps) {
   if (!tender) {
     return (
       <Card size="sm">
@@ -146,55 +155,84 @@ function CurrentWorkloadCard({
     (new Date(tender.closingDate).getTime() - new Date().getTime()) / (1000 * 60 * 60 * 24),
   );
 
+  const progress = progressMap[tender.id] || { total: 0, completed: 0 };
+  const percent = progress.total > 0 ? Math.round((progress.completed / progress.total) * 100) : 0;
+
   return (
-    <Card size="sm">
-      <CardHeader>
-        <div className="flex items-center gap-2">
-          <CalendarClock className="size-4 text-blue-500" />
-          <CardTitle>Now Working</CardTitle>
+    <Card className="border-blue-500/30 shadow-[0_0_15px_rgba(59,130,246,0.05)]">
+      <CardHeader className="pb-2">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <Flame className="size-4 text-blue-500 animate-pulse" />
+            <CardTitle className="text-sm font-semibold">Now Working On</CardTitle>
+          </div>
+          <TenderRiskBadge tender={tender} />
         </div>
       </CardHeader>
-      <CardContent>
-        <div className="flex flex-col gap-3">
-          <div>
-            <p className="text-sm font-medium">{tender.tenderReference}</p>
-            {clientName && <p className="text-xs text-muted-foreground">{clientName}</p>}
-            <p className="mt-1 text-xs text-muted-foreground">
-              Closes {formatDate(tender.closingDate)} ·{' '}
-              {daysToClosing > 0
-                ? `${daysToClosing} day${daysToClosing !== 1 ? 's' : ''} remaining`
-                : daysToClosing === 0
-                  ? 'Closing today'
-                  : `Overdue by ${Math.abs(daysToClosing)} day${Math.abs(daysToClosing) !== 1 ? 's' : ''}`}
-            </p>
-          </div>
-          <div className="flex items-center gap-2">
-            <span className="text-xs text-muted-foreground">Target:</span>
-            <span className="text-xs">{formatDate(tender.targetCompletionDate)}</span>
-            <TenderRiskBadge tender={tender} />
-          </div>
-          {tender.blockers && (
-            <div className="flex items-start gap-1.5 rounded-md bg-amber-500/10 p-2">
-              <AlertTriangle className="mt-0.5 size-3 shrink-0 text-amber-500" />
-              <p className="text-xs text-amber-600 dark:text-amber-400">{tender.blockers}</p>
-            </div>
+      <CardContent className="space-y-3">
+        <div>
+          <Link href={`/scheduling/${tender.id}`} className="hover:underline">
+            <h3 className="font-semibold text-base tracking-tight">{tender.tenderReference}</h3>
+          </Link>
+          {client && (
+            <p className="text-xs text-muted-foreground mt-0.5">{client.name}</p>
           )}
-          <div className="flex items-center gap-2 pt-1">
-            <Button
-              size="sm"
-              variant="default"
-              onClick={() => onStatusChange(tender.id, 'completed')}
-            >
-              Mark Complete
-            </Button>
-            <Button
-              size="sm"
-              variant="ghost"
-              onClick={() => onStatusChange(tender.id, 'cancelled')}
-            >
-              Cancel
-            </Button>
+        </div>
+
+        {progress.total > 0 && (
+          <div className="flex flex-col gap-1.5">
+            <div className="flex justify-between text-[11px] font-medium text-muted-foreground">
+              <span>Task Progress</span>
+              <span>{progress.completed}/{progress.total} completed ({percent}%)</span>
+            </div>
+            <div className="w-full bg-muted rounded-full h-1.5 overflow-hidden">
+              <div
+                className="bg-emerald-500 h-full transition-all duration-300 rounded-full shadow-[0_0_6px_rgba(16,185,129,0.2)]"
+                style={{ width: `${percent}%` }}
+              />
+            </div>
           </div>
+        )}
+
+        <div className="flex items-center gap-6 text-xs text-muted-foreground border-t border-border/50 pt-2.5">
+          {formatDate(tender.closingDate)} ·{' '}
+          {daysToClosing > 0
+            ? `${daysToClosing} day${daysToClosing !== 1 ? 's' : ''} remaining`
+            : daysToClosing === 0
+              ? 'Closing today'
+              : `Overdue by ${Math.abs(daysToClosing)} day${Math.abs(daysToClosing) !== 1 ? 's' : ''}`}
+        </div>
+        
+        {tender.blockers && (
+          <div className="flex items-start gap-1.5 rounded-md bg-amber-500/10 p-2">
+            <AlertTriangle className="mt-0.5 size-3 shrink-0 text-amber-500" />
+            <p className="text-xs text-amber-600 dark:text-amber-400">{tender.blockers}</p>
+          </div>
+        )}
+        <div className="flex items-center gap-2 pt-1">
+          <Button
+            size="sm"
+            variant="default"
+            onClick={() => onStatusChange(tender.id, 'completed')}
+          >
+            Mark Complete
+          </Button>
+          
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="outline" size="sm" className="gap-1">
+                Other Actions <ChevronDown className="size-3.5 text-muted-foreground" />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="start">
+              <DropdownMenuItem onClick={() => onStatusChange(tender.id, 'cancelled')} className="text-xs text-red-600 dark:text-red-400">
+                Cancel Project
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={() => onStatusChange(tender.id, 'planned')} className="text-xs">
+                Re-plan (Pause)
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
         </div>
       </CardContent>
     </Card>
@@ -346,6 +384,8 @@ export function SchedulingOverviewClient({
   overlaps,
   clients,
   divisions,
+  upcomingTenders,
+  progressMap,
 }: SchedulingOverviewClientProps) {
   const router = useRouter();
   const [formOpen, setFormOpen] = React.useState(false);
@@ -389,17 +429,66 @@ export function SchedulingOverviewClient({
       <SchedulingSummaryCards activeEntries={activeEntries} atRiskCount={atRiskTenders.length} />
 
       {/* Now Working + Up Next */}
-      <div className="grid grid-cols-1 gap-4 lg:grid-cols-[minmax(0,0.85fr)_minmax(0,1.35fr)]">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         <CurrentWorkloadCard
           tender={inProgress}
-          clientName={inProgress ? (clientMap.get(inProgress.clientId)?.name ?? null) : null}
+          client={inProgress ? clientMap.get(inProgress.clientId) || null : null}
           onStatusChange={handleStatusChange}
+          progressMap={progressMap}
         />
-        <DraggableUpNext tenders={planned} clients={clients} onStatusChange={handleStatusChange} />
+
+        <DraggableUpNext
+          tenders={planned}
+          clients={clients}
+          onStatusChange={handleStatusChange}
+          progressMap={progressMap}
+        />
       </div>
 
       {/* Compact warnings */}
       <WarningsPanel atRiskTenders={atRiskTenders} overlaps={overlaps} />
+
+      {/* Upcoming Deadlines Widget */}
+      <Card size="sm">
+        <CardHeader className="pb-2">
+          <div className="flex items-center gap-2">
+            <CalendarClock className="size-4 text-blue-500" />
+            <CardTitle>Upcoming Deadlines</CardTitle>
+          </div>
+        </CardHeader>
+        <CardContent className="pt-0">
+          {upcomingTenders.length === 0 ? (
+            <p className="text-xs text-muted-foreground py-4 text-center">No upcoming deadlines.</p>
+          ) : (
+            <ul className="flex flex-col divide-y divide-border/50">
+              {upcomingTenders.map((t) => {
+                const client = clientMap.get(t.clientId);
+                return (
+                  <li key={t.id} className="flex items-center justify-between py-2.5 first:pt-0 last:pb-0">
+                    <div className="min-w-0 flex-1">
+                      <p className="text-xs font-medium truncate">{t.tenderReference}</p>
+                      {client && (
+                        <p className="text-[10px] text-muted-foreground truncate mt-0.5">
+                          {client.name}
+                        </p>
+                      )}
+                    </div>
+                    <div className="flex items-center gap-4 shrink-0 text-right">
+                      <div className="text-right">
+                        <p className="text-[11px] font-medium">Closes {formatDate(t.closingDate)}</p>
+                        <p className="text-[10px] text-muted-foreground mt-0.5">
+                          Target: {formatDate(t.targetCompletionDate)}
+                        </p>
+                      </div>
+                      <TenderStatusBadge status={t.status} />
+                    </div>
+                  </li>
+                );
+              })}
+            </ul>
+          )}
+        </CardContent>
+      </Card>
 
       {/* Tender Form Dialog */}
       <TenderFormDialog

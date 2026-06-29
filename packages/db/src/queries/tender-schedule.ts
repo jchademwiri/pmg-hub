@@ -1,6 +1,6 @@
 import { db } from '../client';
-import { tenderScheduleEntries } from '../schema/tender-schedule';
-import type { TenderScheduleEntry, NewTenderScheduleEntry } from '../schema/tender-schedule';
+import { tenderScheduleEntries, tenderProgressSections, tenderProgressItems } from '../schema/tender-schedule';
+import type { TenderScheduleEntry, NewTenderScheduleEntry, TenderProgressSection, TenderProgressItem } from '../schema/tender-schedule';
 import { eq, asc, and, or, sql } from 'drizzle-orm';
 import { addDays, today as getToday } from '../lib/date-utils';
 
@@ -421,3 +421,75 @@ export async function getTenderScheduleSummary(): Promise<TenderScheduleSummary>
 
   return { inProgress, planned, upcomingDeadlines, atRisk, overdue };
 }
+
+// ── Checklist Queries ─────────────────────────────────────────────────────────
+
+export interface ProgressItemWithCompleted extends TenderProgressItem {}
+
+export interface ProgressSectionWithItems extends TenderProgressSection {
+  items: ProgressItemWithCompleted[];
+}
+
+export async function getTenderChecklist(tenderId: string): Promise<ProgressSectionWithItems[]> {
+  const sections = await db
+    .select()
+    .from(tenderProgressSections)
+    .where(eq(tenderProgressSections.tenderId, tenderId))
+    .orderBy(asc(tenderProgressSections.sortOrder));
+
+  const sectionIds = sections.map((s) => s.id);
+  if (sectionIds.length === 0) return [];
+
+  const items = await db
+    .select()
+    .from(tenderProgressItems)
+    .where(
+      sql`${tenderProgressItems.sectionId}::text = ANY(ARRAY[${sql.join(
+        sectionIds.map((id) => sql`${id}`),
+        sql`, `,
+      )}])`,
+    )
+    .orderBy(asc(tenderProgressItems.sortOrder));
+
+  return sections.map((section) => ({
+    ...section,
+    items: items.filter((item) => item.sectionId === section.id),
+  }));
+}
+
+export async function getTendersProgressMap(
+  tenderIds: string[],
+): Promise<Map<string, { total: number; completed: number }>> {
+  const map = new Map<string, { total: number; completed: number }>();
+  if (tenderIds.length === 0) return map;
+
+  // Initialize map with 0s for all requested IDs
+  for (const id of tenderIds) {
+    map.set(id, { total: 0, completed: 0 });
+  }
+
+  const results = await db
+    .select({
+      tenderId: tenderProgressSections.tenderId,
+      total: sql<number>`count(${tenderProgressItems.id})::int`,
+      completed: sql<number>`count(case when ${tenderProgressItems.isCompleted} then 1 end)::int`,
+    })
+    .from(tenderProgressSections)
+    .innerJoin(tenderProgressItems, eq(tenderProgressItems.sectionId, tenderProgressSections.id))
+    .where(
+      sql`${tenderProgressSections.tenderId}::text = ANY(ARRAY[${sql.join(
+        tenderIds.map((id) => sql`${id}`),
+        sql`, `,
+      )}])`,
+    )
+    .groupBy(tenderProgressSections.tenderId);
+
+  for (const r of results) {
+    if (r.tenderId) {
+      map.set(r.tenderId, { total: r.total, completed: r.completed });
+    }
+  }
+
+  return map;
+}
+
