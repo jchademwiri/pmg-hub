@@ -41,6 +41,7 @@ type Props = {
   currentPeriod: string
   showCloseMonthButton: boolean
   projectScheduleSummary: TenderSummaryData
+  pmgShareRate?: number
 }
 
 const TABS: { key: Tab; label: string }[] = [
@@ -67,6 +68,7 @@ export function DashboardShell({
   hasSnapshot,
   currentPeriod,
   showCloseMonthButton,
+  pmgShareRate,
 }: Props) {
   const router = useRouter()
   const pathname = usePathname()
@@ -116,9 +118,9 @@ export function DashboardShell({
     <div className="flex flex-col gap-5">
 
       {/* ── Period tabs ── */}
-      <Tabs value={activeTab} onValueChange={handleTabChange}>
-        <div className="flex items-center justify-between gap-3">
-          <div className="flex items-center gap-3">
+      <div className="flex items-center justify-between gap-3">
+        <div className="flex items-center gap-3">
+          <Tabs value={activeTab} onValueChange={handleTabChange}>
             <TabsList>
               {TABS.map((tab) => (
                 <TabsTrigger key={tab.key} value={tab.key}>
@@ -126,19 +128,19 @@ export function DashboardShell({
                 </TabsTrigger>
               ))}
             </TabsList>
-            <span className="text-xs text-muted-foreground/70">{activeLabel}</span>
-          </div>
-
-          {/* Close Month button on the far right of the tabs bar */}
-          {hasSnapshot ? (
-            <Badge variant="secondary">{fmtMonthYear(currentPeriod)} closed</Badge>
-          ) : (
-            showCloseMonthButton && (
-              <CloseMonthButton period={currentPeriod} />
-            )
-          )}
+          </Tabs>
+          <span className="text-xs text-muted-foreground/70">{activeLabel}</span>
         </div>
-      </Tabs>
+
+        {/* Close Month button on the far right of the tabs bar */}
+        {hasSnapshot ? (
+          <Badge variant="secondary">{fmtMonthYear(currentPeriod)} closed</Badge>
+        ) : (
+          showCloseMonthButton && (
+            <CloseMonthButton period={currentPeriod} />
+          )
+        )}
+      </div>
 
       {/* ── Row 1: KPI cards ── */}
       <KpiGrid
@@ -147,6 +149,7 @@ export function DashboardShell({
         previousSummary={activePreviousSummary}
         deltaLabel={activeDeltaLabel}
         sparklineData={sparklineData}
+        pmgShareRate={pmgShareRate}
       />
 
       {/* ── Row 2: Accounts Receivable Ageing Overview ── */}

@@ -14,6 +14,7 @@ import { EmptyState } from '@/components/ui/empty-state'
 import { ReportKpiStrip } from '@/components/reports/report-kpi-strip'
 import { ReportsTabs } from '@/components/reports/reports-tabs'
 import { fmtMonthYear, getSASTParts } from '@/lib/format'
+import { getActiveRates } from '@pmg/db'
 
 export const dynamic = 'force-dynamic'
 export const metadata: Metadata = { title: 'Reports & Insights' }
@@ -45,7 +46,7 @@ export default async function ReportsPage({ searchParams }: ReportsPageProps) {
   const currentMonthLabel = fmtMonthYear(new Date(sastYear, sastMonth, 1))
   const previousMonthLabel = fmtMonthYear(new Date(sastYear, sastMonth - 1, 1))
 
-  const [years, momData, budgetChartSeries, expensesByCategory, profitPoolSeries, monthlyFinancials, ledgerBalances] =
+  const [years, momData, budgetChartSeries, expensesByCategory, profitPoolSeries, monthlyFinancials, ledgerBalances, activeRates] =
     await Promise.all([
       getDistinctReportYears().catch((e) => { console.error('getDistinctReportYears failed:', e); return [] as number[] }),
       getMoMChartData().catch((e) => { console.error('getMoMChartData failed:', e); return [] }),
@@ -54,7 +55,10 @@ export default async function ReportsPage({ searchParams }: ReportsPageProps) {
       getProfitPoolSeriesForYear(year).catch((e) => { console.error('getProfitPoolSeriesForYear failed:', e); return [] }),
       getMonthlyFinancialsSeriesForYear(year).catch((e) => { console.error('getMonthlyFinancialsSeriesForYear failed:', e); return [] }),
       getLedgerBalances().catch((e) => { console.error('getLedgerBalances failed:', e); return undefined }),
+      getActiveRates().catch((e) => { console.error('getActiveRates failed:', e); return { pmg_share: 0.25, salary: 0.35, reinvest: 0.30, reserve: 0.30, flex: 0.05 } }),
     ])
+
+  const pmgShareRate = activeRates?.pmg_share ?? 0.25
 
   const hasData =
     momData.length > 0 ||
@@ -83,10 +87,11 @@ export default async function ReportsPage({ searchParams }: ReportsPageProps) {
           <ReportKpiStrip data={{
             revenue: monthlyFinancials.reduce((s, m) => s + m.revenue, 0),
             expenses: monthlyFinancials.reduce((s, m) => s + m.expenses, 0),
-            pmgShare: monthlyFinancials.reduce((s, m) => s + m.revenue, 0) * 0.25, // PMG Share rate from distribution_settings
-            profitPool: monthlyFinancials.reduce((s, m) => s + (m.revenue * 0.75 - m.expenses), 0),
+            pmgShare: monthlyFinancials.reduce((s, m) => s + m.revenue, 0) * pmgShareRate,
+            profitPool: monthlyFinancials.reduce((s, m) => s + (m.revenue * (1 - pmgShareRate) - m.expenses), 0),
             monthlyRevenue: monthlyFinancials.map((m) => m.revenue),
             monthlyExpenses: monthlyFinancials.map((m) => m.expenses),
+            pmgShareRate,
           }} />
           <ReportsTabs
             momData={momData}
@@ -99,6 +104,7 @@ export default async function ReportsPage({ searchParams }: ReportsPageProps) {
             currentMonthLabel={currentMonthLabel}
             previousMonthLabel={previousMonthLabel}
             ledgerBalances={ledgerBalances}
+            pmgShareRate={pmgShareRate}
           />
         </div>
       ) : (

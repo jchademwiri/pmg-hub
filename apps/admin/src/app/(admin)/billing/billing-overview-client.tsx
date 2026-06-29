@@ -16,6 +16,7 @@ import {
   Wallet,
 } from 'lucide-react'
 import type { AgingRow } from '@pmg/db'
+import { STATUS_STYLES, STATUS_TEXT_COLORS } from '@/lib/billing-status'
 
 interface BillingOverviewClientProps {
   invoiceSummary: {
@@ -45,23 +46,7 @@ interface BillingOverviewClientProps {
   }>
 }
 
-const STATUS_STYLES: Record<string, string> = {
-  paid: 'bg-emerald-500/10 text-emerald-600',
-  partially_paid: 'bg-amber-500/10 text-amber-600',
-  issued: 'bg-blue-500/10 text-blue-600',
-  overdue: 'bg-red-500/10 text-red-600',
-  draft: 'bg-zinc-500/10 text-zinc-600',
-  void: 'bg-zinc-500/10 text-zinc-600',
-}
 
-const STATUS_TEXT_COLORS: Record<string, string> = {
-  paid: 'text-emerald-600',
-  partially_paid: 'text-amber-600',
-  issued: 'text-blue-600',
-  overdue: 'text-red-600',
-  draft: 'text-zinc-600',
-  void: 'text-zinc-600 line-through',
-}
 
 export function BillingOverviewClient({
   invoiceSummary,

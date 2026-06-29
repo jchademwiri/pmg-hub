@@ -1,7 +1,6 @@
 'use client';
 
 import Link from 'next/link';
-import { useRouter } from 'next/navigation';
 import { useTransition } from 'react';
 import { MoreHorizontal } from 'lucide-react';
 import { toast } from 'sonner';
@@ -27,6 +26,7 @@ import { BillingStatusBadge } from '@/components/billing/billing-status-badge';
 import { Badge } from '@/components/ui/badge';
 import { getDocumentLogoText } from '@/lib/document-logo';
 import { formatZAR, fmtDate } from '@/lib/format';
+import { STATUS_TEXT_COLORS } from '@/lib/billing-status';
 import type { InvoiceRow } from '@pmg/db';
 
 interface InvoicesClientProps {
@@ -40,14 +40,7 @@ interface InvoicesClientProps {
   voidAction: (id: string) => Promise<{ error?: string }>;
 }
 
-const INVOICE_STATUS_COLORS: Record<string, string> = {
-  paid: 'text-emerald-600',
-  partially_paid: 'text-amber-600',
-  issued: 'text-blue-600',
-  overdue: 'text-red-600',
-  draft: 'text-zinc-600',
-  void: 'text-zinc-600 line-through',
-};
+
 
 export function InvoicesClient({
   entries,
@@ -59,7 +52,6 @@ export function InvoicesClient({
   issueAction,
   voidAction,
 }: InvoicesClientProps) {
-  const router = useRouter();
   const [, startTransition] = useTransition();
 
   function buildHref(page: number) {
@@ -130,10 +122,14 @@ export function InvoicesClient({
           {entries.map((inv) => (
             <TableRow 
               key={inv.id}
-              className="cursor-pointer hover:bg-muted/40 transition-colors border-b border-border"
-              onClick={() => router.push(`/billing/invoices/${inv.id}`)}
+              className="hover:bg-muted/40 transition-colors border-b border-border relative"
             >
               <TableCell className="font-medium">
+                <Link
+                  href={`/billing/invoices/${inv.id}`}
+                  className="absolute inset-0 focus:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-1 rounded-sm"
+                  aria-label={`View invoice ${inv.documentNumber}`}
+                />
                 {inv.documentNumber}
               </TableCell>
               <TableCell>
@@ -150,13 +146,13 @@ export function InvoicesClient({
               <TableCell className="tabular-nums text-sm text-muted-foreground">
                 {fmtDate(inv.dueDate)}
               </TableCell>
-              <TableCell className={`text-right tabular-nums text-sm font-medium ${INVOICE_STATUS_COLORS[inv.status] || ''}`}>
+              <TableCell className={`text-right tabular-nums text-sm font-medium ${STATUS_TEXT_COLORS[inv.status] || ''}`}>
                 {formatZAR(Number(inv.total))}
               </TableCell>
               <TableCell>
                 <BillingStatusBadge status={inv.status} />
               </TableCell>
-              <TableCell onClick={(e) => e.stopPropagation()}>
+              <TableCell className="relative z-10">
                 <DropdownMenu>
                   <DropdownMenuTrigger asChild>
                     <Button variant="ghost" size="icon" className="size-8" title="Actions">

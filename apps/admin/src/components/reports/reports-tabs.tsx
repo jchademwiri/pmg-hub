@@ -26,6 +26,7 @@ interface ReportsTabsProps {
   currentMonthLabel: string
   previousMonthLabel: string
   ledgerBalances?: BucketBalances
+  pmgShareRate?: number
 }
 
 export function ReportsTabs({
@@ -39,6 +40,7 @@ export function ReportsTabs({
   currentMonthLabel,
   previousMonthLabel,
   ledgerBalances,
+  pmgShareRate,
 }: ReportsTabsProps) {
   const [drillOpen, setDrillOpen] = useState(false)
   const [drillPeriod, setDrillPeriod] = useState<string | null>(null)
@@ -71,9 +73,7 @@ export function ReportsTabs({
   // Calculate annual totals for waterfall and sankey flow diagram
   const totalRevenue = monthlyFinancials.reduce((sum, m) => sum + m.revenue, 0)
   const totalExpenses = monthlyFinancials.reduce((sum, m) => sum + m.expenses, 0)
-  // Use 25% PMG Share and profit pool splits as display defaults.
-  // These match the current active rates in the database.
-  const PMG_SHARE_RATE = 0.25
+  const PMG_SHARE_RATE = pmgShareRate ?? 0.25
   const PROFIT_POOL_SPLITS = { salary: 0.35, reinvest: 0.30, reserve: 0.30, flex: 0.05 }
   const totalPmgShare = totalRevenue * PMG_SHARE_RATE
   const totalProfitPool = totalRevenue - totalExpenses - totalPmgShare

@@ -78,13 +78,15 @@ export type ReportKpiData = {
   profitPool: number
   monthlyRevenue: number[]
   monthlyExpenses: number[]
+  pmgShareRate?: number
 }
 
 export function ReportKpiStrip({ data }: { data: ReportKpiData }) {
   const profitMargin = data.revenue > 0 ? (data.profitPool / data.revenue) * 100 : 0
 
-  const monthlyPmg = data.monthlyRevenue.map((r) => r * 0.25)
-  const monthlyProfit = data.monthlyRevenue.map((r, i) => r * 0.75 - (data.monthlyExpenses[i] || 0))
+  const rate = data.pmgShareRate ?? 0.25
+  const monthlyPmg = data.monthlyRevenue.map((r) => r * rate)
+  const monthlyProfit = data.monthlyRevenue.map((r, i) => r * (1 - rate) - (data.monthlyExpenses[i] || 0))
 
   const cards = [
     {

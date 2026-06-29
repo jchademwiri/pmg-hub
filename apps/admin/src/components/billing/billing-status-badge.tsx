@@ -1,4 +1,5 @@
 import { Badge } from '@/components/ui/badge';
+import { formatStatusLabel } from '@/lib/billing-status';
 
 interface BillingStatusBadgeProps {
   status: string;
@@ -20,12 +21,11 @@ const statusStyles: Record<string, string> = {
 
 export function BillingStatusBadge({ status }: BillingStatusBadgeProps) {
   const styles = statusStyles[status] ?? 'bg-muted text-muted-foreground';
-  const label = status === 'converted' ? 'Invoiced' : status.charAt(0).toUpperCase() + status.slice(1);
 
   return (
     <Badge variant="secondary" className={styles}>
       <span className="size-1.5 rounded-full bg-current opacity-70" />
-      {label}
+      {formatStatusLabel(status)}
     </Badge>
   );
 }
