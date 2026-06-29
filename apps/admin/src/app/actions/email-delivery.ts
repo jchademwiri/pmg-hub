@@ -20,6 +20,11 @@ import React from 'react';
 import { z } from 'zod';
 import { validateEmailPdfAttachment } from '@/lib/pdf-attachments';
 
+const CustomAttachmentSchema = z.object({
+  filename: z.string(),
+  content: z.string(), // base64 string
+});
+
 const EmailPayloadSchema = z.object({
   documentId: z.string().uuid(),
   documentType: z.enum(['invoice', 'quote']),
@@ -28,6 +33,7 @@ const EmailPayloadSchema = z.object({
   personalMessage: z.string().optional(),
   base64Pdf: z.string().min(100),
   base64StatementPdf: z.string().optional(), // Statement PDF is optional and only for Invoices
+  customAttachments: z.array(CustomAttachmentSchema).optional(),
 });
 
 const EmailPreviewPayloadSchema = z.object({
@@ -185,7 +191,7 @@ export async function sendDocumentEmailAction(rawPayload: unknown) {
       return { error: parsed.error.issues[0]?.message ?? 'Invalid request parameters.' };
     }
     
-    const { documentId, documentType, recipientEmail, subject, personalMessage, base64Pdf, base64StatementPdf } = parsed.data;
+    const { documentId, documentType, recipientEmail, subject, personalMessage, base64Pdf, base64StatementPdf, customAttachments } = parsed.data;
     const pdfError =
       getPdfAttachmentError(base64Pdf, `${documentType === 'invoice' ? 'Invoice' : 'Quote'} PDF`) ??
       getPdfAttachmentError(base64StatementPdf, 'Statement PDF');
@@ -274,6 +280,16 @@ export async function sendDocumentEmailAction(rawPayload: unknown) {
         attachments.push({
           filename: `Statement-${clientCleanName}.pdf`,
           content: Buffer.from(base64StatementPdf, 'base64'),
+        });
+      }
+
+      // Add custom attachments
+      if (customAttachments && customAttachments.length > 0) {
+        customAttachments.forEach((att) => {
+          attachments.push({
+            filename: att.filename,
+            content: Buffer.from(att.content, 'base64'),
+          });
         });
       }
 
@@ -382,7 +398,11 @@ export async function sendDocumentEmailAction(rawPayload: unknown) {
           {
             filename: `${quote.documentNumber}.pdf`,
             content: Buffer.from(base64Pdf, 'base64'),
-          }
+          },
+          ...(customAttachments || []).map((att) => ({
+            filename: att.filename,
+            content: Buffer.from(att.content, 'base64'),
+          }))
         ]
       });
 
@@ -414,6 +434,7 @@ const ReceiptEmailPayloadSchema = z.object({
   subject: z.string().min(3),
   personalMessage: z.string().optional(),
   base64Pdf: z.string().min(100),
+  customAttachments: z.array(CustomAttachmentSchema).optional(),
 });
 
 export async function sendReceiptEmailAction(rawPayload: unknown) {
@@ -425,7 +446,7 @@ export async function sendReceiptEmailAction(rawPayload: unknown) {
       return { error: parsed.error.issues[0]?.message ?? 'Invalid request parameters.' };
     }
 
-    const { incomeId, recipientEmail, subject, personalMessage, base64Pdf } = parsed.data;
+    const { incomeId, recipientEmail, subject, personalMessage, base64Pdf, customAttachments } = parsed.data;
     const pdfError = getPdfAttachmentError(base64Pdf, 'Receipt PDF');
     if (pdfError) return { error: pdfError };
 
@@ -473,7 +494,11 @@ export async function sendReceiptEmailAction(rawPayload: unknown) {
       {
         filename: `Receipt-${generateReceiptNumber(incomeRow.id, incomeRow.divisionName)}.pdf`,
         content: Buffer.from(base64Pdf, 'base64'),
-      }
+      },
+      ...(customAttachments || []).map((att) => ({
+        filename: att.filename,
+        content: Buffer.from(att.content, 'base64'),
+      }))
     ];
 
     const adminCc = resolveDivisionAdminEmail(incomeRow.divisionName, billingConfig?.salesRepEmail ?? null);

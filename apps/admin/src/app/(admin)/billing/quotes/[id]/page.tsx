@@ -16,7 +16,7 @@ import { buildOrgProps, buildBankingProps } from '@/lib/client-billing-helpers';
 import { QuoteDetailActions } from './quote-detail-actions';
 import { PrintButton } from '@/components/billing/print-button';
 import { ExportPdfButton } from '@/components/billing/export-pdf-button';
-import { EmailDocumentDialog } from '@/components/billing/email-document-dialog';
+import { UniversalEmailDialog } from '@/components/billing/universal-email-dialog';
 
 export const dynamic = 'force-dynamic';
 
@@ -100,7 +100,7 @@ export default async function QuoteDetailPage({ params }: Props) {
             fileName={`Quote-${quote.documentNumber}`}
             pdfUrl={quotePdfUrl}
           />
-          <EmailDocumentDialog
+          <UniversalEmailDialog
             documentId={quote.id}
             documentNumber={quote.documentNumber}
             documentType="quote"
