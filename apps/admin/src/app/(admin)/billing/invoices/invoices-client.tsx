@@ -3,6 +3,7 @@
 import Link from 'next/link';
 import { useTransition } from 'react';
 import { MoreHorizontal } from 'lucide-react';
+import { Pagination } from '@/components/ui/pagination';
 import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
 import { confirm } from '@/components/ui/confirm-dialog';
@@ -189,32 +190,17 @@ export function InvoicesClient({
       </Table>
 
       {/* Pagination */}
-      {total > pageSize && (
-        <div className="flex items-center justify-between px-2 py-2">
-          <span className="text-sm text-muted-foreground">
-            Showing {(currentPage - 1) * pageSize + 1}–
-            {Math.min(currentPage * pageSize, total)} of {total}
-          </span>
-          <div className="flex gap-2">
-            {currentPage > 1 && (
-              <Link
-                href={buildHref(currentPage - 1)}
-                className="rounded-md border px-3 py-1 text-sm hover:bg-muted transition-colors"
-              >
-                Previous
-              </Link>
-            )}
-            {currentPage * pageSize < total && (
-              <Link
-                href={buildHref(currentPage + 1)}
-                className="rounded-md border px-3 py-1 text-sm hover:bg-muted transition-colors"
-              >
-                Next
-              </Link>
-            )}
-          </div>
-        </div>
-      )}
+      <div className="flex items-center justify-between px-2">
+        <span className="text-sm text-muted-foreground">
+          Showing {(currentPage - 1) * pageSize + 1}–
+          {Math.min(currentPage * pageSize, total)} of {total}
+        </span>
+        <Pagination
+          currentPage={currentPage}
+          totalPages={Math.ceil(total / pageSize)}
+          buildHref={buildHref}
+        />
+      </div>
     </div>
   );
 }

@@ -113,7 +113,7 @@ export function ReportsTabs({
       {/* ── Overview Tab ───────────────────────────────────────────────── */}
       <TabsContent value="overview">
         <div className="grid grid-cols-1 gap-6">
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 min-h-[400px]">
             <MoMComparisonChart data={momData} currentMonthLabel={currentMonthLabel} previousMonthLabel={previousMonthLabel} onBarClick={(metric, periodType) => {
               const type = metricToDrillType[metric]
               if (type) {
@@ -138,7 +138,7 @@ export function ReportsTabs({
 
       {/* ── Revenue Tab ────────────────────────────────────────────────── */}
       <TabsContent value="revenue">
-        <div className="grid grid-cols-1 gap-6">
+        <div className="grid grid-cols-1 gap-6 min-h-[400px]">
           <RevenueByDivisionChart
             data={budgetChartSeries}
           />
@@ -147,14 +147,14 @@ export function ReportsTabs({
 
       {/* ── Expenses Tab ───────────────────────────────────────────────── */}
       <TabsContent value="expenses">
-        <div className="grid grid-cols-1 gap-6">
+        <div className="grid grid-cols-1 gap-6 min-h-[400px]">
           <ExpenseByCategoryChart data={expensesByCategory} onBarClick={() => openDrill('expenses', currentPeriod)} />
         </div>
       </TabsContent>
 
       {/* ── Profit Pool Tab ────────────────────────────────────────────── */}
       <TabsContent value="profit">
-        <div className="grid grid-cols-1 gap-6">
+        <div className="grid grid-cols-1 gap-6 min-h-[400px]">
           <SankeyDiagram
             revenue={totalRevenue}
             expenses={totalExpenses}

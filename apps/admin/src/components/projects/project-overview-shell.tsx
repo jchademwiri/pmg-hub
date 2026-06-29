@@ -77,7 +77,7 @@ function SchedulingSummaryCards({
 
   const cards = [
     {
-      label: 'Active Tenders',
+      label: 'Active Projects',
       value: activeEntries.length,
       hint: 'planned or in progress',
       icon: ListOrdered,
@@ -97,7 +97,7 @@ function SchedulingSummaryCards({
       {cards.map((card) => {
         const Icon = card.icon;
         return (
-          <Card key={card.label} size="sm">
+          <Card key={card.label} size="sm" className="hover:shadow-md hover:-translate-y-0.5 transition-all duration-200">
             <CardContent className="flex items-center justify-between gap-3 p-4">
               <div className="min-w-0">
                 <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
@@ -429,7 +429,7 @@ export function ProjectOverviewClient({
       <div className="flex items-center justify-end">
         <Button size="sm" onClick={() => setFormOpen(true)}>
           <Plus className="size-4" />
-          New Tender
+          New Project
         </Button>
       </div>
 
