@@ -3,7 +3,7 @@
 import React from 'react'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
-import { Home, ChevronDown } from 'lucide-react'
+import { Home, ChevronDown, LogOut, Settings, UserCog } from 'lucide-react'
 import {
   Sidebar,
   SidebarContent,
@@ -23,6 +23,14 @@ import {
   CollapsibleTrigger,
 } from '@/components/ui/collapsible'
 import { SignOutButton } from '@/components/navigation/sign-out-button'
+import { Avatar, AvatarFallback } from '@/components/ui/avatar'
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu'
 import { OVERVIEW, GROUPS } from '@/components/navigation/nav-data'
 import type { NavItem, NavGroup, GroupKey } from '@/components/navigation/nav-data'
 
@@ -141,10 +149,14 @@ export function AppSidebar({ user }: AppSidebarProps) {
         <Link
           href="/dashboard"
           onClick={handleNavigate}
-          className="flex flex-col gap-0.5 px-2 py-3 hover:opacity-80 transition-opacity"
+          className="flex items-center gap-3 px-2 py-3 hover:opacity-80 transition-opacity"
         >
-          <span className="text-sidebar-foreground/50 text-xs uppercase tracking-widest">PMG</span>
-          <span className="text-sidebar-foreground text-sm font-semibold">Control Center</span>
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img src="/logo/pmg-logo.svg" alt="PMG" width={28} height={28} className="shrink-0" />
+          <div className="flex flex-col gap-0">
+            <span className="text-sidebar-foreground text-sm font-semibold leading-tight">Control Center</span>
+            <span className="text-sidebar-foreground/50 text-[10px] tracking-widest uppercase">Playhouse Media Group</span>
+          </div>
         </Link>
       </SidebarHeader>
 
@@ -182,12 +194,32 @@ export function AppSidebar({ user }: AppSidebarProps) {
             onNavigate={handleNavigate}
           />
           <div className="mx-2 h-px bg-sidebar-border" />
-          <div className="px-2 py-2 flex flex-col gap-2">
-            <div>
-              <span className="text-sidebar-foreground text-sm font-medium">{user.name}</span>
-              <span className="text-sidebar-foreground/50 text-xs block">{user.email}</span>
-            </div>
-            <SignOutButton />
+          <div className="px-2 py-2">
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <button className="flex items-center gap-2 px-2 py-2 rounded-md hover:bg-sidebar-accent w-full transition-colors">
+                  <Avatar className="size-7">
+                    <AvatarFallback className="text-xs">{user.name.slice(0, 2).toUpperCase()}</AvatarFallback>
+                  </Avatar>
+                  <div className="flex flex-col text-left min-w-0">
+                    <span className="text-sm font-medium truncate text-sidebar-foreground">{user.name}</span>
+                    <span className="text-[10px] text-sidebar-foreground/50 truncate">{user.role}</span>
+                  </div>
+                </button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent side="top" align="start" className="w-56">
+                <DropdownMenuItem asChild>
+                  <Link href="/settings/organisation">
+                    <Settings className="size-4 mr-2" />
+                    Settings
+                  </Link>
+                </DropdownMenuItem>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem>
+                  <SignOutButton />
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
           </div>
         </div>
       </SidebarFooter>
