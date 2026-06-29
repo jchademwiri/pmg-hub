@@ -7,4 +7,4 @@ export * from "./leads";
 export * from "./snapshots";
 export * from "./ledger";
 export * from "./billing";
-export * from "./tender-schedule";
+export * from "./project-schedule";

@@ -22,12 +22,12 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table';
-import type { TenderScheduleEntry } from '@pmg/db';
+import type { ProjectScheduleEntry } from '@pmg/db';
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 
 interface ProjectsListClientProps {
-  projects: TenderScheduleEntry[];
+  projects: ProjectScheduleEntry[];
   progressMap: Record<string, { total: number; completed: number }>;
 }
 
@@ -162,7 +162,7 @@ export function ProjectsListClient({ projects, progressMap }: ProjectsListClient
             {nextDeadline ? (
               <div className="truncate">
                 <div className="text-sm font-bold text-white truncate">
-                  {nextDeadline.tenderReference}
+                  {nextDeadline.projectReference}
                 </div>
                 <div className="text-[11px] text-red-400 font-medium mt-0.5">
                   {formatDate(nextDeadline.closingDate)}
@@ -221,7 +221,7 @@ export function ProjectsListClient({ projects, progressMap }: ProjectsListClient
                         className="cursor-pointer hover:bg-white/[0.02] border-b border-white/5 transition-colors group"
                       >
                         <TableCell className="font-medium text-white group-hover:text-blue-400 transition-colors">
-                          {p.tenderReference}
+                          {p.projectReference}
                         </TableCell>
                         <TableCell>
                           <Badge variant="outline" className={`text-[10px] uppercase font-bold tracking-wider px-2 py-0.5 ${status.className}`}>
@@ -320,7 +320,7 @@ export function ProjectsListClient({ projects, progressMap }: ProjectsListClient
                             {/* Project label */}
                             <div className="w-48 shrink-0 pr-4 min-w-0">
                               <p className="text-xs font-semibold text-white group-hover:text-blue-400 transition-colors truncate">
-                                {entry.tenderReference}
+                                {entry.projectReference}
                               </p>
                               {progress.total > 0 && (
                                 <p className="text-[10px] text-muted-foreground mt-0.5">

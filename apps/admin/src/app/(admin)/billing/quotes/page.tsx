@@ -3,6 +3,7 @@ import Link from 'next/link';
 import { Plus } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
+import { StatusFilter } from '@/components/ui/status-filter';
 import { getAllQuotations } from '@pmg/db';
 import { SetPageTotal } from '@/components/navigation/page-header-context';
 import { formatZAR } from '@/lib/format';
@@ -53,6 +54,19 @@ export default async function QuotesPage({ searchParams }: QuotesPageProps) {
           <p className="text-sm text-muted-foreground">Create and manage client quotes</p>
         </div>
         <div className="flex items-center gap-2">
+          <StatusFilter
+            status={normalizedStatus}
+            basePath="/billing/quotes"
+            preserveParams={{ divisionId }}
+            options={[
+              { value: 'draft', label: 'Draft' },
+              { value: 'sent', label: 'Sent' },
+              { value: 'accepted', label: 'Accepted' },
+              { value: 'declined', label: 'Declined' },
+              { value: 'expired', label: 'Expired' },
+              { value: 'cancelled', label: 'Cancelled' },
+            ]}
+          />
           <Button asChild size="sm">
             <Link href="/billing/quotes/new">
               <Plus className="size-4" />

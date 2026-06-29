@@ -2,7 +2,7 @@
 
 import { z } from 'zod';
 import { revalidatePath } from 'next/cache';
-import { db, clients, income, eq, quotations, invoices, tenderScheduleEntries } from '@pmg/db';
+import { db, clients, income, eq, quotations, invoices, projectScheduleEntries } from '@pmg/db';
 import { setClientActive } from '@pmg/db';
 
 const ClientSchema = z.object({
@@ -115,9 +115,9 @@ export async function deleteClient(id: string): Promise<{ error?: string }> {
 
     // Check for tender schedule entries
     const [tenderCount] = await db
-      .select({ id: tenderScheduleEntries.id })
-      .from(tenderScheduleEntries)
-      .where(eq(tenderScheduleEntries.clientId, id))
+      .select({ id: projectScheduleEntries.id })
+      .from(projectScheduleEntries)
+      .where(eq(projectScheduleEntries.clientId, id))
       .limit(1);
     if (tenderCount) {
       return { error: 'Cannot delete a client that has tender schedule entries. Disable the client instead.' };

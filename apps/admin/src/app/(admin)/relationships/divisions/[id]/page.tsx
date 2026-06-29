@@ -1,9 +1,9 @@
 import type { Metadata } from 'next'
-import Link from 'next/link'
 import { notFound } from 'next/navigation'
 import { getDivisionWithStatsById, getAllIncome, getAllExpenses } from '@pmg/db'
 import { formatZAR, fmtDate } from '@/lib/format'
 import { Badge } from '@/components/ui/badge'
+import { BackButton } from '@/components/ui/back-button'
 import {
   Table, TableBody, TableCell, TableHead, TableHeader, TableRow,
 } from '@/components/ui/table'
@@ -33,9 +33,7 @@ export default async function DivisionDetailPage({ params }: DivisionDetailPageP
     <div className="flex flex-col gap-8">
       {/* Header */}
       <div className="flex items-center gap-4">
-        <Link href="/relationships/divisions" className="text-sm text-muted-foreground hover:text-foreground transition-colors">
-          ← Back to Divisions
-        </Link>
+        <BackButton href="/relationships/divisions" label="Divisions" />
         <h1 className="text-2xl font-semibold">{division.name}</h1>
         <Badge variant={division.isActive ? 'default' : 'secondary'}>
           {division.isActive ? 'Active' : 'Disabled'}

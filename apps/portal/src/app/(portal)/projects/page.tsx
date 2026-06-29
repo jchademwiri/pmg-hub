@@ -1,5 +1,5 @@
 import { getPortalSessionOrRedirect } from '@/lib/portal-session';
-import { db, tenderScheduleEntries, getTendersProgressMap } from '@pmg/db';
+import { db, projectScheduleEntries, getProjectsProgressMap } from '@pmg/db';
 import { eq, and, ne, asc } from 'drizzle-orm';
 import { ProjectsListClient } from './projects-list-client';
 
@@ -12,17 +12,17 @@ export default async function PortalProjectsPage() {
   // Fetch only this client's non-cancelled projects
   const projects = await db
     .select()
-    .from(tenderScheduleEntries)
+    .from(projectScheduleEntries)
     .where(
       and(
-        eq(tenderScheduleEntries.clientId, client.id),
-        ne(tenderScheduleEntries.status, 'cancelled')
+        eq(projectScheduleEntries.clientId, client.id),
+        ne(projectScheduleEntries.status, 'cancelled')
       )
     )
-    .orderBy(asc(tenderScheduleEntries.sortOrder));
+    .orderBy(asc(projectScheduleEntries.sortOrder));
 
   // Fetch progress stats
-  const progressMap = await getTendersProgressMap(projects.map((p) => p.id));
+  const progressMap = await getProjectsProgressMap(projects.map((p) => p.id));
   const progressObj = Object.fromEntries(progressMap.entries());
 
   return (

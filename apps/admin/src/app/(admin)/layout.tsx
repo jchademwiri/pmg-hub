@@ -24,7 +24,7 @@ export default async function AdminLayout({ children }: { children: React.ReactN
       <SidebarInset>
         <PageHeaderProvider>
           <TopNav />
-          <main className="flex-1 p-6 bg-background">
+          <main className="flex-1 px-4 py-6 sm:px-6 bg-background">
             <div className="mx-auto w-full max-w-7xl">
               <ConfirmProvider>{children}</ConfirmProvider>
             </div>

@@ -10,8 +10,8 @@ import { ExpenseSnapshot } from '@/components/dashboard/expense-snapshot'
 import CloseMonthButton from '@/components/dashboard/close-month-button'
 import { Badge } from '@/components/ui/badge'
 import { AgingReportGrid } from '@/components/dashboard/aging-report-grid'
-import { TenderSummaryCard } from '@/components/dashboard/tender-summary-card'
-import type { TenderSummaryData } from '@/components/dashboard/tender-summary-card'
+import { ProjectSummaryCard } from '@/components/dashboard/project-summary-card'
+import type { TenderSummaryData } from '@/components/dashboard/project-summary-card'
 import { fmtMonthYear } from '@/lib/format'
 import type { AgingRow } from '@pmg/db'
 import type { PeriodSummary, DivisionRevenue as DivisionRevenueType, LeadStatusCount, MonthlyFinancials, MonthlyBudgetChartRow } from '@/lib/financial'
@@ -40,7 +40,8 @@ type Props = {
   hasSnapshot: boolean
   currentPeriod: string
   showCloseMonthButton: boolean
-  tenderScheduleSummary: TenderSummaryData
+  projectScheduleSummary: TenderSummaryData
+  pmgShareRate?: number
 }
 
 const TABS: { key: Tab; label: string }[] = [
@@ -63,10 +64,11 @@ export function DashboardShell({
   agingReport,
   budgetChartSeries,
   expensesByDivision,
-  tenderScheduleSummary,
+  projectScheduleSummary,
   hasSnapshot,
   currentPeriod,
   showCloseMonthButton,
+  pmgShareRate,
 }: Props) {
   const router = useRouter()
   const pathname = usePathname()
@@ -116,9 +118,9 @@ export function DashboardShell({
     <div className="flex flex-col gap-5">
 
       {/* ── Period tabs ── */}
-      <Tabs value={activeTab} onValueChange={handleTabChange}>
-        <div className="flex items-center justify-between gap-3">
-          <div className="flex items-center gap-3">
+      <div className="flex items-center justify-between gap-3">
+        <div className="flex items-center gap-3">
+          <Tabs value={activeTab} onValueChange={handleTabChange}>
             <TabsList>
               {TABS.map((tab) => (
                 <TabsTrigger key={tab.key} value={tab.key}>
@@ -126,19 +128,19 @@ export function DashboardShell({
                 </TabsTrigger>
               ))}
             </TabsList>
-            <span className="text-xs text-muted-foreground/70">{activeLabel}</span>
-          </div>
-
-          {/* Close Month button on the far right of the tabs bar */}
-          {hasSnapshot ? (
-            <Badge variant="secondary">{fmtMonthYear(currentPeriod)} closed</Badge>
-          ) : (
-            showCloseMonthButton && (
-              <CloseMonthButton period={currentPeriod} />
-            )
-          )}
+          </Tabs>
+          <span className="text-xs text-muted-foreground/70">{activeLabel}</span>
         </div>
-      </Tabs>
+
+        {/* Close Month button on the far right of the tabs bar */}
+        {hasSnapshot ? (
+          <Badge variant="secondary">{fmtMonthYear(currentPeriod)} closed</Badge>
+        ) : (
+          showCloseMonthButton && (
+            <CloseMonthButton period={currentPeriod} />
+          )
+        )}
+      </div>
 
       {/* ── Row 1: KPI cards ── */}
       <KpiGrid
@@ -147,10 +149,16 @@ export function DashboardShell({
         previousSummary={activePreviousSummary}
         deltaLabel={activeDeltaLabel}
         sparklineData={sparklineData}
+        pmgShareRate={pmgShareRate}
       />
 
       {/* ── Row 2: Accounts Receivable Ageing Overview ── */}
-      <AgingReportGrid data={agingReport} />
+      <section className="flex flex-col gap-2">
+        <h2 className="text-xs font-medium text-muted-foreground uppercase tracking-wider">
+          Accounts Receivable Ageing
+        </h2>
+        <AgingReportGrid data={agingReport} />
+      </section>
 
       {/* ── Row 3: Sales, receipts, and expenses budget chart ── */}
       <div className="w-full">
@@ -158,22 +166,37 @@ export function DashboardShell({
       </div>
 
       {/* ── Row 4: Division revenue with expenses + Leads ── */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-        <DivisionRevenue
-          divisions={divisions}
-          divisionExpenseMap={new Map(Object.entries(divisionExpenseMap))}
-        />
-        <LeadsSummary leads={leads} />
+      <div className="flex flex-col gap-2">
+        <h2 className="text-xs font-medium text-muted-foreground uppercase tracking-wider">
+          Revenue & Leads
+        </h2>
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+          <DivisionRevenue
+            divisions={divisions}
+            divisionExpenseMap={new Map(Object.entries(divisionExpenseMap))}
+          />
+          <LeadsSummary leads={leads} />
+        </div>
       </div>
 
-      {/* ── Row 5: Tender scheduling summary ── */}
-      <TenderSummaryCard data={tenderScheduleSummary} />
+      {/* ── Row 5: Project schedule summary ── */}
+      <section className="flex flex-col gap-2">
+        <h2 className="text-xs font-medium text-muted-foreground uppercase tracking-wider">
+          Project Schedule
+        </h2>
+        <ProjectSummaryCard data={projectScheduleSummary} />
+      </section>
 
       {/* ── Row 6: Expense breakdown ── */}
-      <ExpenseSnapshot
-        expensesByDivision={expensesByDivision}
-        totalExpenses={activeSummary.expenses}
-      />
+      <section className="flex flex-col gap-2">
+        <h2 className="text-xs font-medium text-muted-foreground uppercase tracking-wider">
+          Expense Breakdown
+        </h2>
+        <ExpenseSnapshot
+          expensesByDivision={expensesByDivision}
+          totalExpenses={activeSummary.expenses}
+        />
+      </section>
 
     </div>
   )

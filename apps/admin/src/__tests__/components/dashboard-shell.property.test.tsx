@@ -91,7 +91,7 @@ const baseProps = {
   expensesByDivision: [],
   currentPeriod: '2025-01',
   showCloseMonthButton: true,
-  tenderScheduleSummary: {
+  projectScheduleSummary: {
     inProgress: 0,
     planned: 0,
     upcomingDeadlines: 0,

@@ -12,7 +12,7 @@ import {
 } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import type { TenderScheduleEntry } from '@pmg/db';
+import type { ProjectScheduleEntry } from '@pmg/db';
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 
@@ -32,14 +32,14 @@ interface ProgressItem {
 
 interface ProgressSection {
   id: string;
-  tenderId: string;
+  projectId: string;
   title: string;
   sortOrder: number;
   items: ProgressItem[];
 }
 
 interface ProjectDetailsClientProps {
-  project: TenderScheduleEntry;
+  project: ProjectScheduleEntry;
   divisions: DivisionSummary[];
   initialChecklist: any[];
 }
@@ -111,7 +111,7 @@ export function ProjectDetailsClient({
         </Link>
         <div className="flex flex-wrap items-center gap-3 mt-1">
           <h1 className="text-2xl font-bold tracking-tight text-white">
-            {project.tenderReference}
+            {project.projectReference}
           </h1>
           <Badge variant="outline" className={`text-[10px] uppercase font-bold tracking-wider px-2 py-0.5 ${status.className}`}>
             {status.label}
