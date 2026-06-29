@@ -8,12 +8,16 @@ import {
   DollarSign,
   FileText,
   Receipt,
-  CreditCard,
   BadgeCheck,
   AlertTriangle,
   ArrowUpRight,
   ArrowDownRight,
   Wallet,
+  PiggyBank,
+  Calendar,
+  Banknote,
+  ScrollText,
+  Package,
 } from 'lucide-react'
 import type { AgingRow } from '@pmg/db'
 import { STATUS_STYLES, STATUS_TEXT_COLORS } from '@/lib/billing-status'
@@ -251,14 +255,14 @@ export function BillingOverviewClient({
         <h3 className="text-sm font-semibold mb-3">Modules</h3>
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
           {[
-            { href: '/billing/accounts', label: 'Accounts', description: 'Client billing accounts', color: 'bg-blue-500/10 text-blue-600' },
-            { href: '/billing/aging', label: 'Aging Report', description: 'AR aging analysis', color: 'bg-indigo-500/10 text-indigo-600' },
-            { href: '/billing/quotes', label: 'Quotes', description: 'Create and manage quotations', color: 'bg-violet-500/10 text-violet-600' },
-            { href: '/billing/invoices', label: 'Invoices', description: 'Issue and track invoices', color: 'bg-emerald-500/10 text-emerald-600' },
-            { href: '/billing/payments', label: 'Payments', description: 'Record incoming payments', color: 'bg-cyan-500/10 text-cyan-600' },
-            { href: '/billing/credits', label: 'Credits', description: 'Credit notes and refunds', color: 'bg-amber-500/10 text-amber-600' },
-            { href: '/billing/statements', label: 'Statements', description: 'Client account statements', color: 'bg-rose-500/10 text-rose-600' },
-            { href: '/billing/items', label: 'Items', description: 'Catalogue of billable items', color: 'bg-zinc-500/10 text-zinc-600' },
+            { href: '/billing/accounts', label: 'Accounts', description: 'Client billing accounts', color: 'bg-blue-500/10 text-blue-600', icon: PiggyBank },
+            { href: '/billing/aging', label: 'Aging Report', description: 'AR aging analysis', color: 'bg-indigo-500/10 text-indigo-600', icon: Calendar },
+            { href: '/billing/quotes', label: 'Quotes', description: 'Create and manage quotations', color: 'bg-violet-500/10 text-violet-600', icon: FileText },
+            { href: '/billing/invoices', label: 'Invoices', description: 'Issue and track invoices', color: 'bg-emerald-500/10 text-emerald-600', icon: Receipt },
+            { href: '/billing/payments', label: 'Payments', description: 'Record incoming payments', color: 'bg-cyan-500/10 text-cyan-600', icon: Banknote },
+            { href: '/billing/credits', label: 'Credits', description: 'Credit notes and refunds', color: 'bg-amber-500/10 text-amber-600', icon: Wallet },
+            { href: '/billing/statements', label: 'Statements', description: 'Client account statements', color: 'bg-rose-500/10 text-rose-600', icon: ScrollText },
+            { href: '/billing/items', label: 'Items', description: 'Catalogue of billable items', color: 'bg-zinc-500/10 text-zinc-600', icon: Package },
           ].map((link) => (
             <Link
               key={link.href}
@@ -266,7 +270,7 @@ export function BillingOverviewClient({
               className="group flex items-center gap-3 rounded-xl border bg-card p-3.5 hover:bg-muted/30 hover:shadow-sm transition-all duration-200"
             >
               <div className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-lg ${link.color}`}>
-                <span className="text-sm font-bold">{link.label.charAt(0)}</span>
+                <link.icon className="h-4 w-4" />
               </div>
               <div className="flex-1 min-w-0">
                 <p className="text-sm font-medium group-hover:underline underline-offset-2">{link.label}</p>

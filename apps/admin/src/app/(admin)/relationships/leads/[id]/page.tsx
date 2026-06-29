@@ -1,5 +1,4 @@
 import type { Metadata } from 'next'
-import Link from 'next/link'
 import { notFound } from 'next/navigation'
 import { getLeadById } from '@pmg/db'
 import { updateLeadStatus, updateLeadNotes } from '@/app/actions/leads'
@@ -7,6 +6,7 @@ import { fmtDate } from '@/lib/format'
 import { LeadStatusForm } from '@/components/leads/lead-status-form'
 import { LeadNotesForm } from '@/components/leads/lead-notes-form'
 import { ConvertToClientButton } from '@/components/leads/convert-to-client-button'
+import { BackButton } from '@/components/ui/back-button'
 
 export const dynamic = 'force-dynamic'
 export const metadata: Metadata = { title: 'Lead Detail' }
@@ -23,12 +23,7 @@ export default async function LeadDetailPage({ params }: LeadDetailPageProps) {
   return (
     <div className="flex flex-col gap-6">
       <div className="flex items-center gap-4">
-        <Link
-          href="/relationships/leads"
-          className="text-sm text-muted-foreground hover:text-foreground transition-colors"
-        >
-          ← Back to Leads
-        </Link>
+        <BackButton href="/relationships/leads" label="Leads" />
         <h1 className="text-2xl font-semibold">Lead Detail</h1>
       </div>
 

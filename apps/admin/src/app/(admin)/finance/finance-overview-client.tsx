@@ -11,6 +11,8 @@ import {
   Receipt,
   PieChart,
   ArrowUpRight,
+  ArrowDownLeft,
+  Tags,
 } from 'lucide-react'
 
 interface FinanceOverviewClientProps {
@@ -223,10 +225,10 @@ export function FinanceOverviewClient({
         <h3 className="text-sm font-semibold mb-3">Modules</h3>
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
           {[
-            { href: '/finance/income', label: 'Income', description: 'Track payments received', color: 'bg-emerald-500/10 text-emerald-600' },
-            { href: '/finance/expenses', label: 'Expenses', description: 'Record business costs', color: 'bg-red-500/10 text-red-600' },
-            { href: '/finance/categories', label: 'Categories', description: 'Manage expense categories', color: 'bg-amber-500/10 text-amber-600' },
-            { href: '/finance/distributions', label: 'Distributions', description: 'Allocate profit to buckets', color: 'bg-blue-500/10 text-blue-600' },
+            { href: '/finance/income', label: 'Income', description: 'Track payments received', color: 'bg-emerald-500/10 text-emerald-600', icon: ArrowDownLeft },
+            { href: '/finance/expenses', label: 'Expenses', description: 'Record business costs', color: 'bg-red-500/10 text-red-600', icon: TrendingDown },
+            { href: '/finance/categories', label: 'Categories', description: 'Manage expense categories', color: 'bg-amber-500/10 text-amber-600', icon: Tags },
+            { href: '/finance/distributions', label: 'Distributions', description: 'Allocate profit to buckets', color: 'bg-blue-500/10 text-blue-600', icon: PieChart },
           ].map((link) => (
             <Link
               key={link.href}
@@ -234,7 +236,7 @@ export function FinanceOverviewClient({
               className="group flex items-center gap-3 rounded-xl border bg-card p-3.5 hover:bg-muted/30 hover:shadow-sm transition-all duration-200"
             >
               <div className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-lg ${link.color}`}>
-                <span className="text-sm font-bold">{link.label.charAt(0)}</span>
+                <link.icon className="h-4 w-4" />
               </div>
               <div className="flex-1 min-w-0">
                 <p className="text-sm font-medium group-hover:underline underline-offset-2">{link.label}</p>
