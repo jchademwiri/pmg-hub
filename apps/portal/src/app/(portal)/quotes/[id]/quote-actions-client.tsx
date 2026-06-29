@@ -1,6 +1,7 @@
 'use client';
 
 import * as React from 'react';
+import { createPortal } from 'react-dom';
 import { acceptQuoteAction, declineQuoteAction } from '@/app/actions/quote-actions';
 import { Loader2, Check, X, ShieldAlert } from 'lucide-react';
 import { toast } from 'sonner';
@@ -14,6 +15,11 @@ export function QuoteActionsClient({ quoteId }: QuoteActionsClientProps) {
   const [showAcceptModal, setShowAcceptModal] = React.useState(false);
   const [showDeclineModal, setShowDeclineModal] = React.useState(false);
   const [declineReason, setDeclineReason] = React.useState('');
+  const [mounted, setMounted] = React.useState(false);
+
+  React.useEffect(() => {
+    setMounted(true);
+  }, []);
 
   async function handleAccept() {
     startTransition(async () => {
@@ -66,7 +72,7 @@ export function QuoteActionsClient({ quoteId }: QuoteActionsClientProps) {
       </button>
 
       {/* Custom Accept Modal */}
-      {showAcceptModal && (
+      {showAcceptModal && mounted && createPortal(
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-xs p-4">
           <div className="w-full max-w-md rounded-xl border border-white/10 bg-[#0a0f1d] p-6 shadow-2xl animate-in zoom-in-95 duration-200 text-left">
             <div className="flex items-start gap-3">
@@ -101,11 +107,12 @@ export function QuoteActionsClient({ quoteId }: QuoteActionsClientProps) {
               </button>
             </div>
           </div>
-        </div>
+        </div>,
+        document.body
       )}
 
       {/* Custom Decline Modal */}
-      {showDeclineModal && (
+      {showDeclineModal && mounted && createPortal(
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-xs p-4">
           <div className="w-full max-w-md rounded-xl border border-white/10 bg-[#0a0f1d] p-6 shadow-2xl animate-in zoom-in-95 duration-200 text-left">
             <div className="flex items-start gap-3">
@@ -149,7 +156,8 @@ export function QuoteActionsClient({ quoteId }: QuoteActionsClientProps) {
               </div>
             </form>
           </div>
-        </div>
+        </div>,
+        document.body
       )}
     </div>
   );
