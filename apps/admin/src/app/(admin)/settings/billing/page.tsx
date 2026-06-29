@@ -6,7 +6,7 @@ import { Badge } from '@/components/ui/badge';
 import { SettingsPageHeader } from '@/components/settings/settings-page-header';
 import { BillingSettingsClient } from './billing-settings-client';
 import { saveDivisionBillingSettings } from '@/app/actions/settings';
-import { DEFAULT_EMAIL_FROM, resolveDivisionAdminEmail } from '@pmg/emails';
+import { DEFAULT_EMAIL_FROM, resolveDivisionAdminEmail, resolveFromEmail, resolveDefaultFromEmail } from '@pmg/emails';
 import {
   Table,
   TableBody,
@@ -19,17 +19,7 @@ import {
 export const dynamic = 'force-dynamic';
 export const metadata: Metadata = { title: 'Billing & Invoicing Settings' };
 
-/** Mirrors the resolveFromEmail helper used in all email actions */
-function resolveFromEmail(divisionWebsite: string | null | undefined, fallback: string): string {
-  if (!divisionWebsite) return fallback;
-  const domain = divisionWebsite
-    .trim()
-    .replace(/^(https?:\/\/)?(www\.)?/, '')
-    .split('/')[0]
-    .toLowerCase();
-  if (!domain) return fallback;
-  return domain.startsWith('info.') ? `noreply@${domain}` : `noreply@info.${domain}`;
-}
+
 
 export default async function BillingSettingsPage() {
   const [divisions, allSettings] = await Promise.all([
@@ -97,7 +87,7 @@ export default async function BillingSettingsPage() {
           <TableBody>
             {divisions.map((div) => {
               const s = allSettings[div.id];
-              const fromEmail = resolveFromEmail(s?.divisionWebsite, defaultFrom);
+              const fromEmail = resolveFromEmail(s?.divisionWebsite, resolveDefaultFromEmail(div.name));
               const adminCc = resolveDivisionAdminEmail(div.name, s?.salesRepEmail ?? null);
               const hasContactEmail = !!s?.salesRepEmail;
 

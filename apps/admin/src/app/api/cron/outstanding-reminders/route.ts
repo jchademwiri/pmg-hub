@@ -8,6 +8,7 @@ import {
   resolveDivisionAdminEmail,
   resolveFromEmail,
   resolveResendApiKey,
+  resolveDefaultFromEmail,
 } from '@pmg/emails';
 import * as React from 'react';
 import { fmtDateLong } from '@/lib/format';
@@ -98,7 +99,7 @@ export async function GET(req: Request) {
 
       // Resolve brand-specific API key, sender, and admin CC via shared helpers
       const apiKey = resolveResendApiKey(divRow?.name);
-      const defaultFrom = process.env.EMAIL_FROM_ADDRESS || DEFAULT_EMAIL_FROM;
+      const defaultFrom = resolveDefaultFromEmail(divRow?.name);
       const fromName = billingConfig?.salesRepName || 'Playhouse Media Group';
       const fromEmail = resolveFromEmail(billingConfig?.divisionWebsite, defaultFrom);
       const adminCc = resolveDivisionAdminEmail(divRow?.name, billingConfig?.salesRepEmail ?? null);

@@ -40,6 +40,7 @@ export {
   resolveDivisionAdminEmail,
   resolveFromEmail,
   resolveResendApiKey,
+  resolveDefaultFromEmail,
 } from "./domains";
 export type { BrandKey } from "./domains";
 

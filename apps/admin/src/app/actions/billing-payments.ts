@@ -324,9 +324,9 @@ export async function recordClientPayment(data: PaymentInput): Promise<{ error?:
           const apiKey = (isTes ? process.env.TES_RESEND_API_KEY : isAws ? process.env.AWS_RESEND_API_KEY : undefined) 
                          || process.env.PMG_RESEND_API_KEY!;
 
-          const { createEmailClient, PaymentThankYouEmail, DEFAULT_REPLY_TO, DEFAULT_EMAIL_FROM, resolveDivisionAdminEmail } = await import('@pmg/emails');
+          const { createEmailClient, PaymentThankYouEmail, DEFAULT_REPLY_TO, resolveDivisionAdminEmail, resolveDefaultFromEmail } = await import('@pmg/emails');
 
-          const defaultFrom = process.env.EMAIL_FROM_ADDRESS || DEFAULT_EMAIL_FROM;
+          const defaultFrom = resolveDefaultFromEmail(divRow?.name);
           const fromName = billingConfig?.salesRepName || 'Playhouse Media Group';
 
           // Resolve info subdomain sender (helper matching email-delivery.ts)

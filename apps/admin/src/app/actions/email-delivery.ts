@@ -15,6 +15,7 @@ import {
   resolveDivisionAdminEmail,
   resolveFromEmail,
   resolveResendApiKey,
+  resolveDefaultFromEmail,
 } from '@pmg/emails';
 import React from 'react';
 import { z } from 'zod';
@@ -232,7 +233,7 @@ export async function sendDocumentEmailAction(rawPayload: unknown) {
 
       // Load environment variables for email client
       const apiKey = resolveResendApiKey(invoice.divisionName);
-      const defaultFrom = process.env.EMAIL_FROM_ADDRESS || DEFAULT_EMAIL_FROM;
+      const defaultFrom = resolveDefaultFromEmail(invoice.divisionName);
       const fromName = billingConfig?.salesRepName || process.env.EMAIL_FROM_NAME || 'PMG Admin';
       
       // Resolve dynamic info. subdomain sender
@@ -352,7 +353,7 @@ export async function sendDocumentEmailAction(rawPayload: unknown) {
         .where(eq(divisionBillingSettings.divisionId, quote.divisionId));
 
       const apiKey = resolveResendApiKey(quote.divisionName);
-      const defaultFrom = process.env.EMAIL_FROM_ADDRESS || DEFAULT_EMAIL_FROM;
+      const defaultFrom = resolveDefaultFromEmail(quote.divisionName);
       const fromName = billingConfig?.salesRepName || process.env.EMAIL_FROM_NAME || 'PMG Admin';
       
       const fromEmail = resolveFromEmail(billingConfig?.divisionWebsite, defaultFrom);
@@ -480,7 +481,7 @@ export async function sendReceiptEmailAction(rawPayload: unknown) {
       .where(eq(divisionBillingSettings.divisionId, incomeRow.divisionId));
 
     const apiKey = resolveResendApiKey(incomeRow.divisionName);
-    const defaultFrom = process.env.EMAIL_FROM_ADDRESS || DEFAULT_EMAIL_FROM;
+    const defaultFrom = resolveDefaultFromEmail(incomeRow.divisionName);
     const fromName = billingConfig?.salesRepName || process.env.EMAIL_FROM_NAME || 'PMG Admin';
     const fromEmail = resolveFromEmail(billingConfig?.divisionWebsite, defaultFrom);
 
