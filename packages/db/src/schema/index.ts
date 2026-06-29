@@ -14,4 +14,4 @@ export * from "./credits";
 export * from "./email";
 export * from "./distribution-settings";
 export * from "./accounting";
-export * from "./tender-schedule";
+export * from "./project-schedule";

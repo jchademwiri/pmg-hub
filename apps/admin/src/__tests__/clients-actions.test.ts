@@ -38,7 +38,7 @@ vi.mock('@pmg/db', () => ({
   income: { id: 'income_id', clientId: 'client_id' },
   invoices: { id: 'invoices_id', clientId: 'client_id' },
   quotations: { id: 'quotations_id', clientId: 'client_id' },
-  tenderScheduleEntries: { id: 'tender_schedule_id', clientId: 'client_id' },
+  projectScheduleEntries: { id: 'tender_schedule_id', clientId: 'client_id' },
   eq: vi.fn(),
   setClientActive: mockSetClientActive,
 }))

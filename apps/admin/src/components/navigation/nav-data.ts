@@ -27,7 +27,7 @@ export type NavItem = {
   icon: LucideIcon
 }
 
-export type GroupKey = 'billing' | 'finance' | 'accounting' | 'relationships' | 'insights' | 'system' | 'scheduling'
+export type GroupKey = 'billing' | 'finance' | 'accounting' | 'relationships' | 'insights' | 'system' | 'projects'
 
 export type NavGroup = {
   key: GroupKey
@@ -41,7 +41,7 @@ export type NavGroup = {
 
 export const OVERVIEW: NavItem[] = [
   { title: 'Dashboard',  url: '/dashboard',       icon: LayoutDashboard },
-  { title: 'Scheduling', url: '/scheduling',      icon: CalendarClock },
+  { title: 'Projects', url: '/projects',      icon: CalendarClock },
 ]
 
 // ── Groups ────────────────────────────────────────────────────────────────────
@@ -64,13 +64,13 @@ export const GROUPS: NavGroup[] = [
     ],
   },
   {
-    key: 'scheduling',
-    label: 'Scheduling',
+    key: 'projects',
+    label: 'Projects',
     icon: CalendarClock,
     items: [
-      { title: 'Overview',      url: '/scheduling',       icon: LayoutGrid },
-      { title: 'Schedule List', url: '/scheduling/list',  icon: ListTodo },
-      { title: 'Timeline',      url: '/scheduling/timeline', icon: CalendarRange },
+      { title: 'Overview',      url: '/projects',       icon: LayoutGrid },
+      { title: 'Schedule List', url: '/projects/list',  icon: ListTodo },
+      { title: 'Timeline',      url: '/projects/timeline', icon: CalendarRange },
     ],
   },
   {
@@ -153,8 +153,8 @@ for (const group of GROUPS) {
 const EXTRA_LABELS: Record<string, string> = {
   '/settings/users/invite': 'Invite User',
   '/billing/payments/add': 'Record Payment',
-  '/scheduling/list': 'Schedule List',
-  '/scheduling/timeline': 'Timeline',
+  '/projects/list': 'Schedule List',
+  '/projects/timeline': 'Timeline',
 }
 
 export const ROUTE_LABELS: Record<string, string> = {

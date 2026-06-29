@@ -1,6 +1,6 @@
 import { notFound } from 'next/navigation';
 import { getPortalSessionOrRedirect } from '@/lib/portal-session';
-import { db, tenderScheduleEntries, getTenderChecklist, getAllDivisions } from '@pmg/db';
+import { db, projectScheduleEntries, getProjectChecklist, getAllDivisions } from '@pmg/db';
 import { eq, and } from 'drizzle-orm';
 import { ProjectDetailsClient } from './project-details-client';
 
@@ -19,11 +19,11 @@ export default async function PortalProjectDetailsPage({ params }: PageProps) {
   try {
     const [row] = await db
       .select()
-      .from(tenderScheduleEntries)
+      .from(projectScheduleEntries)
       .where(
         and(
-          eq(tenderScheduleEntries.id, id),
-          eq(tenderScheduleEntries.clientId, client.id)
+          eq(projectScheduleEntries.id, id),
+          eq(projectScheduleEntries.clientId, client.id)
         )
       )
       .limit(1);
@@ -43,7 +43,7 @@ export default async function PortalProjectDetailsPage({ params }: PageProps) {
 
   const [divisions, checklist] = await Promise.all([
     getAllDivisions(),
-    getTenderChecklist(id),
+    getProjectChecklist(id),
   ]);
 
   return (
