@@ -3,6 +3,7 @@ import { getActiveChartAccounts } from '@pmg/db'
 import { SetPageTotal } from '@/components/navigation/page-header-context'
 import { createJournalEntry } from '@/app/actions/accounting'
 import { JournalEntryForm } from './journal-entry-form'
+import { BackButton } from '@/components/ui/back-button'
 
 export const dynamic = 'force-dynamic'
 export const metadata: Metadata = { title: 'New Journal Entry' }
@@ -12,6 +13,7 @@ export default async function NewJournalEntryPage() {
 
   return (
     <div className="flex flex-col gap-6">
+      <BackButton href="/accounting/journals" label="Journals" />
       <SetPageTotal value="New entry" />
 
       <div>

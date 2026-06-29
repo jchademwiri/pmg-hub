@@ -3,9 +3,10 @@
 import * as React from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
-import { CalendarClock, AlertTriangle, ListOrdered, Plus, Flame, Clock, ChevronDown } from 'lucide-react';
+import { CalendarClock, AlertTriangle, ListOrdered, Plus, Flame, Clock, ChevronDown, ChevronUp } from 'lucide-react';
 import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
+import { confirm } from '@/components/ui/confirm-dialog';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import type { ProjectScheduleEntry } from '@pmg/db';
 import { transitionProjectStatusAction } from '@/app/actions/project-schedule';
@@ -13,12 +14,6 @@ import { ProjectFormDialog } from '@/components/projects/project-form-dialog';
 import { DraggableUpNext } from '@/components/projects/draggable-up-next';
 import { ProjectRiskBadge } from '@/components/projects/project-risk-badge';
 import { ProjectStatusBadge } from '@/components/projects/project-status-badge';
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from '@/components/ui/dropdown-menu';
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 
@@ -82,7 +77,7 @@ function SchedulingSummaryCards({
 
   const cards = [
     {
-      label: 'Active Tenders',
+      label: 'Active Projects',
       value: activeEntries.length,
       hint: 'planned or in progress',
       icon: ListOrdered,
@@ -102,7 +97,7 @@ function SchedulingSummaryCards({
       {cards.map((card) => {
         const Icon = card.icon;
         return (
-          <Card key={card.label} size="sm">
+          <Card key={card.label} size="sm" className="hover:shadow-md hover:-translate-y-0.5 transition-all duration-200">
             <CardContent className="flex items-center justify-between gap-3 p-4">
               <div className="min-w-0">
                 <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
@@ -217,22 +212,30 @@ function CurrentWorkloadCard({ tender, client, onStatusChange, progressMap }: Cu
           >
             Mark Complete
           </Button>
-          
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button variant="outline" size="sm" className="gap-1">
-                Other Actions <ChevronDown className="size-3.5 text-muted-foreground" />
-              </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="start">
-              <DropdownMenuItem onClick={() => onStatusChange(tender.id, 'cancelled')} className="text-xs text-red-600 dark:text-red-400">
-                Cancel Project
-              </DropdownMenuItem>
-              <DropdownMenuItem onClick={() => onStatusChange(tender.id, 'planned')} className="text-xs">
-                Re-plan (Pause)
-              </DropdownMenuItem>
-            </DropdownMenuContent>
-          </DropdownMenu>
+          <Button
+            size="sm"
+            variant="outline"
+            onClick={() => onStatusChange(tender.id, 'planned')}
+          >
+            Re-plan (Pause)
+          </Button>
+          <Button
+            size="sm"
+            variant="ghost"
+            className="text-destructive hover:text-destructive"
+            onClick={async () => {
+              const confirmed = await confirm({
+                title: 'Cancel Project',
+                description: `Are you sure you want to cancel "${tender.projectReference}"? This will move it back to the planned queue.`,
+                confirmText: 'Cancel Project',
+                cancelText: 'Keep Working',
+                variant: 'destructive',
+              });
+              if (confirmed) onStatusChange(tender.id, 'cancelled');
+            }}
+          >
+            Cancel Project
+          </Button>
         </div>
       </CardContent>
     </Card>
@@ -345,9 +348,13 @@ function WarningsPanel({
             <button
               type="button"
               onClick={() => setExpanded((p) => !p)}
-              className="text-xs text-muted-foreground hover:text-foreground transition-colors"
+              className="flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground transition-colors"
             >
-              {expanded ? 'Show less' : `+${hidden} more`}
+              {expanded ? (
+                <><ChevronUp className="size-3" /> Show less</>
+              ) : (
+                <><ChevronDown className="size-3" /> +{hidden} more</>
+              )}
             </button>
           )}
         </div>
@@ -422,7 +429,7 @@ export function ProjectOverviewClient({
       <div className="flex items-center justify-end">
         <Button size="sm" onClick={() => setFormOpen(true)}>
           <Plus className="size-4" />
-          New Tender
+          New Project
         </Button>
       </div>
 

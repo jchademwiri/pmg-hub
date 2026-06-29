@@ -26,6 +26,7 @@ interface ReportsTabsProps {
   currentMonthLabel: string
   previousMonthLabel: string
   ledgerBalances?: BucketBalances
+  pmgShareRate?: number
 }
 
 export function ReportsTabs({
@@ -39,6 +40,7 @@ export function ReportsTabs({
   currentMonthLabel,
   previousMonthLabel,
   ledgerBalances,
+  pmgShareRate,
 }: ReportsTabsProps) {
   const [drillOpen, setDrillOpen] = useState(false)
   const [drillPeriod, setDrillPeriod] = useState<string | null>(null)
@@ -71,9 +73,7 @@ export function ReportsTabs({
   // Calculate annual totals for waterfall and sankey flow diagram
   const totalRevenue = monthlyFinancials.reduce((sum, m) => sum + m.revenue, 0)
   const totalExpenses = monthlyFinancials.reduce((sum, m) => sum + m.expenses, 0)
-  // Use 25% PMG Share and profit pool splits as display defaults.
-  // These match the current active rates in the database.
-  const PMG_SHARE_RATE = 0.25
+  const PMG_SHARE_RATE = pmgShareRate ?? 0.25
   const PROFIT_POOL_SPLITS = { salary: 0.35, reinvest: 0.30, reserve: 0.30, flex: 0.05 }
   const totalPmgShare = totalRevenue * PMG_SHARE_RATE
   const totalProfitPool = totalRevenue - totalExpenses - totalPmgShare
@@ -113,7 +113,7 @@ export function ReportsTabs({
       {/* ── Overview Tab ───────────────────────────────────────────────── */}
       <TabsContent value="overview">
         <div className="grid grid-cols-1 gap-6">
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 min-h-[400px]">
             <MoMComparisonChart data={momData} currentMonthLabel={currentMonthLabel} previousMonthLabel={previousMonthLabel} onBarClick={(metric, periodType) => {
               const type = metricToDrillType[metric]
               if (type) {
@@ -138,7 +138,7 @@ export function ReportsTabs({
 
       {/* ── Revenue Tab ────────────────────────────────────────────────── */}
       <TabsContent value="revenue">
-        <div className="grid grid-cols-1 gap-6">
+        <div className="grid grid-cols-1 gap-6 min-h-[400px]">
           <RevenueByDivisionChart
             data={budgetChartSeries}
           />
@@ -147,14 +147,14 @@ export function ReportsTabs({
 
       {/* ── Expenses Tab ───────────────────────────────────────────────── */}
       <TabsContent value="expenses">
-        <div className="grid grid-cols-1 gap-6">
+        <div className="grid grid-cols-1 gap-6 min-h-[400px]">
           <ExpenseByCategoryChart data={expensesByCategory} onBarClick={() => openDrill('expenses', currentPeriod)} />
         </div>
       </TabsContent>
 
       {/* ── Profit Pool Tab ────────────────────────────────────────────── */}
       <TabsContent value="profit">
-        <div className="grid grid-cols-1 gap-6">
+        <div className="grid grid-cols-1 gap-6 min-h-[400px]">
           <SankeyDiagram
             revenue={totalRevenue}
             expenses={totalExpenses}

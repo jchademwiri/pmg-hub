@@ -149,9 +149,10 @@ type Props = {
   previousSummary: PeriodSummary | null
   deltaLabel?: string
   sparklineData?: { revenue: number; expenses: number }[]
+  pmgShareRate?: number
 }
 
-export function KpiGrid({ summary, deltas, previousSummary, deltaLabel, sparklineData = [] }: Props) {
+export function KpiGrid({ summary, deltas, previousSummary, deltaLabel, sparklineData = [], pmgShareRate = 0.25 }: Props) {
   const pmgDelta: Delta = deltas?.revenue && previousSummary
     ? { current: summary.pmgShare, previous: previousSummary.pmgShare }
     : null
@@ -159,8 +160,8 @@ export function KpiGrid({ summary, deltas, previousSummary, deltaLabel, sparklin
   // Map monthly data splits for the Sparkline components
   const revenueTrends = sparklineData.map((d) => d.revenue)
   const expensesTrends = sparklineData.map((d) => d.expenses)
-  const pmgShareTrends = sparklineData.map((d) => d.revenue * 0.25)
-  const profitPoolTrends = sparklineData.map((d) => d.revenue * 0.75 - d.expenses) // 0.75 = 1 - pmg_share
+  const pmgShareTrends = sparklineData.map((d) => d.revenue * pmgShareRate)
+  const profitPoolTrends = sparklineData.map((d) => d.revenue * (1 - pmgShareRate) - d.expenses)
 
   return (
     <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">

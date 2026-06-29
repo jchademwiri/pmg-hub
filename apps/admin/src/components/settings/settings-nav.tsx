@@ -37,7 +37,7 @@ export function SettingsNav() {
             )}
           >
             <span className="flex items-center gap-2">
-              <Icon className="shrink-0" />
+              <Icon className="size-4 shrink-0" />
               {item.label}
             </span>
             {item.badge ? (

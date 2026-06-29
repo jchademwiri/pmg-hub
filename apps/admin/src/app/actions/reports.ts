@@ -1,6 +1,6 @@
 'use server';
 
-import { getMonthlyFinancialsForYear } from '@pmg/db';
+import { getMonthlyFinancialsForYear, getActiveRates } from '@pmg/db';
 
 const MONTH_NAMES = [
   'January', 'February', 'March', 'April', 'May', 'June',
@@ -23,12 +23,13 @@ export async function exportFinancialsCsv(
       dataByMonth.set(row.month, { revenue: row.revenue, expenses: row.expenses });
     }
 
+    const rates = await getActiveRates();
     const header = 'Month,Revenue,Expenses,PMG Share,Profit Pool,Salary,Reinvest,Reserve,Flex';
     const dataRows = MONTH_NAMES.map((name, i) => {
       const monthKey = `${year}-${String(i + 1).padStart(2, '0')}`;
       const { revenue, expenses } = dataByMonth.get(monthKey) ?? { revenue: 0, expenses: 0 };
 
-      const pmgShare   = revenue * 0.25;  // Default rate; matches current distribution_settings
+      const pmgShare   = revenue * rates.pmg_share;
       const profitPool = revenue - expenses - pmgShare;
       const salary     = profitPool * 0.35;
       const reinvest   = profitPool * 0.30;

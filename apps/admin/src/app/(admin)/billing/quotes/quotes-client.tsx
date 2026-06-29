@@ -1,7 +1,6 @@
 'use client';
 
 import Link from 'next/link';
-import { useRouter } from 'next/navigation';
 import { useTransition } from 'react';
 import { MoreHorizontal } from 'lucide-react';
 import { toast } from 'sonner';
@@ -27,6 +26,7 @@ import { BillingStatusBadge } from '@/components/billing/billing-status-badge';
 import { Badge } from '@/components/ui/badge';
 import { getDocumentLogoText } from '@/lib/document-logo';
 import { formatZAR, fmtDate } from '@/lib/format';
+import { Pagination } from '@/components/ui/pagination';
 import type { QuotationRow } from '@pmg/db';
 
 interface QuotesClientProps {
@@ -63,7 +63,6 @@ export function QuotesClient({
   deleteAction,
   updateStatusAction,
 }: QuotesClientProps) {
-  const router = useRouter();
   const [, startTransition] = useTransition();
 
   function buildHref(page: number) {
@@ -141,10 +140,14 @@ export function QuotesClient({
           {entries.map((quote) => (
             <TableRow 
               key={quote.id}
-              className="cursor-pointer hover:bg-muted/40 transition-colors border-b border-border"
-              onClick={() => router.push(`/billing/quotes/${quote.id}`)}
+              className="hover:bg-muted/40 transition-colors border-b border-border relative"
             >
               <TableCell className="font-medium">
+                <Link
+                  href={`/billing/quotes/${quote.id}`}
+                  className="absolute inset-0 focus:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-1 rounded-sm"
+                  aria-label={`View quote ${quote.documentNumber}`}
+                />
                 {quote.documentNumber}
               </TableCell>
               <TableCell>
@@ -167,7 +170,7 @@ export function QuotesClient({
               <TableCell>
                 <BillingStatusBadge status={quote.status} />
               </TableCell>
-              <TableCell onClick={(e) => e.stopPropagation()}>
+              <TableCell className="relative z-10">
                 <DropdownMenu>
                   <DropdownMenuTrigger asChild>
                     <Button variant="ghost" size="icon" className="size-8" title="Actions">
@@ -221,32 +224,17 @@ export function QuotesClient({
       </Table>
 
       {/* Pagination */}
-      {total > pageSize && (
-        <div className="flex items-center justify-between px-2 py-2">
-          <span className="text-sm text-muted-foreground">
-            Showing {(currentPage - 1) * pageSize + 1}–
-            {Math.min(currentPage * pageSize, total)} of {total}
-          </span>
-          <div className="flex gap-2">
-            {currentPage > 1 && (
-              <Link
-                href={buildHref(currentPage - 1)}
-                className="rounded-md border px-3 py-1 text-sm hover:bg-muted transition-colors"
-              >
-                Previous
-              </Link>
-            )}
-            {currentPage * pageSize < total && (
-              <Link
-                href={buildHref(currentPage + 1)}
-                className="rounded-md border px-3 py-1 text-sm hover:bg-muted transition-colors"
-              >
-                Next
-              </Link>
-            )}
-          </div>
-        </div>
-      )}
+      <div className="flex items-center justify-between px-2">
+        <span className="text-sm text-muted-foreground">
+          Showing {(currentPage - 1) * pageSize + 1}–
+          {Math.min(currentPage * pageSize, total)} of {total}
+        </span>
+        <Pagination
+          currentPage={currentPage}
+          totalPages={Math.ceil(total / pageSize)}
+          buildHref={buildHref}
+        />
+      </div>
     </div>
   );
 }

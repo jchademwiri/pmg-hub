@@ -3,21 +3,43 @@
 import { usePathname } from 'next/navigation'
 import { SidebarTrigger } from '@/components/ui/sidebar'
 import { Separator } from '@/components/ui/separator'
+import { ThemeToggle } from '@/components/ui/theme-toggle'
 import {
-  Breadcrumb, BreadcrumbList, BreadcrumbItem, BreadcrumbPage,
+  Breadcrumb, BreadcrumbList, BreadcrumbItem, BreadcrumbPage, BreadcrumbLink, BreadcrumbSeparator,
 } from '@/components/ui/breadcrumb'
 import { usePageHeader } from '@/components/navigation/page-header-context'
-import { ROUTE_LABELS } from '@/components/navigation/nav-data'
+import { ROUTE_LABELS, GROUPS } from '@/components/navigation/nav-data'
 
-function getPageLabel(pathname: string): string {
+/** Find the exact match label, or null if no exact match */
+function getExactLabel(pathname: string): string | null {
   if (ROUTE_LABELS[pathname]) return ROUTE_LABELS[pathname]
-  // Match nested routes - longest prefix wins, but skip exact-only routes like /settings
-  const EXACT_ONLY = new Set(['/settings'])
-  const match = Object.entries(ROUTE_LABELS)
-    .filter(([route]) => !EXACT_ONLY.has(route) && pathname.startsWith(route + '/'))
-    .sort((a, b) => b[0].length - a[0].length)[0]
-  if (match) return match[1]
-  // Derive a readable label from the last path segment as a last resort
+  return null
+}
+
+/** Derive the parent group label from the longest matching group URL */
+function getParentGroup(pathname: string): { label: string; href: string } | null {
+  // Skip top-level routes — they have no parent group
+  const segments = pathname.split('/').filter(Boolean)
+  if (segments.length <= 1) return null
+
+  // Check OVERVIEW routes first (they don't have children that need breadcrumbs)
+  // Find the group whose items contain the longest matching prefix
+  for (const group of GROUPS) {
+    // Check if any child item matches or is a prefix of the current path
+    const matchingItem = group.items
+      .filter((item) => item.url !== '/' + segments[0]) // exclude the group root itself
+      .filter((item) => pathname.startsWith(item.url))
+      .sort((a, b) => b.url.length - a.url.length)[0]
+
+    if (matchingItem) {
+      return { label: group.label, href: group.items[0].url }
+    }
+  }
+  return null
+}
+
+/** Derive a readable label from the last path segment */
+function deriveLabel(pathname: string): string {
   const segment = pathname.split('/').filter(Boolean).pop() ?? ''
   return segment.replace(/-/g, ' ').replace(/\b\w/g, (c) => c.toUpperCase())
 }
@@ -25,7 +47,9 @@ function getPageLabel(pathname: string): string {
 export function TopNav() {
   const pathname = usePathname()
   const { total, totalVariant } = usePageHeader()
-  const label = getPageLabel(pathname)
+  // Two-level breadcrumb: parent > child
+  const parent = getParentGroup(pathname)
+  const label = getExactLabel(pathname) ?? deriveLabel(pathname)
 
   const totalColor = {
     green:   'text-green-500',
@@ -41,6 +65,16 @@ export function TopNav() {
       <div className="flex items-center gap-3">
         <Breadcrumb>
           <BreadcrumbList>
+            {parent && (
+              <>
+                <BreadcrumbItem>
+                  <BreadcrumbLink href={parent.href} className="text-muted-foreground hover:text-foreground transition-colors">
+                    {parent.label}
+                  </BreadcrumbLink>
+                </BreadcrumbItem>
+                <BreadcrumbSeparator />
+              </>
+            )}
             <BreadcrumbItem>
               <BreadcrumbPage className="text-base font-semibold text-foreground">
                 {label}
@@ -53,6 +87,9 @@ export function TopNav() {
             {total}
           </span>
         )}
+        <div className="ml-auto">
+          <ThemeToggle />
+        </div>
       </div>
     </header>
   )

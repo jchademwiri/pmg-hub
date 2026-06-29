@@ -11,7 +11,6 @@ import {
   FieldLabel,
 } from "@/components/ui/field"
 import { Input } from "@/components/ui/input"
-import { GalleryVerticalEndIcon } from "lucide-react"
 import { signIn } from "@/lib/auth-client"
 
 export function LoginForm({
@@ -41,11 +40,9 @@ export function LoginForm({
 
   if (sent) {
     return (
-      <div className={cn("flex flex-col gap-6", className)} {...props}>
-        <div className="flex flex-col items-center gap-4 text-center">
-          <div className="flex size-8 items-center justify-center rounded-md bg-primary text-primary-foreground">
-            <GalleryVerticalEndIcon className="size-5" />
-          </div>
+      <div className={cn("flex flex-col gap-6", className)} {...props}>          <div className="flex flex-col items-center gap-4 text-center">
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img src="/logo/pmg-logo.svg" alt="PMG" width={40} height={40} />
           <h1 className="text-xl font-bold">Check your email</h1>
           <p className="text-sm text-muted-foreground text-balance">
             We sent a sign-in link to{" "}
@@ -73,16 +70,12 @@ export function LoginForm({
       <form onSubmit={handleSubmit}>
         <FieldGroup>
           <div className="flex flex-col items-center gap-2 text-center">
-            <div className="flex flex-col items-center gap-2 font-medium">
-              <div className="flex size-8 items-center justify-center rounded-md bg-primary text-primary-foreground">
-                <GalleryVerticalEndIcon className="size-5" />
-              </div>
-              <span className="sr-only">PMG Control Center</span>
-            </div>
-            <h1 className="text-xl font-bold">Welcome back</h1>
-            <FieldDescription>
-              Login to PMG Control Center
-            </FieldDescription>
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img src="/logo/pmg-logo.svg" alt="PMG" width={40} height={40} />
+            <h1 className="text-xl font-bold">PMG Control Center</h1>
+          <FieldDescription>
+            Sign in to manage billing, finance, and projects
+          </FieldDescription>
           </div>
           <Field>
             <FieldLabel htmlFor="email">Email</FieldLabel>
@@ -105,15 +98,12 @@ export function LoginForm({
           )}
           <Field>
             <Button type="submit" disabled={loading} className="w-full">
-              {loading ? "Sending..." : "Login"}
+              {loading ? "Sending..." : "Send sign-in link"}
             </Button>
           </Field>
         </FieldGroup>
       </form>
-      <FieldDescription className="px-6 text-center">
-        By clicking login, you agree to our <a href="#" className="underline">Terms of Service</a>{" "}
-        and <a href="#" className="underline">Privacy Policy</a>.
-      </FieldDescription>
+
     </div>
   )
 }
