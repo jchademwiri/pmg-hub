@@ -505,6 +505,24 @@ export function ProjectOverviewClient({
     [inProgress, planned],
   );
 
+  React.useEffect(() => {
+    const handleOpen = () => setFormOpen(true);
+    window.addEventListener('open-new-project-dialog', handleOpen);
+
+    // Check for ?new=true query param
+    const params = new URLSearchParams(window.location.search);
+    if (params.get('new') === 'true') {
+      setFormOpen(true);
+      // Clean up the URL query param without reloading
+      const newUrl = window.location.pathname;
+      window.history.replaceState({ path: newUrl }, '', newUrl);
+    }
+
+    return () => {
+      window.removeEventListener('open-new-project-dialog', handleOpen);
+    };
+  }, []);
+
   async function handleStatusChange(id: string, newStatus: string): Promise<string | undefined> {
     const result = await transitionProjectStatusAction(id, newStatus);
     if (result.error) {
@@ -526,14 +544,6 @@ export function ProjectOverviewClient({
 
   return (
     <div className="flex flex-col gap-6">
-      {/* Add Tender button */}
-      <div className="flex items-center justify-end">
-        <Button size="sm" onClick={() => setFormOpen(true)}>
-          <Plus className="size-4" />
-          New Project
-        </Button>
-      </div>
-
       <SchedulingSummaryCards activeEntries={activeEntries} atRiskCount={atRiskTenders.length} />
 
       {/* 2-Column Dashboard Grid */}

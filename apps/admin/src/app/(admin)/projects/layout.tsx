@@ -2,10 +2,13 @@
 
 import * as React from 'react';
 import Link from 'next/link';
-import { usePathname } from 'next/navigation';
+import { usePathname, useRouter } from 'next/navigation';
+import { Button } from '@/components/ui/button';
+import { Plus } from 'lucide-react';
 
 export default function SchedulingLayout({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
+  const router = useRouter();
 
   const tabs = [
     { label: 'Overview', href: '/projects' },
@@ -13,14 +16,28 @@ export default function SchedulingLayout({ children }: { children: React.ReactNo
     { label: 'Timeline', href: '/projects/timeline' },
   ];
 
+  const handleNewProject = () => {
+    if (pathname === '/projects') {
+      window.dispatchEvent(new CustomEvent('open-new-project-dialog'));
+    } else {
+      router.push('/projects?new=true');
+    }
+  };
+
   return (
     <div className="flex flex-col gap-6">
       {/* Page Header */}
-      <div>
-        <h2 className="text-lg font-semibold">Project Scheduling</h2>
-        <p className="text-sm text-muted-foreground">
-          Plan, track, and manage project preparation deadlines
-        </p>
+      <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+        <div>
+          <h2 className="text-lg font-semibold">Project Scheduling</h2>
+          <p className="text-sm text-muted-foreground">
+            Plan, track, and manage project preparation deadlines
+          </p>
+        </div>
+        <Button size="sm" onClick={handleNewProject} className="self-end sm:self-auto">
+          <Plus className="size-4" />
+          New Project
+        </Button>
       </div>
 
       {/* Sub-Navigation Tabs */}
