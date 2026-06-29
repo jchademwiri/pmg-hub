@@ -435,67 +435,70 @@ export function ProjectOverviewClient({
 
       <SchedulingSummaryCards activeEntries={activeEntries} atRiskCount={atRiskTenders.length} />
 
-      {/* Now Working + Up Next */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        <CurrentWorkloadCard
-          tender={inProgress}
-          client={inProgress ? clientMap.get(inProgress.clientId) || null : null}
-          onStatusChange={handleStatusChange}
-          progressMap={progressMap}
-        />
+      {/* 2-Column Dashboard Grid */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        {/* Main Column (Left - 2/3 width) */}
+        <div className="lg:col-span-2 space-y-6">
+          <CurrentWorkloadCard
+            tender={inProgress}
+            client={inProgress ? clientMap.get(inProgress.clientId) || null : null}
+            onStatusChange={handleStatusChange}
+            progressMap={progressMap}
+          />
 
-        <DraggableUpNext
-          tenders={planned}
-          clients={clients}
-          onStatusChange={handleStatusChange}
-          progressMap={progressMap}
-        />
+          <DraggableUpNext
+            tenders={planned}
+            clients={clients}
+            onStatusChange={handleStatusChange}
+            progressMap={progressMap}
+          />
+        </div>
+
+        {/* Sidebar Column (Right - 1/3 width) */}
+        <div className="space-y-6">
+          <WarningsPanel atRiskTenders={atRiskTenders} overlaps={overlaps} />
+
+          {/* Upcoming Deadlines Widget */}
+          <Card size="sm">
+            <CardHeader className="pb-2">
+              <div className="flex items-center gap-2">
+                <CalendarClock className="size-4 text-blue-500" />
+                <CardTitle>Upcoming Deadlines</CardTitle>
+              </div>
+            </CardHeader>
+            <CardContent className="pt-0">
+              {upcomingTenders.length === 0 ? (
+                <p className="text-xs text-muted-foreground py-4 text-center">No upcoming deadlines.</p>
+              ) : (
+                <ul className="flex flex-col divide-y divide-border/50">
+                  {upcomingTenders.map((t) => {
+                    const client = clientMap.get(t.clientId);
+                    return (
+                      <li key={t.id} className="flex items-center justify-between py-2.5 first:pt-0 last:pb-0">
+                        <div className="min-w-0 flex-1">
+                          <p className="text-xs font-medium truncate">{t.projectReference}</p>
+                          {client && (
+                            <p className="text-[10px] text-muted-foreground truncate mt-0.5">
+                              {client.name}
+                            </p>
+                          )}
+                        </div>
+                        <div className="flex flex-col items-end gap-1 shrink-0 text-right">
+                          <p className="text-[11px] font-semibold text-foreground">Closes {formatDate(t.closingDate)}</p>
+                          <p className="text-[10px] text-muted-foreground">
+                            Target: {formatDate(t.targetCompletionDate)}
+                          </p>
+                          <ProjectStatusBadge status={t.status} />
+                        </div>
+                      </li>
+                    );
+                  })}
+                </ul>
+              )}
+            </CardContent>
+          </Card>
+        </div>
       </div>
-
-      {/* Compact warnings */}
-      <WarningsPanel atRiskTenders={atRiskTenders} overlaps={overlaps} />
-
-      {/* Upcoming Deadlines Widget */}
-      <Card size="sm">
-        <CardHeader className="pb-2">
-          <div className="flex items-center gap-2">
-            <CalendarClock className="size-4 text-blue-500" />
-            <CardTitle>Upcoming Deadlines</CardTitle>
-          </div>
-        </CardHeader>
-        <CardContent className="pt-0">
-          {upcomingTenders.length === 0 ? (
-            <p className="text-xs text-muted-foreground py-4 text-center">No upcoming deadlines.</p>
-          ) : (
-            <ul className="flex flex-col divide-y divide-border/50">
-              {upcomingTenders.map((t) => {
-                const client = clientMap.get(t.clientId);
-                return (
-                  <li key={t.id} className="flex items-center justify-between py-2.5 first:pt-0 last:pb-0">
-                    <div className="min-w-0 flex-1">
-                      <p className="text-xs font-medium truncate">{t.projectReference}</p>
-                      {client && (
-                        <p className="text-[10px] text-muted-foreground truncate mt-0.5">
-                          {client.name}
-                        </p>
-                      )}
-                    </div>
-                    <div className="flex items-center gap-4 shrink-0 text-right">
-                      <div className="text-right">
-                        <p className="text-[11px] font-medium">Closes {formatDate(t.closingDate)}</p>
-                        <p className="text-[10px] text-muted-foreground mt-0.5">
-                          Target: {formatDate(t.targetCompletionDate)}
-                        </p>
-                      </div>
-                      <ProjectStatusBadge status={t.status} />
-                    </div>
-                  </li>
-                );
-              })}
-            </ul>
-          )}
-        </CardContent>
-      </Card>
 
       {/* Tender Form Dialog */}
       <ProjectFormDialog
