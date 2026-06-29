@@ -77,24 +77,16 @@ export default async function QuotesPage({ searchParams }: QuotesPageProps) {
       </div>
 
       {/* Quotes table */}
-      <Card>
-        <CardHeader>
-          <CardTitle>All Quotations</CardTitle>
-          <CardDescription>A list of all quotes sent to clients</CardDescription>
-        </CardHeader>
-        <CardContent className="p-0 px-6 pb-4">
-          <QuotesClient
-            entries={result.data}
-            total={result.total}
-            currentPage={currentPage}
-            pageSize={pageSize}
-            divisionId={divisionId}
-            status={normalizedStatus}
-            deleteAction={deleteQuotation}
-            updateStatusAction={updateQuotationStatus}
-          />
-        </CardContent>
-      </Card>
+      <QuotesClient
+        entries={result.data}
+        total={result.total}
+        currentPage={currentPage}
+        pageSize={pageSize}
+        divisionId={divisionId}
+        status={normalizedStatus}
+        deleteAction={deleteQuotation}
+        updateStatusAction={updateQuotationStatus}
+      />
     </div>
   );
 }

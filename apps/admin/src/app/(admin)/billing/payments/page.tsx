@@ -132,27 +132,19 @@ export default async function PaymentsPage({ searchParams }: PaymentsPageProps) 
       />
 
       {/* Payments History Table */}
-      <Card>
-        <CardHeader>
-          <CardTitle>All Payments</CardTitle>
-          <CardDescription>A list of payments received and their allocations</CardDescription>
-        </CardHeader>
-        <CardContent className="p-0 px-6 pb-4">
-          <PaymentsClient
-            entries={payments}
-            total={incomeResult.total}
-            currentPage={currentPage}
-            pageSize={pageSize}
-            divisions={divisions}
-            clients={clients}
-            divisionId={divisionId}
-            month={month}
-            closedPeriods={closedPeriods}
-            updateAction={updateClientPayment}
-            deleteAction={deleteClientPayment}
-          />
-        </CardContent>
-      </Card>
+      <PaymentsClient
+        entries={payments}
+        total={incomeResult.total}
+        currentPage={currentPage}
+        pageSize={pageSize}
+        divisions={divisions}
+        clients={clients}
+        divisionId={divisionId}
+        month={month}
+        closedPeriods={closedPeriods}
+        updateAction={updateClientPayment}
+        deleteAction={deleteClientPayment}
+      />
     </div>
   );
 }

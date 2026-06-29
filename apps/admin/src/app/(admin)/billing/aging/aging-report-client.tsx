@@ -160,7 +160,7 @@ export function AgingReportClient({ clientAging, globalAging }: AgingReportClien
       </div>
 
       {/* Visual Proportions Bar */}
-      <Card className="shadow-none p-5 space-y-4">
+      <div className="border border-border/40 bg-muted/5 rounded-xl p-5 space-y-4">
         <div>
           <h3 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Aging Distribution</h3>
           <p className="text-xs text-muted-foreground mt-0.5">Ratio of receivables per aging category</p>
@@ -214,13 +214,13 @@ export function AgingReportClient({ clientAging, globalAging }: AgingReportClien
         ) : (
           <div className="text-center py-4 text-sm text-muted-foreground">No outstanding invoices.</div>
         )}
-      </Card>
+      </div>
 
       {/* Client Table Section */}
-      <Card className="shadow-none">
-        <CardHeader className="border-b px-5 py-4 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+      <div className="space-y-4">
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 border-b pb-3 border-border">
           <div className="flex items-center gap-2">
-            <CardTitle className="text-sm font-semibold">Client Aging Breakdown</CardTitle>
+            <h3 className="text-sm font-semibold">Client Aging Breakdown</h3>
             {activeBucket && (
               <span className="text-[11px] font-medium bg-muted text-muted-foreground px-2 py-0.5 rounded-full flex items-center gap-1 animate-in fade-in duration-200">
                 Filtered: {segments.find(s => s.bucket === activeBucket)?.label}
@@ -243,8 +243,8 @@ export function AgingReportClient({ clientAging, globalAging }: AgingReportClien
               className="pl-8 h-9 shadow-none text-sm"
             />
           </div>
-        </CardHeader>
-        <CardContent className="p-0">
+        </div>
+        <div>
           {sortedClients.length === 0 ? (
             <div className="px-5 py-8 text-center text-sm text-muted-foreground">No clients found.</div>
           ) : (
@@ -365,8 +365,8 @@ export function AgingReportClient({ clientAging, globalAging }: AgingReportClien
               </Table>
             </div>
           )}
-        </CardContent>
-      </Card>
+        </div>
+      </div>
     </div>
   );
 }

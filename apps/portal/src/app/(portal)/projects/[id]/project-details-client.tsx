@@ -9,10 +9,15 @@ import {
   AlertTriangle,
   CheckSquare,
   Sparkles,
+  Info,
+  X,
 } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
 import type { ProjectScheduleEntry } from '@pmg/db';
+import { TaskBoardReadOnly } from '@/components/projects/task-board-readonly';
+import { TaskListViewReadOnly } from '@/components/projects/task-list-view-readonly';
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 
@@ -35,6 +40,7 @@ interface ProgressSection {
   projectId: string;
   title: string;
   sortOrder: number;
+  status: 'backlog' | 'in_progress' | 'completed';
   items: ProgressItem[];
 }
 
@@ -80,8 +86,12 @@ export function ProjectDetailsClient({
   divisions,
   initialChecklist,
 }: ProjectDetailsClientProps) {
-  const checklist = initialChecklist.map((s) => ({
+  const [viewMode, setViewMode] = React.useState<'board' | 'list'>('board');
+  const [metadataOpen, setMetadataOpen] = React.useState(false);
+
+  const checklist: ProgressSection[] = initialChecklist.map((s) => ({
     ...s,
+    status: s.status as any,
     items: s.items.map((i: any) => ({
       ...i,
       completedAt: i.completedAt ? new Date(i.completedAt) : null,
@@ -100,7 +110,7 @@ export function ProjectDetailsClient({
   const progressPercent = totalItems > 0 ? Math.round((completedItems / totalItems) * 100) : 0;
 
   return (
-    <div className="flex flex-col gap-6 max-w-6xl mx-auto">
+    <div className="flex flex-col gap-6 w-full">
       {/* Header / Breadcrumb */}
       <div className="flex flex-col gap-2 border-b pb-5 border-white/5">
         <Link
@@ -119,132 +129,134 @@ export function ProjectDetailsClient({
         </div>
       </div>
 
-      {/* Main Grid Layout */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {/* Left Column — Checklists, Notes & Blockers */}
-        <div className="lg:col-span-2 space-y-6">
-          {/* Checklist Board */}
-          <Card className="bg-[#0a0f1d] border-white/5 shadow-md">
-            <CardHeader className="flex flex-row items-center justify-between pb-3">
-              <div className="flex items-center gap-2">
-                <CheckSquare className="size-4 text-emerald-400" />
-                <CardTitle className="text-sm font-semibold text-white">Project Checklist</CardTitle>
-              </div>
-              {totalItems > 0 && (
-                <Badge variant="secondary" className="text-xs font-medium bg-white/5 text-white border-white/5">
-                  {completedItems}/{totalItems} Completed
-                </Badge>
-              )}
-            </CardHeader>
-            <CardContent className="space-y-6">
-              {/* Overall Progress Bar */}
-              <div className="rounded-lg border border-white/5 bg-white/[0.02] p-4 flex flex-col gap-2">
-                <div className="flex justify-between text-xs font-medium text-muted-foreground">
-                  <span>Project Completion</span>
-                  <span>{progressPercent}%</span>
-                </div>
-                <div className="w-full bg-white/5 rounded-full h-2.5 overflow-hidden">
-                  <div
-                    className="bg-emerald-500 h-full transition-all duration-500 rounded-full shadow-[0_0_10px_rgba(16,185,129,0.3)]"
-                    style={{ width: `${progressPercent}%` }}
-                  />
-                </div>
-              </div>
+      {/* Checklist Workspace (Full Width - Plain Container) */}
+      <div className="space-y-6">
+        <div className="flex flex-row items-center justify-between border-b pb-3 border-white/5">
+          <div className="flex items-center gap-2">
+            <CheckSquare className="size-4 text-emerald-500" />
+            <h2 className="text-base font-semibold text-white">Project Checklist Workspace</h2>
+          </div>
+          <div className="flex items-center gap-3">
+            {/* Project Details Button */}
+            <Button
+              variant="outline"
+              size="sm"
+              className="h-7 text-xs px-3 border-white/10 text-muted-foreground hover:text-white bg-white/5 hover:bg-white/10"
+              onClick={() => setMetadataOpen(true)}
+            >
+              <Info className="size-3.5 mr-1.5" /> Project Details
+            </Button>
 
-              {/* Checklist Sections */}
-              <div className="space-y-5">
-                {checklist.map((section) => (
-                  <div
-                    key={section.id}
-                    className="border border-white/5 rounded-lg p-4 space-y-3 bg-white/[0.01]"
-                  >
-                    {/* Section Header */}
-                    <div className="border-b border-white/5 pb-2">
-                      <h3 className="text-xs font-bold uppercase tracking-wider text-muted-foreground">
-                        {section.title}
-                      </h3>
-                    </div>
+            {/* View Mode Toggle */}
+            <div className="flex rounded-lg border border-white/5 bg-white/[0.02] p-0.5 text-xs font-medium">
+              <button
+                type="button"
+                onClick={() => setViewMode('board')}
+                className={`px-2.5 py-1 rounded-md transition-all ${
+                  viewMode === 'board'
+                    ? 'bg-white/10 text-white shadow-sm'
+                    : 'text-muted-foreground hover:text-white'
+                }`}
+              >
+                Board
+              </button>
+              <button
+                type="button"
+                onClick={() => setViewMode('list')}
+                className={`px-2.5 py-1 rounded-md transition-all ${
+                  viewMode === 'list'
+                    ? 'bg-white/10 text-white shadow-sm'
+                    : 'text-muted-foreground hover:text-white'
+                }`}
+              >
+                List
+              </button>
+            </div>
 
-                    {/* Section Items */}
-                    <ul className="space-y-2">
-                      {section.items.map((item: any) => (
-                        <li
-                          key={item.id}
-                          className="flex items-start gap-3 text-xs py-1 px-2 rounded-md hover:bg-white/[0.01] transition-colors"
-                        >
-                          <input
-                            type="checkbox"
-                            checked={item.isCompleted}
-                            disabled
-                            className="size-4 mt-0.5 rounded border-white/10 text-emerald-500 bg-transparent cursor-not-allowed opacity-70"
-                          />
-                          <span
-                            className={`text-xs flex-1 ${
-                              item.isCompleted
-                                ? 'text-muted-foreground line-through decoration-muted-foreground/45'
-                                : 'text-white font-medium'
-                            }`}
-                          >
-                            {item.task}
-                          </span>
-                        </li>
-                      ))}
-                    </ul>
-                  </div>
-                ))}
-
-                {checklist.length === 0 && (
-                  <div className="text-center py-10 text-muted-foreground text-xs border border-dashed border-white/5 rounded-lg flex flex-col items-center justify-center gap-2">
-                    <CheckSquare className="size-8 text-muted-foreground/20" />
-                    <span>No checklist items have been added to this project yet.</span>
-                  </div>
-                )}
-              </div>
-            </CardContent>
-          </Card>
-
-          {/* Notes & Blockers (Read-only) */}
-          {(project.notes || project.blockers) && (
-            <Card className="bg-[#0a0f1d] border-white/5 shadow-md">
-              <CardHeader className="pb-3">
-                <div className="flex items-center gap-2">
-                  <Sparkles className="size-4 text-blue-400" />
-                  <CardTitle className="text-sm font-semibold text-white">Project Notes & Updates</CardTitle>
-                </div>
-              </CardHeader>
-              <CardContent className="space-y-4 text-xs leading-relaxed text-muted-foreground">
-                {project.blockers && (
-                  <div className="flex items-start gap-2.5 rounded-lg border border-amber-500/10 bg-amber-500/5 p-3 text-amber-400">
-                    <AlertTriangle className="size-4 shrink-0 mt-0.5" />
-                    <div className="space-y-1">
-                      <span className="font-semibold text-[11px] uppercase tracking-wider">Active Blocker</span>
-                      <p className="text-xs">{project.blockers}</p>
-                    </div>
-                  </div>
-                )}
-
-                {project.notes && (
-                  <div className="space-y-1.5">
-                    <span className="font-semibold text-white">Notes</span>
-                    <div className="bg-white/[0.01] border border-white/5 rounded-lg p-4 whitespace-pre-wrap font-sans text-muted-foreground">
-                      {project.notes}
-                    </div>
-                  </div>
-                )}
-              </CardContent>
-            </Card>
-          )}
+            {totalItems > 0 && (
+              <Badge variant="secondary" className="text-xs font-medium bg-white/5 text-white border-white/5">
+                {completedItems}/{totalItems} Completed ({progressPercent}%)
+              </Badge>
+            )}
+          </div>
         </div>
 
-        {/* Right Column — Sidebar Metadata */}
-        <div className="space-y-6">
-          <Card className="bg-[#0a0f1d] border-white/5 shadow-md">
-            <CardHeader className="pb-3 border-b border-white/5">
-              <CardTitle className="text-sm font-semibold text-white flex items-center gap-2">
-                <Clock className="size-4 text-blue-400" /> Project Timeline
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="pt-4 space-y-4 text-xs">
+        {/* Overall Progress Bar */}
+        <div className="rounded-lg border border-white/5 bg-white/[0.02] p-4 flex flex-col gap-2">
+          <div className="flex justify-between text-xs font-semibold text-muted-foreground">
+            <span>Completion Status</span>
+            <span>{progressPercent}%</span>
+          </div>
+          <div className="w-full bg-white/5 rounded-full h-2.5 overflow-hidden">
+            <div
+              className="bg-emerald-500 h-full transition-all duration-500 rounded-full shadow-[0_0_10px_rgba(16,185,129,0.4)]"
+              style={{ width: `${progressPercent}%` }}
+            />
+          </div>
+        </div>
+
+        {viewMode === 'board' ? (
+          <TaskBoardReadOnly sections={checklist} />
+        ) : (
+          <TaskListViewReadOnly sections={checklist} />
+        )}
+      </div>
+
+      {/* Notes & Blockers Workspace (Full Width) */}
+      {(project.notes || project.blockers) && (
+        <Card className="bg-[#0a0f1d] border-white/5 shadow-md">
+          <CardHeader className="pb-3">
+            <div className="flex items-center gap-2">
+              <Sparkles className="size-4 text-blue-400" />
+              <CardTitle className="text-sm font-semibold text-white">Project Notes & Updates</CardTitle>
+            </div>
+          </CardHeader>
+          <CardContent className="space-y-4 text-xs leading-relaxed text-muted-foreground">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              {project.notes && (
+                <div className="space-y-1.5">
+                  <span className="font-semibold text-white">Notes</span>
+                  <div className="bg-white/[0.01] border border-white/5 rounded-lg p-4 whitespace-pre-wrap font-sans text-muted-foreground">
+                    {project.notes}
+                  </div>
+                </div>
+              )}
+
+              {project.blockers && (
+                <div className="space-y-1.5">
+                  <span className="font-semibold text-white flex items-center gap-1.5">
+                    <AlertTriangle className="size-3.5 text-amber-400" /> Active Blockers
+                  </span>
+                  <div className="flex items-start gap-2.5 rounded-lg border border-amber-500/10 bg-amber-500/5 p-4 text-amber-400">
+                    <div className="space-y-1">
+                      <p className="text-xs leading-relaxed">{project.blockers}</p>
+                    </div>
+                  </div>
+                </div>
+              )}
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
+      {/* Project Metadata Modal */}
+      {metadataOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-in fade-in duration-200">
+          <div className="bg-[#0a0f1d] border border-white/10 rounded-xl max-w-md w-full shadow-2xl overflow-hidden animate-in zoom-in-95 duration-200">
+            {/* Header */}
+            <div className="flex items-center justify-between p-4 border-b border-white/5">
+              <h3 className="text-sm font-semibold text-white flex items-center gap-2">
+                <Clock className="size-4 text-blue-400" /> Project Metadata
+              </h3>
+              <button 
+                onClick={() => setMetadataOpen(false)} 
+                className="text-muted-foreground hover:text-white transition-colors p-1"
+              >
+                <X className="size-4" />
+              </button>
+            </div>
+            {/* Content */}
+            <div className="p-5 space-y-4 text-xs text-muted-foreground">
               {/* Dates Timeline */}
               <div className="space-y-3">
                 <div className="flex flex-col gap-1">
@@ -330,10 +342,10 @@ export function ProjectDetailsClient({
                   </>
                 )}
               </div>
-            </CardContent>
-          </Card>
+            </div>
+          </div>
         </div>
-      </div>
+      )}
     </div>
   );
 }
