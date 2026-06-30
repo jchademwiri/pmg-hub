@@ -247,6 +247,9 @@ export async function sendDocumentEmailAction(rawPayload: unknown) {
         adminEmail: fromEmail,
       });
 
+      const portalBaseUrl = process.env.PORTAL_URL || 'http://localhost:3001';
+      const portalUrl = `${portalBaseUrl}/invoices/${invoice.id}`;
+
       // Construct Invoice React Template props
       const emailProps = {
         clientName: client?.businessName || client?.name || 'Client',
@@ -261,6 +264,7 @@ export async function sendDocumentEmailAction(rawPayload: unknown) {
         websiteUrl: billingConfig?.divisionWebsite || DEFAULT_WEBSITE_URL,
         logoUrl: billingConfig?.logoUrl || undefined,
         hasStatementAttached: !!base64StatementPdf,
+        portalUrl,
         bankDetails: billingConfig ? {
           bankName: billingConfig.bankName || '',
           accountName: billingConfig.bankAccountName || '',
@@ -371,6 +375,9 @@ export async function sendDocumentEmailAction(rawPayload: unknown) {
         adminEmail: fromEmail,
       });
 
+      const portalBaseUrl = process.env.PORTAL_URL || 'http://localhost:3001';
+      const portalUrl = `${portalBaseUrl}/quotes/${quote.id}`;
+
       // Construct Quote React Template props
       const emailProps = {
         clientName: client?.businessName || client?.name || 'Client',
@@ -384,6 +391,7 @@ export async function sendDocumentEmailAction(rawPayload: unknown) {
         primaryColor: '#1d4ed8',
         websiteUrl: billingConfig?.divisionWebsite || DEFAULT_WEBSITE_URL,
         logoUrl: billingConfig?.logoUrl || undefined,
+        portalUrl,
         bankDetails: billingConfig ? {
           bankName: billingConfig.bankName || '',
           accountName: billingConfig.bankAccountName || '',

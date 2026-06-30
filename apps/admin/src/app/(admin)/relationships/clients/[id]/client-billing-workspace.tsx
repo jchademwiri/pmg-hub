@@ -67,6 +67,7 @@ import { CreditHistoryTable } from '@/components/billing/credit-history-table';
 import { bulkIssueInvoices, bulkVoidInvoices, issueInvoice, voidInvoice } from '@/app/actions/billing-invoices';
 import { sendDocumentEmailAction } from '@/app/actions/email-delivery';
 import { updateQuotationStatus } from '@/app/actions/billing-quotes';
+import { sendPortalInvitation } from '@/app/actions/clients';
 import type { InvoiceDetail, QuotationDetail } from '@pmg/db';
 
 function extractInvoiceNumber(description: string | null): string {
@@ -840,6 +841,19 @@ export function ClientBillingWorkspace({
             <Badge variant={client.isActive ? 'default' : 'secondary'}>
               {client.isActive ? 'Active' : 'Disabled'}
             </Badge>
+            {client.userId ? (
+              <Badge variant="secondary" className="bg-emerald-500/15 text-emerald-700 dark:text-emerald-400 border-emerald-500/30">
+                Portal: Registered
+              </Badge>
+            ) : client.portalInvitationSentAt ? (
+              <Badge variant="secondary" className="bg-blue-500/15 text-blue-700 dark:text-blue-400 border-blue-500/30">
+                Portal: Invited
+              </Badge>
+            ) : (
+              <Badge variant="secondary" className="bg-muted text-muted-foreground border-border">
+                Portal: Not Invited
+              </Badge>
+            )}
           </div>
           {(client.email || client.phone) && (
             <div className="flex items-center gap-4 pl-0 text-sm text-muted-foreground">
@@ -923,6 +937,7 @@ export function ClientBillingWorkspace({
             <Plus className="size-4 mr-1 text-green-600 dark:text-green-400" /> Record Payment
           </Link>
         </Button>
+        <PortalInviteButton client={client} />
       </div>
 
       {metricFilter !== 'all' && (activeTab === 'invoices' || activeTab === 'quotes') && (
@@ -1756,5 +1771,51 @@ export function ClientBillingWorkspace({
         divisions={clientDivisions}
       />
     </div>
+  );
+}
+
+function PortalInviteButton({ client }: { client: any }) {
+  const [isPending, startTransition] = useTransition();
+  const router = useRouter();
+
+  const handleInvite = async () => {
+    if (!client.email) {
+      toast.error('Client does not have an email address.');
+      return;
+    }
+    
+    startTransition(async () => {
+      const res = await sendPortalInvitation(client.id);
+      if (res.error) {
+        toast.error(res.error);
+      } else {
+        toast.success(client.portalInvitationSentAt ? 'Portal invitation resent!' : 'Portal invitation sent!');
+        router.refresh();
+      }
+    });
+  };
+
+  if (client.userId) return null;
+
+  return (
+    <Button
+      size="sm"
+      variant="outline"
+      className="border-blue-200 hover:bg-blue-50/50 dark:border-blue-900/50 dark:hover:bg-blue-950/20"
+      disabled={isPending || !client.email}
+      onClick={handleInvite}
+    >
+      {isPending ? (
+        <>
+          <Loader2 className="size-4 mr-1 animate-spin" />
+          Inviting...
+        </>
+      ) : (
+        <>
+          <Mail className="size-4 mr-1 text-blue-600 dark:text-blue-400" />
+          {client.portalInvitationSentAt ? 'Resend Portal Invite' : 'Invite to Portal'}
+        </>
+      )}
+    </Button>
   );
 }

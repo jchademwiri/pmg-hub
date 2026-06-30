@@ -1,5 +1,6 @@
 import * as React from "react";
 import {
+  Button,
   Heading,
   Section,
   Text,
@@ -16,6 +17,7 @@ export type QuoteDeliveryEmailProps = {
   totalAmount: string;
   reference?: string;
   personalMessage?: string;
+  portalUrl?: string;
   bankDetails?: {
     bankName: string;
     accountName: string;
@@ -33,6 +35,7 @@ const QuoteDeliveryEmail = (props: QuoteDeliveryEmailProps) => {
     totalAmount,
     reference,
     personalMessage,
+    portalUrl,
     bankDetails,
     companyName = "Playhouse Media Group",
     primaryColor = "#1d4ed8",
@@ -56,6 +59,21 @@ const QuoteDeliveryEmail = (props: QuoteDeliveryEmailProps) => {
       <Text className="m-0 mb-[16px] text-[15px] leading-[24px] text-[#334155]">
         Please find attached quotation <strong>{documentNumber}</strong> prepared by <strong>{companyName}</strong>.
       </Text>
+
+      {portalUrl && (
+        <Section className="mb-[24px] text-center">
+          <Button
+            href={portalUrl}
+            className="box-border rounded-[6px] px-[20px] py-[10px] text-[14px] font-semibold text-white no-underline inline-block"
+            style={{ backgroundColor: primaryColor }}
+          >
+            View & Approve Quote in Portal
+          </Button>
+          <Text className="m-0 mt-[8px] text-[12px] text-center" style={{ color: '#64748B' }}>
+            Note: You only need your email address to access the portal—no password is required.
+          </Text>
+        </Section>
+      )}
 
       {/* Custom Admin Message */}
       {personalMessage && (

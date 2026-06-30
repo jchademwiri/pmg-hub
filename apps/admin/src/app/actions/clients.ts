@@ -2,8 +2,10 @@
 
 import { z } from 'zod';
 import { revalidatePath } from 'next/cache';
-import { db, clients, income, eq, quotations, invoices, projectScheduleEntries } from '@pmg/db';
+import { db, clients, income, eq, quotations, invoices, projectScheduleEntries, divisionBillingSettings, divisions } from '@pmg/db';
 import { setClientActive } from '@pmg/db';
+import { createEmailClient, PortalInvitationEmail, DEFAULT_REPLY_TO, resolveResendApiKey, resolveDefaultFromEmail, resolveFromEmail } from '@pmg/emails';
+import React from 'react';
 
 const ClientSchema = z.object({
   name:         z.string().min(1),
@@ -129,5 +131,103 @@ export async function deleteClient(id: string): Promise<{ error?: string }> {
   } catch (e) {
     console.error('deleteClient failed:', e);
     return { error: 'Failed to delete. Please try again.' };
+  }
+}
+
+export async function sendPortalInvitation(clientId: string): Promise<{ error?: string; success?: boolean }> {
+  try {
+    if (!clientId) {
+      return { error: 'Client ID is required.' };
+    }
+
+    // Fetch the client
+    const [client] = await db
+      .select()
+      .from(clients)
+      .where(eq(clients.id, clientId))
+      .limit(1);
+
+    if (!client) {
+      return { error: 'Client not found.' };
+    }
+
+    if (!client.email) {
+      return { error: 'Client does not have an email address.' };
+    }
+
+    // Resolve division branding if available
+    let fromName = 'Playhouse Media Group';
+    let fromEmail = 'noreply@playhousemedia.co.za';
+    let divisionName = 'Playhouse Media Group';
+    let websiteUrl: string | undefined;
+    let logoUrl: string | undefined;
+    let apiKey = process.env.PMG_RESEND_API_KEY!;
+
+    if (client.divisionId) {
+      const [billingConfig] = await db
+        .select()
+        .from(divisionBillingSettings)
+        .where(eq(divisionBillingSettings.divisionId, client.divisionId))
+        .limit(1);
+
+      const [divRow] = await db
+        .select({ name: divisions.name })
+        .from(divisions)
+        .where(eq(divisions.id, client.divisionId))
+        .limit(1);
+
+      if (divRow) {
+        divisionName = divRow.name;
+        apiKey = resolveResendApiKey(divRow.name);
+        const defaultFrom = resolveDefaultFromEmail(divRow.name);
+        fromName = billingConfig?.salesRepName || divRow.name;
+        fromEmail = resolveFromEmail(billingConfig?.divisionWebsite, defaultFrom);
+        websiteUrl = billingConfig?.divisionWebsite || undefined;
+        logoUrl = billingConfig?.logoUrl || undefined;
+      }
+    }
+
+    const portalUrl = process.env.PORTAL_URL || 'http://localhost:3001';
+
+    const emailClient = createEmailClient({
+      apiKey,
+      from: `${fromName} <${fromEmail}>`,
+      adminEmail: fromEmail,
+    });
+
+    const { error: mailError } = await emailClient({
+      to: client.email,
+      subject: `Welcome to your ${divisionName} Client Portal`,
+      react: React.createElement(PortalInvitationEmail, {
+        recipientName: client.name,
+        portalUrl,
+        companyName: divisionName,
+        primaryColor: '#1d4ed8',
+        websiteUrl,
+        logoUrl,
+      }),
+      replyTo: DEFAULT_REPLY_TO,
+    });
+
+    if (mailError) {
+      return { error: `Failed to send email: ${mailError.message}` };
+    }
+
+    // Update the client record
+    await db
+      .update(clients)
+      .set({
+        portalInvitationSentAt: new Date(),
+        updatedAt: new Date(),
+      })
+      .where(eq(clients.id, clientId));
+
+    revalidatePath('/relationships/clients');
+    revalidatePath(`/relationships/clients/${clientId}`);
+
+    return { success: true };
+  } catch (e: any) {
+    console.error('sendPortalInvitation failed:', e);
+    return { error: e.message || 'Failed to send portal invitation. Please try again.' };
   }
 }

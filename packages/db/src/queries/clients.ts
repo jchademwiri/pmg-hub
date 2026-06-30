@@ -12,6 +12,8 @@ export type ClientWithIncomeCount = {
   isActive: boolean;
   createdAt: Date;
   incomeCount: number;
+  portalInvitationSentAt: Date | null;
+  userId: string | null;
 };
 
 export async function getAllClients(): Promise<
@@ -42,6 +44,8 @@ export async function getClientsWithIncomeCount(): Promise<ClientWithIncomeCount
       phone: clients.phone,
       isActive: clients.isActive,
       createdAt: clients.createdAt,
+      portalInvitationSentAt: clients.portalInvitationSentAt,
+      userId: clients.userId,
       incomeCount: sql<number>`CAST(COUNT(${income.id}) AS INTEGER)`,
     })
     .from(clients)
