@@ -133,6 +133,7 @@ PaymentThankYouEmail.PreviewProps = {
   amountPaid: "R 12,500.00",
   paymentDate: "24 May 2026",
   paymentDescription: "Monthly retainer payment for SLA services",
+  portalUrl: "https://portal.playhousemedia.co.za/statements",
   allocations: [
     { documentNumber: "INV-2026-001", amount: "R 10,000.00" },
     { documentNumber: "INV-2026-002", amount: "R 2,500.00" },

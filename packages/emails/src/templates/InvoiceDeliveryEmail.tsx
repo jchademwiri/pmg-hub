@@ -176,6 +176,7 @@ InvoiceDeliveryEmail.PreviewProps = {
   totalAmount: "R 12,500.00",
   reference: "REF-9912",
   personalMessage: "Hi there, thank you for your business. Please find attached our invoice and statement.",
+  portalUrl: "https://portal.playhousemedia.co.za/invoices/inv-123",
   bankDetails: {
     bankName: "First National Bank",
     accountName: "Playhouse Media Group",

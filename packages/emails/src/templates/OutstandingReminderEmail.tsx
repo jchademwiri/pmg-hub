@@ -217,6 +217,7 @@ OutstandingReminderEmail.PreviewProps = {
   totalAmount: "R 10,000.00",
   outstandingAmount: "R 5,000.00",
   reminderType: "overdue",
+  portalUrl: "https://portal.playhousemedia.co.za/invoices/inv-123",
   bankDetails: {
     bankName: "First National Bank",
     accountName: "Playhouse Media Group",

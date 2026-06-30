@@ -179,6 +179,7 @@ QuoteDeliveryEmail.PreviewProps = {
   totalAmount: "R 9,750.00",
   reference: "RFQ-50122",
   personalMessage: "Here is the customized quote for your review. Let us know if this aligns with your budget requirements.",
+  portalUrl: "https://portal.playhousemedia.co.za/quotes/q-123",
   bankDetails: {
     bankName: "First National Bank",
     accountName: "Playhouse Media Group",
