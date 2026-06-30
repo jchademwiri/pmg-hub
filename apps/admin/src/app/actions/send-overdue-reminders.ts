@@ -22,6 +22,7 @@ import {
   resolveDivisionAdminEmail,
   resolveFromEmail,
   resolveResendApiKey,
+  resolveDefaultFromEmail,
 } from '@pmg/emails';
 import type { OutstandingReminderEmailProps } from '@pmg/emails';
 import { getSessionOrRedirect, requireRole } from '@/lib/auth';
@@ -230,7 +231,7 @@ async function buildReminderEmailContext(
       ? `${headlineInvoice.documentNumber} (+${pending.invoices.length - 1} more)`
       : headlineInvoice.documentNumber;
 
-  const defaultFrom = process.env.EMAIL_FROM_ADDRESS || DEFAULT_EMAIL_FROM;
+  const defaultFrom = resolveDefaultFromEmail(pending.divisionName);
   const fromName = billingConfig?.salesRepName || 'Playhouse Media Group';
   const fromEmail = resolveFromEmail(billingConfig?.divisionWebsite, defaultFrom);
   const adminCc = resolveDivisionAdminEmail(pending.divisionName, billingConfig?.salesRepEmail ?? null);

@@ -14,7 +14,7 @@ export interface ProjectFilterOptions {
 }
 
 export interface CurrentWorkload {
-  inProgress: ProjectScheduleEntry | null;
+  inProgress: ProjectScheduleEntry[];
   planned: ProjectScheduleEntry[];
 }
 
@@ -299,7 +299,7 @@ export async function getCurrentWorkload(): Promise<CurrentWorkload> {
     );
 
   return {
-    inProgress: entries.find((e) => e.status === 'in_progress') ?? null,
+    inProgress: entries.filter((e) => e.status === 'in_progress'),
     planned: entries.filter((e) => e.status === 'planned'),
   };
 }

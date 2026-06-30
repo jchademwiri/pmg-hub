@@ -47,9 +47,8 @@ import { BillingStatusBadge } from '@/components/billing/billing-status-badge';
 import { DocumentPreview } from '@/components/billing/document-preview';
 import { PrintButton } from '@/components/billing/print-button';
 import { ExportPdfButton } from '@/components/billing/export-pdf-button';
-import { EmailDocumentDialog } from '@/components/billing/email-document-dialog';
+import { UniversalEmailDialog } from '@/components/billing/universal-email-dialog';
 import { PaymentReceiptPreview } from '@/components/billing/payment-receipt-preview';
-import { EmailReceiptDialog } from '@/components/billing/email-receipt-dialog';
 import { ClientEditForm } from '@/components/clients/client-edit-form';
 import { ClientFinancialDashboard } from './client-financial-dashboard';
 import { ClientMetricStrip } from './client-metric-strip';
@@ -1530,7 +1529,7 @@ export function ClientBillingWorkspace({
 
               {selectedDocType === 'invoice' && activeInvoice && (
                 <>
-                  <EmailDocumentDialog
+                  <UniversalEmailDialog
                     documentId={activeInvoice.id}
                     documentNumber={activeInvoice.documentNumber}
                     documentType="invoice"
@@ -1546,7 +1545,7 @@ export function ClientBillingWorkspace({
               )}
               {selectedDocType === 'quote' && activeQuote && (
                 <>
-                  <EmailDocumentDialog
+                  <UniversalEmailDialog
                     documentId={activeQuote.id}
                     documentNumber={activeQuote.documentNumber}
                     documentType="quote"
@@ -1560,9 +1559,10 @@ export function ClientBillingWorkspace({
                 </>
               )}                {selectedDocType === 'payment' && activePayment && (
                   <>
-                    <EmailReceiptDialog
-                      incomeId={activePayment.id}
-                      receiptNumber={generateReceiptNumber(activePayment.id, activePayment.divisionName)}
+                    <UniversalEmailDialog
+                      documentId={activePayment.id}
+                      documentNumber={generateReceiptNumber(activePayment.id, activePayment.divisionName)}
+                      documentType="receipt"
                       defaultRecipientEmail={client.email ?? ''}
                       printableElementId={dialogPrintableElementId}
                       pdfUrl={activePdfUrl}

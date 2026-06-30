@@ -10,7 +10,7 @@ import { DocumentPreview } from '@/components/billing/document-preview';
 import { BillingStatusBadge } from '@/components/billing/billing-status-badge';
 import { BillingTotalsBlock } from '@/components/billing/billing-totals-block';
 import { getInvoiceById, getDivisionBillingSettings, getDb, paymentAllocations, income, sql, desc, eq, getClientStatement, getAllIncome, getOrganisationSettings } from '@pmg/db';
-import { EmailDocumentDialog } from '@/components/billing/email-document-dialog';
+import { UniversalEmailDialog } from '@/components/billing/universal-email-dialog';
 import { issueInvoice, markInvoicePaid, voidInvoice } from '@/app/actions/billing-invoices';
 import { fmtDate, fmtDateTime, formatZAR, getSASTParts, getSASTToday } from '@/lib/format';
 import { buildOrgProps, determineStatementStatus, buildIncomeInvoiceMap, buildTransactionHistory, buildBankingProps } from '@/lib/client-billing-helpers';
@@ -200,7 +200,7 @@ export default async function InvoiceDetailPage({ params }: Props) {
             fileName={`Invoice-${invoice.documentNumber}`}
             pdfUrl={invoicePdfUrl}
           />
-          <EmailDocumentDialog
+          <UniversalEmailDialog
             documentId={invoice.id}
             documentNumber={invoice.documentNumber}
             documentType="invoice"

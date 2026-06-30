@@ -139,10 +139,9 @@ export function TimelineClient({ entries, clients, progressMap = {} }: TimelineC
 
   return (
     <TooltipProvider>
-      <Card>
-      <CardHeader>
-        <div className="flex items-center justify-between">
-          <CardTitle>Schedule Timeline</CardTitle>
+      <div className="space-y-4">
+        <div className="flex items-center justify-between border-b pb-3 border-border">
+          <h3 className="text-sm font-semibold">Schedule Timeline</h3>
           <div className="flex items-center gap-3 text-xs text-muted-foreground">
             <span className="flex items-center gap-1.5">
               <span className="size-2.5 rounded-full bg-sky-500" /> Planned
@@ -158,8 +157,7 @@ export function TimelineClient({ entries, clients, progressMap = {} }: TimelineC
             </span>
           </div>
         </div>
-      </CardHeader>
-      <CardContent>
+        <div>
         <div className="w-full overflow-x-auto scrollbar-thin scrollbar-thumb-muted-foreground/20 relative group">
           <div className="relative pb-4" style={{ minWidth: `${Math.max(totalDays * 8, 800)}px` }}>
             {/* Week headers */}
@@ -376,8 +374,8 @@ export function TimelineClient({ entries, clients, progressMap = {} }: TimelineC
           {/* Subtle fade gradient overlay on the right edge */}
           <div className="absolute right-0 top-0 bottom-0 w-8 bg-gradient-to-l from-card to-transparent pointer-events-none opacity-0 group-hover:opacity-100 transition-opacity" />
         </div>
-      </CardContent>
-    </Card>
+      </div>
+    </div>
     </TooltipProvider>
   )
 }

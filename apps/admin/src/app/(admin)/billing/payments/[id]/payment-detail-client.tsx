@@ -8,7 +8,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Separator } from '@/components/ui/separator';
 import { PaymentReceiptPreview } from '@/components/billing/payment-receipt-preview';
-import { EmailReceiptDialog } from '@/components/billing/email-receipt-dialog';
+import { UniversalEmailDialog } from '@/components/billing/universal-email-dialog';
 import { PrintButton } from '@/components/billing/print-button';
 import { ExportPdfButton } from '@/components/billing/export-pdf-button';
 import { fmtDate, formatZAR } from '@/lib/format';
@@ -524,9 +524,10 @@ export function PaymentDetailClient({
             fileName={`Receipt-${payment.id.slice(0, 8).toUpperCase()}`}
             pdfUrl={pdfUrl}
           />
-          <EmailReceiptDialog
-            incomeId={payment.id}
-            receiptNumber={receiptNumber}
+          <UniversalEmailDialog
+            documentId={payment.id}
+            documentNumber={receiptNumber}
+            documentType="receipt"
             defaultRecipientEmail={client?.email ?? ''}
             pdfUrl={pdfUrl}
           />

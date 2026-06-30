@@ -17,7 +17,7 @@ export default async function SchedulingPage() {
     getAllDivisions(),
   ])
 
-  const totalActive = workload.planned.length + (workload.inProgress ? 1 : 0)
+  const totalActive = workload.planned.length + workload.inProgress.length
   const upcomingEntries = allEntries
     .filter((e) => e.status === 'planned' || e.status === 'in_progress')
     .sort((a, b) => a.closingDate.localeCompare(b.closingDate))
@@ -25,7 +25,7 @@ export default async function SchedulingPage() {
 
   // Fetch progress map for all active and upcoming projects
   const activeIds = [
-    ...(workload.inProgress ? [workload.inProgress.id] : []),
+    ...workload.inProgress.map((p) => p.id),
     ...workload.planned.map((p) => p.id),
     ...upcomingEntries.map((u) => u.id),
   ]

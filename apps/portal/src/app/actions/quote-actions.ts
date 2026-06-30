@@ -1,14 +1,23 @@
 'use server';
 
 import { getPortalSessionOrRedirect } from '@/lib/portal-session';
-import { getDb, quotations, divisionBillingSettings, organisationSettings, eq, and } from '@pmg/db';
+import { getDb, quotations, divisionBillingSettings, organisationSettings, divisions, eq, and } from '@pmg/db';
 import { revalidatePath } from 'next/cache';
-import { createEmailClient, DEFAULT_EMAIL_FROM } from '@pmg/emails';
+import { createEmailClient, DEFAULT_EMAIL_FROM, AdminQuoteAcceptedEmail } from '@pmg/emails';
 import React from 'react';
+import { getClientIp, checkRateLimit } from '@/lib/rate-limit';
 
 export async function acceptQuoteAction(quoteId: string): Promise<{ error?: string }> {
   try {
     const { client, session } = await getPortalSessionOrRedirect();
+    
+    // Rate limit quote responses (max 5 per minute per IP/Client)
+    const ip = await getClientIp();
+    const limitResult = await checkRateLimit(`quote-respond:${client.id}:${ip}`, 5, '60 s');
+    if (!limitResult.success) {
+      return { error: 'Too many requests. Please try again in a minute.' };
+    }
+
     const db = getDb();
 
     // Verify quote ownership
@@ -51,16 +60,32 @@ export async function acceptQuoteAction(quoteId: string): Promise<{ error?: stri
           adminEmail: DEFAULT_EMAIL_FROM,
         });
 
+        const [divRow] = quote.divisionId
+          ? await db
+              .select({ name: divisions.name })
+              .from(divisions)
+              .where(eq(divisions.id, quote.divisionId))
+              .limit(1)
+          : [null];
+
+        const adminUrl = process.env.ADMIN_URL || 'https://control.playhousemedia.co.za';
+        const viewUrl = `${adminUrl}/billing/quotes/${quoteId}`;
+        const totalFormatted = `ZAR ${Number(quote.total).toLocaleString('en-ZA', { minimumFractionDigits: 2 })}`;
+
         await emailClient({
           to: recipient,
           subject: `Quote #${quote.documentNumber} has been ACCEPTED by ${client.businessName || client.name}`,
-          react: React.createElement('div', { style: { fontFamily: 'sans-serif', padding: '20px' } },
-            React.createElement('p', {}, 'Hi there,'),
-            React.createElement('p', {}, `Client `, React.createElement('strong', {}, client.businessName || client.name), ` has accepted Quote #${quote.documentNumber} in the amount of ZAR ${quote.total} on ${new Date().toLocaleString()}.`),
-            React.createElement('p', {}, 'You can view this quote in the PMG Control Center.'),
-            React.createElement('p', {}, 'Best regards,'),
-            React.createElement('p', {}, 'PMG Portal')
-          ),
+          react: React.createElement(AdminQuoteAcceptedEmail, {
+            clientName: client.businessName || client.name,
+            documentNumber: quote.documentNumber,
+            totalAmount: totalFormatted,
+            acceptedAt: new Date().toLocaleString('en-ZA'),
+            viewUrl,
+            companyName: divRow?.name || 'Playhouse Media Group',
+            primaryColor: undefined,
+            websiteUrl: divSettings?.divisionWebsite || undefined,
+            logoUrl: divSettings?.logoUrl || undefined,
+          }),
         });
       } catch (emailErr) {
         console.error('Failed to send quote acceptance email:', emailErr);
@@ -83,6 +108,14 @@ export async function declineQuoteAction(
 ): Promise<{ error?: string }> {
   try {
     const { client, session } = await getPortalSessionOrRedirect();
+
+    // Rate limit quote responses (max 5 per minute per IP/Client)
+    const ip = await getClientIp();
+    const limitResult = await checkRateLimit(`quote-respond:${client.id}:${ip}`, 5, '60 s');
+    if (!limitResult.success) {
+      return { error: 'Too many requests. Please try again in a minute.' };
+    }
+
     const db = getDb();
 
     // Verify quote ownership

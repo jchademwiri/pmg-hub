@@ -64,24 +64,16 @@ export default async function InvoicesPage({ searchParams }: InvoicesPageProps) 
       </div>
 
       {/* Invoices table */}
-      <Card>
-        <CardHeader>
-          <CardTitle>All Invoices</CardTitle>
-          <CardDescription>A list of all invoices across clients</CardDescription>
-        </CardHeader>
-        <CardContent className="p-0 px-6 pb-4">
-          <InvoicesClient
-            entries={result.data}
-            total={result.total}
-            currentPage={currentPage}
-            pageSize={pageSize}
-            divisionId={divisionId}
-            status={status}
-            issueAction={issueInvoice}
-            voidAction={voidInvoice}
-          />
-        </CardContent>
-      </Card>
+      <InvoicesClient
+        entries={result.data}
+        total={result.total}
+        currentPage={currentPage}
+        pageSize={pageSize}
+        divisionId={divisionId}
+        status={status}
+        issueAction={issueInvoice}
+        voidAction={voidInvoice}
+      />
     </div>
   );
 }

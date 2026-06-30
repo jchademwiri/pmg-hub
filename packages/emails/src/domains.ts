@@ -117,6 +117,24 @@ export function resolveFromEmail(
   return domain.startsWith('info.') ? `noreply@${domain}` : `noreply@info.${domain}`;
 }
 
+// ─── Helper: resolve default From email by division name ─────────────────────
+/**
+ * Returns the brand-specific fallback sender email based on the division name
+ * (Tender → TES, Apex → AWS, else PMG).
+ */
+export function resolveDefaultFromEmail(
+  divisionName: string | null | undefined,
+): string {
+  const name = divisionName?.toLowerCase() ?? '';
+  if (name.includes('tender')) {
+    return process.env.TES_FROM_EMAIL || BRAND_FROM_EMAIL.tes;
+  }
+  if (name.includes('apex')) {
+    return process.env.AWS_FROM_EMAIL || BRAND_FROM_EMAIL.aws;
+  }
+  return process.env.EMAIL_FROM_ADDRESS || BRAND_FROM_EMAIL.pmg;
+}
+
 // ─── Helper: resolve Resend API key by division name ─────────────────────────
 /**
  * Returns the correct Resend API key for a division by inspecting its name for
