@@ -221,7 +221,12 @@ export function ProjectsListClient({ projects, progressMap }: ProjectsListClient
                         className="cursor-pointer hover:bg-white/[0.02] border-b border-white/5 transition-colors group"
                       >
                         <TableCell className="font-medium text-white group-hover:text-blue-400 transition-colors">
-                          {p.projectReference}
+                          <div>{p.projectReference}</div>
+                          {p.description && (
+                            <div className="text-xs text-muted-foreground font-normal line-clamp-1 mt-0.5 max-w-md">
+                              {p.description}
+                            </div>
+                          )}
                         </TableCell>
                         <TableCell>
                           <Badge variant="outline" className={`text-[10px] uppercase font-bold tracking-wider px-2 py-0.5 ${status.className}`}>

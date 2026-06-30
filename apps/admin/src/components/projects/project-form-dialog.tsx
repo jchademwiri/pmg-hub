@@ -161,6 +161,18 @@ export function ProjectFormDialog({
               />
             </Field>
 
+            {/* Project Description */}
+            <Field className="sm:col-span-2">
+              <FieldLabel htmlFor="tender-desc">Project Description</FieldLabel>
+              <Textarea
+                id="tender-desc"
+                name="description"
+                placeholder="Brief description of the project scope or goals..."
+                disabled={isPending}
+                className="min-h-[60px]"
+              />
+            </Field>
+
             {/* Closing Date */}
             <Field>
               <FieldLabel htmlFor="tender-closing">

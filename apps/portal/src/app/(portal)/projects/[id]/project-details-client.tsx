@@ -146,7 +146,7 @@ export function ProjectDetailsClient({
       <div className="flex flex-col gap-2 border-b pb-5 border-white/5">
         <Link
           href="/projects"
-          className="flex items-center gap-1.5 text-xs text-muted-foreground hover:text-white transition-colors w-fit"
+          className="flex items-center gap-1.5 text-xs text-muted-foreground hover:text-white transition-colors w-fit cursor-pointer"
         >
           <ArrowLeft className="size-3.5" /> Back to My Projects
         </Link>
@@ -158,6 +158,11 @@ export function ProjectDetailsClient({
             {status.label}
           </Badge>
         </div>
+        {project.description && (
+          <p className="text-sm text-muted-foreground mt-2 max-w-3xl whitespace-pre-line leading-relaxed">
+            {project.description}
+          </p>
+        )}
       </div>
 
       {/* Checklist Workspace (Full Width - Plain Container) */}
@@ -172,7 +177,7 @@ export function ProjectDetailsClient({
             <Button
               variant="outline"
               size="sm"
-              className="h-7 text-xs px-3 border-white/10 text-muted-foreground hover:text-white bg-white/5 hover:bg-white/10"
+              className="h-7 text-xs px-3 border-white/10 text-muted-foreground hover:text-white bg-white/5 hover:bg-white/10 cursor-pointer"
               onClick={() => setMetadataOpen(true)}
             >
               <Info className="size-3.5 mr-1.5" /> Project Details
@@ -183,7 +188,7 @@ export function ProjectDetailsClient({
               <button
                 type="button"
                 onClick={() => setViewMode('board')}
-                className={`px-2.5 py-1 rounded-md transition-all ${
+                className={`px-2.5 py-1 rounded-md transition-all cursor-pointer ${
                   viewMode === 'board'
                     ? 'bg-white/10 text-white shadow-sm'
                     : 'text-muted-foreground hover:text-white'
@@ -194,7 +199,7 @@ export function ProjectDetailsClient({
               <button
                 type="button"
                 onClick={() => setViewMode('list')}
-                className={`px-2.5 py-1 rounded-md transition-all ${
+                className={`px-2.5 py-1 rounded-md transition-all cursor-pointer ${
                   viewMode === 'list'
                     ? 'bg-white/10 text-white shadow-sm'
                     : 'text-muted-foreground hover:text-white'
@@ -274,7 +279,7 @@ export function ProjectDetailsClient({
       <dialog
         ref={dialogRef}
         aria-labelledby="project-metadata-title"
-        className="bg-[#0a0f1d] border border-white/10 rounded-xl max-w-md w-full shadow-2xl overflow-hidden p-0 text-left backdrop:bg-black/60 backdrop:backdrop-blur-sm focus:outline-none open:animate-in open:zoom-in-95 open:fade-in duration-200"
+        className="fixed left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 bg-[#0a0f1d] border border-white/10 rounded-xl max-w-md w-full shadow-2xl overflow-hidden p-0 text-left backdrop:bg-black/60 backdrop:backdrop-blur-sm focus:outline-none open:animate-in open:zoom-in-95 open:fade-in duration-200"
       >
         {/* Header */}
         <div className="flex items-center justify-between p-4 border-b border-white/5">
@@ -284,35 +289,35 @@ export function ProjectDetailsClient({
           <button 
             onClick={() => setMetadataOpen(false)} 
             aria-label="Close dialog"
-            className="text-muted-foreground hover:text-white transition-colors p-1"
+            className="text-white/70 hover:text-red-500 transition-colors p-1 cursor-pointer"
           >
             <X className="size-4" />
           </button>
         </div>
         {/* Content */}
-        <div className="p-5 space-y-4 text-xs text-muted-foreground">
+        <div className="p-5 space-y-4 text-xs text-slate-200">
           {/* Dates Timeline */}
           <div className="space-y-3">
             <div className="flex flex-col gap-1">
-              <span className="text-muted-foreground font-medium">Project Start Date</span>
+              <span className="text-white/80 font-medium">Project Start Date</span>
               <div className="flex items-center gap-1.5 text-white font-semibold">
-                <Calendar className="size-3.5 text-muted-foreground" />
+                <Calendar className="size-3.5 text-white/60" />
                 <span>{formatDate(project.startDate)}</span>
               </div>
             </div>
 
             <div className="flex flex-col gap-1 pt-1 border-t border-white/5">
-              <span className="text-muted-foreground font-medium">Target Completion Date (Internal)</span>
+              <span className="text-white/80 font-medium">Target Completion Date (Internal)</span>
               <div className="flex items-center gap-1.5 text-emerald-400 font-semibold">
-                <Calendar className="size-3.5 text-muted-foreground" />
+                <Calendar className="size-3.5 text-white/60" />
                 <span>{formatDate(project.targetCompletionDate)}</span>
               </div>
             </div>
 
             <div className="flex flex-col gap-1 pt-1 border-t border-white/5">
-              <span className="text-muted-foreground font-medium">Tender Closing Date (Submission)</span>
+              <span className="text-white/80 font-medium">Tender Closing Date (Submission)</span>
               <div className="flex items-center gap-1.5 text-red-400 font-semibold">
-                <Calendar className="size-3.5" />
+                <Calendar className="size-3.5 text-white/60" />
                 <span>{formatDate(project.closingDate)}</span>
               </div>
             </div>
@@ -321,11 +326,11 @@ export function ProjectDetailsClient({
           {/* Effort & Buffer */}
           <div className="grid grid-cols-2 gap-4 border-t border-white/5 pt-3">
             <div className="flex flex-col gap-0.5">
-              <span className="text-muted-foreground font-medium">Planned Effort</span>
+              <span className="text-white/80 font-medium">Planned Effort</span>
               <span className="text-sm font-bold text-white">{project.effortDays} days</span>
             </div>
             <div className="flex flex-col gap-0.5">
-              <span className="text-muted-foreground font-medium">Buffer Margin</span>
+              <span className="text-white/80 font-medium">Buffer Margin</span>
               <span className="text-sm font-bold text-white">{project.bufferDays} days</span>
             </div>
           </div>
@@ -334,16 +339,16 @@ export function ProjectDetailsClient({
           <div className="space-y-3 border-t border-white/5 pt-4">
             {division && (
               <div className="flex justify-between items-center">
-                <span className="text-muted-foreground font-medium">Division</span>
+                <span className="text-white/80 font-medium">Division</span>
                 <span className="font-semibold text-white">{division.name}</span>
               </div>
             )}
 
             <div className="flex justify-between items-center">
-              <span className="text-muted-foreground font-medium">Priority</span>
+              <span className="text-white/80 font-medium">Priority</span>
               <Badge
                 variant="outline"
-                className="capitalize text-[10px] px-2 py-0.5 border-white/10 text-muted-foreground bg-white/5"
+                className="capitalize text-[10px] px-2 py-0.5 border-white/10 text-white bg-white/5"
               >
                 {project.priority}
               </Badge>
@@ -352,17 +357,17 @@ export function ProjectDetailsClient({
             {(project.status === 'completed' || project.status === 'submitted') && (
               <>
                 <div className="flex justify-between items-center border-t border-white/5 pt-3">
-                  <span className="text-muted-foreground font-medium">Actual Effort</span>
+                  <span className="text-white/80 font-medium">Actual Effort</span>
                   <span className="font-semibold text-white">
                     {project.actualEffortDays ? `${project.actualEffortDays} days` : '—'}
                   </span>
                 </div>
 
                 <div className="flex justify-between items-center">
-                  <span className="text-muted-foreground font-medium">Outcome</span>
+                  <span className="text-white/80 font-medium">Outcome</span>
                   <Badge
                     variant="outline"
-                    className="capitalize text-[10px] px-2 py-0.5 font-semibold text-muted-foreground"
+                    className="capitalize text-[10px] px-2 py-0.5 font-semibold text-white border-white/10 bg-white/5"
                   >
                     {project.outcome ?? 'Pending'}
                   </Badge>

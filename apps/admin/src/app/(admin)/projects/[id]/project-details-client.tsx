@@ -194,6 +194,11 @@ export function ProjectDetailsClient({
               Client: <span className="font-medium text-foreground">{client.name}</span>
             </p>
           )}
+          {project.description && (
+            <p className="text-sm text-muted-foreground mt-2 max-w-3xl whitespace-pre-line leading-relaxed">
+              {project.description}
+            </p>
+          )}
         </div>
 
         <div className="flex items-center gap-2">

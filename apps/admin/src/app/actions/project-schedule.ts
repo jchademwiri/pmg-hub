@@ -19,6 +19,7 @@ const ProjectScheduleSchema = z.object({
   clientId: z.string().min(1, 'A client is required.'),
   divisionId: z.string().optional(),
   projectReference: z.string().min(1, 'Tender reference is required.'),
+  description: z.string().optional(),
   closingDate: z.string().min(1, 'Closing date is required.'),
   effortDays: z.coerce.number().int().positive('Effort must be greater than 0.'),
   bufferDays: z.coerce.number().int().min(0).default(5),
@@ -42,6 +43,7 @@ export async function createProjectScheduleEntry(formData: FormData): Promise<{ 
 
     const raw = Object.fromEntries(formData) as Record<string, string>;
     if (raw.divisionId === '__none__') delete raw.divisionId;
+    if (raw.description === '') delete raw.description;
     if (raw.notes === '') delete raw.notes;
     if (raw.blockers === '') delete raw.blockers;
 
@@ -55,6 +57,7 @@ export async function createProjectScheduleEntry(formData: FormData): Promise<{ 
       clientId,
       divisionId,
       projectReference,
+      description,
       closingDate,
       effortDays,
       bufferDays,
@@ -84,6 +87,7 @@ export async function createProjectScheduleEntry(formData: FormData): Promise<{ 
       clientId,
       divisionId: divisionId ?? null,
       projectReference,
+      description: description ?? null,
       closingDate,
       effortDays,
       bufferDays,
@@ -116,6 +120,7 @@ export async function updateProjectScheduleEntry(
 
     const raw = Object.fromEntries(formData) as Record<string, string>;
     if (raw.divisionId === '__none__') delete raw.divisionId;
+    if (raw.description === '') delete raw.description;
     if (raw.notes === '') delete raw.notes;
     if (raw.blockers === '') delete raw.blockers;
 
@@ -128,6 +133,7 @@ export async function updateProjectScheduleEntry(
       clientId,
       divisionId,
       projectReference,
+      description,
       closingDate,
       effortDays,
       bufferDays,
@@ -142,6 +148,7 @@ export async function updateProjectScheduleEntry(
       clientId,
       divisionId: divisionId ?? null,
       projectReference,
+      description: description ?? null,
       closingDate,
       effortDays,
       bufferDays,
