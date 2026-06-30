@@ -6,6 +6,7 @@ import { db, clients, income, eq, quotations, invoices, projectScheduleEntries, 
 import { setClientActive } from '@pmg/db';
 import { createEmailClient, PortalInvitationEmail, DEFAULT_REPLY_TO, resolveResendApiKey, resolveDefaultFromEmail, resolveFromEmail } from '@pmg/emails';
 import React from 'react';
+import { getSessionOrRedirect } from '@/lib/auth';
 
 const ClientSchema = z.object({
   name:         z.string().min(1),
@@ -136,6 +137,8 @@ export async function deleteClient(id: string): Promise<{ error?: string }> {
 
 export async function sendPortalInvitation(clientId: string): Promise<{ error?: string; success?: boolean }> {
   try {
+    await getSessionOrRedirect();
+
     if (!clientId) {
       return { error: 'Client ID is required.' };
     }
@@ -154,6 +157,8 @@ export async function sendPortalInvitation(clientId: string): Promise<{ error?: 
     if (!client.email) {
       return { error: 'Client does not have an email address.' };
     }
+
+    const portalUrl = process.env.PORTAL_URL || 'https://client.playhousemedia.co.za';
 
     // Resolve division branding if available
     let fromName = 'Playhouse Media Group';
@@ -187,7 +192,6 @@ export async function sendPortalInvitation(clientId: string): Promise<{ error?: 
       }
     }
 
-    const portalUrl = process.env.PORTAL_URL || 'http://localhost:3001';
 
     const emailClient = createEmailClient({
       apiKey,

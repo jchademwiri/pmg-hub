@@ -118,7 +118,7 @@ export async function GET(req: Request) {
         reminderType = "overdue";
       }
 
-      const portalBaseUrl = process.env.PORTAL_URL || 'http://localhost:3001';
+      const portalBaseUrl = process.env.PORTAL_URL || 'https://client.playhousemedia.co.za';
       const portalUrl = `${portalBaseUrl}/invoices/${inv.id}`;
 
       // E. Dispatch dynamic notification

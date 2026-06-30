@@ -273,15 +273,17 @@ export function ProjectDetailsClient({
       {/* Project Metadata Modal */}
       <dialog
         ref={dialogRef}
+        aria-labelledby="project-metadata-title"
         className="bg-[#0a0f1d] border border-white/10 rounded-xl max-w-md w-full shadow-2xl overflow-hidden p-0 text-left backdrop:bg-black/60 backdrop:backdrop-blur-sm focus:outline-none open:animate-in open:zoom-in-95 open:fade-in duration-200"
       >
         {/* Header */}
         <div className="flex items-center justify-between p-4 border-b border-white/5">
-          <h3 className="text-sm font-semibold text-white flex items-center gap-2">
+          <h3 id="project-metadata-title" className="text-sm font-semibold text-white flex items-center gap-2">
             <Clock className="size-4 text-blue-400" /> Project Metadata
           </h3>
           <button 
             onClick={() => setMetadataOpen(false)} 
+            aria-label="Close dialog"
             className="text-muted-foreground hover:text-white transition-colors p-1"
           >
             <X className="size-4" />
