@@ -236,6 +236,9 @@ async function buildReminderEmailContext(
   const fromEmail = resolveFromEmail(billingConfig?.divisionWebsite, defaultFrom);
   const adminCc = resolveDivisionAdminEmail(pending.divisionName, billingConfig?.salesRepEmail ?? null);
 
+  const portalBaseUrl = process.env.PORTAL_URL || 'http://localhost:3001';
+  const portalUrl = `${portalBaseUrl}/invoices/${headlineInvoice.id}`;
+
   return {
     pending,
     from: `${fromName} <${fromEmail}>`,
@@ -250,6 +253,7 @@ async function buildReminderEmailContext(
       outstandingAmount: formatMoney(pending.outstandingBalance),
       reminderType: 'overdue',
       personalMessage,
+      portalUrl,
       bankDetails: billingConfig
         ? {
             bankName: billingConfig.bankName || '',

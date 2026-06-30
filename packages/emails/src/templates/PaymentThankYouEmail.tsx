@@ -1,5 +1,6 @@
 import * as React from "react";
 import {
+  Button,
   Heading,
   Section,
   Text,
@@ -13,6 +14,7 @@ export type PaymentThankYouEmailProps = {
   amountPaid: string;
   paymentDate: string;
   paymentDescription?: string;
+  portalUrl?: string;
   allocations: {
     documentNumber: string;
     amount: string;
@@ -25,6 +27,7 @@ const PaymentThankYouEmail = (props: PaymentThankYouEmailProps) => {
     amountPaid,
     paymentDate,
     paymentDescription,
+    portalUrl,
     allocations = [],
     companyName = "Playhouse Media Group",
     primaryColor = "#1d4ed8",
@@ -48,6 +51,21 @@ const PaymentThankYouEmail = (props: PaymentThankYouEmailProps) => {
       <Text className="m-0 mb-[24px] text-[15px] leading-[24px] text-[#334155]">
         Thank you for your business! We have successfully recorded your payment of <strong className="text-brand">{amountPaid}</strong> on <strong>{paymentDate}</strong>. Please find the details of your payment receipt below.
       </Text>
+
+      {portalUrl && (
+        <Section className="mb-[24px] text-center">
+          <Button
+            href={portalUrl}
+            className="box-border rounded-[6px] px-[20px] py-[10px] text-[14px] font-semibold text-white no-underline inline-block"
+            style={{ backgroundColor: primaryColor }}
+          >
+            View Receipt in Portal
+          </Button>
+          <Text className="m-0 mt-[8px] text-[12px] text-center" style={{ color: '#64748B' }}>
+            Note: You only need your email address to access the portal—no password is required.
+          </Text>
+        </Section>
+      )}
 
       {/* Payment Description (if available) */}
       {paymentDescription && (

@@ -356,6 +356,9 @@ export async function recordClientPayment(data: PaymentInput): Promise<{ error?:
             adminEmail: fromEmail,
           });
 
+          const portalBaseUrl = process.env.PORTAL_URL || 'http://localhost:3001';
+          const portalUrl = `${portalBaseUrl}/statements`;
+
           const emailProps = {
             clientName: client.businessName || client.name,
             amountPaid: `R ${Number(data.amount).toLocaleString('en-ZA', { minimumFractionDigits: 2 })}`,
@@ -366,6 +369,7 @@ export async function recordClientPayment(data: PaymentInput): Promise<{ error?:
             primaryColor: '#1d4ed8',
             websiteUrl: billingConfig?.divisionWebsite || undefined,
             logoUrl: billingConfig?.logoUrl || undefined,
+            portalUrl,
           };
 
           const React = await import('react');

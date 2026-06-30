@@ -1,5 +1,6 @@
 import * as React from "react";
 import {
+  Button,
   Heading,
   Section,
   Text,
@@ -17,6 +18,7 @@ export type OutstandingReminderEmailProps = {
   outstandingAmount: string;
   reminderType: "pre-due" | "due-today" | "overdue";
   personalMessage?: string;
+  portalUrl?: string;
   bankDetails?: {
     bankName: string;
     accountName: string;
@@ -35,6 +37,7 @@ const OutstandingReminderEmail = (props: OutstandingReminderEmailProps) => {
     outstandingAmount,
     reminderType,
     personalMessage,
+    portalUrl,
     bankDetails,
     companyName = "Playhouse Media Group",
     primaryColor = "#1d4ed8",
@@ -111,6 +114,21 @@ const OutstandingReminderEmail = (props: OutstandingReminderEmailProps) => {
           {currentConfig.intro}
         </Text>
       </Section>
+
+      {portalUrl && (
+        <Section className="mb-[24px] text-center">
+          <Button
+            href={portalUrl}
+            className="box-border rounded-[6px] px-[20px] py-[10px] text-[14px] font-semibold text-white no-underline inline-block"
+            style={{ backgroundColor: primaryColor }}
+          >
+            View & Pay in Portal
+          </Button>
+          <Text className="m-0 mt-[8px] text-[12px] text-center" style={{ color: '#64748B' }}>
+            Note: You only need your email address to access the portal—no password is required.
+          </Text>
+        </Section>
+      )}
 
       {/* Invoice Summary Block */}
       <Section className="mb-[24px] rounded-[8px] border border-solid border-[#E2E8F0] p-[20px]">

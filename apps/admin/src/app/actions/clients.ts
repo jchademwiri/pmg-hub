@@ -157,7 +157,7 @@ export async function sendPortalInvitation(clientId: string): Promise<{ error?: 
 
     // Resolve division branding if available
     let fromName = 'Playhouse Media Group';
-    let fromEmail = 'noreply@playhousemedia.co.za';
+    let fromEmail = 'noreply@info.playhousemedia.co.za';
     let divisionName = 'Playhouse Media Group';
     let websiteUrl: string | undefined;
     let logoUrl: string | undefined;
