@@ -2,6 +2,7 @@
 
 import * as React from 'react';
 import { useRouter } from 'next/navigation';
+import Link from 'next/link';
 import { Search, X, Filter, Archive, Trash2, CheckSquare, ChevronDown } from 'lucide-react';
 import { toast } from 'sonner';
 import type { ProjectScheduleEntry } from '@pmg/db';
@@ -39,7 +40,6 @@ import { bulkArchiveTenders, bulkDeleteTenders } from '@/app/actions/project-sch
 import { ProjectStatusBadge, getNextStatuses } from '@/components/projects/project-status-badge';
 import { ProjectRiskBadge } from '@/components/projects/project-risk-badge';
 import { ConfirmDialog } from '@/components/ui/confirm-dialog';
-import { ProjectEditDialog } from '@/components/projects/project-edit-dialog';
 
 interface ClientSummary {
   id: string;
@@ -65,9 +65,6 @@ interface ProjectListClientProps {
 export function ProjectListClient({ entries, clients, divisions, progressMap = {} }: ProjectListClientProps) {
   const router = useRouter();
   const clientMap = React.useMemo(() => new Map(clients.map((c) => [c.id, c])), [clients]);
-
-  // Edit dialog state
-  const [editingTender, setEditingTender] = React.useState<ProjectScheduleEntry | null>(null);
 
   // Status Transition
   const [isPending, setIsPending] = React.useState<string | null>(null);
@@ -602,9 +599,11 @@ export function ProjectListClient({ entries, clients, divisions, progressMap = {
                             ))}
                             <DropdownMenuItem
                               className="text-xs"
-                              onClick={() => setEditingTender(entry)}
+                              asChild
                             >
-                              Edit project
+                              <Link href={`/projects/${entry.id}/edit`}>
+                                Edit project
+                              </Link>
                             </DropdownMenuItem>
                             {entry.status !== 'submitted' && entry.status !== 'cancelled' && (
                               <DropdownMenuItem
@@ -625,15 +624,6 @@ export function ProjectListClient({ entries, clients, divisions, progressMap = {
           )}
         </CardContent>
       </Card>
-      {editingTender && (
-        <ProjectEditDialog
-          tender={editingTender}
-          clients={clients}
-          divisions={divisions}
-          onClose={() => setEditingTender(null)}
-          showTrigger={false}
-        />
-      )}
     </>
   );
 }

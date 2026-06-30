@@ -33,7 +33,6 @@ import { Badge } from '@/components/ui/badge';
 import type { ProjectScheduleEntry } from '@pmg/db';
 import { ProjectStatusBadge } from '@/components/projects/project-status-badge';
 import { ProjectRiskBadge } from '@/components/projects/project-risk-badge';
-import { ProjectEditDialog } from '@/components/projects/project-edit-dialog';
 import { TaskBoard } from '@/components/projects/task-board';
 import { TaskListView } from '@/components/projects/task-list-view';
 import {
@@ -202,8 +201,10 @@ export function ProjectDetailsClient({
         </div>
 
         <div className="flex items-center gap-2">
-          <Button variant="outline" size="sm" onClick={() => setEditDialogOpen(true)}>
-            <Edit2 className="size-4 mr-2" /> Edit Details
+          <Button variant="outline" size="sm" asChild>
+            <Link href={`/projects/${project.id}/edit`}>
+              <Edit2 className="size-4 mr-2" /> Edit Details
+            </Link>
           </Button>
         </div>
       </div>
@@ -431,16 +432,6 @@ export function ProjectDetailsClient({
         </DialogContent>
       </Dialog>
 
-      {/* Edit Details Dialog Modal */}
-      {editDialogOpen && (
-        <ProjectEditDialog
-          tender={project}
-          clients={clients}
-          divisions={divisions}
-          onClose={() => setEditDialogOpen(false)}
-          showTrigger={false}
-        />
-      )}
     </div>
   );
 }

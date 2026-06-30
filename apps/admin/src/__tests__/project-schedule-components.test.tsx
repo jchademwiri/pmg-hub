@@ -87,14 +87,14 @@ const mockToggleItem = vi.fn()
 const mockUpdateItemText = vi.fn()
 
 vi.mock('@/app/actions/project-progress', () => ({
-  getProjectChecklistAction: (...args: any[]) => mockGetChecklist(...args),
-  addProgressSectionAction: (...args: any[]) => mockAddSection(...args),
-  deleteProgressSectionAction: (...args: any[]) => mockDeleteSection(...args),
-  renameProgressSectionAction: (...args: any[]) => mockRenameSection(...args),
-  addProgressItemAction: (...args: any[]) => mockAddItem(...args),
-  deleteProgressItemAction: (...args: any[]) => mockDeleteItem(...args),
-  toggleProgressItemAction: (...args: any[]) => mockToggleItem(...args),
-  updateProgressItemTextAction: (...args: any[]) => mockUpdateItemText(...args),
+  getProjectChecklistAction: (projectId: string) => mockGetChecklist(),
+  addProgressSectionAction: (projectId: string, title: string) => mockAddSection(projectId, title),
+  deleteProgressSectionAction: (sectionId: string) => mockDeleteSection(sectionId),
+  renameProgressSectionAction: (sectionId: string, title: string) => mockRenameSection(sectionId, title),
+  addProgressItemAction: (sectionId: string, task: string) => mockAddItem(sectionId, task),
+  deleteProgressItemAction: (itemId: string) => mockDeleteItem(itemId),
+  toggleProgressItemAction: (itemId: string, isCompleted: boolean) => mockToggleItem(itemId, isCompleted),
+  updateProgressItemTextAction: (itemId: string, task: string) => mockUpdateItemText(itemId, task),
 }))
 
 // ─── Test data ────────────────────────────────────────────────────────────────
@@ -244,6 +244,7 @@ describe('ProjectEditDialog', () => {
     startDate: '2026-07-01', targetCompletionDate: '2026-07-04',
     status: 'planned' as const, priority: 'high' as const,
     notes: 'Original notes', blockers: null, outcome: null,
+    description: null,
     createdBy: 'user-1', actualEffortDays: null,
     actualCompletionDate: null, submissionDate: null,
     sortOrder: null,

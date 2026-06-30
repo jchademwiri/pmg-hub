@@ -46,10 +46,10 @@ function deriveLabel(pathname: string): string {
 
 export function TopNav() {
   const pathname = usePathname()
-  const { total, totalVariant } = usePageHeader()
+  const { total, totalVariant, customLabel } = usePageHeader()
   // Two-level breadcrumb: parent > child
   const parent = getParentGroup(pathname)
-  const label = getExactLabel(pathname) ?? deriveLabel(pathname)
+  const label = customLabel ?? getExactLabel(pathname) ?? deriveLabel(pathname)
 
   const totalColor = {
     green:   'text-green-500',

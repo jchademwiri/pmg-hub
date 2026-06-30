@@ -16,14 +16,6 @@ export default function SchedulingLayout({ children }: { children: React.ReactNo
     { label: 'Timeline', href: '/projects/timeline' },
   ];
 
-  const handleNewProject = () => {
-    if (pathname === '/projects') {
-      window.dispatchEvent(new CustomEvent('open-new-project-dialog'));
-    } else {
-      router.push('/projects?new=true');
-    }
-  };
-
   return (
     <div className="flex flex-col gap-6">
       {/* Page Header */}
@@ -34,9 +26,11 @@ export default function SchedulingLayout({ children }: { children: React.ReactNo
             Plan, track, and manage project preparation deadlines
           </p>
         </div>
-        <Button size="sm" onClick={handleNewProject} className="self-end sm:self-auto">
-          <Plus className="size-4" />
-          New Project
+        <Button size="sm" asChild className="self-end sm:self-auto">
+          <Link href="/projects/new">
+            <Plus className="size-4 mr-1" />
+            New Project
+          </Link>
         </Button>
       </div>
 
