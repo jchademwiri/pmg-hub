@@ -113,16 +113,27 @@ export function ProjectDetailsClient({
   const [blockers, setBlockers] = React.useState(project.blockers || '');
   const [savingNotes, setSavingNotes] = React.useState(false);
 
-  const checklist: ProgressSection[] = React.useMemo(() => {
-    return initialChecklist.map((s) => ({
-      ...s,
-      status: s.status as any,
-      items: s.items.map((i: any) => ({
-        ...i,
-        completedAt: i.completedAt ? new Date(i.completedAt) : null,
-      })),
-    }));
+  const [checklist, setChecklist] = React.useState<ProgressSection[]>([]);
+
+  React.useEffect(() => {
+    setChecklist(
+      initialChecklist.map((s) => ({
+        ...s,
+        status: s.status as any,
+        items: s.items.map((i: any) => ({
+          ...i,
+          completedAt: i.completedAt ? new Date(i.completedAt) : null,
+        })),
+      }))
+    );
   }, [initialChecklist]);
+
+  const handleProgressChange = React.useCallback(
+    (_completed: number, _total: number, sections: ProgressSection[]) => {
+      setChecklist(sections);
+    },
+    []
+  );
 
   const client = clients.find((c) => c.id === project.clientId);
   const division = divisions.find((d) => d.id === project.divisionId);
@@ -253,6 +264,7 @@ export function ProjectDetailsClient({
           <TaskBoard
             projectId={project.id}
             initialSections={checklist}
+            onProgressChange={handleProgressChange}
           />
         ) : (
           <TaskListView

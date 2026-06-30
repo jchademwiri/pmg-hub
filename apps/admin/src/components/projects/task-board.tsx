@@ -54,7 +54,7 @@ interface MainTask {
 interface TaskBoardProps {
   projectId: string;
   initialSections: MainTask[];
-  onProgressChange?: (completed: number, total: number) => void;
+  onProgressChange?: (completed: number, total: number, sections: MainTask[]) => void;
 }
 
 export function TaskBoard({ projectId, initialSections, onProgressChange }: TaskBoardProps) {
@@ -95,7 +95,7 @@ export function TaskBoard({ projectId, initialSections, onProgressChange }: Task
     if (onProgressChange) {
       const total = sections.reduce((acc, s) => acc + s.items.length, 0);
       const completed = sections.reduce((acc, s) => acc + s.items.filter(i => i.isCompleted).length, 0);
-      onProgressChange(completed, total);
+      onProgressChange(completed, total, sections);
     }
   }, [sections, onProgressChange]);
 
@@ -121,7 +121,7 @@ export function TaskBoard({ projectId, initialSections, onProgressChange }: Task
                 status: action.targetStatus,
                 items: action.targetStatus === 'completed'
                   ? s.items.map(i => ({ ...i, isCompleted: true, completedAt: new Date() }))
-                  : s.items
+                  : s.items.map(i => ({ ...i, isCompleted: false, completedAt: null }))
               };
             }
             return s;
@@ -238,7 +238,7 @@ export function TaskBoard({ projectId, initialSections, onProgressChange }: Task
               status: targetStatus,
               items: targetStatus === 'completed' 
                 ? s.items.map(i => ({ ...i, isCompleted: true, completedAt: new Date() })) 
-                : s.items
+                : s.items.map(i => ({ ...i, isCompleted: false, completedAt: null }))
             };
           }
           return s;

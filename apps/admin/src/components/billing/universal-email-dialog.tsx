@@ -240,6 +240,8 @@ export function UniversalEmailDialog({
         result = await sendReceiptEmailAction({
           incomeId: documentId,
           recipientEmail: recipient,
+          cc: cc || undefined,
+          bcc: bcc || undefined,
           subject,
           personalMessage: message || undefined,
           base64Pdf: pdfBase64,
@@ -250,6 +252,8 @@ export function UniversalEmailDialog({
           documentId,
           documentType,
           recipientEmail: recipient,
+          cc: cc || undefined,
+          bcc: bcc || undefined,
           subject,
           personalMessage: message || undefined,
           base64Pdf: pdfBase64,

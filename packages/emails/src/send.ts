@@ -14,6 +14,7 @@ export interface EmailPayload {
   react: React.ReactElement;
   replyTo?: string;
   cc?: string | string[];
+  bcc?: string | string[];
   attachments?: {
     filename?: string | false;
     content?: string | Buffer;
@@ -47,6 +48,7 @@ export async function sendEmail(
         attachments: payload.attachments,
         replyTo: payload.replyTo,
         cc: payload.cc,
+        bcc: payload.bcc,
       },
       payload.idempotencyKey ? { idempotencyKey: payload.idempotencyKey } : undefined,
     );

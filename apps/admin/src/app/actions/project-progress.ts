@@ -152,45 +152,47 @@ export async function deleteProgressItemAction(
       return { success: false, error: 'Item ID is required.' };
     }
 
-    // Get the item first to know its sectionId
-    const [item] = await db
-      .select()
-      .from(projectProgressItems)
-      .where(eq(projectProgressItems.id, itemId))
-      .limit(1);
+    await db.transaction(async (tx) => {
+      // Get the item first to know its sectionId
+      const [item] = await tx
+        .select()
+        .from(projectProgressItems)
+        .where(eq(projectProgressItems.id, itemId))
+        .limit(1);
 
-    if (!item) {
-      return { success: false, error: 'Item not found.' };
-    }
+      if (!item) {
+        throw new Error('Item not found.');
+      }
 
-    const sectionId = item.sectionId;
+      const sectionId = item.sectionId;
 
-    // Delete the item
-    await db.delete(projectProgressItems).where(eq(projectProgressItems.id, itemId));
+      // Delete the item
+      await tx.delete(projectProgressItems).where(eq(projectProgressItems.id, itemId));
 
-    // Fetch remaining items
-    const remainingItems = await db
-      .select()
-      .from(projectProgressItems)
-      .where(eq(projectProgressItems.sectionId, sectionId));
+      // Fetch remaining items
+      const remainingItems = await tx
+        .select()
+        .from(projectProgressItems)
+        .where(eq(projectProgressItems.sectionId, sectionId));
 
-    const totalCount = remainingItems.length;
-    const completedCount = remainingItems.filter((i) => i.isCompleted).length;
+      const totalCount = remainingItems.length;
+      const completedCount = remainingItems.filter((i) => i.isCompleted).length;
 
-    let nextStatus: 'backlog' | 'in_progress' | 'completed' = 'in_progress';
+      let nextStatus: 'backlog' | 'in_progress' | 'completed' = 'in_progress';
 
-    if (totalCount === 0) {
-      nextStatus = 'backlog';
-    } else if (completedCount === totalCount) {
-      nextStatus = 'completed';
-    } else if (completedCount === 0) {
-      nextStatus = 'backlog';
-    }
+      if (totalCount === 0) {
+        nextStatus = 'backlog';
+      } else if (completedCount === totalCount) {
+        nextStatus = 'completed';
+      } else if (completedCount === 0) {
+        nextStatus = 'backlog';
+      }
 
-    await db
-      .update(projectProgressSections)
-      .set({ status: nextStatus, updatedAt: new Date() })
-      .where(eq(projectProgressSections.id, sectionId));
+      await tx
+        .update(projectProgressSections)
+        .set({ status: nextStatus, updatedAt: new Date() })
+        .where(eq(projectProgressSections.id, sectionId));
+    });
 
     revalidatePath('/projects');
     return { success: true };
@@ -209,44 +211,52 @@ export async function toggleProgressItemAction(
       return { success: false, error: 'Item ID is required.' };
     }
 
-    // 1. Update the progress item
-    const [updatedItem] = await db
-      .update(projectProgressItems)
-      .set({
-        isCompleted,
-        completedAt: isCompleted ? new Date() : null,
-        updatedAt: new Date(),
-      })
-      .where(eq(projectProgressItems.id, itemId))
-      .returning();
+    const updatedItem = await db.transaction(async (tx) => {
+      // 1. Update the progress item
+      const [item] = await tx
+        .update(projectProgressItems)
+        .set({
+          isCompleted,
+          completedAt: isCompleted ? new Date() : null,
+          updatedAt: new Date(),
+        })
+        .where(eq(projectProgressItems.id, itemId))
+        .returning();
 
-    const sectionId = updatedItem.sectionId;
+      if (!item) {
+        throw new Error('Item not found.');
+      }
 
-    // 2. Get all progress items in this section to determine section status
-    const allItems = await db
-      .select()
-      .from(projectProgressItems)
-      .where(eq(projectProgressItems.sectionId, sectionId));
+      const sectionId = item.sectionId;
 
-    const totalCount = allItems.length;
-    const completedCount = allItems.filter((i) => i.isCompleted).length;
+      // 2. Get all progress items in this section to determine section status
+      const allItems = await tx
+        .select()
+        .from(projectProgressItems)
+        .where(eq(projectProgressItems.sectionId, sectionId));
 
-    let nextStatus: 'backlog' | 'in_progress' | 'completed' = 'in_progress';
+      const totalCount = allItems.length;
+      const completedCount = allItems.filter((i) => i.isCompleted).length;
 
-    if (completedCount === totalCount && totalCount > 0) {
-      nextStatus = 'completed';
-    } else if (completedCount === 0) {
-      nextStatus = 'backlog';
-    }
+      let nextStatus: 'backlog' | 'in_progress' | 'completed' = 'in_progress';
 
-    // 3. Update the section status
-    await db
-      .update(projectProgressSections)
-      .set({
-        status: nextStatus,
-        updatedAt: new Date(),
-      })
-      .where(eq(projectProgressSections.id, sectionId));
+      if (completedCount === totalCount && totalCount > 0) {
+        nextStatus = 'completed';
+      } else if (completedCount === 0) {
+        nextStatus = 'backlog';
+      }
+
+      // 3. Update the section status
+      await tx
+        .update(projectProgressSections)
+        .set({
+          status: nextStatus,
+          updatedAt: new Date(),
+        })
+        .where(eq(projectProgressSections.id, sectionId));
+
+      return item;
+    });
 
     revalidatePath('/projects');
     return { success: true, item: updatedItem };
@@ -288,34 +298,42 @@ export async function updateProgressSectionStatusAction(
       return { success: false, error: 'Section ID and status are required.' };
     }
 
-    // 1. Update the section status
-    const [updatedSection] = await db
-      .update(projectProgressSections)
-      .set({ status, updatedAt: new Date() })
-      .where(eq(projectProgressSections.id, sectionId))
-      .returning();
+    const updatedSection = await db.transaction(async (tx) => {
+      // 1. Update the section status
+      const [section] = await tx
+        .update(projectProgressSections)
+        .set({ status, updatedAt: new Date() })
+        .where(eq(projectProgressSections.id, sectionId))
+        .returning();
 
-    // 2. If moved to completed, mark all sub-tasks complete
-    if (status === 'completed') {
-      await db
-        .update(projectProgressItems)
-        .set({
-          isCompleted: true,
-          completedAt: new Date(),
-          updatedAt: new Date(),
-        })
-        .where(eq(projectProgressItems.sectionId, sectionId));
-    } else if (status === 'in_progress' || status === 'backlog') {
-      // Revert out of Completed: uncheck sub-tasks too
-      await db
-        .update(projectProgressItems)
-        .set({
-          isCompleted: false,
-          completedAt: null,
-          updatedAt: new Date(),
-        })
-        .where(eq(projectProgressItems.sectionId, sectionId));
-    }
+      if (!section) {
+        throw new Error('Section not found.');
+      }
+
+      // 2. If moved to completed, mark all sub-tasks complete
+      if (status === 'completed') {
+        await tx
+          .update(projectProgressItems)
+          .set({
+            isCompleted: true,
+            completedAt: new Date(),
+            updatedAt: new Date(),
+          })
+          .where(eq(projectProgressItems.sectionId, sectionId));
+      } else if (status === 'in_progress' || status === 'backlog') {
+        // Revert out of Completed: uncheck sub-tasks too
+        await tx
+          .update(projectProgressItems)
+          .set({
+            isCompleted: false,
+            completedAt: null,
+            updatedAt: new Date(),
+          })
+          .where(eq(projectProgressItems.sectionId, sectionId));
+      }
+
+      return section;
+    });
 
     revalidatePath('/projects');
     return { success: true, section: updatedSection };

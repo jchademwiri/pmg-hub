@@ -41,11 +41,21 @@ export async function checkRateLimit(
     prefix: "@upstash/ratelimit",
   });
 
-  const result = await ratelimit.limit(identifier);
-  return {
-    success: result.success,
-    limit: result.limit,
-    remaining: result.remaining,
-    reset: result.reset,
-  };
+  try {
+    const result = await ratelimit.limit(identifier);
+    return {
+      success: result.success,
+      limit: result.limit,
+      remaining: result.remaining,
+      reset: result.reset,
+    };
+  } catch (error) {
+    console.error("Rate limiting failed, falling back to fail-open:", error);
+    return {
+      success: true,
+      limit,
+      remaining: limit,
+      reset: Date.now(),
+    };
+  }
 }

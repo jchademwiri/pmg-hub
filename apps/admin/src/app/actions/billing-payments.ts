@@ -220,6 +220,13 @@ export async function recordClientPayment(data: PaymentInput): Promise<{ error?:
       for (const alloc of data.allocations) {
         if (alloc.amount <= 0) continue;
 
+        // Lock the invoice row first to serialize concurrent updates
+        const [invoiceRow] = await tx
+          .select({ total: invoices.total })
+          .from(invoices)
+          .where(eq(invoices.id, alloc.invoiceId))
+          .for('update');
+
         // Insert allocation link
         await tx.insert(paymentAllocations).values({
           incomeId: incomeRow.id,
@@ -232,11 +239,6 @@ export async function recordClientPayment(data: PaymentInput): Promise<{ error?:
           .select({ sum: sql<string>`coalesce(sum(${paymentAllocations.amount}), 0)` })
           .from(paymentAllocations)
           .where(eq(paymentAllocations.invoiceId, alloc.invoiceId));
-
-        const [invoiceRow] = await tx
-          .select({ total: invoices.total })
-          .from(invoices)
-          .where(eq(invoices.id, alloc.invoiceId));
 
         if (invoiceRow) {
           const invoiceTotal = parseFloat(invoiceRow.total);
