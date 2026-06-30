@@ -113,7 +113,16 @@ export function ProjectDetailsClient({
   const [blockers, setBlockers] = React.useState(project.blockers || '');
   const [savingNotes, setSavingNotes] = React.useState(false);
 
-  const [checklist, setChecklist] = React.useState<ProgressSection[]>([]);
+  const [checklist, setChecklist] = React.useState<ProgressSection[]>(() =>
+    initialChecklist.map((s) => ({
+      ...s,
+      status: s.status as any,
+      items: s.items.map((i: any) => ({
+        ...i,
+        completedAt: i.completedAt ? new Date(i.completedAt) : null,
+      })),
+    }))
+  );
 
   React.useEffect(() => {
     setChecklist(

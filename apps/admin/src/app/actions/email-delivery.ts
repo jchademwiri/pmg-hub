@@ -26,12 +26,26 @@ const CustomAttachmentSchema = z.object({
   content: z.string(), // base64 string
 });
 
+const CommaSeparatedEmails = z.string()
+  .optional()
+  .transform((val) => {
+    if (!val || !val.trim()) return undefined;
+    return val.split(',').map(email => email.trim()).filter(Boolean).join(', ');
+  })
+  .refine((val) => {
+    if (val === undefined) return true;
+    const emails = val.split(', ');
+    return emails.every((email) => z.string().email().safeParse(email).success);
+  }, {
+    message: "Invalid email address in CC/BCC list.",
+  });
+
 const EmailPayloadSchema = z.object({
   documentId: z.string().uuid(),
   documentType: z.enum(['invoice', 'quote']),
   recipientEmail: z.string().email(),
-  cc: z.string().optional(),
-  bcc: z.string().optional(),
+  cc: CommaSeparatedEmails,
+  bcc: CommaSeparatedEmails,
   subject: z.string().min(3),
   personalMessage: z.string().optional(),
   base64Pdf: z.string().min(100),

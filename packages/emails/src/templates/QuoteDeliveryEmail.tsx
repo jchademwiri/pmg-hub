@@ -154,7 +154,9 @@ const QuoteDeliveryEmail = (props: QuoteDeliveryEmailProps) => {
       )}
 
       <Text className="m-0 mb-[24px] text-[14px] leading-[22px] text-[#475569]">
-        To accept this quotation, please sign the attached copy and return it to us, or reply directly to this email to discuss any adjustments.
+        {portalUrl
+          ? "To accept this quotation, please click the button above to view and approve it in your client portal, or reply directly to this email to discuss any adjustments."
+          : "To accept this quotation, please sign the attached copy and return it to us, or reply directly to this email to discuss any adjustments."}
       </Text>
 
       {/* Footer Sign-off */}

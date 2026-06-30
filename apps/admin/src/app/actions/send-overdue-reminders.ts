@@ -237,7 +237,10 @@ async function buildReminderEmailContext(
   const adminCc = resolveDivisionAdminEmail(pending.divisionName, billingConfig?.salesRepEmail ?? null);
 
   const portalBaseUrl = process.env.PORTAL_URL || 'http://localhost:3001';
-  const portalUrl = `${portalBaseUrl}/invoices/${headlineInvoice.id}`;
+  const portalUrl =
+    pending.invoices.length > 1
+      ? `${portalBaseUrl}/statements`
+      : `${portalBaseUrl}/invoices/${headlineInvoice.id}`;
 
   return {
     pending,

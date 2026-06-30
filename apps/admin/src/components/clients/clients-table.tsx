@@ -173,13 +173,19 @@ function PortalStatusCell({ client }: { client: ClientWithIncomeCount }) {
       return
     }
     setIsSending(true)
-    const res = await sendPortalInvitation(client.id)
-    setIsSending(false)
-    if (res.error) {
-      toast.error(res.error)
-    } else {
-      toast.success(client.portalInvitationSentAt ? 'Portal invitation resent!' : 'Portal invitation sent!')
-      router.refresh()
+    try {
+      const res = await sendPortalInvitation(client.id)
+      if (res.error) {
+        toast.error(res.error)
+      } else {
+        toast.success(client.portalInvitationSentAt ? 'Portal invitation resent!' : 'Portal invitation sent!')
+        router.refresh()
+      }
+    } catch (err: any) {
+      console.error('handleInvite failed:', err)
+      toast.error(err.message || 'An unexpected error occurred.')
+    } finally {
+      setIsSending(false)
     }
   }
 
