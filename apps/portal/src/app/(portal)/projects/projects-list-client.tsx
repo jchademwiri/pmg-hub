@@ -179,10 +179,10 @@ export function ProjectsListClient({ projects, progressMap }: ProjectsListClient
       <Tabs defaultValue="list" className="w-full">
         <div className="flex items-center justify-between border-b border-white/5 pb-3">
           <TabsList className="bg-[#0a0f1d] border border-white/5 p-1">
-            <TabsTrigger value="list" className="gap-1.5 text-xs data-state=active:bg-blue-500/10 data-state=active:text-blue-400">
+            <TabsTrigger value="list" className="gap-1.5 text-xs data-state=active:bg-blue-500/10 data-state=active:text-blue-400 cursor-pointer">
               <List className="size-3.5" /> List View
             </TabsTrigger>
-            <TabsTrigger value="timeline" className="gap-1.5 text-xs data-state=active:bg-blue-500/10 data-state=active:text-blue-400">
+            <TabsTrigger value="timeline" className="gap-1.5 text-xs data-state=active:bg-blue-500/10 data-state=active:text-blue-400 cursor-pointer">
               <CalendarDays className="size-3.5" /> Timeline
             </TabsTrigger>
           </TabsList>

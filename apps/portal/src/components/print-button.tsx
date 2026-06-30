@@ -51,7 +51,7 @@ export function DocumentActions({ type, id }: Omit<DocumentActionsProps, 'label'
       <button
         type="button"
         onClick={handleDownload}
-        className="inline-flex items-center gap-2 px-3.5 py-1.5 text-xs font-semibold text-white bg-blue-600 hover:bg-blue-500 rounded-lg shadow-md hover:shadow-lg transition-all active:scale-[0.98]"
+        className="inline-flex items-center gap-2 px-3.5 py-1.5 text-xs font-semibold text-white bg-blue-600 hover:bg-blue-500 rounded-lg shadow-md hover:shadow-lg transition-all active:scale-[0.98] cursor-pointer"
       >
         <Download className="size-3.5" />
         <span>Download PDF</span>
@@ -61,7 +61,7 @@ export function DocumentActions({ type, id }: Omit<DocumentActionsProps, 'label'
       <button
         type="button"
         onClick={handlePrint}
-        className="inline-flex items-center gap-2 px-3.5 py-1.5 text-xs font-semibold text-white bg-white/5 hover:bg-white/10 border border-white/10 rounded-lg transition-all active:scale-[0.98]"
+        className="inline-flex items-center gap-2 px-3.5 py-1.5 text-xs font-semibold text-white bg-white/5 hover:bg-white/10 border border-white/10 rounded-lg transition-all active:scale-[0.98] cursor-pointer"
       >
         <Printer className="size-3.5" />
         <span>Print</span>
@@ -76,7 +76,7 @@ export function PrintButton({ type, id, label }: DocumentActionsProps) {
       <button
         type="button"
         onClick={() => printPdf(type, id)}
-        className="inline-flex items-center gap-2 px-3.5 py-1.5 text-xs font-medium text-white bg-blue-600 hover:bg-blue-500 rounded-lg shadow-md transition-all active:scale-[0.98]"
+        className="inline-flex items-center gap-2 px-3.5 py-1.5 text-xs font-medium text-white bg-blue-600 hover:bg-blue-500 rounded-lg shadow-md transition-all active:scale-[0.98] cursor-pointer"
       >
         <Printer className="size-3.5" />
         <span>{label}</span>

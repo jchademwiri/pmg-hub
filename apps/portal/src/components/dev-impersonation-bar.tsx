@@ -70,7 +70,7 @@ export function DevImpersonationBar({
       <select
         value={selectedId}
         onChange={(e) => handleImpersonate(e.target.value)}
-        className="h-8 rounded-lg border border-white/10 bg-white/[0.05] px-2.5 text-xs text-white outline-none focus:border-blue-500/50"
+        className="h-8 rounded-lg border border-white/10 bg-white/[0.05] px-2.5 text-xs text-white outline-none focus:border-blue-500/50 cursor-pointer"
       >
         {clients.map((c) => (
           <option key={c.id} value={c.id} className="bg-[#0a0f1d] text-white text-xs">
@@ -82,7 +82,7 @@ export function DevImpersonationBar({
       <button
         type="button"
         onClick={handleClear}
-        className="h-8 rounded-lg bg-red-500/15 border border-red-500/20 px-3 hover:bg-red-500/25 text-red-400 transition-all font-medium"
+        className="h-8 rounded-lg bg-red-500/15 border border-red-500/20 px-3 hover:bg-red-500/25 text-red-400 transition-all font-medium cursor-pointer"
       >
         Reset
       </button>
