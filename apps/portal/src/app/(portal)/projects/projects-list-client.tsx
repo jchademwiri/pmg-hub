@@ -179,10 +179,10 @@ export function ProjectsListClient({ projects, progressMap }: ProjectsListClient
       <Tabs defaultValue="list" className="w-full">
         <div className="flex items-center justify-between border-b border-white/5 pb-3">
           <TabsList className="bg-[#0a0f1d] border border-white/5 p-1">
-            <TabsTrigger value="list" className="gap-1.5 text-xs data-state=active:bg-blue-500/10 data-state=active:text-blue-400">
+            <TabsTrigger value="list" className="gap-1.5 text-xs data-state=active:bg-blue-500/10 data-state=active:text-blue-400 cursor-pointer">
               <List className="size-3.5" /> List View
             </TabsTrigger>
-            <TabsTrigger value="timeline" className="gap-1.5 text-xs data-state=active:bg-blue-500/10 data-state=active:text-blue-400">
+            <TabsTrigger value="timeline" className="gap-1.5 text-xs data-state=active:bg-blue-500/10 data-state=active:text-blue-400 cursor-pointer">
               <CalendarDays className="size-3.5" /> Timeline
             </TabsTrigger>
           </TabsList>
@@ -221,7 +221,12 @@ export function ProjectsListClient({ projects, progressMap }: ProjectsListClient
                         className="cursor-pointer hover:bg-white/[0.02] border-b border-white/5 transition-colors group"
                       >
                         <TableCell className="font-medium text-white group-hover:text-blue-400 transition-colors">
-                          {p.projectReference}
+                          <div>{p.projectReference}</div>
+                          {p.description && (
+                            <div className="text-xs text-muted-foreground font-normal line-clamp-1 mt-0.5 max-w-md">
+                              {p.description}
+                            </div>
+                          )}
                         </TableCell>
                         <TableCell>
                           <Badge variant="outline" className={`text-[10px] uppercase font-bold tracking-wider px-2 py-0.5 ${status.className}`}>

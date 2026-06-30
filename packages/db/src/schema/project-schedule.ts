@@ -55,6 +55,7 @@ export const projectScheduleEntries = pgTable(
       onDelete: "restrict",
     }),
     projectReference: text("tender_reference").notNull(),
+    description: text("description"),
     closingDate: date("closing_date").notNull(),
     effortDays: integer("effort_days").notNull(),
     actualEffortDays: integer("actual_effort_days"),

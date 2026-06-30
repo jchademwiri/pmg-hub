@@ -110,6 +110,7 @@ export function ProjectEditDialog({
   const [editDivisionId, setEditDivisionId] = React.useState(tender.divisionId ?? '__none__');
   const [editStatus, setEditStatus] = React.useState(tender.status);
   const [editTenderReference, setEditTenderReference] = React.useState(tender.projectReference);
+  const [editDescription, setEditDescription] = React.useState(tender.description ?? '');
   const [editClosingDate, setEditClosingDate] = React.useState(tender.closingDate);
   const [editEffortDays, setEditEffortDays] = React.useState(tender.effortDays.toString());
   const [editPriority, setEditPriority] = React.useState(tender.priority);
@@ -276,6 +277,7 @@ export function ProjectEditDialog({
       const fd = new FormData();
       fd.append('clientId', editClientId);
       fd.append('projectReference', editTenderReference);
+      fd.append('description', editDescription);
       fd.append('closingDate', editClosingDate);
       fd.append('effortDays', editEffortDays);
       fd.append('priority', editPriority);
@@ -609,6 +611,20 @@ export function ProjectEditDialog({
                     value={editTenderReference}
                     onChange={(e) => setEditTenderReference(e.target.value)}
                     disabled={isPending}
+                  />
+                </Field>
+
+                {/* Project Description */}
+                <Field className="sm:col-span-2">
+                  <FieldLabel htmlFor="edit-desc">Project Description</FieldLabel>
+                  <Textarea
+                    id="edit-desc"
+                    name="description"
+                    value={editDescription}
+                    onChange={(e) => setEditDescription(e.target.value)}
+                    placeholder="Brief description of the project scope or goals..."
+                    disabled={isPending}
+                    className="min-h-[60px]"
                   />
                 </Field>
 

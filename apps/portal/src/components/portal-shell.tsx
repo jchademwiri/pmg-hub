@@ -72,7 +72,7 @@ export function PortalShell({ client, children }: PortalShellProps) {
               <Link
                 key={item.href}
                 href={item.href}
-                className={`flex items-center gap-3 px-2.5 py-2 text-sm font-medium rounded-lg transition-all group relative ${
+                className={`flex items-center gap-3 px-2.5 py-2 text-sm font-medium rounded-lg transition-all group relative cursor-pointer ${
                   isActive
                     ? 'bg-blue-500/10 text-blue-400 font-semibold'
                     : 'text-muted-foreground hover:text-white hover:bg-white/[0.03]'
@@ -103,7 +103,7 @@ export function PortalShell({ client, children }: PortalShellProps) {
           <div className="flex flex-col gap-2">
             <a
               href="/login"
-              className={`flex items-center gap-3 px-2.5 py-2 text-sm font-medium text-red-400 rounded-lg hover:text-red-300 hover:bg-red-500/5 transition-all group relative ${
+              className={`flex items-center gap-3 px-2.5 py-2 text-sm font-medium text-red-400 rounded-lg hover:text-red-300 hover:bg-red-500/5 transition-all group relative cursor-pointer ${
                 isCollapsed ? 'justify-center' : ''
               }`}
             >
@@ -121,7 +121,7 @@ export function PortalShell({ client, children }: PortalShellProps) {
             <button
               type="button"
               onClick={() => setIsCollapsed(!isCollapsed)}
-              className="hidden md:flex h-8 items-center justify-center rounded-lg border border-white/5 bg-white/[0.01] hover:bg-white/[0.03] text-muted-foreground hover:text-white transition-all"
+              className="hidden md:flex h-8 items-center justify-center rounded-lg border border-white/5 bg-white/[0.01] hover:bg-white/[0.03] text-muted-foreground hover:text-white transition-all cursor-pointer"
             >
               {isCollapsed ? <ChevronRight className="size-4" /> : <ChevronLeft className="size-4" />}
             </button>
@@ -150,7 +150,7 @@ export function PortalShell({ client, children }: PortalShellProps) {
               <button
                 type="button"
                 onClick={() => setIsMobileOpen(false)}
-                className="text-muted-foreground hover:text-white"
+                className="text-muted-foreground hover:text-white cursor-pointer"
               >
                 <X className="size-5" />
               </button>
@@ -169,7 +169,7 @@ export function PortalShell({ client, children }: PortalShellProps) {
                     key={item.href}
                     href={item.href}
                     onClick={() => setIsMobileOpen(false)}
-                    className={`flex items-center gap-3 px-3 py-2.5 text-sm font-medium rounded-lg transition-all ${
+                    className={`flex items-center gap-3 px-3 py-2.5 text-sm font-medium rounded-lg transition-all cursor-pointer ${
                       isActive
                         ? 'bg-blue-500/10 text-blue-400 font-semibold'
                         : 'text-muted-foreground hover:text-white hover:bg-white/[0.03]'
@@ -189,7 +189,7 @@ export function PortalShell({ client, children }: PortalShellProps) {
               </div>
               <a
                 href="/login"
-                className="flex w-full items-center gap-3 px-3 py-2 text-sm font-medium text-red-400 rounded-lg hover:text-red-300 hover:bg-red-500/5 transition-all"
+                className="flex w-full items-center gap-3 px-3 py-2 text-sm font-medium text-red-400 rounded-lg hover:text-red-300 hover:bg-red-500/5 transition-all cursor-pointer"
               >
                 <LogOut className="size-4 shrink-0" />
                 <span>Sign Out</span>
@@ -207,7 +207,7 @@ export function PortalShell({ client, children }: PortalShellProps) {
             <button
               type="button"
               onClick={() => setIsMobileOpen(true)}
-              className="p-1 text-muted-foreground hover:text-white md:hidden"
+              className="p-1 text-muted-foreground hover:text-white md:hidden cursor-pointer"
               title="Open Menu"
             >
               <Menu className="size-5" />
