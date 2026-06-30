@@ -261,7 +261,7 @@ export async function sendDocumentEmailAction(rawPayload: unknown) {
         adminEmail: fromEmail,
       });
 
-      const portalBaseUrl = process.env.PORTAL_URL || 'http://localhost:3001';
+      const portalBaseUrl = process.env.PORTAL_URL || 'https://client.playhousemedia.co.za';
       const portalUrl = `${portalBaseUrl}/invoices/${invoice.id}`;
 
       // Construct Invoice React Template props
@@ -389,7 +389,7 @@ export async function sendDocumentEmailAction(rawPayload: unknown) {
         adminEmail: fromEmail,
       });
 
-      const portalBaseUrl = process.env.PORTAL_URL || 'http://localhost:3001';
+      const portalBaseUrl = process.env.PORTAL_URL || 'https://client.playhousemedia.co.za';
       const portalUrl = `${portalBaseUrl}/quotes/${quote.id}`;
 
       // Construct Quote React Template props

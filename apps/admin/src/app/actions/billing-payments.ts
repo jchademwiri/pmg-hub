@@ -356,7 +356,7 @@ export async function recordClientPayment(data: PaymentInput): Promise<{ error?:
             adminEmail: fromEmail,
           });
 
-          const portalBaseUrl = process.env.PORTAL_URL || 'http://localhost:3001';
+          const portalBaseUrl = process.env.PORTAL_URL || 'https://client.playhousemedia.co.za';
           const portalUrl = `${portalBaseUrl}/statements`;
 
           const emailProps = {

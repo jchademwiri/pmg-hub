@@ -236,7 +236,7 @@ async function buildReminderEmailContext(
   const fromEmail = resolveFromEmail(billingConfig?.divisionWebsite, defaultFrom);
   const adminCc = resolveDivisionAdminEmail(pending.divisionName, billingConfig?.salesRepEmail ?? null);
 
-  const portalBaseUrl = process.env.PORTAL_URL || 'http://localhost:3001';
+  const portalBaseUrl = process.env.PORTAL_URL || 'https://client.playhousemedia.co.za';
   const portalUrl =
     pending.invoices.length > 1
       ? `${portalBaseUrl}/statements`

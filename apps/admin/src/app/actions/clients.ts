@@ -158,10 +158,7 @@ export async function sendPortalInvitation(clientId: string): Promise<{ error?: 
       return { error: 'Client does not have an email address.' };
     }
 
-    const portalUrl = process.env.PORTAL_URL;
-    if (!portalUrl) {
-      return { error: 'Portal URL is not configured on the server. Please contact support.' };
-    }
+    const portalUrl = process.env.PORTAL_URL || 'https://client.playhousemedia.co.za';
 
     // Resolve division branding if available
     let fromName = 'Playhouse Media Group';
