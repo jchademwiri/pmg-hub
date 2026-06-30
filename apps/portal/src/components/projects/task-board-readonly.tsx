@@ -108,9 +108,12 @@ export function TaskBoardReadOnly({ sections }: TaskBoardReadOnlyProps) {
                       className="flex flex-col border border-white/5 rounded-lg bg-white/[0.01] shadow-sm hover:shadow transition-all group"
                     >
                       {/* Task Header */}
-                      <div 
-                        className="flex items-center gap-2.5 p-3 cursor-pointer select-none"
+                      <button 
+                        type="button"
+                        className="w-full flex items-center gap-2.5 p-3 text-left cursor-pointer select-none focus:outline-none focus-visible:ring-1 focus-visible:ring-white/20"
                         onClick={() => toggleExpand(col.id, task.id)}
+                        aria-expanded={isExpanded}
+                        aria-controls={`subtasks-${task.id}`}
                       >
                         <span className="text-xs font-bold text-white flex-1 truncate">
                           {task.title}
@@ -125,11 +128,14 @@ export function TaskBoardReadOnly({ sections }: TaskBoardReadOnlyProps) {
                         <div className="text-muted-foreground shrink-0">
                           {isExpanded ? <ChevronDown className="size-3.5" /> : <ChevronRight className="size-3.5" />}
                         </div>
-                      </div>
+                      </button>
 
                       {/* Expandable Sub-tasks section */}
                       {isExpanded && (
-                        <div className="border-t border-white/5 p-3 bg-white/[0.01] space-y-2.5 animate-in slide-in-from-top-1 duration-150">
+                        <div 
+                          id={`subtasks-${task.id}`}
+                          className="border-t border-white/5 p-3 bg-white/[0.01] space-y-2.5 animate-in slide-in-from-top-1 duration-150"
+                        >
                           {/* Sub-tasks checklist */}
                           <ul className="space-y-2">
                             {task.items.map(item => (

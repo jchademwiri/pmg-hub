@@ -30,6 +30,8 @@ const EmailPayloadSchema = z.object({
   documentId: z.string().uuid(),
   documentType: z.enum(['invoice', 'quote']),
   recipientEmail: z.string().email(),
+  cc: z.string().optional(),
+  bcc: z.string().optional(),
   subject: z.string().min(3),
   personalMessage: z.string().optional(),
   base64Pdf: z.string().min(100),
@@ -192,7 +194,7 @@ export async function sendDocumentEmailAction(rawPayload: unknown) {
       return { error: parsed.error.issues[0]?.message ?? 'Invalid request parameters.' };
     }
     
-    const { documentId, documentType, recipientEmail, subject, personalMessage, base64Pdf, base64StatementPdf, customAttachments } = parsed.data;
+    const { documentId, documentType, recipientEmail, cc, bcc, subject, personalMessage, base64Pdf, base64StatementPdf, customAttachments } = parsed.data;
     const pdfError =
       getPdfAttachmentError(base64Pdf, `${documentType === 'invoice' ? 'Invoice' : 'Quote'} PDF`) ??
       getPdfAttachmentError(base64StatementPdf, 'Statement PDF');
@@ -245,6 +247,9 @@ export async function sendDocumentEmailAction(rawPayload: unknown) {
         adminEmail: fromEmail,
       });
 
+      const portalBaseUrl = process.env.PORTAL_URL || 'http://localhost:3001';
+      const portalUrl = `${portalBaseUrl}/invoices/${invoice.id}`;
+
       // Construct Invoice React Template props
       const emailProps = {
         clientName: client?.businessName || client?.name || 'Client',
@@ -259,6 +264,7 @@ export async function sendDocumentEmailAction(rawPayload: unknown) {
         websiteUrl: billingConfig?.divisionWebsite || DEFAULT_WEBSITE_URL,
         logoUrl: billingConfig?.logoUrl || undefined,
         hasStatementAttached: !!base64StatementPdf,
+        portalUrl,
         bankDetails: billingConfig ? {
           bankName: billingConfig.bankName || '',
           accountName: billingConfig.bankAccountName || '',
@@ -297,10 +303,15 @@ export async function sendDocumentEmailAction(rawPayload: unknown) {
       // CC the division admin so they always have a copy
       const adminCc = resolveDivisionAdminEmail(invoice.divisionName, billingConfig?.salesRepEmail ?? null);
 
+      const ccRecipients: string[] = [];
+      if (adminCc) ccRecipients.push(adminCc);
+      if (cc?.trim()) ccRecipients.push(cc.trim());
+
       // Send email via Resend
       const { data, error } = await emailClient({
         to: recipientEmail,
-        cc: adminCc,
+        cc: ccRecipients.length > 0 ? ccRecipients : undefined,
+        bcc: bcc?.trim() || undefined,
         subject,
         react: React.createElement(InvoiceDeliveryEmail, emailProps),
         replyTo: DEFAULT_REPLY_TO,
@@ -364,6 +375,9 @@ export async function sendDocumentEmailAction(rawPayload: unknown) {
         adminEmail: fromEmail,
       });
 
+      const portalBaseUrl = process.env.PORTAL_URL || 'http://localhost:3001';
+      const portalUrl = `${portalBaseUrl}/quotes/${quote.id}`;
+
       // Construct Quote React Template props
       const emailProps = {
         clientName: client?.businessName || client?.name || 'Client',
@@ -377,6 +391,7 @@ export async function sendDocumentEmailAction(rawPayload: unknown) {
         primaryColor: '#1d4ed8',
         websiteUrl: billingConfig?.divisionWebsite || DEFAULT_WEBSITE_URL,
         logoUrl: billingConfig?.logoUrl || undefined,
+        portalUrl,
         bankDetails: billingConfig ? {
           bankName: billingConfig.bankName || '',
           accountName: billingConfig.bankAccountName || '',
@@ -388,10 +403,15 @@ export async function sendDocumentEmailAction(rawPayload: unknown) {
       // CC the division admin so they always have a copy
       const adminCc = resolveDivisionAdminEmail(quote.divisionName, billingConfig?.salesRepEmail ?? null);
 
+      const ccRecipients: string[] = [];
+      if (adminCc) ccRecipients.push(adminCc);
+      if (cc?.trim()) ccRecipients.push(cc.trim());
+
       // Send email via Resend
       const { data, error } = await emailClient({
         to: recipientEmail,
-        cc: adminCc,
+        cc: ccRecipients.length > 0 ? ccRecipients : undefined,
+        bcc: bcc?.trim() || undefined,
         subject,
         react: React.createElement(QuoteDeliveryEmail, emailProps),
         replyTo: DEFAULT_REPLY_TO,
@@ -432,6 +452,8 @@ export async function sendDocumentEmailAction(rawPayload: unknown) {
 const ReceiptEmailPayloadSchema = z.object({
   incomeId: z.string().uuid(),
   recipientEmail: z.string().email(),
+  cc: z.string().optional(),
+  bcc: z.string().optional(),
   subject: z.string().min(3),
   personalMessage: z.string().optional(),
   base64Pdf: z.string().min(100),
@@ -447,7 +469,7 @@ export async function sendReceiptEmailAction(rawPayload: unknown) {
       return { error: parsed.error.issues[0]?.message ?? 'Invalid request parameters.' };
     }
 
-    const { incomeId, recipientEmail, subject, personalMessage, base64Pdf, customAttachments } = parsed.data;
+    const { incomeId, recipientEmail, cc, bcc, subject, personalMessage, base64Pdf, customAttachments } = parsed.data;
     const pdfError = getPdfAttachmentError(base64Pdf, 'Receipt PDF');
     if (pdfError) return { error: pdfError };
 
@@ -539,9 +561,14 @@ export async function sendReceiptEmailAction(rawPayload: unknown) {
       </div>
     `;
 
+    const ccRecipients: string[] = [];
+    if (adminCc) ccRecipients.push(adminCc);
+    if (cc?.trim()) ccRecipients.push(cc.trim());
+
     const { data, error } = await emailClient({
       to: recipientEmail,
-      cc: adminCc,
+      cc: ccRecipients.length > 0 ? ccRecipients : undefined,
+      bcc: bcc?.trim() || undefined,
       subject,
       react: React.createElement('div', { dangerouslySetInnerHTML: { __html: htmlBody } }),
       replyTo: DEFAULT_REPLY_TO,

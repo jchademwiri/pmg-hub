@@ -2,12 +2,13 @@
 
 import * as React from 'react'
 import { useRouter } from 'next/navigation'
-import { Trash2, PowerOff, Power } from 'lucide-react'
+import { Trash2, PowerOff, Power, Mail, Send, Loader2 } from 'lucide-react'
 import { toast } from 'sonner'
 import type { ClientWithIncomeCount } from '@pmg/db'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { ConfirmDialog } from '@/components/ui/confirm-dialog'
+import { sendPortalInvitation } from '@/app/actions/clients'
 import {
   Table,
   TableBody,
@@ -78,6 +79,7 @@ export function ClientsTable({ clients, deleteAction, toggleActiveAction }: Clie
             <TableHead>Phone</TableHead>
             <TableHead>Income Records</TableHead>
             <TableHead>Status</TableHead>
+            <TableHead>Portal Access</TableHead>
             <TableHead>Actions</TableHead>
           </TableRow>
         </TableHeader>
@@ -104,6 +106,9 @@ export function ClientsTable({ clients, deleteAction, toggleActiveAction }: Clie
                 >
                   {client.isActive ? 'Active' : 'Disabled'}
                 </Badge>
+              </TableCell>
+              <TableCell onClick={(e) => e.stopPropagation()}>
+                <PortalStatusCell client={client} />
               </TableCell>
               <TableCell onClick={(e) => e.stopPropagation()}>
                 <div className="flex items-center gap-2">
@@ -155,5 +160,84 @@ export function ClientsTable({ clients, deleteAction, toggleActiveAction }: Clie
         </TableBody>
       </Table>
     </>
+  )
+}
+
+function PortalStatusCell({ client }: { client: ClientWithIncomeCount }) {
+  const [isSending, setIsSending] = React.useState(false)
+  const router = useRouter()
+
+  const handleInvite = async () => {
+    if (!client.email) {
+      toast.error('Client does not have an email address.')
+      return
+    }
+    setIsSending(true)
+    const res = await sendPortalInvitation(client.id)
+    setIsSending(false)
+    if (res.error) {
+      toast.error(res.error)
+    } else {
+      toast.success(client.portalInvitationSentAt ? 'Portal invitation resent!' : 'Portal invitation sent!')
+      router.refresh()
+    }
+  }
+
+  if (client.userId) {
+    return (
+      <Badge variant="secondary" className="bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-500/20 shadow-none">
+        Registered
+      </Badge>
+    )
+  }
+
+  if (client.portalInvitationSentAt) {
+    const sentDate = new Date(client.portalInvitationSentAt).toLocaleDateString('en-GB', {
+      day: 'numeric',
+      month: 'short',
+    })
+    return (
+      <div className="flex items-center gap-1.5">
+        <Badge variant="secondary" className="bg-blue-500/10 text-blue-600 dark:text-blue-400 border-blue-500/20 shadow-none">
+          Invited ({sentDate})
+        </Badge>
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <Button
+              variant="ghost"
+              size="icon"
+              className="h-6 w-6 text-muted-foreground hover:text-foreground"
+              disabled={isSending}
+              onClick={handleInvite}
+            >
+              {isSending ? <Loader2 className="size-3 animate-spin" /> : <Send className="size-3" />}
+            </Button>
+          </TooltipTrigger>
+          <TooltipContent>Resend Invitation</TooltipContent>
+        </Tooltip>
+      </div>
+    )
+  }
+
+  return (
+    <Button
+      size="sm"
+      variant="outline"
+      className="h-7 text-xs px-2.5 gap-1"
+      disabled={isSending || !client.email}
+      onClick={handleInvite}
+    >
+      {isSending ? (
+        <>
+          <Loader2 className="size-3 animate-spin mr-1" />
+          Inviting
+        </>
+      ) : (
+        <>
+          <Mail className="size-3 mr-1" />
+          Invite
+        </>
+      )}
+    </Button>
   )
 }

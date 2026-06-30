@@ -1,5 +1,6 @@
 import * as React from "react";
 import {
+  Button,
   Heading,
   Section,
   Text,
@@ -16,6 +17,7 @@ export type InvoiceDeliveryEmailProps = {
   totalAmount: string;
   reference?: string;
   personalMessage?: string;
+  portalUrl?: string;
   bankDetails?: {
     bankName: string;
     accountName: string;
@@ -34,6 +36,7 @@ const InvoiceDeliveryEmail = (props: InvoiceDeliveryEmailProps) => {
     totalAmount,
     reference,
     personalMessage,
+    portalUrl,
     bankDetails,
     hasStatementAttached = false,
     companyName = "Playhouse Media Group",
@@ -59,6 +62,21 @@ const InvoiceDeliveryEmail = (props: InvoiceDeliveryEmailProps) => {
         Please find attached invoice <strong>{documentNumber}</strong> issued by <strong>{companyName}</strong>.
         {hasStatementAttached && " We have also attached your current account statement for your convenience."}
       </Text>
+
+      {portalUrl && (
+        <Section className="mb-[24px] text-center">
+          <Button
+            href={portalUrl}
+            className="box-border rounded-[6px] px-[20px] py-[10px] text-[14px] font-semibold text-white no-underline inline-block"
+            style={{ backgroundColor: primaryColor }}
+          >
+            View Invoice in Portal
+          </Button>
+          <Text className="m-0 mt-[8px] text-[12px] text-center" style={{ color: '#64748B' }}>
+            Note: You only need your email address to access the portal—no password is required.
+          </Text>
+        </Section>
+      )}
 
       {/* Custom Admin Message */}
       {personalMessage && (
@@ -158,6 +176,7 @@ InvoiceDeliveryEmail.PreviewProps = {
   totalAmount: "R 12,500.00",
   reference: "REF-9912",
   personalMessage: "Hi there, thank you for your business. Please find attached our invoice and statement.",
+  portalUrl: "https://portal.playhousemedia.co.za/invoices/inv-123",
   bankDetails: {
     bankName: "First National Bank",
     accountName: "Playhouse Media Group",

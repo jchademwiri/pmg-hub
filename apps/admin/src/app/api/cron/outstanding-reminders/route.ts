@@ -118,6 +118,9 @@ export async function GET(req: Request) {
         reminderType = "overdue";
       }
 
+      const portalBaseUrl = process.env.PORTAL_URL || 'http://localhost:3001';
+      const portalUrl = `${portalBaseUrl}/invoices/${inv.id}`;
+
       // E. Dispatch dynamic notification
       const emailProps = {
         clientName: client.businessName || client.name,
@@ -127,6 +130,7 @@ export async function GET(req: Request) {
         totalAmount: `R ${invoiceTotal.toLocaleString('en-ZA', { minimumFractionDigits: 2 })}`,
         outstandingAmount: `R ${outstandingVal.toLocaleString('en-ZA', { minimumFractionDigits: 2 })}`,
         reminderType,
+        portalUrl,
         bankDetails: billingConfig ? {
           bankName: billingConfig.bankName || '',
           accountName: billingConfig.bankAccountName || '',

@@ -27,6 +27,7 @@ import {
   deleteProgressItemAction,
   toggleProgressItemAction,
   updateProgressItemTextAction,
+  updateProgressSectionStatusAction,
 } from '@/app/actions/project-progress';
 
 type BucketType = 'backlog' | 'in_progress' | 'completed';
@@ -169,6 +170,9 @@ export function TaskListView({ projectId, initialSections }: TaskListViewProps) 
       if (res.error) {
         toast.error(res.error);
       } else {
+        if (columnId !== 'backlog' && res.section) {
+          await updateProgressSectionStatusAction(res.section.id, columnId);
+        }
         toast.success('Task card added');
       }
     });

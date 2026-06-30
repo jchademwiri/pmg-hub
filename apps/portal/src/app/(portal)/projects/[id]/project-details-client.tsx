@@ -89,6 +89,37 @@ export function ProjectDetailsClient({
   const [viewMode, setViewMode] = React.useState<'board' | 'list'>('board');
   const [metadataOpen, setMetadataOpen] = React.useState(false);
 
+  const dialogRef = React.useRef<HTMLDialogElement>(null);
+
+  React.useEffect(() => {
+    const dialog = dialogRef.current;
+    if (!dialog) return;
+
+    if (metadataOpen) {
+      if (!dialog.open) {
+        dialog.showModal();
+      }
+    } else {
+      if (dialog.open) {
+        dialog.close();
+      }
+    }
+  }, [metadataOpen]);
+
+  React.useEffect(() => {
+    const dialog = dialogRef.current;
+    if (!dialog) return;
+
+    const handleClose = () => {
+      setMetadataOpen(false);
+    };
+
+    dialog.addEventListener('close', handleClose);
+    return () => {
+      dialog.removeEventListener('close', handleClose);
+    };
+  }, []);
+
   const checklist: ProgressSection[] = initialChecklist.map((s) => ({
     ...s,
     status: s.status as any,
@@ -240,112 +271,105 @@ export function ProjectDetailsClient({
       )}
 
       {/* Project Metadata Modal */}
-      {metadataOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-in fade-in duration-200">
-          <div className="bg-[#0a0f1d] border border-white/10 rounded-xl max-w-md w-full shadow-2xl overflow-hidden animate-in zoom-in-95 duration-200">
-            {/* Header */}
-            <div className="flex items-center justify-between p-4 border-b border-white/5">
-              <h3 className="text-sm font-semibold text-white flex items-center gap-2">
-                <Clock className="size-4 text-blue-400" /> Project Metadata
-              </h3>
-              <button 
-                onClick={() => setMetadataOpen(false)} 
-                className="text-muted-foreground hover:text-white transition-colors p-1"
-              >
-                <X className="size-4" />
-              </button>
+      <dialog
+        ref={dialogRef}
+        className="bg-[#0a0f1d] border border-white/10 rounded-xl max-w-md w-full shadow-2xl overflow-hidden p-0 text-left backdrop:bg-black/60 backdrop:backdrop-blur-sm focus:outline-none open:animate-in open:zoom-in-95 open:fade-in duration-200"
+      >
+        {/* Header */}
+        <div className="flex items-center justify-between p-4 border-b border-white/5">
+          <h3 className="text-sm font-semibold text-white flex items-center gap-2">
+            <Clock className="size-4 text-blue-400" /> Project Metadata
+          </h3>
+          <button 
+            onClick={() => setMetadataOpen(false)} 
+            className="text-muted-foreground hover:text-white transition-colors p-1"
+          >
+            <X className="size-4" />
+          </button>
+        </div>
+        {/* Content */}
+        <div className="p-5 space-y-4 text-xs text-muted-foreground">
+          {/* Dates Timeline */}
+          <div className="space-y-3">
+            <div className="flex flex-col gap-1">
+              <span className="text-muted-foreground font-medium">Project Start Date</span>
+              <div className="flex items-center gap-1.5 text-white font-semibold">
+                <Calendar className="size-3.5 text-muted-foreground" />
+                <span>{formatDate(project.startDate)}</span>
+              </div>
             </div>
-            {/* Content */}
-            <div className="p-5 space-y-4 text-xs text-muted-foreground">
-              {/* Dates Timeline */}
-              <div className="space-y-3">
-                <div className="flex flex-col gap-1">
-                  <span className="text-muted-foreground font-medium">Project Start Date</span>
-                  <div className="flex items-center gap-1.5 text-white font-semibold">
-                    <Calendar className="size-3.5 text-muted-foreground" />
-                    <span>{formatDate(project.startDate)}</span>
-                  </div>
-                </div>
 
-                <div className="flex flex-col gap-1 pt-1 border-t border-white/5">
-                  <span className="text-muted-foreground font-medium">Target Completion Date (Internal)</span>
-                  <div className="flex items-center gap-1.5 text-emerald-400 font-semibold">
-                    <Calendar className="size-3.5 text-muted-foreground" />
-                    <span>{formatDate(project.targetCompletionDate)}</span>
-                  </div>
-                </div>
-
-                <div className="flex flex-col gap-1 pt-1 border-t border-white/5">
-                  <span className="text-muted-foreground font-medium">Tender Closing Date (Submission)</span>
-                  <div className="flex items-center gap-1.5 text-red-400 font-semibold">
-                    <Calendar className="size-3.5" />
-                    <span>{formatDate(project.closingDate)}</span>
-                  </div>
-                </div>
+            <div className="flex flex-col gap-1 pt-1 border-t border-white/5">
+              <span className="text-muted-foreground font-medium">Target Completion Date (Internal)</span>
+              <div className="flex items-center gap-1.5 text-emerald-400 font-semibold">
+                <Calendar className="size-3.5 text-muted-foreground" />
+                <span>{formatDate(project.targetCompletionDate)}</span>
               </div>
+            </div>
 
-              {/* Effort & Buffer */}
-              <div className="grid grid-cols-2 gap-4 border-t border-white/5 pt-3">
-                <div className="flex flex-col gap-0.5">
-                  <span className="text-muted-foreground font-medium">Planned Effort</span>
-                  <span className="text-sm font-bold text-white">{project.effortDays} days</span>
-                </div>
-                <div className="flex flex-col gap-0.5">
-                  <span className="text-muted-foreground font-medium">Buffer Margin</span>
-                  <span className="text-sm font-bold text-white">{project.bufferDays} days</span>
-                </div>
-              </div>
-
-              {/* Additional Metadata */}
-              <div className="space-y-3 border-t border-white/5 pt-4">
-                {division && (
-                  <div className="flex justify-between items-center">
-                    <span className="text-muted-foreground font-medium">Division</span>
-                    <span className="font-semibold text-white">{division.name}</span>
-                  </div>
-                )}
-
-                <div className="flex justify-between items-center">
-                  <span className="text-muted-foreground font-medium">Priority</span>
-                  <Badge
-                    variant="outline"
-                    className="capitalize text-[10px] px-2 py-0.5 border-white/10 text-muted-foreground bg-white/5"
-                  >
-                    {project.priority}
-                  </Badge>
-                </div>
-
-                {(project.status === 'completed' || project.status === 'submitted') && (
-                  <>
-                    <div className="flex justify-between items-center border-t border-white/5 pt-3">
-                      <span className="text-muted-foreground font-medium">Actual Effort</span>
-                      <span className="font-semibold text-white">
-                        {project.actualEffortDays ? `${project.actualEffortDays} days` : '—'}
-                      </span>
-                    </div>
-
-                    <div className="flex justify-between items-center">
-                      <span className="text-muted-foreground font-medium">Outcome</span>
-                      <Badge
-                        variant="outline"
-                        className={`capitalize text-[10px] px-2 py-0.5 font-semibold ${
-                          project.outcome === 'won'
-                            ? 'text-emerald-400 border-emerald-500/20 bg-emerald-500/5'
-                            : project.outcome === 'lost'
-                              ? 'text-red-400 border-red-500/20 bg-red-500/5'
-                              : 'text-muted-foreground'
-                        }`}
-                      >
-                        {project.outcome ?? 'Pending'}
-                      </Badge>
-                    </div>
-                  </>
-                )}
+            <div className="flex flex-col gap-1 pt-1 border-t border-white/5">
+              <span className="text-muted-foreground font-medium">Tender Closing Date (Submission)</span>
+              <div className="flex items-center gap-1.5 text-red-400 font-semibold">
+                <Calendar className="size-3.5" />
+                <span>{formatDate(project.closingDate)}</span>
               </div>
             </div>
           </div>
+
+          {/* Effort & Buffer */}
+          <div className="grid grid-cols-2 gap-4 border-t border-white/5 pt-3">
+            <div className="flex flex-col gap-0.5">
+              <span className="text-muted-foreground font-medium">Planned Effort</span>
+              <span className="text-sm font-bold text-white">{project.effortDays} days</span>
+            </div>
+            <div className="flex flex-col gap-0.5">
+              <span className="text-muted-foreground font-medium">Buffer Margin</span>
+              <span className="text-sm font-bold text-white">{project.bufferDays} days</span>
+            </div>
+          </div>
+
+          {/* Additional Metadata */}
+          <div className="space-y-3 border-t border-white/5 pt-4">
+            {division && (
+              <div className="flex justify-between items-center">
+                <span className="text-muted-foreground font-medium">Division</span>
+                <span className="font-semibold text-white">{division.name}</span>
+              </div>
+            )}
+
+            <div className="flex justify-between items-center">
+              <span className="text-muted-foreground font-medium">Priority</span>
+              <Badge
+                variant="outline"
+                className="capitalize text-[10px] px-2 py-0.5 border-white/10 text-muted-foreground bg-white/5"
+              >
+                {project.priority}
+              </Badge>
+            </div>
+
+            {(project.status === 'completed' || project.status === 'submitted') && (
+              <>
+                <div className="flex justify-between items-center border-t border-white/5 pt-3">
+                  <span className="text-muted-foreground font-medium">Actual Effort</span>
+                  <span className="font-semibold text-white">
+                    {project.actualEffortDays ? `${project.actualEffortDays} days` : '—'}
+                  </span>
+                </div>
+
+                <div className="flex justify-between items-center">
+                  <span className="text-muted-foreground font-medium">Outcome</span>
+                  <Badge
+                    variant="outline"
+                    className="capitalize text-[10px] px-2 py-0.5 font-semibold text-muted-foreground"
+                  >
+                    {project.outcome ?? 'Pending'}
+                  </Badge>
+                </div>
+              </>
+            )}
+          </div>
         </div>
-      )}
+      </dialog>
     </div>
   );
 }

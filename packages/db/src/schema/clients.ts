@@ -22,6 +22,7 @@ export const clients = pgTable(
     // leave updatedAt stale. Teams requiring guaranteed accuracy should implement a
     // PostgreSQL trigger.
     updatedAt: timestamp("updated_at", { withTimezone: true }),
+    portalInvitationSentAt: timestamp("portal_invitation_sent_at", { withTimezone: true }),
   },
   (t) => [
     index("clients_name_idx").on(t.name),
