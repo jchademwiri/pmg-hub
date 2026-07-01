@@ -24,7 +24,7 @@ vi.mock('@pmg/db', () => {
     delete: vi.fn().mockReturnValue({
       where: vi.fn().mockResolvedValue({}),
     }),
-    batch: vi.fn().mockResolvedValue([]),
+    transaction: vi.fn().mockImplementation(async (cb: any) => cb(mockDb)),
   };
   return {
     db: mockDb,
@@ -183,7 +183,7 @@ describe('Finance Expenses Module', () => {
       where: vi.fn().mockResolvedValue({}),
     } as any);
 
-    vi.mocked(db.batch).mockResolvedValue([]);
+    vi.mocked(db.transaction).mockImplementation(async (cb: any) => cb(db as any));
   });
 
   describe('Server Actions', () => {

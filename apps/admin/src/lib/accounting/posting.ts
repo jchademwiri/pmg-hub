@@ -140,7 +140,7 @@ export async function postPaymentJournalEntries(data: {
     const entryIds: string[] = [];
     const now = new Date();
 
-    // ── Pre-generate all IDs (batch queries can't use .returning()) ───────
+    // ── Pre-generate all IDs ───────────────────────────────────────────────
     const entry1Id = randomUUID();
     const entry1Line1Id = randomUUID();
     const entry1Line2Id = randomUUID();
@@ -148,8 +148,14 @@ export async function postPaymentJournalEntries(data: {
     // ── Build Entry 1: Dr Bank / Cr AR ────────────────────────────────────
     const entryNumber1 = await getNextJournalEntryNumber();
 
-    const batchQueries = [
-      db.insert(journalEntries).values({
+    entryIds.push(entry1Id);
+
+    // ── Execute all inserts atomically in a transaction ────────────────────
+    const pmgShareAmount = Math.round(amount * ACCOUNT_RATES.pmg_share * 100) / 100;
+
+    await db.transaction(async (tx) => {
+      // Entry 1: Dr Bank / Cr AR
+      await tx.insert(journalEntries).values({
         id: entry1Id,
         entryNumber: entryNumber1,
         entryDate: date,
@@ -163,38 +169,32 @@ export async function postPaymentJournalEntries(data: {
         postedAt: now,
         postedBy: 'system',
         createdBy: 'system',
-      }),
-      db.insert(journalLines).values({
+      });
+      await tx.insert(journalLines).values({
         id: entry1Line1Id,
         journalEntryId: entry1Id,
         accountId: bankAccount.id,
         debit: String(amount),
         credit: null,
         description: 'Payment received',
-      }),
-      db.insert(journalLines).values({
+      });
+      await tx.insert(journalLines).values({
         id: entry1Line2Id,
         journalEntryId: entry1Id,
         accountId: accountsReceivable.id,
         debit: null,
         credit: String(amount),
         description: 'Payment received – AR cleared',
-      }),
-    ];
+      });
 
-    entryIds.push(entry1Id);
+      // Entry 2: Dr Savings / Cr Bank (PMG share)
+      if (pmgShareAmount > 0) {
+        const entry2Id = randomUUID();
+        const entry2Line1Id = randomUUID();
+        const entry2Line2Id = randomUUID();
+        const entryNumber2 = await getNextJournalEntryNumber();
 
-    // ── Build Entry 2: Dr Savings / Cr Bank (PMG share) ──────────────────
-    const pmgShareAmount = Math.round(amount * ACCOUNT_RATES.pmg_share * 100) / 100;
-
-    if (pmgShareAmount > 0) {
-      const entry2Id = randomUUID();
-      const entry2Line1Id = randomUUID();
-      const entry2Line2Id = randomUUID();
-      const entryNumber2 = await getNextJournalEntryNumber();
-
-      batchQueries.push(
-        db.insert(journalEntries).values({
+        await tx.insert(journalEntries).values({
           id: entry2Id,
           entryNumber: entryNumber2,
           entryDate: date,
@@ -208,31 +208,27 @@ export async function postPaymentJournalEntries(data: {
           postedAt: now,
           postedBy: 'system',
           createdBy: 'system',
-        }),
-        db.insert(journalLines).values({
+        });
+        await tx.insert(journalLines).values({
           id: entry2Line1Id,
           journalEntryId: entry2Id,
           accountId: savingsAccount.id,
           debit: String(pmgShareAmount),
           credit: null,
           description: 'PMG Share → Savings',
-        }),
-        db.insert(journalLines).values({
+        });
+        await tx.insert(journalLines).values({
           id: entry2Line2Id,
           journalEntryId: entry2Id,
           accountId: bankAccount.id,
           debit: null,
           credit: String(pmgShareAmount),
           description: `PMG Share transfer (25% of R${amount.toFixed(2)})`,
-        }),
-      );
+        });
 
-      entryIds.push(entry2Id);
-    }
-
-    // ── Execute all inserts atomically ────────────────────────────────────
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    await db.batch(batchQueries as any);
+        entryIds.push(entry2Id);
+      }
+    });
 
     return { entryIds };
   } catch (err) {
@@ -268,11 +264,11 @@ export async function voidPaymentJournalEntries(
 
     if (toVoid.length === 0) return { voidedCount: 0 };
 
-    // Batch all void updates
+    // Batch all void updates atomically in a transaction
     const now = new Date();
-    await db.batch(
-      toVoid.map((entry) =>
-        db
+    await db.transaction(async (tx) => {
+      for (const entry of toVoid) {
+        await tx
           .update(journalEntries)
           .set({
             status: 'void',
@@ -281,9 +277,9 @@ export async function voidPaymentJournalEntries(
             voidReason: 'Payment record deleted',
             updatedAt: now,
           })
-          .where(eq(journalEntries.id, entry.id))
-      ) as any
-    );
+          .where(eq(journalEntries.id, entry.id));
+      }
+    });
 
     return { voidedCount: toVoid.length };
   } catch (err) {
@@ -357,9 +353,9 @@ export async function postInvoiceIssueJournalEntry(data: {
     const entryNumber = await getNextJournalEntryNumber();
     const entryId = randomUUID();
 
-    // Atomic batch: entry + 2 lines
-    await db.batch([
-      db.insert(journalEntries).values({
+    // Atomic transaction: entry + 2 lines
+    await db.transaction(async (tx) => {
+      await tx.insert(journalEntries).values({
         id: entryId,
         entryNumber,
         entryDate: date,
@@ -373,24 +369,24 @@ export async function postInvoiceIssueJournalEntry(data: {
         postedAt: new Date(),
         postedBy: 'system',
         createdBy: 'system',
-      }),
-      db.insert(journalLines).values({
+      });
+      await tx.insert(journalLines).values({
         id: randomUUID(),
         journalEntryId: entryId,
         accountId: accountsReceivable.id,
         debit: String(amount),
         credit: null,
         description: `AR – ${description}`,
-      }),
-      db.insert(journalLines).values({
+      });
+      await tx.insert(journalLines).values({
         id: randomUUID(),
         journalEntryId: entryId,
         accountId: salesRevenue.id,
         debit: null,
         credit: String(amount),
         description: `Revenue recognised – ${description}`,
-      }),
-    ]);
+      });
+    });
 
     return { entryId };
   } catch (err) {
@@ -451,14 +447,14 @@ export async function voidInvoiceJournalEntries(
       }
     }
 
-    // 3. Batch-void all entries atomically
+    // 3. Batch-void all entries atomically in a transaction
     const allToVoid = [...toVoid.map((e) => e.id), ...paymentEntriesToVoid];
 
     if (allToVoid.length > 0) {
       const now = new Date();
-      await db.batch(
-        allToVoid.map((id) =>
-          db
+      await db.transaction(async (tx) => {
+        for (const entryId of allToVoid) {
+          await tx
             .update(journalEntries)
             .set({
               status: 'void',
@@ -467,9 +463,9 @@ export async function voidInvoiceJournalEntries(
               voidReason: 'Invoice voided',
               updatedAt: now,
             })
-            .where(eq(journalEntries.id, id))
-        ) as any
-      );
+            .where(eq(journalEntries.id, entryId));
+        }
+      });
       voidedCount = allToVoid.length;
     }
 
@@ -512,9 +508,9 @@ export async function updateInvoiceJournalEntry(data: {
 
     if (toVoid.length > 0) {
       const now = new Date();
-      await db.batch(
-        toVoid.map((entry) =>
-          db
+      await db.transaction(async (tx) => {
+        for (const entry of toVoid) {
+          await tx
             .update(journalEntries)
             .set({
               status: 'void',
@@ -523,9 +519,9 @@ export async function updateInvoiceJournalEntry(data: {
               voidReason: 'Invoice amount edited',
               updatedAt: now,
             })
-            .where(eq(journalEntries.id, entry.id))
-        ) as any
-      );
+            .where(eq(journalEntries.id, entry.id));
+        }
+      });
     }
 
     // Post new AR entry with the updated amount
@@ -585,9 +581,9 @@ export async function postExpenseJournalEntry(data: {
     const entryId = randomUUID();
     const desc = description || category;
 
-    // Atomic batch: entry + 2 lines
-    await db.batch([
-      db.insert(journalEntries).values({
+    // Atomic transaction: entry + 2 lines
+    await db.transaction(async (tx) => {
+      await tx.insert(journalEntries).values({
         id: entryId,
         entryNumber,
         entryDate: date,
@@ -601,24 +597,24 @@ export async function postExpenseJournalEntry(data: {
         postedAt: new Date(),
         postedBy: 'system',
         createdBy: 'system',
-      }),
-      db.insert(journalLines).values({
+      });
+      await tx.insert(journalLines).values({
         id: randomUUID(),
         journalEntryId: entryId,
         accountId: expenseAccount.id,
         debit: String(amount),
         credit: null,
         description: desc,
-      }),
-      db.insert(journalLines).values({
+      });
+      await tx.insert(journalLines).values({
         id: randomUUID(),
         journalEntryId: entryId,
         accountId: bankAccount.id,
         debit: null,
         credit: String(amount),
         description: desc,
-      }),
-    ]);
+      });
+    });
 
     return { entryId };
   } catch (err) {
@@ -655,9 +651,9 @@ export async function voidExpenseJournalEntries(
     if (toVoid.length === 0) return { voidedCount: 0 };
 
     const now = new Date();
-    await db.batch(
-      toVoid.map((entry) =>
-        db
+    await db.transaction(async (tx) => {
+      for (const entry of toVoid) {
+        await tx
           .update(journalEntries)
           .set({
             status: 'void',
@@ -666,9 +662,9 @@ export async function voidExpenseJournalEntries(
             voidReason: 'Expense record deleted',
             updatedAt: now,
           })
-          .where(eq(journalEntries.id, entry.id))
-      ) as any
-    );
+          .where(eq(journalEntries.id, entry.id));
+      }
+    });
 
     return { voidedCount: toVoid.length };
   } catch (err) {
