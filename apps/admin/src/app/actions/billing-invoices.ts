@@ -184,49 +184,51 @@ export async function updateInvoice(
       discountValue,
     );
 
-    // Delete existing line items and reinsert
-    await db
-      .delete(billingLineItems)
-      .where(
-        and(
-          eq(billingLineItems.documentType, 'invoice'),
-          eq(billingLineItems.documentId, id),
-        ),
+    // Delete existing line items, update invoice, and reinsert atomically
+    await db.transaction(async (tx) => {
+      await tx
+        .delete(billingLineItems)
+        .where(
+          and(
+            eq(billingLineItems.documentType, 'invoice'),
+            eq(billingLineItems.documentId, id),
+          ),
+        );
+
+      await tx
+        .update(invoices)
+        .set({
+          clientId,
+          invoiceDate,
+          dueDate: dueDate ?? null,
+          reference: reference ?? null,
+          subtotal: String(subtotal.toFixed(2)),
+          discountType: discountType ?? null,
+          discountValue: discountValue != null ? String(discountValue) : null,
+          discountAmount: String(discountAmount.toFixed(2)),
+          vatEnabled: vatEnabled ?? false,
+          vatAmount: String(vatAmount.toFixed(2)),
+          total: String(total.toFixed(2)),
+          notes: notes ?? null,
+          terms: terms ?? null,
+          updatedAt: new Date(),
+        })
+        .where(eq(invoices.id, id));
+
+      await tx.insert(billingLineItems).values(
+        lineItems.map((item: { itemId?: string | null; description: string; quantity: number; unitPrice: number; vatRate: number }, i: number) => ({
+          documentType: 'invoice' as const,
+          documentId: id,
+          sortOrder: i,
+          itemId: item.itemId ?? null,
+          description: item.description,
+          quantity: String(item.quantity),
+          unitPrice: String(item.unitPrice.toFixed(2)),
+          vatRate: '0',
+          lineTotal: String((item.quantity * item.unitPrice).toFixed(2)),
+        })),
       );
-
-    await db
-      .update(invoices)
-      .set({
-        clientId,
-        invoiceDate,
-        dueDate: dueDate ?? null,
-        reference: reference ?? null,
-        subtotal: String(subtotal.toFixed(2)),
-        discountType: discountType ?? null,
-        discountValue: discountValue != null ? String(discountValue) : null,
-        discountAmount: String(discountAmount.toFixed(2)),
-        vatEnabled: vatEnabled ?? false,
-        vatAmount: String(vatAmount.toFixed(2)),
-        total: String(total.toFixed(2)),
-        notes: notes ?? null,
-        terms: terms ?? null,
-        updatedAt: new Date(),
-      })
-      .where(eq(invoices.id, id));
-
-    await db.insert(billingLineItems).values(
-      lineItems.map((item: { itemId?: string | null; description: string; quantity: number; unitPrice: number; vatRate: number }, i: number) => ({
-        documentType: 'invoice' as const,
-        documentId: id,
-        sortOrder: i,
-        itemId: item.itemId ?? null,
-        description: item.description,
-        quantity: String(item.quantity),
-        unitPrice: String(item.unitPrice.toFixed(2)),
-        vatRate: '0',
-        lineTotal: String((item.quantity * item.unitPrice).toFixed(2)),
-      })),
-    );
+    });
 
     // If an issued/overdue invoice's total changed, void the old AR entry and repost
     if ((existing.status === 'issued' || existing.status === 'overdue') && existing.total !== String(total.toFixed(2))) {
@@ -468,31 +470,35 @@ export async function markInvoicePaid(id: string): Promise<{ error?: string }> {
     const clientLabel = client.businessName ?? client.name;
     const description = `${invoice.documentNumber} - ${clientLabel}`;
 
-    // Post to income ledger using today as the payment date so late payments
-    // land in the correct open period, not the (possibly closed) invoice period.
-    const [incomeRow] = await db
-      .insert(income)
-      .values({
-        date: paymentDate,
-        divisionId: invoice.divisionId,
-        clientId: invoice.clientId,
-        description,
-        amount: invoice.total,
-      })
-      .returning({ id: income.id });
+    // Post to income ledger and mark invoice paid atomically in a transaction
+    const incomeRow = await db.transaction(async (tx) => {
+      const [row] = await tx
+        .insert(income)
+        .values({
+          date: paymentDate,
+          divisionId: invoice.divisionId!,
+          clientId: invoice.clientId!,
+          description,
+          amount: invoice.total!,
+        })
+        .returning({ id: income.id });
+
+      if (!row) throw new Error('Failed to post income record.');
+
+      await tx
+        .update(invoices)
+        .set({
+          status: 'paid',
+          paidAt: new Date(),
+          incomeId: row.id,
+          updatedAt: new Date(),
+        })
+        .where(eq(invoices.id, id));
+
+      return row;
+    });
 
     if (!incomeRow) return { error: 'Failed to post income record.' };
-
-    // Mark invoice paid
-    await db
-      .update(invoices)
-      .set({
-        status: 'paid',
-        paidAt: new Date(),
-        incomeId: incomeRow.id,
-        updatedAt: new Date(),
-      })
-      .where(eq(invoices.id, id));
 
     // Auto-post: Dr Bank (1010) / Cr AR (1100) + Dr Savings / Cr Bank (PMG share)
     const journalResult = await postPaymentJournalEntries({

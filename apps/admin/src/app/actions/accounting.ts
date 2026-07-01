@@ -178,31 +178,36 @@ export async function createJournalEntry(data: {
     const db = getDb();
     const entryNumber = await getNextJournalEntryNumber();
 
-    // Create the entry
-    const [entry] = await db
-      .insert(journalEntries)
-      .values({
-        entryNumber,
-        entryDate: parsed.data.entryDate,
-        period,
-        description: parsed.data.description,
-        status: 'draft',
-        createdBy: session.user.id,
-      })
-      .returning({ id: journalEntries.id });
+    // Create the entry and its lines atomically in a transaction
+    const entry = await db.transaction(async (tx) => {
+      const [e] = await tx
+        .insert(journalEntries)
+        .values({
+          entryNumber,
+          entryDate: parsed.data.entryDate,
+          period,
+          description: parsed.data.description,
+          status: 'draft',
+          createdBy: session.user.id,
+        })
+        .returning({ id: journalEntries.id });
+
+      if (!e) throw new Error('Failed to create journal entry.');
+
+      for (const line of parsed.data.lines) {
+        await tx.insert(journalLines).values({
+          journalEntryId: e.id,
+          accountId: line.accountId,
+          debit: line.debit ? String(line.debit) : null,
+          credit: line.credit ? String(line.credit) : null,
+          description: line.description ?? null,
+        });
+      }
+
+      return e;
+    });
 
     if (!entry) return { error: 'Failed to create journal entry.' };
-
-    // Create the lines
-    for (const line of parsed.data.lines) {
-      await db.insert(journalLines).values({
-        journalEntryId: entry.id,
-        accountId: line.accountId,
-        debit: line.debit ? String(line.debit) : null,
-        credit: line.credit ? String(line.credit) : null,
-        description: line.description ?? null,
-      });
-    }
 
     revalidatePath('/accounting/journals');
     revalidatePath('/accounting/chart-of-accounts');
