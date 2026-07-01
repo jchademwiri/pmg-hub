@@ -115,20 +115,30 @@ export async function convertLeadToClient(id: string): Promise<{ error?: string;
       }
     }
 
-    const [inserted] = await db.insert(clients).values({
-      name: lead.name || 'Converted Lead',
-      email: lead.email ?? null,
-      phone: lead.phone ?? null,
-      isActive: true,
-    }).returning({ id: clients.id });
+    // Use the module-level db client (supports transactions after driver switch)
+    // Insert client and update lead status atomically
+    const inserted = await db.transaction(async (tx) => {
+      const [client] = await tx.insert(clients).values({
+        name: lead.name || 'Converted Lead',
+        email: lead.email ?? null,
+        phone: lead.phone ?? null,
+        isActive: true,
+      }).returning({ id: clients.id });
+
+      if (!client) {
+        throw new Error('Failed to create client record.');
+      }
+
+      await tx.update(leads)
+        .set({ status: 'converted', updatedAt: new Date() })
+        .where(eq(leads.id, id));
+
+      return client;
+    });
 
     if (!inserted) {
       return { error: 'Failed to create client record.' };
     }
-
-    await db.update(leads)
-      .set({ status: 'converted', updatedAt: new Date() })
-      .where(eq(leads.id, id));
 
     revalidatePath('/relationships/leads');
     revalidatePath('/relationships/clients');

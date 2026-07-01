@@ -318,55 +318,61 @@ export async function convertQuoteToInvoice(
 
     const documentNumber = await getNextDocumentNumber(quote.divisionId, 'invoice', year);
 
-    // Create invoice from quote
-    const [inserted] = await db
-      .insert(invoices)
-      .values({
-        divisionId: quote.divisionId,
-        clientId: quote.clientId,
-        documentNumber,
-        status: 'draft',
-        invoiceDate: today,
-        dueDate: calculatedDueDate,
-        reference: quote.reference,
-        quotationId: quote.id,
-        subtotal: quote.subtotal,
-        discountType: quote.discountType,
-        discountValue: quote.discountValue,
-        discountAmount: quote.discountAmount,
-        vatEnabled: quote.vatEnabled,
-        vatAmount: quote.vatAmount,
-        total: quote.total,
-        notes: quote.notes,
-        terms: quote.terms,
-        createdBy: session.user.id,
-      })
-      .returning({ id: invoices.id });
+    // Create invoice, copy line items, and mark quote as converted atomically
+    const inserted = await db.transaction(async (tx) => {
+      const [inv] = await tx
+        .insert(invoices)
+        .values({
+          divisionId: quote.divisionId,
+          clientId: quote.clientId,
+          documentNumber,
+          status: 'draft',
+          invoiceDate: today,
+          dueDate: calculatedDueDate,
+          reference: quote.reference,
+          quotationId: quote.id,
+          subtotal: quote.subtotal,
+          discountType: quote.discountType,
+          discountValue: quote.discountValue,
+          discountAmount: quote.discountAmount,
+          vatEnabled: quote.vatEnabled,
+          vatAmount: quote.vatAmount,
+          total: quote.total,
+          notes: quote.notes,
+          terms: quote.terms,
+          createdBy: session.user.id,
+        })
+        .returning({ id: invoices.id });
+
+      if (!inv) throw new Error('Failed to create invoice.');
+
+      // Copy line items
+      if (quoteLineItems.length > 0) {
+        await tx.insert(billingLineItems).values(
+          quoteLineItems.map((li) => ({
+            documentType: 'invoice' as const,
+            documentId: inv.id,
+            sortOrder: li.sortOrder,
+            itemId: li.itemId,
+            description: li.description,
+            quantity: li.quantity,
+            unitPrice: li.unitPrice,
+            vatRate: li.vatRate,
+            lineTotal: li.lineTotal,
+          })),
+        );
+      }
+
+      // Mark quote as converted
+      await tx
+        .update(quotations)
+        .set({ status: 'converted', updatedAt: new Date() })
+        .where(eq(quotations.id, quotationId));
+
+      return inv;
+    });
 
     if (!inserted) return { error: 'Failed to create invoice.' };
-
-    // Copy line items
-    if (quoteLineItems.length > 0) {
-      await db.insert(billingLineItems).values(
-        quoteLineItems.map((li) => ({
-          documentType: 'invoice' as const,
-          documentId: inserted.id,
-          sortOrder: li.sortOrder,
-          itemId: li.itemId,
-          description: li.description,
-          quantity: li.quantity,
-          unitPrice: li.unitPrice,
-          vatRate: li.vatRate,
-          lineTotal: li.lineTotal,
-        })),
-      );
-    }
-
-    // Mark quote as converted
-    await db
-      .update(quotations)
-      .set({ status: 'converted', updatedAt: new Date() })
-      .where(eq(quotations.id, quotationId));
 
     revalidatePath('/billing/invoices');
     revalidatePath('/billing/quotes');
