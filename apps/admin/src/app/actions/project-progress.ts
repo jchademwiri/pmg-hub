@@ -326,7 +326,27 @@ export async function updateProgressSectionStatusAction(
     // Execute queries atomically
     let section;
     if (updateItemsQuery) {
-      const [sections] = await db.batch([updateSectionQuery, updateItemsQuery]);
+      const sections = await db.transaction(async (tx) => {
+        const updatedSections = await tx
+          .update(projectProgressSections)
+          .set({ status, updatedAt: new Date() })
+          .where(eq(projectProgressSections.id, sectionId))
+          .returning();
+
+        if (status === 'completed') {
+          await tx
+            .update(projectProgressItems)
+            .set({ isCompleted: true, completedAt: new Date(), updatedAt: new Date() })
+            .where(eq(projectProgressItems.sectionId, sectionId));
+        } else if (status === 'backlog') {
+          await tx
+            .update(projectProgressItems)
+            .set({ isCompleted: false, completedAt: null, updatedAt: new Date() })
+            .where(eq(projectProgressItems.sectionId, sectionId));
+        }
+
+        return updatedSections;
+      });
       section = sections[0];
     } else {
       const sections = await updateSectionQuery;
