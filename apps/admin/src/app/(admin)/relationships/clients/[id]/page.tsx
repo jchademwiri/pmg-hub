@@ -13,6 +13,7 @@ import {
   getIncomeAllocations,
   getAllDivisions,
   getOrganisationSettings,
+  getAllProjectScheduleEntries,
   type InvoiceDetail,
   type QuotationDetail,
 } from '@pmg/db';
@@ -57,7 +58,7 @@ export default async function ClientDetailPage({ params, searchParams }: ClientD
   const year = monthPeriod ? undefined : yearParam ? parseInt(yearParam, 10) : undefined;
 
   // Parallel server data fetching
-  const [client, incomeEntries, quotesList, invoicesList, statement, availableYears, creditSummary, creditHistory, divisions, orgSettings] =
+  const [client, incomeEntries, quotesList, invoicesList, statement, availableYears, creditSummary, creditHistory, divisions, orgSettings, projects] =
     await Promise.all([
       getClientById(id),
       getAllIncome({ clientId: id }),
@@ -69,6 +70,7 @@ export default async function ClientDetailPage({ params, searchParams }: ClientD
       getClientCreditHistory(id),
       getAllDivisions(),
       getOrganisationSettings(),
+      getAllProjectScheduleEntries({ clientId: id }),
     ]);
 
   if (!client) notFound();
@@ -117,6 +119,7 @@ export default async function ClientDetailPage({ params, searchParams }: ClientD
       updateClientAction={updateClient.bind(null, id)}
       creditSummary={creditSummary}
       creditHistory={creditHistory}
+      projects={projects}
     />
   );
 }

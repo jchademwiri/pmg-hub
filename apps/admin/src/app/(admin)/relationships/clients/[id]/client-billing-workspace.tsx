@@ -60,7 +60,7 @@ import {
   elementToPdfBase64,
   sanitizePdfFileName,
 } from '@/lib/pdf-export';
-import { ChevronDown, ChevronUp, FileDown, Mail, Loader2, Eye, Plus, CheckCircle2, XCircle, Wallet, Clock, AlertCircle, FileText, FileSignature, Coins, FileSpreadsheet, BarChart3 } from 'lucide-react';
+import { ChevronDown, ChevronUp, FileDown, Mail, Loader2, Eye, Plus, CheckCircle2, XCircle, Wallet, Clock, AlertCircle, FileText, FileSignature, Coins, FileSpreadsheet, BarChart3, Briefcase } from 'lucide-react';
 import { generateReceiptNumber } from '@pmg/utils';
 import { IssueCreditNoteDialog } from '@/components/billing/issue-credit-note-dialog';
 import { CreditHistoryTable } from '@/components/billing/credit-history-table';
@@ -68,6 +68,7 @@ import { bulkIssueInvoices, bulkVoidInvoices, issueInvoice, voidInvoice } from '
 import { sendDocumentEmailAction } from '@/app/actions/email-delivery';
 import { updateQuotationStatus } from '@/app/actions/billing-quotes';
 import { sendPortalInvitation } from '@/app/actions/clients';
+import { SetPageLabel } from '@/components/navigation/page-header-context';
 import type { InvoiceDetail, QuotationDetail } from '@pmg/db';
 
 function extractInvoiceNumber(description: string | null): string {
@@ -95,6 +96,7 @@ interface ClientBillingWorkspaceProps {
   updateClientAction: any;
   creditSummary?: any;
   creditHistory?: any;
+  projects?: any[];
 }
 
 interface BulkLogEntry {
@@ -118,6 +120,7 @@ export function ClientBillingWorkspace({
   creditSummary,
   creditHistory,
   divisions,
+  projects = [],
 }: ClientBillingWorkspaceProps) {
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -202,13 +205,13 @@ export function ClientBillingWorkspace({
       } else if (activeTabFromUrl === 'statement') {
         setSelectedDocType('statement');
         setSelectedDocId(null);
-      } else if (activeTabFromUrl === 'analytics' || activeTabFromUrl === 'credits') {
+      } else if (activeTabFromUrl === 'analytics' || activeTabFromUrl === 'credits' || activeTabFromUrl === 'projects') {
         setSelectedInvoiceIds(new Set());
         setSelectedQuoteIds(new Set());
         setIsPreviewOpen(false);
       }
     }
-  }, [activeTabFromUrl, invoices, quotes, payments]);
+  }, [activeTabFromUrl, invoices, quotes, payments, projects]);
 
   const handleTabChange = (val: string) => {
     const params = new URLSearchParams(searchParams.toString());
@@ -805,6 +808,7 @@ export function ClientBillingWorkspace({
 
   return (
     <div className="flex flex-col gap-8">
+      <SetPageLabel value={client.businessName ?? client.name} />
       {/* Off-screen canvas render container (for sequential combined PDF/Email generation) */}
       {activeRenderingDocId && activeRenderingDocType && (
         <div className="absolute left-[-9999px] top-[-9999px] w-[794px] bg-white text-black" style={{ zIndex: -100 }}>
@@ -1022,6 +1026,18 @@ export function ClientBillingWorkspace({
               <BarChart3 className="size-4 text-muted-foreground group-data-[state=active]:text-amber-500 transition-colors" />
               <span>Analytics</span>
             </TabsTrigger>
+            <TabsTrigger 
+              value="projects" 
+              className="group bg-transparent border-b-2 border-transparent data-[state=active]:border-amber-500 data-[state=active]:text-foreground rounded-none shadow-none px-4 py-2 text-sm font-medium flex items-center gap-2 transition-all hover:text-foreground/80"
+            >
+              <Briefcase className="size-4 text-muted-foreground group-data-[state=active]:text-amber-500 transition-colors" />
+              <span>Projects</span>
+              {projects.length > 0 && (
+                <span className="text-[10px] font-semibold bg-muted group-data-[state=active]:bg-amber-500/10 group-data-[state=active]:text-amber-600 px-1.5 py-0.5 rounded-full text-muted-foreground transition-colors">
+                  {projects.length}
+                </span>
+              )}
+            </TabsTrigger>
           </TabsList>
 
           {/* Action buttons are displayed contextually inside the slide-over drawer */}
@@ -1036,13 +1052,15 @@ export function ClientBillingWorkspace({
             <CardHeader className="p-4 border-b flex flex-row items-center justify-between">
               <div>
                 <CardTitle className="text-sm font-semibold capitalize">
-                  {activeTab === 'analytics' ? 'Client Analytics' : activeTab}
+                  {activeTab === 'analytics' ? 'Client Analytics' : activeTab === 'projects' ? 'Projects' : activeTab}
                 </CardTitle>
                 <CardDescription className="text-xs">
                   {activeTab === 'statement'
                     ? 'Configure and preview the client account statement'
                     : activeTab === 'analytics'
                     ? 'Full financial health, ageing analysis, and billing activity'
+                    : activeTab === 'projects'
+                    ? 'Tender schedule and active projects for this client'
                     : 'Select documents to view or batch process'}
                 </CardDescription>
               </div>
@@ -1488,6 +1506,75 @@ export function ClientBillingWorkspace({
                     <CreditHistoryTable entries={creditHistory ?? []} />
                   </TabsContent>
                 </Tabs>
+              </TabsContent>
+
+              {/* PROJECTS TAB */}
+              <TabsContent value="projects" className="m-0 p-6 flex flex-col gap-6">
+                <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+                  <div className="flex flex-col gap-1">
+                    <h3 className="text-base font-semibold">Client Projects</h3>
+                    <p className="text-xs text-muted-foreground">Overview of the tender schedule and active projects for this client</p>
+                  </div>
+                  <Button size="sm" asChild>
+                    <Link href={`/projects/new?clientId=${client.id}`}>
+                      <Plus className="size-4 mr-1" />
+                      Add Project
+                    </Link>
+                  </Button>
+                </div>
+
+                {projects.length === 0 ? (
+                  <p className="text-xs text-muted-foreground text-center py-8">
+                    No projects found for this client.
+                  </p>
+                ) : (
+                  <div className="border rounded-md overflow-hidden bg-card">
+                    <Table className="text-xs">
+                      <TableHeader>
+                        <TableRow>
+                          <TableHead>Project Reference</TableHead>
+                          <TableHead>Description</TableHead>
+                          <TableHead>Start Date</TableHead>
+                          <TableHead>Target Date</TableHead>
+                          <TableHead>Deadline</TableHead>
+                          <TableHead>Priority</TableHead>
+                          <TableHead>Status</TableHead>
+                          <TableHead className="w-12"></TableHead>
+                        </TableRow>
+                      </TableHeader>
+                      <TableBody>
+                        {projects.map((proj) => (
+                          <TableRow key={proj.id} className="hover:bg-muted/30">
+                            <TableCell className="font-semibold">
+                              <Link href={`/projects/${proj.id}`} className="hover:underline text-blue-600 dark:text-blue-400">
+                                {proj.projectReference}
+                              </Link>
+                            </TableCell>
+                            <TableCell className="max-w-[200px] truncate" title={proj.description ?? ''}>
+                              {proj.description ?? '-'}
+                            </TableCell>
+                            <TableCell>{fmtDate(proj.startDate)}</TableCell>
+                            <TableCell>{fmtDate(proj.targetCompletionDate)}</TableCell>
+                            <TableCell>{fmtDate(proj.closingDate)}</TableCell>
+                            <TableCell className="capitalize">{proj.priority}</TableCell>
+                            <TableCell>
+                              <Badge variant="secondary" className="capitalize">
+                                {proj.status.replace('_', ' ')}
+                              </Badge>
+                            </TableCell>
+                            <TableCell>
+                              <Button size="xs" variant="ghost" asChild>
+                                <Link href={`/projects/${proj.id}`}>
+                                  <Eye className="size-3.5" />
+                                </Link>
+                              </Button>
+                            </TableCell>
+                          </TableRow>
+                        ))}
+                      </TableBody>
+                    </Table>
+                  </div>
+                )}
               </TabsContent>
             </CardContent>
           </Card>

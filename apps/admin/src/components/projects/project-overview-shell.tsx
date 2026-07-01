@@ -3,14 +3,13 @@
 import * as React from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
-import { CalendarClock, AlertTriangle, ListOrdered, Plus, Flame, Clock, ChevronDown, ChevronUp } from 'lucide-react';
+import { CalendarClock, AlertTriangle, ListOrdered, Flame, Clock, ChevronDown, ChevronUp } from 'lucide-react';
 import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
 import { confirm } from '@/components/ui/confirm-dialog';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import type { ProjectScheduleEntry } from '@pmg/db';
 import { transitionProjectStatusAction } from '@/app/actions/project-schedule';
-import { ProjectFormDialog } from '@/components/projects/project-form-dialog';
 import { DraggableUpNext } from '@/components/projects/draggable-up-next';
 import { ProjectRiskBadge } from '@/components/projects/project-risk-badge';
 import { ProjectStatusBadge } from '@/components/projects/project-status-badge';
@@ -496,32 +495,12 @@ export function ProjectOverviewClient({
   progressMap,
 }: ProjectOverviewClientProps) {
   const router = useRouter();
-  const [formOpen, setFormOpen] = React.useState(false);
-
   const clientMap = React.useMemo(() => new Map(clients.map((c) => [c.id, c])), [clients]);
 
   const activeEntries = React.useMemo(
     () => [...inProgress, ...planned],
     [inProgress, planned],
   );
-
-  React.useEffect(() => {
-    const handleOpen = () => setFormOpen(true);
-    window.addEventListener('open-new-project-dialog', handleOpen);
-
-    // Check for ?new=true query param
-    const params = new URLSearchParams(window.location.search);
-    if (params.get('new') === 'true') {
-      setFormOpen(true);
-      // Clean up the URL query param without reloading
-      const newUrl = window.location.pathname;
-      window.history.replaceState({ path: newUrl }, '', newUrl);
-    }
-
-    return () => {
-      window.removeEventListener('open-new-project-dialog', handleOpen);
-    };
-  }, []);
 
   async function handleStatusChange(id: string, newStatus: string): Promise<string | undefined> {
     const result = await transitionProjectStatusAction(id, newStatus);
@@ -610,14 +589,6 @@ export function ProjectOverviewClient({
           </Card>
         </div>
       </div>
-
-      {/* Tender Form Dialog */}
-      <ProjectFormDialog
-        clients={clients}
-        divisions={divisions}
-        open={formOpen}
-        onOpenChange={setFormOpen}
-      />
     </div>
   );
 }

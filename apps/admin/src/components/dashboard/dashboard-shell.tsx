@@ -153,10 +153,7 @@ export function DashboardShell({
       />
 
       {/* ── Row 2: Accounts Receivable Ageing Overview ── */}
-      <section className="flex flex-col gap-2">
-        <h2 className="text-xs font-medium text-muted-foreground uppercase tracking-wider">
-          Accounts Receivable Ageing
-        </h2>
+      <section>
         <AgingReportGrid data={agingReport} />
       </section>
 

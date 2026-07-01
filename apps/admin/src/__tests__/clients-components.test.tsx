@@ -154,6 +154,8 @@ describe('ClientEditForm', () => {
     isActive: true,
     createdAt: new Date('2026-01-01'),
     updatedAt: null,
+    userId: null,
+    portalInvitationSentAt: null,
   }
 
   beforeEach(() => {

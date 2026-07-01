@@ -165,32 +165,34 @@ export async function deleteProgressItemAction(
 
     const sectionId = item.sectionId;
 
-    // Delete the item
-    await db.delete(projectProgressItems).where(eq(projectProgressItems.id, itemId));
+    // Delete the item and recalculate section status atomically in a transaction
+    await db.transaction(async (tx) => {
+      await tx.delete(projectProgressItems).where(eq(projectProgressItems.id, itemId));
 
-    // Fetch remaining items
-    const remainingItems = await db
-      .select()
-      .from(projectProgressItems)
-      .where(eq(projectProgressItems.sectionId, sectionId));
+      // Fetch remaining items
+      const remainingItems = await tx
+        .select()
+        .from(projectProgressItems)
+        .where(eq(projectProgressItems.sectionId, sectionId));
 
-    const totalCount = remainingItems.length;
-    const completedCount = remainingItems.filter((i) => i.isCompleted).length;
+      const totalCount = remainingItems.length;
+      const completedCount = remainingItems.filter((i) => i.isCompleted).length;
 
-    let nextStatus: 'backlog' | 'in_progress' | 'completed' = 'in_progress';
+      let nextStatus: 'backlog' | 'in_progress' | 'completed' = 'in_progress';
 
-    if (totalCount === 0) {
-      nextStatus = 'backlog';
-    } else if (completedCount === totalCount) {
-      nextStatus = 'completed';
-    } else if (completedCount === 0) {
-      nextStatus = 'backlog';
-    }
+      if (totalCount === 0) {
+        nextStatus = 'backlog';
+      } else if (completedCount === totalCount) {
+        nextStatus = 'completed';
+      } else if (completedCount === 0) {
+        nextStatus = 'backlog';
+      }
 
-    await db
-      .update(projectProgressSections)
-      .set({ status: nextStatus, updatedAt: new Date() })
-      .where(eq(projectProgressSections.id, sectionId));
+      await tx
+        .update(projectProgressSections)
+        .set({ status: nextStatus, updatedAt: new Date() })
+        .where(eq(projectProgressSections.id, sectionId));
+    });
 
     revalidatePath('/projects');
     return { success: true };
@@ -299,7 +301,7 @@ export async function updateProgressSectionStatusAction(
       .where(eq(projectProgressSections.id, sectionId))
       .returning();
 
-    // 2. If moved to completed, mark all sub-tasks complete; otherwise, uncheck them
+    // 2. If moved to completed, mark all sub-tasks complete; if backlog, uncheck them; if in_progress, leave them unchanged.
     let updateItemsQuery;
     if (status === 'completed') {
       updateItemsQuery = db
@@ -310,7 +312,7 @@ export async function updateProgressSectionStatusAction(
           updatedAt: new Date(),
         })
         .where(eq(projectProgressItems.sectionId, sectionId));
-    } else {
+    } else if (status === 'backlog') {
       updateItemsQuery = db
         .update(projectProgressItems)
         .set({
@@ -321,9 +323,15 @@ export async function updateProgressSectionStatusAction(
         .where(eq(projectProgressItems.sectionId, sectionId));
     }
 
-    // Execute both queries atomically in a single round trip
-    const [sections] = await db.batch([updateSectionQuery, updateItemsQuery]);
-    const section = sections[0];
+    // Execute queries atomically
+    let section;
+    if (updateItemsQuery) {
+      const [sections] = await db.batch([updateSectionQuery, updateItemsQuery]);
+      section = sections[0];
+    } else {
+      const sections = await updateSectionQuery;
+      section = sections[0];
+    }
 
     if (!section) {
       return { success: false, error: 'Section not found.' };

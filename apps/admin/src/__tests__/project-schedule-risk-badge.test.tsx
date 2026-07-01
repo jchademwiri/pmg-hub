@@ -48,6 +48,7 @@ function makeTender(overrides: TenderOverride) {
     notes: null,
     blockers: null,
     outcome: null,
+    description: null,
     createdBy: 'user-1',
     actualEffortDays: null,
     actualCompletionDate: null,
