@@ -149,7 +149,7 @@ export function CreditNoteDetailClient({
       const { updateCreditNote } = await import('@/app/actions/credit-management');
       const res = await updateCreditNote({
         creditNoteId: note.id,
-        reason: editReason || null,
+        reason: editReason || undefined,
         expiresAt: editExpiresAt || null,
       });
       if (res.error) {
