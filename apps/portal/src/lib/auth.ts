@@ -26,7 +26,7 @@ const getBaseURL = () => {
     return 'https://portal.playhousemedia.co.za';
   }
   if (process.env.VERCEL_URL) return `https://${process.env.VERCEL_URL}`;
-  return 'http://localhost:3001';
+  return process.env.PORTAL_AUTH_URL || process.env.PORTAL_URL || process.env.BETTER_AUTH_URL || 'http://localhost:3001';
 };
 
 const resolvedBaseURL = getBaseURL();

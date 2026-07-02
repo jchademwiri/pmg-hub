@@ -284,7 +284,12 @@ export async function applyCreditToInvoice(
       .from(paymentAllocations)
       .where(eq(paymentAllocations.invoiceId, invoiceId));
 
-    const totalAllocated = parseFloat(allocAgg?.total ?? '0');
+    const [creditAllocAgg] = await db
+      .select({ total: sql<string>`coalesce(sum(${creditApplications.amount}), 0)` })
+      .from(creditApplications)
+      .where(eq(creditApplications.invoiceId, invoiceId));
+
+    const totalAllocated = parseFloat(allocAgg?.total ?? '0') + parseFloat(creditAllocAgg?.total ?? '0');
     const invoiceTotal = parseFloat(invoice.total);
     const outstanding = Math.max(0, invoiceTotal - totalAllocated);
 
@@ -550,7 +555,12 @@ export async function applyCreditToInvoices(
         .from(paymentAllocations)
         .where(eq(paymentAllocations.invoiceId, alloc.invoiceId));
 
-      const totalAllocated = parseFloat(allocAgg?.total ?? '0');
+      const [creditAllocAgg] = await db
+        .select({ total: sql<string>`coalesce(sum(${creditApplications.amount}), 0)` })
+        .from(creditApplications)
+        .where(eq(creditApplications.invoiceId, alloc.invoiceId));
+
+      const totalAllocated = parseFloat(allocAgg?.total ?? '0') + parseFloat(creditAllocAgg?.total ?? '0');
       const invoiceTotal = parseFloat(invoice.total);
       const outstanding = Math.max(0, invoiceTotal - totalAllocated);
 
@@ -656,7 +666,12 @@ export async function applyCreditToInvoices(
         .from(paymentAllocations)
         .where(eq(paymentAllocations.invoiceId, alloc.invoiceId));
 
-      const newTotalAllocated = parseFloat(newAllocAgg?.total ?? '0');
+      const [newCreditAllocAgg] = await db
+        .select({ total: sql<string>`coalesce(sum(${creditApplications.amount}), 0)` })
+        .from(creditApplications)
+        .where(eq(creditApplications.invoiceId, alloc.invoiceId));
+
+      const newTotalAllocated = parseFloat(newAllocAgg?.total ?? '0') + parseFloat(newCreditAllocAgg?.total ?? '0');
 
       if (newTotalAllocated >= invoiceTotal) {
         await db

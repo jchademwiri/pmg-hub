@@ -223,8 +223,6 @@ export async function postPaymentJournalEntries(data: {
           credit: String(pmgShareAmount),
           description: `PMG Share transfer (25% of R${amount.toFixed(2)})`,
         });
-
-        entryIds.push(entry2Id);
       }
     });
 
