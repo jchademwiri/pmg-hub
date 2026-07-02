@@ -9,7 +9,9 @@ export async function getPortalSession() {
   // Impersonation / Bypass Auth helper in development
   if (process.env.NODE_ENV === 'development') {
     const cookieStore = await cookies();
-    const impersonateId = cookieStore.get('dev_impersonate_client_id')?.value;
+    // Check both the dev cookie AND the production impersonate cookie (set by /impersonate route)
+    const impersonateId = cookieStore.get('dev_impersonate_client_id')?.value
+      ?? cookieStore.get('impersonate_client_id')?.value;
 
     if (impersonateId) {
       const [client] = await db
