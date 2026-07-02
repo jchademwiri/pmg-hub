@@ -317,66 +317,69 @@ export async function applyCreditToInvoice(
     let remainingToApply = finalAmount;
     let actualApplied = 0;
 
-    for (const note of activeNotes) {
-      if (remainingToApply <= 0) break;
+    // Wrap all credit note updates, application inserts, and invoice status changes in a transaction
+    await db.transaction(async (tx) => {
+      for (const note of activeNotes) {
+        if (remainingToApply <= 0) break;
 
-      const noteRemaining = parseFloat(note.amountRemaining);
-      if (noteRemaining <= 0) continue;
+        const noteRemaining = parseFloat(note.amountRemaining);
+        if (noteRemaining <= 0) continue;
 
-      const allocAmount = Math.min(noteRemaining, remainingToApply);
-      remainingToApply -= allocAmount;
-      actualApplied += allocAmount;
+        const allocAmount = Math.min(noteRemaining, remainingToApply);
+        remainingToApply -= allocAmount;
+        actualApplied += allocAmount;
 
-      // Update credit note remaining amount
-      const newRemaining = noteRemaining - allocAmount;
-      const newStatus = newRemaining <= 0 ? 'fully_applied' : 'partially_applied';
+        // Update credit note remaining amount
+        const newRemaining = noteRemaining - allocAmount;
+        const newStatus = newRemaining <= 0 ? 'fully_applied' : 'partially_applied';
 
-      await db
-        .update(creditNotes)
-        .set({
-          amountRemaining: String(newRemaining.toFixed(2)),
-          status: newStatus,
-          updatedAt: new Date(),
-        })
-        .where(eq(creditNotes.id, note.id));
+        await tx
+          .update(creditNotes)
+          .set({
+            amountRemaining: String(newRemaining.toFixed(2)),
+            status: newStatus,
+            updatedAt: new Date(),
+          })
+          .where(eq(creditNotes.id, note.id));
 
-      // Create credit application record
-      await db.insert(creditApplications).values({
-        creditNoteId: note.id,
-        invoiceId: invoiceId,
-        amount: String(allocAmount.toFixed(2)),
-        appliedBy: session.user.id,
-      });
-    }
+        // Create credit application record
+        await tx.insert(creditApplications).values({
+          creditNoteId: note.id,
+          invoiceId: invoiceId,
+          amount: String(allocAmount.toFixed(2)),
+          appliedBy: session.user.id,
+        });
+      }
 
-    // 8. Recalculate invoice status
-    const [newAllocAgg] = await db
-      .select({ total: sql<string>`coalesce(sum(${paymentAllocations.amount}), 0)` })
-      .from(paymentAllocations)
-      .where(eq(paymentAllocations.invoiceId, invoiceId));
+      // 8. Recalculate invoice status
+      const [newAllocAgg] = await tx
+        .select({ total: sql<string>`coalesce(sum(${paymentAllocations.amount}), 0)` })
+        .from(paymentAllocations)
+        .where(eq(paymentAllocations.invoiceId, invoiceId));
 
-    const newTotalAllocated = parseFloat(newAllocAgg?.total ?? '0');
+      const newTotalAllocated = parseFloat(newAllocAgg?.total ?? '0');
 
-    if (newTotalAllocated >= invoiceTotal) {
-      await db
-        .update(invoices)
-        .set({
-          status: 'paid',
-          paidAt: new Date(),
-          updatedAt: new Date(),
-        })
-        .where(eq(invoices.id, invoiceId));
-    } else if (newTotalAllocated > 0) {
-      await db
-        .update(invoices)
-        .set({
-          status: 'partially_paid',
-          paidAt: null,
-          incomeId: null,
-          updatedAt: new Date(),
-        })
-        .where(eq(invoices.id, invoiceId));
-    }
+      if (newTotalAllocated >= invoiceTotal) {
+        await tx
+          .update(invoices)
+          .set({
+            status: 'paid',
+            paidAt: new Date(),
+            updatedAt: new Date(),
+          })
+          .where(eq(invoices.id, invoiceId));
+      } else if (newTotalAllocated > 0) {
+        await tx
+          .update(invoices)
+          .set({
+            status: 'partially_paid',
+            paidAt: null,
+            incomeId: null,
+            updatedAt: new Date(),
+          })
+          .where(eq(invoices.id, invoiceId));
+      }
+    });
 
     // 9. Revalidate
     revalidatePath('/billing/invoices');
