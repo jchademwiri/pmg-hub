@@ -875,6 +875,48 @@ export async function reverseCreditApplication(invoiceId: string): Promise<{ err
   }
 }
 
+// ── updateCreditNote ─────────────────────────────────────────────────────────
+// Updates a credit note's reason and/or expiry date.
+
+export async function updateCreditNote(data: {
+  creditNoteId: string;
+  reason?: string;
+  expiresAt?: string | null;
+}): Promise<{ error?: string; success?: boolean }> {
+  try {
+    await getSessionOrRedirect();
+    const db = getDb();
+
+    const [note] = await db
+      .select()
+      .from(creditNotes)
+      .where(eq(creditNotes.id, data.creditNoteId));
+
+    if (!note) return { error: 'Credit note not found.' };
+    if (note.status === 'void') return { error: 'Cannot edit a voided credit note.' };
+
+    await db
+      .update(creditNotes)
+      .set({
+        ...(data.reason !== undefined && { reason: data.reason }),
+        ...(data.expiresAt !== undefined && {
+          expiresAt: data.expiresAt ? new Date(data.expiresAt) : null
+        }),
+        updatedAt: new Date(),
+      })
+      .where(eq(creditNotes.id, data.creditNoteId));
+
+    revalidatePath('/billing/credits');
+    revalidatePath('/dashboard');
+    revalidatePath(`/billing/credits/${data.creditNoteId}`);
+
+    return { success: true };
+  } catch (err) {
+    console.error('Failed to update credit note:', err);
+    return { error: 'Failed to update credit note.' };
+  }
+}
+
 // ── voidCreditNote ────────────────────────────────────────────────────────────
 // Voids a credit note (reverses it). Credit note must not be fully consumed.
 
@@ -917,6 +959,7 @@ export async function voidCreditNote(creditNoteId: string): Promise<{ error?: st
 
     revalidatePath('/billing/credits');
     revalidatePath('/dashboard');
+    revalidatePath(`/billing/credits/${creditNoteId}`);
 
     return {};
   } catch (err) {
