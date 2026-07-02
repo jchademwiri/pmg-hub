@@ -68,6 +68,7 @@ import { bulkIssueInvoices, bulkVoidInvoices, issueInvoice, voidInvoice } from '
 import { sendDocumentEmailAction } from '@/app/actions/email-delivery';
 import { updateQuotationStatus } from '@/app/actions/billing-quotes';
 import { sendPortalInvitation } from '@/app/actions/clients';
+import { generateImpersonationLink } from '@/app/actions/portal-impersonation';
 import { SetPageLabel } from '@/components/navigation/page-header-context';
 import type { InvoiceDetail, QuotationDetail } from '@pmg/db';
 
@@ -942,6 +943,7 @@ export function ClientBillingWorkspace({
           </Link>
         </Button>
         <PortalInviteButton client={client} />
+        <PortalImpersonateButton client={client} />
       </div>
 
       {metricFilter !== 'all' && (activeTab === 'invoices' || activeTab === 'quotes') && (
@@ -1858,6 +1860,47 @@ export function ClientBillingWorkspace({
         divisions={clientDivisions}
       />
     </div>
+  );
+}
+
+function PortalImpersonateButton({ client }: { client: any }) {
+  const [isPending, startTransition] = useTransition();
+
+  const handleImpersonate = () => {
+    if (!client.id) return;
+
+    startTransition(async () => {
+      const result = await generateImpersonationLink(client.id);
+      if (result.error) {
+        toast.error(result.error);
+        return;
+      }
+      if (result.url) {
+        window.open(result.url, '_blank', 'noopener,noreferrer');
+      }
+    });
+  };
+
+  return (
+    <Button
+      size="sm"
+      variant="outline"
+      className="border-indigo-200 hover:bg-indigo-50/50 dark:border-indigo-900/50 dark:hover:bg-indigo-950/20"
+      disabled={isPending}
+      onClick={handleImpersonate}
+    >
+      {isPending ? (
+        <>
+          <Loader2 className="size-4 mr-1 animate-spin" />
+          Loading...
+        </>
+      ) : (
+        <>
+          <Eye className="size-4 mr-1 text-indigo-600 dark:text-indigo-400" />
+          View as Client
+        </>
+      )}
+    </Button>
   );
 }
 
