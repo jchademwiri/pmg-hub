@@ -106,17 +106,6 @@ export async function getPortalSession() {
       }
     }
 
-    // If no impersonate cookie is set and we didn't match a client yet, default to the first active client
-    if (!client) {
-      const [fallbackClient] = await db
-        .select()
-        .from(clients)
-        .where(eq(clients.isActive, true))
-        .limit(1);
-      if (fallbackClient) {
-        client = fallbackClient;
-      }
-    }
   }
 
   // Enforce that only active clients (or impersonated clients) can access the portal
