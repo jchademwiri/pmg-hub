@@ -10,6 +10,13 @@ import { getSASTParts, getSASTToday } from '@/lib/format';
 import { CreateInvoiceSchema, type CreateInvoiceInput } from './billing-schema';
 import { hasBillingLineItemItemIdColumn } from './billing-line-item-compat';
 
+class ActionError extends Error {
+  constructor(message: string) {
+    super(message);
+    this.name = 'ActionError';
+  }
+}
+
 // ── Shared totals helper ──────────────────────────────────────────────────────
 
 function calcTotals(
@@ -301,29 +308,10 @@ export async function convertQuoteToInvoice(
     const today = getSASTToday();
     if (await isPeriodClosed(today)) {
       const minDate = await getMinAllowedDate();
-      return { error: getMinDateErrorMessage(minDate) };
+      throw new ActionError(getMinDateErrorMessage(minDate));
     }
 
     const includeLineItemItemId = await hasBillingLineItemItemIdColumn();
-
-    // Load quote line items
-    const quoteLineItems = await db
-      .select({
-        sortOrder: billingLineItems.sortOrder,
-        ...(includeLineItemItemId ? { itemId: billingLineItems.itemId } : {}),
-        description: billingLineItems.description,
-        quantity: billingLineItems.quantity,
-        unitPrice: billingLineItems.unitPrice,
-        vatRate: billingLineItems.vatRate,
-        lineTotal: billingLineItems.lineTotal,
-      })
-      .from(billingLineItems)
-      .where(
-        and(
-          eq(billingLineItems.documentType, 'quote'),
-          eq(billingLineItems.documentId, quotationId),
-        ),
-      );
 
     // Fetch division payment terms to calculate due date
     const [settings] = await db
@@ -351,6 +339,25 @@ export async function convertQuoteToInvoice(
       if (quoteLocked.status !== 'accepted') {
         throw new InvoiceValidationError('Only accepted quotations can be converted to invoices.');
       }
+
+      // Load quote line items inside the transaction to share the lock
+      const quoteLineItems = await tx
+        .select({
+          sortOrder: billingLineItems.sortOrder,
+          ...(includeLineItemItemId ? { itemId: billingLineItems.itemId } : {}),
+          description: billingLineItems.description,
+          quantity: billingLineItems.quantity,
+          unitPrice: billingLineItems.unitPrice,
+          vatRate: billingLineItems.vatRate,
+          lineTotal: billingLineItems.lineTotal,
+        })
+        .from(billingLineItems)
+        .where(
+          and(
+            eq(billingLineItems.documentType, 'quote'),
+            eq(billingLineItems.documentId, quotationId),
+          ),
+        );
 
       // 2. Check if an invoice has already been created for this quotation
       const [existingInvoice] = await tx
@@ -523,7 +530,7 @@ export async function markInvoicePaid(id: string): Promise<{ error?: string }> {
     const description = `${invoice.documentNumber} - ${clientLabel}`;
 
     // Post to income ledger and mark invoice paid atomically in a transaction
-    const incomeRow = await db.transaction(async (tx) => {
+    const result = await db.transaction(async (tx) => {
       // Lock the invoice row to prevent concurrent status updates
       const [invoiceLocked] = await tx
         .select()
@@ -559,18 +566,19 @@ export async function markInvoicePaid(id: string): Promise<{ error?: string }> {
         })
         .where(eq(invoices.id, id));
 
-      return row;
+      return { incomeRow: row, invoiceLocked };
     });
 
-    if (!incomeRow) return { error: 'Failed to post income record.' };
+    if (!result) return { error: 'Failed to post income record.' };
+    const { incomeRow, invoiceLocked } = result;
 
     // Auto-post: Dr Bank (1010) / Cr AR (1100) + Dr Savings / Cr Bank (PMG share)
     const journalResult = await postPaymentJournalEntries({
       incomeId: incomeRow.id,
-      amount: parseFloat(invoice.total),
+      amount: parseFloat(invoiceLocked.total),
       date: paymentDate,
       description,
-      divisionId: invoice.divisionId,
+      divisionId: invoiceLocked.divisionId,
     });
     if (journalResult.error) {
       console.warn('Payment AR auto-post warning:', journalResult.error);

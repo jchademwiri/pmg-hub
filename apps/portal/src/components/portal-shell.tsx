@@ -14,6 +14,7 @@ import {
   ChevronRight,
   LogOut,
   ShieldCheck,
+  ShieldAlert,
   X,
   CalendarDays,
 } from 'lucide-react';
@@ -21,13 +22,21 @@ import Link from 'next/link';
 
 interface PortalShellProps {
   client: any;
+  isImpersonating: boolean;
   children: React.ReactNode;
 }
 
-export function PortalShell({ client, children }: PortalShellProps) {
+
+export function PortalShell({ client, isImpersonating, children }: PortalShellProps) {
   const [isCollapsed, setIsCollapsed] = React.useState(false);
   const [isMobileOpen, setIsMobileOpen] = React.useState(false);
   const pathname = usePathname();
+
+  const handleStopImpersonating = React.useCallback(() => {
+    // Clear the impersonation cookie and reload — the admin still has a valid session
+    document.cookie = 'impersonate_client_id=; path=/; max-age=0; SameSite=Lax';
+    window.location.reload();
+  }, []);
 
   const NAV_ITEMS = [
     { label: 'Dashboard', href: '/dashboard', icon: LayoutDashboard },
@@ -224,6 +233,29 @@ export function PortalShell({ client, children }: PortalShellProps) {
             </span>
           </div>
         </header>
+
+        {/* Impersonation Banner - shown when an admin is viewing as a client */}
+        {isImpersonating && (
+          <div className="flex items-center gap-3 border-b border-amber-500/20 bg-amber-500/5 px-6 py-2.5 print:hidden">
+            <ShieldAlert className="size-4 shrink-0 text-amber-400" />
+            <span className="text-xs font-medium text-amber-300/90">
+              Preview — Viewing as <strong className="text-amber-200">{client.businessName || client.name}</strong>
+            </span>
+            <div className="ml-auto flex items-center gap-2">
+              <span className="hidden sm:inline text-[10px] text-amber-400/50 font-mono">
+                impersonate_client_id
+              </span>
+              <button
+                type="button"
+                onClick={handleStopImpersonating}
+                className="flex items-center gap-1.5 rounded-md border border-amber-500/25 bg-amber-500/10 px-2.5 py-1 text-[11px] font-medium text-amber-300 transition-all hover:bg-amber-500/20 hover:text-amber-200 cursor-pointer"
+              >
+                <X className="size-3" />
+                Exit Preview
+              </button>
+            </div>
+          </div>
+        )}
 
         {/* Content Body */}
         <main className="flex-1 p-6 md:p-8 max-w-7xl w-full mx-auto">

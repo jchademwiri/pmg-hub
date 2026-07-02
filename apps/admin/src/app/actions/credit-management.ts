@@ -284,7 +284,12 @@ export async function applyCreditToInvoice(
       .from(paymentAllocations)
       .where(eq(paymentAllocations.invoiceId, invoiceId));
 
-    const totalAllocated = parseFloat(allocAgg?.total ?? '0');
+    const [creditAllocAgg] = await db
+      .select({ total: sql<string>`coalesce(sum(${creditApplications.amount}), 0)` })
+      .from(creditApplications)
+      .where(eq(creditApplications.invoiceId, invoiceId));
+
+    const totalAllocated = parseFloat(allocAgg?.total ?? '0') + parseFloat(creditAllocAgg?.total ?? '0');
     const invoiceTotal = parseFloat(invoice.total);
     const outstanding = Math.max(0, invoiceTotal - totalAllocated);
 
@@ -438,6 +443,37 @@ export async function applyCreditToInvoice(
           })
           .where(eq(invoices.id, invoiceId));
       }
+
+      // 6. Create an income record for the credit application (for dashboard visibility)
+      // Also creates a payment_allocation so the income is linked to the invoice.
+      // This ensures the credit application shows up on the income page, payments page,
+      // and dashboard charts. The income + allocation cancel each other out in the
+      // legacy credit balance calculation (sum(income) - sum(payment_allocations)).
+      if (actualApplied > 0) {
+        const [invDoc] = await tx
+          .select({ documentNumber: invoices.documentNumber })
+          .from(invoices)
+          .where(eq(invoices.id, invoiceId));
+
+        const [incomeRow] = await tx
+          .insert(income)
+          .values({
+            date: getSASTToday(),
+            divisionId: invoiceLocked.divisionId!,
+            clientId: invoiceLocked.clientId!,
+            description: `Credit applied to ${invDoc?.documentNumber ?? invoiceId}`,
+            amount: String(actualApplied.toFixed(2)),
+          })
+          .returning({ id: income.id });
+
+        if (incomeRow?.id) {
+          await tx.insert(paymentAllocations).values({
+            incomeId: incomeRow.id,
+            invoiceId: invoiceId,
+            amount: String(actualApplied.toFixed(2)),
+          });
+        }
+      }
     });
 
 
@@ -519,7 +555,12 @@ export async function applyCreditToInvoices(
         .from(paymentAllocations)
         .where(eq(paymentAllocations.invoiceId, alloc.invoiceId));
 
-      const totalAllocated = parseFloat(allocAgg?.total ?? '0');
+      const [creditAllocAgg] = await db
+        .select({ total: sql<string>`coalesce(sum(${creditApplications.amount}), 0)` })
+        .from(creditApplications)
+        .where(eq(creditApplications.invoiceId, alloc.invoiceId));
+
+      const totalAllocated = parseFloat(allocAgg?.total ?? '0') + parseFloat(creditAllocAgg?.total ?? '0');
       const invoiceTotal = parseFloat(invoice.total);
       const outstanding = Math.max(0, invoiceTotal - totalAllocated);
 
@@ -625,7 +666,12 @@ export async function applyCreditToInvoices(
         .from(paymentAllocations)
         .where(eq(paymentAllocations.invoiceId, alloc.invoiceId));
 
-      const newTotalAllocated = parseFloat(newAllocAgg?.total ?? '0');
+      const [newCreditAllocAgg] = await db
+        .select({ total: sql<string>`coalesce(sum(${creditApplications.amount}), 0)` })
+        .from(creditApplications)
+        .where(eq(creditApplications.invoiceId, alloc.invoiceId));
+
+      const newTotalAllocated = parseFloat(newAllocAgg?.total ?? '0') + parseFloat(newCreditAllocAgg?.total ?? '0');
 
       if (newTotalAllocated >= invoiceTotal) {
         await db
@@ -637,6 +683,34 @@ export async function applyCreditToInvoices(
           .update(invoices)
           .set({ status: 'partially_paid', paidAt: null, incomeId: null, updatedAt: new Date() })
           .where(eq(invoices.id, alloc.invoiceId));
+      }
+
+      // Create income record for credit application (dashboard visibility)
+      // Runs regardless of whether the invoice is fully or partially paid
+      if (finalAmount > 0) {
+        const [invDoc] = await db
+          .select({ documentNumber: invoices.documentNumber })
+          .from(invoices)
+          .where(eq(invoices.id, alloc.invoiceId));
+
+        const [incomeRow] = await db
+          .insert(income)
+          .values({
+            date: getSASTToday(),
+            divisionId: invoice.divisionId!,
+            clientId: invoice.clientId!,
+            description: `Credit applied to ${invDoc?.documentNumber ?? alloc.invoiceId}`,
+            amount: String(finalAmount.toFixed(2)),
+          })
+          .returning({ id: income.id });
+
+        if (incomeRow?.id) {
+          await db.insert(paymentAllocations).values({
+            incomeId: incomeRow.id,
+            invoiceId: alloc.invoiceId,
+            amount: String(finalAmount.toFixed(2)),
+          });
+        }
       }
     }
 
@@ -752,6 +826,28 @@ export async function reverseCreditApplication(invoiceId: string): Promise<{ err
       .from(creditApplications)
       .where(eq(creditApplications.invoiceId, invoiceId));
 
+    // Also fetch and delete any income records created for credit applications
+    // These are linked via payment_allocations where the income.description starts with "Credit applied"
+    const creditPaymentAllocs = await db
+      .select({
+        id: paymentAllocations.id,
+        incomeId: paymentAllocations.incomeId,
+      })
+      .from(paymentAllocations)
+      .innerJoin(income, eq(income.id, paymentAllocations.incomeId))
+      .where(
+        and(
+          eq(paymentAllocations.invoiceId, invoiceId),
+          sql`${income.description} LIKE 'Credit applied to%'`
+        )
+      );
+
+    // Delete payment allocations and income records for this credit application
+    for (const alloc of creditPaymentAllocs) {
+      await db.delete(paymentAllocations).where(eq(paymentAllocations.id, alloc.id));
+      await db.delete(income).where(eq(income.id, alloc.incomeId));
+    }
+
     for (const app of apps) {
       // Fetch the credit note
       const [note] = await db
@@ -791,6 +887,48 @@ export async function reverseCreditApplication(invoiceId: string): Promise<{ err
   } catch (err) {
     console.error('Failed to reverse credit application:', err);
     return { error: 'Failed to reverse credit application.' };
+  }
+}
+
+// ── updateCreditNote ─────────────────────────────────────────────────────────
+// Updates a credit note's reason and/or expiry date.
+
+export async function updateCreditNote(data: {
+  creditNoteId: string;
+  reason?: string;
+  expiresAt?: string | null;
+}): Promise<{ error?: string; success?: boolean }> {
+  try {
+    await getSessionOrRedirect();
+    const db = getDb();
+
+    const [note] = await db
+      .select()
+      .from(creditNotes)
+      .where(eq(creditNotes.id, data.creditNoteId));
+
+    if (!note) return { error: 'Credit note not found.' };
+    if (note.status === 'void') return { error: 'Cannot edit a voided credit note.' };
+
+    await db
+      .update(creditNotes)
+      .set({
+        ...(data.reason !== undefined && { reason: data.reason }),
+        ...(data.expiresAt !== undefined && {
+          expiresAt: data.expiresAt ? new Date(data.expiresAt) : null
+        }),
+        updatedAt: new Date(),
+      })
+      .where(eq(creditNotes.id, data.creditNoteId));
+
+    revalidatePath('/billing/credits');
+    revalidatePath('/dashboard');
+    revalidatePath(`/billing/credits/${data.creditNoteId}`);
+
+    return { success: true };
+  } catch (err) {
+    console.error('Failed to update credit note:', err);
+    return { error: 'Failed to update credit note.' };
   }
 }
 
@@ -836,6 +974,7 @@ export async function voidCreditNote(creditNoteId: string): Promise<{ error?: st
 
     revalidatePath('/billing/credits');
     revalidatePath('/dashboard');
+    revalidatePath(`/billing/credits/${creditNoteId}`);
 
     return {};
   } catch (err) {

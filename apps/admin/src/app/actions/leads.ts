@@ -140,6 +140,7 @@ export async function convertLeadToClient(id: string): Promise<{ error?: string;
         }
       }
 
+
       const [client] = await tx.insert(clients).values({
         name: leadRow.name || 'Converted Lead',
         email: leadRow.email ?? null,

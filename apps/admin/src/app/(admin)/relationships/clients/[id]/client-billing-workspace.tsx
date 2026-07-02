@@ -271,7 +271,8 @@ export function ClientBillingWorkspace({
     (inv) => inv.status !== 'void' && inv.status !== 'draft' && inv.invoiceDate <= todayStrWS
   );
   const totalInvoicedWS = activeInvoicesWS.reduce((sum, inv) => sum + Number(inv.total), 0);
-  const totalPaidWS = (payments?.data ?? []).reduce((sum: number, pay: any) => sum + Number(pay.amount), 0);
+  const totalCreditsAppliedWS = (creditSummary?.creditNotes ?? []).reduce((sum: number, note: any) => sum + Math.max(0, note.amount - note.amountRemaining), 0);
+  const totalPaidWS = (payments?.data ?? []).reduce((sum: number, pay: any) => sum + Number(pay.amount), 0) + totalCreditsAppliedWS;
 
   // Overdue Balance Calculation (strictly unpaid invoices where due date is in the past)
   const overdueBalanceWS = activeInvoicesWS
@@ -1380,6 +1381,7 @@ export function ClientBillingWorkspace({
                   invoices={invoices}
                   quotes={quotes}
                   payments={payments.data}
+                  totalCreditsApplied={totalCreditsAppliedWS}
                 />
               </TabsContent>
 

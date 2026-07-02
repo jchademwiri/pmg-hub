@@ -29,7 +29,8 @@ export async function proxy(request: NextRequest): Promise<NextResponse> {
   }
 
   // Allow public routes and assets through
-  if (pathname === '/login' || pathname.startsWith('/api/auth/')) {
+  // /impersonate must be accessible without a session since it creates one
+  if (pathname === '/login' || pathname === '/impersonate' || pathname.startsWith('/api/auth/')) {
     return NextResponse.next();
   }
 

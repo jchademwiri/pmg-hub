@@ -1,6 +1,7 @@
 import { db } from "../client";
 import { quotations, invoices, billingLineItems, billingItems, paymentAllocations } from "../schema/billing";
 import { income } from "../schema/income";
+import { creditApplications } from "../schema/credits";
 import { divisions } from "../schema/divisions";
 import { clients } from "../schema/clients";
 import { sql, eq, and, desc, asc, inArray, or } from "drizzle-orm";
@@ -539,7 +540,11 @@ export async function getAllInvoices(
       createdBy: invoices.createdBy,
       createdAt: invoices.createdAt,
       updatedAt: invoices.updatedAt,
-      allocatedAmount: sql<string>`COALESCE((SELECT SUM(amount) FROM payment_allocations WHERE invoice_id = ${invoices.id}), 0)::text`,
+      allocatedAmount: sql<string>`(
+      COALESCE((SELECT SUM(amount) FROM payment_allocations WHERE invoice_id = ${invoices.id}), 0)
+      +
+      COALESCE((SELECT SUM(amount) FROM credit_applications WHERE invoice_id = ${invoices.id}), 0)
+    )::text`,
     })
     .from(invoices)
     .innerJoin(divisions, eq(invoices.divisionId, divisions.id))
@@ -559,7 +564,7 @@ export async function getAllInvoices(
     .select({
       count: sql<number>`count(*)::int`,
       sum: sql<number>`COALESCE(SUM(${invoices.total}), 0)::numeric`,
-      outstanding: sql<number>`COALESCE(SUM(CASE WHEN ${invoices.status} IN ('issued', 'overdue', 'partially_paid') THEN ${invoices.total} - COALESCE((SELECT SUM(amount) FROM payment_allocations WHERE invoice_id = invoices.id), 0) ELSE 0 END), 0)::numeric`,
+      outstanding: sql<number>`COALESCE(SUM(CASE WHEN ${invoices.status} IN ('issued', 'overdue', 'partially_paid') THEN ${invoices.total} - COALESCE((SELECT SUM(amount) FROM payment_allocations WHERE invoice_id = invoices.id), 0) - COALESCE((SELECT SUM(amount) FROM credit_applications WHERE invoice_id = invoices.id), 0) ELSE 0 END), 0)::numeric`,
     })
     .from(invoices);
   if (countConditions.length > 0) countQuery.where(and(...countConditions));
@@ -685,7 +690,11 @@ export async function getInvoiceById(id: string): Promise<InvoiceDetail | null> 
       createdBy: invoices.createdBy,
       createdAt: invoices.createdAt,
       updatedAt: invoices.updatedAt,
-      allocatedAmount: sql<string>`COALESCE((SELECT SUM(amount) FROM payment_allocations WHERE invoice_id = ${invoices.id}), 0)::text`,
+      allocatedAmount: sql<string>`(
+      COALESCE((SELECT SUM(amount) FROM payment_allocations WHERE invoice_id = ${invoices.id}), 0)
+      +
+      COALESCE((SELECT SUM(amount) FROM credit_applications WHERE invoice_id = ${invoices.id}), 0)
+    )::text`,
     })
     .from(invoices)
     .innerJoin(divisions, eq(invoices.divisionId, divisions.id))
@@ -828,7 +837,11 @@ export async function getClientStatement(
       createdBy: invoices.createdBy,
       createdAt: invoices.createdAt,
       updatedAt: invoices.updatedAt,
-      allocatedAmount: sql<string>`COALESCE((SELECT SUM(amount) FROM payment_allocations WHERE invoice_id = ${invoices.id}), 0)::text`,
+      allocatedAmount: sql<string>`(
+          COALESCE((SELECT SUM(amount) FROM payment_allocations WHERE invoice_id = ${invoices.id}), 0)
+          +
+          COALESCE((SELECT SUM(amount) FROM credit_applications WHERE invoice_id = ${invoices.id}), 0)
+        )::text`,
     })
     .from(invoices)
     .innerJoin(divisions, eq(invoices.divisionId, divisions.id))
@@ -844,14 +857,20 @@ export async function getClientStatement(
     sql`${invoices.invoiceDate} <= timezone('Africa/Johannesburg', now())::date`
   ];
   const globalIncomeConditions = [eq(income.clientId, clientId)];
+  const globalCreditConditions = [
+    eq(invoices.clientId, clientId),
+    sql`${invoices.status} NOT IN ('draft', 'void')`,
+  ];
 
   if (statementBalanceCutoff) {
     if (filters?.year) {
       globalInvoiceConditions.push(sql`${invoices.invoiceDate} < ${statementBalanceCutoff}`);
       globalIncomeConditions.push(sql`${income.date} < ${statementBalanceCutoff}`);
+      globalCreditConditions.push(sql`${creditApplications.appliedAt} < ${statementBalanceCutoff}::timestamp`);
     } else {
       globalInvoiceConditions.push(sql`${invoices.invoiceDate} <= ${statementBalanceCutoff}`);
       globalIncomeConditions.push(sql`${income.date} <= ${statementBalanceCutoff}`);
+      globalCreditConditions.push(sql`${creditApplications.appliedAt} <= ${statementBalanceCutoff}::timestamp + interval '1 day'`);
     }
   }
 
@@ -860,14 +879,22 @@ export async function getClientStatement(
     .from(invoices)
     .where(and(...globalInvoiceConditions));
   
-  const globalPaidRes = await db
-    .select({ total: sql<number>`COALESCE(SUM(${income.amount}), 0)::numeric` })
-    .from(income)
-    .where(and(...globalIncomeConditions));
+  const [globalPaidRes, globalCreditAppliedRes] = await Promise.all([
+    db
+      .select({ total: sql<number>`COALESCE(SUM(${income.amount}), 0)::numeric` })
+      .from(income)
+      .where(and(...globalIncomeConditions)),
+    db
+      .select({ total: sql<number>`COALESCE(SUM(${creditApplications.amount}), 0)::numeric` })
+      .from(creditApplications)
+      .innerJoin(invoices, eq(invoices.id, creditApplications.invoiceId))
+      .where(and(...globalCreditConditions)),
+  ]);
 
   const globalInvoiced = Number(globalInvoicedRes[0]?.total ?? 0);
   const globalPaid = Number(globalPaidRes[0]?.total ?? 0);
-  const totalOutstanding = globalInvoiced - globalPaid;
+  const globalCreditApplied = Number(globalCreditAppliedRes[0]?.total ?? 0);
+  const totalOutstanding = globalInvoiced - globalPaid - globalCreditApplied;
 
   // Compute opening balance (balance prior to the statement period)
   let openingBalance = 0;
@@ -881,8 +908,13 @@ export async function getClientStatement(
       eq(income.clientId, clientId),
       sql`${income.date} < ${periodStartDate}`,
     ];
+    const priorCreditConditions = [
+      eq(invoices.clientId, clientId),
+      sql`${invoices.status} NOT IN ('draft', 'void')`,
+      sql`${creditApplications.appliedAt} < ${periodStartDate}::timestamp`,
+    ];
 
-    const [priorInvoicedRes, priorPaidRes] = await Promise.all([
+    const [priorInvoicedRes, priorPaidRes, priorCreditRes] = await Promise.all([
       db
         .select({ total: sql<number>`COALESCE(SUM(${invoices.total}), 0)::numeric` })
         .from(invoices)
@@ -891,23 +923,49 @@ export async function getClientStatement(
         .select({ total: sql<number>`COALESCE(SUM(${income.amount}), 0)::numeric` })
         .from(income)
         .where(and(...priorIncomeConditions)),
+      db
+        .select({ total: sql<number>`COALESCE(SUM(${creditApplications.amount}), 0)::numeric` })
+        .from(creditApplications)
+        .innerJoin(invoices, eq(invoices.id, creditApplications.invoiceId))
+        .where(and(...priorCreditConditions)),
     ]);
 
     const priorInvoiced = Number(priorInvoicedRes[0]?.total ?? 0);
     const priorPaid = Number(priorPaidRes[0]?.total ?? 0);
-    openingBalance = priorInvoiced - priorPaid;
+    const priorCredit = Number(priorCreditRes[0]?.total ?? 0);
+    openingBalance = priorInvoiced - priorPaid - priorCredit;
   }
 
   // Compute period summary
   const totalQuoted = quoteRows.reduce((s, r) => s + Number(r.total), 0);
   const totalInvoiced = invoiceRows.reduce((s, r) => s + Number(r.total), 0);
   
-  // For period paid, we sum income records in that period
-  const periodPaidRes = await db
-    .select({ total: sql<number>`COALESCE(SUM(${income.amount}), 0)::numeric` })
-    .from(income)
-    .where(and(...incomeConditions));
-  const totalPaid = Number(periodPaidRes[0]?.total ?? 0);
+  // For period paid, we sum income records AND credit applications in that period
+  const periodCreditConditions = [
+    eq(invoices.clientId, clientId),
+    sql`${invoices.status} NOT IN ('draft', 'void')`,
+  ];
+  if (filters?.monthPeriod) {
+    const { startDate, endDate } = getMonthPeriodDates(filters.monthPeriod);
+    periodCreditConditions.push(sql`${creditApplications.appliedAt} >= ${startDate}::timestamp AND ${creditApplications.appliedAt} <= ${endDate}::timestamp + interval '1 day'`);
+  } else if (filters?.year) {
+    const startDate = `${filters.year}-03-01`;
+    const endDateExclusive = `${filters.year + 1}-03-01`;
+    periodCreditConditions.push(sql`${creditApplications.appliedAt} >= ${startDate}::timestamp AND ${creditApplications.appliedAt} < ${endDateExclusive}::timestamp`);
+  }
+
+  const [periodPaidRes, periodCreditRes] = await Promise.all([
+    db
+      .select({ total: sql<number>`COALESCE(SUM(${income.amount}), 0)::numeric` })
+      .from(income)
+      .where(and(...incomeConditions)),
+    db
+      .select({ total: sql<number>`COALESCE(SUM(${creditApplications.amount}), 0)::numeric` })
+      .from(creditApplications)
+      .innerJoin(invoices, eq(invoices.id, creditApplications.invoiceId))
+      .where(and(...periodCreditConditions)),
+  ]);
+  const totalPaid = Number(periodPaidRes[0]?.total ?? 0) + Number(periodCreditRes[0]?.total ?? 0);
 
   const sentCount = quoteRows.filter((r) => r.status === "sent" || r.status === "accepted" || r.status === "declined" || r.status === "converted").length;
   const acceptedCount = quoteRows.filter((r) => r.status === "accepted" || r.status === "converted").length;
@@ -938,7 +996,11 @@ export async function getClientStatement(
       createdBy: invoices.createdBy,
       createdAt: invoices.createdAt,
       updatedAt: invoices.updatedAt,
-      allocatedAmount: sql<string>`COALESCE((SELECT SUM(amount) FROM payment_allocations WHERE invoice_id = ${invoices.id}), 0)::text`,
+      allocatedAmount: sql<string>`(
+          COALESCE((SELECT SUM(amount) FROM payment_allocations WHERE invoice_id = ${invoices.id}), 0)
+          +
+          COALESCE((SELECT SUM(amount) FROM credit_applications WHERE invoice_id = ${invoices.id}), 0)
+        )::text`,
     })
     .from(invoices)
     .innerJoin(divisions, eq(invoices.divisionId, divisions.id))
@@ -981,6 +1043,7 @@ export async function getClientsWithBillingActivity(filters?: { year?: number })
     ? sql`WHERE status NOT IN ('draft', 'void') AND invoice_date >= ${start} AND invoice_date < ${end} AND invoice_date <= timezone('Africa/Johannesburg', now())::date`
     : sql`WHERE status NOT IN ('draft', 'void') AND invoice_date <= timezone('Africa/Johannesburg', now())::date`;
   const incomeFilter = year ? sql`WHERE date >= ${start} AND date < ${end}` : sql``;
+  const creditFilter = year ? sql`WHERE ca.applied_at >= ${start}::timestamp AND ca.applied_at < ${end}::timestamp` : sql``;
 
   const result = await db.execute(sql`
     SELECT
@@ -990,8 +1053,8 @@ export async function getClientsWithBillingActivity(filters?: { year?: number })
       COALESCE(q.quote_count, 0)::int AS "quoteCount",
       COALESCE(inv.invoice_count, 0)::int AS "invoiceCount",
       COALESCE(inv.total_invoiced, 0)::numeric AS "totalInvoiced",
-      COALESCE(inc.total_paid, 0)::numeric AS "totalPaid",
-      (COALESCE(inv_all.total_invoiced, 0) - COALESCE(inc_all.total_paid, 0))::numeric AS "totalOutstanding",
+      (COALESCE(inc.total_paid, 0) + COALESCE(cr.total_credit_applied, 0))::numeric AS "totalPaid",
+      (COALESCE(inv_all.total_invoiced, 0) - COALESCE(inc_all.total_paid, 0) - COALESCE(cr_all.total_credit_applied, 0))::numeric AS "totalOutstanding",
       GREATEST(q.last_quote_date, inv.last_invoice_date)::text AS "lastActivityDate"
     FROM clients c
     LEFT JOIN (
@@ -1036,7 +1099,26 @@ export async function getClientsWithBillingActivity(filters?: { year?: number })
       FROM income
       GROUP BY client_id
     ) inc_all ON inc_all.client_id = c.id
-    WHERE q.client_id IS NOT NULL OR inv.client_id IS NOT NULL OR (COALESCE(inv_all.total_invoiced, 0) - COALESCE(inc_all.total_paid, 0)) > 0
+    LEFT JOIN (
+      SELECT
+        inv.client_id,
+        COALESCE(SUM(ca.amount), 0) AS total_credit_applied
+      FROM credit_applications ca
+      JOIN invoices inv ON inv.id = ca.invoice_id
+      WHERE inv.status NOT IN ('draft', 'void')
+      ${creditFilter}
+      GROUP BY inv.client_id
+    ) cr ON cr.client_id = c.id
+    LEFT JOIN (
+      SELECT
+        inv.client_id,
+        COALESCE(SUM(ca.amount), 0) AS total_credit_applied
+      FROM credit_applications ca
+      JOIN invoices inv ON inv.id = ca.invoice_id
+      WHERE inv.status NOT IN ('draft', 'void')
+      GROUP BY inv.client_id
+    ) cr_all ON cr_all.client_id = c.id
+    WHERE q.client_id IS NOT NULL OR inv.client_id IS NOT NULL OR (COALESCE(inv_all.total_invoiced, 0) - COALESCE(inc_all.total_paid, 0) - COALESCE(cr_all.total_credit_applied, 0)) > 0
     ORDER BY GREATEST(q.last_quote_date, inv.last_invoice_date) DESC NULLS LAST
   `);
 
@@ -1236,10 +1318,18 @@ export async function getStatementYears(clientId: string): Promise<number[]> {
     FROM income
     WHERE client_id = ${clientId}
   `);
+  const creditYears = await db.execute(sql`
+    SELECT DISTINCT
+      EXTRACT(YEAR FROM (ca.applied_at - INTERVAL '2 months')) AS year
+    FROM credit_applications ca
+    JOIN invoices inv ON inv.id = ca.invoice_id
+    WHERE inv.client_id = ${clientId}
+  `);
 
   const years = new Set<number>();
   for (const r of invYears.rows) years.add(Number(r.year));
   for (const r of incYears.rows) years.add(Number(r.year));
+  for (const r of creditYears.rows) years.add(Number(r.year));
 
   const { year: sastYear, month: sastMonth } = getSASTParts();
   const currentFY = sastMonth < 2 ? sastYear - 1 : sastYear;
@@ -1292,7 +1382,7 @@ export async function getAgingReport(): Promise<AgingRow[]> {
         ELSE '61_plus'
       END                                                         AS bucket,
       COUNT(*)::int                                               AS count,
-      COALESCE(SUM(invoices.total - COALESCE((SELECT SUM(amount) FROM payment_allocations WHERE invoice_id = invoices.id), 0)), 0) AS total
+      COALESCE(SUM(invoices.total - COALESCE((SELECT SUM(amount) FROM payment_allocations WHERE invoice_id = invoices.id), 0) - COALESCE((SELECT SUM(amount) FROM credit_applications WHERE invoice_id = invoices.id), 0)), 0) AS total
     FROM invoices
     WHERE status IN ('issued', 'overdue', 'partially_paid')
       AND due_date IS NOT NULL
@@ -1351,7 +1441,7 @@ export async function getClientAgingReport(filters?: { year?: number }): Promise
     JOIN (
       SELECT
         invoices.client_id,
-        invoices.total - COALESCE((SELECT SUM(amount) FROM payment_allocations WHERE invoice_id = invoices.id), 0) AS outstanding,
+        invoices.total - COALESCE((SELECT SUM(amount) FROM payment_allocations WHERE invoice_id = invoices.id), 0) - COALESCE((SELECT SUM(amount) FROM credit_applications WHERE invoice_id = invoices.id), 0) AS outstanding,
         CASE
           WHEN due_date >= timezone('Africa/Johannesburg', now())::date                             THEN 'current'
           WHEN timezone('Africa/Johannesburg', now())::date - due_date BETWEEN 1  AND 14           THEN '1_14'
@@ -1404,7 +1494,11 @@ export async function getClientOutstandingInvoices(clientId: string): Promise<Ou
       dueDate: sql<string | null>`${invoices.dueDate}::text`,
       status: invoices.status,
       total: invoices.total,
-      allocatedAmount: sql<string>`COALESCE((SELECT SUM(amount) FROM payment_allocations WHERE invoice_id = ${invoices.id}), 0)::text`,
+      allocatedAmount: sql<string>`(
+          COALESCE((SELECT SUM(amount) FROM payment_allocations WHERE invoice_id = ${invoices.id}), 0)
+          +
+          COALESCE((SELECT SUM(amount) FROM credit_applications WHERE invoice_id = ${invoices.id}), 0)
+        )::text`,
     })
     .from(invoices)
     .where(

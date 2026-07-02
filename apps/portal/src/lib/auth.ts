@@ -26,7 +26,7 @@ const getBaseURL = () => {
     return 'https://portal.playhousemedia.co.za';
   }
   if (process.env.VERCEL_URL) return `https://${process.env.VERCEL_URL}`;
-  return 'http://localhost:3001';
+  return process.env.PORTAL_AUTH_URL || process.env.PORTAL_URL || process.env.BETTER_AUTH_URL || 'http://localhost:3001';
 };
 
 const resolvedBaseURL = getBaseURL();
@@ -120,6 +120,21 @@ export const portalAuth = betterAuth({
 
       const db = getDb();
       const email = newSession.user.email.toLowerCase();
+
+      // Do NOT auto-link admin/super_admin users to client records.
+      // Admins have their own user record (created by the admin auth) and should
+      // NOT be linked to a client — otherwise getPortalSession() will always
+      // return that client for this user, breaking both normal portal access
+      // and impersonation.
+      const [dbUser] = await db
+        .select()
+        .from(user)
+        .where(eq(user.email, email))
+        .limit(1);
+
+      if (dbUser && ['admin', 'super_admin'].includes(dbUser.role || '')) {
+        return;
+      }
 
       const [client] = await db
         .select()

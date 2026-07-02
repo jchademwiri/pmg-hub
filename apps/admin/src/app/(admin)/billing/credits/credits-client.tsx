@@ -1,6 +1,8 @@
 'use client';
 
 import { useState } from 'react';
+import { useRouter } from 'next/navigation';
+import Link from 'next/link';
 import { formatZAR, fmtDate } from '@/lib/format';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
@@ -20,9 +22,21 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from '@/components/ui/alert-dialog';
 import { IssueCreditNoteDialog } from '@/components/billing/issue-credit-note-dialog';
 import { CreditRefundDialog } from '@/components/billing/credit-refund-dialog';
-import { Wallet, AlertCircle, Clock, CheckCircle2, Download } from 'lucide-react';
+import { Wallet, AlertCircle, Clock, CheckCircle2, Download, Trash2, ExternalLink } from 'lucide-react';
+import { toast } from 'sonner';
 
 interface CreditNoteEntry {
   id: string;
@@ -115,8 +129,10 @@ export function CreditsClient({
   const [statusFilter, setStatusFilter] = useState('all');
   const [typeFilter, setTypeFilter] = useState('all');
   const [searchQuery, setSearchQuery] = useState('');
+  const router = useRouter();
   const [showIssueDialog, setShowIssueDialog] = useState(false);
   const [showRefundDialog, setShowRefundDialog] = useState(false);
+  const [isVoiding, setIsVoiding] = useState(false);
   const [selectedNoteForRefund, setSelectedNoteForRefund] = useState<{
     id: string;
     documentNumber: string;
@@ -297,8 +313,16 @@ export function CreditsClient({
                     const isRefundable = note.status !== 'void' && note.status !== 'expired' && amountRemainingNum > 0;
 
                     return (
-                      <TableRow key={note.id} className="hover:bg-muted/40 transition-colors">
-                        <TableCell className="font-medium text-xs">{note.documentNumber}</TableCell>
+                      <TableRow key={note.id} className="hover:bg-muted/40 transition-colors group">
+                        <TableCell className="font-medium text-xs">
+                          <Link
+                            href={`/billing/credits/${note.id}`}
+                            className="text-primary hover:underline inline-flex items-center gap-1"
+                          >
+                            {note.documentNumber}
+                            <ExternalLink className="size-3 opacity-0 group-hover:opacity-100 transition-opacity" />
+                          </Link>
+                        </TableCell>
                         <TableCell className="text-xs">{clientMap.get(note.clientId) ?? 'Unknown'}</TableCell>
                         <TableCell className="text-xs">{getTypeLabel(note.type)}</TableCell>
                         <TableCell className="text-xs truncate max-w-[200px]" title={note.reason ?? ''}>
@@ -319,25 +343,75 @@ export function CreditsClient({
                           {fmtDate(note.createdAt)}
                         </TableCell>
                         <TableCell className="text-right py-1">
-                          {isRefundable && (
-                            <Button
-                              variant="ghost"
-                              size="sm"
-                              className="text-xs text-blue-600 hover:text-blue-700 h-7 px-2"
-                              onClick={() => {
-                                setSelectedNoteForRefund({
-                                  id: note.id,
-                                  documentNumber: note.documentNumber,
-                                  amountRemaining: amountRemainingNum,
-                                  clientId: note.clientId,
-                                  clientName: clientMap.get(note.clientId) ?? 'Unknown',
-                                });
-                                setShowRefundDialog(true);
-                              }}
-                            >
-                              Refund
-                            </Button>
-                          )}
+                          <div className="flex items-center justify-end gap-1">
+                            {isRefundable && (
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                className="text-xs text-blue-600 hover:text-blue-700 h-7 px-2"
+                                onClick={() => {
+                                  setSelectedNoteForRefund({
+                                    id: note.id,
+                                    documentNumber: note.documentNumber,
+                                    amountRemaining: amountRemainingNum,
+                                    clientId: note.clientId,
+                                    clientName: clientMap.get(note.clientId) ?? 'Unknown',
+                                  });
+                                  setShowRefundDialog(true);
+                                }}
+                              >
+                                Refund
+                              </Button>
+                            )}
+                            {note.status !== 'void' && note.status !== 'expired' && amountRemainingNum >= note.amount && amountRemainingNum > 0 && (
+                              <AlertDialog>
+                                <AlertDialogTrigger asChild>
+                                  <Button
+                                    variant="ghost"
+                                    size="sm"
+                                    className="text-xs text-red-500 hover:text-red-600 h-7 px-2"
+                                    title="Void credit note"
+                                  >
+                                    <Trash2 className="size-3.5" />
+                                  </Button>
+                                </AlertDialogTrigger>
+                                <AlertDialogContent>
+                                  <AlertDialogHeader>
+                                    <AlertDialogTitle>Void Credit Note</AlertDialogTitle>
+                                    <AlertDialogDescription>
+                                      Voiding <strong>{note.documentNumber}</strong> will mark it as void.
+                                      This cannot be undone.
+                                    </AlertDialogDescription>
+                                  </AlertDialogHeader>
+                                  <AlertDialogFooter>
+                                    <AlertDialogCancel>Cancel</AlertDialogCancel>
+                                    <AlertDialogAction
+                                      onClick={async () => {
+                                        setIsVoiding(true);
+                                        try {
+                                          const { voidCreditNote } = await import('@/app/actions/credit-management');
+                                          const res = await voidCreditNote(note.id);
+                                          if (res.error) {
+                                            toast.error(res.error);
+                                          } else {
+                                            toast.success(`${note.documentNumber} voided`);
+                                            router.refresh();
+                                          }
+                                        } catch {
+                                          toast.error('Failed to void');
+                                        } finally {
+                                          setIsVoiding(false);
+                                        }
+                                      }}
+                                      disabled={isVoiding}
+                                    >
+                                      {isVoiding ? 'Voiding...' : 'Confirm Void'}
+                                    </AlertDialogAction>
+                                  </AlertDialogFooter>
+                                </AlertDialogContent>
+                              </AlertDialog>
+                            )}
+                          </div>
                         </TableCell>
                       </TableRow>
                     );
