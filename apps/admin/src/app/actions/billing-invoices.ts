@@ -158,10 +158,8 @@ export async function updateInvoice(
       discountValue,
     );
 
-    let existingRow: { id: string; status: "draft" | "issued" | "partially_paid" | "paid" | "overdue" | "void"; invoiceDate: string; total: string; documentNumber: string } | null = null;
-
     // Delete existing line items, update invoice, and reinsert atomically
-    await db.transaction(async (tx) => {
+    const existingRow = await db.transaction(async (tx) => {
       const [existingLocked] = await tx
         .select({ id: invoices.id, status: invoices.status, invoiceDate: invoices.invoiceDate, total: invoices.total, documentNumber: invoices.documentNumber })
         .from(invoices)
@@ -189,8 +187,6 @@ export async function updateInvoice(
           throw new Error(getMinDateErrorMessage(minDate));
         }
       }
-
-      existingRow = existingLocked;
 
       await tx
         .delete(billingLineItems)
@@ -234,6 +230,8 @@ export async function updateInvoice(
           lineTotal: String((item.quantity * item.unitPrice).toFixed(2)),
         })),
       );
+
+      return existingLocked;
     });
 
     if (!existingRow) return { error: 'Invoice not found.' };
