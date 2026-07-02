@@ -115,11 +115,11 @@ export const portalAuth = betterAuth({
     after: createAuthMiddleware(async (ctx) => {
       if (ctx.path !== '/magic-link/verify') return;
 
-      const session = ctx.context.session;
-      if (!session?.user?.email) return;
+      const newSession = ctx.context.newSession;
+      if (!newSession?.user?.email) return;
 
       const db = getDb();
-      const email = session.user.email.toLowerCase();
+      const email = newSession.user.email.toLowerCase();
 
       const [client] = await db
         .select()
@@ -130,7 +130,7 @@ export const portalAuth = betterAuth({
       if (client && !client.userId) {
         await db
           .update(clients)
-          .set({ userId: session.user.id, updatedAt: new Date() })
+          .set({ userId: newSession.user.id, updatedAt: new Date() })
           .where(eq(clients.id, client.id));
       }
     }),
