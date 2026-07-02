@@ -83,7 +83,18 @@ export async function GET(request: NextRequest) {
   const response = NextResponse.redirect(new URL('/dashboard', request.url));
 
   // Set the portal session cookie (matches better-auth cookie name)
-  response.cookies.set('better-auth.session_token', sessionToken, {
+  // IMPORTANT: The value must be HMAC-signed — better-auth's getSignedCookie() reads session
+  // tokens via getSignedCookie, which splits on the last '.' and verifies the HMAC-SHA256
+  // signature using BETTER_AUTH_SECRET. Without this, getSession() will reject the cookie.
+  const authSecret = process.env.BETTER_AUTH_SECRET;
+  if (!authSecret) {
+    console.error('[Impersonate] BETTER_AUTH_SECRET not configured');
+    return redirectToLogin(request);
+  }
+  const sessionSignature = createHmac('sha256', authSecret).update(sessionToken).digest('base64');
+  const signedSessionValue = `${sessionToken}.${sessionSignature}`;
+
+  response.cookies.set('better-auth.session_token', signedSessionValue, {
     path: '/',
     httpOnly: true,
     secure: process.env.NODE_ENV === 'production',
