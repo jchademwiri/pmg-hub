@@ -149,7 +149,7 @@ export async function postPaymentJournalEntries(data: {
     const pmgShareAmount = Math.round(amount * ACCOUNT_RATES.pmg_share * 100) / 100;
 
     await db.transaction(async (tx) => {
-      const entryNumber1 = await getNextJournalEntryNumber(tx);
+      const entryNumber1 = await getNextJournalEntryNumber(tx, date);
       entryIds.push(entry1Id);
       // Entry 1: Dr Bank / Cr AR
       await tx.insert(journalEntries).values({
@@ -189,7 +189,7 @@ export async function postPaymentJournalEntries(data: {
         const entry2Id = randomUUID();
         const entry2Line1Id = randomUUID();
         const entry2Line2Id = randomUUID();
-        const entryNumber2 = await getNextJournalEntryNumber(tx);
+        const entryNumber2 = await getNextJournalEntryNumber(tx, date);
         entryIds.push(entry2Id);
 
         await tx.insert(journalEntries).values({
@@ -352,7 +352,7 @@ export async function postInvoiceIssueJournalEntry(data: {
 
     // Atomic transaction: entry + 2 lines
     await db.transaction(async (tx) => {
-      const entryNumber = await getNextJournalEntryNumber(tx);
+      const entryNumber = await getNextJournalEntryNumber(tx, date);
       await tx.insert(journalEntries).values({
         id: entryId,
         entryNumber,
@@ -580,7 +580,7 @@ export async function postExpenseJournalEntry(data: {
 
     // Atomic transaction: entry + 2 lines
     await db.transaction(async (tx) => {
-      const entryNumber = await getNextJournalEntryNumber(tx);
+      const entryNumber = await getNextJournalEntryNumber(tx, date);
       await tx.insert(journalEntries).values({
         id: entryId,
         entryNumber,

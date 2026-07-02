@@ -128,7 +128,8 @@ export async function convertLeadToClient(id: string): Promise<{ error?: string;
       if (!leadRow) throw new Error('Lead not found.');
       if (leadRow.status === 'converted') throw new Error('Lead is already converted.');
 
-      // 2. Lock / verify existing client uniqueness (email/phone)
+      // 2. Lock / verify existing client uniqueness (email only - backed by DB constraint)
+      // Note: Phone uniqueness is not enforced as there is no DB unique constraint on clients.phone
       if (leadRow.email) {
         const [existingClient] = await tx
           .select()
@@ -136,16 +137,6 @@ export async function convertLeadToClient(id: string): Promise<{ error?: string;
           .where(eq(clients.email, leadRow.email));
         if (existingClient) {
           throw new Error(`A client with the email "${leadRow.email}" already exists.`);
-        }
-      }
-
-      if (leadRow.phone) {
-        const [existingClientByPhone] = await tx
-          .select()
-          .from(clients)
-          .where(eq(clients.phone, leadRow.phone));
-        if (existingClientByPhone) {
-          throw new Error(`A client with the phone "${leadRow.phone}" already exists.`);
         }
       }
 

@@ -120,6 +120,14 @@ export async function createInvoice(
 
 // ── updateInvoice ─────────────────────────────────────────────────────────────
 
+// Custom error class to preserve validation messages through transaction boundaries
+class InvoiceValidationError extends Error {
+  constructor(message: string) {
+    super(message);
+    this.name = 'InvoiceValidationError';
+  }
+}
+
 export async function updateInvoice(
   id: string,
   data: CreateInvoiceInput,
@@ -166,25 +174,25 @@ export async function updateInvoice(
         .where(eq(invoices.id, id))
         .for('update');
 
-      if (!existingLocked) throw new Error('Invoice not found.');
+      if (!existingLocked) throw new InvoiceValidationError('Invoice not found.');
 
       // Paid and voided invoices cannot be edited
       if (existingLocked.status === 'paid') {
-        throw new Error('Paid invoices cannot be edited.');
+        throw new InvoiceValidationError('Paid invoices cannot be edited.');
       }
       if (existingLocked.status === 'void') {
-        throw new Error('Voided invoices cannot be edited.');
+        throw new InvoiceValidationError('Voided invoices cannot be edited.');
       }
 
       // We allow editing of draft, issued, or overdue invoices in closed periods
       const isInvoiceEditable = existingLocked.status === 'draft' || existingLocked.status === 'issued' || existingLocked.status === 'overdue';
       if (!isInvoiceEditable) {
         if (await isPeriodClosed(existingLocked.invoiceDate)) {
-          throw new Error('Cannot edit an invoice in a closed financial period.');
+          throw new InvoiceValidationError('Cannot edit an invoice in a closed financial period.');
         }
         if (await isPeriodClosed(invoiceDate)) {
           const minDate = await getMinAllowedDate();
-          throw new Error(getMinDateErrorMessage(minDate));
+          throw new InvoiceValidationError(getMinDateErrorMessage(minDate));
         }
       }
 
@@ -236,12 +244,14 @@ export async function updateInvoice(
 
     if (!existingRow) return { error: 'Invoice not found.' };
 
-    // If an issued/overdue invoice's total changed, void the old AR entry and repost
-    if ((existingRow.status === 'issued' || existingRow.status === 'overdue') && existingRow.total !== String(total.toFixed(2))) {
+    // If an issued/overdue invoice's total or date changed, void the old AR entry and repost
+    const totalChanged = existingRow.total !== String(total.toFixed(2));
+    const dateChanged = existingRow.invoiceDate !== invoiceDate;
+    if ((existingRow.status === 'issued' || existingRow.status === 'overdue') && (totalChanged || dateChanged)) {
       const journalResult = await updateInvoiceJournalEntry({
         invoiceId: id,
         newAmount: total,
-        date: existingRow.invoiceDate,
+        date: invoiceDate,
         description: `Invoice ${existingRow.documentNumber}`,
       });
       if (journalResult.error) {
@@ -257,7 +267,11 @@ export async function updateInvoice(
     revalidatePath('/accounting/profit-and-loss');
 
     return {};
-  } catch {
+  } catch (err) {
+    // Preserve specific validation error messages
+    if (err instanceof InvoiceValidationError) {
+      return { error: err.message };
+    }
     return { error: 'Failed to save. Please try again.' };
   }
 }
@@ -333,9 +347,9 @@ export async function convertQuoteToInvoice(
         .where(eq(quotations.id, quotationId))
         .for('update');
 
-      if (!quoteLocked) throw new Error('Quotation not found.');
+      if (!quoteLocked) throw new InvoiceValidationError('Quotation not found.');
       if (quoteLocked.status !== 'accepted') {
-        throw new Error('Only accepted quotations can be converted to invoices.');
+        throw new InvoiceValidationError('Only accepted quotations can be converted to invoices.');
       }
 
       // 2. Check if an invoice has already been created for this quotation
@@ -345,7 +359,7 @@ export async function convertQuoteToInvoice(
         .where(eq(invoices.quotationId, quotationId));
 
       if (existingInvoice) {
-        throw new Error('An invoice has already been created for this quotation.');
+        throw new InvoiceValidationError('An invoice has already been created for this quotation.');
       }
 
       const [inv] = await tx
@@ -372,7 +386,7 @@ export async function convertQuoteToInvoice(
         })
         .returning({ id: invoices.id });
 
-      if (!inv) throw new Error('Failed to create invoice.');
+      if (!inv) throw new InvoiceValidationError('Failed to create invoice.');
 
       // Copy line items
       if (quoteLineItems.length > 0) {
@@ -407,7 +421,11 @@ export async function convertQuoteToInvoice(
     revalidatePath(`/billing/quotes/${quotationId}`);
 
     return { id: inserted.id };
-  } catch {
+  } catch (err) {
+    // Preserve specific validation error messages
+    if (err instanceof InvoiceValidationError) {
+      return { error: err.message };
+    }
     return { error: 'Failed to convert. Please try again.' };
   }
 }
@@ -513,10 +531,10 @@ export async function markInvoicePaid(id: string): Promise<{ error?: string }> {
         .where(eq(invoices.id, id))
         .for('update');
 
-      if (!invoiceLocked) throw new Error('Invoice not found.');
-      if (invoiceLocked.status === 'paid') throw new Error('Invoice is already paid.');
-      if (invoiceLocked.status === 'void') throw new Error('Cannot mark a voided invoice as paid.');
-      if (!invoiceLocked.clientId) throw new Error('A client must be set before marking as paid.');
+      if (!invoiceLocked) throw new InvoiceValidationError('Invoice not found.');
+      if (invoiceLocked.status === 'paid') throw new InvoiceValidationError('Invoice is already paid.');
+      if (invoiceLocked.status === 'void') throw new InvoiceValidationError('Cannot mark a voided invoice as paid.');
+      if (!invoiceLocked.clientId) throw new InvoiceValidationError('A client must be set before marking as paid.');
 
       const [row] = await tx
         .insert(income)
@@ -529,7 +547,7 @@ export async function markInvoicePaid(id: string): Promise<{ error?: string }> {
         })
         .returning({ id: income.id });
 
-      if (!row) throw new Error('Failed to post income record.');
+      if (!row) throw new InvoiceValidationError('Failed to post income record.');
 
       await tx
         .update(invoices)
@@ -568,7 +586,11 @@ export async function markInvoicePaid(id: string): Promise<{ error?: string }> {
     revalidatePath('/accounting/profit-and-loss');
 
     return {};
-  } catch {
+  } catch (err) {
+    // Preserve specific validation error messages
+    if (err instanceof InvoiceValidationError) {
+      return { error: err.message };
+    }
     return { error: 'Failed to mark as paid. Please try again.' };
   }
 }

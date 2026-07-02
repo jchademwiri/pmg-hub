@@ -191,10 +191,32 @@ export function validateJournalLines(
 
 /**
  * Returns the next journal entry number (JE-YYYY-NNNN) using an atomic DB allocator.
- * Can receive an optional tx transaction context.
+ * Can receive an optional tx transaction context and the entry date.
+ * The year is derived from the entryDate parameter, not the server clock.
  */
-export async function getNextJournalEntryNumber(tx?: any): Promise<string> {
-  const year = new Date().getFullYear();
+export async function getNextJournalEntryNumber(txOrDate?: any, entryDate?: string): Promise<string> {
+  // Handle overloaded parameters: (tx, entryDate) or (entryDate) or ()
+  let tx: any;
+  let dateStr: string;
+
+  if (typeof txOrDate === 'string') {
+    // Called as getNextJournalEntryNumber(entryDate)
+    tx = undefined;
+    dateStr = txOrDate;
+  } else if (txOrDate && entryDate) {
+    // Called as getNextJournalEntryNumber(tx, entryDate)
+    tx = txOrDate;
+    dateStr = entryDate;
+  } else if (txOrDate) {
+    // Called as getNextJournalEntryNumber(tx) - backward compat, use current year
+    tx = txOrDate;
+    dateStr = new Date().toISOString().slice(0, 10);
+  } else {
+    // Called as getNextJournalEntryNumber() - use current year
+    dateStr = new Date().toISOString().slice(0, 10);
+  }
+
+  const year = new Date(dateStr).getFullYear();
   const prefix = `JE-${year}-`;
   const client = tx || db;
 

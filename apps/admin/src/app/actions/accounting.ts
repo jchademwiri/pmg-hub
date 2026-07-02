@@ -179,7 +179,7 @@ export async function createJournalEntry(data: {
 
     // Create the entry and its lines atomically in a transaction
     const entry = await db.transaction(async (tx) => {
-      const entryNumber = await getNextJournalEntryNumber(tx);
+      const entryNumber = await getNextJournalEntryNumber(tx, parsed.data.entryDate);
       const [e] = await tx
         .insert(journalEntries)
         .values({
