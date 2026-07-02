@@ -145,15 +145,12 @@ export async function postPaymentJournalEntries(data: {
     const entry1Line1Id = randomUUID();
     const entry1Line2Id = randomUUID();
 
-    // ── Build Entry 1: Dr Bank / Cr AR ────────────────────────────────────
-    const entryNumber1 = await getNextJournalEntryNumber();
-
-    entryIds.push(entry1Id);
-
     // ── Execute all inserts atomically in a transaction ────────────────────
     const pmgShareAmount = Math.round(amount * ACCOUNT_RATES.pmg_share * 100) / 100;
 
     await db.transaction(async (tx) => {
+      const entryNumber1 = await getNextJournalEntryNumber(tx, date);
+      entryIds.push(entry1Id);
       // Entry 1: Dr Bank / Cr AR
       await tx.insert(journalEntries).values({
         id: entry1Id,
@@ -192,7 +189,8 @@ export async function postPaymentJournalEntries(data: {
         const entry2Id = randomUUID();
         const entry2Line1Id = randomUUID();
         const entry2Line2Id = randomUUID();
-        const entryNumber2 = await getNextJournalEntryNumber();
+        const entryNumber2 = await getNextJournalEntryNumber(tx, date);
+        entryIds.push(entry2Id);
 
         await tx.insert(journalEntries).values({
           id: entry2Id,
@@ -350,11 +348,11 @@ export async function postInvoiceIssueJournalEntry(data: {
     }
 
     const db = getDb();
-    const entryNumber = await getNextJournalEntryNumber();
     const entryId = randomUUID();
 
     // Atomic transaction: entry + 2 lines
     await db.transaction(async (tx) => {
+      const entryNumber = await getNextJournalEntryNumber(tx, date);
       await tx.insert(journalEntries).values({
         id: entryId,
         entryNumber,
@@ -577,12 +575,12 @@ export async function postExpenseJournalEntry(data: {
     }
 
     const db = getDb();
-    const entryNumber = await getNextJournalEntryNumber();
     const entryId = randomUUID();
     const desc = description || category;
 
     // Atomic transaction: entry + 2 lines
     await db.transaction(async (tx) => {
+      const entryNumber = await getNextJournalEntryNumber(tx, date);
       await tx.insert(journalEntries).values({
         id: entryId,
         entryNumber,

@@ -82,7 +82,7 @@ function CustomTooltip({
 }
 
 export function DivisionAreaChart({ data }: Props) {
-  const [chartType, setChartType] = useState<'line' | 'bar' | 'both'>('line')
+  const [chartType, setChartType] = useState<'line' | 'bar' | 'both'>('bar')
 
   const currentMonthStr = useMemo(() => {
     const { year, month } = getSASTParts()
@@ -246,6 +246,7 @@ export function DivisionAreaChart({ data }: Props) {
                         strokeWidth={2}
                         dot={{ r: 4, strokeWidth: 2, fill: 'hsl(var(--background))', stroke: item.color }}
                         activeDot={{ r: 6 }}
+                        opacity={chartType === 'both' ? 0.15 : 1}
                       />
                     ))}
                 </ComposedChart>

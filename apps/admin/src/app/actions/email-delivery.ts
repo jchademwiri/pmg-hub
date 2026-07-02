@@ -20,6 +20,7 @@ import {
 import React from 'react';
 import { z } from 'zod';
 import { validateEmailPdfAttachment } from '@/lib/pdf-attachments';
+import { getPortalBaseUrl } from '@/lib/portal-url';
 
 const CustomAttachmentSchema = z.object({
   filename: z.string(),
@@ -261,7 +262,7 @@ export async function sendDocumentEmailAction(rawPayload: unknown) {
         adminEmail: fromEmail,
       });
 
-      const portalBaseUrl = process.env.PORTAL_URL || 'https://client.playhousemedia.co.za';
+      const portalBaseUrl = getPortalBaseUrl();
       const portalUrl = `${portalBaseUrl}/invoices/${invoice.id}`;
 
       // Construct Invoice React Template props
@@ -389,7 +390,7 @@ export async function sendDocumentEmailAction(rawPayload: unknown) {
         adminEmail: fromEmail,
       });
 
-      const portalBaseUrl = process.env.PORTAL_URL || 'https://client.playhousemedia.co.za';
+      const portalBaseUrl = getPortalBaseUrl();
       const portalUrl = `${portalBaseUrl}/quotes/${quote.id}`;
 
       // Construct Quote React Template props

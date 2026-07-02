@@ -7,6 +7,7 @@ import { setClientActive } from '@pmg/db';
 import { createEmailClient, PortalInvitationEmail, DEFAULT_REPLY_TO, resolveResendApiKey, resolveDefaultFromEmail, resolveFromEmail } from '@pmg/emails';
 import React from 'react';
 import { getSessionOrRedirect } from '@/lib/auth';
+import { getPortalBaseUrl } from '@/lib/portal-url';
 
 const ClientSchema = z.object({
   name:         z.string().min(1),
@@ -158,7 +159,7 @@ export async function sendPortalInvitation(clientId: string): Promise<{ error?: 
       return { error: 'Client does not have an email address.' };
     }
 
-    const portalUrl = process.env.PORTAL_URL || 'https://client.playhousemedia.co.za';
+    const portalUrl = getPortalBaseUrl();
 
     // Resolve division branding if available
     let fromName = 'Playhouse Media Group';
