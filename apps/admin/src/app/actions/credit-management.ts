@@ -438,6 +438,37 @@ export async function applyCreditToInvoice(
           })
           .where(eq(invoices.id, invoiceId));
       }
+
+      // 6. Create an income record for the credit application (for dashboard visibility)
+      // Also creates a payment_allocation so the income is linked to the invoice.
+      // This ensures the credit application shows up on the income page, payments page,
+      // and dashboard charts. The income + allocation cancel each other out in the
+      // legacy credit balance calculation (sum(income) - sum(payment_allocations)).
+      if (actualApplied > 0) {
+        const [invDoc] = await tx
+          .select({ documentNumber: invoices.documentNumber })
+          .from(invoices)
+          .where(eq(invoices.id, invoiceId));
+
+        const [incomeRow] = await tx
+          .insert(income)
+          .values({
+            date: getSASTToday(),
+            divisionId: invoiceLocked.divisionId!,
+            clientId: invoiceLocked.clientId!,
+            description: `Credit applied to ${invDoc?.documentNumber ?? invoiceId}`,
+            amount: String(actualApplied.toFixed(2)),
+          })
+          .returning({ id: income.id });
+
+        if (incomeRow?.id) {
+          await tx.insert(paymentAllocations).values({
+            incomeId: incomeRow.id,
+            invoiceId: invoiceId,
+            amount: String(actualApplied.toFixed(2)),
+          });
+        }
+      }
     });
 
 
@@ -638,6 +669,34 @@ export async function applyCreditToInvoices(
           .set({ status: 'partially_paid', paidAt: null, incomeId: null, updatedAt: new Date() })
           .where(eq(invoices.id, alloc.invoiceId));
       }
+
+      // Create income record for credit application (dashboard visibility)
+      // Runs regardless of whether the invoice is fully or partially paid
+      if (finalAmount > 0) {
+        const [invDoc] = await db
+          .select({ documentNumber: invoices.documentNumber })
+          .from(invoices)
+          .where(eq(invoices.id, alloc.invoiceId));
+
+        const [incomeRow] = await db
+          .insert(income)
+          .values({
+            date: getSASTToday(),
+            divisionId: invoice.divisionId!,
+            clientId: invoice.clientId!,
+            description: `Credit applied to ${invDoc?.documentNumber ?? alloc.invoiceId}`,
+            amount: String(finalAmount.toFixed(2)),
+          })
+          .returning({ id: income.id });
+
+        if (incomeRow?.id) {
+          await db.insert(paymentAllocations).values({
+            incomeId: incomeRow.id,
+            invoiceId: alloc.invoiceId,
+            amount: String(finalAmount.toFixed(2)),
+          });
+        }
+      }
     }
 
     // Revalidate
@@ -751,6 +810,28 @@ export async function reverseCreditApplication(invoiceId: string): Promise<{ err
       .select()
       .from(creditApplications)
       .where(eq(creditApplications.invoiceId, invoiceId));
+
+    // Also fetch and delete any income records created for credit applications
+    // These are linked via payment_allocations where the income.description starts with "Credit applied"
+    const creditPaymentAllocs = await db
+      .select({
+        id: paymentAllocations.id,
+        incomeId: paymentAllocations.incomeId,
+      })
+      .from(paymentAllocations)
+      .innerJoin(income, eq(income.id, paymentAllocations.incomeId))
+      .where(
+        and(
+          eq(paymentAllocations.invoiceId, invoiceId),
+          sql`${income.description} LIKE 'Credit applied to%'`
+        )
+      );
+
+    // Delete payment allocations and income records for this credit application
+    for (const alloc of creditPaymentAllocs) {
+      await db.delete(paymentAllocations).where(eq(paymentAllocations.id, alloc.id));
+      await db.delete(income).where(eq(income.id, alloc.incomeId));
+    }
 
     for (const app of apps) {
       // Fetch the credit note
