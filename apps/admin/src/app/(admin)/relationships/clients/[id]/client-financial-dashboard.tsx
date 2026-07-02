@@ -19,12 +19,14 @@ interface ClientFinancialDashboardProps {
   invoices: InvoiceDetail[];
   quotes: QuotationDetail[];
   payments: any[];
+  totalCreditsApplied?: number;
 }
 
 export function ClientFinancialDashboard({
   invoices,
   quotes,
   payments,
+  totalCreditsApplied = 0,
 }: ClientFinancialDashboardProps) {
   const [isActivityExpanded, setIsActivityExpanded] = useState(true);
   const [showAllActivity, setShowAllActivity] = useState(false);
@@ -35,7 +37,7 @@ export function ClientFinancialDashboard({
     (inv) => inv.status !== 'void' && inv.status !== 'draft' && inv.invoiceDate <= todayStr
   );
   const totalInvoiced = activeInvoices.reduce((sum, inv) => sum + Number(inv.total), 0);
-  const totalPaid = payments.reduce((sum, pay) => sum + Number(pay.amount), 0);
+  const totalPaid = payments.reduce((sum, pay) => sum + Number(pay.amount), 0) + totalCreditsApplied;
 
   // Overdue Balance Calculation (strictly unpaid invoices where due date is in the past)
   const overdueInvoices = activeInvoices.filter(
