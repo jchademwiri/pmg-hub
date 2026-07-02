@@ -4,11 +4,11 @@ import { getPortalSessionOrRedirect } from '@/lib/portal-session';
 import { PortalShell } from '@/components/portal-shell';
 
 export default async function PortalLayout({ children }: { children: React.ReactNode }) {
-  const { client } = await getPortalSessionOrRedirect();
+  const { client, isAdmin } = await getPortalSessionOrRedirect();
 
   // Check if an admin is currently impersonating a client
   const cookieStore = await cookies();
-  const isImpersonating = !!cookieStore.get('impersonate_client_id')?.value;
+  const isImpersonating = isAdmin && !!cookieStore.get('impersonate_client_id')?.value;
 
   return (
     <>
