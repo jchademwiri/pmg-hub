@@ -7,12 +7,30 @@ import { getDb, clients, user, eq, and } from '@pmg/db';
 import React from 'react';
 import { createEmailClient, MagicLinkEmail, DEFAULT_EMAIL_FROM, DEFAULT_REPLY_TO } from '@pmg/emails';
 
+const getBaseURL = () => {
+  if (process.env.PORTAL_AUTH_URL) return process.env.PORTAL_AUTH_URL;
+  if (process.env.PORTAL_URL) return process.env.PORTAL_URL;
+  if (process.env.BETTER_AUTH_URL) return process.env.BETTER_AUTH_URL;
+  if (process.env.VERCEL_ENV === 'preview') return 'https://client.playhousemedia.co.za';
+  if (process.env.VERCEL_ENV === 'production' || process.env.NODE_ENV === 'production') {
+    return 'https://portal.playhousemedia.co.za';
+  }
+  if (process.env.VERCEL_URL) return `https://${process.env.VERCEL_URL}`;
+  return 'http://localhost:3001';
+};
+
+const resolvedBaseURL = getBaseURL();
+
 export const portalAuth = betterAuth({
   secret: process.env.BETTER_AUTH_SECRET,
-  baseURL: process.env.PORTAL_AUTH_URL || process.env.BETTER_AUTH_URL || 'http://localhost:3001',
+  baseURL: resolvedBaseURL,
   trustedOrigins: [
     ...(process.env.PORTAL_AUTH_URL ? [process.env.PORTAL_AUTH_URL] : []),
+    ...(process.env.PORTAL_URL ? [process.env.PORTAL_URL] : []),
     ...(process.env.BETTER_AUTH_URL ? [process.env.BETTER_AUTH_URL] : []),
+    ...(process.env.VERCEL_URL ? [`https://${process.env.VERCEL_URL}`] : []),
+    'https://portal.playhousemedia.co.za',
+    'https://client.playhousemedia.co.za',
   ],
   database: drizzleAdapter(getDb(), { provider: 'pg' }),
 

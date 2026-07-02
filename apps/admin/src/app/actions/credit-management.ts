@@ -313,12 +313,66 @@ export async function applyCreditToInvoice(
       )
       .orderBy(asc(creditNotes.createdAt));
 
-    // 7. Apply credit from credit notes (FIFO) and track actual amount applied
-    let remainingToApply = finalAmount;
     let actualApplied = 0;
 
     // Wrap all credit note updates, application inserts, and invoice status changes in a transaction
     await db.transaction(async (tx) => {
+      // 1. Lock the invoice row to prevent concurrent status updates
+      const [invoiceLocked] = await tx
+        .select()
+        .from(invoices)
+        .where(eq(invoices.id, invoiceId))
+        .for('update');
+
+      if (!invoiceLocked) throw new Error('Invoice not found.');
+      if (invoiceLocked.status === 'void') throw new Error('Cannot apply credit to a voided invoice.');
+      if (invoiceLocked.status === 'draft') throw new Error('Issue the invoice before applying credit.');
+      if (!invoiceLocked.clientId) throw new Error('Invoice has no associated client.');
+
+      // 2. Lock active credit notes for this client (FIFO: oldest first)
+      const activeNotes = await tx
+        .select()
+        .from(creditNotes)
+        .where(
+          and(
+            eq(creditNotes.clientId, invoiceLocked.clientId),
+            sql`${creditNotes.status} IN ('active', 'partially_applied')`,
+            sql`${creditNotes.amountRemaining} > 0`
+          )
+        )
+        .orderBy(asc(creditNotes.createdAt))
+        .for('update');
+
+      // 3. Calculate current outstanding on this invoice inside transaction
+      const [allocAgg] = await tx
+        .select({ total: sql<string>`coalesce(sum(${paymentAllocations.amount}), 0)` })
+        .from(paymentAllocations)
+        .where(eq(paymentAllocations.invoiceId, invoiceId));
+
+      const [creditAllocAgg] = await tx
+        .select({ total: sql<string>`coalesce(sum(${creditApplications.amount}), 0)` })
+        .from(creditApplications)
+        .where(eq(creditApplications.invoiceId, invoiceId));
+
+      const totalAllocated = parseFloat(allocAgg?.total ?? '0') + parseFloat(creditAllocAgg?.total ?? '0');
+      const invoiceTotal = parseFloat(invoiceLocked.total);
+      const outstanding = Math.max(0, invoiceTotal - totalAllocated);
+
+      if (outstanding <= 0) {
+        throw new Error('This invoice is already fully paid.');
+      }
+
+      const finalAmount = Math.min(amountToApply, outstanding);
+
+      // Sum active credit notes to check balance
+      const creditNoteBalance = activeNotes.reduce((sum, n) => sum + parseFloat(n.amountRemaining), 0);
+      if (creditNoteBalance < finalAmount) {
+        throw new Error(`Insufficient credit. Available: R${creditNoteBalance.toFixed(2)}`);
+      }
+
+      // 4. Apply credit from credit notes (FIFO)
+      let remainingToApply = finalAmount;
+
       for (const note of activeNotes) {
         if (remainingToApply <= 0) break;
 
@@ -351,13 +405,18 @@ export async function applyCreditToInvoice(
         });
       }
 
-      // 8. Recalculate invoice status
+      // 5. Recalculate invoice status using combined allocation totals
       const [newAllocAgg] = await tx
         .select({ total: sql<string>`coalesce(sum(${paymentAllocations.amount}), 0)` })
         .from(paymentAllocations)
         .where(eq(paymentAllocations.invoiceId, invoiceId));
 
-      const newTotalAllocated = parseFloat(newAllocAgg?.total ?? '0');
+      const [newCreditAllocAgg] = await tx
+        .select({ total: sql<string>`coalesce(sum(${creditApplications.amount}), 0)` })
+        .from(creditApplications)
+        .where(eq(creditApplications.invoiceId, invoiceId));
+
+      const newTotalAllocated = parseFloat(newAllocAgg?.total ?? '0') + parseFloat(newCreditAllocAgg?.total ?? '0');
 
       if (newTotalAllocated >= invoiceTotal) {
         await tx
@@ -380,6 +439,7 @@ export async function applyCreditToInvoice(
           .where(eq(invoices.id, invoiceId));
       }
     });
+
 
     // 9. Revalidate
     revalidatePath('/billing/invoices');

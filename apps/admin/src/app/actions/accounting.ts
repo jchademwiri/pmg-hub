@@ -176,10 +176,10 @@ export async function createJournalEntry(data: {
     await ensureOpenPeriod(period);
 
     const db = getDb();
-    const entryNumber = await getNextJournalEntryNumber();
 
     // Create the entry and its lines atomically in a transaction
     const entry = await db.transaction(async (tx) => {
+      const entryNumber = await getNextJournalEntryNumber(tx);
       const [e] = await tx
         .insert(journalEntries)
         .values({
@@ -194,20 +194,21 @@ export async function createJournalEntry(data: {
 
       if (!e) throw new Error('Failed to create journal entry.');
 
-      for (const line of parsed.data.lines) {
-        await tx.insert(journalLines).values({
-          journalEntryId: e.id,
-          accountId: line.accountId,
-          debit: line.debit ? String(line.debit) : null,
-          credit: line.credit ? String(line.credit) : null,
-          description: line.description ?? null,
-        });
+      if (parsed.data.lines.length > 0) {
+        await tx.insert(journalLines).values(
+          parsed.data.lines.map((line) => ({
+            journalEntryId: e.id,
+            accountId: line.accountId,
+            debit: line.debit ? String(line.debit) : null,
+            credit: line.credit ? String(line.credit) : null,
+            description: line.description ?? null,
+          }))
+        );
       }
 
       return e;
     });
 
-    if (!entry) return { error: 'Failed to create journal entry.' };
 
     revalidatePath('/accounting/journals');
     revalidatePath('/accounting/chart-of-accounts');

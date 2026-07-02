@@ -7,6 +7,7 @@ import { isPeriodClosed, getMinAllowedDate, getMinDateErrorMessage } from '@/lib
 import { getSASTToday, fmtDateLong } from '@/lib/format';
 import { deleteIncome } from './income';
 import { postPaymentJournalEntries, updatePaymentJournalEntries, voidPaymentJournalEntries } from '@/lib/accounting/posting';
+import { getPortalBaseUrl } from '@/lib/portal-url';
 
 export interface PaymentAllocationInput {
   invoiceId: string;
@@ -356,7 +357,7 @@ export async function recordClientPayment(data: PaymentInput): Promise<{ error?:
             adminEmail: fromEmail,
           });
 
-          const portalBaseUrl = process.env.PORTAL_URL || 'https://client.playhousemedia.co.za';
+          const portalBaseUrl = getPortalBaseUrl();
           const portalUrl = `${portalBaseUrl}/statements`;
 
           const emailProps = {

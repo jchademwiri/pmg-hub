@@ -13,6 +13,7 @@ import {
 import * as React from 'react';
 import { fmtDateLong } from '@/lib/format';
 import { authorizeCronRequest } from '@/lib/cron-auth';
+import { getPortalBaseUrl } from '@/lib/portal-url';
 
 export const dynamic = 'force-dynamic'; // Ensure no caching
 
@@ -118,7 +119,7 @@ export async function GET(req: Request) {
         reminderType = "overdue";
       }
 
-      const portalBaseUrl = process.env.PORTAL_URL || 'https://client.playhousemedia.co.za';
+      const portalBaseUrl = getPortalBaseUrl();
       const portalUrl = `${portalBaseUrl}/invoices/${inv.id}`;
 
       // E. Dispatch dynamic notification

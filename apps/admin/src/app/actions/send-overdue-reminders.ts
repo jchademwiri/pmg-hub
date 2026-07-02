@@ -26,6 +26,7 @@ import {
 } from '@pmg/emails';
 import type { OutstandingReminderEmailProps } from '@pmg/emails';
 import { getSessionOrRedirect, requireRole } from '@/lib/auth';
+import { getPortalBaseUrl } from '@/lib/portal-url';
 import { fmtDateLong } from '@/lib/format';
 import { validatePersonalMessage, validateRecipientEmail } from '@/lib/email-validation';
 
@@ -236,7 +237,7 @@ async function buildReminderEmailContext(
   const fromEmail = resolveFromEmail(billingConfig?.divisionWebsite, defaultFrom);
   const adminCc = resolveDivisionAdminEmail(pending.divisionName, billingConfig?.salesRepEmail ?? null);
 
-  const portalBaseUrl = process.env.PORTAL_URL || 'https://client.playhousemedia.co.za';
+  const portalBaseUrl = getPortalBaseUrl();
   const portalUrl =
     pending.invoices.length > 1
       ? `${portalBaseUrl}/statements`

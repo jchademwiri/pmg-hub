@@ -179,3 +179,20 @@ export const journalLines = pgTable(
 
 export type JournalLine = typeof journalLines.$inferSelect;
 export type NewJournalLine = typeof journalLines.$inferInsert;
+
+// ── journal_sequences ──────────────────────────────────────────────────────────
+// Tracks sequence numbers for journal entries per year.
+// Rows are locked and updated atomically to prevent duplicate entry numbers.
+export const journalSequences = pgTable(
+  "journal_sequences",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    year: integer("year").notNull().unique(),
+    lastSequence: integer("last_sequence").notNull().default(0),
+    updatedAt: timestamp("updated_at", { withTimezone: true }).defaultNow().notNull(),
+  }
+);
+
+export type JournalSequence = typeof journalSequences.$inferSelect;
+export type NewJournalSequence = typeof journalSequences.$inferInsert;
+

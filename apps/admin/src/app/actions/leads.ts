@@ -118,10 +118,41 @@ export async function convertLeadToClient(id: string): Promise<{ error?: string;
     // Use the module-level db client (supports transactions after driver switch)
     // Insert client and update lead status atomically
     const inserted = await db.transaction(async (tx) => {
+      // 1. Lock the lead row to prevent concurrent status updates
+      const [leadRow] = await tx
+        .select()
+        .from(leads)
+        .where(eq(leads.id, id))
+        .for('update');
+
+      if (!leadRow) throw new Error('Lead not found.');
+      if (leadRow.status === 'converted') throw new Error('Lead is already converted.');
+
+      // 2. Lock / verify existing client uniqueness (email/phone)
+      if (leadRow.email) {
+        const [existingClient] = await tx
+          .select()
+          .from(clients)
+          .where(eq(clients.email, leadRow.email));
+        if (existingClient) {
+          throw new Error(`A client with the email "${leadRow.email}" already exists.`);
+        }
+      }
+
+      if (leadRow.phone) {
+        const [existingClientByPhone] = await tx
+          .select()
+          .from(clients)
+          .where(eq(clients.phone, leadRow.phone));
+        if (existingClientByPhone) {
+          throw new Error(`A client with the phone "${leadRow.phone}" already exists.`);
+        }
+      }
+
       const [client] = await tx.insert(clients).values({
-        name: lead.name || 'Converted Lead',
-        email: lead.email ?? null,
-        phone: lead.phone ?? null,
+        name: leadRow.name || 'Converted Lead',
+        email: leadRow.email ?? null,
+        phone: leadRow.phone ?? null,
         isActive: true,
       }).returning({ id: clients.id });
 
@@ -135,6 +166,7 @@ export async function convertLeadToClient(id: string): Promise<{ error?: string;
 
       return client;
     });
+
 
     if (!inserted) {
       return { error: 'Failed to create client record.' };
