@@ -1,1 +1,0 @@
-i have also noticed that when i apply the credit its not being posted anywere for accounting, No Jornal entry, not in general ledger, probably not in trail balance, Client Credits account was not active, but does tht mean we can not post? 

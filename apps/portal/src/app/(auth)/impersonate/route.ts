@@ -3,7 +3,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { createHmac, randomUUID } from 'node:crypto';
 import { getDb, session as sessionTable, user, clients, eq, and } from '@pmg/db';
 
-const TOKEN_TTL_MS = 60_000; // 60 seconds
+const TOKEN_TTL_MS = 5 * 60_000; // 5 minutes
 const SESSION_TTL_MS = 24 * 60 * 60 * 1000; // 24 hours
 
 export async function GET(request: NextRequest) {
@@ -94,10 +94,13 @@ export async function GET(request: NextRequest) {
   const sessionSignature = createHmac('sha256', authSecret).update(sessionToken).digest('base64');
   const signedSessionValue = `${sessionToken}.${sessionSignature}`;
 
-  response.cookies.set('better-auth.session_token', signedSessionValue, {
+  const isProd = process.env.NODE_ENV === 'production';
+  const sessionCookieName = isProd ? '__Secure-better-auth.session_token' : 'better-auth.session_token';
+
+  response.cookies.set(sessionCookieName, signedSessionValue, {
     path: '/',
     httpOnly: true,
-    secure: process.env.NODE_ENV === 'production',
+    secure: isProd,
     sameSite: 'lax',
     maxAge: Math.floor(SESSION_TTL_MS / 1000),
   });

@@ -33,9 +33,23 @@ export function PortalShell({ client, isImpersonating, children }: PortalShellPr
   const pathname = usePathname();
 
   const handleStopImpersonating = React.useCallback(() => {
-    // Clear the impersonation cookie and reload — the admin still has a valid session
+    // Clear the impersonation cookie
     document.cookie = 'impersonate_client_id=; path=/; max-age=0; SameSite=Lax';
-    window.location.reload();
+    // Clear the portal session token cookies (both secure and plain) to fully log out of the portal app
+    document.cookie = 'better-auth.session_token=; path=/; max-age=0; SameSite=Lax';
+    document.cookie = '__Secure-better-auth.session_token=; path=/; max-age=0; SameSite=Lax';
+    
+    // Attempt to close the tab directly
+    try {
+      window.close();
+    } catch (e) {
+      console.warn('Failed to close window:', e);
+    }
+
+    // Fallback: if the tab stays open, redirect to login page
+    setTimeout(() => {
+      window.location.href = '/login';
+    }, 100);
   }, []);
 
   const NAV_ITEMS = [
