@@ -31,6 +31,12 @@ export async function proxy(request: NextRequest): Promise<NextResponse> {
   // Allow public routes and assets through
   // /impersonate must be accessible without a session since it creates one
   if (pathname === '/login' || pathname === '/impersonate' || pathname.startsWith('/api/auth/')) {
+    if (pathname === '/login') {
+      const response = NextResponse.next();
+      response.cookies.set('impersonate_client_id', '', { path: '/', maxAge: 0 });
+      response.cookies.set('dev_impersonate_client_id', '', { path: '/', maxAge: 0 });
+      return response;
+    }
     return NextResponse.next();
   }
 
