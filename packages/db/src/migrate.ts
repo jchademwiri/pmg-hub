@@ -23,84 +23,60 @@ const client = new pg.Client({ connectionString: url, ssl: { rejectUnauthorized:
 await client.connect();
 
 // ── Baseline detection ────────────────────────────────────────────────────────
-// Check if the drizzle migrations table exists and has any rows.
-const { rows: tableRows } = await client.query<{ exists: boolean }>(`
+// Drizzle's migrate() compares the `created_at` (timestamp) of the LAST record
+// in drizzle.__drizzle_migrations against each migration's `folderMillis`. Any
+// migration with folderMillis > lastDbMigration.created_at is treated as pending.
+//
+// Strategy: if the DB already has the schema (detected via the `account_type` enum
+// from migration 0000) but no valid baseline exists yet, we ensure a sentinel row
+// exists with the timestamp of the LATEST known migration. This causes Drizzle to
+// skip all migrations up to and including that point, and only apply genuinely new
+// ones added in future.
+
+// Read the journal to get the latest known migration timestamp.
+const journalPath = resolve(import.meta.dir, "migrations/meta/_journal.json");
+const journal = JSON.parse(readFileSync(journalPath, "utf-8")) as {
+  entries: { idx: number; tag: string; when: number }[];
+};
+const latestWhen = Math.max(...journal.entries.map((e) => e.when));
+
+// Check if schema already exists (migration 0000 creates the account_type enum).
+const { rows: schemaRows } = await client.query<{ exists: boolean }>(`
   SELECT EXISTS (
-    SELECT 1 FROM information_schema.tables
-    WHERE table_schema = 'drizzle'
-      AND table_name = '__drizzle_migrations'
+    SELECT 1 FROM pg_type
+    WHERE typname = 'account_type' AND typtype = 'e'
   ) AS exists
 `);
+const schemaAlreadyExists = schemaRows[0]?.exists === true;
 
-const migrationsTableExists = tableRows[0]?.exists === true;
-
-let appliedCount = 0;
-if (migrationsTableExists) {
-  const { rows: countRows } = await client.query<{ count: string }>(
-    `SELECT COUNT(*)::text AS count FROM drizzle.__drizzle_migrations`
-  );
-  appliedCount = parseInt(countRows[0]?.count ?? "0", 10);
-}
-
-// If no migration history exists but the DB already has the schema (indicated by
-// the presence of the account_type enum which is created in migration 0000),
-// we seed the migrations table with all known migrations so Drizzle treats them
-// as already applied.
-if (appliedCount === 0) {
-  const { rows: schemaRows } = await client.query<{ exists: boolean }>(`
-    SELECT EXISTS (
-      SELECT 1 FROM pg_type
-      WHERE typname = 'account_type' AND typtype = 'e'
-    ) AS exists
+if (schemaAlreadyExists) {
+  // Ensure the drizzle schema and migrations table exist.
+  await client.query(`CREATE SCHEMA IF NOT EXISTS drizzle`);
+  await client.query(`
+    CREATE TABLE IF NOT EXISTS drizzle.__drizzle_migrations (
+      id SERIAL PRIMARY KEY,
+      hash TEXT NOT NULL,
+      created_at BIGINT
+    )
   `);
 
-  const schemaAlreadyExists = schemaRows[0]?.exists === true;
+  // Check if the table already has a record covering the latest migration.
+  const { rows: latestRows } = await client.query<{ max_ts: string | null }>(
+    `SELECT MAX(created_at)::text AS max_ts FROM drizzle.__drizzle_migrations`
+  );
+  const currentLatest = parseInt(latestRows[0]?.max_ts ?? "0", 10);
 
-  if (schemaAlreadyExists) {
-    console.log("⚡ Schema already exists but no migration history found.");
-    console.log("   Baselining all existing migrations as applied...");
-
-    // Ensure the drizzle schema and migrations table exist.
-    await client.query(`CREATE SCHEMA IF NOT EXISTS drizzle`);
-    await client.query(`
-      CREATE TABLE IF NOT EXISTS drizzle.__drizzle_migrations (
-        id SERIAL PRIMARY KEY,
-        hash TEXT NOT NULL,
-        created_at BIGINT
-      )
-    `);
-
-    // Read the journal to get all migration tags and timestamps.
-    const journalPath = resolve(import.meta.dir, "migrations/meta/_journal.json");
-    const journal = JSON.parse(readFileSync(journalPath, "utf-8")) as {
-      entries: { idx: number; tag: string; when: number }[];
-    };
-
-    for (const entry of journal.entries) {
-      // Compute the hash the same way Drizzle does: SHA-256 of the migration SQL file.
-      const sqlPath = resolve(import.meta.dir, `migrations/${entry.tag}.sql`);
-      let sqlContent: string;
-      try {
-        sqlContent = readFileSync(sqlPath, "utf-8");
-      } catch {
-        console.warn(`   Warning: could not read ${entry.tag}.sql — skipping.`);
-        continue;
-      }
-
-      // Drizzle uses a simple string hash of the file content for deduplication.
-      // We insert using the file content hash (same algo as drizzle-orm migrator).
-      const crypto = await import("crypto");
-      const hash = crypto.createHash("sha256").update(sqlContent).digest("hex");
-
-      await client.query(
-        `INSERT INTO drizzle.__drizzle_migrations (hash, created_at)
-         VALUES ($1, $2)
-         ON CONFLICT DO NOTHING`,
-        [hash, entry.when]
-      );
-    }
-
-    console.log(`   ✅ Baselined ${journal.entries.length} migrations.`);
+  if (currentLatest < latestWhen) {
+    console.log("⚡ Schema exists but migration history is behind. Inserting baseline sentinel...");
+    // Insert a sentinel row with the latest migration timestamp.
+    // Drizzle will see this as the "last applied" migration and skip everything up to it.
+    await client.query(
+      `INSERT INTO drizzle.__drizzle_migrations (hash, created_at) VALUES ($1, $2)`,
+      ["baseline-sentinel", latestWhen]
+    );
+    console.log(`   ✅ Baseline sentinel inserted (up to timestamp ${latestWhen}).`);
+  } else {
+    console.log(`✓ Migration history is up to date (latest: ${currentLatest}).`);
   }
 }
 // ── End baseline detection ────────────────────────────────────────────────────
