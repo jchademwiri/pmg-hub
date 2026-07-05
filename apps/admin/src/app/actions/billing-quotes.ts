@@ -2,7 +2,7 @@
 
 import { revalidatePath } from 'next/cache';
 import { getDb, quotations, billingLineItems, eq, and } from '@pmg/db';
-import { getNextDocumentNumber, addDays, getQuotationById } from '@pmg/db';
+import { getNextDocumentNumber, addDays, getQuotationById, today } from '@pmg/db';
 import { getSessionOrRedirect } from '@/lib/auth';
 import { isPeriodClosed, getMinAllowedDate, getMinDateErrorMessage } from '@/lib/date-rules';
 import { CreateQuotationSchema, type CreateQuotationInput } from './billing-schema';
@@ -360,7 +360,7 @@ export async function duplicateQuotation(id: string): Promise<{ error?: string; 
     const source = await getQuotationById(id);
     if (!source) return { error: 'Quotation not found.' };
 
-    const today = new Date().toISOString().split('T')[0]!;
+    const todayStr = today();
 
     // Preserve the same expiry offset as the original (days between quoteDate and expiryDate)
     let newExpiryDate: string | null = null;
@@ -370,10 +370,10 @@ export async function duplicateQuotation(id: string): Promise<{ error?: string; 
       const diffDays = Math.round(
         (origExpiry.getTime() - origIssue.getTime()) / (1000 * 60 * 60 * 24),
       );
-      newExpiryDate = addDays(today, diffDays);
+      newExpiryDate = addDays(todayStr, diffDays);
     }
 
-    const year = new Date(today).getFullYear();
+    const year = Number(todayStr.slice(0, 4));
     const documentNumber = await getNextDocumentNumber(source.divisionId, 'quote', year);
 
     const db = getDb();
@@ -387,7 +387,7 @@ export async function duplicateQuotation(id: string): Promise<{ error?: string; 
         clientId: source.clientId,
         documentNumber,
         status: 'draft',
-        quoteDate: today,
+        quoteDate: todayStr,
         expiryDate: newExpiryDate,
         // Reference is intentionally cleared — the caller updates it for the new job
         ...(includeReference ? { reference: null } : {}),
