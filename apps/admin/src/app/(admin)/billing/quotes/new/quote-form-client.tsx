@@ -189,7 +189,10 @@ export function QuoteFormClient({
         const { updateQuotation } = await import('@/app/actions/billing-quotes');
         result = await updateQuotation(editId, payload);
         if (!result.error) {
-          router.push(`/billing/quotes/${editId}`);
+          const destination = mode === 'send'
+            ? `/billing/quotes/${editId}?action=send`
+            : `/billing/quotes/${editId}`;
+          router.push(destination);
           return;
         }
       } else {
@@ -398,17 +401,15 @@ export function QuoteFormClient({
           <Button className="w-full" onClick={() => handleSubmit('draft')} disabled={isSubmitting}>
             {isSubmitting ? 'Saving…' : editId ? 'Save Changes' : 'Save Quote'}
           </Button>
-          {!editId && (
-            <Button
-              variant="outline"
-              className="w-full"
-              onClick={() => handleSubmit('send')}
-              disabled={isSubmitting}
-            >
-              <Mail className="size-4" />
-              Save &amp; Send
-            </Button>
-          )}
+          <Button
+            variant="outline"
+            className="w-full"
+            onClick={() => handleSubmit('send')}
+            disabled={isSubmitting}
+          >
+            <Mail className="size-4" />
+            {editId ? 'Save & Email' : 'Save & Send'}
+          </Button>
         </div>
 
         {!editId && (
