@@ -184,8 +184,6 @@ export async function deleteProgressItemAction(
         nextStatus = 'backlog';
       } else if (completedCount === totalCount) {
         nextStatus = 'completed';
-      } else if (completedCount === 0) {
-        nextStatus = 'backlog';
       }
 
       await tx
@@ -241,8 +239,6 @@ export async function toggleProgressItemAction(
 
     if (completedCount === totalCount && totalCount > 0) {
       nextStatus = 'completed';
-    } else if (completedCount === 0) {
-      nextStatus = 'backlog';
     }
 
     // 3. Update the section status

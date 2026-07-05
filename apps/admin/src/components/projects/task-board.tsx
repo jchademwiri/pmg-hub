@@ -172,7 +172,6 @@ export function TaskBoard({ projectId, initialSections, onProgressChange }: Task
             const completed = updatedItems.filter(i => i.isCompleted).length;
             let nextStatus: BucketType = 'in_progress';
             if (completed === total && total > 0) nextStatus = 'completed';
-            else if (completed === 0) nextStatus = 'backlog';
 
             return { ...s, status: nextStatus, items: updatedItems };
           });
@@ -412,7 +411,6 @@ export function TaskBoard({ projectId, initialSections, onProgressChange }: Task
           const completed = updatedItems.filter(i => i.isCompleted).length;
           let nextStatus: BucketType = 'in_progress';
           if (completed === total && total > 0) nextStatus = 'completed';
-          else if (completed === 0) nextStatus = 'backlog';
 
           return { ...s, status: nextStatus, items: updatedItems };
         }));
@@ -551,27 +549,29 @@ export function TaskBoard({ projectId, initialSections, onProgressChange }: Task
                               </span>
                             )}
 
-                            <div className="flex items-center opacity-0 group-hover:opacity-100 transition-opacity gap-0.5" onClick={e => e.stopPropagation()}>
-                              <Button
-                                variant="ghost"
-                                size="icon"
-                                className="size-6 text-muted-foreground hover:text-foreground"
-                                onClick={() => {
-                                  setEditingSectionId(task.id);
-                                  setEditingSectionTitle(task.title);
-                                }}
-                              >
-                                <Edit2 className="size-3" />
-                              </Button>
-                              <Button
-                                variant="ghost"
-                                size="icon"
-                                className="size-6 text-destructive/85 hover:text-destructive hover:bg-destructive/5"
-                                onClick={() => handleDeleteMainTask(task.id)}
-                              >
-                                <Trash2 className="size-3" />
-                              </Button>
-                            </div>
+                            {task.status !== 'completed' && (
+                               <div className="flex items-center opacity-0 group-hover:opacity-100 transition-opacity gap-0.5" onClick={e => e.stopPropagation()}>
+                                 <Button
+                                   variant="ghost"
+                                   size="icon"
+                                   className="size-6 text-muted-foreground hover:text-foreground"
+                                   onClick={() => {
+                                     setEditingSectionId(task.id);
+                                     setEditingSectionTitle(task.title);
+                                   }}
+                                 >
+                                   <Edit2 className="size-3" />
+                                 </Button>
+                                 <Button
+                                   variant="ghost"
+                                   size="icon"
+                                   className="size-6 text-destructive/85 hover:text-destructive hover:bg-destructive/5"
+                                   onClick={() => handleDeleteMainTask(task.id)}
+                                 >
+                                   <Trash2 className="size-3" />
+                                 </Button>
+                                </div>
+                             )}
 
                             <div className="text-muted-foreground shrink-0 ml-1">
                               {isExpanded ? <ChevronDown className="size-3.5" /> : <ChevronRight className="size-3.5" />}
@@ -621,8 +621,10 @@ export function TaskBoard({ projectId, initialSections, onProgressChange }: Task
                                           : 'text-foreground font-medium'
                                       }`}
                                       onDoubleClick={() => {
-                                        setEditingItemId(item.id);
-                                        setEditingItemText(item.task);
+                                        if (task.status !== 'completed') {
+                                          setEditingItemId(item.id);
+                                          setEditingItemText(item.task);
+                                        }
                                       }}
                                     >
                                       {item.task}
@@ -630,7 +632,7 @@ export function TaskBoard({ projectId, initialSections, onProgressChange }: Task
                                   )}
                                 </div>
                                 
-                                {editingItemId !== item.id && (
+                                {editingItemId !== item.id && task.status !== 'completed' && (
                                   <div className="flex items-center gap-0.5 opacity-0 group-hover/sub:opacity-100 transition-opacity">
                                     <Button
                                       variant="ghost"
@@ -658,33 +660,35 @@ export function TaskBoard({ projectId, initialSections, onProgressChange }: Task
 
                             {task.items.length === 0 && (
                               <p className="text-[10px] text-muted-foreground italic py-1 text-center">
-                                No sub-tasks. Add one below.
+                                {task.status === 'completed' ? 'No sub-tasks.' : 'No sub-tasks. Add one below.'}
                               </p>
                             )}
                           </ul>
 
                           {/* Add Sub-task form */}
-                          <div className="flex gap-1.5 pt-2 border-t border-border/10">
-                            <Input
-                              placeholder="New sub-task..."
-                              className="h-7 text-[11px] flex-1"
-                              value={newSubTaskTexts[task.id] || ''}
-                              onChange={(e) => setNewSubTaskTexts(prev => ({ ...prev, [task.id]: e.target.value }))}
-                              onKeyDown={(e) => {
-                                if (e.key === 'Enter') {
-                                  e.preventDefault();
-                                  handleAddSubTask(task.id);
-                                }
-                              }}
-                            />
-                            <Button 
-                              size="sm" 
-                              className="h-7 text-[11px] px-2.5"
-                              onClick={() => handleAddSubTask(task.id)}
-                            >
-                              <Plus className="size-3 mr-1" /> Add
-                            </Button>
-                          </div>
+                          {task.status !== 'completed' && (
+                            <div className="flex gap-1.5 pt-2 border-t border-border/10">
+                              <Input
+                                placeholder="New sub-task..."
+                                className="h-7 text-[11px] flex-1"
+                                value={newSubTaskTexts[task.id] || ''}
+                                onChange={(e) => setNewSubTaskTexts(prev => ({ ...prev, [task.id]: e.target.value }))}
+                                onKeyDown={(e) => {
+                                  if (e.key === 'Enter') {
+                                    e.preventDefault();
+                                    handleAddSubTask(task.id);
+                                  }
+                                }}
+                              />
+                              <Button 
+                                size="sm" 
+                                className="h-7 text-[11px] px-2.5"
+                                onClick={() => handleAddSubTask(task.id)}
+                              >
+                                <Plus className="size-3 mr-1" /> Add
+                              </Button>
+                            </div>
+                          )}
                         </div>
                       )}
                     </div>
@@ -699,27 +703,29 @@ export function TaskBoard({ projectId, initialSections, onProgressChange }: Task
               </div>
 
               {/* Add Main Task Input */}
-              <div className="flex gap-2 pt-3 border-t border-border/20">
-                <Input
-                  placeholder="Add task card..."
-                  className="h-8 text-xs flex-1"
-                  value={newMainTaskTitles[col.id]}
-                  onChange={(e) => setNewMainTaskTitles(prev => ({ ...prev, [col.id]: e.target.value }))}
-                  onKeyDown={(e) => {
-                    if (e.key === 'Enter') {
-                      e.preventDefault();
-                      handleAddMainTask(col.id);
-                    }
-                  }}
-                />
-                <Button 
-                  size="sm" 
-                  className="h-8 text-xs px-2.5"
-                  onClick={() => handleAddMainTask(col.id)}
-                >
-                  <Plus className="size-3.5" />
-                </Button>
-              </div>
+              {col.id !== 'completed' && (
+                <div className="flex gap-2 pt-3 border-t border-border/20">
+                  <Input
+                    placeholder="Add task card..."
+                    className="h-8 text-xs flex-1"
+                    value={newMainTaskTitles[col.id]}
+                    onChange={(e) => setNewMainTaskTitles(prev => ({ ...prev, [col.id]: e.target.value }))}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter') {
+                        e.preventDefault();
+                        handleAddMainTask(col.id);
+                      }
+                    }}
+                  />
+                  <Button 
+                    size="sm" 
+                    className="h-8 text-xs px-2.5"
+                    onClick={() => handleAddMainTask(col.id)}
+                  >
+                    <Plus className="size-3.5" />
+                  </Button>
+                </div>
+              )}
             </div>
           );
         })}

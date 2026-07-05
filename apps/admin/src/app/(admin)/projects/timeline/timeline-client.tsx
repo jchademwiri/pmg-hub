@@ -210,7 +210,11 @@ export function TimelineClient({ entries, clients, progressMap = {} }: TimelineC
                 const closeDayPct = (closeOffset / totalDays) * 100
 
                 return (
-                  <div key={entry.id} className="group relative flex items-center gap-3 rounded-md px-1 py-2 hover:bg-muted/30">
+                  <div
+                    key={entry.id}
+                    className="group relative flex items-center gap-3 rounded-md px-1 py-2 hover:bg-muted/30 cursor-pointer"
+                    onClick={() => router.push(`/projects/${entry.id}`)}
+                  >
                     {/* Label */}
                     <div className="w-48 shrink-0 truncate">
                       <div className="flex items-center gap-2">
@@ -244,13 +248,12 @@ export function TimelineClient({ entries, clients, progressMap = {} }: TimelineC
                         <div className="relative flex-1 cursor-help" style={{ height: '28px' }}>
                           {/* Main work bar */}
                           <div
-                            className={`absolute top-1 h-5 rounded-sm transition-all ${STATUS_COLORS[entry.status] ?? 'bg-muted'} cursor-pointer hover:brightness-110 active:scale-[0.99] flex items-center justify-end pr-1`}
+                            className={`absolute top-1 h-5 rounded-sm transition-all ${STATUS_COLORS[entry.status] ?? 'bg-muted'} hover:brightness-110 active:scale-[0.99] flex items-center justify-end pr-1`}
                             style={{
                               left: `${(startOffset / totalDays) * 100}%`,
                               width: `${(workDays / totalDays) * 100}%`,
                               minWidth: '4px',
                             }}
-                            onClick={() => router.push(`/projects/${entry.id}`)}
                           >
                             {(() => {
                               const progress = progressMap[entry.id] || { total: 0, completed: 0 };
@@ -322,7 +325,10 @@ export function TimelineClient({ entries, clients, progressMap = {} }: TimelineC
                     </Tooltip>
 
                     {/* Status + Risk badges */}
-                    <div className="flex shrink-0 items-center gap-1.5">
+                    <div
+                      className="flex shrink-0 items-center gap-1.5"
+                      onClick={(e) => e.stopPropagation()}
+                    >
                       {getNextStatuses(entry.status).length === 0 ? (
                         <ProjectStatusBadge status={entry.status} />
                       ) : (
