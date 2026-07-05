@@ -90,10 +90,20 @@ export function TaskListView({ projectId, initialSections }: TaskListViewProps) 
         }
         case 'TOGGLE_SUBTASK': {
           const { itemId, isCompleted } = action.payload;
-          return state.map(t => ({
-            ...t,
-            items: t.items.map(item => item.id === itemId ? { ...item, isCompleted } : item)
-          }));
+          return state.map(t => {
+            const updatedItems = t.items.map(item =>
+              item.id === itemId ? { ...item, isCompleted } : item
+            );
+            const allDone = updatedItems.length > 0 && updatedItems.every(i => i.isCompleted);
+            const noneDone = updatedItems.every(i => !i.isCompleted);
+            const derivedStatus: BucketType =
+              allDone
+                ? 'completed'
+                : noneDone && t.status === 'completed'
+                  ? 'in_progress'
+                  : t.status;
+            return { ...t, items: updatedItems, status: derivedStatus };
+          });
         }
         case 'RENAME_SUBTASK': {
           const { itemId, newTaskText } = action.payload;

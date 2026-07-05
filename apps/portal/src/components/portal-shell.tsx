@@ -34,21 +34,23 @@ export function PortalShell({ client, isImpersonating, children }: PortalShellPr
   const pathname = usePathname();
 
   const handleStopImpersonating = React.useCallback(async () => {
-    // Clear the impersonation cookie
-    document.cookie = 'impersonate_client_id=; path=/; max-age=0; SameSite=Lax';
-    document.cookie = 'dev_impersonate_client_id=; path=/; max-age=0; SameSite=Lax';
-    
-    // Revoke the session server-side
+    // Revoke the session server-side first — if this fails we stop here because
+    // the client-side cookie clears below cannot remove HttpOnly cookies and
+    // would leave the portal session active.
     try {
       await authClient.signOut();
     } catch (err) {
       console.error('Failed to revoke session:', err);
+      alert('Could not end the impersonation session. Please try again.');
+      return;
     }
 
-    // Clear the portal session token cookies (both secure and plain) to fully log out of the portal app
+    // signOut succeeded — clear the impersonation and session cookies.
+    document.cookie = 'impersonate_client_id=; path=/; max-age=0; SameSite=Lax';
+    document.cookie = 'dev_impersonate_client_id=; path=/; max-age=0; SameSite=Lax';
     document.cookie = 'better-auth.session_token=; path=/; max-age=0; SameSite=Lax';
     document.cookie = '__Secure-better-auth.session_token=; path=/; max-age=0; SameSite=Lax';
-    
+
     // Attempt to close the tab directly
     try {
       window.close();

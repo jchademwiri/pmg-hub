@@ -6,14 +6,25 @@ on:
       - master
       - dev
 
+# Only one migration run per branch at a time; newer pushes cancel the older in-progress run.
+concurrency:
+  group: migrate-${{ github.ref_name }}
+  cancel-in-progress: true
+
 jobs:
   migrate:
     name: Migrate (${{ github.ref_name }})
     runs-on: ubuntu-latest
+    # Minimum token scope — this job only reads code and runs scripts.
+    permissions:
+      contents: read
 
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+        with:
+          # This workflow never pushes; don't leave the Git token on disk.
+          persist-credentials: false
 
       - name: Setup Bun
         uses: oven-sh/setup-bun@v2

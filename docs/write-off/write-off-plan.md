@@ -27,7 +27,7 @@ When a payment is received and allocated to a `written_off` invoice:
    - **Credit:** `1010 Business Cheque Account` (25% PMG Share reduction)
 3. The invoice status is updated:
    - **Paid in Full:** Transition to `paid`.
-   - **Partial Payment:** Transition to `partially_paid` (with the remaining balance remaining as written off).
+   - **Partial Recovery:** Transition to `partially_paid` — this status reflects only the payment state (some cash received). The remaining uncollected write-off amount must be preserved in an explicit `write_off_amount` field on the invoice (or in a separate write-off record), **not** inferred from `partially_paid` alone. This keeps payment state and write-off state decoupled.
 
 ---
 
@@ -35,7 +35,7 @@ When a payment is received and allocated to a `written_off` invoice:
 
 > [!IMPORTANT]
 > **Database Enum Migration:** We will add the `'written_off'` value to `invoice_status` enum. Drizzle will generate the migration script.
-> **Auto-creation of Account 5150:** If the `5150 Bad Debt Expense` account does not exist in the active `chart_accounts` table, the posting engine will automatically create it in the database. This ensures the app doesn't crash if the seeding script hasn't run.
+> **Account 5150 provisioning:** The `5150 Bad Debt Expense` account must be created via a database migration or seed script **before** the write-off feature is used. The posting engine will treat a missing account as a hard error — it will **not** auto-create chart accounts at runtime, as doing so would bypass the normal chart-of-accounts approval process.
 
 ---
 
@@ -126,7 +126,10 @@ Update `recordClientPayment`:
 - Drizzle transaction ensures both the recovery reversal and standard payment journal entries post atomically.
 
 Update `deleteClientPayment` / `voidPaymentJournalEntries`:
-- Ensure that if a payment on a written-off invoice is deleted/refunded, the invoice is transitioned back to `'written_off'` status.
+- Ensure that if a payment on a written-off invoice is deleted/refunded:
+  1. **Reverse the recovery entry:** The `DR 1100 / CR 5150` bad-debt recovery journal entry that was posted when the payment was recorded must also be voided or a reversing entry (`DR 5150 / CR 1100`) must be explicitly linked to the delete operation.
+  2. **Restore write-off status:** After the recovery reversal is posted, transition the invoice back to `'written_off'` (not `'issued'` or `'overdue'`).
+  3. Both the recovery reversal and the status update must happen inside the same Drizzle transaction as the payment deletion to prevent partially-applied state.
 
 ---
 

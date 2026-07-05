@@ -212,8 +212,16 @@ export function TimelineClient({ entries, clients, progressMap = {} }: TimelineC
                 return (
                   <div
                     key={entry.id}
+                    role="button"
+                    tabIndex={0}
                     className="group relative flex items-center gap-3 rounded-md px-1 py-2 hover:bg-muted/30 cursor-pointer"
                     onClick={() => router.push(`/projects/${entry.id}`)}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter' || e.key === ' ') {
+                        e.preventDefault();
+                        router.push(`/projects/${entry.id}`);
+                      }
+                    }}
                   >
                     {/* Label */}
                     <div className="w-48 shrink-0 truncate">
