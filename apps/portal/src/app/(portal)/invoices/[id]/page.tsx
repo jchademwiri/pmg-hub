@@ -59,6 +59,7 @@ export default async function InvoiceDetailPage({ params }: PageProps) {
         dueDateOrExpiry: invoice.dueDate,
         status: invoice.status,
         subtotal: invoice.subtotal,
+        discountAmount: invoice.discountAmount,
         vatAmount: invoice.vatAmount,
         total: invoice.total,
         notes: invoice.notes,

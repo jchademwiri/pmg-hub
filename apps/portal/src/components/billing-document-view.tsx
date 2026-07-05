@@ -13,6 +13,7 @@ interface BillingDocumentViewProps {
     dueDateOrExpiry?: string | Date | null;
     status: string;
     subtotal: string | number;
+    discountAmount?: string | number | null;
     vatAmount: string | number;
     total: string | number;
     notes?: string | null;
@@ -211,6 +212,12 @@ export function BillingDocumentView({
                 <span>Subtotal:</span>
                 <span className="font-medium text-white print:text-black">{formatCurrency(document.subtotal)}</span>
               </div>
+              {document.discountAmount && parseFloat(document.discountAmount.toString()) > 0 && (
+                <div className="flex justify-between py-1 text-orange-400 print:text-orange-600 font-medium">
+                  <span>Discount:</span>
+                  <span className="tabular-nums">-{formatCurrency(document.discountAmount)}</span>
+                </div>
+              )}
               {parseFloat(document.vatAmount as string) > 0 && (
                 <div className="flex justify-between py-1 text-muted-foreground print:text-black/70">
                   <span>VAT (15%):</span>
