@@ -619,6 +619,9 @@ export async function voidInvoice(id: string): Promise<{ error?: string }> {
     if (invoice.status === 'paid') {
       return { error: 'Cannot void a paid invoice.' };
     }
+    if (invoice.status === 'void') {
+      return { error: 'Invoice is already void.' };
+    }
 
     // Reverse any credit applications
     const { reverseCreditApplication } = await import('./credit-management');

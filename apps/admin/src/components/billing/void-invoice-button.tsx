@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import { useRouter } from 'next/navigation';
 import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
 import { confirm } from '@/components/ui/confirm-dialog';
@@ -11,6 +12,7 @@ interface VoidInvoiceButtonProps {
 }
 
 export function VoidInvoiceButton({ invoiceId, voidAction }: VoidInvoiceButtonProps) {
+  const router = useRouter();
   const [isPending, setIsPending] = useState(false);
 
   async function handleClick() {
@@ -30,6 +32,7 @@ export function VoidInvoiceButton({ invoiceId, voidAction }: VoidInvoiceButtonPr
         toast.error(result.error);
       } else {
         toast.success('Invoice voided.');
+        router.refresh();
       }
     } finally {
       setIsPending(false);
