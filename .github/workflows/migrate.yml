@@ -22,7 +22,6 @@ jobs:
 
       - name: Install dependencies
         run: bun install --frozen-lockfile
-        working-directory: packages/db
 
       - name: Run migrations (production)
         if: github.ref_name == 'master'
