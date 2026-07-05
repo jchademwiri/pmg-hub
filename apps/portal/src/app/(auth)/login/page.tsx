@@ -12,6 +12,12 @@ export default function LoginPage() {
   const [isSent, setIsSent] = React.useState(false);
   const [useOtp, setUseOtp] = React.useState(false);
 
+  React.useEffect(() => {
+    // Clear any lingering impersonation cookies when accessing the login page
+    document.cookie = 'impersonate_client_id=; path=/; max-age=0; SameSite=Lax';
+    document.cookie = 'dev_impersonate_client_id=; path=/; max-age=0; SameSite=Lax';
+  }, []);
+
   async function handleSendMagicLink(e: React.FormEvent) {
     e.preventDefault();
     if (!email) return;

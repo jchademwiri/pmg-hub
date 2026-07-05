@@ -19,6 +19,7 @@ import {
   CalendarDays,
 } from 'lucide-react';
 import Link from 'next/link';
+import { authClient } from '@/lib/auth-client';
 
 interface PortalShellProps {
   client: any;
@@ -32,13 +33,24 @@ export function PortalShell({ client, isImpersonating, children }: PortalShellPr
   const [isMobileOpen, setIsMobileOpen] = React.useState(false);
   const pathname = usePathname();
 
-  const handleStopImpersonating = React.useCallback(() => {
-    // Clear the impersonation cookie
+  const handleStopImpersonating = React.useCallback(async () => {
+    // Revoke the session server-side first — if this fails we stop here because
+    // the client-side cookie clears below cannot remove HttpOnly cookies and
+    // would leave the portal session active.
+    try {
+      await authClient.signOut();
+    } catch (err) {
+      console.error('Failed to revoke session:', err);
+      alert('Could not end the impersonation session. Please try again.');
+      return;
+    }
+
+    // signOut succeeded — clear the impersonation and session cookies.
     document.cookie = 'impersonate_client_id=; path=/; max-age=0; SameSite=Lax';
-    // Clear the portal session token cookies (both secure and plain) to fully log out of the portal app
+    document.cookie = 'dev_impersonate_client_id=; path=/; max-age=0; SameSite=Lax';
     document.cookie = 'better-auth.session_token=; path=/; max-age=0; SameSite=Lax';
     document.cookie = '__Secure-better-auth.session_token=; path=/; max-age=0; SameSite=Lax';
-    
+
     // Attempt to close the tab directly
     try {
       window.close();
@@ -50,6 +62,27 @@ export function PortalShell({ client, isImpersonating, children }: PortalShellPr
     setTimeout(() => {
       window.location.href = '/login';
     }, 100);
+  }, []);
+
+  const handleSignOut = React.useCallback(async (e: React.MouseEvent) => {
+    e.preventDefault();
+    
+    // Clear impersonation cookies
+    document.cookie = 'impersonate_client_id=; path=/; max-age=0; SameSite=Lax';
+    document.cookie = 'dev_impersonate_client_id=; path=/; max-age=0; SameSite=Lax';
+    
+    // Call better-auth signOut
+    try {
+      await authClient.signOut();
+    } catch (err) {
+      console.error('Failed to sign out:', err);
+    }
+    
+    // Clear session cookies to be absolutely sure
+    document.cookie = 'better-auth.session_token=; path=/; max-age=0; SameSite=Lax';
+    document.cookie = '__Secure-better-auth.session_token=; path=/; max-age=0; SameSite=Lax';
+    
+    window.location.href = '/login';
   }, []);
 
   const NAV_ITEMS = [
@@ -124,9 +157,10 @@ export function PortalShell({ client, isImpersonating, children }: PortalShellPr
           )}
           
           <div className="flex flex-col gap-2">
-            <a
-              href="/login"
-              className={`flex items-center gap-3 px-2.5 py-2 text-sm font-medium text-red-400 rounded-lg hover:text-red-300 hover:bg-red-500/5 transition-all group relative cursor-pointer ${
+            <button
+              type="button"
+              onClick={handleSignOut}
+              className={`flex w-full items-center gap-3 px-2.5 py-2 text-sm font-medium text-red-400 rounded-lg hover:text-red-300 hover:bg-red-500/5 transition-all group relative cursor-pointer border-0 bg-transparent text-left ${
                 isCollapsed ? 'justify-center' : ''
               }`}
             >
@@ -138,7 +172,7 @@ export function PortalShell({ client, isImpersonating, children }: PortalShellPr
                   Sign Out
                 </span>
               )}
-            </a>
+            </button>
 
             {/* Collapse Toggle Button */}
             <button
@@ -210,13 +244,14 @@ export function PortalShell({ client, isImpersonating, children }: PortalShellPr
                 <p className="text-xs font-semibold text-white truncate">{client.businessName || client.name}</p>
                 <p className="text-[10px] text-muted-foreground truncate">{client.email}</p>
               </div>
-              <a
-                href="/login"
-                className="flex w-full items-center gap-3 px-3 py-2 text-sm font-medium text-red-400 rounded-lg hover:text-red-300 hover:bg-red-500/5 transition-all cursor-pointer"
+              <button
+                type="button"
+                onClick={handleSignOut}
+                className="flex w-full items-center gap-3 px-3 py-2 text-sm font-medium text-red-400 rounded-lg hover:text-red-300 hover:bg-red-500/5 transition-all cursor-pointer border-0 bg-transparent text-left"
               >
                 <LogOut className="size-4 shrink-0" />
                 <span>Sign Out</span>
-              </a>
+              </button>
             </div>
           </aside>
         </div>
@@ -257,7 +292,7 @@ export function PortalShell({ client, isImpersonating, children }: PortalShellPr
             </span>
             <div className="ml-auto flex items-center gap-2">
               <span className="hidden sm:inline text-[10px] text-amber-400/50 font-mono">
-                impersonate_client_id
+                {client.id}
               </span>
               <button
                 type="button"
