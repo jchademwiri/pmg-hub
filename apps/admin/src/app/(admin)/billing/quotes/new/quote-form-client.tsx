@@ -8,6 +8,7 @@ import { Field, FieldLabel } from '@/components/ui/field';
 import { Input } from '@/components/ui/input';
 import { Switch } from '@/components/ui/switch';
 import { Textarea } from '@/components/ui/textarea';
+import { Mail } from 'lucide-react';
 import {
   Select,
   SelectContent,
@@ -144,7 +145,7 @@ export function QuoteFormClient({
 
   const totals = calcTotals(lineItems, vatEnabled, discountType, discountValue);
 
-  function handleSubmit() {
+  function handleSubmit(mode: 'draft' | 'send' = 'draft') {
     setError(null);
 
     if (!divisionId) {
@@ -194,7 +195,11 @@ export function QuoteFormClient({
       } else {
         result = await createQuotation(payload);
         if (!result.error && result.id) {
-          router.push(`/billing/quotes/${result.id}`);
+          // mode='send' navigates with ?action=send to auto-open the email dialog
+          const destination = mode === 'send'
+            ? `/billing/quotes/${result.id}?action=send`
+            : `/billing/quotes/${result.id}`;
+          router.push(destination);
           return;
         }
       }
@@ -390,17 +395,18 @@ export function QuoteFormClient({
             </Alert>
           )}
 
-          <Button className="w-full" onClick={handleSubmit} disabled={isSubmitting}>
+          <Button className="w-full" onClick={() => handleSubmit('draft')} disabled={isSubmitting}>
             {isSubmitting ? 'Saving…' : editId ? 'Save Changes' : 'Save Quote'}
           </Button>
           {!editId && (
             <Button
               variant="outline"
               className="w-full"
-              onClick={handleSubmit}
+              onClick={() => handleSubmit('send')}
               disabled={isSubmitting}
             >
-              Save as Draft
+              <Mail className="size-4" />
+              Save &amp; Send
             </Button>
           )}
         </div>

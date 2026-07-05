@@ -10,13 +10,14 @@ import { DocumentPreview } from '@/components/billing/document-preview';
 import { BillingStatusBadge } from '@/components/billing/billing-status-badge';
 import { BillingTotalsBlock } from '@/components/billing/billing-totals-block';
 import { getQuotationById, getDivisionBillingSettings } from '@pmg/db';
-import { updateQuotationStatus, deleteQuotation } from '@/app/actions/billing-quotes';
+import { updateQuotationStatus, deleteQuotation, duplicateQuotation } from '@/app/actions/billing-quotes';
 import { fmtDate, fmtDateTime } from '@/lib/format';
 import { buildOrgProps, buildBankingProps } from '@/lib/client-billing-helpers';
 import { QuoteDetailActions } from './quote-detail-actions';
 import { PrintButton } from '@/components/billing/print-button';
 import { ExportPdfButton } from '@/components/billing/export-pdf-button';
 import { UniversalEmailDialog } from '@/components/billing/universal-email-dialog';
+import { QuoteEmailAutoTrigger } from './quote-email-auto-trigger';
 
 export const dynamic = 'force-dynamic';
 
@@ -30,10 +31,11 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 
 interface Props {
   params: Promise<{ id: string }>;
+  searchParams: Promise<{ action?: string }>;
 }
 
-export default async function QuoteDetailPage({ params }: Props) {
-  const { id } = await params;
+export default async function QuoteDetailPage({ params, searchParams }: Props) {
+  const [{ id }, { action }] = await Promise.all([params, searchParams]);
   const quote = await getQuotationById(id);
   if (!quote) notFound();
 
@@ -68,9 +70,20 @@ export default async function QuoteDetailPage({ params }: Props) {
   };
 
   const canEdit = ['draft', 'sent', 'accepted'].includes(quote.status);
+  const autoOpenEmail = action === 'send';
 
   return (
     <div className="flex flex-col gap-6">
+      {/* Auto-open email dialog when navigated here with ?action=send */}
+      {autoOpenEmail && (
+        <QuoteEmailAutoTrigger
+          documentId={quote.id}
+          documentNumber={quote.documentNumber}
+          clientEmail={quote.clientEmail ?? ''}
+          pdfUrl={quotePdfUrl}
+        />
+      )}
+
       {/* Page header */}
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div className="flex items-center gap-4">
@@ -167,6 +180,7 @@ export default async function QuoteDetailPage({ params }: Props) {
             }}
             updateStatusAction={updateQuotationStatus}
             deleteAction={deleteQuotation}
+            duplicateAction={duplicateQuotation}
           />
         </div>
       </div>
