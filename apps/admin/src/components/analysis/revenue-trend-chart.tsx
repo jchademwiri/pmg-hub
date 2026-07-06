@@ -35,7 +35,7 @@ export function RevenueTrendChart({ data, currentYear }: RevenueTrendChartProps)
             bottom: 25,
           }}
         >
-          <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="hsl(var(--muted-foreground)/0.2)" />
+          <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#334155" />
           <XAxis 
             dataKey="month" 
             tickLine={false}
