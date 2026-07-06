@@ -129,7 +129,7 @@ export default async function InvoiceDetailPage({ params }: Props) {
   const outstandingBalance = Math.max(0, parseFloat(invoice.total) - totalAllocated);
   const availableCredit = invoice.clientId ? await getClientCreditBalanceV2(invoice.clientId) : 0;
   const invoicePdfUrl = `/api/billing/pdf/invoice/${invoice.id}`;
-  const statementPdfUrl = invoice.clientId ? `/api/billing/pdf/statement/${invoice.clientId}` : undefined;
+  const statementPdfUrl = invoice.clientId ? `/api/billing/pdf/statement/${invoice.clientId}?monthPeriod=current` : undefined;
 
   const docPreviewProps = {
     number: invoice.documentNumber,

@@ -794,7 +794,7 @@ export function ClientBillingWorkspace({
       ? 'dialog-receipt-printable'
       : 'dialog-document-printable';
   const statementPdfParams = new URLSearchParams();
-  if (statementPeriodParam) statementPdfParams.set('monthPeriod', statementPeriodParam);
+  if (effectivePeriod) statementPdfParams.set('monthPeriod', effectivePeriod);
   if (statementYearParam) statementPdfParams.set('year', statementYearParam);
   const statementPdfUrl = `/api/billing/pdf/statement/${client.id}${statementPdfParams.size ? `?${statementPdfParams.toString()}` : ''}`;
   const activePdfUrl =

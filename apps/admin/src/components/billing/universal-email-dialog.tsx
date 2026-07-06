@@ -494,7 +494,7 @@ export function UniversalEmailDialog({
 
         {/* Footer */}
         <DialogFooter className="border-t px-5 pb-5 pt-3">
-          <Button variant="outline" onClick={() => setOpen(false)} disabled={isSending}>
+          <Button variant="outline" onClick={() => handleOpenChange(false)} disabled={isSending}>
             Cancel
           </Button>
           <Button 
