@@ -56,12 +56,14 @@ export function RevenueTrendChart({ data, currentYear }: RevenueTrendChartProps)
             formatter={(value: any) => formatZAR(Number(value) || 0)}
             cursor={false}
             contentStyle={{ 
-              backgroundColor: 'hsl(var(--muted))', 
+              backgroundColor: 'hsl(var(--muted)/0.75)', 
               borderColor: 'hsl(var(--border))',
               borderRadius: '8px',
-              boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1)'
+              boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1)',
+              backdropFilter: 'blur(12px)',
+              WebkitBackdropFilter: 'blur(12px)'
             }}
-            itemStyle={{ color: 'hsl(var(--foreground))', fontWeight: 500 }}
+            itemStyle={{ fontWeight: 500 }}
           />
           <Legend verticalAlign="top" height={36} />
           
