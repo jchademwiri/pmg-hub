@@ -36,6 +36,7 @@ export const invoiceStatusEnum = pgEnum("invoice_status", [
   "paid",
   "overdue",
   "void",
+  "written_off",
 ]);
 
 export const billingDocumentTypeEnum = pgEnum("billing_document_type", [
@@ -158,6 +159,7 @@ export const invoices = pgTable(
     vatEnabled: boolean("vat_enabled").notNull().default(false),
     vatAmount: numeric("vat_amount", { precision: 12, scale: 2 }).notNull().default("0"),
     total: numeric("total", { precision: 12, scale: 2 }).notNull().default("0"),
+    writeOffAmount: numeric("write_off_amount", { precision: 12, scale: 2 }).notNull().default("0"),
     notes: text("notes"),
     terms: text("terms"),
     paidAt: timestamp("paid_at", { withTimezone: true }),

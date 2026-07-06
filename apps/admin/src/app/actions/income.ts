@@ -51,12 +51,13 @@ export async function deleteIncome(id: string): Promise<{ error?: string }> {
         .where(eq(paymentAllocations.invoiceId, alloc.invoiceId));
 
       const [invoiceRow] = await db
-        .select({ total: invoices.total })
+        .select({ total: invoices.total, writeOffAmount: invoices.writeOffAmount })
         .from(invoices)
         .where(eq(invoices.id, alloc.invoiceId));
 
       if (invoiceRow) {
         const invoiceTotal = parseFloat(invoiceRow.total);
+        const writeOffAmount = parseFloat(invoiceRow.writeOffAmount || '0');
         const totalAllocated = parseFloat(sumAgg?.sum ?? '0');
 
         if (totalAllocated >= invoiceTotal) {
@@ -65,6 +66,16 @@ export async function deleteIncome(id: string): Promise<{ error?: string }> {
             .set({
               status: 'paid',
               paidAt: new Date(),
+              incomeId: null,
+              updatedAt: new Date(),
+            })
+            .where(eq(invoices.id, alloc.invoiceId));
+        } else if (writeOffAmount > 0 && (invoiceTotal - totalAllocated) >= writeOffAmount) {
+          await db
+            .update(invoices)
+            .set({
+              status: 'written_off',
+              paidAt: null,
               incomeId: null,
               updatedAt: new Date(),
             })
