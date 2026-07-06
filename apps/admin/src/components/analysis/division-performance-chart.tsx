@@ -43,17 +43,17 @@ export function DivisionPerformanceChart({ data }: DivisionPerformanceChartProps
             dataKey="name" 
             tickLine={false}
             axisLine={false}
-            tick={{ fill: 'hsl(var(--muted-foreground))' }}
+            tick={{ fill: '#94a3b8' }}
           >
-            <Label value="Division" offset={-15} position="insideBottom" fill="hsl(var(--muted-foreground))" style={{ fontSize: 12, fontWeight: 500 }} />
+            <Label value="Division" offset={-15} position="insideBottom" fill="#94a3b8" style={{ fontSize: 12, fontWeight: 500 }} />
           </XAxis>
           <YAxis 
             tickFormatter={(value) => `R${value / 1000}k`}
             tickLine={false}
             axisLine={false}
-            tick={{ fill: 'hsl(var(--muted-foreground))' }}
+            tick={{ fill: '#94a3b8' }}
           >
-            <Label value="Amount (ZAR)" angle={-90} position="insideLeft" offset={10} fill="hsl(var(--muted-foreground))" style={{ textAnchor: 'middle', fontSize: 12, fontWeight: 500 }} />
+            <Label value="Amount (ZAR)" angle={-90} position="insideLeft" offset={10} fill="#94a3b8" style={{ textAnchor: 'middle', fontSize: 12, fontWeight: 500 }} />
           </YAxis>
           <Tooltip
             formatter={(value: any) => formatZAR(Number(value) || 0)}
