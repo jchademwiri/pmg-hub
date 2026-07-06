@@ -47,7 +47,10 @@ interface UniversalEmailDialogProps {
   pdfUrl?: string;
   statementPdfUrl?: string;
   onSuccess?: () => void;
-  trigger?: React.ReactNode;
+  trigger?: React.ReactNode | null;
+  open?: boolean;
+  defaultOpen?: boolean;
+  onOpenChange?: (open: boolean) => void;
 }
 
 interface CustomFile {
@@ -87,9 +90,21 @@ export function UniversalEmailDialog({
   statementPdfUrl,
   onSuccess,
   trigger,
+  open,
+  defaultOpen,
+  onOpenChange,
 }: UniversalEmailDialogProps) {
   const router = useRouter();
-  const [open, setOpen] = useState(false);
+  const [internalOpen, setInternalOpen] = useState(defaultOpen ?? false);
+  const isControlled = open !== undefined;
+  const currentOpen = isControlled ? open : internalOpen;
+
+  const handleOpenChange = (newOpen: boolean) => {
+    if (!isControlled) {
+      setInternalOpen(newOpen);
+    }
+    onOpenChange?.(newOpen);
+  };
   
   // Form fields
   const [recipient, setRecipient] = useState(defaultRecipientEmail || '');
@@ -118,7 +133,7 @@ export function UniversalEmailDialog({
 
   // Fetch email preview
   React.useEffect(() => {
-    if (!open) return;
+    if (!currentOpen) return;
 
     let cancelled = false;
     const timeout = window.setTimeout(async () => {
@@ -164,7 +179,7 @@ export function UniversalEmailDialog({
       cancelled = true;
       window.clearTimeout(timeout);
     };
-  }, [open, documentId, documentType, message, attachStatement]);
+  }, [currentOpen, documentId, documentType, message, attachStatement]);
 
   // File upload handler
   const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -266,7 +281,7 @@ export function UniversalEmailDialog({
         toast.error(result.error);
       } else {
         toast.success(`${docLabel} emailed successfully!`);
-        setOpen(false);
+        handleOpenChange(false);
         // Reset states
         setCustomFiles([]);
         setShowCcBcc(false);
@@ -290,15 +305,17 @@ export function UniversalEmailDialog({
     `Receipt-${documentNumber}.pdf`;
 
   return (
-    <Dialog open={open} onOpenChange={setOpen}>
-      <DialogTrigger asChild>
-        {trigger || (
-          <Button variant="outline" size="sm" className={documentType === 'receipt' ? 'border-emerald-200 hover:border-emerald-300 hover:bg-emerald-50/50 dark:hover:bg-emerald-950/20' : ''}>
-            <Mail data-icon="inline-start" className={documentType === 'receipt' ? 'text-emerald-500' : ''} />
-            Email {documentType === 'invoice' ? 'Invoice' : documentType === 'quote' ? 'Quote' : 'Receipt'}
-          </Button>
-        )}
-      </DialogTrigger>
+    <Dialog open={currentOpen} onOpenChange={handleOpenChange}>
+      {trigger !== null && (
+        <DialogTrigger asChild>
+          {trigger || (
+            <Button variant="outline" size="sm" className={documentType === 'receipt' ? 'border-emerald-200 hover:border-emerald-300 hover:bg-emerald-50/50 dark:hover:bg-emerald-950/20' : ''}>
+              <Mail data-icon="inline-start" className={documentType === 'receipt' ? 'text-emerald-500' : ''} />
+              Email {documentType === 'invoice' ? 'Invoice' : documentType === 'quote' ? 'Quote' : 'Receipt'}
+            </Button>
+          )}
+        </DialogTrigger>
+      )}
       <DialogContent className="max-h-[94vh] w-[calc(100vw-2rem)] max-w-[1180px] overflow-hidden p-0">
         <DialogHeader className="border-b px-5 pt-5">
           <DialogTitle>Email {documentType === 'invoice' ? 'Invoice' : documentType === 'quote' ? 'Quotation' : 'Payment Receipt'}</DialogTitle>
@@ -477,7 +494,7 @@ export function UniversalEmailDialog({
 
         {/* Footer */}
         <DialogFooter className="border-t px-5 pb-5 pt-3">
-          <Button variant="outline" onClick={() => setOpen(false)} disabled={isSending}>
+          <Button variant="outline" onClick={() => handleOpenChange(false)} disabled={isSending}>
             Cancel
           </Button>
           <Button 

@@ -6,6 +6,12 @@ import { fileURLToPath } from "node:url";
 const appDir = dirname(fileURLToPath(import.meta.url));
 loadEnvConfig(resolve(appDir, "../.."));
 
-const nextConfig: NextConfig = {};
+const nextConfig: NextConfig = {
+  experimental: {
+    serverActions: {
+      bodySizeLimit: "10mb",
+    },
+  },
+};
 
 export default nextConfig;

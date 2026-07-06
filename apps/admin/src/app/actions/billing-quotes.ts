@@ -112,57 +112,63 @@ export async function createQuotation(
       discountValue,
     );
 
-    const year = new Date(quoteDate).getFullYear();
+    const year = Number(quoteDate.slice(0, 4));
     const documentNumber = await getNextDocumentNumber(divisionId, 'quote', year);
 
     const db = getDb();
     const includeReference = await hasQuotationReferenceColumn();
     const includeLineItemItemId = await hasBillingLineItemItemIdColumn();
 
-    const [inserted] = await db
-      .insert(quotations)
-      .values({
-        divisionId,
-        clientId,
-        documentNumber,
-        status: 'draft',
-        quoteDate,
-        expiryDate: expiryDate ?? addDays(quoteDate, 30),
-        ...(includeReference ? { reference: reference ?? null } : {}),
-        subtotal: String(subtotal.toFixed(2)),
-        discountType: discountType ?? null,
-        discountValue: discountValue != null ? String(discountValue) : null,
-        discountAmount: String(discountAmount.toFixed(2)),
-        vatEnabled,
-        vatAmount: String(vatAmount.toFixed(2)),
-        total: String(total.toFixed(2)),
-        notes: notes ?? null,
-        terms: terms ?? null,
-        createdBy: session.user.id,
-      })
-      .returning({ id: quotations.id });
+    const { id: insertedId } = await db.transaction(async (tx) => {
+      const [inserted] = await tx
+        .insert(quotations)
+        .values({
+          divisionId,
+          clientId,
+          documentNumber,
+          status: 'draft',
+          quoteDate,
+          expiryDate: expiryDate ?? addDays(quoteDate, 30),
+          ...(includeReference ? { reference: reference ?? null } : {}),
+          subtotal: String(subtotal.toFixed(2)),
+          discountType: discountType ?? null,
+          discountValue: discountValue != null ? String(discountValue) : null,
+          discountAmount: String(discountAmount.toFixed(2)),
+          vatEnabled,
+          vatAmount: String(vatAmount.toFixed(2)),
+          total: String(total.toFixed(2)),
+          notes: notes ?? null,
+          terms: terms ?? null,
+          createdBy: session.user.id,
+        })
+        .returning({ id: quotations.id });
 
-    if (!inserted) return { error: 'Failed to create quotation.' };
+      if (!inserted) {
+        throw new Error('Failed to create quotation.');
+      }
 
-    // Insert line items - vatRate always 0 (VAT is document-level)
-    await db.insert(billingLineItems).values(
-      lineItems.map((item: { itemId?: string | null; description: string; quantity: number; unitPrice: number; vatRate: number }, i: number) => ({
-        documentType: 'quote' as const,
-        documentId: inserted.id,
-        sortOrder: i,
-        itemId: item.itemId ?? null,
-        description: item.description,
-        quantity: String(item.quantity),
-        unitPrice: String(item.unitPrice.toFixed(2)),
-        vatRate: '0',
-        lineTotal: String((item.quantity * item.unitPrice).toFixed(2)),
-      })),
-    );
+      // Insert line items - vatRate always 0 (VAT is document-level)
+      await tx.insert(billingLineItems).values(
+        lineItems.map((item: { itemId?: string | null; description: string; quantity: number; unitPrice: number; vatRate: number }, i: number) => ({
+          documentType: 'quote' as const,
+          documentId: inserted.id,
+          sortOrder: i,
+          itemId: item.itemId ?? null,
+          description: item.description,
+          quantity: String(item.quantity),
+          unitPrice: String(item.unitPrice.toFixed(2)),
+          vatRate: '0',
+          lineTotal: String((item.quantity * item.unitPrice).toFixed(2)),
+        })),
+      );
+
+      return { id: inserted.id };
+    });
 
     revalidatePath('/billing/quotes');
     revalidatePath('/dashboard');
 
-    return { id: inserted.id };
+    return { id: insertedId };
   } catch {
     return { error: 'Failed to save. Please try again.' };
   }
@@ -380,51 +386,57 @@ export async function duplicateQuotation(id: string): Promise<{ error?: string; 
     const includeReference = await hasQuotationReferenceColumn();
     const includeLineItemItemId = await hasBillingLineItemItemIdColumn();
 
-    const [inserted] = await db
-      .insert(quotations)
-      .values({
-        divisionId: source.divisionId,
-        clientId: source.clientId,
-        documentNumber,
-        status: 'draft',
-        quoteDate: todayStr,
-        expiryDate: newExpiryDate,
-        // Reference is intentionally cleared — the caller updates it for the new job
-        ...(includeReference ? { reference: null } : {}),
-        subtotal: source.subtotal,
-        discountType: source.discountType ?? null,
-        discountValue: source.discountValue ?? null,
-        discountAmount: source.discountAmount,
-        vatEnabled: source.vatEnabled,
-        vatAmount: source.vatAmount,
-        total: source.total,
-        notes: source.notes ?? null,
-        terms: source.terms ?? null,
-        createdBy: session.user.id,
-      })
-      .returning({ id: quotations.id });
+    const { id: insertedId } = await db.transaction(async (tx) => {
+      const [inserted] = await tx
+        .insert(quotations)
+        .values({
+          divisionId: source.divisionId,
+          clientId: source.clientId,
+          documentNumber,
+          status: 'draft',
+          quoteDate: todayStr,
+          expiryDate: newExpiryDate,
+          // Reference is intentionally cleared — the caller updates it for the new job
+          ...(includeReference ? { reference: null } : {}),
+          subtotal: source.subtotal,
+          discountType: source.discountType ?? null,
+          discountValue: source.discountValue ?? null,
+          discountAmount: source.discountAmount,
+          vatEnabled: source.vatEnabled,
+          vatAmount: source.vatAmount,
+          total: source.total,
+          notes: source.notes ?? null,
+          terms: source.terms ?? null,
+          createdBy: session.user.id,
+        })
+        .returning({ id: quotations.id });
 
-    if (!inserted) return { error: 'Failed to duplicate quotation.' };
+      if (!inserted) {
+        throw new Error('Failed to duplicate quotation.');
+      }
 
-    if (source.lineItems.length > 0) {
-      await db.insert(billingLineItems).values(
-        source.lineItems.map((li, i) => ({
-          documentType: 'quote' as const,
-          documentId: inserted.id,
-          sortOrder: i,
-          ...(includeLineItemItemId ? { itemId: li.itemId ?? null } : {}),
-          description: li.description,
-          quantity: li.quantity,
-          unitPrice: li.unitPrice,
-          vatRate: li.vatRate,
-          lineTotal: li.lineTotal,
-        })),
-      );
-    }
+      if (source.lineItems.length > 0) {
+        await tx.insert(billingLineItems).values(
+          source.lineItems.map((li, i) => ({
+            documentType: 'quote' as const,
+            documentId: inserted.id,
+            sortOrder: i,
+            ...(includeLineItemItemId ? { itemId: li.itemId ?? null } : {}),
+            description: li.description,
+            quantity: li.quantity,
+            unitPrice: li.unitPrice,
+            vatRate: li.vatRate,
+            lineTotal: li.lineTotal,
+          })),
+        );
+      }
+
+      return { id: inserted.id };
+    });
 
     revalidatePath('/billing/quotes');
 
-    return { id: inserted.id };
+    return { id: insertedId };
   } catch {
     return { error: 'Failed to duplicate. Please try again.' };
   }
