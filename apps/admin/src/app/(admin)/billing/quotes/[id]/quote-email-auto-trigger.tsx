@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useRef } from 'react';
+import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { UniversalEmailDialog } from '@/components/billing/universal-email-dialog';
 
@@ -13,8 +13,8 @@ interface QuoteEmailAutoTriggerProps {
 
 /**
  * Rendered only when ?action=send is in the URL (i.e. navigated here via
- * "Save & Send").  On first mount it programmatically opens the email dialog,
- * then cleans up the URL so a refresh doesn't re-open it.
+ * "Save & Send"). On first mount it programmatically opens the email dialog
+ * via controlled open state, then cleans up the URL so a refresh doesn't re-open it.
  */
 export function QuoteEmailAutoTrigger({
   documentId,
@@ -23,24 +23,20 @@ export function QuoteEmailAutoTrigger({
   pdfUrl,
 }: QuoteEmailAutoTriggerProps) {
   const router = useRouter();
-  const triggerRef = useRef<HTMLButtonElement>(null);
-  const fired = useRef(false);
+  const [open, setOpen] = useState(true);
 
   useEffect(() => {
-    if (fired.current) return;
-    fired.current = true;
-
-    // Small delay lets the page fully paint before the dialog opens
-    const t = window.setTimeout(() => {
-      triggerRef.current?.click();
-      // Remove ?action=send from the URL without triggering a navigation
-      const url = new URL(window.location.href);
+    // Remove ?action=send from the URL without triggering a navigation
+    const url = new URL(window.location.href);
+    if (url.searchParams.has('action')) {
       url.searchParams.delete('action');
       window.history.replaceState(null, '', url.toString());
-    }, 150);
-
-    return () => window.clearTimeout(t);
+    }
   }, []);
+
+  const handleOpenChange = (newOpen: boolean) => {
+    setOpen(newOpen);
+  };
 
   return (
     <UniversalEmailDialog
@@ -49,13 +45,9 @@ export function QuoteEmailAutoTrigger({
       documentType="quote"
       defaultRecipientEmail={clientEmail}
       pdfUrl={pdfUrl}
-      trigger={
-        // Hidden button used as a programmatic trigger — the visible "Email Quote"
-        // button in the toolbar is a separate instance of UniversalEmailDialog.
-        <button ref={triggerRef} className="sr-only" aria-hidden tabIndex={-1}>
-          Open email dialog
-        </button>
-      }
+      open={open}
+      onOpenChange={handleOpenChange}
+      trigger={null}
     />
   );
 }

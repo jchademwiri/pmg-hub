@@ -20,6 +20,7 @@ const dbMock = {
   update: mockDbUpdate,
   delete: mockDbDelete,
   execute: mockDbExecute,
+  transaction: vi.fn().mockImplementation((cb) => cb(dbMock)),
 };
 
 vi.mock('@pmg/db', () => ({
@@ -106,6 +107,7 @@ describe('Billing Quotations Module', () => {
     mockIsPeriodClosed.mockResolvedValue(false);
     vi.mocked(getMinAllowedDate).mockResolvedValue(new Date('2026-01-01') as any);
     vi.mocked(getMinDateErrorMessage).mockReturnValue('Period is closed.');
+    vi.mocked(dbMock.transaction).mockImplementation((cb: any) => cb(dbMock));
 
     // Standard chainable mocks to avoid TypeErrors
     mockDbInsert.mockReturnValue({
