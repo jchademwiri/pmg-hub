@@ -27,11 +27,10 @@ export function QuoteEmailAutoTrigger({
   const fired = useRef(false);
 
   useEffect(() => {
-    if (fired.current) return;
-    fired.current = true;
-
     // Small delay lets the page fully paint before the dialog opens
     const t = window.setTimeout(() => {
+      if (fired.current) return;
+      fired.current = true;
       triggerRef.current?.click();
       // Remove ?action=send from the URL without triggering a navigation
       const url = new URL(window.location.href);
