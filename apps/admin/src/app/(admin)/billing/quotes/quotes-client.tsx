@@ -1,6 +1,7 @@
 'use client';
 
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import { useTransition } from 'react';
 import { MoreHorizontal } from 'lucide-react';
 import { toast } from 'sonner';
@@ -41,6 +42,7 @@ interface QuotesClientProps {
     id: string,
     status: 'sent' | 'accepted' | 'declined' | 'cancelled',
   ) => Promise<{ error?: string }>;
+  duplicateAction: (id: string) => Promise<{ error?: string; id?: string }>;
 }
 
 const QUOTE_STATUS_COLORS: Record<string, string> = {
@@ -62,7 +64,9 @@ export function QuotesClient({
   status,
   deleteAction,
   updateStatusAction,
+  duplicateAction,
 }: QuotesClientProps) {
+  const router = useRouter();
   const [, startTransition] = useTransition();
 
   function buildHref(page: number) {
@@ -102,6 +106,18 @@ export function QuotesClient({
         toast.error(result.error);
       } else {
         toast.success('Quote deleted.');
+      }
+    });
+  }
+
+  function handleDuplicate(id: string) {
+    startTransition(async () => {
+      const result = await duplicateAction(id);
+      if (result.error) {
+        toast.error(result.error);
+      } else if (result.id) {
+        toast.success('Quote duplicated.');
+        router.push(`/billing/quotes/${result.id}/edit`);
       }
     });
   }
@@ -203,6 +219,10 @@ export function QuotesClient({
                         </DropdownMenuItem>
                       </>
                     )}
+                    <DropdownMenuSeparator />
+                    <DropdownMenuItem onClick={() => handleDuplicate(quote.id)}>
+                      Duplicate
+                    </DropdownMenuItem>
                     {(quote.status === 'draft' || quote.status === 'sent') && (
                       <>
                         <DropdownMenuSeparator />

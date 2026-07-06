@@ -1,6 +1,7 @@
 'use client';
 
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import { useTransition } from 'react';
 import { MoreHorizontal } from 'lucide-react';
 import { Pagination } from '@/components/ui/pagination';
@@ -53,6 +54,7 @@ export function InvoicesClient({
   issueAction,
   voidAction,
 }: InvoicesClientProps) {
+  const router = useRouter();
   const [, startTransition] = useTransition();
 
   function buildHref(page: number) {
@@ -85,7 +87,10 @@ export function InvoicesClient({
     startTransition(async () => {
       const result = await voidAction(id);
       if (result.error) toast.error(result.error);
-      else toast.success(`${docNumber} voided.`);
+      else {
+        toast.success(`${docNumber} voided.`);
+        router.refresh();
+      }
     });
   }
 

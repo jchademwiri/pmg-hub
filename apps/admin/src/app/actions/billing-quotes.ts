@@ -2,7 +2,7 @@
 
 import { revalidatePath } from 'next/cache';
 import { getDb, quotations, billingLineItems, eq, and } from '@pmg/db';
-import { getNextDocumentNumber, addDays } from '@pmg/db';
+import { getNextDocumentNumber, addDays, getQuotationById, today } from '@pmg/db';
 import { getSessionOrRedirect } from '@/lib/auth';
 import { isPeriodClosed, getMinAllowedDate, getMinDateErrorMessage } from '@/lib/date-rules';
 import { CreateQuotationSchema, type CreateQuotationInput } from './billing-schema';
@@ -348,5 +348,84 @@ export async function deleteQuotation(id: string): Promise<{ error?: string }> {
     return {};
   } catch {
     return { error: 'Failed to delete. Please try again.' };
+  }
+}
+
+// ── duplicateQuotation ────────────────────────────────────────────────────────
+
+export async function duplicateQuotation(id: string): Promise<{ error?: string; id?: string }> {
+  try {
+    const session = await getSessionOrRedirect();
+
+    const source = await getQuotationById(id);
+    if (!source) return { error: 'Quotation not found.' };
+
+    const todayStr = today();
+
+    // Preserve the same expiry offset as the original (days between quoteDate and expiryDate)
+    let newExpiryDate: string | null = null;
+    if (source.expiryDate && source.quoteDate) {
+      const origIssue = new Date(source.quoteDate);
+      const origExpiry = new Date(source.expiryDate);
+      const diffDays = Math.round(
+        (origExpiry.getTime() - origIssue.getTime()) / (1000 * 60 * 60 * 24),
+      );
+      newExpiryDate = addDays(todayStr, diffDays);
+    }
+
+    const year = Number(todayStr.slice(0, 4));
+    const documentNumber = await getNextDocumentNumber(source.divisionId, 'quote', year);
+
+    const db = getDb();
+    const includeReference = await hasQuotationReferenceColumn();
+    const includeLineItemItemId = await hasBillingLineItemItemIdColumn();
+
+    const [inserted] = await db
+      .insert(quotations)
+      .values({
+        divisionId: source.divisionId,
+        clientId: source.clientId,
+        documentNumber,
+        status: 'draft',
+        quoteDate: todayStr,
+        expiryDate: newExpiryDate,
+        // Reference is intentionally cleared — the caller updates it for the new job
+        ...(includeReference ? { reference: null } : {}),
+        subtotal: source.subtotal,
+        discountType: source.discountType ?? null,
+        discountValue: source.discountValue ?? null,
+        discountAmount: source.discountAmount,
+        vatEnabled: source.vatEnabled,
+        vatAmount: source.vatAmount,
+        total: source.total,
+        notes: source.notes ?? null,
+        terms: source.terms ?? null,
+        createdBy: session.user.id,
+      })
+      .returning({ id: quotations.id });
+
+    if (!inserted) return { error: 'Failed to duplicate quotation.' };
+
+    if (source.lineItems.length > 0) {
+      await db.insert(billingLineItems).values(
+        source.lineItems.map((li, i) => ({
+          documentType: 'quote' as const,
+          documentId: inserted.id,
+          sortOrder: i,
+          ...(includeLineItemItemId ? { itemId: li.itemId ?? null } : {}),
+          description: li.description,
+          quantity: li.quantity,
+          unitPrice: li.unitPrice,
+          vatRate: li.vatRate,
+          lineTotal: li.lineTotal,
+        })),
+      );
+    }
+
+    revalidatePath('/billing/quotes');
+
+    return { id: inserted.id };
+  } catch {
+    return { error: 'Failed to duplicate. Please try again.' };
   }
 }

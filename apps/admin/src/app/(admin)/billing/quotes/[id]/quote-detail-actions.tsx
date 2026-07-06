@@ -4,6 +4,7 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useState, useTransition } from 'react';
 import { toast } from 'sonner';
+import { Copy } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { ConvertToInvoiceButton } from '@/components/billing/convert-to-invoice-button';
 import { confirm } from '@/components/ui/confirm-dialog';
@@ -20,12 +21,14 @@ interface QuoteDetailActionsProps {
     status: 'sent' | 'accepted' | 'declined' | 'cancelled',
   ) => Promise<{ error?: string }>;
   deleteAction: (id: string) => Promise<{ error?: string }>;
+  duplicateAction: (id: string) => Promise<{ error?: string; id?: string }>;
 }
 
 export function QuoteDetailActions({
   quote,
   updateStatusAction,
   deleteAction,
+  duplicateAction,
 }: QuoteDetailActionsProps) {
   const router = useRouter();
   const [, startTransition] = useTransition();
@@ -79,6 +82,20 @@ export function QuoteDetailActions({
       } else {
         toast.success('Quote deleted.');
         router.push('/billing/quotes');
+      }
+    });
+  }
+
+  function handleDuplicate() {
+    setIsPending(true);
+    startTransition(async () => {
+      const result = await duplicateAction(quote.id);
+      setIsPending(false);
+      if (result.error) {
+        toast.error(result.error);
+      } else if (result.id) {
+        toast.success('Quote duplicated. Update the reference and any other details.');
+        router.push(`/billing/quotes/${result.id}/edit`);
       }
     });
   }
@@ -145,6 +162,17 @@ export function QuoteDetailActions({
       {(status === 'declined' || status === 'cancelled' || status === 'expired') && (
         <p className="text-xs text-muted-foreground">No further actions available.</p>
       )}
+
+      {/* Duplicate — always available regardless of status */}
+      <Button
+        variant="outline"
+        className="w-full mt-1"
+        onClick={handleDuplicate}
+        disabled={isPending}
+      >
+        <Copy className="size-4 mr-2" />
+        Duplicate Quote
+      </Button>
     </div>
   );
 }

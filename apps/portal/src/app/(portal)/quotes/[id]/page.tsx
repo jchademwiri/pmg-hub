@@ -107,6 +107,7 @@ export default async function QuoteDetailPage({ params }: PageProps) {
         dueDateOrExpiry: quote.expiryDate,
         status: quote.status,
         subtotal: quote.subtotal,
+        discountAmount: quote.discountAmount,
         vatAmount: quote.vatAmount,
         total: quote.total,
         notes: quote.notes,

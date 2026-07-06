@@ -8,6 +8,7 @@ import { Field, FieldLabel } from '@/components/ui/field';
 import { Input } from '@/components/ui/input';
 import { Switch } from '@/components/ui/switch';
 import { Textarea } from '@/components/ui/textarea';
+import { Mail } from 'lucide-react';
 import {
   Select,
   SelectContent,
@@ -144,7 +145,7 @@ export function QuoteFormClient({
 
   const totals = calcTotals(lineItems, vatEnabled, discountType, discountValue);
 
-  function handleSubmit() {
+  function handleSubmit(mode: 'draft' | 'send' = 'draft') {
     setError(null);
 
     if (!divisionId) {
@@ -188,13 +189,20 @@ export function QuoteFormClient({
         const { updateQuotation } = await import('@/app/actions/billing-quotes');
         result = await updateQuotation(editId, payload);
         if (!result.error) {
-          router.push(`/billing/quotes/${editId}`);
+          const destination = mode === 'send'
+            ? `/billing/quotes/${editId}?action=send`
+            : `/billing/quotes/${editId}`;
+          router.push(destination);
           return;
         }
       } else {
         result = await createQuotation(payload);
         if (!result.error && result.id) {
-          router.push(`/billing/quotes/${result.id}`);
+          // mode='send' navigates with ?action=send to auto-open the email dialog
+          const destination = mode === 'send'
+            ? `/billing/quotes/${result.id}?action=send`
+            : `/billing/quotes/${result.id}`;
+          router.push(destination);
           return;
         }
       }
@@ -390,19 +398,18 @@ export function QuoteFormClient({
             </Alert>
           )}
 
-          <Button className="w-full" onClick={handleSubmit} disabled={isSubmitting}>
+          <Button className="w-full" onClick={() => handleSubmit('draft')} disabled={isSubmitting}>
             {isSubmitting ? 'Saving…' : editId ? 'Save Changes' : 'Save Quote'}
           </Button>
-          {!editId && (
-            <Button
-              variant="outline"
-              className="w-full"
-              onClick={handleSubmit}
-              disabled={isSubmitting}
-            >
-              Save as Draft
-            </Button>
-          )}
+          <Button
+            variant="outline"
+            className="w-full"
+            onClick={() => handleSubmit('send')}
+            disabled={isSubmitting}
+          >
+            <Mail className="size-4" />
+            {editId ? 'Save & Email' : 'Save & Send'}
+          </Button>
         </div>
 
         {!editId && (

@@ -8,7 +8,7 @@ import { getAllQuotations } from '@pmg/db';
 import { SetPageTotal } from '@/components/navigation/page-header-context';
 import { formatZAR } from '@/lib/format';
 import { QuotesClient } from './quotes-client';
-import { deleteQuotation, updateQuotationStatus } from '@/app/actions/billing-quotes';
+import { deleteQuotation, updateQuotationStatus, duplicateQuotation } from '@/app/actions/billing-quotes';
 
 export const dynamic = 'force-dynamic';
 export const metadata: Metadata = { title: 'Quotations' };
@@ -86,6 +86,7 @@ export default async function QuotesPage({ searchParams }: QuotesPageProps) {
         status={normalizedStatus}
         deleteAction={deleteQuotation}
         updateStatusAction={updateQuotationStatus}
+        duplicateAction={duplicateQuotation}
       />
     </div>
   );
