@@ -1,6 +1,6 @@
 import { sql, eq, and, gte, lt, lte, desc, inArray } from 'drizzle-orm';
 import { db } from '../client';
-import { invoices, income, quotations, divisions } from '../schema';
+import { invoices, income, quotations, divisions, clients, expenses } from '../schema';
 
 function getFinancialYearRange(year: number) {
   return {
@@ -179,6 +179,16 @@ export async function getDivisionQuotesMetrics(year: number) {
     .where(and(gte(income.date, currentFY.start), lt(income.date, currentFY.end)))
     .groupBy(income.divisionId);
 
+  // Aggregate Invoices by division
+  const invoicesByDiv = await db
+    .select({
+      divisionId: invoices.divisionId,
+      totalInvoiced: sql<number>`coalesce(sum(${invoices.total}), 0)`,
+    })
+    .from(invoices)
+    .where(and(gte(invoices.invoiceDate, currentFY.start), lt(invoices.invoiceDate, currentFY.end)))
+    .groupBy(invoices.divisionId);
+
   // Aggregate Quotes by division
   const quotesByDiv = await db
     .select({
@@ -197,6 +207,7 @@ export async function getDivisionQuotesMetrics(year: number) {
   const results = allDivisions.map(div => {
     const i = incomeByDiv.find(x => x.divisionId === div.id);
     const q = quotesByDiv.find(x => x.divisionId === div.id);
+    const inv = invoicesByDiv.find(x => x.divisionId === div.id);
     
     const totalCount = Number(q?.totalCount || 0);
     const wonCount = Number(q?.wonCount || 0);
@@ -206,6 +217,7 @@ export async function getDivisionQuotesMetrics(year: number) {
       id: div.id,
       name: div.name,
       totalIncome: Number(i?.totalIncome || 0),
+      totalInvoiced: Number(inv?.totalInvoiced || 0),
       totalQuoteValue: Number(q?.totalQuoteValue || 0),
       quoteCount: totalCount,
       wonCount: wonCount,
@@ -329,4 +341,59 @@ export async function getThreeYearMonthlyRevenue(currentYear: number) {
   }
 
   return results;
+}
+
+export async function getClientConcentration(year: number) {
+  const { start, end } = getFinancialYearRange(year);
+
+  // Get total income per client
+  const clientIncomeRaw = await db
+    .select({
+      clientId: income.clientId,
+      totalIncome: sql<number>`coalesce(sum(${income.amount}), 0)`.mapWith(Number),
+    })
+    .from(income)
+    .where(and(gte(income.date, start), lt(income.date, end)))
+    .groupBy(income.clientId);
+
+  // Get total expenses per client
+  const clientExpensesRaw = await db
+    .select({
+      clientId: expenses.clientId,
+      totalExpenses: sql<number>`coalesce(sum(${expenses.amount}), 0)`.mapWith(Number),
+    })
+    .from(expenses)
+    .where(and(gte(expenses.date, start), lt(expenses.date, end)))
+    .groupBy(expenses.clientId);
+
+  const allClients = await db.select().from(clients);
+
+  const incomeMap = new Map(clientIncomeRaw.map(r => [r.clientId, r.totalIncome]));
+  const expenseMap = new Map(clientExpensesRaw.map(r => [r.clientId, r.totalExpenses]));
+
+  let overallTotalIncome = 0;
+  for (const inc of clientIncomeRaw) {
+    overallTotalIncome += inc.totalIncome;
+  }
+
+  const results = allClients.map(client => {
+    const totalInc = incomeMap.get(client.id) || 0;
+    const totalExp = expenseMap.get(client.id) || 0;
+    const netProfit = totalInc - totalExp;
+    const percentage = overallTotalIncome > 0 ? (totalInc / overallTotalIncome) * 100 : 0;
+
+    return {
+      id: client.id,
+      name: client.name,
+      totalIncome: totalInc,
+      totalExpenses: totalExp,
+      netProfit,
+      percentage,
+    };
+  });
+
+  // Filter out clients with no income/expenses and sort by income desc
+  return results
+    .filter(r => r.totalIncome > 0 || r.totalExpenses > 0)
+    .sort((a, b) => b.totalIncome - a.totalIncome);
 }

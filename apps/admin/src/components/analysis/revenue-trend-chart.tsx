@@ -8,7 +8,8 @@ import {
   CartesianGrid,
   Tooltip,
   ResponsiveContainer,
-  Legend
+  Legend,
+  Label
 } from 'recharts';
 import { formatZAR } from '@/lib/format';
 
@@ -23,60 +24,75 @@ export function RevenueTrendChart({ data, currentYear }: RevenueTrendChartProps)
   const prior2Key = String(currentYear - 2);
 
   return (
-    <ResponsiveContainer width="100%" height="100%">
-      <LineChart
-        data={data}
-        margin={{
-          top: 20,
-          right: 30,
-          left: 20,
-          bottom: 5,
-        }}
-      >
-        <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="hsl(var(--muted-foreground)/0.2)" />
-        <XAxis 
-          dataKey="month" 
-          tickLine={false}
-          axisLine={false}
-          tick={{ fill: 'hsl(var(--muted-foreground))' }}
-        />
-        <YAxis 
-          tickFormatter={(value) => `R${value / 1000}k`}
-          tickLine={false}
-          axisLine={false}
-          tick={{ fill: 'hsl(var(--muted-foreground))' }}
-        />
-        <Tooltip
-          formatter={(value: any) => formatZAR(Number(value) || 0)}
-          contentStyle={{ backgroundColor: 'hsl(var(--background))', borderColor: 'hsl(var(--border))' }}
-        />
-        <Legend verticalAlign="top" height={36} />
-        
-        <Line 
-          type="monotone" 
-          name={`FY ${currentYear}`} 
-          dataKey={currentKey} 
-          stroke="hsl(var(--primary))" 
-          strokeWidth={3}
-          activeDot={{ r: 6 }} 
-        />
-        <Line 
-          type="monotone" 
-          name={`FY ${currentYear - 1}`} 
-          dataKey={priorKey} 
-          stroke="hsl(var(--muted-foreground))" 
-          strokeWidth={2}
-          strokeDasharray="5 5"
-        />
-        <Line 
-          type="monotone" 
-          name={`FY ${currentYear - 2}`} 
-          dataKey={prior2Key} 
-          stroke="hsl(var(--muted-foreground)/0.5)" 
-          strokeWidth={2}
-          strokeDasharray="3 3"
-        />
-      </LineChart>
-    </ResponsiveContainer>
+    <div className="w-full h-[400px] min-h-[400px]">
+      <ResponsiveContainer width="100%" height="100%">
+        <LineChart
+          data={data}
+          margin={{
+            top: 20,
+            right: 30,
+            left: 30,
+            bottom: 25,
+          }}
+        >
+          <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="hsl(var(--muted-foreground)/0.2)" />
+          <XAxis 
+            dataKey="month" 
+            tickLine={false}
+            axisLine={false}
+            tick={{ fill: 'hsl(var(--muted-foreground))' }}
+          >
+            <Label value="Month" offset={-15} position="insideBottom" fill="hsl(var(--muted-foreground))" style={{ fontSize: 12, fontWeight: 500 }} />
+          </XAxis>
+          <YAxis 
+            tickFormatter={(value) => `R${value / 1000}k`}
+            tickLine={false}
+            axisLine={false}
+            tick={{ fill: 'hsl(var(--muted-foreground))' }}
+          >
+            <Label value="Revenue (ZAR)" angle={-90} position="insideLeft" offset={10} fill="hsl(var(--muted-foreground))" style={{ textAnchor: 'middle', fontSize: 12, fontWeight: 500 }} />
+          </YAxis>
+          <Tooltip
+            formatter={(value: any) => formatZAR(Number(value) || 0)}
+            cursor={false}
+            contentStyle={{ 
+              backgroundColor: 'hsl(var(--card))', 
+              borderColor: 'hsl(var(--border))',
+              borderRadius: '8px',
+              boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1)'
+            }}
+          />
+          <Legend verticalAlign="top" height={36} />
+          
+          <Line 
+            type="monotone" 
+            name={`FY ${currentYear}`} 
+            dataKey={currentKey} 
+            stroke="#10b981" 
+            strokeWidth={3}
+            activeDot={{ r: 6 }} 
+            connectNulls={true}
+          />
+          <Line 
+            type="monotone" 
+            name={`FY ${currentYear - 1}`} 
+            dataKey={priorKey} 
+            stroke="#94a3b8" 
+            strokeWidth={2}
+            strokeDasharray="5 5"
+            connectNulls={true}
+          />
+          <Line 
+            type="monotone" 
+            name={`FY ${currentYear - 2}`} 
+            dataKey={prior2Key} 
+            stroke="#475569" 
+            strokeWidth={2}
+            strokeDasharray="3 3"
+            connectNulls={true}
+          />
+        </LineChart>
+      </ResponsiveContainer>
+    </div>
   );
 }

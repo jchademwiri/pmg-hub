@@ -32,12 +32,12 @@ export function YoYComparisonTable({ data }: YoYComparisonTableProps) {
   if (!current) return null;
 
   const rows = [
-    { label: 'Total Income', key: 'totalIncome', isCurrency: true },
-    { label: 'Total Expenses', key: 'totalExpenses', isCurrency: true },
-    { label: 'Net Profit Pool', key: 'netProfit', isCurrency: true },
-    { label: 'Total Invoiced', key: 'totalInvoiced', isCurrency: true },
-    { label: 'Average Invoice', key: 'averageInvoice', isCurrency: true },
-    { label: 'Average Transaction', key: 'averageTransaction', isCurrency: true },
+    { label: 'Total Income', key: 'totalIncome', isCurrency: true, colorClass: 'text-emerald-600 dark:text-emerald-500 font-medium' },
+    { label: 'Total Expenses', key: 'totalExpenses', isCurrency: true, colorClass: 'text-muted-foreground' },
+    { label: 'Net Profit Pool', key: 'netProfit', isCurrency: true, colorClass: 'text-emerald-600 dark:text-emerald-500 font-bold' },
+    { label: 'Total Invoiced', key: 'totalInvoiced', isCurrency: true, colorClass: 'text-emerald-600 dark:text-emerald-500 font-medium' },
+    { label: 'Average Invoice', key: 'averageInvoice', isCurrency: true, colorClass: 'text-emerald-600 dark:text-emerald-500 font-medium' },
+    { label: 'Average Transaction', key: 'averageTransaction', isCurrency: true, colorClass: 'text-emerald-600 dark:text-emerald-500 font-medium' },
     { label: 'Quotes Issued', key: 'quotesIssued', isCurrency: false },
     { label: 'Quote Conversion Rate', key: 'quoteConversionRate', isCurrency: false, isPercent: true },
   ];
@@ -49,23 +49,26 @@ export function YoYComparisonTable({ data }: YoYComparisonTableProps) {
   };
 
   return (
-    <div className="rounded-md border">
+    <div className="rounded-xl border shadow-sm overflow-hidden bg-card">
       <Table>
-        <TableHeader>
-          <TableRow>
-            <TableHead>Metric</TableHead>
-            <TableHead className="text-right">FY {current.year}</TableHead>
-            {prior && <TableHead className="text-right">FY {prior.year}</TableHead>}
-            {prior2 && <TableHead className="text-right">FY {prior2.year}</TableHead>}
-            <TableHead className="text-right">Trend</TableHead>
+        <TableHeader className="bg-muted/50">
+          <TableRow className="hover:bg-transparent">
+            <TableHead className="font-semibold text-foreground py-4">Metric</TableHead>
+            <TableHead className="text-right font-semibold text-foreground py-4">FY {current.year}</TableHead>
+            {prior && <TableHead className="text-right font-semibold text-foreground py-4">FY {prior.year}</TableHead>}
+            {prior2 && <TableHead className="text-right font-semibold text-foreground py-4">FY {prior2.year}</TableHead>}
+            <TableHead className="text-right font-semibold text-foreground py-4">Trend</TableHead>
           </TableRow>
         </TableHeader>
         <TableBody>
-          {rows.map((row) => (
-            <TableRow key={row.key}>
-              <TableCell className="font-medium">{row.label}</TableCell>
+          {rows.map((row, index) => (
+            <TableRow 
+              key={row.key}
+              className="transition-colors hover:bg-muted/50 data-[state=selected]:bg-muted"
+            >
+              <TableCell className="font-medium py-4">{row.label}</TableCell>
               
-              <TableCell className="text-right">
+              <TableCell className={`text-right ${row.colorClass || ''}`}>
                 {row.isCurrency 
                   ? formatZAR(current[row.key as keyof typeof current])
                   : row.isPercent 
@@ -96,7 +99,7 @@ export function YoYComparisonTable({ data }: YoYComparisonTableProps) {
                 </TableCell>
               )}
 
-              <TableCell className="text-right flex justify-end items-center h-full pt-4">
+              <TableCell className="text-right flex justify-end items-center h-full py-4">
                 {prior ? getTrendIcon(
                   current[row.key as keyof typeof current] as number, 
                   prior[row.key as keyof typeof prior] as number

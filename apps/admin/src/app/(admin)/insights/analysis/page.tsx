@@ -4,7 +4,8 @@ import {
   getAnalysisOverview, 
   getDivisionQuotesMetrics, 
   getThreeYearYoYComparison, 
-  getThreeYearMonthlyRevenue 
+  getThreeYearMonthlyRevenue,
+  getClientConcentration
 } from '@pmg/db';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -13,6 +14,8 @@ import { AnalysisKpiStrip } from '@/components/analysis/analysis-kpi-strip';
 import { RevenueTrendChart } from '@/components/analysis/revenue-trend-chart';
 import { DivisionPerformanceChart } from '@/components/analysis/division-performance-chart';
 import { YoYComparisonTable } from '@/components/analysis/yoy-comparison-table';
+import { ClientConcentrationTable } from '@/components/analysis/client-concentration-table';
+import { AnalysisTabs } from '@/components/analysis/analysis-tabs';
 import { formatZAR } from '@/lib/format';
 
 export const metadata: Metadata = {
@@ -41,11 +44,13 @@ export default async function AnalysisPage({
     divisionMetrics,
     yoyComparison,
     monthlyRevenue,
+    clientConcentration,
   ] = await Promise.all([
     getAnalysisOverview(selectedYear, currentDateStr),
     getDivisionQuotesMetrics(selectedYear),
     getThreeYearYoYComparison(selectedYear),
     getThreeYearMonthlyRevenue(selectedYear),
+    getClientConcentration(selectedYear),
   ]);
 
   return (
@@ -76,11 +81,12 @@ export default async function AnalysisPage({
       />
 
       <div className="flex-1 space-y-6 p-4 md:p-6 lg:p-8">
-        <Tabs defaultValue="overview" className="w-full">
-          <TabsList className="mb-4 grid w-full grid-cols-2 lg:w-[600px] lg:grid-cols-4">
+        <AnalysisTabs defaultTab="overview">
+          <TabsList className="mb-4 grid w-full grid-cols-2 md:grid-cols-3 lg:w-[800px] lg:grid-cols-5">
             <TabsTrigger value="overview">Overview</TabsTrigger>
             <TabsTrigger value="details">Invoice Details</TabsTrigger>
             <TabsTrigger value="pipeline">Divisions & Pipeline</TabsTrigger>
+            <TabsTrigger value="clients">Clients</TabsTrigger>
             <TabsTrigger value="comparison">YoY Compare</TabsTrigger>
           </TabsList>
 
@@ -173,6 +179,18 @@ export default async function AnalysisPage({
             </Card>
           </TabsContent>
 
+          <TabsContent value="clients" className="space-y-6">
+            <Card>
+              <CardHeader>
+                <CardTitle>Client Concentration</CardTitle>
+                <CardDescription>Income and profit distribution across your client base for FY {selectedYear}.</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <ClientConcentrationTable data={clientConcentration} />
+              </CardContent>
+            </Card>
+          </TabsContent>
+
           <TabsContent value="comparison" className="space-y-6">
             <Card>
               <CardHeader>
@@ -184,7 +202,7 @@ export default async function AnalysisPage({
               </CardContent>
             </Card>
           </TabsContent>
-        </Tabs>
+        </AnalysisTabs>
       </div>
     </div>
   );

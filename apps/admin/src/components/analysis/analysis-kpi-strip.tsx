@@ -52,7 +52,7 @@ export function AnalysisKpiStrip({ overview }: AnalysisKpiStripProps) {
             <h3 className="tracking-tight text-sm font-medium">Avg Invoice</h3>
           </div>
           <div className="flex flex-col gap-1">
-            <div className="text-2xl font-bold">{formatZAR(overview.averages.currentAvgInvoice)}</div>
+            <div className="text-2xl font-bold text-emerald-600 dark:text-emerald-500">{formatZAR(overview.averages.currentAvgInvoice)}</div>
             <p className="text-xs text-muted-foreground">
               vs {formatZAR(overview.averages.priorAvgInvoice)} last year
             </p>
@@ -66,7 +66,7 @@ export function AnalysisKpiStrip({ overview }: AnalysisKpiStripProps) {
             <h3 className="tracking-tight text-sm font-medium">Avg Transaction</h3>
           </div>
           <div className="flex flex-col gap-1">
-            <div className="text-2xl font-bold">{formatZAR(overview.averages.currentAvgTransaction)}</div>
+            <div className="text-2xl font-bold text-emerald-600 dark:text-emerald-500">{formatZAR(overview.averages.currentAvgTransaction)}</div>
             <p className="text-xs text-muted-foreground">
               Cash receipt size
             </p>
@@ -80,7 +80,7 @@ export function AnalysisKpiStrip({ overview }: AnalysisKpiStripProps) {
             <h3 className="tracking-tight text-sm font-medium">Potential Pipeline</h3>
           </div>
           <div className="flex flex-col gap-1">
-            <div className="text-2xl font-bold">{formatZAR(overview.pipeline.totalPotential)}</div>
+            <div className="text-2xl font-bold text-emerald-600 dark:text-emerald-500">{formatZAR(overview.pipeline.totalPotential)}</div>
             <p className="text-xs text-muted-foreground">
               AR + Quotes (weighted)
             </p>

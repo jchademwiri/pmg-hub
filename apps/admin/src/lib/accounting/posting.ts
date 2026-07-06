@@ -37,6 +37,7 @@ import {
   paymentAllocations,
   and,
   eq,
+  inArray,
   sql,
   ACCOUNT_RATES,
   getNextJournalEntryNumber,
@@ -86,7 +87,7 @@ async function getAccountsByCode(codes: string[]) {
   const accounts = await db
     .select()
     .from(chartAccounts)
-    .where(sql`${chartAccounts.code} IN ${codes}`);
+    .where(inArray(chartAccounts.code, codes));
 
   const map = new Map(accounts.map((a) => [a.code, a]));
   return map;
