@@ -6,7 +6,7 @@ import { getSessionOrRedirect } from '@/lib/auth';
 import { isPeriodClosed, getMinAllowedDate, getMinDateErrorMessage } from '@/lib/date-rules';
 import { getSASTToday, fmtDateLong } from '@/lib/format';
 import { deleteIncome } from './income';
-import { postPaymentJournalEntries, updatePaymentJournalEntries, voidPaymentJournalEntries } from '@/lib/accounting/posting';
+import { postPaymentJournalEntries, updatePaymentJournalEntries, voidPaymentJournalEntries, postBadDebtRecoveryJournalEntry } from '@/lib/accounting/posting';
 import { getPortalBaseUrl } from '@/lib/portal-url';
 
 export interface PaymentAllocationInput {
@@ -202,6 +202,8 @@ export async function recordClientPayment(data: PaymentInput): Promise<{ error?:
     }
 
     // 5. Execute database operations in a transaction
+    const recoveriesToPost: { invoiceId: string; amount: number; documentNumber: string; }[] = [];
+
     const recordedIncomeId = await db.transaction(async (tx) => {
       // A. Create the core payment row with the trusted auto-reference
       const [incomeRow] = await tx
@@ -223,7 +225,7 @@ export async function recordClientPayment(data: PaymentInput): Promise<{ error?:
 
         // Lock the invoice row first to serialize concurrent updates
         const [invoiceRow] = await tx
-          .select({ total: invoices.total })
+          .select({ total: invoices.total, writeOffAmount: invoices.writeOffAmount, documentNumber: invoices.documentNumber })
           .from(invoices)
           .where(eq(invoices.id, alloc.invoiceId))
           .for('update');
@@ -244,6 +246,15 @@ export async function recordClientPayment(data: PaymentInput): Promise<{ error?:
         if (invoiceRow) {
           const invoiceTotal = parseFloat(invoiceRow.total);
           const totalAllocated = parseFloat(sumAgg?.sum ?? '0');
+          const writeOffAmount = parseFloat(invoiceRow.writeOffAmount || '0');
+
+          if (writeOffAmount > 0) {
+            recoveriesToPost.push({
+              invoiceId: alloc.invoiceId,
+              amount: alloc.amount,
+              documentNumber: invoiceRow.documentNumber,
+            });
+          }
 
           if (totalAllocated >= invoiceTotal) {
             await tx
@@ -252,6 +263,16 @@ export async function recordClientPayment(data: PaymentInput): Promise<{ error?:
                 status: 'paid',
                 paidAt: new Date(),
                 incomeId: incomeRow.id, // Legacy backwards compatibility
+                updatedAt: new Date(),
+              })
+              .where(eq(invoices.id, alloc.invoiceId));
+          } else if (writeOffAmount > 0 && (invoiceTotal - totalAllocated) >= writeOffAmount) {
+            await tx
+              .update(invoices)
+              .set({
+                status: 'written_off',
+                paidAt: null,
+                incomeId: null,
                 updatedAt: new Date(),
               })
               .where(eq(invoices.id, alloc.invoiceId));
@@ -271,6 +292,20 @@ export async function recordClientPayment(data: PaymentInput): Promise<{ error?:
 
       return incomeRow.id;
     });
+
+    // C. Post bad debt recovery journal entries
+    for (const rec of recoveriesToPost) {
+      const recoveryResult = await postBadDebtRecoveryJournalEntry({
+        incomeId: recordedIncomeId,
+        invoiceId: rec.invoiceId,
+        amount: rec.amount,
+        date: data.date,
+        description: `Bad Debt Recovery - ${rec.documentNumber}`,
+      });
+      if (recoveryResult.error) {
+        console.warn('Bad debt recovery journal warning:', recoveryResult.error);
+      }
+    }
 
     // C. Check for overpayment and create credit note
     if (excessAmount > 0) {
@@ -656,12 +691,13 @@ async function recalculateInvoiceStatus(invoiceId: string, currentIncomeId?: str
     .where(eq(paymentAllocations.invoiceId, invoiceId));
 
   const [invoiceRow] = await db
-    .select({ total: invoices.total })
+    .select({ total: invoices.total, writeOffAmount: invoices.writeOffAmount })
     .from(invoices)
     .where(eq(invoices.id, invoiceId));
 
   if (invoiceRow) {
     const invoiceTotal = parseFloat(invoiceRow.total);
+    const writeOffAmount = parseFloat(invoiceRow.writeOffAmount || '0');
     const totalAllocated = parseFloat(sumAgg?.sum ?? '0');
 
     if (totalAllocated >= invoiceTotal) {
@@ -671,6 +707,16 @@ async function recalculateInvoiceStatus(invoiceId: string, currentIncomeId?: str
           status: 'paid',
           paidAt: new Date(),
           incomeId: currentIncomeId ?? null,
+          updatedAt: new Date(),
+        })
+        .where(eq(invoices.id, invoiceId));
+    } else if (writeOffAmount > 0 && (invoiceTotal - totalAllocated) >= writeOffAmount) {
+      await db
+        .update(invoices)
+        .set({
+          status: 'written_off',
+          paidAt: null,
+          incomeId: null,
           updatedAt: new Date(),
         })
         .where(eq(invoices.id, invoiceId));

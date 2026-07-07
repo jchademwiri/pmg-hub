@@ -37,6 +37,7 @@ import {
   paymentAllocations,
   and,
   eq,
+  inArray,
   sql,
   ACCOUNT_RATES,
   getNextJournalEntryNumber,
@@ -49,6 +50,7 @@ const SAVINGS_ACCOUNT_CODE = '1020'; // Savings Account (PMG Share destination)
 const ACCOUNTS_RECEIVABLE_CODE = '1100'; // Accounts Receivable
 const SALES_REVENUE_CODE = '4010'; // Sales Revenue
 const MISC_EXPENSE_CODE = '5140'; // Miscellaneous Expense (fallback)
+const BAD_DEBT_EXPENSE_CODE = '5150'; // Bad Debt Expense
 
 // ── Expense category → chart account mapping ────────────────────────────────
 const EXPENSE_ACCOUNT_MAP: { keywords: string[]; code: string }[] = [
@@ -85,7 +87,7 @@ async function getAccountsByCode(codes: string[]) {
   const accounts = await db
     .select()
     .from(chartAccounts)
-    .where(sql`${chartAccounts.code} IN ${codes}`);
+    .where(inArray(chartAccounts.code, codes));
 
   const map = new Map(accounts.map((a) => [a.code, a]));
   return map;
@@ -388,6 +390,156 @@ export async function postInvoiceIssueJournalEntry(data: {
   } catch (err) {
     console.error('Failed to auto-post invoice issue journal entry:', err);
     return { error: 'Journal auto-post failed. Please post manually in Accounting → Journals.' };
+  }
+}
+
+// ── Invoice Write-off: Dr Bad Debt / Cr AR ─────────────────────────────────
+
+export async function postInvoiceWriteOffJournalEntry(data: {
+  invoiceId: string;
+  amount: number;
+  date: string;
+  description: string;
+}): Promise<{ error?: string; entryId?: string }> {
+  try {
+    const { invoiceId, amount, date, description } = data;
+    if (amount <= 0) return { error: 'Write-off amount must be positive.' };
+
+    const period = date.slice(0, 7);
+    await ensureOpenPeriod(period);
+
+    const db = getDb();
+
+    // Ensure 5150 exists
+    const [existingBadDebt] = await db.select().from(chartAccounts).where(eq(chartAccounts.code, BAD_DEBT_EXPENSE_CODE)).limit(1);
+    if (!existingBadDebt) {
+       await db.insert(chartAccounts).values({
+         code: BAD_DEBT_EXPENSE_CODE,
+         name: 'Bad Debt Expense',
+         type: 'expense',
+         isActive: true,
+         isPostingAccount: true,
+       });
+    }
+
+    const accountMap = await getAccountsByCode([ACCOUNTS_RECEIVABLE_CODE, BAD_DEBT_EXPENSE_CODE]);
+    const accountsReceivable = accountMap.get(ACCOUNTS_RECEIVABLE_CODE);
+    const badDebtExpense = accountMap.get(BAD_DEBT_EXPENSE_CODE);
+
+    if (!accountsReceivable || !badDebtExpense) {
+      return { error: 'Required chart accounts not found.' };
+    }
+
+    const entryId = randomUUID();
+
+    await db.transaction(async (tx) => {
+      const entryNumber = await getNextJournalEntryNumber(tx, date);
+      await tx.insert(journalEntries).values({
+        id: entryId,
+        entryNumber,
+        entryDate: date,
+        period,
+        description: description || 'Invoice write-off',
+        status: 'posted',
+        sourceModule: 'billing',
+        sourceTable: 'invoices',
+        sourceId: invoiceId,
+        sourceDocumentNumber: entryNumber,
+        postedAt: new Date(),
+        postedBy: 'system',
+        createdBy: 'system',
+      });
+      await tx.insert(journalLines).values({
+        id: randomUUID(),
+        journalEntryId: entryId,
+        accountId: badDebtExpense.id,
+        debit: String(amount),
+        credit: null,
+        description: `Bad Debt – ${description}`,
+      });
+      await tx.insert(journalLines).values({
+        id: randomUUID(),
+        journalEntryId: entryId,
+        accountId: accountsReceivable.id,
+        debit: null,
+        credit: String(amount),
+        description: `AR write-off – ${description}`,
+      });
+    });
+
+    return { entryId };
+  } catch (err) {
+    console.error('Failed to auto-post write-off entry:', err);
+    return { error: 'Journal auto-post failed.' };
+  }
+}
+
+// ── Bad Debt Recovery: Dr AR / Cr Bad Debt ─────────────────────────────────
+
+export async function postBadDebtRecoveryJournalEntry(data: {
+  incomeId: string;
+  invoiceId: string;
+  amount: number;
+  date: string;
+  description: string;
+}): Promise<{ error?: string; entryId?: string }> {
+  try {
+    const { incomeId, invoiceId, amount, date, description } = data;
+    if (amount <= 0) return { error: 'Recovery amount must be positive.' };
+
+    const period = date.slice(0, 7);
+    await ensureOpenPeriod(period);
+
+    const db = getDb();
+    const accountMap = await getAccountsByCode([ACCOUNTS_RECEIVABLE_CODE, BAD_DEBT_EXPENSE_CODE]);
+    const accountsReceivable = accountMap.get(ACCOUNTS_RECEIVABLE_CODE);
+    const badDebtExpense = accountMap.get(BAD_DEBT_EXPENSE_CODE);
+
+    if (!accountsReceivable || !badDebtExpense) {
+      return { error: 'Required chart accounts not found.' };
+    }
+
+    const entryId = randomUUID();
+
+    await db.transaction(async (tx) => {
+      const entryNumber = await getNextJournalEntryNumber(tx, date);
+      await tx.insert(journalEntries).values({
+        id: entryId,
+        entryNumber,
+        entryDate: date,
+        period,
+        description: description || 'Bad Debt Recovery',
+        status: 'posted',
+        sourceModule: 'billing',
+        sourceTable: 'income',
+        sourceId: incomeId,
+        sourceDocumentNumber: entryNumber,
+        postedAt: new Date(),
+        postedBy: 'system',
+        createdBy: 'system',
+      });
+      await tx.insert(journalLines).values({
+        id: randomUUID(),
+        journalEntryId: entryId,
+        accountId: accountsReceivable.id,
+        debit: String(amount),
+        credit: null,
+        description: `AR Recovery – ${description}`,
+      });
+      await tx.insert(journalLines).values({
+        id: randomUUID(),
+        journalEntryId: entryId,
+        accountId: badDebtExpense.id,
+        debit: null,
+        credit: String(amount),
+        description: `Bad Debt Recovery – ${description}`,
+      });
+    });
+
+    return { entryId };
+  } catch (err) {
+    console.error('Failed to auto-post recovery entry:', err);
+    return { error: 'Journal auto-post failed.' };
   }
 }
 

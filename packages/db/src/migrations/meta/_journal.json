@@ -225,6 +225,13 @@
       "when": 1782900000000,
       "tag": "0031_journal_sequences",
       "breakpoints": true
+    },
+    {
+      "idx": 32,
+      "version": "7",
+      "when": 1783357281630,
+      "tag": "0032_public_kronos",
+      "breakpoints": true
     }
   ]
 }

@@ -1,10 +1,10 @@
 'use server';
 
 import { revalidatePath } from 'next/cache';
-import { getDb, invoices, quotations, billingLineItems, income, clients, divisionBillingSettings, eq, and, inArray } from '@pmg/db';
+import { getDb, invoices, quotations, billingLineItems, income, clients, divisionBillingSettings, eq, and, inArray, paymentAllocations, sql } from '@pmg/db';
 import { getNextDocumentNumber, addDays } from '@pmg/db';
 import { getSessionOrRedirect } from '@/lib/auth';
-import { postInvoiceIssueJournalEntry, voidInvoiceJournalEntries, postPaymentJournalEntries, updateInvoiceJournalEntry } from '@/lib/accounting/posting';
+import { postInvoiceIssueJournalEntry, voidInvoiceJournalEntries, postPaymentJournalEntries, updateInvoiceJournalEntry, postInvoiceWriteOffJournalEntry } from '@/lib/accounting/posting';
 import { isPeriodClosed, getMinAllowedDate, getMinDateErrorMessage } from '@/lib/date-rules';
 import { getSASTParts, getSASTToday } from '@/lib/format';
 import { CreateInvoiceSchema, type CreateInvoiceInput } from './billing-schema';
@@ -755,3 +755,76 @@ export async function bulkVoidInvoices(ids: string[]): Promise<{ error?: string;
     return { error: 'Failed to bulk void invoices.' };
   }
 }
+
+// ── writeOffInvoice ──────────────────────────────────────────────────────────
+
+export async function writeOffInvoice(id: string, reason: string): Promise<{ error?: string }> {
+  try {
+    const session = await getSessionOrRedirect();
+
+    const db = getDb();
+    
+    // Calculate total allocations
+    const [sumAgg] = await db
+      .select({ sum: sql<string>`coalesce(sum(${paymentAllocations.amount}), 0)` })
+      .from(paymentAllocations)
+      .where(eq(paymentAllocations.invoiceId, id));
+    
+    const totalAllocated = parseFloat(sumAgg?.sum ?? '0');
+
+    const [invoice] = await db
+      .select({ id: invoices.id, status: invoices.status, total: invoices.total, documentNumber: invoices.documentNumber })
+      .from(invoices)
+      .where(eq(invoices.id, id));
+
+    if (!invoice) return { error: 'Invoice not found.' };
+    if (invoice.status !== 'issued' && invoice.status !== 'overdue') {
+      return { error: 'Only issued or overdue invoices can be written off.' };
+    }
+
+    const total = parseFloat(invoice.total);
+    const outstanding = Math.max(0, total - totalAllocated);
+
+    if (outstanding <= 0) {
+      return { error: 'Invoice has no outstanding balance to write off.' };
+    }
+
+    const writeOffDate = getSASTToday();
+
+    if (await isPeriodClosed(writeOffDate)) {
+      const minDate = await getMinAllowedDate();
+      return { error: getMinDateErrorMessage(minDate) };
+    }
+
+    await db
+      .update(invoices)
+      .set({ 
+        status: 'written_off', 
+        writeOffAmount: String(outstanding),
+        updatedAt: new Date() 
+      })
+      .where(eq(invoices.id, id));
+
+    const journalResult = await postInvoiceWriteOffJournalEntry({
+      invoiceId: id,
+      amount: outstanding,
+      date: writeOffDate,
+      description: `Write-off Invoice ${invoice.documentNumber}: ${reason}`,
+    });
+
+    if (journalResult.error) {
+      console.warn('Invoice write-off journal warning:', journalResult.error);
+    }
+
+    revalidatePath('/billing/invoices');
+    revalidatePath(`/billing/invoices/${id}`);
+    revalidatePath('/accounting/journals');
+    revalidatePath('/accounting/trial-balance');
+    revalidatePath('/accounting/general-ledger');
+
+    return {};
+  } catch {
+    return { error: 'Failed to write off invoice. Please try again.' };
+  }
+}
+

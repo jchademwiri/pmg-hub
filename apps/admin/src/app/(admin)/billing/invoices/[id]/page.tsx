@@ -11,7 +11,7 @@ import { BillingStatusBadge } from '@/components/billing/billing-status-badge';
 import { BillingTotalsBlock } from '@/components/billing/billing-totals-block';
 import { getInvoiceById, getDivisionBillingSettings, getDb, paymentAllocations, income, sql, desc, eq, getClientStatement, getAllIncome, getOrganisationSettings } from '@pmg/db';
 import { UniversalEmailDialog } from '@/components/billing/universal-email-dialog';
-import { issueInvoice, markInvoicePaid, voidInvoice } from '@/app/actions/billing-invoices';
+import { issueInvoice, markInvoicePaid, voidInvoice, writeOffInvoice } from '@/app/actions/billing-invoices';
 import { fmtDate, fmtDateTime, formatZAR, getSASTParts, getSASTToday } from '@/lib/format';
 import { buildOrgProps, determineStatementStatus, buildIncomeInvoiceMap, buildTransactionHistory, buildBankingProps } from '@/lib/client-billing-helpers';
 import { calculateAgeing } from '@/lib/billing-ageing';
@@ -337,6 +337,7 @@ export default async function InvoiceDetailPage({ params }: Props) {
             issueAction={issueInvoice}
             markPaidAction={markInvoicePaid}
             voidAction={voidInvoice}
+            writeOffAction={writeOffInvoice}
           />
         </div>
       </div>

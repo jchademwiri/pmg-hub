@@ -8,6 +8,7 @@ import { Button } from '@/components/ui/button';
 import { fmtDate } from '@/lib/format';
 import { MarkPaidButton } from '@/components/billing/mark-paid-button';
 import { VoidInvoiceButton } from '@/components/billing/void-invoice-button';
+import { WriteOffInvoiceButton } from '@/components/billing/write-off-invoice-button';
 
 interface InvoiceDetailActionsProps {
   invoice: {
@@ -22,6 +23,7 @@ interface InvoiceDetailActionsProps {
   issueAction: (id: string) => Promise<{ error?: string }>;
   markPaidAction: (id: string) => Promise<{ error?: string }>;
   voidAction: (id: string) => Promise<{ error?: string }>;
+  writeOffAction?: (id: string, reason: string) => Promise<{ error?: string }>;
 }
 
 export function InvoiceDetailActions({
@@ -29,6 +31,7 @@ export function InvoiceDetailActions({
   issueAction,
   markPaidAction,
   voidAction,
+  writeOffAction,
 }: InvoiceDetailActionsProps) {
   const router = useRouter();
   const [, startTransition] = useTransition();
@@ -73,6 +76,9 @@ export function InvoiceDetailActions({
               hasClient={!!invoice.clientId}
               markPaidAction={markPaidAction}
             />
+            {writeOffAction && (
+              <WriteOffInvoiceButton invoiceId={invoice.id} writeOffAction={writeOffAction} />
+            )}
             <VoidInvoiceButton invoiceId={invoice.id} voidAction={voidAction} />
           </>
         )}
@@ -91,6 +97,12 @@ export function InvoiceDetailActions({
 
         {status === 'void' && (
           <p className="text-xs text-muted-foreground">This invoice has been voided.</p>
+        )}
+
+        {status === 'written_off' && (
+          <p className="text-xs font-medium text-amber-600 dark:text-amber-500">
+            This invoice has been written off.
+          </p>
         )}
       </div>
     </div>

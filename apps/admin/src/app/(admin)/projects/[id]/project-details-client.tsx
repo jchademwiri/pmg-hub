@@ -17,6 +17,7 @@ import {
   CheckSquare,
   Sparkles,
   Info,
+  Send,
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
@@ -44,7 +45,10 @@ import {
   toggleProgressItemAction,
   updateProgressItemTextAction,
 } from '@/app/actions/project-progress';
-import { updateProjectScheduleEntryJson } from '@/app/actions/project-schedule';
+import {
+  updateProjectScheduleEntryJson,
+  transitionProjectStatusAction,
+} from '@/app/actions/project-schedule';
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 
@@ -107,10 +111,23 @@ export function ProjectDetailsClient({
   const [editDialogOpen, setEditDialogOpen] = React.useState(false);
   const [viewMode, setViewMode] = React.useState<'board' | 'list'>('board');
   const [metadataOpen, setMetadataOpen] = React.useState(false);
+  const [isTransitioning, setIsTransitioning] = React.useState(false);
 
   const [notes, setNotes] = React.useState(project.notes || '');
   const [blockers, setBlockers] = React.useState(project.blockers || '');
   const [savingNotes, setSavingNotes] = React.useState(false);
+
+  const handleTransition = async (newStatus: string) => {
+    setIsTransitioning(true);
+    const res = await transitionProjectStatusAction(project.id, newStatus);
+    setIsTransitioning(false);
+    if (res?.error) {
+      toast.error(res.error);
+    } else {
+      toast.success(`Status updated to ${newStatus.replace('_', ' ')}`);
+      router.refresh();
+    }
+  };
 
   const [checklist, setChecklist] = React.useState<ProgressSection[]>(() =>
     initialChecklist.map((s) => ({
@@ -274,6 +291,53 @@ export function ProjectDetailsClient({
             />
           </div>
         </div>
+
+        {/* Ready to Submit / Complete CTA banner */}
+        {project.status === 'in_progress' && progressPercent === 100 && (
+          <div className="flex items-center justify-between gap-4 rounded-lg border border-emerald-500/30 bg-emerald-500/8 px-4 py-3">
+            <div className="flex items-center gap-2.5">
+              <div className="flex size-7 items-center justify-center rounded-full bg-emerald-500/15">
+                <Check className="size-4 text-emerald-500" />
+              </div>
+              <div>
+                <p className="text-sm font-semibold text-emerald-700 dark:text-emerald-400">All tasks complete!</p>
+                <p className="text-xs text-muted-foreground">Mark as complete to unlock submission.</p>
+              </div>
+            </div>
+            <Button
+              size="sm"
+              className="bg-emerald-600 hover:bg-emerald-700 text-white shrink-0"
+              disabled={isTransitioning}
+              onClick={() => handleTransition('completed')}
+            >
+              <Check className="size-3.5 mr-1.5" />
+              {isTransitioning ? 'Updating...' : 'Mark Complete'}
+            </Button>
+          </div>
+        )}
+
+        {project.status === 'completed' && (
+          <div className="flex items-center justify-between gap-4 rounded-lg border border-blue-500/30 bg-blue-500/8 px-4 py-3">
+            <div className="flex items-center gap-2.5">
+              <div className="flex size-7 items-center justify-center rounded-full bg-blue-500/15">
+                <Send className="size-4 text-blue-500" />
+              </div>
+              <div>
+                <p className="text-sm font-semibold text-blue-700 dark:text-blue-400">Ready to submit</p>
+                <p className="text-xs text-muted-foreground">Submit this project to the client or authority.</p>
+              </div>
+            </div>
+            <Button
+              size="sm"
+              className="bg-blue-600 hover:bg-blue-700 text-white shrink-0"
+              disabled={isTransitioning}
+              onClick={() => handleTransition('submitted')}
+            >
+              <Send className="size-3.5 mr-1.5" />
+              {isTransitioning ? 'Submitting...' : 'Submit Project'}
+            </Button>
+          </div>
+        )}
 
         {viewMode === 'board' ? (
           <TaskBoard
