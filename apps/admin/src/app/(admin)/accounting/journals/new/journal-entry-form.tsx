@@ -19,7 +19,9 @@ import type { ChartAccount } from '@pmg/db'
 
 interface JournalEntryFormProps {
   accounts: ChartAccount[]
+  divisions: any[]
   createAction: (data: {
+    divisionId: string
     entryDate: string
     description: string
     lines: { accountId: string; debit?: number; credit?: number; description?: string }[]
@@ -46,8 +48,9 @@ const TYPE_LABELS: Record<string, string> = {
   expense: 'Expense',
 }
 
-export function JournalEntryForm({ accounts, createAction }: JournalEntryFormProps) {
+export function JournalEntryForm({ accounts, divisions, createAction }: JournalEntryFormProps) {
   const router = useRouter()
+  const [divisionId, setDivisionId] = React.useState(divisions[0]?.id || '')
   const [entryDate, setEntryDate] = React.useState(getSASTToday())
   const [description, setDescription] = React.useState('')
   const [lines, setLines] = React.useState<LineRow[]>([newLine(), newLine()])
@@ -73,7 +76,7 @@ export function JournalEntryForm({ accounts, createAction }: JournalEntryFormPro
 
   // Validation
   const isValid = React.useMemo(() => {
-    if (!entryDate || !description.trim()) return false
+    if (!divisionId || !entryDate || !description.trim()) return false
     if (lines.length < 2) return false
     for (const line of lines) {
       if (!line.accountId) return false
@@ -83,7 +86,7 @@ export function JournalEntryForm({ accounts, createAction }: JournalEntryFormPro
       if (d > 0 && c > 0) return false
     }
     return isBalanced
-  }, [entryDate, description, lines, isBalanced])
+  }, [divisionId, entryDate, description, lines, isBalanced])
 
   function updateLine(id: string, field: keyof LineRow, value: string) {
     setLines((prev) =>
@@ -118,6 +121,7 @@ export function JournalEntryForm({ accounts, createAction }: JournalEntryFormPro
     setSaving(true)
     try {
       const result = await createAction({
+        divisionId,
         entryDate,
         description: description.trim(),
         lines: lines.map((l) => ({
@@ -146,6 +150,21 @@ export function JournalEntryForm({ accounts, createAction }: JournalEntryFormPro
       {/* Header fields */}
       <div className="rounded-xl border bg-card p-5">
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <div className="flex flex-col gap-1.5 sm:col-span-2">
+            <Label htmlFor="divisionId">Division *</Label>
+            <Select value={divisionId} onValueChange={setDivisionId}>
+              <SelectTrigger id="divisionId">
+                <SelectValue placeholder="Select division" />
+              </SelectTrigger>
+              <SelectContent>
+                {divisions.map((d) => (
+                  <SelectItem key={d.id} value={d.id}>
+                    {d.name}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
           <div className="flex flex-col gap-1.5">
             <Label htmlFor="entryDate">Entry Date *</Label>
             <Input

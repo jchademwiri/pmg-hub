@@ -17,6 +17,7 @@ interface DivisionPerformanceChartProps {
   data: {
     id: string;
     name: string;
+    totalInvoiced: number;
     totalIncome: number;
     totalQuoteValue: number;
     quoteCount: number;

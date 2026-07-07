@@ -1,5 +1,5 @@
 import type { Metadata } from 'next'
-import { getActiveChartAccounts } from '@pmg/db'
+import { getActiveChartAccounts, db, divisions, eq } from '@pmg/db'
 import { SetPageTotal } from '@/components/navigation/page-header-context'
 import { createJournalEntry } from '@/app/actions/accounting'
 import { JournalEntryForm } from './journal-entry-form'
@@ -10,6 +10,7 @@ export const metadata: Metadata = { title: 'New Journal Entry' }
 
 export default async function NewJournalEntryPage() {
   const accounts = await getActiveChartAccounts()
+  const activeDivisions = await db.select().from(divisions).where(eq(divisions.isActive, true))
 
   return (
     <div className="flex flex-col gap-6">
@@ -25,6 +26,7 @@ export default async function NewJournalEntryPage() {
 
       <JournalEntryForm
         accounts={accounts}
+        divisions={activeDivisions}
         createAction={createJournalEntry}
       />
     </div>

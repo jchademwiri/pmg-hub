@@ -157,8 +157,8 @@ export default async function InvoiceDetailPage({ params }: Props) {
     banking: buildBankingProps(divSettings),
   };
 
-  // Paid and voided invoices cannot be edited
-  const canEdit = !['paid', 'void'].includes(invoice.status);
+  // Paid, voided, and written-off invoices cannot be edited
+  const canEdit = !['paid', 'void', 'written_off'].includes(invoice.status);
 
   return (
     <div className="flex flex-col gap-6">

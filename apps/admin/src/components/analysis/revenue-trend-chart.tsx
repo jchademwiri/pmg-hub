@@ -13,8 +13,14 @@ import {
 } from 'recharts';
 import { formatZAR } from '@/lib/format';
 
+interface MonthlyRevenueRow {
+  month: string;
+  monthIndex: number;
+  [year: number]: number | string;
+}
+
 interface RevenueTrendChartProps {
-  data: any[];
+  data: MonthlyRevenueRow[];
   currentYear: number;
 }
 

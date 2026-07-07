@@ -52,6 +52,7 @@ export async function createExpense(formData: FormData): Promise<{ error?: strin
         date: parsed.date,
         category: parsed.category,
         description: parsed.description || undefined,
+        divisionId: parsed.divisionId,
       });
       if (journalResult.error) {
         console.warn('Expense auto-post warning:', journalResult.error);
@@ -106,6 +107,7 @@ export async function updateExpense(id: string, formData: FormData): Promise<{ e
       date: parsed.date,
       category: parsed.category,
       description: parsed.description || undefined,
+      divisionId: parsed.divisionId,
     });
 
     revalidatePath('/finance/expenses');

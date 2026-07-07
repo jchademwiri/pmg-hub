@@ -13,7 +13,7 @@
 
 Both `invoice-form-client.tsx` and `quote-form-client.tsx` follow the same structural pattern:
 
-```
+```text
 ┌─────────────────────────────────────┬─────────────────┐
 │  Main Form (2/3 width)              │  Sidebar (1/3)   │
 │                                     │                  │
@@ -29,6 +29,7 @@ Both `invoice-form-client.tsx` and `quote-form-client.tsx` follow the same struc
 ```
 
 ### Current Strengths ✅
+
 | Feature | Detail |
 |---|---|
 | Real-time totals | `calcTotals()` recomputes on every input change |

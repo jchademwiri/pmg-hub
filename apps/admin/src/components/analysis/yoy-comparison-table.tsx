@@ -48,6 +48,13 @@ export function YoYComparisonTable({ data }: YoYComparisonTableProps) {
     return <Minus className="h-4 w-4 text-blue-500" />;
   };
 
+  const renderCell = (row: typeof rows[number], record: (typeof data)[number]) => {
+    const value = record[row.key as keyof typeof record];
+    if (row.isCurrency) return formatZAR(value as number);
+    if (row.isPercent) return `${(value as number).toFixed(1)}%`;
+    return value;
+  };
+
   return (
     <div className="rounded-xl border shadow-sm overflow-hidden bg-card">
       <Table>
@@ -69,33 +76,18 @@ export function YoYComparisonTable({ data }: YoYComparisonTableProps) {
               <TableCell className="font-medium py-4">{row.label}</TableCell>
               
               <TableCell className={`text-right ${row.colorClass || ''}`}>
-                {row.isCurrency 
-                  ? formatZAR(current[row.key as keyof typeof current])
-                  : row.isPercent 
-                    ? `${(current[row.key as keyof typeof current] as number).toFixed(1)}%`
-                    : current[row.key as keyof typeof current]
-                }
+                {renderCell(row, current)}
               </TableCell>
 
               {prior && (
                 <TableCell className="text-right text-muted-foreground">
-                  {row.isCurrency 
-                    ? formatZAR(prior[row.key as keyof typeof prior])
-                    : row.isPercent 
-                      ? `${(prior[row.key as keyof typeof prior] as number).toFixed(1)}%`
-                      : prior[row.key as keyof typeof prior]
-                  }
+                  {renderCell(row, prior)}
                 </TableCell>
               )}
 
               {prior2 && (
                 <TableCell className="text-right text-muted-foreground">
-                  {row.isCurrency 
-                    ? formatZAR(prior2[row.key as keyof typeof prior2])
-                    : row.isPercent 
-                      ? `${(prior2[row.key as keyof typeof prior2] as number).toFixed(1)}%`
-                      : prior2[row.key as keyof typeof prior2]
-                  }
+                  {renderCell(row, prior2)}
                 </TableCell>
               )}
 

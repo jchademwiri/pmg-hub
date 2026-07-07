@@ -138,6 +138,7 @@ const CreateJournalLineSchema = z.object({
 });
 
 const CreateJournalEntrySchema = z.object({
+  divisionId: z.string().uuid(),
   entryDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
   description: z.string().min(1).max(500),
   lines: z.array(CreateJournalLineSchema).min(2),
@@ -148,6 +149,7 @@ const CreateJournalEntrySchema = z.object({
  * Returns an error if the entry does not balance.
  */
 export async function createJournalEntry(data: {
+  divisionId: string;
   entryDate: string;
   description: string;
   lines: { accountId: string; debit?: number; credit?: number; description?: string }[];
@@ -186,6 +188,7 @@ export async function createJournalEntry(data: {
           entryNumber,
           entryDate: parsed.data.entryDate,
           period,
+          divisionId: parsed.data.divisionId,
           description: parsed.data.description,
           status: 'draft',
           createdBy: session.user.id,

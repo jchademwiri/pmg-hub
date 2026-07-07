@@ -1,4 +1,5 @@
 import { Metadata } from 'next';
+import Link from 'next/link';
 import { getSASTParts } from '@/lib/format';
 import { 
   getAnalysisOverview, 
@@ -22,36 +23,46 @@ export const metadata: Metadata = {
   title: 'Business Analysis | PMG Hub',
 };
 
-export default async function AnalysisPage({
-  searchParams,
-}: {
-  searchParams: { year?: string };
+export default async function AnalysisPage(props: {
+  searchParams: Promise<{ year?: string }>;
 }) {
-  const { year, month } = getSASTParts();
+  const searchParams = await props.searchParams;
+  const { year, month, day } = getSASTParts();
   
   // Default to current financial year
   let defaultYear = year;
   if (month < 3) defaultYear = year - 1;
 
-  const selectedYear = searchParams.year ? parseInt(searchParams.year, 10) : defaultYear;
+  const parsedYear = searchParams.year ? parseInt(searchParams.year, 10) : defaultYear;
+  const selectedYear = Number.isFinite(parsedYear) && !Number.isNaN(parsedYear) ? parsedYear : defaultYear;
 
   // Use current date string for YTD calculations
-  const currentDateStr = new Date().toISOString().slice(0, 10);
+  const currentDateStr = `${year}-${String(month).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
 
   // Parallel data fetching
   const [
-    overview,
-    divisionMetrics,
-    yoyComparison,
-    monthlyRevenue,
-    clientConcentration,
-  ] = await Promise.all([
+    overviewResult,
+    divisionMetricsResult,
+    yoyComparisonResult,
+    monthlyRevenueResult,
+    clientConcentrationResult,
+  ] = await Promise.allSettled([
     getAnalysisOverview(selectedYear, currentDateStr),
     getDivisionQuotesMetrics(selectedYear),
     getThreeYearYoYComparison(selectedYear),
     getThreeYearMonthlyRevenue(selectedYear),
     getClientConcentration(selectedYear),
   ]);
+
+  const overview = overviewResult.status === 'fulfilled' ? overviewResult.value : {
+    ytd: { currentRevenue: 0, priorRevenue: 0, growthRatePercent: 0 },
+    averages: { currentAvgInvoice: 0, priorAvgInvoice: 0, currentAvgTransaction: 0 },
+    pipeline: { outstandingAR: 0, pendingQuotes: 0, acceptedQuotes: 0, totalPotential: 0 }
+  };
+  const divisionMetrics = divisionMetricsResult.status === 'fulfilled' ? divisionMetricsResult.value : [];
+  const yoyComparison = yoyComparisonResult.status === 'fulfilled' ? yoyComparisonResult.value : [];
+  const monthlyRevenue = monthlyRevenueResult.status === 'fulfilled' ? monthlyRevenueResult.value : [];
+  const clientConcentration = clientConcentrationResult.status === 'fulfilled' ? clientConcentrationResult.value : [];
 
   return (
     <div className="flex w-full flex-col">
@@ -63,7 +74,7 @@ export default async function AnalysisPage({
             <div className="text-sm font-medium">Select Year:</div>
             <div className="flex gap-2">
               {[selectedYear + 1, selectedYear, selectedYear - 1, selectedYear - 2].map(y => (
-                <a 
+                <Link 
                   key={y} 
                   href={`/insights/analysis?year=${y}`}
                   className={`px-3 py-1 text-sm rounded-md border ${
@@ -73,7 +84,7 @@ export default async function AnalysisPage({
                   }`}
                 >
                   {y}
-                </a>
+                </Link>
               ))}
             </div>
           </div>

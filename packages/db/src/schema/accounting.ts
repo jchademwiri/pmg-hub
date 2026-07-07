@@ -14,6 +14,7 @@ import {
   uniqueIndex,
 } from "drizzle-orm/pg-core";
 import { sql } from "drizzle-orm";
+import { divisions } from "./divisions";
 
 // ── Enums ─────────────────────────────────────────────────────────────────────
 
@@ -109,6 +110,9 @@ export const journalEntries = pgTable(
     entryDate: date("entry_date").notNull(),
     /** The accounting period this entry belongs to (YYYY-MM) */
     period: varchar("period", { length: 7 }).notNull(),
+    divisionId: uuid("division_id")
+      .notNull()
+      .references(() => divisions.id, { onDelete: "restrict" }),
     description: text("description").notNull(),
     status: journalEntryStatusEnum("status").notNull().default("draft"),
     /** Source module that created this entry (e.g. "income", "expense", "manual") */

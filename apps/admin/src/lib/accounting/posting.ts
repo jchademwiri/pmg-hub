@@ -112,7 +112,9 @@ export async function postPaymentJournalEntries(data: {
   amount: number;
   date: string;
   description: string;
-  divisionId?: string;
+  sourceDocumentNumber?: string;
+  divisionId: string;
+  tx?: any;
 }): Promise<{ error?: string; entryIds?: string[] }> {
   try {
     const { incomeId, amount, date, description, divisionId } = data;
@@ -120,7 +122,8 @@ export async function postPaymentJournalEntries(data: {
     if (amount <= 0) return { error: 'Payment amount must be positive.' };
 
     const period = date.slice(0, 7);
-    await ensureOpenPeriod(period);
+    const p = await ensureOpenPeriod(period);
+    if (p.status !== 'open') return { error: `Accounting period ${period} is closed.` };
 
     const accountMap = await getAccountsByCode([
       BANK_ACCOUNT_CODE,
@@ -138,7 +141,7 @@ export async function postPaymentJournalEntries(data: {
       };
     }
 
-    const db = getDb();
+    const db = data.tx || getDb();
     const entryIds: string[] = [];
     const now = new Date();
 
@@ -150,7 +153,7 @@ export async function postPaymentJournalEntries(data: {
     // ── Execute all inserts atomically in a transaction ────────────────────
     const pmgShareAmount = Math.round(amount * ACCOUNT_RATES.pmg_share * 100) / 100;
 
-    await db.transaction(async (tx) => {
+    const runInsideTx = async (tx: any) => {
       const entryNumber1 = await getNextJournalEntryNumber(tx, date);
       entryIds.push(entry1Id);
       // Entry 1: Dr Bank / Cr AR
@@ -159,12 +162,13 @@ export async function postPaymentJournalEntries(data: {
         entryNumber: entryNumber1,
         entryDate: date,
         period,
+        divisionId,
         description: description || 'Payment received',
         status: 'posted',
         sourceModule: 'billing',
         sourceTable: 'income',
         sourceId: incomeId,
-        sourceDocumentNumber: entryNumber1,
+        sourceDocumentNumber: data.sourceDocumentNumber || entryNumber1,
         postedAt: now,
         postedBy: 'system',
         createdBy: 'system',
@@ -199,12 +203,13 @@ export async function postPaymentJournalEntries(data: {
           entryNumber: entryNumber2,
           entryDate: date,
           period,
+          divisionId,
           description: `PMG Share allocation (25%)`,
           status: 'posted',
           sourceModule: 'billing',
           sourceTable: 'income',
           sourceId: incomeId,
-          sourceDocumentNumber: entryNumber2,
+          sourceDocumentNumber: data.sourceDocumentNumber || entryNumber2,
           postedAt: now,
           postedBy: 'system',
           createdBy: 'system',
@@ -226,7 +231,13 @@ export async function postPaymentJournalEntries(data: {
           description: `PMG Share transfer (25% of R${amount.toFixed(2)})`,
         });
       }
-    });
+    };
+
+    if (data.tx) {
+      await runInsideTx(data.tx);
+    } else {
+      await db.transaction(runInsideTx);
+    }
 
     return { entryIds };
   } catch (err) {
@@ -242,10 +253,11 @@ export async function postPaymentJournalEntries(data: {
  * Uses db.batch() to void all entries in a single round trip.
  */
 export async function voidPaymentJournalEntries(
-  incomeId: string
+  incomeId: string,
+  externalTx?: any
 ): Promise<{ error?: string; voidedCount?: number }> {
   try {
-    const db = getDb();
+    const db = externalTx || getDb();
 
     const entries = await db
       .select({ id: journalEntries.id, status: journalEntries.status })
@@ -258,13 +270,13 @@ export async function voidPaymentJournalEntries(
         )
       );
 
-    const toVoid = entries.filter((e) => e.status !== 'void');
+    const toVoid = entries.filter((e: any) => e.status !== 'void');
 
     if (toVoid.length === 0) return { voidedCount: 0 };
 
     // Batch all void updates atomically in a transaction
     const now = new Date();
-    await db.transaction(async (tx) => {
+    const runInsideTx = async (tx: any) => {
       for (const entry of toVoid) {
         await tx
           .update(journalEntries)
@@ -277,7 +289,13 @@ export async function voidPaymentJournalEntries(
           })
           .where(eq(journalEntries.id, entry.id));
       }
-    });
+    };
+
+    if (externalTx) {
+      await runInsideTx(externalTx);
+    } else {
+      await db.transaction(runInsideTx);
+    }
 
     return { voidedCount: toVoid.length };
   } catch (err) {
@@ -297,7 +315,7 @@ export async function updatePaymentJournalEntries(data: {
   newAmount: number;
   date: string;
   description: string;
-  divisionId?: string;
+  divisionId: string;
 }): Promise<{ error?: string }> {
   await voidPaymentJournalEntries(data.incomeId);
 
@@ -325,15 +343,18 @@ export async function postInvoiceIssueJournalEntry(data: {
   invoiceId: string;
   amount: number;
   date: string;
-  description: string;
+  description?: string;
+  sourceDocumentNumber?: string;
+  divisionId: string;
 }): Promise<{ error?: string; entryId?: string }> {
   try {
-    const { invoiceId, amount, date, description } = data;
+    const { invoiceId, amount, date, description, divisionId } = data;
 
     if (amount <= 0) return { error: 'Invoice amount must be positive.' };
 
     const period = date.slice(0, 7);
-    await ensureOpenPeriod(period);
+    const p = await ensureOpenPeriod(period);
+    if (p.status !== 'open') return { error: `Accounting period ${period} is closed.` };
 
     const accountMap = await getAccountsByCode([
       ACCOUNTS_RECEIVABLE_CODE,
@@ -358,12 +379,13 @@ export async function postInvoiceIssueJournalEntry(data: {
         entryNumber,
         entryDate: date,
         period,
+        divisionId,
         description: description || 'Invoice issued',
         status: 'posted',
         sourceModule: 'billing',
         sourceTable: 'invoices',
         sourceId: invoiceId,
-        sourceDocumentNumber: entryNumber,
+        sourceDocumentNumber: data.sourceDocumentNumber || entryNumber,
         postedAt: new Date(),
         postedBy: 'system',
         createdBy: 'system',
@@ -400,27 +422,27 @@ export async function postInvoiceWriteOffJournalEntry(data: {
   amount: number;
   date: string;
   description: string;
+  sourceDocumentNumber?: string;
+  divisionId: string;
+  tx?: any;
 }): Promise<{ error?: string; entryId?: string }> {
   try {
-    const { invoiceId, amount, date, description } = data;
+    const { invoiceId, amount, date, description, divisionId } = data;
     if (amount <= 0) return { error: 'Write-off amount must be positive.' };
 
     const period = date.slice(0, 7);
-    await ensureOpenPeriod(period);
+    const p = await ensureOpenPeriod(period);
+    if (p.status !== 'open') return { error: `Accounting period ${period} is closed.` };
 
-    const db = getDb();
+    const db = data.tx || getDb();
 
-    // Ensure 5150 exists
-    const [existingBadDebt] = await db.select().from(chartAccounts).where(eq(chartAccounts.code, BAD_DEBT_EXPENSE_CODE)).limit(1);
-    if (!existingBadDebt) {
-       await db.insert(chartAccounts).values({
-         code: BAD_DEBT_EXPENSE_CODE,
-         name: 'Bad Debt Expense',
-         type: 'expense',
-         isActive: true,
-         isPostingAccount: true,
-       });
-    }
+    await db.insert(chartAccounts).values({
+      code: BAD_DEBT_EXPENSE_CODE,
+      name: 'Bad Debt Expense',
+      type: 'expense',
+      isActive: true,
+      isPostingAccount: true,
+    }).onConflictDoNothing({ target: chartAccounts.code });
 
     const accountMap = await getAccountsByCode([ACCOUNTS_RECEIVABLE_CODE, BAD_DEBT_EXPENSE_CODE]);
     const accountsReceivable = accountMap.get(ACCOUNTS_RECEIVABLE_CODE);
@@ -432,19 +454,20 @@ export async function postInvoiceWriteOffJournalEntry(data: {
 
     const entryId = randomUUID();
 
-    await db.transaction(async (tx) => {
+    await db.transaction(async (tx: any) => {
       const entryNumber = await getNextJournalEntryNumber(tx, date);
       await tx.insert(journalEntries).values({
         id: entryId,
         entryNumber,
         entryDate: date,
         period,
+        divisionId,
         description: description || 'Invoice write-off',
         status: 'posted',
         sourceModule: 'billing',
         sourceTable: 'invoices',
         sourceId: invoiceId,
-        sourceDocumentNumber: entryNumber,
+        sourceDocumentNumber: data.sourceDocumentNumber || entryNumber,
         postedAt: new Date(),
         postedBy: 'system',
         createdBy: 'system',
@@ -482,15 +505,19 @@ export async function postBadDebtRecoveryJournalEntry(data: {
   amount: number;
   date: string;
   description: string;
+  sourceDocumentNumber?: string;
+  divisionId: string;
+  tx?: any;
 }): Promise<{ error?: string; entryId?: string }> {
   try {
-    const { incomeId, invoiceId, amount, date, description } = data;
+    const { incomeId, invoiceId, amount, date, description, divisionId } = data;
     if (amount <= 0) return { error: 'Recovery amount must be positive.' };
 
     const period = date.slice(0, 7);
-    await ensureOpenPeriod(period);
+    const p = await ensureOpenPeriod(period);
+    if (p.status !== 'open') return { error: `Accounting period ${period} is closed.` };
 
-    const db = getDb();
+    const db = data.tx || getDb();
     const accountMap = await getAccountsByCode([ACCOUNTS_RECEIVABLE_CODE, BAD_DEBT_EXPENSE_CODE]);
     const accountsReceivable = accountMap.get(ACCOUNTS_RECEIVABLE_CODE);
     const badDebtExpense = accountMap.get(BAD_DEBT_EXPENSE_CODE);
@@ -501,19 +528,20 @@ export async function postBadDebtRecoveryJournalEntry(data: {
 
     const entryId = randomUUID();
 
-    await db.transaction(async (tx) => {
+    await db.transaction(async (tx: any) => {
       const entryNumber = await getNextJournalEntryNumber(tx, date);
       await tx.insert(journalEntries).values({
         id: entryId,
         entryNumber,
         entryDate: date,
         period,
+        divisionId,
         description: description || 'Bad Debt Recovery',
         status: 'posted',
         sourceModule: 'billing',
         sourceTable: 'income',
         sourceId: incomeId,
-        sourceDocumentNumber: entryNumber,
+        sourceDocumentNumber: data.sourceDocumentNumber || entryNumber,
         postedAt: new Date(),
         postedBy: 'system',
         createdBy: 'system',
@@ -636,6 +664,7 @@ export async function updateInvoiceJournalEntry(data: {
   newAmount: number;
   date: string;
   description: string;
+  divisionId: string;
 }): Promise<{ error?: string }> {
   try {
     const db = getDb();
@@ -678,6 +707,7 @@ export async function updateInvoiceJournalEntry(data: {
       amount: data.newAmount,
       date: data.date,
       description: data.description,
+      divisionId: data.divisionId,
     });
 
     return { error: result.error };
@@ -702,14 +732,17 @@ export async function postExpenseJournalEntry(data: {
   date: string;
   category: string;
   description?: string;
+  sourceDocumentNumber?: string;
+  divisionId: string;
 }): Promise<{ error?: string; entryId?: string }> {
   try {
-    const { expenseId, amount, date, category, description } = data;
+    const { expenseId, amount, date, category, description, divisionId } = data;
 
     if (amount <= 0) return { error: 'Expense amount must be positive.' };
 
     const period = date.slice(0, 7);
-    await ensureOpenPeriod(period);
+    const p = await ensureOpenPeriod(period);
+    if (p.status !== 'open') return { error: `Accounting period ${period} is closed.` };
 
     const expenseCode = findExpenseAccountCode(category);
     const accountMap = await getAccountsByCode([
@@ -736,12 +769,13 @@ export async function postExpenseJournalEntry(data: {
         entryNumber,
         entryDate: date,
         period,
+        divisionId,
         description: desc,
         status: 'posted',
         sourceModule: 'expense',
         sourceTable: 'expenses',
         sourceId: expenseId,
-        sourceDocumentNumber: entryNumber,
+        sourceDocumentNumber: data.sourceDocumentNumber || entryNumber,
         postedAt: new Date(),
         postedBy: 'system',
         createdBy: 'system',
@@ -833,6 +867,7 @@ export async function updateExpenseJournalEntry(data: {
   date: string;
   category: string;
   description?: string;
+  divisionId: string;
 }): Promise<{ error?: string }> {
   await voidExpenseJournalEntries(data.expenseId);
 
@@ -842,6 +877,7 @@ export async function updateExpenseJournalEntry(data: {
     date: data.date,
     category: data.category,
     description: data.description,
+    divisionId: data.divisionId,
   });
 
   return { error: result.error };
