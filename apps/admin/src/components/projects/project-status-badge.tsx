@@ -42,9 +42,7 @@ export const STATUS_TRANSITIONS: Record<string, { value: string; label: string }
     { value: 'cancelled', label: 'Cancel' },
     { value: 'planned', label: 'Re-plan' },
   ],
-  submitted: [
-    { value: 'planned', label: 'Re-plan' },
-  ],
+  submitted: [],
   cancelled: [
     { value: 'planned', label: 'Reinstate' },
   ],

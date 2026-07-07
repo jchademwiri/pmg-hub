@@ -106,9 +106,9 @@ export function ProjectListClient({ entries, clients, divisions, progressMap = {
         if (!matchClient && !matchRef) return false;
       }
 
-      // Status filter: hide cancelled by default in "All" view
+      // Status filter: hide cancelled and submitted by default in "All" view
       if (statusFilter === 'all') {
-        if (e.status === 'cancelled') return false;
+        if (e.status === 'cancelled' || e.status === 'submitted') return false;
       } else {
         if (e.status !== statusFilter) return false;
       }
@@ -145,10 +145,12 @@ export function ProjectListClient({ entries, clients, divisions, progressMap = {
       return true;
     });
 
-    // Sort cancelled projects to the bottom
+    // Sort cancelled and submitted projects to the bottom
     return [...list].sort((a, b) => {
-      if (a.status === 'cancelled' && b.status !== 'cancelled') return 1;
-      if (a.status !== 'cancelled' && b.status === 'cancelled') return -1;
+      const aBottom = a.status === 'cancelled' || a.status === 'submitted';
+      const bBottom = b.status === 'cancelled' || b.status === 'submitted';
+      if (aBottom && !bBottom) return 1;
+      if (!aBottom && bBottom) return -1;
       return 0;
     });
   }, [entries, searchQuery, statusFilter, priorityFilter, dateFilter, clientMap]);
