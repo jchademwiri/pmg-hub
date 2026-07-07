@@ -238,7 +238,7 @@ export async function transitionProjectStatusAction(
       planned: ['in_progress', 'cancelled'],
       in_progress: ['completed', 'cancelled', 'planned'],
       completed: ['submitted', 'cancelled', 'planned'],
-      submitted: ['planned'],
+      submitted: [],
       cancelled: ['planned'],
     };
 
