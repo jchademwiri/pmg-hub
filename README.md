@@ -1,159 +1,96 @@
-# Turborepo starter
+# PMG Hub — Admin
 
-This Turborepo starter is maintained by the Turborepo core team.
+Internal operations console for Playhouse Media Group (PMG): billing/AR, accounting, project coordination, and client relationships across PMG's divisions (Apex Web Solutions, TenderEdge Solutions, PMG Services).
 
-## Using this example
+Part of the `pmg-hub` Turborepo monorepo. This app lives at `apps/admin`.
 
-Run the following command:
+## Tech stack
 
-```sh
-npx create-turbo@latest
+- **Framework:** Next.js 16 (App Router), React 19
+- **Language:** TypeScript
+- **Styling:** Tailwind CSS 4, shadcn/ui
+- **Database:** Neon Postgres via `@pmg/db` (Drizzle ORM)
+- **Auth:** Better Auth (magic link + OTP)
+- **Email:** Resend, via `@pmg/emails`
+- **Charts:** Recharts
+- **PDF export:** jsPDF + html2canvas-pro
+- **Rate limiting:** Upstash Redis
+- **Testing:** Vitest + Testing Library + fast-check (property-based tests)
+
+## Modules
+
+Route groups under `src/app/(admin)`, mirrored in the sidebar config at `src/components/navigation/nav-data.ts`.
+
+| Module | Routes | What it does |
+|---|---|---|
+| **Dashboard** | `/dashboard` | Landing overview after login. |
+| **Billing** | `/billing/*` | Quote-to-cash: accounts, quotations, invoices, payments, credits, statements, aging report, billable items catalogue. |
+| **Projects** | `/projects/*` | Project coordination: schedule list and timeline views. |
+| **Finance** | `/finance/*` | Income, expenses, expense categories, distributions/allocations. |
+| **Accounting** | `/accounting/*` | Double-entry engine: chart of accounts, journals, general ledger, trial balance, profit & loss, period locking, exports. |
+| **Relationships** | `/relationships/*` | CRM: clients, leads, PMG divisions. |
+| **Insights** | `/insights/*` | Snapshots, reports, business analysis. |
+| **System** | `/settings/*` | Users (with invite flow), organisation profile, subscription/billing plan, security, data & exports. |
+
+To add, remove, or rename a route, edit `src/components/navigation/nav-data.ts` — it's the single source of truth for both the sidebar and breadcrumb labels.
+
+## Getting started
+
+From the monorepo root (uses Bun):
+
+```bash
+bun install
+cp .env.example .env.local        # shared vars — DB, Resend keys, Turnstile, R2
+cp apps/admin/.env.example apps/admin/.env.local   # app-specific vars, if present
+bun run db:migrate                 # apply schema via @pmg/db
+bun run dev                        # runs turbo: dev + db:studio + email:dev
 ```
 
-## What's inside?
+Or scoped to just this app:
 
-This Turborepo includes the following packages/apps:
-
-### Apps and Packages
-
-- `docs`: a [Next.js](https://nextjs.org/) app
-- `web`: another [Next.js](https://nextjs.org/) app
-- `@pmg/ui`: a stub React component library shared by both `web` and `docs` applications
-- `@pmg/eslint-config`: `eslint` configurations (includes `eslint-config-next` and `eslint-config-prettier`)
-- `@pmg/typescript-config`: `tsconfig.json`s used throughout the monorepo
-
-Each package/app is 100% [TypeScript](https://www.typescriptlang.org/).
-
-### Utilities
-
-This Turborepo has some additional tools already setup for you:
-
-- [TypeScript](https://www.typescriptlang.org/) for static type checking
-- [ESLint](https://eslint.org/) for code linting
-- [Prettier](https://prettier.io) for code formatting
-
-### Build
-
-To build all apps and packages, run the following command:
-
-With [global `turbo`](https://turborepo.dev/docs/getting-started/installation#global-installation) installed (recommended):
-
-```sh
-cd my-turborepo
-turbo build
+```bash
+cd apps/admin
+bun dev
 ```
 
-Without global `turbo`, use your package manager:
+App runs at [http://localhost:3000](http://localhost:3000).
 
-```sh
-cd my-turborepo
-npx turbo build
-yarn dlx turbo build
-pnpm exec turbo build
+### Other useful commands
+
+```bash
+bun run lint            # eslint
+bun run check-types     # tsc across the monorepo
+cd apps/admin && bun test          # vitest run
+cd apps/admin && bun test:watch    # vitest watch mode
 ```
 
-You can build a specific package by using a [filter](https://turborepo.dev/docs/crafting-your-repository/running-tasks#using-filters):
+## Project structure
 
-With [global `turbo`](https://turborepo.dev/docs/getting-started/installation#global-installation) installed:
-
-```sh
-turbo build --filter=docs
+```
+apps/admin/
+├── src/
+│   ├── app/
+│   │   ├── (admin)/        # authenticated route groups — see Modules table above
+│   │   ├── (auth)/         # login / magic-link flow
+│   │   ├── actions/        # server actions
+│   │   └── api/            # route handlers (cron, webhooks, etc.)
+│   ├── components/         # one folder per module (billing, projects, ledger, etc.) + shared ui/
+│   ├── lib/                 # accounting engine, billing helpers, auth config, PDF/export utilities
+│   └── __tests__/           # unit, component, and property-based tests
 ```
 
-Without global `turbo`:
+## Environment variables
 
-```sh
-npx turbo build --filter=docs
-yarn exec turbo build --filter=docs
-pnpm exec turbo build --filter=docs
-```
+Shared across the monorepo (see root `.env.example`):
 
-### Develop
+- `DATABASE_URL`, `DATABASE_URL_UNPOOLED` — Neon Postgres
+- `PMG_RESEND_API_KEY` / `TES_RESEND_API_KEY` / `AWS_RESEND_API_KEY` — per-brand email sending
+- `TURNSTILE_SITE_KEY`, `TURNSTILE_SECRET_KEY` — bot protection
+- `CLOUDFLARE_R2_*` — database export/backup storage
+- `IMPERSONATION_SHARED_SECRET` — admin user impersonation
 
-To develop all apps and packages, run the following command:
+## Notes
 
-With [global `turbo`](https://turborepo.dev/docs/getting-started/installation#global-installation) installed (recommended):
-
-```sh
-cd my-turborepo
-turbo dev
-```
-
-Without global `turbo`, use your package manager:
-
-```sh
-cd my-turborepo
-npx turbo dev
-yarn exec turbo dev
-pnpm exec turbo dev
-```
-
-You can develop a specific package by using a [filter](https://turborepo.dev/docs/crafting-your-repository/running-tasks#using-filters):
-
-With [global `turbo`](https://turborepo.dev/docs/getting-started/installation#global-installation) installed:
-
-```sh
-turbo dev --filter=web
-```
-
-Without global `turbo`:
-
-```sh
-npx turbo dev --filter=web
-yarn exec turbo dev --filter=web
-pnpm exec turbo dev --filter=web
-```
-
-### Remote Caching
-
-> [!TIP]
-> Vercel Remote Cache is free for all plans. Get started today at [vercel.com](https://vercel.com/signup?utm_source=remote-cache-sdk&utm_campaign=free_remote_cache).
-
-Turborepo can use a technique known as [Remote Caching](https://turborepo.dev/docs/core-concepts/remote-caching) to share cache artifacts across machines, enabling you to share build caches with your team and CI/CD pipelines.
-
-By default, Turborepo will cache locally. To enable Remote Caching you will need an account with Vercel. If you don't have an account you can [create one](https://vercel.com/signup?utm_source=turborepo-examples), then enter the following commands:
-
-With [global `turbo`](https://turborepo.dev/docs/getting-started/installation#global-installation) installed (recommended):
-
-```sh
-cd my-turborepo
-turbo login
-```
-
-Without global `turbo`, use your package manager:
-
-```sh
-cd my-turborepo
-npx turbo login
-yarn exec turbo login
-pnpm exec turbo login
-```
-
-This will authenticate the Turborepo CLI with your [Vercel account](https://vercel.com/docs/concepts/personal-accounts/overview).
-
-Next, you can link your Turborepo to your Remote Cache by running the following command from the root of your Turborepo:
-
-With [global `turbo`](https://turborepo.dev/docs/getting-started/installation#global-installation) installed:
-
-```sh
-turbo link
-```
-
-Without global `turbo`:
-
-```sh
-npx turbo link
-yarn exec turbo link
-pnpm exec turbo link
-```
-
-## Useful Links
-
-Learn more about the power of Turborepo:
-
-- [Tasks](https://turborepo.dev/docs/crafting-your-repository/running-tasks)
-- [Caching](https://turborepo.dev/docs/crafting-your-repository/caching)
-- [Remote Caching](https://turborepo.dev/docs/core-concepts/remote-caching)
-- [Filtering](https://turborepo.dev/docs/crafting-your-repository/running-tasks#using-filters)
-- [Configuration Options](https://turborepo.dev/docs/reference/configuration)
-- [CLI Usage](https://turborepo.dev/docs/reference/command-line-reference)
+- Financial figures flow through the `accounting` module (source of truth: journals → ledger → trial balance → P&L). Voided journal entries are filtered at the query level — see `src/lib/financial.ts` if touching trial balance logic.
+- Billing aging buckets: Current, 1–30, 31–60, 61–90, 91–120 days (`src/lib/billing-ageing.ts`).
+- This app shares its database and email packages (`@pmg/db`, `@pmg/emails`, `@pmg/billing`) with the other apps in the monorepo (`portal`, `pmg`, `aws`, `tes`) — schema or email-template changes here can affect those apps too.
