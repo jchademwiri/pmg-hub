@@ -119,13 +119,18 @@ export function ProjectDetailsClient({
 
   const handleTransition = async (newStatus: string) => {
     setIsTransitioning(true);
-    const res = await transitionProjectStatusAction(project.id, newStatus);
-    setIsTransitioning(false);
-    if (res?.error) {
-      toast.error(res.error);
-    } else {
-      toast.success(`Status updated to ${newStatus.replace('_', ' ')}`);
-      router.refresh();
+    try {
+      const res = await transitionProjectStatusAction(project.id, newStatus);
+      if (res?.error) {
+        toast.error(res.error);
+      } else {
+        toast.success(`Status updated to ${newStatus.replace('_', ' ')}`);
+        router.refresh();
+      }
+    } catch (err) {
+      toast.error('An unexpected error occurred while updating status.');
+    } finally {
+      setIsTransitioning(false);
     }
   };
 

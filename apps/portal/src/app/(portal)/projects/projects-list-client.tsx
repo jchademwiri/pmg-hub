@@ -79,16 +79,33 @@ export function ProjectsListClient({ projects, progressMap }: ProjectsListClient
   const upcomingDeadlines = projects
     .filter((p) => p.status !== 'completed' && p.status !== 'submitted')
     .sort((a, b) => a.closingDate.localeCompare(b.closingDate));
-  
+
   const nextDeadline = upcomingDeadlines[0];
+
+  // Active projects first, submitted sink to the bottom
+  const sortedProjects = React.useMemo(() => {
+    return [...projects].sort((a, b) => {
+      const aSubmitted = a.status === 'submitted';
+      const bSubmitted = b.status === 'submitted';
+      if (aSubmitted && !bSubmitted) return 1;
+      if (!aSubmitted && bSubmitted) return -1;
+      return 0; // preserve DB sortOrder within each group
+    });
+  }, [projects]);
+
+  // Timeline only shows active projects (submitted windows are in the past)
+  const activeProjects = React.useMemo(
+    () => projects.filter((p) => p.status !== 'submitted'),
+    [projects],
+  );
 
   // ── Timeline Math ───────────────────────────────────────────────────────────
   const { timelineDays, minDate, totalDays } = React.useMemo(() => {
-    if (projects.length === 0) return { timelineDays: [], minDate: new Date(), totalDays: 0 };
+    if (activeProjects.length === 0) return { timelineDays: [], minDate: new Date(), totalDays: 0 };
 
-    // Find min and max dates
-    const startDates = projects.map((p) => new Date(p.startDate).getTime());
-    const closingDates = projects.map((p) => new Date(p.closingDate).getTime());
+    // Find min and max dates from active projects only
+    const startDates = activeProjects.map((p) => new Date(p.startDate).getTime());
+    const closingDates = activeProjects.map((p) => new Date(p.closingDate).getTime());
     const minTime = Math.min(...startDates);
     const maxTime = Math.max(...closingDates);
 
@@ -209,7 +226,7 @@ export function ProjectsListClient({ projects, progressMap }: ProjectsListClient
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {projects.map((p) => {
+                  {sortedProjects.map((p) => {
                     const progress = progressMap[p.id] || { total: 0, completed: 0 };
                     const percent = progress.total > 0 ? Math.round((progress.completed / progress.total) * 100) : 0;
                     const status = STATUS_CONFIG[p.status] || { label: p.status, className: '' };
@@ -270,7 +287,7 @@ export function ProjectsListClient({ projects, progressMap }: ProjectsListClient
 
         {/* Timeline View */}
         <TabsContent value="timeline" className="mt-4 outline-none">
-          {projects.length === 0 ? (
+          {activeProjects.length === 0 ? (
             <div className="text-center py-12 border border-dashed border-white/5 rounded-lg text-muted-foreground text-sm flex flex-col items-center justify-center gap-2">
               <CalendarDays className="size-8 text-muted-foreground/30" />
               <span>No active timelines found.</span>
@@ -298,7 +315,7 @@ export function ProjectsListClient({ projects, progressMap }: ProjectsListClient
 
                     {/* Timeline Rows */}
                     <div className="space-y-4 relative z-10">
-                      {projects.map((entry) => {
+                      {activeProjects.map((entry) => {
                         const startOffset = daysBetween(
                           minDate.toISOString().split('T')[0],
                           entry.startDate,
