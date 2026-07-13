@@ -448,25 +448,24 @@ export async function issueInvoice(id: string): Promise<{ error?: string }> {
     await getSessionOrRedirect();
 
     const db = getDb();
-    const [invoice] = await db
-      .select({ id: invoices.id, status: invoices.status })
-      .from(invoices)
-      .where(eq(invoices.id, id));
+    // Atomic status transition
+    const updateResult = await db
+      .update(invoices)
+      .set({ status: 'issued', updatedAt: new Date() })
+      .where(and(
+        eq(invoices.id, id),
+        eq(invoices.status, 'draft')
+      ))
+      .returning({ id: invoices.id });
 
-    if (!invoice) return { error: 'Invoice not found.' };
-    if (invoice.status !== 'draft') {
-      return { error: 'Only draft invoices can be issued.' };
+    if (updateResult.length === 0) {
+      return { error: 'Invoice not found or is no longer a draft.' };
     }
 
     // Fetch invoice details for the journal entry
     const [invoiceDetail] = await db
       .select({ total: invoices.total, invoiceDate: invoices.invoiceDate, documentNumber: invoices.documentNumber, divisionId: invoices.divisionId })
       .from(invoices)
-      .where(eq(invoices.id, id));
-
-    await db
-      .update(invoices)
-      .set({ status: 'issued', updatedAt: new Date() })
       .where(eq(invoices.id, id));
 
     // Auto-post: Dr AR (1100) / Cr Revenue (4010)
@@ -682,16 +681,26 @@ export async function bulkIssueInvoices(ids: string[]): Promise<{ error?: string
       return { error: 'No draft invoices selected.' };
     }
 
+    // Atomic update
+    const updateResult = await db
+      .update(invoices)
+      .set({ status: 'issued', updatedAt: new Date() })
+      .where(and(
+        inArray(invoices.id, eligibleIds),
+        eq(invoices.status, 'draft')
+      ))
+      .returning({ id: invoices.id });
+
+    const updatedIds = updateResult.map(r => r.id);
+    if (updatedIds.length === 0) {
+      return { error: 'No invoices were updated.' };
+    }
+
     // Fetch invoice details for journal entries
     const invoiceDetails = await db
       .select({ id: invoices.id, total: invoices.total, invoiceDate: invoices.invoiceDate, documentNumber: invoices.documentNumber, divisionId: invoices.divisionId })
       .from(invoices)
-      .where(inArray(invoices.id, eligibleIds));
-
-    await db
-      .update(invoices)
-      .set({ status: 'issued', updatedAt: new Date() })
-      .where(inArray(invoices.id, eligibleIds));
+      .where(inArray(invoices.id, updatedIds));
 
     // Auto-post AR for each issued invoice
     for (const inv of invoiceDetails) {
@@ -802,14 +811,19 @@ export async function writeOffInvoice(id: string, reason: string): Promise<{ err
         throw new Error('Invoice has no outstanding balance to write off.');
       }
 
-      await tx
+      const updateResult = await tx
         .update(invoices)
         .set({ 
           status: 'written_off', 
           writeOffAmount: String(outstanding),
           updatedAt: new Date() 
         })
-        .where(and(eq(invoices.id, id), eq(invoices.status, invoice.status)));
+        .where(and(eq(invoices.id, id), eq(invoices.status, invoice.status)))
+        .returning({ id: invoices.id });
+
+      if (updateResult.length === 0) {
+        throw new Error('Invoice status changed concurrently. Write-off aborted.');
+      }
 
       const journalResult = await postInvoiceWriteOffJournalEntry({
         invoiceId: id,

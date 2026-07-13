@@ -15,11 +15,11 @@ import {
 } from '@/components/ui/select'
 import { getSASTToday, formatZAR } from '@/lib/format'
 import { toast } from 'sonner'
-import type { ChartAccount } from '@pmg/db'
+import type { ChartAccount, Division } from '@pmg/db'
 
 interface JournalEntryFormProps {
   accounts: ChartAccount[]
-  divisions: any[]
+  divisions: Division[]
   createAction: (data: {
     divisionId: string
     entryDate: string

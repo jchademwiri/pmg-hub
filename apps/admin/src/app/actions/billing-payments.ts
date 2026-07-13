@@ -225,12 +225,21 @@ export async function recordClientPayment(data: PaymentInput): Promise<{ error?:
 
         // Lock the invoice row first to serialize concurrent updates
         const [invoiceRow] = await tx
-          .select({ total: invoices.total, writeOffAmount: invoices.writeOffAmount, documentNumber: invoices.documentNumber })
+          .select({ 
+            total: invoices.total, 
+            writeOffAmount: invoices.writeOffAmount, 
+            documentNumber: invoices.documentNumber,
+            clientId: invoices.clientId,
+            divisionId: invoices.divisionId 
+          })
           .from(invoices)
           .where(eq(invoices.id, alloc.invoiceId))
           .for('update');
 
         if (!invoiceRow) throw new Error('Invoice not found for allocation.');
+        if (invoiceRow.clientId !== data.clientId || invoiceRow.divisionId !== finalDivisionId) {
+          throw new Error(`Invoice ${invoiceRow.documentNumber} does not match the payment client or division.`);
+        }
 
         // Verify balance before allocation
         const [sumAggBefore] = await tx

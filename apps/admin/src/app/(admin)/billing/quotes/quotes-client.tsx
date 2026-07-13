@@ -143,7 +143,7 @@ export function QuotesClient({
         <TableHeader>
           <TableRow>
             <TableHead>Quote #</TableHead>
-            <TableHead>Division</TableHead>
+            <TableHead>Reference</TableHead>
             <TableHead>Client</TableHead>
             <TableHead>Issue Date</TableHead>
             <TableHead>Expiry Date</TableHead>
@@ -167,9 +167,11 @@ export function QuotesClient({
                 {quote.documentNumber}
               </TableCell>
               <TableCell>
-                <Badge variant="outline" className="font-mono text-[10px] tracking-wide">
-                  {getDocumentLogoText(quote.divisionName)}
-                </Badge>
+                {quote.reference ? (
+                  <span className="text-muted-foreground">{quote.reference}</span>
+                ) : (
+                  <span className="italic text-muted-foreground/50">None</span>
+                )}
               </TableCell>
               <TableCell className="text-muted-foreground">
                 {quote.clientName ?? <span className="italic">No client</span>}

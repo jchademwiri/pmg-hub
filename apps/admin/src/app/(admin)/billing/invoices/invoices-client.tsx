@@ -115,7 +115,7 @@ export function InvoicesClient({
         <TableHeader>
           <TableRow>
             <TableHead>Invoice #</TableHead>
-            <TableHead>Division</TableHead>
+            <TableHead>Reference</TableHead>
             <TableHead>Client</TableHead>
             <TableHead>Issue Date</TableHead>
             <TableHead>Due Date</TableHead>
@@ -139,9 +139,11 @@ export function InvoicesClient({
                 {inv.documentNumber}
               </TableCell>
               <TableCell>
-                <Badge variant="outline" className="font-mono text-[10px] tracking-wide">
-                  {getDocumentLogoText(inv.divisionName)}
-                </Badge>
+                {inv.reference ? (
+                  <span className="text-muted-foreground">{inv.reference}</span>
+                ) : (
+                  <span className="italic text-muted-foreground/50">None</span>
+                )}
               </TableCell>
               <TableCell className="text-muted-foreground">
                 {inv.clientName ?? <span className="italic">No client</span>}

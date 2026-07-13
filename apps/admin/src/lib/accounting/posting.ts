@@ -317,17 +317,20 @@ export async function updatePaymentJournalEntries(data: {
   description: string;
   divisionId: string;
 }): Promise<{ error?: string }> {
-  await voidPaymentJournalEntries(data.incomeId);
+  return await getDb().transaction(async (tx) => {
+    await voidPaymentJournalEntries(data.incomeId, tx);
 
-  const result = await postPaymentJournalEntries({
-    incomeId: data.incomeId,
-    amount: data.newAmount,
-    date: data.date,
-    description: data.description,
-    divisionId: data.divisionId,
+    const result = await postPaymentJournalEntries({
+      incomeId: data.incomeId,
+      amount: data.newAmount,
+      date: data.date,
+      description: data.description,
+      divisionId: data.divisionId,
+      tx,
+    });
+
+    return { error: result.error };
   });
-
-  return { error: result.error };
 }
 
 // ── Invoice Issue: Dr AR / Cr Revenue ───────────────────────────────────────

@@ -66,7 +66,7 @@ cd apps/admin && bun test:watch    # vitest watch mode
 
 ## Project structure
 
-```
+```text
 apps/admin/
 ├── src/
 │   ├── app/
