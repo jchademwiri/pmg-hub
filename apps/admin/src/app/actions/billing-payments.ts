@@ -230,6 +230,22 @@ export async function recordClientPayment(data: PaymentInput): Promise<{ error?:
           .where(eq(invoices.id, alloc.invoiceId))
           .for('update');
 
+        if (!invoiceRow) throw new Error('Invoice not found for allocation.');
+
+        // Verify balance before allocation
+        const [sumAggBefore] = await tx
+          .select({ sum: sql<string>`coalesce(sum(${paymentAllocations.amount}), 0)` })
+          .from(paymentAllocations)
+          .where(eq(paymentAllocations.invoiceId, alloc.invoiceId));
+          
+        const totalAllocatedBefore = parseFloat(sumAggBefore?.sum ?? '0');
+        const invoiceTotalBefore = parseFloat(invoiceRow.total);
+        const outstandingBefore = Math.max(0, invoiceTotalBefore - totalAllocatedBefore);
+        
+        if (alloc.amount > outstandingBefore + 0.01) {
+           throw new Error(`Payment allocation of R${alloc.amount.toFixed(2)} exceeds outstanding balance for invoice ${invoiceRow.documentNumber}`);
+        }
+
         // Insert allocation link
         await tx.insert(paymentAllocations).values({
           incomeId: incomeRow.id,
@@ -289,25 +305,23 @@ export async function recordClientPayment(data: PaymentInput): Promise<{ error?:
           }
         }
       }
-
-      return incomeRow.id;
-    });
-
     // C. Post bad debt recovery journal entries
     for (const rec of recoveriesToPost) {
       const recoveryResult = await postBadDebtRecoveryJournalEntry({
-        incomeId: recordedIncomeId,
+        incomeId: incomeRow.id,
         invoiceId: rec.invoiceId,
         amount: rec.amount,
         date: data.date,
         description: `Bad Debt Recovery - ${rec.documentNumber}`,
+        divisionId: finalDivisionId,
+        tx,
       });
       if (recoveryResult.error) {
-        console.warn('Bad debt recovery journal warning:', recoveryResult.error);
+        throw new Error(`Bad debt recovery journal failed: ${recoveryResult.error}`);
       }
     }
 
-    // C. Check for overpayment and create credit note
+    // D. Check for overpayment and create credit note
     if (excessAmount > 0) {
       const { createCreditNote } = await import('./credit-management');
       const creditNoteRes = await createCreditNote({
@@ -316,36 +330,40 @@ export async function recordClientPayment(data: PaymentInput): Promise<{ error?:
         type: 'overpayment',
         amount: excessAmount,
         reason: data.description ? `Overpayment from: ${data.description}` : 'Client payment overpayment',
-        originalPaymentId: recordedIncomeId,
+        originalPaymentId: incomeRow.id,
+        tx,
       });
       if (creditNoteRes.error) {
-        console.error('Failed to create credit note for overpayment:', creditNoteRes.error);
+        throw new Error(`Failed to create credit note for overpayment: ${creditNoteRes.error}`);
       }
     }
 
-    // 4. Auto-post double-entry journal entries (Dr Bank / Cr Revenue + Dr Savings / Cr PMG Share)
+    // E. Auto-post double-entry journal entries
     const journalResult = await postPaymentJournalEntries({
-      incomeId: recordedIncomeId,
+      incomeId: incomeRow.id,
       amount: data.amount,
       date: data.date,
       description: autoReference,
       divisionId: finalDivisionId,
+      tx,
     });
     if (journalResult.error) {
-      console.warn('Journal auto-post warning:', journalResult.error);
-      // Non-fatal: payment was recorded, journal posting failed
+      throw new Error(`Journal auto-post failed: ${journalResult.error}`);
     }
 
-    // 5. Revalidate cache
-    revalidatePath('/billing/invoices');
-    revalidatePath('/billing/payments');
-    revalidatePath('/dashboard');
-    revalidatePath('/accounting/journals');
-    revalidatePath('/accounting/trial-balance');
-    revalidatePath('/accounting/general-ledger');
-    revalidatePath('/accounting/profit-and-loss');
+    return incomeRow.id;
+  });
 
-    // 6. Asynchronously trigger Payment Thank You email receipt via Resend
+  // 5. Revalidate cache
+  revalidatePath('/billing/invoices');
+  revalidatePath('/billing/payments');
+  revalidatePath('/dashboard');
+  revalidatePath('/accounting/journals');
+  revalidatePath('/accounting/trial-balance');
+  revalidatePath('/accounting/general-ledger');
+  revalidatePath('/accounting/profit-and-loss');
+
+  // 6. Asynchronously trigger Payment Thank You email receipt via Resend
     if (data.sendReceiptEmail && client.email) {
       (async () => {
         try {

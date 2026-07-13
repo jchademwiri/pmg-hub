@@ -176,19 +176,22 @@ export async function updateInvoice(
     // Delete existing line items, update invoice, and reinsert atomically
     const existingRow = await db.transaction(async (tx) => {
       const [existingLocked] = await tx
-        .select({ id: invoices.id, status: invoices.status, invoiceDate: invoices.invoiceDate, total: invoices.total, documentNumber: invoices.documentNumber })
+        .select({ id: invoices.id, status: invoices.status, invoiceDate: invoices.invoiceDate, total: invoices.total, documentNumber: invoices.documentNumber, divisionId: invoices.divisionId })
         .from(invoices)
         .where(eq(invoices.id, id))
         .for('update');
 
       if (!existingLocked) throw new InvoiceValidationError('Invoice not found.');
 
-      // Paid and voided invoices cannot be edited
+      // Paid, voided, and written-off invoices cannot be edited
       if (existingLocked.status === 'paid') {
         throw new InvoiceValidationError('Paid invoices cannot be edited.');
       }
       if (existingLocked.status === 'void') {
         throw new InvoiceValidationError('Voided invoices cannot be edited.');
+      }
+      if (existingLocked.status === 'written_off') {
+        throw new InvoiceValidationError('Written-off invoices cannot be edited.');
       }
 
       // We allow editing of draft, issued, or overdue invoices in closed periods
@@ -260,6 +263,7 @@ export async function updateInvoice(
         newAmount: total,
         date: invoiceDate,
         description: `Invoice ${existingRow.documentNumber}`,
+        divisionId: existingRow.divisionId,
       });
       if (journalResult.error) {
         console.warn('Invoice AR update warning:', journalResult.error);
@@ -456,7 +460,7 @@ export async function issueInvoice(id: string): Promise<{ error?: string }> {
 
     // Fetch invoice details for the journal entry
     const [invoiceDetail] = await db
-      .select({ total: invoices.total, invoiceDate: invoices.invoiceDate, documentNumber: invoices.documentNumber })
+      .select({ total: invoices.total, invoiceDate: invoices.invoiceDate, documentNumber: invoices.documentNumber, divisionId: invoices.divisionId })
       .from(invoices)
       .where(eq(invoices.id, id));
 
@@ -472,6 +476,7 @@ export async function issueInvoice(id: string): Promise<{ error?: string }> {
         amount: parseFloat(invoiceDetail.total),
         date: invoiceDetail.invoiceDate,
         description: `Invoice ${invoiceDetail.documentNumber}`,
+        divisionId: invoiceDetail.divisionId,
       });
       if (journalResult.error) {
         console.warn('Invoice AR auto-post warning:', journalResult.error);
@@ -679,7 +684,7 @@ export async function bulkIssueInvoices(ids: string[]): Promise<{ error?: string
 
     // Fetch invoice details for journal entries
     const invoiceDetails = await db
-      .select({ id: invoices.id, total: invoices.total, invoiceDate: invoices.invoiceDate, documentNumber: invoices.documentNumber })
+      .select({ id: invoices.id, total: invoices.total, invoiceDate: invoices.invoiceDate, documentNumber: invoices.documentNumber, divisionId: invoices.divisionId })
       .from(invoices)
       .where(inArray(invoices.id, eligibleIds));
 
@@ -695,6 +700,7 @@ export async function bulkIssueInvoices(ids: string[]): Promise<{ error?: string
         amount: parseFloat(inv.total),
         date: inv.invoiceDate,
         description: `Invoice ${inv.documentNumber}`,
+        divisionId: inv.divisionId,
       });
       if (journalResult.error) {
         console.warn('Bulk issue AR auto-post warning:', journalResult.error);
@@ -759,36 +765,10 @@ export async function bulkVoidInvoices(ids: string[]): Promise<{ error?: string;
 // ── writeOffInvoice ──────────────────────────────────────────────────────────
 
 export async function writeOffInvoice(id: string, reason: string): Promise<{ error?: string }> {
+  await getSessionOrRedirect();
+
   try {
-    const session = await getSessionOrRedirect();
-
     const db = getDb();
-    
-    // Calculate total allocations
-    const [sumAgg] = await db
-      .select({ sum: sql<string>`coalesce(sum(${paymentAllocations.amount}), 0)` })
-      .from(paymentAllocations)
-      .where(eq(paymentAllocations.invoiceId, id));
-    
-    const totalAllocated = parseFloat(sumAgg?.sum ?? '0');
-
-    const [invoice] = await db
-      .select({ id: invoices.id, status: invoices.status, total: invoices.total, documentNumber: invoices.documentNumber })
-      .from(invoices)
-      .where(eq(invoices.id, id));
-
-    if (!invoice) return { error: 'Invoice not found.' };
-    if (invoice.status !== 'issued' && invoice.status !== 'overdue') {
-      return { error: 'Only issued or overdue invoices can be written off.' };
-    }
-
-    const total = parseFloat(invoice.total);
-    const outstanding = Math.max(0, total - totalAllocated);
-
-    if (outstanding <= 0) {
-      return { error: 'Invoice has no outstanding balance to write off.' };
-    }
-
     const writeOffDate = getSASTToday();
 
     if (await isPeriodClosed(writeOffDate)) {
@@ -796,25 +776,55 @@ export async function writeOffInvoice(id: string, reason: string): Promise<{ err
       return { error: getMinDateErrorMessage(minDate) };
     }
 
-    await db
-      .update(invoices)
-      .set({ 
-        status: 'written_off', 
-        writeOffAmount: String(outstanding),
-        updatedAt: new Date() 
-      })
-      .where(eq(invoices.id, id));
+    await db.transaction(async (tx) => {
+      // Calculate total allocations within the transaction to prevent stale reads
+      const [sumAgg] = await tx
+        .select({ sum: sql<string>`coalesce(sum(${paymentAllocations.amount}), 0)` })
+        .from(paymentAllocations)
+        .where(eq(paymentAllocations.invoiceId, id));
+      
+      const totalAllocated = parseFloat(sumAgg?.sum ?? '0');
 
-    const journalResult = await postInvoiceWriteOffJournalEntry({
-      invoiceId: id,
-      amount: outstanding,
-      date: writeOffDate,
-      description: `Write-off Invoice ${invoice.documentNumber}: ${reason}`,
+      const [invoice] = await tx
+        .select({ id: invoices.id, status: invoices.status, total: invoices.total, documentNumber: invoices.documentNumber, divisionId: invoices.divisionId })
+        .from(invoices)
+        .where(eq(invoices.id, id));
+
+      if (!invoice) throw new Error('Invoice not found.');
+      if (invoice.status !== 'issued' && invoice.status !== 'overdue') {
+        throw new Error('Only issued or overdue invoices can be written off.');
+      }
+
+      const total = parseFloat(invoice.total);
+      const outstanding = Math.max(0, total - totalAllocated);
+
+      if (outstanding <= 0) {
+        throw new Error('Invoice has no outstanding balance to write off.');
+      }
+
+      await tx
+        .update(invoices)
+        .set({ 
+          status: 'written_off', 
+          writeOffAmount: String(outstanding),
+          updatedAt: new Date() 
+        })
+        .where(and(eq(invoices.id, id), eq(invoices.status, invoice.status)));
+
+      const journalResult = await postInvoiceWriteOffJournalEntry({
+        invoiceId: id,
+        amount: outstanding,
+        date: writeOffDate,
+        description: `Write-off Invoice ${invoice.documentNumber}: ${reason}`,
+        sourceDocumentNumber: invoice.documentNumber,
+        divisionId: invoice.divisionId,
+        tx,
+      });
+
+      if (journalResult.error) {
+        throw new Error(journalResult.error);
+      }
     });
-
-    if (journalResult.error) {
-      console.warn('Invoice write-off journal warning:', journalResult.error);
-    }
 
     revalidatePath('/billing/invoices');
     revalidatePath(`/billing/invoices/${id}`);
@@ -823,8 +833,9 @@ export async function writeOffInvoice(id: string, reason: string): Promise<{ err
     revalidatePath('/accounting/general-ledger');
 
     return {};
-  } catch {
-    return { error: 'Failed to write off invoice. Please try again.' };
+  } catch (err: any) {
+    if (err?.message === 'NEXT_REDIRECT') throw err;
+    return { error: err.message || 'Failed to write off invoice. Please try again.' };
   }
 }
 

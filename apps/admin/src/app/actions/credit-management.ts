@@ -739,10 +739,11 @@ export async function createCreditNote(data: {
   originalInvoiceId?: string;
   originalPaymentId?: string;
   expiresAt?: string;
+  tx?: any;
 }): Promise<{ error?: string; creditNoteId?: string }> {
   try {
     const session = await getSessionOrRedirect();
-    const db = getDb();
+    const db = data.tx || getDb();
 
     if (data.amount <= 0) {
       return { error: 'Credit amount must be greater than zero.' };
