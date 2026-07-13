@@ -140,7 +140,7 @@ export function InvoicesClient({
               </TableCell>
               <TableCell>
                 {inv.reference ? (
-                  <span className="text-muted-foreground">{inv.reference}</span>
+                  <span className="text-muted-foreground">{inv.reference.length > 30 ? inv.reference.slice(0, 30) + '...' : inv.reference}</span>
                 ) : (
                   <span className="italic text-muted-foreground/50">None</span>
                 )}

@@ -168,7 +168,7 @@ export function QuotesClient({
               </TableCell>
               <TableCell>
                 {quote.reference ? (
-                  <span className="text-muted-foreground">{quote.reference}</span>
+                  <span className="text-muted-foreground">{quote.reference.length > 30 ? quote.reference.slice(0, 30) + '...' : quote.reference}</span>
                 ) : (
                   <span className="italic text-muted-foreground/50">None</span>
                 )}
