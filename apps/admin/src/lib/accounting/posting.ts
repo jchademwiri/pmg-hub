@@ -82,14 +82,14 @@ function findExpenseAccountCode(category: string): string {
 }
 
 // ── Look up accounts by code ───────────────────────────────────────────────
-async function getAccountsByCode(codes: string[]) {
-  const db = getDb();
+async function getAccountsByCode(codes: string[], tx?: any) {
+  const db = tx || getDb();
   const accounts = await db
     .select()
     .from(chartAccounts)
     .where(inArray(chartAccounts.code, codes));
 
-  const map = new Map(accounts.map((a) => [a.code, a]));
+  const map = new Map(accounts.map((a: any) => [a.code, a]));
   return map;
 }
 
@@ -129,7 +129,7 @@ export async function postPaymentJournalEntries(data: {
       BANK_ACCOUNT_CODE,
       SAVINGS_ACCOUNT_CODE,
       ACCOUNTS_RECEIVABLE_CODE,
-    ]);
+    ], db);
 
     const bankAccount = accountMap.get(BANK_ACCOUNT_CODE);
     const savingsAccount = accountMap.get(SAVINGS_ACCOUNT_CODE);
@@ -362,7 +362,7 @@ export async function postInvoiceIssueJournalEntry(data: {
     const accountMap = await getAccountsByCode([
       ACCOUNTS_RECEIVABLE_CODE,
       SALES_REVENUE_CODE,
-    ]);
+    ], db);
 
     const accountsReceivable = accountMap.get(ACCOUNTS_RECEIVABLE_CODE);
     const salesRevenue = accountMap.get(SALES_REVENUE_CODE);
@@ -447,7 +447,7 @@ export async function postInvoiceWriteOffJournalEntry(data: {
       isPostingAccount: true,
     }).onConflictDoNothing({ target: chartAccounts.code });
 
-    const accountMap = await getAccountsByCode([ACCOUNTS_RECEIVABLE_CODE, BAD_DEBT_EXPENSE_CODE]);
+    const accountMap = await getAccountsByCode([ACCOUNTS_RECEIVABLE_CODE, BAD_DEBT_EXPENSE_CODE], db);
     const accountsReceivable = accountMap.get(ACCOUNTS_RECEIVABLE_CODE);
     const badDebtExpense = accountMap.get(BAD_DEBT_EXPENSE_CODE);
 
@@ -521,7 +521,7 @@ export async function postBadDebtRecoveryJournalEntry(data: {
     if (p.status !== 'open') return { error: `Accounting period ${period} is closed.` };
 
     const db = data.tx || getDb();
-    const accountMap = await getAccountsByCode([ACCOUNTS_RECEIVABLE_CODE, BAD_DEBT_EXPENSE_CODE]);
+    const accountMap = await getAccountsByCode([ACCOUNTS_RECEIVABLE_CODE, BAD_DEBT_EXPENSE_CODE], db);
     const accountsReceivable = accountMap.get(ACCOUNTS_RECEIVABLE_CODE);
     const badDebtExpense = accountMap.get(BAD_DEBT_EXPENSE_CODE);
 
@@ -747,11 +747,12 @@ export async function postExpenseJournalEntry(data: {
     const p = await ensureOpenPeriod(period);
     if (p.status !== 'open') return { error: `Accounting period ${period} is closed.` };
 
+    const db = getDb();
     const expenseCode = findExpenseAccountCode(category);
     const accountMap = await getAccountsByCode([
       BANK_ACCOUNT_CODE,
       expenseCode,
-    ]);
+    ], db);
 
     const bankAccount = accountMap.get(BANK_ACCOUNT_CODE);
     const expenseAccount = accountMap.get(expenseCode);
@@ -760,7 +761,6 @@ export async function postExpenseJournalEntry(data: {
       return { error: `Required chart accounts not found (1010, ${expenseCode}). Please run the accounting seed first.` };
     }
 
-    const db = getDb();
     const entryId = randomUUID();
     const desc = description || category;
 
