@@ -125,6 +125,7 @@ export async function postPaymentJournalEntries(data: {
     const p = await ensureOpenPeriod(period);
     if (p.status !== 'open') return { error: `Accounting period ${period} is closed.` };
 
+    const db = data.tx || getDb();
     const accountMap = await getAccountsByCode([
       BANK_ACCOUNT_CODE,
       SAVINGS_ACCOUNT_CODE,
@@ -141,7 +142,6 @@ export async function postPaymentJournalEntries(data: {
       };
     }
 
-    const db = data.tx || getDb();
     const entryIds: string[] = [];
     const now = new Date();
 
@@ -359,6 +359,7 @@ export async function postInvoiceIssueJournalEntry(data: {
     const p = await ensureOpenPeriod(period);
     if (p.status !== 'open') return { error: `Accounting period ${period} is closed.` };
 
+    const db = getDb();
     const accountMap = await getAccountsByCode([
       ACCOUNTS_RECEIVABLE_CODE,
       SALES_REVENUE_CODE,
@@ -371,7 +372,6 @@ export async function postInvoiceIssueJournalEntry(data: {
       return { error: 'Required chart accounts not found (1100, 4010). Please run the accounting seed first.' };
     }
 
-    const db = getDb();
     const entryId = randomUUID();
 
     // Atomic transaction: entry + 2 lines
