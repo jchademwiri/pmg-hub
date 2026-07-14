@@ -42,6 +42,7 @@ import {
   ACCOUNT_RATES,
   getNextJournalEntryNumber,
   ensureOpenPeriod,
+  type ChartAccount,
 } from '@pmg/db';
 
 // ── Account Code Constants ───────────────────────────────────────────────────
@@ -89,7 +90,7 @@ async function getAccountsByCode(codes: string[], tx?: any) {
     .from(chartAccounts)
     .where(inArray(chartAccounts.code, codes));
 
-  const map = new Map(accounts.map((a: any) => [a.code, a]));
+  const map = new Map<string, ChartAccount>(accounts.map((a: any) => [a.code, a]));
   return map;
 }
 
