@@ -44,7 +44,10 @@ export function InvoicesTable({
     startTransition(async () => {
       const result = await issueAction(id);
       if (result.error) toast.error(result.error);
-      else toast.success(`${docNumber} issued.`);
+      else {
+        toast.success(`${docNumber} issued.`);
+        router.refresh();
+      }
     });
   }
 

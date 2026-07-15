@@ -65,7 +65,7 @@ export default async function PaymentsPage({ searchParams }: PaymentsPageProps) 
   const previousMonths = currentMonths.slice(1);
 
   const [incomeResult, allocationSums, divisions, clients] = await Promise.all([
-    getAllIncome({ divisionId, month: currentMonthGroup.value }, { page: 1, pageSize: 1000 }),
+    getAllIncome({ divisionId, month: currentMonthGroup.value }, { page: 1, pageSize: 5000 }),
     db
       .select({
         incomeId: paymentAllocations.incomeId,
@@ -153,7 +153,7 @@ export default async function PaymentsPage({ searchParams }: PaymentsPageProps) 
               {m.label}
             </AccordionTrigger>
             <AccordionContent className="pt-2">
-              <LazyPaymentsTable year={m.year} month={m.month} closedPeriods={closedPeriods} deleteAction={deleteClientPayment} />
+              <LazyPaymentsTable year={m.year} month={m.month} deleteAction={deleteClientPayment} />
             </AccordionContent>
           </AccordionItem>
         ))}
@@ -163,7 +163,7 @@ export default async function PaymentsPage({ searchParams }: PaymentsPageProps) 
             {previousYearGroup.label}
           </AccordionTrigger>
           <AccordionContent className="pt-2">
-            <LazyPaymentsTable year={previousYearGroup.year} closedPeriods={closedPeriods} deleteAction={deleteClientPayment} />
+            <LazyPaymentsTable year={previousYearGroup.year} deleteAction={deleteClientPayment} />
           </AccordionContent>
         </AccordionItem>
       </Accordion>

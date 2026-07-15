@@ -66,6 +66,7 @@ export function QuotesTable({
         toast.error(result.error);
       } else {
         toast.success(`Quote marked as ${newStatus}.`);
+        router.refresh();
       }
     });
   }
@@ -84,6 +85,7 @@ export function QuotesTable({
         toast.error(result.error);
       } else {
         toast.success('Quote deleted.');
+        router.refresh();
       }
     });
   }
