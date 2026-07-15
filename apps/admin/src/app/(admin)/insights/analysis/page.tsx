@@ -31,13 +31,13 @@ export default async function AnalysisPage(props: {
   
   // Default to current financial year
   let defaultYear = year;
-  if (month < 3) defaultYear = year - 1;
+  if (month < 2) defaultYear = year - 1;
 
   const parsedYear = searchParams.year ? parseInt(searchParams.year, 10) : defaultYear;
   const selectedYear = Number.isFinite(parsedYear) && !Number.isNaN(parsedYear) ? parsedYear : defaultYear;
 
   // Use current date string for YTD calculations
-  const currentDateStr = `${year}-${String(month).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+  const currentDateStr = `${year}-${String(month + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
 
   // Parallel data fetching
   const [
@@ -53,6 +53,12 @@ export default async function AnalysisPage(props: {
     getThreeYearMonthlyRevenue(selectedYear),
     getClientConcentration(selectedYear),
   ]);
+
+  if (overviewResult.status === 'rejected') console.error('Overview error:', overviewResult.reason);
+  if (divisionMetricsResult.status === 'rejected') console.error('Division metrics error:', divisionMetricsResult.reason);
+  if (yoyComparisonResult.status === 'rejected') console.error('YoY comparison error:', yoyComparisonResult.reason);
+  if (monthlyRevenueResult.status === 'rejected') console.error('Monthly revenue error:', monthlyRevenueResult.reason);
+  if (clientConcentrationResult.status === 'rejected') console.error('Client concentration error:', clientConcentrationResult.reason);
 
   const overview = overviewResult.status === 'fulfilled' ? overviewResult.value : {
     ytd: { currentRevenue: 0, priorRevenue: 0, growthRatePercent: 0 },

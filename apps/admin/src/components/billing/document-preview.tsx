@@ -544,7 +544,7 @@ export function DocumentPreview({
 
         <div className="mx-4 sm:mx-10 border-t border-zinc-100 py-4 flex items-center justify-between">
           <span className="text-[10px] text-zinc-400">
-            {reference ? `Reference: ${reference}` : ''}
+            {reference ? `Reference: ${reference.length > 30 ? reference.slice(0, 30) + '...' : reference}` : ''}
           </span>
           <span className="text-[10px] text-zinc-400">Thank you for your business.</span>
         </div>

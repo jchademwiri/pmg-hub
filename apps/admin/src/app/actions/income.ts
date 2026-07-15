@@ -46,16 +46,16 @@ export async function deleteIncome(id: string): Promise<{ error?: string }> {
 
       // 6. Recalculate status and paidAt for all affected invoices based on remaining allocations
       for (const alloc of allocations) {
-        const [sumAgg] = await tx
-          .select({ sum: sql<string>`coalesce(sum(${paymentAllocations.amount}), 0)` })
-          .from(paymentAllocations)
-          .where(eq(paymentAllocations.invoiceId, alloc.invoiceId));
-
         const [invoiceRow] = await tx
           .select({ total: invoices.total, writeOffAmount: invoices.writeOffAmount })
           .from(invoices)
           .where(eq(invoices.id, alloc.invoiceId))
           .for('update'); // Ensure serialization of concurrent updates on this invoice
+
+        const [sumAgg] = await tx
+          .select({ sum: sql<string>`coalesce(sum(${paymentAllocations.amount}), 0)` })
+          .from(paymentAllocations)
+          .where(eq(paymentAllocations.invoiceId, alloc.invoiceId));
 
         if (invoiceRow) {
           const invoiceTotal = parseFloat(invoiceRow.total);
