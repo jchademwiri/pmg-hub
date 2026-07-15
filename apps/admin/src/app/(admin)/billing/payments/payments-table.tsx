@@ -51,7 +51,7 @@ function PaymentRow({
   deleteAction: PaymentsTableProps['deleteAction'];
 }) {
   const router = useRouter();
-  const [isDeleting, setIsDeleting] = useState(false);
+  const [isDeleting, setIsDeleting] = React.useState(false);
   const period = entry.date.slice(0, 7);
   const isLocked = closedPeriods.includes(period);
 
