@@ -1093,3 +1093,98 @@ export async function getClientCreditBalanceForEdit(clientId: string, currentPay
     return 0;
   }
 }
+
+export async function fetchPaymentsByMonth(year: number, month: number) {
+  const { getAllIncome, getDb, paymentAllocations, sql } = await import('@pmg/db');
+  
+  const incomeResult = await getAllIncome(
+    { year, month: `${year}-${month.toString().padStart(2, '0')}` },
+    { page: 1, pageSize: 1000 }
+  );
+
+  const db = getDb();
+  
+  // Need allocation sums only for these income IDs
+  const incomeIds = incomeResult.data.map(i => i.id);
+  
+  let allocationSums: { incomeId: string; sum: string }[] = [];
+  if (incomeIds.length > 0) {
+    const { inArray } = await import('drizzle-orm');
+    allocationSums = await db.select({ incomeId: paymentAllocations.incomeId, sum: sql<string>`sum(${paymentAllocations.amount})` })
+      .from(paymentAllocations)
+      .where(inArray(paymentAllocations.incomeId, incomeIds))
+      .groupBy(paymentAllocations.incomeId);
+  }
+
+  const allocMap = new Map<string, number>();
+  for (const row of allocationSums) {
+    allocMap.set(row.incomeId, parseFloat(row.sum));
+  }
+
+  const payments = incomeResult.data.map((r) => {
+    const amount = parseFloat(r.amount);
+    const allocated = allocMap.get(r.id) ?? 0;
+    const credit = Math.max(0, amount - allocated);
+    return {
+      id: r.id,
+      date: r.date,
+      divisionId: r.divisionId,
+      divisionName: r.divisionName,
+      clientName: r.clientName ?? 'General / Non-Client',
+      clientId: r.clientId,
+      description: r.description ?? '',
+      amount,
+      allocated,
+      credit,
+    };
+  });
+
+  return { data: payments };
+}
+
+export async function fetchPaymentsByYear(year: number) {
+  const { getAllIncome, getDb, paymentAllocations, sql } = await import('@pmg/db');
+  
+  const incomeResult = await getAllIncome(
+    { year },
+    { page: 1, pageSize: 5000 }
+  );
+
+  const db = getDb();
+  
+  const incomeIds = incomeResult.data.map(i => i.id);
+  
+  let allocationSums: { incomeId: string; sum: string }[] = [];
+  if (incomeIds.length > 0) {
+    const { inArray } = await import('drizzle-orm');
+    allocationSums = await db.select({ incomeId: paymentAllocations.incomeId, sum: sql<string>`sum(${paymentAllocations.amount})` })
+      .from(paymentAllocations)
+      .where(inArray(paymentAllocations.incomeId, incomeIds))
+      .groupBy(paymentAllocations.incomeId);
+  }
+
+  const allocMap = new Map<string, number>();
+  for (const row of allocationSums) {
+    allocMap.set(row.incomeId, parseFloat(row.sum));
+  }
+
+  const payments = incomeResult.data.map((r) => {
+    const amount = parseFloat(r.amount);
+    const allocated = allocMap.get(r.id) ?? 0;
+    const credit = Math.max(0, amount - allocated);
+    return {
+      id: r.id,
+      date: r.date,
+      divisionId: r.divisionId,
+      divisionName: r.divisionName,
+      clientName: r.clientName ?? 'General / Non-Client',
+      clientId: r.clientId,
+      description: r.description ?? '',
+      amount,
+      allocated,
+      credit,
+    };
+  });
+
+  return { data: payments };
+}
