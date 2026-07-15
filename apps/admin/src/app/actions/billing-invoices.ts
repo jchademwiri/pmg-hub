@@ -853,3 +853,18 @@ export async function writeOffInvoice(id: string, reason: string): Promise<{ err
   }
 }
 
+export async function fetchInvoicesByMonth(year: number, month: number) {
+  const { getAllInvoices } = await import('@pmg/db');
+  return getAllInvoices(
+    { year, month: `${year}-${month.toString().padStart(2, '0')}` },
+    { page: 1, pageSize: 1000 }
+  );
+}
+
+export async function fetchInvoicesByYear(year: number) {
+  const { getAllInvoices } = await import('@pmg/db');
+  return getAllInvoices(
+    { year },
+    { page: 1, pageSize: 5000 }
+  );
+}

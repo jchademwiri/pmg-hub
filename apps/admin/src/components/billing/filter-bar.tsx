@@ -12,7 +12,7 @@ import { fmtMonthYear } from '@/lib/format'
 
 interface FilterBarProps {
   divisions: { id: string; name: string }[]
-  months: string[]
+  months?: string[]
   currentDivisionId?: string
   currentMonth?: string
   baseUrl?: string
@@ -60,22 +60,24 @@ export function FilterBar({
         </SelectContent>
       </Select>
 
-      <Select
-        value={currentMonth ?? 'all'}
-        onValueChange={handleMonthChange}
-      >
-        <SelectTrigger className="w-48">
-          <SelectValue placeholder="All months" />
-        </SelectTrigger>
-        <SelectContent>
-          <SelectItem value="all">All months</SelectItem>
-          {months.map((month) => (
-            <SelectItem key={month} value={month}>
-              {fmtMonthYear(month)}
-            </SelectItem>
-          ))}
-        </SelectContent>
-      </Select>
+      {months && months.length > 0 && (
+        <Select
+          value={currentMonth ?? 'all'}
+          onValueChange={handleMonthChange}
+        >
+          <SelectTrigger className="w-48">
+            <SelectValue placeholder="All months" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">All months</SelectItem>
+            {months.map((month) => (
+              <SelectItem key={month} value={month}>
+                {fmtMonthYear(month)}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+      )}
     </div>
   )
 }

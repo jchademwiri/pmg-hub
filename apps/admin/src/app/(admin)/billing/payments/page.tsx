@@ -3,25 +3,26 @@ import Link from 'next/link';
 import { Plus } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
-import { getAllIncome, getDb, paymentAllocations, sql, invoices, and, eq, getAllDivisions, getAllClients, getDistinctIncomeMonths } from '@pmg/db';
+import { getAllIncome, getDb, paymentAllocations, sql, invoices, and, eq, getAllDivisions, getAllClients } from '@pmg/db';
 import { formatZAR } from '@/lib/format';
-import { PaymentsClient } from './payments-client';
 import { SetPageTotal } from '@/components/navigation/page-header-context';
 import { FilterBar } from '@/components/billing/filter-bar';
 import { getClosedPeriodsFromDates } from '@/lib/date-rules';
 import { updateClientPayment, deleteClientPayment } from '@/app/actions/billing-payments';
+import { PaymentsTable } from './payments-table';
+import { LazyPaymentsTable } from './lazy-payments-table';
+import { Accordion, AccordionItem, AccordionTrigger, AccordionContent } from '@/components/ui/accordion';
+import { generateFinancialYearGroups } from '@/lib/billing-groups';
 
 export const dynamic = 'force-dynamic';
 export const metadata: Metadata = { title: 'Payments Received' };
 
 interface PaymentsPageProps {
-  searchParams: Promise<{ page?: string; divisionId?: string; month?: string }>;
+  searchParams: Promise<{ divisionId?: string }>;
 }
 
 export default async function PaymentsPage({ searchParams }: PaymentsPageProps) {
-  const { page, divisionId, month } = await searchParams;
-  const currentPage = Math.max(1, parseInt(page || '1', 10));
-  const pageSize = 20;
+  const { divisionId } = await searchParams;
 
   const db = getDb();
 
@@ -58,9 +59,13 @@ export default async function PaymentsPage({ searchParams }: PaymentsPageProps) 
     }
   }
 
-  // 2. Fetch payments, divisions, clients, months and allocations aggregate
-  const [incomeResult, allocationSums, divisions, clients, months] = await Promise.all([
-    getAllIncome({ divisionId, month }, { page: currentPage, pageSize }),
+  // 2. Fetch payments, divisions, clients, and allocations aggregate
+  const { currentMonths, previousYearGroup } = generateFinancialYearGroups();
+  const currentMonthGroup = currentMonths[0];
+  const previousMonths = currentMonths.slice(1);
+
+  const [incomeResult, allocationSums, divisions, clients] = await Promise.all([
+    getAllIncome({ divisionId, month: currentMonthGroup.value }, { page: 1, pageSize: 1000 }),
     db
       .select({
         incomeId: paymentAllocations.incomeId,
@@ -70,7 +75,6 @@ export default async function PaymentsPage({ searchParams }: PaymentsPageProps) 
       .groupBy(paymentAllocations.incomeId),
     getAllDivisions(),
     getAllClients(),
-    getDistinctIncomeMonths(),
   ]);
 
   // 3. Map allocations for fast lookup
@@ -102,7 +106,7 @@ export default async function PaymentsPage({ searchParams }: PaymentsPageProps) 
 
   // Calculate totals for stats
   const totalReceived = incomeResult.sum;
-
+  
   return (
     <div className="flex flex-col gap-6">
       <SetPageTotal value={formatZAR(totalReceived)} variant="green" />
@@ -125,26 +129,44 @@ export default async function PaymentsPage({ searchParams }: PaymentsPageProps) 
 
       <FilterBar
         divisions={divisions}
-        months={months}
         currentDivisionId={divisionId}
-        currentMonth={month}
         baseUrl="/billing/payments"
       />
 
-      {/* Payments History Table */}
-      <PaymentsClient
-        entries={payments}
-        total={incomeResult.total}
-        currentPage={currentPage}
-        pageSize={pageSize}
-        divisions={divisions}
-        clients={clients}
-        divisionId={divisionId}
-        month={month}
-        closedPeriods={closedPeriods}
-        updateAction={updateClientPayment}
-        deleteAction={deleteClientPayment}
-      />
+      <Accordion type="single" collapsible defaultValue={currentMonthGroup.value} className="w-full flex flex-col gap-4">
+        <AccordionItem value={currentMonthGroup.value} className="border bg-card rounded-lg px-6 data-[state=open]:pb-6">
+          <AccordionTrigger className="text-lg font-medium hover:no-underline">
+            Current Month ({currentMonthGroup.label})
+          </AccordionTrigger>
+          <AccordionContent className="pt-2">
+            <PaymentsTable
+              entries={payments}
+              closedPeriods={closedPeriods}
+              deleteAction={deleteClientPayment}
+            />
+          </AccordionContent>
+        </AccordionItem>
+
+        {previousMonths.map((m) => (
+          <AccordionItem key={m.value} value={m.value} className="border bg-card rounded-lg px-6 data-[state=open]:pb-6">
+            <AccordionTrigger className="text-lg font-medium hover:no-underline text-muted-foreground data-[state=open]:text-foreground">
+              {m.label}
+            </AccordionTrigger>
+            <AccordionContent className="pt-2">
+              <LazyPaymentsTable year={m.year} month={m.month} closedPeriods={closedPeriods} deleteAction={deleteClientPayment} />
+            </AccordionContent>
+          </AccordionItem>
+        ))}
+
+        <AccordionItem value={previousYearGroup.value} className="border bg-card rounded-lg px-6 data-[state=open]:pb-6 mt-4">
+          <AccordionTrigger className="text-lg font-medium hover:no-underline text-muted-foreground data-[state=open]:text-foreground">
+            {previousYearGroup.label}
+          </AccordionTrigger>
+          <AccordionContent className="pt-2">
+            <LazyPaymentsTable year={previousYearGroup.year} closedPeriods={closedPeriods} deleteAction={deleteClientPayment} />
+          </AccordionContent>
+        </AccordionItem>
+      </Accordion>
     </div>
   );
 }

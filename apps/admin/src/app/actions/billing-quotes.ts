@@ -441,3 +441,19 @@ export async function duplicateQuotation(id: string): Promise<{ error?: string; 
     return { error: 'Failed to duplicate. Please try again.' };
   }
 }
+
+export async function fetchQuotesByMonth(year: number, month: number) {
+  const { getAllQuotations } = await import('@pmg/db');
+  return getAllQuotations(
+    { year, month: `${year}-${month.toString().padStart(2, '0')}` },
+    { page: 1, pageSize: 1000 }
+  );
+}
+
+export async function fetchQuotesByYear(year: number) {
+  const { getAllQuotations } = await import('@pmg/db');
+  return getAllQuotations(
+    { year },
+    { page: 1, pageSize: 5000 }
+  );
+}
