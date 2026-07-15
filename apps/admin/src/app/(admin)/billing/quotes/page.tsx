@@ -39,7 +39,7 @@ export default async function QuotesPage({ searchParams }: QuotesPageProps) {
   const currentMonth = `${currentYear}-${String(now.getMonth() + 1).padStart(2, '0')}`;
 
   const result = await getAllQuotations(
-    { divisionId, status: normalizedStatus, year: currentYear, month: currentMonth },
+    { divisionId, status: normalizedStatus, month: currentMonth },
     { page: 1, pageSize: 1000 },
   );
 
@@ -102,7 +102,7 @@ export default async function QuotesPage({ searchParams }: QuotesPageProps) {
               {m.label}
             </AccordionTrigger>
             <AccordionContent className="pt-2">
-              <LazyQuotesTable year={m.year} month={m.month} deleteAction={deleteQuotation} updateStatusAction={updateQuotationStatus} duplicateAction={duplicateQuotation} />
+              <LazyQuotesTable year={m.year} month={m.month} divisionId={divisionId} status={normalizedStatus} deleteAction={deleteQuotation} updateStatusAction={updateQuotationStatus} duplicateAction={duplicateQuotation} />
             </AccordionContent>
           </AccordionItem>
         ))}
@@ -112,7 +112,7 @@ export default async function QuotesPage({ searchParams }: QuotesPageProps) {
             {previousYearGroup.label}
           </AccordionTrigger>
           <AccordionContent className="pt-2">
-            <LazyQuotesTable year={previousYearGroup.year} deleteAction={deleteQuotation} updateStatusAction={updateQuotationStatus} duplicateAction={duplicateQuotation} />
+            <LazyQuotesTable year={previousYearGroup.year} divisionId={divisionId} status={normalizedStatus} deleteAction={deleteQuotation} updateStatusAction={updateQuotationStatus} duplicateAction={duplicateQuotation} />
           </AccordionContent>
         </AccordionItem>
       </Accordion>

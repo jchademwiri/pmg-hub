@@ -442,18 +442,18 @@ export async function duplicateQuotation(id: string): Promise<{ error?: string; 
   }
 }
 
-export async function fetchQuotesByMonth(year: number, month: number) {
+export async function fetchQuotesByMonth(year: number, month: number, divisionId?: string, status?: string) {
   const { getAllQuotations } = await import('@pmg/db');
   return getAllQuotations(
-    { year, month: `${year}-${month.toString().padStart(2, '0')}` },
+    { month: `${year}-${month.toString().padStart(2, '0')}`, divisionId, status },
     { page: 1, pageSize: 1000 }
   );
 }
 
-export async function fetchQuotesByYear(year: number) {
+export async function fetchQuotesByYear(year: number, divisionId?: string, status?: string) {
   const { getAllQuotations } = await import('@pmg/db');
   return getAllQuotations(
-    { year },
+    { year, divisionId, status },
     { page: 1, pageSize: 5000 }
   );
 }

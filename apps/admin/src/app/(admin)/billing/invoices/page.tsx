@@ -28,7 +28,7 @@ export default async function InvoicesPage({ searchParams }: InvoicesPageProps) 
 
   // Fetch only current month
   const result = await getAllInvoices(
-    { divisionId, status, year: currentYear, month: currentMonth },
+    { divisionId, status, month: currentMonth },
     { page: 1, pageSize: 1000 },
   );
 
@@ -90,7 +90,7 @@ export default async function InvoicesPage({ searchParams }: InvoicesPageProps) 
               {m.label}
             </AccordionTrigger>
             <AccordionContent className="pt-2">
-              <LazyInvoicesTable year={m.year} month={m.month} issueAction={issueInvoice} voidAction={voidInvoice} />
+              <LazyInvoicesTable year={m.year} month={m.month} divisionId={divisionId} status={status} issueAction={issueInvoice} voidAction={voidInvoice} />
             </AccordionContent>
           </AccordionItem>
         ))}
@@ -100,7 +100,7 @@ export default async function InvoicesPage({ searchParams }: InvoicesPageProps) 
             {previousYearGroup.label}
           </AccordionTrigger>
           <AccordionContent className="pt-2">
-            <LazyInvoicesTable year={previousYearGroup.year} issueAction={issueInvoice} voidAction={voidInvoice} />
+            <LazyInvoicesTable year={previousYearGroup.year} divisionId={divisionId} status={status} issueAction={issueInvoice} voidAction={voidInvoice} />
           </AccordionContent>
         </AccordionItem>
       </Accordion>

@@ -51,22 +51,34 @@ function PaymentRow({
   deleteAction: PaymentsTableProps['deleteAction'];
 }) {
   const router = useRouter();
+  const [isDeleting, setIsDeleting] = React.useState(false);
   const period = entry.date.slice(0, 7);
   const isLocked = closedPeriods.includes(period);
 
-  async function handleDeleteClick(e: React.MouseEvent) {
+  const handleDeleteClick = async (e: React.MouseEvent) => {
     e.stopPropagation();
+    if (isDeleting) return;
+    
     const confirmed = await confirm({
       title: 'Delete payment record?',
       description: 'This action cannot be undone and will revert all allocations to invoices.',
       confirmText: 'Delete',
       variant: 'destructive',
     });
-    if (!confirmed) return;
-    const result = await deleteAction(entry.id);
-    if (result.error) toast.error(result.error);
-    else toast.success('Payment deleted successfully.');
-  }
+
+    if (confirmed) {
+      setIsDeleting(true);
+      const result = await deleteAction(entry.id);
+      setIsDeleting(false);
+      
+      if (result.error) {
+        toast.error(result.error);
+      } else {
+        toast.success('Payment deleted successfully.');
+        router.refresh();
+      }
+    }
+  };
 
   return (
     <TableRow 
@@ -114,7 +126,13 @@ function PaymentRow({
               <TooltipContent>Period is closed</TooltipContent>
             </Tooltip>
           ) : (
-            <Button variant="ghost" size="icon-sm" onClick={handleDeleteClick} title="Delete">
+            <Button 
+              variant="ghost" 
+              size="icon-sm" 
+              onClick={handleDeleteClick} 
+              disabled={isDeleting}
+              title="Delete"
+            >
               <Trash2 className="size-3.5 text-destructive" />
               <span className="sr-only">Delete</span>
             </Button>
