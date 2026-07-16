@@ -367,3 +367,20 @@ export async function reopenAccountingPeriod(period: string): Promise<{ error?: 
     return { error: 'Failed to reopen period.' };
   }
 }
+
+export async function fetchJournalsByMonth(year: number, month: number, status?: string) {
+  const { getJournalEntries } = await import('@pmg/db');
+  const period = `${year}-${month.toString().padStart(2, '0')}`;
+  const journalsResult = await getJournalEntries(
+    { period, status, page: 1, pageSize: 5000 }
+  );
+  return { data: journalsResult.data };
+}
+
+export async function fetchJournalsByYear(year: number, status?: string) {
+  const { getJournalEntries } = await import('@pmg/db');
+  const journalsResult = await getJournalEntries(
+    { year, status, page: 1, pageSize: 5000 }
+  );
+  return { data: journalsResult.data };
+}

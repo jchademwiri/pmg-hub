@@ -142,7 +142,26 @@ export async function deleteExpense(id: string): Promise<{ error?: string }> {
     revalidatePath('/accounting/general-ledger');
     revalidatePath('/accounting/profit-and-loss');
     return {};
-  } catch {
-    return { error: 'Failed to delete. Please try again.' };
+  } catch (err) {
+    console.error('Failed to delete expense:', err);
+    return { error: err instanceof Error ? err.message : 'Failed to delete expense. Please try again.' };
   }
+}
+
+export async function fetchExpensesByMonth(year: number, month: number, divisionId?: string, category?: string) {
+  const { getAllExpenses } = await import('@pmg/db');
+  const expensesResult = await getAllExpenses(
+    { month: `${year}-${month.toString().padStart(2, '0')}`, divisionId, category },
+    { page: 1, pageSize: 5000 }
+  );
+  return { data: expensesResult.data };
+}
+
+export async function fetchExpensesByYear(year: number, divisionId?: string, category?: string) {
+  const { getAllExpenses } = await import('@pmg/db');
+  const expensesResult = await getAllExpenses(
+    { year, divisionId, category },
+    { page: 1, pageSize: 5000 }
+  );
+  return { data: expensesResult.data };
 }

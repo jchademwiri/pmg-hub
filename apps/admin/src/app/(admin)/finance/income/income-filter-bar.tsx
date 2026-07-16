@@ -8,36 +8,35 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select'
-import { fmtMonthYear } from '@/lib/format'
-
-interface ExpenseFilterBarProps {
+interface IncomeFilterBarProps {
   divisions: { id: string; name: string }[]
-  categories: string[]
+  clients: { id: string; name: string; businessName: string | null }[]
   currentDivisionId?: string
-  currentCategory?: string
+  currentClientId?: string
+  baseUrl?: string
 }
 
-export function ExpenseFilterBar({
+export function IncomeFilterBar({
   divisions,
-  categories,
+  clients,
   currentDivisionId,
-  currentCategory,
-}: ExpenseFilterBarProps) {
+  currentClientId,
+  baseUrl = '/finance/income',
+}: IncomeFilterBarProps) {
   const router = useRouter()
-  const basePath = '/finance/expenses'
 
   function handleDivisionChange(value: string) {
     const params = new URLSearchParams()
     if (value !== 'all') params.set('divisionId', value)
-    if (currentCategory) params.set('category', currentCategory)
-    router.push(`${basePath}?` + params.toString())
+    if (currentClientId) params.set('clientId', currentClientId)
+    router.push(baseUrl + '?' + params.toString())
   }
 
-  function handleCategoryChange(value: string) {
+  function handleClientChange(value: string) {
     const params = new URLSearchParams()
     if (currentDivisionId) params.set('divisionId', currentDivisionId)
-    if (value !== 'all') params.set('category', value)
-    router.push(`${basePath}?` + params.toString())
+    if (value !== 'all') params.set('clientId', value)
+    router.push(baseUrl + '?' + params.toString())
   }
 
   return (
@@ -60,17 +59,17 @@ export function ExpenseFilterBar({
       </Select>
 
       <Select
-        value={currentCategory ?? 'all'}
-        onValueChange={handleCategoryChange}
+        value={currentClientId ?? 'all'}
+        onValueChange={handleClientChange}
       >
-        <SelectTrigger className="w-48">
-          <SelectValue placeholder="All categories" />
+        <SelectTrigger className="w-64">
+          <SelectValue placeholder="All clients" />
         </SelectTrigger>
         <SelectContent>
-          <SelectItem value="all">All categories</SelectItem>
-          {categories.map((category) => (
-            <SelectItem key={category} value={category}>
-              {category}
+          <SelectItem value="all">All clients</SelectItem>
+          {clients.map((client) => (
+            <SelectItem key={client.id} value={client.id}>
+              {client.businessName ?? client.name}
             </SelectItem>
           ))}
         </SelectContent>
