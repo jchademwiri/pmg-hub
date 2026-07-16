@@ -144,7 +144,7 @@ export async function deleteExpense(id: string): Promise<{ error?: string }> {
     return {};
   } catch (err) {
     console.error('Failed to delete expense:', err);
-    return { error: err instanceof Error ? err.message : 'Failed to delete expense. Please try again.' };
+    return { error: 'Failed to delete expense. Please try again.' };
   }
 }
 

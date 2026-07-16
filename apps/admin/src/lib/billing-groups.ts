@@ -1,4 +1,5 @@
 import { format, subMonths } from 'date-fns';
+import { getSASTToday } from './format';
 
 export interface MonthGroup {
   label: string;
@@ -61,5 +62,5 @@ export function generateFinancialYearGroups() {
 }
 
 export function getCurrentMonthString() {
-  return format(new Date(), 'yyyy-MM');
+  return format(new Date(getSASTToday()), 'yyyy-MM');
 }

@@ -50,6 +50,7 @@ function ExpenseTableRow({
   deleteAction,
   updateAction,
   closedPeriods,
+  minDate,
 }: {
   entry: ExpenseRow;
   divisions: { id: string; name: string }[];
@@ -58,9 +59,10 @@ function ExpenseTableRow({
   deleteAction: (id: string) => Promise<{ error?: string }>;
   updateAction: (id: string, formData: FormData) => Promise<{ error?: string }>;
   closedPeriods?: string[];
+  minDate?: string;
 }) {
   const period = entry.date.slice(0, 7);
-  const isLocked = closedPeriods?.includes(period);
+  const isLocked = closedPeriods?.includes(period) || (minDate ? entry.date < minDate : false);
   const [mode, setMode] = React.useState<'display' | 'edit'>('display');
   const [editDate, setEditDate] = React.useState(entry.date);
   const [editDivisionId, setEditDivisionId] = React.useState(entry.divisionId);
@@ -294,6 +296,7 @@ export function ExpenseTable({
             deleteAction={deleteAction}
             updateAction={updateAction}
             closedPeriods={closedPeriods}
+            minDate={minDate}
           />
         ))}
       </TableBody>

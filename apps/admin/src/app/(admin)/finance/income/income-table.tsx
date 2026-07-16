@@ -104,7 +104,7 @@ export function IncomeTable({ entries }: IncomeTableProps) {
                   </TableCell>
                   <TableCell>
                     <Button variant="ghost" size="icon" asChild>
-                      <Link href={`/billing/payments/${row.id}`}>
+                      <Link href={`/billing/payments/${row.id}`} aria-label="Payment details">
                         <ExternalLink className="h-4 w-4" />
                       </Link>
                     </Button>

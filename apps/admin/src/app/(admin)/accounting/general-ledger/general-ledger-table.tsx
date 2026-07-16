@@ -35,44 +35,36 @@ export function GeneralLedgerTable({
               <TableHead>Description</TableHead>
               <TableHead className="text-right">Debit</TableHead>
               <TableHead className="text-right">Credit</TableHead>
-              <TableHead className="text-right">Balance</TableHead>
+              <TableHead className="text-right">Period Mvmt</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
-            {(() => {
-              let balance = 0;
-              return entries.map((row, i) => {
-                balance += (row.debit - row.credit);
-                return (
-                  <TableRow key={`${row.id}-${i}`}>
-                    <TableCell className="text-sm">{fmtDate(row.entryDate)}</TableCell>
-                    <TableCell className="text-sm font-mono">
-                      <a
-                        href={`/accounting/journals?search=${row.entryNumber}`}
-                        className="text-primary hover:underline"
-                      >
-                        {row.entryNumber}
-                      </a>
-                    </TableCell>
-                    <TableCell className="text-sm">
-                      <span className="font-medium">{row.accountCode}</span> — {row.accountName}
-                    </TableCell>
-                    <TableCell className="text-sm truncate max-w-[200px]" title={row.description || ''}>
-                      {row.description || <span className="text-muted-foreground italic">No description</span>}
-                    </TableCell>
-                    <TableCell className="text-right text-sm">
-                      {row.debit > 0 ? formatZAR(row.debit) : '-'}
-                    </TableCell>
-                    <TableCell className="text-right text-sm">
-                      {row.credit > 0 ? formatZAR(row.credit) : '-'}
-                    </TableCell>
-                    <TableCell className="text-right text-sm font-medium">
-                      {formatZAR(balance)}
-                    </TableCell>
-                  </TableRow>
-                )
-              });
-            })()}
+            {entries.map((row, i) => {
+              const movement = row.debit - row.credit;
+              return (
+                <TableRow key={`${row.id}-${i}`}>
+                  <TableCell className="text-sm">{fmtDate(row.entryDate)}</TableCell>
+                  <TableCell className="text-sm font-mono">
+                    {row.entryNumber}
+                  </TableCell>
+                  <TableCell className="text-sm">
+                    <span className="font-medium">{row.accountCode}</span> — {row.accountName}
+                  </TableCell>
+                  <TableCell className="text-sm truncate max-w-[200px]" title={row.description || ''}>
+                    {row.description || <span className="text-muted-foreground italic">No description</span>}
+                  </TableCell>
+                  <TableCell className="text-right text-sm">
+                    {row.debit > 0 ? formatZAR(row.debit) : '-'}
+                  </TableCell>
+                  <TableCell className="text-right text-sm">
+                    {row.credit > 0 ? formatZAR(row.credit) : '-'}
+                  </TableCell>
+                  <TableCell className="text-right text-sm font-medium">
+                    {formatZAR(movement)}
+                  </TableCell>
+                </TableRow>
+              )
+            })}
           </TableBody>
         </Table>
       )}

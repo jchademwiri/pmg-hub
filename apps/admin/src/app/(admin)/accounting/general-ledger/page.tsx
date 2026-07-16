@@ -109,7 +109,7 @@ export default async function GeneralLedgerPage({
               <div className="flex items-center gap-4">
                 <span className="font-semibold text-base">Previous Financial Year</span>
                 <span className="text-sm text-muted-foreground font-normal">
-                  Mar {previousYearGroup.year - 1} - Feb {previousYearGroup.year}
+                  Mar {previousYearGroup.year} - Feb {previousYearGroup.year + 1}
                 </span>
               </div>
             </AccordionTrigger>

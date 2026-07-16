@@ -393,10 +393,10 @@ function getStartAndEndOfMonth(year: number, month: number) {
 }
 
 function getStartAndEndOfFinancialYear(year: number) {
-  // Financial year: March 1 of year-1 to Feb 28/29 of year
-  const startDate = `${year - 1}-03-01`;
-  const endOfMonth = new Date(year, 2, 0).getDate();
-  const endDate = `${year}-02-${endOfMonth}`;
+  // Financial year: March 1 of year to Feb 28/29 of year+1
+  const startDate = `${year}-03-01`;
+  const endOfMonth = new Date(year + 1, 2, 0).getDate();
+  const endDate = `${year + 1}-02-${endOfMonth}`;
   return { startDate, endDate };
 }
 
