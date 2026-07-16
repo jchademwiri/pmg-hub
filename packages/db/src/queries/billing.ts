@@ -466,6 +466,62 @@ export async function getAllQuotations(
   return { data: data as QuotationRow[], total, sum: sumAmount };
 }
 
+// ── getQuotationMonthlySummaries ─────────────────────────────────────────────
+
+export type MonthlyQuotationSummary = {
+  month: string;
+  count: number;
+  totalQuoted: number;
+  totalAccepted: number;
+  totalPending: number;
+};
+
+export async function getQuotationMonthlySummaries(
+  year: number,
+  divisionId?: string,
+  status?: string
+): Promise<MonthlyQuotationSummary[]> {
+  const conditions = [];
+
+  const start = `${year}-03-01`;
+  const end = `${year + 1}-03-01`;
+  conditions.push(sql`${quotations.quoteDate} >= ${start} AND ${quotations.quoteDate} < ${end}`);
+
+  if (divisionId) {
+    conditions.push(eq(quotations.divisionId, divisionId));
+  }
+
+  if (status) {
+    if (VALID_QUOTE_STATUSES.has(status)) {
+      conditions.push(eq(quotations.status, status as any));
+    }
+  } else {
+    // Exclude drafts and cancelled by default unless specifically asking for them
+    conditions.push(sql`${quotations.status} NOT IN ('draft', 'cancelled')`);
+  }
+
+  const query = db
+    .select({
+      month: sql<string>`TO_CHAR(${quotations.quoteDate}, 'YYYY-MM')`,
+      count: sql<number>`count(*)::int`,
+      totalQuoted: sql<number>`COALESCE(SUM(${quotations.total}), 0)::numeric`,
+      totalAccepted: sql<number>`COALESCE(SUM(CASE WHEN ${quotations.status} IN ('accepted', 'converted') THEN ${quotations.total} ELSE 0 END), 0)::numeric`,
+      totalPending: sql<number>`COALESCE(SUM(CASE WHEN ${quotations.status} = 'sent' THEN ${quotations.total} ELSE 0 END), 0)::numeric`,
+    })
+    .from(quotations)
+    .where(and(...conditions))
+    .groupBy(sql`TO_CHAR(${quotations.quoteDate}, 'YYYY-MM')`);
+
+  const results = await query;
+  return results.map((r) => ({
+    month: r.month,
+    count: Number(r.count),
+    totalQuoted: Number(r.totalQuoted),
+    totalAccepted: Number(r.totalAccepted),
+    totalPending: Number(r.totalPending),
+  }));
+}
+
 // ── getAllInvoices ─────────────────────────────────────────────────────────────
 
 /**

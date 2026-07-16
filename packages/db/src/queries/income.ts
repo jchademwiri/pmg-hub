@@ -93,6 +93,64 @@ export async function getAllIncome(
 }
 
 /**
+ * Returns a monthly summary of income and its allocations.
+ */
+export type MonthlyIncomeSummary = {
+  month: string;
+  count: number;
+  totalReceived: number;
+  totalAllocated: number;
+};
+
+export async function getIncomeMonthlySummaries(
+  year: number,
+  divisionId?: string
+): Promise<MonthlyIncomeSummary[]> {
+  const conditions = [];
+
+  const start = `${year}-03-01`;
+  const end = `${year + 1}-03-01`;
+  conditions.push(sql`${income.date} >= ${start} AND ${income.date} < ${end}`);
+
+  if (divisionId) {
+    conditions.push(eq(income.divisionId, divisionId));
+  }
+
+  // 1. Get income sums
+  const incomeQuery = db
+    .select({
+      month: sql<string>`TO_CHAR(${income.date}, 'YYYY-MM')`,
+      count: sql<number>`count(*)::int`,
+      totalReceived: sql<number>`COALESCE(SUM(${income.amount}), 0)::numeric`,
+    })
+    .from(income)
+    .where(and(...conditions))
+    .groupBy(sql`TO_CHAR(${income.date}, 'YYYY-MM')`);
+
+  // 2. Get allocation sums
+  const allocQuery = db
+    .select({
+      month: sql<string>`TO_CHAR(${income.date}, 'YYYY-MM')`,
+      totalAllocated: sql<number>`COALESCE(SUM(${paymentAllocations.amount}), 0)::numeric`,
+    })
+    .from(paymentAllocations)
+    .innerJoin(income, eq(paymentAllocations.incomeId, income.id))
+    .where(and(...conditions))
+    .groupBy(sql`TO_CHAR(${income.date}, 'YYYY-MM')`);
+
+  const [incomeResults, allocResults] = await Promise.all([incomeQuery, allocQuery]);
+
+  const allocMap = new Map(allocResults.map(r => [r.month, Number(r.totalAllocated)]));
+
+  return incomeResults.map((r) => ({
+    month: r.month,
+    count: Number(r.count),
+    totalReceived: Number(r.totalReceived),
+    totalAllocated: allocMap.get(r.month) || 0,
+  }));
+}
+
+/**
  * Returns a single income row by id (with division and client joined),
  * or null if no row with that id exists.
  */
