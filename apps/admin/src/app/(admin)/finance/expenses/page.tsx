@@ -59,7 +59,6 @@ export default async function ExpensePage({ searchParams }: ExpensePageProps) {
       <ExpenseFilterBar
         divisions={divisions}
         categories={categories}
-        months={months}
         currentDivisionId={filters.divisionId}
         currentCategory={filters.category}
       />

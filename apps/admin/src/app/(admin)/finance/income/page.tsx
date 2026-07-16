@@ -7,7 +7,6 @@ import { IncomeTable } from './income-table'
 import { LazyIncomeTable } from './lazy-income-table'
 import { IncomeFilterBar } from './income-filter-bar'
 import { generateFinancialYearGroups, getCurrentMonthString } from '@/lib/billing-groups'
-import { enrichIncomeWithAllocations } from '@/app/actions/income'
 import {
   Accordion,
   AccordionContent,
