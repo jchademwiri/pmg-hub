@@ -9,6 +9,7 @@ import { formatZAR } from '@/lib/format';
 import { deleteQuotation, updateQuotationStatus, duplicateQuotation } from '@/app/actions/billing-quotes';
 import { QuotesTable } from './quotes-table';
 import { LazyQuotesTable } from './lazy-quotes-table';
+import { QuotesClient } from './quotes-client';
 import { Accordion, AccordionItem, AccordionTrigger, AccordionContent } from '@/components/ui/accordion';
 import { generateFinancialYearGroups } from '@/lib/billing-groups';
 
@@ -16,7 +17,7 @@ export const dynamic = 'force-dynamic';
 export const metadata: Metadata = { title: 'Quotations' };
 
 interface QuotesPageProps {
-  searchParams: Promise<{ divisionId?: string; status?: string }>;
+  searchParams: Promise<{ divisionId?: string; status?: string; page?: string }>;
 }
 
 const VALID_QUOTE_STATUSES = new Set([
@@ -30,7 +31,9 @@ const VALID_QUOTE_STATUSES = new Set([
 ]);
 
 export default async function QuotesPage({ searchParams }: QuotesPageProps) {
-  const { divisionId, status } = await searchParams;
+  const { divisionId, status, page } = await searchParams;
+  const currentPage = Number(page) || 1;
+  const pageSize = 20;
 
   const normalizedStatus = status && VALID_QUOTE_STATUSES.has(status) ? status : undefined;
 
@@ -38,10 +41,20 @@ export default async function QuotesPage({ searchParams }: QuotesPageProps) {
   const currentYear = now.getFullYear();
   const currentMonth = `${currentYear}-${String(now.getMonth() + 1).padStart(2, '0')}`;
 
-  const result = await getAllQuotations(
-    { divisionId, status: normalizedStatus, month: currentMonth },
-    { page: 1, pageSize: 1000 },
-  );
+  const isFiltered = Boolean(divisionId || normalizedStatus);
+
+  let result;
+  if (isFiltered) {
+    result = await getAllQuotations(
+      { divisionId, status: normalizedStatus },
+      { page: currentPage, pageSize }
+    );
+  } else {
+    result = await getAllQuotations(
+      { divisionId, status: normalizedStatus, month: currentMonth },
+      { page: 1, pageSize: 1000 },
+    );
+  }
 
   const { currentMonths, previousYearGroup } = generateFinancialYearGroups();
   
@@ -69,6 +82,7 @@ export default async function QuotesPage({ searchParams }: QuotesPageProps) {
               { value: 'accepted', label: 'Accepted' },
               { value: 'declined', label: 'Declined' },
               { value: 'expired', label: 'Expired' },
+              { value: 'converted', label: 'Converted' },
               { value: 'cancelled', label: 'Cancelled' },
             ]}
           />
@@ -81,41 +95,55 @@ export default async function QuotesPage({ searchParams }: QuotesPageProps) {
         </div>
       </div>
 
-      <Accordion type="single" collapsible defaultValue={currentMonthGroup.value} className="w-full flex flex-col gap-4">
-        <AccordionItem value={currentMonthGroup.value} className="border bg-card rounded-lg px-6 data-[state=open]:pb-6">
-          <AccordionTrigger className="text-lg font-medium hover:no-underline">
-            Current Month ({currentMonthGroup.label})
-          </AccordionTrigger>
-          <AccordionContent className="pt-2">
-            <QuotesTable
-              entries={result.data}
-              deleteAction={deleteQuotation}
-              updateStatusAction={updateQuotationStatus}
-              duplicateAction={duplicateQuotation}
-            />
-          </AccordionContent>
-        </AccordionItem>
-
-        {previousMonths.map((m) => (
-          <AccordionItem key={m.value} value={m.value} className="border bg-card rounded-lg px-6 data-[state=open]:pb-6">
-            <AccordionTrigger className="text-lg font-medium hover:no-underline text-muted-foreground data-[state=open]:text-foreground">
-              {m.label}
+      {isFiltered ? (
+        <QuotesClient
+          entries={result.data}
+          total={result.total}
+          currentPage={currentPage}
+          pageSize={pageSize}
+          divisionId={divisionId}
+          status={normalizedStatus}
+          deleteAction={deleteQuotation}
+          updateStatusAction={updateQuotationStatus}
+          duplicateAction={duplicateQuotation}
+        />
+      ) : (
+        <Accordion type="single" collapsible defaultValue={currentMonthGroup.value} className="w-full flex flex-col gap-4">
+          <AccordionItem value={currentMonthGroup.value} className="border bg-card rounded-lg px-6 data-[state=open]:pb-6">
+            <AccordionTrigger className="text-lg font-medium hover:no-underline">
+              Current Month ({currentMonthGroup.label})
             </AccordionTrigger>
             <AccordionContent className="pt-2">
-              <LazyQuotesTable year={m.year} month={m.month} divisionId={divisionId} status={normalizedStatus} deleteAction={deleteQuotation} updateStatusAction={updateQuotationStatus} duplicateAction={duplicateQuotation} />
+              <QuotesTable
+                entries={result.data}
+                deleteAction={deleteQuotation}
+                updateStatusAction={updateQuotationStatus}
+                duplicateAction={duplicateQuotation}
+              />
             </AccordionContent>
           </AccordionItem>
-        ))}
-        
-        <AccordionItem value={previousYearGroup.value} className="border bg-card rounded-lg px-6 data-[state=open]:pb-6 mt-4">
-          <AccordionTrigger className="text-lg font-medium hover:no-underline text-muted-foreground data-[state=open]:text-foreground">
-            {previousYearGroup.label}
-          </AccordionTrigger>
-          <AccordionContent className="pt-2">
-            <LazyQuotesTable year={previousYearGroup.year} divisionId={divisionId} status={normalizedStatus} deleteAction={deleteQuotation} updateStatusAction={updateQuotationStatus} duplicateAction={duplicateQuotation} />
-          </AccordionContent>
-        </AccordionItem>
-      </Accordion>
+
+          {previousMonths.map((m) => (
+            <AccordionItem key={m.value} value={m.value} className="border bg-card rounded-lg px-6 data-[state=open]:pb-6">
+              <AccordionTrigger className="text-lg font-medium hover:no-underline text-muted-foreground data-[state=open]:text-foreground">
+                {m.label}
+              </AccordionTrigger>
+              <AccordionContent className="pt-2">
+                <LazyQuotesTable year={m.year} month={m.month} divisionId={divisionId} status={normalizedStatus} deleteAction={deleteQuotation} updateStatusAction={updateQuotationStatus} duplicateAction={duplicateQuotation} />
+              </AccordionContent>
+            </AccordionItem>
+          ))}
+          
+          <AccordionItem value={previousYearGroup.value} className="border bg-card rounded-lg px-6 data-[state=open]:pb-6 mt-4">
+            <AccordionTrigger className="text-lg font-medium hover:no-underline text-muted-foreground data-[state=open]:text-foreground">
+              {previousYearGroup.label}
+            </AccordionTrigger>
+            <AccordionContent className="pt-2">
+              <LazyQuotesTable year={previousYearGroup.year} divisionId={divisionId} status={normalizedStatus} deleteAction={deleteQuotation} updateStatusAction={updateQuotationStatus} duplicateAction={duplicateQuotation} />
+            </AccordionContent>
+          </AccordionItem>
+        </Accordion>
+      )}
     </div>
   );
 }

@@ -854,11 +854,16 @@ export async function writeOffInvoice(id: string, reason: string): Promise<{ err
 }
 
 export async function fetchInvoicesByMonth(year: number, month: number, divisionId?: string, status?: string) {
+  const { unstable_noStore } = await import('next/cache');
+  unstable_noStore();
   const { getAllInvoices } = await import('@pmg/db');
-  return getAllInvoices(
+  console.log(`[DEBUG fetchInvoicesByMonth] year: ${year}, month: ${month}, divisionId: ${divisionId}, status: ${status}`);
+  const result = await getAllInvoices(
     { month: `${year}-${month.toString().padStart(2, '0')}`, divisionId, status },
     { page: 1, pageSize: 1000 }
   );
+  console.log(`[DEBUG fetchInvoicesByMonth] Returned ${result.data.length} invoices`);
+  return result;
 }
 
 export async function fetchInvoicesByYear(year: number, divisionId?: string, status?: string) {
