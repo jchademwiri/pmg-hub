@@ -39,50 +39,40 @@ export function GeneralLedgerTable({
             </TableRow>
           </TableHeader>
           <TableBody>
-            {entries.map((row, i) => {
-              if (row.isOpeningBalance) {
+            {(() => {
+              let balance = 0;
+              return entries.map((row, i) => {
+                balance += (row.debit - row.credit);
                 return (
-                  <TableRow key={`opening-${i}`} className="bg-muted/30 font-medium">
-                    <TableCell colSpan={6} className="text-right text-muted-foreground">
-                      Opening Balance for {row.accountCode} - {row.accountName}
+                  <TableRow key={`${row.id}-${i}`}>
+                    <TableCell className="text-sm">{fmtDate(row.entryDate)}</TableCell>
+                    <TableCell className="text-sm font-mono">
+                      <a
+                        href={`/accounting/journals?search=${row.entryNumber}`}
+                        className="text-primary hover:underline"
+                      >
+                        {row.entryNumber}
+                      </a>
                     </TableCell>
-                    <TableCell className="text-right">{formatZAR(row.runningBalance)}</TableCell>
+                    <TableCell className="text-sm">
+                      <span className="font-medium">{row.accountCode}</span> — {row.accountName}
+                    </TableCell>
+                    <TableCell className="text-sm truncate max-w-[200px]" title={row.description || ''}>
+                      {row.description || <span className="text-muted-foreground italic">No description</span>}
+                    </TableCell>
+                    <TableCell className="text-right text-sm">
+                      {row.debit > 0 ? formatZAR(row.debit) : '-'}
+                    </TableCell>
+                    <TableCell className="text-right text-sm">
+                      {row.credit > 0 ? formatZAR(row.credit) : '-'}
+                    </TableCell>
+                    <TableCell className="text-right text-sm font-medium">
+                      {formatZAR(balance)}
+                    </TableCell>
                   </TableRow>
                 )
-              }
-
-              const debit = row.amount > 0 ? row.amount : null
-              const credit = row.amount < 0 ? Math.abs(row.amount) : null
-
-              return (
-                <TableRow key={`${row.journalEntryId}-${row.accountId}-${i}`}>
-                  <TableCell className="text-sm">{fmtDate(row.date)}</TableCell>
-                  <TableCell className="text-sm font-mono">
-                    <a
-                      href={`/accounting/journals/${row.journalEntryId}`}
-                      className="text-primary hover:underline"
-                    >
-                      {row.journalEntryNumber}
-                    </a>
-                  </TableCell>
-                  <TableCell className="text-sm">
-                    <span className="font-medium">{row.accountCode}</span> — {row.accountName}
-                  </TableCell>
-                  <TableCell className="text-sm truncate max-w-[200px]" title={row.description || ''}>
-                    {row.description || <span className="text-muted-foreground italic">No description</span>}
-                  </TableCell>
-                  <TableCell className="text-right text-sm">
-                    {debit ? formatZAR(debit) : '-'}
-                  </TableCell>
-                  <TableCell className="text-right text-sm">
-                    {credit ? formatZAR(credit) : '-'}
-                  </TableCell>
-                  <TableCell className="text-right text-sm font-medium">
-                    {formatZAR(row.runningBalance)}
-                  </TableCell>
-                </TableRow>
-              )
-            })}
+              });
+            })()}
           </TableBody>
         </Table>
       )}

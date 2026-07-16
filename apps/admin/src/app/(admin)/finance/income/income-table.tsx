@@ -5,6 +5,13 @@ import { useRouter, usePathname, useSearchParams } from 'next/navigation'
 import Link from 'next/link'
 import { ExternalLink } from 'lucide-react'
 import { Button } from '@/components/ui/button'
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
 } from '@/components/ui/table'
 import { formatZAR, fmtDate } from '@/lib/format'
 
@@ -105,6 +112,7 @@ export function IncomeTable({ entries }: IncomeTableProps) {
                 </TableRow>
               ))}
             </TableBody>
+          </Table>
         </>
       )}
     </div>

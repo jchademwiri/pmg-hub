@@ -59,3 +59,7 @@ export function generateFinancialYearGroups() {
     previousYearGroup,
   };
 }
+
+export function getCurrentMonthString() {
+  return format(new Date(), 'yyyy-MM');
+}

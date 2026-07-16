@@ -26,8 +26,7 @@ export default async function JournalsPage({
   const params = await searchParams
 
   const currentMonthStr = getCurrentMonthString()
-  const groups = generateFinancialYearGroups()
-  const currentGroup = groups[0]
+  const { currentMonths, previousYearGroup } = generateFinancialYearGroups()
   const [currentYear, currentMonth] = currentMonthStr.split('-').map(Number)
 
   const [currentMonthResult] = await Promise.all([
@@ -75,7 +74,7 @@ export default async function JournalsPage({
         </AccordionItem>
 
         {/* PREVIOUS MONTHS OF CURRENT FY */}
-        {currentGroup.months.map((m) => {
+        {currentMonths.map((m) => {
           if (m.year === currentYear && m.month === currentMonth) return null
           
           const val = `month-${m.year}-${m.month}`
@@ -103,19 +102,19 @@ export default async function JournalsPage({
         })}
 
         {/* PREVIOUS FINANCIAL YEAR */}
-        {groups.length > 1 && (
+        {previousYearGroup && (
           <AccordionItem value="previous-fy" className="border rounded-lg bg-card px-4">
             <AccordionTrigger className="hover:no-underline py-4">
               <div className="flex items-center gap-4">
                 <span className="font-semibold text-base">Previous Financial Year</span>
                 <span className="text-sm text-muted-foreground font-normal">
-                  Mar {groups[1].year - 1} - Feb {groups[1].year}
+                  Mar {previousYearGroup.year - 1} - Feb {previousYearGroup.year}
                 </span>
               </div>
             </AccordionTrigger>
             <AccordionContent className="pt-2 pb-6">
               <LazyJournalsTable
-                year={groups[1].year}
+                year={previousYearGroup.year}
                 status={params.status}
                 postAction={postJournalEntry}
                 voidAction={voidJournalEntry}

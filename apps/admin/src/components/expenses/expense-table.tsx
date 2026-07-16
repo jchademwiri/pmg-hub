@@ -39,6 +39,7 @@ interface ExpenseTableProps {
   deleteAction: (id: string) => Promise<{ error?: string }>;
   updateAction: (id: string, formData: FormData) => Promise<{ error?: string }>;
   closedPeriods?: string[];
+  minDate?: string;
 }
 
 function ExpenseTableRow({
@@ -267,6 +268,7 @@ export function ExpenseTable({
   deleteAction,
   updateAction,
   closedPeriods,
+  minDate,
 }: ExpenseTableProps) {
   return (
     <Table>
