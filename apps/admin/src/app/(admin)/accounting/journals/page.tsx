@@ -1,6 +1,8 @@
 import type { Metadata } from 'next'
-import { getJournalEntries, getAllAccountingPeriods } from '@pmg/db'
-import { SetPageTotal } from '@/components/navigation/page-header-context'
+import { getJournalEntries, getAllAccountingPeriods, getJournalMonthlySummaries } from '@pmg/db'
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+import { BookOpen, CheckCircle2, FileEdit } from 'lucide-react'
+import { formatZAR } from '@/lib/format'
 import { postJournalEntry, voidJournalEntry } from '@/app/actions/accounting'
 import { JournalsTable } from './journals-table'
 import { LazyJournalsTable } from './lazy-journals-table'
@@ -33,9 +35,15 @@ export default async function JournalsPage({
     getJournalEntries({ period: currentMonthStr, status: params.status, page: 1, pageSize: 5000 }),
   ])
 
+  const fyStartYear = currentMonth <= 2 ? currentYear - 1 : currentYear;
+
+  const monthlySummaries = await getJournalMonthlySummaries(fyStartYear, params.status);
+  const globalPostedValue = monthlySummaries.reduce((sum, m) => sum + m.totalPostedValue, 0);
+  const globalPostedCount = monthlySummaries.reduce((sum, m) => sum + m.postedCount, 0);
+  const globalDraftCount = monthlySummaries.reduce((sum, m) => sum + m.draftCount, 0);
+
   return (
     <div className="flex flex-col gap-6">
-      <SetPageTotal value={`${currentMonthResult.total} entries`} />
 
       <div className="flex items-center justify-between">
         <div>
@@ -51,18 +59,72 @@ export default async function JournalsPage({
         </Button>
       </div>
 
+      {/* Metrics Overview */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <Card className="shadow-sm">
+          <CardHeader className="flex flex-row items-center justify-between pb-2">
+            <CardTitle className="text-sm font-medium text-muted-foreground">Posted Value</CardTitle>
+            <BookOpen className="size-4 text-primary" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">{formatZAR(globalPostedValue)}</div>
+            <p className="text-xs text-muted-foreground mt-1">Total debits posted</p>
+          </CardContent>
+        </Card>
+        <Card className="shadow-sm">
+          <CardHeader className="flex flex-row items-center justify-between pb-2">
+            <CardTitle className="text-sm font-medium text-muted-foreground">Posted Entries</CardTitle>
+            <CheckCircle2 className="size-4 text-emerald-500" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold text-emerald-600 dark:text-emerald-400">{globalPostedCount}</div>
+            <p className="text-xs text-muted-foreground mt-1">Successfully recorded</p>
+          </CardContent>
+        </Card>
+        <Card className="shadow-sm">
+          <CardHeader className="flex flex-row items-center justify-between pb-2">
+            <CardTitle className="text-sm font-medium text-muted-foreground">Draft Entries</CardTitle>
+            <FileEdit className={`size-4 ${globalDraftCount > 0 ? 'text-amber-500' : 'text-muted-foreground'}`} />
+          </CardHeader>
+          <CardContent>
+            <div className={`text-2xl font-bold ${globalDraftCount > 0 ? 'text-amber-600 dark:text-amber-400' : 'text-emerald-600 dark:text-emerald-400'}`}>
+              {globalDraftCount}
+            </div>
+            <p className="text-xs text-muted-foreground mt-1">Requiring attention</p>
+          </CardContent>
+        </Card>
+      </div>
+
       <JournalsFilterBar currentStatus={params.status} />
 
       <Accordion type="single" collapsible defaultValue="current-month" className="w-full space-y-4">
         {/* CURRENT MONTH */}
         <AccordionItem value="current-month" className="border rounded-lg bg-card px-4">
-          <AccordionTrigger className="hover:no-underline py-4">
-            <div className="flex items-center gap-4">
-              <span className="font-semibold text-base">Current Month</span>
-              <span className="text-sm text-muted-foreground font-normal">
-                {new Date(currentYear, currentMonth - 1).toLocaleString('default', { month: 'long', year: 'numeric' })}
-              </span>
-            </div>
+          <AccordionTrigger className="flex items-center w-full pr-4 hover:no-underline group/trigger py-4">
+            <span className="flex-1 text-left text-lg font-medium text-muted-foreground group-data-[state=open]/trigger:text-foreground transition-colors">
+              Current Month ({new Date(currentYear, currentMonth - 1).toLocaleString('default', { month: 'long', year: 'numeric' })})
+            </span>
+            
+            {/* Summary Badges */}
+            {(() => {
+              const summary = monthlySummaries.find(s => s.month === currentMonthStr);
+              if (!summary) return null;
+              return (
+                <div className="flex items-center gap-3 pr-2">
+                  <div className="px-2.5 py-0.5 rounded-full bg-muted/50 text-xs text-muted-foreground border border-border/50 hidden sm:block">
+                    {summary.count} {summary.count === 1 ? 'entry' : 'entries'}
+                  </div>
+                  <div className="px-2.5 py-0.5 rounded-full bg-primary/10 text-xs text-primary font-medium border border-primary/20">
+                    Posted Value: {formatZAR(summary.totalPostedValue)}
+                  </div>
+                  {summary.draftCount > 0 && (
+                    <div className="px-2.5 py-0.5 rounded-full text-xs font-medium border bg-amber-500/10 text-amber-600 dark:text-amber-400 border-amber-500/20">
+                      Drafts: {summary.draftCount}
+                    </div>
+                  )}
+                </div>
+              );
+            })()}
           </AccordionTrigger>
           <AccordionContent className="pt-2 pb-6">
             <JournalsTable
@@ -80,13 +142,31 @@ export default async function JournalsPage({
           const val = `month-${m.year}-${m.month}`
           return (
             <AccordionItem key={val} value={val} className="border rounded-lg bg-card px-4">
-              <AccordionTrigger className="hover:no-underline py-4">
-                <div className="flex items-center gap-4">
-                  <span className="font-semibold text-base">{m.label}</span>
-                  <span className="text-sm text-muted-foreground font-normal">
-                    {new Date(m.year, m.month - 1).toLocaleString('default', { month: 'long', year: 'numeric' })}
-                  </span>
-                </div>
+              <AccordionTrigger className="flex items-center w-full pr-4 hover:no-underline group/trigger py-4">
+                <span className="flex-1 text-left text-lg font-medium text-muted-foreground group-data-[state=open]/trigger:text-foreground transition-colors">
+                  {m.label}
+                </span>
+
+                {/* Summary Badges */}
+                {(() => {
+                  const summary = monthlySummaries.find(s => s.month === val.replace('month-', ''));
+                  if (!summary) return null;
+                  return (
+                    <div className="flex items-center gap-3 pr-2">
+                      <div className="px-2.5 py-0.5 rounded-full bg-muted/50 text-xs text-muted-foreground border border-border/50 hidden sm:block">
+                        {summary.count} {summary.count === 1 ? 'entry' : 'entries'}
+                      </div>
+                      <div className="px-2.5 py-0.5 rounded-full bg-primary/10 text-xs text-primary font-medium border border-primary/20">
+                        Posted Value: {formatZAR(summary.totalPostedValue)}
+                      </div>
+                      {summary.draftCount > 0 && (
+                        <div className="px-2.5 py-0.5 rounded-full text-xs font-medium border bg-amber-500/10 text-amber-600 dark:text-amber-400 border-amber-500/20">
+                          Drafts: {summary.draftCount}
+                        </div>
+                      )}
+                    </div>
+                  );
+                })()}
               </AccordionTrigger>
               <AccordionContent className="pt-2 pb-6">
                 <LazyJournalsTable
@@ -104,13 +184,10 @@ export default async function JournalsPage({
         {/* PREVIOUS FINANCIAL YEAR */}
         {previousYearGroup && (
           <AccordionItem value="previous-fy" className="border rounded-lg bg-card px-4">
-            <AccordionTrigger className="hover:no-underline py-4">
-              <div className="flex items-center gap-4">
-                <span className="font-semibold text-base">Previous Financial Year</span>
-                <span className="text-sm text-muted-foreground font-normal">
-                  Mar {previousYearGroup.year} - Feb {previousYearGroup.year + 1}
-                </span>
-              </div>
+            <AccordionTrigger className="flex items-center w-full pr-4 hover:no-underline group/trigger py-4">
+              <span className="flex-1 text-left text-lg font-medium text-muted-foreground group-data-[state=open]/trigger:text-foreground transition-colors">
+                Previous Financial Year (Mar {previousYearGroup.year} - Feb {previousYearGroup.year + 1})
+              </span>
             </AccordionTrigger>
             <AccordionContent className="pt-2 pb-6">
               <LazyJournalsTable

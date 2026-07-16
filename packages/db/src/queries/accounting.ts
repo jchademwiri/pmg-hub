@@ -133,6 +133,51 @@ export async function getJournalEntries({
   };
 }
 
+export type MonthlyJournalSummary = {
+  month: string;
+  count: number;
+  postedCount: number;
+  draftCount: number;
+  totalPostedValue: number;
+};
+
+/**
+ * Returns a monthly summary of journal entries for a given financial year.
+ */
+export async function getJournalMonthlySummaries(
+  year: number,
+  status?: string
+): Promise<MonthlyJournalSummary[]> {
+  const conditions = [
+    sql`${journalEntries.period} >= ${`${year}-03`}`,
+    sql`${journalEntries.period} <= ${`${year + 1}-02`}`
+  ];
+
+  if (status) conditions.push(eq(journalEntries.status, status as any));
+
+  const result = await db
+    .select({
+      month: journalEntries.period,
+      count: sql<number>`count(DISTINCT ${journalEntries.id})::int`,
+      postedCount: sql<number>`count(DISTINCT CASE WHEN ${journalEntries.status} = 'posted' THEN ${journalEntries.id} ELSE NULL END)::int`,
+      draftCount: sql<number>`count(DISTINCT CASE WHEN ${journalEntries.status} = 'draft' THEN ${journalEntries.id} ELSE NULL END)::int`,
+      totalPostedValue: sql<number>`COALESCE(SUM(CASE WHEN ${journalEntries.status} = 'posted' THEN ${journalLines.debit} ELSE 0 END), 0)::numeric`,
+    })
+    .from(journalEntries)
+    .leftJoin(journalLines, eq(journalEntries.id, journalLines.journalEntryId))
+    .where(and(...conditions))
+    .groupBy(journalEntries.period)
+    .orderBy(desc(journalEntries.period));
+
+  return result.map((r) => ({
+    month: r.month,
+    count: r.count,
+    postedCount: r.postedCount,
+    draftCount: r.draftCount,
+    totalPostedValue: Number(r.totalPostedValue),
+  }));
+}
+
 /**
  * Fetches a journal entry with its lines.
  */
@@ -567,6 +612,49 @@ export async function getGeneralLedger({
     page,
     pageSize,
   };
+}
+
+export type MonthlyLedgerSummary = {
+  month: string;
+  count: number;
+  totalDebits: number;
+  totalCredits: number;
+};
+
+/**
+ * Returns a monthly summary of ledger entries for a given financial year.
+ */
+export async function getLedgerMonthlySummaries(
+  year: number,
+  accountId?: string
+): Promise<MonthlyLedgerSummary[]> {
+  const conditions = [
+    eq(journalEntries.status, "posted"),
+    sql`${journalEntries.period} >= ${`${year}-03`}`,
+    sql`${journalEntries.period} <= ${`${year + 1}-02`}`
+  ];
+
+  if (accountId) conditions.push(eq(journalLines.accountId, accountId));
+
+  const result = await db
+    .select({
+      month: journalEntries.period,
+      count: sql<number>`count(*)::int`,
+      totalDebits: sql<number>`COALESCE(SUM(${journalLines.debit}), 0)::numeric`,
+      totalCredits: sql<number>`COALESCE(SUM(${journalLines.credit}), 0)::numeric`,
+    })
+    .from(journalLines)
+    .innerJoin(journalEntries, eq(journalLines.journalEntryId, journalEntries.id))
+    .where(and(...conditions))
+    .groupBy(journalEntries.period)
+    .orderBy(desc(journalEntries.period));
+
+  return result.map((r) => ({
+    month: r.month,
+    count: r.count,
+    totalDebits: Number(r.totalDebits),
+    totalCredits: Number(r.totalCredits),
+  }));
 }
 
 // ── Accounting Overview ───────────────────────────────────────────────────────

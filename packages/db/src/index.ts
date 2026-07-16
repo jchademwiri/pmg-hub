@@ -33,8 +33,10 @@ export type {
   AgingRow,
   ClientAgingRow,
   OutstandingInvoiceRow,
+  MonthlyInvoiceSummary,
+  MonthlyQuotationSummary,
 } from './queries/billing';
-export { getActiveItems, getUnlinkedIncomeForClient, getStatementYears, getAgingReport, getClientAgingReport, getClientOutstandingInvoices } from './queries/billing';
+export { getActiveItems, getUnlinkedIncomeForClient, getStatementYears, getAgingReport, getClientAgingReport, getClientOutstandingInvoices, getInvoiceMonthlySummaries, getQuotationMonthlySummaries } from './queries/billing';
 
 // ── Distribution Settings ──────────────────────────────────────────────────────
 export { getActiveRates, getActiveRateForKey, getCurrentRates, getAllDistributionSettings } from './queries/distribution-settings';
@@ -62,6 +64,8 @@ export {
   closePeriod,
   lockPeriod,
   reopenPeriod,
+  getJournalMonthlySummaries,
+  getLedgerMonthlySummaries,
 } from './queries/accounting';
 export type {
   TrialBalanceRow,
@@ -70,7 +74,19 @@ export type {
   GeneralLedgerRow,
   AccountingOverview,
   AccountingPeriodWithNames,
+  MonthlyJournalSummary,
+  MonthlyLedgerSummary,
 } from './queries/accounting';
+
+// ── Income ─────────────────────────────────────────────────────────────
+export {
+  getAllIncome,
+  getIncomeById,
+  getDistinctIncomeMonths,
+  getIncomeAllocations,
+  getIncomeMonthlySummaries,
+} from './queries/income';
+export type { IncomeRow, MonthlyIncomeSummary } from './queries/income';
 export type {
   ChartAccount,
   NewChartAccount,

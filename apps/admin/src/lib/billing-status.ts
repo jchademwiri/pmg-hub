@@ -10,6 +10,7 @@ export const STATUS_STYLES: Record<string, string> = {
   overdue: 'bg-red-500/10 text-red-600',
   draft: 'bg-zinc-500/10 text-zinc-600',
   void: 'bg-zinc-500/10 text-zinc-600',
+  written_off: 'bg-slate-500/10 text-slate-600',
 }
 
 export const STATUS_TEXT_COLORS: Record<string, string> = {
@@ -19,6 +20,7 @@ export const STATUS_TEXT_COLORS: Record<string, string> = {
   overdue: 'text-red-600',
   draft: 'text-zinc-600',
   void: 'text-zinc-600 line-through',
+  written_off: 'text-slate-600 line-through',
 }
 
 /**

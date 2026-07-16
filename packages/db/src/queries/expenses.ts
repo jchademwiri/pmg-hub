@@ -146,3 +146,50 @@ export async function getExpenseCategoryById(id: string): Promise<ExpenseCategor
 
   return result[0] ?? null;
 }
+
+export type MonthlyExpenseSummary = {
+  month: string;
+  count: number;
+  totalExpenses: number;
+  totalCategorized: number;
+  totalUncategorized: number;
+};
+
+/**
+ * Returns a monthly summary of expenses for a given financial year.
+ * Aggregates count, total spent, categorized, and uncategorized sums.
+ */
+export async function getExpenseMonthlySummaries(
+  year: number,
+  divisionId?: string,
+  category?: string
+): Promise<MonthlyExpenseSummary[]> {
+  const conditions = [
+    sql`${expenses.date} >= ${`${year}-03-01`}`,
+    sql`${expenses.date} < ${`${year + 1}-03-01`}`
+  ];
+
+  if (divisionId) conditions.push(eq(expenses.divisionId, divisionId));
+  if (category) conditions.push(eq(expenses.category, category));
+
+  const result = await db
+    .select({
+      month: sql<string>`TO_CHAR(${expenses.date}, 'YYYY-MM')`,
+      count: sql<number>`count(*)::int`,
+      totalExpenses: sql<number>`COALESCE(SUM(${expenses.amount}), 0)::numeric`,
+      totalCategorized: sql<number>`COALESCE(SUM(CASE WHEN ${expenses.category} != 'Uncategorized' THEN ${expenses.amount} ELSE 0 END), 0)::numeric`,
+      totalUncategorized: sql<number>`COALESCE(SUM(CASE WHEN ${expenses.category} = 'Uncategorized' THEN ${expenses.amount} ELSE 0 END), 0)::numeric`,
+    })
+    .from(expenses)
+    .where(and(...conditions))
+    .groupBy(sql`TO_CHAR(${expenses.date}, 'YYYY-MM')`)
+    .orderBy(desc(sql`TO_CHAR(${expenses.date}, 'YYYY-MM')`));
+
+  return result.map(r => ({
+    month: r.month,
+    count: r.count,
+    totalExpenses: Number(r.totalExpenses),
+    totalCategorized: Number(r.totalCategorized),
+    totalUncategorized: Number(r.totalUncategorized),
+  }));
+}
