@@ -33,8 +33,9 @@ export type {
   AgingRow,
   ClientAgingRow,
   OutstandingInvoiceRow,
+  MonthlyInvoiceSummary,
 } from './queries/billing';
-export { getActiveItems, getUnlinkedIncomeForClient, getStatementYears, getAgingReport, getClientAgingReport, getClientOutstandingInvoices } from './queries/billing';
+export { getActiveItems, getUnlinkedIncomeForClient, getStatementYears, getAgingReport, getClientAgingReport, getClientOutstandingInvoices, getInvoiceMonthlySummaries } from './queries/billing';
 
 // ── Distribution Settings ──────────────────────────────────────────────────────
 export { getActiveRates, getActiveRateForKey, getCurrentRates, getAllDistributionSettings } from './queries/distribution-settings';

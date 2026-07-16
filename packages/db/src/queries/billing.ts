@@ -584,6 +584,57 @@ export async function getAllInvoices(
   return { data: data as InvoiceRow[], total, sum: sumAmount, outstanding };
 }
 
+// ── getInvoiceMonthlySummaries ────────────────────────────────────────────────
+
+export type MonthlyInvoiceSummary = {
+  month: string;
+  count: number;
+  total: number;
+  outstanding: number;
+};
+
+export async function getInvoiceMonthlySummaries(
+  year: number,
+  divisionId?: string,
+  status?: string
+): Promise<MonthlyInvoiceSummary[]> {
+  const conditions = [];
+
+  const start = `${year}-03-01`;
+  const end = `${year + 1}-03-01`;
+  conditions.push(sql`${invoices.invoiceDate} >= ${start} AND ${invoices.invoiceDate} < ${end}`);
+
+  if (divisionId) {
+    conditions.push(eq(invoices.divisionId, divisionId));
+  }
+
+  if (status) {
+    conditions.push(eq(invoices.status, status as any));
+  } else {
+    // Exclude drafts and void by default unless specifically asking for them
+    conditions.push(sql`${invoices.status} NOT IN ('draft', 'void')`);
+  }
+
+  const query = db
+    .select({
+      month: sql<string>`TO_CHAR(${invoices.invoiceDate}, 'YYYY-MM')`,
+      count: sql<number>`count(*)::int`,
+      total: sql<number>`COALESCE(SUM(${invoices.total}), 0)::numeric`,
+      outstanding: sql<number>`COALESCE(SUM(CASE WHEN ${invoices.status} IN ('issued', 'overdue', 'partially_paid') THEN ${invoices.total} - COALESCE((SELECT SUM(amount) FROM payment_allocations WHERE invoice_id = invoices.id), 0) - COALESCE((SELECT SUM(amount) FROM credit_applications WHERE invoice_id = invoices.id), 0) ELSE 0 END), 0)::numeric`,
+    })
+    .from(invoices)
+    .where(and(...conditions))
+    .groupBy(sql`TO_CHAR(${invoices.invoiceDate}, 'YYYY-MM')`);
+
+  const results = await query;
+  return results.map((r) => ({
+    month: r.month,
+    count: Number(r.count),
+    total: Number(r.total),
+    outstanding: Number(r.outstanding),
+  }));
+}
+
 // ── getQuotationById ──────────────────────────────────────────────────────────
 
 /**
