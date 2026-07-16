@@ -119,7 +119,8 @@ interface AppSidebarProps {
   user: { name: string; email: string; role: string }
 }
 
-const MAIN_GROUPS = GROUPS.filter((g) => g.key !== 'system')
+const MAIN_GROUPS = GROUPS.filter((g) => g.key !== 'system' && g.key !== 'advanced')
+const ADVANCED_GROUP = GROUPS.find((g) => g.key === 'advanced')
 const SYSTEM_GROUP = GROUPS.find((g) => g.key === 'system')!
 
 export function AppSidebar({ user }: AppSidebarProps) {
@@ -186,6 +187,15 @@ export function AppSidebar({ user }: AppSidebarProps) {
 
       <SidebarFooter>
         <div className="flex flex-col gap-1">
+          {ADVANCED_GROUP && (
+            <CollapsibleGroup
+              group={ADVANCED_GROUP}
+              isOpen={openGroup === ADVANCED_GROUP.key}
+              pathname={pathname}
+              onToggle={handleToggle}
+              onNavigate={handleNavigate}
+            />
+          )}
           <CollapsibleGroup
             group={SYSTEM_GROUP}
             isOpen={openGroup === SYSTEM_GROUP.key}

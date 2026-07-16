@@ -237,7 +237,6 @@ export function FinanceOverviewClient({
             { href: '/finance/income', label: 'Income', description: 'Track payments received', color: 'bg-emerald-500/10 text-emerald-600', icon: ArrowDownLeft },
             { href: '/finance/expenses', label: 'Expenses', description: 'Record business costs', color: 'bg-red-500/10 text-red-600', icon: TrendingDown },
             { href: '/finance/categories', label: 'Categories', description: 'Manage expense categories', color: 'bg-amber-500/10 text-amber-600', icon: Tags },
-            { href: '/finance/distributions', label: 'Distributions', description: 'Allocate profit to buckets', color: 'bg-blue-500/10 text-blue-600', icon: PieChart },
           ].map((link) => (
             <Link
               key={link.href}

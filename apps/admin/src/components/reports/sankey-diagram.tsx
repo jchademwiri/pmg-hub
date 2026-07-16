@@ -9,15 +9,7 @@ interface SankeyDiagramProps {
   expenses: number
   pmgShare: number
   profitPool: number
-  salary: number
-  reinvest: number
-  reserve: number
-  flex: number
   ledgerBalances?: {
-    salary:    { expected: number; spent: number; available: number }
-    reinvest:  { expected: number; spent: number; available: number }
-    reserve:   { expected: number; spent: number; available: number }
-    flex:      { expected: number; spent: number; available: number }
     pmg_share: { expected: number; spent: number; available: number }
   }
 }
@@ -27,10 +19,6 @@ export function SankeyDiagram({
   expenses,
   pmgShare,
   profitPool,
-  salary,
-  reinvest,
-  reserve,
-  flex,
   ledgerBalances,
 }: SankeyDiagramProps) {
   const isProfitable = profitPool > 0
@@ -43,15 +31,15 @@ export function SankeyDiagram({
   // Nodes definition
   const nodes = [
     // Column 0: Gross
-    { id: 'gross', label: 'Gross Revenue', val: revenue, x: 40, y: 180, w: 120, h: 42, color: 'border-emerald-500 bg-emerald-500/10 text-emerald-500' },
+    { id: 'gross', label: 'Gross Revenue', val: revenue, x: 80, y: 180, w: 120, h: 42, color: 'border-emerald-500 bg-emerald-500/10 text-emerald-500' },
     
     // Column 1: L1 splits
     { 
       id: 'pmg', 
       label: 'PMG Share (25%)', 
       val: pmgShare, 
-      x: 240, 
-      y: ledgerBalances ? 80 : 100, 
+      x: 340, 
+      y: ledgerBalances ? 100 : 120, 
       w: 125, 
       h: ledgerBalances ? 64 : 42, 
       color: 'border-blue-500 bg-blue-500/10 text-blue-500',
@@ -59,15 +47,15 @@ export function SankeyDiagram({
       spent: ledgerBalances?.pmg_share.spent,
       available: ledgerBalances?.pmg_share.available,
     },
-    { id: 'net', label: 'Net Revenue', val: netRevenue, x: 240, y: 260, w: 120, h: 42, color: 'border-emerald-500 bg-emerald-500/10 text-emerald-500' },
+    { id: 'net', label: 'Net Revenue', val: netRevenue, x: 340, y: 260, w: 120, h: 42, color: 'border-emerald-500 bg-emerald-500/10 text-emerald-500' },
     
     // Column 2: L1 Net splits
-    { id: 'expenses', label: 'Expenses', val: expenses, x: 440, y: 100, w: 120, h: 42, color: 'border-amber-500 bg-amber-500/10 text-amber-500' },
+    { id: 'expenses', label: 'Expenses', val: expenses, x: 600, y: 120, w: 120, h: 42, color: 'border-amber-500 bg-amber-500/10 text-amber-500' },
     { 
       id: 'pool', 
       label: isProfitable ? 'Profit Pool' : 'Net Deficit', 
       val: Math.abs(profitPool), 
-      x: 440, 
+      x: 600, 
       y: 260, 
       w: 120, 
       h: 42, 
@@ -75,64 +63,9 @@ export function SankeyDiagram({
         ? 'border-emerald-500 bg-emerald-500/10 text-emerald-500' 
         : 'border-red-500 bg-red-500/10 text-red-500' 
     },
-
-    // Column 3: L2 allocations (only if profitable)
-    { 
-      id: 'salary', 
-      label: 'Salary', 
-      val: salary, 
-      x: 640, 
-      y: ledgerBalances ? 30 : 40, 
-      w: 125, 
-      h: ledgerBalances ? 64 : 42, 
-      color: 'border-violet-500 bg-violet-500/10 text-violet-500',
-      hasBalances: !!ledgerBalances,
-      spent: ledgerBalances?.salary.spent,
-      available: ledgerBalances?.salary.available,
-    },
-    { 
-      id: 'reinvest', 
-      label: 'Reinvest', 
-      val: reinvest, 
-      x: 640, 
-      y: ledgerBalances ? 120 : 140, 
-      w: 125, 
-      h: ledgerBalances ? 64 : 42, 
-      color: 'border-cyan-500 bg-cyan-500/10 text-cyan-500',
-      hasBalances: !!ledgerBalances,
-      spent: ledgerBalances?.reinvest.spent,
-      available: ledgerBalances?.reinvest.available,
-    },
-    { 
-      id: 'reserve', 
-      label: 'Reserve', 
-      val: reserve, 
-      x: 640, 
-      y: ledgerBalances ? 210 : 240, 
-      w: 125, 
-      h: ledgerBalances ? 64 : 42, 
-      color: 'border-sky-500 bg-sky-500/10 text-sky-500',
-      hasBalances: !!ledgerBalances,
-      spent: ledgerBalances?.reserve.spent,
-      available: ledgerBalances?.reserve.available,
-    },
-    { 
-      id: 'flex', 
-      label: 'Flex', 
-      val: flex, 
-      x: 640, 
-      y: ledgerBalances ? 300 : 340, 
-      w: 125, 
-      h: ledgerBalances ? 64 : 42, 
-      color: 'border-rose-400 bg-rose-400/10 text-rose-500',
-      hasBalances: !!ledgerBalances,
-      spent: ledgerBalances?.flex.spent,
-      available: ledgerBalances?.flex.available,
-    },
   ]
 
-  // Filter nodes if not profitable (hide Level 2)
-  const activeNodes = isProfitable ? nodes : nodes.filter(n => !['salary', 'reinvest', 'reserve', 'flex'].includes(n.id))
+  const activeNodes = nodes
 
   // Link helper (cubic bezier link paths)
   const getLinkPath = (x0: number, y0: number, x1: number, y1: number) => {
@@ -149,13 +82,7 @@ export function SankeyDiagram({
     // Col 1 -> Col 2
     { source: 'net', target: 'expenses', val: expenses, color: 'stroke-amber-500/20 dark:stroke-amber-500/10' },
     { source: 'net', target: 'pool', val: Math.abs(profitPool), color: isProfitable ? 'stroke-emerald-500/20 dark:stroke-emerald-500/10' : 'stroke-red-500/20 dark:stroke-red-500/10' },
-
-    // Col 2 -> Col 3 (if profitable)
-    { source: 'pool', target: 'salary', val: salary, color: 'stroke-violet-500/20 dark:stroke-violet-500/10', active: isProfitable },
-    { source: 'pool', target: 'reinvest', val: reinvest, color: 'stroke-cyan-500/20 dark:stroke-cyan-500/10', active: isProfitable },
-    { source: 'pool', target: 'reserve', val: reserve, color: 'stroke-sky-500/20 dark:stroke-sky-500/10', active: isProfitable },
-    { source: 'pool', target: 'flex', val: flex, color: 'stroke-rose-400/20 dark:stroke-rose-400/10', active: isProfitable },
-  ].filter(l => l.active !== false)
+  ]
 
   // Max stroke width for styling links
   const maxStroke = 30
@@ -171,7 +98,7 @@ export function SankeyDiagram({
           <span>Allocation Route — Flow Diagram</span>
         </CardTitle>
         <CardDescription>
-          Visual routing of gross income stream flowing down to PMG Share, expenses, net margins, and profit pool divisions.
+          Visual routing of gross income stream flowing down to PMG Share, expenses, and net profit.
         </CardDescription>
       </CardHeader>
       <CardContent className="pt-2">
@@ -270,3 +197,4 @@ export function SankeyDiagram({
     </Card>
   )
 }
+
