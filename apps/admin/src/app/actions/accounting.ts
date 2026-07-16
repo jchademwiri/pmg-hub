@@ -384,3 +384,36 @@ export async function fetchJournalsByYear(year: number, status?: string) {
   );
   return { data: journalsResult.data };
 }
+
+function getStartAndEndOfMonth(year: number, month: number) {
+  const startDate = `${year}-${month.toString().padStart(2, '0')}-01`;
+  const endOfMonth = new Date(year, month, 0).getDate();
+  const endDate = `${year}-${month.toString().padStart(2, '0')}-${endOfMonth}`;
+  return { startDate, endDate };
+}
+
+function getStartAndEndOfFinancialYear(year: number) {
+  // Financial year: March 1 of year-1 to Feb 28/29 of year
+  const startDate = `${year - 1}-03-01`;
+  const endOfMonth = new Date(year, 2, 0).getDate();
+  const endDate = `${year}-02-${endOfMonth}`;
+  return { startDate, endDate };
+}
+
+export async function fetchGeneralLedgerByMonth(year: number, month: number, accountId?: string) {
+  const { getGeneralLedger } = await import('@pmg/db');
+  const { startDate, endDate } = getStartAndEndOfMonth(year, month);
+  const result = await getGeneralLedger(
+    { startDate, endDate, accountId, page: 1, pageSize: 5000 }
+  );
+  return { data: result.data };
+}
+
+export async function fetchGeneralLedgerByYear(year: number, accountId?: string) {
+  const { getGeneralLedger } = await import('@pmg/db');
+  const { startDate, endDate } = getStartAndEndOfFinancialYear(year);
+  const result = await getGeneralLedger(
+    { startDate, endDate, accountId, page: 1, pageSize: 5000 }
+  );
+  return { data: result.data };
+}

@@ -59,12 +59,15 @@ export default function LoginPage() {
   }
 
   return (
-    <div className="relative flex min-h-screen items-center justify-center overflow-hidden bg-[#0a0f1d] px-4 py-12 font-sans text-foreground select-none">
+    <div className="relative flex min-h-screen items-center justify-center overflow-hidden bg-[#0a0f1d] bg-[url('/images/portal-login-bg.png')] bg-cover bg-center bg-no-repeat bg-fixed px-4 py-12 font-sans text-foreground">
+      {/* Dark overlay for contrast */}
+      <div className="absolute inset-0 bg-black/60 mix-blend-multiply pointer-events-none" />
+      
       {/* Glow Effects */}
-      <div className="absolute -left-1/4 -top-1/4 h-[80vh] w-[80vh] rounded-full bg-blue-600/10 blur-[120px]" />
-      <div className="absolute -right-1/4 -bottom-1/4 h-[80vh] w-[80vh] rounded-full bg-indigo-600/10 blur-[120px]" />
+      <div className="absolute -left-1/4 -top-1/4 h-[80vh] w-[80vh] rounded-full bg-blue-600/20 blur-[120px] pointer-events-none" />
+      <div className="absolute -right-1/4 -bottom-1/4 h-[80vh] w-[80vh] rounded-full bg-indigo-600/20 blur-[120px] pointer-events-none" />
 
-      <div className="w-full max-w-md z-10">
+      <div className="w-full max-w-md z-10 animate-in fade-in zoom-in-95 duration-1000">
         {/* Brand / Logo */}
         <div className="mb-8 flex flex-col items-center text-center">
           <div className="flex size-12 items-center justify-center rounded-xl bg-gradient-to-tr from-blue-600 to-indigo-500 shadow-lg shadow-blue-500/20">
