@@ -23,7 +23,7 @@ export type ExpenseRow = {
  * sorted by date DESC.
  */
 export async function getAllExpenses(
-  filters?: { divisionId?: string; category?: string; month?: string },
+  filters?: { divisionId?: string; category?: string; month?: string; year?: number },
   pageObj?: { page: number; pageSize: number },
 ): Promise<{ data: ExpenseRow[]; total: number; sum: number }> {
   const conditions = [];
@@ -35,6 +35,12 @@ export async function getAllExpenses(
   }
   if (filters?.month) {
     conditions.push(sql`TO_CHAR(${expenses.date}, 'YYYY-MM') = ${filters.month}`);
+  }
+  if (filters?.year) {
+    conditions.push(
+      sql`${expenses.date} >= ${`${filters.year}-03-01`}`,
+      sql`${expenses.date} < ${`${filters.year + 1}-03-01`}`
+    );
   }
 
   const query = db

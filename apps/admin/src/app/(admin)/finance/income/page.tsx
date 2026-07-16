@@ -3,7 +3,16 @@ import { getDb, getAllIncome, getAllDivisions, getAllClients, getDistinctIncomeM
 import { formatZAR } from '@/lib/format'
 import { SetPageTotal } from '@/components/navigation/page-header-context'
 import { getMinAllowedDate } from '@/lib/date-rules'
-import { IncomeClient } from './income-client'
+import { IncomeTable } from './income-table'
+import { LazyIncomeTable } from './lazy-income-table'
+import { IncomeFilterBar } from './income-filter-bar'
+import { generateFinancialYearGroups, getCurrentMonthString } from '@/lib/billing-groups'
+import {
+  Accordion,
+  AccordionContent,
+  AccordionItem,
+  AccordionTrigger,
+} from '@/components/ui/accordion'
 
 export const dynamic = 'force-dynamic'
 export const metadata: Metadata = { title: 'Income' }
@@ -18,27 +27,31 @@ interface IncomePageProps {
 }
 
 export default async function FinanceIncomePage({ searchParams }: IncomePageProps) {
-  const { month, divisionId, clientId, page: pageStr } = await searchParams
-  const currentPage = Math.max(1, parseInt(pageStr || '1', 10))
-  const pageSize = 20
+  const { divisionId, clientId } = await searchParams
 
   const filters = {
-    month: month || undefined,
     divisionId: divisionId || undefined,
     clientId: clientId || undefined,
   }
 
-  const [result, divisions, clients, months, minDate] = await Promise.all([
-    getAllIncome(filters, { page: currentPage, pageSize }),
+  const [divisions, clients, minDate] = await Promise.all([
     getAllDivisions(),
     getAllClients(),
-    getDistinctIncomeMonths(),
     getMinAllowedDate(),
   ])
 
-  // Fetch allocation data for each income row
+  // Get Accordion Financial Year logic
+  const currentMonthStr = getCurrentMonthString()
+  const { currentMonths, previousYearGroup } = generateFinancialYearGroups()
+  const [currentYear, currentMonth] = currentMonthStr.split('-').map(Number)
+
+  // Only fetch current month's data server-side
+  const [currentMonthResult] = await Promise.all([
+    getAllIncome({ month: currentMonthStr, ...filters }, { page: 1, pageSize: 5000 }),
+  ])
+
   const db = getDb()
-  const incomeIds = result.data.map((r) => r.id)
+  const incomeIds = currentMonthResult.data.map((r) => r.id)
 
   const allocationRows = incomeIds.length > 0
     ? await db
@@ -57,7 +70,7 @@ export default async function FinanceIncomePage({ searchParams }: IncomePageProp
 
   // Enhance income rows with allocation info
   const minPeriod = minDate.slice(0, 7)
-  const enrichedData = result.data.map((row) => {
+  const enrichedData = currentMonthResult.data.map((row) => {
     const amount = parseFloat(row.amount)
     const allocated = allocationMap.get(row.id) ?? 0
     const unallocated = Math.max(0, amount - allocated)
@@ -84,7 +97,7 @@ export default async function FinanceIncomePage({ searchParams }: IncomePageProp
 
   return (
     <div className="flex flex-col gap-6">
-      <SetPageTotal value={formatZAR(result.sum)} variant="green" />
+      <SetPageTotal value={formatZAR(currentMonthResult.sum)} variant="green" />
 
       <div>
         <h2 className="text-lg font-semibold">Income</h2>
@@ -93,17 +106,77 @@ export default async function FinanceIncomePage({ searchParams }: IncomePageProp
         </p>
       </div>
 
-      <IncomeClient
-        data={enrichedData}
-        total={result.total}
-        sum={result.sum}
-        currentPage={currentPage}
-        pageSize={pageSize}
+      <IncomeFilterBar
         divisions={divisions}
         clients={clients}
-        months={months}
-        filters={filters}
+        currentDivisionId={filters.divisionId}
+        currentClientId={filters.clientId}
       />
+
+      <Accordion type="single" collapsible defaultValue="current-month" className="w-full space-y-4">
+        {/* CURRENT MONTH */}
+        <AccordionItem value="current-month" className="border rounded-lg bg-card px-4">
+          <AccordionTrigger className="hover:no-underline py-4">
+            <div className="flex items-center gap-4">
+              <span className="font-semibold text-base">Current Month</span>
+              <span className="text-sm text-muted-foreground font-normal">
+                {new Date(currentYear, currentMonth - 1).toLocaleString('default', { month: 'long', year: 'numeric' })}
+              </span>
+            </div>
+          </AccordionTrigger>
+          <AccordionContent className="pt-2 pb-6">
+            <IncomeTable entries={enrichedData} />
+          </AccordionContent>
+        </AccordionItem>
+
+        {/* PREVIOUS MONTHS OF CURRENT FY */}
+        {currentMonths.map((m) => {
+          if (m.year === currentYear && m.month === currentMonth) return null
+          
+          const val = `month-${m.year}-${m.month}`
+          return (
+            <AccordionItem key={val} value={val} className="border rounded-lg bg-card px-4">
+              <AccordionTrigger className="hover:no-underline py-4">
+                <div className="flex items-center gap-4">
+                  <span className="font-semibold text-base">{m.label}</span>
+                  <span className="text-sm text-muted-foreground font-normal">
+                    {new Date(m.year, m.month - 1).toLocaleString('default', { month: 'long', year: 'numeric' })}
+                  </span>
+                </div>
+              </AccordionTrigger>
+              <AccordionContent className="pt-2 pb-6">
+                <LazyIncomeTable
+                  year={m.year}
+                  month={m.month}
+                  divisionId={filters.divisionId}
+                  clientId={filters.clientId}
+                />
+              </AccordionContent>
+            </AccordionItem>
+          )
+        })}
+
+        {/* PREVIOUS FINANCIAL YEAR */}
+        {previousYearGroup && (
+          <AccordionItem value="previous-fy" className="border rounded-lg bg-card px-4">
+            <AccordionTrigger className="hover:no-underline py-4">
+              <div className="flex items-center gap-4">
+                <span className="font-semibold text-base">Previous Financial Year</span>
+                <span className="text-sm text-muted-foreground font-normal">
+                  Mar {previousYearGroup.year - 1} - Feb {previousYearGroup.year}
+                </span>
+              </div>
+            </AccordionTrigger>
+            <AccordionContent className="pt-2 pb-6">
+              <LazyIncomeTable
+                year={previousYearGroup.year}
+                divisionId={filters.divisionId}
+                clientId={filters.clientId}
+              />
+            </AccordionContent>
+          </AccordionItem>
+        )}
+      </Accordion>
     </div>
   )
 }

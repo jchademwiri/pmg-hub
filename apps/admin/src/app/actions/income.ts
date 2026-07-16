@@ -108,15 +108,84 @@ export async function deleteIncome(id: string): Promise<{ error?: string }> {
     });
 
     revalidatePath('/finance/income');
-    revalidatePath('/billing/invoices');
-    revalidatePath('/dashboard');
-    revalidatePath('/accounting/journals');
-    revalidatePath('/accounting/trial-balance');
-    revalidatePath('/accounting/general-ledger');
-    revalidatePath('/accounting/profit-and-loss');
+    revalidatePath('/finance/overview');
     return {};
-  } catch (err) {
+  } catch (err: any) {
     console.error('Failed to delete income record:', err);
-    return { error: err instanceof Error ? err.message : 'Failed to delete. Please try again.' };
+    return { error: 'An unexpected error occurred while deleting the income record.' };
   }
+}
+
+async function enrichIncomeWithAllocations(incomeData: any[]) {
+  const dbModule = await import('@pmg/db');
+  const db = dbModule.db;
+  const paymentAllocations = dbModule.paymentAllocations;
+  const sql = dbModule.sql;
+  
+  const incomeIds = incomeData.map((i: any) => i.id);
+  
+  let allocationSums: { incomeId: string; sum: string }[] = [];
+  if (incomeIds.length > 0) {
+    const { inArray } = await import('drizzle-orm');
+    allocationSums = await db.select({ incomeId: paymentAllocations.incomeId, sum: sql<string>`sum(${paymentAllocations.amount})` })
+      .from(paymentAllocations)
+      .where(inArray(paymentAllocations.incomeId, incomeIds))
+      .groupBy(paymentAllocations.incomeId);
+  }
+
+  const allocMap = new Map<string, number>();
+  for (const row of allocationSums) {
+    allocMap.set(row.incomeId, parseFloat(row.sum));
+  }
+
+  const { getMinAllowedDate } = await import('@/lib/date-rules');
+  const minDate = await getMinAllowedDate();
+  const minPeriod = minDate.slice(0, 7);
+
+  return incomeData.map((row) => {
+    const amount = parseFloat(row.amount);
+    const allocated = allocMap.get(row.id) ?? 0;
+    const unallocated = Math.max(0, amount - allocated);
+    const isFullyAllocated = allocated >= amount;
+    const period = row.date.slice(0, 7);
+    const isClosed = period < minPeriod;
+
+    const source: 'invoice_payment' | 'deposit' | 'manual' =
+      row.description?.startsWith('Payment for') ? 'invoice_payment'
+        : row.description?.startsWith('Unallocated') ? 'deposit'
+        : 'manual';
+
+    return {
+      ...row,
+      amountNum: amount,
+      allocated,
+      unallocated,
+      isFullyAllocated,
+      period,
+      isClosed,
+      source,
+    };
+  });
+}
+
+export async function fetchIncomeByMonth(year: number, month: number, divisionId?: string, clientId?: string) {
+  const { getAllIncome } = await import('@pmg/db');
+  const incomeResult = await getAllIncome(
+    { month: `${year}-${month.toString().padStart(2, '0')}`, divisionId, clientId },
+    { page: 1, pageSize: 5000 }
+  );
+
+  const enriched = await enrichIncomeWithAllocations(incomeResult.data);
+  return { data: enriched };
+}
+
+export async function fetchIncomeByYear(year: number, divisionId?: string, clientId?: string) {
+  const { getAllIncome } = await import('@pmg/db');
+  const incomeResult = await getAllIncome(
+    { year, divisionId, clientId },
+    { page: 1, pageSize: 5000 }
+  );
+
+  const enriched = await enrichIncomeWithAllocations(incomeResult.data);
+  return { data: enriched };
 }

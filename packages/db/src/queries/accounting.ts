@@ -94,15 +94,18 @@ export async function getJournalEntries({
   pageSize = 20,
   status,
   period,
+  year,
 }: {
   page?: number;
   pageSize?: number;
   status?: string;
   period?: string;
+  year?: number;
 } = {}) {
   const conditions = [];
   if (status) conditions.push(eq(journalEntries.status, status as any));
   if (period) conditions.push(eq(journalEntries.period, period));
+  if (year) conditions.push(sql`cast(substr(${journalEntries.period}, 1, 4) as int) = ${year}`);
 
   const where = conditions.length > 0 ? and(...conditions) : undefined;
 
