@@ -125,7 +125,7 @@ export default function LoginPage() {
                     disabled={isPending}
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
-                    className="h-10 w-full rounded-lg border border-white/10 bg-white/[0.03] pl-10 pr-4 text-sm text-white placeholder-muted-foreground/50 outline-none transition-all focus:border-blue-500/50 focus:bg-white/[0.05] focus:ring-2 focus:ring-blue-500/10 disabled:opacity-50"
+                    className="h-10 w-full rounded-lg border border-white/10 bg-white/[0.03] pl-10 pr-4 text-sm text-white placeholder-muted-foreground/50 outline-hidden transition-all focus:border-blue-500/50 focus:bg-white/[0.05] focus:ring-2 focus:ring-blue-500/10 disabled:opacity-50"
                   />
                 </div>
 
@@ -143,7 +143,7 @@ export default function LoginPage() {
                       disabled={isPending}
                       value={otpCode}
                       onChange={(e) => setOtpCode(e.target.value)}
-                      className="h-10 w-full rounded-lg border border-white/10 bg-white/[0.03] pl-10 pr-4 text-sm text-white placeholder-muted-foreground/50 outline-none transition-all focus:border-blue-500/50 focus:bg-white/[0.05] focus:ring-2 focus:ring-blue-500/10 disabled:opacity-50 tracking-widest font-mono"
+                      className="h-10 w-full rounded-lg border border-white/10 bg-white/[0.03] pl-10 pr-4 text-sm text-white placeholder-muted-foreground/50 outline-hidden transition-all focus:border-blue-500/50 focus:bg-white/[0.05] focus:ring-2 focus:ring-blue-500/10 disabled:opacity-50 tracking-widest font-mono"
                     />
                   </div>
                 )}
