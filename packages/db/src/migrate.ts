@@ -66,8 +66,8 @@ if (schemaAlreadyExists) {
   );
   const currentLatest = parseInt(latestRows[0]?.max_ts ?? "0", 10);
 
-  if (currentLatest < latestWhen) {
-    console.log("⚡ Schema exists but migration history is behind. Inserting baseline sentinel...");
+  if (currentLatest === 0) {
+    console.log("⚡ Schema exists but no migration history found. Inserting baseline sentinel...");
     // Insert a sentinel row with the latest migration timestamp.
     // Drizzle will see this as the "last applied" migration and skip everything up to it.
     await client.query(
@@ -75,6 +75,8 @@ if (schemaAlreadyExists) {
       ["baseline-sentinel", latestWhen]
     );
     console.log(`   ✅ Baseline sentinel inserted (up to timestamp ${latestWhen}).`);
+  } else if (currentLatest < latestWhen) {
+    console.log(`⚡ Pending migrations detected (history: ${currentLatest}, latest: ${latestWhen}).`);
   } else {
     console.log(`✓ Migration history is up to date (latest: ${currentLatest}).`);
   }
