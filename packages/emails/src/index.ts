@@ -16,6 +16,7 @@ export { default as MagicLinkEmail } from "./templates/MagicLinkEmail";
 export { default as InvitationEmail } from "./templates/InvitationEmail";
 export { default as AdminQuoteAcceptedEmail } from "./templates/AdminQuoteAcceptedEmail";
 export { default as PortalInvitationEmail } from "./templates/PortalInvitationEmail";
+export { default as ComplianceReminderEmail } from "./templates/ComplianceReminderEmail";
 
 // Template prop types
 export type { AdminNewLeadEmailProps } from "./templates/AdminNewLeadEmail";
@@ -28,6 +29,7 @@ export type { MagicLinkEmailProps } from "./templates/MagicLinkEmail";
 export type { InvitationEmailProps } from "./templates/InvitationEmail";
 export type { AdminQuoteAcceptedEmailProps } from "./templates/AdminQuoteAcceptedEmail";
 export type { PortalInvitationEmailProps } from "./templates/PortalInvitationEmail";
+export type { ComplianceReminderEmailProps } from "./templates/ComplianceReminderEmail";
 
 // Central config
 export {

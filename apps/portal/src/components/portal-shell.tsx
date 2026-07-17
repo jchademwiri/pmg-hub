@@ -17,6 +17,7 @@ import {
   ShieldAlert,
   X,
   CalendarDays,
+  Shield,
 } from 'lucide-react';
 import Link from 'next/link';
 import { authClient } from '@/lib/auth-client';
@@ -91,6 +92,7 @@ export function PortalShell({ client, isImpersonating, children }: PortalShellPr
     { label: 'Invoices', href: '/invoices', icon: FileText },
     { label: 'Quotes', href: '/quotes', icon: FileSpreadsheet },
     { label: 'Statements', href: '/statements', icon: Receipt },
+    { label: 'Compliance', href: '/compliance', icon: Shield },
     { label: 'Credit Notes', href: '/credits', icon: PiggyBank },
     { label: 'My Profile', href: '/profile', icon: User },
   ];
