@@ -62,7 +62,7 @@ export function TopNav() {
 
   return (
     <header className="sticky top-0 z-40 h-13 flex w-full items-center border-b border-border bg-card px-4 md:px-6 gap-2">
-      <SidebarTrigger className="shrink-0" />
+      <SidebarTrigger className="shrink-0 hidden md:flex" />
       <Separator orientation="vertical" className="h-4 shrink-0" />
       <div className="flex flex-1 items-center gap-3">
         <Breadcrumb>

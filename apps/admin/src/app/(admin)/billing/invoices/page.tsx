@@ -83,14 +83,21 @@ export default async function InvoicesPage({ searchParams }: InvoicesPageProps) 
               { value: 'written_off', label: 'Written Off' },
             ]}
           />
-          <Button asChild size="sm">
+          <Button asChild size="sm" className="hidden md:flex">
             <Link href="/billing/invoices/new">
-              <Plus className="size-4" />
+              <Plus className="size-4 mr-2" />
               New Invoice
             </Link>
           </Button>
         </div>
       </div>
+
+      {/* Mobile FAB */}
+      <Button asChild size="icon" className="md:hidden fixed bottom-20 right-4 z-50 rounded-full shadow-lg h-14 w-14">
+        <Link href="/billing/invoices/new">
+          <Plus className="size-6" />
+        </Link>
+      </Button>
 
       {/* Metrics Overview */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
