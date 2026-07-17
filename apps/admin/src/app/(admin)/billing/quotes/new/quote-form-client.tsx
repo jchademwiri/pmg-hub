@@ -269,59 +269,69 @@ export function QuoteFormClient({
               </SelectContent>
             </Select>
           </Field>
-
-          <Field>
-            <FieldLabel>
-              Issue Date
-            </FieldLabel>
-            <Input
-              type="date"
-              value={quoteDate}
-              onChange={(e) => {
-                const newDate = e.target.value;
-                setQuoteDate(newDate);
-                if (!isExpiryDateModified) {
-                  const termsDays = billingSettings?.[divisionId]?.paymentTermsDays ?? 5;
-                  const d = new Date(newDate);
-                  d.setDate(d.getDate() + termsDays);
-                  setExpiryDate(d.toISOString().split('T')[0]!);
-                }
-              }}
-              disabled={isSubmitting}
-            />
-          </Field>
-
-          <Field>
-            <FieldLabel>Expiry Date</FieldLabel>
-            <Input
-              type="date"
-              value={expiryDate}
-              onChange={(e) => {
-                setExpiryDate(e.target.value);
-                setIsExpiryDateModified(true);
-              }}
-              disabled={isSubmitting}
-            />
-          </Field>
-
-          <Field className="sm:col-span-2">
-            <FieldLabel>Reference</FieldLabel>
-            <Input
-              value={reference}
-              onChange={(e) => setReference(e.target.value)}
-              placeholder="e.g. Project name, PO-1234, Tender Ref 12/2026"
-              disabled={isSubmitting}
-            />
-            <p className="text-xs text-muted-foreground">Optional internal or client reference</p>
-          </Field>
-
-          <Field>
-            <FieldLabel>Quote #</FieldLabel>
-            <div className="h-9 rounded-md border border-input bg-muted/40 px-3 flex items-center text-sm text-muted-foreground">
-              {editId ? 'Existing number preserved' : 'Auto-generated on save'}
-            </div>
-          </Field>
         </div>
+
+        <Accordion type="single" collapsible className="w-full">
+          <AccordionItem value="document-settings" className="border-none">
+            <AccordionTrigger className="py-3 px-4 rounded-lg border bg-muted/20 hover:bg-muted/40 transition-colors hover:no-underline text-muted-foreground data-[state=open]:text-foreground">
+              <span className="font-semibold text-sm">Dates & Reference</span>
+            </AccordionTrigger>
+            <AccordionContent className="pt-4">
+              <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                <Field>
+                  <FieldLabel>
+                    Issue Date
+                  </FieldLabel>
+                  <Input
+                    type="date"
+                    value={quoteDate}
+                    onChange={(e) => {
+                      const newDate = e.target.value;
+                      setQuoteDate(newDate);
+                      if (!isExpiryDateModified) {
+                        const termsDays = billingSettings?.[divisionId]?.paymentTermsDays ?? 5;
+                        const d = new Date(newDate);
+                        d.setDate(d.getDate() + termsDays);
+                        setExpiryDate(d.toISOString().split('T')[0]!);
+                      }
+                    }}
+                    disabled={isSubmitting}
+                  />
+                </Field>
+
+                <Field>
+                  <FieldLabel>Expiry Date</FieldLabel>
+                  <Input
+                    type="date"
+                    value={expiryDate}
+                    onChange={(e) => {
+                      setExpiryDate(e.target.value);
+                      setIsExpiryDateModified(true);
+                    }}
+                    disabled={isSubmitting}
+                  />
+                </Field>
+
+                <Field>
+                  <FieldLabel>Reference</FieldLabel>
+                  <Input
+                    value={reference}
+                    onChange={(e) => setReference(e.target.value)}
+                    placeholder="Optional reference number"
+                    disabled={isSubmitting}
+                  />
+                </Field>
+
+                <Field>
+                  <FieldLabel>Quote #</FieldLabel>
+                  <div className="h-9 rounded-md border border-input bg-muted/40 px-3 flex items-center text-sm text-muted-foreground">
+                    {editId ? 'Existing number preserved' : 'Auto-generated on save'}
+                  </div>
+                </Field>
+              </div>
+            </AccordionContent>
+          </AccordionItem>
+        </Accordion>
 
         {/* Line items */}
         <div className="flex flex-col gap-3">
@@ -422,18 +432,20 @@ export function QuoteFormClient({
             </Alert>
           )}
 
-          <Button className="w-full bg-blue-600 hover:bg-blue-700 text-white" onClick={() => handleSubmit('draft')} disabled={isSubmitting}>
-            {isSubmitting ? 'Saving…' : editId ? 'Save Changes' : 'Save Quote'}
-          </Button>
-          <Button
-            variant="outline"
-            className="w-full"
-            onClick={() => handleSubmit('send')}
-            disabled={isSubmitting}
-          >
-            <Mail className="size-4" />
-            {editId ? 'Save & Email' : 'Save & Send'}
-          </Button>
+          <div className="fixed md:relative bottom-0 left-0 right-0 p-4 md:p-0 bg-card/95 md:bg-transparent backdrop-blur-md md:backdrop-blur-none border-t md:border-none z-50 flex flex-col gap-2 pb-[max(env(safe-area-inset-bottom),16px)] md:pb-0 shadow-[0_-4px_12px_rgba(0,0,0,0.05)] md:shadow-none dark:shadow-[0_-4px_12px_rgba(0,0,0,0.2)] pt-2 md:pt-0">
+            <Button className="w-full bg-blue-600 hover:bg-blue-700 text-white" onClick={() => handleSubmit('draft')} disabled={isSubmitting}>
+              {isSubmitting ? 'Saving…' : editId ? 'Save Changes' : 'Save Quote'}
+            </Button>
+            <Button
+              variant="outline"
+              className="w-full"
+              onClick={() => handleSubmit('send')}
+              disabled={isSubmitting}
+            >
+              <Mail className="size-4 mr-2" />
+              {editId ? 'Save & Email' : 'Save & Send'}
+            </Button>
+          </div>
         </div>
 
         {!editId && (

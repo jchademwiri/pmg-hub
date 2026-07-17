@@ -9,6 +9,7 @@ import { Separator } from '@/components/ui/separator';
 import { DocumentPreview } from '@/components/billing/document-preview';
 import { BillingStatusBadge } from '@/components/billing/billing-status-badge';
 import { BillingTotalsBlock } from '@/components/billing/billing-totals-block';
+import { MobileReceiptPreview } from '@/components/billing/mobile-receipt-preview';
 import { getQuotationById, getDivisionBillingSettings } from '@pmg/db';
 import { updateQuotationStatus, deleteQuotation, duplicateQuotation } from '@/app/actions/billing-quotes';
 import { fmtDate, fmtDateTime, formatZAR } from '@/lib/format';
@@ -74,7 +75,7 @@ export default async function QuoteDetailPage({ params, searchParams }: Props) {
   const autoOpenEmail = action === 'send';
 
   return (
-    <div className="flex flex-col gap-6">
+    <div className="flex flex-col gap-6 pb-32 lg:pb-0">
       <SetPageLabel value="Quote Details" />
       {/* Auto-open email dialog when navigated here with ?action=send */}
       {autoOpenEmail && (
@@ -137,69 +138,39 @@ export default async function QuoteDetailPage({ params, searchParams }: Props) {
 
       {/* Main layout */}
       <div className="flex flex-col-reverse lg:grid lg:grid-cols-3 lg:items-start gap-6">
-        {/* Document preview - hidden on mobile */}
+        {/* Document preview - scrollable on desktop */}
         <div className="hidden lg:block lg:col-span-2 overflow-x-auto">
           <DocumentPreview id="printable-area" type="quote" {...docPreviewProps} />
+        </div>
+        <div className="block lg:hidden w-full">
+          <MobileReceiptPreview
+            type="quote"
+            {...docPreviewProps}
+            subtotal={Number(quote.subtotal)}
+            discountTotal={Number(quote.discountAmount ?? 0)}
+            vatTotal={Number(quote.vatAmount)}
+            grandTotal={Number(quote.total)}
+          />
         </div>
 
         {/* Sidebar */}
         <div className="flex flex-col gap-4 lg:sticky lg:top-16 lg:self-start">
-          {/* Mobile Line Items - Hidden on Desktop */}
-          <div className="lg:hidden">
+          <div className="hidden lg:block">
             <Card size="sm">
-              <CardHeader className="pb-2">
-                <CardTitle className="text-sm font-semibold">Line Items</CardTitle>
+              <CardHeader>
+                <CardTitle>Summary</CardTitle>
               </CardHeader>
-              <CardContent className="p-0 px-6 pb-4">
-                <div className="flex flex-col divide-y divide-border text-xs">
-                  {quote.lineItems.map((li) => {
-                    const qty = Number(li.quantity);
-                    const price = Number(li.unitPrice);
-                    const discountAmount = Number(li.discountAmount || 0);
-                    const rawTotal = qty * price;
-                    const finalTotal = rawTotal - discountAmount;
-                    
-                    return (
-                      <div key={li.id} className="flex justify-between py-3 items-start gap-4">
-                        <div className="flex flex-col gap-0.5 min-w-0">
-                          <span className="font-semibold text-foreground">{li.itemName || 'Item'}</span>
-                          {li.description && (
-                            <span className="text-muted-foreground whitespace-pre-wrap">{li.description}</span>
-                          )}
-                          <span className="text-muted-foreground mt-1">
-                            {qty} x {formatZAR(price)}
-                          </span>
-                          {discountAmount > 0 && (
-                            <span className="text-amber-600 mt-0.5">
-                              - {formatZAR(discountAmount)} discount
-                            </span>
-                          )}
-                        </div>
-                        <span className="font-bold text-foreground shrink-0 tabular-nums mt-0.5">
-                          {formatZAR(finalTotal)}
-                        </span>
-                      </div>
-                    );
-                  })}
-                </div>
+              <CardContent>
+                <BillingTotalsBlock
+                  subtotal={Number(quote.subtotal)}
+                  discountAmount={Number(quote.discountAmount ?? 0)}
+                  vatEnabled={quote.vatEnabled}
+                  vatAmount={Number(quote.vatAmount)}
+                  total={Number(quote.total)}
+                />
               </CardContent>
             </Card>
           </div>
-
-          <Card size="sm">
-            <CardHeader>
-              <CardTitle>Summary</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <BillingTotalsBlock
-                subtotal={Number(quote.subtotal)}
-                discountAmount={Number(quote.discountAmount ?? 0)}
-                vatEnabled={quote.vatEnabled}
-                vatAmount={Number(quote.vatAmount)}
-                total={Number(quote.total)}
-              />
-            </CardContent>
-          </Card>
 
           <Card size="sm">
             <CardHeader>

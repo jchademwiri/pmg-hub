@@ -13,6 +13,10 @@ export function BottomNav() {
   const isMobile = useIsMobile()
 
   if (!isMobile) return null
+  
+  // Hide on detail/form pages to allow Sticky Action Bars to anchor to the bottom
+  const isDeepPage = pathname.match(/\/(new|[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12})/i)
+  if (isDeepPage) return null
 
   return (
     <div

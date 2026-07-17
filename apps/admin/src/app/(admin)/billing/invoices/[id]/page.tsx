@@ -9,6 +9,7 @@ import { Separator } from '@/components/ui/separator';
 import { DocumentPreview } from '@/components/billing/document-preview';
 import { BillingStatusBadge } from '@/components/billing/billing-status-badge';
 import { BillingTotalsBlock } from '@/components/billing/billing-totals-block';
+import { MobileReceiptPreview } from '@/components/billing/mobile-receipt-preview';
 import { getInvoiceById, getDivisionBillingSettings, getDb, paymentAllocations, income, sql, desc, eq, getClientStatement, getAllIncome, getOrganisationSettings } from '@pmg/db';
 import { UniversalEmailDialog } from '@/components/billing/universal-email-dialog';
 import { issueInvoice, markInvoicePaid, voidInvoice, writeOffInvoice } from '@/app/actions/billing-invoices';
@@ -162,7 +163,7 @@ export default async function InvoiceDetailPage({ params }: Props) {
   const canEdit = !['paid', 'void', 'written_off'].includes(invoice.status);
 
   return (
-    <div className="flex flex-col gap-6">
+    <div className="flex flex-col gap-6 pb-32 lg:pb-0">
       <SetPageLabel value="Invoice Details" />
       {/* Page header */}
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
@@ -228,9 +229,19 @@ export default async function InvoiceDetailPage({ params }: Props) {
 
       {/* Main layout */}
       <div className="flex flex-col-reverse gap-6 lg:grid lg:grid-cols-3 lg:items-start">
-        {/* Document preview - scrollable on desktop, hidden on mobile */}
+        {/* Document preview - scrollable on desktop */}
         <div className="hidden lg:block lg:col-span-2 overflow-x-auto">
           <DocumentPreview id="printable-area" type="invoice" {...docPreviewProps} />
+        </div>
+        <div className="block lg:hidden w-full">
+          <MobileReceiptPreview
+            type="invoice"
+            {...docPreviewProps}
+            subtotal={Number(invoice.subtotal)}
+            discountTotal={Number(invoice.discountAmount ?? 0)}
+            vatTotal={Number(invoice.vatAmount)}
+            grandTotal={Number(invoice.total)}
+          />
         </div>
 
         {/* Sidebar */}
@@ -288,62 +299,22 @@ export default async function InvoiceDetailPage({ params }: Props) {
             </Card>
           )}
 
-          {/* Mobile Line Items - Hidden on Desktop */}
-          <div className="lg:hidden">
+          <div className="hidden lg:block">
             <Card size="sm">
-              <CardHeader className="pb-2">
-                <CardTitle className="text-sm font-semibold">Line Items</CardTitle>
+              <CardHeader>
+                <CardTitle>Summary</CardTitle>
               </CardHeader>
-              <CardContent className="p-0 px-6 pb-4">
-                <div className="flex flex-col divide-y divide-border text-xs">
-                  {invoice.lineItems.map((li) => {
-                    const qty = Number(li.quantity);
-                    const price = Number(li.unitPrice);
-                    const discountAmount = Number(li.discountAmount || 0);
-                    const rawTotal = qty * price;
-                    const finalTotal = rawTotal - discountAmount;
-                    
-                    return (
-                      <div key={li.id} className="flex justify-between py-3 items-start gap-4">
-                        <div className="flex flex-col gap-0.5 min-w-0">
-                          <span className="font-semibold text-foreground">{li.itemName || 'Item'}</span>
-                          {li.description && (
-                            <span className="text-muted-foreground whitespace-pre-wrap">{li.description}</span>
-                          )}
-                          <span className="text-muted-foreground mt-1">
-                            {qty} x {formatZAR(price)}
-                          </span>
-                          {discountAmount > 0 && (
-                            <span className="text-amber-600 mt-0.5">
-                              - {formatZAR(discountAmount)} discount
-                            </span>
-                          )}
-                        </div>
-                        <span className="font-bold text-foreground shrink-0 tabular-nums mt-0.5">
-                          {formatZAR(finalTotal)}
-                        </span>
-                      </div>
-                    );
-                  })}
-                </div>
+              <CardContent>
+                <BillingTotalsBlock
+                  subtotal={Number(invoice.subtotal)}
+                  discountAmount={Number(invoice.discountAmount ?? 0)}
+                  vatEnabled={invoice.vatEnabled}
+                  vatAmount={Number(invoice.vatAmount)}
+                  total={Number(invoice.total)}
+                />
               </CardContent>
             </Card>
           </div>
-
-          <Card size="sm">
-            <CardHeader>
-              <CardTitle>Summary</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <BillingTotalsBlock
-                subtotal={Number(invoice.subtotal)}
-                discountAmount={Number(invoice.discountAmount ?? 0)}
-                vatEnabled={invoice.vatEnabled}
-                vatAmount={Number(invoice.vatAmount)}
-                total={Number(invoice.total)}
-              />
-            </CardContent>
-          </Card>
 
           <Card size="sm">
             <CardHeader>

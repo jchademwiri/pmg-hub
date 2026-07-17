@@ -61,7 +61,7 @@ export function InvoiceDetailActions({
         </div>
       )}
 
-      <div className="flex flex-col gap-2">
+      <div className="fixed md:relative bottom-0 left-0 right-0 p-4 md:p-0 bg-card/95 md:bg-transparent backdrop-blur-md md:backdrop-blur-none border-t md:border-none z-50 flex flex-col gap-2 pb-[max(env(safe-area-inset-bottom),16px)] md:pb-0 shadow-[0_-4px_12px_rgba(0,0,0,0.05)] md:shadow-none dark:shadow-[0_-4px_12px_rgba(0,0,0,0.2)]">
         {status === 'draft' && (
           <>
             <Button className="w-full" onClick={handleIssue}>Issue Invoice</Button>
