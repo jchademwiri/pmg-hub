@@ -14,7 +14,7 @@ import {
   getPreviousMonthLabel,
   getYTDLabel,
 } from '@/lib/financial';
-import { getSnapshotByPeriod, getAgingReport, getProjectScheduleSummary, getActiveRates } from '@pmg/db';
+import { getSnapshotByPeriod, getAgingReport, getProjectScheduleSummary, getActiveRates, getProjectsAtRisk, getCurrentWorkload } from '@pmg/db';
 import { DashboardShell } from '@/components/dashboard/dashboard-shell';
 import { getSASTParts } from '@/lib/format';
 
@@ -47,6 +47,8 @@ export default async function DashboardPage() {
     currentPeriodSnapshot,
     projectScheduleSummary,
     activeRates,
+    projectsAtRisk,
+    currentWorkload,
   ] = await Promise.all([
     getYTDSummary(),
     getPreviousYearYTDSummary(),
@@ -62,6 +64,8 @@ export default async function DashboardPage() {
     getSnapshotByPeriod(periodToClose),
     getProjectScheduleSummary(),
     getActiveRates().catch(() => ({ pmg_share: 0.25 })),
+    getProjectsAtRisk(),
+    getCurrentWorkload(),
   ]);
 
   const pmgShareRate = activeRates?.pmg_share ?? 0.25;
@@ -112,6 +116,8 @@ export default async function DashboardPage() {
       showCloseMonthButton={showCloseMonthButton}
       projectScheduleSummary={projectScheduleSummary}
       pmgShareRate={pmgShareRate}
+      projectsAtRisk={projectsAtRisk}
+      currentWorkload={currentWorkload}
     />
   );
 }
