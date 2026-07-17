@@ -158,7 +158,7 @@ export function ReportsTabs({
             ledgerBalances={ledgerBalances as any}
           />
           <ProfitPoolChart
-            data={monthlyFinancials.map(m => ({ period: m.period, profit: m.revenue * (1 - PMG_SHARE_RATE) - m.expenses }))}
+            data={monthlyFinancials.map(m => ({ period: m.month, profit: m.revenue * (1 - PMG_SHARE_RATE) - m.expenses }))}
           />
         </div>
       </TabsContent>
