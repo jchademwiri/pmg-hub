@@ -20,6 +20,7 @@ import { PrintButton } from '@/components/billing/print-button';
 import { ExportPdfButton } from '@/components/billing/export-pdf-button';
 import { getClientCreditBalanceV2 } from '@/app/actions/credit-management';
 import { ApplyCreditButton } from '@/components/billing/apply-credit-button';
+import { SetPageLabel } from '@/components/navigation/page-header-context';
 
 export const dynamic = 'force-dynamic';
 
@@ -162,16 +163,17 @@ export default async function InvoiceDetailPage({ params }: Props) {
 
   return (
     <div className="flex flex-col gap-6">
+      <SetPageLabel value="Invoice Details" />
       {/* Page header */}
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div className="flex items-center gap-4">
-          <Button variant="ghost" size="sm" asChild>
+          <Button variant="ghost" size="sm" asChild className="hidden sm:flex">
             <Link href="/billing/invoices">
               <ChevronLeft className="size-4" />
               Back
             </Link>
           </Button>
-          <Separator orientation="vertical" className="h-5" />
+          <Separator orientation="vertical" className="h-5 hidden sm:block" />
           <div>
             <div className="flex items-center gap-2 flex-wrap">
               <h2 className="text-lg font-semibold">{invoice.documentNumber}</h2>
@@ -192,10 +194,12 @@ export default async function InvoiceDetailPage({ params }: Props) {
           </div>
         </div>
         <div className="flex items-center gap-2 flex-wrap justify-end">
-          <PrintButton 
-            label="Print"
-            documentTitle={`Invoice-${invoice.documentNumber}`} 
-          />
+          <div className="hidden sm:block">
+            <PrintButton 
+              label="Print"
+              documentTitle={`Invoice-${invoice.documentNumber}`} 
+            />
+          </div>
           <ExportPdfButton 
             fileName={`Invoice-${invoice.documentNumber}`}
             pdfUrl={invoicePdfUrl}
@@ -222,10 +226,10 @@ export default async function InvoiceDetailPage({ params }: Props) {
         </div>
       </div>
 
-      {/* Two-column layout */}
-      <div className="grid grid-cols-1 gap-6 lg:grid-cols-3 lg:items-start">
-        {/* Document preview - scrollable on small screens */}
-        <div className="lg:col-span-2 overflow-x-auto">
+      {/* Main layout */}
+      <div className="flex flex-col-reverse gap-6 lg:grid lg:grid-cols-3 lg:items-start">
+        {/* Document preview - scrollable on desktop, hidden on mobile */}
+        <div className="hidden lg:block lg:col-span-2 overflow-x-auto">
           <DocumentPreview id="printable-area" type="invoice" {...docPreviewProps} />
         </div>
 
