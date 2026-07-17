@@ -26,13 +26,25 @@ export default function SchedulingLayout({ children }: { children: React.ReactNo
             Plan, track, and manage project preparation deadlines
           </p>
         </div>
-        <Button size="sm" asChild className="self-end sm:self-auto">
+        <Button size="sm" asChild className="hidden sm:inline-flex">
           <Link href="/projects/new">
             <Plus className="size-4 mr-1" />
             New Project
           </Link>
         </Button>
       </div>
+
+      {/* Mobile Floating Action Button (FAB) */}
+      <Button
+        size="icon"
+        asChild
+        className="sm:hidden fixed bottom-24 right-6 h-14 w-14 rounded-full shadow-lg z-50 print:hidden"
+      >
+        <Link href="/projects/new">
+          <Plus className="size-6" />
+          <span className="sr-only">New Project</span>
+        </Link>
+      </Button>
 
       {/* Sub-Navigation Tabs */}
       <div className="border-b border-border pb-px print:hidden">

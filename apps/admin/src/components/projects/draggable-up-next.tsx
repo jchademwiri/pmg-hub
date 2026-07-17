@@ -131,120 +131,94 @@ export function DraggableUpNext({ tenders, clients, onStatusChange, progressMap 
           <CardTitle>Up Next ({tenders.length})</CardTitle>
         </div>
       </CardHeader>
-      <CardContent className="flex flex-col gap-0 select-none">
-        {items.map((tender, index) => {
-          const client = clientMap.get(tender.clientId);
-          const bufferGap = daysBetween(tender.targetCompletionDate, tender.closingDate);
-          const daysToClose = daysBetween(
-            new Date().toISOString().split('T')[0],
-            tender.closingDate,
-          );
+      <CardContent className="pt-0 select-none">
+        <ul className="flex flex-col divide-y divide-border/50">
+          {items.map((tender, index) => {
+            const client = clientMap.get(tender.clientId);
+            const isDragging = draggedIndex === index;
+            const isDragOver = dragOverIndex === index;
 
-          const isDragging = draggedIndex === index;
-          const isDragOver = dragOverIndex === index;
+            return (
+              <li
+                key={tender.id}
+                draggable={!isPending}
+                onDragStart={(e) => handleDragStart(e, index)}
+                onDragOver={(e) => handleDragOver(e, index)}
+                onDragEnd={handleDragEnd}
+                onDrop={(e) => handleDrop(e, index)}
+                className={`flex items-center justify-between py-2.5 first:pt-0 last:pb-0 transition-all ${
+                  isDragging ? 'opacity-40 bg-muted/20' : ''
+                } ${
+                  isDragOver ? 'border-t-2 border-t-primary/70 bg-primary/5 pt-4' : ''
+                }`}
+              >
+                <div className="flex min-w-0 flex-1 items-center gap-2">
+                  {/* Drag Handle */}
+                  <div
+                    className={`flex h-7 shrink-0 items-center justify-center text-muted-foreground/40 hover:text-muted-foreground transition-colors cursor-grab active:cursor-grabbing ${
+                      isPending ? 'pointer-events-none opacity-20' : ''
+                    }`}
+                    title="Drag to reorder"
+                  >
+                    <GripVertical className="size-4" />
+                  </div>
 
-          return (
-            <div
-              key={tender.id}
-              draggable={!isPending}
-              onDragStart={(e) => handleDragStart(e, index)}
-              onDragOver={(e) => handleDragOver(e, index)}
-              onDragEnd={handleDragEnd}
-              onDrop={(e) => handleDrop(e, index)}
-              className={`flex items-center justify-between border-b py-3 last:border-0 transition-all ${
-                isDragging ? 'opacity-40 bg-muted/20' : ''
-              } ${
-                isDragOver ? 'border-t-2 border-t-primary/70 bg-primary/5 pt-4' : ''
-              }`}
-            >
-              <div className="flex min-w-0 flex-1 items-start gap-2">
-                {/* Drag Handle */}
-                <div
-                  className={`flex h-7 shrink-0 items-center justify-center text-muted-foreground/40 hover:text-muted-foreground transition-colors cursor-grab active:cursor-grabbing ${
-                    isPending ? 'pointer-events-none opacity-20' : ''
-                  }`}
-                  title="Drag to reorder"
-                >
-                  <GripVertical className="size-4" />
-                </div>
-
-                <div className="flex size-7 shrink-0 items-center justify-center rounded-md border bg-muted text-xs font-medium tabular-nums">
-                  {index + 1}
-                </div>
-                <div className="min-w-0 flex-1">
-                  <div className="flex flex-wrap items-center gap-1.5">
-                    <Link href={`/projects/${tender.id}`} className="hover:underline">
-                      <p className="truncate text-sm font-medium">{tender.projectReference}</p>
-                    </Link>
-                    {tender.priority === 'urgent' && (
-                      <Badge variant="destructive" className="text-xs">
-                        Urgent
-                      </Badge>
+                  <div className="min-w-0 flex-1">
+                    <div className="flex flex-wrap items-center gap-1.5">
+                      <Link href={`/projects/${tender.id}`} className="hover:underline">
+                        <p className="text-xs font-medium truncate">{tender.projectReference}</p>
+                      </Link>
+                      {tender.priority === 'urgent' && (
+                        <Badge variant="destructive" className="text-[9px] px-1 py-0 h-3.5 leading-none">
+                          Urgent
+                        </Badge>
+                      )}
+                    </div>
+                    {client && (
+                      <p className="text-[10px] text-muted-foreground truncate mt-0.5">
+                        {client.name}
+                      </p>
                     )}
                   </div>
-                  {(() => {
-                    const progress = progressMap[tender.id] || { total: 0, completed: 0 };
-                    const percent = progress.total > 0 ? Math.round((progress.completed / progress.total) * 100) : 0;
-                    return (
-                      <div className="flex items-center gap-2 mt-1">
-                        {client && (
-                          <p className="truncate text-xs text-muted-foreground leading-tight flex-1">
-                            {client.name}
-                          </p>
-                        )}
-                        {progress.total > 0 && (
-                          <span className="text-[10px] font-medium text-emerald-600 dark:text-emerald-400 bg-emerald-500/10 px-1.5 py-0.5 rounded shrink-0">
-                            {percent}% ({progress.completed}/{progress.total})
-                          </span>
-                        )}
-                      </div>
-                    );
-                  })()}
-                  <div className="mt-1 flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
-                    <span className="inline-flex items-center gap-1">
-                      <CalendarDays className="size-3" />
-                      {formatDate(tender.startDate)} → {formatDate(tender.targetCompletionDate)}
-                    </span>
-                    <span>{tender.effortDays}d effort</span>
-                    <span className={bufferGap < tender.bufferDays ? 'text-amber-500' : ''}>
-                      {Math.max(0, bufferGap)}d buffer
-                    </span>
-                    <span className={daysToClose <= 7 ? 'text-amber-500 font-medium' : ''}>
-                      closes {formatDate(tender.closingDate)}
-                    </span>
+                </div>
+
+                <div className="flex flex-col items-end gap-1 shrink-0 text-right ml-2">
+                  <p className="text-[11px] font-semibold text-foreground">Closes {formatDate(tender.closingDate)}</p>
+                  <p className="text-[10px] text-muted-foreground">
+                    Target: {formatDate(tender.targetCompletionDate)}
+                  </p>
+                  <div className="flex items-center gap-1.5 mt-0.5">
+                    <ProjectRiskBadge tender={tender} />
+                    <DropdownMenu>
+                      <DropdownMenuTrigger asChild>
+                        <Button
+                          variant="ghost"
+                          size="xs"
+                          className="h-auto p-0 font-normal hover:bg-transparent hover:opacity-80 gap-1"
+                          disabled={isPending}
+                        >
+                          <ProjectStatusBadge status={tender.status} />
+                          <ChevronDown className="size-3 text-muted-foreground" />
+                        </Button>
+                      </DropdownMenuTrigger>
+                      <DropdownMenuContent align="end">
+                        {getNextStatuses(tender.status).map((opt) => (
+                          <DropdownMenuItem
+                            key={opt.value}
+                            onClick={() => onStatusChange(tender.id, opt.value)}
+                            className="text-xs"
+                          >
+                            {opt.label}
+                          </DropdownMenuItem>
+                        ))}
+                      </DropdownMenuContent>
+                    </DropdownMenu>
                   </div>
                 </div>
-              </div>
-              <div className="ml-3 flex shrink-0 items-center gap-2">
-                <ProjectRiskBadge tender={tender} />
-                <DropdownMenu>
-                  <DropdownMenuTrigger asChild>
-                    <Button
-                      variant="ghost"
-                      size="xs"
-                      className="h-auto p-1 font-normal hover:bg-muted/50 gap-1"
-                      disabled={isPending}
-                    >
-                      <ProjectStatusBadge status={tender.status} />
-                      <ChevronDown className="size-3 text-muted-foreground" />
-                    </Button>
-                  </DropdownMenuTrigger>
-                  <DropdownMenuContent align="end">
-                    {getNextStatuses(tender.status).map((opt) => (
-                      <DropdownMenuItem
-                        key={opt.value}
-                        onClick={() => onStatusChange(tender.id, opt.value)}
-                        className="text-xs"
-                      >
-                        {opt.label}
-                      </DropdownMenuItem>
-                    ))}
-                  </DropdownMenuContent>
-                </DropdownMenu>
-              </div>
-            </div>
-          );
-        })}
+              </li>
+            );
+          })}
+        </ul>
       </CardContent>
     </Card>
   );

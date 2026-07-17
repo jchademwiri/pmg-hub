@@ -210,10 +210,10 @@ export function BillingOverviewClient({
                 <Link
                   key={inv.id}
                   href={`/billing/invoices/${inv.id}`}
-                  className="px-5 py-3 flex items-center justify-between hover:bg-muted/20 transition-colors group"
+                  className="px-4 py-3 sm:px-5 flex items-start sm:items-center justify-between hover:bg-muted/20 transition-colors group gap-2"
                 >
-                  <div className="flex items-center gap-3 min-w-0">
-                    <div className={`flex h-7 w-7 shrink-0 items-center justify-center rounded-md ${
+                  <div className="flex items-start sm:items-center gap-3 min-w-0 flex-1">
+                    <div className={`mt-0.5 sm:mt-0 flex h-7 w-7 shrink-0 items-center justify-center rounded-md ${
                       inv.status === 'paid' || inv.status === 'partially_paid'
                         ? 'bg-emerald-500/10'
                         : inv.status === 'overdue'
@@ -226,19 +226,20 @@ export function BillingOverviewClient({
                         <ArrowUpRight className="h-3.5 w-3.5 text-blue-600" />
                       )}
                     </div>
-                    <div className="min-w-0">
+                    <div className="flex flex-col gap-1 sm:gap-0.5 min-w-0 flex-1">
                       <p className="text-sm font-medium truncate group-hover:underline">
                         {inv.clientName || 'Unknown Client'}
                       </p>
-                      <div className="flex items-center gap-2 mt-0.5">
-                        <span className="font-mono text-[11px] text-muted-foreground">{inv.documentNumber}</span>
-                        <span className="text-xs text-muted-foreground">{fmtDate(inv.invoiceDate)}</span>
+                      <div className="flex flex-wrap items-center gap-1.5">
+                        <span className="font-mono text-[10px] text-muted-foreground bg-muted/50 border border-border/50 px-1 py-0.5 rounded leading-none">{inv.documentNumber}</span>
+                        <span className="text-[10px] text-muted-foreground leading-none">{fmtDate(inv.invoiceDate)}</span>
                       </div>
                     </div>
                   </div>
-                  <div className="text-right shrink-0 ml-4 flex items-center gap-2">
-                    <span className={`text-sm font-medium tabular-nums ${STATUS_TEXT_COLORS[inv.status] || ''}`}>{formatZAR(Number(inv.total))}</span>
-                    <span className={`inline-flex items-center rounded-full px-1.5 py-0.5 text-[10px] font-medium ${
+                  
+                  <div className="flex flex-col sm:flex-row items-end sm:items-center gap-1.5 sm:gap-3 shrink-0 ml-2">
+                    <span className={`text-xs sm:text-sm font-semibold tabular-nums ${STATUS_TEXT_COLORS[inv.status] || ''}`}>{formatZAR(Number(inv.total))}</span>
+                    <span className={`inline-flex items-center rounded-full px-1.5 py-0.5 text-[9px] sm:text-[10px] font-medium uppercase tracking-wider sm:tracking-normal sm:none ${
                       STATUS_STYLES[inv.status] || 'bg-zinc-500/10 text-zinc-600'
                     }`}>
                       {formatStatusLabel(inv.status)}
