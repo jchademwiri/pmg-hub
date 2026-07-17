@@ -76,9 +76,9 @@ export default async function AnalysisPage(props: {
         title="Business Growth Analysis"
         description={`Analyzing Financial Year ${selectedYear} (Mar 1 - Feb 28)`}
         actions={
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2 flex-wrap">
             <div className="text-sm font-medium">Select Year:</div>
-            <div className="flex gap-2">
+            <div className="flex gap-2 flex-wrap">
               {[selectedYear + 1, selectedYear, selectedYear - 1, selectedYear - 2].map(y => (
                 <Link 
                   key={y} 
@@ -99,12 +99,12 @@ export default async function AnalysisPage(props: {
 
       <div className="flex-1 space-y-6 p-4 md:p-6 lg:p-8">
         <AnalysisTabs defaultTab="overview">
-          <TabsList className="mb-4 grid w-full grid-cols-2 md:grid-cols-3 lg:w-[800px] lg:grid-cols-5">
-            <TabsTrigger value="overview">Overview</TabsTrigger>
-            <TabsTrigger value="details">Invoice Details</TabsTrigger>
-            <TabsTrigger value="pipeline">Divisions & Pipeline</TabsTrigger>
-            <TabsTrigger value="clients">Clients</TabsTrigger>
-            <TabsTrigger value="comparison">YoY Compare</TabsTrigger>
+          <TabsList className="mb-4 flex w-full justify-start overflow-x-auto overflow-y-hidden lg:grid lg:w-[800px] lg:grid-cols-5 h-auto hide-scrollbar border border-border/50">
+            <TabsTrigger value="overview" className="flex-1 min-w-[120px]">Overview</TabsTrigger>
+            <TabsTrigger value="details" className="flex-1 min-w-[120px]">Invoice Details</TabsTrigger>
+            <TabsTrigger value="pipeline" className="flex-1 min-w-[150px]">Divisions & Pipeline</TabsTrigger>
+            <TabsTrigger value="clients" className="flex-1 min-w-[120px]">Clients</TabsTrigger>
+            <TabsTrigger value="comparison" className="flex-1 min-w-[120px]">YoY Compare</TabsTrigger>
           </TabsList>
 
           <TabsContent value="overview" className="space-y-6">
