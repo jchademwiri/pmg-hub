@@ -58,6 +58,7 @@ export const GROUPS: NavGroup[] = [
       { title: 'Payments',     url: '/billing/payments',   icon: Banknote   },
       { title: 'Credits',      url: '/billing/credits',    icon: Wallet     },
       { title: 'Statements',   url: '/billing/statements', icon: ScrollText },
+      { title: 'Aging Report', url: '/billing/aging',      icon: Calendar   },
     ],
   },
   {
@@ -82,11 +83,12 @@ export const GROUPS: NavGroup[] = [
   },
   {
     key: 'relationships',
-    label: 'Relationships',
+    label: 'Clients',
     icon: Network,
     items: [
       { title: 'Overview',  url: '/relationships',           icon: LayoutGrid },
       { title: 'Clients',   url: '/relationships/clients',   icon: Users     },
+      { title: 'Compliance Radar', url: '/insights/compliance-radar', icon: Shield },
       { title: 'Leads',     url: '/relationships/leads',     icon: UserPlus  },
       { title: 'Divisions', url: '/relationships/divisions', icon: Building2 },
     ],
@@ -99,7 +101,6 @@ export const GROUPS: NavGroup[] = [
       { title: 'Business Analysis', url: '/insights/analysis', icon: TrendingUp },
       { title: 'Insights Reports',  url: '/insights/reports',  icon: BarChart3 },
       { title: 'Snapshots',         url: '/insights/snapshots', icon: Camera   },
-      { title: 'Aging Report',      url: '/billing/aging',     icon: Calendar   },
       { title: 'Finance Categories',url: '/finance/categories',icon: Tags       },
       { title: 'Billing Items',     url: '/billing/items',     icon: Package    },
       { title: 'Accounting',        url: '/accounting',        icon: Calculator },

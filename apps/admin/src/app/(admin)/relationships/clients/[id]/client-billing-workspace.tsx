@@ -52,6 +52,7 @@ import { PaymentReceiptPreview } from '@/components/billing/payment-receipt-prev
 import { ClientEditForm } from '@/components/clients/client-edit-form';
 import { ClientFinancialDashboard } from './client-financial-dashboard';
 import { ClientMetricStrip } from './client-metric-strip';
+import { ComplianceTable } from './_components/compliance/compliance-table';
 import { calculateClientHealth, calculateAverageDaysToPay, buildOrgProps, determineStatementStatus, buildIncomeInvoiceMap, buildTransactionHistory, resolveDivisionBranding, buildBankingProps } from '@/lib/client-billing-helpers';
 import { formatZAR, fmtDate, getSASTToday } from '@/lib/format';
 import { calculateAgeing } from '@/lib/billing-ageing';
@@ -70,7 +71,11 @@ import { updateQuotationStatus } from '@/app/actions/billing-quotes';
 import { sendPortalInvitation } from '@/app/actions/clients';
 import { generateImpersonationLink } from '@/app/actions/portal-impersonation';
 import { SetPageLabel } from '@/components/navigation/page-header-context';
-import type { InvoiceDetail, QuotationDetail } from '@pmg/db';
+import {
+  type InvoiceDetail,
+  type QuotationDetail,
+  type ComplianceDocument,
+} from '@pmg/db';
 
 function extractInvoiceNumber(description: string | null): string {
   if (!description) return '-';
@@ -98,6 +103,7 @@ interface ClientBillingWorkspaceProps {
   creditSummary?: any;
   creditHistory?: any;
   projects?: any[];
+  complianceRecords?: ComplianceDocument[];
 }
 
 interface BulkLogEntry {
@@ -122,6 +128,7 @@ export function ClientBillingWorkspace({
   creditHistory,
   divisions,
   projects = [],
+  complianceRecords,
 }: ClientBillingWorkspaceProps) {
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -1041,6 +1048,18 @@ export function ClientBillingWorkspace({
                 </span>
               )}
             </TabsTrigger>
+            <TabsTrigger 
+              value="compliance" 
+              className="group bg-transparent border-b-2 border-transparent data-[state=active]:border-amber-500 data-[state=active]:text-foreground rounded-none shadow-none px-4 py-2 text-sm font-medium flex items-center gap-2 transition-all hover:text-foreground/80"
+            >
+              <Briefcase className="size-4 text-muted-foreground group-data-[state=active]:text-amber-500 transition-colors" />
+              <span>Compliance</span>
+              {complianceRecords && complianceRecords.length > 0 && (
+                <span className="text-[10px] font-semibold bg-muted group-data-[state=active]:bg-amber-500/10 group-data-[state=active]:text-amber-600 px-1.5 py-0.5 rounded-full text-muted-foreground transition-colors">
+                  {complianceRecords.length}
+                </span>
+              )}
+            </TabsTrigger>
           </TabsList>
 
           {/* Action buttons are displayed contextually inside the slide-over drawer */}
@@ -1579,6 +1598,9 @@ export function ClientBillingWorkspace({
                     </Table>
                   </div>
                 )}
+              </TabsContent>
+              <TabsContent value="compliance" className="m-0 p-6 flex flex-col gap-6">
+                <ComplianceTable clientId={client.id} records={complianceRecords || []} />
               </TabsContent>
             </CardContent>
           </Card>
