@@ -56,17 +56,14 @@ export function ComplianceTable({ clientId, records }: { clientId: string; recor
                 const expiryDate = new Date(record.expiryDate);
                 const daysLeft = differenceInDays(expiryDate, today);
                 
-                let badgeVariant: "default" | "destructive" | "secondary" | "outline" = "outline";
+                let badgeClassName = "bg-green-500/10 text-green-700 dark:text-green-500 border-green-500/20";
                 let statusText = `${daysLeft} days left`;
                 
                 if (daysLeft < 0) {
-                  badgeVariant = "destructive";
+                  badgeClassName = "bg-red-500/10 text-red-700 dark:text-red-500 border-red-500/20";
                   statusText = "Expired";
-                } else if (daysLeft <= 14) {
-                  badgeVariant = "destructive";
-                  statusText = `Expiring (${daysLeft} days)`;
-                } else if (daysLeft <= 60) {
-                  badgeVariant = "secondary";
+                } else if (daysLeft <= 30) {
+                  badgeClassName = "bg-amber-500/10 text-amber-700 dark:text-amber-500 border-amber-500/20";
                   statusText = `Expiring (${daysLeft} days)`;
                 }
 
@@ -77,15 +74,18 @@ export function ComplianceTable({ clientId, records }: { clientId: string; recor
                     </TableCell>
                     <TableCell>{format(expiryDate, 'dd MMM yyyy')}</TableCell>
                     <TableCell>
-                      <Badge variant={badgeVariant}>{statusText}</Badge>
+                      <Badge variant="outline" className={badgeClassName}>{statusText}</Badge>
                     </TableCell>
                     <TableCell>
                       <Badge variant="outline" className="text-xs">{record.uploadedBy}</Badge>
                     </TableCell>
                     <TableCell className="text-right">
-                      <Button variant="ghost" size="icon" disabled={isPending} onClick={() => handleDelete(record.id)}>
-                        <Trash2 className="size-4 text-destructive" />
-                      </Button>
+                      <div className="flex items-center justify-end gap-1">
+                        <ComplianceFormDialog clientId={clientId} record={record} />
+                        <Button variant="ghost" size="icon" disabled={isPending} onClick={() => handleDelete(record.id)}>
+                          <Trash2 className="size-4 text-destructive" />
+                        </Button>
+                      </div>
                     </TableCell>
                   </TableRow>
                 );

@@ -183,17 +183,14 @@ export function ComplianceClient({ records }: { records: any[] }) {
               const expiryDateObj = new Date(record.expiryDate);
               const daysLeft = differenceInDays(expiryDateObj, today);
               
-              let badgeVariant: "default" | "destructive" | "secondary" | "outline" = "outline";
+              let badgeClassName = "bg-green-500/10 text-green-500 hover:bg-green-500/20 border-green-500/20";
               let statusText = `${daysLeft} days left`;
               
               if (daysLeft < 0) {
-                badgeVariant = "destructive";
+                badgeClassName = "bg-red-500/10 text-red-500 hover:bg-red-500/20 border-red-500/20";
                 statusText = "Expired";
-              } else if (daysLeft <= 14) {
-                badgeVariant = "destructive";
-                statusText = `Expiring (${daysLeft} days)`;
-              } else if (daysLeft <= 60) {
-                badgeVariant = "secondary";
+              } else if (daysLeft <= 30) {
+                badgeClassName = "bg-amber-500/10 text-amber-500 hover:bg-amber-500/20 border-amber-500/20";
                 statusText = `Expiring (${daysLeft} days)`;
               }
 
@@ -204,7 +201,7 @@ export function ComplianceClient({ records }: { records: any[] }) {
                   </TableCell>
                   <TableCell className="text-slate-300 py-4">{formatDate(expiryDateObj)}</TableCell>
                   <TableCell className="py-4">
-                    <Badge variant={badgeVariant}>{statusText}</Badge>
+                    <Badge variant="outline" className={badgeClassName}>{statusText}</Badge>
                   </TableCell>
                   <TableCell className="text-right py-4">
                     <div className="flex items-center justify-end gap-2">

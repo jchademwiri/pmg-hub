@@ -2,6 +2,7 @@
 
 import { useState, useTransition } from 'react';
 import { Button } from '@/components/ui/button';
+import { Pencil } from 'lucide-react';
 import {
   Dialog,
   DialogContent,
@@ -11,7 +12,7 @@ import {
 } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { addComplianceRecord } from '@/app/actions/compliance';
+import { addComplianceRecord, updateComplianceRecord } from '@/app/actions/compliance';
 import { toast } from 'sonner';
 
 const DEFAULT_TYPES = [
@@ -23,13 +24,13 @@ const DEFAULT_TYPES = [
   'CUSTOM',
 ];
 
-export function ComplianceFormDialog({ clientId }: { clientId: string }) {
+export function ComplianceFormDialog({ clientId, record }: { clientId: string; record?: any }) {
   const [open, setOpen] = useState(false);
   const [isPending, startTransition] = useTransition();
 
-  const [documentType, setDocumentType] = useState('');
-  const [customName, setCustomName] = useState('');
-  const [expiryDate, setExpiryDate] = useState('');
+  const [documentType, setDocumentType] = useState(record?.documentType || '');
+  const [customName, setCustomName] = useState(record?.customName || '');
+  const [expiryDate, setExpiryDate] = useState(record?.expiryDate || '');
 
   function onSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -45,14 +46,22 @@ export function ComplianceFormDialog({ clientId }: { clientId: string }) {
       if (customName) formData.append('customName', customName);
       formData.append('expiryDate', expiryDate);
 
-      const result = await addComplianceRecord(formData);
+      let result;
+      if (record) {
+        result = await updateComplianceRecord(record.id, formData);
+      } else {
+        result = await addComplianceRecord(formData);
+      }
+
       if (result.error) {
         toast.error(result.error);
       } else {
-        toast.success('Compliance record added successfully');
-        setDocumentType('');
-        setCustomName('');
-        setExpiryDate('');
+        toast.success(`Compliance record ${record ? 'updated' : 'added'} successfully`);
+        if (!record) {
+          setDocumentType('');
+          setCustomName('');
+          setExpiryDate('');
+        }
         setOpen(false);
       }
     });
@@ -61,11 +70,17 @@ export function ComplianceFormDialog({ clientId }: { clientId: string }) {
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
-        <Button variant="default">Add Record</Button>
+        {record ? (
+          <Button variant="ghost" size="icon">
+            <Pencil className="size-4" />
+          </Button>
+        ) : (
+          <Button variant="default">Add Record</Button>
+        )}
       </DialogTrigger>
       <DialogContent>
         <DialogHeader>
-          <DialogTitle>Add Compliance Record</DialogTitle>
+          <DialogTitle>{record ? 'Edit Compliance Record' : 'Add Compliance Record'}</DialogTitle>
         </DialogHeader>
         <form onSubmit={onSubmit} className="space-y-4 mt-4">
           <div className="space-y-2">
