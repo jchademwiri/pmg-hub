@@ -22,6 +22,7 @@ import {
   TableRow,
 } from '@/components/ui/table';
 import { EmptyState } from '@/components/ui/empty-state';
+import { DataList } from '@/components/ui/data-list';
 import { confirm } from '@/components/ui/confirm-dialog';
 import { BillingStatusBadge } from '@/components/billing/billing-status-badge';
 import { formatZAR, fmtDate } from '@/lib/format';

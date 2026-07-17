@@ -321,7 +321,7 @@ export function PortalShell({ client, isImpersonating, children }: PortalShellPr
             <FileText className="size-5" />
             <span className="text-[10px] font-medium">Invoices</span>
           </Link>
-          <button type="button" onClick={() => setIsMobileOpen(true)} className={`flex flex-col items-center justify-center w-full h-full space-y-1 cursor-pointer ${isMobileOpen ? 'text-blue-400' : 'text-muted-foreground hover:text-white'}`}>
+          <button type="button" onClick={() => setIsMobileOpen(true)} className={`flex flex-col items-center justify-center w-full h-full space-y-1 cursor-pointer touch-manipulation ${isMobileOpen ? 'text-blue-400' : 'text-muted-foreground hover:text-white'}`}>
             <Menu className="size-5" />
             <span className="text-[10px] font-medium">More</span>
           </button>
