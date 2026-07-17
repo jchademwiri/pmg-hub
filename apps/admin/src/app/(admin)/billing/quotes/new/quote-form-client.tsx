@@ -8,6 +8,7 @@ import { Field, FieldLabel } from '@/components/ui/field';
 import { Input } from '@/components/ui/input';
 import { Switch } from '@/components/ui/switch';
 import { Textarea } from '@/components/ui/textarea';
+import { Card, CardContent } from '@/components/ui/card';
 import { Mail } from 'lucide-react';
 import {
   Select,
@@ -47,11 +48,13 @@ const plus5 = new Date(Date.now() + 5 * 24 * 60 * 60 * 1000).toISOString().split
 
 function blankRow(): LineItemFormRow {
   return {
-    id: crypto.randomUUID(),
+    id: typeof crypto !== 'undefined' && crypto.randomUUID ? crypto.randomUUID() : Math.random().toString(36).substring(2, 15),
     itemId: '',
     description: '',
     quantity: '1',
     unitPrice: '',
+    discountType: null,
+    discountValue: '',
   };
 }
 
@@ -110,11 +113,13 @@ export function QuoteFormClient({
             itemId = matched?.id ?? '';
           }
           return {
-            id: crypto.randomUUID(),
+            id: typeof crypto !== 'undefined' && crypto.randomUUID ? crypto.randomUUID() : Math.random().toString(36).substring(2, 15),
             itemId,
             description: li.description,
             quantity: li.quantity,
             unitPrice: li.unitPrice,
+            discountType: li.discountType ?? null,
+            discountValue: li.discountValue ?? '',
           };
         })
       : [blankRow()],
@@ -180,6 +185,8 @@ export function QuoteFormClient({
         description: r.description,
         quantity: parseFloat(r.quantity) || 1,
         unitPrice: parseFloat(r.unitPrice) || 0,
+        discountType: r.discountType,
+        discountValue: r.discountValue ? parseFloat(r.discountValue) : null,
         vatRate: 0 as const,
       })),
       vatEnabled,
@@ -223,12 +230,13 @@ export function QuoteFormClient({
   return (
     <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
       {/* Main form area */}
-      <div className="flex flex-col gap-6 lg:col-span-2">
-        {/* Quote details */}
+      <Card className="flex flex-col gap-6 lg:col-span-2">
+        <CardContent className="p-6 flex flex-col gap-6">
+          {/* Quote details */}
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
           <Field>
             <FieldLabel>
-              Division <span className="text-destructive">*</span>
+              Division
             </FieldLabel>
             <Select value={divisionId} onValueChange={setDivisionId} disabled={isSubmitting || !!editId}>
               <SelectTrigger>
@@ -246,7 +254,7 @@ export function QuoteFormClient({
 
           <Field>
             <FieldLabel>
-              Client <span className="text-destructive">*</span>
+              Client
             </FieldLabel>
             <Select value={clientId} onValueChange={setClientId} disabled={isSubmitting}>
               <SelectTrigger>
@@ -264,7 +272,7 @@ export function QuoteFormClient({
 
           <Field>
             <FieldLabel>
-              Issue Date <span className="text-destructive">*</span>
+              Issue Date
             </FieldLabel>
             <Input
               type="date"
@@ -358,7 +366,8 @@ export function QuoteFormClient({
             </AccordionContent>
           </AccordionItem>
         </Accordion>
-      </div>
+        </CardContent>
+      </Card>
 
       {/* Sidebar - sticky */}
       <div className="flex flex-col gap-4 lg:sticky lg:top-16 self-start">
@@ -376,16 +385,7 @@ export function QuoteFormClient({
           </Field>
 
           {/* Discount */}
-          <div className="flex items-center gap-2">
-            <Select value={discountType} onValueChange={(v) => setDiscountType(v as 'percent' | 'amount')}>
-              <SelectTrigger className="h-8 w-28" aria-label="Discount type">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="percent">% Percent</SelectItem>
-                <SelectItem value="amount">R Amount</SelectItem>
-              </SelectContent>
-            </Select>
+          <div className="flex">
             <Input
               type="number"
               min="0"
@@ -393,8 +393,17 @@ export function QuoteFormClient({
               value={discountValue}
               onChange={(e) => setDiscountValue(e.target.value)}
               placeholder="Discount"
-              className="h-8"
+              className="rounded-r-none focus-visible:z-10"
             />
+            <Select value={discountType} onValueChange={(v) => setDiscountType(v as 'percent' | 'amount')}>
+              <SelectTrigger className="w-[65px] rounded-l-none border-l-0 focus:ring-0 focus-visible:z-10 bg-muted/10 px-3 shrink-0" aria-label="Discount type">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="percent">%</SelectItem>
+                <SelectItem value="amount">R</SelectItem>
+              </SelectContent>
+            </Select>
           </div>
 
           <BillingTotalsBlock
@@ -413,7 +422,7 @@ export function QuoteFormClient({
             </Alert>
           )}
 
-          <Button className="w-full" onClick={() => handleSubmit('draft')} disabled={isSubmitting}>
+          <Button className="w-full bg-blue-600 hover:bg-blue-700 text-white" onClick={() => handleSubmit('draft')} disabled={isSubmitting}>
             {isSubmitting ? 'Saving…' : editId ? 'Save Changes' : 'Save Quote'}
           </Button>
           <Button

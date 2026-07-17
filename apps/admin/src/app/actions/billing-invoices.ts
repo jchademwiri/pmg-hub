@@ -20,14 +20,21 @@ class ActionError extends Error {
 // ── Shared totals helper ──────────────────────────────────────────────────────
 
 function calcTotals(
-  lineItems: { quantity: number; unitPrice: number; vatRate: number }[],
+  lineItems: { quantity: number; unitPrice: number; vatRate: number; discountType?: 'percent' | 'amount' | null; discountValue?: number | null }[],
   vatEnabled?: boolean,
   discountType?: 'percent' | 'amount' | null,
   discountValue?: number | null,
 ) {
   let subtotal = 0;
   for (const item of lineItems) {
-    subtotal += item.quantity * item.unitPrice;
+    const rawTotal = item.quantity * item.unitPrice;
+    const itemDiscountVal = item.discountValue ?? 0;
+    const itemDiscountAmount = item.discountType === 'percent'
+      ? rawTotal * (itemDiscountVal / 100)
+      : item.discountType === 'amount'
+      ? Math.min(itemDiscountVal, rawTotal)
+      : 0;
+    subtotal += (rawTotal - itemDiscountAmount);
   }
 
   const discountVal = discountValue ?? 0;
@@ -103,17 +110,30 @@ export async function createInvoice(
     if (!inserted) return { error: 'Failed to create invoice.' };
 
     await db.insert(billingLineItems).values(
-      lineItems.map((item: { itemId?: string | null; description: string; quantity: number; unitPrice: number; vatRate: number }, i: number) => ({
-        documentType: 'invoice' as const,
-        documentId: inserted.id,
-        sortOrder: i,
-        itemId: item.itemId ?? null,
-        description: item.description,
-        quantity: String(item.quantity),
-        unitPrice: String(item.unitPrice.toFixed(2)),
-        vatRate: '0',
-        lineTotal: String((item.quantity * item.unitPrice).toFixed(2)),
-      })),
+      lineItems.map((item: { itemId?: string | null; description: string; quantity: number; unitPrice: number; vatRate: number; discountType?: 'percent' | 'amount' | null; discountValue?: number | null }, i: number) => {
+        const rawTotal = item.quantity * item.unitPrice;
+        const itemDiscountVal = item.discountValue ?? 0;
+        const itemDiscountAmount = item.discountType === 'percent'
+          ? rawTotal * (itemDiscountVal / 100)
+          : item.discountType === 'amount'
+          ? Math.min(itemDiscountVal, rawTotal)
+          : 0;
+
+        return {
+          documentType: 'invoice' as const,
+          documentId: inserted.id,
+          sortOrder: i,
+          itemId: item.itemId ?? null,
+          description: item.description,
+          quantity: String(item.quantity),
+          unitPrice: String(item.unitPrice.toFixed(2)),
+          discountType: item.discountType ?? null,
+          discountValue: item.discountValue != null ? String(item.discountValue) : null,
+          discountAmount: String(itemDiscountAmount.toFixed(2)),
+          vatRate: '0',
+          lineTotal: String((rawTotal - itemDiscountAmount).toFixed(2)),
+        };
+      }),
     );
 
     revalidatePath('/billing/invoices');
@@ -236,17 +256,30 @@ export async function updateInvoice(
         .where(eq(invoices.id, id));
 
       await tx.insert(billingLineItems).values(
-        lineItems.map((item: { itemId?: string | null; description: string; quantity: number; unitPrice: number; vatRate: number }, i: number) => ({
-          documentType: 'invoice' as const,
-          documentId: id,
-          sortOrder: i,
-          itemId: item.itemId ?? null,
-          description: item.description,
-          quantity: String(item.quantity),
-          unitPrice: String(item.unitPrice.toFixed(2)),
-          vatRate: '0',
-          lineTotal: String((item.quantity * item.unitPrice).toFixed(2)),
-        })),
+        lineItems.map((item: { itemId?: string | null; description: string; quantity: number; unitPrice: number; vatRate: number; discountType?: 'percent' | 'amount' | null; discountValue?: number | null }, i: number) => {
+          const rawTotal = item.quantity * item.unitPrice;
+          const itemDiscountVal = item.discountValue ?? 0;
+          const itemDiscountAmount = item.discountType === 'percent'
+            ? rawTotal * (itemDiscountVal / 100)
+            : item.discountType === 'amount'
+            ? Math.min(itemDiscountVal, rawTotal)
+            : 0;
+
+          return {
+            documentType: 'invoice' as const,
+            documentId: id,
+            sortOrder: i,
+            itemId: item.itemId ?? null,
+            description: item.description,
+            quantity: String(item.quantity),
+            unitPrice: String(item.unitPrice.toFixed(2)),
+            discountType: item.discountType ?? null,
+            discountValue: item.discountValue != null ? String(item.discountValue) : null,
+            discountAmount: String(itemDiscountAmount.toFixed(2)),
+            vatRate: '0',
+            lineTotal: String((rawTotal - itemDiscountAmount).toFixed(2)),
+          };
+        }),
       );
 
       return existingLocked;

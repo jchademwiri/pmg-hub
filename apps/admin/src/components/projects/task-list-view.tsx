@@ -164,7 +164,7 @@ export function TaskListView({ projectId, initialSections }: TaskListViewProps) 
 
     setNewMainTaskTitles(prev => ({ ...prev, [columnId]: '' }));
 
-    const tempId = crypto.randomUUID();
+    const tempId = typeof crypto !== 'undefined' && crypto.randomUUID ? crypto.randomUUID() : Math.random().toString(36).substring(2, 15);
     const tempTask: MainTask = {
       id: tempId,
       projectId,
@@ -221,7 +221,7 @@ export function TaskListView({ projectId, initialSections }: TaskListViewProps) 
 
     setNewSubTaskTexts(prev => ({ ...prev, [sectionId]: '' }));
 
-    const tempId = crypto.randomUUID();
+    const tempId = typeof crypto !== 'undefined' && crypto.randomUUID ? crypto.randomUUID() : Math.random().toString(36).substring(2, 15);
     const tempSub: SubTask = {
       id: tempId,
       sectionId,

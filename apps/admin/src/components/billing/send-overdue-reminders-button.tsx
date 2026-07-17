@@ -292,7 +292,7 @@ export function SendOverdueRemindersButton({ clientId, trigger }: { clientId?: s
   async function sendCurrent() {
     if (!activeItem || isSending) return;
     setIsSending(true);
-    const ok = await sendOne(activeItem, crypto.randomUUID());
+    const ok = await sendOne(activeItem, typeof crypto !== 'undefined' && crypto.randomUUID ? crypto.randomUUID() : Math.random().toString(36).substring(2, 15));
     setIsSending(false);
     if (ok) toast.success(`Reminder sent to ${clientLabel(activeItem)}.`);
     else toast.error(errors[activeItem.reminderKey] ?? 'Failed to send reminder.');
@@ -302,7 +302,7 @@ export function SendOverdueRemindersButton({ clientId, trigger }: { clientId?: s
     if (selectedItems.length === 0 || isSending) return;
 
     setIsSending(true);
-    const batchId = crypto.randomUUID();
+    const batchId = typeof crypto !== 'undefined' && crypto.randomUUID ? crypto.randomUUID() : Math.random().toString(36).substring(2, 15);
     let cursor = 0;
     let sentCount = 0;
 

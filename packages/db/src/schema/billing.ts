@@ -204,6 +204,10 @@ export const billingLineItems = pgTable(
     description: text("description").notNull(),
     quantity: numeric("quantity", { precision: 10, scale: 2 }).notNull(),
     unitPrice: numeric("unit_price", { precision: 12, scale: 2 }).notNull(),
+    // Discount fields - both nullable; discountAmount is always stored (0 when no discount)
+    discountType: text("discount_type"),   // 'percent' | 'amount' | null
+    discountValue: numeric("discount_value", { precision: 12, scale: 2 }),  // nullable
+    discountAmount: numeric("discount_amount", { precision: 12, scale: 2 }).notNull().default("0"),
     vatRate: numeric("vat_rate", { precision: 5, scale: 2 }).notNull().default("0"),
     lineTotal: numeric("line_total", { precision: 12, scale: 2 }).notNull(),
     createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),

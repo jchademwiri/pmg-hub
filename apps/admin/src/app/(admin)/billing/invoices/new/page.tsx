@@ -38,21 +38,13 @@ export default async function NewInvoicePage() {
         </div>
       </div>
 
-      <Card>
-        <CardHeader>
-          <CardTitle>Invoice Details</CardTitle>
-          <CardDescription>Fill in the details for this invoice</CardDescription>
-        </CardHeader>
-        <CardContent>
-          <InvoiceFormClient
-            divisions={divisions}
-            clients={clients}
-            activeItems={activeItems}
-            minDate={minDate}
-            billingSettings={billingSettings}
-          />
-        </CardContent>
-      </Card>
+      <InvoiceFormClient
+        divisions={divisions}
+        clients={clients}
+        activeItems={activeItems}
+        minDate={minDate}
+        billingSettings={billingSettings}
+      />
     </div>
   );
 }

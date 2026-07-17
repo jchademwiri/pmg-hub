@@ -39,14 +39,21 @@ async function hasQuotationReferenceColumn() {
 // ── Shared discount + totals helper ──────────────────────────────────────────
 
 function calcDocumentTotals(
-  lineItems: { quantity: number; unitPrice: number }[],
+  lineItems: { quantity: number; unitPrice: number; discountType?: 'percent' | 'amount' | null; discountValue?: number | null }[],
   vatEnabled: boolean,
   discountType: 'percent' | 'amount' | null | undefined,
   discountValue: number | null | undefined,
 ) {
   let subtotal = 0;
   for (const item of lineItems) {
-    subtotal += item.quantity * item.unitPrice;
+    const rawTotal = item.quantity * item.unitPrice;
+    const itemDiscountVal = item.discountValue ?? 0;
+    const itemDiscountAmount = item.discountType === 'percent'
+      ? rawTotal * (itemDiscountVal / 100)
+      : item.discountType === 'amount'
+      ? Math.min(itemDiscountVal, rawTotal)
+      : 0;
+    subtotal += (rawTotal - itemDiscountAmount);
   }
 
   const discountVal = discountValue ?? 0;
@@ -149,17 +156,30 @@ export async function createQuotation(
 
       // Insert line items - vatRate always 0 (VAT is document-level)
       await tx.insert(billingLineItems).values(
-        lineItems.map((item: { itemId?: string | null; description: string; quantity: number; unitPrice: number; vatRate: number }, i: number) => ({
-          documentType: 'quote' as const,
-          documentId: inserted.id,
-          sortOrder: i,
-          itemId: item.itemId ?? null,
-          description: item.description,
-          quantity: String(item.quantity),
-          unitPrice: String(item.unitPrice.toFixed(2)),
-          vatRate: '0',
-          lineTotal: String((item.quantity * item.unitPrice).toFixed(2)),
-        })),
+        lineItems.map((item: { itemId?: string | null; description: string; quantity: number; unitPrice: number; vatRate: number; discountType?: 'percent' | 'amount' | null; discountValue?: number | null }, i: number) => {
+          const rawTotal = item.quantity * item.unitPrice;
+          const itemDiscountVal = item.discountValue ?? 0;
+          const itemDiscountAmount = item.discountType === 'percent'
+            ? rawTotal * (itemDiscountVal / 100)
+            : item.discountType === 'amount'
+            ? Math.min(itemDiscountVal, rawTotal)
+            : 0;
+
+          return {
+            documentType: 'quote' as const,
+            documentId: inserted.id,
+            sortOrder: i,
+            itemId: item.itemId ?? null,
+            description: item.description,
+            quantity: String(item.quantity),
+            unitPrice: String(item.unitPrice.toFixed(2)),
+            discountType: item.discountType ?? null,
+            discountValue: item.discountValue != null ? String(item.discountValue) : null,
+            discountAmount: String(itemDiscountAmount.toFixed(2)),
+            vatRate: '0',
+            lineTotal: String((rawTotal - itemDiscountAmount).toFixed(2)),
+          };
+        }),
       );
 
       return { id: inserted.id };

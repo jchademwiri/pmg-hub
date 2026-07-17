@@ -251,7 +251,7 @@ export function TaskBoard({ projectId, initialSections, onProgressChange }: Task
     const title = newMainTaskTitles[bucket].trim();
     if (!title) return;
 
-    const tempId = crypto.randomUUID();
+    const tempId = typeof crypto !== 'undefined' && crypto.randomUUID ? crypto.randomUUID() : Math.random().toString(36).substring(2, 15);
     const tempTask: MainTask = {
       id: tempId,
       projectId,
@@ -328,7 +328,7 @@ export function TaskBoard({ projectId, initialSections, onProgressChange }: Task
     const text = newSubTaskTexts[sectionId]?.trim();
     if (!text) return;
 
-    const tempId = crypto.randomUUID();
+    const tempId = typeof crypto !== 'undefined' && crypto.randomUUID ? crypto.randomUUID() : Math.random().toString(36).substring(2, 15);
     const tempItem: SubTask = {
       id: tempId,
       sectionId,

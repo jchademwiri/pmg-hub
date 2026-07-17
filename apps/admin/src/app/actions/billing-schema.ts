@@ -12,6 +12,8 @@ export const LineItemSchema = z.object({
   unitPrice: z.coerce.number().min(0, 'Unit price cannot be negative'),
   // vatRate is always 0 - VAT is document-level. Kept for DB compatibility.
   vatRate: z.coerce.number().default(0),
+  discountType: z.enum(['percent', 'amount']).optional().nullable(),
+  discountValue: z.coerce.number().min(0).optional().nullable(),
 });
 
 export type LineItemInput = z.infer<typeof LineItemSchema>;

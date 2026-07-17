@@ -142,9 +142,11 @@ export function InvoicesTable({
                       <DropdownMenuItem asChild>
                         <Link href={`/billing/invoices/${inv.id}`}>View</Link>
                       </DropdownMenuItem>
-                      <DropdownMenuItem asChild>
-                        <Link href={`/billing/invoices/${inv.id}/edit`}>Edit</Link>
-                      </DropdownMenuItem>
+                      {!['paid', 'void', 'written_off'].includes(inv.status) && (
+                        <DropdownMenuItem asChild>
+                          <Link href={`/billing/invoices/${inv.id}/edit`}>Edit</Link>
+                        </DropdownMenuItem>
+                      )}
                       {inv.status === 'draft' && (
                         <>
                           <DropdownMenuSeparator />
@@ -214,9 +216,11 @@ export function InvoicesTable({
                     <DropdownMenuItem asChild>
                       <Link href={`/billing/invoices/${inv.id}`}>View</Link>
                     </DropdownMenuItem>
-                    <DropdownMenuItem asChild>
-                      <Link href={`/billing/invoices/${inv.id}/edit`}>Edit</Link>
-                    </DropdownMenuItem>
+                    {!['paid', 'void', 'written_off'].includes(inv.status) && (
+                      <DropdownMenuItem asChild>
+                        <Link href={`/billing/invoices/${inv.id}/edit`}>Edit</Link>
+                      </DropdownMenuItem>
+                    )}
                     {inv.status === 'draft' && (
                       <>
                         <DropdownMenuSeparator />

@@ -155,6 +155,10 @@ export default async function QuoteDetailPage({ params, searchParams }: Props) {
                   {quote.lineItems.map((li) => {
                     const qty = Number(li.quantity);
                     const price = Number(li.unitPrice);
+                    const discountAmount = Number(li.discountAmount || 0);
+                    const rawTotal = qty * price;
+                    const finalTotal = rawTotal - discountAmount;
+                    
                     return (
                       <div key={li.id} className="flex justify-between py-3 items-start gap-4">
                         <div className="flex flex-col gap-0.5 min-w-0">
@@ -165,9 +169,14 @@ export default async function QuoteDetailPage({ params, searchParams }: Props) {
                           <span className="text-muted-foreground mt-1">
                             {qty} x {formatZAR(price)}
                           </span>
+                          {discountAmount > 0 && (
+                            <span className="text-amber-600 mt-0.5">
+                              - {formatZAR(discountAmount)} discount
+                            </span>
+                          )}
                         </div>
                         <span className="font-bold text-foreground shrink-0 tabular-nums mt-0.5">
-                          {formatZAR(qty * price)}
+                          {formatZAR(finalTotal)}
                         </span>
                       </div>
                     );

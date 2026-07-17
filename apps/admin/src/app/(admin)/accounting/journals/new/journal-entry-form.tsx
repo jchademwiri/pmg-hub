@@ -37,7 +37,7 @@ interface LineRow {
 }
 
 function newLine(): LineRow {
-  return { id: crypto.randomUUID(), accountId: '', debit: '', credit: '', description: '' }
+  return { id: typeof crypto !== 'undefined' && crypto.randomUUID ? crypto.randomUUID() : Math.random().toString(36).substring(2, 15), accountId: '', debit: '', credit: '', description: '' }
 }
 
 const TYPE_LABELS: Record<string, string> = {

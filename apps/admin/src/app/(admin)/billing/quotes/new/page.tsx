@@ -37,20 +37,12 @@ export default async function NewQuotePage() {
         </div>
       </div>
 
-      <Card>
-        <CardHeader>
-          <CardTitle>Quote Details</CardTitle>
-          <CardDescription>Fill in the details for this quotation</CardDescription>
-        </CardHeader>
-        <CardContent>
-          <QuoteFormClient
-            divisions={divisions}
-            clients={clients}
-            activeItems={activeItems}
-            billingSettings={billingSettings}
-          />
-        </CardContent>
-      </Card>
+      <QuoteFormClient
+        divisions={divisions}
+        clients={clients}
+        activeItems={activeItems}
+        billingSettings={billingSettings}
+      />
     </div>
   );
 }
