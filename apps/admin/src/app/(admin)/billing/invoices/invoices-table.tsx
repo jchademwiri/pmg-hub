@@ -22,6 +22,7 @@ import {
   TableRow,
 } from '@/components/ui/table';
 import { confirm } from '@/components/ui/confirm-dialog';
+import { DataList } from '@/components/ui/data-list';
 import { BillingStatusBadge } from '@/components/billing/billing-status-badge';
 import { formatZAR, fmtDate } from '@/lib/format';
 import type { InvoiceRow } from '@pmg/db';
@@ -71,8 +72,8 @@ export function InvoicesTable({
     });
   }
 
-  return (
-    <div className="flex flex-col gap-4">
+  const desktopView = (
+    <div className="overflow-x-auto rounded-md border border-border">
       <Table>
         <TableHeader>
           <TableRow>
@@ -174,5 +175,78 @@ export function InvoicesTable({
         </TableBody>
       </Table>
     </div>
+  );
+
+  const mobileView = (
+    <>
+      {entries.length === 0 ? (
+        <div className="text-center p-4 text-muted-foreground text-sm border border-border rounded-md">
+          No invoices match the current filters.
+        </div>
+      ) : (
+        entries.map((inv) => (
+          <div key={inv.id} className="relative flex flex-col p-4 border border-border rounded-lg bg-card shadow-sm transition-shadow">
+            <Link
+              href={`/billing/invoices/${inv.id}`}
+              className="absolute inset-0 focus:outline-none focus-visible:ring-2 focus-visible:ring-ring rounded-lg"
+              aria-label={`View invoice ${inv.documentNumber}`}
+            />
+            <div className="flex justify-between items-start mb-2">
+              <div>
+                <p className="font-semibold text-foreground">{inv.documentNumber}</p>
+                <p className="text-sm text-muted-foreground">{inv.clientName ?? 'No client'}</p>
+              </div>
+              <div className="flex flex-col items-end gap-1">
+                <span className="font-bold tabular-nums">{formatZAR(Number(inv.total))}</span>
+                <BillingStatusBadge status={inv.status} />
+              </div>
+            </div>
+            <div className="flex justify-between items-center text-xs text-muted-foreground mt-2 border-t border-border/50 pt-2">
+              <span>Due {fmtDate(inv.dueDate)}</span>
+              <div className="relative z-10">
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <Button variant="ghost" size="touch" className="h-8 w-8 min-h-0 min-w-0 p-0" title="Actions">
+                      <MoreHorizontal className="size-4" />
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="end">
+                    <DropdownMenuItem asChild>
+                      <Link href={`/billing/invoices/${inv.id}`}>View</Link>
+                    </DropdownMenuItem>
+                    <DropdownMenuItem asChild>
+                      <Link href={`/billing/invoices/${inv.id}/edit`}>Edit</Link>
+                    </DropdownMenuItem>
+                    {inv.status === 'draft' && (
+                      <>
+                        <DropdownMenuSeparator />
+                        <DropdownMenuItem onClick={() => handleIssue(inv.id, inv.documentNumber)}>
+                          Mark Issued
+                        </DropdownMenuItem>
+                      </>
+                    )}
+                    {(inv.status === 'draft' || inv.status === 'issued' || inv.status === 'overdue') && (
+                      <>
+                        <DropdownMenuSeparator />
+                        <DropdownMenuItem
+                          className="text-destructive focus:text-destructive"
+                          onClick={() => handleVoid(inv.id, inv.documentNumber)}
+                        >
+                          Void
+                        </DropdownMenuItem>
+                      </>
+                    )}
+                  </DropdownMenuContent>
+                </DropdownMenu>
+              </div>
+            </div>
+          </div>
+        ))
+      )}
+    </>
+  );
+
+  return (
+    <DataList desktop={desktopView} mobile={mobileView} />
   );
 }
