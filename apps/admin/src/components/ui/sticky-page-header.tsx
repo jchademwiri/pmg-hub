@@ -33,6 +33,7 @@ export function StickyPageHeader({
       className={cn(
         'sticky top-[3.25rem] z-20 border-b border-border/40 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 -mx-6 px-6 py-4 -mt-6',
         className,
+      )}
     >
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 sm:gap-3">
         <div>
