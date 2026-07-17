@@ -114,7 +114,7 @@ export function BillingLineItemsForm({ value, onChange, activeItems }: BillingLi
             className="flex flex-col gap-3 lg:gap-2 rounded-xl border lg:border-transparent p-4 lg:p-2 bg-card lg:bg-transparent shadow-sm lg:shadow-none lg:border-b lg:rounded-md lg:hover:bg-muted/30 lg:transition-colors lg:-mx-2"
           >
             {/* Top Row: Item, Qty, Price, Discount, Total, Action */}
-            <div className="grid grid-cols-1 lg:grid-cols-[1fr_80px_110px_130px_110px_40px] gap-3 items-start lg:items-center w-full">
+            <div className="flex flex-col lg:grid lg:grid-cols-[1fr_80px_110px_130px_110px_40px] gap-3 items-stretch lg:items-center w-full">
               {/* Item */}
               <div className="flex flex-col gap-1.5 lg:block min-w-0">
                 <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wider lg:hidden">Item</span>

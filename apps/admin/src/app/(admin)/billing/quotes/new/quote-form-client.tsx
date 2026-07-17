@@ -239,7 +239,7 @@ export function QuoteFormClient({
               Division
             </FieldLabel>
             <Select value={divisionId} onValueChange={setDivisionId} disabled={isSubmitting || !!editId}>
-              <SelectTrigger>
+              <SelectTrigger className="w-full">
                 <SelectValue placeholder="Select a division…" />
               </SelectTrigger>
               <SelectContent>
@@ -252,13 +252,13 @@ export function QuoteFormClient({
             </Select>
           </Field>
 
-          <Field>
+          <Field className="sm:col-span-2">
             <FieldLabel>
               Client
             </FieldLabel>
             <Select value={clientId} onValueChange={setClientId} disabled={isSubmitting}>
-              <SelectTrigger>
-                <SelectValue placeholder="Select a client… *" />
+              <SelectTrigger className="w-full">
+                <SelectValue placeholder="Select a client…" />
               </SelectTrigger>
               <SelectContent>
                 {clients.map((c) => (
