@@ -385,7 +385,9 @@ export default async function StatementsPage({ searchParams }: PageProps) {
             {filteredLedger.length === 0 ? (
               <p className="text-xs text-muted-foreground py-6 text-center">No transactions found for this period.</p>
             ) : (
-              <table className="w-full text-left border-collapse">
+              <>
+              <div className="overflow-x-auto hidden md:block print:block">
+                <table className="w-full text-left border-collapse">
                 <thead>
                   <tr className="border-b border-white/5 print:border-black/20 text-[10px] font-bold uppercase tracking-wider text-muted-foreground/75 print:text-black/60">
                     <th className="py-3 pr-4">Date</th>
@@ -425,6 +427,39 @@ export default async function StatementsPage({ searchParams }: PageProps) {
                   })}
                 </tbody>
               </table>
+              </div>
+
+              {/* Mobile Card View */}
+              <div className="md:hidden print:hidden divide-y divide-white/5">
+                {filteredLedger.map((tx) => {
+                  const isInvoice = tx.type === 'invoice';
+                  return (
+                    <div key={tx.id} className="py-4 hover:bg-white/[0.02] px-4 transition-colors">
+                      <div className="flex items-start justify-between mb-2">
+                        <div>
+                          <p className="text-sm font-semibold text-white">{tx.reference}</p>
+                          <p className="text-xs text-muted-foreground mt-0.5">{formatDate(tx.date)}</p>
+                        </div>
+                        <div className="text-right flex flex-col items-end gap-1">
+                          <p className={`text-sm font-bold ${isInvoice ? 'text-white' : 'text-emerald-400'}`}>
+                            {isInvoice ? formatCurrency(tx.amount) : `-${formatCurrency(tx.amount)}`}
+                          </p>
+                          {tx.status && tx.status !== 'paid' && (
+                            <span className="inline-block text-[9px] font-bold uppercase px-1.5 py-0.5 rounded bg-amber-500/10 text-amber-400 mt-1">
+                              {tx.status}
+                            </span>
+                          )}
+                        </div>
+                      </div>
+                      <div className="flex justify-between items-center text-xs mt-3 pt-3 border-t border-white/5">
+                        <span className="text-muted-foreground">Running Balance</span>
+                        <span className="font-bold text-white">{formatCurrency(tx.runningBalance)}</span>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+              </>
             )}
           </div>
         </CardContent>
