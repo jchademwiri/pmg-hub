@@ -41,6 +41,8 @@ export const portalAuth = betterAuth({
     ...(process.env.VERCEL_URL ? [`https://${process.env.VERCEL_URL}`] : []),
     'https://portal.playhousemedia.co.za',
     'https://client.playhousemedia.co.za',
+    'http://192.168.0.190:3000',
+    'http://192.168.0.190:3001',
   ],
   database: drizzleAdapter(getDb(), { provider: 'pg' }),
 
