@@ -87,7 +87,7 @@ export function SankeyDiagram({
   // Max stroke width for styling links
   const maxStroke = 30
   const getStrokeWidth = (val: number) => {
-    const ratio = val / revenue
+    const ratio = revenue !== 0 ? val / revenue : 0
     return Math.max(2, ratio * maxStroke)
   }
 

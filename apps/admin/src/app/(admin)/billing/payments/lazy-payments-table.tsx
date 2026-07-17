@@ -31,7 +31,7 @@ export function LazyPaymentsTable({ year, month, divisionId, deleteAction }: Pro
       }
     });
     return () => { mounted = false; };
-  }, [year, month, refreshCounter]);
+  }, [year, month, divisionId, refreshCounter]);
 
   const wrappedDeleteAction = async (id: string) => {
     const res = await deleteAction(id);

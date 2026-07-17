@@ -98,7 +98,7 @@ export default async function FinanceIncomePage({ searchParams }: IncomePageProp
 
   const fyStartYear = currentMonth <= 2 ? currentYear - 1 : currentYear;
 
-  const monthlySummaries = await getIncomeMonthlySummaries(fyStartYear, divisionId, clientId);
+  const monthlySummaries = await getIncomeMonthlySummaries(fyStartYear, filters.divisionId, filters.clientId);
   const globalReceived = monthlySummaries.reduce((sum, m) => sum + m.totalReceived, 0);
   const globalAllocated = monthlySummaries.reduce((sum, m) => sum + m.totalAllocated, 0);
   const globalUnallocated = Math.max(0, globalReceived - globalAllocated);

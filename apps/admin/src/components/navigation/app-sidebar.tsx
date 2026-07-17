@@ -37,10 +37,17 @@ import type { NavItem, NavGroup, GroupKey } from '@/components/navigation/nav-da
 // ── Helpers ───────────────────────────────────────────────────────────────────
 
 function getActiveGroup(pathname: string): GroupKey | null {
+  let bestMatch: { key: GroupKey; length: number } | null = null
   for (const group of GROUPS) {
-    if (group.items.some((i) => pathname.startsWith(i.url))) return group.key
+    for (const item of group.items) {
+      if (pathname.startsWith(item.url)) {
+        if (!bestMatch || item.url.length > bestMatch.length) {
+          bestMatch = { key: group.key, length: item.url.length }
+        }
+      }
+    }
   }
-  return null
+  return bestMatch ? bestMatch.key : null
 }
 
 // ── Sub-components ────────────────────────────────────────────────────────────

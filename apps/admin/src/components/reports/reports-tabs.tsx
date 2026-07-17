@@ -19,7 +19,6 @@ interface ReportsTabsProps {
   momData: MoMSnapshot[]
   budgetChartSeries: MonthlyBudgetChartRow[]
   expensesByCategory: { category: string; total: number }[]
-  profitPoolSeries: ProfitPoolRow[]
   monthlyFinancials: MonthlyFinancials[]
   currentPeriod: string
   previousPeriod: string
@@ -33,7 +32,6 @@ export function ReportsTabs({
   momData,
   budgetChartSeries,
   expensesByCategory,
-  profitPoolSeries,
   monthlyFinancials,
   currentPeriod,
   previousPeriod,
@@ -155,7 +153,7 @@ export function ReportsTabs({
             expenses={totalExpenses}
             pmgShare={totalPmgShare}
             profitPool={totalProfitPool}
-            ledgerBalances={ledgerBalances as any}
+            ledgerBalances={ledgerBalances}
           />
           <ProfitPoolChart
             data={monthlyFinancials.map(m => ({ period: m.month, profit: m.revenue * (1 - PMG_SHARE_RATE) - m.expenses }))}
