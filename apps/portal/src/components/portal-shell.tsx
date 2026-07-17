@@ -307,7 +307,10 @@ export function PortalShell({ client, isImpersonating, children }: PortalShellPr
       </div>
 
       {/* Mobile Bottom Navigation */}
-      <div className="md:hidden fixed bottom-0 left-0 right-0 z-40 border-t border-white/5 bg-[#0a0f1d]/95 backdrop-blur-md pb-safe">
+      <div
+        className="md:hidden fixed bottom-0 left-0 right-0 z-40 border-t border-white/5 bg-[#0a0f1d]/95 backdrop-blur-md"
+        style={{ paddingBottom: 'max(env(safe-area-inset-bottom), 8px)' }}
+      >
         <div className="flex h-16 items-center justify-around px-2">
           <Link href="/dashboard" className={`flex flex-col items-center justify-center w-full h-full space-y-1 ${pathname === '/dashboard' ? 'text-blue-400' : 'text-muted-foreground hover:text-white'}`}>
             <LayoutDashboard className="size-5" />
