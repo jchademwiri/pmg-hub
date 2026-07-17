@@ -2,7 +2,6 @@ import { SidebarProvider, SidebarInset } from '@/components/ui/sidebar';
 import { AppSidebar } from '@/components/navigation/app-sidebar';
 import { TopNav } from '@/components/navigation/top-nav';
 import { PageHeaderProvider } from '@/components/navigation/page-header-context';
-import { Toaster } from '@/components/ui/sonner';
 import { ConfirmProvider } from '@/components/ui/confirm-dialog';
 import { auth } from '@/lib/auth';
 import { headers } from 'next/headers';
@@ -33,7 +32,6 @@ export default async function AdminLayout({ children }: { children: React.ReactN
         </PageHeaderProvider>
       </SidebarInset>
       <BottomNav />
-      <Toaster theme="dark" position="bottom-right" />
     </SidebarProvider>
   );
 }

@@ -190,7 +190,7 @@ export function PortalShell({ client, isImpersonating, children }: PortalShellPr
 
       {/* Mobile Drawer Sidebar */}
       {isMobileOpen && (
-        <div className="fixed inset-0 z-40 flex md:hidden">
+        <div className="fixed inset-0 z-50 flex md:hidden">
           {/* Backdrop */}
           <div
             className="fixed inset-0 bg-black/60 backdrop-blur-xs"
