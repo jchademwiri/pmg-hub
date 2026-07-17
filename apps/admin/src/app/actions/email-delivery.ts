@@ -8,6 +8,7 @@ import {
   createEmailClient,
   InvoiceDeliveryEmail,
   QuoteDeliveryEmail,
+  StatementDeliveryEmail,
   DEFAULT_EMAIL_FROM,
   DEFAULT_REPLY_TO,
   DEFAULT_WEBSITE_URL,
@@ -43,7 +44,7 @@ const CommaSeparatedEmails = z.string()
 
 const EmailPayloadSchema = z.object({
   documentId: z.string().uuid(),
-  documentType: z.enum(['invoice', 'quote']),
+  documentType: z.enum(['invoice', 'quote', 'statement']),
   recipientEmail: z.string().email(),
   cc: CommaSeparatedEmails,
   bcc: CommaSeparatedEmails,
@@ -52,13 +53,23 @@ const EmailPayloadSchema = z.object({
   base64Pdf: z.string().min(100),
   base64StatementPdf: z.string().optional(), // Statement PDF is optional and only for Invoices
   customAttachments: z.array(CustomAttachmentSchema).optional(),
+  statementData: z.object({
+    statementDate: z.string(),
+    period: z.string(),
+    totalAmountDue: z.string(),
+  }).optional(),
 });
 
 const EmailPreviewPayloadSchema = z.object({
   documentId: z.string().uuid(),
-  documentType: z.enum(['invoice', 'quote']),
+  documentType: z.enum(['invoice', 'quote', 'statement']),
   personalMessage: z.string().optional(),
   hasStatementAttached: z.boolean().optional(),
+  statementData: z.object({
+    statementDate: z.string(),
+    period: z.string(),
+    totalAmountDue: z.string(),
+  }).optional(),
 });
 
 // resolveFromEmail is now imported from @pmg/emails
@@ -87,8 +98,41 @@ export async function getDocumentEmailPreviewAction(rawPayload: unknown): Promis
       return { success: false, error: parsed.error.issues[0]?.message ?? 'Invalid preview request.' };
     }
 
-    const { documentId, documentType, personalMessage, hasStatementAttached } = parsed.data;
+    const { documentId, documentType, personalMessage, hasStatementAttached, statementData } = parsed.data;
     const db = getDb();
+
+    if (documentType === 'statement') {
+      const [client] = await db.select().from(clients).where(eq(clients.id, documentId));
+      if (!client) return { success: false, error: 'Client not found.' };
+
+      // We'll just grab the first billing config for styling since statements span divisions.
+      const [billingConfig] = await db.select().from(divisionBillingSettings).limit(1);
+
+      const html = await renderEmailTemplate(
+        React.createElement(StatementDeliveryEmail, {
+          clientName: client.businessName || client.name || 'Client',
+          statementDate: statementData?.statementDate || fmtDate(new Date()),
+          period: statementData?.period || 'Current Period',
+          totalAmountDue: statementData?.totalAmountDue || 'R 0.00',
+          personalMessage: personalMessage || undefined,
+          portalUrl: `${getPortalBaseUrl()}`,
+          companyName: 'Playhouse Media Group', // Default fallback
+          primaryColor: '#1d4ed8',
+          websiteUrl: billingConfig?.divisionWebsite || DEFAULT_WEBSITE_URL,
+          logoUrl: billingConfig?.logoUrl || undefined,
+          bankDetails: billingConfig
+            ? {
+                bankName: billingConfig.bankName || '',
+                accountName: billingConfig.bankAccountName || '',
+                accountNumber: billingConfig.bankAccountNumber || '',
+                branchCode: billingConfig.bankBranchCode || '',
+              }
+            : undefined,
+        }),
+      );
+
+      return { success: true, html };
+    }
 
     if (documentType === 'invoice') {
       const [invoice] = await db
@@ -209,7 +253,7 @@ export async function sendDocumentEmailAction(rawPayload: unknown) {
       return { error: parsed.error.issues[0]?.message ?? 'Invalid request parameters.' };
     }
     
-    const { documentId, documentType, recipientEmail, cc, bcc, subject, personalMessage, base64Pdf, base64StatementPdf, customAttachments } = parsed.data;
+    const { documentId, documentType, recipientEmail, cc, bcc, subject, personalMessage, base64Pdf, base64StatementPdf, customAttachments, statementData } = parsed.data;
     const pdfError =
       getPdfAttachmentError(base64Pdf, `${documentType === 'invoice' ? 'Invoice' : 'Quote'} PDF`) ??
       getPdfAttachmentError(base64StatementPdf, 'Statement PDF');
@@ -348,7 +392,7 @@ export async function sendDocumentEmailAction(rawPayload: unknown) {
       return { success: true, sendId: data?.id };
 
     // ── QUOTATION DELIVERY FLOW ──────────────────────────────────────────────
-    } else {
+    } else if (documentType === 'quote') {
       const [quote] = await db
         .select({
           id: quotations.id,
@@ -452,6 +496,70 @@ export async function sendDocumentEmailAction(rawPayload: unknown) {
           .update(quotations)
           .set({ status: 'sent', updatedAt: new Date() })
           .where(eq(quotations.id, documentId));
+      }
+
+      return { success: true, sendId: data?.id };
+
+    // ── STATEMENT DELIVERY FLOW ──────────────────────────────────────────────
+    } else if (documentType === 'statement') {
+      const [client] = await db.select().from(clients).where(eq(clients.id, documentId));
+      if (!client) return { error: 'Client not found.' };
+
+      // Try to find a division this client belongs to, or just use the first billing config
+      const [billingConfig] = await db.select().from(divisionBillingSettings).limit(1);
+
+      const apiKey = resolveResendApiKey();
+      const defaultFrom = resolveDefaultFromEmail();
+      const fromName = billingConfig?.salesRepName || process.env.EMAIL_FROM_NAME || 'PMG Admin';
+      const fromEmail = resolveFromEmail(billingConfig?.divisionWebsite, defaultFrom);
+
+      const emailClient = createEmailClient({
+        apiKey,
+        from: `${fromName} <${fromEmail}>`,
+        adminEmail: fromEmail,
+      });
+
+      const portalBaseUrl = getPortalBaseUrl();
+      const emailProps = {
+        clientName: client.businessName || client.name || 'Client',
+        statementDate: statementData?.statementDate || fmtDate(new Date()),
+        period: statementData?.period || 'Current Period',
+        totalAmountDue: statementData?.totalAmountDue || 'R 0.00',
+        personalMessage: personalMessage || undefined,
+        portalUrl: `${portalBaseUrl}`,
+        companyName: 'Playhouse Media Group', // Default fallback
+        primaryColor: '#1d4ed8',
+        websiteUrl: billingConfig?.divisionWebsite || DEFAULT_WEBSITE_URL,
+        logoUrl: billingConfig?.logoUrl || undefined,
+        bankDetails: billingConfig
+          ? {
+              bankName: billingConfig.bankName || '',
+              accountName: billingConfig.bankAccountName || '',
+              accountNumber: billingConfig.bankAccountNumber || '',
+              branchCode: billingConfig.bankBranchCode || '',
+            }
+          : undefined,
+      };
+
+      const attachments = [
+        {
+          filename: `Statement-${(client.businessName || client.name || 'Client').replace(/[^a-zA-Z0-9]/g, '_')}.pdf`,
+          content: Buffer.from(base64Pdf, 'base64'), // Note: base64Pdf carries the Statement PDF here
+        }
+      ];
+
+      const { data, error } = await emailClient({
+        to: recipientEmail,
+        cc: cc?.trim() || undefined,
+        bcc: bcc?.trim() || undefined,
+        subject,
+        react: React.createElement(StatementDeliveryEmail, emailProps),
+        replyTo: DEFAULT_REPLY_TO,
+        attachments,
+      });
+
+      if (error) {
+        return { error: `Failed to deliver statement email: ${error.message}` };
       }
 
       return { success: true, sendId: data?.id };

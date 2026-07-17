@@ -36,6 +36,8 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table';
+import { SetPageLabel } from '@/components/navigation/page-header-context';
+import { SendStatementButton } from '@/components/billing/send-statement-button';
 
 export const dynamic = 'force-dynamic';
 
@@ -217,6 +219,12 @@ export default async function StatementDetailPage({ params, searchParams }: Prop
     }
   }
 
+  const outstandingInvoicesList = (statement.outstandingInvoices ?? invoices).filter(inv => {
+    if (inv.status !== 'issued' && inv.status !== 'overdue' && inv.status !== 'partially_paid') return false;
+    const outstanding = Number(inv.total) - Number(inv.allocatedAmount ?? 0);
+    return outstanding > 0;
+  }).sort((a, b) => new Date(a.invoiceDate).getTime() - new Date(b.invoiceDate).getTime());
+
   const clientRecord = await getClientById(clientId);
   const allDivisions = await getAllDivisions();
   const { divisionName: orgName, effectiveDivisionId } = resolveDivisionBranding(
@@ -247,29 +255,33 @@ export default async function StatementDetailPage({ params, searchParams }: Prop
 
   return (
     <div className="flex flex-col gap-6">
+      <SetPageLabel value="Client Statement" />
       {/* Page header */}
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div className="flex items-center gap-4">
-          <Button variant="ghost" size="sm" asChild>
-            <Link href="/billing/statements">
-              <ChevronLeft className="size-4" />
-              Back
-            </Link>
-          </Button>
-          <Separator orientation="vertical" className="h-5" />
-          <div>
-            <h2 className="text-lg font-semibold">
+          <div className="min-w-0">
+            <h2 className="text-base sm:text-lg font-semibold truncate">
               {client.businessName ?? client.name}
             </h2>
-            <p className="text-sm text-muted-foreground">
+            <p className="text-xs sm:text-sm text-muted-foreground truncate">
               Account statement - {periodLabel}
             </p>
           </div>
         </div>
-        <div className="flex items-center gap-2 flex-wrap justify-end">
-          <PrintButton 
-            label="Print"
-            documentTitle={`Statement-${client.businessName?.replace(/\s+/g, '-') ?? client.name.replace(/\s+/g, '-')}`} 
+        <div className="flex items-center gap-2 justify-end">
+          <div className="hidden sm:block">
+            <PrintButton 
+              documentTitle={`Statement-${client.businessName?.replace(/\s+/g, '-') ?? client.name.replace(/\s+/g, '-')}`} 
+            />
+          </div>
+          <SendStatementButton 
+            clientId={clientId}
+            clientName={client.businessName ?? client.name}
+            defaultRecipientEmail={client.email ?? ''}
+            statementPdfUrl={statementPdfUrl}
+            statementDate={fmtDate(new Date())}
+            period={periodLabel}
+            totalAmountDue={formatZAR(currentBalance)}
           />
           <ExportPdfButton 
             fileName={`Statement-${client.businessName?.replace(/\s+/g, '-') ?? client.name.replace(/\s+/g, '-')}`}
@@ -279,46 +291,40 @@ export default async function StatementDetailPage({ params, searchParams }: Prop
       </div>
 
       {/* Summary strip */}
-      <div className="grid grid-cols-2 gap-4 sm:grid-cols-6">
+      <div className="grid grid-cols-2 lg:grid-cols-6 gap-3 sm:gap-4">
         {[
-          { label: 'Total Quoted', value: formatZAR(summary.totalQuoted) },
-          { label: 'Total Invoiced', value: formatZAR(summary.totalInvoiced) },
-          { label: 'Total Paid', value: formatZAR(summary.totalPaid) },
+          { label: 'Total Quoted', value: formatZAR(summary.totalQuoted), colorClass: 'text-muted-foreground' },
+          { label: 'Total Invoiced', value: formatZAR(summary.totalInvoiced), colorClass: 'text-foreground' },
+          { label: 'Total Paid', value: formatZAR(summary.totalPaid), colorClass: summary.totalPaid > 0 ? 'text-emerald-600 dark:text-emerald-400' : 'text-foreground' },
           {
             label: 'Outstanding',
             value: formatZAR(currentBalance),
-            highlight: currentBalance > 0,
+            colorClass: currentBalance > 0 ? 'text-red-500 dark:text-red-400' : 'text-foreground',
           },
           {
             label: 'Available Credit',
             value: formatZAR(creditBalance),
-            highlightGreen: creditBalance > 0,
+            colorClass: creditBalance > 0 ? 'text-emerald-600 dark:text-emerald-400' : 'text-foreground',
           },
           {
             label: 'Conversion Rate',
             value: `${Math.round(summary.conversionRate * 100)}%`,
+            colorClass: summary.conversionRate > 0 ? 'text-blue-500 dark:text-blue-400' : 'text-foreground',
           },
         ].map((s) => (
-          <Card key={s.label} size="sm">
-            <CardHeader>
-              <p className="text-xs text-muted-foreground">{s.label}</p>
-              <p
-                className={`text-lg font-semibold tabular-nums ${
-                  'highlight' in s && s.highlight ? 'text-red-500' :
-                  'highlightGreen' in s && s.highlightGreen ? 'text-emerald-600' : ''
-                }`}
-              >
-                {s.value}
-              </p>
-            </CardHeader>
+          <Card key={s.label} className="p-3 sm:p-4 flex flex-col justify-center gap-1 bg-muted/20 border border-border/50">
+            <p className="text-[10px] sm:text-xs font-medium text-muted-foreground uppercase tracking-wider truncate">{s.label}</p>
+            <p className={`text-base sm:text-lg font-bold tabular-nums truncate ${s.colorClass}`}>
+              {s.value}
+            </p>
           </Card>
         ))}
       </div>
 
       {/* Two-column layout */}
-      <div className="grid grid-cols-1 gap-6 lg:grid-cols-3 lg:items-start">
-        {/* Document preview - scrollable on small screens */}
-        <div className="lg:col-span-2 overflow-x-auto">
+      <div className="flex flex-col-reverse lg:grid lg:grid-cols-3 gap-6 lg:items-start">
+        {/* Document preview - visible on desktop only */}
+        <div className="hidden lg:block lg:col-span-2 overflow-x-auto">
           <DocumentPreview
             id="printable-area"
             type="statement"
@@ -328,7 +334,7 @@ export default async function StatementDetailPage({ params, searchParams }: Prop
 
         {/* Sidebar */}
         <div className="flex flex-col gap-4 lg:sticky lg:top-16 lg:self-start">
-          <Card size="sm">
+          <Card size="sm" className="hidden lg:block">
             <CardHeader>
               <CardTitle>Client Info</CardTitle>
             </CardHeader>
@@ -358,9 +364,7 @@ export default async function StatementDetailPage({ params, searchParams }: Prop
                 {[
                   { label: 'Current', value: formatZAR(ageing.current) },
                   { label: '1–14 Days', value: formatZAR(ageing.days1_14), highlight: ageing.days1_14 > 0 },
-                  { label: '15–30 Days', value: formatZAR(ageing.days15_30), highlight: ageing.days15_30 > 0 },
-                  { label: '31–60 Days', value: formatZAR(ageing.days31_60), highlight: ageing.days31_60 > 0 },
-                  { label: '61+ Days', value: formatZAR(ageing.days61plus), highlight: ageing.days61plus > 0 },
+                  { label: '15+ Days', value: formatZAR(ageing.days15_30 + ageing.days31_60 + ageing.days61plus), highlight: (ageing.days15_30 + ageing.days31_60 + ageing.days61plus) > 0 },
                 ].map((bucket) => (
                   <div key={bucket.label} className="flex justify-between items-center text-sm py-0.5 border-b border-border/40 last:border-b-0">
                     <span className="text-muted-foreground">{bucket.label}</span>
@@ -378,8 +382,8 @@ export default async function StatementDetailPage({ params, searchParams }: Prop
               <div className="flex flex-col gap-3">
                 
                 <div className="flex flex-col gap-1.5">
-                  <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Rolling Periods</span>
-                  <div className="grid grid-cols-2 gap-1.5">
+                  <span className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider">Rolling Periods</span>
+                  <div className="flex overflow-x-auto scrollbar-none gap-2 pb-2 -mx-4 px-4 sm:mx-0 sm:px-0 sm:pb-0 sm:flex-wrap">
                     {[
                       { value: 'current', label: 'Current' },
                       { value: 'previous', label: 'Previous' },
@@ -389,32 +393,29 @@ export default async function StatementDetailPage({ params, searchParams }: Prop
                       <Link
                         key={p.value}
                         href={`/billing/statements/${clientId}?monthPeriod=${p.value}`}
-                        className={`flex items-center justify-between rounded-md border px-2.5 py-1.5 text-xs transition-all hover:bg-muted ${
+                        className={`flex items-center gap-1.5 whitespace-nowrap rounded-full border px-3 py-1.5 text-xs transition-all ${
                           monthPeriod === p.value
-                            ? 'border-foreground bg-muted font-medium text-foreground'
-                            : 'border-border text-muted-foreground hover:text-foreground'
+                            ? 'border-primary bg-primary/10 font-semibold text-primary'
+                            : 'border-border text-muted-foreground hover:bg-muted'
                         }`}
                       >
-                        <span>{p.label}</span>
-                        {monthPeriod === p.value && (
-                          <span className="h-1.5 w-1.5 rounded-full bg-foreground" />
-                        )}
+                        {p.label}
                       </Link>
                     ))}
                   </div>
                 </div>
 
-                <div className="flex flex-col gap-1.5 mt-1">
-                  <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Fiscal Years</span>
-                  <div className="flex gap-2 flex-wrap">
+                <div className="flex flex-col gap-1.5 mt-2">
+                  <span className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider">Fiscal Years</span>
+                  <div className="flex overflow-x-auto scrollbar-none gap-2 pb-2 -mx-4 px-4 sm:mx-0 sm:px-0 sm:pb-0 sm:flex-wrap">
                     {availableYears.map((y) => (
                       <Link
                         key={y}
                         href={`/billing/statements/${clientId}?year=${y}`}
-                        className={`rounded-md border px-2.5 py-1 text-xs transition-all hover:bg-muted ${
+                        className={`whitespace-nowrap rounded-full border px-3 py-1.5 text-xs transition-all ${
                           !monthPeriod && String(y) === String(year)
-                            ? 'border-foreground bg-muted font-medium text-foreground'
-                            : 'border-border text-muted-foreground hover:text-foreground'
+                            ? 'border-primary bg-primary/10 font-semibold text-primary'
+                            : 'border-border text-muted-foreground hover:bg-muted'
                         }`}
                       >
                         FY {y}
@@ -428,42 +429,40 @@ export default async function StatementDetailPage({ params, searchParams }: Prop
         </div>
       </div>
 
-      {/* Income records section */}
-      {incomeResult.data.length > 0 && (
-        <div className="space-y-4">
-          <div>
-            <h3 className="text-lg font-semibold">Income Records</h3>
-            <p className="text-sm text-muted-foreground">
-              Payments posted to the income ledger for this client -{' '}
-              <span className="font-medium text-green-600 dark:text-green-400">
-                {formatZAR(incomeResult.sum)} total
-              </span>
-            </p>
-          </div>
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead className="pl-6">Date</TableHead>
-                <TableHead>Division</TableHead>
-                <TableHead>Description</TableHead>
-                <TableHead className="text-right pr-6">Amount</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {incomeResult.data.map((inc) => (
-                <TableRow key={inc.id}>
-                  <TableCell className="pl-6 tabular-nums text-muted-foreground">{fmtDate(inc.date)}</TableCell>
-                  <TableCell>{inc.divisionName}</TableCell>
-                  <TableCell className="text-muted-foreground">{inc.description ?? '-'}</TableCell>
-                  <TableCell className="text-right pr-6 tabular-nums font-medium text-green-600 dark:text-green-400">
-                    +{formatZAR(Number(inc.amount))}
-                  </TableCell>
-                </TableRow>
-              ))}
-            </TableBody>
-          </Table>
+      {/* Mobile Outstanding Invoices */}
+      <div className="lg:hidden space-y-4">
+        <div>
+          <h3 className="text-base sm:text-lg font-semibold">Outstanding Invoices</h3>
+          <p className="text-xs sm:text-sm text-muted-foreground">
+            Unpaid invoices making up the balance
+          </p>
         </div>
-      )}
+        
+        <div className="flex flex-col gap-3">
+          {outstandingInvoicesList.map((inv) => {
+            const outstanding = Number(inv.total) - Number(inv.allocatedAmount ?? 0);
+            return (
+            <div key={inv.id} className="bg-card border rounded-lg p-4 flex flex-col gap-2 shadow-sm">
+              <div className="flex justify-between items-start gap-2">
+                <div className="font-semibold text-sm truncate max-w-[65%]">{inv.documentNumber}</div>
+                <div className="font-bold text-sm shrink-0 text-red-500 dark:text-red-400">
+                  {formatZAR(outstanding)}
+                </div>
+              </div>
+              <div className="flex items-center justify-between text-[11px] sm:text-xs text-muted-foreground">
+                <span className="tabular-nums">Issued: {fmtDate(inv.invoiceDate)}</span>
+                <span className="tabular-nums">Due: {fmtDate(inv.dueDate ?? inv.invoiceDate)}</span>
+              </div>
+            </div>
+          )})}
+          {outstandingInvoicesList.length === 0 && (
+            <div className="text-center text-muted-foreground text-sm py-8 px-4 border rounded-lg bg-card border-dashed">
+              No outstanding invoices.
+            </div>
+          )}
+        </div>
+      </div>
+
     </div>
   );
 }
