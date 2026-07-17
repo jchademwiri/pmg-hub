@@ -213,7 +213,7 @@ export function ClientBillingWorkspace({
       } else if (activeTabFromUrl === 'statement') {
         setSelectedDocType('statement');
         setSelectedDocId(null);
-      } else if (activeTabFromUrl === 'analytics' || activeTabFromUrl === 'credits' || activeTabFromUrl === 'projects') {
+      } else if (activeTabFromUrl === 'analytics' || activeTabFromUrl === 'credits' || activeTabFromUrl === 'projects' || activeTabFromUrl === 'compliance') {
         setSelectedInvoiceIds(new Set());
         setSelectedQuoteIds(new Set());
         setIsPreviewOpen(false);
@@ -596,7 +596,7 @@ export function ClientBillingWorkspace({
     }
   };
 
-  const activeSelectionCount = activeTab === 'invoices' ? selectedInvoiceIds.size : selectedQuoteIds.size;
+  const activeSelectionCount = activeTab === 'invoices' ? selectedInvoiceIds.size : activeTab === 'quotes' ? selectedQuoteIds.size : 0;
 
   // ── Sequential Combined PDF Generator ─────────────────────────────────────
   const generateCombinedPDF = async () => {

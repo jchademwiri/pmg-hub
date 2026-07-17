@@ -1,6 +1,8 @@
+import { useState } from 'react'
 import { formatZAR } from '@/lib/format'
-import { TrendingUp, TrendingDown, Minus } from 'lucide-react'
+import { TrendingUp, TrendingDown, Minus, ChevronDown, ChevronUp } from 'lucide-react'
 import { Card, CardHeader, CardDescription, CardContent } from '@/components/ui/card'
+import { Button } from '@/components/ui/button'
 import type { PeriodSummary } from '@/lib/financial'
 
 type Delta = { current: number; previous: number } | null
@@ -153,6 +155,8 @@ type Props = {
 }
 
 export function KpiGrid({ summary, deltas, previousSummary, deltaLabel, sparklineData = [], pmgShareRate = 0.25 }: Props) {
+  const [showAll, setShowAll] = useState(false)
+
   const pmgDelta: Delta = deltas?.revenue && previousSummary
     ? { current: summary.pmgShare, previous: previousSummary.pmgShare }
     : null
@@ -164,45 +168,60 @@ export function KpiGrid({ summary, deltas, previousSummary, deltaLabel, sparklin
   const profitPoolTrends = sparklineData.map((d) => d.revenue * (1 - pmgShareRate) - d.expenses)
 
   return (
-    <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-      <KpiCard
-        label="Total Revenue"
-        value={summary.revenue}
-        delta={deltas?.revenue ?? undefined}
-        deltaLabel={deltaLabel}
-        sparklineData={revenueTrends}
-        sparklineColor="text-emerald-500"
-        textColorClass="text-emerald-600"
-      />
-      <KpiCard
-        label="Total Expenses"
-        value={summary.expenses}
-        delta={deltas?.expenses ?? undefined}
-        invertDelta
-        deltaLabel={deltaLabel}
-        sparklineData={expensesTrends}
-        sparklineColor="text-amber-500"
-        textColorClass="text-red-600"
-      />
-      <KpiCard
-        label="PMG Share (25%)"
-        value={summary.pmgShare}
-        delta={pmgDelta ?? undefined}
-        deltaLabel={deltaLabel}
-        sparklineData={pmgShareTrends}
-        sparklineColor="text-blue-500"
-        textColorClass="text-blue-600"
-      />
-      <KpiCard
-        label="Profit Pool"
-        value={summary.profitPool}
-        delta={deltas?.profit ?? undefined}
-        highlight={summary.profitPool < 0 ? 'danger' : 'success'}
-        deltaLabel={deltaLabel}
-        sparklineData={profitPoolTrends}
-        sparklineColor={summary.profitPool < 0 ? 'text-red-500' : 'text-teal-500'}
-        textColorClass={summary.profitPool < 0 ? 'text-red-600' : 'text-emerald-600'}
-      />
+    <div className="flex flex-col gap-3">
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+        <KpiCard
+          label="Total Revenue"
+          value={summary.revenue}
+          delta={deltas?.revenue ?? undefined}
+          deltaLabel={deltaLabel}
+          sparklineData={revenueTrends}
+          sparklineColor="text-emerald-500"
+          textColorClass="text-emerald-600"
+        />
+        <KpiCard
+          label="Profit Pool"
+          value={summary.profitPool}
+          delta={deltas?.profit ?? undefined}
+          highlight={summary.profitPool < 0 ? 'danger' : 'success'}
+          deltaLabel={deltaLabel}
+          sparklineData={profitPoolTrends}
+          sparklineColor={summary.profitPool < 0 ? 'text-red-500' : 'text-teal-500'}
+          textColorClass={summary.profitPool < 0 ? 'text-red-600' : 'text-emerald-600'}
+        />
+        <div className={`col-span-1 ${showAll ? 'block' : 'hidden lg:block'}`}>
+          <KpiCard
+            label="Total Expenses"
+            value={summary.expenses}
+            delta={deltas?.expenses ?? undefined}
+            invertDelta
+            deltaLabel={deltaLabel}
+            sparklineData={expensesTrends}
+            sparklineColor="text-amber-500"
+            textColorClass="text-red-600"
+          />
+        </div>
+        <div className={`col-span-1 ${showAll ? 'block' : 'hidden lg:block'}`}>
+          <KpiCard
+            label="PMG Share (25%)"
+            value={summary.pmgShare}
+            delta={pmgDelta ?? undefined}
+            deltaLabel={deltaLabel}
+            sparklineData={pmgShareTrends}
+            sparklineColor="text-blue-500"
+            textColorClass="text-blue-600"
+          />
+        </div>
+      </div>
+      <div className="lg:hidden flex justify-center">
+        <Button variant="ghost" size="sm" onClick={() => setShowAll(!showAll)} className="text-xs text-muted-foreground">
+          {showAll ? (
+            <>Hide details <ChevronUp className="ml-1 size-3" /></>
+          ) : (
+            <>Show all KPIs <ChevronDown className="ml-1 size-3" /></>
+          )}
+        </Button>
+      </div>
     </div>
   )
 }

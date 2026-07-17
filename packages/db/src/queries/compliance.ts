@@ -52,3 +52,24 @@ export async function getUpcomingExpirationsGlobal(): Promise<ComplianceDocument
     .where(lte(complianceDocuments.expiryDate, futureStr as string))
     .orderBy(asc(complianceDocuments.expiryDate));
 }
+
+export async function getUpcomingExpirationsForReminders(): Promise<ComplianceDocument[]> {
+  const future = new Date();
+  future.setDate(future.getDate() + 60);
+  const futureStr = future.toISOString().split('T')[0];
+
+  const yesterday = new Date();
+  yesterday.setDate(yesterday.getDate() - 1);
+  const yesterdayStr = yesterday.toISOString().split('T')[0];
+
+  return db
+    .select()
+    .from(complianceDocuments)
+    .where(
+      and(
+        gte(complianceDocuments.expiryDate, yesterdayStr as string),
+        lte(complianceDocuments.expiryDate, futureStr as string)
+      )
+    )
+    .orderBy(asc(complianceDocuments.expiryDate));
+}

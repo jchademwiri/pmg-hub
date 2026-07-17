@@ -44,6 +44,8 @@ function deriveLabel(pathname: string): string {
   return segment.replace(/-/g, ' ').replace(/\b\w/g, (c) => c.toUpperCase())
 }
 
+import { ChevronLeft } from 'lucide-react'
+
 export function TopNav() {
   const pathname = usePathname()
   const { total, totalVariant, customLabel } = usePageHeader()
@@ -59,20 +61,25 @@ export function TopNav() {
   }[totalVariant]
 
   return (
-    <header className="sticky top-0 z-40 h-13 flex items-center border-b border-border bg-card px-6 gap-2">
+    <header className="sticky top-0 z-40 h-13 flex w-full items-center border-b border-border bg-card px-4 md:px-6 gap-2">
       <SidebarTrigger className="shrink-0" />
       <Separator orientation="vertical" className="h-4 shrink-0" />
-      <div className="flex items-center gap-3">
+      <div className="flex flex-1 items-center gap-3">
         <Breadcrumb>
           <BreadcrumbList>
             {parent && (
               <>
-                <BreadcrumbItem>
+                <BreadcrumbItem className="hidden md:block">
                   <BreadcrumbLink href={parent.href} className="text-muted-foreground hover:text-foreground transition-colors">
                     {parent.label}
                   </BreadcrumbLink>
                 </BreadcrumbItem>
-                <BreadcrumbSeparator />
+                <BreadcrumbSeparator className="hidden md:block" />
+                <BreadcrumbItem className="md:hidden">
+                  <BreadcrumbLink href={parent.href} className="flex items-center text-muted-foreground hover:text-foreground transition-colors -ml-1">
+                    <ChevronLeft className="size-5" />
+                  </BreadcrumbLink>
+                </BreadcrumbItem>
               </>
             )}
             <BreadcrumbItem>

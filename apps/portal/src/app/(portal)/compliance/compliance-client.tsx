@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useTransition } from 'react';
+import { differenceInCalendarDays } from 'date-fns';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -89,10 +90,7 @@ export function ComplianceClient({ records }: { records: any[] }) {
     }
   };
 
-  const differenceInDays = (date1: Date, date2: Date) => {
-    const diffTime = date1.getTime() - date2.getTime();
-    return Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-  };
+
   
   const formatDate = (date: Date) => {
     return date.toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' });
@@ -110,8 +108,8 @@ export function ComplianceClient({ records }: { records: any[] }) {
       </div>
       
       {open && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80">
-          <div className="w-full max-w-[425px] bg-slate-900 border border-slate-800 rounded-lg p-6 shadow-xl relative">
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80" onClick={() => setOpen(false)}>
+          <div role="dialog" aria-modal="true" className="w-full max-w-[425px] bg-slate-900 border border-slate-800 rounded-lg p-6 shadow-xl relative" onClick={(e) => e.stopPropagation()}>
             <h2 className="text-xl font-bold text-white mb-6">
               {editId ? 'Edit Compliance Document' : 'Add Compliance Document'}
             </h2>
@@ -180,8 +178,8 @@ export function ComplianceClient({ records }: { records: any[] }) {
               </TableRow>
             )}
             {records.map((record) => {
-              const expiryDateObj = new Date(record.expiryDate);
-              const daysLeft = differenceInDays(expiryDateObj, today);
+              const expiryDateObj = new Date(`${record.expiryDate}T00:00:00`);
+              const daysLeft = differenceInCalendarDays(expiryDateObj, today);
               
               let badgeClassName = "bg-green-500/10 text-green-500 hover:bg-green-500/20 border-green-500/20";
               let statusText = `${daysLeft} days left`;

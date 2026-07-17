@@ -152,17 +152,25 @@ export function DashboardShell({
         pmgShareRate={pmgShareRate}
       />
 
-      {/* ── Row 2: Accounts Receivable Ageing Overview ── */}
+      {/* ── Row 2: Project schedule summary ── */}
+      <section className="flex flex-col gap-2">
+        <h2 className="text-xs font-medium text-muted-foreground uppercase tracking-wider">
+          Project Schedule
+        </h2>
+        <ProjectSummaryCard data={projectScheduleSummary} />
+      </section>
+
+      {/* ── Row 3: Accounts Receivable Ageing Overview ── */}
       <section>
         <AgingReportGrid data={agingReport} />
       </section>
 
-      {/* ── Row 3: Sales, receipts, and expenses budget chart ── */}
+      {/* ── Row 4: Sales, receipts, and expenses budget chart ── */}
       <div className="w-full">
         <DivisionAreaChart data={budgetChartSeries} />
       </div>
 
-      {/* ── Row 4: Division revenue with expenses + Leads ── */}
+      {/* ── Row 5: Division revenue with expenses + Leads ── */}
       <div className="flex flex-col gap-2">
         <h2 className="text-xs font-medium text-muted-foreground uppercase tracking-wider">
           Revenue & Leads
@@ -175,14 +183,6 @@ export function DashboardShell({
           <LeadsSummary leads={leads} />
         </div>
       </div>
-
-      {/* ── Row 5: Project schedule summary ── */}
-      <section className="flex flex-col gap-2">
-        <h2 className="text-xs font-medium text-muted-foreground uppercase tracking-wider">
-          Project Schedule
-        </h2>
-        <ProjectSummaryCard data={projectScheduleSummary} />
-      </section>
 
       {/* ── Row 6: Expense breakdown ── */}
       <section className="flex flex-col gap-2">

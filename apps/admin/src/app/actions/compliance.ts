@@ -17,9 +17,9 @@ const ComplianceSchema = z.object({
 });
 
 export async function addComplianceRecord(formData: FormData): Promise<{ error?: string }> {
+  const session = await getSessionOrRedirect();
+
   try {
-    const session = await getSessionOrRedirect();
-    
     const raw = Object.fromEntries(formData) as Record<string, string>;
     if (raw.customName === '') delete raw.customName;
 
@@ -48,9 +48,9 @@ export async function addComplianceRecord(formData: FormData): Promise<{ error?:
 }
 
 export async function updateComplianceRecord(id: string, formData: FormData): Promise<{ error?: string }> {
+  const session = await getSessionOrRedirect();
+
   try {
-    await getSessionOrRedirect();
-    
     const raw = Object.fromEntries(formData) as Record<string, string>;
     if (raw.customName === '') delete raw.customName;
 
@@ -63,6 +63,7 @@ export async function updateComplianceRecord(id: string, formData: FormData): Pr
 
     await dbUpdateComplianceRecord(id, {
       ...parsed,
+      customName: parsed.documentType === 'CUSTOM' ? parsed.customName : null,
     });
 
     revalidatePath(`/clients/${parsed.clientId}`);
@@ -77,9 +78,9 @@ export async function updateComplianceRecord(id: string, formData: FormData): Pr
 }
 
 export async function deleteComplianceRecord(id: string, clientId: string): Promise<{ error?: string }> {
+  await getSessionOrRedirect();
+
   try {
-    await getSessionOrRedirect();
-    
     await dbDeleteComplianceRecord(id);
 
     revalidatePath(`/clients/${clientId}`);

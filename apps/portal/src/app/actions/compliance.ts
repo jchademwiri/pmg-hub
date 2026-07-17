@@ -15,7 +15,18 @@ import { getPortalSessionOrRedirect } from '@/lib/portal-session';
 const ComplianceSchema = z.object({
   documentType: z.string().min(1),
   customName: z.string().optional(),
-  expiryDate: z.string().min(10), // YYYY-MM-DD
+  expiryDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, 'Must be YYYY-MM-DD').refine((date) => {
+    const d = new Date(date);
+    return !isNaN(d.getTime()) && date === d.toISOString().split('T')[0];
+  }, 'Invalid date'),
+}).superRefine((data, ctx) => {
+  if (data.documentType === 'CUSTOM' && !data.customName?.trim()) {
+    ctx.addIssue({
+      code: z.ZodIssueCode.custom,
+      message: 'Custom Document Name is required when Document Type is CUSTOM',
+      path: ['customName'],
+    });
+  }
 });
 
 export async function addClientComplianceRecord(formData: FormData): Promise<{ error?: string }> {

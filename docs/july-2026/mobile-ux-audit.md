@@ -6,6 +6,8 @@ This audit evaluates the **Admin App** and **Client Portal** within the PMG Hub 
 
 ## 1. Overall UX Score
 
+> **Note:** This document is **Preliminary/Superseded**. Please refer to `mobile-ux-audit-report.md` for the authoritative audit and scoring.
+
 ### Admin App
 **Score: 6/10**
 - **Mobile Usability (5/10):** Currently relies on stacking desktop tables and complex forms. High cognitive load on small screens.
@@ -52,7 +54,7 @@ This audit evaluates the **Admin App** and **Client Portal** within the PMG Hub 
 
 #### Invoices & Statements
 - **Mobile Pain Points:** Viewing a PDF invoice on a phone requires pinching and zooming.
-- **Mobile Recommendations:** Provide a "Mobile Summary" view of the invoice (Total, Due Date, Line Items in a simple list) with a secondary "Download PDF" option.
+- **Mobile Recommendations:** Provide a "Mobile Summary" view of the invoice (Total, Due Date, Line Items in a simple list) with a secondary "Download PDF" option. Implement a mobile-specific or conditionally rendered chart implementation rather than just hiding desktop charts with CSS.
 
 ---
 

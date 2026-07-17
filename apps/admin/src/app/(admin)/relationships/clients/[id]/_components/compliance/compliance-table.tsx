@@ -1,6 +1,6 @@
 'use client';
 
-import { format, differenceInDays } from 'date-fns';
+import { format, differenceInCalendarDays } from 'date-fns';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
@@ -53,8 +53,8 @@ export function ComplianceTable({ clientId, records }: { clientId: string; recor
                 </TableRow>
               )}
               {records.map((record) => {
-                const expiryDate = new Date(record.expiryDate);
-                const daysLeft = differenceInDays(expiryDate, today);
+                const expiryDate = new Date(`${record.expiryDate}T00:00:00`);
+                const daysLeft = differenceInCalendarDays(expiryDate, today);
                 
                 let badgeClassName = "bg-green-500/10 text-green-700 dark:text-green-500 border-green-500/20";
                 let statusText = `${daysLeft} days left`;
