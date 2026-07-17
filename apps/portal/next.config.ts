@@ -7,6 +7,7 @@ const nextConfig: NextConfig = {
       allowedOrigins: ["localhost:3000", "localhost:3001", "192.168.0.190:3000", "192.168.0.190:3001"],
     },
   },
+  allowedDevOrigins: ["192.168.0.190", "192.168.0.190:3000", "192.168.0.190:3001"],
 };
 
 export default nextConfig;
