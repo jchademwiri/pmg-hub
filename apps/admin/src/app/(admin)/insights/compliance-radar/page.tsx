@@ -72,7 +72,7 @@ export default async function ComplianceRadarPage() {
 
   return (
     <>
-      <SetPageLabel label="Compliance Radar" />
+      <SetPageLabel value="Compliance Radar" />
       <div className="space-y-6 max-w-6xl">
         <div className="flex justify-between items-center">
           <div>

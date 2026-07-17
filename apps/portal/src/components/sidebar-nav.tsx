@@ -10,6 +10,7 @@ import {
   Receipt,
   PiggyBank,
   User,
+  Shield,
 } from 'lucide-react';
 
 interface NavItem {
@@ -23,6 +24,7 @@ const NAV_ITEMS: NavItem[] = [
   { label: 'Invoices', href: '/invoices', icon: FileText },
   { label: 'Quotes', href: '/quotes', icon: FileSpreadsheet },
   { label: 'Statements', href: '/statements', icon: Receipt },
+  { label: 'Compliance', href: '/compliance', icon: Shield },
   { label: 'Credit Notes', href: '/credits', icon: PiggyBank },
   { label: 'My Profile', href: '/profile', icon: User },
 ];

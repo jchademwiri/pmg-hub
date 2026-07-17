@@ -53,9 +53,8 @@ export async function deleteClientComplianceRecord(id: string): Promise<{ error?
     
     // Security check: verify this document belongs to this client
     const db = getDb();
-    const doc = await db.query.complianceDocuments.findFirst({
-      where: eq(complianceDocuments.id, id)
-    });
+    const docs = await db.select().from(complianceDocuments).where(eq(complianceDocuments.id, id));
+    const doc = docs[0];
 
     if (!doc || doc.clientId !== client.id) {
       return { error: 'Unauthorized' };

@@ -1,9 +1,6 @@
 'use client';
 
 import { useState, useTransition } from 'react';
-import { useForm } from 'react-hook-form';
-import { zodResolver } from '@hookform/resolvers/zod';
-import { z } from 'zod';
 import { Button } from '@/components/ui/button';
 import {
   Dialog,
@@ -12,24 +9,10 @@ import {
   DialogTitle,
   DialogTrigger,
 } from '@/components/ui/dialog';
-import {
-  Form,
-  FormControl,
-  FormField,
-  FormItem,
-  FormLabel,
-  FormMessage,
-} from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { addComplianceRecord } from '@/app/actions/compliance';
 import { toast } from 'sonner';
-
-const ComplianceSchema = z.object({
-  documentType: z.string().min(1, 'Please select a document type'),
-  customName: z.string().optional(),
-  expiryDate: z.string().min(1, 'Please select an expiry date'),
-});
 
 const DEFAULT_TYPES = [
   'SARS Tax Clearance PIN',
@@ -44,31 +27,32 @@ export function ComplianceFormDialog({ clientId }: { clientId: string }) {
   const [open, setOpen] = useState(false);
   const [isPending, startTransition] = useTransition();
 
-  const form = useForm<z.infer<typeof ComplianceSchema>>({
-    resolver: zodResolver(ComplianceSchema),
-    defaultValues: {
-      documentType: '',
-      customName: '',
-      expiryDate: '',
-    },
-  });
+  const [documentType, setDocumentType] = useState('');
+  const [customName, setCustomName] = useState('');
+  const [expiryDate, setExpiryDate] = useState('');
 
-  const watchDocType = form.watch('documentType');
+  function onSubmit(e: React.FormEvent) {
+    e.preventDefault();
+    if (!documentType || !expiryDate) {
+      toast.error('Please select a document type and expiry date');
+      return;
+    }
 
-  function onSubmit(values: z.infer<typeof ComplianceSchema>) {
     startTransition(async () => {
       const formData = new FormData();
       formData.append('clientId', clientId);
-      formData.append('documentType', values.documentType);
-      if (values.customName) formData.append('customName', values.customName);
-      formData.append('expiryDate', values.expiryDate);
+      formData.append('documentType', documentType);
+      if (customName) formData.append('customName', customName);
+      formData.append('expiryDate', expiryDate);
 
       const result = await addComplianceRecord(formData);
       if (result.error) {
         toast.error(result.error);
       } else {
         toast.success('Compliance record added successfully');
-        form.reset();
+        setDocumentType('');
+        setCustomName('');
+        setExpiryDate('');
         setOpen(false);
       }
     });
@@ -83,63 +67,45 @@ export function ComplianceFormDialog({ clientId }: { clientId: string }) {
         <DialogHeader>
           <DialogTitle>Add Compliance Record</DialogTitle>
         </DialogHeader>
-        <Form {...form}>
-          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4 mt-4">
-            <FormField
-              control={form.control}
-              name="documentType"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Document Type</FormLabel>
-                  <Select onValueChange={field.onChange} defaultValue={field.value}>
-                    <FormControl>
-                      <SelectTrigger>
-                        <SelectValue placeholder="Select type" />
-                      </SelectTrigger>
-                    </FormControl>
-                    <SelectContent>
-                      {DEFAULT_TYPES.map((t) => (
-                        <SelectItem key={t} value={t}>{t}</SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-            {watchDocType === 'CUSTOM' && (
-              <FormField
-                control={form.control}
-                name="customName"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Custom Document Name</FormLabel>
-                    <FormControl>
-                      <Input placeholder="e.g. Industry License" {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
+        <form onSubmit={onSubmit} className="space-y-4 mt-4">
+          <div className="space-y-2">
+            <label className="text-sm font-medium">Document Type</label>
+            <Select value={documentType} onValueChange={setDocumentType}>
+              <SelectTrigger>
+                <SelectValue placeholder="Select type" />
+              </SelectTrigger>
+              <SelectContent>
+                {DEFAULT_TYPES.map((t) => (
+                  <SelectItem key={t} value={t}>{t}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+          
+          {documentType === 'CUSTOM' && (
+            <div className="space-y-2">
+              <label className="text-sm font-medium">Custom Document Name</label>
+              <Input 
+                placeholder="e.g. Industry License" 
+                value={customName}
+                onChange={(e) => setCustomName(e.target.value)}
               />
-            )}
-            <FormField
-              control={form.control}
-              name="expiryDate"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Expiry Date</FormLabel>
-                  <FormControl>
-                    <Input type="date" {...field} />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
+            </div>
+          )}
+          
+          <div className="space-y-2">
+            <label className="text-sm font-medium">Expiry Date</label>
+            <Input 
+              type="date" 
+              value={expiryDate}
+              onChange={(e) => setExpiryDate(e.target.value)}
             />
-            <Button type="submit" disabled={isPending} className="w-full">
-              {isPending ? 'Saving...' : 'Save Record'}
-            </Button>
-          </form>
-        </Form>
+          </div>
+          
+          <Button type="submit" disabled={isPending} className="w-full">
+            {isPending ? 'Saving...' : 'Save Record'}
+          </Button>
+        </form>
       </DialogContent>
     </Dialog>
   );
