@@ -4,7 +4,6 @@ import {
   getMoMChartData,
   getBudgetChartSeriesForYear,
   getExpensesByCategory,
-  getProfitPoolSeriesForYear,
   getMonthlyFinancialsSeriesForYear,
   getLedgerBalances,
 } from '@/lib/financial'
@@ -47,13 +46,12 @@ export default async function ReportsPage({ searchParams }: ReportsPageProps) {
   const currentMonthLabel = fmtMonthYear(new Date(sastYear, sastMonth, 1))
   const previousMonthLabel = fmtMonthYear(new Date(sastYear, sastMonth - 1, 1))
 
-  const [years, momData, budgetChartSeries, expensesByCategory, profitPoolSeries, monthlyFinancials, ledgerBalances, activeRates] =
+  const [years, momData, budgetChartSeries, expensesByCategory, monthlyFinancials, ledgerBalances, activeRates] =
     await Promise.all([
       getDistinctReportYears().catch((e) => { console.error('getDistinctReportYears failed:', e); return [] as number[] }),
       getMoMChartData().catch((e) => { console.error('getMoMChartData failed:', e); return [] }),
       getBudgetChartSeriesForYear(year).catch((e) => { console.error('getBudgetChartSeriesForYear failed:', e); return [] }),
       getExpensesByCategory(year).catch((e) => { console.error('getExpensesByCategory failed:', e); return [] }),
-      getProfitPoolSeriesForYear(year).catch((e) => { console.error('getProfitPoolSeriesForYear failed:', e); return [] }),
       getMonthlyFinancialsSeriesForYear(year).catch((e) => { console.error('getMonthlyFinancialsSeriesForYear failed:', e); return [] }),
       getLedgerBalances().catch((e) => { console.error('getLedgerBalances failed:', e); return undefined }),
       getActiveRates().catch((e) => { console.error('getActiveRates failed:', e); return { pmg_share: 0.25, salary: 0.35, reinvest: 0.30, reserve: 0.30, flex: 0.05 } }),
@@ -64,8 +62,7 @@ export default async function ReportsPage({ searchParams }: ReportsPageProps) {
   const hasData =
     momData.length > 0 ||
     budgetChartSeries.length > 0 ||
-    expensesByCategory.length > 0 ||
-    profitPoolSeries.length > 0
+    expensesByCategory.length > 0
 
   return (
     <div className="flex flex-col gap-6">
@@ -95,7 +92,6 @@ export default async function ReportsPage({ searchParams }: ReportsPageProps) {
             momData={momData}
             budgetChartSeries={budgetChartSeries}
             expensesByCategory={expensesByCategory}
-            profitPoolSeries={profitPoolSeries}
             monthlyFinancials={monthlyFinancials}
             currentPeriod={currentPeriod}
             previousPeriod={previousPeriod}
