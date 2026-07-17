@@ -5,6 +5,7 @@ import { revalidatePath } from 'next/cache';
 import {
   addComplianceRecord as dbAddComplianceRecord,
   deleteComplianceRecord as dbDeleteComplianceRecord,
+  updateComplianceRecord as dbUpdateComplianceRecord,
   getDb,
   complianceDocuments,
   eq
@@ -68,5 +69,39 @@ export async function deleteClientComplianceRecord(id: string): Promise<{ error?
   } catch (e) {
     console.error('deleteClientComplianceRecord failed:', e);
     return { error: 'Failed to delete compliance record. Please try again.' };
+  }
+}
+
+export async function updateClientComplianceRecord(id: string, formData: FormData): Promise<{ error?: string }> {
+  try {
+    const { client } = await getPortalSessionOrRedirect();
+    
+    // Security check: verify this document belongs to this client
+    const db = getDb();
+    const docs = await db.select().from(complianceDocuments).where(eq(complianceDocuments.id, id));
+    const doc = docs[0];
+
+    if (!doc || doc.clientId !== client.id) {
+      return { error: 'Unauthorized' };
+    }
+
+    const raw = Object.fromEntries(formData) as Record<string, string>;
+    if (raw.customName === '') delete raw.customName;
+
+    const result = ComplianceSchema.safeParse(raw);
+    if (!result.success) {
+      return { error: result.error.issues[0]?.message ?? 'Validation error' };
+    }
+
+    const parsed = result.data;
+
+    await dbUpdateComplianceRecord(id, parsed);
+
+    revalidatePath('/compliance');
+    
+    return {};
+  } catch (e) {
+    console.error('updateClientComplianceRecord failed:', e);
+    return { error: 'Failed to update compliance record. Please try again.' };
   }
 }

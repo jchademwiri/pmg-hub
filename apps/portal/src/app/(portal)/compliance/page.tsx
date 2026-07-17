@@ -12,12 +12,7 @@ export default async function CompliancePage() {
   const records = await getComplianceRecordsByClient(client.id);
 
   return (
-    <div className="space-y-6">
-      <div>
-        <h1 className="text-2xl font-bold tracking-tight text-white">Compliance Documents</h1>
-        <p className="text-muted-foreground mt-1">Manage and track the expiry dates of your important business documents.</p>
-      </div>
-
+    <div>
       <ComplianceClient records={records} />
     </div>
   );
