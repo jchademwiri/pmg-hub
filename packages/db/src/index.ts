@@ -101,3 +101,5 @@ export type {
 // ── Date utilities ────────────────────────────────────────────────────────────
 export { addDays, today } from './lib/date-utils';
 
+// ── Compliance Tracking ───────────────────────────────────────────────────────
+export * from './queries/compliance';
