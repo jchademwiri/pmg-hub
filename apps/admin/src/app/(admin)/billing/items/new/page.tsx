@@ -5,21 +5,23 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Separator } from '@/components/ui/separator';
 import { ItemFormClient } from './item-form-client';
+import { SetPageLabel } from '@/components/navigation/page-header-context';
 
 export const metadata: Metadata = { title: 'New Item' };
 
 export default function NewItemPage() {
   return (
-    <div className="flex flex-col gap-6">
+    <div className="flex flex-col gap-6 pb-32 lg:pb-0">
+      <SetPageLabel value="New Item" />
       {/* Page header */}
       <div className="flex items-center gap-4">
-        <Button variant="ghost" size="sm" asChild>
+        <Button variant="ghost" size="sm" asChild className="hidden sm:flex">
           <Link href="/billing/items">
             <ChevronLeft className="size-4" />
             Back
           </Link>
         </Button>
-        <Separator orientation="vertical" className="h-5" />
+        <Separator orientation="vertical" className="h-5 hidden sm:block" />
         <div>
           <h2 className="text-lg font-semibold">New Item</h2>
           <p className="text-sm text-muted-foreground">Create a new service item</p>

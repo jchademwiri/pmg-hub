@@ -135,8 +135,8 @@ export function ItemEditClient({ item }: ItemEditClientProps) {
 
       {error && <p className="text-sm text-destructive">{error}</p>}
 
-      <div className="flex gap-2">
-        <Button className="flex-1" onClick={handleSave} disabled={isSubmitting}>
+      <div className="fixed md:relative bottom-0 left-0 right-0 p-4 md:p-0 bg-card/95 md:bg-transparent backdrop-blur-md md:backdrop-blur-none border-t md:border-none z-50 flex gap-2 pb-[max(env(safe-area-inset-bottom),16px)] md:pb-0 shadow-[0_-4px_12px_rgba(0,0,0,0.05)] md:shadow-none dark:shadow-[0_-4px_12px_rgba(0,0,0,0.2)]">
+        <Button className="flex-1 bg-blue-600 hover:bg-blue-700 text-white" onClick={handleSave} disabled={isSubmitting}>
           {isSubmitting ? 'Saving…' : 'Save Changes'}
         </Button>
         {item.status === 'active' ? (
@@ -147,7 +147,6 @@ export function ItemEditClient({ item }: ItemEditClientProps) {
             title="Archive this item"
           >
             <Archive className="size-4" />
-            Archive
           </Button>
         ) : (
           <Button
@@ -157,13 +156,11 @@ export function ItemEditClient({ item }: ItemEditClientProps) {
             title="Restore this item"
           >
             <ArchiveRestore className="size-4" />
-            Restore
           </Button>
         )}
         <Button
-          variant="ghost"
-          size="icon"
-          className="text-muted-foreground hover:text-destructive"
+          variant="outline"
+          className="text-destructive hover:bg-destructive/10"
           onClick={handleDelete}
           disabled={isSubmitting}
           title="Delete item"

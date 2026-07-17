@@ -9,6 +9,7 @@ import { BillingStatusBadge } from '@/components/billing/billing-status-badge';
 import { getItemById } from '@pmg/db';
 import { formatZAR, fmtDate } from '@/lib/format';
 import { ItemEditClient } from './item-edit-client';
+import { SetPageLabel } from '@/components/navigation/page-header-context';
 
 export const dynamic = 'force-dynamic';
 export const metadata: Metadata = { title: 'Item' };
@@ -25,17 +26,18 @@ export default async function ItemDetailPage({ params }: Props) {
   const totalUsage = item.usageInvoices + item.usageQuotes;
 
   return (
-    <div className="flex flex-col gap-6">
+    <div className="flex flex-col gap-6 pb-32 lg:pb-0">
+      <SetPageLabel value="Item Details" />
       {/* Page header */}
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-4">
-          <Button variant="ghost" size="sm" asChild>
+          <Button variant="ghost" size="sm" asChild className="hidden sm:flex">
             <Link href="/billing/items">
               <ChevronLeft className="size-4" />
               Back
             </Link>
           </Button>
-          <Separator orientation="vertical" className="h-5" />
+          <Separator orientation="vertical" className="h-5 hidden sm:block" />
           <div>
             <div className="flex items-center gap-2">
               <h2 className="text-lg font-semibold">{item.name}</h2>
