@@ -19,6 +19,7 @@ import type { ProjectScheduleEntry, CurrentWorkload } from '@pmg/db'
 import { AlertCircle, Clock, ArrowRight } from 'lucide-react'
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert'
 import Link from 'next/link'
+import { Button } from '@/components/ui/button'
 
 type Tab = 'current' | 'previous' | 'ytd'
 
