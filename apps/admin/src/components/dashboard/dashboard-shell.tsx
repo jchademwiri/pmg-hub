@@ -161,7 +161,7 @@ export function DashboardShell({
             </AlertDescription>
           </Alert>
         )}
-        {agingReport.reduce((acc, row) => acc + (row.bucket30 + row.bucket60 + row.bucket90 + row.bucket120), 0) > 0 && (
+        {agingReport.reduce((acc, row) => acc + (row.bucket !== 'current' ? row.total : 0), 0) > 0 && (
           <Alert variant="destructive" className="bg-orange-500/10 text-orange-600 border-orange-500/20 dark:text-orange-400">
             <AlertCircle className="h-4 w-4 text-orange-600 dark:text-orange-400" />
             <AlertTitle>Outstanding Invoices</AlertTitle>
