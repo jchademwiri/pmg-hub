@@ -67,7 +67,7 @@ export function LoginForm({
 
   return (
     <div className={cn("flex flex-col gap-6", className)} {...props}>
-      <form onSubmit={handleSubmit}>
+      <div className="flex flex-col gap-4">
         <FieldGroup>
           <div className="flex flex-col items-center gap-2 text-center">
             {/* eslint-disable-next-line @next/next/no-img-element */}
@@ -85,6 +85,12 @@ export function LoginForm({
               placeholder="you@playhousemedia.co.za"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter') {
+                  e.preventDefault()
+                  handleSubmit(e)
+                }
+              }}
               required
               disabled={loading}
               autoComplete="email"
@@ -97,12 +103,17 @@ export function LoginForm({
             </Alert>
           )}
           <Field>
-            <Button type="submit" disabled={loading} className="w-full">
+            <Button 
+              type="button" 
+              onClick={handleSubmit} 
+              disabled={loading || !email} 
+              className="w-full"
+            >
               {loading ? "Sending..." : "Send sign-in link"}
             </Button>
           </Field>
         </FieldGroup>
-      </form>
+      </div>
 
     </div>
   )
