@@ -136,26 +136,20 @@ export function AgingReportClient({ clientAging, globalAging }: AgingReportClien
   return (
     <div className="space-y-6">
       {/* KPI Cards */}
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-        <Card className="shadow-none">
-          <CardContent className="p-5">
-            <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider">Total AR Outstanding</p>
-            <p className="text-2xl font-bold mt-2 tabular-nums text-foreground">{formatZAR(totalAR)}</p>
-          </CardContent>
+      <div className="grid grid-cols-2 md:grid-cols-3 gap-3 md:gap-4">
+        <Card className="shadow-none p-4 md:p-5 flex flex-col justify-center">
+          <p className="text-[10px] md:text-xs font-medium text-muted-foreground uppercase tracking-wider truncate">Total Outstanding</p>
+          <p className="text-base sm:text-lg md:text-2xl font-bold mt-1 md:mt-2 tabular-nums text-foreground truncate">{formatZAR(totalAR)}</p>
         </Card>
-        <Card className="shadow-none">
-          <CardContent className="p-5">
-            <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider">Current (Within Terms)</p>
-            <p className="text-2xl font-bold mt-2 tabular-nums text-emerald-600">{formatZAR(totalCurrent)}</p>
-          </CardContent>
+        <Card className="shadow-none p-4 md:p-5 flex flex-col justify-center">
+          <p className="text-[10px] md:text-xs font-medium text-muted-foreground uppercase tracking-wider truncate">Current</p>
+          <p className="text-base sm:text-lg md:text-2xl font-bold mt-1 md:mt-2 tabular-nums text-emerald-600 truncate">{formatZAR(totalCurrent)}</p>
         </Card>
-        <Card className="shadow-none">
-          <CardContent className="p-5">
-            <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider">Total Delinquent AR</p>
-            <p className={`text-2xl font-bold mt-2 tabular-nums ${totalOverdue > 0 ? 'text-red-600' : 'text-emerald-600'}`}>
-              {formatZAR(totalOverdue)}
-            </p>
-          </CardContent>
+        <Card className="shadow-none col-span-2 md:col-span-1 p-4 md:p-5 flex flex-col justify-center border-amber-500/20 bg-amber-500/5">
+          <p className="text-[10px] md:text-xs font-semibold text-amber-600/80 dark:text-amber-500/80 uppercase tracking-wider truncate">Total Delinquent</p>
+          <p className={`text-xl md:text-2xl font-bold mt-1 md:mt-2 tabular-nums truncate ${totalOverdue > 0 ? 'text-red-600 dark:text-red-500' : 'text-emerald-600 dark:text-emerald-500'}`}>
+            {formatZAR(totalOverdue)}
+          </p>
         </Card>
       </div>
 
@@ -248,7 +242,75 @@ export function AgingReportClient({ clientAging, globalAging }: AgingReportClien
           {sortedClients.length === 0 ? (
             <div className="px-5 py-8 text-center text-sm text-muted-foreground">No clients found.</div>
           ) : (
-            <div className="overflow-x-auto">
+            <div className="flex flex-col gap-4">
+              {/* Mobile View */}
+              <div className="flex md:hidden flex-col gap-3">
+                {sortedClients.map((client) => {
+                  const hasOverdue = client.bucket_1_14 > 0 || client.bucket_15_30 > 0 || client.bucket_31_60 > 0 || client.bucket_61_plus > 0;
+                  return (
+                    <div 
+                      key={client.clientId}
+                      className="bg-card border rounded-lg p-4 flex flex-col gap-3 cursor-pointer hover:border-primary/50 transition-colors shadow-sm"
+                      onClick={() => router.push(`/billing/aging/${client.clientId}`)}
+                    >
+                      <div className="flex justify-between items-start gap-3 border-b border-border/40 pb-3">
+                        <div className="font-semibold text-sm truncate">{client.businessName || client.clientName}</div>
+                        <div className="text-right shrink-0">
+                          <div className="font-bold text-sm">{formatZAR(client.totalOutstanding)}</div>
+                        </div>
+                      </div>
+                      
+                      <div className="grid grid-cols-2 gap-y-2 gap-x-4 text-[11px]">
+                        <div className="flex justify-between">
+                          <span className="text-muted-foreground">Current:</span>
+                          <span className="font-medium text-emerald-600">{client.current > 0 ? formatZAR(client.current) : '-'}</span>
+                        </div>
+                        <div className="flex justify-between">
+                          <span className="text-muted-foreground">1-14 Days:</span>
+                          <span className="font-medium text-amber-600">{client.bucket_1_14 > 0 ? formatZAR(client.bucket_1_14) : '-'}</span>
+                        </div>
+                        <div className="flex justify-between">
+                          <span className="text-muted-foreground">15-30 Days:</span>
+                          <span className="font-medium text-orange-600">{client.bucket_15_30 > 0 ? formatZAR(client.bucket_15_30) : '-'}</span>
+                        </div>
+                        <div className="flex justify-between">
+                          <span className="text-muted-foreground">31-60 Days:</span>
+                          <span className="font-medium text-rose-600">{client.bucket_31_60 > 0 ? formatZAR(client.bucket_31_60) : '-'}</span>
+                        </div>
+                        <div className="flex justify-between col-span-2">
+                          <span className="text-muted-foreground">61+ Days:</span>
+                          <span className="font-medium text-red-600">{client.bucket_61_plus > 0 ? formatZAR(client.bucket_61_plus) : '-'}</span>
+                        </div>
+                      </div>
+
+                      <div className="flex justify-end pt-2 border-t border-border/40 mt-1 gap-2" onClick={(e) => e.stopPropagation()}>
+                        <Button asChild size="sm" variant="outline" className="h-7 px-3 text-xs">
+                          <Link href={`/billing/statements/${client.clientId}`}>
+                            <FileText className="size-3 mr-1.5" /> Statement
+                          </Link>
+                        </Button>
+                        {hasOverdue ? (
+                          <SendOverdueRemindersButton
+                            clientId={client.clientId}
+                            trigger={
+                              <Button size="sm" variant="outline" className="h-7 px-3 text-xs text-red-600 border-red-200 hover:bg-red-50 dark:border-red-900/50 dark:hover:bg-red-900/20">
+                                <Mail className="size-3 mr-1.5" /> Reminder
+                              </Button>
+                            }
+                          />
+                        ) : (
+                          <Button size="sm" variant="outline" className="h-7 px-3 text-xs opacity-40 cursor-not-allowed" disabled>
+                            <Mail className="size-3 mr-1.5" /> Reminder
+                          </Button>
+                        )}
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+
+              {/* Desktop View */}
+              <div className="hidden md:block overflow-x-auto border rounded-lg bg-card">
               <Table>
                 <TableHeader>
                   <TableRow>
@@ -363,6 +425,7 @@ export function AgingReportClient({ clientAging, globalAging }: AgingReportClien
                   })}
                 </TableBody>
               </Table>
+            </div>
             </div>
           )}
         </div>
