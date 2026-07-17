@@ -8,10 +8,11 @@ import { Skeleton } from '@/components/ui/skeleton';
 interface Props {
   year: number;
   month?: number;
+  divisionId?: string;
   deleteAction: (id: string) => Promise<{ error?: string }>;
 }
 
-export function LazyPaymentsTable({ year, month, deleteAction }: Props) {
+export function LazyPaymentsTable({ year, month, divisionId, deleteAction }: Props) {
   const [data, setData] = useState<any[] | null>(null);
   const [closedPeriods, setClosedPeriods] = useState<string[]>([]);
   const [refreshCounter, setRefreshCounter] = useState(0);
@@ -20,8 +21,8 @@ export function LazyPaymentsTable({ year, month, deleteAction }: Props) {
     let mounted = true;
     
     const fetchPromise = month 
-      ? fetchPaymentsByMonth(year, month)
-      : fetchPaymentsByYear(year);
+      ? fetchPaymentsByMonth(year, month, divisionId)
+      : fetchPaymentsByYear(year, divisionId);
       
     fetchPromise.then((res) => {
       if (mounted) {

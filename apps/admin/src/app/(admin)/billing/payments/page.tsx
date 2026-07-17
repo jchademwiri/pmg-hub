@@ -222,7 +222,7 @@ export default async function PaymentsPage({ searchParams }: PaymentsPageProps) 
                     deleteAction={deleteClientPayment}
                   />
                 ) : (
-                  <LazyPaymentsTable year={m.year} month={m.month} deleteAction={deleteClientPayment} />
+                  <LazyPaymentsTable year={m.year} month={m.month} divisionId={divisionId} deleteAction={deleteClientPayment} />
                 )}
               </AccordionContent>
             </AccordionItem>
@@ -236,7 +236,7 @@ export default async function PaymentsPage({ searchParams }: PaymentsPageProps) 
             </span>
           </AccordionTrigger>
           <AccordionContent className="pt-2">
-            <LazyPaymentsTable year={previousYearGroup.year} deleteAction={deleteClientPayment} />
+            <LazyPaymentsTable year={previousYearGroup.year} divisionId={divisionId} deleteAction={deleteClientPayment} />
           </AccordionContent>
         </AccordionItem>
       </Accordion>
