@@ -15,7 +15,7 @@ import { divisions } from "./divisions";
 
 // ── Enums ─────────────────────────────────────────────────────────────────────
 
-export const projectScheduleStatusEnum = pgEnum("tender_schedule_status", [
+export const projectScheduleStatusEnum = pgEnum("project_schedule_status", [
   "planned",
   "in_progress",
   "completed",
@@ -23,14 +23,14 @@ export const projectScheduleStatusEnum = pgEnum("tender_schedule_status", [
   "cancelled",
   ]);
   
-export const projectSchedulePriorityEnum = pgEnum("tender_schedule_priority", [
+export const projectSchedulePriorityEnum = pgEnum("project_schedule_priority", [
   "low",
   "normal",
   "high",
   "urgent",
 ]);
 
-export const projectScheduleOutcomeEnum = pgEnum("tender_schedule_outcome", [
+export const projectScheduleOutcomeEnum = pgEnum("project_schedule_outcome", [
   "won",
   "lost",
   "pending",
@@ -45,7 +45,7 @@ export const projectTaskStatusEnum = pgEnum("project_task_status", [
 // ── Main table ────────────────────────────────────────────────────────────────
 
 export const projectScheduleEntries = pgTable(
-  "tender_schedule_entries",
+  "project_schedule_entries",
   {
     id: uuid("id").primaryKey().defaultRandom(),
     clientId: uuid("client_id")
@@ -54,7 +54,7 @@ export const projectScheduleEntries = pgTable(
     divisionId: uuid("division_id").references(() => divisions.id, {
       onDelete: "restrict",
     }),
-    projectReference: text("tender_reference").notNull(),
+    projectReference: text("project_reference").notNull(),
     description: text("description"),
     closingDate: date("closing_date").notNull(),
     effortDays: integer("effort_days").notNull(),
@@ -79,20 +79,20 @@ export const projectScheduleEntries = pgTable(
     updatedAt: timestamp("updated_at", { withTimezone: true }),
   },
   (t) => [
-    index("tender_schedule_status_idx").on(t.status),
-    index("tender_schedule_closing_date_idx").on(t.closingDate),
-    index("tender_schedule_client_id_idx").on(t.clientId),
-    index("tender_schedule_division_id_idx").on(t.divisionId),
+    index("project_schedule_status_idx").on(t.status),
+    index("project_schedule_closing_date_idx").on(t.closingDate),
+    index("project_schedule_client_id_idx").on(t.clientId),
+    index("project_schedule_division_id_idx").on(t.divisionId),
   ],
 );
 
 // ── Progress Sections table ───────────────────────────────────────────────────
 
 export const projectProgressSections = pgTable(
-  "tender_progress_sections",
+  "project_progress_sections",
   {
     id: uuid("id").primaryKey().defaultRandom(),
-    projectId: uuid("tender_id")
+    projectId: uuid("project_id")
       .notNull()
       .references(() => projectScheduleEntries.id, { onDelete: "cascade" }),
     title: text("title").notNull(),
@@ -104,14 +104,14 @@ export const projectProgressSections = pgTable(
     updatedAt: timestamp("updated_at", { withTimezone: true }),
   },
   (t) => [
-    index("tender_progress_sections_tender_id_idx").on(t.projectId),
+    index("project_progress_sections_project_id_idx").on(t.projectId),
   ],
 );
 
 // ── Progress Items table ──────────────────────────────────────────────────────
 
 export const projectProgressItems = pgTable(
-  "tender_progress_items",
+  "project_progress_items",
   {
     id: uuid("id").primaryKey().defaultRandom(),
     sectionId: uuid("section_id")
@@ -127,7 +127,7 @@ export const projectProgressItems = pgTable(
     updatedAt: timestamp("updated_at", { withTimezone: true }),
   },
   (t) => [
-    index("tender_progress_items_section_id_idx").on(t.sectionId),
+    index("project_progress_items_section_id_idx").on(t.sectionId),
   ],
 );
 
