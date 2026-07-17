@@ -1,7 +1,6 @@
 'use client';
 
 import { useState, useTransition } from 'react';
-import { differenceInCalendarDays } from 'date-fns';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -179,7 +178,11 @@ export function ComplianceClient({ records }: { records: any[] }) {
             )}
             {records.map((record) => {
               const expiryDateObj = new Date(`${record.expiryDate}T00:00:00`);
-              const daysLeft = differenceInCalendarDays(expiryDateObj, today);
+              
+              // Calculate difference in calendar days
+              const todayMidnight = new Date(today.getFullYear(), today.getMonth(), today.getDate());
+              const expiryMidnight = new Date(expiryDateObj.getFullYear(), expiryDateObj.getMonth(), expiryDateObj.getDate());
+              const daysLeft = Math.round((expiryMidnight.getTime() - todayMidnight.getTime()) / (1000 * 60 * 60 * 24));
               
               let badgeClassName = "bg-green-500/10 text-green-500 hover:bg-green-500/20 border-green-500/20";
               let statusText = `${daysLeft} days left`;
