@@ -58,7 +58,6 @@ export function ClientsTable({ clients, deleteAction, toggleActiveAction }: Clie
     }
   }
 
-  return (
   const desktopView = (
     <div className="overflow-x-auto rounded-md border border-border">
       <Table>
