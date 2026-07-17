@@ -6,7 +6,7 @@ Fully align the physical PostgreSQL database schema with the new "Project" termi
 ## 2. User Review Required
 > [!WARNING]
 > **Data Preservation:** Database migrations involving renames can sometimes result in data loss if the ORM generates `DROP TABLE` and `CREATE TABLE` commands instead of renaming. 
-> To prevent any data loss, the execution phase will include a strict manual review of the generated SQL migration file. We will ensure it uses `ALTER TABLE ... RENAME TO` and `ALTER TYPE ... RENAME TO` to preserve all existing project records before applying it to the database.
+> To prevent any data loss and avoid expensive index rebuilds, the execution phase will include a strict manual review of the generated SQL migration file. We will ensure it uses `ALTER TABLE ... RENAME TO`, `ALTER TYPE ... RENAME TO`, and `ALTER INDEX ... RENAME TO` to preserve all existing project records and indexes before applying it to the database.
 
 ## 3. Proposed Changes
 

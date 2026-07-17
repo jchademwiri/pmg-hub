@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { getUpcomingExpirationsGlobal, db, clients, eq } from '@pmg/db';
+import { getUpcomingExpirationsForReminders, db, clients, eq } from '@pmg/db';
 import { createEmailClient, ComplianceReminderEmail, DEFAULT_REPLY_TO, resolveResendApiKey, resolveDefaultFromEmail, resolveFromEmail } from '@pmg/emails';
 import React from 'react';
 import { getPortalBaseUrl } from '@/lib/portal-url';
@@ -13,13 +13,17 @@ export async function GET(req: Request) {
   const authHeader = req.headers.get('authorization');
   const CRON_SECRET = process.env.CRON_SECRET;
   
-  if (CRON_SECRET && authHeader !== `Bearer ${CRON_SECRET}`) {
+  if (!CRON_SECRET) {
+    return new NextResponse('Configuration Error: CRON_SECRET is missing', { status: 500 });
+  }
+
+  if (authHeader !== `Bearer ${CRON_SECRET}`) {
     return new NextResponse('Unauthorized', { status: 401 });
   }
 
   try {
-    // 2. Fetch all upcoming expirations
-    const allDocuments = await getUpcomingExpirationsGlobal();
+    // 2. Fetch upcoming expirations bounded by yesterday and 60 days in the future
+    const allDocuments = await getUpcomingExpirationsForReminders();
     
     // Date math setup
     const today = new Date();
@@ -107,6 +111,7 @@ export async function GET(req: Request) {
               portalUrl,
             }),
             replyTo: DEFAULT_REPLY_TO,
+            idempotencyKey: `compliance-reminder/${clientId}/${todayStr}`,
           });
           
           emailsSent++;

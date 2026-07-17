@@ -15,6 +15,11 @@ import type { TenderSummaryData } from '@/components/dashboard/project-summary-c
 import { fmtMonthYear } from '@/lib/format'
 import type { AgingRow } from '@pmg/db'
 import type { PeriodSummary, DivisionRevenue as DivisionRevenueType, LeadStatusCount, MonthlyFinancials, MonthlyBudgetChartRow } from '@/lib/financial'
+import type { ProjectScheduleEntry, CurrentWorkload } from '@pmg/db'
+import { AlertCircle, Clock, ArrowRight } from 'lucide-react'
+import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert'
+import Link from 'next/link'
+import { Button } from '@/components/ui/button'
 
 type Tab = 'current' | 'previous' | 'ytd'
 
@@ -42,6 +47,8 @@ type Props = {
   showCloseMonthButton: boolean
   projectScheduleSummary: TenderSummaryData
   pmgShareRate?: number
+  projectsAtRisk: ProjectScheduleEntry[]
+  currentWorkload: CurrentWorkload
 }
 
 const TABS: { key: Tab; label: string }[] = [
@@ -69,6 +76,8 @@ export function DashboardShell({
   currentPeriod,
   showCloseMonthButton,
   pmgShareRate,
+  projectsAtRisk,
+  currentWorkload,
 }: Props) {
   const router = useRouter()
   const pathname = usePathname()
@@ -142,6 +151,58 @@ export function DashboardShell({
         )}
       </div>
 
+      {/* ── Mobile: Urgent Alerts Strip ── */}
+      <div className="md:hidden flex flex-col gap-3">
+        {projectsAtRisk.length > 0 && (
+          <Alert variant="destructive">
+            <AlertCircle className="h-4 w-4" />
+            <AlertTitle>Action Required</AlertTitle>
+            <AlertDescription>
+              {projectsAtRisk.length} project{projectsAtRisk.length === 1 ? ' is' : 's are'} currently at risk.
+            </AlertDescription>
+          </Alert>
+        )}
+        {agingReport.reduce((acc, row) => acc + (row.bucket !== 'current' ? row.total : 0), 0) > 0 && (
+          <Alert variant="destructive" className="bg-orange-500/10 text-orange-600 border-orange-500/20 dark:text-orange-400">
+            <AlertCircle className="h-4 w-4 text-orange-600 dark:text-orange-400" />
+            <AlertTitle>Outstanding Invoices</AlertTitle>
+            <AlertDescription>
+              There are overdue invoices requiring attention.
+            </AlertDescription>
+          </Alert>
+        )}
+      </div>
+
+      {/* ── Mobile: Today's Projects ── */}
+      <div className="md:hidden flex flex-col gap-3">
+        <div className="flex items-center justify-between">
+          <h2 className="text-sm font-semibold tracking-tight">Today's Active Projects</h2>
+          <Link href="/projects" className="text-xs text-primary font-medium hover:underline flex items-center gap-1">
+            View all <ArrowRight className="h-3 w-3" />
+          </Link>
+        </div>
+        <div className="flex flex-col gap-2">
+          {currentWorkload.inProgress.slice(0, 3).map(project => (
+            <div key={project.id} className="p-3 border border-border rounded-lg bg-card shadow-sm flex flex-col gap-2">
+               <div className="flex justify-between items-start">
+                  <span className="font-medium text-sm text-foreground">{project.projectReference}</span>
+                  <Badge variant="outline" className="text-[10px] uppercase">{project.status}</Badge>
+               </div>
+               {project.closingDate && (
+                 <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                    <Clock className="h-3 w-3" /> Due {new Date(project.closingDate).toLocaleDateString()}
+                 </div>
+               )}
+            </div>
+          ))}
+          {currentWorkload.inProgress.length === 0 && (
+            <div className="text-sm text-muted-foreground p-3 border border-border border-dashed rounded-lg text-center">
+              No active projects for today.
+            </div>
+          )}
+        </div>
+      </div>
+
       {/* ── Row 1: KPI cards ── */}
       <KpiGrid
         summary={activeSummary}
@@ -152,18 +213,26 @@ export function DashboardShell({
         pmgShareRate={pmgShareRate}
       />
 
-      {/* ── Row 2: Accounts Receivable Ageing Overview ── */}
-      <section>
+      {/* ── Row 2: Project schedule summary ── */}
+      <section className="flex flex-col gap-2">
+        <h2 className="text-xs font-medium text-muted-foreground uppercase tracking-wider">
+          Project Schedule
+        </h2>
+        <ProjectSummaryCard data={projectScheduleSummary} />
+      </section>
+
+      {/* ── Row 3: Accounts Receivable Ageing Overview ── */}
+      <section className="hidden md:block">
         <AgingReportGrid data={agingReport} />
       </section>
 
-      {/* ── Row 3: Sales, receipts, and expenses budget chart ── */}
-      <div className="w-full">
+      {/* ── Row 4: Sales, receipts, and expenses budget chart ── */}
+      <div className="w-full hidden md:block">
         <DivisionAreaChart data={budgetChartSeries} />
       </div>
 
-      {/* ── Row 4: Division revenue with expenses + Leads ── */}
-      <div className="flex flex-col gap-2">
+      {/* ── Row 5: Division revenue with expenses + Leads ── */}
+      <div className="flex-col gap-2 hidden md:flex">
         <h2 className="text-xs font-medium text-muted-foreground uppercase tracking-wider">
           Revenue & Leads
         </h2>
@@ -176,16 +245,8 @@ export function DashboardShell({
         </div>
       </div>
 
-      {/* ── Row 5: Project schedule summary ── */}
-      <section className="flex flex-col gap-2">
-        <h2 className="text-xs font-medium text-muted-foreground uppercase tracking-wider">
-          Project Schedule
-        </h2>
-        <ProjectSummaryCard data={projectScheduleSummary} />
-      </section>
-
       {/* ── Row 6: Expense breakdown ── */}
-      <section className="flex flex-col gap-2">
+      <section className="flex-col gap-2 hidden md:flex">
         <h2 className="text-xs font-medium text-muted-foreground uppercase tracking-wider">
           Expense Breakdown
         </h2>
@@ -194,6 +255,15 @@ export function DashboardShell({
           totalExpenses={activeSummary.expenses}
         />
       </section>
+
+      {/* ── Mobile: View Full Analytics Link ── */}
+      <div className="md:hidden mt-2">
+        <Button variant="outline" className="w-full bg-card" asChild>
+          <Link href="/analytics" className="text-muted-foreground hover:text-foreground">
+            View full analytics (Desktop)
+          </Link>
+        </Button>
+      </div>
 
     </div>
   )

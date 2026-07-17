@@ -34,11 +34,22 @@ export default function ClientsPageClient({
           <p className="text-sm text-muted-foreground">Manage client relationships, billing details, and outstanding balances</p>
         </div>
         <div className="flex items-center gap-2">
-          <Button onClick={() => setIsAdding(true)} disabled={isAdding} size="sm">
+          <Button onClick={() => setIsAdding(true)} disabled={isAdding} size="sm" className="hidden md:flex">
             <Plus className="h-4 w-4 mr-2" /> Add Client
           </Button>
         </div>
       </div>
+
+      {/* Mobile FAB */}
+      {!isAdding && (
+        <Button 
+          onClick={() => setIsAdding(true)} 
+          size="icon" 
+          className="md:hidden fixed bottom-20 right-4 z-50 rounded-full shadow-lg h-14 w-14"
+        >
+          <Plus className="size-6" />
+        </Button>
+      )}
 
       {/* Collapsible add form */}
       {isAdding && (

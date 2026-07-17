@@ -190,7 +190,7 @@ export function PortalShell({ client, isImpersonating, children }: PortalShellPr
 
       {/* Mobile Drawer Sidebar */}
       {isMobileOpen && (
-        <div className="fixed inset-0 z-40 flex md:hidden">
+        <div className="fixed inset-0 z-50 flex md:hidden">
           {/* Backdrop */}
           <div
             className="fixed inset-0 bg-black/60 backdrop-blur-xs"
@@ -264,14 +264,6 @@ export function PortalShell({ client, isImpersonating, children }: PortalShellPr
         {/* Header */}
         <header className="flex h-16 shrink-0 items-center justify-between border-b border-white/5 bg-[#0a0f1d] px-6 sticky top-0 z-30 print:hidden">
           <div className="flex items-center gap-4">
-            <button
-              type="button"
-              onClick={() => setIsMobileOpen(true)}
-              className="p-1 text-muted-foreground hover:text-white md:hidden cursor-pointer"
-              title="Open Menu"
-            >
-              <Menu className="size-5" />
-            </button>
             <h2 className="text-sm font-semibold text-white md:text-base truncate">
               {client.businessName || client.name}
             </h2>
@@ -309,9 +301,31 @@ export function PortalShell({ client, isImpersonating, children }: PortalShellPr
         )}
 
         {/* Content Body */}
-        <main className="flex-1 p-6 md:p-8 max-w-7xl w-full mx-auto">
+        <main className="flex-1 p-6 md:p-8 max-w-7xl w-full mx-auto pb-24 md:pb-8">
           {children}
         </main>
+      </div>
+
+      {/* Mobile Bottom Navigation */}
+      <div className="md:hidden fixed bottom-0 left-0 right-0 z-40 border-t border-white/5 bg-[#0a0f1d]/95 backdrop-blur-md pb-safe">
+        <div className="flex h-16 items-center justify-around px-2">
+          <Link href="/dashboard" className={`flex flex-col items-center justify-center w-full h-full space-y-1 ${pathname === '/dashboard' ? 'text-blue-400' : 'text-muted-foreground hover:text-white'}`}>
+            <LayoutDashboard className="size-5" />
+            <span className="text-[10px] font-medium">Dashboard</span>
+          </Link>
+          <Link href="/projects" className={`flex flex-col items-center justify-center w-full h-full space-y-1 ${pathname.startsWith('/projects') ? 'text-blue-400' : 'text-muted-foreground hover:text-white'}`}>
+            <CalendarDays className="size-5" />
+            <span className="text-[10px] font-medium">Projects</span>
+          </Link>
+          <Link href="/invoices" className={`flex flex-col items-center justify-center w-full h-full space-y-1 ${pathname.startsWith('/invoices') ? 'text-blue-400' : 'text-muted-foreground hover:text-white'}`}>
+            <FileText className="size-5" />
+            <span className="text-[10px] font-medium">Invoices</span>
+          </Link>
+          <button type="button" onClick={() => setIsMobileOpen(true)} className={`flex flex-col items-center justify-center w-full h-full space-y-1 cursor-pointer touch-manipulation ${isMobileOpen ? 'text-blue-400' : 'text-muted-foreground hover:text-white'}`}>
+            <Menu className="size-5" />
+            <span className="text-[10px] font-medium">More</span>
+          </button>
+        </div>
       </div>
     </div>
   );

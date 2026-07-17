@@ -8,6 +8,7 @@ import type { ClientWithIncomeCount } from '@pmg/db'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { ConfirmDialog } from '@/components/ui/confirm-dialog'
+import { DataList } from '@/components/ui/data-list'
 import { sendPortalInvitation } from '@/app/actions/clients'
 import {
   Table,
@@ -57,19 +58,8 @@ export function ClientsTable({ clients, deleteAction, toggleActiveAction }: Clie
     }
   }
 
-  return (
-    <>
-      <ConfirmDialog
-        open={!!deleteId}
-        onOpenChange={(open) => {
-          if (!open) setDeleteId(null)
-        }}
-        onConfirm={handleDelete}
-        title="Delete client?"
-        description="This action cannot be undone."
-        confirmText="Delete"
-        variant="destructive"
-      />
+  const desktopView = (
+    <div className="overflow-x-auto rounded-md border border-border">
       <Table>
         <TableHeader>
           <TableRow>
@@ -159,6 +149,113 @@ export function ClientsTable({ clients, deleteAction, toggleActiveAction }: Clie
           ))}
         </TableBody>
       </Table>
+    </div>
+  )
+
+  const mobileView = (
+    <div className="flex flex-col gap-3">
+      {clients.map((client) => (
+        <div
+          key={client.id}
+          className={`relative flex flex-col p-4 border border-border rounded-lg bg-card shadow-sm transition-shadow ${!client.isActive ? 'opacity-60' : ''}`}
+        >
+          <div
+            className="absolute inset-0 cursor-pointer rounded-lg focus:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+            onClick={() => router.push('/relationships/clients/' + client.id)}
+            role="button"
+            tabIndex={0}
+            aria-label={`View client ${client.name}`}
+          />
+          <div className="flex justify-between items-start mb-3 relative z-10">
+            <div>
+              <p className="font-semibold text-foreground leading-tight">{client.name}</p>
+              {client.businessName && <p className="text-sm text-muted-foreground">{client.businessName}</p>}
+            </div>
+            <Badge
+              variant="secondary"
+              className={`border font-medium shadow-none ${
+                client.isActive
+                  ? 'bg-emerald-500/15 text-emerald-700 dark:text-emerald-400 border-emerald-500/30'
+                  : 'bg-muted text-muted-foreground border-border'
+              }`}
+            >
+              {client.isActive ? 'Active' : 'Disabled'}
+            </Badge>
+          </div>
+
+          <div className="flex flex-col gap-1 text-sm text-muted-foreground mb-3 relative z-10">
+            {client.email && <div className="flex items-center gap-2"><Mail className="size-3" /> {client.email}</div>}
+            {client.phone && <div className="flex items-center gap-2">Phone: {client.phone}</div>}
+          </div>
+
+          <div className="flex justify-between items-center text-sm border-t border-border/50 pt-3 relative z-10">
+            <PortalStatusCell client={client} />
+            
+            <div className="flex items-center gap-1">
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button
+                    variant="ghost"
+                    size="touch"
+                    className="h-8 w-8 min-h-0 min-w-0 p-0"
+                    disabled={pendingToggleId === client.id}
+                    onClick={() => handleToggleActive(client.id, client.isActive)}
+                  >
+                    {client.isActive ? (
+                      <PowerOff data-icon className="text-muted-foreground size-4" />
+                    ) : (
+                      <Power data-icon className="text-green-500 size-4" />
+                    )}
+                    <span className="sr-only">{client.isActive ? 'Disable' : 'Activate'}</span>
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent>
+                  {client.isActive ? 'Disable client' : 'Activate client'}
+                </TooltipContent>
+              </Tooltip>
+
+              {client.incomeCount === 0 ? (
+                <Button
+                  variant="ghost"
+                  size="touch"
+                  className="h-8 w-8 min-h-0 min-w-0 p-0"
+                  onClick={() => setDeleteId(client.id)}
+                >
+                  <Trash2 data-icon className="size-4" />
+                  <span className="sr-only">Delete</span>
+                </Button>
+              ) : (
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Button variant="ghost" size="touch" className="h-8 w-8 min-h-0 min-w-0 p-0" disabled>
+                      <Trash2 data-icon className="text-muted-foreground/30 size-4" />
+                      <span className="sr-only">Delete (disabled - has income records)</span>
+                    </Button>
+                  </TooltipTrigger>
+                  <TooltipContent>Cannot delete a client with income records</TooltipContent>
+                </Tooltip>
+              )}
+            </div>
+          </div>
+        </div>
+      ))}
+    </div>
+  )
+
+  return (
+    <>
+      <ConfirmDialog
+        open={!!deleteId}
+        onOpenChange={(open) => {
+          if (!open) setDeleteId(null)
+        }}
+        onConfirm={handleDelete}
+        title="Delete client?"
+        description="This action cannot be undone."
+        confirmText="Delete"
+        variant="destructive"
+      />
+      <DataList desktop={desktopView} mobile={mobileView} />
     </>
   )
 }

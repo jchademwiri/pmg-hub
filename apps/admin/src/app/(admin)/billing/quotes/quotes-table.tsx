@@ -22,6 +22,7 @@ import {
   TableRow,
 } from '@/components/ui/table';
 import { EmptyState } from '@/components/ui/empty-state';
+import { DataList } from '@/components/ui/data-list';
 import { confirm } from '@/components/ui/confirm-dialog';
 import { BillingStatusBadge } from '@/components/billing/billing-status-badge';
 import { formatZAR, fmtDate } from '@/lib/format';
@@ -102,8 +103,8 @@ export function QuotesTable({
     });
   }
 
-  return (
-    <div className="flex flex-col gap-4">
+  const desktopView = (
+    <div className="overflow-x-auto rounded-md border border-border">
       <Table>
         <TableHeader>
           <TableRow>
@@ -218,5 +219,89 @@ export function QuotesTable({
         </TableBody>
       </Table>
     </div>
+  );
+
+  const mobileView = (
+    <>
+      {entries.length === 0 ? (
+        <div className="text-center p-4 text-muted-foreground text-sm border border-border rounded-md">
+          No quotations match the current filters.
+        </div>
+      ) : (
+        entries.map((quote) => (
+          <div key={quote.id} className="relative flex flex-col p-4 border border-border rounded-lg bg-card shadow-sm transition-shadow">
+            <Link
+              href={`/billing/quotes/${quote.id}`}
+              className="absolute inset-0 focus:outline-none focus-visible:ring-2 focus-visible:ring-ring rounded-lg"
+              aria-label={`View quote ${quote.documentNumber}`}
+            />
+            <div className="flex justify-between items-start mb-2">
+              <div>
+                <p className="font-semibold text-foreground">{quote.documentNumber}</p>
+                <p className="text-sm text-muted-foreground">{quote.clientName ?? 'No client'}</p>
+              </div>
+              <div className="flex flex-col items-end gap-1">
+                <span className={`font-bold tabular-nums ${QUOTE_STATUS_COLORS[quote.status] || ''}`}>
+                  {formatZAR(Number(quote.total))}
+                </span>
+                <BillingStatusBadge status={quote.status} />
+              </div>
+            </div>
+            <div className="flex justify-between items-center text-xs text-muted-foreground mt-2 border-t border-border/50 pt-2">
+              <span>Expires {fmtDate(quote.expiryDate)}</span>
+              <div className="relative z-10">
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <Button variant="ghost" size="touch" className="h-8 w-8 min-h-0 min-w-0 p-0" title="Actions">
+                      <MoreHorizontal className="size-4" />
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="end">
+                    <DropdownMenuItem asChild>
+                      <Link href={`/billing/quotes/${quote.id}`}>View</Link>
+                    </DropdownMenuItem>
+                    {quote.status === 'draft' && (
+                      <DropdownMenuItem onClick={() => handleStatusChange(quote.id, 'sent')}>
+                        Mark Sent
+                      </DropdownMenuItem>
+                    )}
+                    {quote.status === 'sent' && (
+                      <>
+                        <DropdownMenuItem onClick={() => handleStatusChange(quote.id, 'accepted')}>
+                          Mark Accepted
+                        </DropdownMenuItem>
+                        <DropdownMenuItem onClick={() => handleStatusChange(quote.id, 'declined')}>
+                          Mark Declined
+                        </DropdownMenuItem>
+                      </>
+                    )}
+                    <DropdownMenuSeparator />
+                    <DropdownMenuItem onClick={() => handleDuplicate(quote.id)}>
+                      Duplicate
+                    </DropdownMenuItem>
+                    {(quote.status === 'draft' || quote.status === 'sent') && (
+                      <>
+                        <DropdownMenuSeparator />
+                        <DropdownMenuItem
+                          className="text-destructive focus:text-destructive"
+                          onClick={() => handleDelete(quote.id, quote.documentNumber)}
+                          disabled={quote.status !== 'draft'}
+                        >
+                          Delete
+                        </DropdownMenuItem>
+                      </>
+                    )}
+                  </DropdownMenuContent>
+                </DropdownMenu>
+              </div>
+            </div>
+          </div>
+        ))
+      )}
+    </>
+  );
+
+  return (
+    <DataList desktop={desktopView} mobile={mobileView} />
   );
 }

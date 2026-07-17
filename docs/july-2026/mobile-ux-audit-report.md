@@ -16,12 +16,14 @@
 6. [Navigation Audit](#6-navigation-audit)
 7. [Information Hierarchy](#7-information-hierarchy)
 8. [Desktop vs Mobile Strategy](#8-desktop-vs-mobile-strategy)
-9. [Quick Wins](#9-quick-wins)
+9. [Quick Wins](#9-quick-wins-ranked-by-impact)
 10. [Long-Term Improvements](#10-long-term-improvements)
 
 ---
 
 ## 1. Overall UX Scores
+
+> **Note:** This document is the **Authoritative** mobile UX audit report. The earlier `mobile-ux-audit.md` document is considered preliminary/superseded.
 
 ### Admin App
 
@@ -262,10 +264,10 @@ Not deeply audited. Likely used in project views. Should collapse to linear list
 
 **Target:** Optimized for productivity & triage — staff can understand their day in 5 seconds.
 
-```
+```text
 ┌──────────────────────────────┐
 │ 👋 Good morning, [Name]      │  ← Quick greeting
-│ Tue, 17 July 2026            │
+│ Fri, 17 July 2026            │
 ├──────────────────────────────┤
 │ 🚨  2 Tenders Overdue        │  ← Alert ribbon (red)
 │ ⚠️  1 Client at Risk         │     (high-priority only)
@@ -312,7 +314,7 @@ Not deeply audited. Likely used in project views. Should collapse to linear list
 
 **Target:** Optimized for clarity & confidence — clients understand status in 5 seconds.
 
-```
+```text
 ┌──────────────────────────────┐
 │ PMG Client Portal           │  ← Header with account name
 │ [Active Account] badge       │
@@ -378,7 +380,7 @@ Not deeply audited. Likely used in project views. Should collapse to linear list
 | Close Month wizard (Dialog) | Multi-step dialog hard on mobile | Convert to bottom sheet or entire page |
 
 **Proposed Bottom Navigation Bar (Admin Mobile):**
-```
+```text
 [Dashboard] [Projects] [Billing] [Tasks] [Menu ▸]
 ```
 - **Dashboard**: The Daily Briefing
@@ -396,7 +398,7 @@ Not deeply audited. Likely used in project views. Should collapse to linear list
 | Drawer has sign-out at bottom | Requires scrolling | Move "More" to bottom nav overflow |
 
 **Proposed Bottom Navigation Bar (Portal Mobile):**
-```
+```text
 [Home] [Projects] [Billing] [Profile]
 ```
 - **Home**: Dashboard (The Command Center)
@@ -460,8 +462,8 @@ Not deeply audited. Likely used in project views. Should collapse to linear list
 ### Implementation Strategy
 
 1. **Detect mobile**: Use existing `useIsMobile()` hook (admin) and matchMedia queries
-2. **Conditionally render**: Wrap complex components in `<div className="hidden md:block">` 
-3. **Server-side aware**: Use responsive CSS rather than client-side hooks where possible
+2. **Layout Simplification**: Wrap simple UI elements in `<div className="hidden md:block">` to simplify layout.
+3. **Performance-Sensitive Content**: For heavy charts or data tables, use conditional rendering in React or server-side rendering rather than just hiding them with CSS.
 4. **Mobile-first components**: Create mobile-specific variants of key components (e.g., `MobileDashboard.tsx`, `MobileInvoiceCard.tsx`)
 5. **No feature parity**: Don't try to show everything on mobile. Accept that some features are desktop-only
 

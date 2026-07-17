@@ -3,8 +3,9 @@
 import * as React from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
-import { Search, X, Filter, Archive, Trash2, CheckSquare, ChevronDown } from 'lucide-react';
+import { Search, X, Filter, Archive, Trash2, CheckSquare, ChevronDown, MoreHorizontal } from 'lucide-react';
 import { toast } from 'sonner';
+import { DataList } from '@/components/ui/data-list';
 import type { ProjectScheduleEntry } from '@pmg/db';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -409,220 +410,314 @@ export function ProjectListClient({ entries, clients, divisions, progressMap = {
               )}
             </div>
           ) : (
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead className="w-10">
-                    <Checkbox
-                      checked={allSelected}
-                      onCheckedChange={toggleSelectAll}
-                      aria-label="Select all"
-                    />
-                  </TableHead>
-                  {/* Client + Reference merged into one column */}
-                  <TableHead>Client</TableHead>
-                  <TableHead>Status</TableHead>
-                  <TableHead>Progress</TableHead>
-                  <TableHead className="hidden sm:table-cell">Priority</TableHead>
-                  {/* Start + Target merged into one "Window" column */}
-                  <TableHead className="hidden md:table-cell">Window</TableHead>
-                  <TableHead>Closes</TableHead>
-                  <TableHead className="hidden sm:table-cell">Risk</TableHead>
-                  <TableHead className="hidden sm:table-cell">Effort</TableHead>
-                  {/* Actions: icon kebab menu — no wide text button */}
-                  <TableHead className="w-10" />
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {filtered.map((entry) => {
-                  const client = clientMap.get(entry.clientId);
-                  const isSelected = selectedIds.has(entry.id);
-                  const transitions = getNextStatuses(entry.status);
-                  return (
-                    <TableRow
-                      key={entry.id}
-                      className={`${entry.status === 'cancelled' ? 'opacity-60' : ''} ${isSelected ? 'bg-muted/30' : ''} cursor-pointer hover:bg-muted/20 transition-colors`}
-                      onClick={(e) => {
-                        // Prevent navigation if clicking interactive elements
-                        if (
-                          (e.target as HTMLElement).closest(
-                            'button, input[type="checkbox"], [role="menuitem"], a, [data-slot="checkbox"]'
-                          )
-                        ) {
-                          return;
-                        }
-                        router.push(`/projects/${entry.id}`);
-                      }}
-                    >
-                      <TableCell className="w-10">
-                        <Checkbox
-                          checked={isSelected}
-                          onCheckedChange={() => toggleSelect(entry.id)}
-                          aria-label={`Select ${entry.projectReference}`}
-                        />
-                      </TableCell>
+            <DataList
+              desktop={
+                <div className="overflow-x-auto rounded-md border border-border">
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead className="w-10">
+                          <Checkbox
+                            checked={allSelected}
+                            onCheckedChange={toggleSelectAll}
+                            aria-label="Select all"
+                          />
+                        </TableHead>
+                        <TableHead>Client</TableHead>
+                        <TableHead>Status</TableHead>
+                        <TableHead>Progress</TableHead>
+                        <TableHead className="hidden sm:table-cell">Priority</TableHead>
+                        <TableHead className="hidden md:table-cell">Window</TableHead>
+                        <TableHead>Closes</TableHead>
+                        <TableHead className="hidden sm:table-cell">Risk</TableHead>
+                        <TableHead className="hidden sm:table-cell">Effort</TableHead>
+                        <TableHead className="w-10" />
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {filtered.map((entry) => {
+                        const client = clientMap.get(entry.clientId);
+                        const isSelected = selectedIds.has(entry.id);
+                        const transitions = getNextStatuses(entry.status);
+                        return (
+                          <TableRow
+                            key={entry.id}
+                            className={`${entry.status === 'cancelled' ? 'opacity-60' : ''} ${isSelected ? 'bg-muted/30' : ''} cursor-pointer hover:bg-muted/20 transition-colors`}
+                            onClick={(e) => {
+                              if (
+                                (e.target as HTMLElement).closest(
+                                  'button, input[type="checkbox"], [role="menuitem"], a, [data-slot="checkbox"]'
+                                )
+                              ) {
+                                return;
+                              }
+                              router.push(`/projects/${entry.id}`);
+                            }}
+                          >
+                            <TableCell className="w-10">
+                              <Checkbox
+                                checked={isSelected}
+                                onCheckedChange={() => toggleSelect(entry.id)}
+                                aria-label={`Select ${entry.projectReference}`}
+                              />
+                            </TableCell>
 
-                      {/* Client name + reference stacked */}
-                      <TableCell>
-                        <p className="text-xs font-medium leading-tight">{client?.name ?? '—'}</p>
-                        <p className="text-[11px] text-muted-foreground leading-tight mt-0.5">
-                          {entry.projectReference}
-                        </p>
-                      </TableCell>
+                            <TableCell>
+                              <p className="text-xs font-medium leading-tight">{client?.name ?? '—'}</p>
+                              <p className="text-[11px] text-muted-foreground leading-tight mt-0.5">
+                                {entry.projectReference}
+                              </p>
+                            </TableCell>
 
-                      {/* Status — clickable dropdown */}
-                      <TableCell>
-                        {transitions.length === 0 ? (
-                          <ProjectStatusBadge status={entry.status} />
-                        ) : (
-                          <DropdownMenu>
-                            <DropdownMenuTrigger asChild>
-                              <Button
-                                variant="ghost"
-                                size="xs"
-                                className="h-auto p-1 font-normal hover:bg-muted/50 gap-1"
-                                disabled={isPending === entry.id}
-                              >
+                            <TableCell>
+                              {transitions.length === 0 ? (
                                 <ProjectStatusBadge status={entry.status} />
-                                <ChevronDown className="size-3 text-muted-foreground" />
-                              </Button>
-                            </DropdownMenuTrigger>
-                            <DropdownMenuContent align="start">
-                              {transitions.map((opt) => (
-                                <DropdownMenuItem
-                                  key={opt.value}
-                                  onClick={() => handleStatusTransition(entry.id, opt.value)}
-                                  className="text-xs"
-                                >
-                                  {opt.label}
-                                </DropdownMenuItem>
-                              ))}
-                            </DropdownMenuContent>
-                          </DropdownMenu>
-                        )}
-                      </TableCell>
+                              ) : (
+                                <DropdownMenu>
+                                  <DropdownMenuTrigger asChild>
+                                    <Button
+                                      variant="ghost"
+                                      size="xs"
+                                      className="h-auto p-1 font-normal hover:bg-muted/50 gap-1"
+                                      disabled={isPending === entry.id}
+                                    >
+                                      <ProjectStatusBadge status={entry.status} />
+                                      <ChevronDown className="size-3 text-muted-foreground" />
+                                    </Button>
+                                  </DropdownMenuTrigger>
+                                  <DropdownMenuContent align="start">
+                                    {transitions.map((opt) => (
+                                      <DropdownMenuItem
+                                        key={opt.value}
+                                        onClick={() => handleStatusTransition(entry.id, opt.value)}
+                                        className="text-xs"
+                                      >
+                                        {opt.label}
+                                      </DropdownMenuItem>
+                                    ))}
+                                  </DropdownMenuContent>
+                                </DropdownMenu>
+                              )}
+                            </TableCell>
 
-                      {/* Progress bar */}
-                      <TableCell>
-                        {(() => {
-                          const progress = progressMap[entry.id] || { total: 0, completed: 0 };
-                          const percent = progress.total > 0 ? Math.round((progress.completed / progress.total) * 100) : 0;
-                          if (progress.total === 0) {
-                            return <span className="text-[10px] text-muted-foreground">—</span>;
-                          }
-                          return (
-                            <div className="flex flex-col gap-1 w-24">
-                              <span className="text-[10px] font-medium text-muted-foreground leading-none">
-                                {percent}% ({progress.completed}/{progress.total})
-                              </span>
-                              <div className="w-full bg-muted rounded-full h-1 overflow-hidden">
-                                <div
-                                  className="bg-emerald-500 h-full rounded-full"
-                                  style={{ width: `${percent}%` }}
-                                />
-                              </div>
+                            <TableCell>
+                              {(() => {
+                                const progress = progressMap[entry.id] || { total: 0, completed: 0 };
+                                const percent = progress.total > 0 ? Math.round((progress.completed / progress.total) * 100) : 0;
+                                if (progress.total === 0) {
+                                  return <span className="text-[10px] text-muted-foreground">—</span>;
+                                }
+                                return (
+                                  <div className="flex flex-col gap-1 w-24">
+                                    <span className="text-[10px] font-medium text-muted-foreground leading-none">
+                                      {percent}% ({progress.completed}/{progress.total})
+                                    </span>
+                                    <div className="w-full bg-muted rounded-full h-1 overflow-hidden">
+                                      <div
+                                        className="bg-emerald-500 h-full rounded-full"
+                                        style={{ width: `${percent}%` }}
+                                      />
+                                    </div>
+                                  </div>
+                                );
+                              })()}
+                            </TableCell>
+
+                            <TableCell className="hidden sm:table-cell">
+                              <Badge
+                                variant={entry.priority === 'urgent' ? 'destructive' : 'secondary'}
+                                className="text-xs capitalize"
+                              >
+                                {entry.priority}
+                              </Badge>
+                            </TableCell>
+
+                            <TableCell className="hidden md:table-cell text-xs text-muted-foreground">
+                              {new Date(entry.startDate).toLocaleDateString('en-GB', {
+                                day: 'numeric',
+                                month: 'short',
+                              })}
+                              {' → '}
+                              {new Date(entry.targetCompletionDate).toLocaleDateString('en-GB', {
+                                day: 'numeric',
+                                month: 'short',
+                              })}
+                            </TableCell>
+
+                            <TableCell className="text-xs">
+                              {new Date(entry.closingDate).toLocaleDateString('en-GB', {
+                                day: 'numeric',
+                                month: 'short',
+                                year: '2-digit',
+                              })}
+                            </TableCell>
+
+                            <TableCell className="hidden sm:table-cell">
+                              <ProjectRiskBadge tender={entry} />
+                            </TableCell>
+
+                            <TableCell className="hidden sm:table-cell text-xs">
+                              {entry.effortDays}d
+                            </TableCell>
+
+                            <TableCell>
+                              <DropdownMenu>
+                                <DropdownMenuTrigger asChild>
+                                  <Button
+                                    variant="ghost"
+                                    size="icon"
+                                    className="size-7"
+                                    aria-label="Row actions"
+                                  >
+                                    <svg
+                                      viewBox="0 0 24 24"
+                                      fill="currentColor"
+                                      className="size-3.5 text-muted-foreground"
+                                    >
+                                      <circle cx="12" cy="5" r="1.5" />
+                                      <circle cx="12" cy="12" r="1.5" />
+                                      <circle cx="12" cy="19" r="1.5" />
+                                    </svg>
+                                  </Button>
+                                </DropdownMenuTrigger>
+                                <DropdownMenuContent align="end">
+                                  {transitions.map((opt) => (
+                                    <DropdownMenuItem
+                                      key={opt.value}
+                                      onClick={() => handleStatusTransition(entry.id, opt.value)}
+                                      className="text-xs"
+                                    >
+                                      {opt.label}
+                                    </DropdownMenuItem>
+                                  ))}
+                                  <DropdownMenuItem
+                                    className="text-xs"
+                                    asChild
+                                  >
+                                    <Link href={`/projects/${entry.id}/edit`}>
+                                      Edit project
+                                    </Link>
+                                  </DropdownMenuItem>
+                                  {entry.status !== 'submitted' && entry.status !== 'cancelled' && (
+                                    <DropdownMenuItem
+                                      className="text-xs text-destructive focus:text-destructive"
+                                      onClick={() => setCancelId(entry.id)}
+                                    >
+                                      Cancel project
+                                    </DropdownMenuItem>
+                                  )}
+                                </DropdownMenuContent>
+                              </DropdownMenu>
+                            </TableCell>
+                          </TableRow>
+                        );
+                      })}
+                    </TableBody>
+                  </Table>
+                </div>
+              }
+              mobile={
+                <div className="flex flex-col gap-3">
+                  {filtered.map((entry) => {
+                    const client = clientMap.get(entry.clientId);
+                    const isSelected = selectedIds.has(entry.id);
+                    const transitions = getNextStatuses(entry.status);
+                    
+                    const progress = progressMap[entry.id] || { total: 0, completed: 0 };
+                    const percent = progress.total > 0 ? Math.round((progress.completed / progress.total) * 100) : 0;
+
+                    return (
+                      <div 
+                        key={entry.id} 
+                        className={`relative flex flex-col p-4 border border-border rounded-lg bg-card shadow-sm transition-shadow ${entry.status === 'cancelled' ? 'opacity-60' : ''} ${isSelected ? 'border-primary bg-primary/5' : ''}`}
+                      >
+                        <Link
+                          href={`/projects/${entry.id}`}
+                          className="absolute inset-0 focus:outline-none focus-visible:ring-2 focus-visible:ring-ring rounded-lg"
+                          aria-label={`View project ${entry.projectReference}`}
+                        />
+                        
+                        <div className="flex justify-between items-start mb-2 relative z-10">
+                          <div className="flex items-center gap-3">
+                            <Checkbox
+                              checked={isSelected}
+                              onCheckedChange={() => toggleSelect(entry.id)}
+                              aria-label={`Select ${entry.projectReference}`}
+                              className="mt-0.5"
+                            />
+                            <div>
+                              <p className="font-semibold text-foreground text-sm leading-tight">{client?.name ?? '—'}</p>
+                              <p className="text-xs text-muted-foreground">{entry.projectReference}</p>
                             </div>
-                          );
-                        })()}
-                      </TableCell>
-
-                      {/* Priority */}
-                      <TableCell className="hidden sm:table-cell">
-                        <Badge
-                          variant={entry.priority === 'urgent' ? 'destructive' : 'secondary'}
-                          className="text-xs capitalize"
-                        >
-                          {entry.priority}
-                        </Badge>
-                      </TableCell>
-
-                      {/* Window: start → target in one cell */}
-                      <TableCell className="hidden md:table-cell text-xs text-muted-foreground">
-                        {new Date(entry.startDate).toLocaleDateString('en-GB', {
-                          day: 'numeric',
-                          month: 'short',
-                        })}
-                        {' → '}
-                        {new Date(entry.targetCompletionDate).toLocaleDateString('en-GB', {
-                          day: 'numeric',
-                          month: 'short',
-                        })}
-                      </TableCell>
-
-                      {/* Closes */}
-                      <TableCell className="text-xs">
-                        {new Date(entry.closingDate).toLocaleDateString('en-GB', {
-                          day: 'numeric',
-                          month: 'short',
-                          year: '2-digit',
-                        })}
-                      </TableCell>
-
-                      {/* Risk */}
-                      <TableCell className="hidden sm:table-cell">
-                        <ProjectRiskBadge tender={entry} />
-                      </TableCell>
-
-                      {/* Effort */}
-                      <TableCell className="hidden sm:table-cell text-xs">
-                        {entry.effortDays}d
-                      </TableCell>
-
-                      {/* Actions: kebab menu */}
-                      <TableCell>
-                        <DropdownMenu>
-                          <DropdownMenuTrigger asChild>
-                            <Button
-                              variant="ghost"
-                              size="icon"
-                              className="size-7"
-                              aria-label="Row actions"
-                            >
-                              <svg
-                                viewBox="0 0 24 24"
-                                fill="currentColor"
-                                className="size-3.5 text-muted-foreground"
-                              >
-                                <circle cx="12" cy="5" r="1.5" />
-                                <circle cx="12" cy="12" r="1.5" />
-                                <circle cx="12" cy="19" r="1.5" />
-                              </svg>
-                            </Button>
-                          </DropdownMenuTrigger>
-                          <DropdownMenuContent align="end">
-                            {transitions.map((opt) => (
-                              <DropdownMenuItem
-                                key={opt.value}
-                                onClick={() => handleStatusTransition(entry.id, opt.value)}
-                                className="text-xs"
-                              >
-                                {opt.label}
-                              </DropdownMenuItem>
-                            ))}
-                            <DropdownMenuItem
-                              className="text-xs"
-                              asChild
-                            >
-                              <Link href={`/projects/${entry.id}/edit`}>
-                                Edit project
-                              </Link>
-                            </DropdownMenuItem>
-                            {entry.status !== 'submitted' && entry.status !== 'cancelled' && (
-                              <DropdownMenuItem
-                                className="text-xs text-destructive focus:text-destructive"
-                                onClick={() => setCancelId(entry.id)}
-                              >
-                                Cancel project
-                              </DropdownMenuItem>
+                          </div>
+                          <ProjectStatusBadge status={entry.status} />
+                        </div>
+                        
+                        <div className="flex items-center justify-between mt-2 mb-3 relative z-10 ml-7">
+                          <div className="flex-1 mr-4">
+                            {progress.total > 0 ? (
+                              <div className="flex flex-col gap-1 w-full max-w-[150px]">
+                                <span className="text-[10px] font-medium text-muted-foreground leading-none">
+                                  {percent}% ({progress.completed}/{progress.total})
+                                </span>
+                                <div className="w-full bg-muted rounded-full h-1 overflow-hidden">
+                                  <div
+                                    className="bg-emerald-500 h-full rounded-full"
+                                    style={{ width: `${percent}%` }}
+                                  />
+                                </div>
+                              </div>
+                            ) : (
+                              <span className="text-[10px] text-muted-foreground">No tasks</span>
                             )}
-                          </DropdownMenuContent>
-                        </DropdownMenu>
-                      </TableCell>
-                    </TableRow>
-                  );
-                })}
-              </TableBody>
-            </Table>
+                          </div>
+                          <Badge variant={entry.priority === 'urgent' ? 'destructive' : 'secondary'} className="text-[10px] capitalize">
+                            {entry.priority}
+                          </Badge>
+                        </div>
+
+                        <div className="flex justify-between items-center text-xs text-muted-foreground mt-2 border-t border-border/50 pt-2 relative z-10">
+                          <div className="flex flex-col gap-0.5">
+                            <span>Closes: {new Date(entry.closingDate).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: '2-digit' })}</span>
+                          </div>
+                          <div>
+                            <DropdownMenu>
+                              <DropdownMenuTrigger asChild>
+                                <Button variant="ghost" size="touch" className="h-8 w-8 min-h-0 min-w-0 p-0" title="Actions">
+                                  <MoreHorizontal className="size-4" />
+                                </Button>
+                              </DropdownMenuTrigger>
+                              <DropdownMenuContent align="end">
+                                {transitions.map((opt) => (
+                                  <DropdownMenuItem
+                                    key={opt.value}
+                                    onClick={() => handleStatusTransition(entry.id, opt.value)}
+                                    className="text-xs"
+                                  >
+                                    {opt.label}
+                                  </DropdownMenuItem>
+                                ))}
+                                <DropdownMenuItem className="text-xs" asChild>
+                                  <Link href={`/projects/${entry.id}/edit`}>Edit project</Link>
+                                </DropdownMenuItem>
+                                {entry.status !== 'submitted' && entry.status !== 'cancelled' && (
+                                  <DropdownMenuItem
+                                    className="text-xs text-destructive focus:text-destructive"
+                                    onClick={() => setCancelId(entry.id)}
+                                  >
+                                    Cancel project
+                                  </DropdownMenuItem>
+                                )}
+                              </DropdownMenuContent>
+                            </DropdownMenu>
+                          </div>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              }
+            />
           )}
         </CardContent>
       </Card>

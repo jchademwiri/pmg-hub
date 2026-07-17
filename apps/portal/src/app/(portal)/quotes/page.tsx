@@ -101,7 +101,7 @@ export default async function QuotesPage({ searchParams }: PageProps) {
             </div>
           ) : (
             <div className="overflow-x-auto">
-              <table className="w-full text-left border-collapse">
+              <table className="w-full text-left border-collapse hidden md:table">
                 <thead>
                   <tr className="border-b border-white/5 text-[10px] font-bold uppercase tracking-wider text-muted-foreground/70 bg-white/[0.01]">
                     <th className="px-6 py-3">Quote #</th>
@@ -141,6 +141,34 @@ export default async function QuotesPage({ searchParams }: PageProps) {
                   ))}
                 </tbody>
               </table>
+
+              {/* Mobile Card View */}
+              <div className="md:hidden divide-y divide-white/5">
+                {filteredQuotes.map((q) => (
+                  <Link
+                    key={q.id}
+                    href={`/quotes/${q.id}`}
+                    className="flex items-center justify-between py-4 hover:bg-white/[0.02] px-4 transition-colors group"
+                  >
+                    <div>
+                      <p className="text-sm font-semibold text-white group-hover:text-blue-400 transition-colors">{q.documentNumber}</p>
+                      <p className="text-xs text-muted-foreground mt-1">Date: {formatDate(q.quoteDate)}</p>
+                      {q.expiryDate && (
+                        <p className="text-xs text-muted-foreground mt-0.5">Expires: {formatDate(q.expiryDate)}</p>
+                      )}
+                    </div>
+                    <div className="text-right flex flex-col items-end gap-1.5">
+                      <p className="text-sm font-bold text-white">{formatCurrency(q.total)}</p>
+                      <span className={`inline-block text-[10px] font-semibold uppercase px-2 py-0.5 rounded-full ${
+                        q.status === 'accepted' || q.status === 'converted' ? 'bg-emerald-500/10 text-emerald-400' :
+                        q.status === 'declined' ? 'bg-red-500/10 text-red-400' : 'bg-purple-500/10 text-purple-400'
+                      }`}>
+                        {q.status === 'sent' ? 'Awaiting Response' : q.status}
+                      </span>
+                    </div>
+                  </Link>
+                ))}
+              </div>
             </div>
           )}
         </CardContent>

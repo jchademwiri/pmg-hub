@@ -10,11 +10,11 @@ This plan details the implementation steps for resolving the highest-priority te
 Fixing synchronous state updates inside `useEffect` which cause double-rendering jank.
 
 #### [MODIFY] `apps/admin/src/hooks/use-mobile.ts`
-- **Change:** Refactor the hook to use standard state setting patterns or remove the synchronous update inside the effect. 
+- **Change:** Refactor the hook to use standard state-setting patterns. Specify an SSR-safe initial state that produces the correct mobile or desktop value on the first render, rather than simply removing the synchronous `setIsMobile` call from the effect. Define and test both initial viewport outcomes, while retaining effect-driven updates for subsequent media-query changes.
 - **Rationale:** `react-hooks/set-state-in-effect` is triggered when `setIsMobile()` is called synchronously inside `useEffect`.
 
 #### [MODIFY] `apps/admin/src/components/projects/task-board.tsx`
-- **Change:** Remove `setSections(initialSections)` from inside the `useEffect`. Instead, use standard React patterns to derive state from props or synchronize it properly.
+- **Change:** Define TaskBoard state ownership and specify when `initialSections` changes reset or reconcile local sections without overwriting in-progress drag state.
 
 ---
 
@@ -30,12 +30,12 @@ The financial module `posting.ts` uses `any` for Drizzle ORM transactions, defea
 Setting up standard CI checks and cleaning up unused code.
 
 #### [MODIFY] `apps/admin/package.json`
-- **Change:** Add `"typecheck": "tsc --noEmit"` to the scripts.
-- **Rationale:** The workspace uses **Bun** (`bun run typecheck`), but `apps/admin` doesn't expose the script locally. Adding this makes CI/CD and developer workflows standardized.
+- **Change:** Add `"check-types": "tsc --noEmit"` to the scripts.
+- **Rationale:** The workspace uses **Bun** (`bun run check-types`), but `apps/admin` doesn't expose the script locally. Adding this makes CI/CD and developer workflows standardized.
 
 #### [COMMAND] Automated Cleanup
 - **Change:** Run `bun run lint --fix` inside `apps/admin` to automatically strip out unused variables and fix minor formatting issues. 
-- **Rationale:** This instantly resolves the 165 ESLint warnings without manual intervention.
+- **Rationale:** Require a clean lint rerun, review of the resulting diff to catch unrelated changes, and an explicit documented count of any remaining warnings or errors, including semantic hook and explicit-any diagnostics.
 
 ## Verification Plan
 
@@ -44,4 +44,4 @@ Setting up standard CI checks and cleaning up unused code.
 - Run `bun run check-types` from the root workspace to verify `posting.ts` passes strict TypeScript checks.
 
 ### Manual Verification
-- Render the `TaskBoard` component visually (if possible) or review the refactored code to ensure optimistic UI dragging and dropping still functions perfectly.
+- Render the `TaskBoard` component visually and verify concrete acceptance scenarios covering initial loading, server refreshes, optimistic drag/drop, and failed saves.
