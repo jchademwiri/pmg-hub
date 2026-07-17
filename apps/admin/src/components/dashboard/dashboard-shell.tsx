@@ -184,7 +184,7 @@ export function DashboardShell({
           {currentWorkload.inProgress.slice(0, 3).map(project => (
             <div key={project.id} className="p-3 border border-border rounded-lg bg-card shadow-sm flex flex-col gap-2">
                <div className="flex justify-between items-start">
-                  <span className="font-medium text-sm text-foreground">{project.title || project.name}</span>
+                  <span className="font-medium text-sm text-foreground">{project.projectReference}</span>
                   <Badge variant="outline" className="text-[10px] uppercase">{project.status}</Badge>
                </div>
                {project.closingDate && (
