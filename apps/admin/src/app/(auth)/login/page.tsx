@@ -61,13 +61,13 @@ export default function LoginPage() {
   return (
     <div className="relative flex min-h-screen items-center justify-center overflow-hidden bg-[#0a0f1d] bg-[url('/images/admin-login-bg.png')] bg-cover bg-center bg-no-repeat bg-fixed px-4 py-12 font-sans text-foreground">
       {/* Dark overlay for contrast */}
-      <div className="absolute inset-0 bg-black/60 mix-blend-multiply pointer-events-none" />
+      <div className="absolute inset-0 z-0 bg-black/60 mix-blend-multiply" />
       
       {/* Glow Effects */}
-      <div className="absolute -left-1/4 -top-1/4 h-[80vh] w-[80vh] rounded-full bg-blue-600/20 blur-[120px] pointer-events-none" />
-      <div className="absolute -right-1/4 -bottom-1/4 h-[80vh] w-[80vh] rounded-full bg-indigo-600/20 blur-[120px] pointer-events-none" />
+      <div className="absolute -left-1/4 -top-1/4 z-0 h-[80vh] w-[80vh] rounded-full bg-blue-600/20 blur-[120px]" />
+      <div className="absolute -right-1/4 -bottom-1/4 z-0 h-[80vh] w-[80vh] rounded-full bg-indigo-600/20 blur-[120px]" />
 
-      <div className="w-full max-w-md z-10 animate-in fade-in zoom-in-95 duration-1000">
+      <div className="relative z-10 w-full max-w-md animate-in fade-in zoom-in-95 duration-1000">
         {/* Brand / Logo */}
         <div className="mb-8 flex flex-col items-center text-center">
           <div className="flex size-12 items-center justify-center rounded-xl bg-gradient-to-tr from-blue-600 to-indigo-500 shadow-lg shadow-blue-500/20">
@@ -152,8 +152,9 @@ export default function LoginPage() {
               {/* Submit Button */}
               <button
                 type="submit"
-                disabled={isPending || !email}
-                className="flex h-10 w-full items-center justify-center gap-2 rounded-lg bg-blue-600 text-sm font-medium text-white shadow-lg shadow-blue-600/25 transition-all hover:bg-blue-500 active:scale-[0.98] disabled:pointer-events-none disabled:opacity-50"
+                className={`flex h-10 w-full items-center justify-center gap-2 rounded-lg bg-blue-600 text-sm font-medium text-white shadow-lg shadow-blue-600/25 transition-all hover:bg-blue-500 active:scale-[0.98] ${
+                  isPending ? 'pointer-events-none opacity-50' : ''
+                }`}
               >
                 {isPending ? (
                   <Loader2 className="size-4 animate-spin" />
