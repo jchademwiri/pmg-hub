@@ -10,14 +10,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from '@/components/ui/table';
+// Table imports removed as we use custom responsive grid
 import { formatZAR } from '@/lib/format';
 
 export interface LineItemFormRow {
@@ -89,58 +82,71 @@ export function BillingLineItemsForm({ value, onChange, activeItems }: BillingLi
   }
 
   return (
-    <div className="flex flex-col gap-3">
-      <Table>
-        <TableHeader>
-          <TableRow>
-            <TableHead className="w-[220px]">Item</TableHead>
-            <TableHead className="w-full">Description</TableHead>
-            <TableHead className="w-20 text-right">Qty</TableHead>
-            <TableHead className="w-32 text-right">Unit Price</TableHead>
-            <TableHead className="w-28 text-right">Total</TableHead>
-            <TableHead className="w-10" />
-          </TableRow>
-        </TableHeader>
-        <TableBody>
-          {value.map((row) => (
-            <TableRow key={row.id}>
-              <TableCell>
-                <Select
-                  value={row.itemId}
-                  onValueChange={(itemId) => selectItem(row.id, itemId)}
-                >
-                  <SelectTrigger className="w-[200px]">
-                    <SelectValue placeholder="Optional item…" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {activeItems.map((item) => (
-                      <SelectItem key={item.id} value={item.id}>
-                        {item.name}
-                        {item.unitLabel ? ` / ${item.unitLabel}` : ''}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </TableCell>
-              <TableCell>
-                <Input
-                  value={row.description}
-                  onChange={(e) => update(row.id, 'description', e.target.value)}
-                  placeholder="Description"
-                  className="min-w-0"
-                />
-              </TableCell>
-              <TableCell>
+    <div className="flex flex-col gap-4">
+      {/* Desktop Header */}
+      <div className="hidden lg:grid lg:grid-cols-[200px_1fr_80px_110px_110px_40px] gap-3 font-medium text-sm text-muted-foreground px-2">
+        <div>Item</div>
+        <div>Description</div>
+        <div className="text-right">Qty</div>
+        <div className="text-right">Unit Price</div>
+        <div className="text-right">Total</div>
+        <div></div>
+      </div>
+
+      <div className="flex flex-col gap-4 lg:gap-2">
+        {value.map((row) => (
+          <div 
+            key={row.id} 
+            className="grid grid-cols-1 lg:grid-cols-[200px_1fr_80px_110px_110px_40px] gap-3 lg:gap-3 items-start lg:items-center rounded-xl border lg:border-transparent p-4 lg:p-0 bg-card lg:bg-transparent shadow-sm lg:shadow-none"
+          >
+            {/* Item */}
+            <div className="flex flex-col gap-1.5 lg:block">
+              <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wider lg:hidden">Item</span>
+              <Select
+                value={row.itemId}
+                onValueChange={(itemId) => selectItem(row.id, itemId)}
+              >
+                <SelectTrigger className="w-full lg:w-[200px]">
+                  <SelectValue placeholder="Optional item…" />
+                </SelectTrigger>
+                <SelectContent>
+                  {activeItems.map((item) => (
+                    <SelectItem key={item.id} value={item.id}>
+                      {item.name}
+                      {item.unitLabel ? ` / ${item.unitLabel}` : ''}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+
+            {/* Description */}
+            <div className="flex flex-col gap-1.5 lg:block">
+              <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wider lg:hidden">Description</span>
+              <Input
+                value={row.description}
+                onChange={(e) => update(row.id, 'description', e.target.value)}
+                placeholder="Description"
+                className="w-full min-w-0"
+              />
+            </div>
+
+            {/* Qty & Price on mobile (side by side) */}
+            <div className="grid grid-cols-2 gap-3 lg:contents">
+              <div className="flex flex-col gap-1.5 lg:block">
+                <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wider lg:hidden">Qty</span>
                 <Input
                   value={row.quantity}
                   onChange={(e) => update(row.id, 'quantity', e.target.value)}
                   type="number"
                   min="0.01"
                   step="0.01"
-                  className="w-20 text-right"
+                  className="w-full lg:w-20 lg:text-right"
                 />
-              </TableCell>
-              <TableCell>
+              </div>
+
+              <div className="flex flex-col gap-1.5 lg:block">
+                <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wider lg:hidden">Unit Price</span>
                 <Input
                   value={row.unitPrice}
                   onChange={(e) => update(row.id, 'unitPrice', e.target.value)}
@@ -148,29 +154,37 @@ export function BillingLineItemsForm({ value, onChange, activeItems }: BillingLi
                   min="0"
                   step="0.01"
                   placeholder="0.00"
-                  className="w-28 text-right"
+                  className="w-full lg:w-28 lg:text-right"
                 />
-              </TableCell>
-              <TableCell className="text-right tabular-nums text-sm">
-                {formatZAR(calcLineTotal(row))}
-              </TableCell>
-              <TableCell>
+              </div>
+            </div>
+
+            {/* Total & Delete Action */}
+            <div className="flex items-center justify-between lg:contents mt-2 lg:mt-0 pt-3 lg:pt-0 border-t lg:border-t-0">
+              <div className="flex items-center gap-2 lg:block lg:text-right">
+                <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wider lg:hidden">Total</span>
+                <div className="font-bold lg:font-normal tabular-nums text-base lg:text-sm text-foreground">
+                  {formatZAR(calcLineTotal(row))}
+                </div>
+              </div>
+              
+              <div className="lg:text-center shrink-0">
                 <Button
                   type="button"
                   variant="ghost"
                   size="icon"
-                  className="size-8 text-muted-foreground hover:text-destructive"
+                  className="size-8 text-muted-foreground hover:text-destructive hover:bg-destructive/10"
                   disabled={value.length <= 1}
                   onClick={() => removeRow(row.id)}
                   aria-label="Remove line item"
                 >
                   <Trash2 className="size-4" />
                 </Button>
-              </TableCell>
-            </TableRow>
-          ))}
-        </TableBody>
-      </Table>
+              </div>
+            </div>
+          </div>
+        ))}
+      </div>
 
       <div>
         <Button type="button" variant="outline" size="sm" onClick={addRow}>

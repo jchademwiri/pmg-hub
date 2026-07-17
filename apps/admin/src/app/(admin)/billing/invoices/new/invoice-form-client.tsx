@@ -17,6 +17,12 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
+import {
+  Accordion,
+  AccordionItem,
+  AccordionTrigger,
+  AccordionContent,
+} from '@/components/ui/accordion';
 import { Separator } from '@/components/ui/separator';
 import {
   BillingLineItemsForm,
@@ -346,30 +352,39 @@ export function InvoiceFormClient({
         />
 
         {/* Notes & terms */}
-        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-          <Field>
-            <FieldLabel htmlFor="invoice-notes">Notes</FieldLabel>
-            <Textarea
-              id="invoice-notes"
-              value={notes}
-              onChange={(e) => setNotes(e.target.value)}
-              placeholder="Payment instructions or notes…"
-              rows={4}
-              disabled={isSubmitting}
-            />
-          </Field>
-          <Field>
-            <FieldLabel htmlFor="invoice-terms">Terms & Conditions</FieldLabel>
-            <Textarea
-              id="invoice-terms"
-              value={terms}
-              onChange={(e) => setTerms(e.target.value)}
-              placeholder="Optional terms and conditions…"
-              rows={4}
-              disabled={isSubmitting}
-            />
-          </Field>
-        </div>
+        <Accordion type="single" collapsible className="w-full">
+          <AccordionItem value="notes-and-terms" className="border-none">
+            <AccordionTrigger className="py-3 px-4 rounded-lg border bg-muted/20 hover:bg-muted/40 transition-colors hover:no-underline text-muted-foreground data-[state=open]:text-foreground">
+              <span className="font-semibold text-sm">Additional Notes & Terms</span>
+            </AccordionTrigger>
+            <AccordionContent className="pt-4">
+              <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                <Field>
+                  <FieldLabel htmlFor="invoice-notes">Notes</FieldLabel>
+                  <Textarea
+                    id="invoice-notes"
+                    value={notes}
+                    onChange={(e) => setNotes(e.target.value)}
+                    placeholder="Payment instructions or notes…"
+                    rows={4}
+                    disabled={isSubmitting}
+                  />
+                </Field>
+                <Field>
+                  <FieldLabel htmlFor="invoice-terms">Terms & Conditions</FieldLabel>
+                  <Textarea
+                    id="invoice-terms"
+                    value={terms}
+                    onChange={(e) => setTerms(e.target.value)}
+                    placeholder="Optional terms and conditions…"
+                    rows={4}
+                    disabled={isSubmitting}
+                  />
+                </Field>
+              </div>
+            </AccordionContent>
+          </AccordionItem>
+        </Accordion>
       </div>
 
       {/* Sidebar - sticky */}
