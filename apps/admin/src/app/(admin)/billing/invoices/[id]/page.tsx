@@ -288,6 +288,39 @@ export default async function InvoiceDetailPage({ params }: Props) {
             </Card>
           )}
 
+          {/* Mobile Line Items - Hidden on Desktop */}
+          <div className="lg:hidden">
+            <Card size="sm">
+              <CardHeader className="pb-2">
+                <CardTitle className="text-sm font-semibold">Line Items</CardTitle>
+              </CardHeader>
+              <CardContent className="p-0 px-6 pb-4">
+                <div className="flex flex-col divide-y divide-border text-xs">
+                  {invoice.lineItems.map((li) => {
+                    const qty = Number(li.quantity);
+                    const price = Number(li.unitPrice);
+                    return (
+                      <div key={li.id} className="flex justify-between py-3 items-start gap-4">
+                        <div className="flex flex-col gap-0.5 min-w-0">
+                          <span className="font-semibold text-foreground">{li.itemName || 'Item'}</span>
+                          {li.description && (
+                            <span className="text-muted-foreground whitespace-pre-wrap">{li.description}</span>
+                          )}
+                          <span className="text-muted-foreground mt-1">
+                            {qty} x {formatZAR(price)}
+                          </span>
+                        </div>
+                        <span className="font-bold text-foreground shrink-0 tabular-nums mt-0.5">
+                          {formatZAR(qty * price)}
+                        </span>
+                      </div>
+                    );
+                  })}
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+
           <Card size="sm">
             <CardHeader>
               <CardTitle>Summary</CardTitle>

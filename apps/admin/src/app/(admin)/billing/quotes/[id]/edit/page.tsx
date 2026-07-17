@@ -7,6 +7,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/com
 import { Separator } from '@/components/ui/separator';
 import { getAllDivisions, getAllClients, getActiveItems, getQuotationById, getAllDivisionBillingSettings } from '@pmg/db';
 import { QuoteFormClient } from '../../new/quote-form-client';
+import { SetPageLabel } from '@/components/navigation/page-header-context';
 
 export const dynamic = 'force-dynamic';
 export const metadata: Metadata = { title: 'Edit Quotation' };
@@ -33,15 +34,16 @@ export default async function EditQuotePage({ params }: Props) {
 
   return (
     <div className="flex flex-col gap-6">
+      <SetPageLabel value={`Edit ${quote.documentNumber}`} />
       {/* Page header */}
       <div className="flex items-center gap-4">
-        <Button variant="ghost" size="sm" asChild>
+        <Button variant="ghost" size="sm" asChild className="hidden sm:flex">
           <Link href={`/billing/quotes/${id}`}>
             <ChevronLeft className="size-4" />
             Back
           </Link>
         </Button>
-        <Separator orientation="vertical" className="h-5" />
+        <Separator orientation="vertical" className="h-5 hidden sm:block" />
         <div>
           <h2 className="text-lg font-semibold">Edit {quote.documentNumber}</h2>
           <p className="text-sm text-muted-foreground">Update this quotation</p>

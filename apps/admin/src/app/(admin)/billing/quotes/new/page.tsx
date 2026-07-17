@@ -6,6 +6,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/com
 import { Separator } from '@/components/ui/separator';
 import { getAllDivisions, getAllClients, getActiveItems, getAllDivisionBillingSettings } from '@pmg/db';
 import { QuoteFormClient } from './quote-form-client';
+import { SetPageLabel } from '@/components/navigation/page-header-context';
 
 export const dynamic = 'force-dynamic';
 export const metadata: Metadata = { title: 'New Quotation' };
@@ -20,15 +21,16 @@ export default async function NewQuotePage() {
 
   return (
     <div className="flex flex-col gap-6">
+      <SetPageLabel value="New Quotation" />
       {/* Page header */}
       <div className="flex items-center gap-4">
-        <Button variant="ghost" size="sm" asChild>
+        <Button variant="ghost" size="sm" asChild className="hidden sm:flex">
           <Link href="/billing/quotes">
             <ChevronLeft className="size-4" />
             Back
           </Link>
         </Button>
-        <Separator orientation="vertical" className="h-5" />
+        <Separator orientation="vertical" className="h-5 hidden sm:block" />
         <div>
           <h2 className="text-lg font-semibold">New Quotation</h2>
           <p className="text-sm text-muted-foreground">Create a new quote for a client</p>

@@ -11,13 +11,14 @@ import { BillingStatusBadge } from '@/components/billing/billing-status-badge';
 import { BillingTotalsBlock } from '@/components/billing/billing-totals-block';
 import { getQuotationById, getDivisionBillingSettings } from '@pmg/db';
 import { updateQuotationStatus, deleteQuotation, duplicateQuotation } from '@/app/actions/billing-quotes';
-import { fmtDate, fmtDateTime } from '@/lib/format';
+import { fmtDate, fmtDateTime, formatZAR } from '@/lib/format';
 import { buildOrgProps, buildBankingProps } from '@/lib/client-billing-helpers';
 import { QuoteDetailActions } from './quote-detail-actions';
 import { PrintButton } from '@/components/billing/print-button';
 import { ExportPdfButton } from '@/components/billing/export-pdf-button';
 import { UniversalEmailDialog } from '@/components/billing/universal-email-dialog';
 import { QuoteEmailAutoTrigger } from './quote-email-auto-trigger';
+import { SetPageLabel } from '@/components/navigation/page-header-context';
 
 export const dynamic = 'force-dynamic';
 
@@ -74,6 +75,7 @@ export default async function QuoteDetailPage({ params, searchParams }: Props) {
 
   return (
     <div className="flex flex-col gap-6">
+      <SetPageLabel value="Quote Details" />
       {/* Auto-open email dialog when navigated here with ?action=send */}
       {autoOpenEmail && (
         <QuoteEmailAutoTrigger
@@ -87,13 +89,13 @@ export default async function QuoteDetailPage({ params, searchParams }: Props) {
       {/* Page header */}
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div className="flex items-center gap-4">
-          <Button variant="ghost" size="sm" asChild>
+          <Button variant="ghost" size="sm" asChild className="hidden sm:flex">
             <Link href="/billing/quotes">
               <ChevronLeft className="size-4" />
               Back
             </Link>
           </Button>
-          <Separator orientation="vertical" className="h-5" />
+          <Separator orientation="vertical" className="h-5 hidden sm:block" />
           <div>
             <div className="flex items-center gap-2">
               <h2 className="text-lg font-semibold">{quote.documentNumber}</h2>
@@ -105,10 +107,12 @@ export default async function QuoteDetailPage({ params, searchParams }: Props) {
           </div>
         </div>
         <div className="flex items-center gap-2 flex-wrap justify-end">
-          <PrintButton 
-            label="Print"
-            documentTitle={`Quote-${quote.documentNumber}`} 
-          />
+          <div className="hidden sm:block">
+            <PrintButton 
+              label="Print"
+              documentTitle={`Quote-${quote.documentNumber}`} 
+            />
+          </div>
           <ExportPdfButton 
             fileName={`Quote-${quote.documentNumber}`}
             pdfUrl={quotePdfUrl}
@@ -131,15 +135,48 @@ export default async function QuoteDetailPage({ params, searchParams }: Props) {
         </div>
       </div>
 
-      {/* Two-column layout */}
-      <div className="grid grid-cols-1 gap-6 lg:grid-cols-3 lg:items-start">
-        {/* Document preview - scrollable on small screens */}
-        <div className="lg:col-span-2 overflow-x-auto">
+      {/* Main layout */}
+      <div className="flex flex-col-reverse lg:grid lg:grid-cols-3 lg:items-start gap-6">
+        {/* Document preview - hidden on mobile */}
+        <div className="hidden lg:block lg:col-span-2 overflow-x-auto">
           <DocumentPreview id="printable-area" type="quote" {...docPreviewProps} />
         </div>
 
         {/* Sidebar */}
         <div className="flex flex-col gap-4 lg:sticky lg:top-16 lg:self-start">
+          {/* Mobile Line Items - Hidden on Desktop */}
+          <div className="lg:hidden">
+            <Card size="sm">
+              <CardHeader className="pb-2">
+                <CardTitle className="text-sm font-semibold">Line Items</CardTitle>
+              </CardHeader>
+              <CardContent className="p-0 px-6 pb-4">
+                <div className="flex flex-col divide-y divide-border text-xs">
+                  {quote.lineItems.map((li) => {
+                    const qty = Number(li.quantity);
+                    const price = Number(li.unitPrice);
+                    return (
+                      <div key={li.id} className="flex justify-between py-3 items-start gap-4">
+                        <div className="flex flex-col gap-0.5 min-w-0">
+                          <span className="font-semibold text-foreground">{li.itemName || 'Item'}</span>
+                          {li.description && (
+                            <span className="text-muted-foreground whitespace-pre-wrap">{li.description}</span>
+                          )}
+                          <span className="text-muted-foreground mt-1">
+                            {qty} x {formatZAR(price)}
+                          </span>
+                        </div>
+                        <span className="font-bold text-foreground shrink-0 tabular-nums mt-0.5">
+                          {formatZAR(qty * price)}
+                        </span>
+                      </div>
+                    );
+                  })}
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+
           <Card size="sm">
             <CardHeader>
               <CardTitle>Summary</CardTitle>
