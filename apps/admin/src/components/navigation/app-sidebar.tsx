@@ -37,10 +37,17 @@ import type { NavItem, NavGroup, GroupKey } from '@/components/navigation/nav-da
 // ── Helpers ───────────────────────────────────────────────────────────────────
 
 function getActiveGroup(pathname: string): GroupKey | null {
+  let bestMatch: { key: GroupKey; length: number } | null = null
   for (const group of GROUPS) {
-    if (group.items.some((i) => pathname.startsWith(i.url))) return group.key
+    for (const item of group.items) {
+      if (pathname.startsWith(item.url)) {
+        if (!bestMatch || item.url.length > bestMatch.length) {
+          bestMatch = { key: group.key, length: item.url.length }
+        }
+      }
+    }
   }
-  return null
+  return bestMatch ? bestMatch.key : null
 }
 
 // ── Sub-components ────────────────────────────────────────────────────────────
@@ -119,7 +126,8 @@ interface AppSidebarProps {
   user: { name: string; email: string; role: string }
 }
 
-const MAIN_GROUPS = GROUPS.filter((g) => g.key !== 'system')
+const MAIN_GROUPS = GROUPS.filter((g) => g.key !== 'system' && g.key !== 'advanced')
+const ADVANCED_GROUP = GROUPS.find((g) => g.key === 'advanced')
 const SYSTEM_GROUP = GROUPS.find((g) => g.key === 'system')!
 
 export function AppSidebar({ user }: AppSidebarProps) {
@@ -186,6 +194,15 @@ export function AppSidebar({ user }: AppSidebarProps) {
 
       <SidebarFooter>
         <div className="flex flex-col gap-1">
+          {ADVANCED_GROUP && (
+            <CollapsibleGroup
+              group={ADVANCED_GROUP}
+              isOpen={openGroup === ADVANCED_GROUP.key}
+              pathname={pathname}
+              onToggle={handleToggle}
+              onNavigate={handleNavigate}
+            />
+          )}
           <CollapsibleGroup
             group={SYSTEM_GROUP}
             isOpen={openGroup === SYSTEM_GROUP.key}

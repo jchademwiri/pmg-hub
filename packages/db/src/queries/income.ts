@@ -104,7 +104,8 @@ export type MonthlyIncomeSummary = {
 
 export async function getIncomeMonthlySummaries(
   year: number,
-  divisionId?: string
+  divisionId?: string,
+  clientId?: string
 ): Promise<MonthlyIncomeSummary[]> {
   const conditions = [];
 
@@ -114,6 +115,10 @@ export async function getIncomeMonthlySummaries(
 
   if (divisionId) {
     conditions.push(eq(income.divisionId, divisionId));
+  }
+  
+  if (clientId) {
+    conditions.push(eq(income.clientId, clientId));
   }
 
   // 1. Get income sums

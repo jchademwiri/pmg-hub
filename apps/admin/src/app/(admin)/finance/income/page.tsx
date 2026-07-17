@@ -98,7 +98,7 @@ export default async function FinanceIncomePage({ searchParams }: IncomePageProp
 
   const fyStartYear = currentMonth <= 2 ? currentYear - 1 : currentYear;
 
-  const monthlySummaries = await getIncomeMonthlySummaries(fyStartYear, divisionId);
+  const monthlySummaries = await getIncomeMonthlySummaries(fyStartYear, filters.divisionId, filters.clientId);
   const globalReceived = monthlySummaries.reduce((sum, m) => sum + m.totalReceived, 0);
   const globalAllocated = monthlySummaries.reduce((sum, m) => sum + m.totalAllocated, 0);
   const globalUnallocated = Math.max(0, globalReceived - globalAllocated);
@@ -200,7 +200,7 @@ export default async function FinanceIncomePage({ searchParams }: IncomePageProp
         {currentMonths.map((m) => {
           if (m.year === currentYear && m.month === currentMonth) return null
           
-          const val = `month-${m.year}-${m.month}`
+          const val = m.value;
           return (
             <AccordionItem key={val} value={val} className="border rounded-lg bg-card px-4">
               <AccordionTrigger className="flex items-center w-full pr-4 hover:no-underline group/trigger py-4">
@@ -210,7 +210,7 @@ export default async function FinanceIncomePage({ searchParams }: IncomePageProp
 
                 {/* Summary Badges */}
                 {(() => {
-                  const summary = monthlySummaries.find(s => s.month === val.replace('month-', ''));
+                  const summary = monthlySummaries.find(s => s.month === val);
                   if (!summary) return null;
                   const unallocated = Math.max(0, summary.totalReceived - summary.totalAllocated);
                   const hasUnallocated = unallocated > 0;

@@ -19,7 +19,6 @@ interface ReportsTabsProps {
   momData: MoMSnapshot[]
   budgetChartSeries: MonthlyBudgetChartRow[]
   expensesByCategory: { category: string; total: number }[]
-  profitPoolSeries: ProfitPoolRow[]
   monthlyFinancials: MonthlyFinancials[]
   currentPeriod: string
   previousPeriod: string
@@ -33,7 +32,6 @@ export function ReportsTabs({
   momData,
   budgetChartSeries,
   expensesByCategory,
-  profitPoolSeries,
   monthlyFinancials,
   currentPeriod,
   previousPeriod,
@@ -74,13 +72,8 @@ export function ReportsTabs({
   const totalRevenue = monthlyFinancials.reduce((sum, m) => sum + m.revenue, 0)
   const totalExpenses = monthlyFinancials.reduce((sum, m) => sum + m.expenses, 0)
   const PMG_SHARE_RATE = pmgShareRate ?? 0.25
-  const PROFIT_POOL_SPLITS = { salary: 0.35, reinvest: 0.30, reserve: 0.30, flex: 0.05 }
   const totalPmgShare = totalRevenue * PMG_SHARE_RATE
   const totalProfitPool = totalRevenue - totalExpenses - totalPmgShare
-  const totalSalary = totalProfitPool * PROFIT_POOL_SPLITS.salary
-  const totalReinvest = totalProfitPool * PROFIT_POOL_SPLITS.reinvest
-  const totalReserve = totalProfitPool * PROFIT_POOL_SPLITS.reserve
-  const totalFlex = totalProfitPool * PROFIT_POOL_SPLITS.flex
 
   return (
     <>
@@ -106,7 +99,7 @@ export function ReportsTabs({
         </TabsTrigger>
         <TabsTrigger value="profit" className="gap-1.5">
           <PiggyBank className="size-3.5" />
-          Profit Pool
+          Net Profit
         </TabsTrigger>
       </TabsList>
 
@@ -160,15 +153,10 @@ export function ReportsTabs({
             expenses={totalExpenses}
             pmgShare={totalPmgShare}
             profitPool={totalProfitPool}
-            salary={totalSalary}
-            reinvest={totalReinvest}
-            reserve={totalReserve}
-            flex={totalFlex}
             ledgerBalances={ledgerBalances}
           />
           <ProfitPoolChart
-            data={profitPoolSeries}
-            onBarClick={(type, period) => openDrill(type, period)}
+            data={monthlyFinancials.map(m => ({ period: m.month, profit: m.revenue * (1 - PMG_SHARE_RATE) - m.expenses }))}
           />
         </div>
       </TabsContent>

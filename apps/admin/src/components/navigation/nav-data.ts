@@ -27,7 +27,7 @@ export type NavItem = {
   icon: LucideIcon
 }
 
-export type GroupKey = 'billing' | 'finance' | 'accounting' | 'relationships' | 'insights' | 'system' | 'projects'
+export type GroupKey = 'billing' | 'finance' | 'accounting' | 'relationships' | 'insights' | 'system' | 'projects' | 'advanced'
 
 export type NavGroup = {
   key: GroupKey
@@ -53,14 +53,11 @@ export const GROUPS: NavGroup[] = [
     icon: FileSpreadsheet,
     items: [
       { title: 'Overview',     url: '/billing',            icon: LayoutGrid },
-      { title: 'Accounts',     url: '/billing/accounts',   icon: PiggyBank  },
-      { title: 'Aging Report', url: '/billing/aging',      icon: Calendar   },
       { title: 'Quotations',   url: '/billing/quotes',     icon: FileText   },
       { title: 'Invoices',     url: '/billing/invoices',   icon: Receipt    },
       { title: 'Payments',     url: '/billing/payments',   icon: Banknote   },
       { title: 'Credits',      url: '/billing/credits',    icon: Wallet     },
       { title: 'Statements',   url: '/billing/statements', icon: ScrollText },
-      { title: 'Items',        url: '/billing/items',      icon: Package    },
     ],
   },
   {
@@ -81,23 +78,6 @@ export const GROUPS: NavGroup[] = [
       { title: 'Overview',     url: '/finance',              icon: LayoutGrid    },
       { title: 'Income',       url: '/finance/income',       icon: ArrowDownLeft },
       { title: 'Expenses',     url: '/finance/expenses',     icon: TrendingDown   },
-      { title: 'Categories',   url: '/finance/categories',   icon: Tags           },
-      { title: 'Distributions', url: '/finance/distributions', icon: PieChart      },
-    ],
-  },
-  {
-    key: 'accounting',
-    label: 'Accounting',
-    icon: Calculator,
-    items: [
-      { title: 'Overview',          url: '/accounting',                   icon: LayoutGrid   },
-      { title: 'Chart of Accounts', url: '/accounting/chart-of-accounts', icon: BookMarked   },
-      { title: 'Journals',          url: '/accounting/journals',          icon: NotebookPen  },
-      { title: 'General Ledger',    url: '/accounting/general-ledger',    icon: BookOpen     },
-      { title: 'Trial Balance',     url: '/accounting/trial-balance',     icon: Scale        },
-      { title: 'Profit & Loss',     url: '/accounting/profit-and-loss',   icon: TrendingUp   },
-      { title: 'Periods',           url: '/accounting/periods',           icon: Calendar     },
-      { title: 'Exports',           url: '/accounting/exports',           icon: Download    },
     ],
   },
   {
@@ -112,13 +92,24 @@ export const GROUPS: NavGroup[] = [
     ],
   },
   {
-    key: 'insights',
-    label: 'Insights',
-    icon: LineChart,
+    key: 'advanced',
+    label: 'Advanced & Reports',
+    icon: BarChart3,
     items: [
-      { title: 'Snapshots', url: '/insights/snapshots', icon: Camera   },
-      { title: 'Reports',   url: '/insights/reports',   icon: BarChart3 },
       { title: 'Business Analysis', url: '/insights/analysis', icon: TrendingUp },
+      { title: 'Insights Reports',  url: '/insights/reports',  icon: BarChart3 },
+      { title: 'Snapshots',         url: '/insights/snapshots', icon: Camera   },
+      { title: 'Aging Report',      url: '/billing/aging',     icon: Calendar   },
+      { title: 'Finance Categories',url: '/finance/categories',icon: Tags       },
+      { title: 'Billing Items',     url: '/billing/items',     icon: Package    },
+      { title: 'Accounting',        url: '/accounting',        icon: Calculator },
+      { title: 'Chart of Accounts', url: '/accounting/chart-of-accounts', icon: BookMarked },
+      { title: 'Journals',          url: '/accounting/journals', icon: NotebookPen },
+      { title: 'General Ledger',    url: '/accounting/general-ledger', icon: BookOpen },
+      { title: 'Trial Balance',     url: '/accounting/trial-balance', icon: Scale },
+      { title: 'Profit & Loss',     url: '/accounting/profit-and-loss', icon: TrendingUp },
+      { title: 'Periods',           url: '/accounting/periods', icon: Calendar },
+      { title: 'Exports',           url: '/accounting/exports', icon: Download },
     ],
   },
   {

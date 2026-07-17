@@ -1131,12 +1131,12 @@ async function enrichIncomeWithAllocations(incomeData: any[]) {
   });
 }
 
-export async function fetchPaymentsByMonth(year: number, month: number) {
+export async function fetchPaymentsByMonth(year: number, month: number, divisionId?: string) {
   const { getAllIncome } = await import('@pmg/db');
   const { getClosedPeriodsFromDates } = await import('@/lib/date-rules');
   
   const incomeResult = await getAllIncome(
-    { year, month: `${year}-${month.toString().padStart(2, '0')}` },
+    { year, month: `${year}-${month.toString().padStart(2, '0')}`, divisionId },
     { page: 1, pageSize: 1000 }
   );
 
@@ -1146,12 +1146,12 @@ export async function fetchPaymentsByMonth(year: number, month: number) {
   return { data: payments, closedPeriods };
 }
 
-export async function fetchPaymentsByYear(year: number) {
+export async function fetchPaymentsByYear(year: number, divisionId?: string) {
   const { getAllIncome } = await import('@pmg/db');
   const { getClosedPeriodsFromDates } = await import('@/lib/date-rules');
   
   const incomeResult = await getAllIncome(
-    { year },
+    { year, divisionId },
     { page: 1, pageSize: 5000 }
   );
 

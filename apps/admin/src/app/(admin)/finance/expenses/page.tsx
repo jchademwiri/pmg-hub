@@ -170,7 +170,7 @@ export default async function ExpensePage({ searchParams }: ExpensePageProps) {
         {currentMonths.map((m) => {
           if (m.year === currentYear && m.month === currentMonth) return null;
           
-          const val = `month-${m.year}-${m.month}`;
+          const val = m.value;
           return (
             <AccordionItem key={val} value={val} className="border rounded-lg bg-card px-4">
               <AccordionTrigger className="flex items-center w-full pr-4 hover:no-underline group/trigger py-4">
@@ -180,7 +180,7 @@ export default async function ExpensePage({ searchParams }: ExpensePageProps) {
 
                 {/* Summary Badges */}
                 {(() => {
-                  const summary = monthlySummaries.find(s => s.month === val.replace('month-', ''));
+                  const summary = monthlySummaries.find(s => s.month === val);
                   if (!summary) return null;
                   return (
                     <div className="flex items-center gap-3 pr-2">

@@ -49,7 +49,7 @@ export default async function GeneralLedgerPage({
   const monthlySummaries = await getLedgerMonthlySummaries(fyStartYear, params.accountId);
   const globalDebits = monthlySummaries.reduce((sum, m) => sum + m.totalDebits, 0);
   const globalCredits = monthlySummaries.reduce((sum, m) => sum + m.totalCredits, 0);
-  const globalMovement = Math.abs(globalDebits - globalCredits);
+  const globalMovement = globalDebits - globalCredits;
 
   return (
     <div className="flex flex-col gap-6">
@@ -90,12 +90,14 @@ export default async function GeneralLedgerPage({
         </Card>
         <Card className="shadow-sm">
           <CardHeader className="flex flex-row items-center justify-between pb-2">
-            <CardTitle className="text-sm font-medium text-muted-foreground">Net Movement</CardTitle>
-            <Activity className={`size-4 ${globalMovement > 0 ? 'text-amber-500' : 'text-muted-foreground'}`} />
+            <CardTitle className="text-sm font-medium text-muted-foreground">
+              {globalMovement < 0 ? 'Net Credit' : globalMovement > 0 ? 'Net Debit' : 'Net Movement'}
+            </CardTitle>
+            <Activity className={`size-4 ${globalMovement > 0 ? 'text-amber-500' : 'text-emerald-500'}`} />
           </CardHeader>
           <CardContent>
             <div className={`text-2xl font-bold ${globalMovement > 0 ? 'text-amber-600 dark:text-amber-400' : 'text-emerald-600 dark:text-emerald-400'}`}>
-              {formatZAR(globalMovement)}
+              {formatZAR(Math.abs(globalMovement))}
             </div>
             <p className="text-xs text-muted-foreground mt-1">Difference (Dr - Cr)</p>
           </CardContent>
@@ -140,7 +142,7 @@ export default async function GeneralLedgerPage({
         {currentMonths.map((m) => {
           if (m.year === currentYear && m.month === currentMonth) return null
           
-          const val = `month-${m.year}-${m.month}`
+          const val = m.value;
           return (
             <AccordionItem key={val} value={val} className="border rounded-lg bg-card px-4">
               <AccordionTrigger className="flex items-center w-full pr-4 hover:no-underline group/trigger py-4">
@@ -150,7 +152,7 @@ export default async function GeneralLedgerPage({
 
                 {/* Summary Badges */}
                 {(() => {
-                  const summary = monthlySummaries.find(s => s.month === val.replace('month-', ''));
+                  const summary = monthlySummaries.find(s => s.month === val);
                   if (!summary) return null;
                   return (
                     <div className="flex items-center gap-3 pr-2">

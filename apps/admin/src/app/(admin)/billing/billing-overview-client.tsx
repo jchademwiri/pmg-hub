@@ -256,7 +256,6 @@ export function BillingOverviewClient({
         <h3 className="text-sm font-semibold mb-3">Modules</h3>
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
           {[
-            { href: '/billing/accounts', label: 'Accounts', description: 'Client billing accounts', color: 'bg-blue-500/10 text-blue-600', icon: PiggyBank },
             { href: '/billing/aging', label: 'Aging Report', description: 'AR aging analysis', color: 'bg-indigo-500/10 text-indigo-600', icon: Calendar },
             { href: '/billing/quotes', label: 'Quotes', description: 'Create and manage quotations', color: 'bg-violet-500/10 text-violet-600', icon: FileText },
             { href: '/billing/invoices', label: 'Invoices', description: 'Issue and track invoices', color: 'bg-emerald-500/10 text-emerald-600', icon: Receipt },
