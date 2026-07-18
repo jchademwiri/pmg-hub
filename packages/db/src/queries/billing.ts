@@ -18,6 +18,9 @@ export type LineItemDetail = {
   description: string;
   quantity: string;   // numeric from DB - caller converts with Number()
   unitPrice: string;
+  discountType: string | null;
+  discountValue: string | null;
+  discountAmount: string;
   vatRate: string;
   lineTotal: string;
   createdAt: Date;

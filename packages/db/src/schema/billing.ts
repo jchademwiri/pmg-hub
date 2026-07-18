@@ -215,6 +215,9 @@ export const billingLineItems = pgTable(
   (t) => [
     check("billing_line_items_quantity_positive", sql`${t.quantity} > 0`),
     check("billing_line_items_unit_price_non_negative", sql`"unit_price" >= 0`),
+    check("billing_line_items_discount_percent_max", sql`("discount_type" = 'percent' AND "discount_value" <= 100) OR "discount_type" IS DISTINCT FROM 'percent'`),
+    check("billing_line_items_discount_value_non_negative", sql`"discount_value" >= 0`),
+    check("billing_line_items_discount_amount_non_negative", sql`"discount_amount" >= 0`),
     index("billing_line_items_document_idx").on(t.documentType, t.documentId),
     index("billing_line_items_item_id_idx").on(t.itemId),
   ],

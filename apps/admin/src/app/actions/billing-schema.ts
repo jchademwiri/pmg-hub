@@ -14,6 +14,14 @@ export const LineItemSchema = z.object({
   vatRate: z.coerce.number().default(0),
   discountType: z.enum(['percent', 'amount']).optional().nullable(),
   discountValue: z.coerce.number().min(0).optional().nullable(),
+}).superRefine((data, ctx) => {
+  if (data.discountType === 'percent' && typeof data.discountValue === 'number' && data.discountValue > 100) {
+    ctx.addIssue({
+      code: z.ZodIssueCode.custom,
+      path: ['discountValue'],
+      message: 'Percentage discount cannot exceed 100',
+    });
+  }
 });
 
 export type LineItemInput = z.infer<typeof LineItemSchema>;
@@ -33,6 +41,14 @@ export const CreateQuotationSchema = z.object({
   vatEnabled: z.boolean().default(false),
   discountType: z.enum(['percent', 'amount']).optional().nullable(),
   discountValue: z.coerce.number().min(0).optional().nullable(),
+}).superRefine((data, ctx) => {
+  if (data.discountType === 'percent' && typeof data.discountValue === 'number' && data.discountValue > 100) {
+    ctx.addIssue({
+      code: z.ZodIssueCode.custom,
+      path: ['discountValue'],
+      message: 'Percentage discount cannot exceed 100',
+    });
+  }
 });
 
 export type CreateQuotationInput = z.infer<typeof CreateQuotationSchema>;
@@ -52,6 +68,14 @@ export const CreateInvoiceSchema = z.object({
   vatEnabled: z.boolean().default(false),
   discountType: z.enum(['percent', 'amount']).optional().nullable(),
   discountValue: z.coerce.number().min(0).optional().nullable(),
+}).superRefine((data, ctx) => {
+  if (data.discountType === 'percent' && typeof data.discountValue === 'number' && data.discountValue > 100) {
+    ctx.addIssue({
+      code: z.ZodIssueCode.custom,
+      path: ['discountValue'],
+      message: 'Percentage discount cannot exceed 100',
+    });
+  }
 });
 
 export type CreateInvoiceInput = z.infer<typeof CreateInvoiceSchema>;

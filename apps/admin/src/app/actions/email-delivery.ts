@@ -58,6 +58,14 @@ const EmailPayloadSchema = z.object({
     period: z.string(),
     totalAmountDue: z.string(),
   }).optional(),
+}).superRefine((payload, ctx) => {
+  if (payload.documentType === 'statement' && !payload.statementData) {
+    ctx.addIssue({
+      code: z.ZodIssueCode.custom,
+      path: ['statementData'],
+      message: 'Statement data is required for statement delivery.',
+    });
+  }
 });
 
 const EmailPreviewPayloadSchema = z.object({
@@ -70,6 +78,14 @@ const EmailPreviewPayloadSchema = z.object({
     period: z.string(),
     totalAmountDue: z.string(),
   }).optional(),
+}).superRefine((payload, ctx) => {
+  if (payload.documentType === 'statement' && !payload.statementData) {
+    ctx.addIssue({
+      code: z.ZodIssueCode.custom,
+      path: ['statementData'],
+      message: 'Statement data is required for statement preview.',
+    });
+  }
 });
 
 // resolveFromEmail is now imported from @pmg/emails
