@@ -21,6 +21,7 @@ import { Mail, Loader2 } from 'lucide-react';
 import { getDocumentEmailPreviewAction, sendDocumentEmailAction } from '@/app/actions/email-delivery';
 import { EmailPreviewPanel } from '@/components/billing/email-preview-panel';
 import { serverPdfUrlToBase64 } from '@/lib/pdf-export';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 
 interface SendStatementButtonProps {
   clientId: string;
@@ -51,6 +52,7 @@ export function SendStatementButton({
   const [previewHtml, setPreviewHtml] = useState('');
   const [previewError, setPreviewError] = useState<string | null>(null);
   const [isPreviewLoading, setIsPreviewLoading] = useState(false);
+  const [statementType, setStatementType] = useState<'activity' | 'outstanding'>('outstanding');
 
   React.useEffect(() => {
     if (!open) return;
@@ -69,6 +71,7 @@ export function SendStatementButton({
             statementDate,
             period,
             totalAmountDue,
+            type: statementType,
           }
         });
 
@@ -96,7 +99,7 @@ export function SendStatementButton({
       cancelled = true;
       window.clearTimeout(timeout);
     };
-  }, [open, clientId, message, statementDate, period, totalAmountDue]);
+  }, [open, clientId, message, statementDate, period, totalAmountDue, statementType]);
 
   async function handleSend() {
     if (!recipient) {
@@ -107,7 +110,10 @@ export function SendStatementButton({
     setIsSending(true);
     try {
       setStatusText('Compiling statement PDF...');
-      const statementBase64 = await serverPdfUrlToBase64(statementPdfUrl, 'Statement PDF');
+      const pdfUrlWithParam = statementPdfUrl.includes('?') 
+        ? `${statementPdfUrl}&statementType=${statementType}`
+        : `${statementPdfUrl}?statementType=${statementType}`;
+      const statementBase64 = await serverPdfUrlToBase64(pdfUrlWithParam, 'Statement PDF');
 
       setStatusText('Transmitting statement via Resend...');
       const result = await sendDocumentEmailAction({
@@ -121,6 +127,7 @@ export function SendStatementButton({
           statementDate,
           period,
           totalAmountDue,
+          type: statementType,
         }
       });
 
@@ -160,6 +167,19 @@ export function SendStatementButton({
           <div className="grid grid-cols-1 lg:min-h-[680px] lg:grid-cols-[minmax(340px,420px)_1fr]">
             <div className="p-5 lg:border-r">
               <FieldGroup>
+              <Field>
+                <FieldLabel htmlFor="statement-type">Statement Type</FieldLabel>
+                <Select value={statementType} onValueChange={(val: 'activity' | 'outstanding') => setStatementType(val)} disabled={isSending}>
+                  <SelectTrigger id="statement-type">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="outstanding">Outstanding Invoices Only (Open Item)</SelectItem>
+                    <SelectItem value="activity">All Activity (Balance Forward)</SelectItem>
+                  </SelectContent>
+                </Select>
+              </Field>
+
               <Field>
                 <FieldLabel htmlFor="email-recipient">Recipient Email Address</FieldLabel>
                 <Input

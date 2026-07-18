@@ -57,6 +57,7 @@ const EmailPayloadSchema = z.object({
     statementDate: z.string(),
     period: z.string(),
     totalAmountDue: z.string(),
+    type: z.enum(['activity', 'outstanding']).optional(),
   }).optional(),
 }).superRefine((payload, ctx) => {
   if (payload.documentType === 'statement' && !payload.statementData) {
@@ -77,6 +78,7 @@ const EmailPreviewPayloadSchema = z.object({
     statementDate: z.string(),
     period: z.string(),
     totalAmountDue: z.string(),
+    type: z.enum(['activity', 'outstanding']).optional(),
   }).optional(),
 }).superRefine((payload, ctx) => {
   if (payload.documentType === 'statement' && !payload.statementData) {
