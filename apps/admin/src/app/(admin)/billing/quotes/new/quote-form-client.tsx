@@ -66,7 +66,18 @@ function calcTotals(
 ) {
   let subtotal = 0;
   for (const item of lineItems) {
-    subtotal += (parseFloat(item.quantity) || 0) * (parseFloat(item.unitPrice) || 0);
+    const qty = parseFloat(item.quantity) || 0;
+    const price = parseFloat(item.unitPrice) || 0;
+    const lineGross = qty * price;
+    
+    let lineDiscount = 0;
+    if (item.discountType === 'percent') {
+      lineDiscount = lineGross * ((parseFloat(item.discountValue || '0') || 0) / 100);
+    } else if (item.discountType === 'amount') {
+      lineDiscount = Math.min(parseFloat(item.discountValue || '0') || 0, lineGross);
+    }
+    
+    subtotal += (lineGross - lineDiscount);
   }
   const discountVal = parseFloat(discountValue) || 0;
   const discountAmount =
@@ -118,8 +129,8 @@ export function QuoteFormClient({
             description: li.description,
             quantity: li.quantity,
             unitPrice: li.unitPrice,
-            discountType: null,
-            discountValue: '',
+            discountType: (li.discountType as 'percent' | 'amount') ?? null,
+            discountValue: li.discountValue ? String(Number(li.discountValue)) : '',
           };
         })
       : [blankRow()],

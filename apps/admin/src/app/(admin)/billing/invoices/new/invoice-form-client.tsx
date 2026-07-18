@@ -68,7 +68,18 @@ function calcTotals(
 ) {
   let subtotal = 0;
   for (const item of lineItems) {
-    subtotal += (parseFloat(item.quantity) || 0) * (parseFloat(item.unitPrice) || 0);
+    const qty = parseFloat(item.quantity) || 0;
+    const price = parseFloat(item.unitPrice) || 0;
+    const lineGross = qty * price;
+    
+    let lineDiscount = 0;
+    if (item.discountType === 'percent') {
+      lineDiscount = lineGross * ((parseFloat(item.discountValue || '0') || 0) / 100);
+    } else if (item.discountType === 'amount') {
+      lineDiscount = Math.min(parseFloat(item.discountValue || '0') || 0, lineGross);
+    }
+    
+    subtotal += (lineGross - lineDiscount);
   }
   const discountVal = parseFloat(discountValue) || 0;
   const discountAmount =
@@ -120,8 +131,8 @@ export function InvoiceFormClient({
             description: li.description,
             quantity: li.quantity,
             unitPrice: li.unitPrice,
-            discountType: null,
-            discountValue: '',
+            discountType: (li.discountType as 'percent' | 'amount') ?? null,
+            discountValue: li.discountValue ? String(Number(li.discountValue)) : '',
           };
         })
       : [blankRow()],
@@ -464,16 +475,6 @@ export function InvoiceFormClient({
             <Button className="w-full bg-blue-600 hover:bg-blue-700 text-white" onClick={handleSubmit} disabled={isSubmitting}>
               {isSubmitting ? 'Saving…' : editId ? 'Save Changes' : 'Save Invoice'}
             </Button>
-            {!editId && (
-              <Button
-                variant="outline"
-                className="w-full"
-                onClick={handleSubmit}
-                disabled={isSubmitting}
-              >
-                Save as Draft
-              </Button>
-            )}
           </div>
         </div>
 

@@ -169,11 +169,16 @@ export function BillingLineItemsForm({ value, onChange, activeItems }: BillingLi
                     <Input
                       type="number"
                       min="0"
+                      max={(!row.discountType || row.discountType === 'percent') ? "100" : undefined}
                       step="0.01"
                       placeholder="0"
                       value={row.discountValue || ''}
                       onChange={(e) => {
-                        const val = e.target.value;
+                        let val = e.target.value;
+                        const currentType = row.discountType || (val ? 'percent' : null);
+                        if (currentType === 'percent' && parseFloat(val) > 100) {
+                          val = '100';
+                        }
                         if (val && !row.discountType) {
                           update(row.id, 'discountType', 'percent');
                         }

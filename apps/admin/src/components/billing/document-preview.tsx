@@ -149,10 +149,8 @@ export function DocumentPreview({
   // Totals - discount is applied after subtotal, before VAT
   const subtotal = lineItems.reduce((sum, i) => sum + (i.qty * i.unitPrice) - (i.discountAmount || 0), 0)
   const vatBase = subtotal - discountAmount
-  const vat = lineItems.reduce(
-    (sum, i) => sum + (i.vatApplicable ? ((i.qty * i.unitPrice) - (i.discountAmount || 0)) * (vatRate / 100) : 0),
-    0,
-  )
+  const hasVat = lineItems.some(i => i.vatApplicable)
+  const vat = hasVat ? vatBase * (vatRate / 100) : 0
   const total = vatBase + vat
 
   const hasLineItemDiscounts = lineItems.some(i => (i.discountAmount || 0) > 0)
@@ -309,7 +307,7 @@ export function DocumentPreview({
             <tbody>
               {lineItems.map((item, i) => {
                 const primaryText = item.itemName || item.description;
-                const hasSecondary = !!item.itemName && !!item.description;
+                const hasSecondary = !!item.itemName && !!item.description && item.itemName !== item.description;
                 return (
                   <tr key={i} className="border-b border-zinc-100 print:break-inside-avoid [break-inside:avoid]">
                     <td className="py-3 pr-4 text-zinc-800">
