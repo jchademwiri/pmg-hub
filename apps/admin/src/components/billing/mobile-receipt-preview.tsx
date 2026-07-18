@@ -15,20 +15,20 @@ export function MobileReceiptPreview({
   org,
   client,
   lineItems,
-  subtotal = 0,
-  discountTotal = 0,
-  vatTotal = 0,
-  grandTotal = 0,
+  subtotal,
+  discountTotal,
+  vatTotal,
+  grandTotal,
   notes,
   terms,
   banking,
   className,
 }: DocumentPreviewProps & { 
   className?: string;
-  subtotal?: number;
-  discountTotal?: number;
-  vatTotal?: number;
-  grandTotal?: number;
+  subtotal: number;
+  discountTotal: number;
+  vatTotal: number;
+  grandTotal: number;
 }) {
   const isQuote = type === 'quote';
 
@@ -60,9 +60,15 @@ export function MobileReceiptPreview({
           </div>
           <div>
             <p className="text-muted-foreground text-xs uppercase tracking-wider mb-1">
-              {isQuote ? 'Expiry' : 'Due Date'}
+              {type === 'statement' ? 'Period' : isQuote ? 'Expiry' : 'Due Date'}
             </p>
-            <p className="font-medium">{dueDate ? fmtDateLong(dueDate) : 'On Receipt'}</p>
+            <p className="font-medium">
+              {type === 'statement'
+                ? `${periodFrom ? fmtDateLong(periodFrom) : ''} - ${periodTo ? fmtDateLong(periodTo) : ''}`
+                : dueDate
+                  ? fmtDateLong(dueDate)
+                  : 'On Receipt'}
+            </p>
           </div>
           <div>
             <p className="text-muted-foreground text-xs uppercase tracking-wider mb-1">Doc #</p>

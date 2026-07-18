@@ -62,6 +62,7 @@ export default async function QuoteDetailPage({ params, searchParams }: Props) {
       description: li.description,
       qty: Number(li.quantity),
       unitPrice: Number(li.unitPrice),
+      discountAmount: Number(li.discountAmount ?? 0),
       vatApplicable: false,
     })),
     notes: quote.notes ?? divSettings?.quoteNotes ?? undefined,

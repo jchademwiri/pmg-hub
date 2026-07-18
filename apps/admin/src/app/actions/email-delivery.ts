@@ -121,8 +121,15 @@ export async function getDocumentEmailPreviewAction(rawPayload: unknown): Promis
       const [client] = await db.select().from(clients).where(eq(clients.id, documentId));
       if (!client) return { success: false, error: 'Client not found.' };
 
-      // We'll just grab the first billing config for styling since statements span divisions.
-      const [billingConfig] = await db.select().from(divisionBillingSettings).limit(1);
+      let billingConfig;
+      let divisionName = 'Playhouse Media Group';
+      if (client.divisionId) {
+        const [div] = await db.select().from(divisions).where(eq(divisions.id, client.divisionId));
+        if (div) divisionName = div.name;
+        [billingConfig] = await db.select().from(divisionBillingSettings).where(eq(divisionBillingSettings.divisionId, client.divisionId));
+      } else {
+        [billingConfig] = await db.select().from(divisionBillingSettings).limit(1);
+      }
 
       const html = await renderEmailTemplate(
         React.createElement(StatementDeliveryEmail, {
@@ -132,7 +139,7 @@ export async function getDocumentEmailPreviewAction(rawPayload: unknown): Promis
           totalAmountDue: statementData?.totalAmountDue || 'R 0.00',
           personalMessage: personalMessage || undefined,
           portalUrl: `${getPortalBaseUrl()}`,
-          companyName: 'Playhouse Media Group', // Default fallback
+          companyName: divisionName,
           primaryColor: '#1d4ed8',
           websiteUrl: billingConfig?.divisionWebsite || DEFAULT_WEBSITE_URL,
           logoUrl: billingConfig?.logoUrl || undefined,
@@ -521,11 +528,18 @@ export async function sendDocumentEmailAction(rawPayload: unknown) {
       const [client] = await db.select().from(clients).where(eq(clients.id, documentId));
       if (!client) return { error: 'Client not found.' };
 
-      // Try to find a division this client belongs to, or just use the first billing config
-      const [billingConfig] = await db.select().from(divisionBillingSettings).limit(1);
+      let billingConfig;
+      let divisionName: string | undefined;
+      if (client.divisionId) {
+        const [div] = await db.select().from(divisions).where(eq(divisions.id, client.divisionId));
+        if (div) divisionName = div.name;
+        [billingConfig] = await db.select().from(divisionBillingSettings).where(eq(divisionBillingSettings.divisionId, client.divisionId));
+      } else {
+        [billingConfig] = await db.select().from(divisionBillingSettings).limit(1);
+      }
 
-      const apiKey = resolveResendApiKey(undefined);
-      const defaultFrom = resolveDefaultFromEmail(undefined);
+      const apiKey = resolveResendApiKey(divisionName);
+      const defaultFrom = resolveDefaultFromEmail(divisionName);
       const fromName = billingConfig?.salesRepName || process.env.EMAIL_FROM_NAME || 'PMG Admin';
       const fromEmail = resolveFromEmail(billingConfig?.divisionWebsite, defaultFrom);
 
@@ -543,7 +557,7 @@ export async function sendDocumentEmailAction(rawPayload: unknown) {
         totalAmountDue: statementData?.totalAmountDue || 'R 0.00',
         personalMessage: personalMessage || undefined,
         portalUrl: `${portalBaseUrl}`,
-        companyName: 'Playhouse Media Group', // Default fallback
+        companyName: divisionName || 'Playhouse Media Group',
         primaryColor: '#1d4ed8',
         websiteUrl: billingConfig?.divisionWebsite || DEFAULT_WEBSITE_URL,
         logoUrl: billingConfig?.logoUrl || undefined,

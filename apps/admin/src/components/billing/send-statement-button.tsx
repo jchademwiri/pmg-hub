@@ -60,27 +60,36 @@ export function SendStatementButton({
       setIsPreviewLoading(true);
       setPreviewError(null);
 
-      const result = await getDocumentEmailPreviewAction({
-        documentId: clientId,
-        documentType: 'statement',
-        personalMessage: message || undefined,
-        statementData: {
-          statementDate,
-          period,
-          totalAmountDue,
+      try {
+        const result = await getDocumentEmailPreviewAction({
+          documentId: clientId,
+          documentType: 'statement',
+          personalMessage: message || undefined,
+          statementData: {
+            statementDate,
+            period,
+            totalAmountDue,
+          }
+        });
+
+        if (cancelled) return;
+
+        if (result.success && result.html) {
+          setPreviewHtml(result.html);
+        } else {
+          setPreviewHtml('');
+          setPreviewError(result.error ?? 'Preview failed.');
         }
-      });
-
-      if (cancelled) return;
-
-      if (result.success && result.html) {
-        setPreviewHtml(result.html);
-      } else {
+      } catch (err) {
+        if (cancelled) return;
         setPreviewHtml('');
-        setPreviewError(result.error ?? 'Preview failed.');
+        setPreviewError('Failed to load preview.');
+        console.error('Statement preview failed:', err);
+      } finally {
+        if (!cancelled) {
+          setIsPreviewLoading(false);
+        }
       }
-
-      setIsPreviewLoading(false);
     }, 350);
 
     return () => {

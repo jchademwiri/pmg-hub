@@ -157,7 +157,7 @@ export function EmailDocumentDialog({
         <DialogHeader className="border-b px-5 py-4 shrink-0">
           <DialogTitle>Email {documentType === 'invoice' ? 'Invoice' : 'Quotation'}</DialogTitle>
           <DialogDescription>
-            Send document **{documentNumber}** directly to the client as a high-fidelity PDF attachment.
+            Send document <strong>{documentNumber}</strong> directly to the client as a high-fidelity PDF attachment.
           </DialogDescription>
         </DialogHeader>
 
