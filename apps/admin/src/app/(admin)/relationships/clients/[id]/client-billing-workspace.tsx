@@ -739,9 +739,9 @@ export function ClientBillingWorkspace({
           base64Pdf,
         });
 
-        if (result.error) {
+        if (!result || result.error) {
           setBulkLog((prev) =>
-            prev.map((e) => (e.id === id ? { ...e, status: 'failed', error: result.error } : e))
+            prev.map((e) => (e.id === id ? { ...e, status: 'failed', error: result?.error ?? 'Network error' } : e))
           );
         } else {
           setBulkLog((prev) =>

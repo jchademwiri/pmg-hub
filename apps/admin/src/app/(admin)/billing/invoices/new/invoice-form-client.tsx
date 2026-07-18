@@ -120,8 +120,8 @@ export function InvoiceFormClient({
             description: li.description,
             quantity: li.quantity,
             unitPrice: li.unitPrice,
-            discountType: li.discountType ?? null,
-            discountValue: li.discountValue ?? '',
+            discountType: null,
+            discountValue: '',
           };
         })
       : [blankRow()],

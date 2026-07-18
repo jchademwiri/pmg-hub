@@ -508,8 +508,8 @@ export async function sendDocumentEmailAction(rawPayload: unknown) {
       // Try to find a division this client belongs to, or just use the first billing config
       const [billingConfig] = await db.select().from(divisionBillingSettings).limit(1);
 
-      const apiKey = resolveResendApiKey();
-      const defaultFrom = resolveDefaultFromEmail();
+      const apiKey = resolveResendApiKey(undefined);
+      const defaultFrom = resolveDefaultFromEmail(undefined);
       const fromName = billingConfig?.salesRepName || process.env.EMAIL_FROM_NAME || 'PMG Admin';
       const fromEmail = resolveFromEmail(billingConfig?.divisionWebsite, defaultFrom);
 

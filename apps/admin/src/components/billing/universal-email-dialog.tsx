@@ -277,8 +277,8 @@ export function UniversalEmailDialog({
         });
       }
 
-      if (result.error) {
-        toast.error(result.error);
+      if (!result || result.error) {
+        toast.error(result?.error || 'Failed to send email.');
       } else {
         toast.success(`${docLabel} emailed successfully!`);
         handleOpenChange(false);

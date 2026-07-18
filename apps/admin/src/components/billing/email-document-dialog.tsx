@@ -128,8 +128,8 @@ export function EmailDocumentDialog({
         base64StatementPdf: statementBase64,
       });
 
-      if (result.error) {
-        toast.error(result.error);
+      if (!result || result.error) {
+        toast.error(result?.error ?? 'Network error');
       } else {
         toast.success(`${documentType === 'invoice' ? 'Invoice' : 'Quote'} emailed successfully!`);
         setOpen(false);

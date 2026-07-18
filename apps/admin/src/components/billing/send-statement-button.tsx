@@ -115,8 +115,8 @@ export function SendStatementButton({
         }
       });
 
-      if (result.error) {
-        toast.error(result.error);
+      if (!result || result.error) {
+        toast.error(result?.error ?? 'Network error');
       } else {
         toast.success('Statement emailed successfully!');
         setOpen(false);

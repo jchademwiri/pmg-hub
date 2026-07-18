@@ -23,7 +23,13 @@ export function MobileReceiptPreview({
   terms,
   banking,
   className,
-}: DocumentPreviewProps & { className?: string }) {
+}: DocumentPreviewProps & { 
+  className?: string;
+  subtotal?: number;
+  discountTotal?: number;
+  vatTotal?: number;
+  grandTotal?: number;
+}) {
   const isQuote = type === 'quote';
 
   return (
