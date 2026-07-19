@@ -126,57 +126,68 @@ export default async function PaymentsPage({ searchParams }: PaymentsPageProps) 
           <h2 className="text-lg font-semibold">Payments Received</h2>
           <p className="text-sm text-muted-foreground">Monitor cash entries, allocations, and client deposits</p>
         </div>
-        <div className="flex items-center gap-2">
-          <Button asChild size="sm">
+        <div className="flex items-center gap-3">
+          <Button asChild size="sm" className="hidden md:flex">
             <Link href="/billing/payments/add">
-              <Plus className="size-4" />
+              <Plus className="size-4 mr-2" />
               Record Payment
             </Link>
           </Button>
         </div>
       </div>
 
+      {/* Mobile FAB */}
+      <Button asChild size="icon" className="md:hidden fixed bottom-24 right-6 z-50 rounded-full shadow-lg h-14 w-14">
+        <Link href="/billing/payments/add">
+          <Plus className="size-6" />
+        </Link>
+      </Button>
+
       {/* Metrics Overview */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        <Card className="shadow-sm">
-          <CardHeader className="flex flex-row items-center justify-between pb-2">
-            <CardTitle className="text-sm font-medium text-muted-foreground">Total Received</CardTitle>
-            <Download className="size-4 text-emerald-500" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold text-emerald-600 dark:text-emerald-400">{formatZAR(globalReceived)}</div>
-            <p className="text-xs text-muted-foreground mt-1">For the current financial year</p>
-          </CardContent>
+      <div className="grid grid-cols-2 md:grid-cols-3 gap-3 md:gap-4">
+        <Card className="shadow-sm flex flex-col p-4 md:p-6 justify-center gap-1.5 md:gap-2">
+          <div className="flex items-center justify-between">
+            <h3 className="text-xs md:text-sm font-medium text-muted-foreground">Received</h3>
+            <Download className="size-3.5 md:size-4 text-emerald-500 shrink-0" />
+          </div>
+          <div>
+            <div className="text-base sm:text-lg md:text-2xl font-bold text-emerald-600 dark:text-emerald-400 truncate" title={formatZAR(globalReceived)}>{formatZAR(globalReceived)}</div>
+            <p className="text-[10px] md:text-xs text-muted-foreground truncate mt-0.5">Current FY</p>
+          </div>
         </Card>
-        <Card className="shadow-sm">
-          <CardHeader className="flex flex-row items-center justify-between pb-2">
-            <CardTitle className="text-sm font-medium text-muted-foreground">Total Allocated</CardTitle>
-            <CheckCircle2 className="size-4 text-primary" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{formatZAR(globalAllocated)}</div>
-            <p className="text-xs text-muted-foreground mt-1">Matched to invoices</p>
-          </CardContent>
+        
+        <Card className="shadow-sm flex flex-col p-4 md:p-6 justify-center gap-1.5 md:gap-2">
+          <div className="flex items-center justify-between">
+            <h3 className="text-xs md:text-sm font-medium text-muted-foreground">Allocated</h3>
+            <CheckCircle2 className="size-3.5 md:size-4 text-primary shrink-0" />
+          </div>
+          <div>
+            <div className="text-base sm:text-lg md:text-2xl font-bold truncate" title={formatZAR(globalAllocated)}>{formatZAR(globalAllocated)}</div>
+            <p className="text-[10px] md:text-xs text-muted-foreground truncate mt-0.5">Matched to invoices</p>
+          </div>
         </Card>
-        <Card className="shadow-sm">
-          <CardHeader className="flex flex-row items-center justify-between pb-2">
-            <CardTitle className="text-sm font-medium text-muted-foreground">Unallocated Credits</CardTitle>
-            <AlertCircle className={`size-4 ${globalUnallocated > 0 ? 'text-amber-500' : 'text-muted-foreground'}`} />
-          </CardHeader>
-          <CardContent>
-            <div className={`text-2xl font-bold ${globalUnallocated > 0 ? 'text-amber-600 dark:text-amber-400' : 'text-emerald-600 dark:text-emerald-400'}`}>
+        
+        <Card className="shadow-sm col-span-2 md:col-span-1 flex flex-col p-4 md:p-6 justify-center gap-1.5 md:gap-2 border-amber-500/20 bg-amber-500/5">
+          <div className="flex items-center justify-between">
+            <h3 className="text-xs md:text-sm font-semibold text-amber-600/80 dark:text-amber-500/80 uppercase tracking-wider">Unallocated</h3>
+            <AlertCircle className={`size-3.5 md:size-4 shrink-0 ${globalUnallocated > 0 ? 'text-amber-600 dark:text-amber-500' : 'text-emerald-600 dark:text-emerald-500'}`} />
+          </div>
+          <div>
+            <div className={`text-xl md:text-2xl font-bold truncate ${globalUnallocated > 0 ? 'text-amber-600 dark:text-amber-500' : 'text-emerald-600 dark:text-emerald-500'}`} title={formatZAR(globalUnallocated)}>
               {formatZAR(globalUnallocated)}
             </div>
-            <p className="text-xs text-muted-foreground mt-1">Pending allocation</p>
-          </CardContent>
+            <p className="text-[10px] md:text-xs text-amber-600/70 dark:text-amber-500/70 truncate mt-0.5 font-medium">Pending allocation</p>
+          </div>
         </Card>
       </div>
 
-      <FilterBar
-        divisions={divisions}
-        currentDivisionId={divisionId}
-        baseUrl="/billing/payments"
-      />
+      <div className="hidden md:block">
+        <FilterBar
+          divisions={divisions}
+          currentDivisionId={divisionId}
+          baseUrl="/billing/payments"
+        />
+      </div>
 
       <Accordion type="single" collapsible defaultValue={currentMonthGroup.value} className="w-full flex flex-col gap-4">
         {[currentMonthGroup, ...previousMonths].map((m, idx) => {
@@ -190,28 +201,33 @@ export default async function PaymentsPage({ searchParams }: PaymentsPageProps) 
 
           return (
             <AccordionItem key={m.value} value={m.value} className="border bg-card rounded-lg px-6 data-[state=open]:pb-6">
-              <AccordionTrigger className="flex items-center w-full pr-4 hover:no-underline group/trigger">
-                <span className="flex-1 text-left text-lg font-medium text-muted-foreground group-data-[state=open]/trigger:text-foreground transition-colors">
-                  {isCurrent ? `Current Month (${m.label})` : m.label}
-                </span>
-                
-                {/* Summary Badges */}
-                <div className="flex items-center gap-3 pr-2">
-                  <div className="px-2.5 py-0.5 rounded-full bg-muted/50 text-xs text-muted-foreground border border-border/50 hidden sm:block">
-                    {count} {count === 1 ? 'payment' : 'payments'}
-                  </div>
-                  <div className="px-2.5 py-0.5 rounded-full bg-emerald-500/10 text-xs text-emerald-600 dark:text-emerald-400 font-medium border border-emerald-500/20">
-                    Received: {formatZAR(received)}
-                  </div>
-                  {count > 0 && (
-                    <div className={`px-2.5 py-0.5 rounded-full text-xs font-medium border ${
-                      hasUnallocated 
-                        ? 'bg-amber-500/10 text-amber-600 dark:text-amber-400 border-amber-500/20' 
-                        : 'bg-primary/10 text-primary border-primary/20'
-                    }`}>
-                      {hasUnallocated ? `Unallocated: ${formatZAR(unallocated)}` : 'Fully Allocated'}
+              <AccordionTrigger className="hover:no-underline py-4">
+                <div className="flex flex-1 items-center justify-between text-left pr-4">
+                  <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-4 w-full">
+                    <span className="font-semibold text-base sm:text-lg">
+                      {isCurrent ? `Current Month (${m.label})` : m.label}
+                    </span>
+                    <div className="flex flex-wrap items-center gap-2">
+                      {count > 0 ? (
+                        <>
+                          <span className="text-[11px] font-medium px-2.5 py-1 rounded-full bg-emerald-500/10 border border-emerald-500/20 text-emerald-600 dark:text-emerald-500 tabular-nums">
+                            Received: {formatZAR(received)}
+                          </span>
+                          {hasUnallocated ? (
+                            <span className="text-[11px] font-semibold px-2.5 py-1 rounded-full bg-amber-500/10 border border-amber-500/20 text-amber-600 dark:text-amber-500 tabular-nums">
+                              Unallocated: {formatZAR(unallocated)}
+                            </span>
+                          ) : (
+                            <span className="text-[11px] font-semibold px-2.5 py-1 rounded-full bg-primary/10 border border-primary/20 text-primary">
+                              Fully Allocated
+                            </span>
+                          )}
+                        </>
+                      ) : (
+                        <span className="text-[11px] text-muted-foreground">No payments</span>
+                      )}
                     </div>
-                  )}
+                  </div>
                 </div>
               </AccordionTrigger>
               <AccordionContent className="pt-2">

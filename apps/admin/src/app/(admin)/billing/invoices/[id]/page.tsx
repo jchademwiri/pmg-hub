@@ -9,6 +9,7 @@ import { Separator } from '@/components/ui/separator';
 import { DocumentPreview } from '@/components/billing/document-preview';
 import { BillingStatusBadge } from '@/components/billing/billing-status-badge';
 import { BillingTotalsBlock } from '@/components/billing/billing-totals-block';
+import { MobileReceiptPreview } from '@/components/billing/mobile-receipt-preview';
 import { getInvoiceById, getDivisionBillingSettings, getDb, paymentAllocations, income, sql, desc, eq, getClientStatement, getAllIncome, getOrganisationSettings } from '@pmg/db';
 import { UniversalEmailDialog } from '@/components/billing/universal-email-dialog';
 import { issueInvoice, markInvoicePaid, voidInvoice, writeOffInvoice } from '@/app/actions/billing-invoices';
@@ -20,6 +21,7 @@ import { PrintButton } from '@/components/billing/print-button';
 import { ExportPdfButton } from '@/components/billing/export-pdf-button';
 import { getClientCreditBalanceV2 } from '@/app/actions/credit-management';
 import { ApplyCreditButton } from '@/components/billing/apply-credit-button';
+import { SetPageLabel } from '@/components/navigation/page-header-context';
 
 export const dynamic = 'force-dynamic';
 
@@ -161,17 +163,18 @@ export default async function InvoiceDetailPage({ params }: Props) {
   const canEdit = !['paid', 'void', 'written_off'].includes(invoice.status);
 
   return (
-    <div className="flex flex-col gap-6">
+    <div className="flex flex-col gap-6 pb-32 lg:pb-0">
+      <SetPageLabel value="Invoice Details" />
       {/* Page header */}
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div className="flex items-center gap-4">
-          <Button variant="ghost" size="sm" asChild>
+          <Button variant="ghost" size="sm" asChild className="hidden sm:flex">
             <Link href="/billing/invoices">
               <ChevronLeft className="size-4" />
               Back
             </Link>
           </Button>
-          <Separator orientation="vertical" className="h-5" />
+          <Separator orientation="vertical" className="h-5 hidden sm:block" />
           <div>
             <div className="flex items-center gap-2 flex-wrap">
               <h2 className="text-lg font-semibold">{invoice.documentNumber}</h2>
@@ -192,10 +195,12 @@ export default async function InvoiceDetailPage({ params }: Props) {
           </div>
         </div>
         <div className="flex items-center gap-2 flex-wrap justify-end">
-          <PrintButton 
-            label="Print"
-            documentTitle={`Invoice-${invoice.documentNumber}`} 
-          />
+          <div className="hidden sm:block">
+            <PrintButton 
+              label="Print"
+              documentTitle={`Invoice-${invoice.documentNumber}`} 
+            />
+          </div>
           <ExportPdfButton 
             fileName={`Invoice-${invoice.documentNumber}`}
             pdfUrl={invoicePdfUrl}
@@ -222,11 +227,21 @@ export default async function InvoiceDetailPage({ params }: Props) {
         </div>
       </div>
 
-      {/* Two-column layout */}
-      <div className="grid grid-cols-1 gap-6 lg:grid-cols-3 lg:items-start">
-        {/* Document preview - scrollable on small screens */}
-        <div className="lg:col-span-2 overflow-x-auto">
+      {/* Main layout */}
+      <div className="flex flex-col-reverse gap-6 lg:grid lg:grid-cols-3 lg:items-start">
+        {/* Document preview - scrollable on desktop */}
+        <div className="hidden lg:block lg:col-span-2 overflow-x-auto">
           <DocumentPreview id="printable-area" type="invoice" {...docPreviewProps} />
+        </div>
+        <div className="block lg:hidden w-full">
+          <MobileReceiptPreview
+            type="invoice"
+            {...docPreviewProps}
+            subtotal={Number(invoice.subtotal)}
+            discountTotal={Number(invoice.discountAmount ?? 0)}
+            vatTotal={Number(invoice.vatAmount)}
+            grandTotal={Number(invoice.total)}
+          />
         </div>
 
         {/* Sidebar */}
@@ -284,20 +299,22 @@ export default async function InvoiceDetailPage({ params }: Props) {
             </Card>
           )}
 
-          <Card size="sm">
-            <CardHeader>
-              <CardTitle>Summary</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <BillingTotalsBlock
-                subtotal={Number(invoice.subtotal)}
-                discountAmount={Number(invoice.discountAmount ?? 0)}
-                vatEnabled={invoice.vatEnabled}
-                vatAmount={Number(invoice.vatAmount)}
-                total={Number(invoice.total)}
-              />
-            </CardContent>
-          </Card>
+          <div className="hidden lg:block">
+            <Card size="sm">
+              <CardHeader>
+                <CardTitle>Summary</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <BillingTotalsBlock
+                  subtotal={Number(invoice.subtotal)}
+                  discountAmount={Number(invoice.discountAmount ?? 0)}
+                  vatEnabled={invoice.vatEnabled}
+                  vatAmount={Number(invoice.vatAmount)}
+                  total={Number(invoice.total)}
+                />
+              </CardContent>
+            </Card>
+          </div>
 
           <Card size="sm">
             <CardHeader>

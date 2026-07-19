@@ -58,7 +58,7 @@ interface NavMenuProps {
   onNavigate: () => void
 }
 
-function NavMenu({ items, pathname, onNavigate }: NavMenuProps) {
+const NavMenu = React.memo(function NavMenu({ items, pathname, onNavigate }: NavMenuProps) {
   return (
     <SidebarMenu>
       {items.map((item) => {
@@ -83,7 +83,7 @@ function NavMenu({ items, pathname, onNavigate }: NavMenuProps) {
       })}
     </SidebarMenu>
   )
-}
+})
 
 interface CollapsibleGroupProps {
   group: NavGroup
@@ -93,7 +93,7 @@ interface CollapsibleGroupProps {
   onNavigate: () => void
 }
 
-function CollapsibleGroup({ group, isOpen, pathname, onToggle, onNavigate }: CollapsibleGroupProps) {
+const CollapsibleGroup = React.memo(function CollapsibleGroup({ group, isOpen, pathname, onToggle, onNavigate }: CollapsibleGroupProps) {
   return (
     <Collapsible
       open={isOpen}
@@ -118,7 +118,7 @@ function CollapsibleGroup({ group, isOpen, pathname, onToggle, onNavigate }: Col
       </SidebarGroup>
     </Collapsible>
   )
-}
+})
 
 // ── AppSidebar ────────────────────────────────────────────────────────────────
 
@@ -130,7 +130,7 @@ const MAIN_GROUPS = GROUPS.filter((g) => g.key !== 'system' && g.key !== 'advanc
 const ADVANCED_GROUP = GROUPS.find((g) => g.key === 'advanced')
 const SYSTEM_GROUP = GROUPS.find((g) => g.key === 'system')!
 
-export function AppSidebar({ user }: AppSidebarProps) {
+export const AppSidebar = React.memo(function AppSidebar({ user }: AppSidebarProps) {
   const pathname = usePathname()
   const { isMobile, setOpenMobile } = useSidebar()
 
@@ -242,4 +242,4 @@ export function AppSidebar({ user }: AppSidebarProps) {
       </SidebarFooter>
     </Sidebar>
   )
-}
+})

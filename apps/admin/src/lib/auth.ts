@@ -14,7 +14,9 @@ import { createEmailClient, MagicLinkEmail, DEFAULT_EMAIL_FROM, DEFAULT_REPLY_TO
 export const auth = betterAuth({
   secret: process.env.BETTER_AUTH_SECRET,
   baseURL: process.env.BETTER_AUTH_URL,
-  trustedOrigins: process.env.BETTER_AUTH_URL ? [process.env.BETTER_AUTH_URL] : [],
+  trustedOrigins: process.env.BETTER_AUTH_URL 
+    ? [process.env.BETTER_AUTH_URL, "http://192.168.0.190:3000"] 
+    : ["http://192.168.0.190:3000"],
   database: drizzleAdapter(getDb(), { provider: 'pg' }),
 
   emailAndPassword: {

@@ -28,6 +28,7 @@ export async function GET(
   const url = new URL(req.url);
   const year = url.searchParams.get('year');
   const monthPeriod = url.searchParams.get('monthPeriod');
+  const statementType = url.searchParams.get('statementType');
   const yearNum = year == null ? undefined : Number(year);
   if (year != null && (year.trim() === '' || !Number.isFinite(yearNum) || !Number.isInteger(yearNum))) {
     return NextResponse.json({ error: 'Invalid year parameter.' }, { status: 400 });
@@ -37,6 +38,9 @@ export async function GET(
     ...(yearNum != null ? { year: yearNum } : {}),
     ...(monthPeriod && PERIODS.has(monthPeriod)
       ? { monthPeriod: monthPeriod as 'current' | 'previous' | 'past3' | 'past6' }
+      : {}),
+    ...(statementType === 'outstanding' || statementType === 'activity'
+      ? { statementType: statementType as 'outstanding' | 'activity' }
       : {}),
   };
 

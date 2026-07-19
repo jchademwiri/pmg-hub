@@ -12,6 +12,7 @@ export interface LineItem {
   description: string
   qty: number
   unitPrice: number
+  discountAmount?: number
   vatApplicable: boolean
 }
 
@@ -146,13 +147,13 @@ export function DocumentPreview({
   openingBalance,
 }: DocumentPreviewProps) {
   // Totals - discount is applied after subtotal, before VAT
-  const subtotal = lineItems.reduce((sum, i) => sum + i.qty * i.unitPrice, 0)
+  const subtotal = lineItems.reduce((sum, i) => sum + (i.qty * i.unitPrice) - (i.discountAmount || 0), 0)
   const vatBase = subtotal - discountAmount
-  const vat = lineItems.reduce(
-    (sum, i) => sum + (i.vatApplicable ? i.qty * i.unitPrice * (vatRate / 100) : 0),
-    0,
-  )
+  const hasVat = lineItems.some(i => i.vatApplicable)
+  const vat = hasVat ? vatBase * (vatRate / 100) : 0
   const total = vatBase + vat
+
+  const hasLineItemDiscounts = lineItems.some(i => (i.discountAmount || 0) > 0)
 
   const typeLabel =
     type === 'invoice' ? 'Invoice' : type === 'quote' ? 'Quotation' : 'Statement'
@@ -293,6 +294,11 @@ export function DocumentPreview({
                 <th className="py-2.5 px-4 text-right text-[10px] font-semibold uppercase tracking-widest text-zinc-400 print:text-zinc-600">
                   Unit Price
                 </th>
+                {hasLineItemDiscounts && (
+                  <th className="py-2.5 px-4 text-right text-[10px] font-semibold uppercase tracking-widest text-zinc-400 print:text-zinc-600">
+                    Discount
+                  </th>
+                )}
                 <th className="py-2.5 pl-4 text-right text-[10px] font-semibold uppercase tracking-widest text-zinc-400 print:text-zinc-600">
                   Amount
                 </th>
@@ -301,7 +307,7 @@ export function DocumentPreview({
             <tbody>
               {lineItems.map((item, i) => {
                 const primaryText = item.itemName || item.description;
-                const hasSecondary = !!item.itemName && !!item.description && item.description.trim().toLowerCase() !== item.itemName.trim().toLowerCase();
+                const hasSecondary = !!item.itemName && !!item.description && item.itemName !== item.description;
                 return (
                   <tr key={i} className="border-b border-zinc-100 print:break-inside-avoid [break-inside:avoid]">
                     <td className="py-3 pr-4 text-zinc-800">
@@ -314,7 +320,12 @@ export function DocumentPreview({
                     </td>
                     <td className="py-3 px-4 text-right tabular-nums text-zinc-600">{item.qty}</td>
                     <td className="py-3 px-4 text-right tabular-nums text-zinc-600">{fmt(item.unitPrice)}</td>
-                    <td className="py-3 pl-4 text-right tabular-nums font-medium">{fmt(item.qty * item.unitPrice)}</td>
+                    {hasLineItemDiscounts && (
+                      <td className="py-3 px-4 text-right tabular-nums text-zinc-600">
+                        {item.discountAmount ? fmt(item.discountAmount) : '-'}
+                      </td>
+                    )}
+                    <td className="py-3 pl-4 text-right tabular-nums font-medium text-zinc-900">{fmt((item.qty * item.unitPrice) - (item.discountAmount || 0))}</td>
                   </tr>
                 );
               })}

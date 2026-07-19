@@ -12,7 +12,7 @@ import { Badge } from '@/components/ui/badge'
 import { AgingReportGrid } from '@/components/dashboard/aging-report-grid'
 import { ProjectSummaryCard } from '@/components/dashboard/project-summary-card'
 import type { TenderSummaryData } from '@/components/dashboard/project-summary-card'
-import { fmtMonthYear } from '@/lib/format'
+import { fmtMonthYear, formatZAR, fmtDate } from '@/lib/format'
 import type { AgingRow } from '@pmg/db'
 import type { PeriodSummary, DivisionRevenue as DivisionRevenueType, LeadStatusCount, MonthlyFinancials, MonthlyBudgetChartRow } from '@/lib/financial'
 import type { ProjectScheduleEntry, CurrentWorkload } from '@pmg/db'
@@ -54,7 +54,6 @@ type Props = {
 const TABS: { key: Tab; label: string }[] = [
   { key: 'current',  label: 'Current Month' },
   { key: 'previous', label: 'Previous Month' },
-  { key: 'ytd',      label: 'Year to Date' },
 ]
 
 export function DashboardShell({
@@ -123,14 +122,18 @@ export function DashboardShell({
     activeTab === 'previous' ? 'vs current month' :
     'vs prev year'
 
+  const currentBalance = agingReport.find(r => r.bucket === 'current')?.total || 0;
+  const over15Balance = agingReport.reduce((acc, row) => acc + (['15_30', '31_60', '61_plus'].includes(row.bucket) ? row.total : 0), 0);
+  const overdueBalance = agingReport.reduce((acc, row) => acc + (row.bucket !== 'current' ? row.total : 0), 0);
+
   return (
     <div className="flex flex-col gap-5">
 
       {/* ── Period tabs ── */}
       <div className="flex items-center justify-between gap-3">
-        <div className="flex items-center gap-3">
-          <Tabs value={activeTab} onValueChange={handleTabChange}>
-            <TabsList>
+        <div className="flex items-center gap-3 w-full">
+          <Tabs value={activeTab} onValueChange={handleTabChange} className="w-full">
+            <TabsList className="grid w-full grid-cols-2">
               {TABS.map((tab) => (
                 <TabsTrigger key={tab.key} value={tab.key}>
                   {tab.label}
@@ -138,17 +141,18 @@ export function DashboardShell({
               ))}
             </TabsList>
           </Tabs>
-          <span className="text-xs text-muted-foreground/70">{activeLabel}</span>
         </div>
 
         {/* Close Month button on the far right of the tabs bar */}
-        {hasSnapshot ? (
-          <Badge variant="secondary">{fmtMonthYear(currentPeriod)} closed</Badge>
-        ) : (
-          showCloseMonthButton && (
-            <CloseMonthButton period={currentPeriod} />
-          )
-        )}
+        <div className="hidden md:block">
+          {hasSnapshot ? (
+            <Badge variant="secondary">{fmtMonthYear(currentPeriod)} closed</Badge>
+          ) : (
+            showCloseMonthButton && (
+              <CloseMonthButton period={currentPeriod} />
+            )
+          )}
+        </div>
       </div>
 
       {/* ── Mobile: Urgent Alerts Strip ── */}
@@ -162,12 +166,21 @@ export function DashboardShell({
             </AlertDescription>
           </Alert>
         )}
-        {agingReport.reduce((acc, row) => acc + (row.bucket !== 'current' ? row.total : 0), 0) > 0 && (
+        {overdueBalance > 0 && (
           <Alert variant="destructive" className="bg-orange-500/10 text-orange-600 border-orange-500/20 dark:text-orange-400">
             <AlertCircle className="h-4 w-4 text-orange-600 dark:text-orange-400" />
             <AlertTitle>Outstanding Invoices</AlertTitle>
-            <AlertDescription>
-              There are overdue invoices requiring attention.
+            <AlertDescription className="mt-3">
+              <div className="flex items-center justify-between gap-4">
+                <div className="flex flex-col gap-1">
+                  <span className="text-xs font-medium opacity-80 uppercase tracking-wider text-emerald-600 dark:text-emerald-400">Current</span>
+                  <span className="font-semibold text-emerald-600 dark:text-emerald-400">{formatZAR(currentBalance)}</span>
+                </div>
+                <div className="flex flex-col gap-1 text-right">
+                  <span className="text-xs font-medium opacity-80 uppercase tracking-wider text-red-600 dark:text-red-400">15+ Days</span>
+                  <span className="font-semibold text-red-600 dark:text-red-400">{formatZAR(over15Balance)}</span>
+                </div>
+              </div>
             </AlertDescription>
           </Alert>
         )}
@@ -190,7 +203,7 @@ export function DashboardShell({
                </div>
                {project.closingDate && (
                  <div className="flex items-center gap-2 text-xs text-muted-foreground">
-                    <Clock className="h-3 w-3" /> Due {new Date(project.closingDate).toLocaleDateString()}
+                    <Clock className="h-3 w-3" /> Due {fmtDate(project.closingDate)}
                  </div>
                )}
             </div>

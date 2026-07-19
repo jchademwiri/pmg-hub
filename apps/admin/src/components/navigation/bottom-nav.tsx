@@ -13,10 +13,17 @@ export function BottomNav() {
   const isMobile = useIsMobile()
 
   if (!isMobile) return null
+  
+  // Hide on detail/form pages to allow Sticky Action Bars to anchor to the bottom
+  const isDeepPage = pathname.match(/\/(new|[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12})/i)
+  if (isDeepPage) return null
 
   return (
-    <div className="md:hidden fixed bottom-0 left-0 right-0 z-40 border-t border-border bg-card/95 backdrop-blur-md pb-safe print:hidden">
-      <div className="flex h-16 items-center justify-around px-2">
+    <div
+      className="md:hidden fixed bottom-0 left-0 right-0 z-40 border-t border-border bg-card/95 backdrop-blur-md print:hidden"
+      style={{ paddingBottom: 'max(env(safe-area-inset-bottom), 8px)' }}
+    >
+      <div className="grid grid-cols-4 h-16 px-2 w-full overflow-hidden">
         <Link href="/dashboard" className={`flex flex-col items-center justify-center w-full h-full space-y-1 ${pathname === '/dashboard' ? 'text-primary' : 'text-muted-foreground hover:text-foreground'}`}>
           <LayoutDashboard className="size-5" />
           <span className="text-[10px] font-medium">Dashboard</span>

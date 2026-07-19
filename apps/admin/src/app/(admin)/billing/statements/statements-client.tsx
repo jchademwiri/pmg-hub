@@ -127,8 +127,8 @@ export function StatementsClient({ initialClients }: StatementsClientProps) {
         </div>
       </div>
 
-      {/* Main Table without card background/border */}
-      <div className="overflow-x-auto">
+      {/* Desktop Table View */}
+      <div className="hidden md:block overflow-x-auto">
         <Table>
           <TableHeader>
             <TableRow>
@@ -233,6 +233,58 @@ export function StatementsClient({ initialClients }: StatementsClientProps) {
             )}
           </TableBody>
         </Table>
+      </div>
+
+      {/* Mobile List View */}
+      <div className="md:hidden flex flex-col gap-3">
+        {sortedClients.length === 0 ? (
+          <div className="text-center text-muted-foreground text-xs py-8 border border-dashed rounded-lg">
+            {searchTerm || filterType !== 'all'
+              ? 'No statement records found matching the criteria.'
+              : 'No client statements available yet.'}
+          </div>
+        ) : (
+          sortedClients.map((client) => {
+            const hasOutstanding = client.totalOutstanding > 0;
+            return (
+              <div 
+                key={client.id}
+                onClick={() => router.push(`/billing/statements/${client.id}`)}
+                className="flex flex-col gap-2 p-4 bg-card border border-border rounded-xl shadow-sm cursor-pointer hover:bg-muted/40 transition-colors"
+              >
+                <div className="flex items-start justify-between gap-2">
+                  <div className="flex flex-col">
+                    <span className="font-semibold text-sm hover:text-primary hover:underline flex items-center gap-2">
+                      {client.businessName ?? client.name}
+                      {hasOutstanding && <span className="inline-flex h-1.5 w-1.5 rounded-full bg-red-500" title="Has outstanding balance" />}
+                    </span>
+                  </div>
+                  <span className="text-[10px] text-muted-foreground whitespace-nowrap pt-0.5">
+                    {client.lastActivityDate ? fmtDate(client.lastActivityDate) : 'No activity'}
+                  </span>
+                </div>
+                
+                <div className="grid grid-cols-2 gap-4 mt-2 pt-3 border-t border-border/50">
+                   <div className="flex flex-col gap-1">
+                     <span className="text-[10px] text-muted-foreground uppercase tracking-wider font-medium">Invoiced</span>
+                     <span className="text-xs font-semibold">{formatZAR(client.totalInvoiced)}</span>
+                   </div>
+                   <div className="flex flex-col gap-1 text-right">
+                     <span className="text-[10px] text-muted-foreground uppercase tracking-wider font-medium">Paid</span>
+                     <span className="text-xs font-semibold text-emerald-600 dark:text-emerald-400">{formatZAR(client.totalPaid)}</span>
+                   </div>
+                </div>
+                
+                <div className="flex items-center justify-between mt-1 pt-3 border-t border-border/50 bg-muted/20 -mx-4 -mb-4 px-4 pb-4 pt-3 rounded-b-xl">
+                  <span className="text-[10px] text-muted-foreground uppercase tracking-wider font-medium">Outstanding</span>
+                  <span className={hasOutstanding ? "text-xs font-bold text-red-500" : "text-xs font-medium text-muted-foreground"}>
+                    {formatZAR(client.totalOutstanding)}
+                  </span>
+                </div>
+              </div>
+            );
+          })
+        )}
       </div>
       {/* Search results summary */}
       {filteredClients.length < initialClients.length && (

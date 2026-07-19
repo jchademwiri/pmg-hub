@@ -9,15 +9,17 @@ import { Separator } from '@/components/ui/separator';
 import { DocumentPreview } from '@/components/billing/document-preview';
 import { BillingStatusBadge } from '@/components/billing/billing-status-badge';
 import { BillingTotalsBlock } from '@/components/billing/billing-totals-block';
+import { MobileReceiptPreview } from '@/components/billing/mobile-receipt-preview';
 import { getQuotationById, getDivisionBillingSettings } from '@pmg/db';
 import { updateQuotationStatus, deleteQuotation, duplicateQuotation } from '@/app/actions/billing-quotes';
-import { fmtDate, fmtDateTime } from '@/lib/format';
+import { fmtDate, fmtDateTime, formatZAR } from '@/lib/format';
 import { buildOrgProps, buildBankingProps } from '@/lib/client-billing-helpers';
 import { QuoteDetailActions } from './quote-detail-actions';
 import { PrintButton } from '@/components/billing/print-button';
 import { ExportPdfButton } from '@/components/billing/export-pdf-button';
 import { UniversalEmailDialog } from '@/components/billing/universal-email-dialog';
 import { QuoteEmailAutoTrigger } from './quote-email-auto-trigger';
+import { SetPageLabel } from '@/components/navigation/page-header-context';
 
 export const dynamic = 'force-dynamic';
 
@@ -60,6 +62,7 @@ export default async function QuoteDetailPage({ params, searchParams }: Props) {
       description: li.description,
       qty: Number(li.quantity),
       unitPrice: Number(li.unitPrice),
+      discountAmount: Number(li.discountAmount ?? 0),
       vatApplicable: false,
     })),
     notes: quote.notes ?? divSettings?.quoteNotes ?? undefined,
@@ -73,7 +76,8 @@ export default async function QuoteDetailPage({ params, searchParams }: Props) {
   const autoOpenEmail = action === 'send';
 
   return (
-    <div className="flex flex-col gap-6">
+    <div className="flex flex-col gap-6 pb-32 lg:pb-0">
+      <SetPageLabel value="Quote Details" />
       {/* Auto-open email dialog when navigated here with ?action=send */}
       {autoOpenEmail && (
         <QuoteEmailAutoTrigger
@@ -87,13 +91,13 @@ export default async function QuoteDetailPage({ params, searchParams }: Props) {
       {/* Page header */}
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div className="flex items-center gap-4">
-          <Button variant="ghost" size="sm" asChild>
+          <Button variant="ghost" size="sm" asChild className="hidden sm:flex">
             <Link href="/billing/quotes">
               <ChevronLeft className="size-4" />
               Back
             </Link>
           </Button>
-          <Separator orientation="vertical" className="h-5" />
+          <Separator orientation="vertical" className="h-5 hidden sm:block" />
           <div>
             <div className="flex items-center gap-2">
               <h2 className="text-lg font-semibold">{quote.documentNumber}</h2>
@@ -105,10 +109,12 @@ export default async function QuoteDetailPage({ params, searchParams }: Props) {
           </div>
         </div>
         <div className="flex items-center gap-2 flex-wrap justify-end">
-          <PrintButton 
-            label="Print"
-            documentTitle={`Quote-${quote.documentNumber}`} 
-          />
+          <div className="hidden sm:block">
+            <PrintButton 
+              label="Print"
+              documentTitle={`Quote-${quote.documentNumber}`} 
+            />
+          </div>
           <ExportPdfButton 
             fileName={`Quote-${quote.documentNumber}`}
             pdfUrl={quotePdfUrl}
@@ -131,29 +137,41 @@ export default async function QuoteDetailPage({ params, searchParams }: Props) {
         </div>
       </div>
 
-      {/* Two-column layout */}
-      <div className="grid grid-cols-1 gap-6 lg:grid-cols-3 lg:items-start">
-        {/* Document preview - scrollable on small screens */}
-        <div className="lg:col-span-2 overflow-x-auto">
+      {/* Main layout */}
+      <div className="flex flex-col-reverse lg:grid lg:grid-cols-3 lg:items-start gap-6">
+        {/* Document preview - scrollable on desktop */}
+        <div className="hidden lg:block lg:col-span-2 overflow-x-auto">
           <DocumentPreview id="printable-area" type="quote" {...docPreviewProps} />
+        </div>
+        <div className="block lg:hidden w-full">
+          <MobileReceiptPreview
+            type="quote"
+            {...docPreviewProps}
+            subtotal={Number(quote.subtotal)}
+            discountTotal={Number(quote.discountAmount ?? 0)}
+            vatTotal={Number(quote.vatAmount)}
+            grandTotal={Number(quote.total)}
+          />
         </div>
 
         {/* Sidebar */}
         <div className="flex flex-col gap-4 lg:sticky lg:top-16 lg:self-start">
-          <Card size="sm">
-            <CardHeader>
-              <CardTitle>Summary</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <BillingTotalsBlock
-                subtotal={Number(quote.subtotal)}
-                discountAmount={Number(quote.discountAmount ?? 0)}
-                vatEnabled={quote.vatEnabled}
-                vatAmount={Number(quote.vatAmount)}
-                total={Number(quote.total)}
-              />
-            </CardContent>
-          </Card>
+          <div className="hidden lg:block">
+            <Card size="sm">
+              <CardHeader>
+                <CardTitle>Summary</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <BillingTotalsBlock
+                  subtotal={Number(quote.subtotal)}
+                  discountAmount={Number(quote.discountAmount ?? 0)}
+                  vatEnabled={quote.vatEnabled}
+                  vatAmount={Number(quote.vatAmount)}
+                  total={Number(quote.total)}
+                />
+              </CardContent>
+            </Card>
+          </div>
 
           <Card size="sm">
             <CardHeader>

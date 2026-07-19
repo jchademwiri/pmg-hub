@@ -35,7 +35,7 @@ export function StickyPageHeader({
         className,
       )}
     >
-      <div className="flex items-center justify-between gap-3">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 sm:gap-3">
         <div>
           <h1 className="text-lg font-semibold">
             {title}
@@ -50,7 +50,7 @@ export function StickyPageHeader({
           )}
         </div>
         {actions && (
-          <div className="flex shrink-0 items-center gap-2">
+          <div className="flex w-full sm:w-auto shrink-0 items-center gap-2">
             {actions}
           </div>
         )}

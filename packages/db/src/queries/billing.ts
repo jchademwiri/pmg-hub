@@ -18,6 +18,9 @@ export type LineItemDetail = {
   description: string;
   quantity: string;   // numeric from DB - caller converts with Number()
   unitPrice: string;
+  discountType: string | null;
+  discountValue: string | null;
+  discountAmount: string;
   vatRate: string;
   lineTotal: string;
   createdAt: Date;
@@ -237,6 +240,9 @@ async function getLineItemsForDocument(
         description: billingLineItems.description,
         quantity: billingLineItems.quantity,
         unitPrice: billingLineItems.unitPrice,
+        discountType: billingLineItems.discountType,
+        discountValue: billingLineItems.discountValue,
+        discountAmount: billingLineItems.discountAmount,
         vatRate: billingLineItems.vatRate,
         lineTotal: billingLineItems.lineTotal,
         createdAt: billingLineItems.createdAt,
@@ -264,6 +270,9 @@ async function getLineItemsForDocument(
       description: billingLineItems.description,
       quantity: billingLineItems.quantity,
       unitPrice: billingLineItems.unitPrice,
+      discountType: billingLineItems.discountType,
+      discountValue: billingLineItems.discountValue,
+      discountAmount: billingLineItems.discountAmount,
       vatRate: billingLineItems.vatRate,
       lineTotal: billingLineItems.lineTotal,
       createdAt: billingLineItems.createdAt,
@@ -721,6 +730,9 @@ export async function getQuotationById(id: string): Promise<QuotationDetail | nu
       description: billingLineItems.description,
       quantity: billingLineItems.quantity,
       unitPrice: billingLineItems.unitPrice,
+      discountType: billingLineItems.discountType,
+      discountValue: billingLineItems.discountValue,
+      discountAmount: billingLineItems.discountAmount,
       vatRate: billingLineItems.vatRate,
       lineTotal: billingLineItems.lineTotal,
       createdAt: billingLineItems.createdAt,
@@ -823,6 +835,9 @@ export async function getInvoiceById(id: string): Promise<InvoiceDetail | null> 
       description: billingLineItems.description,
       quantity: billingLineItems.quantity,
       unitPrice: billingLineItems.unitPrice,
+      discountType: billingLineItems.discountType,
+      discountValue: billingLineItems.discountValue,
+      discountAmount: billingLineItems.discountAmount,
       vatRate: billingLineItems.vatRate,
       lineTotal: billingLineItems.lineTotal,
       createdAt: billingLineItems.createdAt,

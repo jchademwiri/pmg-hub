@@ -739,9 +739,9 @@ export function ClientBillingWorkspace({
           base64Pdf,
         });
 
-        if (result.error) {
+        if (!result || result.error) {
           setBulkLog((prev) =>
-            prev.map((e) => (e.id === id ? { ...e, status: 'failed', error: result.error } : e))
+            prev.map((e) => (e.id === id ? { ...e, status: 'failed', error: result?.error ?? 'Network error' } : e))
           );
         } else {
           setBulkLog((prev) =>
@@ -1666,9 +1666,11 @@ export function ClientBillingWorkspace({
                     pdfUrl={activePdfUrl}
                     statementPdfUrl={statementPdfUrl}
                   />
-                  <Button variant="outline" size="sm" asChild>
-                    <Link href={`/billing/invoices/${activeInvoice.id}/edit`}>Edit</Link>
-                  </Button>
+                  {!['paid', 'void', 'written_off'].includes(activeInvoice.status) && (
+                    <Button variant="outline" size="sm" asChild>
+                      <Link href={`/billing/invoices/${activeInvoice.id}/edit`}>Edit</Link>
+                    </Button>
+                  )}
                 </>
               )}
               {selectedDocType === 'quote' && activeQuote && (
@@ -1681,9 +1683,11 @@ export function ClientBillingWorkspace({
                     printableElementId={dialogPrintableElementId}
                     pdfUrl={activePdfUrl}
                   />
-                  <Button variant="outline" size="sm" asChild>
-                    <Link href={`/billing/quotes/${activeQuote.id}/edit`}>Edit</Link>
-                  </Button>
+                  {['draft', 'sent', 'accepted'].includes(activeQuote.status) && (
+                    <Button variant="outline" size="sm" asChild>
+                      <Link href={`/billing/quotes/${activeQuote.id}/edit`}>Edit</Link>
+                    </Button>
+                  )}
                 </>
               )}                {selectedDocType === 'payment' && activePayment && (
                   <>

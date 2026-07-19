@@ -57,6 +57,7 @@ type PdfAgeing = {
 
 type PdfDocumentData = {
   type: BillingPdfType;
+  statementType?: 'activity' | 'outstanding';
   title: string;
   number: string;
   status: string;
@@ -396,12 +397,18 @@ function drawTransactions(doc: jsPDF, data: PdfDocumentData, startY: number) {
   doc.text('DATE', PAGE.margin + 2, y + 6);
   doc.text('REF', 45, y + 6);
   doc.text('DESCRIPTION', 78, y + 6);
-  doc.text('DEBIT', 145, y + 6, { align: 'right' });
-  doc.text('CREDIT', 170, y + 6, { align: 'right' });
-  doc.text('BALANCE', PAGE.width - PAGE.margin - 2, y + 6, { align: 'right' });
+  if (data.statementType === 'outstanding') {
+    doc.text('TOTAL', 145, y + 6, { align: 'right' });
+    doc.text('PAID', 170, y + 6, { align: 'right' });
+    doc.text('DUE', PAGE.width - PAGE.margin - 2, y + 6, { align: 'right' });
+  } else {
+    doc.text('DEBIT', 145, y + 6, { align: 'right' });
+    doc.text('CREDIT', 170, y + 6, { align: 'right' });
+    doc.text('BALANCE', PAGE.width - PAGE.margin - 2, y + 6, { align: 'right' });
+  }
   y += 12;
 
-  if (data.openingBalance != null && data.openingBalance !== 0) {
+  if (data.openingBalance != null && data.openingBalance !== 0 && data.statementType !== 'outstanding') {
     y = ensurePage(doc, y, 9);
     doc.setFillColor(249, 250, 251);
     doc.rect(PAGE.margin, y - 2, PAGE.width - PAGE.margin * 2, 8, 'F');
@@ -658,7 +665,7 @@ async function buildReceiptPdfData(id: string): Promise<PdfDocumentData | null> 
 
 async function buildStatementPdfData(
   clientId: string,
-  filters?: { year?: number; monthPeriod?: 'current' | 'previous' | 'past3' | 'past6' },
+  filters?: { year?: number; monthPeriod?: 'current' | 'previous' | 'past3' | 'past6'; statementType?: 'activity' | 'outstanding' },
 ): Promise<PdfDocumentData | null> {
   const statement = await getClientStatement(clientId, filters);
   if (!statement) return null;
@@ -695,48 +702,72 @@ async function buildStatementPdfData(
 
   const invoiceToIncome = buildIncomeInvoiceMap(statement.invoices);
 
-  const raw = [
-    ...statement.invoices
-      .filter((invoice) => invoice.status !== 'void')
-      .map((invoice) => ({
-        date: invoice.invoiceDate,
-        reference: invoice.documentNumber,
-        description: invoice.reference ?? 'Invoice',
-        debit: safeNumber(invoice.total),
-        credit: undefined,
-      })),
-    ...incomeResult.data.map((payment) => ({
-      date: payment.date,
-      reference: invoiceToIncome.get(payment.id) ?? '-',
-      description: 'Payment received',
-      debit: undefined,
-      credit: safeNumber(payment.amount),
-    })),
-    ...dbCreditNotes
-      .filter((note) => {
-        const date = note.createdAt.toISOString().split('T')[0];
-        return note.type !== 'overpayment' && date >= periodFrom && date <= periodTo;
-      })
-      .map((note) => ({
-        date: note.createdAt.toISOString().split('T')[0],
-        reference: note.documentNumber,
-        description: note.reason ?? 'Credit Note',
-        debit: undefined,
-        credit: safeNumber(note.amount),
-      })),
-    ...dbRefunds
-      .filter((refund) => refund.refundDate >= periodFrom && refund.refundDate <= periodTo)
-      .map((refund) => ({
-        date: refund.refundDate,
-        reference: refund.reference ?? '-',
-        description: refund.description ?? 'Credit refund',
-        debit: safeNumber(refund.amount),
-        credit: undefined,
-      })),
-  ];
+  let transactions: PdfTransaction[];
+  let finalBalance: number;
 
-  const transactions = buildTransactionHistory(raw, openingBalance);
-  const finalBalance = transactions.length > 0 ? transactions[0]!.balance : openingBalance;
+  if (filters?.statementType === 'outstanding') {
+    const outstandingInvoices = statement.outstandingInvoices ?? statement.invoices.filter(i => {
+       const balance = safeNumber(i.total) - safeNumber(i.allocatedAmount);
+       return balance > 0 && i.status !== 'void';
+    });
+    
+    transactions = outstandingInvoices.map((invoice) => ({
+      date: invoice.invoiceDate,
+      reference: invoice.documentNumber,
+      description: invoice.reference ?? 'Invoice',
+      debit: safeNumber(invoice.total),
+      credit: safeNumber(invoice.allocatedAmount),
+      balance: safeNumber(invoice.total) - safeNumber(invoice.allocatedAmount),
+    }));
+    
+    // Sort transactions by date ascending (oldest first)
+    transactions.sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
+    
+    finalBalance = transactions.reduce((sum, tx) => sum + (tx.balance ?? 0), 0);
+  } else {
+    const raw = [
+      ...statement.invoices
+        .filter((invoice) => invoice.status !== 'void')
+        .map((invoice) => ({
+          date: invoice.invoiceDate,
+          reference: invoice.documentNumber,
+          description: invoice.reference ?? 'Invoice',
+          debit: safeNumber(invoice.total),
+          credit: undefined,
+        })),
+      ...incomeResult.data.map((payment) => ({
+        date: payment.date,
+        reference: invoiceToIncome.get(payment.id) ?? '-',
+        description: 'Payment received',
+        debit: undefined,
+        credit: safeNumber(payment.amount),
+      })),
+      ...dbCreditNotes
+        .filter((note) => {
+          const date = note.createdAt.toISOString().split('T')[0];
+          return note.type !== 'overpayment' && date >= periodFrom && date <= periodTo;
+        })
+        .map((note) => ({
+          date: note.createdAt.toISOString().split('T')[0],
+          reference: note.documentNumber,
+          description: note.reason ?? 'Credit Note',
+          debit: undefined,
+          credit: safeNumber(note.amount),
+        })),
+      ...dbRefunds
+        .filter((refund) => refund.refundDate >= periodFrom && refund.refundDate <= periodTo)
+        .map((refund) => ({
+          date: refund.refundDate,
+          reference: refund.reference ?? '-',
+          description: refund.description ?? 'Credit refund',
+          debit: safeNumber(refund.amount),
+          credit: undefined,
+        })),
+    ];
+
+    transactions = buildTransactionHistory(raw, openingBalance);
+    finalBalance = transactions.length > 0 ? transactions[0]!.balance ?? openingBalance : openingBalance;
+  }
 
   const todayStr = getSASTToday();
   const ageing = calculateAgeing(
@@ -756,6 +787,7 @@ async function buildStatementPdfData(
   const status = determineStatementStatus(statement.summary.totalOutstanding, statement.invoices);
   return {
     type: 'statement',
+    statementType: filters?.statementType ?? 'activity',
     title: 'Statement',
     number: `ST-${statement.client.name.toUpperCase().substring(0, 3)}-${filters?.year ?? currentYear}`,
     status,
@@ -782,7 +814,7 @@ async function buildStatementPdfData(
 export async function generateBillingPdf(
   type: BillingPdfType,
   id: string,
-  filters?: { year?: number; monthPeriod?: 'current' | 'previous' | 'past3' | 'past6' },
+  filters?: { year?: number; monthPeriod?: 'current' | 'previous' | 'past3' | 'past6'; statementType?: 'activity' | 'outstanding' },
 ) {
   const data =
     type === 'invoice'

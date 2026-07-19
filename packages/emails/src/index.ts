@@ -9,6 +9,7 @@ export type { BrandingProps } from "./types";
 export { default as AdminNewLeadEmail } from "./templates/AdminNewLeadEmail";
 export { default as AutoReplyEmail } from "./templates/AutoReplyEmail";
 export { default as InvoiceDeliveryEmail } from "./templates/InvoiceDeliveryEmail";
+export { default as StatementDeliveryEmail } from "./templates/StatementDeliveryEmail";
 export { default as QuoteDeliveryEmail } from "./templates/QuoteDeliveryEmail";
 export { default as PaymentThankYouEmail } from "./templates/PaymentThankYouEmail";
 export { default as OutstandingReminderEmail } from "./templates/OutstandingReminderEmail";
@@ -22,6 +23,7 @@ export { default as ComplianceReminderEmail } from "./templates/ComplianceRemind
 export type { AdminNewLeadEmailProps } from "./templates/AdminNewLeadEmail";
 export type { AutoReplyEmailProps } from "./templates/AutoReplyEmail";
 export type { InvoiceDeliveryEmailProps } from "./templates/InvoiceDeliveryEmail";
+export type { StatementDeliveryEmailProps } from "./templates/StatementDeliveryEmail";
 export type { QuoteDeliveryEmailProps } from "./templates/QuoteDeliveryEmail";
 export type { PaymentThankYouEmailProps } from "./templates/PaymentThankYouEmail";
 export type { OutstandingReminderEmailProps } from "./templates/OutstandingReminderEmail";

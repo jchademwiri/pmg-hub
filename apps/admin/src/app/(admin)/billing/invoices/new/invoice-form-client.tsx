@@ -10,6 +10,7 @@ import { Field, FieldLabel } from '@/components/ui/field';
 import { Input } from '@/components/ui/input';
 import { Switch } from '@/components/ui/switch';
 import { Textarea } from '@/components/ui/textarea';
+import { Card, CardContent } from '@/components/ui/card';
 import {
   Select,
   SelectContent,
@@ -17,6 +18,12 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
+import {
+  Accordion,
+  AccordionItem,
+  AccordionTrigger,
+  AccordionContent,
+} from '@/components/ui/accordion';
 import { Separator } from '@/components/ui/separator';
 import {
   BillingLineItemsForm,
@@ -43,11 +50,13 @@ const plus5 = new Date(Date.now() + 5 * 24 * 60 * 60 * 1000).toISOString().split
 
 function blankRow(): LineItemFormRow {
   return {
-    id: crypto.randomUUID(),
+    id: typeof crypto !== 'undefined' && crypto.randomUUID ? crypto.randomUUID() : Math.random().toString(36).substring(2, 15),
     itemId: '',
     description: '',
     quantity: '1',
     unitPrice: '',
+    discountType: null,
+    discountValue: '',
   };
 }
 
@@ -59,7 +68,18 @@ function calcTotals(
 ) {
   let subtotal = 0;
   for (const item of lineItems) {
-    subtotal += (parseFloat(item.quantity) || 0) * (parseFloat(item.unitPrice) || 0);
+    const qty = parseFloat(item.quantity) || 0;
+    const price = parseFloat(item.unitPrice) || 0;
+    const lineGross = qty * price;
+    
+    let lineDiscount = 0;
+    if (item.discountType === 'percent') {
+      lineDiscount = lineGross * ((parseFloat(item.discountValue || '0') || 0) / 100);
+    } else if (item.discountType === 'amount') {
+      lineDiscount = Math.min(parseFloat(item.discountValue || '0') || 0, lineGross);
+    }
+    
+    subtotal += (lineGross - lineDiscount);
   }
   const discountVal = parseFloat(discountValue) || 0;
   const discountAmount =
@@ -106,11 +126,13 @@ export function InvoiceFormClient({
             itemId = matched?.id ?? '';
           }
           return {
-            id: crypto.randomUUID(),
+            id: typeof crypto !== 'undefined' && crypto.randomUUID ? crypto.randomUUID() : Math.random().toString(36).substring(2, 15),
             itemId,
             description: li.description,
             quantity: li.quantity,
             unitPrice: li.unitPrice,
+            discountType: (li.discountType as 'percent' | 'amount') ?? null,
+            discountValue: li.discountValue ? String(Number(li.discountValue)) : '',
           };
         })
       : [blankRow()],
@@ -191,6 +213,8 @@ export function InvoiceFormClient({
         description: r.description,
         quantity: parseFloat(r.quantity) || 1,
         unitPrice: parseFloat(r.unitPrice) || 0,
+        discountType: r.discountType,
+        discountValue: r.discountValue ? parseFloat(r.discountValue) : null,
         vatRate: 0 as const,
       })),
       vatEnabled,
@@ -227,8 +251,9 @@ export function InvoiceFormClient({
   return (
     <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
       {/* Main form */}
-      <div className="flex flex-col gap-6 lg:col-span-2">
-        {/* Period lock warning */}
+      <Card className="flex flex-col gap-6 lg:col-span-2">
+        <CardContent className="p-6 flex flex-col gap-6">
+          {/* Period lock warning */}
         {isPeriodWarning && (
           <Alert className="border-amber-200 bg-amber-50 text-amber-800 dark:border-amber-800/40 dark:bg-amber-950/30 dark:text-amber-400">
             <AlertDescription>
@@ -242,10 +267,10 @@ export function InvoiceFormClient({
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
           <Field>
             <FieldLabel>
-              Division <span className="text-destructive">*</span>
+              Division
             </FieldLabel>
             <Select value={divisionId} onValueChange={setDivisionId} disabled={isSubmitting || !!editId}>
-              <SelectTrigger>
+              <SelectTrigger className="w-full">
                 <SelectValue placeholder="Select a division…" />
               </SelectTrigger>
               <SelectContent>
@@ -258,13 +283,13 @@ export function InvoiceFormClient({
             </Select>
           </Field>
 
-          <Field>
+          <Field className="sm:col-span-2">
             <FieldLabel>
-              Client <span className="text-destructive">*</span>
+              Client
             </FieldLabel>
             <Select value={clientId} onValueChange={setClientId} disabled={isSubmitting}>
-              <SelectTrigger>
-                <SelectValue placeholder="Select a client… *" />
+              <SelectTrigger className="w-full">
+                <SelectValue placeholder="Select a client…" />
               </SelectTrigger>
               <SelectContent>
                 {clients.map((c) => (
@@ -285,58 +310,69 @@ export function InvoiceFormClient({
               </div>
             )}
           </Field>
-
-          <Field>
-            <FieldLabel>
-              Invoice Date <span className="text-destructive">*</span>
-            </FieldLabel>
-            <Input
-              type="date"
-              value={invoiceDate}
-              onChange={(e) => {
-                const newDate = e.target.value;
-                setInvoiceDate(newDate);
-                if (!isDueDateModified) {
-                  const termsDays = billingSettings?.[divisionId]?.paymentTermsDays ?? 5;
-                  const d = new Date(newDate);
-                  d.setDate(d.getDate() + termsDays);
-                  setDueDate(d.toISOString().split('T')[0]!);
-                }
-              }}
-              disabled={isSubmitting}
-            />
-          </Field>
-
-          <Field>
-            <FieldLabel>Due Date</FieldLabel>
-            <Input
-              type="date"
-              value={dueDate}
-              onChange={(e) => {
-                setDueDate(e.target.value);
-                setIsDueDateModified(true);
-              }}
-              disabled={isSubmitting}
-            />
-          </Field>
-
-          <Field>
-            <FieldLabel>Reference</FieldLabel>
-            <Input
-              value={reference}
-              onChange={(e) => setReference(e.target.value)}
-              placeholder="Optional reference number"
-              disabled={isSubmitting}
-            />
-          </Field>
-
-          <Field>
-            <FieldLabel>Invoice #</FieldLabel>
-            <div className="h-9 rounded-md border border-input bg-muted/40 px-3 flex items-center text-sm text-muted-foreground">
-              {editId ? 'Existing number preserved' : 'Auto-generated on save'}
-            </div>
-          </Field>
         </div>
+
+        <Accordion type="single" collapsible className="w-full">
+          <AccordionItem value="document-settings" className="border-none">
+            <AccordionTrigger className="py-3 px-4 rounded-lg border bg-muted/20 hover:bg-muted/40 transition-colors hover:no-underline text-muted-foreground data-[state=open]:text-foreground">
+              <span className="font-semibold text-sm">Dates & Reference</span>
+            </AccordionTrigger>
+            <AccordionContent className="pt-4">
+              <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                <Field>
+                  <FieldLabel>
+                    Invoice Date
+                  </FieldLabel>
+                  <Input
+                    type="date"
+                    value={invoiceDate}
+                    onChange={(e) => {
+                      const newDate = e.target.value;
+                      setInvoiceDate(newDate);
+                      if (!isDueDateModified) {
+                        const termsDays = billingSettings?.[divisionId]?.paymentTermsDays ?? 5;
+                        const d = new Date(newDate);
+                        d.setDate(d.getDate() + termsDays);
+                        setDueDate(d.toISOString().split('T')[0]!);
+                      }
+                    }}
+                    disabled={isSubmitting}
+                  />
+                </Field>
+
+                <Field>
+                  <FieldLabel>Due Date</FieldLabel>
+                  <Input
+                    type="date"
+                    value={dueDate}
+                    onChange={(e) => {
+                      setDueDate(e.target.value);
+                      setIsDueDateModified(true);
+                    }}
+                    disabled={isSubmitting}
+                  />
+                </Field>
+
+                <Field>
+                  <FieldLabel>Reference</FieldLabel>
+                  <Input
+                    value={reference}
+                    onChange={(e) => setReference(e.target.value)}
+                    placeholder="Optional reference number"
+                    disabled={isSubmitting}
+                  />
+                </Field>
+
+                <Field>
+                  <FieldLabel>Invoice #</FieldLabel>
+                  <div className="h-9 rounded-md border border-input bg-muted/40 px-3 flex items-center text-sm text-muted-foreground">
+                    {editId ? 'Existing number preserved' : 'Auto-generated on save'}
+                  </div>
+                </Field>
+              </div>
+            </AccordionContent>
+          </AccordionItem>
+        </Accordion>
 
         {/* Line items */}
         <BillingLineItemsForm
@@ -346,31 +382,41 @@ export function InvoiceFormClient({
         />
 
         {/* Notes & terms */}
-        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-          <Field>
-            <FieldLabel htmlFor="invoice-notes">Notes</FieldLabel>
-            <Textarea
-              id="invoice-notes"
-              value={notes}
-              onChange={(e) => setNotes(e.target.value)}
-              placeholder="Payment instructions or notes…"
-              rows={4}
-              disabled={isSubmitting}
-            />
-          </Field>
-          <Field>
-            <FieldLabel htmlFor="invoice-terms">Terms & Conditions</FieldLabel>
-            <Textarea
-              id="invoice-terms"
-              value={terms}
-              onChange={(e) => setTerms(e.target.value)}
-              placeholder="Optional terms and conditions…"
-              rows={4}
-              disabled={isSubmitting}
-            />
-          </Field>
-        </div>
-      </div>
+        <Accordion type="single" collapsible className="w-full">
+          <AccordionItem value="notes-and-terms" className="border-none">
+            <AccordionTrigger className="py-3 px-4 rounded-lg border bg-muted/20 hover:bg-muted/40 transition-colors hover:no-underline text-muted-foreground data-[state=open]:text-foreground">
+              <span className="font-semibold text-sm">Additional Notes & Terms</span>
+            </AccordionTrigger>
+            <AccordionContent className="pt-4">
+              <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                <Field>
+                  <FieldLabel htmlFor="invoice-notes">Notes</FieldLabel>
+                  <Textarea
+                    id="invoice-notes"
+                    value={notes}
+                    onChange={(e) => setNotes(e.target.value)}
+                    placeholder="Payment instructions or notes…"
+                    rows={4}
+                    disabled={isSubmitting}
+                  />
+                </Field>
+                <Field>
+                  <FieldLabel htmlFor="invoice-terms">Terms & Conditions</FieldLabel>
+                  <Textarea
+                    id="invoice-terms"
+                    value={terms}
+                    onChange={(e) => setTerms(e.target.value)}
+                    placeholder="Optional terms and conditions…"
+                    rows={4}
+                    disabled={isSubmitting}
+                  />
+                </Field>
+              </div>
+            </AccordionContent>
+          </AccordionItem>
+        </Accordion>
+        </CardContent>
+      </Card>
 
       {/* Sidebar - sticky */}
       <div className="flex flex-col gap-4 lg:sticky lg:top-16 self-start">
@@ -388,16 +434,7 @@ export function InvoiceFormClient({
           </Field>
 
           {/* Discount */}
-          <div className="flex items-center gap-2">
-            <Select value={discountType} onValueChange={(v) => setDiscountType(v as 'percent' | 'amount')}>
-              <SelectTrigger className="h-8 w-28" aria-label="Discount type">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="percent">% Percent</SelectItem>
-                <SelectItem value="amount">R Amount</SelectItem>
-              </SelectContent>
-            </Select>
+          <div className="flex">
             <Input
               type="number"
               min="0"
@@ -405,8 +442,17 @@ export function InvoiceFormClient({
               value={discountValue}
               onChange={(e) => setDiscountValue(e.target.value)}
               placeholder="Discount"
-              className="h-8"
+              className="rounded-r-none focus-visible:z-10"
             />
+            <Select value={discountType} onValueChange={(v) => setDiscountType(v as 'percent' | 'amount')}>
+              <SelectTrigger className="w-[65px] rounded-l-none border-l-0 focus:ring-0 focus-visible:z-10 bg-muted/10 px-3 shrink-0" aria-label="Discount type">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="percent">%</SelectItem>
+                <SelectItem value="amount">R</SelectItem>
+              </SelectContent>
+            </Select>
           </div>
 
           <BillingTotalsBlock
@@ -425,19 +471,11 @@ export function InvoiceFormClient({
             </Alert>
           )}
 
-          <Button className="w-full" onClick={handleSubmit} disabled={isSubmitting}>
-            {isSubmitting ? 'Saving…' : editId ? 'Save Changes' : 'Save Invoice'}
-          </Button>
-          {!editId && (
-            <Button
-              variant="outline"
-              className="w-full"
-              onClick={handleSubmit}
-              disabled={isSubmitting}
-            >
-              Save as Draft
+          <div className="fixed md:relative bottom-0 left-0 right-0 p-4 md:p-0 bg-card/95 md:bg-transparent backdrop-blur-md md:backdrop-blur-none border-t md:border-none z-50 flex flex-col gap-2 pb-[max(env(safe-area-inset-bottom),16px)] md:pb-0 shadow-[0_-4px_12px_rgba(0,0,0,0.05)] md:shadow-none dark:shadow-[0_-4px_12px_rgba(0,0,0,0.2)] pt-2 md:pt-0">
+            <Button className="w-full bg-blue-600 hover:bg-blue-700 text-white" onClick={handleSubmit} disabled={isSubmitting}>
+              {isSubmitting ? 'Saving…' : editId ? 'Save Changes' : 'Save Invoice'}
             </Button>
-          )}
+          </div>
         </div>
 
         {!editId && (

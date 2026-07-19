@@ -84,7 +84,7 @@ function SchedulingSummaryCards({
     { label: 'Urgent', value: urgentCount, hint: 'scheduled first', icon: Flame },
     {
       label: 'Next Closing',
-      value: nextClosing ? new Date(nextClosing.closingDate).toLocaleDateString() : 'None',
+      value: nextClosing ? formatDate(nextClosing.closingDate) : 'None',
       hint: nextClosing?.projectReference ?? 'no active deadline',
       icon: Clock,
     },
@@ -229,6 +229,7 @@ function CurrentWorkloadCard({ tenders, clients, onStatusChange, progressMap }: 
             <Button
               size="sm"
               variant="outline"
+              className="hidden md:inline-flex"
               onClick={() => onStatusChange(primaryTender.id, 'planned')}
             >
               Re-plan (Pause)
@@ -236,7 +237,7 @@ function CurrentWorkloadCard({ tenders, clients, onStatusChange, progressMap }: 
             <Button
               size="sm"
               variant="ghost"
-              className="text-destructive hover:text-destructive text-xs"
+              className="hidden md:inline-flex text-destructive hover:text-destructive text-xs"
               onClick={async () => {
                 const confirmed = await confirm({
                   title: 'Cancel Project',
@@ -323,7 +324,7 @@ function CurrentWorkloadCard({ tenders, clients, onStatusChange, progressMap }: 
                           <Button
                             size="xs"
                             variant="ghost"
-                            className="h-7 text-[10px] px-2 text-muted-foreground hover:text-foreground"
+                            className="hidden md:inline-flex h-7 text-[10px] px-2 text-muted-foreground hover:text-foreground"
                             onClick={() => onStatusChange(tender.id, 'planned')}
                           >
                             Pause
