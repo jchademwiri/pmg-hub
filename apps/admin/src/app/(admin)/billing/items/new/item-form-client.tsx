@@ -4,6 +4,7 @@ import { useState, useTransition } from 'react';
 import { useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { Textarea } from '@/components/ui/textarea';
 import { Separator } from '@/components/ui/separator';
 import { createItem } from '@/app/actions/billing-items';
 
@@ -58,14 +59,14 @@ export function ItemFormClient() {
 
       <div className="flex flex-col gap-1.5">
         <label htmlFor="item-description" className="text-sm font-medium">Description</label>
-        <textarea
+        <Textarea
           id="item-description"
           value={description}
           onChange={(e) => setDescription(e.target.value)}
           placeholder="Longer description that pre-fills the line item on invoices and quotes…"
           rows={3}
           disabled={isSubmitting}
-          className="flex min-h-[80px] w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+          className="min-h-[80px]"
         />
       </div>
 

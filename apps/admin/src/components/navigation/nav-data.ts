@@ -59,6 +59,7 @@ export const GROUPS: NavGroup[] = [
       { title: 'Credits',      url: '/billing/credits',    icon: Wallet     },
       { title: 'Statements',   url: '/billing/statements', icon: ScrollText },
       { title: 'Aging Report', url: '/billing/aging',      icon: Calendar   },
+      { title: 'Billing Items', url: '/billing/items',     icon: Package    },
     ],
   },
   {
@@ -102,7 +103,6 @@ export const GROUPS: NavGroup[] = [
       { title: 'Insights Reports',  url: '/insights/reports',  icon: BarChart3 },
       { title: 'Snapshots',         url: '/insights/snapshots', icon: Camera   },
       { title: 'Finance Categories',url: '/finance/categories',icon: Tags       },
-      { title: 'Billing Items',     url: '/billing/items',     icon: Package    },
       { title: 'Accounting',        url: '/accounting',        icon: Calculator },
       { title: 'Chart of Accounts', url: '/accounting/chart-of-accounts', icon: BookMarked },
       { title: 'Journals',          url: '/accounting/journals', icon: NotebookPen },

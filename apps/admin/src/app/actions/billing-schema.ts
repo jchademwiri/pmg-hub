@@ -7,7 +7,7 @@ export const LineItemSchema = z.object({
     (value) => value === '' ? null : value,
     z.string().uuid().nullable().optional(),
   ),
-  description: z.string().min(1, 'Description is required'),
+  description: z.string().optional().default(''),
   quantity: z.coerce.number().positive('Quantity must be greater than 0'),
   unitPrice: z.coerce.number().min(0, 'Unit price cannot be negative'),
   // vatRate is always 0 - VAT is document-level. Kept for DB compatibility.

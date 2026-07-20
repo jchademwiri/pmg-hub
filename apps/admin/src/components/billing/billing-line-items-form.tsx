@@ -203,7 +203,7 @@ export function BillingLineItemsForm({ value, onChange, activeItems }: BillingLi
               </div>
 
               {/* Description spanning across on mobile, forced to next row on desktop */}
-              <div className="flex flex-col gap-1.5 w-full col-span-2 lg:col-span-1 lg:order-last">
+              <div className="flex flex-col gap-1.5 w-full col-span-2 lg:col-span-4 lg:order-last">
                 <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wider lg:hidden">Description / Name</span>
                 <Textarea
                   value={row.description}
