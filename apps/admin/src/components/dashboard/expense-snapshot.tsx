@@ -4,7 +4,6 @@ import { formatZAR } from '@/lib/format'
 
 type ExpenseSnapshotProps = {
   expensesByDivision: { divisionId?: string; divisionName: string; total: number }[]
-  totalExpenses: number
 }
 
 const DIVISION_COLORS: Record<string, string> = {
@@ -15,7 +14,11 @@ const DIVISION_COLORS: Record<string, string> = {
 
 const DEFAULT_COLORS = ['bg-chart-4', 'bg-chart-5', 'bg-muted-foreground/40']
 
-export function ExpenseSnapshot({ expensesByDivision, totalExpenses }: ExpenseSnapshotProps) {
+export function ExpenseSnapshot({ expensesByDivision }: ExpenseSnapshotProps) {
+  // Derived from the same rows being rendered, so the percentages below can never
+  // drift out of sync with what they're supposed to add up to (see docs/audits/full-portfolio-audit-2026-07-25.md).
+  const totalExpenses = expensesByDivision.reduce((sum, d) => sum + d.total, 0)
+
   if (!expensesByDivision.length || totalExpenses === 0) return null
 
   // Sort descending

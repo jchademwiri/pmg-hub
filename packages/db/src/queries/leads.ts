@@ -106,7 +106,7 @@ export async function getLeadCountsByStatus(): Promise<{
 }> {
   const result = await db.execute(sql`
     SELECT
-      COUNT(*)                                              AS all,
+      COUNT(*)                                              AS "all",
       COUNT(*) FILTER (WHERE status = 'new')               AS new,
       COUNT(*) FILTER (WHERE status = 'contacted')         AS contacted,
       COUNT(*) FILTER (WHERE status = 'converted')         AS converted,
