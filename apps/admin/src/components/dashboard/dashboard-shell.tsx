@@ -265,7 +265,6 @@ export function DashboardShell({
         </h2>
         <ExpenseSnapshot
           expensesByDivision={expensesByDivision}
-          totalExpenses={activeSummary.expenses}
         />
       </section>
 
