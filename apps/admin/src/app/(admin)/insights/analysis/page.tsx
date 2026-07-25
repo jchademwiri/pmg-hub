@@ -1,12 +1,13 @@
 import { Metadata } from 'next';
 import Link from 'next/link';
 import { getSASTParts } from '@/lib/format';
-import { 
-  getAnalysisOverview, 
-  getDivisionQuotesMetrics, 
-  getThreeYearYoYComparison, 
+import {
+  getAnalysisOverview,
+  getDivisionQuotesMetrics,
+  getThreeYearYoYComparison,
   getThreeYearMonthlyRevenue,
-  getClientConcentration
+  getClientConcentration,
+  getMonthlyRevenueVsInvoicedForYear
 } from '@pmg/db';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -16,6 +17,7 @@ import { RevenueTrendChart } from '@/components/analysis/revenue-trend-chart';
 import { DivisionPerformanceChart } from '@/components/analysis/division-performance-chart';
 import { YoYComparisonTable } from '@/components/analysis/yoy-comparison-table';
 import { ClientConcentrationTable } from '@/components/analysis/client-concentration-table';
+import { MonthlyGrowthChart } from '@/components/analysis/monthly-growth-chart';
 import { AnalysisTabs } from '@/components/analysis/analysis-tabs';
 import { formatZAR } from '@/lib/format';
 
@@ -46,12 +48,14 @@ export default async function AnalysisPage(props: {
     yoyComparisonResult,
     monthlyRevenueResult,
     clientConcentrationResult,
+    monthlyGrowthResult,
   ] = await Promise.allSettled([
     getAnalysisOverview(selectedYear, currentDateStr),
     getDivisionQuotesMetrics(selectedYear),
     getThreeYearYoYComparison(selectedYear),
     getThreeYearMonthlyRevenue(selectedYear),
     getClientConcentration(selectedYear),
+    getMonthlyRevenueVsInvoicedForYear(selectedYear),
   ]);
 
   if (overviewResult.status === 'rejected') console.error('Overview error:', overviewResult.reason);
@@ -59,6 +63,7 @@ export default async function AnalysisPage(props: {
   if (yoyComparisonResult.status === 'rejected') console.error('YoY comparison error:', yoyComparisonResult.reason);
   if (monthlyRevenueResult.status === 'rejected') console.error('Monthly revenue error:', monthlyRevenueResult.reason);
   if (clientConcentrationResult.status === 'rejected') console.error('Client concentration error:', clientConcentrationResult.reason);
+  if (monthlyGrowthResult.status === 'rejected') console.error('Monthly growth error:', monthlyGrowthResult.reason);
 
   const overview = overviewResult.status === 'fulfilled' ? overviewResult.value : {
     ytd: { currentRevenue: 0, priorRevenue: 0, growthRatePercent: 0 },
@@ -69,6 +74,7 @@ export default async function AnalysisPage(props: {
   const yoyComparison = yoyComparisonResult.status === 'fulfilled' ? yoyComparisonResult.value : [];
   const monthlyRevenue = monthlyRevenueResult.status === 'fulfilled' ? monthlyRevenueResult.value : [];
   const clientConcentration = clientConcentrationResult.status === 'fulfilled' ? clientConcentrationResult.value : [];
+  const monthlyGrowth = monthlyGrowthResult.status === 'fulfilled' ? monthlyGrowthResult.value : [];
 
   return (
     <div className="flex w-full flex-col">
@@ -101,7 +107,7 @@ export default async function AnalysisPage(props: {
         <AnalysisTabs defaultTab="overview">
           <TabsList className="mb-4 flex w-full justify-start overflow-x-auto overflow-y-hidden lg:grid lg:w-[800px] lg:grid-cols-5 h-auto hide-scrollbar border border-border/50">
             <TabsTrigger value="overview" className="flex-1 min-w-[120px]">Overview</TabsTrigger>
-            <TabsTrigger value="details" className="flex-1 min-w-[120px]">Invoice Details</TabsTrigger>
+            <TabsTrigger value="details" className="flex-1 min-w-[120px]">Growth Trend</TabsTrigger>
             <TabsTrigger value="pipeline" className="flex-1 min-w-[150px]">Divisions & Pipeline</TabsTrigger>
             <TabsTrigger value="clients" className="flex-1 min-w-[120px]">Clients</TabsTrigger>
             <TabsTrigger value="comparison" className="flex-1 min-w-[120px]">YoY Compare</TabsTrigger>
@@ -122,30 +128,17 @@ export default async function AnalysisPage(props: {
           </TabsContent>
 
           <TabsContent value="details" className="space-y-6">
-            <div className="grid gap-6 md:grid-cols-2">
-              <Card>
-                <CardHeader>
-                  <CardTitle>Average Invoice Value</CardTitle>
-                  <CardDescription>Historical size of client bills</CardDescription>
-                </CardHeader>
-                <CardContent>
-                  <div className="text-4xl font-bold">{formatZAR(overview.averages.currentAvgInvoice)}</div>
-                  <p className="text-sm text-muted-foreground mt-2">
-                    Prior FY: {formatZAR(overview.averages.priorAvgInvoice)}
-                  </p>
-                </CardContent>
-              </Card>
-              
-              <Card>
-                <CardHeader>
-                  <CardTitle>Average Income Transaction</CardTitle>
-                  <CardDescription>Average cash receipt size</CardDescription>
-                </CardHeader>
-                <CardContent>
-                  <div className="text-4xl font-bold">{formatZAR(overview.averages.currentAvgTransaction)}</div>
-                </CardContent>
-              </Card>
-            </div>
+            <Card>
+              <CardHeader>
+                <CardTitle>Month-over-Month Growth</CardTitle>
+                <CardDescription>
+                  How invoiced revenue and payments received are trending, month to month, across FY {selectedYear}.
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="h-[400px]">
+                <MonthlyGrowthChart data={monthlyGrowth} />
+              </CardContent>
+            </Card>
           </TabsContent>
 
           <TabsContent value="pipeline" className="space-y-6">

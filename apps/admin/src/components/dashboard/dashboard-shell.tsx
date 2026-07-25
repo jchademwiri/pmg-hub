@@ -51,9 +51,10 @@ type Props = {
   currentWorkload: CurrentWorkload
 }
 
-const TABS: { key: Tab; label: string }[] = [
-  { key: 'current',  label: 'Current Month' },
-  { key: 'previous', label: 'Previous Month' },
+const TABS: { key: Tab; label: string; shortLabel: string }[] = [
+  { key: 'current',  label: 'Current Month',  shortLabel: 'Current' },
+  { key: 'previous', label: 'Previous Month', shortLabel: 'Previous' },
+  { key: 'ytd',      label: 'Year to Date',   shortLabel: 'YTD' },
 ]
 
 export function DashboardShell({
@@ -133,10 +134,11 @@ export function DashboardShell({
       <div className="flex items-center justify-between gap-3">
         <div className="flex items-center gap-3 w-full">
           <Tabs value={activeTab} onValueChange={handleTabChange} className="w-full">
-            <TabsList className="grid w-full grid-cols-2">
+            <TabsList className="grid w-full grid-cols-3">
               {TABS.map((tab) => (
                 <TabsTrigger key={tab.key} value={tab.key}>
-                  {tab.label}
+                  <span className="sm:hidden">{tab.shortLabel}</span>
+                  <span className="hidden sm:inline">{tab.label}</span>
                 </TabsTrigger>
               ))}
             </TabsList>
