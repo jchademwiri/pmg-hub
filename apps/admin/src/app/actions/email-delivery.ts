@@ -306,7 +306,18 @@ export async function sendDocumentEmailAction(rawPayload: unknown) {
         .where(eq(invoices.id, documentId));
 
       if (!invoice) return { error: 'Invoice not found.' };
-      
+
+      // Auto-issue: If invoice is still draft, issue it immediately so the
+      // statement PDF (compiled client-side before this action) is correct.
+      // The client dialog also calls issueInvoice() before compiling the
+      // statement, but this server-side guard ensures correctness regardless.
+      if (invoice.status === 'draft') {
+        await db
+          .update(invoices)
+          .set({ status: 'issued', updatedAt: new Date() })
+          .where(eq(invoices.id, documentId));
+      }
+
       const [client] = await db
         .select()
         .from(clients)
@@ -404,14 +415,6 @@ export async function sendDocumentEmailAction(rawPayload: unknown) {
 
       if (error) {
         return { error: `Failed to deliver email: ${error.message}` };
-      }
-
-      // Update invoice status from 'draft' to 'issued' upon successful send
-      if (invoice.status === 'draft') {
-        await db
-          .update(invoices)
-          .set({ status: 'issued', updatedAt: new Date() })
-          .where(eq(invoices.id, documentId));
       }
 
       return { success: true, sendId: data?.id };

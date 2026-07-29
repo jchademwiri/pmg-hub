@@ -20,6 +20,7 @@ import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Mail, Loader2 } from 'lucide-react';
 import { getDocumentEmailPreviewAction, sendDocumentEmailAction } from '@/app/actions/email-delivery';
+import { issueInvoice } from '@/app/actions/billing-invoices';
 import { EmailPreviewPanel } from '@/components/billing/email-preview-panel';
 import { elementToPdfBase64, serverPdfUrlToBase64 } from '@/lib/pdf-export';
 
@@ -103,6 +104,15 @@ export function EmailDocumentDialog({
       const pdfBase64 = pdfUrl
         ? await serverPdfUrlToBase64(pdfUrl, `${documentType === 'invoice' ? 'Invoice' : 'Quote'} PDF`)
         : await elementToPdfBase64(printableElementId, `${documentType === 'invoice' ? 'Invoice' : 'Quote'} PDF`);
+
+      // Ensure invoice is issued before compiling statement (so it's included)
+      if (documentType === 'invoice') {
+        setStatusText('Issuing invoice...');
+        const issueResult = await issueInvoice(documentId);
+        if (issueResult.error && !issueResult.error.includes('no longer a draft')) {
+          toast.warning(`Note: Invoice could not be auto-issued. Statement may be incomplete.`);
+        }
+      }
 
       let statementBase64: string | undefined;
       if (documentType === 'invoice' && attachStatement) {
