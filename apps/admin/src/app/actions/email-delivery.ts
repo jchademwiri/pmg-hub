@@ -415,7 +415,16 @@ export async function sendDocumentEmailAction(rawPayload: unknown) {
       // received the email. Uses issueInvoiceInternal (no auth/revalidation)
       // since we're already authenticated and the dialog handles UI refresh.
       if (invoice.status === 'draft') {
-        await issueInvoiceInternal(documentId);
+        const issueResult = await issueInvoiceInternal(documentId);
+        if (issueResult.error) {
+          console.warn('Auto-issue after email send failed:', issueResult.error);
+        } else {
+          revalidatePath('/billing/invoices');
+          revalidatePath(`/billing/invoices/${documentId}`);
+          revalidatePath('/accounting/journals');
+          revalidatePath('/accounting/trial-balance');
+          revalidatePath('/accounting/general-ledger');
+        }
       }
 
       return { success: true, sendId: data?.id };
