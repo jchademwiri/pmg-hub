@@ -876,9 +876,16 @@ export async function getInvoiceById(id: string): Promise<InvoiceDetail | null> 
  */
 export async function getClientStatement(
   clientId: string,
-  filters?: { year?: number; monthPeriod?: 'current' | 'previous' | 'past3' | 'past6' },
+  filters?: { year?: number; monthPeriod?: 'current' | 'previous' | 'past3' | 'past6'; includeDraftInvoiceId?: string },
 ): Promise<ClientStatement | null> {
   const includeReference = await hasQuotationReferenceColumn();
+  // When includeDraftInvoiceId is set, include that specific draft invoice
+  // alongside the normal non-draft/non-void invoices. Used by the email
+  // delivery flow so the statement PDF shows the invoice being sent.
+  const draftFilter = filters?.includeDraftInvoiceId
+    ? sql`(${invoices.status} NOT IN ('draft', 'void') OR ${invoices.id} = ${filters.includeDraftInvoiceId})`
+    : sql`${invoices.status} NOT IN ('draft', 'void')`;
+
   // Fetch client
   const clientRows = await db
     .select({
@@ -898,7 +905,7 @@ export async function getClientStatement(
   const quoteConditions = [eq(quotations.clientId, clientId)];
   const invoiceConditions = [
     eq(invoices.clientId, clientId),
-    sql`${invoices.status} NOT IN ('draft', 'void')`,
+    draftFilter,
     sql`${invoices.invoiceDate} <= timezone('Africa/Johannesburg', now())::date`
   ];
   const incomeConditions = [eq(income.clientId, clientId)];
@@ -975,13 +982,13 @@ export async function getClientStatement(
   // Compute balance for "Amount Due" as of the statement period end.
   const globalInvoiceConditions = [
     eq(invoices.clientId, clientId),
-    sql`${invoices.status} NOT IN ('draft', 'void')`,
+    draftFilter,
     sql`${invoices.invoiceDate} <= timezone('Africa/Johannesburg', now())::date`
   ];
   const globalIncomeConditions = [eq(income.clientId, clientId)];
   const globalCreditConditions = [
     eq(invoices.clientId, clientId),
-    sql`${invoices.status} NOT IN ('draft', 'void')`,
+    draftFilter,
   ];
 
   if (statementBalanceCutoff) {
@@ -1023,7 +1030,7 @@ export async function getClientStatement(
   if (periodStartDate) {
     const priorInvoiceConditions = [
       eq(invoices.clientId, clientId),
-      sql`${invoices.status} NOT IN ('draft', 'void')`,
+      draftFilter,
       sql`${invoices.invoiceDate} < ${periodStartDate}`,
     ];
     const priorIncomeConditions = [
@@ -1032,7 +1039,7 @@ export async function getClientStatement(
     ];
     const priorCreditConditions = [
       eq(invoices.clientId, clientId),
-      sql`${invoices.status} NOT IN ('draft', 'void')`,
+      draftFilter,
       sql`${creditApplications.appliedAt} < ${periodStartDate}::timestamp`,
     ];
 
@@ -1065,7 +1072,7 @@ export async function getClientStatement(
   // For period paid, we sum income records AND credit applications in that period
   const periodCreditConditions = [
     eq(invoices.clientId, clientId),
-    sql`${invoices.status} NOT IN ('draft', 'void')`,
+    draftFilter,
   ];
   if (filters?.monthPeriod) {
     const { startDate, endDate } = getMonthPeriodDates(filters.monthPeriod);

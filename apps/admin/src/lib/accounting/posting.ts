@@ -350,6 +350,7 @@ export async function postInvoiceIssueJournalEntry(data: {
   description?: string;
   sourceDocumentNumber?: string;
   divisionId: string;
+  tx?: any;
 }): Promise<{ error?: string; entryId?: string }> {
   try {
     const { invoiceId, amount, date, description, divisionId } = data;
@@ -360,7 +361,7 @@ export async function postInvoiceIssueJournalEntry(data: {
     const p = await ensureOpenPeriod(period);
     if (p.status !== 'open') return { error: `Accounting period ${period} is closed.` };
 
-    const db = getDb();
+    const db = data.tx || getDb();
     const accountMap = await getAccountsByCode([
       ACCOUNTS_RECEIVABLE_CODE,
       SALES_REVENUE_CODE,
@@ -376,7 +377,7 @@ export async function postInvoiceIssueJournalEntry(data: {
     const entryId = randomUUID();
 
     // Atomic transaction: entry + 2 lines
-    await db.transaction(async (tx) => {
+    const runInsideTx = async (tx: any) => {
       const entryNumber = await getNextJournalEntryNumber(tx, date);
       await tx.insert(journalEntries).values({
         id: entryId,
@@ -410,7 +411,13 @@ export async function postInvoiceIssueJournalEntry(data: {
         credit: String(amount),
         description: `Revenue recognised – ${description}`,
       });
-    });
+    };
+
+    if (data.tx) {
+      await runInsideTx(data.tx);
+    } else {
+      await db.transaction(runInsideTx);
+    }
 
     return { entryId };
   } catch (err) {

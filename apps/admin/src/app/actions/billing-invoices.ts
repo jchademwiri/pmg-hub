@@ -482,41 +482,53 @@ export async function convertQuoteToInvoice(
  */
 async function issueInvoiceInternal(id: string): Promise<{ error?: string }> {
   const db = getDb();
-  // Atomic status transition
-  const updateResult = await db
-    .update(invoices)
-    .set({ status: 'issued', updatedAt: new Date() })
-    .where(and(
-      eq(invoices.id, id),
-      eq(invoices.status, 'draft')
-    ))
-    .returning({ id: invoices.id });
 
-  if (updateResult.length === 0) {
-    return { error: 'Invoice not found or is no longer a draft.' };
-  }
+  return await db.transaction(async (tx) => {
+    // Lock the invoice row to prevent concurrent status updates
+    const [invoiceLocked] = await tx
+      .select({ id: invoices.id, status: invoices.status, total: invoices.total, invoiceDate: invoices.invoiceDate, documentNumber: invoices.documentNumber, divisionId: invoices.divisionId })
+      .from(invoices)
+      .where(eq(invoices.id, id))
+      .for('update');
 
-  // Fetch invoice details for the journal entry
-  const [invoiceDetail] = await db
-    .select({ total: invoices.total, invoiceDate: invoices.invoiceDate, documentNumber: invoices.documentNumber, divisionId: invoices.divisionId })
-    .from(invoices)
-    .where(eq(invoices.id, id));
+    if (!invoiceLocked) {
+      return { error: 'Invoice not found.' };
+    }
 
-  // Auto-post: Dr AR (1100) / Cr Revenue (4010)
-  if (invoiceDetail) {
+    if (invoiceLocked.status !== 'draft') {
+      return { error: 'Invoice not found or is no longer a draft.' };
+    }
+
+    // Atomic status transition within the transaction
+    await tx
+      .update(invoices)
+      .set({ status: 'issued', updatedAt: new Date() })
+      .where(eq(invoices.id, id));
+
+    // Auto-post: Dr AR (1100) / Cr Revenue (4010) — within the same transaction
+    // so if the journal entry fails, the status update is rolled back
     const journalResult = await postInvoiceIssueJournalEntry({
       invoiceId: id,
-      amount: parseFloat(invoiceDetail.total),
-      date: invoiceDetail.invoiceDate,
-      description: `Invoice ${invoiceDetail.documentNumber}`,
-      divisionId: invoiceDetail.divisionId,
+      amount: parseFloat(invoiceLocked.total),
+      date: invoiceLocked.invoiceDate,
+      description: `Invoice ${invoiceLocked.documentNumber}`,
+      divisionId: invoiceLocked.divisionId,
+      tx,
     });
-    if (journalResult.error) {
-      console.warn('Invoice AR auto-post warning:', journalResult.error);
-    }
-  }
 
-  return {};
+    if (journalResult.error) {
+      // Throw to roll back the entire transaction (status stays 'draft')
+      throw new Error(`Journal entry failed: ${journalResult.error}`);
+    }
+
+    return {};
+  }).catch((err) => {
+    // Transaction rolled back — return error without changing status
+    if (err.message?.startsWith('Journal entry failed:')) {
+      return { error: err.message };
+    }
+    return { error: 'Failed to issue invoice. Please try again.' };
+  });
 }
 
 /**

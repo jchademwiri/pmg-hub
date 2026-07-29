@@ -20,7 +20,6 @@ import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Mail, Loader2 } from 'lucide-react';
 import { getDocumentEmailPreviewAction, sendDocumentEmailAction } from '@/app/actions/email-delivery';
-import { issueInvoice } from '@/app/actions/billing-invoices';
 import { EmailPreviewPanel } from '@/components/billing/email-preview-panel';
 import { elementToPdfBase64, serverPdfUrlToBase64 } from '@/lib/pdf-export';
 
@@ -105,15 +104,9 @@ export function EmailDocumentDialog({
         ? await serverPdfUrlToBase64(pdfUrl, `${documentType === 'invoice' ? 'Invoice' : 'Quote'} PDF`)
         : await elementToPdfBase64(printableElementId, `${documentType === 'invoice' ? 'Invoice' : 'Quote'} PDF`);
 
-      // Ensure invoice is issued before compiling statement (so it's included)
-      if (documentType === 'invoice') {
-        setStatusText('Issuing invoice...');
-        const issueResult = await issueInvoice(documentId);
-        if (issueResult.error && !issueResult.error.includes('no longer a draft')) {
-          toast.warning(`Note: Invoice could not be auto-issued. Statement may be incomplete.`);
-        }
-      }
-
+      // Statement PDF URL now includes includeDraftInvoiceId when the
+      // invoice is a draft, so the statement query will include it even before
+      // the invoice is issued. Issuance happens AFTER successful email send.
       let statementBase64: string | undefined;
       if (documentType === 'invoice' && attachStatement) {
         setStatusText('Compiling account statement PDF...');

@@ -34,7 +34,6 @@ import {
   getReceiptEmailPreviewAction,
   sendReceiptEmailAction,
 } from '@/app/actions/email-delivery';
-import { issueInvoice } from '@/app/actions/billing-invoices';
 import { EmailPreviewPanel } from '@/components/billing/email-preview-panel';
 import { elementToPdfBase64, serverPdfUrlToBase64 } from '@/lib/pdf-export';
 
@@ -228,17 +227,10 @@ export function UniversalEmailDialog({
         ? await serverPdfUrlToBase64(pdfUrl, `${docLabel} PDF`)
         : await elementToPdfBase64(printableElementId, `${docLabel} PDF`);
 
-      // 1.5. Ensure invoice is issued before compiling statement (so it's included)
-      if (documentType === 'invoice') {
-        setStatusText('Issuing invoice...');
-        const issueResult = await issueInvoice(documentId);
-        if (issueResult.error && !issueResult.error.includes('no longer a draft')) {
-          // If issue failed for a reason other than "already issued", warn but continue
-          toast.warning(`Note: Invoice could not be auto-issued. Statement may be incomplete.`);
-        }
-      }
-
       // 2. Compile statement if selected
+      // Note: The statement PDF URL now includes includeDraftInvoiceId when the
+      // invoice is a draft, so the statement query will include it even before
+      // the invoice is issued. Issuance happens AFTER successful email send.
       let statementBase64: string | undefined;
       if (documentType === 'invoice' && attachStatement) {
         setStatusText('Compiling account statement PDF...');

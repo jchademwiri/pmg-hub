@@ -665,7 +665,7 @@ async function buildReceiptPdfData(id: string): Promise<PdfDocumentData | null> 
 
 async function buildStatementPdfData(
   clientId: string,
-  filters?: { year?: number; monthPeriod?: 'current' | 'previous' | 'past3' | 'past6'; statementType?: 'activity' | 'outstanding' },
+  filters?: { year?: number; monthPeriod?: 'current' | 'previous' | 'past3' | 'past6'; statementType?: 'activity' | 'outstanding'; includeDraftInvoiceId?: string },
 ): Promise<PdfDocumentData | null> {
   const statement = await getClientStatement(clientId, filters);
   if (!statement) return null;
@@ -814,7 +814,7 @@ async function buildStatementPdfData(
 export async function generateBillingPdf(
   type: BillingPdfType,
   id: string,
-  filters?: { year?: number; monthPeriod?: 'current' | 'previous' | 'past3' | 'past6'; statementType?: 'activity' | 'outstanding' },
+  filters?: { year?: number; monthPeriod?: 'current' | 'previous' | 'past3' | 'past6'; statementType?: 'activity' | 'outstanding'; includeDraftInvoiceId?: string },
 ) {
   const data =
     type === 'invoice'

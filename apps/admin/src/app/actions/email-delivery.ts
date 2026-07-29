@@ -309,16 +309,6 @@ export async function sendDocumentEmailAction(rawPayload: unknown) {
 
       if (!invoice) return { error: 'Invoice not found.' };
 
-      // Auto-issue: If invoice is still draft, issue it immediately so the
-      // statement PDF (compiled client-side before this action) is correct.
-      // The client dialog also calls issueInvoice() before compiling the
-      // statement, but this server-side guard ensures correctness regardless.
-      // Uses issueInvoiceInternal (no auth/revalidation) since we're already
-      // authenticated and the dialog handles UI refresh.
-      if (invoice.status === 'draft') {
-        await issueInvoiceInternal(documentId);
-      }
-
       const [client] = await db
         .select()
         .from(clients)
@@ -416,6 +406,16 @@ export async function sendDocumentEmailAction(rawPayload: unknown) {
 
       if (error) {
         return { error: `Failed to deliver email: ${error.message}` };
+      }
+
+      // Auto-issue: If invoice is still draft, issue it NOW (after successful
+      // email send). The statement PDF was compiled with includeDraftInvoiceId
+      // so the draft invoice was already included. Issuing here ensures the
+      // invoice status transitions to 'issued' only after the client actually
+      // received the email. Uses issueInvoiceInternal (no auth/revalidation)
+      // since we're already authenticated and the dialog handles UI refresh.
+      if (invoice.status === 'draft') {
+        await issueInvoiceInternal(documentId);
       }
 
       return { success: true, sendId: data?.id };
