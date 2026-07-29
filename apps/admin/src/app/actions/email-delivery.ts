@@ -1,5 +1,6 @@
 'use server';
 
+import { revalidatePath } from 'next/cache';
 import { getDb, invoices, quotations, clients, divisionBillingSettings, divisions, eq, income, sql } from '@pmg/db';
 import { issueInvoiceInternal } from './billing-invoices';
 import { generateReceiptNumber } from '@pmg/utils';
@@ -524,6 +525,9 @@ export async function sendDocumentEmailAction(rawPayload: unknown) {
           .update(quotations)
           .set({ status: 'sent', updatedAt: new Date() })
           .where(eq(quotations.id, documentId));
+
+        revalidatePath('/billing/quotes');
+        revalidatePath(`/billing/quotes/${documentId}`);
       }
 
       return { success: true, sendId: data?.id };
