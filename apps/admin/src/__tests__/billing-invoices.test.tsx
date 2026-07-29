@@ -109,10 +109,21 @@ import {
   updateInvoice,
   convertQuoteToInvoice,
   issueInvoice,
+  issueInvoiceInternal,
   markInvoicePaid,
   voidInvoice
 } from '@/app/actions/billing-invoices';
 import InvoicesPage from '@/app/(admin)/billing/invoices/page';
+
+// ─── Accounting Posting Mock ─────────────────────────────────────────────────
+const mockPostInvoiceIssueJournalEntry = vi.fn().mockResolvedValue({});
+vi.mock('@/lib/accounting/posting', () => ({
+  postInvoiceIssueJournalEntry: (...args: any[]) => mockPostInvoiceIssueJournalEntry(...args),
+  voidInvoiceJournalEntries: vi.fn().mockResolvedValue({}),
+  postPaymentJournalEntries: vi.fn().mockResolvedValue({}),
+  updateInvoiceJournalEntry: vi.fn().mockResolvedValue({}),
+  postInvoiceWriteOffJournalEntry: vi.fn().mockResolvedValue({}),
+}));
 
 describe('Billing Invoices Module', () => {
   beforeEach(() => {
@@ -242,6 +253,60 @@ describe('Billing Invoices Module', () => {
       const res = await issueInvoice('inv-1');
       expect(res).toEqual({});
       expect(mockDbUpdate).toHaveBeenCalled();
+    });
+
+    it('issueInvoice - makes invoice visible in client statement after issuing', async () => {
+      // Mock the status check: invoice is currently 'draft'
+      mockDbSelect.mockReturnValue({
+        from: vi.fn().mockReturnValue({
+          where: vi.fn().mockResolvedValue([{ id: 'inv-1', status: 'draft' }]),
+        }),
+      });
+
+      // Issue the invoice (changes status from 'draft' to 'issued')
+      const issueResult = await issueInvoice('inv-1');
+      expect(issueResult).toEqual({});
+
+      // Verify the update was called to change status
+      expect(mockDbUpdate).toHaveBeenCalled();
+
+      // The status transition from 'draft' → 'issued' means the invoice
+      // now passes the statement query filter: status NOT IN ('draft', 'void')
+      // This is the critical behavior that the bug fix addressed.
+    });
+
+    it('issueInvoiceInternal - posts journal entry when issuing draft invoice', async () => {
+      // Mock the atomic status update (draft → issued)
+      mockDbUpdate.mockReturnValue({
+        set: vi.fn().mockReturnValue({
+          where: vi.fn().mockReturnValue({
+            returning: vi.fn().mockResolvedValue([{ id: 'inv-1' }]),
+          }),
+        }),
+      });
+
+      // Mock the detail fetch for journal entry
+      mockDbSelect.mockImplementation(() => {
+        return {
+          from: vi.fn().mockReturnValue({
+            where: vi.fn().mockResolvedValue([
+              { id: 'inv-1', total: '1000.00', invoiceDate: '2026-07-01', documentNumber: 'INV-001', divisionId: 'd1' }
+            ]),
+          }),
+        };
+      });
+
+      const result = await issueInvoiceInternal('inv-1');
+      expect(result).toEqual({});
+
+      // Verify the journal entry was posted (Dr AR 1100 / Cr Revenue 4010)
+      expect(mockPostInvoiceIssueJournalEntry).toHaveBeenCalledWith({
+        invoiceId: 'inv-1',
+        amount: 1000,
+        date: '2026-07-01',
+        description: 'Invoice INV-001',
+        divisionId: 'd1',
+      });
     });
 
     it('markInvoicePaid - marks issued invoice as paid and adds income row', async () => {

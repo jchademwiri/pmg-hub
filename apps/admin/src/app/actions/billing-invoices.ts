@@ -734,45 +734,23 @@ export async function bulkIssueInvoices(ids: string[]): Promise<{ error?: string
       return { error: 'No draft invoices selected.' };
     }
 
-    // Atomic update
-    const updateResult = await db
-      .update(invoices)
-      .set({ status: 'issued', updatedAt: new Date() })
-      .where(and(
-        inArray(invoices.id, eligibleIds),
-        eq(invoices.status, 'draft')
-      ))
-      .returning({ id: invoices.id });
-
-    const updatedIds = updateResult.map(r => r.id);
-    if (updatedIds.length === 0) {
-      return { error: 'No invoices were updated.' };
+    // Issue each invoice via the shared helper (status + journal entry)
+    let successCount = 0;
+    for (const id of eligibleIds) {
+      const result = await issueInvoiceInternal(id);
+      if (!result.error) {
+        successCount++;
+      }
     }
 
-    // Fetch invoice details for journal entries
-    const invoiceDetails = await db
-      .select({ id: invoices.id, total: invoices.total, invoiceDate: invoices.invoiceDate, documentNumber: invoices.documentNumber, divisionId: invoices.divisionId })
-      .from(invoices)
-      .where(inArray(invoices.id, updatedIds));
-
-    // Auto-post AR for each issued invoice
-    for (const inv of invoiceDetails) {
-      const journalResult = await postInvoiceIssueJournalEntry({
-        invoiceId: inv.id,
-        amount: parseFloat(inv.total),
-        date: inv.invoiceDate,
-        description: `Invoice ${inv.documentNumber}`,
-        divisionId: inv.divisionId,
-      });
-      if (journalResult.error) {
-        console.warn('Bulk issue AR auto-post warning:', journalResult.error);
-      }
+    if (successCount === 0) {
+      return { error: 'No invoices were updated.' };
     }
 
     revalidatePath('/billing/invoices');
     revalidatePath('/accounting/journals');
     revalidatePath('/accounting/trial-balance');
-    return { successCount: eligibleIds.length };
+    return { successCount };
   } catch {
     return { error: 'Failed to bulk issue invoices.' };
   }
