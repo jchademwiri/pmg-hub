@@ -82,7 +82,6 @@ export async function createInvoice(
     const documentNumber = await getNextDocumentNumber(divisionId, 'invoice', year);
 
     const db = getDb();
-    const includeLineItemItemId = await hasBillingLineItemItemIdColumn();
 
     const [inserted] = await db
       .insert(invoices)
@@ -184,7 +183,6 @@ export async function updateInvoice(
     }
 
     const db = getDb();
-    const includeLineItemItemId = await hasBillingLineItemItemIdColumn();
 
     const { subtotal, discountAmount, vatAmount, total } = calcTotals(
       lineItems,
