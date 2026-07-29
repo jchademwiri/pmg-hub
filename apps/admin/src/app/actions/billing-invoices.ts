@@ -476,44 +476,58 @@ export async function convertQuoteToInvoice(
 
 // ── issueInvoice ──────────────────────────────────────────────────────────────
 
+/**
+ * Core issue logic without auth or path revalidation.
+ * Used by issueInvoice (UI action) and sendDocumentEmailAction (already authenticated).
+ */
+async function issueInvoiceInternal(id: string): Promise<{ error?: string }> {
+  const db = getDb();
+  // Atomic status transition
+  const updateResult = await db
+    .update(invoices)
+    .set({ status: 'issued', updatedAt: new Date() })
+    .where(and(
+      eq(invoices.id, id),
+      eq(invoices.status, 'draft')
+    ))
+    .returning({ id: invoices.id });
+
+  if (updateResult.length === 0) {
+    return { error: 'Invoice not found or is no longer a draft.' };
+  }
+
+  // Fetch invoice details for the journal entry
+  const [invoiceDetail] = await db
+    .select({ total: invoices.total, invoiceDate: invoices.invoiceDate, documentNumber: invoices.documentNumber, divisionId: invoices.divisionId })
+    .from(invoices)
+    .where(eq(invoices.id, id));
+
+  // Auto-post: Dr AR (1100) / Cr Revenue (4010)
+  if (invoiceDetail) {
+    const journalResult = await postInvoiceIssueJournalEntry({
+      invoiceId: id,
+      amount: parseFloat(invoiceDetail.total),
+      date: invoiceDetail.invoiceDate,
+      description: `Invoice ${invoiceDetail.documentNumber}`,
+      divisionId: invoiceDetail.divisionId,
+    });
+    if (journalResult.error) {
+      console.warn('Invoice AR auto-post warning:', journalResult.error);
+    }
+  }
+
+  return {};
+}
+
+/**
+ * Public action: issues a draft invoice, posts the journal entry,
+ * and revalidates cached paths. Used by UI buttons.
+ */
 export async function issueInvoice(id: string): Promise<{ error?: string }> {
   try {
     await getSessionOrRedirect();
-
-    const db = getDb();
-    // Atomic status transition
-    const updateResult = await db
-      .update(invoices)
-      .set({ status: 'issued', updatedAt: new Date() })
-      .where(and(
-        eq(invoices.id, id),
-        eq(invoices.status, 'draft')
-      ))
-      .returning({ id: invoices.id });
-
-    if (updateResult.length === 0) {
-      return { error: 'Invoice not found or is no longer a draft.' };
-    }
-
-    // Fetch invoice details for the journal entry
-    const [invoiceDetail] = await db
-      .select({ total: invoices.total, invoiceDate: invoices.invoiceDate, documentNumber: invoices.documentNumber, divisionId: invoices.divisionId })
-      .from(invoices)
-      .where(eq(invoices.id, id));
-
-    // Auto-post: Dr AR (1100) / Cr Revenue (4010)
-    if (invoiceDetail) {
-      const journalResult = await postInvoiceIssueJournalEntry({
-        invoiceId: id,
-        amount: parseFloat(invoiceDetail.total),
-        date: invoiceDetail.invoiceDate,
-        description: `Invoice ${invoiceDetail.documentNumber}`,
-        divisionId: invoiceDetail.divisionId,
-      });
-      if (journalResult.error) {
-        console.warn('Invoice AR auto-post warning:', journalResult.error);
-      }
-    }
+    const result = await issueInvoiceInternal(id);
+    if (result.error) return result;
 
     revalidatePath('/billing/invoices');
     revalidatePath(`/billing/invoices/${id}`);
@@ -526,6 +540,12 @@ export async function issueInvoice(id: string): Promise<{ error?: string }> {
     return { error: 'Failed to issue invoice. Please try again.' };
   }
 }
+
+/**
+ * Issues a draft invoice without auth or path revalidation.
+ * Exported for use in already-authenticated server actions (e.g. email delivery).
+ */
+export { issueInvoiceInternal };
 
 // ── markInvoicePaid ───────────────────────────────────────────────────────────
 

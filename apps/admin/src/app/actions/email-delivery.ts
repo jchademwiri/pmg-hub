@@ -1,7 +1,7 @@
 'use server';
 
 import { getDb, invoices, quotations, clients, divisionBillingSettings, divisions, eq, income, sql } from '@pmg/db';
-import { issueInvoice } from './billing-invoices';
+import { issueInvoiceInternal } from './billing-invoices';
 import { generateReceiptNumber } from '@pmg/utils';
 import { getSessionOrRedirect } from '@/lib/auth';
 import { fmtDate } from '@/lib/format';
@@ -312,10 +312,10 @@ export async function sendDocumentEmailAction(rawPayload: unknown) {
       // statement PDF (compiled client-side before this action) is correct.
       // The client dialog also calls issueInvoice() before compiling the
       // statement, but this server-side guard ensures correctness regardless.
-      // We call the canonical issueInvoice() action to also post the
-      // Dr AR (1100) / Cr Revenue (4010) journal entry.
+      // Uses issueInvoiceInternal (no auth/revalidation) since we're already
+      // authenticated and the dialog handles UI refresh.
       if (invoice.status === 'draft') {
-        await issueInvoice(documentId);
+        await issueInvoiceInternal(documentId);
       }
 
       const [client] = await db
