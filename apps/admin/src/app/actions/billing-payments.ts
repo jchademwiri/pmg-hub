@@ -185,6 +185,15 @@ export async function recordClientPayment(data: PaymentInput): Promise<{ error?:
     const totalAllocated = data.allocations.reduce((sum, a) => sum + a.amount, 0);
     const excessAmount = data.amount - totalAllocated;
 
+    // Server-side guard: the UI already prevents this, but this is a Server
+    // Action and can be called directly regardless of the UI, so it must be
+    // enforced here too — allocations can never exceed the cash actually
+    // received (allocating less is fine; the remainder becomes unallocated
+    // credit via excessAmount above).
+    if (excessAmount < -0.01) {
+      return { error: 'Total allocations exceed the payment amount received.' };
+    }
+
     let autoReference: string;
     if (allocatedInvoicesInfo.length > 0) {
       const invoiceList = allocatedInvoicesInfo.map((i) => i.documentNumber).join(', ');
@@ -646,13 +655,16 @@ export async function adjustClientPayment(incomeId: string, newAmount: number): 
       .where(eq(income.id, incomeId));
 
     // 4. Update journal entries to reflect new amount
-    await updatePaymentJournalEntries({
+    const journalResult = await updatePaymentJournalEntries({
       incomeId,
       newAmount,
       date: payment.date,
       description: payment.description || 'Payment adjusted',
       divisionId: payment.divisionId,
     });
+    if (journalResult.error) {
+      console.warn('Payment journal update warning:', journalResult.error);
+    }
 
     // 5. Revalidate cache
     revalidatePath('/billing/invoices');
@@ -968,13 +980,16 @@ export async function updateClientPayment(
       .where(eq(income.id, id));
 
     // 5. Update journal entries to reflect new amount/description
-    await updatePaymentJournalEntries({
+    const journalResult = await updatePaymentJournalEntries({
       incomeId: id,
       newAmount,
       date: data.date,
       description: finalDescription,
       divisionId: data.divisionId,
     });
+    if (journalResult.error) {
+      console.warn('Payment journal update warning:', journalResult.error);
+    }
 
     // 6. Revalidate cache
     revalidatePath('/billing/payments');
