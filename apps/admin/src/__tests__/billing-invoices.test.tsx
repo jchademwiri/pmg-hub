@@ -6,11 +6,30 @@ import React from 'react';
 
 vi.mock('server-only', () => ({}));
 
+// Drizzle query builders are thenable AND support further chaining
+// (.for('update'), .orderBy(), .limit()) after a terminal .where(). This
+// helper produces a value that's both directly awaitable and chainable, so a
+// single mocked `where()` return works whether or not the real code adds a
+// row lock after it.
+function selectResult<T>(rows: T): Promise<T> & { for: () => any; orderBy: () => any; limit: () => any } {
+  const p = Promise.resolve(rows) as any;
+  p.for = () => selectResult(rows);
+  p.orderBy = () => selectResult(rows);
+  p.limit = () => selectResult(rows);
+  return p;
+}
+
 const mockDbInsert = vi.fn();
 const mockDbSelect = vi.fn();
 const mockDbUpdate = vi.fn();
 const mockDbDelete = vi.fn();
 const mockDbExecute = vi.fn();
+// Drizzle's db.transaction(cb) runs cb with a transaction-scoped client; since
+// none of these mocks distinguish tx from db, just invoke cb with the same
+// dbMock so every tx.select/insert/update call inside it hits the same mocks.
+// (Implementation is set in beforeEach, once dbMock exists, to avoid a
+// circular type-inference error between the two module-scope consts.)
+const mockDbTransaction = vi.fn();
 
 const dbMock = {
   insert: mockDbInsert,
@@ -18,6 +37,7 @@ const dbMock = {
   update: mockDbUpdate,
   delete: mockDbDelete,
   execute: mockDbExecute,
+  transaction: mockDbTransaction,
 };
 
 vi.mock('@pmg/db', () => ({
@@ -30,10 +50,14 @@ vi.mock('@pmg/db', () => ({
   divisionBillingSettings: { divisionId: 'divisionId', paymentTermsDays: 'paymentTermsDays' },
   creditNotes: { id: 'id' },
   creditApplications: { id: 'id' },
+  paymentAllocations: { id: 'id', incomeId: 'incomeId', invoiceId: 'invoiceId', amount: 'amount' },
   eq: vi.fn(),
   and: vi.fn(),
+  inArray: vi.fn(),
+  sql: Object.assign(vi.fn(), { raw: vi.fn() }),
   getAllInvoices: vi.fn(),
   getNextDocumentNumber: vi.fn().mockResolvedValue('INV-2026-0001'),
+  getInvoiceMonthlySummaries: vi.fn().mockResolvedValue([]),
   addDays: (dateStr: string, days: number) => {
     const d = new Date(dateStr);
     d.setDate(d.getDate() + days);
@@ -41,12 +65,14 @@ vi.mock('@pmg/db', () => ({
   },
 }));
 
+const mockReverseCreditApplication = vi.fn();
+const mockGetClientCreditBalanceV2 = vi.fn();
 vi.mock('@/app/actions/credit-management', () => ({
-  reverseCreditApplication: vi.fn().mockResolvedValue({}),
-  getClientCreditBalanceV2: vi.fn().mockResolvedValue(0),
+  reverseCreditApplication: (...args: any[]) => mockReverseCreditApplication(...args),
+  getClientCreditBalanceV2: (...args: any[]) => mockGetClientCreditBalanceV2(...args),
 }));
 
-import { getAllInvoices, getNextDocumentNumber } from '@pmg/db';
+import { getAllInvoices, getNextDocumentNumber, getInvoiceMonthlySummaries } from '@pmg/db';
 
 vi.mock('@/lib/auth', () => ({
   getSessionOrRedirect: vi.fn().mockResolvedValue({ user: { id: 'user-1' } }),
@@ -109,21 +135,49 @@ import {
   updateInvoice,
   convertQuoteToInvoice,
   issueInvoice,
+  issueInvoiceInternal,
   markInvoicePaid,
   voidInvoice
 } from '@/app/actions/billing-invoices';
 import InvoicesPage from '@/app/(admin)/billing/invoices/page';
 
+// ─── Accounting Posting Mock ─────────────────────────────────────────────────
+// Named (not inline) so beforeEach can re-arm their resolved values after
+// vi.resetAllMocks() — an inline `vi.fn().mockResolvedValue(...)` here would
+// only ever apply once, at module-mock-setup time, and reset to a bare no-op
+// (resolving to undefined) before every single test.
+const mockPostInvoiceIssueJournalEntry = vi.fn();
+const mockVoidInvoiceJournalEntries = vi.fn();
+const mockPostPaymentJournalEntries = vi.fn();
+const mockUpdateInvoiceJournalEntry = vi.fn();
+const mockPostInvoiceWriteOffJournalEntry = vi.fn();
+vi.mock('@/lib/accounting/posting', () => ({
+  postInvoiceIssueJournalEntry: (...args: any[]) => mockPostInvoiceIssueJournalEntry(...args),
+  voidInvoiceJournalEntries: (...args: any[]) => mockVoidInvoiceJournalEntries(...args),
+  postPaymentJournalEntries: (...args: any[]) => mockPostPaymentJournalEntries(...args),
+  updateInvoiceJournalEntry: (...args: any[]) => mockUpdateInvoiceJournalEntry(...args),
+  postInvoiceWriteOffJournalEntry: (...args: any[]) => mockPostInvoiceWriteOffJournalEntry(...args),
+}));
+
 describe('Billing Invoices Module', () => {
   beforeEach(() => {
     vi.resetAllMocks();
+    mockPostInvoiceIssueJournalEntry.mockResolvedValue({});
+    mockVoidInvoiceJournalEntries.mockResolvedValue({});
+    mockPostPaymentJournalEntries.mockResolvedValue({});
+    mockUpdateInvoiceJournalEntry.mockResolvedValue({});
+    mockPostInvoiceWriteOffJournalEntry.mockResolvedValue({});
+    mockReverseCreditApplication.mockResolvedValue({});
+    mockGetClientCreditBalanceV2.mockResolvedValue(0);
     vi.mocked(getSessionOrRedirect).mockResolvedValue({ user: { id: 'user-1' } } as any);
     vi.mocked(getNextDocumentNumber).mockResolvedValue('INV-2026-0001');
+    vi.mocked(getInvoiceMonthlySummaries).mockResolvedValue([]);
     mockIsPeriodClosed.mockResolvedValue(false);
     mockGetMinAllowedDate.mockResolvedValue('2026-01-01');
     mockGetMinDateErrorMessage.mockReturnValue('Period is closed.');
 
     // Standard chainable mocks
+    mockDbTransaction.mockImplementation((cb: (tx: typeof dbMock) => unknown) => cb(dbMock));
     mockDbExecute.mockResolvedValue({ rows: [{ exists: true }] });
     mockDbInsert.mockReturnValue({
       values: vi.fn().mockReturnValue({
@@ -161,7 +215,7 @@ describe('Billing Invoices Module', () => {
       // Mock existing invoice as paid
       mockDbSelect.mockReturnValue({
         from: vi.fn().mockReturnValue({
-          where: vi.fn().mockResolvedValue([{ id: 'inv-1', status: 'paid' }]),
+          where: vi.fn().mockReturnValue(selectResult([{ id: 'inv-1', status: 'paid' }])),
         }),
       });
 
@@ -177,7 +231,7 @@ describe('Billing Invoices Module', () => {
       // Mock existing invoice as draft
       mockDbSelect.mockReturnValue({
         from: vi.fn().mockReturnValue({
-          where: vi.fn().mockResolvedValue([{ id: 'inv-1', status: 'draft' }]),
+          where: vi.fn().mockReturnValue(selectResult([{ id: 'inv-1', status: 'draft' }])),
         }),
       });
 
@@ -193,34 +247,38 @@ describe('Billing Invoices Module', () => {
     });
 
     it('convertQuoteToInvoice - converts accepted quotation successfully', async () => {
-      // select quotations, then divisionBillingSettings, then billingLineItems
+      // Call order: (1) outer quote fetch, (2) outer divisionBillingSettings,
+      // (3) locked quote re-fetch (.for('update')), (4) quote line items,
+      // (5) check for an already-existing invoice for this quotation.
+      const acceptedQuote = {
+        id: 'quote-1',
+        status: 'accepted',
+        divisionId: 'd3b07384-d113-4956-a5db-8f3e58b8d4e6',
+        clientId: 'c3b07384-d113-4956-a5db-8f3e58b8d4e7',
+        subtotal: '500.00',
+        total: '575.00',
+        expiryDate: null,
+      };
       let selectCount = 0;
-      mockDbSelect.mockImplementation((fields?: any) => {
+      mockDbSelect.mockImplementation(() => {
         selectCount++;
         return {
-          from: (table: any) => ({
-            where: (cond: any) => {
-              if (selectCount === 1) { // Quotation select
-                return Promise.resolve([{
-                  id: 'quote-1',
-                  status: 'accepted',
-                  divisionId: 'd3b07384-d113-4956-a5db-8f3e58b8d4e6',
-                  clientId: 'c3b07384-d113-4956-a5db-8f3e58b8d4e7',
-                  subtotal: '500.00',
-                  total: '575.00',
-                }]);
-              } else if (selectCount === 2) { // billingLineItems select
-                return Promise.resolve([{
+          from: () => ({
+            where: () => {
+              if (selectCount === 1) return selectResult([acceptedQuote]); // outer quote fetch
+              if (selectCount === 2) return selectResult([{ paymentTermsDays: 15 }]); // divisionBillingSettings
+              if (selectCount === 3) return selectResult([acceptedQuote]); // locked quote (.for('update'))
+              if (selectCount === 4) {
+                return selectResult([{
                   sortOrder: 0,
                   description: 'Item 1',
                   quantity: '2',
                   unitPrice: '250.00',
                   vatRate: '0',
                   lineTotal: '500.00',
-                }]);
-              } else { // divisionBillingSettings select
-                return Promise.resolve([{ paymentTermsDays: 15 }]);
+                }]); // quote line items
               }
+              return selectResult([]); // no existing invoice for this quotation
             },
           }),
         };
@@ -235,7 +293,7 @@ describe('Billing Invoices Module', () => {
     it('issueInvoice - transitions draft invoice to issued', async () => {
       mockDbSelect.mockReturnValue({
         from: vi.fn().mockReturnValue({
-          where: vi.fn().mockResolvedValue([{ id: 'inv-1', status: 'draft' }]),
+          where: vi.fn().mockReturnValue(selectResult([{ id: 'inv-1', status: 'draft', total: '1000.00', invoiceDate: '2026-07-01', documentNumber: 'INV-001', divisionId: 'd1' }])),
         }),
       });
 
@@ -244,25 +302,73 @@ describe('Billing Invoices Module', () => {
       expect(mockDbUpdate).toHaveBeenCalled();
     });
 
+    it('issueInvoice - makes invoice visible in client statement after issuing', async () => {
+      // Mock the status check: invoice is currently 'draft'
+      mockDbSelect.mockReturnValue({
+        from: vi.fn().mockReturnValue({
+          where: vi.fn().mockReturnValue(selectResult([{ id: 'inv-1', status: 'draft', total: '1000.00', invoiceDate: '2026-07-01', documentNumber: 'INV-001', divisionId: 'd1' }])),
+        }),
+      });
+
+      // Issue the invoice (changes status from 'draft' to 'issued')
+      const issueResult = await issueInvoice('inv-1');
+      expect(issueResult).toEqual({});
+
+      // Verify the update was called to change status
+      expect(mockDbUpdate).toHaveBeenCalled();
+
+      // The status transition from 'draft' → 'issued' means the invoice
+      // now passes the statement query filter: status NOT IN ('draft', 'void')
+      // This is the critical behavior that the bug fix addressed.
+    });
+
+    it('issueInvoiceInternal - posts journal entry when issuing draft invoice', async () => {
+      // Mock the locked read (status must be 'draft' for the transition to proceed)
+      mockDbSelect.mockImplementation(() => {
+        return {
+          from: vi.fn().mockReturnValue({
+            where: vi.fn().mockReturnValue(selectResult([
+              { id: 'inv-1', status: 'draft', total: '1000.00', invoiceDate: '2026-07-01', documentNumber: 'INV-001', divisionId: 'd1' }
+            ])),
+          }),
+        };
+      });
+
+      const result = await issueInvoiceInternal('inv-1');
+      expect(result).toEqual({});
+
+      // Verify the journal entry was posted (Dr AR 1100 / Cr Revenue 4010),
+      // sharing the same transaction (`tx`) as the status update.
+      expect(mockPostInvoiceIssueJournalEntry).toHaveBeenCalledWith({
+        invoiceId: 'inv-1',
+        amount: 1000,
+        date: '2026-07-01',
+        description: 'Invoice INV-001',
+        divisionId: 'd1',
+        tx: expect.anything(),
+      });
+    });
+
     it('markInvoicePaid - marks issued invoice as paid and adds income row', async () => {
+      // Call order: (1) outer invoice fetch, (2) outer client fetch,
+      // (3) locked invoice re-fetch inside the transaction (.for('update')).
+      const invoiceRow = {
+        id: 'inv-1',
+        status: 'issued',
+        clientId: 'c3b07384-d113-4956-a5db-8f3e58b8d4e7',
+        divisionId: 'd3b07384-d113-4956-a5db-8f3e58b8d4e6',
+        total: '1000.00',
+        documentNumber: 'INV-001',
+      };
       let selectCount = 0;
       mockDbSelect.mockImplementation(() => {
         selectCount++;
         return {
           from: () => ({
             where: () => {
-              if (selectCount === 1) { // invoice
-                return Promise.resolve([{
-                  id: 'inv-1',
-                  status: 'issued',
-                  clientId: 'c3b07384-d113-4956-a5db-8f3e58b8d4e7',
-                  divisionId: 'd3b07384-d113-4956-a5db-8f3e58b8d4e6',
-                  total: '1000.00',
-                  documentNumber: 'INV-001',
-                }]);
-              } else { // client
-                return Promise.resolve([{ name: 'Client A', businessName: 'Client Business' }]);
-              }
+              if (selectCount === 1) return selectResult([invoiceRow]); // outer invoice fetch
+              if (selectCount === 2) return selectResult([{ name: 'Client A', businessName: 'Client Business' }]); // client fetch
+              return selectResult([invoiceRow]); // locked invoice re-fetch
             },
           }),
         };
@@ -272,18 +378,62 @@ describe('Billing Invoices Module', () => {
       expect(res).toEqual({});
       expect(mockDbInsert).toHaveBeenCalled();
       expect(mockDbUpdate).toHaveBeenCalled();
+
+      // Regression test: markInvoicePaid must link the income to this invoice
+      // via payment_allocations (in addition to the income row itself), or
+      // every credit-balance calculation (sum(income) - sum(payment_allocations))
+      // treats the payment as free unallocated credit forever.
+      expect(mockDbInsert.mock.calls.length).toBeGreaterThanOrEqual(2);
     });
 
     it('voidInvoice - voids unpaid invoice', async () => {
       mockDbSelect.mockReturnValue({
         from: vi.fn().mockReturnValue({
-          where: vi.fn().mockResolvedValue([{ id: 'inv-1', status: 'issued' }]),
+          where: vi.fn().mockReturnValue(selectResult([{ id: 'inv-1', status: 'issued' }])),
         }),
       });
 
       const res = await voidInvoice('inv-1');
       expect(res).toEqual({});
       expect(mockDbUpdate).toHaveBeenCalled();
+    });
+
+    it('voidInvoice - rejects a partially_paid invoice', async () => {
+      mockDbSelect.mockReturnValue({
+        from: vi.fn().mockReturnValue({
+          where: vi.fn().mockReturnValue(selectResult([{ id: 'inv-1', status: 'partially_paid' }])),
+        }),
+      });
+
+      const res = await voidInvoice('inv-1');
+      expect(res.error).toMatch(/draft, issued, or overdue/i);
+      // Must not have attempted any mutation once blocked by the status guard.
+      expect(mockDbUpdate).not.toHaveBeenCalled();
+    });
+
+    it('voidInvoice - rejects a written_off invoice', async () => {
+      mockDbSelect.mockReturnValue({
+        from: vi.fn().mockReturnValue({
+          where: vi.fn().mockReturnValue(selectResult([{ id: 'inv-1', status: 'written_off' }])),
+        }),
+      });
+
+      const res = await voidInvoice('inv-1');
+      expect(res.error).toMatch(/draft, issued, or overdue/i);
+      expect(mockDbUpdate).not.toHaveBeenCalled();
+    });
+
+    it('voidInvoice - still allows draft, issued, and overdue invoices', async () => {
+      for (const status of ['draft', 'issued', 'overdue']) {
+        mockDbSelect.mockReturnValue({
+          from: vi.fn().mockReturnValue({
+            where: vi.fn().mockReturnValue(selectResult([{ id: 'inv-1', status }])),
+          }),
+        });
+
+        const res = await voidInvoice('inv-1');
+        expect(res).toEqual({});
+      }
     });
   });
 
@@ -297,7 +447,10 @@ describe('Billing Invoices Module', () => {
         sum: 1150,
       } as any);
 
-      const page = await InvoicesPage({ searchParams: Promise.resolve({ page: '1' }) });
+      // status (or divisionId) must be set for the page to take the filtered
+      // list branch (<InvoicesClient>) — with neither set it renders the
+      // unfiltered month-grouped accordion view instead.
+      const page = await InvoicesPage({ searchParams: Promise.resolve({ page: '1', status: 'issued' }) });
       render(page as React.ReactElement);
 
       expect(screen.getByTestId('invoices-client')).toBeInTheDocument();

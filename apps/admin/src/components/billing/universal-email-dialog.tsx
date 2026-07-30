@@ -228,6 +228,9 @@ export function UniversalEmailDialog({
         : await elementToPdfBase64(printableElementId, `${docLabel} PDF`);
 
       // 2. Compile statement if selected
+      // Note: The statement PDF URL now includes includeDraftInvoiceId when the
+      // invoice is a draft, so the statement query will include it even before
+      // the invoice is issued. Issuance happens AFTER successful email send.
       let statementBase64: string | undefined;
       if (documentType === 'invoice' && attachStatement) {
         setStatusText('Compiling account statement PDF...');

@@ -31,6 +31,7 @@ vi.mock('@pmg/db', () => ({
   and: vi.fn(),
   getAllQuotations: vi.fn(),
   getNextDocumentNumber: vi.fn().mockResolvedValue('Q-2026-0001'),
+  getQuotationMonthlySummaries: vi.fn().mockResolvedValue([]),
   addDays: (dateStr: string, days: number) => {
     const d = new Date(dateStr);
     d.setDate(d.getDate() + days);
@@ -38,7 +39,7 @@ vi.mock('@pmg/db', () => ({
   },
 }));
 
-import { getAllQuotations, getNextDocumentNumber } from '@pmg/db';
+import { getAllQuotations, getNextDocumentNumber, getQuotationMonthlySummaries } from '@pmg/db';
 
 vi.mock('@/lib/auth', () => ({
   getSessionOrRedirect: vi.fn().mockResolvedValue({ user: { id: 'user-1' } }),
@@ -104,6 +105,7 @@ describe('Billing Quotations Module', () => {
     vi.resetAllMocks();
     vi.mocked(getSessionOrRedirect).mockResolvedValue({ user: { id: 'user-1' } } as any);
     vi.mocked(getNextDocumentNumber).mockResolvedValue('Q-2026-0001');
+    vi.mocked(getQuotationMonthlySummaries).mockResolvedValue([]);
     mockIsPeriodClosed.mockResolvedValue(false);
     vi.mocked(getMinAllowedDate).mockResolvedValue(new Date('2026-01-01') as any);
     vi.mocked(getMinDateErrorMessage).mockReturnValue('Period is closed.');
@@ -208,6 +210,52 @@ describe('Billing Quotations Module', () => {
       expect(resSuccess).toEqual({});
       expect(mockDbUpdate).toHaveBeenCalled();
     });
+
+    it('updateQuotation - preserves per-line discounts (regression)', async () => {
+      // Previously, updateQuotation's line-item re-insert silently dropped
+      // discountType/discountValue/discountAmount and computed lineTotal as
+      // raw quantity*unitPrice, unlike createQuotation. Assert the values
+      // passed to the billingLineItems insert now include the discount.
+      mockDbExecute.mockResolvedValue({ rows: [{ exists: true }] });
+      mockDbSelect.mockReturnValue({
+        from: vi.fn().mockReturnValue({
+          where: vi.fn().mockResolvedValue([{ id: 'quote-1', status: 'draft' }]),
+        }),
+      });
+
+      const insertValues = vi.fn().mockReturnValue({
+        returning: vi.fn().mockResolvedValue([{ id: 'new-id' }]),
+      });
+      mockDbInsert.mockReturnValue({ values: insertValues });
+
+      const res = await updateQuotation('quote-1', {
+        divisionId: 'd3b07384-d113-4956-a5db-8f3e58b8d4e6',
+        clientId: 'c3b07384-d113-4956-a5db-8f3e58b8d4e7',
+        quoteDate: '2026-05-01',
+        lineItems: [{
+          itemId: 'e3b07384-d113-4956-a5db-8f3e58b8d4e8',
+          description: 'Item 1',
+          quantity: 2,
+          unitPrice: 250,
+          vatRate: 0,
+          discountType: 'percent',
+          discountValue: 10,
+        }],
+        vatEnabled: false,
+      });
+
+      expect(res).toEqual({});
+      const insertedRows = insertValues.mock.calls[0]?.[0];
+      expect(insertedRows).toEqual([
+        expect.objectContaining({
+          discountType: 'percent',
+          discountValue: '10',
+          discountAmount: '50.00', // 10% of (2 * 250)
+          lineTotal: '450.00', // 500 - 50
+        }),
+      ]);
+    });
+
     it('updateQuotationStatus - valid and invalid status transitions', async () => {
       // Mock quote status sent
       mockDbSelect.mockReturnValue({
@@ -292,7 +340,10 @@ describe('Billing Quotations Module', () => {
         sum: 1500,
       } as any);
 
-      const page = await QuotesPage({ searchParams: Promise.resolve({ page: '1' }) });
+      // status (or divisionId) must be set for the page to take the filtered
+      // list branch (<QuotesClient>) — with neither set it renders the
+      // unfiltered month-grouped view instead.
+      const page = await QuotesPage({ searchParams: Promise.resolve({ page: '1', status: 'draft' }) });
       render(page as React.ReactElement);
 
       expect(screen.getByTestId('quotes-client')).toBeInTheDocument();

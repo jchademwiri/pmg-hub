@@ -34,7 +34,10 @@ function calcTotals(
       : item.discountType === 'amount'
       ? Math.min(itemDiscountVal, rawTotal)
       : 0;
-    subtotal += (rawTotal - itemDiscountAmount);
+    // Round each line the same way it's rounded when stored as `lineTotal`
+    // (see the billingLineItems insert below), so the header subtotal always
+    // foots exactly to the sum of the displayed line totals.
+    subtotal += Math.round((rawTotal - itemDiscountAmount) * 100) / 100;
   }
 
   const discountVal = discountValue ?? 0;
@@ -82,7 +85,6 @@ export async function createInvoice(
     const documentNumber = await getNextDocumentNumber(divisionId, 'invoice', year);
 
     const db = getDb();
-    const includeLineItemItemId = await hasBillingLineItemItemIdColumn();
 
     const [inserted] = await db
       .insert(invoices)
@@ -184,7 +186,6 @@ export async function updateInvoice(
     }
 
     const db = getDb();
-    const includeLineItemItemId = await hasBillingLineItemItemIdColumn();
 
     const { subtotal, discountAmount, vatAmount, total } = calcTotals(
       lineItems,
@@ -343,6 +344,9 @@ export async function convertQuoteToInvoice(
 
     const { year } = getSASTParts();
     const today = getSASTToday();
+    if (quote.expiryDate && quote.expiryDate < today) {
+      return { error: 'This quotation has expired and can no longer be converted to an invoice.' };
+    }
     if (await isPeriodClosed(today)) {
       const minDate = await getMinAllowedDate();
       throw new ActionError(getMinDateErrorMessage(minDate));
@@ -375,6 +379,9 @@ export async function convertQuoteToInvoice(
       if (!quoteLocked) throw new InvoiceValidationError('Quotation not found.');
       if (quoteLocked.status !== 'accepted') {
         throw new InvoiceValidationError('Only accepted quotations can be converted to invoices.');
+      }
+      if (quoteLocked.expiryDate && quoteLocked.expiryDate < today) {
+        throw new InvoiceValidationError('This quotation has expired and can no longer be converted to an invoice.');
       }
 
       // Load quote line items inside the transaction to share the lock
@@ -476,44 +483,70 @@ export async function convertQuoteToInvoice(
 
 // ── issueInvoice ──────────────────────────────────────────────────────────────
 
-export async function issueInvoice(id: string): Promise<{ error?: string }> {
-  try {
-    await getSessionOrRedirect();
+/**
+ * Core issue logic without auth or path revalidation.
+ * Used by issueInvoice (UI action) and sendDocumentEmailAction (already authenticated).
+ */
+async function issueInvoiceInternal(id: string): Promise<{ error?: string }> {
+  const db = getDb();
 
-    const db = getDb();
-    // Atomic status transition
-    const updateResult = await db
-      .update(invoices)
-      .set({ status: 'issued', updatedAt: new Date() })
-      .where(and(
-        eq(invoices.id, id),
-        eq(invoices.status, 'draft')
-      ))
-      .returning({ id: invoices.id });
+  return await db.transaction(async (tx) => {
+    // Lock the invoice row to prevent concurrent status updates
+    const [invoiceLocked] = await tx
+      .select({ id: invoices.id, status: invoices.status, total: invoices.total, invoiceDate: invoices.invoiceDate, documentNumber: invoices.documentNumber, divisionId: invoices.divisionId })
+      .from(invoices)
+      .where(eq(invoices.id, id))
+      .for('update');
 
-    if (updateResult.length === 0) {
+    if (!invoiceLocked) {
+      return { error: 'Invoice not found.' };
+    }
+
+    if (invoiceLocked.status !== 'draft') {
       return { error: 'Invoice not found or is no longer a draft.' };
     }
 
-    // Fetch invoice details for the journal entry
-    const [invoiceDetail] = await db
-      .select({ total: invoices.total, invoiceDate: invoices.invoiceDate, documentNumber: invoices.documentNumber, divisionId: invoices.divisionId })
-      .from(invoices)
+    // Atomic status transition within the transaction
+    await tx
+      .update(invoices)
+      .set({ status: 'issued', updatedAt: new Date() })
       .where(eq(invoices.id, id));
 
-    // Auto-post: Dr AR (1100) / Cr Revenue (4010)
-    if (invoiceDetail) {
-      const journalResult = await postInvoiceIssueJournalEntry({
-        invoiceId: id,
-        amount: parseFloat(invoiceDetail.total),
-        date: invoiceDetail.invoiceDate,
-        description: `Invoice ${invoiceDetail.documentNumber}`,
-        divisionId: invoiceDetail.divisionId,
-      });
-      if (journalResult.error) {
-        console.warn('Invoice AR auto-post warning:', journalResult.error);
-      }
+    // Auto-post: Dr AR (1100) / Cr Revenue (4010) — within the same transaction
+    // so if the journal entry fails, the status update is rolled back
+    const journalResult = await postInvoiceIssueJournalEntry({
+      invoiceId: id,
+      amount: parseFloat(invoiceLocked.total),
+      date: invoiceLocked.invoiceDate,
+      description: `Invoice ${invoiceLocked.documentNumber}`,
+      divisionId: invoiceLocked.divisionId,
+      tx,
+    });
+
+    if (journalResult.error) {
+      // Throw to roll back the entire transaction (status stays 'draft')
+      throw new Error(`Journal entry failed: ${journalResult.error}`);
     }
+
+    return {};
+  }).catch((err) => {
+    // Transaction rolled back — return error without changing status
+    if (err.message?.startsWith('Journal entry failed:')) {
+      return { error: err.message };
+    }
+    return { error: 'Failed to issue invoice. Please try again.' };
+  });
+}
+
+/**
+ * Public action: issues a draft invoice, posts the journal entry,
+ * and revalidates cached paths. Used by UI buttons.
+ */
+export async function issueInvoice(id: string): Promise<{ error?: string }> {
+  try {
+    await getSessionOrRedirect();
+    const result = await issueInvoiceInternal(id);
+    if (result.error) return result;
 
     revalidatePath('/billing/invoices');
     revalidatePath(`/billing/invoices/${id}`);
@@ -526,6 +559,12 @@ export async function issueInvoice(id: string): Promise<{ error?: string }> {
     return { error: 'Failed to issue invoice. Please try again.' };
   }
 }
+
+/**
+ * Issues a draft invoice without auth or path revalidation.
+ * Exported for use in already-authenticated server actions (e.g. email delivery).
+ */
+export { issueInvoiceInternal };
 
 // ── markInvoicePaid ───────────────────────────────────────────────────────────
 
@@ -593,6 +632,15 @@ export async function markInvoicePaid(id: string): Promise<{ error?: string }> {
 
       if (!row) throw new InvoiceValidationError('Failed to post income record.');
 
+      // Link the income to this invoice via payment_allocations so credit-balance
+      // calculations (sum(income) - sum(payment_allocations)) don't treat this
+      // payment as unallocated/free credit.
+      await tx.insert(paymentAllocations).values({
+        incomeId: row.id,
+        invoiceId: id,
+        amount: invoiceLocked.total!,
+      });
+
       await tx
         .update(invoices)
         .set({
@@ -603,23 +651,32 @@ export async function markInvoicePaid(id: string): Promise<{ error?: string }> {
         })
         .where(eq(invoices.id, id));
 
+      // Auto-post: Dr Bank (1010) / Cr AR (1100) + Dr Savings / Cr Bank (PMG share)
+      // — within the same transaction so a journal-posting failure (e.g. closed
+      // period) rolls back the whole payment instead of leaving it unbacked.
+      const journalResult = await postPaymentJournalEntries({
+        incomeId: row.id,
+        amount: parseFloat(invoiceLocked.total),
+        date: paymentDate,
+        description,
+        divisionId: invoiceLocked.divisionId,
+        tx,
+      });
+
+      if (journalResult.error) {
+        throw new Error(`Journal entry failed: ${journalResult.error}`);
+      }
+
       return { incomeRow: row, invoiceLocked };
+    }).catch((err) => {
+      if (err instanceof InvoiceValidationError) throw err;
+      if (err.message?.startsWith('Journal entry failed:')) {
+        throw new InvoiceValidationError(err.message);
+      }
+      throw err;
     });
 
     if (!result) return { error: 'Failed to post income record.' };
-    const { incomeRow, invoiceLocked } = result;
-
-    // Auto-post: Dr Bank (1010) / Cr AR (1100) + Dr Savings / Cr Bank (PMG share)
-    const journalResult = await postPaymentJournalEntries({
-      incomeId: incomeRow.id,
-      amount: parseFloat(invoiceLocked.total),
-      date: paymentDate,
-      description,
-      divisionId: invoiceLocked.divisionId,
-    });
-    if (journalResult.error) {
-      console.warn('Payment AR auto-post warning:', journalResult.error);
-    }
 
     revalidatePath('/billing/invoices');
     revalidatePath(`/billing/invoices/${id}`);
@@ -642,41 +699,68 @@ export async function markInvoicePaid(id: string): Promise<{ error?: string }> {
 
 // ── voidInvoice ───────────────────────────────────────────────────────────────
 
-export async function voidInvoice(id: string): Promise<{ error?: string }> {
-  try {
-    await getSessionOrRedirect();
+const VOIDABLE_INVOICE_STATUSES = ['draft', 'issued', 'overdue'] as const;
 
-    const db = getDb();
-    const [invoice] = await db
+/**
+ * Core void logic without auth or path revalidation. Used by voidInvoice (UI
+ * action) and bulkVoidInvoices, so each invoice in a bulk operation gets its
+ * own independent transaction — one invoice failing (e.g. a closed period)
+ * doesn't block the rest of the batch.
+ */
+async function voidInvoiceInternal(id: string): Promise<{ error?: string }> {
+  const db = getDb();
+
+  // Reverse any credit applications. This is a defensive no-op in practice:
+  // any positive credit allocation already flips an invoice's status to
+  // partially_paid/paid, so a draft/issued/overdue invoice reaching this
+  // point should never actually have one — but it's cheap insurance.
+  const { reverseCreditApplication } = await import('./credit-management');
+  const reverseRes = await reverseCreditApplication(id);
+  if (reverseRes.error) return { error: reverseRes.error };
+
+  return await db.transaction(async (tx) => {
+    // Lock the invoice row to prevent concurrent status updates
+    const [invoiceLocked] = await tx
       .select({ id: invoices.id, status: invoices.status })
       .from(invoices)
-      .where(eq(invoices.id, id));
+      .where(eq(invoices.id, id))
+      .for('update');
 
-    if (!invoice) return { error: 'Invoice not found.' };
-    if (invoice.status === 'paid') {
-      return { error: 'Cannot void a paid invoice.' };
-    }
-    if (invoice.status === 'void') {
-      return { error: 'Invoice is already void.' };
-    }
-
-    // Reverse any credit applications
-    const { reverseCreditApplication } = await import('./credit-management');
-    const reverseRes = await reverseCreditApplication(id);
-    if (reverseRes.error) {
-      return { error: reverseRes.error };
+    if (!invoiceLocked) return { error: 'Invoice not found.' };
+    if (!VOIDABLE_INVOICE_STATUSES.includes(invoiceLocked.status as any)) {
+      return {
+        error: invoiceLocked.status === 'paid' || invoiceLocked.status === 'void'
+          ? `Invoice is already ${invoiceLocked.status}.`
+          : 'Only draft, issued, or overdue invoices can be voided. Reverse any payments on this invoice first.',
+      };
     }
 
-    await db
+    await tx
       .update(invoices)
       .set({ status: 'void', updatedAt: new Date() })
       .where(eq(invoices.id, id));
 
-    // Void the AR journal entry (Dr AR / Cr Revenue)
-    const journalResult = await voidInvoiceJournalEntries(id);
+    // Void the AR journal entry within the same transaction so a failure
+    // rolls back the status change instead of leaving it unbacked.
+    const journalResult = await voidInvoiceJournalEntries(id, tx);
     if (journalResult.error) {
-      console.warn('Invoice AR void warning:', journalResult.error);
+      throw new Error(`Journal void failed: ${journalResult.error}`);
     }
+
+    return {};
+  }).catch((err) => {
+    if (err.message?.startsWith('Journal void failed:')) {
+      return { error: err.message };
+    }
+    return { error: 'Failed to void invoice. Please try again.' };
+  });
+}
+
+export async function voidInvoice(id: string): Promise<{ error?: string }> {
+  try {
+    await getSessionOrRedirect();
+    const result = await voidInvoiceInternal(id);
+    if (result.error) return result;
 
     revalidatePath('/billing/invoices');
     revalidatePath(`/billing/invoices/${id}`);
@@ -692,14 +776,14 @@ export async function voidInvoice(id: string): Promise<{ error?: string }> {
 
 // ── bulkIssueInvoices ─────────────────────────────────────────────────────────
 
-export async function bulkIssueInvoices(ids: string[]): Promise<{ error?: string; successCount?: number }> {
+export async function bulkIssueInvoices(ids: string[]): Promise<{ error?: string; successCount?: number; failedIds?: string[] }> {
   try {
     await getSessionOrRedirect();
 
     if (ids.length === 0) return { successCount: 0 };
 
     const db = getDb();
-    
+
     // Find eligible draft invoices in the selected set
     const eligible = await db
       .select({ id: invoices.id })
@@ -714,45 +798,27 @@ export async function bulkIssueInvoices(ids: string[]): Promise<{ error?: string
       return { error: 'No draft invoices selected.' };
     }
 
-    // Atomic update
-    const updateResult = await db
-      .update(invoices)
-      .set({ status: 'issued', updatedAt: new Date() })
-      .where(and(
-        inArray(invoices.id, eligibleIds),
-        eq(invoices.status, 'draft')
-      ))
-      .returning({ id: invoices.id });
-
-    const updatedIds = updateResult.map(r => r.id);
-    if (updatedIds.length === 0) {
-      return { error: 'No invoices were updated.' };
+    // Issue each invoice via the shared helper (own transaction, status +
+    // journal entry) so one failure doesn't block the rest of the batch.
+    let successCount = 0;
+    const failedIds: string[] = [];
+    for (const id of eligibleIds) {
+      const result = await issueInvoiceInternal(id);
+      if (result.error) {
+        failedIds.push(id);
+      } else {
+        successCount++;
+      }
     }
 
-    // Fetch invoice details for journal entries
-    const invoiceDetails = await db
-      .select({ id: invoices.id, total: invoices.total, invoiceDate: invoices.invoiceDate, documentNumber: invoices.documentNumber, divisionId: invoices.divisionId })
-      .from(invoices)
-      .where(inArray(invoices.id, updatedIds));
-
-    // Auto-post AR for each issued invoice
-    for (const inv of invoiceDetails) {
-      const journalResult = await postInvoiceIssueJournalEntry({
-        invoiceId: inv.id,
-        amount: parseFloat(inv.total),
-        date: inv.invoiceDate,
-        description: `Invoice ${inv.documentNumber}`,
-        divisionId: inv.divisionId,
-      });
-      if (journalResult.error) {
-        console.warn('Bulk issue AR auto-post warning:', journalResult.error);
-      }
+    if (successCount === 0) {
+      return { error: 'No invoices were updated.', failedIds };
     }
 
     revalidatePath('/billing/invoices');
     revalidatePath('/accounting/journals');
     revalidatePath('/accounting/trial-balance');
-    return { successCount: eligibleIds.length };
+    return { successCount, failedIds: failedIds.length > 0 ? failedIds : undefined };
   } catch {
     return { error: 'Failed to bulk issue invoices.' };
   }
@@ -760,7 +826,7 @@ export async function bulkIssueInvoices(ids: string[]): Promise<{ error?: string
 
 // ── bulkVoidInvoices ──────────────────────────────────────────────────────────
 
-export async function bulkVoidInvoices(ids: string[]): Promise<{ error?: string; successCount?: number }> {
+export async function bulkVoidInvoices(ids: string[]): Promise<{ error?: string; successCount?: number; failedIds?: string[] }> {
   try {
     await getSessionOrRedirect();
 
@@ -774,7 +840,7 @@ export async function bulkVoidInvoices(ids: string[]): Promise<{ error?: string;
       .from(invoices)
       .where(and(
         inArray(invoices.id, ids),
-        inArray(invoices.status, ['draft', 'issued', 'overdue'])
+        inArray(invoices.status, [...VOIDABLE_INVOICE_STATUSES])
       ));
 
     const eligibleIds = eligible.map(inv => inv.id);
@@ -782,23 +848,27 @@ export async function bulkVoidInvoices(ids: string[]): Promise<{ error?: string;
       return { error: 'No voidable invoices selected.' };
     }
 
-    await db
-      .update(invoices)
-      .set({ status: 'void', updatedAt: new Date() })
-      .where(inArray(invoices.id, eligibleIds));
-
-    // Void AR journal entries for each voided invoice
-    for (const invId of eligibleIds) {
-      const journalResult = await voidInvoiceJournalEntries(invId);
-      if (journalResult.error) {
-        console.warn('Bulk void AR warning:', journalResult.error);
+    // Void each invoice via the shared helper (own transaction, credit
+    // reversal + status + journal void) so one failure doesn't block the rest.
+    let successCount = 0;
+    const failedIds: string[] = [];
+    for (const id of eligibleIds) {
+      const result = await voidInvoiceInternal(id);
+      if (result.error) {
+        failedIds.push(id);
+      } else {
+        successCount++;
       }
+    }
+
+    if (successCount === 0) {
+      return { error: 'No invoices were voided.', failedIds };
     }
 
     revalidatePath('/billing/invoices');
     revalidatePath('/accounting/journals');
     revalidatePath('/accounting/trial-balance');
-    return { successCount: eligibleIds.length };
+    return { successCount, failedIds: failedIds.length > 0 ? failedIds : undefined };
   } catch {
     return { error: 'Failed to bulk void invoices.' };
   }
@@ -833,8 +903,8 @@ export async function writeOffInvoice(id: string, reason: string): Promise<{ err
         .where(eq(invoices.id, id));
 
       if (!invoice) throw new Error('Invoice not found.');
-      if (invoice.status !== 'issued' && invoice.status !== 'overdue') {
-        throw new Error('Only issued or overdue invoices can be written off.');
+      if (!['issued', 'overdue', 'partially_paid'].includes(invoice.status)) {
+        throw new Error('Only issued, overdue, or partially paid invoices can be written off.');
       }
 
       const total = parseFloat(invoice.total);

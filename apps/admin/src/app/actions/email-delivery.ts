@@ -1,6 +1,8 @@
 'use server';
 
+import { revalidatePath } from 'next/cache';
 import { getDb, invoices, quotations, clients, divisionBillingSettings, divisions, eq, income, sql } from '@pmg/db';
+import { issueInvoiceInternal } from './billing-invoices';
 import { generateReceiptNumber } from '@pmg/utils';
 import { getSessionOrRedirect } from '@/lib/auth';
 import { fmtDate } from '@/lib/format';
@@ -306,7 +308,7 @@ export async function sendDocumentEmailAction(rawPayload: unknown) {
         .where(eq(invoices.id, documentId));
 
       if (!invoice) return { error: 'Invoice not found.' };
-      
+
       const [client] = await db
         .select()
         .from(clients)
@@ -406,12 +408,23 @@ export async function sendDocumentEmailAction(rawPayload: unknown) {
         return { error: `Failed to deliver email: ${error.message}` };
       }
 
-      // Update invoice status from 'draft' to 'issued' upon successful send
+      // Auto-issue: If invoice is still draft, issue it NOW (after successful
+      // email send). The statement PDF was compiled with includeDraftInvoiceId
+      // so the draft invoice was already included. Issuing here ensures the
+      // invoice status transitions to 'issued' only after the client actually
+      // received the email. Uses issueInvoiceInternal (no auth/revalidation)
+      // since we're already authenticated and the dialog handles UI refresh.
       if (invoice.status === 'draft') {
-        await db
-          .update(invoices)
-          .set({ status: 'issued', updatedAt: new Date() })
-          .where(eq(invoices.id, documentId));
+        const issueResult = await issueInvoiceInternal(documentId);
+        if (issueResult.error) {
+          console.warn('Auto-issue after email send failed:', issueResult.error);
+        } else {
+          revalidatePath('/billing/invoices');
+          revalidatePath(`/billing/invoices/${documentId}`);
+          revalidatePath('/accounting/journals');
+          revalidatePath('/accounting/trial-balance');
+          revalidatePath('/accounting/general-ledger');
+        }
       }
 
       return { success: true, sendId: data?.id };
@@ -521,6 +534,9 @@ export async function sendDocumentEmailAction(rawPayload: unknown) {
           .update(quotations)
           .set({ status: 'sent', updatedAt: new Date() })
           .where(eq(quotations.id, documentId));
+
+        revalidatePath('/billing/quotes');
+        revalidatePath(`/billing/quotes/${documentId}`);
       }
 
       return { success: true, sendId: data?.id };

@@ -769,6 +769,9 @@ export function ClientBillingWorkspace({
       if (result.error) toast.error(result.error);
       else {
         toast.success(`Successfully issued ${result.successCount} invoices.`);
+        if (result.failedIds?.length) {
+          toast.warning(`${result.failedIds.length} invoice(s) could not be issued — check the accounting period and retry.`);
+        }
         setSelectedInvoiceIds(new Set());
         router.refresh();
       }
@@ -782,6 +785,9 @@ export function ClientBillingWorkspace({
       if (result.error) toast.error(result.error);
       else {
         toast.success(`Successfully voided ${result.successCount} invoices.`);
+        if (result.failedIds?.length) {
+          toast.warning(`${result.failedIds.length} invoice(s) could not be voided — check for linked payments and retry.`);
+        }
         setSelectedInvoiceIds(new Set());
         router.refresh();
       }

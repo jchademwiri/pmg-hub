@@ -548,10 +548,18 @@ export async function getAllInvoices(
     year?: number;
     invoiceDateTo?: string;
     monthPeriod?: 'current' | 'previous' | 'past3' | 'past6';
+    // Explicitly exclude draft/void invoices from BOTH the returned rows and
+    // the total/sum/outstanding counts (used for dashboard summary figures
+    // like "Total Invoiced" — never set this for a paginated invoices list,
+    // since data and totals must always reflect the exact same rows).
+    excludeDraftVoid?: boolean;
   },
   pageObj?: { page: number; pageSize: number },
 ): Promise<{ data: InvoiceRow[]; total: number; sum: number; outstanding: number }> {
   const conditions = [];
+  if (filters?.excludeDraftVoid && !filters?.status) {
+    conditions.push(sql`${invoices.status} NOT IN ('draft', 'void')`);
+  }
 
   if (filters?.divisionId) {
     conditions.push(eq(invoices.divisionId, filters.divisionId));
@@ -619,12 +627,10 @@ export async function getAllInvoices(
 
   let finalQuery = conditions.length > 0 ? query.where(and(...conditions)) : query;
 
-  // Count + sum query (unfiltered outstanding is always across all invoices matching filters)
-  const countConditions = [...conditions];
-  if (!filters?.status) {
-    countConditions.push(sql`${invoices.status} NOT IN ('draft', 'void')`);
-  }
-
+  // Count + sum query — uses the exact same `conditions` as the data query
+  // above, so `total` always matches the number of rows `data` could return
+  // (previously this silently added its own draft/void exclusion here without
+  // applying it to the data query too, making pagination totals wrong).
   const countQuery = db
     .select({
       count: sql<number>`count(*)::int`,
@@ -632,7 +638,7 @@ export async function getAllInvoices(
       outstanding: sql<number>`COALESCE(SUM(CASE WHEN ${invoices.status} IN ('issued', 'overdue', 'partially_paid') THEN ${invoices.total} - COALESCE((SELECT SUM(amount) FROM payment_allocations WHERE invoice_id = invoices.id), 0) - COALESCE((SELECT SUM(amount) FROM credit_applications WHERE invoice_id = invoices.id), 0) ELSE 0 END), 0)::numeric`,
     })
     .from(invoices);
-  if (countConditions.length > 0) countQuery.where(and(...countConditions));
+  if (conditions.length > 0) countQuery.where(and(...conditions));
 
   const [totalRes] = await countQuery;
   const total = totalRes?.count ?? 0;
@@ -876,9 +882,16 @@ export async function getInvoiceById(id: string): Promise<InvoiceDetail | null> 
  */
 export async function getClientStatement(
   clientId: string,
-  filters?: { year?: number; monthPeriod?: 'current' | 'previous' | 'past3' | 'past6' },
+  filters?: { year?: number; monthPeriod?: 'current' | 'previous' | 'past3' | 'past6'; includeDraftInvoiceId?: string },
 ): Promise<ClientStatement | null> {
   const includeReference = await hasQuotationReferenceColumn();
+  // When includeDraftInvoiceId is set, include that specific draft invoice
+  // alongside the normal non-draft/non-void invoices. Used by the email
+  // delivery flow so the statement PDF shows the invoice being sent.
+  const draftFilter = filters?.includeDraftInvoiceId
+    ? sql`(${invoices.status} NOT IN ('draft', 'void') OR ${invoices.id} = ${filters.includeDraftInvoiceId})`
+    : sql`${invoices.status} NOT IN ('draft', 'void')`;
+
   // Fetch client
   const clientRows = await db
     .select({
@@ -894,14 +907,23 @@ export async function getClientStatement(
   if (clientRows.length === 0) return null;
   const client = clientRows[0]!;
 
+  // Credit note applications create both a `creditApplications` row AND a
+  // synthetic `income` + `paymentAllocations` pair (marked by this description
+  // prefix) purely so they surface on generic income/payment dashboards.
+  // Every sum below already adds `creditApplications` separately, so the
+  // synthetic income row must be excluded from every income sum here —
+  // otherwise each credit application is subtracted twice from what the
+  // client owes.
+  const excludeSyntheticCreditIncome = sql`${income.description} NOT LIKE 'Credit applied to%'`;
+
   // Build filter conditions
   const quoteConditions = [eq(quotations.clientId, clientId)];
   const invoiceConditions = [
     eq(invoices.clientId, clientId),
-    sql`${invoices.status} NOT IN ('draft', 'void')`,
+    draftFilter,
     sql`${invoices.invoiceDate} <= timezone('Africa/Johannesburg', now())::date`
   ];
-  const incomeConditions = [eq(income.clientId, clientId)];
+  const incomeConditions = [eq(income.clientId, clientId), excludeSyntheticCreditIncome];
   let statementBalanceCutoff: string | null = null;
   let periodStartDate: string | null = null;
 
@@ -975,13 +997,13 @@ export async function getClientStatement(
   // Compute balance for "Amount Due" as of the statement period end.
   const globalInvoiceConditions = [
     eq(invoices.clientId, clientId),
-    sql`${invoices.status} NOT IN ('draft', 'void')`,
+    draftFilter,
     sql`${invoices.invoiceDate} <= timezone('Africa/Johannesburg', now())::date`
   ];
-  const globalIncomeConditions = [eq(income.clientId, clientId)];
+  const globalIncomeConditions = [eq(income.clientId, clientId), excludeSyntheticCreditIncome];
   const globalCreditConditions = [
     eq(invoices.clientId, clientId),
-    sql`${invoices.status} NOT IN ('draft', 'void')`,
+    draftFilter,
   ];
 
   if (statementBalanceCutoff) {
@@ -1023,16 +1045,17 @@ export async function getClientStatement(
   if (periodStartDate) {
     const priorInvoiceConditions = [
       eq(invoices.clientId, clientId),
-      sql`${invoices.status} NOT IN ('draft', 'void')`,
+      draftFilter,
       sql`${invoices.invoiceDate} < ${periodStartDate}`,
     ];
     const priorIncomeConditions = [
       eq(income.clientId, clientId),
+      excludeSyntheticCreditIncome,
       sql`${income.date} < ${periodStartDate}`,
     ];
     const priorCreditConditions = [
       eq(invoices.clientId, clientId),
-      sql`${invoices.status} NOT IN ('draft', 'void')`,
+      draftFilter,
       sql`${creditApplications.appliedAt} < ${periodStartDate}::timestamp`,
     ];
 
@@ -1065,7 +1088,7 @@ export async function getClientStatement(
   // For period paid, we sum income records AND credit applications in that period
   const periodCreditConditions = [
     eq(invoices.clientId, clientId),
-    sql`${invoices.status} NOT IN ('draft', 'void')`,
+    draftFilter,
   ];
   if (filters?.monthPeriod) {
     const { startDate, endDate } = getMonthPeriodDates(filters.monthPeriod);
@@ -1164,7 +1187,12 @@ export async function getClientsWithBillingActivity(filters?: { year?: number })
   const invoiceFilter = year
     ? sql`WHERE status NOT IN ('draft', 'void') AND invoice_date >= ${start} AND invoice_date < ${end} AND invoice_date <= timezone('Africa/Johannesburg', now())::date`
     : sql`WHERE status NOT IN ('draft', 'void') AND invoice_date <= timezone('Africa/Johannesburg', now())::date`;
-  const incomeFilter = year ? sql`WHERE date >= ${start} AND date < ${end}` : sql``;
+  // Exclude the synthetic "Credit applied to..." income rows created by
+  // credit-note application — those dollars are already counted via
+  // credit_applications below, so including them here would double-count.
+  const incomeFilter = year
+    ? sql`WHERE date >= ${start} AND date < ${end} AND description NOT LIKE 'Credit applied to%'`
+    : sql`WHERE description NOT LIKE 'Credit applied to%'`;
   const creditFilter = year ? sql`WHERE ca.applied_at >= ${start}::timestamp AND ca.applied_at < ${end}::timestamp` : sql``;
 
   const result = await db.execute(sql`
@@ -1219,6 +1247,7 @@ export async function getClientsWithBillingActivity(filters?: { year?: number })
         client_id,
         COALESCE(SUM(amount), 0) AS total_paid
       FROM income
+      WHERE description NOT LIKE 'Credit applied to%'
       GROUP BY client_id
     ) inc_all ON inc_all.client_id = c.id
     LEFT JOIN (

@@ -318,20 +318,32 @@ export async function updatePaymentJournalEntries(data: {
   description: string;
   divisionId: string;
 }): Promise<{ error?: string }> {
-  return await getDb().transaction(async (tx) => {
-    await voidPaymentJournalEntries(data.incomeId, tx);
+  try {
+    await getDb().transaction(async (tx) => {
+      await voidPaymentJournalEntries(data.incomeId, tx);
 
-    const result = await postPaymentJournalEntries({
-      incomeId: data.incomeId,
-      amount: data.newAmount,
-      date: data.date,
-      description: data.description,
-      divisionId: data.divisionId,
-      tx,
+      const result = await postPaymentJournalEntries({
+        incomeId: data.incomeId,
+        amount: data.newAmount,
+        date: data.date,
+        description: data.description,
+        divisionId: data.divisionId,
+        tx,
+      });
+
+      // Throw (not return) on failure — a plain return from inside a Drizzle
+      // transaction callback still commits, which previously left the void
+      // permanent even when the repost failed, leaving the payment with zero
+      // journal entries.
+      if (result.error) {
+        throw new Error(result.error);
+      }
     });
 
-    return { error: result.error };
-  });
+    return {};
+  } catch (err) {
+    return { error: err instanceof Error ? err.message : 'Failed to update payment journal entries.' };
+  }
 }
 
 // ── Invoice Issue: Dr AR / Cr Revenue ───────────────────────────────────────
@@ -350,6 +362,7 @@ export async function postInvoiceIssueJournalEntry(data: {
   description?: string;
   sourceDocumentNumber?: string;
   divisionId: string;
+  tx?: any;
 }): Promise<{ error?: string; entryId?: string }> {
   try {
     const { invoiceId, amount, date, description, divisionId } = data;
@@ -360,7 +373,7 @@ export async function postInvoiceIssueJournalEntry(data: {
     const p = await ensureOpenPeriod(period);
     if (p.status !== 'open') return { error: `Accounting period ${period} is closed.` };
 
-    const db = getDb();
+    const db = data.tx || getDb();
     const accountMap = await getAccountsByCode([
       ACCOUNTS_RECEIVABLE_CODE,
       SALES_REVENUE_CODE,
@@ -376,7 +389,7 @@ export async function postInvoiceIssueJournalEntry(data: {
     const entryId = randomUUID();
 
     // Atomic transaction: entry + 2 lines
-    await db.transaction(async (tx) => {
+    const runInsideTx = async (tx: any) => {
       const entryNumber = await getNextJournalEntryNumber(tx, date);
       await tx.insert(journalEntries).values({
         id: entryId,
@@ -410,7 +423,13 @@ export async function postInvoiceIssueJournalEntry(data: {
         credit: String(amount),
         description: `Revenue recognised – ${description}`,
       });
-    });
+    };
+
+    if (data.tx) {
+      await runInsideTx(data.tx);
+    } else {
+      await db.transaction(runInsideTx);
+    }
 
     return { entryId };
   } catch (err) {
@@ -582,14 +601,14 @@ export async function postBadDebtRecoveryJournalEntry(data: {
  * Uses db.batch() for atomicity.
  */
 export async function voidInvoiceJournalEntries(
-  invoiceId: string
+  invoiceId: string,
+  tx?: any
 ): Promise<{ error?: string; voidedCount?: number }> {
   try {
-    const db = getDb();
-    let voidedCount = 0;
+    const db = tx || getDb();
 
     // 1. Find AR entries linked to the invoice
-    const invoiceEntries = await db
+    const invoiceEntries: { id: string; status: string }[] = await db
       .select({ id: journalEntries.id, status: journalEntries.status })
       .from(journalEntries)
       .where(
@@ -602,39 +621,34 @@ export async function voidInvoiceJournalEntries(
 
     const toVoid = invoiceEntries.filter((e) => e.status !== 'void');
 
-    // 2. Find payment entries linked to this invoice via payment_allocations
+    // 2. Defensive check: callers (voidInvoice/bulkVoidInvoices) only ever
+    // reach this function for draft/issued/overdue invoices, which can never
+    // have a real cash-receipt allocation (any positive allocation flips
+    // status to partially_paid/paid before it could get here). If we ever
+    // find one anyway, refuse to void anything automatically rather than
+    // silently erasing a real cash-receipt journal entry — this indicates a
+    // bug elsewhere (e.g. a caller bypassing the status guard) and needs
+    // investigation, not a silent sweep.
     const linkedIncome = await db
       .selectDistinct({ incomeId: paymentAllocations.incomeId })
       .from(paymentAllocations)
       .where(eq(paymentAllocations.invoiceId, invoiceId));
 
-    // Collect all payment entries to void
-    const paymentEntriesToVoid: string[] = [];
-    for (const row of linkedIncome) {
-      if (!row.incomeId) continue;
-      const pe = await db
-        .select({ id: journalEntries.id, status: journalEntries.status })
-        .from(journalEntries)
-        .where(
-          and(
-            eq(journalEntries.sourceModule, 'billing'),
-            eq(journalEntries.sourceTable, 'income'),
-            eq(journalEntries.sourceId, row.incomeId)
-          )
-        );
-      for (const entry of pe) {
-        if (entry.status !== 'void') paymentEntriesToVoid.push(entry.id);
-      }
+    if (linkedIncome.length > 0) {
+      console.error(
+        `voidInvoiceJournalEntries: invoice ${invoiceId} has ${linkedIncome.length} linked payment_allocations row(s) — refusing to void automatically to avoid erasing real cash-receipt journal entries.`
+      );
+      return {
+        error: 'This invoice has linked payments and cannot be voided automatically. Reverse the payment(s) first, then investigate before voiding.',
+      };
     }
 
-    // 3. Batch-void all entries atomically in a transaction
-    const allToVoid = [...toVoid.map((e) => e.id), ...paymentEntriesToVoid];
-
-    if (allToVoid.length > 0) {
+    // 3. Void the invoice's own AR/Revenue entries.
+    if (toVoid.length > 0) {
       const now = new Date();
-      await db.transaction(async (tx) => {
-        for (const entryId of allToVoid) {
-          await tx
+      const voidRows = async (t: any) => {
+        for (const entry of toVoid) {
+          await t
             .update(journalEntries)
             .set({
               status: 'void',
@@ -643,13 +657,17 @@ export async function voidInvoiceJournalEntries(
               voidReason: 'Invoice voided',
               updatedAt: now,
             })
-            .where(eq(journalEntries.id, entryId));
+            .where(eq(journalEntries.id, entry.id));
         }
-      });
-      voidedCount = allToVoid.length;
+      };
+      if (tx) {
+        await voidRows(tx);
+      } else {
+        await db.transaction(voidRows);
+      }
     }
 
-    return { voidedCount };
+    return { voidedCount: toVoid.length };
   } catch (err) {
     console.error('Failed to void invoice journal entries:', err);
     return { error: 'Failed to void journal entries. Please void manually in Accounting → Journals.' };
@@ -687,9 +705,12 @@ export async function updateInvoiceJournalEntry(data: {
 
     const toVoid = invoiceEntries.filter((e) => e.status !== 'void');
 
-    if (toVoid.length > 0) {
-      const now = new Date();
-      await db.transaction(async (tx) => {
+    // Void the old entry and post the new one in a single transaction so a
+    // failed repost (e.g. the new date falls in a closed period) rolls back
+    // the void too, instead of leaving the invoice with no journal entry at all.
+    await db.transaction(async (tx) => {
+      if (toVoid.length > 0) {
+        const now = new Date();
         for (const entry of toVoid) {
           await tx
             .update(journalEntries)
@@ -702,19 +723,23 @@ export async function updateInvoiceJournalEntry(data: {
             })
             .where(eq(journalEntries.id, entry.id));
         }
-      });
-    }
+      }
 
-    // Post new AR entry with the updated amount
-    const result = await postInvoiceIssueJournalEntry({
-      invoiceId: data.invoiceId,
-      amount: data.newAmount,
-      date: data.date,
-      description: data.description,
-      divisionId: data.divisionId,
+      const result = await postInvoiceIssueJournalEntry({
+        invoiceId: data.invoiceId,
+        amount: data.newAmount,
+        date: data.date,
+        description: data.description,
+        divisionId: data.divisionId,
+        tx,
+      });
+
+      if (result.error) {
+        throw new Error(result.error);
+      }
     });
 
-    return { error: result.error };
+    return {};
   } catch (err) {
     console.error('Failed to update invoice journal entry:', err);
     return { error: 'Journal update failed. Please adjust manually in Accounting → Journals.' };

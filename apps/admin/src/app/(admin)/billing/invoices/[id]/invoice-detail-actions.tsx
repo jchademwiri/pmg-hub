@@ -83,6 +83,17 @@ export function InvoiceDetailActions({
           </>
         )}
 
+        {status === 'partially_paid' && (
+          <>
+            <p className="text-xs text-muted-foreground">
+              This invoice has a partial payment recorded. Record the remaining balance from the client's payment page, or write off what's left if it won't be collected.
+            </p>
+            {writeOffAction && (
+              <WriteOffInvoiceButton invoiceId={invoice.id} writeOffAction={writeOffAction} />
+            )}
+          </>
+        )}
+
         {status === 'paid' && (
           <div className="flex flex-col gap-2">
             <p className="text-xs text-green-600 dark:text-green-400">

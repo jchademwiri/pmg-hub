@@ -29,6 +29,7 @@ export async function GET(
   const year = url.searchParams.get('year');
   const monthPeriod = url.searchParams.get('monthPeriod');
   const statementType = url.searchParams.get('statementType');
+  const includeDraftInvoiceId = url.searchParams.get('includeDraftInvoiceId') ?? undefined;
   const yearNum = year == null ? undefined : Number(year);
   if (year != null && (year.trim() === '' || !Number.isFinite(yearNum) || !Number.isInteger(yearNum))) {
     return NextResponse.json({ error: 'Invalid year parameter.' }, { status: 400 });
@@ -42,6 +43,7 @@ export async function GET(
     ...(statementType === 'outstanding' || statementType === 'activity'
       ? { statementType: statementType as 'outstanding' | 'activity' }
       : {}),
+    ...(includeDraftInvoiceId ? { includeDraftInvoiceId } : {}),
   };
 
   const result = await generateBillingPdf(type as PdfType, id, filters);
