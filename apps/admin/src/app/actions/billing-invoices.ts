@@ -6,7 +6,7 @@ import { getNextDocumentNumber, addDays } from '@pmg/db';
 import { getSessionOrRedirect } from '@/lib/auth';
 import { postInvoiceIssueJournalEntry, voidInvoiceJournalEntries, postPaymentJournalEntries, updateInvoiceJournalEntry, postInvoiceWriteOffJournalEntry } from '@/lib/accounting/posting';
 import { isPeriodClosed, getMinAllowedDate, getMinDateErrorMessage } from '@/lib/date-rules';
-import { getSASTParts, getSASTToday } from '@/lib/format';
+import { getSASTParts, getSASTToday, getEndOfMonth } from '@/lib/format';
 import { CreateInvoiceSchema, type CreateInvoiceInput } from './billing-schema';
 import { hasBillingLineItemItemIdColumn } from './billing-line-item-compat';
 
@@ -94,7 +94,7 @@ export async function createInvoice(
         documentNumber,
         status: 'draft',
         invoiceDate,
-        dueDate: dueDate ?? addDays(invoiceDate, 7),
+        dueDate: dueDate ?? getEndOfMonth(invoiceDate),
         reference: reference ?? null,
         subtotal: String(subtotal.toFixed(2)),
         discountType: discountType ?? null,

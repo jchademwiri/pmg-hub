@@ -30,6 +30,7 @@ import {
   type ActiveItem,
 } from '@/components/billing/billing-line-items-form';
 import { BillingTotalsBlock } from '@/components/billing/billing-totals-block';
+import { getEndOfMonth } from '@/lib/format';
 import { createQuotation } from '@/app/actions/billing-quotes';
 import type { QuotationDetail } from '@pmg/db';
 
@@ -44,7 +45,6 @@ export interface QuoteFormClientProps {
 }
 
 const today = new Date().toISOString().split('T')[0]!;
-const plus5 = new Date(Date.now() + 5 * 24 * 60 * 60 * 1000).toISOString().split('T')[0]!;
 
 function blankRow(): LineItemFormRow {
   return {
@@ -104,7 +104,10 @@ export function QuoteFormClient({
   const [divisionId, setDivisionId] = useState(initialData?.divisionId ?? '');
   const [clientId, setClientId] = useState(initialData?.clientId ?? '');
   const [quoteDate, setQuoteDate] = useState(initialData?.quoteDate ?? today);
-  const [expiryDate, setExpiryDate] = useState(initialData?.expiryDate ?? plus5);
+  const [hasExpiryDate, setHasExpiryDate] = useState(
+    initialData ? !!initialData.expiryDate : true,
+  );
+  const [expiryDate, setExpiryDate] = useState(initialData?.expiryDate ?? getEndOfMonth(today));
   const [isExpiryDateModified, setIsExpiryDateModified] = useState(!!initialData?.expiryDate);
   const [reference, setReference] = useState(initialData?.reference ?? '');
   const [notes, setNotes] = useState(initialData?.notes ?? '');
@@ -157,11 +160,8 @@ export function QuoteFormClient({
       setNotes(settings.quoteNotes);
     }
 
-    // 2. Set default expiry date based on paymentTermsDays
-    const termsDays = settings.paymentTermsDays ?? 5; // fallback to 5 days
-    const d = new Date(quoteDate);
-    d.setDate(d.getDate() + termsDays);
-    setExpiryDate(d.toISOString().split('T')[0]!);
+    // 2. Set default expiry date to end of month
+    setExpiryDate(getEndOfMonth(quoteDate));
     setIsExpiryDateModified(false); // Reset modified status since it's a smart default
   }, [divisionId, billingSettings, quoteDate, editId]);
 
@@ -187,7 +187,7 @@ export function QuoteFormClient({
       divisionId,
       clientId,
       quoteDate,
-      expiryDate: expiryDate || null,
+      expiryDate: hasExpiryDate ? (expiryDate || null) : null,
       reference: reference || null,
       notes: notes || null,
       terms: terms || null,
@@ -282,7 +282,7 @@ export function QuoteFormClient({
           </Field>
         </div>
 
-        <Accordion type="single" collapsible className="w-full">
+        <Accordion type="single" collapsible defaultValue="document-settings" className="w-full">
           <AccordionItem value="document-settings" className="border-none">
             <AccordionTrigger className="py-3 px-4 rounded-lg border bg-muted/20 hover:bg-muted/40 transition-colors hover:no-underline text-muted-foreground data-[state=open]:text-foreground">
               <span className="font-semibold text-sm">Dates & Reference</span>
@@ -300,10 +300,7 @@ export function QuoteFormClient({
                       const newDate = e.target.value;
                       setQuoteDate(newDate);
                       if (!isExpiryDateModified) {
-                        const termsDays = billingSettings?.[divisionId]?.paymentTermsDays ?? 5;
-                        const d = new Date(newDate);
-                        d.setDate(d.getDate() + termsDays);
-                        setExpiryDate(d.toISOString().split('T')[0]!);
+                        setExpiryDate(getEndOfMonth(newDate));
                       }
                     }}
                     disabled={isSubmitting}
@@ -311,7 +308,19 @@ export function QuoteFormClient({
                 </Field>
 
                 <Field>
-                  <FieldLabel>Expiry Date</FieldLabel>
+                  <div className="flex items-center justify-between gap-2 mb-1">
+                    <FieldLabel className="mb-0">Expiry Date</FieldLabel>
+                    <label className="flex items-center gap-1.5 text-xs text-muted-foreground cursor-pointer select-none">
+                      <input
+                        type="checkbox"
+                        checked={hasExpiryDate}
+                        onChange={(e) => setHasExpiryDate(e.target.checked)}
+                        disabled={isSubmitting}
+                        className="h-3.5 w-3.5 rounded border-input text-primary focus:ring-primary"
+                      />
+                      <span>Set expiry date</span>
+                    </label>
+                  </div>
                   <Input
                     type="date"
                     value={expiryDate}
@@ -319,7 +328,8 @@ export function QuoteFormClient({
                       setExpiryDate(e.target.value);
                       setIsExpiryDateModified(true);
                     }}
-                    disabled={isSubmitting}
+                    disabled={isSubmitting || !hasExpiryDate}
+                    className={!hasExpiryDate ? 'opacity-50' : ''}
                   />
                 </Field>
 

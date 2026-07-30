@@ -5,6 +5,7 @@ import { getDb, quotations, billingLineItems, eq, and } from '@pmg/db';
 import { getNextDocumentNumber, addDays, getQuotationById, today } from '@pmg/db';
 import { getSessionOrRedirect } from '@/lib/auth';
 import { isPeriodClosed, getMinAllowedDate, getMinDateErrorMessage } from '@/lib/date-rules';
+import { getEndOfMonth } from '@/lib/format';
 import { CreateQuotationSchema, type CreateQuotationInput } from './billing-schema';
 import { hasBillingLineItemItemIdColumn } from './billing-line-item-compat';
 
@@ -174,7 +175,7 @@ export async function createQuotation(
           documentNumber,
           status: 'draft',
           quoteDate,
-          expiryDate: expiryDate ?? addDays(quoteDate, 30),
+          expiryDate: expiryDate ?? getEndOfMonth(quoteDate),
           ...(includeReference ? { reference: reference ?? null } : {}),
           subtotal: String(subtotal.toFixed(2)),
           discountType: discountType ?? null,
