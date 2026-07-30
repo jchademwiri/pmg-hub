@@ -6,11 +6,25 @@ import React from 'react';
 
 vi.mock('server-only', () => ({}));
 
+// Drizzle query builders are thenable AND support further chaining
+// (.for('update'), .orderBy(), .limit()) after a terminal .where(). This
+// helper produces a value that's both directly awaitable and chainable.
+function selectResult<T>(rows: T): Promise<T> & { for: () => any; orderBy: () => any; limit: () => any } {
+  const p = Promise.resolve(rows) as any;
+  p.for = () => selectResult(rows);
+  p.orderBy = () => selectResult(rows);
+  p.limit = () => selectResult(rows);
+  return p;
+}
+
 const mockDbInsert = vi.fn();
 const mockDbSelect = vi.fn();
 const mockDbUpdate = vi.fn();
 const mockDbDelete = vi.fn();
 const mockDbExecute = vi.fn();
+// Implementation is set in beforeEach, once dbMock exists, to avoid a
+// circular type-inference error between the two module-scope consts.
+const mockDbTransaction = vi.fn();
 
 const dbMock = {
   insert: mockDbInsert,
@@ -18,6 +32,7 @@ const dbMock = {
   update: mockDbUpdate,
   delete: mockDbDelete,
   execute: mockDbExecute,
+  transaction: mockDbTransaction,
 };
 
 vi.mock('@pmg/db', () => ({
@@ -77,6 +92,17 @@ vi.mock('@/components/navigation/page-header-context', () => ({
   SetPageTotal: () => React.createElement('div', { 'data-testid': 'page-total' }),
 }));
 
+const mockPostPaymentJournalEntries = vi.fn();
+const mockUpdatePaymentJournalEntries = vi.fn();
+const mockVoidPaymentJournalEntries = vi.fn();
+const mockPostBadDebtRecoveryJournalEntry = vi.fn();
+vi.mock('@/lib/accounting/posting', () => ({
+  postPaymentJournalEntries: (...args: any[]) => mockPostPaymentJournalEntries(...args),
+  updatePaymentJournalEntries: (...args: any[]) => mockUpdatePaymentJournalEntries(...args),
+  voidPaymentJournalEntries: (...args: any[]) => mockVoidPaymentJournalEntries(...args),
+  postBadDebtRecoveryJournalEntry: (...args: any[]) => mockPostBadDebtRecoveryJournalEntry(...args),
+}));
+
 // ─── Import Code Under Test ──────────────────────────────────────────────────
 import {
   getClientOutstandingInvoices,
@@ -95,6 +121,11 @@ describe('Billing Payments and Statements Module', () => {
     mockGetMinDateErrorMessage.mockReturnValue('Period is closed.');
 
     // Standard chainable mocks
+    mockDbTransaction.mockImplementation((cb: (tx: typeof dbMock) => unknown) => cb(dbMock));
+    mockPostPaymentJournalEntries.mockResolvedValue({});
+    mockUpdatePaymentJournalEntries.mockResolvedValue({});
+    mockVoidPaymentJournalEntries.mockResolvedValue({});
+    mockPostBadDebtRecoveryJournalEntry.mockResolvedValue({});
     mockDbInsert.mockReturnValue({
       values: vi.fn().mockReturnValue({
         returning: vi.fn().mockResolvedValue([{ id: 'new-payment-id' }]),
@@ -174,37 +205,33 @@ describe('Billing Payments and Statements Module', () => {
     });
 
     it('recordClientPayment - checks period lock, inserts payment row and creates allocations', async () => {
+      // Call order: (1) client fetch, (2) invoice document-number lookup,
+      // (3) locked invoice row for the allocation (.for('update')),
+      // (4) sum of allocations before inserting this one, (5) sum after.
       let selectCount = 0;
       mockDbSelect.mockImplementation(() => {
         selectCount++;
         return {
           from: () => ({
             where: () => {
-              if (selectCount === 1) { // Client label
-                return Promise.resolve([{ name: 'Client A', businessName: 'Client Business' }]);
-              } else { // invoice allocation checks
-                return Promise.resolve([{ total: '1000.00' }]);
+              if (selectCount === 1) return selectResult([{ name: 'Client A', businessName: 'Client Business' }]);
+              if (selectCount === 2) return selectResult([{ id: 'inv-1', documentNumber: 'INV-001' }]);
+              if (selectCount === 3) {
+                return selectResult([{
+                  total: '1000.00',
+                  writeOffAmount: '0',
+                  documentNumber: 'INV-001',
+                  clientId: 'c3b07384-d113-4956-a5db-8f3e58b8d4e7',
+                  divisionId: 'd3b07384-d113-4956-a5db-8f3e58b8d4e6',
+                }]);
               }
+              if (selectCount === 4) return selectResult([{ sum: '0.00' }]); // before this allocation
+              return selectResult([{ sum: '1000.00' }]); // after this allocation — fully paid
             },
-            limit: () => Promise.resolve([{ id: 'div-1' }]), // fallback divisionId
+            limit: () => selectResult([{ id: 'div-1' }]), // fallback divisionId (unused — divisionId provided)
           }),
         };
       });
-
-      // Mock inner sum check
-      mockDbSelect.mockImplementationOnce(() => ({
-        from: () => ({
-          where: () => Promise.resolve([{ name: 'Client A', businessName: 'Client Business' }]),
-        }),
-      })).mockImplementationOnce(() => ({
-        from: () => ({
-          where: () => Promise.resolve([{ id: 'inv-1', documentNumber: 'INV-001' }]),
-        }),
-      })).mockImplementationOnce(() => ({
-        from: () => ({
-          where: () => Promise.resolve([{ sum: '1000.00' }]), // sum allocations equal total
-        }),
-      }));
 
       const res = await recordClientPayment({
         clientId: 'c3b07384-d113-4956-a5db-8f3e58b8d4e7',
@@ -220,6 +247,35 @@ describe('Billing Payments and Statements Module', () => {
       expect(res).toEqual({ success: true });
       expect(mockDbInsert).toHaveBeenCalled();
       expect(mockDbUpdate).toHaveBeenCalled();
+    });
+
+    it('recordClientPayment - rejects allocations that exceed the payment amount received', async () => {
+      // Regression test: this is a Server Action callable directly regardless
+      // of the UI, so it must reject a request whose allocations sum to more
+      // than the cash actually received, even though each individual
+      // allocation might be within that invoice's own outstanding balance.
+      // Only the client fetch and invoice-document-number lookup run before
+      // this validation — no locked/allocation selects should ever be reached.
+      mockDbSelect.mockReturnValue({
+        from: () => ({
+          where: () => selectResult([{ name: 'Client A', businessName: 'Client Business' }]),
+        }),
+      });
+
+      const res = await recordClientPayment({
+        clientId: 'c3b07384-d113-4956-a5db-8f3e58b8d4e7',
+        divisionId: 'd3b07384-d113-4956-a5db-8f3e58b8d4e6',
+        date: '2026-05-01',
+        description: 'Monthly Payment',
+        amount: 100,
+        allocations: [
+          { invoiceId: 'inv-1', amount: 50 },
+          { invoiceId: 'inv-2', amount: 100 },
+        ],
+      });
+
+      expect(res.error).toMatch(/exceed the payment amount/i);
+      expect(mockDbInsert).not.toHaveBeenCalled();
     });
   });
 

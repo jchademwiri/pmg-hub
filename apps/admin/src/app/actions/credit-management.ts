@@ -444,36 +444,16 @@ export async function applyCreditToInvoice(
           .where(eq(invoices.id, invoiceId));
       }
 
-      // 6. Create an income record for the credit application (for dashboard visibility)
-      // Also creates a payment_allocation so the income is linked to the invoice.
-      // This ensures the credit application shows up on the income page, payments page,
-      // and dashboard charts. The income + allocation cancel each other out in the
-      // legacy credit balance calculation (sum(income) - sum(payment_allocations)).
-      if (actualApplied > 0) {
-        const [invDoc] = await tx
-          .select({ documentNumber: invoices.documentNumber })
-          .from(invoices)
-          .where(eq(invoices.id, invoiceId));
-
-        const [incomeRow] = await tx
-          .insert(income)
-          .values({
-            date: getSASTToday(),
-            divisionId: invoiceLocked.divisionId!,
-            clientId: invoiceLocked.clientId!,
-            description: `Credit applied to ${invDoc?.documentNumber ?? invoiceId}`,
-            amount: String(actualApplied.toFixed(2)),
-          })
-          .returning({ id: income.id });
-
-        if (incomeRow?.id) {
-          await tx.insert(paymentAllocations).values({
-            incomeId: incomeRow.id,
-            invoiceId: invoiceId,
-            amount: String(actualApplied.toFixed(2)),
-          });
-        }
-      }
+      // Note: this used to also insert a synthetic `income` + `payment_allocations`
+      // row "for dashboard visibility". That's been removed — `creditApplications`
+      // (inserted above, per credit note) is already the correct, sole source of
+      // truth for this invoice's credit-covered amount. The synthetic pair caused
+      // every credit application to be double-counted wherever a query summed
+      // `payment_allocations` and `creditApplications` together for the same
+      // invoice or client (e.g. getAllInvoices' allocatedAmount, getClientStatement's
+      // totalOutstanding) — see docs/apps/admin/billing-accounting for details.
+      // Credit applications should be surfaced via getClientCreditHistory instead
+      // of the generic income/payments views.
     });
 
 
@@ -535,183 +515,182 @@ export async function applyCreditToInvoices(
     const session = await getSessionOrRedirect();
     let totalApplied = 0;
 
-    // Process each allocation
+    // Process each allocation in its own transaction with row locking
+    // (mirroring applyCreditToInvoice's pattern) so concurrent calls can't
+    // double-spend the same credit note or legacy income row.
     for (const alloc of allocations) {
       if (alloc.amount <= 0) continue;
 
-      // Validate invoice
-      const [invoice] = await db
-        .select()
-        .from(invoices)
-        .where(eq(invoices.id, alloc.invoiceId));
+      const applied = await db.transaction(async (tx) => {
+        let appliedThisInvoice = 0;
 
-      if (!invoice) continue;
-      if (invoice.status === 'void' || invoice.status === 'draft') continue;
-      if (!invoice.clientId) continue;
+        // Lock the invoice row
+        const [invoice] = await tx
+          .select()
+          .from(invoices)
+          .where(eq(invoices.id, alloc.invoiceId))
+          .for('update');
 
-      // Calculate outstanding
-      const [allocAgg] = await db
-        .select({ total: sql<string>`coalesce(sum(${paymentAllocations.amount}), 0)` })
-        .from(paymentAllocations)
-        .where(eq(paymentAllocations.invoiceId, alloc.invoiceId));
+        if (!invoice) return 0;
+        if (invoice.status === 'void' || invoice.status === 'draft') return 0;
+        if (!invoice.clientId) return 0;
+        if (invoice.clientId !== clientId) {
+          console.warn(`applyCreditToInvoices: skipping invoice ${alloc.invoiceId} — belongs to a different client than the credit being spent.`);
+          return 0;
+        }
 
-      const [creditAllocAgg] = await db
-        .select({ total: sql<string>`coalesce(sum(${creditApplications.amount}), 0)` })
-        .from(creditApplications)
-        .where(eq(creditApplications.invoiceId, alloc.invoiceId));
+        // Calculate outstanding
+        const [allocAgg] = await tx
+          .select({ total: sql<string>`coalesce(sum(${paymentAllocations.amount}), 0)` })
+          .from(paymentAllocations)
+          .where(eq(paymentAllocations.invoiceId, alloc.invoiceId));
 
-      const totalAllocated = parseFloat(allocAgg?.total ?? '0') + parseFloat(creditAllocAgg?.total ?? '0');
-      const invoiceTotal = parseFloat(invoice.total);
-      const outstanding = Math.max(0, invoiceTotal - totalAllocated);
+        const [creditAllocAgg] = await tx
+          .select({ total: sql<string>`coalesce(sum(${creditApplications.amount}), 0)` })
+          .from(creditApplications)
+          .where(eq(creditApplications.invoiceId, alloc.invoiceId));
 
-      if (outstanding <= 0) continue;
+        const totalAllocated = parseFloat(allocAgg?.total ?? '0') + parseFloat(creditAllocAgg?.total ?? '0');
+        const invoiceTotal = parseFloat(invoice.total);
+        const outstanding = Math.max(0, invoiceTotal - totalAllocated);
 
-      const finalAmount = Math.min(alloc.amount, outstanding);
+        if (outstanding <= 0) return 0;
 
-      // Fetch fresh credit notes for this client (FIFO: oldest first)
-      const freshNotes = await db
-        .select()
-        .from(creditNotes)
-        .where(
-          and(
-            eq(creditNotes.clientId, clientId),
-            sql`${creditNotes.status} IN ('active', 'partially_applied')`,
-            sql`${creditNotes.amountRemaining} > 0`
+        const finalAmount = Math.min(alloc.amount, outstanding);
+
+        // Lock active credit notes for this client (FIFO: oldest first)
+        const freshNotes = await tx
+          .select()
+          .from(creditNotes)
+          .where(
+            and(
+              eq(creditNotes.clientId, clientId),
+              sql`${creditNotes.status} IN ('active', 'partially_applied')`,
+              sql`${creditNotes.amountRemaining} > 0`
+            )
           )
-        )
-        .orderBy(asc(creditNotes.createdAt));
+          .orderBy(asc(creditNotes.createdAt))
+          .for('update');
 
-      // Apply from credit notes first (FIFO)
-      let remainingForInvoice = finalAmount;
+        // Apply from credit notes first (FIFO)
+        let remainingForInvoice = finalAmount;
 
-      for (const note of freshNotes) {
-        if (remainingForInvoice <= 0) break;
-
-        const noteRemaining = parseFloat(note.amountRemaining);
-        if (noteRemaining <= 0) continue;
-
-        const allocAmount = Math.min(noteRemaining, remainingForInvoice);
-        remainingForInvoice -= allocAmount;
-
-        const newRemaining = noteRemaining - allocAmount;
-        const newStatus = newRemaining <= 0 ? 'fully_applied' : 'partially_applied';
-
-        await db
-          .update(creditNotes)
-          .set({
-            amountRemaining: String(newRemaining.toFixed(2)),
-            status: newStatus,
-            updatedAt: new Date(),
-          })
-          .where(eq(creditNotes.id, note.id));
-
-        await db.insert(creditApplications).values({
-          creditNoteId: note.id,
-          invoiceId: alloc.invoiceId,
-          amount: String(allocAmount.toFixed(2)),
-          appliedBy: session.user.id,
-        });
-
-        totalApplied += allocAmount;
-      }
-
-      // Apply from legacy unallocated income if needed
-      if (remainingForInvoice > 0) {
-        // Fetch fresh unallocated income rows
-        const freshIncome = await db
-          .select({ id: income.id, amount: income.amount, date: income.date })
-          .from(income)
-          .where(eq(income.clientId, clientId))
-          .orderBy(asc(income.date));
-
-        for (const row of freshIncome) {
+        for (const note of freshNotes) {
           if (remainingForInvoice <= 0) break;
 
-          // Check if this income row already has a credit note
-          const [existingNote] = await db
-            .select({ id: creditNotes.id })
-            .from(creditNotes)
-            .where(eq(creditNotes.originalPaymentId, row.id))
-            .limit(1);
+          const noteRemaining = parseFloat(note.amountRemaining);
+          if (noteRemaining <= 0) continue;
 
-          if (existingNote) continue;
-
-          const rowTotal = parseFloat(row.amount);
-          const [rowAllocAgg] = await db
-            .select({ total: sql<string>`coalesce(sum(${paymentAllocations.amount}), 0)` })
-            .from(paymentAllocations)
-            .where(eq(paymentAllocations.incomeId, row.id));
-
-          const rowAllocated = parseFloat(rowAllocAgg?.total ?? '0');
-          const rowUnallocated = Math.max(0, rowTotal - rowAllocated);
-
-          if (rowUnallocated <= 0) continue;
-
-          const allocAmount = Math.min(rowUnallocated, remainingForInvoice);
+          const allocAmount = Math.min(noteRemaining, remainingForInvoice);
           remainingForInvoice -= allocAmount;
 
-          await db.insert(paymentAllocations).values({
-            incomeId: row.id,
+          const newRemaining = noteRemaining - allocAmount;
+          const newStatus = newRemaining <= 0 ? 'fully_applied' : 'partially_applied';
+
+          await tx
+            .update(creditNotes)
+            .set({
+              amountRemaining: String(newRemaining.toFixed(2)),
+              status: newStatus,
+              updatedAt: new Date(),
+            })
+            .where(eq(creditNotes.id, note.id));
+
+          await tx.insert(creditApplications).values({
+            creditNoteId: note.id,
             invoiceId: alloc.invoiceId,
             amount: String(allocAmount.toFixed(2)),
+            appliedBy: session.user.id,
           });
 
-          totalApplied += allocAmount;
+          appliedThisInvoice += allocAmount;
         }
-      }
 
-      // Recalculate invoice status
-      const [newAllocAgg] = await db
-        .select({ total: sql<string>`coalesce(sum(${paymentAllocations.amount}), 0)` })
-        .from(paymentAllocations)
-        .where(eq(paymentAllocations.invoiceId, alloc.invoiceId));
+        // Apply from legacy unallocated income if needed
+        if (remainingForInvoice > 0) {
+          // Lock unallocated income rows for this client (oldest first)
+          const freshIncome = await tx
+            .select({ id: income.id, amount: income.amount, date: income.date })
+            .from(income)
+            .where(eq(income.clientId, clientId))
+            .orderBy(asc(income.date))
+            .for('update');
 
-      const [newCreditAllocAgg] = await db
-        .select({ total: sql<string>`coalesce(sum(${creditApplications.amount}), 0)` })
-        .from(creditApplications)
-        .where(eq(creditApplications.invoiceId, alloc.invoiceId));
+          for (const row of freshIncome) {
+            if (remainingForInvoice <= 0) break;
 
-      const newTotalAllocated = parseFloat(newAllocAgg?.total ?? '0') + parseFloat(newCreditAllocAgg?.total ?? '0');
+            // Check if this income row already has a credit note
+            const [existingNote] = await tx
+              .select({ id: creditNotes.id })
+              .from(creditNotes)
+              .where(eq(creditNotes.originalPaymentId, row.id))
+              .limit(1);
 
-      if (newTotalAllocated >= invoiceTotal) {
-        await db
-          .update(invoices)
-          .set({ status: 'paid', paidAt: new Date(), updatedAt: new Date() })
-          .where(eq(invoices.id, alloc.invoiceId));
-      } else if (newTotalAllocated > 0) {
-        await db
-          .update(invoices)
-          .set({ status: 'partially_paid', paidAt: null, incomeId: null, updatedAt: new Date() })
-          .where(eq(invoices.id, alloc.invoiceId));
-      }
+            if (existingNote) continue;
 
-      // Create income record for credit application (dashboard visibility)
-      // Runs regardless of whether the invoice is fully or partially paid
-      if (finalAmount > 0) {
-        const [invDoc] = await db
-          .select({ documentNumber: invoices.documentNumber })
-          .from(invoices)
-          .where(eq(invoices.id, alloc.invoiceId));
+            const rowTotal = parseFloat(row.amount);
+            const [rowAllocAgg] = await tx
+              .select({ total: sql<string>`coalesce(sum(${paymentAllocations.amount}), 0)` })
+              .from(paymentAllocations)
+              .where(eq(paymentAllocations.incomeId, row.id));
 
-        const [incomeRow] = await db
-          .insert(income)
-          .values({
-            date: getSASTToday(),
-            divisionId: invoice.divisionId!,
-            clientId: invoice.clientId!,
-            description: `Credit applied to ${invDoc?.documentNumber ?? alloc.invoiceId}`,
-            amount: String(finalAmount.toFixed(2)),
-          })
-          .returning({ id: income.id });
+            const rowAllocated = parseFloat(rowAllocAgg?.total ?? '0');
+            const rowUnallocated = Math.max(0, rowTotal - rowAllocated);
 
-        if (incomeRow?.id) {
-          await db.insert(paymentAllocations).values({
-            incomeId: incomeRow.id,
-            invoiceId: alloc.invoiceId,
-            amount: String(finalAmount.toFixed(2)),
-          });
+            if (rowUnallocated <= 0) continue;
+
+            const allocAmount = Math.min(rowUnallocated, remainingForInvoice);
+            remainingForInvoice -= allocAmount;
+
+            await tx.insert(paymentAllocations).values({
+              incomeId: row.id,
+              invoiceId: alloc.invoiceId,
+              amount: String(allocAmount.toFixed(2)),
+            });
+
+            appliedThisInvoice += allocAmount;
+          }
         }
-      }
+
+        // Recalculate invoice status
+        const [newAllocAgg] = await tx
+          .select({ total: sql<string>`coalesce(sum(${paymentAllocations.amount}), 0)` })
+          .from(paymentAllocations)
+          .where(eq(paymentAllocations.invoiceId, alloc.invoiceId));
+
+        const [newCreditAllocAgg] = await tx
+          .select({ total: sql<string>`coalesce(sum(${creditApplications.amount}), 0)` })
+          .from(creditApplications)
+          .where(eq(creditApplications.invoiceId, alloc.invoiceId));
+
+        const newTotalAllocated = parseFloat(newAllocAgg?.total ?? '0') + parseFloat(newCreditAllocAgg?.total ?? '0');
+
+        if (newTotalAllocated >= invoiceTotal) {
+          await tx
+            .update(invoices)
+            .set({ status: 'paid', paidAt: new Date(), updatedAt: new Date() })
+            .where(eq(invoices.id, alloc.invoiceId));
+        } else if (newTotalAllocated > 0) {
+          await tx
+            .update(invoices)
+            .set({ status: 'partially_paid', paidAt: null, incomeId: null, updatedAt: new Date() })
+            .where(eq(invoices.id, alloc.invoiceId));
+        }
+
+        // Note: this used to also insert a synthetic `income` + `payment_allocations`
+        // row "for dashboard visibility" — removed for the same reason as in
+        // applyCreditToInvoice (see comment there): it double-counted credit
+        // applications wherever payment_allocations and creditApplications were
+        // summed together for the same invoice/client. Credit-note-sourced amounts
+        // are already tracked via `creditApplications`; legacy-income-sourced
+        // amounts are already tracked via the real `paymentAllocations` row
+        // inserted above (linking the existing income row) — neither needs a
+        // second synthetic record.
+
+        return appliedThisInvoice;
+      });
+
+      totalApplied += applied;
     }
 
     // Revalidate
@@ -816,68 +795,81 @@ export async function createCreditNote(data: {
 // Reverses a credit application when an invoice is voided.
 // Restores the credit note amount_remaining.
 
+// KNOWN LIMITATION: this only reverses credit-note-sourced applications
+// (via `creditApplications`) and historical synthetic "Credit applied to..."
+// income rows (a marker that's no longer created going forward — see
+// applyCreditToInvoice). It cannot identify or reverse allocations sourced
+// from applyCreditToInvoices' "legacy unallocated income" fallback, since
+// those insert a plain `payment_allocations` row indistinguishable from a
+// normal cash-payment allocation — there's no stored marker to tell them
+// apart without a schema change. Voiding an invoice that consumed legacy
+// income via that fallback will not restore that income as available credit.
 export async function reverseCreditApplication(invoiceId: string): Promise<{ error?: string }> {
   try {
     await getSessionOrRedirect();
     const db = getDb();
 
-    // Fetch all credit applications for this invoice
-    const apps = await db
-      .select()
-      .from(creditApplications)
-      .where(eq(creditApplications.invoiceId, invoiceId));
-
-    // Also fetch and delete any income records created for credit applications
-    // These are linked via payment_allocations where the income.description starts with "Credit applied"
-    const creditPaymentAllocs = await db
-      .select({
-        id: paymentAllocations.id,
-        incomeId: paymentAllocations.incomeId,
-      })
-      .from(paymentAllocations)
-      .innerJoin(income, eq(income.id, paymentAllocations.incomeId))
-      .where(
-        and(
-          eq(paymentAllocations.invoiceId, invoiceId),
-          sql`${income.description} LIKE 'Credit applied to%'`
-        )
-      );
-
-    // Delete payment allocations and income records for this credit application
-    for (const alloc of creditPaymentAllocs) {
-      await db.delete(paymentAllocations).where(eq(paymentAllocations.id, alloc.id));
-      await db.delete(income).where(eq(income.id, alloc.incomeId));
-    }
-
-    for (const app of apps) {
-      // Fetch the credit note
-      const [note] = await db
+    await db.transaction(async (tx) => {
+      // Fetch all credit applications for this invoice
+      const apps = await tx
         .select()
-        .from(creditNotes)
-        .where(eq(creditNotes.id, app.creditNoteId));
+        .from(creditApplications)
+        .where(eq(creditApplications.invoiceId, invoiceId));
 
-      if (note) {
-        const currentRemaining = parseFloat(note.amountRemaining);
-        const appAmount = parseFloat(app.amount);
-        const newRemaining = currentRemaining + appAmount;
-        const originalAmount = parseFloat(note.amount);
+      // Also fetch and delete any income records created for credit applications
+      // (historical rows only — see the KNOWN LIMITATION note above the function).
+      const creditPaymentAllocs = await tx
+        .select({
+          id: paymentAllocations.id,
+          incomeId: paymentAllocations.incomeId,
+        })
+        .from(paymentAllocations)
+        .innerJoin(income, eq(income.id, paymentAllocations.incomeId))
+        .where(
+          and(
+            eq(paymentAllocations.invoiceId, invoiceId),
+            sql`${income.description} LIKE 'Credit applied to%'`
+          )
+        );
 
-        // Restore credit note
-        await db
-          .update(creditNotes)
-          .set({
-            amountRemaining: String(newRemaining.toFixed(2)),
-            status: newRemaining >= originalAmount ? 'active' : 'partially_applied',
-            updatedAt: new Date(),
-          })
-          .where(eq(creditNotes.id, note.id));
+      // Delete payment allocations and income records for this credit application
+      for (const alloc of creditPaymentAllocs) {
+        await tx.delete(paymentAllocations).where(eq(paymentAllocations.id, alloc.id));
+        await tx.delete(income).where(eq(income.id, alloc.incomeId));
       }
 
-      // Delete the application record
-      await db
-        .delete(creditApplications)
-        .where(eq(creditApplications.id, app.id));
-    }
+      for (const app of apps) {
+        // Lock the credit note row to prevent a concurrent apply/reverse
+        // from racing on the same amountRemaining balance.
+        const [note] = await tx
+          .select()
+          .from(creditNotes)
+          .where(eq(creditNotes.id, app.creditNoteId))
+          .for('update');
+
+        if (note) {
+          const currentRemaining = parseFloat(note.amountRemaining);
+          const appAmount = parseFloat(app.amount);
+          const newRemaining = currentRemaining + appAmount;
+          const originalAmount = parseFloat(note.amount);
+
+          // Restore credit note
+          await tx
+            .update(creditNotes)
+            .set({
+              amountRemaining: String(newRemaining.toFixed(2)),
+              status: newRemaining >= originalAmount ? 'active' : 'partially_applied',
+              updatedAt: new Date(),
+            })
+            .where(eq(creditNotes.id, note.id));
+        }
+
+        // Delete the application record
+        await tx
+          .delete(creditApplications)
+          .where(eq(creditApplications.id, app.id));
+      }
+    });
 
     revalidatePath('/billing/credits');
     revalidatePath('/billing/invoices');

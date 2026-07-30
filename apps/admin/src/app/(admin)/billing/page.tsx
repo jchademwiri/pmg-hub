@@ -21,10 +21,10 @@ export default async function BillingOverviewPage() {
     clients,
     currentMonthPayments
   ] = await Promise.all([
-    getAllInvoices({}, { page: 1, pageSize: 5 }),
-    getAllInvoices({ year: currentFinancialYear }, { page: 1, pageSize: 1 }),
-    getAllInvoices({ year: lastFinancialYear }, { page: 1, pageSize: 1 }),
-    getAllInvoices({ monthPeriod: 'current' }, { page: 1, pageSize: 1 }),
+    getAllInvoices({ excludeDraftVoid: true }, { page: 1, pageSize: 5 }),
+    getAllInvoices({ year: currentFinancialYear, excludeDraftVoid: true }, { page: 1, pageSize: 1 }),
+    getAllInvoices({ year: lastFinancialYear, excludeDraftVoid: true }, { page: 1, pageSize: 1 }),
+    getAllInvoices({ monthPeriod: 'current', excludeDraftVoid: true }, { page: 1, pageSize: 1 }),
     getAgingReport(),
     getClientsWithBillingActivity(),
     getAllIncome({ monthPeriod: 'current' }),

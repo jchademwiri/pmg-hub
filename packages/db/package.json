@@ -13,6 +13,8 @@
     "db:studio": "drizzle-kit studio",
     "db:reset": "bun src/reset.ts",
     "db:seed": "bun src/reset.ts && bun src/seed.ts",
+    "db:backfill-payment-allocations": "bun src/backfill-payment-allocations.ts",
+    "db:cleanup-synthetic-credit-income": "bun src/cleanup-synthetic-credit-income.ts",
     "test": "vitest run"
   },
   "dependencies": {
