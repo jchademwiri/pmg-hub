@@ -89,7 +89,7 @@ export function LeadsTable({ entries, deleteAction }: LeadsTableProps) {
               </TableCell>
               <TableCell>
                 <Link
-                  href={`/leads/${entry.id}`}
+                  href={`/relationships/leads/${entry.id}`}
                   className="text-sm font-medium underline underline-offset-4 hover:text-foreground/80"
                 >
                   View
