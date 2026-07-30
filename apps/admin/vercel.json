@@ -1,5 +1,5 @@
 {
-  "ignoreCommand": "npx turbo-ignore",
+  "ignoreCommand": "bunx turbo-ignore",
   "crons": [
     {
       "path": "/api/cron/close-month",
