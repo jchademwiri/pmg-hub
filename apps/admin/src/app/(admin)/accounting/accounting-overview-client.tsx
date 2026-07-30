@@ -202,7 +202,7 @@ export function AccountingOverviewClient({
           <div className="px-5 py-3.5 border-b bg-muted/30 flex items-center justify-between">
             <h3 className="text-sm font-semibold">Profit & Loss Summary</h3>
             <Link
-              href={`/accounting/profit-and-loss${selectedPeriod ? `?period=${selectedPeriod}` : ''}`}
+              href={{ pathname: '/accounting/profit-and-loss', query: selectedPeriod ? { period: selectedPeriod } : undefined }}
               className="text-xs text-muted-foreground hover:text-foreground transition-colors flex items-center gap-1"
             >
               Full report <ArrowUpRight className="h-3 w-3" />
