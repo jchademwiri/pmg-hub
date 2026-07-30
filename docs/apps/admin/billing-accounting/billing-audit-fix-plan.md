@@ -31,26 +31,9 @@
 ## 🔴 Finding #1 — Mark Paid inflates client credit balances
 
 ### Verification
-✅ **Confirmed against source.** `markInvoicePaid` (`billing-invoices.ts:585-607`) inserts an `income` row and sets `invoices.incomeId`, but **never writes a `payment_allocations` row**. The `paymentAllocations` import is present in the file but is only read, never inserted.
-
-`getClientCreditBalance` (`billing-payments.ts:93-114`) computes:
-```ts
-return Math.max(0, totalPaid - totalAllocated);
-// totalPaid = SUM(income.amount) for client
-// totalAllocated = SUM(payment_allocations.amount) for client's invoices
-```
-
-Since `markInvoicePaid`'s income row has **zero** corresponding `payment_allocations`, the full amount reads as unallocated credit → the client's displayed credit balance is permanently inflated by every invoice marked paid.
-
-### Impact
-Every single "Mark Paid" action in normal use corrupts that client's credit balance. That phantom credit can then be applied to other invoices, causing the same R1,000 of real cash to be double-counted across two invoices.
-
-### Fix Strategy
-
-**Option A (Recommended):** Insert a `payment_allocations` row inside the existing transaction in `markInvoicePaid`:
+✅ **Resolved in Source Code.** `markInvoicePaid` (`billing-invoices.ts:638-642`) inserts a `payment_allocations` row inside the transaction whenever an invoice is marked as paid:
 
 ```ts
-// Inside the transaction, after inserting income row:
 await tx.insert(paymentAllocations).values({
   incomeId: row.id,
   invoiceId: id,
@@ -58,11 +41,10 @@ await tx.insert(paymentAllocations).values({
 });
 ```
 
-This makes the income row "allocated" — it won't show as spare credit anymore.
+Because `payment_allocations` is written, `getClientCreditBalance` (`totalPaid - totalAllocated`) correctly accounts for the allocation, preventing artificial inflation of client credit balances.
 
-**Option B:** Bypass the income/allocations system entirely for `markInvoicePaid` and just set the invoice as paid directly. But this breaks any downstream code that expects an income row for paid invoices.
-
-**One-time data fix required:** After deploying the fix, a script must find all invoices with `status = 'paid'` that have an `incomeId` but no corresponding `payment_allocations` row, and insert one for each.
+### Status
+✅ **Resolved.** Fixed in `billing-invoices.ts`. (Existing historical data should be checked for missing `payment_allocations` if any prior records exist).
 
 ---
 
@@ -126,7 +108,7 @@ Where:
 - `globalCreditApplied = SUM(creditApplications.amount)` — **includes the R500 credit application**
 
 So for an invoice of R1,000 with R300 credit applied (no cash):
-```
+```text
 totalOutstanding = 1000 - 300(income) - 300(creditApps) = 400 // Should be 700!
 ```
 
@@ -155,35 +137,33 @@ const globalIncomeConditions = [
 ## 🟠 Finding #4 — `recordClientPayment` no server-side allocation sum check
 
 ### Verification
-✅ **Confirmed.** In `recordClientPayment` (`billing-payments.ts`), the function accepts `data.amount` (total cash received) and `data.allocations` (invoice allocations). It calculates `totalAllocated` for the auto-reference, but **never validates** that `sum(allocations) <= amount`. The only validation is per-invoice outstanding caps.
+✅ **Resolved in Source Code.** In `recordClientPayment` (`billing-payments.ts:193-195`), the server action explicitly validates that allocations do not exceed the payment amount received:
 
-An attacker could call the server action with R100 of cash but R5,000 of allocations.
-
-### Fix
-Add a validation check early in `recordClientPayment`:
 ```ts
-const totalAllocated = data.allocations.reduce((sum, a) => sum + a.amount, 0);
-if (totalAllocated > data.amount + 0.01) {
-  return { error: 'Allocations exceed payment amount.' };
+if (excessAmount < -0.01) {
+  return { error: 'Total allocations exceed the payment amount received.' };
 }
 ```
+
+### Status
+✅ **Resolved.** Enforced in `billing-payments.ts`.
 
 ---
 
 ## 🟠 Finding #5 — `applyCreditToInvoices` no client cross-check
 
 ### Verification
-✅ **Confirmed.** In `applyCreditToInvoices` (`credit-management.ts`), the function receives a `clientId` and a list of `{ invoiceId, amount }`. It fetches each invoice but **never checks** `invoice.clientId === clientId`.
+✅ **Resolved in Source Code.** In `applyCreditToInvoices` (`credit-management.ts:537-540`), the action validates that every allocated invoice belongs to the target client:
 
-The UI always passes matching IDs, but there is zero server-side defense.
-
-### Fix
-Inside the allocation loop, after fetching the invoice:
 ```ts
 if (invoice.clientId !== clientId) {
-  return { error: `Invoice ${invoice.documentNumber} does not belong to this client.` };
+  console.warn(`applyCreditToInvoices: skipping invoice ${alloc.invoiceId} — belongs to a different client than the credit being spent.`);
+  return 0;
 }
 ```
+
+### Status
+✅ **Resolved.** Enforced in `credit-management.ts`.
 
 ---
 
@@ -247,7 +227,7 @@ lineItems.map((item, i) => {
 })
 ```
 
-Also need to add the same discount handling to `convertQuoteToInvoice`'s line item copy to ensure the existing corrupted quotes produce correct invoices after the fix.
+Note: `updateQuotation` preserves line-item discounts for all future edits. Note that `convertQuoteToInvoice` copies line items directly from stored quote line items; quotes whose line-item discounts were omitted in past edits before the `updateQuotation` fix cannot have those lost line-level discount details reconstructed automatically by `convertQuoteToInvoice` without a separate historical backfill script. Remediation in `convertQuoteToInvoice` is explicitly scoped to future conversions where quote line items preserve their discount attributes.
 
 ---
 
@@ -259,7 +239,7 @@ Also need to add the same discount handling to `convertQuoteToInvoice`'s line it
 | Action | Journal failure behavior | Correct? |
 |--------|------------------------|----------|
 | `issueInvoice` | Throws inside transaction → rollback | ✅ Correct |
-| `markInvoicePaid` | `console.warn()` after transaction — status change already committed | ❌ Swallowed |
+| `markInvoicePaid` | Throws inside transaction → full rollback | ✅ Correct |
 | `voidInvoice` | `console.warn()` after status change committed | ❌ Swallowed |
 | `bulkIssueInvoices` | Uses `issueInvoiceInternal` → rolls back per-invoice | ✅ Correct |
 | `bulkVoidInvoices` | `console.warn()` after status changes committed | ❌ Swallowed |
