@@ -117,7 +117,7 @@ describe('LeadsTable', () => {
     expect(links).toHaveLength(0)
   })
 
-  it('renders detail links with correct /leads/<id> hrefs', () => {
+  it('renders detail links with correct /relationships/leads/<id> hrefs', () => {
     // Validates: Requirements 1.4
     const entries = [
       {
@@ -156,8 +156,8 @@ describe('LeadsTable', () => {
 
     const links = screen.getAllByRole('link', { name: /view/i })
     expect(links).toHaveLength(2)
-    expect(links[0]).toHaveAttribute('href', '/leads/lead-1')
-    expect(links[1]).toHaveAttribute('href', '/leads/lead-2')
+    expect(links[0]).toHaveAttribute('href', '/relationships/leads/lead-1')
+    expect(links[1]).toHaveAttribute('href', '/relationships/leads/lead-2')
   })
 })
 

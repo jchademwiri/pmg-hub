@@ -13,6 +13,20 @@ const nextConfig: NextConfig = {
       allowedOrigins: ["localhost:3000", "192.168.0.190:3000"],
     },
   },
+  async redirects() {
+    return [
+      {
+        source: '/leads/:id',
+        destination: '/relationships/leads/:id',
+        permanent: true,
+      },
+      {
+        source: '/leads',
+        destination: '/relationships/leads',
+        permanent: true,
+      },
+    ];
+  },
   allowedDevOrigins: ["192.168.0.190", "192.168.0.190:3000", "192.168.0.190:3001"],
 };
 
