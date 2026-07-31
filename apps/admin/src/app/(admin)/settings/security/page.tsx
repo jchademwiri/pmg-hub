@@ -33,12 +33,8 @@ export default async function SecuritySettingsPage() {
         </AlertDescription>
       </Alert>
 
-      <Tabs defaultValue="password" className="w-full">
+      <Tabs defaultValue="audit-log" className="w-full">
         <TabsList className="w-full justify-start rounded-lg bg-muted/40 p-1">
-          <TabsTrigger value="password" className="flex items-center gap-2">
-            <Lock className="h-4 w-4" />
-            Password
-          </TabsTrigger>
           <TabsTrigger value="audit-log" className="flex items-center gap-2">
             <History className="h-4 w-4" />
             Audit Log
@@ -51,11 +47,53 @@ export default async function SecuritySettingsPage() {
             <Laptop className="h-4 w-4" />
             Active Sessions
           </TabsTrigger>
+          <TabsTrigger value="password" className="flex items-center gap-2">
+            <Lock className="h-4 w-4" />
+            Password
+          </TabsTrigger>
         </TabsList>
+
+        {/* Audit Log Tab */}
+        <TabsContent value="audit-log" className="mt-4">
+          <SettingsSection
+            title="Audit Log"
+            description="Recent actions taken in the system."
+          >
+            <PaginatedLogTable
+              entries={systemAuditLogs}
+              emptyMessage="No system audit log activity recorded yet."
+              pageSize={5}
+            />
+          </SettingsSection>
+        </TabsContent>
+
+        {/* Sign-In Log Tab */}
+        <TabsContent value="signin-log" className="mt-4">
+          <SettingsSection
+            title="Sign-In Log"
+            description="Recent authentication activity and sign-in history."
+          >
+            <PaginatedLogTable
+              entries={signInLogs}
+              emptyMessage="No sign-in records found."
+              pageSize={5}
+            />
+          </SettingsSection>
+        </TabsContent>
+
+        {/* Active Sessions Tab */}
+        <TabsContent value="sessions" className="mt-4">
+          <SettingsSection
+            title="Active Sessions"
+            description="Devices currently signed in to your account."
+          >
+            <PaginatedActiveSessions sessions={sessions} pageSize={5} />
+          </SettingsSection>
+        </TabsContent>
 
         {/* Password Tab */}
         <TabsContent value="password" className="mt-4">
-          <SettingsSection title="Password" description="Update your account password.">
+          <SettingsSection title="Password" description="Update your account password (Password management coming soon).">
             <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
               <Field className="sm:col-span-2">
                 <FieldLabel>Current Password</FieldLabel>

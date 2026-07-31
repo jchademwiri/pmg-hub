@@ -11,7 +11,7 @@ const settingsNavItems = [
   { href: '/settings/organisation', label: 'Organisation', icon: Building2 },
   { href: '/settings/billing', label: 'Billing', icon: Receipt },
   { href: '/settings/users', label: 'Users', icon: Users },
-  { href: '/settings/security', label: 'Security', icon: Shield, badge: 'Soon' },
+  { href: '/settings/security', label: 'Security', icon: Shield },
   { href: '/settings/data', label: 'Data', icon: Database },
 ];
 
