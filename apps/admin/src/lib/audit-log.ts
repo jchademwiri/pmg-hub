@@ -1,4 +1,4 @@
-import { db, desc, session, user, invoices, invitations, quotations, eq, sql } from '@pmg/db';
+import { db, desc, session, user, invoices, invitations, quotations, eq, sql, gte, and, count } from '@pmg/db';
 
 export interface AuditLogEntry {
   id: string;
@@ -18,6 +18,16 @@ export interface UserSessionEntry {
   ipAddress: string;
 }
 
+export interface PaginatedResult<T> {
+  data: T[];
+  totalCount: number;
+  totalPages: number;
+  page: number;
+  pageSize: number;
+}
+
+export type DateRangeOption = 'all' | 'today' | '7days' | '30days';
+
 function formatIp(ip?: string | null): string {
   if (!ip) return 'Dashboard';
   if (
@@ -31,11 +41,49 @@ function formatIp(ip?: string | null): string {
   return ip;
 }
 
-/** Fetches sign-in history logs from session records */
-export async function getSignInLogs(limit = 100): Promise<AuditLogEntry[]> {
-  const entries: AuditLogEntry[] = [];
+function getDateBoundary(range: DateRangeOption): Date | null {
+  const now = new Date();
+  if (range === 'today') {
+    return new Date(now.getFullYear(), now.getMonth(), now.getDate());
+  }
+  if (range === '7days') {
+    const d = new Date();
+    d.setDate(d.getDate() - 7);
+    return d;
+  }
+  if (range === '30days') {
+    const d = new Date();
+    d.setDate(d.getDate() - 30);
+    return d;
+  }
+  return null;
+}
+
+/** DB-Layer Paginated & Date-Filtered Sign-In Logs */
+export async function getPaginatedSignInLogs({
+  page = 1,
+  pageSize = 5,
+  dateRange = 'all',
+}: {
+  page?: number;
+  pageSize?: number;
+  dateRange?: DateRangeOption;
+}): Promise<PaginatedResult<AuditLogEntry>> {
+  const dateBoundary = getDateBoundary(dateRange);
+  const offset = (page - 1) * pageSize;
+
+  const whereClause = dateBoundary ? gte(session.createdAt, dateBoundary) : undefined;
 
   try {
+    // 1. Count total sign-in records at DB level
+    const countResult = await db
+      .select({ total: count() })
+      .from(session)
+      .where(whereClause);
+    const totalCount = Number(countResult[0]?.total ?? 0);
+    const totalPages = Math.max(1, Math.ceil(totalCount / pageSize));
+
+    // 2. Fetch page slice at DB level using LIMIT and OFFSET
     const dbSessions = await db
       .select({
         id: session.id,
@@ -48,32 +96,48 @@ export async function getSignInLogs(limit = 100): Promise<AuditLogEntry[]> {
       })
       .from(session)
       .leftJoin(user, eq(session.userId, user.id))
+      .where(whereClause)
       .orderBy(desc(session.createdAt))
-      .limit(limit);
+      .limit(pageSize)
+      .offset(offset);
 
-    for (const s of dbSessions) {
-      entries.push({
-        id: `session-${s.id}`,
-        action: 'Signed in',
-        user: s.userName || s.userEmail || 'System User',
-        timestamp: s.createdAt ? new Date(s.createdAt).toLocaleString() : 'Recently',
-        ip: formatIp(s.ipAddress),
-        createdAt: s.createdAt ? new Date(s.createdAt) : new Date(),
-      });
-    }
+    const data: AuditLogEntry[] = dbSessions.map((s) => ({
+      id: `session-${s.id}`,
+      action: 'Signed in',
+      user: s.userName || s.userEmail || 'System User',
+      timestamp: s.createdAt ? new Date(s.createdAt).toLocaleString() : 'Recently',
+      ip: formatIp(s.ipAddress),
+      createdAt: s.createdAt ? new Date(s.createdAt) : new Date(),
+    }));
+
+    return {
+      data,
+      totalCount,
+      totalPages,
+      page,
+      pageSize,
+    };
   } catch (err) {
-    console.error('Failed to fetch sign in logs:', err);
+    console.error('Failed to fetch paginated sign in logs:', err);
+    return { data: [], totalCount: 0, totalPages: 1, page: 1, pageSize };
   }
-
-  return entries.sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime());
 }
 
-/** Fetches system actions audit logs (Invoices, Quotes, Invitations) */
-export async function getSystemAuditLogs(limit = 100): Promise<AuditLogEntry[]> {
+/** DB-Layer Paginated & Date-Filtered System Audit Logs (Invoices, Quotes, Invitations) */
+export async function getPaginatedSystemAuditLogs({
+  page = 1,
+  pageSize = 5,
+  dateRange = 'all',
+}: {
+  page?: number;
+  pageSize?: number;
+  dateRange?: DateRangeOption;
+}): Promise<PaginatedResult<AuditLogEntry>> {
+  const dateBoundary = getDateBoundary(dateRange);
   const entries: AuditLogEntry[] = [];
 
   try {
-    // 1. Invoices created
+    const invWhere = dateBoundary ? gte(invoices.createdAt, dateBoundary) : undefined;
     const dbInvoices = await db
       .select({
         id: invoices.id,
@@ -85,8 +149,9 @@ export async function getSystemAuditLogs(limit = 100): Promise<AuditLogEntry[]> 
       })
       .from(invoices)
       .leftJoin(user, eq(invoices.createdBy, user.id))
+      .where(invWhere)
       .orderBy(desc(invoices.createdAt))
-      .limit(limit);
+      .limit(50);
 
     for (const inv of dbInvoices) {
       entries.push({
@@ -98,12 +163,8 @@ export async function getSystemAuditLogs(limit = 100): Promise<AuditLogEntry[]> 
         createdAt: inv.createdAt ? new Date(inv.createdAt) : new Date(),
       });
     }
-  } catch (err) {
-    console.error('Failed to fetch invoice audit log:', err);
-  }
 
-  try {
-    // 2. User invitations sent
+    const inviteWhere = dateBoundary ? gte(invitations.createdAt, dateBoundary) : undefined;
     const dbInvitations = await db
       .select({
         id: invitations.id,
@@ -115,8 +176,9 @@ export async function getSystemAuditLogs(limit = 100): Promise<AuditLogEntry[]> 
       })
       .from(invitations)
       .leftJoin(user, sql`${invitations.invitedBy}::text = ${user.id}`)
+      .where(inviteWhere)
       .orderBy(desc(invitations.createdAt))
-      .limit(limit);
+      .limit(50);
 
     for (const inv of dbInvitations) {
       entries.push({
@@ -128,12 +190,8 @@ export async function getSystemAuditLogs(limit = 100): Promise<AuditLogEntry[]> 
         createdAt: inv.createdAt ? new Date(inv.createdAt) : new Date(),
       });
     }
-  } catch (err) {
-    console.error('Failed to fetch invitation audit log:', err);
-  }
 
-  try {
-    // 3. Quotations created
+    const quoteWhere = dateBoundary ? gte(quotations.createdAt, dateBoundary) : undefined;
     const dbQuotes = await db
       .select({
         id: quotations.id,
@@ -145,8 +203,9 @@ export async function getSystemAuditLogs(limit = 100): Promise<AuditLogEntry[]> 
       })
       .from(quotations)
       .leftJoin(user, eq(quotations.createdBy, user.id))
+      .where(quoteWhere)
       .orderBy(desc(quotations.createdAt))
-      .limit(limit);
+      .limit(50);
 
     for (const q of dbQuotes) {
       entries.push({
@@ -158,15 +217,42 @@ export async function getSystemAuditLogs(limit = 100): Promise<AuditLogEntry[]> 
         createdAt: q.createdAt ? new Date(q.createdAt) : new Date(),
       });
     }
-  } catch (err) {
-    console.error('Failed to fetch quotation audit log:', err);
-  }
 
-  return entries.sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime());
+    // Sort combined entries by timestamp descending
+    const sorted = entries.sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime());
+    const totalCount = sorted.length;
+    const totalPages = Math.max(1, Math.ceil(totalCount / pageSize));
+    const offset = (page - 1) * pageSize;
+    const data = sorted.slice(offset, offset + pageSize);
+
+    return {
+      data,
+      totalCount,
+      totalPages,
+      page,
+      pageSize,
+    };
+  } catch (err) {
+    console.error('Failed to fetch paginated system audit logs:', err);
+    return { data: [], totalCount: 0, totalPages: 1, page: 1, pageSize };
+  }
 }
 
-export async function getActiveSessions(limit = 100): Promise<UserSessionEntry[]> {
+/** DB-Layer Paginated Active Sessions */
+export async function getPaginatedActiveSessions({
+  page = 1,
+  pageSize = 5,
+}: {
+  page?: number;
+  pageSize?: number;
+}): Promise<PaginatedResult<UserSessionEntry>> {
+  const offset = (page - 1) * pageSize;
+
   try {
+    const countResult = await db.select({ total: count() }).from(session);
+    const totalCount = Number(countResult[0]?.total ?? 0);
+    const totalPages = Math.max(1, Math.ceil(totalCount / pageSize));
+
     const dbSessions = await db
       .select({
         id: session.id,
@@ -180,22 +266,29 @@ export async function getActiveSessions(limit = 100): Promise<UserSessionEntry[]
       .from(session)
       .leftJoin(user, eq(session.userId, user.id))
       .orderBy(desc(session.updatedAt))
-      .limit(limit);
+      .limit(pageSize)
+      .offset(offset);
 
-    if (dbSessions.length === 0) {
-      return [
-        {
-          id: 'current-session',
-          device: 'Current Web Session',
-          location: 'Active now',
-          lastActive: 'Now',
-          current: true,
-          ipAddress: '127.0.0.1',
-        },
-      ];
+    if (dbSessions.length === 0 && totalCount === 0) {
+      return {
+        data: [
+          {
+            id: 'current-session',
+            device: 'Current Web Session',
+            location: 'Active now',
+            lastActive: 'Now',
+            current: true,
+            ipAddress: '127.0.0.1',
+          },
+        ],
+        totalCount: 1,
+        totalPages: 1,
+        page: 1,
+        pageSize,
+      };
     }
 
-    return dbSessions.map((s, index) => {
+    const data: UserSessionEntry[] = dbSessions.map((s, index) => {
       let device = 'Web Browser';
       if (s.userAgent) {
         if (s.userAgent.includes('Windows')) device = 'Chrome on Windows';
@@ -208,21 +301,35 @@ export async function getActiveSessions(limit = 100): Promise<UserSessionEntry[]
         device: `${device} (${s.userName || 'User'})`,
         location: formatIp(s.ipAddress),
         lastActive: s.updatedAt ? new Date(s.updatedAt).toLocaleString() : 'Recently',
-        current: index === 0,
+        current: index === 0 && page === 1,
         ipAddress: formatIp(s.ipAddress),
       };
     });
+
+    return {
+      data,
+      totalCount,
+      totalPages,
+      page,
+      pageSize,
+    };
   } catch (err) {
     console.error('Failed to fetch active sessions:', err);
-    return [
-      {
-        id: 'current-session',
-        device: 'Current Web Session',
-        location: 'Active now',
-        lastActive: 'Now',
-        current: true,
-        ipAddress: 'Localhost',
-      },
-    ];
+    return {
+      data: [
+        {
+          id: 'current-session',
+          device: 'Current Web Session',
+          location: 'Active now',
+          lastActive: 'Now',
+          current: true,
+          ipAddress: 'Localhost',
+        },
+      ],
+      totalCount: 1,
+      totalPages: 1,
+      page: 1,
+      pageSize,
+    };
   }
 }

@@ -6,16 +6,20 @@ import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { SettingsPageHeader } from '@/components/settings/settings-page-header'
 import { SettingsSection } from '@/components/settings/settings-section'
-import { getSignInLogs, getSystemAuditLogs, getActiveSessions } from '@/lib/audit-log'
-import { PaginatedLogTable, PaginatedActiveSessions } from './security-logs-client'
+import {
+  getPaginatedSignInLogs,
+  getPaginatedSystemAuditLogs,
+  getPaginatedActiveSessions,
+} from '@/lib/audit-log'
+import { PaginatedLogPanel, PaginatedSessionsPanel } from './security-logs-client'
 
 export const metadata: Metadata = { title: 'Security Settings' }
 
 export default async function SecuritySettingsPage() {
-  const [signInLogs, systemAuditLogs, sessions] = await Promise.all([
-    getSignInLogs(),
-    getSystemAuditLogs(),
-    getActiveSessions(),
+  const [systemAuditLogs, signInLogs, sessions] = await Promise.all([
+    getPaginatedSystemAuditLogs({ page: 1, pageSize: 5 }),
+    getPaginatedSignInLogs({ page: 1, pageSize: 5 }),
+    getPaginatedActiveSessions({ page: 1, pageSize: 5 }),
   ])
 
   return (
@@ -59,11 +63,7 @@ export default async function SecuritySettingsPage() {
             title="Audit Log"
             description="Recent actions taken in the system."
           >
-            <PaginatedLogTable
-              entries={systemAuditLogs}
-              emptyMessage="No system audit log activity recorded yet."
-              pageSize={5}
-            />
+            <PaginatedLogPanel initialData={systemAuditLogs} type="system" />
           </SettingsSection>
         </TabsContent>
 
@@ -105,11 +105,7 @@ export default async function SecuritySettingsPage() {
             title="Sign-In Log"
             description="Recent authentication activity and sign-in history."
           >
-            <PaginatedLogTable
-              entries={signInLogs}
-              emptyMessage="No sign-in records found."
-              pageSize={5}
-            />
+            <PaginatedLogPanel initialData={signInLogs} type="signin" />
           </SettingsSection>
         </TabsContent>
 
@@ -119,13 +115,14 @@ export default async function SecuritySettingsPage() {
             title="Active Sessions"
             description="Devices currently signed in to your account."
           >
-            <PaginatedActiveSessions sessions={sessions} pageSize={5} />
+            <PaginatedSessionsPanel initialData={sessions} />
           </SettingsSection>
         </TabsContent>
       </Tabs>
     </div>
   )
 }
+
 
 
 
