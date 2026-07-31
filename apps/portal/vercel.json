@@ -1,4 +1,4 @@
 {
   "$schema": "https://openapi.vercel.sh/vercel.json",
-  "ignoreCommand": "npx turbo run build --filter=portal...[HEAD^]"
+  "ignoreCommand": "[ \"$VERCEL_ENV\" == \"production\" ] && exit 1 || npx turbo run build --filter=portal...[HEAD^]"
 }

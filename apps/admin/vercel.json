@@ -1,5 +1,5 @@
 {
-  "ignoreCommand": "npx turbo run build --filter=admin...[HEAD^]",
+  "ignoreCommand": "[ \"$VERCEL_ENV\" == \"production\" ] && exit 1 || npx turbo run build --filter=admin...[HEAD^]",
   "crons": [
     {
       "path": "/api/cron/close-month",
