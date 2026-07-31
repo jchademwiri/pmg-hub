@@ -450,7 +450,7 @@ export function BankingOverviewMatrix({
                 <TableCell className="py-3.5 text-sm">
                   {s?.bankName ? (
                     <span className="flex items-center gap-1.5">
-                      <Landmark className="h-3.5 w-3.5 text-muted-foreground" />
+                      <Landmark className="h-3.5 w-3.5 text-emerald-600 dark:text-emerald-400" />
                       {s.bankName}
                     </span>
                   ) : (
@@ -463,7 +463,7 @@ export function BankingOverviewMatrix({
                 <TableCell className="py-3.5 text-sm text-muted-foreground">
                   {s?.bankAccountName || '-'}
                 </TableCell>
-                <TableCell className="py-3.5 font-mono text-xs text-foreground">
+                <TableCell className="py-3.5 font-mono text-xs text-foreground font-semibold">
                   {s?.bankAccountNumber || '-'}
                 </TableCell>
                 <TableCell className="py-3.5 pr-4 font-mono text-xs text-muted-foreground">
@@ -484,4 +484,177 @@ export function BankingOverviewMatrix({
     </SettingsSection>
   );
 }
+
+function DivisionBankingFormOnly({
+  division,
+  currentSettings,
+  saveAction,
+}: DivisionBillingFormProps) {
+  const formRef = useRef<HTMLFormElement>(null);
+  const [isPending, startTransition] = useTransition();
+  const [error, setError] = useState<string | null>(null);
+  const [isDirty, setIsDirty] = useState(false);
+
+  const s = currentSettings;
+  const [bankName, setBankName] = useState<string>(s?.bankName ?? '');
+  const [bankAccountName, setBankAccountName] = useState<string>(s?.bankAccountName ?? '');
+  const [bankAccountNumber, setBankAccountNumber] = useState<string>(s?.bankAccountNumber ?? '');
+  const [bankBranchCode, setBankBranchCode] = useState<string>(s?.bankBranchCode ?? '');
+
+  function handleSubmit(e: FormEvent) {
+    e.preventDefault();
+    setError(null);
+    startTransition(async () => {
+      const fd = new FormData(formRef.current!);
+      const result = await saveAction(division.id, fd);
+      if (result.error) {
+        setError(result.error);
+      } else {
+        setIsDirty(false);
+        toast.success(`${division.name} banking details updated.`);
+      }
+    });
+  }
+
+  return (
+    <form
+      ref={formRef}
+      onSubmit={handleSubmit}
+      onChange={() => setIsDirty(true)}
+      className="flex flex-col gap-6"
+    >
+      {/* Hidden inputs to preserve non-banking division settings */}
+      {s?.defaultVatRate ? <input type="hidden" name="defaultVatRate" value={s.defaultVatRate} /> : null}
+      {s?.paymentTermsDays ? <input type="hidden" name="paymentTermsDays" value={s.paymentTermsDays} /> : null}
+      {s?.salesRepName ? <input type="hidden" name="salesRepName" value={s.salesRepName} /> : null}
+      {s?.salesRepEmail ? <input type="hidden" name="salesRepEmail" value={s.salesRepEmail} /> : null}
+      {s?.salesRepPhone ? <input type="hidden" name="salesRepPhone" value={s.salesRepPhone} /> : null}
+      {s?.divisionWebsite ? <input type="hidden" name="divisionWebsite" value={s.divisionWebsite} /> : null}
+      {s?.invoiceNotes ? <input type="hidden" name="invoiceNotes" value={s.invoiceNotes} /> : null}
+      {s?.quoteNotes ? <input type="hidden" name="quoteNotes" value={s.quoteNotes} /> : null}
+      {s?.creditExpiryMonths != null ? <input type="hidden" name="creditExpiryMonths" value={s.creditExpiryMonths} /> : null}
+      {s?.autoApplyCredits ? <input type="hidden" name="autoApplyCredits" value="on" /> : null}
+
+      <SettingsSection
+        title={`Banking Details for ${division.name}`}
+        description="Printed on client invoices so buyers know where to pay."
+      >
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+          <Field>
+            <FieldLabel>Bank Name</FieldLabel>
+            <Input
+              name="bankName"
+              value={bankName}
+              onChange={(e) => setBankName(e.target.value)}
+              placeholder="e.g. Capitec"
+              disabled={isPending}
+            />
+          </Field>
+          <Field>
+            <FieldLabel>Account Holder / Name</FieldLabel>
+            <Input
+              name="bankAccountName"
+              value={bankAccountName}
+              onChange={(e) => setBankAccountName(e.target.value)}
+              placeholder="e.g. MR JACOB CHADEMWIRI"
+              disabled={isPending}
+            />
+          </Field>
+          <Field>
+            <FieldLabel>Account Number</FieldLabel>
+            <Input
+              name="bankAccountNumber"
+              value={bankAccountNumber}
+              onChange={(e) => setBankAccountNumber(e.target.value)}
+              placeholder="e.g. 2520318607"
+              disabled={isPending}
+            />
+          </Field>
+          <Field>
+            <FieldLabel>Branch Code</FieldLabel>
+            <Input
+              name="bankBranchCode"
+              value={bankBranchCode}
+              onChange={(e) => setBankBranchCode(e.target.value)}
+              placeholder="e.g. 470010"
+              disabled={isPending}
+            />
+          </Field>
+        </div>
+      </SettingsSection>
+
+      {error ? (
+        <Alert variant="destructive">
+          <AlertCircle />
+          <AlertTitle>Could not save banking details</AlertTitle>
+          <AlertDescription>{error}</AlertDescription>
+        </Alert>
+      ) : null}
+
+      <div className="sticky bottom-4 flex items-center justify-between gap-4 rounded-lg border bg-background/95 p-3.5 shadow-sm backdrop-blur">
+        <p className="text-sm text-muted-foreground">
+          {isDirty ? 'Unsaved changes' : `${division.name} banking details saved`}
+        </p>
+        <Button type="submit" disabled={isPending}>
+          {isPending ? 'Saving…' : 'Save Banking Details'}
+        </Button>
+      </div>
+    </form>
+  );
+}
+
+export function BankingAccountsClient({
+  divisions,
+  allSettings,
+  saveAction,
+}: BillingSettingsClientProps) {
+  const [activeId, setActiveId] = useState<string>(divisions[0]?.id ?? '');
+  const activeDivision = divisions.find((d) => d.id === activeId) ?? divisions[0];
+
+  if (!activeDivision) return null;
+
+  return (
+    <div className="flex flex-col gap-8">
+      <Tabs value={activeDivision.id} onValueChange={setActiveId}>
+        <div className="sticky top-13 z-20 bg-background/95 py-2 backdrop-blur-sm sm:top-14">
+          <TabsList className="w-full justify-start rounded-lg bg-muted/40 p-1 overflow-x-auto">
+            {divisions.map((division) => {
+              const s = allSettings[division.id];
+              const hasBanking = Boolean(s?.bankName && s?.bankAccountNumber);
+
+              return (
+                <TabsTrigger key={division.id} value={division.id} className="gap-2">
+                  {division.name}
+                  <Badge
+                    variant={hasBanking ? 'default' : 'outline'}
+                    className={
+                      hasBanking
+                        ? 'bg-emerald-600 hover:bg-emerald-600 text-white text-[10px] px-1.5 py-0'
+                        : 'border-amber-500/50 text-amber-600 dark:text-amber-400 text-[10px] px-1.5 py-0'
+                    }
+                  >
+                    {hasBanking ? 'Banking Configured' : 'Missing Banking'}
+                  </Badge>
+                </TabsTrigger>
+              );
+            })}
+          </TabsList>
+        </div>
+        {divisions.map((division) => (
+          <TabsContent key={division.id} value={division.id} className="mt-4">
+            <DivisionBankingFormOnly
+              key={division.id}
+              division={division}
+              currentSettings={allSettings[division.id] ?? null}
+              saveAction={saveAction}
+            />
+          </TabsContent>
+        ))}
+      </Tabs>
+
+      <BankingOverviewMatrix divisions={divisions} allSettings={allSettings} />
+    </div>
+  );
+}
+
 
