@@ -215,15 +215,6 @@ function ReviewFigures({
         />
       </div>
 
-      <div className="rounded-md border border-border p-3">
-        <p className="mb-3 text-sm font-medium">Profit pool allocation</p>
-        <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
-          <FigureTile label="Salary" value={summary.salary} tone="allocation" compact />
-          <FigureTile label="Reinvest" value={summary.reinvest} tone="allocation" compact />
-          <FigureTile label="Reserve" value={summary.reserve} tone="allocation" compact />
-          <FigureTile label="Flex" value={summary.flex} tone="allocation" compact />
-        </div>
-      </div>
 
       <Alert>
         <Lock className="size-4" />
