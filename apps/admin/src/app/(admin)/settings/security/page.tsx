@@ -59,12 +59,12 @@ export default async function SecuritySettingsPage() {
 
         {/* Audit Log Tab */}
         <TabsContent value="audit-log" className="mt-4">
-          <SettingsSection
+          <PaginatedLogPanel
+            initialData={systemAuditLogs}
+            type="system"
             title="Audit Log"
             description="Recent actions taken in the system."
-          >
-            <PaginatedLogPanel initialData={systemAuditLogs} type="system" />
-          </SettingsSection>
+          />
         </TabsContent>
 
         {/* Password Tab */}
@@ -101,22 +101,21 @@ export default async function SecuritySettingsPage() {
 
         {/* Sign-In Log Tab */}
         <TabsContent value="signin-log" className="mt-4">
-          <SettingsSection
+          <PaginatedLogPanel
+            initialData={signInLogs}
+            type="signin"
             title="Sign-In Log"
             description="Recent authentication activity and sign-in history."
-          >
-            <PaginatedLogPanel initialData={signInLogs} type="signin" />
-          </SettingsSection>
+          />
         </TabsContent>
 
         {/* Active Sessions Tab */}
         <TabsContent value="sessions" className="mt-4">
-          <SettingsSection
+          <PaginatedSessionsPanel
+            initialData={sessions}
             title="Active Sessions"
             description="Devices currently signed in to your account."
-          >
-            <PaginatedSessionsPanel initialData={sessions} />
-          </SettingsSection>
+          />
         </TabsContent>
       </Tabs>
     </div>

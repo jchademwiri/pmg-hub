@@ -7,6 +7,7 @@ interface SettingsSectionProps {
   title: string;
   description: string;
   children: ReactNode;
+  headerAction?: ReactNode;
   className?: string;
   layout?: 'stacked' | 'sidebar';
 }
@@ -15,6 +16,7 @@ export function SettingsSection({
   title,
   description,
   children,
+  headerAction,
   className,
   layout = 'stacked',
 }: SettingsSectionProps) {
@@ -34,9 +36,12 @@ export function SettingsSection({
 
   return (
     <Card className={cn('border bg-card shadow-xs', className)}>
-      <CardHeader className="border-b bg-muted/10 pb-4">
-        <CardTitle className="text-base font-semibold">{title}</CardTitle>
-        <CardDescription>{description}</CardDescription>
+      <CardHeader className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between border-b bg-muted/10 pb-4">
+        <div className="flex flex-col gap-0.5">
+          <CardTitle className="text-base font-semibold">{title}</CardTitle>
+          <CardDescription>{description}</CardDescription>
+        </div>
+        {headerAction ? <div className="shrink-0">{headerAction}</div> : null}
       </CardHeader>
       <CardContent className="flex flex-col gap-4 pt-6">{children}</CardContent>
     </Card>
