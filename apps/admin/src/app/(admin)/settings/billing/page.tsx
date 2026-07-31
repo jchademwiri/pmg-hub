@@ -1,7 +1,7 @@
 import type { Metadata } from 'next';
 import { Receipt } from 'lucide-react';
 import { getDivisions, getAllDivisionBillingSettings } from '@/lib/data/billing';
-import { saveDivisionBillingSettings } from '@/app/(admin)/settings/billing/actions';
+import { saveDivisionBillingSettings } from '@/app/actions/settings';
 import { SettingsPageHeader } from '@/components/settings/settings-page-header';
 import { BillingDefaultsClient } from './billing-settings-client';
 

@@ -1,7 +1,7 @@
 import type { Metadata } from 'next';
 import { AlertCircle, CheckCircle2, Mail } from 'lucide-react';
 import { getDivisions, getAllDivisionBillingSettings } from '@/lib/data/billing';
-import { saveDivisionBillingSettings } from '@/app/(admin)/settings/billing/actions';
+import { saveDivisionBillingSettings } from '@/app/actions/settings';
 import { Card, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { SettingsPageHeader } from '@/components/settings/settings-page-header';

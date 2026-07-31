@@ -1,6 +1,6 @@
 import type { Metadata } from 'next';
 import { getDivisions, getAllDivisionBillingSettings } from '@/lib/data/billing';
-import { saveDivisionBillingSettings } from '@/app/(admin)/settings/billing/actions';
+import { saveDivisionBillingSettings } from '@/app/actions/settings';
 import { BillingCreditClient } from '../billing-settings-client';
 
 export const metadata: Metadata = {
