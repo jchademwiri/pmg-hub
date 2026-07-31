@@ -7,7 +7,18 @@ import { Building2, Database, Receipt, Shield, Users } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { cn } from '@/lib/utils';
 
-const settingsNavItems = [
+interface SettingsNavItem {
+  href: string;
+  label: React.ComponentType<{ className?: string }>;
+  badge?: string;
+}
+
+const settingsNavItems: {
+  href: string;
+  label: string;
+  icon: React.ComponentType<{ className?: string }>;
+  badge?: string;
+}[] = [
   { href: '/settings/organisation', label: 'Organisation', icon: Building2 },
   { href: '/settings/billing', label: 'Billing', icon: Receipt },
   { href: '/settings/users', label: 'Users', icon: Users },
