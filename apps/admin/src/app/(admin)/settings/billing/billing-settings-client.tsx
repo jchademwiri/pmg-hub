@@ -214,6 +214,103 @@ function DivisionBillingForm({
       </SettingsSection>
 
       <SettingsSection
+        title="Sales Rep & Contact Info"
+        description="Contact details printed on document headers and used for email routing."
+      >
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+          <Field className="sm:col-span-2">
+            <FieldLabel>Sales Rep Name</FieldLabel>
+            <Input
+              name="salesRepName"
+              value={salesRepName}
+              onChange={(e) => setSalesRepName(e.target.value)}
+              placeholder="e.g. Jacob Chademwiri"
+              disabled={isPending}
+            />
+          </Field>
+          <Field>
+            <FieldLabel>Phone Number</FieldLabel>
+            <Input
+              name="salesRepPhone"
+              value={salesRepPhone}
+              onChange={(e) => setSalesRepPhone(e.target.value)}
+              placeholder="+27 21 000 0000"
+              disabled={isPending}
+            />
+          </Field>
+          <Field>
+            <FieldLabel>Email Address</FieldLabel>
+            <Input
+              name="salesRepEmail"
+              type="email"
+              value={salesRepEmail}
+              onChange={(e) => setSalesRepEmail(e.target.value)}
+              placeholder="sales@example.co.za"
+              disabled={isPending}
+            />
+          </Field>
+          <Field className="sm:col-span-2">
+            <FieldLabel>Division Website</FieldLabel>
+            <Input
+              name="divisionWebsite"
+              value={divisionWebsite}
+              onChange={(e) => setDivisionWebsite(e.target.value)}
+              placeholder="www.example.co.za"
+              disabled={isPending}
+            />
+          </Field>
+        </div>
+      </SettingsSection>
+
+      <SettingsSection
+        title="Banking Details"
+        description="Printed on invoices so clients know where to pay for this division."
+      >
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+          <Field>
+            <FieldLabel>Bank Name</FieldLabel>
+            <Input
+              name="bankName"
+              value={bankName}
+              onChange={(e) => setBankName(e.target.value)}
+              placeholder="e.g. First National Bank"
+              disabled={isPending}
+            />
+          </Field>
+          <Field>
+            <FieldLabel>Account Name</FieldLabel>
+            <Input
+              name="bankAccountName"
+              value={bankAccountName}
+              onChange={(e) => setBankAccountName(e.target.value)}
+              placeholder="e.g. PMG Media (Pty) Ltd"
+              disabled={isPending}
+            />
+          </Field>
+          <Field>
+            <FieldLabel>Account Number</FieldLabel>
+            <Input
+              name="bankAccountNumber"
+              value={bankAccountNumber}
+              onChange={(e) => setBankAccountNumber(e.target.value)}
+              placeholder="e.g. 62012345678"
+              disabled={isPending}
+            />
+          </Field>
+          <Field>
+            <FieldLabel>Branch Code</FieldLabel>
+            <Input
+              name="bankBranchCode"
+              value={bankBranchCode}
+              onChange={(e) => setBankBranchCode(e.target.value)}
+              placeholder="e.g. 250655"
+              disabled={isPending}
+            />
+          </Field>
+        </div>
+      </SettingsSection>
+
+      <SettingsSection
         title="Default Notes & Terms"
         description="Pre-filled on new invoices and quotes. Can be overridden per document."
       >
