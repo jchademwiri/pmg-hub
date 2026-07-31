@@ -110,256 +110,136 @@ function DivisionBillingForm({
       onChange={() => setIsDirty(true)}
       className="flex flex-col gap-6"
     >
-      <Tabs value={activeTab} onValueChange={(value) => setActiveTab(value as typeof activeTab)}>
-        <TabsList className="w-full justify-start rounded-lg bg-muted/40 p-1">
-          <TabsTrigger value="general" className="flex items-center gap-2">
-            <Building2 className="h-4 w-4" />
-            General & Numbering
-          </TabsTrigger>
-          <TabsTrigger value="contact_banking" className="flex items-center gap-2">
-            <Mail className="h-4 w-4" />
-            Contact & Banking
-          </TabsTrigger>
-          <TabsTrigger value="notes" className="flex items-center gap-2">
-            <Landmark className="h-4 w-4" />
-            Templates & Notes
-          </TabsTrigger>
-        </TabsList>
-
-        <TabsContent value="general" className="mt-4 flex flex-col gap-6">
-          <SettingsSection
-            title="Document Numbering"
-            description="Prefix is derived from the division name. Sequence numbers are managed automatically."
-          >
-            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-              <Field>
-                <FieldLabel>Invoice Prefix</FieldLabel>
-                <div className="flex h-9 items-center rounded-md border border-input bg-muted/40 px-3 text-sm text-muted-foreground">
-                  {prefix}-INV-
-                </div>
-                <p className="text-xs text-muted-foreground">e.g. {prefix}-INV-2026-001</p>
-              </Field>
-              <Field>
-                <FieldLabel>Quote Prefix</FieldLabel>
-                <div className="flex h-9 items-center rounded-md border border-input bg-muted/40 px-3 text-sm text-muted-foreground">
-                  {prefix}-Q-
-                </div>
-                <p className="text-xs text-muted-foreground">e.g. {prefix}-Q-2026-001</p>
-              </Field>
+      <SettingsSection
+        title="Document Numbering"
+        description="Prefix is derived from the division name. Sequence numbers are managed automatically."
+      >
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+          <Field>
+            <FieldLabel>Invoice Prefix</FieldLabel>
+            <div className="flex h-9 items-center rounded-md border border-input bg-muted/40 px-3 text-sm text-muted-foreground font-mono">
+              {prefix}-INV-
             </div>
-          </SettingsSection>
-
-          <SettingsSection
-            title="Tax & Payment"
-            description="Default VAT rate and payment terms for new documents."
-          >
-            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-              <Field>
-                <FieldLabel>Default VAT Rate (%)</FieldLabel>
-                <Input
-                  name="defaultVatRate"
-                  type="number"
-                  min="0"
-                  max="100"
-                  step="0.01"
-                  value={defaultVatRate}
-                  onChange={(e) => setDefaultVatRate(e.target.value)}
-                  disabled={isPending}
-                />
-              </Field>
-              <Field>
-                <FieldLabel>Payment Terms (days)</FieldLabel>
-                <Input
-                  name="paymentTermsDays"
-                  type="number"
-                  min="0"
-                  max="365"
-                  value={paymentTermsDays}
-                  onChange={(e) => setPaymentTermsDays(e.target.value)}
-                  disabled={isPending}
-                />
-              </Field>
-              <Field>
-                <FieldLabel>Currency</FieldLabel>
-                <div className="flex h-9 items-center rounded-md border border-input bg-muted/40 px-3 text-sm text-muted-foreground">
-                  ZAR - South African Rand
-                </div>
-              </Field>
+            <p className="text-xs text-muted-foreground">e.g. {prefix}-INV-2026-001</p>
+          </Field>
+          <Field>
+            <FieldLabel>Quote Prefix</FieldLabel>
+            <div className="flex h-9 items-center rounded-md border border-input bg-muted/40 px-3 text-sm text-muted-foreground font-mono">
+              {prefix}-Q-
             </div>
-          </SettingsSection>
+            <p className="text-xs text-muted-foreground">e.g. {prefix}-Q-2026-001</p>
+          </Field>
+        </div>
+      </SettingsSection>
 
-          <SettingsSection
-            title="Credit Policy"
-            description="Configure default client credit settings and auto-application rules."
-          >
-            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-              <Field>
-                <FieldLabel>Credit Expiry (months)</FieldLabel>
-                <Input
-                  name="creditExpiryMonths"
-                  type="number"
-                  min="0"
-                  max="120"
-                  value={creditExpiryMonths}
-                  onChange={(e) => setCreditExpiryMonths(e.target.value)}
-                  disabled={isPending}
-                />
-                <p className="text-xs text-muted-foreground">
-                  Set to 0 for credit notes that never expire.
-                </p>
-              </Field>
-              <Field orientation="horizontal" className="items-end pb-1">
-                {autoApplyCredits ? (
-                  <input type="hidden" name="autoApplyCredits" value="on" />
-                ) : null}
-                <Switch
-                  checked={autoApplyCredits}
-                  onCheckedChange={(checked) => {
-                    setAutoApplyCredits(checked);
-                    setIsDirty(true);
-                  }}
-                  disabled={isPending}
-                />
-                <FieldContent>
-                  <FieldLabel>Auto-apply Credit to Invoices</FieldLabel>
-                  <p className="text-xs text-muted-foreground">
-                    Automatically apply outstanding client credits to new invoices FIFO.
-                  </p>
-                </FieldContent>
-              </Field>
+      <SettingsSection
+        title="Tax & Payment"
+        description="Default VAT rate and payment terms for new documents."
+      >
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+          <Field>
+            <FieldLabel>Default VAT Rate (%)</FieldLabel>
+            <Input
+              name="defaultVatRate"
+              type="number"
+              min="0"
+              max="100"
+              step="0.01"
+              value={defaultVatRate}
+              onChange={(e) => setDefaultVatRate(e.target.value)}
+              disabled={isPending}
+            />
+          </Field>
+          <Field>
+            <FieldLabel>Payment Terms (days)</FieldLabel>
+            <Input
+              name="paymentTermsDays"
+              type="number"
+              min="0"
+              max="365"
+              value={paymentTermsDays}
+              onChange={(e) => setPaymentTermsDays(e.target.value)}
+              disabled={isPending}
+            />
+          </Field>
+          <Field>
+            <FieldLabel>Currency</FieldLabel>
+            <div className="flex h-9 items-center rounded-md border border-input bg-muted/40 px-3 text-sm text-muted-foreground font-medium">
+              ZAR - South African Rand
             </div>
-          </SettingsSection>
-        </TabsContent>
+          </Field>
+        </div>
+      </SettingsSection>
 
-        <TabsContent value="contact_banking" className="mt-4 flex flex-col gap-6">
-          <SettingsSection
-            title="Contact Details"
-            description="Sales rep contact info printed on invoices and quotes for this division."
-          >
-            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-              <Field className="sm:col-span-2">
-                <FieldLabel>Sales Rep Name</FieldLabel>
-                <Input
-                  name="salesRepName"
-                  value={salesRepName}
-                  onChange={(e) => setSalesRepName(e.target.value)}
-                  placeholder="e.g. Jacob Chademwiri"
-                  disabled={isPending}
-                />
-              </Field>
-              <Field>
-                <FieldLabel>Phone Number</FieldLabel>
-                <Input
-                  name="salesRepPhone"
-                  value={salesRepPhone}
-                  onChange={(e) => setSalesRepPhone(e.target.value)}
-                  placeholder="+27 21 000 0000"
-                  disabled={isPending}
-                />
-              </Field>
-              <Field>
-                <FieldLabel>Email Address</FieldLabel>
-                <Input
-                  name="salesRepEmail"
-                  type="email"
-                  value={salesRepEmail}
-                  onChange={(e) => setSalesRepEmail(e.target.value)}
-                  placeholder="sales@example.co.za"
-                  disabled={isPending}
-                />
-              </Field>
-              <Field>
-                <FieldLabel>Division Website</FieldLabel>
-                <Input
-                  name="divisionWebsite"
-                  value={divisionWebsite}
-                  onChange={(e) => setDivisionWebsite(e.target.value)}
-                  placeholder="www.example.co.za"
-                  disabled={isPending}
-                />
-              </Field>
-            </div>
-          </SettingsSection>
+      <SettingsSection
+        title="Credit Policy"
+        description="Configure default client credit settings and auto-application rules."
+      >
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+          <Field>
+            <FieldLabel>Credit Expiry (months)</FieldLabel>
+            <Input
+              name="creditExpiryMonths"
+              type="number"
+              min="0"
+              max="120"
+              value={creditExpiryMonths}
+              onChange={(e) => setCreditExpiryMonths(e.target.value)}
+              disabled={isPending}
+            />
+            <p className="text-xs text-muted-foreground">
+              Set to 0 for credit notes that never expire.
+            </p>
+          </Field>
+          <Field orientation="horizontal" className="items-end pb-1">
+            {autoApplyCredits ? (
+              <input type="hidden" name="autoApplyCredits" value="on" />
+            ) : null}
+            <Switch
+              checked={autoApplyCredits}
+              onCheckedChange={(checked) => {
+                setAutoApplyCredits(checked);
+                setIsDirty(true);
+              }}
+              disabled={isPending}
+            />
+            <FieldContent>
+              <FieldLabel>Auto-apply Credit to Invoices</FieldLabel>
+              <p className="text-xs text-muted-foreground">
+                Automatically apply outstanding client credits to new invoices FIFO.
+              </p>
+            </FieldContent>
+          </Field>
+        </div>
+      </SettingsSection>
 
-          <SettingsSection
-            title="Banking Details"
-            description="Printed on invoices so clients know where to pay."
-          >
-            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-              <Field>
-                <FieldLabel>Bank Name</FieldLabel>
-                <Input
-                  name="bankName"
-                  value={bankName}
-                  onChange={(e) => setBankName(e.target.value)}
-                  placeholder="e.g. First National Bank"
-                  disabled={isPending}
-                />
-              </Field>
-              <Field>
-                <FieldLabel>Account Name</FieldLabel>
-                <Input
-                  name="bankAccountName"
-                  value={bankAccountName}
-                  onChange={(e) => setBankAccountName(e.target.value)}
-                  placeholder="e.g. PMG Media (Pty) Ltd"
-                  disabled={isPending}
-                />
-              </Field>
-              <Field>
-                <FieldLabel>Account Number</FieldLabel>
-                <Input
-                  name="bankAccountNumber"
-                  value={bankAccountNumber}
-                  onChange={(e) => setBankAccountNumber(e.target.value)}
-                  placeholder="e.g. 62012345678"
-                  disabled={isPending}
-                />
-              </Field>
-              <Field>
-                <FieldLabel>Branch Code</FieldLabel>
-                <Input
-                  name="bankBranchCode"
-                  value={bankBranchCode}
-                  onChange={(e) => setBankBranchCode(e.target.value)}
-                  placeholder="e.g. 250655"
-                  disabled={isPending}
-                />
-              </Field>
-            </div>
-          </SettingsSection>
-        </TabsContent>
-
-        <TabsContent value="notes" className="mt-4 flex flex-col gap-6">
-          <SettingsSection
-            title="Default Notes"
-            description="Pre-filled on new invoices and quotes. Can be overridden per document."
-          >
-            <Field>
-              <FieldLabel>Invoice Notes</FieldLabel>
-              <Textarea
-                name="invoiceNotes"
-                value={invoiceNotes}
-                onChange={(e) => setInvoiceNotes(e.target.value)}
-                rows={4}
-                disabled={isPending}
-                placeholder="e.g. Payment due within 30 days. Please use invoice number as reference."
-              />
-            </Field>
-            <Field>
-              <FieldLabel>Quote Notes / Terms</FieldLabel>
-              <Textarea
-                name="quoteNotes"
-                value={quoteNotes}
-                onChange={(e) => setQuoteNotes(e.target.value)}
-                rows={4}
-                disabled={isPending}
-                placeholder="e.g. 50% deposit required. Quotation valid for 30 days."
-              />
-            </Field>
-          </SettingsSection>
-        </TabsContent>
-      </Tabs>
+      <SettingsSection
+        title="Default Notes & Terms"
+        description="Pre-filled on new invoices and quotes. Can be overridden per document."
+      >
+        <Field>
+          <FieldLabel>Invoice Notes</FieldLabel>
+          <Textarea
+            name="invoiceNotes"
+            value={invoiceNotes}
+            onChange={(e) => setInvoiceNotes(e.target.value)}
+            rows={3}
+            disabled={isPending}
+            placeholder="e.g. Payment due within 30 days. Please use invoice number as reference."
+          />
+        </Field>
+        <Field>
+          <FieldLabel>Quote Notes / Terms</FieldLabel>
+          <Textarea
+            name="quoteNotes"
+            value={quoteNotes}
+            onChange={(e) => setQuoteNotes(e.target.value)}
+            rows={3}
+            disabled={isPending}
+            placeholder="e.g. 50% deposit required. Quotation valid for 30 days."
+          />
+        </Field>
+      </SettingsSection>
 
       {error ? (
         <Alert variant="destructive">
