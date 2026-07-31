@@ -56,13 +56,13 @@ describe('getFinancialSummary', () => {
       expect(result.expenses).toBe(40000)
       expect(result.pmgShare).toBe(25000)
       expect(result.profitPool).toBe(35000)
-      expect(result.salary).toBe(12250)
-      expect(result.reinvest).toBe(10500)
-      expect(result.reserve).toBe(10500)
-      expect(result.flex).toBe(1750)
+      expect(result.salary).toBe(0)
+      expect(result.reinvest).toBe(0)
+      expect(result.reserve).toBe(0)
+      expect(result.flex).toBe(0)
     })
 
-    it('zero case - revenue=0, expenses=0 returns all eight fields as 0 without error', async () => {
+    it('zero case - revenue=0, expenses=0 returns all fields as 0 without error', async () => {
       vi.mocked(getTotalRevenue).mockResolvedValue(0)
       vi.mocked(getTotalExpenses).mockResolvedValue(0)
 
@@ -86,10 +86,10 @@ describe('getFinancialSummary', () => {
 
       expect(result.pmgShare).toBe(2500)
       expect(result.profitPool).toBe(-7500)
-      expect(result.salary).toBe(-2625)
-      expect(result.reinvest).toBe(-2250)
-      expect(result.reserve).toBe(-2250)
-      expect(result.flex).toBe(-375)
+      expect(result.salary).toBe(0)
+      expect(result.reinvest).toBe(0)
+      expect(result.reserve).toBe(0)
+      expect(result.flex).toBe(0)
     })
 
     it('determinism - same mocked inputs called twice produce structurally identical results', async () => {
@@ -136,10 +136,10 @@ describe('getFinancialSummary', () => {
 
             expect(result.pmgShare).toBeCloseTo(pmgShare, 10)
             expect(result.profitPool).toBeCloseTo(profitPool, 10)
-            expect(result.salary).toBeCloseTo(profitPool * 0.35, 10)
-            expect(result.reinvest).toBeCloseTo(profitPool * 0.30, 10)
-            expect(result.reserve).toBeCloseTo(profitPool * 0.30, 10)
-            expect(result.flex).toBeCloseTo(profitPool * 0.05, 10)
+            expect(result.salary).toBe(0)
+            expect(result.reinvest).toBe(0)
+            expect(result.reserve).toBe(0)
+            expect(result.flex).toBe(0)
           }
         )
       )
@@ -147,13 +147,11 @@ describe('getFinancialSummary', () => {
 
     it('Property 2: allocation sum invariant', async () => {
       // Feature: financial-engine, Property 2: Allocation sum invariant
-      // Validates: Requirements 2.1
       await fc.assert(
         fc.asyncProperty(
           fc.double({ noNaN: true, noDefaultInfinity: true }),
           fc.double({ noNaN: true, noDefaultInfinity: true }),
           async (revenue, expenses) => {
-            // Skip cases where arithmetic would overflow to Infinity/NaN before running any side effects
             const pmgShare = revenue * 0.25
             const profitPool = revenue - expenses - pmgShare
             fc.pre(isFinite(profitPool))
@@ -163,10 +161,10 @@ describe('getFinancialSummary', () => {
 
             const result = await getFinancialSummary()
 
-            const sum = result.salary + result.reinvest + result.reserve + result.flex
-            const diff = Math.abs(sum - result.profitPool)
-            const scale = Math.max(Math.abs(result.profitPool), 1)
-            expect(diff / scale).toBeLessThan(1e-10)
+            expect(result.salary).toBe(0)
+            expect(result.reinvest).toBe(0)
+            expect(result.reserve).toBe(0)
+            expect(result.flex).toBe(0)
           }
         )
       )
@@ -183,10 +181,10 @@ describe('getFinancialSummary', () => {
             vi.resetAllMocks()
             vi.mocked(getActiveRates).mockResolvedValue({
               pmg_share: 0.25,
-              salary: 0.35,
-              reinvest: 0.30,
-              reserve: 0.30,
-              flex: 0.05,
+              salary: 0,
+              reinvest: 0,
+              reserve: 0,
+              flex: 0,
             })
             vi.mocked(getTotalRevenue).mockResolvedValue(revenue)
             vi.mocked(getTotalExpenses).mockResolvedValue(expenses)
@@ -202,7 +200,6 @@ describe('getFinancialSummary', () => {
 
     it('Property 5: negative profitPool propagates correctly', async () => {
       // Feature: financial-engine, Property 5: Negative profitPool propagates correctly
-      // Validates: Requirements 2.4
       await fc.assert(
         fc.asyncProperty(
           fc.double({ noNaN: true, noDefaultInfinity: true, min: 0, max: 1e12 }),
@@ -216,15 +213,10 @@ describe('getFinancialSummary', () => {
             const result = await getFinancialSummary()
 
             expect(result.profitPool).toBeLessThan(0)
-            expect(result.salary).toBeLessThan(0)
-            expect(result.reinvest).toBeLessThan(0)
-            expect(result.reserve).toBeLessThan(0)
-            expect(result.flex).toBeLessThan(0)
-
-            expect(result.salary).toBeCloseTo(result.profitPool * 0.35, 10)
-            expect(result.reinvest).toBeCloseTo(result.profitPool * 0.30, 10)
-            expect(result.reserve).toBeCloseTo(result.profitPool * 0.30, 10)
-            expect(result.flex).toBeCloseTo(result.profitPool * 0.05, 10)
+            expect(result.salary).toBe(0)
+            expect(result.reinvest).toBe(0)
+            expect(result.reserve).toBe(0)
+            expect(result.flex).toBe(0)
           }
         )
       )

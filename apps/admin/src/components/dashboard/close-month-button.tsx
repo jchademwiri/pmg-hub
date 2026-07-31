@@ -15,7 +15,7 @@ export default function CloseMonthButton({ period }: CloseMonthButtonProps) {
   const [wizardOpen, setWizardOpen] = useState(false)
   const [summary, setSummary] = useState<{
     revenue: number; expenses: number; pmgShare: number; profitPool: number;
-    salary: number; reinvest: number; reserve: number; flex: number;
+    salary?: number; reinvest?: number; reserve?: number; flex?: number;
   } | null>(null)
   const periodLabel = fmtMonthYear(period)
 

@@ -48,6 +48,7 @@ import {
 // ── Account Code Constants ───────────────────────────────────────────────────
 const BANK_ACCOUNT_CODE = '1010'; // Business Cheque Account
 const SAVINGS_ACCOUNT_CODE = '1020'; // Savings Account (PMG Share destination)
+const PMG_SHARE_RESERVE_CODE = '3150'; // PMG Share Equity Reserve (Option 1)
 const ACCOUNTS_RECEIVABLE_CODE = '1100'; // Accounts Receivable
 const SALES_REVENUE_CODE = '4010'; // Sales Revenue
 const MISC_EXPENSE_CODE = '5140'; // Miscellaneous Expense (fallback)
@@ -127,19 +128,32 @@ export async function postPaymentJournalEntries(data: {
     if (p.status !== 'open') return { error: `Accounting period ${period} is closed.` };
 
     const db = data.tx || getDb();
+
+    // Ensure PMG Share Equity Reserve (3150) exists in chartAccounts
+    await db.insert(chartAccounts).values({
+      code: PMG_SHARE_RESERVE_CODE,
+      name: 'PMG Share Equity Reserve',
+      type: 'equity',
+      description: 'Accumulated PMG Share retained reserve from billing income',
+      isActive: true,
+      isPostingAccount: true,
+    }).onConflictDoNothing({ target: chartAccounts.code });
+
     const accountMap = await getAccountsByCode([
       BANK_ACCOUNT_CODE,
       SAVINGS_ACCOUNT_CODE,
+      PMG_SHARE_RESERVE_CODE,
       ACCOUNTS_RECEIVABLE_CODE,
     ], db);
 
     const bankAccount = accountMap.get(BANK_ACCOUNT_CODE);
     const savingsAccount = accountMap.get(SAVINGS_ACCOUNT_CODE);
+    const pmgShareReserveAccount = accountMap.get(PMG_SHARE_RESERVE_CODE);
     const accountsReceivable = accountMap.get(ACCOUNTS_RECEIVABLE_CODE);
 
-    if (!bankAccount || !savingsAccount || !accountsReceivable) {
+    if (!bankAccount || !savingsAccount || !accountsReceivable || !pmgShareReserveAccount) {
       return {
-        error: 'Required chart accounts not found (1010, 1020, 1100). Please run the accounting seed first.',
+        error: 'Required chart accounts not found (1010, 1020, 1100, 3150). Please run the accounting seed first.',
       };
     }
 
@@ -191,7 +205,7 @@ export async function postPaymentJournalEntries(data: {
         description: 'Payment received – AR cleared',
       });
 
-      // Entry 2: Dr Savings / Cr Bank (PMG share)
+      // Entry 2: Dr Savings Account (1020) / Cr PMG Share Equity Reserve (3150)
       if (pmgShareAmount > 0) {
         const entry2Id = randomUUID();
         const entry2Line1Id = randomUUID();
@@ -226,10 +240,10 @@ export async function postPaymentJournalEntries(data: {
         await tx.insert(journalLines).values({
           id: entry2Line2Id,
           journalEntryId: entry2Id,
-          accountId: bankAccount.id,
+          accountId: pmgShareReserveAccount.id,
           debit: null,
           credit: String(pmgShareAmount),
-          description: `PMG Share transfer (25% of R${amount.toFixed(2)})`,
+          description: `PMG Share Reserve (25% of R${amount.toFixed(2)})`,
         });
       }
     };
