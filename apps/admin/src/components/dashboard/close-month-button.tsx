@@ -28,8 +28,8 @@ export default function CloseMonthButton({ period }: CloseMonthButtonProps) {
 
   return (
     <>
-      <Button onClick={handleClick} variant="outline" size="sm" className="gap-1.5">
-        <Lock data-icon="inline-start" />
+      <Button onClick={handleClick} variant="outline" className="h-9 px-3.5 rounded-lg text-xs font-semibold gap-1.5 whitespace-nowrap">
+        <Lock className="h-3.5 w-3.5" />
         Close {periodLabel}
       </Button>
       {summary && (

@@ -66,18 +66,18 @@ export function DashboardShell({
   deltas,
   divisions,
   divisionExpenseMap,
-  leads,
-  sparklineData,
-  agingReport,
-  budgetChartSeries,
-  expensesByDivision,
-  projectScheduleSummary,
+  leads = [],
+  sparklineData = [],
+  agingReport = [],
+  budgetChartSeries = [],
+  expensesByDivision = [],
+  projectScheduleSummary = { inProgress: 0, planned: 0, upcomingDeadlines: 0, atRisk: 0, overdue: 0 },
   hasSnapshot,
   currentPeriod,
   showCloseMonthButton,
   pmgShareRate,
-  projectsAtRisk,
-  currentWorkload,
+  projectsAtRisk = [],
+  currentWorkload = { inProgress: [], planned: [] },
 }: Props) {
   const router = useRouter()
   const pathname = usePathname()
@@ -146,9 +146,15 @@ export function DashboardShell({
         </div>
 
         {/* Close Month button on the far right of the tabs bar */}
-        <div className="hidden md:block">
+        <div className="hidden md:flex shrink-0 items-center">
           {hasSnapshot ? (
-            <Badge variant="secondary">{fmtMonthYear(currentPeriod)} closed</Badge>
+            <Badge
+              variant="secondary"
+              className="h-9 px-3.5 rounded-lg text-xs font-semibold border border-border/40 bg-muted/80 text-muted-foreground shadow-2xs gap-1.5 whitespace-nowrap"
+            >
+              <span className="h-1.5 w-1.5 rounded-full bg-emerald-500" />
+              <span>{fmtMonthYear(currentPeriod)} closed</span>
+            </Badge>
           ) : (
             showCloseMonthButton && (
               <CloseMonthButton period={currentPeriod} />

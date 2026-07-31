@@ -9,6 +9,8 @@ import {
 import { formatZAR } from '@/lib/format';
 import { TrendingUp, TrendingDown, Minus } from 'lucide-react';
 
+import { cn } from '@/lib/utils';
+
 interface YoYComparisonTableProps {
   data: {
     year: number;
@@ -21,9 +23,10 @@ interface YoYComparisonTableProps {
     quotesIssued: number;
     quoteConversionRate: number;
   }[];
+  className?: string;
 }
 
-export function YoYComparisonTable({ data }: YoYComparisonTableProps) {
+export function YoYComparisonTable({ data, className }: YoYComparisonTableProps) {
   // Assuming data is sorted with current year first
   const current = data[0];
   const prior = data[1];
@@ -56,7 +59,7 @@ export function YoYComparisonTable({ data }: YoYComparisonTableProps) {
   };
 
   return (
-    <div className="rounded-xl border shadow-sm overflow-hidden bg-card">
+    <div className={cn("rounded-xl border shadow-sm overflow-hidden bg-card", className)}>
       <Table>
         <TableHeader className="bg-muted/50">
           <TableRow className="hover:bg-transparent">

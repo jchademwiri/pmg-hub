@@ -140,15 +140,15 @@ export function SnapshotsCockpit({ snapshots }: SnapshotsCockpitProps) {
           <CardContent>
             <div className="hidden md:block">
               <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>Month</TableHead>
-                    <TableHead>Status</TableHead>
-                    <TableHead className="text-right">Revenue</TableHead>
-                    <TableHead className="text-right">Expenses</TableHead>
-                    <TableHead className="text-right">Profit/Loss</TableHead>
-                    <TableHead>Closed</TableHead>
-                    <TableHead>Notes</TableHead>
+                <TableHeader className="bg-muted/50">
+                  <TableRow className="hover:bg-transparent">
+                    <TableHead className="font-semibold text-foreground py-4">Month</TableHead>
+                    <TableHead className="font-semibold text-foreground py-4">Status</TableHead>
+                    <TableHead className="text-right font-semibold text-foreground py-4">Revenue</TableHead>
+                    <TableHead className="text-right font-semibold text-foreground py-4">Expenses</TableHead>
+                    <TableHead className="text-right font-semibold text-foreground py-4">Profit/Loss</TableHead>
+                    <TableHead className="text-right font-semibold text-foreground py-4">Closed</TableHead>
+                    <TableHead className="text-center font-semibold text-foreground py-4">Notes</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -158,7 +158,7 @@ export function SnapshotsCockpit({ snapshots }: SnapshotsCockpitProps) {
                       aria-selected={selectedSnapshot?.id === row.id}
                       tabIndex={0}
                       data-state={selectedSnapshot?.id === row.id ? "selected" : undefined}
-                      className="cursor-pointer"
+                      className="cursor-pointer transition-colors hover:bg-muted/50"
                       onClick={() => setSelectedId(row.id)}
                       onKeyDown={(event) => {
                         if (event.key === "Enter" || event.key === " ") {
@@ -167,27 +167,27 @@ export function SnapshotsCockpit({ snapshots }: SnapshotsCockpitProps) {
                         }
                       }}
                     >
-                      <TableCell className="font-medium">{row.periodLabel}</TableCell>
-                      <TableCell>
+                      <TableCell className="font-medium py-4">{row.periodLabel}</TableCell>
+                      <TableCell className="py-4">
                         <Badge variant="secondary">{row.status}</Badge>
                       </TableCell>
-                      <TableCell className="text-right tabular-nums">
+                      <TableCell className="text-right tabular-nums py-4 font-medium">
                         <span className={amountToneClass("revenue")}>{formatZAR(row.revenue)}</span>
                       </TableCell>
-                      <TableCell className="text-right tabular-nums">
+                      <TableCell className="text-right tabular-nums py-4 font-medium">
                         <span className={amountToneClass("expense")}>{formatZAR(row.expenses)}</span>
                       </TableCell>
-                      <TableCell className="text-right tabular-nums">
+                      <TableCell className="text-right tabular-nums py-4 font-semibold">
                         <span className={amountToneClass(row.profitPool >= 0 ? "positive" : "negative")}>
                           {formatZAR(row.profitPool)}
                         </span>
                       </TableCell>
-                      <TableCell className="tabular-nums">{fmtDate(row.closedAt)}</TableCell>
-                      <TableCell>
+                      <TableCell className="text-right tabular-nums py-4 text-muted-foreground">{fmtDate(row.closedAt)}</TableCell>
+                      <TableCell className="text-center py-4">
                         {row.notes ? (
-                          <Badge variant="outline">
-                            <FileText data-icon="inline-start" />
-                            Yes
+                          <Badge variant="outline" className="inline-flex items-center gap-1 mx-auto">
+                            <FileText className="size-3" />
+                            <span>Yes</span>
                           </Badge>
                         ) : (
                           <span className="text-muted-foreground">-</span>

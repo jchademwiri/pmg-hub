@@ -77,7 +77,7 @@ export function ProjectSummaryCard({ data }: { data: TenderSummaryData }) {
       <CardHeader className="pb-3">
         <div className="flex items-start justify-between">
           <CardTitle className="text-card-foreground text-sm font-semibold tracking-tight">
-            Tender Scheduling
+            Project Scheduling
           </CardTitle>
           {total > 0 && (
             <span className="text-xs text-muted-foreground/75 font-medium">
@@ -88,7 +88,7 @@ export function ProjectSummaryCard({ data }: { data: TenderSummaryData }) {
       </CardHeader>
       <CardContent>
         {total === 0 && data.overdue === 0 ? (
-          <p className="text-muted-foreground/50 text-xs">No active tenders.</p>
+          <p className="text-muted-foreground/50 text-xs">No active projects.</p>
         ) : (
           <div className="flex flex-col gap-3">
             {/* Metric bubbles row */}
@@ -147,7 +147,7 @@ export function ProjectSummaryCard({ data }: { data: TenderSummaryData }) {
                 href="/projects"
                 className="text-[10px] sm:text-xs text-muted-foreground/60 hover:text-foreground transition-colors underline underline-offset-4 decoration-muted-foreground/20 hover:decoration-foreground/40"
               >
-                View all tenders →
+                View all projects →
               </a>
               {data.atRisk > 0 && (
                 <Badge variant="destructive" className="text-[9px] px-1.5 py-0 h-4">

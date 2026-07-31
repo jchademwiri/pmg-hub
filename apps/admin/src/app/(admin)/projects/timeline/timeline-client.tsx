@@ -93,9 +93,9 @@ export function TimelineClient({ entries, clients, progressMap = {} }: TimelineC
         </CardHeader>
         <CardContent>
           <div className="flex flex-col items-center gap-2 py-10 text-center">
-            <p className="text-sm text-muted-foreground">No active tenders to display</p>
+            <p className="text-sm text-muted-foreground">No active projects to display</p>
             <p className="text-xs text-muted-foreground">
-              Add a tender from the Scheduling Overview page to see it here.
+              Add a project from the Scheduling Overview page to see it here.
             </p>
           </div>
         </CardContent>
