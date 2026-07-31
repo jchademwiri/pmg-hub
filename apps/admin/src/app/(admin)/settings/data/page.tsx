@@ -1,7 +1,6 @@
 import type { Metadata } from 'next'
 import { Database, Trash2 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
-import { Separator } from '@/components/ui/separator'
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert'
 import { Field, FieldLabel } from '@/components/ui/field'
 import { SettingsPageHeader } from '@/components/settings/settings-page-header'
@@ -35,8 +34,6 @@ export default async function DataSettingsPage() {
         <DataExportList />
       </SettingsSection>
 
-      <Separator />
-
       {/* Backups */}
       <SettingsSection
         title="Database Backup"
@@ -51,14 +48,12 @@ export default async function DataSettingsPage() {
         />
       </SettingsSection>
 
-      <Separator />
-
       {/* Retention */}
       <SettingsSection
         title="Data Retention"
         description="How long historical records are kept before archiving."
       >
-        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
           <Field>
             <FieldLabel>Financial Records</FieldLabel>
             <div className="flex h-9 items-center rounded-md border border-input bg-muted/40 px-3 text-sm text-muted-foreground">
@@ -80,8 +75,6 @@ export default async function DataSettingsPage() {
         </div>
       </SettingsSection>
 
-      <Separator />
-
       {/* Danger zone */}
       <SettingsSection
         title="Danger Zone"
@@ -89,7 +82,7 @@ export default async function DataSettingsPage() {
         className="border-destructive/30"
       >
         <div className="flex flex-col divide-y divide-border">
-          <div className="flex items-center justify-between gap-4 py-4">
+          <div className="flex items-center justify-between gap-4 py-2">
             <div className="flex flex-col gap-0.5">
               <span className="text-sm font-medium">Clear all snapshots</span>
               <span className="text-xs text-muted-foreground">
@@ -101,7 +94,7 @@ export default async function DataSettingsPage() {
               Clear
             </Button>
           </div>
-          <div className="flex items-center justify-between gap-4 py-4">
+          <div className="flex items-center justify-between gap-4 py-2">
             <div className="flex flex-col gap-0.5">
               <span className="text-sm font-medium">Reset all settings</span>
               <span className="text-xs text-muted-foreground">
@@ -118,3 +111,4 @@ export default async function DataSettingsPage() {
     </div>
   )
 }
+

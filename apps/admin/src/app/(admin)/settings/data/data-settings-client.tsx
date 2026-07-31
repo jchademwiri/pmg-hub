@@ -80,17 +80,22 @@ function formatBytes(bytes: number) {
 
 export function DataExportList() {
   return (
-    <div className="flex flex-col divide-y divide-border">
+    <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
       {exportOptions.map((opt) => (
-        <div key={opt.label} className="flex items-center justify-between gap-4 py-3">
-          <div className="flex items-center gap-3">
-            <opt.icon className="shrink-0 text-muted-foreground" />
-            <div className="flex flex-col gap-0.5">
-              <span className="text-sm font-medium">{opt.label}</span>
-              <span className="text-xs text-muted-foreground">{opt.description}</span>
+        <div
+          key={opt.label}
+          className="flex items-center justify-between gap-3 rounded-lg border bg-muted/15 p-3.5 transition-colors hover:bg-muted/30"
+        >
+          <div className="flex items-center gap-3 min-w-0">
+            <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-md border bg-background text-muted-foreground shadow-2xs">
+              <opt.icon className="h-4.5 w-4.5" />
+            </div>
+            <div className="flex flex-col gap-0.5 min-w-0">
+              <span className="truncate text-sm font-medium leading-tight">{opt.label}</span>
+              <span className="truncate text-xs text-muted-foreground">{opt.description}</span>
             </div>
           </div>
-          <Button variant="outline" size="sm" asChild>
+          <Button variant="outline" size="sm" className="shrink-0" asChild>
             <Link href={opt.href}>
               <Download data-icon="inline-start" />
               Export
