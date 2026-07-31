@@ -795,6 +795,7 @@ async function buildStatementPdfData(
     periodFrom,
     periodTo,
     org: buildOrgProps(divisionName, settings, orgSettings),
+    banking: buildBankingProps(settings),
     client: {
       name: statement.client.businessName ?? statement.client.name,
       email: statement.client.email,
