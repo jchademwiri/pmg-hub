@@ -213,6 +213,12 @@ function DivisionBillingForm({
         </div>
       </SettingsSection>
 
+      {/* Hidden inputs to preserve banking details when saving Billing & Taxes form */}
+      {s?.bankName ? <input type="hidden" name="bankName" value={s.bankName} /> : null}
+      {s?.bankAccountName ? <input type="hidden" name="bankAccountName" value={s.bankAccountName} /> : null}
+      {s?.bankAccountNumber ? <input type="hidden" name="bankAccountNumber" value={s.bankAccountNumber} /> : null}
+      {s?.bankBranchCode ? <input type="hidden" name="bankBranchCode" value={s.bankBranchCode} /> : null}
+
       <SettingsSection
         title="Sales Rep & Contact Info"
         description="Contact details printed on document headers and used for email routing."
@@ -256,54 +262,6 @@ function DivisionBillingForm({
               value={divisionWebsite}
               onChange={(e) => setDivisionWebsite(e.target.value)}
               placeholder="www.example.co.za"
-              disabled={isPending}
-            />
-          </Field>
-        </div>
-      </SettingsSection>
-
-      <SettingsSection
-        title="Banking Details"
-        description="Printed on invoices so clients know where to pay for this division."
-      >
-        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-          <Field>
-            <FieldLabel>Bank Name</FieldLabel>
-            <Input
-              name="bankName"
-              value={bankName}
-              onChange={(e) => setBankName(e.target.value)}
-              placeholder="e.g. First National Bank"
-              disabled={isPending}
-            />
-          </Field>
-          <Field>
-            <FieldLabel>Account Name</FieldLabel>
-            <Input
-              name="bankAccountName"
-              value={bankAccountName}
-              onChange={(e) => setBankAccountName(e.target.value)}
-              placeholder="e.g. PMG Media (Pty) Ltd"
-              disabled={isPending}
-            />
-          </Field>
-          <Field>
-            <FieldLabel>Account Number</FieldLabel>
-            <Input
-              name="bankAccountNumber"
-              value={bankAccountNumber}
-              onChange={(e) => setBankAccountNumber(e.target.value)}
-              placeholder="e.g. 62012345678"
-              disabled={isPending}
-            />
-          </Field>
-          <Field>
-            <FieldLabel>Branch Code</FieldLabel>
-            <Input
-              name="bankBranchCode"
-              value={bankBranchCode}
-              onChange={(e) => setBankBranchCode(e.target.value)}
-              placeholder="e.g. 250655"
               disabled={isPending}
             />
           </Field>
