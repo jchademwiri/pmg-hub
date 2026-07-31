@@ -7,7 +7,8 @@ import {
   getThreeYearYoYComparison,
   getThreeYearMonthlyRevenue,
   getClientConcentration,
-  getMonthlyRevenueVsInvoicedForYear
+  getMonthlyRevenueVsInvoicedForYear,
+  getMonthlyFinancialsBreakdownForYear,
 } from '@pmg/db';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -18,6 +19,7 @@ import { DivisionPerformanceChart } from '@/components/analysis/division-perform
 import { YoYComparisonTable } from '@/components/analysis/yoy-comparison-table';
 import { ClientConcentrationTable } from '@/components/analysis/client-concentration-table';
 import { MonthlyGrowthChart } from '@/components/analysis/monthly-growth-chart';
+import { MoMComparisonTable } from '@/components/analysis/mom-comparison-table';
 import { AnalysisTabs } from '@/components/analysis/analysis-tabs';
 import { formatZAR } from '@/lib/format';
 
@@ -49,6 +51,7 @@ export default async function AnalysisPage(props: {
     monthlyRevenueResult,
     clientConcentrationResult,
     monthlyGrowthResult,
+    momBreakdownResult,
   ] = await Promise.allSettled([
     getAnalysisOverview(selectedYear, currentDateStr),
     getDivisionQuotesMetrics(selectedYear),
@@ -56,6 +59,7 @@ export default async function AnalysisPage(props: {
     getThreeYearMonthlyRevenue(selectedYear),
     getClientConcentration(selectedYear),
     getMonthlyRevenueVsInvoicedForYear(selectedYear),
+    getMonthlyFinancialsBreakdownForYear(selectedYear),
   ]);
 
   if (overviewResult.status === 'rejected') console.error('Overview error:', overviewResult.reason);
@@ -64,6 +68,7 @@ export default async function AnalysisPage(props: {
   if (monthlyRevenueResult.status === 'rejected') console.error('Monthly revenue error:', monthlyRevenueResult.reason);
   if (clientConcentrationResult.status === 'rejected') console.error('Client concentration error:', clientConcentrationResult.reason);
   if (monthlyGrowthResult.status === 'rejected') console.error('Monthly growth error:', monthlyGrowthResult.reason);
+  if (momBreakdownResult.status === 'rejected') console.error('MoM breakdown error:', momBreakdownResult.reason);
 
   const overview = overviewResult.status === 'fulfilled' ? overviewResult.value : {
     ytd: { currentRevenue: 0, priorRevenue: 0, growthRatePercent: 0 },
@@ -75,9 +80,10 @@ export default async function AnalysisPage(props: {
   const monthlyRevenue = monthlyRevenueResult.status === 'fulfilled' ? monthlyRevenueResult.value : [];
   const clientConcentration = clientConcentrationResult.status === 'fulfilled' ? clientConcentrationResult.value : [];
   const monthlyGrowth = monthlyGrowthResult.status === 'fulfilled' ? monthlyGrowthResult.value : [];
+  const momBreakdown = momBreakdownResult.status === 'fulfilled' ? momBreakdownResult.value : [];
 
   return (
-    <div className="flex w-full flex-col">
+    <div className="flex flex-col gap-6">
       <StickyPageHeader
         title="Business Growth Analysis"
         description={`Analyzing Financial Year ${selectedYear} (Mar 1 - Feb 28)`}
@@ -103,117 +109,126 @@ export default async function AnalysisPage(props: {
         }
       />
 
-      <div className="flex-1 space-y-6 p-4 md:p-6 lg:p-8">
-        <AnalysisTabs defaultTab="overview">
-          <TabsList className="mb-4 flex w-full justify-start overflow-x-auto overflow-y-hidden lg:grid lg:w-[800px] lg:grid-cols-5 h-auto hide-scrollbar border border-border/50">
-            <TabsTrigger value="overview" className="flex-1 min-w-[120px]">Overview</TabsTrigger>
-            <TabsTrigger value="details" className="flex-1 min-w-[120px]">Growth Trend</TabsTrigger>
-            <TabsTrigger value="pipeline" className="flex-1 min-w-[150px]">Divisions & Pipeline</TabsTrigger>
-            <TabsTrigger value="clients" className="flex-1 min-w-[120px]">Clients</TabsTrigger>
-            <TabsTrigger value="comparison" className="flex-1 min-w-[120px]">YoY Compare</TabsTrigger>
-          </TabsList>
+      <AnalysisTabs defaultTab="overview">
+        <TabsList className="mb-4 flex w-full justify-start overflow-x-auto overflow-y-hidden lg:grid lg:w-[800px] lg:grid-cols-5 h-auto hide-scrollbar border border-border/50">
+          <TabsTrigger value="overview" className="flex-1 min-w-[120px]">Overview</TabsTrigger>
+          <TabsTrigger value="details" className="flex-1 min-w-[120px]">Growth Trend</TabsTrigger>
+          <TabsTrigger value="pipeline" className="flex-1 min-w-[150px]">Divisions & Pipeline</TabsTrigger>
+          <TabsTrigger value="clients" className="flex-1 min-w-[120px]">Clients</TabsTrigger>
+          <TabsTrigger value="comparison" className="flex-1 min-w-[140px]">Comparison</TabsTrigger>
+        </TabsList>
 
-          <TabsContent value="overview" className="space-y-6">
-            <AnalysisKpiStrip overview={overview} />
-            
+        <TabsContent value="overview" className="space-y-6">
+          <AnalysisKpiStrip overview={overview} />
+          
+          <Card>
+            <CardHeader>
+              <CardTitle>3-Year Revenue Trend</CardTitle>
+              <CardDescription>Monthly cash income overlaid across previous financial years.</CardDescription>
+            </CardHeader>
+            <CardContent className="h-[400px]">
+              <RevenueTrendChart data={monthlyRevenue} currentYear={selectedYear} />
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        <TabsContent value="details" className="space-y-6">
+          <Card>
+            <CardHeader>
+              <CardTitle>Month-over-Month Growth</CardTitle>
+              <CardDescription>
+                How invoiced revenue and payments received are trending, month to month, across FY {selectedYear}.
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="h-[400px]">
+              <MonthlyGrowthChart data={monthlyGrowth} />
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        <TabsContent value="pipeline" className="space-y-6">
+          <div className="grid gap-6 md:grid-cols-3">
             <Card>
               <CardHeader>
-                <CardTitle>3-Year Revenue Trend</CardTitle>
-                <CardDescription>Monthly cash income overlaid across previous financial years.</CardDescription>
-              </CardHeader>
-              <CardContent className="h-[400px]">
-                <RevenueTrendChart data={monthlyRevenue} currentYear={selectedYear} />
-              </CardContent>
-            </Card>
-          </TabsContent>
-
-          <TabsContent value="details" className="space-y-6">
-            <Card>
-              <CardHeader>
-                <CardTitle>Month-over-Month Growth</CardTitle>
-                <CardDescription>
-                  How invoiced revenue and payments received are trending, month to month, across FY {selectedYear}.
-                </CardDescription>
-              </CardHeader>
-              <CardContent className="h-[400px]">
-                <MonthlyGrowthChart data={monthlyGrowth} />
-              </CardContent>
-            </Card>
-          </TabsContent>
-
-          <TabsContent value="pipeline" className="space-y-6">
-            <div className="grid gap-6 md:grid-cols-3">
-              <Card>
-                <CardHeader>
-                  <CardTitle>Outstanding (AR)</CardTitle>
-                  <CardDescription>Issued & unpaid invoices</CardDescription>
-                </CardHeader>
-                <CardContent>
-                  <div className="text-3xl font-bold">{formatZAR(overview.pipeline.outstandingAR)}</div>
-                </CardContent>
-              </Card>
-
-              <Card>
-                <CardHeader>
-                  <CardTitle>Accepted Quotes</CardTitle>
-                  <CardDescription>Won but uninvoiced</CardDescription>
-                </CardHeader>
-                <CardContent>
-                  <div className="text-3xl font-bold text-amber-600 dark:text-amber-500">
-                    {formatZAR(overview.pipeline.acceptedQuotes)}
-                  </div>
-                </CardContent>
-              </Card>
-
-              <Card>
-                <CardHeader>
-                  <CardTitle>Pending Quotes</CardTitle>
-                  <CardDescription>Deals in negotiation</CardDescription>
-                </CardHeader>
-                <CardContent>
-                  <div className="text-3xl font-bold text-blue-600 dark:text-blue-500">
-                    {formatZAR(overview.pipeline.pendingQuotes)}
-                  </div>
-                </CardContent>
-              </Card>
-            </div>
-
-            <Card>
-              <CardHeader>
-                <CardTitle>Division Performance</CardTitle>
-                <CardDescription>Actual income vs quotes generated per division</CardDescription>
-              </CardHeader>
-              <CardContent className="h-[400px]">
-                <DivisionPerformanceChart data={divisionMetrics} />
-              </CardContent>
-            </Card>
-          </TabsContent>
-
-          <TabsContent value="clients" className="space-y-6">
-            <Card>
-              <CardHeader>
-                <CardTitle>Client Concentration</CardTitle>
-                <CardDescription>Income and profit distribution across your client base for FY {selectedYear}.</CardDescription>
+                <CardTitle>Outstanding (AR)</CardTitle>
+                <CardDescription>Issued & unpaid invoices</CardDescription>
               </CardHeader>
               <CardContent>
-                <ClientConcentrationTable data={clientConcentration} />
+                <div className="text-3xl font-bold">{formatZAR(overview.pipeline.outstandingAR)}</div>
               </CardContent>
             </Card>
-          </TabsContent>
 
-          <TabsContent value="comparison" className="space-y-6">
             <Card>
               <CardHeader>
-                <CardTitle>3-Year Comparison</CardTitle>
-                <CardDescription>Side-by-side metric comparison for the last three years.</CardDescription>
+                <CardTitle>Accepted Quotes</CardTitle>
+                <CardDescription>Won but uninvoiced</CardDescription>
               </CardHeader>
               <CardContent>
-                <YoYComparisonTable data={yoyComparison} />
+                <div className="text-3xl font-bold text-amber-600 dark:text-amber-500">
+                  {formatZAR(overview.pipeline.acceptedQuotes)}
+                </div>
               </CardContent>
             </Card>
-          </TabsContent>
-        </AnalysisTabs>
-      </div>
+
+            <Card>
+              <CardHeader>
+                <CardTitle>Pending Quotes</CardTitle>
+                <CardDescription>Deals in negotiation</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="text-3xl font-bold text-blue-600 dark:text-blue-500">
+                  {formatZAR(overview.pipeline.pendingQuotes)}
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+
+          <Card>
+            <CardHeader>
+              <CardTitle>Division Performance</CardTitle>
+              <CardDescription>Actual income vs quotes generated per division</CardDescription>
+            </CardHeader>
+            <CardContent className="h-[400px]">
+              <DivisionPerformanceChart data={divisionMetrics} />
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        <TabsContent value="clients" className="space-y-6">
+          <Card className="border bg-card shadow-sm rounded-xl overflow-hidden">
+            <CardHeader>
+              <CardTitle>Client Concentration</CardTitle>
+              <CardDescription>Income, invoiced amounts, and profit distribution across your client base for FY {selectedYear}.</CardDescription>
+            </CardHeader>
+            <CardContent className="p-0">
+              <ClientConcentrationTable data={clientConcentration} className="border-0 shadow-none rounded-none" />
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        <TabsContent value="comparison" className="space-y-6">
+          <Card className="border bg-card shadow-sm rounded-xl overflow-hidden">
+            <CardHeader>
+              <CardTitle>Month-to-Month Comparison (FY {selectedYear})</CardTitle>
+              <CardDescription>Detailed monthly breakdown of invoiced revenue, cash income, expenses, and net profit for the current financial year.</CardDescription>
+            </CardHeader>
+            <CardContent className="p-0">
+              <MoMComparisonTable data={momBreakdown} year={selectedYear} className="border-0 shadow-none rounded-none" />
+            </CardContent>
+          </Card>
+
+          <Card className="border bg-card shadow-sm rounded-xl overflow-hidden">
+            <CardHeader>
+              <CardTitle>3-Year Comparison (YoY)</CardTitle>
+              <CardDescription>Side-by-side metric comparison for the last three financial years.</CardDescription>
+            </CardHeader>
+            <CardContent className="p-0">
+              <YoYComparisonTable data={yoyComparison} className="border-0 shadow-none rounded-none" />
+            </CardContent>
+          </Card>
+        </TabsContent>
+      </AnalysisTabs>
     </div>
   );
 }
+

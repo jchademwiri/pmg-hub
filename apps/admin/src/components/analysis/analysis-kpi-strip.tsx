@@ -5,15 +5,37 @@ import { formatZAR } from '@/lib/format';
 import { TrendingUp, TrendingDown, Minus } from 'lucide-react';
 
 interface AnalysisKpiStripProps {
-  overview: {
+  overview?: {
     ytd: { currentRevenue: number; priorRevenue: number; growthRatePercent: number };
-    averages: { currentAvgInvoice: number; priorAvgInvoice: number; currentAvgTransaction: number };
+    averages: { 
+      currentAvgInvoice: number; 
+      priorAvgInvoice: number; 
+      invoiceMomGrowth?: number;
+      currentAvgTransaction: number; 
+      priorAvgTransaction?: number;
+      transactionMomGrowth?: number;
+    };
+    pipeline: { totalPotential: number };
+  };
+  data?: {
+    ytd: { currentRevenue: number; priorRevenue: number; growthRatePercent: number };
+    averages: { 
+      currentAvgInvoice: number; 
+      priorAvgInvoice: number; 
+      invoiceMomGrowth?: number;
+      currentAvgTransaction: number; 
+      priorAvgTransaction?: number;
+      transactionMomGrowth?: number;
+    };
     pipeline: { totalPotential: number };
   };
 }
 
-export function AnalysisKpiStrip({ overview }: AnalysisKpiStripProps) {
-  const { growthRatePercent } = overview.ytd;
+export function AnalysisKpiStrip({ overview, data }: AnalysisKpiStripProps) {
+  const ov = overview ?? data;
+  if (!ov) return null;
+
+  const { growthRatePercent } = ov.ytd;
   
   let StatusIcon = Minus;
   let statusColor = 'text-blue-500';
@@ -28,6 +50,9 @@ export function AnalysisKpiStrip({ overview }: AnalysisKpiStripProps) {
     statusColor = 'text-red-500';
     statusText = 'DECLINING';
   }
+
+  const priorInv = ov.averages.priorAvgInvoice ?? 0;
+  const priorTx = ov.averages.priorAvgTransaction ?? 0;
 
   return (
     <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
@@ -52,9 +77,9 @@ export function AnalysisKpiStrip({ overview }: AnalysisKpiStripProps) {
             <h3 className="tracking-tight text-sm font-medium">Avg Invoice</h3>
           </div>
           <div className="flex flex-col gap-1">
-            <div className="text-2xl font-bold text-emerald-600 dark:text-emerald-500">{formatZAR(overview.averages.currentAvgInvoice)}</div>
+            <div className="text-2xl font-bold text-emerald-600 dark:text-emerald-500">{formatZAR(ov.averages.currentAvgInvoice)}</div>
             <p className="text-xs text-muted-foreground">
-              vs {formatZAR(overview.averages.priorAvgInvoice)} last year
+              vs {formatZAR(priorInv)} prior month
             </p>
           </div>
         </CardContent>
@@ -66,9 +91,9 @@ export function AnalysisKpiStrip({ overview }: AnalysisKpiStripProps) {
             <h3 className="tracking-tight text-sm font-medium">Avg Transaction</h3>
           </div>
           <div className="flex flex-col gap-1">
-            <div className="text-2xl font-bold text-emerald-600 dark:text-emerald-500">{formatZAR(overview.averages.currentAvgTransaction)}</div>
+            <div className="text-2xl font-bold text-emerald-600 dark:text-emerald-500">{formatZAR(ov.averages.currentAvgTransaction)}</div>
             <p className="text-xs text-muted-foreground">
-              Cash receipt size
+              vs {formatZAR(priorTx)} prior month
             </p>
           </div>
         </CardContent>
@@ -80,9 +105,9 @@ export function AnalysisKpiStrip({ overview }: AnalysisKpiStripProps) {
             <h3 className="tracking-tight text-sm font-medium">Potential Pipeline</h3>
           </div>
           <div className="flex flex-col gap-1">
-            <div className="text-2xl font-bold text-emerald-600 dark:text-emerald-500">{formatZAR(overview.pipeline.totalPotential)}</div>
+            <div className="text-2xl font-bold text-emerald-600 dark:text-emerald-500">{formatZAR(ov.pipeline.totalPotential)}</div>
             <p className="text-xs text-muted-foreground">
-              AR + Quotes (weighted)
+              AR + Accepted Quotes
             </p>
           </div>
         </CardContent>

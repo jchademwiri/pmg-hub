@@ -68,7 +68,23 @@ export async function getAnalysisOverview(year: number, currentDateStr: string) 
     yoyGrowth = 100; // 100% growth if prior was 0 and current > 0
   }
 
-  // 3. Average Invoice Size & Transaction Size (Full FY)
+  // 3. Average Invoice Size & Transaction Size (Month over Month & FY)
+  const cYr = parseInt(currentDateStr.slice(0, 4), 10);
+  const cMo = parseInt(currentDateStr.slice(5, 7), 10);
+
+  const curMonthStart = `${cYr}-${String(cMo).padStart(2, '0')}-01`;
+  let nextMo = cMo + 1;
+  let nextYr = cYr;
+  if (nextMo > 12) { nextMo = 1; nextYr += 1; }
+  const curMonthEnd = `${nextYr}-${String(nextMo).padStart(2, '0')}-01`;
+
+  let prevMo = cMo - 1;
+  let prevYr = cYr;
+  if (prevMo < 1) { prevMo = 12; prevYr -= 1; }
+  const prevMonthStart = `${prevYr}-${String(prevMo).padStart(2, '0')}-01`;
+  const prevMonthEnd = curMonthStart;
+
+  // Full FY Invoices
   const [currentInvoices] = await db
     .select({
       sum: sql<number>`coalesce(sum(${invoices.total}), 0)`,
@@ -83,7 +99,8 @@ export async function getAnalysisOverview(year: number, currentDateStr: string) 
       )
     );
 
-  const [priorInvoices] = await db
+  // Current Month Invoices
+  const [curMonthInvoices] = await db
     .select({
       sum: sql<number>`coalesce(sum(${invoices.total}), 0)`,
       count: sql<number>`count(${invoices.id})`,
@@ -91,15 +108,39 @@ export async function getAnalysisOverview(year: number, currentDateStr: string) 
     .from(invoices)
     .where(
       and(
-        gte(invoices.invoiceDate, priorFY.start),
-        lt(invoices.invoiceDate, priorFY.end),
+        gte(invoices.invoiceDate, curMonthStart),
+        lt(invoices.invoiceDate, curMonthEnd),
+        inArray(invoices.status, ['issued', 'partially_paid', 'paid', 'overdue'])
+      )
+    );
+
+  // Prior Month Invoices
+  const [prevMonthInvoices] = await db
+    .select({
+      sum: sql<number>`coalesce(sum(${invoices.total}), 0)`,
+      count: sql<number>`count(${invoices.id})`,
+    })
+    .from(invoices)
+    .where(
+      and(
+        gte(invoices.invoiceDate, prevMonthStart),
+        lt(invoices.invoiceDate, prevMonthEnd),
         inArray(invoices.status, ['issued', 'partially_paid', 'paid', 'overdue'])
       )
     );
 
   const currentAvgInvoice = currentInvoices && currentInvoices.count > 0 ? Number(currentInvoices.sum) / Number(currentInvoices.count) : 0;
-  const priorAvgInvoice = priorInvoices && priorInvoices.count > 0 ? Number(priorInvoices.sum) / Number(priorInvoices.count) : 0;
+  const prevAvgInvoice = prevMonthInvoices && prevMonthInvoices.count > 0 ? Number(prevMonthInvoices.sum) / Number(prevMonthInvoices.count) : 0;
+  const curAvgInvoice = curMonthInvoices && curMonthInvoices.count > 0 ? Number(curMonthInvoices.sum) / Number(curMonthInvoices.count) : currentAvgInvoice;
 
+  let invoiceMomGrowth = 0;
+  if (prevAvgInvoice > 0) {
+    invoiceMomGrowth = ((curAvgInvoice - prevAvgInvoice) / prevAvgInvoice) * 100;
+  } else if (curAvgInvoice > 0) {
+    invoiceMomGrowth = 100;
+  }
+
+  // Full FY Income
   const [currentIncome] = await db
     .select({
       sum: sql<number>`coalesce(sum(${income.amount}), 0)`,
@@ -108,7 +149,34 @@ export async function getAnalysisOverview(year: number, currentDateStr: string) 
     .from(income)
     .where(and(gte(income.date, currentFY.start), lt(income.date, currentFY.end)));
 
+  // Current Month Income
+  const [curMonthIncome] = await db
+    .select({
+      sum: sql<number>`coalesce(sum(${income.amount}), 0)`,
+      count: sql<number>`count(${income.id})`,
+    })
+    .from(income)
+    .where(and(gte(income.date, curMonthStart), lt(income.date, curMonthEnd)));
+
+  // Prior Month Income
+  const [prevMonthIncome] = await db
+    .select({
+      sum: sql<number>`coalesce(sum(${income.amount}), 0)`,
+      count: sql<number>`count(${income.id})`,
+    })
+    .from(income)
+    .where(and(gte(income.date, prevMonthStart), lt(income.date, prevMonthEnd)));
+
   const currentAvgTransaction = currentIncome && currentIncome.count > 0 ? Number(currentIncome.sum) / Number(currentIncome.count) : 0;
+  const prevAvgTransaction = prevMonthIncome && prevMonthIncome.count > 0 ? Number(prevMonthIncome.sum) / Number(prevMonthIncome.count) : 0;
+  const curAvgTransaction = curMonthIncome && curMonthIncome.count > 0 ? Number(curMonthIncome.sum) / Number(curMonthIncome.count) : currentAvgTransaction;
+
+  let transactionMomGrowth = 0;
+  if (prevAvgTransaction > 0) {
+    transactionMomGrowth = ((curAvgTransaction - prevAvgTransaction) / prevAvgTransaction) * 100;
+  } else if (curAvgTransaction > 0) {
+    transactionMomGrowth = 100;
+  }
 
   // 4. Pipeline Valuations
   // Outstanding AR: issued, partially_paid, overdue
@@ -120,9 +188,6 @@ export async function getAnalysisOverview(year: number, currentDateStr: string) 
     .from(invoices)
     .where(inArray(invoices.status, ['issued', 'partially_paid', 'overdue']));
 
-  // To get actual outstanding we need to subtract payments, but for pipeline a quick estimation is fine,
-  // or we can just fetch the paymentAllocations.
-  // We'll calculate total allocations for these active invoices.
   const [arAllocations] = await db
     .select({ totalAllocated: sql<number>`coalesce(sum(amount), 0)` })
     .from(sql`payment_allocations pa`)
@@ -143,8 +208,9 @@ export async function getAnalysisOverview(year: number, currentDateStr: string) 
 
   const pendingQuotesVal = Number(sentQuotes?.sum || 0);
   const acceptedQuotesVal = Number(acceptedQuotes?.sum || 0);
-  // Estimate 30% win rate for pending quotes
-  const pipelinePotential = outstandingAR + acceptedQuotesVal + (pendingQuotesVal * 0.3);
+  
+  // Pipeline potential strictly counts Outstanding AR + Accepted Quotes as requested
+  const pipelinePotential = outstandingAR + acceptedQuotesVal;
 
   return {
     ytd: {
@@ -154,8 +220,11 @@ export async function getAnalysisOverview(year: number, currentDateStr: string) 
     },
     averages: {
       currentAvgInvoice,
-      priorAvgInvoice,
+      priorAvgInvoice: prevAvgInvoice,
+      invoiceMomGrowth,
       currentAvgTransaction,
+      priorAvgTransaction: prevAvgTransaction,
+      transactionMomGrowth,
     },
     pipeline: {
       outstandingAR,
@@ -356,6 +425,22 @@ export async function getClientConcentration(year: number) {
     .where(and(gte(income.date, start), lt(income.date, end)))
     .groupBy(income.clientId);
 
+  // Get total invoiced per client
+  const clientInvoicedRaw = await db
+    .select({
+      clientId: invoices.clientId,
+      totalInvoiced: sql<number>`coalesce(sum(${invoices.total}), 0)`.mapWith(Number),
+    })
+    .from(invoices)
+    .where(
+      and(
+        gte(invoices.invoiceDate, start),
+        lt(invoices.invoiceDate, end),
+        inArray(invoices.status, ['issued', 'partially_paid', 'paid', 'overdue'])
+      )
+    )
+    .groupBy(invoices.clientId);
+
   // Get total expenses per client
   const clientExpensesRaw = await db
     .select({
@@ -369,31 +454,103 @@ export async function getClientConcentration(year: number) {
   const allClients = await db.select().from(clients);
 
   const incomeMap = new Map(clientIncomeRaw.map(r => [r.clientId, r.totalIncome]));
+  const invoicedMap = new Map(clientInvoicedRaw.map(r => [r.clientId, r.totalInvoiced]));
   const expenseMap = new Map(clientExpensesRaw.map(r => [r.clientId, r.totalExpenses]));
 
-  let overallTotalIncome = 0;
-  for (const inc of clientIncomeRaw) {
-    overallTotalIncome += inc.totalIncome;
+  let overallTotalRevenue = 0;
+  for (const client of allClients) {
+    const incAmt = incomeMap.get(client.id) || 0;
+    const invAmt = invoicedMap.get(client.id) || 0;
+    overallTotalRevenue += Math.max(incAmt, invAmt);
   }
 
   const results = allClients.map(client => {
     const totalInc = incomeMap.get(client.id) || 0;
+    const totalInv = invoicedMap.get(client.id) || 0;
     const totalExp = expenseMap.get(client.id) || 0;
     const netProfit = totalInc - totalExp;
-    const percentage = overallTotalIncome > 0 ? (totalInc / overallTotalIncome) * 100 : 0;
+    const clientRevenue = Math.max(totalInc, totalInv);
+    const percentage = overallTotalRevenue > 0 ? (clientRevenue / overallTotalRevenue) * 100 : 0;
 
     return {
       id: client.id,
       name: client.name,
       totalIncome: totalInc,
+      totalInvoiced: totalInv,
       totalExpenses: totalExp,
       netProfit,
       percentage,
     };
   });
 
-  // Filter out clients with no income/expenses and sort by income desc
+  // Filter out clients with no income/invoiced/expenses and sort by invoiced desc, then income desc
   return results
-    .filter(r => r.totalIncome > 0 || r.totalExpenses > 0)
-    .sort((a, b) => b.totalIncome - a.totalIncome);
+    .filter(r => r.totalIncome > 0 || r.totalInvoiced > 0 || r.totalExpenses > 0)
+    .sort((a, b) => (b.totalInvoiced - a.totalInvoiced) || (b.totalIncome - a.totalIncome));
 }
+
+export async function getMonthlyFinancialsBreakdownForYear(year: number) {
+  const months: { period: string; monthLabel: string }[] = [];
+  
+  // Financial year months: March year to February year+1
+  for (let i = 0; i < 12; i += 1) {
+    const date = new Date(year, 2 + i, 1);
+    const period = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`;
+    const monthLabel = date.toLocaleString('default', { month: 'short', year: 'numeric' });
+    months.push({ period, monthLabel });
+  }
+
+  // Get monthly income
+  const incomeRows = await db.execute(sql`
+    SELECT TO_CHAR(date, 'YYYY-MM') AS month, COALESCE(SUM(amount), 0) AS total
+    FROM income
+    WHERE EXTRACT(YEAR FROM (date - INTERVAL '2 months')) = ${year}
+    GROUP BY TO_CHAR(date, 'YYYY-MM')
+  `);
+
+  // Get monthly invoiced
+  const invoicedRows = await db.execute(sql`
+    SELECT TO_CHAR(invoice_date, 'YYYY-MM') AS month, COALESCE(SUM(total), 0) AS total
+    FROM invoices
+    WHERE EXTRACT(YEAR FROM (invoice_date - INTERVAL '2 months')) = ${year}
+      AND status IN ('issued', 'partially_paid', 'paid', 'overdue')
+    GROUP BY TO_CHAR(invoice_date, 'YYYY-MM')
+  `);
+
+  // Get monthly expenses
+  const expenseRows = await db.execute(sql`
+    SELECT TO_CHAR(date, 'YYYY-MM') AS month, COALESCE(SUM(amount), 0) AS total
+    FROM expenses
+    WHERE EXTRACT(YEAR FROM (date - INTERVAL '2 months')) = ${year}
+    GROUP BY TO_CHAR(date, 'YYYY-MM')
+  `);
+
+  const incomeMap = new Map((incomeRows.rows as any[]).map(r => [r.month, Number(r.total)]));
+  const invoicedMap = new Map((invoicedRows.rows as any[]).map(r => [r.month, Number(r.total)]));
+  const expenseMap = new Map((expenseRows.rows as any[]).map(r => [r.month, Number(r.total)]));
+
+  let prevIncome = 0;
+  return months.map(({ period, monthLabel }) => {
+    const received = incomeMap.get(period) || 0;
+    const invoiced = invoicedMap.get(period) || 0;
+    const expensesAmt = expenseMap.get(period) || 0;
+    const netProfit = received - expensesAmt;
+
+    let momGrowth = 0;
+    if (prevIncome > 0) {
+      momGrowth = ((received - prevIncome) / prevIncome) * 100;
+    }
+    prevIncome = received;
+
+    return {
+      period,
+      monthLabel,
+      invoiced,
+      received,
+      expenses: expensesAmt,
+      netProfit,
+      momGrowth,
+    };
+  });
+}
+

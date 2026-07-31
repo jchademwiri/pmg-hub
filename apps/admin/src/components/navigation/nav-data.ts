@@ -41,7 +41,6 @@ export type NavGroup = {
 
 export const OVERVIEW: NavItem[] = [
   { title: 'Dashboard',  url: '/dashboard',       icon: LayoutDashboard },
-  { title: 'Projects', url: '/projects',      icon: CalendarClock },
 ]
 
 // ── Groups ────────────────────────────────────────────────────────────────────
@@ -52,13 +51,13 @@ export const GROUPS: NavGroup[] = [
     label: 'Billing',
     icon: FileSpreadsheet,
     items: [
-      { title: 'Overview',     url: '/billing',            icon: LayoutGrid },
-      { title: 'Quotations',   url: '/billing/quotes',     icon: FileText   },
-      { title: 'Invoices',     url: '/billing/invoices',   icon: Receipt    },
-      { title: 'Payments',     url: '/billing/payments',   icon: Banknote   },
-      { title: 'Credits',      url: '/billing/credits',    icon: Wallet     },
-      { title: 'Statements',   url: '/billing/statements', icon: ScrollText },
-      { title: 'Aging Report', url: '/billing/aging',      icon: Calendar   },
+      { title: 'Overview',      url: '/billing',            icon: LayoutGrid },
+      { title: 'Quotations',    url: '/billing/quotes',     icon: FileText   },
+      { title: 'Invoices',      url: '/billing/invoices',   icon: Receipt    },
+      { title: 'Payments',      url: '/billing/payments',   icon: Banknote   },
+      { title: 'Credits',       url: '/billing/credits',    icon: Wallet     },
+      { title: 'Statements',    url: '/billing/statements', icon: ScrollText },
+      { title: 'Aging Report',  url: '/billing/aging',      icon: Calendar   },
       { title: 'Billing Items', url: '/billing/items',     icon: Package    },
     ],
   },
@@ -67,19 +66,21 @@ export const GROUPS: NavGroup[] = [
     label: 'Projects',
     icon: CalendarClock,
     items: [
-      { title: 'Overview',      url: '/projects',       icon: LayoutGrid },
-      { title: 'Schedule List', url: '/projects/list',  icon: ListTodo },
+      { title: 'Overview',      url: '/projects',          icon: LayoutGrid },
+      { title: 'Schedule List', url: '/projects/list',     icon: ListTodo },
       { title: 'Timeline',      url: '/projects/timeline', icon: CalendarRange },
     ],
   },
   {
     key: 'finance',
-    label: 'Finance',
+    label: 'Finance & Accounting',
     icon: Banknote,
     items: [
-      { title: 'Overview',     url: '/finance',              icon: LayoutGrid    },
-      { title: 'Income',       url: '/finance/income',       icon: ArrowDownLeft },
-      { title: 'Expenses',     url: '/finance/expenses',     icon: TrendingDown   },
+      { title: 'Overview',           url: '/finance',            icon: LayoutGrid    },
+      { title: 'Income',             url: '/finance/income',     icon: ArrowDownLeft },
+      { title: 'Expenses',           url: '/finance/expenses',   icon: TrendingDown  },
+      { title: 'Accounting Hub',     url: '/accounting',        icon: Calculator    },
+      { title: 'Finance Categories', url: '/finance/categories', icon: Tags          },
     ],
   },
   {
@@ -87,30 +88,22 @@ export const GROUPS: NavGroup[] = [
     label: 'Clients',
     icon: Network,
     items: [
-      { title: 'Overview',  url: '/relationships',           icon: LayoutGrid },
-      { title: 'Clients',   url: '/relationships/clients',   icon: Users     },
-      { title: 'Compliance Radar', url: '/insights/compliance-radar', icon: Shield },
-      { title: 'Leads',     url: '/relationships/leads',     icon: UserPlus  },
-      { title: 'Divisions', url: '/relationships/divisions', icon: Building2 },
+      { title: 'Overview',         url: '/relationships',              icon: LayoutGrid },
+      { title: 'Clients',          url: '/relationships/clients',      icon: Users      },
+      { title: 'Leads',            url: '/relationships/leads',        icon: UserPlus   },
+      { title: 'Divisions',        url: '/relationships/divisions',    icon: Building2  },
+      { title: 'Compliance Radar', url: '/insights/compliance-radar', icon: Shield     },
     ],
   },
   {
-    key: 'advanced',
-    label: 'Advanced & Reports',
+    key: 'insights',
+    label: 'Reports & Insights',
     icon: BarChart3,
     items: [
+      { title: 'Overview',          url: '/insights',          icon: LayoutGrid },
       { title: 'Business Analysis', url: '/insights/analysis', icon: TrendingUp },
-      { title: 'Insights Reports',  url: '/insights/reports',  icon: BarChart3 },
-      { title: 'Snapshots',         url: '/insights/snapshots', icon: Camera   },
-      { title: 'Finance Categories',url: '/finance/categories',icon: Tags       },
-      { title: 'Accounting',        url: '/accounting',        icon: Calculator },
-      { title: 'Chart of Accounts', url: '/accounting/chart-of-accounts', icon: BookMarked },
-      { title: 'Journals',          url: '/accounting/journals', icon: NotebookPen },
-      { title: 'General Ledger',    url: '/accounting/general-ledger', icon: BookOpen },
-      { title: 'Trial Balance',     url: '/accounting/trial-balance', icon: Scale },
-      { title: 'Profit & Loss',     url: '/accounting/profit-and-loss', icon: TrendingUp },
-      { title: 'Periods',           url: '/accounting/periods', icon: Calendar },
-      { title: 'Exports',           url: '/accounting/exports', icon: Download },
+      { title: 'Insights Reports',  url: '/insights/reports',  icon: BarChart3  },
+      { title: 'Snapshots',         url: '/insights/snapshots', icon: Camera    },
     ],
   },
   {
@@ -148,6 +141,13 @@ const EXTRA_LABELS: Record<string, string> = {
   '/billing/payments/add': 'Record Payment',
   '/projects/list': 'Schedule List',
   '/projects/timeline': 'Timeline',
+  '/accounting/chart-of-accounts': 'Chart of Accounts',
+  '/accounting/journals': 'Journals',
+  '/accounting/general-ledger': 'General Ledger',
+  '/accounting/trial-balance': 'Trial Balance',
+  '/accounting/profit-and-loss': 'Profit & Loss',
+  '/accounting/periods': 'Accounting Periods',
+  '/accounting/exports': 'Exports',
 }
 
 export const ROUTE_LABELS: Record<string, string> = {

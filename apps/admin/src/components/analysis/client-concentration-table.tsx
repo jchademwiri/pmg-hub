@@ -10,32 +10,37 @@ import { formatZAR } from '@/lib/format';
 import { AlertCircle } from 'lucide-react';
 import { Progress } from '@/components/ui/progress';
 
+import { cn } from '@/lib/utils';
+
 interface ClientConcentrationTableProps {
   data: {
     id: string;
     name: string;
     totalIncome: number;
+    totalInvoiced?: number;
     totalExpenses: number;
     netProfit: number;
     percentage: number;
   }[];
+  className?: string;
 }
 
-export function ClientConcentrationTable({ data }: ClientConcentrationTableProps) {
+export function ClientConcentrationTable({ data, className }: ClientConcentrationTableProps) {
   if (!data || data.length === 0) {
     return (
-      <div className="flex h-[400px] items-center justify-center rounded-xl border bg-card text-muted-foreground shadow-sm">
+      <div className={cn("flex h-[400px] items-center justify-center rounded-xl border bg-card text-muted-foreground shadow-sm", className)}>
         No client data available for the selected year.
       </div>
     );
   }
 
   return (
-    <div className="rounded-xl border shadow-sm overflow-hidden bg-card">
+    <div className={cn("rounded-xl border shadow-sm overflow-hidden bg-card", className)}>
       <Table>
         <TableHeader className="bg-muted/50">
           <TableRow className="hover:bg-transparent">
             <TableHead className="font-semibold text-foreground py-4">Client</TableHead>
+            <TableHead className="text-right font-semibold text-foreground py-4">Total Invoiced</TableHead>
             <TableHead className="text-right font-semibold text-foreground py-4">Total Income</TableHead>
             <TableHead className="text-right font-semibold text-foreground py-4">Total Expenses</TableHead>
             <TableHead className="text-right font-semibold text-foreground py-4">Net Profit</TableHead>
@@ -61,6 +66,7 @@ export function ClientConcentrationTable({ data }: ClientConcentrationTableProps
                     )}
                   </div>
                 </TableCell>
+                <TableCell className="text-right py-4 font-medium text-blue-600 dark:text-blue-400">{formatZAR(client.totalInvoiced ?? 0)}</TableCell>
                 <TableCell className="text-right py-4 font-medium text-emerald-600 dark:text-emerald-500">{formatZAR(client.totalIncome)}</TableCell>
                 <TableCell className="text-right text-muted-foreground py-4">{formatZAR(client.totalExpenses)}</TableCell>
                 <TableCell className={`text-right font-medium py-4 ${client.netProfit < 0 ? 'text-destructive' : 'text-emerald-600 dark:text-emerald-500'}`}>
