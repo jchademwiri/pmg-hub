@@ -455,7 +455,12 @@ export function BillingCreditClient({ divisions, allSettings, saveAction }: Bill
 
 // ── 4. Email Contact Details Form ───────────────────────────────────────────
 
-function DivisionEmailContactForm({ division, currentSettings, saveAction }: DivisionBillingFormProps) {
+function DivisionEmailContactForm({
+  division,
+  currentSettings,
+  saveAction,
+  onSuccess,
+}: DivisionBillingFormProps & { onSuccess?: () => void }) {
   const formRef = useRef<HTMLFormElement>(null);
   const [isPending, startTransition] = useTransition();
   const [error, setError] = useState<string | null>(null);
@@ -478,6 +483,7 @@ function DivisionEmailContactForm({ division, currentSettings, saveAction }: Div
       } else {
         setIsDirty(false);
         toast.success(`${division.name} contact details updated.`);
+        onSuccess?.();
       }
     });
   }
@@ -557,48 +563,78 @@ function DivisionEmailContactForm({ division, currentSettings, saveAction }: Div
 
 export function BillingEmailClient({ divisions, allSettings, saveAction }: BillingSettingsClientProps) {
   const [activeId, setActiveId] = useState<string>(divisions[0]?.id ?? '');
+  const [isEditing, setIsEditing] = useState<boolean>(false);
   const activeDivision = divisions.find((d) => d.id === activeId) ?? divisions[0];
 
   if (!activeDivision) return null;
 
   return (
-    <div className="flex flex-col gap-6">
-      <Tabs value={activeDivision.id} onValueChange={setActiveId}>
-        <div className="sticky top-13 z-20 bg-background/95 py-2 backdrop-blur-sm sm:top-14">
-          <TabsList className="w-full justify-start rounded-lg bg-muted/40 p-1 overflow-x-auto">
-            {divisions.map((division) => {
-              const s = allSettings[division.id];
-              const hasContact = Boolean(s?.salesRepEmail);
-
-              return (
-                <TabsTrigger key={division.id} value={division.id} className="gap-2">
-                  {division.name}
-                  <Badge
-                    variant={hasContact ? 'default' : 'outline'}
-                    className={
-                      hasContact
-                        ? 'bg-emerald-600 hover:bg-emerald-600 text-white text-[10px] px-1.5 py-0'
-                        : 'border-amber-500/50 text-amber-600 dark:text-amber-400 text-[10px] px-1.5 py-0'
-                    }
-                  >
-                    {hasContact ? 'Configured' : 'Missing'}
-                  </Badge>
-                </TabsTrigger>
-              );
-            })}
-          </TabsList>
+    <div className="flex flex-col gap-4">
+      <div className="flex items-center justify-between border-b pb-3">
+        <div>
+          <h3 className="text-base font-semibold tracking-tight">Division Contact Info</h3>
+          <p className="text-xs text-muted-foreground">Sales rep contact email, phone, and website details per division.</p>
         </div>
-        {divisions.map((division) => (
-          <TabsContent key={division.id} value={division.id} className="mt-4">
-            <DivisionEmailContactForm
-              key={division.id}
-              division={division}
-              currentSettings={allSettings[division.id] ?? null}
-              saveAction={saveAction}
-            />
-          </TabsContent>
-        ))}
-      </Tabs>
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={() => setIsEditing(!isEditing)}
+          className="gap-2 text-xs"
+        >
+          <Pencil className="h-3.5 w-3.5" />
+          {isEditing ? 'Close Editor' : 'Edit Contact Details'}
+        </Button>
+      </div>
+
+      {isEditing && (
+        <div className="rounded-xl border bg-card p-4 shadow-xs sm:p-6 flex flex-col gap-6 animate-in fade-in slide-in-from-top-2 duration-200">
+          <div className="flex items-center justify-between border-b pb-4">
+            <h4 className="text-sm font-semibold flex items-center gap-2">
+              <Pencil className="h-3.5 w-3.5 text-muted-foreground" />
+              Edit Division Contact Info
+            </h4>
+            <Button variant="ghost" size="sm" onClick={() => setIsEditing(false)} className="h-7 text-xs">
+              Cancel
+            </Button>
+          </div>
+
+          <Tabs value={activeDivision.id} onValueChange={setActiveId}>
+            <TabsList className="w-full justify-start rounded-lg bg-muted/40 p-1 overflow-x-auto">
+              {divisions.map((division) => {
+                const s = allSettings[division.id];
+                const hasContact = Boolean(s?.salesRepEmail);
+
+                return (
+                  <TabsTrigger key={division.id} value={division.id} className="gap-2">
+                    {division.name}
+                    <Badge
+                      variant={hasContact ? 'default' : 'outline'}
+                      className={
+                        hasContact
+                          ? 'bg-emerald-600 hover:bg-emerald-600 text-white text-[10px] px-1.5 py-0'
+                          : 'border-amber-500/50 text-amber-600 dark:text-amber-400 text-[10px] px-1.5 py-0'
+                      }
+                    >
+                      {hasContact ? 'Configured' : 'Missing'}
+                    </Badge>
+                  </TabsTrigger>
+                );
+              })}
+            </TabsList>
+            {divisions.map((division) => (
+              <TabsContent key={division.id} value={division.id} className="mt-4">
+                <DivisionEmailContactForm
+                  key={division.id}
+                  division={division}
+                  currentSettings={allSettings[division.id] ?? null}
+                  saveAction={saveAction}
+                  onSuccess={() => setIsEditing(false)}
+                />
+              </TabsContent>
+            ))}
+          </Tabs>
+        </div>
+      )}
     </div>
   );
 }
