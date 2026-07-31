@@ -2,7 +2,7 @@
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { Building2, Database, Landmark, Mail, Receipt, Shield, Users } from 'lucide-react';
+import { Building2, CreditCard, Database, FileText, Landmark, Mail, Receipt, Shield, Users } from 'lucide-react';
 
 import { Badge } from '@/components/ui/badge';
 import { cn } from '@/lib/utils';
@@ -20,9 +20,11 @@ const settingsNavItems: {
   badge?: string;
 }[] = [
   { href: '/settings/organisation', label: 'Organisation', icon: Building2 },
-  { href: '/settings/billing', label: 'Billing & Taxes', icon: Receipt },
+  { href: '/settings/billing', label: 'Document Defaults', icon: Receipt },
   { href: '/settings/billing/banking', label: 'Banking Accounts', icon: Landmark },
   { href: '/settings/billing/email', label: 'Email Delivery', icon: Mail },
+  { href: '/settings/billing/templates', label: 'Document Templates', icon: FileText },
+  { href: '/settings/billing/credit', label: 'Credit Policy', icon: CreditCard },
   { href: '/settings/users', label: 'Users', icon: Users },
   { href: '/settings/security', label: 'Security', icon: Shield },
   { href: '/settings/data', label: 'Data & Exports', icon: Database },

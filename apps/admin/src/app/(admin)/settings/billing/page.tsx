@@ -1,28 +1,28 @@
 import type { Metadata } from 'next';
 import { Receipt } from 'lucide-react';
-import { getAllDivisions, getAllDivisionBillingSettings } from '@pmg/db';
+import { getDivisions, getAllDivisionBillingSettings } from '@/lib/data/billing';
+import { saveDivisionBillingSettings } from '@/app/(admin)/settings/billing/actions';
 import { SettingsPageHeader } from '@/components/settings/settings-page-header';
-import { BillingSettingsClient } from './billing-settings-client';
-import { saveDivisionBillingSettings } from '@/app/actions/settings';
+import { BillingDefaultsClient } from './billing-settings-client';
 
 export const dynamic = 'force-dynamic';
-export const metadata: Metadata = { title: 'Billing & Taxes Settings' };
+export const metadata: Metadata = { title: 'Document Defaults · Settings' };
 
 export default async function BillingSettingsPage() {
   const [divisions, allSettings] = await Promise.all([
-    getAllDivisions(),
+    getDivisions(),
     getAllDivisionBillingSettings(),
   ]);
 
   return (
     <div className="flex flex-col gap-6">
       <SettingsPageHeader
-        title="Billing & Taxes"
-        description="Configure document numbering prefixes, VAT rate, payment terms, and credit policy per division"
+        title="Document Defaults"
+        description="Configure document numbering prefixes, VAT rate, and payment terms per division"
         icon={Receipt}
       />
 
-      <BillingSettingsClient
+      <BillingDefaultsClient
         divisions={divisions}
         allSettings={allSettings}
         saveAction={saveDivisionBillingSettings}
@@ -30,5 +30,3 @@ export default async function BillingSettingsPage() {
     </div>
   );
 }
-
-

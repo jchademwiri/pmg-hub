@@ -1,6 +1,7 @@
 import type { Metadata } from 'next';
 import { AlertCircle, CheckCircle2, Mail } from 'lucide-react';
-import { getAllDivisions, getAllDivisionBillingSettings } from '@pmg/db';
+import { getDivisions, getAllDivisionBillingSettings } from '@/lib/data/billing';
+import { saveDivisionBillingSettings } from '@/app/(admin)/settings/billing/actions';
 import { Card, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { SettingsPageHeader } from '@/components/settings/settings-page-header';
@@ -13,13 +14,14 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table';
+import { BillingEmailClient } from '../billing-settings-client';
 
 export const dynamic = 'force-dynamic';
 export const metadata: Metadata = { title: 'Email Delivery · Settings' };
 
 export default async function BillingEmailPage() {
   const [divisions, allSettings] = await Promise.all([
-    getAllDivisions(),
+    getDivisions(),
     getAllDivisionBillingSettings(),
   ]);
 
@@ -32,12 +34,19 @@ export default async function BillingEmailPage() {
   return (
     <div className="flex flex-col gap-6">
       <SettingsPageHeader
-        title="Email Delivery & Routing"
+        title="Email Delivery & Contact"
         description="Sender and CC addresses used when invoices and quotes are emailed per division"
         icon={Mail}
       />
 
-      <div className="flex flex-col gap-4">
+      <BillingEmailClient
+        divisions={divisions}
+        allSettings={allSettings}
+        saveAction={saveDivisionBillingSettings}
+      />
+
+      <div className="flex flex-col gap-4 pt-4 border-t">
+        <h3 className="text-base font-semibold tracking-tight">Email Routing Matrix & Health</h3>
         <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
           <Card size="sm">
             <CardHeader>

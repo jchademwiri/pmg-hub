@@ -1,7 +1,7 @@
 'use client';
 
 import { useRef, useState, useTransition, type FormEvent } from 'react';
-import { AlertCircle, Building2, CheckCircle2, Landmark, Mail, Pencil } from 'lucide-react';
+import { AlertCircle, CheckCircle2, Landmark, Mail, Pencil } from 'lucide-react';
 import { toast } from 'sonner';
 
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
@@ -53,17 +53,31 @@ function divisionPrefix(name: string): string {
     .join('');
 }
 
-function divisionStatus(settings: DivisionBillingSettings | undefined) {
-  if (!settings?.salesRepEmail) return 'Missing contact';
-  if (!settings.bankName || !settings.bankAccountNumber) return 'Missing banking';
-  return 'Configured';
+function HiddenPreserveInputs({ settings }: { settings: DivisionBillingSettings | null }) {
+  if (!settings) return null;
+  return (
+    <>
+      {settings.defaultVatRate ? <input type="hidden" name="defaultVatRate" value={settings.defaultVatRate} /> : null}
+      {settings.paymentTermsDays != null ? <input type="hidden" name="paymentTermsDays" value={settings.paymentTermsDays} /> : null}
+      {settings.bankName ? <input type="hidden" name="bankName" value={settings.bankName} /> : null}
+      {settings.bankAccountName ? <input type="hidden" name="bankAccountName" value={settings.bankAccountName} /> : null}
+      {settings.bankAccountNumber ? <input type="hidden" name="bankAccountNumber" value={settings.bankAccountNumber} /> : null}
+      {settings.bankBranchCode ? <input type="hidden" name="bankBranchCode" value={settings.bankBranchCode} /> : null}
+      {settings.invoiceNotes ? <input type="hidden" name="invoiceNotes" value={settings.invoiceNotes} /> : null}
+      {settings.quoteNotes ? <input type="hidden" name="quoteNotes" value={settings.quoteNotes} /> : null}
+      {settings.salesRepName ? <input type="hidden" name="salesRepName" value={settings.salesRepName} /> : null}
+      {settings.salesRepPhone ? <input type="hidden" name="salesRepPhone" value={settings.salesRepPhone} /> : null}
+      {settings.salesRepEmail ? <input type="hidden" name="salesRepEmail" value={settings.salesRepEmail} /> : null}
+      {settings.divisionWebsite ? <input type="hidden" name="divisionWebsite" value={settings.divisionWebsite} /> : null}
+      {settings.creditExpiryMonths != null ? <input type="hidden" name="creditExpiryMonths" value={settings.creditExpiryMonths} /> : null}
+      {settings.autoApplyCredits ? <input type="hidden" name="autoApplyCredits" value="on" /> : null}
+    </>
+  );
 }
 
-function DivisionBillingForm({
-  division,
-  currentSettings,
-  saveAction,
-}: DivisionBillingFormProps) {
+// ── 1. Document Defaults Form (Prefixes + VAT % + Payment Terms) ─────────────
+
+function DivisionDefaultsForm({ division, currentSettings, saveAction }: DivisionBillingFormProps) {
   const formRef = useRef<HTMLFormElement>(null);
   const [isPending, startTransition] = useTransition();
   const [error, setError] = useState<string | null>(null);
@@ -74,19 +88,6 @@ function DivisionBillingForm({
 
   const [defaultVatRate, setDefaultVatRate] = useState<string>(s?.defaultVatRate ?? '15');
   const [paymentTermsDays, setPaymentTermsDays] = useState<string | number>(s?.paymentTermsDays ?? 30);
-  const [bankName, setBankName] = useState<string>(s?.bankName ?? '');
-  const [bankAccountName, setBankAccountName] = useState<string>(s?.bankAccountName ?? '');
-  const [bankAccountNumber, setBankAccountNumber] = useState<string>(s?.bankAccountNumber ?? '');
-  const [bankBranchCode, setBankBranchCode] = useState<string>(s?.bankBranchCode ?? '');
-  const [invoiceNotes, setInvoiceNotes] = useState<string>(s?.invoiceNotes ?? '');
-  const [quoteNotes, setQuoteNotes] = useState<string>(s?.quoteNotes ?? '');
-  const [salesRepName, setSalesRepName] = useState<string>(s?.salesRepName ?? '');
-  const [salesRepPhone, setSalesRepPhone] = useState<string>(s?.salesRepPhone ?? '');
-  const [salesRepEmail, setSalesRepEmail] = useState<string>(s?.salesRepEmail ?? '');
-  const [divisionWebsite, setDivisionWebsite] = useState<string>(s?.divisionWebsite ?? '');
-  const [creditExpiryMonths, setCreditExpiryMonths] = useState<string | number>(s?.creditExpiryMonths ?? 12);
-  const [autoApplyCredits, setAutoApplyCredits] = useState<boolean>(s?.autoApplyCredits ?? true);
-  const [activeTab, setActiveTab] = useState<'general' | 'contact_banking' | 'notes'>('general');
 
   function handleSubmit(e: FormEvent) {
     e.preventDefault();
@@ -98,18 +99,15 @@ function DivisionBillingForm({
         setError(result.error);
       } else {
         setIsDirty(false);
-        toast.success(`${division.name} billing settings saved.`);
+        toast.success(`${division.name} document defaults saved.`);
       }
     });
   }
 
   return (
-    <form
-      ref={formRef}
-      onSubmit={handleSubmit}
-      onChange={() => setIsDirty(true)}
-      className="flex flex-col gap-6"
-    >
+    <form ref={formRef} onSubmit={handleSubmit} onChange={() => setIsDirty(true)} className="flex flex-col gap-6">
+      <HiddenPreserveInputs settings={s} />
+
       <SettingsSection
         title="Document Numbering"
         description="Prefix is derived from the division name. Sequence numbers are managed automatically."
@@ -117,14 +115,14 @@ function DivisionBillingForm({
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
           <Field>
             <FieldLabel>Invoice Prefix</FieldLabel>
-            <div className="flex h-9 items-center rounded-md border border-input bg-muted/40 px-3 text-sm text-muted-foreground font-mono">
+            <div className="flex h-9 items-center rounded-md border border-input bg-muted/40 px-3 text-sm font-mono text-muted-foreground">
               {prefix}-INV-
             </div>
             <p className="text-xs text-muted-foreground">e.g. {prefix}-INV-2026-001</p>
           </Field>
           <Field>
             <FieldLabel>Quote Prefix</FieldLabel>
-            <div className="flex h-9 items-center rounded-md border border-input bg-muted/40 px-3 text-sm text-muted-foreground font-mono">
+            <div className="flex h-9 items-center rounded-md border border-input bg-muted/40 px-3 text-sm font-mono text-muted-foreground">
               {prefix}-Q-
             </div>
             <p className="text-xs text-muted-foreground">e.g. {prefix}-Q-2026-001</p>
@@ -132,10 +130,7 @@ function DivisionBillingForm({
         </div>
       </SettingsSection>
 
-      <SettingsSection
-        title="Tax & Payment"
-        description="Default VAT rate and payment terms for new documents."
-      >
+      <SettingsSection title="Tax & Payment Terms" description="Default VAT rate and payment terms applied to new documents.">
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
           <Field>
             <FieldLabel>Default VAT Rate (%)</FieldLabel>
@@ -164,16 +159,212 @@ function DivisionBillingForm({
           </Field>
           <Field>
             <FieldLabel>Currency</FieldLabel>
-            <div className="flex h-9 items-center rounded-md border border-input bg-muted/40 px-3 text-sm text-muted-foreground font-medium">
+            <div className="flex h-9 items-center rounded-md border border-input bg-muted/40 px-3 text-sm font-medium text-muted-foreground">
               ZAR - South African Rand
             </div>
           </Field>
         </div>
       </SettingsSection>
 
+      {error ? (
+        <Alert variant="destructive">
+          <AlertCircle />
+          <AlertTitle>Could not save document defaults</AlertTitle>
+          <AlertDescription>{error}</AlertDescription>
+        </Alert>
+      ) : null}
+
+      <div className="sticky bottom-4 flex items-center justify-between gap-4 rounded-lg border bg-background/95 p-3.5 shadow-sm backdrop-blur">
+        <p className="text-sm text-muted-foreground">
+          {isDirty ? 'Unsaved changes' : `${division.name} defaults saved`}
+        </p>
+        <Button type="submit" disabled={isPending}>
+          {isPending ? 'Saving…' : 'Save Defaults'}
+        </Button>
+      </div>
+    </form>
+  );
+}
+
+export function BillingDefaultsClient({ divisions, allSettings, saveAction }: BillingSettingsClientProps) {
+  const [activeId, setActiveId] = useState<string>(divisions[0]?.id ?? '');
+  const activeDivision = divisions.find((d) => d.id === activeId) ?? divisions[0];
+
+  if (!activeDivision) return <EmptyState title="No divisions found" message="Add a division first." />;
+
+  return (
+    <div className="flex flex-col gap-6">
+      <Tabs value={activeDivision.id} onValueChange={setActiveId}>
+        <div className="sticky top-13 z-20 bg-background/95 py-2 backdrop-blur-sm sm:top-14">
+          <TabsList className="w-full justify-start rounded-lg bg-muted/40 p-1 overflow-x-auto">
+            {divisions.map((division) => (
+              <TabsTrigger key={division.id} value={division.id} className="gap-2">
+                {division.name}
+              </TabsTrigger>
+            ))}
+          </TabsList>
+        </div>
+        {divisions.map((division) => (
+          <TabsContent key={division.id} value={division.id} className="mt-4">
+            <DivisionDefaultsForm
+              key={division.id}
+              division={division}
+              currentSettings={allSettings[division.id] ?? null}
+              saveAction={saveAction}
+            />
+          </TabsContent>
+        ))}
+      </Tabs>
+    </div>
+  );
+}
+
+// ── 2. Document Templates & Notes Form ───────────────────────────────────────
+
+function DivisionTemplatesForm({ division, currentSettings, saveAction }: DivisionBillingFormProps) {
+  const formRef = useRef<HTMLFormElement>(null);
+  const [isPending, startTransition] = useTransition();
+  const [error, setError] = useState<string | null>(null);
+  const [isDirty, setIsDirty] = useState(false);
+
+  const s = currentSettings;
+  const [invoiceNotes, setInvoiceNotes] = useState<string>(s?.invoiceNotes ?? '');
+  const [quoteNotes, setQuoteNotes] = useState<string>(s?.quoteNotes ?? '');
+
+  function handleSubmit(e: FormEvent) {
+    e.preventDefault();
+    setError(null);
+    startTransition(async () => {
+      const fd = new FormData(formRef.current!);
+      const result = await saveAction(division.id, fd);
+      if (result.error) {
+        setError(result.error);
+      } else {
+        setIsDirty(false);
+        toast.success(`${division.name} document templates saved.`);
+      }
+    });
+  }
+
+  return (
+    <form ref={formRef} onSubmit={handleSubmit} onChange={() => setIsDirty(true)} className="flex flex-col gap-6">
+      <HiddenPreserveInputs settings={s} />
+
       <SettingsSection
-        title="Credit Policy"
-        description="Configure default client credit settings and auto-application rules."
+        title={`Document Notes & Terms for ${division.name}`}
+        description="Pre-filled payment instructions and quote validity rules printed on documents."
+      >
+        <Field>
+          <FieldLabel>Invoice Notes & Payment Terms</FieldLabel>
+          <Textarea
+            name="invoiceNotes"
+            value={invoiceNotes}
+            onChange={(e) => setInvoiceNotes(e.target.value)}
+            rows={4}
+            disabled={isPending}
+            placeholder="e.g. Payment due within 7 days. Use invoice number as reference."
+          />
+        </Field>
+        <Field>
+          <FieldLabel>Quote Terms & Validity</FieldLabel>
+          <Textarea
+            name="quoteNotes"
+            value={quoteNotes}
+            onChange={(e) => setQuoteNotes(e.target.value)}
+            rows={4}
+            disabled={isPending}
+            placeholder="e.g. Quotation valid for 30 days. 50% deposit required."
+          />
+        </Field>
+      </SettingsSection>
+
+      {error ? (
+        <Alert variant="destructive">
+          <AlertCircle />
+          <AlertTitle>Could not save document templates</AlertTitle>
+          <AlertDescription>{error}</AlertDescription>
+        </Alert>
+      ) : null}
+
+      <div className="sticky bottom-4 flex items-center justify-between gap-4 rounded-lg border bg-background/95 p-3.5 shadow-sm backdrop-blur">
+        <p className="text-sm text-muted-foreground">
+          {isDirty ? 'Unsaved changes' : `${division.name} templates saved`}
+        </p>
+        <Button type="submit" disabled={isPending}>
+          {isPending ? 'Saving…' : 'Save Templates'}
+        </Button>
+      </div>
+    </form>
+  );
+}
+
+export function BillingTemplatesClient({ divisions, allSettings, saveAction }: BillingSettingsClientProps) {
+  const [activeId, setActiveId] = useState<string>(divisions[0]?.id ?? '');
+  const activeDivision = divisions.find((d) => d.id === activeId) ?? divisions[0];
+
+  if (!activeDivision) return null;
+
+  return (
+    <div className="flex flex-col gap-6">
+      <Tabs value={activeDivision.id} onValueChange={setActiveId}>
+        <div className="sticky top-13 z-20 bg-background/95 py-2 backdrop-blur-sm sm:top-14">
+          <TabsList className="w-full justify-start rounded-lg bg-muted/40 p-1 overflow-x-auto">
+            {divisions.map((division) => (
+              <TabsTrigger key={division.id} value={division.id} className="gap-2">
+                {division.name}
+              </TabsTrigger>
+            ))}
+          </TabsList>
+        </div>
+        {divisions.map((division) => (
+          <TabsContent key={division.id} value={division.id} className="mt-4">
+            <DivisionTemplatesForm
+              key={division.id}
+              division={division}
+              currentSettings={allSettings[division.id] ?? null}
+              saveAction={saveAction}
+            />
+          </TabsContent>
+        ))}
+      </Tabs>
+    </div>
+  );
+}
+
+// ── 3. Credit Policy Form ───────────────────────────────────────────────────
+
+function DivisionCreditForm({ division, currentSettings, saveAction }: DivisionBillingFormProps) {
+  const formRef = useRef<HTMLFormElement>(null);
+  const [isPending, startTransition] = useTransition();
+  const [error, setError] = useState<string | null>(null);
+  const [isDirty, setIsDirty] = useState(false);
+
+  const s = currentSettings;
+  const [creditExpiryMonths, setCreditExpiryMonths] = useState<string | number>(s?.creditExpiryMonths ?? 12);
+  const [autoApplyCredits, setAutoApplyCredits] = useState<boolean>(s?.autoApplyCredits ?? true);
+
+  function handleSubmit(e: FormEvent) {
+    e.preventDefault();
+    setError(null);
+    startTransition(async () => {
+      const fd = new FormData(formRef.current!);
+      const result = await saveAction(division.id, fd);
+      if (result.error) {
+        setError(result.error);
+      } else {
+        setIsDirty(false);
+        toast.success(`${division.name} credit policy saved.`);
+      }
+    });
+  }
+
+  return (
+    <form ref={formRef} onSubmit={handleSubmit} onChange={() => setIsDirty(true)} className="flex flex-col gap-6">
+      <HiddenPreserveInputs settings={s} />
+
+      <SettingsSection
+        title={`Credit Rules & Expiry for ${division.name}`}
+        description="Configure client credit note retention and automatic allocation policies."
       >
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
           <Field>
@@ -187,14 +378,10 @@ function DivisionBillingForm({
               onChange={(e) => setCreditExpiryMonths(e.target.value)}
               disabled={isPending}
             />
-            <p className="text-xs text-muted-foreground">
-              Set to 0 for credit notes that never expire.
-            </p>
+            <p className="text-xs text-muted-foreground">Set to 0 for credit notes that never expire.</p>
           </Field>
           <Field orientation="horizontal" className="items-end pb-1">
-            {autoApplyCredits ? (
-              <input type="hidden" name="autoApplyCredits" value="on" />
-            ) : null}
+            {autoApplyCredits ? <input type="hidden" name="autoApplyCredits" value="on" /> : null}
             <Switch
               checked={autoApplyCredits}
               onCheckedChange={(checked) => {
@@ -204,7 +391,7 @@ function DivisionBillingForm({
               disabled={isPending}
             />
             <FieldContent>
-              <FieldLabel>Auto-apply Credit to Invoices</FieldLabel>
+              <FieldLabel>Auto-apply Credits to Invoices</FieldLabel>
               <p className="text-xs text-muted-foreground">
                 Automatically apply outstanding client credits to new invoices FIFO.
               </p>
@@ -213,14 +400,94 @@ function DivisionBillingForm({
         </div>
       </SettingsSection>
 
-      {/* Hidden inputs to preserve banking details when saving Billing & Taxes form */}
-      {s?.bankName ? <input type="hidden" name="bankName" value={s.bankName} /> : null}
-      {s?.bankAccountName ? <input type="hidden" name="bankAccountName" value={s.bankAccountName} /> : null}
-      {s?.bankAccountNumber ? <input type="hidden" name="bankAccountNumber" value={s.bankAccountNumber} /> : null}
-      {s?.bankBranchCode ? <input type="hidden" name="bankBranchCode" value={s.bankBranchCode} /> : null}
+      {error ? (
+        <Alert variant="destructive">
+          <AlertCircle />
+          <AlertTitle>Could not save credit policy</AlertTitle>
+          <AlertDescription>{error}</AlertDescription>
+        </Alert>
+      ) : null}
+
+      <div className="sticky bottom-4 flex items-center justify-between gap-4 rounded-lg border bg-background/95 p-3.5 shadow-sm backdrop-blur">
+        <p className="text-sm text-muted-foreground">
+          {isDirty ? 'Unsaved changes' : `${division.name} credit policy saved`}
+        </p>
+        <Button type="submit" disabled={isPending}>
+          {isPending ? 'Saving…' : 'Save Credit Policy'}
+        </Button>
+      </div>
+    </form>
+  );
+}
+
+export function BillingCreditClient({ divisions, allSettings, saveAction }: BillingSettingsClientProps) {
+  const [activeId, setActiveId] = useState<string>(divisions[0]?.id ?? '');
+  const activeDivision = divisions.find((d) => d.id === activeId) ?? divisions[0];
+
+  if (!activeDivision) return null;
+
+  return (
+    <div className="flex flex-col gap-6">
+      <Tabs value={activeDivision.id} onValueChange={setActiveId}>
+        <div className="sticky top-13 z-20 bg-background/95 py-2 backdrop-blur-sm sm:top-14">
+          <TabsList className="w-full justify-start rounded-lg bg-muted/40 p-1 overflow-x-auto">
+            {divisions.map((division) => (
+              <TabsTrigger key={division.id} value={division.id} className="gap-2">
+                {division.name}
+              </TabsTrigger>
+            ))}
+          </TabsList>
+        </div>
+        {divisions.map((division) => (
+          <TabsContent key={division.id} value={division.id} className="mt-4">
+            <DivisionCreditForm
+              key={division.id}
+              division={division}
+              currentSettings={allSettings[division.id] ?? null}
+              saveAction={saveAction}
+            />
+          </TabsContent>
+        ))}
+      </Tabs>
+    </div>
+  );
+}
+
+// ── 4. Email Contact Details Form ───────────────────────────────────────────
+
+function DivisionEmailContactForm({ division, currentSettings, saveAction }: DivisionBillingFormProps) {
+  const formRef = useRef<HTMLFormElement>(null);
+  const [isPending, startTransition] = useTransition();
+  const [error, setError] = useState<string | null>(null);
+  const [isDirty, setIsDirty] = useState(false);
+
+  const s = currentSettings;
+  const [salesRepName, setSalesRepName] = useState<string>(s?.salesRepName ?? '');
+  const [salesRepPhone, setSalesRepPhone] = useState<string>(s?.salesRepPhone ?? '');
+  const [salesRepEmail, setSalesRepEmail] = useState<string>(s?.salesRepEmail ?? '');
+  const [divisionWebsite, setDivisionWebsite] = useState<string>(s?.divisionWebsite ?? '');
+
+  function handleSubmit(e: FormEvent) {
+    e.preventDefault();
+    setError(null);
+    startTransition(async () => {
+      const fd = new FormData(formRef.current!);
+      const result = await saveAction(division.id, fd);
+      if (result.error) {
+        setError(result.error);
+      } else {
+        setIsDirty(false);
+        toast.success(`${division.name} contact details updated.`);
+      }
+    });
+  }
+
+  return (
+    <form ref={formRef} onSubmit={handleSubmit} onChange={() => setIsDirty(true)} className="flex flex-col gap-6">
+      <HiddenPreserveInputs settings={s} />
 
       <SettingsSection
-        title="Sales Rep & Contact Info"
+        title={`Sales Rep & Contact Info for ${division.name}`}
         description="Contact details printed on document headers and used for email routing."
       >
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
@@ -240,7 +507,7 @@ function DivisionBillingForm({
               name="salesRepPhone"
               value={salesRepPhone}
               onChange={(e) => setSalesRepPhone(e.target.value)}
-              placeholder="+27 21 000 0000"
+              placeholder="+27 74 049 1433"
               disabled={isPending}
             />
           </Field>
@@ -251,7 +518,7 @@ function DivisionBillingForm({
               type="email"
               value={salesRepEmail}
               onChange={(e) => setSalesRepEmail(e.target.value)}
-              placeholder="sales@example.co.za"
+              placeholder="info@playhousemedia.co.za"
               disabled={isPending}
             />
           </Field>
@@ -261,77 +528,38 @@ function DivisionBillingForm({
               name="divisionWebsite"
               value={divisionWebsite}
               onChange={(e) => setDivisionWebsite(e.target.value)}
-              placeholder="www.example.co.za"
+              placeholder="www.playhousemedia.co.za"
               disabled={isPending}
             />
           </Field>
         </div>
       </SettingsSection>
 
-      <SettingsSection
-        title="Default Notes & Terms"
-        description="Pre-filled on new invoices and quotes. Can be overridden per document."
-      >
-        <Field>
-          <FieldLabel>Invoice Notes</FieldLabel>
-          <Textarea
-            name="invoiceNotes"
-            value={invoiceNotes}
-            onChange={(e) => setInvoiceNotes(e.target.value)}
-            rows={3}
-            disabled={isPending}
-            placeholder="e.g. Payment due within 30 days. Please use invoice number as reference."
-          />
-        </Field>
-        <Field>
-          <FieldLabel>Quote Notes / Terms</FieldLabel>
-          <Textarea
-            name="quoteNotes"
-            value={quoteNotes}
-            onChange={(e) => setQuoteNotes(e.target.value)}
-            rows={3}
-            disabled={isPending}
-            placeholder="e.g. 50% deposit required. Quotation valid for 30 days."
-          />
-        </Field>
-      </SettingsSection>
-
       {error ? (
         <Alert variant="destructive">
           <AlertCircle />
-          <AlertTitle>Could not save billing settings</AlertTitle>
+          <AlertTitle>Could not save contact details</AlertTitle>
           <AlertDescription>{error}</AlertDescription>
         </Alert>
       ) : null}
 
       <div className="sticky bottom-4 flex items-center justify-between gap-4 rounded-lg border bg-background/95 p-3.5 shadow-sm backdrop-blur">
         <p className="text-sm text-muted-foreground">
-          {isDirty ? 'Unsaved changes' : `${division.name} settings are saved`}
+          {isDirty ? 'Unsaved changes' : `${division.name} contact details saved`}
         </p>
         <Button type="submit" disabled={isPending}>
-          {isPending ? 'Saving…' : 'Save Changes'}
+          {isPending ? 'Saving…' : 'Save Contact Details'}
         </Button>
       </div>
     </form>
   );
 }
 
-export function BillingSettingsClient({
-  divisions,
-  allSettings,
-  saveAction,
-}: BillingSettingsClientProps) {
+export function BillingEmailClient({ divisions, allSettings, saveAction }: BillingSettingsClientProps) {
   const [activeId, setActiveId] = useState<string>(divisions[0]?.id ?? '');
   const activeDivision = divisions.find((d) => d.id === activeId) ?? divisions[0];
 
-  if (!activeDivision) {
-    return (
-      <EmptyState
-        title="No divisions found"
-        message="Add a division before configuring billing and invoice defaults."
-      />
-    );
-  }
+  if (!activeDivision) return null;
 
   return (
     <div className="flex flex-col gap-6">
@@ -339,21 +567,21 @@ export function BillingSettingsClient({
         <div className="sticky top-13 z-20 bg-background/95 py-2 backdrop-blur-sm sm:top-14">
           <TabsList className="w-full justify-start rounded-lg bg-muted/40 p-1 overflow-x-auto">
             {divisions.map((division) => {
-              const status = divisionStatus(allSettings[division.id]);
-              const isConfigured = status === 'Configured';
+              const s = allSettings[division.id];
+              const hasContact = Boolean(s?.salesRepEmail);
 
               return (
                 <TabsTrigger key={division.id} value={division.id} className="gap-2">
                   {division.name}
                   <Badge
-                    variant={isConfigured ? 'default' : 'outline'}
+                    variant={hasContact ? 'default' : 'outline'}
                     className={
-                      isConfigured
+                      hasContact
                         ? 'bg-emerald-600 hover:bg-emerald-600 text-white text-[10px] px-1.5 py-0'
                         : 'border-amber-500/50 text-amber-600 dark:text-amber-400 text-[10px] px-1.5 py-0'
                     }
                   >
-                    {status}
+                    {hasContact ? 'Configured' : 'Missing'}
                   </Badge>
                 </TabsTrigger>
               );
@@ -362,7 +590,7 @@ export function BillingSettingsClient({
         </div>
         {divisions.map((division) => (
           <TabsContent key={division.id} value={division.id} className="mt-4">
-            <DivisionBillingForm
+            <DivisionEmailContactForm
               key={division.id}
               division={division}
               currentSettings={allSettings[division.id] ?? null}
@@ -374,6 +602,8 @@ export function BillingSettingsClient({
     </div>
   );
 }
+
+// ── 5. Banking Accounts Matrix & Inline Table Editor ─────────────────────────
 
 function BankingMatrixRow({
   division,
@@ -404,7 +634,6 @@ function BankingMatrixRow({
       fd.append('bankAccountNumber', bankAccountNumber);
       fd.append('bankBranchCode', bankBranchCode);
 
-      // Preserve non-banking division settings
       if (settings?.defaultVatRate) fd.append('defaultVatRate', settings.defaultVatRate);
       if (settings?.paymentTermsDays != null) fd.append('paymentTermsDays', String(settings.paymentTermsDays));
       if (settings?.salesRepName) fd.append('salesRepName', settings.salesRepName);
@@ -598,6 +827,6 @@ export function BankingAccountsClient({
   );
 }
 
-
-
-
+export function BillingSettingsClient({ divisions, allSettings, saveAction }: BillingSettingsClientProps) {
+  return <BillingDefaultsClient divisions={divisions} allSettings={allSettings} saveAction={saveAction} />;
+}
