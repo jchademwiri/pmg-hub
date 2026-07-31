@@ -2,7 +2,7 @@
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { Building2, Database, Receipt, Shield, Users } from 'lucide-react';
+import { Building2, Database, Landmark, Mail, Receipt, Shield, Users } from 'lucide-react';
 
 import { Badge } from '@/components/ui/badge';
 import { cn } from '@/lib/utils';
@@ -20,10 +20,12 @@ const settingsNavItems: {
   badge?: string;
 }[] = [
   { href: '/settings/organisation', label: 'Organisation', icon: Building2 },
-  { href: '/settings/billing', label: 'Billing', icon: Receipt },
+  { href: '/settings/billing', label: 'Billing & Taxes', icon: Receipt },
+  { href: '/settings/billing/banking', label: 'Banking Accounts', icon: Landmark },
+  { href: '/settings/billing/email', label: 'Email Delivery', icon: Mail },
   { href: '/settings/users', label: 'Users', icon: Users },
   { href: '/settings/security', label: 'Security', icon: Shield },
-  { href: '/settings/data', label: 'Data', icon: Database },
+  { href: '/settings/data', label: 'Data & Exports', icon: Database },
 ];
 
 export function SettingsNav() {
@@ -35,7 +37,9 @@ export function SettingsNav() {
       className="sticky top-13 z-30 -mx-4 flex gap-2 overflow-x-auto bg-background/95 px-4 py-2 backdrop-blur-sm sm:-mx-6 sm:px-6 lg:static lg:z-auto lg:mx-0 lg:flex-col lg:overflow-visible lg:bg-transparent lg:p-0"
     >
       {settingsNavItems.map((item) => {
-        const isActive = pathname === item.href || pathname.startsWith(`${item.href}/`);
+        const isActive =
+          pathname === item.href ||
+          (item.href !== '/settings/billing' && pathname.startsWith(`${item.href}/`));
         const Icon = item.icon;
 
         return (
