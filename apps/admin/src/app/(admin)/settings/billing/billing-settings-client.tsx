@@ -378,28 +378,30 @@ export function BillingSettingsClient({
   return (
     <div className="flex flex-col gap-6">
       <Tabs value={activeDivision.id} onValueChange={setActiveId}>
-        <TabsList className="w-full justify-start rounded-lg bg-muted/40 p-1 overflow-x-auto">
-          {divisions.map((division) => {
-            const status = divisionStatus(allSettings[division.id]);
-            const isConfigured = status === 'Configured';
+        <div className="sticky top-13 z-20 bg-background/95 py-2 backdrop-blur-sm sm:top-14">
+          <TabsList className="w-full justify-start rounded-lg bg-muted/40 p-1 overflow-x-auto">
+            {divisions.map((division) => {
+              const status = divisionStatus(allSettings[division.id]);
+              const isConfigured = status === 'Configured';
 
-            return (
-              <TabsTrigger key={division.id} value={division.id} className="gap-2">
-                {division.name}
-                <Badge
-                  variant={isConfigured ? 'default' : 'outline'}
-                  className={
-                    isConfigured
-                      ? 'bg-emerald-600 hover:bg-emerald-600 text-white text-[10px] px-1.5 py-0'
-                      : 'border-amber-500/50 text-amber-600 dark:text-amber-400 text-[10px] px-1.5 py-0'
-                  }
-                >
-                  {status}
-                </Badge>
-              </TabsTrigger>
-            );
-          })}
-        </TabsList>
+              return (
+                <TabsTrigger key={division.id} value={division.id} className="gap-2">
+                  {division.name}
+                  <Badge
+                    variant={isConfigured ? 'default' : 'outline'}
+                    className={
+                      isConfigured
+                        ? 'bg-emerald-600 hover:bg-emerald-600 text-white text-[10px] px-1.5 py-0'
+                        : 'border-amber-500/50 text-amber-600 dark:text-amber-400 text-[10px] px-1.5 py-0'
+                    }
+                  >
+                    {status}
+                  </Badge>
+                </TabsTrigger>
+              );
+            })}
+          </TabsList>
+        </div>
         {divisions.map((division) => (
           <TabsContent key={division.id} value={division.id} className="mt-4">
             <DivisionBillingForm
