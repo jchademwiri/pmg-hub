@@ -1,5 +1,5 @@
 import type { Metadata } from 'next';
-import { getDivisions, getAllDivisionBillingSettings } from '@/lib/data/billing';
+import { getAllDivisions, getAllDivisionBillingSettings } from '@pmg/db';
 import { saveDivisionBillingSettings } from '@/app/actions/settings';
 import { BillingCreditClient } from '../billing-settings-client';
 
@@ -10,7 +10,7 @@ export const metadata: Metadata = {
 
 export default async function BillingCreditPage() {
   const [divisionsList, allSettings] = await Promise.all([
-    getDivisions(),
+    getAllDivisions(),
     getAllDivisionBillingSettings(),
   ]);
 

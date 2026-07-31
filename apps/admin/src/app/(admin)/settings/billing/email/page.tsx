@@ -1,6 +1,6 @@
 import type { Metadata } from 'next';
 import { AlertCircle, CheckCircle2, Mail } from 'lucide-react';
-import { getDivisions, getAllDivisionBillingSettings } from '@/lib/data/billing';
+import { getAllDivisions, getAllDivisionBillingSettings } from '@pmg/db';
 import { saveDivisionBillingSettings } from '@/app/actions/settings';
 import { Card, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -21,7 +21,7 @@ export const metadata: Metadata = { title: 'Email Delivery · Settings' };
 
 export default async function BillingEmailPage() {
   const [divisions, allSettings] = await Promise.all([
-    getDivisions(),
+    getAllDivisions(),
     getAllDivisionBillingSettings(),
   ]);
 

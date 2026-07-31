@@ -1,6 +1,6 @@
 import type { Metadata } from 'next';
 import { Receipt } from 'lucide-react';
-import { getDivisions, getAllDivisionBillingSettings } from '@/lib/data/billing';
+import { getAllDivisions, getAllDivisionBillingSettings } from '@pmg/db';
 import { saveDivisionBillingSettings } from '@/app/actions/settings';
 import { SettingsPageHeader } from '@/components/settings/settings-page-header';
 import { BillingDefaultsClient } from './billing-settings-client';
@@ -10,7 +10,7 @@ export const metadata: Metadata = { title: 'Document Defaults · Settings' };
 
 export default async function BillingSettingsPage() {
   const [divisions, allSettings] = await Promise.all([
-    getDivisions(),
+    getAllDivisions(),
     getAllDivisionBillingSettings(),
   ]);
 
