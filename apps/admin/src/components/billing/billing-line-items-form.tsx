@@ -54,25 +54,22 @@ function calcLineTotal(row: LineItemFormRow): number {
 }
 
 export function BillingLineItemsForm({ value, onChange, activeItems }: BillingLineItemsFormProps) {
+  function updateRow(id: string, updates: Partial<LineItemFormRow>) {
+    onChange(value.map((row) => (row.id === id ? { ...row, ...updates } : row)));
+  }
+
   function update(id: string, field: keyof LineItemFormRow, val: string) {
-    onChange(value.map((row) => (row.id === id ? { ...row, [field]: val } : row)));
+    updateRow(id, { [field]: val });
   }
 
   function selectItem(rowId: string, itemId: string) {
     const item = activeItems.find((i) => i.id === itemId);
     if (!item) return;
-    onChange(
-      value.map((row) =>
-        row.id === rowId
-          ? {
-              ...row,
-              itemId: item.id,
-              description: item.description ?? item.name,
-              unitPrice: item.unitPrice,
-            }
-          : row,
-      ),
-    );
+    updateRow(rowId, {
+      itemId: item.id,
+      description: item.description ?? item.name,
+      unitPrice: item.unitPrice,
+    });
   }
 
   function addRow() {
@@ -175,20 +172,20 @@ export function BillingLineItemsForm({ value, onChange, activeItems }: BillingLi
                       value={row.discountValue || ''}
                       onChange={(e) => {
                         let val = e.target.value;
-                        const currentType = row.discountType || (val ? 'percent' : null);
+                        const currentType = row.discountType || 'percent';
                         if (currentType === 'percent' && parseFloat(val) > 100) {
                           val = '100';
                         }
-                        if (val && !row.discountType) {
-                          update(row.id, 'discountType', 'percent');
-                        }
-                        update(row.id, 'discountValue', val);
+                        updateRow(row.id, {
+                          discountType: val ? currentType : null,
+                          discountValue: val,
+                        });
                       }}
                       className="w-full lg:text-right rounded-r-none focus-visible:z-10"
                     />
                     <Select
                       value={row.discountType || 'percent'}
-                      onValueChange={(v) => update(row.id, 'discountType', v as 'percent' | 'amount')}
+                      onValueChange={(v) => updateRow(row.id, { discountType: v as 'percent' | 'amount' })}
                     >
                       <SelectTrigger className="w-[65px] rounded-l-none border-l-0 focus:ring-0 focus-visible:z-10 bg-muted/10 px-3 shrink-0">
                         <SelectValue />
