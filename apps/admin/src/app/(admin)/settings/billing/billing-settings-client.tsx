@@ -1,7 +1,7 @@
 'use client';
 
 import { useRef, useState, useTransition, type FormEvent } from 'react';
-import { AlertCircle } from 'lucide-react';
+import { AlertCircle, Building2, CheckCircle2, Landmark, Mail } from 'lucide-react';
 import { toast } from 'sonner';
 
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
@@ -10,10 +10,17 @@ import { Button } from '@/components/ui/button';
 import { EmptyState } from '@/components/ui/empty-state';
 import { Field, FieldContent, FieldLabel } from '@/components/ui/field';
 import { Input } from '@/components/ui/input';
-import { Separator } from '@/components/ui/separator';
 import { Switch } from '@/components/ui/switch';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Textarea } from '@/components/ui/textarea';
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from '@/components/ui/table';
 import { SettingsSection } from '@/components/settings/settings-section';
 import type { DivisionBillingSettings } from '@pmg/db';
 
@@ -104,13 +111,22 @@ function DivisionBillingForm({
       className="flex flex-col gap-6"
     >
       <Tabs value={activeTab} onValueChange={(value) => setActiveTab(value as typeof activeTab)}>
-        <TabsList variant="line" className="flex w-full justify-start overflow-x-auto">
-          <TabsTrigger value="general">General & Numbers</TabsTrigger>
-          <TabsTrigger value="contact_banking">Contact & Banking</TabsTrigger>
-          <TabsTrigger value="notes">Templates & Notes</TabsTrigger>
+        <TabsList className="w-full justify-start rounded-lg bg-muted/40 p-1">
+          <TabsTrigger value="general" className="flex items-center gap-2">
+            <Building2 className="h-4 w-4" />
+            General & Numbering
+          </TabsTrigger>
+          <TabsTrigger value="contact_banking" className="flex items-center gap-2">
+            <Mail className="h-4 w-4" />
+            Contact & Banking
+          </TabsTrigger>
+          <TabsTrigger value="notes" className="flex items-center gap-2">
+            <Landmark className="h-4 w-4" />
+            Templates & Notes
+          </TabsTrigger>
         </TabsList>
 
-        <TabsContent value="general" className="flex flex-col gap-6">
+        <TabsContent value="general" className="mt-4 flex flex-col gap-6">
           <SettingsSection
             title="Document Numbering"
             description="Prefix is derived from the division name. Sequence numbers are managed automatically."
@@ -132,8 +148,6 @@ function DivisionBillingForm({
               </Field>
             </div>
           </SettingsSection>
-
-          <Separator />
 
           <SettingsSection
             title="Tax & Payment"
@@ -173,8 +187,6 @@ function DivisionBillingForm({
               </Field>
             </div>
           </SettingsSection>
-
-          <Separator />
 
           <SettingsSection
             title="Credit Policy"
@@ -219,7 +231,7 @@ function DivisionBillingForm({
           </SettingsSection>
         </TabsContent>
 
-        <TabsContent value="contact_banking" className="flex flex-col gap-6">
+        <TabsContent value="contact_banking" className="mt-4 flex flex-col gap-6">
           <SettingsSection
             title="Contact Details"
             description="Sales rep contact info printed on invoices and quotes for this division."
@@ -268,8 +280,6 @@ function DivisionBillingForm({
               </Field>
             </div>
           </SettingsSection>
-
-          <Separator />
 
           <SettingsSection
             title="Banking Details"
@@ -320,7 +330,7 @@ function DivisionBillingForm({
           </SettingsSection>
         </TabsContent>
 
-        <TabsContent value="notes" className="flex flex-col gap-6">
+        <TabsContent value="notes" className="mt-4 flex flex-col gap-6">
           <SettingsSection
             title="Default Notes"
             description="Pre-filled on new invoices and quotes. Can be overridden per document."
@@ -359,7 +369,7 @@ function DivisionBillingForm({
         </Alert>
       ) : null}
 
-      <div className="sticky bottom-4 flex items-center justify-between gap-4 rounded-lg border bg-background/95 p-3 shadow-sm backdrop-blur">
+      <div className="sticky bottom-4 flex items-center justify-between gap-4 rounded-lg border bg-background/95 p-3.5 shadow-sm backdrop-blur">
         <p className="text-sm text-muted-foreground">
           {isDirty ? 'Unsaved changes' : `${division.name} settings are saved`}
         </p>
@@ -391,14 +401,22 @@ export function BillingSettingsClient({
   return (
     <div className="flex flex-col gap-6">
       <Tabs value={activeDivision.id} onValueChange={setActiveId}>
-        <TabsList variant="line" className="flex w-full justify-start overflow-x-auto">
+        <TabsList className="w-full justify-start rounded-lg bg-muted/40 p-1 overflow-x-auto">
           {divisions.map((division) => {
             const status = divisionStatus(allSettings[division.id]);
+            const isConfigured = status === 'Configured';
 
             return (
               <TabsTrigger key={division.id} value={division.id} className="gap-2">
                 {division.name}
-                <Badge variant={status === 'Configured' ? 'secondary' : 'outline'} className="text-xs">
+                <Badge
+                  variant={isConfigured ? 'default' : 'outline'}
+                  className={
+                    isConfigured
+                      ? 'bg-emerald-600 hover:bg-emerald-600 text-white text-[10px] px-1.5 py-0'
+                      : 'border-amber-500/50 text-amber-600 dark:text-amber-400 text-[10px] px-1.5 py-0'
+                  }
+                >
                   {status}
                 </Badge>
               </TabsTrigger>
@@ -406,7 +424,7 @@ export function BillingSettingsClient({
           })}
         </TabsList>
         {divisions.map((division) => (
-          <TabsContent key={division.id} value={division.id}>
+          <TabsContent key={division.id} value={division.id} className="mt-4">
             <DivisionBillingForm
               key={division.id}
               division={division}
@@ -419,3 +437,72 @@ export function BillingSettingsClient({
     </div>
   );
 }
+
+export function BankingOverviewMatrix({
+  divisions,
+  allSettings,
+}: {
+  divisions: Division[];
+  allSettings: Record<string, DivisionBillingSettings>;
+}) {
+  return (
+    <SettingsSection
+      title="Banking Overview Matrix"
+      description="Bank accounts and payment details printed on client invoices per division."
+    >
+      <Table>
+        <TableHeader>
+          <TableRow>
+            <TableHead className="py-3.5 pl-4">Division</TableHead>
+            <TableHead className="py-3.5">Bank Name</TableHead>
+            <TableHead className="py-3.5">Account Name</TableHead>
+            <TableHead className="py-3.5">Account Number</TableHead>
+            <TableHead className="py-3.5 pr-4">Branch Code</TableHead>
+          </TableRow>
+        </TableHeader>
+        <TableBody>
+          {divisions.map((div) => {
+            const s = allSettings[div.id];
+            const hasBanking = Boolean(s?.bankName && s?.bankAccountNumber);
+
+            return (
+              <TableRow key={div.id}>
+                <TableCell className="py-3.5 pl-4 font-medium">{div.name}</TableCell>
+                <TableCell className="py-3.5 text-sm">
+                  {s?.bankName ? (
+                    <span className="flex items-center gap-1.5">
+                      <Landmark className="h-3.5 w-3.5 text-muted-foreground" />
+                      {s.bankName}
+                    </span>
+                  ) : (
+                    <span className="text-xs text-muted-foreground flex items-center gap-1">
+                      <AlertCircle className="h-3.5 w-3.5 text-amber-500" />
+                      Not set
+                    </span>
+                  )}
+                </TableCell>
+                <TableCell className="py-3.5 text-sm text-muted-foreground">
+                  {s?.bankAccountName || '-'}
+                </TableCell>
+                <TableCell className="py-3.5 font-mono text-xs text-foreground">
+                  {s?.bankAccountNumber || '-'}
+                </TableCell>
+                <TableCell className="py-3.5 pr-4 font-mono text-xs text-muted-foreground">
+                  {s?.bankBranchCode || '-'}
+                </TableCell>
+              </TableRow>
+            );
+          })}
+          {divisions.length === 0 && (
+            <TableRow>
+              <TableCell colSpan={5} className="h-24 text-center text-sm text-muted-foreground">
+                No divisions configured yet.
+              </TableCell>
+            </TableRow>
+          )}
+        </TableBody>
+      </Table>
+    </SettingsSection>
+  );
+}
+
