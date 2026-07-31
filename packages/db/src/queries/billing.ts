@@ -889,8 +889,8 @@ export async function getClientStatement(
   // alongside the normal non-draft/non-void invoices. Used by the email
   // delivery flow so the statement PDF shows the invoice being sent.
   const draftFilter = filters?.includeDraftInvoiceId
-    ? sql`(${invoices.status} NOT IN ('draft', 'void') OR ${invoices.id} = ${filters.includeDraftInvoiceId})`
-    : sql`${invoices.status} NOT IN ('draft', 'void')`;
+    ? sql`(${invoices.status} NOT IN ('draft', 'void', 'written_off') OR ${invoices.id} = ${filters.includeDraftInvoiceId})`
+    : sql`${invoices.status} NOT IN ('draft', 'void', 'written_off')`;
 
   // Fetch client
   const clientRows = await db
