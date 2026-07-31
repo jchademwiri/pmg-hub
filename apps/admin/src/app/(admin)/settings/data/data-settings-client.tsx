@@ -11,6 +11,7 @@ import {
   FileSpreadsheet,
   RotateCcw,
   Trash2,
+  CheckCircle2,
 } from 'lucide-react';
 
 import {
@@ -30,6 +31,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
+import { cn } from '@/lib/utils';
 
 const exportOptions = [
   {
@@ -168,6 +170,10 @@ export function DatabaseBackupPanel({
     });
   }
 
+  const selectedBackupFileName = selectedBackupKey
+    ? selectedBackupKey.replace(`${backupPrefix}/`, '')
+    : null;
+
   return (
     <div className="flex flex-col gap-4">
       <div className="flex flex-col gap-3 rounded-lg border bg-muted/20 p-4 sm:flex-row sm:items-center sm:justify-between">
@@ -223,20 +229,39 @@ export function DatabaseBackupPanel({
           </div>
           {visibleBackups.length > 0 ? (
             <div className="flex flex-col divide-y divide-border">
-              {visibleBackups.map((backup) => (
-                <button
-                  key={backup.key}
-                  type="button"
-                  onClick={() => setSelectedBackupKey(backup.key)}
-                  aria-pressed={selectedBackupKey === backup.key}
-                  className="flex items-center justify-between gap-4 py-3 text-left text-sm transition-colors hover:text-foreground aria-pressed:font-medium"
-                >
-                  <span className="truncate">{backup.key.replace(`${backupPrefix}/`, '')}</span>
-                  <span className="shrink-0 text-xs text-muted-foreground">
-                    {new Date(backup.lastModified).toLocaleString()} · {formatBytes(backup.sizeBytes)}
-                  </span>
-                </button>
-              ))}
+              {visibleBackups.map((backup, index) => {
+                const isLatest = index === 0;
+                const isSelected = selectedBackupKey === backup.key;
+                return (
+                  <button
+                    key={backup.key}
+                    type="button"
+                    onClick={() => setSelectedBackupKey(backup.key)}
+                    aria-pressed={isSelected}
+                    className={cn(
+                      "flex items-center justify-between gap-4 py-3 text-left text-sm transition-colors hover:text-foreground",
+                      isSelected ? "font-medium text-foreground bg-muted/40 px-2.5 -mx-2.5 rounded-md" : ""
+                    )}
+                  >
+                    <div className="flex items-center gap-2 min-w-0 truncate">
+                      <span className="truncate">{backup.key.replace(`${backupPrefix}/`, '')}</span>
+                      {isLatest && (
+                        <Badge variant="default" className="text-[10px] px-1.5 py-0 font-semibold bg-emerald-600 hover:bg-emerald-600 text-white shrink-0">
+                          Latest
+                        </Badge>
+                      )}
+                      {isSelected && (
+                        <Badge variant="secondary" className="text-[10px] px-1.5 py-0 font-normal shrink-0">
+                          Selected
+                        </Badge>
+                      )}
+                    </div>
+                    <span className="shrink-0 text-xs text-muted-foreground">
+                      {new Date(backup.lastModified).toLocaleString()} · {formatBytes(backup.sizeBytes)}
+                    </span>
+                  </button>
+                );
+              })}
             </div>
           ) : (
             <div className="rounded-md border border-dashed p-4 text-sm text-muted-foreground">
@@ -254,6 +279,26 @@ export function DatabaseBackupPanel({
               This replaces current data with the selected backup.
             </p>
           </div>
+
+          {selectedBackupFileName && (
+            <div className="rounded-md border border-amber-500/30 bg-amber-500/10 p-3 text-xs flex flex-col gap-1">
+              <div className="flex items-center justify-between font-medium text-amber-700 dark:text-amber-400">
+                <span className="flex items-center gap-1.5">
+                  <CheckCircle2 className="h-3.5 w-3.5 text-amber-600 dark:text-amber-400" />
+                  Target Backup for Restore:
+                </span>
+                {selectedBackupKey === visibleBackups[0]?.key && (
+                  <Badge variant="outline" className="text-[10px] px-1.5 py-0 border-amber-500/40 bg-amber-500/20 font-semibold">
+                    Latest
+                  </Badge>
+                )}
+              </div>
+              <span className="font-mono text-[11px] truncate text-foreground font-semibold">
+                {selectedBackupFileName}
+              </span>
+            </div>
+          )}
+
           <Field>
             <FieldLabel>Backup file</FieldLabel>
             <Select
@@ -266,15 +311,23 @@ export function DatabaseBackupPanel({
               </SelectTrigger>
               <SelectContent>
                 <SelectGroup>
-                  {visibleBackups.map((backup) => (
+                  {visibleBackups.map((backup, idx) => (
                     <SelectItem key={backup.key} value={backup.key}>
-                      {backup.key.replace(`${backupPrefix}/`, '')}
+                      <span className="flex items-center gap-2">
+                        <span>{backup.key.replace(`${backupPrefix}/`, '')}</span>
+                        {idx === 0 && (
+                          <span className="text-[10px] font-semibold text-emerald-600 dark:text-emerald-400">
+                            (Latest)
+                          </span>
+                        )}
+                      </span>
                     </SelectItem>
                   ))}
                 </SelectGroup>
               </SelectContent>
             </Select>
           </Field>
+
           <Field>
             <FieldLabel>Type RESTORE to confirm</FieldLabel>
             <Input
@@ -284,6 +337,7 @@ export function DatabaseBackupPanel({
               disabled={!selectedBackupKey || isRestorePending}
             />
           </Field>
+
           <Button
             type="button"
             variant="destructive"
@@ -303,3 +357,4 @@ export function DatabaseBackupPanel({
     </div>
   );
 }
+
