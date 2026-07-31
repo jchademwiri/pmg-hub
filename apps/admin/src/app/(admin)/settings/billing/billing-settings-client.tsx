@@ -378,14 +378,29 @@ export function BillingSettingsClient({
 export function BankingOverviewMatrix({
   divisions,
   allSettings,
+  onEditDivision,
 }: {
   divisions: Division[];
   allSettings: Record<string, DivisionBillingSettings>;
+  onEditDivision?: (divisionId: string) => void;
 }) {
   return (
     <SettingsSection
       title="Banking Overview Matrix"
       description="Bank accounts and payment details printed on client invoices per division."
+      headerAction={
+        onEditDivision && (
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => onEditDivision(divisions[0]?.id ?? '')}
+            className="gap-2"
+          >
+            <Pencil className="h-3.5 w-3.5" />
+            Edit Banking Details
+          </Button>
+        )
+      }
     >
       <Table>
         <TableHeader>
@@ -394,13 +409,13 @@ export function BankingOverviewMatrix({
             <TableHead className="py-3.5">Bank Name</TableHead>
             <TableHead className="py-3.5">Account Name</TableHead>
             <TableHead className="py-3.5">Account Number</TableHead>
-            <TableHead className="py-3.5 pr-4">Branch Code</TableHead>
+            <TableHead className="py-3.5">Branch Code</TableHead>
+            {onEditDivision && <TableHead className="py-3.5 pr-4 text-right">Action</TableHead>}
           </TableRow>
         </TableHeader>
         <TableBody>
           {divisions.map((div) => {
             const s = allSettings[div.id];
-            const hasBanking = Boolean(s?.bankName && s?.bankAccountNumber);
 
             return (
               <TableRow key={div.id}>
@@ -424,15 +439,28 @@ export function BankingOverviewMatrix({
                 <TableCell className="py-3.5 font-mono text-xs text-foreground font-semibold">
                   {s?.bankAccountNumber || '-'}
                 </TableCell>
-                <TableCell className="py-3.5 pr-4 font-mono text-xs text-muted-foreground">
+                <TableCell className="py-3.5 font-mono text-xs text-muted-foreground">
                   {s?.bankBranchCode || '-'}
                 </TableCell>
+                {onEditDivision && (
+                  <TableCell className="py-3.5 pr-4 text-right">
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => onEditDivision(div.id)}
+                      className="h-8 gap-1 px-2 text-xs"
+                    >
+                      <Pencil className="h-3 w-3" />
+                      Edit
+                    </Button>
+                  </TableCell>
+                )}
               </TableRow>
             );
           })}
           {divisions.length === 0 && (
             <TableRow>
-              <TableCell colSpan={5} className="h-24 text-center text-sm text-muted-foreground">
+              <TableCell colSpan={6} className="h-24 text-center text-sm text-muted-foreground">
                 No divisions configured yet.
               </TableCell>
             </TableRow>
@@ -447,7 +475,8 @@ function DivisionBankingFormOnly({
   division,
   currentSettings,
   saveAction,
-}: DivisionBillingFormProps) {
+  onSuccess,
+}: DivisionBillingFormProps & { onSuccess?: () => void }) {
   const formRef = useRef<HTMLFormElement>(null);
   const [isPending, startTransition] = useTransition();
   const [error, setError] = useState<string | null>(null);
@@ -470,6 +499,7 @@ function DivisionBankingFormOnly({
       } else {
         setIsDirty(false);
         toast.success(`${division.name} banking details updated.`);
+        onSuccess?.();
       }
     });
   }
@@ -567,52 +597,80 @@ export function BankingAccountsClient({
   saveAction,
 }: BillingSettingsClientProps) {
   const [activeId, setActiveId] = useState<string>(divisions[0]?.id ?? '');
+  const [isEditing, setIsEditing] = useState<boolean>(false);
   const activeDivision = divisions.find((d) => d.id === activeId) ?? divisions[0];
+
+  function handleEditDivision(divisionId: string) {
+    setActiveId(divisionId);
+    setIsEditing(true);
+  }
+
+  function handleSaveSuccess() {
+    setIsEditing(false);
+  }
 
   if (!activeDivision) return null;
 
   return (
-    <div className="flex flex-col gap-8">
-      <Tabs value={activeDivision.id} onValueChange={setActiveId}>
-        <div className="sticky top-13 z-20 bg-background/95 py-2 backdrop-blur-sm sm:top-14">
-          <TabsList className="w-full justify-start rounded-lg bg-muted/40 p-1 overflow-x-auto">
-            {divisions.map((division) => {
-              const s = allSettings[division.id];
-              const hasBanking = Boolean(s?.bankName && s?.bankAccountNumber);
+    <div className="flex flex-col gap-6">
+      <BankingOverviewMatrix
+        divisions={divisions}
+        allSettings={allSettings}
+        onEditDivision={handleEditDivision}
+      />
 
-              return (
-                <TabsTrigger key={division.id} value={division.id} className="gap-2">
-                  {division.name}
-                  <Badge
-                    variant={hasBanking ? 'default' : 'outline'}
-                    className={
-                      hasBanking
-                        ? 'bg-emerald-600 hover:bg-emerald-600 text-white text-[10px] px-1.5 py-0'
-                        : 'border-amber-500/50 text-amber-600 dark:text-amber-400 text-[10px] px-1.5 py-0'
-                    }
-                  >
-                    {hasBanking ? 'Banking Configured' : 'Missing Banking'}
-                  </Badge>
-                </TabsTrigger>
-              );
-            })}
-          </TabsList>
+      {isEditing && (
+        <div className="rounded-xl border bg-card p-4 shadow-xs sm:p-6 flex flex-col gap-6 animate-in fade-in slide-in-from-top-2 duration-200">
+          <div className="flex items-center justify-between border-b pb-4">
+            <h3 className="text-base font-semibold flex items-center gap-2">
+              <Pencil className="h-4 w-4 text-muted-foreground" />
+              Edit Division Banking Details
+            </h3>
+            <Button variant="ghost" size="sm" onClick={() => setIsEditing(false)}>
+              Cancel
+            </Button>
+          </div>
+
+          <Tabs value={activeDivision.id} onValueChange={setActiveId}>
+            <TabsList className="w-full justify-start rounded-lg bg-muted/40 p-1 overflow-x-auto">
+              {divisions.map((division) => {
+                const s = allSettings[division.id];
+                const hasBanking = Boolean(s?.bankName && s?.bankAccountNumber);
+
+                return (
+                  <TabsTrigger key={division.id} value={division.id} className="gap-2">
+                    {division.name}
+                    <Badge
+                      variant={hasBanking ? 'default' : 'outline'}
+                      className={
+                        hasBanking
+                          ? 'bg-emerald-600 hover:bg-emerald-600 text-white text-[10px] px-1.5 py-0'
+                          : 'border-amber-500/50 text-amber-600 dark:text-amber-400 text-[10px] px-1.5 py-0'
+                      }
+                    >
+                      {hasBanking ? 'Configured' : 'Missing'}
+                    </Badge>
+                  </TabsTrigger>
+                );
+              })}
+            </TabsList>
+            {divisions.map((division) => (
+              <TabsContent key={division.id} value={division.id} className="mt-4">
+                <DivisionBankingFormOnly
+                  key={division.id}
+                  division={division}
+                  currentSettings={allSettings[division.id] ?? null}
+                  saveAction={saveAction}
+                  onSuccess={handleSaveSuccess}
+                />
+              </TabsContent>
+            ))}
+          </Tabs>
         </div>
-        {divisions.map((division) => (
-          <TabsContent key={division.id} value={division.id} className="mt-4">
-            <DivisionBankingFormOnly
-              key={division.id}
-              division={division}
-              currentSettings={allSettings[division.id] ?? null}
-              saveAction={saveAction}
-            />
-          </TabsContent>
-        ))}
-      </Tabs>
-
-      <BankingOverviewMatrix divisions={divisions} allSettings={allSettings} />
+      )}
     </div>
   );
 }
+
 
 
