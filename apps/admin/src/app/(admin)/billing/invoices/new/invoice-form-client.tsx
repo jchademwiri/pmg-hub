@@ -2,7 +2,7 @@
 
 import { useState, useTransition, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { formatZAR } from '@/lib/format';
+import { formatZAR, getEndOfMonth } from '@/lib/format';
 import { getClientCreditBalance } from '@/app/actions/billing-payments';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
@@ -46,7 +46,6 @@ export interface InvoiceFormClientProps {
 }
 
 const today = new Date().toISOString().split('T')[0]!;
-const plus5 = new Date(Date.now() + 5 * 24 * 60 * 60 * 1000).toISOString().split('T')[0]!;
 
 function blankRow(): LineItemFormRow {
   return {
@@ -106,7 +105,10 @@ export function InvoiceFormClient({
   const [divisionId, setDivisionId] = useState(initialData?.divisionId ?? '');
   const [clientId, setClientId] = useState(initialData?.clientId ?? '');
   const [invoiceDate, setInvoiceDate] = useState(initialData?.invoiceDate ?? today);
-  const [dueDate, setDueDate] = useState(initialData?.dueDate ?? plus5);
+  const [hasDueDate, setHasDueDate] = useState(
+    initialData ? !!initialData.dueDate : true,
+  );
+  const [dueDate, setDueDate] = useState(initialData?.dueDate ?? getEndOfMonth(today));
   const [isDueDateModified, setIsDueDateModified] = useState(!!initialData?.dueDate);
   const [reference, setReference] = useState(initialData?.reference ?? '');
   const [notes, setNotes] = useState(initialData?.notes ?? '');
@@ -165,11 +167,8 @@ export function InvoiceFormClient({
       setNotes(settings.invoiceNotes);
     }
 
-    // 2. Set default due date based on paymentTermsDays
-    const termsDays = settings.paymentTermsDays ?? 5; // fallback to 5 days
-    const d = new Date(invoiceDate);
-    d.setDate(d.getDate() + termsDays);
-    setDueDate(d.toISOString().split('T')[0]!);
+    // 2. Set default due date to end of month
+    setDueDate(getEndOfMonth(invoiceDate));
     setIsDueDateModified(false); // Reset modified status since it's a smart default
   }, [divisionId, billingSettings, invoiceDate, editId]);
 
@@ -204,7 +203,7 @@ export function InvoiceFormClient({
       divisionId,
       clientId,
       invoiceDate,
-      dueDate: dueDate || null,
+      dueDate: hasDueDate ? (dueDate || null) : null,
       reference: reference || null,
       notes: notes || null,
       terms: terms || null,
@@ -312,7 +311,7 @@ export function InvoiceFormClient({
           </Field>
         </div>
 
-        <Accordion type="single" collapsible className="w-full">
+        <Accordion type="single" collapsible defaultValue="document-settings" className="w-full">
           <AccordionItem value="document-settings" className="border-none">
             <AccordionTrigger className="py-3 px-4 rounded-lg border bg-muted/20 hover:bg-muted/40 transition-colors hover:no-underline text-muted-foreground data-[state=open]:text-foreground">
               <span className="font-semibold text-sm">Dates & Reference</span>
@@ -330,10 +329,7 @@ export function InvoiceFormClient({
                       const newDate = e.target.value;
                       setInvoiceDate(newDate);
                       if (!isDueDateModified) {
-                        const termsDays = billingSettings?.[divisionId]?.paymentTermsDays ?? 5;
-                        const d = new Date(newDate);
-                        d.setDate(d.getDate() + termsDays);
-                        setDueDate(d.toISOString().split('T')[0]!);
+                        setDueDate(getEndOfMonth(newDate));
                       }
                     }}
                     disabled={isSubmitting}
@@ -341,7 +337,19 @@ export function InvoiceFormClient({
                 </Field>
 
                 <Field>
-                  <FieldLabel>Due Date</FieldLabel>
+                  <div className="flex items-center justify-between gap-2 mb-1">
+                    <FieldLabel className="mb-0">Due Date</FieldLabel>
+                    <label className="flex items-center gap-1.5 text-xs text-muted-foreground cursor-pointer select-none">
+                      <input
+                        type="checkbox"
+                        checked={hasDueDate}
+                        onChange={(e) => setHasDueDate(e.target.checked)}
+                        disabled={isSubmitting}
+                        className="h-3.5 w-3.5 rounded border-input text-primary focus:ring-primary"
+                      />
+                      <span>Set due date</span>
+                    </label>
+                  </div>
                   <Input
                     type="date"
                     value={dueDate}
@@ -349,7 +357,8 @@ export function InvoiceFormClient({
                       setDueDate(e.target.value);
                       setIsDueDateModified(true);
                     }}
-                    disabled={isSubmitting}
+                    disabled={isSubmitting || !hasDueDate}
+                    className={!hasDueDate ? 'opacity-50' : ''}
                   />
                 </Field>
 

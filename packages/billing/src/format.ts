@@ -112,6 +112,25 @@ export function getSASTToday(): string {
 }
 
 /**
+ * Get the last day of the month for a given ISO date string (YYYY-MM-DD) or Date object.
+ * Returns date formatted as YYYY-MM-DD.
+ */
+export function getEndOfMonth(dateStr?: string | Date | null): string {
+  const d = !dateStr
+    ? new Date()
+    : typeof dateStr === 'string'
+      ? (dateStr.length === 10 ? new Date(dateStr + 'T00:00:00') : new Date(dateStr))
+      : dateStr;
+  const year = d.getFullYear();
+  const month = d.getMonth();
+  const lastDay = new Date(year, month + 1, 0);
+  const yyyy = lastDay.getFullYear();
+  const mm = String(lastDay.getMonth() + 1).padStart(2, '0');
+  const dd = String(lastDay.getDate()).padStart(2, '0');
+  return `${yyyy}-${mm}-${dd}`;
+}
+
+/**
  * Format an organisation's address from its street/city/postal fields into a single string.
  * Returns `undefined` if no address parts are available.
  */

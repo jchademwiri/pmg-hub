@@ -1,5 +1,5 @@
 {
-  "ignoreCommand": "npx turbo-ignore",
+  "ignoreCommand": "npx turbo run build --filter=admin...[HEAD^]",
   "crons": [
     {
       "path": "/api/cron/close-month",
