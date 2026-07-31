@@ -33,15 +33,15 @@ export default async function SecuritySettingsPage() {
         </AlertDescription>
       </Alert>
 
-      <Tabs defaultValue="password" className="w-full">
+      <Tabs defaultValue="audit-log" className="w-full">
         <TabsList className="w-full justify-start rounded-lg bg-muted/40 p-1">
-          <TabsTrigger value="password" className="flex items-center gap-2">
-            <Lock className="h-4 w-4" />
-            Password
-          </TabsTrigger>
           <TabsTrigger value="audit-log" className="flex items-center gap-2">
             <History className="h-4 w-4" />
             Audit Log
+          </TabsTrigger>
+          <TabsTrigger value="password" className="flex items-center gap-2">
+            <Lock className="h-4 w-4" />
+            Password
           </TabsTrigger>
           <TabsTrigger value="signin-log" className="flex items-center gap-2">
             <LogIn className="h-4 w-4" />
@@ -52,6 +52,20 @@ export default async function SecuritySettingsPage() {
             Active Sessions
           </TabsTrigger>
         </TabsList>
+
+        {/* Audit Log Tab */}
+        <TabsContent value="audit-log" className="mt-4">
+          <SettingsSection
+            title="Audit Log"
+            description="Recent actions taken in the system."
+          >
+            <PaginatedLogTable
+              entries={systemAuditLogs}
+              emptyMessage="No system audit log activity recorded yet."
+              pageSize={5}
+            />
+          </SettingsSection>
+        </TabsContent>
 
         {/* Password Tab */}
         <TabsContent value="password" className="mt-4">
@@ -82,20 +96,6 @@ export default async function SecuritySettingsPage() {
                 Update Password
               </Button>
             </div>
-          </SettingsSection>
-        </TabsContent>
-
-        {/* Audit Log Tab */}
-        <TabsContent value="audit-log" className="mt-4">
-          <SettingsSection
-            title="Audit Log"
-            description="Recent actions taken in the system."
-          >
-            <PaginatedLogTable
-              entries={systemAuditLogs}
-              emptyMessage="No system audit log activity recorded yet."
-              pageSize={5}
-            />
           </SettingsSection>
         </TabsContent>
 
