@@ -13,9 +13,17 @@ export const EXPORT_FILENAMES: Record<ExportType, string> = {
   'full-json': 'full-data-export.json',
 };
 
+export interface TableColumnSchema {
+  name: string;
+  dataType: string;
+  isNullable: boolean;
+  columnDefault: string | null;
+}
+
 interface BackupPayload {
   exportedAt: string;
   source: string;
+  schema?: Record<string, TableColumnSchema[]>;
   tables: Record<string, unknown[]>;
 }
 
