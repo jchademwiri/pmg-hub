@@ -17,7 +17,7 @@ interface MonthFinancialRow {
   received: number;
   expenses: number;
   netProfit: number;
-  momGrowth: number;
+  momGrowth: number | null;
 }
 
 interface MoMComparisonTableProps {
@@ -51,8 +51,9 @@ export function MoMComparisonTable({ data, year, className }: MoMComparisonTable
         <TableBody>
           {data.map((row) => {
             const isPositiveProfit = row.netProfit >= 0;
-            const isPositiveGrowth = row.momGrowth > 0;
-            const isNegativeGrowth = row.momGrowth < 0;
+            const hasGrowth = row.momGrowth !== null;
+            const isPositiveGrowth = hasGrowth && row.momGrowth! > 0;
+            const isNegativeGrowth = hasGrowth && row.momGrowth! < 0;
 
             return (
               <TableRow 
@@ -81,19 +82,22 @@ export function MoMComparisonTable({ data, year, className }: MoMComparisonTable
                 
                 <TableCell className="py-4">
                   <div className="flex items-center justify-end gap-1.5 font-medium text-sm">
+                    {row.momGrowth === null && (
+                      <span className="text-muted-foreground">—</span>
+                    )}
                     {isPositiveGrowth && (
                       <>
                         <TrendingUp className="h-4 w-4 text-emerald-500" />
-                        <span className="text-emerald-600 dark:text-emerald-500">+{row.momGrowth.toFixed(1)}%</span>
+                        <span className="text-emerald-600 dark:text-emerald-500">+{row.momGrowth!.toFixed(1)}%</span>
                       </>
                     )}
                     {isNegativeGrowth && (
                       <>
                         <TrendingDown className="h-4 w-4 text-red-500" />
-                        <span className="text-red-500">{row.momGrowth.toFixed(1)}%</span>
+                        <span className="text-red-500">{row.momGrowth!.toFixed(1)}%</span>
                       </>
                     )}
-                    {!isPositiveGrowth && !isNegativeGrowth && (
+                    {hasGrowth && !isPositiveGrowth && !isNegativeGrowth && (
                       <>
                         <Minus className="h-4 w-4 text-muted-foreground" />
                         <span className="text-muted-foreground">0.0%</span>

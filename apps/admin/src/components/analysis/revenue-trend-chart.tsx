@@ -23,18 +23,20 @@ interface MonthlyRevenueRow {
 interface RevenueTrendChartProps {
   data: MonthlyRevenueRow[];
   currentYear: number;
+  currentMonth?: number; // 1-12
+  sastYear?: number;
 }
 
-export function RevenueTrendChart({ data, currentYear }: RevenueTrendChartProps) {
+export function RevenueTrendChart({ data, currentYear, currentMonth, sastYear }: RevenueTrendChartProps) {
   const currentKey = String(currentYear);
   const priorKey = String(currentYear - 1);
   const prior2Key = String(currentYear - 2);
 
   // Sanitize data: for current year, future months should be null so the line ends gracefully at current month instead of plunging to 0
   const processedData = useMemo(() => {
-    const now = new Date();
-    const nowYear = now.getFullYear();
-    const nowMonth = now.getMonth() + 1; // 1 to 12
+    if (!currentMonth) return data;
+    const nowMonth = currentMonth;
+    const nowYear = sastYear ?? currentYear;
     const activeFY = nowMonth < 3 ? nowYear - 1 : nowYear;
 
     if (currentYear !== activeFY) {
@@ -53,7 +55,7 @@ export function RevenueTrendChart({ data, currentYear }: RevenueTrendChartProps)
       }
       return row;
     });
-  }, [data, currentYear, currentKey]);
+  }, [data, currentYear, currentMonth, sastYear, currentKey]);
 
   return (
     <div className="w-full h-[400px] min-h-[400px]">

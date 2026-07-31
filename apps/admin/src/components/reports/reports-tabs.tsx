@@ -134,6 +134,7 @@ export function ReportsTabs({
         <div className="grid grid-cols-1 gap-6 min-h-[400px]">
           <RevenueByDivisionChart
             data={budgetChartSeries}
+            currentPeriod={currentPeriod}
           />
         </div>
       </TabsContent>

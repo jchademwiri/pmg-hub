@@ -13,13 +13,19 @@ import { AnalysisKpiStrip } from '@/components/analysis/analysis-kpi-strip'
 
 interface InsightsOverviewClientProps {
   overviewData: any
-  snapshotCount: number
+  overviewStatus?: 'fulfilled' | 'rejected'
+  snapshotCount?: number
+  snapshotsStatus?: 'fulfilled' | 'rejected'
 }
 
 export function InsightsOverviewClient({
   overviewData,
+  overviewStatus,
   snapshotCount,
+  snapshotsStatus,
 }: InsightsOverviewClientProps) {
+  const snapshotBadge = snapshotsStatus === 'rejected' ? 'Unavailable' : `${snapshotCount ?? 0} Saved`
+
   const modules = [
     {
       href: '/insights/analysis',
@@ -44,7 +50,7 @@ export function InsightsOverviewClient({
       title: 'Closed Month Snapshots',
       description: 'Locked point-in-time monthly snapshots for historical reporting and audit verification.',
       icon: Camera,
-      badge: `${snapshotCount} Saved`,
+      badge: snapshotBadge,
       color: 'bg-emerald-500/10 text-emerald-600 dark:bg-emerald-500/20 dark:text-emerald-400',
       accent: 'border-emerald-500/20 hover:border-emerald-500/40',
     },
@@ -62,7 +68,12 @@ export function InsightsOverviewClient({
   return (
     <div className="flex flex-col gap-8">
       {/* High-level KPI Strip */}
-      {overviewData && (
+      {overviewStatus === 'rejected' ? (
+        <section className="rounded-xl border border-destructive/20 bg-destructive/5 p-4 text-sm text-destructive" data-testid="overview-retrieval-failure">
+          <p className="font-medium">Failed to load overview KPI data.</p>
+          <p className="text-xs text-muted-foreground mt-0.5">Please refresh the page or try again later.</p>
+        </section>
+      ) : overviewData ? (
         <section>
           <div className="flex items-center justify-between mb-3">
             <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider">
@@ -75,7 +86,7 @@ export function InsightsOverviewClient({
           </div>
           <AnalysisKpiStrip data={overviewData} />
         </section>
-      )}
+      ) : null}
 
       {/* Reports & Insights Modules Hub Cards */}
       <section className="flex flex-col gap-4">

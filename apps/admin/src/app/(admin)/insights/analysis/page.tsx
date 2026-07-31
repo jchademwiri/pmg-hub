@@ -7,7 +7,6 @@ import {
   getThreeYearYoYComparison,
   getThreeYearMonthlyRevenue,
   getClientConcentration,
-  getMonthlyRevenueVsInvoicedForYear,
   getMonthlyFinancialsBreakdownForYear,
 } from '@pmg/db';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
@@ -50,7 +49,6 @@ export default async function AnalysisPage(props: {
     yoyComparisonResult,
     monthlyRevenueResult,
     clientConcentrationResult,
-    monthlyGrowthResult,
     momBreakdownResult,
   ] = await Promise.allSettled([
     getAnalysisOverview(selectedYear, currentDateStr),
@@ -58,7 +56,6 @@ export default async function AnalysisPage(props: {
     getThreeYearYoYComparison(selectedYear),
     getThreeYearMonthlyRevenue(selectedYear),
     getClientConcentration(selectedYear),
-    getMonthlyRevenueVsInvoicedForYear(selectedYear),
     getMonthlyFinancialsBreakdownForYear(selectedYear),
   ]);
 
@@ -67,7 +64,6 @@ export default async function AnalysisPage(props: {
   if (yoyComparisonResult.status === 'rejected') console.error('YoY comparison error:', yoyComparisonResult.reason);
   if (monthlyRevenueResult.status === 'rejected') console.error('Monthly revenue error:', monthlyRevenueResult.reason);
   if (clientConcentrationResult.status === 'rejected') console.error('Client concentration error:', clientConcentrationResult.reason);
-  if (monthlyGrowthResult.status === 'rejected') console.error('Monthly growth error:', monthlyGrowthResult.reason);
   if (momBreakdownResult.status === 'rejected') console.error('MoM breakdown error:', momBreakdownResult.reason);
 
   const overview = overviewResult.status === 'fulfilled' ? overviewResult.value : {
@@ -79,8 +75,12 @@ export default async function AnalysisPage(props: {
   const yoyComparison = yoyComparisonResult.status === 'fulfilled' ? yoyComparisonResult.value : [];
   const monthlyRevenue = monthlyRevenueResult.status === 'fulfilled' ? monthlyRevenueResult.value : [];
   const clientConcentration = clientConcentrationResult.status === 'fulfilled' ? clientConcentrationResult.value : [];
-  const monthlyGrowth = monthlyGrowthResult.status === 'fulfilled' ? monthlyGrowthResult.value : [];
   const momBreakdown = momBreakdownResult.status === 'fulfilled' ? momBreakdownResult.value : [];
+  const monthlyGrowth = momBreakdown.map((r) => ({
+    month: r.period,
+    received: r.received,
+    invoiced: r.invoiced,
+  }));
 
   return (
     <div className="flex flex-col gap-6">
@@ -127,7 +127,7 @@ export default async function AnalysisPage(props: {
               <CardDescription>Monthly cash income overlaid across previous financial years.</CardDescription>
             </CardHeader>
             <CardContent className="h-[400px]">
-              <RevenueTrendChart data={monthlyRevenue} currentYear={selectedYear} />
+              <RevenueTrendChart data={monthlyRevenue} currentYear={selectedYear} currentMonth={month + 1} sastYear={year} />
             </CardContent>
           </Card>
         </TabsContent>

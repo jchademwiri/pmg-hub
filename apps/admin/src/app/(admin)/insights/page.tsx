@@ -20,14 +20,19 @@ export default async function InsightsOverviewPage() {
     getAllSnapshots(),
   ])
 
+  const overviewStatus = overviewResult.status
+  const snapshotsStatus = snapshotsResult.status
+
   const overviewData = overviewResult.status === 'fulfilled' ? overviewResult.value : null
   const snapshots = snapshotsResult.status === 'fulfilled' ? snapshotsResult.value : []
 
-  const ytdRevenue = overviewData?.ytd?.currentRevenue ?? 0
+  const totalValue = overviewStatus === 'fulfilled' && overviewData
+    ? `YTD Revenue: ${formatZAR(overviewData.ytd?.currentRevenue ?? 0)}`
+    : 'YTD Revenue: Unavailable'
 
   return (
     <div className="flex flex-col gap-6">
-      <SetPageTotal value={`YTD Revenue: ${formatZAR(ytdRevenue)}`} />
+      <SetPageTotal value={totalValue} />
 
       <div>
         <h2 className="text-lg font-semibold">Reports & Insights Overview</h2>
@@ -38,7 +43,9 @@ export default async function InsightsOverviewPage() {
 
       <InsightsOverviewClient
         overviewData={overviewData}
+        overviewStatus={overviewStatus}
         snapshotCount={snapshots.length}
+        snapshotsStatus={snapshotsStatus}
       />
     </div>
   )
