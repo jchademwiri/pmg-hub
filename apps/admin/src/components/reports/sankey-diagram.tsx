@@ -21,6 +21,8 @@ export function SankeyDiagram({
   profitPool,
   ledgerBalances,
 }: SankeyDiagramProps) {
+  const [hoveredId, setHoveredId] = useState<string | null>(null)
+
   const isProfitable = profitPool > 0
   const netRevenue = revenue - pmgShare
 
@@ -36,7 +38,6 @@ export function SankeyDiagram({
 
   // Nodes definition
   const nodes = [
-    // Column 0: Gross
     {
       id: 'gross',
       label: 'Gross Revenue',
@@ -44,12 +45,12 @@ export function SankeyDiagram({
       pct: '100%',
       x: 50,
       y: 180,
-      w: 145,
+      w: 155,
       h: 48,
-      color: 'border-emerald-500 bg-emerald-500/10 text-emerald-500',
+      activeColor: 'border-emerald-500 bg-emerald-500/15 text-emerald-400 stroke-emerald-500',
+      activeText: 'fill-emerald-400',
+      dimColor: 'border-border/60 bg-card/60 text-muted-foreground stroke-border/60',
     },
-    
-    // Column 1: L1 splits
     { 
       id: 'pmg', 
       label: 'PMG Share', 
@@ -57,9 +58,11 @@ export function SankeyDiagram({
       pct: `${pmgPct.toFixed(1)}%`,
       x: 340, 
       y: ledgerBalances ? 90 : 110, 
-      w: 155, 
+      w: 160, 
       h: ledgerBalances ? 68 : 48, 
-      color: 'border-blue-500 bg-blue-500/10 text-blue-500',
+      activeColor: 'border-blue-500 bg-blue-500/15 text-blue-400 stroke-blue-500',
+      activeText: 'fill-blue-400',
+      dimColor: 'border-border/60 bg-card/60 text-muted-foreground stroke-border/60',
       hasBalances: !!ledgerBalances,
       spent: ledgerBalances?.pmg_share.spent,
       available: ledgerBalances?.pmg_share.available,
@@ -71,12 +74,12 @@ export function SankeyDiagram({
       pct: `${netPct.toFixed(1)}%`,
       x: 340, 
       y: 260, 
-      w: 155, 
+      w: 160, 
       h: 48, 
-      color: 'border-emerald-500 bg-emerald-500/10 text-emerald-500',
+      activeColor: 'border-emerald-500 bg-emerald-500/15 text-emerald-400 stroke-emerald-500',
+      activeText: 'fill-emerald-400',
+      dimColor: 'border-border/60 bg-card/60 text-muted-foreground stroke-border/60',
     },
-    
-    // Column 2: L1 Net splits
     { 
       id: 'expenses', 
       label: 'Expenses', 
@@ -84,9 +87,11 @@ export function SankeyDiagram({
       pct: `${expPct.toFixed(1)}%`,
       x: 620, 
       y: 110, 
-      w: 155, 
+      w: 160, 
       h: 48, 
-      color: 'border-amber-500 bg-amber-500/10 text-amber-500',
+      activeColor: 'border-amber-500 bg-amber-500/15 text-amber-400 stroke-amber-500',
+      activeText: 'fill-amber-400',
+      dimColor: 'border-border/60 bg-card/60 text-muted-foreground stroke-border/60',
     },
     { 
       id: 'pool', 
@@ -95,15 +100,55 @@ export function SankeyDiagram({
       pct: `${poolPct.toFixed(1)}%`,
       x: 620, 
       y: 260, 
-      w: 155, 
+      w: 160, 
       h: 48, 
-      color: isProfitable 
-        ? 'border-emerald-500 bg-emerald-500/10 text-emerald-500' 
-        : 'border-red-500 bg-red-500/10 text-red-500' 
+      activeColor: isProfitable 
+        ? 'border-emerald-500 bg-emerald-500/15 text-emerald-400 stroke-emerald-500' 
+        : 'border-red-500 bg-red-500/15 text-red-400 stroke-red-500', 
+      activeText: isProfitable ? 'fill-emerald-400' : 'fill-red-400',
+      dimColor: 'border-border/60 bg-card/60 text-muted-foreground stroke-border/60',
     },
   ]
 
-  const activeNodes = nodes
+  // Links definitions
+  const links = [
+    { 
+      id: 'link-gross-pmg',
+      source: 'gross', 
+      target: 'pmg', 
+      val: pmgShare, 
+      pct: `${pmgPct.toFixed(1)}%`, 
+      activeStroke: 'stroke-blue-500/70 dark:stroke-blue-400/80',
+      dimStroke: 'stroke-muted-foreground/20 dark:stroke-border/40',
+    },
+    { 
+      id: 'link-gross-net',
+      source: 'gross', 
+      target: 'net', 
+      val: netRevenue, 
+      pct: `${netPct.toFixed(1)}%`, 
+      activeStroke: 'stroke-emerald-500/70 dark:stroke-emerald-400/80',
+      dimStroke: 'stroke-muted-foreground/20 dark:stroke-border/40',
+    },
+    { 
+      id: 'link-net-expenses',
+      source: 'net', 
+      target: 'expenses', 
+      val: expenses, 
+      pct: `${expPct.toFixed(1)}%`, 
+      activeStroke: 'stroke-amber-500/70 dark:stroke-amber-400/80',
+      dimStroke: 'stroke-muted-foreground/20 dark:stroke-border/40',
+    },
+    { 
+      id: 'link-net-pool',
+      source: 'net', 
+      target: 'pool', 
+      val: Math.abs(profitPool), 
+      pct: `${poolPct.toFixed(1)}%`, 
+      activeStroke: isProfitable ? 'stroke-emerald-500/70 dark:stroke-emerald-400/80' : 'stroke-red-500/70 dark:stroke-red-400/80',
+      dimStroke: 'stroke-muted-foreground/20 dark:stroke-border/40',
+    },
+  ]
 
   // Link helper (cubic bezier link paths)
   const getLinkPath = (x0: number, y0: number, x1: number, y1: number) => {
@@ -111,22 +156,26 @@ export function SankeyDiagram({
     return `M ${x0} ${y0} C ${x0 + dx} ${y0}, ${x1 - dx} ${y1}, ${x1} ${y1}`
   }
 
-  // Links definitions
-  const links = [
-    // Col 0 -> Col 1
-    { source: 'gross', target: 'pmg', val: pmgShare, pct: `${pmgPct.toFixed(1)}%`, color: 'stroke-blue-500/20 dark:stroke-blue-500/10' },
-    { source: 'gross', target: 'net', val: netRevenue, pct: `${netPct.toFixed(1)}%`, color: 'stroke-emerald-500/20 dark:stroke-emerald-500/10' },
-    
-    // Col 1 -> Col 2
-    { source: 'net', target: 'expenses', val: expenses, pct: `${expPct.toFixed(1)}%`, color: 'stroke-amber-500/20 dark:stroke-amber-500/10' },
-    { source: 'net', target: 'pool', val: Math.abs(profitPool), pct: `${poolPct.toFixed(1)}%`, color: isProfitable ? 'stroke-emerald-500/20 dark:stroke-emerald-500/10' : 'stroke-red-500/20 dark:stroke-red-500/10' },
-  ]
-
   // Max stroke width for styling links
   const maxStroke = 32
   const getStrokeWidth = (val: number) => {
     const ratio = revenue !== 0 ? val / revenue : 0
-    return Math.max(2, ratio * maxStroke)
+    return Math.max(3, ratio * maxStroke)
+  }
+
+  // Hover helper logic
+  const isLinkActive = (link: typeof links[0]) => {
+    if (!hoveredId) return false
+    if (hoveredId === link.id) return true
+    return hoveredId === link.source || hoveredId === link.target
+  }
+
+  const isNodeActive = (nodeId: string) => {
+    if (!hoveredId) return false
+    if (hoveredId === nodeId) return true
+    const activeLink = links.find((l) => l.id === hoveredId)
+    if (activeLink) return activeLink.source === nodeId || activeLink.target === nodeId
+    return links.some((l) => (l.source === hoveredId && l.target === nodeId) || (l.target === hoveredId && l.source === nodeId))
   }
 
   return (
@@ -138,23 +187,23 @@ export function SankeyDiagram({
               <span>Allocation Route — Flow & % Distribution</span>
             </CardTitle>
             <CardDescription>
-              Visual routing of gross income stream with percentage breakdown across PMG Share, Expenses, and Profit Pool.
+              Interactive income flow routing. Hover over nodes or flow lines to highlight distribution paths.
             </CardDescription>
           </div>
           
           {/* Summary Percentage Distribution Badges */}
           <div className="flex items-center gap-1.5 flex-wrap">
-            <span className="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-blue-500/10 text-blue-600 border border-blue-500/20">
+            <span className="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-blue-500/10 text-blue-600 dark:text-blue-400 border border-blue-500/20">
               PMG Share: {pmgPct.toFixed(1)}%
             </span>
-            <span className="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-amber-500/10 text-amber-600 border border-amber-500/20">
+            <span className="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-500/20">
               Expenses: {expPct.toFixed(1)}%
             </span>
             <span className={cn(
               "text-[10px] font-semibold px-2 py-0.5 rounded-full border",
               isProfitable 
-                ? "bg-emerald-500/10 text-emerald-600 border-emerald-500/20" 
-                : "bg-red-500/10 text-red-600 border-red-500/20"
+                ? "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-500/20" 
+                : "bg-red-500/10 text-red-600 dark:text-red-400 border-red-500/20"
             )}>
               Net Profit: {poolPct.toFixed(1)}%
             </span>
@@ -168,43 +217,61 @@ export function SankeyDiagram({
             className="w-full min-w-[760px] h-auto overflow-visible select-none"
           >
             {/* Draw Links */}
-            {links.map((link, i) => {
-              const srcNode = nodes.find(n => n.id === link.source)!
-              const tgtNode = nodes.find(n => n.id === link.target)!
+            {links.map((link) => {
+              const srcNode = nodes.find((n) => n.id === link.source)!
+              const tgtNode = nodes.find((n) => n.id === link.target)!
               
-              // Anchor link positions at middle-right of source, middle-left of target
               const x0 = srcNode.x + srcNode.w
               const y0 = srcNode.y + srcNode.h / 2
               const x1 = tgtNode.x
               const y1 = tgtNode.y + tgtNode.h / 2
               
-              const strokeWidth = getStrokeWidth(link.val)
+              const baseWidth = getStrokeWidth(link.val)
+              const active = isLinkActive(link)
+              const strokeWidth = active ? baseWidth + 3 : baseWidth
               const midX = (x0 + x1) / 2
               const midY = (y0 + y1) / 2
 
               return (
-                <g key={`link-group-${i}`}>
+                <g 
+                  key={link.id} 
+                  className="cursor-pointer group/link"
+                  onMouseEnter={() => setHoveredId(link.id)}
+                  onMouseLeave={() => setHoveredId(null)}
+                >
                   <path
                     d={getLinkPath(x0, y0, x1, y1)}
                     fill="none"
-                    className={cn("transition-all duration-300 hover:stroke-opacity-80", link.color)}
+                    className={cn(
+                      "transition-all duration-300",
+                      active ? link.activeStroke : link.dimStroke
+                    )}
                     strokeWidth={strokeWidth}
                     style={{ strokeLinecap: 'round' }}
                   />
                   {/* Link Percentage Label Badge */}
                   <rect
-                    x={midX - 18}
-                    y={midY - 8}
-                    width={36}
-                    height={16}
-                    rx="8"
-                    className="fill-background/90 stroke-border/60 stroke-[1px]"
+                    x={midX - 20}
+                    y={midY - 9}
+                    width={40}
+                    height={18}
+                    rx="9"
+                    className={cn(
+                      "transition-all duration-300 stroke-[1px]",
+                      active 
+                        ? "fill-card stroke-primary shadow-sm" 
+                        : "fill-muted/70 dark:fill-zinc-900/80 stroke-border/50"
+                    )}
                   />
                   <text
                     x={midX}
-                    y={midY + 3.5}
+                    y={midY + 0.5}
                     textAnchor="middle"
-                    className="text-[9px] font-bold fill-foreground/80 tabular-nums"
+                    dominantBaseline="central"
+                    className={cn(
+                      "text-[9px] font-bold tabular-nums transition-colors duration-300",
+                      active ? "fill-foreground" : "fill-muted-foreground/80"
+                    )}
                   >
                     {link.pct}
                   </text>
@@ -213,72 +280,109 @@ export function SankeyDiagram({
             })}
 
             {/* Draw Nodes */}
-            {activeNodes.map((node) => (
-              <g key={node.id} className="group/node">
-                {/* Outer Box */}
-                <rect
-                  x={node.x}
-                  y={node.y}
-                  width={node.w}
-                  height={node.h}
-                  rx="6"
-                  className={cn(
-                    "transition-all duration-300 border-[1.5px] stroke-[1.5px] stroke-current fill-card hover:brightness-105 hover:shadow-md",
-                    node.color
-                  )}
-                  style={{ stroke: 'currentColor' }}
-                />
+            {nodes.map((node) => {
+              const active = isNodeActive(node.id)
 
-                {/* Node Header Label & Percentage Badge */}
-                <text
-                  x={node.x + 8}
-                  y={node.hasBalances ? node.y + 14 : node.y + 16}
-                  className="text-[9px] font-semibold fill-muted-foreground group-hover/node:fill-foreground transition-colors"
+              return (
+                <g 
+                  key={node.id} 
+                  className="cursor-pointer group/node"
+                  onMouseEnter={() => setHoveredId(node.id)}
+                  onMouseLeave={() => setHoveredId(null)}
                 >
-                  {node.label}
-                </text>
-                <text
-                  x={node.x + node.w - 8}
-                  y={node.hasBalances ? node.y + 14 : node.y + 16}
-                  textAnchor="end"
-                  className="text-[9px] font-bold fill-primary tabular-nums"
-                >
-                  {node.pct}
-                </text>
+                  {/* Outer Box */}
+                  <rect
+                    x={node.x}
+                    y={node.y}
+                    width={node.w}
+                    height={node.h}
+                    rx="8"
+                    className={cn(
+                      "transition-all duration-300 border-[1.5px] stroke-[1.5px]",
+                      active ? node.activeColor : node.dimColor
+                    )}
+                  />
 
-                {/* Node Value */}
-                <text
-                  x={node.x + 8}
-                  y={node.hasBalances ? node.y + 28 : node.y + 32}
-                  className="text-[10px] font-bold tabular-nums fill-foreground"
-                >
-                  {formatZAR(node.val)}
-                </text>
+                  {/* Node Label */}
+                  <text
+                    x={node.x + 10}
+                    y={node.y + 15}
+                    className={cn(
+                      "text-[9.5px] font-semibold transition-colors duration-300",
+                      active ? "fill-foreground" : "fill-muted-foreground/75"
+                    )}
+                  >
+                    {node.label}
+                  </text>
 
-                {/* Secondary States (Withdrawn & Available) */}
-                {node.hasBalances && (
-                  <>
-                    <text
-                      x={node.x + 8}
-                      y={node.y + 44}
-                      className="text-[8px] font-medium fill-muted-foreground tabular-nums"
-                    >
-                      Withdrawn: {formatZAR(node.spent ?? 0)}
-                    </text>
-                    <text
-                      x={node.x + 8}
-                      y={node.y + 55}
+                  {/* Center-Aligned Percentage Badge inside Card Header */}
+                  <g>
+                    <rect
+                      x={node.x + node.w - 44}
+                      y={node.y + (node.hasBalances ? 6 : 7)}
+                      width={36}
+                      height={16}
+                      rx="8"
                       className={cn(
-                        "text-[8px] font-semibold tabular-nums",
-                        (node.available ?? 0) >= 0 ? "fill-emerald-500/90 dark:fill-emerald-400/90" : "fill-red-400"
+                        "transition-all duration-300 stroke-[1px]",
+                        active 
+                          ? "fill-card/90 stroke-current" 
+                          : "fill-muted/50 dark:fill-zinc-800/60 stroke-border/40"
+                      )}
+                    />
+                    <text
+                      x={node.x + node.w - 26}
+                      y={node.y + (node.hasBalances ? 14 : 15)}
+                      textAnchor="middle"
+                      dominantBaseline="central"
+                      className={cn(
+                        "text-[9px] font-bold tabular-nums transition-colors duration-300",
+                        active ? node.activeText : "fill-muted-foreground/70"
                       )}
                     >
-                      Balance: {formatZAR(node.available ?? 0)}
+                      {node.pct}
                     </text>
-                  </>
-                )}
-              </g>
-            ))}
+                  </g>
+
+                  {/* Node Value */}
+                  <text
+                    x={node.x + 10}
+                    y={node.hasBalances ? node.y + 30 : node.y + 33}
+                    className={cn(
+                      "text-[10.5px] font-bold tabular-nums transition-colors duration-300",
+                      active ? "fill-foreground" : "fill-foreground/80"
+                    )}
+                  >
+                    {formatZAR(node.val)}
+                  </text>
+
+                  {/* Secondary States (Withdrawn & Available) */}
+                  {node.hasBalances && (
+                    <>
+                      <text
+                        x={node.x + 10}
+                        y={node.y + 46}
+                        className="text-[8px] font-medium fill-muted-foreground/75 tabular-nums"
+                      >
+                        Withdrawn: {formatZAR(node.spent ?? 0)}
+                      </text>
+                      <text
+                        x={node.x + 10}
+                        y={node.y + 57}
+                        className={cn(
+                          "text-[8px] font-semibold tabular-nums transition-colors",
+                          active
+                            ? (node.available ?? 0) >= 0 ? "fill-emerald-400" : "fill-red-400"
+                            : (node.available ?? 0) >= 0 ? "fill-emerald-500/80" : "fill-red-400/80"
+                        )}
+                      >
+                        Balance: {formatZAR(node.available ?? 0)}
+                      </text>
+                    </>
+                  )}
+                </g>
+              )
+            })}
           </svg>
         </div>
       </CardContent>
