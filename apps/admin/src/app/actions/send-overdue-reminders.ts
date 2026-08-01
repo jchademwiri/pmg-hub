@@ -74,6 +74,7 @@ export type ReminderPreviewPayload = {
 
 export type SendCustomizedReminderPayload = ReminderPreviewPayload & {
   batchId?: string;
+  invoiceIds?: string[];
 };
 
 type ReminderEmailContext = {

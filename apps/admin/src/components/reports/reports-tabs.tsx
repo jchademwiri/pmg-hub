@@ -12,6 +12,12 @@ import { SankeyDiagram } from './sankey-diagram'
 import { ReportCommentary } from './report-commentary'
 import { FinancialDrilldownSheet } from '@/components/insights/financial-drilldown-sheet'
 import type { DrilldownType } from '@/app/actions/drilldown'
+import type {
+  MoMSnapshot,
+  MonthlyBudgetChartRow,
+  MonthlyFinancials,
+  BucketBalances,
+} from '@/lib/financial'
 import { TrendingUp, DollarSign, Receipt, PiggyBank, Printer } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 

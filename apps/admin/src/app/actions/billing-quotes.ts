@@ -488,7 +488,7 @@ export async function fetchQuotesByYear(year: number, divisionId?: string, statu
  */
 export async function convertQuotationToInvoice(id: string): Promise<{ error?: string; id?: string }> {
   try {
-    await getSessionOrRedirect();
+    const session = await getSessionOrRedirect();
     const db = getDb();
     const { invoices } = await import('@pmg/db');
 
@@ -503,8 +503,10 @@ export async function convertQuotationToInvoice(id: string): Promise<{ error?: s
 
     const dueDate = addDays(todayStr, 30);
 
+    const year = new Date(todayStr).getFullYear();
+    const documentNumber = await getNextDocumentNumber(source.divisionId, 'invoice', year);
+
     const newInvoiceId = await db.transaction(async (tx) => {
-      const documentNumber = await getNextDocumentNumber(tx, 'invoice', source.divisionId);
 
       const [inv] = await tx
         .insert(invoices)
@@ -514,7 +516,6 @@ export async function convertQuotationToInvoice(id: string): Promise<{ error?: s
           clientId: source.clientId,
           invoiceDate: todayStr,
           dueDate,
-          period: todayStr.slice(0, 7),
           reference: source.reference ? `Quote ${source.documentNumber}: ${source.reference}` : `From Quote ${source.documentNumber}`,
           subtotal: source.subtotal,
           discountType: source.discountType,
@@ -523,6 +524,7 @@ export async function convertQuotationToInvoice(id: string): Promise<{ error?: s
           vatAmount: source.vatAmount,
           total: source.total,
           status: 'issued',
+          createdBy: session.user.id,
         })
         .returning({ id: invoices.id });
 

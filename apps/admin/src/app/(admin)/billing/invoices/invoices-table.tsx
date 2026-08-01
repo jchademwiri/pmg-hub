@@ -126,6 +126,7 @@ export function InvoicesTable({
             const clientLabel = clientItem.businessName || clientItem.clientName;
             const res = await sendCustomizedReminderAction({
               clientId: clientItem.clientId,
+              divisionId: clientItem.divisionId,
               recipientEmail: clientItem.email,
               subject: `Overdue Payment Reminder - ${clientLabel}`,
               invoiceIds: matchingInvoiceIds,
