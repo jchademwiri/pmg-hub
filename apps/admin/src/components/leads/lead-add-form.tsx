@@ -50,7 +50,7 @@ export function LeadAddForm({ divisions, createAction, onCancel }: LeadAddFormPr
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 items-start">
         <Field>
           <FieldLabel htmlFor="lead-name">
-            Name <span className="text-destructive">*</span>
+            Contact Name <span className="text-destructive">*</span>
           </FieldLabel>
           <Input
             id="lead-name"
@@ -58,6 +58,17 @@ export function LeadAddForm({ divisions, createAction, onCancel }: LeadAddFormPr
             type="text"
             placeholder="e.g. John Doe"
             required
+            disabled={isPending}
+          />
+        </Field>
+
+        <Field>
+          <FieldLabel htmlFor="lead-company">Company / Business Name</FieldLabel>
+          <Input
+            id="lead-company"
+            name="companyName"
+            type="text"
+            placeholder="e.g. Acme Pty Ltd"
             disabled={isPending}
           />
         </Field>

@@ -173,6 +173,9 @@ export function DocumentPreview({
         <div className="flex max-w-[16rem] items-start gap-4">
           <div className="flex flex-col gap-0.5">
             <span className="text-lg font-bold tracking-tight">{org.name}</span>
+            {org.divisionOf && (
+              <span className="text-xs text-zinc-500 italic">A division of {org.divisionOf}</span>
+            )}
             {org.registrationNumber && (
               <span className="text-xs text-zinc-500">Reg: {org.registrationNumber}</span>
             )}

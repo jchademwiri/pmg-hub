@@ -22,8 +22,21 @@ const ExpenseSchema = z.object({
 import { writeFile, mkdir } from 'fs/promises';
 import { join } from 'path';
 
-async function handleReceiptUpload(file: File | null): Promise<{ url?: string; fileName?: string; fileSize?: number }> {
+const MAX_FILE_SIZE = 10 * 1024 * 1024; // 10MB
+const ALLOWED_MIME_TYPES = ['application/pdf', 'image/png', 'image/jpeg', 'image/jpg'];
+
+async function handleReceiptUpload(file: File | null): Promise<{ url?: string; fileName?: string; fileSize?: number; error?: string }> {
   if (!file || typeof file === 'string' || file.size === 0 || file.name === 'undefined') return {};
+
+  if (file.size > MAX_FILE_SIZE) {
+    return { error: 'File size exceeds 10MB limit.' };
+  }
+
+  const mimeMatch = ALLOWED_MIME_TYPES.includes(file.type.toLowerCase());
+  const nameMatch = /\.(pdf|png|jpe?g)$/i.test(file.name);
+  if (!mimeMatch && !nameMatch) {
+    return { error: 'Only PDF, PNG, JPG, and JPEG files are allowed.' };
+  }
 
   try {
     const bytes = await file.arrayBuffer();
@@ -68,6 +81,9 @@ export async function createExpense(formData: FormData): Promise<{ error?: strin
 
     const receiptFile = formData.get('receipt') as File | null;
     const receiptData = await handleReceiptUpload(receiptFile);
+    if (receiptData.error) {
+      return { error: receiptData.error };
+    }
 
     const [inserted] = await db.insert(expenses).values({
       date: parsed.date,
@@ -126,6 +142,9 @@ export async function updateExpense(id: string, formData: FormData): Promise<{ e
     }
     const receiptFile = formData.get('receipt') as File | null;
     const receiptData = await handleReceiptUpload(receiptFile);
+    if (receiptData.error) {
+      return { error: receiptData.error };
+    }
 
     const updatePayload: Record<string, any> = {
       date: parsed.date,

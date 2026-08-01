@@ -195,6 +195,7 @@ function ExpenseTableRow({
               disabled={isSaving}
             />
           </TableCell>
+          <TableCell />
           <TableCell>
             <div className="flex items-center gap-2">
               <Button size="sm" onClick={handleSave} disabled={isSaving}>
@@ -214,7 +215,7 @@ function ExpenseTableRow({
         </TableRow>
         {error && (
           <TableRow>
-            <TableCell colSpan={7} className="py-1">
+            <TableCell colSpan={8} className="py-1">
               <p className="text-sm text-destructive">{error}</p>
             </TableCell>
           </TableRow>

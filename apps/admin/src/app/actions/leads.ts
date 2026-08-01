@@ -51,6 +51,7 @@ export async function updateLeadNotes(id: string, formData: FormData): Promise<{
 const CreateLeadSchema = z
   .object({
     name: z.string().min(1),
+    companyName: z.string().optional(),
     email: z.string().email().optional(),
     phone: z.string().optional(),
     source: z.string().optional(),
@@ -72,6 +73,7 @@ export async function createLead(formData: FormData): Promise<{ error?: string }
     const parsed = result.data;
     await db.insert(leads).values({
       name: parsed.name,
+      companyName: parsed.companyName ?? null,
       email: parsed.email ?? null,
       phone: parsed.phone ?? null,
       source: parsed.source ?? null,
@@ -143,8 +145,10 @@ export async function convertLeadToClient(id: string): Promise<{ error?: string;
 
       const [client] = await tx.insert(clients).values({
         name: leadRow.name || 'Converted Lead',
+        businessName: leadRow.companyName ?? null,
         email: leadRow.email ?? null,
         phone: leadRow.phone ?? null,
+        divisionId: leadRow.divisionId ?? null,
         isActive: true,
       }).returning({ id: clients.id });
 

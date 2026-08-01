@@ -5,6 +5,7 @@ import { sql, eq, desc, asc, and } from 'drizzle-orm';
 export type LeadRow = {
   id: string;
   name: string | null;
+  companyName?: string | null;
   email: string | null;
   phone: string | null;
   message: string | null;
@@ -43,6 +44,7 @@ export async function getAllLeads(filters?: {
     .select({
       id: leads.id,
       name: leads.name,
+      companyName: leads.companyName,
       email: leads.email,
       phone: leads.phone,
       message: leads.message,
@@ -74,6 +76,7 @@ export async function getLeadById(id: string): Promise<LeadRow | null> {
     .select({
       id: leads.id,
       name: leads.name,
+      companyName: leads.companyName,
       email: leads.email,
       phone: leads.phone,
       message: leads.message,

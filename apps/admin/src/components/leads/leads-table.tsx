@@ -75,7 +75,14 @@ export function LeadsTable({ entries, deleteAction }: LeadsTableProps) {
         <TableBody>
           {entries.map((entry) => (
             <TableRow key={entry.id}>
-              <TableCell>{entry.name ?? ''}</TableCell>
+              <TableCell>
+                <div className="flex flex-col">
+                  <span className="font-medium text-foreground">{entry.name ?? ''}</span>
+                  {entry.companyName && (
+                    <span className="text-xs text-muted-foreground">{entry.companyName}</span>
+                  )}
+                </div>
+              </TableCell>
               <TableCell>{entry.email ?? entry.phone ?? ''}</TableCell>
               <TableCell>{entry.divisionName ?? ''}</TableCell>
               <TableCell>{entry.source ?? ''}</TableCell>

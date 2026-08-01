@@ -13,9 +13,10 @@ interface ClientEditFormProps {
   client: Client
   divisions: { id: string; name: string }[]
   updateAction: (formData: FormData) => Promise<{ error?: string }>
+  onCancel?: () => void
 }
 
-export function ClientEditForm({ client, divisions, updateAction }: ClientEditFormProps) {
+export function ClientEditForm({ client, divisions, updateAction, onCancel }: ClientEditFormProps) {
   const router = useRouter()
   const [isPending, startTransition] = React.useTransition()
   const [errorMessage, setErrorMessage] = React.useState<string | null>(null)
@@ -32,6 +33,7 @@ export function ClientEditForm({ client, divisions, updateAction }: ClientEditFo
         setErrorMessage(result.error)
       } else {
         router.refresh()
+        if (onCancel) onCancel()
       }
     })
   }
@@ -123,7 +125,18 @@ export function ClientEditForm({ client, divisions, updateAction }: ClientEditFo
       </div>
 
       <div className="flex items-center justify-end gap-3 border-t border-border/50 pt-4 mt-2">
-        <Button type="submit" disabled={isPending}>
+        {onCancel && (
+          <Button
+            type="button"
+            variant="outline"
+            onClick={onCancel}
+            disabled={isPending}
+            size="sm"
+          >
+            Cancel
+          </Button>
+        )}
+        <Button type="submit" disabled={isPending} size="sm">
           {isPending ? 'Saving…' : 'Save Changes'}
         </Button>
       </div>

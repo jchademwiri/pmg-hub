@@ -116,14 +116,14 @@ export function resolveDivisionBranding(
   const firstInvoiceDivId = invoices.length > 0 ? (invoices[0]!.divisionId ?? null) : null;
   const effectiveDivisionId = linkedId ?? firstInvoiceDivId;
 
-  // Try linked invoice first (its divisionName is the most authoritative)
-  const linkedInvoice = invoices.find((inv) => inv.divisionId === linkedId);
+  // Try linked division from allDivisions list first (authoritative client division)
   const linkedDivName = linkedId && allDivisions
     ? allDivisions.find((d) => d.id === linkedId)?.name
     : undefined;
+  const linkedInvoice = invoices.find((inv) => inv.divisionId === linkedId);
 
-  const divisionName = linkedInvoice?.divisionName
-    ?? linkedDivName
+  const divisionName = linkedDivName
+    ?? linkedInvoice?.divisionName
     ?? invoices[0]?.divisionName
     ?? defaultName;
 
@@ -141,10 +141,11 @@ export function buildOrgProps(
   /** Pass `null` to suppress the "A division of..." line entirely; omit or pass `undefined` to use the default `'Playhouse Media Group'` */
   divisionOf?: string | null,
 ): OrgPreviewProps {
+  const isMainOrg = divisionName.trim().toLowerCase() === 'playhouse media group';
   return {
     name: divisionName,
     logoUrl: getDocumentLogoUrl(divisionName),
-    divisionOf: divisionOf !== null ? (divisionOf ?? 'Playhouse Media Group') : undefined,
+    divisionOf: !isMainOrg && divisionOf !== null ? (divisionOf ?? 'Playhouse Media Group') : undefined,
     registrationNumber: orgSettings?.registrationNumber ?? undefined,
     vatNumber: orgSettings?.vatNumber ?? undefined,
     email: divSettings?.salesRepEmail ?? orgSettings?.email ?? undefined,
