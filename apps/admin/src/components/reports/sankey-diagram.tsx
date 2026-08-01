@@ -316,29 +316,29 @@ export function SankeyDiagram({
                     {node.label}
                   </text>
 
-                  {/* Center-Aligned Percentage Badge inside Card Header */}
+                  {/* Vertically Centered Percentage Badge on Card */}
                   <g>
                     <rect
-                      x={node.x + node.w - 44}
-                      y={node.y + (node.hasBalances ? 6 : 7)}
-                      width={36}
-                      height={16}
-                      rx="8"
+                      x={node.x + node.w - 48}
+                      y={node.y + node.h / 2 - 10}
+                      width={38}
+                      height={20}
+                      rx="10"
                       className={cn(
                         "transition-all duration-300 stroke-[1px]",
                         active 
-                          ? "fill-card/90 stroke-current" 
-                          : "fill-muted/50 dark:fill-zinc-800/60 stroke-border/40"
+                          ? "fill-card/90 stroke-current shadow-sm" 
+                          : "fill-muted/60 dark:fill-zinc-800/80 stroke-border/50"
                       )}
                     />
                     <text
-                      x={node.x + node.w - 26}
-                      y={node.y + (node.hasBalances ? 14 : 15)}
+                      x={node.x + node.w - 29}
+                      y={node.y + node.h / 2}
                       textAnchor="middle"
                       dominantBaseline="central"
                       className={cn(
-                        "text-[9px] font-bold tabular-nums transition-colors duration-300",
-                        active ? node.activeText : "fill-muted-foreground/70"
+                        "text-[9.5px] font-bold tabular-nums transition-colors duration-300",
+                        active ? node.activeText : "fill-muted-foreground/80"
                       )}
                     >
                       {node.pct}
