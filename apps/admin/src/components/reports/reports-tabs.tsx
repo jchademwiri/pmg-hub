@@ -75,6 +75,15 @@ export function ReportsTabs({
   const totalPmgShare = totalRevenue * PMG_SHARE_RATE
   const totalProfitPool = totalRevenue - totalExpenses - totalPmgShare
 
+  // Map Sankey node IDs to drill-down types
+  const nodeToDrillType: Record<string, DrilldownType> = {
+    gross: 'revenue',
+    net: 'revenue',
+    pmg: 'pmg_share',
+    expenses: 'expenses',
+    pool: 'revenue',
+  }
+
   return (
     <>
     <FinancialDrilldownSheet
@@ -155,6 +164,10 @@ export function ReportsTabs({
             pmgShare={totalPmgShare}
             profitPool={totalProfitPool}
             ledgerBalances={ledgerBalances}
+            onNodeClick={(nodeId) => {
+              const type = nodeToDrillType[nodeId]
+              if (type) openDrill(type, currentPeriod)
+            }}
           />
           <ProfitPoolChart
             data={monthlyFinancials.map(m => ({ period: m.month, profit: m.revenue * (1 - PMG_SHARE_RATE) - m.expenses }))}

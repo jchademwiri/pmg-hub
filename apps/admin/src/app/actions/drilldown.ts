@@ -2,7 +2,7 @@
 
 import { getIncomeByPeriod, getExpensesByPeriod, getLedgerEntriesByPeriod } from '@pmg/db'
 
-export type DrilldownType = 'revenue' | 'expenses' | 'salary' | 'reinvest' | 'reserve' | 'flex'
+export type DrilldownType = 'revenue' | 'expenses' | 'pmg_share' | 'salary' | 'reinvest' | 'reserve' | 'flex'
 
 export type IncomeRow = {
   date: string
@@ -45,7 +45,7 @@ export async function getDrilldownData(
     const rows = await getExpensesByPeriod(period)
     return { type: 'expense', total: rows.reduce((s, r) => s + r.amount, 0), rows }
   }
-  // For allocation types (salary, reinvest, reserve, flex) → ledger entries
+  // For allocation types (pmg_share, salary, reinvest, reserve, flex) → ledger entries
   const rows = await getLedgerEntriesByPeriod(period, drillType)
   return { type: 'ledger', total: rows.total, rows: rows.entries }
 }

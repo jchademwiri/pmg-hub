@@ -1,9 +1,17 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useRef } from 'react'
 import { formatZAR } from '@/lib/format'
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card'
+import { Button } from '@/components/ui/button'
+import {
+  DropdownMenu,
+  DropdownMenuTrigger,
+  DropdownMenuContent,
+  DropdownMenuItem,
+} from '@/components/ui/dropdown-menu'
 import { cn } from '@/lib/utils'
+import { Download } from 'lucide-react'
 
 interface SankeyDiagramProps {
   revenue: number
@@ -13,6 +21,7 @@ interface SankeyDiagramProps {
   ledgerBalances?: {
     pmg_share: { expected: number; spent: number; available: number }
   }
+  onNodeClick?: (nodeId: string) => void
 }
 
 export function SankeyDiagram({
@@ -21,8 +30,55 @@ export function SankeyDiagram({
   pmgShare,
   profitPool,
   ledgerBalances,
+  onNodeClick,
 }: SankeyDiagramProps) {
   const [hoveredId, setHoveredId] = useState<string | null>(null)
+  const svgRef = useRef<SVGSVGElement>(null)
+
+  const handleExportSVG = () => {
+    if (!svgRef.current) return
+    const svgString = new XMLSerializer().serializeToString(svgRef.current)
+    const blob = new Blob([svgString], { type: 'image/svg+xml;charset=utf-8' })
+    const url = URL.createObjectURL(blob)
+    const link = document.createElement('a')
+    link.href = url
+    link.download = `pmg-allocation-flow.svg`
+    document.body.appendChild(link)
+    link.click()
+    document.body.removeChild(link)
+    URL.revokeObjectURL(url)
+  }
+
+  const handleExportPNG = () => {
+    if (!svgRef.current) return
+    const svgElement = svgRef.current
+    const svgString = new XMLSerializer().serializeToString(svgElement)
+    const blob = new Blob([svgString], { type: 'image/svg+xml;charset=utf-8' })
+    const url = URL.createObjectURL(blob)
+    const img = new Image()
+
+    img.onload = () => {
+      const canvas = document.createElement('canvas')
+      canvas.width = 840 * 2
+      canvas.height = 410 * 2
+      const ctx = canvas.getContext('2d')
+      if (ctx) {
+        ctx.fillStyle = '#09090b'
+        ctx.fillRect(0, 0, canvas.width, canvas.height)
+        ctx.drawImage(img, 0, 0, canvas.width, canvas.height)
+        const pngUrl = canvas.toDataURL('image/png')
+        const link = document.createElement('a')
+        link.href = pngUrl
+        link.download = `pmg-allocation-flow.png`
+        document.body.appendChild(link)
+        link.click()
+        document.body.removeChild(link)
+      }
+      URL.revokeObjectURL(url)
+    }
+
+    img.src = url
+  }
 
   const isProfitable = profitPool > 0
   const netRevenue = revenue - pmgShare
@@ -192,8 +248,8 @@ export function SankeyDiagram({
             </CardDescription>
           </div>
           
-          {/* Summary Percentage Distribution Badges */}
-          <div className="flex items-center gap-1.5 flex-wrap">
+          {/* Summary Percentage Distribution Badges & Export Button */}
+          <div className="flex items-center gap-2 flex-wrap">
             <span className="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-blue-500/10 text-blue-600 dark:text-blue-400 border border-blue-500/20">
               PMG Share: {pmgPct.toFixed(1)}%
             </span>
@@ -208,12 +264,30 @@ export function SankeyDiagram({
             )}>
               Net Profit: {poolPct.toFixed(1)}%
             </span>
+
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="outline" size="sm" className="h-7 text-xs gap-1 ml-1">
+                  <Download className="h-3.5 w-3.5" />
+                  Export
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end">
+                <DropdownMenuItem onClick={handleExportPNG} className="text-xs cursor-pointer">
+                  Download PNG (High Res)
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={handleExportSVG} className="text-xs cursor-pointer">
+                  Download SVG (Vector)
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
           </div>
         </div>
       </CardHeader>
       <CardContent className="pt-2">
         <div className="w-full overflow-x-auto">
           <svg 
+            ref={svgRef}
             viewBox={`0 0 ${width} ${height}`} 
             className="w-full min-w-[760px] h-auto overflow-visible select-none"
           >
@@ -290,6 +364,7 @@ export function SankeyDiagram({
                   className="cursor-pointer group/node"
                   onMouseEnter={() => setHoveredId(node.id)}
                   onMouseLeave={() => setHoveredId(null)}
+                  onClick={() => onNodeClick?.(node.id)}
                 >
                   {/* Outer Box */}
                   <rect
