@@ -47,23 +47,23 @@ export default async function StatementsPage({ searchParams }: PageProps) {
     .where(eq(income.clientId, client.id))
     .orderBy(desc(income.date));
 
-  // Get the division of the most recent invoice to use for branding/logo
-  const lastInvoice = allInvoices[0];
+  // Resolve division per client & statement invoices (prioritize client.divisionId first)
+  const effectiveDivisionId = client.divisionId ?? (allInvoices[0]?.divisionId || null);
   let division = null;
   let divSettings = null;
 
-  if (lastInvoice) {
+  if (effectiveDivisionId) {
     const [fetchedDivision] = await db
       .select()
       .from(divisions)
-      .where(eq(divisions.id, lastInvoice.divisionId))
+      .where(eq(divisions.id, effectiveDivisionId))
       .limit(1);
     division = fetchedDivision;
 
     const [fetchedSettings] = await db
       .select()
       .from(divisionBillingSettings)
-      .where(eq(divisionBillingSettings.divisionId, lastInvoice.divisionId))
+      .where(eq(divisionBillingSettings.divisionId, effectiveDivisionId))
       .limit(1);
     divSettings = fetchedSettings;
   }
