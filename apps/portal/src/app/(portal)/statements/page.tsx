@@ -326,19 +326,19 @@ export default async function StatementsPage({ searchParams }: PageProps) {
               <div className="grid grid-cols-2 gap-x-4 gap-y-1 text-xs text-muted-foreground print:text-black/70 w-full max-w-xs">
                 <span className="text-left sm:text-right">Bank:</span>
                 <span className="font-semibold text-white print:text-black text-right">
-                  {divSettings?.bankName || 'Standard Bank'}
+                  {divSettings?.bankName || 'Capitec'}
                 </span>
                 <span className="text-left sm:text-right">Account Name:</span>
                 <span className="font-semibold text-white print:text-black text-right">
-                  {divSettings?.bankAccountName || 'Playhouse Media Group'}
+                  {divSettings?.bankAccountName || 'MR JACOB CHADEMWIRI (PMG Solutions)'}
                 </span>
                 <span className="text-left sm:text-right">Account Number:</span>
                 <span className="font-semibold text-white print:text-black text-right">
-                  {divSettings?.bankAccountNumber || '10123456789'}
+                  {divSettings?.bankAccountNumber || '2520318607'}
                 </span>
                 <span className="text-left sm:text-right">Branch Code:</span>
                 <span className="font-semibold text-white print:text-black text-right">
-                  {divSettings?.bankBranchCode || '051001'}
+                  {divSettings?.bankBranchCode || '470010'}
                 </span>
                 <span className="text-left sm:text-right">Reference:</span>
                 <span className="font-semibold text-blue-400 print:text-black text-right">
