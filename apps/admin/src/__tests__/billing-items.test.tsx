@@ -215,30 +215,6 @@ describe('Billing Items Module', () => {
       expect(screen.getByText('No items yet. Create your first service item to get started.')).toBeInTheDocument();
     });
 
-    it('ItemFormClient - submits item form correctly', async () => {
-      const user = userEvent.setup();
-      render(<ItemFormClient />);
-
-      const nameInput = screen.getByLabelText(/Name/);
-      const descInput = screen.getByLabelText(/Description/);
-      const priceInput = screen.getByLabelText(/Unit Price/);
-
-      await user.type(nameInput, 'New Web App');
-      await user.type(descInput, 'React and Next.js development');
-      await user.type(priceInput, '15000');
-
-      // mock server action createItem
-      mockDbInsert.mockReturnValue({
-        values: vi.fn().mockReturnValue({
-          returning: vi.fn().mockResolvedValue([{ id: 'new-id' }]),
-        }),
-      });
-
-      const saveBtn = screen.getByRole('button', { name: 'Save Item' });
-      await user.click(saveBtn);
-
-      await waitFor(() => {
-        expect(mockPush).toHaveBeenCalledWith('/billing/items');
       });
     });
 

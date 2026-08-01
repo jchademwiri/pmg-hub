@@ -74,10 +74,8 @@ export default async function ItemsPage({ searchParams }: ItemsPageProps) {
                 message={
                   showArchived
                     ? 'No archived items.'
-                    : 'No items yet. Create your first service item to get started.'
+                    : 'No items yet. Create your first service item using the New Item button above.'
                 }
-                ctaLabel={!showArchived ? 'New Item' : undefined}
-                ctaHref={!showArchived ? '/billing/items/new' : undefined}
               />
             </div>
           ) : (
