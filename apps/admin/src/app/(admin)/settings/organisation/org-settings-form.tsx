@@ -2,13 +2,13 @@
 
 import { useRef, useTransition, useState, type FormEvent } from 'react';
 import { toast } from 'sonner';
-import { AlertCircle } from 'lucide-react';
+import { AlertCircle, Building2, Mail, MapPin, Image } from 'lucide-react';
 
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Separator } from '@/components/ui/separator';
 import { Field, FieldLabel } from '@/components/ui/field';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { SettingsSection } from '@/components/settings/settings-section';
 import type { OrganisationSettings } from '@pmg/db';
 
@@ -47,11 +47,32 @@ export function OrgSettingsForm({ settings, saveAction }: OrgSettingsFormProps) 
       onChange={() => setIsDirty(true)}
       className="flex flex-col gap-6"
     >
-      {/* Company identity */}
-      <SettingsSection
-        title="Company Identity"
-        description="Your registered company name and legal identifiers."
-      >
+      <Tabs defaultValue="identity" className="w-full">
+        <TabsList className="w-full justify-start rounded-lg bg-muted/40 p-1">
+          <TabsTrigger value="identity" className="flex items-center gap-2">
+            <Building2 className="h-4 w-4" />
+            Company Identity
+          </TabsTrigger>
+          <TabsTrigger value="contact" className="flex items-center gap-2">
+            <Mail className="h-4 w-4" />
+            Contact Details
+          </TabsTrigger>
+          <TabsTrigger value="address" className="flex items-center gap-2">
+            <MapPin className="h-4 w-4" />
+            Address
+          </TabsTrigger>
+          <TabsTrigger value="logo" className="flex items-center gap-2">
+            <Image className="h-4 w-4" />
+            Brand Logo
+          </TabsTrigger>
+        </TabsList>
+
+        {/* Company Identity Tab */}
+        <TabsContent value="identity" className="mt-4">
+          <SettingsSection
+            title="Company Identity"
+            description="Your registered company name and legal identifiers."
+          >
             <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
               <Field className="sm:col-span-2">
                 <FieldLabel>Company Name</FieldLabel>
@@ -81,18 +102,18 @@ export function OrgSettingsForm({ settings, saveAction }: OrgSettingsFormProps) 
                 />
               </Field>
             </div>
-      </SettingsSection>
+          </SettingsSection>
+        </TabsContent>
 
-      <Separator />
-
-      {/* Contact details */}
-      <SettingsSection
-        title="Contact Details"
-        description="How clients can reach you. Appears in document footers."
-      >
+        {/* Contact Details Tab */}
+        <TabsContent value="contact" className="mt-4">
+          <SettingsSection
+            title="Contact Details"
+            description="How clients can reach you. Appears in document footers."
+          >
             <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
               <Field>
-                <FieldLabel>Email</FieldLabel>
+                <FieldLabel>Email Address</FieldLabel>
                 <Input
                   name="email"
                   type="email"
@@ -102,7 +123,7 @@ export function OrgSettingsForm({ settings, saveAction }: OrgSettingsFormProps) 
                 />
               </Field>
               <Field>
-                <FieldLabel>Phone</FieldLabel>
+                <FieldLabel>Phone Number</FieldLabel>
                 <Input
                   name="phone"
                   defaultValue={s?.phone ?? ''}
@@ -110,8 +131,8 @@ export function OrgSettingsForm({ settings, saveAction }: OrgSettingsFormProps) 
                   disabled={isPending}
                 />
               </Field>
-              <Field>
-                <FieldLabel>Website</FieldLabel>
+              <Field className="sm:col-span-2">
+                <FieldLabel>Website URL</FieldLabel>
                 <Input
                   name="website"
                   defaultValue={s?.website ?? ''}
@@ -120,15 +141,15 @@ export function OrgSettingsForm({ settings, saveAction }: OrgSettingsFormProps) 
                 />
               </Field>
             </div>
-      </SettingsSection>
+          </SettingsSection>
+        </TabsContent>
 
-      <Separator />
-
-      {/* Address */}
-      <SettingsSection
-        title="Address"
-        description="Physical or postal address printed on documents."
-      >
+        {/* Address Tab */}
+        <TabsContent value="address" className="mt-4">
+          <SettingsSection
+            title="Address"
+            description="Physical or postal address printed on documents."
+          >
             <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
               <Field className="sm:col-span-2">
                 <FieldLabel>Street Address</FieldLabel>
@@ -175,29 +196,31 @@ export function OrgSettingsForm({ settings, saveAction }: OrgSettingsFormProps) 
                 />
               </Field>
             </div>
-      </SettingsSection>
+          </SettingsSection>
+        </TabsContent>
 
-      <Separator />
-
-      {/* Logo - upload deferred to v2 */}
-      <SettingsSection
-        title="Logo"
-        description="Displayed on invoices, quotes, and statements."
-      >
-            <div className="flex items-center gap-4">
-              <div className="flex size-20 items-center justify-center rounded-lg border border-dashed border-border bg-muted/40 text-xs text-muted-foreground">
+        {/* Brand Logo Tab */}
+        <TabsContent value="logo" className="mt-4">
+          <SettingsSection
+            title="Logo"
+            description="Displayed on invoices, quotes, and statements."
+          >
+            <div className="flex flex-col gap-4 sm:flex-row sm:items-center">
+              <div className="flex size-24 items-center justify-center rounded-lg border border-dashed border-border bg-muted/40 text-xs text-muted-foreground font-medium">
                 No logo
               </div>
               <div className="flex flex-col gap-2">
                 <Button variant="outline" size="sm" disabled type="button" title="Coming soon">
                   Upload Logo
                 </Button>
-                <p className="text-xs text-muted-foreground">PNG or SVG, max 2 MB - coming soon</p>
+                <p className="text-xs text-muted-foreground">Recommended size: PNG or SVG, transparent background, max 2 MB</p>
               </div>
             </div>
-      </SettingsSection>
+          </SettingsSection>
+        </TabsContent>
+      </Tabs>
 
-      {/* Save */}
+      {/* Save Error */}
       {error && (
         <Alert variant="destructive">
           <AlertCircle />
@@ -205,9 +228,11 @@ export function OrgSettingsForm({ settings, saveAction }: OrgSettingsFormProps) 
           <AlertDescription>{error}</AlertDescription>
         </Alert>
       )}
-      <div className="sticky bottom-4 flex items-center justify-between gap-4 rounded-lg border bg-background/95 p-3 shadow-sm backdrop-blur">
+
+      {/* Sticky Save Bar */}
+      <div className="sticky bottom-4 flex items-center justify-between gap-4 rounded-lg border bg-background/95 p-3.5 shadow-sm backdrop-blur">
         <p className="text-sm text-muted-foreground">
-          {isDirty ? 'Unsaved changes' : 'All organisation changes are saved'}
+          {isDirty ? 'Unsaved changes in form' : 'All organisation details are saved'}
         </p>
         <Button type="submit" disabled={isPending}>
           {isPending ? 'Saving…' : 'Save Changes'}
@@ -216,3 +241,4 @@ export function OrgSettingsForm({ settings, saveAction }: OrgSettingsFormProps) 
     </form>
   );
 }
+

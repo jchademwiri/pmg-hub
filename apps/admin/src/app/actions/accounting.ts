@@ -417,3 +417,95 @@ export async function fetchGeneralLedgerByYear(year: number, accountId?: string)
   );
   return { data: result.data };
 }
+
+/**
+ * Records a physical cash transfer between two liquid bank/savings accounts.
+ * E.g., Transferring PMG Share cash from Cheque (1010) to Savings (1020).
+ *
+ * Dr Destination Account (toAccountId) = amount
+ * Cr Source Account (fromAccountId)      = amount
+ */
+export async function recordCashTransfer(data: {
+  fromAccountId: string;
+  toAccountId: string;
+  amount: number;
+  date: string;
+  description: string;
+}): Promise<{ error?: string; entryId?: string }> {
+  try {
+    const session = await getSessionOrRedirect();
+    const { fromAccountId, toAccountId, amount, date, description } = data;
+
+    if (amount <= 0) return { error: 'Transfer amount must be positive.' };
+    if (fromAccountId === toAccountId) return { error: 'Source and destination accounts must be different.' };
+
+    const period = date.slice(0, 7);
+    if (!(await isPeriodOpen(period))) {
+      return { error: `Period ${period} is closed.` };
+    }
+    await ensureOpenPeriod(period);
+
+    const db = getDb();
+
+    // Default to first active division
+    const [division] = await db
+      .select({ id: chartAccounts.id })
+      .from(chartAccounts)
+      .limit(1);
+
+    // Fetch division from journalEntries if needed, or query divisions table
+    const divisionRows = await db.execute(sql`SELECT id FROM divisions LIMIT 1`);
+    const divisionId = (divisionRows.rows[0] as { id: string })?.id;
+
+    if (!divisionId) return { error: 'No active division found.' };
+
+    const entry = await db.transaction(async (tx) => {
+      const entryNumber = await getNextJournalEntryNumber(tx, date);
+      const [e] = await tx
+        .insert(journalEntries)
+        .values({
+          entryNumber,
+          entryDate: date,
+          period,
+          divisionId,
+          description: description || 'Cash transfer',
+          status: 'posted',
+          sourceModule: 'accounting',
+          sourceTable: 'cash_transfers',
+          postedAt: new Date(),
+          postedBy: session.user.id,
+          createdBy: session.user.id,
+        })
+        .returning({ id: journalEntries.id });
+
+      if (!e) throw new Error('Failed to create transfer entry.');
+
+      await tx.insert(journalLines).values([
+        {
+          journalEntryId: e.id,
+          accountId: toAccountId,
+          debit: String(amount),
+          credit: null,
+          description: `Transfer in – ${description}`,
+        },
+        {
+          journalEntryId: e.id,
+          accountId: fromAccountId,
+          debit: null,
+          credit: String(amount),
+          description: `Transfer out – ${description}`,
+        },
+      ]);
+
+      return e;
+    });
+
+    revalidatePath('/accounting/journals');
+    revalidatePath('/accounting/general-ledger');
+    revalidatePath('/accounting/trial-balance');
+    return { entryId: entry.id };
+  } catch (err) {
+    console.error('Failed to record cash transfer:', err);
+    return { error: 'Failed to record cash transfer.' };
+  }
+}

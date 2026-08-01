@@ -20,6 +20,15 @@ import {
 } from '@/app/actions/expense-categories';
 import { confirm } from '@/components/ui/confirm-dialog';
 
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+  DialogFooter,
+} from '@/components/ui/dialog';
+
 interface CategoryListProps {
   initialCategories: { id: string; name: string }[];
 }
@@ -102,9 +111,45 @@ export function CategoryList({ initialCategories }: CategoryListProps) {
           <p className="text-sm text-muted-foreground">Manage expense allocation categories and items</p>
         </div>
         <div className="flex items-center gap-2">
-          <Button onClick={() => setIsAdding(true)} disabled={isAdding || isSaving} size="sm">
+          <Button onClick={() => setIsAdding(true)} disabled={isSaving} size="sm">
             <Plus className="h-4 w-4 mr-2" /> Add Category
           </Button>
+
+          <Dialog open={isAdding} onOpenChange={setIsAdding}>
+            <DialogContent className="sm:max-w-md">
+              <DialogHeader>
+                <DialogTitle>Add Expense Category</DialogTitle>
+                <DialogDescription>
+                  Create a new financial allocation category for categorizing business expenses.
+                </DialogDescription>
+              </DialogHeader>
+
+              <div className="flex flex-col gap-4 mt-2">
+                <div>
+                  <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider block mb-1">
+                    Category Name <span className="text-destructive">*</span>
+                  </label>
+                  <Input
+                    autoFocus
+                    placeholder="e.g. Software & Subscriptions"
+                    value={newName}
+                    onChange={(e) => setNewName(e.target.value)}
+                    onKeyDown={(e) => e.key === 'Enter' && handleCreate()}
+                    disabled={isSaving}
+                  />
+                </div>
+
+                <DialogFooter className="mt-2">
+                  <Button variant="outline" onClick={() => setIsAdding(false)} disabled={isSaving}>
+                    Cancel
+                  </Button>
+                  <Button onClick={handleCreate} disabled={!newName.trim() || isSaving}>
+                    {isSaving ? 'Creating…' : 'Create Category'}
+                  </Button>
+                </DialogFooter>
+              </div>
+            </DialogContent>
+          </Dialog>
         </div>
       </div>
 
@@ -116,38 +161,6 @@ export function CategoryList({ initialCategories }: CategoryListProps) {
           </TableRow>
         </TableHeader>
         <TableBody>
-          {isAdding && (
-            <TableRow className="bg-muted/30">
-              <TableCell>
-                <Input
-                  autoFocus
-                  placeholder="New category name"
-                  value={newName}
-                  onChange={(e) => setNewName(e.target.value)}
-                  onKeyDown={(e) => e.key === 'Enter' && handleCreate()}
-                  disabled={isSaving}
-                />
-              </TableCell>
-              <TableCell className="text-right">
-                <div className="flex justify-end gap-2">
-                  <Button size="sm" onClick={handleCreate} disabled={!newName.trim() || isSaving}>
-                    <Check className="h-4 w-4" />
-                  </Button>
-                  <Button
-                    size="sm"
-                    variant="outline"
-                    onClick={() => {
-                      setIsAdding(false);
-                      setNewName('');
-                    }}
-                    disabled={isSaving}
-                  >
-                    <X className="h-4 w-4" />
-                  </Button>
-                </div>
-              </TableCell>
-            </TableRow>
-          )}
 
           {categories.length === 0 && !isAdding ? (
             <TableRow>

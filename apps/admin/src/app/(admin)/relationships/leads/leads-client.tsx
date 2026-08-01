@@ -8,6 +8,14 @@ import { LeadsTable } from '@/components/leads/leads-table';
 import { EmptyState } from '@/components/ui/empty-state';
 import type { LeadRow } from '@pmg/db';
 
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+} from '@/components/ui/dialog';
+
 interface LeadsPageClientProps {
   entries: LeadRow[];
   divisions: { id: string; name: string }[];
@@ -27,7 +35,7 @@ export default function LeadsPageClient({
   createAction,
   deleteAction,
 }: LeadsPageClientProps) {
-  const [isAdding, setIsAdding] = React.useState(false);
+  const [isOpen, setIsOpen] = React.useState(false);
 
   return (
     <div className="flex flex-col gap-6">
@@ -38,33 +46,35 @@ export default function LeadsPageClient({
           <p className="text-sm text-muted-foreground">Monitor sales pipelines, prospective clients, and conversions</p>
         </div>
         <div className="flex items-center gap-2">
-          <Button onClick={() => setIsAdding(true)} disabled={isAdding} size="sm">
+          <Button onClick={() => setIsOpen(true)} size="sm">
             <Plus className="h-4 w-4 mr-2" /> Add Lead
           </Button>
+
+          <Dialog open={isOpen} onOpenChange={setIsOpen}>
+            <DialogContent className="sm:max-w-xl">
+              <DialogHeader>
+                <DialogTitle>Add New Lead</DialogTitle>
+                <DialogDescription>
+                  Capture prospective client details, services of interest, and sales referral sources.
+                </DialogDescription>
+              </DialogHeader>
+
+              <LeadAddForm
+                divisions={divisions}
+                createAction={async (fd) => {
+                  const result = await createAction(fd);
+                  if (!result.error) setIsOpen(false);
+                  return result;
+                }}
+                onCancel={() => setIsOpen(false)}
+              />
+            </DialogContent>
+          </Dialog>
         </div>
       </div>
 
-      {/* Collapsible add form */}
-      {isAdding && (
-        <div className="bg-card rounded-xl border border-border shadow-sm p-5">
-          <div className="mb-4">
-            <h3 className="text-sm font-semibold text-foreground">Add New Lead</h3>
-            <p className="text-xs text-muted-foreground">Capture prospective client details, services of interest, and sales referral sources</p>
-          </div>
-          <LeadAddForm
-            divisions={divisions}
-            createAction={async (fd) => {
-              const result = await createAction(fd);
-              if (!result.error) setIsAdding(false);
-              return result;
-            }}
-            onCancel={() => setIsAdding(false)}
-          />
-        </div>
-      )}
-
       {/* Table or empty state */}
-      {entries.length === 0 && !isAdding ? (
+      {entries.length === 0 && !isOpen ? (
         <EmptyState
           message={
             status || divisionId || source ? 'No leads match the current filters.' : 'No leads yet.'

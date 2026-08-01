@@ -17,7 +17,7 @@ export default async function AccountingOverviewPage({
 
   // Derive date range from period (e.g. "2026-05" → start "2026-05-01", end "2026-05-31")
   const glFilters: { startDate?: string; endDate?: string; pageSize: number } = {
-    pageSize: 10,
+    pageSize: 6,
   }
   if (period) {
     const [year, month] = period.split('-')

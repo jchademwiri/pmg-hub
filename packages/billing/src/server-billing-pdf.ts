@@ -708,7 +708,7 @@ async function buildStatementPdfData(
   if (filters?.statementType === 'outstanding') {
     const outstandingInvoices = statement.outstandingInvoices ?? statement.invoices.filter(i => {
        const balance = safeNumber(i.total) - safeNumber(i.allocatedAmount);
-       return balance > 0 && i.status !== 'void';
+       return balance > 0 && i.status !== 'void' && i.status !== 'written_off';
     });
     
     transactions = outstandingInvoices.map((invoice) => ({
@@ -727,7 +727,7 @@ async function buildStatementPdfData(
   } else {
     const raw = [
       ...statement.invoices
-        .filter((invoice) => invoice.status !== 'void')
+        .filter((invoice) => invoice.status !== 'void' && invoice.status !== 'written_off')
         .map((invoice) => ({
           date: invoice.invoiceDate,
           reference: invoice.documentNumber,
@@ -795,6 +795,7 @@ async function buildStatementPdfData(
     periodFrom,
     periodTo,
     org: buildOrgProps(divisionName, settings, orgSettings),
+    banking: buildBankingProps(settings),
     client: {
       name: statement.client.businessName ?? statement.client.name,
       email: statement.client.email,

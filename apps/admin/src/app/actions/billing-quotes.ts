@@ -480,3 +480,86 @@ export async function fetchQuotesByYear(year: number, divisionId?: string, statu
     { page: 1, pageSize: 5000 }
   );
 }
+
+/**
+ * ── convertQuotationToInvoice ───────────────────────────────────────────────
+ * Converts an accepted or sent quote into a formal invoice (INV-XXXX).
+ * Copies all header details & line items and marks quote as 'converted'.
+ */
+export async function convertQuotationToInvoice(id: string): Promise<{ error?: string; id?: string }> {
+  try {
+    const session = await getSessionOrRedirect();
+    const db = getDb();
+    const { invoices } = await import('@pmg/db');
+
+    const source = await getQuotationById(id);
+    if (!source) return { error: 'Quote not found.' };
+
+    const todayStr = new Date().toISOString().split('T')[0]!;
+    if (await isPeriodClosed(todayStr)) {
+      const minDate = await getMinAllowedDate();
+      return { error: getMinDateErrorMessage(minDate) };
+    }
+
+    const dueDate = addDays(todayStr, 30);
+
+    const year = new Date(todayStr).getFullYear();
+    const documentNumber = await getNextDocumentNumber(source.divisionId, 'invoice', year);
+
+    const newInvoiceId = await db.transaction(async (tx) => {
+
+      const [inv] = await tx
+        .insert(invoices)
+        .values({
+          documentNumber,
+          divisionId: source.divisionId,
+          clientId: source.clientId,
+          invoiceDate: todayStr,
+          dueDate,
+          reference: source.reference ? `Quote ${source.documentNumber}: ${source.reference}` : `From Quote ${source.documentNumber}`,
+          subtotal: source.subtotal,
+          discountType: source.discountType,
+          discountValue: source.discountValue,
+          discountAmount: source.discountAmount,
+          vatAmount: source.vatAmount,
+          total: source.total,
+          status: 'issued',
+          createdBy: session.user.id,
+        })
+        .returning({ id: invoices.id });
+
+      if (!inv) throw new Error('Failed to create invoice.');
+
+      if (source.lineItems.length > 0) {
+        const includeLineItemItemId = await hasBillingLineItemItemIdColumn();
+        await tx.insert(billingLineItems).values(
+          source.lineItems.map((li, i) => ({
+            documentType: 'invoice' as const,
+            documentId: inv.id,
+            sortOrder: i,
+            ...(includeLineItemItemId ? { itemId: li.itemId ?? null } : {}),
+            description: li.description,
+            quantity: li.quantity,
+            unitPrice: li.unitPrice,
+            vatRate: li.vatRate,
+            lineTotal: li.lineTotal,
+          })),
+        );
+      }
+
+      await tx
+        .update(quotations)
+        .set({ status: 'converted', updatedAt: new Date() })
+        .where(eq(quotations.id, id));
+
+      return inv.id;
+    });
+
+    revalidatePath('/billing/quotes');
+    revalidatePath('/billing/invoices');
+    return { id: newInvoiceId };
+  } catch (err) {
+    console.error('Failed to convert quote to invoice:', err);
+    return { error: 'Failed to convert quote to invoice.' };
+  }
+}

@@ -13,9 +13,17 @@ export const EXPORT_FILENAMES: Record<ExportType, string> = {
   'full-json': 'full-data-export.json',
 };
 
+export interface TableColumnSchema {
+  name: string;
+  dataType: string;
+  isNullable: boolean;
+  columnDefault: string | null;
+}
+
 interface BackupPayload {
   exportedAt: string;
   source: string;
+  schema?: Record<string, TableColumnSchema[]>;
   tables: Record<string, unknown[]>;
 }
 
@@ -206,6 +214,31 @@ export async function buildDatabaseBackupPayload(): Promise<BackupPayload> {
     ORDER BY table_name ASC
   `);
 
+  // Query table column definitions from PostgreSQL information_schema
+  const schemaRows = await getRows(sql`
+    SELECT
+      table_name AS "tableName",
+      column_name AS "columnName",
+      data_type AS "dataType",
+      is_nullable AS "isNullable",
+      column_default AS "columnDefault"
+    FROM information_schema.columns
+    WHERE table_schema = 'public'
+    ORDER BY table_name ASC, ordinal_position ASC
+  `);
+
+  const schema: Record<string, TableColumnSchema[]> = {};
+  for (const col of schemaRows) {
+    const table = String(col.tableName);
+    if (!schema[table]) schema[table] = [];
+    schema[table].push({
+      name: String(col.columnName),
+      dataType: String(col.dataType),
+      isNullable: col.isNullable === 'YES',
+      columnDefault: col.columnDefault ? String(col.columnDefault) : null,
+    });
+  }
+
   const data: BackupPayload['tables'] = {};
 
   for (const table of tables) {
@@ -217,6 +250,7 @@ export async function buildDatabaseBackupPayload(): Promise<BackupPayload> {
   return {
     exportedAt: new Date().toISOString(),
     source: 'pmg-hub-admin',
+    schema,
     tables: data,
   };
 }

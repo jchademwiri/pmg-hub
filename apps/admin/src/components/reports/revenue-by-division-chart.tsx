@@ -27,9 +27,9 @@ import {
 import { formatZAR, fmtMonthYear } from '@/lib/format'
 import type { MonthlyBudgetChartRow } from '@/lib/financial'
 
-type Props = { data: MonthlyBudgetChartRow[] }
+type Props = { data: MonthlyBudgetChartRow[]; currentPeriod?: string }
 
-export function RevenueByDivisionChart({ data }: Props) {
+export function RevenueByDivisionChart({ data, currentPeriod }: Props) {
   const [monthRange, setMonthRange] = React.useState('6')
 
   const filteredSeries = React.useMemo(() => {
@@ -39,8 +39,11 @@ export function RevenueByDivisionChart({ data }: Props) {
     if (monthRange === 'all') return data
 
     // Determine current period in YYYY-MM
-    const now = new Date()
-    const nowStr = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`
+    let nowStr = currentPeriod
+    if (!nowStr) {
+      const now = new Date()
+      nowStr = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`
+    }
 
     // Find elapsed months in the financial year up to current date (or last non-zero month)
     let elapsedIdx = data.findIndex(d => d.month > nowStr)

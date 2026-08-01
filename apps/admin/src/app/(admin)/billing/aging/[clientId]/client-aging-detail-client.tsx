@@ -178,7 +178,7 @@ export function ClientAgingDetailClient({ client, invoices, totalOutstanding }: 
           <div className="overflow-x-auto">
             <Table>
               <TableHeader>
-                <TableRow className="hover:bg-transparent bg-muted/20 select-none">
+                <TableRow className="hover:bg-transparent bg-muted/20">
                   <TableHead
                     onClick={() => setActiveBucket(null)}
                     className="text-center font-semibold h-10 cursor-pointer hover:text-foreground transition-colors"
@@ -218,7 +218,7 @@ export function ClientAgingDetailClient({ client, invoices, totalOutstanding }: 
                 </TableRow>
               </TableHeader>
               <TableBody>
-                <TableRow className="hover:bg-transparent text-center font-medium tabular-nums select-none">
+                <TableRow className="hover:bg-transparent text-center font-medium tabular-nums">
                   <TableCell
                     onClick={() => setActiveBucket(null)}
                     className={`font-bold text-base h-12 cursor-pointer transition-colors ${!activeBucket ? 'bg-muted/10' : 'opacity-50 hover:opacity-100'}`}

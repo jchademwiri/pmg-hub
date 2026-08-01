@@ -12,8 +12,14 @@ import { SankeyDiagram } from './sankey-diagram'
 import { ReportCommentary } from './report-commentary'
 import { FinancialDrilldownSheet } from '@/components/insights/financial-drilldown-sheet'
 import type { DrilldownType } from '@/app/actions/drilldown'
-import { TrendingUp, DollarSign, Receipt, PiggyBank } from 'lucide-react'
-import type { MoMSnapshot, ProfitPoolRow, MonthlyFinancials, MonthlyBudgetChartRow, BucketBalances } from '@/lib/financial'
+import type {
+  MoMSnapshot,
+  MonthlyBudgetChartRow,
+  MonthlyFinancials,
+  BucketBalances,
+} from '@/lib/financial'
+import { TrendingUp, DollarSign, Receipt, PiggyBank, Printer } from 'lucide-react'
+import { Button } from '@/components/ui/button'
 
 interface ReportsTabsProps {
   momData: MoMSnapshot[]
@@ -75,6 +81,15 @@ export function ReportsTabs({
   const totalPmgShare = totalRevenue * PMG_SHARE_RATE
   const totalProfitPool = totalRevenue - totalExpenses - totalPmgShare
 
+  // Map Sankey node IDs to drill-down types
+  const nodeToDrillType: Record<string, DrilldownType> = {
+    gross: 'revenue',
+    net: 'revenue',
+    pmg: 'pmg_share',
+    expenses: 'expenses',
+    pool: 'revenue',
+  }
+
   return (
     <>
     <FinancialDrilldownSheet
@@ -84,24 +99,36 @@ export function ReportsTabs({
       drillType={drillType}
     />
     <Tabs value={activeTab} onValueChange={handleTabChange} className="w-full">
-      <TabsList className="mb-4">
-        <TabsTrigger value="overview" className="gap-1.5">
-          <TrendingUp className="size-3.5" />
-          Overview
-        </TabsTrigger>
-        <TabsTrigger value="revenue" className="gap-1.5">
-          <DollarSign className="size-3.5" />
-          Revenue
-        </TabsTrigger>
-        <TabsTrigger value="expenses" className="gap-1.5">
-          <Receipt className="size-3.5" />
-          Expenses
-        </TabsTrigger>
-        <TabsTrigger value="profit" className="gap-1.5">
-          <PiggyBank className="size-3.5" />
-          Net Profit
-        </TabsTrigger>
-      </TabsList>
+      <div className="flex items-center justify-between mb-4 print:hidden">
+        <TabsList>
+          <TabsTrigger value="overview" className="gap-1.5">
+            <TrendingUp className="size-3.5" />
+            Overview
+          </TabsTrigger>
+          <TabsTrigger value="revenue" className="gap-1.5">
+            <DollarSign className="size-3.5" />
+            Revenue
+          </TabsTrigger>
+          <TabsTrigger value="expenses" className="gap-1.5">
+            <Receipt className="size-3.5" />
+            Expenses
+          </TabsTrigger>
+          <TabsTrigger value="profit" className="gap-1.5">
+            <PiggyBank className="size-3.5" />
+            Net Profit
+          </TabsTrigger>
+        </TabsList>
+
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={() => window.print()}
+          className="gap-2 text-xs border-primary/20 hover:bg-primary/5"
+        >
+          <Printer className="size-3.5 text-primary" />
+          Print / Save PDF Report
+        </Button>
+      </div>
 
       {/* ── Overview Tab ───────────────────────────────────────────────── */}
       <TabsContent value="overview">
@@ -134,6 +161,7 @@ export function ReportsTabs({
         <div className="grid grid-cols-1 gap-6 min-h-[400px]">
           <RevenueByDivisionChart
             data={budgetChartSeries}
+            currentPeriod={currentPeriod}
           />
         </div>
       </TabsContent>
@@ -154,6 +182,10 @@ export function ReportsTabs({
             pmgShare={totalPmgShare}
             profitPool={totalProfitPool}
             ledgerBalances={ledgerBalances}
+            onNodeClick={(nodeId) => {
+              const type = nodeToDrillType[nodeId]
+              if (type) openDrill(type, currentPeriod)
+            }}
           />
           <ProfitPoolChart
             data={monthlyFinancials.map(m => ({ period: m.month, profit: m.revenue * (1 - PMG_SHARE_RATE) - m.expenses }))}

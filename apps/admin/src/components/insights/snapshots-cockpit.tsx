@@ -292,19 +292,6 @@ function SnapshotDetail({ snapshot }: { snapshot: SnapshotView }) {
           />
         </div>
 
-        <div className="rounded-md border border-border p-3">
-          <div className="mb-3 flex items-center gap-2 text-sm font-medium">
-            <LockKeyhole className="size-4 text-muted-foreground" />
-            Allocation
-          </div>
-          <div className="grid grid-cols-2 gap-3 text-sm">
-            <DetailMetric label="Salary" value={snapshot.salary} tone="allocation" compact />
-            <DetailMetric label="Reinvest" value={snapshot.reinvest} tone="allocation" compact />
-            <DetailMetric label="Reserve" value={snapshot.reserve} tone="allocation" compact />
-            <DetailMetric label="Flex" value={snapshot.flex} tone="allocation" compact />
-          </div>
-        </div>
-
         <div className="flex flex-col gap-1 rounded-md border border-border p-3">
           <span className="text-sm font-medium">Notes</span>
           <p className="text-sm text-muted-foreground">

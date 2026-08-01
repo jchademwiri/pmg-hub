@@ -169,10 +169,10 @@ export function buildBankingProps(
   } | null,
 ): { bankName: string; accountName: string; accountNumber: string; branchCode: string } | undefined {
   return {
-    bankName: settings?.bankName || 'Standard Bank',
-    accountName: settings?.bankAccountName || 'Playhouse Media Group',
-    accountNumber: settings?.bankAccountNumber || '10123456789',
-    branchCode: settings?.bankBranchCode || '051001',
+    bankName: settings?.bankName || 'Capitec',
+    accountName: settings?.bankAccountName || 'PMG Solutions',
+    accountNumber: settings?.bankAccountNumber || '2520318607',
+    branchCode: settings?.bankBranchCode || '470010',
   };
 }
 

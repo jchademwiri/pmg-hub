@@ -24,6 +24,7 @@ interface FinancialDrilldownSheetProps {
 const TYPE_META: Record<DrilldownType, { label: string; icon: React.ComponentType<{ className?: string }>; color: string; description: string }> = {
   revenue:   { label: 'Revenue',      icon: TrendingUp,  color: 'text-emerald-600', description: 'Income rows for this period' },
   expenses:  { label: 'Expenses',     icon: TrendingDown, color: 'text-amber-600',  description: 'Expense rows for this period' },
+  pmg_share: { label: 'PMG Share',    icon: Shield,      color: 'text-blue-600',   description: 'Retained 25% PMG Share allocations and ledger entries' },
   salary:    { label: 'Salary',       icon: Wallet,      color: 'text-violet-600', description: 'Ledger entries for salary allocation' },
   reinvest:  { label: 'Reinvest',     icon: RefreshCw,   color: 'text-cyan-600',   description: 'Ledger entries for reinvest allocation' },
   reserve:   { label: 'Reserve',      icon: Shield,      color: 'text-sky-600',    description: 'Ledger entries for reserve allocation' },

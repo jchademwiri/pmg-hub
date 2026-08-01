@@ -16,6 +16,9 @@ export const expenses = pgTable(
       .references(() => clients.id, { onDelete: "set null" }), // Optional link to a client
     description: text("description"),
     amount: numeric("amount", { precision: 12, scale: 2 }).notNull(),
+    receiptUrl: text("receipt_url"),
+    receiptFileName: text("receipt_file_name"),
+    receiptFileSize: numeric("receipt_file_size"),
     createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
     // updatedAt is managed by the application layer on update. Any database-level operation
     // that bypasses the application (direct SQL fixes, migrations, external services) will

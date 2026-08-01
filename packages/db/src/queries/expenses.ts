@@ -13,6 +13,9 @@ export type ExpenseRow = {
   category: string;
   description: string | null;
   amount: string; // numeric from DB - caller converts with Number()
+  receiptUrl?: string | null;
+  receiptFileName?: string | null;
+  receiptFileSize?: string | null;
   createdAt: Date;
   updatedAt: Date | null;
 };
@@ -54,6 +57,9 @@ export async function getAllExpenses(
       category: expenses.category,
       description: expenses.description,
       amount: expenses.amount,
+      receiptUrl: expenses.receiptUrl,
+      receiptFileName: expenses.receiptFileName,
+      receiptFileSize: expenses.receiptFileSize,
       createdAt: expenses.createdAt,
       updatedAt: expenses.updatedAt,
     })
@@ -102,6 +108,9 @@ export async function getExpenseById(id: string): Promise<ExpenseRow | null> {
       category: expenses.category,
       description: expenses.description,
       amount: expenses.amount,
+      receiptUrl: expenses.receiptUrl,
+      receiptFileName: expenses.receiptFileName,
+      receiptFileSize: expenses.receiptFileSize,
       createdAt: expenses.createdAt,
       updatedAt: expenses.updatedAt,
     })

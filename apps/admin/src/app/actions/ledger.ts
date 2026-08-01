@@ -35,7 +35,7 @@ async function checkLedgerConstraints(
   existingAmountId?: string,
 ): Promise<{ error?: string }> {
   const balances = await getLedgerBalances();
-  let availableBalance = balances[allocationType].available;
+  let availableBalance = balances[allocationType]?.available ?? 0;
 
   if (existingAmountId) {
     const { getLedgerById } = await import('@pmg/db');

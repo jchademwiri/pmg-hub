@@ -1,7 +1,7 @@
 'use client';
 
 import * as React from 'react';
-import { Pencil, Trash2, X, Check, Lock } from 'lucide-react';
+import { Pencil, Trash2, X, Check, Lock, Paperclip } from 'lucide-react';
 import { toast } from 'sonner';
 import type { ExpenseRow } from '@pmg/db';
 import { Button } from '@/components/ui/button';
@@ -234,6 +234,22 @@ function ExpenseTableRow({
         −{formatZAR(Number(entry.amount))}
       </TableCell>
       <TableCell>
+        {entry.receiptUrl ? (
+          <a
+            href={entry.receiptUrl}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="inline-flex items-center gap-1 text-xs font-medium px-2 py-1 rounded bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20 hover:bg-emerald-500/20 transition-colors"
+            title={entry.receiptFileName || 'View Receipt'}
+          >
+            <Paperclip className="h-3 w-3" />
+            <span>Receipt</span>
+          </a>
+        ) : (
+          <span className="text-xs text-muted-foreground/40 italic">None</span>
+        )}
+      </TableCell>
+      <TableCell>
         <div className="flex items-center gap-2">
           {isLocked ? (
             <Tooltip>
@@ -282,6 +298,7 @@ export function ExpenseTable({
           <TableHead>Category</TableHead>
           <TableHead>Description</TableHead>
           <TableHead>Amount</TableHead>
+          <TableHead>Receipt</TableHead>
           <TableHead>Actions</TableHead>
         </TableRow>
       </TableHeader>

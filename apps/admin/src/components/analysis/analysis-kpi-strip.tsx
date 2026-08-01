@@ -4,31 +4,22 @@ import { Card, CardContent } from '@/components/ui/card';
 import { formatZAR } from '@/lib/format';
 import { TrendingUp, TrendingDown, Minus } from 'lucide-react';
 
-interface AnalysisKpiStripProps {
-  overview?: {
-    ytd: { currentRevenue: number; priorRevenue: number; growthRatePercent: number };
-    averages: { 
-      currentAvgInvoice: number; 
-      priorAvgInvoice: number; 
-      invoiceMomGrowth?: number;
-      currentAvgTransaction: number; 
-      priorAvgTransaction?: number;
-      transactionMomGrowth?: number;
-    };
-    pipeline: { totalPotential: number };
+export interface AnalysisKpiData {
+  ytd: { currentRevenue: number; priorRevenue: number; growthRatePercent: number };
+  averages: { 
+    currentAvgInvoice: number; 
+    priorAvgInvoice: number; 
+    invoiceMomGrowth?: number;
+    currentAvgTransaction: number; 
+    priorAvgTransaction?: number;
+    transactionMomGrowth?: number;
   };
-  data?: {
-    ytd: { currentRevenue: number; priorRevenue: number; growthRatePercent: number };
-    averages: { 
-      currentAvgInvoice: number; 
-      priorAvgInvoice: number; 
-      invoiceMomGrowth?: number;
-      currentAvgTransaction: number; 
-      priorAvgTransaction?: number;
-      transactionMomGrowth?: number;
-    };
-    pipeline: { totalPotential: number };
-  };
+  pipeline: { totalPotential: number };
+}
+
+export interface AnalysisKpiStripProps {
+  overview?: AnalysisKpiData;
+  data?: AnalysisKpiData;
 }
 
 export function AnalysisKpiStrip({ overview, data }: AnalysisKpiStripProps) {

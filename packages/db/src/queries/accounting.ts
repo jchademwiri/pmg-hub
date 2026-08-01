@@ -11,10 +11,69 @@ import { eq, and, desc, asc, sql, inArray } from "drizzle-orm";
 
 // ── Chart of Accounts ─────────────────────────────────────────────────────────
 
+export async function ensurePmgShareReserveAccount() {
+  try {
+    const [inserted] = await db
+      .insert(chartAccounts)
+      .values({
+        code: "3150",
+        name: "PMG Share Equity Reserve",
+        type: "equity",
+        description: "Accumulated PMG Share retained reserve from billing income",
+        isActive: true,
+        isPostingAccount: true,
+      })
+      .onConflictDoNothing({ target: chartAccounts.code })
+      .returning({ id: chartAccounts.id });
+
+    let pmgAccountId = inserted?.id;
+    if (!pmgAccountId) {
+      const [existing] = await db
+        .select({ id: chartAccounts.id })
+        .from(chartAccounts)
+        .where(eq(chartAccounts.code, "3150"))
+        .limit(1);
+      pmgAccountId = existing?.id;
+    }
+
+    if (pmgAccountId) {
+      const [bankAccount] = await db
+        .select({ id: chartAccounts.id })
+        .from(chartAccounts)
+        .where(eq(chartAccounts.code, "1010"))
+        .limit(1);
+
+      if (bankAccount) {
+        const pmgEntries = await db
+          .select({ id: journalEntries.id })
+          .from(journalEntries)
+          .where(sql`${journalEntries.description} LIKE 'PMG Share%'`);
+
+        if (pmgEntries.length > 0) {
+          const entryIds = pmgEntries.map((e) => e.id);
+          await db
+            .update(journalLines)
+            .set({ accountId: pmgAccountId })
+            .where(
+              and(
+                inArray(journalLines.journalEntryId, entryIds),
+                eq(journalLines.accountId, bankAccount.id),
+                sql`${journalLines.credit} IS NOT NULL`
+              )
+            );
+        }
+      }
+    }
+  } catch (err) {
+    console.error("ensurePmgShareReserveAccount error:", err);
+  }
+}
+
 /**
  * Returns all chart accounts ordered by code.
  */
 export async function getAllChartAccounts() {
+  await ensurePmgShareReserveAccount();
   return db
     .select()
     .from(chartAccounts)
@@ -25,6 +84,7 @@ export async function getAllChartAccounts() {
  * Returns only active chart accounts ordered by code.
  */
 export async function getActiveChartAccounts() {
+  await ensurePmgShareReserveAccount();
   return db
     .select()
     .from(chartAccounts)

@@ -71,15 +71,30 @@ export async function getAnalysisOverview(year: number, currentDateStr: string) 
   // 3. Average Invoice Size & Transaction Size (Month over Month & FY)
   const cYr = parseInt(currentDateStr.slice(0, 4), 10);
   const cMo = parseInt(currentDateStr.slice(5, 7), 10);
+  const activeFY = cMo < 3 ? cYr - 1 : cYr;
 
-  const curMonthStart = `${cYr}-${String(cMo).padStart(2, '0')}-01`;
-  let nextMo = cMo + 1;
-  let nextYr = cYr;
+  let targetYr: number;
+  let targetMo: number;
+
+  if (year === activeFY) {
+    targetYr = cYr;
+    targetMo = cMo;
+  } else if (year < activeFY) {
+    targetYr = year + 1;
+    targetMo = 2;
+  } else {
+    targetYr = year;
+    targetMo = 3;
+  }
+
+  const curMonthStart = `${targetYr}-${String(targetMo).padStart(2, '0')}-01`;
+  let nextMo = targetMo + 1;
+  let nextYr = targetYr;
   if (nextMo > 12) { nextMo = 1; nextYr += 1; }
   const curMonthEnd = `${nextYr}-${String(nextMo).padStart(2, '0')}-01`;
 
-  let prevMo = cMo - 1;
-  let prevYr = cYr;
+  let prevMo = targetMo - 1;
+  let prevYr = targetYr;
   if (prevMo < 1) { prevMo = 12; prevYr -= 1; }
   const prevMonthStart = `${prevYr}-${String(prevMo).padStart(2, '0')}-01`;
   const prevMonthEnd = curMonthStart;
@@ -219,10 +234,10 @@ export async function getAnalysisOverview(year: number, currentDateStr: string) 
       growthRatePercent: yoyGrowth,
     },
     averages: {
-      currentAvgInvoice,
+      currentAvgInvoice: curAvgInvoice,
       priorAvgInvoice: prevAvgInvoice,
       invoiceMomGrowth,
-      currentAvgTransaction,
+      currentAvgTransaction: curAvgTransaction,
       priorAvgTransaction: prevAvgTransaction,
       transactionMomGrowth,
     },
@@ -490,13 +505,16 @@ export async function getClientConcentration(year: number) {
 }
 
 export async function getMonthlyFinancialsBreakdownForYear(year: number) {
+  const MONTH_NAMES = ['Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec', 'Jan', 'Feb'];
   const months: { period: string; monthLabel: string }[] = [];
   
   // Financial year months: March year to February year+1
   for (let i = 0; i < 12; i += 1) {
-    const date = new Date(year, 2 + i, 1);
-    const period = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`;
-    const monthLabel = date.toLocaleString('default', { month: 'short', year: 'numeric' });
+    const mName = MONTH_NAMES[i];
+    const calYear = i < 10 ? year : year + 1;
+    const calMonth = i < 10 ? i + 3 : i - 9;
+    const period = `${calYear}-${String(calMonth).padStart(2, '0')}`;
+    const monthLabel = `${mName} ${calYear}`;
     months.push({ period, monthLabel });
   }
 
@@ -530,15 +548,21 @@ export async function getMonthlyFinancialsBreakdownForYear(year: number) {
   const expenseMap = new Map((expenseRows.rows as any[]).map(r => [r.month, Number(r.total)]));
 
   let prevIncome = 0;
-  return months.map(({ period, monthLabel }) => {
+  return months.map(({ period, monthLabel }, idx) => {
     const received = incomeMap.get(period) || 0;
     const invoiced = invoicedMap.get(period) || 0;
     const expensesAmt = expenseMap.get(period) || 0;
     const netProfit = received - expensesAmt;
 
-    let momGrowth = 0;
-    if (prevIncome > 0) {
-      momGrowth = ((received - prevIncome) / prevIncome) * 100;
+    let momGrowth: number | null = null;
+    if (idx > 0) {
+      if (prevIncome > 0) {
+        momGrowth = ((received - prevIncome) / prevIncome) * 100;
+      } else if (received > 0) {
+        momGrowth = 100;
+      } else {
+        momGrowth = 0;
+      }
     }
     prevIncome = received;
 

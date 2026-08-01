@@ -42,17 +42,17 @@ export type MonthlyBudgetChartRow = { month: string; revenue: number; invoiced: 
 export type MoMSnapshot = { metric: string; current: number; previous: number }
 export type FinancialSummary = {
   revenue: number; expenses: number; pmgShare: number; profitPool: number;
-  salary: number; reinvest: number; reserve: number; flex: number;
+  salary?: number; reinvest?: number; reserve?: number; flex?: number;
 }
 export type DivisionRevenue = { divisionId?: string; divisionName: string; total: number }
 export type LeadStatusCount = { status: string; count: number }
 
 export type BucketBalances = {
-  salary:    { expected: number; spent: number; available: number };
-  reinvest:  { expected: number; spent: number; available: number };
-  reserve:   { expected: number; spent: number; available: number };
-  flex:      { expected: number; spent: number; available: number };
   pmg_share: { expected: number; spent: number; available: number };
+  salary?:    { expected: number; spent: number; available: number };
+  reinvest?:  { expected: number; spent: number; available: number };
+  reserve?:   { expected: number; spent: number; available: number };
+  flex?:      { expected: number; spent: number; available: number };
 };
 
 export type DivisionSeriesRow = { month: string; divisionName: string; total: number }
@@ -83,10 +83,7 @@ export async function getFinancialSummary(): Promise<FinancialSummary> {
   const profitPool = revenue - expenses - pmgShare
   return {
     revenue, expenses, pmgShare, profitPool,
-    salary:   profitPool * rates.salary,
-    reinvest: profitPool * rates.reinvest,
-    reserve:  profitPool * rates.reserve,
-    flex:     profitPool * rates.flex,
+    salary: 0, reinvest: 0, reserve: 0, flex: 0,
   }
 }
 
@@ -96,20 +93,14 @@ export { getCurrentMonthSummary, getPreviousMonthSummary, getYTDSummary, getPrev
 // ── Ledger ────────────────────────────────────────────────────────────────────
 export async function getLedgerBalances(): Promise<BucketBalances> {
   const summary = await getFinancialSummary();
-  const [spentSalary, spentReinvest, spentReserve, spentFlex, spentPmgShare] = await Promise.all([
-    getLedgerTotalByAllocation('salary'),
-    getLedgerTotalByAllocation('reinvest'),
-    getLedgerTotalByAllocation('reserve'),
-    getLedgerTotalByAllocation('flex'),
-    getLedgerTotalByAllocation('pmg_share'),
-  ]);
+  const spentPmgShare = await getLedgerTotalByAllocation('pmg_share');
 
   return {
-    salary:    { expected: summary.salary,    spent: spentSalary,    available: summary.salary    - spentSalary    },
-    reinvest:  { expected: summary.reinvest,  spent: spentReinvest,  available: summary.reinvest  - spentReinvest  },
-    reserve:   { expected: summary.reserve,   spent: spentReserve,   available: summary.reserve   - spentReserve   },
-    flex:      { expected: summary.flex,      spent: spentFlex,      available: summary.flex      - spentFlex      },
-    pmg_share: { expected: summary.pmgShare,  spent: spentPmgShare,  available: summary.pmgShare  - spentPmgShare  },
+    pmg_share: { expected: summary.pmgShare, spent: spentPmgShare, available: summary.pmgShare - spentPmgShare },
+    salary:    { expected: 0, spent: 0, available: 0 },
+    reinvest:  { expected: 0, spent: 0, available: 0 },
+    reserve:   { expected: 0, spent: 0, available: 0 },
+    flex:      { expected: 0, spent: 0, available: 0 },
   };
 }
 

@@ -36,7 +36,7 @@ export function LedgerAddForm({
   const [errorMessage, setErrorMessage] = React.useState<string | null>(null);
   const [selectedAllocation, setSelectedAllocation] = React.useState<
     'salary' | 'reinvest' | 'reserve' | 'flex' | 'pmg_share'
-  >('salary');
+  >('pmg_share');
   const [selectedEntry, setSelectedEntry] = React.useState<'spend' | 'transfer' | 'adjustment'>(
     'spend',
   );
@@ -64,7 +64,7 @@ export function LedgerAddForm({
       } else {
         toast.success('Ledger entry recorded');
         formRef.current?.reset();
-        setSelectedAllocation('salary');
+        setSelectedAllocation('pmg_share');
         setSelectedEntry('spend');
         refreshBalances();
       }
@@ -108,10 +108,6 @@ export function LedgerAddForm({
             </SelectTrigger>
             <SelectContent>
               <SelectItem value="pmg_share">PMG Share</SelectItem>
-              <SelectItem value="salary">Salary</SelectItem>
-              <SelectItem value="reinvest">Reinvest</SelectItem>
-              <SelectItem value="reserve">Reserve</SelectItem>
-              <SelectItem value="flex">Flex</SelectItem>
             </SelectContent>
           </Select>
         </Field>

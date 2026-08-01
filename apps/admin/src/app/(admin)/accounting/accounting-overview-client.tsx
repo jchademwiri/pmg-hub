@@ -378,7 +378,7 @@ export function AccountingOverviewClient({
           </div>
         ) : (
           <div className="divide-y">
-            {recentEntries.map((entry) => (
+            {recentEntries.slice(0, 6).map((entry) => (
               <div key={entry.id} className="px-5 py-3 flex items-start justify-between hover:bg-muted/20 transition-colors">
                 <div className="flex items-start gap-3 min-w-0">
                   <div className={`flex h-7 w-7 shrink-0 items-center justify-center rounded-md mt-0.5 ${

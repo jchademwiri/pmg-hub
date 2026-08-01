@@ -30,7 +30,7 @@ Route groups under `src/app/(admin)`, mirrored in the sidebar config at `src/com
 | **Accounting** | `/accounting/*` | Double-entry engine: chart of accounts, journals, general ledger, trial balance, profit & loss, period locking, exports. |
 | **Relationships** | `/relationships/*` | CRM: clients, leads, PMG divisions. |
 | **Insights** | `/insights/*` | Snapshots, reports, business analysis. |
-| **System** | `/settings/*` | Users (with invite flow), organisation profile, subscription/billing plan, security, data & exports. |
+| **System** | `/settings/*` | Organisation profile, Document Defaults (/settings/billing), Banking Accounts (/settings/billing/banking), Email Delivery (/settings/billing/email), Document Templates (/settings/billing/templates), Credit Policy (/settings/billing/credit), Users, Security, Data & Exports. |
 
 To add, remove, or rename a route, edit `src/components/navigation/nav-data.ts` — it's the single source of truth for both the sidebar and breadcrumb labels.
 
