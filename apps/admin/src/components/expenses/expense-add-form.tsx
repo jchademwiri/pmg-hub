@@ -151,6 +151,19 @@ export function ExpenseAddForm({
             placeholder="e.g. 250.00"
           />
         </Field>
+
+        <Field className="sm:col-span-2 lg:col-span-3">
+          <FieldLabel htmlFor="expense-receipt">Receipt / Proof of Payment (Optional PDF / Image)</FieldLabel>
+          <Input
+            id="expense-receipt"
+            name="receipt"
+            type="file"
+            accept="image/*,.pdf"
+            disabled={isPending}
+            className="cursor-pointer file:mr-3 file:py-1 file:px-2.5 file:rounded-md file:border-0 file:text-xs file:font-semibold file:bg-primary/10 file:text-primary hover:file:bg-primary/20"
+          />
+          <span className="text-[10px] text-muted-foreground mt-1">Upload invoice, receipt, or EFT proof of payment for SARS audit compliance</span>
+        </Field>
       </div>
 
       <div className="flex items-center justify-end gap-3 border-t border-border/50 pt-4 mt-2">

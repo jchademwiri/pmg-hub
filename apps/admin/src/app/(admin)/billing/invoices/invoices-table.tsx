@@ -3,7 +3,7 @@
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useTransition, useState } from 'react';
-import { MoreHorizontal, Download, Copy, CheckSquare, X } from 'lucide-react';
+import { MoreHorizontal, Download, Copy, CheckSquare, X, Mail } from 'lucide-react';
 import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
