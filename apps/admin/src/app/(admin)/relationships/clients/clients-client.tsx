@@ -8,6 +8,14 @@ import { ClientsTable } from '@/components/clients/clients-table';
 import { EmptyState } from '@/components/ui/empty-state';
 import type { ClientWithIncomeCount } from '@pmg/db';
 
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog';
+
 interface ClientsPageClientProps {
   clients: ClientWithIncomeCount[];
   divisions: { id: string; name: string }[];
@@ -34,30 +42,28 @@ export default function ClientsPageClient({
           <p className="text-sm text-muted-foreground">Manage client relationships, billing details, and outstanding balances</p>
         </div>
         <div className="flex items-center gap-2">
-          <Button onClick={() => setIsAdding(true)} disabled={isAdding} size="sm" className="hidden md:flex">
+          <Button onClick={() => setIsAdding(true)} size="sm" className="hidden md:flex">
             <Plus className="h-4 w-4 mr-2" /> Add Client
           </Button>
         </div>
       </div>
 
       {/* Mobile FAB */}
-      {!isAdding && (
-        <Button 
-          onClick={() => setIsAdding(true)} 
-          size="icon" 
-          className="md:hidden fixed bottom-20 right-4 z-50 rounded-full shadow-lg h-14 w-14"
-        >
-          <Plus className="size-6" />
-        </Button>
-      )}
+      <Button 
+        onClick={() => setIsAdding(true)} 
+        size="icon" 
+        className="md:hidden fixed bottom-20 right-4 z-50 rounded-full shadow-lg h-14 w-14"
+      >
+        <Plus className="size-6" />
+      </Button>
 
-      {/* Collapsible add form */}
-      {isAdding && (
-        <div className="bg-card rounded-xl border border-border shadow-sm p-5">
-          <div className="mb-4">
-            <h3 className="text-sm font-semibold text-foreground">Add New Client</h3>
-            <p className="text-xs text-muted-foreground">Create a new client profile for billing and activity tracking</p>
-          </div>
+      {/* Add Client Dialog */}
+      <Dialog open={isAdding} onOpenChange={setIsAdding}>
+        <DialogContent className="sm:max-w-2xl max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>Add New Client</DialogTitle>
+            <DialogDescription>Create a new client profile for billing and activity tracking</DialogDescription>
+          </DialogHeader>
           <ClientAddForm
             divisions={divisions}
             createAction={async (fd) => {
@@ -67,8 +73,8 @@ export default function ClientsPageClient({
             }}
             onCancel={() => setIsAdding(false)}
           />
-        </div>
-      )}
+        </DialogContent>
+      </Dialog>
 
       {/* Table or empty state */}
       {clients.length === 0 && !isAdding ? (

@@ -61,7 +61,7 @@ import {
   elementToPdfBase64,
   sanitizePdfFileName,
 } from '@/lib/pdf-export';
-import { ChevronDown, ChevronUp, FileDown, Mail, Loader2, Eye, Plus, CheckCircle2, XCircle, Wallet, Clock, AlertCircle, FileText, FileSignature, Coins, FileSpreadsheet, BarChart3, Briefcase } from 'lucide-react';
+import { ChevronDown, ChevronUp, FileDown, Mail, Loader2, Eye, Plus, Pencil, CheckCircle2, XCircle, Wallet, Clock, AlertCircle, FileText, FileSignature, Coins, FileSpreadsheet, BarChart3, Briefcase } from 'lucide-react';
 import { generateReceiptNumber } from '@pmg/utils';
 import { IssueCreditNoteDialog } from '@/components/billing/issue-credit-note-dialog';
 import { CreditHistoryTable } from '@/components/billing/credit-history-table';
@@ -894,31 +894,32 @@ export function ClientBillingWorkspace({
         <Button
           variant="outline"
           size="sm"
-          onClick={() => setIsDetailsOpen(!isDetailsOpen)}
+          onClick={() => setIsDetailsOpen(true)}
           className="self-start sm:self-auto"
         >
-          {isDetailsOpen ? (
-            <>
-              <ChevronUp className="size-4 mr-2" /> Hide Details
-            </>
-          ) : (
-            <>
-              <ChevronDown className="size-4 mr-2" /> Edit Details
-            </>
-          )}
+          <Pencil className="size-4 mr-2" /> Edit Client
         </Button>
       </div>
 
-      {/* Collapsible Edit form */}
-      <Collapsible open={isDetailsOpen} onOpenChange={setIsDetailsOpen}>
-        <CollapsibleContent className="rounded-lg border p-5 bg-card flex flex-col gap-4 shadow-sm transition-all duration-300">
-          <h2 className="text-base font-semibold">Client Details</h2>            <ClientEditForm
-              client={client}
-              divisions={divisions}
-              updateAction={updateClientAction}
-            />
-        </CollapsibleContent>
-      </Collapsible>
+      {/* Edit Client Dialog */}
+      <Dialog open={isDetailsOpen} onOpenChange={setIsDetailsOpen}>
+        <DialogContent className="sm:max-w-2xl max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>Edit Client Details</DialogTitle>
+            <DialogDescription>Update client profile information, contact details, and division link</DialogDescription>
+          </DialogHeader>
+          <ClientEditForm
+            client={client}
+            divisions={divisions}
+            updateAction={async (fd) => {
+              const result = await updateClientAction(fd);
+              if (!result.error) setIsDetailsOpen(false);
+              return result;
+            }}
+            onCancel={() => setIsDetailsOpen(false)}
+          />
+        </DialogContent>
+      </Dialog>
 
       {/* Metric Strip */}
       <ClientMetricStrip
