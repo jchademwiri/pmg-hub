@@ -13,8 +13,13 @@ import {
   ArrowUpRight,
   ArrowDownLeft,
   Tags,
+  Building2,
+  PiggyBank,
+  ArrowRightLeft,
 } from 'lucide-react'
+import { Button } from '@/components/ui/button'
 import { EmptyState } from '@/components/ui/empty-state'
+import { CashTransferDialog } from '@/components/finance/cash-transfer-dialog'
 
 interface FinanceOverviewClientProps {
   summary: {
@@ -23,6 +28,11 @@ interface FinanceOverviewClientProps {
     pmgShare: number
     profitPool: number
   }
+  liquidBalances?: {
+    cheque: number
+    savings: number
+  }
+  liquidAccounts?: Array<{ id: string; code: string; name: string }>
   revenueByDivision: Array<{ divisionName: string; total: number }>
   expensesByCategory: Array<{ category: string; total: number }>
   recentIncome: Array<{ id: string; date: string; description: string | null; amount: number; divisionName: string }>
@@ -31,17 +41,80 @@ interface FinanceOverviewClientProps {
 
 export function FinanceOverviewClient({
   summary,
+  liquidBalances = { cheque: 0, savings: 0 },
+  liquidAccounts = [],
   revenueByDivision,
   expensesByCategory,
   recentIncome,
   recentExpenses,
 }: FinanceOverviewClientProps) {
+  const [transferOpen, setTransferOpen] = React.useState(false)
   const isProfitable = summary.profitPool >= 0
   const totalIncomeCount = recentIncome.length
   const totalExpenseCount = recentExpenses.length
 
+  const totalLiquidCash = liquidBalances.cheque + liquidBalances.savings
+
   return (
     <div className="flex flex-col gap-6">
+      <CashTransferDialog
+        open={transferOpen}
+        onOpenChange={setTransferOpen}
+        accounts={liquidAccounts}
+      />
+
+      {/* Banking & Liquid Cashflow Row */}
+      <div className="rounded-xl border bg-gradient-to-r from-card via-card to-blue-500/5 p-5 shadow-sm">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-4">
+          <div>
+            <h3 className="text-sm font-semibold flex items-center gap-2">
+              <Building2 className="h-4 w-4 text-blue-600" />
+              Liquid Cash & Banking Reserves
+            </h3>
+            <p className="text-xs text-muted-foreground mt-0.5">
+              Available cash balance across operational cheque and reserve savings accounts.
+            </p>
+          </div>
+          <Button
+            size="sm"
+            onClick={() => setTransferOpen(true)}
+            className="gap-1.5 bg-blue-600 hover:bg-blue-500 text-white shrink-0"
+          >
+            <ArrowRightLeft className="h-3.5 w-3.5" />
+            Transfer Funds
+          </Button>
+        </div>
+
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+          <div className="rounded-lg border bg-card p-3.5">
+            <div className="flex items-center justify-between text-xs text-muted-foreground">
+              <span>1010 · Cheque Account</span>
+              <Building2 className="h-3.5 w-3.5 text-blue-500" />
+            </div>
+            <p className="text-xl font-bold mt-1.5 tabular-nums text-foreground">{formatZAR(liquidBalances.cheque)}</p>
+            <p className="text-[11px] text-muted-foreground mt-0.5">Operational liquidity</p>
+          </div>
+
+          <div className="rounded-lg border bg-card p-3.5">
+            <div className="flex items-center justify-between text-xs text-muted-foreground">
+              <span>1020 · Savings Account</span>
+              <PiggyBank className="h-3.5 w-3.5 text-emerald-500" />
+            </div>
+            <p className="text-xl font-bold mt-1.5 tabular-nums text-emerald-600 dark:text-emerald-400">{formatZAR(liquidBalances.savings)}</p>
+            <p className="text-[11px] text-muted-foreground mt-0.5">Reserve funds & PMG Share</p>
+          </div>
+
+          <div className="rounded-lg border bg-card p-3.5 bg-primary/5">
+            <div className="flex items-center justify-between text-xs text-muted-foreground">
+              <span>Total Liquid Cash</span>
+              <DollarSign className="h-3.5 w-3.5 text-primary" />
+            </div>
+            <p className="text-xl font-bold mt-1.5 tabular-nums text-primary">{formatZAR(totalLiquidCash)}</p>
+            <p className="text-[11px] text-muted-foreground mt-0.5">Combined bank reserves</p>
+          </div>
+        </div>
+      </div>
+
       {/* Dashboard Cards */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         <div className="rounded-xl border bg-card p-5 hover:shadow-md transition-all duration-200">
