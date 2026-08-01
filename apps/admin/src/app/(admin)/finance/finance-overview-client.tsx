@@ -54,6 +54,7 @@ export function FinanceOverviewClient({
   const totalExpenseCount = recentExpenses.length
 
   const totalLiquidCash = liquidBalances.cheque + liquidBalances.savings
+  const pendingTransfer = Math.max(0, summary.pmgShare - liquidBalances.savings)
 
   return (
     <div className="flex flex-col gap-6">
@@ -61,6 +62,7 @@ export function FinanceOverviewClient({
         open={transferOpen}
         onOpenChange={setTransferOpen}
         accounts={liquidAccounts}
+        suggestedAmount={pendingTransfer}
       />
 
       {/* Banking & Liquid Cashflow Row */}
@@ -72,7 +74,7 @@ export function FinanceOverviewClient({
               Liquid Cash & Banking Reserves
             </h3>
             <p className="text-xs text-muted-foreground mt-0.5">
-              Available cash balance across operational cheque and reserve savings accounts.
+              Available cash balance across operational cheque and reserve savings bank accounts.
             </p>
           </div>
           <Button
@@ -92,7 +94,7 @@ export function FinanceOverviewClient({
               <Building2 className="h-3.5 w-3.5 text-blue-500" />
             </div>
             <p className="text-xl font-bold mt-1.5 tabular-nums text-foreground">{formatZAR(liquidBalances.cheque)}</p>
-            <p className="text-[11px] text-muted-foreground mt-0.5">Operational liquidity</p>
+            <p className="text-[11px] text-muted-foreground mt-0.5">Operational liquidity in bank</p>
           </div>
 
           <div className="rounded-lg border bg-card p-3.5">
@@ -101,7 +103,14 @@ export function FinanceOverviewClient({
               <PiggyBank className="h-3.5 w-3.5 text-emerald-500" />
             </div>
             <p className="text-xl font-bold mt-1.5 tabular-nums text-emerald-600 dark:text-emerald-400">{formatZAR(liquidBalances.savings)}</p>
-            <p className="text-[11px] text-muted-foreground mt-0.5">Reserve funds & PMG Share</p>
+            <p className="text-[11px] text-muted-foreground mt-0.5">
+              Physical cash in savings account
+              {pendingTransfer > 0 && (
+                <span className="block text-[10px] text-amber-500 font-medium mt-0.5">
+                  ({formatZAR(pendingTransfer)} pending transfer from Cheque)
+                </span>
+              )}
+            </p>
           </div>
 
           <div className="rounded-lg border bg-card p-3.5 bg-primary/5">
@@ -110,7 +119,7 @@ export function FinanceOverviewClient({
               <DollarSign className="h-3.5 w-3.5 text-primary" />
             </div>
             <p className="text-xl font-bold mt-1.5 tabular-nums text-primary">{formatZAR(totalLiquidCash)}</p>
-            <p className="text-[11px] text-muted-foreground mt-0.5">Combined bank reserves</p>
+            <p className="text-[11px] text-muted-foreground mt-0.5">Combined physical bank cash</p>
           </div>
         </div>
       </div>
@@ -156,13 +165,13 @@ export function FinanceOverviewClient({
 
         <div className="rounded-xl border bg-card p-5 hover:shadow-md transition-all duration-200">
           <div className="flex items-center justify-between">
-            <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider">PMG Share</p>
+            <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider">PMG Share (25%)</p>
             <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-blue-500/10">
               <PieChart className="h-4 w-4 text-blue-600" />
             </div>
           </div>
           <p className="text-2xl font-bold mt-2 tabular-nums text-blue-600">{formatZAR(summary.pmgShare)}</p>
-          <p className="text-xs text-muted-foreground mt-1">25% of revenue</p>
+          <p className="text-xs text-muted-foreground mt-1">Calculated 25% equity reserve earned</p>
         </div>
       </div>
 

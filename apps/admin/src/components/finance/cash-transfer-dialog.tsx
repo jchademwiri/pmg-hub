@@ -27,9 +27,10 @@ interface CashTransferDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   accounts: { id: string; code: string; name: string }[];
+  suggestedAmount?: number;
 }
 
-export function CashTransferDialog({ open, onOpenChange, accounts }: CashTransferDialogProps) {
+export function CashTransferDialog({ open, onOpenChange, accounts, suggestedAmount }: CashTransferDialogProps) {
   const [loading, setLoading] = useState(false);
   const [amount, setAmount] = useState('');
   const [fromAccountId, setFromAccountId] = useState('');
@@ -42,6 +43,12 @@ export function CashTransferDialog({ open, onOpenChange, accounts }: CashTransfe
 
   const defaultFrom = fromAccountId || cheque?.id || accounts[0]?.id || '';
   const defaultTo = toAccountId || savings?.id || accounts[1]?.id || '';
+
+  const handleAutofill = () => {
+    if (suggestedAmount && suggestedAmount > 0) {
+      setAmount(suggestedAmount.toFixed(2));
+    }
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -84,7 +91,7 @@ export function CashTransferDialog({ open, onOpenChange, accounts }: CashTransfe
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-md">
+      <DialogContent className="sm:max-w-lg">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <ArrowRightLeft className="h-5 w-5 text-blue-600" />
@@ -96,11 +103,22 @@ export function CashTransferDialog({ open, onOpenChange, accounts }: CashTransfe
         </DialogHeader>
 
         <form onSubmit={handleSubmit} className="space-y-4 py-2">
-          <div className="grid grid-cols-2 gap-3">
-            <div className="space-y-1.5">
+          {suggestedAmount && suggestedAmount > 0 && (
+            <div className="flex items-center justify-between p-2.5 rounded-lg bg-blue-500/10 border border-blue-500/20 text-xs">
+              <span className="text-blue-600 dark:text-blue-400 font-medium">
+                Pending PMG Share Transfer: <strong>R {suggestedAmount.toLocaleString('en-ZA', { minimumFractionDigits: 2 })}</strong>
+              </span>
+              <Button type="button" variant="outline" size="xs" onClick={handleAutofill} className="h-6 text-[11px] px-2">
+                Auto-fill
+              </Button>
+            </div>
+          )}
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <div className="space-y-1.5 min-w-0">
               <Label className="text-xs">From Account (Out)</Label>
               <Select value={defaultFrom} onValueChange={setFromAccountId}>
-                <SelectTrigger className="h-9 text-xs">
+                <SelectTrigger className="h-9 text-xs w-full min-w-0 truncate">
                   <SelectValue placeholder="Select account" />
                 </SelectTrigger>
                 <SelectContent>
@@ -113,10 +131,10 @@ export function CashTransferDialog({ open, onOpenChange, accounts }: CashTransfe
               </Select>
             </div>
 
-            <div className="space-y-1.5">
+            <div className="space-y-1.5 min-w-0">
               <Label className="text-xs">To Account (In)</Label>
               <Select value={defaultTo} onValueChange={setToAccountId}>
-                <SelectTrigger className="h-9 text-xs">
+                <SelectTrigger className="h-9 text-xs w-full min-w-0 truncate">
                   <SelectValue placeholder="Select account" />
                 </SelectTrigger>
                 <SelectContent>
