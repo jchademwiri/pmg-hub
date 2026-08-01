@@ -42,6 +42,23 @@ export function ExpenseAddForm({
   const [selectedFile, setSelectedFile] = React.useState<File | null>(null);
   const [isDragging, setIsDragging] = React.useState(false);
 
+  const MAX_SIZE = 10 * 1024 * 1024; // 10MB
+  const ALLOWED_TYPES = ['application/pdf', 'image/png', 'image/jpeg', 'image/jpg'];
+
+  const validateFile = (file: File): boolean => {
+    const mimeMatch = ALLOWED_TYPES.includes(file.type.toLowerCase());
+    const nameMatch = /\.(pdf|png|jpe?g)$/i.test(file.name);
+    if (!mimeMatch && !nameMatch) {
+      toast.error('Only PDF, PNG, JPG, and JPEG files are allowed.');
+      return false;
+    }
+    if (file.size > MAX_SIZE) {
+      toast.error('File size must be 10MB or less.');
+      return false;
+    }
+    return true;
+  };
+
   const handleDragOver = (e: React.DragEvent) => {
     e.preventDefault();
     e.stopPropagation();
@@ -61,18 +78,29 @@ export function ExpenseAddForm({
 
     if (e.dataTransfer.files && e.dataTransfer.files.length > 0) {
       const file = e.dataTransfer.files[0];
-      setSelectedFile(file);
-      if (fileInputRef.current) {
-        const dataTransfer = new DataTransfer();
-        dataTransfer.items.add(file);
-        fileInputRef.current.files = dataTransfer.files;
+      if (validateFile(file)) {
+        setSelectedFile(file);
+        if (fileInputRef.current) {
+          const dataTransfer = new DataTransfer();
+          dataTransfer.items.add(file);
+          fileInputRef.current.files = dataTransfer.files;
+        }
+      } else {
+        setSelectedFile(null);
+        if (fileInputRef.current) fileInputRef.current.value = '';
       }
     }
   };
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files.length > 0) {
-      setSelectedFile(e.target.files[0]);
+      const file = e.target.files[0];
+      if (validateFile(file)) {
+        setSelectedFile(file);
+      } else {
+        setSelectedFile(null);
+        if (fileInputRef.current) fileInputRef.current.value = '';
+      }
     } else {
       setSelectedFile(null);
     }
@@ -216,10 +244,18 @@ export function ExpenseAddForm({
 
           {!selectedFile ? (
             <div
+              role="button"
+              tabIndex={0}
               onDragOver={handleDragOver}
               onDragLeave={handleDragLeave}
               onDrop={handleDrop}
               onClick={() => fileInputRef.current?.click()}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter' || e.key === ' ') {
+                  e.preventDefault();
+                  fileInputRef.current?.click();
+                }
+              }}
               className={`flex flex-col items-center justify-center p-6 border-2 border-dashed rounded-lg cursor-pointer transition-all duration-150 text-center ${
                 isDragging
                   ? 'border-primary bg-primary/10 text-primary scale-[1.01]'
