@@ -7,6 +7,8 @@ import { EmptyState } from '@/components/ui/empty-state';
 import { getAllItems } from '@pmg/db';
 import { ItemsTable } from './items-table';
 
+import { AddItemDialog } from './add-item-dialog';
+
 export const dynamic = 'force-dynamic';
 export const metadata: Metadata = { title: 'Items' };
 
@@ -34,12 +36,7 @@ export default async function ItemsPage({ searchParams }: ItemsPageProps) {
           <p className="text-sm text-muted-foreground">Manage your service catalogue</p>
         </div>
         <div className="flex items-center gap-2">
-          <Button asChild size="sm">
-            <Link href="/billing/items/new">
-              <Plus className="size-4" />
-              New Item
-            </Link>
-          </Button>
+          <AddItemDialog />
         </div>
       </div>
 
