@@ -23,6 +23,7 @@ export const leads = pgTable(
   {
     id: uuid("id").primaryKey().defaultRandom(),
     name: text("name"),
+    companyName: text("company_name"),
     email: text("email"),
     phone: text("phone"),
     message: text("message"),
