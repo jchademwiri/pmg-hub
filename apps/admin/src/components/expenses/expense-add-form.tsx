@@ -14,6 +14,8 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 
+import { UploadCloud, FileText, Image as ImageIcon, X } from 'lucide-react';
+
 const today = new Date().toISOString().split('T')[0];
 
 interface ExpenseAddFormProps {
@@ -34,8 +36,54 @@ export function ExpenseAddForm({
   onCancel,
 }: ExpenseAddFormProps) {
   const formRef = React.useRef<HTMLFormElement>(null);
+  const fileInputRef = React.useRef<HTMLInputElement>(null);
   const [isPending, startTransition] = React.useTransition();
   const [errorMessage, setErrorMessage] = React.useState<string | null>(null);
+  const [selectedFile, setSelectedFile] = React.useState<File | null>(null);
+  const [isDragging, setIsDragging] = React.useState(false);
+
+  const handleDragOver = (e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsDragging(true);
+  };
+
+  const handleDragLeave = (e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsDragging(false);
+  };
+
+  const handleDrop = (e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsDragging(false);
+
+    if (e.dataTransfer.files && e.dataTransfer.files.length > 0) {
+      const file = e.dataTransfer.files[0];
+      setSelectedFile(file);
+      if (fileInputRef.current) {
+        const dataTransfer = new DataTransfer();
+        dataTransfer.items.add(file);
+        fileInputRef.current.files = dataTransfer.files;
+      }
+    }
+  };
+
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files && e.target.files.length > 0) {
+      setSelectedFile(e.target.files[0]);
+    } else {
+      setSelectedFile(null);
+    }
+  };
+
+  const removeFile = () => {
+    setSelectedFile(null);
+    if (fileInputRef.current) {
+      fileInputRef.current.value = '';
+    }
+  };
 
   function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
@@ -47,8 +95,9 @@ export function ExpenseAddForm({
       if (result.error) {
         setErrorMessage(result.error);
       } else {
-        toast.success('Expense added');
+        toast.success('Expense added with receipt!');
         formRef.current?.reset();
+        setSelectedFile(null);
       }
     });
   }
@@ -153,16 +202,70 @@ export function ExpenseAddForm({
         </Field>
 
         <Field className="sm:col-span-2 lg:col-span-3">
-          <FieldLabel htmlFor="expense-receipt">Receipt / Proof of Payment (Optional PDF / Image)</FieldLabel>
-          <Input
+          <FieldLabel>Receipt / Proof of Payment (Optional)</FieldLabel>
+          <input
+            ref={fileInputRef}
             id="expense-receipt"
             name="receipt"
             type="file"
             accept="image/*,.pdf"
             disabled={isPending}
-            className="cursor-pointer file:mr-3 file:py-1 file:px-2.5 file:rounded-md file:border-0 file:text-xs file:font-semibold file:bg-primary/10 file:text-primary hover:file:bg-primary/20"
+            className="hidden"
+            onChange={handleFileChange}
           />
-          <span className="text-[10px] text-muted-foreground mt-1">Upload invoice, receipt, or EFT proof of payment for SARS audit compliance</span>
+
+          {!selectedFile ? (
+            <div
+              onDragOver={handleDragOver}
+              onDragLeave={handleDragLeave}
+              onDrop={handleDrop}
+              onClick={() => fileInputRef.current?.click()}
+              className={`flex flex-col items-center justify-center p-6 border-2 border-dashed rounded-lg cursor-pointer transition-all duration-150 text-center ${
+                isDragging
+                  ? 'border-primary bg-primary/10 text-primary scale-[1.01]'
+                  : 'border-border hover:border-primary/50 bg-muted/20 hover:bg-muted/40 text-muted-foreground'
+              }`}
+            >
+              <UploadCloud className="size-8 mb-2 text-primary/70" />
+              <p className="text-xs font-semibold text-foreground">
+                Drag & drop receipt file here, or <span className="text-primary underline">browse</span>
+              </p>
+              <p className="text-[10px] text-muted-foreground mt-1">
+                Supports PDF, PNG, JPG, JPEG (Max 10MB) for SARS audit proof
+              </p>
+            </div>
+          ) : (
+            <div className="flex items-center justify-between p-3 border rounded-lg bg-emerald-500/5 border-emerald-500/20">
+              <div className="flex items-center gap-3 min-w-0">
+                <div className="p-2 rounded bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 shrink-0">
+                  {selectedFile.type.includes('image') ? (
+                    <ImageIcon className="size-5" />
+                  ) : (
+                    <FileText className="size-5" />
+                  )}
+                </div>
+                <div className="flex flex-col min-w-0">
+                  <span className="text-xs font-semibold text-foreground truncate" title={selectedFile.name}>
+                    {selectedFile.name}
+                  </span>
+                  <span className="text-[10px] text-muted-foreground">
+                    {(selectedFile.size / 1024).toFixed(1)} KB
+                  </span>
+                </div>
+              </div>
+              <Button
+                type="button"
+                variant="ghost"
+                size="icon"
+                className="size-7 text-muted-foreground hover:text-destructive"
+                onClick={removeFile}
+                disabled={isPending}
+              >
+                <X className="size-4" />
+                <span className="sr-only">Remove file</span>
+              </Button>
+            </div>
+          )}
         </Field>
       </div>
 
