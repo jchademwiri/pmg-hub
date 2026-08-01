@@ -93,7 +93,7 @@ export function SankeyDiagram({
   const width = 840
   const height = 410
 
-  // Nodes definition
+  // Nodes definition with explicit full-color attributes for SVG/PNG export support
   const nodes = [
     {
       id: 'gross',
@@ -104,9 +104,12 @@ export function SankeyDiagram({
       y: 180,
       w: 155,
       h: 48,
-      activeColor: 'border-emerald-500 bg-emerald-500/15 text-emerald-400 stroke-emerald-500',
-      activeText: 'fill-emerald-400',
-      dimColor: 'border-border/60 bg-card/60 text-muted-foreground stroke-border/60',
+      stroke: '#10b981',
+      fill: '#091a14',
+      labelColor: '#a1a1aa',
+      valColor: '#ffffff',
+      pctBg: '#064e3b',
+      pctColor: '#34d399',
     },
     { 
       id: 'pmg', 
@@ -117,9 +120,12 @@ export function SankeyDiagram({
       y: ledgerBalances ? 90 : 110, 
       w: 160, 
       h: ledgerBalances ? 68 : 48, 
-      activeColor: 'border-blue-500 bg-blue-500/15 text-blue-400 stroke-blue-500',
-      activeText: 'fill-blue-400',
-      dimColor: 'border-border/60 bg-card/60 text-muted-foreground stroke-border/60',
+      stroke: '#3b82f6',
+      fill: '#0f172a',
+      labelColor: '#a1a1aa',
+      valColor: '#ffffff',
+      pctBg: '#1e3a8a',
+      pctColor: '#60a5fa',
       hasBalances: !!ledgerBalances,
       spent: ledgerBalances?.pmg_share.spent,
       available: ledgerBalances?.pmg_share.available,
@@ -133,9 +139,12 @@ export function SankeyDiagram({
       y: 260, 
       w: 160, 
       h: 48, 
-      activeColor: 'border-emerald-500 bg-emerald-500/15 text-emerald-400 stroke-emerald-500',
-      activeText: 'fill-emerald-400',
-      dimColor: 'border-border/60 bg-card/60 text-muted-foreground stroke-border/60',
+      stroke: '#10b981',
+      fill: '#091a14',
+      labelColor: '#a1a1aa',
+      valColor: '#ffffff',
+      pctBg: '#064e3b',
+      pctColor: '#34d399',
     },
     { 
       id: 'expenses', 
@@ -146,9 +155,12 @@ export function SankeyDiagram({
       y: 110, 
       w: 160, 
       h: 48, 
-      activeColor: 'border-amber-500 bg-amber-500/15 text-amber-400 stroke-amber-500',
-      activeText: 'fill-amber-400',
-      dimColor: 'border-border/60 bg-card/60 text-muted-foreground stroke-border/60',
+      stroke: '#f59e0b',
+      fill: '#1c1917',
+      labelColor: '#a1a1aa',
+      valColor: '#ffffff',
+      pctBg: '#451a03',
+      pctColor: '#fbbf24',
     },
     { 
       id: 'pool', 
@@ -159,15 +171,16 @@ export function SankeyDiagram({
       y: 260, 
       w: 160, 
       h: 48, 
-      activeColor: isProfitable 
-        ? 'border-emerald-500 bg-emerald-500/15 text-emerald-400 stroke-emerald-500' 
-        : 'border-red-500 bg-red-500/15 text-red-400 stroke-red-500', 
-      activeText: isProfitable ? 'fill-emerald-400' : 'fill-red-400',
-      dimColor: 'border-border/60 bg-card/60 text-muted-foreground stroke-border/60',
+      stroke: isProfitable ? '#10b981' : '#ef4444',
+      fill: isProfitable ? '#091a14' : '#1f1213',
+      labelColor: '#a1a1aa',
+      valColor: '#ffffff',
+      pctBg: isProfitable ? '#064e3b' : '#7f1d1d',
+      pctColor: isProfitable ? '#34d399' : '#f87171',
     },
   ]
 
-  // Links definitions
+  // Links definitions with explicit full-color stroke attributes
   const links = [
     { 
       id: 'link-gross-pmg',
@@ -175,8 +188,7 @@ export function SankeyDiagram({
       target: 'pmg', 
       val: pmgShare, 
       pct: `${pmgPct.toFixed(1)}%`, 
-      activeStroke: 'stroke-blue-500/70 dark:stroke-blue-400/80',
-      dimStroke: 'stroke-muted-foreground/20 dark:stroke-border/40',
+      stroke: '#3b82f6',
     },
     { 
       id: 'link-gross-net',
@@ -184,8 +196,7 @@ export function SankeyDiagram({
       target: 'net', 
       val: netRevenue, 
       pct: `${netPct.toFixed(1)}%`, 
-      activeStroke: 'stroke-emerald-500/70 dark:stroke-emerald-400/80',
-      dimStroke: 'stroke-muted-foreground/20 dark:stroke-border/40',
+      stroke: '#10b981',
     },
     { 
       id: 'link-net-expenses',
@@ -193,8 +204,7 @@ export function SankeyDiagram({
       target: 'expenses', 
       val: expenses, 
       pct: `${expPct.toFixed(1)}%`, 
-      activeStroke: 'stroke-amber-500/70 dark:stroke-amber-400/80',
-      dimStroke: 'stroke-muted-foreground/20 dark:stroke-border/40',
+      stroke: '#f59e0b',
     },
     { 
       id: 'link-net-pool',
@@ -202,8 +212,7 @@ export function SankeyDiagram({
       target: 'pool', 
       val: Math.abs(profitPool), 
       pct: `${poolPct.toFixed(1)}%`, 
-      activeStroke: isProfitable ? 'stroke-emerald-500/70 dark:stroke-emerald-400/80' : 'stroke-red-500/70 dark:stroke-red-400/80',
-      dimStroke: 'stroke-muted-foreground/20 dark:stroke-border/40',
+      stroke: isProfitable ? '#10b981' : '#ef4444',
     },
   ]
 
@@ -217,7 +226,7 @@ export function SankeyDiagram({
   const maxStroke = 32
   const getStrokeWidth = (val: number) => {
     const ratio = revenue !== 0 ? val / revenue : 0
-    return Math.max(3, ratio * maxStroke)
+    return Math.max(4, ratio * maxStroke)
   }
 
   // Hover helper logic
@@ -290,7 +299,11 @@ export function SankeyDiagram({
             ref={svgRef}
             viewBox={`0 0 ${width} ${height}`} 
             className="w-full min-w-[760px] h-auto overflow-visible select-none"
+            style={{ backgroundColor: '#09090b' }}
           >
+            {/* Background Rect for standalone SVG/PNG rendering */}
+            <rect width={width} height={height} fill="#09090b" rx="12" />
+
             {/* Draw Links */}
             {links.map((link) => {
               const srcNode = nodes.find((n) => n.id === link.source)!
@@ -304,6 +317,7 @@ export function SankeyDiagram({
               const baseWidth = getStrokeWidth(link.val)
               const active = isLinkActive(link)
               const strokeWidth = active ? baseWidth + 3 : baseWidth
+              const opacity = active ? 0.95 : 0.55
               const midX = (x0 + x1) / 2
               const midY = (y0 + y1) / 2
 
@@ -317,12 +331,10 @@ export function SankeyDiagram({
                   <path
                     d={getLinkPath(x0, y0, x1, y1)}
                     fill="none"
-                    className={cn(
-                      "transition-all duration-300",
-                      active ? link.activeStroke : link.dimStroke
-                    )}
+                    stroke={link.stroke}
+                    strokeOpacity={opacity}
                     strokeWidth={strokeWidth}
-                    style={{ strokeLinecap: 'round' }}
+                    style={{ strokeLinecap: 'round', transition: 'all 0.3s ease' }}
                   />
                   {/* Link Percentage Label Badge */}
                   <rect
@@ -331,22 +343,18 @@ export function SankeyDiagram({
                     width={40}
                     height={18}
                     rx="9"
-                    className={cn(
-                      "transition-all duration-300 stroke-[1px]",
-                      active 
-                        ? "fill-card stroke-primary shadow-sm" 
-                        : "fill-muted/70 dark:fill-zinc-900/80 stroke-border/50"
-                    )}
+                    fill="#18181b"
+                    stroke={active ? link.stroke : '#3f3f46'}
+                    strokeWidth={active ? 1.5 : 1}
                   />
                   <text
                     x={midX}
                     y={midY + 0.5}
                     textAnchor="middle"
                     dominantBaseline="central"
-                    className={cn(
-                      "text-[9px] font-bold tabular-nums transition-colors duration-300",
-                      active ? "fill-foreground" : "fill-muted-foreground/80"
-                    )}
+                    fill={active ? '#ffffff' : '#d4d4d8'}
+                    fontSize="9.5"
+                    fontWeight="700"
                   >
                     {link.pct}
                   </text>
@@ -373,20 +381,19 @@ export function SankeyDiagram({
                     width={node.w}
                     height={node.h}
                     rx="8"
-                    className={cn(
-                      "transition-all duration-300 border-[1.5px] stroke-[1.5px]",
-                      active ? node.activeColor : node.dimColor
-                    )}
+                    fill={node.fill}
+                    stroke={node.stroke}
+                    strokeWidth={active ? 2.5 : 1.5}
+                    style={{ transition: 'all 0.3s ease' }}
                   />
 
                   {/* Node Label */}
                   <text
                     x={node.x + 10}
                     y={node.y + 15}
-                    className={cn(
-                      "text-[9.5px] font-semibold transition-colors duration-300",
-                      active ? "fill-foreground" : "fill-muted-foreground/75"
-                    )}
+                    fill={node.labelColor}
+                    fontSize="9.5"
+                    fontWeight="600"
                   >
                     {node.label}
                   </text>
@@ -399,22 +406,18 @@ export function SankeyDiagram({
                       width={38}
                       height={20}
                       rx="10"
-                      className={cn(
-                        "transition-all duration-300 stroke-[1px]",
-                        active 
-                          ? "fill-card/90 stroke-current shadow-sm" 
-                          : "fill-muted/60 dark:fill-zinc-800/80 stroke-border/50"
-                      )}
+                      fill={node.pctBg}
+                      stroke={node.stroke}
+                      strokeWidth={1}
                     />
                     <text
                       x={node.x + node.w - 29}
                       y={node.y + node.h / 2}
                       textAnchor="middle"
                       dominantBaseline="central"
-                      className={cn(
-                        "text-[9.5px] font-bold tabular-nums transition-colors duration-300",
-                        active ? node.activeText : "fill-muted-foreground/80"
-                      )}
+                      fill={node.pctColor}
+                      fontSize="9.5"
+                      fontWeight="700"
                     >
                       {node.pct}
                     </text>
@@ -424,10 +427,9 @@ export function SankeyDiagram({
                   <text
                     x={node.x + 10}
                     y={node.hasBalances ? node.y + 30 : node.y + 33}
-                    className={cn(
-                      "text-[10.5px] font-bold tabular-nums transition-colors duration-300",
-                      active ? "fill-foreground" : "fill-foreground/80"
-                    )}
+                    fill={node.valColor}
+                    fontSize="10.5"
+                    fontWeight="700"
                   >
                     {formatZAR(node.val)}
                   </text>
@@ -438,19 +440,18 @@ export function SankeyDiagram({
                       <text
                         x={node.x + 10}
                         y={node.y + 46}
-                        className="text-[8px] font-medium fill-muted-foreground/75 tabular-nums"
+                        fill="#71717a"
+                        fontSize="8"
+                        fontWeight="500"
                       >
                         Withdrawn: {formatZAR(node.spent ?? 0)}
                       </text>
                       <text
                         x={node.x + 10}
                         y={node.y + 57}
-                        className={cn(
-                          "text-[8px] font-semibold tabular-nums transition-colors",
-                          active
-                            ? (node.available ?? 0) >= 0 ? "fill-emerald-400" : "fill-red-400"
-                            : (node.available ?? 0) >= 0 ? "fill-emerald-500/80" : "fill-red-400/80"
-                        )}
+                        fill={(node.available ?? 0) >= 0 ? "#34d399" : "#f87171"}
+                        fontSize="8"
+                        fontWeight="600"
                       >
                         Balance: {formatZAR(node.available ?? 0)}
                       </text>
