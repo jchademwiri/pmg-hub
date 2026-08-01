@@ -1077,10 +1077,18 @@ export function ClientBillingWorkspace({
           {/* Document list — full width */}
           <div className="w-full shrink-0">
             <Card className="w-full shadow-sm border-muted-foreground/10 bg-card overflow-hidden">
-            <CardHeader className="p-4 border-b flex flex-row items-center justify-between">
+            <CardHeader className="p-4 border-b flex flex-col sm:flex-row sm:items-center justify-between gap-4">
               <div>
                 <CardTitle className="text-sm font-semibold capitalize">
-                  {activeTab === 'analytics' ? 'Client Analytics' : activeTab === 'projects' ? 'Projects' : activeTab}
+                  {activeTab === 'analytics'
+                    ? 'Client Analytics'
+                    : activeTab === 'projects'
+                    ? 'Client Projects'
+                    : activeTab === 'credits'
+                    ? 'Client Credits'
+                    : activeTab === 'compliance'
+                    ? 'Compliance Documents'
+                    : activeTab}
                 </CardTitle>
                 <CardDescription className="text-xs">
                   {activeTab === 'statement'
@@ -1088,9 +1096,53 @@ export function ClientBillingWorkspace({
                     : activeTab === 'analytics'
                     ? 'Full financial health, ageing analysis, and billing activity'
                     : activeTab === 'projects'
-                    ? 'Tender schedule and active projects for this client'
+                    ? 'Overview of the tender schedule and active projects for this client'
+                    : activeTab === 'credits'
+                    ? 'Manage credit notes and unallocated overpayments for this client'
+                    : activeTab === 'compliance'
+                    ? 'Track CIPC, BEE, and Tax Compliance documents for this client'
                     : 'Select documents to view or batch process'}
                 </CardDescription>
+              </div>
+              <div className="flex items-center gap-2">
+                {activeTab === 'credits' && (
+                  <Button size="sm" onClick={() => setShowIssueCreditDialog(true)}>
+                    <Plus className="size-4 mr-1" />
+                    Issue Credit Note
+                  </Button>
+                )}
+                {activeTab === 'projects' && (
+                  <Button size="sm" asChild>
+                    <Link href={`/projects/new?clientId=${client.id}`}>
+                      <Plus className="size-4 mr-1" />
+                      Add Project
+                    </Link>
+                  </Button>
+                )}
+                {activeTab === 'invoices' && (
+                  <Button size="sm" asChild>
+                    <Link href={`/billing/invoices/new?clientId=${client.id}`}>
+                      <Plus className="size-4 mr-1" />
+                      Create Invoice
+                    </Link>
+                  </Button>
+                )}
+                {activeTab === 'quotes' && (
+                  <Button size="sm" asChild>
+                    <Link href={`/billing/quotes/new?clientId=${client.id}`}>
+                      <Plus className="size-4 mr-1" />
+                      Create Quotation
+                    </Link>
+                  </Button>
+                )}
+                {activeTab === 'payments' && (
+                  <Button size="sm" asChild>
+                    <Link href={`/billing/payments/add?clientId=${client.id}`}>
+                      <Plus className="size-4 mr-1" />
+                      Record Payment
+                    </Link>
+                  </Button>
+                )}
               </div>
             </CardHeader>
             <CardContent className="p-0">
@@ -1412,16 +1464,6 @@ export function ClientBillingWorkspace({
 
               {/* CREDITS TAB */}
               <TabsContent value="credits" className="m-0 p-6 flex flex-col gap-6">
-                <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-                  <div className="flex flex-col gap-1">
-                    <h3 className="text-base font-semibold">Client Credits</h3>
-                    <p className="text-xs text-muted-foreground">Manage credit notes and unallocated overpayments for this client</p>
-                  </div>
-                  <Button size="sm" onClick={() => setShowIssueCreditDialog(true)}>
-                    <Plus className="size-4 mr-1" />
-                    Issue Credit Note
-                  </Button>
-                </div>
 
                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                   <div className="flex flex-col gap-1 p-4 rounded-lg border bg-muted/20">
@@ -1539,18 +1581,6 @@ export function ClientBillingWorkspace({
 
               {/* PROJECTS TAB */}
               <TabsContent value="projects" className="m-0 p-6 flex flex-col gap-6">
-                <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-                  <div className="flex flex-col gap-1">
-                    <h3 className="text-base font-semibold">Client Projects</h3>
-                    <p className="text-xs text-muted-foreground">Overview of the tender schedule and active projects for this client</p>
-                  </div>
-                  <Button size="sm" asChild>
-                    <Link href={`/projects/new?clientId=${client.id}`}>
-                      <Plus className="size-4 mr-1" />
-                      Add Project
-                    </Link>
-                  </Button>
-                </div>
 
                 {projects.length === 0 ? (
                   <p className="text-xs text-muted-foreground text-center py-8">
