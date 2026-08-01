@@ -22,6 +22,7 @@ export interface PaymentInput {
   amount: number;
   allocations: PaymentAllocationInput[];
   sendReceiptEmail?: boolean;
+  autoTransferPmgShare?: boolean;
 }
 
 /**
@@ -372,10 +373,36 @@ export async function recordClientPayment(data: PaymentInput): Promise<{ error?:
     return incomeRow.id;
   });
 
-  // 5. Revalidate cache
+  // 5. Automatic PMG Share (25%) physical cash transfer if requested
+  if (data.autoTransferPmgShare && data.amount > 0) {
+    try {
+      const pmgShareAmount = data.amount * 0.25;
+      const { chartAccounts } = await import('@pmg/db');
+      const { recordCashTransfer } = await import('./accounting');
+
+      const cheque = await db.select({ id: chartAccounts.id }).from(chartAccounts).where(eq(chartAccounts.code, '1010')).limit(1);
+      const savings = await db.select({ id: chartAccounts.id }).from(chartAccounts).where(eq(chartAccounts.code, '1020')).limit(1);
+
+      if (cheque[0] && savings[0]) {
+        await recordCashTransfer({
+          fromAccountId: cheque[0].id,
+          toAccountId: savings[0].id,
+          amount: pmgShareAmount,
+          date: data.date,
+          description: `Auto-transfer 25% PMG Share for income (${autoReference.slice(0, 40)})`,
+        });
+      }
+    } catch (err) {
+      console.error('Auto cash transfer of PMG Share failed:', err);
+    }
+  }
+
+  // 6. Revalidate cache
   revalidatePath('/billing/invoices');
   revalidatePath('/billing/payments');
   revalidatePath('/dashboard');
+  revalidatePath('/finance');
+  revalidatePath('/finance/overview');
   revalidatePath('/accounting/journals');
   revalidatePath('/accounting/trial-balance');
   revalidatePath('/accounting/general-ledger');

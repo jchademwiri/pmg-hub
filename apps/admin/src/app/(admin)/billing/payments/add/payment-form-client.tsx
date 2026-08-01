@@ -73,6 +73,7 @@ export function PaymentFormClient({ divisions, clients, minDate }: PaymentFormCl
   const selectedClient = clients.find((c) => c.id === clientId);
   const selectedClientEmail = selectedClient?.email;
   const [sendReceiptEmail, setSendReceiptEmail] = useState(true);
+  const [autoTransferPmgShare, setAutoTransferPmgShare] = useState(true);
 
   // Sync sendReceiptEmail default based on client email presence
   useEffect(() => {
@@ -308,6 +309,7 @@ export function PaymentFormClient({ divisions, clients, minDate }: PaymentFormCl
           amount: parseFloat(val) || 0,
         })),
         sendReceiptEmail,
+        autoTransferPmgShare,
       };
 
       startTransition(async () => {
@@ -318,7 +320,11 @@ export function PaymentFormClient({ divisions, clients, minDate }: PaymentFormCl
           return;
         }
 
-        toast.success('Payment successfully recorded!');
+        toast.success(
+          autoTransferPmgShare
+            ? `Payment of ${formatZAR(payload.amount)} recorded & 25% PMG Share transferred to Savings!`
+            : 'Payment successfully recorded!'
+        );
         router.push('/billing/payments');
       });
     }
@@ -487,6 +493,24 @@ export function PaymentFormClient({ divisions, clients, minDate }: PaymentFormCl
             </>
           )}
         </Field>
+
+        {/* Auto Transfer PMG Share Option */}
+        {!useExistingCredit && (
+          <div className="flex items-center justify-between p-3 rounded-md bg-blue-500/10 border border-blue-500/20">
+            <div className="flex flex-col gap-0.5">
+              <span className="text-sm font-semibold text-blue-900 dark:text-blue-300">Auto-transfer PMG Share (25%)</span>
+              <span className="text-xs text-blue-700 dark:text-blue-400">
+                Post bank cash transfer of {totalPaidNum > 0 ? formatZAR(totalPaidNum * 0.25) : '25%'} to Savings (1020)
+              </span>
+            </div>
+            <input
+              type="checkbox"
+              className="h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500 cursor-pointer"
+              checked={autoTransferPmgShare}
+              onChange={(e) => setAutoTransferPmgShare(e.target.checked)}
+            />
+          </div>
+        )}
 
         {/* Send Thank You / Receipt Email Option - Only show when recording cash payment */}
         {!useExistingCredit && clientId && (
