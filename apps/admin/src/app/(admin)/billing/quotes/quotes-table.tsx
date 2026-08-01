@@ -30,6 +30,8 @@ import type { QuotationRow } from '@pmg/db';
 
 import { MobileQuoteCard } from '@/components/billing/mobile-quote-card';
 
+import { convertQuotationToInvoice } from '@/app/actions/billing-quotes';
+
 interface QuotesTableProps {
   entries: QuotationRow[];
   deleteAction: (id: string) => Promise<{ error?: string }>;
@@ -58,6 +60,18 @@ export function QuotesTable({
 }: QuotesTableProps) {
   const router = useRouter();
   const [, startTransition] = useTransition();
+
+  function handleConvert(id: string, docNumber: string) {
+    startTransition(async () => {
+      const result = await convertQuotationToInvoice(id);
+      if (result.error) {
+        toast.error(result.error);
+      } else if (result.id) {
+        toast.success(`Quote ${docNumber} converted to Invoice!`);
+        router.push(`/billing/invoices/${result.id}`);
+      }
+    });
+  }
 
   function handleStatusChange(
     id: string,
@@ -195,6 +209,14 @@ export function QuotesTable({
                           Mark Declined
                         </DropdownMenuItem>
                       </>
+                    )}
+                    {['draft', 'sent', 'accepted'].includes(quote.status) && (
+                      <DropdownMenuItem
+                        onClick={() => handleConvert(quote.id, quote.documentNumber)}
+                        className="text-emerald-600 dark:text-emerald-400 font-medium"
+                      >
+                        Convert to Invoice
+                      </DropdownMenuItem>
                     )}
                     <DropdownMenuSeparator />
                     <DropdownMenuItem onClick={() => handleDuplicate(quote.id)}>
