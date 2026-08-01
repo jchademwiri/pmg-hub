@@ -101,6 +101,55 @@ export function InvoicesTable({
     toast.success(`Copied ${selectedRows.length} invoice numbers to clipboard.`);
   };
 
+  const handleBulkSendReminders = async () => {
+    const selectedRows = entries.filter((e) => selectedIds.includes(e.id));
+    if (selectedRows.length === 0) return;
+
+    const { sendCustomizedReminderAction, getPendingRemindersAction } = await import('@/app/actions/send-overdue-reminders');
+
+    startTransition(async () => {
+      try {
+        const pendingRes = await getPendingRemindersAction();
+        if (!pendingRes.success || !pendingRes.data) {
+          toast.error('Failed to load client reminder data.');
+          return;
+        }
+
+        let sentCount = 0;
+
+        for (const clientItem of pendingRes.data) {
+          const matchingInvoiceIds = clientItem.invoices
+            .filter((inv) => selectedIds.includes(inv.id))
+            .map((inv) => inv.id);
+
+          if (matchingInvoiceIds.length > 0 && clientItem.email) {
+            const clientLabel = clientItem.businessName || clientItem.clientName;
+            const res = await sendCustomizedReminderAction({
+              clientId: clientItem.clientId,
+              recipientEmail: clientItem.email,
+              subject: `Overdue Payment Reminder - ${clientLabel}`,
+              invoiceIds: matchingInvoiceIds,
+            });
+
+            if (res.success) {
+              sentCount++;
+            }
+          }
+        }
+
+        if (sentCount > 0) {
+          toast.success(`Sent payment reminders to ${sentCount} client(s).`);
+          router.refresh();
+        } else {
+          toast.info('No overdue invoices with valid client email addresses found in selection.');
+        }
+      } catch (err) {
+        toast.error('Failed to send reminders.');
+        console.error(err);
+      }
+    });
+  };
+
   function handleIssue(id: string, docNumber: string) {
     startTransition(async () => {
       const result = await issueAction(id);
@@ -142,6 +191,10 @@ export function InvoicesTable({
             <span>{selectedIds.length} invoice(s) selected</span>
           </div>
           <div className="flex items-center gap-2">
+            <Button size="sm" variant="outline" className="h-7 text-xs gap-1 border-amber-500/30 bg-amber-500/10 text-amber-700 dark:text-amber-300 hover:bg-amber-500/20" onClick={handleBulkSendReminders}>
+              <Mail className="h-3 w-3" />
+              Send Reminders
+            </Button>
             <Button size="sm" variant="outline" className="h-7 text-xs gap-1" onClick={handleBulkExportCSV}>
               <Download className="h-3 w-3" />
               Export CSV

@@ -12,8 +12,8 @@ import { SankeyDiagram } from './sankey-diagram'
 import { ReportCommentary } from './report-commentary'
 import { FinancialDrilldownSheet } from '@/components/insights/financial-drilldown-sheet'
 import type { DrilldownType } from '@/app/actions/drilldown'
-import { TrendingUp, DollarSign, Receipt, PiggyBank } from 'lucide-react'
-import type { MoMSnapshot, ProfitPoolRow, MonthlyFinancials, MonthlyBudgetChartRow, BucketBalances } from '@/lib/financial'
+import { TrendingUp, DollarSign, Receipt, PiggyBank, Printer } from 'lucide-react'
+import { Button } from '@/components/ui/button'
 
 interface ReportsTabsProps {
   momData: MoMSnapshot[]
@@ -93,24 +93,36 @@ export function ReportsTabs({
       drillType={drillType}
     />
     <Tabs value={activeTab} onValueChange={handleTabChange} className="w-full">
-      <TabsList className="mb-4">
-        <TabsTrigger value="overview" className="gap-1.5">
-          <TrendingUp className="size-3.5" />
-          Overview
-        </TabsTrigger>
-        <TabsTrigger value="revenue" className="gap-1.5">
-          <DollarSign className="size-3.5" />
-          Revenue
-        </TabsTrigger>
-        <TabsTrigger value="expenses" className="gap-1.5">
-          <Receipt className="size-3.5" />
-          Expenses
-        </TabsTrigger>
-        <TabsTrigger value="profit" className="gap-1.5">
-          <PiggyBank className="size-3.5" />
-          Net Profit
-        </TabsTrigger>
-      </TabsList>
+      <div className="flex items-center justify-between mb-4 print:hidden">
+        <TabsList>
+          <TabsTrigger value="overview" className="gap-1.5">
+            <TrendingUp className="size-3.5" />
+            Overview
+          </TabsTrigger>
+          <TabsTrigger value="revenue" className="gap-1.5">
+            <DollarSign className="size-3.5" />
+            Revenue
+          </TabsTrigger>
+          <TabsTrigger value="expenses" className="gap-1.5">
+            <Receipt className="size-3.5" />
+            Expenses
+          </TabsTrigger>
+          <TabsTrigger value="profit" className="gap-1.5">
+            <PiggyBank className="size-3.5" />
+            Net Profit
+          </TabsTrigger>
+        </TabsList>
+
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={() => window.print()}
+          className="gap-2 text-xs border-primary/20 hover:bg-primary/5"
+        >
+          <Printer className="size-3.5 text-primary" />
+          Print / Save PDF Report
+        </Button>
+      </div>
 
       {/* ── Overview Tab ───────────────────────────────────────────────── */}
       <TabsContent value="overview">

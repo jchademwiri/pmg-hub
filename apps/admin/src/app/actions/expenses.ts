@@ -19,6 +19,36 @@ const ExpenseSchema = z.object({
   amount: z.coerce.number().positive(),
 });
 
+import { writeFile, mkdir } from 'fs/promises';
+import { join } from 'path';
+
+async function handleReceiptUpload(file: File | null): Promise<{ url?: string; fileName?: string; fileSize?: number }> {
+  if (!file || typeof file === 'string' || file.size === 0 || file.name === 'undefined') return {};
+
+  try {
+    const bytes = await file.arrayBuffer();
+    const buffer = Buffer.from(bytes);
+
+    const uploadDir = join(process.cwd(), 'public', 'uploads', 'receipts');
+    await mkdir(uploadDir, { recursive: true });
+
+    const ext = file.name.split('.').pop() || 'bin';
+    const fileName = `receipt_${Date.now()}_${Math.random().toString(36).substring(2, 8)}.${ext}`;
+    const filePath = join(uploadDir, fileName);
+
+    await writeFile(filePath, buffer);
+
+    return {
+      url: `/uploads/receipts/${fileName}`,
+      fileName: file.name,
+      fileSize: file.size,
+    };
+  } catch (err) {
+    console.error('Failed to save receipt file:', err);
+    return {};
+  }
+}
+
 export async function createExpense(formData: FormData): Promise<{ error?: string }> {
   try {
     const raw = Object.fromEntries(formData);
@@ -35,6 +65,10 @@ export async function createExpense(formData: FormData): Promise<{ error?: strin
       const minDate = await getMinAllowedDate();
       return { error: getMinDateErrorMessage(minDate) };
     }
+
+    const receiptFile = formData.get('receipt') as File | null;
+    const receiptData = await handleReceiptUpload(receiptFile);
+
     const [inserted] = await db.insert(expenses).values({
       date: parsed.date,
       divisionId: parsed.divisionId,
@@ -42,6 +76,9 @@ export async function createExpense(formData: FormData): Promise<{ error?: strin
       category: parsed.category,
       description: parsed.description ?? null,
       amount: String(parsed.amount),
+      receiptUrl: receiptData.url ?? null,
+      receiptFileName: receiptData.fileName ?? null,
+      receiptFileSize: receiptData.fileSize ? String(receiptData.fileSize) : null,
     }).returning({ id: expenses.id });
 
     // Auto-post: Dr Expense / Cr Bank
@@ -87,17 +124,28 @@ export async function updateExpense(id: string, formData: FormData): Promise<{ e
       const minDate = await getMinAllowedDate();
       return { error: getMinDateErrorMessage(minDate) };
     }
+    const receiptFile = formData.get('receipt') as File | null;
+    const receiptData = await handleReceiptUpload(receiptFile);
+
+    const updatePayload: Record<string, any> = {
+      date: parsed.date,
+      divisionId: parsed.divisionId,
+      clientId: parsed.clientId ?? null,
+      category: parsed.category,
+      description: parsed.description ?? null,
+      amount: String(parsed.amount),
+      updatedAt: new Date(),
+    };
+
+    if (receiptData.url) {
+      updatePayload.receiptUrl = receiptData.url;
+      updatePayload.receiptFileName = receiptData.fileName;
+      updatePayload.receiptFileSize = String(receiptData.fileSize);
+    }
+
     await db
       .update(expenses)
-      .set({
-        date: parsed.date,
-        divisionId: parsed.divisionId,
-        clientId: parsed.clientId ?? null,
-        category: parsed.category,
-        description: parsed.description ?? null,
-        amount: String(parsed.amount),
-        updatedAt: new Date(),
-      })
+      .set(updatePayload)
       .where(eq(expenses.id, id));
 
     // Auto-post: void old entry, post new one
