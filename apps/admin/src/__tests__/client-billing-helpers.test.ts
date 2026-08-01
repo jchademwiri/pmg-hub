@@ -383,7 +383,7 @@ describe('buildBankingProps', () => {
   it('returns default banking details when settings is null', () => {
     expect(buildBankingProps(null)).toEqual({
       bankName: 'Capitec',
-      accountName: 'MR JACOB CHADEMWIRI (PMG Solutions)',
+      accountName: 'PMG Solutions',
       accountNumber: '2520318607',
       branchCode: '470010',
     });
@@ -392,7 +392,7 @@ describe('buildBankingProps', () => {
   it('returns default banking details when settings is undefined', () => {
     expect(buildBankingProps(undefined)).toEqual({
       bankName: 'Capitec',
-      accountName: 'MR JACOB CHADEMWIRI (PMG Solutions)',
+      accountName: 'PMG Solutions',
       accountNumber: '2520318607',
       branchCode: '470010',
     });
@@ -401,7 +401,7 @@ describe('buildBankingProps', () => {
   it('returns default banking details when bankName is null', () => {
     expect(buildBankingProps({ bankName: null })).toEqual({
       bankName: 'Capitec',
-      accountName: 'MR JACOB CHADEMWIRI (PMG Solutions)',
+      accountName: 'PMG Solutions',
       accountNumber: '2520318607',
       branchCode: '470010',
     });
@@ -410,7 +410,7 @@ describe('buildBankingProps', () => {
   it('returns default banking details when bankName is empty string', () => {
     expect(buildBankingProps({ bankName: '' })).toEqual({
       bankName: 'Capitec',
-      accountName: 'MR JACOB CHADEMWIRI (PMG Solutions)',
+      accountName: 'PMG Solutions',
       accountNumber: '2520318607',
       branchCode: '470010',
     });
@@ -437,7 +437,7 @@ describe('buildBankingProps', () => {
     });
     expect(result).toEqual({
       bankName: 'Test Bank',
-      accountName: 'MR JACOB CHADEMWIRI (PMG Solutions)',
+      accountName: 'PMG Solutions',
       accountNumber: '2520318607',
       branchCode: '470010',
     });
@@ -452,7 +452,7 @@ describe('buildBankingProps', () => {
     });
     expect(result).toEqual({
       bankName: 'Test Bank',
-      accountName: 'MR JACOB CHADEMWIRI (PMG Solutions)',
+      accountName: 'PMG Solutions',
       accountNumber: '2520318607',
       branchCode: '470010',
     });

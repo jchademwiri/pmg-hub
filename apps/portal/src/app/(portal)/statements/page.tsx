@@ -330,7 +330,7 @@ export default async function StatementsPage({ searchParams }: PageProps) {
                 </span>
                 <span className="text-left sm:text-right">Account Name:</span>
                 <span className="font-semibold text-white print:text-black text-right">
-                  {divSettings?.bankAccountName || 'MR JACOB CHADEMWIRI (PMG Solutions)'}
+                  {divSettings?.bankAccountName || 'PMG Solutions'}
                 </span>
                 <span className="text-left sm:text-right">Account Number:</span>
                 <span className="font-semibold text-white print:text-black text-right">

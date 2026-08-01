@@ -13,19 +13,19 @@ import { eq } from 'drizzle-orm';
 const bankingData: Record<string, { bankName: string; bankAccountName: string; bankAccountNumber: string; bankBranchCode: string }> = {
   'Playhouse Media Group': {
     bankName: 'Capitec',
-    bankAccountName: 'MR JACOB CHADEMWIRI (PMG Solutions)',
+    bankAccountName: 'PMG Solutions',
     bankAccountNumber: '2520318607',
     bankBranchCode: '470010',
   },
   'Apex Web Solutions': {
     bankName: 'Capitec',
-    bankAccountName: 'MR JACOB CHADEMWIRI (Apex Web Solutions)',
+    bankAccountName: 'Apex Web Solutions',
     bankAccountNumber: '2507002995',
     bankBranchCode: '470010',
   },
   'Tender Edge Solutions': {
     bankName: 'Capitec',
-    bankAccountName: 'MR JACOB CHADEMWIRI (Tender Edge Solutions)',
+    bankAccountName: 'Tender Edge Solutions',
     bankAccountNumber: '2521736631',
     bankBranchCode: '470010',
   },

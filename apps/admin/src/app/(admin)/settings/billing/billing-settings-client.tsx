@@ -708,7 +708,7 @@ function BankingMatrixRow({
           <Input
             value={bankAccountName}
             onChange={(e) => setBankAccountName(e.target.value)}
-            placeholder="e.g. MR JACOB CHADEMWIRI"
+            placeholder="e.g. PMG Solutions"
             className="h-8 text-xs bg-background"
             disabled={isPending}
           />
