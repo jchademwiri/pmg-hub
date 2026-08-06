@@ -41,7 +41,7 @@ const EXPORT_TYPES = [
     label: 'General Ledger',
     description: 'Detailed transaction lines organised by date and account',
     icon: Table2,
-    needsPeriod: false,
+    needsPeriod: true,
     needsAccount: true,
   },
   {

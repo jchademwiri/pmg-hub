@@ -27,6 +27,9 @@ export async function GET(
   if (!result) {
     return NextResponse.json({ error: 'Report not available.' }, { status: 404 });
   }
+  if ('error' in result) {
+    return NextResponse.json({ error: result.error }, { status: 400 });
+  }
 
   return new NextResponse(new Uint8Array(result.buffer), {
     headers: {
