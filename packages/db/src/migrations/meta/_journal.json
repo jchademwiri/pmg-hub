@@ -246,6 +246,13 @@
       "when": 1786001422573,
       "tag": "0034_add_expense_receipt_columns",
       "breakpoints": true
+    },
+    {
+      "idx": 35,
+      "version": "7",
+      "when": 1786007892830,
+      "tag": "0035_rename_tender_to_project_schedule",
+      "breakpoints": true
     }
   ]
 }
