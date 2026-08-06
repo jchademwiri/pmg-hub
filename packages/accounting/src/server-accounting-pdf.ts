@@ -1,6 +1,18 @@
 import 'server-only';
 
-import { getOrganisationSettings, getProfitAndLoss, getTrialBalance, getGeneralLedger, type ProfitAndLossResult, type TrialBalanceRow, type GeneralLedgerRow } from '@pmg/db';
+import {
+  getOrganisationSettings,
+  getProfitAndLoss,
+  getTrialBalance,
+  getGeneralLedger,
+  getJournalEntries,
+  getJournalLinesForEntries,
+  type ProfitAndLossResult,
+  type TrialBalanceRow,
+  type GeneralLedgerRow,
+  type JournalEntry,
+  type JournalEntryLineRow,
+} from '@pmg/db';
 import { buildOrgProps } from '@pmg/billing/client-billing-helpers';
 import { formatZAR, fmtDate, fmtDateLong, fmtMonthYear } from '@pmg/billing/format';
 import { PAGE, split, ensurePage, drawShellHeader, drawShellFooter, type PdfOrgHeader } from '@pmg/billing/pdf-shell';
@@ -337,6 +349,97 @@ async function buildGeneralLedgerPdf(filters: AccountingPdfFilters): Promise<Acc
   };
 }
 
+// Same safety-net cap/truncation-notice pattern as general ledger.
+const JOURNAL_ENTRIES_MAX_ROWS = 1000;
+
+const STATUS_COLOR: Record<string, [number, number, number]> = {
+  posted: [5, 150, 105],
+  void: [220, 38, 38],
+  draft: [217, 119, 6],
+};
+
+function drawJournalEntries(
+  doc: jsPDF,
+  startY: number,
+  entries: JournalEntry[],
+  linesByEntry: Map<string, JournalEntryLineRow[]>,
+): number {
+  let y = startY;
+
+  for (const entry of entries) {
+    const lines = linesByEntry.get(entry.id) ?? [];
+    y = ensurePage(doc, y, 11 + Math.min(lines.length, 4) * 5.5);
+
+    doc.setFillColor(249, 250, 251);
+    doc.rect(PAGE.margin, y, PAGE.width - PAGE.margin * 2, 8, 'F');
+    doc.setFont('helvetica', 'bold');
+    doc.setFontSize(8);
+    doc.setTextColor(24, 24, 27);
+    doc.text(entry.entryNumber, PAGE.margin + 2, y + 5.5);
+    doc.setFont('helvetica', 'normal');
+    doc.setTextColor(82, 82, 91);
+    doc.text(fmtDate(entry.entryDate), PAGE.margin + 32, y + 5.5);
+    doc.text(split(doc, entry.description, 78)[0] ?? '', PAGE.margin + 58, y + 5.5);
+    doc.setFont('helvetica', 'bold');
+    const [r, g, b] = STATUS_COLOR[entry.status] ?? [113, 113, 122];
+    doc.setTextColor(r, g, b);
+    doc.text(entry.status.toUpperCase(), PAGE.width - PAGE.margin - 2, y + 5.5, { align: 'right' });
+    y += 11;
+
+    doc.setFont('helvetica', 'normal');
+    doc.setFontSize(7.5);
+    for (const line of lines) {
+      y = ensurePage(doc, y, 6);
+      doc.setTextColor(82, 82, 91);
+      doc.text(`${line.accountCode} — ${line.accountName}`, PAGE.margin + 8, y + 4);
+      doc.setTextColor(24, 24, 27);
+      doc.text(line.debit > 0 ? formatZAR(line.debit) : '', 150, y + 4, { align: 'right' });
+      doc.text(line.credit > 0 ? formatZAR(line.credit) : '', PAGE.width - PAGE.margin - 2, y + 4, { align: 'right' });
+      y += 5.5;
+    }
+    y += 4;
+  }
+
+  return y;
+}
+
+async function buildJournalEntriesPdf(filters: AccountingPdfFilters): Promise<AccountingPdfResult> {
+  const [entriesResult, header] = await Promise.all([
+    getJournalEntries({ period: filters.period, page: 1, pageSize: JOURNAL_ENTRIES_MAX_ROWS }),
+    buildReportHeader('Journal Entries', filters.period),
+  ]);
+
+  const linesByEntry = new Map<string, JournalEntryLineRow[]>();
+  const allLines = await getJournalLinesForEntries(entriesResult.data.map((e) => e.id));
+  for (const line of allLines) {
+    const arr = linesByEntry.get(line.journalEntryId) ?? [];
+    arr.push(line);
+    linesByEntry.set(line.journalEntryId, arr);
+  }
+
+  const doc = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' });
+  drawReportHeader(doc, header);
+  let y = drawJournalEntries(doc, 72, entriesResult.data, linesByEntry);
+  if (entriesResult.total > entriesResult.data.length) {
+    y = ensurePage(doc, y, 10);
+    doc.setFont('helvetica', 'italic');
+    doc.setFontSize(8);
+    doc.setTextColor(220, 38, 38);
+    doc.text(
+      `Showing ${entriesResult.data.length} of ${entriesResult.total} entries — narrow your filters to see the rest.`,
+      PAGE.margin,
+      y,
+    );
+  }
+  drawReportFooter(doc, header);
+
+  const periodSuffix = filters.period ?? 'all-time';
+  return {
+    fileName: `journal-entries-${periodSuffix}.pdf`,
+    buffer: Buffer.from(doc.output('arraybuffer')),
+  };
+}
+
 /**
  * Generates a PDF for one of the 5 accounting reports on /accounting/exports.
  * Returns null for a valid-but-not-yet-implemented type (filled in phase by
@@ -356,7 +459,7 @@ export async function generateAccountingPdf(
     case 'general-ledger':
       return buildGeneralLedgerPdf(filters);
     case 'journal-entries':
-      return null; // Phase 4
+      return buildJournalEntriesPdf(filters);
     case 'chart-of-accounts':
       return null; // Phase 5
     default:
