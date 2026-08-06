@@ -239,6 +239,13 @@
       "when": 1783400143685,
       "tag": "0033_massive_the_watchers",
       "breakpoints": true
+    },
+    {
+      "idx": 34,
+      "version": "7",
+      "when": 1786001422573,
+      "tag": "0034_add_expense_receipt_columns",
+      "breakpoints": true
     }
   ]
 }
