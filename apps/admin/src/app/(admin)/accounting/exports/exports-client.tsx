@@ -76,7 +76,6 @@ export function ExportsClient({ periods, accounts, selectedPeriod }: ExportsClie
     if (exportConfig?.needsPeriod && period !== 'all') params.set('period', period)
     if (exportConfig?.needsAccount && accountId !== 'all') params.set('accountId', accountId)
 
-    // Build export URL — in a real implementation, this would trigger a download
     const url = `/api/accounting/export/${selectedExport}?${params.toString()}`
     window.open(url, '_blank')
   }
@@ -162,7 +161,7 @@ export function ExportsClient({ periods, accounts, selectedPeriod }: ExportsClie
 
             <Button onClick={handleExport} size="sm">
               <Download className="h-3.5 w-3.5 mr-1.5" />
-              Export CSV
+              Download PDF
             </Button>
           </div>
 
@@ -180,7 +179,7 @@ export function ExportsClient({ periods, accounts, selectedPeriod }: ExportsClie
             {exportConfig.needsAccount && accountId === 'all' && (
               <span>Account: All Accounts · </span>
             )}
-            Format: CSV (opens in Excel, Google Sheets, Numbers)
+            Format: PDF
           </div>
         </div>
       )}
@@ -189,8 +188,7 @@ export function ExportsClient({ periods, accounts, selectedPeriod }: ExportsClie
       {!selectedExport && (
         <div className="rounded-xl border bg-card p-8 text-center">
           <p className="text-sm text-muted-foreground">
-            Select an export type above to preview and download your accounting data.
-            All exports are in CSV format and can be opened in Excel, Google Sheets, or any spreadsheet application.
+            Select an export type above to preview and download your accounting data as a PDF report.
           </p>
         </div>
       )}
