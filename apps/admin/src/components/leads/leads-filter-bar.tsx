@@ -31,7 +31,7 @@ export function LeadsFilterBar({
     if (value !== 'all') params.set('divisionId', value)
     if (currentSource) params.set('source', currentSource)
     if (currentStatus) params.set('status', currentStatus)
-    router.push('/leads?' + params.toString())
+    router.push('/relationships/leads?' + params.toString())
   }
 
   function handleSourceChange(value: string) {
@@ -39,7 +39,7 @@ export function LeadsFilterBar({
     if (currentDivisionId) params.set('divisionId', currentDivisionId)
     if (value !== 'all') params.set('source', value)
     if (currentStatus) params.set('status', currentStatus)
-    router.push('/leads?' + params.toString())
+    router.push('/relationships/leads?' + params.toString())
   }
 
   return (

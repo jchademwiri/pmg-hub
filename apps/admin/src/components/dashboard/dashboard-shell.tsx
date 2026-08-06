@@ -279,7 +279,7 @@ export function DashboardShell({
       {/* ── Mobile: View Full Analytics Link ── */}
       <div className="md:hidden mt-2">
         <Button variant="outline" className="w-full bg-card" asChild>
-          <Link href="/analytics" className="text-muted-foreground hover:text-foreground">
+          <Link href="/insights/analysis" className="text-muted-foreground hover:text-foreground">
             View full analytics (Desktop)
           </Link>
         </Button>

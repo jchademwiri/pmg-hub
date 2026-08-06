@@ -75,7 +75,6 @@ vi.setConfig({ testTimeout: 15_000 });
 // ─── Import Code Under Test ──────────────────────────────────────────────────
 import { createItem, updateItem, archiveItem, unarchiveItem, deleteItem } from '@/app/actions/billing-items';
 import ItemsPage from '@/app/(admin)/billing/items/page';
-import { ItemFormClient } from '@/app/(admin)/billing/items/new/item-form-client';
 import { ItemEditClient } from '@/app/(admin)/billing/items/[id]/item-edit-client';
 
 describe('Billing Items Module', () => {
@@ -213,9 +212,6 @@ describe('Billing Items Module', () => {
       render(page as React.ReactElement);
 
       expect(screen.getByText('No items yet. Create your first service item to get started.')).toBeInTheDocument();
-    });
-
-      });
     });
 
     describe('ItemEditClient', () => {
