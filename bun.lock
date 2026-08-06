@@ -18,6 +18,7 @@
       "name": "admin",
       "version": "0.1.0",
       "dependencies": {
+        "@pmg/accounting": "workspace:*",
         "@pmg/billing": "workspace:*",
         "@pmg/db": "*",
         "@pmg/emails": "*",
@@ -191,6 +192,20 @@
         "fast-check": "^4.6.0",
         "tailwindcss": "catalog:",
         "vitest": "^1.4.0",
+      },
+    },
+    "packages/accounting": {
+      "name": "@pmg/accounting",
+      "version": "0.0.0",
+      "dependencies": {
+        "@pmg/billing": "workspace:*",
+        "@pmg/db": "workspace:*",
+        "jspdf": "^4.2.1",
+        "server-only": "^0.0.1",
+      },
+      "devDependencies": {
+        "@pmg/typescript-config": "workspace:*",
+        "typescript": "^5.4.0",
       },
     },
     "packages/billing": {
@@ -765,6 +780,8 @@
     "@oxc-transform/binding-win32-ia32-msvc": ["@oxc-transform/binding-win32-ia32-msvc@0.111.0", "", { "os": "win32", "cpu": "ia32" }, "sha512-A6ztCXpoSHt6PbvGAFqB0MLOcGG7ZJrrPXY1iB0zfOB1atLgI8oNePGxPl03XSbwpiTsFJ1oo8rj9DXcBzgT9g=="],
 
     "@oxc-transform/binding-win32-x64-msvc": ["@oxc-transform/binding-win32-x64-msvc@0.111.0", "", { "os": "win32", "cpu": "x64" }, "sha512-QddKW4kBH0Wof6Y65eYCNHM4iOGmCTWLLcNYY1FGswhzmTYOUVXajNROR+iCXAOFnOF0ldtsR79SyqgyHH1Bgg=="],
+
+    "@pmg/accounting": ["@pmg/accounting@workspace:packages/accounting"],
 
     "@pmg/billing": ["@pmg/billing@workspace:packages/billing"],
 
@@ -3319,6 +3336,8 @@
     "@modelcontextprotocol/sdk/jose": ["jose@6.2.3", "", {}, "sha512-YYVDInQKFJfR/xa3ojUTl8c2KoTwiL1R5Wg9YCydwH0x0B9grbzlg5HC7mMjCtUJjbQ/YnGEZIhI5tCgfTb4Hw=="],
 
     "@neondatabase/serverless/@types/pg": ["@types/pg@8.11.6", "", { "dependencies": { "@types/node": "*", "pg-protocol": "*", "pg-types": "^4.0.1" } }, "sha512-/2WmmBXHLsfRqzfHW7BNZ8SbYzE8OSk7i3WjFYvfgRHj7S1xj+16Je5fUKv3lVdVzk/zn9TXOqf+avFCFIE0yQ=="],
+
+    "@pmg/accounting/typescript": ["typescript@5.9.3", "", { "bin": { "tsc": "bin/tsc", "tsserver": "bin/tsserver" } }, "sha512-jl1vZzPDinLr9eUt3J/t7V6FgNEw9QjvBPdysz9KfQDD41fQrC2Y4vKQdiaUpFT4bXlb1RHhLpp8wtm6M5TgSw=="],
 
     "@pmg/billing/typescript": ["typescript@5.9.3", "", { "bin": { "tsc": "bin/tsc", "tsserver": "bin/tsserver" } }, "sha512-jl1vZzPDinLr9eUt3J/t7V6FgNEw9QjvBPdysz9KfQDD41fQrC2Y4vKQdiaUpFT4bXlb1RHhLpp8wtm6M5TgSw=="],
 

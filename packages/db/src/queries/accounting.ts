@@ -259,6 +259,49 @@ export async function getJournalEntryWithLines(id: string) {
   return { ...entry, lines };
 }
 
+export type JournalEntryLineRow = {
+  id: string;
+  journalEntryId: string;
+  accountId: string;
+  accountCode: string;
+  accountName: string;
+  debit: number;
+  credit: number;
+  description: string | null;
+};
+
+/**
+ * Returns all journal lines (with account code/name joined) for a batch of
+ * journal entry ids in a single query — used by report generation that
+ * needs every entry's lines without the N+1 cost of calling
+ * getJournalEntryWithLines per entry.
+ */
+export async function getJournalLinesForEntries(entryIds: string[]): Promise<JournalEntryLineRow[]> {
+  if (entryIds.length === 0) return [];
+
+  const rows = await db
+    .select({
+      id: journalLines.id,
+      journalEntryId: journalLines.journalEntryId,
+      accountId: journalLines.accountId,
+      accountCode: chartAccounts.code,
+      accountName: chartAccounts.name,
+      debit: journalLines.debit,
+      credit: journalLines.credit,
+      description: journalLines.description,
+    })
+    .from(journalLines)
+    .innerJoin(chartAccounts, eq(journalLines.accountId, chartAccounts.id))
+    .where(inArray(journalLines.journalEntryId, entryIds))
+    .orderBy(asc(journalLines.createdAt));
+
+  return rows.map((r) => ({
+    ...r,
+    debit: Number(r.debit ?? 0),
+    credit: Number(r.credit ?? 0),
+  }));
+}
+
 /**
  * Validates that a set of journal lines balance (total debits = total credits).
  */

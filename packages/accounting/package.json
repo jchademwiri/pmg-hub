@@ -1,0 +1,19 @@
+{
+  "name": "@pmg/accounting",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "exports": {
+    "./server-accounting-pdf": "./src/server-accounting-pdf.ts"
+  },
+  "dependencies": {
+    "@pmg/billing": "workspace:*",
+    "@pmg/db": "workspace:*",
+    "jspdf": "^4.2.1",
+    "server-only": "^0.0.1"
+  },
+  "devDependencies": {
+    "@pmg/typescript-config": "workspace:*",
+    "typescript": "^5.4.0"
+  }
+}
