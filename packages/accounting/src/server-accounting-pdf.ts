@@ -7,11 +7,13 @@ import {
   getGeneralLedger,
   getJournalEntries,
   getJournalLinesForEntries,
+  getChartAccountsByType,
   type ProfitAndLossResult,
   type TrialBalanceRow,
   type GeneralLedgerRow,
   type JournalEntry,
   type JournalEntryLineRow,
+  type ChartAccount,
 } from '@pmg/db';
 import { buildOrgProps } from '@pmg/billing/client-billing-helpers';
 import { formatZAR, fmtDate, fmtDateLong, fmtMonthYear } from '@pmg/billing/format';
@@ -440,6 +442,76 @@ async function buildJournalEntriesPdf(filters: AccountingPdfFilters): Promise<Ac
   };
 }
 
+const CHART_OF_ACCOUNTS_GROUPS: ReadonlyArray<{ key: string; label: string }> = [
+  { key: 'asset', label: 'Assets' },
+  { key: 'liability', label: 'Liabilities' },
+  { key: 'equity', label: 'Equity' },
+  { key: 'revenue', label: 'Revenue' },
+  { key: 'expense', label: 'Expenses' },
+];
+
+const COA_COLS = { code: PAGE.margin + 2, name: PAGE.margin + 26, status: PAGE.width - PAGE.margin - 2 };
+
+function drawChartOfAccountsTable(doc: jsPDF, startY: number, grouped: Record<string, ChartAccount[]>): number {
+  let y = startY;
+
+  for (const group of CHART_OF_ACCOUNTS_GROUPS) {
+    const accounts = grouped[group.key] ?? [];
+    if (accounts.length === 0) continue;
+
+    y = ensurePage(doc, y, 18);
+    doc.setFont('helvetica', 'bold');
+    doc.setFontSize(10);
+    doc.setTextColor(29, 78, 216);
+    doc.text(group.label, PAGE.margin, y);
+    y += 6;
+
+    doc.setFillColor(249, 250, 251);
+    doc.rect(PAGE.margin, y, PAGE.width - PAGE.margin * 2, 8, 'F');
+    doc.setFont('helvetica', 'bold');
+    doc.setFontSize(7);
+    doc.setTextColor(113, 113, 122);
+    doc.text('CODE', COA_COLS.code, y + 5.5);
+    doc.text('ACCOUNT NAME', COA_COLS.name, y + 5.5);
+    doc.text('STATUS', COA_COLS.status, y + 5.5, { align: 'right' });
+    y += 11;
+
+    doc.setFont('helvetica', 'normal');
+    doc.setFontSize(8.5);
+    for (const account of accounts) {
+      y = ensurePage(doc, y, 7);
+      doc.setTextColor(24, 24, 27);
+      doc.text(account.code, COA_COLS.code, y + 4);
+      doc.text(account.name, COA_COLS.name, y + 4);
+      doc.setTextColor(account.isActive ? 5 : 161, account.isActive ? 150 : 161, account.isActive ? 105 : 170);
+      doc.text(account.isActive ? 'Active' : 'Inactive', COA_COLS.status, y + 4, { align: 'right' });
+      doc.setDrawColor(244, 244, 245);
+      doc.line(PAGE.margin, y + 6, PAGE.width - PAGE.margin, y + 6);
+      y += 7;
+    }
+    y += 6;
+  }
+
+  return y;
+}
+
+async function buildChartOfAccountsPdf(): Promise<AccountingPdfResult> {
+  const [grouped, header] = await Promise.all([
+    getChartAccountsByType(),
+    buildReportHeader('Chart of Accounts', undefined),
+  ]);
+
+  const doc = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' });
+  drawReportHeader(doc, header);
+  drawChartOfAccountsTable(doc, 72, grouped);
+  drawReportFooter(doc, header);
+
+  return {
+    fileName: 'chart-of-accounts.pdf',
+    buffer: Buffer.from(doc.output('arraybuffer')),
+  };
+}
+
 /**
  * Generates a PDF for one of the 5 accounting reports on /accounting/exports.
  * Returns null for a valid-but-not-yet-implemented type (filled in phase by
@@ -461,7 +533,7 @@ export async function generateAccountingPdf(
     case 'journal-entries':
       return buildJournalEntriesPdf(filters);
     case 'chart-of-accounts':
-      return null; // Phase 5
+      return buildChartOfAccountsPdf();
     default:
       return null;
   }
