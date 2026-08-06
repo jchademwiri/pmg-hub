@@ -20,7 +20,7 @@ export function YearFilter({ years, currentYear }: YearFilterProps) {
   const options = years.length > 0 ? years : [currentYear]
 
   function handleYearChange(value: string) {
-    router.push('/reports?year=' + value)
+    router.push('/insights/reports?year=' + value)
   }
 
   return (
