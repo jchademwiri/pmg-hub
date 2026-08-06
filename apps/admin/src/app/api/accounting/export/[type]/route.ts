@@ -22,8 +22,9 @@ export async function GET(
   const url = new URL(req.url);
   const period = url.searchParams.get('period') ?? undefined;
   const accountId = url.searchParams.get('accountId') ?? undefined;
+  const divisionId = url.searchParams.get('divisionId') ?? undefined;
 
-  const result = await generateAccountingPdf(type, { period, accountId });
+  const result = await generateAccountingPdf(type, { period, accountId, divisionId });
   if (!result) {
     return NextResponse.json({ error: 'Report not available.' }, { status: 404 });
   }

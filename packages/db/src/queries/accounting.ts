@@ -7,6 +7,7 @@ import {
 } from "../schema/accounting";
 import { user } from "../schema/auth";
 import { snapshots } from "../schema/snapshots";
+import { divisions } from "../schema/divisions";
 import { eq, and, desc, asc, sql, inArray } from "drizzle-orm";
 
 // ── Chart of Accounts ─────────────────────────────────────────────────────────
@@ -155,16 +156,19 @@ export async function getJournalEntries({
   status,
   period,
   year,
+  divisionId,
 }: {
   page?: number;
   pageSize?: number;
   status?: string;
   period?: string;
   year?: number;
+  divisionId?: string;
 } = {}) {
   const conditions = [];
   if (status) conditions.push(eq(journalEntries.status, status as any));
   if (period) conditions.push(eq(journalEntries.period, period));
+  if (divisionId) conditions.push(eq(journalEntries.divisionId, divisionId));
   if (year) {
     conditions.push(sql`${journalEntries.period} >= ${`${year}-03`}`);
     conditions.push(sql`${journalEntries.period} <= ${`${year + 1}-02`}`);
@@ -483,11 +487,12 @@ export type TrialBalanceRow = {
  * Uses a subquery to ensure only journal lines belonging to posted entries
  * are aggregated — void/draft entries are excluded.
  */
-export async function getTrialBalance(period?: string): Promise<TrialBalanceRow[]> {
+export async function getTrialBalance(period?: string, divisionId?: string): Promise<TrialBalanceRow[]> {
   const entryConditions = [
     eq(journalEntries.status, "posted"),
   ];
   if (period) entryConditions.push(eq(journalEntries.period, period));
+  if (divisionId) entryConditions.push(eq(journalEntries.divisionId, divisionId));
 
   const accountConditions = [
     eq(chartAccounts.isPostingAccount, true),
@@ -561,11 +566,12 @@ export type ProfitAndLossResult = {
  * Uses a subquery to ensure only journal lines belonging to posted entries
  * are aggregated — void/draft entries are excluded.
  */
-export async function getProfitAndLoss(period?: string): Promise<ProfitAndLossResult> {
+export async function getProfitAndLoss(period?: string, divisionId?: string): Promise<ProfitAndLossResult> {
   const entryConditions = [
     eq(journalEntries.status, "posted"),
   ];
   if (period) entryConditions.push(eq(journalEntries.period, period));
+  if (divisionId) entryConditions.push(eq(journalEntries.divisionId, divisionId));
 
   const accountConditions = [
     eq(chartAccounts.isPostingAccount, true),
@@ -633,6 +639,67 @@ export async function getProfitAndLoss(period?: string): Promise<ProfitAndLossRe
   };
 }
 
+export type ProfitAndLossByDivisionRow = {
+  divisionId: string;
+  divisionName: string;
+  totalRevenue: number;
+  totalExpenses: number;
+  netProfit: number;
+};
+
+/**
+ * Returns revenue/expenses/net profit grouped by division, for a given
+ * period. Divisions with zero revenue and zero expense activity are
+ * omitted. Sorted by totalRevenue descending (highest-earning division
+ * first).
+ */
+export async function getProfitAndLossByDivision(period?: string): Promise<ProfitAndLossByDivisionRow[]> {
+  const entryConditions = [
+    eq(journalEntries.status, "posted"),
+  ];
+  if (period) entryConditions.push(eq(journalEntries.period, period));
+
+  const rows = await db
+    .select({
+      divisionId: journalEntries.divisionId,
+      accountType: chartAccounts.type,
+      totalDebits: sql<string>`COALESCE(SUM(${journalLines.debit}::numeric), 0)`,
+      totalCredits: sql<string>`COALESCE(SUM(${journalLines.credit}::numeric), 0)`,
+    })
+    .from(journalLines)
+    .innerJoin(journalEntries, and(eq(journalLines.journalEntryId, journalEntries.id), ...entryConditions))
+    .innerJoin(chartAccounts, eq(journalLines.accountId, chartAccounts.id))
+    .where(inArray(chartAccounts.type, ["revenue", "expense"]))
+    .groupBy(journalEntries.divisionId, chartAccounts.type);
+
+  const allDivisions = await db.select({ id: divisions.id, name: divisions.name }).from(divisions);
+  const divisionNames = new Map(allDivisions.map((d) => [d.id, d.name]));
+
+  const byDivision = new Map<string, { totalRevenue: number; totalExpenses: number }>();
+  for (const r of rows) {
+    const totals = byDivision.get(r.divisionId) ?? { totalRevenue: 0, totalExpenses: 0 };
+    const debits = Number(r.totalDebits);
+    const credits = Number(r.totalCredits);
+    if (r.accountType === "revenue") totals.totalRevenue += credits - debits;
+    else if (r.accountType === "expense") totals.totalExpenses += debits - credits;
+    byDivision.set(r.divisionId, totals);
+  }
+
+  const result: ProfitAndLossByDivisionRow[] = [];
+  for (const [divisionId, totals] of byDivision) {
+    if (Math.abs(totals.totalRevenue) < 0.01 && Math.abs(totals.totalExpenses) < 0.01) continue;
+    result.push({
+      divisionId,
+      divisionName: divisionNames.get(divisionId) ?? "Unknown Division",
+      totalRevenue: totals.totalRevenue,
+      totalExpenses: totals.totalExpenses,
+      netProfit: totals.totalRevenue - totals.totalExpenses,
+    });
+  }
+
+  return result.sort((a, b) => b.totalRevenue - a.totalRevenue);
+}
+
 // ── General Ledger ────────────────────────────────────────────────────────────
 
 export type GeneralLedgerRow = {
@@ -658,12 +725,14 @@ export async function getGeneralLedger({
   startDate,
   endDate,
   accountId,
+  divisionId,
   page = 1,
   pageSize = 50,
 }: {
   startDate?: string;
   endDate?: string;
   accountId?: string;
+  divisionId?: string;
   page?: number;
   pageSize?: number;
 } = {}) {
@@ -673,6 +742,7 @@ export async function getGeneralLedger({
   if (startDate) conditions.push(sql`${journalEntries.entryDate} >= ${startDate}`);
   if (endDate) conditions.push(sql`${journalEntries.entryDate} <= ${endDate}`);
   if (accountId) conditions.push(eq(journalLines.accountId, accountId));
+  if (divisionId) conditions.push(eq(journalEntries.divisionId, divisionId));
 
   const where = and(...conditions);
 

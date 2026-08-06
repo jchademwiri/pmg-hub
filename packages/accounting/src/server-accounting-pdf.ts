@@ -3,12 +3,15 @@ import 'server-only';
 import {
   getOrganisationSettings,
   getProfitAndLoss,
+  getProfitAndLossByDivision,
   getTrialBalance,
   getGeneralLedger,
   getJournalEntries,
   getJournalLinesForEntries,
   getChartAccountsByType,
+  getAllDivisions,
   type ProfitAndLossResult,
+  type ProfitAndLossByDivisionRow,
   type TrialBalanceRow,
   type GeneralLedgerRow,
   type JournalEntry,
@@ -32,6 +35,8 @@ export interface AccountingPdfFilters {
   period?: string;
   /** Chart-of-accounts account id. Used by general-ledger. */
   accountId?: string;
+  /** Division id. Scopes profit-and-loss, trial-balance, general-ledger, journal-entries to one division. */
+  divisionId?: string;
 }
 
 export interface AccountingPdfResult {
@@ -69,10 +74,17 @@ interface AccountingReportHeader {
   generatedAt: string;
 }
 
-async function buildReportHeader(title: string, period?: string): Promise<AccountingReportHeader> {
+/** Resolves a division id to its display name, so a division-filtered PDF is self-describing. */
+async function resolveDivisionName(divisionId?: string): Promise<string | undefined> {
+  if (!divisionId) return undefined;
+  const allDivisions = await getAllDivisions();
+  return allDivisions.find((d) => d.id === divisionId)?.name;
+}
+
+async function buildReportHeader(title: string, period?: string, divisionLabel?: string): Promise<AccountingReportHeader> {
   const orgSettings = await getOrganisationSettings();
   return {
-    title,
+    title: divisionLabel ? `${title} — ${divisionLabel}` : title,
     org: buildOrgProps(COMPANY_NAME, null, orgSettings),
     periodLabel: period ? fmtMonthYear(period) : 'All Time',
     generatedAt: fmtDateLong(new Date()),
@@ -159,20 +171,87 @@ function drawProfitAndLossTable(doc: jsPDF, startY: number, result: ProfitAndLos
   return y + 14;
 }
 
+const DIVISION_COLS = { name: PAGE.margin + 2, revenue: 120, expenses: 156, net: PAGE.width - PAGE.margin - 2 };
+
+/** Revenue/expenses/net profit per division, sorted highest-revenue first —
+ * answers "which division is bringing in more money" at a glance. */
+function drawProfitAndLossByDivisionTable(doc: jsPDF, startY: number, rows: ProfitAndLossByDivisionRow[]): number {
+  let y = startY;
+
+  y = ensurePage(doc, y, 22);
+  doc.setFont('helvetica', 'bold');
+  doc.setFontSize(10);
+  doc.setTextColor(29, 78, 216);
+  doc.text('Revenue & Profit by Division', PAGE.margin, y);
+  y += 8;
+
+  doc.setFillColor(249, 250, 251);
+  doc.rect(PAGE.margin, y, PAGE.width - PAGE.margin * 2, 9, 'F');
+  doc.setFont('helvetica', 'bold');
+  doc.setFontSize(7);
+  doc.setTextColor(113, 113, 122);
+  doc.text('DIVISION', DIVISION_COLS.name, y + 6);
+  doc.text('REVENUE', DIVISION_COLS.revenue, y + 6, { align: 'right' });
+  doc.text('EXPENSES', DIVISION_COLS.expenses, y + 6, { align: 'right' });
+  doc.text('NET PROFIT', DIVISION_COLS.net, y + 6, { align: 'right' });
+  y += 13;
+
+  let totalRevenue = 0;
+  let totalExpenses = 0;
+  doc.setFont('helvetica', 'normal');
+  doc.setFontSize(9);
+  for (const row of rows) {
+    y = ensurePage(doc, y, 8);
+    totalRevenue += row.totalRevenue;
+    totalExpenses += row.totalExpenses;
+    doc.setTextColor(24, 24, 27);
+    doc.text(row.divisionName, DIVISION_COLS.name, y + 4);
+    doc.text(formatZAR(row.totalRevenue), DIVISION_COLS.revenue, y + 4, { align: 'right' });
+    doc.text(formatZAR(row.totalExpenses), DIVISION_COLS.expenses, y + 4, { align: 'right' });
+    doc.setTextColor(row.netProfit >= 0 ? 5 : 220, row.netProfit >= 0 ? 150 : 38, row.netProfit >= 0 ? 105 : 38);
+    doc.text(formatZAR(row.netProfit), DIVISION_COLS.net, y + 4, { align: 'right' });
+    doc.setDrawColor(244, 244, 245);
+    doc.line(PAGE.margin, y + 6, PAGE.width - PAGE.margin, y + 6);
+    y += 8;
+  }
+
+  y = ensurePage(doc, y, 12);
+  doc.setDrawColor(24, 24, 27);
+  doc.line(PAGE.margin, y + 2, PAGE.width - PAGE.margin, y + 2);
+  doc.setFont('helvetica', 'bold');
+  doc.setFontSize(9);
+  doc.setTextColor(24, 24, 27);
+  doc.text('Total', DIVISION_COLS.name, y + 9);
+  doc.text(formatZAR(totalRevenue), DIVISION_COLS.revenue, y + 9, { align: 'right' });
+  doc.text(formatZAR(totalExpenses), DIVISION_COLS.expenses, y + 9, { align: 'right' });
+  const totalNet = totalRevenue - totalExpenses;
+  doc.setTextColor(totalNet >= 0 ? 5 : 220, totalNet >= 0 ? 150 : 38, totalNet >= 0 ? 105 : 38);
+  doc.text(formatZAR(totalNet), DIVISION_COLS.net, y + 9, { align: 'right' });
+
+  return y + 16;
+}
+
 async function buildProfitAndLossPdf(filters: AccountingPdfFilters): Promise<AccountingPdfResult> {
-  const [result, header] = await Promise.all([
-    getProfitAndLoss(filters.period),
-    buildReportHeader('Profit & Loss Statement', filters.period),
+  const [result, byDivision, divisionName] = await Promise.all([
+    getProfitAndLoss(filters.period, filters.divisionId),
+    getProfitAndLossByDivision(filters.period),
+    resolveDivisionName(filters.divisionId),
   ]);
+  const header = await buildReportHeader('Profit & Loss Statement', filters.period, divisionName);
 
   const doc = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' });
   drawReportHeader(doc, header);
-  drawProfitAndLossTable(doc, 72, result);
+  let y = drawProfitAndLossTable(doc, 72, result);
+  if (byDivision.length > 0) {
+    y += 6;
+    y = ensurePage(doc, y, 30);
+    y = drawProfitAndLossByDivisionTable(doc, y, byDivision);
+  }
   drawReportFooter(doc, header);
 
-  const periodSuffix = filters.period ?? 'all-time';
+  const suffix = [filters.period ?? 'all-time', filters.divisionId].filter(Boolean).join('-');
   return {
-    fileName: `profit-and-loss-${periodSuffix}.pdf`,
+    fileName: `profit-and-loss-${suffix}.pdf`,
     buffer: Buffer.from(doc.output('arraybuffer')),
   };
 }
@@ -233,19 +312,20 @@ function drawTrialBalanceTable(doc: jsPDF, startY: number, rows: TrialBalanceRow
 }
 
 async function buildTrialBalancePdf(filters: AccountingPdfFilters): Promise<AccountingPdfResult> {
-  const [rows, header] = await Promise.all([
-    getTrialBalance(filters.period),
-    buildReportHeader('Trial Balance', filters.period),
+  const [rows, divisionName] = await Promise.all([
+    getTrialBalance(filters.period, filters.divisionId),
+    resolveDivisionName(filters.divisionId),
   ]);
+  const header = await buildReportHeader('Trial Balance', filters.period, divisionName);
 
   const doc = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' });
   drawReportHeader(doc, header);
   drawTrialBalanceTable(doc, 72, rows);
   drawReportFooter(doc, header);
 
-  const periodSuffix = filters.period ?? 'all-time';
+  const suffix = [filters.period ?? 'all-time', filters.divisionId].filter(Boolean).join('-');
   return {
-    fileName: `trial-balance-${periodSuffix}.pdf`,
+    fileName: `trial-balance-${suffix}.pdf`,
     buffer: Buffer.from(doc.output('arraybuffer')),
   };
 }
@@ -323,10 +403,11 @@ async function buildGeneralLedgerPdf(filters: AccountingPdfFilters): Promise<Acc
   }
 
   const dateRange = filters.period ? periodToDateRange(filters.period) : {};
-  const [ledgerResult, header] = await Promise.all([
-    getGeneralLedger({ ...dateRange, accountId: filters.accountId, page: 1, pageSize: GENERAL_LEDGER_MAX_ROWS }),
-    buildReportHeader('General Ledger', filters.period),
+  const [ledgerResult, divisionName] = await Promise.all([
+    getGeneralLedger({ ...dateRange, accountId: filters.accountId, divisionId: filters.divisionId, page: 1, pageSize: GENERAL_LEDGER_MAX_ROWS }),
+    resolveDivisionName(filters.divisionId),
   ]);
+  const header = await buildReportHeader('General Ledger', filters.period, divisionName);
 
   const doc = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' });
   drawReportHeader(doc, header);
@@ -344,7 +425,7 @@ async function buildGeneralLedgerPdf(filters: AccountingPdfFilters): Promise<Acc
   }
   drawReportFooter(doc, header);
 
-  const suffix = [filters.period, filters.accountId].filter(Boolean).join('-') || 'filtered';
+  const suffix = [filters.period, filters.accountId, filters.divisionId].filter(Boolean).join('-') || 'filtered';
   return {
     fileName: `general-ledger-${suffix}.pdf`,
     buffer: Buffer.from(doc.output('arraybuffer')),
@@ -406,10 +487,11 @@ function drawJournalEntries(
 }
 
 async function buildJournalEntriesPdf(filters: AccountingPdfFilters): Promise<AccountingPdfResult> {
-  const [entriesResult, header] = await Promise.all([
-    getJournalEntries({ period: filters.period, page: 1, pageSize: JOURNAL_ENTRIES_MAX_ROWS }),
-    buildReportHeader('Journal Entries', filters.period),
+  const [entriesResult, divisionName] = await Promise.all([
+    getJournalEntries({ period: filters.period, divisionId: filters.divisionId, page: 1, pageSize: JOURNAL_ENTRIES_MAX_ROWS }),
+    resolveDivisionName(filters.divisionId),
   ]);
+  const header = await buildReportHeader('Journal Entries', filters.period, divisionName);
 
   const linesByEntry = new Map<string, JournalEntryLineRow[]>();
   const allLines = await getJournalLinesForEntries(entriesResult.data.map((e) => e.id));
@@ -435,9 +517,9 @@ async function buildJournalEntriesPdf(filters: AccountingPdfFilters): Promise<Ac
   }
   drawReportFooter(doc, header);
 
-  const periodSuffix = filters.period ?? 'all-time';
+  const suffix = [filters.period ?? 'all-time', filters.divisionId].filter(Boolean).join('-');
   return {
-    fileName: `journal-entries-${periodSuffix}.pdf`,
+    fileName: `journal-entries-${suffix}.pdf`,
     buffer: Buffer.from(doc.output('arraybuffer')),
   };
 }

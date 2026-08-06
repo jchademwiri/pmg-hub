@@ -16,6 +16,7 @@ import type { ChartAccount } from '@pmg/db'
 interface ExportsClientProps {
   periods: string[]
   accounts: ChartAccount[]
+  divisions: { id: string; name: string }[]
   selectedPeriod: string
 }
 
@@ -27,6 +28,7 @@ const EXPORT_TYPES = [
     icon: BookOpen,
     needsPeriod: false,
     needsAccount: false,
+    needsDivision: false,
   },
   {
     id: 'journal-entries',
@@ -35,6 +37,7 @@ const EXPORT_TYPES = [
     icon: FileText,
     needsPeriod: true,
     needsAccount: false,
+    needsDivision: true,
   },
   {
     id: 'general-ledger',
@@ -43,6 +46,7 @@ const EXPORT_TYPES = [
     icon: Table2,
     needsPeriod: true,
     needsAccount: true,
+    needsDivision: true,
   },
   {
     id: 'trial-balance',
@@ -51,21 +55,24 @@ const EXPORT_TYPES = [
     icon: Scale,
     needsPeriod: true,
     needsAccount: false,
+    needsDivision: true,
   },
   {
     id: 'profit-and-loss',
     label: 'Profit & Loss',
-    description: 'Revenue and expenses with net profit calculation',
+    description: 'Revenue and expenses with net profit calculation, broken down by division',
     icon: TrendingUp,
     needsPeriod: true,
     needsAccount: false,
+    needsDivision: true,
   },
 ]
 
-export function ExportsClient({ periods, accounts, selectedPeriod }: ExportsClientProps) {
+export function ExportsClient({ periods, accounts, divisions, selectedPeriod }: ExportsClientProps) {
   const [selectedExport, setSelectedExport] = React.useState<string>('')
   const [period, setPeriod] = React.useState(selectedPeriod || 'all')
   const [accountId, setAccountId] = React.useState('all')
+  const [divisionId, setDivisionId] = React.useState('all')
 
   const exportConfig = EXPORT_TYPES.find((e) => e.id === selectedExport)
 
@@ -75,6 +82,7 @@ export function ExportsClient({ periods, accounts, selectedPeriod }: ExportsClie
     const params = new URLSearchParams()
     if (exportConfig?.needsPeriod && period !== 'all') params.set('period', period)
     if (exportConfig?.needsAccount && accountId !== 'all') params.set('accountId', accountId)
+    if (exportConfig?.needsDivision && divisionId !== 'all') params.set('divisionId', divisionId)
 
     const url = `/api/accounting/export/${selectedExport}?${params.toString()}`
     window.open(url, '_blank')
@@ -157,6 +165,24 @@ export function ExportsClient({ periods, accounts, selectedPeriod }: ExportsClie
               </div>
             )}
 
+            {/* Division Filter */}
+            {exportConfig.needsDivision && (
+              <div className="flex flex-col gap-1.5">
+                <label className="text-xs font-medium text-muted-foreground">Division</label>
+                <Select value={divisionId} onValueChange={setDivisionId}>
+                  <SelectTrigger className="w-[180px]">
+                    <SelectValue placeholder="All Divisions" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">All Divisions</SelectItem>
+                    {divisions.map((d) => (
+                      <SelectItem key={d.id} value={d.id}>{d.name}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            )}
+
             <div className="flex-1" />
 
             <Button onClick={handleExport} size="sm">
@@ -178,6 +204,12 @@ export function ExportsClient({ periods, accounts, selectedPeriod }: ExportsClie
             )}
             {exportConfig.needsAccount && accountId === 'all' && (
               <span>Account: All Accounts · </span>
+            )}
+            {exportConfig.needsDivision && divisionId !== 'all' && (
+              <span>Division: {divisions.find((d) => d.id === divisionId)?.name ?? '—'} · </span>
+            )}
+            {exportConfig.needsDivision && divisionId === 'all' && (
+              <span>Division: All Divisions · </span>
             )}
             Format: PDF
           </div>

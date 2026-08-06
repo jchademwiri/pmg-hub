@@ -1,5 +1,5 @@
 import type { Metadata } from 'next'
-import { getAllAccountingPeriods, getActiveChartAccounts } from '@pmg/db'
+import { getAllAccountingPeriods, getActiveChartAccounts, getAllDivisions } from '@pmg/db'
 import { SetPageTotal } from '@/components/navigation/page-header-context'
 import { ExportsClient } from './exports-client'
 
@@ -7,9 +7,10 @@ export const dynamic = 'force-dynamic'
 export const metadata: Metadata = { title: 'Accounting Exports' }
 
 export default async function AccountingExportsPage() {
-  const [allPeriods, accounts] = await Promise.all([
+  const [allPeriods, accounts, divisions] = await Promise.all([
     getAllAccountingPeriods(),
     getActiveChartAccounts(),
+    getAllDivisions(),
   ])
 
   const periods = allPeriods.map((p) => p.period)
@@ -28,6 +29,7 @@ export default async function AccountingExportsPage() {
       <ExportsClient
         periods={periods}
         accounts={accounts}
+        divisions={divisions}
         selectedPeriod=""
       />
     </div>
