@@ -41,7 +41,7 @@ export function ExpensesHeader({
         </Button>
 
         <Dialog open={isOpen} onOpenChange={setIsOpen}>
-          <DialogContent className="sm:max-w-xl">
+          <DialogContent className="sm:max-w-2xl">
             <DialogHeader>
               <DialogTitle>Record New Expense</DialogTitle>
               <DialogDescription>
