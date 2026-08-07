@@ -29,25 +29,26 @@ const items = [
 ---
 
 <section class='bg-card border-y border-[--border] py-5 px-6 lg:px-12' aria-label='Trust signals'>
-  <ul
-    class='grid grid-cols-1 sm:grid-cols-2 lg:flex lg:items-center lg:justify-center list-none m-0 p-0 gap-y-3 sm:gap-y-4 lg:gap-0'
-    role='list'
-  >
-    {
-      items.map((item, i) => (
-        <li
-          class={`flex items-center gap-3 px-4 py-2 rounded-lg bg-[--bg-secondary] lg:bg-transparent lg:px-5 lg:py-0 sm:border-t sm:border-[--border] ${i >= 1 ? 'lg:border-l lg:border-t-0' : ''}`}
-        >
-          <span class='text-primary shrink-0'>
-            <Fragment set:html={item.icon} />
-          </span>
-          <span class='text-sm'>
-            <span class='text-foreground font-medium'>{item.label}</span>
-            <span class='text-muted-foreground hidden sm:inline'> · {item.sublabel}</span>
-            <span class='text-muted-foreground sm:hidden block'>{item.sublabel}</span>
-          </span>
-        </li>
-      ))
-    }
-  </ul>
+  <div class='max-w-7xl mx-auto'>
+    <ul
+      class='grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 list-none m-0 p-0 gap-y-3 sm:gap-y-4 lg:gap-x-4 lg:gap-y-0'
+      role='list'
+    >
+      {
+        items.map((item, i) => (
+          <li
+            class={`flex items-center gap-3 px-4 py-3 rounded-lg bg-[--bg-secondary] lg:bg-transparent lg:px-4 sm:border-t sm:border-[--border] ${i >= 1 ? 'lg:border-l lg:border-t-0' : ''}`}
+          >
+            <span class='text-primary shrink-0'>
+              <Fragment set:html={item.icon} />
+            </span>
+            <span class='text-sm flex flex-col min-w-0'>
+              <span class='text-foreground font-medium'>{item.label}</span>
+              <span class='text-muted-foreground text-xs'>{item.sublabel}</span>
+            </span>
+          </li>
+        ))
+      }
+    </ul>
+  </div>
 </section>
