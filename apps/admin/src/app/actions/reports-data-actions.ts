@@ -14,7 +14,7 @@ import {
 import { getSessionOrRedirect } from '@/lib/auth';
 
 export interface ReportPreviewFilter {
-  reportType: 'chart-of-accounts' | 'journal-entries' | 'general-ledger' | 'trial-balance' | 'profit-and-loss';
+  reportType: 'chart-of-accounts' | 'journal-entries' | 'general-ledger' | 'trial-balance' | 'profit-and-loss' | 'division-performance';
   period?: string;
   startDate?: string;
   endDate?: string;
@@ -118,11 +118,14 @@ export async function fetchReportPreviewData(filter: ReportPreviewFilter) {
 
       case 'profit-and-loss': {
         const d = filter.divisionId !== 'all' ? filter.divisionId : undefined;
-        const [statement, divisions] = await Promise.all([
-          getProfitAndLoss(periodMonth, d, startDate, endDate),
-          getProfitAndLossByDivision(periodMonth, startDate, endDate),
-        ]);
-        data = { statement, divisions };
+        const statement = await getProfitAndLoss(periodMonth, d, startDate, endDate);
+        data = { statement };
+        break;
+      }
+
+      case 'division-performance': {
+        const divisions = await getProfitAndLossByDivision(periodMonth, startDate, endDate);
+        data = { divisions };
         break;
       }
     }

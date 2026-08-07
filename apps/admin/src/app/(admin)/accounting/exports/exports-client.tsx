@@ -1,7 +1,7 @@
 'use client';
 
 import * as React from 'react';
-import { Download, Printer, BookOpen, FileText, Table2, Scale, TrendingUp, Calendar, Filter, Layers } from 'lucide-react';
+import { Download, Printer, BookOpen, FileText, Table2, Scale, TrendingUp, Building2, Calendar, Filter, Layers } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import {
@@ -23,7 +23,7 @@ interface ExportsClientProps {
   selectedPeriod: string;
 }
 
-type ReportType = 'chart-of-accounts' | 'journal-entries' | 'general-ledger' | 'trial-balance' | 'profit-and-loss';
+type ReportType = 'chart-of-accounts' | 'journal-entries' | 'general-ledger' | 'trial-balance' | 'profit-and-loss' | 'division-performance';
 
 interface ReportConfig {
   id: ReportType;
@@ -80,12 +80,22 @@ const REPORT_TYPES: ReportConfig[] = [
   {
     id: 'profit-and-loss',
     label: 'Profit & Loss',
-    description: 'Revenue and expenses with net profit calculation by division',
+    description: 'Corporate income, expenses & net operating profit statement',
     icon: TrendingUp,
     needsPeriod: true,
     needsAccount: false,
     needsDivision: true,
-    supportsDateRange: false,
+    supportsDateRange: true,
+  },
+  {
+    id: 'division-performance',
+    label: 'Division Performance',
+    description: 'Division cash flow, revenue, cash collected, AR, expenses & margin %',
+    icon: Building2,
+    needsPeriod: true,
+    needsAccount: false,
+    needsDivision: true,
+    supportsDateRange: true,
   },
 ];
 
@@ -182,7 +192,7 @@ export function ExportsClient({ periods, accounts, divisions, selectedPeriod }: 
               <Layers className="size-3.5" /> Select Report
             </h3>
             <span className="text-[10px] font-medium px-2 py-0.5 rounded-full bg-primary/10 text-primary">
-              5 Reports
+              6 Reports
             </span>
           </div>
 

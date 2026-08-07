@@ -25,13 +25,14 @@ import { jsPDF } from 'jspdf';
 
 export type AccountingReportType =
   | 'profit-and-loss'
+  | 'division-performance'
   | 'trial-balance'
   | 'general-ledger'
   | 'journal-entries'
   | 'chart-of-accounts';
 
 export interface AccountingPdfFilters {
-  /** Accounting period, "YYYY-MM". Used by journal-entries, trial-balance, profit-and-loss. */
+  /** Accounting period, "YYYY-MM". Used by journal-entries, trial-balance, profit-and-loss, division-performance. */
   period?: string;
   /** Chart-of-accounts account id. Used by general-ledger. */
   accountId?: string;
@@ -52,6 +53,7 @@ export interface AccountingPdfError {
 
 const REPORT_TYPES: ReadonlySet<AccountingReportType> = new Set([
   'profit-and-loss',
+  'division-performance',
   'trial-balance',
   'general-ledger',
   'journal-entries',
@@ -615,8 +617,27 @@ async function buildChartOfAccountsPdf(): Promise<AccountingPdfResult> {
   };
 }
 
+async function buildDivisionPerformancePdf(filters: AccountingPdfFilters): Promise<AccountingPdfResult> {
+  const [byDivision, divisionName] = await Promise.all([
+    getProfitAndLossByDivision(filters.period),
+    resolveDivisionName(filters.divisionId),
+  ]);
+  const header = await buildReportHeader('Division Performance Report', filters.period, divisionName);
+
+  const doc = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' });
+  drawReportHeader(doc, header);
+  drawProfitAndLossByDivisionTable(doc, 72, byDivision);
+  drawReportFooter(doc, header);
+
+  const suffix = [filters.period ?? 'all-time', filters.divisionId].filter(Boolean).join('-');
+  return {
+    fileName: `division-performance-${suffix}.pdf`,
+    buffer: Buffer.from(doc.output('arraybuffer')),
+  };
+}
+
 /**
- * Generates a PDF for one of the 5 accounting reports on /accounting/exports.
+ * Generates a PDF for one of the 6 accounting reports on /accounting/exports.
  * Returns null for a valid-but-not-yet-implemented type (filled in phase by
  * phase) or when the underlying data can't be found, or an
  * `AccountingPdfError` when the caller needs to fix their request (e.g.
@@ -629,6 +650,8 @@ export async function generateAccountingPdf(
   switch (type) {
     case 'profit-and-loss':
       return buildProfitAndLossPdf(filters);
+    case 'division-performance':
+      return buildDivisionPerformancePdf(filters);
     case 'trial-balance':
       return buildTrialBalancePdf(filters);
     case 'general-ledger':

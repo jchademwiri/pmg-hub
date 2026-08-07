@@ -25,6 +25,7 @@ export const auth = betterAuth({
 
   plugins: [
     magicLink({
+      expiresIn: 600, // 10 minutes in seconds
       sendMagicLink: async ({ email, url }) => {
         try {
           const emailClient = createEmailClient({
@@ -38,7 +39,7 @@ export const auth = betterAuth({
             subject: 'Sign in to PMG Control Center',
             react: React.createElement(MagicLinkEmail, {
               url,
-              expiresIn: '24 hours',
+              expiresIn: '10 minutes',
               companyName: 'Playhouse Media Group',
               primaryColor: '#1d4ed8',
               websiteUrl: 'https://playhousemedia.co.za',

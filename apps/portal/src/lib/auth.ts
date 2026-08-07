@@ -52,6 +52,7 @@ export const portalAuth = betterAuth({
 
   plugins: [
     magicLink({
+      expiresIn: 600, // 10 minutes in seconds
       sendMagicLink: async ({ email, url }) => {
         try {
           const emailClient = createEmailClient({
@@ -65,7 +66,7 @@ export const portalAuth = betterAuth({
             subject: 'Access your PMG Billing Portal',
             react: React.createElement(MagicLinkEmail, {
               url,
-              expiresIn: '24 hours',
+              expiresIn: '10 minutes',
               companyName: 'Playhouse Media Group',
               primaryColor: '#2563eb', // blue-600
               websiteUrl: 'https://playhousemedia.co.za',

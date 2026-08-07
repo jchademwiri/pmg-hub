@@ -89,7 +89,7 @@ export default function LoginPage() {
                 We've sent a secure, passwordless login link to <span className="font-medium text-blue-400">{email}</span>.
               </p>
               <p className="mt-1 text-xs text-muted-foreground">
-                The link is valid for 24 hours.
+                The link is valid for 10 minutes.
               </p>
               <button
                 type="button"

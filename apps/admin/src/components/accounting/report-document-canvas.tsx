@@ -4,7 +4,7 @@ import * as React from 'react';
 import { formatZAR, fmtDate } from '@/lib/format';
 
 export interface ReportDocumentCanvasProps {
-  reportType: 'chart-of-accounts' | 'journal-entries' | 'general-ledger' | 'trial-balance' | 'profit-and-loss';
+  reportType: 'chart-of-accounts' | 'journal-entries' | 'general-ledger' | 'trial-balance' | 'profit-and-loss' | 'division-performance';
   reportTitle: string;
   divisionName?: string;
   periodLabel?: string;
@@ -226,135 +226,124 @@ export function ReportDocumentCanvas({
 
         {/* 5. PROFIT & LOSS */}
         {reportType === 'profit-and-loss' && (
-          <div className="flex flex-col gap-8">
-            {/* Section A: Corporate Profit & Loss Statement */}
-            <div className="flex flex-col gap-4">
-              <h3 className="text-xs font-bold uppercase tracking-wider text-blue-600 dark:text-blue-400 border-b pb-1">
-                1. Profit & Loss Statement (Account Breakdown)
-              </h3>
-
-              {/* Revenue Accounts */}
-              <div>
-                <h4 className="text-[11px] font-semibold text-zinc-500 uppercase tracking-wider mb-2">Sales & Revenue Income</h4>
-                <table className="w-full text-left text-xs border-collapse">
-                  <tbody className="divide-y divide-zinc-100 dark:divide-zinc-900">
-                    {data?.statement?.revenue?.map((row: any) => (
-                      <tr key={row.accountId} className="hover:bg-zinc-50 dark:hover:bg-zinc-900/50">
-                        <td className="py-2 px-3 font-mono text-zinc-500 w-20">{row.accountCode}</td>
-                        <td className="py-2 px-3 font-medium text-zinc-800 dark:text-zinc-200">{row.accountName}</td>
-                        <td className="py-2 px-3 text-right font-mono text-emerald-600 dark:text-emerald-400 font-semibold">{formatZAR(row.amount)}</td>
-                      </tr>
-                    ))}
-                    {(!data?.statement?.revenue || data.statement.revenue.length === 0) && (
-                      <tr>
-                        <td colSpan={3} className="py-3 px-3 text-zinc-400 italic text-[11px]">No revenue transactions recorded.</td>
-                      </tr>
-                    )}
-                  </tbody>
-                  <tfoot>
-                    <tr className="border-t border-zinc-300 dark:border-zinc-700 font-bold">
-                      <td colSpan={2} className="py-2.5 px-3 text-zinc-900 dark:text-white uppercase">Total Operating Revenue</td>
-                      <td className="py-2.5 px-3 text-right font-mono text-emerald-600 dark:text-emerald-400">{formatZAR(data?.statement?.totalRevenue || 0)}</td>
-                    </tr>
-                  </tfoot>
-                </table>
-              </div>
-
-              {/* Expense Accounts */}
-              <div className="mt-2">
-                <h4 className="text-[11px] font-semibold text-zinc-500 uppercase tracking-wider mb-2">Operating Expenses</h4>
-                <table className="w-full text-left text-xs border-collapse">
-                  <tbody className="divide-y divide-zinc-100 dark:divide-zinc-900">
-                    {data?.statement?.expenses?.map((row: any) => (
-                      <tr key={row.accountId} className="hover:bg-zinc-50 dark:hover:bg-zinc-900/50">
-                        <td className="py-2 px-3 font-mono text-zinc-500 w-20">{row.accountCode}</td>
-                        <td className="py-2 px-3 font-medium text-zinc-800 dark:text-zinc-200">{row.accountName}</td>
-                        <td className="py-2 px-3 text-right font-mono text-zinc-800 dark:text-zinc-200">{formatZAR(row.amount)}</td>
-                      </tr>
-                    ))}
-                    {(!data?.statement?.expenses || data.statement.expenses.length === 0) && (
-                      <tr>
-                        <td colSpan={3} className="py-3 px-3 text-zinc-400 italic text-[11px]">No operating expenses recorded.</td>
-                      </tr>
-                    )}
-                  </tbody>
-                  <tfoot>
-                    <tr className="border-t border-zinc-300 dark:border-zinc-700 font-bold">
-                      <td colSpan={2} className="py-2.5 px-3 text-zinc-900 dark:text-white uppercase">Total Operating Expenses</td>
-                      <td className="py-2.5 px-3 text-right font-mono text-zinc-800 dark:text-zinc-200">{formatZAR(data?.statement?.totalExpenses || 0)}</td>
-                    </tr>
-                  </tfoot>
-                </table>
-              </div>
-
-              {/* Net Profit Summary Band */}
-              <div className="p-3.5 rounded-xl bg-zinc-100 dark:bg-zinc-900 flex justify-between items-center border border-zinc-200 dark:border-zinc-800 mt-2">
-                <span className="font-bold text-sm uppercase text-zinc-900 dark:text-white">Net Profit / (Loss)</span>
-                <span className={`font-mono text-base font-bold ${
-                  (data?.statement?.netProfit || 0) >= 0 ? 'text-emerald-600 dark:text-emerald-400' : 'text-red-500 dark:text-red-400'
-                }`}>
-                  {formatZAR(data?.statement?.netProfit || 0)}
-                </span>
-              </div>
-            </div>
-
-            {/* Section B: Division Performance Summary Report */}
-            <div className="flex flex-col gap-3">
-              <h3 className="text-xs font-bold uppercase tracking-wider text-blue-600 dark:text-blue-400 border-b pb-1">
-                2. Division Performance & Cash Flow Summary
-              </h3>
-
+          <div className="flex flex-col gap-4">
+            {/* Revenue Accounts */}
+            <div>
+              <h4 className="text-[11px] font-semibold text-zinc-500 uppercase tracking-wider mb-2">Sales & Revenue Income</h4>
               <table className="w-full text-left text-xs border-collapse">
-                <thead>
-                  <tr className="border-b border-zinc-200 dark:border-zinc-800 text-zinc-500 dark:text-zinc-400 uppercase tracking-wider text-[10px] font-bold">
-                    <th className="py-2.5 px-2">Division</th>
-                    <th className="py-2.5 px-2 text-right">Revenue (ZAR)</th>
-                    <th className="py-2.5 px-2 text-right">Cash Received</th>
-                    <th className="py-2.5 px-2 text-right">Outstanding AR</th>
-                    <th className="py-2.5 px-2 text-right">Expenses</th>
-                    <th className="py-2.5 px-2 text-right">Net Profit</th>
-                    <th className="py-2.5 px-2 text-right">Margin %</th>
-                    <th className="py-2.5 px-2 text-right">Share %</th>
-                  </tr>
-                </thead>
                 <tbody className="divide-y divide-zinc-100 dark:divide-zinc-900">
-                  {data?.divisions?.map((div: any) => (
-                    <tr key={div.divisionId} className="hover:bg-zinc-50 dark:hover:bg-zinc-900/50">
-                      <td className="py-2.5 px-2 font-semibold text-zinc-900 dark:text-zinc-100">{div.divisionName}</td>
-                      <td className="py-2.5 px-2 text-right font-mono tabular-nums text-emerald-600 dark:text-emerald-400 font-medium">
-                        {formatZAR(div.totalRevenue)}
-                      </td>
-                      <td className="py-2.5 px-2 text-right font-mono tabular-nums text-blue-600 dark:text-blue-400 font-medium">
-                        {formatZAR(div.totalIncome)}
-                      </td>
-                      <td className="py-2.5 px-2 text-right font-mono tabular-nums text-amber-600 dark:text-amber-400">
-                        {div.totalOutstandingAr > 0 ? formatZAR(div.totalOutstandingAr) : '—'}
-                      </td>
-                      <td className="py-2.5 px-2 text-right font-mono tabular-nums text-zinc-700 dark:text-zinc-300">
-                        {formatZAR(div.totalExpenses)}
-                      </td>
-                      <td className={`py-2.5 px-2 text-right font-mono tabular-nums font-bold ${
-                        div.netProfit >= 0 ? 'text-emerald-600 dark:text-emerald-400' : 'text-red-500 dark:text-red-400'
-                      }`}>
-                        {formatZAR(div.netProfit)}
-                      </td>
-                      <td className="py-2.5 px-2 text-right font-mono tabular-nums font-medium text-zinc-700 dark:text-zinc-300">
-                        {div.marginPercent.toFixed(1)}%
-                      </td>
-                      <td className="py-2.5 px-2 text-right font-mono tabular-nums text-zinc-500">
-                        {div.distributionPercent.toFixed(1)}%
-                      </td>
+                  {data?.statement?.revenue?.map((row: any) => (
+                    <tr key={row.accountId} className="hover:bg-zinc-50 dark:hover:bg-zinc-900/50">
+                      <td className="py-2 px-3 font-mono text-zinc-500 w-20">{row.accountCode}</td>
+                      <td className="py-2 px-3 font-medium text-zinc-800 dark:text-zinc-200">{row.accountName}</td>
+                      <td className="py-2 px-3 text-right font-mono text-emerald-600 dark:text-emerald-400 font-semibold">{formatZAR(row.amount)}</td>
                     </tr>
                   ))}
-                  {(!data?.divisions || data.divisions.length === 0) && (
+                  {(!data?.statement?.revenue || data.statement.revenue.length === 0) && (
                     <tr>
-                      <td colSpan={8} className="py-8 text-center text-zinc-400">No division activity recorded.</td>
+                      <td colSpan={3} className="py-3 px-3 text-zinc-400 italic text-[11px]">No revenue transactions recorded.</td>
                     </tr>
                   )}
                 </tbody>
+                <tfoot>
+                  <tr className="border-t border-zinc-300 dark:border-zinc-700 font-bold">
+                    <td colSpan={2} className="py-2.5 px-3 text-zinc-900 dark:text-white uppercase">Total Operating Revenue</td>
+                    <td className="py-2.5 px-3 text-right font-mono text-emerald-600 dark:text-emerald-400">{formatZAR(data?.statement?.totalRevenue || 0)}</td>
+                  </tr>
+                </tfoot>
               </table>
             </div>
+
+            {/* Expense Accounts */}
+            <div className="mt-2">
+              <h4 className="text-[11px] font-semibold text-zinc-500 uppercase tracking-wider mb-2">Operating Expenses</h4>
+              <table className="w-full text-left text-xs border-collapse">
+                <tbody className="divide-y divide-zinc-100 dark:divide-zinc-900">
+                  {data?.statement?.expenses?.map((row: any) => (
+                    <tr key={row.accountId} className="hover:bg-zinc-50 dark:hover:bg-zinc-900/50">
+                      <td className="py-2 px-3 font-mono text-zinc-500 w-20">{row.accountCode}</td>
+                      <td className="py-2 px-3 font-medium text-zinc-800 dark:text-zinc-200">{row.accountName}</td>
+                      <td className="py-2 px-3 text-right font-mono text-zinc-800 dark:text-zinc-200">{formatZAR(row.amount)}</td>
+                    </tr>
+                  ))}
+                  {(!data?.statement?.expenses || data.statement.expenses.length === 0) && (
+                    <tr>
+                      <td colSpan={3} className="py-3 px-3 text-zinc-400 italic text-[11px]">No operating expenses recorded.</td>
+                    </tr>
+                  )}
+                </tbody>
+                <tfoot>
+                  <tr className="border-t border-zinc-300 dark:border-zinc-700 font-bold">
+                    <td colSpan={2} className="py-2.5 px-3 text-zinc-900 dark:text-white uppercase">Total Operating Expenses</td>
+                    <td className="py-2.5 px-3 text-right font-mono text-zinc-800 dark:text-zinc-200">{formatZAR(data?.statement?.totalExpenses || 0)}</td>
+                  </tr>
+                </tfoot>
+              </table>
+            </div>
+
+            {/* Net Profit Summary Band */}
+            <div className="p-3.5 rounded-xl bg-zinc-100 dark:bg-zinc-900 flex justify-between items-center border border-zinc-200 dark:border-zinc-800 mt-2">
+              <span className="font-bold text-sm uppercase text-zinc-900 dark:text-white">Net Profit / (Loss)</span>
+              <span className={`font-mono text-base font-bold ${
+                (data?.statement?.netProfit || 0) >= 0 ? 'text-emerald-600 dark:text-emerald-400' : 'text-red-500 dark:text-red-400'
+              }`}>
+                {formatZAR(data?.statement?.netProfit || 0)}
+              </span>
+            </div>
           </div>
+        )}
+
+        {/* 6. DIVISION PERFORMANCE */}
+        {reportType === 'division-performance' && (
+          <table className="w-full text-left text-xs border-collapse">
+            <thead>
+              <tr className="border-b border-zinc-200 dark:border-zinc-800 text-zinc-500 dark:text-zinc-400 uppercase tracking-wider text-[10px] font-bold">
+                <th className="py-2.5 px-2">Division</th>
+                <th className="py-2.5 px-2 text-right">Revenue (ZAR)</th>
+                <th className="py-2.5 px-2 text-right">Cash Received</th>
+                <th className="py-2.5 px-2 text-right">Outstanding AR</th>
+                <th className="py-2.5 px-2 text-right">Expenses</th>
+                <th className="py-2.5 px-2 text-right">Net Profit</th>
+                <th className="py-2.5 px-2 text-right">Margin %</th>
+                <th className="py-2.5 px-2 text-right">Share %</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-zinc-100 dark:divide-zinc-900">
+              {data?.divisions?.map((div: any) => (
+                <tr key={div.divisionId} className="hover:bg-zinc-50 dark:hover:bg-zinc-900/50">
+                  <td className="py-2.5 px-2 font-semibold text-zinc-900 dark:text-zinc-100">{div.divisionName}</td>
+                  <td className="py-2.5 px-2 text-right font-mono tabular-nums text-emerald-600 dark:text-emerald-400 font-medium">
+                    {formatZAR(div.totalRevenue)}
+                  </td>
+                  <td className="py-2.5 px-2 text-right font-mono tabular-nums text-blue-600 dark:text-blue-400 font-medium">
+                    {formatZAR(div.totalIncome)}
+                  </td>
+                  <td className="py-2.5 px-2 text-right font-mono tabular-nums text-amber-600 dark:text-amber-400">
+                    {div.totalOutstandingAr > 0 ? formatZAR(div.totalOutstandingAr) : '—'}
+                  </td>
+                  <td className="py-2.5 px-2 text-right font-mono tabular-nums text-zinc-700 dark:text-zinc-300">
+                    {formatZAR(div.totalExpenses)}
+                  </td>
+                  <td className={`py-2.5 px-2 text-right font-mono tabular-nums font-bold ${
+                    div.netProfit >= 0 ? 'text-emerald-600 dark:text-emerald-400' : 'text-red-500 dark:text-red-400'
+                  }`}>
+                    {formatZAR(div.netProfit)}
+                  </td>
+                  <td className="py-2.5 px-2 text-right font-mono tabular-nums font-medium text-zinc-700 dark:text-zinc-300">
+                    {div.marginPercent.toFixed(1)}%
+                  </td>
+                  <td className="py-2.5 px-2 text-right font-mono tabular-nums text-zinc-500">
+                    {div.distributionPercent.toFixed(1)}%
+                  </td>
+                </tr>
+              ))}
+              {(!data?.divisions || data.divisions.length === 0) && (
+                <tr>
+                  <td colSpan={8} className="py-8 text-center text-zinc-400">No division activity recorded.</td>
+                </tr>
+              )}
+            </tbody>
+          </table>
         )}
       </div>
 
