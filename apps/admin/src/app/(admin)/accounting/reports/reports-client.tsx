@@ -17,7 +17,7 @@ import type { ChartAccount } from '@pmg/db';
 import { ReportDocumentCanvas } from '@/components/accounting/report-document-canvas';
 import { fetchReportPreviewData } from '@/app/actions/reports-data-actions';
 
-interface ExportsClientProps {
+interface ReportsClientProps {
   periods: string[];
   accounts: ChartAccount[];
   divisions: { id: string; name: string }[];
@@ -128,7 +128,7 @@ const REPORT_TYPES: ReportConfig[] = [
   },
 ];
 
-export function ExportsClient({ periods, accounts, divisions, selectedPeriod }: ExportsClientProps) {
+export function ReportsClient({ periods, accounts, divisions, selectedPeriod }: ReportsClientProps) {
   const searchParams = useSearchParams();
   const router = useRouter();
   const pathname = usePathname();

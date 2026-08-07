@@ -436,7 +436,7 @@ export function AccountingOverviewClient({
             { href: '/accounting/trial-balance', label: 'Trial Balance', description: 'Verify debits equal credits', color: 'bg-emerald-500/10 text-emerald-600' },
             { href: '/accounting/profit-and-loss', label: 'Profit & Loss', description: 'Income, expenses, net profit', color: 'bg-rose-500/10 text-rose-600' },
             { href: '/accounting/periods', label: 'Accounting Periods', description: 'Open, close, lock months', color: 'bg-cyan-500/10 text-cyan-600' },
-            { href: '/accounting/exports', label: 'Exports', description: 'Export for your accountant', color: 'bg-zinc-500/10 text-zinc-600' },
+            { href: '/accounting/reports', label: 'Financial Reports', description: 'Interactive report workbench', color: 'bg-emerald-500/10 text-emerald-600' },
           ].map((link) => (
             <Link
               key={link.href}

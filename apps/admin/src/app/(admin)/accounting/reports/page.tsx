@@ -1,12 +1,12 @@
 import type { Metadata } from 'next';
 import { getAllAccountingPeriods, getActiveChartAccounts, getAllDivisions } from '@pmg/db';
 import { SetPageTotal } from '@/components/navigation/page-header-context';
-import { ExportsClient } from './exports-client';
+import { ReportsClient } from './reports-client';
 
 export const dynamic = 'force-dynamic';
-export const metadata: Metadata = { title: 'Financial Reports & Exports' };
+export const metadata: Metadata = { title: 'Financial Reports' };
 
-export default async function AccountingExportsPage() {
+export default async function AccountingReportsPage() {
   const [allPeriods, accounts, divisions] = await Promise.all([
     getAllAccountingPeriods(),
     getActiveChartAccounts(),
@@ -17,9 +17,9 @@ export default async function AccountingExportsPage() {
 
   return (
     <div className="flex flex-col gap-4">
-      <SetPageTotal value="5 financial reports" />
+      <SetPageTotal value="Financial report workbench" />
 
-      <ExportsClient
+      <ReportsClient
         periods={periods}
         accounts={accounts}
         divisions={divisions}

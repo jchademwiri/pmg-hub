@@ -147,7 +147,7 @@ const EXTRA_LABELS: Record<string, string> = {
   '/accounting/trial-balance': 'Trial Balance',
   '/accounting/profit-and-loss': 'Profit & Loss',
   '/accounting/periods': 'Accounting Periods',
-  '/accounting/exports': 'Exports',
+  '/accounting/reports': 'Financial Reports',
 }
 
 export const ROUTE_LABELS: Record<string, string> = {
