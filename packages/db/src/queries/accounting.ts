@@ -545,6 +545,117 @@ export async function getTrialBalance(period?: string, divisionId?: string, star
   }));
 }
 
+// ── Balance Sheet ─────────────────────────────────────────────────────────────
+
+export type BalanceSheetAccountRow = {
+  accountId: string;
+  accountCode: string;
+  accountName: string;
+  accountType: string;
+  amount: number;
+};
+
+export type BalanceSheetResult = {
+  assets: BalanceSheetAccountRow[];
+  totalAssets: number;
+  liabilities: BalanceSheetAccountRow[];
+  totalLiabilities: number;
+  equity: BalanceSheetAccountRow[];
+  totalEquity: number;
+  netIncome: number;
+  totalLiabilitiesAndEquity: number;
+};
+
+export async function getBalanceSheet(
+  period?: string,
+  divisionId?: string,
+  startDate?: string,
+  endDate?: string
+): Promise<BalanceSheetResult> {
+  const entryConditions = [
+    eq(journalEntries.status, "posted"),
+  ];
+  if (period) entryConditions.push(eq(journalEntries.period, period));
+  if (divisionId) entryConditions.push(eq(journalEntries.divisionId, divisionId));
+  if (startDate) entryConditions.push(sql`${journalEntries.entryDate} >= ${startDate}`);
+  if (endDate) entryConditions.push(sql`${journalEntries.entryDate} <= ${endDate}`);
+
+  const postedLineTotals = db
+    .select({
+      accountId: journalLines.accountId,
+      totalDebits: sql<string>`COALESCE(SUM(${journalLines.debit}::numeric), 0)`.as("totalDebits"),
+      totalCredits: sql<string>`COALESCE(SUM(${journalLines.credit}::numeric), 0)`.as("totalCredits"),
+    })
+    .from(journalLines)
+    .innerJoin(
+      journalEntries,
+      and(
+        eq(journalLines.journalEntryId, journalEntries.id),
+        ...entryConditions
+      )
+    )
+    .groupBy(journalLines.accountId)
+    .as("posted_line_totals");
+
+  const rows = await db
+    .select({
+      accountId: chartAccounts.id,
+      accountCode: chartAccounts.code,
+      accountName: chartAccounts.name,
+      accountType: chartAccounts.type,
+      totalDebits: sql<string>`COALESCE(${postedLineTotals.totalDebits}, 0)`,
+      totalCredits: sql<string>`COALESCE(${postedLineTotals.totalCredits}, 0)`,
+    })
+    .from(chartAccounts)
+    .leftJoin(postedLineTotals, eq(postedLineTotals.accountId, chartAccounts.id))
+    .where(and(eq(chartAccounts.isPostingAccount, true), eq(chartAccounts.isActive, true)))
+    .orderBy(asc(chartAccounts.code));
+
+  const assets: BalanceSheetAccountRow[] = [];
+  const liabilities: BalanceSheetAccountRow[] = [];
+  const equity: BalanceSheetAccountRow[] = [];
+
+  let totalRev = 0;
+  let totalExp = 0;
+
+  for (const r of rows) {
+    const debits = Number(r.totalDebits);
+    const credits = Number(r.totalCredits);
+
+    if (r.accountType === "asset") {
+      const amount = debits - credits;
+      if (Math.abs(amount) > 0.01) assets.push({ ...r, amount });
+    } else if (r.accountType === "liability") {
+      const amount = credits - debits;
+      if (Math.abs(amount) > 0.01) liabilities.push({ ...r, amount });
+    } else if (r.accountType === "equity") {
+      const amount = credits - debits;
+      if (Math.abs(amount) > 0.01) equity.push({ ...r, amount });
+    } else if (r.accountType === "revenue") {
+      totalRev += credits - debits;
+    } else if (r.accountType === "expense") {
+      totalExp += debits - credits;
+    }
+  }
+
+  const netIncome = totalRev - totalExp;
+  const totalAssets = assets.reduce((sum, a) => sum + a.amount, 0);
+  const totalLiabilities = liabilities.reduce((sum, l) => sum + l.amount, 0);
+  const totalEquity = equity.reduce((sum, e) => sum + e.amount, 0) + netIncome;
+  const totalLiabilitiesAndEquity = totalLiabilities + totalEquity;
+
+  return {
+    assets,
+    totalAssets,
+    liabilities,
+    totalLiabilities,
+    equity,
+    totalEquity,
+    netIncome,
+    totalLiabilitiesAndEquity,
+  };
+}
+
 // ── Profit & Loss ─────────────────────────────────────────────────────────────
 
 export type ProfitAndLossRow = {
@@ -662,11 +773,13 @@ export type ProfitAndLossByDivisionRow = {
  * period. Includes division margin % and group distribution %.
  * Sorted by totalRevenue descending (highest-earning division first).
  */
-export async function getProfitAndLossByDivision(period?: string): Promise<ProfitAndLossByDivisionRow[]> {
+export async function getProfitAndLossByDivision(period?: string, startDate?: string, endDate?: string): Promise<ProfitAndLossByDivisionRow[]> {
   const entryConditions = [
     eq(journalEntries.status, "posted"),
   ];
   if (period) entryConditions.push(eq(journalEntries.period, period));
+  if (startDate) entryConditions.push(sql`${journalEntries.entryDate} >= ${startDate}`);
+  if (endDate) entryConditions.push(sql`${journalEntries.entryDate} <= ${endDate}`);
 
   const rows = await db
     .select({
@@ -720,8 +833,12 @@ export async function getProfitAndLossByDivision(period?: string): Promise<Profi
       divisionId,
       divisionName: divisionNames.get(divisionId) ?? "Unknown Division",
       totalRevenue: totals.totalRevenue,
+      totalIncome: cashIncome,
+      totalOutstandingAr,
       totalExpenses: totals.totalExpenses,
-      netProfit: totals.totalRevenue - totals.totalExpenses,
+      netProfit,
+      marginPercent,
+      distributionPercent,
     });
   }
 

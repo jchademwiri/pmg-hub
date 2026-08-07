@@ -1,7 +1,8 @@
 'use client';
 
 import * as React from 'react';
-import { Download, Printer, BookOpen, FileText, Table2, Scale, TrendingUp, Building2, Calendar, Filter, Layers } from 'lucide-react';
+import { useSearchParams, useRouter, usePathname } from 'next/navigation';
+import { Download, Printer, BookOpen, FileText, Table2, Scale, TrendingUp, Building2, Landmark, Calendar, Filter, Layers } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import {
@@ -23,7 +24,7 @@ interface ExportsClientProps {
   selectedPeriod: string;
 }
 
-type ReportType = 'chart-of-accounts' | 'journal-entries' | 'general-ledger' | 'trial-balance' | 'profit-and-loss' | 'division-performance';
+type ReportType = 'chart-of-accounts' | 'journal-entries' | 'general-ledger' | 'trial-balance' | 'profit-and-loss' | 'division-performance' | 'balance-sheet';
 
 interface ReportConfig {
   id: ReportType;
@@ -97,15 +98,93 @@ const REPORT_TYPES: ReportConfig[] = [
     needsDivision: true,
     supportsDateRange: true,
   },
+  {
+    id: 'balance-sheet',
+    label: 'Balance Sheet',
+    description: 'Statement of Financial Position: Assets, Liabilities & Equity',
+    icon: Landmark,
+    needsPeriod: true,
+    needsAccount: false,
+    needsDivision: true,
+    supportsDateRange: true,
+  },
 ];
 
 export function ExportsClient({ periods, accounts, divisions, selectedPeriod }: ExportsClientProps) {
-  const [selectedReport, setSelectedReport] = React.useState<ReportType>('trial-balance');
-  const [period, setPeriod] = React.useState<string>(selectedPeriod || 'all');
-  const [startDate, setStartDate] = React.useState<string>('');
-  const [endDate, setEndDate] = React.useState<string>('');
-  const [accountId, setAccountId] = React.useState<string>('all');
-  const [divisionId, setDivisionId] = React.useState<string>('all');
+  const searchParams = useSearchParams();
+  const router = useRouter();
+  const pathname = usePathname();
+
+  const urlType = searchParams.get('type') as ReportType | null;
+  const urlPeriod = searchParams.get('period');
+  const urlDivisionId = searchParams.get('divisionId');
+  const urlAccountId = searchParams.get('accountId');
+  const urlStartDate = searchParams.get('startDate');
+  const urlEndDate = searchParams.get('endDate');
+
+  const validReportTypes: ReportType[] = [
+    'chart-of-accounts',
+    'journal-entries',
+    'general-ledger',
+    'trial-balance',
+    'profit-and-loss',
+    'division-performance',
+    'balance-sheet',
+  ];
+
+  const initialReport: ReportType = urlType && validReportTypes.includes(urlType) ? urlType : 'trial-balance';
+
+  const [selectedReport, setSelectedReportState] = React.useState<ReportType>(initialReport);
+  const [period, setPeriodState] = React.useState<string>(urlPeriod || selectedPeriod || 'all');
+  const [startDate, setStartDateState] = React.useState<string>(urlStartDate || '');
+  const [endDate, setEndDateState] = React.useState<string>(urlEndDate || '');
+  const [accountId, setAccountIdState] = React.useState<string>(urlAccountId || 'all');
+  const [divisionId, setDivisionIdState] = React.useState<string>(urlDivisionId || 'all');
+
+  const updateUrl = React.useCallback(
+    (paramsToUpdate: Record<string, string | undefined>) => {
+      const params = new URLSearchParams(searchParams.toString());
+      Object.entries(paramsToUpdate).forEach(([key, val]) => {
+        if (val && val !== 'all') {
+          params.set(key, val);
+        } else {
+          params.delete(key);
+        }
+      });
+      router.replace(`${pathname}?${params.toString()}`, { scroll: false });
+    },
+    [router, pathname, searchParams]
+  );
+
+  const setSelectedReport = (r: ReportType) => {
+    setSelectedReportState(r);
+    updateUrl({ type: r, period, divisionId, accountId, startDate, endDate });
+  };
+
+  const setPeriod = (p: string) => {
+    setPeriodState(p);
+    updateUrl({ type: selectedReport, period: p, divisionId, accountId, startDate, endDate });
+  };
+
+  const setDivisionId = (d: string) => {
+    setDivisionIdState(d);
+    updateUrl({ type: selectedReport, period, divisionId: d, accountId, startDate, endDate });
+  };
+
+  const setAccountId = (a: string) => {
+    setAccountIdState(a);
+    updateUrl({ type: selectedReport, period, divisionId, accountId: a, startDate, endDate });
+  };
+
+  const setStartDate = (s: string) => {
+    setStartDateState(s);
+    updateUrl({ type: selectedReport, period, divisionId, accountId, startDate: s, endDate });
+  };
+
+  const setEndDate = (e: string) => {
+    setEndDateState(e);
+    updateUrl({ type: selectedReport, period, divisionId, accountId, startDate, endDate: e });
+  };
 
   const [previewData, setPreviewData] = React.useState<any>(null);
   const [orgSettings, setOrgSettings] = React.useState<any>(null);
@@ -192,7 +271,7 @@ export function ExportsClient({ periods, accounts, divisions, selectedPeriod }: 
               <Layers className="size-3.5" /> Select Report
             </h3>
             <span className="text-[10px] font-medium px-2 py-0.5 rounded-full bg-primary/10 text-primary">
-              6 Reports
+              7 Reports
             </span>
           </div>
 

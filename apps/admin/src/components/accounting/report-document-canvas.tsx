@@ -4,7 +4,7 @@ import * as React from 'react';
 import { formatZAR, fmtDate } from '@/lib/format';
 
 export interface ReportDocumentCanvasProps {
-  reportType: 'chart-of-accounts' | 'journal-entries' | 'general-ledger' | 'trial-balance' | 'profit-and-loss' | 'division-performance';
+  reportType: 'chart-of-accounts' | 'journal-entries' | 'general-ledger' | 'trial-balance' | 'profit-and-loss' | 'division-performance' | 'balance-sheet';
   reportTitle: string;
   divisionName?: string;
   periodLabel?: string;
@@ -330,10 +330,10 @@ export function ReportDocumentCanvas({
                     {formatZAR(div.netProfit)}
                   </td>
                   <td className="py-2.5 px-2 text-right font-mono tabular-nums font-medium text-zinc-700 dark:text-zinc-300">
-                    {div.marginPercent.toFixed(1)}%
+                    {(div.marginPercent ?? 0).toFixed(1)}%
                   </td>
                   <td className="py-2.5 px-2 text-right font-mono tabular-nums text-zinc-500">
-                    {div.distributionPercent.toFixed(1)}%
+                    {(div.distributionPercent ?? 0).toFixed(1)}%
                   </td>
                 </tr>
               ))}
@@ -343,7 +343,121 @@ export function ReportDocumentCanvas({
                 </tr>
               )}
             </tbody>
+            {data?.divisions && data.divisions.length > 0 && (() => {
+              const totRev = data.divisions.reduce((s: number, d: any) => s + (d.totalRevenue || 0), 0);
+              const totInc = data.divisions.reduce((s: number, d: any) => s + (d.totalIncome || 0), 0);
+              const totAr = data.divisions.reduce((s: number, d: any) => s + (d.totalOutstandingAr || 0), 0);
+              const totExp = data.divisions.reduce((s: number, d: any) => s + (d.totalExpenses || 0), 0);
+              const totNet = totRev - totExp;
+              const totMargin = totRev > 0 ? (totNet / totRev) * 100 : 0;
+              return (
+                <tfoot>
+                  <tr className="border-t-2 border-zinc-900 dark:border-zinc-100 font-bold bg-zinc-50/50 dark:bg-zinc-900/40">
+                    <td className="py-3 px-2 text-zinc-900 dark:text-white uppercase">Total / Summary</td>
+                    <td className="py-3 px-2 text-right font-mono text-emerald-600 dark:text-emerald-400">{formatZAR(totRev)}</td>
+                    <td className="py-3 px-2 text-right font-mono text-blue-600 dark:text-blue-400">{formatZAR(totInc)}</td>
+                    <td className="py-3 px-2 text-right font-mono text-amber-600 dark:text-amber-400">{totAr > 0 ? formatZAR(totAr) : '—'}</td>
+                    <td className="py-3 px-2 text-right font-mono text-zinc-800 dark:text-zinc-200">{formatZAR(totExp)}</td>
+                    <td className={`py-3 px-2 text-right font-mono ${totNet >= 0 ? 'text-emerald-600 dark:text-emerald-400' : 'text-red-500 dark:text-red-400'}`}>
+                      {formatZAR(totNet)}
+                    </td>
+                    <td className="py-3 px-2 text-right font-mono text-zinc-800 dark:text-zinc-200">{totMargin.toFixed(1)}%</td>
+                    <td className="py-3 px-2 text-right font-mono text-zinc-500">100.0%</td>
+                  </tr>
+                </tfoot>
+              );
+            })()}
           </table>
+        )}
+
+        {/* 7. BALANCE SHEET */}
+        {reportType === 'balance-sheet' && (
+          <div className="flex flex-col gap-6">
+            {/* ASSETS */}
+            <div>
+              <h4 className="text-[11px] font-bold text-zinc-500 uppercase tracking-wider mb-2 border-b pb-1">Assets</h4>
+              <table className="w-full text-left text-xs border-collapse">
+                <tbody className="divide-y divide-zinc-100 dark:divide-zinc-900">
+                  {data?.balanceSheet?.assets?.map((row: any) => (
+                    <tr key={row.accountId} className="hover:bg-zinc-50 dark:hover:bg-zinc-900/50">
+                      <td className="py-2 px-3 font-mono text-zinc-500 w-20">{row.accountCode}</td>
+                      <td className="py-2 px-3 font-medium text-zinc-800 dark:text-zinc-200">{row.accountName}</td>
+                      <td className="py-2 px-3 text-right font-mono text-emerald-600 dark:text-emerald-400 font-semibold">{formatZAR(row.amount)}</td>
+                    </tr>
+                  ))}
+                  {(!data?.balanceSheet?.assets || data.balanceSheet.assets.length === 0) && (
+                    <tr><td colSpan={3} className="py-3 px-3 text-zinc-400 italic text-[11px]">No asset accounts recorded.</td></tr>
+                  )}
+                </tbody>
+                <tfoot>
+                  <tr className="border-t border-zinc-300 dark:border-zinc-700 font-bold">
+                    <td colSpan={2} className="py-2.5 px-3 text-zinc-900 dark:text-white uppercase">Total Assets</td>
+                    <td className="py-2.5 px-3 text-right font-mono text-emerald-600 dark:text-emerald-400">{formatZAR(data?.balanceSheet?.totalAssets || 0)}</td>
+                  </tr>
+                </tfoot>
+              </table>
+            </div>
+
+            {/* LIABILITIES */}
+            <div>
+              <h4 className="text-[11px] font-bold text-zinc-500 uppercase tracking-wider mb-2 border-b pb-1">Liabilities</h4>
+              <table className="w-full text-left text-xs border-collapse">
+                <tbody className="divide-y divide-zinc-100 dark:divide-zinc-900">
+                  {data?.balanceSheet?.liabilities?.map((row: any) => (
+                    <tr key={row.accountId} className="hover:bg-zinc-50 dark:hover:bg-zinc-900/50">
+                      <td className="py-2 px-3 font-mono text-zinc-500 w-20">{row.accountCode}</td>
+                      <td className="py-2 px-3 font-medium text-zinc-800 dark:text-zinc-200">{row.accountName}</td>
+                      <td className="py-2 px-3 text-right font-mono text-zinc-800 dark:text-zinc-200 font-semibold">{formatZAR(row.amount)}</td>
+                    </tr>
+                  ))}
+                  {(!data?.balanceSheet?.liabilities || data.balanceSheet.liabilities.length === 0) && (
+                    <tr><td colSpan={3} className="py-3 px-3 text-zinc-400 italic text-[11px]">No liability accounts recorded.</td></tr>
+                  )}
+                </tbody>
+                <tfoot>
+                  <tr className="border-t border-zinc-300 dark:border-zinc-700 font-bold">
+                    <td colSpan={2} className="py-2.5 px-3 text-zinc-900 dark:text-white uppercase">Total Liabilities</td>
+                    <td className="py-2.5 px-3 text-right font-mono text-zinc-800 dark:text-zinc-200">{formatZAR(data?.balanceSheet?.totalLiabilities || 0)}</td>
+                  </tr>
+                </tfoot>
+              </table>
+            </div>
+
+            {/* EQUITY */}
+            <div>
+              <h4 className="text-[11px] font-bold text-zinc-500 uppercase tracking-wider mb-2 border-b pb-1">Equity</h4>
+              <table className="w-full text-left text-xs border-collapse">
+                <tbody className="divide-y divide-zinc-100 dark:divide-zinc-900">
+                  {data?.balanceSheet?.equity?.map((row: any) => (
+                    <tr key={row.accountId} className="hover:bg-zinc-50 dark:hover:bg-zinc-900/50">
+                      <td className="py-2 px-3 font-mono text-zinc-500 w-20">{row.accountCode}</td>
+                      <td className="py-2 px-3 font-medium text-zinc-800 dark:text-zinc-200">{row.accountName}</td>
+                      <td className="py-2 px-3 text-right font-mono text-zinc-800 dark:text-zinc-200 font-semibold">{formatZAR(row.amount)}</td>
+                    </tr>
+                  ))}
+                  <tr className="hover:bg-zinc-50 dark:hover:bg-zinc-900/50 italic">
+                    <td className="py-2 px-3 font-mono text-zinc-400 w-20">—</td>
+                    <td className="py-2 px-3 font-medium text-zinc-700 dark:text-zinc-300">Retained Earnings / Current Period Net Profit</td>
+                    <td className="py-2 px-3 text-right font-mono text-emerald-600 dark:text-emerald-400 font-semibold">{formatZAR(data?.balanceSheet?.netIncome || 0)}</td>
+                  </tr>
+                </tbody>
+                <tfoot>
+                  <tr className="border-t border-zinc-300 dark:border-zinc-700 font-bold">
+                    <td colSpan={2} className="py-2.5 px-3 text-zinc-900 dark:text-white uppercase">Total Equity</td>
+                    <td className="py-2.5 px-3 text-right font-mono text-zinc-900 dark:text-white">{formatZAR(data?.balanceSheet?.totalEquity || 0)}</td>
+                  </tr>
+                </tfoot>
+              </table>
+            </div>
+
+            {/* TOTAL LIABILITIES & EQUITY BAND */}
+            <div className="p-3.5 rounded-xl bg-zinc-100 dark:bg-zinc-900 flex justify-between items-center border border-zinc-200 dark:border-zinc-800">
+              <span className="font-bold text-sm uppercase text-zinc-900 dark:text-white">Total Liabilities & Equity</span>
+              <span className="font-mono text-base font-bold text-emerald-600 dark:text-emerald-400">
+                {formatZAR(data?.balanceSheet?.totalLiabilitiesAndEquity || 0)}
+              </span>
+            </div>
+          </div>
         )}
       </div>
 

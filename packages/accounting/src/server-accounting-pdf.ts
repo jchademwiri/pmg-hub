@@ -4,6 +4,7 @@ import {
   getOrganisationSettings,
   getProfitAndLoss,
   getProfitAndLossByDivision,
+  getBalanceSheet,
   getTrialBalance,
   getGeneralLedger,
   getJournalEntries,
@@ -26,13 +27,14 @@ import { jsPDF } from 'jspdf';
 export type AccountingReportType =
   | 'profit-and-loss'
   | 'division-performance'
+  | 'balance-sheet'
   | 'trial-balance'
   | 'general-ledger'
   | 'journal-entries'
   | 'chart-of-accounts';
 
 export interface AccountingPdfFilters {
-  /** Accounting period, "YYYY-MM". Used by journal-entries, trial-balance, profit-and-loss, division-performance. */
+  /** Accounting period, "YYYY-MM". Used by journal-entries, trial-balance, profit-and-loss, division-performance, balance-sheet. */
   period?: string;
   /** Chart-of-accounts account id. Used by general-ledger. */
   accountId?: string;
@@ -54,6 +56,7 @@ export interface AccountingPdfError {
 const REPORT_TYPES: ReadonlySet<AccountingReportType> = new Set([
   'profit-and-loss',
   'division-performance',
+  'balance-sheet',
   'trial-balance',
   'general-ledger',
   'journal-entries',
@@ -636,8 +639,74 @@ async function buildDivisionPerformancePdf(filters: AccountingPdfFilters): Promi
   };
 }
 
+async function buildBalanceSheetPdf(filters: AccountingPdfFilters): Promise<AccountingPdfResult> {
+  const [result, divisionName] = await Promise.all([
+    getBalanceSheet(filters.period, filters.divisionId),
+    resolveDivisionName(filters.divisionId),
+  ]);
+  const header = await buildReportHeader('Balance Sheet (Statement of Financial Position)', filters.period, divisionName);
+
+  const doc = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' });
+  drawReportHeader(doc, header);
+
+  let y = 72;
+  // Draw Assets
+  doc.setFont('helvetica', 'bold');
+  doc.setFontSize(9);
+  doc.setTextColor(37, 99, 235);
+  doc.text('ASSETS', 15, y);
+  y += 5;
+
+  y = drawAccountSubtable(doc, y, result.assets, 'Total Assets', result.totalAssets);
+  y += 6;
+
+  // Draw Liabilities
+  y = ensurePage(doc, y, 30);
+  doc.setFont('helvetica', 'bold');
+  doc.setFontSize(9);
+  doc.setTextColor(37, 99, 235);
+  doc.text('LIABILITIES', 15, y);
+  y += 5;
+
+  y = drawAccountSubtable(doc, y, result.liabilities, 'Total Liabilities', result.totalLiabilities);
+  y += 6;
+
+  // Draw Equity
+  y = ensurePage(doc, y, 30);
+  doc.setFont('helvetica', 'bold');
+  doc.setFontSize(9);
+  doc.setTextColor(37, 99, 235);
+  doc.text('EQUITY', 15, y);
+  y += 5;
+
+  const equityRows = [
+    ...result.equity,
+    { accountId: 'retained', accountCode: '—', accountName: 'Retained Earnings / Net Income', accountType: 'equity', amount: result.netIncome }
+  ];
+  y = drawAccountSubtable(doc, y, equityRows, 'Total Equity', result.totalEquity);
+  y += 6;
+
+  // Summary Band
+  y = ensurePage(doc, y, 20);
+  doc.setFillColor(244, 244, 245);
+  doc.rect(15, y, 180, 10, 'F');
+  doc.setFont('helvetica', 'bold');
+  doc.setFontSize(9);
+  doc.setTextColor(24, 24, 27);
+  doc.text('TOTAL LIABILITIES & EQUITY', 18, y + 6.5);
+  doc.text(formatZAR(result.totalLiabilitiesAndEquity), 190, y + 6.5, { align: 'right' });
+
+  drawReportFooter(doc, header);
+
+  const suffix = [filters.period ?? 'all-time', filters.divisionId].filter(Boolean).join('-');
+  return {
+    fileName: `balance-sheet-${suffix}.pdf`,
+    buffer: Buffer.from(doc.output('arraybuffer')),
+  };
+}
+
 /**
- * Generates a PDF for one of the 6 accounting reports on /accounting/exports.
+ * Generates a PDF for one of the 7 accounting reports on /accounting/exports.
  * Returns null for a valid-but-not-yet-implemented type (filled in phase by
  * phase) or when the underlying data can't be found, or an
  * `AccountingPdfError` when the caller needs to fix their request (e.g.
@@ -652,6 +721,8 @@ export async function generateAccountingPdf(
       return buildProfitAndLossPdf(filters);
     case 'division-performance':
       return buildDivisionPerformancePdf(filters);
+    case 'balance-sheet':
+      return buildBalanceSheetPdf(filters);
     case 'trial-balance':
       return buildTrialBalancePdf(filters);
     case 'general-ledger':

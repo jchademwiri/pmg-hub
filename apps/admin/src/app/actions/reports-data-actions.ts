@@ -8,13 +8,14 @@ import {
   getTrialBalance,
   getProfitAndLoss,
   getProfitAndLossByDivision,
+  getBalanceSheet,
   getOrganisationSettings,
   divisions,
 } from '@pmg/db';
 import { getSessionOrRedirect } from '@/lib/auth';
 
 export interface ReportPreviewFilter {
-  reportType: 'chart-of-accounts' | 'journal-entries' | 'general-ledger' | 'trial-balance' | 'profit-and-loss' | 'division-performance';
+  reportType: 'chart-of-accounts' | 'journal-entries' | 'general-ledger' | 'trial-balance' | 'profit-and-loss' | 'division-performance' | 'balance-sheet';
   period?: string;
   startDate?: string;
   endDate?: string;
@@ -126,6 +127,13 @@ export async function fetchReportPreviewData(filter: ReportPreviewFilter) {
       case 'division-performance': {
         const divisions = await getProfitAndLossByDivision(periodMonth, startDate, endDate);
         data = { divisions };
+        break;
+      }
+
+      case 'balance-sheet': {
+        const d = filter.divisionId !== 'all' ? filter.divisionId : undefined;
+        const balanceSheet = await getBalanceSheet(periodMonth, d, startDate, endDate);
+        data = { balanceSheet };
         break;
       }
     }
