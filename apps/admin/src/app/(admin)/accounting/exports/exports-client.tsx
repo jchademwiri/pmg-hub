@@ -153,7 +153,14 @@ export function ExportsClient({ periods, accounts, divisions, selectedPeriod }: 
     ? (divisions.find((d) => d.id === divisionId)?.name ?? 'All Divisions')
     : 'All Divisions';
 
-  const periodDisplay = period !== 'all' ? fmtMonthYear(period) : 'All Time';
+  let periodDisplay = 'All Time';
+  if (period && period !== 'all') {
+    if (period.endsWith('-FY')) periodDisplay = `Annual FY${period.substring(0, 4)}`;
+    else if (period.endsWith('-H1')) periodDisplay = `Bi-Annual ${period.substring(0, 4)} H1 (Jan–Jun)`;
+    else if (period.endsWith('-H2')) periodDisplay = `Bi-Annual ${period.substring(0, 4)} H2 (Jul–Dec)`;
+    else if (period.includes('-Q')) periodDisplay = `Quarterly ${period.substring(0, 4)} ${period.substring(5)}`;
+    else periodDisplay = fmtMonthYear(period);
+  }
 
   let dateRangeDisplay = '';
   if (startDate && endDate) {
@@ -250,8 +257,24 @@ export function ExportsClient({ periods, accounts, divisions, selectedPeriod }: 
                     </SelectTrigger>
                     <SelectContent>
                       <SelectItem value="all">All Time</SelectItem>
+                      
+                      {/* Annually */}
+                      <SelectItem value="2026-FY">Annual: FY2026 (Full Year)</SelectItem>
+                      <SelectItem value="2025-FY">Annual: FY2025 (Full Year)</SelectItem>
+
+                      {/* Bi-Annually */}
+                      <SelectItem value="2026-H1">Bi-Annual: 2026 H1 (Jan – Jun)</SelectItem>
+                      <SelectItem value="2026-H2">Bi-Annual: 2026 H2 (Jul – Dec)</SelectItem>
+
+                      {/* Quarterly */}
+                      <SelectItem value="2026-Q1">Quarterly: 2026 Q1 (Jan – Mar)</SelectItem>
+                      <SelectItem value="2026-Q2">Quarterly: 2026 Q2 (Apr – Jun)</SelectItem>
+                      <SelectItem value="2026-Q3">Quarterly: 2026 Q3 (Jul – Sep)</SelectItem>
+                      <SelectItem value="2026-Q4">Quarterly: 2026 Q4 (Oct – Dec)</SelectItem>
+
+                      {/* Monthly */}
                       {periods.map((p) => (
-                        <SelectItem key={p} value={p}>{fmtMonthYear(p)}</SelectItem>
+                        <SelectItem key={p} value={p}>Monthly: {fmtMonthYear(p)}</SelectItem>
                       ))}
                     </SelectContent>
                   </Select>

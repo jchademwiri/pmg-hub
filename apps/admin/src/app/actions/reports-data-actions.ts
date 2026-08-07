@@ -22,6 +22,44 @@ export interface ReportPreviewFilter {
   accountId?: string;
 }
 
+export function resolvePeriodDateRange(periodStr?: string, customStart?: string, customEnd?: string) {
+  let startDate = customStart;
+  let endDate = customEnd;
+  let periodMonth: string | undefined = undefined;
+
+  if (periodStr && periodStr !== 'all') {
+    if (/^\d{4}-\d{2}$/.test(periodStr)) {
+      periodMonth = periodStr;
+    } else if (/^(\d{4})-Q([1-4])$/.test(periodStr)) {
+      const match = periodStr.match(/^(\d{4})-Q([1-4])$/)!;
+      const yr = match[1];
+      const q = parseInt(match[2], 10);
+      const starts = ['01-01', '04-01', '07-01', '10-01'];
+      const ends = ['03-31', '06-30', '09-30', '12-31'];
+      startDate = `${yr}-${starts[q - 1]}`;
+      endDate = `${yr}-${ends[q - 1]}`;
+    } else if (/^(\d{4})-H([1-2])$/.test(periodStr)) {
+      const match = periodStr.match(/^(\d{4})-H([1-2])$/)!;
+      const yr = match[1];
+      const h = match[2];
+      if (h === '1') {
+        startDate = `${yr}-01-01`;
+        endDate = `${yr}-06-30`;
+      } else {
+        startDate = `${yr}-07-01`;
+        endDate = `${yr}-12-31`;
+      }
+    } else if (/^(FY)?(\d{4})$/.test(periodStr)) {
+      const match = periodStr.match(/^(FY)?(\d{4})$/)!;
+      const yr = match[2];
+      startDate = `${yr}-01-01`;
+      endDate = `${yr}-12-31`;
+    }
+  }
+
+  return { periodMonth, startDate, endDate };
+}
+
 export async function fetchReportPreviewData(filter: ReportPreviewFilter) {
   try {
     await getSessionOrRedirect();
@@ -36,6 +74,8 @@ export async function fetchReportPreviewData(filter: ReportPreviewFilter) {
       ? divList.find((d) => d.id === filter.divisionId)
       : null;
 
+    const { periodMonth, startDate, endDate } = resolvePeriodDateRange(filter.period, filter.startDate, filter.endDate);
+
     let data: any = null;
 
     switch (filter.reportType) {
@@ -47,7 +87,7 @@ export async function fetchReportPreviewData(filter: ReportPreviewFilter) {
 
       case 'journal-entries': {
         const result = await getJournalEntries({
-          period: filter.period !== 'all' ? filter.period : undefined,
+          period: periodMonth,
           divisionId: filter.divisionId !== 'all' ? filter.divisionId : undefined,
           pageSize: 500,
         });
@@ -57,8 +97,8 @@ export async function fetchReportPreviewData(filter: ReportPreviewFilter) {
 
       case 'general-ledger': {
         const result = await getGeneralLedger({
-          startDate: filter.startDate,
-          endDate: filter.endDate,
+          startDate,
+          endDate,
           accountId: filter.accountId !== 'all' ? filter.accountId : undefined,
           divisionId: filter.divisionId !== 'all' ? filter.divisionId : undefined,
           pageSize: 500,
@@ -68,9 +108,8 @@ export async function fetchReportPreviewData(filter: ReportPreviewFilter) {
       }
 
       case 'trial-balance': {
-        const p = filter.period !== 'all' ? filter.period : undefined;
         const d = filter.divisionId !== 'all' ? filter.divisionId : undefined;
-        const rows = await getTrialBalance(p, d);
+        const rows = await getTrialBalance(periodMonth, d, startDate, endDate);
         const totalDebits = rows.reduce((s, r: any) => s + (Number(r.debit ?? r.totalDebits) || 0), 0);
         const totalCredits = rows.reduce((s, r: any) => s + (Number(r.credit ?? r.totalCredits) || 0), 0);
         data = { rows, totalDebits, totalCredits };
@@ -78,11 +117,10 @@ export async function fetchReportPreviewData(filter: ReportPreviewFilter) {
       }
 
       case 'profit-and-loss': {
-        const p = filter.period !== 'all' ? filter.period : undefined;
         const d = filter.divisionId !== 'all' ? filter.divisionId : undefined;
         const [statement, divisions] = await Promise.all([
-          getProfitAndLoss(p, d),
-          getProfitAndLossByDivision(p),
+          getProfitAndLoss(periodMonth, d, startDate, endDate),
+          getProfitAndLossByDivision(periodMonth, startDate, endDate),
         ]);
         data = { statement, divisions };
         break;

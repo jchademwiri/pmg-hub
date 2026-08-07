@@ -489,12 +489,14 @@ export type TrialBalanceRow = {
  * Uses a subquery to ensure only journal lines belonging to posted entries
  * are aggregated — void/draft entries are excluded.
  */
-export async function getTrialBalance(period?: string, divisionId?: string): Promise<TrialBalanceRow[]> {
+export async function getTrialBalance(period?: string, divisionId?: string, startDate?: string, endDate?: string): Promise<TrialBalanceRow[]> {
   const entryConditions = [
     eq(journalEntries.status, "posted"),
   ];
   if (period) entryConditions.push(eq(journalEntries.period, period));
   if (divisionId) entryConditions.push(eq(journalEntries.divisionId, divisionId));
+  if (startDate) entryConditions.push(sql`${journalEntries.entryDate} >= ${startDate}`);
+  if (endDate) entryConditions.push(sql`${journalEntries.entryDate} <= ${endDate}`);
 
   const accountConditions = [
     eq(chartAccounts.isPostingAccount, true),
