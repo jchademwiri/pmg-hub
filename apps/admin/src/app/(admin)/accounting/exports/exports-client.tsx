@@ -2,7 +2,7 @@
 
 import * as React from 'react';
 import { useSearchParams, useRouter, usePathname } from 'next/navigation';
-import { Download, Printer, BookOpen, FileText, Table2, Scale, TrendingUp, Building2, Landmark, Calendar, Filter, Layers } from 'lucide-react';
+import { Download, Printer, BookOpen, FileText, Table2, Scale, TrendingUp, Building2, Landmark, Banknote, Calendar, Filter, Layers } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import {
@@ -24,7 +24,15 @@ interface ExportsClientProps {
   selectedPeriod: string;
 }
 
-type ReportType = 'chart-of-accounts' | 'journal-entries' | 'general-ledger' | 'trial-balance' | 'profit-and-loss' | 'division-performance' | 'balance-sheet';
+type ReportType =
+  | 'balance-sheet'
+  | 'profit-and-loss'
+  | 'division-performance'
+  | 'trial-balance'
+  | 'cash-flow'
+  | 'journal-entries'
+  | 'general-ledger'
+  | 'chart-of-accounts';
 
 interface ReportConfig {
   id: ReportType;
@@ -39,40 +47,10 @@ interface ReportConfig {
 
 const REPORT_TYPES: ReportConfig[] = [
   {
-    id: 'chart-of-accounts',
-    label: 'Chart of Accounts',
-    description: 'Complete list of all account categories, codes, and types',
-    icon: BookOpen,
-    needsPeriod: false,
-    needsAccount: false,
-    needsDivision: false,
-    supportsDateRange: false,
-  },
-  {
-    id: 'journal-entries',
-    label: 'Journal Entries',
-    description: 'All posted double-entry journal entries with debits & credits',
-    icon: FileText,
-    needsPeriod: true,
-    needsAccount: false,
-    needsDivision: true,
-    supportsDateRange: true,
-  },
-  {
-    id: 'general-ledger',
-    label: 'General Ledger',
-    description: 'Detailed transaction line items organized by date and account',
-    icon: Table2,
-    needsPeriod: true,
-    needsAccount: true,
-    needsDivision: true,
-    supportsDateRange: true,
-  },
-  {
-    id: 'trial-balance',
-    label: 'Trial Balance',
-    description: 'Account balances summary verifying debits and credits equality',
-    icon: Scale,
+    id: 'balance-sheet',
+    label: 'Balance Sheet',
+    description: 'Statement of Financial Position: Assets, Liabilities & Equity',
+    icon: Landmark,
     needsPeriod: true,
     needsAccount: false,
     needsDivision: true,
@@ -99,14 +77,54 @@ const REPORT_TYPES: ReportConfig[] = [
     supportsDateRange: true,
   },
   {
-    id: 'balance-sheet',
-    label: 'Balance Sheet',
-    description: 'Statement of Financial Position: Assets, Liabilities & Equity',
-    icon: Landmark,
+    id: 'trial-balance',
+    label: 'Trial Balance',
+    description: 'Account balances summary verifying debits and credits equality',
+    icon: Scale,
     needsPeriod: true,
     needsAccount: false,
     needsDivision: true,
     supportsDateRange: true,
+  },
+  {
+    id: 'cash-flow',
+    label: 'Cash Flow Statement',
+    description: 'Operating cash collections, expenses & cash position movements',
+    icon: Banknote,
+    needsPeriod: true,
+    needsAccount: false,
+    needsDivision: true,
+    supportsDateRange: true,
+  },
+  {
+    id: 'journal-entries',
+    label: 'Journal Entries',
+    description: 'All posted double-entry journal entries with debits & credits',
+    icon: FileText,
+    needsPeriod: true,
+    needsAccount: false,
+    needsDivision: true,
+    supportsDateRange: true,
+  },
+  {
+    id: 'general-ledger',
+    label: 'General Ledger',
+    description: 'Detailed transaction line items organized by date and account',
+    icon: Table2,
+    needsPeriod: true,
+    needsAccount: true,
+    needsDivision: true,
+    supportsDateRange: true,
+  },
+  {
+    id: 'chart-of-accounts',
+    label: 'Chart of Accounts',
+    description: 'Complete list of all account categories, codes, and types',
+    icon: BookOpen,
+    needsPeriod: false,
+    needsAccount: false,
+    needsDivision: false,
+    supportsDateRange: false,
   },
 ];
 
@@ -123,13 +141,14 @@ export function ExportsClient({ periods, accounts, divisions, selectedPeriod }: 
   const urlEndDate = searchParams.get('endDate');
 
   const validReportTypes: ReportType[] = [
-    'chart-of-accounts',
-    'journal-entries',
-    'general-ledger',
-    'trial-balance',
+    'balance-sheet',
     'profit-and-loss',
     'division-performance',
-    'balance-sheet',
+    'trial-balance',
+    'cash-flow',
+    'journal-entries',
+    'general-ledger',
+    'chart-of-accounts',
   ];
 
   const initialReport: ReportType = urlType && validReportTypes.includes(urlType) ? urlType : 'trial-balance';
@@ -271,7 +290,7 @@ export function ExportsClient({ periods, accounts, divisions, selectedPeriod }: 
               <Layers className="size-3.5" /> Select Report
             </h3>
             <span className="text-[10px] font-medium px-2 py-0.5 rounded-full bg-primary/10 text-primary">
-              7 Reports
+              {REPORT_TYPES.length} Reports
             </span>
           </div>
 

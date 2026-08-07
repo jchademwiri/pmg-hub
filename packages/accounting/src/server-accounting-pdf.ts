@@ -5,6 +5,7 @@ import {
   getProfitAndLoss,
   getProfitAndLossByDivision,
   getBalanceSheet,
+  getCashFlowStatement,
   getTrialBalance,
   getGeneralLedger,
   getJournalEntries,
@@ -25,16 +26,17 @@ import { PAGE, split, ensurePage, drawShellHeader, drawShellFooter, type PdfOrgH
 import { jsPDF } from 'jspdf';
 
 export type AccountingReportType =
+  | 'balance-sheet'
   | 'profit-and-loss'
   | 'division-performance'
-  | 'balance-sheet'
   | 'trial-balance'
-  | 'general-ledger'
+  | 'cash-flow'
   | 'journal-entries'
+  | 'general-ledger'
   | 'chart-of-accounts';
 
 export interface AccountingPdfFilters {
-  /** Accounting period, "YYYY-MM". Used by journal-entries, trial-balance, profit-and-loss, division-performance, balance-sheet. */
+  /** Accounting period, "YYYY-MM". Used by journal-entries, trial-balance, profit-and-loss, division-performance, balance-sheet, cash-flow. */
   period?: string;
   /** Chart-of-accounts account id. Used by general-ledger. */
   accountId?: string;
@@ -54,12 +56,13 @@ export interface AccountingPdfError {
 }
 
 const REPORT_TYPES: ReadonlySet<AccountingReportType> = new Set([
+  'balance-sheet',
   'profit-and-loss',
   'division-performance',
-  'balance-sheet',
   'trial-balance',
-  'general-ledger',
+  'cash-flow',
   'journal-entries',
+  'general-ledger',
   'chart-of-accounts',
 ]);
 
@@ -722,8 +725,57 @@ async function buildBalanceSheetPdf(filters: AccountingPdfFilters): Promise<Acco
   };
 }
 
+async function buildCashFlowPdf(filters: AccountingPdfFilters): Promise<AccountingPdfResult> {
+  const [result, divisionName] = await Promise.all([
+    getCashFlowStatement(filters.period, filters.divisionId),
+    resolveDivisionName(filters.divisionId),
+  ]);
+  const header = await buildReportHeader('Cash Flow Statement', filters.period, divisionName);
+
+  const doc = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' });
+  drawReportHeader(doc, header);
+
+  let y = 72;
+  doc.setFont('helvetica', 'bold');
+  doc.setFontSize(9);
+  doc.setTextColor(37, 99, 235);
+  doc.text('CASH FLOWS FROM OPERATING ACTIVITIES', 15, y);
+  y += 6;
+
+  doc.setFont('helvetica', 'normal');
+  doc.setFontSize(8);
+  for (const row of result.operatingActivities) {
+    y = ensurePage(doc, y, 8);
+    doc.setTextColor(24, 24, 27);
+    doc.text(row.description, 17, y + 4);
+    doc.text(formatZAR(row.amount), 190, y + 4, { align: 'right' });
+    y += 7;
+  }
+
+  y = ensurePage(doc, y, 12);
+  y = drawTotalRow(doc, y, 'Net Cash Flow from Operating Activities', result.netOperatingCashFlow);
+
+  y += 6;
+  y = ensurePage(doc, y, 16);
+  doc.setFillColor(244, 244, 245);
+  doc.rect(15, y, 180, 10, 'F');
+  doc.setFont('helvetica', 'bold');
+  doc.setFontSize(9);
+  doc.setTextColor(24, 24, 27);
+  doc.text('NET INCREASE / (DECREASE) IN CASH', 18, y + 6.5);
+  doc.text(formatZAR(result.netCashIncrease), 190, y + 6.5, { align: 'right' });
+
+  drawReportFooter(doc, header);
+
+  const suffix = [filters.period ?? 'all-time', filters.divisionId].filter(Boolean).join('-');
+  return {
+    fileName: `cash-flow-${suffix}.pdf`,
+    buffer: Buffer.from(doc.output('arraybuffer')),
+  };
+}
+
 /**
- * Generates a PDF for one of the 7 accounting reports on /accounting/exports.
+ * Generates a PDF for one of the 8 accounting reports on /accounting/exports.
  * Returns null for a valid-but-not-yet-implemented type (filled in phase by
  * phase) or when the underlying data can't be found, or an
  * `AccountingPdfError` when the caller needs to fix their request (e.g.
@@ -734,14 +786,16 @@ export async function generateAccountingPdf(
   filters: AccountingPdfFilters = {},
 ): Promise<AccountingPdfResult | AccountingPdfError | null> {
   switch (type) {
+    case 'balance-sheet':
+      return buildBalanceSheetPdf(filters);
     case 'profit-and-loss':
       return buildProfitAndLossPdf(filters);
     case 'division-performance':
       return buildDivisionPerformancePdf(filters);
-    case 'balance-sheet':
-      return buildBalanceSheetPdf(filters);
     case 'trial-balance':
       return buildTrialBalancePdf(filters);
+    case 'cash-flow':
+      return buildCashFlowPdf(filters);
     case 'general-ledger':
       return buildGeneralLedgerPdf(filters);
     case 'journal-entries':

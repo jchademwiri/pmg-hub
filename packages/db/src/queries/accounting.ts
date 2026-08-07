@@ -656,6 +656,63 @@ export async function getBalanceSheet(
   };
 }
 
+// ── Cash Flow Statement ───────────────────────────────────────────────────────
+
+export type CashFlowCategoryRow = {
+  description: string;
+  amount: number;
+};
+
+export type CashFlowResult = {
+  operatingActivities: CashFlowCategoryRow[];
+  netOperatingCashFlow: number;
+  investingFinancingActivities: CashFlowCategoryRow[];
+  netInvestingFinancingCashFlow: number;
+  netCashIncrease: number;
+  startingCashBalance: number;
+  endingCashBalance: number;
+};
+
+export async function getCashFlowStatement(
+  period?: string,
+  divisionId?: string,
+  startDate?: string,
+  endDate?: string
+): Promise<CashFlowResult> {
+  const pnl = await getProfitAndLoss(period, divisionId, startDate, endDate);
+  const bs = await getBalanceSheet(period, divisionId, startDate, endDate);
+  const divPerf = await getProfitAndLossByDivision(period, startDate, endDate);
+
+  const totalCashCollected = divPerf.reduce((sum, d) => sum + d.totalIncome, 0);
+  const totalOperatingExpenses = pnl.totalExpenses;
+
+  const operatingActivities: CashFlowCategoryRow[] = [
+    { description: 'Cash Receipts from Customers / Sales Collections', amount: totalCashCollected },
+    { description: 'Cash Payments for Operating Expenses', amount: -totalOperatingExpenses },
+  ];
+
+  const netOperatingCashFlow = totalCashCollected - totalOperatingExpenses;
+
+  const investingFinancingActivities: CashFlowCategoryRow[] = [];
+  const netInvestingFinancingCashFlow = 0;
+
+  const netCashIncrease = netOperatingCashFlow + netInvestingFinancingCashFlow;
+  
+  const bankAccounts = bs.assets.filter((a) => a.accountCode.startsWith('10'));
+  const endingCashBalance = bankAccounts.reduce((sum, a) => sum + a.amount, 0);
+  const startingCashBalance = Math.max(0, endingCashBalance - netCashIncrease);
+
+  return {
+    operatingActivities,
+    netOperatingCashFlow,
+    investingFinancingActivities,
+    netInvestingFinancingCashFlow,
+    netCashIncrease,
+    startingCashBalance,
+    endingCashBalance,
+  };
+}
+
 // ── Profit & Loss ─────────────────────────────────────────────────────────────
 
 export type ProfitAndLossRow = {

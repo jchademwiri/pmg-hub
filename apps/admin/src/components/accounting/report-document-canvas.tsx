@@ -4,7 +4,15 @@ import * as React from 'react';
 import { formatZAR, fmtDate } from '@/lib/format';
 
 export interface ReportDocumentCanvasProps {
-  reportType: 'chart-of-accounts' | 'journal-entries' | 'general-ledger' | 'trial-balance' | 'profit-and-loss' | 'division-performance' | 'balance-sheet';
+  reportType:
+    | 'balance-sheet'
+    | 'profit-and-loss'
+    | 'division-performance'
+    | 'trial-balance'
+    | 'cash-flow'
+    | 'journal-entries'
+    | 'general-ledger'
+    | 'chart-of-accounts';
   reportTitle: string;
   divisionName?: string;
   periodLabel?: string;
@@ -456,6 +464,62 @@ export function ReportDocumentCanvas({
               <span className="font-mono text-base font-bold text-emerald-600 dark:text-emerald-400">
                 {formatZAR(data?.balanceSheet?.totalLiabilitiesAndEquity || 0)}
               </span>
+            </div>
+          </div>
+        )}
+
+        {/* 8. CASH FLOW STATEMENT */}
+        {reportType === 'cash-flow' && (
+          <div className="flex flex-col gap-6">
+            {/* Operating Activities */}
+            <div>
+              <h4 className="text-[11px] font-bold text-zinc-500 uppercase tracking-wider mb-2 border-b pb-1">Cash Flows from Operating Activities</h4>
+              <table className="w-full text-left text-xs border-collapse">
+                <tbody className="divide-y divide-zinc-100 dark:divide-zinc-900">
+                  {data?.cashFlow?.operatingActivities?.map((row: any, idx: number) => (
+                    <tr key={idx} className="hover:bg-zinc-50 dark:hover:bg-zinc-900/50">
+                      <td className="py-2.5 px-3 font-medium text-zinc-800 dark:text-zinc-200">{row.description}</td>
+                      <td className={`py-2.5 px-3 text-right font-mono font-semibold ${
+                        row.amount >= 0 ? 'text-emerald-600 dark:text-emerald-400' : 'text-red-500 dark:text-red-400'
+                      }`}>
+                        {formatZAR(row.amount)}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+                <tfoot>
+                  <tr className="border-t border-zinc-300 dark:border-zinc-700 font-bold">
+                    <td className="py-2.5 px-3 text-zinc-900 dark:text-white uppercase">Net Cash Flow from Operating Activities</td>
+                    <td className={`py-2.5 px-3 text-right font-mono ${
+                      (data?.cashFlow?.netOperatingCashFlow || 0) >= 0 ? 'text-emerald-600 dark:text-emerald-400' : 'text-red-500 dark:text-red-400'
+                    }`}>
+                      {formatZAR(data?.cashFlow?.netOperatingCashFlow || 0)}
+                    </td>
+                  </tr>
+                </tfoot>
+              </table>
+            </div>
+
+            {/* Net Increase Band */}
+            <div className="p-3.5 rounded-xl bg-zinc-100 dark:bg-zinc-900 flex justify-between items-center border border-zinc-200 dark:border-zinc-800">
+              <span className="font-bold text-sm uppercase text-zinc-900 dark:text-white">Net Increase / (Decrease) in Cash</span>
+              <span className={`font-mono text-base font-bold ${
+                (data?.cashFlow?.netCashIncrease || 0) >= 0 ? 'text-emerald-600 dark:text-emerald-400' : 'text-red-500 dark:text-red-400'
+              }`}>
+                {formatZAR(data?.cashFlow?.netCashIncrease || 0)}
+              </span>
+            </div>
+
+            {/* Cash Position Summary */}
+            <div className="rounded-xl border border-zinc-200 dark:border-zinc-800 p-4 bg-card flex flex-col gap-2">
+              <div className="flex justify-between items-center text-xs">
+                <span className="text-zinc-500">Starting Cash & Bank Balance</span>
+                <span className="font-mono text-zinc-700 dark:text-zinc-300 font-semibold">{formatZAR(data?.cashFlow?.startingCashBalance || 0)}</span>
+              </div>
+              <div className="flex justify-between items-center text-xs pt-2 border-t border-zinc-100 dark:border-zinc-900 font-bold">
+                <span className="text-zinc-900 dark:text-white uppercase">Ending Cash & Bank Balance</span>
+                <span className="font-mono text-emerald-600 dark:text-emerald-400 text-sm">{formatZAR(data?.cashFlow?.endingCashBalance || 0)}</span>
+              </div>
             </div>
           </div>
         )}
