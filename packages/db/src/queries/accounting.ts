@@ -539,18 +539,20 @@ export async function getTrialBalance(period?: string, divisionId?: string, star
     .where(and(...accountConditions))
     .orderBy(asc(chartAccounts.code));
 
-  return rows.map((r) => {
-    const debits = Number(r.totalDebits);
-    const credits = Number(r.totalCredits);
-    return {
-      ...r,
-      debit: debits,
-      credit: credits,
-      totalDebits: debits,
-      totalCredits: credits,
-      balance: debits - credits,
-    };
-  });
+  return rows
+    .map((r) => {
+      const debits = Number(r.totalDebits);
+      const credits = Number(r.totalCredits);
+      return {
+        ...r,
+        debit: debits,
+        credit: credits,
+        totalDebits: debits,
+        totalCredits: credits,
+        balance: debits - credits,
+      };
+    })
+    .filter((r) => Math.abs(r.totalDebits) >= 0.01 || Math.abs(r.totalCredits) >= 0.01);
 }
 
 // ── Balance Sheet ─────────────────────────────────────────────────────────────

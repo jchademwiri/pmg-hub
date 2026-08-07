@@ -205,7 +205,7 @@ export function ReportDocumentCanvas({
                 </tr>
               </thead>
               <tbody className="divide-y divide-zinc-100 dark:divide-zinc-900">
-                {data?.rows?.map((row: any) => (
+                {data?.rows?.filter((r: any) => Math.abs(r.debit ?? r.totalDebits ?? 0) >= 0.01 || Math.abs(r.credit ?? r.totalCredits ?? 0) >= 0.01).map((row: any) => (
                   <tr key={row.accountId} className="hover:bg-zinc-50 dark:hover:bg-zinc-900/50">
                     <td className="py-2.5 px-3 font-mono font-bold text-zinc-900 dark:text-zinc-100">{row.accountCode}</td>
                     <td className="py-2.5 px-3 font-medium text-zinc-800 dark:text-zinc-200">{row.accountName}</td>
