@@ -6,39 +6,33 @@ export interface Service {
 
 export const services: Service[] = [
   {
-    name: 'CSD Registration & Management',
+    name: 'Full Tender Preparation',
     description:
-      'Get registered on the Central Supplier Database and keep your profile current. We handle the full process from initial registration to annual updates.',
+      'End-to-end tender document preparation, done for you. We read the bid, source every requirement, and compile a complete, submission-ready package. Already started your own tender and something isn\'t right? We\'ll review it, flag what\'s missing or incorrect, and get it submission-ready before the deadline.',
     price: 'Get a quote',
   },
   {
-    name: 'CIDB Grading',
+    name: 'RFQ & RFI Preparation',
     description:
-      'Obtain your CIDB contractor grading certificate for construction and civil tenders. We manage the application, documentation, and submission.',
+      'Fast turnaround on Requests for Quotation and Requests for Information. We prepare accurate, compliant responses so you never miss a window because of paperwork.',
     price: 'Get a quote',
   },
   {
-    name: 'B-BBEE Affidavits',
+    name: 'Supplier & Vendor Database Registration',
     description:
-      'EME and QSE affidavits prepared and commissioned correctly. Valid, compliant, and ready for any tender submission.',
+      'Get registered directly with the municipalities, parastatals, and corporates you want to supply to - Tshwane, Ekurhuleni, Transnet, Eskom, and more. Each runs its own database; we handle the registration so you receive their RFQs directly.',
     price: 'Get a quote',
   },
-  {
-    name: 'COIDA Registration',
-    description:
-      'Register with the Compensation Fund and obtain your Letter of Good Standing. Essential for any government tender submission.',
-    price: 'Get a quote',
-  },
-  {
-    name: 'SBD Forms & Returnables',
-    description:
-      'All standard bidding documents completed accurately - SBD1, SBD4, SBD6.1, SBD8, and SBD9. No errors, no omissions.',
-    price: 'Get a quote',
-  },
-  {
-    name: 'Full Tender Compilation',
-    description:
-      'End-to-end tender document preparation. We compile, format, and package your complete submission to meet every specification.',
-    price: 'Get a quote',
-  },
+]
+
+export interface AddOnService {
+  name: string
+}
+
+export const addOnServices: AddOnService[] = [
+  { name: 'CSD Registration' },
+  { name: 'CIDB Grading' },
+  { name: 'B-BBEE Affidavits' },
+  { name: 'COIDA Registration' },
+  { name: 'SBD Forms' },
 ]
