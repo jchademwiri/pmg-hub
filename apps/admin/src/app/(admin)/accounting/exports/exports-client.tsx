@@ -204,6 +204,9 @@ export function ExportsClient({ periods, accounts, divisions, selectedPeriod }: 
                     <p className={`text-xs font-semibold truncate ${isSelected ? 'text-primary' : 'text-foreground'}`}>
                       {type.label}
                     </p>
+                    <p className="text-[11px] text-muted-foreground mt-0.5 truncate">
+                      {type.description}
+                    </p>
                   </div>
                 </button>
               );
