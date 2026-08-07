@@ -97,21 +97,38 @@ export function drawShellHeader(doc: jsPDF, opts: DrawShellHeaderOptions): void 
 
   drawCenteredLogo(doc, opts.org.name);
 
-  doc.setFontSize(20);
+  // Title formatting: reduce font size to 9.5pt and constrain width to prevent overlapping logo
+  const titleText = opts.title.toUpperCase();
+  const maxTitleWidth = 55; // mm (leaves generous clear margin before centered logo)
+  const titleFontSize = 9.5;
+  doc.setFont('helvetica', 'bold');
+  doc.setFontSize(titleFontSize);
   doc.setTextColor(161, 161, 170);
-  doc.text(opts.title.toUpperCase(), PAGE.width - PAGE.margin, 18, { align: 'right' });
-  doc.setFontSize(10);
+
+  const titleLines = split(doc, titleText, maxTitleWidth);
+  let currentY = 15;
+  const lineSpacing = titleFontSize * 0.4;
+
+  titleLines.forEach((line) => {
+    doc.text(line, PAGE.width - PAGE.margin, currentY, { align: 'right' });
+    currentY += lineSpacing;
+  });
+
+  currentY = Math.max(currentY, 22);
+
+  doc.setFont('helvetica', 'normal');
+  doc.setFontSize(9);
   doc.setTextColor(63, 63, 70);
-  doc.text(`#${opts.number}`, PAGE.width - PAGE.margin, 25, { align: 'right' });
+  doc.text(`#${opts.number}`, PAGE.width - PAGE.margin, currentY + 3, { align: 'right' });
   doc.setFontSize(8);
-  doc.text(opts.status, PAGE.width - PAGE.margin, 31, { align: 'right' });
+  doc.text(opts.status, PAGE.width - PAGE.margin, currentY + 8, { align: 'right' });
 
   if (opts.highlight) {
     doc.setFont('helvetica', 'bold');
     doc.setFontSize(8);
     const [r, g, b] = opts.highlight.color ?? [220, 38, 38];
     doc.setTextColor(r, g, b);
-    doc.text(`${opts.highlight.label}: ${opts.highlight.value}`, PAGE.width - PAGE.margin, 37, { align: 'right' });
+    doc.text(`${opts.highlight.label}: ${opts.highlight.value}`, PAGE.width - PAGE.margin, currentY + 13, { align: 'right' });
     doc.setFont('helvetica', 'normal');
   }
 
