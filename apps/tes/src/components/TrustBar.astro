@@ -1,19 +1,19 @@
 ---
 const items = [
   {
-    label: 'CSD',
-    sublabel: 'Registered Supplier',
-    icon: `<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>`,
+    label: 'Full Tender Prep',
+    sublabel: 'Compiled & Reviewed',
+    icon: `<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/></svg>`,
   },
   {
-    label: 'CIDB',
-    sublabel: 'Grading Specialists',
-    icon: `<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="8" r="6"/><path d="M15.477 12.89L17 22l-5-3-5 3 1.523-9.11"/></svg>`,
+    label: 'RFQ / RFI',
+    sublabel: 'Fast, Compliant Responses',
+    icon: `<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 22h14a2 2 0 0 0 2-2V7.5L14.5 2H6a2 2 0 0 0-2 2v5"/><path d="M14 2v6h6"/><path d="M10 13a2 2 0 1 1 3 1.732c-.6.35-1 1.02-1 1.768"/><line x1="12" y1="19.5" x2="12" y2="19.51"/></svg>`,
   },
   {
-    label: 'B-BBEE',
-    sublabel: 'Affidavit Experts',
-    icon: `<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>`,
+    label: 'Vendor DB Registration',
+    sublabel: 'Municipal, Parastatal & Corporate',
+    icon: `<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><ellipse cx="12" cy="5" rx="9" ry="3"/><path d="M3 5v14a9 3 0 0 0 18 0V5"/><path d="M3 12a9 3 0 0 0 18 0"/></svg>`,
   },
   {
     label: 'Centurion-Based',
@@ -29,25 +29,26 @@ const items = [
 ---
 
 <section class='bg-card border-y border-[--border] py-5 px-6 lg:px-12' aria-label='Trust signals'>
-  <ul
-    class='grid grid-cols-1 sm:grid-cols-2 lg:flex lg:items-center lg:justify-center list-none m-0 p-0 gap-y-3 sm:gap-y-4 lg:gap-0'
-    role='list'
-  >
-    {
-      items.map((item, i) => (
-        <li
-          class={`flex items-center gap-3 px-4 py-2 rounded-lg bg-[--bg-secondary] lg:bg-transparent lg:px-5 lg:py-0 sm:border-t sm:border-[--border] ${i >= 1 ? 'lg:border-l lg:border-t-0' : ''}`}
-        >
-          <span class='text-primary shrink-0'>
-            <Fragment set:html={item.icon} />
-          </span>
-          <span class='text-sm'>
-            <span class='text-foreground font-medium'>{item.label}</span>
-            <span class='text-muted-foreground hidden sm:inline'> · {item.sublabel}</span>
-            <span class='text-muted-foreground sm:hidden block'>{item.sublabel}</span>
-          </span>
-        </li>
-      ))
-    }
-  </ul>
+  <div class='max-w-7xl mx-auto'>
+    <ul
+      class='grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 list-none m-0 p-0 gap-y-3 sm:gap-y-4 lg:gap-x-4 lg:gap-y-0'
+      role='list'
+    >
+      {
+        items.map((item, i) => (
+          <li
+            class={`flex items-center gap-3 px-4 py-3 rounded-lg bg-[--bg-secondary] lg:bg-transparent lg:px-4 sm:border-t sm:border-[--border] ${i >= 1 ? 'lg:border-l lg:border-t-0' : ''}`}
+          >
+            <span class='text-primary shrink-0'>
+              <Fragment set:html={item.icon} />
+            </span>
+            <span class='text-sm flex flex-col min-w-0'>
+              <span class='text-foreground font-medium'>{item.label}</span>
+              <span class='text-muted-foreground text-xs'>{item.sublabel}</span>
+            </span>
+          </li>
+        ))
+      }
+    </ul>
+  </div>
 </section>

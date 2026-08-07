@@ -1,5 +1,32 @@
 ---
 // HowItWorks.astro - Three-step process section
+
+const steps = [
+  {
+    n: '01',
+    title: 'Send Your Documents',
+    desc: "WhatsApp or email us your existing documents. We'll review everything within 24 hours and tell you exactly what's needed.",
+  },
+  {
+    n: '02',
+    title: 'We Handle Everything',
+    desc: 'We process your registrations, complete all required forms, and compile your full tender submission package.',
+  },
+  {
+    n: '03',
+    title: 'You Submit With Confidence',
+    desc: 'Receive your complete, professionally packaged submission - ready to hand in before the deadline.',
+  },
+];
+
+const icons = [
+  // Step 1 - send
+  `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#c9a227" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>`,
+  // Step 2 - checklist
+  `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#c9a227" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m3 17 2 2 4-4"/><path d="m3 7 2 2 4-4"/><path d="M13 6h8"/><path d="M13 12h8"/><path d="M13 18h8"/></svg>`,
+  // Step 3 - check circle
+  `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#c9a227" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>`,
+];
 ---
 
 <section id='process' class='bg-background py-20 md:py-28 px-6 md:px-12 diagonal-lines'>
@@ -11,78 +38,47 @@
       Simple. Fast. Submission-ready.
     </h2>
 
-    <!-- Desktop: horizontal steps with connector arrows -->
+    <!-- Desktop: card steps with connector arrows -->
     <div class='hidden md:grid items-start' style='grid-template-columns: 1fr 48px 1fr 48px 1fr;'>
-
-      <!-- Step 1 -->
-      <div class='reveal flex flex-col gap-3' data-delay="0">
-        <div class='flex items-center gap-3'>
-          <div class='step-num w-11 h-11 rounded-full border border-primary/60 flex items-center justify-center shrink-0'>
-            <span class='text-primary font-condensed text-base font-semibold tracking-wide'>01</span>
+      {steps.map((step, i) => (
+        <>
+          <div class='reveal step-card bg-card border border-[--border] rounded-xl p-6 relative overflow-hidden flex flex-col gap-3' data-delay={String(i * 100)}>
+            <span class='step-ghost-num font-condensed' aria-hidden='true'>{step.n}</span>
+            <div class='flex items-center gap-3 relative z-10'>
+              <div class='icon-wrap shrink-0 w-11 h-11 rounded-full border border-primary/50 flex items-center justify-center' style='background: rgba(201,162,39,0.08);'>
+                <Fragment set:html={icons[i]} />
+              </div>
+              <h3 class='text-foreground font-semibold text-base'>{step.title}</h3>
+            </div>
+            <p class='text-muted-foreground text-sm leading-relaxed relative z-10'>{step.desc}</p>
           </div>
-          <h3 class='text-foreground font-semibold text-base'>Send Your Documents</h3>
-        </div>
-        <p class='text-muted-foreground text-sm leading-relaxed' style='padding-left: 56px;'>
-          WhatsApp or email us your existing documents. We'll review everything within 24 hours and tell you exactly what's needed.
-        </p>
-      </div>
 
-      <!-- Connector 1→2 -->
-      <div class='flex items-center justify-center' style='padding-top: 22px;'>
-        <div class='connector-arrow w-full'></div>
-      </div>
-
-      <!-- Step 2 -->
-      <div class='reveal flex flex-col gap-3' data-delay="100">
-        <div class='flex items-center gap-3'>
-          <div class='step-num w-11 h-11 rounded-full border border-primary/60 flex items-center justify-center shrink-0'>
-            <span class='text-primary font-condensed text-base font-semibold tracking-wide'>02</span>
-          </div>
-          <h3 class='text-foreground font-semibold text-base'>We Handle Everything</h3>
-        </div>
-        <p class='text-muted-foreground text-sm leading-relaxed' style='padding-left: 56px;'>
-          We process your registrations, complete all required forms, and compile your full tender submission package.
-        </p>
-      </div>
-
-      <!-- Connector 2→3 -->
-      <div class='flex items-center justify-center' style='padding-top: 22px;'>
-        <div class='connector-arrow w-full'></div>
-      </div>
-
-      <!-- Step 3 -->
-      <div class='reveal flex flex-col gap-3' data-delay="200">
-        <div class='flex items-center gap-3'>
-          <div class='step-num w-11 h-11 rounded-full border border-primary/60 flex items-center justify-center shrink-0'>
-            <span class='text-primary font-condensed text-base font-semibold tracking-wide'>03</span>
-          </div>
-          <h3 class='text-foreground font-semibold text-base'>You Submit With Confidence</h3>
-        </div>
-        <p class='text-muted-foreground text-sm leading-relaxed' style='padding-left: 56px;'>
-          Receive your complete, professionally packaged submission - ready to hand in before the deadline.
-        </p>
-      </div>
+          {i < steps.length - 1 && (
+            <div class='self-stretch flex items-center justify-center'>
+              <div class='connector-arrow w-full'></div>
+            </div>
+          )}
+        </>
+      ))}
     </div>
 
-    <!-- Mobile: vertical timeline -->
+    <!-- Mobile: vertical timeline with card steps -->
     <div class='flex md:hidden flex-col gap-0'>
-      {[
-        { n: '01', title: 'Send Your Documents', desc: "WhatsApp or email us your existing documents. We'll review everything within 24 hours and tell you exactly what's needed." },
-        { n: '02', title: 'We Handle Everything', desc: 'We process your registrations, complete all required forms, and compile your full tender submission package.' },
-        { n: '03', title: 'You Submit With Confidence', desc: 'Receive your complete, professionally packaged submission - ready to hand in before the deadline.' },
-      ].map((step, i) => (
+      {steps.map((step, i) => (
         <div class='flex gap-4'>
-          <!-- Left: number + vertical line -->
+          <!-- Left: icon + vertical line -->
           <div class='flex flex-col items-center'>
-            <div class='step-num w-11 h-11 rounded-full border border-primary/60 flex items-center justify-center shrink-0'>
-              <span class='text-primary font-condensed text-base font-semibold tracking-wide'>{step.n}</span>
+            <div class='icon-wrap w-11 h-11 rounded-full border border-primary/50 flex items-center justify-center shrink-0' style='background: rgba(201,162,39,0.08);'>
+              <Fragment set:html={icons[i]} />
             </div>
-            {i < 2 && <div class='w-px flex-1 my-2' style='background: rgba(201,162,39,0.25); min-height: 32px;'></div>}
+            {i < steps.length - 1 && <div class='w-px flex-1 my-2' style='background: rgba(201,162,39,0.25); min-height: 24px;'></div>}
           </div>
-          <!-- Right: content -->
-          <div class='pb-8 pt-2'>
-            <h3 class='text-foreground font-semibold text-base mb-2'>{step.title}</h3>
-            <p class='text-muted-foreground text-sm leading-relaxed'>{step.desc}</p>
+          <!-- Right: card content -->
+          <div class='step-card bg-card border border-[--border] rounded-xl p-5 flex-1 mb-4 relative overflow-hidden'>
+            <span class='step-ghost-num font-condensed' aria-hidden='true'>{step.n}</span>
+            <p class='text-primary text-[10px] uppercase tracking-widest font-semibold mb-1.5 relative z-10'>Step {step.n}</p>
+            <h3 class='text-foreground font-semibold text-base mb-2 relative z-10'>{step.title}</h3>
+            <p class='text-muted-foreground text-sm leading-relaxed relative z-10'>{step.desc}</p>
           </div>
         </div>
       ))}
@@ -122,11 +118,29 @@
     border-right: 1.5px solid rgba(201, 162, 39, 0.45);
     transform: rotate(45deg);
   }
-  .step-num {
+  .step-card {
+    transition: border-color 0.2s ease, transform 0.2s ease;
+  }
+  .step-card:hover {
+    border-color: rgba(201, 162, 39, 0.4);
+    transform: translateY(-2px);
+  }
+  .icon-wrap {
     transition: border-color 0.2s ease, background-color 0.2s ease;
   }
-  .step-num:hover {
-    background-color: rgba(201, 162, 39, 0.08);
+  .step-card:hover .icon-wrap {
+    background-color: rgba(201, 162, 39, 0.14);
     border-color: rgba(201, 162, 39, 1);
+  }
+  .step-ghost-num {
+    position: absolute;
+    top: -10px;
+    right: 12px;
+    font-size: 72px;
+    font-weight: 700;
+    line-height: 1;
+    color: rgba(201, 162, 39, 0.07);
+    pointer-events: none;
+    user-select: none;
   }
 </style>
