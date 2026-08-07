@@ -38,7 +38,8 @@ import {
   and,
   eq,
   inArray,
-  sql,
+  divisions,
+  deriveDivisionPrefix,
   ACCOUNT_RATES,
   getNextJournalEntryNumber,
   ensureOpenPeriod,
@@ -93,6 +94,26 @@ async function getAccountsByCode(codes: string[], tx?: any) {
 
   const map = new Map<string, ChartAccount>(accounts.map((a: any) => [a.code, a]));
   return map;
+}
+
+/**
+ * Helper to append division prefix/name suffix to journal entry descriptions.
+ */
+async function formatDivisionDescription(db: any, divisionId: string, baseDesc: string): Promise<string> {
+  try {
+    const [div] = await db
+      .select({ name: divisions.name })
+      .from(divisions)
+      .where(eq(divisions.id, divisionId));
+    if (!div?.name) return baseDesc;
+    const prefix = deriveDivisionPrefix(div.name);
+    if (baseDesc.endsWith(` - ${prefix}`) || baseDesc.endsWith(` - ${div.name}`)) {
+      return baseDesc;
+    }
+    return `${baseDesc} - ${prefix}`;
+  } catch {
+    return baseDesc;
+  }
 }
 
 // ── Post Journal Entries for a Payment ──────────────────────────────────────
@@ -170,6 +191,7 @@ export async function postPaymentJournalEntries(data: {
 
     const runInsideTx = async (tx: any) => {
       const entryNumber1 = await getNextJournalEntryNumber(tx, date);
+      const formattedDesc = await formatDivisionDescription(tx, divisionId, description || 'Payment received');
       entryIds.push(entry1Id);
       // Entry 1: Dr Bank / Cr AR
       await tx.insert(journalEntries).values({
@@ -178,7 +200,7 @@ export async function postPaymentJournalEntries(data: {
         entryDate: date,
         period,
         divisionId,
-        description: description || 'Payment received',
+        description: formattedDesc,
         status: 'posted',
         sourceModule: 'billing',
         sourceTable: 'income',
@@ -405,13 +427,14 @@ export async function postInvoiceIssueJournalEntry(data: {
     // Atomic transaction: entry + 2 lines
     const runInsideTx = async (tx: any) => {
       const entryNumber = await getNextJournalEntryNumber(tx, date);
+      const formattedDesc = await formatDivisionDescription(tx, divisionId, description || 'Invoice issued');
       await tx.insert(journalEntries).values({
         id: entryId,
         entryNumber,
         entryDate: date,
         period,
         divisionId,
-        description: description || 'Invoice issued',
+        description: formattedDesc,
         status: 'posted',
         sourceModule: 'billing',
         sourceTable: 'invoices',
@@ -493,13 +516,14 @@ export async function postInvoiceWriteOffJournalEntry(data: {
 
     await db.transaction(async (tx: any) => {
       const entryNumber = await getNextJournalEntryNumber(tx, date);
+      const formattedDesc = await formatDivisionDescription(tx, divisionId, description || 'Invoice write-off');
       await tx.insert(journalEntries).values({
         id: entryId,
         entryNumber,
         entryDate: date,
         period,
         divisionId,
-        description: description || 'Invoice write-off',
+        description: formattedDesc,
         status: 'posted',
         sourceModule: 'billing',
         sourceTable: 'invoices',

@@ -2,9 +2,11 @@
   "name": "@pmg/accounting",
   "version": "0.0.0",
   "private": true,
-  "type": "module",
+  "main": "./src/server-accounting-pdf.ts",
   "exports": {
-    "./server-accounting-pdf": "./src/server-accounting-pdf.ts"
+    ".": "./src/server-accounting-pdf.ts",
+    "./server-accounting-pdf": "./src/server-accounting-pdf.ts",
+    "./*": "./src/*.ts"
   },
   "dependencies": {
     "@pmg/billing": "workspace:*",

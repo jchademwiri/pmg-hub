@@ -9,7 +9,8 @@
     "./client-billing-helpers": "./src/client-billing-helpers.ts",
     "./document-logo": "./src/document-logo.ts",
     "./server-billing-pdf": "./src/server-billing-pdf.ts",
-    "./pdf-shell": "./src/pdf-shell.ts"
+    "./pdf-shell": "./src/pdf-shell.ts",
+    "./*": "./src/*.ts"
   },
   "dependencies": {
     "@pmg/db": "workspace:*",

@@ -60,6 +60,7 @@ export {
   getTrialBalance,
   getProfitAndLoss,
   getProfitAndLossByDivision,
+  getUnpostedInvoicesReconciliation,
   getGeneralLedger,
   getAccountingOverview,
   ensureOpenPeriod,

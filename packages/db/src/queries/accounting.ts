@@ -8,6 +8,7 @@ import {
 import { user } from "../schema/auth";
 import { snapshots } from "../schema/snapshots";
 import { divisions } from "../schema/divisions";
+import { invoices } from "../schema/billing";
 import { eq, and, desc, asc, sql, inArray } from "drizzle-orm";
 
 // ── Chart of Accounts ─────────────────────────────────────────────────────────
@@ -936,4 +937,34 @@ export async function reopenPeriod(period: string) {
       updatedAt: new Date(),
     })
     .where(eq(accountingPeriods.period, period));
+}
+
+export type UnpostedInvoiceReconciliationRow = {
+  id: string;
+  documentNumber: string;
+  status: string;
+  total: number;
+};
+
+/**
+ * Sweeps for active invoices (issued, partially_paid, paid, written_off)
+ * that have 0 debits/credits posted in the general ledger.
+ */
+export async function getUnpostedInvoicesReconciliation(): Promise<UnpostedInvoiceReconciliationRow[]> {
+  const result = await db.execute(sql`
+    SELECT i.id, i.document_number AS "documentNumber", i.status, CAST(i.total AS NUMERIC) AS total
+    FROM invoices i
+    LEFT JOIN journal_entries je ON je.source_table = 'invoices' AND je.source_id = i.id
+    LEFT JOIN journal_lines jl ON jl.journal_entry_id = je.id
+    WHERE i.status IN ('paid', 'written_off', 'issued', 'partially_paid')
+    GROUP BY i.id, i.document_number, i.status, i.total
+    HAVING COALESCE(SUM(jl.debit), 0) = 0 AND COALESCE(SUM(jl.credit), 0) = 0
+  `);
+
+  return (result.rows as any[]).map((r) => ({
+    id: String(r.id),
+    documentNumber: String(r.documentNumber),
+    status: String(r.status),
+    total: Number(r.total),
+  }));
 }
