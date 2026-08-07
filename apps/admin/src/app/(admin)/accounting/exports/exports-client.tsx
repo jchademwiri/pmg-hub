@@ -169,17 +169,17 @@ export function ExportsClient({ periods, accounts, divisions, selectedPeriod }: 
       {/* Two-Column Workbench Layout */}
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
         {/* Left Column: Report Selector Sidebar */}
-        <div className="lg:col-span-4 flex flex-col gap-3 lg:sticky lg:top-16 lg:self-start">
+        <div className="lg:col-span-3 flex flex-col gap-3 lg:sticky lg:top-16 lg:self-start">
           <div className="flex items-center justify-between px-1">
             <h3 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider flex items-center gap-1.5">
-              <Layers className="size-3.5" /> Select Report Type
+              <Layers className="size-3.5" /> Select Report
             </h3>
             <span className="text-[10px] font-medium px-2 py-0.5 rounded-full bg-primary/10 text-primary">
               5 Reports
             </span>
           </div>
 
-          <div className="flex flex-col gap-2.5">
+          <div className="flex flex-col gap-2">
             {REPORT_TYPES.map((type) => {
               const Icon = type.icon;
               const isSelected = selectedReport === type.id;
@@ -188,30 +188,25 @@ export function ExportsClient({ periods, accounts, divisions, selectedPeriod }: 
                   key={type.id}
                   type="button"
                   onClick={() => setSelectedReport(type.id)}
-                  className={`group flex items-start gap-3.5 rounded-xl border p-4 text-left transition-all relative overflow-hidden ${
+                  className={`group flex items-start gap-3 rounded-xl border p-3 text-left transition-all relative overflow-hidden ${
                     isSelected
                       ? 'border-primary bg-primary/5 ring-1 ring-primary/20 shadow-sm'
                       : 'bg-card border-border/70 hover:bg-muted/40 hover:border-muted-foreground/30'
                   }`}
                 >
-                  <div className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-lg transition-colors ${
+                  <div className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-lg transition-colors ${
                     isSelected ? 'bg-primary text-primary-foreground shadow-sm' : 'bg-muted text-muted-foreground group-hover:text-foreground'
                   }`}>
-                    <Icon className="h-5 w-5" />
+                    <Icon className="h-4 w-4" />
                   </div>
 
                   <div className="flex-1 min-w-0">
-                    <div className="flex items-center justify-between">
-                      <p className={`text-sm font-semibold truncate ${isSelected ? 'text-primary' : 'text-foreground'}`}>
+                    <div className="flex items-center justify-between gap-1">
+                      <p className={`text-xs sm:text-sm font-semibold truncate ${isSelected ? 'text-primary' : 'text-foreground'}`}>
                         {type.label}
                       </p>
-                      {isSelected && (
-                        <span className="text-[10px] font-semibold uppercase px-1.5 py-0.5 rounded bg-primary/10 text-primary">
-                          Previewing
-                        </span>
-                      )}
                     </div>
-                    <p className="text-xs text-muted-foreground mt-1 line-clamp-2 leading-relaxed">
+                    <p className="text-[11px] text-muted-foreground mt-0.5 line-clamp-2 leading-relaxed">
                       {type.description}
                     </p>
                   </div>
@@ -222,7 +217,7 @@ export function ExportsClient({ periods, accounts, divisions, selectedPeriod }: 
         </div>
 
         {/* Right Column: Controls & Live Document Canvas */}
-        <div className="lg:col-span-8 flex flex-col gap-4">
+        <div className="lg:col-span-9 flex flex-col gap-4">
           {/* Top Filter & Control Bar */}
           <div className="rounded-2xl border bg-card p-4 sm:p-5 shadow-xs flex flex-col gap-4">
             <div className="flex flex-wrap items-center justify-between gap-3 pb-3 border-b border-border/60">
