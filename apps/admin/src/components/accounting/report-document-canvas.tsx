@@ -26,7 +26,13 @@ export function ReportDocumentCanvas({
 }: ReportDocumentCanvasProps) {
   const companyName = orgSettings?.registeredName || 'PLAYHOUSE MEDIA GROUP (PTY) LTD';
   const taxNumber = orgSettings?.taxNumber || '9876543210';
-  const currentDate = fmtDate(new Date());
+  const [mounted, setMounted] = React.useState(false);
+
+  React.useEffect(() => {
+    setMounted(true);
+  }, []);
+
+  const currentDate = mounted ? fmtDate(new Date()) : '';
 
   if (loading) {
     return (
