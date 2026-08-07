@@ -361,6 +361,37 @@ export function AccountingOverviewClient({
         </div>
       </div>
 
+      {/* Quick Links / Modules */}
+      <div>
+        <h3 className="text-sm font-semibold mb-3">Modules</h3>
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
+          {[
+            { href: '/accounting/chart-of-accounts', label: 'Chart of Accounts', description: 'Manage your account structure', color: 'bg-blue-500/10 text-blue-600' },
+            { href: '/accounting/journals', label: 'Journal Entries', description: 'Record double-entry journals', color: 'bg-violet-500/10 text-violet-600' },
+            { href: '/accounting/general-ledger', label: 'General Ledger', description: 'View the complete ledger', color: 'bg-amber-500/10 text-amber-600' },
+            { href: '/accounting/trial-balance', label: 'Trial Balance', description: 'Verify debits equal credits', color: 'bg-emerald-500/10 text-emerald-600' },
+            { href: '/accounting/profit-and-loss', label: 'Profit & Loss', description: 'Income, expenses, net profit', color: 'bg-rose-500/10 text-rose-600' },
+            { href: '/accounting/periods', label: 'Accounting Periods', description: 'Open, close, lock months', color: 'bg-cyan-500/10 text-cyan-600' },
+            { href: '/accounting/reports', label: 'Financial Reports', description: 'Interactive report workbench', color: 'bg-emerald-500/10 text-emerald-600' },
+          ].map((link) => (
+            <Link
+              key={link.href}
+              href={link.href}
+              className="group flex items-center gap-3 rounded-xl border bg-card p-3.5 hover:bg-muted/30 hover:shadow-sm transition-all duration-200"
+            >
+              <div className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-lg ${link.color}`}>
+                <span className="text-sm font-bold">{link.label.charAt(0)}</span>
+              </div>
+              <div className="flex-1 min-w-0">
+                <p className="text-sm font-medium group-hover:underline underline-offset-2">{link.label}</p>
+                <p className="text-[11px] text-muted-foreground truncate">{link.description}</p>
+              </div>
+              <ArrowRight className="h-3.5 w-3.5 text-muted-foreground shrink-0 opacity-0 group-hover:opacity-100 transition-all duration-200 -translate-x-1 group-hover:translate-x-0" />
+            </Link>
+          ))}
+        </div>
+      </div>
+
       {/* Recent Journal Entries */}
       <div className="rounded-xl border bg-card overflow-hidden">
         <div className="px-5 py-3.5 border-b bg-muted/30 flex items-center justify-between">
@@ -423,37 +454,6 @@ export function AccountingOverviewClient({
             ))}
           </div>
         )}
-      </div>
-
-      {/* Quick Links */}
-      <div>
-        <h3 className="text-sm font-semibold mb-3">Modules</h3>
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
-          {[
-            { href: '/accounting/chart-of-accounts', label: 'Chart of Accounts', description: 'Manage your account structure', color: 'bg-blue-500/10 text-blue-600' },
-            { href: '/accounting/journals', label: 'Journal Entries', description: 'Record double-entry journals', color: 'bg-violet-500/10 text-violet-600' },
-            { href: '/accounting/general-ledger', label: 'General Ledger', description: 'View the complete ledger', color: 'bg-amber-500/10 text-amber-600' },
-            { href: '/accounting/trial-balance', label: 'Trial Balance', description: 'Verify debits equal credits', color: 'bg-emerald-500/10 text-emerald-600' },
-            { href: '/accounting/profit-and-loss', label: 'Profit & Loss', description: 'Income, expenses, net profit', color: 'bg-rose-500/10 text-rose-600' },
-            { href: '/accounting/periods', label: 'Accounting Periods', description: 'Open, close, lock months', color: 'bg-cyan-500/10 text-cyan-600' },
-            { href: '/accounting/reports', label: 'Financial Reports', description: 'Interactive report workbench', color: 'bg-emerald-500/10 text-emerald-600' },
-          ].map((link) => (
-            <Link
-              key={link.href}
-              href={link.href}
-              className="group flex items-center gap-3 rounded-xl border bg-card p-3.5 hover:bg-muted/30 hover:shadow-sm transition-all duration-200"
-            >
-              <div className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-lg ${link.color}`}>
-                <span className="text-sm font-bold">{link.label.charAt(0)}</span>
-              </div>
-              <div className="flex-1 min-w-0">
-                <p className="text-sm font-medium group-hover:underline underline-offset-2">{link.label}</p>
-                <p className="text-[11px] text-muted-foreground truncate">{link.description}</p>
-              </div>
-              <ArrowRight className="h-3.5 w-3.5 text-muted-foreground shrink-0 opacity-0 group-hover:opacity-100 transition-all duration-200 -translate-x-1 group-hover:translate-x-0" />
-            </Link>
-          ))}
-        </div>
       </div>
     </div>
   )
