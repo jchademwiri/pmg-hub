@@ -3,16 +3,16 @@
 
 const outcomes = [
   {
-    stat: '5',
+    stat: '3',
     unit: 'days',
-    label: 'Average time to CSD registration',
-    sub: 'From document drop-off to active profile',
+    label: 'Average tender turnaround',
+    sub: 'From documents received to submission-ready',
   },
   {
-    stat: '0',
-    unit: 'errors',
-    label: 'SBD form resubmissions',
-    sub: 'We get it right the first time',
+    stat: '48',
+    unit: 'hrs',
+    label: 'Vendor database registration',
+    sub: 'From application to active profile',
   },
   {
     stat: '100%',
@@ -46,9 +46,9 @@ const phases: Phase[] = [
     phase: '01',
     title: 'You arrive with gaps',
     description:
-      "Expired certificates, incomplete CSD profile, missing SBD forms - the kind of gaps that cause automatic disqualification. Most businesses don't even know what's missing.",
+      "Incomplete tender packages, missed RFQ windows, not registered with the databases that send you work - the kind of gaps that cost you opportunities before you even get a chance to compete.",
     stateLabel: 'Where you are now',
-    tags: ['Missing COIDA', 'Expired B-BBEE', 'No CIDB grade'],
+    tags: ['Incomplete tender pack', 'Missed RFQ deadlines', 'Not on vendor databases'],
     cardClass: 'bg-red-500/5 border-red-500/20',
     bubbleClass: 'border-red-500/30 bg-red-500/10',
     numClass: 'text-red-400',
