@@ -1,229 +1,357 @@
-'use client'
+'use client';
 
-import * as React from 'react'
-import { Download, FileText, Scale, TrendingUp, BookOpen, Table2 } from 'lucide-react'
-import { Button } from '@/components/ui/button'
+import * as React from 'react';
+import { Download, Printer, BookOpen, FileText, Table2, Scale, TrendingUp, Calendar, Filter, Layers } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from '@/components/ui/select'
-import { fmtMonthYear } from '@/lib/format'
-import type { ChartAccount } from '@pmg/db'
+} from '@/components/ui/select';
+import { fmtMonthYear } from '@/lib/format';
+import type { ChartAccount } from '@pmg/db';
+import { ReportDocumentCanvas } from '@/components/accounting/report-document-canvas';
+import { fetchReportPreviewData } from '@/app/actions/reports-data-actions';
 
 interface ExportsClientProps {
-  periods: string[]
-  accounts: ChartAccount[]
-  divisions: { id: string; name: string }[]
-  selectedPeriod: string
+  periods: string[];
+  accounts: ChartAccount[];
+  divisions: { id: string; name: string }[];
+  selectedPeriod: string;
 }
 
-const EXPORT_TYPES = [
+type ReportType = 'chart-of-accounts' | 'journal-entries' | 'general-ledger' | 'trial-balance' | 'profit-and-loss';
+
+interface ReportConfig {
+  id: ReportType;
+  label: string;
+  description: string;
+  icon: any;
+  needsPeriod: boolean;
+  needsAccount: boolean;
+  needsDivision: boolean;
+  supportsDateRange: boolean;
+}
+
+const REPORT_TYPES: ReportConfig[] = [
   {
     id: 'chart-of-accounts',
     label: 'Chart of Accounts',
-    description: 'Complete list of all account categories and codes',
+    description: 'Complete list of all account categories, codes, and types',
     icon: BookOpen,
     needsPeriod: false,
     needsAccount: false,
     needsDivision: false,
+    supportsDateRange: false,
   },
   {
     id: 'journal-entries',
     label: 'Journal Entries',
-    description: 'All journal entries with debits, credits, and descriptions',
+    description: 'All posted double-entry journal entries with debits & credits',
     icon: FileText,
     needsPeriod: true,
     needsAccount: false,
     needsDivision: true,
+    supportsDateRange: true,
   },
   {
     id: 'general-ledger',
     label: 'General Ledger',
-    description: 'Detailed transaction lines organised by date and account',
+    description: 'Detailed transaction line items organized by date and account',
     icon: Table2,
     needsPeriod: true,
     needsAccount: true,
     needsDivision: true,
+    supportsDateRange: true,
   },
   {
     id: 'trial-balance',
     label: 'Trial Balance',
-    description: 'Account balances summary showing debits vs credits',
+    description: 'Account balances summary verifying debits and credits equality',
     icon: Scale,
     needsPeriod: true,
     needsAccount: false,
     needsDivision: true,
+    supportsDateRange: true,
   },
   {
     id: 'profit-and-loss',
     label: 'Profit & Loss',
-    description: 'Revenue and expenses with net profit calculation, broken down by division',
+    description: 'Revenue and expenses with net profit calculation by division',
     icon: TrendingUp,
     needsPeriod: true,
     needsAccount: false,
     needsDivision: true,
+    supportsDateRange: false,
   },
-]
+];
 
 export function ExportsClient({ periods, accounts, divisions, selectedPeriod }: ExportsClientProps) {
-  const [selectedExport, setSelectedExport] = React.useState<string>('')
-  const [period, setPeriod] = React.useState(selectedPeriod || 'all')
-  const [accountId, setAccountId] = React.useState('all')
-  const [divisionId, setDivisionId] = React.useState('all')
+  const [selectedReport, setSelectedReport] = React.useState<ReportType>('trial-balance');
+  const [period, setPeriod] = React.useState<string>(selectedPeriod || 'all');
+  const [startDate, setStartDate] = React.useState<string>('');
+  const [endDate, setEndDate] = React.useState<string>('');
+  const [accountId, setAccountId] = React.useState<string>('all');
+  const [divisionId, setDivisionId] = React.useState<string>('all');
 
-  const exportConfig = EXPORT_TYPES.find((e) => e.id === selectedExport)
+  const [previewData, setPreviewData] = React.useState<any>(null);
+  const [orgSettings, setOrgSettings] = React.useState<any>(null);
+  const [loading, setLoading] = React.useState<boolean>(false);
 
-  function handleExport() {
-    if (!selectedExport) return
+  const reportConfig = REPORT_TYPES.find((r) => r.id === selectedReport) || REPORT_TYPES[3];
 
-    const params = new URLSearchParams()
-    if (exportConfig?.needsPeriod && period !== 'all') params.set('period', period)
-    if (exportConfig?.needsAccount && accountId !== 'all') params.set('accountId', accountId)
-    if (exportConfig?.needsDivision && divisionId !== 'all') params.set('divisionId', divisionId)
+  // Fetch live preview data whenever report type or filters change
+  const loadPreview = React.useCallback(async () => {
+    setLoading(true);
+    try {
+      const res = await fetchReportPreviewData({
+        reportType: selectedReport,
+        period,
+        startDate: startDate || undefined,
+        endDate: endDate || undefined,
+        divisionId,
+        accountId,
+      });
 
-    const url = `/api/accounting/export/${selectedExport}?${params.toString()}`
-    window.open(url, '_blank')
+      if (res.success) {
+        setPreviewData(res.data);
+        if (res.orgSettings) setOrgSettings(res.orgSettings);
+      }
+    } catch (err) {
+      console.error('Failed to load report preview:', err);
+    } finally {
+      setLoading(false);
+    }
+  }, [selectedReport, period, startDate, endDate, divisionId, accountId]);
+
+  React.useEffect(() => {
+    loadPreview();
+  }, [loadPreview]);
+
+  // Handle PDF Export download link
+  function handleDownloadPdf() {
+    const params = new URLSearchParams();
+    if (reportConfig.needsPeriod && period !== 'all') params.set('period', period);
+    if (startDate) params.set('startDate', startDate);
+    if (endDate) params.set('endDate', endDate);
+    if (reportConfig.needsAccount && accountId !== 'all') params.set('accountId', accountId);
+    if (reportConfig.needsDivision && divisionId !== 'all') params.set('divisionId', divisionId);
+
+    const url = `/api/accounting/export/${selectedReport}?${params.toString()}`;
+    window.open(url, '_blank');
+  }
+
+  // Handle Print trigger
+  function handlePrint() {
+    window.print();
+  }
+
+  const selectedDivisionName = divisionId !== 'all' 
+    ? (divisions.find((d) => d.id === divisionId)?.name ?? 'All Divisions')
+    : 'All Divisions';
+
+  const periodDisplay = period !== 'all' ? fmtMonthYear(period) : 'All Time';
+
+  let dateRangeDisplay = '';
+  if (startDate && endDate) {
+    dateRangeDisplay = `${startDate} to ${endDate}`;
+  } else if (startDate) {
+    dateRangeDisplay = `From ${startDate}`;
+  } else if (endDate) {
+    dateRangeDisplay = `Until ${endDate}`;
   }
 
   return (
     <div className="flex flex-col gap-6">
-      {/* Export Type Selection */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
-        {EXPORT_TYPES.map((exportType) => {
-          const Icon = exportType.icon
-          const isSelected = selectedExport === exportType.id
-          return (
-            <button
-              key={exportType.id}
-              onClick={() => setSelectedExport(exportType.id)}
-              className={`group flex items-start gap-3 rounded-xl border p-4 text-left transition-all ${
-                isSelected
-                  ? 'border-primary bg-primary/5 ring-1 ring-primary/20'
-                  : 'bg-card hover:bg-muted/30 hover:border-muted-foreground/20'
-              }`}
-            >
-              <div className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-lg ${
-                isSelected ? 'bg-primary/10' : 'bg-muted'
-              }`}>
-                <Icon className={`h-5 w-5 ${isSelected ? 'text-primary' : 'text-muted-foreground'}`} />
+      {/* Two-Column Workbench Layout */}
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
+        {/* Left Column: Report Selector Sidebar */}
+        <div className="lg:col-span-4 flex flex-col gap-3 lg:sticky lg:top-16 lg:self-start">
+          <div className="flex items-center justify-between px-1">
+            <h3 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider flex items-center gap-1.5">
+              <Layers className="size-3.5" /> Select Report Type
+            </h3>
+            <span className="text-[10px] font-medium px-2 py-0.5 rounded-full bg-primary/10 text-primary">
+              5 Reports
+            </span>
+          </div>
+
+          <div className="flex flex-col gap-2.5">
+            {REPORT_TYPES.map((type) => {
+              const Icon = type.icon;
+              const isSelected = selectedReport === type.id;
+              return (
+                <button
+                  key={type.id}
+                  type="button"
+                  onClick={() => setSelectedReport(type.id)}
+                  className={`group flex items-start gap-3.5 rounded-xl border p-4 text-left transition-all relative overflow-hidden ${
+                    isSelected
+                      ? 'border-primary bg-primary/5 ring-1 ring-primary/20 shadow-sm'
+                      : 'bg-card border-border/70 hover:bg-muted/40 hover:border-muted-foreground/30'
+                  }`}
+                >
+                  <div className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-lg transition-colors ${
+                    isSelected ? 'bg-primary text-primary-foreground shadow-sm' : 'bg-muted text-muted-foreground group-hover:text-foreground'
+                  }`}>
+                    <Icon className="h-5 w-5" />
+                  </div>
+
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center justify-between">
+                      <p className={`text-sm font-semibold truncate ${isSelected ? 'text-primary' : 'text-foreground'}`}>
+                        {type.label}
+                      </p>
+                      {isSelected && (
+                        <span className="text-[10px] font-semibold uppercase px-1.5 py-0.5 rounded bg-primary/10 text-primary">
+                          Previewing
+                        </span>
+                      )}
+                    </div>
+                    <p className="text-xs text-muted-foreground mt-1 line-clamp-2 leading-relaxed">
+                      {type.description}
+                    </p>
+                  </div>
+                </button>
+              );
+            })}
+          </div>
+        </div>
+
+        {/* Right Column: Controls & Live Document Canvas */}
+        <div className="lg:col-span-8 flex flex-col gap-4">
+          {/* Top Filter & Control Bar */}
+          <div className="rounded-2xl border bg-card p-4 sm:p-5 shadow-xs flex flex-col gap-4">
+            <div className="flex flex-wrap items-center justify-between gap-3 pb-3 border-b border-border/60">
+              <div className="flex items-center gap-2">
+                <Filter className="h-4 w-4 text-primary" />
+                <h4 className="text-sm font-semibold">Report Filters & Actions</h4>
               </div>
-              <div className="flex-1 min-w-0">
-                <p className={`text-sm font-medium ${isSelected ? 'text-primary' : ''}`}>
-                  {exportType.label}
-                </p>
-                <p className="text-xs text-muted-foreground mt-0.5">
-                  {exportType.description}
-                </p>
+
+              <div className="flex items-center gap-2">
+                <Button onClick={handlePrint} variant="outline" size="sm" className="h-8 gap-1.5">
+                  <Printer className="h-3.5 w-3.5" />
+                  <span className="hidden sm:inline">Print</span>
+                </Button>
+                <Button onClick={handleDownloadPdf} size="sm" className="h-8 gap-1.5 shadow-sm">
+                  <Download className="h-3.5 w-3.5" />
+                  Download PDF
+                </Button>
               </div>
-            </button>
-          )
-        })}
+            </div>
+
+            {/* Filter Inputs Grid */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
+              {/* Reporting Period */}
+              {reportConfig.needsPeriod && (
+                <div className="flex flex-col gap-1.5">
+                  <label className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider flex items-center gap-1">
+                    <Calendar className="size-3" /> Period
+                  </label>
+                  <Select value={period} onValueChange={setPeriod}>
+                    <SelectTrigger className="h-9 text-xs">
+                      <SelectValue placeholder="All Time" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="all">All Time</SelectItem>
+                      {periods.map((p) => (
+                        <SelectItem key={p} value={p}>{fmtMonthYear(p)}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+              )}
+
+              {/* Division Selector */}
+              {reportConfig.needsDivision && (
+                <div className="flex flex-col gap-1.5">
+                  <label className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider">
+                    Division
+                  </label>
+                  <Select value={divisionId} onValueChange={setDivisionId}>
+                    <SelectTrigger className="h-9 text-xs">
+                      <SelectValue placeholder="All Divisions" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="all">All Divisions</SelectItem>
+                      {divisions.map((d) => (
+                        <SelectItem key={d.id} value={d.id}>{d.name}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+              )}
+
+              {/* Account Selector (General Ledger) */}
+              {reportConfig.needsAccount && (
+                <div className="flex flex-col gap-1.5">
+                  <label className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider">
+                    Account
+                  </label>
+                  <Select value={accountId} onValueChange={setAccountId}>
+                    <SelectTrigger className="h-9 text-xs">
+                      <SelectValue placeholder="All Accounts" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="all">All Accounts</SelectItem>
+                      {accounts.map((a) => (
+                        <SelectItem key={a.id} value={a.id}>
+                          {a.code} — {a.name}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+              )}
+
+              {/* Custom Date Range (Start Date) */}
+              {reportConfig.supportsDateRange && (
+                <div className="flex flex-col gap-1.5">
+                  <label className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider">
+                    Start Date
+                  </label>
+                  <Input
+                    type="date"
+                    value={startDate}
+                    onChange={(e) => setStartDate(e.target.value)}
+                    className="h-9 text-xs"
+                  />
+                </div>
+              )}
+
+              {/* Custom Date Range (End Date) */}
+              {reportConfig.supportsDateRange && (
+                <div className="flex flex-col gap-1.5">
+                  <label className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider">
+                    End Date
+                  </label>
+                  <Input
+                    type="date"
+                    value={endDate}
+                    onChange={(e) => setEndDate(e.target.value)}
+                    className="h-9 text-xs"
+                  />
+                </div>
+              )}
+            </div>
+          </div>
+
+          {/* Live Report A4 Canvas Preview */}
+          <ReportDocumentCanvas
+            reportType={selectedReport}
+            reportTitle={reportConfig.label}
+            divisionName={selectedDivisionName}
+            periodLabel={periodDisplay}
+            dateRangeLabel={dateRangeDisplay}
+            orgSettings={orgSettings}
+            data={previewData}
+            loading={loading}
+          />
+        </div>
       </div>
-
-      {/* Filters & Export Button */}
-      {selectedExport && exportConfig && (
-        <div className="rounded-xl border bg-card p-5">
-          <div className="flex flex-wrap items-end gap-4">
-            {/* Period Filter */}
-            {exportConfig.needsPeriod && (
-              <div className="flex flex-col gap-1.5">
-                <label className="text-xs font-medium text-muted-foreground">Period</label>
-                <Select value={period} onValueChange={setPeriod}>
-                  <SelectTrigger className="w-[180px]">
-                    <SelectValue placeholder="All Time" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="all">All Time</SelectItem>
-                    {periods.map((p) => (
-                      <SelectItem key={p} value={p}>{fmtMonthYear(p)}</SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-            )}
-
-            {/* Account Filter */}
-            {exportConfig.needsAccount && (
-              <div className="flex flex-col gap-1.5">
-                <label className="text-xs font-medium text-muted-foreground">Account</label>
-                <Select value={accountId} onValueChange={setAccountId}>
-                  <SelectTrigger className="w-[260px]">
-                    <SelectValue placeholder="All Accounts" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="all">All Accounts</SelectItem>
-                    {accounts.map((a) => (
-                      <SelectItem key={a.id} value={a.id}>
-                        {a.code} — {a.name}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-            )}
-
-            {/* Division Filter */}
-            {exportConfig.needsDivision && (
-              <div className="flex flex-col gap-1.5">
-                <label className="text-xs font-medium text-muted-foreground">Division</label>
-                <Select value={divisionId} onValueChange={setDivisionId}>
-                  <SelectTrigger className="w-[180px]">
-                    <SelectValue placeholder="All Divisions" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="all">All Divisions</SelectItem>
-                    {divisions.map((d) => (
-                      <SelectItem key={d.id} value={d.id}>{d.name}</SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-            )}
-
-            <div className="flex-1" />
-
-            <Button onClick={handleExport} size="sm">
-              <Download className="h-3.5 w-3.5 mr-1.5" />
-              Download PDF
-            </Button>
-          </div>
-
-          {/* Export Summary */}
-          <div className="mt-3 pt-3 border-t text-xs text-muted-foreground">
-            {exportConfig.needsPeriod && period !== 'all' && (
-              <span>Period: {fmtMonthYear(period)} · </span>
-            )}
-            {exportConfig.needsPeriod && period === 'all' && (
-              <span>Period: All Time · </span>
-            )}
-            {exportConfig.needsAccount && accountId !== 'all' && (
-              <span>Account: {accounts.find((a) => a.id === accountId)?.name ?? '—'} · </span>
-            )}
-            {exportConfig.needsAccount && accountId === 'all' && (
-              <span>Account: All Accounts · </span>
-            )}
-            {exportConfig.needsDivision && divisionId !== 'all' && (
-              <span>Division: {divisions.find((d) => d.id === divisionId)?.name ?? '—'} · </span>
-            )}
-            {exportConfig.needsDivision && divisionId === 'all' && (
-              <span>Division: All Divisions · </span>
-            )}
-            Format: PDF
-          </div>
-        </div>
-      )}
-
-      {/* Help Text */}
-      {!selectedExport && (
-        <div className="rounded-xl border bg-card p-8 text-center">
-          <p className="text-sm text-muted-foreground">
-            Select an export type above to preview and download your accounting data as a PDF report.
-          </p>
-        </div>
-      )}
     </div>
-  )
+  );
 }
