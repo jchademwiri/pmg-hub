@@ -74,7 +74,7 @@ export async function fetchReportPreviewData(filter: ReportPreviewFilter) {
       ? divList.find((d) => d.id === filter.divisionId)
       : null;
 
-    const { periodMonth, startDate, endDate } = resolvePeriodDateRange(filter.period, filter.startDate, filter.endDate);
+    const { periodMonth, startDate, endDate } = await resolvePeriodDateRange(filter.period, filter.startDate, filter.endDate);
 
     let data: any = null;
 
