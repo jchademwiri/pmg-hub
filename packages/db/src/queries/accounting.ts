@@ -478,6 +478,8 @@ export type TrialBalanceRow = {
   accountCode: string;
   accountName: string;
   accountType: string;
+  debit: number;
+  credit: number;
   totalDebits: number;
   totalCredits: number;
   balance: number;
@@ -537,12 +539,18 @@ export async function getTrialBalance(period?: string, divisionId?: string, star
     .where(and(...accountConditions))
     .orderBy(asc(chartAccounts.code));
 
-  return rows.map((r) => ({
-    ...r,
-    totalDebits: Number(r.totalDebits),
-    totalCredits: Number(r.totalCredits),
-    balance: Number(r.totalDebits) - Number(r.totalCredits),
-  }));
+  return rows.map((r) => {
+    const debits = Number(r.totalDebits);
+    const credits = Number(r.totalCredits);
+    return {
+      ...r,
+      debit: debits,
+      credit: credits,
+      totalDebits: debits,
+      totalCredits: credits,
+      balance: debits - credits,
+    };
+  });
 }
 
 // ── Balance Sheet ─────────────────────────────────────────────────────────────

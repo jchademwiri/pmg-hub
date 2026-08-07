@@ -211,10 +211,10 @@ export function ReportDocumentCanvas({
                     <td className="py-2.5 px-3 font-medium text-zinc-800 dark:text-zinc-200">{row.accountName}</td>
                     <td className="py-2.5 px-3 uppercase text-[10px] text-zinc-500">{row.accountType}</td>
                     <td className="py-2.5 px-3 text-right font-mono tabular-nums font-semibold text-zinc-900 dark:text-zinc-100">
-                      {row.debit > 0 ? formatZAR(row.debit) : '—'}
+                      {(row.debit ?? row.totalDebits ?? 0) > 0 ? formatZAR(row.debit ?? row.totalDebits) : '—'}
                     </td>
                     <td className="py-2.5 px-3 text-right font-mono tabular-nums font-semibold text-zinc-900 dark:text-zinc-100">
-                      {row.credit > 0 ? formatZAR(row.credit) : '—'}
+                      {(row.credit ?? row.totalCredits ?? 0) > 0 ? formatZAR(row.credit ?? row.totalCredits) : '—'}
                     </td>
                   </tr>
                 ))}
