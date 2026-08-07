@@ -639,6 +639,23 @@ async function buildDivisionPerformancePdf(filters: AccountingPdfFilters): Promi
   };
 }
 
+function drawAccountSubtable(
+  doc: jsPDF,
+  startY: number,
+  rows: Array<{ accountCode: string; accountName: string; amount: number }>,
+  totalLabel: string,
+  totalAmount: number
+): number {
+  let y = startY;
+  for (const row of rows) {
+    y = ensurePage(doc, y, 8);
+    drawAccountRow(doc, y, row.accountCode, row.accountName, row.amount);
+    y += 7;
+  }
+  y = ensurePage(doc, y, 12);
+  return drawTotalRow(doc, y, totalLabel, totalAmount);
+}
+
 async function buildBalanceSheetPdf(filters: AccountingPdfFilters): Promise<AccountingPdfResult> {
   const [result, divisionName] = await Promise.all([
     getBalanceSheet(filters.period, filters.divisionId),
