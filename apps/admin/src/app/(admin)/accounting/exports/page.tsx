@@ -16,15 +16,8 @@ export default async function AccountingExportsPage() {
   const periods = allPeriods.map((p) => p.period);
 
   return (
-    <div className="flex flex-col gap-6">
+    <div className="flex flex-col gap-4">
       <SetPageTotal value="5 financial reports" />
-
-      <div>
-        <h2 className="text-lg font-semibold">Financial Reports & Exports</h2>
-        <p className="text-sm text-muted-foreground">
-          Interactive report workbench. Preview live financial statements, filter by reporting period, and export high-fidelity PDFs.
-        </p>
-      </div>
 
       <ExportsClient
         periods={periods}
