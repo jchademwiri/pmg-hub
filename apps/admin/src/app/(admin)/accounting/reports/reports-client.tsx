@@ -151,10 +151,13 @@ export function ReportsClient({ periods, accounts, divisions, selectedPeriod }: 
     'chart-of-accounts',
   ];
 
+  const currentYear = new Date().getFullYear();
+  const defaultFinancialYear = `${currentYear}-FY`;
+
   const initialReport: ReportType = urlType && validReportTypes.includes(urlType) ? urlType : 'trial-balance';
 
   const [selectedReport, setSelectedReportState] = React.useState<ReportType>(initialReport);
-  const [period, setPeriodState] = React.useState<string>(urlPeriod || selectedPeriod || 'all');
+  const [period, setPeriodState] = React.useState<string>(urlPeriod || selectedPeriod || defaultFinancialYear);
   const [startDate, setStartDateState] = React.useState<string>(urlStartDate || '');
   const [endDate, setEndDateState] = React.useState<string>(urlEndDate || '');
   const [accountId, setAccountIdState] = React.useState<string>(urlAccountId || 'all');
@@ -367,18 +370,18 @@ export function ReportsClient({ periods, accounts, divisions, selectedPeriod }: 
                       <SelectItem value="all">All Time</SelectItem>
                       
                       {/* Annually */}
-                      <SelectItem value="2026-FY">Annual: FY2026 (Full Year)</SelectItem>
-                      <SelectItem value="2025-FY">Annual: FY2025 (Full Year)</SelectItem>
+                      <SelectItem value={`${currentYear}-FY`}>Annual: FY{currentYear} (Full Year)</SelectItem>
+                      <SelectItem value={`${currentYear - 1}-FY`}>Annual: FY{currentYear - 1} (Full Year)</SelectItem>
 
                       {/* Bi-Annually */}
-                      <SelectItem value="2026-H1">Bi-Annual: 2026 H1 (Jan – Jun)</SelectItem>
-                      <SelectItem value="2026-H2">Bi-Annual: 2026 H2 (Jul – Dec)</SelectItem>
+                      <SelectItem value={`${currentYear}-H1`}>Bi-Annual: {currentYear} H1 (Jan – Jun)</SelectItem>
+                      <SelectItem value={`${currentYear}-H2`}>Bi-Annual: {currentYear} H2 (Jul – Dec)</SelectItem>
 
                       {/* Quarterly */}
-                      <SelectItem value="2026-Q1">Quarterly: 2026 Q1 (Jan – Mar)</SelectItem>
-                      <SelectItem value="2026-Q2">Quarterly: 2026 Q2 (Apr – Jun)</SelectItem>
-                      <SelectItem value="2026-Q3">Quarterly: 2026 Q3 (Jul – Sep)</SelectItem>
-                      <SelectItem value="2026-Q4">Quarterly: 2026 Q4 (Oct – Dec)</SelectItem>
+                      <SelectItem value={`${currentYear}-Q1`}>Quarterly: {currentYear} Q1 (Jan – Mar)</SelectItem>
+                      <SelectItem value={`${currentYear}-Q2`}>Quarterly: {currentYear} Q2 (Apr – Jun)</SelectItem>
+                      <SelectItem value={`${currentYear}-Q3`}>Quarterly: {currentYear} Q3 (Jul – Sep)</SelectItem>
+                      <SelectItem value={`${currentYear}-Q4`}>Quarterly: {currentYear} Q4 (Oct – Dec)</SelectItem>
 
                       {/* Monthly */}
                       {periods.map((p) => (
