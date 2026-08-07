@@ -171,7 +171,15 @@ function drawProfitAndLossTable(doc: jsPDF, startY: number, result: ProfitAndLos
   return y + 14;
 }
 
-const DIVISION_COLS = { name: PAGE.margin + 2, revenue: 120, expenses: 156, net: PAGE.width - PAGE.margin - 2 };
+const DIVISION_COLS = {
+  name: PAGE.margin + 2,
+  revenue: 68,
+  income: 94,
+  ar: 118,
+  expenses: 144,
+  net: 170,
+  margin: PAGE.width - PAGE.margin - 2,
+};
 
 /** Revenue/expenses/net profit per division, sorted highest-revenue first —
  * answers "which division is bringing in more money" at a glance. */
@@ -182,34 +190,45 @@ function drawProfitAndLossByDivisionTable(doc: jsPDF, startY: number, rows: Prof
   doc.setFont('helvetica', 'bold');
   doc.setFontSize(10);
   doc.setTextColor(29, 78, 216);
-  doc.text('Revenue & Profit by Division', PAGE.margin, y);
+  doc.text('Division Performance & Cash Flow Summary', PAGE.margin, y);
   y += 8;
 
   doc.setFillColor(249, 250, 251);
   doc.rect(PAGE.margin, y, PAGE.width - PAGE.margin * 2, 9, 'F');
   doc.setFont('helvetica', 'bold');
-  doc.setFontSize(7);
+  doc.setFontSize(6.5);
   doc.setTextColor(113, 113, 122);
   doc.text('DIVISION', DIVISION_COLS.name, y + 6);
   doc.text('REVENUE', DIVISION_COLS.revenue, y + 6, { align: 'right' });
+  doc.text('CASH REC.', DIVISION_COLS.income, y + 6, { align: 'right' });
+  doc.text('OUTST. AR', DIVISION_COLS.ar, y + 6, { align: 'right' });
   doc.text('EXPENSES', DIVISION_COLS.expenses, y + 6, { align: 'right' });
   doc.text('NET PROFIT', DIVISION_COLS.net, y + 6, { align: 'right' });
+  doc.text('MARGIN', DIVISION_COLS.margin, y + 6, { align: 'right' });
   y += 13;
 
   let totalRevenue = 0;
+  let totalIncome = 0;
+  let totalAr = 0;
   let totalExpenses = 0;
   doc.setFont('helvetica', 'normal');
-  doc.setFontSize(9);
+  doc.setFontSize(8);
   for (const row of rows) {
     y = ensurePage(doc, y, 8);
     totalRevenue += row.totalRevenue;
+    totalIncome += row.totalIncome;
+    totalAr += row.totalOutstandingAr;
     totalExpenses += row.totalExpenses;
     doc.setTextColor(24, 24, 27);
     doc.text(row.divisionName, DIVISION_COLS.name, y + 4);
     doc.text(formatZAR(row.totalRevenue), DIVISION_COLS.revenue, y + 4, { align: 'right' });
+    doc.text(formatZAR(row.totalIncome), DIVISION_COLS.income, y + 4, { align: 'right' });
+    doc.text(row.totalOutstandingAr > 0 ? formatZAR(row.totalOutstandingAr) : '—', DIVISION_COLS.ar, y + 4, { align: 'right' });
     doc.text(formatZAR(row.totalExpenses), DIVISION_COLS.expenses, y + 4, { align: 'right' });
     doc.setTextColor(row.netProfit >= 0 ? 5 : 220, row.netProfit >= 0 ? 150 : 38, row.netProfit >= 0 ? 105 : 38);
     doc.text(formatZAR(row.netProfit), DIVISION_COLS.net, y + 4, { align: 'right' });
+    doc.setTextColor(113, 113, 122);
+    doc.text(`${row.marginPercent.toFixed(1)}%`, DIVISION_COLS.margin, y + 4, { align: 'right' });
     doc.setDrawColor(244, 244, 245);
     doc.line(PAGE.margin, y + 6, PAGE.width - PAGE.margin, y + 6);
     y += 8;
@@ -219,10 +238,12 @@ function drawProfitAndLossByDivisionTable(doc: jsPDF, startY: number, rows: Prof
   doc.setDrawColor(24, 24, 27);
   doc.line(PAGE.margin, y + 2, PAGE.width - PAGE.margin, y + 2);
   doc.setFont('helvetica', 'bold');
-  doc.setFontSize(9);
+  doc.setFontSize(8);
   doc.setTextColor(24, 24, 27);
   doc.text('Total', DIVISION_COLS.name, y + 9);
   doc.text(formatZAR(totalRevenue), DIVISION_COLS.revenue, y + 9, { align: 'right' });
+  doc.text(formatZAR(totalIncome), DIVISION_COLS.income, y + 9, { align: 'right' });
+  doc.text(formatZAR(totalAr), DIVISION_COLS.ar, y + 9, { align: 'right' });
   doc.text(formatZAR(totalExpenses), DIVISION_COLS.expenses, y + 9, { align: 'right' });
   const totalNet = totalRevenue - totalExpenses;
   doc.setTextColor(totalNet >= 0 ? 5 : 220, totalNet >= 0 ? 150 : 38, totalNet >= 0 ? 105 : 38);

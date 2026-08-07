@@ -9,6 +9,7 @@ import { user } from "../schema/auth";
 import { snapshots } from "../schema/snapshots";
 import { divisions } from "../schema/divisions";
 import { invoices } from "../schema/billing";
+import { income } from "../schema/income";
 import { eq, and, desc, asc, sql, inArray } from "drizzle-orm";
 
 // ── Chart of Accounts ─────────────────────────────────────────────────────────
@@ -644,15 +645,18 @@ export type ProfitAndLossByDivisionRow = {
   divisionId: string;
   divisionName: string;
   totalRevenue: number;
+  totalIncome: number;
+  totalOutstandingAr: number;
   totalExpenses: number;
   netProfit: number;
+  marginPercent: number;
+  distributionPercent: number;
 };
 
 /**
- * Returns revenue/expenses/net profit grouped by division, for a given
- * period. Divisions with zero revenue and zero expense activity are
- * omitted. Sorted by totalRevenue descending (highest-earning division
- * first).
+ * Returns revenue/income/AR/expenses/net profit grouped by division, for a given
+ * period. Includes division margin % and group distribution %.
+ * Sorted by totalRevenue descending (highest-earning division first).
  */
 export async function getProfitAndLossByDivision(period?: string): Promise<ProfitAndLossByDivisionRow[]> {
   const entryConditions = [
@@ -673,6 +677,17 @@ export async function getProfitAndLossByDivision(period?: string): Promise<Profi
     .where(inArray(chartAccounts.type, ["revenue", "expense"]))
     .groupBy(journalEntries.divisionId, chartAccounts.type);
 
+  // Fetch actual cash income collected per division
+  const incomeRows = await db
+    .select({
+      divisionId: income.divisionId,
+      totalIncome: sql<string>`COALESCE(SUM(${income.amount}::numeric), 0)`,
+    })
+    .from(income)
+    .groupBy(income.divisionId);
+
+  const incomeMap = new Map(incomeRows.map((i) => [i.divisionId, Number(i.totalIncome)]));
+
   const allDivisions = await db.select({ id: divisions.id, name: divisions.name }).from(divisions);
   const divisionNames = new Map(allDivisions.map((d) => [d.id, d.name]));
 
@@ -685,6 +700,8 @@ export async function getProfitAndLossByDivision(period?: string): Promise<Profi
     else if (r.accountType === "expense") totals.totalExpenses += debits - credits;
     byDivision.set(r.divisionId, totals);
   }
+
+  const groupTotalRevenue = Array.from(byDivision.values()).reduce((sum, d) => sum + Math.max(0, d.totalRevenue), 0);
 
   const result: ProfitAndLossByDivisionRow[] = [];
   for (const [divisionId, totals] of byDivision) {

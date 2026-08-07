@@ -6,6 +6,7 @@ import {
   getJournalEntries,
   getGeneralLedger,
   getTrialBalance,
+  getProfitAndLoss,
   getProfitAndLossByDivision,
   getOrganisationSettings,
   divisions,
@@ -77,10 +78,13 @@ export async function fetchReportPreviewData(filter: ReportPreviewFilter) {
       }
 
       case 'profit-and-loss': {
-        const result = await getProfitAndLossByDivision(
-          filter.period !== 'all' ? filter.period : undefined
-        );
-        data = { divisions: result };
+        const p = filter.period !== 'all' ? filter.period : undefined;
+        const d = filter.divisionId !== 'all' ? filter.divisionId : undefined;
+        const [statement, divisions] = await Promise.all([
+          getProfitAndLoss(p, d),
+          getProfitAndLossByDivision(p),
+        ]);
+        data = { statement, divisions };
         break;
       }
     }
