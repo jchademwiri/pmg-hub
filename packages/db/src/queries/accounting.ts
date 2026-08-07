@@ -708,6 +708,12 @@ export async function getProfitAndLossByDivision(period?: string): Promise<Profi
   const result: ProfitAndLossByDivisionRow[] = [];
   for (const [divisionId, totals] of byDivision) {
     if (Math.abs(totals.totalRevenue) < 0.01 && Math.abs(totals.totalExpenses) < 0.01) continue;
+    const cashIncome = incomeMap.get(divisionId) ?? 0;
+    const netProfit = totals.totalRevenue - totals.totalExpenses;
+    const marginPercent = totals.totalRevenue > 0 ? (netProfit / totals.totalRevenue) * 100 : 0;
+    const distributionPercent = groupTotalRevenue > 0 ? (totals.totalRevenue / groupTotalRevenue) * 100 : 0;
+    const totalOutstandingAr = Math.max(0, totals.totalRevenue - cashIncome);
+
     result.push({
       divisionId,
       divisionName: divisionNames.get(divisionId) ?? "Unknown Division",
