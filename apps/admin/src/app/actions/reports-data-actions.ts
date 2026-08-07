@@ -22,7 +22,7 @@ export interface ReportPreviewFilter {
   accountId?: string;
 }
 
-export function resolvePeriodDateRange(periodStr?: string, customStart?: string, customEnd?: string) {
+export async function resolvePeriodDateRange(periodStr?: string, customStart?: string, customEnd?: string) {
   let startDate = customStart;
   let endDate = customEnd;
   let periodMonth: string | undefined = undefined;
