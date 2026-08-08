@@ -626,7 +626,7 @@ export function ReportDocumentCanvas({
             <div className="flex flex-col gap-10">
               {/* PAGE 1: DIRECTORS' REPORT & BUSINESS ACTIVITIES */}
               <div className="flex flex-col gap-6">
-                <div className="border-b-2 border-zinc-900 dark:border-zinc-100 pb-3 flex justify-between items-end">
+                <div className="sticky top-0 z-20 bg-white/95 dark:bg-zinc-950/95 backdrop-blur-md py-3 border-b-2 border-zinc-900 dark:border-zinc-100 flex justify-between items-end mb-2">
                   <div>
                     <h2 className="text-base font-extrabold uppercase text-zinc-900 dark:text-white tracking-wide">{info?.companyName}</h2>
                     <p className="text-xs text-zinc-500 font-medium mt-0.5">Registration Number: {info?.registrationNumber}</p>
@@ -709,7 +709,7 @@ export function ReportDocumentCanvas({
 
               {/* PAGE 2: INCOME STATEMENT */}
               <div className="flex flex-col gap-6 pt-8 border-t-2 border-zinc-200 dark:border-zinc-800 print:break-before-page break-before-page">
-                <div className="border-b-2 border-zinc-900 dark:border-zinc-100 pb-3 flex justify-between items-end">
+                <div className="sticky top-0 z-20 bg-white/95 dark:bg-zinc-950/95 backdrop-blur-md py-3 border-b-2 border-zinc-900 dark:border-zinc-100 flex justify-between items-end mb-2">
                   <div>
                     <h2 className="text-base font-extrabold uppercase text-zinc-900 dark:text-white tracking-wide">{info?.companyName}</h2>
                     <p className="text-xs text-zinc-500 font-medium mt-0.5">Registration Number: {info?.registrationNumber}</p>
@@ -771,14 +771,14 @@ export function ReportDocumentCanvas({
                     <tr>
                       <td className="py-2 px-2 font-sans text-zinc-700 dark:text-zinc-300">Investment revenues</td>
                       <td className="py-2 px-2 text-center font-sans text-zinc-400">Note 2</td>
-                      <td className="py-2 px-2 text-right">—</td>
-                      <td className="py-2 px-2 text-right text-zinc-400">—</td>
+                      <td className="py-2 px-2 text-right">{formatZAR(0)}</td>
+                      <td className="py-2 px-2 text-right text-zinc-400">{formatZAR(0)}</td>
                     </tr>
                     <tr>
                       <td className="py-2 px-2 font-sans text-zinc-700 dark:text-zinc-300">Interest on finance cost</td>
                       <td className="py-2 px-2 text-center font-sans text-zinc-400">Note 2</td>
-                      <td className="py-2 px-2 text-right">—</td>
-                      <td className="py-2 px-2 text-right text-zinc-400">—</td>
+                      <td className="py-2 px-2 text-right">{formatZAR(0)}</td>
+                      <td className="py-2 px-2 text-right text-zinc-400">{formatZAR(0)}</td>
                     </tr>
                     <tr className="font-bold text-zinc-900 dark:text-white">
                       <td className="py-2.5 px-2 font-sans uppercase">Profit / (loss) before tax</td>
@@ -789,8 +789,8 @@ export function ReportDocumentCanvas({
                     <tr>
                       <td className="py-2 px-2 font-sans text-zinc-700 dark:text-zinc-300">Income tax expense</td>
                       <td className="py-2 px-2 text-center font-sans text-zinc-400">Note 3</td>
-                      <td className="py-2 px-2 text-right">—</td>
-                      <td className="py-2 px-2 text-right text-zinc-400">—</td>
+                      <td className="py-2 px-2 text-right">{formatZAR(0)}</td>
+                      <td className="py-2 px-2 text-right text-zinc-400">{formatZAR(0)}</td>
                     </tr>
                     <tr className="font-extrabold border-t-2 border-b-2 border-zinc-900 dark:border-zinc-100 text-sm text-zinc-900 dark:text-white bg-zinc-50 dark:bg-zinc-900/50">
                       <td className="py-3 px-2 font-sans uppercase">Profit / (loss) for the year</td>
@@ -809,7 +809,7 @@ export function ReportDocumentCanvas({
 
               {/* PAGE 3: BALANCE SHEET */}
               <div className="flex flex-col gap-6 pt-8 border-t-2 border-zinc-200 dark:border-zinc-800 print:break-before-page break-before-page">
-                <div className="border-b-2 border-zinc-900 dark:border-zinc-100 pb-3 flex justify-between items-end">
+                <div className="sticky top-0 z-20 bg-white/95 dark:bg-zinc-950/95 backdrop-blur-md py-3 border-b-2 border-zinc-900 dark:border-zinc-100 flex justify-between items-end mb-2">
                   <div>
                     <h2 className="text-base font-extrabold uppercase text-zinc-900 dark:text-white tracking-wide">{info?.companyName}</h2>
                     <p className="text-xs text-zinc-500 font-medium mt-0.5">Registration Number: {info?.registrationNumber}</p>
@@ -841,7 +841,7 @@ export function ReportDocumentCanvas({
                         <td className="py-1.5 px-5 font-sans text-zinc-700 dark:text-zinc-300">{a.accountName}</td>
                         <td className="py-1.5 px-2 text-center font-sans text-zinc-400">Note 5</td>
                         <td className="py-1.5 px-2 text-right">{formatZAR(a.amount)}</td>
-                        <td className="py-1.5 px-2 text-right text-zinc-400">—</td>
+                        <td className="py-1.5 px-2 text-right text-zinc-400">{formatZAR(0)}</td>
                       </tr>
                     ))}
                     <tr className="font-semibold text-zinc-800 dark:text-zinc-200 italic">
@@ -852,7 +852,7 @@ export function ReportDocumentCanvas({
                         <td className="py-1.5 px-5 font-sans text-zinc-700 dark:text-zinc-300">{a.accountName}</td>
                         <td className="py-1.5 px-2 text-center font-sans text-zinc-400">{a.accountName.toLowerCase().includes('receivable') ? 'Note 7' : 'Note 8'}</td>
                         <td className="py-1.5 px-2 text-right">{formatZAR(a.amount)}</td>
-                        <td className="py-1.5 px-2 text-right text-zinc-400">—</td>
+                        <td className="py-1.5 px-2 text-right text-zinc-400">{formatZAR(0)}</td>
                       </tr>
                     ))}
                     <tr className="font-extrabold border-t-2 border-b-2 border-zinc-900 dark:border-zinc-100 text-zinc-900 dark:text-white bg-zinc-50 dark:bg-zinc-900/50">
@@ -888,7 +888,7 @@ export function ReportDocumentCanvas({
                         <td className="py-1.5 px-5 font-sans text-zinc-700 dark:text-zinc-300">{l.accountName}</td>
                         <td className="py-1.5 px-2 text-center font-sans text-zinc-400">Note 11</td>
                         <td className="py-1.5 px-2 text-right">{formatZAR(l.amount)}</td>
-                        <td className="py-1.5 px-2 text-right text-zinc-400">—</td>
+                        <td className="py-1.5 px-2 text-right text-zinc-400">{formatZAR(0)}</td>
                       </tr>
                     ))}
                     <tr className="font-extrabold border-t-2 border-b-2 border-zinc-900 dark:border-zinc-100 text-sm text-zinc-900 dark:text-white bg-zinc-50 dark:bg-zinc-900/50">
@@ -908,7 +908,7 @@ export function ReportDocumentCanvas({
 
               {/* PAGE 4: STATEMENT OF CHANGES IN EQUITY */}
               <div className="flex flex-col gap-6 pt-8 border-t-2 border-zinc-200 dark:border-zinc-800 print:break-before-page break-before-page">
-                <div className="border-b-2 border-zinc-900 dark:border-zinc-100 pb-3 flex justify-between items-end">
+                <div className="sticky top-0 z-20 bg-white/95 dark:bg-zinc-950/95 backdrop-blur-md py-3 border-b-2 border-zinc-900 dark:border-zinc-100 flex justify-between items-end mb-2">
                   <div>
                     <h2 className="text-base font-extrabold uppercase text-zinc-900 dark:text-white tracking-wide">{info?.companyName}</h2>
                     <p className="text-xs text-zinc-500 font-medium mt-0.5">Registration Number: {info?.registrationNumber}</p>
@@ -937,7 +937,7 @@ export function ReportDocumentCanvas({
                     </tr>
                     <tr>
                       <td className="py-2 px-2 font-sans text-zinc-600 dark:text-zinc-400">Net profit / (loss) for FY{priYear}</td>
-                      <td className="py-2 px-2 text-right">—</td>
+                      <td className="py-2 px-2 text-right">{formatZAR(0)}</td>
                       <td className="py-2 px-2 text-right">{formatZAR(eq?.priorNetProfit || 0)}</td>
                       <td className="py-2 px-2 text-right">{formatZAR(eq?.priorNetProfit || 0)}</td>
                     </tr>
@@ -955,7 +955,7 @@ export function ReportDocumentCanvas({
                     </tr>
                     <tr>
                       <td className="py-2 px-2 font-sans text-zinc-600 dark:text-zinc-400">Net profit / (loss) for FY{curYear} (to date)</td>
-                      <td className="py-2 px-2 text-right">—</td>
+                      <td className="py-2 px-2 text-right">{formatZAR(0)}</td>
                       <td className="py-2 px-2 text-right text-emerald-600 dark:text-emerald-400 font-semibold">{formatZAR(eq?.currentNetProfit || 0)}</td>
                       <td className="py-2 px-2 text-right text-emerald-600 dark:text-emerald-400 font-semibold">{formatZAR(eq?.currentNetProfit || 0)}</td>
                     </tr>
@@ -976,7 +976,7 @@ export function ReportDocumentCanvas({
 
               {/* PAGE 5: CASH FLOW STATEMENT */}
               <div className="flex flex-col gap-6 pt-8 border-t-2 border-zinc-200 dark:border-zinc-800 print:break-before-page break-before-page">
-                <div className="border-b-2 border-zinc-900 dark:border-zinc-100 pb-3 flex justify-between items-end">
+                <div className="sticky top-0 z-20 bg-white/95 dark:bg-zinc-950/95 backdrop-blur-md py-3 border-b-2 border-zinc-900 dark:border-zinc-100 flex justify-between items-end mb-2">
                   <div>
                     <h2 className="text-base font-extrabold uppercase text-zinc-900 dark:text-white tracking-wide">{info?.companyName}</h2>
                     <p className="text-xs text-zinc-500 font-medium mt-0.5">Registration Number: {info?.registrationNumber}</p>
@@ -1013,7 +1013,7 @@ export function ReportDocumentCanvas({
                       <td className="py-1.5 px-8 font-sans text-zinc-600 dark:text-zinc-400">Depreciation of property, plant and equipment</td>
                       <td className="py-1.5 px-2 text-center font-sans text-zinc-400">Note 5</td>
                       <td className="py-1.5 px-2 text-right">{formatZAR(pnl?.depreciation?.current || 0)}</td>
-                      <td className="py-1.5 px-2 text-right text-zinc-400">—</td>
+                      <td className="py-1.5 px-2 text-right text-zinc-400">{formatZAR(0)}</td>
                     </tr>
                     <tr className="font-bold border-t border-zinc-300 dark:border-zinc-700">
                       <td className="py-2 px-2 font-sans">Cash generated from operations</td>
@@ -1028,14 +1028,14 @@ export function ReportDocumentCanvas({
                     <tr>
                       <td className="py-1.5 px-5 font-sans text-zinc-700 dark:text-zinc-300">Net cash used in investing activities</td>
                       <td className="py-1.5 px-2 text-center font-sans text-zinc-400"></td>
-                      <td className="py-1.5 px-2 text-right">—</td>
-                      <td className="py-1.5 px-2 text-right text-zinc-400">—</td>
+                      <td className="py-1.5 px-2 text-right">{formatZAR(0)}</td>
+                      <td className="py-1.5 px-2 text-right text-zinc-400">{formatZAR(0)}</td>
                     </tr>
                     <tr>
                       <td className="py-1.5 px-5 font-sans text-zinc-700 dark:text-zinc-300">Net cash used in financing activities</td>
                       <td className="py-1.5 px-2 text-center font-sans text-zinc-400"></td>
-                      <td className="py-1.5 px-2 text-right">—</td>
-                      <td className="py-1.5 px-2 text-right text-zinc-400">—</td>
+                      <td className="py-1.5 px-2 text-right">{formatZAR(0)}</td>
+                      <td className="py-1.5 px-2 text-right text-zinc-400">{formatZAR(0)}</td>
                     </tr>
 
                     <tr className="font-extrabold border-t-2 border-b-2 border-zinc-900 dark:border-zinc-100 text-sm text-zinc-900 dark:text-white bg-zinc-50 dark:bg-zinc-900/50">
@@ -1055,7 +1055,7 @@ export function ReportDocumentCanvas({
 
               {/* PAGE 6: DETAILED INCOME STATEMENT & DIVISIONAL REVENUE BREAKDOWN */}
               <div className="flex flex-col gap-6 pt-8 border-t-2 border-zinc-200 dark:border-zinc-800 print:break-before-page break-before-page">
-                <div className="border-b-2 border-zinc-900 dark:border-zinc-100 pb-3 flex justify-between items-end">
+                <div className="sticky top-0 z-20 bg-white/95 dark:bg-zinc-950/95 backdrop-blur-md py-3 border-b-2 border-zinc-900 dark:border-zinc-100 flex justify-between items-end mb-2">
                   <div>
                     <h2 className="text-base font-extrabold uppercase text-zinc-900 dark:text-white tracking-wide">{info?.companyName}</h2>
                     <p className="text-xs text-zinc-500 font-medium mt-0.5">Registration Number: {info?.registrationNumber}</p>
@@ -1097,13 +1097,13 @@ export function ReportDocumentCanvas({
                     <tr>
                       <td className="py-1.5 px-5 font-sans text-zinc-700 dark:text-zinc-300">Depreciation of property, plant and equipment</td>
                       <td className="py-1.5 px-2 text-right">{formatZAR(pnl?.depreciation?.current || 0)}</td>
-                      <td className="py-1.5 px-2 text-right text-zinc-400">—</td>
+                      <td className="py-1.5 px-2 text-right text-zinc-400">{formatZAR(0)}</td>
                     </tr>
                     {det?.expenses?.map((exp: any) => (
                       <tr key={exp.accountId}>
                         <td className="py-1.5 px-5 font-sans text-zinc-700 dark:text-zinc-300">{exp.accountCode} - {exp.accountName}</td>
                         <td className="py-1.5 px-2 text-right">{formatZAR(exp.amount)}</td>
-                        <td className="py-1.5 px-2 text-right text-zinc-400">—</td>
+                        <td className="py-1.5 px-2 text-right text-zinc-400">{formatZAR(0)}</td>
                       </tr>
                     ))}
                     <tr className="font-extrabold border-t-2 border-b-2 border-zinc-900 dark:border-zinc-100 text-sm text-zinc-900 dark:text-white bg-zinc-50 dark:bg-zinc-900/50">

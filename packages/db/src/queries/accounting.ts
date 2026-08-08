@@ -1396,6 +1396,8 @@ export type AnnualFinancialStatementsResult = {
   statementOfProfitLoss: {
     revenue: AfsComparativeAmount;
     divisionBreakdown: AfsDivisionBuildUpRow[];
+    depreciation: AfsComparativeAmount;
+    employeeBenefits: AfsComparativeAmount;
     expenses: ProfitAndLossRow[];
     totalExpenses: AfsComparativeAmount;
     operatingProfit: AfsComparativeAmount;
@@ -1595,6 +1597,14 @@ export async function getAnnualFinancialStatements(
     statementOfProfitLoss: {
       revenue: { current: pnl.totalRevenue, prior: priorPnl.totalRevenue },
       divisionBreakdown,
+      depreciation: {
+        current: pnl.expenses.find((e) => e.accountName.toLowerCase().includes('depreciation'))?.amount || 0,
+        prior: priorPnl.expenses.find((e) => e.accountName.toLowerCase().includes('depreciation'))?.amount || 0,
+      },
+      employeeBenefits: {
+        current: pnl.expenses.filter((e) => e.accountName.toLowerCase().includes('staff') || e.accountName.toLowerCase().includes('salary') || e.accountName.toLowerCase().includes('remuneration')).reduce((s, e) => s + e.amount, 0),
+        prior: priorPnl.expenses.filter((e) => e.accountName.toLowerCase().includes('staff') || e.accountName.toLowerCase().includes('salary') || e.accountName.toLowerCase().includes('remuneration')).reduce((s, e) => s + e.amount, 0),
+      },
       expenses: pnl.expenses,
       totalExpenses: { current: pnl.totalExpenses, prior: priorPnl.totalExpenses },
       operatingProfit: { current: pnl.netProfit, prior: priorPnl.netProfit },

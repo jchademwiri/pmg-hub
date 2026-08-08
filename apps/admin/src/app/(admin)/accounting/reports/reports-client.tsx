@@ -140,7 +140,7 @@ const REPORT_TYPES: ReportConfig[] = [
   },
   {
     id: 'annual-financial-statements',
-    label: 'AFS',
+    label: 'Annual Financial Statements',
     description: 'Full CIPC-compliant AFS package: Directors Report, Balance Sheet, P&L, Equity, Cash Flow & Notes',
     icon: ShieldCheck,
     needsPeriod: true,
