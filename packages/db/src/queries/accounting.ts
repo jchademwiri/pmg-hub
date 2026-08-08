@@ -1271,7 +1271,7 @@ export async function getAnnualFinancialStatements(
   // Notes data
   const revenueNotes: AfsNoteRow[] = pnlDivisions.map((div) => ({
     label: `Revenue — ${div.divisionName}`,
-    amount: div.revenue,
+    amount: div.totalRevenue,
   }));
 
   const expenseNotes: AfsNoteRow[] = pnl.expenses.map((exp) => ({
