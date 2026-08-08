@@ -920,12 +920,17 @@ export async function getProfitAndLossByDivision(period?: string, startDate?: st
     .groupBy(journalEntries.divisionId, chartAccounts.type);
 
   // Fetch actual cash income collected per division
+  const incomeConditions = [];
+  if (effectiveStart) incomeConditions.push(sql`${income.date} >= ${effectiveStart}`);
+  if (effectiveEnd) incomeConditions.push(sql`${income.date} <= ${effectiveEnd}`);
+
   const incomeRows = await db
     .select({
       divisionId: income.divisionId,
       totalIncome: sql<string>`COALESCE(SUM(${income.amount}::numeric), 0)`,
     })
     .from(income)
+    .where(incomeConditions.length > 0 ? and(...incomeConditions) : undefined)
     .groupBy(income.divisionId);
 
   const incomeMap = new Map(incomeRows.map((i) => [i.divisionId, Number(i.totalIncome)]));
