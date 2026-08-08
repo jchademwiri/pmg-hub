@@ -8,6 +8,7 @@ import {
   getTrialBalance,
   getProfitAndLoss,
   getProfitAndLossByDivision,
+  getClientPerformance,
   getBalanceSheet,
   getCashFlowStatement,
   getAnnualFinancialStatements,
@@ -22,6 +23,7 @@ export interface ReportPreviewFilter {
     | 'balance-sheet'
     | 'profit-and-loss'
     | 'division-performance'
+    | 'client-performance'
     | 'trial-balance'
     | 'cash-flow'
     | 'journal-entries'
@@ -138,6 +140,12 @@ export async function fetchReportPreviewData(filter: ReportPreviewFilter) {
       case 'division-performance': {
         const divisions = await getProfitAndLossByDivision(periodMonth, startDate, endDate);
         data = { divisions };
+        break;
+      }
+
+      case 'client-performance': {
+        const clients = await getClientPerformance(periodMonth, startDate, endDate);
+        data = { clients };
         break;
       }
 

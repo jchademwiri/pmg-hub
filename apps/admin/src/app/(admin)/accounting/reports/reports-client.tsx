@@ -2,7 +2,7 @@
 
 import * as React from 'react';
 import { useSearchParams, useRouter, usePathname } from 'next/navigation';
-import { Download, Printer, BookOpen, FileText, Table2, Scale, TrendingUp, Building2, Landmark, Banknote, Calendar, Filter, Layers, ShieldCheck } from 'lucide-react';
+import { Download, Printer, BookOpen, FileText, Table2, Scale, TrendingUp, Building2, Landmark, Banknote, Calendar, Filter, Layers, ShieldCheck, Users } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import {
@@ -29,6 +29,7 @@ type ReportType =
   | 'balance-sheet'
   | 'profit-and-loss'
   | 'division-performance'
+  | 'client-performance'
   | 'trial-balance'
   | 'cash-flow'
   | 'journal-entries'
@@ -75,6 +76,16 @@ const REPORT_TYPES: ReportConfig[] = [
     needsPeriod: true,
     needsAccount: false,
     needsDivision: true,
+    supportsDateRange: true,
+  },
+  {
+    id: 'client-performance',
+    label: 'Client Performance',
+    description: 'Client billing, revenue, cash collected, AR balance & collection margin %',
+    icon: Users,
+    needsPeriod: true,
+    needsAccount: false,
+    needsDivision: false,
     supportsDateRange: true,
   },
   {
@@ -156,6 +167,7 @@ export function ReportsClient({ periods, accounts, divisions, selectedPeriod }: 
     'balance-sheet',
     'profit-and-loss',
     'division-performance',
+    'client-performance',
     'trial-balance',
     'cash-flow',
     'journal-entries',

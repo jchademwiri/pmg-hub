@@ -9,6 +9,7 @@ export interface ReportDocumentCanvasProps {
     | 'balance-sheet'
     | 'profit-and-loss'
     | 'division-performance'
+    | 'client-performance'
     | 'trial-balance'
     | 'cash-flow'
     | 'journal-entries'
@@ -379,6 +380,69 @@ export function ReportDocumentCanvas({
           </table>
         )}
 
+        {/* 3. CLIENT PERFORMANCE */}
+        {reportType === 'client-performance' && (
+          <table className="w-full text-left text-xs border-collapse">
+            <thead>
+              <tr className="border-b border-zinc-200 dark:border-zinc-800 text-zinc-500 dark:text-zinc-400 uppercase tracking-wider text-[10px] font-bold">
+                <th className="py-2.5 px-2">Client Name</th>
+                <th className="py-2.5 px-2 text-right">Invoiced Revenue (ZAR)</th>
+                <th className="py-2.5 px-2 text-right">Cash Collected (ZAR)</th>
+                <th className="py-2.5 px-2 text-right">Outstanding AR (ZAR)</th>
+                <th className="py-2.5 px-2 text-right">Collection Rate %</th>
+                <th className="py-2.5 px-2 text-right">Share %</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-zinc-100 dark:divide-zinc-900">
+              {data?.clients?.map((cli: any) => (
+                <tr key={cli.clientId} className="hover:bg-zinc-50 dark:hover:bg-zinc-900/50">
+                  <td className="py-2.5 px-2 font-medium text-zinc-800 dark:text-zinc-200">
+                    {cli.clientName}
+                  </td>
+                  <td className="py-2.5 px-2 text-right font-mono tabular-nums font-semibold text-emerald-600 dark:text-emerald-400">
+                    {formatZAR(cli.totalRevenue)}
+                  </td>
+                  <td className="py-2.5 px-2 text-right font-mono tabular-nums text-blue-600 dark:text-blue-400">
+                    {formatZAR(cli.totalCashCollected)}
+                  </td>
+                  <td className="py-2.5 px-2 text-right font-mono tabular-nums text-amber-600 dark:text-amber-400">
+                    {cli.totalOutstandingAr > 0 ? formatZAR(cli.totalOutstandingAr) : '—'}
+                  </td>
+                  <td className="py-2.5 px-2 text-right font-mono tabular-nums font-medium text-zinc-700 dark:text-zinc-300">
+                    {(cli.marginPercent ?? 0).toFixed(1)}%
+                  </td>
+                  <td className="py-2.5 px-2 text-right font-mono tabular-nums text-zinc-500">
+                    {(cli.distributionPercent ?? 0).toFixed(1)}%
+                  </td>
+                </tr>
+              ))}
+              {(!data?.clients || data.clients.length === 0) && (
+                <tr>
+                  <td colSpan={6} className="py-8 text-center text-zinc-400">No client billing activity recorded.</td>
+                </tr>
+              )}
+            </tbody>
+            {data?.clients && data.clients.length > 0 && (() => {
+              const totRev = data.clients.reduce((s: number, c: any) => s + (c.totalRevenue || 0), 0);
+              const totCol = data.clients.reduce((s: number, c: any) => s + (c.totalCashCollected || 0), 0);
+              const totAr = data.clients.reduce((s: number, c: any) => s + (c.totalOutstandingAr || 0), 0);
+              const avgRate = totRev > 0 ? (totCol / totRev) * 100 : 0;
+              return (
+                <tfoot>
+                  <tr className="border-t-2 border-zinc-900 dark:border-zinc-100 font-bold bg-zinc-50/50 dark:bg-zinc-900/40">
+                    <td className="py-3 px-2 text-zinc-900 dark:text-white uppercase">Total Client Summary</td>
+                    <td className="py-3 px-2 text-right font-mono text-emerald-600 dark:text-emerald-400">{formatZAR(totRev)}</td>
+                    <td className="py-3 px-2 text-right font-mono text-blue-600 dark:text-blue-400">{formatZAR(totCol)}</td>
+                    <td className="py-3 px-2 text-right font-mono text-amber-600 dark:text-amber-400">{totAr > 0 ? formatZAR(totAr) : '—'}</td>
+                    <td className="py-3 px-2 text-right font-mono text-zinc-800 dark:text-zinc-200">{avgRate.toFixed(1)}%</td>
+                    <td className="py-3 px-2 text-right font-mono text-zinc-500">100.0%</td>
+                  </tr>
+                </tfoot>
+              );
+            })()}
+          </table>
+        )}
+
         {/* 7. BALANCE SHEET */}
         {reportType === 'balance-sheet' && (
           <div className="flex flex-col gap-6">
@@ -657,7 +721,7 @@ export function ReportDocumentCanvas({
                 {/* Note 3: Operating Expenses */}
                 <div className="rounded-lg border border-zinc-200 dark:border-zinc-800 p-4 bg-card">
                   <h4 className="text-xs font-bold text-zinc-900 dark:text-white mb-2">Note 3: Operating Expenses Breakdown</h4>
-                  <div className="flex flex-col divide-y text-xs max-h-48 overflow-y-auto">
+                  <div className="flex flex-col divide-y text-xs">
                     {data?.afs?.notes?.note3OperatingExpenses?.map((item: any, idx: number) => (
                       <div key={idx} className="py-1.5 flex justify-between">
                         <span className="text-zinc-600 dark:text-zinc-400">{item.code ? `${item.code} - ` : ''}{item.label}</span>

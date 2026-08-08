@@ -8,7 +8,8 @@ import {
 import { user } from "../schema/auth";
 import { snapshots } from "../schema/snapshots";
 import { divisions } from "../schema/divisions";
-import { invoices } from "../schema/billing";
+import { clients } from "../schema/clients";
+import { invoices, payments } from "../schema/billing";
 import { income } from "../schema/income";
 import { getOrganisationSettings } from "./billing";
 import { eq, and, desc, asc, sql, inArray } from "drizzle-orm";
@@ -906,6 +907,96 @@ export async function getProfitAndLossByDivision(period?: string, startDate?: st
       totalExpenses: totals.totalExpenses,
       netProfit,
       marginPercent,
+      distributionPercent,
+    });
+  }
+
+  return result.sort((a, b) => b.totalRevenue - a.totalRevenue);
+}
+
+// ── Client Performance ────────────────────────────────────────────────────────
+
+export type ClientPerformanceRow = {
+  clientId: string;
+  clientName: string;
+  totalRevenue: number;
+  totalCashCollected: number;
+  totalOutstandingAr: number;
+  marginPercent: number;
+  distributionPercent: number;
+};
+
+/**
+ * Returns revenue, cash collected, outstanding AR balance & margin % per client.
+ */
+export async function getClientPerformance(
+  period?: string,
+  startDate?: string,
+  endDate?: string
+): Promise<ClientPerformanceRow[]> {
+  const allClients = await db.select().from(clients).where(eq(clients.isActive, true));
+
+  // Invoiced total per client
+  const invoiceConditions = [inArray(invoices.status, ['issued', 'partially_paid', 'paid', 'written_off'])];
+  if (startDate) invoiceConditions.push(sql`${invoices.issueDate} >= ${startDate}`);
+  if (endDate) invoiceConditions.push(sql`${invoices.issueDate} <= ${endDate}`);
+
+  const invoicedRows = await db
+    .select({
+      clientId: invoices.clientId,
+      totalInvoiced: sql<string>`COALESCE(SUM(${invoices.total}::numeric), 0)`,
+    })
+    .from(invoices)
+    .where(and(...invoiceConditions))
+    .groupBy(invoices.clientId);
+
+  // Cash collected per client
+  const paymentConditions = [eq(payments.status, 'completed')];
+  if (startDate) paymentConditions.push(sql`${payments.paymentDate} >= ${startDate}`);
+  if (endDate) paymentConditions.push(sql`${payments.paymentDate} <= ${endDate}`);
+
+  const paymentRows = await db
+    .select({
+      clientId: payments.clientId,
+      totalPaid: sql<string>`COALESCE(SUM(${payments.amount}::numeric), 0)`,
+    })
+    .from(payments)
+    .where(and(...paymentConditions))
+    .groupBy(payments.clientId);
+
+  const invoicedMap = new Map<string, number>();
+  for (const r of invoicedRows) {
+    if (r.clientId) invoicedMap.set(r.clientId, Number(r.totalInvoiced));
+  }
+
+  const paymentMap = new Map<string, number>();
+  for (const r of paymentRows) {
+    if (r.clientId) paymentMap.set(r.clientId, Number(r.totalPaid));
+  }
+
+  let groupTotalRevenue = 0;
+  for (const amount of invoicedMap.values()) {
+    groupTotalRevenue += amount;
+  }
+
+  const result: ClientPerformanceRow[] = [];
+  for (const client of allClients) {
+    const rev = invoicedMap.get(client.id) || 0;
+    const collected = paymentMap.get(client.id) || 0;
+    const ar = Math.max(0, rev - collected);
+
+    if (rev === 0 && collected === 0) continue;
+
+    const distributionPercent = groupTotalRevenue > 0 ? (rev / groupTotalRevenue) * 100 : 0;
+    const marginPercent = rev > 0 ? (collected / rev) * 100 : 0;
+
+    result.push({
+      clientId: client.id,
+      clientName: client.name,
+      totalRevenue: rev,
+      totalCashCollected: collected,
+      totalOutstandingAr: ar,
+      marginPercent: Math.min(100, marginPercent),
       distributionPercent,
     });
   }

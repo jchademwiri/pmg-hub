@@ -4,6 +4,7 @@ import {
   getOrganisationSettings,
   getProfitAndLoss,
   getProfitAndLossByDivision,
+  getClientPerformance,
   getBalanceSheet,
   getCashFlowStatement,
   getAnnualFinancialStatements,
@@ -31,6 +32,7 @@ export type AccountingReportType =
   | 'balance-sheet'
   | 'profit-and-loss'
   | 'division-performance'
+  | 'client-performance'
   | 'trial-balance'
   | 'cash-flow'
   | 'journal-entries'
@@ -62,6 +64,7 @@ const REPORT_TYPES: ReadonlySet<AccountingReportType> = new Set([
   'balance-sheet',
   'profit-and-loss',
   'division-performance',
+  'client-performance',
   'trial-balance',
   'cash-flow',
   'journal-entries',
@@ -938,8 +941,71 @@ async function buildAnnualFinancialStatementsPdf(filters: AccountingPdfFilters):
   };
 }
 
+async function buildClientPerformancePdf(filters: AccountingPdfFilters): Promise<AccountingPdfResult> {
+  const clients = await getClientPerformance(filters.period);
+  const header = await buildReportHeader('Client Performance Report', filters.period);
+
+  const doc = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' });
+  drawReportHeader(doc, header);
+
+  let y = 72;
+  doc.setFont('helvetica', 'bold');
+  doc.setFontSize(8);
+  doc.setTextColor(113, 113, 122);
+  doc.text('CLIENT NAME', 15, y);
+  doc.text('INVOICED (ZAR)', 85, y, { align: 'right' });
+  doc.text('COLLECTED (ZAR)', 120, y, { align: 'right' });
+  doc.text('OUTSTANDING (ZAR)', 160, y, { align: 'right' });
+  doc.text('RATE %', 190, y, { align: 'right' });
+  y += 4;
+  doc.setDrawColor(229, 231, 235);
+  doc.line(15, y, 195, y);
+  y += 5;
+
+  doc.setFont('helvetica', 'normal');
+  doc.setFontSize(8);
+
+  let totalRev = 0;
+  let totalCol = 0;
+  let totalAr = 0;
+
+  for (const cli of clients) {
+    y = ensurePage(doc, y, 8);
+    totalRev += cli.totalRevenue;
+    totalCol += cli.totalCashCollected;
+    totalAr += cli.totalOutstandingAr;
+
+    doc.setTextColor(24, 24, 27);
+    doc.text(cli.clientName, 15, y);
+    doc.text(formatZAR(cli.totalRevenue), 85, y, { align: 'right' });
+    doc.text(formatZAR(cli.totalCashCollected), 120, y, { align: 'right' });
+    doc.text(cli.totalOutstandingAr > 0 ? formatZAR(cli.totalOutstandingAr) : '—', 160, y, { align: 'right' });
+    doc.text(`${(cli.marginPercent || 0).toFixed(1)}%`, 190, y, { align: 'right' });
+    y += 7;
+  }
+
+  y = ensurePage(doc, y, 12);
+  const avgRate = totalRev > 0 ? (totalCol / totalRev) * 100 : 0;
+  doc.line(15, y, 195, y);
+  y += 4;
+  doc.setFont('helvetica', 'bold');
+  doc.text('TOTAL CLIENT SUMMARY', 15, y);
+  doc.text(formatZAR(totalRev), 85, y, { align: 'right' });
+  doc.text(formatZAR(totalCol), 120, y, { align: 'right' });
+  doc.text(totalAr > 0 ? formatZAR(totalAr) : '—', 160, y, { align: 'right' });
+  doc.text(`${avgRate.toFixed(1)}%`, 190, y, { align: 'right' });
+
+  drawReportFooter(doc, header);
+
+  const suffix = [filters.period ?? 'all-time'].filter(Boolean).join('-');
+  return {
+    fileName: `client-performance-${suffix}.pdf`,
+    buffer: Buffer.from(doc.output('arraybuffer')),
+  };
+}
+
 /**
- * Generates a PDF for one of the 9 accounting reports on /accounting/reports.
+ * Generates a PDF for one of the 10 accounting reports on /accounting/reports.
  * Returns null for a valid-but-not-yet-implemented type (filled in phase by
  * phase) or when the underlying data can't be found, or an
  * `AccountingPdfError` when the caller needs to fix their request (e.g.
@@ -958,6 +1024,8 @@ export async function generateAccountingPdf(
       return buildProfitAndLossPdf(filters);
     case 'division-performance':
       return buildDivisionPerformancePdf(filters);
+    case 'client-performance':
+      return buildClientPerformancePdf(filters);
     case 'trial-balance':
       return buildTrialBalancePdf(filters);
     case 'cash-flow':
