@@ -1,30 +1,19 @@
 'use client';
 
 import * as React from 'react';
-import {
-  Filter,
-  RotateCcw,
-  Printer,
-  Download,
-  Building2,
-  Calendar,
-  Table2,
-  BookOpen,
-  Sparkles,
-} from 'lucide-react';
+import { Calendar, Filter, Download, Printer, RefreshCw, Building2, Layers, Tag } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import {
   Select,
   SelectContent,
-  SelectGroup,
   SelectItem,
-  SelectLabel,
   SelectTrigger,
   SelectValue,
+  SelectGroup,
+  SelectLabel,
 } from '@/components/ui/select';
-import { Badge } from '@/components/ui/badge';
-import { formatZAR } from '@/lib/format';
+import { fmtMonthYear, formatZAR } from '@/lib/format';
 import type { ChartAccount } from '@pmg/db';
 
 export type ReportType =
@@ -45,19 +34,19 @@ interface ReportFilterCardProps {
   reportType: ReportType;
   periods: string[];
   selectedPeriod: string;
-  onPeriodChange: (period: string) => void;
+  onPeriodChange: (p: string) => void;
   divisions: { id: string; name: string }[];
   selectedDivisionId: string;
-  onDivisionChange: (divisionId: string) => void;
+  onDivisionChange: (d: string) => void;
   accounts: ChartAccount[];
   selectedAccountId: string;
-  onAccountChange: (accountId: string) => void;
+  onAccountChange: (a: string) => void;
   startDate: string;
-  onStartDateChange: (startDate: string) => void;
+  onStartDateChange: (s: string) => void;
   endDate: string;
-  onEndDateChange: (endDate: string) => void;
+  onEndDateChange: (e: string) => void;
   selectedCategory: string;
-  onCategoryChange: (category: string) => void;
+  onCategoryChange: (c: string) => void;
   onPrint: () => void;
   onDownloadPdf: () => void;
   loading?: boolean;
@@ -83,18 +72,23 @@ export function ReportFilterCard({
   onCategoryChange,
   onPrint,
   onDownloadPdf,
-  loading = false,
-  divisionSummary = null,
+  loading,
+  divisionSummary,
 }: ReportFilterCardProps) {
-  // Determine control visibilities based on matrix
-  const isAfsOrEquity = reportType === 'annual-financial-statements' || reportType === 'changes-in-equity';
-  const isChartOfAccounts = reportType === 'chart-of-accounts';
-  const isClientPerformance = reportType === 'client-performance';
+  const now = new Date();
+  const currentYear = now.getFullYear();
+  const currentMonth = now.getMonth() + 1;
+  const currentFyYear = currentMonth >= 3 ? currentYear + 1 : currentYear;
 
-  const showPeriod = !isChartOfAccounts;
-  const showDivision = !isChartOfAccounts && !isClientPerformance;
-  const showAccountPicker = reportType === 'general-ledger';
-  const showDateRange = [
+  // Filter Visibility Config per Report Type
+  const isAnnualOnlyReport = reportType === 'annual-financial-statements' || reportType === 'changes-in-equity';
+  const hidesPeriodFilter = reportType === 'chart-of-accounts';
+
+  const showDivisionFilter = reportType !== 'client-performance' && reportType !== 'chart-of-accounts';
+  const showAccountFilter = reportType === 'general-ledger';
+  const showCategoryFilter = reportType === 'chart-of-accounts';
+
+  const supportsDateRange = [
     'balance-sheet',
     'profit-and-loss',
     'cash-flow',
@@ -104,146 +98,139 @@ export function ReportFilterCard({
     'general-ledger',
     'journal-entries',
   ].includes(reportType);
-  const showCategoryFilter = isChartOfAccounts;
 
-  // Compute active filters count
-  const now = new Date();
-  const currentYear = now.getFullYear();
-  const currentMonth = now.getMonth() + 1;
-  const defaultFy = `${currentMonth >= 3 ? currentYear + 1 : currentYear}-FY`;
-
+  // Calculate active filter count
   let activeFilterCount = 0;
-  if (showPeriod && selectedPeriod && selectedPeriod !== defaultFy) activeFilterCount++;
-  if (showDivision && selectedDivisionId && selectedDivisionId !== 'all') activeFilterCount++;
-  if (showAccountPicker && selectedAccountId && selectedAccountId !== 'all') activeFilterCount++;
-  if (showDateRange && (startDate || endDate)) activeFilterCount++;
-  if (showCategoryFilter && selectedCategory && selectedCategory !== 'all') activeFilterCount++;
+  if (selectedPeriod && selectedPeriod !== `${currentFyYear}-FY` && !hidesPeriodFilter) activeFilterCount++;
+  if (selectedDivisionId && selectedDivisionId !== 'all' && showDivisionFilter) activeFilterCount++;
+  if (selectedAccountId && selectedAccountId !== 'all' && showAccountFilter) activeFilterCount++;
+  if (selectedCategory && selectedCategory !== 'all' && showCategoryFilter) activeFilterCount++;
+  if (startDate) activeFilterCount++;
+  if (endDate) activeFilterCount++;
 
   const handleReset = () => {
-    onPeriodChange(defaultFy);
+    onPeriodChange(`${currentFyYear}-FY`);
     onDivisionChange('all');
     onAccountChange('all');
+    onCategoryChange('all');
     onStartDateChange('');
     onEndDateChange('');
-    onCategoryChange('all');
   };
 
-  // Build financial year options (last 4 years)
-  const fyYearNums = [currentYear + 1, currentYear, currentYear - 1, currentYear - 2];
-  const annualFyOptions = fyYearNums.map((yr) => ({
-    value: `${yr}-FY`,
-    label: `FY${yr} (1 Mar ${yr - 1} – 28 Feb ${yr})`,
-  }));
-
-  // Build quarterly options for current and previous FY
-  const quarterOptions: { value: string; label: string }[] = [];
-  fyYearNums.slice(0, 2).forEach((yr) => {
-    quarterOptions.push(
-      { value: `${yr}-Q1`, label: `${yr} Q1 (Mar – May ${yr - 1})` },
-      { value: `${yr}-Q2`, label: `${yr} Q2 (Jun – Aug ${yr - 1})` },
-      { value: `${yr}-Q3`, label: `${yr} Q3 (Sep – Nov ${yr - 1})` },
-      { value: `${yr}-Q4`, label: `${yr} Q4 (Dec ${yr - 1} – Feb ${yr})` }
-    );
-  });
-
-  // Monthly options from periods prop
-  const monthlyOptions = (periods || []).slice(0, 24);
-
-  const selectedDivisionObj = divisions.find((d) => d.id === selectedDivisionId);
+  const selectedDivisionName = selectedDivisionId !== 'all'
+    ? (divisions.find((d) => d.id === selectedDivisionId)?.name ?? 'Selected Division')
+    : null;
 
   return (
-    <div className="rounded-2xl border bg-card p-3.5 shadow-sm transition-all dark:bg-zinc-900/60 dark:border-zinc-800/80 mb-5">
+    <div className="rounded-2xl border bg-card p-3.5 sm:p-4 shadow-xs flex flex-col gap-3 transition-all">
       {/* Header Bar */}
-      <div className="flex flex-wrap items-center justify-between gap-2.5 pb-3 border-b border-border/60">
+      <div className="flex flex-wrap items-center justify-between gap-2.5 pb-2.5 border-b border-border/60">
         <div className="flex items-center gap-2">
           <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-primary/10 text-primary">
             <Filter className="h-3.5 w-3.5" />
           </div>
-          <span className="text-xs font-semibold text-foreground tracking-tight">Report Controls & Filters</span>
-          {activeFilterCount > 0 && (
-            <Badge variant="secondary" className="h-5 px-1.5 text-[10px] font-medium bg-primary/10 text-primary border-primary/20">
-              {activeFilterCount} Active {activeFilterCount === 1 ? 'Filter' : 'Filters'}
-            </Badge>
-          )}
-          {loading && (
-            <span className="inline-flex items-center gap-1 text-[11px] text-muted-foreground animate-pulse ml-1">
-              <Sparkles className="h-3 w-3 text-amber-500 animate-spin" /> Updating preview...
-            </span>
-          )}
+          <div>
+            <h4 className="text-xs font-bold text-foreground flex items-center gap-1.5 uppercase tracking-wider">
+              Filter Options
+              {activeFilterCount > 0 && (
+                <span className="inline-flex items-center px-1.5 py-0.2 rounded-full text-[10px] font-semibold bg-primary/10 text-primary">
+                  {activeFilterCount} Active
+                </span>
+              )}
+            </h4>
+          </div>
         </div>
 
-        {/* Right Header Actions */}
-        <div className="flex items-center gap-2">
+        {/* Division Isolated View KPI Snippet */}
+        {selectedDivisionName && divisionSummary && (
+          <div className="hidden md:flex items-center gap-3 px-2.5 py-1 rounded-lg bg-muted/60 border border-border/50 text-[11px]">
+            <span className="font-semibold text-foreground flex items-center gap-1">
+              <Building2 className="h-3 w-3 text-primary" /> {selectedDivisionName}:
+            </span>
+            <span className="text-emerald-600 dark:text-emerald-400 font-mono font-medium">
+              Rev: {formatZAR(divisionSummary.revenue)}
+            </span>
+            <span className="text-zinc-500 font-mono">|</span>
+            <span className="text-red-500 font-mono font-medium">
+              Exp: {formatZAR(divisionSummary.expenses)}
+            </span>
+            <span className="text-zinc-500 font-mono">|</span>
+            <span className={`font-mono font-bold ${divisionSummary.revenue - divisionSummary.expenses >= 0 ? 'text-emerald-600 dark:text-emerald-400' : 'text-red-600'}`}>
+              Net: {formatZAR(divisionSummary.revenue - divisionSummary.expenses)}
+            </span>
+          </div>
+        )}
+
+        {/* Top Right Action Buttons */}
+        <div className="flex items-center gap-1.5 ml-auto">
           {activeFilterCount > 0 && (
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={handleReset}
-              className="h-7 px-2 text-[11px] text-muted-foreground hover:text-foreground hover:bg-zinc-100 dark:hover:bg-zinc-800"
-            >
-              <RotateCcw className="mr-1 h-3 w-3" /> Reset
+            <Button onClick={handleReset} variant="ghost" size="sm" className="h-7 text-xs px-2 gap-1 text-muted-foreground hover:text-foreground">
+              <RefreshCw className="h-3 w-3" /> Reset
             </Button>
           )}
-
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={onPrint}
-            className="h-7 px-2.5 text-xs border-border/80 text-foreground hover:bg-zinc-100 dark:hover:bg-zinc-800"
-          >
-            <Printer className="mr-1.5 h-3.5 w-3.5 text-muted-foreground" /> Print
+          <Button onClick={onPrint} variant="outline" size="sm" className="h-7 text-xs px-2.5 gap-1.5">
+            <Printer className="h-3.5 w-3.5" />
+            <span className="hidden sm:inline">Print</span>
           </Button>
-
-          <Button
-            variant="default"
-            size="sm"
-            onClick={onDownloadPdf}
-            className="h-7 px-2.5 text-xs bg-primary text-primary-foreground hover:bg-primary/90 shadow-xs"
-          >
-            <Download className="mr-1.5 h-3.5 w-3.5" /> Export PDF
+          <Button onClick={onDownloadPdf} size="sm" className="h-7 text-xs px-2.5 gap-1.5 shadow-xs">
+            <Download className="h-3.5 w-3.5" />
+            Download PDF
           </Button>
         </div>
       </div>
 
-      {/* Control Grid */}
-      <div className="mt-3.5 flex flex-wrap items-end gap-3">
-        {/* Period Selector */}
-        {showPeriod && (
-          <div className="flex-1 min-w-[200px] max-w-[280px]">
-            <label className="block text-[10px] font-bold uppercase text-muted-foreground tracking-wider mb-1">
-              Period / Financial Year
+      {/* Dynamic Filter Controls Grid */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-2.5 items-end">
+        {/* 1. Period Selector */}
+        {!hidesPeriodFilter && (
+          <div className="flex flex-col gap-1">
+            <label className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider flex items-center gap-1">
+              <Calendar className="size-3 text-primary" /> Period
             </label>
             <Select value={selectedPeriod} onValueChange={onPeriodChange}>
               <SelectTrigger className="h-8 text-xs bg-background">
-                <Calendar className="mr-1.5 h-3.5 w-3.5 text-muted-foreground shrink-0" />
-                <SelectValue placeholder="Select period" />
+                <SelectValue placeholder="Select Period" />
               </SelectTrigger>
-              <SelectContent>
-                <SelectGroup>
-                  <SelectLabel className="text-[10px] uppercase font-bold text-muted-foreground">Annual Financial Years</SelectLabel>
-                  {annualFyOptions.map((opt) => (
-                    <SelectItem key={opt.value} value={opt.value} className="text-xs">
-                      {opt.label}
-                    </SelectItem>
-                  ))}
-                </SelectGroup>
-
-                {!isAfsOrEquity && (
+              <SelectContent className="text-xs">
+                {isAnnualOnlyReport ? (
+                  <SelectGroup>
+                    <SelectLabel className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">Annual Financial Years</SelectLabel>
+                    <SelectItem value={`${currentFyYear}-FY`}>Annual: FY{currentFyYear} (1 Mar {currentFyYear - 1} – 28 Feb {currentFyYear})</SelectItem>
+                    <SelectItem value={`${currentFyYear - 1}-FY`}>Annual: FY{currentFyYear - 1} (1 Mar {currentFyYear - 2} – 28 Feb {currentFyYear - 1})</SelectItem>
+                  </SelectGroup>
+                ) : (
                   <>
+                    <SelectItem value="all">All Time</SelectItem>
+
+                    {/* Annual Financial Years */}
                     <SelectGroup>
-                      <SelectLabel className="text-[10px] uppercase font-bold text-muted-foreground mt-1">Quarterly</SelectLabel>
-                      {quarterOptions.map((opt) => (
-                        <SelectItem key={opt.value} value={opt.value} className="text-xs">
-                          {opt.label}
-                        </SelectItem>
-                      ))}
+                      <SelectLabel className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">Annual Financial Years</SelectLabel>
+                      <SelectItem value={`${currentFyYear}-FY`}>Annual: FY{currentFyYear} (1 Mar {currentFyYear - 1} – 28 Feb {currentFyYear})</SelectItem>
+                      <SelectItem value={`${currentFyYear - 1}-FY`}>Annual: FY{currentFyYear - 1} (1 Mar {currentFyYear - 2} – 28 Feb {currentFyYear - 1})</SelectItem>
                     </SelectGroup>
 
+                    {/* Bi-Annually (Current Year) */}
                     <SelectGroup>
-                      <SelectLabel className="text-[10px] uppercase font-bold text-muted-foreground mt-1">Monthly Periods</SelectLabel>
-                      {monthlyOptions.map((m) => (
-                        <SelectItem key={m} value={m} className="text-xs">
-                          {m}
+                      <SelectLabel className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">Bi-Annual Periods</SelectLabel>
+                      <SelectItem value={`${currentFyYear}-H1`}>Bi-Annual: FY{currentFyYear} H1 (Mar – Aug {currentFyYear - 1})</SelectItem>
+                      <SelectItem value={`${currentFyYear}-H2`}>Bi-Annual: FY{currentFyYear} H2 (Sep {currentFyYear - 1} – Feb {currentFyYear})</SelectItem>
+                    </SelectGroup>
+
+                    {/* Quarterly (Current Year) */}
+                    <SelectGroup>
+                      <SelectLabel className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">Quarterly Periods</SelectLabel>
+                      <SelectItem value={`${currentFyYear}-Q1`}>Quarterly: FY{currentFyYear} Q1 (Mar – May {currentFyYear - 1})</SelectItem>
+                      <SelectItem value={`${currentFyYear}-Q2`}>Quarterly: FY{currentFyYear} Q2 (Jun – Aug {currentFyYear - 1})</SelectItem>
+                      <SelectItem value={`${currentFyYear}-Q3`}>Quarterly: FY{currentFyYear} Q3 (Sep – Nov {currentFyYear - 1})</SelectItem>
+                      <SelectItem value={`${currentFyYear}-Q4`}>Quarterly: FY{currentFyYear} Q4 (Dec {currentFyYear - 1} – Feb {currentFyYear})</SelectItem>
+                    </SelectGroup>
+
+                    {/* Monthly */}
+                    <SelectGroup>
+                      <SelectLabel className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">Monthly Periods</SelectLabel>
+                      {periods.map((p) => (
+                        <SelectItem key={p} value={p}>
+                          Monthly: {fmtMonthYear(p)}
                         </SelectItem>
                       ))}
                     </SelectGroup>
@@ -254,23 +241,20 @@ export function ReportFilterCard({
           </div>
         )}
 
-        {/* Division Selector */}
-        {showDivision && (
-          <div className="flex-1 min-w-[180px] max-w-[240px]">
-            <label className="block text-[10px] font-bold uppercase text-muted-foreground tracking-wider mb-1">
-              Division Filter
+        {/* 2. Division Selector */}
+        {showDivisionFilter && (
+          <div className="flex flex-col gap-1">
+            <label className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider flex items-center gap-1">
+              <Building2 className="size-3 text-primary" /> Division
             </label>
             <Select value={selectedDivisionId} onValueChange={onDivisionChange}>
               <SelectTrigger className="h-8 text-xs bg-background">
-                <Building2 className="mr-1.5 h-3.5 w-3.5 text-muted-foreground shrink-0" />
                 <SelectValue placeholder="All Divisions" />
               </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all" className="text-xs font-medium">
-                  🏢 All Divisions (Consolidated)
-                </SelectItem>
+              <SelectContent className="text-xs">
+                <SelectItem value="all">All Divisions</SelectItem>
                 {divisions.map((d) => (
-                  <SelectItem key={d.id} value={d.id} className="text-xs">
+                  <SelectItem key={d.id} value={d.id}>
                     {d.name}
                   </SelectItem>
                 ))}
@@ -279,25 +263,21 @@ export function ReportFilterCard({
           </div>
         )}
 
-        {/* Account Selector (General Ledger) */}
-        {showAccountPicker && (
-          <div className="flex-1 min-w-[220px] max-w-[300px]">
-            <label className="block text-[10px] font-bold uppercase text-muted-foreground tracking-wider mb-1">
-              Account Picker
+        {/* 3. Account Selector (General Ledger) */}
+        {showAccountFilter && (
+          <div className="flex flex-col gap-1">
+            <label className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider flex items-center gap-1">
+              <Layers className="size-3 text-primary" /> Account
             </label>
             <Select value={selectedAccountId} onValueChange={onAccountChange}>
               <SelectTrigger className="h-8 text-xs bg-background">
-                <Table2 className="mr-1.5 h-3.5 w-3.5 text-muted-foreground shrink-0" />
                 <SelectValue placeholder="All Accounts" />
               </SelectTrigger>
-              <SelectContent className="max-h-60">
-                <SelectItem value="all" className="text-xs font-medium">
-                  All Chart Accounts
-                </SelectItem>
-                {accounts.map((acc) => (
-                  <SelectItem key={acc.id} value={acc.id} className="text-xs">
-                    <span className="font-mono text-[11px] text-muted-foreground mr-1.5">{acc.code}</span>
-                    {acc.name}
+              <SelectContent className="text-xs max-h-60">
+                <SelectItem value="all">All Accounts</SelectItem>
+                {accounts.map((a) => (
+                  <SelectItem key={a.id} value={a.id}>
+                    {a.code} — {a.name}
                   </SelectItem>
                 ))}
               </SelectContent>
@@ -305,77 +285,58 @@ export function ReportFilterCard({
           </div>
         )}
 
-        {/* Category Filter (Chart of Accounts) */}
+        {/* 4. Category Filter (Chart of Accounts) */}
         {showCategoryFilter && (
-          <div className="flex-1 min-w-[180px] max-w-[240px]">
-            <label className="block text-[10px] font-bold uppercase text-muted-foreground tracking-wider mb-1">
-              Account Category
+          <div className="flex flex-col gap-1">
+            <label className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider flex items-center gap-1">
+              <Tag className="size-3 text-primary" /> Category
             </label>
             <Select value={selectedCategory} onValueChange={onCategoryChange}>
               <SelectTrigger className="h-8 text-xs bg-background">
-                <BookOpen className="mr-1.5 h-3.5 w-3.5 text-muted-foreground shrink-0" />
                 <SelectValue placeholder="All Categories" />
               </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all" className="text-xs font-medium">All Categories</SelectItem>
-                <SelectItem value="asset" className="text-xs">Assets</SelectItem>
-                <SelectItem value="liability" className="text-xs">Liabilities</SelectItem>
-                <SelectItem value="equity" className="text-xs">Equity</SelectItem>
-                <SelectItem value="revenue" className="text-xs">Revenue</SelectItem>
-                <SelectItem value="expense" className="text-xs">Expenses</SelectItem>
+              <SelectContent className="text-xs">
+                <SelectItem value="all">All Categories</SelectItem>
+                <SelectItem value="asset">Assets</SelectItem>
+                <SelectItem value="liability">Liabilities</SelectItem>
+                <SelectItem value="equity">Equity</SelectItem>
+                <SelectItem value="revenue">Revenue</SelectItem>
+                <SelectItem value="expense">Expenses</SelectItem>
               </SelectContent>
             </Select>
           </div>
         )}
 
-        {/* Custom Date Range Pickers */}
-        {showDateRange && (
-          <div className="flex items-center gap-2 min-w-[260px]">
-            <div className="flex-1">
-              <label className="block text-[10px] font-bold uppercase text-muted-foreground tracking-wider mb-1">
-                Start Date
-              </label>
-              <Input
-                type="date"
-                value={startDate}
-                onChange={(e) => onStartDateChange(e.target.value)}
-                className="h-8 text-xs bg-background px-2"
-              />
-            </div>
-            <div className="flex-1">
-              <label className="block text-[10px] font-bold uppercase text-muted-foreground tracking-wider mb-1">
-                End Date
-              </label>
-              <Input
-                type="date"
-                value={endDate}
-                onChange={(e) => onEndDateChange(e.target.value)}
-                className="h-8 text-xs bg-background px-2"
-              />
-            </div>
+        {/* 5. Custom Date Range: Start Date */}
+        {supportsDateRange && (
+          <div className="flex flex-col gap-1">
+            <label className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider">
+              {reportType === 'balance-sheet' ? 'From Date (Opt)' : 'Start Date'}
+            </label>
+            <Input
+              type="date"
+              value={startDate}
+              onChange={(e) => onStartDateChange(e.target.value)}
+              className="h-8 text-xs bg-background"
+            />
+          </div>
+        )}
+
+        {/* 6. Custom Date Range: End Date / As at Date */}
+        {supportsDateRange && (
+          <div className="flex flex-col gap-1">
+            <label className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider">
+              {reportType === 'balance-sheet' ? 'As at Date' : 'End Date'}
+            </label>
+            <Input
+              type="date"
+              value={endDate}
+              onChange={(e) => onEndDateChange(e.target.value)}
+              className="h-8 text-xs bg-background"
+            />
           </div>
         )}
       </div>
-
-      {/* Active Division Summary Callout Pill */}
-      {selectedDivisionId !== 'all' && selectedDivisionObj && (
-        <div className="mt-3 pt-2.5 border-t border-border/40 flex items-center justify-between text-xs text-muted-foreground bg-primary/5 rounded-lg px-3 py-1.5 border border-primary/10">
-          <div className="flex items-center gap-1.5 font-medium text-foreground">
-            <Building2 className="h-3.5 w-3.5 text-primary" />
-            <span>Showing information isolated for <strong className="text-primary">{selectedDivisionObj.name}</strong></span>
-          </div>
-          {divisionSummary && (
-            <div className="flex items-center gap-3 text-[11px] font-mono">
-              <span className="text-emerald-600 dark:text-emerald-400 font-semibold">
-                Rev: {formatZAR(divisionSummary.revenue)}
-              </span>
-              <span className="text-rose-600 dark:text-rose-400 font-semibold">
-                Exp: {formatZAR(divisionSummary.expenses)}
-              </span>
-            </div>
-          )}
-        </div>
-      )}
     </div>
   );
 }
