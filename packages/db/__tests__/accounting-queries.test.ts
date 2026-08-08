@@ -215,6 +215,41 @@ describe("getTrialBalance", () => {
     expect(result[0].totalCredits).toBe(35080);
   });
 
+  it("accepts a divisionId filter and returns the scoped rows", async () => {
+    mockSelect.mockReturnValueOnce(mockSubqueryChain({
+      accountId: "mock_account_id",
+      totalDebits: "mock_total_debits",
+      totalCredits: "mock_total_credits",
+    }));
+    mockSelect.mockReturnValue(mockMainQueryChain(
+      MOCK_TRIAL_BALANCE_ROWS.filter((r) => r.accountCode === "1010")
+    ));
+
+    const result = await getTrialBalance(undefined, "division-1");
+
+    expect(result).toHaveLength(1);
+    expect(result[0].accountCode).toBe("1010");
+    expect(result[0].totalDebits).toBe(20500);
+  });
+
+  it("accepts an explicit startDate/endDate range and returns mapped rows", async () => {
+    mockSelect.mockReturnValueOnce(mockSubqueryChain({
+      accountId: "mock_account_id",
+      totalDebits: "mock_total_debits",
+      totalCredits: "mock_total_credits",
+    }));
+    mockSelect.mockReturnValue(mockMainQueryChain(MOCK_TRIAL_BALANCE_ROWS));
+
+    const result = await getTrialBalance(undefined, undefined, "2026-04-01", "2026-06-30");
+
+    expect(result).toHaveLength(3);
+    result.forEach((r) => {
+      expect(typeof r.totalDebits).toBe("number");
+      expect(typeof r.totalCredits).toBe("number");
+      expect(typeof r.balance).toBe("number");
+    });
+  });
+
   it("excludes zero-movement accounts but keeps accounts with real activity", async () => {
     // 1010 has real movement; 4010 and 5010 have none and should be dropped.
     const mixedRows = MOCK_ACCOUNTS.map((a) => ({
