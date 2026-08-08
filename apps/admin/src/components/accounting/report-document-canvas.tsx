@@ -610,6 +610,53 @@ export function ReportDocumentCanvas({
           </div>
         )}
 
+        {/* 8. STATEMENT OF CHANGES IN EQUITY */}
+        {reportType === 'changes-in-equity' && (
+          <div className="flex flex-col gap-6">
+            <div className="border-b-2 border-zinc-900 dark:border-zinc-100 pb-3 flex justify-between items-end">
+              <div>
+                <h2 className="text-base font-extrabold uppercase text-zinc-900 dark:text-white tracking-wide">{companyName}</h2>
+                <p className="text-xs text-zinc-500 font-medium mt-0.5">Registration Number: 2023/683669/07</p>
+              </div>
+              <div className="text-right">
+                <h3 className="text-xs font-bold text-zinc-900 dark:text-white uppercase tracking-wider">STATEMENT OF CHANGES IN EQUITY</h3>
+                <p className="text-xs text-zinc-500 font-medium">Period: {periodLabel}</p>
+              </div>
+            </div>
+
+            <table className="w-full text-left text-xs border-collapse font-mono">
+              <thead>
+                <tr className="border-b-2 border-zinc-900 dark:border-zinc-100 text-zinc-500 text-[10px] font-bold uppercase">
+                  <th className="py-2.5 px-2 font-sans">Period / Movement Description</th>
+                  <th className="py-2.5 px-2 text-right">Shareholders Contribution (R)</th>
+                  <th className="py-2.5 px-2 text-right">Retained Earnings (R)</th>
+                  <th className="py-2.5 px-2 text-right">Total Equity (R)</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-zinc-100 dark:divide-zinc-900">
+                <tr>
+                  <td className="py-2 px-2 font-sans font-medium text-zinc-800 dark:text-zinc-200">Opening Balance (1 March)</td>
+                  <td className="py-2 px-2 text-right">100,00</td>
+                  <td className="py-2 px-2 text-right">{formatZAR(data?.afs?.statementOfChangesInEquity?.currentOpeningRetained || 0)}</td>
+                  <td className="py-2 px-2 text-right font-semibold">{formatZAR(100 + (data?.afs?.statementOfChangesInEquity?.currentOpeningRetained || 0))}</td>
+                </tr>
+                <tr>
+                  <td className="py-2 px-2 font-sans text-zinc-600 dark:text-zinc-400">Net profit / (loss) for period</td>
+                  <td className="py-2 px-2 text-right">{formatZAR(0)}</td>
+                  <td className="py-2 px-2 text-right text-emerald-600 dark:text-emerald-400 font-semibold">{formatZAR(data?.afs?.statementOfChangesInEquity?.currentNetProfit || 0)}</td>
+                  <td className="py-2 px-2 text-right text-emerald-600 dark:text-emerald-400 font-semibold">{formatZAR(data?.afs?.statementOfChangesInEquity?.currentNetProfit || 0)}</td>
+                </tr>
+                <tr className="font-extrabold border-t-2 border-b-2 border-zinc-900 dark:border-zinc-100 text-sm text-zinc-900 dark:text-white bg-zinc-50 dark:bg-zinc-900/50">
+                  <td className="py-3 px-2 font-sans uppercase">Closing Balance</td>
+                  <td className="py-3 px-2 text-right">100,00</td>
+                  <td className="py-3 px-2 text-right">{formatZAR(data?.afs?.statementOfChangesInEquity?.currentClosingRetained || 0)}</td>
+                  <td className="py-3 px-2 text-right text-emerald-600 dark:text-emerald-400">{formatZAR(100 + (data?.afs?.statementOfChangesInEquity?.currentClosingRetained || 0))}</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        )}
+
         {/* 9. ANNUAL FINANCIAL STATEMENTS (AFS) */}
         {reportType === 'annual-financial-statements' && (() => {
           const curYear = data?.afs?.generalInfo?.currentYearLabel || '2027';
@@ -715,7 +762,7 @@ export function ReportDocumentCanvas({
                     <p className="text-xs text-zinc-500 font-medium mt-0.5">Registration Number: {info?.registrationNumber}</p>
                   </div>
                   <div className="text-right">
-                    <h3 className="text-xs font-bold text-zinc-900 dark:text-white uppercase tracking-wider">INCOME STATEMENT</h3>
+                    <h3 className="text-xs font-bold text-zinc-900 dark:text-white uppercase tracking-wider">INCOME STATEMENT (STATEMENT OF COMPREHENSIVE INCOME)</h3>
                     <p className="text-xs text-zinc-500 font-medium">for the year ended {info?.financialYearEnd}</p>
                   </div>
                 </div>
@@ -815,7 +862,7 @@ export function ReportDocumentCanvas({
                     <p className="text-xs text-zinc-500 font-medium mt-0.5">Registration Number: {info?.registrationNumber}</p>
                   </div>
                   <div className="text-right">
-                    <h3 className="text-xs font-bold text-zinc-900 dark:text-white uppercase tracking-wider">BALANCE SHEET</h3>
+                    <h3 className="text-xs font-bold text-zinc-900 dark:text-white uppercase tracking-wider">STATEMENT OF FINANCIAL POSITION</h3>
                     <p className="text-xs text-zinc-500 font-medium">at {info?.financialYearEnd}</p>
                   </div>
                 </div>
@@ -982,7 +1029,7 @@ export function ReportDocumentCanvas({
                     <p className="text-xs text-zinc-500 font-medium mt-0.5">Registration Number: {info?.registrationNumber}</p>
                   </div>
                   <div className="text-right">
-                    <h3 className="text-xs font-bold text-zinc-900 dark:text-white uppercase tracking-wider">CASH FLOW STATEMENT</h3>
+                    <h3 className="text-xs font-bold text-zinc-900 dark:text-white uppercase tracking-wider">STATEMENT OF CASH FLOWS</h3>
                     <p className="text-xs text-zinc-500 font-medium">for the year ended {info?.financialYearEnd}</p>
                   </div>
                 </div>

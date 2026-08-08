@@ -918,7 +918,7 @@ async function buildAnnualFinancialStatementsPdf(filters: AccountingPdfFilters):
   doc.setFont('helvetica', 'bold');
   doc.setFontSize(10);
   doc.setTextColor(24, 24, 27);
-  doc.text('INCOME STATEMENT', PAGE.margin, y);
+  doc.text('STATEMENT OF COMPREHENSIVE INCOME', PAGE.margin, y);
   doc.setFont('helvetica', 'normal');
   doc.setFontSize(8);
   doc.setTextColor(113, 113, 122);
@@ -998,7 +998,7 @@ async function buildAnnualFinancialStatementsPdf(filters: AccountingPdfFilters):
   doc.setFont('helvetica', 'bold');
   doc.setFontSize(10);
   doc.setTextColor(24, 24, 27);
-  doc.text('BALANCE SHEET', PAGE.margin, y);
+  doc.text('STATEMENT OF FINANCIAL POSITION', PAGE.margin, y);
   doc.setFont('helvetica', 'normal');
   doc.setFontSize(8);
   doc.setTextColor(113, 113, 122);
@@ -1139,7 +1139,7 @@ async function buildAnnualFinancialStatementsPdf(filters: AccountingPdfFilters):
   doc.setFont('helvetica', 'bold');
   doc.setFontSize(10);
   doc.setTextColor(24, 24, 27);
-  doc.text('CASH FLOW STATEMENT', PAGE.margin, y);
+  doc.text('STATEMENT OF CASH FLOWS', PAGE.margin, y);
   doc.setFont('helvetica', 'normal');
   doc.setFontSize(8);
   doc.setTextColor(113, 113, 122);

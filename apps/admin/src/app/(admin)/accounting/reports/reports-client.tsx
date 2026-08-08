@@ -28,10 +28,11 @@ type ReportType =
   | 'annual-financial-statements'
   | 'balance-sheet'
   | 'profit-and-loss'
+  | 'cash-flow'
+  | 'changes-in-equity'
   | 'division-performance'
   | 'client-performance'
   | 'trial-balance'
-  | 'cash-flow'
   | 'journal-entries'
   | 'general-ledger'
   | 'chart-of-accounts';
@@ -50,7 +51,7 @@ interface ReportConfig {
 const REPORT_TYPES: ReportConfig[] = [
   {
     id: 'balance-sheet',
-    label: 'Balance Sheet',
+    label: 'Financial Position',
     description: 'Statement of Financial Position: Assets, Liabilities & Equity',
     icon: Landmark,
     needsPeriod: true,
@@ -60,13 +61,33 @@ const REPORT_TYPES: ReportConfig[] = [
   },
   {
     id: 'profit-and-loss',
-    label: 'Profit & Loss',
-    description: 'Corporate income, expenses & net operating profit statement',
+    label: 'Income Statement',
+    description: 'Statement of Comprehensive Income: Revenue, Expenses & Net Operating Profit',
     icon: TrendingUp,
     needsPeriod: true,
     needsAccount: false,
     needsDivision: true,
     supportsDateRange: true,
+  },
+  {
+    id: 'cash-flow',
+    label: 'Cash Flows',
+    description: 'Statement of Cash Flows: Operating collections, expenses & cash movements',
+    icon: Banknote,
+    needsPeriod: true,
+    needsAccount: false,
+    needsDivision: true,
+    supportsDateRange: true,
+  },
+  {
+    id: 'changes-in-equity',
+    label: 'Changes in Equity',
+    description: 'Statement of Changes in Equity: Share capital & retained earnings movements',
+    icon: Scale,
+    needsPeriod: true,
+    needsAccount: false,
+    needsDivision: true,
+    supportsDateRange: false,
   },
   {
     id: 'division-performance',
@@ -93,16 +114,6 @@ const REPORT_TYPES: ReportConfig[] = [
     label: 'Trial Balance',
     description: 'Account balances summary verifying debits and credits equality',
     icon: Scale,
-    needsPeriod: true,
-    needsAccount: false,
-    needsDivision: true,
-    supportsDateRange: true,
-  },
-  {
-    id: 'cash-flow',
-    label: 'Cash Flow Statement',
-    description: 'Operating cash collections, expenses & cash position movements',
-    icon: Banknote,
     needsPeriod: true,
     needsAccount: false,
     needsDivision: true,
@@ -140,8 +151,8 @@ const REPORT_TYPES: ReportConfig[] = [
   },
   {
     id: 'annual-financial-statements',
-    label: 'Annual Financial Statements',
-    description: 'Full CIPC-compliant AFS package: Directors Report, Balance Sheet, P&L, Equity, Cash Flow & Notes',
+    label: 'AFS',
+    description: 'Full CIPC-compliant AFS package: Directors Report, Position, Income, Equity, Cash Flows & Notes',
     icon: ShieldCheck,
     needsPeriod: true,
     needsAccount: false,
