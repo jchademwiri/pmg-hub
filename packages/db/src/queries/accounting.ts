@@ -980,6 +980,8 @@ export type ClientPerformanceRow = {
   totalOutstandingAr: number;
   marginPercent: number;
   distributionPercent: number;
+  concentrationPercent: number;
+  isHighRisk: boolean;
 };
 
 /**
@@ -1048,6 +1050,8 @@ export async function getClientPerformance(
     if (rev === 0 && collected === 0) continue;
 
     const distributionPercent = groupTotalRevenue > 0 ? (rev / groupTotalRevenue) * 100 : 0;
+    const concentrationPercent = distributionPercent;
+    const isHighRisk = concentrationPercent > 25;
     const marginPercent = rev > 0 ? (collected / rev) * 100 : 0;
 
     result.push({
@@ -1058,6 +1062,8 @@ export async function getClientPerformance(
       totalOutstandingAr: ar,
       marginPercent: Math.min(100, marginPercent),
       distributionPercent,
+      concentrationPercent,
+      isHighRisk,
     });
   }
 

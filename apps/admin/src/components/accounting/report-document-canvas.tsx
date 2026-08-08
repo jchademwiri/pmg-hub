@@ -390,32 +390,53 @@ export function ReportDocumentCanvas({
                 <th className="py-2.5 px-2 text-right">Cash Collected (ZAR)</th>
                 <th className="py-2.5 px-2 text-right">Outstanding AR (ZAR)</th>
                 <th className="py-2.5 px-2 text-right">Collection Rate %</th>
-                <th className="py-2.5 px-2 text-right">Share %</th>
+                <th className="py-2.5 px-2 text-right">Concentration %</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-zinc-100 dark:divide-zinc-900">
-              {data?.clients?.map((cli: any) => (
-                <tr key={cli.clientId} className="hover:bg-zinc-50 dark:hover:bg-zinc-900/50">
-                  <td className="py-2.5 px-2 font-medium text-zinc-800 dark:text-zinc-200">
-                    {cli.clientName}
-                  </td>
-                  <td className="py-2.5 px-2 text-right font-mono tabular-nums font-semibold text-emerald-600 dark:text-emerald-400">
-                    {formatZAR(cli.totalRevenue)}
-                  </td>
-                  <td className="py-2.5 px-2 text-right font-mono tabular-nums text-blue-600 dark:text-blue-400">
-                    {formatZAR(cli.totalCashCollected)}
-                  </td>
-                  <td className="py-2.5 px-2 text-right font-mono tabular-nums text-amber-600 dark:text-amber-400">
-                    {cli.totalOutstandingAr > 0 ? formatZAR(cli.totalOutstandingAr) : '—'}
-                  </td>
-                  <td className="py-2.5 px-2 text-right font-mono tabular-nums font-medium text-zinc-700 dark:text-zinc-300">
-                    {(cli.marginPercent ?? 0).toFixed(1)}%
-                  </td>
-                  <td className="py-2.5 px-2 text-right font-mono tabular-nums text-zinc-500">
-                    {(cli.distributionPercent ?? 0).toFixed(1)}%
-                  </td>
-                </tr>
-              ))}
+              {data?.clients?.map((cli: any) => {
+                const conc = cli.concentrationPercent ?? cli.distributionPercent ?? 0;
+                const isHighRisk = cli.isHighRisk || conc > 25;
+                return (
+                  <tr key={cli.clientId} className="hover:bg-zinc-50 dark:hover:bg-zinc-900/50">
+                    <td className="py-2.5 px-2 font-medium text-zinc-800 dark:text-zinc-200">
+                      <div className="flex items-center gap-2">
+                        <span>{cli.clientName}</span>
+                        {isHighRisk && (
+                          <span className="inline-flex items-center rounded-full bg-amber-500/10 px-2 py-0.5 text-[10px] font-semibold text-amber-600 dark:text-amber-400 border border-amber-500/20">
+                            High Risk
+                          </span>
+                        )}
+                      </div>
+                    </td>
+                    <td className="py-2.5 px-2 text-right font-mono tabular-nums font-semibold text-emerald-600 dark:text-emerald-400">
+                      {formatZAR(cli.totalRevenue)}
+                    </td>
+                    <td className="py-2.5 px-2 text-right font-mono tabular-nums text-blue-600 dark:text-blue-400">
+                      {formatZAR(cli.totalCashCollected)}
+                    </td>
+                    <td className="py-2.5 px-2 text-right font-mono tabular-nums text-amber-600 dark:text-amber-400">
+                      {cli.totalOutstandingAr > 0 ? formatZAR(cli.totalOutstandingAr) : '—'}
+                    </td>
+                    <td className="py-2.5 px-2 text-right font-mono tabular-nums font-medium text-zinc-700 dark:text-zinc-300">
+                      {(cli.marginPercent ?? 0).toFixed(1)}%
+                    </td>
+                    <td className="py-2.5 px-2 text-right">
+                      <div className="flex items-center justify-end gap-2">
+                        <span className="font-mono tabular-nums font-semibold text-zinc-800 dark:text-zinc-200">
+                          {conc.toFixed(1)}%
+                        </span>
+                        <div className="w-16 h-1.5 rounded-full bg-zinc-100 dark:bg-zinc-800 overflow-hidden">
+                          <div
+                            className={`h-full rounded-full ${isHighRisk ? 'bg-amber-500' : 'bg-blue-600'}`}
+                            style={{ width: `${Math.min(100, conc)}%` }}
+                          />
+                        </div>
+                      </div>
+                    </td>
+                  </tr>
+                );
+              })}
               {(!data?.clients || data.clients.length === 0) && (
                 <tr>
                   <td colSpan={6} className="py-8 text-center text-zinc-400">No client billing activity recorded.</td>
@@ -435,7 +456,7 @@ export function ReportDocumentCanvas({
                     <td className="py-3 px-2 text-right font-mono text-blue-600 dark:text-blue-400">{formatZAR(totCol)}</td>
                     <td className="py-3 px-2 text-right font-mono text-amber-600 dark:text-amber-400">{totAr > 0 ? formatZAR(totAr) : '—'}</td>
                     <td className="py-3 px-2 text-right font-mono text-zinc-800 dark:text-zinc-200">{avgRate.toFixed(1)}%</td>
-                    <td className="py-3 px-2 text-right font-mono text-zinc-500">100.0%</td>
+                    <td className="py-3 px-2 text-right font-mono text-zinc-800 dark:text-zinc-200">100.0%</td>
                   </tr>
                 </tfoot>
               );
