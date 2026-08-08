@@ -5,6 +5,7 @@ import { formatZAR, fmtDate } from '@/lib/format';
 
 export interface ReportDocumentCanvasProps {
   reportType:
+    | 'annual-financial-statements'
     | 'balance-sheet'
     | 'profit-and-loss'
     | 'division-performance'
@@ -519,6 +520,152 @@ export function ReportDocumentCanvas({
               <div className="flex justify-between items-center text-xs pt-2 border-t border-zinc-100 dark:border-zinc-900 font-bold">
                 <span className="text-zinc-900 dark:text-white uppercase">Ending Cash & Bank Balance</span>
                 <span className="font-mono text-emerald-600 dark:text-emerald-400 text-sm">{formatZAR(data?.cashFlow?.endingCashBalance || 0)}</span>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* 9. ANNUAL FINANCIAL STATEMENTS (AFS) */}
+        {reportType === 'annual-financial-statements' && (
+          <div className="flex flex-col gap-8">
+            {/* General Info & Directors Approval Header */}
+            <div className="p-5 rounded-2xl bg-zinc-900 text-white flex flex-col gap-4">
+              <div className="flex flex-wrap justify-between items-start border-b border-zinc-800 pb-4 gap-4">
+                <div>
+                  <span className="text-[10px] uppercase font-bold tracking-widest text-emerald-400">CIPC Financial Reporting Package</span>
+                  <h2 className="text-lg font-extrabold text-white mt-0.5">{data?.afs?.generalInfo?.companyName || 'PLAYHOUSE MEDIA GROUP (PTY) LTD'}</h2>
+                  <p className="text-xs text-zinc-400 font-mono mt-1">Registration No: {data?.afs?.generalInfo?.registrationNumber || '2023/683669/07'} | Tax Ref: {data?.afs?.generalInfo?.taxReferenceNumber || '9876543210'}</p>
+                </div>
+                <div className="text-right">
+                  <span className="text-xs font-mono px-2.5 py-1 rounded-md bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 font-bold">
+                    {data?.afs?.generalInfo?.financialYear || 'FY2026'} Full Year AFS
+                  </span>
+                  <p className="text-[11px] text-zinc-400 mt-1">Financial Year Ended: {data?.afs?.generalInfo?.financialYearEnd || '28 February'}</p>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-xs text-zinc-300">
+                <div>
+                  <span className="text-zinc-500 text-[10px] uppercase font-bold tracking-wider block mb-1">Registered Address</span>
+                  <p className="font-medium text-zinc-200">{data?.afs?.generalInfo?.registeredAddress}</p>
+                </div>
+                <div>
+                  <span className="text-zinc-500 text-[10px] uppercase font-bold tracking-wider block mb-1">Director Approval Sign-off</span>
+                  <p className="font-medium text-zinc-200">Director: {data?.afs?.generalInfo?.directorName}</p>
+                  <p className="text-[11px] text-emerald-400 font-medium mt-0.5">Approved and authorized for issue by the Board of Directors</p>
+                </div>
+              </div>
+            </div>
+
+            {/* Directors' Report */}
+            <div className="rounded-xl border border-zinc-200 dark:border-zinc-800 p-5 bg-card flex flex-col gap-3">
+              <h3 className="text-xs font-bold uppercase tracking-wider text-zinc-500 border-b pb-2">Directors' Report</h3>
+              <p className="text-xs text-zinc-700 dark:text-zinc-300 leading-relaxed">
+                {data?.afs?.directorsReport?.principalActivities}
+              </p>
+              <div className="p-3 rounded-lg bg-zinc-50 dark:bg-zinc-900 border border-zinc-200/60 dark:border-zinc-800 text-xs text-zinc-800 dark:text-zinc-200 font-medium">
+                {data?.afs?.directorsReport?.financialResultsSummary}
+              </div>
+              <p className="text-xs text-zinc-600 dark:text-zinc-400">
+                <strong className="text-zinc-800 dark:text-zinc-200">Going Concern:</strong> {data?.afs?.directorsReport?.goingConcernStatement}
+              </p>
+            </div>
+
+            {/* Section 1: Balance Sheet Summary */}
+            <div className="flex flex-col gap-3">
+              <h3 className="text-xs font-bold uppercase tracking-wider text-zinc-500 border-b pb-1">Statement of Financial Position</h3>
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                <div className="p-3 rounded-xl border bg-card flex flex-col justify-between">
+                  <span className="text-[10px] font-bold text-zinc-500 uppercase">Total Assets</span>
+                  <span className="text-base font-bold font-mono text-zinc-900 dark:text-white mt-1">{formatZAR(data?.afs?.statementOfPosition?.totalAssets || 0)}</span>
+                </div>
+                <div className="p-3 rounded-xl border bg-card flex flex-col justify-between">
+                  <span className="text-[10px] font-bold text-zinc-500 uppercase">Total Liabilities</span>
+                  <span className="text-base font-bold font-mono text-amber-600 dark:text-amber-400 mt-1">{formatZAR(data?.afs?.statementOfPosition?.totalLiabilities || 0)}</span>
+                </div>
+                <div className="p-3 rounded-xl border bg-card flex flex-col justify-between">
+                  <span className="text-[10px] font-bold text-zinc-500 uppercase">Net Shareholders Equity</span>
+                  <span className="text-base font-bold font-mono text-emerald-600 dark:text-emerald-400 mt-1">{formatZAR(data?.afs?.statementOfPosition?.totalEquity || 0)}</span>
+                </div>
+              </div>
+            </div>
+
+            {/* Section 2: Statement of Changes in Equity */}
+            <div className="flex flex-col gap-3">
+              <h3 className="text-xs font-bold uppercase tracking-wider text-zinc-500 border-b pb-1">Statement of Changes in Equity</h3>
+              <table className="w-full text-left text-xs border-collapse">
+                <thead>
+                  <tr className="border-b border-zinc-200 dark:border-zinc-800 text-zinc-500 text-[10px] font-bold uppercase">
+                    <th className="py-2 px-3">Description</th>
+                    <th className="py-2 px-3 text-right">Share Capital</th>
+                    <th className="py-2 px-3 text-right">Retained Income</th>
+                    <th className="py-2 px-3 text-right">Total Equity</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-zinc-100 dark:divide-zinc-900">
+                  <tr>
+                    <td className="py-2 px-3 font-medium text-zinc-800 dark:text-zinc-200">Balance as of March 1</td>
+                    <td className="py-2 px-3 text-right font-mono">{formatZAR(data?.afs?.statementOfChangesInEquity?.openingShareCapital || 100)}</td>
+                    <td className="py-2 px-3 text-right font-mono">{formatZAR(data?.afs?.statementOfChangesInEquity?.openingRetainedIncome || 0)}</td>
+                    <td className="py-2 px-3 text-right font-mono font-bold text-zinc-900 dark:text-white">{formatZAR(data?.afs?.statementOfChangesInEquity?.totalOpeningEquity || 100)}</td>
+                  </tr>
+                  <tr>
+                    <td className="py-2 px-3 font-medium text-zinc-800 dark:text-zinc-200">Current Year Net Operating Profit</td>
+                    <td className="py-2 px-3 text-right font-mono">—</td>
+                    <td className="py-2 px-3 text-right font-mono text-emerald-600 dark:text-emerald-400">{formatZAR(data?.afs?.statementOfChangesInEquity?.currentYearNetProfit || 0)}</td>
+                    <td className="py-2 px-3 text-right font-mono text-emerald-600 dark:text-emerald-400 font-bold">{formatZAR(data?.afs?.statementOfChangesInEquity?.currentYearNetProfit || 0)}</td>
+                  </tr>
+                </tbody>
+                <tfoot>
+                  <tr className="border-t-2 border-zinc-900 dark:border-zinc-100 font-bold text-xs">
+                    <td className="py-2.5 px-3 uppercase text-zinc-900 dark:text-white">Balance at Year End</td>
+                    <td className="py-2.5 px-3 text-right font-mono">{formatZAR(data?.afs?.statementOfChangesInEquity?.closingShareCapital || 100)}</td>
+                    <td className="py-2.5 px-3 text-right font-mono">{formatZAR(data?.afs?.statementOfChangesInEquity?.closingRetainedIncome || 0)}</td>
+                    <td className="py-2.5 px-3 text-right font-mono text-emerald-600 dark:text-emerald-400 text-sm">{formatZAR(data?.afs?.statementOfChangesInEquity?.totalClosingEquity || 0)}</td>
+                  </tr>
+                </tfoot>
+              </table>
+            </div>
+
+            {/* Section 3: Notes to the Financial Statements */}
+            <div className="flex flex-col gap-4">
+              <h3 className="text-xs font-bold uppercase tracking-wider text-zinc-500 border-b pb-1">Notes to the Financial Statements</h3>
+              
+              {/* Note 1 */}
+              <div className="rounded-lg border border-zinc-200 dark:border-zinc-800 p-4 bg-card">
+                <h4 className="text-xs font-bold text-zinc-900 dark:text-white mb-1">Note 1: Basis of Preparation & Accounting Policies</h4>
+                <p className="text-xs text-zinc-600 dark:text-zinc-400 leading-relaxed">
+                  {data?.afs?.notes?.note1BasisOfPreparation}
+                </p>
+              </div>
+
+              {/* Note 2 & Note 3 Grid */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                {/* Note 2: Revenue Breakdown */}
+                <div className="rounded-lg border border-zinc-200 dark:border-zinc-800 p-4 bg-card">
+                  <h4 className="text-xs font-bold text-zinc-900 dark:text-white mb-2">Note 2: Sales Revenue Breakdown</h4>
+                  <div className="flex flex-col divide-y text-xs">
+                    {data?.afs?.notes?.note2RevenueBreakdown?.map((item: any, idx: number) => (
+                      <div key={idx} className="py-1.5 flex justify-between">
+                        <span className="text-zinc-600 dark:text-zinc-400">{item.label}</span>
+                        <span className="font-mono font-semibold text-zinc-900 dark:text-zinc-100">{formatZAR(item.amount)}</span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Note 3: Operating Expenses */}
+                <div className="rounded-lg border border-zinc-200 dark:border-zinc-800 p-4 bg-card">
+                  <h4 className="text-xs font-bold text-zinc-900 dark:text-white mb-2">Note 3: Operating Expenses Breakdown</h4>
+                  <div className="flex flex-col divide-y text-xs max-h-48 overflow-y-auto">
+                    {data?.afs?.notes?.note3OperatingExpenses?.map((item: any, idx: number) => (
+                      <div key={idx} className="py-1.5 flex justify-between">
+                        <span className="text-zinc-600 dark:text-zinc-400">{item.code ? `${item.code} - ` : ''}{item.label}</span>
+                        <span className="font-mono font-semibold text-zinc-900 dark:text-zinc-100">{formatZAR(item.amount)}</span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
               </div>
             </div>
           </div>

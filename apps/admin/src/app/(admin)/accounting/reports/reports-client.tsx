@@ -2,7 +2,7 @@
 
 import * as React from 'react';
 import { useSearchParams, useRouter, usePathname } from 'next/navigation';
-import { Download, Printer, BookOpen, FileText, Table2, Scale, TrendingUp, Building2, Landmark, Banknote, Calendar, Filter, Layers } from 'lucide-react';
+import { Download, Printer, BookOpen, FileText, Table2, Scale, TrendingUp, Building2, Landmark, Banknote, Calendar, Filter, Layers, ShieldCheck } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import {
@@ -25,6 +25,7 @@ interface ReportsClientProps {
 }
 
 type ReportType =
+  | 'annual-financial-statements'
   | 'balance-sheet'
   | 'profit-and-loss'
   | 'division-performance'
@@ -46,6 +47,16 @@ interface ReportConfig {
 }
 
 const REPORT_TYPES: ReportConfig[] = [
+  {
+    id: 'annual-financial-statements',
+    label: 'Annual Financial Statements (AFS)',
+    description: 'Full CIPC-compliant AFS package: Directors Report, Balance Sheet, P&L, Equity, Cash Flow & Notes',
+    icon: ShieldCheck,
+    needsPeriod: true,
+    needsAccount: false,
+    needsDivision: true,
+    supportsDateRange: false,
+  },
   {
     id: 'balance-sheet',
     label: 'Balance Sheet',
@@ -141,6 +152,7 @@ export function ReportsClient({ periods, accounts, divisions, selectedPeriod }: 
   const urlEndDate = searchParams.get('endDate');
 
   const validReportTypes: ReportType[] = [
+    'annual-financial-statements',
     'balance-sheet',
     'profit-and-loss',
     'division-performance',

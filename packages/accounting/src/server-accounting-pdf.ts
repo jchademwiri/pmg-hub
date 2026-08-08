@@ -6,6 +6,7 @@ import {
   getProfitAndLossByDivision,
   getBalanceSheet,
   getCashFlowStatement,
+  getAnnualFinancialStatements,
   getTrialBalance,
   getGeneralLedger,
   getJournalEntries,
@@ -26,6 +27,7 @@ import { PAGE, split, ensurePage, drawShellHeader, drawShellFooter, type PdfOrgH
 import { jsPDF } from 'jspdf';
 
 export type AccountingReportType =
+  | 'annual-financial-statements'
   | 'balance-sheet'
   | 'profit-and-loss'
   | 'division-performance'
@@ -56,6 +58,7 @@ export interface AccountingPdfError {
 }
 
 const REPORT_TYPES: ReadonlySet<AccountingReportType> = new Set([
+  'annual-financial-statements',
   'balance-sheet',
   'profit-and-loss',
   'division-performance',
@@ -774,8 +777,73 @@ async function buildCashFlowPdf(filters: AccountingPdfFilters): Promise<Accounti
   };
 }
 
+async function buildAnnualFinancialStatementsPdf(filters: AccountingPdfFilters): Promise<AccountingPdfResult> {
+  const [result, divisionName] = await Promise.all([
+    getAnnualFinancialStatements(filters.period, filters.divisionId),
+    resolveDivisionName(filters.divisionId),
+  ]);
+  const header = await buildReportHeader('Annual Financial Statements (AFS)', filters.period, divisionName);
+
+  const doc = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' });
+  drawReportHeader(doc, header);
+
+  let y = 72;
+  doc.setFont('helvetica', 'bold');
+  doc.setFontSize(10);
+  doc.setTextColor(37, 99, 235);
+  doc.text('GENERAL INFORMATION & DIRECTORS APPROVAL', 15, y);
+  y += 6;
+
+  doc.setFont('helvetica', 'normal');
+  doc.setFontSize(8);
+  doc.setTextColor(24, 24, 27);
+  doc.text(`Company Name: ${result.generalInfo.companyName}`, 17, y); y += 5;
+  doc.text(`Registration Number: ${result.generalInfo.registrationNumber}`, 17, y); y += 5;
+  doc.text(`Tax Reference Number: ${result.generalInfo.taxReferenceNumber}`, 17, y); y += 5;
+  doc.text(`Registered Address: ${result.generalInfo.registeredAddress}`, 17, y); y += 5;
+  doc.text(`Managing Director: ${result.generalInfo.directorName}`, 17, y); y += 5;
+  doc.text(`Financial Year Ended: ${result.generalInfo.financialYearEnd}`, 17, y); y += 8;
+
+  y = ensurePage(doc, y, 20);
+  doc.setFont('helvetica', 'bold');
+  doc.setFontSize(9);
+  doc.setTextColor(37, 99, 235);
+  doc.text('DIRECTORS REPORT & GOING CONCERN STATEMENT', 15, y);
+  y += 6;
+  doc.setFont('helvetica', 'normal');
+  doc.setFontSize(8);
+  doc.setTextColor(24, 24, 27);
+  const principalText = split(doc, `Principal Activities: ${result.directorsReport.principalActivities}`, 180);
+  doc.text(principalText, 17, y);
+  y += principalText.length * 4 + 4;
+
+  const resultsText = split(doc, result.directorsReport.financialResultsSummary, 180);
+  doc.text(resultsText, 17, y);
+  y += resultsText.length * 4 + 6;
+
+  y = ensurePage(doc, y, 20);
+  doc.setFont('helvetica', 'bold');
+  doc.setFontSize(9);
+  doc.setTextColor(37, 99, 235);
+  doc.text('STATEMENT OF CHANGES IN EQUITY', 15, y);
+  y += 6;
+  y = drawTotalRow(doc, y, 'Opening Equity', result.statementOfChangesInEquity.totalOpeningEquity);
+  y += 5;
+  y = drawTotalRow(doc, y, 'Current Year Net Profit', result.statementOfChangesInEquity.currentYearNetProfit);
+  y += 5;
+  y = drawTotalRow(doc, y, 'Closing Equity', result.statementOfChangesInEquity.totalClosingEquity);
+
+  drawReportFooter(doc, header);
+
+  const suffix = [filters.period ?? 'all-time', filters.divisionId].filter(Boolean).join('-');
+  return {
+    fileName: `annual-financial-statements-${suffix}.pdf`,
+    buffer: Buffer.from(doc.output('arraybuffer')),
+  };
+}
+
 /**
- * Generates a PDF for one of the 8 accounting reports on /accounting/exports.
+ * Generates a PDF for one of the 9 accounting reports on /accounting/reports.
  * Returns null for a valid-but-not-yet-implemented type (filled in phase by
  * phase) or when the underlying data can't be found, or an
  * `AccountingPdfError` when the caller needs to fix their request (e.g.
@@ -786,6 +854,8 @@ export async function generateAccountingPdf(
   filters: AccountingPdfFilters = {},
 ): Promise<AccountingPdfResult | AccountingPdfError | null> {
   switch (type) {
+    case 'annual-financial-statements':
+      return buildAnnualFinancialStatementsPdf(filters);
     case 'balance-sheet':
       return buildBalanceSheetPdf(filters);
     case 'profit-and-loss':

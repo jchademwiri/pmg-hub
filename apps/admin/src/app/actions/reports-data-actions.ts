@@ -10,6 +10,7 @@ import {
   getProfitAndLossByDivision,
   getBalanceSheet,
   getCashFlowStatement,
+  getAnnualFinancialStatements,
   getOrganisationSettings,
   divisions,
 } from '@pmg/db';
@@ -17,6 +18,7 @@ import { getSessionOrRedirect } from '@/lib/auth';
 
 export interface ReportPreviewFilter {
   reportType:
+    | 'annual-financial-statements'
     | 'balance-sheet'
     | 'profit-and-loss'
     | 'division-performance'
@@ -143,6 +145,13 @@ export async function fetchReportPreviewData(filter: ReportPreviewFilter) {
         const d = filter.divisionId !== 'all' ? filter.divisionId : undefined;
         const balanceSheet = await getBalanceSheet(periodMonth, d, startDate, endDate);
         data = { balanceSheet };
+        break;
+      }
+
+      case 'annual-financial-statements': {
+        const d = filter.divisionId !== 'all' ? filter.divisionId : undefined;
+        const afs = await getAnnualFinancialStatements(periodMonth, d, startDate, endDate);
+        data = { afs };
         break;
       }
 
