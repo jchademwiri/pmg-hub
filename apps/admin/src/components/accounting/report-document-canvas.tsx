@@ -382,15 +382,15 @@ export function ReportDocumentCanvas({
 
         {/* 3. CLIENT PERFORMANCE */}
         {reportType === 'client-performance' && (
-          <table className="w-full text-left text-xs border-collapse">
+          <table className="w-full text-left text-xs border-collapse" suppressHydrationWarning>
             <thead>
-              <tr className="border-b border-zinc-200 dark:border-zinc-800 text-zinc-500 dark:text-zinc-400 uppercase tracking-wider text-[10px] font-bold">
+              <tr className="border-b border-zinc-200 dark:border-zinc-800 text-zinc-500 dark:text-zinc-400 uppercase tracking-wider text-[10px] font-bold" suppressHydrationWarning>
                 <th className="py-2.5 px-2">Client Name</th>
                 <th className="py-2.5 px-2 text-right">Invoiced Revenue (ZAR)</th>
                 <th className="py-2.5 px-2 text-right">Cash Collected (ZAR)</th>
                 <th className="py-2.5 px-2 text-right">Outstanding AR (ZAR)</th>
                 <th className="py-2.5 px-2 text-right">Collection Rate %</th>
-                <th className="py-2.5 px-2 text-right">Concentration %</th>
+                <th className="py-2.5 px-2 text-right" suppressHydrationWarning>Concentration %</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-zinc-100 dark:divide-zinc-900">
