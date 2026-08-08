@@ -611,150 +611,517 @@ export function ReportDocumentCanvas({
         )}
 
         {/* 9. ANNUAL FINANCIAL STATEMENTS (AFS) */}
-        {reportType === 'annual-financial-statements' && (
-          <div className="flex flex-col gap-8">
-            {/* General Info & Directors Approval Header */}
-            <div className="p-5 rounded-2xl bg-zinc-900 text-white flex flex-col gap-4">
-              <div className="flex flex-wrap justify-between items-start border-b border-zinc-800 pb-4 gap-4">
-                <div>
-                  <span className="text-[10px] uppercase font-bold tracking-widest text-emerald-400">CIPC Financial Reporting Package</span>
-                  <h2 className="text-lg font-extrabold text-white mt-0.5">{data?.afs?.generalInfo?.companyName || 'PLAYHOUSE MEDIA GROUP (PTY) LTD'}</h2>
-                  <p className="text-xs text-zinc-400 font-mono mt-1">Registration No: {data?.afs?.generalInfo?.registrationNumber || '2023/683669/07'} | Tax Ref: {data?.afs?.generalInfo?.taxReferenceNumber || '9876543210'}</p>
-                </div>
-                <div className="text-right">
-                  <span className="text-xs font-mono px-2.5 py-1 rounded-md bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 font-bold">
-                    {data?.afs?.generalInfo?.financialYear || 'FY2026'} Full Year AFS
-                  </span>
-                  <p className="text-[11px] text-zinc-400 mt-1">Financial Year Ended: {data?.afs?.generalInfo?.financialYearEnd || '28 February'}</p>
-                </div>
-              </div>
+        {reportType === 'annual-financial-statements' && (() => {
+          const curYear = data?.afs?.generalInfo?.currentYearLabel || '2027';
+          const priYear = data?.afs?.generalInfo?.priorYearLabel || '2026';
+          const info = data?.afs?.generalInfo;
+          const dr = data?.afs?.directorsReport;
+          const pnl = data?.afs?.statementOfProfitLoss;
+          const bs = data?.afs?.statementOfPosition;
+          const eq = data?.afs?.statementOfChangesInEquity;
+          const cf = data?.afs?.statementOfCashFlows;
+          const det = data?.afs?.detailedIncomeStatement;
 
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-xs text-zinc-300">
-                <div>
-                  <span className="text-zinc-500 text-[10px] uppercase font-bold tracking-wider block mb-1">Registered Address</span>
-                  <p className="font-medium text-zinc-200">{data?.afs?.generalInfo?.registeredAddress}</p>
-                </div>
-                <div>
-                  <span className="text-zinc-500 text-[10px] uppercase font-bold tracking-wider block mb-1">Director Approval Sign-off</span>
-                  <p className="font-medium text-zinc-200">Director: {data?.afs?.generalInfo?.directorName}</p>
-                  <p className="text-[11px] text-emerald-400 font-medium mt-0.5">Approved and authorized for issue by the Board of Directors</p>
-                </div>
-              </div>
-            </div>
-
-            {/* Directors' Report */}
-            <div className="rounded-xl border border-zinc-200 dark:border-zinc-800 p-5 bg-card flex flex-col gap-3">
-              <h3 className="text-xs font-bold uppercase tracking-wider text-zinc-500 border-b pb-2">Directors' Report</h3>
-              <p className="text-xs text-zinc-700 dark:text-zinc-300 leading-relaxed">
-                {data?.afs?.directorsReport?.principalActivities}
-              </p>
-              <div className="p-3 rounded-lg bg-zinc-50 dark:bg-zinc-900 border border-zinc-200/60 dark:border-zinc-800 text-xs text-zinc-800 dark:text-zinc-200 font-medium">
-                {data?.afs?.directorsReport?.financialResultsSummary}
-              </div>
-              <p className="text-xs text-zinc-600 dark:text-zinc-400">
-                <strong className="text-zinc-800 dark:text-zinc-200">Going Concern:</strong> {data?.afs?.directorsReport?.goingConcernStatement}
-              </p>
-            </div>
-
-            {/* Section 1: Balance Sheet Summary */}
-            <div className="flex flex-col gap-3">
-              <h3 className="text-xs font-bold uppercase tracking-wider text-zinc-500 border-b pb-1">Statement of Financial Position</h3>
-              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-                <div className="p-3 rounded-xl border bg-card flex flex-col justify-between">
-                  <span className="text-[10px] font-bold text-zinc-500 uppercase">Total Assets</span>
-                  <span className="text-base font-bold font-mono text-zinc-900 dark:text-white mt-1">{formatZAR(data?.afs?.statementOfPosition?.totalAssets || 0)}</span>
-                </div>
-                <div className="p-3 rounded-xl border bg-card flex flex-col justify-between">
-                  <span className="text-[10px] font-bold text-zinc-500 uppercase">Total Liabilities</span>
-                  <span className="text-base font-bold font-mono text-amber-600 dark:text-amber-400 mt-1">{formatZAR(data?.afs?.statementOfPosition?.totalLiabilities || 0)}</span>
-                </div>
-                <div className="p-3 rounded-xl border bg-card flex flex-col justify-between">
-                  <span className="text-[10px] font-bold text-zinc-500 uppercase">Net Shareholders Equity</span>
-                  <span className="text-base font-bold font-mono text-emerald-600 dark:text-emerald-400 mt-1">{formatZAR(data?.afs?.statementOfPosition?.totalEquity || 0)}</span>
-                </div>
-              </div>
-            </div>
-
-            {/* Section 2: Statement of Changes in Equity */}
-            <div className="flex flex-col gap-3">
-              <h3 className="text-xs font-bold uppercase tracking-wider text-zinc-500 border-b pb-1">Statement of Changes in Equity</h3>
-              <table className="w-full text-left text-xs border-collapse">
-                <thead>
-                  <tr className="border-b border-zinc-200 dark:border-zinc-800 text-zinc-500 text-[10px] font-bold uppercase">
-                    <th className="py-2 px-3">Description</th>
-                    <th className="py-2 px-3 text-right">Share Capital</th>
-                    <th className="py-2 px-3 text-right">Retained Income</th>
-                    <th className="py-2 px-3 text-right">Total Equity</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-zinc-100 dark:divide-zinc-900">
-                  <tr>
-                    <td className="py-2 px-3 font-medium text-zinc-800 dark:text-zinc-200">Balance as of March 1</td>
-                    <td className="py-2 px-3 text-right font-mono">{formatZAR(data?.afs?.statementOfChangesInEquity?.openingShareCapital || 100)}</td>
-                    <td className="py-2 px-3 text-right font-mono">{formatZAR(data?.afs?.statementOfChangesInEquity?.openingRetainedIncome || 0)}</td>
-                    <td className="py-2 px-3 text-right font-mono font-bold text-zinc-900 dark:text-white">{formatZAR(data?.afs?.statementOfChangesInEquity?.totalOpeningEquity || 100)}</td>
-                  </tr>
-                  <tr>
-                    <td className="py-2 px-3 font-medium text-zinc-800 dark:text-zinc-200">Current Year Net Operating Profit</td>
-                    <td className="py-2 px-3 text-right font-mono">—</td>
-                    <td className="py-2 px-3 text-right font-mono text-emerald-600 dark:text-emerald-400">{formatZAR(data?.afs?.statementOfChangesInEquity?.currentYearNetProfit || 0)}</td>
-                    <td className="py-2 px-3 text-right font-mono text-emerald-600 dark:text-emerald-400 font-bold">{formatZAR(data?.afs?.statementOfChangesInEquity?.currentYearNetProfit || 0)}</td>
-                  </tr>
-                </tbody>
-                <tfoot>
-                  <tr className="border-t-2 border-zinc-900 dark:border-zinc-100 font-bold text-xs">
-                    <td className="py-2.5 px-3 uppercase text-zinc-900 dark:text-white">Balance at Year End</td>
-                    <td className="py-2.5 px-3 text-right font-mono">{formatZAR(data?.afs?.statementOfChangesInEquity?.closingShareCapital || 100)}</td>
-                    <td className="py-2.5 px-3 text-right font-mono">{formatZAR(data?.afs?.statementOfChangesInEquity?.closingRetainedIncome || 0)}</td>
-                    <td className="py-2.5 px-3 text-right font-mono text-emerald-600 dark:text-emerald-400 text-sm">{formatZAR(data?.afs?.statementOfChangesInEquity?.totalClosingEquity || 0)}</td>
-                  </tr>
-                </tfoot>
-              </table>
-            </div>
-
-            {/* Section 3: Notes to the Financial Statements */}
-            <div className="flex flex-col gap-4">
-              <h3 className="text-xs font-bold uppercase tracking-wider text-zinc-500 border-b pb-1">Notes to the Financial Statements</h3>
-              
-              {/* Note 1 */}
-              <div className="rounded-lg border border-zinc-200 dark:border-zinc-800 p-4 bg-card">
-                <h4 className="text-xs font-bold text-zinc-900 dark:text-white mb-1">Note 1: Basis of Preparation & Accounting Policies</h4>
-                <p className="text-xs text-zinc-600 dark:text-zinc-400 leading-relaxed">
-                  {data?.afs?.notes?.note1BasisOfPreparation}
-                </p>
-              </div>
-
-              {/* Note 2 & Note 3 Grid */}
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                {/* Note 2: Revenue Breakdown */}
-                <div className="rounded-lg border border-zinc-200 dark:border-zinc-800 p-4 bg-card">
-                  <h4 className="text-xs font-bold text-zinc-900 dark:text-white mb-2">Note 2: Sales Revenue Breakdown</h4>
-                  <div className="flex flex-col divide-y text-xs">
-                    {data?.afs?.notes?.note2RevenueBreakdown?.map((item: any, idx: number) => (
-                      <div key={idx} className="py-1.5 flex justify-between">
-                        <span className="text-zinc-600 dark:text-zinc-400">{item.label}</span>
-                        <span className="font-mono font-semibold text-zinc-900 dark:text-zinc-100">{formatZAR(item.amount)}</span>
-                      </div>
-                    ))}
+          return (
+            <div className="flex flex-col gap-10">
+              {/* PAGE 1: DIRECTORS' REPORT & BUSINESS ACTIVITIES */}
+              <div className="flex flex-col gap-6">
+                <div className="border-b-2 border-zinc-900 dark:border-zinc-100 pb-3 flex justify-between items-end">
+                  <div>
+                    <h2 className="text-base font-extrabold uppercase text-zinc-900 dark:text-white tracking-wide">{info?.companyName}</h2>
+                    <p className="text-xs text-zinc-500 font-medium mt-0.5">Registration Number: {info?.registrationNumber}</p>
+                  </div>
+                  <div className="text-right">
+                    <h3 className="text-xs font-bold text-zinc-900 dark:text-white uppercase tracking-wider">DIRECTORS' REPORT</h3>
+                    <p className="text-xs text-zinc-500 font-medium">for the year ended {info?.financialYearEnd}</p>
                   </div>
                 </div>
 
-                {/* Note 3: Operating Expenses */}
-                <div className="rounded-lg border border-zinc-200 dark:border-zinc-800 p-4 bg-card">
-                  <h4 className="text-xs font-bold text-zinc-900 dark:text-white mb-2">Note 3: Operating Expenses Breakdown</h4>
-                  <div className="flex flex-col divide-y text-xs">
-                    {data?.afs?.notes?.note3OperatingExpenses?.map((item: any, idx: number) => (
-                      <div key={idx} className="py-1.5 flex justify-between">
-                        <span className="text-zinc-600 dark:text-zinc-400">{item.code ? `${item.code} - ` : ''}{item.label}</span>
-                        <span className="font-mono font-semibold text-zinc-900 dark:text-zinc-100">{formatZAR(item.amount)}</span>
-                      </div>
-                    ))}
+                <div className="text-xs flex flex-col gap-4 text-zinc-800 dark:text-zinc-200">
+                  <div>
+                    <h4 className="font-bold uppercase text-zinc-500 text-[10px] tracking-wider mb-1">1. Nature of business</h4>
+                    <p className="leading-relaxed text-zinc-700 dark:text-zinc-300">{dr?.principalActivities}</p>
+                  </div>
+
+                  <div>
+                    <h4 className="font-bold uppercase text-zinc-500 text-[10px] tracking-wider mb-2">2. Business activities & Financial Results</h4>
+                    <table className="w-full text-left text-xs border-collapse">
+                      <thead>
+                        <tr className="border-b border-zinc-300 dark:border-zinc-700 text-zinc-500 text-[10px] font-bold uppercase">
+                          <th className="py-2 px-2">Financial Indicator</th>
+                          <th className="py-2 px-2 text-right font-mono">{curYear} (R)</th>
+                          <th className="py-2 px-2 text-right font-mono">{priYear} (R)</th>
+                        </tr>
+                      </thead>
+                      <tbody className="divide-y divide-zinc-100 dark:divide-zinc-900 font-mono">
+                        <tr className="font-bold text-zinc-900 dark:text-white">
+                          <td className="py-2 px-2 font-sans">Sales Revenue (Group Total)</td>
+                          <td className="py-2 px-2 text-right text-emerald-600 dark:text-emerald-400">{formatZAR(dr?.businessActivities?.revenue?.current || 0)}</td>
+                          <td className="py-2 px-2 text-right text-zinc-400">{formatZAR(dr?.businessActivities?.revenue?.prior || 0)}</td>
+                        </tr>
+                        {dr?.divisionBreakdown?.map((div: any) => (
+                          <tr key={div.divisionId} className="text-zinc-600 dark:text-zinc-400 italic">
+                            <td className="py-1 px-4 font-sans">├── {div.divisionName}</td>
+                            <td className="py-1 px-2 text-right">{formatZAR(div.current)}</td>
+                            <td className="py-1 px-2 text-right text-zinc-400">{formatZAR(div.prior)}</td>
+                          </tr>
+                        ))}
+                        <tr>
+                          <td className="py-2 px-2 font-sans font-medium text-zinc-800 dark:text-zinc-200">Operating profit / (loss)</td>
+                          <td className="py-2 px-2 text-right font-semibold text-zinc-900 dark:text-white">{formatZAR(dr?.businessActivities?.operatingProfit?.current || 0)}</td>
+                          <td className="py-2 px-2 text-right text-zinc-400">{formatZAR(dr?.businessActivities?.operatingProfit?.prior || 0)}</td>
+                        </tr>
+                        <tr>
+                          <td className="py-2 px-2 font-sans font-medium text-zinc-800 dark:text-zinc-200">Profit / (loss) for the year</td>
+                          <td className="py-2 px-2 text-right font-semibold text-emerald-600 dark:text-emerald-400">{formatZAR(dr?.businessActivities?.netProfit?.current || 0)}</td>
+                          <td className="py-2 px-2 text-right text-zinc-400">{formatZAR(dr?.businessActivities?.netProfit?.prior || 0)}</td>
+                        </tr>
+                        <tr>
+                          <td className="py-2 px-2 font-sans font-medium text-zinc-800 dark:text-zinc-200">Total assets</td>
+                          <td className="py-2 px-2 text-right font-semibold text-zinc-900 dark:text-white">{formatZAR(dr?.businessActivities?.totalAssets?.current || 0)}</td>
+                          <td className="py-2 px-2 text-right text-zinc-400">{formatZAR(dr?.businessActivities?.totalAssets?.prior || 0)}</td>
+                        </tr>
+                        <tr>
+                          <td className="py-2 px-2 font-sans font-medium text-zinc-800 dark:text-zinc-200">Total liabilities</td>
+                          <td className="py-2 px-2 text-right font-semibold text-amber-600 dark:text-amber-400">{formatZAR(dr?.businessActivities?.totalLiabilities?.current || 0)}</td>
+                          <td className="py-2 px-2 text-right text-zinc-400">{formatZAR(dr?.businessActivities?.totalLiabilities?.prior || 0)}</td>
+                        </tr>
+                      </tbody>
+                    </table>
+                  </div>
+
+                  <div className="pt-2 flex flex-col gap-2">
+                    <h4 className="font-bold uppercase text-zinc-500 text-[10px] tracking-wider">3. Going concern & Subsequent Events</h4>
+                    <p className="leading-relaxed text-zinc-700 dark:text-zinc-300">{dr?.goingConcernStatement}</p>
+                    <p className="leading-relaxed text-zinc-600 dark:text-zinc-400">{dr?.eventsAfterReportingPeriod}</p>
+                  </div>
+
+                  <div className="mt-6 pt-4 border-t border-zinc-200 dark:border-zinc-800 flex justify-between items-end">
+                    <div>
+                      <div className="border-b border-zinc-900 dark:border-zinc-100 w-48 mb-1" />
+                      <p className="font-bold text-zinc-900 dark:text-white">{info?.directorName}</p>
+                      <p className="text-[10px] text-zinc-500">Managing Director</p>
+                    </div>
+                    <span className="text-[10px] text-zinc-400 font-mono">Page 1</span>
                   </div>
                 </div>
               </div>
+
+              {/* PAGE 2: INCOME STATEMENT */}
+              <div className="flex flex-col gap-6 pt-8 border-t-2 border-zinc-200 dark:border-zinc-800 print:break-before-page break-before-page">
+                <div className="border-b-2 border-zinc-900 dark:border-zinc-100 pb-3 flex justify-between items-end">
+                  <div>
+                    <h2 className="text-base font-extrabold uppercase text-zinc-900 dark:text-white tracking-wide">{info?.companyName}</h2>
+                    <p className="text-xs text-zinc-500 font-medium mt-0.5">Registration Number: {info?.registrationNumber}</p>
+                  </div>
+                  <div className="text-right">
+                    <h3 className="text-xs font-bold text-zinc-900 dark:text-white uppercase tracking-wider">INCOME STATEMENT</h3>
+                    <p className="text-xs text-zinc-500 font-medium">for the year ended {info?.financialYearEnd}</p>
+                  </div>
+                </div>
+
+                <table className="w-full text-left text-xs border-collapse">
+                  <thead>
+                    <tr className="border-b-2 border-zinc-900 dark:border-zinc-100 text-zinc-500 text-[10px] font-bold uppercase">
+                      <th className="py-2.5 px-2">Account Description</th>
+                      <th className="py-2.5 px-2 text-center w-16">NOTES</th>
+                      <th className="py-2.5 px-2 text-right font-mono w-32">{curYear} (R)</th>
+                      <th className="py-2.5 px-2 text-right font-mono w-32">{priYear} (R)</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-zinc-100 dark:divide-zinc-900 font-mono">
+                    <tr className="font-bold text-zinc-900 dark:text-white bg-zinc-50/50 dark:bg-zinc-900/30">
+                      <td className="py-2 px-2 font-sans">Sales Revenue (Group Total)</td>
+                      <td className="py-2 px-2 text-center font-sans text-zinc-400">Note 2</td>
+                      <td className="py-2 px-2 text-right text-emerald-600 dark:text-emerald-400">{formatZAR(pnl?.revenue?.current || 0)}</td>
+                      <td className="py-2 px-2 text-right text-zinc-400">{formatZAR(pnl?.revenue?.prior || 0)}</td>
+                    </tr>
+                    {pnl?.divisionBreakdown?.map((div: any) => (
+                      <tr key={div.divisionId} className="text-zinc-600 dark:text-zinc-400 italic">
+                        <td className="py-1 px-4 font-sans">├── {div.divisionName}</td>
+                        <td className="py-1 px-2 text-center font-sans text-zinc-400">Note 2</td>
+                        <td className="py-1 px-2 text-right">{formatZAR(div.current)}</td>
+                        <td className="py-1 px-2 text-right text-zinc-400">{formatZAR(div.prior)}</td>
+                      </tr>
+                    ))}
+                    <tr>
+                      <td className="py-2 px-2 font-sans text-zinc-700 dark:text-zinc-300">Less: Depreciation expense</td>
+                      <td className="py-2 px-2 text-center font-sans text-zinc-400">Note 5</td>
+                      <td className="py-2 px-2 text-right">{formatZAR(pnl?.depreciation?.current || 0)}</td>
+                      <td className="py-2 px-2 text-right text-zinc-400">{formatZAR(pnl?.depreciation?.prior || 0)}</td>
+                    </tr>
+                    <tr>
+                      <td className="py-2 px-2 font-sans text-zinc-700 dark:text-zinc-300">Employee benefits expense</td>
+                      <td className="py-2 px-2 text-center font-sans text-zinc-400">Note 1</td>
+                      <td className="py-2 px-2 text-right">{formatZAR(pnl?.employeeBenefits?.current || 0)}</td>
+                      <td className="py-2 px-2 text-right text-zinc-400">{formatZAR(pnl?.employeeBenefits?.prior || 0)}</td>
+                    </tr>
+                    <tr>
+                      <td className="py-2 px-2 font-sans text-zinc-700 dark:text-zinc-300">Other operating expenses</td>
+                      <td className="py-2 px-2 text-center font-sans text-zinc-400">Note 3</td>
+                      <td className="py-2 px-2 text-right">{formatZAR(pnl?.totalExpenses?.current || 0)}</td>
+                      <td className="py-2 px-2 text-right text-zinc-400">{formatZAR(pnl?.totalExpenses?.prior || 0)}</td>
+                    </tr>
+                    <tr className="font-bold border-t border-b border-zinc-900 dark:border-zinc-100 text-zinc-900 dark:text-white">
+                      <td className="py-2.5 px-2 font-sans uppercase">Operating profit / (loss)</td>
+                      <td className="py-2.5 px-2 text-center font-sans text-zinc-400"></td>
+                      <td className="py-2.5 px-2 text-right text-emerald-600 dark:text-emerald-400">{formatZAR(pnl?.operatingProfit?.current || 0)}</td>
+                      <td className="py-2.5 px-2 text-right text-zinc-400">{formatZAR(pnl?.operatingProfit?.prior || 0)}</td>
+                    </tr>
+                    <tr>
+                      <td className="py-2 px-2 font-sans text-zinc-700 dark:text-zinc-300">Investment revenues</td>
+                      <td className="py-2 px-2 text-center font-sans text-zinc-400">Note 2</td>
+                      <td className="py-2 px-2 text-right">—</td>
+                      <td className="py-2 px-2 text-right text-zinc-400">—</td>
+                    </tr>
+                    <tr>
+                      <td className="py-2 px-2 font-sans text-zinc-700 dark:text-zinc-300">Interest on finance cost</td>
+                      <td className="py-2 px-2 text-center font-sans text-zinc-400">Note 2</td>
+                      <td className="py-2 px-2 text-right">—</td>
+                      <td className="py-2 px-2 text-right text-zinc-400">—</td>
+                    </tr>
+                    <tr className="font-bold text-zinc-900 dark:text-white">
+                      <td className="py-2.5 px-2 font-sans uppercase">Profit / (loss) before tax</td>
+                      <td className="py-2.5 px-2 text-center font-sans text-zinc-400"></td>
+                      <td className="py-2.5 px-2 text-right">{formatZAR(pnl?.profitBeforeTax?.current || 0)}</td>
+                      <td className="py-2.5 px-2 text-right text-zinc-400">{formatZAR(pnl?.profitBeforeTax?.prior || 0)}</td>
+                    </tr>
+                    <tr>
+                      <td className="py-2 px-2 font-sans text-zinc-700 dark:text-zinc-300">Income tax expense</td>
+                      <td className="py-2 px-2 text-center font-sans text-zinc-400">Note 3</td>
+                      <td className="py-2 px-2 text-right">—</td>
+                      <td className="py-2 px-2 text-right text-zinc-400">—</td>
+                    </tr>
+                    <tr className="font-extrabold border-t-2 border-b-2 border-zinc-900 dark:border-zinc-100 text-sm text-zinc-900 dark:text-white bg-zinc-50 dark:bg-zinc-900/50">
+                      <td className="py-3 px-2 font-sans uppercase">Profit / (loss) for the year</td>
+                      <td className="py-3 px-2 text-center font-sans text-zinc-400">Note 4</td>
+                      <td className="py-3 px-2 text-right text-emerald-600 dark:text-emerald-400">{formatZAR(pnl?.netProfit?.current || 0)}</td>
+                      <td className="py-3 px-2 text-right text-zinc-400">{formatZAR(pnl?.netProfit?.prior || 0)}</td>
+                    </tr>
+                  </tbody>
+                </table>
+
+                <div className="mt-8 pt-4 border-t border-zinc-200 dark:border-zinc-800 flex justify-between text-[10px] text-zinc-400">
+                  <span>Annual Financial Statements — {info?.companyName}</span>
+                  <span className="font-mono">Page 2</span>
+                </div>
+              </div>
+
+              {/* PAGE 3: BALANCE SHEET */}
+              <div className="flex flex-col gap-6 pt-8 border-t-2 border-zinc-200 dark:border-zinc-800 print:break-before-page break-before-page">
+                <div className="border-b-2 border-zinc-900 dark:border-zinc-100 pb-3 flex justify-between items-end">
+                  <div>
+                    <h2 className="text-base font-extrabold uppercase text-zinc-900 dark:text-white tracking-wide">{info?.companyName}</h2>
+                    <p className="text-xs text-zinc-500 font-medium mt-0.5">Registration Number: {info?.registrationNumber}</p>
+                  </div>
+                  <div className="text-right">
+                    <h3 className="text-xs font-bold text-zinc-900 dark:text-white uppercase tracking-wider">BALANCE SHEET</h3>
+                    <p className="text-xs text-zinc-500 font-medium">at {info?.financialYearEnd}</p>
+                  </div>
+                </div>
+
+                <table className="w-full text-left text-xs border-collapse">
+                  <thead>
+                    <tr className="border-b-2 border-zinc-900 dark:border-zinc-100 text-zinc-500 text-[10px] font-bold uppercase">
+                      <th className="py-2.5 px-2">Account Description</th>
+                      <th className="py-2.5 px-2 text-center w-16">NOTES</th>
+                      <th className="py-2.5 px-2 text-right font-mono w-32">{curYear} (R)</th>
+                      <th className="py-2.5 px-2 text-right font-mono w-32">{priYear} (R)</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-zinc-100 dark:divide-zinc-900 font-mono">
+                    <tr className="font-bold text-zinc-900 dark:text-white uppercase text-[11px] bg-zinc-50 dark:bg-zinc-900/40">
+                      <td colSpan={4} className="py-2 px-2 font-sans">ASSETS</td>
+                    </tr>
+                    <tr className="font-semibold text-zinc-800 dark:text-zinc-200 italic">
+                      <td colSpan={4} className="py-1.5 px-3 font-sans">Non-current assets</td>
+                    </tr>
+                    {bs?.assets?.filter((a: any) => a.accountType === 'asset' && !a.accountName.toLowerCase().includes('receivable') && !a.accountName.toLowerCase().includes('bank') && !a.accountName.toLowerCase().includes('cash')).map((a: any) => (
+                      <tr key={a.accountId}>
+                        <td className="py-1.5 px-5 font-sans text-zinc-700 dark:text-zinc-300">{a.accountName}</td>
+                        <td className="py-1.5 px-2 text-center font-sans text-zinc-400">Note 5</td>
+                        <td className="py-1.5 px-2 text-right">{formatZAR(a.amount)}</td>
+                        <td className="py-1.5 px-2 text-right text-zinc-400">—</td>
+                      </tr>
+                    ))}
+                    <tr className="font-semibold text-zinc-800 dark:text-zinc-200 italic">
+                      <td colSpan={4} className="py-1.5 px-3 font-sans">Current assets</td>
+                    </tr>
+                    {bs?.assets?.filter((a: any) => a.accountName.toLowerCase().includes('receivable') || a.accountName.toLowerCase().includes('bank') || a.accountName.toLowerCase().includes('cash')).map((a: any) => (
+                      <tr key={a.accountId}>
+                        <td className="py-1.5 px-5 font-sans text-zinc-700 dark:text-zinc-300">{a.accountName}</td>
+                        <td className="py-1.5 px-2 text-center font-sans text-zinc-400">{a.accountName.toLowerCase().includes('receivable') ? 'Note 7' : 'Note 8'}</td>
+                        <td className="py-1.5 px-2 text-right">{formatZAR(a.amount)}</td>
+                        <td className="py-1.5 px-2 text-right text-zinc-400">—</td>
+                      </tr>
+                    ))}
+                    <tr className="font-extrabold border-t-2 border-b-2 border-zinc-900 dark:border-zinc-100 text-zinc-900 dark:text-white bg-zinc-50 dark:bg-zinc-900/50">
+                      <td className="py-3 px-2 font-sans uppercase">Total assets</td>
+                      <td className="py-3 px-2 text-center font-sans text-zinc-400"></td>
+                      <td className="py-3 px-2 text-right text-emerald-600 dark:text-emerald-400">{formatZAR(bs?.totalAssets?.current || 0)}</td>
+                      <td className="py-3 px-2 text-right text-zinc-400">{formatZAR(bs?.totalAssets?.prior || 0)}</td>
+                    </tr>
+
+                    <tr className="font-bold text-zinc-900 dark:text-white uppercase text-[11px] bg-zinc-50 dark:bg-zinc-900/40">
+                      <td colSpan={4} className="py-2 px-2 font-sans pt-4">EQUITY AND LIABILITIES</td>
+                    </tr>
+                    <tr className="font-semibold text-zinc-800 dark:text-zinc-200 italic">
+                      <td colSpan={4} className="py-1.5 px-3 font-sans">Capital and reserves</td>
+                    </tr>
+                    <tr>
+                      <td className="py-1.5 px-5 font-sans text-zinc-700 dark:text-zinc-300">Shareholders Contribution</td>
+                      <td className="py-1.5 px-2 text-center font-sans text-zinc-400">Note 10</td>
+                      <td className="py-1.5 px-2 text-right">R 100,00</td>
+                      <td className="py-1.5 px-2 text-right text-zinc-400">R 100,00</td>
+                    </tr>
+                    <tr>
+                      <td className="py-1.5 px-5 font-sans text-zinc-700 dark:text-zinc-300">Retained earnings</td>
+                      <td className="py-1.5 px-2 text-center font-sans text-zinc-400">Note 4</td>
+                      <td className="py-1.5 px-2 text-right">{formatZAR(pnl?.netProfit?.current || 0)}</td>
+                      <td className="py-1.5 px-2 text-right text-zinc-400">{formatZAR(pnl?.netProfit?.prior || 0)}</td>
+                    </tr>
+                    <tr className="font-semibold text-zinc-800 dark:text-zinc-200 italic">
+                      <td colSpan={4} className="py-1.5 px-3 font-sans">Current liabilities</td>
+                    </tr>
+                    {bs?.liabilities?.map((l: any) => (
+                      <tr key={l.accountId}>
+                        <td className="py-1.5 px-5 font-sans text-zinc-700 dark:text-zinc-300">{l.accountName}</td>
+                        <td className="py-1.5 px-2 text-center font-sans text-zinc-400">Note 11</td>
+                        <td className="py-1.5 px-2 text-right">{formatZAR(l.amount)}</td>
+                        <td className="py-1.5 px-2 text-right text-zinc-400">—</td>
+                      </tr>
+                    ))}
+                    <tr className="font-extrabold border-t-2 border-b-2 border-zinc-900 dark:border-zinc-100 text-sm text-zinc-900 dark:text-white bg-zinc-50 dark:bg-zinc-900/50">
+                      <td className="py-3 px-2 font-sans uppercase">Total equity and liabilities</td>
+                      <td className="py-3 px-2 text-center font-sans text-zinc-400"></td>
+                      <td className="py-3 px-2 text-right text-emerald-600 dark:text-emerald-400">{formatZAR(bs?.totalLiabilitiesAndEquity?.current || 0)}</td>
+                      <td className="py-3 px-2 text-right text-zinc-400">{formatZAR(bs?.totalLiabilitiesAndEquity?.prior || 0)}</td>
+                    </tr>
+                  </tbody>
+                </table>
+
+                <div className="mt-8 pt-4 border-t border-zinc-200 dark:border-zinc-800 flex justify-between text-[10px] text-zinc-400">
+                  <span>Annual Financial Statements — {info?.companyName}</span>
+                  <span className="font-mono">Page 3</span>
+                </div>
+              </div>
+
+              {/* PAGE 4: STATEMENT OF CHANGES IN EQUITY */}
+              <div className="flex flex-col gap-6 pt-8 border-t-2 border-zinc-200 dark:border-zinc-800 print:break-before-page break-before-page">
+                <div className="border-b-2 border-zinc-900 dark:border-zinc-100 pb-3 flex justify-between items-end">
+                  <div>
+                    <h2 className="text-base font-extrabold uppercase text-zinc-900 dark:text-white tracking-wide">{info?.companyName}</h2>
+                    <p className="text-xs text-zinc-500 font-medium mt-0.5">Registration Number: {info?.registrationNumber}</p>
+                  </div>
+                  <div className="text-right">
+                    <h3 className="text-xs font-bold text-zinc-900 dark:text-white uppercase tracking-wider">STATEMENT OF CHANGES IN EQUITY</h3>
+                    <p className="text-xs text-zinc-500 font-medium">for the year ended {info?.financialYearEnd}</p>
+                  </div>
+                </div>
+
+                <table className="w-full text-left text-xs border-collapse font-mono">
+                  <thead>
+                    <tr className="border-b-2 border-zinc-900 dark:border-zinc-100 text-zinc-500 text-[10px] font-bold uppercase">
+                      <th className="py-2.5 px-2 font-sans">Period / Movement Description</th>
+                      <th className="py-2.5 px-2 text-right">Shareholders Contribution (R)</th>
+                      <th className="py-2.5 px-2 text-right">Retained Earnings (R)</th>
+                      <th className="py-2.5 px-2 text-right">Total Equity (R)</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-zinc-100 dark:divide-zinc-900">
+                    <tr>
+                      <td className="py-2 px-2 font-sans font-medium text-zinc-800 dark:text-zinc-200">Balance at {eq?.priorYearStartLabel || '1 March 2025'}</td>
+                      <td className="py-2 px-2 text-right">100,00</td>
+                      <td className="py-2 px-2 text-right">0,00</td>
+                      <td className="py-2 px-2 text-right font-semibold">100,00</td>
+                    </tr>
+                    <tr>
+                      <td className="py-2 px-2 font-sans text-zinc-600 dark:text-zinc-400">Net profit / (loss) for FY{priYear}</td>
+                      <td className="py-2 px-2 text-right">—</td>
+                      <td className="py-2 px-2 text-right">{formatZAR(eq?.priorNetProfit || 0)}</td>
+                      <td className="py-2 px-2 text-right">{formatZAR(eq?.priorNetProfit || 0)}</td>
+                    </tr>
+                    <tr className="font-bold border-t border-zinc-300 dark:border-zinc-700 bg-zinc-50/40 dark:bg-zinc-900/30">
+                      <td className="py-2 px-2 font-sans">Balance at {eq?.priorYearEndLabel || '28 February 2026'}</td>
+                      <td className="py-2 px-2 text-right">100,00</td>
+                      <td className="py-2 px-2 text-right">{formatZAR(eq?.priorClosingRetained || 0)}</td>
+                      <td className="py-2 px-2 text-right">{formatZAR(100 + (eq?.priorClosingRetained || 0))}</td>
+                    </tr>
+                    <tr>
+                      <td className="py-2 px-2 font-sans font-medium text-zinc-800 dark:text-zinc-200">Balance at 1 March {priYear}</td>
+                      <td className="py-2 px-2 text-right">100,00</td>
+                      <td className="py-2 px-2 text-right">{formatZAR(eq?.currentOpeningRetained || 0)}</td>
+                      <td className="py-2 px-2 text-right font-semibold">{formatZAR(100 + (eq?.currentOpeningRetained || 0))}</td>
+                    </tr>
+                    <tr>
+                      <td className="py-2 px-2 font-sans text-zinc-600 dark:text-zinc-400">Net profit / (loss) for FY{curYear} (to date)</td>
+                      <td className="py-2 px-2 text-right">—</td>
+                      <td className="py-2 px-2 text-right text-emerald-600 dark:text-emerald-400 font-semibold">{formatZAR(eq?.currentNetProfit || 0)}</td>
+                      <td className="py-2 px-2 text-right text-emerald-600 dark:text-emerald-400 font-semibold">{formatZAR(eq?.currentNetProfit || 0)}</td>
+                    </tr>
+                    <tr className="font-extrabold border-t-2 border-b-2 border-zinc-900 dark:border-zinc-100 text-sm text-zinc-900 dark:text-white bg-zinc-50 dark:bg-zinc-900/50">
+                      <td className="py-3 px-2 font-sans uppercase">Balance at {eq?.currentYearEndLabel || '28 February 2027'}</td>
+                      <td className="py-3 px-2 text-right">100,00</td>
+                      <td className="py-3 px-2 text-right">{formatZAR(eq?.currentClosingRetained || 0)}</td>
+                      <td className="py-3 px-2 text-right text-emerald-600 dark:text-emerald-400">{formatZAR(100 + (eq?.currentClosingRetained || 0))}</td>
+                    </tr>
+                  </tbody>
+                </table>
+
+                <div className="mt-8 pt-4 border-t border-zinc-200 dark:border-zinc-800 flex justify-between text-[10px] text-zinc-400">
+                  <span>Annual Financial Statements — {info?.companyName}</span>
+                  <span className="font-mono">Page 4</span>
+                </div>
+              </div>
+
+              {/* PAGE 5: CASH FLOW STATEMENT */}
+              <div className="flex flex-col gap-6 pt-8 border-t-2 border-zinc-200 dark:border-zinc-800 print:break-before-page break-before-page">
+                <div className="border-b-2 border-zinc-900 dark:border-zinc-100 pb-3 flex justify-between items-end">
+                  <div>
+                    <h2 className="text-base font-extrabold uppercase text-zinc-900 dark:text-white tracking-wide">{info?.companyName}</h2>
+                    <p className="text-xs text-zinc-500 font-medium mt-0.5">Registration Number: {info?.registrationNumber}</p>
+                  </div>
+                  <div className="text-right">
+                    <h3 className="text-xs font-bold text-zinc-900 dark:text-white uppercase tracking-wider">CASH FLOW STATEMENT</h3>
+                    <p className="text-xs text-zinc-500 font-medium">for the year ended {info?.financialYearEnd}</p>
+                  </div>
+                </div>
+
+                <table className="w-full text-left text-xs border-collapse font-mono">
+                  <thead>
+                    <tr className="border-b-2 border-zinc-900 dark:border-zinc-100 text-zinc-500 text-[10px] font-bold uppercase">
+                      <th className="py-2.5 px-2 font-sans">Cash Flow Category</th>
+                      <th className="py-2.5 px-2 text-center w-16 font-sans">NOTES</th>
+                      <th className="py-2.5 px-2 text-right w-32">{curYear} (R)</th>
+                      <th className="py-2.5 px-2 text-right w-32">{priYear} (R)</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-zinc-100 dark:divide-zinc-900">
+                    <tr className="font-bold text-zinc-900 dark:text-white uppercase text-[11px] bg-zinc-50 dark:bg-zinc-900/40">
+                      <td colSpan={4} className="py-2 px-2 font-sans">Operating activities</td>
+                    </tr>
+                    <tr>
+                      <td className="py-1.5 px-5 font-sans text-zinc-700 dark:text-zinc-300">Profit for the year</td>
+                      <td className="py-1.5 px-2 text-center font-sans text-zinc-400"></td>
+                      <td className="py-1.5 px-2 text-right text-emerald-600 dark:text-emerald-400">{formatZAR(pnl?.netProfit?.current || 0)}</td>
+                      <td className="py-1.5 px-2 text-right text-zinc-400">{formatZAR(pnl?.netProfit?.prior || 0)}</td>
+                    </tr>
+                    <tr className="font-semibold text-zinc-800 dark:text-zinc-200 italic">
+                      <td colSpan={4} className="py-1.5 px-5 font-sans">Adjustments for:</td>
+                    </tr>
+                    <tr>
+                      <td className="py-1.5 px-8 font-sans text-zinc-600 dark:text-zinc-400">Depreciation of property, plant and equipment</td>
+                      <td className="py-1.5 px-2 text-center font-sans text-zinc-400">Note 5</td>
+                      <td className="py-1.5 px-2 text-right">{formatZAR(pnl?.depreciation?.current || 0)}</td>
+                      <td className="py-1.5 px-2 text-right text-zinc-400">—</td>
+                    </tr>
+                    <tr className="font-bold border-t border-zinc-300 dark:border-zinc-700">
+                      <td className="py-2 px-2 font-sans">Cash generated from operations</td>
+                      <td className="py-2 px-2 text-center font-sans text-zinc-400"></td>
+                      <td className="py-2 px-2 text-right text-emerald-600 dark:text-emerald-400">{formatZAR(cf?.current?.netOperatingCashFlow || 0)}</td>
+                      <td className="py-2 px-2 text-right text-zinc-400">{formatZAR(cf?.prior?.netOperatingCashFlow || 0)}</td>
+                    </tr>
+
+                    <tr className="font-bold text-zinc-900 dark:text-white uppercase text-[11px] bg-zinc-50 dark:bg-zinc-900/40">
+                      <td colSpan={4} className="py-2 px-2 font-sans pt-4">Investing & Financing activities</td>
+                    </tr>
+                    <tr>
+                      <td className="py-1.5 px-5 font-sans text-zinc-700 dark:text-zinc-300">Net cash used in investing activities</td>
+                      <td className="py-1.5 px-2 text-center font-sans text-zinc-400"></td>
+                      <td className="py-1.5 px-2 text-right">—</td>
+                      <td className="py-1.5 px-2 text-right text-zinc-400">—</td>
+                    </tr>
+                    <tr>
+                      <td className="py-1.5 px-5 font-sans text-zinc-700 dark:text-zinc-300">Net cash used in financing activities</td>
+                      <td className="py-1.5 px-2 text-center font-sans text-zinc-400"></td>
+                      <td className="py-1.5 px-2 text-right">—</td>
+                      <td className="py-1.5 px-2 text-right text-zinc-400">—</td>
+                    </tr>
+
+                    <tr className="font-extrabold border-t-2 border-b-2 border-zinc-900 dark:border-zinc-100 text-sm text-zinc-900 dark:text-white bg-zinc-50 dark:bg-zinc-900/50">
+                      <td className="py-3 px-2 font-sans uppercase">Net increase in cash and cash equivalents</td>
+                      <td className="py-3 px-2 text-center font-sans text-zinc-400"></td>
+                      <td className="py-3 px-2 text-right text-emerald-600 dark:text-emerald-400">{formatZAR(cf?.current?.endingCashBalance || 0)}</td>
+                      <td className="py-3 px-2 text-right text-zinc-400">{formatZAR(cf?.prior?.endingCashBalance || 0)}</td>
+                    </tr>
+                  </tbody>
+                </table>
+
+                <div className="mt-8 pt-4 border-t border-zinc-200 dark:border-zinc-800 flex justify-between text-[10px] text-zinc-400">
+                  <span>Annual Financial Statements — {info?.companyName}</span>
+                  <span className="font-mono">Page 5</span>
+                </div>
+              </div>
+
+              {/* PAGE 6: DETAILED INCOME STATEMENT & DIVISIONAL REVENUE BREAKDOWN */}
+              <div className="flex flex-col gap-6 pt-8 border-t-2 border-zinc-200 dark:border-zinc-800 print:break-before-page break-before-page">
+                <div className="border-b-2 border-zinc-900 dark:border-zinc-100 pb-3 flex justify-between items-end">
+                  <div>
+                    <h2 className="text-base font-extrabold uppercase text-zinc-900 dark:text-white tracking-wide">{info?.companyName}</h2>
+                    <p className="text-xs text-zinc-500 font-medium mt-0.5">Registration Number: {info?.registrationNumber}</p>
+                  </div>
+                  <div className="text-right">
+                    <h3 className="text-xs font-bold text-zinc-900 dark:text-white uppercase tracking-wider">DETAILED INCOME STATEMENT</h3>
+                    <p className="text-xs text-zinc-500 font-medium">for the year ended {info?.financialYearEnd}</p>
+                  </div>
+                </div>
+
+                <table className="w-full text-left text-xs border-collapse font-mono">
+                  <thead>
+                    <tr className="border-b-2 border-zinc-900 dark:border-zinc-100 text-zinc-500 text-[10px] font-bold uppercase">
+                      <th className="py-2.5 px-2 font-sans">Revenue & Expense Schedule</th>
+                      <th className="py-2.5 px-2 text-right w-32">{curYear} (R)</th>
+                      <th className="py-2.5 px-2 text-right w-32">{priYear} (R)</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-zinc-100 dark:divide-zinc-900">
+                    <tr className="font-bold text-zinc-900 dark:text-white uppercase text-[11px] bg-zinc-50 dark:bg-zinc-900/40">
+                      <td colSpan={3} className="py-2 px-2 font-sans">INCOME</td>
+                    </tr>
+                    <tr className="font-bold text-zinc-900 dark:text-white">
+                      <td className="py-2 px-2 font-sans">Sales Revenue (excluding VAT)</td>
+                      <td className="py-2 px-2 text-right text-emerald-600 dark:text-emerald-400">{formatZAR(det?.revenue?.current || 0)}</td>
+                      <td className="py-2 px-2 text-right text-zinc-400">{formatZAR(det?.revenue?.prior || 0)}</td>
+                    </tr>
+                    {det?.divisionBreakdown?.map((div: any) => (
+                      <tr key={div.divisionId} className="text-zinc-600 dark:text-zinc-400 italic">
+                        <td className="py-1 px-5 font-sans">├── {div.divisionName}</td>
+                        <td className="py-1 px-2 text-right">{formatZAR(div.current)}</td>
+                        <td className="py-1 px-2 text-right text-zinc-400">{formatZAR(div.prior)}</td>
+                      </tr>
+                    ))}
+
+                    <tr className="font-bold text-zinc-900 dark:text-white uppercase text-[11px] bg-zinc-50 dark:bg-zinc-900/40">
+                      <td colSpan={3} className="py-2 px-2 font-sans pt-4">EXPENSES</td>
+                    </tr>
+                    <tr>
+                      <td className="py-1.5 px-5 font-sans text-zinc-700 dark:text-zinc-300">Depreciation of property, plant and equipment</td>
+                      <td className="py-1.5 px-2 text-right">{formatZAR(pnl?.depreciation?.current || 0)}</td>
+                      <td className="py-1.5 px-2 text-right text-zinc-400">—</td>
+                    </tr>
+                    {det?.expenses?.map((exp: any) => (
+                      <tr key={exp.accountId}>
+                        <td className="py-1.5 px-5 font-sans text-zinc-700 dark:text-zinc-300">{exp.accountCode} - {exp.accountName}</td>
+                        <td className="py-1.5 px-2 text-right">{formatZAR(exp.amount)}</td>
+                        <td className="py-1.5 px-2 text-right text-zinc-400">—</td>
+                      </tr>
+                    ))}
+                    <tr className="font-extrabold border-t-2 border-b-2 border-zinc-900 dark:border-zinc-100 text-sm text-zinc-900 dark:text-white bg-zinc-50 dark:bg-zinc-900/50">
+                      <td className="py-3 px-2 font-sans uppercase">Profit / (loss) for the year</td>
+                      <td className="py-3 px-2 text-right text-emerald-600 dark:text-emerald-400">{formatZAR(det?.netProfit?.current || 0)}</td>
+                      <td className="py-3 px-2 text-right text-zinc-400">{formatZAR(det?.netProfit?.prior || 0)}</td>
+                    </tr>
+                  </tbody>
+                </table>
+
+                <div className="mt-8 pt-4 border-t border-zinc-200 dark:border-zinc-800 flex justify-between text-[10px] text-zinc-400">
+                  <span>Annual Financial Statements — {info?.companyName}</span>
+                  <span className="font-mono">Page 6</span>
+                </div>
+              </div>
             </div>
-          </div>
-        )}
+          );
+        })()}
       </div>
 
       {/* Document Footer */}

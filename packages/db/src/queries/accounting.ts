@@ -1346,6 +1346,18 @@ export type AfsNoteRow = {
   code?: string;
 };
 
+export type AfsComparativeAmount = {
+  current: number;
+  prior: number;
+};
+
+export type AfsDivisionBuildUpRow = {
+  divisionId: string;
+  divisionName: string;
+  current: number;
+  prior: number;
+};
+
 export type AnnualFinancialStatementsResult = {
   generalInfo: {
     companyName: string;
@@ -1355,26 +1367,72 @@ export type AnnualFinancialStatementsResult = {
     postalAddress: string;
     directorName: string;
     financialYearEnd: string;
-    financialYear: string;
+    currentYearLabel: string;
+    priorYearLabel: string;
   };
   directorsReport: {
     principalActivities: string;
     financialResultsSummary: string;
     goingConcernStatement: string;
     eventsAfterReportingPeriod: string;
+    businessActivities: {
+      revenue: AfsComparativeAmount;
+      operatingProfit: AfsComparativeAmount;
+      netProfit: AfsComparativeAmount;
+      totalAssets: AfsComparativeAmount;
+      totalLiabilities: AfsComparativeAmount;
+    };
+    divisionBreakdown: AfsDivisionBuildUpRow[];
   };
-  statementOfPosition: BalanceSheetResult;
-  statementOfProfitLoss: ProfitAndLossResult;
+  statementOfPosition: {
+    assets: BalanceSheetAccountRow[];
+    totalAssets: AfsComparativeAmount;
+    liabilities: BalanceSheetAccountRow[];
+    totalLiabilities: AfsComparativeAmount;
+    equity: BalanceSheetAccountRow[];
+    totalEquity: AfsComparativeAmount;
+    totalLiabilitiesAndEquity: AfsComparativeAmount;
+  };
+  statementOfProfitLoss: {
+    revenue: AfsComparativeAmount;
+    divisionBreakdown: AfsDivisionBuildUpRow[];
+    expenses: ProfitAndLossRow[];
+    totalExpenses: AfsComparativeAmount;
+    operatingProfit: AfsComparativeAmount;
+    investmentRevenues: AfsComparativeAmount;
+    financeCosts: AfsComparativeAmount;
+    profitBeforeTax: AfsComparativeAmount;
+    incomeTaxExpense: AfsComparativeAmount;
+    netProfit: AfsComparativeAmount;
+  };
   statementOfChangesInEquity: {
-    openingShareCapital: number;
-    closingShareCapital: number;
-    openingRetainedIncome: number;
-    currentYearNetProfit: number;
-    closingRetainedIncome: number;
-    totalOpeningEquity: number;
+    priorYearStartLabel: string;
+    priorYearEndLabel: string;
+    currentYearEndLabel: string;
+    shareCapital: number;
+    priorOpeningRetained: number;
+    priorNetProfit: number;
+    priorClosingRetained: number;
+    currentOpeningRetained: number;
+    currentNetProfit: number;
+    currentClosingRetained: number;
     totalClosingEquity: number;
   };
-  statementOfCashFlows: CashFlowResult;
+  statementOfCashFlows: {
+    current: CashFlowResult;
+    prior: CashFlowResult;
+  };
+  detailedIncomeStatement: {
+    revenue: AfsComparativeAmount;
+    divisionBreakdown: AfsDivisionBuildUpRow[];
+    expenses: ProfitAndLossRow[];
+    totalExpenses: AfsComparativeAmount;
+    operatingProfit: AfsComparativeAmount;
+    financeCosts: AfsComparativeAmount;
+    profitBeforeTax: AfsComparativeAmount;
+    incomeTaxExpense: AfsComparativeAmount;
+    netProfit: AfsComparativeAmount;
+  };
   notes: {
     note1BasisOfPreparation: string;
     note2RevenueBreakdown: AfsNoteRow[];
@@ -1394,7 +1452,8 @@ export type AnnualFinancialStatementsResult = {
 };
 
 /**
- * Returns a complete Annual Financial Statements (AFS) package for CIPC & IFRS compliance.
+ * Returns a complete Annual Financial Statements (AFS) package for CIPC & IFRS compliance
+ * featuring comparative 2-column figures (Current FY vs Prior FY) and divisional revenue build-ups.
  */
 export async function getAnnualFinancialStatements(
   period?: string,
@@ -1402,18 +1461,45 @@ export async function getAnnualFinancialStatements(
   startDate?: string,
   endDate?: string
 ): Promise<AnnualFinancialStatementsResult> {
-  const [orgSettings, balanceSheet, pnl, cashFlow, pnlDivisions] = await Promise.all([
+  const currentYearNum = new Date().getFullYear();
+  const nowMonth = new Date().getMonth() + 1;
+  const defaultFyNum = nowMonth >= 3 ? currentYearNum + 1 : currentYearNum;
+
+  const targetYearNum = period
+    ? parseInt(period.split('-')[0], 10)
+    : defaultFyNum;
+  const priorYearNum = targetYearNum - 1;
+
+  const currentPeriodKey = `${targetYearNum}-FY`;
+  const priorPeriodKey = `${priorYearNum}-FY`;
+
+  const [
+    orgSettings,
+    balanceSheet,
+    pnl,
+    cashFlow,
+    pnlDivisions,
+    priorBalanceSheet,
+    priorPnl,
+    priorCashFlow,
+    priorPnlDivisions,
+    allDivList,
+  ] = await Promise.all([
     getOrganisationSettings(),
-    getBalanceSheet(period, divisionId, startDate, endDate),
-    getProfitAndLoss(period, divisionId, startDate, endDate),
-    getCashFlowStatement(period, divisionId, startDate, endDate),
-    getProfitAndLossByDivision(period, startDate, endDate),
+    getBalanceSheet(currentPeriodKey, divisionId, startDate, endDate),
+    getProfitAndLoss(currentPeriodKey, divisionId, startDate, endDate),
+    getCashFlowStatement(currentPeriodKey, divisionId, startDate, endDate),
+    getProfitAndLossByDivision(currentPeriodKey, startDate, endDate),
+    getBalanceSheet(priorPeriodKey, divisionId),
+    getProfitAndLoss(priorPeriodKey, divisionId),
+    getCashFlowStatement(priorPeriodKey, divisionId),
+    getProfitAndLossByDivision(priorPeriodKey),
+    db.select().from(divisions),
   ]);
 
-  const currentYear = new Date().getFullYear();
-  const targetYear = period ? (period.includes('-FY') ? period.split('-')[0] : (period.includes('-') ? period.split('-')[0] : String(currentYear))) : String(currentYear);
-  const yearLabel = period ? (period.includes('-FY') ? `FY${period.split('-')[0]}` : period) : `FY${currentYear}`;
-  const financialYearEndLabel = `28 February ${targetYear}`;
+  const currentYearLabel = String(targetYearNum);
+  const priorYearLabel = String(priorYearNum);
+  const financialYearEndLabel = `28 February ${targetYearNum}`;
 
   const street = orgSettings?.addressStreet || '285 ERASMUS AVENUE, RASLOUW AH';
   const city = orgSettings?.addressCity || 'CENTURION';
@@ -1421,16 +1507,36 @@ export async function getAnnualFinancialStatements(
   const province = orgSettings?.addressProvince || 'GAUTENG';
   const regAddress = `${street}, ${city}, ${province}, ${postal}`;
 
-  // Calculate changes in equity
+  // Division revenue build-up
+  const priorDivMap = new Map<string, number>();
+  for (const d of priorPnlDivisions) {
+    priorDivMap.set(d.divisionId, d.totalRevenue);
+  }
+
+  const divisionBreakdown: AfsDivisionBuildUpRow[] = allDivList.map((div) => {
+    const curDiv = pnlDivisions.find((d) => d.divisionId === div.id);
+    return {
+      divisionId: div.id,
+      divisionName: div.name,
+      current: curDiv?.totalRevenue || 0,
+      prior: priorDivMap.get(div.id) || 0,
+    };
+  });
+
+  // Calculate equity movements
   const openingShareCapital = 100.00;
   const closingShareCapital = 100.00;
+  const priorNetProfit = priorPnl.netProfit;
   const currentNetProfit = pnl.netProfit;
-  const openingRetained = balanceSheet.totalEquity - closingShareCapital - currentNetProfit;
+  const priorOpeningRetained = 0;
+  const priorClosingRetained = priorOpeningRetained + priorNetProfit;
+  const currentOpeningRetained = priorClosingRetained;
+  const currentClosingRetained = currentOpeningRetained + currentNetProfit;
 
   // Notes data
-  const revenueNotes: AfsNoteRow[] = pnlDivisions.map((div) => ({
+  const revenueNotes: AfsNoteRow[] = divisionBreakdown.map((div) => ({
     label: `Revenue — ${div.divisionName}`,
-    amount: div.totalRevenue,
+    amount: div.current,
   }));
 
   const expenseNotes: AfsNoteRow[] = pnl.expenses.map((exp) => ({
@@ -1460,26 +1566,72 @@ export async function getAnnualFinancialStatements(
       postalAddress: regAddress,
       directorName: 'JACOB CHADEMWIRI',
       financialYearEnd: financialYearEndLabel,
-      financialYear: yearLabel,
+      currentYearLabel,
+      priorYearLabel,
     },
     directorsReport: {
       principalActivities: 'Software development, digital agency services, domain & hosting solutions, and professional technology consulting.',
-      financialResultsSummary: `The corporate net operating financial result for ${yearLabel} reflects a Net Operating Profit of R ${pnl.netProfit.toLocaleString('en-ZA', { minimumFractionDigits: 2 })} on Total Sales Revenue of R ${pnl.totalRevenue.toLocaleString('en-ZA', { minimumFractionDigits: 2 })}.`,
+      financialResultsSummary: `The corporate net operating financial result for FY${targetYearNum} reflects a Net Operating Profit of R ${pnl.netProfit.toLocaleString('en-ZA', { minimumFractionDigits: 2 })} on Total Sales Revenue of R ${pnl.totalRevenue.toLocaleString('en-ZA', { minimumFractionDigits: 2 })}.`,
       goingConcernStatement: 'The directors believe that the company has adequate financial resources to continue in operation for the foreseeable future and accordingly the annual financial statements have been prepared on a going concern basis.',
       eventsAfterReportingPeriod: 'The directors are not aware of any material matter or circumstance arising since the end of the financial year that would significantly impact these financial statements.',
+      businessActivities: {
+        revenue: { current: pnl.totalRevenue, prior: priorPnl.totalRevenue },
+        operatingProfit: { current: pnl.netProfit, prior: priorPnl.netProfit },
+        netProfit: { current: pnl.netProfit, prior: priorPnl.netProfit },
+        totalAssets: { current: balanceSheet.totalAssets, prior: priorBalanceSheet.totalAssets },
+        totalLiabilities: { current: balanceSheet.totalLiabilities, prior: priorBalanceSheet.totalLiabilities },
+      },
+      divisionBreakdown,
     },
-    statementOfPosition: balanceSheet,
-    statementOfProfitLoss: pnl,
+    statementOfPosition: {
+      assets: balanceSheet.assets,
+      totalAssets: { current: balanceSheet.totalAssets, prior: priorBalanceSheet.totalAssets },
+      liabilities: balanceSheet.liabilities,
+      totalLiabilities: { current: balanceSheet.totalLiabilities, prior: priorBalanceSheet.totalLiabilities },
+      equity: balanceSheet.equity,
+      totalEquity: { current: balanceSheet.totalEquity, prior: priorBalanceSheet.totalEquity },
+      totalLiabilitiesAndEquity: { current: balanceSheet.totalLiabilitiesAndEquity, prior: priorBalanceSheet.totalLiabilitiesAndEquity },
+    },
+    statementOfProfitLoss: {
+      revenue: { current: pnl.totalRevenue, prior: priorPnl.totalRevenue },
+      divisionBreakdown,
+      expenses: pnl.expenses,
+      totalExpenses: { current: pnl.totalExpenses, prior: priorPnl.totalExpenses },
+      operatingProfit: { current: pnl.netProfit, prior: priorPnl.netProfit },
+      investmentRevenues: { current: 0, prior: 0 },
+      financeCosts: { current: 0, prior: 0 },
+      profitBeforeTax: { current: pnl.netProfit, prior: priorPnl.netProfit },
+      incomeTaxExpense: { current: 0, prior: 0 },
+      netProfit: { current: pnl.netProfit, prior: priorPnl.netProfit },
+    },
     statementOfChangesInEquity: {
-      openingShareCapital,
-      closingShareCapital,
-      openingRetainedIncome: Math.max(0, openingRetained),
-      currentYearNetProfit: currentNetProfit,
-      closingRetainedIncome: Math.max(0, openingRetained) + currentNetProfit,
-      totalOpeningEquity: openingShareCapital + Math.max(0, openingRetained),
+      priorYearStartLabel: `1 March ${priorYearNum - 1}`,
+      priorYearEndLabel: `28 February ${priorYearNum}`,
+      currentYearEndLabel: `28 February ${targetYearNum}`,
+      shareCapital: openingShareCapital,
+      priorOpeningRetained,
+      priorNetProfit,
+      priorClosingRetained,
+      currentOpeningRetained,
+      currentNetProfit,
+      currentClosingRetained,
       totalClosingEquity: balanceSheet.totalEquity,
     },
-    statementOfCashFlows: cashFlow,
+    statementOfCashFlows: {
+      current: cashFlow,
+      prior: priorCashFlow,
+    },
+    detailedIncomeStatement: {
+      revenue: { current: pnl.totalRevenue, prior: priorPnl.totalRevenue },
+      divisionBreakdown,
+      expenses: pnl.expenses,
+      totalExpenses: { current: pnl.totalExpenses, prior: priorPnl.totalExpenses },
+      operatingProfit: { current: pnl.netProfit, prior: priorPnl.netProfit },
+      financeCosts: { current: 0, prior: 0 },
+      profitBeforeTax: { current: pnl.netProfit, prior: priorPnl.netProfit },
+      incomeTaxExpense: { current: 0, prior: 0 },
+      netProfit: { current: pnl.netProfit, prior: priorPnl.netProfit },
+    },
     notes: {
       note1BasisOfPreparation: 'The annual financial statements have been prepared in accordance with International Financial Reporting Standards for Small and Medium-sized Entities (IFRS for SMEs) and the South African Companies Act No. 71 of 2008. The financial statements have been prepared on the historical cost basis and incorporate the principal accounting policies set out below.',
       note2RevenueBreakdown: revenueNotes.length > 0 ? revenueNotes : [{ label: 'Gross Sales Revenue', amount: pnl.totalRevenue }],

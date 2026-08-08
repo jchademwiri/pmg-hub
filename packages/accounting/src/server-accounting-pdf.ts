@@ -779,159 +779,469 @@ async function buildCashFlowPdf(filters: AccountingPdfFilters): Promise<Accounti
   doc.text('NET INCREASE / (DECREASE) IN CASH', 18, y + 6.5);
   doc.text(formatZAR(result.netCashIncrease), 190, y + 6.5, { align: 'right' });
 
-  drawReportFooter(doc, header);
-
-  const suffix = [filters.period ?? 'all-time', filters.divisionId].filter(Boolean).join('-');
-  return {
-    fileName: `cash-flow-${suffix}.pdf`,
-    buffer: Buffer.from(doc.output('arraybuffer')),
-  };
-}
-
 async function buildAnnualFinancialStatementsPdf(filters: AccountingPdfFilters): Promise<AccountingPdfResult> {
-  const [result, divisionName] = await Promise.all([
-    getAnnualFinancialStatements(filters.period, filters.divisionId),
-    resolveDivisionName(filters.divisionId),
-  ]);
-  const header = await buildReportHeader('Annual Financial Statements (AFS)', filters.period, divisionName);
+  const result = await getAnnualFinancialStatements(filters.period, filters.divisionId);
+  const header = await buildReportHeader('Annual Financial Statements (AFS)', filters.period);
 
   const doc = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' });
+  const info = result.generalInfo;
+  const curYear = info.currentYearLabel;
+  const priYear = info.priorYearLabel;
+  const dr = result.directorsReport;
+  const pnl = result.statementOfProfitLoss;
+  const bs = result.statementOfPosition;
+  const eq = result.statementOfChangesInEquity;
+  const cf = result.statementOfCashFlows;
+  const det = result.detailedIncomeStatement;
+
+  // PAGE 1: DIRECTORS' REPORT
   drawReportHeader(doc, header);
-
   let y = 72;
-
-  // 1. GENERAL INFORMATION
   doc.setFont('helvetica', 'bold');
   doc.setFontSize(10);
-  doc.setTextColor(37, 99, 235);
-  doc.text('1. GENERAL INFORMATION & DIRECTORS APPROVAL', 15, y);
-  y += 6;
+  doc.setTextColor(24, 24, 27);
+  doc.text('DIRECTORS\' REPORT', PAGE.margin, y);
+  doc.setFont('helvetica', 'normal');
+  doc.setFontSize(8);
+  doc.setTextColor(113, 113, 122);
+  doc.text(`for the year ended ${info.financialYearEnd}`, PAGE.width - PAGE.margin, y, { align: 'right' });
+  y += 8;
 
+  doc.setFont('helvetica', 'bold');
+  doc.setFontSize(8.5);
+  doc.setTextColor(37, 99, 235);
+  doc.text('1. Nature of business', PAGE.margin, y);
+  y += 5;
   doc.setFont('helvetica', 'normal');
   doc.setFontSize(8);
   doc.setTextColor(24, 24, 27);
-  doc.text(`Company Name: ${result.generalInfo.companyName}`, 17, y); y += 5;
-  doc.text(`Registration Number: ${result.generalInfo.registrationNumber}`, 17, y); y += 5;
-  doc.text(`Tax Reference Number: ${result.generalInfo.taxReferenceNumber}`, 17, y); y += 5;
-  doc.text(`Registered Address: ${result.generalInfo.registeredAddress}`, 17, y); y += 5;
-  doc.text(`Managing Director: ${result.generalInfo.directorName}`, 17, y); y += 5;
-  doc.text(`Financial Year Ended: ${result.generalInfo.financialYearEnd}`, 17, y); y += 8;
+  const natText = split(doc, dr.principalActivities, 180);
+  doc.text(natText, PAGE.margin, y);
+  y += natText.length * 4.5 + 4;
 
-  // 2. DIRECTORS REPORT
-  y = ensurePage(doc, y, 24);
   doc.setFont('helvetica', 'bold');
-  doc.setFontSize(9);
+  doc.setFontSize(8.5);
   doc.setTextColor(37, 99, 235);
-  doc.text('2. DIRECTORS REPORT & GOING CONCERN STATEMENT', 15, y);
+  doc.text('2. Business activities & Financial Results Summary', PAGE.margin, y);
   y += 6;
-  doc.setFont('helvetica', 'normal');
-  doc.setFontSize(8);
+
+  // Table header
+  doc.setFillColor(243, 244, 246);
+  doc.rect(PAGE.margin, y, PAGE.width - PAGE.margin * 2, 7, 'F');
+  doc.setFont('helvetica', 'bold');
+  doc.setFontSize(7.5);
+  doc.setTextColor(113, 113, 122);
+  doc.text('FINANCIAL INDICATOR', PAGE.margin + 3, y + 4.5);
+  doc.text(`${curYear} (R)`, 150, y + 4.5, { align: 'right' });
+  doc.text(`${priYear} (R)`, PAGE.width - PAGE.margin - 3, y + 4.5, { align: 'right' });
+  y += 9;
+
+  // Sales Revenue (Group Total)
+  doc.setFont('helvetica', 'bold');
   doc.setTextColor(24, 24, 27);
-  const principalText = split(doc, `Principal Activities: ${result.directorsReport.principalActivities}`, 180);
-  doc.text(principalText, 17, y);
-  y += principalText.length * 4 + 4;
+  doc.text('Sales Revenue (Group Total)', PAGE.margin + 3, y);
+  doc.text(formatZAR(dr.businessActivities.revenue.current), 150, y, { align: 'right' });
+  doc.text(formatZAR(dr.businessActivities.revenue.prior), PAGE.width - PAGE.margin - 3, y, { align: 'right' });
+  y += 5.5;
 
-  const resultsText = split(doc, result.directorsReport.financialResultsSummary, 180);
-  doc.text(resultsText, 17, y);
-  y += resultsText.length * 4 + 6;
-
-  // 3. STATEMENT OF FINANCIAL POSITION (BALANCE SHEET)
-  y = ensurePage(doc, y, 30);
-  doc.setFont('helvetica', 'bold');
-  doc.setFontSize(9);
-  doc.setTextColor(37, 99, 235);
-  doc.text('3. STATEMENT OF FINANCIAL POSITION (BALANCE SHEET)', 15, y);
-  y += 6;
-
-  y = drawAccountSubtable(doc, y, result.statementOfPosition.assets, 'Total Assets', result.statementOfPosition.totalAssets);
-  y += 5;
-  y = drawAccountSubtable(doc, y, result.statementOfPosition.liabilities, 'Total Liabilities', result.statementOfPosition.totalLiabilities);
-  y += 5;
-  const equityRows = [
-    ...result.statementOfPosition.equity,
-    { accountId: 'retained', accountCode: '—', accountName: 'Retained Earnings / Current Period Net Profit', accountType: 'equity', amount: result.statementOfPosition.netIncome }
-  ];
-  y = drawAccountSubtable(doc, y, equityRows, 'Total Equity', result.statementOfPosition.totalEquity);
-  y += 6;
-
-  // 4. STATEMENT OF PROFIT OR LOSS
-  y = ensurePage(doc, y, 30);
-  doc.setFont('helvetica', 'bold');
-  doc.setFontSize(9);
-  doc.setTextColor(37, 99, 235);
-  doc.text('4. STATEMENT OF PROFIT OR LOSS AND OTHER COMPREHENSIVE INCOME', 15, y);
-  y += 6;
-  y = drawAccountSubtable(doc, y, result.statementOfProfitLoss.revenue, 'Total Revenue', result.statementOfProfitLoss.totalRevenue);
-  y += 5;
-  y = drawAccountSubtable(doc, y, result.statementOfProfitLoss.expenses, 'Total Operating Expenses', result.statementOfProfitLoss.totalExpenses);
-  y += 5;
-  y = drawTotalRow(doc, y, 'Net Operating Profit', result.statementOfProfitLoss.netProfit);
-  y += 8;
-
-  // 5. STATEMENT OF CHANGES IN EQUITY
-  y = ensurePage(doc, y, 20);
-  doc.setFont('helvetica', 'bold');
-  doc.setFontSize(9);
-  doc.setTextColor(37, 99, 235);
-  doc.text('5. STATEMENT OF CHANGES IN EQUITY', 15, y);
-  y += 6;
-  y = drawTotalRow(doc, y, 'Opening Share Capital & Retained Income', result.statementOfChangesInEquity.totalOpeningEquity);
-  y += 5;
-  y = drawTotalRow(doc, y, 'Current Year Net Profit', result.statementOfChangesInEquity.currentYearNetProfit);
-  y += 5;
-  y = drawTotalRow(doc, y, 'Closing Equity', result.statementOfChangesInEquity.totalClosingEquity);
-  y += 8;
-
-  // 6. STATEMENT OF CASH FLOWS
-  y = ensurePage(doc, y, 24);
-  doc.setFont('helvetica', 'bold');
-  doc.setFontSize(9);
-  doc.setTextColor(37, 99, 235);
-  doc.text('6. STATEMENT OF CASH FLOWS', 15, y);
-  y += 6;
-  y = drawTotalRow(doc, y, 'Net Cash Flow from Operating Activities', result.statementOfCashFlows.netOperatingCashFlow);
-  y += 5;
-  y = drawTotalRow(doc, y, 'Net Cash Increase / (Decrease)', result.statementOfCashFlows.netCashIncrease);
-  y += 5;
-  y = drawTotalRow(doc, y, 'Ending Cash & Bank Balance', result.statementOfCashFlows.endingCashBalance);
-  y += 8;
-
-  // 7. NOTES TO THE FINANCIAL STATEMENTS
-  y = ensurePage(doc, y, 30);
-  doc.setFont('helvetica', 'bold');
-  doc.setFontSize(9);
-  doc.setTextColor(37, 99, 235);
-  doc.text('7. NOTES TO THE FINANCIAL STATEMENTS', 15, y);
-  y += 6;
-
-  doc.setFont('helvetica', 'bold');
-  doc.setFontSize(8);
-  doc.setTextColor(24, 24, 27);
-  doc.text('Note 1: Basis of Preparation & Accounting Policies', 17, y); y += 4;
-  doc.setFont('helvetica', 'normal');
-  const note1Text = split(doc, result.notes.note1BasisOfPreparation, 180);
-  doc.text(note1Text, 17, y);
-  y += note1Text.length * 4 + 6;
-
-  y = ensurePage(doc, y, 20);
-  doc.setFont('helvetica', 'bold');
-  doc.text('Note 2: Sales Revenue Breakdown', 17, y); y += 5;
-  for (const item of result.notes.note2RevenueBreakdown) {
-    y = ensurePage(doc, y, 6);
-    drawAccountRow(doc, y, 'Note 2', item.label, item.amount);
-    y += 6;
+  // Divisions
+  doc.setFont('helvetica', 'italic');
+  doc.setFontSize(7.5);
+  doc.setTextColor(82, 82, 91);
+  for (const div of dr.divisionBreakdown) {
+    doc.text(`├── ${div.divisionName}`, PAGE.margin + 7, y);
+    doc.text(formatZAR(div.current), 150, y, { align: 'right' });
+    doc.text(formatZAR(div.prior), PAGE.width - PAGE.margin - 3, y, { align: 'right' });
+    y += 5;
   }
+
+  doc.setFont('helvetica', 'normal');
+  doc.setFontSize(8);
+  doc.setTextColor(24, 24, 27);
+  doc.text('Operating profit / (loss)', PAGE.margin + 3, y);
+  doc.text(formatZAR(dr.businessActivities.operatingProfit.current), 150, y, { align: 'right' });
+  doc.text(formatZAR(dr.businessActivities.operatingProfit.prior), PAGE.width - PAGE.margin - 3, y, { align: 'right' });
+  y += 5.5;
+
+  doc.text('Profit / (loss) for the year', PAGE.margin + 3, y);
+  doc.text(formatZAR(dr.businessActivities.netProfit.current), 150, y, { align: 'right' });
+  doc.text(formatZAR(dr.businessActivities.netProfit.prior), PAGE.width - PAGE.margin - 3, y, { align: 'right' });
+  y += 5.5;
+
+  doc.text('Total assets', PAGE.margin + 3, y);
+  doc.text(formatZAR(dr.businessActivities.totalAssets.current), 150, y, { align: 'right' });
+  doc.text(formatZAR(dr.businessActivities.totalAssets.prior), PAGE.width - PAGE.margin - 3, y, { align: 'right' });
+  y += 5.5;
+
+  doc.text('Total liabilities', PAGE.margin + 3, y);
+  doc.text(formatZAR(dr.businessActivities.totalLiabilities.current), 150, y, { align: 'right' });
+  doc.text(formatZAR(dr.businessActivities.totalLiabilities.prior), PAGE.width - PAGE.margin - 3, y, { align: 'right' });
+  y += 8;
+
+  doc.setFont('helvetica', 'bold');
+  doc.setFontSize(8.5);
+  doc.setTextColor(37, 99, 235);
+  doc.text('3. Going Concern & Subsequent Events', PAGE.margin, y);
+  y += 5;
+  doc.setFont('helvetica', 'normal');
+  doc.setFontSize(8);
+  doc.setTextColor(24, 24, 27);
+  const gcText = split(doc, dr.goingConcernStatement, 180);
+  doc.text(gcText, PAGE.margin, y);
+  y += gcText.length * 4.5 + 3;
+  const evText = split(doc, dr.eventsAfterReportingPeriod, 180);
+  doc.text(evText, PAGE.margin, y);
+  y += evText.length * 4.5 + 8;
+
+  // Sign-off
+  doc.setFont('helvetica', 'bold');
+  doc.text(info.directorName, PAGE.margin, y);
   y += 4;
+  doc.setFont('helvetica', 'normal');
+  doc.setTextColor(113, 113, 122);
+  doc.text('Managing Director', PAGE.margin, y);
+  drawReportFooter(doc, header);
 
-  y = ensurePage(doc, y, 20);
+  // PAGE 2: INCOME STATEMENT
+  doc.addPage();
+  drawReportHeader(doc, header);
+  y = 72;
   doc.setFont('helvetica', 'bold');
-  doc.text('Note 3: Operating Expenses Schedule', 17, y); y += 5;
-  for (const item of result.notes.note3OperatingExpenses) {
-    y = ensurePage(doc, y, 6);
-    drawAccountRow(doc, y, item.code || 'Note 3', item.label, item.amount);
-    y += 6;
+  doc.setFontSize(10);
+  doc.setTextColor(24, 24, 27);
+  doc.text('INCOME STATEMENT', PAGE.margin, y);
+  doc.setFont('helvetica', 'normal');
+  doc.setFontSize(8);
+  doc.setTextColor(113, 113, 122);
+  doc.text(`for the year ended ${info.financialYearEnd}`, PAGE.width - PAGE.margin, y, { align: 'right' });
+  y += 8;
+
+  doc.setFillColor(243, 244, 246);
+  doc.rect(PAGE.margin, y, PAGE.width - PAGE.margin * 2, 7, 'F');
+  doc.setFont('helvetica', 'bold');
+  doc.setFontSize(7.5);
+  doc.setTextColor(113, 113, 122);
+  doc.text('ACCOUNT DESCRIPTION', PAGE.margin + 3, y + 4.5);
+  doc.text('NOTES', 120, y + 4.5, { align: 'center' });
+  doc.text(`${curYear} (R)`, 155, y + 4.5, { align: 'right' });
+  doc.text(`${priYear} (R)`, PAGE.width - PAGE.margin - 3, y + 4.5, { align: 'right' });
+  y += 9;
+
+  doc.setFont('helvetica', 'bold');
+  doc.setFontSize(8);
+  doc.setTextColor(24, 24, 27);
+  doc.text('Revenue (Group Total)', PAGE.margin + 3, y);
+  doc.text('Note 2', 120, y, { align: 'center' });
+  doc.text(formatZAR(pnl.revenue.current), 155, y, { align: 'right' });
+  doc.text(formatZAR(pnl.revenue.prior), PAGE.width - PAGE.margin - 3, y, { align: 'right' });
+  y += 5.5;
+
+  doc.setFont('helvetica', 'italic');
+  doc.setFontSize(7.5);
+  doc.setTextColor(82, 82, 91);
+  for (const div of pnl.divisionBreakdown) {
+    doc.text(`├── ${div.divisionName}`, PAGE.margin + 7, y);
+    doc.text('Note 2', 120, y, { align: 'center' });
+    doc.text(formatZAR(div.current), 155, y, { align: 'right' });
+    doc.text(formatZAR(div.prior), PAGE.width - PAGE.margin - 3, y, { align: 'right' });
+    y += 5;
   }
 
+  doc.setFont('helvetica', 'normal');
+  doc.setFontSize(8);
+  doc.setTextColor(24, 24, 27);
+  doc.text('Less: Depreciation expense', PAGE.margin + 3, y);
+  doc.text('Note 5', 120, y, { align: 'center' });
+  doc.text(formatZAR(pnl.depreciation.current), 155, y, { align: 'right' });
+  doc.text(formatZAR(pnl.depreciation.prior), PAGE.width - PAGE.margin - 3, y, { align: 'right' });
+  y += 5.5;
+
+  doc.text('Employee benefits expense', PAGE.margin + 3, y);
+  doc.text('Note 1', 120, y, { align: 'center' });
+  doc.text(formatZAR(pnl.employeeBenefits.current), 155, y, { align: 'right' });
+  doc.text(formatZAR(pnl.employeeBenefits.prior), PAGE.width - PAGE.margin - 3, y, { align: 'right' });
+  y += 5.5;
+
+  doc.text('Other operating expenses', PAGE.margin + 3, y);
+  doc.text('Note 3', 120, y, { align: 'center' });
+  doc.text(formatZAR(pnl.totalExpenses.current), 155, y, { align: 'right' });
+  doc.text(formatZAR(pnl.totalExpenses.prior), PAGE.width - PAGE.margin - 3, y, { align: 'right' });
+  y += 7;
+
+  doc.setFont('helvetica', 'bold');
+  doc.text('Operating profit / (loss)', PAGE.margin + 3, y);
+  doc.text(formatZAR(pnl.operatingProfit.current), 155, y, { align: 'right' });
+  doc.text(formatZAR(pnl.operatingProfit.prior), PAGE.width - PAGE.margin - 3, y, { align: 'right' });
+  y += 7;
+
+  doc.setFont('helvetica', 'bold');
+  doc.setFontSize(9);
+  doc.text('Profit / (loss) for the year', PAGE.margin + 3, y);
+  doc.text('Note 4', 120, y, { align: 'center' });
+  doc.text(formatZAR(pnl.netProfit.current), 155, y, { align: 'right' });
+  doc.text(formatZAR(pnl.netProfit.prior), PAGE.width - PAGE.margin - 3, y, { align: 'right' });
+  drawReportFooter(doc, header);
+
+  // PAGE 3: BALANCE SHEET
+  doc.addPage();
+  drawReportHeader(doc, header);
+  y = 72;
+  doc.setFont('helvetica', 'bold');
+  doc.setFontSize(10);
+  doc.setTextColor(24, 24, 27);
+  doc.text('BALANCE SHEET', PAGE.margin, y);
+  doc.setFont('helvetica', 'normal');
+  doc.setFontSize(8);
+  doc.setTextColor(113, 113, 122);
+  doc.text(`at ${info.financialYearEnd}`, PAGE.width - PAGE.margin, y, { align: 'right' });
+  y += 8;
+
+  doc.setFillColor(243, 244, 246);
+  doc.rect(PAGE.margin, y, PAGE.width - PAGE.margin * 2, 7, 'F');
+  doc.setFont('helvetica', 'bold');
+  doc.setFontSize(7.5);
+  doc.setTextColor(113, 113, 122);
+  doc.text('ACCOUNT DESCRIPTION', PAGE.margin + 3, y + 4.5);
+  doc.text('NOTES', 120, y + 4.5, { align: 'center' });
+  doc.text(`${curYear} (R)`, 155, y + 4.5, { align: 'right' });
+  doc.text(`${priYear} (R)`, PAGE.width - PAGE.margin - 3, y + 4.5, { align: 'right' });
+  y += 9;
+
+  doc.setFont('helvetica', 'bold');
+  doc.setFontSize(8);
+  doc.setTextColor(24, 24, 27);
+  doc.text('ASSETS', PAGE.margin + 3, y); y += 5.5;
+
+  doc.setFont('helvetica', 'normal');
+  for (const a of bs.assets) {
+    doc.text(a.accountName, PAGE.margin + 6, y);
+    doc.text(a.accountName.toLowerCase().includes('receivable') ? 'Note 7' : (a.accountName.toLowerCase().includes('bank') || a.accountName.toLowerCase().includes('cash') ? 'Note 8' : 'Note 5'), 120, y, { align: 'center' });
+    doc.text(formatZAR(a.amount), 155, y, { align: 'right' });
+    doc.text('—', PAGE.width - PAGE.margin - 3, y, { align: 'right' });
+    y += 5;
+  }
+  doc.setFont('helvetica', 'bold');
+  doc.text('Total assets', PAGE.margin + 3, y);
+  doc.text(formatZAR(bs.totalAssets.current), 155, y, { align: 'right' });
+  doc.text(formatZAR(bs.totalAssets.prior), PAGE.width - PAGE.margin - 3, y, { align: 'right' });
+  y += 8;
+
+  doc.text('EQUITY AND LIABILITIES', PAGE.margin + 3, y); y += 5.5;
+  doc.setFont('helvetica', 'normal');
+  doc.text('Shareholders Contribution', PAGE.margin + 6, y);
+  doc.text('Note 10', 120, y, { align: 'center' });
+  doc.text('R 100,00', 155, y, { align: 'right' });
+  doc.text('R 100,00', PAGE.width - PAGE.margin - 3, y, { align: 'right' });
+  y += 5;
+
+  doc.text('Retained earnings', PAGE.margin + 6, y);
+  doc.text('Note 4', 120, y, { align: 'center' });
+  doc.text(formatZAR(pnl.netProfit.current), 155, y, { align: 'right' });
+  doc.text(formatZAR(pnl.netProfit.prior), PAGE.width - PAGE.margin - 3, y, { align: 'right' });
+  y += 5;
+
+  for (const l of bs.liabilities) {
+    doc.text(l.accountName, PAGE.margin + 6, y);
+    doc.text('Note 11', 120, y, { align: 'center' });
+    doc.text(formatZAR(l.amount), 155, y, { align: 'right' });
+    doc.text('—', PAGE.width - PAGE.margin - 3, y, { align: 'right' });
+    y += 5;
+  }
+
+  doc.setFont('helvetica', 'bold');
+  doc.setFontSize(8.5);
+  doc.text('Total equity and liabilities', PAGE.margin + 3, y);
+  doc.text(formatZAR(bs.totalLiabilitiesAndEquity.current), 155, y, { align: 'right' });
+  doc.text(formatZAR(bs.totalLiabilitiesAndEquity.prior), PAGE.width - PAGE.margin - 3, y, { align: 'right' });
+  drawReportFooter(doc, header);
+
+  // PAGE 4: STATEMENT OF CHANGES IN EQUITY
+  doc.addPage();
+  drawReportHeader(doc, header);
+  y = 72;
+  doc.setFont('helvetica', 'bold');
+  doc.setFontSize(10);
+  doc.setTextColor(24, 24, 27);
+  doc.text('STATEMENT OF CHANGES IN EQUITY', PAGE.margin, y);
+  doc.setFont('helvetica', 'normal');
+  doc.setFontSize(8);
+  doc.setTextColor(113, 113, 122);
+  doc.text(`for the year ended ${info.financialYearEnd}`, PAGE.width - PAGE.margin, y, { align: 'right' });
+  y += 8;
+
+  doc.setFillColor(243, 244, 246);
+  doc.rect(PAGE.margin, y, PAGE.width - PAGE.margin * 2, 7, 'F');
+  doc.setFont('helvetica', 'bold');
+  doc.setFontSize(7.5);
+  doc.setTextColor(113, 113, 122);
+  doc.text('PERIOD / MOVEMENT DESCRIPTION', PAGE.margin + 3, y + 4.5);
+  doc.text('SHARE CAPITAL (R)', 115, y + 4.5, { align: 'right' });
+  doc.text('RETAINED EARNINGS (R)', 155, y + 4.5, { align: 'right' });
+  doc.text('TOTAL EQUITY (R)', PAGE.width - PAGE.margin - 3, y + 4.5, { align: 'right' });
+  y += 9;
+
+  doc.setFont('helvetica', 'normal');
+  doc.setFontSize(8);
+  doc.setTextColor(24, 24, 27);
+  doc.text(`Balance at ${eq.priorYearStartLabel}`, PAGE.margin + 3, y);
+  doc.text('100,00', 115, y, { align: 'right' });
+  doc.text('0,00', 155, y, { align: 'right' });
+  doc.text('100,00', PAGE.width - PAGE.margin - 3, y, { align: 'right' });
+  y += 5.5;
+
+  doc.text(`Net profit / (loss) for FY${priYear}`, PAGE.margin + 3, y);
+  doc.text('—', 115, y, { align: 'right' });
+  doc.text(formatZAR(eq.priorNetProfit), 155, y, { align: 'right' });
+  doc.text(formatZAR(eq.priorNetProfit), PAGE.width - PAGE.margin - 3, y, { align: 'right' });
+  y += 5.5;
+
+  doc.setFont('helvetica', 'bold');
+  doc.text(`Balance at ${eq.priorYearEndLabel}`, PAGE.margin + 3, y);
+  doc.text('100,00', 115, y, { align: 'right' });
+  doc.text(formatZAR(eq.priorClosingRetained), 155, y, { align: 'right' });
+  doc.text(formatZAR(100 + eq.priorClosingRetained), PAGE.width - PAGE.margin - 3, y, { align: 'right' });
+  y += 5.5;
+
+  doc.setFont('helvetica', 'normal');
+  doc.text(`Balance at 1 March ${priYear}`, PAGE.margin + 3, y);
+  doc.text('100,00', 115, y, { align: 'right' });
+  doc.text(formatZAR(eq.currentOpeningRetained), 155, y, { align: 'right' });
+  doc.text(formatZAR(100 + eq.currentOpeningRetained), PAGE.width - PAGE.margin - 3, y, { align: 'right' });
+  y += 5.5;
+
+  doc.text(`Net profit / (loss) for FY${curYear} (to date)`, PAGE.margin + 3, y);
+  doc.text('—', 115, y, { align: 'right' });
+  doc.text(formatZAR(eq.currentNetProfit), 155, y, { align: 'right' });
+  doc.text(formatZAR(eq.currentNetProfit), PAGE.width - PAGE.margin - 3, y, { align: 'right' });
+  y += 7;
+
+  doc.setFont('helvetica', 'bold');
+  doc.setFontSize(8.5);
+  doc.text(`Balance at ${eq.currentYearEndLabel}`, PAGE.margin + 3, y);
+  doc.text('100,00', 115, y, { align: 'right' });
+  doc.text(formatZAR(eq.currentClosingRetained), 155, y, { align: 'right' });
+  doc.text(formatZAR(100 + eq.currentClosingRetained), PAGE.width - PAGE.margin - 3, y, { align: 'right' });
+  drawReportFooter(doc, header);
+
+  // PAGE 5: CASH FLOW STATEMENT
+  doc.addPage();
+  drawReportHeader(doc, header);
+  y = 72;
+  doc.setFont('helvetica', 'bold');
+  doc.setFontSize(10);
+  doc.setTextColor(24, 24, 27);
+  doc.text('CASH FLOW STATEMENT', PAGE.margin, y);
+  doc.setFont('helvetica', 'normal');
+  doc.setFontSize(8);
+  doc.setTextColor(113, 113, 122);
+  doc.text(`for the year ended ${info.financialYearEnd}`, PAGE.width - PAGE.margin, y, { align: 'right' });
+  y += 8;
+
+  doc.setFillColor(243, 244, 246);
+  doc.rect(PAGE.margin, y, PAGE.width - PAGE.margin * 2, 7, 'F');
+  doc.setFont('helvetica', 'bold');
+  doc.setFontSize(7.5);
+  doc.setTextColor(113, 113, 122);
+  doc.text('CASH FLOW CATEGORY', PAGE.margin + 3, y + 4.5);
+  doc.text('NOTES', 120, y + 4.5, { align: 'center' });
+  doc.text(`${curYear} (R)`, 155, y + 4.5, { align: 'right' });
+  doc.text(`${priYear} (R)`, PAGE.width - PAGE.margin - 3, y + 4.5, { align: 'right' });
+  y += 9;
+
+  doc.setFont('helvetica', 'bold');
+  doc.setFontSize(8);
+  doc.setTextColor(24, 24, 27);
+  doc.text('Operating activities', PAGE.margin + 3, y); y += 5.5;
+
+  doc.setFont('helvetica', 'normal');
+  doc.text('Profit for the year', PAGE.margin + 6, y);
+  doc.text(formatZAR(pnl.netProfit.current), 155, y, { align: 'right' });
+  doc.text(formatZAR(pnl.netProfit.prior), PAGE.width - PAGE.margin - 3, y, { align: 'right' });
+  y += 5;
+
+  doc.text('Depreciation of property, plant & equipment', PAGE.margin + 6, y);
+  doc.text('Note 5', 120, y, { align: 'center' });
+  doc.text(formatZAR(pnl.depreciation.current), 155, y, { align: 'right' });
+  doc.text('—', PAGE.width - PAGE.margin - 3, y, { align: 'right' });
+  y += 5.5;
+
+  doc.setFont('helvetica', 'bold');
+  doc.text('Net cash from operating activities', PAGE.margin + 3, y);
+  doc.text(formatZAR(cf.current.netOperatingCashFlow), 155, y, { align: 'right' });
+  doc.text(formatZAR(cf.prior.netOperatingCashFlow), PAGE.width - PAGE.margin - 3, y, { align: 'right' });
+  y += 7;
+
+  doc.setFont('helvetica', 'bold');
+  doc.setFontSize(8.5);
+  doc.text('Net increase in cash and cash equivalents', PAGE.margin + 3, y);
+  doc.text(formatZAR(cf.current.endingCashBalance), 155, y, { align: 'right' });
+  doc.text(formatZAR(cf.prior.endingCashBalance), PAGE.width - PAGE.margin - 3, y, { align: 'right' });
+  drawReportFooter(doc, header);
+
+  // PAGE 6: DETAILED INCOME STATEMENT & DIVISIONAL REVENUE BREAKDOWN
+  doc.addPage();
+  drawReportHeader(doc, header);
+  y = 72;
+  doc.setFont('helvetica', 'bold');
+  doc.setFontSize(10);
+  doc.setTextColor(24, 24, 27);
+  doc.text('DETAILED INCOME STATEMENT', PAGE.margin, y);
+  doc.setFont('helvetica', 'normal');
+  doc.setFontSize(8);
+  doc.setTextColor(113, 113, 122);
+  doc.text(`for the year ended ${info.financialYearEnd}`, PAGE.width - PAGE.margin, y, { align: 'right' });
+  y += 8;
+
+  doc.setFillColor(243, 244, 246);
+  doc.rect(PAGE.margin, y, PAGE.width - PAGE.margin * 2, 7, 'F');
+  doc.setFont('helvetica', 'bold');
+  doc.setFontSize(7.5);
+  doc.setTextColor(113, 113, 122);
+  doc.text('REVENUE & EXPENSE SCHEDULE', PAGE.margin + 3, y + 4.5);
+  doc.text(`${curYear} (R)`, 155, y + 4.5, { align: 'right' });
+  doc.text(`${priYear} (R)`, PAGE.width - PAGE.margin - 3, y + 4.5, { align: 'right' });
+  y += 9;
+
+  doc.setFont('helvetica', 'bold');
+  doc.setFontSize(8);
+  doc.setTextColor(24, 24, 27);
+  doc.text('INCOME', PAGE.margin + 3, y); y += 5.5;
+
+  doc.text('Sales Revenue (excluding VAT)', PAGE.margin + 6, y);
+  doc.text(formatZAR(det.revenue.current), 155, y, { align: 'right' });
+  doc.text(formatZAR(det.revenue.prior), PAGE.width - PAGE.margin - 3, y, { align: 'right' });
+  y += 5;
+
+  doc.setFont('helvetica', 'italic');
+  doc.setFontSize(7.5);
+  doc.setTextColor(82, 82, 91);
+  for (const div of det.divisionBreakdown) {
+    doc.text(`├── ${div.divisionName}`, PAGE.margin + 10, y);
+    doc.text(formatZAR(div.current), 155, y, { align: 'right' });
+    doc.text(formatZAR(div.prior), PAGE.width - PAGE.margin - 3, y, { align: 'right' });
+    y += 5;
+  }
+
+  doc.setFont('helvetica', 'bold');
+  doc.setFontSize(8);
+  doc.setTextColor(24, 24, 27);
+  doc.text('EXPENSES', PAGE.margin + 3, y); y += 5.5;
+
+  doc.setFont('helvetica', 'normal');
+  for (const exp of det.expenses) {
+    y = ensurePage(doc, y, 6);
+    doc.text(`${exp.accountCode} — ${exp.accountName}`, PAGE.margin + 6, y);
+    doc.text(formatZAR(exp.amount), 155, y, { align: 'right' });
+    doc.text('—', PAGE.width - PAGE.margin - 3, y, { align: 'right' });
+    y += 5;
+  }
+
+  y = ensurePage(doc, y, 10);
+  doc.setFont('helvetica', 'bold');
+  doc.setFontSize(8.5);
+  doc.text('Profit / (loss) for the year', PAGE.margin + 3, y);
+  doc.text(formatZAR(det.netProfit.current), 155, y, { align: 'right' });
+  doc.text(formatZAR(det.netProfit.prior), PAGE.width - PAGE.margin - 3, y, { align: 'right' });
   drawReportFooter(doc, header);
 
   const suffix = [filters.period ?? 'all-time', filters.divisionId].filter(Boolean).join('-');
