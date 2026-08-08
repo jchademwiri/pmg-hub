@@ -9,7 +9,7 @@ import { user } from "../schema/auth";
 import { snapshots } from "../schema/snapshots";
 import { divisions } from "../schema/divisions";
 import { clients } from "../schema/clients";
-import { invoices, payments } from "../schema/billing";
+import { invoices } from "../schema/billing";
 import { income } from "../schema/income";
 import { getOrganisationSettings } from "./billing";
 import { eq, and, desc, asc, sql, inArray } from "drizzle-orm";
@@ -951,18 +951,18 @@ export async function getClientPerformance(
     .groupBy(invoices.clientId);
 
   // Cash collected per client
-  const paymentConditions = [eq(payments.status, 'completed')];
-  if (startDate) paymentConditions.push(sql`${payments.paymentDate} >= ${startDate}`);
-  if (endDate) paymentConditions.push(sql`${payments.paymentDate} <= ${endDate}`);
+  const paymentConditions = [];
+  if (startDate) paymentConditions.push(sql`${income.date} >= ${startDate}`);
+  if (endDate) paymentConditions.push(sql`${income.date} <= ${endDate}`);
 
   const paymentRows = await db
     .select({
-      clientId: payments.clientId,
-      totalPaid: sql<string>`COALESCE(SUM(${payments.amount}::numeric), 0)`,
+      clientId: income.clientId,
+      totalPaid: sql<string>`COALESCE(SUM(${income.amount}::numeric), 0)`,
     })
-    .from(payments)
-    .where(and(...paymentConditions))
-    .groupBy(payments.clientId);
+    .from(income)
+    .where(paymentConditions.length > 0 ? and(...paymentConditions) : undefined)
+    .groupBy(income.clientId);
 
   const invoicedMap = new Map<string, number>();
   for (const r of invoicedRows) {
