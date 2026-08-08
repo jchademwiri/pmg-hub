@@ -998,8 +998,8 @@ export async function getClientPerformance(
 
   const allClients = await db.select().from(clients).where(eq(clients.isActive, true));
 
-  // Invoiced total per client
-  const invoiceConditions = [inArray(invoices.status, ['issued', 'partially_paid', 'paid', 'written_off'])];
+  // Invoiced total per client (excludes written_off, draft, void)
+  const invoiceConditions = [inArray(invoices.status, ['issued', 'partially_paid', 'paid'])];
   if (effectiveStart) invoiceConditions.push(sql`${invoices.invoiceDate} >= ${effectiveStart}`);
   if (effectiveEnd) invoiceConditions.push(sql`${invoices.invoiceDate} <= ${effectiveEnd}`);
 
