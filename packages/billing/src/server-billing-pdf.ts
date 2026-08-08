@@ -377,16 +377,23 @@ function drawTotals(doc: jsPDF, data: PdfDocumentData, startY: number) {
     totals.subtotal != null ? ['Subtotal', totals.subtotal] as const : null,
     totals.discount && totals.discount > 0 ? ['Discount', -totals.discount] as const : null,
     totals.vat && totals.vat > 0 ? ['VAT', totals.vat] as const : null,
-    totals.paid != null ? ['Total Paid', totals.paid] as const : null,
+    totals.total != null ? ['Total Invoiced', totals.total] as const : null,
+    totals.paid != null && totals.paid > 0 ? ['Less Payments', -totals.paid] as const : null,
     totals.balanceDue != null ? ['Balance Due', totals.balanceDue] as const : null,
-    totals.total != null ? ['Total', totals.total] as const : null,
   ].filter(Boolean) as ReadonlyArray<readonly [string, number]>;
 
   for (const [label, amount] of rows) {
-    doc.setFont('helvetica', label === 'Total' || label === 'Balance Due' ? 'bold' : 'normal');
-    doc.setFontSize(label === 'Total' || label === 'Balance Due' ? 10 : 8);
-    if (label === 'Total Paid') {
+    const isBold = label === 'Total Invoiced' || label === 'Balance Due';
+    doc.setFont('helvetica', isBold ? 'bold' : 'normal');
+    doc.setFontSize(isBold ? 10 : 8);
+    if (label === 'Less Payments') {
       doc.setTextColor(5, 150, 105); // green for paid
+    } else if (label === 'Balance Due') {
+      if (amount === 0) {
+        doc.setTextColor(5, 150, 105); // green for zero balance
+      } else {
+        doc.setTextColor(217, 119, 6); // amber/warning for outstanding balance
+      }
     } else {
       doc.setTextColor(24, 24, 27);
     }
@@ -458,6 +465,13 @@ async function buildInvoicePdfData(id: string): Promise<PdfDocumentData | null> 
   const settings = await getDivisionBillingSettings(invoice.divisionId);
   const orgSettings = await getOrganisationSettings();
 
+  const total = safeNumber(invoice.total);
+  const paid = invoice.status === 'paid' 
+    ? total 
+    : Math.min(total, safeNumber(invoice.allocatedAmount));
+  const balanceDue = Math.max(0, total - paid);
+  const showPaymentSummary = paid > 0 || invoice.status === 'paid' || invoice.status === 'partially_paid';
+
   return {
     type: 'invoice',
     title: 'Invoice',
@@ -486,7 +500,9 @@ async function buildInvoicePdfData(id: string): Promise<PdfDocumentData | null> 
       subtotal: safeNumber(invoice.subtotal),
       discount: safeNumber(invoice.discountAmount),
       vat: safeNumber(invoice.vatAmount),
-      total: safeNumber(invoice.total),
+      total,
+      paid: showPaymentSummary ? paid : undefined,
+      balanceDue: showPaymentSummary ? balanceDue : undefined,
     },
   };
 }

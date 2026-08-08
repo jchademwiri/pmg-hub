@@ -141,6 +141,8 @@ export default async function InvoiceDetailPage({ params }: Props) {
     issueDate: invoice.invoiceDate,
     dueDate: invoice.dueDate ?? undefined,
     reference: invoice.reference ?? undefined,
+    amountPaid: invoice.status === 'paid' ? Number(invoice.total) : totalAllocated,
+    balanceDue: outstandingBalance,
     org: buildOrgProps(invoice.divisionName, divSettings, orgSettings),
     client: {
       name: invoice.clientName ?? 'No client',
@@ -285,17 +287,28 @@ export default async function InvoiceDetailPage({ params }: Props) {
               </CardHeader>
               <CardContent className="p-0 px-6 pb-4">
                 <div className="flex flex-col divide-y divide-border text-xs">
-                  {allocations.map((a) => (
-                    <div key={a.id} className="flex justify-between py-2 items-center gap-2">
-                      <div className="flex flex-col gap-0.5 min-w-0">
-                        <span className="font-semibold truncate text-foreground">{a.description}</span>
-                        <span className="text-muted-foreground text-[10px]">{fmtDate(a.date)}</span>
+                  {allocations.map((a, index) => {
+                    const totalInvoiceAmt = parseFloat(invoice.total);
+                    const remainingAllocations = allocations.slice(index);
+                    const totalPaidUpToThis = remainingAllocations.reduce((sum, item) => sum + parseFloat(item.amount), 0);
+                    const remBalAfter = Math.max(0, totalInvoiceAmt - totalPaidUpToThis);
+
+                    return (
+                      <div key={a.id} className="flex justify-between py-2 items-center gap-2">
+                        <div className="flex flex-col gap-0.5 min-w-0">
+                          <span className="font-semibold truncate text-foreground">{a.description}</span>
+                          <div className="flex items-center gap-1.5 text-muted-foreground text-[10px]">
+                            <span>{fmtDate(a.date)}</span>
+                            <span>•</span>
+                            <span className="font-medium text-muted-foreground">Bal: {formatZAR(remBalAfter)}</span>
+                          </div>
+                        </div>
+                        <span className="font-bold text-emerald-600 shrink-0 tabular-nums">
+                          +{formatZAR(parseFloat(a.amount))}
+                        </span>
                       </div>
-                      <span className="font-bold text-emerald-600 shrink-0 tabular-nums">
-                        {formatZAR(parseFloat(a.amount))}
-                      </span>
-                    </div>
-                  ))}
+                    );
+                  })}
                 </div>
               </CardContent>
             </Card>

@@ -227,7 +227,9 @@ export function InvoicesTable({
               <TableHead>Client</TableHead>
               <TableHead>Issue Date</TableHead>
               <TableHead>Due Date</TableHead>
-              <TableHead className="text-right">Amount</TableHead>
+              <TableHead className="text-right">Total</TableHead>
+              <TableHead className="text-right">Paid</TableHead>
+              <TableHead className="text-right">Balance Due</TableHead>
               <TableHead>Status</TableHead>
               <TableHead className="w-10" />
             </TableRow>
@@ -235,13 +237,17 @@ export function InvoicesTable({
           <TableBody>
             {entries.length === 0 ? (
               <TableRow>
-                <TableCell colSpan={9} className="h-24 text-center text-muted-foreground text-xs">
+                <TableCell colSpan={11} className="h-24 text-center text-muted-foreground text-xs">
                   No invoices match the current filters.
                 </TableCell>
               </TableRow>
             ) : (
               entries.map((inv) => {
                 const isSelected = selectedIds.includes(inv.id);
+                const invTotal = Number(inv.total);
+                const invPaid = inv.status === 'paid' ? invTotal : Math.min(invTotal, Number(inv.allocatedAmount || 0));
+                const invBalance = Math.max(0, invTotal - invPaid);
+
                 return (
                   <TableRow 
                     key={inv.id}
@@ -280,7 +286,17 @@ export function InvoicesTable({
                       {fmtDate(inv.dueDate)}
                     </TableCell>
                     <TableCell className="text-right tabular-nums text-sm font-medium">
-                      {formatZAR(Number(inv.total))}
+                      {formatZAR(invTotal)}
+                    </TableCell>
+                    <TableCell className="text-right tabular-nums text-sm">
+                      <span className={invPaid > 0 ? "text-emerald-600 font-medium" : "text-muted-foreground"}>
+                        {formatZAR(invPaid)}
+                      </span>
+                    </TableCell>
+                    <TableCell className="text-right tabular-nums text-sm font-semibold">
+                      <span className={invBalance === 0 ? "text-emerald-600 font-medium" : "text-amber-600 font-semibold"}>
+                        {formatZAR(invBalance)}
+                      </span>
                     </TableCell>
                     <TableCell>
                       <BillingStatusBadge status={inv.status} />

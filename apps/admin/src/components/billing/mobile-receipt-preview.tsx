@@ -122,9 +122,23 @@ export function MobileReceiptPreview({
             </div>
           )}
           <div className="flex justify-between font-bold text-base pt-2 border-t border-border mt-1">
-            <span>Total</span>
+            <span>{type === 'invoice' && (status.toLowerCase() === 'paid' || status.toLowerCase() === 'partially_paid') ? 'Total Invoiced' : 'Total'}</span>
             <span className="tabular-nums">{formatZAR(grandTotal)}</span>
           </div>
+          {type === 'invoice' && (status.toLowerCase() === 'paid' || status.toLowerCase() === 'partially_paid') && (
+            <>
+              <div className="flex justify-between text-sm font-medium text-emerald-600">
+                <span>Less Payments</span>
+                <span className="tabular-nums">-{formatZAR(status.toLowerCase() === 'paid' ? grandTotal : (grandTotal - (balanceDue ?? 0)))}</span>
+              </div>
+              <div className="flex justify-between font-bold text-base pt-2 border-t border-border mt-1">
+                <span>Balance Due</span>
+                <span className={`tabular-nums ${(balanceDue ?? 0) === 0 || status.toLowerCase() === 'paid' ? 'text-emerald-600' : 'text-amber-600'}`}>
+                  {formatZAR(status.toLowerCase() === 'paid' ? 0 : (balanceDue ?? 0))}
+                </span>
+              </div>
+            </>
+          )}
         </div>
 
         {/* Banking Details */}
