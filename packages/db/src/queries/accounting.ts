@@ -7,6 +7,11 @@ import {
 } from "../schema/accounting";
 import { user } from "../schema/auth";
 import { snapshots } from "../schema/snapshots";
+import { divisions } from "../schema/divisions";
+import { clients } from "../schema/clients";
+import { invoices } from "../schema/billing";
+import { income } from "../schema/income";
+import { getOrganisationSettings } from "./billing";
 import { eq, and, desc, asc, sql, inArray } from "drizzle-orm";
 
 // ── Chart of Accounts ─────────────────────────────────────────────────────────
@@ -155,16 +160,19 @@ export async function getJournalEntries({
   status,
   period,
   year,
+  divisionId,
 }: {
   page?: number;
   pageSize?: number;
   status?: string;
   period?: string;
   year?: number;
+  divisionId?: string;
 } = {}) {
   const conditions = [];
   if (status) conditions.push(eq(journalEntries.status, status as any));
   if (period) conditions.push(eq(journalEntries.period, period));
+  if (divisionId) conditions.push(eq(journalEntries.divisionId, divisionId));
   if (year) {
     conditions.push(sql`${journalEntries.period} >= ${`${year}-03`}`);
     conditions.push(sql`${journalEntries.period} <= ${`${year + 1}-02`}`);
@@ -257,6 +265,49 @@ export async function getJournalEntryWithLines(id: string) {
     .orderBy(asc(journalLines.createdAt));
 
   return { ...entry, lines };
+}
+
+export type JournalEntryLineRow = {
+  id: string;
+  journalEntryId: string;
+  accountId: string;
+  accountCode: string;
+  accountName: string;
+  debit: number;
+  credit: number;
+  description: string | null;
+};
+
+/**
+ * Returns all journal lines (with account code/name joined) for a batch of
+ * journal entry ids in a single query — used by report generation that
+ * needs every entry's lines without the N+1 cost of calling
+ * getJournalEntryWithLines per entry.
+ */
+export async function getJournalLinesForEntries(entryIds: string[]): Promise<JournalEntryLineRow[]> {
+  if (entryIds.length === 0) return [];
+
+  const rows = await db
+    .select({
+      id: journalLines.id,
+      journalEntryId: journalLines.journalEntryId,
+      accountId: journalLines.accountId,
+      accountCode: chartAccounts.code,
+      accountName: chartAccounts.name,
+      debit: journalLines.debit,
+      credit: journalLines.credit,
+      description: journalLines.description,
+    })
+    .from(journalLines)
+    .innerJoin(chartAccounts, eq(journalLines.accountId, chartAccounts.id))
+    .where(inArray(journalLines.journalEntryId, entryIds))
+    .orderBy(asc(journalLines.createdAt));
+
+  return rows.map((r) => ({
+    ...r,
+    debit: Number(r.debit ?? 0),
+    credit: Number(r.credit ?? 0),
+  }));
 }
 
 /**
@@ -429,10 +480,44 @@ export type TrialBalanceRow = {
   accountCode: string;
   accountName: string;
   accountType: string;
+  debit: number;
+  credit: number;
   totalDebits: number;
   totalCredits: number;
   balance: number;
 };
+
+/**
+ * Resolves a period key (e.g. "2027-FY", "2026-03", "2026-H1", "2026-Q1")
+ * to explicit startDate and endDate for South African Financial Years (1 Mar - 28/29 Feb).
+ */
+export function resolvePeriodDateRange(period?: string): { startDate?: string; endDate?: string } {
+  if (!period || period === 'all') return {};
+
+  // Annual Financial Year, e.g. "2027-FY" or "2026-FY"
+  if (period.endsWith('-FY')) {
+    const fyYear = parseInt(period.split('-')[0], 10);
+    const startYear = fyYear - 1;
+    const isLeap = (fyYear % 4 === 0 && fyYear % 100 !== 0) || (fyYear % 400 === 0);
+    const febDays = isLeap ? 29 : 28;
+    return {
+      startDate: `${startYear}-03-01`,
+      endDate: `${fyYear}-02-${febDays}`,
+    };
+  }
+
+  // Monthly, e.g. "2026-03"
+  if (/^\d{4}-\d{2}$/.test(period)) {
+    const [y, m] = period.split('-').map(Number);
+    const lastDay = new Date(y, m, 0).getDate();
+    return {
+      startDate: `${period}-01`,
+      endDate: `${period}-${String(lastDay).padStart(2, '0')}`,
+    };
+  }
+
+  return {};
+}
 
 /**
  * Returns trial balance data: for each posting account, the sum of debits and
@@ -440,11 +525,20 @@ export type TrialBalanceRow = {
  * Uses a subquery to ensure only journal lines belonging to posted entries
  * are aggregated — void/draft entries are excluded.
  */
-export async function getTrialBalance(period?: string): Promise<TrialBalanceRow[]> {
+export async function getTrialBalance(period?: string, divisionId?: string, startDate?: string, endDate?: string): Promise<TrialBalanceRow[]> {
+  const range = resolvePeriodDateRange(period);
+  const effectiveStart = startDate || range.startDate;
+  const effectiveEnd = endDate || range.endDate;
+
   const entryConditions = [
     eq(journalEntries.status, "posted"),
   ];
-  if (period) entryConditions.push(eq(journalEntries.period, period));
+  if (period && !period.endsWith('-FY') && !/^\d{4}-\d{2}$/.test(period)) {
+    entryConditions.push(eq(journalEntries.period, period));
+  }
+  if (divisionId) entryConditions.push(eq(journalEntries.divisionId, divisionId));
+  if (effectiveStart) entryConditions.push(sql`${journalEntries.entryDate} >= ${effectiveStart}`);
+  if (effectiveEnd) entryConditions.push(sql`${journalEntries.entryDate} <= ${effectiveEnd}`);
 
   const accountConditions = [
     eq(chartAccounts.isPostingAccount, true),
@@ -485,12 +579,196 @@ export async function getTrialBalance(period?: string): Promise<TrialBalanceRow[
     .where(and(...accountConditions))
     .orderBy(asc(chartAccounts.code));
 
-  return rows.map((r) => ({
-    ...r,
-    totalDebits: Number(r.totalDebits),
-    totalCredits: Number(r.totalCredits),
-    balance: Number(r.totalDebits) - Number(r.totalCredits),
-  }));
+  return rows
+    .map((r) => {
+      const debits = Number(r.totalDebits);
+      const credits = Number(r.totalCredits);
+      return {
+        ...r,
+        debit: debits,
+        credit: credits,
+        totalDebits: debits,
+        totalCredits: credits,
+        balance: debits - credits,
+      };
+    })
+    .filter((r) => Math.abs(r.totalDebits) >= 0.01 || Math.abs(r.totalCredits) >= 0.01);
+}
+
+// ── Balance Sheet ─────────────────────────────────────────────────────────────
+
+export type BalanceSheetAccountRow = {
+  accountId: string;
+  accountCode: string;
+  accountName: string;
+  accountType: string;
+  amount: number;
+};
+
+export type BalanceSheetResult = {
+  assets: BalanceSheetAccountRow[];
+  totalAssets: number;
+  liabilities: BalanceSheetAccountRow[];
+  totalLiabilities: number;
+  equity: BalanceSheetAccountRow[];
+  totalEquity: number;
+  netIncome: number;
+  totalLiabilitiesAndEquity: number;
+};
+
+export async function getBalanceSheet(
+  period?: string,
+  divisionId?: string,
+  startDate?: string,
+  endDate?: string
+): Promise<BalanceSheetResult> {
+  const range = resolvePeriodDateRange(period);
+  const effectiveStart = startDate || range.startDate;
+  const effectiveEnd = endDate || range.endDate;
+
+  const entryConditions = [
+    eq(journalEntries.status, "posted"),
+  ];
+  if (period && !period.endsWith('-FY') && !/^\d{4}-\d{2}$/.test(period)) {
+    entryConditions.push(eq(journalEntries.period, period));
+  }
+  if (divisionId) entryConditions.push(eq(journalEntries.divisionId, divisionId));
+  if (effectiveStart) entryConditions.push(sql`${journalEntries.entryDate} >= ${effectiveStart}`);
+  if (effectiveEnd) entryConditions.push(sql`${journalEntries.entryDate} <= ${effectiveEnd}`);
+
+  const postedLineTotals = db
+    .select({
+      accountId: journalLines.accountId,
+      totalDebits: sql<string>`COALESCE(SUM(${journalLines.debit}::numeric), 0)`.as("totalDebits"),
+      totalCredits: sql<string>`COALESCE(SUM(${journalLines.credit}::numeric), 0)`.as("totalCredits"),
+    })
+    .from(journalLines)
+    .innerJoin(
+      journalEntries,
+      and(
+        eq(journalLines.journalEntryId, journalEntries.id),
+        ...entryConditions
+      )
+    )
+    .groupBy(journalLines.accountId)
+    .as("posted_line_totals");
+
+  const rows = await db
+    .select({
+      accountId: chartAccounts.id,
+      accountCode: chartAccounts.code,
+      accountName: chartAccounts.name,
+      accountType: chartAccounts.type,
+      totalDebits: sql<string>`COALESCE(${postedLineTotals.totalDebits}, 0)`,
+      totalCredits: sql<string>`COALESCE(${postedLineTotals.totalCredits}, 0)`,
+    })
+    .from(chartAccounts)
+    .leftJoin(postedLineTotals, eq(postedLineTotals.accountId, chartAccounts.id))
+    .where(and(eq(chartAccounts.isPostingAccount, true), eq(chartAccounts.isActive, true)))
+    .orderBy(asc(chartAccounts.code));
+
+  const assets: BalanceSheetAccountRow[] = [];
+  const liabilities: BalanceSheetAccountRow[] = [];
+  const equity: BalanceSheetAccountRow[] = [];
+
+  let totalRev = 0;
+  let totalExp = 0;
+
+  for (const r of rows) {
+    const debits = Number(r.totalDebits);
+    const credits = Number(r.totalCredits);
+
+    if (r.accountType === "asset") {
+      const amount = debits - credits;
+      if (Math.abs(amount) > 0.01) assets.push({ ...r, amount });
+    } else if (r.accountType === "liability") {
+      const amount = credits - debits;
+      if (Math.abs(amount) > 0.01) liabilities.push({ ...r, amount });
+    } else if (r.accountType === "equity") {
+      const amount = credits - debits;
+      if (Math.abs(amount) > 0.01) equity.push({ ...r, amount });
+    } else if (r.accountType === "revenue") {
+      totalRev += credits - debits;
+    } else if (r.accountType === "expense") {
+      totalExp += debits - credits;
+    }
+  }
+
+  const netIncome = totalRev - totalExp;
+  const totalAssets = assets.reduce((sum, a) => sum + a.amount, 0);
+  const totalLiabilities = liabilities.reduce((sum, l) => sum + l.amount, 0);
+  const totalEquity = equity.reduce((sum, e) => sum + e.amount, 0) + netIncome;
+  const totalLiabilitiesAndEquity = totalLiabilities + totalEquity;
+
+  return {
+    assets,
+    totalAssets,
+    liabilities,
+    totalLiabilities,
+    equity,
+    totalEquity,
+    netIncome,
+    totalLiabilitiesAndEquity,
+  };
+}
+
+// ── Cash Flow Statement ───────────────────────────────────────────────────────
+
+export type CashFlowCategoryRow = {
+  description: string;
+  amount: number;
+};
+
+export type CashFlowResult = {
+  operatingActivities: CashFlowCategoryRow[];
+  netOperatingCashFlow: number;
+  investingFinancingActivities: CashFlowCategoryRow[];
+  netInvestingFinancingCashFlow: number;
+  netCashIncrease: number;
+  startingCashBalance: number;
+  endingCashBalance: number;
+};
+
+export async function getCashFlowStatement(
+  period?: string,
+  divisionId?: string,
+  startDate?: string,
+  endDate?: string
+): Promise<CashFlowResult> {
+  const pnl = await getProfitAndLoss(period, divisionId, startDate, endDate);
+  const bs = await getBalanceSheet(period, divisionId, startDate, endDate);
+  const divPerf = await getProfitAndLossByDivision(period, startDate, endDate);
+
+  const totalCashCollected = divPerf
+    .filter((d) => !divisionId || d.divisionId === divisionId)
+    .reduce((sum, d) => sum + d.totalIncome, 0);
+  const totalOperatingExpenses = pnl.totalExpenses;
+
+  const operatingActivities: CashFlowCategoryRow[] = [
+    { description: 'Cash Receipts from Customers / Sales Collections', amount: totalCashCollected },
+    { description: 'Cash Payments for Operating Expenses', amount: -totalOperatingExpenses },
+  ];
+
+  const netOperatingCashFlow = totalCashCollected - totalOperatingExpenses;
+
+  const investingFinancingActivities: CashFlowCategoryRow[] = [];
+  const netInvestingFinancingCashFlow = 0;
+
+  const netCashIncrease = netOperatingCashFlow + netInvestingFinancingCashFlow;
+  
+  const bankAccounts = bs.assets.filter((a) => a.accountCode.startsWith('10'));
+  const endingCashBalance = bankAccounts.reduce((sum, a) => sum + a.amount, 0);
+  const startingCashBalance = Math.max(0, endingCashBalance - netCashIncrease);
+
+  return {
+    operatingActivities,
+    netOperatingCashFlow,
+    investingFinancingActivities,
+    netInvestingFinancingCashFlow,
+    netCashIncrease,
+    startingCashBalance,
+    endingCashBalance,
+  };
 }
 
 // ── Profit & Loss ─────────────────────────────────────────────────────────────
@@ -518,11 +796,20 @@ export type ProfitAndLossResult = {
  * Uses a subquery to ensure only journal lines belonging to posted entries
  * are aggregated — void/draft entries are excluded.
  */
-export async function getProfitAndLoss(period?: string): Promise<ProfitAndLossResult> {
+export async function getProfitAndLoss(period?: string, divisionId?: string, startDate?: string, endDate?: string): Promise<ProfitAndLossResult> {
+  const range = resolvePeriodDateRange(period);
+  const effectiveStart = startDate || range.startDate;
+  const effectiveEnd = endDate || range.endDate;
+
   const entryConditions = [
     eq(journalEntries.status, "posted"),
   ];
-  if (period) entryConditions.push(eq(journalEntries.period, period));
+  if (period && !period.endsWith('-FY') && !/^\d{4}-\d{2}$/.test(period)) {
+    entryConditions.push(eq(journalEntries.period, period));
+  }
+  if (divisionId) entryConditions.push(eq(journalEntries.divisionId, divisionId));
+  if (effectiveStart) entryConditions.push(sql`${journalEntries.entryDate} >= ${effectiveStart}`);
+  if (effectiveEnd) entryConditions.push(sql`${journalEntries.entryDate} <= ${effectiveEnd}`);
 
   const accountConditions = [
     eq(chartAccounts.isPostingAccount, true),
@@ -590,6 +877,206 @@ export async function getProfitAndLoss(period?: string): Promise<ProfitAndLossRe
   };
 }
 
+export type ProfitAndLossByDivisionRow = {
+  divisionId: string;
+  divisionName: string;
+  totalRevenue: number;
+  totalIncome: number;
+  totalOutstandingAr: number;
+  totalExpenses: number;
+  netProfit: number;
+  marginPercent: number;
+  distributionPercent: number;
+};
+
+/**
+ * Returns revenue/income/AR/expenses/net profit grouped by division, for a given
+ * period. Includes division margin % and group distribution %.
+ * Sorted by totalRevenue descending (highest-earning division first).
+ */
+export async function getProfitAndLossByDivision(period?: string, startDate?: string, endDate?: string): Promise<ProfitAndLossByDivisionRow[]> {
+  const range = resolvePeriodDateRange(period);
+  const effectiveStart = startDate || range.startDate;
+  const effectiveEnd = endDate || range.endDate;
+
+  const entryConditions = [
+    eq(journalEntries.status, "posted"),
+  ];
+  if (period && !period.endsWith('-FY') && !/^\d{4}-\d{2}$/.test(period)) {
+    entryConditions.push(eq(journalEntries.period, period));
+  }
+  if (effectiveStart) entryConditions.push(sql`${journalEntries.entryDate} >= ${effectiveStart}`);
+  if (effectiveEnd) entryConditions.push(sql`${journalEntries.entryDate} <= ${effectiveEnd}`);
+
+  const rows = await db
+    .select({
+      divisionId: journalEntries.divisionId,
+      accountType: chartAccounts.type,
+      totalDebits: sql<string>`COALESCE(SUM(${journalLines.debit}::numeric), 0)`,
+      totalCredits: sql<string>`COALESCE(SUM(${journalLines.credit}::numeric), 0)`,
+    })
+    .from(journalLines)
+    .innerJoin(journalEntries, and(eq(journalLines.journalEntryId, journalEntries.id), ...entryConditions))
+    .innerJoin(chartAccounts, eq(journalLines.accountId, chartAccounts.id))
+    .where(inArray(chartAccounts.type, ["revenue", "expense"]))
+    .groupBy(journalEntries.divisionId, chartAccounts.type);
+
+  // Fetch actual cash income collected per division
+  const incomeConditions = [];
+  if (effectiveStart) incomeConditions.push(sql`${income.date} >= ${effectiveStart}`);
+  if (effectiveEnd) incomeConditions.push(sql`${income.date} <= ${effectiveEnd}`);
+
+  const incomeRows = await db
+    .select({
+      divisionId: income.divisionId,
+      totalIncome: sql<string>`COALESCE(SUM(${income.amount}::numeric), 0)`,
+    })
+    .from(income)
+    .where(incomeConditions.length > 0 ? and(...incomeConditions) : undefined)
+    .groupBy(income.divisionId);
+
+  const incomeMap = new Map(incomeRows.map((i) => [i.divisionId, Number(i.totalIncome)]));
+
+  const allDivisions = await db.select({ id: divisions.id, name: divisions.name }).from(divisions);
+  const divisionNames = new Map(allDivisions.map((d) => [d.id, d.name]));
+
+  const byDivision = new Map<string, { totalRevenue: number; totalExpenses: number }>();
+  for (const r of rows) {
+    const totals = byDivision.get(r.divisionId) ?? { totalRevenue: 0, totalExpenses: 0 };
+    const debits = Number(r.totalDebits);
+    const credits = Number(r.totalCredits);
+    if (r.accountType === "revenue") totals.totalRevenue += credits - debits;
+    else if (r.accountType === "expense") totals.totalExpenses += debits - credits;
+    byDivision.set(r.divisionId, totals);
+  }
+
+  const groupTotalRevenue = Array.from(byDivision.values()).reduce((sum, d) => sum + Math.max(0, d.totalRevenue), 0);
+
+  const result: ProfitAndLossByDivisionRow[] = [];
+  for (const [divisionId, totals] of byDivision) {
+    if (Math.abs(totals.totalRevenue) < 0.01 && Math.abs(totals.totalExpenses) < 0.01) continue;
+    const cashIncome = incomeMap.get(divisionId) ?? 0;
+    const netProfit = totals.totalRevenue - totals.totalExpenses;
+    const marginPercent = totals.totalRevenue > 0 ? (netProfit / totals.totalRevenue) * 100 : 0;
+    const distributionPercent = groupTotalRevenue > 0 ? (totals.totalRevenue / groupTotalRevenue) * 100 : 0;
+    const totalOutstandingAr = Math.max(0, totals.totalRevenue - cashIncome);
+
+    result.push({
+      divisionId,
+      divisionName: divisionNames.get(divisionId) ?? "Unknown Division",
+      totalRevenue: totals.totalRevenue,
+      totalIncome: cashIncome,
+      totalOutstandingAr,
+      totalExpenses: totals.totalExpenses,
+      netProfit,
+      marginPercent,
+      distributionPercent,
+    });
+  }
+
+  return result.sort((a, b) => b.totalRevenue - a.totalRevenue);
+}
+
+// ── Client Performance ────────────────────────────────────────────────────────
+
+export type ClientPerformanceRow = {
+  clientId: string;
+  clientName: string;
+  totalRevenue: number;
+  totalCashCollected: number;
+  totalOutstandingAr: number;
+  marginPercent: number;
+  distributionPercent: number;
+  concentrationPercent: number;
+  isHighRisk: boolean;
+};
+
+/**
+ * Returns revenue, cash collected, outstanding AR balance & margin % per client.
+ */
+export async function getClientPerformance(
+  period?: string,
+  startDate?: string,
+  endDate?: string
+): Promise<ClientPerformanceRow[]> {
+  const range = resolvePeriodDateRange(period);
+  const effectiveStart = startDate || range.startDate;
+  const effectiveEnd = endDate || range.endDate;
+
+  const allClients = await db.select().from(clients).where(eq(clients.isActive, true));
+
+  // Invoiced total per client (excludes written_off, draft, void)
+  const invoiceConditions = [inArray(invoices.status, ['issued', 'partially_paid', 'paid'])];
+  if (effectiveStart) invoiceConditions.push(sql`${invoices.invoiceDate} >= ${effectiveStart}`);
+  if (effectiveEnd) invoiceConditions.push(sql`${invoices.invoiceDate} <= ${effectiveEnd}`);
+
+  const invoicedRows = await db
+    .select({
+      clientId: invoices.clientId,
+      totalInvoiced: sql<string>`COALESCE(SUM(${invoices.total}::numeric), 0)`,
+    })
+    .from(invoices)
+    .where(and(...invoiceConditions))
+    .groupBy(invoices.clientId);
+
+  // Cash collected per client
+  const paymentConditions = [];
+  if (effectiveStart) paymentConditions.push(sql`${income.date} >= ${effectiveStart}`);
+  if (effectiveEnd) paymentConditions.push(sql`${income.date} <= ${effectiveEnd}`);
+
+  const paymentRows = await db
+    .select({
+      clientId: income.clientId,
+      totalPaid: sql<string>`COALESCE(SUM(${income.amount}::numeric), 0)`,
+    })
+    .from(income)
+    .where(paymentConditions.length > 0 ? and(...paymentConditions) : undefined)
+    .groupBy(income.clientId);
+
+  const invoicedMap = new Map<string, number>();
+  for (const r of invoicedRows) {
+    if (r.clientId) invoicedMap.set(r.clientId, Number(r.totalInvoiced));
+  }
+
+  const paymentMap = new Map<string, number>();
+  for (const r of paymentRows) {
+    if (r.clientId) paymentMap.set(r.clientId, Number(r.totalPaid));
+  }
+
+  let groupTotalRevenue = 0;
+  for (const amount of invoicedMap.values()) {
+    groupTotalRevenue += amount;
+  }
+
+  const result: ClientPerformanceRow[] = [];
+  for (const client of allClients) {
+    const rev = invoicedMap.get(client.id) || 0;
+    const collected = paymentMap.get(client.id) || 0;
+    const ar = Math.max(0, rev - collected);
+
+    if (rev === 0 && collected === 0) continue;
+
+    const distributionPercent = groupTotalRevenue > 0 ? (rev / groupTotalRevenue) * 100 : 0;
+    const concentrationPercent = distributionPercent;
+    const isHighRisk = concentrationPercent > 25;
+    const marginPercent = rev > 0 ? (collected / rev) * 100 : 0;
+
+    result.push({
+      clientId: client.id,
+      clientName: client.name,
+      totalRevenue: rev,
+      totalCashCollected: collected,
+      totalOutstandingAr: ar,
+      marginPercent: Math.min(100, marginPercent),
+      distributionPercent,
+      concentrationPercent,
+      isHighRisk,
+    });
+  }
+
+  return result.sort((a, b) => b.totalRevenue - a.totalRevenue);
+}
+
 // ── General Ledger ────────────────────────────────────────────────────────────
 
 export type GeneralLedgerRow = {
@@ -615,12 +1102,14 @@ export async function getGeneralLedger({
   startDate,
   endDate,
   accountId,
+  divisionId,
   page = 1,
   pageSize = 50,
 }: {
   startDate?: string;
   endDate?: string;
   accountId?: string;
+  divisionId?: string;
   page?: number;
   pageSize?: number;
 } = {}) {
@@ -630,6 +1119,7 @@ export async function getGeneralLedger({
   if (startDate) conditions.push(sql`${journalEntries.entryDate} >= ${startDate}`);
   if (endDate) conditions.push(sql`${journalEntries.entryDate} <= ${endDate}`);
   if (accountId) conditions.push(eq(journalLines.accountId, accountId));
+  if (divisionId) conditions.push(eq(journalEntries.divisionId, divisionId));
 
   const where = and(...conditions);
 
@@ -823,4 +1313,358 @@ export async function reopenPeriod(period: string) {
       updatedAt: new Date(),
     })
     .where(eq(accountingPeriods.period, period));
+}
+
+export type UnpostedInvoiceReconciliationRow = {
+  id: string;
+  documentNumber: string;
+  status: string;
+  total: number;
+};
+
+/**
+ * Sweeps for active invoices (issued, partially_paid, paid, written_off)
+ * that have 0 debits/credits posted in the general ledger.
+ */
+export async function getUnpostedInvoicesReconciliation(): Promise<UnpostedInvoiceReconciliationRow[]> {
+  const result = await db.execute(sql`
+    SELECT i.id, i.document_number AS "documentNumber", i.status, CAST(i.total AS NUMERIC) AS total
+    FROM invoices i
+    LEFT JOIN journal_entries je ON je.source_table = 'invoices' AND je.source_id = i.id
+    LEFT JOIN journal_lines jl ON jl.journal_entry_id = je.id
+    WHERE i.status IN ('paid', 'written_off', 'issued', 'partially_paid')
+    GROUP BY i.id, i.document_number, i.status, i.total
+    HAVING COALESCE(SUM(jl.debit), 0) = 0 AND COALESCE(SUM(jl.credit), 0) = 0
+  `);
+
+  return (result.rows as any[]).map((r) => ({
+    id: String(r.id),
+    documentNumber: String(r.documentNumber),
+    status: String(r.status),
+    total: Number(r.total),
+  }));
+}
+
+// ── Annual Financial Statements (AFS) ─────────────────────────────────────────
+
+export type AfsNoteRow = {
+  label: string;
+  amount: number;
+  code?: string;
+};
+
+export type AfsComparativeAmount = {
+  current: number;
+  prior: number;
+};
+
+export type AfsDivisionBuildUpRow = {
+  divisionId: string;
+  divisionName: string;
+  current: number;
+  prior: number;
+};
+
+export type AnnualFinancialStatementsResult = {
+  generalInfo: {
+    companyName: string;
+    registrationNumber: string;
+    taxReferenceNumber: string;
+    registeredAddress: string;
+    postalAddress: string;
+    directorName: string;
+    financialYearEnd: string;
+    currentYearLabel: string;
+    priorYearLabel: string;
+  };
+  directorsReport: {
+    principalActivities: string;
+    financialResultsSummary: string;
+    goingConcernStatement: string;
+    eventsAfterReportingPeriod: string;
+    businessActivities: {
+      revenue: AfsComparativeAmount;
+      operatingProfit: AfsComparativeAmount;
+      netProfit: AfsComparativeAmount;
+      totalAssets: AfsComparativeAmount;
+      totalLiabilities: AfsComparativeAmount;
+    };
+    divisionBreakdown: AfsDivisionBuildUpRow[];
+  };
+  statementOfPosition: {
+    assets: BalanceSheetAccountRow[];
+    totalAssets: AfsComparativeAmount;
+    liabilities: BalanceSheetAccountRow[];
+    totalLiabilities: AfsComparativeAmount;
+    equity: BalanceSheetAccountRow[];
+    totalEquity: AfsComparativeAmount;
+    totalLiabilitiesAndEquity: AfsComparativeAmount;
+  };
+  statementOfProfitLoss: {
+    revenue: AfsComparativeAmount;
+    divisionBreakdown: AfsDivisionBuildUpRow[];
+    depreciation: AfsComparativeAmount;
+    employeeBenefits: AfsComparativeAmount;
+    expenses: ProfitAndLossRow[];
+    totalExpenses: AfsComparativeAmount;
+    operatingProfit: AfsComparativeAmount;
+    investmentRevenues: AfsComparativeAmount;
+    financeCosts: AfsComparativeAmount;
+    profitBeforeTax: AfsComparativeAmount;
+    incomeTaxExpense: AfsComparativeAmount;
+    netProfit: AfsComparativeAmount;
+  };
+  statementOfChangesInEquity: {
+    priorYearStartLabel: string;
+    priorYearEndLabel: string;
+    currentYearEndLabel: string;
+    shareCapital: number;
+    priorOpeningRetained: number;
+    priorNetProfit: number;
+    priorClosingRetained: number;
+    currentOpeningRetained: number;
+    currentNetProfit: number;
+    currentClosingRetained: number;
+    totalClosingEquity: number;
+  };
+  statementOfCashFlows: {
+    current: CashFlowResult;
+    prior: CashFlowResult;
+  };
+  detailedIncomeStatement: {
+    revenue: AfsComparativeAmount;
+    divisionBreakdown: AfsDivisionBuildUpRow[];
+    expenses: ProfitAndLossRow[];
+    totalExpenses: AfsComparativeAmount;
+    operatingProfit: AfsComparativeAmount;
+    financeCosts: AfsComparativeAmount;
+    profitBeforeTax: AfsComparativeAmount;
+    incomeTaxExpense: AfsComparativeAmount;
+    netProfit: AfsComparativeAmount;
+  };
+  notes: {
+    note1BasisOfPreparation: string;
+    note2RevenueBreakdown: AfsNoteRow[];
+    note3OperatingExpenses: AfsNoteRow[];
+    note4TradeReceivables: {
+      grossReceivables: number;
+      allowanceForBadDebts: number;
+      netReceivables: number;
+    };
+    note5CashAndCashEquivalents: AfsNoteRow[];
+    note6TradeAndOtherPayables: {
+      tradePayables: number;
+      clientCredits: number;
+      totalPayables: number;
+    };
+  };
+};
+
+/**
+ * Returns a complete Annual Financial Statements (AFS) package for CIPC & IFRS compliance
+ * featuring comparative 2-column figures (Current FY vs Prior FY) and divisional revenue build-ups.
+ */
+export async function getAnnualFinancialStatements(
+  period?: string,
+  divisionId?: string,
+  startDate?: string,
+  endDate?: string
+): Promise<AnnualFinancialStatementsResult> {
+  const currentYearNum = new Date().getFullYear();
+  const nowMonth = new Date().getMonth() + 1;
+  const defaultFyNum = nowMonth >= 3 ? currentYearNum + 1 : currentYearNum;
+
+  const targetYearNum = period
+    ? parseInt(period.split('-')[0], 10)
+    : defaultFyNum;
+  const priorYearNum = targetYearNum - 1;
+
+  const currentPeriodKey = `${targetYearNum}-FY`;
+  const priorPeriodKey = `${priorYearNum}-FY`;
+
+  const [
+    orgSettings,
+    balanceSheet,
+    pnl,
+    cashFlow,
+    pnlDivisions,
+    priorBalanceSheet,
+    priorPnl,
+    priorCashFlow,
+    priorPnlDivisions,
+    allDivList,
+  ] = await Promise.all([
+    getOrganisationSettings(),
+    getBalanceSheet(currentPeriodKey, divisionId, startDate, endDate),
+    getProfitAndLoss(currentPeriodKey, divisionId, startDate, endDate),
+    getCashFlowStatement(currentPeriodKey, divisionId, startDate, endDate),
+    getProfitAndLossByDivision(currentPeriodKey, startDate, endDate),
+    getBalanceSheet(priorPeriodKey, divisionId),
+    getProfitAndLoss(priorPeriodKey, divisionId),
+    getCashFlowStatement(priorPeriodKey, divisionId),
+    getProfitAndLossByDivision(priorPeriodKey),
+    db.select().from(divisions),
+  ]);
+
+  const currentYearLabel = String(targetYearNum);
+  const priorYearLabel = String(priorYearNum);
+  const financialYearEndLabel = `28 February ${targetYearNum}`;
+
+  const street = orgSettings?.addressStreet || '285 ERASMUS AVENUE, RASLOUW AH';
+  const city = orgSettings?.addressCity || 'CENTURION';
+  const postal = orgSettings?.addressPostal || '0157';
+  const province = orgSettings?.addressProvince || 'GAUTENG';
+  const regAddress = `${street}, ${city}, ${province}, ${postal}`;
+
+  // Division revenue build-up
+  const targetDivisions = divisionId ? allDivList.filter((d) => d.id === divisionId) : allDivList;
+  const priorDivMap = new Map<string, number>();
+  for (const d of priorPnlDivisions) {
+    priorDivMap.set(d.divisionId, d.totalRevenue);
+  }
+
+  const divisionBreakdown: AfsDivisionBuildUpRow[] = targetDivisions.map((div) => {
+    const curDiv = pnlDivisions.find((d) => d.divisionId === div.id);
+    return {
+      divisionId: div.id,
+      divisionName: div.name,
+      current: curDiv?.totalRevenue || 0,
+      prior: priorDivMap.get(div.id) || 0,
+    };
+  });
+
+  // Calculate equity movements
+  const openingShareCapital = 100.00;
+  const closingShareCapital = 100.00;
+  const priorNetProfit = priorPnl.netProfit;
+  const currentNetProfit = pnl.netProfit;
+  const priorOpeningRetained = 0;
+  const priorClosingRetained = priorOpeningRetained + priorNetProfit;
+  const currentOpeningRetained = priorClosingRetained;
+  const currentClosingRetained = currentOpeningRetained + currentNetProfit;
+
+  // Notes data
+  const revenueNotes: AfsNoteRow[] = divisionBreakdown.map((div) => ({
+    label: `Revenue — ${div.divisionName}`,
+    amount: div.current,
+  }));
+
+  const expenseNotes: AfsNoteRow[] = pnl.expenses.map((exp) => ({
+    code: exp.accountCode,
+    label: exp.accountName,
+    amount: exp.amount,
+  }));
+
+  const cashNotes: AfsNoteRow[] = balanceSheet.assets
+    .filter((a) => a.accountName.toLowerCase().includes('bank') || a.accountName.toLowerCase().includes('cash') || a.accountName.toLowerCase().includes('savings'))
+    .map((a) => ({ code: a.accountCode, label: a.accountName, amount: a.amount }));
+
+  const arAsset = balanceSheet.assets.find((a) => a.accountName.toLowerCase().includes('receivable') || a.accountCode === '1100');
+  const badDebtExp = pnl.expenses.find((e) => e.accountName.toLowerCase().includes('bad debt') || e.accountCode === '5150');
+  const grossAR = (arAsset?.amount || 0) + (badDebtExp?.amount || 0);
+  const allowanceAR = badDebtExp?.amount || 0;
+
+  const clientCreditsLiability = balanceSheet.liabilities.find((l) => l.accountName.toLowerCase().includes('credit') || l.accountCode === '2200');
+  const otherPayables = balanceSheet.totalLiabilities - (clientCreditsLiability?.amount || 0);
+
+  return {
+    generalInfo: {
+      companyName: orgSettings?.companyName || 'PLAYHOUSE MEDIA GROUP (PTY) LTD',
+      registrationNumber: orgSettings?.registrationNumber || '2023/683669/07',
+      taxReferenceNumber: orgSettings?.vatNumber || '9876543210',
+      registeredAddress: regAddress,
+      postalAddress: regAddress,
+      directorName: 'JACOB CHADEMWIRI',
+      financialYearEnd: financialYearEndLabel,
+      currentYearLabel,
+      priorYearLabel,
+    },
+    directorsReport: {
+      principalActivities: 'Software development, digital agency services, domain & hosting solutions, and professional technology consulting.',
+      financialResultsSummary: `The corporate net operating financial result for FY${targetYearNum} reflects a Net Operating Profit of R ${pnl.netProfit.toLocaleString('en-ZA', { minimumFractionDigits: 2 })} on Total Sales Revenue of R ${pnl.totalRevenue.toLocaleString('en-ZA', { minimumFractionDigits: 2 })}.`,
+      goingConcernStatement: 'The directors believe that the company has adequate financial resources to continue in operation for the foreseeable future and accordingly the annual financial statements have been prepared on a going concern basis.',
+      eventsAfterReportingPeriod: 'The directors are not aware of any material matter or circumstance arising since the end of the financial year that would significantly impact these financial statements.',
+      businessActivities: {
+        revenue: { current: pnl.totalRevenue, prior: priorPnl.totalRevenue },
+        operatingProfit: { current: pnl.netProfit, prior: priorPnl.netProfit },
+        netProfit: { current: pnl.netProfit, prior: priorPnl.netProfit },
+        totalAssets: { current: balanceSheet.totalAssets, prior: priorBalanceSheet.totalAssets },
+        totalLiabilities: { current: balanceSheet.totalLiabilities, prior: priorBalanceSheet.totalLiabilities },
+      },
+      divisionBreakdown,
+    },
+    statementOfPosition: {
+      assets: balanceSheet.assets,
+      totalAssets: { current: balanceSheet.totalAssets, prior: priorBalanceSheet.totalAssets },
+      liabilities: balanceSheet.liabilities,
+      totalLiabilities: { current: balanceSheet.totalLiabilities, prior: priorBalanceSheet.totalLiabilities },
+      equity: balanceSheet.equity,
+      totalEquity: { current: balanceSheet.totalEquity, prior: priorBalanceSheet.totalEquity },
+      totalLiabilitiesAndEquity: { current: balanceSheet.totalLiabilitiesAndEquity, prior: priorBalanceSheet.totalLiabilitiesAndEquity },
+    },
+    statementOfProfitLoss: {
+      revenue: { current: pnl.totalRevenue, prior: priorPnl.totalRevenue },
+      divisionBreakdown,
+      depreciation: {
+        current: pnl.expenses.find((e) => e.accountName.toLowerCase().includes('depreciation'))?.amount || 0,
+        prior: priorPnl.expenses.find((e) => e.accountName.toLowerCase().includes('depreciation'))?.amount || 0,
+      },
+      employeeBenefits: {
+        current: pnl.expenses.filter((e) => e.accountName.toLowerCase().includes('staff') || e.accountName.toLowerCase().includes('salary') || e.accountName.toLowerCase().includes('remuneration')).reduce((s, e) => s + e.amount, 0),
+        prior: priorPnl.expenses.filter((e) => e.accountName.toLowerCase().includes('staff') || e.accountName.toLowerCase().includes('salary') || e.accountName.toLowerCase().includes('remuneration')).reduce((s, e) => s + e.amount, 0),
+      },
+      expenses: pnl.expenses,
+      totalExpenses: { current: pnl.totalExpenses, prior: priorPnl.totalExpenses },
+      operatingProfit: { current: pnl.netProfit, prior: priorPnl.netProfit },
+      investmentRevenues: { current: 0, prior: 0 },
+      financeCosts: { current: 0, prior: 0 },
+      profitBeforeTax: { current: pnl.netProfit, prior: priorPnl.netProfit },
+      incomeTaxExpense: { current: 0, prior: 0 },
+      netProfit: { current: pnl.netProfit, prior: priorPnl.netProfit },
+    },
+    statementOfChangesInEquity: {
+      priorYearStartLabel: `1 March ${priorYearNum - 1}`,
+      priorYearEndLabel: `28 February ${priorYearNum}`,
+      currentYearEndLabel: `28 February ${targetYearNum}`,
+      shareCapital: openingShareCapital,
+      priorOpeningRetained,
+      priorNetProfit,
+      priorClosingRetained,
+      currentOpeningRetained,
+      currentNetProfit,
+      currentClosingRetained,
+      totalClosingEquity: balanceSheet.totalEquity,
+    },
+    statementOfCashFlows: {
+      current: cashFlow,
+      prior: priorCashFlow,
+    },
+    detailedIncomeStatement: {
+      revenue: { current: pnl.totalRevenue, prior: priorPnl.totalRevenue },
+      divisionBreakdown,
+      expenses: pnl.expenses,
+      totalExpenses: { current: pnl.totalExpenses, prior: priorPnl.totalExpenses },
+      operatingProfit: { current: pnl.netProfit, prior: priorPnl.netProfit },
+      financeCosts: { current: 0, prior: 0 },
+      profitBeforeTax: { current: pnl.netProfit, prior: priorPnl.netProfit },
+      incomeTaxExpense: { current: 0, prior: 0 },
+      netProfit: { current: pnl.netProfit, prior: priorPnl.netProfit },
+    },
+    notes: {
+      note1BasisOfPreparation: 'The annual financial statements have been prepared in accordance with International Financial Reporting Standards for Small and Medium-sized Entities (IFRS for SMEs) and the South African Companies Act No. 71 of 2008. The financial statements have been prepared on the historical cost basis and incorporate the principal accounting policies set out below.',
+      note2RevenueBreakdown: revenueNotes.length > 0 ? revenueNotes : [{ label: 'Gross Sales Revenue', amount: pnl.totalRevenue }],
+      note3OperatingExpenses: expenseNotes,
+      note4TradeReceivables: {
+        grossReceivables: grossAR,
+        allowanceForBadDebts: allowanceAR,
+        netReceivables: arAsset?.amount || 0,
+      },
+      note5CashAndCashEquivalents: cashNotes.length > 0 ? cashNotes : [{ label: 'Main Bank Account Balance', amount: cashFlow.endingCashBalance }],
+      note6TradeAndOtherPayables: {
+        tradePayables: Math.max(0, otherPayables),
+        clientCredits: clientCreditsLiability?.amount || 0,
+        totalPayables: balanceSheet.totalLiabilities,
+      },
+    },
+  };
 }

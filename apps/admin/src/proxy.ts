@@ -47,6 +47,7 @@ export async function proxy(request: NextRequest): Promise<NextResponse> {
   // Allow auth and cron routes through. Cron routes enforce CRON_SECRET internally.
   if (
     pathname === '/login' ||
+    pathname.startsWith('/login/') ||
     pathname.startsWith('/api/auth/') ||
     pathname.startsWith('/api/cron/')
   ) {

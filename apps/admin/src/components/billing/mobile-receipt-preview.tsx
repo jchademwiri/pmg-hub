@@ -22,6 +22,8 @@ export function MobileReceiptPreview({
   notes,
   terms,
   banking,
+  amountPaid,
+  balanceDue,
   className,
 }: DocumentPreviewProps & { 
   className?: string;
@@ -122,9 +124,31 @@ export function MobileReceiptPreview({
             </div>
           )}
           <div className="flex justify-between font-bold text-base pt-2 border-t border-border mt-1">
-            <span>Total</span>
+            <span>{type === 'invoice' && (status.toLowerCase() === 'paid' || status.toLowerCase() === 'partially_paid') ? 'Total Invoiced' : 'Total'}</span>
             <span className="tabular-nums">{formatZAR(grandTotal)}</span>
           </div>
+          {type === 'invoice' && (status.toLowerCase() === 'paid' || status.toLowerCase() === 'partially_paid' || status.toLowerCase() === 'written_off') && (
+            <>
+              {(amountPaid ?? 0) > 0 || status.toLowerCase() === 'paid' ? (
+                <div className="flex justify-between text-sm font-medium text-emerald-600">
+                  <span>Less Payments</span>
+                  <span className="tabular-nums">-{formatZAR(status.toLowerCase() === 'paid' ? grandTotal : (amountPaid ?? (grandTotal - (balanceDue ?? 0))))}</span>
+                </div>
+              ) : null}
+              {status.toLowerCase() === 'written_off' ? (
+                <div className="flex justify-between text-sm font-medium text-rose-600">
+                  <span>Less Write-Off</span>
+                  <span className="tabular-nums">-{formatZAR(grandTotal - (amountPaid ?? 0))}</span>
+                </div>
+              ) : null}
+              <div className="flex justify-between font-bold text-base pt-2 border-t border-border mt-1">
+                <span>Balance Due</span>
+                <span className={`tabular-nums ${(balanceDue ?? 0) === 0 || status.toLowerCase() === 'paid' || status.toLowerCase() === 'written_off' ? 'text-emerald-600' : 'text-amber-600'}`}>
+                  {formatZAR(status.toLowerCase() === 'paid' || status.toLowerCase() === 'written_off' ? 0 : (balanceDue ?? 0))}
+                </span>
+              </div>
+            </>
+          )}
         </div>
 
         {/* Banking Details */}

@@ -20,7 +20,9 @@
       }
     ],
     "paths": {
-      "@/*": ["./src/*"]
+      "@/*": ["./src/*"],
+      "@pmg/accounting/*": ["../../packages/accounting/src/*"],
+      "@pmg/billing/*": ["../../packages/billing/src/*"]
     }
   },
   "include": [

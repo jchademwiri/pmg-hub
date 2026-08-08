@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import type { ProjectScheduleEntry } from "../src/schema/project-schedule";
 import { calculateProjectWaterfallUpdates } from "../src/queries/project-schedule";
+import { addDays, today } from "../src/lib/date-utils";
 
 function makeTender(
   overrides: Partial<ProjectScheduleEntry> & { id: string },
@@ -83,18 +84,24 @@ describe("calculateProjectWaterfallUpdates", () => {
       }),
     ]);
 
+    // The first planned entry always anchors to today (no backdate, no float).
+    const firstStart = today();
+    const firstTarget = addDays(firstStart, 3);
+    const secondStart = addDays(firstTarget, 1);
+    const secondTarget = addDays(secondStart, 4);
+
     expect(updates).toEqual([
       {
         id: "first",
         sortOrder: 1,
-        startDate: "2026-07-12",
-        targetCompletionDate: "2026-07-15",
+        startDate: firstStart,
+        targetCompletionDate: firstTarget,
       },
       {
         id: "second",
         sortOrder: 2,
-        startDate: "2026-07-15",
-        targetCompletionDate: "2026-07-19",
+        startDate: secondStart,
+        targetCompletionDate: secondTarget,
       },
     ]);
   });
@@ -126,8 +133,8 @@ describe("calculateProjectWaterfallUpdates", () => {
       {
         id: "urgent-planned",
         sortOrder: 2,
-        startDate: "2026-07-04",
-        targetCompletionDate: "2026-07-06",
+        startDate: "2026-07-05",
+        targetCompletionDate: "2026-07-07",
       },
     ]);
   });

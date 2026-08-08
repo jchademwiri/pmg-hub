@@ -4,7 +4,7 @@ import { revalidatePath } from 'next/cache';
 import { getDb, invoices, quotations, billingLineItems, income, clients, divisionBillingSettings, eq, and, inArray, paymentAllocations, sql } from '@pmg/db';
 import { getNextDocumentNumber, addDays } from '@pmg/db';
 import { getSessionOrRedirect } from '@/lib/auth';
-import { postInvoiceIssueJournalEntry, voidInvoiceJournalEntries, postPaymentJournalEntries, updateInvoiceJournalEntry, postInvoiceWriteOffJournalEntry } from '@/lib/accounting/posting';
+import { postInvoiceIssueJournalEntry, voidInvoiceJournalEntries, postPaymentJournalEntries, updateInvoiceJournalEntry, postInvoiceWriteOffJournalEntry, voidInvoiceWriteOffJournalEntries } from '@/lib/accounting/posting';
 import { isPeriodClosed, getMinAllowedDate, getMinDateErrorMessage } from '@/lib/date-rules';
 import { getSASTParts, getSASTToday, getEndOfMonth } from '@/lib/format';
 import { CreateInvoiceSchema, type CreateInvoiceInput } from './billing-schema';
@@ -979,4 +979,86 @@ export async function fetchInvoicesByYear(year: number, divisionId?: string, sta
     { year, divisionId, status },
     { page: 1, pageSize: 5000 }
   );
+}
+
+// ── restoreWriteOffInvoice ──────────────────────────────────────────────────
+
+export async function restoreWriteOffInvoice(id: string): Promise<{ error?: string }> {
+  await getSessionOrRedirect();
+
+  try {
+    const db = getDb();
+    const today = getSASTToday();
+
+    if (await isPeriodClosed(today)) {
+      const minDate = await getMinAllowedDate();
+      return { error: getMinDateErrorMessage(minDate) };
+    }
+
+    await db.transaction(async (tx) => {
+      const [invoice] = await tx
+        .select({
+          id: invoices.id,
+          status: invoices.status,
+          total: invoices.total,
+          dueDate: invoices.dueDate,
+          documentNumber: invoices.documentNumber,
+          divisionId: invoices.divisionId,
+          writeOffAmount: invoices.writeOffAmount,
+        })
+        .from(invoices)
+        .where(eq(invoices.id, id));
+
+      if (!invoice) throw new Error('Invoice not found.');
+      const currentWriteOff = parseFloat(invoice.writeOffAmount ?? '0');
+      if (invoice.status !== 'written_off' && currentWriteOff <= 0) {
+        throw new Error('Invoice is not written off.');
+      }
+
+      const [sumAgg] = await tx
+        .select({ sum: sql<string>`coalesce(sum(${paymentAllocations.amount}), 0)` })
+        .from(paymentAllocations)
+        .where(eq(paymentAllocations.invoiceId, id));
+
+      const totalAllocated = parseFloat(sumAgg?.sum ?? '0');
+      const invoiceTotal = parseFloat(invoice.total);
+
+      let restoredStatus: 'paid' | 'partially_paid' | 'overdue' | 'issued';
+      if (totalAllocated >= invoiceTotal) {
+        restoredStatus = 'paid';
+      } else if (totalAllocated > 0) {
+        restoredStatus = 'partially_paid';
+      } else if (invoice.dueDate && invoice.dueDate < today) {
+        restoredStatus = 'overdue';
+      } else {
+        restoredStatus = 'issued';
+      }
+
+      await tx
+        .update(invoices)
+        .set({
+          status: restoredStatus,
+          writeOffAmount: '0',
+          updatedAt: new Date(),
+        })
+        .where(eq(invoices.id, id));
+
+      const voidResult = await voidInvoiceWriteOffJournalEntries(id, tx);
+      if (voidResult.error) {
+        throw new Error(voidResult.error);
+      }
+    });
+
+    revalidatePath('/billing/invoices');
+    revalidatePath(`/billing/invoices/${id}`);
+    revalidatePath('/accounting/journals');
+    revalidatePath('/accounting/trial-balance');
+    revalidatePath('/accounting/general-ledger');
+
+    return {};
+  } catch (err: any) {
+    if (err?.message === 'NEXT_REDIRECT') throw err;
+    console.error('Failed to restore write-off invoice:', err);
+    return { error: err?.message || 'Failed to remove write-off.' };
+  }
 }

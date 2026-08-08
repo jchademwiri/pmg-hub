@@ -17,7 +17,7 @@ export type MagicLinkEmailProps = {
 const MagicLinkEmail = (props: MagicLinkEmailProps) => {
   const {
     url,
-    expiresIn = "24 hours",
+    expiresIn = "10 minutes",
     companyName = "Playhouse Media Group",
     primaryColor = "#1d4ed8",
     websiteUrl = DEFAULT_WEBSITE_URL,
@@ -77,7 +77,7 @@ const MagicLinkEmail = (props: MagicLinkEmailProps) => {
 
 MagicLinkEmail.PreviewProps = {
   url: "https://app.playhousemedia.co.za/api/auth/magic-link/verify?token=McgWvgHPBBEusTZFaRAdgqdGgfAYBZvB&callbackURL=%2Fdashboard",
-  expiresIn: "24 hours",
+  expiresIn: "10 minutes",
   companyName: "Playhouse Media Group",
   primaryColor: "#1d4ed8",
   websiteUrl: DEFAULT_WEBSITE_URL,

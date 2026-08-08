@@ -520,27 +520,27 @@ export async function getMonthlyFinancialsBreakdownForYear(year: number) {
 
   // Get monthly income
   const incomeRows = await db.execute(sql`
-    SELECT TO_CHAR(date, 'YYYY-MM') AS month, COALESCE(SUM(amount), 0) AS total
+    SELECT TO_CHAR(date::date, 'YYYY-MM') AS month, COALESCE(SUM(amount), 0) AS total
     FROM income
-    WHERE EXTRACT(YEAR FROM (date - INTERVAL '2 months')) = ${year}
-    GROUP BY TO_CHAR(date, 'YYYY-MM')
+    WHERE EXTRACT(YEAR FROM (date::date - INTERVAL '2 months'))::int = ${Number(year)}
+    GROUP BY TO_CHAR(date::date, 'YYYY-MM')
   `);
 
   // Get monthly invoiced
   const invoicedRows = await db.execute(sql`
-    SELECT TO_CHAR(invoice_date, 'YYYY-MM') AS month, COALESCE(SUM(total), 0) AS total
+    SELECT TO_CHAR(invoice_date::date, 'YYYY-MM') AS month, COALESCE(SUM(total), 0) AS total
     FROM invoices
-    WHERE EXTRACT(YEAR FROM (invoice_date - INTERVAL '2 months')) = ${year}
+    WHERE EXTRACT(YEAR FROM (invoice_date::date - INTERVAL '2 months'))::int = ${Number(year)}
       AND status IN ('issued', 'partially_paid', 'paid', 'overdue')
-    GROUP BY TO_CHAR(invoice_date, 'YYYY-MM')
+    GROUP BY TO_CHAR(invoice_date::date, 'YYYY-MM')
   `);
 
   // Get monthly expenses
   const expenseRows = await db.execute(sql`
-    SELECT TO_CHAR(date, 'YYYY-MM') AS month, COALESCE(SUM(amount), 0) AS total
+    SELECT TO_CHAR(date::date, 'YYYY-MM') AS month, COALESCE(SUM(amount), 0) AS total
     FROM expenses
-    WHERE EXTRACT(YEAR FROM (date - INTERVAL '2 months')) = ${year}
-    GROUP BY TO_CHAR(date, 'YYYY-MM')
+    WHERE EXTRACT(YEAR FROM (date::date - INTERVAL '2 months'))::int = ${Number(year)}
+    GROUP BY TO_CHAR(date::date, 'YYYY-MM')
   `);
 
   const incomeMap = new Map((incomeRows.rows as any[]).map(r => [r.month, Number(r.total)]));

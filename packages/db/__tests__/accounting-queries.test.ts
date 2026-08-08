@@ -168,10 +168,10 @@ describe("getTrialBalance", () => {
     expect(revenue).toBeDefined();
     expect(revenue!.totalCredits).toBe(35080);
 
-    // Void lines are excluded, so account 1010 has zero debits
+    // Void lines are excluded, so account 1010 has zero debits — and
+    // zero-movement accounts are dropped from the trial balance entirely.
     const bank = result.find((r) => r.accountCode === "1010");
-    expect(bank).toBeDefined();
-    expect(bank!.totalDebits).toBe(0);
+    expect(bank).toBeUndefined();
   });
 
   it("excludes draft journal entries from totals", async () => {
@@ -194,13 +194,8 @@ describe("getTrialBalance", () => {
 
     const result = await getTrialBalance();
 
-    // Accounts appear with zero balances
-    expect(result).toHaveLength(3);
-    result.forEach((r) => {
-      expect(r.totalDebits).toBe(0);
-      expect(r.totalCredits).toBe(0);
-      expect(r.balance).toBe(0);
-    });
+    // Zero-movement accounts are excluded from the trial balance entirely.
+    expect(result).toHaveLength(0);
   });
 
   it("applies period filter correctly", async () => {
@@ -220,13 +215,49 @@ describe("getTrialBalance", () => {
     expect(result[0].totalCredits).toBe(35080);
   });
 
-  it("shows active posting accounts with zero movement", async () => {
-    const zeroRows = MOCK_ACCOUNTS.map((a) => ({
+  it("accepts a divisionId filter and returns the scoped rows", async () => {
+    mockSelect.mockReturnValueOnce(mockSubqueryChain({
+      accountId: "mock_account_id",
+      totalDebits: "mock_total_debits",
+      totalCredits: "mock_total_credits",
+    }));
+    mockSelect.mockReturnValue(mockMainQueryChain(
+      MOCK_TRIAL_BALANCE_ROWS.filter((r) => r.accountCode === "1010")
+    ));
+
+    const result = await getTrialBalance(undefined, "division-1");
+
+    expect(result).toHaveLength(1);
+    expect(result[0].accountCode).toBe("1010");
+    expect(result[0].totalDebits).toBe(20500);
+  });
+
+  it("accepts an explicit startDate/endDate range and returns mapped rows", async () => {
+    mockSelect.mockReturnValueOnce(mockSubqueryChain({
+      accountId: "mock_account_id",
+      totalDebits: "mock_total_debits",
+      totalCredits: "mock_total_credits",
+    }));
+    mockSelect.mockReturnValue(mockMainQueryChain(MOCK_TRIAL_BALANCE_ROWS));
+
+    const result = await getTrialBalance(undefined, undefined, "2026-04-01", "2026-06-30");
+
+    expect(result).toHaveLength(3);
+    result.forEach((r) => {
+      expect(typeof r.totalDebits).toBe("number");
+      expect(typeof r.totalCredits).toBe("number");
+      expect(typeof r.balance).toBe("number");
+    });
+  });
+
+  it("excludes zero-movement accounts but keeps accounts with real activity", async () => {
+    // 1010 has real movement; 4010 and 5010 have none and should be dropped.
+    const mixedRows = MOCK_ACCOUNTS.map((a) => ({
       accountId: a.id,
       accountCode: a.code,
       accountName: a.name,
       accountType: a.type,
-      totalDebits: "0",
+      totalDebits: a.code === "1010" ? "500" : "0",
       totalCredits: "0",
     }));
 
@@ -235,18 +266,16 @@ describe("getTrialBalance", () => {
       totalDebits: "mock_total_debits",
       totalCredits: "mock_total_credits",
     }));
-    mockSelect.mockReturnValue(mockMainQueryChain(zeroRows));
+    mockSelect.mockReturnValue(mockMainQueryChain(mixedRows));
 
     const result = await getTrialBalance();
 
-    expect(result).toHaveLength(MOCK_ACCOUNTS.length);
-    result.forEach((r) => {
-      expect(typeof r.totalDebits).toBe("number");
-      expect(typeof r.totalCredits).toBe("number");
-      expect(typeof r.balance).toBe("number");
-      expect(r.totalDebits).toBe(0);
-      expect(r.totalCredits).toBe(0);
-    });
+    expect(result).toHaveLength(1);
+    expect(result[0]!.accountCode).toBe("1010");
+    expect(typeof result[0]!.totalDebits).toBe("number");
+    expect(typeof result[0]!.totalCredits).toBe("number");
+    expect(typeof result[0]!.balance).toBe("number");
+    expect(result[0]!.totalDebits).toBe(500);
   });
 
   it("returns correct number types (not strings)", async () => {

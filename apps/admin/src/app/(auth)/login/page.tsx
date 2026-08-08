@@ -89,7 +89,7 @@ export default function LoginPage() {
                 We've sent a secure, passwordless login link to <span className="font-medium text-blue-400">{email}</span>.
               </p>
               <p className="mt-1 text-xs text-muted-foreground">
-                The link is valid for 24 hours.
+                The link is valid for 10 minutes.
               </p>
               <button
                 type="button"
@@ -115,10 +115,14 @@ export default function LoginPage() {
               <div className="space-y-4">
                 {/* Email Input */}
                 <div className="relative">
+                  <label htmlFor="email" className="sr-only">
+                    Email
+                  </label>
                   <span className="absolute inset-y-0 left-3 flex items-center text-muted-foreground/50">
                     <Mail className="size-4" />
                   </span>
                   <input
+                    id="email"
                     type="email"
                     placeholder="name@company.com"
                     required

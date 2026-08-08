@@ -76,7 +76,11 @@ export interface DocumentPreviewProps {
     days31_60: number;
     days61plus: number;
   }
-  /** Global balance due for statement */
+  /** Total amount paid towards this invoice */
+  amountPaid?: number
+  /** Amount written off for this invoice */
+  writtenOffAmount?: number
+  /** Global balance due for statement or remaining invoice balance */
   balanceDue?: number
   /** Balance brought forward for statement period */
   openingBalance?: number
@@ -143,6 +147,8 @@ export function DocumentPreview({
   discountAmount = 0,
   href,
   ageing,
+  amountPaid,
+  writtenOffAmount,
   balanceDue,
   openingBalance,
 }: DocumentPreviewProps) {
@@ -152,6 +158,11 @@ export function DocumentPreview({
   const hasVat = lineItems.some(i => i.vatApplicable)
   const vat = hasVat ? vatBase * (vatRate / 100) : 0
   const total = vatBase + vat
+
+  const paidAmount = amountPaid ?? (status.toLowerCase() === 'paid' ? total : 0)
+  const writtenOff = writtenOffAmount ?? (status.toLowerCase() === 'written_off' ? Math.max(0, total - paidAmount) : 0)
+  const remBalance = balanceDue ?? Math.max(0, total - paidAmount - writtenOff)
+  const showInvoicePaymentSummary = type === 'invoice' && (paidAmount > 0 || writtenOff > 0 || status.toLowerCase() === 'paid' || status.toLowerCase() === 'partially_paid' || status.toLowerCase() === 'written_off' || remBalance < total)
 
   const hasLineItemDiscounts = lineItems.some(i => (i.discountAmount || 0) > 0)
 
@@ -355,9 +366,31 @@ export function DocumentPreview({
                 </div>
               )}
               <div className="border-t border-zinc-200 pt-2 flex justify-between text-sm font-bold text-zinc-900">
-                <span>Total</span>
+                <span>{showInvoicePaymentSummary ? 'Total Invoiced' : 'Total'}</span>
                 <span className="tabular-nums">{fmt(total)}</span>
               </div>
+              {showInvoicePaymentSummary && (
+                <>
+                  {paidAmount > 0 && (
+                    <div className="flex justify-between text-sm font-medium text-emerald-600">
+                      <span>Less Payments Received</span>
+                      <span className="tabular-nums">−{fmt(paidAmount)}</span>
+                    </div>
+                  )}
+                  {writtenOff > 0 && (
+                    <div className="flex justify-between text-sm font-medium text-rose-600">
+                      <span>Less Write-Off / Bad Debt</span>
+                      <span className="tabular-nums">−{fmt(writtenOff)}</span>
+                    </div>
+                  )}
+                  <div className="border-t border-zinc-200 pt-2 flex justify-between text-sm font-bold">
+                    <span>Balance Due</span>
+                    <span className={cn("tabular-nums", remBalance === 0 ? "text-emerald-600" : "text-amber-600")}>
+                      {fmt(remBalance)}
+                    </span>
+                  </div>
+                </>
+              )}
             </div>
           </div>
         </div>

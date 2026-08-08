@@ -9,6 +9,7 @@ import { fmtDate } from '@/lib/format';
 import { MarkPaidButton } from '@/components/billing/mark-paid-button';
 import { VoidInvoiceButton } from '@/components/billing/void-invoice-button';
 import { WriteOffInvoiceButton } from '@/components/billing/write-off-invoice-button';
+import { RestoreWriteOffButton } from '@/components/billing/restore-write-off-button';
 
 interface InvoiceDetailActionsProps {
   invoice: {
@@ -24,6 +25,7 @@ interface InvoiceDetailActionsProps {
   markPaidAction: (id: string) => Promise<{ error?: string }>;
   voidAction: (id: string) => Promise<{ error?: string }>;
   writeOffAction?: (id: string, reason: string) => Promise<{ error?: string }>;
+  restoreWriteOffAction?: (id: string) => Promise<{ error?: string }>;
 }
 
 export function InvoiceDetailActions({
@@ -32,6 +34,7 @@ export function InvoiceDetailActions({
   markPaidAction,
   voidAction,
   writeOffAction,
+  restoreWriteOffAction,
 }: InvoiceDetailActionsProps) {
   const router = useRouter();
   const [, startTransition] = useTransition();
@@ -111,9 +114,14 @@ export function InvoiceDetailActions({
         )}
 
         {status === 'written_off' && (
-          <p className="text-xs font-medium text-amber-600 dark:text-amber-500">
-            This invoice has been written off.
-          </p>
+          <div className="flex flex-col gap-2">
+            <p className="text-xs font-medium text-amber-600 dark:text-amber-500">
+              This invoice has been written off.
+            </p>
+            {restoreWriteOffAction && (
+              <RestoreWriteOffButton invoiceId={invoice.id} restoreWriteOffAction={restoreWriteOffAction} />
+            )}
+          </div>
         )}
       </div>
     </div>

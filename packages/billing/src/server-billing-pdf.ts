@@ -1,8 +1,5 @@
 import 'server-only';
 
-import { existsSync, readFileSync } from 'fs';
-import { join } from 'path';
-
 import {
   and,
   creditNotes,
@@ -28,6 +25,7 @@ import { jsPDF } from 'jspdf';
 import { fmtDate, formatZAR, getSASTParts, getSASTToday } from './format';
 import { calculateAgeing, totalAgeingDue } from './billing-ageing';
 import { buildOrgProps, determineStatementStatus, buildIncomeInvoiceMap, buildTransactionHistory, adjustOpeningBalance, resolveDivisionBranding, buildBankingProps } from './client-billing-helpers';
+import { PAGE, split, ensurePage, drawShellHeader, drawShellFooter } from './pdf-shell';
 
 type BillingPdfType = 'invoice' | 'quote' | 'statement' | 'receipt';
 
@@ -101,15 +99,9 @@ type PdfDocumentData = {
     vat?: number;
     total?: number;
     paid?: number;
+    writtenOff?: number;
     balanceDue?: number;
   };
-};
-
-const PAGE = {
-  width: 210,
-  height: 297,
-  margin: 14,
-  bottom: 280,
 };
 
 function statusLabel(status: string) {
@@ -120,51 +112,12 @@ function safeNumber(value: unknown) {
   return Number(value ?? 0) || 0;
 }
 
-function split(doc: jsPDF, text: string | undefined | null, width: number) {
-  return doc.splitTextToSize(text || '', width) as string[];
-}
-
-function ensurePage(doc: jsPDF, y: number, needed = 16) {
-  if (y + needed <= PAGE.bottom) return y;
-  doc.addPage();
-  return PAGE.margin;
-}
-
-function getLogoPath(orgName: string) {
-  const normalized = orgName.toLowerCase();
-  const fileName = /tender edge|tes/.test(normalized)
-    ? 'tes-logo.png'
-    : /apex|aws/.test(normalized)
-    ? 'aws-logo.png'
-    : 'pmg-logo.png';
-
-  const fullPath = join(process.cwd(), 'public', 'logo', fileName);
-  return existsSync(fullPath) ? fullPath : null;
-}
-
-function drawCenteredLogo(doc: jsPDF, orgName: string) {
-  const logoPath = getLogoPath(orgName);
-  if (!logoPath) {
-    doc.setFont('helvetica', 'bold');
-    doc.setFontSize(10);
-    doc.setTextColor(39, 39, 42);
-    doc.text(split(doc, orgName, 42), PAGE.width / 2, 18, { align: 'center' });
-    return;
-  }
-
-  const logoData = `data:image/png;base64,${readFileSync(logoPath).toString('base64')}`;
-  const normalized = orgName.toLowerCase();
-  const size = /tender edge|tes/.test(normalized) ? 22 : 20;
-  doc.addImage(logoData, 'PNG', PAGE.width / 2 - size / 2, 10, size, size, undefined, 'FAST');
-}
-
 function drawFooter(doc: jsPDF, data: PdfDocumentData) {
-  const pageCount = doc.getNumberOfPages();
-  for (let i = 1; i <= pageCount; i++) {
-    doc.setPage(i);
-
-    // Draw ageing summary on every page for statements
-    if (data.type === 'statement' && data.ageing) {
+  drawShellFooter(doc, {
+    divisionOf: data.org.divisionOf,
+    onPage: (doc) => {
+      // Draw ageing summary on every page for statements
+      if (data.type !== 'statement' || !data.ageing) return;
       const ageing = data.ageing;
       const totalDue = totalAgeingDue(ageing);
       const buckets = [
@@ -213,64 +166,21 @@ function drawFooter(doc: jsPDF, data: PdfDocumentData) {
         doc.setFontSize(6.5);
         doc.text(formatZAR(amount), x + colWidth / 2, tableY + 13, { align: 'center' });
       });
-    }
-
-    doc.setDrawColor(229, 231, 235);
-    doc.line(PAGE.margin, 282, PAGE.width - PAGE.margin, 282);
-    doc.setFont('helvetica', 'normal');
-    doc.setFontSize(8);
-    doc.setTextColor(113, 113, 122);
-    doc.text(data.org.divisionOf ? `A division of ${data.org.divisionOf}` : 'Thank you for your business.', PAGE.margin, 288);
-    doc.text(`Page ${i} of ${pageCount}`, PAGE.width - PAGE.margin, 288, { align: 'right' });
-  }
+    },
+  });
 }
 
 function drawHeader(doc: jsPDF, data: PdfDocumentData) {
-  doc.setFillColor(29, 78, 216);
-  doc.rect(0, 0, PAGE.width, 3, 'F');
-
-  doc.setFont('helvetica', 'bold');
-  doc.setFontSize(13);
-  doc.setTextColor(24, 24, 27);
-  doc.text(data.org.name, PAGE.margin, 18);
-
-  doc.setFont('helvetica', 'normal');
-  doc.setFontSize(8);
-  doc.setTextColor(82, 82, 91);
-  const orgLines = [
-    data.org.divisionOf ? `A division of ${data.org.divisionOf}` : undefined,
-    data.org.registrationNumber ? `Reg: ${data.org.registrationNumber}` : undefined,
-    data.org.vatNumber ? `VAT: ${data.org.vatNumber}` : undefined,
-    data.org.email,
-    data.org.phone,
-    data.org.website,
-    data.org.address,
-    data.org.salesRep ? `Rep: ${data.org.salesRep}` : undefined,
-  ].filter(Boolean) as string[];
-  orgLines.slice(0, 8).forEach((line, index) => doc.text(line, PAGE.margin, 24 + index * 4));
-
-  drawCenteredLogo(doc, data.org.name);
-
-  doc.setFontSize(20);
-  doc.setTextColor(161, 161, 170);
-  doc.text(data.title.toUpperCase(), PAGE.width - PAGE.margin, 18, { align: 'right' });
-  doc.setFontSize(10);
-  doc.setTextColor(63, 63, 70);
-  doc.text(`#${data.number}`, PAGE.width - PAGE.margin, 25, { align: 'right' });
-  doc.setFontSize(8);
-  doc.text(data.status, PAGE.width - PAGE.margin, 31, { align: 'right' });
-
-  // Total Due line (only for statements, below the status badge)
-  if (data.type === 'statement' && data.totals?.balanceDue != null) {
-    doc.setFont('helvetica', 'bold');
-    doc.setFontSize(8);
-    doc.setTextColor(220, 38, 38);
-    doc.text(`Total Due: ${formatZAR(data.totals.balanceDue)}`, PAGE.width - PAGE.margin, 37, { align: 'right' });
-    doc.setFont('helvetica', 'normal');
-  }
-
-  doc.setDrawColor(229, 231, 235);
-  doc.line(PAGE.margin, 60, PAGE.width - PAGE.margin, 60);
+  drawShellHeader(doc, {
+    org: data.org,
+    title: data.title,
+    number: data.number,
+    status: data.status,
+    highlight:
+      data.type === 'statement' && data.totals?.balanceDue != null
+        ? { label: 'Total Due', value: formatZAR(data.totals.balanceDue) }
+        : undefined,
+  });
 }
 
 function drawMeta(doc: jsPDF, data: PdfDocumentData) {
@@ -468,16 +378,26 @@ function drawTotals(doc: jsPDF, data: PdfDocumentData, startY: number) {
     totals.subtotal != null ? ['Subtotal', totals.subtotal] as const : null,
     totals.discount && totals.discount > 0 ? ['Discount', -totals.discount] as const : null,
     totals.vat && totals.vat > 0 ? ['VAT', totals.vat] as const : null,
-    totals.paid != null ? ['Total Paid', totals.paid] as const : null,
+    totals.total != null ? ['Total Invoiced', totals.total] as const : null,
+    totals.paid != null && totals.paid > 0 ? ['Less Payments', -totals.paid] as const : null,
+    totals.writtenOff != null && totals.writtenOff > 0 ? ['Less Write-Off', -totals.writtenOff] as const : null,
     totals.balanceDue != null ? ['Balance Due', totals.balanceDue] as const : null,
-    totals.total != null ? ['Total', totals.total] as const : null,
   ].filter(Boolean) as ReadonlyArray<readonly [string, number]>;
 
   for (const [label, amount] of rows) {
-    doc.setFont('helvetica', label === 'Total' || label === 'Balance Due' ? 'bold' : 'normal');
-    doc.setFontSize(label === 'Total' || label === 'Balance Due' ? 10 : 8);
-    if (label === 'Total Paid') {
+    const isBold = label === 'Total Invoiced' || label === 'Balance Due';
+    doc.setFont('helvetica', isBold ? 'bold' : 'normal');
+    doc.setFontSize(isBold ? 10 : 8);
+    if (label === 'Less Payments') {
       doc.setTextColor(5, 150, 105); // green for paid
+    } else if (label === 'Less Write-Off') {
+      doc.setTextColor(225, 29, 72); // rose/red for write-off
+    } else if (label === 'Balance Due') {
+      if (amount === 0) {
+        doc.setTextColor(5, 150, 105); // green for zero balance
+      } else {
+        doc.setTextColor(217, 119, 6); // amber/warning for outstanding balance
+      }
     } else {
       doc.setTextColor(24, 24, 27);
     }
@@ -549,6 +469,14 @@ async function buildInvoicePdfData(id: string): Promise<PdfDocumentData | null> 
   const settings = await getDivisionBillingSettings(invoice.divisionId);
   const orgSettings = await getOrganisationSettings();
 
+  const total = safeNumber(invoice.total);
+  const paid = invoice.status === 'paid' 
+    ? total 
+    : Math.min(total, safeNumber(invoice.allocatedAmount));
+  const writtenOff = safeNumber(invoice.writeOffAmount);
+  const balanceDue = Math.max(0, total - paid - writtenOff);
+  const showPaymentSummary = paid > 0 || writtenOff > 0 || invoice.status === 'paid' || invoice.status === 'partially_paid' || invoice.status === 'written_off';
+
   return {
     type: 'invoice',
     title: 'Invoice',
@@ -568,7 +496,7 @@ async function buildInvoicePdfData(id: string): Promise<PdfDocumentData | null> 
       description: line.itemName || line.description,
       qty: safeNumber(line.quantity),
       unitPrice: safeNumber(line.unitPrice),
-      amount: safeNumber(line.lineTotal) || safeNumber(line.quantity) * safeNumber(line.unitPrice),
+      amount: line.lineTotal != null ? safeNumber(line.lineTotal) : safeNumber(line.quantity) * safeNumber(line.unitPrice),
     })),
     notes: invoice.notes ?? settings?.invoiceNotes,
     terms: invoice.terms,
@@ -577,7 +505,10 @@ async function buildInvoicePdfData(id: string): Promise<PdfDocumentData | null> 
       subtotal: safeNumber(invoice.subtotal),
       discount: safeNumber(invoice.discountAmount),
       vat: safeNumber(invoice.vatAmount),
-      total: safeNumber(invoice.total),
+      total,
+      paid: showPaymentSummary ? paid : undefined,
+      writtenOff: writtenOff > 0 ? writtenOff : undefined,
+      balanceDue: showPaymentSummary ? balanceDue : undefined,
     },
   };
 }
@@ -607,7 +538,7 @@ async function buildQuotePdfData(id: string): Promise<PdfDocumentData | null> {
       description: line.itemName || line.description,
       qty: safeNumber(line.quantity),
       unitPrice: safeNumber(line.unitPrice),
-      amount: safeNumber(line.lineTotal) || safeNumber(line.quantity) * safeNumber(line.unitPrice),
+      amount: line.lineTotal != null ? safeNumber(line.lineTotal) : safeNumber(line.quantity) * safeNumber(line.unitPrice),
     })),
     notes: quote.notes ?? settings?.quoteNotes,
     terms: quote.terms,

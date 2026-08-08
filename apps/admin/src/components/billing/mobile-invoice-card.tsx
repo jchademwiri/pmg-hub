@@ -71,16 +71,35 @@ export function MobileInvoiceCard({ inv, handleIssue, handleVoid }: MobileInvoic
           className="absolute inset-0 focus:outline-none focus-visible:ring-2 focus-visible:ring-ring rounded-lg"
           aria-label={`View invoice ${inv.documentNumber}`}
         />
-        <div className="flex justify-between items-start mb-2">
-          <div>
-            <p className="font-semibold text-foreground">{inv.documentNumber}</p>
-            <p className="text-sm text-muted-foreground">{inv.clientName ?? 'No client'}</p>
-          </div>
-          <div className="flex flex-col items-end gap-1">
-            <span className="font-bold tabular-nums">{formatZAR(Number(inv.total))}</span>
-            <BillingStatusBadge status={inv.status} />
-          </div>
-        </div>
+        {(() => {
+          const invTotal = Number(inv.total);
+          const invPaid = inv.status === 'paid' ? invTotal : Math.min(invTotal, Number(inv.allocatedAmount || 0));
+          const invBalance = Math.max(0, invTotal - invPaid);
+          const showBreakdown = invPaid > 0 || inv.status === 'paid' || inv.status === 'partially_paid';
+
+          return (
+            <>
+              <div className="flex justify-between items-start mb-2">
+                <div>
+                  <p className="font-semibold text-foreground">{inv.documentNumber}</p>
+                  <p className="text-sm text-muted-foreground">{inv.clientName ?? 'No client'}</p>
+                </div>
+                <div className="flex flex-col items-end gap-1">
+                  <span className="font-bold tabular-nums">{formatZAR(invTotal)}</span>
+                  <BillingStatusBadge status={inv.status} />
+                </div>
+              </div>
+              {showBreakdown && (
+                <div className="flex justify-between items-center text-xs border-t border-border/40 pt-1.5 mt-1">
+                  <span className="text-emerald-600 font-medium">Paid: {formatZAR(invPaid)}</span>
+                  <span className={invBalance === 0 ? "text-emerald-600 font-medium" : "text-amber-600 font-semibold"}>
+                    Bal: {formatZAR(invBalance)}
+                  </span>
+                </div>
+              )}
+            </>
+          );
+        })()}
         <div className="flex justify-between items-center text-xs text-muted-foreground mt-2 border-t border-border/50 pt-2">
           <span>Due {fmtDate(inv.dueDate)}</span>
           <div className="relative z-10">
