@@ -781,5 +781,6 @@ export function ReportsClient({ periods, accounts, divisions, selectedPeriod }: 
           )}
         </div>
       </div>
+    </div>
   );
 }
