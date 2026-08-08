@@ -1254,7 +1254,9 @@ export async function getAnnualFinancialStatements(
   ]);
 
   const currentYear = new Date().getFullYear();
+  const targetYear = period ? (period.includes('-FY') ? period.split('-')[0] : (period.includes('-') ? period.split('-')[0] : String(currentYear))) : String(currentYear);
   const yearLabel = period ? (period.includes('-FY') ? `FY${period.split('-')[0]}` : period) : `FY${currentYear}`;
+  const financialYearEndLabel = `28 February ${targetYear}`;
 
   const street = orgSettings?.addressStreet || '285 ERASMUS AVENUE, RASLOUW AH';
   const city = orgSettings?.addressCity || 'CENTURION';
@@ -1300,7 +1302,7 @@ export async function getAnnualFinancialStatements(
       registeredAddress: regAddress,
       postalAddress: regAddress,
       directorName: 'JACOB CHADEMWIRI',
-      financialYearEnd: '28 February',
+      financialYearEnd: financialYearEndLabel,
       financialYear: yearLabel,
     },
     directorsReport: {

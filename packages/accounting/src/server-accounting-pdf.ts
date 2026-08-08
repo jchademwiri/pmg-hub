@@ -92,12 +92,20 @@ async function resolveDivisionName(divisionId?: string): Promise<string | undefi
   return allDivisions.find((d) => d.id === divisionId)?.name;
 }
 
+function formatPeriodLabel(period?: string): string {
+  if (!period || period === 'all') return 'Period: All Time';
+  if (period.endsWith('-FY')) return `Period: Annual FY${period.split('-')[0]} (Full Year)`;
+  if (period.includes('-H')) return `Period: Bi-Annual ${period.replace('-', ' ')}`;
+  if (period.includes('-Q')) return `Period: Quarterly ${period.replace('-', ' ')}`;
+  return `Period: ${fmtMonthYear(period)}`;
+}
+
 async function buildReportHeader(title: string, period?: string, divisionLabel?: string): Promise<AccountingReportHeader> {
   const orgSettings = await getOrganisationSettings();
   return {
     title: divisionLabel ? `${title} — ${divisionLabel}` : title,
     org: buildOrgProps(COMPANY_NAME, null, orgSettings),
-    periodLabel: period ? fmtMonthYear(period) : 'All Time',
+    periodLabel: formatPeriodLabel(period),
     generatedAt: fmtDateLong(new Date()),
   };
 }
@@ -788,10 +796,12 @@ async function buildAnnualFinancialStatementsPdf(filters: AccountingPdfFilters):
   drawReportHeader(doc, header);
 
   let y = 72;
+
+  // 1. GENERAL INFORMATION
   doc.setFont('helvetica', 'bold');
   doc.setFontSize(10);
   doc.setTextColor(37, 99, 235);
-  doc.text('GENERAL INFORMATION & DIRECTORS APPROVAL', 15, y);
+  doc.text('1. GENERAL INFORMATION & DIRECTORS APPROVAL', 15, y);
   y += 6;
 
   doc.setFont('helvetica', 'normal');
@@ -804,11 +814,12 @@ async function buildAnnualFinancialStatementsPdf(filters: AccountingPdfFilters):
   doc.text(`Managing Director: ${result.generalInfo.directorName}`, 17, y); y += 5;
   doc.text(`Financial Year Ended: ${result.generalInfo.financialYearEnd}`, 17, y); y += 8;
 
-  y = ensurePage(doc, y, 20);
+  // 2. DIRECTORS REPORT
+  y = ensurePage(doc, y, 24);
   doc.setFont('helvetica', 'bold');
   doc.setFontSize(9);
   doc.setTextColor(37, 99, 235);
-  doc.text('DIRECTORS REPORT & GOING CONCERN STATEMENT', 15, y);
+  doc.text('2. DIRECTORS REPORT & GOING CONCERN STATEMENT', 15, y);
   y += 6;
   doc.setFont('helvetica', 'normal');
   doc.setFontSize(8);
@@ -821,17 +832,102 @@ async function buildAnnualFinancialStatementsPdf(filters: AccountingPdfFilters):
   doc.text(resultsText, 17, y);
   y += resultsText.length * 4 + 6;
 
+  // 3. STATEMENT OF FINANCIAL POSITION (BALANCE SHEET)
+  y = ensurePage(doc, y, 30);
+  doc.setFont('helvetica', 'bold');
+  doc.setFontSize(9);
+  doc.setTextColor(37, 99, 235);
+  doc.text('3. STATEMENT OF FINANCIAL POSITION (BALANCE SHEET)', 15, y);
+  y += 6;
+
+  y = drawAccountSubtable(doc, y, result.statementOfPosition.assets, 'Total Assets', result.statementOfPosition.totalAssets);
+  y += 5;
+  y = drawAccountSubtable(doc, y, result.statementOfPosition.liabilities, 'Total Liabilities', result.statementOfPosition.totalLiabilities);
+  y += 5;
+  const equityRows = [
+    ...result.statementOfPosition.equity,
+    { accountId: 'retained', accountCode: '—', accountName: 'Retained Earnings / Current Period Net Profit', accountType: 'equity', amount: result.statementOfPosition.netIncome }
+  ];
+  y = drawAccountSubtable(doc, y, equityRows, 'Total Equity', result.statementOfPosition.totalEquity);
+  y += 6;
+
+  // 4. STATEMENT OF PROFIT OR LOSS
+  y = ensurePage(doc, y, 30);
+  doc.setFont('helvetica', 'bold');
+  doc.setFontSize(9);
+  doc.setTextColor(37, 99, 235);
+  doc.text('4. STATEMENT OF PROFIT OR LOSS AND OTHER COMPREHENSIVE INCOME', 15, y);
+  y += 6;
+  y = drawAccountSubtable(doc, y, result.statementOfProfitLoss.income, 'Total Revenue', result.statementOfProfitLoss.totalRevenue);
+  y += 5;
+  y = drawAccountSubtable(doc, y, result.statementOfProfitLoss.expenses, 'Total Operating Expenses', result.statementOfProfitLoss.totalExpenses);
+  y += 5;
+  y = drawTotalRow(doc, y, 'Net Operating Profit', result.statementOfProfitLoss.netProfit);
+  y += 8;
+
+  // 5. STATEMENT OF CHANGES IN EQUITY
   y = ensurePage(doc, y, 20);
   doc.setFont('helvetica', 'bold');
   doc.setFontSize(9);
   doc.setTextColor(37, 99, 235);
-  doc.text('STATEMENT OF CHANGES IN EQUITY', 15, y);
+  doc.text('5. STATEMENT OF CHANGES IN EQUITY', 15, y);
   y += 6;
-  y = drawTotalRow(doc, y, 'Opening Equity', result.statementOfChangesInEquity.totalOpeningEquity);
+  y = drawTotalRow(doc, y, 'Opening Share Capital & Retained Income', result.statementOfChangesInEquity.totalOpeningEquity);
   y += 5;
   y = drawTotalRow(doc, y, 'Current Year Net Profit', result.statementOfChangesInEquity.currentYearNetProfit);
   y += 5;
   y = drawTotalRow(doc, y, 'Closing Equity', result.statementOfChangesInEquity.totalClosingEquity);
+  y += 8;
+
+  // 6. STATEMENT OF CASH FLOWS
+  y = ensurePage(doc, y, 24);
+  doc.setFont('helvetica', 'bold');
+  doc.setFontSize(9);
+  doc.setTextColor(37, 99, 235);
+  doc.text('6. STATEMENT OF CASH FLOWS', 15, y);
+  y += 6;
+  y = drawTotalRow(doc, y, 'Net Cash Flow from Operating Activities', result.statementOfCashFlows.netOperatingCashFlow);
+  y += 5;
+  y = drawTotalRow(doc, y, 'Net Cash Increase / (Decrease)', result.statementOfCashFlows.netCashIncrease);
+  y += 5;
+  y = drawTotalRow(doc, y, 'Ending Cash & Bank Balance', result.statementOfCashFlows.endingCashBalance);
+  y += 8;
+
+  // 7. NOTES TO THE FINANCIAL STATEMENTS
+  y = ensurePage(doc, y, 30);
+  doc.setFont('helvetica', 'bold');
+  doc.setFontSize(9);
+  doc.setTextColor(37, 99, 235);
+  doc.text('7. NOTES TO THE FINANCIAL STATEMENTS', 15, y);
+  y += 6;
+
+  doc.setFont('helvetica', 'bold');
+  doc.setFontSize(8);
+  doc.setTextColor(24, 24, 27);
+  doc.text('Note 1: Basis of Preparation & Accounting Policies', 17, y); y += 4;
+  doc.setFont('helvetica', 'normal');
+  const note1Text = split(doc, result.notes.note1BasisOfPreparation, 180);
+  doc.text(note1Text, 17, y);
+  y += note1Text.length * 4 + 6;
+
+  y = ensurePage(doc, y, 20);
+  doc.setFont('helvetica', 'bold');
+  doc.text('Note 2: Sales Revenue Breakdown', 17, y); y += 5;
+  for (const item of result.notes.note2RevenueBreakdown) {
+    y = ensurePage(doc, y, 6);
+    drawAccountRow(doc, y, 'Note 2', item.label, item.amount);
+    y += 6;
+  }
+  y += 4;
+
+  y = ensurePage(doc, y, 20);
+  doc.setFont('helvetica', 'bold');
+  doc.text('Note 3: Operating Expenses Schedule', 17, y); y += 5;
+  for (const item of result.notes.note3OperatingExpenses) {
+    y = ensurePage(doc, y, 6);
+    drawAccountRow(doc, y, item.code || 'Note 3', item.label, item.amount);
+    y += 6;
+  }
 
   drawReportFooter(doc, header);
 
