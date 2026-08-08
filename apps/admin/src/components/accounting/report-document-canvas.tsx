@@ -45,6 +45,23 @@ export function ReportDocumentCanvas({
 
   const currentDate = mounted ? fmtDate(new Date()) : '';
 
+  const fullDocumentTitle = React.useMemo(() => {
+    switch (reportType) {
+      case 'annual-financial-statements':
+        return 'ANNUAL FINANCIAL STATEMENTS';
+      case 'balance-sheet':
+        return 'STATEMENT OF FINANCIAL POSITION';
+      case 'profit-and-loss':
+        return 'STATEMENT OF COMPREHENSIVE INCOME';
+      case 'cash-flow':
+        return 'STATEMENT OF CASH FLOWS';
+      case 'changes-in-equity':
+        return 'STATEMENT OF CHANGES IN EQUITY';
+      default:
+        return reportTitle.toUpperCase();
+    }
+  }, [reportType, reportTitle]);
+
   if (loading) {
     return (
       <div className="bg-card border rounded-2xl p-8 min-h-[600px] flex flex-col items-center justify-center gap-3">
@@ -70,7 +87,7 @@ export function ReportDocumentCanvas({
 
         <div className="sm:text-right">
           <span className="inline-block px-3 py-1 text-xs font-semibold uppercase tracking-wider rounded-full bg-blue-500/10 text-blue-600 dark:text-blue-400 border border-blue-500/20">
-            {reportTitle}
+            {fullDocumentTitle}
           </span>
           <p className="text-xs text-zinc-500 dark:text-zinc-400 mt-2">
             Period: <span className="font-medium text-zinc-800 dark:text-zinc-200">{periodLabel}</span>
@@ -763,7 +780,7 @@ export function ReportDocumentCanvas({
                     <p className="text-xs text-zinc-500 font-medium mt-0.5">Registration Number: {info?.registrationNumber}</p>
                   </div>
                   <div className="text-right">
-                    <h3 className="text-xs font-bold text-zinc-900 dark:text-white uppercase tracking-wider">INCOME STATEMENT (STATEMENT OF COMPREHENSIVE INCOME)</h3>
+                    <h3 className="text-xs font-bold text-zinc-900 dark:text-white uppercase tracking-wider">STATEMENT OF COMPREHENSIVE INCOME</h3>
                     <p className="text-xs text-zinc-500 font-medium">for the year ended {info?.financialYearEnd}</p>
                   </div>
                 </div>
