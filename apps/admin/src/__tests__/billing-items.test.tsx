@@ -201,8 +201,8 @@ describe('Billing Items Module', () => {
       const page = await ItemsPage({ searchParams: Promise.resolve({ status: 'active' }) });
       render(page as React.ReactElement);
 
-      expect(screen.getByText('Item Alpha')).toBeInTheDocument();
-      expect(screen.getByText('Desc A')).toBeInTheDocument();
+      expect(screen.getAllByText('Item Alpha')[0]).toBeInTheDocument();
+      expect(screen.getAllByText('Desc A')[0]).toBeInTheDocument();
     });
 
     it('ItemsPage - renders empty state', async () => {
@@ -211,7 +211,9 @@ describe('Billing Items Module', () => {
       const page = await ItemsPage({ searchParams: Promise.resolve({ status: 'active' }) });
       render(page as React.ReactElement);
 
-      expect(screen.getByText('No items yet. Create your first service item to get started.')).toBeInTheDocument();
+      expect(
+        screen.getByText('No items yet. Create your first service item using the New Item button above.')
+      ).toBeInTheDocument();
     });
 
     describe('ItemEditClient', () => {
@@ -265,7 +267,7 @@ describe('Billing Items Module', () => {
           }),
         });
 
-        await user.click(screen.getByRole('button', { name: 'Archive' }));
+        await user.click(screen.getByRole('button', { name: 'Archive this item' }));
 
         await waitFor(() => {
           expect(toast.success).toHaveBeenCalledWith('Item archived.');

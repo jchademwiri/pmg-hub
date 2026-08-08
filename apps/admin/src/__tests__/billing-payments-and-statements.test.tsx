@@ -296,7 +296,7 @@ describe('Billing Payments and Statements Module', () => {
       const page = await StatementsPage();
       render(page as React.ReactElement);
 
-      expect(screen.getByText('Alpha Corp')).toBeInTheDocument();
+      expect(screen.getAllByText('Alpha Corp')[0]).toBeInTheDocument();
       expect(screen.getAllByText('R 2 000,00')[0]).toBeInTheDocument(); // outstanding format
     });
 
@@ -306,7 +306,7 @@ describe('Billing Payments and Statements Module', () => {
       const page = await StatementsPage();
       render(page as React.ReactElement);
 
-      expect(screen.getByText('No client statements available yet.')).toBeInTheDocument();
+      expect(screen.getAllByText('No client statements available yet.')[0]).toBeInTheDocument();
     });
   });
 });

@@ -12,6 +12,12 @@ import { describe, it, expect, vi, beforeEach } from 'vitest'
 
 // ─── Mocks ───────────────────────────────────────────────────────────────────
 
+vi.mock('server-only', () => ({}))
+
+vi.mock('@/lib/auth', () => ({
+  getSessionOrRedirect: vi.fn().mockResolvedValue({ user: { id: 'user-1' } }),
+}))
+
 const mockDbInsert = vi.fn()
 const mockDbUpdate = vi.fn()
 const mockDbDelete = vi.fn()
