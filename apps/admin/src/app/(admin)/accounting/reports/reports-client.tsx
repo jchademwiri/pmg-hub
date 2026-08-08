@@ -48,16 +48,6 @@ interface ReportConfig {
 
 const REPORT_TYPES: ReportConfig[] = [
   {
-    id: 'annual-financial-statements',
-    label: 'Annual Financial Statements (AFS)',
-    description: 'Full CIPC-compliant AFS package: Directors Report, Balance Sheet, P&L, Equity, Cash Flow & Notes',
-    icon: ShieldCheck,
-    needsPeriod: true,
-    needsAccount: false,
-    needsDivision: true,
-    supportsDateRange: false,
-  },
-  {
     id: 'balance-sheet',
     label: 'Balance Sheet',
     description: 'Statement of Financial Position: Assets, Liabilities & Equity',
@@ -135,6 +125,16 @@ const REPORT_TYPES: ReportConfig[] = [
     needsPeriod: false,
     needsAccount: false,
     needsDivision: false,
+    supportsDateRange: false,
+  },
+  {
+    id: 'annual-financial-statements',
+    label: 'AFS',
+    description: 'Full CIPC-compliant AFS package: Directors Report, Balance Sheet, P&L, Equity, Cash Flow & Notes',
+    icon: ShieldCheck,
+    needsPeriod: true,
+    needsAccount: false,
+    needsDivision: true,
     supportsDateRange: false,
   },
 ];
