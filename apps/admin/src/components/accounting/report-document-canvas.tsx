@@ -8,10 +8,11 @@ export interface ReportDocumentCanvasProps {
     | 'annual-financial-statements'
     | 'balance-sheet'
     | 'profit-and-loss'
+    | 'cash-flow'
+    | 'changes-in-equity'
     | 'division-performance'
     | 'client-performance'
     | 'trial-balance'
-    | 'cash-flow'
     | 'journal-entries'
     | 'general-ledger'
     | 'chart-of-accounts';

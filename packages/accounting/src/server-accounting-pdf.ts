@@ -31,10 +31,11 @@ export type AccountingReportType =
   | 'annual-financial-statements'
   | 'balance-sheet'
   | 'profit-and-loss'
+  | 'cash-flow'
+  | 'changes-in-equity'
   | 'division-performance'
   | 'client-performance'
   | 'trial-balance'
-  | 'cash-flow'
   | 'journal-entries'
   | 'general-ledger'
   | 'chart-of-accounts';
@@ -63,10 +64,11 @@ const REPORT_TYPES: ReadonlySet<AccountingReportType> = new Set([
   'annual-financial-statements',
   'balance-sheet',
   'profit-and-loss',
+  'cash-flow',
+  'changes-in-equity',
   'division-performance',
   'client-performance',
   'trial-balance',
-  'cash-flow',
   'journal-entries',
   'general-ledger',
   'chart-of-accounts',
