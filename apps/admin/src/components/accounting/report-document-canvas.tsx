@@ -77,7 +77,7 @@ export function ReportDocumentCanvas({
           {dateRangeLabel && (
             <p className="text-[11px] text-zinc-400 dark:text-zinc-500">{dateRangeLabel}</p>
           )}
-          <p className="text-[10px] text-zinc-400 dark:text-zinc-500 mt-0.5">Generated: {currentDate}</p>
+          <p suppressHydrationWarning className="text-[10px] text-zinc-400 dark:text-zinc-500 mt-0.5">Generated: {currentDate}</p>
         </div>
       </div>
 

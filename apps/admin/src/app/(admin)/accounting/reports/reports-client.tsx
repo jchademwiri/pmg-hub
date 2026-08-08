@@ -346,7 +346,7 @@ export function ReportsClient({ periods, accounts, divisions, selectedPeriod }: 
                   </div>
 
                   <div className="flex-1 min-w-0">
-                    <p className={`text-[11px] font-semibold truncate ${isSelected ? 'text-primary' : 'text-foreground'}`}>
+                    <p suppressHydrationWarning className={`text-[11px] font-semibold truncate ${isSelected ? 'text-primary' : 'text-foreground'}`}>
                       {type.label}
                     </p>
                   </div>
