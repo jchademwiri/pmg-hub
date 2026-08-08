@@ -5,6 +5,7 @@ import { formatZAR, fmtDate } from '@/lib/format';
 
 export interface ReportDocumentCanvasProps {
   reportType:
+    | 'overview'
     | 'annual-financial-statements'
     | 'balance-sheet'
     | 'profit-and-loss'

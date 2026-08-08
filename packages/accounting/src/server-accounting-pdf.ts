@@ -28,6 +28,7 @@ import { PAGE, split, ensurePage, drawShellHeader, drawShellFooter, type PdfOrgH
 import { jsPDF } from 'jspdf';
 
 export type AccountingReportType =
+  | 'overview'
   | 'annual-financial-statements'
   | 'balance-sheet'
   | 'profit-and-loss'
@@ -61,6 +62,7 @@ export interface AccountingPdfError {
 }
 
 const REPORT_TYPES: ReadonlySet<AccountingReportType> = new Set([
+  'overview',
   'annual-financial-statements',
   'balance-sheet',
   'profit-and-loss',

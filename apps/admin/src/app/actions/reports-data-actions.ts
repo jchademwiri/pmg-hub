@@ -19,6 +19,7 @@ import { getSessionOrRedirect } from '@/lib/auth';
 
 export interface ReportPreviewFilter {
   reportType:
+    | 'overview'
     | 'annual-financial-statements'
     | 'balance-sheet'
     | 'profit-and-loss'
@@ -94,6 +95,16 @@ export async function fetchReportPreviewData(filter: ReportPreviewFilter) {
     let data: any = null;
 
     switch (filter.reportType) {
+      case 'overview': {
+        const d = filter.divisionId !== 'all' ? filter.divisionId : undefined;
+        const [afs, trialBalanceRows] = await Promise.all([
+          getAnnualFinancialStatements(periodMonth, d, startDate, endDate),
+          getTrialBalance(periodMonth, d, startDate, endDate),
+        ]);
+        data = { afs, trialBalanceRows };
+        break;
+      }
+
       case 'chart-of-accounts': {
         const accounts = await getActiveChartAccounts();
         data = { accounts };
