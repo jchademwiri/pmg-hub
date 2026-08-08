@@ -79,7 +79,15 @@ export function ReportDocumentCanvas({
         <div>
           <h1 className="text-xl font-bold tracking-tight text-zinc-900 dark:text-white uppercase">{companyName}</h1>
           <p className="text-xs text-zinc-500 dark:text-zinc-400 mt-1">
-            Division: <span className="font-semibold text-zinc-700 dark:text-zinc-300">{divisionName}</span>
+            Division:{' '}
+            <span className="font-semibold text-zinc-800 dark:text-zinc-200">
+              {divisionName}
+            </span>
+            {divisionName && divisionName !== 'All Divisions' && (
+              <span className="ml-1.5 inline-flex items-center px-1.5 py-0.5 text-[10px] font-semibold bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20 rounded">
+                Isolated Division View
+              </span>
+            )}
           </p>
           {taxNumber && (
             <p className="text-[11px] text-zinc-400 dark:text-zinc-500">VAT / Tax Ref: {taxNumber}</p>

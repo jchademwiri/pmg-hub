@@ -739,7 +739,9 @@ export async function getCashFlowStatement(
   const bs = await getBalanceSheet(period, divisionId, startDate, endDate);
   const divPerf = await getProfitAndLossByDivision(period, startDate, endDate);
 
-  const totalCashCollected = divPerf.reduce((sum, d) => sum + d.totalIncome, 0);
+  const totalCashCollected = divPerf
+    .filter((d) => !divisionId || d.divisionId === divisionId)
+    .reduce((sum, d) => sum + d.totalIncome, 0);
   const totalOperatingExpenses = pnl.totalExpenses;
 
   const operatingActivities: CashFlowCategoryRow[] = [
@@ -1515,12 +1517,13 @@ export async function getAnnualFinancialStatements(
   const regAddress = `${street}, ${city}, ${province}, ${postal}`;
 
   // Division revenue build-up
+  const targetDivisions = divisionId ? allDivList.filter((d) => d.id === divisionId) : allDivList;
   const priorDivMap = new Map<string, number>();
   for (const d of priorPnlDivisions) {
     priorDivMap.set(d.divisionId, d.totalRevenue);
   }
 
-  const divisionBreakdown: AfsDivisionBuildUpRow[] = allDivList.map((div) => {
+  const divisionBreakdown: AfsDivisionBuildUpRow[] = targetDivisions.map((div) => {
     const curDiv = pnlDivisions.find((d) => d.divisionId === div.id);
     return {
       divisionId: div.id,

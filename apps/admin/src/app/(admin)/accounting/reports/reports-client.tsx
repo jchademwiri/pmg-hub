@@ -15,6 +15,7 @@ import {
 import { fmtMonthYear, formatZAR } from '@/lib/format';
 import type { ChartAccount } from '@pmg/db';
 import { ReportDocumentCanvas } from '@/components/accounting/report-document-canvas';
+import { ReportFilterCard } from '@/components/accounting/report-filter-card';
 import { fetchReportPreviewData } from '@/app/actions/reports-data-actions';
 
 interface ReportsClientProps {
@@ -183,6 +184,7 @@ export function ReportsClient({ periods, accounts, divisions, selectedPeriod }: 
   const urlAccountId = searchParams.get('accountId');
   const urlStartDate = searchParams.get('startDate');
   const urlEndDate = searchParams.get('endDate');
+  const urlCategory = searchParams.get('category');
 
   const validReportTypes: ReportType[] = [
     'overview',
@@ -213,6 +215,7 @@ export function ReportsClient({ periods, accounts, divisions, selectedPeriod }: 
   const [endDate, setEndDateState] = React.useState<string>(urlEndDate || '');
   const [accountId, setAccountIdState] = React.useState<string>(urlAccountId || 'all');
   const [divisionId, setDivisionIdState] = React.useState<string>(urlDivisionId || 'all');
+  const [category, setCategoryState] = React.useState<string>(urlCategory || 'all');
 
   const updateUrl = React.useCallback(
     (paramsToUpdate: Record<string, string | undefined>) => {
@@ -231,32 +234,37 @@ export function ReportsClient({ periods, accounts, divisions, selectedPeriod }: 
 
   const setSelectedReport = (r: ReportType) => {
     setSelectedReportState(r);
-    updateUrl({ type: r === 'overview' ? undefined : r, period, divisionId, accountId, startDate, endDate });
+    updateUrl({ type: r === 'overview' ? undefined : r, period, divisionId, accountId, startDate, endDate, category });
   };
 
   const setPeriod = (p: string) => {
     setPeriodState(p);
-    updateUrl({ type: selectedReport, period: p, divisionId, accountId, startDate, endDate });
+    updateUrl({ type: selectedReport, period: p, divisionId, accountId, startDate, endDate, category });
   };
 
   const setDivisionId = (d: string) => {
     setDivisionIdState(d);
-    updateUrl({ type: selectedReport, period, divisionId: d, accountId, startDate, endDate });
+    updateUrl({ type: selectedReport, period, divisionId: d, accountId, startDate, endDate, category });
   };
 
   const setAccountId = (a: string) => {
     setAccountIdState(a);
-    updateUrl({ type: selectedReport, period, divisionId, accountId: a, startDate, endDate });
+    updateUrl({ type: selectedReport, period, divisionId, accountId: a, startDate, endDate, category });
   };
 
   const setStartDate = (s: string) => {
     setStartDateState(s);
-    updateUrl({ type: selectedReport, period, divisionId, accountId, startDate: s, endDate });
+    updateUrl({ type: selectedReport, period, divisionId, accountId, startDate: s, endDate, category });
   };
 
   const setEndDate = (e: string) => {
     setEndDateState(e);
-    updateUrl({ type: selectedReport, period, divisionId, accountId, startDate, endDate: e });
+    updateUrl({ type: selectedReport, period, divisionId, accountId, startDate, endDate: e, category });
+  };
+
+  const setCategory = (c: string) => {
+    setCategoryState(c);
+    updateUrl({ type: selectedReport, period, divisionId, accountId, startDate, endDate, category: c });
   };
 
   const [previewData, setPreviewData] = React.useState<any>(null);
@@ -264,6 +272,23 @@ export function ReportsClient({ periods, accounts, divisions, selectedPeriod }: 
   const [loading, setLoading] = React.useState<boolean>(false);
 
   const reportConfig = REPORT_TYPES.find((r) => r.id === selectedReport) || REPORT_TYPES[3];
+
+  const divisionSummary = React.useMemo(() => {
+    if (divisionId === 'all') return null;
+    if (previewData?.statement) {
+      return {
+        revenue: previewData.statement.totalRevenue || 0,
+        expenses: previewData.statement.totalExpenses || 0,
+      };
+    }
+    if (previewData?.afs?.statementOfProfitLoss) {
+      return {
+        revenue: previewData.afs.statementOfProfitLoss.totalRevenue || 0,
+        expenses: previewData.afs.statementOfProfitLoss.totalExpenses || 0,
+      };
+    }
+    return null;
+  }, [divisionId, previewData]);
 
   // Fetch live preview data whenever report type or filters change
   const loadPreview = React.useCallback(async () => {
@@ -276,6 +301,7 @@ export function ReportsClient({ periods, accounts, divisions, selectedPeriod }: 
         endDate: endDate || undefined,
         divisionId,
         accountId,
+        category,
       });
 
       if (res.success) {
@@ -287,7 +313,7 @@ export function ReportsClient({ periods, accounts, divisions, selectedPeriod }: 
     } finally {
       setLoading(false);
     }
-  }, [selectedReport, period, startDate, endDate, divisionId, accountId]);
+  }, [selectedReport, period, startDate, endDate, divisionId, accountId, category]);
 
   React.useEffect(() => {
     loadPreview();
@@ -389,146 +415,43 @@ export function ReportsClient({ periods, accounts, divisions, selectedPeriod }: 
 
         {/* Right Column: Controls & Live Document Canvas */}
         <div className="lg:col-span-10 flex flex-col gap-4">
-          {/* Top Filter & Control Bar */}
-          <div className="rounded-2xl border bg-card p-4 sm:p-5 shadow-xs flex flex-col gap-4">
-            <div className="flex flex-wrap items-center justify-between gap-3 pb-3 border-b border-border/60">
-              <div className="flex items-center gap-2">
-                {selectedReport !== 'overview' ? (
-                  <Button onClick={() => setSelectedReport('overview')} variant="outline" size="sm" className="h-8 gap-1.5 text-xs font-semibold">
-                    <ArrowLeft className="h-3.5 w-3.5" />
-                    Back to Overview Dashboard
-                  </Button>
-                ) : (
-                  <div className="flex items-center gap-2">
-                    <Filter className="h-4 w-4 text-primary" />
-                    <h4 className="text-sm font-semibold">Financial Reports Filters & Actions</h4>
-                  </div>
-                )}
-              </div>
-
-              <div className="flex items-center gap-2">
-                <Button onClick={handlePrint} variant="outline" size="sm" className="h-8 gap-1.5">
-                  <Printer className="h-3.5 w-3.5" />
-                  <span className="hidden sm:inline">Print</span>
-                </Button>
-                <Button onClick={handleDownloadPdf} size="sm" className="h-8 gap-1.5 shadow-sm">
-                  <Download className="h-3.5 w-3.5" />
-                  Download AFS PDF
-                </Button>
-              </div>
+          {/* Back to Overview Header if in sub-report */}
+          {selectedReport !== 'overview' && (
+            <div className="flex items-center justify-between">
+              <Button
+                onClick={() => setSelectedReport('overview')}
+                variant="outline"
+                size="sm"
+                className="h-7 gap-1.5 text-xs font-medium border-border/80 hover:bg-zinc-100 dark:hover:bg-zinc-800"
+              >
+                <ArrowLeft className="h-3.5 w-3.5" /> Back to Overview Dashboard
+              </Button>
             </div>
+          )}
 
-            {/* Filter Inputs Grid */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
-              {/* Reporting Period */}
-              {reportConfig.needsPeriod && (
-                <div className="flex flex-col gap-1.5">
-                  <label className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider flex items-center gap-1">
-                    <Calendar className="size-3" /> Period
-                  </label>
-                  <Select value={period} onValueChange={setPeriod}>
-                    <SelectTrigger className="h-9 text-xs">
-                      <SelectValue placeholder="All Time" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="all">All Time</SelectItem>
-                      
-                      {/* Annually */}
-                      <SelectItem value={`${currentYear}-FY`}>Annual: FY{currentYear} (Full Year)</SelectItem>
-                      <SelectItem value={`${currentYear - 1}-FY`}>Annual: FY{currentYear - 1} (Full Year)</SelectItem>
-
-                      {/* Bi-Annually */}
-                      <SelectItem value={`${currentYear}-H1`}>Bi-Annual: {currentYear} H1 (Jan – Jun)</SelectItem>
-                      <SelectItem value={`${currentYear}-H2`}>Bi-Annual: {currentYear} H2 (Jul – Dec)</SelectItem>
-
-                      {/* Quarterly */}
-                      <SelectItem value={`${currentYear}-Q1`}>Quarterly: {currentYear} Q1 (Jan – Mar)</SelectItem>
-                      <SelectItem value={`${currentYear}-Q2`}>Quarterly: {currentYear} Q2 (Apr – Jun)</SelectItem>
-                      <SelectItem value={`${currentYear}-Q3`}>Quarterly: {currentYear} Q3 (Jul – Sep)</SelectItem>
-                      <SelectItem value={`${currentYear}-Q4`}>Quarterly: {currentYear} Q4 (Oct – Dec)</SelectItem>
-
-                      {/* Monthly */}
-                      {periods.map((p) => (
-                        <SelectItem key={p} value={p}>Monthly: {fmtMonthYear(p)}</SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-              )}
-
-              {/* Division Selector */}
-              {reportConfig.needsDivision && (
-                <div className="flex flex-col gap-1.5">
-                  <label className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider">
-                    Division
-                  </label>
-                  <Select value={divisionId} onValueChange={setDivisionId}>
-                    <SelectTrigger className="h-9 text-xs">
-                      <SelectValue placeholder="All Divisions" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="all">All Divisions</SelectItem>
-                      {divisions.map((d) => (
-                        <SelectItem key={d.id} value={d.id}>{d.name}</SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-              )}
-
-              {/* Account Selector (General Ledger) */}
-              {reportConfig.needsAccount && (
-                <div className="flex flex-col gap-1.5">
-                  <label className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider">
-                    Account
-                  </label>
-                  <Select value={accountId} onValueChange={setAccountId}>
-                    <SelectTrigger className="h-9 text-xs">
-                      <SelectValue placeholder="All Accounts" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="all">All Accounts</SelectItem>
-                      {accounts.map((a) => (
-                        <SelectItem key={a.id} value={a.id}>
-                          {a.code} — {a.name}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-              )}
-
-              {/* Custom Date Range (Start Date) */}
-              {reportConfig.supportsDateRange && (
-                <div className="flex flex-col gap-1.5">
-                  <label className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider">
-                    Start Date
-                  </label>
-                  <Input
-                    type="date"
-                    value={startDate}
-                    onChange={(e) => setStartDate(e.target.value)}
-                    className="h-9 text-xs"
-                  />
-                </div>
-              )}
-
-              {/* Custom Date Range (End Date) */}
-              {reportConfig.supportsDateRange && (
-                <div className="flex flex-col gap-1.5">
-                  <label className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider">
-                    End Date
-                  </label>
-                  <Input
-                    type="date"
-                    value={endDate}
-                    onChange={(e) => setEndDate(e.target.value)}
-                    className="h-9 text-xs"
-                  />
-                </div>
-              )}
-            </div>
-          </div>
+          {/* Unified Dynamic Report Filter Card */}
+          <ReportFilterCard
+            reportType={selectedReport}
+            periods={periods}
+            selectedPeriod={period}
+            onPeriodChange={setPeriod}
+            divisions={divisions}
+            selectedDivisionId={divisionId}
+            onDivisionChange={setDivisionId}
+            accounts={accounts}
+            selectedAccountId={accountId}
+            onAccountChange={setAccountId}
+            startDate={startDate}
+            onStartDateChange={setStartDate}
+            endDate={endDate}
+            onEndDateChange={setEndDate}
+            selectedCategory={category}
+            onCategoryChange={setCategory}
+            onPrint={handlePrint}
+            onDownloadPdf={handleDownloadPdf}
+            loading={loading}
+            divisionSummary={divisionSummary}
+          />
 
           {/* OVERVIEW DASHBOARD VIEW */}
           {selectedReport === 'overview' ? (

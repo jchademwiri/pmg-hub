@@ -36,6 +36,7 @@ export interface ReportPreviewFilter {
   endDate?: string;
   divisionId?: string;
   accountId?: string;
+  category?: string;
 }
 
 export async function resolvePeriodDateRange(periodStr?: string, customStart?: string, customEnd?: string) {
@@ -106,7 +107,10 @@ export async function fetchReportPreviewData(filter: ReportPreviewFilter) {
       }
 
       case 'chart-of-accounts': {
-        const accounts = await getActiveChartAccounts();
+        let accounts = await getActiveChartAccounts();
+        if (filter.category && filter.category !== 'all') {
+          accounts = accounts.filter((a) => a.type === filter.category);
+        }
         data = { accounts };
         break;
       }
