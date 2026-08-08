@@ -661,7 +661,7 @@ export function ReportDocumentCanvas({
                         </tr>
                         {dr?.divisionBreakdown?.map((div: any) => (
                           <tr key={div.divisionId} className="text-zinc-600 dark:text-zinc-400 italic">
-                            <td className="py-1 px-4 font-sans">├── {div.divisionName}</td>
+                            <td className="py-1 px-4 font-sans">- {div.divisionName}</td>
                             <td className="py-1 px-2 text-right">{formatZAR(div.current)}</td>
                             <td className="py-1 px-2 text-right text-zinc-400">{formatZAR(div.prior)}</td>
                           </tr>
@@ -738,7 +738,7 @@ export function ReportDocumentCanvas({
                     </tr>
                     {pnl?.divisionBreakdown?.map((div: any) => (
                       <tr key={div.divisionId} className="text-zinc-600 dark:text-zinc-400 italic">
-                        <td className="py-1 px-4 font-sans">├── {div.divisionName}</td>
+                        <td className="py-1 px-4 font-sans">- {div.divisionName}</td>
                         <td className="py-1 px-2 text-center font-sans text-zinc-400">Note 2</td>
                         <td className="py-1 px-2 text-right">{formatZAR(div.current)}</td>
                         <td className="py-1 px-2 text-right text-zinc-400">{formatZAR(div.prior)}</td>
@@ -1085,7 +1085,7 @@ export function ReportDocumentCanvas({
                     </tr>
                     {det?.divisionBreakdown?.map((div: any) => (
                       <tr key={div.divisionId} className="text-zinc-600 dark:text-zinc-400 italic">
-                        <td className="py-1 px-5 font-sans">├── {div.divisionName}</td>
+                        <td className="py-1 px-5 font-sans">- {div.divisionName}</td>
                         <td className="py-1 px-2 text-right">{formatZAR(div.current)}</td>
                         <td className="py-1 px-2 text-right text-zinc-400">{formatZAR(div.prior)}</td>
                       </tr>

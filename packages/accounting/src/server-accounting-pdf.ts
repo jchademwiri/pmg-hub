@@ -858,7 +858,7 @@ async function buildAnnualFinancialStatementsPdf(filters: AccountingPdfFilters):
   doc.setFontSize(7.5);
   doc.setTextColor(82, 82, 91);
   for (const div of dr.divisionBreakdown) {
-    doc.text(`├── ${div.divisionName}`, PAGE.margin + 7, y);
+    doc.text(`- ${div.divisionName}`, PAGE.margin + 7, y);
     doc.text(formatZAR(div.current), 150, y, { align: 'right' });
     doc.text(formatZAR(div.prior), PAGE.width - PAGE.margin - 3, y, { align: 'right' });
     y += 5;
@@ -949,7 +949,7 @@ async function buildAnnualFinancialStatementsPdf(filters: AccountingPdfFilters):
   doc.setFontSize(7.5);
   doc.setTextColor(82, 82, 91);
   for (const div of pnl.divisionBreakdown) {
-    doc.text(`├── ${div.divisionName}`, PAGE.margin + 7, y);
+    doc.text(`- ${div.divisionName}`, PAGE.margin + 7, y);
     doc.text('Note 2', 120, y, { align: 'center' });
     doc.text(formatZAR(div.current), 155, y, { align: 'right' });
     doc.text(formatZAR(div.prior), PAGE.width - PAGE.margin - 3, y, { align: 'right' });
@@ -1026,7 +1026,7 @@ async function buildAnnualFinancialStatementsPdf(filters: AccountingPdfFilters):
     doc.text(a.accountName, PAGE.margin + 6, y);
     doc.text(a.accountName.toLowerCase().includes('receivable') ? 'Note 7' : (a.accountName.toLowerCase().includes('bank') || a.accountName.toLowerCase().includes('cash') ? 'Note 8' : 'Note 5'), 120, y, { align: 'center' });
     doc.text(formatZAR(a.amount), 155, y, { align: 'right' });
-    doc.text('—', PAGE.width - PAGE.margin - 3, y, { align: 'right' });
+    doc.text(formatZAR(0), PAGE.width - PAGE.margin - 3, y, { align: 'right' });
     y += 5;
   }
   doc.setFont('helvetica', 'bold');
@@ -1053,7 +1053,7 @@ async function buildAnnualFinancialStatementsPdf(filters: AccountingPdfFilters):
     doc.text(l.accountName, PAGE.margin + 6, y);
     doc.text('Note 11', 120, y, { align: 'center' });
     doc.text(formatZAR(l.amount), 155, y, { align: 'right' });
-    doc.text('—', PAGE.width - PAGE.margin - 3, y, { align: 'right' });
+    doc.text(formatZAR(0), PAGE.width - PAGE.margin - 3, y, { align: 'right' });
     y += 5;
   }
 
@@ -1099,7 +1099,7 @@ async function buildAnnualFinancialStatementsPdf(filters: AccountingPdfFilters):
   y += 5.5;
 
   doc.text(`Net profit / (loss) for FY${priYear}`, PAGE.margin + 3, y);
-  doc.text('—', 115, y, { align: 'right' });
+  doc.text(formatZAR(0), 115, y, { align: 'right' });
   doc.text(formatZAR(eq.priorNetProfit), 155, y, { align: 'right' });
   doc.text(formatZAR(eq.priorNetProfit), PAGE.width - PAGE.margin - 3, y, { align: 'right' });
   y += 5.5;
@@ -1119,7 +1119,7 @@ async function buildAnnualFinancialStatementsPdf(filters: AccountingPdfFilters):
   y += 5.5;
 
   doc.text(`Net profit / (loss) for FY${curYear} (to date)`, PAGE.margin + 3, y);
-  doc.text('—', 115, y, { align: 'right' });
+  doc.text(formatZAR(0), 115, y, { align: 'right' });
   doc.text(formatZAR(eq.currentNetProfit), 155, y, { align: 'right' });
   doc.text(formatZAR(eq.currentNetProfit), PAGE.width - PAGE.margin - 3, y, { align: 'right' });
   y += 7;
@@ -1171,7 +1171,7 @@ async function buildAnnualFinancialStatementsPdf(filters: AccountingPdfFilters):
   doc.text('Depreciation of property, plant & equipment', PAGE.margin + 6, y);
   doc.text('Note 5', 120, y, { align: 'center' });
   doc.text(formatZAR(pnl.depreciation.current), 155, y, { align: 'right' });
-  doc.text('—', PAGE.width - PAGE.margin - 3, y, { align: 'right' });
+  doc.text(formatZAR(0), PAGE.width - PAGE.margin - 3, y, { align: 'right' });
   y += 5.5;
 
   doc.setFont('helvetica', 'bold');
@@ -1225,7 +1225,7 @@ async function buildAnnualFinancialStatementsPdf(filters: AccountingPdfFilters):
   doc.setFontSize(7.5);
   doc.setTextColor(82, 82, 91);
   for (const div of det.divisionBreakdown) {
-    doc.text(`├── ${div.divisionName}`, PAGE.margin + 10, y);
+    doc.text(`- ${div.divisionName}`, PAGE.margin + 10, y);
     doc.text(formatZAR(div.current), 155, y, { align: 'right' });
     doc.text(formatZAR(div.prior), PAGE.width - PAGE.margin - 3, y, { align: 'right' });
     y += 5;
