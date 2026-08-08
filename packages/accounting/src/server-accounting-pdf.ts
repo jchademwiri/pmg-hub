@@ -858,7 +858,7 @@ async function buildAnnualFinancialStatementsPdf(filters: AccountingPdfFilters):
   doc.setTextColor(37, 99, 235);
   doc.text('4. STATEMENT OF PROFIT OR LOSS AND OTHER COMPREHENSIVE INCOME', 15, y);
   y += 6;
-  y = drawAccountSubtable(doc, y, result.statementOfProfitLoss.income, 'Total Revenue', result.statementOfProfitLoss.totalRevenue);
+  y = drawAccountSubtable(doc, y, result.statementOfProfitLoss.revenue, 'Total Revenue', result.statementOfProfitLoss.totalRevenue);
   y += 5;
   y = drawAccountSubtable(doc, y, result.statementOfProfitLoss.expenses, 'Total Operating Expenses', result.statementOfProfitLoss.totalExpenses);
   y += 5;
