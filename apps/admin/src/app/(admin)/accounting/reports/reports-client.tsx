@@ -334,6 +334,12 @@ export function ReportsClient({ periods, accounts, divisions, selectedPeriod }: 
     dateRangeDisplay = `Until ${endDate}`;
   }
 
+  const afsData = previewData?.afs;
+  const pnlSummary = afsData?.statementOfProfitLoss;
+  const bsSummary = afsData?.statementOfPosition;
+  const cfSummary = afsData?.statementOfCashFlows;
+  const eqSummary = afsData?.statementOfChangesInEquity;
+
   return (
     <div className="flex flex-col gap-6">
       {/* Two-Column Workbench Layout */}
