@@ -274,18 +274,37 @@ export function ReportsClient({ periods, accounts, divisions, selectedPeriod }: 
   const reportConfig = REPORT_TYPES.find((r) => r.id === selectedReport) || REPORT_TYPES[3];
 
   const divisionSummary = React.useMemo(() => {
-    if (divisionId === 'all') return null;
-    if (previewData?.statement) {
+    if (divisionId === 'all' || !previewData) return null;
+
+    const extractVal = (val: any): number => {
+      if (typeof val === 'number') return isNaN(val) ? 0 : val;
+      if (typeof val === 'object' && val !== null) {
+        if ('current' in val) return extractVal(val.current);
+      }
+      const parsed = parseFloat(String(val ?? 0));
+      return isNaN(parsed) ? 0 : parsed;
+    };
+
+    if (previewData.statement) {
       return {
-        revenue: previewData.statement.totalRevenue || 0,
-        expenses: previewData.statement.totalExpenses || 0,
+        revenue: extractVal(previewData.statement.totalRevenue),
+        expenses: extractVal(previewData.statement.totalExpenses),
       };
     }
-    if (previewData?.afs?.statementOfProfitLoss) {
+    if (previewData.afs?.statementOfProfitLoss) {
       return {
-        revenue: previewData.afs.statementOfProfitLoss.totalRevenue || 0,
-        expenses: previewData.afs.statementOfProfitLoss.totalExpenses || 0,
+        revenue: extractVal(previewData.afs.statementOfProfitLoss.revenue),
+        expenses: extractVal(previewData.afs.statementOfProfitLoss.totalExpenses),
       };
+    }
+    if (previewData.divisions && Array.isArray(previewData.divisions)) {
+      const selectedDiv = previewData.divisions.find((d: any) => d.divisionId === divisionId);
+      if (selectedDiv) {
+        return {
+          revenue: extractVal(selectedDiv.totalRevenue),
+          expenses: extractVal(selectedDiv.totalExpenses),
+        };
+      }
     }
     return null;
   }, [divisionId, previewData]);

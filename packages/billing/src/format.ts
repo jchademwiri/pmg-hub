@@ -1,10 +1,12 @@
-export function formatZAR(amount: number): string {
+export function formatZAR(amount: number | string | null | undefined): string {
+  const val = typeof amount === 'number' ? amount : parseFloat(String(amount ?? 0));
+  const num = isNaN(val) ? 0 : val;
   return new Intl.NumberFormat('en-ZA', {
     style: 'currency',
     currency: 'ZAR',
     minimumFractionDigits: 2,
     maximumFractionDigits: 2,
-  }).format(amount)
+  }).format(num);
 }
 
 /**
