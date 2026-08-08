@@ -231,13 +231,12 @@ export function InvoicesTable({
               <TableHead className="text-right">Paid</TableHead>
               <TableHead className="text-right">Balance Due</TableHead>
               <TableHead>Status</TableHead>
-              <TableHead className="w-10" />
             </TableRow>
           </TableHeader>
           <TableBody>
             {entries.length === 0 ? (
               <TableRow>
-                <TableCell colSpan={11} className="h-24 text-center text-muted-foreground text-xs">
+                <TableCell colSpan={10} className="h-24 text-center text-muted-foreground text-xs">
                   No invoices match the current filters.
                 </TableCell>
               </TableRow>
@@ -251,7 +250,7 @@ export function InvoicesTable({
                 return (
                   <TableRow 
                     key={inv.id}
-                    className={`hover:bg-muted/40 transition-colors border-b border-border relative ${isSelected ? 'bg-blue-500/5' : ''}`}
+                    className={`hover:bg-muted/40 transition-colors border-b border-border relative cursor-pointer ${isSelected ? 'bg-blue-500/5' : ''}`}
                   >
                     <TableCell className="relative z-10">
                       <Checkbox
@@ -263,11 +262,12 @@ export function InvoicesTable({
                     <TableCell className="font-medium">
                       <Link
                         href={`/billing/invoices/${inv.id}`}
-                        className="hover:underline text-primary font-semibold"
+                        className="absolute inset-0 focus:outline-none focus-visible:ring-2 focus-visible:ring-ring rounded-sm"
                         aria-label={`View invoice ${inv.documentNumber}`}
-                      >
+                      />
+                      <span className="hover:underline text-primary font-semibold relative z-10">
                         {inv.documentNumber}
-                      </Link>
+                      </span>
                     </TableCell>
                     <TableCell>
                       {inv.reference ? (
@@ -300,47 +300,6 @@ export function InvoicesTable({
                     </TableCell>
                     <TableCell>
                       <BillingStatusBadge status={inv.status} />
-                    </TableCell>
-                    <TableCell className="relative z-10">
-                      <DropdownMenu>
-                        <DropdownMenuTrigger asChild>
-                          <Button variant="ghost" size="icon" className="size-8" title="Actions">
-                            <MoreHorizontal className="size-4" />
-                            <span className="sr-only">Actions</span>
-                          </Button>
-                        </DropdownMenuTrigger>
-                        <DropdownMenuContent align="end">
-                          <DropdownMenuItem asChild>
-                            <Link href={`/billing/invoices/${inv.id}`}>View</Link>
-                          </DropdownMenuItem>
-                          {!['paid', 'void', 'written_off'].includes(inv.status) && (
-                            <DropdownMenuItem asChild>
-                              <Link href={`/billing/invoices/${inv.id}/edit`}>Edit</Link>
-                            </DropdownMenuItem>
-                          )}
-                          {inv.status === 'draft' && (
-                            <>
-                              <DropdownMenuSeparator />
-                              <DropdownMenuItem
-                                onClick={() => handleIssue(inv.id, inv.documentNumber)}
-                              >
-                                Mark Issued
-                              </DropdownMenuItem>
-                            </>
-                          )}
-                          {(inv.status === 'draft' || inv.status === 'issued' || inv.status === 'overdue') && (
-                            <>
-                              <DropdownMenuSeparator />
-                              <DropdownMenuItem
-                                className="text-destructive focus:text-destructive"
-                                onClick={() => handleVoid(inv.id, inv.documentNumber)}
-                              >
-                                Void
-                              </DropdownMenuItem>
-                            </>
-                          )}
-                        </DropdownMenuContent>
-                      </DropdownMenu>
                     </TableCell>
                   </TableRow>
                 );

@@ -99,6 +99,7 @@ type PdfDocumentData = {
     vat?: number;
     total?: number;
     paid?: number;
+    writtenOff?: number;
     balanceDue?: number;
   };
 };
@@ -379,6 +380,7 @@ function drawTotals(doc: jsPDF, data: PdfDocumentData, startY: number) {
     totals.vat && totals.vat > 0 ? ['VAT', totals.vat] as const : null,
     totals.total != null ? ['Total Invoiced', totals.total] as const : null,
     totals.paid != null && totals.paid > 0 ? ['Less Payments', -totals.paid] as const : null,
+    totals.writtenOff != null && totals.writtenOff > 0 ? ['Less Write-Off', -totals.writtenOff] as const : null,
     totals.balanceDue != null ? ['Balance Due', totals.balanceDue] as const : null,
   ].filter(Boolean) as ReadonlyArray<readonly [string, number]>;
 
@@ -388,6 +390,8 @@ function drawTotals(doc: jsPDF, data: PdfDocumentData, startY: number) {
     doc.setFontSize(isBold ? 10 : 8);
     if (label === 'Less Payments') {
       doc.setTextColor(5, 150, 105); // green for paid
+    } else if (label === 'Less Write-Off') {
+      doc.setTextColor(225, 29, 72); // rose/red for write-off
     } else if (label === 'Balance Due') {
       if (amount === 0) {
         doc.setTextColor(5, 150, 105); // green for zero balance
@@ -469,8 +473,9 @@ async function buildInvoicePdfData(id: string): Promise<PdfDocumentData | null> 
   const paid = invoice.status === 'paid' 
     ? total 
     : Math.min(total, safeNumber(invoice.allocatedAmount));
-  const balanceDue = Math.max(0, total - paid);
-  const showPaymentSummary = paid > 0 || invoice.status === 'paid' || invoice.status === 'partially_paid';
+  const writtenOff = safeNumber(invoice.writeOffAmount);
+  const balanceDue = Math.max(0, total - paid - writtenOff);
+  const showPaymentSummary = paid > 0 || writtenOff > 0 || invoice.status === 'paid' || invoice.status === 'partially_paid' || invoice.status === 'written_off';
 
   return {
     type: 'invoice',
@@ -502,6 +507,7 @@ async function buildInvoicePdfData(id: string): Promise<PdfDocumentData | null> 
       vat: safeNumber(invoice.vatAmount),
       total,
       paid: showPaymentSummary ? paid : undefined,
+      writtenOff: writtenOff > 0 ? writtenOff : undefined,
       balanceDue: showPaymentSummary ? balanceDue : undefined,
     },
   };

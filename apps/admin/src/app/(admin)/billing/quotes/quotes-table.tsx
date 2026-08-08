@@ -131,13 +131,12 @@ export function QuotesTable({
             <TableHead>Expiry Date</TableHead>
             <TableHead className="text-right">Amount</TableHead>
             <TableHead>Status</TableHead>
-            <TableHead className="w-10" />
           </TableRow>
         </TableHeader>
         <TableBody>
           {entries.length === 0 ? (
             <TableRow>
-              <TableCell colSpan={8} className="h-24 text-center text-muted-foreground text-xs">
+              <TableCell colSpan={7} className="h-24 text-center text-muted-foreground text-xs">
                 No quotations match the current filters.
               </TableCell>
             </TableRow>
@@ -145,7 +144,7 @@ export function QuotesTable({
             entries.map((quote) => (
             <TableRow 
               key={quote.id}
-              className="hover:bg-muted/40 transition-colors border-b border-border relative"
+              className="hover:bg-muted/40 transition-colors border-b border-border relative cursor-pointer"
             >
               <TableCell className="font-medium">
                 <Link
@@ -153,7 +152,9 @@ export function QuotesTable({
                   className="absolute inset-0 focus:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-1 rounded-sm"
                   aria-label={`View quote ${quote.documentNumber}`}
                 />
-                {quote.documentNumber}
+                <span className="hover:underline text-primary font-semibold relative z-10">
+                  {quote.documentNumber}
+                </span>
               </TableCell>
               <TableCell>
                 {quote.reference ? (
@@ -176,66 +177,6 @@ export function QuotesTable({
               </TableCell>
               <TableCell>
                 <BillingStatusBadge status={quote.status} />
-              </TableCell>
-              <TableCell className="relative z-10">
-                <DropdownMenu>
-                  <DropdownMenuTrigger asChild>
-                    <Button variant="ghost" size="icon" className="size-8" title="Actions">
-                      <MoreHorizontal className="size-4" />
-                      <span className="sr-only">Actions</span>
-                    </Button>
-                  </DropdownMenuTrigger>
-                  <DropdownMenuContent align="end">
-                    <DropdownMenuItem asChild>
-                      <Link href={`/billing/quotes/${quote.id}`}>View</Link>
-                    </DropdownMenuItem>
-                    {quote.status === 'draft' && (
-                      <DropdownMenuItem
-                        onClick={() => handleStatusChange(quote.id, 'sent')}
-                      >
-                        Mark Sent
-                      </DropdownMenuItem>
-                    )}
-                    {quote.status === 'sent' && (
-                      <>
-                        <DropdownMenuItem
-                          onClick={() => handleStatusChange(quote.id, 'accepted')}
-                        >
-                          Mark Accepted
-                        </DropdownMenuItem>
-                        <DropdownMenuItem
-                          onClick={() => handleStatusChange(quote.id, 'declined')}
-                        >
-                          Mark Declined
-                        </DropdownMenuItem>
-                      </>
-                    )}
-                    {['draft', 'sent', 'accepted'].includes(quote.status) && (
-                      <DropdownMenuItem
-                        onClick={() => handleConvert(quote.id, quote.documentNumber)}
-                        className="text-emerald-600 dark:text-emerald-400 font-medium"
-                      >
-                        Convert to Invoice
-                      </DropdownMenuItem>
-                    )}
-                    <DropdownMenuSeparator />
-                    <DropdownMenuItem onClick={() => handleDuplicate(quote.id)}>
-                      Duplicate
-                    </DropdownMenuItem>
-                    {(quote.status === 'draft' || quote.status === 'sent') && (
-                      <>
-                        <DropdownMenuSeparator />
-                        <DropdownMenuItem
-                          className="text-destructive focus:text-destructive"
-                          onClick={() => handleDelete(quote.id, quote.documentNumber)}
-                          disabled={quote.status !== 'draft'}
-                        >
-                          Delete
-                        </DropdownMenuItem>
-                      </>
-                    )}
-                  </DropdownMenuContent>
-                </DropdownMenu>
               </TableCell>
             </TableRow>
             ))

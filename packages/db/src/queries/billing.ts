@@ -85,6 +85,7 @@ export type InvoiceRow = {
   vatEnabled: boolean;
   vatAmount: string;
   total: string;
+  writeOffAmount?: string;
   notes: string | null;
   terms: string | null;
   paidAt: Date | null;
@@ -607,6 +608,7 @@ export async function getAllInvoices(
       subtotal: invoices.subtotal,
       vatAmount: invoices.vatAmount,
       total: invoices.total,
+      writeOffAmount: invoices.writeOffAmount,
       notes: invoices.notes,
       terms: invoices.terms,
       paidAt: invoices.paidAt,
@@ -809,6 +811,7 @@ export async function getInvoiceById(id: string): Promise<InvoiceDetail | null> 
       vatEnabled: invoices.vatEnabled,
       vatAmount: invoices.vatAmount,
       total: invoices.total,
+      writeOffAmount: invoices.writeOffAmount,
       notes: invoices.notes,
       terms: invoices.terms,
       paidAt: invoices.paidAt,

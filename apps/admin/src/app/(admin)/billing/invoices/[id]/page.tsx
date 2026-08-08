@@ -12,7 +12,7 @@ import { BillingTotalsBlock } from '@/components/billing/billing-totals-block';
 import { MobileReceiptPreview } from '@/components/billing/mobile-receipt-preview';
 import { getInvoiceById, getDivisionBillingSettings, getDb, paymentAllocations, income, sql, desc, eq, getClientStatement, getAllIncome, getOrganisationSettings } from '@pmg/db';
 import { UniversalEmailDialog } from '@/components/billing/universal-email-dialog';
-import { issueInvoice, markInvoicePaid, voidInvoice, writeOffInvoice } from '@/app/actions/billing-invoices';
+import { issueInvoice, markInvoicePaid, voidInvoice, writeOffInvoice, restoreWriteOffInvoice } from '@/app/actions/billing-invoices';
 import { fmtDate, fmtDateTime, formatZAR, getSASTParts, getSASTToday } from '@/lib/format';
 import { buildOrgProps, determineStatementStatus, buildIncomeInvoiceMap, buildTransactionHistory, buildBankingProps } from '@/lib/client-billing-helpers';
 import { calculateAgeing } from '@/lib/billing-ageing';
@@ -128,7 +128,10 @@ export default async function InvoiceDetailPage({ params }: Props) {
     .orderBy(desc(income.date));
 
   const totalAllocated = allocations.reduce((sum, a) => sum + parseFloat(a.amount), 0);
-  const outstandingBalance = Math.max(0, parseFloat(invoice.total) - totalAllocated);
+  const writeOffAmt = parseFloat(invoice.writeOffAmount ?? '0');
+  const isWrittenOff = invoice.status === 'written_off' || writeOffAmt > 0;
+  const effectiveWriteOff = isWrittenOff ? (writeOffAmt > 0 ? writeOffAmt : Math.max(0, parseFloat(invoice.total) - totalAllocated)) : 0;
+  const outstandingBalance = Math.max(0, parseFloat(invoice.total) - totalAllocated - effectiveWriteOff);
   const availableCredit = invoice.clientId ? await getClientCreditBalanceV2(invoice.clientId) : 0;
   const invoicePdfUrl = `/api/billing/pdf/invoice/${invoice.id}`;
   const statementPdfUrl = invoice.clientId
@@ -142,6 +145,7 @@ export default async function InvoiceDetailPage({ params }: Props) {
     dueDate: invoice.dueDate ?? undefined,
     reference: invoice.reference ?? undefined,
     amountPaid: invoice.status === 'paid' ? Number(invoice.total) : totalAllocated,
+    writtenOffAmount: effectiveWriteOff,
     balanceDue: outstandingBalance,
     org: buildOrgProps(invoice.divisionName, divSettings, orgSettings),
     client: {
@@ -250,16 +254,34 @@ export default async function InvoiceDetailPage({ params }: Props) {
 
         {/* Sidebar */}
         <div className="flex flex-col gap-4 lg:sticky lg:top-16 lg:self-start">
-          {/* Outstanding Balance & Record Payment */}
+          {/* Outstanding Balance & Record Payment / Write-off Summary */}
           {invoice.status !== 'void' && (
-            <Card size="sm" className="border-amber-200/50 bg-amber-50/10">
+            <Card size="sm" className={effectiveWriteOff > 0 ? "border-rose-200/50 bg-rose-50/10" : "border-amber-200/50 bg-amber-50/10"}>
               <CardHeader className="pb-2">
-                <CardTitle className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Outstanding Balance</CardTitle>
+                <CardTitle className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
+                  {effectiveWriteOff > 0 ? "Write-off & Payment Summary" : "Outstanding Balance"}
+                </CardTitle>
               </CardHeader>
               <CardContent className="flex flex-col gap-3">
-                <span className="text-2xl font-bold tracking-tight text-amber-600 tabular-nums">
+                <span className={`text-2xl font-bold tracking-tight tabular-nums ${effectiveWriteOff > 0 ? (outstandingBalance === 0 ? "text-emerald-600" : "text-rose-600") : "text-amber-600"}`}>
                   {formatZAR(outstandingBalance)}
                 </span>
+                {effectiveWriteOff > 0 && (
+                  <div className="flex flex-col gap-1.5 pt-1 text-xs border-t border-border/50">
+                    <div className="flex justify-between text-muted-foreground">
+                      <span>Total Invoiced</span>
+                      <span className="font-semibold text-foreground">{formatZAR(parseFloat(invoice.total))}</span>
+                    </div>
+                    <div className="flex justify-between text-emerald-600 font-medium">
+                      <span>Total Paid</span>
+                      <span>{formatZAR(totalAllocated)}</span>
+                    </div>
+                    <div className="flex justify-between text-rose-600 font-medium">
+                      <span>Written Off</span>
+                      <span>{formatZAR(effectiveWriteOff)}</span>
+                    </div>
+                  </div>
+                )}
                 {outstandingBalance > 0 && invoice.status !== 'draft' && (
                   <div className="flex flex-col gap-2 w-full">
                     <Button asChild size="sm" className="w-full">
@@ -370,6 +392,7 @@ export default async function InvoiceDetailPage({ params }: Props) {
             markPaidAction={markInvoicePaid}
             voidAction={voidInvoice}
             writeOffAction={writeOffInvoice}
+            restoreWriteOffAction={restoreWriteOffInvoice}
           />
         </div>
       </div>

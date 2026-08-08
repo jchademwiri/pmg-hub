@@ -949,3 +949,64 @@ export async function updateExpenseJournalEntry(data: {
 
   return { error: result.error };
 }
+
+// ── Void Write-Off Journal Entries ──────────────────────────────────────────
+
+/**
+ * Voids write-off / bad debt journal entries linked to an invoice.
+ * Called when a write-off is removed/restored.
+ */
+export async function voidInvoiceWriteOffJournalEntries(
+  invoiceId: string,
+  externalTx?: any
+): Promise<{ error?: string; voidedCount?: number }> {
+  try {
+    const db = externalTx || getDb();
+
+    const entries = await db
+      .select({ id: journalEntries.id, status: journalEntries.status, description: journalEntries.description })
+      .from(journalEntries)
+      .where(
+        and(
+          eq(journalEntries.sourceModule, 'billing'),
+          eq(journalEntries.sourceTable, 'invoices'),
+          eq(journalEntries.sourceId, invoiceId)
+        )
+      );
+
+    const writeOffEntries = entries.filter(
+      (e: any) =>
+        e.status !== 'void' &&
+        (e.description?.toLowerCase().includes('write-off') || e.description?.toLowerCase().includes('bad debt'))
+    );
+
+    if (writeOffEntries.length === 0) return { voidedCount: 0 };
+
+    const now = new Date();
+    const runInsideTx = async (tx: any) => {
+      for (const entry of writeOffEntries) {
+        await tx
+          .update(journalEntries)
+          .set({
+            status: 'void',
+            voidedAt: now,
+            voidedBy: 'system',
+            voidReason: 'Write-off removed',
+            updatedAt: now,
+          })
+          .where(eq(journalEntries.id, entry.id));
+      }
+    };
+
+    if (externalTx) {
+      await runInsideTx(externalTx);
+    } else {
+      await db.transaction(runInsideTx);
+    }
+
+    return { voidedCount: writeOffEntries.length };
+  } catch (err) {
+    console.error('Failed to void write-off journal entries:', err);
+    return { error: 'Failed to void write-off journal entries.' };
+  }
+}
