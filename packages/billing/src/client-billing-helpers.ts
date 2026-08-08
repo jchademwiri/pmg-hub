@@ -228,11 +228,14 @@ export function calculateClientHealth(
     return false;
   });
 
-  if (criticalOverdue || (outstandingBalance > 0 && overdueBalance / outstandingBalance >= 0.8)) {
+  // Safe ratio: returns 0 when denominator is zero or negative to avoid NaN/Infinity
+  const overdueRatio = outstandingBalance > 0 ? overdueBalance / outstandingBalance : 0;
+
+  if (criticalOverdue || overdueRatio >= 0.8) {
     return { score: 'Critical', color: 'red' };
   }
 
-  if (overdueBalance > 0 && (overdueBalance / outstandingBalance > 0.2 || avgDays > 45)) {
+  if (overdueBalance > 0 && (overdueRatio > 0.2 || avgDays > 45)) {
     return { score: 'At Risk', color: 'orange' };
   }
 
