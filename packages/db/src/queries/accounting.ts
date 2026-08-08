@@ -1216,7 +1216,7 @@ export type AnnualFinancialStatementsResult = {
     totalOpeningEquity: number;
     totalClosingEquity: number;
   };
-  statementOfCashFlows: CashFlowStatementResult;
+  statementOfCashFlows: CashFlowResult;
   notes: {
     note1BasisOfPreparation: string;
     note2RevenueBreakdown: AfsNoteRow[];
