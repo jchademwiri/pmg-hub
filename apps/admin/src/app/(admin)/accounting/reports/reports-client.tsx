@@ -534,23 +534,23 @@ export function ReportsClient({ periods, accounts, divisions, selectedPeriod }: 
           {selectedReport === 'overview' ? (
             <div className="flex flex-col gap-6">
               {/* Overview Hero Card */}
-              <div className="relative overflow-hidden rounded-2xl border bg-gradient-to-r from-zinc-900 via-zinc-800 to-zinc-900 dark:from-zinc-950 dark:via-zinc-900 dark:to-zinc-950 p-6 sm:p-8 text-white shadow-xl">
+              <div className="relative overflow-hidden rounded-2xl border border-zinc-800 bg-gradient-to-r from-zinc-950 via-zinc-900 to-zinc-950 p-6 sm:p-8 text-white shadow-xl">
                 <div className="relative z-10 flex flex-col sm:flex-row sm:items-center justify-between gap-6">
-                  <div className="flex flex-col gap-2 max-w-xl">
-                    <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-primary/20 text-primary-foreground border border-primary/30 text-xs font-semibold w-fit">
+                  <div className="flex flex-col gap-2.5 max-w-xl">
+                    <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-amber-500/15 text-amber-300 border border-amber-500/30 text-xs font-semibold w-fit shadow-xs">
                       <Sparkles className="h-3.5 w-3.5 text-amber-400" /> PMG Financial Intelligence Hub
                     </div>
-                    <h2 className="text-xl sm:text-2xl font-bold tracking-tight">Financial Reports & Statements Workbench</h2>
-                    <p className="text-xs sm:text-sm text-zinc-300">
-                      Consolidated corporate reporting for {orgSettings?.registeredName || 'PLAYHOUSE MEDIA GROUP (PTY) LTD'}. Generating CIPC compliant Annual Financial Statements (AFS), real-time financial position, income statements, and cash flows.
+                    <h2 className="text-xl sm:text-2xl font-bold tracking-tight text-white">Financial Reports & Statements Workbench</h2>
+                    <p className="text-xs sm:text-sm text-zinc-300 leading-relaxed font-normal">
+                      Consolidated corporate reporting for <span className="font-semibold text-white">{orgSettings?.registeredName || 'PLAYHOUSE MEDIA GROUP (PTY) LTD'}</span>. Generating CIPC compliant Annual Financial Statements (AFS), real-time financial position, income statements, and cash flows.
                     </p>
                   </div>
 
-                  <div className="flex flex-col gap-2 shrink-0">
-                    <Button onClick={() => setSelectedReport('annual-financial-statements')} className="gap-2 bg-emerald-600 hover:bg-emerald-500 text-white shadow-lg">
+                  <div className="flex flex-col sm:flex-row lg:flex-col gap-2.5 shrink-0">
+                    <Button onClick={() => setSelectedReport('annual-financial-statements')} className="gap-2 bg-emerald-600 hover:bg-emerald-500 text-white font-semibold shadow-lg">
                       <ShieldCheck className="h-4 w-4" /> Open Full AFS Package
                     </Button>
-                    <Button onClick={handleDownloadPdf} variant="outline" className="gap-2 text-white border-zinc-700 hover:bg-zinc-800">
+                    <Button onClick={handleDownloadPdf} variant="outline" className="gap-2 text-zinc-100 border-zinc-700 bg-zinc-800/80 hover:bg-zinc-700 hover:text-white">
                       <Download className="h-4 w-4" /> Export Complete AFS PDF
                     </Button>
                   </div>
