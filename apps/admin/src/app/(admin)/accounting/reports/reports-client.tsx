@@ -175,8 +175,11 @@ export function ReportsClient({ periods, accounts, divisions, selectedPeriod }: 
     'chart-of-accounts',
   ];
 
-  const currentYear = new Date().getFullYear();
-  const defaultFinancialYear = `${currentYear}-FY`;
+  const now = new Date();
+  const currentYear = now.getFullYear();
+  const currentMonth = now.getMonth() + 1;
+  const currentFyYear = currentMonth >= 3 ? currentYear + 1 : currentYear;
+  const defaultFinancialYear = `${currentFyYear}-FY`;
 
   const initialReport: ReportType = urlType && validReportTypes.includes(urlType) ? urlType : 'trial-balance';
 

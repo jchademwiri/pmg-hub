@@ -488,19 +488,57 @@ export type TrialBalanceRow = {
 };
 
 /**
+ * Resolves a period key (e.g. "2027-FY", "2026-03", "2026-H1", "2026-Q1")
+ * to explicit startDate and endDate for South African Financial Years (1 Mar - 28/29 Feb).
+ */
+export function resolvePeriodDateRange(period?: string): { startDate?: string; endDate?: string } {
+  if (!period || period === 'all') return {};
+
+  // Annual Financial Year, e.g. "2027-FY" or "2026-FY"
+  if (period.endsWith('-FY')) {
+    const fyYear = parseInt(period.split('-')[0], 10);
+    const startYear = fyYear - 1;
+    const isLeap = (fyYear % 4 === 0 && fyYear % 100 !== 0) || (fyYear % 400 === 0);
+    const febDays = isLeap ? 29 : 28;
+    return {
+      startDate: `${startYear}-03-01`,
+      endDate: `${fyYear}-02-${febDays}`,
+    };
+  }
+
+  // Monthly, e.g. "2026-03"
+  if (/^\d{4}-\d{2}$/.test(period)) {
+    const [y, m] = period.split('-').map(Number);
+    const lastDay = new Date(y, m, 0).getDate();
+    return {
+      startDate: `${period}-01`,
+      endDate: `${period}-${String(lastDay).padStart(2, '0')}`,
+    };
+  }
+
+  return {};
+}
+
+/**
  * Returns trial balance data: for each posting account, the sum of debits and
  * credits across only posted journal lines, optionally filtered by period.
  * Uses a subquery to ensure only journal lines belonging to posted entries
  * are aggregated — void/draft entries are excluded.
  */
 export async function getTrialBalance(period?: string, divisionId?: string, startDate?: string, endDate?: string): Promise<TrialBalanceRow[]> {
+  const range = resolvePeriodDateRange(period);
+  const effectiveStart = startDate || range.startDate;
+  const effectiveEnd = endDate || range.endDate;
+
   const entryConditions = [
     eq(journalEntries.status, "posted"),
   ];
-  if (period) entryConditions.push(eq(journalEntries.period, period));
+  if (period && !period.endsWith('-FY') && !/^\d{4}-\d{2}$/.test(period)) {
+    entryConditions.push(eq(journalEntries.period, period));
+  }
   if (divisionId) entryConditions.push(eq(journalEntries.divisionId, divisionId));
-  if (startDate) entryConditions.push(sql`${journalEntries.entryDate} >= ${startDate}`);
-  if (endDate) entryConditions.push(sql`${journalEntries.entryDate} <= ${endDate}`);
+  if (effectiveStart) entryConditions.push(sql`${journalEntries.entryDate} >= ${effectiveStart}`);
+  if (effectiveEnd) entryConditions.push(sql`${journalEntries.entryDate} <= ${effectiveEnd}`);
 
   const accountConditions = [
     eq(chartAccounts.isPostingAccount, true),
@@ -584,13 +622,19 @@ export async function getBalanceSheet(
   startDate?: string,
   endDate?: string
 ): Promise<BalanceSheetResult> {
+  const range = resolvePeriodDateRange(period);
+  const effectiveStart = startDate || range.startDate;
+  const effectiveEnd = endDate || range.endDate;
+
   const entryConditions = [
     eq(journalEntries.status, "posted"),
   ];
-  if (period) entryConditions.push(eq(journalEntries.period, period));
+  if (period && !period.endsWith('-FY') && !/^\d{4}-\d{2}$/.test(period)) {
+    entryConditions.push(eq(journalEntries.period, period));
+  }
   if (divisionId) entryConditions.push(eq(journalEntries.divisionId, divisionId));
-  if (startDate) entryConditions.push(sql`${journalEntries.entryDate} >= ${startDate}`);
-  if (endDate) entryConditions.push(sql`${journalEntries.entryDate} <= ${endDate}`);
+  if (effectiveStart) entryConditions.push(sql`${journalEntries.entryDate} >= ${effectiveStart}`);
+  if (effectiveEnd) entryConditions.push(sql`${journalEntries.entryDate} <= ${effectiveEnd}`);
 
   const postedLineTotals = db
     .select({
@@ -751,13 +795,19 @@ export type ProfitAndLossResult = {
  * are aggregated — void/draft entries are excluded.
  */
 export async function getProfitAndLoss(period?: string, divisionId?: string, startDate?: string, endDate?: string): Promise<ProfitAndLossResult> {
+  const range = resolvePeriodDateRange(period);
+  const effectiveStart = startDate || range.startDate;
+  const effectiveEnd = endDate || range.endDate;
+
   const entryConditions = [
     eq(journalEntries.status, "posted"),
   ];
-  if (period) entryConditions.push(eq(journalEntries.period, period));
+  if (period && !period.endsWith('-FY') && !/^\d{4}-\d{2}$/.test(period)) {
+    entryConditions.push(eq(journalEntries.period, period));
+  }
   if (divisionId) entryConditions.push(eq(journalEntries.divisionId, divisionId));
-  if (startDate) entryConditions.push(sql`${journalEntries.entryDate} >= ${startDate}`);
-  if (endDate) entryConditions.push(sql`${journalEntries.entryDate} <= ${endDate}`);
+  if (effectiveStart) entryConditions.push(sql`${journalEntries.entryDate} >= ${effectiveStart}`);
+  if (effectiveEnd) entryConditions.push(sql`${journalEntries.entryDate} <= ${effectiveEnd}`);
 
   const accountConditions = [
     eq(chartAccounts.isPostingAccount, true),
@@ -843,12 +893,18 @@ export type ProfitAndLossByDivisionRow = {
  * Sorted by totalRevenue descending (highest-earning division first).
  */
 export async function getProfitAndLossByDivision(period?: string, startDate?: string, endDate?: string): Promise<ProfitAndLossByDivisionRow[]> {
+  const range = resolvePeriodDateRange(period);
+  const effectiveStart = startDate || range.startDate;
+  const effectiveEnd = endDate || range.endDate;
+
   const entryConditions = [
     eq(journalEntries.status, "posted"),
   ];
-  if (period) entryConditions.push(eq(journalEntries.period, period));
-  if (startDate) entryConditions.push(sql`${journalEntries.entryDate} >= ${startDate}`);
-  if (endDate) entryConditions.push(sql`${journalEntries.entryDate} <= ${endDate}`);
+  if (period && !period.endsWith('-FY') && !/^\d{4}-\d{2}$/.test(period)) {
+    entryConditions.push(eq(journalEntries.period, period));
+  }
+  if (effectiveStart) entryConditions.push(sql`${journalEntries.entryDate} >= ${effectiveStart}`);
+  if (effectiveEnd) entryConditions.push(sql`${journalEntries.entryDate} <= ${effectiveEnd}`);
 
   const rows = await db
     .select({
@@ -934,12 +990,16 @@ export async function getClientPerformance(
   startDate?: string,
   endDate?: string
 ): Promise<ClientPerformanceRow[]> {
+  const range = resolvePeriodDateRange(period);
+  const effectiveStart = startDate || range.startDate;
+  const effectiveEnd = endDate || range.endDate;
+
   const allClients = await db.select().from(clients).where(eq(clients.isActive, true));
 
   // Invoiced total per client
   const invoiceConditions = [inArray(invoices.status, ['issued', 'partially_paid', 'paid', 'written_off'])];
-  if (startDate) invoiceConditions.push(sql`${invoices.invoiceDate} >= ${startDate}`);
-  if (endDate) invoiceConditions.push(sql`${invoices.invoiceDate} <= ${endDate}`);
+  if (effectiveStart) invoiceConditions.push(sql`${invoices.invoiceDate} >= ${effectiveStart}`);
+  if (effectiveEnd) invoiceConditions.push(sql`${invoices.invoiceDate} <= ${effectiveEnd}`);
 
   const invoicedRows = await db
     .select({
@@ -952,8 +1012,8 @@ export async function getClientPerformance(
 
   // Cash collected per client
   const paymentConditions = [];
-  if (startDate) paymentConditions.push(sql`${income.date} >= ${startDate}`);
-  if (endDate) paymentConditions.push(sql`${income.date} <= ${endDate}`);
+  if (effectiveStart) paymentConditions.push(sql`${income.date} >= ${effectiveStart}`);
+  if (effectiveEnd) paymentConditions.push(sql`${income.date} <= ${effectiveEnd}`);
 
   const paymentRows = await db
     .select({
