@@ -779,6 +779,15 @@ async function buildCashFlowPdf(filters: AccountingPdfFilters): Promise<Accounti
   doc.text('NET INCREASE / (DECREASE) IN CASH', 18, y + 6.5);
   doc.text(formatZAR(result.netCashIncrease), 190, y + 6.5, { align: 'right' });
 
+  drawReportFooter(doc, header);
+
+  const suffix = [filters.period ?? 'all-time', filters.divisionId].filter(Boolean).join('-');
+  return {
+    fileName: `cash-flow-${suffix}.pdf`,
+    buffer: Buffer.from(doc.output('arraybuffer')),
+  };
+}
+
 async function buildAnnualFinancialStatementsPdf(filters: AccountingPdfFilters): Promise<AccountingPdfResult> {
   const result = await getAnnualFinancialStatements(filters.period, filters.divisionId);
   const header = await buildReportHeader('Annual Financial Statements (AFS)', filters.period);
