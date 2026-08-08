@@ -82,7 +82,7 @@ export function ReportDocumentCanvas({
       </div>
 
       {/* Document Body View */}
-      <div className="mt-6 overflow-x-auto">
+      <div className="mt-6">
         {/* 1. CHART OF ACCOUNTS */}
         {reportType === 'chart-of-accounts' && (
           <table className="w-full text-left text-xs border-collapse">
@@ -626,7 +626,7 @@ export function ReportDocumentCanvas({
             <div className="flex flex-col gap-10">
               {/* PAGE 1: DIRECTORS' REPORT & BUSINESS ACTIVITIES */}
               <div className="flex flex-col gap-6">
-                <div className="sticky top-0 z-20 bg-white/95 dark:bg-zinc-950/95 backdrop-blur-md py-3 border-b-2 border-zinc-900 dark:border-zinc-100 flex justify-between items-end mb-2">
+                <div className="sticky top-14 sm:top-16 z-30 bg-white dark:bg-zinc-950 py-3.5 px-2 -mx-2 border-b-2 border-zinc-900 dark:border-zinc-100 flex justify-between items-end mb-4 shadow-sm text-zinc-900 dark:text-zinc-100">
                   <div>
                     <h2 className="text-base font-extrabold uppercase text-zinc-900 dark:text-white tracking-wide">{info?.companyName}</h2>
                     <p className="text-xs text-zinc-500 font-medium mt-0.5">Registration Number: {info?.registrationNumber}</p>
@@ -709,7 +709,7 @@ export function ReportDocumentCanvas({
 
               {/* PAGE 2: INCOME STATEMENT */}
               <div className="flex flex-col gap-6 pt-8 border-t-2 border-zinc-200 dark:border-zinc-800 print:break-before-page break-before-page">
-                <div className="sticky top-0 z-20 bg-white/95 dark:bg-zinc-950/95 backdrop-blur-md py-3 border-b-2 border-zinc-900 dark:border-zinc-100 flex justify-between items-end mb-2">
+                <div className="sticky top-14 sm:top-16 z-30 bg-white dark:bg-zinc-950 py-3.5 px-2 -mx-2 border-b-2 border-zinc-900 dark:border-zinc-100 flex justify-between items-end mb-4 shadow-sm text-zinc-900 dark:text-zinc-100">
                   <div>
                     <h2 className="text-base font-extrabold uppercase text-zinc-900 dark:text-white tracking-wide">{info?.companyName}</h2>
                     <p className="text-xs text-zinc-500 font-medium mt-0.5">Registration Number: {info?.registrationNumber}</p>
@@ -809,7 +809,7 @@ export function ReportDocumentCanvas({
 
               {/* PAGE 3: BALANCE SHEET */}
               <div className="flex flex-col gap-6 pt-8 border-t-2 border-zinc-200 dark:border-zinc-800 print:break-before-page break-before-page">
-                <div className="sticky top-0 z-20 bg-white/95 dark:bg-zinc-950/95 backdrop-blur-md py-3 border-b-2 border-zinc-900 dark:border-zinc-100 flex justify-between items-end mb-2">
+                <div className="sticky top-14 sm:top-16 z-30 bg-white dark:bg-zinc-950 py-3.5 px-2 -mx-2 border-b-2 border-zinc-900 dark:border-zinc-100 flex justify-between items-end mb-4 shadow-sm text-zinc-900 dark:text-zinc-100">
                   <div>
                     <h2 className="text-base font-extrabold uppercase text-zinc-900 dark:text-white tracking-wide">{info?.companyName}</h2>
                     <p className="text-xs text-zinc-500 font-medium mt-0.5">Registration Number: {info?.registrationNumber}</p>
@@ -908,7 +908,7 @@ export function ReportDocumentCanvas({
 
               {/* PAGE 4: STATEMENT OF CHANGES IN EQUITY */}
               <div className="flex flex-col gap-6 pt-8 border-t-2 border-zinc-200 dark:border-zinc-800 print:break-before-page break-before-page">
-                <div className="sticky top-0 z-20 bg-white/95 dark:bg-zinc-950/95 backdrop-blur-md py-3 border-b-2 border-zinc-900 dark:border-zinc-100 flex justify-between items-end mb-2">
+                <div className="sticky top-14 sm:top-16 z-30 bg-white dark:bg-zinc-950 py-3.5 px-2 -mx-2 border-b-2 border-zinc-900 dark:border-zinc-100 flex justify-between items-end mb-4 shadow-sm text-zinc-900 dark:text-zinc-100">
                   <div>
                     <h2 className="text-base font-extrabold uppercase text-zinc-900 dark:text-white tracking-wide">{info?.companyName}</h2>
                     <p className="text-xs text-zinc-500 font-medium mt-0.5">Registration Number: {info?.registrationNumber}</p>
@@ -976,7 +976,7 @@ export function ReportDocumentCanvas({
 
               {/* PAGE 5: CASH FLOW STATEMENT */}
               <div className="flex flex-col gap-6 pt-8 border-t-2 border-zinc-200 dark:border-zinc-800 print:break-before-page break-before-page">
-                <div className="sticky top-0 z-20 bg-white/95 dark:bg-zinc-950/95 backdrop-blur-md py-3 border-b-2 border-zinc-900 dark:border-zinc-100 flex justify-between items-end mb-2">
+                <div className="sticky top-14 sm:top-16 z-30 bg-white dark:bg-zinc-950 py-3.5 px-2 -mx-2 border-b-2 border-zinc-900 dark:border-zinc-100 flex justify-between items-end mb-4 shadow-sm text-zinc-900 dark:text-zinc-100">
                   <div>
                     <h2 className="text-base font-extrabold uppercase text-zinc-900 dark:text-white tracking-wide">{info?.companyName}</h2>
                     <p className="text-xs text-zinc-500 font-medium mt-0.5">Registration Number: {info?.registrationNumber}</p>
@@ -1055,7 +1055,7 @@ export function ReportDocumentCanvas({
 
               {/* PAGE 6: DETAILED INCOME STATEMENT & DIVISIONAL REVENUE BREAKDOWN */}
               <div className="flex flex-col gap-6 pt-8 border-t-2 border-zinc-200 dark:border-zinc-800 print:break-before-page break-before-page">
-                <div className="sticky top-0 z-20 bg-white/95 dark:bg-zinc-950/95 backdrop-blur-md py-3 border-b-2 border-zinc-900 dark:border-zinc-100 flex justify-between items-end mb-2">
+                <div className="sticky top-14 sm:top-16 z-30 bg-white dark:bg-zinc-950 py-3.5 px-2 -mx-2 border-b-2 border-zinc-900 dark:border-zinc-100 flex justify-between items-end mb-4 shadow-sm text-zinc-900 dark:text-zinc-100">
                   <div>
                     <h2 className="text-base font-extrabold uppercase text-zinc-900 dark:text-white tracking-wide">{info?.companyName}</h2>
                     <p className="text-xs text-zinc-500 font-medium mt-0.5">Registration Number: {info?.registrationNumber}</p>
