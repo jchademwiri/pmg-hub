@@ -1179,3 +1179,162 @@ export async function getUnpostedInvoicesReconciliation(): Promise<UnpostedInvoi
     total: Number(r.total),
   }));
 }
+
+// ── Annual Financial Statements (AFS) ─────────────────────────────────────────
+
+export type AfsNoteRow = {
+  label: string;
+  amount: number;
+  code?: string;
+};
+
+export type AnnualFinancialStatementsResult = {
+  generalInfo: {
+    companyName: string;
+    registrationNumber: string;
+    taxReferenceNumber: string;
+    registeredAddress: string;
+    postalAddress: string;
+    directorName: string;
+    financialYearEnd: string;
+    financialYear: string;
+  };
+  directorsReport: {
+    principalActivities: string;
+    financialResultsSummary: string;
+    goingConcernStatement: string;
+    eventsAfterReportingPeriod: string;
+  };
+  statementOfPosition: BalanceSheetResult;
+  statementOfProfitLoss: ProfitAndLossResult;
+  statementOfChangesInEquity: {
+    openingShareCapital: number;
+    closingShareCapital: number;
+    openingRetainedIncome: number;
+    currentYearNetProfit: number;
+    closingRetainedIncome: number;
+    totalOpeningEquity: number;
+    totalClosingEquity: number;
+  };
+  statementOfCashFlows: CashFlowStatementResult;
+  notes: {
+    note1BasisOfPreparation: string;
+    note2RevenueBreakdown: AfsNoteRow[];
+    note3OperatingExpenses: AfsNoteRow[];
+    note4TradeReceivables: {
+      grossReceivables: number;
+      allowanceForBadDebts: number;
+      netReceivables: number;
+    };
+    note5CashAndCashEquivalents: AfsNoteRow[];
+    note6TradeAndOtherPayables: {
+      tradePayables: number;
+      clientCredits: number;
+      totalPayables: number;
+    };
+  };
+};
+
+/**
+ * Returns a complete Annual Financial Statements (AFS) package for CIPC & IFRS compliance.
+ */
+export async function getAnnualFinancialStatements(
+  period?: string,
+  divisionId?: string,
+  startDate?: string,
+  endDate?: string
+): Promise<AnnualFinancialStatementsResult> {
+  const [orgSettings, balanceSheet, pnl, cashFlow, pnlDivisions] = await Promise.all([
+    getOrganisationSettings(),
+    getBalanceSheet(period, divisionId, startDate, endDate),
+    getProfitAndLoss(period, divisionId, startDate, endDate),
+    getCashFlowStatement(period, divisionId, startDate, endDate),
+    getProfitAndLossByDivision(period, startDate, endDate),
+  ]);
+
+  const currentYear = new Date().getFullYear();
+  const yearLabel = period ? (period.includes('-FY') ? `FY${period.split('-')[0]}` : period) : `FY${currentYear}`;
+
+  const street = orgSettings?.addressStreet || '285 ERASMUS AVENUE, RASLOUW AH';
+  const city = orgSettings?.addressCity || 'CENTURION';
+  const postal = orgSettings?.addressPostal || '0157';
+  const province = orgSettings?.addressProvince || 'GAUTENG';
+  const regAddress = `${street}, ${city}, ${province}, ${postal}`;
+
+  // Calculate changes in equity
+  const openingShareCapital = 100.00;
+  const closingShareCapital = 100.00;
+  const currentNetProfit = pnl.netProfit;
+  const openingRetained = balanceSheet.totalEquity - closingShareCapital - currentNetProfit;
+
+  // Notes data
+  const revenueNotes: AfsNoteRow[] = pnlDivisions.map((div) => ({
+    label: `Revenue — ${div.divisionName}`,
+    amount: div.revenue,
+  }));
+
+  const expenseNotes: AfsNoteRow[] = pnl.expenses.map((exp) => ({
+    code: exp.accountCode,
+    label: exp.accountName,
+    amount: exp.amount,
+  }));
+
+  const cashNotes: AfsNoteRow[] = balanceSheet.assets
+    .filter((a) => a.accountName.toLowerCase().includes('bank') || a.accountName.toLowerCase().includes('cash') || a.accountName.toLowerCase().includes('savings'))
+    .map((a) => ({ code: a.accountCode, label: a.accountName, amount: a.amount }));
+
+  const arAsset = balanceSheet.assets.find((a) => a.accountName.toLowerCase().includes('receivable') || a.accountCode === '1100');
+  const badDebtExp = pnl.expenses.find((e) => e.accountName.toLowerCase().includes('bad debt') || e.accountCode === '5150');
+  const grossAR = (arAsset?.amount || 0) + (badDebtExp?.amount || 0);
+  const allowanceAR = badDebtExp?.amount || 0;
+
+  const clientCreditsLiability = balanceSheet.liabilities.find((l) => l.accountName.toLowerCase().includes('credit') || l.accountCode === '2200');
+  const otherPayables = balanceSheet.totalLiabilities - (clientCreditsLiability?.amount || 0);
+
+  return {
+    generalInfo: {
+      companyName: orgSettings?.companyName || 'PLAYHOUSE MEDIA GROUP (PTY) LTD',
+      registrationNumber: orgSettings?.registrationNumber || '2023/683669/07',
+      taxReferenceNumber: orgSettings?.vatNumber || '9876543210',
+      registeredAddress: regAddress,
+      postalAddress: regAddress,
+      directorName: 'JACOB CHADEMWIRI',
+      financialYearEnd: '28 February',
+      financialYear: yearLabel,
+    },
+    directorsReport: {
+      principalActivities: 'Software development, digital agency services, domain & hosting solutions, and professional technology consulting.',
+      financialResultsSummary: `The corporate net operating financial result for ${yearLabel} reflects a Net Operating Profit of R ${pnl.netProfit.toLocaleString('en-ZA', { minimumFractionDigits: 2 })} on Total Sales Revenue of R ${pnl.totalRevenue.toLocaleString('en-ZA', { minimumFractionDigits: 2 })}.`,
+      goingConcernStatement: 'The directors believe that the company has adequate financial resources to continue in operation for the foreseeable future and accordingly the annual financial statements have been prepared on a going concern basis.',
+      eventsAfterReportingPeriod: 'The directors are not aware of any material matter or circumstance arising since the end of the financial year that would significantly impact these financial statements.',
+    },
+    statementOfPosition: balanceSheet,
+    statementOfProfitLoss: pnl,
+    statementOfChangesInEquity: {
+      openingShareCapital,
+      closingShareCapital,
+      openingRetainedIncome: Math.max(0, openingRetained),
+      currentYearNetProfit: currentNetProfit,
+      closingRetainedIncome: Math.max(0, openingRetained) + currentNetProfit,
+      totalOpeningEquity: openingShareCapital + Math.max(0, openingRetained),
+      totalClosingEquity: balanceSheet.totalEquity,
+    },
+    statementOfCashFlows: cashFlow,
+    notes: {
+      note1BasisOfPreparation: 'The annual financial statements have been prepared in accordance with International Financial Reporting Standards for Small and Medium-sized Entities (IFRS for SMEs) and the South African Companies Act No. 71 of 2008. The financial statements have been prepared on the historical cost basis and incorporate the principal accounting policies set out below.',
+      note2RevenueBreakdown: revenueNotes.length > 0 ? revenueNotes : [{ label: 'Gross Sales Revenue', amount: pnl.totalRevenue }],
+      note3OperatingExpenses: expenseNotes,
+      note4TradeReceivables: {
+        grossReceivables: grossAR,
+        allowanceForBadDebts: allowanceAR,
+        netReceivables: arAsset?.amount || 0,
+      },
+      note5CashAndCashEquivalents: cashNotes.length > 0 ? cashNotes : [{ label: 'Main Bank Account Balance', amount: cashFlow.endingCashBalance }],
+      note6TradeAndOtherPayables: {
+        tradePayables: Math.max(0, otherPayables),
+        clientCredits: clientCreditsLiability?.amount || 0,
+        totalPayables: balanceSheet.totalLiabilities,
+      },
+    },
+  };
+}
