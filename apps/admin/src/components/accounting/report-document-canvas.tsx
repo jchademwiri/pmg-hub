@@ -86,7 +86,7 @@ export function ReportDocumentCanvas({
         </div>
 
         <div className="sm:text-right">
-          <span className="inline-block px-3 py-1 text-xs font-semibold uppercase tracking-wider rounded-full bg-blue-500/10 text-blue-600 dark:text-blue-400 border border-blue-500/20">
+          <span suppressHydrationWarning className="inline-block px-3 py-1 text-xs font-semibold uppercase tracking-wider rounded-full bg-blue-500/10 text-blue-600 dark:text-blue-400 border border-blue-500/20">
             {fullDocumentTitle}
           </span>
           <p className="text-xs text-zinc-500 dark:text-zinc-400 mt-2">
