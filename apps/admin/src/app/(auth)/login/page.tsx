@@ -115,10 +115,14 @@ export default function LoginPage() {
               <div className="space-y-4">
                 {/* Email Input */}
                 <div className="relative">
+                  <label htmlFor="email" className="sr-only">
+                    Email
+                  </label>
                   <span className="absolute inset-y-0 left-3 flex items-center text-muted-foreground/50">
                     <Mail className="size-4" />
                   </span>
                   <input
+                    id="email"
                     type="email"
                     placeholder="name@company.com"
                     required

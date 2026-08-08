@@ -138,13 +138,18 @@ describe('ProjectRiskBadge — time-based risk', () => {
 
   it('shows "Impossible" when target completion is after closing', async () => {
     const { ProjectRiskBadge } = await import('@/components/projects/project-risk-badge')
+    const daysFromNow = (n: number) => {
+      const d = new Date()
+      d.setDate(d.getDate() + n)
+      return d.toISOString().split('T')[0]
+    }
 
     render(
       <ProjectRiskBadge
         tender={makeTender({
           status: 'planned',
-          closingDate: '2026-07-06',
-          targetCompletionDate: '2026-07-07',
+          closingDate: daysFromNow(10),
+          targetCompletionDate: daysFromNow(11),
         })}
       />,
     )
@@ -153,14 +158,20 @@ describe('ProjectRiskBadge — time-based risk', () => {
 
   it('shows "Tight" when target completion leaves less than the configured buffer', async () => {
     const { ProjectRiskBadge } = await import('@/components/projects/project-risk-badge')
+    const daysFromNow = (n: number) => {
+      const d = new Date()
+      d.setDate(d.getDate() + n)
+      return d.toISOString().split('T')[0]
+    }
 
     render(
       <ProjectRiskBadge
         tender={makeTender({
           status: 'planned',
           bufferDays: 5,
-          closingDate: '2026-07-10',
-          targetCompletionDate: '2026-07-07',
+          startDate: daysFromNow(1), // not yet due, so "Start Due" doesn't take priority
+          closingDate: daysFromNow(10),
+          targetCompletionDate: daysFromNow(7), // within 5-day buffer of closing
         })}
       />,
     )
@@ -169,14 +180,19 @@ describe('ProjectRiskBadge — time-based risk', () => {
 
   it('shows "On Track" for healthy planned tender', async () => {
     const { ProjectRiskBadge } = await import('@/components/projects/project-risk-badge')
+    const daysFromNow = (n: number) => {
+      const d = new Date()
+      d.setDate(d.getDate() + n)
+      return d.toISOString().split('T')[0]
+    }
 
     render(
       <ProjectRiskBadge
         tender={makeTender({
           status: 'planned',
-          closingDate: '2026-07-14',
-          startDate: '2026-07-01',
-          targetCompletionDate: '2026-07-05', // 9 days before closing → not tight
+          closingDate: daysFromNow(14),
+          startDate: daysFromNow(1),
+          targetCompletionDate: daysFromNow(5), // 9 days before closing → not tight
         })}
       />,
     )

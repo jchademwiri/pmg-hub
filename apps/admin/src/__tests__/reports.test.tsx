@@ -490,7 +490,7 @@ describe('YearFilter', () => {
     const selectEl = screen.getByTestId('select')
     await user.selectOptions(selectEl, '2024')
 
-    expect(mockPush).toHaveBeenCalledWith('/reports?year=2024')
+    expect(mockPush).toHaveBeenCalledWith('/insights/reports?year=2024')
   })
 })
 

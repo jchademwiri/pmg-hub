@@ -710,7 +710,6 @@ describe('ExpenseFilterBar', () => {
     { id: 'div-2', name: 'TES' },
   ]
   const categories = ['Travel', 'Software', 'Office']
-  const months = ['2026-01', '2026-02', '2026-03']
 
   beforeEach(() => {
     mockPush.mockClear()
@@ -721,7 +720,6 @@ describe('ExpenseFilterBar', () => {
       React.createElement(ExpenseFilterBar, {
         divisions,
         categories,
-        months,
       })
     )
     expect(screen.getByText('All divisions')).toBeInTheDocument()
@@ -732,22 +730,11 @@ describe('ExpenseFilterBar', () => {
       React.createElement(ExpenseFilterBar, {
         divisions,
         categories,
-        months,
       })
     )
     expect(screen.getByText('All categories')).toBeInTheDocument()
   })
 
-  it('renders "All months" as default option', () => {
-    render(
-      React.createElement(ExpenseFilterBar, {
-        divisions,
-        categories,
-        months,
-      })
-    )
-    expect(screen.getByText('All months')).toBeInTheDocument()
-  })
 })
 
 // ─── ExpenseTable unit tests ──────────────────────────────────────────────────

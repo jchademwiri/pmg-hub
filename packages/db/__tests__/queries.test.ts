@@ -121,6 +121,8 @@ describe("getDivisionsWithStats", () => {
           totalExpenses: "500",
           netProfit: "500",
           leadCount: "10",
+          paymentCount: "4",
+          invoiceCount: "6",
         },
       ],
     });
@@ -134,6 +136,8 @@ describe("getDivisionsWithStats", () => {
         totalExpenses: 500,
         netProfit: 500,
         leadCount: 10,
+        paymentCount: 4,
+        invoiceCount: 6,
       },
     ]);
   });
@@ -157,6 +161,8 @@ describe("getDivisionWithStatsById", () => {
           totalExpenses: "500",
           netProfit: "500",
           leadCount: "10",
+          paymentCount: "4",
+          invoiceCount: "6",
         },
       ],
     });
@@ -169,6 +175,8 @@ describe("getDivisionWithStatsById", () => {
       totalExpenses: 500,
       netProfit: 500,
       leadCount: 10,
+      paymentCount: 4,
+      invoiceCount: 6,
     });
   });
 });
