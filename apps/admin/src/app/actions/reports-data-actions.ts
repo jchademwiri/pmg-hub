@@ -22,10 +22,11 @@ export interface ReportPreviewFilter {
     | 'annual-financial-statements'
     | 'balance-sheet'
     | 'profit-and-loss'
+    | 'cash-flow'
+    | 'changes-in-equity'
     | 'division-performance'
     | 'client-performance'
     | 'trial-balance'
-    | 'cash-flow'
     | 'journal-entries'
     | 'general-ledger'
     | 'chart-of-accounts';
@@ -157,6 +158,13 @@ export async function fetchReportPreviewData(filter: ReportPreviewFilter) {
       }
 
       case 'annual-financial-statements': {
+        const d = filter.divisionId !== 'all' ? filter.divisionId : undefined;
+        const afs = await getAnnualFinancialStatements(periodMonth, d, startDate, endDate);
+        data = { afs };
+        break;
+      }
+
+      case 'changes-in-equity': {
         const d = filter.divisionId !== 'all' ? filter.divisionId : undefined;
         const afs = await getAnnualFinancialStatements(periodMonth, d, startDate, endDate);
         data = { afs };
