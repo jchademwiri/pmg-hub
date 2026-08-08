@@ -92,14 +92,14 @@ export async function getMonthlyFinancials(): Promise<
 > {
   const result = await db.execute(sql`
     WITH rev AS (
-      SELECT TO_CHAR(date, 'YYYY-MM') AS month, COALESCE(SUM(amount), 0) AS revenue
-      FROM income WHERE EXTRACT(YEAR FROM (date - INTERVAL '2 months')) = EXTRACT(YEAR FROM (timezone('Africa/Johannesburg', now()) - INTERVAL '2 months'))
-      GROUP BY TO_CHAR(date, 'YYYY-MM')
+      SELECT TO_CHAR(date::date, 'YYYY-MM') AS month, COALESCE(SUM(amount), 0) AS revenue
+      FROM income WHERE EXTRACT(YEAR FROM (date::date - INTERVAL '2 months'))::int = EXTRACT(YEAR FROM (timezone('Africa/Johannesburg', now()) - INTERVAL '2 months'))::int
+      GROUP BY TO_CHAR(date::date, 'YYYY-MM')
     ),
     exp AS (
-      SELECT TO_CHAR(date, 'YYYY-MM') AS month, COALESCE(SUM(amount), 0) AS expenses
-      FROM expenses WHERE EXTRACT(YEAR FROM (date - INTERVAL '2 months')) = EXTRACT(YEAR FROM (timezone('Africa/Johannesburg', now()) - INTERVAL '2 months'))
-      GROUP BY TO_CHAR(date, 'YYYY-MM')
+      SELECT TO_CHAR(date::date, 'YYYY-MM') AS month, COALESCE(SUM(amount), 0) AS expenses
+      FROM expenses WHERE EXTRACT(YEAR FROM (date::date - INTERVAL '2 months'))::int = EXTRACT(YEAR FROM (timezone('Africa/Johannesburg', now()) - INTERVAL '2 months'))::int
+      GROUP BY TO_CHAR(date::date, 'YYYY-MM')
     )
     SELECT COALESCE(rev.month, exp.month) AS month,
            COALESCE(rev.revenue, 0) AS revenue,
@@ -238,7 +238,7 @@ export async function getExpensesByCategoryForYear(
       total: sql<string>`COALESCE(SUM(${expenses.amount}), '0')`,
     })
     .from(expenses)
-    .where(sql`EXTRACT(YEAR FROM (${expenses.date} - INTERVAL '2 months')) = ${year}`)
+    .where(sql`EXTRACT(YEAR FROM (${expenses.date}::date - INTERVAL '2 months'))::int = ${Number(year)}`)
     .groupBy(expenses.category)
     .orderBy(desc(sql`SUM(${expenses.amount})`));
   return result.map((r) => ({ category: r.category, total: Number(r.total) }));
@@ -251,11 +251,11 @@ export async function getExpensesByCategoryForYear(
 export async function getDistinctYears(): Promise<number[]> {
   const result = await db.execute(sql`
     SELECT year FROM (
-      SELECT DISTINCT EXTRACT(YEAR FROM (date - INTERVAL '2 months'))::integer AS year FROM income
+      SELECT DISTINCT EXTRACT(YEAR FROM (date::date - INTERVAL '2 months'))::integer AS year FROM income
       UNION
-      SELECT DISTINCT EXTRACT(YEAR FROM (date - INTERVAL '2 months'))::integer AS year FROM expenses
+      SELECT DISTINCT EXTRACT(YEAR FROM (date::date - INTERVAL '2 months'))::integer AS year FROM expenses
       UNION
-      SELECT DISTINCT EXTRACT(YEAR FROM (invoice_date - INTERVAL '2 months'))::integer AS year FROM invoices
+      SELECT DISTINCT EXTRACT(YEAR FROM (invoice_date::date - INTERVAL '2 months'))::integer AS year FROM invoices
     ) combined
     ORDER BY year DESC
   `);
@@ -271,16 +271,16 @@ export async function getMonthlyFinancialsForYear(
 ): Promise<{ month: string; revenue: number; expenses: number }[]> {
   const result = await db.execute(sql`
     WITH rev AS (
-      SELECT TO_CHAR(date, 'YYYY-MM') AS month, COALESCE(SUM(amount), 0) AS revenue
+      SELECT TO_CHAR(date::date, 'YYYY-MM') AS month, COALESCE(SUM(amount), 0) AS revenue
       FROM income
-      WHERE EXTRACT(YEAR FROM (date - INTERVAL '2 months')) = ${year}
-      GROUP BY TO_CHAR(date, 'YYYY-MM')
+      WHERE EXTRACT(YEAR FROM (date::date - INTERVAL '2 months'))::int = ${Number(year)}
+      GROUP BY TO_CHAR(date::date, 'YYYY-MM')
     ),
     exp AS (
-      SELECT TO_CHAR(date, 'YYYY-MM') AS month, COALESCE(SUM(amount), 0) AS expenses
+      SELECT TO_CHAR(date::date, 'YYYY-MM') AS month, COALESCE(SUM(amount), 0) AS expenses
       FROM expenses
-      WHERE EXTRACT(YEAR FROM (date - INTERVAL '2 months')) = ${year}
-      GROUP BY TO_CHAR(date, 'YYYY-MM')
+      WHERE EXTRACT(YEAR FROM (date::date - INTERVAL '2 months'))::int = ${Number(year)}
+      GROUP BY TO_CHAR(date::date, 'YYYY-MM')
     )
     SELECT COALESCE(rev.month, exp.month) AS month,
            COALESCE(rev.revenue, 0) AS revenue,
@@ -304,17 +304,17 @@ export async function getMonthlyRevenueVsInvoicedForYear(
 ): Promise<{ month: string; received: number; invoiced: number }[]> {
   const result = await db.execute(sql`
     WITH received AS (
-      SELECT TO_CHAR(date, 'YYYY-MM') AS month, COALESCE(SUM(amount), 0) AS received
+      SELECT TO_CHAR(date::date, 'YYYY-MM') AS month, COALESCE(SUM(amount), 0) AS received
       FROM income
-      WHERE EXTRACT(YEAR FROM (date - INTERVAL '2 months')) = ${year}
-      GROUP BY TO_CHAR(date, 'YYYY-MM')
+      WHERE EXTRACT(YEAR FROM (date::date - INTERVAL '2 months'))::int = ${Number(year)}
+      GROUP BY TO_CHAR(date::date, 'YYYY-MM')
     ),
     invoiced AS (
-      SELECT TO_CHAR(invoice_date, 'YYYY-MM') AS month, COALESCE(SUM(total), 0) AS invoiced
+      SELECT TO_CHAR(invoice_date::date, 'YYYY-MM') AS month, COALESCE(SUM(total), 0) AS invoiced
       FROM invoices
-      WHERE EXTRACT(YEAR FROM (invoice_date - INTERVAL '2 months')) = ${year}
+      WHERE EXTRACT(YEAR FROM (invoice_date::date - INTERVAL '2 months'))::int = ${Number(year)}
         AND status IN ('issued', 'partially_paid', 'paid', 'overdue')
-      GROUP BY TO_CHAR(invoice_date, 'YYYY-MM')
+      GROUP BY TO_CHAR(invoice_date::date, 'YYYY-MM')
     )
     SELECT COALESCE(received.month, invoiced.month) AS month,
            COALESCE(received.received, 0) AS received,
@@ -347,7 +347,7 @@ export async function getDraftInvoicesCount(year: number): Promise<number> {
   const result = await db.execute(sql`
     SELECT COUNT(*)::int AS count FROM invoices
     WHERE status = 'draft'
-    AND EXTRACT(YEAR FROM (invoice_date - INTERVAL '2 months')) = ${year}
+    AND EXTRACT(YEAR FROM (invoice_date::date - INTERVAL '2 months'))::int = ${Number(year)}
   `);
   return (result.rows[0] as { count: number })?.count ?? 0;
 }

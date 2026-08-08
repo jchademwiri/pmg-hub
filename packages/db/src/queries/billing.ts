@@ -1459,19 +1459,19 @@ export async function getAllDivisionBillingSettings(): Promise<
 export async function getStatementYears(clientId: string): Promise<number[]> {
   const invYears = await db.execute(sql`
     SELECT DISTINCT
-      EXTRACT(YEAR FROM (invoice_date - INTERVAL '2 months')) AS year
+      EXTRACT(YEAR FROM (invoice_date::date - INTERVAL '2 months'))::int AS year
     FROM invoices
     WHERE client_id = ${clientId}
   `);
   const incYears = await db.execute(sql`
     SELECT DISTINCT
-      EXTRACT(YEAR FROM (date - INTERVAL '2 months')) AS year
+      EXTRACT(YEAR FROM (date::date - INTERVAL '2 months'))::int AS year
     FROM income
     WHERE client_id = ${clientId}
   `);
   const creditYears = await db.execute(sql`
     SELECT DISTINCT
-      EXTRACT(YEAR FROM (ca.applied_at - INTERVAL '2 months')) AS year
+      EXTRACT(YEAR FROM (ca.applied_at::date - INTERVAL '2 months'))::int AS year
     FROM credit_applications ca
     JOIN invoices inv ON inv.id = ca.invoice_id
     WHERE inv.client_id = ${clientId}
