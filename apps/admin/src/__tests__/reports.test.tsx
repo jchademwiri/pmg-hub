@@ -107,10 +107,6 @@ vi.mock('@/lib/financial', () => ({
   getExpensesByCategory: vi.fn().mockResolvedValue([]),
   getProfitPoolSeriesForYear: vi.fn().mockResolvedValue([]),
   getLedgerBalances: vi.fn().mockResolvedValue({
-    salary:    { expected: 0, spent: 0, available: 0 },
-    reinvest:  { expected: 0, spent: 0, available: 0 },
-    reserve:   { expected: 0, spent: 0, available: 0 },
-    flex:      { expected: 0, spent: 0, available: 0 },
     pmg_share: { expected: 0, spent: 0, available: 0 },
   }),
 }))
@@ -290,7 +286,7 @@ describe('P3: CSV export correctness - structure and financial model', () => {
           const lines = result.trim().split('\n')
 
           // Header must be exactly correct
-          if (lines[0] !== 'Month,Revenue,Expenses,PMG Share,Profit Pool,Salary,Reinvest,Reserve,Flex') return false
+          if (lines[0] !== 'Month,Revenue,Expenses,PMG Share,Profit Pool') return false
 
           // Must have exactly 12 data rows (header + 12 = 13 lines)
           if (lines.length !== 13) return false
@@ -298,18 +294,14 @@ describe('P3: CSV export correctness - structure and financial model', () => {
           const eps = 0.01
           for (const line of lines.slice(1)) {
             const parts = line.split(',')
-            if (parts.length !== 9) return false
+            if (parts.length !== 5) return false
 
-            const [, rev, exp, pmg, profit, sal, reinv, res, flex] = parts.map((v, i) =>
+            const [, rev, exp, pmg, profit] = parts.map((v, i) =>
               i === 0 ? v : Number(v)
-            ) as [string, number, number, number, number, number, number, number, number]
+            ) as [string, number, number, number, number]
 
             if (Math.abs(pmg - rev * 0.25) > eps) return false
             if (Math.abs(profit - (rev - exp - pmg)) > eps) return false
-            if (Math.abs(sal - profit * 0.35) > eps) return false
-            if (Math.abs(reinv - profit * 0.30) > eps) return false
-            if (Math.abs(res - profit * 0.30) > eps) return false
-            if (Math.abs(flex - profit * 0.05) > eps) return false
           }
 
           return true
@@ -344,18 +336,14 @@ describe('P3: CSV export correctness - structure and financial model', () => {
     const dataRows = lines.slice(1)
 
     for (const row of dataRows) {
-      const [, rev, exp, pmg, profit, sal, reinv, res, flex] = row.split(',').map((v, i) =>
+      const [, rev, exp, pmg, profit] = row.split(',').map((v, i) =>
         i === 0 ? v : Number(v)
-      ) as [string, number, number, number, number, number, number, number, number]
+      ) as [string, number, number, number, number]
 
       expect(rev).toBe(0)
       expect(exp).toBe(0)
       expect(pmg).toBe(0)
       expect(profit).toBe(0)
-      expect(sal).toBe(0)
-      expect(reinv).toBe(0)
-      expect(res).toBe(0)
-      expect(flex).toBe(0)
     }
   })
 })
@@ -628,10 +616,6 @@ describe('Reports page', () => {
     vi.mocked(financial.getExpensesByCategory).mockResolvedValue([])
     vi.mocked(financial.getProfitPoolSeriesForYear).mockResolvedValue([])
     vi.mocked(financial.getLedgerBalances).mockResolvedValue({
-      salary:    { expected: 0, spent: 0, available: 0 },
-      reinvest:  { expected: 0, spent: 0, available: 0 },
-      reserve:   { expected: 0, spent: 0, available: 0 },
-      flex:      { expected: 0, spent: 0, available: 0 },
       pmg_share: { expected: 0, spent: 0, available: 0 },
     })
   })

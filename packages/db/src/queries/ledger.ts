@@ -1,19 +1,21 @@
 import { db } from '../client';
-import { ledger } from '../schema/index';
+import { ledger, type LedgerEntry, type AllocationType } from '../schema/index';
 import { sql, eq, desc, and } from 'drizzle-orm';
 
 export type LedgerEntryRow = {
   id: string;
   date: string;
   amount: string;
-  allocationType: 'salary' | 'reinvest' | 'reserve' | 'flex' | 'pmg_share';
+  // Reflects the DB enum, which still includes legacy values ('salary',
+  // 'reinvest', 'reserve', 'flex') for historical rows.
+  allocationType: LedgerEntry['allocationType'];
   entryType: 'spend' | 'transfer' | 'adjustment';
   description: string | null;
   createdAt: Date | null;
   createdBy: string | null;
 };
 
-export async function getLedgerEntriesCurrentMonth(allocationType?: 'salary' | 'reinvest' | 'reserve' | 'flex' | 'pmg_share'): Promise<{
+export async function getLedgerEntriesCurrentMonth(allocationType?: AllocationType): Promise<{
   total: number;
   entries: { date: string; description: string | null; amount: number }[];
 }> {
@@ -44,7 +46,7 @@ export async function getLedgerEntriesCurrentMonth(allocationType?: 'salary' | '
   return { total, entries };
 }
 
-export async function getLedgerTotalByAllocation(allocationType: 'salary' | 'reinvest' | 'reserve' | 'flex' | 'pmg_share'): Promise<number> {
+export async function getLedgerTotalByAllocation(allocationType: AllocationType): Promise<number> {
   const result = await db
     .select({ total: sql<string>`COALESCE(SUM(${ledger.amount}), '0')` })
     .from(ledger)
@@ -52,7 +54,7 @@ export async function getLedgerTotalByAllocation(allocationType: 'salary' | 'rei
   return Number(result[0]?.total ?? 0);
 }
 
-export async function getLedgerEntriesPreviousMonth(allocationType?: 'salary' | 'reinvest' | 'reserve' | 'flex' | 'pmg_share'): Promise<{
+export async function getLedgerEntriesPreviousMonth(allocationType?: AllocationType): Promise<{
   total: number;
   entries: { date: string; description: string | null; amount: number }[];
 }> {
@@ -82,7 +84,7 @@ export async function getLedgerEntriesPreviousMonth(allocationType?: 'salary' | 
   return { total: entries.reduce((sum, e) => sum + e.amount, 0), entries };
 }
 
-export async function getLedgerEntriesYTD(allocationType?: 'salary' | 'reinvest' | 'reserve' | 'flex' | 'pmg_share'): Promise<{
+export async function getLedgerEntriesYTD(allocationType?: AllocationType): Promise<{
   total: number;
   entries: { date: string; description: string | null; amount: number }[];
 }> {
@@ -125,7 +127,7 @@ export async function getLedgerByAllocationYTD(): Promise<Record<string, number>
 }
 
 export async function getAllLedgerEntries(
-  filters?: { allocationType?: 'salary' | 'reinvest' | 'reserve' | 'flex' | 'pmg_share'; entryType?: 'spend' | 'transfer' | 'adjustment' },
+  filters?: { allocationType?: AllocationType; entryType?: 'spend' | 'transfer' | 'adjustment' },
   pageObj?: { page: number; pageSize: number }
 ): Promise<{ data: LedgerEntryRow[]; total: number; sum: number }> {
   const conditions = [];
@@ -189,7 +191,7 @@ export async function getLedgerById(id: string): Promise<LedgerEntryRow | null> 
 export async function insertLedgerEntry(data: {
   amount: number;
   date: string;
-  allocationType: 'salary' | 'reinvest' | 'reserve' | 'flex' | 'pmg_share';
+  allocationType: AllocationType;
   entryType: 'spend' | 'transfer' | 'adjustment';
   description?: string;
   createdBy?: string;
@@ -221,7 +223,7 @@ export async function insertLedgerEntry(data: {
 export async function updateLedgerEntry(id: string, data: Partial<{
   amount: number;
   date: string;
-  allocationType: 'salary' | 'reinvest' | 'reserve' | 'flex' | 'pmg_share';
+  allocationType: AllocationType;
   entryType: 'spend' | 'transfer' | 'adjustment';
   description?: string;
 }>): Promise<void> {
@@ -239,6 +241,6 @@ export async function deleteLedgerEntry(id: string): Promise<void> {
   await db.delete(ledger).where(eq(ledger.id, id));
 }
 
-export async function getLedgerByAllocation(allocationType: 'salary' | 'reinvest' | 'reserve' | 'flex' | 'pmg_share') {
+export async function getLedgerByAllocation(allocationType: AllocationType) {
   return await db.select().from(ledger).where(eq(ledger.allocationType, allocationType)).orderBy(desc(ledger.date));
 }

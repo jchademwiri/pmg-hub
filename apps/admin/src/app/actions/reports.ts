@@ -24,19 +24,15 @@ export async function exportFinancialsCsv(
     }
 
     const rates = await getActiveRates();
-    const header = 'Month,Revenue,Expenses,PMG Share,Profit Pool,Salary,Reinvest,Reserve,Flex';
+    const header = 'Month,Revenue,Expenses,PMG Share,Profit Pool';
     const dataRows = MONTH_NAMES.map((name, i) => {
       const monthKey = `${year}-${String(i + 1).padStart(2, '0')}`;
       const { revenue, expenses } = dataByMonth.get(monthKey) ?? { revenue: 0, expenses: 0 };
 
       const pmgShare   = revenue * rates.pmg_share;
       const profitPool = revenue - expenses - pmgShare;
-      const salary     = profitPool * 0.35;
-      const reinvest   = profitPool * 0.30;
-      const reserve    = profitPool * 0.30;
-      const flex       = profitPool * 0.05;
 
-      return `${name},${revenue},${expenses},${pmgShare},${profitPool},${salary},${reinvest},${reserve},${flex}`;
+      return `${name},${revenue},${expenses},${pmgShare},${profitPool}`;
     });
 
     return [header, ...dataRows].join('\n');
