@@ -247,12 +247,12 @@ export function DashboardShell({
       </section>
 
       {/* ── Row 4: Sales, receipts, and expenses budget chart ── */}
-      <div className="w-full">
+      <div className="w-full hidden md:block">
         <DivisionAreaChart data={budgetChartSeries} />
       </div>
 
       {/* ── Row 5: Division financial breakdown ── */}
-      <section className="flex-col gap-2 hidden md:flex">
+      <section className="flex flex-col gap-2">
         <h2 className="text-xs font-medium text-muted-foreground uppercase tracking-wider">
           Division Breakdown
         </h2>
