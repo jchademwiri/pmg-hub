@@ -118,8 +118,8 @@ export const GROUPS: NavGroup[] = [
     label: 'Reports',
     icon: BarChart3,
     items: [
-      { title: 'Financial Reports',  url: '/insights/financial-reports', icon: PieChart   },
       { title: 'Overview',           url: '/insights',                   icon: LayoutGrid },
+      { title: 'Financial Reports',  url: '/insights/financial-reports', icon: PieChart   },
       { title: 'Business Analysis',  url: '/insights/analysis',          icon: TrendingUp },
       { title: 'Performance Reports', url: '/insights/reports',          icon: BarChart3  },
       { title: 'Snapshots',          url: '/insights/snapshots',         icon: Camera     },
