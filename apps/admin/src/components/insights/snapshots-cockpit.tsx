@@ -8,7 +8,6 @@ import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { EmptyState } from "@/components/ui/empty-state"
 import {
-  Table,
   TableBody,
   TableCell,
   TableHead,
@@ -251,15 +250,15 @@ export function SnapshotsCockpit({ snapshots }: SnapshotsCockpitProps) {
         />
       </div>
 
-      <Card>
+      <Card className="overflow-visible">
           <CardHeader className="px-4">
             <CardTitle className="text-base">Closed months</CardTitle>
             <CardDescription>Select a month to review the locked figures.</CardDescription>
           </CardHeader>
           <CardContent className="p-0">
             <div className="hidden md:block">
-              <Table>
-                <TableHeader className="bg-muted/50">
+              <table className="w-full caption-bottom text-sm">
+                <TableHeader className="sticky top-[8.25rem] z-10 bg-muted/50">
                   <TableRow className="hover:bg-transparent">
                     <TableHead className="font-semibold text-foreground py-4">Month</TableHead>
                     <TableHead className="text-right font-semibold text-foreground py-4">Revenue</TableHead>
@@ -311,7 +310,7 @@ export function SnapshotsCockpit({ snapshots }: SnapshotsCockpitProps) {
                     </TableRow>
                   ))}
                 </TableBody>
-              </Table>
+              </table>
             </div>
 
             <div className="flex flex-col gap-2 px-4 md:hidden">
