@@ -241,12 +241,14 @@ export function SnapshotsCockpit({ snapshots }: SnapshotsCockpitProps) {
             value={`${grossMarginPct.toFixed(1)}%`}
             icon={Percent}
             tone={grossMarginPct >= 0 ? "positive" : "negative"}
+            hint="Total profit retained in the business (Revenue − Expenses) ÷ Revenue — includes the PMG growth & investment reserve, since that stays within the organisation."
           />
           <SummaryMetric
-            label="Profit margin"
+            label="Distributable margin"
             value={`${netMarginPct.toFixed(1)}%`}
             icon={Percent}
             tone={netMarginPct >= 0 ? "positive" : "negative"}
+            hint="Profit Pool ÷ Revenue — what's left for salary, reinvestment, reserve & flex allocations after the PMG cross-divisional growth reserve is set aside."
           />
         </div>
       </div>
@@ -370,14 +372,16 @@ function SummaryMetric({
   value,
   icon: Icon,
   tone = "default",
+  hint,
 }: {
   label: string
   value: string
   icon: React.ComponentType<{ className?: string }>
   tone?: AmountTone
+  hint?: string
 }) {
   return (
-    <Card>
+    <Card title={hint}>
       <CardHeader className="flex flex-row items-start justify-between gap-3 pb-3">
         <div className="flex min-w-0 flex-col gap-1">
           <CardDescription>{label}</CardDescription>
@@ -418,10 +422,21 @@ function SnapshotDetail({
   arError: string | null
 }) {
   const isProfitable = snapshot.profitPool >= 0
-  const margin = snapshot.revenue > 0 ? (snapshot.profitPool / snapshot.revenue) * 100 : 0
-  const previousMargin =
+
+  // Gross margin: total profit retained in the business — PMG Share is an
+  // internal growth/investment reserve, not an external cost, so it's still
+  // counted as profit here.
+  const grossMargin = snapshot.revenue > 0 ? ((snapshot.revenue - snapshot.expenses) / snapshot.revenue) * 100 : 0
+  const previousGrossMargin =
+    previous && previous.revenue > 0 ? ((previous.revenue - previous.expenses) / previous.revenue) * 100 : null
+  const grossMarginDelta = previousGrossMargin !== null ? grossMargin - previousGrossMargin : null
+
+  // Distributable margin: what's left for salary/reinvest/reserve/flex after
+  // the PMG cross-divisional growth reserve is set aside.
+  const netMargin = snapshot.revenue > 0 ? (snapshot.profitPool / snapshot.revenue) * 100 : 0
+  const previousNetMargin =
     previous && previous.revenue > 0 ? (previous.profitPool / previous.revenue) * 100 : null
-  const marginDelta = previousMargin !== null ? margin - previousMargin : null
+  const netMarginDelta = previousNetMargin !== null ? netMargin - previousNetMargin : null
 
   return (
     <Card>
@@ -496,27 +511,20 @@ function SnapshotDetail({
           )}
         </div>
 
-        <div className="grid grid-cols-2 gap-3">
-          <DetailMetric
-            label="Profit margin"
-            formattedValue={`${margin.toFixed(1)}%`}
-            tone={isProfitable ? "positive" : "negative"}
+        <div className="flex flex-col gap-3 rounded-md border border-border p-3">
+          <MarginRow
+            label="Gross margin"
+            hint="Total profit retained in the business (Revenue − Expenses) ÷ Revenue — includes the PMG growth & investment reserve, since that stays within the organisation."
+            value={grossMargin}
+            delta={grossMarginDelta}
           />
-          <div className="flex flex-col gap-1">
-            <span className="text-xs text-muted-foreground">vs last month</span>
-            <span
-              className={cn(
-                "text-base font-semibold tabular-nums",
-                marginDelta === null
-                  ? "text-muted-foreground"
-                  : marginDelta >= 0
-                    ? "text-emerald-600"
-                    : "text-destructive",
-              )}
-            >
-              {marginDelta === null ? "—" : `${marginDelta >= 0 ? "+" : ""}${marginDelta.toFixed(1)}pp`}
-            </span>
-          </div>
+          <div className="h-px bg-border" />
+          <MarginRow
+            label="Distributable margin"
+            hint="Profit Pool ÷ Revenue — what's left for salary, reinvestment, reserve & flex allocations after the PMG cross-divisional growth reserve is set aside."
+            value={netMargin}
+            delta={netMarginDelta}
+          />
         </div>
 
         {sparklineData.length > 1 && (
@@ -564,22 +572,41 @@ function SnapshotDetail({
   )
 }
 
-function DetailMetric({
+function MarginRow({
   label,
+  hint,
   value,
-  formattedValue,
-  tone = "default",
+  delta,
 }: {
   label: string
-  value?: number
-  formattedValue?: string
-  tone?: AmountTone
+  hint: string
+  value: number
+  delta: number | null
 }) {
   return (
-    <div className="flex flex-col gap-1">
-      <span className="text-xs text-muted-foreground">{label}</span>
-      <span className={cn("text-base font-semibold tabular-nums", amountToneClass(tone))}>
-        {formattedValue ?? formatZAR(value ?? 0)}
+    <div className="flex items-center justify-between gap-2" title={hint}>
+      <div className="flex flex-col gap-1">
+        <span className="text-xs text-muted-foreground">{label}</span>
+        <span
+          className={cn(
+            "text-base font-semibold tabular-nums",
+            value >= 0 ? "text-emerald-600" : "text-destructive",
+          )}
+        >
+          {value.toFixed(1)}%
+        </span>
+      </div>
+      <span
+        className={cn(
+          "text-xs font-medium tabular-nums",
+          delta === null
+            ? "text-muted-foreground"
+            : delta >= 0
+              ? "text-emerald-600"
+              : "text-destructive",
+        )}
+      >
+        {delta === null ? "First month" : `${delta >= 0 ? "+" : ""}${delta.toFixed(1)}pp vs last month`}
       </span>
     </div>
   )
