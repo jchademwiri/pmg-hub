@@ -1,7 +1,7 @@
 "use client"
 
 import { useEffect, useMemo, useState } from "react"
-import { CalendarCheck, LockKeyhole, Percent, TrendingDown, TrendingUp } from "lucide-react"
+import { LockKeyhole, Percent, TrendingDown, TrendingUp } from "lucide-react"
 import type { SnapshotRow } from "@pmg/db"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
@@ -190,9 +190,10 @@ export function SnapshotsCockpit({ snapshots }: SnapshotsCockpitProps) {
         (acc, row) => ({
           revenue: acc.revenue + row.revenue,
           expenses: acc.expenses + row.expenses,
+          pmgShare: acc.pmgShare + row.pmgShare,
           profitPool: acc.profitPool + row.profitPool,
         }),
-        { revenue: 0, expenses: 0, profitPool: 0 },
+        { revenue: 0, expenses: 0, pmgShare: 0, profitPool: 0 },
       ),
     [fyRows],
   )
@@ -211,49 +212,53 @@ export function SnapshotsCockpit({ snapshots }: SnapshotsCockpitProps) {
   }
 
   return (
-    <div className="flex flex-col gap-5">
-      <div className="flex flex-col gap-3">
-        <span className="text-xs font-medium text-muted-foreground">
-          Financial year {fmtMonthYear(fyStartPeriod, { short: true })} – {fmtMonthYear(fyEndPeriod, { short: true })}
-        </span>
-        <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-          <SummaryMetric label="Closed months" value={String(fyRows.length)} icon={CalendarCheck} />
-          <SummaryMetric
-            label="Total revenue"
-            value={formatZAR(totals.revenue)}
-            icon={TrendingUp}
-            tone="revenue"
-          />
-          <SummaryMetric
-            label="Total expenses"
-            value={formatZAR(totals.expenses)}
-            icon={TrendingDown}
-            tone="expense"
-          />
-          <SummaryMetric
-            label="Total profit/loss"
-            value={formatZAR(totals.profitPool)}
-            icon={totals.profitPool >= 0 ? TrendingUp : TrendingDown}
-            tone={totals.profitPool >= 0 ? "positive" : "negative"}
-          />
-          <SummaryMetric
-            label="Profit percentage"
-            value={`${grossMarginPct.toFixed(1)}%`}
-            icon={Percent}
-            tone={grossMarginPct >= 0 ? "positive" : "negative"}
-            hint="Total profit retained in the business (Revenue − Expenses) ÷ Revenue — includes the PMG growth & investment reserve, since that stays within the organisation."
-          />
-          <SummaryMetric
-            label="Distributable margin"
-            value={`${netMarginPct.toFixed(1)}%`}
-            icon={Percent}
-            tone={netMarginPct >= 0 ? "positive" : "negative"}
-            hint="Profit Pool ÷ Revenue — what's left for salary, reinvestment, reserve & flex allocations after the PMG cross-divisional growth reserve is set aside."
-          />
-        </div>
+    <div className="flex flex-col gap-4">
+      <span className="text-[11px] font-medium text-muted-foreground">
+        Financial year {fmtMonthYear(fyStartPeriod, { short: true })} – {fmtMonthYear(fyEndPeriod, { short: true })}
+      </span>
+
+      <div className="grid gap-2.5 sm:grid-cols-2 lg:grid-cols-3">
+        <SummaryMetric
+          label="Total revenue"
+          value={formatZAR(totals.revenue)}
+          icon={TrendingUp}
+          tone="revenue"
+        />
+        <SummaryMetric
+          label="PMG Share"
+          value={formatZAR(totals.pmgShare)}
+          icon={TrendingUp}
+          tone="share"
+        />
+        <SummaryMetric
+          label="Total expenses"
+          value={formatZAR(totals.expenses)}
+          icon={TrendingDown}
+          tone="expense"
+        />
+        <SummaryMetric
+          label="Total profit/loss"
+          value={formatZAR(totals.profitPool)}
+          icon={totals.profitPool >= 0 ? TrendingUp : TrendingDown}
+          tone={totals.profitPool >= 0 ? "positive" : "negative"}
+        />
+        <SummaryMetric
+          label="Profit percentage"
+          value={`${grossMarginPct.toFixed(1)}%`}
+          icon={Percent}
+          tone={grossMarginPct >= 0 ? "positive" : "negative"}
+          hint="Total profit retained in the business (Revenue − Expenses) ÷ Revenue — includes the PMG growth & investment reserve, since that stays within the organisation."
+        />
+        <SummaryMetric
+          label="Distributable margin"
+          value={`${netMarginPct.toFixed(1)}%`}
+          icon={Percent}
+          tone={netMarginPct >= 0 ? "positive" : "negative"}
+          hint="Profit Pool ÷ Revenue — what's left for salary, reinvestment, reserve & flex allocations after the PMG cross-divisional growth reserve is set aside."
+        />
       </div>
 
-      <div className="grid gap-5 xl:grid-cols-[minmax(0,1fr)_320px]">
+      <div className="grid gap-5 xl:grid-cols-[minmax(0,1fr)_320px] xl:items-start">
         <Card>
           <CardHeader>
             <CardTitle className="text-base">Closed months</CardTitle>
@@ -377,20 +382,20 @@ function SummaryMetric({
   hint?: string
 }) {
   return (
-    <Card title={hint}>
-      <CardHeader className="flex flex-row items-start justify-between gap-3 pb-3">
-        <div className="flex min-w-0 flex-col gap-1">
-          <CardDescription>{label}</CardDescription>
+    <Card size="sm" title={hint}>
+      <CardHeader className="flex flex-row items-start justify-between gap-2">
+        <div className="flex min-w-0 flex-col gap-0.5">
+          <CardDescription className="text-xs">{label}</CardDescription>
           <CardTitle
             className={cn(
-              "truncate text-xl tabular-nums",
+              "truncate text-base tabular-nums",
               amountToneClass(tone),
             )}
           >
             {value}
           </CardTitle>
         </div>
-        <Icon className="mt-1 size-4 shrink-0 text-muted-foreground" />
+        <Icon className={cn("mt-0.5 size-3.5 shrink-0", tone === "default" ? "text-muted-foreground" : amountToneClass(tone))} />
       </CardHeader>
     </Card>
   )
@@ -425,17 +430,15 @@ function SnapshotDetail({
   const grossMargin = snapshot.revenue > 0 ? ((snapshot.revenue - snapshot.expenses) / snapshot.revenue) * 100 : 0
   const previousGrossMargin =
     previous && previous.revenue > 0 ? ((previous.revenue - previous.expenses) / previous.revenue) * 100 : null
-  const grossMarginDelta = previousGrossMargin !== null ? grossMargin - previousGrossMargin : null
 
   // Distributable margin: what's left for salary/reinvest/reserve/flex after
   // the PMG cross-divisional growth reserve is set aside.
   const netMargin = snapshot.revenue > 0 ? (snapshot.profitPool / snapshot.revenue) * 100 : 0
   const previousNetMargin =
     previous && previous.revenue > 0 ? (previous.profitPool / previous.revenue) * 100 : null
-  const netMarginDelta = previousNetMargin !== null ? netMargin - previousNetMargin : null
 
   return (
-    <Card>
+    <Card className="xl:sticky xl:top-24 xl:self-start">
       <CardHeader>
         <div className="flex items-center justify-between gap-3">
           <div>
@@ -512,14 +515,14 @@ function SnapshotDetail({
             label="Gross margin"
             hint="Total profit retained in the business (Revenue − Expenses) ÷ Revenue — includes the PMG growth & investment reserve, since that stays within the organisation."
             value={grossMargin}
-            delta={grossMarginDelta}
+            previousValue={previousGrossMargin}
           />
           <div className="h-px bg-border" />
           <MarginRow
             label="Distributable margin"
             hint="Profit Pool ÷ Revenue — what's left for salary, reinvestment, reserve & flex allocations after the PMG cross-divisional growth reserve is set aside."
             value={netMargin}
-            delta={netMarginDelta}
+            previousValue={previousNetMargin}
           />
         </div>
 
@@ -572,13 +575,14 @@ function MarginRow({
   label,
   hint,
   value,
-  delta,
+  previousValue,
 }: {
   label: string
   hint: string
   value: number
-  delta: number | null
+  previousValue: number | null
 }) {
+  const improved = previousValue !== null && value >= previousValue
   return (
     <div className="flex items-center justify-between gap-2" title={hint}>
       <div className="flex flex-col gap-1">
@@ -595,14 +599,10 @@ function MarginRow({
       <span
         className={cn(
           "text-xs font-medium tabular-nums",
-          delta === null
-            ? "text-muted-foreground"
-            : delta >= 0
-              ? "text-emerald-600"
-              : "text-destructive",
+          previousValue === null ? "text-muted-foreground" : improved ? "text-emerald-600" : "text-destructive",
         )}
       >
-        {delta === null ? "First month" : `${delta >= 0 ? "+" : ""}${delta.toFixed(1)}pp vs last month`}
+        {previousValue === null ? "First month" : `${previousValue.toFixed(1)}% last month`}
       </span>
     </div>
   )
