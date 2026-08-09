@@ -64,6 +64,7 @@ const baseProps = {
   deltas: { revenue: null, expenses: null, profit: null },
   divisions: [],
   arByDivision: [],
+  invoicedByDivision: [],
   monthlySeries: [],
   sparklineData: [],
   agingReport: [],

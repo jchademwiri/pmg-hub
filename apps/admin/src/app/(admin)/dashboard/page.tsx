@@ -6,6 +6,7 @@ import {
   getPreviousYearYTDSummary,
   getDivisionRevenue,
   getDivisionAR,
+  getDivisionInvoiced,
   getMonthlyFinancialsSeries,
   getBudgetChartSeriesForYear,
   getMoMChartData,
@@ -39,6 +40,7 @@ export default async function DashboardPage() {
     previousMonthSummary,
     divisions,
     arByDivision,
+    invoicedByDivision,
     monthlySeries,
     agingReport,
     budgetChartSeries,
@@ -56,6 +58,7 @@ export default async function DashboardPage() {
     getPreviousMonthSummary(),
     getDivisionRevenue(),
     getDivisionAR(),
+    getDivisionInvoiced(),
     getMonthlyFinancialsSeries(),
     getAgingReport(),
     getBudgetChartSeriesForYear(fiscalYear),
@@ -101,6 +104,7 @@ export default async function DashboardPage() {
       // Supporting data
       divisions={divisions}
       arByDivision={arByDivision}
+      invoicedByDivision={invoicedByDivision}
       monthlySeries={monthlySeries}
       sparklineData={monthlySeries.slice(-6)}
       agingReport={agingReport}

@@ -29,6 +29,7 @@ import {
   getMonthlyRevenueVsInvoicedForYear,
   getMonthlyARBalanceForYear,
   getOutstandingByDivision,
+  getInvoicedByDivision,
   getAllSnapshots,
 } from '@pmg/db'
 import { fmtMonthYear, getSASTParts } from '@/lib/format'
@@ -113,6 +114,11 @@ export async function getDivisionRevenue(): Promise<DivisionRevenue[]> {
 // ── Division AR (current outstanding balance, by division) ────────────────────
 export async function getDivisionAR(): Promise<DivisionRevenue[]> {
   return getOutstandingByDivision()
+}
+
+// ── Division Revenue, accrual-basis (total invoiced, by division) ─────────────
+export async function getDivisionInvoiced(): Promise<DivisionRevenue[]> {
+  return getInvoicedByDivision()
 }
 
 export async function getLeadCounts(): Promise<LeadStatusCount[]> {

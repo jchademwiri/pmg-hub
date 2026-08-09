@@ -3,6 +3,7 @@ import type { DivisionRevenue } from '@/lib/financial'
 
 type ExpenseSnapshotProps = {
   divisions: DivisionRevenue[]
+  invoicedByDivision: DivisionRevenue[]
   expensesByDivision: { divisionId?: string; divisionName: string; total: number }[]
   arByDivision: DivisionRevenue[]
   pmgShareRate: number
@@ -22,13 +23,22 @@ const dotColorFor = (name: string, i: number) => DIVISION_COLORS[name] ?? DEFAUL
 
 const TITLE = 'Division Financial Breakdown'
 
-export function ExpenseSnapshot({ divisions, expensesByDivision, arByDivision, pmgShareRate }: ExpenseSnapshotProps) {
+export function ExpenseSnapshot({
+  divisions,
+  invoicedByDivision,
+  expensesByDivision,
+  arByDivision,
+  pmgShareRate,
+}: ExpenseSnapshotProps) {
   const receiptsByName = new Map(divisions.map((d) => [d.divisionName, d]))
+  const invoicedByName = new Map(invoicedByDivision.map((d) => [d.divisionName, d]))
   const expenseByName = new Map(expensesByDivision.map((d) => [d.divisionName, d]))
   const arByName = new Map(arByDivision.map((d) => [d.divisionName, d]))
-  // Union of all three lists: a division can have cash receipts with no expenses (or
+  // Union of all lists: a division can have cash receipts with no expenses (or
   // vice versa), or still-outstanding AR with no receipts yet, and should still show up.
-  const names = Array.from(new Set([...receiptsByName.keys(), ...expenseByName.keys(), ...arByName.keys()]))
+  const names = Array.from(
+    new Set([...receiptsByName.keys(), ...invoicedByName.keys(), ...expenseByName.keys(), ...arByName.keys()]),
+  )
 
   const totalExpenses = expensesByDivision.reduce((sum, d) => sum + d.total, 0)
 
@@ -43,6 +53,7 @@ export function ExpenseSnapshot({ divisions, expensesByDivision, arByDivision, p
     )
   }
 
+  const totalRevenue = names.reduce((sum, name) => sum + (invoicedByName.get(name)?.total ?? 0), 0)
   const totalCashReceipts = names.reduce((sum, name) => sum + (receiptsByName.get(name)?.total ?? 0), 0)
   const totalPmgShare = totalCashReceipts * pmgShareRate
   const totalAR = names.reduce((sum, name) => sum + (arByName.get(name)?.total ?? 0), 0)
@@ -51,8 +62,10 @@ export function ExpenseSnapshot({ divisions, expensesByDivision, arByDivision, p
   const rows: DivisionBreakdownRow[] = names
     .map((name) => {
       const receipts = receiptsByName.get(name)
+      const invoiced = invoicedByName.get(name)
       const expense = expenseByName.get(name)
       const ar = arByName.get(name)
+      const revenueTotal = invoiced?.total ?? 0
       const cashReceiptsTotal = receipts?.total ?? 0
       const expenseTotal = expense?.total ?? 0
       const arTotal = ar?.total ?? 0
@@ -61,10 +74,11 @@ export function ExpenseSnapshot({ divisions, expensesByDivision, arByDivision, p
       const pct = Math.round((expenseTotal / totalExpenses) * 100)
 
       return {
-        divisionId: receipts?.divisionId ?? expense?.divisionId ?? ar?.divisionId,
+        divisionId: receipts?.divisionId ?? invoiced?.divisionId ?? expense?.divisionId ?? ar?.divisionId,
         divisionName: name,
         pct,
         metrics: [
+          { label: 'Revenue', value: revenueTotal, colorClass: 'text-sky-600' },
           { label: 'Cash Receipts', value: cashReceiptsTotal, colorClass: 'text-emerald-600' },
           { label: 'PMG Share', value: pmgShare, colorClass: 'text-blue-600' },
           { label: 'Accounts Receivable', value: arTotal, colorClass: 'text-violet-600' },
@@ -79,6 +93,7 @@ export function ExpenseSnapshot({ divisions, expensesByDivision, arByDivision, p
     <DivisionBreakdownCard
       title={TITLE}
       totals={[
+        { label: 'Revenue', value: totalRevenue, colorClass: 'text-sky-600' },
         { label: 'Cash Receipts', value: totalCashReceipts, colorClass: 'text-emerald-600' },
         { label: 'PMG Share', value: totalPmgShare, colorClass: 'text-blue-600' },
         { label: 'AR', value: totalAR, colorClass: 'text-violet-600' },

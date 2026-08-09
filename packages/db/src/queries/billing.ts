@@ -1590,6 +1590,35 @@ export async function getOutstandingByDivision(): Promise<
   }));
 }
 
+/**
+ * Returns total invoiced (billed) amount grouped by division, all-time.
+ * This is accrual-basis Revenue — the client-facing invoice total — as
+ * opposed to `getRevenueByDivision` in general.ts, which sums the `income`
+ * table (i.e. Cash Receipts). Uses the same "counts as billed" status set
+ * as `getMonthlyRevenueVsInvoicedForYear`'s "invoiced" series.
+ */
+export async function getInvoicedByDivision(): Promise<
+  { divisionId: string; divisionName: string; total: number }[]
+> {
+  const result = await db.execute(sql`
+    SELECT
+      divisions.id                    AS division_id,
+      divisions.name                  AS division_name,
+      COALESCE(SUM(invoices.total), 0) AS total
+    FROM invoices
+    JOIN divisions ON divisions.id = invoices.division_id
+    WHERE invoices.status IN ('issued', 'partially_paid', 'paid', 'overdue')
+    GROUP BY divisions.id, divisions.name
+    ORDER BY total DESC
+  `);
+
+  return (result.rows as { division_id: string; division_name: string; total: string }[]).map((r) => ({
+    divisionId: r.division_id,
+    divisionName: r.division_name,
+    total: Number(r.total),
+  }));
+}
+
 export interface ClientAgingRow {
   clientId: string;
   clientName: string;
