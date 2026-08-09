@@ -8,10 +8,6 @@ vi.mock('@pmg/db', () => ({
   getLedgerTotalByAllocation: vi.fn(),
   getActiveRates: vi.fn().mockResolvedValue({
     pmg_share: 0.25,
-    salary: 0.35,
-    reinvest: 0.30,
-    reserve: 0.30,
-    flex: 0.05,
   }),
   ACCOUNT_RATES: {
     pmg_share: 0.25,
@@ -26,10 +22,6 @@ describe('getLedgerBalances', () => {
     vi.resetAllMocks();
     vi.mocked(getActiveRates).mockResolvedValue({
       pmg_share: 0.25,
-      salary: 0,
-      reinvest: 0,
-      reserve: 0,
-      flex: 0,
     });
   });
 

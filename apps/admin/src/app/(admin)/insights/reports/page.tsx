@@ -54,7 +54,7 @@ export default async function ReportsPage({ searchParams }: ReportsPageProps) {
       getExpensesByCategory(year).catch((e) => { console.error('getExpensesByCategory failed:', e); return [] }),
       getMonthlyFinancialsSeriesForYear(year).catch((e) => { console.error('getMonthlyFinancialsSeriesForYear failed:', e); return [] }),
       getLedgerBalances().catch((e) => { console.error('getLedgerBalances failed:', e); return undefined }),
-      getActiveRates().catch((e) => { console.error('getActiveRates failed:', e); return { pmg_share: 0.25, salary: 0.35, reinvest: 0.30, reserve: 0.30, flex: 0.05 } }),
+      getActiveRates().catch((e) => { console.error('getActiveRates failed:', e); return { pmg_share: 0.25 } }),
     ])
 
   const pmgShareRate = activeRates?.pmg_share ?? 0.25

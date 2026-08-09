@@ -10,23 +10,9 @@ vi.mock('@pmg/db', () => ({
   getLeadsByStatus: vi.fn(),
   getActiveRates: vi.fn().mockResolvedValue({
     pmg_share: 0.25,
-    salary: 0.35,
-    reinvest: 0.30,
-    reserve: 0.30,
-    flex: 0.05,
   }),
   ACCOUNT_RATES: {
-    salary: 0.35,
-    reinvest: 0.30,
-    reserve: 0.30,
-    flex: 0.05,
     pmg_share: 0.25,
-  },
-  PROFIT_POOL_RATES: {
-    salary: 0.35,
-    reinvest: 0.30,
-    reserve: 0.30,
-    flex: 0.05,
   },
 }))
 
@@ -39,14 +25,10 @@ describe('getFinancialSummary', () => {
       vi.resetAllMocks()
       vi.mocked(getActiveRates).mockResolvedValue({
         pmg_share: 0.25,
-        salary: 0.35,
-        reinvest: 0.30,
-        reserve: 0.30,
-        flex: 0.05,
       })
     })
 
-    it('standard case - revenue=100000, expenses=40000 produces correct eight fields', async () => {
+    it('standard case - revenue=100000, expenses=40000 produces correct fields', async () => {
       vi.mocked(getTotalRevenue).mockResolvedValue(100000)
       vi.mocked(getTotalExpenses).mockResolvedValue(40000)
 
@@ -56,10 +38,6 @@ describe('getFinancialSummary', () => {
       expect(result.expenses).toBe(40000)
       expect(result.pmgShare).toBe(25000)
       expect(result.profitPool).toBe(35000)
-      expect(result.salary).toBe(0)
-      expect(result.reinvest).toBe(0)
-      expect(result.reserve).toBe(0)
-      expect(result.flex).toBe(0)
     })
 
     it('zero case - revenue=0, expenses=0 returns all fields as 0 without error', async () => {
@@ -72,10 +50,6 @@ describe('getFinancialSummary', () => {
       expect(result.expenses).toBe(0)
       expect(result.pmgShare).toBe(0)
       expect(result.profitPool).toBe(0)
-      expect(result.salary).toBe(0)
-      expect(result.reinvest).toBe(0)
-      expect(result.reserve).toBe(0)
-      expect(result.flex).toBe(0)
     })
 
     it('loss case - revenue=10000, expenses=15000 produces correct negative values', async () => {
@@ -86,10 +60,6 @@ describe('getFinancialSummary', () => {
 
       expect(result.pmgShare).toBe(2500)
       expect(result.profitPool).toBe(-7500)
-      expect(result.salary).toBe(0)
-      expect(result.reinvest).toBe(0)
-      expect(result.reserve).toBe(0)
-      expect(result.flex).toBe(0)
     })
 
     it('determinism - same mocked inputs called twice produce structurally identical results', async () => {
@@ -112,10 +82,6 @@ describe('getFinancialSummary', () => {
       vi.resetAllMocks()
       vi.mocked(getActiveRates).mockResolvedValue({
         pmg_share: 0.25,
-        salary: 0.35,
-        reinvest: 0.30,
-        reserve: 0.30,
-        flex: 0.05,
       })
     })
 
@@ -136,35 +102,6 @@ describe('getFinancialSummary', () => {
 
             expect(result.pmgShare).toBeCloseTo(pmgShare, 10)
             expect(result.profitPool).toBeCloseTo(profitPool, 10)
-            expect(result.salary).toBe(0)
-            expect(result.reinvest).toBe(0)
-            expect(result.reserve).toBe(0)
-            expect(result.flex).toBe(0)
-          }
-        )
-      )
-    })
-
-    it('Property 2: allocation sum invariant', async () => {
-      // Feature: financial-engine, Property 2: Allocation sum invariant
-      await fc.assert(
-        fc.asyncProperty(
-          fc.double({ noNaN: true, noDefaultInfinity: true }),
-          fc.double({ noNaN: true, noDefaultInfinity: true }),
-          async (revenue, expenses) => {
-            const pmgShare = revenue * 0.25
-            const profitPool = revenue - expenses - pmgShare
-            fc.pre(isFinite(profitPool))
-
-            vi.mocked(getTotalRevenue).mockResolvedValue(revenue)
-            vi.mocked(getTotalExpenses).mockResolvedValue(expenses)
-
-            const result = await getFinancialSummary()
-
-            expect(result.salary).toBe(0)
-            expect(result.reinvest).toBe(0)
-            expect(result.reserve).toBe(0)
-            expect(result.flex).toBe(0)
           }
         )
       )
@@ -181,10 +118,6 @@ describe('getFinancialSummary', () => {
             vi.resetAllMocks()
             vi.mocked(getActiveRates).mockResolvedValue({
               pmg_share: 0.25,
-              salary: 0,
-              reinvest: 0,
-              reserve: 0,
-              flex: 0,
             })
             vi.mocked(getTotalRevenue).mockResolvedValue(revenue)
             vi.mocked(getTotalExpenses).mockResolvedValue(expenses)
@@ -213,10 +146,6 @@ describe('getFinancialSummary', () => {
             const result = await getFinancialSummary()
 
             expect(result.profitPool).toBeLessThan(0)
-            expect(result.salary).toBe(0)
-            expect(result.reinvest).toBe(0)
-            expect(result.reserve).toBe(0)
-            expect(result.flex).toBe(0)
           }
         )
       )

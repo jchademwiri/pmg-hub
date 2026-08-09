@@ -6,15 +6,11 @@ import { eq, and, desc, sql } from "drizzle-orm";
  * Rate keys that are managed in the distribution_settings table.
  * Mirrors ACCOUNT_KEYS from accounts.ts but used for DB queries.
  */
-export const RATE_KEYS = ["pmg_share", "salary", "reinvest", "reserve", "flex"] as const;
+export const RATE_KEYS = ["pmg_share"] as const;
 export type RateKey = (typeof RATE_KEYS)[number];
 
 export type ActiveRates = {
   pmg_share: number;
-  salary: number;
-  reinvest: number;
-  reserve: number;
-  flex: number;
 };
 
 /**
@@ -50,10 +46,6 @@ export async function getActiveRates(
     console.warn('[distribution-settings] Falling back to default rates:', e);
     return {
       pmg_share: getDefaultRate('pmg_share'),
-      salary: getDefaultRate('salary'),
-      reinvest: getDefaultRate('reinvest'),
-      reserve: getDefaultRate('reserve'),
-      flex: getDefaultRate('flex'),
     };
   }
 
@@ -68,10 +60,6 @@ export async function getActiveRates(
 
   const rates: ActiveRates = {
     pmg_share: rateMap.get("pmg_share") ?? getDefaultRate("pmg_share"),
-    salary: rateMap.get("salary") ?? getDefaultRate("salary"),
-    reinvest: rateMap.get("reinvest") ?? getDefaultRate("reinvest"),
-    reserve: rateMap.get("reserve") ?? getDefaultRate("reserve"),
-    flex: rateMap.get("flex") ?? getDefaultRate("flex"),
   };
 
   return rates;
@@ -164,15 +152,11 @@ export async function getCurrentRates(): Promise<
 
 /**
  * Returns hardcoded defaults as fallback when no DB settings exist.
- * These mirror the original ACCOUNT_RATES and PROFIT_POOL_RATES constants.
+ * These mirror the original ACCOUNT_RATES constant.
  */
 function getDefaultRate(rateKey: string): number {
   const defaults: Record<string, number> = {
     pmg_share: 0.25,
-    salary: 0.35,
-    reinvest: 0.30,
-    reserve: 0.30,
-    flex: 0.05,
   };
   return defaults[rateKey] ?? 0;
 }

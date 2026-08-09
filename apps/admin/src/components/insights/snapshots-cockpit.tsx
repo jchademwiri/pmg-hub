@@ -31,10 +31,6 @@ type SnapshotView = {
   expenses: number
   pmgShare: number
   profitPool: number
-  salary: number
-  reinvest: number
-  reserve: number
-  flex: number
   status: string
   notes: string | null
   closedAt: Date
@@ -69,10 +65,6 @@ export function SnapshotsCockpit({ snapshots }: SnapshotsCockpitProps) {
         expenses: toMoney(snapshot.expenses),
         pmgShare: toMoney(snapshot.pmgShare),
         profitPool: toMoney(snapshot.profitPool),
-        salary: toMoney(snapshot.salary),
-        reinvest: toMoney(snapshot.reinvest),
-        reserve: toMoney(snapshot.reserve),
-        flex: toMoney(snapshot.flex),
         status: snapshot.status,
         notes: snapshot.notes,
         closedAt: snapshot.closedAt,
