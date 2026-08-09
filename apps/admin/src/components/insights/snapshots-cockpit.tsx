@@ -1,7 +1,7 @@
 "use client"
 
 import { useEffect, useMemo, useState } from "react"
-import { CalendarCheck, FileText, LockKeyhole, Percent, TrendingDown, TrendingUp } from "lucide-react"
+import { CalendarCheck, LockKeyhole, Percent, TrendingDown, TrendingUp } from "lucide-react"
 import type { SnapshotRow } from "@pmg/db"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
@@ -265,12 +265,11 @@ export function SnapshotsCockpit({ snapshots }: SnapshotsCockpitProps) {
                 <TableHeader className="bg-muted/50">
                   <TableRow className="hover:bg-transparent">
                     <TableHead className="font-semibold text-foreground py-4">Month</TableHead>
-                    <TableHead className="font-semibold text-foreground py-4">Status</TableHead>
                     <TableHead className="text-right font-semibold text-foreground py-4">Revenue</TableHead>
                     <TableHead className="text-right font-semibold text-foreground py-4">Expenses</TableHead>
+                    <TableHead className="text-right font-semibold text-foreground py-4">PMG Share</TableHead>
                     <TableHead className="text-right font-semibold text-foreground py-4">Profit/Loss</TableHead>
                     <TableHead className="text-right font-semibold text-foreground py-4">Closed</TableHead>
-                    <TableHead className="text-center font-semibold text-foreground py-4">Notes</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -289,9 +288,13 @@ export function SnapshotsCockpit({ snapshots }: SnapshotsCockpitProps) {
                         }
                       }}
                     >
-                      <TableCell className="font-medium py-4">{row.periodLabel}</TableCell>
-                      <TableCell className="py-4">
-                        <Badge variant="secondary">{row.status}</Badge>
+                      <TableCell className="font-medium py-4">
+                        <span className="inline-flex items-center gap-1.5">
+                          {row.status === "locked" && (
+                            <LockKeyhole className="size-3 shrink-0 text-muted-foreground" aria-label="Locked" />
+                          )}
+                          {row.periodLabel}
+                        </span>
                       </TableCell>
                       <TableCell className="text-right tabular-nums py-4 font-medium">
                         <span className={amountToneClass("revenue")}>{formatZAR(row.revenue)}</span>
@@ -299,22 +302,15 @@ export function SnapshotsCockpit({ snapshots }: SnapshotsCockpitProps) {
                       <TableCell className="text-right tabular-nums py-4 font-medium">
                         <span className={amountToneClass("expense")}>{formatZAR(row.expenses)}</span>
                       </TableCell>
+                      <TableCell className="text-right tabular-nums py-4 font-medium">
+                        <span className={amountToneClass("share")}>{formatZAR(row.pmgShare)}</span>
+                      </TableCell>
                       <TableCell className="text-right tabular-nums py-4 font-semibold">
                         <span className={amountToneClass(row.profitPool >= 0 ? "positive" : "negative")}>
                           {formatZAR(row.profitPool)}
                         </span>
                       </TableCell>
                       <TableCell className="text-right tabular-nums py-4 text-muted-foreground">{fmtDate(row.closedAt)}</TableCell>
-                      <TableCell className="text-center py-4">
-                        {row.notes ? (
-                          <Badge variant="outline" className="inline-flex items-center gap-1 mx-auto">
-                            <FileText className="size-3" />
-                            <span>Yes</span>
-                          </Badge>
-                        ) : (
-                          <span className="text-muted-foreground">-</span>
-                        )}
-                      </TableCell>
                     </TableRow>
                   ))}
                 </TableBody>
