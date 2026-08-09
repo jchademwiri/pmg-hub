@@ -204,7 +204,8 @@ export function SnapshotsCockpit({ snapshots }: SnapshotsCockpitProps) {
   }
 
   return (
-    <div className="flex flex-col gap-4">
+    <div className="grid gap-5 xl:grid-cols-[minmax(0,1fr)_320px] xl:items-start">
+      <div className="flex flex-col gap-4">
       <span className="text-[11px] font-medium text-muted-foreground">
         Financial year {fmtMonthYear(fyStartPeriod, { short: true })} – {fmtMonthYear(fyEndPeriod, { short: true })}
       </span>
@@ -250,13 +251,12 @@ export function SnapshotsCockpit({ snapshots }: SnapshotsCockpitProps) {
         />
       </div>
 
-      <div className="grid gap-5 xl:grid-cols-[minmax(0,1fr)_320px] xl:items-start">
-        <Card>
-          <CardHeader>
+      <Card>
+          <CardHeader className="px-4">
             <CardTitle className="text-base">Closed months</CardTitle>
             <CardDescription>Select a month to review the locked figures.</CardDescription>
           </CardHeader>
-          <CardContent>
+          <CardContent className="p-0">
             <div className="hidden md:block">
               <Table>
                 <TableHeader className="bg-muted/50">
@@ -314,7 +314,7 @@ export function SnapshotsCockpit({ snapshots }: SnapshotsCockpitProps) {
               </Table>
             </div>
 
-            <div className="flex flex-col gap-2 md:hidden">
+            <div className="flex flex-col gap-2 px-4 md:hidden">
               {rows.map((row) => (
                 <Button
                   key={row.id}
@@ -341,21 +341,21 @@ export function SnapshotsCockpit({ snapshots }: SnapshotsCockpitProps) {
             </div>
           </CardContent>
         </Card>
-
-        {selectedSnapshot && detail && (
-          <SnapshotDetail
-            snapshot={selectedSnapshot}
-            previous={detail.previous}
-            yoySnapshot={detail.yoySnapshot}
-            sparklineData={detail.sparklineData}
-            streak={detail.streak}
-            arSelected={arSummary.selected}
-            arPrevious={arSummary.previous}
-            arLoading={arSummary.loading}
-            arError={arSummary.error}
-          />
-        )}
       </div>
+
+      {selectedSnapshot && detail && (
+        <SnapshotDetail
+          snapshot={selectedSnapshot}
+          previous={detail.previous}
+          yoySnapshot={detail.yoySnapshot}
+          sparklineData={detail.sparklineData}
+          streak={detail.streak}
+          arSelected={arSummary.selected}
+          arPrevious={arSummary.previous}
+          arLoading={arSummary.loading}
+          arError={arSummary.error}
+        />
+      )}
     </div>
   )
 }
@@ -576,7 +576,7 @@ function MarginRow({
 }) {
   const improved = previousValue !== null && value >= previousValue
   return (
-    <div className="flex items-center justify-between gap-2" title={hint}>
+    <div className="flex items-start justify-between gap-2" title={hint}>
       <div className="flex flex-col gap-1">
         <span className="text-xs text-muted-foreground">{label}</span>
         <span
