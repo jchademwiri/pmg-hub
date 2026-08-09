@@ -242,7 +242,7 @@ export function DivisionAreaChart({ data }: Props) {
               </div>
             </div>
 
-            <div className="flex flex-col justify-center gap-6 text-right">
+            <div className="hidden lg:flex flex-col justify-center gap-6 text-right">
               <div>
                 <p className="text-xs font-medium text-[color:oklch(0.72_0.16_150)]">Total Revenue</p>
                 <p className="mt-1 text-xl font-semibold tabular-nums text-foreground">
