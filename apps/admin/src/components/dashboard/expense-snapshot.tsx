@@ -102,7 +102,6 @@ export function ExpenseSnapshot({
       ]}
       rows={rows}
       emptyMessage="No expenses recorded yet."
-      linkBase="/finance/expenses"
       dotColorFor={dotColorFor}
     />
   )

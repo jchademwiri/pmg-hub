@@ -16,7 +16,6 @@ type DivisionBreakdownCardProps = {
   totals: DivisionMetric[]
   rows: DivisionBreakdownRow[]
   emptyMessage: string
-  linkBase?: string
   dotColorFor?: (divisionName: string, index: number) => string
 }
 
@@ -25,7 +24,6 @@ export function DivisionBreakdownCard({
   totals,
   rows,
   emptyMessage,
-  linkBase,
   dotColorFor = () => 'bg-muted-foreground/40',
 }: DivisionBreakdownCardProps) {
   if (rows.length === 0) {
@@ -96,11 +94,11 @@ export function DivisionBreakdownCard({
               </div>
             )
 
-            if (row.divisionId && linkBase) {
+            if (row.divisionId) {
               return (
                 <Link
                   key={row.divisionName}
-                  href={`${linkBase}?divisionId=${row.divisionId}`}
+                  href={`/relationships/divisions/${row.divisionId}`}
                   className="block group"
                 >
                   {content}
