@@ -1,7 +1,7 @@
 "use client"
 
 import { useEffect, useMemo, useState } from "react"
-import { CalendarCheck, FileText, LockKeyhole, TrendingDown, TrendingUp } from "lucide-react"
+import { CalendarCheck, LockKeyhole, Percent, TrendingDown, TrendingUp } from "lucide-react"
 import type { SnapshotRow } from "@pmg/db"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
@@ -57,6 +57,25 @@ export function shiftPeriod(period: string, months: number): string {
   const year = Math.floor(totalMonths / 12)
   const month = (totalMonths % 12) + 1
   return `${year}-${String(month).padStart(2, "0")}`
+}
+
+/**
+ * The current South African fiscal year (March -> Feb, named by the ending
+ * year — e.g. "2027-FY" spans 2026-03 to 2027-02), as a "YYYY-MM" range.
+ * Mirrors resolvePeriodDateRange's "-FY" convention in packages/db.
+ */
+export function getCurrentFinancialYearRange(referenceDate: Date = new Date()): {
+  startPeriod: string
+  endPeriod: string
+} {
+  const year = referenceDate.getFullYear()
+  const month = referenceDate.getMonth() + 1 // 1-12
+  const fyEndYear = month >= 3 ? year + 1 : year
+  const fyStartYear = fyEndYear - 1
+  return {
+    startPeriod: `${fyStartYear}-03`,
+    endPeriod: `${fyEndYear}-02`,
+  }
 }
 
 /** Consecutive closed months (starting at `fromIndex`, walking toward older rows) on the same side of profit/loss. */
@@ -156,9 +175,18 @@ export function SnapshotsCockpit({ snapshots }: SnapshotsCockpitProps) {
     }
   }, [selectedSnapshot?.id, detail?.previous?.period])
 
+  const { startPeriod: fyStartPeriod, endPeriod: fyEndPeriod } = useMemo(
+    () => getCurrentFinancialYearRange(),
+    [],
+  )
+  const fyRows = useMemo(
+    () => rows.filter((row) => row.period >= fyStartPeriod && row.period <= fyEndPeriod),
+    [rows, fyStartPeriod, fyEndPeriod],
+  )
+
   const totals = useMemo(
     () =>
-      rows.reduce(
+      fyRows.reduce(
         (acc, row) => ({
           revenue: acc.revenue + row.revenue,
           expenses: acc.expenses + row.expenses,
@@ -166,8 +194,10 @@ export function SnapshotsCockpit({ snapshots }: SnapshotsCockpitProps) {
         }),
         { revenue: 0, expenses: 0, profitPool: 0 },
       ),
-    [rows],
+    [fyRows],
   )
+  const grossMarginPct = totals.revenue > 0 ? ((totals.revenue - totals.expenses) / totals.revenue) * 100 : 0
+  const netMarginPct = totals.revenue > 0 ? (totals.profitPool / totals.revenue) * 100 : 0
 
   if (rows.length === 0) {
     return (
@@ -182,26 +212,45 @@ export function SnapshotsCockpit({ snapshots }: SnapshotsCockpitProps) {
 
   return (
     <div className="flex flex-col gap-5">
-      <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
-        <SummaryMetric label="Closed months" value={String(rows.length)} icon={CalendarCheck} />
-        <SummaryMetric
-          label="Total revenue"
-          value={formatZAR(totals.revenue)}
-          icon={TrendingUp}
-          tone="revenue"
-        />
-        <SummaryMetric
-          label="Total expenses"
-          value={formatZAR(totals.expenses)}
-          icon={TrendingDown}
-          tone="expense"
-        />
-        <SummaryMetric
-          label="Total profit/loss"
-          value={formatZAR(totals.profitPool)}
-          icon={totals.profitPool >= 0 ? TrendingUp : TrendingDown}
-          tone={totals.profitPool >= 0 ? "positive" : "negative"}
-        />
+      <div className="flex flex-col gap-3">
+        <span className="text-xs font-medium text-muted-foreground">
+          Financial year {fmtMonthYear(fyStartPeriod, { short: true })} – {fmtMonthYear(fyEndPeriod, { short: true })}
+        </span>
+        <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+          <SummaryMetric label="Closed months" value={String(fyRows.length)} icon={CalendarCheck} />
+          <SummaryMetric
+            label="Total revenue"
+            value={formatZAR(totals.revenue)}
+            icon={TrendingUp}
+            tone="revenue"
+          />
+          <SummaryMetric
+            label="Total expenses"
+            value={formatZAR(totals.expenses)}
+            icon={TrendingDown}
+            tone="expense"
+          />
+          <SummaryMetric
+            label="Total profit/loss"
+            value={formatZAR(totals.profitPool)}
+            icon={totals.profitPool >= 0 ? TrendingUp : TrendingDown}
+            tone={totals.profitPool >= 0 ? "positive" : "negative"}
+          />
+          <SummaryMetric
+            label="Profit percentage"
+            value={`${grossMarginPct.toFixed(1)}%`}
+            icon={Percent}
+            tone={grossMarginPct >= 0 ? "positive" : "negative"}
+            hint="Total profit retained in the business (Revenue − Expenses) ÷ Revenue — includes the PMG growth & investment reserve, since that stays within the organisation."
+          />
+          <SummaryMetric
+            label="Distributable margin"
+            value={`${netMarginPct.toFixed(1)}%`}
+            icon={Percent}
+            tone={netMarginPct >= 0 ? "positive" : "negative"}
+            hint="Profit Pool ÷ Revenue — what's left for salary, reinvestment, reserve & flex allocations after the PMG cross-divisional growth reserve is set aside."
+          />
+        </div>
       </div>
 
       <div className="grid gap-5 xl:grid-cols-[minmax(0,1fr)_320px]">
@@ -216,12 +265,11 @@ export function SnapshotsCockpit({ snapshots }: SnapshotsCockpitProps) {
                 <TableHeader className="bg-muted/50">
                   <TableRow className="hover:bg-transparent">
                     <TableHead className="font-semibold text-foreground py-4">Month</TableHead>
-                    <TableHead className="font-semibold text-foreground py-4">Status</TableHead>
                     <TableHead className="text-right font-semibold text-foreground py-4">Revenue</TableHead>
                     <TableHead className="text-right font-semibold text-foreground py-4">Expenses</TableHead>
+                    <TableHead className="text-right font-semibold text-foreground py-4">PMG Share</TableHead>
                     <TableHead className="text-right font-semibold text-foreground py-4">Profit/Loss</TableHead>
                     <TableHead className="text-right font-semibold text-foreground py-4">Closed</TableHead>
-                    <TableHead className="text-center font-semibold text-foreground py-4">Notes</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -240,9 +288,13 @@ export function SnapshotsCockpit({ snapshots }: SnapshotsCockpitProps) {
                         }
                       }}
                     >
-                      <TableCell className="font-medium py-4">{row.periodLabel}</TableCell>
-                      <TableCell className="py-4">
-                        <Badge variant="secondary">{row.status}</Badge>
+                      <TableCell className="font-medium py-4">
+                        <span className="inline-flex items-center gap-1.5">
+                          {row.status === "locked" && (
+                            <LockKeyhole className="size-3 shrink-0 text-muted-foreground" aria-label="Locked" />
+                          )}
+                          {row.periodLabel}
+                        </span>
                       </TableCell>
                       <TableCell className="text-right tabular-nums py-4 font-medium">
                         <span className={amountToneClass("revenue")}>{formatZAR(row.revenue)}</span>
@@ -250,22 +302,15 @@ export function SnapshotsCockpit({ snapshots }: SnapshotsCockpitProps) {
                       <TableCell className="text-right tabular-nums py-4 font-medium">
                         <span className={amountToneClass("expense")}>{formatZAR(row.expenses)}</span>
                       </TableCell>
+                      <TableCell className="text-right tabular-nums py-4 font-medium">
+                        <span className={amountToneClass("share")}>{formatZAR(row.pmgShare)}</span>
+                      </TableCell>
                       <TableCell className="text-right tabular-nums py-4 font-semibold">
                         <span className={amountToneClass(row.profitPool >= 0 ? "positive" : "negative")}>
                           {formatZAR(row.profitPool)}
                         </span>
                       </TableCell>
                       <TableCell className="text-right tabular-nums py-4 text-muted-foreground">{fmtDate(row.closedAt)}</TableCell>
-                      <TableCell className="text-center py-4">
-                        {row.notes ? (
-                          <Badge variant="outline" className="inline-flex items-center gap-1 mx-auto">
-                            <FileText className="size-3" />
-                            <span>Yes</span>
-                          </Badge>
-                        ) : (
-                          <span className="text-muted-foreground">-</span>
-                        )}
-                      </TableCell>
                     </TableRow>
                   ))}
                 </TableBody>
@@ -323,14 +368,16 @@ function SummaryMetric({
   value,
   icon: Icon,
   tone = "default",
+  hint,
 }: {
   label: string
   value: string
   icon: React.ComponentType<{ className?: string }>
   tone?: AmountTone
+  hint?: string
 }) {
   return (
-    <Card>
+    <Card title={hint}>
       <CardHeader className="flex flex-row items-start justify-between gap-3 pb-3">
         <div className="flex min-w-0 flex-col gap-1">
           <CardDescription>{label}</CardDescription>
@@ -371,10 +418,21 @@ function SnapshotDetail({
   arError: string | null
 }) {
   const isProfitable = snapshot.profitPool >= 0
-  const margin = snapshot.revenue > 0 ? (snapshot.profitPool / snapshot.revenue) * 100 : 0
-  const previousMargin =
+
+  // Gross margin: total profit retained in the business — PMG Share is an
+  // internal growth/investment reserve, not an external cost, so it's still
+  // counted as profit here.
+  const grossMargin = snapshot.revenue > 0 ? ((snapshot.revenue - snapshot.expenses) / snapshot.revenue) * 100 : 0
+  const previousGrossMargin =
+    previous && previous.revenue > 0 ? ((previous.revenue - previous.expenses) / previous.revenue) * 100 : null
+  const grossMarginDelta = previousGrossMargin !== null ? grossMargin - previousGrossMargin : null
+
+  // Distributable margin: what's left for salary/reinvest/reserve/flex after
+  // the PMG cross-divisional growth reserve is set aside.
+  const netMargin = snapshot.revenue > 0 ? (snapshot.profitPool / snapshot.revenue) * 100 : 0
+  const previousNetMargin =
     previous && previous.revenue > 0 ? (previous.profitPool / previous.revenue) * 100 : null
-  const marginDelta = previousMargin !== null ? margin - previousMargin : null
+  const netMarginDelta = previousNetMargin !== null ? netMargin - previousNetMargin : null
 
   return (
     <Card>
@@ -449,27 +507,20 @@ function SnapshotDetail({
           )}
         </div>
 
-        <div className="grid grid-cols-2 gap-3">
-          <DetailMetric
-            label="Profit margin"
-            formattedValue={`${margin.toFixed(1)}%`}
-            tone={isProfitable ? "positive" : "negative"}
+        <div className="flex flex-col gap-3 rounded-md border border-border p-3">
+          <MarginRow
+            label="Gross margin"
+            hint="Total profit retained in the business (Revenue − Expenses) ÷ Revenue — includes the PMG growth & investment reserve, since that stays within the organisation."
+            value={grossMargin}
+            delta={grossMarginDelta}
           />
-          <div className="flex flex-col gap-1">
-            <span className="text-xs text-muted-foreground">vs last month</span>
-            <span
-              className={cn(
-                "text-base font-semibold tabular-nums",
-                marginDelta === null
-                  ? "text-muted-foreground"
-                  : marginDelta >= 0
-                    ? "text-emerald-600"
-                    : "text-destructive",
-              )}
-            >
-              {marginDelta === null ? "—" : `${marginDelta >= 0 ? "+" : ""}${marginDelta.toFixed(1)}pp`}
-            </span>
-          </div>
+          <div className="h-px bg-border" />
+          <MarginRow
+            label="Distributable margin"
+            hint="Profit Pool ÷ Revenue — what's left for salary, reinvestment, reserve & flex allocations after the PMG cross-divisional growth reserve is set aside."
+            value={netMargin}
+            delta={netMarginDelta}
+          />
         </div>
 
         {sparklineData.length > 1 && (
@@ -517,22 +568,41 @@ function SnapshotDetail({
   )
 }
 
-function DetailMetric({
+function MarginRow({
   label,
+  hint,
   value,
-  formattedValue,
-  tone = "default",
+  delta,
 }: {
   label: string
-  value?: number
-  formattedValue?: string
-  tone?: AmountTone
+  hint: string
+  value: number
+  delta: number | null
 }) {
   return (
-    <div className="flex flex-col gap-1">
-      <span className="text-xs text-muted-foreground">{label}</span>
-      <span className={cn("text-base font-semibold tabular-nums", amountToneClass(tone))}>
-        {formattedValue ?? formatZAR(value ?? 0)}
+    <div className="flex items-center justify-between gap-2" title={hint}>
+      <div className="flex flex-col gap-1">
+        <span className="text-xs text-muted-foreground">{label}</span>
+        <span
+          className={cn(
+            "text-base font-semibold tabular-nums",
+            value >= 0 ? "text-emerald-600" : "text-destructive",
+          )}
+        >
+          {value.toFixed(1)}%
+        </span>
+      </div>
+      <span
+        className={cn(
+          "text-xs font-medium tabular-nums",
+          delta === null
+            ? "text-muted-foreground"
+            : delta >= 0
+              ? "text-emerald-600"
+              : "text-destructive",
+        )}
+      >
+        {delta === null ? "First month" : `${delta >= 0 ? "+" : ""}${delta.toFixed(1)}pp vs last month`}
       </span>
     </div>
   )
