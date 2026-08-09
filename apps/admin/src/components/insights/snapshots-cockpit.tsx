@@ -429,7 +429,7 @@ function SnapshotDetail({
     previous && previous.revenue > 0 ? (previous.profitPool / previous.revenue) * 100 : null
 
   return (
-    <Card className="lg:sticky lg:top-24 lg:self-start">
+    <Card className="lg:sticky lg:top-[8.25rem] lg:self-start">
       <CardHeader>
         <div className="flex items-center justify-between gap-3">
           <div>
