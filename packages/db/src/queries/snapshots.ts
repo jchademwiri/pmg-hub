@@ -53,10 +53,12 @@ export async function insertSnapshot(
       expenses: String(summary.expenses),
       pmgShare: String(summary.pmgShare),
       profitPool: String(summary.profitPool),
-      salary: String(summary.salary),
-      reinvest: String(summary.reinvest),
-      reserve: String(summary.reserve),
-      flex: String(summary.flex),
+      // Legacy distribution buckets, removed from the app. Columns are still
+      // NOT NULL; new closes write 0.
+      salary: '0',
+      reinvest: '0',
+      reserve: '0',
+      flex: '0',
       createdBy: opts?.createdBy ?? null,
       notes: opts?.notes ?? null,
     })

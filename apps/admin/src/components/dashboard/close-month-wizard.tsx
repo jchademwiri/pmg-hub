@@ -42,10 +42,6 @@ interface CloseMonthWizardProps {
     expenses: number
     pmgShare: number
     profitPool: number
-    salary?: number
-    reinvest?: number
-    reserve?: number
-    flex?: number
   }
 }
 

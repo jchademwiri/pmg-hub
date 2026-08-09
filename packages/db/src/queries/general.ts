@@ -6,6 +6,7 @@ import {
   divisions,
   clients,
   ledger,
+  type AllocationType,
 } from '../schema/index';
 import { sql, eq, and, desc, asc } from 'drizzle-orm';
 import { getActiveRates } from './distribution-settings';
@@ -16,10 +17,6 @@ export type PeriodSummary = {
   expenses: number;
   pmgShare: number;
   profitPool: number;
-  salary: number;
-  reinvest: number;
-  reserve: number;
-  flex: number;
 };
 
 export async function getTotalRevenue(): Promise<number> {
@@ -185,10 +182,6 @@ export async function getFinancialSummaryForPeriod(
     expenses: expTotal,
     pmgShare,
     profitPool,
-    salary: profitPool * effectiveRates.salary,
-    reinvest: profitPool * effectiveRates.reinvest,
-    reserve: profitPool * effectiveRates.reserve,
-    flex: profitPool * effectiveRates.flex,
   };
 }
 
@@ -436,7 +429,7 @@ export async function getExpensesByPeriod(
  */
 export async function getLedgerEntriesByPeriod(
   period: string,
-  allocationType?: 'salary' | 'reinvest' | 'reserve' | 'flex' | 'pmg_share',
+  allocationType?: AllocationType,
 ): Promise<{ total: number; entries: { date: string; description: string | null; amount: number; entryType: string }[] }> {
   const conditions = [
     sql`TO_CHAR(${ledger.date}, 'YYYY-MM') = ${period}`,

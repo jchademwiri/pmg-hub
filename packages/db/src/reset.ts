@@ -17,7 +17,6 @@ console.log("⚠️  Truncating all table data...");
 await client.query(`
   truncate table
     snapshots,
-    withdrawals,
     leads,
     expenses,
     income,

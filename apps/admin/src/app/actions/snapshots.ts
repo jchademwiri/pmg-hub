@@ -19,7 +19,6 @@ const periodSchema = z.string().regex(/^\d{4}-\d{2}$/);
 
 export async function getPeriodSummary(period: string): Promise<{
   revenue: number; expenses: number; pmgShare: number; profitPool: number;
-  salary?: number; reinvest?: number; reserve?: number; flex?: number;
 } | { error: string }> {
   const parsed = periodSchema.safeParse(period);
   if (!parsed.success) return { error: 'Period must be YYYY-MM' };
