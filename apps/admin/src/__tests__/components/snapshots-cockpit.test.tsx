@@ -1,4 +1,12 @@
-import { describe, it, expect } from 'vitest'
+import { describe, it, expect, vi } from 'vitest'
+
+// snapshots-cockpit.tsx imports the getSnapshotArSummary server action, which
+// transitively pulls in auth.ts ('server-only') — stub it out since these
+// tests only exercise the module's pure helper functions.
+vi.mock('@/app/actions/snapshots', () => ({
+  getSnapshotArSummary: vi.fn(),
+}))
+
 import { shiftPeriod, computeStreak, type SnapshotView } from '@/components/insights/snapshots-cockpit'
 
 function makeRow(period: string, profitPool: number): SnapshotView {

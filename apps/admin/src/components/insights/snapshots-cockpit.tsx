@@ -1,6 +1,6 @@
 "use client"
 
-import { useMemo, useState } from "react"
+import { useEffect, useMemo, useState } from "react"
 import { CalendarCheck, FileText, LockKeyhole, TrendingDown, TrendingUp } from "lucide-react"
 import type { SnapshotRow } from "@pmg/db"
 import { Badge } from "@/components/ui/badge"
@@ -18,6 +18,9 @@ import {
 import { cn } from "@/lib/utils"
 import { fmtDate, formatZAR, fmtMonthYear } from "@/lib/format"
 import { DeltaBadge, Sparkline } from "@/components/reports/report-kpi-strip"
+import { getSnapshotArSummary } from "@/app/actions/snapshots"
+
+type ArSummary = { invoiced: number; paid: number; arBalance: number }
 
 interface SnapshotsCockpitProps {
   snapshots: SnapshotRow[]
@@ -117,6 +120,41 @@ export function SnapshotsCockpit({ snapshots }: SnapshotsCockpitProps) {
     const streak = computeStreak(rows, index)
     return { previous, yoySnapshot, sparklineData, streak }
   }, [rows, selectedSnapshot])
+
+  const [arSummary, setArSummary] = useState<{
+    selected: ArSummary | null
+    previous: ArSummary | null
+    loading: boolean
+    error: string | null
+  }>({ selected: null, previous: null, loading: false, error: null })
+
+  useEffect(() => {
+    if (!selectedSnapshot) return
+    let cancelled = false
+    setArSummary((state) => ({ ...state, loading: true, error: null }))
+
+    const previousPeriod = detail?.previous?.period
+    Promise.all([
+      getSnapshotArSummary(selectedSnapshot.period),
+      previousPeriod ? getSnapshotArSummary(previousPeriod) : Promise.resolve(null),
+    ]).then(([selectedResult, previousResult]) => {
+      if (cancelled) return
+      if (selectedResult && "error" in selectedResult) {
+        setArSummary({ selected: null, previous: null, loading: false, error: selectedResult.error })
+        return
+      }
+      setArSummary({
+        selected: selectedResult,
+        previous: previousResult && !("error" in previousResult) ? previousResult : null,
+        loading: false,
+        error: null,
+      })
+    })
+
+    return () => {
+      cancelled = true
+    }
+  }, [selectedSnapshot?.id, detail?.previous?.period])
 
   const totals = useMemo(
     () =>
@@ -269,6 +307,10 @@ export function SnapshotsCockpit({ snapshots }: SnapshotsCockpitProps) {
             yoySnapshot={detail.yoySnapshot}
             sparklineData={detail.sparklineData}
             streak={detail.streak}
+            arSelected={arSummary.selected}
+            arPrevious={arSummary.previous}
+            arLoading={arSummary.loading}
+            arError={arSummary.error}
           />
         )}
       </div>
@@ -313,12 +355,20 @@ function SnapshotDetail({
   yoySnapshot,
   sparklineData,
   streak,
+  arSelected,
+  arPrevious,
+  arLoading,
+  arError,
 }: {
   snapshot: SnapshotView
   previous: SnapshotView | undefined
   yoySnapshot: SnapshotView | undefined
   sparklineData: number[]
   streak: number
+  arSelected: ArSummary | null
+  arPrevious: ArSummary | null
+  arLoading: boolean
+  arError: string | null
 }) {
   const isProfitable = snapshot.profitPool >= 0
   const margin = snapshot.revenue > 0 ? (snapshot.profitPool / snapshot.revenue) * 100 : 0
@@ -364,6 +414,41 @@ function SnapshotDetail({
           </div>
         )}
 
+        <div className="flex flex-col gap-2 rounded-md border border-border p-3">
+          <span className="text-xs font-medium text-muted-foreground">Billing &amp; AR</span>
+          {arError ? (
+            <p className="text-sm text-destructive">{arError}</p>
+          ) : arLoading || !arSelected ? (
+            <p className="text-sm text-muted-foreground">Loading…</p>
+          ) : (
+            <div className="flex flex-col gap-1.5">
+              <div className="flex items-center justify-between gap-2">
+                <span className="text-sm">Invoiced</span>
+                <div className="flex items-center gap-2">
+                  <span className="text-sm font-medium tabular-nums">{formatZAR(arSelected.invoiced)}</span>
+                  {arPrevious && <DeltaBadge current={arSelected.invoiced} previous={arPrevious.invoiced} label="" />}
+                </div>
+              </div>
+              <div className="flex items-center justify-between gap-2">
+                <span className="text-sm">Paid</span>
+                <div className="flex items-center gap-2">
+                  <span className="text-sm font-medium tabular-nums">{formatZAR(arSelected.paid)}</span>
+                  {arPrevious && <DeltaBadge current={arSelected.paid} previous={arPrevious.paid} label="" />}
+                </div>
+              </div>
+              <div className="flex items-center justify-between gap-2">
+                <span className="text-sm">AR at close</span>
+                <div className="flex items-center gap-2">
+                  <span className="text-sm font-medium tabular-nums">{formatZAR(arSelected.arBalance)}</span>
+                  {arPrevious && (
+                    <DeltaBadge current={arSelected.arBalance} previous={arPrevious.arBalance} invertDelta label="" />
+                  )}
+                </div>
+              </div>
+            </div>
+          )}
+        </div>
+
         <div className="grid grid-cols-2 gap-3">
           <DetailMetric
             label="Profit margin"
@@ -392,6 +477,11 @@ function SnapshotDetail({
             <div className="flex flex-col gap-0.5">
               <span className="text-xs text-muted-foreground">Profit pool trend</span>
               <span className="text-xs text-muted-foreground">last {sparklineData.length} months</span>
+              <DeltaBadge
+                current={sparklineData[sparklineData.length - 1]}
+                previous={sparklineData[0]}
+                label={`over ${sparklineData.length} mo`}
+              />
             </div>
             <Sparkline data={sparklineData} colorClass={isProfitable ? "text-emerald-500" : "text-red-500"} />
           </div>
