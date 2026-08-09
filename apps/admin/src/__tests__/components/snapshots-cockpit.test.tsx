@@ -7,7 +7,12 @@ vi.mock('@/app/actions/snapshots', () => ({
   getSnapshotArSummary: vi.fn(),
 }))
 
-import { shiftPeriod, computeStreak, type SnapshotView } from '@/components/insights/snapshots-cockpit'
+import {
+  shiftPeriod,
+  computeStreak,
+  getCurrentFinancialYearRange,
+  type SnapshotView,
+} from '@/components/insights/snapshots-cockpit'
 
 function makeRow(period: string, profitPool: number): SnapshotView {
   return {
@@ -82,5 +87,35 @@ describe('computeStreak', () => {
   it('returns 1 for the oldest row regardless of what came before it', () => {
     const rows = [makeRow('2026-06', 100), makeRow('2026-05', -10)]
     expect(computeStreak(rows, 1)).toBe(1)
+  })
+})
+
+describe('getCurrentFinancialYearRange', () => {
+  it('names the FY by the ending year when the reference date is on/after March', () => {
+    expect(getCurrentFinancialYearRange(new Date(2026, 7, 9))).toEqual({
+      startPeriod: '2026-03',
+      endPeriod: '2027-02',
+    })
+  })
+
+  it('names the FY by the ending year when the reference date is before March', () => {
+    expect(getCurrentFinancialYearRange(new Date(2026, 0, 15))).toEqual({
+      startPeriod: '2025-03',
+      endPeriod: '2026-02',
+    })
+  })
+
+  it('treats March itself as the first month of the new FY', () => {
+    expect(getCurrentFinancialYearRange(new Date(2026, 2, 1))).toEqual({
+      startPeriod: '2026-03',
+      endPeriod: '2027-02',
+    })
+  })
+
+  it('treats February itself as the last month of the current FY', () => {
+    expect(getCurrentFinancialYearRange(new Date(2026, 1, 28))).toEqual({
+      startPeriod: '2025-03',
+      endPeriod: '2026-02',
+    })
   })
 })

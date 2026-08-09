@@ -1,7 +1,7 @@
 "use client"
 
 import { useEffect, useMemo, useState } from "react"
-import { CalendarCheck, FileText, LockKeyhole, TrendingDown, TrendingUp } from "lucide-react"
+import { CalendarCheck, FileText, LockKeyhole, Percent, TrendingDown, TrendingUp } from "lucide-react"
 import type { SnapshotRow } from "@pmg/db"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
@@ -57,6 +57,25 @@ export function shiftPeriod(period: string, months: number): string {
   const year = Math.floor(totalMonths / 12)
   const month = (totalMonths % 12) + 1
   return `${year}-${String(month).padStart(2, "0")}`
+}
+
+/**
+ * The current South African fiscal year (March -> Feb, named by the ending
+ * year — e.g. "2027-FY" spans 2026-03 to 2027-02), as a "YYYY-MM" range.
+ * Mirrors resolvePeriodDateRange's "-FY" convention in packages/db.
+ */
+export function getCurrentFinancialYearRange(referenceDate: Date = new Date()): {
+  startPeriod: string
+  endPeriod: string
+} {
+  const year = referenceDate.getFullYear()
+  const month = referenceDate.getMonth() + 1 // 1-12
+  const fyEndYear = month >= 3 ? year + 1 : year
+  const fyStartYear = fyEndYear - 1
+  return {
+    startPeriod: `${fyStartYear}-03`,
+    endPeriod: `${fyEndYear}-02`,
+  }
 }
 
 /** Consecutive closed months (starting at `fromIndex`, walking toward older rows) on the same side of profit/loss. */
@@ -156,9 +175,18 @@ export function SnapshotsCockpit({ snapshots }: SnapshotsCockpitProps) {
     }
   }, [selectedSnapshot?.id, detail?.previous?.period])
 
+  const { startPeriod: fyStartPeriod, endPeriod: fyEndPeriod } = useMemo(
+    () => getCurrentFinancialYearRange(),
+    [],
+  )
+  const fyRows = useMemo(
+    () => rows.filter((row) => row.period >= fyStartPeriod && row.period <= fyEndPeriod),
+    [rows, fyStartPeriod, fyEndPeriod],
+  )
+
   const totals = useMemo(
     () =>
-      rows.reduce(
+      fyRows.reduce(
         (acc, row) => ({
           revenue: acc.revenue + row.revenue,
           expenses: acc.expenses + row.expenses,
@@ -166,8 +194,10 @@ export function SnapshotsCockpit({ snapshots }: SnapshotsCockpitProps) {
         }),
         { revenue: 0, expenses: 0, profitPool: 0 },
       ),
-    [rows],
+    [fyRows],
   )
+  const grossMarginPct = totals.revenue > 0 ? ((totals.revenue - totals.expenses) / totals.revenue) * 100 : 0
+  const netMarginPct = totals.revenue > 0 ? (totals.profitPool / totals.revenue) * 100 : 0
 
   if (rows.length === 0) {
     return (
@@ -182,26 +212,43 @@ export function SnapshotsCockpit({ snapshots }: SnapshotsCockpitProps) {
 
   return (
     <div className="flex flex-col gap-5">
-      <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
-        <SummaryMetric label="Closed months" value={String(rows.length)} icon={CalendarCheck} />
-        <SummaryMetric
-          label="Total revenue"
-          value={formatZAR(totals.revenue)}
-          icon={TrendingUp}
-          tone="revenue"
-        />
-        <SummaryMetric
-          label="Total expenses"
-          value={formatZAR(totals.expenses)}
-          icon={TrendingDown}
-          tone="expense"
-        />
-        <SummaryMetric
-          label="Total profit/loss"
-          value={formatZAR(totals.profitPool)}
-          icon={totals.profitPool >= 0 ? TrendingUp : TrendingDown}
-          tone={totals.profitPool >= 0 ? "positive" : "negative"}
-        />
+      <div className="flex flex-col gap-3">
+        <span className="text-xs font-medium text-muted-foreground">
+          Financial year {fmtMonthYear(fyStartPeriod, { short: true })} – {fmtMonthYear(fyEndPeriod, { short: true })}
+        </span>
+        <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+          <SummaryMetric label="Closed months" value={String(fyRows.length)} icon={CalendarCheck} />
+          <SummaryMetric
+            label="Total revenue"
+            value={formatZAR(totals.revenue)}
+            icon={TrendingUp}
+            tone="revenue"
+          />
+          <SummaryMetric
+            label="Total expenses"
+            value={formatZAR(totals.expenses)}
+            icon={TrendingDown}
+            tone="expense"
+          />
+          <SummaryMetric
+            label="Total profit/loss"
+            value={formatZAR(totals.profitPool)}
+            icon={totals.profitPool >= 0 ? TrendingUp : TrendingDown}
+            tone={totals.profitPool >= 0 ? "positive" : "negative"}
+          />
+          <SummaryMetric
+            label="Profit percentage"
+            value={`${grossMarginPct.toFixed(1)}%`}
+            icon={Percent}
+            tone={grossMarginPct >= 0 ? "positive" : "negative"}
+          />
+          <SummaryMetric
+            label="Profit margin"
+            value={`${netMarginPct.toFixed(1)}%`}
+            icon={Percent}
+            tone={netMarginPct >= 0 ? "positive" : "negative"}
+          />
+        </div>
       </div>
 
       <div className="grid gap-5 xl:grid-cols-[minmax(0,1fr)_320px]">
