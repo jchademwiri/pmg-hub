@@ -17,12 +17,13 @@ import {
 } from "@/components/ui/table"
 import { cn } from "@/lib/utils"
 import { fmtDate, formatZAR, fmtMonthYear } from "@/lib/format"
+import { DeltaBadge, Sparkline } from "@/components/reports/report-kpi-strip"
 
 interface SnapshotsCockpitProps {
   snapshots: SnapshotRow[]
 }
 
-type SnapshotView = {
+export type SnapshotView = {
   id: string
   period: string
   periodLabel: string
@@ -44,6 +45,26 @@ type AmountTone = "default" | "revenue" | "expense" | "positive" | "negative" | 
 
 function toMoney(value: string) {
   return Number(value) || 0
+}
+
+/** Shifts a "YYYY-MM" period by `months` (negative to go back). */
+export function shiftPeriod(period: string, months: number): string {
+  const [yearStr, monthStr] = period.split("-")
+  const totalMonths = Number(yearStr) * 12 + (Number(monthStr) - 1) + months
+  const year = Math.floor(totalMonths / 12)
+  const month = (totalMonths % 12) + 1
+  return `${year}-${String(month).padStart(2, "0")}`
+}
+
+/** Consecutive closed months (starting at `fromIndex`, walking toward older rows) on the same side of profit/loss. */
+export function computeStreak(rows: SnapshotView[], fromIndex: number): number {
+  const isProfitable = rows[fromIndex].profitPool >= 0
+  let streak = 0
+  for (let i = fromIndex; i < rows.length; i++) {
+    if ((rows[i].profitPool >= 0) !== isProfitable) break
+    streak++
+  }
+  return streak
 }
 
 function amountToneClass(tone: AmountTone) {
@@ -82,6 +103,20 @@ export function SnapshotsCockpit({ snapshots }: SnapshotsCockpitProps) {
 
   const [selectedId, setSelectedId] = useState(rows[0]?.id ?? "")
   const selectedSnapshot = rows.find((row) => row.id === selectedId) ?? rows[0]
+
+  const detail = useMemo(() => {
+    if (!selectedSnapshot) return null
+    const index = rows.findIndex((row) => row.id === selectedSnapshot.id)
+    const previous = rows[index + 1]
+    const yoyPeriod = shiftPeriod(selectedSnapshot.period, -12)
+    const yoySnapshot = rows.find((row) => row.period === yoyPeriod)
+    const sparklineData = rows
+      .slice(index, index + 6)
+      .reverse()
+      .map((row) => row.profitPool)
+    const streak = computeStreak(rows, index)
+    return { previous, yoySnapshot, sparklineData, streak }
+  }, [rows, selectedSnapshot])
 
   const totals = useMemo(
     () =>
@@ -227,7 +262,15 @@ export function SnapshotsCockpit({ snapshots }: SnapshotsCockpitProps) {
           </CardContent>
         </Card>
 
-        {selectedSnapshot && <SnapshotDetail snapshot={selectedSnapshot} />}
+        {selectedSnapshot && detail && (
+          <SnapshotDetail
+            snapshot={selectedSnapshot}
+            previous={detail.previous}
+            yoySnapshot={detail.yoySnapshot}
+            sparklineData={detail.sparklineData}
+            streak={detail.streak}
+          />
+        )}
       </div>
     </div>
   )
@@ -264,8 +307,24 @@ function SummaryMetric({
   )
 }
 
-function SnapshotDetail({ snapshot }: { snapshot: SnapshotView }) {
+function SnapshotDetail({
+  snapshot,
+  previous,
+  yoySnapshot,
+  sparklineData,
+  streak,
+}: {
+  snapshot: SnapshotView
+  previous: SnapshotView | undefined
+  yoySnapshot: SnapshotView | undefined
+  sparklineData: number[]
+  streak: number
+}) {
   const isProfitable = snapshot.profitPool >= 0
+  const margin = snapshot.revenue > 0 ? (snapshot.profitPool / snapshot.revenue) * 100 : 0
+  const previousMargin =
+    previous && previous.revenue > 0 ? (previous.profitPool / previous.revenue) * 100 : null
+  const marginDelta = previousMargin !== null ? margin - previousMargin : null
 
   return (
     <Card>
@@ -281,16 +340,81 @@ function SnapshotDetail({ snapshot }: { snapshot: SnapshotView }) {
         </div>
       </CardHeader>
       <CardContent className="flex flex-col gap-4">
+        {previous ? (
+          <div className="flex flex-col gap-2 rounded-md border border-border p-3">
+            <span className="text-xs font-medium text-muted-foreground">vs {previous.periodLabel}</span>
+            <div className="flex flex-col gap-1.5">
+              <div className="flex items-center justify-between gap-2">
+                <span className="text-sm">Revenue</span>
+                <DeltaBadge current={snapshot.revenue} previous={previous.revenue} label="" />
+              </div>
+              <div className="flex items-center justify-between gap-2">
+                <span className="text-sm">Expenses</span>
+                <DeltaBadge current={snapshot.expenses} previous={previous.expenses} invertDelta label="" />
+              </div>
+              <div className="flex items-center justify-between gap-2">
+                <span className="text-sm">Profit Pool</span>
+                <DeltaBadge current={snapshot.profitPool} previous={previous.profitPool} label="" />
+              </div>
+            </div>
+          </div>
+        ) : (
+          <div className="rounded-md border border-dashed border-border p-3 text-sm text-muted-foreground">
+            First closed month — no prior month to compare against.
+          </div>
+        )}
+
         <div className="grid grid-cols-2 gap-3">
-          <DetailMetric label="Revenue" value={snapshot.revenue} tone="revenue" />
-          <DetailMetric label="Expenses" value={snapshot.expenses} tone="expense" />
-          <DetailMetric label="PMG Share" value={snapshot.pmgShare} tone="share" />
           <DetailMetric
-            label={isProfitable ? "Profit Pool" : "Net Loss"}
-            value={snapshot.profitPool}
+            label="Profit margin"
+            formattedValue={`${margin.toFixed(1)}%`}
             tone={isProfitable ? "positive" : "negative"}
           />
+          <div className="flex flex-col gap-1">
+            <span className="text-xs text-muted-foreground">vs last month</span>
+            <span
+              className={cn(
+                "text-base font-semibold tabular-nums",
+                marginDelta === null
+                  ? "text-muted-foreground"
+                  : marginDelta >= 0
+                    ? "text-emerald-600"
+                    : "text-destructive",
+              )}
+            >
+              {marginDelta === null ? "—" : `${marginDelta >= 0 ? "+" : ""}${marginDelta.toFixed(1)}pp`}
+            </span>
+          </div>
         </div>
+
+        {sparklineData.length > 1 && (
+          <div className="flex items-center justify-between gap-3 rounded-md border border-border p-3">
+            <div className="flex flex-col gap-0.5">
+              <span className="text-xs text-muted-foreground">Profit pool trend</span>
+              <span className="text-xs text-muted-foreground">last {sparklineData.length} months</span>
+            </div>
+            <Sparkline data={sparklineData} colorClass={isProfitable ? "text-emerald-500" : "text-red-500"} />
+          </div>
+        )}
+
+        <div className="flex items-center gap-2 rounded-md border border-border p-3">
+          {isProfitable ? (
+            <TrendingUp className="size-4 shrink-0 text-emerald-600" />
+          ) : (
+            <TrendingDown className="size-4 shrink-0 text-destructive" />
+          )}
+          <span className="text-sm">
+            <span className="font-semibold">{streak}</span> consecutive{" "}
+            {isProfitable ? "profitable" : "loss"} month{streak === 1 ? "" : "s"}
+          </span>
+        </div>
+
+        {yoySnapshot && (
+          <div className="flex items-center justify-between gap-2 rounded-md border border-border p-3">
+            <span className="text-sm">vs {yoySnapshot.periodLabel}</span>
+            <DeltaBadge current={snapshot.revenue} previous={yoySnapshot.revenue} label="revenue" />
+          </div>
+        )}
 
         <div className="flex flex-col gap-1 rounded-md border border-border p-3">
           <span className="text-sm font-medium">Notes</span>
@@ -306,25 +430,19 @@ function SnapshotDetail({ snapshot }: { snapshot: SnapshotView }) {
 function DetailMetric({
   label,
   value,
-  compact = false,
+  formattedValue,
   tone = "default",
 }: {
   label: string
-  value: number
-  compact?: boolean
+  value?: number
+  formattedValue?: string
   tone?: AmountTone
 }) {
   return (
     <div className="flex flex-col gap-1">
       <span className="text-xs text-muted-foreground">{label}</span>
-      <span
-        className={cn(
-          "font-semibold tabular-nums",
-          compact ? "text-sm" : "text-base",
-          amountToneClass(tone),
-        )}
-      >
-        {formatZAR(value)}
+      <span className={cn("text-base font-semibold tabular-nums", amountToneClass(tone))}>
+        {formattedValue ?? formatZAR(value ?? 0)}
       </span>
     </div>
   )
