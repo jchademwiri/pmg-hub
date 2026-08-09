@@ -349,7 +349,11 @@ export async function getMonthlyARBalanceForYear(
     invoice_base AS (
       SELECT id, invoice_date::date AS invoice_date, total::numeric AS total
       FROM invoices
-      WHERE status IN ('issued', 'partially_paid', 'paid', 'overdue')
+      -- 'paid' is deliberately excluded, unlike the "invoiced" (Revenue) status set —
+      -- a fully paid invoice can still carry a stray credit note applied after the
+      -- fact, which would otherwise show up here as a negative balance and wash out
+      -- real outstanding AR from other invoices. Matches getAgingReport's status set.
+      WHERE status IN ('issued', 'partially_paid', 'overdue')
         AND EXTRACT(YEAR FROM (invoice_date::date - INTERVAL '2 months'))::int = ${Number(year)}
     )
     SELECT

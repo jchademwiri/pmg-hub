@@ -18,13 +18,13 @@ export function WaterfallChart({
   profitPool,
 }: WaterfallChartProps) {
   // Define steps
-  // 1. Gross Revenue (+)
+  // 1. Gross Cash Receipts (+)
   // 2. PMG Share (25%) (-)
   // 3. Operating Expenses (-)
   // 4. Net Profit Pool (=)
   const steps = [
     {
-      label: 'Gross Revenue',
+      label: 'Gross Cash Receipts',
       value: revenue,
       type: 'start' as const,
       color: 'fill-emerald-500 dark:fill-emerald-400',
@@ -122,7 +122,7 @@ export function WaterfallChart({
           <span>Waterfall Ledger — Cash Flow Analysis</span>
         </CardTitle>
         <CardDescription>
-          Deconstruction of Gross Revenue showing PMG Share contribution, operating cost reductions, and net pool yield.
+          Deconstruction of Gross Cash Receipts showing PMG Share contribution, operating cost reductions, and net pool yield.
         </CardDescription>
       </CardHeader>
       <CardContent className="pt-2">
