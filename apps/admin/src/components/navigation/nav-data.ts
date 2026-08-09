@@ -12,12 +12,13 @@ import {
   Banknote, FileSpreadsheet, Network, LineChart, Cog,
   LayoutDashboard, TrendingUp, TrendingDown, Tags, BookOpen,
   FileText, Receipt, ScrollText, Users, UserPlus, Building2,
-  Camera, BarChart3, Settings, UserCog, PiggyBank,
+  Camera, BarChart3, Settings, UserCog,
   Package, Shield, Database, Wallet, ArrowDownLeft,
   PieChart, Calculator, BookMarked, NotebookPen, Scale,
-  Calendar, Download, LayoutGrid, CalendarClock, ListTodo, CalendarRange,
+  Calendar, LayoutGrid, CalendarClock, ListTodo, CalendarRange,
 } from 'lucide-react'
 import type { LucideIcon } from 'lucide-react'
+import type { Role } from '@/lib/roles'
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 
@@ -25,6 +26,8 @@ export type NavItem = {
   title: string
   url: string
   icon: LucideIcon
+  /** Hide this item from the sidebar unless the current user meets this role. */
+  minRole?: Role
 }
 
 export type GroupKey = 'billing' | 'finance' | 'accounting' | 'relationships' | 'insights' | 'system' | 'projects' | 'advanced'
@@ -44,6 +47,9 @@ export const OVERVIEW: NavItem[] = [
 ]
 
 // ── Groups ────────────────────────────────────────────────────────────────────
+// Order here is the sidebar's rendered order (top to bottom), prioritized around
+// daily workflow: revenue ops and client relationships first, periodic
+// accounting/reporting work further down, System pinned in the footer.
 
 export const GROUPS: NavGroup[] = [
   {
@@ -62,6 +68,17 @@ export const GROUPS: NavGroup[] = [
     ],
   },
   {
+    key: 'relationships',
+    label: 'Clients',
+    icon: Network,
+    items: [
+      { title: 'Overview',  url: '/relationships',           icon: LayoutGrid },
+      { title: 'Clients',   url: '/relationships/clients',   icon: Users      },
+      { title: 'Leads',     url: '/relationships/leads',     icon: UserPlus   },
+      { title: 'Divisions', url: '/relationships/divisions', icon: Building2  },
+    ],
+  },
+  {
     key: 'projects',
     label: 'Projects',
     icon: CalendarClock,
@@ -73,37 +90,40 @@ export const GROUPS: NavGroup[] = [
   },
   {
     key: 'finance',
-    label: 'Finance & Accounting',
+    label: 'Finance',
     icon: Banknote,
     items: [
       { title: 'Overview',           url: '/finance',            icon: LayoutGrid    },
       { title: 'Income',             url: '/finance/income',     icon: ArrowDownLeft },
       { title: 'Expenses',           url: '/finance/expenses',   icon: TrendingDown  },
-      { title: 'Accounting Hub',     url: '/accounting',        icon: Calculator    },
       { title: 'Finance Categories', url: '/finance/categories', icon: Tags          },
     ],
   },
   {
-    key: 'relationships',
-    label: 'Clients',
-    icon: Network,
+    key: 'accounting',
+    label: 'Accounting',
+    icon: Calculator,
     items: [
-      { title: 'Overview',         url: '/relationships',              icon: LayoutGrid },
-      { title: 'Clients',          url: '/relationships/clients',      icon: Users      },
-      { title: 'Leads',            url: '/relationships/leads',        icon: UserPlus   },
-      { title: 'Divisions',        url: '/relationships/divisions',    icon: Building2  },
-      { title: 'Compliance Radar', url: '/insights/compliance-radar', icon: Shield     },
+      { title: 'Overview',           url: '/accounting',                    icon: LayoutGrid    },
+      { title: 'Chart of Accounts',  url: '/accounting/chart-of-accounts',  icon: BookOpen      },
+      { title: 'General Ledger',     url: '/accounting/general-ledger',     icon: BookMarked    },
+      { title: 'Journals',           url: '/accounting/journals',           icon: NotebookPen   },
+      { title: 'Trial Balance',      url: '/accounting/trial-balance',      icon: Scale         },
+      { title: 'Profit & Loss',      url: '/accounting/profit-and-loss',    icon: LineChart     },
+      { title: 'Accounting Periods', url: '/accounting/periods',            icon: Calendar      },
     ],
   },
   {
     key: 'insights',
-    label: 'Reports & Insights',
+    label: 'Reports',
     icon: BarChart3,
     items: [
-      { title: 'Overview',          url: '/insights',          icon: LayoutGrid },
-      { title: 'Business Analysis', url: '/insights/analysis', icon: TrendingUp },
-      { title: 'Insights Reports',  url: '/insights/reports',  icon: BarChart3  },
-      { title: 'Snapshots',         url: '/insights/snapshots', icon: Camera    },
+      { title: 'Financial Reports',  url: '/insights/financial-reports', icon: PieChart   },
+      { title: 'Overview',           url: '/insights',                   icon: LayoutGrid },
+      { title: 'Business Analysis',  url: '/insights/analysis',          icon: TrendingUp },
+      { title: 'Performance Reports', url: '/insights/reports',          icon: BarChart3  },
+      { title: 'Snapshots',          url: '/insights/snapshots',         icon: Camera     },
+      { title: 'Compliance Radar',   url: '/insights/compliance-radar',  icon: Shield     },
     ],
   },
   {
@@ -111,10 +131,10 @@ export const GROUPS: NavGroup[] = [
     label: 'System',
     icon: Cog,
     items: [
-      { title: 'Settings',       url: '/settings',              icon: Settings  },
-      { title: 'Users',          url: '/settings/users',        icon: UserCog   },
+      { title: 'Overview',       url: '/settings',              icon: Settings  },
       { title: 'Organisation',   url: '/settings/organisation', icon: Building2 },
       { title: 'Billing',        url: '/settings/billing',      icon: Receipt   },
+      { title: 'Users',          url: '/settings/users',        icon: UserCog, minRole: 'super_admin' },
       { title: 'Security',       url: '/settings/security',     icon: Shield    },
       { title: 'Data & Exports', url: '/settings/data',         icon: Database  },
     ],
@@ -141,13 +161,6 @@ const EXTRA_LABELS: Record<string, string> = {
   '/billing/payments/add': 'Record Payment',
   '/projects/list': 'Schedule List',
   '/projects/timeline': 'Timeline',
-  '/accounting/chart-of-accounts': 'Chart of Accounts',
-  '/accounting/journals': 'Journals',
-  '/accounting/general-ledger': 'General Ledger',
-  '/accounting/trial-balance': 'Trial Balance',
-  '/accounting/profit-and-loss': 'Profit & Loss',
-  '/accounting/periods': 'Accounting Periods',
-  '/accounting/reports': 'Financial Reports',
 }
 
 export const ROUTE_LABELS: Record<string, string> = {
