@@ -9,13 +9,6 @@ export const snapshots = pgTable(
     expenses:   numeric("expenses",    { precision: 12, scale: 2 }).notNull(),
     pmgShare:   numeric("pmg_share",   { precision: 12, scale: 2 }).notNull(),
     profitPool: numeric("profit_pool", { precision: 12, scale: 2 }).notNull(),
-    // salary/reinvest/reserve/flex: legacy distribution buckets, removed from the
-    // app. Columns kept (NOT NULL) for historical closed-month data; new closes
-    // write 0 here.
-    salary:     numeric("salary",      { precision: 12, scale: 2 }).notNull(),
-    reinvest:   numeric("reinvest",    { precision: 12, scale: 2 }).notNull(),
-    reserve:    numeric("reserve",     { precision: 12, scale: 2 }).notNull(),
-    flex:       numeric("flex",        { precision: 12, scale: 2 }).notNull(),
     createdBy:  uuid("created_by"),
     status:     text("status").notNull().default("locked"),
     notes:      text("notes"),

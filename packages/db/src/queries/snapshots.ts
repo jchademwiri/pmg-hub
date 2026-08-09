@@ -10,10 +10,6 @@ export type SnapshotRow = {
   expenses: string;
   pmgShare: string;
   profitPool: string;
-  salary: string;
-  reinvest: string;
-  reserve: string;
-  flex: string;
   createdBy: string | null;
   status: string;
   notes: string | null;
@@ -53,12 +49,6 @@ export async function insertSnapshot(
       expenses: String(summary.expenses),
       pmgShare: String(summary.pmgShare),
       profitPool: String(summary.profitPool),
-      // Legacy distribution buckets, removed from the app. Columns are still
-      // NOT NULL; new closes write 0.
-      salary: '0',
-      reinvest: '0',
-      reserve: '0',
-      flex: '0',
       createdBy: opts?.createdBy ?? null,
       notes: opts?.notes ?? null,
     })
