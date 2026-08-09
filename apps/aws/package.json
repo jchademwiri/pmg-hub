@@ -23,7 +23,6 @@
     "@pmg/emails": "workspace:*",
     "@pmg/tailwind-config": "workspace:*",
     "@pmg/utils": "workspace:*",
-    "@react-email/components": "^1.0.1",
     "@tailwindcss/vite": "^4.1.17",
     "@vercel/analytics": "^2.0.1",
     "astro": "^6.0.8",
@@ -31,14 +30,10 @@
     "react": "^19.2.1",
     "react-dom": "^19.2.1",
     "react-email": "^5.0.6",
-    "resend": "^6.5.2",
     "schema-dts": "^2.0.0",
-    "tailwind-merge": "^3.4.0",
-    "tailwind-variants": "^3.2.2",
     "tailwindcss": "^4.1.17"
   },
   "devDependencies": {
-    "@astrojs/check": "^0.9.7",
     "@types/react": "^19.2.7",
     "@types/react-dom": "^19.2.3",
     "vitest": "^3.0.0",

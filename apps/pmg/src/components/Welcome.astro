@@ -5,8 +5,6 @@ import Hero from './Hero.astro';
 import Services from './Services.astro';
 import About from './About.astro';
 import Flywheel from './Flywheel.astro';
-// import FAQ from './FAQ.astro';
-// import Contact from './Contact.astro';
 import Footer from './Footer.astro';
 import ContactModal from './ContactModal.astro';
 ---
@@ -30,8 +28,6 @@ import ContactModal from './ContactModal.astro';
   <Services />
   <About />
   <Flywheel />
-  <!-- <FAQ /> -->
-  <!-- <Contact /> -->
   <Footer />
 </div>
 
@@ -755,143 +751,6 @@ import ContactModal from './ContactModal.astro';
     display: flex;
     align-items: center;
     justify-content: center;
-  }
-
-  /* FAQ Section */
-  .faq-wrapper {
-    max-width: 720px;
-    display: flex;
-    flex-direction: column;
-    gap: 16px;
-  }
-
-  .faq-item {
-    background: var(--glass-bg);
-    border: 1px solid var(--glass-border);
-    border-radius: 10px;
-    overflow: hidden;
-    transition: border-color 0.25s ease;
-  }
-
-  .faq-item[open] {
-    border-color: var(--glass-border-hover);
-  }
-
-  summary {
-    padding: 24px;
-    font-size: 15px;
-    font-weight: 600;
-    color: var(--white);
-    cursor: pointer;
-    list-style: none;
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    user-select: none;
-  }
-
-  summary::-webkit-details-marker {
-    display: none;
-  }
-
-  summary::after {
-    content: '+';
-    font-family: 'Outfit', sans-serif;
-    font-size: 20px;
-    color: var(--orange);
-    transition: transform 0.2s ease;
-  }
-
-  .faq-item[open] summary::after {
-    content: '−';
-  }
-
-  .faq-content {
-    padding: 0 24px 24px 24px;
-    border-top: 1px solid var(--faint-border);
-    padding-top: 20px;
-  }
-
-  .faq-content p {
-    font-size: 14px;
-    color: var(--muted);
-    line-height: 1.6;
-    font-weight: 300;
-  }
-
-  /* Contact Section */
-  .contact-grid {
-    display: grid;
-    grid-template-columns: 1fr;
-    gap: 40px;
-  }
-
-  @media (min-width: 868px) {
-    .contact-grid {
-      grid-template-columns: 4fr 5fr;
-    }
-  }
-
-  .contact-info-panel {
-    display: flex;
-    flex-direction: column;
-    gap: 28px;
-  }
-
-  .info-group {
-    display: flex;
-    gap: 20px;
-    align-items: flex-start;
-  }
-
-  .info-icon {
-    width: 44px;
-    height: 44px;
-    background: var(--orange-dim);
-    border-radius: 8px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    color: var(--orange);
-    flex-shrink: 0;
-  }
-
-  .info-details {
-    display: flex;
-    flex-direction: column;
-    gap: 4px;
-  }
-
-  .info-details span {
-    font-size: 11px;
-    letter-spacing: 0.08em;
-    text-transform: uppercase;
-    color: var(--muted);
-    font-weight: 600;
-  }
-
-  .info-details a,
-  .info-details p {
-    font-size: 15px;
-    color: var(--white);
-    text-decoration: none;
-    font-weight: 500;
-    line-height: 1.4;
-  }
-
-  .info-details a:hover {
-    color: var(--orange);
-  }
-
-  .map-placeholder {
-    width: 100%;
-    height: 230px;
-    background: var(--glass-bg);
-    border: 1px solid var(--glass-border);
-    border-radius: 12px;
-    overflow: hidden;
-    position: relative;
-    box-shadow: inset 0 0 12px rgba(0, 0, 0, 0.2);
   }
 
   /* Contact Form */
