@@ -34,6 +34,7 @@ type Props = {
     profit:   { current: number; previous: number } | null
   }
   divisions: DivisionRevenueType[]
+  arByDivision: DivisionRevenueType[]
   monthlySeries: MonthlyFinancials[]
   sparklineData: MonthlyFinancials[]
   agingReport: AgingRow[]
@@ -62,6 +63,7 @@ export function DashboardShell({
   labels,
   deltas,
   divisions,
+  arByDivision = [],
   sparklineData = [],
   agingReport = [],
   budgetChartSeries = [],
@@ -255,6 +257,7 @@ export function DashboardShell({
         <ExpenseSnapshot
           divisions={divisions}
           expensesByDivision={expensesByDivision}
+          arByDivision={arByDivision}
           pmgShareRate={resolvedPmgShareRate}
         />
       </section>

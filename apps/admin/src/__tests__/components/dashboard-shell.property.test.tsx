@@ -63,6 +63,7 @@ const baseProps = {
   labels: { current: 'Jan 2025', previous: 'Dec 2024', ytd: 'YTD 2025' },
   deltas: { revenue: null, expenses: null, profit: null },
   divisions: [],
+  arByDivision: [],
   monthlySeries: [],
   sparklineData: [],
   agingReport: [],

@@ -27,6 +27,8 @@ import {
   getMonthlyFinancialsForYear,
   getMonthlyRevenueByDivisionForYear,
   getMonthlyRevenueVsInvoicedForYear,
+  getMonthlyARBalanceForYear,
+  getOutstandingByDivision,
   getAllSnapshots,
 } from '@pmg/db'
 import { fmtMonthYear, getSASTParts } from '@/lib/format'
@@ -38,7 +40,7 @@ export type { PeriodSummary } from '@pmg/db'
 export type MonthlyRevenueByDivision = { month: string; [divisionName: string]: number | string }
 export type MonthlyFinancials = { month: string; revenue: number; expenses: number }
 export type MonthlyRevenueVsInvoiced = { month: string; received: number; invoiced: number }
-export type MonthlyBudgetChartRow = { month: string; revenue: number; invoiced: number; expenses: number }
+export type MonthlyBudgetChartRow = { month: string; revenue: number; invoiced: number; expenses: number; ar: number }
 export type MoMSnapshot = { metric: string; current: number; previous: number }
 export type FinancialSummary = {
   revenue: number; expenses: number; pmgShare: number; profitPool: number;
@@ -106,6 +108,11 @@ export async function getLedgerEntriesForPeriod(
 // ── Division revenue ──────────────────────────────────────────────────────────
 export async function getDivisionRevenue(): Promise<DivisionRevenue[]> {
   return getRevenueByDivision()
+}
+
+// ── Division AR (current outstanding balance, by division) ────────────────────
+export async function getDivisionAR(): Promise<DivisionRevenue[]> {
+  return getOutstandingByDivision()
 }
 
 export async function getLeadCounts(): Promise<LeadStatusCount[]> {
@@ -215,28 +222,35 @@ export async function getRevenueVsInvoicedSeriesForYear(
 export async function getBudgetChartSeriesForYear(
   year: number
 ): Promise<MonthlyBudgetChartRow[]> {
-  const [revenueVsInvoiced, monthlyFinancials] = await Promise.all([
+  const [revenueVsInvoiced, monthlyFinancials, arBalance] = await Promise.all([
     getRevenueVsInvoicedSeriesForYear(year),
     getMonthlyFinancialsSeriesForYear(year),
+    getMonthlyARBalanceForYear(year),
   ])
 
   const monthMap = new Map<string, MonthlyBudgetChartRow>()
   for (let i = 0; i < 12; i += 1) {
     const date = new Date(year, 2 + i, 1)
     const month = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`
-    monthMap.set(month, { month, revenue: 0, invoiced: 0, expenses: 0 })
+    monthMap.set(month, { month, revenue: 0, invoiced: 0, expenses: 0, ar: 0 })
   }
 
   for (const row of revenueVsInvoiced) {
-    const entry = monthMap.get(row.month) ?? { month: row.month, revenue: 0, invoiced: 0, expenses: 0 }
+    const entry = monthMap.get(row.month) ?? { month: row.month, revenue: 0, invoiced: 0, expenses: 0, ar: 0 }
     entry.revenue = row.received
     entry.invoiced = row.invoiced
     monthMap.set(row.month, entry)
   }
 
   for (const row of monthlyFinancials) {
-    const entry = monthMap.get(row.month) ?? { month: row.month, revenue: 0, invoiced: 0, expenses: 0 }
+    const entry = monthMap.get(row.month) ?? { month: row.month, revenue: 0, invoiced: 0, expenses: 0, ar: 0 }
     entry.expenses = row.expenses
+    monthMap.set(row.month, entry)
+  }
+
+  for (const row of arBalance) {
+    const entry = monthMap.get(row.month) ?? { month: row.month, revenue: 0, invoiced: 0, expenses: 0, ar: 0 }
+    entry.ar = row.ar
     monthMap.set(row.month, entry)
   }
 

@@ -4,6 +4,7 @@ import type { DivisionRevenue } from '@/lib/financial'
 type ExpenseSnapshotProps = {
   divisions: DivisionRevenue[]
   expensesByDivision: { divisionId?: string; divisionName: string; total: number }[]
+  arByDivision: DivisionRevenue[]
   pmgShareRate: number
 }
 
@@ -21,12 +22,13 @@ const dotColorFor = (name: string, i: number) => DIVISION_COLORS[name] ?? DEFAUL
 
 const TITLE = 'Division Financial Breakdown'
 
-export function ExpenseSnapshot({ divisions, expensesByDivision, pmgShareRate }: ExpenseSnapshotProps) {
-  const revenueByName = new Map(divisions.map((d) => [d.divisionName, d]))
+export function ExpenseSnapshot({ divisions, expensesByDivision, arByDivision, pmgShareRate }: ExpenseSnapshotProps) {
+  const receiptsByName = new Map(divisions.map((d) => [d.divisionName, d]))
   const expenseByName = new Map(expensesByDivision.map((d) => [d.divisionName, d]))
-  // Union of both lists: a division can have revenue with no expenses (or vice versa)
-  // and should still show up, matching what Revenue by Division used to show.
-  const names = Array.from(new Set([...revenueByName.keys(), ...expenseByName.keys()]))
+  const arByName = new Map(arByDivision.map((d) => [d.divisionName, d]))
+  // Union of all three lists: a division can have cash receipts with no expenses (or
+  // vice versa), or still-outstanding AR with no receipts yet, and should still show up.
+  const names = Array.from(new Set([...receiptsByName.keys(), ...expenseByName.keys(), ...arByName.keys()]))
 
   const totalExpenses = expensesByDivision.reduce((sum, d) => sum + d.total, 0)
 
@@ -41,27 +43,31 @@ export function ExpenseSnapshot({ divisions, expensesByDivision, pmgShareRate }:
     )
   }
 
-  const totalRevenue = names.reduce((sum, name) => sum + (revenueByName.get(name)?.total ?? 0), 0)
-  const totalPmgShare = totalRevenue * pmgShareRate
-  const totalNet = totalRevenue - totalExpenses
+  const totalCashReceipts = names.reduce((sum, name) => sum + (receiptsByName.get(name)?.total ?? 0), 0)
+  const totalPmgShare = totalCashReceipts * pmgShareRate
+  const totalAR = names.reduce((sum, name) => sum + (arByName.get(name)?.total ?? 0), 0)
+  const totalNet = totalCashReceipts - totalExpenses
 
   const rows: DivisionBreakdownRow[] = names
     .map((name) => {
-      const revenue = revenueByName.get(name)
+      const receipts = receiptsByName.get(name)
       const expense = expenseByName.get(name)
-      const revenueTotal = revenue?.total ?? 0
+      const ar = arByName.get(name)
+      const cashReceiptsTotal = receipts?.total ?? 0
       const expenseTotal = expense?.total ?? 0
-      const pmgShare = revenueTotal * pmgShareRate
-      const net = revenueTotal - expenseTotal
+      const arTotal = ar?.total ?? 0
+      const pmgShare = cashReceiptsTotal * pmgShareRate
+      const net = cashReceiptsTotal - expenseTotal
       const pct = Math.round((expenseTotal / totalExpenses) * 100)
 
       return {
-        divisionId: revenue?.divisionId ?? expense?.divisionId,
+        divisionId: receipts?.divisionId ?? expense?.divisionId ?? ar?.divisionId,
         divisionName: name,
         pct,
         metrics: [
-          { label: 'Revenue', value: revenueTotal, colorClass: 'text-emerald-600' },
+          { label: 'Cash Receipts', value: cashReceiptsTotal, colorClass: 'text-emerald-600' },
           { label: 'PMG Share', value: pmgShare, colorClass: 'text-blue-600' },
+          { label: 'Accounts Receivable', value: arTotal, colorClass: 'text-violet-600' },
           { label: 'Expenses', value: expenseTotal, colorClass: 'text-red-600' },
           { label: 'Net', value: net, colorClass: net >= 0 ? 'text-emerald-600' : 'text-red-600' },
         ],
@@ -73,8 +79,9 @@ export function ExpenseSnapshot({ divisions, expensesByDivision, pmgShareRate }:
     <DivisionBreakdownCard
       title={TITLE}
       totals={[
-        { label: 'Revenue', value: totalRevenue, colorClass: 'text-emerald-600' },
+        { label: 'Cash Receipts', value: totalCashReceipts, colorClass: 'text-emerald-600' },
         { label: 'PMG Share', value: totalPmgShare, colorClass: 'text-blue-600' },
+        { label: 'AR', value: totalAR, colorClass: 'text-violet-600' },
         { label: 'Expenses', value: totalExpenses, colorClass: 'text-red-600' },
         { label: 'Net', value: totalNet, colorClass: totalNet >= 0 ? 'text-emerald-600' : 'text-red-600' },
       ]}

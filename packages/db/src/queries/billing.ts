@@ -1559,6 +1559,37 @@ export async function getAgingReport(): Promise<AgingRow[]> {
   }));
 }
 
+/**
+ * Returns the current outstanding Accounts Receivable balance grouped by
+ * division, using the same "what counts as outstanding" rules as
+ * `getAgingReport` (status in issued/overdue/partially_paid, net of
+ * payments and credits applied to date). Divisions with no outstanding
+ * balance are omitted.
+ */
+export async function getOutstandingByDivision(): Promise<
+  { divisionId: string; divisionName: string; total: number }[]
+> {
+  const result = await db.execute(sql`
+    SELECT
+      divisions.id                                                AS division_id,
+      divisions.name                                               AS division_name,
+      COALESCE(SUM(invoices.total - COALESCE((SELECT SUM(amount) FROM payment_allocations WHERE invoice_id = invoices.id), 0) - COALESCE((SELECT SUM(amount) FROM credit_applications WHERE invoice_id = invoices.id), 0)), 0) AS total
+    FROM invoices
+    JOIN divisions ON divisions.id = invoices.division_id
+    WHERE invoices.status IN ('issued', 'overdue', 'partially_paid')
+      AND invoices.invoice_date <= timezone('Africa/Johannesburg', now())::date
+    GROUP BY divisions.id, divisions.name
+    HAVING COALESCE(SUM(invoices.total - COALESCE((SELECT SUM(amount) FROM payment_allocations WHERE invoice_id = invoices.id), 0) - COALESCE((SELECT SUM(amount) FROM credit_applications WHERE invoice_id = invoices.id), 0)), 0) <> 0
+    ORDER BY total DESC
+  `);
+
+  return (result.rows as { division_id: string; division_name: string; total: string }[]).map((r) => ({
+    divisionId: r.division_id,
+    divisionName: r.division_name,
+    total: Number(r.total),
+  }));
+}
+
 export interface ClientAgingRow {
   clientId: string;
   clientName: string;
