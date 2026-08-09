@@ -6,12 +6,16 @@ import {
   ComposedChart,
   Line,
   CartesianGrid,
-  ResponsiveContainer,
-  Tooltip,
   XAxis,
   YAxis,
 } from 'recharts'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+import {
+  ChartContainer,
+  ChartTooltip,
+  ChartTooltipContent,
+  type ChartConfig,
+} from '@/components/ui/chart'
 import { formatZAR, fmtMonthYear, getSASTParts } from '@/lib/format'
 import type { MonthlyBudgetChartRow } from '@/lib/financial'
 
@@ -25,60 +29,22 @@ const SERIES = [
   { key: 'expenses', label: 'Expenses', color: 'var(--chart-expense)' },
 ] as const
 
-type TooltipPayload = {
-  dataKey: string
-  name?: string
-  value: number | string
-  color?: string
-}
+const chartConfig: ChartConfig = Object.fromEntries(
+  SERIES.map((item) => [item.key, { label: item.label, color: item.color }]),
+)
 
 function formatYAxis(value: number) {
   if (Math.abs(value) >= 1000) return `R${Math.round(value / 1000)}k`
   return `R${value}`
 }
 
-function CustomTooltip({
-  active,
-  payload,
-  label,
-}: {
-  active?: boolean
-  payload?: TooltipPayload[]
-  label?: string
-}) {
-  if (!active || !payload?.length) return null
+const MONTH_ABBR = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec']
 
-  // Deduplicate entries by dataKey (since Bar and Line render the same series keys in 'both' mode)
-  const seen = new Set<string>()
-  const uniquePayload = payload.filter((entry) => {
-    if (seen.has(entry.dataKey)) return false
-    seen.add(entry.dataKey)
-    return true
-  })
-
-  return (
-    <div className="rounded-lg border border-border bg-card px-3 py-2.5 text-xs shadow-xl">
-      <p className="mb-2 border-b border-border pb-1.5 font-medium text-muted-foreground">
-        {fmtMonthYear(label)}
-      </p>
-      <div className="flex min-w-40 flex-col gap-1.5">
-        {uniquePayload.map((entry) => (
-          <div key={entry.dataKey} className="flex items-center justify-between gap-4">
-            <span className="flex items-center gap-1.5 text-muted-foreground">
-              <span
-                className="inline-block size-2 rounded-sm"
-                style={{ background: entry.color }}
-              />
-              {entry.name ?? entry.dataKey}
-            </span>
-            <span className="font-semibold tabular-nums text-foreground">
-              {formatZAR(Number(entry.value))}
-            </span>
-          </div>
-        ))}
-      </div>
-    </div>
-  )
+// Month-only (no year) keeps X-axis ticks short enough to stay legible on narrow screens;
+// the year is shown in the card subtitle and in the tooltip on hover.
+function formatXAxisTick(month: string) {
+  const [, m] = month.split('-')
+  return MONTH_ABBR[Number(m) - 1] ?? month
 }
 
 export function DivisionAreaChart({ data }: Props) {
@@ -188,9 +154,10 @@ export function DivisionAreaChart({ data }: Props) {
           </div>
         ) : (
           <div className="grid gap-3 lg:grid-cols-[minmax(0,1fr)_140px]">
-            <div className="min-w-0 rounded-md border border-border bg-muted/20 p-4">
-              <ResponsiveContainer width="100%" height={230}>
-                <ComposedChart data={chartData} barGap={0} barCategoryGap="25%" margin={{ top: 12, right: 12, left: 0, bottom: 0 }}>
+            <div className="min-w-0 overflow-x-auto rounded-md border border-border bg-muted/20 p-4">
+              <div className="min-w-[560px]">
+                <ChartContainer config={chartConfig} className="aspect-auto h-[230px] w-full">
+                  <ComposedChart data={chartData} barGap={0} barCategoryGap="25%" margin={{ top: 12, right: 12, left: 0, bottom: 0 }}>
                   <CartesianGrid
                     strokeDasharray="2 4"
                     stroke="var(--border)"
@@ -199,7 +166,7 @@ export function DivisionAreaChart({ data }: Props) {
                   />
                   <XAxis
                     dataKey="month"
-                    tickFormatter={(value) => fmtMonthYear(value, { short: true })}
+                    tickFormatter={formatXAxisTick}
                     tick={{ fill: 'var(--muted-foreground)', fontSize: 11 }}
                     axisLine={false}
                     tickLine={false}
@@ -212,12 +179,33 @@ export function DivisionAreaChart({ data }: Props) {
                     tickLine={false}
                     width={46}
                   />
-                  <Tooltip
-                    content={<CustomTooltip />}
+                  <ChartTooltip
+                    payloadUniqBy={(item) => item.dataKey}
                     cursor={
                       chartType === 'bar'
                         ? { fill: 'var(--muted)', opacity: 0.35 }
                         : { stroke: 'var(--border)', strokeWidth: 1, strokeDasharray: '2 2', opacity: 0.8 }
+                    }
+                    content={
+                      <ChartTooltipContent
+                        className="min-w-40 border-border bg-card px-3 py-2.5"
+                        labelClassName="mb-2 border-b border-border pb-1.5 text-muted-foreground"
+                        labelFormatter={(value) => fmtMonthYear(value as string)}
+                        formatter={(value, name, item) => (
+                          <>
+                            <span
+                              className="inline-block size-2.5 shrink-0 rounded-sm"
+                              style={{ background: item.color }}
+                            />
+                            <div className="flex flex-1 items-center justify-between gap-4 leading-none">
+                              <span className="text-muted-foreground">{name}</span>
+                              <span className="font-semibold tabular-nums text-foreground">
+                                {formatZAR(Number(value))}
+                              </span>
+                            </div>
+                          </>
+                        )}
+                      />
                     }
                   />
                   
@@ -249,8 +237,9 @@ export function DivisionAreaChart({ data }: Props) {
                         opacity={chartType === 'both' ? 0.15 : 1}
                       />
                     ))}
-                </ComposedChart>
-              </ResponsiveContainer>
+                  </ComposedChart>
+                </ChartContainer>
+              </div>
             </div>
 
             <div className="flex flex-col justify-center gap-6 text-right">

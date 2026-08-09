@@ -26,14 +26,6 @@ vi.mock('@/components/dashboard/division-area-chart', () => ({
   DivisionAreaChart: () => <div data-testid="division-area-chart" />,
 }))
 
-vi.mock('@/components/dashboard/division-revenue', () => ({
-  DivisionRevenue: () => <div data-testid="division-revenue" />,
-}))
-
-vi.mock('@/components/dashboard/leads-summary', () => ({
-  LeadsSummary: () => <div data-testid="leads-summary" />,
-}))
-
 vi.mock('@/components/dashboard/expense-snapshot', () => ({
   ExpenseSnapshot: () => <div data-testid="expense-snapshot" />,
 }))
@@ -71,8 +63,6 @@ const baseProps = {
   labels: { current: 'Jan 2025', previous: 'Dec 2024', ytd: 'YTD 2025' },
   deltas: { revenue: null, expenses: null, profit: null },
   divisions: [],
-  divisionExpenseMap: {},
-  leads: [],
   monthlySeries: [],
   sparklineData: [],
   agingReport: [],

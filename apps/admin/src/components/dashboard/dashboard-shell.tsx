@@ -4,8 +4,6 @@ import { useRouter, usePathname, useSearchParams } from 'next/navigation'
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { KpiGrid } from '@/components/dashboard/kpi-grid'
 import { DivisionAreaChart } from '@/components/dashboard/division-area-chart'
-import { DivisionRevenue } from '@/components/dashboard/division-revenue'
-import { LeadsSummary } from '@/components/dashboard/leads-summary'
 import { ExpenseSnapshot } from '@/components/dashboard/expense-snapshot'
 import CloseMonthButton from '@/components/dashboard/close-month-button'
 import { Badge } from '@/components/ui/badge'
@@ -13,8 +11,9 @@ import { AgingReportGrid } from '@/components/dashboard/aging-report-grid'
 import { ProjectSummaryCard } from '@/components/dashboard/project-summary-card'
 import type { TenderSummaryData } from '@/components/dashboard/project-summary-card'
 import { fmtMonthYear, formatZAR, fmtDate } from '@/lib/format'
+import { summarizeAging } from '@/lib/aging-summary'
 import type { AgingRow } from '@pmg/db'
-import type { PeriodSummary, DivisionRevenue as DivisionRevenueType, LeadStatusCount, MonthlyFinancials, MonthlyBudgetChartRow } from '@/lib/financial'
+import type { PeriodSummary, DivisionRevenue as DivisionRevenueType, MonthlyFinancials, MonthlyBudgetChartRow } from '@/lib/financial'
 import type { ProjectScheduleEntry, CurrentWorkload } from '@pmg/db'
 import { AlertCircle, Clock, ArrowRight } from 'lucide-react'
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert'
@@ -35,13 +34,11 @@ type Props = {
     profit:   { current: number; previous: number } | null
   }
   divisions: DivisionRevenueType[]
-  divisionExpenseMap: Record<string, number>
-  leads: LeadStatusCount[]
   monthlySeries: MonthlyFinancials[]
   sparklineData: MonthlyFinancials[]
   agingReport: AgingRow[]
   budgetChartSeries: MonthlyBudgetChartRow[]
-  expensesByDivision: { divisionName: string; total: number }[]
+  expensesByDivision: { divisionId?: string; divisionName: string; total: number }[]
   hasSnapshot: boolean
   currentPeriod: string
   showCloseMonthButton: boolean
@@ -65,8 +62,6 @@ export function DashboardShell({
   labels,
   deltas,
   divisions,
-  divisionExpenseMap,
-  leads = [],
   sparklineData = [],
   agingReport = [],
   budgetChartSeries = [],
@@ -123,9 +118,9 @@ export function DashboardShell({
     activeTab === 'previous' ? 'vs current month' :
     'vs prev year'
 
-  const currentBalance = agingReport.find(r => r.bucket === 'current')?.total || 0;
-  const over15Balance = agingReport.reduce((acc, row) => acc + (['15_30', '31_60', '61_plus'].includes(row.bucket) ? row.total : 0), 0);
-  const overdueBalance = agingReport.reduce((acc, row) => acc + (row.bucket !== 'current' ? row.total : 0), 0);
+  const { current: currentBalance, over15: over15Balance, overdue: overdueBalance } = summarizeAging(agingReport);
+
+  const resolvedPmgShareRate = pmgShareRate ?? 0.25
 
   return (
     <div className="flex flex-col gap-5">
@@ -248,31 +243,19 @@ export function DashboardShell({
       </section>
 
       {/* ── Row 4: Sales, receipts, and expenses budget chart ── */}
-      <div className="w-full hidden md:block">
+      <div className="w-full">
         <DivisionAreaChart data={budgetChartSeries} />
       </div>
 
-      {/* ── Row 5: Division revenue with expenses + Leads ── */}
-      <div className="flex-col gap-2 hidden md:flex">
-        <h2 className="text-xs font-medium text-muted-foreground uppercase tracking-wider">
-          Revenue & Leads
-        </h2>
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-          <DivisionRevenue
-            divisions={divisions}
-            divisionExpenseMap={new Map(Object.entries(divisionExpenseMap))}
-          />
-          <LeadsSummary leads={leads} />
-        </div>
-      </div>
-
-      {/* ── Row 6: Expense breakdown ── */}
+      {/* ── Row 5: Division financial breakdown ── */}
       <section className="flex-col gap-2 hidden md:flex">
         <h2 className="text-xs font-medium text-muted-foreground uppercase tracking-wider">
-          Expense Breakdown
+          Division Breakdown
         </h2>
         <ExpenseSnapshot
+          divisions={divisions}
           expensesByDivision={expensesByDivision}
+          pmgShareRate={resolvedPmgShareRate}
         />
       </section>
 

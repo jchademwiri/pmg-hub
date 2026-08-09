@@ -1,3 +1,5 @@
+'use client'
+
 import { useState } from 'react'
 import { formatZAR } from '@/lib/format'
 import { TrendingUp, TrendingDown, Minus, ChevronDown, ChevronUp } from 'lucide-react'
@@ -50,7 +52,7 @@ function DeltaBadge({
   )
 }
 
-function Sparkline({ data, colorClass = 'text-emerald-500' }: { data: number[]; colorClass?: string }) {
+function Sparkline({ data, colorClass = 'text-emerald-500', label }: { data: number[]; colorClass?: string; label: string }) {
   if (!data || data.length <= 1) return null
   const max = Math.max(...data)
   const min = Math.min(...data)
@@ -66,8 +68,15 @@ function Sparkline({ data, colorClass = 'text-emerald-500' }: { data: number[]; 
     })
     .join(' ')
 
+  const trend = data[data.length - 1] > data[0] ? 'trending up' : data[data.length - 1] < data[0] ? 'trending down' : 'flat'
+
   return (
-    <svg className={`w-16 sm:w-20 h-7 overflow-visible ${colorClass}`} viewBox={`0 0 ${width} ${height}`}>
+    <svg
+      className={`w-16 sm:w-20 h-7 overflow-visible ${colorClass}`}
+      viewBox={`0 0 ${width} ${height}`}
+      role="img"
+      aria-label={`${label} trend over the last ${data.length} months: ${trend}`}
+    >
       <polyline
         fill="none"
         stroke="currentColor"
@@ -133,7 +142,7 @@ function KpiCard({
         </div>
         {sparklineData && sparklineData.length > 0 && (
           <div className="opacity-75 group-hover:opacity-100 group-hover:scale-105 transition-all duration-300 shrink-0 mt-1 xl:mt-0">
-            <Sparkline data={sparklineData} colorClass={sparklineColor} />
+            <Sparkline data={sparklineData} colorClass={sparklineColor} label={label} />
           </div>
         )}
       </CardContent>
@@ -203,7 +212,7 @@ export function KpiGrid({ summary, deltas, previousSummary, deltaLabel, sparklin
         </div>
         <div className={`col-span-1 ${showAll ? 'block' : 'hidden lg:block'}`}>
           <KpiCard
-            label="PMG Share (25%)"
+            label={`PMG Share (${Math.round(pmgShareRate * 100)}%)`}
             value={summary.pmgShare}
             delta={pmgDelta ?? undefined}
             deltaLabel={deltaLabel}
