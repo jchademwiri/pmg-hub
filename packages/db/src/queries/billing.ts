@@ -1004,9 +1004,14 @@ export async function getClientStatement(
     sql`${invoices.invoiceDate} <= timezone('Africa/Johannesburg', now())::date`
   ];
   const globalIncomeConditions = [eq(income.clientId, clientId), excludeSyntheticCreditIncome];
+  // A credit note applied to an invoice that's already fully paid in cash
+  // doesn't reduce what the client currently owes overall — it's excluded
+  // here so it can't understate (or, combined with others, zero out) the
+  // "Amount Due" balance. Matches the same fix applied to the AR queries.
   const globalCreditConditions = [
     eq(invoices.clientId, clientId),
     draftFilter,
+    sql`${invoices.status} != 'paid'`,
   ];
 
   if (statementBalanceCutoff) {
@@ -1059,6 +1064,7 @@ export async function getClientStatement(
     const priorCreditConditions = [
       eq(invoices.clientId, clientId),
       draftFilter,
+      sql`${invoices.status} != 'paid'`,
       sql`${creditApplications.appliedAt} < ${periodStartDate}::timestamp`,
     ];
 
