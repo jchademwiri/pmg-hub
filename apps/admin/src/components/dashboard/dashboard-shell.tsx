@@ -47,8 +47,8 @@ type Props = {
   showCloseMonthButton: boolean
   projectScheduleSummary: TenderSummaryData
   pmgShareRate?: number
-  projectsAtRisk: ProjectScheduleEntry[]
-  currentWorkload: CurrentWorkload
+  projectsAtRisk?: ProjectScheduleEntry[]
+  currentWorkload?: CurrentWorkload
 }
 
 const TABS: { key: Tab; label: string; shortLabel: string }[] = [

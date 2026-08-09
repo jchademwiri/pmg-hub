@@ -204,7 +204,7 @@ export function SnapshotsCockpit({ snapshots }: SnapshotsCockpitProps) {
   }
 
   return (
-    <div className="grid gap-5 xl:grid-cols-[minmax(0,1fr)_320px] xl:items-start">
+    <div className="grid gap-5 lg:grid-cols-[minmax(0,1fr)_320px] lg:items-start">
       <div className="flex flex-col gap-4">
       <span className="text-[11px] font-medium text-muted-foreground">
         Financial year {fmtMonthYear(fyStartPeriod, { short: true })} – {fmtMonthYear(fyEndPeriod, { short: true })}
@@ -430,7 +430,7 @@ function SnapshotDetail({
     previous && previous.revenue > 0 ? (previous.profitPool / previous.revenue) * 100 : null
 
   return (
-    <Card className="xl:sticky xl:top-24 xl:self-start">
+    <Card className="lg:sticky lg:top-24 lg:self-start">
       <CardHeader>
         <div className="flex items-center justify-between gap-3">
           <div>
@@ -588,14 +588,21 @@ function MarginRow({
           {value.toFixed(1)}%
         </span>
       </div>
-      <span
-        className={cn(
-          "text-xs font-medium tabular-nums",
-          previousValue === null ? "text-muted-foreground" : improved ? "text-emerald-600" : "text-destructive",
+      <div className="flex flex-col items-end gap-1">
+        <span className="text-xs text-muted-foreground">
+          {previousValue === null ? "First month" : "last month"}
+        </span>
+        {previousValue !== null && (
+          <span
+            className={cn(
+              "text-xs font-medium tabular-nums",
+              improved ? "text-emerald-600" : "text-destructive",
+            )}
+          >
+            {previousValue.toFixed(1)}%
+          </span>
         )}
-      >
-        {previousValue === null ? "First month" : `${previousValue.toFixed(1)}% last month`}
-      </span>
+      </div>
     </div>
   )
 }
