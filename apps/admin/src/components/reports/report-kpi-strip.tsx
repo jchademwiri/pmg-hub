@@ -7,7 +7,7 @@ import { cn } from '@/lib/utils'
 
 type Delta = { current: number; previous: number } | null
 
-function DeltaBadge({
+export function DeltaBadge({
   current,
   previous,
   invertDelta,
@@ -49,7 +49,7 @@ function DeltaBadge({
   )
 }
 
-function Sparkline({ data, colorClass = 'text-emerald-500' }: { data: number[]; colorClass?: string }) {
+export function Sparkline({ data, colorClass = 'text-emerald-500' }: { data: number[]; colorClass?: string }) {
   if (!data || data.length <= 1) return null
   const max = Math.max(...data)
   const min = Math.min(...data)
