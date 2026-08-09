@@ -14,7 +14,7 @@ const submitted = result?.data?.success === true;
     <p class="reveal text-muted-foreground text-base mb-10" data-delay="140">Fill in the form below and we'll follow up within 24 hours.</p>
 
     <div class="grid md:grid-cols-2 gap-12 items-start">
-      <div class="reveal" data-delay="180">
+      <div class="reveal min-w-0" data-delay="180">
         {submitted ? (
           <div class="py-12 text-center success-state" data-success>
             <div class="inline-flex items-center justify-center w-14 h-14 rounded-full bg-primary/15 mb-5">
@@ -172,7 +172,7 @@ const submitted = result?.data?.success === true;
       </div>
 
       <!-- Right column: Contact details -->
-      <div class="reveal flex flex-col gap-6" data-delay="240">
+      <div class="reveal flex flex-col gap-6 min-w-0" data-delay="240">
         <div>
           <p class="text-foreground font-semibold text-base mb-4">Contact Us Directly</p>
 
@@ -222,9 +222,9 @@ const submitted = result?.data?.success === true;
                   <path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7"/>
                 </svg>
               </div>
-              <div>
+              <div class="min-w-0">
                 <p class="text-foreground text-sm font-medium">Email</p>
-                <p class="text-muted-foreground text-sm">tenders@tenderedgesolutions.co.za</p>
+                <p class="text-muted-foreground text-sm break-all">tenders@tenderedgesolutions.co.za</p>
               </div>
             </a>
 
