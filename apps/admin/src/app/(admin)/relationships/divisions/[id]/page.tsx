@@ -12,6 +12,7 @@ import { formatZAR, fmtDate } from '@/lib/format'
 import { Badge } from '@/components/ui/badge'
 import { BackButton } from '@/components/ui/back-button'
 import { BillingStatusBadge } from '@/components/billing/billing-status-badge'
+import { SetPageLabel } from '@/components/navigation/page-header-context'
 import {
   Table, TableBody, TableCell, TableHead, TableHeader, TableRow,
 } from '@/components/ui/table'
@@ -59,6 +60,7 @@ export default async function DivisionDetailPage({ params }: DivisionDetailPageP
 
   return (
     <div className="flex flex-col gap-8">
+      <SetPageLabel value={division.name} />
       {/* Header */}
       <div className="flex items-center gap-4">
         <BackButton href="/relationships/divisions" label="Divisions" />
