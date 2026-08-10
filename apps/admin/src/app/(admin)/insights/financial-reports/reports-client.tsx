@@ -400,7 +400,7 @@ export function ReportsClient({ periods, accounts, divisions, selectedPeriod }: 
             </span>
           </div>
 
-          <div className="flex flex-col gap-1.5">
+          <div className="flex flex-row gap-1.5 overflow-x-auto pb-1 -mx-0.5 px-0.5 lg:flex-col lg:overflow-visible lg:pb-0 lg:mx-0 lg:px-0">
             {REPORT_TYPES.map((type) => {
               const Icon = type.icon;
               const isSelected = selectedReport === type.id;
@@ -409,7 +409,7 @@ export function ReportsClient({ periods, accounts, divisions, selectedPeriod }: 
                   key={type.id}
                   type="button"
                   onClick={() => setSelectedReport(type.id)}
-                  className={`group flex items-center gap-2.5 rounded-lg border px-2.5 py-2 text-left transition-all relative overflow-hidden ${
+                  className={`group flex shrink-0 items-center gap-2.5 rounded-lg border px-2.5 py-2 text-left transition-all relative overflow-hidden min-w-[160px] lg:min-w-0 lg:w-full ${
                     isSelected
                       ? 'border-primary bg-primary/5 ring-1 ring-primary/20 shadow-xs'
                       : 'bg-card border-border/70 hover:bg-muted/40 hover:border-muted-foreground/30'
