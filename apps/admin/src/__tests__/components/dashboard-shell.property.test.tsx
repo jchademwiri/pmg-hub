@@ -83,13 +83,6 @@ const baseProps = {
   expensesByDivision: [],
   currentPeriod: '2025-01',
   showCloseMonthButton: true,
-  projectScheduleSummary: {
-    inProgress: 0,
-    planned: 0,
-    upcomingDeadlines: 0,
-    atRisk: 0,
-    overdue: 0,
-  },
   ledgerBalances: {
     pmg_share: { expected: 0, spent: 0, available: 0 },
   },

@@ -18,14 +18,6 @@ export interface CurrentWorkload {
   planned: ProjectScheduleEntry[];
 }
 
-export interface ProjectScheduleSummary {
-  inProgress: number;
-  planned: number;
-  upcomingDeadlines: number;
-  atRisk: number;
-  overdue: number;
-}
-
 export interface OverlapWarning {
   tenderA: ProjectScheduleEntry;
   tenderB: ProjectScheduleEntry;
@@ -390,36 +382,6 @@ export async function detectOverlaps(): Promise<OverlapWarning[]> {
   }
 
   return warnings;
-}
-
-// ── Summary ───────────────────────────────────────────────────────────────────
-
-export async function getProjectScheduleSummary(): Promise<ProjectScheduleSummary> {
-  const all = await db
-    .select()
-    .from(projectScheduleEntries)
-    .where(
-      sql`${projectScheduleEntries.status}::text = ANY(ARRAY['planned', 'in_progress', 'completed'])`,
-    );
-
-  const today = new Date().toISOString().slice(0, 10);
-
-  const inProgress = all.filter((e) => e.status === 'in_progress').length;
-  const planned = all.filter((e) => e.status === 'planned').length;
-  const upcomingDeadlines = all.filter(
-    (e) =>
-      e.status !== 'completed' &&
-      e.closingDate >= today &&
-      new Date(e.closingDate).getTime() - new Date(today).getTime() <= 7 * 24 * 60 * 60 * 1000, // within 7 days
-  ).length;
-  const atRisk = all.filter(
-    (e) => (e.status === 'planned' || e.status === 'in_progress') && e.targetCompletionDate < today,
-  ).length;
-  const overdue = all.filter(
-    (e) => e.status !== 'submitted' && e.status !== 'completed' && e.closingDate < today,
-  ).length;
-
-  return { inProgress, planned, upcomingDeadlines, atRisk, overdue };
 }
 
 // ── Checklist Queries ─────────────────────────────────────────────────────────
