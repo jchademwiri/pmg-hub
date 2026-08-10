@@ -5,22 +5,27 @@ import {
   getAllIncome,
   getAllExpenses,
   getAllInvoices,
+  getAllQuotations,
   getProfitAndLossByDivision,
   getActiveRates,
 } from '@pmg/db'
 import { formatZAR, fmtDate, getSASTParts } from '@/lib/format'
 import { Badge } from '@/components/ui/badge'
 import { BackButton } from '@/components/ui/back-button'
-import { BillingStatusBadge } from '@/components/billing/billing-status-badge'
 import { SetPageLabel } from '@/components/navigation/page-header-context'
+import { Pagination } from '@/components/ui/pagination'
+import { ClickableTableRow } from '@/components/ui/clickable-table-row'
 import {
   Table, TableBody, TableCell, TableHead, TableHeader, TableRow,
 } from '@/components/ui/table'
 
 export const dynamic = 'force-dynamic'
 
+const PAGE_SIZE = 5
+
 interface DivisionDetailPageProps {
   params: Promise<{ id: string }>
+  searchParams: Promise<{ invPage?: string; quotePage?: string; payPage?: string; expPage?: string }>
 }
 
 export async function generateMetadata({ params }: DivisionDetailPageProps): Promise<Metadata> {
@@ -29,8 +34,13 @@ export async function generateMetadata({ params }: DivisionDetailPageProps): Pro
   return { title: division ? division.name : 'Division' }
 }
 
-export default async function DivisionDetailPage({ params }: DivisionDetailPageProps) {
+export default async function DivisionDetailPage({ params, searchParams }: DivisionDetailPageProps) {
   const { id } = await params
+  const sp = await searchParams
+  const invPage = Math.max(1, Number(sp.invPage) || 1)
+  const quotePage = Math.max(1, Number(sp.quotePage) || 1)
+  const payPage = Math.max(1, Number(sp.payPage) || 1)
+  const expPage = Math.max(1, Number(sp.expPage) || 1)
 
   // Mirrors /relationships/divisions and /insights/financial-reports?type=division-performance's
   // fiscal-year labeling convention (label = the calendar year the FY ends in).
@@ -38,12 +48,13 @@ export default async function DivisionDetailPage({ params }: DivisionDetailPageP
   const fiscalYearStart = month < 2 ? year - 1 : year
   const period = `${fiscalYearStart + 1}-FY`
 
-  const [division, incomeEntries, expenseEntries, invoiceEntries, profitAndLossByDivision, activeRates] =
+  const [division, incomeEntries, expenseEntries, invoiceEntries, quoteEntries, profitAndLossByDivision, activeRates] =
     await Promise.all([
       getDivisionWithStatsById(id),
-      getAllIncome({ divisionId: id, year: fiscalYearStart }),
-      getAllExpenses({ divisionId: id, year: fiscalYearStart }),
-      getAllInvoices({ divisionId: id, year: fiscalYearStart }),
+      getAllIncome({ divisionId: id, year: fiscalYearStart }, { page: payPage, pageSize: PAGE_SIZE }),
+      getAllExpenses({ divisionId: id, year: fiscalYearStart }, { page: expPage, pageSize: PAGE_SIZE }),
+      getAllInvoices({ divisionId: id, year: fiscalYearStart }, { page: invPage, pageSize: PAGE_SIZE }),
+      getAllQuotations({ divisionId: id, year: fiscalYearStart }, { page: quotePage, pageSize: PAGE_SIZE }),
       getProfitAndLossByDivision(period),
       getActiveRates().catch(() => ({ pmg_share: 0.25 })),
     ])
@@ -64,6 +75,14 @@ export default async function DivisionDetailPage({ params }: DivisionDetailPageP
     distributionPercent: 0,
   }
   const pmgShare = pnl.totalRevenue * activeRates.pmg_share
+
+  // Preserve the other three page params when linking a different section's pagination.
+  const params_ = { invPage: String(invPage), quotePage: String(quotePage), payPage: String(payPage), expPage: String(expPage) }
+  function hrefFor(key: keyof typeof params_, page: number) {
+    const p = new URLSearchParams(params_)
+    p.set(key, String(page))
+    return `?${p.toString()}`
+  }
 
   return (
     <div className="flex flex-col gap-8">
@@ -97,122 +116,166 @@ export default async function DivisionDetailPage({ params }: DivisionDetailPageP
         ))}
       </div>
 
-      {/* Invoices */}
-      <section className="rounded-lg border p-5 flex flex-col gap-4">
-        <div className="flex items-center justify-between">
-          <h2 className="text-base font-medium">Invoices</h2>
-          <span className="text-sm font-semibold text-amber-500">{formatZAR(pnl.totalOutstandingAr)} outstanding</span>
-        </div>
-        {invoiceEntries.data.length === 0 ? (
-          <p className="text-sm text-muted-foreground">No invoices for this division.</p>
-        ) : (
-          <div className="max-h-[420px] overflow-y-auto rounded-md border">
-            <Table>
-              <TableHeader className="sticky top-0 z-10 bg-background">
-                <TableRow>
-                  <TableHead>Invoice</TableHead>
-                  <TableHead>Client</TableHead>
-                  <TableHead>Date</TableHead>
-                  <TableHead>Due</TableHead>
-                  <TableHead>Status</TableHead>
-                  <TableHead className="text-right">Total</TableHead>
-                  <TableHead className="text-right">Balance</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {invoiceEntries.data.map((inv) => {
-                  const balance = Number(inv.total) - Number(inv.allocatedAmount ?? 0)
-                  return (
-                    <TableRow key={inv.id}>
-                      <TableCell>{inv.documentNumber}</TableCell>
-                      <TableCell>{inv.clientName ?? '-'}</TableCell>
-                      <TableCell>{fmtDate(inv.invoiceDate)}</TableCell>
-                      <TableCell>{inv.dueDate ? fmtDate(inv.dueDate) : '-'}</TableCell>
-                      <TableCell><BillingStatusBadge status={inv.status} /></TableCell>
-                      <TableCell className="text-right tabular-nums font-medium">{formatZAR(Number(inv.total))}</TableCell>
-                      <TableCell className="text-right tabular-nums font-medium">
-                        {balance > 0 ? formatZAR(balance) : '-'}
+      {/* Transaction cards — 2 per row */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        {/* Invoices */}
+        <section className="rounded-lg border p-5 flex flex-col gap-3">
+          <div className="flex items-center justify-between">
+            <h2 className="text-base font-medium">Invoices</h2>
+            <span className="text-sm font-semibold text-amber-500">{formatZAR(pnl.totalOutstandingAr)} outstanding</span>
+          </div>
+          {invoiceEntries.data.length === 0 ? (
+            <p className="text-sm text-muted-foreground">No invoices for this division.</p>
+          ) : (
+            <>
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Invoice</TableHead>
+                    <TableHead>Due</TableHead>
+                    <TableHead className="text-right">Total</TableHead>
+                    <TableHead className="text-right">Balance</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {invoiceEntries.data.map((inv) => {
+                    const balance = Number(inv.total) - Number(inv.allocatedAmount ?? 0)
+                    return (
+                      <ClickableTableRow key={inv.id} href={`/billing/invoices/${inv.id}`}>
+                        <TableCell className="font-medium">{inv.documentNumber}</TableCell>
+                        <TableCell>{inv.dueDate ? fmtDate(inv.dueDate) : '-'}</TableCell>
+                        <TableCell className="text-right tabular-nums font-medium">{formatZAR(Number(inv.total))}</TableCell>
+                        <TableCell className="text-right tabular-nums font-medium">
+                          {balance > 0 ? formatZAR(balance) : '-'}
+                        </TableCell>
+                      </ClickableTableRow>
+                    )
+                  })}
+                </TableBody>
+              </Table>
+              <Pagination
+                currentPage={invPage}
+                totalPages={Math.ceil(invoiceEntries.total / PAGE_SIZE)}
+                buildHref={(p) => hrefFor('invPage', p)}
+              />
+            </>
+          )}
+        </section>
+
+        {/* Quotes */}
+        <section className="rounded-lg border p-5 flex flex-col gap-3">
+          <div className="flex items-center justify-between">
+            <h2 className="text-base font-medium">Quotes</h2>
+          </div>
+          {quoteEntries.data.length === 0 ? (
+            <p className="text-sm text-muted-foreground">No quotes for this division.</p>
+          ) : (
+            <>
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Quote</TableHead>
+                    <TableHead>Expiry</TableHead>
+                    <TableHead className="text-right">Total</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {quoteEntries.data.map((q) => (
+                    <ClickableTableRow key={q.id} href={`/billing/quotes/${q.id}`}>
+                      <TableCell className="font-medium">{q.documentNumber}</TableCell>
+                      <TableCell>{q.expiryDate ? fmtDate(q.expiryDate) : '-'}</TableCell>
+                      <TableCell className="text-right tabular-nums font-medium">{formatZAR(Number(q.total))}</TableCell>
+                    </ClickableTableRow>
+                  ))}
+                </TableBody>
+              </Table>
+              <Pagination
+                currentPage={quotePage}
+                totalPages={Math.ceil(quoteEntries.total / PAGE_SIZE)}
+                buildHref={(p) => hrefFor('quotePage', p)}
+              />
+            </>
+          )}
+        </section>
+
+        {/* Payment receipts */}
+        <section className="rounded-lg border p-5 flex flex-col gap-3">
+          <div className="flex items-center justify-between">
+            <h2 className="text-base font-medium">Payment Receipts</h2>
+            <span className="text-sm font-semibold text-green-500">{formatZAR(pnl.totalIncome)}</span>
+          </div>
+          {incomeEntries.data.length === 0 ? (
+            <p className="text-sm text-muted-foreground">No income records for this division.</p>
+          ) : (
+            <>
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Date</TableHead>
+                    <TableHead>Client</TableHead>
+                    <TableHead className="text-right">Amount</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {incomeEntries.data.map((e) => (
+                    <ClickableTableRow key={e.id} href={`/billing/payments/${e.id}`}>
+                      <TableCell>{fmtDate(e.date)}</TableCell>
+                      <TableCell>{e.clientName ?? '-'}</TableCell>
+                      <TableCell className="text-right tabular-nums font-medium text-green-500">
+                        +{formatZAR(Number(e.amount))}
+                      </TableCell>
+                    </ClickableTableRow>
+                  ))}
+                </TableBody>
+              </Table>
+              <Pagination
+                currentPage={payPage}
+                totalPages={Math.ceil(incomeEntries.total / PAGE_SIZE)}
+                buildHref={(p) => hrefFor('payPage', p)}
+              />
+            </>
+          )}
+        </section>
+
+        {/* Expense history */}
+        <section className="rounded-lg border p-5 flex flex-col gap-3">
+          <div className="flex items-center justify-between">
+            <h2 className="text-base font-medium">Expense History</h2>
+            <span className="text-sm font-semibold text-amber-500">{formatZAR(expenseEntries.sum)}</span>
+          </div>
+          {expenseEntries.data.length === 0 ? (
+            <p className="text-sm text-muted-foreground">No expense records for this division.</p>
+          ) : (
+            <>
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Date</TableHead>
+                    <TableHead>Category</TableHead>
+                    <TableHead className="text-right">Amount</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {expenseEntries.data.map((e) => (
+                    <TableRow key={e.id}>
+                      <TableCell>{fmtDate(e.date)}</TableCell>
+                      <TableCell>{e.category}</TableCell>
+                      <TableCell className="text-right tabular-nums font-medium text-amber-500">
+                        −{formatZAR(Number(e.amount))}
                       </TableCell>
                     </TableRow>
-                  )
-                })}
-              </TableBody>
-            </Table>
-          </div>
-        )}
-      </section>
-
-      {/* Payment receipts */}
-      <section className="rounded-lg border p-5 flex flex-col gap-4">
-        <div className="flex items-center justify-between">
-          <h2 className="text-base font-medium">Payment Receipts</h2>
-          <span className="text-sm font-semibold text-green-500">{formatZAR(pnl.totalIncome)}</span>
-        </div>
-        {incomeEntries.data.length === 0 ? (
-          <p className="text-sm text-muted-foreground">No income records for this division.</p>
-        ) : (
-          <div className="max-h-[420px] overflow-y-auto rounded-md border">
-            <Table>
-              <TableHeader className="sticky top-0 z-10 bg-background">
-                <TableRow>
-                  <TableHead>Date</TableHead>
-                  <TableHead>Client</TableHead>
-                  <TableHead>Description</TableHead>
-                  <TableHead className="text-right">Amount</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {incomeEntries.data.map((e) => (
-                  <TableRow key={e.id}>
-                    <TableCell>{fmtDate(e.date)}</TableCell>
-                    <TableCell>{e.clientName ?? '-'}</TableCell>
-                    <TableCell>{e.description ?? '-'}</TableCell>
-                    <TableCell className="text-right tabular-nums font-medium text-green-500">
-                      +{formatZAR(Number(e.amount))}
-                    </TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          </div>
-        )}
-      </section>
-
-      {/* Expense history */}
-      <section className="rounded-lg border p-5 flex flex-col gap-4">
-        <div className="flex items-center justify-between">
-          <h2 className="text-base font-medium">Expense History</h2>
-          <span className="text-sm font-semibold text-amber-500">{formatZAR(expenseEntries.sum)}</span>
-        </div>
-        {expenseEntries.data.length === 0 ? (
-          <p className="text-sm text-muted-foreground">No expense records for this division.</p>
-        ) : (
-          <div className="max-h-[420px] overflow-y-auto rounded-md border">
-            <Table>
-              <TableHeader className="sticky top-0 z-10 bg-background">
-                <TableRow>
-                  <TableHead>Date</TableHead>
-                  <TableHead>Category</TableHead>
-                  <TableHead>Description</TableHead>
-                  <TableHead className="text-right">Amount</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {expenseEntries.data.map((e) => (
-                  <TableRow key={e.id}>
-                    <TableCell>{fmtDate(e.date)}</TableCell>
-                    <TableCell>{e.category}</TableCell>
-                    <TableCell>{e.description ?? '-'}</TableCell>
-                    <TableCell className="text-right tabular-nums font-medium text-amber-500">
-                      −{formatZAR(Number(e.amount))}
-                    </TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          </div>
-        )}
-      </section>
+                  ))}
+                </TableBody>
+              </Table>
+              <Pagination
+                currentPage={expPage}
+                totalPages={Math.ceil(expenseEntries.total / PAGE_SIZE)}
+                buildHref={(p) => hrefFor('expPage', p)}
+              />
+            </>
+          )}
+        </section>
+      </div>
     </div>
   )
 }
