@@ -7,6 +7,7 @@ import {
   getAllInvoices,
   getAllQuotations,
   getProfitAndLossByDivision,
+  getProfitAndLoss,
   getActiveRates,
 } from '@pmg/db'
 import { formatZAR, fmtDate, getSASTParts } from '@/lib/format'
@@ -48,7 +49,7 @@ export default async function DivisionDetailPage({ params, searchParams }: Divis
   const fiscalYearStart = month < 2 ? year - 1 : year
   const period = `${fiscalYearStart + 1}-FY`
 
-  const [division, incomeEntries, expenseEntries, invoiceEntries, quoteEntries, profitAndLossByDivision, activeRates] =
+  const [division, incomeEntries, expenseEntries, invoiceEntries, quoteEntries, profitAndLossByDivision, glProfitAndLoss, activeRates] =
     await Promise.all([
       getDivisionWithStatsById(id),
       getAllIncome({ divisionId: id, year: fiscalYearStart }, { page: payPage, pageSize: PAGE_SIZE }),
@@ -56,6 +57,7 @@ export default async function DivisionDetailPage({ params, searchParams }: Divis
       getAllInvoices({ divisionId: id, year: fiscalYearStart }, { page: invPage, pageSize: PAGE_SIZE }),
       getAllQuotations({ divisionId: id, year: fiscalYearStart }, { page: quotePage, pageSize: PAGE_SIZE }),
       getProfitAndLossByDivision(period),
+      getProfitAndLoss(period, id),
       getActiveRates().catch(() => ({ pmg_share: 0.25 })),
     ])
   if (!division) notFound()
@@ -75,6 +77,14 @@ export default async function DivisionDetailPage({ params, searchParams }: Divis
     distributionPercent: 0,
   }
   const pmgShare = pnl.totalRevenue * activeRates.pmg_share
+
+  // Bad Debt Expense is a GL expense line item (an AR write-off), already
+  // folded into pnl.totalExpenses/marginPercent above — surfaced here as its
+  // own figure so it doesn't just look like an unexplained gap vs. the
+  // Expense History table below (which only lists raw `expenses` rows).
+  const badDebtExpense = glProfitAndLoss.expenses.find(
+    (e) => e.accountCode === '5150' || e.accountName.toLowerCase().includes('bad debt')
+  )?.amount ?? 0
 
   // Preserve the other three page params when linking a different section's pagination.
   const params_ = { invPage: String(invPage), quotePage: String(quotePage), payPage: String(payPage), expPage: String(expPage) }
@@ -108,6 +118,7 @@ export default async function DivisionDetailPage({ params, searchParams }: Divis
           { label: 'Margin',               value: `${pnl.marginPercent.toFixed(1)}%`, cls: pnl.marginPercent >= 0 ? 'text-green-500' : 'text-red-500' },
           { label: '% of Total Revenue',   value: `${pnl.distributionPercent.toFixed(1)}%`, cls: '' },
           { label: 'Leads',                value: String(division.leadCount),         cls: '' },
+          { label: 'Bad Debt',             value: formatZAR(badDebtExpense),          cls: badDebtExpense > 0 ? 'text-red-500' : '' },
         ].map(({ label, value, cls }) => (
           <div key={label} className="rounded-lg border p-4 flex flex-col gap-1">
             <span className="text-xs text-muted-foreground">{label}</span>
