@@ -19,6 +19,7 @@ function makeDivision(overrides: Partial<DivisionWithPnl> & Pick<DivisionWithPnl
     pnlCashReceived: 0,
     pnlOutstandingAr: 0,
     pnlExpenses: 0,
+    pnlBadDebt: 0,
     pnlNetProfit: 0,
     pnlMarginPercent: 0,
     pnlSharePercent: 0,

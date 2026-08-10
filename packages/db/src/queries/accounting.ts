@@ -885,6 +885,7 @@ export type ProfitAndLossByDivisionRow = {
   totalIncome: number;
   totalOutstandingAr: number;
   totalExpenses: number;
+  totalBadDebt: number;
   netProfit: number;
   marginPercent: number;
   distributionPercent: number;
@@ -913,6 +914,8 @@ export async function getProfitAndLossByDivision(period?: string, startDate?: st
     .select({
       divisionId: journalEntries.divisionId,
       accountType: chartAccounts.type,
+      accountCode: chartAccounts.code,
+      accountName: chartAccounts.name,
       totalDebits: sql<string>`COALESCE(SUM(${journalLines.debit}::numeric), 0)`,
       totalCredits: sql<string>`COALESCE(SUM(${journalLines.credit}::numeric), 0)`,
     })
@@ -920,7 +923,7 @@ export async function getProfitAndLossByDivision(period?: string, startDate?: st
     .innerJoin(journalEntries, and(eq(journalLines.journalEntryId, journalEntries.id), ...entryConditions))
     .innerJoin(chartAccounts, eq(journalLines.accountId, chartAccounts.id))
     .where(inArray(chartAccounts.type, ["revenue", "expense"]))
-    .groupBy(journalEntries.divisionId, chartAccounts.type);
+    .groupBy(journalEntries.divisionId, chartAccounts.type, chartAccounts.code, chartAccounts.name);
 
   // Fetch actual cash income collected per division
   const incomeConditions = [];
@@ -941,13 +944,20 @@ export async function getProfitAndLossByDivision(period?: string, startDate?: st
   const allDivisions = await db.select({ id: divisions.id, name: divisions.name }).from(divisions);
   const divisionNames = new Map(allDivisions.map((d) => [d.id, d.name]));
 
-  const byDivision = new Map<string, { totalRevenue: number; totalExpenses: number }>();
+  const byDivision = new Map<string, { totalRevenue: number; totalExpenses: number; totalBadDebt: number }>();
   for (const r of rows) {
-    const totals = byDivision.get(r.divisionId) ?? { totalRevenue: 0, totalExpenses: 0 };
+    const totals = byDivision.get(r.divisionId) ?? { totalRevenue: 0, totalExpenses: 0, totalBadDebt: 0 };
     const debits = Number(r.totalDebits);
     const credits = Number(r.totalCredits);
-    if (r.accountType === "revenue") totals.totalRevenue += credits - debits;
-    else if (r.accountType === "expense") totals.totalExpenses += debits - credits;
+    if (r.accountType === "revenue") {
+      totals.totalRevenue += credits - debits;
+    } else if (r.accountType === "expense") {
+      const amount = debits - credits;
+      totals.totalExpenses += amount;
+      if (r.accountCode === "5150" || r.accountName.toLowerCase().includes("bad debt")) {
+        totals.totalBadDebt += amount;
+      }
+    }
     byDivision.set(r.divisionId, totals);
   }
 
@@ -969,6 +979,7 @@ export async function getProfitAndLossByDivision(period?: string, startDate?: st
       totalIncome: cashIncome,
       totalOutstandingAr,
       totalExpenses: totals.totalExpenses,
+      totalBadDebt: totals.totalBadDebt,
       netProfit,
       marginPercent,
       distributionPercent,

@@ -14,6 +14,7 @@ export type DivisionWithPnl = DivisionRow & {
   pnlCashReceived: number;
   pnlOutstandingAr: number;
   pnlExpenses: number;
+  pnlBadDebt: number;
   pnlNetProfit: number;
   pnlMarginPercent: number;
   pnlSharePercent: number;
@@ -41,12 +42,16 @@ export default function DivisionsPageClient({
   const totals = React.useMemo(() => {
     const revenue = divisions.reduce((s, d) => s + d.pnlRevenue, 0);
     const expenses = divisions.reduce((s, d) => s + d.pnlExpenses, 0);
-    const netProfit = revenue - expenses;
+    // Net Profit is summed from each division's own pnlNetProfit (not
+    // revenue - expenses) since pnlExpenses excludes Bad Debt but netProfit
+    // already correctly accounts for it.
+    const netProfit = divisions.reduce((s, d) => s + d.pnlNetProfit, 0);
     return {
       revenue,
       cashReceived: divisions.reduce((s, d) => s + d.pnlCashReceived, 0),
       outstandingAr: divisions.reduce((s, d) => s + d.pnlOutstandingAr, 0),
       expenses,
+      badDebt: divisions.reduce((s, d) => s + d.pnlBadDebt, 0),
       netProfit,
       marginPercent: revenue > 0 ? (netProfit / revenue) * 100 : 0,
       leads: divisions.reduce((s, d) => s + d.leadCount, 0),
@@ -72,7 +77,7 @@ export default function DivisionsPageClient({
 
       {/* Combined totals */}
       {divisions.length > 0 && (
-        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-4">
+        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-7 gap-4">
           {[
             { label: 'Revenue',          value: formatZAR(totals.revenue),        cls: 'text-emerald-500' },
             { label: 'Cash Receipts',    value: formatZAR(totals.cashReceived),   cls: 'text-blue-500' },
@@ -80,6 +85,7 @@ export default function DivisionsPageClient({
             { label: 'Expenses',         value: formatZAR(totals.expenses),       cls: 'text-muted-foreground' },
             { label: 'Net Profit',       value: formatZAR(totals.netProfit),      cls: totals.netProfit >= 0 ? 'text-emerald-500' : 'text-red-500' },
             { label: 'Leads',            value: String(totals.leads),             cls: '' },
+            { label: 'Bad Debt',         value: formatZAR(totals.badDebt),        cls: totals.badDebt > 0 ? 'text-red-500' : '' },
           ].map(({ label, value, cls }) => (
             <div key={label} className="rounded-lg border p-4 flex flex-col gap-1">
               <span className="text-xs text-muted-foreground">{label}</span>

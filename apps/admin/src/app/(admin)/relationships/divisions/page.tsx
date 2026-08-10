@@ -28,12 +28,18 @@ export default async function DivisionsPage() {
 
   const divisionsWithPnl: DivisionWithPnl[] = divisions.map((division) => {
     const pnl = pnlByDivision.get(division.id);
+    // "Expenses" excludes Bad Debt Expense — that's an AR write-off, not an
+    // operating cost, and gets its own figure so it isn't buried in the total.
+    // Net Profit / Margin still subtract it (via pnl.netProfit), since it's a
+    // real expense for profitability purposes — only this display total omits it.
+    const badDebt = pnl?.totalBadDebt ?? 0;
     return {
       ...division,
       pnlRevenue: pnl?.totalRevenue ?? 0,
       pnlCashReceived: pnl?.totalIncome ?? 0,
       pnlOutstandingAr: pnl?.totalOutstandingAr ?? 0,
-      pnlExpenses: pnl?.totalExpenses ?? 0,
+      pnlExpenses: (pnl?.totalExpenses ?? 0) - badDebt,
+      pnlBadDebt: badDebt,
       pnlNetProfit: pnl?.netProfit ?? 0,
       pnlMarginPercent: pnl?.marginPercent ?? 0,
       pnlSharePercent: pnl?.distributionPercent ?? 0,
