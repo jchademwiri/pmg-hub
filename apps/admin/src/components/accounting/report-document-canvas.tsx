@@ -296,13 +296,27 @@ export function ReportDocumentCanvas({
               <h4 className="text-[11px] font-semibold text-zinc-500 uppercase tracking-wider mb-2">Operating Expenses</h4>
               <table className="w-full text-left text-xs border-collapse">
                 <tbody className="divide-y divide-zinc-100 dark:divide-zinc-900">
-                  {data?.statement?.expenses?.map((row: any) => (
-                    <tr key={row.accountId} className="hover:bg-zinc-50 dark:hover:bg-zinc-900/50">
-                      <td className="py-2 px-3 font-mono text-zinc-500 w-20">{row.accountCode}</td>
-                      <td className="py-2 px-3 font-medium text-zinc-800 dark:text-zinc-200">{row.accountName}</td>
-                      <td className="py-2 px-3 text-right font-mono text-zinc-800 dark:text-zinc-200">{formatZAR(row.amount)}</td>
-                    </tr>
-                  ))}
+                  {data?.statement?.expenses?.map((row: any) => {
+                    const isBadDebt = row.accountCode === '5150' || row.accountName?.toLowerCase().includes('bad debt');
+                    return (
+                      <tr key={row.accountId} className="hover:bg-zinc-50 dark:hover:bg-zinc-900/50">
+                        <td className="py-2 px-3 font-mono text-zinc-500 w-20">{row.accountCode}</td>
+                        <td className="py-2 px-3 font-medium text-zinc-800 dark:text-zinc-200">
+                          <div className="flex items-center gap-2">
+                            <span>{row.accountName}</span>
+                            {isBadDebt && (
+                              <span className="inline-flex items-center rounded-full bg-red-500/10 px-2 py-0.5 text-[10px] font-semibold text-red-600 dark:text-red-400 border border-red-500/20">
+                                Write-off
+                              </span>
+                            )}
+                          </div>
+                        </td>
+                        <td className={`py-2 px-3 text-right font-mono ${isBadDebt ? 'text-red-600 dark:text-red-400 font-semibold' : 'text-zinc-800 dark:text-zinc-200'}`}>
+                          {formatZAR(row.amount)}
+                        </td>
+                      </tr>
+                    );
+                  })}
                   {(!data?.statement?.expenses || data.statement.expenses.length === 0) && (
                     <tr>
                       <td colSpan={3} className="py-3 px-3 text-zinc-400 italic text-[11px]">No operating expenses recorded.</td>
@@ -1173,13 +1187,18 @@ export function ReportDocumentCanvas({
                       <td className="py-1.5 px-2 text-right">{formatZAR(pnl?.depreciation?.current || 0)}</td>
                       <td className="py-1.5 px-2 text-right text-zinc-400">{formatZAR(0)}</td>
                     </tr>
-                    {det?.expenses?.map((exp: any) => (
-                      <tr key={exp.accountId}>
-                        <td className="py-1.5 px-5 font-sans text-zinc-700 dark:text-zinc-300">{exp.accountCode} - {exp.accountName}</td>
-                        <td className="py-1.5 px-2 text-right">{formatZAR(exp.amount)}</td>
-                        <td className="py-1.5 px-2 text-right text-zinc-400">{formatZAR(0)}</td>
-                      </tr>
-                    ))}
+                    {det?.expenses?.map((exp: any) => {
+                      const isBadDebt = exp.accountCode === '5150' || exp.accountName?.toLowerCase().includes('bad debt');
+                      return (
+                        <tr key={exp.accountId}>
+                          <td className={`py-1.5 px-5 font-sans ${isBadDebt ? 'text-red-600 dark:text-red-400 font-semibold' : 'text-zinc-700 dark:text-zinc-300'}`}>
+                            {exp.accountCode} - {exp.accountName}{isBadDebt ? ' (write-off)' : ''}
+                          </td>
+                          <td className={`py-1.5 px-2 text-right ${isBadDebt ? 'text-red-600 dark:text-red-400 font-semibold' : ''}`}>{formatZAR(exp.amount)}</td>
+                          <td className="py-1.5 px-2 text-right text-zinc-400">{formatZAR(0)}</td>
+                        </tr>
+                      );
+                    })}
                     <tr className="font-extrabold border-t-2 border-b-2 border-zinc-900 dark:border-zinc-100 text-sm text-zinc-900 dark:text-white bg-zinc-50 dark:bg-zinc-900/50">
                       <td className="py-3 px-2 font-sans uppercase">Profit / (loss) for the year</td>
                       <td className="py-3 px-2 text-right text-emerald-600 dark:text-emerald-400">{formatZAR(det?.netProfit?.current || 0)}</td>
