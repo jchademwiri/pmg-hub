@@ -1,109 +1,108 @@
-import Link from 'next/link'
-import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card'
-import { formatZAR } from '@/lib/format'
+import { DivisionBreakdownCard, type DivisionBreakdownRow } from '@/components/dashboard/division-breakdown-card'
+import type { DivisionRevenue } from '@/lib/financial'
 
 type ExpenseSnapshotProps = {
+  divisions: DivisionRevenue[]
+  invoicedByDivision: DivisionRevenue[]
   expensesByDivision: { divisionId?: string; divisionName: string; total: number }[]
+  arByDivision: DivisionRevenue[]
+  pmgShareRate: number
 }
 
+// chart-1..5 are a monochrome sequential palette (same hue, varying lightness) and
+// are not distinguishable from one another here, so divisions get real qualitative hues.
 const DIVISION_COLORS: Record<string, string> = {
-  'Playhouse Media Group': 'bg-chart-1',
-  'Tender Edge Solutions':  'bg-chart-2',
-  'Apex Web Solutions':     'bg-chart-3',
+  'Playhouse Media Group': 'bg-chart-2',
+  'Tender Edge Solutions':  'bg-amber-500',
+  'Apex Web Solutions':     'bg-violet-500',
 }
 
-const DEFAULT_COLORS = ['bg-chart-4', 'bg-chart-5', 'bg-muted-foreground/40']
+const DEFAULT_COLORS = ['bg-rose-500', 'bg-teal-500', 'bg-muted-foreground/40']
 
-export function ExpenseSnapshot({ expensesByDivision }: ExpenseSnapshotProps) {
-  // Derived from the same rows being rendered, so the percentages below can never
-  // drift out of sync with what they're supposed to add up to (see docs/audits/full-portfolio-audit-2026-07-25.md).
+const dotColorFor = (name: string, i: number) => DIVISION_COLORS[name] ?? DEFAULT_COLORS[i % DEFAULT_COLORS.length]
+
+const TITLE = 'Division Financial Breakdown'
+
+export function ExpenseSnapshot({
+  divisions,
+  invoicedByDivision,
+  expensesByDivision,
+  arByDivision,
+  pmgShareRate,
+}: ExpenseSnapshotProps) {
+  const receiptsByName = new Map(divisions.map((d) => [d.divisionName, d]))
+  const invoicedByName = new Map(invoicedByDivision.map((d) => [d.divisionName, d]))
+  const expenseByName = new Map(expensesByDivision.map((d) => [d.divisionName, d]))
+  const arByName = new Map(arByDivision.map((d) => [d.divisionName, d]))
+  // Union of all lists: a division can have cash receipts with no expenses (or
+  // vice versa), or still-outstanding AR with no receipts yet, and should still show up.
+  const names = Array.from(
+    new Set([...receiptsByName.keys(), ...invoicedByName.keys(), ...expenseByName.keys(), ...arByName.keys()]),
+  )
+
   const totalExpenses = expensesByDivision.reduce((sum, d) => sum + d.total, 0)
 
-  if (!expensesByDivision.length || totalExpenses === 0) return null
+  if (names.length === 0 || totalExpenses === 0) {
+    return (
+      <DivisionBreakdownCard
+        title={TITLE}
+        totals={[]}
+        rows={[]}
+        emptyMessage="No expenses recorded yet."
+      />
+    )
+  }
 
-  // Sort descending
-  const sorted = [...expensesByDivision].sort((a, b) => b.total - a.total)
+  const totalRevenue = names.reduce((sum, name) => sum + (invoicedByName.get(name)?.total ?? 0), 0)
+  const totalCashReceipts = names.reduce((sum, name) => sum + (receiptsByName.get(name)?.total ?? 0), 0)
+  const totalPmgShare = totalCashReceipts * pmgShareRate
+  const totalAR = names.reduce((sum, name) => sum + (arByName.get(name)?.total ?? 0), 0)
+  const totalNet = totalCashReceipts - totalExpenses
+
+  const rows: DivisionBreakdownRow[] = names
+    .map((name) => {
+      const receipts = receiptsByName.get(name)
+      const invoiced = invoicedByName.get(name)
+      const expense = expenseByName.get(name)
+      const ar = arByName.get(name)
+      const revenueTotal = invoiced?.total ?? 0
+      const cashReceiptsTotal = receipts?.total ?? 0
+      const expenseTotal = expense?.total ?? 0
+      const arTotal = ar?.total ?? 0
+      const pmgShare = cashReceiptsTotal * pmgShareRate
+      const net = cashReceiptsTotal - expenseTotal
+      const pct = Math.round((expenseTotal / totalExpenses) * 100)
+
+      return {
+        divisionId: receipts?.divisionId ?? invoiced?.divisionId ?? expense?.divisionId ?? ar?.divisionId,
+        divisionName: name,
+        pct,
+        metrics: [
+          { label: 'Revenue', value: revenueTotal, colorClass: 'text-sky-600' },
+          { label: 'Cash Receipts', value: cashReceiptsTotal, colorClass: 'text-emerald-600' },
+          { label: 'PMG Share', value: pmgShare, colorClass: 'text-blue-600' },
+          { label: 'Accounts Receivable', value: arTotal, colorClass: 'text-violet-600' },
+          { label: 'Expenses', value: expenseTotal, colorClass: 'text-red-600' },
+          { label: 'Net', value: net, colorClass: net >= 0 ? 'text-emerald-600' : 'text-red-600' },
+        ],
+      }
+    })
+    .sort((a, b) => (expenseByName.get(b.divisionName)?.total ?? 0) - (expenseByName.get(a.divisionName)?.total ?? 0))
 
   return (
-    <Card className="rounded-xl border border-border bg-card shadow-none">
-      <CardHeader className="pb-3">
-        <div className="flex items-center justify-between">
-          <CardTitle className="text-card-foreground text-sm font-medium">
-            Expense Breakdown by Division
-          </CardTitle>
-          <span className="text-xs text-red-600 tabular-nums font-medium">
-            {formatZAR(totalExpenses)}
-          </span>
-        </div>
-      </CardHeader>
-      <CardContent>
-        <div className="space-y-3">
-          {/* Stacked proportion bar */}
-          <div className="flex h-2.5 w-full overflow-hidden rounded-full gap-0.5">
-            {sorted.map((div, i) => {
-              const pct = (div.total / totalExpenses) * 100
-              const colorClass =
-                DIVISION_COLORS[div.divisionName] ?? DEFAULT_COLORS[i % DEFAULT_COLORS.length]
-              return (
-                <div
-                  key={div.divisionName}
-                  className={`${colorClass} rounded-full`}
-                  style={{ width: `${pct}%` }}
-                  title={`${div.divisionName}: ${formatZAR(div.total)}`}
-                />
-              )
-            })}
-          </div>
-
-          {/* Division rows */}
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-            {sorted.map((div, i) => {
-              const pct = Math.round((div.total / totalExpenses) * 100)
-              const colorClass =
-                DIVISION_COLORS[div.divisionName] ?? DEFAULT_COLORS[i % DEFAULT_COLORS.length]
-
-              const content = (
-                <div
-                  className={`rounded-lg bg-muted/30 border border-border/50 p-3 transition-all duration-200 ${
-                    div.divisionId
-                      ? 'group-hover:scale-[1.01] group-hover:bg-muted/50 group-hover:border-primary/20 group-hover:shadow-sm'
-                      : ''
-                  }`}
-                >
-                  <div className="flex items-center gap-1.5 mb-1">
-                    <span className={`inline-block h-2 w-2 rounded-full ${colorClass}`} />
-                    <span className={`text-xs text-muted-foreground truncate ${div.divisionId ? 'group-hover:text-primary transition-colors' : ''}`}>
-                      {div.divisionName}
-                    </span>
-                  </div>
-                  <p className="text-red-600 text-base font-semibold tabular-nums">
-                    {formatZAR(div.total)}
-                  </p>
-                  <p className="text-muted-foreground/60 text-xs">{pct}% of total</p>
-                </div>
-              )
-
-              if (div.divisionId) {
-                return (
-                  <Link
-                    key={div.divisionName}
-                    href={`/finance/expenses?divisionId=${div.divisionId}`}
-                    className="block group"
-                  >
-                    {content}
-                  </Link>
-                )
-              }
-
-              return (
-                <div key={div.divisionName} className="block">
-                  {content}
-                </div>
-              )
-            })}
-          </div>
-        </div>
-      </CardContent>
-    </Card>
+    <DivisionBreakdownCard
+      title={TITLE}
+      totals={[
+        { label: 'Revenue', value: totalRevenue, colorClass: 'text-sky-600' },
+        { label: 'Cash Receipts', value: totalCashReceipts, colorClass: 'text-emerald-600' },
+        { label: 'PMG Share', value: totalPmgShare, colorClass: 'text-blue-600' },
+        { label: 'AR', value: totalAR, colorClass: 'text-violet-600' },
+        { label: 'Expenses', value: totalExpenses, colorClass: 'text-red-600' },
+        { label: 'Net', value: totalNet, colorClass: totalNet >= 0 ? 'text-emerald-600' : 'text-red-600' },
+      ]}
+      rows={rows}
+      emptyMessage="No expenses recorded yet."
+      dotColorFor={dotColorFor}
+    />
   )
 }

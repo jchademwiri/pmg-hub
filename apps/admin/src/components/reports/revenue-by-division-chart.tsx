@@ -35,9 +35,6 @@ export function RevenueByDivisionChart({ data, currentPeriod }: Props) {
   const filteredSeries = React.useMemo(() => {
     if (!data || data.length === 0) return []
 
-    // If 'all', show full 12 months of the financial year
-    if (monthRange === 'all') return data
-
     // Determine current period in YYYY-MM
     let nowStr = currentPeriod
     if (!nowStr) {
@@ -45,25 +42,34 @@ export function RevenueByDivisionChart({ data, currentPeriod }: Props) {
       nowStr = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`
     }
 
+    // AR is a cumulative balance query, so it still returns a (flat, projected)
+    // value for months that haven't happened yet — zero it out beyond the
+    // current month so future months don't look like they have real data.
+    const sanitized = data.map((d) => (d.month > nowStr ? { ...d, ar: 0 } : d))
+
+    // If 'all', show full 12 months of the financial year
+    if (monthRange === 'all') return sanitized
+
     // Find elapsed months in the financial year up to current date (or last non-zero month)
-    let elapsedIdx = data.findIndex(d => d.month > nowStr)
-    if (elapsedIdx === -1) elapsedIdx = data.length
+    let elapsedIdx = sanitized.findIndex(d => d.month > nowStr)
+    if (elapsedIdx === -1) elapsedIdx = sanitized.length
 
     // If no months have elapsed yet or all are in the past, fall back to non-zero months or full data
-    const nonZeroIdx = data.reduce((max, d, idx) => (d.revenue > 0 || d.invoiced > 0 || d.expenses > 0 ? idx + 1 : max), 0)
+    const nonZeroIdx = sanitized.reduce((max, d, idx) => (d.revenue > 0 || d.invoiced > 0 || d.expenses > 0 || d.ar > 0 ? idx + 1 : max), 0)
     const cutoffIdx = Math.max(elapsedIdx, nonZeroIdx, 1)
 
-    const availableData = data.slice(0, cutoffIdx)
+    const availableData = sanitized.slice(0, cutoffIdx)
 
     if (monthRange === 'ytd') return availableData
 
     const months = parseInt(monthRange, 10)
     return availableData.slice(-months)
-  }, [data, monthRange])
+  }, [data, monthRange, currentPeriod])
 
   const config: ChartConfig = {
-    revenue: { label: 'Revenue (Cash)', color: '#10b981' },
-    invoiced: { label: 'Invoiced', color: '#3b82f6' },
+    invoiced: { label: 'Revenue', color: '#3b82f6' },
+    revenue: { label: 'Cash Receipts', color: '#10b981' },
+    ar: { label: 'Accounts Receivable', color: '#a855f7' },
     expenses: { label: 'Expenses', color: '#f59e0b' },
   }
 
@@ -71,8 +77,8 @@ export function RevenueByDivisionChart({ data, currentPeriod }: Props) {
     <Card className="pt-0">
       <CardHeader className="flex items-center gap-2 space-y-0 border-b py-5 sm:flex-row">
         <div className="grid flex-1 gap-1">
-          <CardTitle>Revenue, Invoiced, and Expenses</CardTitle>
-          <CardDescription>Monthly payments received, invoices raised, and expenses incurred</CardDescription>
+          <CardTitle>Revenue, Cash Receipts, and Expenses</CardTitle>
+          <CardDescription>Monthly invoices raised, payments received, outstanding balance, and expenses incurred</CardDescription>
         </div>
         <Select value={monthRange} onValueChange={setMonthRange}>
           <SelectTrigger
@@ -92,7 +98,7 @@ export function RevenueByDivisionChart({ data, currentPeriod }: Props) {
       <CardContent className="px-2 pt-4 sm:px-6 sm:pt-6">
         {filteredSeries.length === 0 ? (
           <p className="text-muted-foreground/50 text-xs">
-            No revenue, invoiced, or expense data for this period.
+            No revenue, cash receipt, or expense data for this period.
           </p>
         ) : (
           <ChartContainer config={config} className="aspect-auto h-[280px] w-full">
@@ -116,8 +122,9 @@ export function RevenueByDivisionChart({ data, currentPeriod }: Props) {
                   />
                 }
               />
-              <Bar dataKey="revenue" fill="#10b981" radius={[4, 4, 0, 0]} />
               <Bar dataKey="invoiced" fill="#3b82f6" radius={[4, 4, 0, 0]} />
+              <Bar dataKey="revenue" fill="#10b981" radius={[4, 4, 0, 0]} />
+              <Bar dataKey="ar" fill="#a855f7" radius={[4, 4, 0, 0]} />
               <Bar dataKey="expenses" fill="#f59e0b" radius={[4, 4, 0, 0]} />
               <ChartLegend content={<ChartLegendContent />} />
             </BarChart>

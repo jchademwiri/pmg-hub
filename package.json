@@ -37,7 +37,6 @@
     "packages/*"
   ],
   "dependencies": {
-    "vercel": "^53.4.0",
     "zod": "catalog:"
   },
   "overrides": {

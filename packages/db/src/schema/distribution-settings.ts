@@ -7,10 +7,10 @@ import { pgTable, varchar, numeric, date, boolean, timestamp, uuid, index } from
  *
  * Current defaults (seeded):
  *   - pmg_share: 25% of gross revenue
- *   - salary: 35% of profit pool
- *   - reinvest: 30% of profit pool
- *   - reserve: 30% of profit pool
- *   - flex: 5% of profit pool
+ *
+ * Rows with rate_key in ('salary', 'reinvest', 'reserve', 'flex') are legacy —
+ * those distribution buckets were removed and the rows were deactivated
+ * (is_active = false) rather than deleted, to preserve rate history.
  */
 export const distributionSettings = pgTable(
   "distribution_settings",

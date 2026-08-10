@@ -8,6 +8,7 @@ import { redirect } from 'next/navigation'
 import { getDb, invitations, user, eq } from '@pmg/db'
 import React, { cache } from 'react'
 import { createEmailClient, MagicLinkEmail, DEFAULT_EMAIL_FROM, DEFAULT_REPLY_TO } from '@pmg/emails'
+import { ROLE_HIERARCHY, type Role } from './roles'
 
 // ── Better Auth config ────────────────────────────────────────────────────────
 
@@ -135,11 +136,6 @@ export const auth = betterAuth({
 })
 
 export type Session = typeof auth.$Infer.Session
-
-// ── Role hierarchy ────────────────────────────────────────────────────────────
-
-const ROLE_HIERARCHY = { super_admin: 3, admin: 2, viewer: 1 } as const
-type Role = keyof typeof ROLE_HIERARCHY
 
 // ── Server helpers ────────────────────────────────────────────────────────────
 

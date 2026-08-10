@@ -22,20 +22,8 @@ vi.mock('@/components/dashboard/kpi-grid', () => ({
   KpiGrid: () => <div data-testid="kpi-grid" />,
 }))
 
-vi.mock('@/components/dashboard/salary-card', () => ({
-  SalaryCard: () => <div data-testid="salary-card" />,
-}))
-
 vi.mock('@/components/dashboard/division-area-chart', () => ({
   DivisionAreaChart: () => <div data-testid="division-area-chart" />,
-}))
-
-vi.mock('@/components/dashboard/division-revenue', () => ({
-  DivisionRevenue: () => <div data-testid="division-revenue" />,
-}))
-
-vi.mock('@/components/dashboard/leads-summary', () => ({
-  LeadsSummary: () => <div data-testid="leads-summary" />,
 }))
 
 vi.mock('@/components/dashboard/expense-snapshot', () => ({
@@ -59,10 +47,6 @@ const emptySummary = {
   expenses: 0,
   pmgShare: 0,
   profitPool: 0,
-  salary: 0,
-  reinvest: 0,
-  reserve: 0,
-  flex: 0,
 }
 
 const emptyWithdrawals = {
@@ -79,8 +63,8 @@ const baseProps = {
   labels: { current: 'Jan 2025', previous: 'Dec 2024', ytd: 'YTD 2025' },
   deltas: { revenue: null, expenses: null, profit: null },
   divisions: [],
-  divisionExpenseMap: {},
-  leads: [],
+  arByDivision: [],
+  invoicedByDivision: [],
   monthlySeries: [],
   sparklineData: [],
   agingReport: [],
@@ -91,18 +75,7 @@ const baseProps = {
   expensesByDivision: [],
   currentPeriod: '2025-01',
   showCloseMonthButton: true,
-  projectScheduleSummary: {
-    inProgress: 0,
-    planned: 0,
-    upcomingDeadlines: 0,
-    atRisk: 0,
-    overdue: 0,
-  },
   ledgerBalances: {
-    salary:    { expected: 0, spent: 0, available: 0 },
-    reinvest:  { expected: 0, spent: 0, available: 0 },
-    reserve:   { expected: 0, spent: 0, available: 0 },
-    flex:      { expected: 0, spent: 0, available: 0 },
     pmg_share: { expected: 0, spent: 0, available: 0 },
   },
 }

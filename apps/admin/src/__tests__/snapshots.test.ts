@@ -47,10 +47,6 @@ function makeSnapshotRow(period: string, overrides: Partial<SnapshotRow> = {}): 
     expenses: '40000.00',
     pmgShare: '20000.00',
     profitPool: '40000.00',
-    salary: '14000.00',
-    reinvest: '12000.00',
-    reserve: '12000.00',
-    flex: '2000.00',
     createdBy: null,
     status: 'locked',
     notes: null,
@@ -64,11 +60,7 @@ function makeSnapshotRow(period: string, overrides: Partial<SnapshotRow> = {}): 
 function computeSummary(revenue: number, expenses: number) {
   const pmgShare = revenue * 0.25
   const profitPool = revenue - expenses - pmgShare
-  const salary = profitPool * 0.35
-  const reinvest = profitPool * 0.30
-  const reserve = profitPool * 0.30
-  const flex = profitPool * 0.05
-  return { revenue, expenses, pmgShare, profitPool, salary, reinvest, reserve, flex }
+  return { revenue, expenses, pmgShare, profitPool }
 }
 
 // ─── P1: getAllSnapshots ordering invariant ───────────────────────────────────
@@ -143,7 +135,7 @@ describe('P3: Numeric round-trip - insert then retrieve preserves values', () =>
     vi.resetAllMocks()
   })
 
-  it('P3: Number(row.field) equals original summary field for all eight numeric fields - Validates: Requirements 2.2, 2.3, 6.2, 6.3', async () => {
+  it('P3: Number(row.field) equals original summary field for all four numeric fields - Validates: Requirements 2.2, 2.3, 6.2, 6.3', async () => {
     // Feature: financial-snapshots, Property 3: Numeric round-trip
     await fc.assert(
       fc.asyncProperty(
@@ -158,10 +150,6 @@ describe('P3: Numeric round-trip - insert then retrieve preserves values', () =>
             expenses: String(summary.expenses),
             pmgShare: String(summary.pmgShare),
             profitPool: String(summary.profitPool),
-            salary: String(summary.salary),
-            reinvest: String(summary.reinvest),
-            reserve: String(summary.reserve),
-            flex: String(summary.flex),
           })
 
           vi.mocked(insertSnapshot).mockResolvedValue(row)
@@ -175,10 +163,6 @@ describe('P3: Numeric round-trip - insert then retrieve preserves values', () =>
           expect(Number(retrieved!.expenses)).toBeCloseTo(summary.expenses, 5)
           expect(Number(retrieved!.pmgShare)).toBeCloseTo(summary.pmgShare, 5)
           expect(Number(retrieved!.profitPool)).toBeCloseTo(summary.profitPool, 5)
-          expect(Number(retrieved!.salary)).toBeCloseTo(summary.salary, 5)
-          expect(Number(retrieved!.reinvest)).toBeCloseTo(summary.reinvest, 5)
-          expect(Number(retrieved!.reserve)).toBeCloseTo(summary.reserve, 5)
-          expect(Number(retrieved!.flex)).toBeCloseTo(summary.flex, 5)
         }
       ),
       { numRuns: 100 }
@@ -305,8 +289,11 @@ describe('P7: Period formatting produces correct month name and year', () => {
 // ─── P8: Financial model formula invariants ───────────────────────────────────
 
 describe('P8: Financial model formula invariants', () => {
-  it('P8: computeSummary satisfies all six formula relationships - Validates: Requirements 6.4', () => {
+  it('P8: computeSummary satisfies the pmgShare/profitPool formula relationships - Validates: Requirements 6.4', () => {
     // Feature: financial-snapshots, Property 8: Financial model formula invariants
+    // The salary/reinvest/reserve/flex distribution formulas were removed along
+    // with those columns (the app moved to a full accounting/billing system;
+    // pmg_share is the only active allocation) - only pmgShare/profitPool remain.
     fc.assert(
       fc.property(
         fc.float({ min: 0, max: 1_000_000, noNaN: true }),
@@ -317,14 +304,6 @@ describe('P8: Financial model formula invariants', () => {
 
           expect(Math.abs(s.pmgShare - revenue * 0.25)).toBeLessThan(eps)
           expect(Math.abs(s.profitPool - (revenue - expenses - s.pmgShare))).toBeLessThan(eps)
-          expect(Math.abs(s.salary - s.profitPool * 0.35)).toBeLessThan(eps)
-          expect(Math.abs(s.reinvest - s.profitPool * 0.30)).toBeLessThan(eps)
-          expect(Math.abs(s.reserve - s.profitPool * 0.30)).toBeLessThan(eps)
-          expect(Math.abs(s.flex - s.profitPool * 0.05)).toBeLessThan(eps)
-
-          // Allocation sum invariant: salary + reinvest + reserve + flex === profitPool
-          const allocationSum = s.salary + s.reinvest + s.reserve + s.flex
-          expect(Math.abs(allocationSum - s.profitPool)).toBeLessThan(eps)
         }
       ),
       { numRuns: 100 }

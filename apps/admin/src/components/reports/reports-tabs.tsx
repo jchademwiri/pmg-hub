@@ -68,9 +68,15 @@ export function ReportsTabs({
     setDrillOpen(true)
   }
 
-  // Map MoM metric names to drill-down types
+  // The MoM chart displays "Cash Receipts" (matching the rest of the app's
+  // terminology fix) but the underlying momData metric name stays "Revenue" —
+  // it's shared with CSV export and AI commentary generation, which key off
+  // that exact string, so only the chart's own rendering is remapped here.
+  const momDataForChart = momData.map((d) => (d.metric === 'Revenue' ? { ...d, metric: 'Cash Receipts' } : d))
+
+  // Map MoM metric names (as shown in the chart) to drill-down types
   const metricToDrillType: Record<string, DrilldownType> = {
-    'Revenue': 'revenue',
+    'Cash Receipts': 'revenue',
     'Expenses': 'expenses',
   }
 
@@ -134,7 +140,7 @@ export function ReportsTabs({
       <TabsContent value="overview">
         <div className="grid grid-cols-1 gap-6">
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 min-h-[400px]">
-            <MoMComparisonChart data={momData} currentMonthLabel={currentMonthLabel} previousMonthLabel={previousMonthLabel} onBarClick={(metric, periodType) => {
+            <MoMComparisonChart data={momDataForChart} currentMonthLabel={currentMonthLabel} previousMonthLabel={previousMonthLabel} onBarClick={(metric, periodType) => {
               const type = metricToDrillType[metric]
               if (type) {
                 const targetPeriod = periodType === 'current' ? currentPeriod : previousPeriod

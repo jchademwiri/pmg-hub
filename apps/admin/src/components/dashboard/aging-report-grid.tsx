@@ -4,6 +4,7 @@ import React from 'react';
 import Link from 'next/link';
 import { Card, CardHeader, CardContent } from '@/components/ui/card';
 import { formatZAR } from '@/lib/format';
+import { summarizeAging } from '@/lib/aging-summary';
 import { ShieldCheck, Clock, AlertTriangle, AlertCircle, LucideIcon } from 'lucide-react';
 import type { AgingRow } from '@pmg/db';
 
@@ -52,7 +53,7 @@ const BUCKET_THEMES: Record<string, BucketTheme> = {
 };
 
 export function AgingReportGrid({ data = [] }: AgingReportGridProps) {
-  const totalOutstanding = data.reduce((sum, r) => sum + r.total, 0);
+  const { totalOutstanding } = summarizeAging(data);
 
   return (
     <div className="space-y-3">

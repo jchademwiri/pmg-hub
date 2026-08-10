@@ -10,6 +10,7 @@ import { snapshots } from "../schema/snapshots";
 import { divisions } from "../schema/divisions";
 import { clients } from "../schema/clients";
 import { invoices } from "../schema/billing";
+import { creditApplications } from "../schema/credits";
 import { income } from "../schema/income";
 import { getOrganisationSettings } from "./billing";
 import { eq, and, desc, asc, sql, inArray } from "drizzle-orm";
@@ -884,6 +885,7 @@ export type ProfitAndLossByDivisionRow = {
   totalIncome: number;
   totalOutstandingAr: number;
   totalExpenses: number;
+  totalBadDebt: number;
   netProfit: number;
   marginPercent: number;
   distributionPercent: number;
@@ -912,6 +914,8 @@ export async function getProfitAndLossByDivision(period?: string, startDate?: st
     .select({
       divisionId: journalEntries.divisionId,
       accountType: chartAccounts.type,
+      accountCode: chartAccounts.code,
+      accountName: chartAccounts.name,
       totalDebits: sql<string>`COALESCE(SUM(${journalLines.debit}::numeric), 0)`,
       totalCredits: sql<string>`COALESCE(SUM(${journalLines.credit}::numeric), 0)`,
     })
@@ -919,7 +923,7 @@ export async function getProfitAndLossByDivision(period?: string, startDate?: st
     .innerJoin(journalEntries, and(eq(journalLines.journalEntryId, journalEntries.id), ...entryConditions))
     .innerJoin(chartAccounts, eq(journalLines.accountId, chartAccounts.id))
     .where(inArray(chartAccounts.type, ["revenue", "expense"]))
-    .groupBy(journalEntries.divisionId, chartAccounts.type);
+    .groupBy(journalEntries.divisionId, chartAccounts.type, chartAccounts.code, chartAccounts.name);
 
   // Fetch actual cash income collected per division
   const incomeConditions = [];
@@ -940,13 +944,20 @@ export async function getProfitAndLossByDivision(period?: string, startDate?: st
   const allDivisions = await db.select({ id: divisions.id, name: divisions.name }).from(divisions);
   const divisionNames = new Map(allDivisions.map((d) => [d.id, d.name]));
 
-  const byDivision = new Map<string, { totalRevenue: number; totalExpenses: number }>();
+  const byDivision = new Map<string, { totalRevenue: number; totalExpenses: number; totalBadDebt: number }>();
   for (const r of rows) {
-    const totals = byDivision.get(r.divisionId) ?? { totalRevenue: 0, totalExpenses: 0 };
+    const totals = byDivision.get(r.divisionId) ?? { totalRevenue: 0, totalExpenses: 0, totalBadDebt: 0 };
     const debits = Number(r.totalDebits);
     const credits = Number(r.totalCredits);
-    if (r.accountType === "revenue") totals.totalRevenue += credits - debits;
-    else if (r.accountType === "expense") totals.totalExpenses += debits - credits;
+    if (r.accountType === "revenue") {
+      totals.totalRevenue += credits - debits;
+    } else if (r.accountType === "expense") {
+      const amount = debits - credits;
+      totals.totalExpenses += amount;
+      if (r.accountCode === "5150" || r.accountName.toLowerCase().includes("bad debt")) {
+        totals.totalBadDebt += amount;
+      }
+    }
     byDivision.set(r.divisionId, totals);
   }
 
@@ -968,6 +979,7 @@ export async function getProfitAndLossByDivision(period?: string, startDate?: st
       totalIncome: cashIncome,
       totalOutstandingAr,
       totalExpenses: totals.totalExpenses,
+      totalBadDebt: totals.totalBadDebt,
       netProfit,
       marginPercent,
       distributionPercent,
@@ -1043,6 +1055,30 @@ export async function getClientPerformance(
     if (r.clientId) paymentMap.set(r.clientId, Number(r.totalPaid));
   }
 
+  // Credits applied to still-open invoices per client. Credits tied to a
+  // 'paid' invoice are deliberately excluded — a credit note applied after
+  // an invoice is already fully paid in cash doesn't reduce what the client
+  // currently owes on OTHER open invoices; including it would understate
+  // (or, summed with enough of them, even zero out) real outstanding AR.
+  const creditConditions = [inArray(invoices.status, ['issued', 'partially_paid'])];
+  if (effectiveStart) creditConditions.push(sql`${creditApplications.appliedAt} >= ${effectiveStart}::timestamp`);
+  if (effectiveEnd) creditConditions.push(sql`${creditApplications.appliedAt} <= ${effectiveEnd}::timestamp`);
+
+  const creditRows = await db
+    .select({
+      clientId: invoices.clientId,
+      totalCredited: sql<string>`COALESCE(SUM(${creditApplications.amount}::numeric), 0)`,
+    })
+    .from(creditApplications)
+    .innerJoin(invoices, eq(invoices.id, creditApplications.invoiceId))
+    .where(and(...creditConditions))
+    .groupBy(invoices.clientId);
+
+  const creditMap = new Map<string, number>();
+  for (const r of creditRows) {
+    if (r.clientId) creditMap.set(r.clientId, Number(r.totalCredited));
+  }
+
   let groupTotalRevenue = 0;
   for (const amount of invoicedMap.values()) {
     groupTotalRevenue += amount;
@@ -1052,7 +1088,8 @@ export async function getClientPerformance(
   for (const client of allClients) {
     const rev = invoicedMap.get(client.id) || 0;
     const collected = paymentMap.get(client.id) || 0;
-    const ar = Math.max(0, rev - collected);
+    const credited = creditMap.get(client.id) || 0;
+    const ar = Math.max(0, rev - collected - credited);
 
     if (rev === 0 && collected === 0) continue;
 

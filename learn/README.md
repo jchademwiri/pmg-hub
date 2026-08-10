@@ -86,4 +86,3 @@ Important: if you are in June, June is still open. The close-month flow should u
 - Record expenses with clear descriptions, not vague labels like "misc".
 - Close months only after the numbers have been reviewed.
 - Ask an admin before changing Settings, Security, Data, or Backup configuration.
-

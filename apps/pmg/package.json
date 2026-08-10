@@ -16,7 +16,6 @@
     "@astrojs/vercel": "^10.0.4",
     "@pmg/db": "workspace:*",
     "@pmg/emails": "workspace:*",
-    "@pmg/tailwind-config": "workspace:*",
     "@pmg/utils": "workspace:*",
     "@vercel/analytics": "^2.0.1",
     "astro": "^6.0.8",

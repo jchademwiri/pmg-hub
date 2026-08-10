@@ -6,6 +6,7 @@ import {
   divisions,
   clients,
   ledger,
+  type AllocationType,
 } from '../schema/index';
 import { sql, eq, and, desc, asc } from 'drizzle-orm';
 import { getActiveRates } from './distribution-settings';
@@ -16,10 +17,6 @@ export type PeriodSummary = {
   expenses: number;
   pmgShare: number;
   profitPool: number;
-  salary: number;
-  reinvest: number;
-  reserve: number;
-  flex: number;
 };
 
 export async function getTotalRevenue(): Promise<number> {
@@ -185,10 +182,6 @@ export async function getFinancialSummaryForPeriod(
     expenses: expTotal,
     pmgShare,
     profitPool,
-    salary: profitPool * effectiveRates.salary,
-    reinvest: profitPool * effectiveRates.reinvest,
-    reserve: profitPool * effectiveRates.reserve,
-    flex: profitPool * effectiveRates.flex,
   };
 }
 
@@ -330,6 +323,67 @@ export async function getMonthlyRevenueVsInvoicedForYear(
 }
 
 /**
+ * Returns the cumulative outstanding Accounts Receivable balance as of each
+ * month-end in the given financial year, ordered by month ascending.
+ * Month format is 'YYYY-MM'. Unlike `getMonthlyRevenueVsInvoicedForYear`
+ * (which returns per-month flows), this is a running balance built up across
+ * the months within the fiscal year: it starts at 0 in March and grows/shrinks
+ * as that year's invoices are billed and collected. Invoices are scoped to
+ * the same financial year as `getMonthlyRevenueVsInvoicedForYear`'s "invoiced"
+ * series, so all three chart metrics (Cash Receipts, Revenue, AR) stay
+ * consistently scoped to "this fiscal year" rather than mixing in prior-year
+ * carryover for AR alone.
+ */
+export async function getMonthlyARBalanceForYear(
+  year: number,
+): Promise<{ month: string; ar: number }[]> {
+  const result = await db.execute(sql`
+    WITH month_ends AS (
+      SELECT (gs + INTERVAL '1 month' - INTERVAL '1 day')::date AS month_end
+      FROM generate_series(
+        make_date(${Number(year)}, 3, 1),
+        make_date(${Number(year)} + 1, 2, 1),
+        INTERVAL '1 month'
+      ) AS gs
+    ),
+    invoice_base AS (
+      SELECT id, invoice_date::date AS invoice_date, total::numeric AS total
+      FROM invoices
+      -- 'paid' is deliberately excluded, unlike the "invoiced" (Revenue) status set —
+      -- a fully paid invoice can still carry a stray credit note applied after the
+      -- fact, which would otherwise show up here as a negative balance and wash out
+      -- real outstanding AR from other invoices. Matches getAgingReport's status set.
+      WHERE status IN ('issued', 'partially_paid', 'overdue')
+        AND EXTRACT(YEAR FROM (invoice_date::date - INTERVAL '2 months'))::int = ${Number(year)}
+    )
+    SELECT
+      TO_CHAR(me.month_end, 'YYYY-MM') AS month,
+      COALESCE(SUM(
+        CASE WHEN ib.invoice_date <= me.month_end THEN
+          ib.total
+          - COALESCE((
+              SELECT SUM(pa.amount) FROM payment_allocations pa
+              JOIN income inc ON inc.id = pa.income_id
+              WHERE pa.invoice_id = ib.id AND inc.date::date <= me.month_end
+            ), 0)
+          - COALESCE((
+              SELECT SUM(ca.amount) FROM credit_applications ca
+              WHERE ca.invoice_id = ib.id AND ca.applied_at::date <= me.month_end
+            ), 0)
+        ELSE 0 END
+      ), 0) AS ar
+    FROM month_ends me
+    CROSS JOIN invoice_base ib
+    GROUP BY me.month_end
+    ORDER BY me.month_end
+  `);
+  return (result.rows as { month: string; ar: string }[]).map((r) => ({
+    month: r.month,
+    ar: Number(r.ar),
+  }));
+}
+
+/**
  * Pre-close integrity check: count expenses with no category for a given period.
  */
 export async function getUncategorizedExpensesCount(period: string): Promise<number> {
@@ -436,7 +490,7 @@ export async function getExpensesByPeriod(
  */
 export async function getLedgerEntriesByPeriod(
   period: string,
-  allocationType?: 'salary' | 'reinvest' | 'reserve' | 'flex' | 'pmg_share',
+  allocationType?: AllocationType,
 ): Promise<{ total: number; entries: { date: string; description: string | null; amount: number; entryType: string }[] }> {
   const conditions = [
     sql`TO_CHAR(${ledger.date}, 'YYYY-MM') = ${period}`,

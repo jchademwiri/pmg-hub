@@ -1004,9 +1004,14 @@ export async function getClientStatement(
     sql`${invoices.invoiceDate} <= timezone('Africa/Johannesburg', now())::date`
   ];
   const globalIncomeConditions = [eq(income.clientId, clientId), excludeSyntheticCreditIncome];
+  // A credit note applied to an invoice that's already fully paid in cash
+  // doesn't reduce what the client currently owes overall — it's excluded
+  // here so it can't understate (or, combined with others, zero out) the
+  // "Amount Due" balance. Matches the same fix applied to the AR queries.
   const globalCreditConditions = [
     eq(invoices.clientId, clientId),
     draftFilter,
+    sql`${invoices.status} != 'paid'`,
   ];
 
   if (statementBalanceCutoff) {
@@ -1059,6 +1064,7 @@ export async function getClientStatement(
     const priorCreditConditions = [
       eq(invoices.clientId, clientId),
       draftFilter,
+      sql`${invoices.status} != 'paid'`,
       sql`${creditApplications.appliedAt} < ${periodStartDate}::timestamp`,
     ];
 
@@ -1556,6 +1562,66 @@ export async function getAgingReport(): Promise<AgingRow[]> {
     label: AGING_LABELS[bucket],
     total: map[bucket]?.total ?? 0,
     count: map[bucket]?.count ?? 0,
+  }));
+}
+
+/**
+ * Returns the current outstanding Accounts Receivable balance grouped by
+ * division, using the same "what counts as outstanding" rules as
+ * `getAgingReport` (status in issued/overdue/partially_paid, net of
+ * payments and credits applied to date). Divisions with no outstanding
+ * balance are omitted.
+ */
+export async function getOutstandingByDivision(): Promise<
+  { divisionId: string; divisionName: string; total: number }[]
+> {
+  const result = await db.execute(sql`
+    SELECT
+      divisions.id                                                AS division_id,
+      divisions.name                                               AS division_name,
+      COALESCE(SUM(invoices.total - COALESCE((SELECT SUM(amount) FROM payment_allocations WHERE invoice_id = invoices.id), 0) - COALESCE((SELECT SUM(amount) FROM credit_applications WHERE invoice_id = invoices.id), 0)), 0) AS total
+    FROM invoices
+    JOIN divisions ON divisions.id = invoices.division_id
+    WHERE invoices.status IN ('issued', 'overdue', 'partially_paid')
+      AND invoices.invoice_date <= timezone('Africa/Johannesburg', now())::date
+    GROUP BY divisions.id, divisions.name
+    HAVING COALESCE(SUM(invoices.total - COALESCE((SELECT SUM(amount) FROM payment_allocations WHERE invoice_id = invoices.id), 0) - COALESCE((SELECT SUM(amount) FROM credit_applications WHERE invoice_id = invoices.id), 0)), 0) <> 0
+    ORDER BY total DESC
+  `);
+
+  return (result.rows as { division_id: string; division_name: string; total: string }[]).map((r) => ({
+    divisionId: r.division_id,
+    divisionName: r.division_name,
+    total: Number(r.total),
+  }));
+}
+
+/**
+ * Returns total invoiced (billed) amount grouped by division, all-time.
+ * This is accrual-basis Revenue — the client-facing invoice total — as
+ * opposed to `getRevenueByDivision` in general.ts, which sums the `income`
+ * table (i.e. Cash Receipts). Uses the same "counts as billed" status set
+ * as `getMonthlyRevenueVsInvoicedForYear`'s "invoiced" series.
+ */
+export async function getInvoicedByDivision(): Promise<
+  { divisionId: string; divisionName: string; total: number }[]
+> {
+  const result = await db.execute(sql`
+    SELECT
+      divisions.id                    AS division_id,
+      divisions.name                  AS division_name,
+      COALESCE(SUM(invoices.total), 0) AS total
+    FROM invoices
+    JOIN divisions ON divisions.id = invoices.division_id
+    WHERE invoices.status IN ('issued', 'partially_paid', 'paid', 'overdue')
+    GROUP BY divisions.id, divisions.name
+    ORDER BY total DESC
+  `);
+
+  return (result.rows as { division_id: string; division_name: string; total: string }[]).map((r) => ({
+    divisionId: r.division_id,
+    divisionName: r.division_name,
+    total: Number(r.total),
   }));
 }
 

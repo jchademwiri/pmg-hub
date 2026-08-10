@@ -456,7 +456,7 @@ describe.skipIf(!hasDb)("Integration: seed idempotency (real database)", () => {
     const { client, db } = await createTestDb();
     try {
       const result = await db.execute(
-        sql`SELECT revenue, expenses, pmg_share, profit_pool, salary, reinvest, reserve, flex FROM snapshots LIMIT 1`
+        sql`SELECT revenue, expenses, pmg_share, profit_pool FROM snapshots LIMIT 1`
       );
       expect(result.rows.length).toBeGreaterThanOrEqual(1);
       const row = result.rows[0] as {
@@ -464,16 +464,9 @@ describe.skipIf(!hasDb)("Integration: seed idempotency (real database)", () => {
         expenses: string;
         pmg_share: string;
         profit_pool: string;
-        salary: string;
-        reinvest: string;
-        reserve: string;
-        flex: string;
       };
       // All numeric fields must be finite numbers
-      for (const field of [
-        row.revenue, row.expenses, row.pmg_share, row.profit_pool,
-        row.salary, row.reinvest, row.reserve, row.flex,
-      ]) {
+      for (const field of [row.revenue, row.expenses, row.pmg_share, row.profit_pool]) {
         expect(isFinite(Number(field))).toBe(true);
       }
     } finally {

@@ -5,7 +5,8 @@ import {
   getYTDSummary,
   getPreviousYearYTDSummary,
   getDivisionRevenue,
-  getLeadCounts,
+  getDivisionAR,
+  getDivisionInvoiced,
   getMonthlyFinancialsSeries,
   getBudgetChartSeriesForYear,
   getMoMChartData,
@@ -14,7 +15,7 @@ import {
   getPreviousMonthLabel,
   getYTDLabel,
 } from '@/lib/financial';
-import { getSnapshotByPeriod, getAgingReport, getProjectScheduleSummary, getActiveRates, getProjectsAtRisk, getCurrentWorkload } from '@pmg/db';
+import { getSnapshotByPeriod, getAgingReport, getActiveRates } from '@pmg/db';
 import { DashboardShell } from '@/components/dashboard/dashboard-shell';
 import { getSASTParts } from '@/lib/format';
 
@@ -38,34 +39,30 @@ export default async function DashboardPage() {
     currentMonthSummary,
     previousMonthSummary,
     divisions,
-    leads,
+    arByDivision,
+    invoicedByDivision,
     monthlySeries,
     agingReport,
     budgetChartSeries,
     momData,
     expensesByDivision,
     currentPeriodSnapshot,
-    projectScheduleSummary,
     activeRates,
-    projectsAtRisk,
-    currentWorkload,
   ] = await Promise.all([
     getYTDSummary(),
     getPreviousYearYTDSummary(),
     getCurrentMonthSummary(),
     getPreviousMonthSummary(),
     getDivisionRevenue(),
-    getLeadCounts(),
+    getDivisionAR(),
+    getDivisionInvoiced(),
     getMonthlyFinancialsSeries(),
     getAgingReport(),
     getBudgetChartSeriesForYear(fiscalYear),
     getMoMChartData(),
     getExpensesByDivision(),
     getSnapshotByPeriod(periodToClose),
-    getProjectScheduleSummary(),
     getActiveRates().catch(() => ({ pmg_share: 0.25 })),
-    getProjectsAtRisk(),
-    getCurrentWorkload(),
   ]);
 
   const pmgShareRate = activeRates?.pmg_share ?? 0.25;
@@ -89,9 +86,6 @@ export default async function DashboardPage() {
     profit: profitSnap ? { current: profitSnap.current, previous: profitSnap.previous } : null,
   };
 
-  // Build division expense map for the division revenue card
-  const divisionExpenseMap = new Map(expensesByDivision.map((d) => [d.divisionName, d.total]));
-
   return (
     <DashboardShell
       // Period summaries
@@ -103,8 +97,8 @@ export default async function DashboardPage() {
       deltas={deltas}
       // Supporting data
       divisions={divisions}
-      divisionExpenseMap={Object.fromEntries(divisionExpenseMap)}
-      leads={leads}
+      arByDivision={arByDivision}
+      invoicedByDivision={invoicedByDivision}
       monthlySeries={monthlySeries}
       sparklineData={monthlySeries.slice(-6)}
       agingReport={agingReport}
@@ -114,10 +108,7 @@ export default async function DashboardPage() {
       currentPeriod={periodToClose}
       hasSnapshot={hasSnapshot}
       showCloseMonthButton={showCloseMonthButton}
-      projectScheduleSummary={projectScheduleSummary}
       pmgShareRate={pmgShareRate}
-      projectsAtRisk={projectsAtRisk}
-      currentWorkload={currentWorkload}
     />
   );
 }

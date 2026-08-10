@@ -246,6 +246,20 @@
       "when": 1786001422573,
       "tag": "0034_add_expense_receipt_columns",
       "breakpoints": true
+    },
+    {
+      "idx": 35,
+      "version": "7",
+      "when": 1786100000000,
+      "tag": "0035_distribution_accounts_removal",
+      "breakpoints": true
+    },
+    {
+      "idx": 36,
+      "version": "7",
+      "when": 1786100100000,
+      "tag": "0036_drop_legacy_distribution_columns",
+      "breakpoints": true
     }
   ]
 }

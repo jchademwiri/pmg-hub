@@ -10,6 +10,7 @@ import {
   getDraftInvoicesCount,
   getPeriodTotals,
   closePeriod,
+  getTrialBalance,
 } from '@pmg/db';
 import { getSASTParts } from '@/lib/format';
 import { getSessionOrRedirect } from '@/lib/auth';
@@ -18,7 +19,6 @@ const periodSchema = z.string().regex(/^\d{4}-\d{2}$/);
 
 export async function getPeriodSummary(period: string): Promise<{
   revenue: number; expenses: number; pmgShare: number; profitPool: number;
-  salary?: number; reinvest?: number; reserve?: number; flex?: number;
 } | { error: string }> {
   const parsed = periodSchema.safeParse(period);
   if (!parsed.success) return { error: 'Period must be YYYY-MM' };
@@ -74,6 +74,39 @@ export async function closeMonth(
     revalidatePath('/dashboard');
     revalidatePath('/insights/snapshots');
     return {};
+  } catch (err) {
+    return { error: (err as Error).message };
+  }
+}
+
+const ACCOUNTS_RECEIVABLE_CODE = '1100';
+
+/**
+ * Invoiced/paid for the month (from that month's AR account movement) and the
+ * true outstanding AR balance as of month-end (cumulative since inception,
+ * via getTrialBalance with only an end date — no lower bound).
+ */
+export async function getSnapshotArSummary(period: string): Promise<
+  { invoiced: number; paid: number; arBalance: number } | { error: string }
+> {
+  const parsed = periodSchema.safeParse(period);
+  if (!parsed.success) return { error: 'Period must be YYYY-MM' };
+
+  const [year, month] = period.split('-').map(Number);
+  const monthEnd = new Date(Date.UTC(year, month, 0)).toISOString().slice(0, 10);
+
+  try {
+    const [monthRows, cumulativeRows] = await Promise.all([
+      getTrialBalance(period),
+      getTrialBalance(undefined, undefined, undefined, monthEnd),
+    ]);
+    const monthAr = monthRows.find((row) => row.accountCode === ACCOUNTS_RECEIVABLE_CODE);
+    const cumulativeAr = cumulativeRows.find((row) => row.accountCode === ACCOUNTS_RECEIVABLE_CODE);
+    return {
+      invoiced: monthAr?.totalDebits ?? 0,
+      paid: monthAr?.totalCredits ?? 0,
+      arBalance: cumulativeAr?.balance ?? 0,
+    };
   } catch (err) {
     return { error: (err as Error).message };
   }

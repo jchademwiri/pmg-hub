@@ -7,7 +7,7 @@ import { cn } from '@/lib/utils'
 
 type Delta = { current: number; previous: number } | null
 
-function DeltaBadge({
+export function DeltaBadge({
   current,
   previous,
   invertDelta,
@@ -49,7 +49,7 @@ function DeltaBadge({
   )
 }
 
-function Sparkline({ data, colorClass = 'text-emerald-500' }: { data: number[]; colorClass?: string }) {
+export function Sparkline({ data, colorClass = 'text-emerald-500' }: { data: number[]; colorClass?: string }) {
   if (!data || data.length <= 1) return null
   const max = Math.max(...data)
   const min = Math.min(...data)
@@ -90,7 +90,7 @@ export function ReportKpiStrip({ data }: { data: ReportKpiData }) {
 
   const cards = [
     {
-      label: 'Total Revenue',
+      label: 'Total Cash Receipts',
       value: data.revenue,
       textColor: 'text-emerald-600 dark:text-emerald-400',
       sparklineData: data.monthlyRevenue,
@@ -105,7 +105,7 @@ export function ReportKpiStrip({ data }: { data: ReportKpiData }) {
       sparklineColor: 'text-amber-500',
     },
     {
-      label: 'PMG Share (25%)',
+      label: `PMG Share (${Math.round(rate * 100)}%)`,
       value: data.pmgShare,
       textColor: 'text-blue-600 dark:text-blue-400',
       sparklineData: monthlyPmg,

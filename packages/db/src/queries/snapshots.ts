@@ -10,10 +10,6 @@ export type SnapshotRow = {
   expenses: string;
   pmgShare: string;
   profitPool: string;
-  salary: string;
-  reinvest: string;
-  reserve: string;
-  flex: string;
   createdBy: string | null;
   status: string;
   notes: string | null;
@@ -53,10 +49,6 @@ export async function insertSnapshot(
       expenses: String(summary.expenses),
       pmgShare: String(summary.pmgShare),
       profitPool: String(summary.profitPool),
-      salary: String(summary.salary),
-      reinvest: String(summary.reinvest),
-      reserve: String(summary.reserve),
-      flex: String(summary.flex),
       createdBy: opts?.createdBy ?? null,
       notes: opts?.notes ?? null,
     })

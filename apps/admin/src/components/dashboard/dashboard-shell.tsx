@@ -4,19 +4,15 @@ import { useRouter, usePathname, useSearchParams } from 'next/navigation'
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { KpiGrid } from '@/components/dashboard/kpi-grid'
 import { DivisionAreaChart } from '@/components/dashboard/division-area-chart'
-import { DivisionRevenue } from '@/components/dashboard/division-revenue'
-import { LeadsSummary } from '@/components/dashboard/leads-summary'
 import { ExpenseSnapshot } from '@/components/dashboard/expense-snapshot'
 import CloseMonthButton from '@/components/dashboard/close-month-button'
 import { Badge } from '@/components/ui/badge'
 import { AgingReportGrid } from '@/components/dashboard/aging-report-grid'
-import { ProjectSummaryCard } from '@/components/dashboard/project-summary-card'
-import type { TenderSummaryData } from '@/components/dashboard/project-summary-card'
-import { fmtMonthYear, formatZAR, fmtDate } from '@/lib/format'
+import { fmtMonthYear, formatZAR } from '@/lib/format'
+import { summarizeAging } from '@/lib/aging-summary'
 import type { AgingRow } from '@pmg/db'
-import type { PeriodSummary, DivisionRevenue as DivisionRevenueType, LeadStatusCount, MonthlyFinancials, MonthlyBudgetChartRow } from '@/lib/financial'
-import type { ProjectScheduleEntry, CurrentWorkload } from '@pmg/db'
-import { AlertCircle, Clock, ArrowRight } from 'lucide-react'
+import type { PeriodSummary, DivisionRevenue as DivisionRevenueType, MonthlyFinancials, MonthlyBudgetChartRow } from '@/lib/financial'
+import { AlertCircle } from 'lucide-react'
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert'
 import Link from 'next/link'
 import { Button } from '@/components/ui/button'
@@ -35,20 +31,17 @@ type Props = {
     profit:   { current: number; previous: number } | null
   }
   divisions: DivisionRevenueType[]
-  divisionExpenseMap: Record<string, number>
-  leads: LeadStatusCount[]
+  arByDivision: DivisionRevenueType[]
+  invoicedByDivision: DivisionRevenueType[]
   monthlySeries: MonthlyFinancials[]
   sparklineData: MonthlyFinancials[]
   agingReport: AgingRow[]
   budgetChartSeries: MonthlyBudgetChartRow[]
-  expensesByDivision: { divisionName: string; total: number }[]
+  expensesByDivision: { divisionId?: string; divisionName: string; total: number }[]
   hasSnapshot: boolean
   currentPeriod: string
   showCloseMonthButton: boolean
-  projectScheduleSummary: TenderSummaryData
   pmgShareRate?: number
-  projectsAtRisk: ProjectScheduleEntry[]
-  currentWorkload: CurrentWorkload
 }
 
 const TABS: { key: Tab; label: string; shortLabel: string }[] = [
@@ -65,19 +58,16 @@ export function DashboardShell({
   labels,
   deltas,
   divisions,
-  divisionExpenseMap,
-  leads = [],
+  arByDivision = [],
+  invoicedByDivision = [],
   sparklineData = [],
   agingReport = [],
   budgetChartSeries = [],
   expensesByDivision = [],
-  projectScheduleSummary = { inProgress: 0, planned: 0, upcomingDeadlines: 0, atRisk: 0, overdue: 0 },
   hasSnapshot,
   currentPeriod,
   showCloseMonthButton,
   pmgShareRate,
-  projectsAtRisk = [],
-  currentWorkload = { inProgress: [], planned: [] },
 }: Props) {
   const router = useRouter()
   const pathname = usePathname()
@@ -123,9 +113,9 @@ export function DashboardShell({
     activeTab === 'previous' ? 'vs current month' :
     'vs prev year'
 
-  const currentBalance = agingReport.find(r => r.bucket === 'current')?.total || 0;
-  const over15Balance = agingReport.reduce((acc, row) => acc + (['15_30', '31_60', '61_plus'].includes(row.bucket) ? row.total : 0), 0);
-  const overdueBalance = agingReport.reduce((acc, row) => acc + (row.bucket !== 'current' ? row.total : 0), 0);
+  const { current: currentBalance, over15: over15Balance, overdue: overdueBalance } = summarizeAging(agingReport);
+
+  const resolvedPmgShareRate = pmgShareRate ?? 0.25
 
   return (
     <div className="flex flex-col gap-5">
@@ -165,15 +155,6 @@ export function DashboardShell({
 
       {/* ── Mobile: Urgent Alerts Strip ── */}
       <div className="md:hidden flex flex-col gap-3">
-        {projectsAtRisk.length > 0 && (
-          <Alert variant="destructive">
-            <AlertCircle className="h-4 w-4" />
-            <AlertTitle>Action Required</AlertTitle>
-            <AlertDescription>
-              {projectsAtRisk.length} project{projectsAtRisk.length === 1 ? ' is' : 's are'} currently at risk.
-            </AlertDescription>
-          </Alert>
-        )}
         {overdueBalance > 0 && (
           <Alert variant="destructive" className="bg-orange-500/10 text-orange-600 border-orange-500/20 dark:text-orange-400">
             <AlertCircle className="h-4 w-4 text-orange-600 dark:text-orange-400" />
@@ -194,36 +175,6 @@ export function DashboardShell({
         )}
       </div>
 
-      {/* ── Mobile: Today's Projects ── */}
-      <div className="md:hidden flex flex-col gap-3">
-        <div className="flex items-center justify-between">
-          <h2 className="text-sm font-semibold tracking-tight">Today's Active Projects</h2>
-          <Link href="/projects" className="text-xs text-primary font-medium hover:underline flex items-center gap-1">
-            View all <ArrowRight className="h-3 w-3" />
-          </Link>
-        </div>
-        <div className="flex flex-col gap-2">
-          {currentWorkload.inProgress.slice(0, 3).map(project => (
-            <div key={project.id} className="p-3 border border-border rounded-lg bg-card shadow-sm flex flex-col gap-2">
-               <div className="flex justify-between items-start">
-                  <span className="font-medium text-sm text-foreground">{project.projectReference}</span>
-                  <Badge variant="outline" className="text-[10px] uppercase">{project.status}</Badge>
-               </div>
-               {project.closingDate && (
-                 <div className="flex items-center gap-2 text-xs text-muted-foreground">
-                    <Clock className="h-3 w-3" /> Due {fmtDate(project.closingDate)}
-                 </div>
-               )}
-            </div>
-          ))}
-          {currentWorkload.inProgress.length === 0 && (
-            <div className="text-sm text-muted-foreground p-3 border border-border border-dashed rounded-lg text-center">
-              No active projects for today.
-            </div>
-          )}
-        </div>
-      </div>
-
       {/* ── Row 1: KPI cards ── */}
       <KpiGrid
         summary={activeSummary}
@@ -233,14 +184,6 @@ export function DashboardShell({
         sparklineData={sparklineData}
         pmgShareRate={pmgShareRate}
       />
-
-      {/* ── Row 2: Project schedule summary ── */}
-      <section className="flex flex-col gap-2">
-        <h2 className="text-xs font-medium text-muted-foreground uppercase tracking-wider">
-          Project Schedule
-        </h2>
-        <ProjectSummaryCard data={projectScheduleSummary} />
-      </section>
 
       {/* ── Row 3: Accounts Receivable Ageing Overview ── */}
       <section className="hidden md:block">
@@ -252,27 +195,17 @@ export function DashboardShell({
         <DivisionAreaChart data={budgetChartSeries} />
       </div>
 
-      {/* ── Row 5: Division revenue with expenses + Leads ── */}
-      <div className="flex-col gap-2 hidden md:flex">
+      {/* ── Row 5: Division financial breakdown ── */}
+      <section className="flex flex-col gap-2">
         <h2 className="text-xs font-medium text-muted-foreground uppercase tracking-wider">
-          Revenue & Leads
-        </h2>
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-          <DivisionRevenue
-            divisions={divisions}
-            divisionExpenseMap={new Map(Object.entries(divisionExpenseMap))}
-          />
-          <LeadsSummary leads={leads} />
-        </div>
-      </div>
-
-      {/* ── Row 6: Expense breakdown ── */}
-      <section className="flex-col gap-2 hidden md:flex">
-        <h2 className="text-xs font-medium text-muted-foreground uppercase tracking-wider">
-          Expense Breakdown
+          Division Breakdown
         </h2>
         <ExpenseSnapshot
+          divisions={divisions}
+          invoicedByDivision={invoicedByDivision}
           expensesByDivision={expensesByDivision}
+          arByDivision={arByDivision}
+          pmgShareRate={resolvedPmgShareRate}
         />
       </section>
 

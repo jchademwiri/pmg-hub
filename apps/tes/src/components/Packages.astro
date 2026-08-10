@@ -115,13 +115,14 @@ const waIcon = `<svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" v
       {packages.map((pkg) => (
         <div class={`package-card rounded-2xl p-7 relative flex flex-col gap-5 ${pkg.cardClass}`}>
 
-          <!-- Glow for featured -->
+          <!-- Glow for featured (clipped to the card so it can't push the page wider on mobile) -->
           {pkg.featured && (
-            <span
-              class='pointer-events-none absolute -top-16 -right-16 w-56 h-56 rounded-full'
-              style='background: radial-gradient(circle, rgba(201,162,39,0.14) 0%, transparent 70%);'
-              aria-hidden='true'
-            ></span>
+            <span class='pointer-events-none absolute inset-0 overflow-hidden rounded-2xl' aria-hidden='true'>
+              <span
+                class='absolute -top-16 -right-16 w-56 h-56 rounded-full block'
+                style='background: radial-gradient(circle, rgba(201,162,39,0.14) 0%, transparent 70%);'
+              ></span>
+            </span>
           )}
 
           <!-- Badge -->

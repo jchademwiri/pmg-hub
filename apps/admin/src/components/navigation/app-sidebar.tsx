@@ -33,8 +33,13 @@ import {
 } from '@/components/ui/dropdown-menu'
 import { OVERVIEW, GROUPS } from '@/components/navigation/nav-data'
 import type { NavItem, NavGroup, GroupKey } from '@/components/navigation/nav-data'
+import { canAccess } from '@/lib/roles'
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
+
+function filterByRole(items: NavItem[], role: string): NavItem[] {
+  return items.filter((item) => !item.minRole || canAccess(role, item.minRole))
+}
 
 function getActiveGroup(pathname: string): GroupKey | null {
   let bestMatch: { key: GroupKey; length: number } | null = null
@@ -151,6 +156,20 @@ export const AppSidebar = React.memo(function AppSidebar({ user }: AppSidebarPro
     if (isMobile) setOpenMobile(false)
   }, [isMobile, setOpenMobile])
 
+  const visibleOverview = React.useMemo(() => filterByRole(OVERVIEW, user.role), [user.role])
+  const visibleMainGroups = React.useMemo(
+    () => MAIN_GROUPS.map((g) => ({ ...g, items: filterByRole(g.items, user.role) })),
+    [user.role],
+  )
+  const visibleAdvancedGroup = React.useMemo(
+    () => (ADVANCED_GROUP ? { ...ADVANCED_GROUP, items: filterByRole(ADVANCED_GROUP.items, user.role) } : null),
+    [user.role],
+  )
+  const visibleSystemGroup = React.useMemo(
+    () => ({ ...SYSTEM_GROUP, items: filterByRole(SYSTEM_GROUP.items, user.role) }),
+    [user.role],
+  )
+
   return (
     <Sidebar variant="inset">
       <SidebarHeader>
@@ -176,11 +195,11 @@ export const AppSidebar = React.memo(function AppSidebar({ user }: AppSidebarPro
             Overview
           </SidebarGroupLabel>
           <SidebarGroupContent>
-            <NavMenu items={OVERVIEW} pathname={pathname} onNavigate={handleNavigate} />
+            <NavMenu items={visibleOverview} pathname={pathname} onNavigate={handleNavigate} />
           </SidebarGroupContent>
         </SidebarGroup>
 
-        {MAIN_GROUPS.map((g) => (
+        {visibleMainGroups.map((g) => (
           <CollapsibleGroup
             key={g.key}
             group={g}
@@ -194,18 +213,18 @@ export const AppSidebar = React.memo(function AppSidebar({ user }: AppSidebarPro
 
       <SidebarFooter>
         <div className="flex flex-col gap-1">
-          {ADVANCED_GROUP && (
+          {visibleAdvancedGroup && (
             <CollapsibleGroup
-              group={ADVANCED_GROUP}
-              isOpen={openGroup === ADVANCED_GROUP.key}
+              group={visibleAdvancedGroup}
+              isOpen={openGroup === visibleAdvancedGroup.key}
               pathname={pathname}
               onToggle={handleToggle}
               onNavigate={handleNavigate}
             />
           )}
           <CollapsibleGroup
-            group={SYSTEM_GROUP}
-            isOpen={openGroup === SYSTEM_GROUP.key}
+            group={visibleSystemGroup}
+            isOpen={openGroup === visibleSystemGroup.key}
             pathname={pathname}
             onToggle={handleToggle}
             onNavigate={handleNavigate}

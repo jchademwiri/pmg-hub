@@ -47,6 +47,14 @@ export async function resolvePeriodDateRange(periodStr?: string, customStart?: s
   if (periodStr && periodStr !== 'all') {
     if (/^\d{4}-\d{2}$/.test(periodStr)) {
       periodMonth = periodStr;
+    } else if (/^\d{4}-FY$/.test(periodStr)) {
+      // Annual Financial Year, e.g. "2027-FY" = 1 Mar 2026 – 28/29 Feb 2027.
+      const fyYear = parseInt(periodStr.split('-')[0]!, 10);
+      const startYear = fyYear - 1;
+      const isLeap = (fyYear % 4 === 0 && fyYear % 100 !== 0) || fyYear % 400 === 0;
+      const febDays = isLeap ? 29 : 28;
+      startDate = `${startYear}-03-01`;
+      endDate = `${fyYear}-02-${febDays}`;
     } else if (/^(\d{4})-Q([1-4])$/.test(periodStr)) {
       const match = periodStr.match(/^(\d{4})-Q([1-4])$/)!;
       const yr = match[1];
