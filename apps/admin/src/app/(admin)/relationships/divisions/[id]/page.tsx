@@ -170,42 +170,6 @@ export default async function DivisionDetailPage({ params, searchParams }: Divis
           )}
         </section>
 
-        {/* Quotes */}
-        <section className="rounded-lg border p-5 flex flex-col gap-3">
-          <div className="flex items-center justify-between">
-            <h2 className="text-base font-medium">Quotes</h2>
-          </div>
-          {quoteEntries.data.length === 0 ? (
-            <p className="text-sm text-muted-foreground">No quotes for this division.</p>
-          ) : (
-            <>
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>Quote</TableHead>
-                    <TableHead>Expiry</TableHead>
-                    <TableHead className="text-right">Total</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {quoteEntries.data.map((q) => (
-                    <ClickableTableRow key={q.id} href={`/billing/quotes/${q.id}`}>
-                      <TableCell className="font-medium">{q.documentNumber}</TableCell>
-                      <TableCell>{q.expiryDate ? fmtDate(q.expiryDate) : '-'}</TableCell>
-                      <TableCell className="text-right tabular-nums font-medium">{formatZAR(Number(q.total))}</TableCell>
-                    </ClickableTableRow>
-                  ))}
-                </TableBody>
-              </Table>
-              <Pagination
-                currentPage={quotePage}
-                totalPages={Math.ceil(quoteEntries.total / PAGE_SIZE)}
-                buildHref={(p) => hrefFor('quotePage', p)}
-              />
-            </>
-          )}
-        </section>
-
         {/* Payment receipts */}
         <section className="rounded-lg border p-5 flex flex-col gap-3">
           <div className="flex items-center justify-between">
@@ -240,6 +204,42 @@ export default async function DivisionDetailPage({ params, searchParams }: Divis
                 currentPage={payPage}
                 totalPages={Math.ceil(incomeEntries.total / PAGE_SIZE)}
                 buildHref={(p) => hrefFor('payPage', p)}
+              />
+            </>
+          )}
+        </section>
+
+        {/* Quotes */}
+        <section className="rounded-lg border p-5 flex flex-col gap-3">
+          <div className="flex items-center justify-between">
+            <h2 className="text-base font-medium">Quotes</h2>
+          </div>
+          {quoteEntries.data.length === 0 ? (
+            <p className="text-sm text-muted-foreground">No quotes for this division.</p>
+          ) : (
+            <>
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Quote</TableHead>
+                    <TableHead>Expiry</TableHead>
+                    <TableHead className="text-right">Total</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {quoteEntries.data.map((q) => (
+                    <ClickableTableRow key={q.id} href={`/billing/quotes/${q.id}`}>
+                      <TableCell className="font-medium">{q.documentNumber}</TableCell>
+                      <TableCell>{q.expiryDate ? fmtDate(q.expiryDate) : '-'}</TableCell>
+                      <TableCell className="text-right tabular-nums font-medium">{formatZAR(Number(q.total))}</TableCell>
+                    </ClickableTableRow>
+                  ))}
+                </TableBody>
+              </Table>
+              <Pagination
+                currentPage={quotePage}
+                totalPages={Math.ceil(quoteEntries.total / PAGE_SIZE)}
+                buildHref={(p) => hrefFor('quotePage', p)}
               />
             </>
           )}
