@@ -2,11 +2,10 @@
 
 import * as React from 'react'
 import { useRouter } from 'next/navigation'
-import { PowerOff, Power, Trash2 } from 'lucide-react'
+import { PowerOff, Power, Trash2, Pencil } from 'lucide-react'
 import { toast } from 'sonner'
-import type { DivisionRow } from '@pmg/db'
+import type { DivisionWithPnl } from '@/app/(admin)/relationships/divisions/divisions-client'
 import { Button } from '@/components/ui/button'
-import { Badge } from '@/components/ui/badge'
 import { Input } from '@/components/ui/input'
 import {
   Table, TableBody, TableCell, TableHead, TableHeader, TableRow,
@@ -20,7 +19,7 @@ import {
 } from '@/components/ui/tooltip'
 
 interface DivisionsTableProps {
-  divisions: DivisionRow[]
+  divisions: DivisionWithPnl[]
   updateAction: (id: string, formData: FormData) => Promise<{ error?: string }>
   deleteAction: (id: string) => Promise<{ error?: string }>
   toggleActiveAction: (id: string, isActive: boolean) => Promise<{ error?: string }>
@@ -29,7 +28,7 @@ interface DivisionsTableProps {
 function DivisionTableRow({
   division, updateAction, deleteAction, toggleActiveAction,
 }: {
-  division: DivisionRow
+  division: DivisionWithPnl
   updateAction: (id: string, formData: FormData) => Promise<{ error?: string }>
   deleteAction: (id: string) => Promise<{ error?: string }>
   toggleActiveAction: (id: string, isActive: boolean) => Promise<{ error?: string }>
@@ -79,7 +78,8 @@ function DivisionTableRow({
     if (result.error) toast.error(result.error)
   }
 
-  const netProfitClass = division.netProfit >= 0 ? 'text-emerald-600' : 'text-red-600'
+  const netProfitClass = division.pnlNetProfit >= 0 ? 'text-emerald-600' : 'text-red-600'
+  const marginClass = division.pnlMarginPercent >= 0 ? 'text-emerald-600' : 'text-red-600'
 
   return (
     <TableRow
@@ -111,20 +111,30 @@ function DivisionTableRow({
           division.name
         )}
       </TableCell>
-      <TableCell className="text-emerald-600 tabular-nums font-medium">{formatZAR(division.totalIncome)}</TableCell>
-      <TableCell className="text-red-600 tabular-nums font-medium">{formatZAR(division.totalExpenses)}</TableCell>
-      <TableCell className={`tabular-nums font-medium ${netProfitClass}`}>{formatZAR(division.netProfit)}</TableCell>
-      <TableCell>{division.leadCount}</TableCell>
-      <TableCell>
-        <Badge variant={division.isActive ? 'default' : 'secondary'}>
-          {division.isActive ? 'Active' : 'Disabled'}
-        </Badge>
+      <TableCell className="text-emerald-600 dark:text-emerald-400 tabular-nums font-medium">{formatZAR(division.pnlRevenue)}</TableCell>
+      <TableCell className="text-blue-600 dark:text-blue-400 tabular-nums font-medium">{formatZAR(division.pnlCashReceived)}</TableCell>
+      <TableCell className="text-amber-600 dark:text-amber-400 tabular-nums">
+        {division.pnlOutstandingAr > 0 ? formatZAR(division.pnlOutstandingAr) : '—'}
       </TableCell>
+      <TableCell className="text-muted-foreground tabular-nums">{formatZAR(division.pnlExpenses)}</TableCell>
+      <TableCell className={`tabular-nums font-semibold ${netProfitClass}`}>{formatZAR(division.pnlNetProfit)}</TableCell>
+      <TableCell className={`tabular-nums ${marginClass}`}>{division.pnlMarginPercent.toFixed(1)}%</TableCell>
+      <TableCell className="text-muted-foreground/70 tabular-nums">{division.pnlSharePercent.toFixed(1)}%</TableCell>
       <TableCell onClick={(e) => e.stopPropagation()}>
         <div className="flex items-center gap-2">
-          <Button size="sm" variant="outline" onClick={(e) => { e.stopPropagation(); setEditName(division.name); setEditError(null); setMode('edit') }}>
-            Rename
-          </Button>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={(e) => { e.stopPropagation(); setEditName(division.name); setEditError(null); setMode('edit') }}
+              >
+                <Pencil data-icon className="text-muted-foreground" />
+                <span className="sr-only">Rename</span>
+              </Button>
+            </TooltipTrigger>
+            <TooltipContent>Rename division</TooltipContent>
+          </Tooltip>
           <Tooltip>
             <TooltipTrigger asChild>
               <Button
@@ -169,11 +179,13 @@ export function DivisionsTable({ divisions, updateAction, deleteAction, toggleAc
       <TableHeader>
         <TableRow>
           <TableHead>Name</TableHead>
-          <TableHead>Total Income</TableHead>
-          <TableHead>Total Expenses</TableHead>
+          <TableHead>Revenue</TableHead>
+          <TableHead>Cash Receipts</TableHead>
+          <TableHead>Outstanding AR</TableHead>
+          <TableHead>Expenses</TableHead>
           <TableHead>Net Profit</TableHead>
-          <TableHead>Leads</TableHead>
-          <TableHead>Status</TableHead>
+          <TableHead>Margin %</TableHead>
+          <TableHead>Share %</TableHead>
           <TableHead>Actions</TableHead>
         </TableRow>
       </TableHeader>

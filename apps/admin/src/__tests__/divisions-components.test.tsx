@@ -5,7 +5,26 @@ import userEvent from '@testing-library/user-event'
 import { DivisionsTable } from '@/components/divisions/divisions-table'
 import { DivisionAddForm } from '@/components/divisions/division-add-form'
 import { TooltipProvider } from '@/components/ui/tooltip'
-import type { DivisionRow } from '@pmg/db'
+import type { DivisionWithPnl } from '@/app/(admin)/relationships/divisions/divisions-client'
+
+/** Fixture builder — zero-filled DivisionWithPnl with per-test overrides. */
+function makeDivision(overrides: Partial<DivisionWithPnl> & Pick<DivisionWithPnl, 'id' | 'name'>): DivisionWithPnl {
+  return {
+    totalIncome: 0,
+    totalExpenses: 0,
+    netProfit: 0,
+    leadCount: 0,
+    isActive: true,
+    pnlRevenue: 0,
+    pnlCashReceived: 0,
+    pnlOutstandingAr: 0,
+    pnlExpenses: 0,
+    pnlNetProfit: 0,
+    pnlMarginPercent: 0,
+    pnlSharePercent: 0,
+    ...overrides,
+  }
+}
 
 // ─── Mocks for server action edge case tests ──────────────────────────────────
 
@@ -91,7 +110,7 @@ describe('DivisionsTable', () => {
 
   // ── Column headers ──────────────────────────────────────────────────────────
 
-  it('renders all 7 column headers - Validates: Requirements 1.2', () => {
+  it('renders all 9 column headers - Validates: Requirements 1.2', () => {
     renderDivisionsTable({
       divisions: [],
       updateAction,
@@ -100,27 +119,28 @@ describe('DivisionsTable', () => {
     })
 
     expect(screen.getByRole('columnheader', { name: /^name$/i })).toBeDefined()
-    expect(screen.getByRole('columnheader', { name: /^total income$/i })).toBeDefined()
-    expect(screen.getByRole('columnheader', { name: /^total expenses$/i })).toBeDefined()
+    expect(screen.getByRole('columnheader', { name: /^revenue$/i })).toBeDefined()
+    expect(screen.getByRole('columnheader', { name: /^cash receipts$/i })).toBeDefined()
+    expect(screen.getByRole('columnheader', { name: /^outstanding ar$/i })).toBeDefined()
+    expect(screen.getByRole('columnheader', { name: /^expenses$/i })).toBeDefined()
     expect(screen.getByRole('columnheader', { name: /^net profit$/i })).toBeDefined()
-    expect(screen.getByRole('columnheader', { name: /^leads$/i })).toBeDefined()
-    expect(screen.getByRole('columnheader', { name: /^status$/i })).toBeDefined()
+    expect(screen.getByRole('columnheader', { name: /^margin %$/i })).toBeDefined()
+    expect(screen.getByRole('columnheader', { name: /^share %$/i })).toBeDefined()
     expect(screen.getByRole('columnheader', { name: /^actions$/i })).toBeDefined()
   })
 
   // ── formatZAR applied to currency columns ───────────────────────────────────
 
-  it('applies formatZAR (ZAR currency format with R prefix) to Total Income, Total Expenses, and Net Profit columns - Validates: Requirements 1.3', () => {
-    const divisions: DivisionRow[] = [
-      {
+  it('applies formatZAR (ZAR currency format with R prefix) to Revenue, Expenses, and Net Profit columns - Validates: Requirements 1.3', () => {
+    const divisions: DivisionWithPnl[] = [
+      makeDivision({
         id: 'div-1',
         name: 'Test Division',
-        totalIncome: 12345,
-        totalExpenses: 6789,
-        netProfit: 5556,
+        pnlRevenue: 12345,
+        pnlExpenses: 6789,
+        pnlNetProfit: 5556,
         leadCount: 3,
-        isActive: true,
-      },
+      }),
     ]
 
     renderDivisionsTable({
@@ -134,9 +154,9 @@ describe('DivisionsTable', () => {
     const cells = screen.getAllByRole('cell')
     const cellTexts = cells.map((c) => normalise(c.textContent ?? ''))
 
-    // Total Income: R 12 345,00
+    // Revenue: R 12 345,00
     expect(cellTexts.some((t) => t.includes('R') && t.includes('12') && t.includes('345'))).toBe(true)
-    // Total Expenses: R 6 789,00
+    // Expenses: R 6 789,00
     expect(cellTexts.some((t) => t.includes('R') && t.includes('6') && t.includes('789'))).toBe(true)
     // Net Profit: R 5 556,00
     expect(cellTexts.some((t) => t.includes('R') && t.includes('5') && t.includes('556'))).toBe(true)
@@ -144,17 +164,16 @@ describe('DivisionsTable', () => {
 
   // ── Net Profit color classes ────────────────────────────────────────────────
 
-  it('applies text-green-600 to Net Profit cell when netProfit > 0 - Validates: Requirements 1.3', () => {
-    const divisions: DivisionRow[] = [
-      {
+  it('applies text-emerald-600 to Net Profit cell when netProfit > 0 - Validates: Requirements 1.3', () => {
+    const divisions: DivisionWithPnl[] = [
+      makeDivision({
         id: 'div-pos',
         name: 'Positive Division',
-        totalIncome: 100,
-        totalExpenses: 40,
-        netProfit: 60,
+        pnlRevenue: 100,
+        pnlExpenses: 40,
+        pnlNetProfit: 60,
         leadCount: 1,
-        isActive: true,
-      },
+      }),
     ]
 
     renderDivisionsTable({
@@ -164,23 +183,23 @@ describe('DivisionsTable', () => {
       toggleActiveAction,
     })
 
-    // The Net Profit cell is the 4th <td> (index 3): Name, Income, Expenses, NetProfit
+    // The Net Profit cell is the 6th <td> (index 5):
+    // Name, Revenue, Cash Received, Outstanding AR, Expenses, Net Profit
     const cells = screen.getAllByRole('cell')
-    const netProfitCell = cells[3]
+    const netProfitCell = cells[5]
     expect(netProfitCell.className).toContain('text-emerald-600')
   })
 
   it('applies text-red-600 to Net Profit cell when netProfit < 0 - Validates: Requirements 1.3', () => {
-    const divisions: DivisionRow[] = [
-      {
+    const divisions: DivisionWithPnl[] = [
+      makeDivision({
         id: 'div-neg',
         name: 'Negative Division',
-        totalIncome: 40,
-        totalExpenses: 100,
-        netProfit: -60,
+        pnlRevenue: 40,
+        pnlExpenses: 100,
+        pnlNetProfit: -60,
         leadCount: 1,
-        isActive: true,
-      },
+      }),
     ]
 
     renderDivisionsTable({
@@ -191,21 +210,16 @@ describe('DivisionsTable', () => {
     })
 
     const cells = screen.getAllByRole('cell')
-    const netProfitCell = cells[3]
+    const netProfitCell = cells[5]
     expect(netProfitCell.className).toContain('text-red-600')
   })
 
-  it('applies text-red-600 to Net Profit cell when netProfit === 0 - Validates: Requirements 1.3', () => {
-    const divisions: DivisionRow[] = [
-      {
+  it('applies text-emerald-600 to Net Profit cell when netProfit === 0 - Validates: Requirements 1.3', () => {
+    const divisions: DivisionWithPnl[] = [
+      makeDivision({
         id: 'div-zero',
         name: 'Zero Division',
-        totalIncome: 0,
-        totalExpenses: 0,
-        netProfit: 0,
-        leadCount: 0,
-        isActive: true,
-      },
+      }),
     ]
 
     renderDivisionsTable({
@@ -216,7 +230,7 @@ describe('DivisionsTable', () => {
     })
 
     const cells = screen.getAllByRole('cell')
-    const netProfitCell = cells[3]
+    const netProfitCell = cells[5]
     expect(netProfitCell.className).toContain('text-emerald-600')
   })
 
@@ -224,16 +238,8 @@ describe('DivisionsTable', () => {
 
   it('clicking Edit shows a text input pre-populated with the current division name - Validates: Requirements 3.1', async () => {
     const user = userEvent.setup()
-    const divisions: DivisionRow[] = [
-      {
-        id: 'div-rename',
-        name: 'Alpha Division',
-        totalIncome: 0,
-        totalExpenses: 0,
-        netProfit: 0,
-        leadCount: 0,
-        isActive: true,
-      },
+    const divisions: DivisionWithPnl[] = [
+      makeDivision({ id: 'div-rename', name: 'Alpha Division' }),
     ]
 
     renderDivisionsTable({
@@ -255,16 +261,8 @@ describe('DivisionsTable', () => {
 
   it('clicking Cancel reverts the row to display state without saving - Validates: Requirements 3.2', async () => {
     const user = userEvent.setup()
-    const divisions: DivisionRow[] = [
-      {
-        id: 'div-cancel',
-        name: 'Beta Division',
-        totalIncome: 0,
-        totalExpenses: 0,
-        netProfit: 0,
-        leadCount: 0,
-        isActive: true,
-      },
+    const divisions: DivisionWithPnl[] = [
+      makeDivision({ id: 'div-cancel', name: 'Beta Division' }),
     ]
 
     renderDivisionsTable({
@@ -287,16 +285,8 @@ describe('DivisionsTable', () => {
 
   it('pressing Escape reverts the row to display state without saving - Validates: Requirements 3.6', async () => {
     const user = userEvent.setup()
-    const divisions: DivisionRow[] = [
-      {
-        id: 'div-escape',
-        name: 'Gamma Division',
-        totalIncome: 0,
-        totalExpenses: 0,
-        netProfit: 0,
-        leadCount: 0,
-        isActive: true,
-      },
+    const divisions: DivisionWithPnl[] = [
+      makeDivision({ id: 'div-escape', name: 'Gamma Division' }),
     ]
 
     renderDivisionsTable({
@@ -322,16 +312,8 @@ describe('DivisionsTable', () => {
 
   it('clicking Delete opens confirm dialog via confirm() - Validates: Requirements 4.1', async () => {
     const user = userEvent.setup()
-    const divisions: DivisionRow[] = [
-      {
-        id: 'div-delete-confirm',
-        name: 'Delta Division',
-        totalIncome: 0,
-        totalExpenses: 0,
-        netProfit: 0,
-        leadCount: 0,
-        isActive: true,
-      },
+    const divisions: DivisionWithPnl[] = [
+      makeDivision({ id: 'div-delete-confirm', name: 'Delta Division' }),
     ]
 
     renderDivisionsTable({
@@ -355,16 +337,8 @@ describe('DivisionsTable', () => {
   it('confirming delete calls deleteAction - Validates: Requirements 4.2, 4.6', async () => {
     const user = userEvent.setup()
     mockConfirm.mockResolvedValue(true)
-    const divisions: DivisionRow[] = [
-      {
-        id: 'div-delete-cancel',
-        name: 'Epsilon Division',
-        totalIncome: 0,
-        totalExpenses: 0,
-        netProfit: 0,
-        leadCount: 0,
-        isActive: true,
-      },
+    const divisions: DivisionWithPnl[] = [
+      makeDivision({ id: 'div-delete-cancel', name: 'Epsilon Division' }),
     ]
 
     renderDivisionsTable({
@@ -428,7 +402,7 @@ describe('Divisions page empty state', () => {
   it('renders empty-state message when divisions.length === 0 - Validates: Requirements 1.4', () => {
     // The empty-state message is rendered by the page when divisions.length === 0.
     // We test the logic directly: the condition that drives the branch.
-    const divisions: DivisionRow[] = []
+    const divisions: DivisionWithPnl[] = []
     const showsEmptyState = divisions.length === 0
     expect(showsEmptyState).toBe(true)
 
