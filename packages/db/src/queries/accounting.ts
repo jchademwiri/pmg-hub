@@ -10,6 +10,7 @@ import { snapshots } from "../schema/snapshots";
 import { divisions } from "../schema/divisions";
 import { clients } from "../schema/clients";
 import { invoices } from "../schema/billing";
+import { creditApplications } from "../schema/credits";
 import { income } from "../schema/income";
 import { getOrganisationSettings } from "./billing";
 import { eq, and, desc, asc, sql, inArray } from "drizzle-orm";
@@ -1043,6 +1044,30 @@ export async function getClientPerformance(
     if (r.clientId) paymentMap.set(r.clientId, Number(r.totalPaid));
   }
 
+  // Credits applied to still-open invoices per client. Credits tied to a
+  // 'paid' invoice are deliberately excluded — a credit note applied after
+  // an invoice is already fully paid in cash doesn't reduce what the client
+  // currently owes on OTHER open invoices; including it would understate
+  // (or, summed with enough of them, even zero out) real outstanding AR.
+  const creditConditions = [inArray(invoices.status, ['issued', 'partially_paid'])];
+  if (effectiveStart) creditConditions.push(sql`${creditApplications.appliedAt} >= ${effectiveStart}::timestamp`);
+  if (effectiveEnd) creditConditions.push(sql`${creditApplications.appliedAt} <= ${effectiveEnd}::timestamp`);
+
+  const creditRows = await db
+    .select({
+      clientId: invoices.clientId,
+      totalCredited: sql<string>`COALESCE(SUM(${creditApplications.amount}::numeric), 0)`,
+    })
+    .from(creditApplications)
+    .innerJoin(invoices, eq(invoices.id, creditApplications.invoiceId))
+    .where(and(...creditConditions))
+    .groupBy(invoices.clientId);
+
+  const creditMap = new Map<string, number>();
+  for (const r of creditRows) {
+    if (r.clientId) creditMap.set(r.clientId, Number(r.totalCredited));
+  }
+
   let groupTotalRevenue = 0;
   for (const amount of invoicedMap.values()) {
     groupTotalRevenue += amount;
@@ -1052,7 +1077,8 @@ export async function getClientPerformance(
   for (const client of allClients) {
     const rev = invoicedMap.get(client.id) || 0;
     const collected = paymentMap.get(client.id) || 0;
-    const ar = Math.max(0, rev - collected);
+    const credited = creditMap.get(client.id) || 0;
+    const ar = Math.max(0, rev - collected - credited);
 
     if (rev === 0 && collected === 0) continue;
 

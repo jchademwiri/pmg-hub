@@ -90,7 +90,7 @@ export function ReportKpiStrip({ data }: { data: ReportKpiData }) {
 
   const cards = [
     {
-      label: 'Total Revenue',
+      label: 'Total Cash Receipts',
       value: data.revenue,
       textColor: 'text-emerald-600 dark:text-emerald-400',
       sparklineData: data.monthlyRevenue,
@@ -105,7 +105,7 @@ export function ReportKpiStrip({ data }: { data: ReportKpiData }) {
       sparklineColor: 'text-amber-500',
     },
     {
-      label: 'PMG Share (25%)',
+      label: `PMG Share (${Math.round(rate * 100)}%)`,
       value: data.pmgShare,
       textColor: 'text-blue-600 dark:text-blue-400',
       sparklineData: monthlyPmg,

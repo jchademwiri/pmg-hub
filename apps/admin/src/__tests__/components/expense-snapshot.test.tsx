@@ -25,7 +25,7 @@ describe('ExpenseSnapshot percentage invariant', () => {
         }),
         (expensesByDivision) => {
           const { container, unmount } = render(
-            <ExpenseSnapshot expensesByDivision={expensesByDivision} />,
+            <ExpenseSnapshot divisions={[]} invoicedByDivision={[]} expensesByDivision={expensesByDivision} arByDivision={[]} pmgShareRate={0.25} />,
           )
 
           const pctMatches = [...container.textContent!.matchAll(/(\d+)% of total/g)].map((m) =>
@@ -47,8 +47,8 @@ describe('ExpenseSnapshot percentage invariant', () => {
     )
   })
 
-  it('renders nothing when there are no divisions', () => {
-    const { container } = render(<ExpenseSnapshot expensesByDivision={[]} />)
-    expect(container.firstChild).toBeNull()
+  it('shows an empty-state message when there are no divisions', () => {
+    const { container } = render(<ExpenseSnapshot divisions={[]} invoicedByDivision={[]} expensesByDivision={[]} arByDivision={[]} pmgShareRate={0.25} />)
+    expect(container.textContent).toContain('No expenses recorded yet.')
   })
 })

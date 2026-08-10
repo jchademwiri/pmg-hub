@@ -83,7 +83,7 @@ export function SankeyDiagram({
   const isProfitable = profitPool > 0
   const netRevenue = revenue - pmgShare
 
-  // Percentage distribution calculations relative to Gross Revenue
+  // Percentage distribution calculations relative to Gross Cash Receipts
   const pmgPct = revenue > 0 ? (pmgShare / revenue) * 100 : 0
   const netPct = revenue > 0 ? (netRevenue / revenue) * 100 : 0
   const expPct = revenue > 0 ? (expenses / revenue) * 100 : 0
@@ -97,7 +97,7 @@ export function SankeyDiagram({
   const nodes = [
     {
       id: 'gross',
-      label: 'Gross Revenue',
+      label: 'Gross Cash Receipts',
       val: revenue,
       pct: '100%',
       x: 50,
@@ -131,9 +131,9 @@ export function SankeyDiagram({
       available: ledgerBalances?.pmg_share.available,
     },
     { 
-      id: 'net', 
-      label: 'Net Revenue', 
-      val: netRevenue, 
+      id: 'net',
+      label: 'Net Cash Receipts',
+      val: netRevenue,
       pct: `${netPct.toFixed(1)}%`,
       x: 340, 
       y: 260, 

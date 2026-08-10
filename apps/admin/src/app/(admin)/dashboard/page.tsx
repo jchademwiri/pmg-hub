@@ -5,7 +5,8 @@ import {
   getYTDSummary,
   getPreviousYearYTDSummary,
   getDivisionRevenue,
-  getLeadCounts,
+  getDivisionAR,
+  getDivisionInvoiced,
   getMonthlyFinancialsSeries,
   getBudgetChartSeriesForYear,
   getMoMChartData,
@@ -38,7 +39,8 @@ export default async function DashboardPage() {
     currentMonthSummary,
     previousMonthSummary,
     divisions,
-    leads,
+    arByDivision,
+    invoicedByDivision,
     monthlySeries,
     agingReport,
     budgetChartSeries,
@@ -52,7 +54,8 @@ export default async function DashboardPage() {
     getCurrentMonthSummary(),
     getPreviousMonthSummary(),
     getDivisionRevenue(),
-    getLeadCounts(),
+    getDivisionAR(),
+    getDivisionInvoiced(),
     getMonthlyFinancialsSeries(),
     getAgingReport(),
     getBudgetChartSeriesForYear(fiscalYear),
@@ -83,9 +86,6 @@ export default async function DashboardPage() {
     profit: profitSnap ? { current: profitSnap.current, previous: profitSnap.previous } : null,
   };
 
-  // Build division expense map for the division revenue card
-  const divisionExpenseMap = new Map(expensesByDivision.map((d) => [d.divisionName, d.total]));
-
   return (
     <DashboardShell
       // Period summaries
@@ -97,8 +97,8 @@ export default async function DashboardPage() {
       deltas={deltas}
       // Supporting data
       divisions={divisions}
-      divisionExpenseMap={Object.fromEntries(divisionExpenseMap)}
-      leads={leads}
+      arByDivision={arByDivision}
+      invoicedByDivision={invoicedByDivision}
       monthlySeries={monthlySeries}
       sparklineData={monthlySeries.slice(-6)}
       agingReport={agingReport}

@@ -1,0 +1,48 @@
+{
+  "version": "0.0.1",
+  "configurations": [
+    {
+      "name": "admin",
+      "runtimeExecutable": "bunx",
+      "runtimeArgs": ["turbo", "run", "dev", "--filter=admin"],
+      "port": 3000
+    },
+    {
+      "name": "portal",
+      "runtimeExecutable": "bunx",
+      "runtimeArgs": ["turbo", "run", "dev", "--filter=portal"],
+      "port": 3001
+    },
+    {
+      "name": "aws",
+      "runtimeExecutable": "bunx",
+      "runtimeArgs": ["turbo", "run", "dev", "--filter=aws"],
+      "port": 4321
+    },
+    {
+      "name": "pmg",
+      "runtimeExecutable": "bunx",
+      "runtimeArgs": ["turbo", "run", "dev", "--filter=pmg"],
+      "port": 4321
+    },
+    {
+      "name": "tes",
+      "runtimeExecutable": "bunx",
+      "runtimeArgs": ["turbo", "run", "dev", "--filter=tes"],
+      "port": 4321
+    },
+    {
+      "name": "email-dev",
+      "runtimeExecutable": "bunx",
+      "runtimeArgs": ["turbo", "run", "email:dev", "--filter=@pmg/emails"],
+      "port": 3010
+    },
+    {
+      "name": "db-studio",
+      "runtimeExecutable": "bunx",
+      "runtimeArgs": ["turbo", "run", "db:studio", "--filter=@pmg/db"],
+      "port": 4983,
+      "url": "https://local.drizzle.studio"
+    }
+  ]
+}
