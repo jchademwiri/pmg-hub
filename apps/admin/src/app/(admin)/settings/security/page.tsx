@@ -38,7 +38,7 @@ export default async function SecuritySettingsPage() {
       </Alert>
 
       <Tabs defaultValue="audit-log" className="w-full">
-        <TabsList className="w-full justify-start rounded-lg bg-muted/40 p-1">
+        <TabsList className="w-full justify-start overflow-x-auto rounded-lg bg-muted/40 p-1">
           <TabsTrigger value="audit-log" className="flex items-center gap-2">
             <History className="h-4 w-4" />
             Audit Log

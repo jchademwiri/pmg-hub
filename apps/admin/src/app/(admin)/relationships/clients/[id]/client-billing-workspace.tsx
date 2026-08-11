@@ -980,7 +980,7 @@ export function ClientBillingWorkspace({
       {/* Tabbed Document split-pane browser */}
       <Tabs value={activeTab} onValueChange={handleTabChange} className="flex flex-col gap-4">
         <div className="sticky top-[3.25rem] z-30 bg-background -mx-6 px-6 pb-2 border-b flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
-          <TabsList className="bg-transparent h-10 p-0 flex gap-2 shrink-0">
+          <TabsList className="bg-transparent h-10 p-0 flex gap-2 min-w-0 max-w-full overflow-x-auto">
             <TabsTrigger 
               value="invoices" 
               className="group bg-transparent border-b-2 border-transparent data-[state=active]:border-amber-500 data-[state=active]:text-foreground rounded-none shadow-none px-4 py-2 text-sm font-medium flex items-center gap-2 transition-all hover:text-foreground/80"

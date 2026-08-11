@@ -126,9 +126,9 @@ export function DashboardShell({
           <Tabs value={activeTab} onValueChange={handleTabChange} className="w-full">
             <TabsList className="grid w-full grid-cols-3">
               {TABS.map((tab) => (
-                <TabsTrigger key={tab.key} value={tab.key}>
-                  <span className="sm:hidden">{tab.shortLabel}</span>
-                  <span className="hidden sm:inline">{tab.label}</span>
+                <TabsTrigger key={tab.key} value={tab.key} className="min-w-0">
+                  <span className="lg:hidden truncate">{tab.shortLabel}</span>
+                  <span className="hidden lg:inline">{tab.label}</span>
                 </TabsTrigger>
               ))}
             </TabsList>
