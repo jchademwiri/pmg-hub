@@ -84,6 +84,21 @@ export async function reactivateAsset(id: string): Promise<void> {
     .where(eq(assets.id, id));
 }
 
+// ── hasAssetHistory ───────────────────────────────────────────────────────────
+
+/**
+ * Whether an asset has any recorded valuations or deposit/withdrawal
+ * transactions. Used to steer users toward disposing (not deleting) assets
+ * that would otherwise silently lose that history on cascade delete.
+ */
+export async function hasAssetHistory(id: string): Promise<boolean> {
+  const [[valuation], [transaction]] = await Promise.all([
+    db.select({ id: assetValuations.id }).from(assetValuations).where(eq(assetValuations.assetId, id)).limit(1),
+    db.select({ id: assetTransactions.id }).from(assetTransactions).where(eq(assetTransactions.assetId, id)).limit(1),
+  ]);
+  return Boolean(valuation || transaction);
+}
+
 // ── deleteAsset ───────────────────────────────────────────────────────────────
 
 export async function deleteAsset(id: string): Promise<void> {

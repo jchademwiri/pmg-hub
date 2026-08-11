@@ -1,6 +1,7 @@
 import {
   boolean,
   date,
+  foreignKey,
   index,
   integer,
   pgEnum,
@@ -92,9 +93,7 @@ export const projectProgressSections = pgTable(
   "project_progress_sections",
   {
     id: uuid("id").primaryKey().defaultRandom(),
-    projectId: uuid("project_id")
-      .notNull()
-      .references(() => projectScheduleEntries.id, { onDelete: "cascade" }),
+    projectId: uuid("project_id").notNull(),
     title: text("title").notNull(),
     sortOrder: integer("sort_order").notNull(),
     status: projectTaskStatusEnum("status").notNull().default("backlog"),
@@ -105,6 +104,14 @@ export const projectProgressSections = pgTable(
   },
   (t) => [
     index("project_progress_sections_project_id_idx").on(t.projectId),
+    // Named explicitly - the Drizzle-default name for this FK exceeds
+    // Postgres's 63-byte identifier limit and gets silently truncated,
+    // which made `db:generate` show a spurious drop+recreate diff forever.
+    foreignKey({
+      columns: [t.projectId],
+      foreignColumns: [projectScheduleEntries.id],
+      name: "project_progress_sections_project_id_fk",
+    }).onDelete("cascade"),
   ],
 );
 
@@ -114,9 +121,7 @@ export const projectProgressItems = pgTable(
   "project_progress_items",
   {
     id: uuid("id").primaryKey().defaultRandom(),
-    sectionId: uuid("section_id")
-      .notNull()
-      .references(() => projectProgressSections.id, { onDelete: "cascade" }),
+    sectionId: uuid("section_id").notNull(),
     task: text("task").notNull(),
     isCompleted: boolean("is_completed").notNull().default(false),
     completedAt: timestamp("completed_at", { withTimezone: true }),
@@ -128,6 +133,12 @@ export const projectProgressItems = pgTable(
   },
   (t) => [
     index("project_progress_items_section_id_idx").on(t.sectionId),
+    // Named explicitly - see projectProgressSections' FK comment above.
+    foreignKey({
+      columns: [t.sectionId],
+      foreignColumns: [projectProgressSections.id],
+      name: "project_progress_items_section_id_fk",
+    }).onDelete("cascade"),
   ],
 );
 
