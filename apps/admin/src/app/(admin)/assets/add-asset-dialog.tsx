@@ -111,7 +111,7 @@ export function AddAssetDialog() {
       </Button>
 
       <Dialog open={open} onOpenChange={setOpen}>
-        <DialogContent className="sm:max-w-md">
+        <DialogContent className="sm:max-w-2xl">
           <DialogHeader>
             <DialogTitle>Register New Asset</DialogTitle>
             <DialogDescription>
@@ -120,34 +120,36 @@ export function AddAssetDialog() {
           </DialogHeader>
 
           <form onSubmit={handleSubmit} className="flex flex-col gap-4 mt-2 max-h-[70vh] overflow-y-auto pr-1">
-            <Field>
-              <FieldLabel htmlFor="asset-kind">
-                Type <span className="text-destructive">*</span>
-              </FieldLabel>
-              <Select value={kind} onValueChange={(v) => setKind(v as AssetKind)} disabled={isPending}>
-                <SelectTrigger id="asset-kind" className="w-full">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="fixed_asset">Fixed Asset (equipment, vehicle, etc.)</SelectItem>
-                  <SelectItem value="investment">Investment (crypto, stock, etc.)</SelectItem>
-                </SelectContent>
-              </Select>
-            </Field>
+            <div className="grid grid-cols-3 gap-3">
+              <Field>
+                <FieldLabel htmlFor="asset-kind">
+                  Type <span className="text-destructive">*</span>
+                </FieldLabel>
+                <Select value={kind} onValueChange={(v) => setKind(v as AssetKind)} disabled={isPending}>
+                  <SelectTrigger id="asset-kind" className="w-full">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="fixed_asset">Fixed Asset</SelectItem>
+                    <SelectItem value="investment">Investment</SelectItem>
+                  </SelectContent>
+                </Select>
+              </Field>
 
-            <Field>
-              <FieldLabel htmlFor="asset-name">
-                Name <span className="text-destructive">*</span>
-              </FieldLabel>
-              <Input
-                id="asset-name"
-                placeholder={kind === 'investment' ? 'e.g. Bitcoin Holdings' : 'e.g. Dell Latitude 5420'}
-                value={name}
-                onChange={(e) => setName(e.target.value)}
-                required
-                disabled={isPending}
-              />
-            </Field>
+              <Field className="col-span-2">
+                <FieldLabel htmlFor="asset-name">
+                  Name <span className="text-destructive">*</span>
+                </FieldLabel>
+                <Input
+                  id="asset-name"
+                  placeholder={kind === 'investment' ? 'e.g. Bitcoin Holdings' : 'e.g. Dell Latitude 5420'}
+                  value={name}
+                  onChange={(e) => setName(e.target.value)}
+                  required
+                  disabled={isPending}
+                />
+              </Field>
+            </div>
 
             <div className="grid grid-cols-2 gap-3">
               <Field>
