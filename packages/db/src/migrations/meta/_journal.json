@@ -260,6 +260,13 @@
       "when": 1786100100000,
       "tag": "0036_drop_legacy_distribution_columns",
       "breakpoints": true
+    },
+    {
+      "idx": 37,
+      "version": "7",
+      "when": 1786428124515,
+      "tag": "0037_add_assets_register",
+      "breakpoints": true
     }
   ]
 }
