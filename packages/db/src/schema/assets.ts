@@ -17,6 +17,8 @@ export const assetKindEnum = pgEnum("asset_kind", ["fixed_asset", "investment"])
 
 export const assetStatusEnum = pgEnum("asset_status", ["active", "disposed"]);
 
+export const assetTransactionTypeEnum = pgEnum("asset_transaction_type", ["deposit", "withdrawal"]);
+
 // ── assets ────────────────────────────────────────────────────────────────────
 // Company-wide simple register: fixed assets (equipment, vehicles, computers) and
 // investments (crypto, stocks) tracked side by side. No division scoping, no
@@ -96,13 +98,52 @@ export const assetValuations = pgTable(
 export type AssetValuation = typeof assetValuations.$inferSelect;
 export type NewAssetValuation = typeof assetValuations.$inferInsert;
 
+// ── asset_transactions ────────────────────────────────────────────────────────
+// Money moved into or out of an investment after the initial deposit
+// (assets.cost): additional deposits (top-ups) and withdrawals (partial/full
+// sales). Each entry can optionally move the held quantity too (buying or
+// selling units of a crypto/stock position); assets.quantity is kept in sync.
+
+export const assetTransactions = pgTable(
+  "asset_transactions",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    assetId: uuid("asset_id")
+      .notNull()
+      .references(() => assets.id, { onDelete: "cascade" }),
+    type: assetTransactionTypeEnum("type").notNull(),
+    transactionDate: date("transaction_date").notNull(),
+    amount: numeric("amount", { precision: 14, scale: 2 }).notNull(),
+    quantity: numeric("quantity", { precision: 20, scale: 8 }),
+    notes: text("notes"),
+    createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
+  },
+  (t) => [
+    check("asset_transactions_amount_non_negative", sql`${t.amount} >= 0`),
+    check("asset_transactions_quantity_non_negative", sql`${t.quantity} IS NULL OR ${t.quantity} >= 0`),
+    index("asset_transactions_asset_id_idx").on(t.assetId),
+    index("asset_transactions_transaction_date_idx").on(t.transactionDate),
+  ],
+);
+
+export type AssetTransaction = typeof assetTransactions.$inferSelect;
+export type NewAssetTransaction = typeof assetTransactions.$inferInsert;
+
 export const assetsRelations = relations(assets, ({ many }) => ({
   valuations: many(assetValuations),
+  transactions: many(assetTransactions),
 }));
 
 export const assetValuationsRelations = relations(assetValuations, ({ one }) => ({
   asset: one(assets, {
     fields: [assetValuations.assetId],
+    references: [assets.id],
+  }),
+}));
+
+export const assetTransactionsRelations = relations(assetTransactions, ({ one }) => ({
+  asset: one(assets, {
+    fields: [assetTransactions.assetId],
     references: [assets.id],
   }),
 }));

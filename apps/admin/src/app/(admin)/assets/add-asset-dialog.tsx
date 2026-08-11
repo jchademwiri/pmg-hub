@@ -183,7 +183,7 @@ export function AddAssetDialog() {
             <div className="grid grid-cols-2 gap-3">
               <Field>
                 <FieldLabel htmlFor="asset-cost">
-                  {kind === 'investment' ? 'Cost Basis (ZAR)' : 'Cost (ZAR)'} <span className="text-destructive">*</span>
+                  {kind === 'investment' ? 'Initial Deposit (ZAR)' : 'Cost (ZAR)'} <span className="text-destructive">*</span>
                 </FieldLabel>
                 <div className="relative">
                   <span className="absolute left-3 top-2 text-xs font-semibold text-muted-foreground">R</span>

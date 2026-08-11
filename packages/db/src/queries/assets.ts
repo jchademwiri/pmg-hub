@@ -1,11 +1,13 @@
 import { db } from "../client";
-import { assets, assetValuations } from "../schema/assets";
+import { assets, assetValuations, assetTransactions } from "../schema/assets";
 import { and, asc, desc, eq, sql } from "drizzle-orm";
 
 export type AssetRow = typeof assets.$inferSelect;
 export type NewAssetRow = typeof assets.$inferInsert;
 export type AssetValuationRow = typeof assetValuations.$inferSelect;
 export type NewAssetValuationRow = typeof assetValuations.$inferInsert;
+export type AssetTransactionRow = typeof assetTransactions.$inferSelect;
+export type NewAssetTransactionRow = typeof assetTransactions.$inferInsert;
 
 // ── getAllAssets ──────────────────────────────────────────────────────────────
 
@@ -180,4 +182,104 @@ async function syncCurrentValueFromLatestValuation(assetId: string): Promise<voi
     .update(assets)
     .set({ currentValue: latest?.value ?? null, updatedAt: new Date() })
     .where(eq(assets.id, assetId));
+}
+
+// ── getAssetTransactions ──────────────────────────────────────────────────────
+
+/**
+ * Returns an asset's deposit/withdrawal history (money moved after the
+ * initial deposit recorded as assets.cost), most recent first.
+ */
+export async function getAssetTransactions(assetId: string): Promise<AssetTransactionRow[]> {
+  return db
+    .select()
+    .from(assetTransactions)
+    .where(eq(assetTransactions.assetId, assetId))
+    .orderBy(desc(assetTransactions.transactionDate), desc(assetTransactions.createdAt));
+}
+
+// ── addAssetTransaction ───────────────────────────────────────────────────────
+
+/**
+ * Records a deposit (top-up) or withdrawal (sale) on an investment. If a
+ * quantity is given (e.g. buying/selling units of a crypto/stock position),
+ * it's added onto or subtracted from the asset's running quantity.
+ */
+export async function addAssetTransaction(
+  assetId: string,
+  data: {
+    type: "deposit" | "withdrawal";
+    transactionDate: string;
+    amount: string;
+    quantity?: string | null;
+    notes?: string | null;
+  },
+): Promise<AssetTransactionRow> {
+  const [inserted] = await db
+    .insert(assetTransactions)
+    .values({ assetId, ...data })
+    .returning();
+  if (!inserted) throw new Error("Failed to record transaction.");
+
+  if (data.quantity != null) {
+    const delta = data.type === "withdrawal" ? sql`-${data.quantity}::numeric` : sql`${data.quantity}::numeric`;
+    await db
+      .update(assets)
+      .set({
+        quantity: sql`greatest(coalesce(${assets.quantity}, 0) + ${delta}, 0)`,
+        updatedAt: new Date(),
+      })
+      .where(eq(assets.id, assetId));
+  }
+
+  return inserted;
+}
+
+// ── deleteAssetTransaction ────────────────────────────────────────────────────
+
+export async function deleteAssetTransaction(id: string, assetId: string): Promise<void> {
+  const [txn] = await db
+    .select({ type: assetTransactions.type, quantity: assetTransactions.quantity })
+    .from(assetTransactions)
+    .where(eq(assetTransactions.id, id));
+
+  await db.delete(assetTransactions).where(eq(assetTransactions.id, id));
+
+  if (txn?.quantity != null) {
+    // Reverse the original effect on quantity.
+    const delta = txn.type === "withdrawal" ? sql`${txn.quantity}::numeric` : sql`-${txn.quantity}::numeric`;
+    await db
+      .update(assets)
+      .set({
+        quantity: sql`greatest(coalesce(${assets.quantity}, 0) + ${delta}, 0)`,
+        updatedAt: new Date(),
+      })
+      .where(eq(assets.id, assetId));
+  }
+}
+
+// ── getAssetTotalInvested ─────────────────────────────────────────────────────
+
+/**
+ * Net capital currently invested: the initial deposit (assets.cost) plus
+ * every subsequent deposit, minus every withdrawal.
+ */
+export async function getAssetTotalInvested(assetId: string): Promise<number> {
+  const asset = await getAssetById(assetId);
+  if (!asset) return 0;
+
+  const rows = await db
+    .select({
+      type: assetTransactions.type,
+      total: sql<string>`coalesce(sum(${assetTransactions.amount}), 0)`,
+    })
+    .from(assetTransactions)
+    .where(eq(assetTransactions.assetId, assetId))
+    .groupBy(assetTransactions.type);
+
+  let net = Number(asset.cost);
+  for (const row of rows) {
+    net += row.type === "withdrawal" ? -Number(row.total) : Number(row.total);
+  }
+  return net;
 }

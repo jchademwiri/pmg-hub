@@ -10,6 +10,8 @@ import {
   deleteAsset as deleteAssetRow,
   addAssetValuation as addAssetValuationRow,
   deleteAssetValuation as deleteAssetValuationRow,
+  addAssetTransaction as addAssetTransactionRow,
+  deleteAssetTransaction as deleteAssetTransactionRow,
 } from '@pmg/db';
 import { getSessionOrRedirect } from '@/lib/auth';
 
@@ -44,6 +46,16 @@ const ValuationSchema = z.object({
 });
 
 type ValuationInput = z.infer<typeof ValuationSchema>;
+
+const TransactionSchema = z.object({
+  type: z.enum(['deposit', 'withdrawal']),
+  transactionDate: z.string().min(10, 'Date is required'),
+  amount: z.coerce.number().min(0, 'Amount cannot be negative'),
+  quantity: z.coerce.number().min(0, 'Quantity cannot be negative').optional().nullable(),
+  notes: z.string().optional().nullable(),
+});
+
+type TransactionInput = z.infer<typeof TransactionSchema>;
 
 // ── createAsset ───────────────────────────────────────────────────────────────
 
@@ -198,5 +210,53 @@ export async function deleteAssetValuation(
     return {};
   } catch {
     return { error: 'Failed to delete valuation. Please try again.' };
+  }
+}
+
+// ── addAssetTransaction ───────────────────────────────────────────────────────
+
+export async function addAssetTransaction(
+  assetId: string,
+  data: TransactionInput,
+): Promise<{ error?: string }> {
+  try {
+    await getSessionOrRedirect();
+
+    const parsed = TransactionSchema.safeParse(data);
+    if (!parsed.success) {
+      return { error: parsed.error.issues[0]?.message ?? 'Validation error' };
+    }
+    const v = parsed.data;
+
+    await addAssetTransactionRow(assetId, {
+      type: v.type,
+      transactionDate: v.transactionDate,
+      amount: String(v.amount.toFixed(2)),
+      quantity: v.quantity != null ? String(v.quantity) : null,
+      notes: v.notes ?? null,
+    });
+
+    revalidatePath('/assets');
+    revalidatePath(`/assets/${assetId}`);
+    return {};
+  } catch {
+    return { error: 'Failed to record transaction. Please try again.' };
+  }
+}
+
+// ── deleteAssetTransaction ────────────────────────────────────────────────────
+
+export async function deleteAssetTransaction(
+  id: string,
+  assetId: string,
+): Promise<{ error?: string }> {
+  try {
+    await getSessionOrRedirect();
+    await deleteAssetTransactionRow(id, assetId);
+    revalidatePath('/assets');
+    revalidatePath(`/assets/${assetId}`);
+    return {};
+  } catch {
+    return { error: 'Failed to delete transaction. Please try again.' };
   }
 }
