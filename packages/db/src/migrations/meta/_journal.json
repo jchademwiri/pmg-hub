@@ -288,6 +288,13 @@
       "when": 1786445200000,
       "tag": "0040_add_asset_transactions",
       "breakpoints": true
+    },
+    {
+      "idx": 41,
+      "version": "7",
+      "when": 1786453300000,
+      "tag": "0041_compliance_leads_discounts",
+      "breakpoints": true
     }
   ]
 }
