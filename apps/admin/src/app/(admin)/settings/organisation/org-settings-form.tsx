@@ -48,24 +48,26 @@ export function OrgSettingsForm({ settings, saveAction }: OrgSettingsFormProps) 
       className="flex flex-col gap-6"
     >
       <Tabs defaultValue="identity" className="w-full">
-        <TabsList className="w-full justify-start rounded-lg bg-muted/40 p-1">
-          <TabsTrigger value="identity" className="flex items-center gap-2">
-            <Building2 className="h-4 w-4" />
-            Company Identity
-          </TabsTrigger>
-          <TabsTrigger value="contact" className="flex items-center gap-2">
-            <Mail className="h-4 w-4" />
-            Contact Details
-          </TabsTrigger>
-          <TabsTrigger value="address" className="flex items-center gap-2">
-            <MapPin className="h-4 w-4" />
-            Address
-          </TabsTrigger>
-          <TabsTrigger value="logo" className="flex items-center gap-2">
-            <Image className="h-4 w-4" />
-            Brand Logo
-          </TabsTrigger>
-        </TabsList>
+        <div className="w-full min-w-0 overflow-x-auto">
+          <TabsList className="w-full justify-start rounded-lg bg-muted/40 p-1">
+            <TabsTrigger value="identity" className="flex items-center gap-2">
+              <Building2 className="h-4 w-4" />
+              Company Identity
+            </TabsTrigger>
+            <TabsTrigger value="contact" className="flex items-center gap-2">
+              <Mail className="h-4 w-4" />
+              Contact Details
+            </TabsTrigger>
+            <TabsTrigger value="address" className="flex items-center gap-2">
+              <MapPin className="h-4 w-4" />
+              Address
+            </TabsTrigger>
+            <TabsTrigger value="logo" className="flex items-center gap-2">
+              <Image className="h-4 w-4" />
+              Brand Logo
+            </TabsTrigger>
+          </TabsList>
+        </div>
 
         {/* Company Identity Tab */}
         <TabsContent value="identity" className="mt-4">

@@ -39,14 +39,16 @@ export function LeadStatusTabs({
 
   return (
     <Tabs value={activeTab} onValueChange={handleTabChange}>
-      <TabsList>
-        {TABS.map((tab) => (
-          <TabsTrigger key={tab.key} value={tab.key} className="gap-1.5">
-            {tab.label}
-            <Badge variant="secondary">{counts[tab.key as keyof typeof counts]}</Badge>
-          </TabsTrigger>
-        ))}
-      </TabsList>
+      <div className="overflow-x-auto">
+        <TabsList>
+          {TABS.map((tab) => (
+            <TabsTrigger key={tab.key} value={tab.key} className="gap-1.5">
+              {tab.label}
+              <Badge variant="secondary">{counts[tab.key as keyof typeof counts]}</Badge>
+            </TabsTrigger>
+          ))}
+        </TabsList>
+      </div>
     </Tabs>
   )
 }

@@ -554,6 +554,9 @@ export async function getAllInvoices(
     // like "Total Invoiced" — never set this for a paginated invoices list,
     // since data and totals must always reflect the exact same rows).
     excludeDraftVoid?: boolean;
+    // Only invoices with a remaining balance - mirrors the status set used
+    // by the `outstanding` sum below (issued/overdue/partially_paid).
+    onlyOutstanding?: boolean;
   },
   pageObj?: { page: number; pageSize: number },
 ): Promise<{ data: InvoiceRow[]; total: number; sum: number; outstanding: number }> {
@@ -585,6 +588,9 @@ export async function getAllInvoices(
   if (filters?.monthPeriod) {
     const { startDate, endDate } = getMonthPeriodDates(filters.monthPeriod);
     conditions.push(sql`${invoices.invoiceDate} >= ${startDate} AND ${invoices.invoiceDate} <= ${endDate}`);
+  }
+  if (filters?.onlyOutstanding) {
+    conditions.push(sql`${invoices.status} IN ('issued', 'overdue', 'partially_paid')`);
   }
 
   // Alias quotations for the join

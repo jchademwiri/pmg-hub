@@ -12,6 +12,7 @@ import {
   deleteAssetValuation as deleteAssetValuationRow,
   addAssetTransaction as addAssetTransactionRow,
   deleteAssetTransaction as deleteAssetTransactionRow,
+  hasAssetHistory,
 } from '@pmg/db';
 import { getSessionOrRedirect } from '@/lib/auth';
 
@@ -159,6 +160,11 @@ export async function reactivateAsset(id: string): Promise<{ error?: string }> {
 export async function deleteAsset(id: string): Promise<{ error?: string }> {
   try {
     await getSessionOrRedirect();
+
+    if (await hasAssetHistory(id)) {
+      return { error: 'This asset has recorded valuations or deposits/withdrawals. Dispose it instead of deleting, so that history is preserved.' };
+    }
+
     await deleteAssetRow(id);
     revalidatePath('/assets');
     return {};

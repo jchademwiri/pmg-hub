@@ -31,7 +31,7 @@ export default async function DataSettingsPage() {
       </Alert>
 
       <Tabs defaultValue="export-data" className="w-full">
-        <TabsList className="w-full justify-start rounded-lg bg-muted/40 p-1">
+        <TabsList className="w-full justify-start overflow-x-auto rounded-lg bg-muted/40 p-1">
           <TabsTrigger value="export-data" className="flex items-center gap-2">
             <Download className="h-4 w-4" />
             Export Data
