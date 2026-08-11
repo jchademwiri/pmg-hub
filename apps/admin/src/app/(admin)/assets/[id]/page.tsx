@@ -6,10 +6,11 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
-import { getAssetById } from '@pmg/db';
+import { getAssetById, getAssetValuations } from '@pmg/db';
 import { formatZAR, fmtDate } from '@/lib/format';
 import { formatStatusLabel } from '@/lib/billing-status';
 import { AssetEditClient } from './asset-edit-client';
+import { ValuationHistory } from './valuation-history';
 import { SetPageLabel } from '@/components/navigation/page-header-context';
 
 export const dynamic = 'force-dynamic';
@@ -23,6 +24,12 @@ export default async function AssetDetailPage({ params }: Props) {
   const { id } = await params;
   const asset = await getAssetById(id);
   if (!asset) notFound();
+
+  const valuations = asset.kind === 'investment' ? await getAssetValuations(id) : [];
+  const growthPct =
+    asset.currentValue != null && Number(asset.cost) > 0
+      ? ((Number(asset.currentValue) - Number(asset.cost)) / Number(asset.cost)) * 100
+      : null;
 
   return (
     <div className="flex flex-col gap-6 pb-32 lg:pb-0">
@@ -59,6 +66,18 @@ export default async function AssetDetailPage({ params }: Props) {
               <AssetEditClient asset={asset} />
             </CardContent>
           </Card>
+
+          {asset.kind === 'investment' && (
+            <Card className="mt-6">
+              <CardHeader>
+                <CardTitle>Valuation History</CardTitle>
+                <CardDescription>Record value updates over time to track growth</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <ValuationHistory assetId={asset.id} valuations={valuations} />
+              </CardContent>
+            </Card>
+          )}
         </div>
 
         {/* Sidebar */}
@@ -85,6 +104,23 @@ export default async function AssetDetailPage({ params }: Props) {
                   <div className="flex justify-between text-sm">
                     <span className="text-muted-foreground">Current Value</span>
                     <span className="tabular-nums">{formatZAR(Number(asset.currentValue))}</span>
+                  </div>
+                )}
+                {growthPct != null && (
+                  <div className="flex justify-between text-sm">
+                    <span className="text-muted-foreground">Growth</span>
+                    <span
+                      className={`tabular-nums font-medium ${
+                        growthPct > 0
+                          ? 'text-emerald-600 dark:text-emerald-400'
+                          : growthPct < 0
+                            ? 'text-red-600 dark:text-red-400'
+                            : 'text-muted-foreground'
+                      }`}
+                    >
+                      {growthPct > 0 ? '+' : ''}
+                      {growthPct.toFixed(1)}%
+                    </span>
                   </div>
                 )}
                 {asset.kind === 'investment' && asset.quantity && (

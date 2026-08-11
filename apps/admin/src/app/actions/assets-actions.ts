@@ -8,6 +8,8 @@ import {
   disposeAsset as disposeAssetRow,
   reactivateAsset as reactivateAssetRow,
   deleteAsset as deleteAssetRow,
+  addAssetValuation as addAssetValuationRow,
+  deleteAssetValuation as deleteAssetValuationRow,
 } from '@pmg/db';
 import { getSessionOrRedirect } from '@/lib/auth';
 
@@ -34,6 +36,14 @@ const AssetSchema = z
   });
 
 type AssetInput = z.infer<typeof AssetSchema>;
+
+const ValuationSchema = z.object({
+  valuationDate: z.string().min(10, 'Date is required'),
+  value: z.coerce.number().min(0, 'Value cannot be negative'),
+  notes: z.string().optional().nullable(),
+});
+
+type ValuationInput = z.infer<typeof ValuationSchema>;
 
 // ── createAsset ───────────────────────────────────────────────────────────────
 
@@ -142,5 +152,51 @@ export async function deleteAsset(id: string): Promise<{ error?: string }> {
     return {};
   } catch {
     return { error: 'Failed to delete. Please try again.' };
+  }
+}
+
+// ── addAssetValuation ─────────────────────────────────────────────────────────
+
+export async function addAssetValuation(
+  assetId: string,
+  data: ValuationInput,
+): Promise<{ error?: string }> {
+  try {
+    await getSessionOrRedirect();
+
+    const parsed = ValuationSchema.safeParse(data);
+    if (!parsed.success) {
+      return { error: parsed.error.issues[0]?.message ?? 'Validation error' };
+    }
+    const v = parsed.data;
+
+    await addAssetValuationRow(assetId, {
+      valuationDate: v.valuationDate,
+      value: String(v.value.toFixed(2)),
+      notes: v.notes ?? null,
+    });
+
+    revalidatePath('/assets');
+    revalidatePath(`/assets/${assetId}`);
+    return {};
+  } catch {
+    return { error: 'Failed to record valuation. Please try again.' };
+  }
+}
+
+// ── deleteAssetValuation ──────────────────────────────────────────────────────
+
+export async function deleteAssetValuation(
+  id: string,
+  assetId: string,
+): Promise<{ error?: string }> {
+  try {
+    await getSessionOrRedirect();
+    await deleteAssetValuationRow(id, assetId);
+    revalidatePath('/assets');
+    revalidatePath(`/assets/${assetId}`);
+    return {};
+  } catch {
+    return { error: 'Failed to delete valuation. Please try again.' };
   }
 }

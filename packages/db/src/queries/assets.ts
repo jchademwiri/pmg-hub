@@ -1,9 +1,11 @@
 import { db } from "../client";
-import { assets } from "../schema/assets";
+import { assets, assetValuations } from "../schema/assets";
 import { and, asc, desc, eq, sql } from "drizzle-orm";
 
 export type AssetRow = typeof assets.$inferSelect;
 export type NewAssetRow = typeof assets.$inferInsert;
+export type AssetValuationRow = typeof assetValuations.$inferSelect;
+export type NewAssetValuationRow = typeof assetValuations.$inferInsert;
 
 // ── getAllAssets ──────────────────────────────────────────────────────────────
 
@@ -120,4 +122,62 @@ export async function getAssetsSummary(): Promise<AssetsSummary> {
   }
 
   return { totalFixedAssetsValue, totalInvestmentsValue, totalCount };
+}
+
+// ── getAssetValuations ────────────────────────────────────────────────────────
+
+/**
+ * Returns an asset's valuation history, most recent first.
+ */
+export async function getAssetValuations(assetId: string): Promise<AssetValuationRow[]> {
+  return db
+    .select()
+    .from(assetValuations)
+    .where(eq(assetValuations.assetId, assetId))
+    .orderBy(desc(assetValuations.valuationDate), desc(assetValuations.createdAt));
+}
+
+// ── addAssetValuation ─────────────────────────────────────────────────────────
+
+/**
+ * Records a new valuation entry and, if it's the most recent by date,
+ * syncs it onto assets.currentValue so summary cards and the register
+ * table stay in step with the latest recorded value.
+ */
+export async function addAssetValuation(
+  assetId: string,
+  data: { valuationDate: string; value: string; notes?: string | null },
+): Promise<AssetValuationRow> {
+  const [inserted] = await db
+    .insert(assetValuations)
+    .values({ assetId, ...data })
+    .returning();
+  if (!inserted) throw new Error("Failed to record valuation.");
+
+  await syncCurrentValueFromLatestValuation(assetId);
+
+  return inserted;
+}
+
+// ── deleteAssetValuation ──────────────────────────────────────────────────────
+
+export async function deleteAssetValuation(id: string, assetId: string): Promise<void> {
+  await db.delete(assetValuations).where(eq(assetValuations.id, id));
+  await syncCurrentValueFromLatestValuation(assetId);
+}
+
+// ── syncCurrentValueFromLatestValuation ──────────────────────────────────────
+
+async function syncCurrentValueFromLatestValuation(assetId: string): Promise<void> {
+  const [latest] = await db
+    .select({ value: assetValuations.value })
+    .from(assetValuations)
+    .where(eq(assetValuations.assetId, assetId))
+    .orderBy(desc(assetValuations.valuationDate), desc(assetValuations.createdAt))
+    .limit(1);
+
+  await db
+    .update(assets)
+    .set({ currentValue: latest?.value ?? null, updatedAt: new Date() })
+    .where(eq(assets.id, assetId));
 }

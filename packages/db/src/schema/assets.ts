@@ -9,7 +9,7 @@ import {
   timestamp,
   uuid,
 } from "drizzle-orm/pg-core";
-import { sql } from "drizzle-orm";
+import { relations, sql } from "drizzle-orm";
 
 // ── Enums ─────────────────────────────────────────────────────────────────────
 
@@ -67,3 +67,42 @@ export const assets = pgTable(
 
 export type Asset = typeof assets.$inferSelect;
 export type NewAsset = typeof assets.$inferInsert;
+
+// ── asset_valuations ──────────────────────────────────────────────────────────
+// Point-in-time value entries for an asset, so investments (and, if useful,
+// fixed assets) can show growth/decline over time instead of a single
+// overwritable current_value. Adding a valuation keeps assets.current_value in
+// sync with the latest entry - still manual record-keeping, no automated pricing.
+
+export const assetValuations = pgTable(
+  "asset_valuations",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    assetId: uuid("asset_id")
+      .notNull()
+      .references(() => assets.id, { onDelete: "cascade" }),
+    valuationDate: date("valuation_date").notNull(),
+    value: numeric("value", { precision: 14, scale: 2 }).notNull(),
+    notes: text("notes"),
+    createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
+  },
+  (t) => [
+    check("asset_valuations_value_non_negative", sql`${t.value} >= 0`),
+    index("asset_valuations_asset_id_idx").on(t.assetId),
+    index("asset_valuations_valuation_date_idx").on(t.valuationDate),
+  ],
+);
+
+export type AssetValuation = typeof assetValuations.$inferSelect;
+export type NewAssetValuation = typeof assetValuations.$inferInsert;
+
+export const assetsRelations = relations(assets, ({ many }) => ({
+  valuations: many(assetValuations),
+}));
+
+export const assetValuationsRelations = relations(assetValuations, ({ one }) => ({
+  asset: one(assets, {
+    fields: [assetValuations.assetId],
+    references: [assets.id],
+  }),
+}));
