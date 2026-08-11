@@ -16,6 +16,7 @@ import {
   Package, Shield, Database, Wallet, ArrowDownLeft,
   PieChart, Calculator, BookMarked, NotebookPen, Scale,
   Calendar, LayoutGrid, CalendarClock, ListTodo, CalendarRange,
+  Landmark,
 } from 'lucide-react'
 import type { LucideIcon } from 'lucide-react'
 import type { Role } from '@/lib/roles'
@@ -97,6 +98,7 @@ export const GROUPS: NavGroup[] = [
       { title: 'Income',             url: '/finance/income',     icon: ArrowDownLeft },
       { title: 'Expenses',           url: '/finance/expenses',   icon: TrendingDown  },
       { title: 'Finance Categories', url: '/finance/categories', icon: Tags          },
+      { title: 'Assets Register',    url: '/assets',             icon: Landmark      },
     ],
   },
   {

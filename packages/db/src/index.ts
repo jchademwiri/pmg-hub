@@ -118,3 +118,6 @@ export { addDays, today } from './lib/date-utils';
 
 // ── Compliance Tracking ───────────────────────────────────────────────────────
 export * from './queries/compliance';
+
+// ── Assets Register ───────────────────────────────────────────────────────────
+export * from './queries/assets';
