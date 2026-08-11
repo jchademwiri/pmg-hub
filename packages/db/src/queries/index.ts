@@ -10,3 +10,4 @@ export * from "./billing";
 export * from "./project-schedule";
 export * from "./analysis";
 export * from "./compliance";
+export * from "./assets";

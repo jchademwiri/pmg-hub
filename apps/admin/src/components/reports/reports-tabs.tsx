@@ -105,8 +105,8 @@ export function ReportsTabs({
       drillType={drillType}
     />
     <Tabs value={activeTab} onValueChange={handleTabChange} className="w-full">
-      <div className="flex items-center justify-between mb-4 print:hidden">
-        <TabsList>
+      <div className="flex items-center justify-between mb-4 print:hidden gap-2">
+        <TabsList className="min-w-0 overflow-x-auto">
           <TabsTrigger value="overview" className="gap-1.5">
             <TrendingUp className="size-3.5" />
             Overview

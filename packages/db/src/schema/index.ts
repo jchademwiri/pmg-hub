@@ -16,3 +16,4 @@ export * from "./distribution-settings";
 export * from "./accounting";
 export * from "./project-schedule";
 export * from "./compliance";
+export * from "./assets";

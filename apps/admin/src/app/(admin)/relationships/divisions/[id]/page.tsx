@@ -53,7 +53,7 @@ export default async function DivisionDetailPage({ params, searchParams }: Divis
       getDivisionWithStatsById(id),
       getAllIncome({ divisionId: id, year: fiscalYearStart }, { page: payPage, pageSize: PAGE_SIZE }),
       getAllExpenses({ divisionId: id, year: fiscalYearStart }, { page: expPage, pageSize: PAGE_SIZE }),
-      getAllInvoices({ divisionId: id, year: fiscalYearStart }, { page: invPage, pageSize: PAGE_SIZE }),
+      getAllInvoices({ divisionId: id, year: fiscalYearStart, onlyOutstanding: true }, { page: invPage, pageSize: PAGE_SIZE }),
       getAllQuotations({ divisionId: id, year: fiscalYearStart }, { page: quotePage, pageSize: PAGE_SIZE }),
       getProfitAndLossByDivision(period),
       getActiveRates().catch(() => ({ pmg_share: 0.25 })),
@@ -133,7 +133,7 @@ export default async function DivisionDetailPage({ params, searchParams }: Divis
             <span className="text-sm font-semibold text-amber-500">{formatZAR(pnl.totalOutstandingAr)} outstanding</span>
           </div>
           {invoiceEntries.data.length === 0 ? (
-            <p className="text-sm text-muted-foreground">No invoices for this division.</p>
+            <p className="text-sm text-muted-foreground">No outstanding invoices for this division.</p>
           ) : (
             <>
               <Table>
@@ -141,7 +141,6 @@ export default async function DivisionDetailPage({ params, searchParams }: Divis
                   <TableRow>
                     <TableHead>Invoice</TableHead>
                     <TableHead>Due</TableHead>
-                    <TableHead className="text-right">Total</TableHead>
                     <TableHead className="text-right">Balance</TableHead>
                   </TableRow>
                 </TableHeader>
@@ -152,9 +151,8 @@ export default async function DivisionDetailPage({ params, searchParams }: Divis
                       <ClickableTableRow key={inv.id} href={`/billing/invoices/${inv.id}`}>
                         <TableCell className="font-medium">{inv.documentNumber}</TableCell>
                         <TableCell>{inv.dueDate ? fmtDate(inv.dueDate) : '-'}</TableCell>
-                        <TableCell className="text-right tabular-nums font-medium">{formatZAR(Number(inv.total))}</TableCell>
                         <TableCell className="text-right tabular-nums font-medium">
-                          {balance > 0 ? formatZAR(balance) : '-'}
+                          {formatZAR(balance)}
                         </TableCell>
                       </ClickableTableRow>
                     )
