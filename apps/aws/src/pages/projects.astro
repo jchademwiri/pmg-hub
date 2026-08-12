@@ -22,7 +22,7 @@ import { projects } from "@/data/projects";
         {projects.map((project) => (
           <a href={project.url} target="_blank" rel="noopener noreferrer" class="group relative overflow-hidden rounded-2xl bg-muted/30 border border-border/50 hover:border-primary/50 transition-all duration-300 hover:shadow-lg block">
             <!-- Image Placeholder -->
-            <div class={`h-64 w-full ${project.image} relative overflow-hidden`}>
+            <div class={`h-56 w-full ${project.image} relative overflow-hidden`}>
                 <img
                   src={project.bgImage}
                   alt={project.title}
@@ -33,9 +33,9 @@ import { projects } from "@/data/projects";
             </div>
 
             <div class="p-8 relative z-10 -mt-12 mx-4 bg-blue-950/80 backdrop-blur-xl rounded-xl shadow-2xl border border-border/50 group-hover:translate-y-[-10px] transition-transform duration-300">
-              <div class="text-xs font-bold text-blue-400 uppercase tracking-wider mb-2">{project.category}</div>
-              <h3 class="text-xl font-bold mb-2 text-white">{project.title}</h3>
-              <p class="text-blue-100/80 text-sm line-clamp-2">
+              <div class="text-xs font-bold text-blue-400 uppercase tracking-wider mb-2 line-clamp-1">{project.category}</div>
+              <h3 class="text-xl font-bold mb-2 text-white leading-6 line-clamp-2 min-h-[3rem]">{project.title}</h3>
+              <p class="text-blue-100/80 text-sm leading-5 line-clamp-3 min-h-[3.75rem]">
                 {project.description}
               </p>
             </div>
