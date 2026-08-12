@@ -39,4 +39,24 @@ export const projects = [
     bgImage:
       "https://s0.wp.com/mshots/v1/https%3A%2F%2Fwww.tenderedgesolutions.co.za%2F?w=800&h=600",
   },
+  {
+    title: "Livhu & Musa Enterprise",
+    category: "Civil Construction and Infrastructure Development",
+    description:
+      "A Level 1 B-BBEE certified civil projects company based in Centurion, specializing in architectural spaces and infrastructure solutions for future development.",
+    url: "https://www.livhuandmusa.co.za/",
+    image: "bg-linear-to-br from-emerald-600 to-teal-800",
+    bgImage:
+      "https://s0.wp.com/mshots/v1/https%3A%2F%2Fwww.livhuandmusa.co.za%2F?w=800&h=600",
+  },
+  {
+    title: "Sithembe Transportation & Projects",
+    category: "Transportation and Infrastructure Development",
+    description:
+      "A BBBEE Level 1 certified South African firm offering transportation and infrastructure development solutions, built on a foundation of quality delivery.",
+    url: "https://www.sithembe.co.za/",
+    image: "bg-linear-to-br from-slate-600 to-zinc-800",
+    bgImage:
+      "https://s0.wp.com/mshots/v1/https%3A%2F%2Fwww.sithembe.co.za%2F?w=800&h=600",
+  },
 ];
