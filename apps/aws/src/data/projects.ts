@@ -14,10 +14,20 @@ export const projects = [
     category: "Personalized Mobile Spa Services",
     description:
       "Bringing relaxation and rejuvenation to your doorstep with personalized mobile spa services, including massages, facials, and beauty treatments.",
-    url: "https://www.beccasmobilespa.co.za/",
+    url: "https://beccas-mobile-spa-official-website.vercel.app/",
     image: "bg-linear-to-br from-rose-500 to-pink-600",
     bgImage:
-      "https://s0.wp.com/mshots/v1/https%3A%2F%2Fwww.beccasmobilespa.co.za%2F?w=800&h=600",
+      "https://s0.wp.com/mshots/v1/https%3A%2F%2Fbeccas-mobile-spa-official-website.vercel.app%2F?w=800&h=600",
+  },
+  {
+    title: "Phehlwana Group Investments",
+    category: "Construction, Engineering & Facilities Management",
+    description:
+      "A Pretoria-based enterprise providing construction and civil engineering services alongside mechanical systems, plant hire, cleaning, and security solutions for government, corporate, and private clients.",
+    url: "https://www.phehlwanagroup.co.za/",
+    image: "bg-linear-to-br from-amber-600 to-orange-800",
+    bgImage:
+      "https://s0.wp.com/mshots/v1/https%3A%2F%2Fwww.phehlwanagroup.co.za%2F?w=800&h=600",
   },
   {
     title: "Tender Edge Solutions",
