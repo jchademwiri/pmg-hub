@@ -8,10 +8,6 @@ import {
   disposeAsset as disposeAssetRow,
   reactivateAsset as reactivateAssetRow,
   deleteAsset as deleteAssetRow,
-  addAssetValuation as addAssetValuationRow,
-  deleteAssetValuation as deleteAssetValuationRow,
-  addAssetTransaction as addAssetTransactionRow,
-  deleteAssetTransaction as deleteAssetTransactionRow,
   hasAssetHistory,
 } from '@pmg/db';
 import { getSessionOrRedirect } from '@/lib/auth';
@@ -40,24 +36,6 @@ const AssetSchema = z
 
 type AssetInput = z.infer<typeof AssetSchema>;
 
-const ValuationSchema = z.object({
-  valuationDate: z.string().min(10, 'Date is required'),
-  value: z.coerce.number().min(0, 'Value cannot be negative'),
-  notes: z.string().optional().nullable(),
-});
-
-type ValuationInput = z.infer<typeof ValuationSchema>;
-
-const TransactionSchema = z.object({
-  type: z.enum(['deposit', 'withdrawal']),
-  transactionDate: z.string().min(10, 'Date is required'),
-  amount: z.coerce.number().min(0, 'Amount cannot be negative'),
-  quantity: z.coerce.number().min(0, 'Quantity cannot be negative').optional().nullable(),
-  notes: z.string().optional().nullable(),
-});
-
-type TransactionInput = z.infer<typeof TransactionSchema>;
-
 // ── createAsset ───────────────────────────────────────────────────────────────
 
 export async function createAsset(data: AssetInput): Promise<{ error?: string; id?: string }> {
@@ -68,21 +46,23 @@ export async function createAsset(data: AssetInput): Promise<{ error?: string; i
     if (!parsed.success) {
       return { error: parsed.error.issues[0]?.message ?? 'Validation error' };
     }
-    const v = parsed.data;
+    // Investments are sourced live from Luno — the register never creates
+    // investment rows, so force the kind here regardless of what the client sends.
+    const v = { ...parsed.data, kind: 'fixed_asset' as const };
 
     const created = await createAssetRow({
-      kind: v.kind,
+      kind: 'fixed_asset',
       name: v.name,
       category: v.category,
       acquisitionDate: v.acquisitionDate,
       cost: String(v.cost.toFixed(2)),
       currentValue: v.currentValue != null ? String(v.currentValue.toFixed(2)) : null,
       notes: v.notes ?? null,
-      serialNumber: v.kind === 'fixed_asset' ? (v.serialNumber ?? null) : null,
-      location: v.kind === 'fixed_asset' ? (v.location ?? null) : null,
-      assignedTo: v.kind === 'fixed_asset' ? (v.assignedTo ?? null) : null,
-      quantity: v.kind === 'investment' && v.quantity != null ? String(v.quantity) : null,
-      unitType: v.kind === 'investment' ? (v.unitType ?? null) : null,
+      serialNumber: v.serialNumber ?? null,
+      location: v.location ?? null,
+      assignedTo: v.assignedTo ?? null,
+      quantity: null,
+      unitType: null,
     });
 
     revalidatePath('/assets');
@@ -173,96 +153,3 @@ export async function deleteAsset(id: string): Promise<{ error?: string }> {
   }
 }
 
-// ── addAssetValuation ─────────────────────────────────────────────────────────
-
-export async function addAssetValuation(
-  assetId: string,
-  data: ValuationInput,
-): Promise<{ error?: string }> {
-  try {
-    await getSessionOrRedirect();
-
-    const parsed = ValuationSchema.safeParse(data);
-    if (!parsed.success) {
-      return { error: parsed.error.issues[0]?.message ?? 'Validation error' };
-    }
-    const v = parsed.data;
-
-    await addAssetValuationRow(assetId, {
-      valuationDate: v.valuationDate,
-      value: String(v.value.toFixed(2)),
-      notes: v.notes ?? null,
-    });
-
-    revalidatePath('/assets');
-    revalidatePath(`/assets/${assetId}`);
-    return {};
-  } catch {
-    return { error: 'Failed to record valuation. Please try again.' };
-  }
-}
-
-// ── deleteAssetValuation ──────────────────────────────────────────────────────
-
-export async function deleteAssetValuation(
-  id: string,
-  assetId: string,
-): Promise<{ error?: string }> {
-  try {
-    await getSessionOrRedirect();
-    await deleteAssetValuationRow(id, assetId);
-    revalidatePath('/assets');
-    revalidatePath(`/assets/${assetId}`);
-    return {};
-  } catch {
-    return { error: 'Failed to delete valuation. Please try again.' };
-  }
-}
-
-// ── addAssetTransaction ───────────────────────────────────────────────────────
-
-export async function addAssetTransaction(
-  assetId: string,
-  data: TransactionInput,
-): Promise<{ error?: string }> {
-  try {
-    await getSessionOrRedirect();
-
-    const parsed = TransactionSchema.safeParse(data);
-    if (!parsed.success) {
-      return { error: parsed.error.issues[0]?.message ?? 'Validation error' };
-    }
-    const v = parsed.data;
-
-    await addAssetTransactionRow(assetId, {
-      type: v.type,
-      transactionDate: v.transactionDate,
-      amount: String(v.amount.toFixed(2)),
-      quantity: v.quantity != null ? String(v.quantity) : null,
-      notes: v.notes ?? null,
-    });
-
-    revalidatePath('/assets');
-    revalidatePath(`/assets/${assetId}`);
-    return {};
-  } catch {
-    return { error: 'Failed to record transaction. Please try again.' };
-  }
-}
-
-// ── deleteAssetTransaction ────────────────────────────────────────────────────
-
-export async function deleteAssetTransaction(
-  id: string,
-  assetId: string,
-): Promise<{ error?: string }> {
-  try {
-    await getSessionOrRedirect();
-    await deleteAssetTransactionRow(id, assetId);
-    revalidatePath('/assets');
-    revalidatePath(`/assets/${assetId}`);
-    return {};
-  } catch {
-    return { error: 'Failed to delete transaction. Please try again.' };
-  }
-}
