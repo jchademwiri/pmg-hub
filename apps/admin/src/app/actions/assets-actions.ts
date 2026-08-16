@@ -82,21 +82,24 @@ export async function updateAsset(id: string, data: AssetInput): Promise<{ error
     if (!parsed.success) {
       return { error: parsed.error.issues[0]?.message ?? 'Validation error' };
     }
-    const v = parsed.data;
+    // Same policy as createAsset: investments are sourced live from Luno, so
+    // an existing row can't be turned into one via update either, regardless
+    // of what the client sends.
+    const v = { ...parsed.data, kind: 'fixed_asset' as const };
 
     await updateAssetRow(id, {
-      kind: v.kind,
+      kind: 'fixed_asset',
       name: v.name,
       category: v.category,
       acquisitionDate: v.acquisitionDate,
       cost: String(v.cost.toFixed(2)),
       currentValue: v.currentValue != null ? String(v.currentValue.toFixed(2)) : null,
       notes: v.notes ?? null,
-      serialNumber: v.kind === 'fixed_asset' ? (v.serialNumber ?? null) : null,
-      location: v.kind === 'fixed_asset' ? (v.location ?? null) : null,
-      assignedTo: v.kind === 'fixed_asset' ? (v.assignedTo ?? null) : null,
-      quantity: v.kind === 'investment' && v.quantity != null ? String(v.quantity) : null,
-      unitType: v.kind === 'investment' ? (v.unitType ?? null) : null,
+      serialNumber: v.serialNumber ?? null,
+      location: v.location ?? null,
+      assignedTo: v.assignedTo ?? null,
+      quantity: null,
+      unitType: null,
     });
 
     revalidatePath('/assets');

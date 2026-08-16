@@ -32,8 +32,20 @@ export type SpendMatchConfig = {
   companionKeywords: string[];
 };
 
-/** `col ILIKE '%a%' OR col ILIKE '%b%' ...` */
-function anyKeyword(col: SQL, keywords: string[]): SQL {
+/**
+ * `col ILIKE '%a%' OR col ILIKE '%b%' ...`
+ *
+ * `drizzle-orm`'s `or()` returns `undefined` when called with zero arguments
+ * (verified against the installed version) rather than throwing, and neither
+ * `not()` nor `and()` guard against an `undefined` operand - they silently
+ * build a broken SQL fragment instead. Every current SPEND_TRACKERS config has
+ * non-empty keyword arrays, so this can't happen today, but a future tracker
+ * with an empty list (e.g. no companionKeywords yet) would misclassify rows
+ * instead of failing loudly. `sql\`false\`` is the correct empty-list identity
+ * for OR - "no keyword to match" should mean "never matches".
+ */
+export function anyKeyword(col: SQL, keywords: string[]): SQL {
+  if (keywords.length === 0) return sql`false`;
   return or(...keywords.map((k) => sql`${col} ILIKE ${`%${k}%`}`))!;
 }
 

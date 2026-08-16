@@ -131,22 +131,33 @@ export type MonthlySpend = { month: string; total: number };
  * The spread between them is the point: a single average hides whether spend is
  * ramping or tailing off, which is usually what decides whether the purchase is
  * worth making at all.
+ *
+ * `currentMonth` (YYYY-MM) marks the month still in progress, so the "Last 3
+ * months" and "Last complete month" windows can exclude it explicitly. Without
+ * it, an earlier version assumed the final entry in `monthly` was always the
+ * partial current month and dropped it positionally - wrong whenever the
+ * current month has no matched spend yet, since `monthly` only contains
+ * months with activity: the true last complete month is then the actual last
+ * entry, and dropping it silently substituted a stale one instead. "All time"
+ * deliberately keeps including the partial month - it's meant to reflect
+ * total spend across the full observed history, partial month included.
  */
 export function computePaybackWindows(
   price: number,
   monthly: MonthlySpend[],
   runningCost = 0,
+  currentMonth?: string,
 ): PaybackWindow[] {
   if (monthly.length === 0) return [];
 
   const mean = (rows: MonthlySpend[]) =>
     rows.length > 0 ? rows.reduce((s, m) => s + m.total, 0) / rows.length : 0;
 
-  const lastComplete = monthly.length > 1 ? monthly.slice(-2, -1) : monthly.slice(-1);
+  const completeMonths = currentMonth ? monthly.filter((m) => m.month !== currentMonth) : monthly;
 
   return [
     computePayback(price, mean(monthly), runningCost, 'All time'),
-    computePayback(price, mean(monthly.slice(-3)), runningCost, 'Last 3 months'),
-    computePayback(price, mean(lastComplete), runningCost, 'Last complete month'),
+    computePayback(price, mean(completeMonths.slice(-3)), runningCost, 'Last 3 months'),
+    computePayback(price, mean(completeMonths.slice(-1)), runningCost, 'Last complete month'),
   ];
 }

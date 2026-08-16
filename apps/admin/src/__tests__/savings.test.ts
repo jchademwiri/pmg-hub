@@ -133,23 +133,35 @@ describe('computePaybackWindows', () => {
   ];
 
   it('reproduces the measured baseline against the R4,295 printer', () => {
-    const [allTime, last3, lastComplete] = computePaybackWindows(4295, monthly);
+    // currentMonth is always supplied by the real caller (payback-panel.tsx
+    // has it as a required prop) - passing it here is the realistic case, not
+    // a special one.
+    const [allTime, last3, lastComplete] = computePaybackWindows(4295, monthly, 0, '2026-08');
 
-    // R1,714 / 4 months = R428.50
+    // R1,714 / 4 months = R428.50 - "All time" deliberately still includes
+    // the partial current month, unlike the other two windows.
     expect(allTime!.monthlySpend).toBeCloseTo(428.5, 2);
     expect(allTime!.paybackMonths).toBeCloseTo(10.02, 1);
 
-    // (125 + 786 + 638) / 3 = R516.33
-    expect(last3!.monthlySpend).toBeCloseTo(516.33, 1);
+    // May + June + July / 3, with August (in progress) excluded = R358.67
+    expect(last3!.monthlySpend).toBeCloseTo(358.67, 1);
 
     // July is the last COMPLETE month; August is still in progress.
     expect(lastComplete!.monthlySpend).toBe(786);
     expect(lastComplete!.paybackMonths).toBeCloseTo(5.46, 1);
   });
 
-  it('excludes the in-progress month from the last-complete window', () => {
-    const [, , lastComplete] = computePaybackWindows(4295, monthly);
+  it('excludes the in-progress month from the last-complete window when currentMonth is given', () => {
+    const [, , lastComplete] = computePaybackWindows(4295, monthly, 0, '2026-08');
     expect(lastComplete!.monthlySpend).not.toBe(638);
+  });
+
+  it('without currentMonth, falls back to treating the final entry as complete', () => {
+    // No real caller omits currentMonth (it's always available), but the
+    // parameter is optional for callers that don't track it - documenting
+    // that fallback here rather than leaving it an implicit surprise.
+    const [, , lastComplete] = computePaybackWindows(4295, monthly);
+    expect(lastComplete!.monthlySpend).toBe(638);
   });
 
   it('falls back to the only month when there is just one', () => {
@@ -159,5 +171,37 @@ describe('computePaybackWindows', () => {
 
   it('returns nothing when there is no spend history', () => {
     expect(computePaybackWindows(4295, [])).toEqual([]);
+  });
+
+  it('excludes the current month explicitly by name, not by array position', () => {
+    // Same result as the positional test above, but driven by the actual
+    // caller contract (payback-panel.tsx passes currentMonth explicitly)
+    // rather than relying on August happening to be the last array entry.
+    const [, , lastComplete] = computePaybackWindows(4295, monthly, 0, '2026-08');
+    expect(lastComplete!.monthlySpend).toBe(786);
+  });
+
+  it('does not drop the true last complete month when the current month has no matched spend yet', () => {
+    // Regression: the current month (September) hasn't had a single scan run
+    // logged yet, so it never appears in `monthly` at all - `getSpendMonthlySummary`
+    // only returns months with matched activity. Positional slicing assumed
+    // the final array entry was always the partial current month and would
+    // have dropped August (the true last COMPLETE month) in favour of July,
+    // silently understating the most recent window.
+    const withGap = [
+      { month: '2026-06', total: 125 },
+      { month: '2026-07', total: 786 },
+      { month: '2026-08', total: 638 },
+    ];
+    const [, , lastComplete] = computePaybackWindows(4295, withGap, 0, '2026-09');
+    expect(lastComplete!.monthlySpend).toBe(638);
+  });
+
+  it('excludes the current month from the last-3-months average when it has partial data', () => {
+    const [, last3] = computePaybackWindows(4295, monthly, 0, '2026-08');
+    // With August (the current, partial month) excluded: May + June + July / 3
+    // - a materially different, more honest number than including a partial
+    // month as if it were a full one.
+    expect(last3!.monthlySpend).toBeCloseTo((165 + 125 + 786) / 3, 2);
   });
 });

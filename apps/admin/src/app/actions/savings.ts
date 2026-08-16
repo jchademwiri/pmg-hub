@@ -2,7 +2,8 @@
 
 import { z } from 'zod';
 import { revalidatePath } from 'next/cache';
-import { db, savingsGoals, savingsContributions, assets, eq, getSavingsGoalById } from '@pmg/db';
+import { db, savingsGoals, savingsContributions, assets, eq, sql, getSavingsGoalById } from '@pmg/db';
+import { getSessionOrRedirect } from '@/lib/auth';
 
 const GoalSchema = z.object({
   name: z.string().min(1).max(200),
@@ -40,6 +41,7 @@ function revalidate(goalId?: string) {
 }
 
 export async function createSavingsGoal(formData: FormData): Promise<{ error?: string }> {
+  await getSessionOrRedirect();
   try {
     const parsed = GoalSchema.safeParse(Object.fromEntries(formData));
     if (!parsed.success) {
@@ -67,6 +69,7 @@ export async function createSavingsGoal(formData: FormData): Promise<{ error?: s
 }
 
 export async function updateSavingsGoal(id: string, formData: FormData): Promise<{ error?: string }> {
+  await getSessionOrRedirect();
   try {
     const parsed = GoalSchema.safeParse(Object.fromEntries(formData));
     if (!parsed.success) {
@@ -99,6 +102,7 @@ export async function updateSavingsGoal(id: string, formData: FormData): Promise
 
 /** Deletes the goal and, by cascade, its contribution history. */
 export async function deleteSavingsGoal(id: string): Promise<{ error?: string }> {
+  await getSessionOrRedirect();
   try {
     await db.delete(savingsGoals).where(eq(savingsGoals.id, id));
     revalidate();
@@ -109,6 +113,7 @@ export async function deleteSavingsGoal(id: string): Promise<{ error?: string }>
 }
 
 export async function addContribution(formData: FormData): Promise<{ error?: string }> {
+  await getSessionOrRedirect();
   try {
     const parsed = ContributionSchema.safeParse(Object.fromEntries(formData));
     if (!parsed.success) {
@@ -116,20 +121,45 @@ export async function addContribution(formData: FormData): Promise<{ error?: str
     }
     const d = parsed.data;
 
-    const goal = await getSavingsGoalById(d.goalId);
-    if (!goal) return { error: 'Goal not found.' };
+    // The balance check and the insert must be one atomic unit: two
+    // concurrent withdrawal submissions could otherwise both read the same
+    // `saved` total, both pass the check, and both insert, taking the
+    // balance negative. `FOR UPDATE` locks the goal row so the second
+    // transaction blocks until the first commits and re-reads a balance that
+    // already reflects it.
+    const result = await db.transaction(async (tx) => {
+      const lockedGoal = await tx
+        .select({ id: savingsGoals.id })
+        .from(savingsGoals)
+        .where(eq(savingsGoals.id, d.goalId))
+        .for('update');
+      if (lockedGoal.length === 0) return { error: 'Goal not found.' };
 
-    if (d.type === 'withdrawal' && d.amount > goal.saved) {
-      return { error: `Cannot withdraw more than the R${goal.saved.toFixed(2)} saved.` };
-    }
+      if (d.type === 'withdrawal') {
+        const [row] = await tx
+          .select({
+            saved: sql<string>`COALESCE(SUM(CASE WHEN ${savingsContributions.type} = 'withdrawal' THEN -${savingsContributions.amount} ELSE ${savingsContributions.amount} END), 0)`,
+          })
+          .from(savingsContributions)
+          .where(eq(savingsContributions.goalId, d.goalId));
+        const saved = Number(row?.saved ?? 0);
+        if (d.amount > saved) {
+          return { error: `Cannot withdraw more than the R${saved.toFixed(2)} saved.` };
+        }
+      }
 
-    await db.insert(savingsContributions).values({
-      goalId: d.goalId,
-      type: d.type,
-      contributionDate: d.contributionDate,
-      amount: String(d.amount),
-      notes: d.notes || null,
+      await tx.insert(savingsContributions).values({
+        goalId: d.goalId,
+        type: d.type,
+        contributionDate: d.contributionDate,
+        amount: String(d.amount),
+        notes: d.notes || null,
+      });
+
+      return {};
     });
+
+    if (result.error) return result;
 
     revalidate(d.goalId);
     return {};
@@ -139,6 +169,7 @@ export async function addContribution(formData: FormData): Promise<{ error?: str
 }
 
 export async function deleteContribution(id: string, goalId: string): Promise<{ error?: string }> {
+  await getSessionOrRedirect();
   try {
     await db.delete(savingsContributions).where(eq(savingsContributions.id, id));
     revalidate(goalId);
@@ -159,6 +190,7 @@ export async function convertGoalToAsset(
   id: string,
   formData: FormData,
 ): Promise<{ error?: string; assetId?: string }> {
+  await getSessionOrRedirect();
   try {
     const schema = z.object({
       acquisitionDate: z.string().min(1),

@@ -83,6 +83,14 @@ export function LunoChart({ accountId }: LunoChartProps) {
       return;
     }
 
+    // Guards every setState below, not just the abort path: aborting a fetch
+    // that has already resolved (its promise settled just as this account
+    // changed again) is a no-op, so the abort signal alone doesn't stop a
+    // stale response from landing after a newer request. Without this flag a
+    // slow response for a previous account could overwrite the current
+    // account's chart with the wrong data.
+    let isCurrent = true;
+
     const controller = new AbortController();
     const timeoutId = setTimeout(() => controller.abort(), 30_000);
     setState({ status: 'loading' });
@@ -93,6 +101,8 @@ export function LunoChart({ accountId }: LunoChartProps) {
         const body = (await res.json().catch(() => null)) as
           | { data?: BalancePoint[]; error?: string }
           | null;
+
+        if (!isCurrent) return;
 
         if (!res.ok) {
           setState({ status: 'error', message: body?.error ?? 'Failed to load portfolio data.' });
@@ -108,13 +118,16 @@ export function LunoChart({ accountId }: LunoChartProps) {
         setState({ status: 'ready', data });
       } catch {
         // Timeout (abort) and network failures share the same safe fallback.
-        setState({ status: 'error', message: 'Failed to load portfolio data.' });
+        if (isCurrent) {
+          setState({ status: 'error', message: 'Failed to load portfolio data.' });
+        }
       } finally {
         clearTimeout(timeoutId);
       }
     })();
 
     return () => {
+      isCurrent = false;
       clearTimeout(timeoutId);
       controller.abort();
     };

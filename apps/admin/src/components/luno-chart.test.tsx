@@ -115,6 +115,55 @@ describe('LunoChart', () => {
     expect(await screen.findByText('No transaction history available.')).toBeInTheDocument();
   });
 
+  it('ignores a stale response that resolves after accountId has already changed', async () => {
+    // Regression: aborting a fetch whose promise has already settled is a
+    // no-op, so the abort signal alone can't stop a slow response for a
+    // previous account landing after a newer request already resolved.
+    let resolveOld!: (res: Response) => void;
+    const oldResponse = new Promise<Response>((resolve) => {
+      resolveOld = resolve;
+    });
+
+    fetchMock.mockImplementation((url: string) => {
+      if (url.includes('acc-old')) return oldResponse;
+      return Promise.resolve(
+        new Response(
+          JSON.stringify({
+            data: [
+              { date: '2026-08-01', balance: 1 },
+              { date: '2026-08-02', balance: 1.5 },
+            ],
+          }),
+          { status: 200, headers: { 'Content-Type': 'application/json' } },
+        ),
+      );
+    });
+
+    const { rerender, container } = render(<LunoChart accountId="acc-old" />);
+    rerender(<LunoChart accountId="acc-new" />);
+
+    // The new account's request resolves synchronously above; wait for its chart.
+    await waitFor(() => {
+      expect(container.querySelector('.recharts-line-curve')).not.toBeNull();
+    });
+
+    // Now let the old, stale request resolve with different data. If the
+    // component doesn't guard against it, this overwrites the current chart.
+    resolveOld(
+      new Response(JSON.stringify({ data: [] }), {
+        status: 200,
+        headers: { 'Content-Type': 'application/json' },
+      }),
+    );
+
+    // Give the stale promise's .then chain a turn to run, then assert the
+    // chart for the new account is still showing, not the old account's
+    // "empty" result.
+    await new Promise((r) => setTimeout(r, 0));
+    expect(container.querySelector('.recharts-line-curve')).not.toBeNull();
+    expect(screen.queryByText('No transaction history available.')).toBeNull();
+  });
+
   it('renders a stepAfter line chart when data is present', async () => {
     fetchMock.mockResolvedValue(
       new Response(

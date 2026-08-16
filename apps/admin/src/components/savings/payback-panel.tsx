@@ -83,8 +83,8 @@ export function PaybackPanel({
   );
 
   const windows = React.useMemo(
-    () => computePaybackWindows(price, series, running),
-    [price, series, running],
+    () => computePaybackWindows(price, series, running, currentMonth),
+    [price, series, running, currentMonth],
   );
 
   const chartData = monthly.map((m) => ({
