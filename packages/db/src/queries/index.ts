@@ -11,4 +11,6 @@ export * from "./project-schedule";
 export * from "./analysis";
 export * from "./compliance";
 export * from "./assets";
+export * from "./savings";
+export * from "./spend-trackers";
 export * from "./luno";
