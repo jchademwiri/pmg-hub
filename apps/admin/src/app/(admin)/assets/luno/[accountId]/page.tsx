@@ -111,9 +111,9 @@ export default async function LunoAccountPage({ params }: Props) {
                       {account.zarValue != null ? formatZAR(account.zarValue) : '—'}
                     </span>
                   </div>
-                  {isTokenisedStock(account.asset) && (
+                  {isTokenisedStock(account.asset) && account.zarValue == null && (
                     <p className="text-[11px] leading-snug text-muted-foreground">
-                      Tokenised stock — Luno exposes no ZAR price, so this account shows units only.
+                      Tokenised stock — no price available right now, so this account shows units only.
                     </p>
                   )}
                   <div className="flex justify-between text-sm">

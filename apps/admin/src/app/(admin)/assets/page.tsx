@@ -12,7 +12,7 @@ import {
 import { EmptyState } from '@/components/ui/empty-state';
 import { getAllAssets, getAssetsSummary, getLunoAccounts } from '@pmg/db';
 import { formatZAR, fmtDateTime } from '@/lib/format';
-import { isTokenisedStock } from '@/lib/luno';
+import { isVisibleLunoAccount } from '@/lib/luno';
 import { AssetsTable } from './assets-table';
 import { AddAssetDialog } from './add-asset-dialog';
 import { LunoAccountsTable } from '@/components/luno-accounts-table';
@@ -63,16 +63,7 @@ export default async function AssetsPage({ searchParams }: AssetsPageProps) {
   const isStale = lunoAccounts.length === 0 || Date.now() - lastSyncedMs > STALE_AFTER_MS;
   const lastSynced = lastSyncedMs > 0 ? new Date(lastSyncedMs) : null;
 
-  // Show accounts whose ZAR value is above R1 (hides dust/empty wallets), plus
-  // tokenised stocks (AAPLx, SPYx, …) whenever they hold units — Luno exposes
-  // no price for them, so they display units only with no ZAR value.
-  const MIN_ZAR_VALUE = 1;
-  const visibleAccounts = lunoAccounts.filter((a) => {
-    const hasBalance = Number.parseFloat(a.balance) > 0;
-    if (!hasBalance) return false;
-    if (isTokenisedStock(a.asset)) return true;
-    return a.zarValue != null && Number(a.zarValue) > MIN_ZAR_VALUE;
-  });
+  const visibleAccounts = lunoAccounts.filter(isVisibleLunoAccount);
   // The Investments Value stat card sums only priced accounts — tokenised
   // stocks have no ZAR value and contribute nothing.
   const lunoInvestmentsValue = visibleAccounts.reduce(
@@ -126,8 +117,13 @@ export default async function AssetsPage({ searchParams }: AssetsPageProps) {
               <Wallet className="size-4" />
             </div>
             <div>
-              <p className="text-xs text-muted-foreground">Total Active Assets</p>
-              <p className="text-lg font-semibold tabular-nums">{summary.totalCount}</p>
+              <p className="text-xs text-muted-foreground">Total Asset Value</p>
+              <p className="text-lg font-semibold tabular-nums">
+                {formatZAR(summary.totalFixedAssetsValue + lunoInvestmentsValue)}
+              </p>
+              <p className="text-[11px] text-muted-foreground mt-0.5">
+                {summary.totalCount} fixed {summary.totalCount === 1 ? 'asset' : 'assets'}
+              </p>
             </div>
           </CardContent>
         </Card>
@@ -162,7 +158,7 @@ export default async function AssetsPage({ searchParams }: AssetsPageProps) {
             <div className="px-6 pb-4">
               <EmptyState
                 title="No accounts to show"
-                message="All synced Luno accounts currently have a value of R1 or less or an empty balance. Only accounts valued above R1 are shown, plus tokenised stocks (which display units only)."
+                message="All synced Luno accounts currently have an empty balance, are priced at R1 or less, or have no ZAR price available at all."
               />
             </div>
           ) : (

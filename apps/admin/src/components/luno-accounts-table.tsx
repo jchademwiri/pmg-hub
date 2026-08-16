@@ -49,8 +49,10 @@ export function LunoAccountsTable({ accounts }: { accounts: LunoAccountRow[] }) 
               <TableCell
                 className="text-right tabular-nums text-sm"
                 title={
-                  account.zarValue == null && /^[A-Z0-9]+x$/i.test(account.asset)
-                    ? 'Tokenised stock — Luno exposes no ZAR price, units only'
+                  account.zarValue == null
+                    ? /^[A-Z0-9]+x$/i.test(account.asset)
+                      ? 'No price available for this tokenised stock right now — units only'
+                      : 'No ZAR market for this asset — units only'
                     : undefined
                 }
               >

@@ -170,12 +170,14 @@ export async function fetchWithTimeout(url: string, init: RequestInit = {}): Pro
 }
 
 /**
- * Fetches all Luno accounts and enriches each with a ZAR value computed from
- * the public ticker endpoint (zar_value = balance × last_trade).
+ * Fetches all Luno accounts and enriches each with a ZAR value: crypto via
+ * Luno's own public ticker endpoint (zar_value = balance × last_trade), the
+ * ZAR wallet 1:1 against its own balance, and tokenised stocks (xStocks) via
+ * CoinGecko, since Luno has no ticker for those at all.
  *
- * Ticker failures degrade gracefully: the affected accounts keep
- * `zar_value: null` and the request still succeeds. Credentials never leave
- * this module and never appear in returned data.
+ * Pricing failures degrade gracefully at every step: the affected accounts
+ * keep `zar_value: null` and the request still succeeds. Credentials never
+ * leave this module and never appear in returned data.
  *
  * Throws LunoConfigError / LunoTimeoutError / LunoUpstreamError /
  * LunoInvalidResponseError, which callers map to HTTP responses.
@@ -222,8 +224,13 @@ export async function fetchLunoAccounts(): Promise<LunoAccountRow[]> {
     accounts = accounts.filter((a) => a.account_id === filterAccountId);
   }
 
-  // 3. Enrich with ZAR values via parallel ticker calls (public, unauthenticated)
-  const assets = [...new Set(accounts.map((a) => a.asset).filter((asset) => asset.length > 0))];
+  // 3. Enrich with ZAR values via parallel ticker calls (public, unauthenticated).
+  // ZAR itself is excluded - a "ZARZAR" ticker pair doesn't exist, so it's
+  // priced 1:1 against its own balance below instead of going through a
+  // lookup that would always fail and leave the fiat wallet unpriced.
+  const assets = [
+    ...new Set(accounts.map((a) => a.asset).filter((asset) => asset.length > 0 && asset !== 'ZAR')),
+  ];
 
   const priceEntries = await Promise.all(
     assets.map(async (asset) => {
@@ -248,9 +255,26 @@ export async function fetchLunoAccounts(): Promise<LunoAccountRow[]> {
 
   const priceMap = new Map(priceEntries);
 
+  // 4. Enrich tokenised stocks (AAPLx, SPYx, …) via CoinGecko - Luno has no
+  // ticker for these in any currency, but they're a real product (xStocks)
+  // with a real market price elsewhere. One batched call for every held
+  // xStock; unmapped/failed symbols fall back to zar_value: null (units only),
+  // same degrade-gracefully contract as the Luno ticker path above.
+  const xstockAssets = [...new Set(accounts.filter((a) => isTokenisedStock(a.asset)).map((a) => a.asset))];
+  const xstockPriceMap =
+    xstockAssets.length > 0 ? await fetchXStockZarPrices(xstockAssets) : new Map<string, number | null>();
+
   return accounts.map((account) => {
-    const price = account.asset.length > 0 ? priceMap.get(account.asset) ?? null : null;
     const balance = parseFloat(account.balance);
+
+    if (account.asset === 'ZAR') {
+      return { ...account, zar_value: Number.isFinite(balance) ? balance : null };
+    }
+
+    const price =
+      account.asset.length > 0
+        ? (priceMap.get(account.asset) ?? xstockPriceMap.get(account.asset) ?? null)
+        : null;
     const zar_value =
       price !== null && Number.isFinite(balance)
         ? Math.round(balance * price * 1e8) / 1e8
@@ -260,15 +284,123 @@ export async function fetchLunoAccounts(): Promise<LunoAccountRow[]> {
   });
 }
 
+// ─── Dashboard visibility ───────────────────────────────────────────────────────
+
+/** Minimum priced ZAR value to display; hides dust (e.g. a R0.03 residue). */
+export const MIN_VISIBLE_ZAR_VALUE = 1;
+
+/**
+ * Should this synced Luno account appear on the /assets dashboard?
+ *
+ * Shows an account only when it has a nonzero balance AND a priced ZAR value
+ * above MIN_VISIBLE_ZAR_VALUE. An unpriced holding (`zarValue: null` -
+ * tokenised stocks CoinGecko has no mapping for, or an ordinary coin with no
+ * ZAR market, e.g. BNB) is hidden.
+ *
+ * This is a deliberate product choice, not an oversight: an earlier version
+ * showed unpriced accounts as units-only instead of hiding them, specifically
+ * because hiding a real BNB balance with no indication anything was missing
+ * read as a bug. The owner reviewed that tradeoff and chose a clean list over
+ * surfacing unpriced dust anyway - so the original failure mode (a real
+ * balance in an unmapped asset disappearing with no explanation) is back by
+ * request. If that confusion resurfaces, this comment is why.
+ */
+export function isVisibleLunoAccount(account: { balance: string; zarValue: string | null }): boolean {
+  const hasBalance = Number.parseFloat(account.balance) > 0;
+  if (!hasBalance) return false;
+  if (account.zarValue == null) return false;
+  return Number(account.zarValue) > MIN_VISIBLE_ZAR_VALUE;
+}
+
 // ─── Tokenised stocks ─────────────────────────────────────────────────────────
 
 /**
- * Luno's tokenised stocks (AAPLx, SPYx, GLDx, …) are BUNDLE accounts with no
- * public ticker pairs, so they can't be priced via the ZAR ticker endpoint.
- * They are identified by the "x" suffix on the asset code.
+ * Luno's tokenised stocks (AAPLx, SPYx, GLDx, …) have no Luno ticker pair
+ * (confirmed: /api/1/ticker?pair=AAPLxZAR returns "Market not available", in
+ * any quote currency). They are identified by the "x" suffix on the asset
+ * code.
+ *
+ * These ARE real assets with a real market price, though - they're "xStocks",
+ * a tokenised-equity product (by Backed Finance) that also trades on Kraken
+ * and is priced on CoinGecko. `XSTOCK_COINGECKO_IDS` below is what actually
+ * prices them; this function is only the "does this need that path" check.
  */
 export function isTokenisedStock(asset: string): boolean {
   return /^[A-Z0-9]+x$/i.test(asset);
+}
+
+/**
+ * Luno asset code -> CoinGecko coin id, for every xStock this account has
+ * held. CoinGecko's `symbol` field matches these 1:1 and case-insensitively
+ * (verified: aaplx -> "apple-xstock", spyx -> "sp500-xstock", etc.), but
+ * symbols are not globally unique on CoinGecko in general, so an explicit map
+ * is safer than a live symbol search and is also one HTTP call cheaper.
+ *
+ * Extend this when Luno lists a new tokenised stock: look up the ticker at
+ * https://www.coingecko.com/en/coins/all (search the company name + "xstock")
+ * and add a row here. An asset missing from this map simply prices as
+ * `zar_value: null` (units-only) rather than failing anything.
+ */
+export const XSTOCK_COINGECKO_IDS: Record<string, string> = {
+  AAPLX: 'apple-xstock',
+  AMZNX: 'amazon-xstock',
+  AVGOX: 'broadcom-xstock',
+  GLDX: 'gold-xstock',
+  GOOGLX: 'alphabet-xstock',
+  METAX: 'meta-xstock',
+  MSFTX: 'microsoft-xstock',
+  MSTRX: 'microstrategy-xstock',
+  NVDAX: 'nvidia-xstock',
+  QQQX: 'nasdaq-xstock',
+  SPYX: 'sp500-xstock',
+  TQQQX: 'tqqq-xstock',
+  TSLAX: 'tesla-xstock',
+};
+
+const COINGECKO_SIMPLE_PRICE_URL = 'https://api.coingecko.com/api/v3/simple/price';
+
+/**
+ * Batch-prices tokenised-stock asset codes in ZAR via CoinGecko's free,
+ * keyless public API. One request covers every symbol passed in.
+ *
+ * Degrades gracefully like the Luno ticker enrichment above: on any failure
+ * (network, timeout, non-2xx, malformed body) every requested symbol maps to
+ * `null` rather than throwing - an unpriced xStock should never take down the
+ * whole Luno sync.
+ */
+export async function fetchXStockZarPrices(
+  symbols: string[],
+): Promise<Map<string, number | null>> {
+  const result = new Map<string, number | null>(symbols.map((s) => [s, null]));
+
+  const idToSymbol = new Map<string, string>();
+  for (const symbol of symbols) {
+    const id = XSTOCK_COINGECKO_IDS[symbol.toUpperCase()];
+    if (id) idToSymbol.set(id, symbol);
+  }
+  if (idToSymbol.size === 0) return result;
+
+  try {
+    const url = `${COINGECKO_SIMPLE_PRICE_URL}?ids=${[...idToSymbol.keys()].join(',')}&vs_currencies=zar`;
+    const res = await fetchWithTimeout(url);
+    if (!res.ok) return result;
+
+    const body = (await res.json()) as unknown;
+    if (typeof body !== 'object' || body === null) return result;
+
+    for (const [id, symbol] of idToSymbol) {
+      const entry = (body as Record<string, unknown>)[id];
+      const price =
+        typeof entry === 'object' && entry !== null
+          ? (entry as Record<string, unknown>).zar
+          : undefined;
+      result.set(symbol, typeof price === 'number' && Number.isFinite(price) ? price : null);
+    }
+  } catch {
+    // Leave every symbol as null - see docstring.
+  }
+
+  return result;
 }
 
 // ─── History route helpers ────────────────────────────────────────────────────

@@ -108,6 +108,44 @@ describe('Balance Route — ZAR ticker enrichment', () => {
     ]);
   });
 
+  it('prices a ZAR wallet 1:1 against its own balance, with no ticker call', async () => {
+    const fetchSpy = mockUpstream(
+      {
+        balance: [
+          { account_id: 'acc-zar', asset: 'ZAR', balance: '0.01', reserved: '0', unconfirmed: '0' },
+        ],
+      },
+      { last_trade: '1000000.00' },
+    );
+
+    const response = await GET(new Request('http://localhost/api/luno/balance', { method: 'GET' }));
+    expect(response.status).toBe(200);
+
+    const body = (await response.json()) as { accounts: Array<{ asset: string; zar_value: number | null }> };
+    expect(body.accounts[0].zar_value).toBe(0.01);
+
+    // A "ZARZAR" pair doesn't exist upstream - it must never be requested.
+    expect(tickerCalls(fetchSpy)).toEqual([]);
+  });
+
+  it('prices a coin with no ZAR market (e.g. BNB) as null rather than erroring', async () => {
+    mockUpstream(
+      {
+        balance: [
+          { account_id: 'acc-bnb', asset: 'BNB', balance: '0.00695467', reserved: '0', unconfirmed: '0' },
+        ],
+      },
+      { error: 'Market not available', error_code: 'ErrMarketUnavailable' },
+      404,
+    );
+
+    const response = await GET(new Request('http://localhost/api/luno/balance', { method: 'GET' }));
+    expect(response.status).toBe(200);
+
+    const body = (await response.json()) as { accounts: Array<{ zar_value: number | null }> };
+    expect(body.accounts[0].zar_value).toBeNull();
+  });
+
   it('rounds zar_value to 8 decimal places — Validates: Requirements 4.4', async () => {
     mockUpstream(
       { balance: [{ account_id: 'a1', asset: 'XBT', balance: '0.00350000', reserved: '0', unconfirmed: '0' }] },
