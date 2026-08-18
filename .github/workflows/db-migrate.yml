@@ -1,0 +1,110 @@
+name: DB Migrate
+
+on:
+  push:
+    branches:
+      - master
+      - dev
+    paths:
+      - 'packages/db/src/migrations/**'
+      - 'packages/db/src/schema/**'
+      - '.github/workflows/db-migrate.yml'
+  workflow_dispatch:
+    inputs:
+      target_env:
+        description: 'Target environment'
+        required: true
+        type: choice
+        options:
+          - dev_or_staging
+          - production
+      dry_run:
+        description: "Dry run (status check only, don't apply migrations)"
+        required: false
+        type: boolean
+        default: false
+
+# Migration safety: never cancel a run that might be mid-apply. Same-target
+# runs still queue behind each other via the group key.
+concurrency:
+  group: db-migrate-${{ github.event_name == 'workflow_dispatch' && inputs.target_env || github.ref_name }}
+  cancel-in-progress: false
+
+jobs:
+  migrate:
+    name: Migrate
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+
+      - name: Setup Bun
+        uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: 1.3.14
+
+      - name: Install dependencies
+        run: bun install
+
+      # master/main -> production; dev -> dev_or_staging; workflow_dispatch
+      # picks explicitly. Resolves to the first configured secret in the
+      # fallback chain and exports it for every later step in this job.
+      - name: Resolve target environment
+        id: resolve
+        run: |
+          set -euo pipefail
+
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+            target="${{ inputs.target_env }}"
+            dry_run="${{ inputs.dry_run }}"
+          elif [ "${{ github.ref_name }}" = "master" ] || [ "${{ github.ref_name }}" = "main" ]; then
+            target="production"
+            dry_run="false"
+          else
+            target="dev_or_staging"
+            dry_run="false"
+          fi
+
+          echo "target=$target" >> "$GITHUB_OUTPUT"
+          echo "dry_run=$dry_run" >> "$GITHUB_OUTPUT"
+
+          if [ "$target" = "production" ]; then
+            resolved="${DB_PROD:-$DB_GENERIC}"
+          else
+            resolved="${DB_STAGING:-${DB_DEV:-$DB_GENERIC}}"
+          fi
+
+          if [ -z "$resolved" ]; then
+            echo "::error::No database secret configured for target '$target'. Set DATABASE_URL_UNPOOLED_PROD/_STAGING (or the _DEV / generic fallback)."
+            exit 1
+          fi
+
+          echo "DATABASE_URL_UNPOOLED=$resolved" >> "$GITHUB_ENV"
+          echo "Resolved target: $target (dry_run=$dry_run)"
+        env:
+          DB_PROD: ${{ secrets.DATABASE_URL_UNPOOLED_PROD }}
+          DB_STAGING: ${{ secrets.DATABASE_URL_UNPOOLED_STAGING }}
+          DB_DEV: ${{ secrets.DATABASE_URL_UNPOOLED_DEV }}
+          DB_GENERIC: ${{ secrets.DATABASE_URL_UNPOOLED }}
+
+      - name: Pre-migration status check
+        working-directory: packages/db
+        run: bun run db:check
+
+      - name: Apply migrations
+        if: steps.resolve.outputs.dry_run != 'true'
+        working-directory: packages/db
+        run: bun src/migrate.ts
+
+      - name: Skipped (dry run)
+        if: steps.resolve.outputs.dry_run == 'true'
+        run: echo "dry_run=true - migrations not applied. Pre-migration status check above is the full result of this run."
+
+      - name: Post-migration verification
+        if: steps.resolve.outputs.dry_run != 'true'
+        working-directory: packages/db
+        run: bun run db:check

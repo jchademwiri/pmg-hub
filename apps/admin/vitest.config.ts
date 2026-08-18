@@ -1,11 +1,13 @@
-import { defineConfig } from 'vitest/config'
-import { resolve } from 'path'
+import { defineConfig, configDefaults } from 'vitest/config';
+import { resolve } from 'path';
 
 export default defineConfig({
   test: {
     environment: 'jsdom',
     globals: true,
     setupFiles: ['./src/__tests__/setup.ts'],
+    // Playwright specs live in e2e/ and run via `playwright test`, not vitest.
+    exclude: [...configDefaults.exclude, 'e2e/**'],
   },
   resolve: {
     alias: {
@@ -16,4 +18,4 @@ export default defineConfig({
     // single instance so vi.mock('resend', ...) intercepts both.
     dedupe: ['resend'],
   },
-})
+});

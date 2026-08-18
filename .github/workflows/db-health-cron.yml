@@ -1,0 +1,96 @@
+name: DB Health Check
+
+on:
+  schedule:
+    # Daily at 04:00 UTC.
+    - cron: '0 4 * * *'
+  workflow_dispatch:
+
+concurrency:
+  group: db-health-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  check-staging:
+    name: Check staging
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    env:
+      DB_URL: ${{ secrets.DATABASE_URL_UNPOOLED_STAGING }}
+    steps:
+      - name: Check secret is configured
+        id: check
+        run: |
+          set -euo pipefail
+          if [ -n "${DB_URL:-}" ]; then
+            echo "configured=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "configured=false" >> "$GITHUB_OUTPUT"
+            echo "::warning::DATABASE_URL_UNPOOLED_STAGING is not configured - skipping staging health check."
+          fi
+
+      - name: Checkout
+        if: steps.check.outputs.configured == 'true'
+        uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+
+      - name: Setup Bun
+        if: steps.check.outputs.configured == 'true'
+        uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: 1.3.14
+
+      - name: Install dependencies
+        if: steps.check.outputs.configured == 'true'
+        run: bun install
+
+      - name: db:check (staging)
+        if: steps.check.outputs.configured == 'true'
+        run: bun run db:check
+        working-directory: packages/db
+        env:
+          DATABASE_URL_UNPOOLED: ${{ secrets.DATABASE_URL_UNPOOLED_STAGING }}
+
+  check-production:
+    name: Check production
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    env:
+      DB_URL: ${{ secrets.DATABASE_URL_UNPOOLED_PROD }}
+    steps:
+      - name: Check secret is configured
+        id: check
+        run: |
+          set -euo pipefail
+          if [ -n "${DB_URL:-}" ]; then
+            echo "configured=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "configured=false" >> "$GITHUB_OUTPUT"
+            echo "::warning::DATABASE_URL_UNPOOLED_PROD is not configured - skipping production health check."
+          fi
+
+      - name: Checkout
+        if: steps.check.outputs.configured == 'true'
+        uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+
+      - name: Setup Bun
+        if: steps.check.outputs.configured == 'true'
+        uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: 1.3.14
+
+      - name: Install dependencies
+        if: steps.check.outputs.configured == 'true'
+        run: bun install
+
+      - name: db:check (production)
+        if: steps.check.outputs.configured == 'true'
+        run: bun run db:check
+        working-directory: packages/db
+        env:
+          DATABASE_URL_UNPOOLED: ${{ secrets.DATABASE_URL_UNPOOLED_PROD }}

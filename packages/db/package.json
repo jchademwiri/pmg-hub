@@ -15,6 +15,7 @@
     "db:seed": "bun src/reset.ts && bun src/seed.ts",
     "db:backfill-payment-allocations": "bun src/backfill-payment-allocations.ts",
     "db:cleanup-synthetic-credit-income": "bun src/cleanup-synthetic-credit-income.ts",
+    "db:check": "bun src/db-check.ts",
     "test": "vitest run"
   },
   "dependencies": {
