@@ -35,8 +35,14 @@ export default async function LunoAccountPage({ params }: Props) {
   // Auto-sync when the summary snapshot is older than 15 minutes so it stays
   // in step with the live chart.
   const STALE_AFTER_MS = 15 * 60 * 1000;
-  const isStale =
-    !account || Date.now() - new Date(account.syncedAt).getTime() > STALE_AFTER_MS;
+  // react-hooks/purity assumes a component may be re-rendered/memoized on the
+  // client, where an impure call like Date.now() could produce inconsistent
+  // output across renders. This is a Server Component (no 'use client') -
+  // it runs exactly once per request on the server - so that concern doesn't
+  // apply here.
+  // eslint-disable-next-line react-hooks/purity
+  const now = Date.now();
+  const isStale = !account || now - new Date(account.syncedAt).getTime() > STALE_AFTER_MS;
 
   return (
     <div className="flex flex-col gap-6">

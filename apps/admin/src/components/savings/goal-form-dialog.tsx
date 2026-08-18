@@ -64,9 +64,17 @@ export function GoalFormDialog({ goal }: { goal?: GoalDefaults }) {
   const [targetTouched, setTargetTouched] = React.useState(isEdit);
   const suggested = roundTarget(parseFloat(actualPrice) || 0);
 
-  React.useEffect(() => {
-    if (!targetTouched && suggested > 0) setTargetAmount(String(suggested));
-  }, [suggested, targetTouched]);
+  // Sync targetAmount to the rounded suggestion until the user edits it
+  // directly, adjusted during render - React's recommended pattern for
+  // "derive state until overridden" - rather than in an effect, so there's
+  // no extra post-commit render pass. -1 is a sentinel roundTarget never
+  // returns, so the very first render (mount) still syncs once if a price
+  // is already present, matching the previous effect-based behaviour.
+  const [prevSuggested, setPrevSuggested] = React.useState(-1);
+  if (!targetTouched && suggested > 0 && suggested !== prevSuggested) {
+    setPrevSuggested(suggested);
+    setTargetAmount(String(suggested));
+  }
 
   function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -127,6 +135,16 @@ export function GoalFormDialog({ goal }: { goal?: GoalDefaults }) {
                 value={name}
                 onChange={(e) => setName(e.target.value)}
                 placeholder="HP Smart Tank 530 printer"
+              />
+            </Field>
+
+            <Field>
+              <FieldLabel htmlFor="goal-description">Description</FieldLabel>
+              <Input
+                id="goal-description"
+                value={description}
+                onChange={(e) => setDescription(e.target.value)}
+                placeholder="3-in-1 colour ink tank with 35-page ADF"
               />
             </Field>
 

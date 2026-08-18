@@ -20,6 +20,8 @@ export const DELETE = METHOD_NOT_ALLOWED;
 export const HEAD = METHOD_NOT_ALLOWED;
 export const OPTIONS = METHOD_NOT_ALLOWED;
 
+// _request is required by the Route Handler signature; tests call GET(request) directly.
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 export async function GET(_request: Request): Promise<Response> {
   try {
     // fetchLunoAccounts handles: credential validation, the balance fetch

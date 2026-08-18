@@ -77,9 +77,21 @@ export function LunoChart({ accountId }: LunoChartProps) {
     accountId ? { status: 'loading' } : { status: 'idle' },
   );
 
+  // Reset to 'loading' synchronously during render when accountId changes -
+  // React's recommended "adjust state when a prop changes" pattern - rather
+  // than via setState inside the effect below, which only needs to own the
+  // actual async fetch now.
+  const [prevAccountId, setPrevAccountId] = React.useState(accountId);
+  if (accountId && accountId !== prevAccountId) {
+    setPrevAccountId(accountId);
+    setState({ status: 'loading' });
+  }
+
   React.useEffect(() => {
+    // No setState here: the "no account" case is rendered directly from the
+    // `accountId` prop below, not from `state` - so there is nothing to
+    // synchronize when it's absent.
     if (!accountId) {
-      setState({ status: 'idle' });
       return;
     }
 
@@ -93,7 +105,6 @@ export function LunoChart({ accountId }: LunoChartProps) {
 
     const controller = new AbortController();
     const timeoutId = setTimeout(() => controller.abort(), 30_000);
-    setState({ status: 'loading' });
 
     (async () => {
       try {
@@ -133,11 +144,14 @@ export function LunoChart({ accountId }: LunoChartProps) {
     };
   }, [accountId]);
 
-  if (state.status === 'idle') {
+  if (!accountId) {
     return <Centered message="No account selected." />;
   }
 
-  if (state.status === 'loading') {
+  // Unreachable past the accountId guard above (the effect never sets
+  // 'idle' now), but keeping the branch is cheap correctness insurance if
+  // that ever changes.
+  if (state.status === 'idle' || state.status === 'loading') {
     return <Skeleton className="h-[400px] w-full rounded-xl" />;
   }
 

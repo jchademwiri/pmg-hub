@@ -20,6 +20,8 @@ export const DELETE = METHOD_NOT_ALLOWED;
 export const HEAD = METHOD_NOT_ALLOWED;
 export const OPTIONS = METHOD_NOT_ALLOWED;
 
+// _request is required by the Route Handler signature; tests call POST(request) directly.
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 export async function POST(_request: Request): Promise<Response> {
   try {
     // Reuses the same enriched balance fetch as the Balance Route

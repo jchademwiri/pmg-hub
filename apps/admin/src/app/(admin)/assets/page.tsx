@@ -60,7 +60,14 @@ export default async function AssetsPage({ searchParams }: AssetsPageProps) {
   const STALE_AFTER_MS = 15 * 60 * 1000;
   const lastSyncedMs =
     lunoAccounts.length > 0 ? Math.max(...lunoAccounts.map((a) => a.syncedAt.getTime())) : 0;
-  const isStale = lunoAccounts.length === 0 || Date.now() - lastSyncedMs > STALE_AFTER_MS;
+  // react-hooks/purity assumes a component may be re-rendered/memoized on the
+  // client, where an impure call like Date.now() could produce inconsistent
+  // output across renders. This is a Server Component (no 'use client') -
+  // it runs exactly once per request on the server - so that concern doesn't
+  // apply here.
+  // eslint-disable-next-line react-hooks/purity
+  const now = Date.now();
+  const isStale = lunoAccounts.length === 0 || now - lastSyncedMs > STALE_AFTER_MS;
   const lastSynced = lastSyncedMs > 0 ? new Date(lastSyncedMs) : null;
 
   const visibleAccounts = lunoAccounts.filter(isVisibleLunoAccount);

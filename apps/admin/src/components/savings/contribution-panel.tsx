@@ -94,11 +94,12 @@ export function ContributionPanel({
   }
 
   // Newest first for reading; the ledger arrives oldest-first for the running balance.
-  let balance = 0;
-  const withBalance = contributions.map((c) => {
-    balance += c.type === 'withdrawal' ? -Number(c.amount) : Number(c.amount);
-    return { ...c, balance };
-  });
+  const withBalance = contributions.reduce<Array<Contribution & { balance: number }>>((acc, c) => {
+    const prevBalance = acc.length > 0 ? acc[acc.length - 1]!.balance : 0;
+    const delta = c.type === 'withdrawal' ? -Number(c.amount) : Number(c.amount);
+    acc.push({ ...c, balance: prevBalance + delta });
+    return acc;
+  }, []);
   const rows = [...withBalance].reverse();
 
   return (
