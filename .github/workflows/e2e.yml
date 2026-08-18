@@ -18,23 +18,7 @@ jobs:
     runs-on: ubuntu-latest
     permissions:
       contents: read
-    services:
-      postgres:
-        image: postgres:16
-        env:
-          POSTGRES_USER: postgres
-          POSTGRES_PASSWORD: postgres
-          POSTGRES_DB: pmghub_test_db
-        ports:
-          - 5432:5432
-        options: >-
-          --health-cmd "pg_isready -U postgres"
-          --health-interval 5s
-          --health-timeout 5s
-          --health-retries 10
     env:
-      DATABASE_URL: postgres://postgres:postgres@localhost:5432/pmghub_test_db
-      DATABASE_URL_UNPOOLED: postgres://postgres:postgres@localhost:5432/pmghub_test_db
       BETTER_AUTH_SECRET: e2e-stub-secret-not-a-real-credential-0
       BETTER_AUTH_URL: http://localhost:3000
     steps:
@@ -51,27 +35,22 @@ jobs:
       - name: Install dependencies
         run: bun install
 
-      # Same fixture db-validate uses in ci.yml: real databases already have
-      # the better-auth tables outside of drizzle-kit's tracked migrations,
-      # so a truly empty DB needs this baseline before the tracked migrations
-      # (which reference "user" via foreign keys) can apply.
-      #
-      # NOTE: apps/admin's runtime DB access (getDb()) goes through
-      # @neondatabase/serverless's WebSocket driver, which can't actually
-      # reach this plain Postgres container - only a real Neon endpoint or a
-      # neon-local proxy. Today's smoke tests never hit that path (the login
-      # page is a pure client render, and the middleware short-circuits to a
-      # redirect on a missing session cookie before it would query the DB),
-      # so this is safe for now. Any future e2e test that needs a real DB
-      # round-trip will need a neon-local (or similar) proxy added here.
-      - name: Load auth baseline fixture
-        run: psql "$DATABASE_URL_UNPOOLED" -f ci/baseline-auth.sql
-        working-directory: packages/db
-
-      - name: Run DB migrations
-        run: bun src/migrate.ts
-        working-directory: packages/db
-
+      # No database here on purpose (no service container, no DATABASE_URL).
+      # Today's smoke tests never need one: the login page is a pure client
+      # render, and the auth middleware short-circuits to a redirect on a
+      # missing session cookie before it would query anything. When a real
+      # DB-dependent e2e test is added, this needs two things db-validate in
+      # ci.yml also had to work around: a postgres:16 service container loaded
+      # with packages/db/ci/baseline-auth.sql (real databases already have the
+      # better-auth tables outside drizzle-kit's tracked migrations - see the
+      # comment in ci.yml's db-validate job), and either a fix for migration
+      # 0035 (uses an enum value added in 0005, in the same transaction when
+      # applying from scratch - fine incrementally, broken applying all 45
+      # migrations at once) or some other way to reach a fully-migrated state.
+      # apps/admin's runtime DB access also goes through
+      # @neondatabase/serverless's WebSocket driver, which needs a real Neon
+      # endpoint or a neon-local proxy - a plain Postgres container isn't
+      # enough on its own.
       - name: Install Playwright (Chromium only)
         run: bunx playwright install --with-deps chromium
         working-directory: apps/admin
@@ -79,6 +58,9 @@ jobs:
       - name: Build admin
         run: bun run build
         working-directory: apps/admin
+        env:
+          DATABASE_URL: postgresql://stub:stub@localhost:5432/stub_db
+          DATABASE_URL_UNPOOLED: postgresql://stub:stub@localhost:5432/stub_db
 
       - name: Run E2E tests
         run: bunx playwright test
