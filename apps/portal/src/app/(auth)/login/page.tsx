@@ -86,7 +86,7 @@ export default function LoginPage() {
               </div>
               <h2 className="text-lg font-semibold text-white">Check your email</h2>
               <p className="mt-2 text-sm text-muted-foreground leading-relaxed">
-                We've sent a secure, passwordless login link to <span className="font-medium text-blue-400">{email}</span>.
+                We&apos;ve sent a secure, passwordless login link to <span className="font-medium text-blue-400">{email}</span>.
               </p>
               <p className="mt-1 text-xs text-muted-foreground">
                 The link is valid for 10 minutes.

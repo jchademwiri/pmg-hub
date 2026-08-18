@@ -15,11 +15,15 @@ export function QuoteActionsClient({ quoteId }: QuoteActionsClientProps) {
   const [showAcceptModal, setShowAcceptModal] = React.useState(false);
   const [showDeclineModal, setShowDeclineModal] = React.useState(false);
   const [declineReason, setDeclineReason] = React.useState('');
-  const [mounted, setMounted] = React.useState(false);
-
-  React.useEffect(() => {
-    setMounted(true);
-  }, []);
+  // Portals must not render during SSR (no `document` yet) or the pre-hydration
+  // client render (would mismatch the server-rendered tree). useSyncExternalStore
+  // with a constant subscription is the client-only-render idiom that avoids an
+  // effect-driven setState-then-rerender pass for this exact case.
+  const mounted = React.useSyncExternalStore(
+    () => () => {},
+    () => true,
+    () => false,
+  );
 
   async function handleAccept() {
     startTransition(async () => {
