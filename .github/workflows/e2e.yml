@@ -19,6 +19,11 @@ jobs:
     permissions:
       contents: read
     env:
+      # These need to be set at job level, not just on the build step: the
+      # webServer Playwright starts (`next start`) is a separate step/process
+      # and reads them at request time too, not just at build time.
+      DATABASE_URL: postgresql://stub:stub@localhost:5432/stub_db
+      DATABASE_URL_UNPOOLED: postgresql://stub:stub@localhost:5432/stub_db
       BETTER_AUTH_SECRET: e2e-stub-secret-not-a-real-credential-0
       BETTER_AUTH_URL: http://localhost:3000
     steps:
@@ -58,9 +63,6 @@ jobs:
       - name: Build admin
         run: bun run build
         working-directory: apps/admin
-        env:
-          DATABASE_URL: postgresql://stub:stub@localhost:5432/stub_db
-          DATABASE_URL_UNPOOLED: postgresql://stub:stub@localhost:5432/stub_db
 
       - name: Run E2E tests
         run: bunx playwright test
