@@ -34,18 +34,30 @@ jobs:
   resolve:
     name: Resolve target
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
     outputs:
       target: ${{ steps.resolve.outputs.target }}
       dry_run: ${{ steps.resolve.outputs.dry_run }}
     steps:
+      # Values interpolated straight into a run: block via ${{ }} become part
+      # of the shell source - a ref name or input containing shell metachars
+      # could inject commands before this even reaches the environment gate.
+      # Passing them through env: and reading as quoted shell variables avoids
+      # that entirely.
       - name: Resolve target environment
         id: resolve
+        env:
+          EVENT_NAME: ${{ github.event_name }}
+          TARGET_ENV_INPUT: ${{ inputs.target_env }}
+          DRY_RUN_INPUT: ${{ inputs.dry_run }}
+          REF_NAME: ${{ github.ref_name }}
         run: |
           set -euo pipefail
-          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
-            echo "target=${{ inputs.target_env }}" >> "$GITHUB_OUTPUT"
-            echo "dry_run=${{ inputs.dry_run }}" >> "$GITHUB_OUTPUT"
-          elif [ "${{ github.ref_name }}" = "master" ] || [ "${{ github.ref_name }}" = "main" ]; then
+          if [ "$EVENT_NAME" = "workflow_dispatch" ]; then
+            echo "target=$TARGET_ENV_INPUT" >> "$GITHUB_OUTPUT"
+            echo "dry_run=$DRY_RUN_INPUT" >> "$GITHUB_OUTPUT"
+          elif [ "$REF_NAME" = "master" ] || [ "$REF_NAME" = "main" ]; then
             echo "target=production" >> "$GITHUB_OUTPUT"
             echo "dry_run=false" >> "$GITHUB_OUTPUT"
           else
