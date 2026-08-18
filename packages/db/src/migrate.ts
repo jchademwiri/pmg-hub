@@ -25,6 +25,9 @@ const isLocalHost = /^(postgres:\/\/|postgresql:\/\/)[^@]*@(localhost|127\.0\.0\
 const client = new pg.Client({
   connectionString: url,
   ssl: isLocalHost ? false : { rejectUnauthorized: true },
+  // pg defaults this to 0 (no timeout) - bound it so an unreachable database
+  // fails fast instead of hanging until the job's own timeout kicks in.
+  connectionTimeoutMillis: 15_000,
 });
 await client.connect();
 

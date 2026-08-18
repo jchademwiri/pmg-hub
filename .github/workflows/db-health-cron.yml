@@ -14,20 +14,28 @@ jobs:
   check-staging:
     name: Check staging
     runs-on: ubuntu-latest
+    environment: staging
     permissions:
       contents: read
     env:
       DB_URL: ${{ secrets.DATABASE_URL_UNPOOLED_STAGING }}
     steps:
+      # A scheduled run silently skipping (and still reporting success) would
+      # be a false-green: the daily check ran and reported nothing wrong
+      # while actually checking nothing. Only a manual run - where a human is
+      # right there, setting things up - gets to skip gracefully.
       - name: Check secret is configured
         id: check
         run: |
           set -euo pipefail
           if [ -n "${DB_URL:-}" ]; then
             echo "configured=true" >> "$GITHUB_OUTPUT"
-          else
+          elif [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
             echo "configured=false" >> "$GITHUB_OUTPUT"
             echo "::warning::DATABASE_URL_UNPOOLED_STAGING is not configured - skipping staging health check."
+          else
+            echo "::error::DATABASE_URL_UNPOOLED_STAGING is not configured. The scheduled health check cannot silently skip - configure the secret or disable this workflow."
+            exit 1
           fi
 
       - name: Checkout
@@ -44,7 +52,7 @@ jobs:
 
       - name: Install dependencies
         if: steps.check.outputs.configured == 'true'
-        run: bun install
+        run: bun ci
 
       - name: db:check (staging)
         if: steps.check.outputs.configured == 'true'
@@ -56,6 +64,7 @@ jobs:
   check-production:
     name: Check production
     runs-on: ubuntu-latest
+    environment: production
     permissions:
       contents: read
     env:
@@ -67,9 +76,12 @@ jobs:
           set -euo pipefail
           if [ -n "${DB_URL:-}" ]; then
             echo "configured=true" >> "$GITHUB_OUTPUT"
-          else
+          elif [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
             echo "configured=false" >> "$GITHUB_OUTPUT"
             echo "::warning::DATABASE_URL_UNPOOLED_PROD is not configured - skipping production health check."
+          else
+            echo "::error::DATABASE_URL_UNPOOLED_PROD is not configured. The scheduled health check cannot silently skip - configure the secret or disable this workflow."
+            exit 1
           fi
 
       - name: Checkout
@@ -86,7 +98,7 @@ jobs:
 
       - name: Install dependencies
         if: steps.check.outputs.configured == 'true'
-        run: bun install
+        run: bun ci
 
       - name: db:check (production)
         if: steps.check.outputs.configured == 'true'

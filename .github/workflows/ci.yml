@@ -43,7 +43,7 @@ jobs:
           restore-keys: turbo-lint-
 
       - name: Install dependencies
-        run: bun install
+        run: bun ci
 
       # This repo has substantial pre-existing lint debt (300+ errors across
       # ~90 files, mostly @typescript-eslint/no-explicit-any) that predates
@@ -64,8 +64,10 @@ jobs:
           elif [ "${{ github.event.before }}" != "0000000000000000000000000000000000000000" ]; then
             echo "ref=${{ github.event.before }}" >> "$GITHUB_OUTPUT"
           else
-            # First push to a new branch - nothing to diff against yet.
-            echo "ref=HEAD~1" >> "$GITHUB_OUTPUT"
+            # First push to a new branch (or a root commit) - nothing to diff against.
+            # Git's empty-tree hash: diffing against it treats every file in HEAD
+            # as added, covering all commits in the push, not just the last one.
+            echo "ref=4b825dc642cb6eb9a060e54bf8d69288fbee4904" >> "$GITHUB_OUTPUT"
           fi
 
       - name: Lint changed files (per package that owns a lint script)
@@ -115,7 +117,7 @@ jobs:
           bun-version: ${{ env.BUN_VERSION }}
 
       - name: Install dependencies
-        run: bun install
+        run: bun ci
 
       - name: Determine base ref
         id: base_ref
@@ -126,7 +128,10 @@ jobs:
           elif [ "${{ github.event.before }}" != "0000000000000000000000000000000000000000" ]; then
             echo "ref=${{ github.event.before }}" >> "$GITHUB_OUTPUT"
           else
-            echo "ref=HEAD~1" >> "$GITHUB_OUTPUT"
+            # First push to a new branch (or a root commit) - nothing to diff
+            # against. Git's empty-tree hash: diffing against it treats every
+            # file in HEAD as added, covering all commits in the push.
+            echo "ref=4b825dc642cb6eb9a060e54bf8d69288fbee4904" >> "$GITHUB_OUTPUT"
           fi
 
       - name: Format check (changed files only)
@@ -163,7 +168,7 @@ jobs:
           restore-keys: turbo-typecheck-
 
       - name: Install dependencies
-        run: bun install
+        run: bun ci
 
       - name: Check types
         run: bun run check-types
@@ -192,7 +197,7 @@ jobs:
           restore-keys: turbo-unit-tests-
 
       - name: Install dependencies
-        run: bun install
+        run: bun ci
 
       - name: Test
         run: bun run test
@@ -235,7 +240,7 @@ jobs:
           bun-version: ${{ env.BUN_VERSION }}
 
       - name: Install dependencies
-        run: bun install
+        run: bun ci
 
       - name: Drizzle schema consistency check
         run: bunx drizzle-kit check
@@ -278,7 +283,7 @@ jobs:
           restore-keys: turbo-build-
 
       - name: Install dependencies
-        run: bun install
+        run: bun ci
 
       # Deliberately NOT real secrets: this validates the build compiles and
       # every route resolves without a live backend, decoupled from whether
