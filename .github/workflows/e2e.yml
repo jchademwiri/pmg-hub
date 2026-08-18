@@ -21,10 +21,12 @@ jobs:
     env:
       # These need to be set at job level, not just on the build step: the
       # webServer Playwright starts (`next start`) is a separate step/process
-      # and reads them at request time too, not just at build time.
-      DATABASE_URL: postgresql://stub:stub@localhost:5432/stub_db
-      DATABASE_URL_UNPOOLED: postgresql://stub:stub@localhost:5432/stub_db
-      BETTER_AUTH_SECRET: e2e-stub-secret-not-a-real-credential-0
+      # and reads them at request time too, not just at build time. No
+      # credential shapes on purpose (no user:pass@host URL) - never
+      # connected to, but secret scanners pattern-match on shape alone.
+      DATABASE_URL: https://ci-stub.invalid/not-a-real-database
+      DATABASE_URL_UNPOOLED: https://ci-stub.invalid/not-a-real-database
+      BETTER_AUTH_SECRET: not-a-real-credential-ci-e2e-only-placeholder
       BETTER_AUTH_URL: http://localhost:3000
     steps:
       - name: Checkout

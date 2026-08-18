@@ -288,14 +288,17 @@ jobs:
       - name: Build (CI stub env)
         run: bun run build
         env:
-          DATABASE_URL: postgresql://stub:stub@localhost:5432/stub_db
-          DATABASE_URL_UNPOOLED: postgresql://stub:stub@localhost:5432/stub_db
-          BETTER_AUTH_SECRET: stub-secret-not-a-real-credential-000000
+          # No credential shapes on purpose (no user:pass@host URLs, no re_*
+          # prefixes) - these are never connected to, but secret scanners
+          # pattern-match on shape alone regardless of the literal value.
+          DATABASE_URL: https://ci-stub.invalid/not-a-real-database
+          DATABASE_URL_UNPOOLED: https://ci-stub.invalid/not-a-real-database
+          BETTER_AUTH_SECRET: not-a-real-credential-ci-build-only-placeholder
           BETTER_AUTH_URL: http://localhost:3000
-          RESEND_API_KEY: re_stub_00000000000000000000
-          PMG_RESEND_API_KEY: re_stub_00000000000000000000
-          TES_RESEND_API_KEY: re_stub_00000000000000000000
-          AWS_RESEND_API_KEY: re_stub_00000000000000000000
+          RESEND_API_KEY: not-a-real-credential-ci-build-only-placeholder
+          PMG_RESEND_API_KEY: not-a-real-credential-ci-build-only-placeholder
+          TES_RESEND_API_KEY: not-a-real-credential-ci-build-only-placeholder
+          AWS_RESEND_API_KEY: not-a-real-credential-ci-build-only-placeholder
           TES_FROM_EMAIL: ci-stub@example.com
           TES_ADMIN_EMAIL: ci-stub@example.com
           AWS_FROM_EMAIL: ci-stub@example.com
