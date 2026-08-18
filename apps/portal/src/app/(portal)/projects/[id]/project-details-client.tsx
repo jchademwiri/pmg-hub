@@ -122,7 +122,7 @@ export function ProjectDetailsClient({
 
   const checklist: ProgressSection[] = initialChecklist.map((s) => ({
     ...s,
-    status: s.status as ProgressSection['status'],
+    status: s.status,
     items: s.items.map((i) => ({
       ...i,
       completedAt: i.completedAt ? new Date(i.completedAt) : null,
