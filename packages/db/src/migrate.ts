@@ -19,7 +19,13 @@ config({ path: resolve(import.meta.dir, "../../../.env.local"), override: false 
 const url = process.env.DATABASE_URL_UNPOOLED;
 if (!url) throw new Error("DATABASE_URL_UNPOOLED is not set");
 
-const client = new pg.Client({ connectionString: url, ssl: { rejectUnauthorized: true } });
+// Neon (staging/prod) always requires SSL. Ephemeral local/CI Postgres containers
+// (used for migration dry-runs) don't support it, so skip SSL for those hosts.
+const isLocalHost = /^(postgres:\/\/|postgresql:\/\/)[^@]*@(localhost|127\.0\.0\.1)[:/]/.test(url);
+const client = new pg.Client({
+  connectionString: url,
+  ssl: isLocalHost ? false : { rejectUnauthorized: true },
+});
 await client.connect();
 
 // ── Baseline detection ────────────────────────────────────────────────────────
