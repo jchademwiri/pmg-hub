@@ -24,7 +24,8 @@ export async function updateClientProfileAction(formData: { name: string; phone:
 
     revalidatePath('/profile');
     return { success: true };
-  } catch (err: any) {
-    return { error: err?.message || 'Failed to update profile.' };
+  } catch (err) {
+    const message = err instanceof Error ? err.message : 'Failed to update profile.';
+    return { error: message };
   }
 }

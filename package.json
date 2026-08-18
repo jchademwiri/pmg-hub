@@ -7,6 +7,7 @@
     "lint": "turbo run lint",
     "format": "prettier --write \"**/*.{ts,tsx,md}\"",
     "check-types": "turbo run check-types",
+    "test": "turbo run test",
     "db:generate": "bun --filter @pmg/db db:generate",
     "db:migrate": "bun --filter @pmg/db db:migrate",
     "db:push": "bun --filter @pmg/db db:push",

@@ -9,6 +9,7 @@ import { toast } from 'sonner';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { addClientComplianceRecord, updateClientComplianceRecord, deleteClientComplianceRecord } from '@/app/actions/compliance';
+import type { ComplianceDocument } from '@pmg/db';
 
 const DEFAULT_TYPES = [
   'SARS Tax Clearance PIN',
@@ -19,7 +20,7 @@ const DEFAULT_TYPES = [
   'CUSTOM',
 ];
 
-export function ComplianceClient({ records }: { records: any[] }) {
+export function ComplianceClient({ records }: { records: ComplianceDocument[] }) {
   const [open, setOpen] = useState(false);
   const [editId, setEditId] = useState<string | null>(null);
   const [isPending, startTransition] = useTransition();
@@ -38,7 +39,7 @@ export function ComplianceClient({ records }: { records: any[] }) {
     setOpen(true);
   }
 
-  function handleOpenEdit(record: any) {
+  function handleOpenEdit(record: ComplianceDocument) {
     setEditId(record.id);
     setDocumentType(record.documentType);
     setCustomName(record.customName || '');

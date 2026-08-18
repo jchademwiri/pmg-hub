@@ -28,11 +28,12 @@ export default async function PortalProjectDetailsPage({ params }: PageProps) {
       )
       .limit(1);
     project = row;
-  } catch (error: any) {
+  } catch (error) {
+    const err = error instanceof Error ? error : new Error(String(error));
     console.error("❌ Error fetching project details in PortalProjectDetailsPage:", {
-      message: error.message,
-      stack: error.stack,
-      cause: error.cause,
+      message: err.message,
+      stack: err.stack,
+      cause: err.cause,
     });
     throw error;
   }

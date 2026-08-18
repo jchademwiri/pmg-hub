@@ -9,7 +9,9 @@
     "dev": "astro dev",
     "build": "astro build",
     "preview": "astro preview",
-    "astro": "astro"
+    "astro": "astro",
+    "test": "vitest run --passWithNoTests",
+    "test:watch": "vitest"
   },
   "dependencies": {
     "@astrojs/sitemap": "^3.7.2",
@@ -26,6 +28,7 @@
     "@tailwindcss/vite": "catalog:",
     "@types/react": "^19.2.14",
     "@types/react-dom": "^19.2.3",
-    "tailwindcss": "catalog:"
+    "tailwindcss": "catalog:",
+    "vitest": "^3.0.0"
   }
 }

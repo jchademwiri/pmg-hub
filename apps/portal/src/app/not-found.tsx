@@ -29,7 +29,7 @@ export default function NotFound() {
             Page Not Found
           </h1>
           <p className="text-sm text-muted-foreground leading-relaxed max-w-xs mx-auto">
-            The page you are looking for doesn't exist, has been moved, or you don't have access to it.
+            The page you are looking for doesn&apos;t exist, has been moved, or you don&apos;t have access to it.
           </p>
         </div>
 

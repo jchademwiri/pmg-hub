@@ -21,9 +21,10 @@ import {
 } from 'lucide-react';
 import Link from 'next/link';
 import { authClient } from '@/lib/auth-client';
+import type { Client } from '@pmg/db';
 
 interface PortalShellProps {
-  client: any;
+  client: Client;
   isImpersonating: boolean;
   children: React.ReactNode;
 }

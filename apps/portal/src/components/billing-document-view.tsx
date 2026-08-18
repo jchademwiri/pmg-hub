@@ -3,6 +3,7 @@ import { Card, CardContent } from '@/components/ui/card';
 import { ArrowLeft } from 'lucide-react';
 import Link from 'next/link';
 import { PrintButton } from '@/components/print-button';
+import type { Client, Division, DivisionBillingSettings, BillingLineItem } from '@pmg/db';
 
 interface BillingDocumentViewProps {
   type: 'invoice' | 'quote';
@@ -19,10 +20,10 @@ interface BillingDocumentViewProps {
     notes?: string | null;
     terms?: string | null;
   };
-  client: any;
-  division: any;
-  divSettings: any;
-  lineItems: any[];
+  client: Client;
+  division: Division | undefined;
+  divSettings: DivisionBillingSettings | undefined;
+  lineItems: BillingLineItem[];
   actionButtons?: React.ReactNode;
   statusBanner?: React.ReactNode;
 }

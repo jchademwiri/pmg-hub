@@ -15,7 +15,7 @@ import {
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import type { ProjectScheduleEntry } from '@pmg/db';
+import type { ProjectScheduleEntry, ProgressSectionWithItems } from '@pmg/db';
 import { TaskBoardReadOnly } from '@/components/projects/task-board-readonly';
 import { TaskListViewReadOnly } from '@/components/projects/task-list-view-readonly';
 
@@ -47,7 +47,7 @@ interface ProgressSection {
 interface ProjectDetailsClientProps {
   project: ProjectScheduleEntry;
   divisions: DivisionSummary[];
-  initialChecklist: any[];
+  initialChecklist: ProgressSectionWithItems[];
 }
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
@@ -122,8 +122,8 @@ export function ProjectDetailsClient({
 
   const checklist: ProgressSection[] = initialChecklist.map((s) => ({
     ...s,
-    status: s.status as any,
-    items: s.items.map((i: any) => ({
+    status: s.status as ProgressSection['status'],
+    items: s.items.map((i) => ({
       ...i,
       completedAt: i.completedAt ? new Date(i.completedAt) : null,
     })),
@@ -135,7 +135,7 @@ export function ProjectDetailsClient({
   // Checklist Calculations
   const totalItems = checklist.reduce((acc, s) => acc + s.items.length, 0);
   const completedItems = checklist.reduce(
-    (acc, s) => acc + s.items.filter((i: any) => i.isCompleted).length,
+    (acc, s) => acc + s.items.filter((i) => i.isCompleted).length,
     0,
   );
   const progressPercent = totalItems > 0 ? Math.round((completedItems / totalItems) * 100) : 0;

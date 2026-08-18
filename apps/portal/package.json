@@ -6,7 +6,10 @@
     "dev": "next dev --port 3001",
     "build": "next build",
     "start": "next start",
-    "lint": "eslint"
+    "lint": "eslint",
+    "check-types": "tsc --noEmit",
+    "test": "vitest run --passWithNoTests",
+    "test:watch": "vitest"
   },
   "dependencies": {
     "@pmg/billing": "workspace:*",
@@ -37,7 +40,9 @@
     "eslint": "^9",
     "eslint-config-next": "16.2.1",
     "tailwindcss": "^4",
-    "typescript": "^5"
+    "typescript": "^5",
+    "vitest": "^1.4.0",
+    "jsdom": "^29.0.1"
   },
   "ignoreScripts": [
     "sharp",
