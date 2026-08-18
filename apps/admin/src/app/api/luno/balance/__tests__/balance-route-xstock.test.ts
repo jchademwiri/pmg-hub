@@ -59,10 +59,13 @@ function mockUpstream({
       // xStock instead of leaving it for CoinGecko) would go undetected.
       if (/xZAR/i.test(url)) {
         return Promise.resolve(
-          new Response(JSON.stringify({ error: 'Market not available', error_code: 'ErrMarketUnavailable' }), {
-            status: 404,
-            headers: { 'Content-Type': 'application/json' },
-          }),
+          new Response(
+            JSON.stringify({ error: 'Market not available', error_code: 'ErrMarketUnavailable' }),
+            {
+              status: 404,
+              headers: { 'Content-Type': 'application/json' },
+            },
+          ),
         );
       }
       return Promise.resolve(

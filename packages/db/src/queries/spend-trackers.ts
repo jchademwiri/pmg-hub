@@ -100,7 +100,9 @@ export async function getSpendRows(config: SpendMatchConfig): Promise<SpendRow[]
       category: expenses.category,
       description: expenses.description,
       amount: expenses.amount,
-      kind: sql<'primary' | 'companion'>`CASE WHEN ${isPrimary} THEN 'primary' ELSE 'companion' END`,
+      kind: sql<
+        'primary' | 'companion'
+      >`CASE WHEN ${isPrimary} THEN 'primary' ELSE 'companion' END`,
     })
     .from(expenses)
     .innerJoin(divisions, eq(expenses.divisionId, divisions.id))

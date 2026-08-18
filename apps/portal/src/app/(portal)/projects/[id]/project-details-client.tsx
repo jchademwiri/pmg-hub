@@ -154,7 +154,10 @@ export function ProjectDetailsClient({
           <h1 className="text-2xl font-bold tracking-tight text-white">
             {project.projectReference}
           </h1>
-          <Badge variant="outline" className={`text-[10px] uppercase font-bold tracking-wider px-2 py-0.5 ${status.className}`}>
+          <Badge
+            variant="outline"
+            className={`text-[10px] uppercase font-bold tracking-wider px-2 py-0.5 ${status.className}`}
+          >
             {status.label}
           </Badge>
         </div>
@@ -210,7 +213,10 @@ export function ProjectDetailsClient({
             </div>
 
             {totalItems > 0 && (
-              <Badge variant="secondary" className="text-xs font-medium bg-white/5 text-white border-white/5">
+              <Badge
+                variant="secondary"
+                className="text-xs font-medium bg-white/5 text-white border-white/5"
+              >
                 {completedItems}/{totalItems} Completed ({progressPercent}%)
               </Badge>
             )}
@@ -244,7 +250,9 @@ export function ProjectDetailsClient({
           <CardHeader className="pb-3">
             <div className="flex items-center gap-2">
               <Sparkles className="size-4 text-blue-400" />
-              <CardTitle className="text-sm font-semibold text-white">Project Notes & Updates</CardTitle>
+              <CardTitle className="text-sm font-semibold text-white">
+                Project Notes & Updates
+              </CardTitle>
             </div>
           </CardHeader>
           <CardContent className="space-y-4 text-xs leading-relaxed text-muted-foreground">
@@ -283,11 +291,14 @@ export function ProjectDetailsClient({
       >
         {/* Header */}
         <div className="flex items-center justify-between p-4 border-b border-white/5">
-          <h3 id="project-metadata-title" className="text-sm font-semibold text-white flex items-center gap-2">
+          <h3
+            id="project-metadata-title"
+            className="text-sm font-semibold text-white flex items-center gap-2"
+          >
             <Clock className="size-4 text-blue-400" /> Project Metadata
           </h3>
-          <button 
-            onClick={() => setMetadataOpen(false)} 
+          <button
+            onClick={() => setMetadataOpen(false)}
             aria-label="Close dialog"
             className="text-white/70 hover:text-red-500 transition-colors p-1 cursor-pointer"
           >

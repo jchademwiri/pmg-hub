@@ -94,12 +94,23 @@ export function BillingDocumentView({
                 </div>
               )}
               <p className="text-xs text-muted-foreground print:text-black/60 leading-relaxed mt-2">
-                {division ? division.name : 'Playhouse Media Group (Pty) Ltd'}<br />
-                {divSettings?.salesRepEmail || 'billing@playhousemedia.co.za'}<br />
-                {divSettings?.salesRepPhone && <span>{divSettings.salesRepPhone}<br /></span>}
+                {division ? division.name : 'Playhouse Media Group (Pty) Ltd'}
+                <br />
+                {divSettings?.salesRepEmail || 'billing@playhousemedia.co.za'}
+                <br />
+                {divSettings?.salesRepPhone && (
+                  <span>
+                    {divSettings.salesRepPhone}
+                    <br />
+                  </span>
+                )}
                 {divSettings?.divisionWebsite && (
                   <a
-                    href={divSettings.divisionWebsite.startsWith('http') ? divSettings.divisionWebsite : `https://${divSettings.divisionWebsite}`}
+                    href={
+                      divSettings.divisionWebsite.startsWith('http')
+                        ? divSettings.divisionWebsite
+                        : `https://${divSettings.divisionWebsite}`
+                    }
                     target="_blank"
                     rel="noopener noreferrer"
                     className="hover:underline text-blue-400 print:text-black"
@@ -113,10 +124,14 @@ export function BillingDocumentView({
               <h2 className="text-xl font-bold text-white print:text-black tracking-tight">
                 {isInvoice ? 'INVOICE' : 'QUOTATION'}
               </h2>
-              <p className="text-xs font-semibold text-blue-400 print:text-black mt-1">{document.documentNumber}</p>
+              <p className="text-xs font-semibold text-blue-400 print:text-black mt-1">
+                {document.documentNumber}
+              </p>
               <div className="mt-4 grid grid-cols-2 gap-x-4 gap-y-1 text-xs text-muted-foreground print:text-black/70">
                 <span>Date:</span>
-                <span className="font-medium text-white print:text-black">{formatDate(document.date)}</span>
+                <span className="font-medium text-white print:text-black">
+                  {formatDate(document.date)}
+                </span>
                 {document.dueDateOrExpiry && (
                   <>
                     <span>{isInvoice ? 'Due Date:' : 'Expiry Date:'}</span>
@@ -126,7 +141,9 @@ export function BillingDocumentView({
                   </>
                 )}
                 <span>Status:</span>
-                <span className="font-semibold uppercase text-blue-400 print:text-black">{document.status}</span>
+                <span className="font-semibold uppercase text-blue-400 print:text-black">
+                  {document.status}
+                </span>
               </div>
             </div>
           </div>
@@ -137,10 +154,14 @@ export function BillingDocumentView({
               <p className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground/70 print:text-black/50 mb-2">
                 {isInvoice ? 'Billed To' : 'Quoted To'}
               </p>
-              <p className="text-xs font-bold text-white print:text-black">{client.businessName || client.name}</p>
+              <p className="text-xs font-bold text-white print:text-black">
+                {client.businessName || client.name}
+              </p>
               <p className="text-xs text-muted-foreground print:text-black/70 mt-1 leading-relaxed">
-                {client.name}<br />
-                {client.email}<br />
+                {client.name}
+                <br />
+                {client.email}
+                <br />
                 {client.phone}
               </p>
             </div>
@@ -211,7 +232,9 @@ export function BillingDocumentView({
             <div className="w-full sm:w-80 flex flex-col gap-2 text-right text-xs">
               <div className="flex justify-between py-1 text-muted-foreground print:text-black/70">
                 <span>Subtotal:</span>
-                <span className="font-medium text-white print:text-black">{formatCurrency(document.subtotal)}</span>
+                <span className="font-medium text-white print:text-black">
+                  {formatCurrency(document.subtotal)}
+                </span>
               </div>
               {document.discountAmount && parseFloat(document.discountAmount.toString()) > 0 && (
                 <div className="flex justify-between py-1 text-orange-400 print:text-orange-600 font-medium">
@@ -222,12 +245,16 @@ export function BillingDocumentView({
               {parseFloat(document.vatAmount as string) > 0 && (
                 <div className="flex justify-between py-1 text-muted-foreground print:text-black/70">
                   <span>VAT (15%):</span>
-                  <span className="font-medium text-white print:text-black">{formatCurrency(document.vatAmount)}</span>
+                  <span className="font-medium text-white print:text-black">
+                    {formatCurrency(document.vatAmount)}
+                  </span>
                 </div>
               )}
               <div className="flex justify-between py-2 text-sm font-bold border-t border-white/5 print:border-black/15 text-white print:text-black">
                 <span>Total:</span>
-                <span className="text-base text-blue-400 print:text-black">{formatCurrency(document.total)}</span>
+                <span className="text-base text-blue-400 print:text-black">
+                  {formatCurrency(document.total)}
+                </span>
               </div>
             </div>
           </div>
@@ -237,12 +264,14 @@ export function BillingDocumentView({
             <div className="mt-12 pt-8 border-t border-white/5 print:border-black/10 text-[11px] text-muted-foreground print:text-black/60 space-y-2 leading-relaxed">
               {document.notes && (
                 <p>
-                  <span className="font-semibold text-white print:text-black">Notes:</span> {document.notes}
+                  <span className="font-semibold text-white print:text-black">Notes:</span>{' '}
+                  {document.notes}
                 </p>
               )}
               {document.terms && (
                 <p>
-                  <span className="font-semibold text-white print:text-black">Terms:</span> {document.terms}
+                  <span className="font-semibold text-white print:text-black">Terms:</span>{' '}
+                  {document.terms}
                 </p>
               )}
             </div>

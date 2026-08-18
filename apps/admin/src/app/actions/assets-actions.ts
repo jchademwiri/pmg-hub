@@ -21,7 +21,11 @@ const AssetSchema = z
     category: z.string().min(1, 'Category is required'),
     acquisitionDate: z.string().min(10, 'Acquisition date is required'),
     cost: z.coerce.number().min(0, 'Cost cannot be negative'),
-    currentValue: z.coerce.number().min(0, 'Current value cannot be negative').optional().nullable(),
+    currentValue: z.coerce
+      .number()
+      .min(0, 'Current value cannot be negative')
+      .optional()
+      .nullable(),
     notes: z.string().optional().nullable(),
     serialNumber: z.string().optional().nullable(),
     location: z.string().optional().nullable(),
@@ -112,7 +116,10 @@ export async function updateAsset(id: string, data: AssetInput): Promise<{ error
 
 // ── disposeAsset ──────────────────────────────────────────────────────────────
 
-export async function disposeAsset(id: string, disposalNotes?: string): Promise<{ error?: string }> {
+export async function disposeAsset(
+  id: string,
+  disposalNotes?: string,
+): Promise<{ error?: string }> {
   try {
     await getSessionOrRedirect();
     await disposeAssetRow(id, disposalNotes);
@@ -145,7 +152,10 @@ export async function deleteAsset(id: string): Promise<{ error?: string }> {
     await getSessionOrRedirect();
 
     if (await hasAssetHistory(id)) {
-      return { error: 'This asset has recorded valuations or deposits/withdrawals. Dispose it instead of deleting, so that history is preserved.' };
+      return {
+        error:
+          'This asset has recorded valuations or deposits/withdrawals. Dispose it instead of deleting, so that history is preserved.',
+      };
     }
 
     await deleteAssetRow(id);
@@ -155,4 +165,3 @@ export async function deleteAsset(id: string): Promise<{ error?: string }> {
     return { error: 'Failed to delete. Please try again.' };
   }
 }
-

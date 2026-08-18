@@ -32,9 +32,10 @@ export function LunoSyncButton({ syncNow = false, autoSyncIfStale = false }: Lun
             method: 'POST',
             signal: controller.signal,
           });
-          const body = (await res.json().catch(() => null)) as
-            | { synced?: number; error?: string }
-            | null;
+          const body = (await res.json().catch(() => null)) as {
+            synced?: number;
+            error?: string;
+          } | null;
 
           if (!res.ok) {
             const message = body?.error ?? 'Failed to sync Luno data.';

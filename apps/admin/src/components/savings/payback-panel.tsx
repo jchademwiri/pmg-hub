@@ -109,8 +109,8 @@ export function PaybackPanel({
       <CardHeader>
         <CardTitle className="text-base">What this replaces — {label}</CardTitle>
         <p className="text-sm text-muted-foreground">
-          {totals.count} {totals.count === 1 ? 'run' : 'runs'} totalling {formatZAR(totals.allIn)} across{' '}
-          {monthly.length} {monthly.length === 1 ? 'month' : 'months'}
+          {totals.count} {totals.count === 1 ? 'run' : 'runs'} totalling {formatZAR(totals.allIn)}{' '}
+          across {monthly.length} {monthly.length === 1 ? 'month' : 'months'}
         </p>
       </CardHeader>
       <CardContent className="flex flex-col gap-6">
@@ -179,8 +179,8 @@ export function PaybackPanel({
           <p className="text-xs text-muted-foreground flex gap-1.5">
             <Info className="size-3.5 shrink-0 mt-0.5" />
             <span>
-              Three windows, not one average — the spread shows whether spend is rising or
-              tailing off, which is usually what decides whether the purchase is worth making.
+              Three windows, not one average — the spread shows whether spend is rising or tailing
+              off, which is usually what decides whether the purchase is worth making.
             </span>
           </p>
         </div>
@@ -191,7 +191,11 @@ export function PaybackPanel({
             <ChartContainer config={config} className="max-h-64 w-full">
               <BarChart data={chartData}>
                 <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" vertical={false} />
-                <XAxis dataKey="month" tick={{ fill: 'var(--muted-foreground)' }} tickLine={false} />
+                <XAxis
+                  dataKey="month"
+                  tick={{ fill: 'var(--muted-foreground)' }}
+                  tickLine={false}
+                />
                 <YAxis
                   tickFormatter={(v) => formatZAR(Number(v))}
                   tick={{ fill: 'var(--muted-foreground)' }}
@@ -232,7 +236,10 @@ export function PaybackPanel({
                       <TableCell className="whitespace-nowrap">{fmtDate(r.date)}</TableCell>
                       <TableCell>
                         <span className="mr-2">{r.description || '—'}</span>
-                        <Badge variant={r.kind === 'primary' ? 'default' : 'secondary'} className="text-[10px]">
+                        <Badge
+                          variant={r.kind === 'primary' ? 'default' : 'secondary'}
+                          className="text-[10px]"
+                        >
                           {r.kind === 'primary' ? primaryLabel : companionLabel}
                         </Badge>
                       </TableCell>

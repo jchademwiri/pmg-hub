@@ -49,7 +49,7 @@ The integration fetches **all** Luno accounts live via `/api/1/balance`, convert
 9. IF the Luno_API response body cannot be parsed as JSON, or THE Balance_Route response does not contain a `balance` array, or THE History_Route response does not contain a `transactions` array, THEN THE route SHALL return an HTTP 502 response with a JSON body `{ "error": "Invalid upstream response" }`.
 10. WHEN THE Balance_Route returns a successful response, THE Balance_Route SHALL respond with HTTP 200 and a JSON body `{ "accounts": [LunoAccountRow, ...] }` where each element is the pass-through mapping of the corresponding entry in the upstream `balance` array, enriched with `zar_value`.
 11. WHEN THE History_Route returns a successful response, THE History_Route SHALL respond with HTTP 200 and a JSON body `{ "data": [Balance_Point, ...] }` where each element is derived from the corresponding entry in the upstream `transactions` array.
-12. WHEN THE History_Route receives a GET request, THE History_Route SHALL validate that the `accountId` path segment contains only characters matching `[A-Za-z0-9_-]` and is at most 64 characters long; IF the `accountId` fails this validation, THE History_Route SHALL return HTTP 400 with a JSON body `{ "error": "Invalid account ID" }` and SHALL NOT make an outbound request to the Luno_API.
+12. WHEN THE History*Route receives a GET request, THE History_Route SHALL validate that the `accountId` path segment contains only characters matching `[A-Za-z0-9*-]`and is at most 64 characters long; IF the`accountId`fails this validation, THE History_Route SHALL return HTTP 400 with a JSON body`{ "error": "Invalid account ID" }` and SHALL NOT make an outbound request to the Luno_API.
 
 ### Requirement 2: Balance History Data Transformation
 

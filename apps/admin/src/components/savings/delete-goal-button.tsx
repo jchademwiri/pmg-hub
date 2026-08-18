@@ -24,7 +24,8 @@ export function DeleteGoalButton({
   async function handleDelete() {
     const ok = await confirm({
       title: `Delete "${goalName}"?`,
-      description: 'This removes the goal and its full contribution history. This cannot be undone.',
+      description:
+        'This removes the goal and its full contribution history. This cannot be undone.',
       confirmText: 'Delete goal',
       variant: 'destructive',
     });

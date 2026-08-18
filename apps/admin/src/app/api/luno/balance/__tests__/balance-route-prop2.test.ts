@@ -70,7 +70,10 @@ describe('Property 2: Credentials are never leaked in responses (Balance Route)'
       fc.asyncProperty(
         // Generate credential strings — minLength 8 avoids short/whitespace-only
         // values that trivially appear in typical response text.
-        fc.tuple(fc.string({ minLength: 8, maxLength: 64 }), fc.string({ minLength: 8, maxLength: 64 })),
+        fc.tuple(
+          fc.string({ minLength: 8, maxLength: 64 }),
+          fc.string({ minLength: 8, maxLength: 64 }),
+        ),
         async ([keyId, keySecret]) => {
           // Set the env vars to the generated values
           process.env.LUNO_API_KEY_ID = keyId;
@@ -128,7 +131,10 @@ describe('Property 2: Credentials are never leaked in responses (Balance Route)'
         // Generate non-empty credential strings so we pass the env-var check
         // and proceed to the fetch call. minLength 8 avoids short/whitespace-only
         // values that trivially appear in typical response text.
-        fc.tuple(fc.string({ minLength: 8, maxLength: 64 }), fc.string({ minLength: 8, maxLength: 64 })),
+        fc.tuple(
+          fc.string({ minLength: 8, maxLength: 64 }),
+          fc.string({ minLength: 8, maxLength: 64 }),
+        ),
         async ([keyId, keySecret]) => {
           // Set both env vars so the route passes credential validation
           process.env.LUNO_API_KEY_ID = keyId;
@@ -183,7 +189,10 @@ describe('Property 2: Credentials are never leaked in responses (Balance Route)'
   it('credentials never appear in the response body or headers — success path (mocked valid upstream) — Validates: Requirements 1.3', async () => {
     await fc.assert(
       fc.asyncProperty(
-        fc.tuple(fc.string({ minLength: 8, maxLength: 64 }), fc.string({ minLength: 8, maxLength: 64 })),
+        fc.tuple(
+          fc.string({ minLength: 8, maxLength: 64 }),
+          fc.string({ minLength: 8, maxLength: 64 }),
+        ),
         async ([keyId, keySecret]) => {
           process.env.LUNO_API_KEY_ID = keyId;
           process.env.LUNO_API_KEY_SECRET = keySecret;

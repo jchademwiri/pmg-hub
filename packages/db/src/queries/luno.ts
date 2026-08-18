@@ -1,6 +1,6 @@
-import { db } from "../client";
-import { lunoAccounts } from "../schema/luno";
-import { desc, eq, sql } from "drizzle-orm";
+import { db } from '../client';
+import { lunoAccounts } from '../schema/luno';
+import { desc, eq, sql } from 'drizzle-orm';
 
 export type LunoAccountRow = typeof lunoAccounts.$inferSelect;
 
@@ -16,7 +16,11 @@ export async function getLunoAccounts(): Promise<LunoAccountRow[]> {
 // ── getLunoAccountById ────────────────────────────────────────────────────────
 
 export async function getLunoAccountById(accountId: string): Promise<LunoAccountRow | null> {
-  const rows = await db.select().from(lunoAccounts).where(eq(lunoAccounts.accountId, accountId)).limit(1);
+  const rows = await db
+    .select()
+    .from(lunoAccounts)
+    .where(eq(lunoAccounts.accountId, accountId))
+    .limit(1);
   return rows[0] ?? null;
 }
 

@@ -90,7 +90,10 @@ export async function GET(
   // ── Transform to Balance_Point[] ──────────────────────────────────────────
   const result = transformTransactions((body as { transactions: unknown[] }).transactions);
   if (!result.ok) {
-    return Response.json({ error: 'Invalid transaction data', field: result.field }, { status: 422 });
+    return Response.json(
+      { error: 'Invalid transaction data', field: result.field },
+      { status: 422 },
+    );
   }
 
   return Response.json({ data: result.data }, { status: 200 });

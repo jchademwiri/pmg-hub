@@ -78,9 +78,15 @@ export function GoalFormDialog({ goal }: { goal?: GoalDefaults }) {
 
   function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
-    if (!name.trim()) { toast.error('A name is required.'); return; }
+    if (!name.trim()) {
+      toast.error('A name is required.');
+      return;
+    }
     const target = parseFloat(targetAmount);
-    if (!target || target <= 0) { toast.error('Target amount must be greater than zero.'); return; }
+    if (!target || target <= 0) {
+      toast.error('Target amount must be greater than zero.');
+      return;
+    }
 
     const fd = new FormData();
     fd.set('name', name.trim());
@@ -169,7 +175,10 @@ export function GoalFormDialog({ goal }: { goal?: GoalDefaults }) {
                   step="0.01"
                   min="0"
                   value={targetAmount}
-                  onChange={(e) => { setTargetTouched(true); setTargetAmount(e.target.value); }}
+                  onChange={(e) => {
+                    setTargetTouched(true);
+                    setTargetAmount(e.target.value);
+                  }}
                   placeholder="4500.00"
                 />
               </Field>
@@ -220,7 +229,9 @@ export function GoalFormDialog({ goal }: { goal?: GoalDefaults }) {
                 <SelectContent>
                   <SelectItem value="none">Nothing — just a savings goal</SelectItem>
                   {SPEND_TRACKER_OPTIONS.map((o) => (
-                    <SelectItem key={o.value} value={o.value}>{o.label}</SelectItem>
+                    <SelectItem key={o.value} value={o.value}>
+                      {o.label}
+                    </SelectItem>
                   ))}
                 </SelectContent>
               </Select>
@@ -242,7 +253,9 @@ export function GoalFormDialog({ goal }: { goal?: GoalDefaults }) {
           </div>
 
           <DialogFooter>
-            <Button type="button" variant="outline" onClick={() => setOpen(false)}>Cancel</Button>
+            <Button type="button" variant="outline" onClick={() => setOpen(false)}>
+              Cancel
+            </Button>
             <Button type="submit" disabled={isPending}>
               {isPending ? 'Saving…' : isEdit ? 'Save changes' : 'Create goal'}
             </Button>

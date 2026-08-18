@@ -109,9 +109,10 @@ export function LunoChart({ accountId }: LunoChartProps) {
     (async () => {
       try {
         const res = await fetch(`/api/luno/history/${accountId}`, { signal: controller.signal });
-        const body = (await res.json().catch(() => null)) as
-          | { data?: BalancePoint[]; error?: string }
-          | null;
+        const body = (await res.json().catch(() => null)) as {
+          data?: BalancePoint[];
+          error?: string;
+        } | null;
 
         if (!isCurrent) return;
 

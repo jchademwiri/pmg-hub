@@ -151,7 +151,10 @@ export function mapTickerPrice(body: unknown): number | null {
  *
  * Exported so the History Route can reuse the same timeout/error contract.
  */
-export async function fetchWithTimeout(url: string, init: RequestInit = {}): Promise<globalThis.Response> {
+export async function fetchWithTimeout(
+  url: string,
+  init: RequestInit = {},
+): Promise<globalThis.Response> {
   const controller = new AbortController();
   const timeoutId = setTimeout(() => controller.abort(), TIMEOUT_MS);
 
@@ -160,7 +163,11 @@ export async function fetchWithTimeout(url: string, init: RequestInit = {}): Pro
   } catch (err) {
     // Duck-type the abort check: Node's DOMException extends Error, but jsdom's
     // does not, so `instanceof Error` is unreliable across environments.
-    if (typeof err === 'object' && err !== null && (err as { name?: string }).name === 'AbortError') {
+    if (
+      typeof err === 'object' &&
+      err !== null &&
+      (err as { name?: string }).name === 'AbortError'
+    ) {
       throw new LunoTimeoutError();
     }
     throw new LunoUpstreamError();
@@ -216,7 +223,7 @@ export async function fetchLunoAccounts(): Promise<LunoAccountRow[]> {
     throw new LunoInvalidResponseError();
   }
 
-  let accounts: LunoAccountRow[] = ((body as { balance: unknown[] }).balance).map(mapAccountRow);
+  let accounts: LunoAccountRow[] = (body as { balance: unknown[] }).balance.map(mapAccountRow);
 
   // 2. Optional LUNO_ACCOUNT_ID filter (before tickers, so we only price what we return)
   const filterAccountId = process.env.LUNO_ACCOUNT_ID;
@@ -260,9 +267,13 @@ export async function fetchLunoAccounts(): Promise<LunoAccountRow[]> {
   // with a real market price elsewhere. One batched call for every held
   // xStock; unmapped/failed symbols fall back to zar_value: null (units only),
   // same degrade-gracefully contract as the Luno ticker path above.
-  const xstockAssets = [...new Set(accounts.filter((a) => isTokenisedStock(a.asset)).map((a) => a.asset))];
+  const xstockAssets = [
+    ...new Set(accounts.filter((a) => isTokenisedStock(a.asset)).map((a) => a.asset)),
+  ];
   const xstockPriceMap =
-    xstockAssets.length > 0 ? await fetchXStockZarPrices(xstockAssets) : new Map<string, number | null>();
+    xstockAssets.length > 0
+      ? await fetchXStockZarPrices(xstockAssets)
+      : new Map<string, number | null>();
 
   return accounts.map((account) => {
     const balance = parseFloat(account.balance);
@@ -276,9 +287,7 @@ export async function fetchLunoAccounts(): Promise<LunoAccountRow[]> {
         ? (priceMap.get(account.asset) ?? xstockPriceMap.get(account.asset) ?? null)
         : null;
     const zar_value =
-      price !== null && Number.isFinite(balance)
-        ? Math.round(balance * price * 1e8) / 1e8
-        : null;
+      price !== null && Number.isFinite(balance) ? Math.round(balance * price * 1e8) / 1e8 : null;
 
     return { ...account, zar_value };
   });
@@ -305,7 +314,10 @@ export const MIN_VISIBLE_ZAR_VALUE = 1;
  * balance in an unmapped asset disappearing with no explanation) is back by
  * request. If that confusion resurfaces, this comment is why.
  */
-export function isVisibleLunoAccount(account: { balance: string; zarValue: string | null }): boolean {
+export function isVisibleLunoAccount(account: {
+  balance: string;
+  zarValue: string | null;
+}): boolean {
   const hasBalance = Number.parseFloat(account.balance) > 0;
   if (!hasBalance) return false;
   if (account.zarValue == null) return false;
@@ -368,9 +380,7 @@ const COINGECKO_SIMPLE_PRICE_URL = 'https://api.coingecko.com/api/v3/simple/pric
  * `null` rather than throwing - an unpriced xStock should never take down the
  * whole Luno sync.
  */
-export async function fetchXStockZarPrices(
-  symbols: string[],
-): Promise<Map<string, number | null>> {
+export async function fetchXStockZarPrices(symbols: string[]): Promise<Map<string, number | null>> {
   const result = new Map<string, number | null>(symbols.map((s) => [s, null]));
 
   const idToSymbol = new Map<string, string>();

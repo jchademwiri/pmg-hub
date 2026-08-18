@@ -90,7 +90,9 @@ describe('Balance Route — ZAR ticker enrichment', () => {
     const response = await GET(new Request('http://localhost/api/luno/balance', { method: 'GET' }));
     expect(response.status).toBe(200);
 
-    const body = (await response.json()) as { accounts: Array<{ account_id: string; asset: string; zar_value: number | null }> };
+    const body = (await response.json()) as {
+      accounts: Array<{ account_id: string; asset: string; zar_value: number | null }>;
+    };
     expect(body.accounts).toHaveLength(2);
 
     // 0.5 XBT × 1,000,000 ZAR = 500,000
@@ -121,7 +123,9 @@ describe('Balance Route — ZAR ticker enrichment', () => {
     const response = await GET(new Request('http://localhost/api/luno/balance', { method: 'GET' }));
     expect(response.status).toBe(200);
 
-    const body = (await response.json()) as { accounts: Array<{ asset: string; zar_value: number | null }> };
+    const body = (await response.json()) as {
+      accounts: Array<{ asset: string; zar_value: number | null }>;
+    };
     expect(body.accounts[0].zar_value).toBe(0.01);
 
     // A "ZARZAR" pair doesn't exist upstream - it must never be requested.
@@ -132,7 +136,13 @@ describe('Balance Route — ZAR ticker enrichment', () => {
     mockUpstream(
       {
         balance: [
-          { account_id: 'acc-bnb', asset: 'BNB', balance: '0.00695467', reserved: '0', unconfirmed: '0' },
+          {
+            account_id: 'acc-bnb',
+            asset: 'BNB',
+            balance: '0.00695467',
+            reserved: '0',
+            unconfirmed: '0',
+          },
         ],
       },
       { error: 'Market not available', error_code: 'ErrMarketUnavailable' },
@@ -148,7 +158,17 @@ describe('Balance Route — ZAR ticker enrichment', () => {
 
   it('rounds zar_value to 8 decimal places — Validates: Requirements 4.4', async () => {
     mockUpstream(
-      { balance: [{ account_id: 'a1', asset: 'XBT', balance: '0.00350000', reserved: '0', unconfirmed: '0' }] },
+      {
+        balance: [
+          {
+            account_id: 'a1',
+            asset: 'XBT',
+            balance: '0.00350000',
+            reserved: '0',
+            unconfirmed: '0',
+          },
+        ],
+      },
       { last_trade: '1234567.89' },
     );
 
@@ -184,25 +204,29 @@ describe('Balance Route — ZAR ticker enrichment', () => {
 
   it('degrades to zar_value: null when the ticker call times out — Validates: Requirements 4.5', async () => {
     // Ticker fetch never resolves and aborts on signal; the balance call succeeds.
-    vi.spyOn(globalThis, 'fetch').mockImplementation((input: RequestInfo | URL, init?: RequestInit) => {
-      const url = String(input);
-      if (url.includes('/api/1/ticker')) {
-        return new Promise<Response>((_resolve, reject) => {
-          (init?.signal as AbortSignal | undefined)?.addEventListener('abort', () =>
-            reject(new DOMException('The operation was aborted.', 'AbortError')),
-          );
-        });
-      }
-      return Promise.resolve(
-        new Response(JSON.stringify(BALANCE_BODY), {
-          status: 200,
-          headers: { 'Content-Type': 'application/json' },
-        }),
-      );
-    });
+    vi.spyOn(globalThis, 'fetch').mockImplementation(
+      (input: RequestInfo | URL, init?: RequestInit) => {
+        const url = String(input);
+        if (url.includes('/api/1/ticker')) {
+          return new Promise<Response>((_resolve, reject) => {
+            (init?.signal as AbortSignal | undefined)?.addEventListener('abort', () =>
+              reject(new DOMException('The operation was aborted.', 'AbortError')),
+            );
+          });
+        }
+        return Promise.resolve(
+          new Response(JSON.stringify(BALANCE_BODY), {
+            status: 200,
+            headers: { 'Content-Type': 'application/json' },
+          }),
+        );
+      },
+    );
 
     vi.useFakeTimers();
-    const responsePromise = GET(new Request('http://localhost/api/luno/balance', { method: 'GET' }));
+    const responsePromise = GET(
+      new Request('http://localhost/api/luno/balance', { method: 'GET' }),
+    );
     await vi.advanceTimersByTimeAsync(10_000);
     const response = await responsePromise;
 
@@ -218,7 +242,9 @@ describe('Balance Route — ZAR ticker enrichment', () => {
     const response = await GET(new Request('http://localhost/api/luno/balance', { method: 'GET' }));
     expect(response.status).toBe(200);
 
-    const body = (await response.json()) as { accounts: Array<{ account_id: string; zar_value: number }> };
+    const body = (await response.json()) as {
+      accounts: Array<{ account_id: string; zar_value: number }>;
+    };
     expect(body.accounts).toHaveLength(1);
     expect(body.accounts[0].account_id).toBe('acc-xbt');
     expect(body.accounts[0].zar_value).toBe(500000);
@@ -257,7 +283,9 @@ describe('Balance Route — ZAR ticker enrichment', () => {
     );
 
     vi.useFakeTimers();
-    const responsePromise = GET(new Request('http://localhost/api/luno/balance', { method: 'GET' }));
+    const responsePromise = GET(
+      new Request('http://localhost/api/luno/balance', { method: 'GET' }),
+    );
     await vi.advanceTimersByTimeAsync(10_000);
     const response = await responsePromise;
 

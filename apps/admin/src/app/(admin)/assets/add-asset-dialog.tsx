@@ -47,11 +47,23 @@ export function AddAssetDialog() {
 
   function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
-    if (!name.trim()) { toast.error('Asset name is required.'); return; }
-    if (!category.trim()) { toast.error('Category is required.'); return; }
-    if (!acquisitionDate) { toast.error('Acquisition date is required.'); return; }
+    if (!name.trim()) {
+      toast.error('Asset name is required.');
+      return;
+    }
+    if (!category.trim()) {
+      toast.error('Category is required.');
+      return;
+    }
+    if (!acquisitionDate) {
+      toast.error('Acquisition date is required.');
+      return;
+    }
     const costValue = parseFloat(cost) || 0;
-    if (costValue < 0) { toast.error('Cost cannot be negative.'); return; }
+    if (costValue < 0) {
+      toast.error('Cost cannot be negative.');
+      return;
+    }
 
     startTransition(async () => {
       const res = await createAsset({
@@ -95,7 +107,10 @@ export function AddAssetDialog() {
             </DialogDescription>
           </DialogHeader>
 
-          <form onSubmit={handleSubmit} className="flex flex-col gap-4 mt-2 max-h-[70vh] overflow-y-auto pr-1">
+          <form
+            onSubmit={handleSubmit}
+            className="flex flex-col gap-4 mt-2 max-h-[70vh] overflow-y-auto pr-1"
+          >
             <div className="grid grid-cols-3 gap-3">
               <Field className="col-span-2">
                 <FieldLabel htmlFor="asset-name">
@@ -144,7 +159,9 @@ export function AddAssetDialog() {
                   Cost (ZAR) <span className="text-destructive">*</span>
                 </FieldLabel>
                 <div className="relative">
-                  <span className="absolute left-3 top-2 text-xs font-semibold text-muted-foreground">R</span>
+                  <span className="absolute left-3 top-2 text-xs font-semibold text-muted-foreground">
+                    R
+                  </span>
                   <Input
                     id="asset-cost"
                     type="number"
@@ -165,7 +182,9 @@ export function AddAssetDialog() {
               <Field>
                 <FieldLabel htmlFor="asset-current-value">Current Value (Optional)</FieldLabel>
                 <div className="relative">
-                  <span className="absolute left-3 top-2 text-xs font-semibold text-muted-foreground">R</span>
+                  <span className="absolute left-3 top-2 text-xs font-semibold text-muted-foreground">
+                    R
+                  </span>
                   <Input
                     id="asset-current-value"
                     type="number"
@@ -223,7 +242,12 @@ export function AddAssetDialog() {
             </Field>
 
             <DialogFooter className="mt-2">
-              <Button type="button" variant="outline" onClick={() => setOpen(false)} disabled={isPending}>
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => setOpen(false)}
+                disabled={isPending}
+              >
                 Cancel
               </Button>
               <Button type="submit" disabled={isPending}>

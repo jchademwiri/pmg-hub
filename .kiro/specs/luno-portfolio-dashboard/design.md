@@ -194,18 +194,18 @@ New schema module `src/schema/luno.ts`:
 
 ```typescript
 export const lunoAccounts = pgTable(
-  "luno_accounts",
+  'luno_accounts',
   {
-    accountId: text("account_id").primaryKey(),
-    asset: text("asset").notNull(),
-    name: text("name"),
-    balance: text("balance").notNull(),        // decimal string from Luno
-    reserved: text("reserved").notNull(),
-    unconfirmed: text("unconfirmed").notNull(),
-    zarValue: numeric("zar_value", { precision: 20, scale: 8 }), // nullable
-    syncedAt: timestamp("synced_at", { withTimezone: true }).defaultNow().notNull(),
+    accountId: text('account_id').primaryKey(),
+    asset: text('asset').notNull(),
+    name: text('name'),
+    balance: text('balance').notNull(), // decimal string from Luno
+    reserved: text('reserved').notNull(),
+    unconfirmed: text('unconfirmed').notNull(),
+    zarValue: numeric('zar_value', { precision: 20, scale: 8 }), // nullable
+    syncedAt: timestamp('synced_at', { withTimezone: true }).defaultNow().notNull(),
   },
-  (t) => [index("luno_accounts_asset_idx").on(t.asset)],
+  (t) => [index('luno_accounts_asset_idx').on(t.asset)],
 );
 ```
 
@@ -591,7 +591,7 @@ Each property runs a minimum of 100 iterations.
 | Invalid accountId format → 400 | Property 11 | `fc.string()` filtered to contain non-`[A-Za-z0-9_-]` chars or length > 64                      |
 | Ticker URL construction        | Property 12 | `fc.string({ minLength: 1 })` for asset                                                         |
 | Ticker price extraction        | Property 13 | `fc.oneof(fc.string(), fc.object())` for invalid bodies; `fc.string()` for valid last_trade     |
-| ZAR value / ticker degradation | Property 14 | `fc.record(...)` for accounts + `fc.constantFrom` of ticker failure modes                        |
+| ZAR value / ticker degradation | Property 14 | `fc.record(...)` for accounts + `fc.constantFrom` of ticker failure modes                       |
 | Sync upsert idempotence        | Property 15 | `fc.array(accountArb)` for accounts                                                             |
 
 ### Example-Based / Integration Tests
@@ -605,7 +605,7 @@ Each property runs a minimum of 100 iterations.
 - `GET /api/luno/history/{accountId}` with valid mocked upstream → HTTP 200 with correct `data` shape
 - Upstream timeout mock → HTTP 504
 - Empty array upstream → HTTP 200 with empty array
-- Archive migration SQL: run against a fixture with investment + fixed_asset rows → investments copied to `archived_*` and deleted from `assets`; fixed assets untouched; `luno_accounts` created
+- Archive migration SQL: run against a fixture with investment + fixed*asset rows → investments copied to `archived*\*`and deleted from`assets`; fixed assets untouched; `luno_accounts` created
 - `LunoChart` renders skeleton during loading / error / empty / `"No account selected."` / `LineChart` with `stepAfter`
 - Assets page stat card shows `getLunoInvestmentsValue()`; register table excludes investments
 - `LunoSyncButton` syncs and refreshes; surfaces errors inline
@@ -621,22 +621,22 @@ Each property runs a minimum of 100 iterations.
 
 ### File Locations
 
-| File                                                     | Purpose                                        |
-| -------------------------------------------------------- | ---------------------------------------------- |
-| `packages/db/src/schema/luno.ts`                         | `luno_accounts` table schema                   |
-| `packages/db/src/queries/luno.ts`                        | Snapshot queries + upsert                     |
-| `packages/db/src/migrations/0043_luno_investments.sql`   | Archive manual investments + create snapshot  |
-| `apps/admin/src/app/api/luno/balance/route.ts`           | Balance proxy route (accounts + ZAR)          |
-| `apps/admin/src/app/api/luno/sync/route.ts`              | Sync proxy route (upsert snapshot)            |
-| `apps/admin/src/app/api/luno/history/[accountId]/route.ts` | History proxy route (per-account)           |
-| `apps/admin/src/components/luno-chart.tsx`               | Client chart component                        |
-| `apps/admin/src/components/luno-sync-button.tsx`         | Client refresh/sync button island             |
-| `apps/admin/src/app/(admin)/assets/page.tsx`             | Assets page (Crypto Portfolio + stat cards)   |
-| `apps/admin/src/app/(admin)/assets/luno/[accountId]/page.tsx` | Luno account detail page (new route)    |
-| `apps/admin/src/app/(admin)/assets/[id]/page.tsx`        | Fixed-asset detail page (investment branch removed) |
-| `apps/admin/src/app/(admin)/assets/[id]/transaction-history.tsx` | Deleted (dead code)                  |
-| `apps/admin/src/app/(admin)/assets/[id]/valuation-history.tsx`   | Deleted (dead code)                  |
-| `apps/admin/.env.local`                                  | Local environment variables (not committed)    |
+| File                                                             | Purpose                                             |
+| ---------------------------------------------------------------- | --------------------------------------------------- |
+| `packages/db/src/schema/luno.ts`                                 | `luno_accounts` table schema                        |
+| `packages/db/src/queries/luno.ts`                                | Snapshot queries + upsert                           |
+| `packages/db/src/migrations/0043_luno_investments.sql`           | Archive manual investments + create snapshot        |
+| `apps/admin/src/app/api/luno/balance/route.ts`                   | Balance proxy route (accounts + ZAR)                |
+| `apps/admin/src/app/api/luno/sync/route.ts`                      | Sync proxy route (upsert snapshot)                  |
+| `apps/admin/src/app/api/luno/history/[accountId]/route.ts`       | History proxy route (per-account)                   |
+| `apps/admin/src/components/luno-chart.tsx`                       | Client chart component                              |
+| `apps/admin/src/components/luno-sync-button.tsx`                 | Client refresh/sync button island                   |
+| `apps/admin/src/app/(admin)/assets/page.tsx`                     | Assets page (Crypto Portfolio + stat cards)         |
+| `apps/admin/src/app/(admin)/assets/luno/[accountId]/page.tsx`    | Luno account detail page (new route)                |
+| `apps/admin/src/app/(admin)/assets/[id]/page.tsx`                | Fixed-asset detail page (investment branch removed) |
+| `apps/admin/src/app/(admin)/assets/[id]/transaction-history.tsx` | Deleted (dead code)                                 |
+| `apps/admin/src/app/(admin)/assets/[id]/valuation-history.tsx`   | Deleted (dead code)                                 |
+| `apps/admin/.env.local`                                          | Local environment variables (not committed)         |
 
 ### Environment Variables
 

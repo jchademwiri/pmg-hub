@@ -55,8 +55,14 @@ export function ContributionPanel({
   function handleAdd(e: React.FormEvent) {
     e.preventDefault();
     const value = parseFloat(amount);
-    if (!value || value <= 0) { toast.error('Enter an amount greater than zero.'); return; }
-    if (!date) { toast.error('Pick a date.'); return; }
+    if (!value || value <= 0) {
+      toast.error('Enter an amount greater than zero.');
+      return;
+    }
+    if (!date) {
+      toast.error('Pick a date.');
+      return;
+    }
 
     const fd = new FormData();
     fd.set('goalId', goalId);
@@ -67,7 +73,10 @@ export function ContributionPanel({
 
     startTransition(async () => {
       const res = await addContribution(fd);
-      if (res.error) { toast.error(res.error); return; }
+      if (res.error) {
+        toast.error(res.error);
+        return;
+      }
       toast.success(type === 'deposit' ? 'Contribution added.' : 'Withdrawal recorded.');
       setAmount('');
       setNotes('');
@@ -87,7 +96,10 @@ export function ContributionPanel({
 
     startTransition(async () => {
       const res = await deleteContribution(id, goalId);
-      if (res.error) { toast.error(res.error); return; }
+      if (res.error) {
+        toast.error(res.error);
+        return;
+      }
       toast.success('Entry deleted.');
       router.refresh();
     });
@@ -126,14 +138,22 @@ export function ContributionPanel({
           <div className="sm:col-span-3">
             <Field>
               <FieldLabel htmlFor="c-date">Date</FieldLabel>
-              <Input id="c-date" type="date" value={date} max={today} onChange={(e) => setDate(e.target.value)} />
+              <Input
+                id="c-date"
+                type="date"
+                value={date}
+                max={today}
+                onChange={(e) => setDate(e.target.value)}
+              />
             </Field>
           </div>
           <div className="sm:col-span-2">
             <Field>
               <FieldLabel htmlFor="c-type">Type</FieldLabel>
               <Select value={type} onValueChange={(v) => setType(v as 'deposit' | 'withdrawal')}>
-                <SelectTrigger id="c-type"><SelectValue /></SelectTrigger>
+                <SelectTrigger id="c-type">
+                  <SelectValue />
+                </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="deposit">Deposit</SelectItem>
                   <SelectItem value="withdrawal">Withdrawal</SelectItem>
@@ -144,7 +164,12 @@ export function ContributionPanel({
           <div className="sm:col-span-2">
             <Field>
               <FieldLabel htmlFor="c-notes">Note</FieldLabel>
-              <Input id="c-notes" value={notes} onChange={(e) => setNotes(e.target.value)} placeholder="Optional" />
+              <Input
+                id="c-notes"
+                value={notes}
+                onChange={(e) => setNotes(e.target.value)}
+                placeholder="Optional"
+              />
             </Field>
           </div>
           <div className="sm:col-span-2">
@@ -173,7 +198,9 @@ export function ContributionPanel({
               <TableBody>
                 {rows.map((c) => (
                   <TableRow key={c.id}>
-                    <TableCell className="whitespace-nowrap">{fmtDate(c.contributionDate)}</TableCell>
+                    <TableCell className="whitespace-nowrap">
+                      {fmtDate(c.contributionDate)}
+                    </TableCell>
                     <TableCell className="text-muted-foreground">{c.notes || '—'}</TableCell>
                     <TableCell className="text-right tabular-nums">
                       <span
@@ -188,7 +215,8 @@ export function ContributionPanel({
                         ) : (
                           <ArrowUpRight className="inline size-3.5 mr-0.5 -mt-0.5" />
                         )}
-                        {c.type === 'withdrawal' ? '-' : '+'}{formatZAR(Number(c.amount))}
+                        {c.type === 'withdrawal' ? '-' : '+'}
+                        {formatZAR(Number(c.amount))}
                       </span>
                     </TableCell>
                     <TableCell className="text-right tabular-nums font-medium">

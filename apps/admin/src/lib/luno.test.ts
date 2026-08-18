@@ -114,7 +114,21 @@ describe('fetchXStockZarPrices', () => {
   it('every symbol Luno actually lists resolves to a CoinGecko id', () => {
     // Guards the mapping table itself, independent of any network call:
     // catches a typo the moment it's introduced rather than at runtime.
-    for (const symbol of ['AAPLX', 'SPYX', 'GLDX', 'TQQQX', 'AMZNX', 'AVGOX', 'GOOGLX', 'METAX', 'MSFTX', 'MSTRX', 'NVDAX', 'QQQX', 'TSLAX']) {
+    for (const symbol of [
+      'AAPLX',
+      'SPYX',
+      'GLDX',
+      'TQQQX',
+      'AMZNX',
+      'AVGOX',
+      'GOOGLX',
+      'METAX',
+      'MSFTX',
+      'MSTRX',
+      'NVDAX',
+      'QQQX',
+      'TSLAX',
+    ]) {
       expect(XSTOCK_COINGECKO_IDS[symbol]).toBeTruthy();
     }
   });

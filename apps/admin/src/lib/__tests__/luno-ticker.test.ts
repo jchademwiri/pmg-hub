@@ -60,7 +60,13 @@ describe('mapTickerPrice', () => {
   it('Property 13 — invalid bodies always produce null — Validates: Requirements 4.5', () => {
     fc.assert(
       fc.property(
-        fc.oneof(fc.string(), fc.constant(null), fc.constant(undefined), fc.integer(), fc.record({ last_trade: fc.constant('nope') })),
+        fc.oneof(
+          fc.string(),
+          fc.constant(null),
+          fc.constant(undefined),
+          fc.integer(),
+          fc.record({ last_trade: fc.constant('nope') }),
+        ),
         (body) => {
           expect(mapTickerPrice(body)).toBeNull();
         },

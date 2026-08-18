@@ -39,10 +39,22 @@ export function AssetEditClient({ asset }: AssetEditClientProps) {
 
   function handleSave() {
     setError(null);
-    if (!name.trim()) { setError('Name is required.'); return; }
-    if (!category.trim()) { setError('Category is required.'); return; }
-    if (!acquisitionDate) { setError('Acquisition date is required.'); return; }
-    if (!cost || parseFloat(cost) < 0) { setError('A valid cost is required.'); return; }
+    if (!name.trim()) {
+      setError('Name is required.');
+      return;
+    }
+    if (!category.trim()) {
+      setError('Category is required.');
+      return;
+    }
+    if (!acquisitionDate) {
+      setError('Acquisition date is required.');
+      return;
+    }
+    if (!cost || parseFloat(cost) < 0) {
+      setError('A valid cost is required.');
+      return;
+    }
 
     setIsSubmitting(true);
     startTransition(async () => {
@@ -52,7 +64,8 @@ export function AssetEditClient({ asset }: AssetEditClientProps) {
         category: category.trim(),
         acquisitionDate,
         cost: parseFloat(cost),
-        currentValue: currentValue !== '' && currentValue != null ? parseFloat(String(currentValue)) : null,
+        currentValue:
+          currentValue !== '' && currentValue != null ? parseFloat(String(currentValue)) : null,
         notes: notes.trim() || null,
         serialNumber: serialNumber.trim() || null,
         location: location.trim() || null,
@@ -72,7 +85,10 @@ export function AssetEditClient({ asset }: AssetEditClientProps) {
     startTransition(async () => {
       const result = await disposeAsset(asset.id);
       if (result.error) toast.error(result.error);
-      else { toast.success('Asset marked as disposed.'); router.refresh(); }
+      else {
+        toast.success('Asset marked as disposed.');
+        router.refresh();
+      }
     });
   }
 
@@ -80,7 +96,10 @@ export function AssetEditClient({ asset }: AssetEditClientProps) {
     startTransition(async () => {
       const result = await reactivateAsset(asset.id);
       if (result.error) toast.error(result.error);
-      else { toast.success('Asset reactivated.'); router.refresh(); }
+      else {
+        toast.success('Asset reactivated.');
+        router.refresh();
+      }
     });
   }
 
@@ -114,11 +133,19 @@ export function AssetEditClient({ asset }: AssetEditClientProps) {
 
       <div className="grid grid-cols-2 gap-4">
         <div className="flex flex-col gap-1.5">
-          <label className="text-sm font-medium">Category <span className="text-destructive">*</span></label>
-          <Input value={category} onChange={(e) => setCategory(e.target.value)} disabled={isSubmitting} />
+          <label className="text-sm font-medium">
+            Category <span className="text-destructive">*</span>
+          </label>
+          <Input
+            value={category}
+            onChange={(e) => setCategory(e.target.value)}
+            disabled={isSubmitting}
+          />
         </div>
         <div className="flex flex-col gap-1.5">
-          <label className="text-sm font-medium">Acquisition Date <span className="text-destructive">*</span></label>
+          <label className="text-sm font-medium">
+            Acquisition Date <span className="text-destructive">*</span>
+          </label>
           <Input
             type="date"
             value={acquisitionDate}
@@ -130,7 +157,9 @@ export function AssetEditClient({ asset }: AssetEditClientProps) {
 
       <div className="grid grid-cols-2 gap-4">
         <div className="flex flex-col gap-1.5">
-          <label className="text-sm font-medium">Cost <span className="text-destructive">*</span></label>
+          <label className="text-sm font-medium">
+            Cost <span className="text-destructive">*</span>
+          </label>
           <Input
             type="number"
             min="0"
@@ -156,15 +185,27 @@ export function AssetEditClient({ asset }: AssetEditClientProps) {
       <div className="grid grid-cols-2 gap-4">
         <div className="flex flex-col gap-1.5">
           <label className="text-sm font-medium">Serial Number</label>
-          <Input value={serialNumber} onChange={(e) => setSerialNumber(e.target.value)} disabled={isSubmitting} />
+          <Input
+            value={serialNumber}
+            onChange={(e) => setSerialNumber(e.target.value)}
+            disabled={isSubmitting}
+          />
         </div>
         <div className="flex flex-col gap-1.5">
           <label className="text-sm font-medium">Location</label>
-          <Input value={location} onChange={(e) => setLocation(e.target.value)} disabled={isSubmitting} />
+          <Input
+            value={location}
+            onChange={(e) => setLocation(e.target.value)}
+            disabled={isSubmitting}
+          />
         </div>
         <div className="flex flex-col gap-1.5 col-span-2">
           <label className="text-sm font-medium">Assigned To</label>
-          <Input value={assignedTo} onChange={(e) => setAssignedTo(e.target.value)} disabled={isSubmitting} />
+          <Input
+            value={assignedTo}
+            onChange={(e) => setAssignedTo(e.target.value)}
+            disabled={isSubmitting}
+          />
         </div>
       </div>
 
@@ -184,7 +225,11 @@ export function AssetEditClient({ asset }: AssetEditClientProps) {
       {error && <p className="text-sm text-destructive">{error}</p>}
 
       <div className="fixed md:relative bottom-0 left-0 right-0 p-4 md:p-0 bg-card/95 md:bg-transparent backdrop-blur-md md:backdrop-blur-none border-t md:border-none z-50 flex gap-2 pb-[max(env(safe-area-inset-bottom),16px)] md:pb-0 shadow-[0_-4px_12px_rgba(0,0,0,0.05)] md:shadow-none dark:shadow-[0_-4px_12px_rgba(0,0,0,0.2)]">
-        <Button className="flex-1 bg-blue-600 hover:bg-blue-700 text-white" onClick={handleSave} disabled={isSubmitting}>
+        <Button
+          className="flex-1 bg-blue-600 hover:bg-blue-700 text-white"
+          onClick={handleSave}
+          disabled={isSubmitting}
+        >
           {isSubmitting ? 'Saving…' : 'Save Changes'}
         </Button>
         {asset.status === 'active' ? (

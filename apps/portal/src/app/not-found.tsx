@@ -24,25 +24,32 @@ export default function NotFound() {
 
         {/* Error Code & Message */}
         <div className="space-y-2">
-          <span className="text-xs font-bold uppercase tracking-widest text-blue-400/80">404 Error</span>
+          <span className="text-xs font-bold uppercase tracking-widest text-blue-400/80">
+            404 Error
+          </span>
           <h1 className="text-3xl font-bold tracking-tight bg-gradient-to-r from-white via-white to-white/60 bg-clip-text text-transparent">
             Page Not Found
           </h1>
           <p className="text-sm text-muted-foreground leading-relaxed max-w-xs mx-auto">
-            The page you are looking for doesn&apos;t exist, has been moved, or you don&apos;t have access to it.
+            The page you are looking for doesn&apos;t exist, has been moved, or you don&apos;t have
+            access to it.
           </p>
         </div>
 
         {/* Action Buttons */}
         <div className="flex flex-col sm:flex-row gap-3 w-full pt-4">
-          <Button asChild variant="default" className="flex-1 bg-blue-600 hover:bg-blue-500 text-white font-medium shadow-lg shadow-blue-600/20 py-5 rounded-lg">
+          <Button
+            asChild
+            variant="default"
+            className="flex-1 bg-blue-600 hover:bg-blue-500 text-white font-medium shadow-lg shadow-blue-600/20 py-5 rounded-lg"
+          >
             <Link href="/dashboard">
               <Home className="size-4 mr-2" />
               Go to Dashboard
             </Link>
           </Button>
-          <Button 
-            variant="outline" 
+          <Button
+            variant="outline"
             className="flex-1 border-white/10 bg-white/[0.02] hover:bg-white/[0.05] text-white font-medium py-5 rounded-lg cursor-pointer"
             onClick={() => router.back()}
           >

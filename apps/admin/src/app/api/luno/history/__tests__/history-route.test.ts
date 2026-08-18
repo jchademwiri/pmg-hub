@@ -126,7 +126,10 @@ describe('History Route', () => {
 
     const response = await callGet('acc-1');
     expect(response.status).toBe(422);
-    expect(await response.json()).toEqual({ error: 'Invalid transaction data', field: 'timestamp' });
+    expect(await response.json()).toEqual({
+      error: 'Invalid transaction data',
+      field: 'timestamp',
+    });
   });
 
   it('Property 7 — a single corrupted entry yields 422 with the field name — Validates: Requirements 2.6', async () => {

@@ -44,10 +44,19 @@ export function MarkPurchasedDialog({ goalId, goalName, suggestedCost }: Props) 
 
   function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
-    if (!acquisitionDate) { toast.error('Purchase date is required.'); return; }
-    if (!category.trim()) { toast.error('Category is required.'); return; }
+    if (!acquisitionDate) {
+      toast.error('Purchase date is required.');
+      return;
+    }
+    if (!category.trim()) {
+      toast.error('Category is required.');
+      return;
+    }
     const costValue = parseFloat(cost);
-    if (isNaN(costValue) || costValue < 0) { toast.error('Cost must be zero or greater.'); return; }
+    if (isNaN(costValue) || costValue < 0) {
+      toast.error('Cost must be zero or greater.');
+      return;
+    }
 
     const fd = new FormData();
     fd.set('acquisitionDate', acquisitionDate);
@@ -144,7 +153,9 @@ export function MarkPurchasedDialog({ goalId, goalName, suggestedCost }: Props) 
           </div>
 
           <DialogFooter>
-            <Button type="button" variant="outline" onClick={() => setOpen(false)}>Cancel</Button>
+            <Button type="button" variant="outline" onClick={() => setOpen(false)}>
+              Cancel
+            </Button>
             <Button type="submit" disabled={isPending}>
               {isPending ? 'Saving…' : 'Add to asset register'}
             </Button>

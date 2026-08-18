@@ -44,8 +44,12 @@ export function AssetsTable({ assets }: { assets: AssetRow[] }) {
             >
               <TableCell className="font-medium">{asset.name}</TableCell>
               <TableCell className="text-sm text-muted-foreground">{asset.category}</TableCell>
-              <TableCell className="text-sm text-muted-foreground">{fmtDate(asset.acquisitionDate)}</TableCell>
-              <TableCell className="text-right tabular-nums text-sm">{formatZAR(Number(asset.cost))}</TableCell>
+              <TableCell className="text-sm text-muted-foreground">
+                {fmtDate(asset.acquisitionDate)}
+              </TableCell>
+              <TableCell className="text-right tabular-nums text-sm">
+                {formatZAR(Number(asset.cost))}
+              </TableCell>
               <TableCell className="text-right tabular-nums text-sm">
                 {asset.currentValue != null ? formatZAR(Number(asset.currentValue)) : '-'}
               </TableCell>

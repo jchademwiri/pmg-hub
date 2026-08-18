@@ -2,7 +2,15 @@
 
 import { z } from 'zod';
 import { revalidatePath } from 'next/cache';
-import { db, savingsGoals, savingsContributions, assets, eq, sql, getSavingsGoalById } from '@pmg/db';
+import {
+  db,
+  savingsGoals,
+  savingsContributions,
+  assets,
+  eq,
+  sql,
+  getSavingsGoalById,
+} from '@pmg/db';
 import { getSessionOrRedirect } from '@/lib/auth';
 
 const GoalSchema = z.object({
@@ -68,7 +76,10 @@ export async function createSavingsGoal(formData: FormData): Promise<{ error?: s
   }
 }
 
-export async function updateSavingsGoal(id: string, formData: FormData): Promise<{ error?: string }> {
+export async function updateSavingsGoal(
+  id: string,
+  formData: FormData,
+): Promise<{ error?: string }> {
   await getSessionOrRedirect();
   try {
     const parsed = GoalSchema.safeParse(Object.fromEntries(formData));

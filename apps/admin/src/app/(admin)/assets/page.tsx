@@ -73,10 +73,7 @@ export default async function AssetsPage({ searchParams }: AssetsPageProps) {
   const visibleAccounts = lunoAccounts.filter(isVisibleLunoAccount);
   // The Investments Value stat card sums only priced accounts — tokenised
   // stocks have no ZAR value and contribute nothing.
-  const lunoInvestmentsValue = visibleAccounts.reduce(
-    (sum, a) => sum + Number(a.zarValue ?? 0),
-    0,
-  );
+  const lunoInvestmentsValue = visibleAccounts.reduce((sum, a) => sum + Number(a.zarValue ?? 0), 0);
 
   return (
     <div className="flex flex-col gap-6">
@@ -103,7 +100,9 @@ export default async function AssetsPage({ searchParams }: AssetsPageProps) {
             </div>
             <div>
               <p className="text-xs text-muted-foreground">Fixed Assets Value</p>
-              <p className="text-lg font-semibold tabular-nums">{formatZAR(summary.totalFixedAssetsValue)}</p>
+              <p className="text-lg font-semibold tabular-nums">
+                {formatZAR(summary.totalFixedAssetsValue)}
+              </p>
             </div>
           </CardContent>
         </Card>
@@ -114,7 +113,9 @@ export default async function AssetsPage({ searchParams }: AssetsPageProps) {
             </div>
             <div>
               <p className="text-xs text-muted-foreground">Investments Value</p>
-              <p className="text-lg font-semibold tabular-nums">{formatZAR(lunoInvestmentsValue)}</p>
+              <p className="text-lg font-semibold tabular-nums">
+                {formatZAR(lunoInvestmentsValue)}
+              </p>
             </div>
           </CardContent>
         </Card>
@@ -187,7 +188,9 @@ export default async function AssetsPage({ searchParams }: AssetsPageProps) {
               <Link
                 href={query({ status: undefined })}
                 className={`rounded-md px-3 py-1 text-xs font-medium transition-colors ${
-                  !showDisposed ? 'bg-foreground text-background' : 'text-muted-foreground hover:text-foreground'
+                  !showDisposed
+                    ? 'bg-foreground text-background'
+                    : 'text-muted-foreground hover:text-foreground'
                 }`}
               >
                 Active
@@ -195,7 +198,9 @@ export default async function AssetsPage({ searchParams }: AssetsPageProps) {
               <Link
                 href={query({ status: 'disposed' })}
                 className={`rounded-md px-3 py-1 text-xs font-medium transition-colors ${
-                  showDisposed ? 'bg-foreground text-background' : 'text-muted-foreground hover:text-foreground'
+                  showDisposed
+                    ? 'bg-foreground text-background'
+                    : 'text-muted-foreground hover:text-foreground'
                 }`}
               >
                 Disposed

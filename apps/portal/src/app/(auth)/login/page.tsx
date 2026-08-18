@@ -50,7 +50,9 @@ export default function LoginPage() {
     setIsPending(true);
     try {
       // Prepared for V1.5 OTP verification
-      toast.info('OTP verification is being enabled. Please use the Magic Link sent to your email.');
+      toast.info(
+        'OTP verification is being enabled. Please use the Magic Link sent to your email.',
+      );
     } catch (err) {
       console.error(err);
     } finally {
@@ -62,7 +64,7 @@ export default function LoginPage() {
     <div className="relative flex min-h-screen items-center justify-center overflow-hidden bg-[#0a0f1d] bg-[url('/images/portal-login-bg.png')] bg-cover bg-center bg-no-repeat bg-fixed px-4 py-12 font-sans text-foreground">
       {/* Dark overlay for contrast */}
       <div className="absolute inset-0 bg-black/60 mix-blend-multiply pointer-events-none" />
-      
+
       {/* Glow Effects */}
       <div className="absolute -left-1/4 -top-1/4 h-[80vh] w-[80vh] rounded-full bg-blue-600/20 blur-[120px] pointer-events-none" />
       <div className="absolute -right-1/4 -bottom-1/4 h-[80vh] w-[80vh] rounded-full bg-indigo-600/20 blur-[120px] pointer-events-none" />
@@ -73,8 +75,12 @@ export default function LoginPage() {
           <div className="flex size-12 items-center justify-center rounded-xl bg-gradient-to-tr from-blue-600 to-indigo-500 shadow-lg shadow-blue-500/20">
             <ShieldCheck className="size-6 text-white" />
           </div>
-          <h1 className="mt-4 text-2xl font-bold tracking-tight text-white">Playhouse Media Group</h1>
-          <p className="mt-1.5 text-sm text-muted-foreground">Client Billing & Self-Service Portal</p>
+          <h1 className="mt-4 text-2xl font-bold tracking-tight text-white">
+            Playhouse Media Group
+          </h1>
+          <p className="mt-1.5 text-sm text-muted-foreground">
+            Client Billing & Self-Service Portal
+          </p>
         </div>
 
         {/* Card */}
@@ -86,7 +92,8 @@ export default function LoginPage() {
               </div>
               <h2 className="text-lg font-semibold text-white">Check your email</h2>
               <p className="mt-2 text-sm text-muted-foreground leading-relaxed">
-                We&apos;ve sent a secure, passwordless login link to <span className="font-medium text-blue-400">{email}</span>.
+                We&apos;ve sent a secure, passwordless login link to{' '}
+                <span className="font-medium text-blue-400">{email}</span>.
               </p>
               <p className="mt-1 text-xs text-muted-foreground">
                 The link is valid for 10 minutes.

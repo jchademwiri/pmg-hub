@@ -53,7 +53,9 @@ describe('transformTransaction', () => {
   it('throws with field "timestamp" when timestamp is not a finite integer', () => {
     expect(() => transformTransaction({ timestamp: 'abc', balance: '1' })).toThrow('timestamp');
     expect(() => transformTransaction({ timestamp: 1.5, balance: '1' })).toThrow('timestamp');
-    expect(() => transformTransaction({ timestamp: Number.NaN, balance: '1' })).toThrow('timestamp');
+    expect(() => transformTransaction({ timestamp: Number.NaN, balance: '1' })).toThrow(
+      'timestamp',
+    );
   });
 
   it('throws with field "timestamp" when timestamp is zero or negative', () => {
@@ -63,8 +65,12 @@ describe('transformTransaction', () => {
 
   it('throws with field "balance" when balance is missing or unparseable', () => {
     expect(() => transformTransaction({ timestamp: 1700000000000 })).toThrow('balance');
-    expect(() => transformTransaction({ timestamp: 1700000000000, balance: 'xyz' })).toThrow('balance');
-    expect(() => transformTransaction({ timestamp: 1700000000000, balance: null })).toThrow('balance');
+    expect(() => transformTransaction({ timestamp: 1700000000000, balance: 'xyz' })).toThrow(
+      'balance',
+    );
+    expect(() => transformTransaction({ timestamp: 1700000000000, balance: null })).toThrow(
+      'balance',
+    );
   });
 });
 

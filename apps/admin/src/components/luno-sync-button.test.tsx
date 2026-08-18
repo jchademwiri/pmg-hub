@@ -60,7 +60,10 @@ describe('LunoSyncButton', () => {
     await userEvent.click(screen.getByRole('button', { name: /refresh/i }));
 
     await waitFor(() => {
-      expect(fetchMock).toHaveBeenCalledWith('/api/luno/sync', expect.objectContaining({ method: 'POST' }));
+      expect(fetchMock).toHaveBeenCalledWith(
+        '/api/luno/sync',
+        expect.objectContaining({ method: 'POST' }),
+      );
     });
     await waitFor(() => {
       expect(toastMock.success).toHaveBeenCalledWith('Synced 2 Luno account(s).');

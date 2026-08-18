@@ -25,11 +25,7 @@ import { formatZAR, fmtDate, getSASTToday, getSASTParts } from '@/lib/format';
 export const dynamic = 'force-dynamic';
 export const metadata: Metadata = { title: 'Savings Goal' };
 
-export default async function SavingsGoalPage({
-  params,
-}: {
-  params: Promise<{ id: string }>;
-}) {
+export default async function SavingsGoalPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
 
   const goal = await getSavingsGoalById(id).catch((e) => {
@@ -114,7 +110,10 @@ export default async function SavingsGoalPage({
         <CardHeader className="pb-3">
           <div className="flex flex-wrap items-center justify-between gap-3">
             <CardTitle className="text-base">Progress</CardTitle>
-            <Badge variant={goal.status === 'saving' ? 'default' : 'secondary'} className="capitalize">
+            <Badge
+              variant={goal.status === 'saving' ? 'default' : 'secondary'}
+              className="capitalize"
+            >
               {goal.status}
             </Badge>
           </div>
@@ -181,9 +180,7 @@ export default async function SavingsGoalPage({
                     ? fmtDate(rate.projectedDate)
                     : '—'
               }
-              hint={
-                goal.targetDate ? `Target: ${fmtDate(goal.targetDate)}` : undefined
-              }
+              hint={goal.targetDate ? `Target: ${fmtDate(goal.targetDate)}` : undefined}
             />
           </div>
 

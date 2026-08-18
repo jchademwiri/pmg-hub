@@ -1,11 +1,5 @@
 import type { Metadata } from 'next';
-import {
-  Card,
-  CardContent,
-  CardHeader,
-  CardTitle,
-  CardDescription,
-} from '@/components/ui/card';
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Separator } from '@/components/ui/separator';
 import { BackButton } from '@/components/ui/back-button';
 import { getLunoAccountById } from '@pmg/db';
@@ -53,17 +47,17 @@ export default async function LunoAccountPage({ params }: Props) {
         <div className="flex items-center gap-4">
           <BackButton href="/assets" label="Back" />
           <Separator orientation="vertical" className="h-5 hidden sm:block" />
-        <div>
-          <div className="flex items-center gap-2">
-            <h2 className="text-lg font-semibold">{account?.name ?? accountId}</h2>
-            {account && (
-              <span className="inline-flex items-center gap-1.5 rounded-md bg-amber-500/10 px-2 py-0.5 font-mono text-xs font-semibold text-amber-700 dark:text-amber-400">
-                {account.asset}
-              </span>
-            )}
+          <div>
+            <div className="flex items-center gap-2">
+              <h2 className="text-lg font-semibold">{account?.name ?? accountId}</h2>
+              {account && (
+                <span className="inline-flex items-center gap-1.5 rounded-md bg-amber-500/10 px-2 py-0.5 font-mono text-xs font-semibold text-amber-700 dark:text-amber-400">
+                  {account.asset}
+                </span>
+              )}
+            </div>
+            <p className="text-sm text-muted-foreground">Live Luno account</p>
           </div>
-          <p className="text-sm text-muted-foreground">Live Luno account</p>
-        </div>
         </div>
         <LunoSyncButton autoSyncIfStale={isStale} />
       </div>
@@ -103,7 +97,10 @@ export default async function LunoAccountPage({ params }: Props) {
                   </div>
                   <div className="flex justify-between text-sm">
                     <span className="text-muted-foreground">Account</span>
-                    <span className="max-w-[160px] truncate font-medium" title={account.name ?? undefined}>
+                    <span
+                      className="max-w-[160px] truncate font-medium"
+                      title={account.name ?? undefined}
+                    >
                       {account.name ?? '—'}
                     </span>
                   </div>
@@ -119,7 +116,8 @@ export default async function LunoAccountPage({ params }: Props) {
                   </div>
                   {isTokenisedStock(account.asset) && account.zarValue == null && (
                     <p className="text-[11px] leading-snug text-muted-foreground">
-                      Tokenised stock — no price available right now, so this account shows units only.
+                      Tokenised stock — no price available right now, so this account shows units
+                      only.
                     </p>
                   )}
                   <div className="flex justify-between text-sm">

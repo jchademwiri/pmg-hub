@@ -49,31 +49,45 @@ export default async function SavingsPage() {
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             <Card className="shadow-sm">
               <CardHeader className="flex flex-row items-center justify-between pb-2">
-                <CardTitle className="text-sm font-medium text-muted-foreground">Total saved</CardTitle>
+                <CardTitle className="text-sm font-medium text-muted-foreground">
+                  Total saved
+                </CardTitle>
                 <Wallet className="size-4 text-primary" />
               </CardHeader>
               <CardContent>
                 <div className="text-2xl font-bold">{formatZAR(totalSaved)}</div>
-                <p className="text-xs text-muted-foreground mt-1">Across {active.length} active {active.length === 1 ? 'goal' : 'goals'}</p>
+                <p className="text-xs text-muted-foreground mt-1">
+                  Across {active.length} active {active.length === 1 ? 'goal' : 'goals'}
+                </p>
               </CardContent>
             </Card>
             <Card className="shadow-sm">
               <CardHeader className="flex flex-row items-center justify-between pb-2">
-                <CardTitle className="text-sm font-medium text-muted-foreground">Still to go</CardTitle>
+                <CardTitle className="text-sm font-medium text-muted-foreground">
+                  Still to go
+                </CardTitle>
                 <Target className="size-4 text-amber-500" />
               </CardHeader>
               <CardContent>
-                <div className="text-2xl font-bold">{formatZAR(Math.max(0, totalTarget - totalSaved))}</div>
-                <p className="text-xs text-muted-foreground mt-1">Of {formatZAR(totalTarget)} targeted</p>
+                <div className="text-2xl font-bold">
+                  {formatZAR(Math.max(0, totalTarget - totalSaved))}
+                </div>
+                <p className="text-xs text-muted-foreground mt-1">
+                  Of {formatZAR(totalTarget)} targeted
+                </p>
               </CardContent>
             </Card>
             <Card className="shadow-sm">
               <CardHeader className="flex flex-row items-center justify-between pb-2">
-                <CardTitle className="text-sm font-medium text-muted-foreground">Purchased</CardTitle>
+                <CardTitle className="text-sm font-medium text-muted-foreground">
+                  Purchased
+                </CardTitle>
                 <CheckCircle2 className="size-4 text-emerald-500" />
               </CardHeader>
               <CardContent>
-                <div className="text-2xl font-bold text-emerald-600 dark:text-emerald-400">{purchased}</div>
+                <div className="text-2xl font-bold text-emerald-600 dark:text-emerald-400">
+                  {purchased}
+                </div>
                 <p className="text-xs text-muted-foreground mt-1">Goals reached and bought</p>
               </CardContent>
             </Card>
@@ -83,7 +97,12 @@ export default async function SavingsPage() {
             {goals.map((g) => {
               const target = Number(g.targetAmount);
               const progress = computeProgress(g.saved, target);
-              const rate = computeSavingRate(g.saved, target, g.firstContribution, g.lastContribution);
+              const rate = computeSavingRate(
+                g.saved,
+                target,
+                g.firstContribution,
+                g.lastContribution,
+              );
 
               return (
                 <Link key={g.id} href={`/savings/${g.id}`} className="group">
@@ -96,14 +115,19 @@ export default async function SavingsPage() {
                             <p className="text-xs text-muted-foreground mt-0.5">{g.vendor}</p>
                           )}
                         </div>
-                        <Badge variant={statusVariant[g.status] ?? 'outline'} className="shrink-0 capitalize">
+                        <Badge
+                          variant={statusVariant[g.status] ?? 'outline'}
+                          className="shrink-0 capitalize"
+                        >
                           {g.status}
                         </Badge>
                       </div>
                     </CardHeader>
                     <CardContent className="flex flex-col gap-3">
                       <div className="flex items-baseline justify-between gap-2">
-                        <span className="text-2xl font-bold tabular-nums">{formatZAR(g.saved)}</span>
+                        <span className="text-2xl font-bold tabular-nums">
+                          {formatZAR(g.saved)}
+                        </span>
                         <span className="text-sm text-muted-foreground tabular-nums">
                           of {formatZAR(target)}
                         </span>
@@ -128,7 +152,9 @@ export default async function SavingsPage() {
                       {g.status === 'saving' && rate.projectedDate && (
                         <p className="text-xs text-muted-foreground border-t pt-3">
                           At {formatZAR(rate.perMonth)}/month, on track for{' '}
-                          <span className="font-medium text-foreground">{fmtDate(rate.projectedDate)}</span>
+                          <span className="font-medium text-foreground">
+                            {fmtDate(rate.projectedDate)}
+                          </span>
                         </p>
                       )}
                       {g.status === 'saving' && !rate.projectedDate && !progress.isFunded && (
