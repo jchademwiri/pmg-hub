@@ -28,27 +28,22 @@ interface BotCheckResult {
  * Run all bot protection checks. Returns `{ blocked: true }` if the submission
  * should be silently rejected, or `{ blocked: false }` to proceed.
  */
-export async function checkBotProtection(
-  opts: BotCheckOptions
-): Promise<BotCheckResult> {
+export async function checkBotProtection(opts: BotCheckOptions): Promise<BotCheckResult> {
   const msg = opts.successMessage;
 
   // 1. Turnstile verification (strongest signal, check first)
   if (opts.turnstile) {
-    const secretKey = import.meta.env.TURNSTILE_SECRET_KEY;
+    const secretKey = process.env.TURNSTILE_SECRET_KEY ?? '';
     if (secretKey) {
       try {
-        const res = await fetch(
-          'https://challenges.cloudflare.com/turnstile/v0/siteverify',
-          {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-            body: new URLSearchParams({
-              secret: secretKey,
-              response: opts.turnstile,
-            }),
-          }
-        );
+        const res = await fetch('https://challenges.cloudflare.com/turnstile/v0/siteverify', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+          body: new URLSearchParams({
+            secret: secretKey,
+            response: opts.turnstile,
+          }),
+        });
         const data = await res.json();
         if (!data.success) {
           console.log('[bot-check] Turnstile verification failed');
@@ -59,9 +54,7 @@ export async function checkBotProtection(
         // Fail open on network errors — don't block legitimate users
       }
     } else {
-      console.warn(
-        '[bot-check] TURNSTILE_SECRET_KEY not configured — skipping verification'
-      );
+      console.warn('[bot-check] TURNSTILE_SECRET_KEY not configured — skipping verification');
     }
   }
 
