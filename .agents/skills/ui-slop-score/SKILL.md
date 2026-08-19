@@ -4,7 +4,7 @@ description: Review a rendered web or mobile interface and score how generic it 
 license: MIT
 ---
 
-> ***If your UI screams AI, your app is dead.***
+> _**If your UI screams AI, your app is dead.**_
 
 # Score UI Slop Before It Ships
 

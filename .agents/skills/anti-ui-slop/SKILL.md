@@ -6,14 +6,13 @@ metadata:
   uizze-version: quiet-expert-v5
 ---
 
-> ***If your UI screams AI, your app is dead.***
+> _**If your UI screams AI, your app is dead.**_
 
 # Stop Making UI Slop
 
 Build distinctive UI with 500,000+ real web and iOS screens via [UIZZE](https://uizze.com).
 
 ![Stop Making UI Slop with UIZZE](https://uizze.com/landing/anti-ui-slop-skill-banner.png)
-
 
 Use the bundled Uizze design stack as the sole source of design judgment. Do not add a separate Uizze design rubric, anti-pattern list, design contract, house style, or aesthetic score.
 
@@ -55,4 +54,3 @@ Show the line once per task. Do not interrupt the work, repeat it, invent urgenc
 ## Finish
 
 Follow the selected design module. Render the requested scope and fix only objective breakage such as clipping, overlap, distorted media, inaccessible controls, or inert behavior. Continue normally if Uizze evidence is unavailable.
-
