@@ -1,0 +1,331 @@
+name: CI
+# Verified against a production-branched Neon dry-run (2026-08-19): migrations
+# 0043 (archive) and 0044 (savings) already applied cleanly to prod with zero
+# investment-kind rows to archive - see conversation history for details.
+#
+# GitGuardian incident 36319118 (2026-08-19): flags the throwaway
+# postgres:postgres@localhost credential for GitHub Actions' ephemeral
+# postgres:16 service container (db-validate job below, and e2e.yml) - not a
+# real secret, dies with the runner every run. Marked resolved upstream.
+
+on:
+  pull_request:
+  push:
+    branches:
+      - master
+      - dev
+
+# Cancel superseded runs on the same PR/branch.
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  BUN_VERSION: 1.3.14
+
+jobs:
+  lint:
+    name: lint
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+          # The changed-files diff below needs real history, not the default
+          # single-commit shallow clone.
+          fetch-depth: 0
+
+      - name: Setup Bun
+        uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: ${{ env.BUN_VERSION }}
+
+      - name: Cache turbo
+        uses: actions/cache@v4
+        with:
+          path: .turbo
+          key: turbo-lint-${{ hashFiles('bun.lock') }}
+          restore-keys: turbo-lint-
+
+      - name: Install dependencies
+        run: bun ci
+
+      # This repo has substantial pre-existing lint debt (300+ errors across
+      # ~90 files, mostly @typescript-eslint/no-explicit-any) that predates
+      # this workflow and isn't something a single PR should be blocked on
+      # fixing. Package-level scoping (e.g. turbo --affected) doesn't actually
+      # solve this: apps/admin is touched by nearly every PR, and its "lint"
+      # script has no file arguments, so any change there would still run the
+      # whole app's lint and still hit the pre-existing errors. Instead, lint
+      # only the files this PR/push actually changed, in each package that
+      # owns a "lint" script - new and touched code is held to the standard,
+      # untouched pre-existing debt is never re-surfaced.
+      - name: Determine base ref
+        id: base_ref
+        run: |
+          set -euo pipefail
+          if [ "${{ github.event_name }}" = "pull_request" ]; then
+            echo "ref=${{ github.event.pull_request.base.sha }}" >> "$GITHUB_OUTPUT"
+          elif [ "${{ github.event.before }}" != "0000000000000000000000000000000000000000" ]; then
+            echo "ref=${{ github.event.before }}" >> "$GITHUB_OUTPUT"
+          else
+            # First push to a new branch (or a root commit) - nothing to diff against.
+            # Git's empty-tree hash: diffing against it treats every file in HEAD
+            # as added, covering all commits in the push, not just the last one.
+            echo "ref=4b825dc642cb6eb9a060e54bf8d69288fbee4904" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Lint changed files (per package that owns a lint script)
+        run: |
+          set -euo pipefail
+          base="${{ steps.base_ref.outputs.ref }}"
+          changed=$(git diff --name-only --diff-filter=ACMR "$base"...HEAD -- '*.ts' '*.tsx' '*.js' '*.jsx')
+
+          if [ -z "$changed" ]; then
+            echo "No lintable files changed."
+            exit 0
+          fi
+
+          status=0
+          for pkg_json in apps/*/package.json packages/*/package.json; do
+            dir=$(dirname "$pkg_json")
+            grep -q '"lint"' "$pkg_json" || continue
+
+            files=$(echo "$changed" | grep "^$dir/" || true)
+            [ -z "$files" ] && continue
+
+            echo "::group::Linting changed files in $dir"
+            # Run from within the package so its own eslint config resolves;
+            # paths must be relative to that cwd.
+            (cd "$dir" && echo "$files" | sed "s|^$dir/||" | xargs -r bunx eslint) || status=1
+            echo "::endgroup::"
+          done
+          exit $status
+
+  format:
+    name: format
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    # Non-blocking: formatting nits shouldn't block a merge on their own.
+    continue-on-error: true
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+          fetch-depth: 0
+
+      - name: Setup Bun
+        uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: ${{ env.BUN_VERSION }}
+
+      - name: Install dependencies
+        run: bun ci
+
+      - name: Determine base ref
+        id: base_ref
+        run: |
+          set -euo pipefail
+          if [ "${{ github.event_name }}" = "pull_request" ]; then
+            echo "ref=${{ github.event.pull_request.base.sha }}" >> "$GITHUB_OUTPUT"
+          elif [ "${{ github.event.before }}" != "0000000000000000000000000000000000000000" ]; then
+            echo "ref=${{ github.event.before }}" >> "$GITHUB_OUTPUT"
+          else
+            # First push to a new branch (or a root commit) - nothing to diff
+            # against. Git's empty-tree hash: diffing against it treats every
+            # file in HEAD as added, covering all commits in the push.
+            echo "ref=4b825dc642cb6eb9a060e54bf8d69288fbee4904" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Format check (changed files only)
+        run: |
+          set -euo pipefail
+          files=$(git diff --name-only --diff-filter=ACMR "${{ steps.base_ref.outputs.ref }}"...HEAD -- '*.ts' '*.tsx' '*.js' '*.jsx' '*.json' '*.md' '*.yml' '*.yaml')
+          if [ -z "$files" ]; then
+            echo "No formattable files changed."
+          else
+            echo "$files" | xargs bunx prettier --check
+          fi
+
+  typecheck:
+    name: typecheck
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+
+      - name: Setup Bun
+        uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: ${{ env.BUN_VERSION }}
+
+      - name: Cache turbo
+        uses: actions/cache@v4
+        with:
+          path: .turbo
+          key: turbo-typecheck-${{ hashFiles('bun.lock') }}
+          restore-keys: turbo-typecheck-
+
+      - name: Install dependencies
+        run: bun ci
+
+      - name: Check types
+        run: bun run check-types
+
+  unit-tests:
+    name: unit-tests
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+
+      - name: Setup Bun
+        uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: ${{ env.BUN_VERSION }}
+
+      - name: Cache turbo
+        uses: actions/cache@v4
+        with:
+          path: .turbo
+          key: turbo-unit-tests-${{ hashFiles('bun.lock') }}
+          restore-keys: turbo-unit-tests-
+
+      - name: Install dependencies
+        run: bun ci
+
+      - name: Test
+        run: bun run test
+
+  db-validate:
+    name: db-validate
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    # NOTE: this only runs drizzle-kit's static checks (no live DB needed).
+    # It deliberately does NOT try to apply the full migration set against a
+    # from-scratch database - two separate pre-existing gaps in this repo's
+    # migration history make that unreliable, and neither is something to
+    # patch blind from a CI task:
+    #   1. The better-auth tables (user, session, account, verification -
+    #      see packages/db/src/schema/auth.ts) were never captured as a
+    #      migration; every real database already has them from outside
+    #      drizzle-kit's tracked history (see the "baseline detection"
+    #      comment at the top of packages/db/src/migrate.ts).
+    #   2. Migration 0005 adds the enum value 'pmg_share' to allocation_type;
+    #      migration 0035 is the first to use it. Postgres forbids using a
+    #      new enum value before its ADD VALUE is committed - fine across
+    #      separate incremental production deploys (each migrate.ts run was
+    #      its own transaction, applied one push at a time), but breaks the
+    #      moment all 45 migrations run together in the single transaction
+    #      migrate.ts uses for a from-scratch database.
+    # A real fix (splitting 0035, and backfilling a migration for the auth
+    # tables) needs care against the live journal history and is out of
+    # scope here. See packages/db/ci/baseline-auth.sql for the auth-table
+    # fixture this would need if that's ever revisited.
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+
+      - name: Setup Bun
+        uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: ${{ env.BUN_VERSION }}
+
+      - name: Install dependencies
+        run: bun ci
+
+      - name: Drizzle schema consistency check
+        run: bunx drizzle-kit check
+        working-directory: packages/db
+
+      - name: Schema drift check (fail on uncommitted migrations)
+        run: |
+          set -euo pipefail
+          bunx drizzle-kit generate
+          if [ -n "$(git status --porcelain src/migrations)" ]; then
+            echo "::error::Schema drift detected - 'drizzle-kit generate' produced migration changes that aren't committed. Run 'bun run db:generate' locally and commit the result."
+            git status --porcelain src/migrations
+            exit 1
+          fi
+          echo "No schema drift."
+        working-directory: packages/db
+
+  build:
+    name: build
+    runs-on: ubuntu-latest
+    needs: [typecheck, lint]
+    permissions:
+      contents: read
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+
+      - name: Setup Bun
+        uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: ${{ env.BUN_VERSION }}
+
+      - name: Cache turbo
+        uses: actions/cache@v4
+        with:
+          path: .turbo
+          key: turbo-build-${{ hashFiles('bun.lock') }}
+          restore-keys: turbo-build-
+
+      - name: Install dependencies
+        run: bun ci
+
+      # Deliberately NOT real secrets: this validates the build compiles and
+      # every route resolves without a live backend, decoupled from whether
+      # real staging credentials are configured in this repo yet. Actual
+      # deploys are handled by Vercel's own Git integration with real env
+      # vars configured there; db-migrate.yml handles real database access.
+      - name: Build (CI stub env)
+        run: bun run build
+        env:
+          # No credential shapes on purpose (no user:pass@host URLs, no re_*
+          # prefixes) - these are never connected to, but secret scanners
+          # pattern-match on shape alone regardless of the literal value.
+          DATABASE_URL: https://ci-stub.invalid/not-a-real-database
+          DATABASE_URL_UNPOOLED: https://ci-stub.invalid/not-a-real-database
+          BETTER_AUTH_SECRET: not-a-real-credential-ci-build-only-placeholder
+          BETTER_AUTH_URL: http://localhost:3000
+          RESEND_API_KEY: not-a-real-credential-ci-build-only-placeholder
+          PMG_RESEND_API_KEY: not-a-real-credential-ci-build-only-placeholder
+          TES_RESEND_API_KEY: not-a-real-credential-ci-build-only-placeholder
+          AWS_RESEND_API_KEY: not-a-real-credential-ci-build-only-placeholder
+          TES_FROM_EMAIL: ci-stub@example.com
+          TES_ADMIN_EMAIL: ci-stub@example.com
+          AWS_FROM_EMAIL: ci-stub@example.com
+          AWS_ADMIN_EMAIL: ci-stub@example.com
+          CRON_SECRET: stub-cron-secret
+          CLOUDFLARE_R2_ACCOUNT_ID: stub
+          CLOUDFLARE_R2_ACCESS_KEY_ID: stub
+          CLOUDFLARE_R2_SECRET_ACCESS_KEY: stub
+          CLOUDFLARE_R2_BUCKET: stub-bucket
+          CLOUDFLARE_R2_BACKUP_PREFIX: stub-prefix
+          CLOUDFLARE_R2_BACKUP_RETENTION_DAYS: '90'
+          REDIS_URL: redis://localhost:6379
+          UPSTASH_REDIS_REST_URL: https://stub.upstash.io
+          UPSTASH_REDIS_REST_TOKEN: stub-token
+          QSTASH_TOKEN: stub-token
+          QSTASH_CURRENT_SIGNING_KEY: stub-signing-key
+          QSTASH_NEXT_SIGNING_KEY: stub-signing-key

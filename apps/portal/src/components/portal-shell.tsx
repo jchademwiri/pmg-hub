@@ -21,13 +21,13 @@ import {
 } from 'lucide-react';
 import Link from 'next/link';
 import { authClient } from '@/lib/auth-client';
+import type { Client } from '@pmg/db';
 
 interface PortalShellProps {
-  client: any;
+  client: Client;
   isImpersonating: boolean;
   children: React.ReactNode;
 }
-
 
 export function PortalShell({ client, isImpersonating, children }: PortalShellProps) {
   const [isCollapsed, setIsCollapsed] = React.useState(false);
@@ -67,22 +67,22 @@ export function PortalShell({ client, isImpersonating, children }: PortalShellPr
 
   const handleSignOut = React.useCallback(async (e: React.MouseEvent) => {
     e.preventDefault();
-    
+
     // Clear impersonation cookies
     document.cookie = 'impersonate_client_id=; path=/; max-age=0; SameSite=Lax';
     document.cookie = 'dev_impersonate_client_id=; path=/; max-age=0; SameSite=Lax';
-    
+
     // Call better-auth signOut
     try {
       await authClient.signOut();
     } catch (err) {
       console.error('Failed to sign out:', err);
     }
-    
+
     // Clear session cookies to be absolutely sure
     document.cookie = 'better-auth.session_token=; path=/; max-age=0; SameSite=Lax';
     document.cookie = '__Secure-better-auth.session_token=; path=/; max-age=0; SameSite=Lax';
-    
+
     window.location.href = '/login';
   }, []);
 
@@ -136,7 +136,9 @@ export function PortalShell({ client, isImpersonating, children }: PortalShellPr
                     : 'text-muted-foreground hover:text-white hover:bg-white/[0.03]'
                 }`}
               >
-                <Icon className={`size-4 shrink-0 transition-colors ${isActive ? 'text-blue-400' : 'text-muted-foreground/75'}`} />
+                <Icon
+                  className={`size-4 shrink-0 transition-colors ${isActive ? 'text-blue-400' : 'text-muted-foreground/75'}`}
+                />
                 {!isCollapsed ? (
                   <span className="truncate animate-in fade-in duration-200">{item.label}</span>
                 ) : (
@@ -153,11 +155,13 @@ export function PortalShell({ client, isImpersonating, children }: PortalShellPr
         <div className="p-4 border-t border-white/5 bg-[#080c14]/30">
           {!isCollapsed && (
             <div className="mb-4 px-2 animate-in fade-in duration-200">
-              <p className="text-xs font-semibold text-white truncate">{client.businessName || client.name}</p>
+              <p className="text-xs font-semibold text-white truncate">
+                {client.businessName || client.name}
+              </p>
               <p className="text-[10px] text-muted-foreground truncate">{client.email}</p>
             </div>
           )}
-          
+
           <div className="flex flex-col gap-2">
             <button
               type="button"
@@ -182,7 +186,11 @@ export function PortalShell({ client, isImpersonating, children }: PortalShellPr
               onClick={() => setIsCollapsed(!isCollapsed)}
               className="hidden md:flex h-8 items-center justify-center rounded-lg border border-white/5 bg-white/[0.01] hover:bg-white/[0.03] text-muted-foreground hover:text-white transition-all cursor-pointer"
             >
-              {isCollapsed ? <ChevronRight className="size-4" /> : <ChevronLeft className="size-4" />}
+              {isCollapsed ? (
+                <ChevronRight className="size-4" />
+              ) : (
+                <ChevronLeft className="size-4" />
+              )}
             </button>
           </div>
         </div>
@@ -204,7 +212,9 @@ export function PortalShell({ client, isImpersonating, children }: PortalShellPr
                 <div className="flex size-8 items-center justify-center rounded-lg bg-gradient-to-tr from-blue-600 to-indigo-500 shadow-md">
                   <ShieldCheck className="size-4.5 text-white" />
                 </div>
-                <span className="font-bold text-white text-sm tracking-tight">PMG Client Portal</span>
+                <span className="font-bold text-white text-sm tracking-tight">
+                  PMG Client Portal
+                </span>
               </div>
               <button
                 type="button"
@@ -234,7 +244,9 @@ export function PortalShell({ client, isImpersonating, children }: PortalShellPr
                         : 'text-muted-foreground hover:text-white hover:bg-white/[0.03]'
                     }`}
                   >
-                    <Icon className={`size-4 shrink-0 transition-colors ${isActive ? 'text-blue-400' : 'text-muted-foreground/75'}`} />
+                    <Icon
+                      className={`size-4 shrink-0 transition-colors ${isActive ? 'text-blue-400' : 'text-muted-foreground/75'}`}
+                    />
                     <span>{item.label}</span>
                   </Link>
                 );
@@ -243,7 +255,9 @@ export function PortalShell({ client, isImpersonating, children }: PortalShellPr
 
             <div className="p-4 border-t border-white/5 bg-[#080c14]/30">
               <div className="mb-4 px-3">
-                <p className="text-xs font-semibold text-white truncate">{client.businessName || client.name}</p>
+                <p className="text-xs font-semibold text-white truncate">
+                  {client.businessName || client.name}
+                </p>
                 <p className="text-[10px] text-muted-foreground truncate">{client.email}</p>
               </div>
               <button
@@ -282,7 +296,8 @@ export function PortalShell({ client, isImpersonating, children }: PortalShellPr
           <div className="flex items-center gap-3 border-b border-amber-500/20 bg-amber-500/5 px-6 py-2.5 print:hidden">
             <ShieldAlert className="size-4 shrink-0 text-amber-400" />
             <span className="text-xs font-medium text-amber-300/90">
-              Preview — Viewing as <strong className="text-amber-200">{client.businessName || client.name}</strong>
+              Preview — Viewing as{' '}
+              <strong className="text-amber-200">{client.businessName || client.name}</strong>
             </span>
             <div className="ml-auto flex items-center gap-2">
               <span className="hidden sm:inline text-[10px] text-amber-400/50 font-mono">
@@ -301,9 +316,7 @@ export function PortalShell({ client, isImpersonating, children }: PortalShellPr
         )}
 
         {/* Content Body */}
-        <main className="flex-1 p-6 md:p-8 max-w-7xl w-full mx-auto pb-24 md:pb-8">
-          {children}
-        </main>
+        <main className="flex-1 p-6 md:p-8 max-w-7xl w-full mx-auto pb-24 md:pb-8">{children}</main>
       </div>
 
       {/* Mobile Bottom Navigation */}
@@ -312,19 +325,32 @@ export function PortalShell({ client, isImpersonating, children }: PortalShellPr
         style={{ paddingBottom: 'max(env(safe-area-inset-bottom), 8px)' }}
       >
         <div className="grid grid-cols-4 h-16 px-2 w-full overflow-hidden">
-          <Link href="/dashboard" className={`flex flex-col items-center justify-center w-full h-full space-y-1 ${pathname === '/dashboard' ? 'text-blue-400' : 'text-muted-foreground hover:text-white'}`}>
+          <Link
+            href="/dashboard"
+            className={`flex flex-col items-center justify-center w-full h-full space-y-1 ${pathname === '/dashboard' ? 'text-blue-400' : 'text-muted-foreground hover:text-white'}`}
+          >
             <LayoutDashboard className="size-5" />
             <span className="text-[10px] font-medium">Dashboard</span>
           </Link>
-          <Link href="/projects" className={`flex flex-col items-center justify-center w-full h-full space-y-1 ${pathname.startsWith('/projects') ? 'text-blue-400' : 'text-muted-foreground hover:text-white'}`}>
+          <Link
+            href="/projects"
+            className={`flex flex-col items-center justify-center w-full h-full space-y-1 ${pathname.startsWith('/projects') ? 'text-blue-400' : 'text-muted-foreground hover:text-white'}`}
+          >
             <CalendarDays className="size-5" />
             <span className="text-[10px] font-medium">Projects</span>
           </Link>
-          <Link href="/invoices" className={`flex flex-col items-center justify-center w-full h-full space-y-1 ${pathname.startsWith('/invoices') ? 'text-blue-400' : 'text-muted-foreground hover:text-white'}`}>
+          <Link
+            href="/invoices"
+            className={`flex flex-col items-center justify-center w-full h-full space-y-1 ${pathname.startsWith('/invoices') ? 'text-blue-400' : 'text-muted-foreground hover:text-white'}`}
+          >
             <FileText className="size-5" />
             <span className="text-[10px] font-medium">Invoices</span>
           </Link>
-          <button type="button" onClick={() => setIsMobileOpen(true)} className={`flex flex-col items-center justify-center w-full h-full space-y-1 cursor-pointer touch-manipulation ${isMobileOpen ? 'text-blue-400' : 'text-muted-foreground hover:text-white'}`}>
+          <button
+            type="button"
+            onClick={() => setIsMobileOpen(true)}
+            className={`flex flex-col items-center justify-center w-full h-full space-y-1 cursor-pointer touch-manipulation ${isMobileOpen ? 'text-blue-400' : 'text-muted-foreground hover:text-white'}`}
+          >
             <Menu className="size-5" />
             <span className="text-[10px] font-medium">More</span>
           </button>

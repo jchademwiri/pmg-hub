@@ -1,14 +1,32 @@
 'use client';
 
 import { useState, useTransition } from 'react';
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Trash2, Pencil } from 'lucide-react';
 import { toast } from 'sonner';
 import { Input } from '@/components/ui/input';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { addClientComplianceRecord, updateClientComplianceRecord, deleteClientComplianceRecord } from '@/app/actions/compliance';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
+import {
+  addClientComplianceRecord,
+  updateClientComplianceRecord,
+  deleteClientComplianceRecord,
+} from '@/app/actions/compliance';
+import type { ComplianceDocument } from '@pmg/db';
 
 const DEFAULT_TYPES = [
   'SARS Tax Clearance PIN',
@@ -19,7 +37,7 @@ const DEFAULT_TYPES = [
   'CUSTOM',
 ];
 
-export function ComplianceClient({ records }: { records: any[] }) {
+export function ComplianceClient({ records }: { records: ComplianceDocument[] }) {
   const [open, setOpen] = useState(false);
   const [editId, setEditId] = useState<string | null>(null);
   const [isPending, startTransition] = useTransition();
@@ -38,7 +56,7 @@ export function ComplianceClient({ records }: { records: any[] }) {
     setOpen(true);
   }
 
-  function handleOpenEdit(record: any) {
+  function handleOpenEdit(record: ComplianceDocument) {
     setEditId(record.id);
     setDocumentType(record.documentType);
     setCustomName(record.customName || '');
@@ -89,8 +107,6 @@ export function ComplianceClient({ records }: { records: any[] }) {
     }
   };
 
-
-  
   const formatDate = (date: Date) => {
     return date.toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' });
   };
@@ -101,18 +117,36 @@ export function ComplianceClient({ records }: { records: any[] }) {
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
           <h1 className="text-2xl font-bold tracking-tight text-white">Compliance Documents</h1>
-          <p className="text-muted-foreground mt-1 text-sm">Manage and track the expiry dates of your important business documents.</p>
+          <p className="text-muted-foreground mt-1 text-sm">
+            Manage and track the expiry dates of your important business documents.
+          </p>
         </div>
-        <Button variant="default" onClick={handleOpenAdd}>Add Document</Button>
+        <Button variant="default" onClick={handleOpenAdd}>
+          Add Document
+        </Button>
       </div>
-      
+
       {open && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80" onClick={() => setOpen(false)}>
-          <div role="dialog" aria-modal="true" className="w-full max-w-[425px] bg-slate-900 border border-slate-800 rounded-lg p-6 shadow-xl relative" onClick={(e) => e.stopPropagation()}>
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/80"
+          onClick={() => setOpen(false)}
+        >
+          <div
+            role="dialog"
+            aria-modal="true"
+            className="w-full max-w-[425px] bg-slate-900 border border-slate-800 rounded-lg p-6 shadow-xl relative"
+            onClick={(e) => e.stopPropagation()}
+          >
             <h2 className="text-xl font-bold text-white mb-6">
               {editId ? 'Edit Compliance Document' : 'Add Compliance Document'}
             </h2>
-            <button type="button" onClick={() => setOpen(false)} className="absolute top-4 right-4 text-slate-400 hover:text-white">✕</button>
+            <button
+              type="button"
+              onClick={() => setOpen(false)}
+              className="absolute top-4 right-4 text-slate-400 hover:text-white"
+            >
+              ✕
+            </button>
             <form onSubmit={onSubmit} className="space-y-4">
               <div className="space-y-2">
                 <label className="text-sm font-medium text-slate-200">Document Type</label>
@@ -122,36 +156,38 @@ export function ComplianceClient({ records }: { records: any[] }) {
                   </SelectTrigger>
                   <SelectContent className="bg-slate-900 border-slate-800 text-slate-200">
                     {DEFAULT_TYPES.map((t) => (
-                      <SelectItem key={t} value={t}>{t}</SelectItem>
+                      <SelectItem key={t} value={t}>
+                        {t}
+                      </SelectItem>
                     ))}
                   </SelectContent>
                 </Select>
               </div>
-              
+
               {documentType === 'CUSTOM' && (
                 <div className="space-y-2">
                   <label className="text-sm font-medium text-slate-200">Custom Document Name</label>
-                  <Input 
-                    className="bg-slate-950 border-slate-800 text-slate-200" 
-                    placeholder="e.g. Industry License" 
+                  <Input
+                    className="bg-slate-950 border-slate-800 text-slate-200"
+                    placeholder="e.g. Industry License"
                     value={customName}
                     onChange={(e) => setCustomName(e.target.value)}
                   />
                 </div>
               )}
-              
+
               <div className="space-y-2">
                 <label className="text-sm font-medium text-slate-200">Expiry Date</label>
-                <Input 
-                  type="date" 
-                  className="bg-slate-950 border-slate-800 text-slate-200" 
+                <Input
+                  type="date"
+                  className="bg-slate-950 border-slate-800 text-slate-200"
                   value={expiryDate}
                   onChange={(e) => setExpiryDate(e.target.value)}
                 />
               </div>
-              
+
               <Button type="submit" disabled={isPending} className="w-full mt-4">
-                {isPending ? 'Saving...' : (editId ? 'Update Document' : 'Save Document')}
+                {isPending ? 'Saving...' : editId ? 'Update Document' : 'Save Document'}
               </Button>
             </form>
           </div>
@@ -163,7 +199,9 @@ export function ComplianceClient({ records }: { records: any[] }) {
           <TableHeader>
             <TableRow className="border-b border-white/10 hover:bg-transparent">
               <TableHead className="text-muted-foreground font-semibold h-12">Document</TableHead>
-              <TableHead className="text-muted-foreground font-semibold h-12">Expiry Date</TableHead>
+              <TableHead className="text-muted-foreground font-semibold h-12">
+                Expiry Date
+              </TableHead>
               <TableHead className="text-muted-foreground font-semibold h-12">Status</TableHead>
               <TableHead className="w-[100px] h-12"></TableHead>
             </TableRow>
@@ -178,38 +216,67 @@ export function ComplianceClient({ records }: { records: any[] }) {
             )}
             {records.map((record) => {
               const expiryDateObj = new Date(`${record.expiryDate}T00:00:00`);
-              
+
               // Calculate difference in calendar days
-              const todayMidnight = new Date(today.getFullYear(), today.getMonth(), today.getDate());
-              const expiryMidnight = new Date(expiryDateObj.getFullYear(), expiryDateObj.getMonth(), expiryDateObj.getDate());
-              const daysLeft = Math.round((expiryMidnight.getTime() - todayMidnight.getTime()) / (1000 * 60 * 60 * 24));
-              
-              let badgeClassName = "bg-green-500/10 text-green-500 hover:bg-green-500/20 border-green-500/20";
+              const todayMidnight = new Date(
+                today.getFullYear(),
+                today.getMonth(),
+                today.getDate(),
+              );
+              const expiryMidnight = new Date(
+                expiryDateObj.getFullYear(),
+                expiryDateObj.getMonth(),
+                expiryDateObj.getDate(),
+              );
+              const daysLeft = Math.round(
+                (expiryMidnight.getTime() - todayMidnight.getTime()) / (1000 * 60 * 60 * 24),
+              );
+
+              let badgeClassName =
+                'bg-green-500/10 text-green-500 hover:bg-green-500/20 border-green-500/20';
               let statusText = `${daysLeft} days left`;
-              
+
               if (daysLeft < 0) {
-                badgeClassName = "bg-red-500/10 text-red-500 hover:bg-red-500/20 border-red-500/20";
-                statusText = "Expired";
+                badgeClassName = 'bg-red-500/10 text-red-500 hover:bg-red-500/20 border-red-500/20';
+                statusText = 'Expired';
               } else if (daysLeft <= 30) {
-                badgeClassName = "bg-amber-500/10 text-amber-500 hover:bg-amber-500/20 border-amber-500/20";
+                badgeClassName =
+                  'bg-amber-500/10 text-amber-500 hover:bg-amber-500/20 border-amber-500/20';
                 statusText = `Expiring (${daysLeft} days)`;
               }
 
               return (
-                <TableRow key={record.id} className="border-b border-white/10 hover:bg-white/[0.02]">
+                <TableRow
+                  key={record.id}
+                  className="border-b border-white/10 hover:bg-white/[0.02]"
+                >
                   <TableCell className="font-medium text-slate-200 py-4">
                     {record.documentType === 'CUSTOM' ? record.customName : record.documentType}
                   </TableCell>
                   <TableCell className="text-slate-300 py-4">{formatDate(expiryDateObj)}</TableCell>
                   <TableCell className="py-4">
-                    <Badge variant="outline" className={badgeClassName}>{statusText}</Badge>
+                    <Badge variant="outline" className={badgeClassName}>
+                      {statusText}
+                    </Badge>
                   </TableCell>
                   <TableCell className="text-right py-4">
                     <div className="flex items-center justify-end gap-2">
-                      <Button variant="outline" size="icon" className="bg-slate-900 border-slate-700 hover:bg-slate-800" disabled={isPending} onClick={() => handleOpenEdit(record)}>
+                      <Button
+                        variant="outline"
+                        size="icon"
+                        className="bg-slate-900 border-slate-700 hover:bg-slate-800"
+                        disabled={isPending}
+                        onClick={() => handleOpenEdit(record)}
+                      >
                         <Pencil className="size-4 text-slate-300 hover:text-blue-400" />
                       </Button>
-                      <Button variant="outline" size="icon" className="bg-slate-900 border-slate-700 hover:bg-slate-800" disabled={isPending} onClick={() => handleDelete(record.id)}>
+                      <Button
+                        variant="outline"
+                        size="icon"
+                        className="bg-slate-900 border-slate-700 hover:bg-slate-800"
+                        disabled={isPending}
+                        onClick={() => handleDelete(record.id)}
+                      >
                         <Trash2 className="size-4 text-slate-300 hover:text-red-400" />
                       </Button>
                     </div>

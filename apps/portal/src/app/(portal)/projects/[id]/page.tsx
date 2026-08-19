@@ -20,19 +20,15 @@ export default async function PortalProjectDetailsPage({ params }: PageProps) {
     const [row] = await db
       .select()
       .from(projectScheduleEntries)
-      .where(
-        and(
-          eq(projectScheduleEntries.id, id),
-          eq(projectScheduleEntries.clientId, client.id)
-        )
-      )
+      .where(and(eq(projectScheduleEntries.id, id), eq(projectScheduleEntries.clientId, client.id)))
       .limit(1);
     project = row;
-  } catch (error: any) {
-    console.error("❌ Error fetching project details in PortalProjectDetailsPage:", {
-      message: error.message,
-      stack: error.stack,
-      cause: error.cause,
+  } catch (error) {
+    const err = error instanceof Error ? error : new Error(String(error));
+    console.error('❌ Error fetching project details in PortalProjectDetailsPage:', {
+      message: err.message,
+      stack: err.stack,
+      cause: err.cause,
     });
     throw error;
   }
@@ -41,16 +37,9 @@ export default async function PortalProjectDetailsPage({ params }: PageProps) {
     notFound();
   }
 
-  const [divisions, checklist] = await Promise.all([
-    getAllDivisions(),
-    getProjectChecklist(id),
-  ]);
+  const [divisions, checklist] = await Promise.all([getAllDivisions(), getProjectChecklist(id)]);
 
   return (
-    <ProjectDetailsClient
-      project={project}
-      divisions={divisions}
-      initialChecklist={checklist}
-    />
+    <ProjectDetailsClient project={project} divisions={divisions} initialChecklist={checklist} />
   );
 }

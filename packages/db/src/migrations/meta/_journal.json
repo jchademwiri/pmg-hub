@@ -302,6 +302,20 @@
       "when": 1786455475650,
       "tag": "0042_shorten_project_progress_fk_names",
       "breakpoints": true
+    },
+    {
+      "idx": 43,
+      "version": "7",
+      "when": 1786683324971,
+      "tag": "0043_spotty_fat_cobra",
+      "breakpoints": true
+    },
+    {
+      "idx": 44,
+      "version": "7",
+      "when": 1786866722206,
+      "tag": "0044_thankful_meggan",
+      "breakpoints": true
     }
   ]
 }

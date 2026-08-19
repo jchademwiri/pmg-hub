@@ -9,43 +9,79 @@
  */
 
 import {
-  Banknote, FileSpreadsheet, Network, LineChart, Cog,
-  LayoutDashboard, TrendingUp, TrendingDown, Tags, BookOpen,
-  FileText, Receipt, ScrollText, Users, UserPlus, Building2,
-  Camera, BarChart3, Settings, UserCog,
-  Package, Shield, Database, Wallet, ArrowDownLeft,
-  PieChart, Calculator, BookMarked, NotebookPen, Scale,
-  Calendar, LayoutGrid, CalendarClock, ListTodo, CalendarRange,
+  Banknote,
+  FileSpreadsheet,
+  Network,
+  LineChart,
+  Cog,
+  LayoutDashboard,
+  TrendingUp,
+  TrendingDown,
+  Tags,
+  BookOpen,
+  FileText,
+  Receipt,
+  ScrollText,
+  Users,
+  UserPlus,
+  Building2,
+  Camera,
+  BarChart3,
+  Settings,
+  UserCog,
+  Package,
+  Shield,
+  Database,
+  Wallet,
+  ArrowDownLeft,
+  PieChart,
+  Calculator,
+  BookMarked,
+  NotebookPen,
+  Scale,
+  Calendar,
+  LayoutGrid,
+  CalendarClock,
+  ListTodo,
+  CalendarRange,
   Landmark,
-} from 'lucide-react'
-import type { LucideIcon } from 'lucide-react'
-import type { Role } from '@/lib/roles'
+  PiggyBank,
+} from 'lucide-react';
+import type { LucideIcon } from 'lucide-react';
+import type { Role } from '@/lib/roles';
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 
 export type NavItem = {
-  title: string
-  url: string
-  icon: LucideIcon
+  title: string;
+  url: string;
+  icon: LucideIcon;
   /** Hide this item from the sidebar unless the current user meets this role. */
-  minRole?: Role
-}
+  minRole?: Role;
+};
 
-export type GroupKey = 'billing' | 'finance' | 'accounting' | 'relationships' | 'insights' | 'system' | 'projects' | 'advanced'
+export type GroupKey =
+  | 'billing'
+  | 'finance'
+  | 'accounting'
+  | 'relationships'
+  | 'insights'
+  | 'system'
+  | 'projects'
+  | 'advanced';
 
 export type NavGroup = {
-  key: GroupKey
-  label: string
-  icon: LucideIcon
-  items: NavItem[]
-}
-
+  key: GroupKey;
+  label: string;
+  icon: LucideIcon;
+  items: NavItem[];
+};
 
 // ── Overview (non-grouped) ────────────────────────────────────────────────────
 
 export const OVERVIEW: NavItem[] = [
-  { title: 'Dashboard',  url: '/dashboard',       icon: LayoutDashboard },
-]
+  { title: 'Dashboard', url: '/dashboard', icon: LayoutDashboard },
+];
 
 // ── Groups ────────────────────────────────────────────────────────────────────
 // Order here is the sidebar's rendered order (top to bottom), prioritized around
@@ -58,14 +94,14 @@ export const GROUPS: NavGroup[] = [
     label: 'Billing',
     icon: FileSpreadsheet,
     items: [
-      { title: 'Overview',      url: '/billing',            icon: LayoutGrid },
-      { title: 'Quotations',    url: '/billing/quotes',     icon: FileText   },
-      { title: 'Invoices',      url: '/billing/invoices',   icon: Receipt    },
-      { title: 'Payments',      url: '/billing/payments',   icon: Banknote   },
-      { title: 'Credits',       url: '/billing/credits',    icon: Wallet     },
-      { title: 'Statements',    url: '/billing/statements', icon: ScrollText },
-      { title: 'Aging Report',  url: '/billing/aging',      icon: Calendar   },
-      { title: 'Billing Items', url: '/billing/items',     icon: Package    },
+      { title: 'Overview', url: '/billing', icon: LayoutGrid },
+      { title: 'Quotations', url: '/billing/quotes', icon: FileText },
+      { title: 'Invoices', url: '/billing/invoices', icon: Receipt },
+      { title: 'Payments', url: '/billing/payments', icon: Banknote },
+      { title: 'Credits', url: '/billing/credits', icon: Wallet },
+      { title: 'Statements', url: '/billing/statements', icon: ScrollText },
+      { title: 'Aging Report', url: '/billing/aging', icon: Calendar },
+      { title: 'Billing Items', url: '/billing/items', icon: Package },
     ],
   },
   {
@@ -73,10 +109,10 @@ export const GROUPS: NavGroup[] = [
     label: 'Clients',
     icon: Network,
     items: [
-      { title: 'Overview',  url: '/relationships',           icon: LayoutGrid },
-      { title: 'Clients',   url: '/relationships/clients',   icon: Users      },
-      { title: 'Leads',     url: '/relationships/leads',     icon: UserPlus   },
-      { title: 'Divisions', url: '/relationships/divisions', icon: Building2  },
+      { title: 'Overview', url: '/relationships', icon: LayoutGrid },
+      { title: 'Clients', url: '/relationships/clients', icon: Users },
+      { title: 'Leads', url: '/relationships/leads', icon: UserPlus },
+      { title: 'Divisions', url: '/relationships/divisions', icon: Building2 },
     ],
   },
   {
@@ -84,9 +120,9 @@ export const GROUPS: NavGroup[] = [
     label: 'Projects',
     icon: CalendarClock,
     items: [
-      { title: 'Overview',      url: '/projects',          icon: LayoutGrid },
-      { title: 'Schedule List', url: '/projects/list',     icon: ListTodo },
-      { title: 'Timeline',      url: '/projects/timeline', icon: CalendarRange },
+      { title: 'Overview', url: '/projects', icon: LayoutGrid },
+      { title: 'Schedule List', url: '/projects/list', icon: ListTodo },
+      { title: 'Timeline', url: '/projects/timeline', icon: CalendarRange },
     ],
   },
   {
@@ -94,11 +130,12 @@ export const GROUPS: NavGroup[] = [
     label: 'Finance',
     icon: Banknote,
     items: [
-      { title: 'Overview',           url: '/finance',            icon: LayoutGrid    },
-      { title: 'Income',             url: '/finance/income',     icon: ArrowDownLeft },
-      { title: 'Expenses',           url: '/finance/expenses',   icon: TrendingDown  },
-      { title: 'Finance Categories', url: '/finance/categories', icon: Tags          },
-      { title: 'Assets Register',    url: '/assets',             icon: Landmark      },
+      { title: 'Overview', url: '/finance', icon: LayoutGrid },
+      { title: 'Income', url: '/finance/income', icon: ArrowDownLeft },
+      { title: 'Expenses', url: '/finance/expenses', icon: TrendingDown },
+      { title: 'Finance Categories', url: '/finance/categories', icon: Tags },
+      { title: 'Assets Register', url: '/assets', icon: Landmark },
+      { title: 'Savings Goals', url: '/savings', icon: PiggyBank },
     ],
   },
   {
@@ -106,13 +143,13 @@ export const GROUPS: NavGroup[] = [
     label: 'Accounting',
     icon: Calculator,
     items: [
-      { title: 'Overview',           url: '/accounting',                    icon: LayoutGrid    },
-      { title: 'Chart of Accounts',  url: '/accounting/chart-of-accounts',  icon: BookOpen      },
-      { title: 'General Ledger',     url: '/accounting/general-ledger',     icon: BookMarked    },
-      { title: 'Journals',           url: '/accounting/journals',           icon: NotebookPen   },
-      { title: 'Trial Balance',      url: '/accounting/trial-balance',      icon: Scale         },
-      { title: 'Profit & Loss',      url: '/accounting/profit-and-loss',    icon: LineChart     },
-      { title: 'Accounting Periods', url: '/accounting/periods',            icon: Calendar      },
+      { title: 'Overview', url: '/accounting', icon: LayoutGrid },
+      { title: 'Chart of Accounts', url: '/accounting/chart-of-accounts', icon: BookOpen },
+      { title: 'General Ledger', url: '/accounting/general-ledger', icon: BookMarked },
+      { title: 'Journals', url: '/accounting/journals', icon: NotebookPen },
+      { title: 'Trial Balance', url: '/accounting/trial-balance', icon: Scale },
+      { title: 'Profit & Loss', url: '/accounting/profit-and-loss', icon: LineChart },
+      { title: 'Accounting Periods', url: '/accounting/periods', icon: Calendar },
     ],
   },
   {
@@ -120,12 +157,12 @@ export const GROUPS: NavGroup[] = [
     label: 'Reports',
     icon: BarChart3,
     items: [
-      { title: 'Overview',           url: '/insights',                   icon: LayoutGrid },
-      { title: 'Financial Reports',  url: '/insights/financial-reports', icon: PieChart   },
-      { title: 'Business Analysis',  url: '/insights/analysis',          icon: TrendingUp },
-      { title: 'Performance Reports', url: '/insights/reports',          icon: BarChart3  },
-      { title: 'Snapshots',          url: '/insights/snapshots',         icon: Camera     },
-      { title: 'Compliance Radar',   url: '/insights/compliance-radar',  icon: Shield     },
+      { title: 'Overview', url: '/insights', icon: LayoutGrid },
+      { title: 'Financial Reports', url: '/insights/financial-reports', icon: PieChart },
+      { title: 'Business Analysis', url: '/insights/analysis', icon: TrendingUp },
+      { title: 'Performance Reports', url: '/insights/reports', icon: BarChart3 },
+      { title: 'Snapshots', url: '/insights/snapshots', icon: Camera },
+      { title: 'Compliance Radar', url: '/insights/compliance-radar', icon: Shield },
     ],
   },
   {
@@ -133,27 +170,27 @@ export const GROUPS: NavGroup[] = [
     label: 'System',
     icon: Cog,
     items: [
-      { title: 'Overview',       url: '/settings',              icon: Settings  },
-      { title: 'Organisation',   url: '/settings/organisation', icon: Building2 },
-      { title: 'Billing',        url: '/settings/billing',      icon: Receipt   },
-      { title: 'Users',          url: '/settings/users',        icon: UserCog, minRole: 'super_admin' },
-      { title: 'Security',       url: '/settings/security',     icon: Shield    },
-      { title: 'Data & Exports', url: '/settings/data',         icon: Database  },
+      { title: 'Overview', url: '/settings', icon: Settings },
+      { title: 'Organisation', url: '/settings/organisation', icon: Building2 },
+      { title: 'Billing', url: '/settings/billing', icon: Receipt },
+      { title: 'Users', url: '/settings/users', icon: UserCog, minRole: 'super_admin' },
+      { title: 'Security', url: '/settings/security', icon: Shield },
+      { title: 'Data & Exports', url: '/settings/data', icon: Database },
     ],
   },
-]
+];
 
 // ── Route labels (derived - do not edit manually) ─────────────────────────────
 // Built from GROUPS + OVERVIEW so top-nav breadcrumbs always match the sidebar.
 
-const derivedLabels: Record<string, string> = {}
+const derivedLabels: Record<string, string> = {};
 
 for (const item of OVERVIEW) {
-  derivedLabels[item.url] = item.title
+  derivedLabels[item.url] = item.title;
 }
 for (const group of GROUPS) {
   for (const item of group.items) {
-    derivedLabels[item.url] = item.title
+    derivedLabels[item.url] = item.title;
   }
 }
 
@@ -163,9 +200,9 @@ const EXTRA_LABELS: Record<string, string> = {
   '/billing/payments/add': 'Record Payment',
   '/projects/list': 'Schedule List',
   '/projects/timeline': 'Timeline',
-}
+};
 
 export const ROUTE_LABELS: Record<string, string> = {
   ...derivedLabels,
   ...EXTRA_LABELS,
-}
+};

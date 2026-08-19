@@ -3,23 +3,32 @@
 // Includes baseline detection: if the DB already has the schema but no migration
 // history (e.g. a Neon branch or db:push setup), we seed the migrations table so
 // Drizzle only runs genuinely new migrations going forward.
-import { config } from "dotenv";
-import { resolve } from "path";
-import pg from "pg";
-import { drizzle } from "drizzle-orm/node-postgres";
-import { migrate } from "drizzle-orm/node-postgres/migrator";
-import { readFileSync } from "fs";
+import { config } from 'dotenv';
+import { resolve } from 'path';
+import pg from 'pg';
+import { drizzle } from 'drizzle-orm/node-postgres';
+import { migrate } from 'drizzle-orm/node-postgres/migrator';
+import { readFileSync } from 'fs';
 
 // Try packages/db/.env first, then fall back to the monorepo root .env / .env.local.
 // In CI, DATABASE_URL_UNPOOLED is injected via GitHub Secrets so dotenv is a no-op.
-config({ path: resolve(import.meta.dir, "../.env") });
-config({ path: resolve(import.meta.dir, "../../../.env"), override: false });
-config({ path: resolve(import.meta.dir, "../../../.env.local"), override: false });
+config({ path: resolve(import.meta.dir, '../.env') });
+config({ path: resolve(import.meta.dir, '../../../.env'), override: false });
+config({ path: resolve(import.meta.dir, '../../../.env.local'), override: false });
 
 const url = process.env.DATABASE_URL_UNPOOLED;
-if (!url) throw new Error("DATABASE_URL_UNPOOLED is not set");
+if (!url) throw new Error('DATABASE_URL_UNPOOLED is not set');
 
-const client = new pg.Client({ connectionString: url, ssl: { rejectUnauthorized: true } });
+// Neon (staging/prod) always requires SSL. Ephemeral local/CI Postgres containers
+// (used for migration dry-runs) don't support it, so skip SSL for those hosts.
+const isLocalHost = /^(postgres:\/\/|postgresql:\/\/)[^@]*@(localhost|127\.0\.0\.1)[:/]/.test(url);
+const client = new pg.Client({
+  connectionString: url,
+  ssl: isLocalHost ? false : { rejectUnauthorized: true },
+  // pg defaults this to 0 (no timeout) - bound it so an unreachable database
+  // fails fast instead of hanging until the job's own timeout kicks in.
+  connectionTimeoutMillis: 15_000,
+});
 await client.connect();
 
 // ── Baseline detection ────────────────────────────────────────────────────────
@@ -34,8 +43,8 @@ await client.connect();
 // ones added in future.
 
 // Read the journal to get the latest known migration timestamp.
-const journalPath = resolve(import.meta.dir, "migrations/meta/_journal.json");
-const journal = JSON.parse(readFileSync(journalPath, "utf-8")) as {
+const journalPath = resolve(import.meta.dir, 'migrations/meta/_journal.json');
+const journal = JSON.parse(readFileSync(journalPath, 'utf-8')) as {
   entries: { idx: number; tag: string; when: number }[];
 };
 const latestWhen = Math.max(...journal.entries.map((e) => e.when));
@@ -62,21 +71,23 @@ if (schemaAlreadyExists) {
 
   // Check if the table already has a record covering the latest migration.
   const { rows: latestRows } = await client.query<{ max_ts: string | null }>(
-    `SELECT MAX(created_at)::text AS max_ts FROM drizzle.__drizzle_migrations`
+    `SELECT MAX(created_at)::text AS max_ts FROM drizzle.__drizzle_migrations`,
   );
-  const currentLatest = parseInt(latestRows[0]?.max_ts ?? "0", 10);
+  const currentLatest = parseInt(latestRows[0]?.max_ts ?? '0', 10);
 
   if (currentLatest === 0) {
-    console.log("⚡ Schema exists but no migration history found. Inserting baseline sentinel...");
+    console.log('⚡ Schema exists but no migration history found. Inserting baseline sentinel...');
     // Insert a sentinel row with the latest migration timestamp.
     // Drizzle will see this as the "last applied" migration and skip everything up to it.
     await client.query(
       `INSERT INTO drizzle.__drizzle_migrations (hash, created_at) VALUES ($1, $2)`,
-      ["baseline-sentinel", latestWhen]
+      ['baseline-sentinel', latestWhen],
     );
     console.log(`   ✅ Baseline sentinel inserted (up to timestamp ${latestWhen}).`);
   } else if (currentLatest < latestWhen) {
-    console.log(`⚡ Pending migrations detected (history: ${currentLatest}, latest: ${latestWhen}).`);
+    console.log(
+      `⚡ Pending migrations detected (history: ${currentLatest}, latest: ${latestWhen}).`,
+    );
   } else {
     console.log(`✓ Migration history is up to date (latest: ${currentLatest}).`);
   }
@@ -85,9 +96,9 @@ if (schemaAlreadyExists) {
 
 const db = drizzle(client);
 
-console.log("🚀 Running migrations...");
+console.log('🚀 Running migrations...');
 
-await migrate(db, { migrationsFolder: resolve(import.meta.dir, "migrations") });
+await migrate(db, { migrationsFolder: resolve(import.meta.dir, 'migrations') });
 
-console.log("✅ Migrations applied.");
+console.log('✅ Migrations applied.');
 await client.end();

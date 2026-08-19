@@ -15,7 +15,7 @@ import {
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import type { ProjectScheduleEntry } from '@pmg/db';
+import type { ProjectScheduleEntry, ProgressSectionWithItems } from '@pmg/db';
 import { TaskBoardReadOnly } from '@/components/projects/task-board-readonly';
 import { TaskListViewReadOnly } from '@/components/projects/task-list-view-readonly';
 
@@ -47,7 +47,7 @@ interface ProgressSection {
 interface ProjectDetailsClientProps {
   project: ProjectScheduleEntry;
   divisions: DivisionSummary[];
-  initialChecklist: any[];
+  initialChecklist: ProgressSectionWithItems[];
 }
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
@@ -122,8 +122,8 @@ export function ProjectDetailsClient({
 
   const checklist: ProgressSection[] = initialChecklist.map((s) => ({
     ...s,
-    status: s.status as any,
-    items: s.items.map((i: any) => ({
+    status: s.status,
+    items: s.items.map((i) => ({
       ...i,
       completedAt: i.completedAt ? new Date(i.completedAt) : null,
     })),
@@ -135,7 +135,7 @@ export function ProjectDetailsClient({
   // Checklist Calculations
   const totalItems = checklist.reduce((acc, s) => acc + s.items.length, 0);
   const completedItems = checklist.reduce(
-    (acc, s) => acc + s.items.filter((i: any) => i.isCompleted).length,
+    (acc, s) => acc + s.items.filter((i) => i.isCompleted).length,
     0,
   );
   const progressPercent = totalItems > 0 ? Math.round((completedItems / totalItems) * 100) : 0;
@@ -154,7 +154,10 @@ export function ProjectDetailsClient({
           <h1 className="text-2xl font-bold tracking-tight text-white">
             {project.projectReference}
           </h1>
-          <Badge variant="outline" className={`text-[10px] uppercase font-bold tracking-wider px-2 py-0.5 ${status.className}`}>
+          <Badge
+            variant="outline"
+            className={`text-[10px] uppercase font-bold tracking-wider px-2 py-0.5 ${status.className}`}
+          >
             {status.label}
           </Badge>
         </div>
@@ -210,7 +213,10 @@ export function ProjectDetailsClient({
             </div>
 
             {totalItems > 0 && (
-              <Badge variant="secondary" className="text-xs font-medium bg-white/5 text-white border-white/5">
+              <Badge
+                variant="secondary"
+                className="text-xs font-medium bg-white/5 text-white border-white/5"
+              >
                 {completedItems}/{totalItems} Completed ({progressPercent}%)
               </Badge>
             )}
@@ -244,7 +250,9 @@ export function ProjectDetailsClient({
           <CardHeader className="pb-3">
             <div className="flex items-center gap-2">
               <Sparkles className="size-4 text-blue-400" />
-              <CardTitle className="text-sm font-semibold text-white">Project Notes & Updates</CardTitle>
+              <CardTitle className="text-sm font-semibold text-white">
+                Project Notes & Updates
+              </CardTitle>
             </div>
           </CardHeader>
           <CardContent className="space-y-4 text-xs leading-relaxed text-muted-foreground">
@@ -283,11 +291,14 @@ export function ProjectDetailsClient({
       >
         {/* Header */}
         <div className="flex items-center justify-between p-4 border-b border-white/5">
-          <h3 id="project-metadata-title" className="text-sm font-semibold text-white flex items-center gap-2">
+          <h3
+            id="project-metadata-title"
+            className="text-sm font-semibold text-white flex items-center gap-2"
+          >
             <Clock className="size-4 text-blue-400" /> Project Metadata
           </h3>
-          <button 
-            onClick={() => setMetadataOpen(false)} 
+          <button
+            onClick={() => setMetadataOpen(false)}
             aria-label="Close dialog"
             className="text-white/70 hover:text-red-500 transition-colors p-1 cursor-pointer"
           >

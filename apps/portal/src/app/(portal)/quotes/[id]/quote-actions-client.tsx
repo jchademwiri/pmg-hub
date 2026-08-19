@@ -10,16 +10,25 @@ interface QuoteActionsClientProps {
   quoteId: string;
 }
 
+// Stable no-op subscription for the useSyncExternalStore call below - defined
+// once at module scope so it doesn't get recreated (and re-subscribed) on
+// every render.
+const subscribeNoop = () => () => {};
+
 export function QuoteActionsClient({ quoteId }: QuoteActionsClientProps) {
   const [isPending, startTransition] = React.useTransition();
   const [showAcceptModal, setShowAcceptModal] = React.useState(false);
   const [showDeclineModal, setShowDeclineModal] = React.useState(false);
   const [declineReason, setDeclineReason] = React.useState('');
-  const [mounted, setMounted] = React.useState(false);
-
-  React.useEffect(() => {
-    setMounted(true);
-  }, []);
+  // Portals must not render during SSR (no `document` yet) or the pre-hydration
+  // client render (would mismatch the server-rendered tree). useSyncExternalStore
+  // with a constant subscription is the client-only-render idiom that avoids an
+  // effect-driven setState-then-rerender pass for this exact case.
+  const mounted = React.useSyncExternalStore(
+    subscribeNoop,
+    () => true,
+    () => false,
+  );
 
   async function handleAccept() {
     startTransition(async () => {
@@ -72,93 +81,98 @@ export function QuoteActionsClient({ quoteId }: QuoteActionsClientProps) {
       </button>
 
       {/* Custom Accept Modal */}
-      {showAcceptModal && mounted && createPortal(
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-xs p-4">
-          <div className="w-full max-w-md rounded-xl border border-white/10 bg-[#0a0f1d] p-6 shadow-2xl animate-in zoom-in-95 duration-200 text-left">
-            <div className="flex items-start gap-3">
-              <div className="flex size-10 shrink-0 items-center justify-center rounded-lg bg-emerald-500/10 text-emerald-400">
-                <Check className="size-5" />
+      {showAcceptModal &&
+        mounted &&
+        createPortal(
+          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-xs p-4">
+            <div className="w-full max-w-md rounded-xl border border-white/10 bg-[#0a0f1d] p-6 shadow-2xl animate-in zoom-in-95 duration-200 text-left">
+              <div className="flex items-start gap-3">
+                <div className="flex size-10 shrink-0 items-center justify-center rounded-lg bg-emerald-500/10 text-emerald-400">
+                  <Check className="size-5" />
+                </div>
+                <div>
+                  <h3 className="text-base font-bold text-white">Accept Quotation</h3>
+                  <p className="text-xs text-muted-foreground mt-1.5 leading-relaxed">
+                    Are you sure you want to accept this quotation? This will notify our billing
+                    department to convert it to an invoice and begin scheduling.
+                  </p>
+                </div>
               </div>
-              <div>
-                <h3 className="text-base font-bold text-white">Accept Quotation</h3>
-                <p className="text-xs text-muted-foreground mt-1.5 leading-relaxed">
-                  Are you sure you want to accept this quotation? This will notify our billing department to convert it to an invoice and begin scheduling.
-                </p>
-              </div>
-            </div>
 
-            <div className="mt-6 flex justify-end gap-2.5">
-              <button
-                type="button"
-                disabled={isPending}
-                onClick={() => setShowAcceptModal(false)}
-                className="px-3.5 py-1.5 text-xs font-semibold text-muted-foreground hover:text-white rounded-lg transition-colors disabled:opacity-50"
-              >
-                Cancel
-              </button>
-              <button
-                type="button"
-                disabled={isPending}
-                onClick={handleAccept}
-                className="inline-flex items-center gap-2 px-4 py-1.5 text-xs font-semibold text-white bg-emerald-600 hover:bg-emerald-500 rounded-lg shadow-md transition-all active:scale-[0.98] disabled:opacity-50"
-              >
-                {isPending && <Loader2 className="size-3.5 animate-spin" />}
-                <span>Confirm & Accept</span>
-              </button>
-            </div>
-          </div>
-        </div>,
-        document.body
-      )}
-
-      {/* Custom Decline Modal */}
-      {showDeclineModal && mounted && createPortal(
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-xs p-4">
-          <div className="w-full max-w-md rounded-xl border border-white/10 bg-[#0a0f1d] p-6 shadow-2xl animate-in zoom-in-95 duration-200 text-left">
-            <div className="flex items-start gap-3">
-              <div className="flex size-10 shrink-0 items-center justify-center rounded-lg bg-red-500/10 text-red-400">
-                <ShieldAlert className="size-5" />
-              </div>
-              <div>
-                <h3 className="text-base font-bold text-white">Decline Quotation</h3>
-                <p className="text-xs text-muted-foreground mt-1.5 leading-relaxed">
-                  Please let us know why you are declining this quotation (optional).
-                </p>
-              </div>
-            </div>
-
-            <form onSubmit={handleDecline} className="mt-4 space-y-4">
-              <textarea
-                placeholder="Reason for declining..."
-                value={declineReason}
-                onChange={(e) => setDeclineReason(e.target.value)}
-                disabled={isPending}
-                className="w-full min-h-[100px] rounded-lg border border-white/10 bg-white/[0.03] p-3 text-xs text-white placeholder-muted-foreground/50 outline-none transition-all focus:border-blue-500/50 focus:bg-white/[0.05] focus:ring-2 focus:ring-blue-500/10 disabled:opacity-50 resize-none"
-              />
-
-              <div className="flex justify-end gap-2.5">
+              <div className="mt-6 flex justify-end gap-2.5">
                 <button
                   type="button"
                   disabled={isPending}
-                  onClick={() => setShowDeclineModal(false)}
+                  onClick={() => setShowAcceptModal(false)}
                   className="px-3.5 py-1.5 text-xs font-semibold text-muted-foreground hover:text-white rounded-lg transition-colors disabled:opacity-50"
                 >
                   Cancel
                 </button>
                 <button
-                  type="submit"
+                  type="button"
                   disabled={isPending}
-                  className="inline-flex items-center gap-2 px-4 py-1.5 text-xs font-semibold text-white bg-red-600 hover:bg-red-500 rounded-lg shadow-md transition-all active:scale-[0.98] disabled:opacity-50"
+                  onClick={handleAccept}
+                  className="inline-flex items-center gap-2 px-4 py-1.5 text-xs font-semibold text-white bg-emerald-600 hover:bg-emerald-500 rounded-lg shadow-md transition-all active:scale-[0.98] disabled:opacity-50"
                 >
                   {isPending && <Loader2 className="size-3.5 animate-spin" />}
-                  <span>Decline Quote</span>
+                  <span>Confirm & Accept</span>
                 </button>
               </div>
-            </form>
-          </div>
-        </div>,
-        document.body
-      )}
+            </div>
+          </div>,
+          document.body,
+        )}
+
+      {/* Custom Decline Modal */}
+      {showDeclineModal &&
+        mounted &&
+        createPortal(
+          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-xs p-4">
+            <div className="w-full max-w-md rounded-xl border border-white/10 bg-[#0a0f1d] p-6 shadow-2xl animate-in zoom-in-95 duration-200 text-left">
+              <div className="flex items-start gap-3">
+                <div className="flex size-10 shrink-0 items-center justify-center rounded-lg bg-red-500/10 text-red-400">
+                  <ShieldAlert className="size-5" />
+                </div>
+                <div>
+                  <h3 className="text-base font-bold text-white">Decline Quotation</h3>
+                  <p className="text-xs text-muted-foreground mt-1.5 leading-relaxed">
+                    Please let us know why you are declining this quotation (optional).
+                  </p>
+                </div>
+              </div>
+
+              <form onSubmit={handleDecline} className="mt-4 space-y-4">
+                <textarea
+                  placeholder="Reason for declining..."
+                  value={declineReason}
+                  onChange={(e) => setDeclineReason(e.target.value)}
+                  disabled={isPending}
+                  className="w-full min-h-[100px] rounded-lg border border-white/10 bg-white/[0.03] p-3 text-xs text-white placeholder-muted-foreground/50 outline-none transition-all focus:border-blue-500/50 focus:bg-white/[0.05] focus:ring-2 focus:ring-blue-500/10 disabled:opacity-50 resize-none"
+                />
+
+                <div className="flex justify-end gap-2.5">
+                  <button
+                    type="button"
+                    disabled={isPending}
+                    onClick={() => setShowDeclineModal(false)}
+                    className="px-3.5 py-1.5 text-xs font-semibold text-muted-foreground hover:text-white rounded-lg transition-colors disabled:opacity-50"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    type="submit"
+                    disabled={isPending}
+                    className="inline-flex items-center gap-2 px-4 py-1.5 text-xs font-semibold text-white bg-red-600 hover:bg-red-500 rounded-lg shadow-md transition-all active:scale-[0.98] disabled:opacity-50"
+                  >
+                    {isPending && <Loader2 className="size-3.5 animate-spin" />}
+                    <span>Decline Quote</span>
+                  </button>
+                </div>
+              </form>
+            </div>
+          </div>,
+          document.body,
+        )}
     </div>
   );
 }
