@@ -1,0 +1,10 @@
+version: 2
+
+secret:
+  ignored-matches:
+    # Throwaway credential for GitHub Actions' ephemeral postgres:16 service
+    # container (see .github/workflows/ci.yml's db-validate job and
+    # e2e.yml) - dies with the runner on every CI run, never a real secret.
+    # GitGuardian incident 36319118.
+    - name: ci-ephemeral-postgres-service-container
+      match: postgres:postgres@localhost
