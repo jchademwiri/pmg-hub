@@ -35,7 +35,7 @@ export async function checkBotProtection(
 
   // 1. Turnstile verification (strongest signal, check first)
   if (opts.turnstile) {
-    const secretKey = import.meta.env.TURNSTILE_SECRET_KEY;
+    const secretKey = process.env.TURNSTILE_SECRET_KEY ?? '';
     if (secretKey) {
       try {
         const res = await fetch(
