@@ -1,6 +1,15 @@
-<!-- mermaid-ai-skills:start -->
-## Mermaid Diagrams
+# pmg-hub — Copilot Instructions
 
-When the user asks to create, edit, or visualize a diagram, follow the
-instructions in `.github/instructions/mermaid.instructions.md`.
-<!-- mermaid-ai-skills:end -->
+## Workflow
+- /start <task> — Initialize
+- /done — Ship
+- /release — Promote
+- /tag — Tag
+- /rollback — Revert
+- /incident — Diagnose
+- /changelog — Notes
+
+## Rules
+- Conventional commits
+- Never push to master directly
+- See AGENTS.md for full reference
