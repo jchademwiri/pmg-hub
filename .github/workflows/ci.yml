@@ -2,6 +2,11 @@ name: CI
 # Verified against a production-branched Neon dry-run (2026-08-19): migrations
 # 0043 (archive) and 0044 (savings) already applied cleanly to prod with zero
 # investment-kind rows to archive - see conversation history for details.
+#
+# GitGuardian incident 36319118 (2026-08-19): flags the throwaway
+# postgres:postgres@localhost credential for GitHub Actions' ephemeral
+# postgres:16 service container (db-validate job below, and e2e.yml) - not a
+# real secret, dies with the runner every run. Marked resolved upstream.
 
 on:
   pull_request:
