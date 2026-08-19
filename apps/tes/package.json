@@ -33,6 +33,6 @@
     "@tailwindcss/vite": "catalog:",
     "fast-check": "^4.6.0",
     "tailwindcss": "catalog:",
-    "vitest": "^1.4.0"
+    "vitest": "^3.2.7"
   }
 }
