@@ -1,6 +1,7 @@
 # pmg-hub — Copilot Instructions
 
 ## Workflow
+
 - /start <task> — Initialize
 - /done — Ship
 - /release — Promote
@@ -10,6 +11,7 @@
 - /changelog — Notes
 
 ## Rules
+
 - Conventional commits
 - Never push to master directly
 - See AGENTS.md for full reference
