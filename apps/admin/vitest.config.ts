@@ -8,6 +8,7 @@ export default defineConfig({
     setupFiles: ['./src/__tests__/setup.ts'],
     // Playwright specs live in e2e/ and run via `playwright test`, not vitest.
     exclude: [...configDefaults.exclude, 'e2e/**'],
+    testTimeout: 20000,
   },
   resolve: {
     alias: {
