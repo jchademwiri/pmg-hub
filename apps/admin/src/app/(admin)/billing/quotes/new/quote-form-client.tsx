@@ -29,6 +29,7 @@ import {
   type LineItemFormRow,
   type ActiveItem,
 } from '@/components/billing/billing-line-items-form';
+import { SearchableClientSelect } from '@/components/billing/searchable-client-select';
 import { BillingTotalsBlock } from '@/components/billing/billing-totals-block';
 import { getEndOfMonth } from '@/lib/format';
 import { createQuotation } from '@/app/actions/billing-quotes';
@@ -36,7 +37,13 @@ import type { QuotationDetail } from '@pmg/db';
 
 export interface QuoteFormClientProps {
   divisions: { id: string; name: string }[];
-  clients: { id: string; name: string; businessName: string | null }[];
+  clients: {
+    id: string;
+    name: string;
+    businessName: string | null;
+    email?: string | null;
+    isActive?: boolean;
+  }[];
   activeItems: ActiveItem[];
   /** When provided, the form is in edit mode */
   initialData?: QuotationDetail;
@@ -48,7 +55,10 @@ const today = new Date().toISOString().split('T')[0]!;
 
 function blankRow(): LineItemFormRow {
   return {
-    id: typeof crypto !== 'undefined' && crypto.randomUUID ? crypto.randomUUID() : Math.random().toString(36).substring(2, 15),
+    id:
+      typeof crypto !== 'undefined' && crypto.randomUUID
+        ? crypto.randomUUID()
+        : Math.random().toString(36).substring(2, 15),
     itemId: '',
     description: '',
     quantity: '1',
@@ -69,21 +79,19 @@ function calcTotals(
     const qty = parseFloat(item.quantity) || 0;
     const price = parseFloat(item.unitPrice) || 0;
     const lineGross = qty * price;
-    
+
     let lineDiscount = 0;
     if (item.discountType === 'percent') {
       lineDiscount = lineGross * ((parseFloat(item.discountValue || '0') || 0) / 100);
     } else if (item.discountType === 'amount') {
       lineDiscount = Math.min(parseFloat(item.discountValue || '0') || 0, lineGross);
     }
-    
-    subtotal += (lineGross - lineDiscount);
+
+    subtotal += lineGross - lineDiscount;
   }
   const discountVal = parseFloat(discountValue) || 0;
   const discountAmount =
-    discountType === 'percent'
-      ? subtotal * (discountVal / 100)
-      : Math.min(discountVal, subtotal);
+    discountType === 'percent' ? subtotal * (discountVal / 100) : Math.min(discountVal, subtotal);
   const vatBase = subtotal - discountAmount;
   const vatAmount = vatEnabled ? vatBase * 0.15 : 0;
   return { subtotal, discountAmount, vatAmount, total: vatBase + vatAmount };
@@ -104,9 +112,7 @@ export function QuoteFormClient({
   const [divisionId, setDivisionId] = useState(initialData?.divisionId ?? '');
   const [clientId, setClientId] = useState(initialData?.clientId ?? '');
   const [quoteDate, setQuoteDate] = useState(initialData?.quoteDate ?? today);
-  const [hasExpiryDate, setHasExpiryDate] = useState(
-    initialData ? !!initialData.expiryDate : true,
-  );
+  const [hasExpiryDate, setHasExpiryDate] = useState(initialData ? !!initialData.expiryDate : true);
   const [expiryDate, setExpiryDate] = useState(initialData?.expiryDate ?? getEndOfMonth(today));
   const [isExpiryDateModified, setIsExpiryDateModified] = useState(!!initialData?.expiryDate);
   const [reference, setReference] = useState(initialData?.reference ?? '');
@@ -127,7 +133,10 @@ export function QuoteFormClient({
             itemId = matched?.id ?? '';
           }
           return {
-            id: typeof crypto !== 'undefined' && crypto.randomUUID ? crypto.randomUUID() : Math.random().toString(36).substring(2, 15),
+            id:
+              typeof crypto !== 'undefined' && crypto.randomUUID
+                ? crypto.randomUUID()
+                : Math.random().toString(36).substring(2, 15),
             itemId,
             description: li.description,
             quantity: li.quantity,
@@ -187,7 +196,7 @@ export function QuoteFormClient({
       divisionId,
       clientId,
       quoteDate,
-      expiryDate: hasExpiryDate ? (expiryDate || null) : null,
+      expiryDate: hasExpiryDate ? expiryDate || null : null,
       reference: reference || null,
       notes: notes || null,
       terms: terms || null,
@@ -213,9 +222,8 @@ export function QuoteFormClient({
         const { updateQuotation } = await import('@/app/actions/billing-quotes');
         result = await updateQuotation(editId, payload);
         if (!result.error) {
-          const destination = mode === 'send'
-            ? `/billing/quotes/${editId}?action=send`
-            : `/billing/quotes/${editId}`;
+          const destination =
+            mode === 'send' ? `/billing/quotes/${editId}?action=send` : `/billing/quotes/${editId}`;
           router.push(destination);
           return;
         }
@@ -223,9 +231,10 @@ export function QuoteFormClient({
         result = await createQuotation(payload);
         if (!result.error && result.id) {
           // mode='send' navigates with ?action=send to auto-open the email dialog
-          const destination = mode === 'send'
-            ? `/billing/quotes/${result.id}?action=send`
-            : `/billing/quotes/${result.id}`;
+          const destination =
+            mode === 'send'
+              ? `/billing/quotes/${result.id}?action=send`
+              : `/billing/quotes/${result.id}`;
           router.push(destination);
           return;
         }
@@ -244,159 +253,151 @@ export function QuoteFormClient({
       <Card className="flex flex-col gap-6 lg:col-span-2">
         <CardContent className="p-6 flex flex-col gap-6">
           {/* Quote details */}
-        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-          <Field>
-            <FieldLabel>
-              Division
-            </FieldLabel>
-            <Select value={divisionId} onValueChange={setDivisionId} disabled={isSubmitting || !!editId}>
-              <SelectTrigger className="w-full">
-                <SelectValue placeholder="Select a division…" />
-              </SelectTrigger>
-              <SelectContent>
-                {divisions.map((d) => (
-                  <SelectItem key={d.id} value={d.id}>
-                    {d.name}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </Field>
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+            <Field>
+              <FieldLabel>Division</FieldLabel>
+              <Select
+                value={divisionId}
+                onValueChange={setDivisionId}
+                disabled={isSubmitting || !!editId}
+              >
+                <SelectTrigger className="w-full">
+                  <SelectValue placeholder="Select a division…" />
+                </SelectTrigger>
+                <SelectContent>
+                  {divisions.map((d) => (
+                    <SelectItem key={d.id} value={d.id}>
+                      {d.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </Field>
 
-          <Field className="sm:col-span-2">
-            <FieldLabel>
-              Client
-            </FieldLabel>
-            <Select value={clientId} onValueChange={setClientId} disabled={isSubmitting}>
-              <SelectTrigger className="w-full">
-                <SelectValue placeholder="Select a client…" />
-              </SelectTrigger>
-              <SelectContent>
-                {clients.map((c) => (
-                  <SelectItem key={c.id} value={c.id}>
-                    {c.businessName ?? c.name}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </Field>
-        </div>
+            <Field className="sm:col-span-2">
+              <FieldLabel>Client</FieldLabel>
+              <SearchableClientSelect
+                clients={clients}
+                value={clientId}
+                onValueChange={setClientId}
+                disabled={isSubmitting}
+              />
+            </Field>
+          </div>
 
-        <Accordion type="single" collapsible defaultValue="document-settings" className="w-full">
-          <AccordionItem value="document-settings" className="border-none">
-            <AccordionTrigger className="py-3 px-4 rounded-lg border bg-muted/20 hover:bg-muted/40 transition-colors hover:no-underline text-muted-foreground data-[state=open]:text-foreground">
-              <span className="font-semibold text-sm">Dates & Reference</span>
-            </AccordionTrigger>
-            <AccordionContent className="pt-4">
-              <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-                <Field>
-                  <FieldLabel>
-                    Issue Date
-                  </FieldLabel>
-                  <Input
-                    type="date"
-                    value={quoteDate}
-                    onChange={(e) => {
-                      const newDate = e.target.value;
-                      setQuoteDate(newDate);
-                      if (!isExpiryDateModified) {
-                        setExpiryDate(getEndOfMonth(newDate));
-                      }
-                    }}
-                    disabled={isSubmitting}
-                  />
-                </Field>
+          <Accordion type="single" collapsible defaultValue="document-settings" className="w-full">
+            <AccordionItem value="document-settings" className="border-none">
+              <AccordionTrigger className="py-3 px-4 rounded-lg border bg-muted/20 hover:bg-muted/40 transition-colors hover:no-underline text-muted-foreground data-[state=open]:text-foreground">
+                <span className="font-semibold text-sm">Dates & Reference</span>
+              </AccordionTrigger>
+              <AccordionContent className="pt-4">
+                <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                  <Field>
+                    <FieldLabel>Issue Date</FieldLabel>
+                    <Input
+                      type="date"
+                      value={quoteDate}
+                      onChange={(e) => {
+                        const newDate = e.target.value;
+                        setQuoteDate(newDate);
+                        if (!isExpiryDateModified) {
+                          setExpiryDate(getEndOfMonth(newDate));
+                        }
+                      }}
+                      disabled={isSubmitting}
+                    />
+                  </Field>
 
-                <Field>
-                  <div className="flex items-center justify-between gap-2 mb-1">
-                    <FieldLabel className="mb-0">Expiry Date</FieldLabel>
-                    <label className="flex items-center gap-1.5 text-xs text-muted-foreground cursor-pointer select-none">
-                      <input
-                        type="checkbox"
-                        checked={hasExpiryDate}
-                        onChange={(e) => setHasExpiryDate(e.target.checked)}
-                        disabled={isSubmitting}
-                        className="h-3.5 w-3.5 rounded border-input text-primary focus:ring-primary"
-                      />
-                      <span>Set expiry date</span>
-                    </label>
-                  </div>
-                  <Input
-                    type="date"
-                    value={expiryDate}
-                    onChange={(e) => {
-                      setExpiryDate(e.target.value);
-                      setIsExpiryDateModified(true);
-                    }}
-                    disabled={isSubmitting || !hasExpiryDate}
-                    className={!hasExpiryDate ? 'opacity-50' : ''}
-                  />
-                </Field>
+                  <Field>
+                    <div className="flex items-center justify-between gap-2 mb-1">
+                      <FieldLabel className="mb-0">Expiry Date</FieldLabel>
+                      <label className="flex items-center gap-1.5 text-xs text-muted-foreground cursor-pointer select-none">
+                        <input
+                          type="checkbox"
+                          checked={hasExpiryDate}
+                          onChange={(e) => setHasExpiryDate(e.target.checked)}
+                          disabled={isSubmitting}
+                          className="h-3.5 w-3.5 rounded border-input text-primary focus:ring-primary"
+                        />
+                        <span>Set expiry date</span>
+                      </label>
+                    </div>
+                    <Input
+                      type="date"
+                      value={expiryDate}
+                      onChange={(e) => {
+                        setExpiryDate(e.target.value);
+                        setIsExpiryDateModified(true);
+                      }}
+                      disabled={isSubmitting || !hasExpiryDate}
+                      className={!hasExpiryDate ? 'opacity-50' : ''}
+                    />
+                  </Field>
 
-                <Field>
-                  <FieldLabel>Reference</FieldLabel>
-                  <Input
-                    value={reference}
-                    onChange={(e) => setReference(e.target.value)}
-                    placeholder="Optional reference number"
-                    disabled={isSubmitting}
-                  />
-                </Field>
+                  <Field>
+                    <FieldLabel>Reference</FieldLabel>
+                    <Input
+                      value={reference}
+                      onChange={(e) => setReference(e.target.value)}
+                      placeholder="Optional reference number"
+                      disabled={isSubmitting}
+                    />
+                  </Field>
 
-                <Field>
-                  <FieldLabel>Quote #</FieldLabel>
-                  <div className="h-9 rounded-md border border-input bg-muted/40 px-3 flex items-center text-sm text-muted-foreground">
-                    {editId ? 'Existing number preserved' : 'Auto-generated on save'}
-                  </div>
-                </Field>
-              </div>
-            </AccordionContent>
-          </AccordionItem>
-        </Accordion>
+                  <Field>
+                    <FieldLabel>Quote #</FieldLabel>
+                    <div className="h-9 rounded-md border border-input bg-muted/40 px-3 flex items-center text-sm text-muted-foreground">
+                      {editId ? 'Existing number preserved' : 'Auto-generated on save'}
+                    </div>
+                  </Field>
+                </div>
+              </AccordionContent>
+            </AccordionItem>
+          </Accordion>
 
-        {/* Line items */}
-        <div className="flex flex-col gap-3">
-          <BillingLineItemsForm
-            value={lineItems}
-            onChange={setLineItems}
-            activeItems={activeItems}
-          />
-        </div>
+          {/* Line items */}
+          <div className="flex flex-col gap-3">
+            <BillingLineItemsForm
+              value={lineItems}
+              onChange={setLineItems}
+              activeItems={activeItems}
+            />
+          </div>
 
-        {/* Terms & notes */}
-        <Accordion type="single" collapsible className="w-full">
-          <AccordionItem value="notes-and-terms" className="border-none">
-            <AccordionTrigger className="py-3 px-4 rounded-lg border bg-muted/20 hover:bg-muted/40 transition-colors hover:no-underline text-muted-foreground data-[state=open]:text-foreground">
-              <span className="font-semibold text-sm">Additional Notes & Terms</span>
-            </AccordionTrigger>
-            <AccordionContent className="pt-4">
-              <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-                <Field>
-                  <FieldLabel htmlFor="quote-notes">Notes</FieldLabel>
-                  <Textarea
-                    id="quote-notes"
-                    value={notes}
-                    onChange={(e) => setNotes(e.target.value)}
-                    placeholder="Optional notes for the client…"
-                    rows={4}
-                    disabled={isSubmitting}
-                  />
-                </Field>
-                <Field>
-                  <FieldLabel htmlFor="quote-terms">Terms & Conditions</FieldLabel>
-                  <Textarea
-                    id="quote-terms"
-                    value={terms}
-                    onChange={(e) => setTerms(e.target.value)}
-                    placeholder="Optional terms and conditions…"
-                    rows={4}
-                    disabled={isSubmitting}
-                  />
-                </Field>
-              </div>
-            </AccordionContent>
-          </AccordionItem>
-        </Accordion>
+          {/* Terms & notes */}
+          <Accordion type="single" collapsible className="w-full">
+            <AccordionItem value="notes-and-terms" className="border-none">
+              <AccordionTrigger className="py-3 px-4 rounded-lg border bg-muted/20 hover:bg-muted/40 transition-colors hover:no-underline text-muted-foreground data-[state=open]:text-foreground">
+                <span className="font-semibold text-sm">Additional Notes & Terms</span>
+              </AccordionTrigger>
+              <AccordionContent className="pt-4">
+                <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                  <Field>
+                    <FieldLabel htmlFor="quote-notes">Notes</FieldLabel>
+                    <Textarea
+                      id="quote-notes"
+                      value={notes}
+                      onChange={(e) => setNotes(e.target.value)}
+                      placeholder="Optional notes for the client…"
+                      rows={4}
+                      disabled={isSubmitting}
+                    />
+                  </Field>
+                  <Field>
+                    <FieldLabel htmlFor="quote-terms">Terms & Conditions</FieldLabel>
+                    <Textarea
+                      id="quote-terms"
+                      value={terms}
+                      onChange={(e) => setTerms(e.target.value)}
+                      placeholder="Optional terms and conditions…"
+                      rows={4}
+                      disabled={isSubmitting}
+                    />
+                  </Field>
+                </div>
+              </AccordionContent>
+            </AccordionItem>
+          </Accordion>
         </CardContent>
       </Card>
 
@@ -426,8 +427,14 @@ export function QuoteFormClient({
               placeholder="Discount"
               className="rounded-r-none focus-visible:z-10"
             />
-            <Select value={discountType} onValueChange={(v) => setDiscountType(v as 'percent' | 'amount')}>
-              <SelectTrigger className="w-[65px] rounded-l-none border-l-0 focus:ring-0 focus-visible:z-10 bg-muted/10 px-3 shrink-0" aria-label="Discount type">
+            <Select
+              value={discountType}
+              onValueChange={(v) => setDiscountType(v as 'percent' | 'amount')}
+            >
+              <SelectTrigger
+                className="w-[65px] rounded-l-none border-l-0 focus:ring-0 focus-visible:z-10 bg-muted/10 px-3 shrink-0"
+                aria-label="Discount type"
+              >
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
@@ -454,7 +461,11 @@ export function QuoteFormClient({
           )}
 
           <div className="fixed md:relative bottom-0 left-0 right-0 p-4 md:p-0 bg-card/95 md:bg-transparent backdrop-blur-md md:backdrop-blur-none border-t md:border-none z-50 flex flex-col gap-2 pb-[max(env(safe-area-inset-bottom),16px)] md:pb-0 shadow-[0_-4px_12px_rgba(0,0,0,0.05)] md:shadow-none dark:shadow-[0_-4px_12px_rgba(0,0,0,0.2)] pt-2 md:pt-0">
-            <Button className="w-full bg-blue-600 hover:bg-blue-700 text-white" onClick={() => handleSubmit('draft')} disabled={isSubmitting}>
+            <Button
+              className="w-full bg-blue-600 hover:bg-blue-700 text-white"
+              onClick={() => handleSubmit('draft')}
+              disabled={isSubmitting}
+            >
               {isSubmitting ? 'Saving…' : editId ? 'Save Changes' : 'Save Quote'}
             </Button>
             <Button

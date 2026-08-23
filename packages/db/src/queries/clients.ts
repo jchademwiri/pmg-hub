@@ -16,18 +16,46 @@ export type ClientWithIncomeCount = {
   userId: string | null;
 };
 
-export async function getAllClients(): Promise<
-  { id: string; name: string; businessName: string | null; email: string | null }[]
+export async function getAllClients(
+  options: { activeOnly?: boolean } = {},
+): Promise<
+  {
+    id: string;
+    name: string;
+    businessName: string | null;
+    email: string | null;
+    isActive: boolean;
+  }[]
 > {
-  return db
+  const query = db
     .select({
       id: clients.id,
       name: clients.name,
       businessName: clients.businessName,
       email: clients.email,
+      isActive: clients.isActive,
     })
-    .from(clients)
-    .orderBy(asc(clients.name));
+    .from(clients);
+
+  if (options.activeOnly) {
+    return query
+      .where(eq(clients.isActive, true))
+      .orderBy(asc(sql`COALESCE(NULLIF(${clients.businessName}, ''), ${clients.name})`));
+  }
+
+  return query.orderBy(asc(sql`COALESCE(NULLIF(${clients.businessName}, ''), ${clients.name})`));
+}
+
+export async function getActiveClients(): Promise<
+  {
+    id: string;
+    name: string;
+    businessName: string | null;
+    email: string | null;
+    isActive: boolean;
+  }[]
+> {
+  return getAllClients({ activeOnly: true });
 }
 
 /**

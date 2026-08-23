@@ -4,7 +4,7 @@ import { ChevronLeft } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Separator } from '@/components/ui/separator';
-import { getAllDivisions, getAllClients } from '@pmg/db';
+import { getAllDivisions, getActiveClients } from '@pmg/db';
 import { getMinAllowedDate } from '@/lib/date-rules';
 import { PaymentFormClient } from './payment-form-client';
 
@@ -13,7 +13,7 @@ export const metadata: Metadata = { title: 'Record Client Payment' };
 export default async function AddPaymentPage() {
   const [divisions, clients, minDate] = await Promise.all([
     getAllDivisions(),
-    getAllClients(),
+    getActiveClients(),
     getMinAllowedDate(),
   ]);
 
