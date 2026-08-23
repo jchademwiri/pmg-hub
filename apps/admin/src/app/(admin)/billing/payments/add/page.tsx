@@ -30,14 +30,18 @@ export default async function AddPaymentPage() {
         <Separator orientation="vertical" className="h-5" />
         <div>
           <h2 className="text-lg font-semibold">Record Payment</h2>
-          <p className="text-sm text-muted-foreground">Record and allocate a client payment received</p>
+          <p className="text-sm text-muted-foreground">
+            Record and allocate a client payment received
+          </p>
         </div>
       </div>
 
       <Card>
         <CardHeader>
           <CardTitle>Payment Details</CardTitle>
-          <CardDescription>Record the total amount received and allocate it across outstanding invoices</CardDescription>
+          <CardDescription>
+            Record the total amount received and allocate it across outstanding invoices
+          </CardDescription>
         </CardHeader>
         <CardContent>
           <PaymentFormClient divisions={divisions} clients={clients} minDate={minDate} />
