@@ -5,7 +5,7 @@ Next.js Astro Turborepo | Drizzle PostgreSQL | Vercel
 
 ## Commands
 - /start <task> — Branch, audit, plan
-- /done — Pre-flight, PR, CI
+- /ship (or /pr, /done) — Pre-flight, PR, CI
 - /release — Release PR
 - /tag vX.Y.Z — Tag production
 - /rollback — Revert

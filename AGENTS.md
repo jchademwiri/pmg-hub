@@ -14,7 +14,7 @@
 
 - `/start <task>` — Create branch from `dev`, audit codebase, plan implementation
 - `/bug-hunter` — Multi-phase systematic bug audit, logic check, and hardening
-- `/done` — Pre-flight, commit, push, PR to `dev`, CI checks, next-step reminder
+- `/ship` (or `/pr`, `/done`) — Pre-flight, commit, push, PR to `dev`, CI checks, next-step reminder
 - `/release` — Check/merge open feature PRs, run audit, PR `dev` → `master`, CI checks
 - `/tag vX.Y.Z` — Check/merge release PR to `master`, tag, push, health check 6 endpoints
 - `/rollback` — Revert to previous release tag on `master`
@@ -24,7 +24,7 @@
 ## Auto-Merge & Next Step Conventions
 
 - **Auto-Merge Check**: Commands that depend on an open PR (`/release`, `/tag`) check if the PR is open, verify CI passed, merge it, pull latest, and explicitly report the merge in the summary.
-- **Next Step Reminders**: Every workflow command (`/done`, `/release`, `/tag`) must conclude by reminding the developer of the exact next command in the pipeline.
+- **Next Step Reminders**: Every workflow command (`/ship`, `/release`, `/tag`) must conclude by reminding the developer of the exact next command in the pipeline.
 
 ## Production Endpoints & Domains
 

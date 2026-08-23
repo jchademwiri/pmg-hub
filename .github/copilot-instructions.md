@@ -3,9 +3,9 @@
 ## Workflow
 
 - /start <task> — Initialize
-- /done — Ship
-- /release — Promote
-- /tag — Tag
+- /ship (or /pr, /done) — Ship to staging (PR to dev)
+- /release — Promote dev → master
+- /tag vX.Y.Z — Tag production
 - /rollback — Revert
 - /incident — Diagnose
 - /changelog — Notes

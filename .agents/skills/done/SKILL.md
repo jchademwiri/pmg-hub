@@ -1,15 +1,17 @@
 ---
 name: done
 description: |
-  Ship workflow. Use when user says "/done", "done", or "ship it".
+  Ship / Pull Request workflow (Alias for /ship). Use when user says "/done", "done", "/ship", "ship", or "/pr".
 metadata:
   author: custom
   version: '1.0.0'
 ---
 
-# Done (Ship Workflow)
+# Done (Alias for /ship)
 
-Pre-flight, commit, PR, monitor CI.
+See `.agents/skills/ship/SKILL.md` for full implementation details.
+
+Pre-flight verification, commit, PR creation targeting `dev`, and CI monitoring.
 
 ## Steps
 
@@ -54,6 +56,7 @@ Fix failures until all green.
 ### 6. Summary & Next Step Guidance
 
 Present the PR link and remind the user of the next step:
+
 ```
 ✅ PR #<number> created: <url>
 All CI checks passed!
