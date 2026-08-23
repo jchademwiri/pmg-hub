@@ -51,7 +51,18 @@ gh pr checks
 
 Fix failures until all green.
 
+### 6. Summary & Next Step Guidance
+
+Present the PR link and remind the user of the next step:
+```
+✅ PR #<number> created: <url>
+All CI checks passed!
+
+👉 Next Step: Review & merge the PR into dev (or ask me to merge it), then run `/release`.
+```
+
 ## Rules
 
 - Never push to `master` directly.
 - Use conventional commits.
+- Always provide the PR link and clear next-step reminder in the summary.
