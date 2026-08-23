@@ -45,6 +45,9 @@ git push origin vX.Y.Z
 echo "tenderedgesolutions.co.za: $(curl -sI https://tenderedgesolutions.co.za | head -1)"
 echo "apexwebsolutions.co.za: $(curl -sI https://apexwebsolutions.co.za | head -1)"
 echo "playhousemedia.co.za: $(curl -sI https://playhousemedia.co.za | head -1)"
+echo "admin.playhousemedia.co.za: $(curl -sI https://admin.playhousemedia.co.za | head -1)"
+echo "portal.playhousemedia.co.za: $(curl -sI https://portal.playhousemedia.co.za | head -1)"
+echo "portal.tenderedgesolutions.co.za: $(curl -sI https://portal.tenderedgesolutions.co.za | head -1)"
 ```
 
 ### 6. Summary

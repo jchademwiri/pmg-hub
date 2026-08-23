@@ -14,13 +14,12 @@ Pulls deployment history, correlates with commits, suggests fix.
 
 ## Steps
 
-### 1. Identify App
-
-- `tenderedgesolutions.co.za` → `apps/admin`
-- `apexwebsolutions.co.za` → `apps/portal`
-- `playhousemedia.co.za` → `apps/tes`
-- `apps/aws`
-- `apps/pmg`
+- `admin.playhousemedia.co.za` → `apps/admin`
+- `portal.playhousemedia.co.za` → `apps/portal`
+- `portal.tenderedgesolutions.co.za` → `apps/portal`
+- `tenderedgesolutions.co.za` → `apps/tes`
+- `apexwebsolutions.co.za` → `apps/aws`
+- `playhousemedia.co.za` → `apps/pmg`
 
 ### 2. Pull Recent Deploys
 
