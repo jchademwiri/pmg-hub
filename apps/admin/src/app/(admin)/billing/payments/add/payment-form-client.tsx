@@ -77,8 +77,9 @@ export function PaymentFormClient({ divisions, clients, minDate }: PaymentFormCl
   const [creditAmountToApply, setCreditAmountToApply] = useState('');
 
   // Email Notification States
+  const selectedClientEmail = clients.find((c) => c.id === clientId)?.email;
   const [sendReceiptEmail, setSendReceiptEmail] = useState(() => {
-    const initClient = clients.find((c) => c.id === initialClientId);
+    const initClient = clients.find((c) => c.id === queryClientId);
     return !!initClient?.email;
   });
   const [autoTransferPmgShare, setAutoTransferPmgShare] = useState(true);
@@ -86,7 +87,7 @@ export function PaymentFormClient({ divisions, clients, minDate }: PaymentFormCl
   // Loaded Client States
   const [unpaidInvoices, setUnpaidInvoices] = useState<UnpaidInvoice[]>([]);
   const [existingCreditBalance, setExistingCreditBalance] = useState(0);
-  const [isLoadingClientData, setIsLoadingClientData] = useState(!!initialClientId);
+  const [isLoadingClientData, setIsLoadingClientData] = useState(!!queryClientId);
 
   // Allocation Inputs: invoiceId -> string value
   const [manualAllocations, setManualAllocations] = useState<Record<string, string>>({});
@@ -127,13 +128,13 @@ export function PaymentFormClient({ divisions, clients, minDate }: PaymentFormCl
       });
   }
 
-  // Load initial client data if initialClientId was provided in URL query
+  // Load initial client data if queryClientId was provided in URL query
   useEffect(() => {
-    if (!initialClientId) return;
+    if (!queryClientId) return;
     let mounted = true;
     Promise.all([
-      getClientOutstandingInvoices(initialClientId),
-      getClientCreditBalance(initialClientId),
+      getClientOutstandingInvoices(queryClientId),
+      getClientCreditBalance(queryClientId),
     ])
       .then(([invoicesList, credit]) => {
         if (!mounted) return;
