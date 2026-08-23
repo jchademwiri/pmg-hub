@@ -1,0 +1,18 @@
+# Prettier can't parse these
+.cursorrules
+*.sh
+*.sql
+*.lock
+*.lockb
+
+# Build outputs
+dist/
+.next/
+.vercel/
+.turbo/
+
+# Dependencies
+node_modules/
+
+# Environment files
+.env*
