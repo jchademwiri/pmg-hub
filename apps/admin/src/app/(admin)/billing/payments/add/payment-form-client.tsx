@@ -77,31 +77,25 @@ export function PaymentFormClient({ divisions, clients, minDate }: PaymentFormCl
   const [creditAmountToApply, setCreditAmountToApply] = useState('');
 
   // Email Notification States
-  const selectedClient = clients.find((c) => c.id === clientId);
-  const selectedClientEmail = selectedClient?.email;
-  const [sendReceiptEmail, setSendReceiptEmail] = useState(true);
+  const [sendReceiptEmail, setSendReceiptEmail] = useState(() => {
+    const initClient = clients.find((c) => c.id === initialClientId);
+    return !!initClient?.email;
+  });
   const [autoTransferPmgShare, setAutoTransferPmgShare] = useState(true);
-
-  // Sync sendReceiptEmail default based on client email presence
-  useEffect(() => {
-    if (selectedClientEmail) {
-      setSendReceiptEmail(true);
-    } else {
-      setSendReceiptEmail(false);
-    }
-  }, [clientId, selectedClientEmail]);
 
   // Loaded Client States
   const [unpaidInvoices, setUnpaidInvoices] = useState<UnpaidInvoice[]>([]);
   const [existingCreditBalance, setExistingCreditBalance] = useState(0);
-  const [isLoadingClientData, setIsLoadingClientData] = useState(false);
+  const [isLoadingClientData, setIsLoadingClientData] = useState(!!initialClientId);
 
   // Allocation Inputs: invoiceId -> string value
   const [manualAllocations, setManualAllocations] = useState<Record<string, string>>({});
 
-  // 1. Fetch unpaid invoices and credit balance when client changes
-  useEffect(() => {
-    if (!clientId) {
+  function handleClientChange(val: string) {
+    setClientId(val);
+    const client = clients.find((c) => c.id === val);
+    setSendReceiptEmail(!!client?.email);
+    if (!val) {
       setUnpaidInvoices([]);
       setExistingCreditBalance(0);
       setManualAllocations({});
@@ -111,8 +105,8 @@ export function PaymentFormClient({ divisions, clients, minDate }: PaymentFormCl
     }
 
     setIsLoadingClientData(true);
-    const p1 = getClientOutstandingInvoices(clientId);
-    const p2 = getClientCreditBalance(clientId);
+    const p1 = getClientOutstandingInvoices(val);
+    const p2 = getClientCreditBalance(val);
 
     Promise.all([p1, p2])
       .then(([invoicesList, credit]) => {
@@ -123,13 +117,6 @@ export function PaymentFormClient({ divisions, clients, minDate }: PaymentFormCl
         if (invoicesList.length > 0 && invoicesList[0].divisionId) {
           setDivisionId(invoicesList[0].divisionId);
         }
-
-        // Reset allocations
-        const initAllocations: Record<string, string> = {};
-        for (const inv of invoicesList) {
-          initAllocations[inv.id] = '0';
-        }
-        setManualAllocations(initAllocations);
       })
       .catch((err) => {
         toast.error('Failed to load client invoices.');
@@ -138,52 +125,82 @@ export function PaymentFormClient({ divisions, clients, minDate }: PaymentFormCl
       .finally(() => {
         setIsLoadingClientData(false);
       });
-  }, [clientId]);
+  }
 
-  // 2. FIFO Auto-spreading calculation when amount or invoices change
+  // Load initial client data if initialClientId was provided in URL query
   useEffect(() => {
-    if (!autoAllocate || unpaidInvoices.length === 0) return;
+    if (!initialClientId) return;
+    let mounted = true;
+    Promise.all([
+      getClientOutstandingInvoices(initialClientId),
+      getClientCreditBalance(initialClientId),
+    ])
+      .then(([invoicesList, credit]) => {
+        if (!mounted) return;
+        setUnpaidInvoices(invoicesList);
+        setExistingCreditBalance(credit);
+        if (invoicesList.length > 0 && invoicesList[0].divisionId) {
+          setDivisionId(invoicesList[0].divisionId);
+        }
+        setIsLoadingClientData(false);
+      })
+      .catch((err) => {
+        if (!mounted) return;
+        toast.error('Failed to load client invoices.');
+        console.error(err);
+        setIsLoadingClientData(false);
+      });
+    return () => {
+      mounted = false;
+    };
+  }, []);
 
-    const totalPaid = parseFloat(amount) || 0;
-    let remaining = totalPaid;
-    const newAllocations: Record<string, string> = {};
-
-    for (const inv of unpaidInvoices) {
-      if (remaining <= 0) {
-        newAllocations[inv.id] = '0';
-        continue;
+  // Derived current allocations (FIFO auto-allocated or manual)
+  const currentAllocations = React.useMemo(() => {
+    if (useExistingCredit) {
+      const creditToUse = parseFloat(creditAmountToApply) || 0;
+      let remaining = creditToUse;
+      const allocs: Record<string, string> = {};
+      for (const inv of unpaidInvoices) {
+        if (remaining <= 0) {
+          allocs[inv.id] = '0';
+          continue;
+        }
+        const share = Math.min(inv.outstanding, remaining);
+        allocs[inv.id] = String(Number(share.toFixed(2)));
+        remaining -= share;
       }
-      const share = Math.min(inv.outstanding, remaining);
-      newAllocations[inv.id] = String(Number(share.toFixed(2)));
-      remaining -= share;
+      return allocs;
     }
 
-    setManualAllocations(newAllocations);
-  }, [amount, autoAllocate, unpaidInvoices]);
-
-  // 3. Auto-allocate credit when toggle is on
-  useEffect(() => {
-    if (!useExistingCredit || unpaidInvoices.length === 0) return;
-
-    const creditToUse = parseFloat(creditAmountToApply) || 0;
-    let remaining = creditToUse;
-    const newAllocations: Record<string, string> = {};
-
-    for (const inv of unpaidInvoices) {
-      if (remaining <= 0) {
-        newAllocations[inv.id] = '0';
-        continue;
+    if (autoAllocate) {
+      const totalPaid = parseFloat(amount) || 0;
+      let remaining = totalPaid;
+      const allocs: Record<string, string> = {};
+      for (const inv of unpaidInvoices) {
+        if (remaining <= 0) {
+          allocs[inv.id] = '0';
+          continue;
+        }
+        const share = Math.min(inv.outstanding, remaining);
+        allocs[inv.id] = String(Number(share.toFixed(2)));
+        remaining -= share;
       }
-      const share = Math.min(inv.outstanding, remaining);
-      newAllocations[inv.id] = String(Number(share.toFixed(2)));
-      remaining -= share;
+      return allocs;
     }
 
-    setManualAllocations(newAllocations);
-  }, [creditAmountToApply, useExistingCredit, unpaidInvoices]);
+    return manualAllocations;
+  }, [
+    useExistingCredit,
+    creditAmountToApply,
+    autoAllocate,
+    amount,
+    unpaidInvoices,
+    manualAllocations,
+  ]);
 
   // 4. Sum of current allocations in the form
-  const totalAllocatedInForm = Object.values(manualAllocations).reduce(
+  const totalAllocatedInForm = Object.values(currentAllocations).reduce(
     (sum, val) => sum + (parseFloat(val) || 0),
     0,
   );
@@ -201,11 +218,11 @@ export function PaymentFormClient({ divisions, clients, minDate }: PaymentFormCl
   const allocatedInvoiceNumbers = React.useMemo(() => {
     return unpaidInvoices
       .filter((inv) => {
-        const alloc = parseFloat(manualAllocations[inv.id] || '0');
+        const alloc = parseFloat(currentAllocations[inv.id] || '0');
         return alloc > 0;
       })
       .map((inv) => inv.documentNumber);
-  }, [unpaidInvoices, manualAllocations]);
+  }, [unpaidInvoices, currentAllocations]);
 
   const autoReference = React.useMemo(() => {
     if (allocatedInvoiceNumbers.length === 0) {
@@ -244,10 +261,10 @@ export function PaymentFormClient({ divisions, clients, minDate }: PaymentFormCl
     const val = parseFloat(value) || 0;
     if (val < 0) return;
 
-    setManualAllocations((prev) => ({
-      ...prev,
+    setManualAllocations({
+      ...currentAllocations,
       [invoiceId]: value,
-    }));
+    });
   }
 
   // Handle submission
@@ -274,7 +291,7 @@ export function PaymentFormClient({ divisions, clients, minDate }: PaymentFormCl
         return;
       }
 
-      const creditAllocations = Object.entries(manualAllocations)
+      const creditAllocations = Object.entries(currentAllocations)
         .filter(([, val]) => (parseFloat(val) || 0) > 0)
         .map(([invoiceId, val]) => ({
           invoiceId,
@@ -325,7 +342,7 @@ export function PaymentFormClient({ divisions, clients, minDate }: PaymentFormCl
         date: paymentDate,
         description,
         amount: parseFloat(amount) || 0,
-        allocations: Object.entries(manualAllocations).map(([invoiceId, val]) => ({
+        allocations: Object.entries(currentAllocations).map(([invoiceId, val]) => ({
           invoiceId,
           amount: parseFloat(val) || 0,
         })),
@@ -365,7 +382,7 @@ export function PaymentFormClient({ divisions, clients, minDate }: PaymentFormCl
           <SearchableClientSelect
             clients={clients}
             value={clientId}
-            onValueChange={setClientId}
+            onValueChange={handleClientChange}
             placeholder="Select Client"
           />
           {clientId && !isLoadingClientData && (
@@ -645,7 +662,7 @@ export function PaymentFormClient({ divisions, clients, minDate }: PaymentFormCl
               </TableHeader>
               <TableBody>
                 {unpaidInvoices.map((inv) => {
-                  const currentAlloc = manualAllocations[inv.id] || '0';
+                  const currentAlloc = currentAllocations[inv.id] || '0';
                   const outstandingAfterThis = Math.max(
                     0,
                     inv.outstanding - (parseFloat(currentAlloc) || 0),

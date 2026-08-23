@@ -16,9 +16,7 @@ export type ClientWithIncomeCount = {
   userId: string | null;
 };
 
-export async function getAllClients(
-  options: { activeOnly?: boolean } = {},
-): Promise<
+export async function getAllClients(options: { activeOnly?: boolean } = {}): Promise<
   {
     id: string;
     name: string;

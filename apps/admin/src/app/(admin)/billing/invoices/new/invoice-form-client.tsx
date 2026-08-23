@@ -49,17 +49,23 @@ export interface InvoiceFormClientProps {
   /** When provided, the form is in edit mode */
   initialData?: InvoiceDetail;
   editId?: string;
-  billingSettings?: Record<string, any>;
+  billingSettings?: Record<string, { quoteNotes?: string | null; invoiceNotes?: string | null }>;
 }
 
 const today = new Date().toISOString().split('T')[0]!;
 
+let nextRowId = 0;
+function generateRowId(): string {
+  if (typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function') {
+    return crypto.randomUUID();
+  }
+  nextRowId += 1;
+  return `row-${Date.now()}-${nextRowId}`;
+}
+
 function blankRow(): LineItemFormRow {
   return {
-    id:
-      typeof crypto !== 'undefined' && crypto.randomUUID
-        ? crypto.randomUUID()
-        : Math.random().toString(36).substring(2, 15),
+    id: generateRowId(),
     itemId: '',
     description: '',
     quantity: '1',
@@ -134,10 +140,7 @@ export function InvoiceFormClient({
             itemId = matched?.id ?? '';
           }
           return {
-            id:
-              typeof crypto !== 'undefined' && crypto.randomUUID
-                ? crypto.randomUUID()
-                : Math.random().toString(36).substring(2, 15),
+            id: generateRowId(),
             itemId,
             description: li.description,
             quantity: li.quantity,
@@ -164,33 +167,37 @@ export function InvoiceFormClient({
   // Warn if invoice date is near the period boundary
   const isPeriodWarning = invoiceDate < minDate;
 
-  // Load division default billing settings when divisionId changes (only for new invoices)
-  useEffect(() => {
-    if (editId || !divisionId || !billingSettings) return;
-
-    const settings = billingSettings[divisionId];
-    if (!settings) return;
-
-    // 1. Set default notes
-    if (settings.invoiceNotes) {
-      setNotes(settings.invoiceNotes);
+  function handleDivisionChange(val: string) {
+    setDivisionId(val);
+    if (!editId && billingSettings && val) {
+      const settings = billingSettings[val];
+      if (settings?.invoiceNotes) {
+        setNotes(settings.invoiceNotes);
+      }
+      setDueDate(getEndOfMonth(invoiceDate));
+      setIsDueDateModified(false);
     }
+  }
 
-    // 2. Set default due date to end of month
-    setDueDate(getEndOfMonth(invoiceDate));
-    setIsDueDateModified(false); // Reset modified status since it's a smart default
-  }, [divisionId, billingSettings, invoiceDate, editId]);
-
-  // Load client unallocated credit retainer balance
-  useEffect(() => {
-    if (!clientId) {
+  function handleClientChange(val: string) {
+    setClientId(val);
+    if (!val) {
       setCreditBalance(0);
-      return;
+    } else {
+      getClientCreditBalance(val)
+        .then(setCreditBalance)
+        .catch((err) => console.error('Failed to load client credit balance:', err));
     }
-    getClientCreditBalance(clientId)
-      .then(setCreditBalance)
-      .catch((err) => console.error('Failed to load client credit balance:', err));
-  }, [clientId]);
+  }
+
+  // Load initial client credit balance in edit mode
+  useEffect(() => {
+    if (initialData?.clientId) {
+      getClientCreditBalance(initialData.clientId)
+        .then(setCreditBalance)
+        .catch((err) => console.error('Failed to load client credit balance:', err));
+    }
+  }, [initialData?.clientId]);
 
   function handleSubmit() {
     setError(null);
@@ -277,7 +284,7 @@ export function InvoiceFormClient({
               <FieldLabel>Division</FieldLabel>
               <Select
                 value={divisionId}
-                onValueChange={setDivisionId}
+                onValueChange={handleDivisionChange}
                 disabled={isSubmitting || !!editId}
               >
                 <SelectTrigger className="w-full">
@@ -298,7 +305,7 @@ export function InvoiceFormClient({
               <SearchableClientSelect
                 clients={clients}
                 value={clientId}
-                onValueChange={setClientId}
+                onValueChange={handleClientChange}
                 disabled={isSubmitting}
               />
               {creditBalance > 0 && (

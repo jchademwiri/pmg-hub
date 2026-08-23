@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useTransition, useEffect } from 'react';
+import { useState, useTransition } from 'react';
 import { useRouter } from 'next/navigation';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
@@ -48,17 +48,23 @@ export interface QuoteFormClientProps {
   /** When provided, the form is in edit mode */
   initialData?: QuotationDetail;
   editId?: string;
-  billingSettings?: Record<string, any>;
+  billingSettings?: Record<string, { quoteNotes?: string | null; invoiceNotes?: string | null }>;
 }
 
 const today = new Date().toISOString().split('T')[0]!;
 
+let nextRowId = 0;
+function generateRowId(): string {
+  if (typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function') {
+    return crypto.randomUUID();
+  }
+  nextRowId += 1;
+  return `row-${Date.now()}-${nextRowId}`;
+}
+
 function blankRow(): LineItemFormRow {
   return {
-    id:
-      typeof crypto !== 'undefined' && crypto.randomUUID
-        ? crypto.randomUUID()
-        : Math.random().toString(36).substring(2, 15),
+    id: generateRowId(),
     itemId: '',
     description: '',
     quantity: '1',
@@ -133,10 +139,7 @@ export function QuoteFormClient({
             itemId = matched?.id ?? '';
           }
           return {
-            id:
-              typeof crypto !== 'undefined' && crypto.randomUUID
-                ? crypto.randomUUID()
-                : Math.random().toString(36).substring(2, 15),
+            id: generateRowId(),
             itemId,
             description: li.description,
             quantity: li.quantity,
@@ -157,22 +160,17 @@ export function QuoteFormClient({
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  // Load division default billing settings when divisionId changes (only for new quotes)
-  useEffect(() => {
-    if (editId || !divisionId || !billingSettings) return;
-
-    const settings = billingSettings[divisionId];
-    if (!settings) return;
-
-    // 1. Set default notes
-    if (settings.quoteNotes) {
-      setNotes(settings.quoteNotes);
+  function handleDivisionChange(val: string) {
+    setDivisionId(val);
+    if (!editId && billingSettings && val) {
+      const settings = billingSettings[val];
+      if (settings?.quoteNotes) {
+        setNotes(settings.quoteNotes);
+      }
+      setExpiryDate(getEndOfMonth(quoteDate));
+      setIsExpiryDateModified(false);
     }
-
-    // 2. Set default expiry date to end of month
-    setExpiryDate(getEndOfMonth(quoteDate));
-    setIsExpiryDateModified(false); // Reset modified status since it's a smart default
-  }, [divisionId, billingSettings, quoteDate, editId]);
+  }
 
   const totals = calcTotals(lineItems, vatEnabled, discountType, discountValue);
 
@@ -258,7 +256,7 @@ export function QuoteFormClient({
               <FieldLabel>Division</FieldLabel>
               <Select
                 value={divisionId}
-                onValueChange={setDivisionId}
+                onValueChange={handleDivisionChange}
                 disabled={isSubmitting || !!editId}
               >
                 <SelectTrigger className="w-full">
