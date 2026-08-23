@@ -4,7 +4,7 @@ import { ChevronLeft } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Separator } from '@/components/ui/separator';
-import { getAllDivisions, getAllClients } from '@pmg/db';
+import { getAllDivisions, getActiveClients } from '@pmg/db';
 import { getMinAllowedDate } from '@/lib/date-rules';
 import { PaymentFormClient } from './payment-form-client';
 
@@ -13,7 +13,7 @@ export const metadata: Metadata = { title: 'Record Client Payment' };
 export default async function AddPaymentPage() {
   const [divisions, clients, minDate] = await Promise.all([
     getAllDivisions(),
-    getAllClients(),
+    getActiveClients(),
     getMinAllowedDate(),
   ]);
 
@@ -30,14 +30,18 @@ export default async function AddPaymentPage() {
         <Separator orientation="vertical" className="h-5" />
         <div>
           <h2 className="text-lg font-semibold">Record Payment</h2>
-          <p className="text-sm text-muted-foreground">Record and allocate a client payment received</p>
+          <p className="text-sm text-muted-foreground">
+            Record and allocate a client payment received
+          </p>
         </div>
       </div>
 
       <Card>
         <CardHeader>
           <CardTitle>Payment Details</CardTitle>
-          <CardDescription>Record the total amount received and allocate it across outstanding invoices</CardDescription>
+          <CardDescription>
+            Record the total amount received and allocate it across outstanding invoices
+          </CardDescription>
         </CardHeader>
         <CardContent>
           <PaymentFormClient divisions={divisions} clients={clients} minDate={minDate} />

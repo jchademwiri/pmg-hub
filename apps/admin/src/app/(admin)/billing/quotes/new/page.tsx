@@ -2,9 +2,13 @@ import type { Metadata } from 'next';
 import Link from 'next/link';
 import { ChevronLeft } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Separator } from '@/components/ui/separator';
-import { getAllDivisions, getAllClients, getActiveItems, getAllDivisionBillingSettings } from '@pmg/db';
+import {
+  getAllDivisions,
+  getActiveClients,
+  getActiveItems,
+  getAllDivisionBillingSettings,
+} from '@pmg/db';
 import { QuoteFormClient } from './quote-form-client';
 import { SetPageLabel } from '@/components/navigation/page-header-context';
 
@@ -14,7 +18,7 @@ export const metadata: Metadata = { title: 'New Quotation' };
 export default async function NewQuotePage() {
   const [divisions, clients, activeItems, billingSettings] = await Promise.all([
     getAllDivisions(),
-    getAllClients(),
+    getActiveClients(),
     getActiveItems(),
     getAllDivisionBillingSettings(),
   ]);
