@@ -1,52 +1,136 @@
-import { db } from "../client";
+import { db } from '../client';
 import {
   chartAccounts,
   journalEntries,
   journalLines,
   accountingPeriods,
-} from "../schema/accounting";
-import { user } from "../schema/auth";
-import { snapshots } from "../schema/snapshots";
-import { divisions } from "../schema/divisions";
-import { clients } from "../schema/clients";
-import { invoices } from "../schema/billing";
-import { creditApplications } from "../schema/credits";
-import { income } from "../schema/income";
-import { getOrganisationSettings } from "./billing";
-import { eq, and, desc, asc, sql, inArray } from "drizzle-orm";
+} from '../schema/accounting';
+import { user } from '../schema/auth';
+import { snapshots } from '../schema/snapshots';
+import { divisions } from '../schema/divisions';
+import { clients } from '../schema/clients';
+import { invoices } from '../schema/billing';
+import { creditApplications } from '../schema/credits';
+import { income } from '../schema/income';
+import { getOrganisationSettings } from './billing';
+import { eq, and, desc, asc, sql, inArray } from 'drizzle-orm';
 
 // ── Chart of Accounts ─────────────────────────────────────────────────────────
 
-export async function ensurePmgShareReserveAccount() {
-  try {
-    const [inserted] = await db
-      .insert(chartAccounts)
-      .values({
-        code: "3150",
-        name: "PMG Share Equity Reserve",
-        type: "equity",
-        description: "Accumulated PMG Share retained reserve from billing income",
-        isActive: true,
-        isPostingAccount: true,
-      })
-      .onConflictDoNothing({ target: chartAccounts.code })
-      .returning({ id: chartAccounts.id });
+export const CORE_CHART_ACCOUNTS = [
+  {
+    code: '1010',
+    name: 'Business Cheque Account',
+    type: 'asset' as const,
+    description: 'Primary operational bank account',
+  },
+  {
+    code: '1020',
+    name: 'Savings Account',
+    type: 'asset' as const,
+    description: 'PMG Share cash holding account',
+  },
+  {
+    code: '1100',
+    name: 'Accounts Receivable',
+    type: 'asset' as const,
+    description: 'Unpaid customer invoices',
+  },
+  {
+    code: '2140',
+    name: 'Client Overpayment Credits',
+    type: 'liability' as const,
+    description: 'Unallocated customer credits and overpayments',
+  },
+  {
+    code: '2150',
+    name: 'VAT Output Control',
+    type: 'liability' as const,
+    description: 'VAT collected on sales invoices (when VAT registered)',
+  },
+  {
+    code: '3150',
+    name: 'PMG Share Equity Reserve',
+    type: 'equity' as const,
+    description: 'Accumulated PMG Share retained reserve from billing income',
+  },
+  {
+    code: '4010',
+    name: 'Sales Revenue',
+    type: 'revenue' as const,
+    description: 'Gross income from client billing',
+  },
+  {
+    code: '5010',
+    name: 'Hosting & Infrastructure',
+    type: 'expense' as const,
+    description: 'Servers, VPS, domains, cloud hosting',
+  },
+  {
+    code: '5020',
+    name: 'Software & SaaS Subscriptions',
+    type: 'expense' as const,
+    description: 'Claude, Antigravity, software tools',
+  },
+  {
+    code: '5090',
+    name: 'Contractor & Freelance Fees',
+    type: 'expense' as const,
+    description: 'Direct project subcontractor costs',
+  },
+  {
+    code: '5130',
+    name: 'Growth & Development / Reinvestment',
+    type: 'expense' as const,
+    description: 'Business expansion and development',
+  },
+  {
+    code: '5140',
+    name: 'Miscellaneous Expense',
+    type: 'expense' as const,
+    description: 'General operational expenses',
+  },
+  {
+    code: '5150',
+    name: 'Bad Debt Expense',
+    type: 'expense' as const,
+    description: 'Uncollectible invoice write-offs',
+  },
+];
 
-    let pmgAccountId = inserted?.id;
-    if (!pmgAccountId) {
-      const [existing] = await db
-        .select({ id: chartAccounts.id })
-        .from(chartAccounts)
-        .where(eq(chartAccounts.code, "3150"))
-        .limit(1);
-      pmgAccountId = existing?.id;
+export async function ensureCoreChartAccounts() {
+  try {
+    for (const acc of CORE_CHART_ACCOUNTS) {
+      await db
+        .insert(chartAccounts)
+        .values({
+          code: acc.code,
+          name: acc.name,
+          type: acc.type,
+          description: acc.description,
+          isActive: true,
+          isPostingAccount: true,
+        })
+        .onConflictDoUpdate({
+          target: chartAccounts.code,
+          set: {
+            isActive: true,
+            isPostingAccount: true,
+          },
+        });
     }
 
-    if (pmgAccountId) {
+    const [pmgAccount] = await db
+      .select({ id: chartAccounts.id })
+      .from(chartAccounts)
+      .where(eq(chartAccounts.code, '3150'))
+      .limit(1);
+
+    if (pmgAccount) {
       const [bankAccount] = await db
         .select({ id: chartAccounts.id })
         .from(chartAccounts)
-        .where(eq(chartAccounts.code, "1010"))
+        .where(eq(chartAccounts.code, '1010'))
         .limit(1);
 
       if (bankAccount) {
@@ -59,31 +143,32 @@ export async function ensurePmgShareReserveAccount() {
           const entryIds = pmgEntries.map((e) => e.id);
           await db
             .update(journalLines)
-            .set({ accountId: pmgAccountId })
+            .set({ accountId: pmgAccount.id })
             .where(
               and(
                 inArray(journalLines.journalEntryId, entryIds),
                 eq(journalLines.accountId, bankAccount.id),
-                sql`${journalLines.credit} IS NOT NULL`
-              )
+                sql`${journalLines.credit} IS NOT NULL`,
+              ),
             );
         }
       }
     }
   } catch (err) {
-    console.error("ensurePmgShareReserveAccount error:", err);
+    console.error('ensureCoreChartAccounts error:', err);
   }
+}
+
+export async function ensurePmgShareReserveAccount() {
+  return ensureCoreChartAccounts();
 }
 
 /**
  * Returns all chart accounts ordered by code.
  */
 export async function getAllChartAccounts() {
-  await ensurePmgShareReserveAccount();
-  return db
-    .select()
-    .from(chartAccounts)
-    .orderBy(asc(chartAccounts.code));
+  await ensureCoreChartAccounts();
+  return db.select().from(chartAccounts).orderBy(asc(chartAccounts.code));
 }
 
 /**
@@ -121,11 +206,7 @@ export async function getChartAccountsByType() {
  * Fetches a single chart account by id.
  */
 export async function getChartAccountById(id: string) {
-  const [account] = await db
-    .select()
-    .from(chartAccounts)
-    .where(eq(chartAccounts.id, id))
-    .limit(1);
+  const [account] = await db.select().from(chartAccounts).where(eq(chartAccounts.id, id)).limit(1);
   return account ?? null;
 }
 
@@ -134,7 +215,7 @@ export async function getChartAccountById(id: string) {
  * Uses the type prefix + next sequential number (e.g. 1001, 1002 for assets).
  */
 export async function getNextAccountCode(
-  type: "asset" | "liability" | "equity" | "revenue" | "expense"
+  type: 'asset' | 'liability' | 'equity' | 'revenue' | 'expense',
 ): Promise<string> {
   const prefix = { asset: 1, liability: 2, equity: 3, revenue: 4, expense: 5 }[type];
 
@@ -147,7 +228,7 @@ export async function getNextAccountCode(
 
   if (!last) return `${prefix}001`;
   const num = parseInt(last.code.slice(1), 10) + 1;
-  return `${prefix}${String(num).padStart(3, "0")}`;
+  return `${prefix}${String(num).padStart(3, '0')}`;
 }
 
 // ── Journal Entries ───────────────────────────────────────────────────────────
@@ -215,11 +296,11 @@ export type MonthlyJournalSummary = {
  */
 export async function getJournalMonthlySummaries(
   year: number,
-  status?: string
+  status?: string,
 ): Promise<MonthlyJournalSummary[]> {
   const conditions = [
     sql`${journalEntries.period} >= ${`${year}-03`}`,
-    sql`${journalEntries.period} <= ${`${year + 1}-02`}`
+    sql`${journalEntries.period} <= ${`${year + 1}-02`}`,
   ];
 
   if (status) conditions.push(eq(journalEntries.status, status as any));
@@ -251,11 +332,7 @@ export async function getJournalMonthlySummaries(
  * Fetches a journal entry with its lines.
  */
 export async function getJournalEntryWithLines(id: string) {
-  const [entry] = await db
-    .select()
-    .from(journalEntries)
-    .where(eq(journalEntries.id, id))
-    .limit(1);
+  const [entry] = await db.select().from(journalEntries).where(eq(journalEntries.id, id)).limit(1);
 
   if (!entry) return null;
 
@@ -285,7 +362,9 @@ export type JournalEntryLineRow = {
  * needs every entry's lines without the N+1 cost of calling
  * getJournalEntryWithLines per entry.
  */
-export async function getJournalLinesForEntries(entryIds: string[]): Promise<JournalEntryLineRow[]> {
+export async function getJournalLinesForEntries(
+  entryIds: string[],
+): Promise<JournalEntryLineRow[]> {
   if (entryIds.length === 0) return [];
 
   const rows = await db
@@ -315,7 +394,7 @@ export async function getJournalLinesForEntries(entryIds: string[]): Promise<Jou
  * Validates that a set of journal lines balance (total debits = total credits).
  */
 export function validateJournalLines(
-  lines: { debit?: string | number | null; credit?: string | number | null }[]
+  lines: { debit?: string | number | null; credit?: string | number | null }[],
 ): { valid: boolean; totalDebits: number; totalCredits: number; error?: string } {
   let totalDebits = 0;
   let totalCredits = 0;
@@ -325,10 +404,20 @@ export function validateJournalLines(
     const credit = line.credit ? Number(line.credit) : 0;
 
     if (debit > 0 && credit > 0) {
-      return { valid: false, totalDebits, totalCredits, error: "A line cannot have both a debit and credit amount." };
+      return {
+        valid: false,
+        totalDebits,
+        totalCredits,
+        error: 'A line cannot have both a debit and credit amount.',
+      };
     }
     if (debit <= 0 && credit <= 0) {
-      return { valid: false, totalDebits, totalCredits, error: "Each line must have either a debit or credit amount greater than zero." };
+      return {
+        valid: false,
+        totalDebits,
+        totalCredits,
+        error: 'Each line must have either a debit or credit amount greater than zero.',
+      };
     }
 
     totalDebits += debit;
@@ -336,7 +425,12 @@ export function validateJournalLines(
   }
 
   if (lines.length < 2) {
-    return { valid: false, totalDebits, totalCredits, error: "A journal entry must have at least two lines." };
+    return {
+      valid: false,
+      totalDebits,
+      totalCredits,
+      error: 'A journal entry must have at least two lines.',
+    };
   }
 
   const diff = Math.abs(totalDebits - totalCredits);
@@ -357,7 +451,10 @@ export function validateJournalLines(
  * Can receive an optional tx transaction context and the entry date.
  * The year is derived from the entryDate parameter, not the server clock.
  */
-export async function getNextJournalEntryNumber(txOrDate?: any, entryDate?: string): Promise<string> {
+export async function getNextJournalEntryNumber(
+  txOrDate?: any,
+  entryDate?: string,
+): Promise<string> {
   // Handle overloaded parameters: (tx, entryDate) or (entryDate) or ()
   let tx: any;
   let dateStr: string;
@@ -394,9 +491,8 @@ export async function getNextJournalEntryNumber(txOrDate?: any, entryDate?: stri
   `);
 
   const sequence = (result.rows[0] as { last_sequence: number }).last_sequence;
-  return `${prefix}${String(sequence).padStart(4, "0")}`;
+  return `${prefix}${String(sequence).padStart(4, '0')}`;
 }
-
 
 // ── Accounting Periods ────────────────────────────────────────────────────────
 
@@ -405,16 +501,16 @@ export async function getNextJournalEntryNumber(txOrDate?: any, entryDate?: stri
  * Resolves closedBy/lockedBy user IDs to user names.
  */
 export async function getAllAccountingPeriods() {
-  const rows = await db
-    .select()
-    .from(accountingPeriods)
-    .orderBy(desc(accountingPeriods.period));
+  const rows = await db.select().from(accountingPeriods).orderBy(desc(accountingPeriods.period));
 
   // Collect unique user IDs to batch-resolve names
-  const userIds = [...new Set(
-    [...rows.map((r) => r.closedBy), ...rows.map((r) => r.lockedBy)]
-      .filter((id): id is string => !!id)
-  )];
+  const userIds = [
+    ...new Set(
+      [...rows.map((r) => r.closedBy), ...rows.map((r) => r.lockedBy)].filter(
+        (id): id is string => !!id,
+      ),
+    ),
+  ];
 
   if (userIds.length === 0) {
     return rows.map((r) => ({ ...r, closedByName: null, lockedByName: null }));
@@ -443,7 +539,7 @@ export async function getCurrentOpenPeriod() {
   const [period] = await db
     .select()
     .from(accountingPeriods)
-    .where(eq(accountingPeriods.status, "open"))
+    .where(eq(accountingPeriods.status, 'open'))
     .orderBy(desc(accountingPeriods.period))
     .limit(1);
   return period ?? null;
@@ -471,7 +567,7 @@ export async function isPeriodOpen(period: string): Promise<boolean> {
     .limit(1);
 
   // If period doesn't exist in the table, treat it as open
-  return !row || row.status === "open";
+  return !row || row.status === 'open';
 }
 
 // ── Trial Balance ─────────────────────────────────────────────────────────────
@@ -499,7 +595,7 @@ export function resolvePeriodDateRange(period?: string): { startDate?: string; e
   if (period.endsWith('-FY')) {
     const fyYear = parseInt(period.split('-')[0], 10);
     const startYear = fyYear - 1;
-    const isLeap = (fyYear % 4 === 0 && fyYear % 100 !== 0) || (fyYear % 400 === 0);
+    const isLeap = (fyYear % 4 === 0 && fyYear % 100 !== 0) || fyYear % 400 === 0;
     const febDays = isLeap ? 29 : 28;
     return {
       startDate: `${startYear}-03-01`,
@@ -526,14 +622,17 @@ export function resolvePeriodDateRange(period?: string): { startDate?: string; e
  * Uses a subquery to ensure only journal lines belonging to posted entries
  * are aggregated — void/draft entries are excluded.
  */
-export async function getTrialBalance(period?: string, divisionId?: string, startDate?: string, endDate?: string): Promise<TrialBalanceRow[]> {
+export async function getTrialBalance(
+  period?: string,
+  divisionId?: string,
+  startDate?: string,
+  endDate?: string,
+): Promise<TrialBalanceRow[]> {
   const range = resolvePeriodDateRange(period);
   const effectiveStart = startDate || range.startDate;
   const effectiveEnd = endDate || range.endDate;
 
-  const entryConditions = [
-    eq(journalEntries.status, "posted"),
-  ];
+  const entryConditions = [eq(journalEntries.status, 'posted')];
   if (period && !period.endsWith('-FY') && !/^\d{4}-\d{2}$/.test(period)) {
     entryConditions.push(eq(journalEntries.period, period));
   }
@@ -552,19 +651,18 @@ export async function getTrialBalance(period?: string, divisionId?: string, star
   const postedLineTotals = db
     .select({
       accountId: journalLines.accountId,
-      totalDebits: sql<string>`COALESCE(SUM(${journalLines.debit}::numeric), 0)`.as("totalDebits"),
-      totalCredits: sql<string>`COALESCE(SUM(${journalLines.credit}::numeric), 0)`.as("totalCredits"),
+      totalDebits: sql<string>`COALESCE(SUM(${journalLines.debit}::numeric), 0)`.as('totalDebits'),
+      totalCredits: sql<string>`COALESCE(SUM(${journalLines.credit}::numeric), 0)`.as(
+        'totalCredits',
+      ),
     })
     .from(journalLines)
     .innerJoin(
       journalEntries,
-      and(
-        eq(journalLines.journalEntryId, journalEntries.id),
-        ...entryConditions
-      )
+      and(eq(journalLines.journalEntryId, journalEntries.id), ...entryConditions),
     )
     .groupBy(journalLines.accountId)
-    .as("posted_line_totals");
+    .as('posted_line_totals');
 
   const rows = await db
     .select({
@@ -621,15 +719,13 @@ export async function getBalanceSheet(
   period?: string,
   divisionId?: string,
   startDate?: string,
-  endDate?: string
+  endDate?: string,
 ): Promise<BalanceSheetResult> {
   const range = resolvePeriodDateRange(period);
   const effectiveStart = startDate || range.startDate;
   const effectiveEnd = endDate || range.endDate;
 
-  const entryConditions = [
-    eq(journalEntries.status, "posted"),
-  ];
+  const entryConditions = [eq(journalEntries.status, 'posted')];
   if (period && !period.endsWith('-FY') && !/^\d{4}-\d{2}$/.test(period)) {
     entryConditions.push(eq(journalEntries.period, period));
   }
@@ -640,19 +736,18 @@ export async function getBalanceSheet(
   const postedLineTotals = db
     .select({
       accountId: journalLines.accountId,
-      totalDebits: sql<string>`COALESCE(SUM(${journalLines.debit}::numeric), 0)`.as("totalDebits"),
-      totalCredits: sql<string>`COALESCE(SUM(${journalLines.credit}::numeric), 0)`.as("totalCredits"),
+      totalDebits: sql<string>`COALESCE(SUM(${journalLines.debit}::numeric), 0)`.as('totalDebits'),
+      totalCredits: sql<string>`COALESCE(SUM(${journalLines.credit}::numeric), 0)`.as(
+        'totalCredits',
+      ),
     })
     .from(journalLines)
     .innerJoin(
       journalEntries,
-      and(
-        eq(journalLines.journalEntryId, journalEntries.id),
-        ...entryConditions
-      )
+      and(eq(journalLines.journalEntryId, journalEntries.id), ...entryConditions),
     )
     .groupBy(journalLines.accountId)
-    .as("posted_line_totals");
+    .as('posted_line_totals');
 
   const rows = await db
     .select({
@@ -679,18 +774,18 @@ export async function getBalanceSheet(
     const debits = Number(r.totalDebits);
     const credits = Number(r.totalCredits);
 
-    if (r.accountType === "asset") {
+    if (r.accountType === 'asset') {
       const amount = debits - credits;
       if (Math.abs(amount) > 0.01) assets.push({ ...r, amount });
-    } else if (r.accountType === "liability") {
+    } else if (r.accountType === 'liability') {
       const amount = credits - debits;
       if (Math.abs(amount) > 0.01) liabilities.push({ ...r, amount });
-    } else if (r.accountType === "equity") {
+    } else if (r.accountType === 'equity') {
       const amount = credits - debits;
       if (Math.abs(amount) > 0.01) equity.push({ ...r, amount });
-    } else if (r.accountType === "revenue") {
+    } else if (r.accountType === 'revenue') {
       totalRev += credits - debits;
-    } else if (r.accountType === "expense") {
+    } else if (r.accountType === 'expense') {
       totalExp += debits - credits;
     }
   }
@@ -734,7 +829,7 @@ export async function getCashFlowStatement(
   period?: string,
   divisionId?: string,
   startDate?: string,
-  endDate?: string
+  endDate?: string,
 ): Promise<CashFlowResult> {
   const pnl = await getProfitAndLoss(period, divisionId, startDate, endDate);
   const bs = await getBalanceSheet(period, divisionId, startDate, endDate);
@@ -756,7 +851,7 @@ export async function getCashFlowStatement(
   const netInvestingFinancingCashFlow = 0;
 
   const netCashIncrease = netOperatingCashFlow + netInvestingFinancingCashFlow;
-  
+
   const bankAccounts = bs.assets.filter((a) => a.accountCode.startsWith('10'));
   const endingCashBalance = bankAccounts.reduce((sum, a) => sum + a.amount, 0);
   const startingCashBalance = Math.max(0, endingCashBalance - netCashIncrease);
@@ -797,14 +892,17 @@ export type ProfitAndLossResult = {
  * Uses a subquery to ensure only journal lines belonging to posted entries
  * are aggregated — void/draft entries are excluded.
  */
-export async function getProfitAndLoss(period?: string, divisionId?: string, startDate?: string, endDate?: string): Promise<ProfitAndLossResult> {
+export async function getProfitAndLoss(
+  period?: string,
+  divisionId?: string,
+  startDate?: string,
+  endDate?: string,
+): Promise<ProfitAndLossResult> {
   const range = resolvePeriodDateRange(period);
   const effectiveStart = startDate || range.startDate;
   const effectiveEnd = endDate || range.endDate;
 
-  const entryConditions = [
-    eq(journalEntries.status, "posted"),
-  ];
+  const entryConditions = [eq(journalEntries.status, 'posted')];
   if (period && !period.endsWith('-FY') && !/^\d{4}-\d{2}$/.test(period)) {
     entryConditions.push(eq(journalEntries.period, period));
   }
@@ -823,19 +921,18 @@ export async function getProfitAndLoss(period?: string, divisionId?: string, sta
   const postedLineTotals = db
     .select({
       accountId: journalLines.accountId,
-      totalDebits: sql<string>`COALESCE(SUM(${journalLines.debit}::numeric), 0)`.as("totalDebits"),
-      totalCredits: sql<string>`COALESCE(SUM(${journalLines.credit}::numeric), 0)`.as("totalCredits"),
+      totalDebits: sql<string>`COALESCE(SUM(${journalLines.debit}::numeric), 0)`.as('totalDebits'),
+      totalCredits: sql<string>`COALESCE(SUM(${journalLines.credit}::numeric), 0)`.as(
+        'totalCredits',
+      ),
     })
     .from(journalLines)
     .innerJoin(
       journalEntries,
-      and(
-        eq(journalLines.journalEntryId, journalEntries.id),
-        ...entryConditions
-      )
+      and(eq(journalLines.journalEntryId, journalEntries.id), ...entryConditions),
     )
     .groupBy(journalLines.accountId)
-    .as("posted_line_totals");
+    .as('posted_line_totals');
 
   const rows = await db
     .select({
@@ -857,10 +954,10 @@ export async function getProfitAndLoss(period?: string, divisionId?: string, sta
   for (const r of rows) {
     const debits = Number(r.totalDebits);
     const credits = Number(r.totalCredits);
-    if (r.accountType === "revenue") {
+    if (r.accountType === 'revenue') {
       const amount = credits - debits;
       if (Math.abs(amount) > 0.01) revenue.push({ ...r, amount });
-    } else if (r.accountType === "expense") {
+    } else if (r.accountType === 'expense') {
       const amount = debits - credits;
       if (Math.abs(amount) > 0.01) expenses.push({ ...r, amount });
     }
@@ -896,14 +993,16 @@ export type ProfitAndLossByDivisionRow = {
  * period. Includes division margin % and group distribution %.
  * Sorted by totalRevenue descending (highest-earning division first).
  */
-export async function getProfitAndLossByDivision(period?: string, startDate?: string, endDate?: string): Promise<ProfitAndLossByDivisionRow[]> {
+export async function getProfitAndLossByDivision(
+  period?: string,
+  startDate?: string,
+  endDate?: string,
+): Promise<ProfitAndLossByDivisionRow[]> {
   const range = resolvePeriodDateRange(period);
   const effectiveStart = startDate || range.startDate;
   const effectiveEnd = endDate || range.endDate;
 
-  const entryConditions = [
-    eq(journalEntries.status, "posted"),
-  ];
+  const entryConditions = [eq(journalEntries.status, 'posted')];
   if (period && !period.endsWith('-FY') && !/^\d{4}-\d{2}$/.test(period)) {
     entryConditions.push(eq(journalEntries.period, period));
   }
@@ -920,9 +1019,12 @@ export async function getProfitAndLossByDivision(period?: string, startDate?: st
       totalCredits: sql<string>`COALESCE(SUM(${journalLines.credit}::numeric), 0)`,
     })
     .from(journalLines)
-    .innerJoin(journalEntries, and(eq(journalLines.journalEntryId, journalEntries.id), ...entryConditions))
+    .innerJoin(
+      journalEntries,
+      and(eq(journalLines.journalEntryId, journalEntries.id), ...entryConditions),
+    )
     .innerJoin(chartAccounts, eq(journalLines.accountId, chartAccounts.id))
-    .where(inArray(chartAccounts.type, ["revenue", "expense"]))
+    .where(inArray(chartAccounts.type, ['revenue', 'expense']))
     .groupBy(journalEntries.divisionId, chartAccounts.type, chartAccounts.code, chartAccounts.name);
 
   // Fetch actual cash income collected per division
@@ -944,24 +1046,34 @@ export async function getProfitAndLossByDivision(period?: string, startDate?: st
   const allDivisions = await db.select({ id: divisions.id, name: divisions.name }).from(divisions);
   const divisionNames = new Map(allDivisions.map((d) => [d.id, d.name]));
 
-  const byDivision = new Map<string, { totalRevenue: number; totalExpenses: number; totalBadDebt: number }>();
+  const byDivision = new Map<
+    string,
+    { totalRevenue: number; totalExpenses: number; totalBadDebt: number }
+  >();
   for (const r of rows) {
-    const totals = byDivision.get(r.divisionId) ?? { totalRevenue: 0, totalExpenses: 0, totalBadDebt: 0 };
+    const totals = byDivision.get(r.divisionId) ?? {
+      totalRevenue: 0,
+      totalExpenses: 0,
+      totalBadDebt: 0,
+    };
     const debits = Number(r.totalDebits);
     const credits = Number(r.totalCredits);
-    if (r.accountType === "revenue") {
+    if (r.accountType === 'revenue') {
       totals.totalRevenue += credits - debits;
-    } else if (r.accountType === "expense") {
+    } else if (r.accountType === 'expense') {
       const amount = debits - credits;
       totals.totalExpenses += amount;
-      if (r.accountCode === "5150" || r.accountName.toLowerCase().includes("bad debt")) {
+      if (r.accountCode === '5150' || r.accountName.toLowerCase().includes('bad debt')) {
         totals.totalBadDebt += amount;
       }
     }
     byDivision.set(r.divisionId, totals);
   }
 
-  const groupTotalRevenue = Array.from(byDivision.values()).reduce((sum, d) => sum + Math.max(0, d.totalRevenue), 0);
+  const groupTotalRevenue = Array.from(byDivision.values()).reduce(
+    (sum, d) => sum + Math.max(0, d.totalRevenue),
+    0,
+  );
 
   const result: ProfitAndLossByDivisionRow[] = [];
   for (const [divisionId, totals] of byDivision) {
@@ -969,12 +1081,13 @@ export async function getProfitAndLossByDivision(period?: string, startDate?: st
     const cashIncome = incomeMap.get(divisionId) ?? 0;
     const netProfit = totals.totalRevenue - totals.totalExpenses;
     const marginPercent = totals.totalRevenue > 0 ? (netProfit / totals.totalRevenue) * 100 : 0;
-    const distributionPercent = groupTotalRevenue > 0 ? (totals.totalRevenue / groupTotalRevenue) * 100 : 0;
+    const distributionPercent =
+      groupTotalRevenue > 0 ? (totals.totalRevenue / groupTotalRevenue) * 100 : 0;
     const totalOutstandingAr = Math.max(0, totals.totalRevenue - cashIncome);
 
     result.push({
       divisionId,
-      divisionName: divisionNames.get(divisionId) ?? "Unknown Division",
+      divisionName: divisionNames.get(divisionId) ?? 'Unknown Division',
       totalRevenue: totals.totalRevenue,
       totalIncome: cashIncome,
       totalOutstandingAr,
@@ -1009,7 +1122,7 @@ export type ClientPerformanceRow = {
 export async function getClientPerformance(
   period?: string,
   startDate?: string,
-  endDate?: string
+  endDate?: string,
 ): Promise<ClientPerformanceRow[]> {
   const range = resolvePeriodDateRange(period);
   const effectiveStart = startDate || range.startDate;
@@ -1061,8 +1174,10 @@ export async function getClientPerformance(
   // currently owes on OTHER open invoices; including it would understate
   // (or, summed with enough of them, even zero out) real outstanding AR.
   const creditConditions = [inArray(invoices.status, ['issued', 'partially_paid'])];
-  if (effectiveStart) creditConditions.push(sql`${creditApplications.appliedAt} >= ${effectiveStart}::timestamp`);
-  if (effectiveEnd) creditConditions.push(sql`${creditApplications.appliedAt} <= ${effectiveEnd}::timestamp`);
+  if (effectiveStart)
+    creditConditions.push(sql`${creditApplications.appliedAt} >= ${effectiveStart}::timestamp`);
+  if (effectiveEnd)
+    creditConditions.push(sql`${creditApplications.appliedAt} <= ${effectiveEnd}::timestamp`);
 
   const creditRows = await db
     .select({
@@ -1150,9 +1265,7 @@ export async function getGeneralLedger({
   page?: number;
   pageSize?: number;
 } = {}) {
-  const conditions = [
-    eq(journalEntries.status, "posted"),
-  ];
+  const conditions = [eq(journalEntries.status, 'posted')];
   if (startDate) conditions.push(sql`${journalEntries.entryDate} >= ${startDate}`);
   if (endDate) conditions.push(sql`${journalEntries.entryDate} <= ${endDate}`);
   if (accountId) conditions.push(eq(journalLines.accountId, accountId));
@@ -1213,12 +1326,12 @@ export type MonthlyLedgerSummary = {
  */
 export async function getLedgerMonthlySummaries(
   year: number,
-  accountId?: string
+  accountId?: string,
 ): Promise<MonthlyLedgerSummary[]> {
   const conditions = [
-    eq(journalEntries.status, "posted"),
+    eq(journalEntries.status, 'posted'),
     sql`${journalEntries.period} >= ${`${year}-03`}`,
-    sql`${journalEntries.period} <= ${`${year + 1}-02`}`
+    sql`${journalEntries.period} <= ${`${year + 1}-02`}`,
   ];
 
   if (accountId) conditions.push(eq(journalLines.accountId, accountId));
@@ -1266,12 +1379,12 @@ export async function getAccountingOverview(): Promise<AccountingOverview> {
   const [postedCount] = await db
     .select({ count: sql<number>`count(*)::int` })
     .from(journalEntries)
-    .where(eq(journalEntries.status, "posted"));
+    .where(eq(journalEntries.status, 'posted'));
 
   const [draftCount] = await db
     .select({ count: sql<number>`count(*)::int` })
     .from(journalEntries)
-    .where(eq(journalEntries.status, "draft"));
+    .where(eq(journalEntries.status, 'draft'));
 
   const period = await getCurrentOpenPeriod();
 
@@ -1300,7 +1413,7 @@ export async function ensureOpenPeriod(period: string) {
 
   const [created] = await db
     .insert(accountingPeriods)
-    .values({ period, status: "open" })
+    .values({ period, status: 'open' })
     .returning();
 
   return created;
@@ -1314,7 +1427,7 @@ export async function closePeriod(period: string, closedBy: string) {
   await db
     .update(accountingPeriods)
     .set({
-      status: "closed",
+      status: 'closed',
       closedAt: new Date(),
       closedBy,
       updatedAt: new Date(),
@@ -1329,7 +1442,7 @@ export async function lockPeriod(period: string, lockedBy: string) {
   await db
     .update(accountingPeriods)
     .set({
-      status: "locked",
+      status: 'locked',
       lockedAt: new Date(),
       lockedBy,
       updatedAt: new Date(),
@@ -1344,7 +1457,7 @@ export async function reopenPeriod(period: string) {
   await db
     .update(accountingPeriods)
     .set({
-      status: "open",
+      status: 'open',
       closedAt: null,
       closedBy: null,
       updatedAt: new Date(),
@@ -1363,7 +1476,9 @@ export type UnpostedInvoiceReconciliationRow = {
  * Sweeps for active invoices (issued, partially_paid, paid, written_off)
  * that have 0 debits/credits posted in the general ledger.
  */
-export async function getUnpostedInvoicesReconciliation(): Promise<UnpostedInvoiceReconciliationRow[]> {
+export async function getUnpostedInvoicesReconciliation(): Promise<
+  UnpostedInvoiceReconciliationRow[]
+> {
   const result = await db.execute(sql`
     SELECT i.id, i.document_number AS "documentNumber", i.status, CAST(i.total AS NUMERIC) AS total
     FROM invoices i
@@ -1505,15 +1620,13 @@ export async function getAnnualFinancialStatements(
   period?: string,
   divisionId?: string,
   startDate?: string,
-  endDate?: string
+  endDate?: string,
 ): Promise<AnnualFinancialStatementsResult> {
   const currentYearNum = new Date().getFullYear();
   const nowMonth = new Date().getMonth() + 1;
   const defaultFyNum = nowMonth >= 3 ? currentYearNum + 1 : currentYearNum;
 
-  const targetYearNum = period
-    ? parseInt(period.split('-')[0], 10)
-    : defaultFyNum;
+  const targetYearNum = period ? parseInt(period.split('-')[0], 10) : defaultFyNum;
   const priorYearNum = targetYearNum - 1;
 
   const currentPeriodKey = `${targetYearNum}-FY`;
@@ -1571,8 +1684,8 @@ export async function getAnnualFinancialStatements(
   });
 
   // Calculate equity movements
-  const openingShareCapital = 100.00;
-  const closingShareCapital = 100.00;
+  const openingShareCapital = 100.0;
+  const closingShareCapital = 100.0;
   const priorNetProfit = priorPnl.netProfit;
   const currentNetProfit = pnl.netProfit;
   const priorOpeningRetained = 0;
@@ -1593,15 +1706,26 @@ export async function getAnnualFinancialStatements(
   }));
 
   const cashNotes: AfsNoteRow[] = balanceSheet.assets
-    .filter((a) => a.accountName.toLowerCase().includes('bank') || a.accountName.toLowerCase().includes('cash') || a.accountName.toLowerCase().includes('savings'))
+    .filter(
+      (a) =>
+        a.accountName.toLowerCase().includes('bank') ||
+        a.accountName.toLowerCase().includes('cash') ||
+        a.accountName.toLowerCase().includes('savings'),
+    )
     .map((a) => ({ code: a.accountCode, label: a.accountName, amount: a.amount }));
 
-  const arAsset = balanceSheet.assets.find((a) => a.accountName.toLowerCase().includes('receivable') || a.accountCode === '1100');
-  const badDebtExp = pnl.expenses.find((e) => e.accountName.toLowerCase().includes('bad debt') || e.accountCode === '5150');
+  const arAsset = balanceSheet.assets.find(
+    (a) => a.accountName.toLowerCase().includes('receivable') || a.accountCode === '1100',
+  );
+  const badDebtExp = pnl.expenses.find(
+    (e) => e.accountName.toLowerCase().includes('bad debt') || e.accountCode === '5150',
+  );
   const grossAR = (arAsset?.amount || 0) + (badDebtExp?.amount || 0);
   const allowanceAR = badDebtExp?.amount || 0;
 
-  const clientCreditsLiability = balanceSheet.liabilities.find((l) => l.accountName.toLowerCase().includes('credit') || l.accountCode === '2200');
+  const clientCreditsLiability = balanceSheet.liabilities.find(
+    (l) => l.accountName.toLowerCase().includes('credit') || l.accountCode === '2200',
+  );
   const otherPayables = balanceSheet.totalLiabilities - (clientCreditsLiability?.amount || 0);
 
   return {
@@ -1617,16 +1741,22 @@ export async function getAnnualFinancialStatements(
       priorYearLabel,
     },
     directorsReport: {
-      principalActivities: 'Software development, digital agency services, domain & hosting solutions, and professional technology consulting.',
+      principalActivities:
+        'Software development, digital agency services, domain & hosting solutions, and professional technology consulting.',
       financialResultsSummary: `The corporate net operating financial result for FY${targetYearNum} reflects a Net Operating Profit of R ${pnl.netProfit.toLocaleString('en-ZA', { minimumFractionDigits: 2 })} on Total Sales Revenue of R ${pnl.totalRevenue.toLocaleString('en-ZA', { minimumFractionDigits: 2 })}.`,
-      goingConcernStatement: 'The directors believe that the company has adequate financial resources to continue in operation for the foreseeable future and accordingly the annual financial statements have been prepared on a going concern basis.',
-      eventsAfterReportingPeriod: 'The directors are not aware of any material matter or circumstance arising since the end of the financial year that would significantly impact these financial statements.',
+      goingConcernStatement:
+        'The directors believe that the company has adequate financial resources to continue in operation for the foreseeable future and accordingly the annual financial statements have been prepared on a going concern basis.',
+      eventsAfterReportingPeriod:
+        'The directors are not aware of any material matter or circumstance arising since the end of the financial year that would significantly impact these financial statements.',
       businessActivities: {
         revenue: { current: pnl.totalRevenue, prior: priorPnl.totalRevenue },
         operatingProfit: { current: pnl.netProfit, prior: priorPnl.netProfit },
         netProfit: { current: pnl.netProfit, prior: priorPnl.netProfit },
         totalAssets: { current: balanceSheet.totalAssets, prior: priorBalanceSheet.totalAssets },
-        totalLiabilities: { current: balanceSheet.totalLiabilities, prior: priorBalanceSheet.totalLiabilities },
+        totalLiabilities: {
+          current: balanceSheet.totalLiabilities,
+          prior: priorBalanceSheet.totalLiabilities,
+        },
       },
       divisionBreakdown,
     },
@@ -1634,21 +1764,45 @@ export async function getAnnualFinancialStatements(
       assets: balanceSheet.assets,
       totalAssets: { current: balanceSheet.totalAssets, prior: priorBalanceSheet.totalAssets },
       liabilities: balanceSheet.liabilities,
-      totalLiabilities: { current: balanceSheet.totalLiabilities, prior: priorBalanceSheet.totalLiabilities },
+      totalLiabilities: {
+        current: balanceSheet.totalLiabilities,
+        prior: priorBalanceSheet.totalLiabilities,
+      },
       equity: balanceSheet.equity,
       totalEquity: { current: balanceSheet.totalEquity, prior: priorBalanceSheet.totalEquity },
-      totalLiabilitiesAndEquity: { current: balanceSheet.totalLiabilitiesAndEquity, prior: priorBalanceSheet.totalLiabilitiesAndEquity },
+      totalLiabilitiesAndEquity: {
+        current: balanceSheet.totalLiabilitiesAndEquity,
+        prior: priorBalanceSheet.totalLiabilitiesAndEquity,
+      },
     },
     statementOfProfitLoss: {
       revenue: { current: pnl.totalRevenue, prior: priorPnl.totalRevenue },
       divisionBreakdown,
       depreciation: {
-        current: pnl.expenses.find((e) => e.accountName.toLowerCase().includes('depreciation'))?.amount || 0,
-        prior: priorPnl.expenses.find((e) => e.accountName.toLowerCase().includes('depreciation'))?.amount || 0,
+        current:
+          pnl.expenses.find((e) => e.accountName.toLowerCase().includes('depreciation'))?.amount ||
+          0,
+        prior:
+          priorPnl.expenses.find((e) => e.accountName.toLowerCase().includes('depreciation'))
+            ?.amount || 0,
       },
       employeeBenefits: {
-        current: pnl.expenses.filter((e) => e.accountName.toLowerCase().includes('staff') || e.accountName.toLowerCase().includes('salary') || e.accountName.toLowerCase().includes('remuneration')).reduce((s, e) => s + e.amount, 0),
-        prior: priorPnl.expenses.filter((e) => e.accountName.toLowerCase().includes('staff') || e.accountName.toLowerCase().includes('salary') || e.accountName.toLowerCase().includes('remuneration')).reduce((s, e) => s + e.amount, 0),
+        current: pnl.expenses
+          .filter(
+            (e) =>
+              e.accountName.toLowerCase().includes('staff') ||
+              e.accountName.toLowerCase().includes('salary') ||
+              e.accountName.toLowerCase().includes('remuneration'),
+          )
+          .reduce((s, e) => s + e.amount, 0),
+        prior: priorPnl.expenses
+          .filter(
+            (e) =>
+              e.accountName.toLowerCase().includes('staff') ||
+              e.accountName.toLowerCase().includes('salary') ||
+              e.accountName.toLowerCase().includes('remuneration'),
+          )
+          .reduce((s, e) => s + e.amount, 0),
       },
       expenses: pnl.expenses,
       totalExpenses: { current: pnl.totalExpenses, prior: priorPnl.totalExpenses },
@@ -1688,15 +1842,22 @@ export async function getAnnualFinancialStatements(
       netProfit: { current: pnl.netProfit, prior: priorPnl.netProfit },
     },
     notes: {
-      note1BasisOfPreparation: 'The annual financial statements have been prepared in accordance with International Financial Reporting Standards for Small and Medium-sized Entities (IFRS for SMEs) and the South African Companies Act No. 71 of 2008. The financial statements have been prepared on the historical cost basis and incorporate the principal accounting policies set out below.',
-      note2RevenueBreakdown: revenueNotes.length > 0 ? revenueNotes : [{ label: 'Gross Sales Revenue', amount: pnl.totalRevenue }],
+      note1BasisOfPreparation:
+        'The annual financial statements have been prepared in accordance with International Financial Reporting Standards for Small and Medium-sized Entities (IFRS for SMEs) and the South African Companies Act No. 71 of 2008. The financial statements have been prepared on the historical cost basis and incorporate the principal accounting policies set out below.',
+      note2RevenueBreakdown:
+        revenueNotes.length > 0
+          ? revenueNotes
+          : [{ label: 'Gross Sales Revenue', amount: pnl.totalRevenue }],
       note3OperatingExpenses: expenseNotes,
       note4TradeReceivables: {
         grossReceivables: grossAR,
         allowanceForBadDebts: allowanceAR,
         netReceivables: arAsset?.amount || 0,
       },
-      note5CashAndCashEquivalents: cashNotes.length > 0 ? cashNotes : [{ label: 'Main Bank Account Balance', amount: cashFlow.endingCashBalance }],
+      note5CashAndCashEquivalents:
+        cashNotes.length > 0
+          ? cashNotes
+          : [{ label: 'Main Bank Account Balance', amount: cashFlow.endingCashBalance }],
       note6TradeAndOtherPayables: {
         tradePayables: Math.max(0, otherPayables),
         clientCredits: clientCreditsLiability?.amount || 0,

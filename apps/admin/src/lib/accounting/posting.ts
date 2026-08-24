@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 'use server';
 
 /**
@@ -51,6 +52,7 @@ const BANK_ACCOUNT_CODE = '1010'; // Business Cheque Account
 const SAVINGS_ACCOUNT_CODE = '1020'; // Savings Account (PMG Share destination)
 const PMG_SHARE_RESERVE_CODE = '3150'; // PMG Share Equity Reserve (Option 1)
 const ACCOUNTS_RECEIVABLE_CODE = '1100'; // Accounts Receivable
+const VAT_OUTPUT_CODE = '2150'; // VAT Output Control (Liability)
 const SALES_REVENUE_CODE = '4010'; // Sales Revenue
 const MISC_EXPENSE_CODE = '5140'; // Miscellaneous Expense (fallback)
 const BAD_DEBT_EXPENSE_CODE = '5150'; // Bad Debt Expense
@@ -87,10 +89,7 @@ function findExpenseAccountCode(category: string): string {
 // ── Look up accounts by code ───────────────────────────────────────────────
 async function getAccountsByCode(codes: string[], tx?: any) {
   const db = tx || getDb();
-  const accounts = await db
-    .select()
-    .from(chartAccounts)
-    .where(inArray(chartAccounts.code, codes));
+  const accounts = await db.select().from(chartAccounts).where(inArray(chartAccounts.code, codes));
 
   const map = new Map<string, ChartAccount>(accounts.map((a: any) => [a.code, a]));
   return map;
@@ -99,7 +98,11 @@ async function getAccountsByCode(codes: string[], tx?: any) {
 /**
  * Helper to append division prefix/name suffix to journal entry descriptions.
  */
-async function formatDivisionDescription(db: any, divisionId: string, baseDesc: string): Promise<string> {
+async function formatDivisionDescription(
+  db: any,
+  divisionId: string,
+  baseDesc: string,
+): Promise<string> {
   try {
     const [div] = await db
       .select({ name: divisions.name })
@@ -133,6 +136,7 @@ async function formatDivisionDescription(db: any, divisionId: string, baseDesc: 
 export async function postPaymentJournalEntries(data: {
   incomeId: string;
   amount: number;
+  pmgShareAmount?: number;
   date: string;
   description: string;
   sourceDocumentNumber?: string;
@@ -151,21 +155,22 @@ export async function postPaymentJournalEntries(data: {
     const db = data.tx || getDb();
 
     // Ensure PMG Share Equity Reserve (3150) exists in chartAccounts
-    await db.insert(chartAccounts).values({
-      code: PMG_SHARE_RESERVE_CODE,
-      name: 'PMG Share Equity Reserve',
-      type: 'equity',
-      description: 'Accumulated PMG Share retained reserve from billing income',
-      isActive: true,
-      isPostingAccount: true,
-    }).onConflictDoNothing({ target: chartAccounts.code });
+    await db
+      .insert(chartAccounts)
+      .values({
+        code: PMG_SHARE_RESERVE_CODE,
+        name: 'PMG Share Equity Reserve',
+        type: 'equity',
+        description: 'Accumulated PMG Share retained reserve from billing income',
+        isActive: true,
+        isPostingAccount: true,
+      })
+      .onConflictDoNothing({ target: chartAccounts.code });
 
-    const accountMap = await getAccountsByCode([
-      BANK_ACCOUNT_CODE,
-      SAVINGS_ACCOUNT_CODE,
-      PMG_SHARE_RESERVE_CODE,
-      ACCOUNTS_RECEIVABLE_CODE,
-    ], db);
+    const accountMap = await getAccountsByCode(
+      [BANK_ACCOUNT_CODE, SAVINGS_ACCOUNT_CODE, PMG_SHARE_RESERVE_CODE, ACCOUNTS_RECEIVABLE_CODE],
+      db,
+    );
 
     const bankAccount = accountMap.get(BANK_ACCOUNT_CODE);
     const savingsAccount = accountMap.get(SAVINGS_ACCOUNT_CODE);
@@ -174,7 +179,8 @@ export async function postPaymentJournalEntries(data: {
 
     if (!bankAccount || !savingsAccount || !accountsReceivable || !pmgShareReserveAccount) {
       return {
-        error: 'Required chart accounts not found (1010, 1020, 1100, 3150). Please run the accounting seed first.',
+        error:
+          'Required chart accounts not found (1010, 1020, 1100, 3150). Please run the accounting seed first.',
       };
     }
 
@@ -187,11 +193,18 @@ export async function postPaymentJournalEntries(data: {
     const entry1Line2Id = randomUUID();
 
     // ── Execute all inserts atomically in a transaction ────────────────────
-    const pmgShareAmount = Math.round(amount * ACCOUNT_RATES.pmg_share * 100) / 100;
+    const pmgShareAmount =
+      data.pmgShareAmount !== undefined
+        ? Math.round(data.pmgShareAmount * 100) / 100
+        : Math.round(amount * ACCOUNT_RATES.pmg_share * 100) / 100;
 
     const runInsideTx = async (tx: any) => {
       const entryNumber1 = await getNextJournalEntryNumber(tx, date);
-      const formattedDesc = await formatDivisionDescription(tx, divisionId, description || 'Payment received');
+      const formattedDesc = await formatDivisionDescription(
+        tx,
+        divisionId,
+        description || 'Payment received',
+      );
       entryIds.push(entry1Id);
       // Entry 1: Dr Bank / Cr AR
       await tx.insert(journalEntries).values({
@@ -291,7 +304,7 @@ export async function postPaymentJournalEntries(data: {
  */
 export async function voidPaymentJournalEntries(
   incomeId: string,
-  externalTx?: any
+  externalTx?: any,
 ): Promise<{ error?: string; voidedCount?: number }> {
   try {
     const db = externalTx || getDb();
@@ -303,8 +316,8 @@ export async function voidPaymentJournalEntries(
         and(
           eq(journalEntries.sourceModule, 'billing'),
           eq(journalEntries.sourceTable, 'income'),
-          eq(journalEntries.sourceId, incomeId)
-        )
+          eq(journalEntries.sourceId, incomeId),
+        ),
       );
 
     const toVoid = entries.filter((e: any) => e.status !== 'void');
@@ -337,7 +350,9 @@ export async function voidPaymentJournalEntries(
     return { voidedCount: toVoid.length };
   } catch (err) {
     console.error('Failed to void payment journal entries:', err);
-    return { error: 'Failed to void journal entries. Please void manually in Accounting → Journals.' };
+    return {
+      error: 'Failed to void journal entries. Please void manually in Accounting → Journals.',
+    };
   }
 }
 
@@ -378,22 +393,33 @@ export async function updatePaymentJournalEntries(data: {
 
     return {};
   } catch (err) {
-    return { error: err instanceof Error ? err.message : 'Failed to update payment journal entries.' };
+    return {
+      error: err instanceof Error ? err.message : 'Failed to update payment journal entries.',
+    };
   }
 }
 
-// ── Invoice Issue: Dr AR / Cr Revenue ───────────────────────────────────────
+// ── Invoice Issue: Dr AR / Cr Revenue (+ Cr VAT Output if enabled) ─────────
 
 /**
  * Creates and auto-posts a journal entry when an invoice is issued.
  * Uses db.batch() for atomicity.
  *
+ * If VAT is enabled:
+ *   Dr Accounts Receivable (1100)  = invoice total
+ *   Cr Sales Revenue (4010)        = subtotal (excl VAT)
+ *   Cr VAT Output Control (2150)   = vat amount
+ *
+ * If VAT is disabled:
  *   Dr Accounts Receivable (1100)  = invoice total
  *   Cr Sales Revenue (4010)        = invoice total
  */
 export async function postInvoiceIssueJournalEntry(data: {
   invoiceId: string;
   amount: number;
+  subtotal?: number;
+  vatAmount?: number;
+  vatEnabled?: boolean;
   date: string;
   description?: string;
   sourceDocumentNumber?: string;
@@ -401,7 +427,8 @@ export async function postInvoiceIssueJournalEntry(data: {
   tx?: any;
 }): Promise<{ error?: string; entryId?: string }> {
   try {
-    const { invoiceId, amount, date, description, divisionId } = data;
+    const { invoiceId, amount, subtotal, vatAmount, vatEnabled, date, description, divisionId } =
+      data;
 
     if (amount <= 0) return { error: 'Invoice amount must be positive.' };
 
@@ -410,24 +437,35 @@ export async function postInvoiceIssueJournalEntry(data: {
     if (p.status !== 'open') return { error: `Accounting period ${period} is closed.` };
 
     const db = data.tx || getDb();
-    const accountMap = await getAccountsByCode([
-      ACCOUNTS_RECEIVABLE_CODE,
-      SALES_REVENUE_CODE,
-    ], db);
+    const isVatActive = Boolean(vatEnabled && vatAmount && vatAmount > 0);
+
+    const requiredCodes = isVatActive
+      ? [ACCOUNTS_RECEIVABLE_CODE, SALES_REVENUE_CODE, VAT_OUTPUT_CODE]
+      : [ACCOUNTS_RECEIVABLE_CODE, SALES_REVENUE_CODE];
+
+    const accountMap = await getAccountsByCode(requiredCodes, db);
 
     const accountsReceivable = accountMap.get(ACCOUNTS_RECEIVABLE_CODE);
     const salesRevenue = accountMap.get(SALES_REVENUE_CODE);
+    const vatOutput = isVatActive ? accountMap.get(VAT_OUTPUT_CODE) : null;
 
-    if (!accountsReceivable || !salesRevenue) {
-      return { error: 'Required chart accounts not found (1100, 4010). Please run the accounting seed first.' };
+    if (!accountsReceivable || !salesRevenue || (isVatActive && !vatOutput)) {
+      return {
+        error:
+          'Required chart accounts not found (1100, 4010, 2150). Please run the accounting seed first.',
+      };
     }
 
     const entryId = randomUUID();
 
-    // Atomic transaction: entry + 2 lines
+    // Atomic transaction: entry + lines
     const runInsideTx = async (tx: any) => {
       const entryNumber = await getNextJournalEntryNumber(tx, date);
-      const formattedDesc = await formatDivisionDescription(tx, divisionId, description || 'Invoice issued');
+      const formattedDesc = await formatDivisionDescription(
+        tx,
+        divisionId,
+        description || 'Invoice issued',
+      );
       await tx.insert(journalEntries).values({
         id: entryId,
         entryNumber,
@@ -444,22 +482,49 @@ export async function postInvoiceIssueJournalEntry(data: {
         postedBy: 'system',
         createdBy: 'system',
       });
+
+      // Dr Accounts Receivable (Total)
       await tx.insert(journalLines).values({
         id: randomUUID(),
         journalEntryId: entryId,
         accountId: accountsReceivable.id,
-        debit: String(amount),
+        debit: String(amount.toFixed(2)),
         credit: null,
-        description: `AR – ${description}`,
+        description: `AR – ${description || 'Invoice issued'}`,
       });
-      await tx.insert(journalLines).values({
-        id: randomUUID(),
-        journalEntryId: entryId,
-        accountId: salesRevenue.id,
-        debit: null,
-        credit: String(amount),
-        description: `Revenue recognised – ${description}`,
-      });
+
+      if (isVatActive && vatOutput) {
+        const netRevenue = subtotal != null ? subtotal : amount - (vatAmount || 0);
+        // Cr Sales Revenue (Net Excl. VAT)
+        await tx.insert(journalLines).values({
+          id: randomUUID(),
+          journalEntryId: entryId,
+          accountId: salesRevenue.id,
+          debit: null,
+          credit: String(netRevenue.toFixed(2)),
+          description: `Revenue recognised (excl. VAT) – ${description || 'Invoice issued'}`,
+        });
+
+        // Cr VAT Output Control (Liability)
+        await tx.insert(journalLines).values({
+          id: randomUUID(),
+          journalEntryId: entryId,
+          accountId: vatOutput.id,
+          debit: null,
+          credit: String(vatAmount!.toFixed(2)),
+          description: `VAT Output liability (15%) – ${description || 'Invoice issued'}`,
+        });
+      } else {
+        // Cr Sales Revenue (Full total)
+        await tx.insert(journalLines).values({
+          id: randomUUID(),
+          journalEntryId: entryId,
+          accountId: salesRevenue.id,
+          debit: null,
+          credit: String(amount.toFixed(2)),
+          description: `Revenue recognised – ${description || 'Invoice issued'}`,
+        });
+      }
     };
 
     if (data.tx) {
@@ -496,15 +561,21 @@ export async function postInvoiceWriteOffJournalEntry(data: {
 
     const db = data.tx || getDb();
 
-    await db.insert(chartAccounts).values({
-      code: BAD_DEBT_EXPENSE_CODE,
-      name: 'Bad Debt Expense',
-      type: 'expense',
-      isActive: true,
-      isPostingAccount: true,
-    }).onConflictDoNothing({ target: chartAccounts.code });
+    await db
+      .insert(chartAccounts)
+      .values({
+        code: BAD_DEBT_EXPENSE_CODE,
+        name: 'Bad Debt Expense',
+        type: 'expense',
+        isActive: true,
+        isPostingAccount: true,
+      })
+      .onConflictDoNothing({ target: chartAccounts.code });
 
-    const accountMap = await getAccountsByCode([ACCOUNTS_RECEIVABLE_CODE, BAD_DEBT_EXPENSE_CODE], db);
+    const accountMap = await getAccountsByCode(
+      [ACCOUNTS_RECEIVABLE_CODE, BAD_DEBT_EXPENSE_CODE],
+      db,
+    );
     const accountsReceivable = accountMap.get(ACCOUNTS_RECEIVABLE_CODE);
     const badDebtExpense = accountMap.get(BAD_DEBT_EXPENSE_CODE);
 
@@ -516,7 +587,11 @@ export async function postInvoiceWriteOffJournalEntry(data: {
 
     await db.transaction(async (tx: any) => {
       const entryNumber = await getNextJournalEntryNumber(tx, date);
-      const formattedDesc = await formatDivisionDescription(tx, divisionId, description || 'Invoice write-off');
+      const formattedDesc = await formatDivisionDescription(
+        tx,
+        divisionId,
+        description || 'Invoice write-off',
+      );
       await tx.insert(journalEntries).values({
         id: entryId,
         entryNumber,
@@ -571,7 +646,7 @@ export async function postBadDebtRecoveryJournalEntry(data: {
   tx?: any;
 }): Promise<{ error?: string; entryId?: string }> {
   try {
-    const { incomeId, invoiceId, amount, date, description, divisionId } = data;
+    const { incomeId, amount, date, description, divisionId } = data;
     if (amount <= 0) return { error: 'Recovery amount must be positive.' };
 
     const period = date.slice(0, 7);
@@ -579,7 +654,10 @@ export async function postBadDebtRecoveryJournalEntry(data: {
     if (p.status !== 'open') return { error: `Accounting period ${period} is closed.` };
 
     const db = data.tx || getDb();
-    const accountMap = await getAccountsByCode([ACCOUNTS_RECEIVABLE_CODE, BAD_DEBT_EXPENSE_CODE], db);
+    const accountMap = await getAccountsByCode(
+      [ACCOUNTS_RECEIVABLE_CODE, BAD_DEBT_EXPENSE_CODE],
+      db,
+    );
     const accountsReceivable = accountMap.get(ACCOUNTS_RECEIVABLE_CODE);
     const badDebtExpense = accountMap.get(BAD_DEBT_EXPENSE_CODE);
 
@@ -640,7 +718,7 @@ export async function postBadDebtRecoveryJournalEntry(data: {
  */
 export async function voidInvoiceJournalEntries(
   invoiceId: string,
-  tx?: any
+  tx?: any,
 ): Promise<{ error?: string; voidedCount?: number }> {
   try {
     const db = tx || getDb();
@@ -653,8 +731,8 @@ export async function voidInvoiceJournalEntries(
         and(
           eq(journalEntries.sourceModule, 'billing'),
           eq(journalEntries.sourceTable, 'invoices'),
-          eq(journalEntries.sourceId, invoiceId)
-        )
+          eq(journalEntries.sourceId, invoiceId),
+        ),
       );
 
     const toVoid = invoiceEntries.filter((e) => e.status !== 'void');
@@ -674,10 +752,11 @@ export async function voidInvoiceJournalEntries(
 
     if (linkedIncome.length > 0) {
       console.error(
-        `voidInvoiceJournalEntries: invoice ${invoiceId} has ${linkedIncome.length} linked payment_allocations row(s) — refusing to void automatically to avoid erasing real cash-receipt journal entries.`
+        `voidInvoiceJournalEntries: invoice ${invoiceId} has ${linkedIncome.length} linked payment_allocations row(s) — refusing to void automatically to avoid erasing real cash-receipt journal entries.`,
       );
       return {
-        error: 'This invoice has linked payments and cannot be voided automatically. Reverse the payment(s) first, then investigate before voiding.',
+        error:
+          'This invoice has linked payments and cannot be voided automatically. Reverse the payment(s) first, then investigate before voiding.',
       };
     }
 
@@ -708,7 +787,9 @@ export async function voidInvoiceJournalEntries(
     return { voidedCount: toVoid.length };
   } catch (err) {
     console.error('Failed to void invoice journal entries:', err);
-    return { error: 'Failed to void journal entries. Please void manually in Accounting → Journals.' };
+    return {
+      error: 'Failed to void journal entries. Please void manually in Accounting → Journals.',
+    };
   }
 }
 
@@ -722,6 +803,9 @@ export async function voidInvoiceJournalEntries(
 export async function updateInvoiceJournalEntry(data: {
   invoiceId: string;
   newAmount: number;
+  subtotal?: number;
+  vatAmount?: number;
+  vatEnabled?: boolean;
   date: string;
   description: string;
   divisionId: string;
@@ -737,8 +821,8 @@ export async function updateInvoiceJournalEntry(data: {
         and(
           eq(journalEntries.sourceModule, 'billing'),
           eq(journalEntries.sourceTable, 'invoices'),
-          eq(journalEntries.sourceId, data.invoiceId)
-        )
+          eq(journalEntries.sourceId, data.invoiceId),
+        ),
       );
 
     const toVoid = invoiceEntries.filter((e) => e.status !== 'void');
@@ -766,6 +850,9 @@ export async function updateInvoiceJournalEntry(data: {
       const result = await postInvoiceIssueJournalEntry({
         invoiceId: data.invoiceId,
         amount: data.newAmount,
+        subtotal: data.subtotal,
+        vatAmount: data.vatAmount,
+        vatEnabled: data.vatEnabled,
         date: data.date,
         description: data.description,
         divisionId: data.divisionId,
@@ -813,16 +900,15 @@ export async function postExpenseJournalEntry(data: {
 
     const db = getDb();
     const expenseCode = findExpenseAccountCode(category);
-    const accountMap = await getAccountsByCode([
-      BANK_ACCOUNT_CODE,
-      expenseCode,
-    ], db);
+    const accountMap = await getAccountsByCode([BANK_ACCOUNT_CODE, expenseCode], db);
 
     const bankAccount = accountMap.get(BANK_ACCOUNT_CODE);
     const expenseAccount = accountMap.get(expenseCode);
 
     if (!bankAccount || !expenseAccount) {
-      return { error: `Required chart accounts not found (1010, ${expenseCode}). Please run the accounting seed first.` };
+      return {
+        error: `Required chart accounts not found (1010, ${expenseCode}). Please run the accounting seed first.`,
+      };
     }
 
     const entryId = randomUUID();
@@ -879,7 +965,7 @@ export async function postExpenseJournalEntry(data: {
  * Uses db.batch() for atomicity.
  */
 export async function voidExpenseJournalEntries(
-  expenseId: string
+  expenseId: string,
 ): Promise<{ error?: string; voidedCount?: number }> {
   try {
     const db = getDb();
@@ -891,8 +977,8 @@ export async function voidExpenseJournalEntries(
         and(
           eq(journalEntries.sourceModule, 'expense'),
           eq(journalEntries.sourceTable, 'expenses'),
-          eq(journalEntries.sourceId, expenseId)
-        )
+          eq(journalEntries.sourceId, expenseId),
+        ),
       );
 
     const toVoid = entries.filter((e) => e.status !== 'void');
@@ -918,7 +1004,9 @@ export async function voidExpenseJournalEntries(
     return { voidedCount: toVoid.length };
   } catch (err) {
     console.error('Failed to void expense journal entries:', err);
-    return { error: 'Failed to void journal entries. Please void manually in Accounting → Journals.' };
+    return {
+      error: 'Failed to void journal entries. Please void manually in Accounting → Journals.',
+    };
   }
 }
 
@@ -958,26 +1046,31 @@ export async function updateExpenseJournalEntry(data: {
  */
 export async function voidInvoiceWriteOffJournalEntries(
   invoiceId: string,
-  externalTx?: any
+  externalTx?: any,
 ): Promise<{ error?: string; voidedCount?: number }> {
   try {
     const db = externalTx || getDb();
 
     const entries = await db
-      .select({ id: journalEntries.id, status: journalEntries.status, description: journalEntries.description })
+      .select({
+        id: journalEntries.id,
+        status: journalEntries.status,
+        description: journalEntries.description,
+      })
       .from(journalEntries)
       .where(
         and(
           eq(journalEntries.sourceModule, 'billing'),
           eq(journalEntries.sourceTable, 'invoices'),
-          eq(journalEntries.sourceId, invoiceId)
-        )
+          eq(journalEntries.sourceId, invoiceId),
+        ),
       );
 
     const writeOffEntries = entries.filter(
       (e: any) =>
         e.status !== 'void' &&
-        (e.description?.toLowerCase().includes('write-off') || e.description?.toLowerCase().includes('bad debt'))
+        (e.description?.toLowerCase().includes('write-off') ||
+          e.description?.toLowerCase().includes('bad debt')),
     );
 
     if (writeOffEntries.length === 0) return { voidedCount: 0 };

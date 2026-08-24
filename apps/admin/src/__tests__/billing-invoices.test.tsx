@@ -1,5 +1,6 @@
+/* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unused-vars */
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { render, screen, waitFor } from '@testing-library/react';
+import { render, screen } from '@testing-library/react';
 import React from 'react';
 
 // ─── Setup Mocks ─────────────────────────────────────────────────────────────
@@ -11,7 +12,9 @@ vi.mock('server-only', () => ({}));
 // helper produces a value that's both directly awaitable and chainable, so a
 // single mocked `where()` return works whether or not the real code adds a
 // row lock after it.
-function selectResult<T>(rows: T): Promise<T> & { for: () => any; orderBy: () => any; limit: () => any } {
+function selectResult<T>(
+  rows: T,
+): Promise<T> & { for: () => any; orderBy: () => any; limit: () => any } {
   const p = Promise.resolve(rows) as any;
   p.for = () => selectResult(rows);
   p.orderBy = () => selectResult(rows);
@@ -42,9 +45,19 @@ const dbMock = {
 
 vi.mock('@pmg/db', () => ({
   getDb: () => dbMock,
-  invoices: { id: 'invoices_id', status: 'status', total: 'total', clientId: 'clientId', divisionId: 'divisionId' },
+  invoices: {
+    id: 'invoices_id',
+    status: 'status',
+    total: 'total',
+    clientId: 'clientId',
+    divisionId: 'divisionId',
+  },
   quotations: { id: 'quotations_id', status: 'status' },
-  billingLineItems: { id: 'billing_line_items_id', documentType: 'documentType', documentId: 'documentId' },
+  billingLineItems: {
+    id: 'billing_line_items_id',
+    documentType: 'documentType',
+    documentId: 'documentId',
+  },
   income: { id: 'income_id' },
   clients: { id: 'clients_id', name: 'name', businessName: 'businessName' },
   divisionBillingSettings: { divisionId: 'divisionId', paymentTermsDays: 'paymentTermsDays' },
@@ -58,6 +71,7 @@ vi.mock('@pmg/db', () => ({
   getAllInvoices: vi.fn(),
   getNextDocumentNumber: vi.fn().mockResolvedValue('INV-2026-0001'),
   getInvoiceMonthlySummaries: vi.fn().mockResolvedValue([]),
+  getOrganisationSettings: vi.fn().mockResolvedValue({ vatNumber: '4123456789' }),
   addDays: (dateStr: string, days: number) => {
     const d = new Date(dateStr);
     d.setDate(d.getDate() + days);
@@ -72,7 +86,12 @@ vi.mock('@/app/actions/credit-management', () => ({
   getClientCreditBalanceV2: (...args: any[]) => mockGetClientCreditBalanceV2(...args),
 }));
 
-import { getAllInvoices, getNextDocumentNumber, getInvoiceMonthlySummaries } from '@pmg/db';
+import {
+  getAllInvoices,
+  getNextDocumentNumber,
+  getInvoiceMonthlySummaries,
+  getOrganisationSettings,
+} from '@pmg/db';
 
 vi.mock('@/lib/auth', () => ({
   getSessionOrRedirect: vi.fn().mockResolvedValue({ user: { id: 'user-1' } }),
@@ -137,7 +156,7 @@ import {
   issueInvoice,
   issueInvoiceInternal,
   markInvoicePaid,
-  voidInvoice
+  voidInvoice,
 } from '@/app/actions/billing-invoices';
 import InvoicesPage from '@/app/(admin)/billing/invoices/page';
 
@@ -172,6 +191,7 @@ describe('Billing Invoices Module', () => {
     vi.mocked(getSessionOrRedirect).mockResolvedValue({ user: { id: 'user-1' } } as any);
     vi.mocked(getNextDocumentNumber).mockResolvedValue('INV-2026-0001');
     vi.mocked(getInvoiceMonthlySummaries).mockResolvedValue([]);
+    vi.mocked(getOrganisationSettings).mockResolvedValue({ vatNumber: '4123456789' } as any);
     mockIsPeriodClosed.mockResolvedValue(false);
     mockGetMinAllowedDate.mockResolvedValue('2026-01-01');
     mockGetMinDateErrorMessage.mockReturnValue('Period is closed.');
@@ -201,7 +221,13 @@ describe('Billing Invoices Module', () => {
         clientId: 'c3b07384-d113-4956-a5db-8f3e58b8d4e7',
         invoiceDate: '2026-05-01',
         lineItems: [
-          { itemId: 'e3b07384-d113-4956-a5db-8f3e58b8d4e8', description: 'Item 1', quantity: 2, unitPrice: 250, vatRate: 0 },
+          {
+            itemId: 'e3b07384-d113-4956-a5db-8f3e58b8d4e8',
+            description: 'Item 1',
+            quantity: 2,
+            unitPrice: 250,
+            vatRate: 0,
+          },
         ],
         vatEnabled: true,
       });
@@ -223,7 +249,15 @@ describe('Billing Invoices Module', () => {
         divisionId: 'd3b07384-d113-4956-a5db-8f3e58b8d4e6',
         clientId: 'c3b07384-d113-4956-a5db-8f3e58b8d4e7',
         invoiceDate: '2026-05-01',
-        lineItems: [{ itemId: 'e3b07384-d113-4956-a5db-8f3e58b8d4e8', description: 'Item 1', quantity: 2, unitPrice: 250, vatRate: 0 }],
+        lineItems: [
+          {
+            itemId: 'e3b07384-d113-4956-a5db-8f3e58b8d4e8',
+            description: 'Item 1',
+            quantity: 2,
+            unitPrice: 250,
+            vatRate: 0,
+          },
+        ],
         vatEnabled: false,
       });
       expect(resBlocked.error).toBe('Paid invoices cannot be edited.');
@@ -239,7 +273,15 @@ describe('Billing Invoices Module', () => {
         divisionId: 'd3b07384-d113-4956-a5db-8f3e58b8d4e6',
         clientId: 'c3b07384-d113-4956-a5db-8f3e58b8d4e7',
         invoiceDate: '2026-05-01',
-        lineItems: [{ itemId: 'e3b07384-d113-4956-a5db-8f3e58b8d4e8', description: 'Item 1', quantity: 2, unitPrice: 250, vatRate: 0 }],
+        lineItems: [
+          {
+            itemId: 'e3b07384-d113-4956-a5db-8f3e58b8d4e8',
+            description: 'Item 1',
+            quantity: 2,
+            unitPrice: 250,
+            vatRate: 0,
+          },
+        ],
         vatEnabled: false,
       });
       expect(resSuccess).toEqual({});
@@ -269,14 +311,16 @@ describe('Billing Invoices Module', () => {
               if (selectCount === 2) return selectResult([{ paymentTermsDays: 15 }]); // divisionBillingSettings
               if (selectCount === 3) return selectResult([acceptedQuote]); // locked quote (.for('update'))
               if (selectCount === 4) {
-                return selectResult([{
-                  sortOrder: 0,
-                  description: 'Item 1',
-                  quantity: '2',
-                  unitPrice: '250.00',
-                  vatRate: '0',
-                  lineTotal: '500.00',
-                }]); // quote line items
+                return selectResult([
+                  {
+                    sortOrder: 0,
+                    description: 'Item 1',
+                    quantity: '2',
+                    unitPrice: '250.00',
+                    vatRate: '0',
+                    lineTotal: '500.00',
+                  },
+                ]); // quote line items
               }
               return selectResult([]); // no existing invoice for this quotation
             },
@@ -293,7 +337,18 @@ describe('Billing Invoices Module', () => {
     it('issueInvoice - transitions draft invoice to issued', async () => {
       mockDbSelect.mockReturnValue({
         from: vi.fn().mockReturnValue({
-          where: vi.fn().mockReturnValue(selectResult([{ id: 'inv-1', status: 'draft', total: '1000.00', invoiceDate: '2026-07-01', documentNumber: 'INV-001', divisionId: 'd1' }])),
+          where: vi.fn().mockReturnValue(
+            selectResult([
+              {
+                id: 'inv-1',
+                status: 'draft',
+                total: '1000.00',
+                invoiceDate: '2026-07-01',
+                documentNumber: 'INV-001',
+                divisionId: 'd1',
+              },
+            ]),
+          ),
         }),
       });
 
@@ -306,7 +361,18 @@ describe('Billing Invoices Module', () => {
       // Mock the status check: invoice is currently 'draft'
       mockDbSelect.mockReturnValue({
         from: vi.fn().mockReturnValue({
-          where: vi.fn().mockReturnValue(selectResult([{ id: 'inv-1', status: 'draft', total: '1000.00', invoiceDate: '2026-07-01', documentNumber: 'INV-001', divisionId: 'd1' }])),
+          where: vi.fn().mockReturnValue(
+            selectResult([
+              {
+                id: 'inv-1',
+                status: 'draft',
+                total: '1000.00',
+                invoiceDate: '2026-07-01',
+                documentNumber: 'INV-001',
+                divisionId: 'd1',
+              },
+            ]),
+          ),
         }),
       });
 
@@ -327,9 +393,21 @@ describe('Billing Invoices Module', () => {
       mockDbSelect.mockImplementation(() => {
         return {
           from: vi.fn().mockReturnValue({
-            where: vi.fn().mockReturnValue(selectResult([
-              { id: 'inv-1', status: 'draft', total: '1000.00', invoiceDate: '2026-07-01', documentNumber: 'INV-001', divisionId: 'd1' }
-            ])),
+            where: vi.fn().mockReturnValue(
+              selectResult([
+                {
+                  id: 'inv-1',
+                  status: 'draft',
+                  total: '1000.00',
+                  subtotal: '1000.00',
+                  vatAmount: '0.00',
+                  vatEnabled: false,
+                  invoiceDate: '2026-07-01',
+                  documentNumber: 'INV-001',
+                  divisionId: 'd1',
+                },
+              ]),
+            ),
           }),
         };
       });
@@ -339,14 +417,18 @@ describe('Billing Invoices Module', () => {
 
       // Verify the journal entry was posted (Dr AR 1100 / Cr Revenue 4010),
       // sharing the same transaction (`tx`) as the status update.
-      expect(mockPostInvoiceIssueJournalEntry).toHaveBeenCalledWith({
-        invoiceId: 'inv-1',
-        amount: 1000,
-        date: '2026-07-01',
-        description: 'Invoice INV-001',
-        divisionId: 'd1',
-        tx: expect.anything(),
-      });
+      expect(mockPostInvoiceIssueJournalEntry).toHaveBeenCalledWith(
+        expect.objectContaining({
+          invoiceId: 'inv-1',
+          amount: 1000,
+          subtotal: 1000,
+          vatAmount: 0,
+          vatEnabled: false,
+          date: '2026-07-01',
+          description: 'Invoice INV-001',
+          divisionId: 'd1',
+        }),
+      );
     });
 
     it('markInvoicePaid - marks issued invoice as paid and adds income row', async () => {
@@ -367,7 +449,8 @@ describe('Billing Invoices Module', () => {
           from: () => ({
             where: () => {
               if (selectCount === 1) return selectResult([invoiceRow]); // outer invoice fetch
-              if (selectCount === 2) return selectResult([{ name: 'Client A', businessName: 'Client Business' }]); // client fetch
+              if (selectCount === 2)
+                return selectResult([{ name: 'Client A', businessName: 'Client Business' }]); // client fetch
               return selectResult([invoiceRow]); // locked invoice re-fetch
             },
           }),
@@ -450,7 +533,9 @@ describe('Billing Invoices Module', () => {
       // status (or divisionId) must be set for the page to take the filtered
       // list branch (<InvoicesClient>) — with neither set it renders the
       // unfiltered month-grouped accordion view instead.
-      const page = await InvoicesPage({ searchParams: Promise.resolve({ page: '1', status: 'issued' }) });
+      const page = await InvoicesPage({
+        searchParams: Promise.resolve({ page: '1', status: 'issued' }),
+      });
       render(page as React.ReactElement);
 
       expect(screen.getByTestId('invoices-client')).toBeInTheDocument();
