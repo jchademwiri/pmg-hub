@@ -13,6 +13,7 @@ import {
   and,
   sql,
   getNextDocumentNumber,
+  addDays,
 } from '@pmg/db';
 import { getSessionOrRedirect } from '@/lib/auth';
 import { postInvoiceIssueJournalEntry, postExpenseJournalEntry } from '@/lib/accounting/posting';
@@ -94,7 +95,9 @@ function calculateInitialNextRunDate(cycleDay = 25): string {
     }
   }
 
-  const d = new Date(Date.UTC(targetYear, targetMonth, cycleDay));
+  const maxDays = new Date(Date.UTC(targetYear, targetMonth + 1, 0)).getUTCDate();
+  const safeDay = Math.min(Math.max(1, cycleDay), maxDays);
+  const d = new Date(Date.UTC(targetYear, targetMonth, safeDay));
   return d.toISOString().slice(0, 10);
 }
 
@@ -106,7 +109,9 @@ function advanceNextMonth(dateStr: string, cycleDay = 25): string {
     nextMonth = 0;
     nextYear += 1;
   }
-  const d = new Date(Date.UTC(nextYear, nextMonth, cycleDay));
+  const maxDays = new Date(Date.UTC(nextYear, nextMonth + 1, 0)).getUTCDate();
+  const safeDay = Math.min(Math.max(1, cycleDay), maxDays);
+  const d = new Date(Date.UTC(nextYear, nextMonth, safeDay));
   return d.toISOString().slice(0, 10);
 }
 
@@ -264,11 +269,9 @@ export async function triggerRecurringBillingRun(
       if (lineItems.length === 0) continue;
 
       const invoiceDate = todayStr;
-      const dueDateObj = new Date(invoiceDate);
-      dueDateObj.setDate(dueDateObj.getDate() + (schedule.dueDaysOffset || 6));
-      const dueDate = dueDateObj.toISOString().split('T')[0];
+      const dueDate = addDays(invoiceDate, schedule.dueDaysOffset || 6);
 
-      const year = new Date(invoiceDate).getFullYear();
+      const year = Number(invoiceDate.slice(0, 4));
       const documentNumber = await getNextDocumentNumber(schedule.divisionId, 'invoice', year);
 
       await db.transaction(async (tx) => {

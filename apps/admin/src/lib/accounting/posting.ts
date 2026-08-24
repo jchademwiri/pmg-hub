@@ -585,7 +585,7 @@ export async function postInvoiceWriteOffJournalEntry(data: {
 
     const entryId = randomUUID();
 
-    await db.transaction(async (tx: any) => {
+    const runInsideTx = async (tx: any) => {
       const entryNumber = await getNextJournalEntryNumber(tx, date);
       const formattedDesc = await formatDivisionDescription(
         tx,
@@ -612,7 +612,7 @@ export async function postInvoiceWriteOffJournalEntry(data: {
         id: randomUUID(),
         journalEntryId: entryId,
         accountId: badDebtExpense.id,
-        debit: String(amount),
+        debit: String(amount.toFixed(2)),
         credit: null,
         description: `Bad Debt – ${description}`,
       });
@@ -621,10 +621,16 @@ export async function postInvoiceWriteOffJournalEntry(data: {
         journalEntryId: entryId,
         accountId: accountsReceivable.id,
         debit: null,
-        credit: String(amount),
+        credit: String(amount.toFixed(2)),
         description: `AR write-off – ${description}`,
       });
-    });
+    };
+
+    if (data.tx) {
+      await runInsideTx(data.tx);
+    } else {
+      await db.transaction(runInsideTx);
+    }
 
     return { entryId };
   } catch (err) {
@@ -667,7 +673,7 @@ export async function postBadDebtRecoveryJournalEntry(data: {
 
     const entryId = randomUUID();
 
-    await db.transaction(async (tx: any) => {
+    const runInsideTx = async (tx: any) => {
       const entryNumber = await getNextJournalEntryNumber(tx, date);
       await tx.insert(journalEntries).values({
         id: entryId,
@@ -689,7 +695,7 @@ export async function postBadDebtRecoveryJournalEntry(data: {
         id: randomUUID(),
         journalEntryId: entryId,
         accountId: accountsReceivable.id,
-        debit: String(amount),
+        debit: String(amount.toFixed(2)),
         credit: null,
         description: `AR Recovery – ${description}`,
       });
@@ -698,10 +704,16 @@ export async function postBadDebtRecoveryJournalEntry(data: {
         journalEntryId: entryId,
         accountId: badDebtExpense.id,
         debit: null,
-        credit: String(amount),
+        credit: String(amount.toFixed(2)),
         description: `Bad Debt Recovery – ${description}`,
       });
-    });
+    };
+
+    if (data.tx) {
+      await runInsideTx(data.tx);
+    } else {
+      await db.transaction(runInsideTx);
+    }
 
     return { entryId };
   } catch (err) {
