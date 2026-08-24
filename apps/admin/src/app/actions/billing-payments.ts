@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 'use server';
 
 import { revalidatePath } from 'next/cache';
@@ -22,7 +23,6 @@ import { deleteIncome } from './income';
 import {
   postPaymentJournalEntries,
   updatePaymentJournalEntries,
-  voidPaymentJournalEntries,
   postBadDebtRecoveryJournalEntry,
 } from '@/lib/accounting/posting';
 import { getPortalBaseUrl } from '@/lib/portal-url';

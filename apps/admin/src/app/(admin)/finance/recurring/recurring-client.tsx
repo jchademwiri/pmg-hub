@@ -30,7 +30,6 @@ import {
   CheckCircle2,
   PauseCircle,
   RefreshCw,
-  Sparkles,
   Layers,
 } from 'lucide-react';
 import { formatZAR, fmtDateLong } from '@/lib/format';
@@ -39,7 +38,6 @@ import {
   setRecurringInvoiceStatus,
   triggerRecurringBillingRun,
   createRecurringExpense,
-  setRecurringExpenseStatus,
   markRecurringExpenseAsPaid,
 } from '@/app/actions/recurring-actions';
 import type { RecurringInvoiceRow, RecurringExpenseRow } from '@pmg/db';
@@ -49,7 +47,7 @@ interface RecurringClientProps {
   recurringExpenses: RecurringExpenseRow[];
   clients: { id: string; name: string; businessName: string | null }[];
   divisions: { id: string; name: string }[];
-  billingItems: { id: string; name: string; unitPrice: string }[];
+  billingItems?: { id: string; name: string; unitPrice: string }[];
   categories: string[];
 }
 
@@ -58,7 +56,6 @@ export function RecurringClient({
   recurringExpenses,
   clients,
   divisions,
-  billingItems,
   categories,
 }: RecurringClientProps) {
   const [isPending, startTransition] = useTransition();

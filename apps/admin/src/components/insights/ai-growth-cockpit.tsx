@@ -11,12 +11,8 @@ import {
   ArrowDownLeft,
   TrendingDown,
   Layers,
-  ShieldCheck,
   Zap,
   Target,
-  Clock,
-  ArrowUpRight,
-  AlertTriangle,
 } from 'lucide-react';
 import { formatZAR } from '@/lib/format';
 import { generateGrowthAdvisoryReport, type GrowthAdvisorResult } from '@/lib/ai/growth-advisor';

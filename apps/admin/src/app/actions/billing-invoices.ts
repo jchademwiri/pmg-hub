@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 'use server';
 
 import { revalidatePath } from 'next/cache';
@@ -15,7 +16,7 @@ import {
   paymentAllocations,
   sql,
 } from '@pmg/db';
-import { getNextDocumentNumber, addDays } from '@pmg/db';
+import { getNextDocumentNumber } from '@pmg/db';
 import { getSessionOrRedirect } from '@/lib/auth';
 import {
   postInvoiceIssueJournalEntry,
@@ -708,7 +709,7 @@ export { issueInvoiceInternal };
 
 export async function markInvoicePaid(id: string): Promise<{ error?: string }> {
   try {
-    const session = await getSessionOrRedirect();
+    await getSessionOrRedirect();
 
     const db = getDb();
     const [invoice] = await db.select().from(invoices).where(eq(invoices.id, id));

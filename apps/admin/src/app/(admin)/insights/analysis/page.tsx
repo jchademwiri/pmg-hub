@@ -10,7 +10,7 @@ import {
   getMonthlyFinancialsBreakdownForYear,
 } from '@pmg/db';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { StickyPageHeader } from '@/components/ui/sticky-page-header';
 import { AnalysisKpiStrip } from '@/components/analysis/analysis-kpi-strip';
 import { RevenueTrendChart } from '@/components/analysis/revenue-trend-chart';

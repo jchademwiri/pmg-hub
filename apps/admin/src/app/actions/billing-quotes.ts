@@ -198,7 +198,7 @@ export async function createQuotation(
 
     const db = getDb();
     const includeReference = await hasQuotationReferenceColumn();
-    const includeLineItemItemId = await hasBillingLineItemItemIdColumn();
+    await hasBillingLineItemItemIdColumn();
 
     const { id: insertedId } = await db.transaction(async (tx) => {
       const [inserted] = await tx
@@ -275,7 +275,7 @@ export async function updateQuotation(
 
     const db = getDb();
     const includeReference = await hasQuotationReferenceColumn();
-    const includeLineItemItemId = await hasBillingLineItemItemIdColumn();
+    await hasBillingLineItemItemIdColumn();
     const [existing] = await db
       .select({ id: quotations.id, status: quotations.status, quoteDate: quotations.quoteDate })
       .from(quotations)

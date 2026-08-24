@@ -9,10 +9,6 @@ import {
   invoices,
   billingLineItems,
   expenses,
-  clients,
-  divisions,
-  divisionBillingSettings,
-  organisationSettings,
   eq,
   and,
   sql,
@@ -224,7 +220,7 @@ export async function setRecurringInvoiceStatus(
 
     revalidatePath('/finance/recurring');
     return {};
-  } catch (err) {
+  } catch {
     return { error: 'Failed to update schedule status.' };
   }
 }
@@ -424,7 +420,7 @@ export async function setRecurringExpenseStatus(
 
     revalidatePath('/finance/recurring');
     return {};
-  } catch (err) {
+  } catch {
     return { error: 'Failed to update subscription status.' };
   }
 }
@@ -439,7 +435,7 @@ export async function markRecurringExpenseAsPaid(
   paymentDate?: string,
 ): Promise<{ error?: string; expenseId?: string }> {
   try {
-    const session = await getSessionOrRedirect();
+    await getSessionOrRedirect();
     const db = getDb();
     const date = paymentDate || getSASTToday();
 

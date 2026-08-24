@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 'use server';
 
 /**
@@ -645,7 +646,7 @@ export async function postBadDebtRecoveryJournalEntry(data: {
   tx?: any;
 }): Promise<{ error?: string; entryId?: string }> {
   try {
-    const { incomeId, invoiceId, amount, date, description, divisionId } = data;
+    const { incomeId, amount, date, description, divisionId } = data;
     if (amount <= 0) return { error: 'Recovery amount must be positive.' };
 
     const period = date.slice(0, 7);
