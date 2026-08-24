@@ -154,7 +154,7 @@ export function PaymentFormClient({ divisions, clients, minDate }: PaymentFormCl
     return () => {
       mounted = false;
     };
-  }, []);
+  }, [queryClientId]);
 
   // Derived current allocations (FIFO auto-allocated or manual)
   const currentAllocations = React.useMemo(() => {
