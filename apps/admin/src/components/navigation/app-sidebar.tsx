@@ -178,23 +178,18 @@ export const AppSidebar = React.memo(function AppSidebar({ user }: AppSidebarPro
         <Link
           href="/dashboard"
           onClick={handleNavigate}
-          className="flex items-center justify-between gap-2 px-2 py-3 hover:opacity-80 transition-opacity"
+          className="flex items-center gap-3 px-2 py-3 hover:opacity-80 transition-opacity"
         >
-          <div className="flex items-center gap-3 min-w-0">
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img src="/logo/pmg-logo.svg" alt="PMG" width={28} height={28} className="shrink-0" />
-            <div className="flex flex-col gap-0 min-w-0">
-              <span className="text-sidebar-foreground text-sm font-semibold leading-tight truncate">
-                Control Center
-              </span>
-              <span className="text-sidebar-foreground/50 text-[10px] tracking-widest uppercase truncate">
-                Playhouse Media Group
-              </span>
-            </div>
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img src="/logo/pmg-logo.svg" alt="PMG" width={28} height={28} className="shrink-0" />
+          <div className="flex flex-col gap-0 min-w-0">
+            <span className="text-sidebar-foreground text-sm font-semibold leading-tight truncate">
+              Control Center
+            </span>
+            <span className="text-sidebar-foreground/50 text-[10px] font-mono tracking-wider truncate">
+              {APP_VERSION}
+            </span>
           </div>
-          <span className="text-[10px] font-mono px-1.5 py-0.5 rounded border border-sidebar-border bg-sidebar-accent/80 text-sidebar-foreground/70 font-medium shrink-0">
-            {APP_VERSION}
-          </span>
         </Link>
       </SidebarHeader>
 
