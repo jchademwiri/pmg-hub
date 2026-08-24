@@ -1,9 +1,9 @@
-'use client'
+'use client';
 
-import React from 'react'
-import Link from 'next/link'
-import { usePathname } from 'next/navigation'
-import { Home, ChevronDown, LogOut, Settings, UserCog } from 'lucide-react'
+import React from 'react';
+import Link from 'next/link';
+import { usePathname } from 'next/navigation';
+import { Home, ChevronDown, LogOut, Settings, UserCog } from 'lucide-react';
 import {
   Sidebar,
   SidebarContent,
@@ -16,51 +16,48 @@ import {
   SidebarMenuButton,
   SidebarMenuItem,
   useSidebar,
-} from '@/components/ui/sidebar'
-import {
-  Collapsible,
-  CollapsibleContent,
-  CollapsibleTrigger,
-} from '@/components/ui/collapsible'
-import { SignOutButton } from '@/components/navigation/sign-out-button'
-import { Avatar, AvatarFallback } from '@/components/ui/avatar'
+} from '@/components/ui/sidebar';
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
+import { SignOutButton } from '@/components/navigation/sign-out-button';
+import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
-} from '@/components/ui/dropdown-menu'
-import { OVERVIEW, GROUPS } from '@/components/navigation/nav-data'
-import type { NavItem, NavGroup, GroupKey } from '@/components/navigation/nav-data'
-import { canAccess } from '@/lib/roles'
+} from '@/components/ui/dropdown-menu';
+import { OVERVIEW, GROUPS } from '@/components/navigation/nav-data';
+import type { NavItem, NavGroup, GroupKey } from '@/components/navigation/nav-data';
+import { canAccess } from '@/lib/roles';
+import { APP_VERSION } from '@pmg/utils';
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
 
 function filterByRole(items: NavItem[], role: string): NavItem[] {
-  return items.filter((item) => !item.minRole || canAccess(role, item.minRole))
+  return items.filter((item) => !item.minRole || canAccess(role, item.minRole));
 }
 
 function getActiveGroup(pathname: string): GroupKey | null {
-  let bestMatch: { key: GroupKey; length: number } | null = null
+  let bestMatch: { key: GroupKey; length: number } | null = null;
   for (const group of GROUPS) {
     for (const item of group.items) {
       if (pathname.startsWith(item.url)) {
         if (!bestMatch || item.url.length > bestMatch.length) {
-          bestMatch = { key: group.key, length: item.url.length }
+          bestMatch = { key: group.key, length: item.url.length };
         }
       }
     }
   }
-  return bestMatch ? bestMatch.key : null
+  return bestMatch ? bestMatch.key : null;
 }
 
 // ── Sub-components ────────────────────────────────────────────────────────────
 
 interface NavMenuProps {
-  items: NavItem[]
-  pathname: string
-  onNavigate: () => void
+  items: NavItem[];
+  pathname: string;
+  onNavigate: () => void;
 }
 
 const NavMenu = React.memo(function NavMenu({ items, pathname, onNavigate }: NavMenuProps) {
@@ -71,10 +68,8 @@ const NavMenu = React.memo(function NavMenu({ items, pathname, onNavigate }: Nav
         // /accounting, /settings) to avoid them showing active on every sub-route
         // (e.g. /billing matching /billing/invoices). Sub-routes always have a
         // path segment after the group root, so segment count is the reliable check.
-        const isGroupRoot = item.url.split('/').filter(Boolean).length === 1
-        const isActive = isGroupRoot
-          ? pathname === item.url
-          : pathname.startsWith(item.url)
+        const isGroupRoot = item.url.split('/').filter(Boolean).length === 1;
+        const isActive = isGroupRoot ? pathname === item.url : pathname.startsWith(item.url);
         return (
           <SidebarMenuItem key={item.url}>
             <SidebarMenuButton asChild isActive={isActive}>
@@ -84,21 +79,27 @@ const NavMenu = React.memo(function NavMenu({ items, pathname, onNavigate }: Nav
               </Link>
             </SidebarMenuButton>
           </SidebarMenuItem>
-        )
+        );
       })}
     </SidebarMenu>
-  )
-})
+  );
+});
 
 interface CollapsibleGroupProps {
-  group: NavGroup
-  isOpen: boolean
-  pathname: string
-  onToggle: (key: GroupKey, open: boolean) => void
-  onNavigate: () => void
+  group: NavGroup;
+  isOpen: boolean;
+  pathname: string;
+  onToggle: (key: GroupKey, open: boolean) => void;
+  onNavigate: () => void;
 }
 
-const CollapsibleGroup = React.memo(function CollapsibleGroup({ group, isOpen, pathname, onToggle, onNavigate }: CollapsibleGroupProps) {
+const CollapsibleGroup = React.memo(function CollapsibleGroup({
+  group,
+  isOpen,
+  pathname,
+  onToggle,
+  onNavigate,
+}: CollapsibleGroupProps) {
   return (
     <Collapsible
       open={isOpen}
@@ -122,53 +123,54 @@ const CollapsibleGroup = React.memo(function CollapsibleGroup({ group, isOpen, p
         </CollapsibleContent>
       </SidebarGroup>
     </Collapsible>
-  )
-})
+  );
+});
 
 // ── AppSidebar ────────────────────────────────────────────────────────────────
 
 interface AppSidebarProps {
-  user: { name: string; email: string; role: string }
+  user: { name: string; email: string; role: string };
 }
 
-const MAIN_GROUPS = GROUPS.filter((g) => g.key !== 'system' && g.key !== 'advanced')
-const ADVANCED_GROUP = GROUPS.find((g) => g.key === 'advanced')
-const SYSTEM_GROUP = GROUPS.find((g) => g.key === 'system')!
+const MAIN_GROUPS = GROUPS.filter((g) => g.key !== 'system' && g.key !== 'advanced');
+const ADVANCED_GROUP = GROUPS.find((g) => g.key === 'advanced');
+const SYSTEM_GROUP = GROUPS.find((g) => g.key === 'system')!;
 
 export const AppSidebar = React.memo(function AppSidebar({ user }: AppSidebarProps) {
-  const pathname = usePathname()
-  const { isMobile, setOpenMobile } = useSidebar()
+  const pathname = usePathname();
+  const { isMobile, setOpenMobile } = useSidebar();
 
-  const [openGroup, setOpenGroup] = React.useState<GroupKey | null>(
-    () => getActiveGroup(pathname),
-  )
+  const [openGroup, setOpenGroup] = React.useState<GroupKey | null>(() => getActiveGroup(pathname));
 
   React.useEffect(() => {
-    const active = getActiveGroup(pathname)
-    if (active) setOpenGroup(active)
-  }, [pathname])
+    const active = getActiveGroup(pathname);
+    if (active) setOpenGroup(active);
+  }, [pathname]);
 
   const handleToggle = (key: GroupKey, open: boolean) => {
-    setOpenGroup(open ? key : null)
-  }
+    setOpenGroup(open ? key : null);
+  };
 
   const handleNavigate = React.useCallback(() => {
-    if (isMobile) setOpenMobile(false)
-  }, [isMobile, setOpenMobile])
+    if (isMobile) setOpenMobile(false);
+  }, [isMobile, setOpenMobile]);
 
-  const visibleOverview = React.useMemo(() => filterByRole(OVERVIEW, user.role), [user.role])
+  const visibleOverview = React.useMemo(() => filterByRole(OVERVIEW, user.role), [user.role]);
   const visibleMainGroups = React.useMemo(
     () => MAIN_GROUPS.map((g) => ({ ...g, items: filterByRole(g.items, user.role) })),
     [user.role],
-  )
+  );
   const visibleAdvancedGroup = React.useMemo(
-    () => (ADVANCED_GROUP ? { ...ADVANCED_GROUP, items: filterByRole(ADVANCED_GROUP.items, user.role) } : null),
+    () =>
+      ADVANCED_GROUP
+        ? { ...ADVANCED_GROUP, items: filterByRole(ADVANCED_GROUP.items, user.role) }
+        : null,
     [user.role],
-  )
+  );
   const visibleSystemGroup = React.useMemo(
     () => ({ ...SYSTEM_GROUP, items: filterByRole(SYSTEM_GROUP.items, user.role) }),
     [user.role],
-  )
+  );
 
   return (
     <Sidebar variant="inset">
@@ -176,14 +178,23 @@ export const AppSidebar = React.memo(function AppSidebar({ user }: AppSidebarPro
         <Link
           href="/dashboard"
           onClick={handleNavigate}
-          className="flex items-center gap-3 px-2 py-3 hover:opacity-80 transition-opacity"
+          className="flex items-center justify-between gap-2 px-2 py-3 hover:opacity-80 transition-opacity"
         >
-          {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img src="/logo/pmg-logo.svg" alt="PMG" width={28} height={28} className="shrink-0" />
-          <div className="flex flex-col gap-0">
-            <span className="text-sidebar-foreground text-sm font-semibold leading-tight">Control Center</span>
-            <span className="text-sidebar-foreground/50 text-[10px] tracking-widest uppercase">Playhouse Media Group</span>
+          <div className="flex items-center gap-3 min-w-0">
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img src="/logo/pmg-logo.svg" alt="PMG" width={28} height={28} className="shrink-0" />
+            <div className="flex flex-col gap-0 min-w-0">
+              <span className="text-sidebar-foreground text-sm font-semibold leading-tight truncate">
+                Control Center
+              </span>
+              <span className="text-sidebar-foreground/50 text-[10px] tracking-widest uppercase truncate">
+                Playhouse Media Group
+              </span>
+            </div>
           </div>
+          <span className="text-[10px] font-mono px-1.5 py-0.5 rounded border border-sidebar-border bg-sidebar-accent/80 text-sidebar-foreground/70 font-medium shrink-0">
+            {APP_VERSION}
+          </span>
         </Link>
       </SidebarHeader>
 
@@ -235,11 +246,17 @@ export const AppSidebar = React.memo(function AppSidebar({ user }: AppSidebarPro
               <DropdownMenuTrigger asChild>
                 <button className="flex items-center gap-2 px-2 py-2 rounded-md hover:bg-sidebar-accent w-full transition-colors">
                   <Avatar className="size-7">
-                    <AvatarFallback className="text-xs">{user.name.slice(0, 2).toUpperCase()}</AvatarFallback>
+                    <AvatarFallback className="text-xs">
+                      {user.name.slice(0, 2).toUpperCase()}
+                    </AvatarFallback>
                   </Avatar>
-                  <div className="flex flex-col text-left min-w-0">
-                    <span className="text-sm font-medium truncate text-sidebar-foreground">{user.name}</span>
-                    <span className="text-[10px] text-sidebar-foreground/50 truncate">{user.role}</span>
+                  <div className="flex flex-col text-left min-w-0 flex-1">
+                    <span className="text-sm font-medium truncate text-sidebar-foreground">
+                      {user.name}
+                    </span>
+                    <span className="text-[10px] text-sidebar-foreground/50 truncate">
+                      {user.role}
+                    </span>
                   </div>
                 </button>
               </DropdownMenuTrigger>
@@ -251,6 +268,11 @@ export const AppSidebar = React.memo(function AppSidebar({ user }: AppSidebarPro
                   </Link>
                 </DropdownMenuItem>
                 <DropdownMenuSeparator />
+                <div className="px-2 py-1.5 text-[11px] text-muted-foreground flex justify-between font-mono">
+                  <span>PMG Hub</span>
+                  <span className="font-medium text-foreground">{APP_VERSION}</span>
+                </div>
+                <DropdownMenuSeparator />
                 <DropdownMenuItem>
                   <SignOutButton />
                 </DropdownMenuItem>
@@ -260,5 +282,5 @@ export const AppSidebar = React.memo(function AppSidebar({ user }: AppSidebarPro
         </div>
       </SidebarFooter>
     </Sidebar>
-  )
-})
+  );
+});

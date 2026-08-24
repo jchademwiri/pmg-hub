@@ -22,6 +22,7 @@ import {
 import Link from 'next/link';
 import { authClient } from '@/lib/auth-client';
 import type { Client } from '@pmg/db';
+import { APP_VERSION } from '@pmg/utils';
 
 interface PortalShellProps {
   client: Client;
@@ -106,14 +107,19 @@ export function PortalShell({ client, isImpersonating, children }: PortalShellPr
         }`}
       >
         {/* Sidebar Header */}
-        <div className="flex h-16 items-center gap-2 px-4 border-b border-white/5 overflow-hidden">
+        <div className="flex h-16 items-center gap-2.5 px-4 border-b border-white/5 overflow-hidden">
           <div className="flex size-8 shrink-0 items-center justify-center rounded-lg bg-gradient-to-tr from-blue-600 to-indigo-500 shadow-md">
             <ShieldCheck className="size-4.5 text-white" />
           </div>
           {!isCollapsed && (
-            <span className="font-bold text-white text-sm tracking-tight truncate animate-in fade-in duration-200">
-              PMG Client Portal
-            </span>
+            <div className="flex flex-col min-w-0 animate-in fade-in duration-200">
+              <span className="font-bold text-white text-sm tracking-tight truncate">
+                PMG Client Portal
+              </span>
+              <span className="text-[10px] text-blue-400 font-mono tracking-wider font-medium">
+                {APP_VERSION}
+              </span>
+            </div>
           )}
         </div>
 
@@ -208,13 +214,18 @@ export function PortalShell({ client, isImpersonating, children }: PortalShellPr
           {/* Drawer content */}
           <aside className="relative flex w-full max-w-xs flex-1 flex-col bg-[#0a0f1d] border-r border-white/5 animate-in slide-in-from-left duration-200">
             <div className="flex h-16 items-center justify-between px-6 border-b border-white/5">
-              <div className="flex items-center gap-2">
+              <div className="flex items-center gap-2.5">
                 <div className="flex size-8 items-center justify-center rounded-lg bg-gradient-to-tr from-blue-600 to-indigo-500 shadow-md">
                   <ShieldCheck className="size-4.5 text-white" />
                 </div>
-                <span className="font-bold text-white text-sm tracking-tight">
-                  PMG Client Portal
-                </span>
+                <div className="flex flex-col min-w-0">
+                  <span className="font-bold text-white text-sm tracking-tight">
+                    PMG Client Portal
+                  </span>
+                  <span className="text-[10px] text-blue-400 font-mono tracking-wider font-medium">
+                    {APP_VERSION}
+                  </span>
+                </div>
               </div>
               <button
                 type="button"
