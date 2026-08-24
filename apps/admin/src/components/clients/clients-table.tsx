@@ -281,9 +281,9 @@ function PortalStatusCell({ client }: { client: ClientWithIncomeCount }) {
         );
         router.refresh();
       }
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error('handleInvite failed:', err);
-      toast.error(err.message || 'An unexpected error occurred.');
+      toast.error(err instanceof Error ? err.message : 'An unexpected error occurred.');
     } finally {
       setIsSending(false);
     }

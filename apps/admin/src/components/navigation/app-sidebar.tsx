@@ -3,7 +3,7 @@
 import React from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { Home, ChevronDown, LogOut, Settings, UserCog } from 'lucide-react';
+import { Home, ChevronDown, Settings } from 'lucide-react';
 import {
   Sidebar,
   SidebarContent,
