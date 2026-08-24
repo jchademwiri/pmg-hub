@@ -499,64 +499,68 @@ export function RecurringClient({
 
       {/* Modal: Create Recurring Inbound Retainer */}
       <Dialog open={invoiceModalOpen} onOpenChange={setInvoiceModalOpen}>
-        <DialogContent className="sm:max-w-[500px]">
+        <DialogContent className="sm:max-w-2xl md:max-w-3xl max-h-[90vh] overflow-y-auto">
           <form onSubmit={handleCreateInvoice}>
             <DialogHeader>
-              <DialogTitle className="flex items-center gap-2">
-                <CalendarClock className="h-5 w-5 text-emerald-600" /> Create Client Retainer
-                Schedule
+              <DialogTitle className="flex items-center gap-2 text-xl font-bold">
+                <CalendarClock className="h-5 w-5 text-emerald-600 dark:text-emerald-400" /> Create Client Retainer Schedule
               </DialogTitle>
               <DialogDescription>
-                Generates invoices on the 25th with a due date of the 1st of the next month.
+                Automated monthly retainer billing. Invoices generate on the 25th with payment due on the 1st of the following month.
               </DialogDescription>
             </DialogHeader>
 
-            <div className="grid gap-4 py-4">
-              <div className="grid gap-1.5">
-                <Label htmlFor="inv-division">Division</Label>
-                <Select value={newInvDivisionId} onValueChange={setNewInvDivisionId}>
-                  <SelectTrigger id="inv-division">
-                    <SelectValue placeholder="Select Division" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {divisions.map((d) => (
-                      <SelectItem key={d.id} value={d.id}>
-                        {d.name}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+            <div className="grid gap-5 py-4">
+              {/* Row 1: Division & Client */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div className="grid gap-1.5">
+                  <Label htmlFor="inv-division" className="text-xs font-semibold">Division</Label>
+                  <Select value={newInvDivisionId} onValueChange={setNewInvDivisionId}>
+                    <SelectTrigger id="inv-division">
+                      <SelectValue placeholder="Select Division" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {divisions.map((d) => (
+                        <SelectItem key={d.id} value={d.id}>
+                          {d.name}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                <div className="grid gap-1.5">
+                  <Label htmlFor="inv-client" className="text-xs font-semibold">Client</Label>
+                  <Select value={newInvClientId} onValueChange={setNewInvClientId}>
+                    <SelectTrigger id="inv-client">
+                      <SelectValue placeholder="Select Client" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {clients.map((c) => (
+                        <SelectItem key={c.id} value={c.id}>
+                          {c.businessName || c.name}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
               </div>
 
+              {/* Row 2: Reference */}
               <div className="grid gap-1.5">
-                <Label htmlFor="inv-client">Client</Label>
-                <Select value={newInvClientId} onValueChange={setNewInvClientId}>
-                  <SelectTrigger id="inv-client">
-                    <SelectValue placeholder="Select Client" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {clients.map((c) => (
-                      <SelectItem key={c.id} value={c.id}>
-                        {c.businessName || c.name}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-
-              <div className="grid gap-1.5">
-                <Label htmlFor="inv-ref">Schedule Reference</Label>
+                <Label htmlFor="inv-ref" className="text-xs font-semibold">Schedule Reference</Label>
                 <Input
                   id="inv-ref"
-                  placeholder="e.g. Monthly Website Hosting & Retainer"
+                  placeholder="e.g. Monthly Website Hosting, Security & Maintenance Retainer"
                   value={newInvRef}
                   onChange={(e) => setNewInvRef(e.target.value)}
                 />
               </div>
 
-              <div className="grid grid-cols-2 gap-3">
+              {/* Row 3: Billing Cycle & Pricing */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 p-4 rounded-lg bg-muted/40 border">
                 <div className="grid gap-1.5">
-                  <Label htmlFor="inv-cycle">Cycle Day</Label>
+                  <Label htmlFor="inv-cycle" className="text-xs font-semibold">Billing Cycle Day</Label>
                   <Input
                     id="inv-cycle"
                     type="number"
@@ -565,11 +569,11 @@ export function RecurringClient({
                     value={newInvCycleDay}
                     onChange={(e) => setNewInvCycleDay(Number(e.target.value))}
                   />
-                  <span className="text-[11px] text-muted-foreground">Default: 25th (due 1st)</span>
+                  <span className="text-[11px] text-muted-foreground">Default: 25th of month (Due date: 1st)</span>
                 </div>
 
                 <div className="grid gap-1.5">
-                  <Label htmlFor="inv-amount">Monthly Fee (ZAR)</Label>
+                  <Label htmlFor="inv-amount" className="text-xs font-semibold">Monthly Retainer Fee (ZAR)</Label>
                   <Input
                     id="inv-amount"
                     type="number"
@@ -579,26 +583,28 @@ export function RecurringClient({
                     onChange={(e) => setNewInvAmount(e.target.value)}
                     required
                   />
+                  <span className="text-[11px] text-muted-foreground">Excludes VAT (unless VAT registered)</span>
                 </div>
               </div>
 
+              {/* Row 4: Line item description */}
               <div className="grid gap-1.5">
-                <Label htmlFor="inv-desc">Line Item Description</Label>
+                <Label htmlFor="inv-desc" className="text-xs font-semibold">Invoice Line Item Description</Label>
                 <Input
                   id="inv-desc"
-                  placeholder="e.g. Monthly Web Hosting, Backups & Maintenance"
+                  placeholder="e.g. Monthly Web Hosting, SSL, Nightly Backups & Maintenance Retainer"
                   value={newInvDescription}
                   onChange={(e) => setNewInvDescription(e.target.value)}
                 />
               </div>
             </div>
 
-            <DialogFooter>
+            <DialogFooter className="gap-2 sm:gap-0">
               <Button type="button" variant="outline" onClick={() => setInvoiceModalOpen(false)}>
                 Cancel
               </Button>
-              <Button type="submit" disabled={isPending}>
-                {isPending ? 'Saving...' : 'Create Retainer'}
+              <Button type="submit" disabled={isPending} className="bg-emerald-600 hover:bg-emerald-700 text-white">
+                {isPending ? 'Saving...' : 'Create Retainer Schedule'}
               </Button>
             </DialogFooter>
           </form>
@@ -607,48 +613,52 @@ export function RecurringClient({
 
       {/* Modal: Create Recurring Outbound Subscription */}
       <Dialog open={expenseModalOpen} onOpenChange={setExpenseModalOpen}>
-        <DialogContent className="sm:max-w-[500px]">
+        <DialogContent className="sm:max-w-2xl max-h-[90vh] overflow-y-auto">
           <form onSubmit={handleCreateExpense}>
             <DialogHeader>
-              <DialogTitle className="flex items-center gap-2">
-                <TrendingDown className="h-5 w-5 text-rose-600" /> Add Vendor Subscription
+              <DialogTitle className="flex items-center gap-2 text-xl font-bold">
+                <TrendingDown className="h-5 w-5 text-rose-600 dark:text-rose-400" /> Add Vendor Subscription
               </DialogTitle>
               <DialogDescription>
-                Track recurring software or server expenses (Claude, Antigravity, Hetzner).
+                Track recurring software licenses, AI subscriptions (Claude, Antigravity), and cloud hosting (Hetzner).
               </DialogDescription>
             </DialogHeader>
 
-            <div className="grid gap-4 py-4">
-              <div className="grid gap-1.5">
-                <Label htmlFor="exp-division">Division</Label>
-                <Select value={newExpDivisionId} onValueChange={setNewExpDivisionId}>
-                  <SelectTrigger id="exp-division">
-                    <SelectValue placeholder="Select Division" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {divisions.map((d) => (
-                      <SelectItem key={d.id} value={d.id}>
-                        {d.name}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-
-              <div className="grid gap-1.5">
-                <Label htmlFor="exp-vendor">Vendor / Software Name</Label>
-                <Input
-                  id="exp-vendor"
-                  placeholder="e.g. Claude Anthropic / Antigravity / Hetzner"
-                  value={newExpVendor}
-                  onChange={(e) => setNewExpVendor(e.target.value)}
-                  required
-                />
-              </div>
-
-              <div className="grid grid-cols-2 gap-3">
+            <div className="grid gap-5 py-4">
+              {/* Row 1: Division & Vendor */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div className="grid gap-1.5">
-                  <Label htmlFor="exp-category">Category</Label>
+                  <Label htmlFor="exp-division" className="text-xs font-semibold">Division</Label>
+                  <Select value={newExpDivisionId} onValueChange={setNewExpDivisionId}>
+                    <SelectTrigger id="exp-division">
+                      <SelectValue placeholder="Select Division" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {divisions.map((d) => (
+                        <SelectItem key={d.id} value={d.id}>
+                          {d.name}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                <div className="grid gap-1.5">
+                  <Label htmlFor="exp-vendor" className="text-xs font-semibold">Vendor / Software Name</Label>
+                  <Input
+                    id="exp-vendor"
+                    placeholder="e.g. Claude Anthropic / Antigravity / Hetzner"
+                    value={newExpVendor}
+                    onChange={(e) => setNewExpVendor(e.target.value)}
+                    required
+                  />
+                </div>
+              </div>
+
+              {/* Row 2: Category & Amount */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div className="grid gap-1.5">
+                  <Label htmlFor="exp-category" className="text-xs font-semibold">Expense Category</Label>
                   <Select value={newExpCategory} onValueChange={setNewExpCategory}>
                     <SelectTrigger id="exp-category">
                       <SelectValue placeholder="Category" />
@@ -670,7 +680,7 @@ export function RecurringClient({
                 </div>
 
                 <div className="grid gap-1.5">
-                  <Label htmlFor="exp-amount">Amount (ZAR)</Label>
+                  <Label htmlFor="exp-amount" className="text-xs font-semibold">Monthly Amount (ZAR)</Label>
                   <Input
                     id="exp-amount"
                     type="number"
@@ -683,9 +693,10 @@ export function RecurringClient({
                 </div>
               </div>
 
-              <div className="grid grid-cols-2 gap-3">
+              {/* Row 3: Cycle Day & Client Cost Attribution */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 p-4 rounded-lg bg-muted/40 border">
                 <div className="grid gap-1.5">
-                  <Label htmlFor="exp-cycle">Billing Day</Label>
+                  <Label htmlFor="exp-cycle" className="text-xs font-semibold">Billing Day of Month</Label>
                   <Input
                     id="exp-cycle"
                     type="number"
@@ -694,16 +705,17 @@ export function RecurringClient({
                     value={newExpCycleDay}
                     onChange={(e) => setNewExpCycleDay(Number(e.target.value))}
                   />
+                  <span className="text-[11px] text-muted-foreground">Day when subscription is debited</span>
                 </div>
 
                 <div className="grid gap-1.5">
-                  <Label htmlFor="exp-client">Direct Client Cost (Optional)</Label>
+                  <Label htmlFor="exp-client" className="text-xs font-semibold">Project Cost Attribution</Label>
                   <Select value={newExpClientId} onValueChange={setNewExpClientId}>
                     <SelectTrigger id="exp-client">
-                      <SelectValue placeholder="None (General)" />
+                      <SelectValue placeholder="None (General Overhead)" />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="none">None (General Overhead)</SelectItem>
+                      <SelectItem value="none">None (General Business Overhead)</SelectItem>
                       {clients.map((c) => (
                         <SelectItem key={c.id} value={c.id}>
                           {c.businessName || c.name}
@@ -711,15 +723,16 @@ export function RecurringClient({
                       ))}
                     </SelectContent>
                   </Select>
+                  <span className="text-[11px] text-muted-foreground">Deducted when calculating client net profit</span>
                 </div>
               </div>
             </div>
 
-            <DialogFooter>
+            <DialogFooter className="gap-2 sm:gap-0">
               <Button type="button" variant="outline" onClick={() => setExpenseModalOpen(false)}>
                 Cancel
               </Button>
-              <Button type="submit" disabled={isPending}>
+              <Button type="submit" disabled={isPending} className="bg-rose-600 hover:bg-rose-700 text-white">
                 {isPending ? 'Saving...' : 'Add Subscription'}
               </Button>
             </DialogFooter>

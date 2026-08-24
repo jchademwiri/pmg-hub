@@ -5,7 +5,14 @@ import { ChevronLeft, FileX } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Separator } from '@/components/ui/separator';
-import { getAllDivisions, getAllClients, getActiveItems, getQuotationById, getAllDivisionBillingSettings } from '@pmg/db';
+import {
+  getAllDivisions,
+  getAllClients,
+  getActiveItems,
+  getQuotationById,
+  getAllDivisionBillingSettings,
+  getOrganisationSettings,
+} from '@pmg/db';
 import { QuoteFormClient } from '../../new/quote-form-client';
 import { SetPageLabel } from '@/components/navigation/page-header-context';
 
@@ -19,12 +26,13 @@ interface Props {
 export default async function EditQuotePage({ params }: Props) {
   const { id } = await params;
 
-  const [quote, divisions, clients, activeItems, billingSettings] = await Promise.all([
+  const [quote, divisions, clients, activeItems, billingSettings, orgSettings] = await Promise.all([
     getQuotationById(id),
     getAllDivisions(),
     getAllClients(),
     getActiveItems(),
     getAllDivisionBillingSettings(),
+    getOrganisationSettings(),
   ]);
 
   if (!quote) notFound();
@@ -75,6 +83,7 @@ export default async function EditQuotePage({ params }: Props) {
         initialData={quote}
         editId={id}
         billingSettings={billingSettings}
+        orgVatNumber={orgSettings?.vatNumber ?? null}
       />
     </div>
   );

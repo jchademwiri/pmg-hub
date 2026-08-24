@@ -8,6 +8,7 @@ import {
   getActiveClients,
   getActiveItems,
   getAllDivisionBillingSettings,
+  getOrganisationSettings,
 } from '@pmg/db';
 import { getMinAllowedDate } from '@/lib/date-rules';
 import { InvoiceFormClient } from './invoice-form-client';
@@ -16,12 +17,13 @@ import { SetPageLabel } from '@/components/navigation/page-header-context';
 export const metadata: Metadata = { title: 'New Invoice' };
 
 export default async function NewInvoicePage() {
-  const [divisions, clients, activeItems, minDate, billingSettings] = await Promise.all([
+  const [divisions, clients, activeItems, minDate, billingSettings, orgSettings] = await Promise.all([
     getAllDivisions(),
     getActiveClients(),
     getActiveItems(),
     getMinAllowedDate(),
     getAllDivisionBillingSettings(),
+    getOrganisationSettings(),
   ]);
 
   return (
@@ -48,6 +50,7 @@ export default async function NewInvoicePage() {
         activeItems={activeItems}
         minDate={minDate}
         billingSettings={billingSettings}
+        orgVatNumber={orgSettings?.vatNumber ?? null}
       />
     </div>
   );

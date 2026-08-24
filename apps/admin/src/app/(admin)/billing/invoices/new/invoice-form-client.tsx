@@ -2,6 +2,7 @@
 
 import { useState, useTransition, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
+import Link from 'next/link';
 import { formatZAR, getEndOfMonth } from '@/lib/format';
 import { getClientCreditBalance } from '@/app/actions/billing-payments';
 import { Alert, AlertDescription } from '@/components/ui/alert';
@@ -50,6 +51,7 @@ export interface InvoiceFormClientProps {
   initialData?: InvoiceDetail;
   editId?: string;
   billingSettings?: Record<string, { quoteNotes?: string | null; invoiceNotes?: string | null }>;
+  orgVatNumber?: string | null;
 }
 
 const today = new Date().toISOString().split('T')[0]!;
@@ -112,6 +114,7 @@ export function InvoiceFormClient({
   initialData,
   editId,
   billingSettings,
+  orgVatNumber,
 }: InvoiceFormClientProps) {
   const router = useRouter();
   const [, startTransition] = useTransition();
@@ -441,15 +444,52 @@ export function InvoiceFormClient({
         <div className="rounded-xl border bg-card p-4 flex flex-col gap-3">
           <p className="text-sm font-semibold">Summary</p>
 
-          <Field orientation="horizontal" className="items-center justify-between">
-            <FieldLabel htmlFor="vat-toggle">VAT (15%)</FieldLabel>
-            <Switch
-              id="vat-toggle"
-              checked={vatEnabled}
-              onCheckedChange={setVatEnabled}
-              disabled={isSubmitting}
-            />
-          </Field>
+          <div className="flex flex-col gap-1 rounded-lg border bg-muted/20 p-2.5">
+            <Field orientation="horizontal" className="items-center justify-between">
+              <div className="flex flex-col">
+                <FieldLabel htmlFor="vat-toggle" className="text-xs font-semibold cursor-pointer">
+                  VAT (15%)
+                </FieldLabel>
+                {orgVatNumber ? (
+                  <span className="text-[10px] text-emerald-600 dark:text-emerald-400 font-medium">
+                    Reg: {orgVatNumber}
+                  </span>
+                ) : (
+                  <span className="text-[10px] text-muted-foreground">
+                    Off (Not registered)
+                  </span>
+                )}
+              </div>
+              <Switch
+                id="vat-toggle"
+                checked={vatEnabled}
+                onCheckedChange={(checked) => {
+                  if (checked && !orgVatNumber?.trim()) {
+                    setError(
+                      'VAT cannot be enabled: No registered VAT number configured in Settings → Organisation.',
+                    );
+                    return;
+                  }
+                  setError(null);
+                  setVatEnabled(checked);
+                }}
+                disabled={isSubmitting || !orgVatNumber?.trim()}
+              />
+            </Field>
+            {!orgVatNumber?.trim() && (
+              <p className="text-[11px] text-muted-foreground/80 leading-snug pt-1 border-t border-border/50">
+                To charge VAT, set your company VAT number in{' '}
+                <Link
+                  href="/settings/organisation"
+                  className="text-primary underline font-medium hover:text-primary/80"
+                  target="_blank"
+                >
+                  Settings → Organisation
+                </Link>
+                .
+              </p>
+            )}
+          </div>
 
           {/* Discount */}
           <div className="flex">

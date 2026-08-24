@@ -8,6 +8,7 @@ import {
   getActiveClients,
   getActiveItems,
   getAllDivisionBillingSettings,
+  getOrganisationSettings,
 } from '@pmg/db';
 import { QuoteFormClient } from './quote-form-client';
 import { SetPageLabel } from '@/components/navigation/page-header-context';
@@ -16,11 +17,12 @@ export const dynamic = 'force-dynamic';
 export const metadata: Metadata = { title: 'New Quotation' };
 
 export default async function NewQuotePage() {
-  const [divisions, clients, activeItems, billingSettings] = await Promise.all([
+  const [divisions, clients, activeItems, billingSettings, orgSettings] = await Promise.all([
     getAllDivisions(),
     getActiveClients(),
     getActiveItems(),
     getAllDivisionBillingSettings(),
+    getOrganisationSettings(),
   ]);
 
   return (
@@ -46,6 +48,7 @@ export default async function NewQuotePage() {
         clients={clients}
         activeItems={activeItems}
         billingSettings={billingSettings}
+        orgVatNumber={orgSettings?.vatNumber ?? null}
       />
     </div>
   );

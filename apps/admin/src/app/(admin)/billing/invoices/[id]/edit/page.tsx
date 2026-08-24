@@ -5,7 +5,14 @@ import { ChevronLeft, FileX } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Separator } from '@/components/ui/separator';
-import { getAllDivisions, getAllClients, getActiveItems, getInvoiceById, getAllDivisionBillingSettings } from '@pmg/db';
+import {
+  getAllDivisions,
+  getAllClients,
+  getActiveItems,
+  getInvoiceById,
+  getAllDivisionBillingSettings,
+  getOrganisationSettings,
+} from '@pmg/db';
 import { getMinAllowedDate } from '@/lib/date-rules';
 import { InvoiceFormClient } from '../../new/invoice-form-client';
 import { SetPageLabel } from '@/components/navigation/page-header-context';
@@ -20,13 +27,14 @@ interface Props {
 export default async function EditInvoicePage({ params }: Props) {
   const { id } = await params;
 
-  const [invoice, divisions, clients, activeItems, minDate, billingSettings] = await Promise.all([
+  const [invoice, divisions, clients, activeItems, minDate, billingSettings, orgSettings] = await Promise.all([
     getInvoiceById(id),
     getAllDivisions(),
     getAllClients(),
     getActiveItems(),
     getMinAllowedDate(),
     getAllDivisionBillingSettings(),
+    getOrganisationSettings(),
   ]);
 
   if (!invoice) notFound();
@@ -78,6 +86,7 @@ export default async function EditInvoicePage({ params }: Props) {
         initialData={invoice}
         editId={id}
         billingSettings={billingSettings}
+        orgVatNumber={orgSettings?.vatNumber ?? null}
       />
     </div>
   );
