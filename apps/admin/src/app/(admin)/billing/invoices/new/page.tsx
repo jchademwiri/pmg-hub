@@ -17,14 +17,15 @@ import { SetPageLabel } from '@/components/navigation/page-header-context';
 export const metadata: Metadata = { title: 'New Invoice' };
 
 export default async function NewInvoicePage() {
-  const [divisions, clients, activeItems, minDate, billingSettings, orgSettings] = await Promise.all([
-    getAllDivisions(),
-    getActiveClients(),
-    getActiveItems(),
-    getMinAllowedDate(),
-    getAllDivisionBillingSettings(),
-    getOrganisationSettings(),
-  ]);
+  const [divisions, clients, activeItems, minDate, billingSettings, orgSettings] =
+    await Promise.all([
+      getAllDivisions(),
+      getActiveClients(),
+      getActiveItems(),
+      getMinAllowedDate(),
+      getAllDivisionBillingSettings(),
+      getOrganisationSettings(),
+    ]);
 
   return (
     <div className="flex flex-col gap-6">

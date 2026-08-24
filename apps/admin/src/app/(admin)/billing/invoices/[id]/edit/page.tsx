@@ -27,15 +27,16 @@ interface Props {
 export default async function EditInvoicePage({ params }: Props) {
   const { id } = await params;
 
-  const [invoice, divisions, clients, activeItems, minDate, billingSettings, orgSettings] = await Promise.all([
-    getInvoiceById(id),
-    getAllDivisions(),
-    getAllClients(),
-    getActiveItems(),
-    getMinAllowedDate(),
-    getAllDivisionBillingSettings(),
-    getOrganisationSettings(),
-  ]);
+  const [invoice, divisions, clients, activeItems, minDate, billingSettings, orgSettings] =
+    await Promise.all([
+      getInvoiceById(id),
+      getAllDivisions(),
+      getAllClients(),
+      getActiveItems(),
+      getMinAllowedDate(),
+      getAllDivisionBillingSettings(),
+      getOrganisationSettings(),
+    ]);
 
   if (!invoice) notFound();
 
@@ -48,7 +49,9 @@ export default async function EditInvoicePage({ params }: Props) {
         </div>
         <h2 className="text-2xl font-semibold tracking-tight">Cannot Edit Invoice</h2>
         <p className="text-muted-foreground text-sm">
-          This invoice is marked as <strong className="capitalize">{invoice.status.replace('_', ' ')}</strong>. Documents in this state are locked for accounting integrity and can no longer be modified.
+          This invoice is marked as{' '}
+          <strong className="capitalize">{invoice.status.replace('_', ' ')}</strong>. Documents in
+          this state are locked for accounting integrity and can no longer be modified.
         </p>
         <Button asChild className="mt-4" variant="outline">
           <Link href={`/billing/invoices/${id}`}>

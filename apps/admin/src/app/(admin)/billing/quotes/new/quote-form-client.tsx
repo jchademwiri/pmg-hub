@@ -410,7 +410,10 @@ export function QuoteFormClient({
           <div className="flex flex-col gap-1 rounded-lg border bg-muted/20 p-2.5">
             <Field orientation="horizontal" className="items-center justify-between">
               <div className="flex flex-col">
-                <FieldLabel htmlFor="quote-vat-toggle" className="text-xs font-semibold cursor-pointer">
+                <FieldLabel
+                  htmlFor="quote-vat-toggle"
+                  className="text-xs font-semibold cursor-pointer"
+                >
                   VAT (15%)
                 </FieldLabel>
                 {orgVatNumber ? (
@@ -418,9 +421,7 @@ export function QuoteFormClient({
                     Reg: {orgVatNumber}
                   </span>
                 ) : (
-                  <span className="text-[10px] text-muted-foreground">
-                    Off (Not registered)
-                  </span>
+                  <span className="text-[10px] text-muted-foreground">Off (Not registered)</span>
                 )}
               </div>
               <Switch

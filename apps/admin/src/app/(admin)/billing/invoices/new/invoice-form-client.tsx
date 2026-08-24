@@ -455,9 +455,7 @@ export function InvoiceFormClient({
                     Reg: {orgVatNumber}
                   </span>
                 ) : (
-                  <span className="text-[10px] text-muted-foreground">
-                    Off (Not registered)
-                  </span>
+                  <span className="text-[10px] text-muted-foreground">Off (Not registered)</span>
                 )}
               </div>
               <Switch

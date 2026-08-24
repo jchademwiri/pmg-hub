@@ -46,7 +46,9 @@ export default async function EditQuotePage({ params }: Props) {
         </div>
         <h2 className="text-2xl font-semibold tracking-tight">Cannot Edit Quotation</h2>
         <p className="text-muted-foreground text-sm">
-          This quotation is marked as <strong className="capitalize">{quote.status.replace('_', ' ')}</strong>. Documents in this state are locked and can no longer be modified.
+          This quotation is marked as{' '}
+          <strong className="capitalize">{quote.status.replace('_', ' ')}</strong>. Documents in
+          this state are locked and can no longer be modified.
         </p>
         <Button asChild className="mt-4" variant="outline">
           <Link href={`/billing/quotes/${id}`}>
