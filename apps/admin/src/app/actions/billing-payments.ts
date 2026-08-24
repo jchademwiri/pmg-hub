@@ -1,12 +1,30 @@
 'use server';
 
 import { revalidatePath } from 'next/cache';
-import { getDb, invoices, income, clients, paymentAllocations, eq, and, sql, desc, asc, divisions, divisionBillingSettings } from '@pmg/db';
+import {
+  getDb,
+  invoices,
+  income,
+  clients,
+  paymentAllocations,
+  eq,
+  and,
+  sql,
+  desc,
+  asc,
+  divisions,
+  divisionBillingSettings,
+} from '@pmg/db';
 import { getSessionOrRedirect } from '@/lib/auth';
 import { isPeriodClosed, getMinAllowedDate, getMinDateErrorMessage } from '@/lib/date-rules';
 import { getSASTToday, fmtDateLong } from '@/lib/format';
 import { deleteIncome } from './income';
-import { postPaymentJournalEntries, updatePaymentJournalEntries, voidPaymentJournalEntries, postBadDebtRecoveryJournalEntry } from '@/lib/accounting/posting';
+import {
+  postPaymentJournalEntries,
+  updatePaymentJournalEntries,
+  voidPaymentJournalEntries,
+  postBadDebtRecoveryJournalEntry,
+} from '@/lib/accounting/posting';
 import { getPortalBaseUrl } from '@/lib/portal-url';
 
 export interface PaymentAllocationInput {
@@ -52,8 +70,8 @@ export async function getClientOutstandingInvoices(clientId: string) {
       .where(
         and(
           eq(invoices.clientId, clientId),
-          sql`${invoices.status} IN ('issued', 'partially_paid', 'overdue')`
-        )
+          sql`${invoices.status} IN ('issued', 'partially_paid', 'overdue')`,
+        ),
       )
       .groupBy(
         invoices.id,
@@ -61,7 +79,7 @@ export async function getClientOutstandingInvoices(clientId: string) {
         invoices.invoiceDate,
         invoices.dueDate,
         invoices.total,
-        invoices.divisionId
+        invoices.divisionId,
       )
       .orderBy(asc(invoices.invoiceDate));
 
@@ -124,7 +142,9 @@ export async function getClientCreditBalance(clientId: string): Promise<number> 
  * Transactionally saves a cash payment (income row), maps allocations inside payment_allocations,
  * updates invoice states, and revalidates Next.js page caches.
  */
-export async function recordClientPayment(data: PaymentInput): Promise<{ error?: string; success?: boolean }> {
+export async function recordClientPayment(
+  data: PaymentInput,
+): Promise<{ error?: string; success?: boolean }> {
   try {
     await getSessionOrRedirect();
     const db = getDb();
@@ -161,16 +181,19 @@ export async function recordClientPayment(data: PaymentInput): Promise<{ error?:
     }
 
     // 3. Fetch invoice document numbers upfront for auto-reference and email
-    const allocatedInvoiceIds = data.allocations.filter((a) => a.amount > 0).map((a) => a.invoiceId);
-    const invDocs = allocatedInvoiceIds.length > 0
-      ? await db
-          .select({ id: invoices.id, documentNumber: invoices.documentNumber })
-          .from(invoices)
-          .where(sql`${invoices.id} IN ${allocatedInvoiceIds}`)
-      : [];
+    const allocatedInvoiceIds = data.allocations
+      .filter((a) => a.amount > 0)
+      .map((a) => a.invoiceId);
+    const invDocs =
+      allocatedInvoiceIds.length > 0
+        ? await db
+            .select({ id: invoices.id, documentNumber: invoices.documentNumber })
+            .from(invoices)
+            .where(sql`${invoices.id} IN ${allocatedInvoiceIds}`)
+        : [];
     const invDocMap = new Map(invDocs.map((d) => [d.id, d.documentNumber]));
 
-    const allocatedInvoicesInfo: { documentNumber: string, amount: string }[] = [];
+    const allocatedInvoicesInfo: { documentNumber: string; amount: string }[] = [];
     for (const alloc of data.allocations) {
       if (alloc.amount <= 0) continue;
       const docNum = invDocMap.get(alloc.invoiceId);
@@ -212,7 +235,7 @@ export async function recordClientPayment(data: PaymentInput): Promise<{ error?:
     }
 
     // 5. Execute database operations in a transaction
-    const recoveriesToPost: { invoiceId: string; amount: number; documentNumber: string; }[] = [];
+    const recoveriesToPost: { invoiceId: string; amount: number; documentNumber: string }[] = [];
 
     const recordedIncomeId = await db.transaction(async (tx) => {
       // A. Create the core payment row with the trusted auto-reference
@@ -235,12 +258,12 @@ export async function recordClientPayment(data: PaymentInput): Promise<{ error?:
 
         // Lock the invoice row first to serialize concurrent updates
         const [invoiceRow] = await tx
-          .select({ 
-            total: invoices.total, 
-            writeOffAmount: invoices.writeOffAmount, 
+          .select({
+            total: invoices.total,
+            writeOffAmount: invoices.writeOffAmount,
             documentNumber: invoices.documentNumber,
             clientId: invoices.clientId,
-            divisionId: invoices.divisionId 
+            divisionId: invoices.divisionId,
           })
           .from(invoices)
           .where(eq(invoices.id, alloc.invoiceId))
@@ -248,7 +271,9 @@ export async function recordClientPayment(data: PaymentInput): Promise<{ error?:
 
         if (!invoiceRow) throw new Error('Invoice not found for allocation.');
         if (invoiceRow.clientId !== data.clientId || invoiceRow.divisionId !== finalDivisionId) {
-          throw new Error(`Invoice ${invoiceRow.documentNumber} does not match the payment client or division.`);
+          throw new Error(
+            `Invoice ${invoiceRow.documentNumber} does not match the payment client or division.`,
+          );
         }
 
         // Verify balance before allocation
@@ -256,13 +281,15 @@ export async function recordClientPayment(data: PaymentInput): Promise<{ error?:
           .select({ sum: sql<string>`coalesce(sum(${paymentAllocations.amount}), 0)` })
           .from(paymentAllocations)
           .where(eq(paymentAllocations.invoiceId, alloc.invoiceId));
-          
+
         const totalAllocatedBefore = parseFloat(sumAggBefore?.sum ?? '0');
         const invoiceTotalBefore = parseFloat(invoiceRow.total);
         const outstandingBefore = Math.max(0, invoiceTotalBefore - totalAllocatedBefore);
-        
+
         if (alloc.amount > outstandingBefore + 0.01) {
-           throw new Error(`Payment allocation of R${alloc.amount.toFixed(2)} exceeds outstanding balance for invoice ${invoiceRow.documentNumber}`);
+          throw new Error(
+            `Payment allocation of R${alloc.amount.toFixed(2)} exceeds outstanding balance for invoice ${invoiceRow.documentNumber}`,
+          );
         }
 
         // Insert allocation link
@@ -301,7 +328,7 @@ export async function recordClientPayment(data: PaymentInput): Promise<{ error?:
                 updatedAt: new Date(),
               })
               .where(eq(invoices.id, alloc.invoiceId));
-          } else if (writeOffAmount > 0 && (invoiceTotal - totalAllocated) >= writeOffAmount) {
+          } else if (writeOffAmount > 0 && invoiceTotal - totalAllocated >= writeOffAmount) {
             await tx
               .update(invoices)
               .set({
@@ -324,91 +351,127 @@ export async function recordClientPayment(data: PaymentInput): Promise<{ error?:
           }
         }
       }
-    // C. Post bad debt recovery journal entries
-    for (const rec of recoveriesToPost) {
-      const recoveryResult = await postBadDebtRecoveryJournalEntry({
-        incomeId: incomeRow.id,
-        invoiceId: rec.invoiceId,
-        amount: rec.amount,
-        date: data.date,
-        description: `Bad Debt Recovery - ${rec.documentNumber}`,
-        divisionId: finalDivisionId,
-        tx,
-      });
-      if (recoveryResult.error) {
-        throw new Error(`Bad debt recovery journal failed: ${recoveryResult.error}`);
-      }
-    }
-
-    // D. Check for overpayment and create credit note
-    if (excessAmount > 0) {
-      const { createCreditNote } = await import('./credit-management');
-      const creditNoteRes = await createCreditNote({
-        clientId: data.clientId,
-        divisionId: finalDivisionId,
-        type: 'overpayment',
-        amount: excessAmount,
-        reason: data.description ? `Overpayment from: ${data.description}` : 'Client payment overpayment',
-        originalPaymentId: incomeRow.id,
-        tx,
-      });
-      if (creditNoteRes.error) {
-        throw new Error(`Failed to create credit note for overpayment: ${creditNoteRes.error}`);
-      }
-    }
-
-    // E. Auto-post double-entry journal entries
-    const journalResult = await postPaymentJournalEntries({
-      incomeId: incomeRow.id,
-      amount: data.amount,
-      date: data.date,
-      description: autoReference,
-      divisionId: finalDivisionId,
-      tx,
-    });
-    if (journalResult.error) {
-      throw new Error(`Journal auto-post failed: ${journalResult.error}`);
-    }
-
-    return incomeRow.id;
-  });
-
-  // 5. Automatic PMG Share (25%) physical cash transfer if requested
-  if (data.autoTransferPmgShare && data.amount > 0) {
-    try {
-      const pmgShareAmount = data.amount * 0.25;
-      const { chartAccounts } = await import('@pmg/db');
-      const { recordCashTransfer } = await import('./accounting');
-
-      const cheque = await db.select({ id: chartAccounts.id }).from(chartAccounts).where(eq(chartAccounts.code, '1010')).limit(1);
-      const savings = await db.select({ id: chartAccounts.id }).from(chartAccounts).where(eq(chartAccounts.code, '1020')).limit(1);
-
-      if (cheque[0] && savings[0]) {
-        await recordCashTransfer({
-          fromAccountId: cheque[0].id,
-          toAccountId: savings[0].id,
-          amount: pmgShareAmount,
+      // C. Post bad debt recovery journal entries
+      for (const rec of recoveriesToPost) {
+        const recoveryResult = await postBadDebtRecoveryJournalEntry({
+          incomeId: incomeRow.id,
+          invoiceId: rec.invoiceId,
+          amount: rec.amount,
           date: data.date,
-          description: `Auto-transfer 25% PMG Share for income (${autoReference.slice(0, 40)})`,
+          description: `Bad Debt Recovery - ${rec.documentNumber}`,
+          divisionId: finalDivisionId,
+          tx,
         });
+        if (recoveryResult.error) {
+          throw new Error(`Bad debt recovery journal failed: ${recoveryResult.error}`);
+        }
       }
-    } catch (err) {
-      console.error('Auto cash transfer of PMG Share failed:', err);
+
+      // D. Check for overpayment and create credit note
+      if (excessAmount > 0) {
+        const { createCreditNote } = await import('./credit-management');
+        const creditNoteRes = await createCreditNote({
+          clientId: data.clientId,
+          divisionId: finalDivisionId,
+          type: 'overpayment',
+          amount: excessAmount,
+          reason: data.description
+            ? `Overpayment from: ${data.description}`
+            : 'Client payment overpayment',
+          originalPaymentId: incomeRow.id,
+          tx,
+        });
+        if (creditNoteRes.error) {
+          throw new Error(`Failed to create credit note for overpayment: ${creditNoteRes.error}`);
+        }
+      }
+
+      // Calculate date-effective PMG Share based on distribution basis (net_profit vs gross_revenue)
+      let calculatedPmgShare = data.amount * 0.25;
+      try {
+        const { getActiveRates, expenses } = await import('@pmg/db');
+        const rates = await getActiveRates(new Date(data.date));
+        calculatedPmgShare = data.amount * (rates.pmg_share ?? 0.25);
+
+        if (rates.distribution_basis === 'net_profit' && data.clientId) {
+          const [directExpAgg] = await tx
+            .select({ totalDirect: sql<string>`coalesce(sum(${expenses.amount}), 0)` })
+            .from(expenses)
+            .where(eq(expenses.clientId, data.clientId));
+
+          if (directExpAgg && directExpAgg.totalDirect !== undefined) {
+            const totalDirectCosts = parseFloat(directExpAgg.totalDirect || '0');
+            if (!isNaN(totalDirectCosts)) {
+              const netMargin = Math.max(0, data.amount - totalDirectCosts);
+              calculatedPmgShare = netMargin * (rates.pmg_share ?? 0.25);
+            }
+          }
+        }
+      } catch {
+        // Graceful fallback to standard 25% if schema or mock does not have expense queries
+      }
+
+      // E. Auto-post double-entry journal entries
+      const journalResult = await postPaymentJournalEntries({
+        incomeId: incomeRow.id,
+        amount: data.amount,
+        pmgShareAmount: calculatedPmgShare,
+        date: data.date,
+        description: autoReference,
+        divisionId: finalDivisionId,
+        tx,
+      });
+      if (journalResult?.error) {
+        throw new Error(`Journal auto-post failed: ${journalResult.error}`);
+      }
+
+      return { incomeId: incomeRow.id, pmgShareAmount: calculatedPmgShare };
+    });
+
+    // 5. Automatic PMG Share physical cash transfer if requested
+    if (data.autoTransferPmgShare && data.amount > 0) {
+      try {
+        const pmgShareAmount = recordedIncomeId.pmgShareAmount;
+        const { chartAccounts } = await import('@pmg/db');
+        const { recordCashTransfer } = await import('./accounting');
+
+        const cheque = await db
+          .select({ id: chartAccounts.id })
+          .from(chartAccounts)
+          .where(eq(chartAccounts.code, '1010'))
+          .limit(1);
+        const savings = await db
+          .select({ id: chartAccounts.id })
+          .from(chartAccounts)
+          .where(eq(chartAccounts.code, '1020'))
+          .limit(1);
+
+        if (cheque[0] && savings[0] && pmgShareAmount > 0) {
+          await recordCashTransfer({
+            fromAccountId: cheque[0].id,
+            toAccountId: savings[0].id,
+            amount: pmgShareAmount,
+            date: data.date,
+            description: `Auto-transfer PMG Share for income (${autoReference.slice(0, 40)})`,
+          });
+        }
+      } catch (err) {
+        console.error('Auto cash transfer of PMG Share failed:', err);
+      }
     }
-  }
 
-  // 6. Revalidate cache
-  revalidatePath('/billing/invoices');
-  revalidatePath('/billing/payments');
-  revalidatePath('/dashboard');
-  revalidatePath('/finance');
-  revalidatePath('/finance/overview');
-  revalidatePath('/accounting/journals');
-  revalidatePath('/accounting/trial-balance');
-  revalidatePath('/accounting/general-ledger');
-  revalidatePath('/accounting/profit-and-loss');
+    // 6. Revalidate cache
+    revalidatePath('/billing/invoices');
+    revalidatePath('/billing/payments');
+    revalidatePath('/dashboard');
+    revalidatePath('/finance');
+    revalidatePath('/finance/overview');
+    revalidatePath('/accounting/journals');
+    revalidatePath('/accounting/trial-balance');
+    revalidatePath('/accounting/general-ledger');
+    revalidatePath('/accounting/profit-and-loss');
 
-  // 6. Asynchronously trigger Payment Thank You email receipt via Resend
+    // 6. Asynchronously trigger Payment Thank You email receipt via Resend
     if (data.sendReceiptEmail && client.email) {
       (async () => {
         try {
@@ -426,10 +489,20 @@ export async function recordClientPayment(data: PaymentInput): Promise<{ error?:
           // Set up environment config for email dispatcher (matching email-delivery.ts)
           const isTes = divRow?.name?.toLowerCase().includes('tender') || false;
           const isAws = divRow?.name?.toLowerCase().includes('apex') || false;
-          const apiKey = (isTes ? process.env.TES_RESEND_API_KEY : isAws ? process.env.AWS_RESEND_API_KEY : undefined) 
-                         || process.env.PMG_RESEND_API_KEY!;
+          const apiKey =
+            (isTes
+              ? process.env.TES_RESEND_API_KEY
+              : isAws
+                ? process.env.AWS_RESEND_API_KEY
+                : undefined) || process.env.PMG_RESEND_API_KEY!;
 
-          const { createEmailClient, PaymentThankYouEmail, DEFAULT_REPLY_TO, resolveDivisionAdminEmail, resolveDefaultFromEmail } = await import('@pmg/emails');
+          const {
+            createEmailClient,
+            PaymentThankYouEmail,
+            DEFAULT_REPLY_TO,
+            resolveDivisionAdminEmail,
+            resolveDefaultFromEmail,
+          } = await import('@pmg/emails');
 
           const defaultFrom = resolveDefaultFromEmail(divRow?.name);
           const fromName = billingConfig?.salesRepName || 'Playhouse Media Group';
@@ -437,17 +510,23 @@ export async function recordClientPayment(data: PaymentInput): Promise<{ error?:
           // Resolve info subdomain sender (helper matching email-delivery.ts)
           let fromEmail = defaultFrom;
           if (billingConfig?.divisionWebsite) {
-            const domain = billingConfig.divisionWebsite.trim()
+            const domain = billingConfig.divisionWebsite
+              .trim()
               .replace(/^(https?:\/\/)?(www\.)?/, '')
               .split('/')[0]
               .toLowerCase();
             if (domain) {
-              fromEmail = domain.startsWith('info.') ? `noreply@${domain}` : `noreply@info.${domain}`;
+              fromEmail = domain.startsWith('info.')
+                ? `noreply@${domain}`
+                : `noreply@info.${domain}`;
             }
           }
 
           // CC the division admin — salesRepEmail takes priority, then brand default
-          const adminCc = resolveDivisionAdminEmail(divRow?.name, billingConfig?.salesRepEmail ?? null);
+          const adminCc = resolveDivisionAdminEmail(
+            divRow?.name,
+            billingConfig?.salesRepEmail ?? null,
+          );
 
           const emailClient = createEmailClient({
             apiKey,
@@ -498,16 +577,16 @@ export async function recordClientPayment(data: PaymentInput): Promise<{ error?:
  * - If adjusted DOWN: Applies LIFO reverse-spread to strip allocations from the newest invoices.
  * - If adjusted UP: Applies FIFO spread to allocate the extra funds to the oldest unpaid invoices.
  */
-export async function adjustClientPayment(incomeId: string, newAmount: number): Promise<{ error?: string; success?: boolean }> {
+export async function adjustClientPayment(
+  incomeId: string,
+  newAmount: number,
+): Promise<{ error?: string; success?: boolean }> {
   try {
     await getSessionOrRedirect();
     const db = getDb();
 
     // 1. Fetch original income record
-    const [payment] = await db
-      .select()
-      .from(income)
-      .where(eq(income.id, incomeId));
+    const [payment] = await db.select().from(income).where(eq(income.id, incomeId));
 
     if (!payment) return { error: 'Payment not found.' };
     const oldAmount = parseFloat(payment.amount);
@@ -543,9 +622,7 @@ export async function adjustClientPayment(incomeId: string, newAmount: number): 
 
         if (allocAmount <= reductionNeeded) {
           // Delete this allocation fully
-          await db
-            .delete(paymentAllocations)
-            .where(eq(paymentAllocations.id, alloc.id));
+          await db.delete(paymentAllocations).where(eq(paymentAllocations.id, alloc.id));
 
           reductionNeeded -= allocAmount;
 
@@ -619,8 +696,8 @@ export async function adjustClientPayment(incomeId: string, newAmount: number): 
           .where(
             and(
               eq(paymentAllocations.incomeId, incomeId),
-              eq(paymentAllocations.invoiceId, inv.id)
-            )
+              eq(paymentAllocations.invoiceId, inv.id),
+            ),
           )
           .limit(1);
 
@@ -634,13 +711,11 @@ export async function adjustClientPayment(incomeId: string, newAmount: number): 
             .set({ amount: String(currentAllocVal + extraAllocAmount) })
             .where(eq(paymentAllocations.id, existingAlloc.id));
         } else {
-          await db
-            .insert(paymentAllocations)
-            .values({
-              incomeId,
-              invoiceId: inv.id,
-              amount: String(extraAllocAmount),
-            });
+          await db.insert(paymentAllocations).values({
+            incomeId,
+            invoiceId: inv.id,
+            amount: String(extraAllocAmount),
+          });
         }
 
         // Check if invoice is now fully paid
@@ -727,8 +802,8 @@ async function getClientOutstandingInvoicesInternal(clientId: string) {
     .where(
       and(
         eq(invoices.clientId, clientId),
-        sql`${invoices.status} IN ('issued', 'partially_paid', 'overdue')`
-      )
+        sql`${invoices.status} IN ('issued', 'partially_paid', 'overdue')`,
+      ),
     )
     .groupBy(invoices.id, invoices.documentNumber, invoices.invoiceDate, invoices.total)
     .orderBy(asc(invoices.invoiceDate));
@@ -749,7 +824,7 @@ async function getClientOutstandingInvoicesInternal(clientId: string) {
  */
 async function recalculateInvoiceStatus(invoiceId: string, currentIncomeId?: string) {
   const db = getDb();
-  
+
   // Sum allocations for this invoice
   const [sumAgg] = await db
     .select({ sum: sql<string>`coalesce(sum(${paymentAllocations.amount}), 0)` })
@@ -776,7 +851,7 @@ async function recalculateInvoiceStatus(invoiceId: string, currentIncomeId?: str
           updatedAt: new Date(),
         })
         .where(eq(invoices.id, invoiceId));
-    } else if (writeOffAmount > 0 && (invoiceTotal - totalAllocated) >= writeOffAmount) {
+    } else if (writeOffAmount > 0 && invoiceTotal - totalAllocated >= writeOffAmount) {
       await db
         .update(invoices)
         .set({
@@ -826,7 +901,7 @@ export async function updateClientPayment(
     description: string;
     amount: number;
     allocations?: PaymentAllocationInput[];
-  }
+  },
 ): Promise<{ error?: string; success?: boolean }> {
   try {
     await getSessionOrRedirect();
@@ -962,10 +1037,7 @@ export async function updateClientPayment(
             .select()
             .from(paymentAllocations)
             .where(
-              and(
-                eq(paymentAllocations.incomeId, id),
-                eq(paymentAllocations.invoiceId, inv.id)
-              )
+              and(eq(paymentAllocations.incomeId, id), eq(paymentAllocations.invoiceId, inv.id)),
             )
             .limit(1);
 
@@ -1048,7 +1120,10 @@ export async function deleteClientPayment(id: string): Promise<{ error?: string 
  * Fetches all invoices for a client that are unpaid or partially paid, plus any invoices
  * that are currently allocated to the specified payment, adjusting their outstanding balances.
  */
-export async function getClientOutstandingInvoicesForEdit(clientId: string, currentPaymentId: string) {
+export async function getClientOutstandingInvoicesForEdit(
+  clientId: string,
+  currentPaymentId: string,
+) {
   try {
     await getSessionOrRedirect();
     const db = getDb();
@@ -1073,7 +1148,7 @@ export async function getClientOutstandingInvoicesForEdit(clientId: string, curr
       .where(eq(paymentAllocations.incomeId, currentPaymentId));
 
     // 3. Create a map of unpaid invoices for quick lookup
-    const unpaidMap = new Map<string, typeof unpaidInvoices[0]>();
+    const unpaidMap = new Map<string, (typeof unpaidInvoices)[0]>();
     for (const inv of unpaidInvoices) {
       unpaidMap.set(inv.id, inv);
     }
@@ -1084,7 +1159,9 @@ export async function getClientOutstandingInvoicesForEdit(clientId: string, curr
       const existingUnpaid = unpaidMap.get(alloc.invoiceId);
 
       if (existingUnpaid) {
-        existingUnpaid.outstanding = parseFloat((existingUnpaid.outstanding + allocatedAmount).toFixed(2));
+        existingUnpaid.outstanding = parseFloat(
+          (existingUnpaid.outstanding + allocatedAmount).toFixed(2),
+        );
       } else {
         unpaidInvoices.push({
           id: alloc.invoiceId,
@@ -1110,7 +1187,10 @@ export async function getClientOutstandingInvoicesForEdit(clientId: string, curr
  * ── getClientCreditBalanceForEdit ─────────────────────────────────────────────────────
  * Calculates the unallocated credit balance for a client excluding the specified payment.
  */
-export async function getClientCreditBalanceForEdit(clientId: string, currentPaymentId: string): Promise<number> {
+export async function getClientCreditBalanceForEdit(
+  clientId: string,
+  currentPaymentId: string,
+): Promise<number> {
   try {
     await getSessionOrRedirect();
     const db = getDb();
@@ -1124,7 +1204,12 @@ export async function getClientCreditBalanceForEdit(clientId: string, currentPay
       .select({ totalAllocated: sql<string>`coalesce(sum(${paymentAllocations.amount}), 0)` })
       .from(paymentAllocations)
       .innerJoin(invoices, eq(invoices.id, paymentAllocations.invoiceId))
-      .where(and(eq(invoices.clientId, clientId), sql`${paymentAllocations.incomeId} != ${currentPaymentId}`));
+      .where(
+        and(
+          eq(invoices.clientId, clientId),
+          sql`${paymentAllocations.incomeId} != ${currentPaymentId}`,
+        ),
+      );
 
     const totalPaid = parseFloat(incomeAgg?.totalPaid ?? '0');
     const totalAllocated = parseFloat(allocationAgg?.totalAllocated ?? '0');
@@ -1139,12 +1224,16 @@ export async function getClientCreditBalanceForEdit(clientId: string, currentPay
 async function enrichIncomeWithAllocations(incomeData: any[]) {
   const { getDb, paymentAllocations, sql } = await import('@pmg/db');
   const db = getDb();
-  const incomeIds = incomeData.map(i => i.id);
-  
+  const incomeIds = incomeData.map((i) => i.id);
+
   let allocationSums: { incomeId: string; sum: string }[] = [];
   if (incomeIds.length > 0) {
     const { inArray } = await import('drizzle-orm');
-    allocationSums = await db.select({ incomeId: paymentAllocations.incomeId, sum: sql<string>`sum(${paymentAllocations.amount})` })
+    allocationSums = await db
+      .select({
+        incomeId: paymentAllocations.incomeId,
+        sum: sql<string>`sum(${paymentAllocations.amount})`,
+      })
       .from(paymentAllocations)
       .where(inArray(paymentAllocations.incomeId, incomeIds))
       .groupBy(paymentAllocations.incomeId);
@@ -1176,14 +1265,14 @@ async function enrichIncomeWithAllocations(incomeData: any[]) {
 export async function fetchPaymentsByMonth(year: number, month: number, divisionId?: string) {
   const { getAllIncome } = await import('@pmg/db');
   const { getClosedPeriodsFromDates } = await import('@/lib/date-rules');
-  
+
   const incomeResult = await getAllIncome(
     { year, month: `${year}-${month.toString().padStart(2, '0')}`, divisionId },
-    { page: 1, pageSize: 1000 }
+    { page: 1, pageSize: 1000 },
   );
 
   const payments = await enrichIncomeWithAllocations(incomeResult.data);
-  const closedPeriods = await getClosedPeriodsFromDates(payments.map(p => p.date));
+  const closedPeriods = await getClosedPeriodsFromDates(payments.map((p) => p.date));
 
   return { data: payments, closedPeriods };
 }
@@ -1191,14 +1280,11 @@ export async function fetchPaymentsByMonth(year: number, month: number, division
 export async function fetchPaymentsByYear(year: number, divisionId?: string) {
   const { getAllIncome } = await import('@pmg/db');
   const { getClosedPeriodsFromDates } = await import('@/lib/date-rules');
-  
-  const incomeResult = await getAllIncome(
-    { year, divisionId },
-    { page: 1, pageSize: 5000 }
-  );
+
+  const incomeResult = await getAllIncome({ year, divisionId }, { page: 1, pageSize: 5000 });
 
   const payments = await enrichIncomeWithAllocations(incomeResult.data);
-  const closedPeriods = await getClosedPeriodsFromDates(payments.map(p => p.date));
+  const closedPeriods = await getClosedPeriodsFromDates(payments.map((p) => p.date));
 
   return { data: payments, closedPeriods };
 }

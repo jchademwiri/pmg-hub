@@ -1,10 +1,30 @@
 'use server';
 
 import { revalidatePath } from 'next/cache';
-import { getDb, invoices, quotations, billingLineItems, income, clients, divisionBillingSettings, eq, and, inArray, paymentAllocations, sql } from '@pmg/db';
+import {
+  getDb,
+  invoices,
+  quotations,
+  billingLineItems,
+  income,
+  clients,
+  divisionBillingSettings,
+  eq,
+  and,
+  inArray,
+  paymentAllocations,
+  sql,
+} from '@pmg/db';
 import { getNextDocumentNumber, addDays } from '@pmg/db';
 import { getSessionOrRedirect } from '@/lib/auth';
-import { postInvoiceIssueJournalEntry, voidInvoiceJournalEntries, postPaymentJournalEntries, updateInvoiceJournalEntry, postInvoiceWriteOffJournalEntry, voidInvoiceWriteOffJournalEntries } from '@/lib/accounting/posting';
+import {
+  postInvoiceIssueJournalEntry,
+  voidInvoiceJournalEntries,
+  postPaymentJournalEntries,
+  updateInvoiceJournalEntry,
+  postInvoiceWriteOffJournalEntry,
+  voidInvoiceWriteOffJournalEntries,
+} from '@/lib/accounting/posting';
 import { isPeriodClosed, getMinAllowedDate, getMinDateErrorMessage } from '@/lib/date-rules';
 import { getSASTParts, getSASTToday, getEndOfMonth } from '@/lib/format';
 import { CreateInvoiceSchema, type CreateInvoiceInput } from './billing-schema';
@@ -20,7 +40,13 @@ class ActionError extends Error {
 // ── Shared totals helper ──────────────────────────────────────────────────────
 
 function calcTotals(
-  lineItems: { quantity: number; unitPrice: number; vatRate: number; discountType?: 'percent' | 'amount' | null; discountValue?: number | null }[],
+  lineItems: {
+    quantity: number;
+    unitPrice: number;
+    vatRate: number;
+    discountType?: 'percent' | 'amount' | null;
+    discountValue?: number | null;
+  }[],
   vatEnabled?: boolean,
   discountType?: 'percent' | 'amount' | null,
   discountValue?: number | null,
@@ -29,11 +55,12 @@ function calcTotals(
   for (const item of lineItems) {
     const rawTotal = item.quantity * item.unitPrice;
     const itemDiscountVal = item.discountValue ?? 0;
-    const itemDiscountAmount = item.discountType === 'percent'
-      ? rawTotal * (itemDiscountVal / 100)
-      : item.discountType === 'amount'
-      ? Math.min(itemDiscountVal, rawTotal)
-      : 0;
+    const itemDiscountAmount =
+      item.discountType === 'percent'
+        ? rawTotal * (itemDiscountVal / 100)
+        : item.discountType === 'amount'
+          ? Math.min(itemDiscountVal, rawTotal)
+          : 0;
     // Round each line the same way it's rounded when stored as `lineTotal`
     // (see the billingLineItems insert below), so the header subtotal always
     // foots exactly to the sum of the displayed line totals.
@@ -67,8 +94,19 @@ export async function createInvoice(
     if (!parsed.success) {
       return { error: parsed.error.issues[0]?.message ?? 'Validation error' };
     }
-    const { divisionId, clientId, invoiceDate, dueDate, reference, notes, terms, lineItems, vatEnabled, discountType, discountValue } =
-      parsed.data;
+    const {
+      divisionId,
+      clientId,
+      invoiceDate,
+      dueDate,
+      reference,
+      notes,
+      terms,
+      lineItems,
+      vatEnabled,
+      discountType,
+      discountValue,
+    } = parsed.data;
 
     // clientId is required - enforced by Zod but double-check
     if (!clientId) {
@@ -80,7 +118,29 @@ export async function createInvoice(
       return { error: getMinDateErrorMessage(minDate) };
     }
 
-    const { subtotal, discountAmount, vatAmount, total } = calcTotals(lineItems, vatEnabled, discountType, discountValue);
+    if (vatEnabled) {
+      try {
+        const { getOrganisationSettings } = await import('@pmg/db');
+        if (typeof getOrganisationSettings === 'function') {
+          const orgSettings = await getOrganisationSettings();
+          if (orgSettings && !orgSettings.vatNumber?.trim()) {
+            return {
+              error:
+                'VAT cannot be enabled: No registered VAT number is configured in Organisation Settings.',
+            };
+          }
+        }
+      } catch {
+        // Table or settings not initialized
+      }
+    }
+
+    const { subtotal, discountAmount, vatAmount, total } = calcTotals(
+      lineItems,
+      vatEnabled,
+      discountType,
+      discountValue,
+    );
     const year = new Date(invoiceDate).getFullYear();
     const documentNumber = await getNextDocumentNumber(divisionId, 'invoice', year);
 
@@ -112,30 +172,44 @@ export async function createInvoice(
     if (!inserted) return { error: 'Failed to create invoice.' };
 
     await db.insert(billingLineItems).values(
-      lineItems.map((item: { itemId?: string | null; description: string; quantity: number; unitPrice: number; vatRate: number; discountType?: 'percent' | 'amount' | null; discountValue?: number | null }, i: number) => {
-        const rawTotal = item.quantity * item.unitPrice;
-        const itemDiscountVal = item.discountValue ?? 0;
-        const itemDiscountAmount = item.discountType === 'percent'
-          ? rawTotal * (itemDiscountVal / 100)
-          : item.discountType === 'amount'
-          ? Math.min(itemDiscountVal, rawTotal)
-          : 0;
+      lineItems.map(
+        (
+          item: {
+            itemId?: string | null;
+            description: string;
+            quantity: number;
+            unitPrice: number;
+            vatRate: number;
+            discountType?: 'percent' | 'amount' | null;
+            discountValue?: number | null;
+          },
+          i: number,
+        ) => {
+          const rawTotal = item.quantity * item.unitPrice;
+          const itemDiscountVal = item.discountValue ?? 0;
+          const itemDiscountAmount =
+            item.discountType === 'percent'
+              ? rawTotal * (itemDiscountVal / 100)
+              : item.discountType === 'amount'
+                ? Math.min(itemDiscountVal, rawTotal)
+                : 0;
 
-        return {
-          documentType: 'invoice' as const,
-          documentId: inserted.id,
-          sortOrder: i,
-          itemId: item.itemId ?? null,
-          description: item.description,
-          quantity: String(item.quantity),
-          unitPrice: String(item.unitPrice.toFixed(2)),
-          discountType: item.discountType ?? null,
-          discountValue: item.discountValue != null ? String(item.discountValue) : null,
-          discountAmount: String(itemDiscountAmount.toFixed(2)),
-          vatRate: '0',
-          lineTotal: String((rawTotal - itemDiscountAmount).toFixed(2)),
-        };
-      }),
+          return {
+            documentType: 'invoice' as const,
+            documentId: inserted.id,
+            sortOrder: i,
+            itemId: item.itemId ?? null,
+            description: item.description,
+            quantity: String(item.quantity),
+            unitPrice: String(item.unitPrice.toFixed(2)),
+            discountType: item.discountType ?? null,
+            discountValue: item.discountValue != null ? String(item.discountValue) : null,
+            discountAmount: String(itemDiscountAmount.toFixed(2)),
+            vatRate: '0',
+            lineTotal: String((rawTotal - itemDiscountAmount).toFixed(2)),
+          };
+        },
+      ),
     );
 
     revalidatePath('/billing/invoices');
@@ -185,7 +259,22 @@ export async function updateInvoice(
       return { error: 'A client is required.' };
     }
 
-    const db = getDb();
+    if (vatEnabled) {
+      try {
+        const { getOrganisationSettings } = await import('@pmg/db');
+        if (typeof getOrganisationSettings === 'function') {
+          const orgSettings = await getOrganisationSettings();
+          if (orgSettings && !orgSettings.vatNumber?.trim()) {
+            return {
+              error:
+                'VAT cannot be enabled: No registered VAT number is configured in Organisation Settings.',
+            };
+          }
+        }
+      } catch {
+        // Table or settings not initialized
+      }
+    }
 
     const { subtotal, discountAmount, vatAmount, total } = calcTotals(
       lineItems,
@@ -194,10 +283,19 @@ export async function updateInvoice(
       discountValue,
     );
 
+    const db = getDb();
+
     // Delete existing line items, update invoice, and reinsert atomically
-    const existingRow = await db.transaction(async (tx) => {
+    const existingRow = await db.transaction(async (tx: any) => {
       const [existingLocked] = await tx
-        .select({ id: invoices.id, status: invoices.status, invoiceDate: invoices.invoiceDate, total: invoices.total, documentNumber: invoices.documentNumber, divisionId: invoices.divisionId })
+        .select({
+          id: invoices.id,
+          status: invoices.status,
+          invoiceDate: invoices.invoiceDate,
+          total: invoices.total,
+          documentNumber: invoices.documentNumber,
+          divisionId: invoices.divisionId,
+        })
         .from(invoices)
         .where(eq(invoices.id, id))
         .for('update');
@@ -216,7 +314,10 @@ export async function updateInvoice(
       }
 
       // We allow editing of draft, issued, or overdue invoices in closed periods
-      const isInvoiceEditable = existingLocked.status === 'draft' || existingLocked.status === 'issued' || existingLocked.status === 'overdue';
+      const isInvoiceEditable =
+        existingLocked.status === 'draft' ||
+        existingLocked.status === 'issued' ||
+        existingLocked.status === 'overdue';
       if (!isInvoiceEditable) {
         if (await isPeriodClosed(existingLocked.invoiceDate)) {
           throw new InvoiceValidationError('Cannot edit an invoice in a closed financial period.');
@@ -230,10 +331,7 @@ export async function updateInvoice(
       await tx
         .delete(billingLineItems)
         .where(
-          and(
-            eq(billingLineItems.documentType, 'invoice'),
-            eq(billingLineItems.documentId, id),
-          ),
+          and(eq(billingLineItems.documentType, 'invoice'), eq(billingLineItems.documentId, id)),
         );
 
       await tx
@@ -257,30 +355,44 @@ export async function updateInvoice(
         .where(eq(invoices.id, id));
 
       await tx.insert(billingLineItems).values(
-        lineItems.map((item: { itemId?: string | null; description: string; quantity: number; unitPrice: number; vatRate: number; discountType?: 'percent' | 'amount' | null; discountValue?: number | null }, i: number) => {
-          const rawTotal = item.quantity * item.unitPrice;
-          const itemDiscountVal = item.discountValue ?? 0;
-          const itemDiscountAmount = item.discountType === 'percent'
-            ? rawTotal * (itemDiscountVal / 100)
-            : item.discountType === 'amount'
-            ? Math.min(itemDiscountVal, rawTotal)
-            : 0;
+        lineItems.map(
+          (
+            item: {
+              itemId?: string | null;
+              description: string;
+              quantity: number;
+              unitPrice: number;
+              vatRate: number;
+              discountType?: 'percent' | 'amount' | null;
+              discountValue?: number | null;
+            },
+            i: number,
+          ) => {
+            const rawTotal = item.quantity * item.unitPrice;
+            const itemDiscountVal = item.discountValue ?? 0;
+            const itemDiscountAmount =
+              item.discountType === 'percent'
+                ? rawTotal * (itemDiscountVal / 100)
+                : item.discountType === 'amount'
+                  ? Math.min(itemDiscountVal, rawTotal)
+                  : 0;
 
-          return {
-            documentType: 'invoice' as const,
-            documentId: id,
-            sortOrder: i,
-            itemId: item.itemId ?? null,
-            description: item.description,
-            quantity: String(item.quantity),
-            unitPrice: String(item.unitPrice.toFixed(2)),
-            discountType: item.discountType ?? null,
-            discountValue: item.discountValue != null ? String(item.discountValue) : null,
-            discountAmount: String(itemDiscountAmount.toFixed(2)),
-            vatRate: '0',
-            lineTotal: String((rawTotal - itemDiscountAmount).toFixed(2)),
-          };
-        }),
+            return {
+              documentType: 'invoice' as const,
+              documentId: id,
+              sortOrder: i,
+              itemId: item.itemId ?? null,
+              description: item.description,
+              quantity: String(item.quantity),
+              unitPrice: String(item.unitPrice.toFixed(2)),
+              discountType: item.discountType ?? null,
+              discountValue: item.discountValue != null ? String(item.discountValue) : null,
+              discountAmount: String(itemDiscountAmount.toFixed(2)),
+              vatRate: '0',
+              lineTotal: String((rawTotal - itemDiscountAmount).toFixed(2)),
+            };
+          },
+        ),
       );
 
       return existingLocked;
@@ -291,10 +403,16 @@ export async function updateInvoice(
     // If an issued/overdue invoice's total or date changed, void the old AR entry and repost
     const totalChanged = existingRow.total !== String(total.toFixed(2));
     const dateChanged = existingRow.invoiceDate !== invoiceDate;
-    if ((existingRow.status === 'issued' || existingRow.status === 'overdue') && (totalChanged || dateChanged)) {
+    if (
+      (existingRow.status === 'issued' || existingRow.status === 'overdue') &&
+      (totalChanged || dateChanged)
+    ) {
       const journalResult = await updateInvoiceJournalEntry({
         invoiceId: id,
         newAmount: total,
+        subtotal,
+        vatAmount,
+        vatEnabled: Boolean(vatEnabled),
         date: invoiceDate,
         description: `Invoice ${existingRow.documentNumber}`,
         divisionId: existingRow.divisionId,
@@ -332,10 +450,7 @@ export async function convertQuoteToInvoice(
     const db = getDb();
 
     // Load quote - must be accepted
-    const [quote] = await db
-      .select()
-      .from(quotations)
-      .where(eq(quotations.id, quotationId));
+    const [quote] = await db.select().from(quotations).where(eq(quotations.id, quotationId));
 
     if (!quote) return { error: 'Quotation not found.' };
     if (quote.status !== 'accepted') {
@@ -381,7 +496,9 @@ export async function convertQuoteToInvoice(
         throw new InvoiceValidationError('Only accepted quotations can be converted to invoices.');
       }
       if (quoteLocked.expiryDate && quoteLocked.expiryDate < today) {
-        throw new InvoiceValidationError('This quotation has expired and can no longer be converted to an invoice.');
+        throw new InvoiceValidationError(
+          'This quotation has expired and can no longer be converted to an invoice.',
+        );
       }
 
       // Load quote line items inside the transaction to share the lock
@@ -496,52 +613,67 @@ export async function convertQuoteToInvoice(
 async function issueInvoiceInternal(id: string): Promise<{ error?: string }> {
   const db = getDb();
 
-  return await db.transaction(async (tx) => {
-    // Lock the invoice row to prevent concurrent status updates
-    const [invoiceLocked] = await tx
-      .select({ id: invoices.id, status: invoices.status, total: invoices.total, invoiceDate: invoices.invoiceDate, documentNumber: invoices.documentNumber, divisionId: invoices.divisionId })
-      .from(invoices)
-      .where(eq(invoices.id, id))
-      .for('update');
+  return await db
+    .transaction(async (tx) => {
+      // Lock the invoice row to prevent concurrent status updates
+      const [invoiceLocked] = await tx
+        .select({
+          id: invoices.id,
+          status: invoices.status,
+          total: invoices.total,
+          subtotal: invoices.subtotal,
+          vatAmount: invoices.vatAmount,
+          vatEnabled: invoices.vatEnabled,
+          invoiceDate: invoices.invoiceDate,
+          documentNumber: invoices.documentNumber,
+          divisionId: invoices.divisionId,
+        })
+        .from(invoices)
+        .where(eq(invoices.id, id))
+        .for('update');
 
-    if (!invoiceLocked) {
-      return { error: 'Invoice not found.' };
-    }
+      if (!invoiceLocked) {
+        return { error: 'Invoice not found.' };
+      }
 
-    if (invoiceLocked.status !== 'draft') {
-      return { error: 'Invoice not found or is no longer a draft.' };
-    }
+      if (invoiceLocked.status !== 'draft') {
+        return { error: 'Invoice not found or is no longer a draft.' };
+      }
 
-    // Atomic status transition within the transaction
-    await tx
-      .update(invoices)
-      .set({ status: 'issued', updatedAt: new Date() })
-      .where(eq(invoices.id, id));
+      // Atomic status transition within the transaction
+      await tx
+        .update(invoices)
+        .set({ status: 'issued', updatedAt: new Date() })
+        .where(eq(invoices.id, id));
 
-    // Auto-post: Dr AR (1100) / Cr Revenue (4010) — within the same transaction
-    // so if the journal entry fails, the status update is rolled back
-    const journalResult = await postInvoiceIssueJournalEntry({
-      invoiceId: id,
-      amount: parseFloat(invoiceLocked.total),
-      date: invoiceLocked.invoiceDate,
-      description: `Invoice ${invoiceLocked.documentNumber}`,
-      divisionId: invoiceLocked.divisionId,
-      tx,
+      // Auto-post: Dr AR (1100) / Cr Revenue (4010) + Cr VAT Output (2150) if enabled
+      // — within the same transaction so if the journal entry fails, the status update is rolled back
+      const journalResult = await postInvoiceIssueJournalEntry({
+        invoiceId: id,
+        amount: parseFloat(invoiceLocked.total),
+        subtotal: parseFloat(invoiceLocked.subtotal),
+        vatAmount: parseFloat(invoiceLocked.vatAmount || '0'),
+        vatEnabled: Boolean(invoiceLocked.vatEnabled),
+        date: invoiceLocked.invoiceDate,
+        description: `Invoice ${invoiceLocked.documentNumber}`,
+        divisionId: invoiceLocked.divisionId,
+        tx,
+      });
+
+      if (journalResult.error) {
+        // Throw to roll back the entire transaction (status stays 'draft')
+        throw new Error(`Journal entry failed: ${journalResult.error}`);
+      }
+
+      return {};
+    })
+    .catch((err) => {
+      // Transaction rolled back — return error without changing status
+      if (err.message?.startsWith('Journal entry failed:')) {
+        return { error: err.message };
+      }
+      return { error: 'Failed to issue invoice. Please try again.' };
     });
-
-    if (journalResult.error) {
-      // Throw to roll back the entire transaction (status stays 'draft')
-      throw new Error(`Journal entry failed: ${journalResult.error}`);
-    }
-
-    return {};
-  }).catch((err) => {
-    // Transaction rolled back — return error without changing status
-    if (err.message?.startsWith('Journal entry failed:')) {
-      return { error: err.message };
-    }
-    return { error: 'Failed to issue invoice. Please try again.' };
-  });
 }
 
 /**
@@ -579,10 +711,7 @@ export async function markInvoicePaid(id: string): Promise<{ error?: string }> {
     const session = await getSessionOrRedirect();
 
     const db = getDb();
-    const [invoice] = await db
-      .select()
-      .from(invoices)
-      .where(eq(invoices.id, id));
+    const [invoice] = await db.select().from(invoices).where(eq(invoices.id, id));
 
     if (!invoice) return { error: 'Invoice not found.' };
     if (invoice.status === 'paid') return { error: 'Invoice is already paid.' };
@@ -612,75 +741,80 @@ export async function markInvoicePaid(id: string): Promise<{ error?: string }> {
     const description = `${invoice.documentNumber} - ${clientLabel}`;
 
     // Post to income ledger and mark invoice paid atomically in a transaction
-    const result = await db.transaction(async (tx) => {
-      // Lock the invoice row to prevent concurrent status updates
-      const [invoiceLocked] = await tx
-        .select()
-        .from(invoices)
-        .where(eq(invoices.id, id))
-        .for('update');
+    const result = await db
+      .transaction(async (tx) => {
+        // Lock the invoice row to prevent concurrent status updates
+        const [invoiceLocked] = await tx
+          .select()
+          .from(invoices)
+          .where(eq(invoices.id, id))
+          .for('update');
 
-      if (!invoiceLocked) throw new InvoiceValidationError('Invoice not found.');
-      if (invoiceLocked.status === 'paid') throw new InvoiceValidationError('Invoice is already paid.');
-      if (invoiceLocked.status === 'void') throw new InvoiceValidationError('Cannot mark a voided invoice as paid.');
-      if (!invoiceLocked.clientId) throw new InvoiceValidationError('A client must be set before marking as paid.');
+        if (!invoiceLocked) throw new InvoiceValidationError('Invoice not found.');
+        if (invoiceLocked.status === 'paid')
+          throw new InvoiceValidationError('Invoice is already paid.');
+        if (invoiceLocked.status === 'void')
+          throw new InvoiceValidationError('Cannot mark a voided invoice as paid.');
+        if (!invoiceLocked.clientId)
+          throw new InvoiceValidationError('A client must be set before marking as paid.');
 
-      const [row] = await tx
-        .insert(income)
-        .values({
-          date: paymentDate,
-          divisionId: invoiceLocked.divisionId!,
-          clientId: invoiceLocked.clientId!,
-          description,
-          amount: invoiceLocked.total!,
-        })
-        .returning({ id: income.id });
+        const [row] = await tx
+          .insert(income)
+          .values({
+            date: paymentDate,
+            divisionId: invoiceLocked.divisionId!,
+            clientId: invoiceLocked.clientId!,
+            description,
+            amount: invoiceLocked.total!,
+          })
+          .returning({ id: income.id });
 
-      if (!row) throw new InvoiceValidationError('Failed to post income record.');
+        if (!row) throw new InvoiceValidationError('Failed to post income record.');
 
-      // Link the income to this invoice via payment_allocations so credit-balance
-      // calculations (sum(income) - sum(payment_allocations)) don't treat this
-      // payment as unallocated/free credit.
-      await tx.insert(paymentAllocations).values({
-        incomeId: row.id,
-        invoiceId: id,
-        amount: invoiceLocked.total!,
-      });
-
-      await tx
-        .update(invoices)
-        .set({
-          status: 'paid',
-          paidAt: new Date(),
+        // Link the income to this invoice via payment_allocations so credit-balance
+        // calculations (sum(income) - sum(payment_allocations)) don't treat this
+        // payment as unallocated/free credit.
+        await tx.insert(paymentAllocations).values({
           incomeId: row.id,
-          updatedAt: new Date(),
-        })
-        .where(eq(invoices.id, id));
+          invoiceId: id,
+          amount: invoiceLocked.total!,
+        });
 
-      // Auto-post: Dr Bank (1010) / Cr AR (1100) + Dr Savings / Cr Bank (PMG share)
-      // — within the same transaction so a journal-posting failure (e.g. closed
-      // period) rolls back the whole payment instead of leaving it unbacked.
-      const journalResult = await postPaymentJournalEntries({
-        incomeId: row.id,
-        amount: parseFloat(invoiceLocked.total),
-        date: paymentDate,
-        description,
-        divisionId: invoiceLocked.divisionId,
-        tx,
+        await tx
+          .update(invoices)
+          .set({
+            status: 'paid',
+            paidAt: new Date(),
+            incomeId: row.id,
+            updatedAt: new Date(),
+          })
+          .where(eq(invoices.id, id));
+
+        // Auto-post: Dr Bank (1010) / Cr AR (1100) + Dr Savings / Cr Bank (PMG share)
+        // — within the same transaction so a journal-posting failure (e.g. closed
+        // period) rolls back the whole payment instead of leaving it unbacked.
+        const journalResult = await postPaymentJournalEntries({
+          incomeId: row.id,
+          amount: parseFloat(invoiceLocked.total),
+          date: paymentDate,
+          description,
+          divisionId: invoiceLocked.divisionId,
+          tx,
+        });
+
+        if (journalResult.error) {
+          throw new Error(`Journal entry failed: ${journalResult.error}`);
+        }
+
+        return { incomeRow: row, invoiceLocked };
+      })
+      .catch((err) => {
+        if (err instanceof InvoiceValidationError) throw err;
+        if (err.message?.startsWith('Journal entry failed:')) {
+          throw new InvoiceValidationError(err.message);
+        }
+        throw err;
       });
-
-      if (journalResult.error) {
-        throw new Error(`Journal entry failed: ${journalResult.error}`);
-      }
-
-      return { incomeRow: row, invoiceLocked };
-    }).catch((err) => {
-      if (err instanceof InvoiceValidationError) throw err;
-      if (err.message?.startsWith('Journal entry failed:')) {
-        throw new InvoiceValidationError(err.message);
-      }
-      throw err;
-    });
 
     if (!result) return { error: 'Failed to post income record.' };
 
@@ -724,42 +858,45 @@ async function voidInvoiceInternal(id: string): Promise<{ error?: string }> {
   const reverseRes = await reverseCreditApplication(id);
   if (reverseRes.error) return { error: reverseRes.error };
 
-  return await db.transaction(async (tx) => {
-    // Lock the invoice row to prevent concurrent status updates
-    const [invoiceLocked] = await tx
-      .select({ id: invoices.id, status: invoices.status })
-      .from(invoices)
-      .where(eq(invoices.id, id))
-      .for('update');
+  return await db
+    .transaction(async (tx) => {
+      // Lock the invoice row to prevent concurrent status updates
+      const [invoiceLocked] = await tx
+        .select({ id: invoices.id, status: invoices.status })
+        .from(invoices)
+        .where(eq(invoices.id, id))
+        .for('update');
 
-    if (!invoiceLocked) return { error: 'Invoice not found.' };
-    if (!VOIDABLE_INVOICE_STATUSES.includes(invoiceLocked.status as any)) {
-      return {
-        error: invoiceLocked.status === 'paid' || invoiceLocked.status === 'void'
-          ? `Invoice is already ${invoiceLocked.status}.`
-          : 'Only draft, issued, or overdue invoices can be voided. Reverse any payments on this invoice first.',
-      };
-    }
+      if (!invoiceLocked) return { error: 'Invoice not found.' };
+      if (!VOIDABLE_INVOICE_STATUSES.includes(invoiceLocked.status as any)) {
+        return {
+          error:
+            invoiceLocked.status === 'paid' || invoiceLocked.status === 'void'
+              ? `Invoice is already ${invoiceLocked.status}.`
+              : 'Only draft, issued, or overdue invoices can be voided. Reverse any payments on this invoice first.',
+        };
+      }
 
-    await tx
-      .update(invoices)
-      .set({ status: 'void', updatedAt: new Date() })
-      .where(eq(invoices.id, id));
+      await tx
+        .update(invoices)
+        .set({ status: 'void', updatedAt: new Date() })
+        .where(eq(invoices.id, id));
 
-    // Void the AR journal entry within the same transaction so a failure
-    // rolls back the status change instead of leaving it unbacked.
-    const journalResult = await voidInvoiceJournalEntries(id, tx);
-    if (journalResult.error) {
-      throw new Error(`Journal void failed: ${journalResult.error}`);
-    }
+      // Void the AR journal entry within the same transaction so a failure
+      // rolls back the status change instead of leaving it unbacked.
+      const journalResult = await voidInvoiceJournalEntries(id, tx);
+      if (journalResult.error) {
+        throw new Error(`Journal void failed: ${journalResult.error}`);
+      }
 
-    return {};
-  }).catch((err) => {
-    if (err.message?.startsWith('Journal void failed:')) {
-      return { error: err.message };
-    }
-    return { error: 'Failed to void invoice. Please try again.' };
-  });
+      return {};
+    })
+    .catch((err) => {
+      if (err.message?.startsWith('Journal void failed:')) {
+        return { error: err.message };
+      }
+      return { error: 'Failed to void invoice. Please try again.' };
+    });
 }
 
 export async function voidInvoice(id: string): Promise<{ error?: string }> {
@@ -782,7 +919,9 @@ export async function voidInvoice(id: string): Promise<{ error?: string }> {
 
 // ── bulkIssueInvoices ─────────────────────────────────────────────────────────
 
-export async function bulkIssueInvoices(ids: string[]): Promise<{ error?: string; successCount?: number; failedIds?: string[] }> {
+export async function bulkIssueInvoices(
+  ids: string[],
+): Promise<{ error?: string; successCount?: number; failedIds?: string[] }> {
   try {
     await getSessionOrRedirect();
 
@@ -794,12 +933,9 @@ export async function bulkIssueInvoices(ids: string[]): Promise<{ error?: string
     const eligible = await db
       .select({ id: invoices.id })
       .from(invoices)
-      .where(and(
-        inArray(invoices.id, ids),
-        eq(invoices.status, 'draft')
-      ));
+      .where(and(inArray(invoices.id, ids), eq(invoices.status, 'draft')));
 
-    const eligibleIds = eligible.map(inv => inv.id);
+    const eligibleIds = eligible.map((inv) => inv.id);
     if (eligibleIds.length === 0) {
       return { error: 'No draft invoices selected.' };
     }
@@ -832,7 +968,9 @@ export async function bulkIssueInvoices(ids: string[]): Promise<{ error?: string
 
 // ── bulkVoidInvoices ──────────────────────────────────────────────────────────
 
-export async function bulkVoidInvoices(ids: string[]): Promise<{ error?: string; successCount?: number; failedIds?: string[] }> {
+export async function bulkVoidInvoices(
+  ids: string[],
+): Promise<{ error?: string; successCount?: number; failedIds?: string[] }> {
   try {
     await getSessionOrRedirect();
 
@@ -844,12 +982,11 @@ export async function bulkVoidInvoices(ids: string[]): Promise<{ error?: string;
     const eligible = await db
       .select({ id: invoices.id })
       .from(invoices)
-      .where(and(
-        inArray(invoices.id, ids),
-        inArray(invoices.status, [...VOIDABLE_INVOICE_STATUSES])
-      ));
+      .where(
+        and(inArray(invoices.id, ids), inArray(invoices.status, [...VOIDABLE_INVOICE_STATUSES])),
+      );
 
-    const eligibleIds = eligible.map(inv => inv.id);
+    const eligibleIds = eligible.map((inv) => inv.id);
     if (eligibleIds.length === 0) {
       return { error: 'No voidable invoices selected.' };
     }
@@ -900,11 +1037,17 @@ export async function writeOffInvoice(id: string, reason: string): Promise<{ err
         .select({ sum: sql<string>`coalesce(sum(${paymentAllocations.amount}), 0)` })
         .from(paymentAllocations)
         .where(eq(paymentAllocations.invoiceId, id));
-      
+
       const totalAllocated = parseFloat(sumAgg?.sum ?? '0');
 
       const [invoice] = await tx
-        .select({ id: invoices.id, status: invoices.status, total: invoices.total, documentNumber: invoices.documentNumber, divisionId: invoices.divisionId })
+        .select({
+          id: invoices.id,
+          status: invoices.status,
+          total: invoices.total,
+          documentNumber: invoices.documentNumber,
+          divisionId: invoices.divisionId,
+        })
         .from(invoices)
         .where(eq(invoices.id, id));
 
@@ -922,10 +1065,10 @@ export async function writeOffInvoice(id: string, reason: string): Promise<{ err
 
       const updateResult = await tx
         .update(invoices)
-        .set({ 
-          status: 'written_off', 
+        .set({
+          status: 'written_off',
           writeOffAmount: String(outstanding),
-          updatedAt: new Date() 
+          updatedAt: new Date(),
         })
         .where(and(eq(invoices.id, id), eq(invoices.status, invoice.status)))
         .returning({ id: invoices.id });
@@ -962,23 +1105,25 @@ export async function writeOffInvoice(id: string, reason: string): Promise<{ err
   }
 }
 
-export async function fetchInvoicesByMonth(year: number, month: number, divisionId?: string, status?: string) {
+export async function fetchInvoicesByMonth(
+  year: number,
+  month: number,
+  divisionId?: string,
+  status?: string,
+) {
   const { getAllInvoices } = await import('@pmg/db');
-  
+
   const result = await getAllInvoices(
     { month: `${year}-${month.toString().padStart(2, '0')}`, divisionId, status },
-    { page: 1, pageSize: 1000 }
+    { page: 1, pageSize: 1000 },
   );
-  
+
   return result;
 }
 
 export async function fetchInvoicesByYear(year: number, divisionId?: string, status?: string) {
   const { getAllInvoices } = await import('@pmg/db');
-  return getAllInvoices(
-    { year, divisionId, status },
-    { page: 1, pageSize: 5000 }
-  );
+  return getAllInvoices({ year, divisionId, status }, { page: 1, pageSize: 5000 });
 }
 
 // ── restoreWriteOffInvoice ──────────────────────────────────────────────────

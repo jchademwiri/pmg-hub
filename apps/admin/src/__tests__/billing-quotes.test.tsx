@@ -26,12 +26,17 @@ const dbMock = {
 vi.mock('@pmg/db', () => ({
   getDb: () => dbMock,
   quotations: { id: 'quotations_id', status: 'status', quoteDate: 'quoteDate' },
-  billingLineItems: { id: 'billing_line_items_id', documentType: 'documentType', documentId: 'documentId' },
+  billingLineItems: {
+    id: 'billing_line_items_id',
+    documentType: 'documentType',
+    documentId: 'documentId',
+  },
   eq: vi.fn(),
   and: vi.fn(),
   getAllQuotations: vi.fn(),
   getNextDocumentNumber: vi.fn().mockResolvedValue('Q-2026-0001'),
   getQuotationMonthlySummaries: vi.fn().mockResolvedValue([]),
+  getOrganisationSettings: vi.fn().mockResolvedValue({ vatNumber: '4123456789' }),
   addDays: (dateStr: string, days: number) => {
     const d = new Date(dateStr);
     d.setDate(d.getDate() + days);
@@ -39,7 +44,12 @@ vi.mock('@pmg/db', () => ({
   },
 }));
 
-import { getAllQuotations, getNextDocumentNumber, getQuotationMonthlySummaries } from '@pmg/db';
+import {
+  getAllQuotations,
+  getNextDocumentNumber,
+  getQuotationMonthlySummaries,
+  getOrganisationSettings,
+} from '@pmg/db';
 
 vi.mock('@/lib/auth', () => ({
   getSessionOrRedirect: vi.fn().mockResolvedValue({ user: { id: 'user-1' } }),
@@ -97,7 +107,12 @@ vi.mock('@/app/(admin)/billing/quotes/quotes-client', () => ({
 }));
 
 // ─── Import Code Under Test ──────────────────────────────────────────────────
-import { createQuotation, updateQuotation, updateQuotationStatus, deleteQuotation } from '@/app/actions/billing-quotes';
+import {
+  createQuotation,
+  updateQuotation,
+  updateQuotationStatus,
+  deleteQuotation,
+} from '@/app/actions/billing-quotes';
 import QuotesPage from '@/app/(admin)/billing/quotes/page';
 
 describe('Billing Quotations Module', () => {
@@ -106,6 +121,7 @@ describe('Billing Quotations Module', () => {
     vi.mocked(getSessionOrRedirect).mockResolvedValue({ user: { id: 'user-1' } } as any);
     vi.mocked(getNextDocumentNumber).mockResolvedValue('Q-2026-0001');
     vi.mocked(getQuotationMonthlySummaries).mockResolvedValue([]);
+    vi.mocked(getOrganisationSettings).mockResolvedValue({ vatNumber: '4123456789' } as any);
     mockIsPeriodClosed.mockResolvedValue(false);
     vi.mocked(getMinAllowedDate).mockResolvedValue(new Date('2026-01-01') as any);
     vi.mocked(getMinDateErrorMessage).mockReturnValue('Period is closed.');
@@ -135,7 +151,13 @@ describe('Billing Quotations Module', () => {
         clientId: 'c3b07384-d113-4956-a5db-8f3e58b8d4e7',
         quoteDate: '2026-05-01',
         lineItems: [
-          { itemId: 'e3b07384-d113-4956-a5db-8f3e58b8d4e8', description: 'Item 1', quantity: 2, unitPrice: 250, vatRate: 0 },
+          {
+            itemId: 'e3b07384-d113-4956-a5db-8f3e58b8d4e8',
+            description: 'Item 1',
+            quantity: 2,
+            unitPrice: 250,
+            vatRate: 0,
+          },
         ],
         vatEnabled: true,
       });
@@ -154,7 +176,13 @@ describe('Billing Quotations Module', () => {
         clientId: 'c3b07384-d113-4956-a5db-8f3e58b8d4e7',
         quoteDate: '2099-12-31', // future
         lineItems: [
-          { itemId: 'e3b07384-d113-4956-a5db-8f3e58b8d4e8', description: 'Item 1', quantity: 2, unitPrice: 250, vatRate: 0 },
+          {
+            itemId: 'e3b07384-d113-4956-a5db-8f3e58b8d4e8',
+            description: 'Item 1',
+            quantity: 2,
+            unitPrice: 250,
+            vatRate: 0,
+          },
         ],
         vatEnabled: true,
       });
@@ -167,7 +195,13 @@ describe('Billing Quotations Module', () => {
         clientId: 'c3b07384-d113-4956-a5db-8f3e58b8d4e7',
         quoteDate: '2026-01-01',
         lineItems: [
-          { itemId: 'e3b07384-d113-4956-a5db-8f3e58b8d4e8', description: 'Item 1', quantity: 2, unitPrice: 250, vatRate: 0 },
+          {
+            itemId: 'e3b07384-d113-4956-a5db-8f3e58b8d4e8',
+            description: 'Item 1',
+            quantity: 2,
+            unitPrice: 250,
+            vatRate: 0,
+          },
         ],
         vatEnabled: true,
       });
@@ -188,7 +222,15 @@ describe('Billing Quotations Module', () => {
         divisionId: 'd3b07384-d113-4956-a5db-8f3e58b8d4e6',
         clientId: 'c3b07384-d113-4956-a5db-8f3e58b8d4e7',
         quoteDate: '2026-05-01',
-        lineItems: [{ itemId: 'e3b07384-d113-4956-a5db-8f3e58b8d4e8', description: 'Item 1', quantity: 2, unitPrice: 250, vatRate: 0 }],
+        lineItems: [
+          {
+            itemId: 'e3b07384-d113-4956-a5db-8f3e58b8d4e8',
+            description: 'Item 1',
+            quantity: 2,
+            unitPrice: 250,
+            vatRate: 0,
+          },
+        ],
         vatEnabled: false,
       });
       expect(resBlocked.error).toBe('This quotation can no longer be edited.');
@@ -204,7 +246,15 @@ describe('Billing Quotations Module', () => {
         divisionId: 'd3b07384-d113-4956-a5db-8f3e58b8d4e6',
         clientId: 'c3b07384-d113-4956-a5db-8f3e58b8d4e7',
         quoteDate: '2026-05-01',
-        lineItems: [{ itemId: 'e3b07384-d113-4956-a5db-8f3e58b8d4e8', description: 'Item 1', quantity: 2, unitPrice: 250, vatRate: 0 }],
+        lineItems: [
+          {
+            itemId: 'e3b07384-d113-4956-a5db-8f3e58b8d4e8',
+            description: 'Item 1',
+            quantity: 2,
+            unitPrice: 250,
+            vatRate: 0,
+          },
+        ],
         vatEnabled: false,
       });
       expect(resSuccess).toEqual({});
@@ -232,15 +282,17 @@ describe('Billing Quotations Module', () => {
         divisionId: 'd3b07384-d113-4956-a5db-8f3e58b8d4e6',
         clientId: 'c3b07384-d113-4956-a5db-8f3e58b8d4e7',
         quoteDate: '2026-05-01',
-        lineItems: [{
-          itemId: 'e3b07384-d113-4956-a5db-8f3e58b8d4e8',
-          description: 'Item 1',
-          quantity: 2,
-          unitPrice: 250,
-          vatRate: 0,
-          discountType: 'percent',
-          discountValue: 10,
-        }],
+        lineItems: [
+          {
+            itemId: 'e3b07384-d113-4956-a5db-8f3e58b8d4e8',
+            description: 'Item 1',
+            quantity: 2,
+            unitPrice: 250,
+            vatRate: 0,
+            discountType: 'percent',
+            discountValue: 10,
+          },
+        ],
         vatEnabled: false,
       });
 
@@ -323,9 +375,9 @@ describe('Billing Quotations Module', () => {
             expect(subtotal).toBeGreaterThanOrEqual(0);
             expect(discountAmount).toBeLessThanOrEqual(subtotal);
             expect(total).toBeCloseTo(vatBase + vatAmount, 2);
-          }
+          },
         ),
-        { numRuns: 100 }
+        { numRuns: 100 },
       );
     });
   });
@@ -333,9 +385,7 @@ describe('Billing Quotations Module', () => {
   describe('Pages and Client Components', () => {
     it('QuotesPage - renders list of quotes successfully', async () => {
       vi.mocked(getAllQuotations).mockResolvedValue({
-        data: [
-          { id: 'q-1', documentNumber: 'Q-2026-0001', total: '1500.00', status: 'draft' },
-        ],
+        data: [{ id: 'q-1', documentNumber: 'Q-2026-0001', total: '1500.00', status: 'draft' }],
         total: 1,
         sum: 1500,
       } as any);
@@ -343,7 +393,9 @@ describe('Billing Quotations Module', () => {
       // status (or divisionId) must be set for the page to take the filtered
       // list branch (<QuotesClient>) — with neither set it renders the
       // unfiltered month-grouped view instead.
-      const page = await QuotesPage({ searchParams: Promise.resolve({ page: '1', status: 'draft' }) });
+      const page = await QuotesPage({
+        searchParams: Promise.resolve({ page: '1', status: 'draft' }),
+      });
       render(page as React.ReactElement);
 
       expect(screen.getByTestId('quotes-client')).toBeInTheDocument();

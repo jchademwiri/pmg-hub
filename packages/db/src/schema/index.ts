@@ -19,3 +19,4 @@ export * from './compliance';
 export * from './assets';
 export * from './savings';
 export * from './luno';
+export * from './recurring';

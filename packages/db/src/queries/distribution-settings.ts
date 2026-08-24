@@ -1,16 +1,17 @@
-import { db } from "../client";
-import { distributionSettings } from "../schema/distribution-settings";
-import { eq, and, desc, sql } from "drizzle-orm";
+import { db } from '../client';
+import { distributionSettings } from '../schema/distribution-settings';
+import { eq, and, desc, sql } from 'drizzle-orm';
 
 /**
  * Rate keys that are managed in the distribution_settings table.
  * Mirrors ACCOUNT_KEYS from accounts.ts but used for DB queries.
  */
-export const RATE_KEYS = ["pmg_share"] as const;
+export const RATE_KEYS = ['pmg_share'] as const;
 export type RateKey = (typeof RATE_KEYS)[number];
 
 export type ActiveRates = {
   pmg_share: number;
+  distribution_basis?: 'net_profit' | 'gross_revenue';
 };
 
 /**
@@ -18,9 +19,7 @@ export type ActiveRates = {
  * Uses the most recent rate whose effectiveFrom <= date and (effectiveTo is null or >= date).
  * Falls back to hardcoded defaults if no DB rows exist.
  */
-export async function getActiveRates(
-  asOfDate: Date = new Date()
-): Promise<ActiveRates> {
+export async function getActiveRates(asOfDate: Date = new Date()): Promise<ActiveRates> {
   const dateStr = asOfDate.toISOString().slice(0, 10); // YYYY-MM-DD
 
   // Single query: fetch the most recent active rate for each key as of the given date
@@ -28,38 +27,46 @@ export async function getActiveRates(
   try {
     rows = await db
       .select({
-      rateKey: distributionSettings.rateKey,
-      rateValue: distributionSettings.rateValue,
-      effectiveFrom: distributionSettings.effectiveFrom,
-      effectiveTo: distributionSettings.effectiveTo,
-    })
-    .from(distributionSettings)
-    .where(
-      and(
-        eq(distributionSettings.isActive, true),
-        sql`${distributionSettings.effectiveFrom} <= ${dateStr}::date`,
+        rateKey: distributionSettings.rateKey,
+        rateValue: distributionSettings.rateValue,
+        distributionBasis: distributionSettings.distributionBasis,
+        effectiveFrom: distributionSettings.effectiveFrom,
+        effectiveTo: distributionSettings.effectiveTo,
+      })
+      .from(distributionSettings)
+      .where(
+        and(
+          eq(distributionSettings.isActive, true),
+          sql`${distributionSettings.effectiveFrom} <= ${dateStr}::date`,
+        ),
       )
-    )
-    .orderBy(desc(distributionSettings.effectiveFrom));
+      .orderBy(desc(distributionSettings.effectiveFrom));
   } catch (e) {
     // Table may not exist yet (e.g. before migration runs on Vercel) — fall back to defaults
     console.warn('[distribution-settings] Falling back to default rates:', e);
     return {
       pmg_share: getDefaultRate('pmg_share'),
+      distribution_basis: 'net_profit',
     };
   }
 
   // Group by rateKey and take the most recent (first after ORDER BY desc)
   const rateMap = new Map<string, number>();
+  let activeBasis: 'net_profit' | 'gross_revenue' = 'net_profit';
+
   for (const row of rows) {
     if (rateMap.has(row.rateKey)) continue; // already have the most recent
     // Skip if effectiveTo has passed
     if (row.effectiveTo && row.effectiveTo.toISOString().slice(0, 10) < dateStr) continue;
     rateMap.set(row.rateKey, parseFloat(row.rateValue));
+    if (row.distributionBasis === 'gross_revenue' || row.distributionBasis === 'net_profit') {
+      activeBasis = row.distributionBasis;
+    }
   }
 
   const rates: ActiveRates = {
-    pmg_share: rateMap.get("pmg_share") ?? getDefaultRate("pmg_share"),
+    pmg_share: rateMap.get('pmg_share') ?? getDefaultRate('pmg_share'),
+    distribution_basis: activeBasis,
   };
 
   return rates;
@@ -71,7 +78,7 @@ export async function getActiveRates(
  */
 export async function getActiveRateForKey(
   rateKey: RateKey,
-  asOfDate: Date = new Date()
+  asOfDate: Date = new Date(),
 ): Promise<number> {
   const rates = await getActiveRates(asOfDate);
   return rates[rateKey];
@@ -120,7 +127,12 @@ export async function getCurrentRates(): Promise<
 
   // Take the most recent rate for each key (first row per key after ORDER BY desc)
   const seen = new Set<string>();
-  const results: { rateKey: string; rateValue: number; effectiveFrom: string; description: string | null }[] = [];
+  const results: {
+    rateKey: string;
+    rateValue: number;
+    effectiveFrom: string;
+    description: string | null;
+  }[] = [];
 
   for (const row of rows) {
     if (seen.has(row.rateKey)) continue;
@@ -128,9 +140,10 @@ export async function getCurrentRates(): Promise<
     results.push({
       rateKey: row.rateKey,
       rateValue: parseFloat(row.rateValue),
-      effectiveFrom: row.effectiveFrom instanceof Date
-        ? row.effectiveFrom.toISOString().slice(0, 10)
-        : String(row.effectiveFrom),
+      effectiveFrom:
+        row.effectiveFrom instanceof Date
+          ? row.effectiveFrom.toISOString().slice(0, 10)
+          : String(row.effectiveFrom),
       description: row.description,
     });
   }

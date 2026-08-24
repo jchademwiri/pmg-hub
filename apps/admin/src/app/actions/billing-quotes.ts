@@ -14,7 +14,8 @@ let hasQuotationReferenceColumnPromise: Promise<boolean> | null = null;
 async function hasQuotationReferenceColumn() {
   if (!hasQuotationReferenceColumnPromise) {
     hasQuotationReferenceColumnPromise = getDb()
-      .execute(`
+      .execute(
+        `
         SELECT EXISTS (
           SELECT 1
           FROM information_schema.columns
@@ -22,7 +23,8 @@ async function hasQuotationReferenceColumn() {
             AND table_name = 'quotations'
             AND column_name = 'reference'
         ) AS "exists"
-      `)
+      `,
+      )
       .then((res) => {
         const rows = (res as { rows?: Array<{ exists?: boolean }> }).rows;
         const exists = Boolean(rows?.[0]?.exists);
@@ -40,7 +42,12 @@ async function hasQuotationReferenceColumn() {
 // ── Shared discount + totals helper ──────────────────────────────────────────
 
 function calcDocumentTotals(
-  lineItems: { quantity: number; unitPrice: number; discountType?: 'percent' | 'amount' | null; discountValue?: number | null }[],
+  lineItems: {
+    quantity: number;
+    unitPrice: number;
+    discountType?: 'percent' | 'amount' | null;
+    discountValue?: number | null;
+  }[],
   vatEnabled: boolean,
   discountType: 'percent' | 'amount' | null | undefined,
   discountValue: number | null | undefined,
@@ -49,11 +56,12 @@ function calcDocumentTotals(
   for (const item of lineItems) {
     const rawTotal = item.quantity * item.unitPrice;
     const itemDiscountVal = item.discountValue ?? 0;
-    const itemDiscountAmount = item.discountType === 'percent'
-      ? rawTotal * (itemDiscountVal / 100)
-      : item.discountType === 'amount'
-      ? Math.min(itemDiscountVal, rawTotal)
-      : 0;
+    const itemDiscountAmount =
+      item.discountType === 'percent'
+        ? rawTotal * (itemDiscountVal / 100)
+        : item.discountType === 'amount'
+          ? Math.min(itemDiscountVal, rawTotal)
+          : 0;
     // Round each line the same way buildQuoteLineItemRows rounds its stored
     // `lineTotal`, so the header subtotal always foots exactly to the sum of
     // the displayed line totals.
@@ -88,16 +96,25 @@ function calcDocumentTotals(
 
 function buildQuoteLineItemRows(
   documentId: string,
-  lineItems: { itemId?: string | null; description: string; quantity: number; unitPrice: number; vatRate: number; discountType?: 'percent' | 'amount' | null; discountValue?: number | null }[],
+  lineItems: {
+    itemId?: string | null;
+    description: string;
+    quantity: number;
+    unitPrice: number;
+    vatRate: number;
+    discountType?: 'percent' | 'amount' | null;
+    discountValue?: number | null;
+  }[],
 ) {
   return lineItems.map((item, i) => {
     const rawTotal = item.quantity * item.unitPrice;
     const itemDiscountVal = item.discountValue ?? 0;
-    const itemDiscountAmount = item.discountType === 'percent'
-      ? rawTotal * (itemDiscountVal / 100)
-      : item.discountType === 'amount'
-      ? Math.min(itemDiscountVal, rawTotal)
-      : 0;
+    const itemDiscountAmount =
+      item.discountType === 'percent'
+        ? rawTotal * (itemDiscountVal / 100)
+        : item.discountType === 'amount'
+          ? Math.min(itemDiscountVal, rawTotal)
+          : 0;
 
     return {
       documentType: 'quote' as const,
@@ -150,6 +167,23 @@ export async function createQuotation(
     if (await isPeriodClosed(quoteDate)) {
       const minDate = await getMinAllowedDate();
       return { error: getMinDateErrorMessage(minDate) };
+    }
+
+    if (vatEnabled) {
+      try {
+        const { getOrganisationSettings } = await import('@pmg/db');
+        if (typeof getOrganisationSettings === 'function') {
+          const orgSettings = await getOrganisationSettings();
+          if (orgSettings && !orgSettings.vatNumber?.trim()) {
+            return {
+              error:
+                'VAT cannot be enabled: No registered VAT number is configured in Organisation Settings.',
+            };
+          }
+        }
+      } catch {
+        // Table or settings not initialized
+      }
     }
 
     const { subtotal, discountAmount, vatAmount, total } = calcDocumentTotals(
@@ -254,6 +288,23 @@ export async function updateQuotation(
       return { error: 'This quotation can no longer be edited.' };
     }
 
+    if (vatEnabled) {
+      try {
+        const { getOrganisationSettings } = await import('@pmg/db');
+        if (typeof getOrganisationSettings === 'function') {
+          const orgSettings = await getOrganisationSettings();
+          if (orgSettings && !orgSettings.vatNumber?.trim()) {
+            return {
+              error:
+                'VAT cannot be enabled: No registered VAT number is configured in Organisation Settings.',
+            };
+          }
+        }
+      } catch {
+        // Table or settings not initialized
+      }
+    }
+
     const { subtotal, discountAmount, vatAmount, total } = calcDocumentTotals(
       lineItems,
       vatEnabled,
@@ -264,12 +315,7 @@ export async function updateQuotation(
     // Delete existing line items and reinsert
     await db
       .delete(billingLineItems)
-      .where(
-        and(
-          eq(billingLineItems.documentType, 'quote'),
-          eq(billingLineItems.documentId, id),
-        ),
-      );
+      .where(and(eq(billingLineItems.documentType, 'quote'), eq(billingLineItems.documentId, id)));
 
     await db
       .update(quotations)
@@ -329,10 +375,7 @@ export async function updateQuotationStatus(
       return { error: 'Invalid status transition.' };
     }
 
-    await db
-      .update(quotations)
-      .set({ status, updatedAt: new Date() })
-      .where(eq(quotations.id, id));
+    await db.update(quotations).set({ status, updatedAt: new Date() }).where(eq(quotations.id, id));
 
     revalidatePath('/billing/quotes');
     revalidatePath(`/billing/quotes/${id}`);
@@ -363,12 +406,7 @@ export async function deleteQuotation(id: string): Promise<{ error?: string }> {
     // Delete line items first (no FK cascade - polymorphic)
     await db
       .delete(billingLineItems)
-      .where(
-        and(
-          eq(billingLineItems.documentType, 'quote'),
-          eq(billingLineItems.documentId, id),
-        ),
-      );
+      .where(and(eq(billingLineItems.documentType, 'quote'), eq(billingLineItems.documentId, id)));
 
     await db.delete(quotations).where(eq(quotations.id, id));
 
@@ -465,20 +503,22 @@ export async function duplicateQuotation(id: string): Promise<{ error?: string; 
   }
 }
 
-export async function fetchQuotesByMonth(year: number, month: number, divisionId?: string, status?: string) {
+export async function fetchQuotesByMonth(
+  year: number,
+  month: number,
+  divisionId?: string,
+  status?: string,
+) {
   const { getAllQuotations } = await import('@pmg/db');
   return getAllQuotations(
     { month: `${year}-${month.toString().padStart(2, '0')}`, divisionId, status },
-    { page: 1, pageSize: 1000 }
+    { page: 1, pageSize: 1000 },
   );
 }
 
 export async function fetchQuotesByYear(year: number, divisionId?: string, status?: string) {
   const { getAllQuotations } = await import('@pmg/db');
-  return getAllQuotations(
-    { year, divisionId, status },
-    { page: 1, pageSize: 5000 }
-  );
+  return getAllQuotations({ year, divisionId, status }, { page: 1, pageSize: 5000 });
 }
 
 /**
@@ -486,7 +526,9 @@ export async function fetchQuotesByYear(year: number, divisionId?: string, statu
  * Converts an accepted or sent quote into a formal invoice (INV-XXXX).
  * Copies all header details & line items and marks quote as 'converted'.
  */
-export async function convertQuotationToInvoice(id: string): Promise<{ error?: string; id?: string }> {
+export async function convertQuotationToInvoice(
+  id: string,
+): Promise<{ error?: string; id?: string }> {
   try {
     const session = await getSessionOrRedirect();
     const db = getDb();
@@ -507,7 +549,6 @@ export async function convertQuotationToInvoice(id: string): Promise<{ error?: s
     const documentNumber = await getNextDocumentNumber(source.divisionId, 'invoice', year);
 
     const newInvoiceId = await db.transaction(async (tx) => {
-
       const [inv] = await tx
         .insert(invoices)
         .values({
@@ -516,7 +557,9 @@ export async function convertQuotationToInvoice(id: string): Promise<{ error?: s
           clientId: source.clientId,
           invoiceDate: todayStr,
           dueDate,
-          reference: source.reference ? `Quote ${source.documentNumber}: ${source.reference}` : `From Quote ${source.documentNumber}`,
+          reference: source.reference
+            ? `Quote ${source.documentNumber}: ${source.reference}`
+            : `From Quote ${source.documentNumber}`,
           subtotal: source.subtotal,
           discountType: source.discountType,
           discountValue: source.discountValue,
