@@ -133,6 +133,7 @@ export const GROUPS: NavGroup[] = [
       { title: 'Overview', url: '/finance', icon: LayoutGrid },
       { title: 'Income', url: '/finance/income', icon: ArrowDownLeft },
       { title: 'Expenses', url: '/finance/expenses', icon: TrendingDown },
+      { title: 'Recurring', url: '/finance/recurring', icon: CalendarClock },
       { title: 'Finance Categories', url: '/finance/categories', icon: Tags },
       { title: 'Assets Register', url: '/assets', icon: Landmark },
       { title: 'Savings Goals', url: '/savings', icon: PiggyBank },

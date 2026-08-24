@@ -6,7 +6,7 @@ import { SidebarProvider } from '../../components/ui/sidebar';
 
 Object.defineProperty(window, 'matchMedia', {
   writable: true,
-  value: vi.fn().mockImplementation(query => ({
+  value: vi.fn().mockImplementation((query) => ({
     matches: false,
     media: query,
     onchange: null,
@@ -23,7 +23,7 @@ vi.mock('next/navigation', () => ({
 }));
 
 vi.mock('next/link', () => ({
-  default: ({ children, href }: any) => <a href={href}>{children}</a>,
+  default: ({ children, href }: { children: React.ReactNode; href: string }) => <a href={href}>{children}</a>,
 }));
 
 vi.mock('@/components/layout/sign-out-button', () => ({
@@ -43,12 +43,15 @@ describe('AppSidebar Logo', () => {
         <SidebarProvider>
           <AppSidebar user={mockUser} />
         </SidebarProvider>
-      </TooltipProvider>
+      </TooltipProvider>,
     );
 
     // Initial test checks for current text-based logo
     // Once implemented, this will be updated to check for the Image component
     const logoLabel = screen.queryByText(/Control Center/i);
     expect(logoLabel).toBeInTheDocument();
+
+    const versionLabel = screen.queryByText(/v1\.36\.0/i);
+    expect(versionLabel).toBeInTheDocument();
   });
 });

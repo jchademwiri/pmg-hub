@@ -2,9 +2,14 @@ import type { Metadata } from 'next';
 import Link from 'next/link';
 import { ChevronLeft } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Separator } from '@/components/ui/separator';
-import { getAllDivisions, getAllClients, getActiveItems, getAllDivisionBillingSettings } from '@pmg/db';
+import {
+  getAllDivisions,
+  getActiveClients,
+  getActiveItems,
+  getAllDivisionBillingSettings,
+  getOrganisationSettings,
+} from '@pmg/db';
 import { getMinAllowedDate } from '@/lib/date-rules';
 import { InvoiceFormClient } from './invoice-form-client';
 import { SetPageLabel } from '@/components/navigation/page-header-context';
@@ -12,13 +17,15 @@ import { SetPageLabel } from '@/components/navigation/page-header-context';
 export const metadata: Metadata = { title: 'New Invoice' };
 
 export default async function NewInvoicePage() {
-  const [divisions, clients, activeItems, minDate, billingSettings] = await Promise.all([
-    getAllDivisions(),
-    getAllClients(),
-    getActiveItems(),
-    getMinAllowedDate(),
-    getAllDivisionBillingSettings(),
-  ]);
+  const [divisions, clients, activeItems, minDate, billingSettings, orgSettings] =
+    await Promise.all([
+      getAllDivisions(),
+      getActiveClients(),
+      getActiveItems(),
+      getMinAllowedDate(),
+      getAllDivisionBillingSettings(),
+      getOrganisationSettings(),
+    ]);
 
   return (
     <div className="flex flex-col gap-6">
@@ -44,6 +51,7 @@ export default async function NewInvoicePage() {
         activeItems={activeItems}
         minDate={minDate}
         billingSettings={billingSettings}
+        orgVatNumber={orgSettings?.vatNumber ?? null}
       />
     </div>
   );

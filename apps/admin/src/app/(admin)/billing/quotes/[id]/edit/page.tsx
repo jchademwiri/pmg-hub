@@ -3,9 +3,15 @@ import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import { ChevronLeft, FileX } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Separator } from '@/components/ui/separator';
-import { getAllDivisions, getAllClients, getActiveItems, getQuotationById, getAllDivisionBillingSettings } from '@pmg/db';
+import {
+  getAllDivisions,
+  getAllClients,
+  getActiveItems,
+  getQuotationById,
+  getAllDivisionBillingSettings,
+  getOrganisationSettings,
+} from '@pmg/db';
 import { QuoteFormClient } from '../../new/quote-form-client';
 import { SetPageLabel } from '@/components/navigation/page-header-context';
 
@@ -19,12 +25,13 @@ interface Props {
 export default async function EditQuotePage({ params }: Props) {
   const { id } = await params;
 
-  const [quote, divisions, clients, activeItems, billingSettings] = await Promise.all([
+  const [quote, divisions, clients, activeItems, billingSettings, orgSettings] = await Promise.all([
     getQuotationById(id),
     getAllDivisions(),
     getAllClients(),
     getActiveItems(),
     getAllDivisionBillingSettings(),
+    getOrganisationSettings(),
   ]);
 
   if (!quote) notFound();
@@ -38,7 +45,9 @@ export default async function EditQuotePage({ params }: Props) {
         </div>
         <h2 className="text-2xl font-semibold tracking-tight">Cannot Edit Quotation</h2>
         <p className="text-muted-foreground text-sm">
-          This quotation is marked as <strong className="capitalize">{quote.status.replace('_', ' ')}</strong>. Documents in this state are locked and can no longer be modified.
+          This quotation is marked as{' '}
+          <strong className="capitalize">{quote.status.replace('_', ' ')}</strong>. Documents in
+          this state are locked and can no longer be modified.
         </p>
         <Button asChild className="mt-4" variant="outline">
           <Link href={`/billing/quotes/${id}`}>
@@ -75,6 +84,7 @@ export default async function EditQuotePage({ params }: Props) {
         initialData={quote}
         editId={id}
         billingSettings={billingSettings}
+        orgVatNumber={orgSettings?.vatNumber ?? null}
       />
     </div>
   );

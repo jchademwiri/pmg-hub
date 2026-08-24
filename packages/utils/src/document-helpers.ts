@@ -47,8 +47,20 @@ export function generateReceiptNumber(paymentId: string, divisionName: string): 
  * Generates a division-prefixed credit note number.
  * Examples: TES-CN-2026-0001 · PMG-CN-2026-0042
  */
-export function generateCreditNoteNumber(divisionName: string, year: number, sequence: number): string {
+export function generateCreditNoteNumber(
+  divisionName: string,
+  year: number,
+  sequence: number,
+): string {
   const prefix = deriveDivisionPrefix(divisionName);
   const seq = String(sequence).padStart(4, '0');
   return `${prefix}-CN-${year}-${seq}`;
 }
+
+/**
+ * Canonical Application Version for PMG Hub.
+ * Updated automatically during production release pipeline (/release, /tag).
+ */
+export const APP_VERSION = 'v1.36.0';
+export const APP_RELEASE_NAME = 'Release v1.36.0';
+export const CURRENT_APP_VERSION = process.env.NEXT_PUBLIC_APP_VERSION || APP_VERSION;

@@ -2,9 +2,17 @@
   "name": "@pmg/utils",
   "version": "0.0.1",
   "private": true,
+  "main": "./src/document-helpers.ts",
+  "types": "./src/document-helpers.ts",
   "exports": {
-    ".": "./src/document-helpers.ts",
-    "./bot-protection": "./src/bot-protection.ts"
+    ".": {
+      "types": "./src/document-helpers.ts",
+      "default": "./src/document-helpers.ts"
+    },
+    "./bot-protection": {
+      "types": "./src/bot-protection.ts",
+      "default": "./src/bot-protection.ts"
+    }
   },
   "devDependencies": {
     "@pmg/typescript-config": "workspace:*",

@@ -133,6 +133,7 @@
         "@pmg/db": "*",
         "@pmg/emails": "*",
         "@pmg/tailwind-config": "workspace:*",
+        "@pmg/utils": "workspace:*",
         "@radix-ui/react-select": "^2.2.6",
         "@upstash/ratelimit": "^2.0.8",
         "@upstash/redis": "^1.38.0",
