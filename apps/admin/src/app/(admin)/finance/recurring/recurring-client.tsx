@@ -31,15 +31,25 @@ import {
   PauseCircle,
   RefreshCw,
   Layers,
+  Pencil,
+  Trash2,
 } from 'lucide-react';
 import { formatZAR, fmtDateLong } from '@/lib/format';
 import {
   createRecurringInvoice,
+  updateRecurringInvoice,
+  deleteRecurringInvoice,
+  getRecurringInvoiceDetail,
   setRecurringInvoiceStatus,
   triggerRecurringBillingRun,
   createRecurringExpense,
   markRecurringExpenseAsPaid,
 } from '@/app/actions/recurring-actions';
+import {
+  BillingLineItemsForm,
+  type LineItemFormRow,
+  type ActiveItem,
+} from '@/components/billing/billing-line-items-form';
 import type { RecurringInvoiceRow, RecurringExpenseRow } from '@pmg/db';
 
 interface RecurringClientProps {
@@ -47,8 +57,27 @@ interface RecurringClientProps {
   recurringExpenses: RecurringExpenseRow[];
   clients: { id: string; name: string; businessName: string | null }[];
   divisions: { id: string; name: string }[];
-  billingItems?: { id: string; name: string; unitPrice: string }[];
+  activeItems: ActiveItem[];
   categories: string[];
+}
+
+function generateRowId(): string {
+  if (typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function') {
+    return crypto.randomUUID();
+  }
+  return Math.random().toString(36).substring(2, 15);
+}
+
+function blankRow(): LineItemFormRow {
+  return {
+    id: generateRowId(),
+    itemId: '',
+    description: '',
+    quantity: '1',
+    unitPrice: '',
+    discountType: null,
+    discountValue: '',
+  };
 }
 
 export function RecurringClient({
@@ -56,6 +85,7 @@ export function RecurringClient({
   recurringExpenses,
   clients,
   divisions,
+  activeItems,
   categories,
 }: RecurringClientProps) {
   const [isPending, startTransition] = useTransition();
@@ -64,18 +94,18 @@ export function RecurringClient({
   // Modals
   const [invoiceModalOpen, setInvoiceModalOpen] = useState(false);
   const [expenseModalOpen, setExpenseModalOpen] = useState(false);
+  const [editingId, setEditingId] = useState<string | null>(null);
   const [actionMessage, setActionMessage] = useState<{
     type: 'success' | 'error';
     text: string;
   } | null>(null);
 
-  // New Inbound Invoice Form State
+  // New/Edit Inbound Invoice Form State
   const [newInvDivisionId, setNewInvDivisionId] = useState(divisions[0]?.id || '');
   const [newInvClientId, setNewInvClientId] = useState('');
   const [newInvRef, setNewInvRef] = useState('');
   const [newInvCycleDay, setNewInvCycleDay] = useState(25);
-  const [newInvDescription, setNewInvDescription] = useState('');
-  const [newInvAmount, setNewInvAmount] = useState('');
+  const [newInvLineItems, setNewInvLineItems] = useState<LineItemFormRow[]>([blankRow()]);
 
   // New Outbound Expense Form State
   const [newExpDivisionId, setNewExpDivisionId] = useState(divisions[0]?.id || '');
@@ -109,20 +139,94 @@ export function RecurringClient({
     });
   };
 
+  function resetInvoiceForm() {
+    setEditingId(null);
+    setNewInvDivisionId(divisions[0]?.id || '');
+    setNewInvClientId('');
+    setNewInvRef('');
+    setNewInvCycleDay(25);
+    setNewInvLineItems([blankRow()]);
+  }
+
+  function handleOpenCreateInvoice() {
+    resetInvoiceForm();
+    setInvoiceModalOpen(true);
+  }
+
+  function handleOpenEditInvoice(id: string) {
+    setActionMessage(null);
+    startTransition(async () => {
+      const res = await getRecurringInvoiceDetail(id);
+      if (res.error || !res.data) {
+        setActionMessage({ type: 'error', text: res.error || 'Failed to load schedule.' });
+        return;
+      }
+      const detail = res.data;
+      setEditingId(id);
+      setNewInvDivisionId(detail.divisionId);
+      setNewInvClientId(detail.clientId);
+      setNewInvRef(detail.reference || '');
+      setNewInvCycleDay(detail.billingCycleDay);
+      setNewInvLineItems(
+        detail.lineItems.length
+          ? detail.lineItems.map((li) => ({
+              id: generateRowId(),
+              itemId: li.itemId || '',
+              description: li.description,
+              quantity: li.quantity,
+              unitPrice: li.unitPrice,
+              discountType: li.discountType as 'percent' | 'amount' | null,
+              discountValue: li.discountValue,
+            }))
+          : [blankRow()],
+      );
+      setInvoiceModalOpen(true);
+    });
+  }
+
+  function handleDeleteInvoice(id: string) {
+    if (!window.confirm('Delete this recurring retainer schedule? This cannot be undone.')) return;
+    setActionMessage(null);
+    startTransition(async () => {
+      const res = await deleteRecurringInvoice(id);
+      if (res.error) {
+        setActionMessage({ type: 'error', text: res.error });
+      } else {
+        setActionMessage({ type: 'success', text: 'Recurring retainer schedule deleted.' });
+      }
+    });
+  }
+
   const handleCreateInvoice = (e: React.FormEvent) => {
     e.preventDefault();
     setActionMessage(null);
-    const amountNum = parseFloat(newInvAmount);
-    if (!newInvClientId || isNaN(amountNum) || amountNum <= 0) {
+
+    if (!newInvClientId) {
+      setActionMessage({ type: 'error', text: 'Please select a client.' });
+      return;
+    }
+
+    const lineItems = newInvLineItems
+      .filter((row) => row.description.trim() && parseFloat(row.unitPrice) > 0)
+      .map((row) => ({
+        itemId: row.itemId || null,
+        description: row.description.trim(),
+        quantity: parseFloat(row.quantity) || 1,
+        unitPrice: parseFloat(row.unitPrice) || 0,
+        discountType: row.discountType ?? null,
+        discountValue: row.discountValue ? parseFloat(row.discountValue) : null,
+      }));
+
+    if (lineItems.length === 0) {
       setActionMessage({
         type: 'error',
-        text: 'Please enter a valid client, description, and amount.',
+        text: 'Please add at least one line item with a description and unit price.',
       });
       return;
     }
 
     startTransition(async () => {
-      const res = await createRecurringInvoice({
+      const payload = {
         divisionId: newInvDivisionId,
         clientId: newInvClientId,
         reference: newInvRef || 'Monthly Hosting & Retainer',
@@ -130,25 +234,23 @@ export function RecurringClient({
         dueDaysOffset: 6, // due 1st
         autoSendEmail: true,
         vatEnabled: false,
-        lineItems: [
-          {
-            description: newInvDescription || 'Monthly Website Hosting & Retainer Service',
-            quantity: 1,
-            unitPrice: amountNum,
-          },
-        ],
-      });
+        lineItems,
+      };
+
+      const res = editingId
+        ? await updateRecurringInvoice(editingId, payload)
+        : await createRecurringInvoice(payload);
 
       if (res.error) {
         setActionMessage({ type: 'error', text: res.error });
       } else {
         setInvoiceModalOpen(false);
-        setNewInvAmount('');
-        setNewInvDescription('');
-        setNewInvRef('');
+        resetInvoiceForm();
         setActionMessage({
           type: 'success',
-          text: 'Recurring retainer schedule created successfully.',
+          text: editingId
+            ? 'Recurring retainer schedule updated successfully.'
+            : 'Recurring retainer schedule created successfully.',
         });
       }
     });
@@ -300,7 +402,7 @@ export function RecurringClient({
                 <RefreshCw className={`h-4 w-4 ${isPending ? 'animate-spin' : ''}`} />
                 Run Billing Now
               </Button>
-              <Button size="sm" onClick={() => setInvoiceModalOpen(true)} className="gap-1.5">
+              <Button size="sm" onClick={handleOpenCreateInvoice} className="gap-1.5">
                 <Plus className="h-4 w-4" /> Add Retainer Schedule
               </Button>
             </>
@@ -323,7 +425,7 @@ export function RecurringClient({
                 Set up recurring monthly hosting or maintenance retainers to automatically generate
                 and issue invoices on the 25th.
               </p>
-              <Button size="sm" onClick={() => setInvoiceModalOpen(true)}>
+              <Button size="sm" onClick={handleOpenCreateInvoice}>
                 <Plus className="h-4 w-4 mr-1.5" /> Create First Retainer Schedule
               </Button>
             </div>
@@ -382,25 +484,47 @@ export function RecurringClient({
                         </Badge>
                       </td>
                       <td className="px-4 py-3 text-right">
-                        {inv.status === 'active' ? (
+                        <div className="flex items-center justify-end gap-1">
                           <Button
                             variant="ghost"
                             size="sm"
-                            onClick={() => setRecurringInvoiceStatus(inv.id, 'paused')}
+                            onClick={() => handleOpenEditInvoice(inv.id)}
+                            disabled={isPending}
                             className="text-xs h-8"
                           >
-                            <PauseCircle className="h-3.5 w-3.5 mr-1" /> Pause
+                            <Pencil className="h-3.5 w-3.5 mr-1" /> Edit
                           </Button>
-                        ) : (
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            onClick={() => setRecurringInvoiceStatus(inv.id, 'active')}
-                            className="text-xs h-8 text-emerald-600"
-                          >
-                            <Play className="h-3.5 w-3.5 mr-1" /> Resume
-                          </Button>
-                        )}
+                          {inv.status === 'active' ? (
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => setRecurringInvoiceStatus(inv.id, 'paused')}
+                              className="text-xs h-8"
+                            >
+                              <PauseCircle className="h-3.5 w-3.5 mr-1" /> Pause
+                            </Button>
+                          ) : (
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => setRecurringInvoiceStatus(inv.id, 'active')}
+                              className="text-xs h-8 text-emerald-600"
+                            >
+                              <Play className="h-3.5 w-3.5 mr-1" /> Resume
+                            </Button>
+                          )}
+                          {!inv.lastRunDate && (
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => handleDeleteInvoice(inv.id)}
+                              disabled={isPending}
+                              className="text-xs h-8 text-destructive hover:text-destructive"
+                            >
+                              <Trash2 className="h-3.5 w-3.5 mr-1" /> Delete
+                            </Button>
+                          )}
+                        </div>
                       </td>
                     </tr>
                   ))}
@@ -497,14 +621,20 @@ export function RecurringClient({
         </div>
       )}
 
-      {/* Modal: Create Recurring Inbound Retainer */}
-      <Dialog open={invoiceModalOpen} onOpenChange={setInvoiceModalOpen}>
+      {/* Modal: Create/Edit Recurring Inbound Retainer */}
+      <Dialog
+        open={invoiceModalOpen}
+        onOpenChange={(open) => {
+          setInvoiceModalOpen(open);
+          if (!open) resetInvoiceForm();
+        }}
+      >
         <DialogContent className="sm:max-w-2xl md:max-w-3xl max-h-[90vh] overflow-y-auto">
           <form onSubmit={handleCreateInvoice}>
             <DialogHeader>
               <DialogTitle className="flex items-center gap-2 text-xl font-bold">
-                <CalendarClock className="h-5 w-5 text-emerald-600 dark:text-emerald-400" /> Create
-                Client Retainer Schedule
+                <CalendarClock className="h-5 w-5 text-emerald-600 dark:text-emerald-400" />
+                {editingId ? 'Edit Client Retainer Schedule' : 'Create Client Retainer Schedule'}
               </DialogTitle>
               <DialogDescription>
                 Automated monthly retainer billing. Invoices generate on the 25th with payment due
@@ -565,7 +695,7 @@ export function RecurringClient({
                 />
               </div>
 
-              {/* Row 3: Billing Cycle & Pricing */}
+              {/* Row 3: Billing Cycle */}
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 p-4 rounded-lg bg-muted/40 border">
                 <div className="grid gap-1.5">
                   <Label htmlFor="inv-cycle" className="text-xs font-semibold">
@@ -583,36 +713,15 @@ export function RecurringClient({
                     Default: 25th of month (Due date: 1st)
                   </span>
                 </div>
-
-                <div className="grid gap-1.5">
-                  <Label htmlFor="inv-amount" className="text-xs font-semibold">
-                    Monthly Retainer Fee (ZAR)
-                  </Label>
-                  <Input
-                    id="inv-amount"
-                    type="number"
-                    step="0.01"
-                    placeholder="1500.00"
-                    value={newInvAmount}
-                    onChange={(e) => setNewInvAmount(e.target.value)}
-                    required
-                  />
-                  <span className="text-[11px] text-muted-foreground">
-                    Excludes VAT (unless VAT registered)
-                  </span>
-                </div>
               </div>
 
-              {/* Row 4: Line item description */}
+              {/* Row 4: Line items — pick from catalogue items, or enter a custom description/price */}
               <div className="grid gap-1.5">
-                <Label htmlFor="inv-desc" className="text-xs font-semibold">
-                  Invoice Line Item Description
-                </Label>
-                <Input
-                  id="inv-desc"
-                  placeholder="e.g. Monthly Web Hosting, SSL, Nightly Backups & Maintenance Retainer"
-                  value={newInvDescription}
-                  onChange={(e) => setNewInvDescription(e.target.value)}
+                <Label className="text-xs font-semibold">Retainer Line Items</Label>
+                <BillingLineItemsForm
+                  value={newInvLineItems}
+                  onChange={setNewInvLineItems}
+                  activeItems={activeItems}
                 />
               </div>
             </div>
@@ -626,7 +735,7 @@ export function RecurringClient({
                 disabled={isPending}
                 className="bg-emerald-600 hover:bg-emerald-700 text-white"
               >
-                {isPending ? 'Saving...' : 'Create Retainer Schedule'}
+                {isPending ? 'Saving...' : editingId ? 'Save Changes' : 'Create Retainer Schedule'}
               </Button>
             </DialogFooter>
           </form>
