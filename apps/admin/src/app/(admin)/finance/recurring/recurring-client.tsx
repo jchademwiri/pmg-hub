@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useTransition } from 'react';
+import React, { useEffect, useState, useTransition } from 'react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -33,6 +33,7 @@ import {
   Layers,
   Pencil,
   Trash2,
+  X,
 } from 'lucide-react';
 import { formatZAR, fmtDateLong } from '@/lib/format';
 import {
@@ -99,6 +100,12 @@ export function RecurringClient({
     type: 'success' | 'error';
     text: string;
   } | null>(null);
+
+  useEffect(() => {
+    if (!actionMessage) return;
+    const timer = setTimeout(() => setActionMessage(null), 6000);
+    return () => clearTimeout(timer);
+  }, [actionMessage]);
 
   // New/Edit Inbound Invoice Form State
   const [newInvDivisionId, setNewInvDivisionId] = useState(divisions[0]?.id || '');
@@ -358,14 +365,26 @@ export function RecurringClient({
 
       {actionMessage && (
         <div
-          className={`p-4 rounded-lg text-sm border flex items-center gap-2 ${
+          className={`p-4 rounded-lg text-sm border flex items-start justify-between gap-2 ${
             actionMessage.type === 'success'
               ? 'bg-emerald-50 border-emerald-200 text-emerald-800 dark:bg-emerald-950/30 dark:border-emerald-800 dark:text-emerald-300'
               : 'bg-rose-50 border-rose-200 text-rose-800 dark:bg-rose-950/30 dark:border-rose-800 dark:text-rose-300'
           }`}
         >
-          {actionMessage.type === 'success' ? <CheckCircle2 className="h-4 w-4 shrink-0" /> : null}
-          {actionMessage.text}
+          <div className="flex items-center gap-2">
+            {actionMessage.type === 'success' ? (
+              <CheckCircle2 className="h-4 w-4 shrink-0" />
+            ) : null}
+            {actionMessage.text}
+          </div>
+          <button
+            type="button"
+            onClick={() => setActionMessage(null)}
+            aria-label="Dismiss message"
+            className="shrink-0 rounded-md p-0.5 hover:bg-black/5 dark:hover:bg-white/10 transition-colors"
+          >
+            <X className="h-4 w-4" />
+          </button>
         </div>
       )}
 
