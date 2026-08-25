@@ -29,6 +29,7 @@ export type RecurringInvoiceRow = {
   terms: string | null;
   lastRunDate: string | null;
   nextRunDate: string;
+  endDate: string | null;
   createdBy: string;
   createdAt: Date;
   updatedAt: Date | null;
@@ -108,6 +109,7 @@ export async function getAllRecurringInvoices(filters?: {
       terms: recurringInvoices.terms,
       lastRunDate: sql<string | null>`${recurringInvoices.lastRunDate}::text`,
       nextRunDate: sql<string>`${recurringInvoices.nextRunDate}::text`,
+      endDate: sql<string | null>`${recurringInvoices.endDate}::text`,
       createdBy: recurringInvoices.createdBy,
       createdAt: recurringInvoices.createdAt,
       updatedAt: recurringInvoices.updatedAt,
@@ -150,6 +152,7 @@ export async function getRecurringInvoiceById(id: string): Promise<RecurringInvo
       terms: recurringInvoices.terms,
       lastRunDate: sql<string | null>`${recurringInvoices.lastRunDate}::text`,
       nextRunDate: sql<string>`${recurringInvoices.nextRunDate}::text`,
+      endDate: sql<string | null>`${recurringInvoices.endDate}::text`,
       createdBy: recurringInvoices.createdBy,
       createdAt: recurringInvoices.createdAt,
       updatedAt: recurringInvoices.updatedAt,
