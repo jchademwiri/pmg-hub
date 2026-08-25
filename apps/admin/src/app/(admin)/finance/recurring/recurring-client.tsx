@@ -634,7 +634,7 @@ export function RecurringClient({
           if (!open) resetInvoiceForm();
         }}
       >
-        <DialogContent className="sm:max-w-2xl md:max-w-3xl max-h-[90vh] overflow-y-auto">
+        <DialogContent className="sm:max-w-3xl md:max-w-4xl max-h-[90vh] overflow-y-auto">
           <form onSubmit={handleCreateInvoice}>
             <DialogHeader>
               <DialogTitle className="flex items-center gap-2 text-xl font-bold">
@@ -687,21 +687,20 @@ export function RecurringClient({
                 </div>
               </div>
 
-              {/* Row 2: Reference */}
-              <div className="grid gap-1.5">
-                <Label htmlFor="inv-ref" className="text-xs font-semibold">
-                  Schedule Reference
-                </Label>
-                <Input
-                  id="inv-ref"
-                  placeholder="e.g. Monthly Website Hosting, Security & Maintenance Retainer"
-                  value={newInvRef}
-                  onChange={(e) => setNewInvRef(e.target.value)}
-                />
-              </div>
+              {/* Row 2: Reference & Billing Cycle */}
+              <div className="grid grid-cols-1 sm:grid-cols-[2fr_1fr] gap-4">
+                <div className="grid gap-1.5">
+                  <Label htmlFor="inv-ref" className="text-xs font-semibold">
+                    Schedule Reference
+                  </Label>
+                  <Input
+                    id="inv-ref"
+                    placeholder="e.g. Monthly Website Hosting, Security & Maintenance Retainer"
+                    value={newInvRef}
+                    onChange={(e) => setNewInvRef(e.target.value)}
+                  />
+                </div>
 
-              {/* Row 3: Billing Cycle */}
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 p-4 rounded-lg bg-muted/40 border">
                 <div className="grid gap-1.5">
                   <Label htmlFor="inv-cycle" className="text-xs font-semibold">
                     Billing Cycle Day
@@ -715,7 +714,7 @@ export function RecurringClient({
                     onChange={(e) => setNewInvCycleDay(Number(e.target.value))}
                   />
                   <span className="text-[11px] text-muted-foreground">
-                    Default: 25th of month (Due date: 1st)
+                    Default: 25th (Due: 1st)
                   </span>
                 </div>
               </div>
