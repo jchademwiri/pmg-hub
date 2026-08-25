@@ -257,7 +257,8 @@ export async function sendPortalInvitation(
     return { success: true };
   } catch (e: unknown) {
     console.error('sendPortalInvitation failed:', e);
-    const message = e instanceof Error ? e.message : 'Failed to send portal invitation. Please try again.';
+    const message =
+      e instanceof Error ? e.message : 'Failed to send portal invitation. Please try again.';
     return { error: message };
   }
 }
