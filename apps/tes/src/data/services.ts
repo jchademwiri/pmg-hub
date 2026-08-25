@@ -1,14 +1,14 @@
 export interface Service {
-  name: string
-  description: string
-  price: string
+  name: string;
+  description: string;
+  price: string;
 }
 
 export const services: Service[] = [
   {
     name: 'Full Tender Preparation',
     description:
-      'End-to-end tender document preparation, done for you. We read the bid, source every requirement, and compile a complete, submission-ready package. Already started your own tender and something isn\'t right? We\'ll review it, flag what\'s missing or incorrect, and get it submission-ready before the deadline.',
+      "End-to-end tender document preparation, done for you. We read the bid, source every requirement, and compile a complete, submission-ready package. Already started your own tender and something isn't right? We'll review it, flag what's missing or incorrect, and get it submission-ready before the deadline.",
     price: 'Get a quote',
   },
   {
@@ -23,10 +23,10 @@ export const services: Service[] = [
       'Get registered directly with the municipalities, parastatals, and corporates you want to supply to - Tshwane, Ekurhuleni, Transnet, Eskom, and more. Each runs its own database; we handle the registration so you receive their RFQs directly.',
     price: 'Get a quote',
   },
-]
+];
 
 export interface AddOnService {
-  name: string
+  name: string;
 }
 
 export const addOnServices: AddOnService[] = [
@@ -35,4 +35,5 @@ export const addOnServices: AddOnService[] = [
   { name: 'B-BBEE Affidavits' },
   { name: 'COIDA Registration' },
   { name: 'SBD Forms' },
-]
+  { name: 'Hand-Delivery with Video Proof' },
+];

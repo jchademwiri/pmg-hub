@@ -9,22 +9,45 @@ import {
   invoices,
   billingLineItems,
   expenses,
+  clients,
+  divisions,
+  divisionBillingSettings,
   eq,
   and,
   sql,
   getNextDocumentNumber,
   addDays,
+  getRecurringInvoiceById,
+  type RecurringInvoiceDetail,
 } from '@pmg/db';
 import { getSessionOrRedirect } from '@/lib/auth';
 import { postInvoiceIssueJournalEntry, postExpenseJournalEntry } from '@/lib/accounting/posting';
-import { getSASTParts, getSASTToday, fmtDateLong } from '@/lib/format';
+import { getSASTParts, getSASTToday, fmtDate, fmtDateLong } from '@/lib/format';
 import { isPeriodClosed, getMinAllowedDate, getMinDateErrorMessage } from '@/lib/date-rules';
+import { generateBillingPdf } from '@/lib/server-billing-pdf';
+import { getPortalBaseUrl } from '@/lib/portal-url';
+import {
+  createEmailClient,
+  InvoiceDeliveryEmail,
+  DEFAULT_REPLY_TO,
+  DEFAULT_WEBSITE_URL,
+  resolveDivisionAdminEmail,
+  resolveFromEmail,
+  resolveResendApiKey,
+  resolveDefaultFromEmail,
+} from '@pmg/emails';
+import React from 'react';
 
 export interface CreateRecurringInvoiceInput {
   divisionId: string;
   clientId: string;
   reference?: string | null;
-  billingCycleDay?: number; // default 25
+  /** Explicit next/first invoice date ("YYYY-MM-DD"). Defaults to the 25th
+   *  of this month (or next month, if the 25th has passed) when omitted. */
+  nextRunDate?: string | null;
+  /** Once the next scheduled invoice date would fall on or after this date,
+   *  the schedule auto-pauses instead of generating another invoice. */
+  endDate?: string | null;
   dueDaysOffset?: number; // default 6 (due 1st)
   autoSendEmail?: boolean;
   notes?: string | null;
@@ -81,13 +104,126 @@ function calcTotals(
   return { subtotal, discountAmount, vatAmount, total };
 }
 
+function formatMoney(amount: string) {
+  return `R ${Number(amount).toLocaleString('en-ZA', { minimumFractionDigits: 2 })}`;
+}
+
+/**
+ * Emails a freshly generated recurring invoice to the client, with a copy of
+ * their current outstanding statement (which includes this invoice, since it
+ * has already been committed by the time this runs) attached alongside it.
+ * Best-effort: failures are returned as an error string rather than thrown,
+ * so a delivery failure never rolls back the invoice that was already issued.
+ */
+async function sendRecurringInvoiceEmail(params: {
+  invoiceId: string;
+  clientId: string;
+  divisionId: string;
+  documentNumber: string;
+  invoiceDate: string;
+  dueDate: string;
+  reference: string | null;
+  total: string;
+}): Promise<{ error?: string }> {
+  const db = getDb();
+
+  const [client] = await db.select().from(clients).where(eq(clients.id, params.clientId));
+  if (!client?.email) return { error: `Client has no email address on file.` };
+
+  const [division] = await db.select().from(divisions).where(eq(divisions.id, params.divisionId));
+  const divisionName = division?.name;
+
+  const [billingConfig] = await db
+    .select()
+    .from(divisionBillingSettings)
+    .where(eq(divisionBillingSettings.divisionId, params.divisionId));
+
+  const [invoicePdf, statementPdf] = await Promise.all([
+    generateBillingPdf('invoice', params.invoiceId),
+    generateBillingPdf('statement', params.clientId, { statementType: 'outstanding' }),
+  ]);
+
+  if (!invoicePdf) return { error: 'Failed to generate invoice PDF.' };
+
+  const apiKey = resolveResendApiKey(divisionName);
+  const defaultFrom = resolveDefaultFromEmail(divisionName);
+  const fromName = billingConfig?.salesRepName || process.env.EMAIL_FROM_NAME || 'PMG Admin';
+  const fromEmail = resolveFromEmail(billingConfig?.divisionWebsite, defaultFrom);
+
+  const emailClient = createEmailClient({
+    apiKey,
+    from: `${fromName} <${fromEmail}>`,
+    adminEmail: fromEmail,
+  });
+
+  const portalUrl = `${getPortalBaseUrl()}/invoices/${params.invoiceId}`;
+
+  const emailProps = {
+    clientName: client.businessName || client.name || 'Client',
+    documentNumber: params.documentNumber,
+    invoiceDate: fmtDate(params.invoiceDate),
+    dueDate: fmtDate(params.dueDate),
+    totalAmount: formatMoney(params.total),
+    reference: params.reference || undefined,
+    companyName: divisionName || 'Playhouse Media Group',
+    primaryColor: '#1d4ed8',
+    websiteUrl: billingConfig?.divisionWebsite || DEFAULT_WEBSITE_URL,
+    logoUrl: billingConfig?.logoUrl || undefined,
+    hasStatementAttached: !!statementPdf,
+    portalUrl,
+    bankDetails: billingConfig
+      ? {
+          bankName: billingConfig.bankName || '',
+          accountName: billingConfig.bankAccountName || '',
+          accountNumber: billingConfig.bankAccountNumber || '',
+          branchCode: billingConfig.bankBranchCode || '',
+        }
+      : undefined,
+  };
+
+  const attachments = [{ filename: `${params.documentNumber}.pdf`, content: invoicePdf.buffer }];
+  if (statementPdf) {
+    const clientCleanName = (client.businessName || client.name || 'Client').replace(
+      /[^a-zA-Z0-9]/g,
+      '_',
+    );
+    attachments.push({
+      filename: `Statement-${clientCleanName}.pdf`,
+      content: statementPdf.buffer,
+    });
+  }
+
+  const adminCc = resolveDivisionAdminEmail(divisionName, billingConfig?.salesRepEmail ?? null);
+
+  const { error } = await emailClient({
+    to: client.email,
+    cc: adminCc ? [adminCc] : undefined,
+    subject: `Invoice ${params.documentNumber} from ${divisionName || 'Playhouse Media Group'}`,
+    react: React.createElement(InvoiceDeliveryEmail, emailProps),
+    replyTo: DEFAULT_REPLY_TO,
+    attachments,
+  });
+
+  if (error) return { error: `Failed to deliver email: ${error.message}` };
+  return {};
+}
+
+/** Extracts the day-of-month from an ISO date string, clamped to 1-28 so it
+ *  stays valid across every month when the cadence is later advanced. */
+function dayOfMonthClamped(dateStr: string): number {
+  const day = Number(dateStr.slice(8, 10));
+  return Math.min(Math.max(1, day || 25), 28);
+}
+
 function calculateInitialNextRunDate(cycleDay = 25): string {
   const { year, month, day } = getSASTParts();
   let targetYear = year;
   let targetMonth = month;
 
-  // If we already passed cycleDay this month, schedule for next month
-  if (day >= cycleDay) {
+  // If we already passed cycleDay this month, schedule for next month.
+  // A schedule created ON the cycle day itself stays in the current month so
+  // it is picked up by today's billing run.
+  if (day > cycleDay) {
     targetMonth += 1;
     if (targetMonth > 11) {
       targetMonth = 0;
@@ -147,8 +283,14 @@ export async function createRecurringInvoice(
       data.discountValue,
     );
 
-    const billingCycleDay = data.billingCycleDay ?? 25;
-    const nextRunDate = calculateInitialNextRunDate(billingCycleDay);
+    const explicitNextRunDate = data.nextRunDate?.trim() || null;
+    const billingCycleDay = explicitNextRunDate ? dayOfMonthClamped(explicitNextRunDate) : 25;
+    const nextRunDate = explicitNextRunDate ?? calculateInitialNextRunDate(billingCycleDay);
+    const endDate = data.endDate?.trim() || null;
+
+    if (endDate && endDate < nextRunDate) {
+      return { error: 'End date cannot be before the next invoice date.' };
+    }
 
     const [inserted] = await db
       .insert(recurringInvoices)
@@ -170,6 +312,7 @@ export async function createRecurringInvoice(
         notes: data.notes ?? null,
         terms: data.terms ?? null,
         nextRunDate,
+        endDate,
         createdBy: session.user.id,
       })
       .returning({ id: recurringInvoices.id });
@@ -211,6 +354,186 @@ export async function createRecurringInvoice(
   }
 }
 
+export async function getRecurringInvoiceDetail(
+  id: string,
+): Promise<{ error?: string; data?: RecurringInvoiceDetail }> {
+  try {
+    await getSessionOrRedirect();
+    const detail = await getRecurringInvoiceById(id);
+    if (!detail) return { error: 'Recurring schedule not found.' };
+    return { data: detail };
+  } catch (err) {
+    console.error('Failed to load recurring invoice:', err);
+    return { error: 'Failed to load recurring schedule.' };
+  }
+}
+
+export interface UpdateRecurringInvoiceInput {
+  divisionId: string;
+  clientId: string;
+  reference?: string | null;
+  /** Explicit next invoice date ("YYYY-MM-DD"). Keeps the schedule's
+   *  current next-run date when omitted. */
+  nextRunDate?: string | null;
+  /** Once the next scheduled invoice date would fall on or after this date,
+   *  the schedule auto-pauses instead of generating another invoice. */
+  endDate?: string | null;
+  dueDaysOffset?: number;
+  autoSendEmail?: boolean;
+  notes?: string | null;
+  terms?: string | null;
+  vatEnabled?: boolean;
+  discountType?: 'percent' | 'amount' | null;
+  discountValue?: number | null;
+  lineItems: {
+    itemId?: string | null;
+    description: string;
+    quantity: number;
+    unitPrice: number;
+    discountType?: 'percent' | 'amount' | null;
+    discountValue?: number | null;
+  }[];
+}
+
+export async function updateRecurringInvoice(
+  id: string,
+  data: UpdateRecurringInvoiceInput,
+): Promise<{ error?: string }> {
+  try {
+    await getSessionOrRedirect();
+    const db = getDb();
+
+    if (!data.clientId) return { error: 'Client is required.' };
+    if (!data.divisionId) return { error: 'Division is required.' };
+    if (!data.lineItems || data.lineItems.length === 0)
+      return { error: 'At least one line item is required.' };
+
+    const [existing] = await db
+      .select({ nextRunDate: recurringInvoices.nextRunDate })
+      .from(recurringInvoices)
+      .where(eq(recurringInvoices.id, id))
+      .limit(1);
+    if (!existing) return { error: 'Recurring schedule not found.' };
+
+    if (data.vatEnabled) {
+      const { getOrganisationSettings } = await import('@pmg/db');
+      const orgSettings = await getOrganisationSettings();
+      if (!orgSettings?.vatNumber?.trim()) {
+        return {
+          error:
+            'VAT cannot be enabled: No registered VAT number is configured in Organisation Settings.',
+        };
+      }
+    }
+
+    const { subtotal, discountAmount, vatAmount, total } = calcTotals(
+      data.lineItems,
+      data.vatEnabled,
+      data.discountType,
+      data.discountValue,
+    );
+
+    const nextRunDate = data.nextRunDate?.trim() || existing.nextRunDate;
+    const billingCycleDay = dayOfMonthClamped(nextRunDate);
+    const endDate = data.endDate?.trim() || null;
+
+    if (endDate && endDate < nextRunDate) {
+      return { error: 'End date cannot be before the next invoice date.' };
+    }
+
+    await db.transaction(async (tx) => {
+      await tx
+        .update(recurringInvoices)
+        .set({
+          divisionId: data.divisionId,
+          clientId: data.clientId,
+          reference: data.reference ?? null,
+          billingCycleDay,
+          nextRunDate,
+          endDate,
+          dueDaysOffset: data.dueDaysOffset ?? 6,
+          autoSendEmail: data.autoSendEmail ?? true,
+          subtotal: String(subtotal.toFixed(2)),
+          discountType: data.discountType ?? null,
+          discountValue: data.discountValue != null ? String(data.discountValue) : null,
+          discountAmount: String(discountAmount.toFixed(2)),
+          vatEnabled: data.vatEnabled ?? false,
+          vatAmount: String(vatAmount.toFixed(2)),
+          total: String(total.toFixed(2)),
+          notes: data.notes ?? null,
+          terms: data.terms ?? null,
+          updatedAt: new Date(),
+        })
+        .where(eq(recurringInvoices.id, id));
+
+      await tx.delete(recurringLineItems).where(eq(recurringLineItems.recurringInvoiceId, id));
+
+      await tx.insert(recurringLineItems).values(
+        data.lineItems.map((item, i) => {
+          const rawTotal = item.quantity * item.unitPrice;
+          const itemDiscountVal = item.discountValue ?? 0;
+          const itemDiscountAmount =
+            item.discountType === 'percent'
+              ? rawTotal * (itemDiscountVal / 100)
+              : item.discountType === 'amount'
+                ? Math.min(itemDiscountVal, rawTotal)
+                : 0;
+
+          return {
+            recurringInvoiceId: id,
+            sortOrder: i,
+            itemId: item.itemId ?? null,
+            description: item.description,
+            quantity: String(item.quantity),
+            unitPrice: String(item.unitPrice.toFixed(2)),
+            discountType: item.discountType ?? null,
+            discountValue: item.discountValue != null ? String(item.discountValue) : null,
+            discountAmount: String(itemDiscountAmount.toFixed(2)),
+            vatRate: '0',
+            lineTotal: String((rawTotal - itemDiscountAmount).toFixed(2)),
+          };
+        }),
+      );
+    });
+
+    revalidatePath('/finance/recurring');
+    return {};
+  } catch (err) {
+    console.error('Failed to update recurring invoice:', err);
+    return { error: 'Failed to update recurring schedule.' };
+  }
+}
+
+export async function deleteRecurringInvoice(id: string): Promise<{ error?: string }> {
+  try {
+    await getSessionOrRedirect();
+    const db = getDb();
+
+    const [schedule] = await db
+      .select({ lastRunDate: recurringInvoices.lastRunDate })
+      .from(recurringInvoices)
+      .where(eq(recurringInvoices.id, id))
+      .limit(1);
+
+    if (!schedule) return { error: 'Recurring schedule not found.' };
+
+    if (schedule.lastRunDate) {
+      return {
+        error:
+          'This schedule has already generated invoices and cannot be deleted. Cancel it instead to stop future billing.',
+      };
+    }
+
+    await db.delete(recurringInvoices).where(eq(recurringInvoices.id, id));
+
+    revalidatePath('/finance/recurring');
+    return {};
+  } catch (err) {
+    console.error('Failed to delete recurring invoice:', err);
+    return { error: 'Failed to delete recurring schedule.' };
+  }
+}
+
 export async function setRecurringInvoiceStatus(
   id: string,
   status: 'active' | 'paused' | 'cancelled',
@@ -237,7 +560,7 @@ export async function setRecurringInvoiceStatus(
  */
 export async function triggerRecurringBillingRun(
   asOfDate?: string,
-): Promise<{ error?: string; generatedCount?: number }> {
+): Promise<{ error?: string; generatedCount?: number; emailFailureCount?: number }> {
   try {
     const session = await getSessionOrRedirect();
     const db = getDb();
@@ -259,8 +582,20 @@ export async function triggerRecurringBillingRun(
     }
 
     let generatedCount = 0;
+    let emailFailureCount = 0;
 
     for (const schedule of dueSchedules) {
+      // Safety net: a schedule already past its end date should have been
+      // paused when a previous run advanced it there. Pause it now instead
+      // of generating another invoice.
+      if (schedule.endDate && schedule.nextRunDate > schedule.endDate) {
+        await db
+          .update(recurringInvoices)
+          .set({ status: 'paused', updatedAt: new Date() })
+          .where(eq(recurringInvoices.id, schedule.id));
+        continue;
+      }
+
       const lineItems = await db
         .select()
         .from(recurringLineItems)
@@ -270,81 +605,136 @@ export async function triggerRecurringBillingRun(
 
       const invoiceDate = todayStr;
       const dueDate = addDays(invoiceDate, schedule.dueDaysOffset || 6);
+      const billingPeriod = invoiceDate.slice(0, 7); // YYYY-MM
+
+      // Guard against double-generation for the same schedule + month (e.g. a
+      // double-click on "Run Billing Now", or two overlapping runs). The
+      // partial unique index on (recurring_invoice_id, billing_period) is the
+      // authoritative guard; this check just avoids burning a document number.
+      const [existing] = await db
+        .select({ id: invoices.id })
+        .from(invoices)
+        .where(
+          and(
+            eq(invoices.recurringInvoiceId, schedule.id),
+            eq(invoices.billingPeriod, billingPeriod),
+          ),
+        )
+        .limit(1);
+      if (existing) continue;
 
       const year = Number(invoiceDate.slice(0, 4));
       const documentNumber = await getNextDocumentNumber(schedule.divisionId, 'invoice', year);
 
-      await db.transaction(async (tx) => {
-        // 1. Insert official invoice in 'issued' status
-        const [inv] = await tx
-          .insert(invoices)
-          .values({
-            divisionId: schedule.divisionId,
-            clientId: schedule.clientId,
-            documentNumber,
-            status: 'issued',
-            invoiceDate,
-            dueDate,
-            reference: schedule.reference ?? 'Monthly Retainer & Hosting',
-            subtotal: schedule.subtotal,
-            discountType: schedule.discountType,
-            discountValue: schedule.discountValue,
-            discountAmount: schedule.discountAmount,
+      let insertedInvoiceId: string | undefined;
+
+      try {
+        await db.transaction(async (tx) => {
+          // 1. Insert official invoice in 'issued' status
+          const [inv] = await tx
+            .insert(invoices)
+            .values({
+              divisionId: schedule.divisionId,
+              clientId: schedule.clientId,
+              documentNumber,
+              status: 'issued',
+              invoiceDate,
+              dueDate,
+              reference: schedule.reference ?? 'Monthly Retainer & Hosting',
+              subtotal: schedule.subtotal,
+              discountType: schedule.discountType,
+              discountValue: schedule.discountValue,
+              discountAmount: schedule.discountAmount,
+              vatEnabled: schedule.vatEnabled,
+              vatAmount: schedule.vatAmount,
+              total: schedule.total,
+              notes: schedule.notes,
+              terms: schedule.terms,
+              recurringInvoiceId: schedule.id,
+              billingPeriod,
+              createdBy: session.user.id,
+            })
+            .returning({ id: invoices.id });
+
+          if (!inv) throw new Error('Failed to generate invoice.');
+          insertedInvoiceId = inv.id;
+
+          // 2. Insert billing line items
+          await tx.insert(billingLineItems).values(
+            lineItems.map((li) => ({
+              documentType: 'invoice' as const,
+              documentId: inv.id,
+              sortOrder: li.sortOrder,
+              itemId: li.itemId,
+              description: li.description,
+              quantity: li.quantity,
+              unitPrice: li.unitPrice,
+              discountType: li.discountType,
+              discountValue: li.discountValue,
+              discountAmount: li.discountAmount,
+              vatRate: li.vatRate,
+              lineTotal: li.lineTotal,
+            })),
+          );
+
+          // 3. Post double-entry journal entry
+          await postInvoiceIssueJournalEntry({
+            invoiceId: inv.id,
+            amount: parseFloat(schedule.total),
+            subtotal: parseFloat(schedule.subtotal),
+            vatAmount: parseFloat(schedule.vatAmount || '0'),
             vatEnabled: schedule.vatEnabled,
-            vatAmount: schedule.vatAmount,
-            total: schedule.total,
-            notes: schedule.notes,
-            terms: schedule.terms,
-            createdBy: session.user.id,
-          })
-          .returning({ id: invoices.id });
+            date: invoiceDate,
+            description: `Recurring Invoice ${documentNumber} - ${schedule.reference || 'Retainer'}`,
+            divisionId: schedule.divisionId,
+            tx,
+          });
 
-        if (!inv) throw new Error('Failed to generate invoice.');
+          // 4. Advance next run date to the same day next month. If that
+          // would fall on or after the schedule's end date, auto-pause
+          // instead of leaving it active for a run that should never fire.
+          const nextDate = advanceNextMonth(invoiceDate, schedule.billingCycleDay);
+          const reachedEndDate = schedule.endDate != null && nextDate > schedule.endDate;
+          await tx
+            .update(recurringInvoices)
+            .set({
+              lastRunDate: invoiceDate,
+              nextRunDate: nextDate,
+              status: reachedEndDate ? 'paused' : schedule.status,
+              updatedAt: new Date(),
+            })
+            .where(eq(recurringInvoices.id, schedule.id));
 
-        // 2. Insert billing line items
-        await tx.insert(billingLineItems).values(
-          lineItems.map((li) => ({
-            documentType: 'invoice' as const,
-            documentId: inv.id,
-            sortOrder: li.sortOrder,
-            itemId: li.itemId,
-            description: li.description,
-            quantity: li.quantity,
-            unitPrice: li.unitPrice,
-            discountType: li.discountType,
-            discountValue: li.discountValue,
-            discountAmount: li.discountAmount,
-            vatRate: li.vatRate,
-            lineTotal: li.lineTotal,
-          })),
-        );
-
-        // 3. Post double-entry journal entry
-        await postInvoiceIssueJournalEntry({
-          invoiceId: inv.id,
-          amount: parseFloat(schedule.total),
-          subtotal: parseFloat(schedule.subtotal),
-          vatAmount: parseFloat(schedule.vatAmount || '0'),
-          vatEnabled: schedule.vatEnabled,
-          date: invoiceDate,
-          description: `Recurring Invoice ${documentNumber} - ${schedule.reference || 'Retainer'}`,
-          divisionId: schedule.divisionId,
-          tx,
+          generatedCount++;
         });
+      } catch (err) {
+        // A unique-violation on (recurring_invoice_id, billing_period) means a
+        // concurrent run already generated this month's invoice — skip it
+        // rather than failing the whole batch.
+        const code = (err as { code?: string })?.code;
+        if (code === '23505') continue;
+        throw err;
+      }
 
-        // 4. Advance next run date to 25th of next month
-        const nextDate = advanceNextMonth(invoiceDate, schedule.billingCycleDay);
-        await tx
-          .update(recurringInvoices)
-          .set({
-            lastRunDate: invoiceDate,
-            nextRunDate: nextDate,
-            updatedAt: new Date(),
-          })
-          .where(eq(recurringInvoices.id, schedule.id));
-
-        generatedCount++;
-      });
+      // Email the client (with their statement attached) once the invoice is
+      // committed. Best-effort: a delivery failure never undoes the invoice
+      // that was already issued, it's just reported back in the summary.
+      if (schedule.autoSendEmail && insertedInvoiceId) {
+        const emailResult = await sendRecurringInvoiceEmail({
+          invoiceId: insertedInvoiceId,
+          clientId: schedule.clientId,
+          divisionId: schedule.divisionId,
+          documentNumber,
+          invoiceDate,
+          dueDate,
+          reference: schedule.reference,
+          total: schedule.total,
+        });
+        if (emailResult.error) {
+          console.error(`Failed to email recurring invoice ${documentNumber}:`, emailResult.error);
+          emailFailureCount++;
+        }
+      }
     }
 
     revalidatePath('/billing/invoices');
@@ -352,7 +742,7 @@ export async function triggerRecurringBillingRun(
     revalidatePath('/accounting/journals');
     revalidatePath('/dashboard');
 
-    return { generatedCount };
+    return { generatedCount, emailFailureCount };
   } catch (err) {
     console.error('Failed to trigger recurring billing:', err);
     return { error: 'Failed to process recurring invoices.' };

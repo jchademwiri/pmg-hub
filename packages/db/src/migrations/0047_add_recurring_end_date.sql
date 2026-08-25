@@ -1,0 +1,1 @@
+ALTER TABLE "recurring_invoices" ADD COLUMN "end_date" date;
