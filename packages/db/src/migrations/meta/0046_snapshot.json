@@ -110,12 +110,8 @@
           "name": "account_user_id_user_id_fk",
           "tableFrom": "account",
           "tableTo": "user",
-          "columnsFrom": [
-            "user_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["user_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         }
@@ -202,12 +198,8 @@
           "name": "session_user_id_user_id_fk",
           "tableFrom": "session",
           "tableTo": "user",
-          "columnsFrom": [
-            "user_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["user_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         }
@@ -217,9 +209,7 @@
         "session_token_unique": {
           "name": "session_token_unique",
           "nullsNotDistinct": false,
-          "columns": [
-            "token"
-          ]
+          "columns": ["token"]
         }
       },
       "policies": {},
@@ -297,9 +287,7 @@
         "user_email_unique": {
           "name": "user_email_unique",
           "nullsNotDistinct": false,
-          "columns": [
-            "email"
-          ]
+          "columns": ["email"]
         }
       },
       "policies": {},
@@ -462,9 +450,7 @@
         "aws_pricing_name_unique": {
           "name": "aws_pricing_name_unique",
           "nullsNotDistinct": false,
-          "columns": [
-            "name"
-          ]
+          "columns": ["name"]
         }
       },
       "policies": {},
@@ -532,9 +518,7 @@
         "divisions_name_unique": {
           "name": "divisions_name_unique",
           "nullsNotDistinct": false,
-          "columns": [
-            "name"
-          ]
+          "columns": ["name"]
         }
       },
       "policies": {},
@@ -633,12 +617,8 @@
           "name": "client_change_requests_client_id_clients_id_fk",
           "tableFrom": "client_change_requests",
           "tableTo": "clients",
-          "columnsFrom": [
-            "client_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["client_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         },
@@ -646,12 +626,8 @@
           "name": "client_change_requests_reviewed_by_user_id_fk",
           "tableFrom": "client_change_requests",
           "tableTo": "user",
-          "columnsFrom": [
-            "reviewed_by"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["reviewed_by"],
+          "columnsTo": ["id"],
           "onDelete": "set null",
           "onUpdate": "no action"
         }
@@ -790,12 +766,8 @@
           "name": "clients_division_id_divisions_id_fk",
           "tableFrom": "clients",
           "tableTo": "divisions",
-          "columnsFrom": [
-            "division_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["division_id"],
+          "columnsTo": ["id"],
           "onDelete": "no action",
           "onUpdate": "no action"
         },
@@ -803,12 +775,8 @@
           "name": "clients_user_id_user_id_fk",
           "tableFrom": "clients",
           "tableTo": "user",
-          "columnsFrom": [
-            "user_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["user_id"],
+          "columnsTo": ["id"],
           "onDelete": "set null",
           "onUpdate": "no action"
         }
@@ -926,12 +894,8 @@
           "name": "income_division_id_divisions_id_fk",
           "tableFrom": "income",
           "tableTo": "divisions",
-          "columnsFrom": [
-            "division_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["division_id"],
+          "columnsTo": ["id"],
           "onDelete": "restrict",
           "onUpdate": "no action"
         },
@@ -939,12 +903,8 @@
           "name": "income_client_id_clients_id_fk",
           "tableFrom": "income",
           "tableTo": "clients",
-          "columnsFrom": [
-            "client_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["client_id"],
+          "columnsTo": ["id"],
           "onDelete": "restrict",
           "onUpdate": "no action"
         }
@@ -1106,12 +1066,8 @@
           "name": "expenses_division_id_divisions_id_fk",
           "tableFrom": "expenses",
           "tableTo": "divisions",
-          "columnsFrom": [
-            "division_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["division_id"],
+          "columnsTo": ["id"],
           "onDelete": "restrict",
           "onUpdate": "no action"
         },
@@ -1119,12 +1075,8 @@
           "name": "expenses_client_id_clients_id_fk",
           "tableFrom": "expenses",
           "tableTo": "clients",
-          "columnsFrom": [
-            "client_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["client_id"],
+          "columnsTo": ["id"],
           "onDelete": "set null",
           "onUpdate": "no action"
         }
@@ -1338,12 +1290,8 @@
           "name": "leads_division_id_divisions_id_fk",
           "tableFrom": "leads",
           "tableTo": "divisions",
-          "columnsFrom": [
-            "division_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["division_id"],
+          "columnsTo": ["id"],
           "onDelete": "set null",
           "onUpdate": "no action"
         }
@@ -1560,9 +1508,7 @@
         "snapshots_period_unique": {
           "name": "snapshots_period_unique",
           "nullsNotDistinct": false,
-          "columns": [
-            "period"
-          ]
+          "columns": ["period"]
         }
       },
       "policies": {},
@@ -1601,9 +1547,7 @@
         "expense_categories_name_unique": {
           "name": "expense_categories_name_unique",
           "nullsNotDistinct": false,
-          "columns": [
-            "name"
-          ]
+          "columns": ["name"]
         }
       },
       "policies": {},
@@ -1678,16 +1622,12 @@
         "invitations_email_unique": {
           "name": "invitations_email_unique",
           "nullsNotDistinct": false,
-          "columns": [
-            "email"
-          ]
+          "columns": ["email"]
         },
         "invitations_token_unique": {
           "name": "invitations_token_unique",
           "nullsNotDistinct": false,
-          "columns": [
-            "token"
-          ]
+          "columns": ["token"]
         }
       },
       "policies": {},
@@ -1935,12 +1875,8 @@
           "name": "billing_line_items_item_id_billing_items_id_fk",
           "tableFrom": "billing_line_items",
           "tableTo": "billing_items",
-          "columnsFrom": [
-            "item_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["item_id"],
+          "columnsTo": ["id"],
           "onDelete": "set null",
           "onUpdate": "no action"
         }
@@ -2096,12 +2032,8 @@
           "name": "division_billing_settings_division_id_divisions_id_fk",
           "tableFrom": "division_billing_settings",
           "tableTo": "divisions",
-          "columnsFrom": [
-            "division_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["division_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         }
@@ -2111,9 +2043,7 @@
         "division_billing_settings_division_id_unique": {
           "name": "division_billing_settings_division_id_unique",
           "nullsNotDistinct": false,
-          "columns": [
-            "division_id"
-          ]
+          "columns": ["division_id"]
         }
       },
       "policies": {},
@@ -2171,12 +2101,8 @@
           "name": "document_sequences_division_id_divisions_id_fk",
           "tableFrom": "document_sequences",
           "tableTo": "divisions",
-          "columnsFrom": [
-            "division_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["division_id"],
+          "columnsTo": ["id"],
           "onDelete": "restrict",
           "onUpdate": "no action"
         }
@@ -2186,11 +2112,7 @@
         "document_sequences_division_type_year_unique": {
           "name": "document_sequences_division_type_year_unique",
           "nullsNotDistinct": false,
-          "columns": [
-            "division_id",
-            "document_type",
-            "year"
-          ]
+          "columns": ["division_id", "document_type", "year"]
         }
       },
       "policies": {},
@@ -2478,12 +2400,8 @@
           "name": "invoices_division_id_divisions_id_fk",
           "tableFrom": "invoices",
           "tableTo": "divisions",
-          "columnsFrom": [
-            "division_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["division_id"],
+          "columnsTo": ["id"],
           "onDelete": "restrict",
           "onUpdate": "no action"
         },
@@ -2491,12 +2409,8 @@
           "name": "invoices_client_id_clients_id_fk",
           "tableFrom": "invoices",
           "tableTo": "clients",
-          "columnsFrom": [
-            "client_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["client_id"],
+          "columnsTo": ["id"],
           "onDelete": "restrict",
           "onUpdate": "no action"
         },
@@ -2504,12 +2418,8 @@
           "name": "invoices_income_id_income_id_fk",
           "tableFrom": "invoices",
           "tableTo": "income",
-          "columnsFrom": [
-            "income_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["income_id"],
+          "columnsTo": ["id"],
           "onDelete": "set null",
           "onUpdate": "no action"
         }
@@ -2519,9 +2429,7 @@
         "invoices_document_number_unique": {
           "name": "invoices_document_number_unique",
           "nullsNotDistinct": false,
-          "columns": [
-            "document_number"
-          ]
+          "columns": ["document_number"]
         }
       },
       "policies": {},
@@ -2712,12 +2620,8 @@
           "name": "payment_allocations_income_id_income_id_fk",
           "tableFrom": "payment_allocations",
           "tableTo": "income",
-          "columnsFrom": [
-            "income_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["income_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         },
@@ -2725,12 +2629,8 @@
           "name": "payment_allocations_invoice_id_invoices_id_fk",
           "tableFrom": "payment_allocations",
           "tableTo": "invoices",
-          "columnsFrom": [
-            "invoice_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["invoice_id"],
+          "columnsTo": ["id"],
           "onDelete": "restrict",
           "onUpdate": "no action"
         }
@@ -2966,12 +2866,8 @@
           "name": "quotations_division_id_divisions_id_fk",
           "tableFrom": "quotations",
           "tableTo": "divisions",
-          "columnsFrom": [
-            "division_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["division_id"],
+          "columnsTo": ["id"],
           "onDelete": "restrict",
           "onUpdate": "no action"
         },
@@ -2979,12 +2875,8 @@
           "name": "quotations_client_id_clients_id_fk",
           "tableFrom": "quotations",
           "tableTo": "clients",
-          "columnsFrom": [
-            "client_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["client_id"],
+          "columnsTo": ["id"],
           "onDelete": "restrict",
           "onUpdate": "no action"
         }
@@ -2994,9 +2886,7 @@
         "quotations_document_number_unique": {
           "name": "quotations_document_number_unique",
           "nullsNotDistinct": false,
-          "columns": [
-            "document_number"
-          ]
+          "columns": ["document_number"]
         }
       },
       "policies": {},
@@ -3088,12 +2978,8 @@
           "name": "credit_applications_credit_note_id_credit_notes_id_fk",
           "tableFrom": "credit_applications",
           "tableTo": "credit_notes",
-          "columnsFrom": [
-            "credit_note_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["credit_note_id"],
+          "columnsTo": ["id"],
           "onDelete": "restrict",
           "onUpdate": "no action"
         },
@@ -3101,12 +2987,8 @@
           "name": "credit_applications_invoice_id_invoices_id_fk",
           "tableFrom": "credit_applications",
           "tableTo": "invoices",
-          "columnsFrom": [
-            "invoice_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["invoice_id"],
+          "columnsTo": ["id"],
           "onDelete": "restrict",
           "onUpdate": "no action"
         }
@@ -3301,12 +3183,8 @@
           "name": "credit_notes_client_id_clients_id_fk",
           "tableFrom": "credit_notes",
           "tableTo": "clients",
-          "columnsFrom": [
-            "client_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["client_id"],
+          "columnsTo": ["id"],
           "onDelete": "restrict",
           "onUpdate": "no action"
         },
@@ -3314,12 +3192,8 @@
           "name": "credit_notes_division_id_divisions_id_fk",
           "tableFrom": "credit_notes",
           "tableTo": "divisions",
-          "columnsFrom": [
-            "division_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["division_id"],
+          "columnsTo": ["id"],
           "onDelete": "restrict",
           "onUpdate": "no action"
         },
@@ -3327,12 +3201,8 @@
           "name": "credit_notes_original_invoice_id_invoices_id_fk",
           "tableFrom": "credit_notes",
           "tableTo": "invoices",
-          "columnsFrom": [
-            "original_invoice_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["original_invoice_id"],
+          "columnsTo": ["id"],
           "onDelete": "set null",
           "onUpdate": "no action"
         },
@@ -3340,12 +3210,8 @@
           "name": "credit_notes_original_payment_id_income_id_fk",
           "tableFrom": "credit_notes",
           "tableTo": "income",
-          "columnsFrom": [
-            "original_payment_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["original_payment_id"],
+          "columnsTo": ["id"],
           "onDelete": "set null",
           "onUpdate": "no action"
         }
@@ -3355,9 +3221,7 @@
         "credit_notes_document_number_unique": {
           "name": "credit_notes_document_number_unique",
           "nullsNotDistinct": false,
-          "columns": [
-            "document_number"
-          ]
+          "columns": ["document_number"]
         }
       },
       "policies": {},
@@ -3478,12 +3342,8 @@
           "name": "credit_refunds_credit_note_id_credit_notes_id_fk",
           "tableFrom": "credit_refunds",
           "tableTo": "credit_notes",
-          "columnsFrom": [
-            "credit_note_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["credit_note_id"],
+          "columnsTo": ["id"],
           "onDelete": "restrict",
           "onUpdate": "no action"
         },
@@ -3491,12 +3351,8 @@
           "name": "credit_refunds_client_id_clients_id_fk",
           "tableFrom": "credit_refunds",
           "tableTo": "clients",
-          "columnsFrom": [
-            "client_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["client_id"],
+          "columnsTo": ["id"],
           "onDelete": "restrict",
           "onUpdate": "no action"
         }
@@ -3681,12 +3537,8 @@
           "name": "email_audit_log_client_id_clients_id_fk",
           "tableFrom": "email_audit_log",
           "tableTo": "clients",
-          "columnsFrom": [
-            "client_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["client_id"],
+          "columnsTo": ["id"],
           "onDelete": "set null",
           "onUpdate": "no action"
         },
@@ -3694,12 +3546,8 @@
           "name": "email_audit_log_division_id_divisions_id_fk",
           "tableFrom": "email_audit_log",
           "tableTo": "divisions",
-          "columnsFrom": [
-            "division_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["division_id"],
+          "columnsTo": ["id"],
           "onDelete": "set null",
           "onUpdate": "no action"
         },
@@ -3707,12 +3555,8 @@
           "name": "email_audit_log_sent_by_user_id_fk",
           "tableFrom": "email_audit_log",
           "tableTo": "user",
-          "columnsFrom": [
-            "sent_by"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["sent_by"],
+          "columnsTo": ["id"],
           "onDelete": "restrict",
           "onUpdate": "no action"
         }
@@ -3722,9 +3566,7 @@
         "email_audit_log_idempotency_key_unique": {
           "name": "email_audit_log_idempotency_key_unique",
           "nullsNotDistinct": false,
-          "columns": [
-            "idempotency_key"
-          ]
+          "columns": ["idempotency_key"]
         }
       },
       "policies": {},
@@ -3941,9 +3783,7 @@
         "accounting_periods_period_unique": {
           "name": "accounting_periods_period_unique",
           "nullsNotDistinct": false,
-          "columns": [
-            "period"
-          ]
+          "columns": ["period"]
         }
       },
       "policies": {},
@@ -4073,9 +3913,7 @@
         "chart_accounts_code_unique": {
           "name": "chart_accounts_code_unique",
           "nullsNotDistinct": false,
-          "columns": [
-            "code"
-          ]
+          "columns": ["code"]
         }
       },
       "policies": {},
@@ -4284,12 +4122,8 @@
           "name": "journal_entries_division_id_divisions_id_fk",
           "tableFrom": "journal_entries",
           "tableTo": "divisions",
-          "columnsFrom": [
-            "division_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["division_id"],
+          "columnsTo": ["id"],
           "onDelete": "restrict",
           "onUpdate": "no action"
         }
@@ -4299,9 +4133,7 @@
         "journal_entries_entry_number_unique": {
           "name": "journal_entries_entry_number_unique",
           "nullsNotDistinct": false,
-          "columns": [
-            "entry_number"
-          ]
+          "columns": ["entry_number"]
         }
       },
       "policies": {},
@@ -4415,12 +4247,8 @@
           "name": "journal_lines_journal_entry_id_journal_entries_id_fk",
           "tableFrom": "journal_lines",
           "tableTo": "journal_entries",
-          "columnsFrom": [
-            "journal_entry_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["journal_entry_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         },
@@ -4428,12 +4256,8 @@
           "name": "journal_lines_account_id_chart_accounts_id_fk",
           "tableFrom": "journal_lines",
           "tableTo": "chart_accounts",
-          "columnsFrom": [
-            "account_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["account_id"],
+          "columnsTo": ["id"],
           "onDelete": "restrict",
           "onUpdate": "no action"
         }
@@ -4492,9 +4316,7 @@
         "journal_sequences_year_unique": {
           "name": "journal_sequences_year_unique",
           "nullsNotDistinct": false,
-          "columns": [
-            "year"
-          ]
+          "columns": ["year"]
         }
       },
       "policies": {},
@@ -4579,12 +4401,8 @@
           "name": "project_progress_items_section_id_fk",
           "tableFrom": "project_progress_items",
           "tableTo": "project_progress_sections",
-          "columnsFrom": [
-            "section_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["section_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         }
@@ -4668,12 +4486,8 @@
           "name": "project_progress_sections_project_id_fk",
           "tableFrom": "project_progress_sections",
           "tableTo": "project_schedule_entries",
-          "columnsFrom": [
-            "project_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["project_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         }
@@ -4896,12 +4710,8 @@
           "name": "project_schedule_entries_client_id_clients_id_fk",
           "tableFrom": "project_schedule_entries",
           "tableTo": "clients",
-          "columnsFrom": [
-            "client_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["client_id"],
+          "columnsTo": ["id"],
           "onDelete": "restrict",
           "onUpdate": "no action"
         },
@@ -4909,12 +4719,8 @@
           "name": "project_schedule_entries_division_id_divisions_id_fk",
           "tableFrom": "project_schedule_entries",
           "tableTo": "divisions",
-          "columnsFrom": [
-            "division_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["division_id"],
+          "columnsTo": ["id"],
           "onDelete": "restrict",
           "onUpdate": "no action"
         }
@@ -5024,12 +4830,8 @@
           "name": "compliance_documents_client_id_clients_id_fk",
           "tableFrom": "compliance_documents",
           "tableTo": "clients",
-          "columnsFrom": [
-            "client_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["client_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         }
@@ -5133,12 +4935,8 @@
           "name": "asset_transactions_asset_id_assets_id_fk",
           "tableFrom": "asset_transactions",
           "tableTo": "assets",
-          "columnsFrom": [
-            "asset_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["asset_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         }
@@ -5238,12 +5036,8 @@
           "name": "asset_valuations_asset_id_assets_id_fk",
           "tableFrom": "asset_valuations",
           "tableTo": "assets",
-          "columnsFrom": [
-            "asset_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["asset_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         }
@@ -5547,12 +5341,8 @@
           "name": "savings_contributions_goal_id_savings_goals_id_fk",
           "tableFrom": "savings_contributions",
           "tableTo": "savings_goals",
-          "columnsFrom": [
-            "goal_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["goal_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         }
@@ -5704,12 +5494,8 @@
           "name": "savings_goals_asset_id_assets_id_fk",
           "tableFrom": "savings_goals",
           "tableTo": "assets",
-          "columnsFrom": [
-            "asset_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["asset_id"],
+          "columnsTo": ["id"],
           "onDelete": "set null",
           "onUpdate": "no action"
         }
@@ -5953,12 +5739,8 @@
           "name": "recurring_expenses_division_id_divisions_id_fk",
           "tableFrom": "recurring_expenses",
           "tableTo": "divisions",
-          "columnsFrom": [
-            "division_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["division_id"],
+          "columnsTo": ["id"],
           "onDelete": "restrict",
           "onUpdate": "no action"
         },
@@ -5966,12 +5748,8 @@
           "name": "recurring_expenses_client_id_clients_id_fk",
           "tableFrom": "recurring_expenses",
           "tableTo": "clients",
-          "columnsFrom": [
-            "client_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["client_id"],
+          "columnsTo": ["id"],
           "onDelete": "set null",
           "onUpdate": "no action"
         }
@@ -6203,12 +5981,8 @@
           "name": "recurring_invoices_division_id_divisions_id_fk",
           "tableFrom": "recurring_invoices",
           "tableTo": "divisions",
-          "columnsFrom": [
-            "division_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["division_id"],
+          "columnsTo": ["id"],
           "onDelete": "restrict",
           "onUpdate": "no action"
         },
@@ -6216,12 +5990,8 @@
           "name": "recurring_invoices_client_id_clients_id_fk",
           "tableFrom": "recurring_invoices",
           "tableTo": "clients",
-          "columnsFrom": [
-            "client_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["client_id"],
+          "columnsTo": ["id"],
           "onDelete": "restrict",
           "onUpdate": "no action"
         }
@@ -6347,12 +6117,8 @@
           "name": "recurring_line_items_recurring_invoice_id_recurring_invoices_id_fk",
           "tableFrom": "recurring_line_items",
           "tableTo": "recurring_invoices",
-          "columnsFrom": [
-            "recurring_invoice_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["recurring_invoice_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         },
@@ -6360,12 +6126,8 @@
           "name": "recurring_line_items_item_id_billing_items_id_fk",
           "tableFrom": "recurring_line_items",
           "tableTo": "billing_items",
-          "columnsFrom": [
-            "item_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["item_id"],
+          "columnsTo": ["id"],
           "onDelete": "set null",
           "onUpdate": "no action"
         }
@@ -6390,93 +6152,47 @@
     "public.aws_package_type": {
       "name": "aws_package_type",
       "schema": "public",
-      "values": [
-        "monthly",
-        "once_off"
-      ]
+      "values": ["monthly", "once_off"]
     },
     "public.lead_status": {
       "name": "lead_status",
       "schema": "public",
-      "values": [
-        "new",
-        "contacted",
-        "converted",
-        "lost"
-      ]
+      "values": ["new", "contacted", "converted", "lost"]
     },
     "public.allocation_type": {
       "name": "allocation_type",
       "schema": "public",
-      "values": [
-        "salary",
-        "reinvest",
-        "reserve",
-        "flex",
-        "pmg_share"
-      ]
+      "values": ["salary", "reinvest", "reserve", "flex", "pmg_share"]
     },
     "public.entry_type": {
       "name": "entry_type",
       "schema": "public",
-      "values": [
-        "spend",
-        "transfer",
-        "adjustment"
-      ]
+      "values": ["spend", "transfer", "adjustment"]
     },
     "public.billing_document_type": {
       "name": "billing_document_type",
       "schema": "public",
-      "values": [
-        "quote",
-        "invoice"
-      ]
+      "values": ["quote", "invoice"]
     },
     "public.billing_item_status": {
       "name": "billing_item_status",
       "schema": "public",
-      "values": [
-        "active",
-        "archived"
-      ]
+      "values": ["active", "archived"]
     },
     "public.invoice_status": {
       "name": "invoice_status",
       "schema": "public",
-      "values": [
-        "draft",
-        "issued",
-        "partially_paid",
-        "paid",
-        "overdue",
-        "void",
-        "written_off"
-      ]
+      "values": ["draft", "issued", "partially_paid", "paid", "overdue", "void", "written_off"]
     },
     "public.quotation_status": {
       "name": "quotation_status",
       "schema": "public",
-      "values": [
-        "draft",
-        "sent",
-        "accepted",
-        "declined",
-        "expired",
-        "converted",
-        "cancelled"
-      ]
+      "values": ["draft", "sent", "accepted", "declined", "expired", "converted", "cancelled"]
     },
     "public.credit_note_status": {
       "name": "credit_note_status",
       "schema": "public",
-      "values": [
-        "active",
-        "partially_applied",
-        "fully_applied",
-        "expired",
-        "void"
-      ]
+      "values": ["active", "partially_applied", "fully_applied", "expired", "void"]
     },
     "public.credit_note_type": {
       "name": "credit_note_type",
@@ -6492,149 +6208,82 @@
     "public.email_audit_status": {
       "name": "email_audit_status",
       "schema": "public",
-      "values": [
-        "success",
-        "failed",
-        "cancelled"
-      ]
+      "values": ["success", "failed", "cancelled"]
     },
     "public.email_audit_type": {
       "name": "email_audit_type",
       "schema": "public",
-      "values": [
-        "overdue_reminder",
-        "payment_receipt",
-        "invoice",
-        "quote",
-        "custom"
-      ]
+      "values": ["overdue_reminder", "payment_receipt", "invoice", "quote", "custom"]
     },
     "public.account_type": {
       "name": "account_type",
       "schema": "public",
-      "values": [
-        "asset",
-        "liability",
-        "equity",
-        "revenue",
-        "expense"
-      ]
+      "values": ["asset", "liability", "equity", "revenue", "expense"]
     },
     "public.journal_entry_status": {
       "name": "journal_entry_status",
       "schema": "public",
-      "values": [
-        "draft",
-        "posted",
-        "void"
-      ]
+      "values": ["draft", "posted", "void"]
     },
     "public.period_status": {
       "name": "period_status",
       "schema": "public",
-      "values": [
-        "open",
-        "closed",
-        "locked"
-      ]
+      "values": ["open", "closed", "locked"]
     },
     "public.project_schedule_outcome": {
       "name": "project_schedule_outcome",
       "schema": "public",
-      "values": [
-        "won",
-        "lost",
-        "pending"
-      ]
+      "values": ["won", "lost", "pending"]
     },
     "public.project_schedule_priority": {
       "name": "project_schedule_priority",
       "schema": "public",
-      "values": [
-        "low",
-        "normal",
-        "high",
-        "urgent"
-      ]
+      "values": ["low", "normal", "high", "urgent"]
     },
     "public.project_schedule_status": {
       "name": "project_schedule_status",
       "schema": "public",
-      "values": [
-        "planned",
-        "in_progress",
-        "completed",
-        "submitted",
-        "cancelled"
-      ]
+      "values": ["planned", "in_progress", "completed", "submitted", "cancelled"]
     },
     "public.project_task_status": {
       "name": "project_task_status",
       "schema": "public",
-      "values": [
-        "backlog",
-        "in_progress",
-        "completed"
-      ]
+      "values": ["backlog", "in_progress", "completed"]
     },
     "public.asset_kind": {
       "name": "asset_kind",
       "schema": "public",
-      "values": [
-        "fixed_asset",
-        "investment"
-      ]
+      "values": ["fixed_asset", "investment"]
     },
     "public.asset_status": {
       "name": "asset_status",
       "schema": "public",
-      "values": [
-        "active",
-        "disposed"
-      ]
+      "values": ["active", "disposed"]
     },
     "public.asset_transaction_type": {
       "name": "asset_transaction_type",
       "schema": "public",
-      "values": [
-        "deposit",
-        "withdrawal"
-      ]
+      "values": ["deposit", "withdrawal"]
     },
     "public.savings_contribution_type": {
       "name": "savings_contribution_type",
       "schema": "public",
-      "values": [
-        "deposit",
-        "withdrawal"
-      ]
+      "values": ["deposit", "withdrawal"]
     },
     "public.savings_goal_status": {
       "name": "savings_goal_status",
       "schema": "public",
-      "values": [
-        "saving",
-        "purchased",
-        "cancelled"
-      ]
+      "values": ["saving", "purchased", "cancelled"]
     },
     "public.recurring_expense_status": {
       "name": "recurring_expense_status",
       "schema": "public",
-      "values": [
-        "active",
-        "paused",
-        "cancelled"
-      ]
+      "values": ["active", "paused", "cancelled"]
     },
     "public.recurring_invoice_status": {
       "name": "recurring_invoice_status",
       "schema": "public",
-      "values": [
-        "active",
-        "paused",
-        "cancelled"
-      ]
+      "values": ["active", "paused", "cancelled"]
     }
   },
   "schemas": {},
