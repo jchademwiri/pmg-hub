@@ -1,37 +1,37 @@
 // Send utilities
-export { sendEmail, createEmailClient, renderEmailTemplate } from "./send";
-export type { ResendConfig, EmailPayload, SendResult } from "./send";
+export { sendEmail, createEmailClient, renderEmailTemplate } from './send';
+export type { ResendConfig, EmailPayload, SendResult } from './send';
 
 // Shared branding interface
-export type { BrandingProps } from "./types";
+export type { BrandingProps } from './types';
 
 // Templates
-export { default as AdminNewLeadEmail } from "./templates/AdminNewLeadEmail";
-export { default as AutoReplyEmail } from "./templates/AutoReplyEmail";
-export { default as InvoiceDeliveryEmail } from "./templates/InvoiceDeliveryEmail";
-export { default as StatementDeliveryEmail } from "./templates/StatementDeliveryEmail";
-export { default as QuoteDeliveryEmail } from "./templates/QuoteDeliveryEmail";
-export { default as PaymentThankYouEmail } from "./templates/PaymentThankYouEmail";
-export { default as OutstandingReminderEmail } from "./templates/OutstandingReminderEmail";
-export { default as MagicLinkEmail } from "./templates/MagicLinkEmail";
-export { default as InvitationEmail } from "./templates/InvitationEmail";
-export { default as AdminQuoteAcceptedEmail } from "./templates/AdminQuoteAcceptedEmail";
-export { default as PortalInvitationEmail } from "./templates/PortalInvitationEmail";
-export { default as ComplianceReminderEmail } from "./templates/ComplianceReminderEmail";
+export { default as AdminNewLeadEmail } from './templates/AdminNewLeadEmail';
+export { default as AutoReplyEmail } from './templates/AutoReplyEmail';
+export { default as InvoiceDeliveryEmail } from './templates/InvoiceDeliveryEmail';
+export { default as StatementDeliveryEmail } from './templates/StatementDeliveryEmail';
+export { default as QuoteDeliveryEmail } from './templates/QuoteDeliveryEmail';
+export { default as PaymentThankYouEmail } from './templates/PaymentThankYouEmail';
+export { default as OutstandingReminderEmail } from './templates/OutstandingReminderEmail';
+export { default as MagicLinkEmail } from './templates/MagicLinkEmail';
+export { default as InvitationEmail } from './templates/InvitationEmail';
+export { default as AdminQuoteAcceptedEmail } from './templates/AdminQuoteAcceptedEmail';
+export { default as PortalInvitationEmail } from './templates/PortalInvitationEmail';
+export { default as ComplianceReminderEmail } from './templates/ComplianceReminderEmail';
 
 // Template prop types
-export type { AdminNewLeadEmailProps } from "./templates/AdminNewLeadEmail";
-export type { AutoReplyEmailProps } from "./templates/AutoReplyEmail";
-export type { InvoiceDeliveryEmailProps } from "./templates/InvoiceDeliveryEmail";
-export type { StatementDeliveryEmailProps } from "./templates/StatementDeliveryEmail";
-export type { QuoteDeliveryEmailProps } from "./templates/QuoteDeliveryEmail";
-export type { PaymentThankYouEmailProps } from "./templates/PaymentThankYouEmail";
-export type { OutstandingReminderEmailProps } from "./templates/OutstandingReminderEmail";
-export type { MagicLinkEmailProps } from "./templates/MagicLinkEmail";
-export type { InvitationEmailProps } from "./templates/InvitationEmail";
-export type { AdminQuoteAcceptedEmailProps } from "./templates/AdminQuoteAcceptedEmail";
-export type { PortalInvitationEmailProps } from "./templates/PortalInvitationEmail";
-export type { ComplianceReminderEmailProps } from "./templates/ComplianceReminderEmail";
+export type { AdminNewLeadEmailProps } from './templates/AdminNewLeadEmail';
+export type { AutoReplyEmailProps } from './templates/AutoReplyEmail';
+export type { InvoiceDeliveryEmailProps } from './templates/InvoiceDeliveryEmail';
+export type { StatementDeliveryEmailProps } from './templates/StatementDeliveryEmail';
+export type { QuoteDeliveryEmailProps } from './templates/QuoteDeliveryEmail';
+export type { PaymentThankYouEmailProps } from './templates/PaymentThankYouEmail';
+export type { OutstandingReminderEmailProps } from './templates/OutstandingReminderEmail';
+export type { MagicLinkEmailProps } from './templates/MagicLinkEmail';
+export type { InvitationEmailProps } from './templates/InvitationEmail';
+export type { AdminQuoteAcceptedEmailProps } from './templates/AdminQuoteAcceptedEmail';
+export type { PortalInvitationEmailProps } from './templates/PortalInvitationEmail';
+export type { ComplianceReminderEmailProps } from './templates/ComplianceReminderEmail';
 
 // Central config
 export {
@@ -46,14 +46,12 @@ export {
   DEFAULT_WEBSITE_URL,
   getResendApiKey,
   resolveDivisionAdminEmail,
+  resolveDivisionSenderName,
   resolveFromEmail,
   resolveResendApiKey,
   resolveDefaultFromEmail,
-} from "./domains";
-export type { BrandKey } from "./domains";
+} from './domains';
+export type { BrandKey } from './domains';
 
-export {
-  resolveBrandEmailConfig,
-  toResendConfig,
-} from "./brand-config";
-export type { BrandEmailConfig } from "./brand-config";
+export { resolveBrandEmailConfig, toResendConfig } from './brand-config';
+export type { BrandEmailConfig } from './brand-config';

@@ -1,7 +1,17 @@
 'use server';
 
 import { revalidatePath } from 'next/cache';
-import { getDb, invoices, quotations, clients, divisionBillingSettings, divisions, eq, income, sql } from '@pmg/db';
+import {
+  getDb,
+  invoices,
+  quotations,
+  clients,
+  divisionBillingSettings,
+  divisions,
+  eq,
+  income,
+  sql,
+} from '@pmg/db';
 import { issueInvoiceInternal } from './billing-invoices';
 import { generateReceiptNumber } from '@pmg/utils';
 import { getSessionOrRedirect } from '@/lib/auth';
@@ -11,11 +21,11 @@ import {
   InvoiceDeliveryEmail,
   QuoteDeliveryEmail,
   StatementDeliveryEmail,
-  DEFAULT_EMAIL_FROM,
   DEFAULT_REPLY_TO,
   DEFAULT_WEBSITE_URL,
   renderEmailTemplate,
   resolveDivisionAdminEmail,
+  resolveDivisionSenderName,
   resolveFromEmail,
   resolveResendApiKey,
   resolveDefaultFromEmail,
@@ -30,67 +40,83 @@ const CustomAttachmentSchema = z.object({
   content: z.string(), // base64 string
 });
 
-const CommaSeparatedEmails = z.string()
+const CommaSeparatedEmails = z
+  .string()
   .optional()
   .transform((val) => {
     if (!val || !val.trim()) return undefined;
-    return val.split(',').map(email => email.trim()).filter(Boolean).join(', ');
+    return val
+      .split(',')
+      .map((email) => email.trim())
+      .filter(Boolean)
+      .join(', ');
   })
-  .refine((val) => {
-    if (val === undefined) return true;
-    const emails = val.split(', ');
-    return emails.every((email) => z.string().email().safeParse(email).success);
-  }, {
-    message: "Invalid email address in CC/BCC list.",
+  .refine(
+    (val) => {
+      if (val === undefined) return true;
+      const emails = val.split(', ');
+      return emails.every((email) => z.string().email().safeParse(email).success);
+    },
+    {
+      message: 'Invalid email address in CC/BCC list.',
+    },
+  );
+
+const EmailPayloadSchema = z
+  .object({
+    documentId: z.string().uuid(),
+    documentType: z.enum(['invoice', 'quote', 'statement']),
+    recipientEmail: z.string().email(),
+    cc: CommaSeparatedEmails,
+    bcc: CommaSeparatedEmails,
+    subject: z.string().min(3),
+    personalMessage: z.string().optional(),
+    base64Pdf: z.string().min(100),
+    base64StatementPdf: z.string().optional(), // Statement PDF is optional and only for Invoices
+    customAttachments: z.array(CustomAttachmentSchema).optional(),
+    statementData: z
+      .object({
+        statementDate: z.string(),
+        period: z.string(),
+        totalAmountDue: z.string(),
+        type: z.enum(['activity', 'outstanding']).optional(),
+      })
+      .optional(),
+  })
+  .superRefine((payload, ctx) => {
+    if (payload.documentType === 'statement' && !payload.statementData) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ['statementData'],
+        message: 'Statement data is required for statement delivery.',
+      });
+    }
   });
 
-const EmailPayloadSchema = z.object({
-  documentId: z.string().uuid(),
-  documentType: z.enum(['invoice', 'quote', 'statement']),
-  recipientEmail: z.string().email(),
-  cc: CommaSeparatedEmails,
-  bcc: CommaSeparatedEmails,
-  subject: z.string().min(3),
-  personalMessage: z.string().optional(),
-  base64Pdf: z.string().min(100),
-  base64StatementPdf: z.string().optional(), // Statement PDF is optional and only for Invoices
-  customAttachments: z.array(CustomAttachmentSchema).optional(),
-  statementData: z.object({
-    statementDate: z.string(),
-    period: z.string(),
-    totalAmountDue: z.string(),
-    type: z.enum(['activity', 'outstanding']).optional(),
-  }).optional(),
-}).superRefine((payload, ctx) => {
-  if (payload.documentType === 'statement' && !payload.statementData) {
-    ctx.addIssue({
-      code: z.ZodIssueCode.custom,
-      path: ['statementData'],
-      message: 'Statement data is required for statement delivery.',
-    });
-  }
-});
-
-const EmailPreviewPayloadSchema = z.object({
-  documentId: z.string().uuid(),
-  documentType: z.enum(['invoice', 'quote', 'statement']),
-  personalMessage: z.string().optional(),
-  hasStatementAttached: z.boolean().optional(),
-  statementData: z.object({
-    statementDate: z.string(),
-    period: z.string(),
-    totalAmountDue: z.string(),
-    type: z.enum(['activity', 'outstanding']).optional(),
-  }).optional(),
-}).superRefine((payload, ctx) => {
-  if (payload.documentType === 'statement' && !payload.statementData) {
-    ctx.addIssue({
-      code: z.ZodIssueCode.custom,
-      path: ['statementData'],
-      message: 'Statement data is required for statement preview.',
-    });
-  }
-});
+const EmailPreviewPayloadSchema = z
+  .object({
+    documentId: z.string().uuid(),
+    documentType: z.enum(['invoice', 'quote', 'statement']),
+    personalMessage: z.string().optional(),
+    hasStatementAttached: z.boolean().optional(),
+    statementData: z
+      .object({
+        statementDate: z.string(),
+        period: z.string(),
+        totalAmountDue: z.string(),
+        type: z.enum(['activity', 'outstanding']).optional(),
+      })
+      .optional(),
+  })
+  .superRefine((payload, ctx) => {
+    if (payload.documentType === 'statement' && !payload.statementData) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ['statementData'],
+        message: 'Statement data is required for statement preview.',
+      });
+    }
+  });
 
 // resolveFromEmail is now imported from @pmg/emails
 
@@ -103,8 +129,6 @@ function getPdfAttachmentError(base64: string | undefined, label: string) {
   return validateEmailPdfAttachment(base64, label);
 }
 
-
-
 export async function getDocumentEmailPreviewAction(rawPayload: unknown): Promise<{
   success: boolean;
   html?: string;
@@ -115,10 +139,14 @@ export async function getDocumentEmailPreviewAction(rawPayload: unknown): Promis
 
     const parsed = EmailPreviewPayloadSchema.safeParse(rawPayload);
     if (!parsed.success) {
-      return { success: false, error: parsed.error.issues[0]?.message ?? 'Invalid preview request.' };
+      return {
+        success: false,
+        error: parsed.error.issues[0]?.message ?? 'Invalid preview request.',
+      };
     }
 
-    const { documentId, documentType, personalMessage, hasStatementAttached, statementData } = parsed.data;
+    const { documentId, documentType, personalMessage, hasStatementAttached, statementData } =
+      parsed.data;
     const db = getDb();
 
     if (documentType === 'statement') {
@@ -130,7 +158,10 @@ export async function getDocumentEmailPreviewAction(rawPayload: unknown): Promis
       if (client.divisionId) {
         const [div] = await db.select().from(divisions).where(eq(divisions.id, client.divisionId));
         if (div) divisionName = div.name;
-        [billingConfig] = await db.select().from(divisionBillingSettings).where(eq(divisionBillingSettings.divisionId, client.divisionId));
+        [billingConfig] = await db
+          .select()
+          .from(divisionBillingSettings)
+          .where(eq(divisionBillingSettings.divisionId, client.divisionId));
       } else {
         [billingConfig] = await db.select().from(divisionBillingSettings).limit(1);
       }
@@ -273,14 +304,26 @@ export async function sendDocumentEmailAction(rawPayload: unknown) {
   try {
     // 1. Verify active session
     await getSessionOrRedirect();
-    
+
     // 2. Validate payload input
     const parsed = EmailPayloadSchema.safeParse(rawPayload);
     if (!parsed.success) {
       return { error: parsed.error.issues[0]?.message ?? 'Invalid request parameters.' };
     }
-    
-    const { documentId, documentType, recipientEmail, cc, bcc, subject, personalMessage, base64Pdf, base64StatementPdf, customAttachments, statementData } = parsed.data;
+
+    const {
+      documentId,
+      documentType,
+      recipientEmail,
+      cc,
+      bcc,
+      subject,
+      personalMessage,
+      base64Pdf,
+      base64StatementPdf,
+      customAttachments,
+      statementData,
+    } = parsed.data;
     const pdfError =
       getPdfAttachmentError(base64Pdf, `${documentType === 'invoice' ? 'Invoice' : 'Quote'} PDF`) ??
       getPdfAttachmentError(base64StatementPdf, 'Statement PDF');
@@ -309,11 +352,8 @@ export async function sendDocumentEmailAction(rawPayload: unknown) {
 
       if (!invoice) return { error: 'Invoice not found.' };
 
-      const [client] = await db
-        .select()
-        .from(clients)
-        .where(eq(clients.id, invoice.clientId!));
-        
+      const [client] = await db.select().from(clients).where(eq(clients.id, invoice.clientId!));
+
       const [billingConfig] = await db
         .select()
         .from(divisionBillingSettings)
@@ -322,8 +362,8 @@ export async function sendDocumentEmailAction(rawPayload: unknown) {
       // Load environment variables for email client
       const apiKey = resolveResendApiKey(invoice.divisionName);
       const defaultFrom = resolveDefaultFromEmail(invoice.divisionName);
-      const fromName = billingConfig?.salesRepName || process.env.EMAIL_FROM_NAME || 'PMG Admin';
-      
+      const fromName = resolveDivisionSenderName(invoice.divisionName);
+
       // Resolve dynamic info. subdomain sender
       const fromEmail = resolveFromEmail(billingConfig?.divisionWebsite, defaultFrom);
 
@@ -351,12 +391,14 @@ export async function sendDocumentEmailAction(rawPayload: unknown) {
         logoUrl: billingConfig?.logoUrl || undefined,
         hasStatementAttached: !!base64StatementPdf,
         portalUrl,
-        bankDetails: billingConfig ? {
-          bankName: billingConfig.bankName || '',
-          accountName: billingConfig.bankAccountName || '',
-          accountNumber: billingConfig.bankAccountNumber || '',
-          branchCode: billingConfig.bankBranchCode || '',
-        } : undefined,
+        bankDetails: billingConfig
+          ? {
+              bankName: billingConfig.bankName || '',
+              accountName: billingConfig.bankAccountName || '',
+              accountNumber: billingConfig.bankAccountNumber || '',
+              branchCode: billingConfig.bankBranchCode || '',
+            }
+          : undefined,
       };
 
       // Set up attachments list
@@ -364,12 +406,15 @@ export async function sendDocumentEmailAction(rawPayload: unknown) {
         {
           filename: `${invoice.documentNumber}.pdf`,
           content: Buffer.from(base64Pdf, 'base64'),
-        }
+        },
       ];
 
       // If statement is also attached, add it to the list
       if (base64StatementPdf) {
-        const clientCleanName = (client?.businessName || client?.name || 'Client').replace(/[^a-zA-Z0-9]/g, '_');
+        const clientCleanName = (client?.businessName || client?.name || 'Client').replace(
+          /[^a-zA-Z0-9]/g,
+          '_',
+        );
         attachments.push({
           filename: `Statement-${clientCleanName}.pdf`,
           content: Buffer.from(base64StatementPdf, 'base64'),
@@ -387,7 +432,10 @@ export async function sendDocumentEmailAction(rawPayload: unknown) {
       }
 
       // CC the division admin so they always have a copy
-      const adminCc = resolveDivisionAdminEmail(invoice.divisionName, billingConfig?.salesRepEmail ?? null);
+      const adminCc = resolveDivisionAdminEmail(
+        invoice.divisionName,
+        billingConfig?.salesRepEmail ?? null,
+      );
 
       const ccRecipients: string[] = [];
       if (adminCc) ccRecipients.push(adminCc);
@@ -429,7 +477,7 @@ export async function sendDocumentEmailAction(rawPayload: unknown) {
 
       return { success: true, sendId: data?.id };
 
-    // ── QUOTATION DELIVERY FLOW ──────────────────────────────────────────────
+      // ── QUOTATION DELIVERY FLOW ──────────────────────────────────────────────
     } else if (documentType === 'quote') {
       const [quote] = await db
         .select({
@@ -450,11 +498,8 @@ export async function sendDocumentEmailAction(rawPayload: unknown) {
 
       if (!quote) return { error: 'Quotation not found.' };
 
-      const [client] = await db
-        .select()
-        .from(clients)
-        .where(eq(clients.id, quote.clientId!));
-        
+      const [client] = await db.select().from(clients).where(eq(clients.id, quote.clientId!));
+
       const [billingConfig] = await db
         .select()
         .from(divisionBillingSettings)
@@ -462,8 +507,8 @@ export async function sendDocumentEmailAction(rawPayload: unknown) {
 
       const apiKey = resolveResendApiKey(quote.divisionName);
       const defaultFrom = resolveDefaultFromEmail(quote.divisionName);
-      const fromName = billingConfig?.salesRepName || process.env.EMAIL_FROM_NAME || 'PMG Admin';
-      
+      const fromName = resolveDivisionSenderName(quote.divisionName);
+
       const fromEmail = resolveFromEmail(billingConfig?.divisionWebsite, defaultFrom);
 
       const emailClient = createEmailClient({
@@ -489,16 +534,21 @@ export async function sendDocumentEmailAction(rawPayload: unknown) {
         websiteUrl: billingConfig?.divisionWebsite || DEFAULT_WEBSITE_URL,
         logoUrl: billingConfig?.logoUrl || undefined,
         portalUrl,
-        bankDetails: billingConfig ? {
-          bankName: billingConfig.bankName || '',
-          accountName: billingConfig.bankAccountName || '',
-          accountNumber: billingConfig.bankAccountNumber || '',
-          branchCode: billingConfig.bankBranchCode || '',
-        } : undefined,
+        bankDetails: billingConfig
+          ? {
+              bankName: billingConfig.bankName || '',
+              accountName: billingConfig.bankAccountName || '',
+              accountNumber: billingConfig.bankAccountNumber || '',
+              branchCode: billingConfig.bankBranchCode || '',
+            }
+          : undefined,
       };
 
       // CC the division admin so they always have a copy
-      const adminCc = resolveDivisionAdminEmail(quote.divisionName, billingConfig?.salesRepEmail ?? null);
+      const adminCc = resolveDivisionAdminEmail(
+        quote.divisionName,
+        billingConfig?.salesRepEmail ?? null,
+      );
 
       const ccRecipients: string[] = [];
       if (adminCc) ccRecipients.push(adminCc);
@@ -520,8 +570,8 @@ export async function sendDocumentEmailAction(rawPayload: unknown) {
           ...(customAttachments || []).map((att) => ({
             filename: att.filename,
             content: Buffer.from(att.content, 'base64'),
-          }))
-        ]
+          })),
+        ],
       });
 
       if (error) {
@@ -541,7 +591,7 @@ export async function sendDocumentEmailAction(rawPayload: unknown) {
 
       return { success: true, sendId: data?.id };
 
-    // ── STATEMENT DELIVERY FLOW ──────────────────────────────────────────────
+      // ── STATEMENT DELIVERY FLOW ──────────────────────────────────────────────
     } else if (documentType === 'statement') {
       const [client] = await db.select().from(clients).where(eq(clients.id, documentId));
       if (!client) return { error: 'Client not found.' };
@@ -551,14 +601,17 @@ export async function sendDocumentEmailAction(rawPayload: unknown) {
       if (client.divisionId) {
         const [div] = await db.select().from(divisions).where(eq(divisions.id, client.divisionId));
         if (div) divisionName = div.name;
-        [billingConfig] = await db.select().from(divisionBillingSettings).where(eq(divisionBillingSettings.divisionId, client.divisionId));
+        [billingConfig] = await db
+          .select()
+          .from(divisionBillingSettings)
+          .where(eq(divisionBillingSettings.divisionId, client.divisionId));
       } else {
         [billingConfig] = await db.select().from(divisionBillingSettings).limit(1);
       }
 
       const apiKey = resolveResendApiKey(divisionName);
       const defaultFrom = resolveDefaultFromEmail(divisionName);
-      const fromName = billingConfig?.salesRepName || process.env.EMAIL_FROM_NAME || 'PMG Admin';
+      const fromName = resolveDivisionSenderName(divisionName);
       const fromEmail = resolveFromEmail(billingConfig?.divisionWebsite, defaultFrom);
 
       const emailClient = createEmailClient({
@@ -593,7 +646,7 @@ export async function sendDocumentEmailAction(rawPayload: unknown) {
         {
           filename: `Statement-${(client.businessName || client.name || 'Client').replace(/[^a-zA-Z0-9]/g, '_')}.pdf`,
           content: Buffer.from(base64Pdf, 'base64'), // Note: base64Pdf carries the Statement PDF here
-        }
+        },
       ];
 
       const { data, error } = await emailClient({
@@ -640,7 +693,16 @@ export async function sendReceiptEmailAction(rawPayload: unknown) {
       return { error: parsed.error.issues[0]?.message ?? 'Invalid request parameters.' };
     }
 
-    const { incomeId, recipientEmail, cc, bcc, subject, personalMessage, base64Pdf, customAttachments } = parsed.data;
+    const {
+      incomeId,
+      recipientEmail,
+      cc,
+      bcc,
+      subject,
+      personalMessage,
+      base64Pdf,
+      customAttachments,
+    } = parsed.data;
     const pdfError = getPdfAttachmentError(base64Pdf, 'Receipt PDF');
     if (pdfError) return { error: pdfError };
 
@@ -663,10 +725,7 @@ export async function sendReceiptEmailAction(rawPayload: unknown) {
 
     if (!incomeRow) return { error: 'Payment receipt not found.' };
 
-    const [client] = await db
-      .select()
-      .from(clients)
-      .where(eq(clients.id, incomeRow.clientId!));
+    const [client] = await db.select().from(clients).where(eq(clients.id, incomeRow.clientId!));
 
     const [billingConfig] = await db
       .select()
@@ -692,10 +751,13 @@ export async function sendReceiptEmailAction(rawPayload: unknown) {
       ...(customAttachments || []).map((att) => ({
         filename: att.filename,
         content: Buffer.from(att.content, 'base64'),
-      }))
+      })),
     ];
 
-    const adminCc = resolveDivisionAdminEmail(incomeRow.divisionName, billingConfig?.salesRepEmail ?? null);
+    const adminCc = resolveDivisionAdminEmail(
+      incomeRow.divisionName,
+      billingConfig?.salesRepEmail ?? null,
+    );
 
     const clientName = client?.businessName || client?.name || 'Client';
     const htmlBody = `
@@ -765,13 +827,18 @@ export async function getReceiptEmailPreviewAction(rawPayload: unknown): Promise
   try {
     await getSessionOrRedirect();
 
-    const parsed = z.object({
-      incomeId: z.string().uuid(),
-      personalMessage: z.string().optional(),
-    }).safeParse(rawPayload);
+    const parsed = z
+      .object({
+        incomeId: z.string().uuid(),
+        personalMessage: z.string().optional(),
+      })
+      .safeParse(rawPayload);
 
     if (!parsed.success) {
-      return { success: false, error: parsed.error.issues[0]?.message ?? 'Invalid preview request.' };
+      return {
+        success: false,
+        error: parsed.error.issues[0]?.message ?? 'Invalid preview request.',
+      };
     }
 
     const { incomeId, personalMessage } = parsed.data;
@@ -793,10 +860,7 @@ export async function getReceiptEmailPreviewAction(rawPayload: unknown): Promise
 
     if (!incomeRow) return { success: false, error: 'Payment receipt not found.' };
 
-    const [client] = await db
-      .select()
-      .from(clients)
-      .where(eq(clients.id, incomeRow.clientId!));
+    const [client] = await db.select().from(clients).where(eq(clients.id, incomeRow.clientId!));
 
     const clientName = client?.businessName || client?.name || 'Client';
     const htmlBody = `
