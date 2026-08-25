@@ -131,9 +131,14 @@ export function RecurringClient({
       if (res.error) {
         setActionMessage({ type: 'error', text: res.error });
       } else {
+        const emailNote = res.emailFailureCount
+          ? ` ${res.emailFailureCount} email(s) failed to send — check client email addresses and try again.`
+          : res.generatedCount
+            ? ' Emailed to clients with their statement attached.'
+            : '';
         setActionMessage({
-          type: 'success',
-          text: `Successfully processed recurring run: ${res.generatedCount ?? 0} invoice(s) generated & issued.`,
+          type: res.emailFailureCount ? 'error' : 'success',
+          text: `Successfully processed recurring run: ${res.generatedCount ?? 0} invoice(s) generated & issued.${emailNote}`,
         });
       }
     });

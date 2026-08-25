@@ -9,6 +9,9 @@ import {
   invoices,
   billingLineItems,
   expenses,
+  clients,
+  divisions,
+  divisionBillingSettings,
   eq,
   and,
   sql,
@@ -19,8 +22,21 @@ import {
 } from '@pmg/db';
 import { getSessionOrRedirect } from '@/lib/auth';
 import { postInvoiceIssueJournalEntry, postExpenseJournalEntry } from '@/lib/accounting/posting';
-import { getSASTParts, getSASTToday, fmtDateLong } from '@/lib/format';
+import { getSASTParts, getSASTToday, fmtDate, fmtDateLong } from '@/lib/format';
 import { isPeriodClosed, getMinAllowedDate, getMinDateErrorMessage } from '@/lib/date-rules';
+import { generateBillingPdf } from '@/lib/server-billing-pdf';
+import { getPortalBaseUrl } from '@/lib/portal-url';
+import {
+  createEmailClient,
+  InvoiceDeliveryEmail,
+  DEFAULT_REPLY_TO,
+  DEFAULT_WEBSITE_URL,
+  resolveDivisionAdminEmail,
+  resolveFromEmail,
+  resolveResendApiKey,
+  resolveDefaultFromEmail,
+} from '@pmg/emails';
+import React from 'react';
 
 export interface CreateRecurringInvoiceInput {
   divisionId: string;
@@ -81,6 +97,110 @@ function calcTotals(
   const total = vatBase + vatAmount;
 
   return { subtotal, discountAmount, vatAmount, total };
+}
+
+function formatMoney(amount: string) {
+  return `R ${Number(amount).toLocaleString('en-ZA', { minimumFractionDigits: 2 })}`;
+}
+
+/**
+ * Emails a freshly generated recurring invoice to the client, with a copy of
+ * their current outstanding statement (which includes this invoice, since it
+ * has already been committed by the time this runs) attached alongside it.
+ * Best-effort: failures are returned as an error string rather than thrown,
+ * so a delivery failure never rolls back the invoice that was already issued.
+ */
+async function sendRecurringInvoiceEmail(params: {
+  invoiceId: string;
+  clientId: string;
+  divisionId: string;
+  documentNumber: string;
+  invoiceDate: string;
+  dueDate: string;
+  reference: string | null;
+  total: string;
+}): Promise<{ error?: string }> {
+  const db = getDb();
+
+  const [client] = await db.select().from(clients).where(eq(clients.id, params.clientId));
+  if (!client?.email) return { error: `Client has no email address on file.` };
+
+  const [division] = await db.select().from(divisions).where(eq(divisions.id, params.divisionId));
+  const divisionName = division?.name;
+
+  const [billingConfig] = await db
+    .select()
+    .from(divisionBillingSettings)
+    .where(eq(divisionBillingSettings.divisionId, params.divisionId));
+
+  const [invoicePdf, statementPdf] = await Promise.all([
+    generateBillingPdf('invoice', params.invoiceId),
+    generateBillingPdf('statement', params.clientId, { statementType: 'outstanding' }),
+  ]);
+
+  if (!invoicePdf) return { error: 'Failed to generate invoice PDF.' };
+
+  const apiKey = resolveResendApiKey(divisionName);
+  const defaultFrom = resolveDefaultFromEmail(divisionName);
+  const fromName = billingConfig?.salesRepName || process.env.EMAIL_FROM_NAME || 'PMG Admin';
+  const fromEmail = resolveFromEmail(billingConfig?.divisionWebsite, defaultFrom);
+
+  const emailClient = createEmailClient({
+    apiKey,
+    from: `${fromName} <${fromEmail}>`,
+    adminEmail: fromEmail,
+  });
+
+  const portalUrl = `${getPortalBaseUrl()}/invoices/${params.invoiceId}`;
+
+  const emailProps = {
+    clientName: client.businessName || client.name || 'Client',
+    documentNumber: params.documentNumber,
+    invoiceDate: fmtDate(params.invoiceDate),
+    dueDate: fmtDate(params.dueDate),
+    totalAmount: formatMoney(params.total),
+    reference: params.reference || undefined,
+    companyName: divisionName || 'Playhouse Media Group',
+    primaryColor: '#1d4ed8',
+    websiteUrl: billingConfig?.divisionWebsite || DEFAULT_WEBSITE_URL,
+    logoUrl: billingConfig?.logoUrl || undefined,
+    hasStatementAttached: !!statementPdf,
+    portalUrl,
+    bankDetails: billingConfig
+      ? {
+          bankName: billingConfig.bankName || '',
+          accountName: billingConfig.bankAccountName || '',
+          accountNumber: billingConfig.bankAccountNumber || '',
+          branchCode: billingConfig.bankBranchCode || '',
+        }
+      : undefined,
+  };
+
+  const attachments = [{ filename: `${params.documentNumber}.pdf`, content: invoicePdf.buffer }];
+  if (statementPdf) {
+    const clientCleanName = (client.businessName || client.name || 'Client').replace(
+      /[^a-zA-Z0-9]/g,
+      '_',
+    );
+    attachments.push({
+      filename: `Statement-${clientCleanName}.pdf`,
+      content: statementPdf.buffer,
+    });
+  }
+
+  const adminCc = resolveDivisionAdminEmail(divisionName, billingConfig?.salesRepEmail ?? null);
+
+  const { error } = await emailClient({
+    to: client.email,
+    cc: adminCc ? [adminCc] : undefined,
+    subject: `Invoice ${params.documentNumber} from ${divisionName || 'Playhouse Media Group'}`,
+    react: React.createElement(InvoiceDeliveryEmail, emailProps),
+    replyTo: DEFAULT_REPLY_TO,
+    attachments,
+  });
+
+  if (error) return { error: `Failed to deliver email: ${error.message}` };
+  return {};
 }
 
 function calculateInitialNextRunDate(cycleDay = 25): string {
@@ -401,7 +521,7 @@ export async function setRecurringInvoiceStatus(
  */
 export async function triggerRecurringBillingRun(
   asOfDate?: string,
-): Promise<{ error?: string; generatedCount?: number }> {
+): Promise<{ error?: string; generatedCount?: number; emailFailureCount?: number }> {
   try {
     const session = await getSessionOrRedirect();
     const db = getDb();
@@ -423,6 +543,7 @@ export async function triggerRecurringBillingRun(
     }
 
     let generatedCount = 0;
+    let emailFailureCount = 0;
 
     for (const schedule of dueSchedules) {
       const lineItems = await db
@@ -455,6 +576,8 @@ export async function triggerRecurringBillingRun(
       const year = Number(invoiceDate.slice(0, 4));
       const documentNumber = await getNextDocumentNumber(schedule.divisionId, 'invoice', year);
 
+      let insertedInvoiceId: string | undefined;
+
       try {
         await db.transaction(async (tx) => {
           // 1. Insert official invoice in 'issued' status
@@ -484,6 +607,7 @@ export async function triggerRecurringBillingRun(
             .returning({ id: invoices.id });
 
           if (!inv) throw new Error('Failed to generate invoice.');
+          insertedInvoiceId = inv.id;
 
           // 2. Insert billing line items
           await tx.insert(billingLineItems).values(
@@ -537,6 +661,26 @@ export async function triggerRecurringBillingRun(
         if (code === '23505') continue;
         throw err;
       }
+
+      // Email the client (with their statement attached) once the invoice is
+      // committed. Best-effort: a delivery failure never undoes the invoice
+      // that was already issued, it's just reported back in the summary.
+      if (schedule.autoSendEmail && insertedInvoiceId) {
+        const emailResult = await sendRecurringInvoiceEmail({
+          invoiceId: insertedInvoiceId,
+          clientId: schedule.clientId,
+          divisionId: schedule.divisionId,
+          documentNumber,
+          invoiceDate,
+          dueDate,
+          reference: schedule.reference,
+          total: schedule.total,
+        });
+        if (emailResult.error) {
+          console.error(`Failed to email recurring invoice ${documentNumber}:`, emailResult.error);
+          emailFailureCount++;
+        }
+      }
     }
 
     revalidatePath('/billing/invoices');
@@ -544,7 +688,7 @@ export async function triggerRecurringBillingRun(
     revalidatePath('/accounting/journals');
     revalidatePath('/dashboard');
 
-    return { generatedCount };
+    return { generatedCount, emailFailureCount };
   } catch (err) {
     console.error('Failed to trigger recurring billing:', err);
     return { error: 'Failed to process recurring invoices.' };
