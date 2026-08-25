@@ -20,6 +20,7 @@ import {
   createEmailClient,
   renderEmailTemplate,
   resolveDivisionAdminEmail,
+  resolveDivisionSenderName,
   resolveFromEmail,
   resolveResendApiKey,
   resolveDefaultFromEmail,
@@ -93,7 +94,10 @@ function roleError(session: Awaited<ReturnType<typeof getSessionOrRedirect>>) {
   return requireRole(session, 'admin') ? null : 'Insufficient permissions to send billing emails.';
 }
 
-async function getPendingReminderClients(clientId?: string, divisionId?: string): Promise<PendingReminderClient[]> {
+async function getPendingReminderClients(
+  clientId?: string,
+  divisionId?: string,
+): Promise<PendingReminderClient[]> {
   const db = getDb();
   const today = new Date().toISOString().split('T')[0]!;
 
@@ -234,9 +238,12 @@ async function buildReminderEmailContext(
       : headlineInvoice.documentNumber;
 
   const defaultFrom = resolveDefaultFromEmail(pending.divisionName);
-  const fromName = billingConfig?.salesRepName || 'Playhouse Media Group';
+  const fromName = resolveDivisionSenderName(pending.divisionName);
   const fromEmail = resolveFromEmail(billingConfig?.divisionWebsite, defaultFrom);
-  const adminCc = resolveDivisionAdminEmail(pending.divisionName, billingConfig?.salesRepEmail ?? null);
+  const adminCc = resolveDivisionAdminEmail(
+    pending.divisionName,
+    billingConfig?.salesRepEmail ?? null,
+  );
 
   const portalBaseUrl = getPortalBaseUrl();
   const portalUrl =
@@ -252,8 +259,12 @@ async function buildReminderEmailContext(
     emailProps: {
       clientName: pending.businessName || pending.clientName,
       documentNumber,
-      invoiceDate: fmtDateLong(headlineInvoice.invoiceDate) === '-' ? 'N/A' : fmtDateLong(headlineInvoice.invoiceDate),
-      dueDate: fmtDateLong(headlineInvoice.dueDate) === '-' ? 'N/A' : fmtDateLong(headlineInvoice.dueDate),
+      invoiceDate:
+        fmtDateLong(headlineInvoice.invoiceDate) === '-'
+          ? 'N/A'
+          : fmtDateLong(headlineInvoice.invoiceDate),
+      dueDate:
+        fmtDateLong(headlineInvoice.dueDate) === '-' ? 'N/A' : fmtDateLong(headlineInvoice.dueDate),
       totalAmount: formatMoney(headlineInvoice.total),
       outstandingAmount: formatMoney(pending.outstandingBalance),
       reminderType: 'overdue',
@@ -296,7 +307,10 @@ function resendKeyHint(divisionName: string) {
   return 'PMG_RESEND_API_KEY';
 }
 
-export async function getPendingRemindersAction(filters?: { clientId?: string; divisionId?: string }): Promise<{
+export async function getPendingRemindersAction(filters?: {
+  clientId?: string;
+  divisionId?: string;
+}): Promise<{
   success: boolean;
   data: PendingReminderClient[];
   error?: string;
@@ -306,7 +320,10 @@ export async function getPendingRemindersAction(filters?: { clientId?: string; d
     const forbidden = roleError(session);
     if (forbidden) return { success: false, data: [], error: forbidden };
 
-    return { success: true, data: await getPendingReminderClients(filters?.clientId, filters?.divisionId) };
+    return {
+      success: true,
+      data: await getPendingReminderClients(filters?.clientId, filters?.divisionId),
+    };
   } catch (err) {
     const message = err instanceof Error ? err.message : String(err);
     return { success: false, data: [], error: message };
@@ -344,7 +361,9 @@ export async function getReminderPreviewAction(payload: ReminderPreviewPayload):
   }
 }
 
-export async function sendCustomizedReminderAction(payload: SendCustomizedReminderPayload): Promise<{
+export async function sendCustomizedReminderAction(
+  payload: SendCustomizedReminderPayload,
+): Promise<{
   success: boolean;
   emailId?: string;
   error?: string;
@@ -372,7 +391,8 @@ export async function sendCustomizedReminderAction(payload: SendCustomizedRemind
 
     const subject = payload.subject.trim();
     if (!subject) return { success: false, error: 'Subject is required.' };
-    if (subject.length > 180) return { success: false, error: 'Subject must be 180 characters or fewer.' };
+    if (subject.length > 180)
+      return { success: false, error: 'Subject must be 180 characters or fewer.' };
 
     const messageResult = validatePersonalMessage(payload.personalMessage);
     if (!messageResult.valid) return { success: false, error: messageResult.error };
@@ -418,7 +438,10 @@ export async function sendCustomizedReminderAction(payload: SendCustomizedRemind
       return { success: true, emailId: existingAudit.resendEmailId ?? undefined };
     }
     if (existingAudit?.status === 'failed') {
-      return { success: false, error: existingAudit.errorMessage ?? 'This reminder attempt already failed.' };
+      return {
+        success: false,
+        error: existingAudit.errorMessage ?? 'This reminder attempt already failed.',
+      };
     }
 
     auditBase = {
@@ -542,7 +565,10 @@ export async function sendOverdueRemindersAction(): Promise<SendOverdueReminders
     });
 
     if (result.success) sent++;
-    else errors.push(`${pending.businessName ?? pending.clientName}: ${result.error ?? 'Failed to send'}`);
+    else
+      errors.push(
+        `${pending.businessName ?? pending.clientName}: ${result.error ?? 'Failed to send'}`,
+      );
   }
 
   return { success: true, sent, skipped, errors };

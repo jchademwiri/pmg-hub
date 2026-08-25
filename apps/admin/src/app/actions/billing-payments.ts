@@ -501,11 +501,12 @@ export async function recordClientPayment(
             PaymentThankYouEmail,
             DEFAULT_REPLY_TO,
             resolveDivisionAdminEmail,
+            resolveDivisionSenderName,
             resolveDefaultFromEmail,
           } = await import('@pmg/emails');
 
           const defaultFrom = resolveDefaultFromEmail(divRow?.name);
-          const fromName = billingConfig?.salesRepName || 'Playhouse Media Group';
+          const fromName = resolveDivisionSenderName(divRow?.name);
 
           // Resolve info subdomain sender (helper matching email-delivery.ts)
           let fromEmail = defaultFrom;

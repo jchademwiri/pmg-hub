@@ -45,8 +45,8 @@ export const BRAND_ADMIN_EMAIL: Record<BrandKey, string> = {
 } as const;
 
 // ─── PMG (admin app) defaults — kept for backward compat ─────────────────────
-export const DEFAULT_EMAIL_FROM  = BRAND_FROM_EMAIL.pmg;
-export const DEFAULT_REPLY_TO    = BRAND_REPLY_TO.pmg;
+export const DEFAULT_EMAIL_FROM = BRAND_FROM_EMAIL.pmg;
+export const DEFAULT_REPLY_TO = BRAND_REPLY_TO.pmg;
 export const DEFAULT_ADMIN_EMAIL = BRAND_ADMIN_EMAIL.pmg;
 export const DEFAULT_WEBSITE_URL = `https://${DOMAINS.pmg}`;
 
@@ -91,7 +91,7 @@ export function resolveDivisionAdminEmail(
 
   const name = divisionName?.toLowerCase() ?? '';
   if (name.includes('tender')) return BRAND_ADMIN_EMAIL.tes;
-  if (name.includes('apex'))   return BRAND_ADMIN_EMAIL.aws;
+  if (name.includes('apex')) return BRAND_ADMIN_EMAIL.aws;
   return BRAND_ADMIN_EMAIL.pmg;
 }
 
@@ -122,9 +122,7 @@ export function resolveFromEmail(
  * Returns the brand-specific fallback sender email based on the division name
  * (Tender → TES, Apex → AWS, else PMG).
  */
-export function resolveDefaultFromEmail(
-  divisionName: string | null | undefined,
-): string {
+export function resolveDefaultFromEmail(divisionName: string | null | undefined): string {
   const name = divisionName?.toLowerCase() ?? '';
   if (name.includes('tender')) {
     return process.env.TES_FROM_EMAIL || BRAND_FROM_EMAIL.tes;
@@ -135,6 +133,23 @@ export function resolveDefaultFromEmail(
   return process.env.EMAIL_FROM_ADDRESS || BRAND_FROM_EMAIL.pmg;
 }
 
+// ─── Helper: resolve sender display name by division name ───────────────────
+/**
+ * Resolves the email sender display name for a division.
+ * Following the brand standard: `<Division Name> Team`
+ * e.g.:
+ * - "Tender Edge Solutions" -> "Tender Edge Solutions Team"
+ * - "Apex Web Solutions"    -> "Apex Web Solutions Team"
+ * - "Playhouse Media Group"  -> "Playhouse Media Group Team"
+ * If the division name already ends with "Team" (case-insensitive), it avoids duplicating "Team".
+ */
+export function resolveDivisionSenderName(divisionName: string | null | undefined): string {
+  const trimmed = divisionName?.trim();
+  if (!trimmed) return 'Playhouse Media Group Team';
+  if (/team$/i.test(trimmed)) return trimmed;
+  return `${trimmed} Team`;
+}
+
 // ─── Helper: resolve Resend API key by division name ─────────────────────────
 /**
  * Returns the correct Resend API key for a division by inspecting its name for
@@ -142,16 +157,16 @@ export function resolveDefaultFromEmail(
  *
  * Falls back to `PMG_RESEND_API_KEY` when no brand-specific key is set.
  */
-export function resolveResendApiKey(
-  divisionName: string | null | undefined,
-): string {
+export function resolveResendApiKey(divisionName: string | null | undefined): string {
   const name = divisionName?.toLowerCase() ?? '';
   const key =
     (name.includes('tender')
       ? process.env.TES_RESEND_API_KEY
       : name.includes('apex')
         ? process.env.AWS_RESEND_API_KEY
-        : undefined) ?? process.env.PMG_RESEND_API_KEY ?? '';
+        : undefined) ??
+    process.env.PMG_RESEND_API_KEY ??
+    '';
   if (!key) {
     console.warn('[emails] No Resend API key resolved for division:', divisionName);
   }

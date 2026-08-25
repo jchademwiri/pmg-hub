@@ -1,11 +1,22 @@
 import { NextResponse } from 'next/server';
-import { getDb, invoices, clients, divisions, divisionBillingSettings, paymentAllocations, eq, and, sql } from '@pmg/db';
+import {
+  getDb,
+  invoices,
+  clients,
+  divisions,
+  divisionBillingSettings,
+  paymentAllocations,
+  eq,
+  and,
+  sql,
+} from '@pmg/db';
 import {
   createEmailClient,
   OutstandingReminderEmail,
   DEFAULT_EMAIL_FROM,
   DEFAULT_REPLY_TO,
   resolveDivisionAdminEmail,
+  resolveDivisionSenderName,
   resolveFromEmail,
   resolveResendApiKey,
   resolveDefaultFromEmail,
@@ -54,8 +65,8 @@ export async function GET(req: Request) {
       .where(
         and(
           sql`${invoices.status} IN ('issued', 'partially_paid', 'overdue')`,
-          sql`${invoices.dueDate} IN (${date3DaysBefore}, ${dateDueToday}, ${date7DaysOverdue})`
-        )
+          sql`${invoices.dueDate} IN (${date3DaysBefore}, ${dateDueToday}, ${date7DaysOverdue})`,
+        ),
       );
 
     let reminderCount = 0;
@@ -101,7 +112,7 @@ export async function GET(req: Request) {
       // Resolve brand-specific API key, sender, and admin CC via shared helpers
       const apiKey = resolveResendApiKey(divRow?.name);
       const defaultFrom = resolveDefaultFromEmail(divRow?.name);
-      const fromName = billingConfig?.salesRepName || 'Playhouse Media Group';
+      const fromName = resolveDivisionSenderName(divRow?.name);
       const fromEmail = resolveFromEmail(billingConfig?.divisionWebsite, defaultFrom);
       const adminCc = resolveDivisionAdminEmail(divRow?.name, billingConfig?.salesRepEmail ?? null);
 
@@ -112,11 +123,11 @@ export async function GET(req: Request) {
       });
 
       // D. Determine reminder type based on due date match
-      let reminderType: "pre-due" | "due-today" | "overdue" = "pre-due";
+      let reminderType: 'pre-due' | 'due-today' | 'overdue' = 'pre-due';
       if (inv.dueDate === dateDueToday) {
-        reminderType = "due-today";
+        reminderType = 'due-today';
       } else if (inv.dueDate === date7DaysOverdue) {
-        reminderType = "overdue";
+        reminderType = 'overdue';
       }
 
       const portalBaseUrl = getPortalBaseUrl();
@@ -132,12 +143,14 @@ export async function GET(req: Request) {
         outstandingAmount: `R ${outstandingVal.toLocaleString('en-ZA', { minimumFractionDigits: 2 })}`,
         reminderType,
         portalUrl,
-        bankDetails: billingConfig ? {
-          bankName: billingConfig.bankName || '',
-          accountName: billingConfig.bankAccountName || '',
-          accountNumber: billingConfig.bankAccountNumber || '',
-          branchCode: billingConfig.bankBranchCode || '',
-        } : undefined,
+        bankDetails: billingConfig
+          ? {
+              bankName: billingConfig.bankName || '',
+              accountName: billingConfig.bankAccountName || '',
+              accountNumber: billingConfig.bankAccountNumber || '',
+              branchCode: billingConfig.bankBranchCode || '',
+            }
+          : undefined,
         companyName: divRow?.name || 'Playhouse Media Group',
         primaryColor: '#1d4ed8',
         websiteUrl: billingConfig?.divisionWebsite || undefined,
@@ -145,15 +158,15 @@ export async function GET(req: Request) {
       };
 
       const subjectTexts = {
-        "pre-due": `Upcoming Invoice Reminder: ${inv.documentNumber}`,
-        "due-today": `Invoice Due Today: ${inv.documentNumber}`,
-        "overdue": `IMPORTANT: Invoice Overdue Notice - ${inv.documentNumber}`,
+        'pre-due': `Upcoming Invoice Reminder: ${inv.documentNumber}`,
+        'due-today': `Invoice Due Today: ${inv.documentNumber}`,
+        overdue: `IMPORTANT: Invoice Overdue Notice - ${inv.documentNumber}`,
       };
 
       await emailClient({
         to: client.email,
         cc: adminCc,
-        subject: subjectTexts[reminderType] || subjectTexts["pre-due"],
+        subject: subjectTexts[reminderType] || subjectTexts['pre-due'],
         react: React.createElement(OutstandingReminderEmail, emailProps),
         replyTo: DEFAULT_REPLY_TO,
       });
@@ -161,11 +174,18 @@ export async function GET(req: Request) {
       reminderCount++;
     }
 
-    return NextResponse.json({ success: true, processed: outstandingInvoices.length, sent: reminderCount });
+    return NextResponse.json({
+      success: true,
+      processed: outstandingInvoices.length,
+      sent: reminderCount,
+    });
   } catch (err: unknown) {
     console.error('Error in outstanding reminders auto cron:', err);
     return NextResponse.json(
-      { success: false, error: err instanceof Error ? err.message : 'Failed to send outstanding reminders.' },
+      {
+        success: false,
+        error: err instanceof Error ? err.message : 'Failed to send outstanding reminders.',
+      },
       { status: 500 },
     );
   }

@@ -2,19 +2,37 @@
 
 import { z } from 'zod';
 import { revalidatePath } from 'next/cache';
-import { db, clients, income, eq, quotations, invoices, projectScheduleEntries, divisionBillingSettings, divisions } from '@pmg/db';
+import {
+  db,
+  clients,
+  income,
+  eq,
+  quotations,
+  invoices,
+  projectScheduleEntries,
+  divisionBillingSettings,
+  divisions,
+} from '@pmg/db';
 import { setClientActive } from '@pmg/db';
-import { createEmailClient, PortalInvitationEmail, DEFAULT_REPLY_TO, resolveResendApiKey, resolveDefaultFromEmail, resolveFromEmail } from '@pmg/emails';
+import {
+  createEmailClient,
+  PortalInvitationEmail,
+  DEFAULT_REPLY_TO,
+  resolveResendApiKey,
+  resolveDefaultFromEmail,
+  resolveFromEmail,
+  resolveDivisionSenderName,
+} from '@pmg/emails';
 import React from 'react';
 import { getSessionOrRedirect } from '@/lib/auth';
 import { getPortalBaseUrl } from '@/lib/portal-url';
 
 const ClientSchema = z.object({
-  name:         z.string().min(1),
+  name: z.string().min(1),
   businessName: z.string().optional(),
-  email:        z.string().email().optional(),
-  phone:        z.string().optional(),
-  divisionId:   z.string().optional(),
+  email: z.string().email().optional(),
+  phone: z.string().optional(),
+  divisionId: z.string().optional(),
 });
 
 export async function createClient(formData: FormData): Promise<{ error?: string }> {
@@ -56,7 +74,8 @@ export async function updateClient(id: string, formData: FormData): Promise<{ er
       return { error: result.error.issues[0]?.message ?? 'Validation error' };
     }
     const parsed = result.data;
-    await db.update(clients)
+    await db
+      .update(clients)
       .set({
         name: parsed.name,
         businessName: parsed.businessName ?? null,
@@ -74,7 +93,10 @@ export async function updateClient(id: string, formData: FormData): Promise<{ er
   }
 }
 
-export async function toggleClientActive(id: string, isActive: boolean): Promise<{ error?: string }> {
+export async function toggleClientActive(
+  id: string,
+  isActive: boolean,
+): Promise<{ error?: string }> {
   try {
     await setClientActive(id, isActive);
     revalidatePath('/relationships/clients');
@@ -94,7 +116,9 @@ export async function deleteClient(id: string): Promise<{ error?: string }> {
       .where(eq(income.clientId, id))
       .limit(1);
     if (incomeCount) {
-      return { error: 'Cannot delete a client that has payment records. Disable the client instead.' };
+      return {
+        error: 'Cannot delete a client that has payment records. Disable the client instead.',
+      };
     }
 
     // Check for invoices
@@ -124,7 +148,10 @@ export async function deleteClient(id: string): Promise<{ error?: string }> {
       .where(eq(projectScheduleEntries.clientId, id))
       .limit(1);
     if (tenderCount) {
-      return { error: 'Cannot delete a client that has tender schedule entries. Disable the client instead.' };
+      return {
+        error:
+          'Cannot delete a client that has tender schedule entries. Disable the client instead.',
+      };
     }
 
     await db.delete(clients).where(eq(clients.id, id));
@@ -136,7 +163,9 @@ export async function deleteClient(id: string): Promise<{ error?: string }> {
   }
 }
 
-export async function sendPortalInvitation(clientId: string): Promise<{ error?: string; success?: boolean }> {
+export async function sendPortalInvitation(
+  clientId: string,
+): Promise<{ error?: string; success?: boolean }> {
   try {
     await getSessionOrRedirect();
 
@@ -145,11 +174,7 @@ export async function sendPortalInvitation(clientId: string): Promise<{ error?: 
     }
 
     // Fetch the client
-    const [client] = await db
-      .select()
-      .from(clients)
-      .where(eq(clients.id, clientId))
-      .limit(1);
+    const [client] = await db.select().from(clients).where(eq(clients.id, clientId)).limit(1);
 
     if (!client) {
       return { error: 'Client not found.' };
@@ -186,13 +211,12 @@ export async function sendPortalInvitation(clientId: string): Promise<{ error?: 
         divisionName = divRow.name;
         apiKey = resolveResendApiKey(divRow.name);
         const defaultFrom = resolveDefaultFromEmail(divRow.name);
-        fromName = billingConfig?.salesRepName || divRow.name;
+        fromName = resolveDivisionSenderName(divRow.name);
         fromEmail = resolveFromEmail(billingConfig?.divisionWebsite, defaultFrom);
         websiteUrl = billingConfig?.divisionWebsite || undefined;
         logoUrl = billingConfig?.logoUrl || undefined;
       }
     }
-
 
     const emailClient = createEmailClient({
       apiKey,
