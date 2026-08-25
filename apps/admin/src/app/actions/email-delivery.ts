@@ -21,7 +21,6 @@ import {
   InvoiceDeliveryEmail,
   QuoteDeliveryEmail,
   StatementDeliveryEmail,
-  DEFAULT_EMAIL_FROM,
   DEFAULT_REPLY_TO,
   DEFAULT_WEBSITE_URL,
   renderEmailTemplate,

@@ -14,7 +14,6 @@ import {
   sql,
 } from '@pmg/db';
 import {
-  DEFAULT_EMAIL_FROM,
   DEFAULT_REPLY_TO,
   OutstandingReminderEmail,
   createEmailClient,

@@ -13,7 +13,6 @@ import {
 import {
   createEmailClient,
   OutstandingReminderEmail,
-  DEFAULT_EMAIL_FROM,
   DEFAULT_REPLY_TO,
   resolveDivisionAdminEmail,
   resolveDivisionSenderName,

@@ -255,8 +255,9 @@ export async function sendPortalInvitation(
     revalidatePath(`/relationships/clients/${clientId}`);
 
     return { success: true };
-  } catch (e: any) {
+  } catch (e: unknown) {
     console.error('sendPortalInvitation failed:', e);
-    return { error: e.message || 'Failed to send portal invitation. Please try again.' };
+    const message = e instanceof Error ? e.message : 'Failed to send portal invitation. Please try again.';
+    return { error: message };
   }
 }
