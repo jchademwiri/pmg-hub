@@ -6,7 +6,7 @@ import {
   getAllRecurringExpenses,
   getActiveClients,
   getAllExpenseCategories,
-  getAllItems,
+  getActiveItems,
 } from '@pmg/db';
 import { SetPageTotal } from '@/components/navigation/page-header-context';
 import { RecurringClient } from './recurring-client';
@@ -23,7 +23,7 @@ export default async function RecurringFinancePage() {
       getAllRecurringExpenses(),
       getActiveClients(),
       db.select({ id: divisions.id, name: divisions.name }).from(divisions),
-      getAllItems({ status: 'active' }),
+      getActiveItems(),
       getAllExpenseCategories(),
     ]);
 
@@ -48,7 +48,7 @@ export default async function RecurringFinancePage() {
         recurringExpenses={expensesData}
         clients={clientsData.map((c) => ({ id: c.id, name: c.name, businessName: c.businessName }))}
         divisions={divisionsData}
-        billingItems={itemsData.map((i) => ({ id: i.id, name: i.name, unitPrice: i.unitPrice }))}
+        activeItems={itemsData}
         categories={categoriesData.map((cat) => cat.name)}
       />
     </div>
