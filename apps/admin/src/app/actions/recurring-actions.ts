@@ -42,7 +42,12 @@ export interface CreateRecurringInvoiceInput {
   divisionId: string;
   clientId: string;
   reference?: string | null;
-  billingCycleDay?: number; // default 25
+  /** Explicit next/first invoice date ("YYYY-MM-DD"). Defaults to the 25th
+   *  of this month (or next month, if the 25th has passed) when omitted. */
+  nextRunDate?: string | null;
+  /** Once the next scheduled invoice date would fall on or after this date,
+   *  the schedule auto-pauses instead of generating another invoice. */
+  endDate?: string | null;
   dueDaysOffset?: number; // default 6 (due 1st)
   autoSendEmail?: boolean;
   notes?: string | null;
@@ -203,6 +208,13 @@ async function sendRecurringInvoiceEmail(params: {
   return {};
 }
 
+/** Extracts the day-of-month from an ISO date string, clamped to 1-28 so it
+ *  stays valid across every month when the cadence is later advanced. */
+function dayOfMonthClamped(dateStr: string): number {
+  const day = Number(dateStr.slice(8, 10));
+  return Math.min(Math.max(1, day || 25), 28);
+}
+
 function calculateInitialNextRunDate(cycleDay = 25): string {
   const { year, month, day } = getSASTParts();
   let targetYear = year;
@@ -271,8 +283,14 @@ export async function createRecurringInvoice(
       data.discountValue,
     );
 
-    const billingCycleDay = data.billingCycleDay ?? 25;
-    const nextRunDate = calculateInitialNextRunDate(billingCycleDay);
+    const explicitNextRunDate = data.nextRunDate?.trim() || null;
+    const billingCycleDay = explicitNextRunDate ? dayOfMonthClamped(explicitNextRunDate) : 25;
+    const nextRunDate = explicitNextRunDate ?? calculateInitialNextRunDate(billingCycleDay);
+    const endDate = data.endDate?.trim() || null;
+
+    if (endDate && endDate < nextRunDate) {
+      return { error: 'End date cannot be before the next invoice date.' };
+    }
 
     const [inserted] = await db
       .insert(recurringInvoices)
@@ -294,6 +312,7 @@ export async function createRecurringInvoice(
         notes: data.notes ?? null,
         terms: data.terms ?? null,
         nextRunDate,
+        endDate,
         createdBy: session.user.id,
       })
       .returning({ id: recurringInvoices.id });
@@ -353,7 +372,12 @@ export interface UpdateRecurringInvoiceInput {
   divisionId: string;
   clientId: string;
   reference?: string | null;
-  billingCycleDay?: number;
+  /** Explicit next invoice date ("YYYY-MM-DD"). Keeps the schedule's
+   *  current next-run date when omitted. */
+  nextRunDate?: string | null;
+  /** Once the next scheduled invoice date would fall on or after this date,
+   *  the schedule auto-pauses instead of generating another invoice. */
+  endDate?: string | null;
   dueDaysOffset?: number;
   autoSendEmail?: boolean;
   notes?: string | null;
@@ -384,6 +408,13 @@ export async function updateRecurringInvoice(
     if (!data.lineItems || data.lineItems.length === 0)
       return { error: 'At least one line item is required.' };
 
+    const [existing] = await db
+      .select({ nextRunDate: recurringInvoices.nextRunDate })
+      .from(recurringInvoices)
+      .where(eq(recurringInvoices.id, id))
+      .limit(1);
+    if (!existing) return { error: 'Recurring schedule not found.' };
+
     if (data.vatEnabled) {
       const { getOrganisationSettings } = await import('@pmg/db');
       const orgSettings = await getOrganisationSettings();
@@ -402,7 +433,13 @@ export async function updateRecurringInvoice(
       data.discountValue,
     );
 
-    const billingCycleDay = data.billingCycleDay ?? 25;
+    const nextRunDate = data.nextRunDate?.trim() || existing.nextRunDate;
+    const billingCycleDay = dayOfMonthClamped(nextRunDate);
+    const endDate = data.endDate?.trim() || null;
+
+    if (endDate && endDate < nextRunDate) {
+      return { error: 'End date cannot be before the next invoice date.' };
+    }
 
     await db.transaction(async (tx) => {
       await tx
@@ -412,6 +449,8 @@ export async function updateRecurringInvoice(
           clientId: data.clientId,
           reference: data.reference ?? null,
           billingCycleDay,
+          nextRunDate,
+          endDate,
           dueDaysOffset: data.dueDaysOffset ?? 6,
           autoSendEmail: data.autoSendEmail ?? true,
           subtotal: String(subtotal.toFixed(2)),
@@ -546,6 +585,17 @@ export async function triggerRecurringBillingRun(
     let emailFailureCount = 0;
 
     for (const schedule of dueSchedules) {
+      // Safety net: a schedule already past its end date should have been
+      // paused when a previous run advanced it there. Pause it now instead
+      // of generating another invoice.
+      if (schedule.endDate && schedule.nextRunDate > schedule.endDate) {
+        await db
+          .update(recurringInvoices)
+          .set({ status: 'paused', updatedAt: new Date() })
+          .where(eq(recurringInvoices.id, schedule.id));
+        continue;
+      }
+
       const lineItems = await db
         .select()
         .from(recurringLineItems)
@@ -640,13 +690,17 @@ export async function triggerRecurringBillingRun(
             tx,
           });
 
-          // 4. Advance next run date to 25th of next month
+          // 4. Advance next run date to the same day next month. If that
+          // would fall on or after the schedule's end date, auto-pause
+          // instead of leaving it active for a run that should never fire.
           const nextDate = advanceNextMonth(invoiceDate, schedule.billingCycleDay);
+          const reachedEndDate = schedule.endDate != null && nextDate > schedule.endDate;
           await tx
             .update(recurringInvoices)
             .set({
               lastRunDate: invoiceDate,
               nextRunDate: nextDate,
+              status: reachedEndDate ? 'paused' : schedule.status,
               updatedAt: new Date(),
             })
             .where(eq(recurringInvoices.id, schedule.id));

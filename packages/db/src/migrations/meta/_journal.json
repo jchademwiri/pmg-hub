@@ -330,6 +330,13 @@
       "when": 1787640733837,
       "tag": "0046_add_recurring_invoice_link",
       "breakpoints": true
+    },
+    {
+      "idx": 47,
+      "version": "7",
+      "when": 1787647702310,
+      "tag": "0047_add_recurring_end_date",
+      "breakpoints": true
     }
   ]
 }

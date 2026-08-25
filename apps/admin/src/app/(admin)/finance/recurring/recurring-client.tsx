@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useTransition } from 'react';
+import React, { useEffect, useState, useTransition } from 'react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -33,6 +33,7 @@ import {
   Layers,
   Pencil,
   Trash2,
+  X,
 } from 'lucide-react';
 import { formatZAR, fmtDateLong } from '@/lib/format';
 import {
@@ -80,6 +81,25 @@ function blankRow(): LineItemFormRow {
   };
 }
 
+/** Mirrors the server's default: the 25th of this month, or next month if
+ *  the 25th has already passed. Just a starting point — fully editable. */
+function defaultNextRunDate(): string {
+  const now = new Date();
+  const cycleDay = 25;
+  let year = now.getFullYear();
+  let month = now.getMonth();
+  if (now.getDate() > cycleDay) {
+    month += 1;
+    if (month > 11) {
+      month = 0;
+      year += 1;
+    }
+  }
+  const maxDay = new Date(year, month + 1, 0).getDate();
+  const day = Math.min(cycleDay, maxDay);
+  return `${year}-${String(month + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+}
+
 export function RecurringClient({
   recurringInvoices,
   recurringExpenses,
@@ -100,11 +120,18 @@ export function RecurringClient({
     text: string;
   } | null>(null);
 
+  useEffect(() => {
+    if (!actionMessage) return;
+    const timer = setTimeout(() => setActionMessage(null), 6000);
+    return () => clearTimeout(timer);
+  }, [actionMessage]);
+
   // New/Edit Inbound Invoice Form State
   const [newInvDivisionId, setNewInvDivisionId] = useState(divisions[0]?.id || '');
   const [newInvClientId, setNewInvClientId] = useState('');
   const [newInvRef, setNewInvRef] = useState('');
-  const [newInvCycleDay, setNewInvCycleDay] = useState(25);
+  const [newInvNextRunDate, setNewInvNextRunDate] = useState(defaultNextRunDate());
+  const [newInvEndDate, setNewInvEndDate] = useState('');
   const [newInvLineItems, setNewInvLineItems] = useState<LineItemFormRow[]>([blankRow()]);
 
   // New Outbound Expense Form State
@@ -149,7 +176,8 @@ export function RecurringClient({
     setNewInvDivisionId(divisions[0]?.id || '');
     setNewInvClientId('');
     setNewInvRef('');
-    setNewInvCycleDay(25);
+    setNewInvNextRunDate(defaultNextRunDate());
+    setNewInvEndDate('');
     setNewInvLineItems([blankRow()]);
   }
 
@@ -171,7 +199,8 @@ export function RecurringClient({
       setNewInvDivisionId(detail.divisionId);
       setNewInvClientId(detail.clientId);
       setNewInvRef(detail.reference || '');
-      setNewInvCycleDay(detail.billingCycleDay);
+      setNewInvNextRunDate(detail.nextRunDate);
+      setNewInvEndDate(detail.endDate || '');
       setNewInvLineItems(
         detail.lineItems.length
           ? detail.lineItems.map((li) => ({
@@ -230,12 +259,21 @@ export function RecurringClient({
       return;
     }
 
+    if (newInvEndDate && newInvEndDate < newInvNextRunDate) {
+      setActionMessage({
+        type: 'error',
+        text: 'End date cannot be before the next invoice date.',
+      });
+      return;
+    }
+
     startTransition(async () => {
       const payload = {
         divisionId: newInvDivisionId,
         clientId: newInvClientId,
         reference: newInvRef || 'Monthly Hosting & Retainer',
-        billingCycleDay: Number(newInvCycleDay),
+        nextRunDate: newInvNextRunDate,
+        endDate: newInvEndDate || null,
         dueDaysOffset: 6, // due 1st
         autoSendEmail: true,
         vatEnabled: false,
@@ -358,14 +396,26 @@ export function RecurringClient({
 
       {actionMessage && (
         <div
-          className={`p-4 rounded-lg text-sm border flex items-center gap-2 ${
+          className={`p-4 rounded-lg text-sm border flex items-start justify-between gap-2 ${
             actionMessage.type === 'success'
               ? 'bg-emerald-50 border-emerald-200 text-emerald-800 dark:bg-emerald-950/30 dark:border-emerald-800 dark:text-emerald-300'
               : 'bg-rose-50 border-rose-200 text-rose-800 dark:bg-rose-950/30 dark:border-rose-800 dark:text-rose-300'
           }`}
         >
-          {actionMessage.type === 'success' ? <CheckCircle2 className="h-4 w-4 shrink-0" /> : null}
-          {actionMessage.text}
+          <div className="flex items-center gap-2">
+            {actionMessage.type === 'success' ? (
+              <CheckCircle2 className="h-4 w-4 shrink-0" />
+            ) : null}
+            {actionMessage.text}
+          </div>
+          <button
+            type="button"
+            onClick={() => setActionMessage(null)}
+            aria-label="Dismiss message"
+            className="shrink-0 rounded-md p-0.5 hover:bg-black/5 dark:hover:bg-white/10 transition-colors"
+          >
+            <X className="h-4 w-4" />
+          </button>
         </div>
       )}
 
@@ -470,6 +520,11 @@ export function RecurringClient({
                         <div className="text-xs text-muted-foreground">
                           Next: {fmtDateLong(inv.nextRunDate)}
                         </div>
+                        {inv.endDate && (
+                          <div className="text-xs text-muted-foreground">
+                            Ends: {fmtDateLong(inv.endDate)}
+                          </div>
+                        )}
                       </td>
                       <td className="px-4 py-3 font-semibold text-foreground">
                         {formatZAR(parseFloat(inv.total))}
@@ -634,7 +689,7 @@ export function RecurringClient({
           if (!open) resetInvoiceForm();
         }}
       >
-        <DialogContent className="sm:max-w-2xl md:max-w-3xl max-h-[90vh] overflow-y-auto">
+        <DialogContent className="sm:max-w-3xl md:max-w-4xl max-h-[90vh] overflow-y-auto">
           <form onSubmit={handleCreateInvoice}>
             <DialogHeader>
               <DialogTitle className="flex items-center gap-2 text-xl font-bold">
@@ -687,35 +742,53 @@ export function RecurringClient({
                 </div>
               </div>
 
-              {/* Row 2: Reference */}
-              <div className="grid gap-1.5">
-                <Label htmlFor="inv-ref" className="text-xs font-semibold">
-                  Schedule Reference
-                </Label>
-                <Input
-                  id="inv-ref"
-                  placeholder="e.g. Monthly Website Hosting, Security & Maintenance Retainer"
-                  value={newInvRef}
-                  onChange={(e) => setNewInvRef(e.target.value)}
-                />
-              </div>
-
-              {/* Row 3: Billing Cycle */}
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 p-4 rounded-lg bg-muted/40 border">
+              {/* Row 2: Reference & Next Invoice Date */}
+              <div className="grid grid-cols-1 sm:grid-cols-[2fr_1fr] gap-4">
                 <div className="grid gap-1.5">
-                  <Label htmlFor="inv-cycle" className="text-xs font-semibold">
-                    Billing Cycle Day
+                  <Label htmlFor="inv-ref" className="text-xs font-semibold">
+                    Schedule Reference
                   </Label>
                   <Input
-                    id="inv-cycle"
-                    type="number"
-                    min={1}
-                    max={28}
-                    value={newInvCycleDay}
-                    onChange={(e) => setNewInvCycleDay(Number(e.target.value))}
+                    id="inv-ref"
+                    placeholder="e.g. Monthly Website Hosting, Security & Maintenance Retainer"
+                    value={newInvRef}
+                    onChange={(e) => setNewInvRef(e.target.value)}
                   />
+                </div>
+
+                <div className="grid gap-1.5">
+                  <Label htmlFor="inv-next-run" className="text-xs font-semibold">
+                    Next Invoice Date
+                  </Label>
+                  <Input
+                    id="inv-next-run"
+                    type="date"
+                    value={newInvNextRunDate}
+                    onChange={(e) => setNewInvNextRunDate(e.target.value)}
+                    required
+                  />
+                  <span className="text-[11px] text-muted-foreground">Due: +6 days</span>
+                </div>
+              </div>
+
+              {/* Row 3: End Date (optional auto-pause) */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 p-4 rounded-lg bg-muted/40 border">
+                <div className="grid gap-1.5">
+                  <Label htmlFor="inv-end-date" className="text-xs font-semibold">
+                    End Date (optional)
+                  </Label>
+                  <Input
+                    id="inv-end-date"
+                    type="date"
+                    value={newInvEndDate}
+                    min={newInvNextRunDate || undefined}
+                    onChange={(e) => setNewInvEndDate(e.target.value)}
+                  />
+                </div>
+                <div className="flex items-end">
                   <span className="text-[11px] text-muted-foreground">
-                    Default: 25th of month (Due date: 1st)
+                    Once the next invoice would fall on or after this date, the schedule pauses
+                    automatically. Leave blank to bill indefinitely.
                   </span>
                 </div>
               </div>

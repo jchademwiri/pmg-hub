@@ -58,6 +58,10 @@ export const recurringInvoices = pgTable(
     terms: text('terms'),
     lastRunDate: date('last_run_date'),
     nextRunDate: date('next_run_date').notNull(),
+    // endDate: when set, the schedule auto-pauses once the next generated
+    // invoice's period would fall on or after it - no further invoices are
+    // generated past this date without the user manually resuming it.
+    endDate: date('end_date'),
     createdBy: text('created_by').notNull(),
     createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
     updatedAt: timestamp('updated_at', { withTimezone: true }),
