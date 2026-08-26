@@ -39,10 +39,21 @@ import {
 } from '@pmg/emails';
 import React from 'react';
 
+export type RecurringFrequency = 'monthly' | 'quarterly' | 'semi_annually' | 'annually';
+
+const FREQUENCY_MONTHS: Record<RecurringFrequency, number> = {
+  monthly: 1,
+  quarterly: 3,
+  semi_annually: 6,
+  annually: 12,
+};
+
 export interface CreateRecurringInvoiceInput {
   divisionId: string;
   clientId: string;
   reference?: string | null;
+  /** Billing frequency cadence */
+  frequency?: RecurringFrequency;
   /** Explicit next/first invoice date ("YYYY-MM-DD"). Defaults to the 25th
    *  of this month (or next month, if the 25th has passed) when omitted. */
   nextRunDate?: string | null;
@@ -238,14 +249,16 @@ function calculateInitialNextRunDate(cycleDay = 25): string {
   return d.toISOString().slice(0, 10);
 }
 
-function advanceNextMonth(dateStr: string, cycleDay = 25): string {
+function advanceNextRunDate(
+  dateStr: string,
+  cycleDay = 25,
+  frequency: RecurringFrequency = 'monthly',
+): string {
   const [y, m] = dateStr.split('-').map(Number);
-  let nextYear = y;
-  let nextMonth = m; // 1-indexed next month is already m in 0-indexed terms
-  if (nextMonth > 11) {
-    nextMonth = 0;
-    nextYear += 1;
-  }
+  const stepMonths = FREQUENCY_MONTHS[frequency] ?? 1;
+  const totalMonths = y! * 12 + (m! - 1) + stepMonths;
+  const nextYear = Math.floor(totalMonths / 12);
+  const nextMonth = totalMonths % 12; // 0-11
   const maxDays = new Date(Date.UTC(nextYear, nextMonth + 1, 0)).getUTCDate();
   const safeDay = Math.min(Math.max(1, cycleDay), maxDays);
   const d = new Date(Date.UTC(nextYear, nextMonth, safeDay));
@@ -284,6 +297,7 @@ export async function createRecurringInvoice(
       data.discountValue,
     );
 
+    const frequency = data.frequency || 'monthly';
     const explicitNextRunDate = data.nextRunDate?.trim() || null;
     const billingCycleDay = explicitNextRunDate ? dayOfMonthClamped(explicitNextRunDate) : 25;
     const nextRunDate = explicitNextRunDate ?? calculateInitialNextRunDate(billingCycleDay);
@@ -300,6 +314,7 @@ export async function createRecurringInvoice(
         clientId: data.clientId,
         reference: data.reference ?? null,
         status: 'active',
+        frequency,
         billingCycleDay,
         dueDaysOffset: data.dueDaysOffset ?? 6,
         autoSendEmail: data.autoSendEmail ?? true,
@@ -373,6 +388,8 @@ export interface UpdateRecurringInvoiceInput {
   divisionId: string;
   clientId: string;
   reference?: string | null;
+  /** Billing frequency cadence */
+  frequency?: RecurringFrequency;
   /** Explicit next invoice date ("YYYY-MM-DD"). Keeps the schedule's
    *  current next-run date when omitted. */
   nextRunDate?: string | null;
@@ -434,6 +451,7 @@ export async function updateRecurringInvoice(
       data.discountValue,
     );
 
+    const frequency = data.frequency || 'monthly';
     const nextRunDate = data.nextRunDate?.trim() || existing.nextRunDate;
     const billingCycleDay = dayOfMonthClamped(nextRunDate);
     const endDate = data.endDate?.trim() || null;
@@ -449,6 +467,7 @@ export async function updateRecurringInvoice(
           divisionId: data.divisionId,
           clientId: data.clientId,
           reference: data.reference ?? null,
+          frequency,
           billingCycleDay,
           nextRunDate,
           endDate,
@@ -691,10 +710,14 @@ export async function triggerRecurringBillingRun(
             tx,
           });
 
-          // 4. Advance next run date to the same day next month. If that
+          // 4. Advance next run date to the next cycle (monthly, quarterly, semi-annually, annually). If that
           // would fall on or after the schedule's end date, auto-pause
           // instead of leaving it active for a run that should never fire.
-          const nextDate = advanceNextMonth(invoiceDate, schedule.billingCycleDay);
+          const nextDate = advanceNextRunDate(
+            invoiceDate,
+            schedule.billingCycleDay,
+            (schedule.frequency as RecurringFrequency) || 'monthly',
+          );
           const reachedEndDate = schedule.endDate != null && nextDate > schedule.endDate;
           await tx
             .update(recurringInvoices)
@@ -757,6 +780,7 @@ export interface CreateRecurringExpenseInput {
   vendorName: string;
   category: string;
   amount: number;
+  frequency?: RecurringFrequency;
   billingCycleDay?: number;
   clientId?: string | null;
   notes?: string | null;
@@ -773,6 +797,7 @@ export async function createRecurringExpense(
     if (!data.category) return { error: 'Category is required.' };
     if (data.amount <= 0) return { error: 'Amount must be greater than 0.' };
 
+    const frequency = data.frequency || 'monthly';
     const cycleDay = data.billingCycleDay ?? 1;
     const nextDueDate = calculateInitialNextRunDate(cycleDay);
 
@@ -782,6 +807,7 @@ export async function createRecurringExpense(
         divisionId: data.divisionId,
         vendorName: data.vendorName.trim(),
         category: data.category,
+        frequency,
         amount: String(data.amount.toFixed(2)),
         billingCycleDay: cycleDay,
         nextDueDate,
@@ -822,7 +848,7 @@ export async function setRecurringExpenseStatus(
 /**
  * Marks a recurring vendor subscription as paid:
  * Creates an official row in `expenses`, posts `Dr 5020/5010 / Cr 1010 Bank`,
- * and advances the next due date by one month.
+ * and advances the next due date by the subscription frequency.
  */
 export async function markRecurringExpenseAsPaid(
   id: string,
@@ -874,8 +900,12 @@ export async function markRecurringExpenseAsPaid(
         divisionId: subscription.divisionId,
       });
 
-      // 3. Advance next due date by 1 month
-      const nextDate = advanceNextMonth(subscription.nextDueDate, subscription.billingCycleDay);
+      // 3. Advance next due date according to frequency
+      const nextDate = advanceNextRunDate(
+        subscription.nextDueDate,
+        subscription.billingCycleDay,
+        (subscription.frequency as RecurringFrequency) || 'monthly',
+      );
       await tx
         .update(recurringExpenses)
         .set({

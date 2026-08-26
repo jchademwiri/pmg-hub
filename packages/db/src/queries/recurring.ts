@@ -15,6 +15,7 @@ export type RecurringInvoiceRow = {
   clientEmail: string | null;
   reference: string | null;
   status: 'active' | 'paused' | 'cancelled';
+  frequency: 'monthly' | 'quarterly' | 'semi_annually' | 'annually';
   billingCycleDay: number;
   dueDaysOffset: number;
   autoSendEmail: boolean;
@@ -58,6 +59,7 @@ export type RecurringExpenseRow = {
   divisionName: string;
   vendorName: string;
   category: string;
+  frequency: 'monthly' | 'quarterly' | 'semi_annually' | 'annually';
   amount: string;
   billingCycleDay: number;
   nextDueDate: string;
@@ -95,6 +97,7 @@ export async function getAllRecurringInvoices(filters?: {
       clientEmail: clients.email,
       reference: recurringInvoices.reference,
       status: recurringInvoices.status,
+      frequency: recurringInvoices.frequency,
       billingCycleDay: recurringInvoices.billingCycleDay,
       dueDaysOffset: recurringInvoices.dueDaysOffset,
       autoSendEmail: recurringInvoices.autoSendEmail,
@@ -138,6 +141,7 @@ export async function getRecurringInvoiceById(id: string): Promise<RecurringInvo
       clientEmail: clients.email,
       reference: recurringInvoices.reference,
       status: recurringInvoices.status,
+      frequency: recurringInvoices.frequency,
       billingCycleDay: recurringInvoices.billingCycleDay,
       dueDaysOffset: recurringInvoices.dueDaysOffset,
       autoSendEmail: recurringInvoices.autoSendEmail,
@@ -211,6 +215,7 @@ export async function getAllRecurringExpenses(filters?: {
       divisionName: divisions.name,
       vendorName: recurringExpenses.vendorName,
       category: recurringExpenses.category,
+      frequency: recurringExpenses.frequency,
       amount: recurringExpenses.amount,
       billingCycleDay: recurringExpenses.billingCycleDay,
       nextDueDate: sql<string>`${recurringExpenses.nextDueDate}::text`,
