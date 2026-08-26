@@ -102,27 +102,27 @@ export function BillingLineItemsForm({ value, onChange, activeItems }: BillingLi
 
   return (
     <div className="flex flex-col gap-4">
-      {/* Desktop Header */}
-      <div className="hidden lg:grid lg:grid-cols-[1fr_80px_110px_130px_110px_40px] gap-3 font-medium text-sm text-muted-foreground pb-2">
+      {/* Desktop/Tablet Header */}
+      <div className="hidden md:grid md:grid-cols-[1fr_80px_115px_140px_110px_36px] gap-3 font-medium text-xs text-muted-foreground pb-1 px-1">
         <div>Item</div>
-        <div className="text-right">Qty</div>
-        <div className="text-right">Unit Price</div>
-        <div className="text-right">Discount</div>
+        <div>Qty</div>
+        <div>Unit Price</div>
+        <div>Discount</div>
         <div className="text-right">Total</div>
         <div></div>
       </div>
 
-      <div className="flex flex-col gap-4 lg:gap-2">
+      <div className="flex flex-col gap-3">
         {value.map((row) => (
           <div
             key={row.id}
-            className="flex flex-col gap-3 lg:gap-2 rounded-xl border lg:border-transparent p-4 lg:p-2 bg-card lg:bg-transparent shadow-sm lg:shadow-none lg:border-b lg:rounded-md lg:hover:bg-muted/30 lg:transition-colors lg:-mx-2"
+            className="flex flex-col gap-3 rounded-xl border md:border-border/60 p-3.5 md:p-3 bg-card/60 md:bg-card/40 shadow-sm md:shadow-none md:rounded-lg md:hover:bg-muted/20 md:transition-colors"
           >
-            {/* Top Row: Item, Qty, Price, Discount, Total, Action */}
-            <div className="flex flex-col lg:grid lg:grid-cols-[1fr_80px_110px_130px_110px_40px] gap-3 items-stretch lg:items-center w-full">
-              {/* Item */}
-              <div className="flex flex-col gap-1.5 lg:block min-w-0">
-                <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wider lg:hidden">
+            {/* Top Controls Row */}
+            <div className="flex flex-col md:grid md:grid-cols-[1fr_80px_115px_140px_110px_36px] gap-3 items-stretch md:items-center w-full">
+              {/* Item Select */}
+              <div className="flex flex-col gap-1.5 md:block min-w-0">
+                <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wider md:hidden">
                   Item
                 </span>
                 <SearchableItemSelect
@@ -132,10 +132,10 @@ export function BillingLineItemsForm({ value, onChange, activeItems }: BillingLi
                 />
               </div>
 
-              {/* Qty, Price & Discount on mobile (side by side grid) */}
-              <div className="grid grid-cols-2 gap-3 lg:contents">
-                <div className="flex flex-col gap-1.5 lg:block">
-                  <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wider lg:hidden">
+              {/* Qty, Price & Discount */}
+              <div className="grid grid-cols-2 gap-3 md:contents">
+                <div className="flex flex-col gap-1.5 md:block">
+                  <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wider md:hidden">
                     Qty
                   </span>
                   <Input
@@ -144,12 +144,12 @@ export function BillingLineItemsForm({ value, onChange, activeItems }: BillingLi
                     type="number"
                     min="0.01"
                     step="0.01"
-                    className="w-full lg:text-right"
+                    className="w-full"
                   />
                 </div>
 
-                <div className="flex flex-col gap-1.5 lg:block">
-                  <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wider lg:hidden">
+                <div className="flex flex-col gap-1.5 md:block">
+                  <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wider md:hidden">
                     Unit Price
                   </span>
                   <Input
@@ -159,12 +159,12 @@ export function BillingLineItemsForm({ value, onChange, activeItems }: BillingLi
                     min="0"
                     step="0.01"
                     placeholder="0.00"
-                    className="w-full lg:text-right"
+                    className="w-full"
                   />
                 </div>
 
-                <div className="flex flex-col gap-1.5 lg:block col-span-2 lg:col-span-1">
-                  <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wider lg:hidden">
+                <div className="flex flex-col gap-1.5 md:block col-span-2 md:col-span-1">
+                  <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wider md:hidden">
                     Discount
                   </span>
                   <div className="flex">
@@ -186,7 +186,7 @@ export function BillingLineItemsForm({ value, onChange, activeItems }: BillingLi
                           discountValue: val,
                         });
                       }}
-                      className="w-full lg:text-right rounded-r-none focus-visible:z-10"
+                      className="w-full rounded-r-none focus-visible:z-10"
                     />
                     <Select
                       value={row.discountType || 'percent'}
@@ -194,7 +194,7 @@ export function BillingLineItemsForm({ value, onChange, activeItems }: BillingLi
                         updateRow(row.id, { discountType: v as 'percent' | 'amount' })
                       }
                     >
-                      <SelectTrigger className="w-[65px] rounded-l-none border-l-0 focus:ring-0 focus-visible:z-10 bg-muted/10 px-3 shrink-0">
+                      <SelectTrigger className="w-[60px] rounded-l-none border-l-0 focus:ring-0 focus-visible:z-10 bg-muted/10 px-2 shrink-0 text-xs">
                         <SelectValue />
                       </SelectTrigger>
                       <SelectContent>
@@ -206,45 +206,62 @@ export function BillingLineItemsForm({ value, onChange, activeItems }: BillingLi
                 </div>
               </div>
 
-              {/* Description spanning across on mobile, forced to next row on desktop */}
-              <div className="flex flex-col gap-1.5 w-full col-span-2 lg:col-span-4 lg:order-last">
-                <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wider lg:hidden">
-                  Description / Name
-                </span>
-                <Textarea
-                  value={row.description}
-                  onChange={(e) => update(row.id, 'description', e.target.value)}
-                  placeholder="Line item name and detailed description..."
-                  className="w-full min-h-[40px] lg:min-h-[60px] resize-y"
-                  rows={1}
-                />
+              {/* Total on desktop */}
+              <div className="hidden md:block text-right">
+                <div className="font-semibold tabular-nums text-sm text-foreground">
+                  {formatZAR(calcLineTotal(row))}
+                </div>
               </div>
 
-              {/* Total & Delete Action */}
-              <div className="flex items-center justify-between lg:contents mt-2 lg:mt-0 pt-3 lg:pt-0 border-t lg:border-t-0 col-span-2 lg:col-span-1">
-                <div className="flex items-center gap-2 lg:block lg:text-right">
-                  <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wider lg:hidden">
+              {/* Delete on desktop */}
+              <div className="hidden md:flex justify-center items-center">
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="icon"
+                  className="size-8 text-muted-foreground hover:text-destructive hover:bg-destructive/10"
+                  disabled={value.length <= 1}
+                  onClick={() => removeRow(row.id)}
+                  aria-label="Remove line item"
+                >
+                  <Trash2 className="size-4" />
+                </Button>
+              </div>
+
+              {/* Total & Delete for mobile */}
+              <div className="flex items-center justify-between md:hidden mt-1 pt-2.5 border-t">
+                <div className="flex items-center gap-2">
+                  <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
                     Total
                   </span>
-                  <div className="font-bold lg:font-normal tabular-nums text-base lg:text-sm text-foreground">
+                  <div className="font-bold tabular-nums text-base text-foreground">
                     {formatZAR(calcLineTotal(row))}
                   </div>
                 </div>
 
-                <div className="lg:text-center shrink-0">
-                  <Button
-                    type="button"
-                    variant="ghost"
-                    size="icon"
-                    className="size-8 text-muted-foreground hover:text-destructive hover:bg-destructive/10"
-                    disabled={value.length <= 1}
-                    onClick={() => removeRow(row.id)}
-                    aria-label="Remove line item"
-                  >
-                    <Trash2 className="size-4" />
-                  </Button>
-                </div>
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="icon"
+                  className="size-8 text-muted-foreground hover:text-destructive hover:bg-destructive/10"
+                  disabled={value.length <= 1}
+                  onClick={() => removeRow(row.id)}
+                  aria-label="Remove line item"
+                >
+                  <Trash2 className="size-4" />
+                </Button>
               </div>
+            </div>
+
+            {/* Description row: spans 100% full width across all columns */}
+            <div className="w-full">
+              <Textarea
+                value={row.description}
+                onChange={(e) => update(row.id, 'description', e.target.value)}
+                placeholder="Item description or custom details..."
+                className="w-full min-h-[44px] md:min-h-[48px] text-xs resize-y"
+                rows={1}
+              />
             </div>
           </div>
         ))}

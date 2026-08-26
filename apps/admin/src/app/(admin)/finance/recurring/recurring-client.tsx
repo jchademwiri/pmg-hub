@@ -689,9 +689,9 @@ export function RecurringClient({
           if (!open) resetInvoiceForm();
         }}
       >
-        <DialogContent className="sm:max-w-3xl md:max-w-4xl max-h-[90vh] overflow-y-auto">
-          <form onSubmit={handleCreateInvoice}>
-            <DialogHeader>
+        <DialogContent className="sm:max-w-3xl md:max-w-4xl max-h-[90vh] flex flex-col p-0 gap-0 overflow-hidden">
+          <form onSubmit={handleCreateInvoice} className="flex flex-col h-full overflow-hidden">
+            <DialogHeader className="px-6 pt-6 pb-4 border-b shrink-0">
               <DialogTitle className="flex items-center gap-2 text-xl font-bold">
                 <CalendarClock className="h-5 w-5 text-emerald-600 dark:text-emerald-400" />
                 {editingId ? 'Edit Client Retainer Schedule' : 'Create Client Retainer Schedule'}
@@ -702,7 +702,7 @@ export function RecurringClient({
               </DialogDescription>
             </DialogHeader>
 
-            <div className="grid gap-5 py-4">
+            <div className="px-6 py-5 overflow-y-auto flex-1 space-y-5">
               {/* Row 1: Division & Client */}
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div className="grid gap-1.5">
@@ -742,24 +742,28 @@ export function RecurringClient({
                 </div>
               </div>
 
-              {/* Row 2: Reference & Next Invoice Date */}
-              <div className="grid grid-cols-1 sm:grid-cols-[2fr_1fr] gap-4">
-                <div className="grid gap-1.5">
-                  <Label htmlFor="inv-ref" className="text-xs font-semibold">
-                    Schedule Reference
-                  </Label>
-                  <Input
-                    id="inv-ref"
-                    placeholder="e.g. Monthly Website Hosting, Security & Maintenance Retainer"
-                    value={newInvRef}
-                    onChange={(e) => setNewInvRef(e.target.value)}
-                  />
-                </div>
+              {/* Row 2: Schedule Reference */}
+              <div className="grid gap-1.5">
+                <Label htmlFor="inv-ref" className="text-xs font-semibold">
+                  Schedule Reference
+                </Label>
+                <Input
+                  id="inv-ref"
+                  placeholder="e.g. Monthly Website Hosting, Security & Maintenance Retainer"
+                  value={newInvRef}
+                  onChange={(e) => setNewInvRef(e.target.value)}
+                />
+              </div>
 
+              {/* Row 3: Next Invoice Date & End Date (optional) */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div className="grid gap-1.5">
-                  <Label htmlFor="inv-next-run" className="text-xs font-semibold">
-                    Next Invoice Date
-                  </Label>
+                  <div className="flex items-center justify-between">
+                    <Label htmlFor="inv-next-run" className="text-xs font-semibold">
+                      Next Invoice Date
+                    </Label>
+                    <span className="text-[11px] text-muted-foreground">Due: +6 days</span>
+                  </div>
                   <Input
                     id="inv-next-run"
                     type="date"
@@ -767,16 +771,17 @@ export function RecurringClient({
                     onChange={(e) => setNewInvNextRunDate(e.target.value)}
                     required
                   />
-                  <span className="text-[11px] text-muted-foreground">Due: +6 days</span>
                 </div>
-              </div>
 
-              {/* Row 3: End Date (optional auto-pause) */}
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 p-4 rounded-lg bg-muted/40 border">
                 <div className="grid gap-1.5">
-                  <Label htmlFor="inv-end-date" className="text-xs font-semibold">
-                    End Date (optional)
-                  </Label>
+                  <div className="flex items-center justify-between">
+                    <Label htmlFor="inv-end-date" className="text-xs font-semibold">
+                      End Date (optional)
+                    </Label>
+                    <span className="text-[11px] text-muted-foreground">
+                      Blank = bill indefinitely
+                    </span>
+                  </div>
                   <Input
                     id="inv-end-date"
                     type="date"
@@ -785,17 +790,18 @@ export function RecurringClient({
                     onChange={(e) => setNewInvEndDate(e.target.value)}
                   />
                 </div>
-                <div className="flex items-end">
-                  <span className="text-[11px] text-muted-foreground">
-                    Once the next invoice would fall on or after this date, the schedule pauses
-                    automatically. Leave blank to bill indefinitely.
-                  </span>
-                </div>
               </div>
 
               {/* Row 4: Line items — pick from catalogue items, or enter a custom description/price */}
-              <div className="grid gap-1.5">
-                <Label className="text-xs font-semibold">Retainer Line Items</Label>
+              <div className="grid gap-2 pt-1">
+                <div className="flex items-center justify-between">
+                  <Label className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+                    Retainer Line Items
+                  </Label>
+                  <span className="text-[11px] text-muted-foreground">
+                    Select catalogue item or enter custom rate
+                  </span>
+                </div>
                 <BillingLineItemsForm
                   value={newInvLineItems}
                   onChange={setNewInvLineItems}
@@ -804,7 +810,7 @@ export function RecurringClient({
               </div>
             </div>
 
-            <DialogFooter className="gap-2 sm:gap-0">
+            <DialogFooter className="px-6 py-4 border-t bg-muted/20 shrink-0 flex items-center justify-end gap-2">
               <Button type="button" variant="outline" onClick={() => setInvoiceModalOpen(false)}>
                 Cancel
               </Button>
@@ -822,9 +828,9 @@ export function RecurringClient({
 
       {/* Modal: Create Recurring Outbound Subscription */}
       <Dialog open={expenseModalOpen} onOpenChange={setExpenseModalOpen}>
-        <DialogContent className="sm:max-w-2xl max-h-[90vh] overflow-y-auto">
-          <form onSubmit={handleCreateExpense}>
-            <DialogHeader>
+        <DialogContent className="sm:max-w-2xl max-h-[90vh] flex flex-col p-0 gap-0 overflow-hidden">
+          <form onSubmit={handleCreateExpense} className="flex flex-col h-full overflow-hidden">
+            <DialogHeader className="px-6 pt-6 pb-4 border-b shrink-0">
               <DialogTitle className="flex items-center gap-2 text-xl font-bold">
                 <TrendingDown className="h-5 w-5 text-rose-600 dark:text-rose-400" /> Add Vendor
                 Subscription
@@ -835,7 +841,7 @@ export function RecurringClient({
               </DialogDescription>
             </DialogHeader>
 
-            <div className="grid gap-5 py-4">
+            <div className="px-6 py-5 overflow-y-auto flex-1 space-y-5">
               {/* Row 1: Division & Vendor */}
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div className="grid gap-1.5">
@@ -955,7 +961,7 @@ export function RecurringClient({
               </div>
             </div>
 
-            <DialogFooter className="gap-2 sm:gap-0">
+            <DialogFooter className="px-6 py-4 border-t bg-muted/20 shrink-0 flex items-center justify-end gap-2">
               <Button type="button" variant="outline" onClick={() => setExpenseModalOpen(false)}>
                 Cancel
               </Button>

@@ -1,10 +1,5 @@
-import type { BrandKey } from "./domains";
-import {
-  BRAND_ADMIN_EMAIL,
-  BRAND_FROM_EMAIL,
-  DOMAINS,
-  RESEND_API_KEY_ENV,
-} from "./domains";
+import type { BrandKey } from './domains';
+import { BRAND_ADMIN_EMAIL, BRAND_FROM_EMAIL, DOMAINS, RESEND_API_KEY_ENV } from './domains';
 
 export interface BrandEmailConfig {
   apiKey: string;
@@ -28,26 +23,26 @@ const BRAND_META: Record<
   }
 > = {
   tes: {
-    companyName: "Tender Edge Solutions",
-    websiteUrl: "https://www.tenderedgesolutions.co.za",
-    primaryColor: "#c9a227",
-    fromEnv: "TES_FROM_EMAIL",
-    adminEnv: "TES_ADMIN_EMAIL",
+    companyName: 'Tender Edge Solutions',
+    websiteUrl: 'https://www.tenderedgesolutions.co.za',
+    primaryColor: '#c9a227',
+    fromEnv: 'TES_FROM_EMAIL',
+    adminEnv: 'TES_ADMIN_EMAIL',
   },
   aws: {
-    companyName: "Apex Web Solutions",
-    websiteUrl: "https://apexwebsolutions.co.za",
-    primaryColor: "#1d4ed8",
-    logoUrl: "https://apexwebsolutions.co.za/logo.png",
-    fromEnv: "AWS_FROM_EMAIL",
-    adminEnv: "AWS_ADMIN_EMAIL",
+    companyName: 'Apex Web Solutions',
+    websiteUrl: 'https://apexwebsolutions.co.za',
+    primaryColor: '#1d4ed8',
+    logoUrl: 'https://apexwebsolutions.co.za/logo.png',
+    fromEnv: 'AWS_FROM_EMAIL',
+    adminEnv: 'AWS_ADMIN_EMAIL',
   },
   pmg: {
-    companyName: "Playhouse Media Group",
-    websiteUrl: "https://playhousemedia.co.za",
-    primaryColor: "#f97316",
-    fromEnv: "PMG_FROM_EMAIL",
-    adminEnv: "PMG_ADMIN_EMAIL",
+    companyName: 'Playhouse Media Group',
+    websiteUrl: 'https://playhousemedia.co.za',
+    primaryColor: '#f97316',
+    fromEnv: 'PMG_FROM_EMAIL',
+    adminEnv: 'PMG_ADMIN_EMAIL',
   },
 };
 
@@ -61,8 +56,9 @@ export function resolveBrandEmailConfig(
 ): BrandEmailConfig {
   const meta = BRAND_META[brand];
   const apiKeyEnv = RESEND_API_KEY_ENV[brand];
-  const apiKey = (env[apiKeyEnv] || env.RESEND_API_KEY || "").trim();
-  const from = env[meta.fromEnv] || BRAND_FROM_EMAIL[brand];
+  const apiKey = (env[apiKeyEnv] || env.RESEND_API_KEY || '').trim();
+  const rawFrom = env[meta.fromEnv] || BRAND_FROM_EMAIL[brand];
+  const from = rawFrom.includes('<') ? rawFrom : `${meta.companyName} Team <${rawFrom}>`;
   const adminEmail = env[meta.adminEnv] || BRAND_ADMIN_EMAIL[brand];
 
   if (!apiKey) {
@@ -72,7 +68,7 @@ export function resolveBrandEmailConfig(
   }
 
   const expectedDomain = DOMAINS[brand];
-  const fromDomain = from.split("@")[1]?.toLowerCase();
+  const fromDomain = rawFrom.split('@')[1]?.toLowerCase();
   if (fromDomain && !fromDomain.endsWith(expectedDomain)) {
     console.warn(
       `[emails] "${brand}" from address "${from}" does not match verified domain "${expectedDomain}".`,

@@ -32,6 +32,7 @@ import {
   DEFAULT_REPLY_TO,
   DEFAULT_WEBSITE_URL,
   resolveDivisionAdminEmail,
+  resolveDivisionSenderName,
   resolveFromEmail,
   resolveResendApiKey,
   resolveDefaultFromEmail,
@@ -147,7 +148,7 @@ async function sendRecurringInvoiceEmail(params: {
 
   const apiKey = resolveResendApiKey(divisionName);
   const defaultFrom = resolveDefaultFromEmail(divisionName);
-  const fromName = billingConfig?.salesRepName || process.env.EMAIL_FROM_NAME || 'PMG Admin';
+  const fromName = resolveDivisionSenderName(divisionName);
   const fromEmail = resolveFromEmail(billingConfig?.divisionWebsite, defaultFrom);
 
   const emailClient = createEmailClient({
