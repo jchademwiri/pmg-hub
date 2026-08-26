@@ -33,7 +33,9 @@ export function ExpensesHeader({
     <div className="flex items-center justify-between">
       <div>
         <h2 className="text-lg font-semibold">Expenses</h2>
-        <p className="text-sm text-muted-foreground">Monitor general expense entries and record outgoing cash</p>
+        <p className="text-sm text-muted-foreground">
+          Monitor general expense entries and record outgoing cash
+        </p>
       </div>
       <div className="flex items-center gap-2">
         <Button onClick={() => setIsOpen(true)} size="sm">
@@ -41,11 +43,12 @@ export function ExpensesHeader({
         </Button>
 
         <Dialog open={isOpen} onOpenChange={setIsOpen}>
-          <DialogContent className="sm:max-w-2xl">
+          <DialogContent className="sm:max-w-2xl" onPointerDownOutside={(e) => e.preventDefault()}>
             <DialogHeader>
               <DialogTitle>Record New Expense</DialogTitle>
               <DialogDescription>
-                Log a business expense, select division & category, and attach receipt proof of payment.
+                Log a business expense, select division & category, and attach receipt proof of
+                payment.
               </DialogDescription>
             </DialogHeader>
 

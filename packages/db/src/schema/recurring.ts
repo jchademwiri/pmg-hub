@@ -30,6 +30,13 @@ export const recurringExpenseStatusEnum = pgEnum('recurring_expense_status', [
   'cancelled',
 ]);
 
+export const recurringFrequencyEnum = pgEnum('recurring_frequency', [
+  'monthly',
+  'quarterly',
+  'semi_annually',
+  'annually',
+]);
+
 // ── recurring_invoices (Client Retainers / Monthly Hosting) ───────────────────
 
 export const recurringInvoices = pgTable(
@@ -44,6 +51,7 @@ export const recurringInvoices = pgTable(
       .references(() => clients.id, { onDelete: 'restrict' }),
     reference: text('reference'), // e.g. "Monthly Retainer & Cloud Hosting"
     status: recurringInvoiceStatusEnum('status').notNull().default('active'),
+    frequency: recurringFrequencyEnum('frequency').notNull().default('monthly'),
     billingCycleDay: integer('billing_cycle_day').notNull().default(25), // Defaults to 25th of month
     dueDaysOffset: integer('due_days_offset').notNull().default(6), // 25th + 6 days = 1st of next month
     autoSendEmail: boolean('auto_send_email').notNull().default(true),
@@ -120,6 +128,7 @@ export const recurringExpenses = pgTable(
       .references(() => divisions.id, { onDelete: 'restrict' }),
     vendorName: text('vendor_name').notNull(), // e.g. "Claude Anthropic", "Antigravity", "Hetzner Cloud"
     category: text('category').notNull(), // e.g. "Software & SaaS", "Hosting & Infrastructure"
+    frequency: recurringFrequencyEnum('frequency').notNull().default('monthly'),
     amount: numeric('amount', { precision: 12, scale: 2 }).notNull(),
     billingCycleDay: integer('billing_cycle_day').notNull().default(1), // Day of month subscription charges
     nextDueDate: date('next_due_date').notNull(),

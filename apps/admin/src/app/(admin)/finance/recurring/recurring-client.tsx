@@ -45,6 +45,7 @@ import {
   triggerRecurringBillingRun,
   createRecurringExpense,
   markRecurringExpenseAsPaid,
+  type RecurringFrequency,
 } from '@/app/actions/recurring-actions';
 import {
   BillingLineItemsForm,
@@ -100,6 +101,20 @@ function defaultNextRunDate(): string {
   return `${year}-${String(month + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
 }
 
+function formatFrequencyLabel(freq?: string): string {
+  switch (freq) {
+    case 'quarterly':
+      return 'Quarterly (3 Mo)';
+    case 'semi_annually':
+      return 'Bi-Annually (6 Mo)';
+    case 'annually':
+      return 'Yearly (12 Mo)';
+    case 'monthly':
+    default:
+      return 'Monthly';
+  }
+}
+
 export function RecurringClient({
   recurringInvoices,
   recurringExpenses,
@@ -130,6 +145,7 @@ export function RecurringClient({
   const [newInvDivisionId, setNewInvDivisionId] = useState(divisions[0]?.id || '');
   const [newInvClientId, setNewInvClientId] = useState('');
   const [newInvRef, setNewInvRef] = useState('');
+  const [newInvFrequency, setNewInvFrequency] = useState<RecurringFrequency>('monthly');
   const [newInvNextRunDate, setNewInvNextRunDate] = useState(defaultNextRunDate());
   const [newInvEndDate, setNewInvEndDate] = useState('');
   const [newInvLineItems, setNewInvLineItems] = useState<LineItemFormRow[]>([blankRow()]);
@@ -138,6 +154,7 @@ export function RecurringClient({
   const [newExpDivisionId, setNewExpDivisionId] = useState(divisions[0]?.id || '');
   const [newExpVendor, setNewExpVendor] = useState('');
   const [newExpCategory, setNewExpCategory] = useState(categories[0] || 'Software & SaaS');
+  const [newExpFrequency, setNewExpFrequency] = useState<RecurringFrequency>('monthly');
   const [newExpAmount, setNewExpAmount] = useState('');
   const [newExpCycleDay, setNewExpCycleDay] = useState(1);
   const [newExpClientId, setNewExpClientId] = useState<string>('none');
@@ -146,8 +163,32 @@ export function RecurringClient({
   const activeInbound = recurringInvoices.filter((i) => i.status === 'active');
   const activeOutbound = recurringExpenses.filter((e) => e.status === 'active');
 
-  const totalMRR = activeInbound.reduce((sum, inv) => sum + parseFloat(inv.total), 0);
-  const totalSoftwareBurn = activeOutbound.reduce((sum, exp) => sum + parseFloat(exp.amount), 0);
+  const totalMRR = activeInbound.reduce((sum, inv) => {
+    const amount = parseFloat(inv.total);
+    const factor =
+      inv.frequency === 'annually'
+        ? 1 / 12
+        : inv.frequency === 'semi_annually'
+          ? 1 / 6
+          : inv.frequency === 'quarterly'
+            ? 1 / 3
+            : 1;
+    return sum + amount * factor;
+  }, 0);
+
+  const totalSoftwareBurn = activeOutbound.reduce((sum, exp) => {
+    const amount = parseFloat(exp.amount);
+    const factor =
+      exp.frequency === 'annually'
+        ? 1 / 12
+        : exp.frequency === 'semi_annually'
+          ? 1 / 6
+          : exp.frequency === 'quarterly'
+            ? 1 / 3
+            : 1;
+    return sum + amount * factor;
+  }, 0);
+
   const netMonthlySurplus = totalMRR - totalSoftwareBurn;
 
   // Handlers
@@ -176,6 +217,7 @@ export function RecurringClient({
     setNewInvDivisionId(divisions[0]?.id || '');
     setNewInvClientId('');
     setNewInvRef('');
+    setNewInvFrequency('monthly');
     setNewInvNextRunDate(defaultNextRunDate());
     setNewInvEndDate('');
     setNewInvLineItems([blankRow()]);
@@ -199,6 +241,7 @@ export function RecurringClient({
       setNewInvDivisionId(detail.divisionId);
       setNewInvClientId(detail.clientId);
       setNewInvRef(detail.reference || '');
+      setNewInvFrequency((detail.frequency as RecurringFrequency) || 'monthly');
       setNewInvNextRunDate(detail.nextRunDate);
       setNewInvEndDate(detail.endDate || '');
       setNewInvLineItems(
@@ -271,7 +314,8 @@ export function RecurringClient({
       const payload = {
         divisionId: newInvDivisionId,
         clientId: newInvClientId,
-        reference: newInvRef || 'Monthly Hosting & Retainer',
+        reference: newInvRef || 'Client Hosting & Retainer',
+        frequency: newInvFrequency,
         nextRunDate: newInvNextRunDate,
         endDate: newInvEndDate || null,
         dueDaysOffset: 6, // due 1st
@@ -313,6 +357,7 @@ export function RecurringClient({
         divisionId: newExpDivisionId,
         vendorName: newExpVendor.trim(),
         category: newExpCategory,
+        frequency: newExpFrequency,
         amount: amountNum,
         billingCycleDay: Number(newExpCycleDay),
         clientId: newExpClientId === 'none' ? null : newExpClientId,
@@ -324,6 +369,7 @@ export function RecurringClient({
         setExpenseModalOpen(false);
         setNewExpVendor('');
         setNewExpAmount('');
+        setNewExpFrequency('monthly');
         setActionMessage({ type: 'success', text: 'Recurring subscription created successfully.' });
       }
     });
@@ -514,8 +560,16 @@ export function RecurringClient({
                         </Badge>
                       </td>
                       <td className="px-4 py-3">
-                        <div className="text-xs font-medium">
-                          Day {inv.billingCycleDay} of month
+                        <div className="flex items-center gap-1.5 mb-1">
+                          <Badge
+                            variant="outline"
+                            className="text-[10px] font-semibold uppercase tracking-wider bg-muted/40"
+                          >
+                            {formatFrequencyLabel(inv.frequency)}
+                          </Badge>
+                          <span className="text-xs text-muted-foreground">
+                            Day {inv.billingCycleDay}
+                          </span>
                         </div>
                         <div className="text-xs text-muted-foreground">
                           Next: {fmtDateLong(inv.nextRunDate)}
@@ -616,7 +670,7 @@ export function RecurringClient({
                     <th className="px-4 py-3">Category</th>
                     <th className="px-4 py-3">Division</th>
                     <th className="px-4 py-3">Cycle & Next Due</th>
-                    <th className="px-4 py-3">Monthly Amount</th>
+                    <th className="px-4 py-3">Amount</th>
                     <th className="px-4 py-3">Status</th>
                     <th className="px-4 py-3 text-right">Actions</th>
                   </tr>
@@ -637,7 +691,17 @@ export function RecurringClient({
                         </Badge>
                       </td>
                       <td className="px-4 py-3">
-                        <div className="text-xs font-medium">Day {exp.billingCycleDay}</div>
+                        <div className="flex items-center gap-1.5 mb-1">
+                          <Badge
+                            variant="outline"
+                            className="text-[10px] font-semibold uppercase tracking-wider bg-muted/40"
+                          >
+                            {formatFrequencyLabel(exp.frequency)}
+                          </Badge>
+                          <span className="text-xs text-muted-foreground">
+                            Day {exp.billingCycleDay}
+                          </span>
+                        </div>
                         <div className="text-xs text-muted-foreground">
                           Due: {fmtDateLong(exp.nextDueDate)}
                         </div>
@@ -689,7 +753,10 @@ export function RecurringClient({
           if (!open) resetInvoiceForm();
         }}
       >
-        <DialogContent className="sm:max-w-3xl md:max-w-4xl max-h-[90vh] flex flex-col p-0 gap-0 overflow-hidden">
+        <DialogContent
+          className="sm:max-w-3xl md:max-w-4xl max-h-[90vh] flex flex-col p-0 gap-0 overflow-hidden"
+          onPointerDownOutside={(e) => e.preventDefault()}
+        >
           <form onSubmit={handleCreateInvoice} className="flex flex-col h-full overflow-hidden">
             <DialogHeader className="px-6 pt-6 pb-4 border-b shrink-0">
               <DialogTitle className="flex items-center gap-2 text-xl font-bold">
@@ -697,8 +764,8 @@ export function RecurringClient({
                 {editingId ? 'Edit Client Retainer Schedule' : 'Create Client Retainer Schedule'}
               </DialogTitle>
               <DialogDescription>
-                Automated monthly retainer billing. Invoices generate on the 25th with payment due
-                on the 1st of the following month.
+                Automated recurring retainer billing. Invoices generate on the selected cadence with
+                payment due 6 days later (e.g. 25th → 1st).
               </DialogDescription>
             </DialogHeader>
 
@@ -742,17 +809,39 @@ export function RecurringClient({
                 </div>
               </div>
 
-              {/* Row 2: Schedule Reference */}
-              <div className="grid gap-1.5">
-                <Label htmlFor="inv-ref" className="text-xs font-semibold">
-                  Schedule Reference
-                </Label>
-                <Input
-                  id="inv-ref"
-                  placeholder="e.g. Monthly Website Hosting, Security & Maintenance Retainer"
-                  value={newInvRef}
-                  onChange={(e) => setNewInvRef(e.target.value)}
-                />
+              {/* Row 2: Schedule Reference & Billing Cycle Frequency */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div className="grid gap-1.5">
+                  <Label htmlFor="inv-ref" className="text-xs font-semibold">
+                    Schedule Reference
+                  </Label>
+                  <Input
+                    id="inv-ref"
+                    placeholder="e.g. Website Hosting & Maintenance Retainer"
+                    value={newInvRef}
+                    onChange={(e) => setNewInvRef(e.target.value)}
+                  />
+                </div>
+
+                <div className="grid gap-1.5">
+                  <Label htmlFor="inv-frequency" className="text-xs font-semibold">
+                    Billing Cycle / Frequency
+                  </Label>
+                  <Select
+                    value={newInvFrequency}
+                    onValueChange={(val) => setNewInvFrequency(val as RecurringFrequency)}
+                  >
+                    <SelectTrigger id="inv-frequency">
+                      <SelectValue placeholder="Billing Frequency" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="monthly">Monthly (Every 1 Month)</SelectItem>
+                      <SelectItem value="quarterly">Quarterly (Every 3 Months)</SelectItem>
+                      <SelectItem value="semi_annually">Bi-Annually (Every 6 Months)</SelectItem>
+                      <SelectItem value="annually">Yearly / Annually (Every 12 Months)</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
               </div>
 
               {/* Row 3: Next Invoice Date & End Date (optional) */}
@@ -828,7 +917,10 @@ export function RecurringClient({
 
       {/* Modal: Create Recurring Outbound Subscription */}
       <Dialog open={expenseModalOpen} onOpenChange={setExpenseModalOpen}>
-        <DialogContent className="sm:max-w-2xl max-h-[90vh] flex flex-col p-0 gap-0 overflow-hidden">
+        <DialogContent
+          className="sm:max-w-2xl max-h-[90vh] flex flex-col p-0 gap-0 overflow-hidden"
+          onPointerDownOutside={(e) => e.preventDefault()}
+        >
           <form onSubmit={handleCreateExpense} className="flex flex-col h-full overflow-hidden">
             <DialogHeader className="px-6 pt-6 pb-4 border-b shrink-0">
               <DialogTitle className="flex items-center gap-2 text-xl font-bold">
@@ -876,7 +968,7 @@ export function RecurringClient({
                 </div>
               </div>
 
-              {/* Row 2: Category & Amount */}
+              {/* Row 2: Category & Billing Frequency */}
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div className="grid gap-1.5">
                   <Label htmlFor="exp-category" className="text-xs font-semibold">
@@ -903,8 +995,31 @@ export function RecurringClient({
                 </div>
 
                 <div className="grid gap-1.5">
+                  <Label htmlFor="exp-frequency" className="text-xs font-semibold">
+                    Billing Cycle / Frequency
+                  </Label>
+                  <Select
+                    value={newExpFrequency}
+                    onValueChange={(val) => setNewExpFrequency(val as RecurringFrequency)}
+                  >
+                    <SelectTrigger id="exp-frequency">
+                      <SelectValue placeholder="Billing Frequency" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="monthly">Monthly (Every 1 Month)</SelectItem>
+                      <SelectItem value="quarterly">Quarterly (Every 3 Months)</SelectItem>
+                      <SelectItem value="semi_annually">Bi-Annually (Every 6 Months)</SelectItem>
+                      <SelectItem value="annually">Yearly / Annually (Every 12 Months)</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
+
+              {/* Row 3: Amount & Cycle Day */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div className="grid gap-1.5">
                   <Label htmlFor="exp-amount" className="text-xs font-semibold">
-                    Monthly Amount (ZAR)
+                    Subscription Amount (ZAR)
                   </Label>
                   <Input
                     id="exp-amount"
@@ -916,10 +1031,7 @@ export function RecurringClient({
                     required
                   />
                 </div>
-              </div>
 
-              {/* Row 3: Cycle Day & Client Cost Attribution */}
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 p-4 rounded-lg bg-muted/40 border">
                 <div className="grid gap-1.5">
                   <Label htmlFor="exp-cycle" className="text-xs font-semibold">
                     Billing Day of Month
@@ -936,7 +1048,10 @@ export function RecurringClient({
                     Day when subscription is debited
                   </span>
                 </div>
+              </div>
 
+              {/* Row 4: Client Cost Attribution */}
+              <div className="p-4 rounded-lg bg-muted/40 border">
                 <div className="grid gap-1.5">
                   <Label htmlFor="exp-client" className="text-xs font-semibold">
                     Project Cost Attribution
