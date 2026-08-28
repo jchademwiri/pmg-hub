@@ -74,11 +74,12 @@ export const GET: APIRoute = async ({ request }) => {
       .where(eq(publicDocuments.id, doc.id));
 
     const { client, bucket } = getR2Client();
+    const safeFilename = `${formSlug.replace(/[^a-zA-Z0-9._-]/g, '_')}.pdf`;
 
     const command = new GetObjectCommand({
       Bucket: bucket,
       Key: doc.s3Key,
-      ResponseContentDisposition: `attachment; filename="${formSlug}.pdf"`,
+      ResponseContentDisposition: `attachment; filename="${safeFilename}"`,
     });
 
     const presignedUrl = await getSignedUrl(client, command, { expiresIn: 300 });

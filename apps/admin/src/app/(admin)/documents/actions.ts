@@ -60,13 +60,24 @@ export async function uploadDocumentAction(formData: FormData) {
 
   await client.send(command);
 
-  // 2. Save metadata to Postgres
-  await db.insert(publicDocuments).values({
-    title,
-    slug,
-    s3Key,
-    downloadCount: 0,
-  });
+  // 2. Save or update metadata in Postgres (handles version updates cleanly)
+  await db
+    .insert(publicDocuments)
+    .values({
+      title,
+      slug,
+      s3Key,
+      downloadCount: 0,
+      updatedAt: new Date(),
+    })
+    .onConflictDoUpdate({
+      target: publicDocuments.slug,
+      set: {
+        title,
+        s3Key,
+        updatedAt: new Date(),
+      },
+    });
 
   revalidatePath('/documents');
   return { success: true, s3Key };
