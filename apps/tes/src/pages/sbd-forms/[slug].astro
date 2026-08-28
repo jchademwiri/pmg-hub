@@ -1,83 +1,108 @@
 ---
-import Layout from "../../layouts/Layout.astro";
+import Layout from '../../layouts/Layout.astro';
 
 export const prerender = true;
 
 export function getStaticPaths() {
   return [
-    { params: { slug: "sbd-4" } },
-    { params: { slug: "sbd-6-1" } },
-    { params: { slug: "sbd-8" } },
-    { params: { slug: "sbd-9" } }
+    { params: { slug: 'sbd-4' } },
+    { params: { slug: 'sbd-6-1' } },
+    { params: { slug: 'sbd-8' } },
+    { params: { slug: 'sbd-9' } },
   ];
 }
 
 const { slug } = Astro.params;
 
 const formContent: Record<string, any> = {
-  "sbd-4": {
-    docName: "SBD 4",
-    title: "DECLARATION OF INTEREST",
-    description: "Download the SBD 4 form required for all government tenders to declare relationships or conflicts of interest.",
-    content: "The SBD 4 form (Declaration of Interest) is a mandatory document for all South African government tenders. It requires bidders to declare if they are employed by the state, or if they have any relationship with persons involved in the evaluation or adjudication of the bid. Failing to accurately complete the SBD 4 form will result in immediate disqualification.",
+  'sbd-4': {
+    docName: 'SBD 4',
+    title: 'DECLARATION OF INTEREST',
+    description:
+      'Download the SBD 4 form required for all government tenders to declare relationships or conflicts of interest.',
+    content:
+      'The SBD 4 form (Declaration of Interest) is a mandatory document for all South African government tenders. It requires bidders to declare if they are employed by the state, or if they have any relationship with persons involved in the evaluation or adjudication of the bid. Failing to accurately complete the SBD 4 form will result in immediate disqualification.',
     mistakes: [
-      "Failing to declare family members who work for the government.",
+      'Failing to declare family members who work for the government.',
       "Leaving sections blank instead of writing 'N/A'.",
-      "Forgetting to have the document signed by a Commissioner of Oaths (if required by the specific tender)."
-    ]
+      'Forgetting to have the document signed by a Commissioner of Oaths (if required by the specific tender).',
+    ],
   },
-  "sbd-6-1": {
-    docName: "SBD 6.1",
-    title: "PREFERENCE POINTS CLAIM",
-    description: "Download the SBD 6.1 form to claim preference points based on your B-BBEE status.",
-    content: "The SBD 6.1 form is used to claim preference points in terms of the Preferential Procurement Regulations. It calculates your score based on price (80 or 90 points) and your B-BBEE Status Level of Contribution (20 or 10 points).",
+  'sbd-6-1': {
+    docName: 'SBD 6.1',
+    title: 'PREFERENCE POINTS CLAIM',
+    description:
+      'Download the SBD 6.1 form to claim preference points based on your B-BBEE status.',
+    content:
+      'The SBD 6.1 form is used to claim preference points in terms of the Preferential Procurement Regulations. It calculates your score based on price (80 or 90 points) and your B-BBEE Status Level of Contribution (20 or 10 points).',
     mistakes: [
-      "Claiming points without a valid B-BBEE certificate or sworn affidavit.",
-      "Incorrectly calculating the preference points.",
-      "Using an outdated version of the form."
-    ]
+      'Claiming points without a valid B-BBEE certificate or sworn affidavit.',
+      'Incorrectly calculating the preference points.',
+      'Using an outdated version of the form.',
+    ],
   },
-  "sbd-8": {
-    docName: "SBD 8",
-    title: "SUPPLY CHAIN PRACTICES",
-    description: "Download the SBD 8 form to declare your company's past supply chain management practices.",
-    content: "The SBD 8 form serves as a declaration that the bidder has not abused the institution's supply chain management system, committed fraud, or failed to perform on any government contracts.",
+  'sbd-8': {
+    docName: 'SBD 8',
+    title: 'SUPPLY CHAIN PRACTICES',
+    description:
+      "Download the SBD 8 form to declare your company's past supply chain management practices.",
+    content:
+      "The SBD 8 form serves as a declaration that the bidder has not abused the institution's supply chain management system, committed fraud, or failed to perform on any government contracts.",
     mistakes: [
-      "Failing to disclose past contract terminations.",
-      "Not checking the National Treasury Register for Tender Defaulters before signing."
-    ]
+      'Failing to disclose past contract terminations.',
+      'Not checking the National Treasury Register for Tender Defaulters before signing.',
+    ],
   },
-  "sbd-9": {
-    docName: "SBD 9",
-    title: "INDEPENDENT BID DETERMINATION",
-    description: "Download the SBD 9 form to certify that your bid was determined independently.",
-    content: "The SBD 9 form is a certificate of declaration that ensures the bid was arrived at independently, without consultation, communication, or agreement with any competitor. This prevents bid-rigging and collusive practices.",
+  'sbd-9': {
+    docName: 'SBD 9',
+    title: 'INDEPENDENT BID DETERMINATION',
+    description: 'Download the SBD 9 form to certify that your bid was determined independently.',
+    content:
+      'The SBD 9 form is a certificate of declaration that ensures the bid was arrived at independently, without consultation, communication, or agreement with any competitor. This prevents bid-rigging and collusive practices.',
     mistakes: [
-      "Submitting identical bids as a subsidiary or sister company.",
-      "Discussing pricing strategies with competitors before submitting the bid."
-    ]
-  }
+      'Submitting identical bids as a subsidiary or sister company.',
+      'Discussing pricing strategies with competitors before submitting the bid.',
+    ],
+  },
 };
 
 const form = formContent[slug];
-if (!form) return Astro.redirect("/404");
+if (!form) return Astro.redirect('/404');
 ---
 
-<Layout title={`Download ${form.docName}: ${form.title} | TenderEdge Solutions`} description={form.description}>
+<Layout
+  title={`Download ${form.docName}: ${form.title} | TenderEdge Solutions`}
+  description={form.description}
+>
   <section class="relative pt-28 pb-16 px-6 md:px-12 dot-grid border-b border-border">
     <div class="max-w-7xl mx-auto w-full">
       <div class="mb-8">
-        <a href="/sbd-forms" class="inline-flex items-center gap-2 text-muted-foreground hover:text-primary transition-colors text-sm uppercase tracking-wider font-semibold">
-          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="19" y1="12" x2="5" y2="12"></line><polyline points="12 19 5 12 12 5"></polyline></svg>
+        <a
+          href="/sbd-forms"
+          class="inline-flex items-center gap-2 text-muted-foreground hover:text-primary transition-colors text-sm uppercase tracking-wider font-semibold"
+        >
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            width="16"
+            height="16"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="2"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            ><line x1="19" y1="12" x2="5" y2="12"></line><polyline points="12 19 5 12 12 5"
+            ></polyline></svg
+          >
           Back to all forms
         </a>
       </div>
-      
+
       <p class="text-primary uppercase tracking-widest font-medium text-[10px] md:text-[11px] mb-4">
         {form.docName}
       </p>
       <h1 class="font-condensed uppercase text-5xl md:text-7xl lg:text-8xl leading-[0.9] mb-8">
-        {form.title.split(' ').slice(0, -1).join(' ')}<br/>
+        {form.title.split(' ').slice(0, -1).join(' ')}<br />
         <span class="text-primary">{form.title.split(' ').slice(-1)}</span>
       </h1>
     </div>
@@ -85,22 +110,40 @@ if (!form) return Astro.redirect("/404");
 
   <section class="py-16 md:py-24 px-6 md:px-12">
     <div class="max-w-7xl mx-auto w-full grid md:grid-cols-12 gap-12 lg:gap-24">
-      
       <!-- Main Content -->
       <div class="md:col-span-7 lg:col-span-8">
         <div class="prose prose-invert prose-lg max-w-none">
           <p class="text-xl text-foreground leading-relaxed font-light mb-12">
             {form.content}
           </p>
-          
-          <h3 class="font-condensed uppercase text-3xl text-primary mb-6 mt-12">Common Mistakes to Avoid</h3>
+
+          <h3 class="font-condensed uppercase text-3xl text-primary mb-6 mt-12">
+            Common Mistakes to Avoid
+          </h3>
           <ul class="space-y-4 text-muted-foreground">
-            {form.mistakes.map((mistake: string) => (
-              <li class="flex items-start gap-3">
-                <svg class="w-6 h-6 text-primary flex-shrink-0 mt-0.5" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="12"></line><line x1="12" y1="16" x2="12.01" y2="16"></line></svg>
-                <span>{mistake}</span>
-              </li>
-            ))}
+            {
+              form.mistakes.map((mistake: string) => (
+                <li class="flex items-start gap-3">
+                  <svg
+                    class="w-6 h-6 text-primary flex-shrink-0 mt-0.5"
+                    xmlns="http://www.w3.org/2000/svg"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    stroke-width="2"
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                  >
+                    <>
+                      <circle cx="12" cy="12" r="10" />
+                      <line x1="12" y1="8" x2="12" y2="12" />
+                      <line x1="12" y1="16" x2="12.01" y2="16" />
+                    </>
+                  </svg>
+                  <span>{mistake}</span>
+                </li>
+              ))
+            }
           </ul>
         </div>
       </div>
@@ -109,26 +152,105 @@ if (!form) return Astro.redirect("/404");
       <div class="md:col-span-5 lg:col-span-4 space-y-6">
         <!-- Download CTA -->
         <div class="bg-card border border-border rounded-xl p-8 shadow-xl">
-          <p class="text-primary uppercase tracking-widest font-medium text-[10px] mb-2">DO IT YOURSELF</p>
+          <p class="text-primary uppercase tracking-widest font-medium text-[10px] mb-2">
+            DO IT YOURSELF
+          </p>
           <h3 class="font-condensed uppercase text-3xl mb-4">DOWNLOAD PDF</h3>
-          <p class="text-muted-foreground text-sm mb-8">Download the blank {form.docName} PDF document and complete it manually.</p>
-          
-          <a 
-            href={`/api/download?form=${slug}`}
-            class="w-full flex items-center justify-center gap-2 bg-transparent border-2 border-primary text-primary px-6 py-4 rounded-md font-bold uppercase tracking-wider hover:bg-primary hover:text-primary-foreground transition-all"
+          <p class="text-muted-foreground text-sm mb-6">
+            Download the blank {form.docName} PDF document and complete it manually.
+          </p>
+
+          <!-- Download Button Component -->
+          <button
+            id="download-btn"
+            data-slug={slug}
+            data-docname={form.docName}
+            class="w-full flex items-center justify-center gap-2 bg-transparent border-2 border-primary text-primary px-6 py-4 rounded-md font-bold uppercase tracking-wider hover:bg-primary hover:text-primary-foreground transition-all duration-200 cursor-pointer disabled:opacity-60 disabled:cursor-not-allowed group"
           >
-            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
-            Download {form.docName}
-          </a>
+            <svg
+              id="download-icon"
+              xmlns="http://www.w3.org/2000/svg"
+              width="20"
+              height="20"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              class="group-hover:translate-y-0.5 transition-transform"
+              ><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline
+                points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"
+              ></line></svg
+            >
+            <svg
+              id="loading-spinner"
+              class="animate-spin -ml-1 mr-2 h-5 w-5 hidden"
+              xmlns="http://www.w3.org/2000/svg"
+              fill="none"
+              viewBox="0 0 24 24"
+            >
+              <circle
+                class="opacity-25"
+                cx="12"
+                cy="12"
+                r="10"
+                stroke="currentColor"
+                stroke-width="4"></circle>
+              <path
+                class="opacity-75"
+                fill="currentColor"
+                d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+              ></path>
+            </svg>
+            <span id="download-text">Download {form.docName}</span>
+          </button>
+
+          <!-- Error & Fallback Banner (Hidden by default, shown on failure or ?error=) -->
+          <div
+            id="download-error"
+            class="hidden mt-4 p-4 rounded-lg bg-amber-500/10 border border-amber-500/30 text-xs space-y-3"
+          >
+            <div class="flex items-start gap-2.5 text-amber-200">
+              <svg
+                class="size-4 shrink-0 text-amber-400 mt-0.5"
+                xmlns="http://www.w3.org/2000/svg"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="2"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                ><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="12"
+                ></line><line x1="12" y1="16" x2="12.01" y2="16"></line></svg
+              >
+              <p class="leading-relaxed">
+                Direct download link temporarily unavailable. Contact us on WhatsApp to receive the
+                official <strong class="text-white">{form.docName}</strong> PDF instantly.
+              </p>
+            </div>
+            <a
+              href={`https://wa.me/27745017094?text=${encodeURIComponent(`Hi, I'm requesting the ${form.docName} form PDF.`)}`}
+              target="_blank"
+              rel="noopener noreferrer"
+              class="w-full flex items-center justify-center gap-1.5 py-2 px-3 rounded bg-amber-500/20 hover:bg-amber-500/30 text-amber-300 font-semibold uppercase tracking-wider transition-colors"
+            >
+              Request via WhatsApp →
+            </a>
+          </div>
         </div>
 
         <!-- Service CTA -->
         <div class="bg-white/5 border border-white/10 rounded-xl p-8 backdrop-blur-sm">
-          <p class="text-white uppercase tracking-widest font-medium text-[10px] mb-2">DONE FOR YOU</p>
+          <p class="text-white uppercase tracking-widest font-medium text-[10px] mb-2">
+            DONE FOR YOU
+          </p>
           <h3 class="font-condensed uppercase text-3xl mb-4 text-white">GET IT COMPLETED</h3>
-          <p class="text-muted-foreground text-sm mb-8">Save time and avoid disqualification risks. Let our experts prepare your documents.</p>
-          
-          <a 
+          <p class="text-muted-foreground text-sm mb-8">
+            Save time and avoid disqualification risks. Let our experts prepare your documents.
+          </p>
+
+          <a
             href={`https://wa.me/27745017094?text=Hi%2C+I'm+interested+in+your+tender+compliance+services+for+the+${form.docName}+form.`}
             target="_blank"
             rel="noopener noreferrer"
@@ -138,7 +260,80 @@ if (!form) return Astro.redirect("/404");
           </a>
         </div>
       </div>
-
     </div>
   </section>
+
+  <script>
+    function setupDownload() {
+      const btn = document.getElementById('download-btn');
+      const text = document.getElementById('download-text');
+      const icon = document.getElementById('download-icon');
+      const spinner = document.getElementById('loading-spinner');
+      const errorBox = document.getElementById('download-error');
+
+      if (!btn || !text || !icon || !spinner || !errorBox) return;
+
+      // Check if page loaded with ?error= parameter
+      const urlParams = new URLSearchParams(window.location.search);
+      if (urlParams.has('error')) {
+        errorBox.classList.remove('hidden');
+      }
+
+      btn.addEventListener('click', async () => {
+        const slug = btn.getAttribute('data-slug');
+        const docName = btn.getAttribute('data-docname') || 'PDF';
+
+        // Set loading state
+        btn.setAttribute('disabled', 'true');
+        icon.classList.add('hidden');
+        spinner.classList.remove('hidden');
+        text.textContent = 'Generating PDF Link...';
+        errorBox.classList.add('hidden');
+
+        try {
+          const res = await fetch(
+            `/api/download?form=${encodeURIComponent(slug || '')}&format=json`,
+            {
+              headers: { Accept: 'application/json' },
+            },
+          );
+
+          const data = await res.json();
+
+          if (!res.ok || !data.success || !data.url) {
+            throw new Error(data.error || 'Failed to generate download');
+          }
+
+          // Trigger direct browser download via presigned URL
+          text.textContent = '✓ Starting Download...';
+          btn.classList.add('bg-primary/20', 'border-primary');
+
+          const downloadLink = document.createElement('a');
+          downloadLink.href = data.url;
+          downloadLink.download = data.filename || `${slug}.pdf`;
+          document.body.appendChild(downloadLink);
+          downloadLink.click();
+          document.body.removeChild(downloadLink);
+
+          setTimeout(() => {
+            text.textContent = `Download ${docName}`;
+            btn.removeAttribute('disabled');
+            icon.classList.remove('hidden');
+            spinner.classList.add('hidden');
+            btn.classList.remove('bg-primary/20');
+          }, 3000);
+        } catch (err) {
+          console.error('Download error:', err);
+          errorBox.classList.remove('hidden');
+          text.textContent = `Retry Download`;
+          btn.removeAttribute('disabled');
+          icon.classList.remove('hidden');
+          spinner.classList.add('hidden');
+        }
+      });
+    }
+
+    setupDownload();
+    document.addEventListener('astro:page-load', setupDownload);
+  </script>
 </Layout>
