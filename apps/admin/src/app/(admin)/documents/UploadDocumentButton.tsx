@@ -31,10 +31,43 @@ function slugify(text: string): string {
   return text
     .toLowerCase()
     .trim()
-    .replace(/[.\s_]+/g, '-')
+    .replace(/(\d+)\.(\d+)/g, '$1-$2') // 6.1 -> 6-1
+    .replace(/[.\s_()\[\]{}#@!$%^&*+=~`|\\:;"'<>,?\/]+/g, '-')
     .replace(/[^a-z0-9-]/g, '')
     .replace(/-+/g, '-')
-    .replace(/^-|-$/g, '');
+    .replace(/^-+|-+$/g, '');
+}
+
+function pruneFileNameToSlug(filename: string): string {
+  if (!filename) return '';
+  return filename
+    .replace(/\.[^/.]+$/, '') // remove extension
+    .replace(/^\d{10,14}[-_]/, '') // remove leading epoch timestamps/hashes
+    .toLowerCase()
+    .trim()
+    .replace(/(\d+)\.(\d+)/g, '$1-$2') // 6.1 -> 6-1
+    .replace(/[.\s_()\[\]{}#@!$%^&*+=~`|\\:;"'<>,?\/]+/g, '-')
+    .replace(/[^a-z0-9-]/g, '')
+    .replace(/-+/g, '-')
+    .replace(/^-+|-+$/g, '');
+}
+
+function pruneFileNameToTitle(filename: string): string {
+  if (!filename) return '';
+  const withoutExt = filename
+    .replace(/\.[^/.]+$/, '')
+    .replace(/^\d{10,14}[-_]/, '')
+    .trim();
+
+  // Pattern matching for SBD forms (e.g. sbd-6.1, sbd 4, SBD_8)
+  const sbdMatch = withoutExt.match(/^sbd[-_\s.]*([0-9]+(?:\.[0-9]+)?)(.*)$/i);
+  if (sbdMatch) {
+    const num = sbdMatch[1];
+    const rest = sbdMatch[2].replace(/[-_]+/g, ' ').trim();
+    return `SBD ${num}${rest ? ` - ${rest}` : ''}`.trim();
+  }
+
+  return withoutExt.replace(/[-_]+/g, ' ').replace(/\s+/g, ' ').trim();
 }
 
 function formatFileSize(bytes: number): string {
@@ -68,32 +101,51 @@ export function UploadDocumentButton() {
   };
 
   const handlePresetSelect = (preset: (typeof SBD_PRESETS)[number]) => {
+    // If clicking the active preset, toggle/deselect it
+    if (slug === preset.slug) {
+      if (file) {
+        setTitle(pruneFileNameToTitle(file.name));
+        setSlug(pruneFileNameToSlug(file.name));
+      } else {
+        setTitle('');
+        setSlug('');
+      }
+      return;
+    }
+
+    // Otherwise activate the preset
     setTitle(preset.title);
     setSlug(preset.slug);
   };
 
-  const processFile = useCallback(
-    (selectedFile: File | null) => {
-      setError(null);
-      if (!selectedFile) return;
+  const processFile = useCallback((selectedFile: File | null) => {
+    setError(null);
+    if (!selectedFile) return;
 
-      if (selectedFile.type !== 'application/pdf' && !selectedFile.name.endsWith('.pdf')) {
-        setError('Please select a valid PDF document.');
-        return;
-      }
+    if (selectedFile.type !== 'application/pdf' && !selectedFile.name.endsWith('.pdf')) {
+      setError('Please select a valid PDF document.');
+      return;
+    }
 
-      setFile(selectedFile);
+    setFile(selectedFile);
 
-      // Auto-extract title and slug from file name if title is empty
-      if (!title) {
-        const baseName = selectedFile.name.replace(/\.[^/.]+$/, '');
-        const cleanTitle = baseName.toUpperCase().replace(/[-_]/g, ' ');
-        setTitle(cleanTitle);
-        setSlug(slugify(cleanTitle));
-      }
-    },
-    [title],
-  );
+    // Standardize and prune filename into standard slug and title
+    const derivedSlug = pruneFileNameToSlug(selectedFile.name);
+    const derivedTitle = pruneFileNameToTitle(selectedFile.name);
+
+    // Check if filename directly matches any of our SBD presets
+    const matchingPreset = SBD_PRESETS.find(
+      (p) => p.slug === derivedSlug || derivedSlug.startsWith(p.slug),
+    );
+
+    if (matchingPreset) {
+      setTitle(matchingPreset.title);
+      setSlug(matchingPreset.slug);
+    } else {
+      setTitle(derivedTitle);
+      setSlug(derivedSlug);
+    }
+  }, []);
 
   const handleDragOver = (e: React.DragEvent) => {
     e.preventDefault();
