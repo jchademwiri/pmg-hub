@@ -1,5 +1,5 @@
 import type { APIRoute } from 'astro';
-import { db, publicDocuments, eq, sql } from '@pmg/db';
+import { getDb, publicDocuments, eq, sql, bridgeDatabaseEnv } from '@pmg/db';
 import { S3Client, GetObjectCommand } from '@aws-sdk/client-s3';
 import { getSignedUrl } from '@aws-sdk/s3-request-presigner';
 
@@ -51,7 +51,12 @@ export const GET: APIRoute = async ({ request }) => {
     return new Response(JSON.stringify({ error: 'Form parameter is required' }), { status: 400 });
   }
 
+  // Bridge Astro environment variables into process.env for @pmg/db
+  const env = import.meta.env as Record<string, string | undefined>;
+  bridgeDatabaseEnv(env);
+
   try {
+    const db = getDb();
     const docs = await db
       .select()
       .from(publicDocuments)
