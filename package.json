@@ -40,6 +40,9 @@
     "packages/*"
   ],
   "dependencies": {
+    "@aws-sdk/client-s3": "^3.1121.0",
+    "@aws-sdk/s3-request-presigner": "^3.1121.0",
+    "pdf-lib": "^1.17.1",
     "zod": "catalog:"
   },
   "overrides": {

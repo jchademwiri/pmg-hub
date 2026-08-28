@@ -1,0 +1,84 @@
+import type { APIRoute } from "astro";
+import { db, publicDocuments, eq, sql } from "@pmg/db";
+import { S3Client, GetObjectCommand } from "@aws-sdk/client-s3";
+import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
+
+function getR2Client() {
+  const accountId = import.meta.env.CLOUDFLARE_R2_ACCOUNT_ID || process.env.CLOUDFLARE_R2_ACCOUNT_ID;
+  const accessKeyId =
+    import.meta.env.CLOUDFLARE_R2_ACCESS_KEY_ID ||
+    process.env.CLOUDFLARE_R2_ACCESS_KEY_ID ||
+    import.meta.env.AWS_ACCESS_KEY_ID ||
+    process.env.AWS_ACCESS_KEY_ID;
+  const secretAccessKey =
+    import.meta.env.CLOUDFLARE_R2_SECRET_ACCESS_KEY ||
+    process.env.CLOUDFLARE_R2_SECRET_ACCESS_KEY ||
+    import.meta.env.AWS_SECRET_ACCESS_KEY ||
+    process.env.AWS_SECRET_ACCESS_KEY;
+  const bucket =
+    import.meta.env.CLOUDFLARE_R2_BUCKET ||
+    process.env.CLOUDFLARE_R2_BUCKET ||
+    import.meta.env.AWS_S3_BUCKET_NAME ||
+    process.env.AWS_S3_BUCKET_NAME;
+
+  if (!accessKeyId || !secretAccessKey || !bucket) {
+    throw new Error("Cloudflare R2 / S3 storage is not configured.");
+  }
+
+  const endpoint = accountId ? `https://${accountId}.r2.cloudflarestorage.com` : undefined;
+
+  const client = new S3Client({
+    region: accountId ? "auto" : (import.meta.env.AWS_REGION || process.env.AWS_REGION || "us-east-1"),
+    endpoint,
+    forcePathStyle: true,
+    credentials: {
+      accessKeyId,
+      secretAccessKey,
+    },
+  });
+
+  return { client, bucket };
+}
+
+export const GET: APIRoute = async ({ request }) => {
+  const { searchParams } = new URL(request.url);
+  const formSlug = searchParams.get("form");
+
+  if (!formSlug) {
+    return new Response(JSON.stringify({ error: "Form parameter is required" }), { status: 400 });
+  }
+
+  try {
+    const docs = await db.select().from(publicDocuments).where(eq(publicDocuments.slug, formSlug)).limit(1);
+    const doc = docs[0];
+
+    if (!doc) {
+      return new Response(JSON.stringify({ error: "Form not found" }), { status: 404 });
+    }
+
+    await db.update(publicDocuments)
+      .set({ downloadCount: sql`${publicDocuments.downloadCount} + 1` })
+      .where(eq(publicDocuments.id, doc.id));
+
+    const { client, bucket } = getR2Client();
+
+    const command = new GetObjectCommand({
+      Bucket: bucket,
+      Key: doc.s3Key,
+      ResponseContentDisposition: `attachment; filename="${formSlug}.pdf"`,
+    });
+
+    const presignedUrl = await getSignedUrl(client, command, { expiresIn: 300 });
+
+    return new Response(null, {
+      status: 302,
+      headers: {
+        Location: presignedUrl,
+      },
+    });
+  } catch (error) {
+    console.error("Download error:", error);
+    return new Response(JSON.stringify({ error: "Failed to generate download" }), { status: 500 });
+  }
+};
+

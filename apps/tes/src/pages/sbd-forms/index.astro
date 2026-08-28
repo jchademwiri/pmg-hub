@@ -1,0 +1,59 @@
+---
+import Layout from "../../layouts/Layout.astro";
+
+const forms = [
+  { slug: "sbd-4", title: "SBD 4", subtitle: "Declaration of Interest", description: "Required for all government tenders to declare any relationships or conflicts of interest." },
+  { slug: "sbd-6-1", title: "SBD 6.1", subtitle: "Preference Points Claim", description: "Claim preference points for B-BBEE status level of contribution." },
+  { slug: "sbd-8", title: "SBD 8", subtitle: "Supply Chain Practices", description: "Declaration of bidder's past supply chain management practices." },
+  { slug: "sbd-9", title: "SBD 9", subtitle: "Independent Bid Determination", description: "Ensures that bids are not rigged and encourages fair competition." },
+];
+---
+
+<Layout title="Download Standard Bidding Documents (SBD) Forms | TenderEdge Solutions" description="Download the latest SBD forms required for South African government tenders, including SBD 4, SBD 6.1, SBD 8, and SBD 9.">
+  <section class="relative min-h-[60vh] flex flex-col justify-center py-20 md:py-28 px-6 md:px-12 diagonal-lines border-b border-border">
+    <div class="max-w-7xl mx-auto w-full">
+      <p class="text-primary uppercase tracking-widest font-medium text-[10px] md:text-[11px] mb-4">
+        COMPLIANCE RESOURCES
+      </p>
+      <h1 class="font-condensed uppercase text-5xl md:text-7xl lg:text-8xl leading-[0.9] mb-6">
+        STANDARD BIDDING<br/>
+        <span class="text-primary">DOCUMENTS.</span>
+      </h1>
+      <p class="text-muted-foreground text-lg md:text-xl max-w-2xl">
+        Download the latest SBD forms required for South African government and municipal tenders. 
+        Read our guides on how to complete them correctly, or let our tender experts handle the entire submission for you.
+      </p>
+    </div>
+  </section>
+
+  <section class="py-20 md:py-28 px-6 md:px-12">
+    <div class="max-w-7xl mx-auto w-full grid gap-6 md:grid-cols-2 lg:grid-cols-4">
+      {forms.map((form) => (
+        <a href={`/sbd-forms/${form.slug}`} class="group flex flex-col bg-card border border-border rounded-xl p-6 transition-all hover:-translate-y-1 hover:border-primary/50 hover:shadow-lg hover:shadow-primary/5">
+          <h2 class="text-primary font-condensed text-4xl font-bold mb-1">{form.title}</h2>
+          <h3 class="text-foreground text-sm font-medium uppercase tracking-wider mb-4">{form.subtitle}</h3>
+          <p class="text-muted-foreground text-sm flex-1">{form.description}</p>
+          <div class="mt-6 flex items-center gap-2 text-primary text-sm font-semibold uppercase tracking-wider group-hover:translate-x-1 transition-transform">
+            View Details 
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="12" x2="19" y2="12"></line><polyline points="12 5 19 12 12 19"></polyline></svg>
+          </div>
+        </a>
+      ))}
+    </div>
+  </section>
+
+  <section class="py-20 px-6 md:px-12 bg-white/5 border-t border-border dot-grid">
+    <div class="max-w-3xl mx-auto text-center">
+      <h3 class="font-condensed uppercase text-4xl md:text-5xl text-foreground mb-4">NEED HELP WITH YOUR TENDER?</h3>
+      <p class="text-muted-foreground text-lg mb-8">Our experts can complete all your SBD forms and compile a winning tender response.</p>
+      <a 
+        href="https://wa.me/27745017094?text=Hi%2C+I'm+interested+in+your+tender+compliance+services+for+SBD+forms." 
+        target="_blank"
+        rel="noopener noreferrer"
+        class="inline-flex items-center justify-center bg-primary text-primary-foreground px-8 py-4 rounded-md font-bold uppercase tracking-wider hover:bg-primary-hover transition-colors"
+      >
+        Contact Our Tender Experts
+      </a>
+    </div>
+  </section>
+</Layout>
