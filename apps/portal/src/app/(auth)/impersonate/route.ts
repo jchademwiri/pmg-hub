@@ -82,10 +82,28 @@ export async function GET(request: NextRequest) {
   // Build response redirecting to dashboard
   const response = NextResponse.redirect(new URL('/dashboard', request.url));
 
-  // Set the portal session cookie (matches better-auth cookie name)
-  // IMPORTANT: The value must be HMAC-signed — better-auth's getSignedCookie() reads session
-  // tokens via getSignedCookie, which splits on the last '.' and verifies the HMAC-SHA256
-  // signature using BETTER_AUTH_SECRET. Without this, getSession() will reject the cookie.
+  const isProd = process.env.NODE_ENV === 'production';
+  const secureCookiePrefix = isProd ? '__Secure-' : '';
+
+  // ── Clear ALL stale Better Auth cookies first ──────────────────────────
+  // When the target client (or any previous user) has logged into the portal,
+  // their browser may have a session_data cookie (Better Auth's cookie cache)
+  // or even a stale session_token cookie. Clearing these before setting the
+  // new admin session prevents getSession() from reading stale cached data
+  // and returning the wrong user.
+  const clearOpts = {
+    path: '/',
+    httpOnly: true,
+    secure: isProd,
+    sameSite: 'lax' as const,
+    maxAge: 0,
+  };
+  response.cookies.set(`${secureCookiePrefix}better-auth.session_token`, '', clearOpts);
+  response.cookies.set(`${secureCookiePrefix}better-auth.session_data`, '', clearOpts);
+  response.cookies.set(`${secureCookiePrefix}better-auth.dont_remember`, '', clearOpts);
+  response.cookies.set(`${secureCookiePrefix}better-auth.account_data`, '', clearOpts);
+
+  // ── Set the new impersonation session ──────────────────────────────────
   const authSecret = process.env.BETTER_AUTH_SECRET;
   if (!authSecret) {
     console.error('[Impersonate] BETTER_AUTH_SECRET not configured');
@@ -94,10 +112,7 @@ export async function GET(request: NextRequest) {
   const sessionSignature = createHmac('sha256', authSecret).update(sessionToken).digest('base64url');
   const signedSessionValue = `${sessionToken}.${sessionSignature}`;
 
-  const isProd = process.env.NODE_ENV === 'production';
-  const sessionCookieName = isProd ? '__Secure-better-auth.session_token' : 'better-auth.session_token';
-
-  response.cookies.set(sessionCookieName, signedSessionValue, {
+  response.cookies.set(`${secureCookiePrefix}better-auth.session_token`, signedSessionValue, {
     path: '/',
     httpOnly: true,
     secure: isProd,
@@ -109,7 +124,7 @@ export async function GET(request: NextRequest) {
   response.cookies.set('impersonate_client_id', clientId, {
     path: '/',
     httpOnly: true,
-    secure: process.env.NODE_ENV === 'production',
+    secure: isProd,
     sameSite: 'lax',
     maxAge: 86400, // 24 hours
   });
