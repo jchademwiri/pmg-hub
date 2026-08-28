@@ -260,16 +260,14 @@ export function UploadDocumentButton() {
             </div>
           </div>
 
-          {/* Live URL Preview */}
-          {slug && (
-            <div className="flex items-center gap-2 px-3 py-2 rounded-md bg-muted/40 border border-border/60 text-xs text-muted-foreground">
-              <Globe className="size-3.5 text-primary shrink-0" />
-              <span className="shrink-0 font-medium">Public Page:</span>
-              <span className="font-mono text-[11px] text-foreground truncate">
-                https://tenderedgesolutions.co.za/sbd-forms/{slug}
-              </span>
-            </div>
-          )}
+          {/* Live URL Preview (Always visible to avoid form shift) */}
+          <div className="flex items-center gap-2 px-3 py-2 rounded-md bg-muted/40 border border-border/60 text-xs text-muted-foreground">
+            <Globe className="size-3.5 text-primary shrink-0" />
+            <span className="shrink-0 font-medium">Public Page:</span>
+            <span className="font-mono text-[11px] text-foreground truncate">
+              https://tenderedgesolutions.co.za/sbd-forms/{slug || ''}
+            </span>
+          </div>
 
           {/* Drag and Drop Zone (Bottom Area) */}
           <div className="space-y-2">
