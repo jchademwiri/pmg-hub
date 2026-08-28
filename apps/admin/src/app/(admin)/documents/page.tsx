@@ -1,21 +1,31 @@
-import { db, publicDocuments } from "@pmg/db";
-import { desc } from "drizzle-orm";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Button } from "@/components/ui/button";
-import { Upload } from "lucide-react";
-import { UploadDocumentButton } from "./UploadDocumentButton";
+import { db, publicDocuments } from '@pmg/db';
+import { desc } from 'drizzle-orm';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from '@/components/ui/table';
+import { Button } from '@/components/ui/button';
+import { Upload } from 'lucide-react';
+import { UploadDocumentButton } from './UploadDocumentButton';
 
 function formatDate(d: Date | string): string {
-  return new Date(d).toLocaleDateString("en-GB", {
-    day: "numeric",
-    month: "long",
-    year: "numeric",
+  return new Date(d).toLocaleDateString('en-GB', {
+    day: 'numeric',
+    month: 'long',
+    year: 'numeric',
   });
 }
 
 export default async function DocumentsAdminPage() {
-  const documents = await db.select().from(publicDocuments).orderBy(desc(publicDocuments.downloadCount));
+  const documents = await db
+    .select()
+    .from(publicDocuments)
+    .orderBy(desc(publicDocuments.downloadCount));
 
   return (
     <div className="flex-1 space-y-4 p-8 pt-6">
@@ -25,12 +35,13 @@ export default async function DocumentsAdminPage() {
           <UploadDocumentButton />
         </div>
       </div>
-      
+
       <Card>
         <CardHeader>
           <CardTitle>Public Documents (SBD Forms)</CardTitle>
           <CardDescription>
-            Manage the standard bidding documents hosted on Cloudflare R2 and track live lead downloads.
+            Manage the standard bidding documents hosted on Cloudflare R2 and track live lead
+            downloads.
           </CardDescription>
         </CardHeader>
         <CardContent>

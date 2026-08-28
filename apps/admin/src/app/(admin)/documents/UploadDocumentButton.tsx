@@ -1,6 +1,6 @@
-"use client";
+'use client';
 
-import { useState, useRef, useCallback } from "react";
+import { useState, useRef, useCallback } from 'react';
 import {
   Upload,
   FileText,
@@ -12,8 +12,8 @@ import {
   AlertCircle,
   Sparkles,
   Lock,
-} from "lucide-react";
-import { Button } from "@/components/ui/button";
+} from 'lucide-react';
+import { Button } from '@/components/ui/button';
 import {
   Dialog,
   DialogContent,
@@ -22,34 +22,34 @@ import {
   DialogHeader,
   DialogTitle,
   DialogTrigger,
-} from "@/components/ui/dialog";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { uploadDocumentAction } from "./actions";
+} from '@/components/ui/dialog';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { uploadDocumentAction } from './actions';
 
 function slugify(text: string): string {
   return text
     .toLowerCase()
     .trim()
-    .replace(/[.\s_]+/g, "-")
-    .replace(/[^a-z0-9-]/g, "")
-    .replace(/-+/g, "-")
-    .replace(/^-|-$/g, "");
+    .replace(/[.\s_]+/g, '-')
+    .replace(/[^a-z0-9-]/g, '')
+    .replace(/-+/g, '-')
+    .replace(/^-|-$/g, '');
 }
 
 function formatFileSize(bytes: number): string {
-  if (bytes === 0) return "0 Bytes";
+  if (bytes === 0) return '0 Bytes';
   const k = 1024;
-  const sizes = ["Bytes", "KB", "MB", "GB"];
+  const sizes = ['Bytes', 'KB', 'MB', 'GB'];
   const i = Math.floor(Math.log(bytes) / Math.log(k));
   return `${parseFloat((bytes / Math.pow(k, i)).toFixed(1))} ${sizes[i]}`;
 }
 
 const SBD_PRESETS = [
-  { label: "SBD 4", title: "SBD 4", slug: "sbd-4" },
-  { label: "SBD 6.1", title: "SBD 6.1", slug: "sbd-6-1" },
-  { label: "SBD 8", title: "SBD 8", slug: "sbd-8" },
-  { label: "SBD 9", title: "SBD 9", slug: "sbd-9" },
+  { label: 'SBD 4', title: 'SBD 4', slug: 'sbd-4' },
+  { label: 'SBD 6.1', title: 'SBD 6.1', slug: 'sbd-6-1' },
+  { label: 'SBD 8', title: 'SBD 8', slug: 'sbd-8' },
+  { label: 'SBD 9', title: 'SBD 9', slug: 'sbd-9' },
 ];
 
 export function UploadDocumentButton() {
@@ -57,8 +57,8 @@ export function UploadDocumentButton() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [file, setFile] = useState<File | null>(null);
-  const [title, setTitle] = useState("");
-  const [slug, setSlug] = useState("");
+  const [title, setTitle] = useState('');
+  const [slug, setSlug] = useState('');
   const [isDragging, setIsDragging] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -77,8 +77,8 @@ export function UploadDocumentButton() {
       setError(null);
       if (!selectedFile) return;
 
-      if (selectedFile.type !== "application/pdf" && !selectedFile.name.endsWith(".pdf")) {
-        setError("Please select a valid PDF document.");
+      if (selectedFile.type !== 'application/pdf' && !selectedFile.name.endsWith('.pdf')) {
+        setError('Please select a valid PDF document.');
         return;
       }
 
@@ -86,13 +86,13 @@ export function UploadDocumentButton() {
 
       // Auto-extract title and slug from file name if title is empty
       if (!title) {
-        const baseName = selectedFile.name.replace(/\.[^/.]+$/, "");
-        const cleanTitle = baseName.toUpperCase().replace(/[-_]/g, " ");
+        const baseName = selectedFile.name.replace(/\.[^/.]+$/, '');
+        const cleanTitle = baseName.toUpperCase().replace(/[-_]/g, ' ');
         setTitle(cleanTitle);
         setSlug(slugify(cleanTitle));
       }
     },
-    [title]
+    [title],
   );
 
   const handleDragOver = (e: React.DragEvent) => {
@@ -119,8 +119,8 @@ export function UploadDocumentButton() {
 
   const resetForm = () => {
     setFile(null);
-    setTitle("");
-    setSlug("");
+    setTitle('');
+    setSlug('');
     setError(null);
     setIsDragging(false);
   };
@@ -134,18 +134,22 @@ export function UploadDocumentButton() {
 
     try {
       const formData = new FormData();
-      formData.append("file", file);
-      formData.append("title", title.trim());
-      formData.append("slug", slug.trim());
+      formData.append('file', file);
+      formData.append('title', title.trim());
+      formData.append('slug', slug.trim());
 
       await uploadDocumentAction(formData);
 
       // Close & reset
       setOpen(false);
       resetForm();
-    } catch (err: any) {
-      console.error("Document upload failed:", err);
-      setError(err?.message || "An unexpected error occurred while uploading the document.");
+    } catch (err: unknown) {
+      console.error('Document upload failed:', err);
+      setError(
+        err instanceof Error
+          ? err.message
+          : 'An unexpected error occurred while uploading the document.',
+      );
     } finally {
       setLoading(false);
     }
@@ -179,7 +183,8 @@ export function UploadDocumentButton() {
                   Upload Public Document
                 </DialogTitle>
                 <DialogDescription className="text-xs text-muted-foreground mt-0.5">
-                  Upload an SBD Form PDF to Cloudflare R2 storage for instant lead generation and download tracking.
+                  Upload an SBD Form PDF to Cloudflare R2 storage for instant lead generation and
+                  download tracking.
                 </DialogDescription>
               </div>
             </div>
@@ -206,8 +211,8 @@ export function UploadDocumentButton() {
                     onClick={() => handlePresetSelect(preset)}
                     className={`text-xs px-3 py-1.5 rounded-md font-medium border transition-all duration-150 ${
                       isActive
-                        ? "bg-primary text-primary-foreground border-primary shadow-sm"
-                        : "bg-card hover:bg-muted/50 border-border text-foreground hover:border-primary/40"
+                        ? 'bg-primary text-primary-foreground border-primary shadow-sm'
+                        : 'bg-card hover:bg-muted/50 border-border text-foreground hover:border-primary/40'
                     }`}
                   >
                     {preset.label}
@@ -231,7 +236,9 @@ export function UploadDocumentButton() {
                 className="h-10 text-sm bg-background border-border/80 focus-visible:ring-primary"
                 required
               />
-              <p className="text-[11px] text-muted-foreground">The display name on the portal & website.</p>
+              <p className="text-[11px] text-muted-foreground">
+                The display name on the portal & website.
+              </p>
             </div>
 
             <div className="space-y-2">
@@ -247,7 +254,9 @@ export function UploadDocumentButton() {
                 placeholder="auto-generated-slug"
                 className="h-10 text-sm font-mono bg-muted/60 text-muted-foreground border-border/60 cursor-not-allowed select-all focus-visible:ring-0 focus-visible:border-border/60"
               />
-              <p className="text-[11px] text-muted-foreground">Auto-generated from title for search engine indexing.</p>
+              <p className="text-[11px] text-muted-foreground">
+                Auto-generated from title for search engine indexing.
+              </p>
             </div>
           </div>
 
@@ -284,8 +293,8 @@ export function UploadDocumentButton() {
                 onClick={() => fileInputRef.current?.click()}
                 className={`relative flex flex-col items-center justify-center p-8 text-center rounded-xl border-2 border-dashed transition-all duration-200 cursor-pointer ${
                   isDragging
-                    ? "border-primary bg-primary/5 scale-[0.99] ring-2 ring-primary/20 shadow-inner"
-                    : "border-border/80 hover:border-primary/50 hover:bg-muted/30 bg-card"
+                    ? 'border-primary bg-primary/5 scale-[0.99] ring-2 ring-primary/20 shadow-inner'
+                    : 'border-border/80 hover:border-primary/50 hover:bg-muted/30 bg-card'
                 }`}
               >
                 <div className="flex size-14 items-center justify-center rounded-full bg-primary/10 text-primary mb-3.5 transition-transform duration-200 group-hover:scale-105">
