@@ -46,16 +46,16 @@ export function ClientAddForm({ createAction, onCancel, divisions }: ClientAddFo
             id="client-name"
             name="name"
             type="text"
-            placeholder="e.g. Acme Corp"
             required
+            placeholder="e.g. Acme Corp"
             disabled={isPending}
           />
         </Field>
 
         <Field>
-          <FieldLabel htmlFor="client-business-name">Business Name</FieldLabel>
+          <FieldLabel htmlFor="client-biz-name">Business Name</FieldLabel>
           <Input
-            id="client-business-name"
+            id="client-biz-name"
             name="businessName"
             type="text"
             placeholder="e.g. Acme Pty Ltd"
@@ -85,7 +85,7 @@ export function ClientAddForm({ createAction, onCancel, divisions }: ClientAddFo
           />
         </Field>
 
-        <Field>
+        <Field className="lg:col-span-2">
           <FieldLabel htmlFor="client-division">Linked Division</FieldLabel>
           <Select
             value={divisionId}
@@ -107,6 +107,40 @@ export function ClientAddForm({ createAction, onCancel, divisions }: ClientAddFo
           <input id="client-add-division-hidden" type="hidden" name="divisionId" value={divisionId} />
           <p className="text-xs text-muted-foreground mt-1">
             When set, statements will use this division&apos;s branding. If unset, the first invoice&apos;s division is used.
+          </p>
+        </Field>
+
+        <Field>
+          <FieldLabel htmlFor="client-add-is-retainer">Client Type</FieldLabel>
+          <label className="flex items-center gap-2 cursor-pointer mt-1">
+            <input
+              type="checkbox"
+              id="client-add-is-retainer"
+              name="isRetainer"
+              disabled={isPending}
+              className="rounded border-input text-brand focus:ring-brand h-4 w-4"
+            />
+            <span className="text-sm font-medium">Mark as Retainer Client</span>
+          </label>
+          <p className="text-xs text-muted-foreground mt-1">
+            Flags this client as a retainer in your lists.
+          </p>
+        </Field>
+
+        <Field>
+          <FieldLabel htmlFor="client-add-exclude-statements">Automated Statements</FieldLabel>
+          <label className="flex items-center gap-2 cursor-pointer mt-1">
+            <input
+              type="checkbox"
+              id="client-add-exclude-statements"
+              name="excludeFromAutoStatements"
+              disabled={isPending}
+              className="rounded border-input text-brand focus:ring-brand h-4 w-4"
+            />
+            <span className="text-sm font-medium">Exclude from global statements</span>
+          </label>
+          <p className="text-xs text-muted-foreground mt-1">
+            Check if this VIP client should not receive automated monthly sweeps.
           </p>
         </Field>
       </div>

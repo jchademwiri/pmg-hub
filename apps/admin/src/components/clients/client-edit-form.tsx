@@ -122,6 +122,42 @@ export function ClientEditForm({ client, divisions, updateAction, onCancel }: Cl
             When set, statements will use this division&apos;s branding. If unset, the first invoice&apos;s division is used.
           </p>
         </Field>
+
+        <Field>
+          <FieldLabel htmlFor="client-is-retainer">Client Type</FieldLabel>
+          <label className="flex items-center gap-2 cursor-pointer mt-1">
+            <input
+              type="checkbox"
+              id="client-is-retainer"
+              name="isRetainer"
+              defaultChecked={client.isRetainer}
+              disabled={isPending}
+              className="rounded border-input text-brand focus:ring-brand h-4 w-4"
+            />
+            <span className="text-sm font-medium">Mark as Retainer Client</span>
+          </label>
+          <p className="text-xs text-muted-foreground mt-1">
+            Flags this client as a retainer in your client lists and reports.
+          </p>
+        </Field>
+
+        <Field>
+          <FieldLabel htmlFor="client-exclude-statements">Automated Statements</FieldLabel>
+          <label className="flex items-center gap-2 cursor-pointer mt-1">
+            <input
+              type="checkbox"
+              id="client-exclude-statements"
+              name="excludeFromAutoStatements"
+              defaultChecked={client.excludeFromAutoStatements}
+              disabled={isPending}
+              className="rounded border-input text-brand focus:ring-brand h-4 w-4"
+            />
+            <span className="text-sm font-medium">Exclude this client from global automated statements</span>
+          </label>
+          <p className="text-xs text-muted-foreground mt-1">
+            Check this if this is a VIP or edge-case client who should not receive automated monthly sweeps.
+          </p>
+        </Field>
       </div>
 
       <div className="flex items-center justify-end gap-3 border-t border-border/50 pt-4 mt-2">

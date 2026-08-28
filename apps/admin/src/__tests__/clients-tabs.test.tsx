@@ -30,18 +30,22 @@ const mockClients: ClientWithIncomeCount[] = [
     incomeCount: 2,
     portalInvitationSentAt: null,
     userId: null,
+    isRetainer: false,
+    excludeFromAutoStatements: false,
   },
   {
     id: 'client-inactive-1',
     name: 'Jane Smith',
     businessName: 'Dormant Enterprise',
-    email: 'jane@dormant.com',
+    email: 'jane@dormant.co.za',
     phone: '+27 82 333 4444',
     isActive: false,
     createdAt: new Date('2026-01-02'),
     incomeCount: 0,
     portalInvitationSentAt: null,
     userId: null,
+    isRetainer: false,
+    excludeFromAutoStatements: false,
   },
 ];
 
