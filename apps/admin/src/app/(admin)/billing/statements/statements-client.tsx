@@ -44,7 +44,7 @@ function SortIcon({ field, currentField, order }: { field: SortField; currentFie
 export function StatementsClient({ initialClients }: StatementsClientProps) {
   const router = useRouter();
   const [searchTerm, setSearchTerm] = React.useState('');
-  const [filterType, setFilterType] = React.useState<'all' | 'outstanding'>('all');
+  const [filterType, setFilterType] = React.useState<'all' | 'outstanding'>('outstanding');
   const [sortField, setSortField] = React.useState<SortField>('totalOutstanding');
   const [sortOrder, setSortOrder] = React.useState<SortOrder>('desc');
 

@@ -156,6 +156,8 @@ describe('ClientEditForm', () => {
     updatedAt: null,
     userId: null,
     portalInvitationSentAt: null,
+    isRetainer: false,
+    excludeFromAutoStatements: false,
   }
 
   beforeEach(() => {

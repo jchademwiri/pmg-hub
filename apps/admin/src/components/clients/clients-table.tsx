@@ -75,7 +75,16 @@ export function ClientsTable({ clients, deleteAction, toggleActiveAction }: Clie
               className={`cursor-pointer ${!client.isActive ? 'opacity-60' : ''}`}
               onClick={() => router.push('/relationships/clients/' + client.id)}
             >
-              <TableCell>{client.name}</TableCell>
+              <TableCell>
+                <div className="flex items-center gap-2">
+                  {client.name}
+                  {client.isRetainer && (
+                    <Badge variant="outline" className="text-[10px] uppercase h-5 bg-blue-500/10 text-blue-600 border-blue-500/20">
+                      Retainer
+                    </Badge>
+                  )}
+                </div>
+              </TableCell>
               <TableCell>{client.businessName ?? ''}</TableCell>
               <TableCell>{client.email ?? ''}</TableCell>
               <TableCell>{client.phone ?? ''}</TableCell>
@@ -158,7 +167,14 @@ export function ClientsTable({ clients, deleteAction, toggleActiveAction }: Clie
           />
           <div className="flex justify-between items-start mb-3 relative z-10">
             <div>
-              <p className="font-semibold text-foreground leading-tight">{client.name}</p>
+              <div className="flex items-center gap-2">
+                <p className="font-semibold text-foreground leading-tight">{client.name}</p>
+                {client.isRetainer && (
+                  <Badge variant="outline" className="text-[10px] uppercase h-5 bg-blue-500/10 text-blue-600 border-blue-500/20">
+                    Retainer
+                  </Badge>
+                )}
+              </div>
               {client.businessName && (
                 <p className="text-sm text-muted-foreground">{client.businessName}</p>
               )}

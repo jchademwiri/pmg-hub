@@ -15,6 +15,8 @@ export const clients = pgTable(
     phone: text("phone"),
     divisionId: uuid("division_id").references(() => divisions.id),
     isActive: boolean("is_active").notNull().default(true),
+    isRetainer: boolean("is_retainer").notNull().default(false),
+    excludeFromAutoStatements: boolean("exclude_from_auto_statements").notNull().default(false),
     userId: text("user_id").references(() => user.id, { onDelete: "set null" }),
     createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
     // updatedAt is managed by the application layer on update. Any database-level operation

@@ -91,7 +91,7 @@ export async function GET(request: NextRequest) {
     console.error('[Impersonate] BETTER_AUTH_SECRET not configured');
     return redirectToLogin(request);
   }
-  const sessionSignature = createHmac('sha256', authSecret).update(sessionToken).digest('base64');
+  const sessionSignature = createHmac('sha256', authSecret).update(sessionToken).digest('base64url');
   const signedSessionValue = `${sessionToken}.${sessionSignature}`;
 
   const isProd = process.env.NODE_ENV === 'production';

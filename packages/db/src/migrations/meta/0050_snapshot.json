@@ -1,6 +1,6 @@
 {
-  "id": "0c524814-5955-4c88-9cf0-ae96f8749179",
-  "prevId": "fcf124ae-70bf-4cce-a7a2-295a1da38567",
+  "id": "912f0f0e-eef4-4fab-a86e-5308608b5fa0",
+  "prevId": "0c524814-5955-4c88-9cf0-ae96f8749179",
   "version": "7",
   "dialect": "postgresql",
   "tables": {
@@ -709,6 +709,13 @@
           "primaryKey": false,
           "notNull": true,
           "default": true
+        },
+        "is_retainer": {
+          "name": "is_retainer",
+          "type": "boolean",
+          "primaryKey": false,
+          "notNull": true,
+          "default": false
         },
         "exclude_from_auto_statements": {
           "name": "exclude_from_auto_statements",
