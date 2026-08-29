@@ -337,6 +337,9 @@ export const divisionBillingSettings = pgTable('division_billing_settings', {
   divisionWebsite: text('division_website'),
   creditExpiryMonths: integer('credit_expiry_months').default(12),
   autoApplyCredits: boolean('auto_apply_credits').default(true),
+  autoSendStatements: boolean('auto_send_statements').default(false).notNull(),
+  statementCycleDay: integer('statement_cycle_day').default(1).notNull(),
+  statementType: text('statement_type').default('outstanding').notNull(),
   updatedAt: timestamp('updated_at', { withTimezone: true }),
 });
 

@@ -14,6 +14,11 @@ export type StatementDeliveryEmailProps = {
   statementDate: string;
   period: string;
   totalAmountDue: string;
+  invoicesList?: Array<{
+    documentNumber: string;
+    invoiceDate: string;
+    outstanding: string;
+  }>;
   personalMessage?: string;
   portalUrl?: string;
   bankDetails?: {
@@ -30,6 +35,7 @@ const StatementDeliveryEmail = (props: StatementDeliveryEmailProps) => {
     statementDate,
     period,
     totalAmountDue,
+    invoicesList,
     personalMessage,
     portalUrl,
     bankDetails,
@@ -85,7 +91,7 @@ const StatementDeliveryEmail = (props: StatementDeliveryEmailProps) => {
         <Heading className="m-0 mb-[12px] text-[16px] font-bold text-[#020304]">
           Statement Summary
         </Heading>
-        <table className="w-full text-[14px]">
+        <table className="w-full text-[14px] mb-[16px]">
           <tbody>
             <tr className="border-b border-solid border-[#F1F5F9]">
               <td className="py-2 text-[#64748B]">Statement Date:</td>
@@ -101,6 +107,32 @@ const StatementDeliveryEmail = (props: StatementDeliveryEmailProps) => {
             </tr>
           </tbody>
         </table>
+
+        {invoicesList && invoicesList.length > 0 && (
+          <Section className="mt-[16px] border-t border-solid border-[#F1F5F9] pt-[16px]">
+            <Heading className="m-0 mb-[12px] text-[14px] font-semibold text-[#020304]">
+              Outstanding Invoices
+            </Heading>
+            <table className="w-full text-[13px]">
+              <thead>
+                <tr className="border-b border-solid border-[#E2E8F0] text-[#64748B]">
+                  <th className="py-2 text-left font-semibold">Invoice</th>
+                  <th className="py-2 text-left font-semibold">Date</th>
+                  <th className="py-2 text-right font-semibold">Amount Due</th>
+                </tr>
+              </thead>
+              <tbody>
+                {invoicesList.map((inv, idx) => (
+                  <tr key={idx} className="border-b border-solid border-[#F1F5F9]">
+                    <td className="py-2 text-[#020304]">{inv.documentNumber}</td>
+                    <td className="py-2 text-[#64748B]">{inv.invoiceDate}</td>
+                    <td className="py-2 text-[#020304] text-right font-medium">{inv.outstanding}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </Section>
+        )}
       </Section>
 
       {/* Bank/EFT details block */}

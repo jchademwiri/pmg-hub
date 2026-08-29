@@ -33,6 +33,8 @@ const ClientSchema = z.object({
   email: z.string().email().optional(),
   phone: z.string().optional(),
   divisionId: z.string().optional(),
+  isRetainer: z.boolean().optional().default(false),
+  excludeFromAutoStatements: z.boolean().optional().default(false),
 });
 
 export async function createClient(formData: FormData): Promise<{ error?: string }> {
@@ -42,7 +44,9 @@ export async function createClient(formData: FormData): Promise<{ error?: string
     if (raw.email === '') delete raw.email;
     if (raw.phone === '') delete raw.phone;
     if (raw.divisionId === '__none__') delete raw.divisionId;
-    const result = ClientSchema.safeParse(raw);
+    const isExcluded = raw.excludeFromAutoStatements === 'on';
+    const isRetainer = raw.isRetainer === 'on';
+    const result = ClientSchema.safeParse({ ...raw, excludeFromAutoStatements: isExcluded, isRetainer });
     if (!result.success) {
       return { error: result.error.issues[0]?.message ?? 'Validation error' };
     }
@@ -53,6 +57,8 @@ export async function createClient(formData: FormData): Promise<{ error?: string
       email: parsed.email ?? null,
       phone: parsed.phone ?? null,
       divisionId: parsed.divisionId ?? null,
+      isRetainer: parsed.isRetainer,
+      excludeFromAutoStatements: parsed.excludeFromAutoStatements,
     });
     revalidatePath('/relationships/clients');
     return {};
@@ -69,7 +75,12 @@ export async function updateClient(id: string, formData: FormData): Promise<{ er
     if (raw.email === '') delete raw.email;
     if (raw.phone === '') delete raw.phone;
     if (raw.divisionId === '__none__') delete raw.divisionId;
-    const result = ClientSchema.safeParse(raw);
+    
+    // Convert checkbox 'on' value to boolean
+    const isExcluded = raw.excludeFromAutoStatements === 'on';
+    const isRetainer = raw.isRetainer === 'on';
+
+    const result = ClientSchema.safeParse({ ...raw, excludeFromAutoStatements: isExcluded, isRetainer });
     if (!result.success) {
       return { error: result.error.issues[0]?.message ?? 'Validation error' };
     }
@@ -82,6 +93,8 @@ export async function updateClient(id: string, formData: FormData): Promise<{ er
         email: parsed.email ?? null,
         phone: parsed.phone ?? null,
         divisionId: parsed.divisionId ?? null,
+        isRetainer: parsed.isRetainer,
+        excludeFromAutoStatements: parsed.excludeFromAutoStatements,
         updatedAt: new Date(),
       })
       .where(eq(clients.id, id));

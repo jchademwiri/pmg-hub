@@ -9,7 +9,7 @@
 >
   <div class='max-w-7xl mx-auto flex items-center justify-between'>
     <a
-      href='#hero'
+      href='/'
       class='font-condensed font-bold text-xl leading-none shrink-0'
       aria-label='TenderEdge Solutions - back to top'
     >
@@ -18,14 +18,21 @@
 
     <ul class='hidden md:flex gap-6 list-none m-0 p-0' role='list'>
       {
-        ['services', 'process', 'packages', 'results', 'contact'].map((id, i) => (
+        [
+          ['services', 'Services', '/#services'],
+          ['process', 'Process', '/#process'],
+          ['packages', 'Packages', '/#packages'],
+          ['results', 'Results', '/#results'],
+          ['sbd-forms', 'SBD Forms', '/sbd-forms'],
+          ['contact', 'Contact', '/#contact'],
+        ].map(([id, label, url]) => (
           <li>
             <a
-              href={`#${id}`}
+              href={url}
               data-nav-link={id}
               class='nav-link text-muted-foreground hover:text-foreground text-sm transition-colors relative pb-0.5'
             >
-              {['Services', 'Process', 'Packages', 'Results', 'Contact'][i]}
+              {label}
             </a>
           </li>
         ))
@@ -75,7 +82,7 @@
     aria-hidden='true'
   >
     <div class='flex items-center justify-between py-4'>
-      <a href='#hero' class='mobile-nav-link font-condensed font-bold text-xl leading-none'>
+      <a href='/' class='mobile-nav-link font-condensed font-bold text-xl leading-none'>
         <span class='text-foreground'>TenderEdge</span><span class='text-primary'>Solutions</span>
       </a>
       <button
@@ -103,16 +110,17 @@
     <ul class='flex flex-col gap-1 list-none m-0 p-0' role='list'>
       {
         [
-          ['services', 'Services'],
-          ['process', 'Process'],
-          ['packages', 'Packages'],
-          ['results', 'Results'],
-          ['contact', 'Contact'],
-        ].map(([id, label], i) => (
+          ['services', 'Services', '/#services'],
+          ['process', 'Process', '/#process'],
+          ['packages', 'Packages', '/#packages'],
+          ['results', 'Results', '/#results'],
+          ['sbd-forms', 'SBD Forms', '/sbd-forms'],
+          ['contact', 'Contact', '/#contact'],
+        ].map(([id, label, url], i) => (
           <li>
             <a
-              href={`#${id}`}
-              class={`mobile-nav-link block py-3 text-muted-foreground hover:text-foreground text-base transition-colors ${i < 4 ? 'border-b border-border/50' : ''}`}
+              href={url}
+              class={`mobile-nav-link block py-3 text-muted-foreground hover:text-foreground text-base transition-colors ${i < 5 ? 'border-b border-border/50' : ''}`}
             >
               {label}
             </a>

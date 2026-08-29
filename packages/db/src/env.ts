@@ -1,4 +1,4 @@
-import { z } from "zod";
+import { z } from 'zod';
 
 const envSchema = z.object({
   DATABASE_URL: z.string().url(),
@@ -6,14 +6,24 @@ const envSchema = z.object({
 });
 
 export function getEnv() {
+  const databaseUrl =
+    process.env.DATABASE_URL ||
+    (typeof import.meta !== 'undefined' && (import.meta as any)?.env?.DATABASE_URL);
+  const databaseUrlUnpooled =
+    process.env.DATABASE_URL_UNPOOLED ||
+    (typeof import.meta !== 'undefined' && (import.meta as any)?.env?.DATABASE_URL_UNPOOLED);
+
   const parsedEnv = envSchema.safeParse({
-    DATABASE_URL: process.env.DATABASE_URL,
-    DATABASE_URL_UNPOOLED: process.env.DATABASE_URL_UNPOOLED,
+    DATABASE_URL: databaseUrl,
+    DATABASE_URL_UNPOOLED: databaseUrlUnpooled,
   });
 
   if (!parsedEnv.success) {
-    console.error("❌ Invalid database environment variables:", parsedEnv.error.flatten().fieldErrors);
-    throw new Error("Invalid database environment variables");
+    console.error(
+      '❌ Invalid database environment variables:',
+      parsedEnv.error.flatten().fieldErrors,
+    );
+    throw new Error('Invalid database environment variables');
   }
 
   return parsedEnv.data;

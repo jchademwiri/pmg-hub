@@ -10,6 +10,8 @@ export type ClientWithIncomeCount = {
   email: string | null;
   phone: string | null;
   isActive: boolean;
+  isRetainer: boolean;
+  excludeFromAutoStatements: boolean;
   createdAt: Date;
   incomeCount: number;
   portalInvitationSentAt: Date | null;
@@ -23,6 +25,8 @@ export async function getAllClients(options: { activeOnly?: boolean } = {}): Pro
     businessName: string | null;
     email: string | null;
     isActive: boolean;
+    isRetainer: boolean;
+    excludeFromAutoStatements: boolean;
   }[]
 > {
   const query = db
@@ -32,6 +36,8 @@ export async function getAllClients(options: { activeOnly?: boolean } = {}): Pro
       businessName: clients.businessName,
       email: clients.email,
       isActive: clients.isActive,
+      isRetainer: clients.isRetainer,
+      excludeFromAutoStatements: clients.excludeFromAutoStatements,
     })
     .from(clients);
 
@@ -51,6 +57,8 @@ export async function getActiveClients(): Promise<
     businessName: string | null;
     email: string | null;
     isActive: boolean;
+    isRetainer: boolean;
+    excludeFromAutoStatements: boolean;
   }[]
 > {
   return getAllClients({ activeOnly: true });
@@ -69,6 +77,8 @@ export async function getClientsWithIncomeCount(): Promise<ClientWithIncomeCount
       email: clients.email,
       phone: clients.phone,
       isActive: clients.isActive,
+      isRetainer: clients.isRetainer,
+      excludeFromAutoStatements: clients.excludeFromAutoStatements,
       createdAt: clients.createdAt,
       portalInvitationSentAt: clients.portalInvitationSentAt,
       userId: clients.userId,

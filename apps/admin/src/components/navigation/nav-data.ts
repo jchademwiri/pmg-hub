@@ -174,6 +174,7 @@ export const GROUPS: NavGroup[] = [
       { title: 'Overview', url: '/settings', icon: Settings },
       { title: 'Organisation', url: '/settings/organisation', icon: Building2 },
       { title: 'Billing', url: '/settings/billing', icon: Receipt },
+      { title: 'Public Documents', url: '/documents', icon: FileText },
       { title: 'Users', url: '/settings/users', icon: UserCog, minRole: 'super_admin' },
       { title: 'Security', url: '/settings/security', icon: Shield },
       { title: 'Data & Exports', url: '/settings/data', icon: Database },

@@ -1,0 +1,1 @@
+ALTER TABLE "clients" ADD COLUMN "is_retainer" boolean DEFAULT false NOT NULL;

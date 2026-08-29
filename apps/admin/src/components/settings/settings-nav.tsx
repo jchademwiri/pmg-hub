@@ -24,6 +24,7 @@ const settingsNavItems: {
   { href: '/settings/billing/banking', label: 'Banking Accounts', icon: Landmark },
   { href: '/settings/billing/email', label: 'Email Delivery', icon: Mail },
   { href: '/settings/billing/templates', label: 'Document Templates', icon: FileText },
+  { href: '/settings/billing/statements', label: 'Automated Statements', icon: FileText },
   { href: '/settings/billing/credit', label: 'Credit Policy', icon: CreditCard },
   { href: '/settings/users', label: 'Users', icon: Users },
   { href: '/settings/security', label: 'Security', icon: Shield },
