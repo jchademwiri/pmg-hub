@@ -1,4 +1,4 @@
-CREATE TABLE "public_documents" (
+CREATE TABLE IF NOT EXISTS "public_documents" (
 	"id" uuid PRIMARY KEY DEFAULT gen_random_uuid() NOT NULL,
 	"slug" text NOT NULL,
 	"title" text NOT NULL,
