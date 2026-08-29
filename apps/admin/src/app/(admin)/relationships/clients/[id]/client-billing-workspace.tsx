@@ -1934,14 +1934,21 @@ function PortalImpersonateButton({ client }: { client: any }) {
   const handleImpersonate = () => {
     if (!client.id) return;
 
+    // Open the window immediately (synchronous user gesture) so the popup
+    // blocker won't block it, then navigate it after the server action resolves.
+    const popup = window.open('', '_blank', 'noopener,noreferrer');
+
     startTransition(async () => {
       const result = await generateImpersonationLink(client.id);
       if (result.error) {
+        popup?.close();
         toast.error(result.error);
         return;
       }
-      if (result.url) {
-        window.open(result.url, '_blank', 'noopener,noreferrer');
+      if (result.url && popup) {
+        popup.location.href = result.url;
+      } else {
+        popup?.close();
       }
     });
   };
