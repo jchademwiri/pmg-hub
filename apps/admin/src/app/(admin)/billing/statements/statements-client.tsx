@@ -32,8 +32,19 @@ interface StatementsClientProps {
 type SortField = 'name' | 'totalInvoiced' | 'totalPaid' | 'totalOutstanding' | 'lastActivityDate';
 type SortOrder = 'asc' | 'desc';
 
-function SortIcon({ field, currentField, order }: { field: SortField; currentField: SortField; order: SortOrder }) {
-  if (currentField !== field) return <ArrowUpDown className="ml-1 size-3 text-muted-foreground/50 opacity-0 group-hover:opacity-100 transition-opacity" />;
+function SortIcon({
+  field,
+  currentField,
+  order,
+}: {
+  field: SortField;
+  currentField: SortField;
+  order: SortOrder;
+}) {
+  if (currentField !== field)
+    return (
+      <ArrowUpDown className="ml-1 size-3 text-muted-foreground/50 opacity-0 group-hover:opacity-100 transition-opacity" />
+    );
   return order === 'asc' ? (
     <ArrowUp className="ml-1 size-3 text-foreground" />
   ) : (
@@ -63,9 +74,8 @@ export function StatementsClient({ initialClients }: StatementsClientProps) {
       const nameMatch = (client.businessName ?? client.name)
         .toLowerCase()
         .includes(searchTerm.toLowerCase());
-      
-      const outstandingMatch =
-        filterType === 'all' || client.totalOutstanding > 0;
+
+      const outstandingMatch = filterType === 'all' || client.totalOutstanding > 0;
 
       return nameMatch && outstandingMatch;
     });
@@ -74,8 +84,8 @@ export function StatementsClient({ initialClients }: StatementsClientProps) {
   // Sorting
   const sortedClients = React.useMemo(() => {
     return [...filteredClients].sort((a, b) => {
-      let valA: any = '';
-      let valB: any = '';
+      let valA: string | number = '';
+      let valB: string | number = '';
 
       if (sortField === 'name') {
         valA = (a.businessName ?? a.name).toLowerCase();
@@ -183,9 +193,9 @@ export function StatementsClient({ initialClients }: StatementsClientProps) {
             {sortedClients.length === 0 ? (
               <TableRow>
                 <TableCell colSpan={5} className="h-24 text-center text-muted-foreground text-xs">
-                  {searchTerm || filterType !== 'all'
-                    ? 'No statement records found matching the criteria.'
-                    : 'No client statements available yet.'}
+                  {initialClients.length === 0
+                    ? 'No client statements available yet.'
+                    : 'No statement records found matching the criteria.'}
                 </TableCell>
               </TableRow>
             ) : (
@@ -203,7 +213,10 @@ export function StatementsClient({ initialClients }: StatementsClientProps) {
                           {client.businessName ?? client.name}
                         </span>
                         {hasOutstanding && (
-                          <span className="inline-flex h-1.5 w-1.5 rounded-full bg-red-500" title="Has outstanding balance" />
+                          <span
+                            className="inline-flex h-1.5 w-1.5 rounded-full bg-red-500"
+                            title="Has outstanding balance"
+                          />
                         )}
                       </div>
                     </TableCell>
@@ -216,9 +229,7 @@ export function StatementsClient({ initialClients }: StatementsClientProps) {
                     <TableCell className="text-right tabular-nums text-sm py-4">
                       <span
                         className={
-                          hasOutstanding
-                            ? 'text-red-500 font-semibold'
-                            : 'text-muted-foreground'
+                          hasOutstanding ? 'text-red-500 font-semibold' : 'text-muted-foreground'
                         }
                       >
                         {formatZAR(client.totalOutstanding)}
@@ -239,15 +250,15 @@ export function StatementsClient({ initialClients }: StatementsClientProps) {
       <div className="md:hidden flex flex-col gap-3">
         {sortedClients.length === 0 ? (
           <div className="text-center text-muted-foreground text-xs py-8 border border-dashed rounded-lg">
-            {searchTerm || filterType !== 'all'
-              ? 'No statement records found matching the criteria.'
-              : 'No client statements available yet.'}
+            {initialClients.length === 0
+              ? 'No client statements available yet.'
+              : 'No statement records found matching the criteria.'}
           </div>
         ) : (
           sortedClients.map((client) => {
             const hasOutstanding = client.totalOutstanding > 0;
             return (
-              <div 
+              <div
                 key={client.id}
                 onClick={() => router.push(`/billing/statements/${client.id}`)}
                 className="flex flex-col gap-2 p-4 bg-card border border-border rounded-xl shadow-sm cursor-pointer hover:bg-muted/40 transition-colors"
@@ -256,28 +267,47 @@ export function StatementsClient({ initialClients }: StatementsClientProps) {
                   <div className="flex flex-col">
                     <span className="font-semibold text-sm hover:text-primary hover:underline flex items-center gap-2">
                       {client.businessName ?? client.name}
-                      {hasOutstanding && <span className="inline-flex h-1.5 w-1.5 rounded-full bg-red-500" title="Has outstanding balance" />}
+                      {hasOutstanding && (
+                        <span
+                          className="inline-flex h-1.5 w-1.5 rounded-full bg-red-500"
+                          title="Has outstanding balance"
+                        />
+                      )}
                     </span>
                   </div>
                   <span className="text-[10px] text-muted-foreground whitespace-nowrap pt-0.5">
                     {client.lastActivityDate ? fmtDate(client.lastActivityDate) : 'No activity'}
                   </span>
                 </div>
-                
+
                 <div className="grid grid-cols-2 gap-4 mt-2 pt-3 border-t border-border/50">
-                   <div className="flex flex-col gap-1">
-                     <span className="text-[10px] text-muted-foreground uppercase tracking-wider font-medium">Invoiced</span>
-                     <span className="text-xs font-semibold">{formatZAR(client.totalInvoiced)}</span>
-                   </div>
-                   <div className="flex flex-col gap-1 text-right">
-                     <span className="text-[10px] text-muted-foreground uppercase tracking-wider font-medium">Paid</span>
-                     <span className="text-xs font-semibold text-emerald-600 dark:text-emerald-400">{formatZAR(client.totalPaid)}</span>
-                   </div>
+                  <div className="flex flex-col gap-1">
+                    <span className="text-[10px] text-muted-foreground uppercase tracking-wider font-medium">
+                      Invoiced
+                    </span>
+                    <span className="text-xs font-semibold">{formatZAR(client.totalInvoiced)}</span>
+                  </div>
+                  <div className="flex flex-col gap-1 text-right">
+                    <span className="text-[10px] text-muted-foreground uppercase tracking-wider font-medium">
+                      Paid
+                    </span>
+                    <span className="text-xs font-semibold text-emerald-600 dark:text-emerald-400">
+                      {formatZAR(client.totalPaid)}
+                    </span>
+                  </div>
                 </div>
-                
+
                 <div className="flex items-center justify-between mt-1 pt-3 border-t border-border/50 bg-muted/20 -mx-4 -mb-4 px-4 pb-4 pt-3 rounded-b-xl">
-                  <span className="text-[10px] text-muted-foreground uppercase tracking-wider font-medium">Outstanding</span>
-                  <span className={hasOutstanding ? "text-xs font-bold text-red-500" : "text-xs font-medium text-muted-foreground"}>
+                  <span className="text-[10px] text-muted-foreground uppercase tracking-wider font-medium">
+                    Outstanding
+                  </span>
+                  <span
+                    className={
+                      hasOutstanding
+                        ? 'text-xs font-bold text-red-500'
+                        : 'text-xs font-medium text-muted-foreground'
+                    }
+                  >
                     {formatZAR(client.totalOutstanding)}
                   </span>
                 </div>

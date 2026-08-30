@@ -61,9 +61,7 @@ export function ClientsTable({ clients, deleteAction, toggleActiveAction }: Clie
           <TableRow>
             <TableHead>Name</TableHead>
             <TableHead>Business Name</TableHead>
-            <TableHead>Email</TableHead>
             <TableHead>Phone</TableHead>
-            <TableHead>Status</TableHead>
             <TableHead>Portal Access</TableHead>
             <TableHead>Actions</TableHead>
           </TableRow>
@@ -79,27 +77,17 @@ export function ClientsTable({ clients, deleteAction, toggleActiveAction }: Clie
                 <div className="flex items-center gap-2">
                   {client.name}
                   {client.isRetainer && (
-                    <Badge variant="outline" className="text-[10px] uppercase h-5 bg-blue-500/10 text-blue-600 border-blue-500/20">
+                    <Badge
+                      variant="outline"
+                      className="text-[10px] uppercase h-5 bg-blue-500/10 text-blue-600 border-blue-500/20"
+                    >
                       Retainer
                     </Badge>
                   )}
                 </div>
               </TableCell>
               <TableCell>{client.businessName ?? ''}</TableCell>
-              <TableCell>{client.email ?? ''}</TableCell>
               <TableCell>{client.phone ?? ''}</TableCell>
-              <TableCell>
-                <Badge
-                  variant="secondary"
-                  className={`border font-medium shadow-none ${
-                    client.isActive
-                      ? 'bg-emerald-500/15 text-emerald-700 dark:text-emerald-400 border-emerald-500/30'
-                      : 'bg-muted text-muted-foreground border-border'
-                  }`}
-                >
-                  {client.isActive ? 'Active' : 'Disabled'}
-                </Badge>
-              </TableCell>
               <TableCell onClick={(e) => e.stopPropagation()}>
                 <PortalStatusCell client={client} />
               </TableCell>
@@ -170,7 +158,10 @@ export function ClientsTable({ clients, deleteAction, toggleActiveAction }: Clie
               <div className="flex items-center gap-2">
                 <p className="font-semibold text-foreground leading-tight">{client.name}</p>
                 {client.isRetainer && (
-                  <Badge variant="outline" className="text-[10px] uppercase h-5 bg-blue-500/10 text-blue-600 border-blue-500/20">
+                  <Badge
+                    variant="outline"
+                    className="text-[10px] uppercase h-5 bg-blue-500/10 text-blue-600 border-blue-500/20"
+                  >
                     Retainer
                   </Badge>
                 )}
@@ -179,24 +170,9 @@ export function ClientsTable({ clients, deleteAction, toggleActiveAction }: Clie
                 <p className="text-sm text-muted-foreground">{client.businessName}</p>
               )}
             </div>
-            <Badge
-              variant="secondary"
-              className={`border font-medium shadow-none ${
-                client.isActive
-                  ? 'bg-emerald-500/15 text-emerald-700 dark:text-emerald-400 border-emerald-500/30'
-                  : 'bg-muted text-muted-foreground border-border'
-              }`}
-            >
-              {client.isActive ? 'Active' : 'Disabled'}
-            </Badge>
           </div>
 
           <div className="flex flex-col gap-1 text-sm text-muted-foreground mb-3 relative z-10">
-            {client.email && (
-              <div className="flex items-center gap-2">
-                <Mail className="size-3" /> {client.email}
-              </div>
-            )}
             {client.phone && <div className="flex items-center gap-2">Phone: {client.phone}</div>}
           </div>
 

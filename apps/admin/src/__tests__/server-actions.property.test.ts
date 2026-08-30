@@ -5,23 +5,35 @@
  * Validates: Requirements 1.1, 1.2, 1.6
  */
 
-import { describe, it, vi, beforeEach, expect } from 'vitest'
-import * as fc from 'fast-check'
+import { describe, it, vi, beforeEach, expect } from 'vitest';
+import * as fc from 'fast-check';
 
-vi.mock('server-only', () => ({}))
+vi.mock('server-only', () => ({}));
 vi.mock('@/lib/auth', () => ({
   getSessionOrRedirect: vi.fn().mockResolvedValue({ user: { id: 'user-1' } }),
-}))
+}));
 
 // ─── Hoist mock state so it's available when vi.mock factories run ────────────
 const { mockDbExecute } = vi.hoisted(() => {
-  return { mockDbExecute: vi.fn() }
-})
+  return { mockDbExecute: vi.fn() };
+});
 
 // ─── Mock next/cache ─────────────────────────────────────────────────────────
 vi.mock('next/cache', () => ({
   revalidatePath: vi.fn(),
-}))
+}));
+
+vi.mock('@/lib/date-rules', () => ({
+  isPeriodClosed: vi.fn().mockResolvedValue(false),
+  getMinAllowedDate: vi.fn().mockResolvedValue('2026-01-01'),
+  getMinDateErrorMessage: vi.fn().mockReturnValue('Period is closed.'),
+}));
+
+vi.mock('@/lib/accounting/posting', () => ({
+  postExpenseJournalEntry: vi.fn().mockResolvedValue({}),
+  voidExpenseJournalEntries: vi.fn().mockResolvedValue({}),
+  updateExpenseJournalEntry: vi.fn().mockResolvedValue({}),
+}));
 
 // ─── Mock @pmg/db ─────────────────────────────────────────────────────────────
 // The Drizzle db object uses a chainable builder: db.insert(t).values(v)
@@ -33,18 +45,18 @@ vi.mock('@pmg/db', () => {
   function makeChain(): Record<string, unknown> {
     const chain: Record<string, unknown> = {
       then(resolve: (v: unknown) => unknown, reject: (e: unknown) => unknown) {
-        return mockDbExecute().then(resolve, reject)
+        return mockDbExecute().then(resolve, reject);
       },
       catch(reject: (e: unknown) => unknown) {
-        return mockDbExecute().catch(reject)
+        return mockDbExecute().catch(reject);
       },
-    }
+    };
     // All builder methods return the same chain
-    const methods = ['insert', 'update', 'delete', 'values', 'set', 'where']
+    const methods = ['insert', 'update', 'delete', 'values', 'set', 'where'];
     for (const m of methods) {
-      chain[m] = () => chain
+      chain[m] = () => chain;
     }
-    return chain
+    return chain;
   }
 
   return {
@@ -54,62 +66,54 @@ vi.mock('@pmg/db', () => {
     leads: {},
     divisions: {},
     eq: vi.fn(),
-  }
-})
+    getExpenseById: vi.fn().mockResolvedValue({ id: 'exp-1', date: '2026-05-01' }),
+  };
+});
 
-import {
-  deleteIncome,
-} from '@/app/actions/income'
+import { deleteIncome } from '@/app/actions/income';
 
-import {
-  createExpense,
-  updateExpense,
-  deleteExpense,
-} from '@/app/actions/expenses'
+import { createExpense, updateExpense, deleteExpense } from '@/app/actions/expenses';
 
-import {
-  updateLeadStatus,
-  updateLeadNotes,
-} from '@/app/actions/leads'
+import { updateLeadStatus, updateLeadNotes } from '@/app/actions/leads';
 
-import { createDivision } from '@/app/actions/divisions'
+import { createDivision } from '@/app/actions/divisions';
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
 
 /** Assert a value matches the { error?: string } contract */
 function assertActionResult(result: unknown): void {
-  expect(typeof result).toBe('object')
-  expect(result).not.toBeNull()
-  const keys = Object.keys(result as object)
+  expect(typeof result).toBe('object');
+  expect(result).not.toBeNull();
+  const keys = Object.keys(result as object);
   for (const key of keys) {
-    expect(key).toBe('error')
+    expect(key).toBe('error');
   }
-  const r = result as { error?: unknown }
+  const r = result as { error?: unknown };
   if ('error' in r) {
-    expect(typeof r.error).toBe('string')
+    expect(typeof r.error).toBe('string');
   }
 }
 
 /** Build a FormData from an arbitrary dictionary of string→string */
 function buildFormData(dict: Record<string, string>): FormData {
-  const fd = new FormData()
+  const fd = new FormData();
   for (const [k, v] of Object.entries(dict)) {
-    fd.set(k, v)
+    fd.set(k, v);
   }
-  return fd
+  return fd;
 }
 
 /** Arbitrary: dictionary of string keys → string values, built into FormData */
 const formDataArb = fc
   .dictionary(fc.string({ minLength: 1, maxLength: 30 }), fc.string({ maxLength: 100 }))
-  .map(buildFormData)
+  .map(buildFormData);
 
 /** Arbitrary: whether the db call should throw */
-const dbBehaviourArb = fc.boolean()
+const dbBehaviourArb = fc.boolean();
 
 beforeEach(() => {
-  vi.clearAllMocks()
-})
+  vi.clearAllMocks();
+});
 
 // ─── Tests ───────────────────────────────────────────────────────────────────
 
@@ -124,90 +128,105 @@ describe('Server Actions - Property 1: never throw, always return { error? }', (
     await fc.assert(
       fc.asyncProperty(fc.uuid(), dbBehaviourArb, async (id, shouldThrow) => {
         mockDbExecute.mockImplementation(() =>
-          shouldThrow ? Promise.reject(new Error('db error')) : Promise.resolve()
-        )
-        const result = await deleteIncome(id)
-        assertActionResult(result)
+          shouldThrow ? Promise.reject(new Error('db error')) : Promise.resolve(),
+        );
+        const result = await deleteIncome(id);
+        assertActionResult(result);
       }),
-      { numRuns: 100 }
-    )
-  })
+      { numRuns: 100 },
+    );
+  });
 
   it('createExpense never throws and always returns { error? } - Validates: Requirements 1.1, 1.2, 1.6', async () => {
     await fc.assert(
       fc.asyncProperty(formDataArb, dbBehaviourArb, async (formData, shouldThrow) => {
         mockDbExecute.mockImplementation(() =>
-          shouldThrow ? Promise.reject(new Error('db error')) : Promise.resolve()
-        )
-        const result = await createExpense(formData)
-        assertActionResult(result)
+          shouldThrow ? Promise.reject(new Error('db error')) : Promise.resolve(),
+        );
+        const result = await createExpense(formData);
+        assertActionResult(result);
       }),
-      { numRuns: 100 }
-    )
-  })
+      { numRuns: 100 },
+    );
+  });
 
   it('updateExpense never throws and always returns { error? } - Validates: Requirements 1.1, 1.2, 1.6', async () => {
     await fc.assert(
-      fc.asyncProperty(fc.uuid(), formDataArb, dbBehaviourArb, async (id, formData, shouldThrow) => {
-        mockDbExecute.mockImplementation(() =>
-          shouldThrow ? Promise.reject(new Error('db error')) : Promise.resolve()
-        )
-        const result = await updateExpense(id, formData)
-        assertActionResult(result)
-      }),
-      { numRuns: 100 }
-    )
-  })
+      fc.asyncProperty(
+        fc.uuid(),
+        formDataArb,
+        dbBehaviourArb,
+        async (id, formData, shouldThrow) => {
+          mockDbExecute.mockImplementation(() =>
+            shouldThrow ? Promise.reject(new Error('db error')) : Promise.resolve(),
+          );
+          const result = await updateExpense(id, formData);
+          assertActionResult(result);
+        },
+      ),
+      { numRuns: 100 },
+    );
+  });
 
   it('deleteExpense never throws and always returns { error? } - Validates: Requirements 1.1, 1.2, 1.6', async () => {
     await fc.assert(
       fc.asyncProperty(fc.uuid(), dbBehaviourArb, async (id, shouldThrow) => {
         mockDbExecute.mockImplementation(() =>
-          shouldThrow ? Promise.reject(new Error('db error')) : Promise.resolve()
-        )
-        const result = await deleteExpense(id)
-        assertActionResult(result)
+          shouldThrow ? Promise.reject(new Error('db error')) : Promise.resolve(),
+        );
+        const result = await deleteExpense(id);
+        assertActionResult(result);
       }),
-      { numRuns: 100 }
-    )
-  })
+      { numRuns: 100 },
+    );
+  });
 
   it('updateLeadStatus never throws and always returns { error? } - Validates: Requirements 1.1, 1.2, 1.6', async () => {
     await fc.assert(
-      fc.asyncProperty(fc.uuid(), formDataArb, dbBehaviourArb, async (id, formData, shouldThrow) => {
-        mockDbExecute.mockImplementation(() =>
-          shouldThrow ? Promise.reject(new Error('db error')) : Promise.resolve()
-        )
-        const result = await updateLeadStatus(id, formData)
-        assertActionResult(result)
-      }),
-      { numRuns: 100 }
-    )
-  })
+      fc.asyncProperty(
+        fc.uuid(),
+        formDataArb,
+        dbBehaviourArb,
+        async (id, formData, shouldThrow) => {
+          mockDbExecute.mockImplementation(() =>
+            shouldThrow ? Promise.reject(new Error('db error')) : Promise.resolve(),
+          );
+          const result = await updateLeadStatus(id, formData);
+          assertActionResult(result);
+        },
+      ),
+      { numRuns: 100 },
+    );
+  });
 
   it('updateLeadNotes never throws and always returns { error? } - Validates: Requirements 1.1, 1.2, 1.6', async () => {
     await fc.assert(
-      fc.asyncProperty(fc.uuid(), formDataArb, dbBehaviourArb, async (id, formData, shouldThrow) => {
-        mockDbExecute.mockImplementation(() =>
-          shouldThrow ? Promise.reject(new Error('db error')) : Promise.resolve()
-        )
-        const result = await updateLeadNotes(id, formData)
-        assertActionResult(result)
-      }),
-      { numRuns: 100 }
-    )
-  })
+      fc.asyncProperty(
+        fc.uuid(),
+        formDataArb,
+        dbBehaviourArb,
+        async (id, formData, shouldThrow) => {
+          mockDbExecute.mockImplementation(() =>
+            shouldThrow ? Promise.reject(new Error('db error')) : Promise.resolve(),
+          );
+          const result = await updateLeadNotes(id, formData);
+          assertActionResult(result);
+        },
+      ),
+      { numRuns: 100 },
+    );
+  });
 
   it('createDivision never throws and always returns { error? } - Validates: Requirements 1.1, 1.2, 1.6', async () => {
     await fc.assert(
       fc.asyncProperty(formDataArb, dbBehaviourArb, async (formData, shouldThrow) => {
         mockDbExecute.mockImplementation(() =>
-          shouldThrow ? Promise.reject(new Error('db error')) : Promise.resolve()
-        )
-        const result = await createDivision(formData)
-        assertActionResult(result)
+          shouldThrow ? Promise.reject(new Error('db error')) : Promise.resolve(),
+        );
+        const result = await createDivision(formData);
+        assertActionResult(result);
       }),
-      { numRuns: 100 }
-    )
-  })
-})
+      { numRuns: 100 },
+    );
+  });
+});

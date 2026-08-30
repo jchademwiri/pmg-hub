@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect, useTransition, useRef } from 'react';
+import React, { useState, useEffect, useTransition } from 'react';
 import Link from 'next/link';
 import { useRouter, useSearchParams, usePathname } from 'next/navigation';
 import { toast } from 'sonner';
@@ -9,13 +9,7 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Progress } from '@/components/ui/progress';
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from '@/components/ui/card';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import {
   Table,
   TableBody,
@@ -24,12 +18,7 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table';
-import {
-  Tabs,
-  TabsContent,
-  TabsList,
-  TabsTrigger,
-} from '@/components/ui/tabs';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import {
   Dialog,
   DialogContent,
@@ -38,11 +27,12 @@ import {
   DialogTitle,
 } from '@/components/ui/dialog';
 import {
-  Collapsible,
-  CollapsibleContent,
-  CollapsibleTrigger,
-} from '@/components/ui/collapsible';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
 import { BillingStatusBadge } from '@/components/billing/billing-status-badge';
 import { DocumentPreview } from '@/components/billing/document-preview';
 import { PrintButton } from '@/components/billing/print-button';
@@ -53,29 +43,81 @@ import { ClientEditForm } from '@/components/clients/client-edit-form';
 import { ClientFinancialDashboard } from './client-financial-dashboard';
 import { ClientMetricStrip } from './client-metric-strip';
 import { ComplianceTable } from './_components/compliance/compliance-table';
-import { calculateClientHealth, calculateAverageDaysToPay, buildOrgProps, determineStatementStatus, buildIncomeInvoiceMap, buildTransactionHistory, resolveDivisionBranding, buildBankingProps } from '@/lib/client-billing-helpers';
+import {
+  calculateClientHealth,
+  calculateAverageDaysToPay,
+  buildOrgProps,
+  determineStatementStatus,
+  buildIncomeInvoiceMap,
+  buildTransactionHistory,
+  resolveDivisionBranding,
+  buildBankingProps,
+} from '@/lib/client-billing-helpers';
 import { formatZAR, fmtDate, getSASTToday } from '@/lib/format';
 import { calculateAgeing } from '@/lib/billing-ageing';
+import { appendElementToPdf, elementToPdfBase64, sanitizePdfFileName } from '@/lib/pdf-export';
 import {
-  appendElementToPdf,
-  elementToPdfBase64,
-  sanitizePdfFileName,
-} from '@/lib/pdf-export';
-import { ChevronDown, ChevronUp, FileDown, Mail, Loader2, Eye, Plus, Pencil, CheckCircle2, XCircle, Wallet, Clock, AlertCircle, FileText, FileSignature, Coins, FileSpreadsheet, BarChart3, Briefcase } from 'lucide-react';
+  FileDown,
+  Mail,
+  Loader2,
+  Eye,
+  Plus,
+  Pencil,
+  CheckCircle2,
+  XCircle,
+  Wallet,
+  Clock,
+  AlertCircle,
+  FileText,
+  FileSignature,
+  Coins,
+  FileSpreadsheet,
+  BarChart3,
+  Briefcase,
+} from 'lucide-react';
 import { generateReceiptNumber } from '@pmg/utils';
 import { IssueCreditNoteDialog } from '@/components/billing/issue-credit-note-dialog';
 import { CreditHistoryTable } from '@/components/billing/credit-history-table';
-import { bulkIssueInvoices, bulkVoidInvoices, issueInvoice, voidInvoice } from '@/app/actions/billing-invoices';
+import { bulkIssueInvoices, bulkVoidInvoices } from '@/app/actions/billing-invoices';
 import { sendDocumentEmailAction } from '@/app/actions/email-delivery';
-import { updateQuotationStatus } from '@/app/actions/billing-quotes';
 import { sendPortalInvitation } from '@/app/actions/clients';
 import { generateImpersonationLink } from '@/app/actions/portal-impersonation';
 import { SetPageLabel } from '@/components/navigation/page-header-context';
 import {
+  type Client,
   type InvoiceDetail,
   type QuotationDetail,
   type ComplianceDocument,
+  type ClientStatement,
+  type DivisionBillingSettings,
+  type OrganisationSettings,
+  type ProjectScheduleEntry,
 } from '@pmg/db';
+import {
+  type CreditSummary,
+  type CreditHistoryEntry,
+  type CreditNoteRow,
+} from '@/app/actions/credit-management';
+
+export interface PaymentItem {
+  id: string;
+  clientId: string | null;
+  clientName?: string | null;
+  divisionId: string | null;
+  divisionName?: string | null;
+  amount: number | string;
+  date: string;
+  description: string | null;
+  notes?: string | null;
+  paymentMethod?: string | null;
+  allocations?: {
+    id: string;
+    invoiceId: string;
+    invoiceNumber: string;
+    amount: string | number;
+    createdAt: Date | string;
+  }[];
+}
 
 function extractInvoiceNumber(description: string | null): string {
   if (!description) return '-';
@@ -89,20 +131,20 @@ function extractInvoiceNumber(description: string | null): string {
 }
 
 interface ClientBillingWorkspaceProps {
-  client: any;
+  client: Client;
   invoices: InvoiceDetail[];
   quotes: QuotationDetail[];
-  payments: any;
-  statement: any;
+  payments: { data: PaymentItem[]; total?: number };
+  statement: ClientStatement | null;
   availableYears: number[];
   currentFY: number;
   divisions: { id: string; name: string }[];
-  divSettings: any;
-  orgSettings?: any;
-  updateClientAction: any;
-  creditSummary?: any;
-  creditHistory?: any;
-  projects?: any[];
+  divSettings: DivisionBillingSettings | null;
+  orgSettings?: OrganisationSettings | null;
+  updateClientAction: (formData: FormData) => Promise<{ error?: string }>;
+  creditSummary?: CreditSummary;
+  creditHistory?: CreditHistoryEntry[];
+  projects?: ProjectScheduleEntry[];
   complianceRecords?: ComplianceDocument[];
 }
 
@@ -143,19 +185,21 @@ export function ClientBillingWorkspace({
     invoices.length > 0
       ? invoices[0]!.id
       : quotes.length > 0
-      ? quotes[0]!.id
-      : (payments?.data && payments.data.length > 0)
-      ? payments.data[0]!.id
-      : null
+        ? quotes[0]!.id
+        : payments?.data && payments.data.length > 0
+          ? payments.data[0]!.id
+          : null,
   );
-  const [selectedDocType, setSelectedDocType] = useState<'invoice' | 'quote' | 'statement' | 'payment'>(
+  const [selectedDocType, setSelectedDocType] = useState<
+    'invoice' | 'quote' | 'statement' | 'payment'
+  >(
     invoices.length > 0
       ? 'invoice'
       : quotes.length > 0
-      ? 'quote'
-      : (payments?.data && payments.data.length > 0)
-      ? 'payment'
-      : 'statement'
+        ? 'quote'
+        : payments?.data && payments.data.length > 0
+          ? 'payment'
+          : 'statement',
   );
 
   // Checkbox Multiselect Layer
@@ -165,7 +209,9 @@ export function ClientBillingWorkspace({
 
   // Sequential Queue Render State (Recommendations implemented)
   const [activeRenderingDocId, setActiveRenderingDocId] = useState<string | null>(null);
-  const [activeRenderingDocType, setActiveRenderingDocType] = useState<'invoice' | 'quote' | null>(null);
+  const [activeRenderingDocType, setActiveRenderingDocType] = useState<'invoice' | 'quote' | null>(
+    null,
+  );
 
   // Bulk Progress Dialog
   const [isBulkDialogOpen, setIsBulkDialogOpen] = useState(false);
@@ -175,7 +221,9 @@ export function ClientBillingWorkspace({
 
   // Active Tab
   const [activeTab, setActiveTab] = useState<string>(searchParams.get('tab') || 'invoices');
-  const [metricFilter, setMetricFilter] = useState<'all' | 'paid' | 'outstanding' | 'overdue'>('all');
+  const [metricFilter, setMetricFilter] = useState<'all' | 'paid' | 'outstanding' | 'overdue'>(
+    'all',
+  );
   const [showIssueCreditDialog, setShowIssueCreditDialog] = useState(false);
 
   const clientDivisions = React.useMemo(() => {
@@ -213,13 +261,18 @@ export function ClientBillingWorkspace({
       } else if (activeTabFromUrl === 'statement') {
         setSelectedDocType('statement');
         setSelectedDocId(null);
-      } else if (activeTabFromUrl === 'analytics' || activeTabFromUrl === 'credits' || activeTabFromUrl === 'projects' || activeTabFromUrl === 'compliance') {
+      } else if (
+        activeTabFromUrl === 'analytics' ||
+        activeTabFromUrl === 'credits' ||
+        activeTabFromUrl === 'projects' ||
+        activeTabFromUrl === 'compliance'
+      ) {
         setSelectedInvoiceIds(new Set());
         setSelectedQuoteIds(new Set());
         setIsPreviewOpen(false);
       }
     }
-  }, [activeTabFromUrl, invoices, quotes, payments, projects]);
+  }, [activeTab, activeTabFromUrl, invoices, quotes, payments, projects]);
 
   const handleTabChange = (val: string) => {
     const params = new URLSearchParams(searchParams.toString());
@@ -240,7 +293,7 @@ export function ClientBillingWorkspace({
             inv.status !== 'paid' &&
             inv.status !== 'void' &&
             inv.status !== 'draft' &&
-            (!inv.dueDate || inv.dueDate >= todayStrWS)
+            (!inv.dueDate || inv.dueDate >= todayStrWS),
         );
       case 'overdue':
         return invoices.filter(
@@ -249,7 +302,7 @@ export function ClientBillingWorkspace({
             inv.status !== 'void' &&
             inv.status !== 'draft' &&
             inv.dueDate &&
-            inv.dueDate < todayStrWS
+            inv.dueDate < todayStrWS,
         );
       case 'all':
       default:
@@ -260,9 +313,7 @@ export function ClientBillingWorkspace({
   const filteredQuotes = (() => {
     switch (metricFilter) {
       case 'paid':
-        return quotes.filter(
-          (q) => q.status === 'accepted' || q.status === 'converted'
-        );
+        return quotes.filter((q) => q.status === 'accepted' || q.status === 'converted');
       case 'outstanding':
         return quotes.filter((q) => q.status === 'sent');
       case 'overdue':
@@ -275,11 +326,16 @@ export function ClientBillingWorkspace({
 
   // ── Metric Strip Computations ──────────────────────────────────────────────
   const activeInvoicesWS = invoices.filter(
-    (inv) => inv.status !== 'void' && inv.status !== 'draft' && inv.invoiceDate <= todayStrWS
+    (inv) => inv.status !== 'void' && inv.status !== 'draft' && inv.invoiceDate <= todayStrWS,
   );
   const totalInvoicedWS = activeInvoicesWS.reduce((sum, inv) => sum + Number(inv.total), 0);
-  const totalCreditsAppliedWS = (creditSummary?.creditNotes ?? []).reduce((sum: number, note: any) => sum + Math.max(0, note.amount - note.amountRemaining), 0);
-  const totalPaidWS = (payments?.data ?? []).reduce((sum: number, pay: any) => sum + Number(pay.amount), 0) + totalCreditsAppliedWS;
+  const totalCreditsAppliedWS = (creditSummary?.creditNotes ?? []).reduce(
+    (sum: number, note: CreditNoteRow) => sum + Math.max(0, note.amount - note.amountRemaining),
+    0,
+  );
+  const totalPaidWS =
+    (payments?.data ?? []).reduce((sum: number, pay: PaymentItem) => sum + Number(pay.amount), 0) +
+    totalCreditsAppliedWS;
 
   // Overdue Balance Calculation (strictly unpaid invoices where due date is in the past)
   const overdueBalanceWS = activeInvoicesWS
@@ -336,10 +392,14 @@ export function ClientBillingWorkspace({
     };
   }, [activeInvoicesWS, todayStrWS]);
 
-  const healthWS = calculateClientHealth(invoices, outstandingBalanceWS + overdueBalanceWS, overdueBalanceWS);
+  const healthWS = calculateClientHealth(
+    invoices,
+    outstandingBalanceWS + overdueBalanceWS,
+    overdueBalanceWS,
+  );
   const avgDaysToPayWS = calculateAverageDaysToPay(invoices);
-  const sortedPaymentsWS = [...(payments?.data ?? [])].sort((a: any, b: any) =>
-    b.date.localeCompare(a.date)
+  const sortedPaymentsWS = [...(payments?.data ?? [])].sort((a: PaymentItem, b: PaymentItem) =>
+    b.date.localeCompare(a.date),
   );
   const lastPaymentWS = sortedPaymentsWS[0] ?? null;
 
@@ -353,7 +413,7 @@ export function ClientBillingWorkspace({
     if (tabParam === 'payments' || paymentIdParam) {
       setActiveTab('payments');
       if (paymentIdParam) {
-        const hasPayment = (payments?.data || []).some((p: any) => p.id === paymentIdParam);
+        const hasPayment = (payments?.data || []).some((p: PaymentItem) => p.id === paymentIdParam);
         if (hasPayment) {
           setSelectedDocId(paymentIdParam);
           setSelectedDocType('payment');
@@ -387,12 +447,10 @@ export function ClientBillingWorkspace({
     }
   }, [searchParams, invoices, quotes, payments]);
 
-
-
   // Find selected document detail in memory
   const activeInvoice = invoices.find((i) => i.id === selectedDocId);
   const activeQuote = quotes.find((q) => q.id === selectedDocId);
-  const activePayment = (payments?.data || []).find((p: any) => p.id === selectedDocId);
+  const activePayment = (payments?.data || []).find((p: PaymentItem) => p.id === selectedDocId);
 
   let documentTitle = 'Document';
   if (selectedDocType === 'invoice' && activeInvoice) {
@@ -400,13 +458,16 @@ export function ClientBillingWorkspace({
   } else if (selectedDocType === 'quote' && activeQuote) {
     documentTitle = `Quote-${activeQuote.documentNumber}`;
   } else if (selectedDocType === 'payment' && activePayment) {
-    documentTitle = generateReceiptNumber(activePayment.id, activePayment.divisionName);
+    documentTitle = generateReceiptNumber(
+      activePayment.id,
+      activePayment.divisionName || 'General',
+    );
   }
 
   const navigableIds = (() => {
-    if (selectedDocType === 'invoice') return invoices.map(i => i.id);
-    if (selectedDocType === 'quote') return quotes.map(q => q.id);
-    if (selectedDocType === 'payment') return (payments?.data ?? []).map((p: any) => p.id);
+    if (selectedDocType === 'invoice') return invoices.map((i) => i.id);
+    if (selectedDocType === 'quote') return quotes.map((q) => q.id);
+    if (selectedDocType === 'payment') return (payments?.data ?? []).map((p: PaymentItem) => p.id);
     return [];
   })();
   const currentNavIndex = selectedDocId ? navigableIds.indexOf(selectedDocId) : -1;
@@ -469,14 +530,14 @@ export function ClientBillingWorkspace({
 
   const statementTxRaw = [
     ...(statement?.invoices ?? [])
-      .filter((inv: any) => inv.status !== 'void')
-      .map((inv: any) => ({
+      .filter((inv) => inv.status !== 'void')
+      .map((inv) => ({
         date: inv.invoiceDate,
         reference: inv.documentNumber,
         description: inv.reference ?? 'Invoice',
         debit: Number(inv.total),
       })),
-    ...(payments.data ?? []).map((inc: any) => ({
+    ...(payments.data ?? []).map((inc: PaymentItem) => ({
       date: inc.date,
       reference: statementToInvoiceNumber.get(inc.id) ?? '-',
       description: 'Payment received',
@@ -484,9 +545,15 @@ export function ClientBillingWorkspace({
     })),
   ];
 
-  const statementTransactions = buildTransactionHistory(statementTxRaw, statement?.summary.openingBalance ?? 0);
+  const statementTransactions = buildTransactionHistory(
+    statementTxRaw,
+    statement?.summary.openingBalance ?? 0,
+  );
 
-  const statementStatus = determineStatementStatus(statement?.summary.totalOutstanding ?? 0, statement?.invoices ?? []);
+  const statementStatus = determineStatementStatus(
+    statement?.summary.totalOutstanding ?? 0,
+    statement?.invoices ?? [],
+  );
 
   const statementAgeing = calculateAgeing(
     statement?.outstandingInvoices ?? statement?.invoices ?? [],
@@ -538,7 +605,7 @@ export function ClientBillingWorkspace({
   );
 
   const statementPreviewProps = {
-    number: `STMT-${statementPeriodParam ? statementPeriodParam.toUpperCase() : (statementYearParam ? statementYearParam : currentFY)}-${(client.businessName ?? client.name).slice(0, 3).toUpperCase()}`,
+    number: `STMT-${statementPeriodParam ? statementPeriodParam.toUpperCase() : statementYearParam ? statementYearParam : currentFY}-${(client.businessName ?? client.name).slice(0, 3).toUpperCase()}`,
     status: statementStatus,
     issueDate: getSASTToday(),
     periodFrom,
@@ -596,11 +663,18 @@ export function ClientBillingWorkspace({
     }
   };
 
-  const activeSelectionCount = activeTab === 'invoices' ? selectedInvoiceIds.size : activeTab === 'quotes' ? selectedQuoteIds.size : 0;
+  const activeSelectionCount =
+    activeTab === 'invoices'
+      ? selectedInvoiceIds.size
+      : activeTab === 'quotes'
+        ? selectedQuoteIds.size
+        : 0;
 
   // ── Sequential Combined PDF Generator ─────────────────────────────────────
   const generateCombinedPDF = async () => {
-    const selectedIds = Array.from(activeTab === 'invoices' ? selectedInvoiceIds : selectedQuoteIds);
+    const selectedIds = Array.from(
+      activeTab === 'invoices' ? selectedInvoiceIds : selectedQuoteIds,
+    );
     if (selectedIds.length === 0) return;
 
     setBulkType('download');
@@ -608,13 +682,15 @@ export function ClientBillingWorkspace({
     setBulkLog(
       selectedIds.map((id) => {
         const item =
-          activeTab === 'invoices' ? invoices.find((i) => i.id === id) : quotes.find((q) => q.id === id);
+          activeTab === 'invoices'
+            ? invoices.find((i) => i.id === id)
+            : quotes.find((q) => q.id === id);
         return {
           id,
           docNumber: item?.documentNumber ?? 'Doc',
           status: 'pending',
         };
-      })
+      }),
     );
     setIsBulkDialogOpen(true);
 
@@ -632,10 +708,10 @@ export function ClientBillingWorkspace({
 
       for (let i = 0; i < selectedIds.length; i++) {
         const id = selectedIds[i]!;
-        
+
         // Update state to render this document off-screen
         setActiveRenderingDocId(id);
-        setBulkProgress(Math.round(((i) / selectedIds.length) * 100));
+        setBulkProgress(Math.round((i / selectedIds.length) * 100));
 
         // Delay to allow React mounting/rendering
         await new Promise((resolve) => setTimeout(resolve, 250));
@@ -643,7 +719,9 @@ export function ClientBillingWorkspace({
         const elementId = `offscreen-doc-${id}`;
         if (!document.getElementById(elementId)) {
           setBulkLog((prev) =>
-            prev.map((e) => (e.id === id ? { ...e, status: 'failed', error: 'Render container missing' } : e))
+            prev.map((e) =>
+              e.id === id ? { ...e, status: 'failed', error: 'Render container missing' } : e,
+            ),
           );
           continue;
         }
@@ -652,13 +730,15 @@ export function ClientBillingWorkspace({
         pageAdded = true;
 
         // Success for this item
-        setBulkLog((prev) =>
-          prev.map((e) => (e.id === id ? { ...e, status: 'success' } : e))
-        );
+        setBulkLog((prev) => prev.map((e) => (e.id === id ? { ...e, status: 'success' } : e)));
       }
 
       setBulkProgress(100);
-      pdf.save(sanitizePdfFileName(`Combined_${activeTab === 'invoices' ? 'Invoices' : 'Quotes'}_${client.businessName ?? 'Client'}`));
+      pdf.save(
+        sanitizePdfFileName(
+          `Combined_${activeTab === 'invoices' ? 'Invoices' : 'Quotes'}_${client.businessName ?? 'Client'}`,
+        ),
+      );
       toast.success('Combined PDF compiled successfully!');
     } catch (err) {
       console.error(err);
@@ -671,7 +751,9 @@ export function ClientBillingWorkspace({
 
   // ── Sequential Bulk Email Dispatcher ──────────────────────────────────────
   const handleBulkEmail = async () => {
-    const selectedIds = Array.from(activeTab === 'invoices' ? selectedInvoiceIds : selectedQuoteIds);
+    const selectedIds = Array.from(
+      activeTab === 'invoices' ? selectedInvoiceIds : selectedQuoteIds,
+    );
     if (selectedIds.length === 0) return;
 
     if (!client.email) {
@@ -684,13 +766,15 @@ export function ClientBillingWorkspace({
     setBulkLog(
       selectedIds.map((id) => {
         const item =
-          activeTab === 'invoices' ? invoices.find((i) => i.id === id) : quotes.find((q) => q.id === id);
+          activeTab === 'invoices'
+            ? invoices.find((i) => i.id === id)
+            : quotes.find((q) => q.id === id);
         return {
           id,
           docNumber: item?.documentNumber ?? 'Doc',
           status: 'pending',
         };
-      })
+      }),
     );
     setIsBulkDialogOpen(true);
 
@@ -700,7 +784,9 @@ export function ClientBillingWorkspace({
       for (let i = 0; i < selectedIds.length; i++) {
         const id = selectedIds[i]!;
         const item =
-          activeTab === 'invoices' ? invoices.find((inv) => inv.id === id) : quotes.find((q) => q.id === id);
+          activeTab === 'invoices'
+            ? invoices.find((inv) => inv.id === id)
+            : quotes.find((q) => q.id === id);
 
         setActiveRenderingDocId(id);
         setBulkProgress(Math.round((i / selectedIds.length) * 100));
@@ -710,21 +796,28 @@ export function ClientBillingWorkspace({
         const elementId = `offscreen-doc-${id}`;
         if (!document.getElementById(elementId)) {
           setBulkLog((prev) =>
-            prev.map((e) => (e.id === id ? { ...e, status: 'failed', error: 'Render error' } : e))
+            prev.map((e) => (e.id === id ? { ...e, status: 'failed', error: 'Render error' } : e)),
           );
           continue;
         }
 
         let base64Pdf: string;
         try {
-          base64Pdf = await elementToPdfBase64(elementId, `${activeTab === 'invoices' ? 'Invoice' : 'Quote'} PDF`);
+          base64Pdf = await elementToPdfBase64(
+            elementId,
+            `${activeTab === 'invoices' ? 'Invoice' : 'Quote'} PDF`,
+          );
         } catch (error) {
           setBulkLog((prev) =>
-            prev.map((e) => (
+            prev.map((e) =>
               e.id === id
-                ? { ...e, status: 'failed', error: error instanceof Error ? error.message : 'PDF generation failed' }
-                : e
-            ))
+                ? {
+                    ...e,
+                    status: 'failed',
+                    error: error instanceof Error ? error.message : 'PDF generation failed',
+                  }
+                : e,
+            ),
           );
           continue;
         }
@@ -741,12 +834,12 @@ export function ClientBillingWorkspace({
 
         if (!result || result.error) {
           setBulkLog((prev) =>
-            prev.map((e) => (e.id === id ? { ...e, status: 'failed', error: result?.error ?? 'Network error' } : e))
+            prev.map((e) =>
+              e.id === id ? { ...e, status: 'failed', error: result?.error ?? 'Network error' } : e,
+            ),
           );
         } else {
-          setBulkLog((prev) =>
-            prev.map((e) => (e.id === id ? { ...e, status: 'success' } : e))
-          );
+          setBulkLog((prev) => prev.map((e) => (e.id === id ? { ...e, status: 'success' } : e)));
         }
       }
 
@@ -770,7 +863,9 @@ export function ClientBillingWorkspace({
       else {
         toast.success(`Successfully issued ${result.successCount} invoices.`);
         if (result.failedIds?.length) {
-          toast.warning(`${result.failedIds.length} invoice(s) could not be issued — check the accounting period and retry.`);
+          toast.warning(
+            `${result.failedIds.length} invoice(s) could not be issued — check the accounting period and retry.`,
+          );
         }
         setSelectedInvoiceIds(new Set());
         router.refresh();
@@ -786,7 +881,9 @@ export function ClientBillingWorkspace({
       else {
         toast.success(`Successfully voided ${result.successCount} invoices.`);
         if (result.failedIds?.length) {
-          toast.warning(`${result.failedIds.length} invoice(s) could not be voided — check for linked payments and retry.`);
+          toast.warning(
+            `${result.failedIds.length} invoice(s) could not be voided — check for linked payments and retry.`,
+          );
         }
         setSelectedInvoiceIds(new Set());
         router.refresh();
@@ -794,18 +891,12 @@ export function ClientBillingWorkspace({
     });
   };
 
-  const workspacePrintableElementId =
-    selectedDocType === 'statement'
-      ? 'workspace-statement-printable'
-      : selectedDocType === 'payment'
-      ? 'workspace-receipt-printable'
-      : 'workspace-document-printable';
   const dialogPrintableElementId =
     selectedDocType === 'statement'
       ? 'dialog-statement-printable'
       : selectedDocType === 'payment'
-      ? 'dialog-receipt-printable'
-      : 'dialog-document-printable';
+        ? 'dialog-receipt-printable'
+        : 'dialog-document-printable';
   const statementPdfParams = new URLSearchParams();
   if (effectivePeriod) statementPdfParams.set('monthPeriod', effectivePeriod);
   if (statementYearParam) statementPdfParams.set('year', statementYearParam);
@@ -814,33 +905,38 @@ export function ClientBillingWorkspace({
     selectedDocType === 'invoice' && activeInvoice
       ? `/api/billing/pdf/invoice/${activeInvoice.id}`
       : selectedDocType === 'quote' && activeQuote
-      ? `/api/billing/pdf/quote/${activeQuote.id}`
-      : selectedDocType === 'payment' && activePayment
-      ? `/api/billing/pdf/receipt/${activePayment.id}`
-      : selectedDocType === 'statement'
-      ? statementPdfUrl
-      : undefined;
+        ? `/api/billing/pdf/quote/${activeQuote.id}`
+        : selectedDocType === 'payment' && activePayment
+          ? `/api/billing/pdf/receipt/${activePayment.id}`
+          : selectedDocType === 'statement'
+            ? statementPdfUrl
+            : undefined;
 
   return (
     <div className="flex flex-col gap-8">
       <SetPageLabel value={client.businessName ?? client.name} />
       {/* Off-screen canvas render container (for sequential combined PDF/Email generation) */}
       {activeRenderingDocId && activeRenderingDocType && (
-        <div className="absolute left-[-9999px] top-[-9999px] w-[794px] bg-white text-black" style={{ zIndex: -100 }}>
-          {activeRenderingDocType === 'invoice' && invoices.find(i => i.id === activeRenderingDocId) && (
-            <DocumentPreview 
-              id={`offscreen-doc-${activeRenderingDocId}`}
-              type="invoice" 
-              {...getInvoicePreviewProps(invoices.find(i => i.id === activeRenderingDocId)!)} 
-            />
-          )}
-          {activeRenderingDocType === 'quote' && quotes.find(q => q.id === activeRenderingDocId) && (
-            <DocumentPreview 
-              id={`offscreen-doc-${activeRenderingDocId}`}
-              type="quote" 
-              {...getQuotePreviewProps(quotes.find(q => q.id === activeRenderingDocId)!)} 
-            />
-          )}
+        <div
+          className="absolute left-[-9999px] top-[-9999px] w-[794px] bg-white text-black"
+          style={{ zIndex: -100 }}
+        >
+          {activeRenderingDocType === 'invoice' &&
+            invoices.find((i) => i.id === activeRenderingDocId) && (
+              <DocumentPreview
+                id={`offscreen-doc-${activeRenderingDocId}`}
+                type="invoice"
+                {...getInvoicePreviewProps(invoices.find((i) => i.id === activeRenderingDocId)!)}
+              />
+            )}
+          {activeRenderingDocType === 'quote' &&
+            quotes.find((q) => q.id === activeRenderingDocId) && (
+              <DocumentPreview
+                id={`offscreen-doc-${activeRenderingDocId}`}
+                type="quote"
+                {...getQuotePreviewProps(quotes.find((q) => q.id === activeRenderingDocId)!)}
+              />
+            )}
         </div>
       )}
 
@@ -861,11 +957,17 @@ export function ClientBillingWorkspace({
               {client.isActive ? 'Active' : 'Disabled'}
             </Badge>
             {client.userId ? (
-              <Badge variant="secondary" className="bg-emerald-500/15 text-emerald-700 dark:text-emerald-400 border-emerald-500/30">
+              <Badge
+                variant="secondary"
+                className="bg-emerald-500/15 text-emerald-700 dark:text-emerald-400 border-emerald-500/30"
+              >
                 Portal: Registered
               </Badge>
             ) : client.portalInvitationSentAt ? (
-              <Badge variant="secondary" className="bg-blue-500/15 text-blue-700 dark:text-blue-400 border-blue-500/30">
+              <Badge
+                variant="secondary"
+                className="bg-blue-500/15 text-blue-700 dark:text-blue-400 border-blue-500/30"
+              >
                 Portal: Invited
               </Badge>
             ) : (
@@ -906,7 +1008,9 @@ export function ClientBillingWorkspace({
         <DialogContent className="sm:max-w-2xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>Edit Client Details</DialogTitle>
-            <DialogDescription>Update client profile information, contact details, and division link</DialogDescription>
+            <DialogDescription>
+              Update client profile information, contact details, and division link
+            </DialogDescription>
           </DialogHeader>
           <ClientEditForm
             client={client}
@@ -952,7 +1056,12 @@ export function ClientBillingWorkspace({
             <Plus className="size-4 mr-1" /> New Quote
           </Link>
         </Button>
-        <Button asChild size="sm" variant="outline" className="border-green-200 hover:bg-green-50/50 dark:border-green-900/50 dark:hover:bg-green-950/20">
+        <Button
+          asChild
+          size="sm"
+          variant="outline"
+          className="border-green-200 hover:bg-green-50/50 dark:border-green-900/50 dark:hover:bg-green-950/20"
+        >
           <Link href={`/billing/payments/add?clientId=${client.id}`}>
             <Plus className="size-4 mr-1 text-green-600 dark:text-green-400" /> Record Payment
           </Link>
@@ -981,8 +1090,8 @@ export function ClientBillingWorkspace({
       <Tabs value={activeTab} onValueChange={handleTabChange} className="flex flex-col gap-4">
         <div className="sticky top-[3.25rem] z-30 bg-background -mx-6 px-6 pb-2 border-b flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
           <TabsList className="bg-transparent h-10 p-0 flex gap-2 min-w-0 max-w-full overflow-x-auto hide-scrollbar">
-            <TabsTrigger 
-              value="invoices" 
+            <TabsTrigger
+              value="invoices"
               className="group bg-transparent border-b-2 border-transparent data-[state=active]:border-amber-500 data-[state=active]:text-foreground rounded-none shadow-none px-4 py-2 text-sm font-medium flex items-center gap-2 transition-all hover:text-foreground/80"
             >
               <FileText className="size-4 text-muted-foreground group-data-[state=active]:text-amber-500 transition-colors" />
@@ -993,8 +1102,8 @@ export function ClientBillingWorkspace({
                 </span>
               )}
             </TabsTrigger>
-            <TabsTrigger 
-              value="quotes" 
+            <TabsTrigger
+              value="quotes"
               className="group bg-transparent border-b-2 border-transparent data-[state=active]:border-amber-500 data-[state=active]:text-foreground rounded-none shadow-none px-4 py-2 text-sm font-medium flex items-center gap-2 transition-all hover:text-foreground/80"
             >
               <FileSignature className="size-4 text-muted-foreground group-data-[state=active]:text-amber-500 transition-colors" />
@@ -1005,8 +1114,8 @@ export function ClientBillingWorkspace({
                 </span>
               )}
             </TabsTrigger>
-            <TabsTrigger 
-              value="payments" 
+            <TabsTrigger
+              value="payments"
               className="group bg-transparent border-b-2 border-transparent data-[state=active]:border-amber-500 data-[state=active]:text-foreground rounded-none shadow-none px-4 py-2 text-sm font-medium flex items-center gap-2 transition-all hover:text-foreground/80"
             >
               <Coins className="size-4 text-muted-foreground group-data-[state=active]:text-amber-500 transition-colors" />
@@ -1017,15 +1126,15 @@ export function ClientBillingWorkspace({
                 </span>
               )}
             </TabsTrigger>
-            <TabsTrigger 
-              value="statement" 
+            <TabsTrigger
+              value="statement"
               className="group bg-transparent border-b-2 border-transparent data-[state=active]:border-amber-500 data-[state=active]:text-foreground rounded-none shadow-none px-4 py-2 text-sm font-medium flex items-center gap-2 transition-all hover:text-foreground/80"
             >
               <FileSpreadsheet className="size-4 text-muted-foreground group-data-[state=active]:text-amber-500 transition-colors" />
               <span>Statement</span>
             </TabsTrigger>
-            <TabsTrigger 
-              value="credits" 
+            <TabsTrigger
+              value="credits"
               className="group bg-transparent border-b-2 border-transparent data-[state=active]:border-amber-500 data-[state=active]:text-foreground rounded-none shadow-none px-4 py-2 text-sm font-medium flex items-center gap-2 transition-all hover:text-foreground/80"
             >
               <Wallet className="size-4 text-muted-foreground group-data-[state=active]:text-amber-500 transition-colors" />
@@ -1036,15 +1145,15 @@ export function ClientBillingWorkspace({
                 </span>
               )}
             </TabsTrigger>
-            <TabsTrigger 
-              value="analytics" 
+            <TabsTrigger
+              value="analytics"
               className="group bg-transparent border-b-2 border-transparent data-[state=active]:border-amber-500 data-[state=active]:text-foreground rounded-none shadow-none px-4 py-2 text-sm font-medium flex items-center gap-2 transition-all hover:text-foreground/80"
             >
               <BarChart3 className="size-4 text-muted-foreground group-data-[state=active]:text-amber-500 transition-colors" />
               <span>Analytics</span>
             </TabsTrigger>
-            <TabsTrigger 
-              value="projects" 
+            <TabsTrigger
+              value="projects"
               className="group bg-transparent border-b-2 border-transparent data-[state=active]:border-amber-500 data-[state=active]:text-foreground rounded-none shadow-none px-4 py-2 text-sm font-medium flex items-center gap-2 transition-all hover:text-foreground/80"
             >
               <Briefcase className="size-4 text-muted-foreground group-data-[state=active]:text-amber-500 transition-colors" />
@@ -1055,8 +1164,8 @@ export function ClientBillingWorkspace({
                 </span>
               )}
             </TabsTrigger>
-            <TabsTrigger 
-              value="compliance" 
+            <TabsTrigger
+              value="compliance"
               className="group bg-transparent border-b-2 border-transparent data-[state=active]:border-amber-500 data-[state=active]:text-foreground rounded-none shadow-none px-4 py-2 text-sm font-medium flex items-center gap-2 transition-all hover:text-foreground/80"
             >
               <Briefcase className="size-4 text-muted-foreground group-data-[state=active]:text-amber-500 transition-colors" />
@@ -1074,663 +1183,758 @@ export function ClientBillingWorkspace({
 
         {/* Split pane: list (left) + preview (right on lg+) */}
         <div className="flex flex-col lg:flex-row gap-4 items-start w-full">
-
           {/* Document list — full width */}
           <div className="w-full shrink-0">
             <Card className="w-full shadow-sm border-muted-foreground/10 bg-card overflow-hidden">
-            <CardHeader className="p-4 border-b flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-              <div>
-                <CardTitle className="text-sm font-semibold capitalize">
-                  {activeTab === 'analytics'
-                    ? 'Client Analytics'
-                    : activeTab === 'projects'
-                    ? 'Client Projects'
-                    : activeTab === 'credits'
-                    ? 'Client Credits'
-                    : activeTab === 'compliance'
-                    ? 'Compliance Documents'
-                    : activeTab}
-                </CardTitle>
-                <CardDescription className="text-xs">
-                  {activeTab === 'statement'
-                    ? 'Configure and preview the client account statement'
-                    : activeTab === 'analytics'
-                    ? 'Full financial health, ageing analysis, and billing activity'
-                    : activeTab === 'projects'
-                    ? 'Overview of the tender schedule and active projects for this client'
-                    : activeTab === 'credits'
-                    ? 'Manage credit notes and unallocated overpayments for this client'
-                    : activeTab === 'compliance'
-                    ? 'Track CIPC, BEE, and Tax Compliance documents for this client'
-                    : 'Select documents to view or batch process'}
-                </CardDescription>
-              </div>
-              <div className="flex items-center gap-2">
-                {activeTab === 'credits' && (
-                  <Button size="sm" onClick={() => setShowIssueCreditDialog(true)}>
-                    <Plus className="size-4 mr-1" />
-                    Issue Credit Note
-                  </Button>
-                )}
-                {activeTab === 'projects' && (
-                  <Button size="sm" asChild>
-                    <Link href={`/projects/new?clientId=${client.id}`}>
-                      <Plus className="size-4 mr-1" />
-                      Add Project
-                    </Link>
-                  </Button>
-                )}
-                {activeTab === 'invoices' && (
-                  <Button size="sm" asChild>
-                    <Link href={`/billing/invoices/new?clientId=${client.id}`}>
-                      <Plus className="size-4 mr-1" />
-                      Create Invoice
-                    </Link>
-                  </Button>
-                )}
-                {activeTab === 'quotes' && (
-                  <Button size="sm" asChild>
-                    <Link href={`/billing/quotes/new?clientId=${client.id}`}>
-                      <Plus className="size-4 mr-1" />
-                      Create Quotation
-                    </Link>
-                  </Button>
-                )}
-                {activeTab === 'payments' && (
-                  <Button size="sm" asChild>
-                    <Link href={`/billing/payments/add?clientId=${client.id}`}>
-                      <Plus className="size-4 mr-1" />
-                      Record Payment
-                    </Link>
-                  </Button>
-                )}
-              </div>
-            </CardHeader>
-            <CardContent className="p-0">
-              {/* INVOICES TAB */}
-              <TabsContent value="invoices" className="m-0">
-                {filteredInvoices.length === 0 ? (
-                  <p className="text-xs text-muted-foreground text-center py-8">
-                    {metricFilter === 'all'
-                      ? 'No invoices for this client.'
-                      : `No ${metricFilter} invoices.`}
-                  </p>
-                ) : (
-                  <Table className="text-xs">
-                    <TableHeader>
-                      <TableRow>
-                        <TableHead className="w-10">
-                          <Checkbox
-                            checked={filteredInvoices.length > 0 && selectedInvoiceIds.size === filteredInvoices.length}
-                            onCheckedChange={handleSelectAllInvoices}
-                          />
-                        </TableHead>
-                        <TableHead>Invoice #</TableHead>
-                        <TableHead>Reference</TableHead>
-                        <TableHead>Date</TableHead>
-                        <TableHead>Due Date</TableHead>
-                        <TableHead>Division</TableHead>
-                        <TableHead className="text-right">Amount</TableHead>
-                        <TableHead>Status</TableHead>
-                      </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                      {filteredInvoices.map((inv) => (
-                        <TableRow
-                          key={inv.id}
-                          className={`cursor-pointer hover:bg-muted/30 transition-colors ${
-                            selectedDocId === inv.id && selectedDocType === 'invoice' ? 'bg-muted/50 font-medium' : ''
-                          }`}
-                          onClick={() => {
-                            setSelectedDocId(inv.id);
-                            setSelectedDocType('invoice');
-                            setIsPreviewOpen(true);
-                          }}
-                        >
-                          <TableCell onClick={(e) => e.stopPropagation()}>
-                            <Checkbox
-                              checked={selectedInvoiceIds.has(inv.id)}
-                              onCheckedChange={(checked) => handleSelectInvoice(inv.id, !!checked)}
-                            />
-                          </TableCell>
-                          <TableCell className="font-semibold">{inv.documentNumber}</TableCell>
-                          <TableCell className="text-muted-foreground truncate max-w-[150px]" title={inv.reference ?? ''}>
-                            {inv.reference ?? '-'}
-                          </TableCell>
-                          <TableCell className="tabular-nums">{fmtDate(inv.invoiceDate)}</TableCell>
-                          <TableCell className="tabular-nums">
-                            {inv.dueDate ? (
-                              <span className={cn(
-                                inv.status !== 'paid' && inv.status !== 'void' && inv.dueDate < todayStrWS && "text-red-500 font-medium"
-                              )}>
-                                {fmtDate(inv.dueDate)}
-                              </span>
-                            ) : '-'}
-                          </TableCell>
-                          <TableCell>
-                            <span className="text-muted-foreground">{inv.divisionName ?? '-'}</span>
-                          </TableCell>
-                          <TableCell className="text-right tabular-nums font-semibold">{formatZAR(Number(inv.total))}</TableCell>
-                          <TableCell>
-                            <BillingStatusBadge status={inv.status} />
-                          </TableCell>
-                        </TableRow>
-                      ))}
-                    </TableBody>
-                  </Table>
-                )}
-              </TabsContent>
-
-              {/* QUOTATIONS TAB */}
-              <TabsContent value="quotes" className="m-0">
-                {filteredQuotes.length === 0 ? (
-                  <p className="text-xs text-muted-foreground text-center py-8">
-                    {metricFilter === 'all'
-                      ? 'No quotations for this client.'
-                      : `No ${metricFilter} quotations.`}
-                  </p>
-                ) : (
-                  <Table className="text-xs">
-                    <TableHeader>
-                      <TableRow>
-                        <TableHead className="w-10">
-                          <Checkbox
-                            checked={filteredQuotes.length > 0 && selectedQuoteIds.size === filteredQuotes.length}
-                            onCheckedChange={handleSelectAllQuotes}
-                          />
-                        </TableHead>
-                        <TableHead>Quote #</TableHead>
-                        <TableHead>Reference</TableHead>
-                        <TableHead>Date</TableHead>
-                        <TableHead>Expiry Date</TableHead>
-                        <TableHead>Division</TableHead>
-                        <TableHead className="text-right">Amount</TableHead>
-                        <TableHead>Status</TableHead>
-                      </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                      {filteredQuotes.map((q) => (
-                        <TableRow
-                          key={q.id}
-                          className={`cursor-pointer hover:bg-muted/30 transition-colors ${
-                            selectedDocId === q.id && selectedDocType === 'quote' ? 'bg-muted/50 font-medium' : ''
-                          }`}
-                          onClick={() => {
-                            setSelectedDocId(q.id);
-                            setSelectedDocType('quote');
-                            setIsPreviewOpen(true);
-                          }}
-                        >
-                          <TableCell onClick={(e) => e.stopPropagation()}>
-                            <Checkbox
-                              checked={selectedQuoteIds.has(q.id)}
-                              onCheckedChange={(checked) => handleSelectQuote(q.id, !!checked)}
-                            />
-                          </TableCell>
-                          <TableCell className="font-semibold">{q.documentNumber}</TableCell>
-                          <TableCell className="text-muted-foreground truncate max-w-[150px]" title={q.reference ?? ''}>
-                            {q.reference ?? '-'}
-                          </TableCell>
-                          <TableCell className="tabular-nums">{fmtDate(q.quoteDate)}</TableCell>
-                          <TableCell className="tabular-nums">
-                            {q.expiryDate ? (
-                              <span className={cn(
-                                q.status === 'sent' && q.expiryDate < todayStrWS && "text-red-500 font-medium"
-                              )}>
-                                {fmtDate(q.expiryDate)}
-                              </span>
-                            ) : '-'}
-                          </TableCell>
-                          <TableCell>
-                            <span className="text-muted-foreground">{q.divisionName ?? '-'}</span>
-                          </TableCell>
-                          <TableCell className="text-right tabular-nums font-semibold">{formatZAR(Number(q.total))}</TableCell>
-                          <TableCell>
-                            <BillingStatusBadge status={q.status} />
-                          </TableCell>
-                        </TableRow>
-                      ))}
-                    </TableBody>
-                  </Table>
-                )}
-              </TabsContent>
-
-              {/* PAYMENTS TAB */}
-              <TabsContent value="payments" className="m-0">
-                {payments.data.length === 0 ? (
-                  <p className="text-xs text-muted-foreground text-center py-8">No payments recorded.</p>
-                ) : (
-                  <Table className="text-xs">
-                    <TableHeader>
-                      <TableRow>
-                        <TableHead>Date</TableHead>
-                        <TableHead>Receipt #</TableHead>
-                        <TableHead>Invoice Number</TableHead>
-                        <TableHead>Division</TableHead>
-                        <TableHead className="text-right">Amount</TableHead>
-                      </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                      {payments.data.map((entry: any) => (
-                        <TableRow
-                          key={entry.id}
-                          className={`cursor-pointer hover:bg-muted/30 transition-colors ${
-                            selectedDocId === entry.id && selectedDocType === 'payment' ? 'bg-muted/50 font-medium' : ''
-                          }`}
-                          onClick={() => {
-                            setSelectedDocId(entry.id);
-                            setSelectedDocType('payment');
-                            setIsPreviewOpen(true);
-                          }}
-                        >
-                          <TableCell className="tabular-nums">{fmtDate(entry.date)}</TableCell>
-                          <TableCell className="font-mono text-xs text-muted-foreground">
-                            {generateReceiptNumber(entry.id, entry.divisionName)}
-                          </TableCell>
-                          <TableCell className="font-semibold">{extractInvoiceNumber(entry.description)}</TableCell>
-                          <TableCell>
-                            <span className="text-muted-foreground">{entry.divisionName ?? '-'}</span>
-                          </TableCell>
-                          <TableCell className="text-right tabular-nums font-semibold text-emerald-500">
-                            +{formatZAR(Number(entry.amount))}
-                          </TableCell>
-                        </TableRow>
-                      ))}
-                    </TableBody>
-                  </Table>
-                )}
-              </TabsContent>
-
-              {/* STATEMENT FILTER PANEL TAB */}
-              <TabsContent value="statement" className="m-0 flex flex-col gap-4">
-                {/* Horizontal Filter Bar at the Top */}
-                <div className="p-4 border-b flex flex-col md:flex-row md:items-center justify-between gap-4 bg-muted/5">
-                  <div className="flex flex-col gap-2">
-                    <span className="text-xs font-semibold text-muted-foreground">Select Statement Period</span>
-                    <div className="flex flex-wrap gap-2">
-                      <Button
-                        variant={effectivePeriod === 'current' ? 'default' : 'outline'}
-                        size="xs"
-                        onClick={() => updateStatementFilter('monthPeriod', 'current')}
-                        className="text-xs px-3 py-1.5 h-8"
-                      >
-                        Current Month
-                      </Button>
-                      <Button
-                        variant={effectivePeriod === 'previous' ? 'default' : 'outline'}
-                        size="xs"
-                        onClick={() => updateStatementFilter('monthPeriod', 'previous')}
-                        className="text-xs px-3 py-1.5 h-8"
-                      >
-                        Previous Month
-                      </Button>
-                      <Button
-                        variant={effectivePeriod === 'past3' ? 'default' : 'outline'}
-                        size="xs"
-                        onClick={() => updateStatementFilter('monthPeriod', 'past3')}
-                        className="text-xs px-3 py-1.5 h-8"
-                      >
-                        Past 3 Months
-                      </Button>
-                      <Button
-                        variant={effectivePeriod === 'past6' ? 'default' : 'outline'}
-                        size="xs"
-                        onClick={() => updateStatementFilter('monthPeriod', 'past6')}
-                        className="text-xs px-3 py-1.5 h-8"
-                      >
-                        Past 6 Months
-                      </Button>
-                    </div>
-                  </div>
-
-                  <div className="flex flex-col gap-2 min-w-[150px]">
-                    <span className="text-xs font-medium text-muted-foreground">Or Fiscal Year</span>
-                    <Select
-                      value={statementYearParam ?? String(currentFY)}
-                      onValueChange={(val) => updateStatementFilter('year', val)}
-                    >
-                      <SelectTrigger className="text-xs h-8">
-                        <SelectValue placeholder="Select Year" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {availableYears.map((year) => (
-                          <SelectItem key={year} value={String(year)} className="text-xs">
-                            FY {year}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  </div>
-
-                  <div className="flex items-end mt-4 md:mt-0">
-                    <Button
-                      variant="default"
-                      size="sm"
-                      className="flex items-center gap-1.5 shadow-sm h-8"
-                      onClick={() => setIsPreviewOpen(true)}
-                    >
-                      <Eye className="size-4" /> Preview Statement PDF
-                    </Button>
-                  </div>
+              <CardHeader className="p-4 border-b flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                <div>
+                  <CardTitle className="text-sm font-semibold capitalize">
+                    {activeTab === 'analytics'
+                      ? 'Client Analytics'
+                      : activeTab === 'projects'
+                        ? 'Client Projects'
+                        : activeTab === 'credits'
+                          ? 'Client Credits'
+                          : activeTab === 'compliance'
+                            ? 'Compliance Documents'
+                            : activeTab}
+                  </CardTitle>
+                  <CardDescription className="text-xs">
+                    {activeTab === 'statement'
+                      ? 'Configure and preview the client account statement'
+                      : activeTab === 'analytics'
+                        ? 'Full financial health, ageing analysis, and billing activity'
+                        : activeTab === 'projects'
+                          ? 'Overview of the tender schedule and active projects for this client'
+                          : activeTab === 'credits'
+                            ? 'Manage credit notes and unallocated overpayments for this client'
+                            : activeTab === 'compliance'
+                              ? 'Track CIPC, BEE, and Tax Compliance documents for this client'
+                              : 'Select documents to view or batch process'}
+                  </CardDescription>
                 </div>
+                <div className="flex items-center gap-2">
+                  {activeTab === 'credits' && (
+                    <Button size="sm" onClick={() => setShowIssueCreditDialog(true)}>
+                      <Plus className="size-4 mr-1" />
+                      Issue Credit Note
+                    </Button>
+                  )}
+                  {activeTab === 'projects' && (
+                    <Button size="sm" asChild>
+                      <Link href={`/projects/new?clientId=${client.id}`}>
+                        <Plus className="size-4 mr-1" />
+                        Add Project
+                      </Link>
+                    </Button>
+                  )}
+                  {activeTab === 'invoices' && (
+                    <Button size="sm" asChild>
+                      <Link href={`/billing/invoices/new?clientId=${client.id}`}>
+                        <Plus className="size-4 mr-1" />
+                        Create Invoice
+                      </Link>
+                    </Button>
+                  )}
+                  {activeTab === 'quotes' && (
+                    <Button size="sm" asChild>
+                      <Link href={`/billing/quotes/new?clientId=${client.id}`}>
+                        <Plus className="size-4 mr-1" />
+                        Create Quotation
+                      </Link>
+                    </Button>
+                  )}
+                  {activeTab === 'payments' && (
+                    <Button size="sm" asChild>
+                      <Link href={`/billing/payments/add?clientId=${client.id}`}>
+                        <Plus className="size-4 mr-1" />
+                        Record Payment
+                      </Link>
+                    </Button>
+                  )}
+                </div>
+              </CardHeader>
+              <CardContent className="p-0">
+                {/* INVOICES TAB */}
+                <TabsContent value="invoices" className="m-0">
+                  {filteredInvoices.length === 0 ? (
+                    <p className="text-xs text-muted-foreground text-center py-8">
+                      {metricFilter === 'all'
+                        ? 'No invoices for this client.'
+                        : `No ${metricFilter} invoices.`}
+                    </p>
+                  ) : (
+                    <Table className="text-xs">
+                      <TableHeader>
+                        <TableRow>
+                          <TableHead className="w-10">
+                            <Checkbox
+                              checked={
+                                filteredInvoices.length > 0 &&
+                                selectedInvoiceIds.size === filteredInvoices.length
+                              }
+                              onCheckedChange={handleSelectAllInvoices}
+                            />
+                          </TableHead>
+                          <TableHead>Invoice #</TableHead>
+                          <TableHead>Reference</TableHead>
+                          <TableHead>Date</TableHead>
+                          <TableHead>Due Date</TableHead>
+                          <TableHead>Division</TableHead>
+                          <TableHead className="text-right">Amount</TableHead>
+                          <TableHead>Status</TableHead>
+                        </TableRow>
+                      </TableHeader>
+                      <TableBody>
+                        {filteredInvoices.map((inv) => (
+                          <TableRow
+                            key={inv.id}
+                            className={`cursor-pointer hover:bg-muted/30 transition-colors ${
+                              selectedDocId === inv.id && selectedDocType === 'invoice'
+                                ? 'bg-muted/50 font-medium'
+                                : ''
+                            }`}
+                            onClick={() => {
+                              setSelectedDocId(inv.id);
+                              setSelectedDocType('invoice');
+                              setIsPreviewOpen(true);
+                            }}
+                          >
+                            <TableCell onClick={(e) => e.stopPropagation()}>
+                              <Checkbox
+                                checked={selectedInvoiceIds.has(inv.id)}
+                                onCheckedChange={(checked) =>
+                                  handleSelectInvoice(inv.id, !!checked)
+                                }
+                              />
+                            </TableCell>
+                            <TableCell className="font-semibold">{inv.documentNumber}</TableCell>
+                            <TableCell
+                              className="text-muted-foreground truncate max-w-[150px]"
+                              title={inv.reference ?? ''}
+                            >
+                              {inv.reference ?? '-'}
+                            </TableCell>
+                            <TableCell className="tabular-nums">
+                              {fmtDate(inv.invoiceDate)}
+                            </TableCell>
+                            <TableCell className="tabular-nums">
+                              {inv.dueDate ? (
+                                <span
+                                  className={cn(
+                                    inv.status !== 'paid' &&
+                                      inv.status !== 'void' &&
+                                      inv.dueDate < todayStrWS &&
+                                      'text-red-500 font-medium',
+                                  )}
+                                >
+                                  {fmtDate(inv.dueDate)}
+                                </span>
+                              ) : (
+                                '-'
+                              )}
+                            </TableCell>
+                            <TableCell>
+                              <span className="text-muted-foreground">
+                                {inv.divisionName ?? '-'}
+                              </span>
+                            </TableCell>
+                            <TableCell className="text-right tabular-nums font-semibold">
+                              {formatZAR(Number(inv.total))}
+                            </TableCell>
+                            <TableCell>
+                              <BillingStatusBadge status={inv.status} />
+                            </TableCell>
+                          </TableRow>
+                        ))}
+                      </TableBody>
+                    </Table>
+                  )}
+                </TabsContent>
 
-                {/* Statement Transactions Table */}
-                <div className="p-0">
-                  {statementTransactions.length === 0 ? (
-                    <p className="text-xs text-muted-foreground text-center py-8">No transactions for the selected period.</p>
+                {/* QUOTATIONS TAB */}
+                <TabsContent value="quotes" className="m-0">
+                  {filteredQuotes.length === 0 ? (
+                    <p className="text-xs text-muted-foreground text-center py-8">
+                      {metricFilter === 'all'
+                        ? 'No quotations for this client.'
+                        : `No ${metricFilter} quotations.`}
+                    </p>
+                  ) : (
+                    <Table className="text-xs">
+                      <TableHeader>
+                        <TableRow>
+                          <TableHead className="w-10">
+                            <Checkbox
+                              checked={
+                                filteredQuotes.length > 0 &&
+                                selectedQuoteIds.size === filteredQuotes.length
+                              }
+                              onCheckedChange={handleSelectAllQuotes}
+                            />
+                          </TableHead>
+                          <TableHead>Quote #</TableHead>
+                          <TableHead>Reference</TableHead>
+                          <TableHead>Date</TableHead>
+                          <TableHead>Expiry Date</TableHead>
+                          <TableHead>Division</TableHead>
+                          <TableHead className="text-right">Amount</TableHead>
+                          <TableHead>Status</TableHead>
+                        </TableRow>
+                      </TableHeader>
+                      <TableBody>
+                        {filteredQuotes.map((q) => (
+                          <TableRow
+                            key={q.id}
+                            className={`cursor-pointer hover:bg-muted/30 transition-colors ${
+                              selectedDocId === q.id && selectedDocType === 'quote'
+                                ? 'bg-muted/50 font-medium'
+                                : ''
+                            }`}
+                            onClick={() => {
+                              setSelectedDocId(q.id);
+                              setSelectedDocType('quote');
+                              setIsPreviewOpen(true);
+                            }}
+                          >
+                            <TableCell onClick={(e) => e.stopPropagation()}>
+                              <Checkbox
+                                checked={selectedQuoteIds.has(q.id)}
+                                onCheckedChange={(checked) => handleSelectQuote(q.id, !!checked)}
+                              />
+                            </TableCell>
+                            <TableCell className="font-semibold">{q.documentNumber}</TableCell>
+                            <TableCell
+                              className="text-muted-foreground truncate max-w-[150px]"
+                              title={q.reference ?? ''}
+                            >
+                              {q.reference ?? '-'}
+                            </TableCell>
+                            <TableCell className="tabular-nums">{fmtDate(q.quoteDate)}</TableCell>
+                            <TableCell className="tabular-nums">
+                              {q.expiryDate ? (
+                                <span
+                                  className={cn(
+                                    q.status === 'sent' &&
+                                      q.expiryDate < todayStrWS &&
+                                      'text-red-500 font-medium',
+                                  )}
+                                >
+                                  {fmtDate(q.expiryDate)}
+                                </span>
+                              ) : (
+                                '-'
+                              )}
+                            </TableCell>
+                            <TableCell>
+                              <span className="text-muted-foreground">{q.divisionName ?? '-'}</span>
+                            </TableCell>
+                            <TableCell className="text-right tabular-nums font-semibold">
+                              {formatZAR(Number(q.total))}
+                            </TableCell>
+                            <TableCell>
+                              <BillingStatusBadge status={q.status} />
+                            </TableCell>
+                          </TableRow>
+                        ))}
+                      </TableBody>
+                    </Table>
+                  )}
+                </TabsContent>
+
+                {/* PAYMENTS TAB */}
+                <TabsContent value="payments" className="m-0">
+                  {payments.data.length === 0 ? (
+                    <p className="text-xs text-muted-foreground text-center py-8">
+                      No payments recorded.
+                    </p>
                   ) : (
                     <Table className="text-xs">
                       <TableHeader>
                         <TableRow>
                           <TableHead>Date</TableHead>
-                          <TableHead>Reference</TableHead>
-                          <TableHead className="text-right">Debit (+)</TableHead>
-                          <TableHead className="text-right">Credit (-)</TableHead>
-                          <TableHead className="text-right">Balance</TableHead>
+                          <TableHead>Receipt #</TableHead>
+                          <TableHead>Invoice Number</TableHead>
+                          <TableHead>Division</TableHead>
+                          <TableHead className="text-right">Amount</TableHead>
                         </TableRow>
                       </TableHeader>
                       <TableBody>
-                        {statementTransactions.map((tx, idx) => (
-                          <TableRow key={idx} className="hover:bg-muted/30 transition-colors">
-                            <TableCell className="tabular-nums">{fmtDate(tx.date)}</TableCell>
+                        {payments.data.map((entry: PaymentItem) => (
+                          <TableRow
+                            key={entry.id}
+                            className={`cursor-pointer hover:bg-muted/30 transition-colors ${
+                              selectedDocId === entry.id && selectedDocType === 'payment'
+                                ? 'bg-muted/50 font-medium'
+                                : ''
+                            }`}
+                            onClick={() => {
+                              setSelectedDocId(entry.id);
+                              setSelectedDocType('payment');
+                              setIsPreviewOpen(true);
+                            }}
+                          >
+                            <TableCell className="tabular-nums">{fmtDate(entry.date)}</TableCell>
+                            <TableCell className="font-mono text-xs text-muted-foreground">
+                              {generateReceiptNumber(entry.id, entry.divisionName || 'General')}
+                            </TableCell>
                             <TableCell className="font-semibold">
-                              {tx.reference === '-' ? '' : tx.reference}
+                              {extractInvoiceNumber(entry.description)}
                             </TableCell>
-                            <TableCell className="text-right tabular-nums text-red-500 font-semibold">
-                              {tx.debit ? formatZAR(tx.debit) : ''}
+                            <TableCell>
+                              <span className="text-muted-foreground">
+                                {entry.divisionName ?? '-'}
+                              </span>
                             </TableCell>
-                            <TableCell className="text-right tabular-nums text-emerald-500 font-semibold">
-                              {tx.credit ? formatZAR(tx.credit) : ''}
-                            </TableCell>
-                            <TableCell className="text-right tabular-nums font-bold">
-                              {formatZAR(tx.balance)}
+                            <TableCell className="text-right tabular-nums font-semibold text-emerald-500">
+                              +{formatZAR(Number(entry.amount))}
                             </TableCell>
                           </TableRow>
                         ))}
                       </TableBody>
                     </Table>
                   )}
-                </div>
-              </TabsContent>
+                </TabsContent>
 
-              {/* ANALYTICS TAB */}
-              <TabsContent value="analytics" className="m-0 p-4">
-                <ClientFinancialDashboard
-                  invoices={invoices}
-                  quotes={quotes}
-                  payments={payments.data}
-                  totalCreditsApplied={totalCreditsAppliedWS}
-                />
-              </TabsContent>
+                {/* STATEMENT FILTER PANEL TAB */}
+                <TabsContent value="statement" className="m-0 flex flex-col gap-4">
+                  {/* Horizontal Filter Bar at the Top */}
+                  <div className="p-4 border-b flex flex-col md:flex-row md:items-center justify-between gap-4 bg-muted/5">
+                    <div className="flex flex-col gap-2">
+                      <span className="text-xs font-semibold text-muted-foreground">
+                        Select Statement Period
+                      </span>
+                      <div className="flex flex-wrap gap-2">
+                        <Button
+                          variant={effectivePeriod === 'current' ? 'default' : 'outline'}
+                          size="xs"
+                          onClick={() => updateStatementFilter('monthPeriod', 'current')}
+                          className="text-xs px-3 py-1.5 h-8"
+                        >
+                          Current Month
+                        </Button>
+                        <Button
+                          variant={effectivePeriod === 'previous' ? 'default' : 'outline'}
+                          size="xs"
+                          onClick={() => updateStatementFilter('monthPeriod', 'previous')}
+                          className="text-xs px-3 py-1.5 h-8"
+                        >
+                          Previous Month
+                        </Button>
+                        <Button
+                          variant={effectivePeriod === 'past3' ? 'default' : 'outline'}
+                          size="xs"
+                          onClick={() => updateStatementFilter('monthPeriod', 'past3')}
+                          className="text-xs px-3 py-1.5 h-8"
+                        >
+                          Past 3 Months
+                        </Button>
+                        <Button
+                          variant={effectivePeriod === 'past6' ? 'default' : 'outline'}
+                          size="xs"
+                          onClick={() => updateStatementFilter('monthPeriod', 'past6')}
+                          className="text-xs px-3 py-1.5 h-8"
+                        >
+                          Past 6 Months
+                        </Button>
+                      </div>
+                    </div>
 
-              {/* CREDITS TAB */}
-              <TabsContent value="credits" className="m-0 p-6 flex flex-col gap-6">
+                    <div className="flex flex-col gap-2 min-w-[150px]">
+                      <span className="text-xs font-medium text-muted-foreground">
+                        Or Fiscal Year
+                      </span>
+                      <Select
+                        value={statementYearParam ?? String(currentFY)}
+                        onValueChange={(val) => updateStatementFilter('year', val)}
+                      >
+                        <SelectTrigger className="text-xs h-8">
+                          <SelectValue placeholder="Select Year" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {availableYears.map((year) => (
+                            <SelectItem key={year} value={String(year)} className="text-xs">
+                              FY {year}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
 
-                <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-                  <div className="flex flex-col gap-1 p-4 rounded-lg border bg-muted/20">
-                    <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Total Issued</span>
-                    <span className="text-xl font-bold tabular-nums">
-                      {formatZAR(
-                        creditSummary?.creditNotes.reduce((sum: number, n: any) => sum + n.amount, 0) ?? 0
-                      )}
-                    </span>
+                    <div className="flex items-end mt-4 md:mt-0">
+                      <Button
+                        variant="default"
+                        size="sm"
+                        className="flex items-center gap-1.5 shadow-sm h-8"
+                        onClick={() => setIsPreviewOpen(true)}
+                      >
+                        <Eye className="size-4" /> Preview Statement PDF
+                      </Button>
+                    </div>
                   </div>
-                  <div className="flex flex-col gap-1 p-4 rounded-lg border bg-emerald-50/50 border-emerald-100 dark:bg-emerald-950/20 dark:border-emerald-800/20">
-                    <span className="text-xs font-semibold text-emerald-700 dark:text-emerald-400 uppercase tracking-wider">Active Credits</span>
-                    <span className="text-xl font-bold text-emerald-600 dark:text-emerald-400 tabular-nums">
-                      {formatZAR(creditSummary?.activeCredit ?? 0)}
-                    </span>
-                  </div>
-                  <div className="flex flex-col gap-1 p-4 rounded-lg border bg-amber-50/50 border-amber-100 dark:bg-amber-950/20 dark:border-amber-800/20">
-                    <span className="text-xs font-semibold text-amber-700 dark:text-amber-400 uppercase tracking-wider">Expired Credits</span>
-                    <span className="text-xl font-bold text-amber-600 dark:text-amber-400 tabular-nums">
-                      {formatZAR(creditSummary?.expiredCredit ?? 0)}
-                    </span>
-                  </div>
-                </div>
 
-                <Tabs defaultValue="notes" className="w-full">
-                  <TabsList className="grid grid-cols-2 w-[300px]">
-                    <TabsTrigger value="notes">Issued Notes</TabsTrigger>
-                    <TabsTrigger value="history">Transaction Feed</TabsTrigger>
-                  </TabsList>
-                  <TabsContent value="notes" className="mt-4 border rounded-md overflow-hidden bg-card">
-                    <Table>
-                      <TableHeader>
-                        <TableRow>
-                          <TableHead>Document #</TableHead>
-                          <TableHead>Type</TableHead>
-                          <TableHead>Reason</TableHead>
-                          <TableHead className="text-right">Amount</TableHead>
-                          <TableHead className="text-right">Remaining</TableHead>
-                          <TableHead>Status</TableHead>
-                          <TableHead>Date</TableHead>
-                        </TableRow>
-                      </TableHeader>
-                      <TableBody>
-                        {!creditSummary?.creditNotes || creditSummary.creditNotes.length === 0 ? (
+                  {/* Statement Transactions Table */}
+                  <div className="p-0">
+                    {statementTransactions.length === 0 ? (
+                      <p className="text-xs text-muted-foreground text-center py-8">
+                        No transactions for the selected period.
+                      </p>
+                    ) : (
+                      <Table className="text-xs">
+                        <TableHeader>
                           <TableRow>
-                            <TableCell colSpan={7} className="h-24 text-center text-muted-foreground text-xs">
-                              No credit notes found for this client.
-                            </TableCell>
+                            <TableHead>Date</TableHead>
+                            <TableHead>Reference</TableHead>
+                            <TableHead className="text-right">Debit (+)</TableHead>
+                            <TableHead className="text-right">Credit (-)</TableHead>
+                            <TableHead className="text-right">Balance</TableHead>
                           </TableRow>
-                        ) : (
-                          creditSummary.creditNotes.map((note: any) => (
-                            <TableRow key={note.id} className="hover:bg-muted/40 transition-colors">
-                              <TableCell className="font-medium text-xs">{note.documentNumber}</TableCell>
-                              <TableCell className="text-xs">
-                                {note.type === 'overpayment' && 'Overpayment'}
-                                {note.type === 'manual_adjustment' && 'Manual Adjustment'}
-                                {note.type === 'credit_note' && 'Credit Note'}
-                                {note.type === 'promotional' && 'Promotional'}
-                                {note.type === 'refund_reversal' && 'Refund Reversal'}
+                        </TableHeader>
+                        <TableBody>
+                          {statementTransactions.map((tx, idx) => (
+                            <TableRow key={idx} className="hover:bg-muted/30 transition-colors">
+                              <TableCell className="tabular-nums">{fmtDate(tx.date)}</TableCell>
+                              <TableCell className="font-semibold">
+                                {tx.reference === '-' ? '' : tx.reference}
                               </TableCell>
-                              <TableCell className="text-xs truncate max-w-[200px]" title={note.reason ?? ''}>
-                                {note.reason ?? '-'}
+                              <TableCell className="text-right tabular-nums text-red-500 font-semibold">
+                                {'debit' in tx && tx.debit ? formatZAR(tx.debit) : ''}
                               </TableCell>
-                              <TableCell className="text-right tabular-nums font-semibold text-xs">
-                                {formatZAR(note.amount)}
+                              <TableCell className="text-right tabular-nums text-emerald-500 font-semibold">
+                                {'credit' in tx && tx.credit ? formatZAR(tx.credit) : ''}
                               </TableCell>
-                              <TableCell className="text-right tabular-nums text-xs">
-                                {note.amountRemaining > 0 ? (
-                                  <span className="font-bold text-emerald-600">{formatZAR(note.amountRemaining)}</span>
-                                ) : (
-                                  <span className="text-muted-foreground">-</span>
-                                )}
-                              </TableCell>
-                              <TableCell>
-                                {note.status === 'active' && (
-                                  <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-medium bg-emerald-50 text-emerald-700 dark:bg-emerald-950/30 dark:text-emerald-400">
-                                    <CheckCircle2 className="size-3" /> Active
-                                  </span>
-                                )}
-                                {note.status === 'partially_applied' && (
-                                  <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-medium bg-blue-50 text-blue-700 dark:bg-blue-950/30 dark:text-blue-400">
-                                    <Clock className="size-3" /> Partial
-                                  </span>
-                                )}
-                                {note.status === 'fully_applied' && (
-                                  <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-medium bg-zinc-100 text-zinc-600 dark:bg-zinc-800 dark:text-zinc-400">
-                                    Used
-                                  </span>
-                                )}
-                                {note.status === 'expired' && (
-                                  <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-medium bg-amber-50 text-amber-700 dark:bg-amber-950/30 dark:text-amber-400">
-                                    <AlertCircle className="size-3" /> Expired
-                                  </span>
-                                )}
-                                {note.status === 'void' && (
-                                  <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-medium bg-red-50 text-red-600 dark:bg-red-950/30 dark:text-red-400">
-                                    Void
-                                  </span>
-                                )}
-                              </TableCell>
-                              <TableCell className="text-xs text-muted-foreground">
-                                {fmtDate(note.createdAt)}
+                              <TableCell className="text-right tabular-nums font-bold">
+                                {formatZAR(tx.balance)}
                               </TableCell>
                             </TableRow>
-                          ))
-                        )}
-                      </TableBody>
-                    </Table>
-                  </TabsContent>
-                  <TabsContent value="history" className="mt-4">
-                    <CreditHistoryTable entries={creditHistory ?? []} />
-                  </TabsContent>
-                </Tabs>
-              </TabsContent>
-
-              {/* PROJECTS TAB */}
-              <TabsContent value="projects" className="m-0 p-6 flex flex-col gap-6">
-
-                {projects.length === 0 ? (
-                  <p className="text-xs text-muted-foreground text-center py-8">
-                    No projects found for this client.
-                  </p>
-                ) : (
-                  <div className="border rounded-md overflow-hidden bg-card">
-                    <Table className="text-xs">
-                      <TableHeader>
-                        <TableRow>
-                          <TableHead>Project Reference</TableHead>
-                          <TableHead>Description</TableHead>
-                          <TableHead>Start Date</TableHead>
-                          <TableHead>Target Date</TableHead>
-                          <TableHead>Deadline</TableHead>
-                          <TableHead>Priority</TableHead>
-                          <TableHead>Status</TableHead>
-                          <TableHead className="w-12"></TableHead>
-                        </TableRow>
-                      </TableHeader>
-                      <TableBody>
-                        {projects.map((proj) => (
-                          <TableRow key={proj.id} className="hover:bg-muted/30">
-                            <TableCell className="font-semibold">
-                              <Link href={`/projects/${proj.id}`} className="hover:underline text-blue-600 dark:text-blue-400">
-                                {proj.projectReference}
-                              </Link>
-                            </TableCell>
-                            <TableCell className="max-w-[200px] truncate" title={proj.description ?? ''}>
-                              {proj.description ?? '-'}
-                            </TableCell>
-                            <TableCell>{fmtDate(proj.startDate)}</TableCell>
-                            <TableCell>{fmtDate(proj.targetCompletionDate)}</TableCell>
-                            <TableCell>{fmtDate(proj.closingDate)}</TableCell>
-                            <TableCell className="capitalize">{proj.priority}</TableCell>
-                            <TableCell>
-                              <Badge variant="secondary" className="capitalize">
-                                {proj.status.replace('_', ' ')}
-                              </Badge>
-                            </TableCell>
-                            <TableCell>
-                              <Button size="xs" variant="ghost" asChild>
-                                <Link href={`/projects/${proj.id}`}>
-                                  <Eye className="size-3.5" />
-                                </Link>
-                              </Button>
-                            </TableCell>
-                          </TableRow>
-                        ))}
-                      </TableBody>
-                    </Table>
+                          ))}
+                        </TableBody>
+                      </Table>
+                    )}
                   </div>
-                )}
-              </TabsContent>
-              <TabsContent value="compliance" className="m-0 p-6 flex flex-col gap-6">
-                <ComplianceTable clientId={client.id} records={complianceRecords || []} />
-              </TabsContent>
-            </CardContent>
-          </Card>
+                </TabsContent>
+
+                {/* ANALYTICS TAB */}
+                <TabsContent value="analytics" className="m-0 p-4">
+                  <ClientFinancialDashboard
+                    invoices={invoices}
+                    quotes={quotes}
+                    payments={payments.data}
+                    totalCreditsApplied={totalCreditsAppliedWS}
+                  />
+                </TabsContent>
+
+                {/* CREDITS TAB */}
+                <TabsContent value="credits" className="m-0 p-6 flex flex-col gap-6">
+                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                    <div className="flex flex-col gap-1 p-4 rounded-lg border bg-muted/20">
+                      <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
+                        Total Issued
+                      </span>
+                      <span className="text-xl font-bold tabular-nums">
+                        {formatZAR(
+                          creditSummary?.creditNotes.reduce(
+                            (sum: number, n: CreditNoteRow) => sum + n.amount,
+                            0,
+                          ) ?? 0,
+                        )}
+                      </span>
+                    </div>
+                    <div className="flex flex-col gap-1 p-4 rounded-lg border bg-emerald-50/50 border-emerald-100 dark:bg-emerald-950/20 dark:border-emerald-800/20">
+                      <span className="text-xs font-semibold text-emerald-700 dark:text-emerald-400 uppercase tracking-wider">
+                        Active Credits
+                      </span>
+                      <span className="text-xl font-bold text-emerald-600 dark:text-emerald-400 tabular-nums">
+                        {formatZAR(creditSummary?.activeCredit ?? 0)}
+                      </span>
+                    </div>
+                    <div className="flex flex-col gap-1 p-4 rounded-lg border bg-amber-50/50 border-amber-100 dark:bg-amber-950/20 dark:border-amber-800/20">
+                      <span className="text-xs font-semibold text-amber-700 dark:text-amber-400 uppercase tracking-wider">
+                        Expired Credits
+                      </span>
+                      <span className="text-xl font-bold text-amber-600 dark:text-amber-400 tabular-nums">
+                        {formatZAR(creditSummary?.expiredCredit ?? 0)}
+                      </span>
+                    </div>
+                  </div>
+
+                  <Tabs defaultValue="notes" className="w-full">
+                    <TabsList className="grid grid-cols-2 w-[300px]">
+                      <TabsTrigger value="notes">Issued Notes</TabsTrigger>
+                      <TabsTrigger value="history">Transaction Feed</TabsTrigger>
+                    </TabsList>
+                    <TabsContent
+                      value="notes"
+                      className="mt-4 border rounded-md overflow-hidden bg-card"
+                    >
+                      <Table>
+                        <TableHeader>
+                          <TableRow>
+                            <TableHead>Document #</TableHead>
+                            <TableHead>Type</TableHead>
+                            <TableHead>Reason</TableHead>
+                            <TableHead className="text-right">Amount</TableHead>
+                            <TableHead className="text-right">Remaining</TableHead>
+                            <TableHead>Status</TableHead>
+                            <TableHead>Date</TableHead>
+                          </TableRow>
+                        </TableHeader>
+                        <TableBody>
+                          {!creditSummary?.creditNotes || creditSummary.creditNotes.length === 0 ? (
+                            <TableRow>
+                              <TableCell
+                                colSpan={7}
+                                className="h-24 text-center text-muted-foreground text-xs"
+                              >
+                                No credit notes found for this client.
+                              </TableCell>
+                            </TableRow>
+                          ) : (
+                            creditSummary.creditNotes.map((note: CreditNoteRow) => (
+                              <TableRow
+                                key={note.id}
+                                className="hover:bg-muted/40 transition-colors"
+                              >
+                                <TableCell className="font-medium text-xs">
+                                  {note.documentNumber}
+                                </TableCell>
+                                <TableCell className="text-xs">
+                                  {note.type === 'overpayment' && 'Overpayment'}
+                                  {note.type === 'manual_adjustment' && 'Manual Adjustment'}
+                                  {note.type === 'credit_note' && 'Credit Note'}
+                                  {note.type === 'promotional' && 'Promotional'}
+                                  {note.type === 'refund_reversal' && 'Refund Reversal'}
+                                </TableCell>
+                                <TableCell
+                                  className="text-xs truncate max-w-[200px]"
+                                  title={note.reason ?? ''}
+                                >
+                                  {note.reason ?? '-'}
+                                </TableCell>
+                                <TableCell className="text-right tabular-nums font-semibold text-xs">
+                                  {formatZAR(note.amount)}
+                                </TableCell>
+                                <TableCell className="text-right tabular-nums text-xs">
+                                  {note.amountRemaining > 0 ? (
+                                    <span className="font-bold text-emerald-600">
+                                      {formatZAR(note.amountRemaining)}
+                                    </span>
+                                  ) : (
+                                    <span className="text-muted-foreground">-</span>
+                                  )}
+                                </TableCell>
+                                <TableCell>
+                                  {note.status === 'active' && (
+                                    <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-medium bg-emerald-50 text-emerald-700 dark:bg-emerald-950/30 dark:text-emerald-400">
+                                      <CheckCircle2 className="size-3" /> Active
+                                    </span>
+                                  )}
+                                  {note.status === 'partially_applied' && (
+                                    <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-medium bg-blue-50 text-blue-700 dark:bg-blue-950/30 dark:text-blue-400">
+                                      <Clock className="size-3" /> Partial
+                                    </span>
+                                  )}
+                                  {note.status === 'fully_applied' && (
+                                    <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-medium bg-zinc-100 text-zinc-600 dark:bg-zinc-800 dark:text-zinc-400">
+                                      Used
+                                    </span>
+                                  )}
+                                  {note.status === 'expired' && (
+                                    <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-medium bg-amber-50 text-amber-700 dark:bg-amber-950/30 dark:text-amber-400">
+                                      <AlertCircle className="size-3" /> Expired
+                                    </span>
+                                  )}
+                                  {note.status === 'void' && (
+                                    <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-medium bg-red-50 text-red-600 dark:bg-red-950/30 dark:text-red-400">
+                                      Void
+                                    </span>
+                                  )}
+                                </TableCell>
+                                <TableCell className="text-xs text-muted-foreground">
+                                  {fmtDate(note.createdAt)}
+                                </TableCell>
+                              </TableRow>
+                            ))
+                          )}
+                        </TableBody>
+                      </Table>
+                    </TabsContent>
+                    <TabsContent value="history" className="mt-4">
+                      <CreditHistoryTable entries={creditHistory ?? []} />
+                    </TabsContent>
+                  </Tabs>
+                </TabsContent>
+
+                {/* PROJECTS TAB */}
+                <TabsContent value="projects" className="m-0 p-6 flex flex-col gap-6">
+                  {projects.length === 0 ? (
+                    <p className="text-xs text-muted-foreground text-center py-8">
+                      No projects found for this client.
+                    </p>
+                  ) : (
+                    <div className="border rounded-md overflow-hidden bg-card">
+                      <Table className="text-xs">
+                        <TableHeader>
+                          <TableRow>
+                            <TableHead>Project Reference</TableHead>
+                            <TableHead>Description</TableHead>
+                            <TableHead>Start Date</TableHead>
+                            <TableHead>Target Date</TableHead>
+                            <TableHead>Deadline</TableHead>
+                            <TableHead>Priority</TableHead>
+                            <TableHead>Status</TableHead>
+                            <TableHead className="w-12"></TableHead>
+                          </TableRow>
+                        </TableHeader>
+                        <TableBody>
+                          {projects.map((proj) => (
+                            <TableRow key={proj.id} className="hover:bg-muted/30">
+                              <TableCell className="font-semibold">
+                                <Link
+                                  href={`/projects/${proj.id}`}
+                                  className="hover:underline text-blue-600 dark:text-blue-400"
+                                >
+                                  {proj.projectReference}
+                                </Link>
+                              </TableCell>
+                              <TableCell
+                                className="max-w-[200px] truncate"
+                                title={proj.description ?? ''}
+                              >
+                                {proj.description ?? '-'}
+                              </TableCell>
+                              <TableCell>{fmtDate(proj.startDate)}</TableCell>
+                              <TableCell>{fmtDate(proj.targetCompletionDate)}</TableCell>
+                              <TableCell>{fmtDate(proj.closingDate)}</TableCell>
+                              <TableCell className="capitalize">{proj.priority}</TableCell>
+                              <TableCell>
+                                <Badge variant="secondary" className="capitalize">
+                                  {proj.status.replace('_', ' ')}
+                                </Badge>
+                              </TableCell>
+                              <TableCell>
+                                <Button size="xs" variant="ghost" asChild>
+                                  <Link href={`/projects/${proj.id}`}>
+                                    <Eye className="size-3.5" />
+                                  </Link>
+                                </Button>
+                              </TableCell>
+                            </TableRow>
+                          ))}
+                        </TableBody>
+                      </Table>
+                    </div>
+                  )}
+                </TabsContent>
+                <TabsContent value="compliance" className="m-0 p-6 flex flex-col gap-6">
+                  <ComplianceTable clientId={client.id} records={complianceRecords || []} />
+                </TabsContent>
+              </CardContent>
+            </Card>
           </div>
-
-
-
         </div>
 
-      <Dialog open={isPreviewOpen} onOpenChange={setIsPreviewOpen}>
-        <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto p-6 bg-background rounded-lg shadow-2xl">
-          <DialogHeader className="p-0 pb-4 border-b flex flex-row items-center justify-between shrink-0">
-            <div className="flex flex-col gap-1">
-              <DialogTitle className="text-base font-bold flex gap-2 items-center">
-                {selectedDocType === 'invoice' && activeInvoice?.documentNumber}
-                {selectedDocType === 'quote' && activeQuote?.documentNumber}                  {selectedDocType === 'payment' && activePayment && generateReceiptNumber(activePayment.id, activePayment.divisionName)}
-                  {selectedDocType === 'statement' && "Statement"}
-                <Badge
-                  variant="outline"
-                  className={cn(
-                    "capitalize text-[10px]",
-                    selectedDocType === 'payment' && "bg-emerald-50 text-emerald-700 border-emerald-200"
-                  )}
-                >
-                  {selectedDocType}
-                </Badge>
-              </DialogTitle>
-              <DialogDescription className="text-xs">
-                {selectedDocType === 'statement' ? statementPeriodLabel : "Document Inspection & Operations"}
-              </DialogDescription>
-            </div>
-            
-            {/* Action buttons inside dialog header */}
-            <div className="flex items-center gap-2 shrink-0 mr-8 print:hidden">
-              {selectedDocType !== 'statement' && selectedDocId && (
-                <>
-                  <PrintButton label="Print" documentTitle={documentTitle} />
-                  <ExportPdfButton fileName={documentTitle} elementId={dialogPrintableElementId} pdfUrl={activePdfUrl} />
-                </>
-              )}
-              {selectedDocType === 'statement' && (
-                <>
-                  <PrintButton
-                    label="Print"
-                    documentTitle={`Statement-${client.businessName?.replace(/\s+/g, '-') ?? client.name.replace(/\s+/g, '-')}`}
-                  />
-                  <ExportPdfButton
-                    fileName={`Statement-${client.businessName?.replace(/\s+/g, '-') ?? client.name.replace(/\s+/g, '-')}`}
-                    elementId={dialogPrintableElementId}
-                    pdfUrl={statementPdfUrl}
-                  />
-                </>
-              )}
+        <Dialog open={isPreviewOpen} onOpenChange={setIsPreviewOpen}>
+          <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto p-6 bg-background rounded-lg shadow-2xl">
+            <DialogHeader className="p-0 pb-4 border-b flex flex-row items-center justify-between shrink-0">
+              <div className="flex flex-col gap-1">
+                <DialogTitle className="text-base font-bold flex gap-2 items-center">
+                  {selectedDocType === 'invoice' && activeInvoice?.documentNumber}
+                  {selectedDocType === 'quote' && activeQuote?.documentNumber}
+                  {selectedDocType === 'payment' &&
+                    activePayment &&
+                    generateReceiptNumber(
+                      activePayment.id,
+                      activePayment.divisionName || 'General',
+                    )}
+                  {selectedDocType === 'statement' && 'Statement'}
+                  <Badge
+                    variant="outline"
+                    className={cn(
+                      'capitalize text-[10px]',
+                      selectedDocType === 'payment' &&
+                        'bg-emerald-50 text-emerald-700 border-emerald-200',
+                    )}
+                  >
+                    {selectedDocType}
+                  </Badge>
+                </DialogTitle>
+                <DialogDescription className="text-xs">
+                  {selectedDocType === 'statement'
+                    ? statementPeriodLabel
+                    : 'Document Inspection & Operations'}
+                </DialogDescription>
+              </div>
 
-              {selectedDocType === 'invoice' && activeInvoice && (
-                <>
-                  <UniversalEmailDialog
-                    documentId={activeInvoice.id}
-                    documentNumber={activeInvoice.documentNumber}
-                    documentType="invoice"
-                    defaultRecipientEmail={client.email ?? ''}
-                    printableElementId={dialogPrintableElementId}
-                    pdfUrl={activePdfUrl}
-                    statementPdfUrl={statementPdfUrl}
-                  />
-                  {!['paid', 'void', 'written_off'].includes(activeInvoice.status) && (
-                    <Button variant="outline" size="sm" asChild>
-                      <Link href={`/billing/invoices/${activeInvoice.id}/edit`}>Edit</Link>
-                    </Button>
-                  )}
-                </>
-              )}
-              {selectedDocType === 'quote' && activeQuote && (
-                <>
-                  <UniversalEmailDialog
-                    documentId={activeQuote.id}
-                    documentNumber={activeQuote.documentNumber}
-                    documentType="quote"
-                    defaultRecipientEmail={client.email ?? ''}
-                    printableElementId={dialogPrintableElementId}
-                    pdfUrl={activePdfUrl}
-                  />
-                  {['draft', 'sent', 'accepted'].includes(activeQuote.status) && (
-                    <Button variant="outline" size="sm" asChild>
-                      <Link href={`/billing/quotes/${activeQuote.id}/edit`}>Edit</Link>
-                    </Button>
-                  )}
-                </>
-              )}                {selectedDocType === 'payment' && activePayment && (
+              {/* Action buttons inside dialog header */}
+              <div className="flex items-center gap-2 shrink-0 mr-8 print:hidden">
+                {selectedDocType !== 'statement' && selectedDocId && (
+                  <>
+                    <PrintButton label="Print" documentTitle={documentTitle} />
+                    <ExportPdfButton
+                      fileName={documentTitle}
+                      elementId={dialogPrintableElementId}
+                      pdfUrl={activePdfUrl}
+                    />
+                  </>
+                )}
+                {selectedDocType === 'statement' && (
+                  <>
+                    <PrintButton
+                      label="Print"
+                      documentTitle={`Statement-${client.businessName?.replace(/\s+/g, '-') ?? client.name.replace(/\s+/g, '-')}`}
+                    />
+                    <ExportPdfButton
+                      fileName={`Statement-${client.businessName?.replace(/\s+/g, '-') ?? client.name.replace(/\s+/g, '-')}`}
+                      elementId={dialogPrintableElementId}
+                      pdfUrl={statementPdfUrl}
+                    />
+                  </>
+                )}
+
+                {selectedDocType === 'invoice' && activeInvoice && (
+                  <>
+                    <UniversalEmailDialog
+                      documentId={activeInvoice.id}
+                      documentNumber={activeInvoice.documentNumber}
+                      documentType="invoice"
+                      defaultRecipientEmail={client.email ?? ''}
+                      printableElementId={dialogPrintableElementId}
+                      pdfUrl={activePdfUrl}
+                      statementPdfUrl={statementPdfUrl}
+                    />
+                    {!['paid', 'void', 'written_off'].includes(activeInvoice.status) && (
+                      <Button variant="outline" size="sm" asChild>
+                        <Link href={`/billing/invoices/${activeInvoice.id}/edit`}>Edit</Link>
+                      </Button>
+                    )}
+                  </>
+                )}
+                {selectedDocType === 'quote' && activeQuote && (
+                  <>
+                    <UniversalEmailDialog
+                      documentId={activeQuote.id}
+                      documentNumber={activeQuote.documentNumber}
+                      documentType="quote"
+                      defaultRecipientEmail={client.email ?? ''}
+                      printableElementId={dialogPrintableElementId}
+                      pdfUrl={activePdfUrl}
+                    />
+                    {['draft', 'sent', 'accepted'].includes(activeQuote.status) && (
+                      <Button variant="outline" size="sm" asChild>
+                        <Link href={`/billing/quotes/${activeQuote.id}/edit`}>Edit</Link>
+                      </Button>
+                    )}
+                  </>
+                )}
+                {selectedDocType === 'payment' && activePayment && (
                   <>
                     <UniversalEmailDialog
                       documentId={activePayment.id}
-                      documentNumber={generateReceiptNumber(activePayment.id, activePayment.divisionName)}
+                      documentNumber={generateReceiptNumber(
+                        activePayment.id,
+                        activePayment.divisionName || 'General',
+                      )}
                       documentType="receipt"
                       defaultRecipientEmail={client.email ?? ''}
                       printableElementId={dialogPrintableElementId}
@@ -1741,76 +1945,102 @@ export function ClientBillingWorkspace({
                     </Button>
                   </>
                 )}
-            </div>
-          </DialogHeader>
-          
-          <div className="mt-4 overflow-x-auto bg-muted/5 p-4 rounded border">
-            {selectedDocType === 'statement' ? (
-              <div className="bg-card rounded-lg p-4 overflow-x-auto">
-                <DocumentPreview id={dialogPrintableElementId} type="statement" {...statementPreviewProps} />
               </div>
-            ) : selectedDocId ? (
-              <div className="bg-card rounded-lg p-4 overflow-x-auto">
-                {selectedDocType === 'invoice' && activeInvoice && (
-                  <DocumentPreview id={dialogPrintableElementId} type="invoice" {...getInvoicePreviewProps(activeInvoice)} />
-                )}
-                {selectedDocType === 'quote' && activeQuote && (
-                  <DocumentPreview id={dialogPrintableElementId} type="quote" {...getQuotePreviewProps(activeQuote)} />
-                )}
-                {selectedDocType === 'payment' && activePayment && (
-                  <PaymentReceiptPreview
+            </DialogHeader>
+
+            <div className="mt-4 overflow-x-auto bg-muted/5 p-4 rounded border">
+              {selectedDocType === 'statement' ? (
+                <div className="bg-card rounded-lg p-4 overflow-x-auto">
+                  <DocumentPreview
                     id={dialogPrintableElementId}
-                    payment={activePayment}
-                    client={client}
-                    divSettings={divSettings}
+                    type="statement"
+                    {...statementPreviewProps}
                   />
-                )}
-              </div>
-            ) : (
-              <div className="h-64 flex items-center justify-center border border-dashed rounded-lg bg-card shadow-sm">
-                <span className="text-sm text-muted-foreground">No document details found.</span>
+                </div>
+              ) : selectedDocId ? (
+                <div className="bg-card rounded-lg p-4 overflow-x-auto">
+                  {selectedDocType === 'invoice' && activeInvoice && (
+                    <DocumentPreview
+                      id={dialogPrintableElementId}
+                      type="invoice"
+                      {...getInvoicePreviewProps(activeInvoice)}
+                    />
+                  )}
+                  {selectedDocType === 'quote' && activeQuote && (
+                    <DocumentPreview
+                      id={dialogPrintableElementId}
+                      type="quote"
+                      {...getQuotePreviewProps(activeQuote)}
+                    />
+                  )}
+                  {selectedDocType === 'payment' && activePayment && (
+                    <PaymentReceiptPreview
+                      id={dialogPrintableElementId}
+                      payment={{
+                        ...activePayment,
+                        amount: String(activePayment.amount),
+                        divisionId: activePayment.divisionId ?? '',
+                        divisionName: activePayment.divisionName ?? 'General',
+                        clientName: activePayment.clientName ?? client.businessName ?? client.name,
+                        allocations: activePayment.allocations?.map((a) => ({
+                          ...a,
+                          amount: String(a.amount),
+                          invoiceNumber: a.invoiceNumber ?? '',
+                          createdAt: a.createdAt ?? activePayment.date,
+                        })),
+                      }}
+                      client={client}
+                      divSettings={divSettings}
+                    />
+                  )}
+                </div>
+              ) : (
+                <div className="h-64 flex items-center justify-center border border-dashed rounded-lg bg-card shadow-sm">
+                  <span className="text-sm text-muted-foreground">No document details found.</span>
+                </div>
+              )}
+            </div>
+
+            {navigableIds.length > 1 && currentNavIndex >= 0 && (
+              <div className="flex items-center justify-between pt-3 border-t mt-2">
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  disabled={currentNavIndex === 0}
+                  onClick={() => {
+                    const prevId = navigableIds[currentNavIndex - 1];
+                    if (prevId) setSelectedDocId(prevId);
+                  }}
+                >
+                  ← Previous
+                </Button>
+                <span className="text-xs text-muted-foreground">
+                  {currentNavIndex + 1} of {navigableIds.length}
+                </span>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  disabled={currentNavIndex === navigableIds.length - 1}
+                  onClick={() => {
+                    const nextId = navigableIds[currentNavIndex + 1];
+                    if (nextId) setSelectedDocId(nextId);
+                  }}
+                >
+                  Next →
+                </Button>
               </div>
             )}
-          </div>
-
-          {navigableIds.length > 1 && currentNavIndex >= 0 && (
-            <div className="flex items-center justify-between pt-3 border-t mt-2">
-              <Button
-                variant="ghost"
-                size="sm"
-                disabled={currentNavIndex === 0}
-                onClick={() => {
-                  const prevId = navigableIds[currentNavIndex - 1];
-                  if (prevId) setSelectedDocId(prevId);
-                }}
-              >
-                ← Previous
-              </Button>
-              <span className="text-xs text-muted-foreground">
-                {currentNavIndex + 1} of {navigableIds.length}
-              </span>
-              <Button
-                variant="ghost"
-                size="sm"
-                disabled={currentNavIndex === navigableIds.length - 1}
-                onClick={() => {
-                  const nextId = navigableIds[currentNavIndex + 1];
-                  if (nextId) setSelectedDocId(nextId);
-                }}
-              >
-                Next →
-              </Button>
-            </div>
-          )}
-        </DialogContent>
-      </Dialog>
+          </DialogContent>
+        </Dialog>
       </Tabs>
 
       {/* Checkbox Floating Action Bar */}
       {activeSelectionCount > 0 && (
         <div className="fixed bottom-6 left-1/2 transform -translate-x-1/2 z-50 bg-background/80 dark:bg-card/90 backdrop-blur-md border border-muted-foreground/20 rounded-full py-3 px-6 shadow-2xl flex items-center gap-6 transition-all duration-300">
           <div className="flex flex-col">
-            <span className="text-xs font-bold text-foreground">{activeSelectionCount} Selected</span>
+            <span className="text-xs font-bold text-foreground">
+              {activeSelectionCount} Selected
+            </span>
             <span className="text-[10px] text-muted-foreground capitalize">{activeTab}</span>
           </div>
 
@@ -1867,7 +2097,8 @@ export function ClientBillingWorkspace({
                 </>
               ) : (
                 <>
-                  <Loader2 className="size-4 animate-spin text-amber-500" /> Transmitting Bulk Emails
+                  <Loader2 className="size-4 animate-spin text-amber-500" /> Transmitting Bulk
+                  Emails
                 </>
               )}
             </DialogTitle>
@@ -1885,7 +2116,10 @@ export function ClientBillingWorkspace({
 
             <div className="border rounded-lg max-h-40 overflow-y-auto bg-muted/20 text-xs p-3 flex flex-col gap-2">
               {bulkLog.map((log) => (
-                <div key={log.id} className="flex justify-between items-center py-1 border-b border-muted-foreground/5 last:border-0">
+                <div
+                  key={log.id}
+                  className="flex justify-between items-center py-1 border-b border-muted-foreground/5 last:border-0"
+                >
                   <span className="font-medium">{log.docNumber}</span>
                   <div className="flex items-center gap-1.5">
                     {log.status === 'pending' && (
@@ -1928,20 +2162,27 @@ export function ClientBillingWorkspace({
   );
 }
 
-function PortalImpersonateButton({ client }: { client: any }) {
+function PortalImpersonateButton({ client }: { client: Client }) {
   const [isPending, startTransition] = useTransition();
 
   const handleImpersonate = () => {
     if (!client.id) return;
 
+    // Open the window immediately (synchronous user gesture) so the popup
+    // blocker won't block it, then navigate it after the server action resolves.
+    const popup = window.open('', '_blank', 'noopener,noreferrer');
+
     startTransition(async () => {
       const result = await generateImpersonationLink(client.id);
       if (result.error) {
+        popup?.close();
         toast.error(result.error);
         return;
       }
-      if (result.url) {
-        window.open(result.url, '_blank', 'noopener,noreferrer');
+      if (result.url && popup) {
+        popup.location.href = result.url;
+      } else {
+        popup?.close();
       }
     });
   };
@@ -1969,7 +2210,7 @@ function PortalImpersonateButton({ client }: { client: any }) {
   );
 }
 
-function PortalInviteButton({ client }: { client: any }) {
+function PortalInviteButton({ client }: { client: Client }) {
   const [isPending, startTransition] = useTransition();
   const router = useRouter();
 
@@ -1978,13 +2219,15 @@ function PortalInviteButton({ client }: { client: any }) {
       toast.error('Client does not have an email address.');
       return;
     }
-    
+
     startTransition(async () => {
       const res = await sendPortalInvitation(client.id);
       if (res.error) {
         toast.error(res.error);
       } else {
-        toast.success(client.portalInvitationSentAt ? 'Portal invitation resent!' : 'Portal invitation sent!');
+        toast.success(
+          client.portalInvitationSentAt ? 'Portal invitation resent!' : 'Portal invitation sent!',
+        );
         router.refresh();
       }
     });
