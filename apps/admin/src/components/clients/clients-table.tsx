@@ -77,7 +77,10 @@ export function ClientsTable({ clients, deleteAction, toggleActiveAction }: Clie
                 <div className="flex items-center gap-2">
                   {client.name}
                   {client.isRetainer && (
-                    <Badge variant="outline" className="text-[10px] uppercase h-5 bg-blue-500/10 text-blue-600 border-blue-500/20">
+                    <Badge
+                      variant="outline"
+                      className="text-[10px] uppercase h-5 bg-blue-500/10 text-blue-600 border-blue-500/20"
+                    >
                       Retainer
                     </Badge>
                   )}
@@ -155,7 +158,10 @@ export function ClientsTable({ clients, deleteAction, toggleActiveAction }: Clie
               <div className="flex items-center gap-2">
                 <p className="font-semibold text-foreground leading-tight">{client.name}</p>
                 {client.isRetainer && (
-                  <Badge variant="outline" className="text-[10px] uppercase h-5 bg-blue-500/10 text-blue-600 border-blue-500/20">
+                  <Badge
+                    variant="outline"
+                    className="text-[10px] uppercase h-5 bg-blue-500/10 text-blue-600 border-blue-500/20"
+                  >
                     Retainer
                   </Badge>
                 )}
