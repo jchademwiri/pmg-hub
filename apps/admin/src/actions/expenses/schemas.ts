@@ -3,14 +3,14 @@ import { z } from 'zod';
 export const ExpenseSchema = z.object({
   date: z.string().min(1, 'Date is required'),
   divisionId: z.string().uuid('Division is required'),
-  categoryId: z.string().uuid().optional().nullable(),
   category: z.string().min(1, 'Category is required'),
-  description: z.string().min(1, 'Description is required'),
+  clientId: z
+    .string()
+    .optional()
+    .nullable()
+    .transform((val) => (val === '' || val === 'none' ? undefined : val)),
+  description: z.string().optional().nullable(),
   amount: z.coerce.number().positive('Amount must be positive'),
-  isTaxDeductible: z.boolean().default(true),
-  notes: z.string().optional().nullable(),
-  receiptUrl: z.string().optional().nullable(),
-  paymentMethod: z.string().optional().nullable(),
 });
 
 export type ExpenseInput = z.infer<typeof ExpenseSchema>;

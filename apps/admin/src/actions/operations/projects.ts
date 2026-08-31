@@ -32,12 +32,14 @@ export async function addProgressSectionAction(
     }
 
     // Get the next sort order
-    const [countResult] = await db
-      .select({ count: sql<number>`count(*)::int` })
+    const [maxResult] = await db
+      .select({
+        maxOrder: sql<number>`coalesce(max(${projectProgressSections.sortOrder}), 0)::int`,
+      })
       .from(projectProgressSections)
       .where(eq(projectProgressSections.projectId, projectId));
 
-    const sortOrder = (countResult?.count ?? 0) + 1;
+    const sortOrder = (maxResult?.maxOrder ?? 0) + 1;
 
     const [newSection] = await db
       .insert(projectProgressSections)
@@ -110,12 +112,12 @@ export async function addProgressItemAction(
     }
 
     // Get the next sort order
-    const [countResult] = await db
-      .select({ count: sql<number>`count(*)::int` })
+    const [maxResult] = await db
+      .select({ maxOrder: sql<number>`coalesce(max(${projectProgressItems.sortOrder}), 0)::int` })
       .from(projectProgressItems)
       .where(eq(projectProgressItems.sectionId, sectionId));
 
-    const sortOrder = (countResult?.count ?? 0) + 1;
+    const sortOrder = (maxResult?.maxOrder ?? 0) + 1;
 
     const [newItem] = await db
       .insert(projectProgressItems)
@@ -299,65 +301,29 @@ export async function updateProgressSectionStatusAction(
       return { success: false, error: 'Section ID and status are required.' };
     }
 
-    // 1. Update the section status
-    const updateSectionQuery = db
-      .update(projectProgressSections)
-      .set({ status, updatedAt: new Date() })
-      .where(eq(projectProgressSections.id, sectionId))
-      .returning();
+    const sections = await db.transaction(async (tx) => {
+      const updatedSections = await tx
+        .update(projectProgressSections)
+        .set({ status, updatedAt: new Date() })
+        .where(eq(projectProgressSections.id, sectionId))
+        .returning();
 
-    // 2. If moved to completed, mark all sub-tasks complete; if backlog, uncheck them; if in_progress, leave them unchanged.
-    let updateItemsQuery;
-    if (status === 'completed') {
-      updateItemsQuery = db
-        .update(projectProgressItems)
-        .set({
-          isCompleted: true,
-          completedAt: new Date(),
-          updatedAt: new Date(),
-        })
-        .where(eq(projectProgressItems.sectionId, sectionId));
-    } else if (status === 'backlog') {
-      updateItemsQuery = db
-        .update(projectProgressItems)
-        .set({
-          isCompleted: false,
-          completedAt: null,
-          updatedAt: new Date(),
-        })
-        .where(eq(projectProgressItems.sectionId, sectionId));
-    }
+      if (status === 'completed') {
+        await tx
+          .update(projectProgressItems)
+          .set({ isCompleted: true, completedAt: new Date(), updatedAt: new Date() })
+          .where(eq(projectProgressItems.sectionId, sectionId));
+      } else if (status === 'backlog') {
+        await tx
+          .update(projectProgressItems)
+          .set({ isCompleted: false, completedAt: null, updatedAt: new Date() })
+          .where(eq(projectProgressItems.sectionId, sectionId));
+      }
 
-    // Execute queries atomically
-    let section;
-    if (updateItemsQuery) {
-      const sections = await db.transaction(async (tx) => {
-        const updatedSections = await tx
-          .update(projectProgressSections)
-          .set({ status, updatedAt: new Date() })
-          .where(eq(projectProgressSections.id, sectionId))
-          .returning();
+      return updatedSections;
+    });
 
-        if (status === 'completed') {
-          await tx
-            .update(projectProgressItems)
-            .set({ isCompleted: true, completedAt: new Date(), updatedAt: new Date() })
-            .where(eq(projectProgressItems.sectionId, sectionId));
-        } else if (status === 'backlog') {
-          await tx
-            .update(projectProgressItems)
-            .set({ isCompleted: false, completedAt: null, updatedAt: new Date() })
-            .where(eq(projectProgressItems.sectionId, sectionId));
-        }
-
-        return updatedSections;
-      });
-      section = sections[0];
-    } else {
-      const sections = await updateSectionQuery;
-      section = sections[0];
-    }
-
+    const section = sections[0];
     if (!section) {
       return { success: false, error: 'Section not found.' };
     }

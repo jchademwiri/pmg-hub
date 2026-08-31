@@ -26,16 +26,7 @@ import {
 import React from 'react';
 import { getSessionOrRedirect } from '@/lib/auth';
 import { getPortalBaseUrl } from '@/lib/portal-url';
-
-const ClientSchema = z.object({
-  name: z.string().min(1),
-  businessName: z.string().optional(),
-  email: z.string().email().optional(),
-  phone: z.string().optional(),
-  divisionId: z.string().optional(),
-  isRetainer: z.boolean().optional().default(false),
-  excludeFromAutoStatements: z.boolean().optional().default(false),
-});
+import { ClientSchema } from './schemas';
 
 export async function createClient(formData: FormData): Promise<{ error?: string }> {
   try {

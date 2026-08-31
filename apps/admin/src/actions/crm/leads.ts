@@ -4,12 +4,7 @@ import { z } from 'zod';
 import { revalidatePath } from 'next/cache';
 import { db, leads, clients, eq } from '@pmg/db';
 import { getSessionOrRedirect } from '@/lib/auth';
-
-const LeadStatusSchema = z.object({
-  status: z.enum(['new', 'contacted', 'converted', 'lost'], {
-    error: 'Status must be one of: new, contacted, converted, or lost',
-  }),
-});
+import { LeadStatusSchema, LeadNotesSchema, CreateLeadSchema } from './schemas';
 
 export async function updateLeadStatus(
   id: string,
@@ -35,8 +30,6 @@ export async function updateLeadStatus(
   }
 }
 
-const LeadNotesSchema = z.object({ notes: z.string().optional() });
-
 export async function updateLeadNotes(id: string, formData: FormData): Promise<{ error?: string }> {
   try {
     await getSessionOrRedirect();
@@ -55,21 +48,6 @@ export async function updateLeadNotes(id: string, formData: FormData): Promise<{
     return { error: 'Failed to save. Please try again.' };
   }
 }
-
-const CreateLeadSchema = z
-  .object({
-    name: z.string().min(1),
-    companyName: z.string().optional(),
-    email: z.string().email().optional(),
-    phone: z.string().optional(),
-    source: z.string().optional(),
-    serviceInterest: z.string().optional(),
-    divisionId: z.string().uuid().optional(),
-    message: z.string().optional(),
-  })
-  .refine((data) => !!(data.email || data.phone), {
-    message: 'At least one of email or phone is required',
-  });
 
 export async function createLead(formData: FormData): Promise<{ error?: string }> {
   try {
