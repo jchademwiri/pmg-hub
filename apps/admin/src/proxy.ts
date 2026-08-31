@@ -15,6 +15,16 @@ const RATE_LIMIT_WINDOW_MS = 60_000
 
 function isRateLimited(ip: string): boolean {
   const now = Date.now()
+
+  // Evict expired entries if map grows
+  if (rateLimitMap.size > 1000) {
+    for (const [key, entry] of rateLimitMap.entries()) {
+      if (now - entry.windowStart >= RATE_LIMIT_WINDOW_MS) {
+        rateLimitMap.delete(key)
+      }
+    }
+  }
+
   const entry = rateLimitMap.get(ip)
 
   if (!entry || now - entry.windowStart >= RATE_LIMIT_WINDOW_MS) {

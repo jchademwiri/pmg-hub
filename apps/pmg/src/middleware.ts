@@ -12,6 +12,16 @@ function getClientId(context: { request: { ip: string; headers: Headers } }): st
 
 function isRateLimited(clientId: string): boolean {
   const now = Date.now();
+
+  // Prune expired rate limit entries
+  if (rateLimitStore.size > 1000) {
+    for (const [key, record] of rateLimitStore.entries()) {
+      if (now > record.resetAt) {
+        rateLimitStore.delete(key);
+      }
+    }
+  }
+
   const record = rateLimitStore.get(clientId);
 
   if (!record || now > record.resetAt) {
@@ -44,5 +54,18 @@ export const onRequest = defineMiddleware(async (context, next) => {
     }
   }
 
-  return next();
+  const response = await next();
+
+  const cacheControlValue =
+    pathname.startsWith('/_astro') || pathname.match(/\.(js|css|png|jpg|jpeg|gif|svg|ico|woff2?)$/)
+      ? 'public, max-age=31536000, immutable'
+      : 'no-cache, no-store, must-revalidate';
+
+  response.headers.set('Cache-Control', cacheControlValue);
+  response.headers.set('X-Frame-Options', 'DENY');
+  response.headers.set('X-Content-Type-Options', 'nosniff');
+  response.headers.set('Referrer-Policy', 'strict-origin-when-cross-origin');
+  response.headers.set('Permissions-Policy', 'camera=(), microphone=(), geolocation=()');
+
+  return response;
 });

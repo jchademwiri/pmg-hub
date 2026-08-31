@@ -1,18 +1,16 @@
 import { NextResponse } from 'next/server';
 import { triggerRecurringBillingRun } from '@/app/actions/recurring-actions';
 import { triggerAutomatedStatementsRun } from '@/app/actions/automated-statements';
+import { authorizeCronRequest } from '@/lib/cron-auth';
 
 export const maxDuration = 300; // Allow Vercel up to 5 minutes to run this cron
 
 export async function GET(request: Request) {
   try {
     // Vercel cron authorization check
-    const authHeader = request.headers.get('authorization');
-    if (
-      process.env.NODE_ENV === 'production' &&
-      authHeader !== `Bearer ${process.env.CRON_SECRET}`
-    ) {
-      return new NextResponse('Unauthorized', { status: 401 });
+    const authError = authorizeCronRequest(request);
+    if (authError) {
+      return authError;
     }
 
     console.log('[CRON:DAILY] Starting daily maintenance run...');

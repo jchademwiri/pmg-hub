@@ -72,13 +72,13 @@ This task list tracks the execution and verification of all bug fixes, security 
 
 ---
 
-- [ ] **Task 6: Cron & Middleware Security Hardening**
-  - [ ] **6.1** `apps/admin/src/app/api/cron/daily/route.ts`
-    - Enforce `CRON_SECRET` authorization header check across all environments.
-  - [ ] **6.2** `apps/tes/src/middleware.ts`, `apps/aws/src/middleware.ts`, `apps/pmg/src/middleware.ts`
-    - Apply security headers (`X-Frame-Options`, `X-Content-Type-Options`, `Referrer-Policy`, `Permissions-Policy`) across all routes.
-  - [ ] **6.3** `apps/admin/src/proxy.ts` and Astro middlewares
-    - Add TTL eviction / cleanup to in-memory rate limiter `Map` instances.
+- [x] **Task 6: Cron & Middleware Security Hardening**
+  - [x] **6.1** `apps/admin/src/app/api/cron/daily/route.ts`
+    - Enforced `authorizeCronRequest(request)` header check using `CRON_SECRET`.
+  - [x] **6.2** `apps/tes/src/middleware.ts`, `apps/aws/src/middleware.ts`, `apps/pmg/src/middleware.ts`
+    - Applied security headers (`X-Frame-Options`, `X-Content-Type-Options`, `Referrer-Policy`, `Permissions-Policy`) globally across all routes.
+  - [x] **6.3** `apps/admin/src/proxy.ts` and Astro middlewares
+    - Added TTL eviction / pruning to in-memory rate limiter `Map` instances.
 
 ---
 
