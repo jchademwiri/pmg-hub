@@ -103,7 +103,7 @@ describe('DivisionsTable', () => {
   })
 
   beforeEach(() => {
-    vi.resetAllMocks()
+    vi.clearAllMocks()
     updateAction.mockResolvedValue({})
     deleteAction.mockResolvedValue({})
     toggleActiveAction.mockResolvedValue({})
@@ -417,7 +417,7 @@ describe('Divisions page empty state', () => {
 
 describe('deleteDivision - FK constraint violation returns { error }', () => {
   beforeEach(async () => {
-    vi.resetAllMocks()
+    vi.clearAllMocks()
     const { db } = await import('@pmg/db')
     vi.mocked(db.select).mockReturnValue({
       from: vi.fn().mockReturnValue({
@@ -451,7 +451,7 @@ describe('deleteDivision - FK constraint violation returns { error }', () => {
 
 describe('createDivision - validation failure returns { error }', () => {
   beforeEach(() => {
-    vi.resetAllMocks()
+    vi.clearAllMocks()
   })
 
   it('returns { error: <non-empty string> } when name is empty - Validates: Requirements 2.4', async () => {
@@ -472,7 +472,7 @@ describe('createDivision - validation failure returns { error }', () => {
 
 describe('updateDivision - validation failure returns { error }', () => {
   beforeEach(() => {
-    vi.resetAllMocks()
+    vi.clearAllMocks()
   })
 
   it('returns { error: <non-empty string> } when name is empty - Validates: Requirements 3.4', async () => {

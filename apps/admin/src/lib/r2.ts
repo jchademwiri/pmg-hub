@@ -76,7 +76,7 @@ export async function uploadReceiptToR2(file: File | null): Promise<{
       fileName: file.name,
       fileSize: file.size,
     };
-  } catch (err: any) {
+  } catch (err: unknown) {
     console.error('Failed to upload receipt to R2:', err);
     return { error: 'Failed to upload receipt file to cloud storage.' };
   }

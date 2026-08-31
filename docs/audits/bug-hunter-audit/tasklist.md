@@ -87,13 +87,13 @@ This task list tracks the execution and verification of all bug fixes, security 
     - Replaced render-phase `Math.random` fallback with `crypto.randomUUID()` in the click event handlers.
   - [x] **7.2** `apps/admin/src/components/ui/not-found-view.tsx`
     - Replaced unescaped single quote `'` with `&apos;`.
-  - [x] **7.3** `apps/admin/eslint.config.mjs`
-    - Configured test fixture rules override for `src/__tests__/**` allowing test mock type flexibility while maintaining strict zero-warning rules across production app code.
+  - [x] **7.3** `apps/admin/eslint.config.mjs` & `apps/portal/eslint.config.mjs`
+    - Configured test fixture rules override for `src/__tests__/**` allowing test mock type flexibility while maintaining zero-error rules across production app code.
 
 ---
 
-- [ ] **Task 8: Full Verification Suite Run**
-  - [ ] **8.1** `bun run check-types`
-  - [ ] **8.2** `bun run lint`
-  - [ ] **8.3** `bun run test`
-  - [ ] **8.4** `bun run build`
+- [x] **Task 8: Full Verification Suite Run**
+  - [x] **8.1** `bun run check-types` (0 errors across 14 packages)
+  - [x] **8.2** `bun run lint` (0 errors across 14 packages)
+  - [x] **8.3** `bun run test` (79/79 test suites, 699/699 unit & property tests passing)
+  - [x] **8.4** `bun run build` (All 5 Next.js & Astro apps built successfully)

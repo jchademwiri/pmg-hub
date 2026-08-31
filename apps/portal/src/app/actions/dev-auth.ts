@@ -55,7 +55,8 @@ export async function loginAsDevClientAction(clientId: string): Promise<{ succes
     });
 
     return { success: true };
-  } catch (error: any) {
-    return { success: false, error: error.message || 'Failed to login as client.' };
+  } catch (error: unknown) {
+    const message = error instanceof Error ? error.message : 'Failed to login as client.';
+    return { success: false, error: message };
   }
 }

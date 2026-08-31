@@ -1,12 +1,14 @@
 'use client';
 
 import * as React from 'react';
+import { useRouter } from 'next/navigation';
 import { authClient } from '@/lib/auth-client';
 import { Loader2, Mail, KeyRound, ArrowRight, ShieldCheck, UserCheck } from 'lucide-react';
 import { toast } from 'sonner';
 import { getDevClientsAction, loginAsDevClientAction } from '@/app/actions/dev-auth';
 
 export default function LoginPage() {
+  const router = useRouter();
   const [email, setEmail] = React.useState('');
   const [otpCode, setOtpCode] = React.useState('');
   const [isPending, setIsPending] = React.useState(false);
@@ -85,12 +87,14 @@ export default function LoginPage() {
       const res = await loginAsDevClientAction(selectedDevClient);
       if (res.success) {
         toast.success('Switched user in Dev Mode. Redirecting...');
-        window.location.href = '/dashboard';
+        router.push('/dashboard');
+        router.refresh();
       } else {
         toast.error(res.error || 'Failed to switch user.');
       }
-    } catch (err: any) {
-      toast.error('Dev switch failed: ' + err.message);
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : 'Dev switch failed';
+      toast.error(message);
     } finally {
       setIsDevLoading(false);
     }

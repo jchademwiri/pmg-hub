@@ -85,10 +85,12 @@ export function TaskBoard({ projectId, initialSections, onProgressChange }: Task
     completed: null,
   });
 
-  // Sync state with props
-  React.useEffect(() => {
+  // Sync state with props during render to avoid cascading effect renders
+  const [prevInitialSections, setPrevInitialSections] = React.useState(initialSections);
+  if (initialSections !== prevInitialSections) {
+    setPrevInitialSections(initialSections);
     setSections(initialSections);
-  }, [initialSections]);
+  }
 
   // Report progress changes to parent if needed
   React.useEffect(() => {
