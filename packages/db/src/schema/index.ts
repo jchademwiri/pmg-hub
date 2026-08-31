@@ -21,3 +21,4 @@ export * from './savings';
 export * from './luno';
 export * from './recurring';
 export * from './documents';
+export * from './onboarding';

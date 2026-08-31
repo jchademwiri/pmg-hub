@@ -91,6 +91,72 @@ export function ClientAddForm({ createAction, onCancel, divisions }: ClientAddFo
           />
         </Field>
 
+        <Field>
+          <FieldLabel htmlFor="client-registration-number">CIPC Registration Number</FieldLabel>
+          <Input
+            id="client-registration-number"
+            name="registrationNumber"
+            type="text"
+            placeholder="e.g. 2024/123456/07"
+            disabled={isPending}
+          />
+        </Field>
+
+        <Field>
+          <FieldLabel htmlFor="client-website">Website URL</FieldLabel>
+          <Input
+            id="client-website"
+            name="website"
+            type="text"
+            placeholder="e.g. https://acme.co.za"
+            disabled={isPending}
+          />
+        </Field>
+
+        <Field className="lg:col-span-2">
+          <FieldLabel htmlFor="client-billing-address">Street / Physical Address</FieldLabel>
+          <Input
+            id="client-billing-address"
+            name="billingAddress"
+            type="text"
+            placeholder="e.g. 123 Main Road, Centurion"
+            disabled={isPending}
+          />
+        </Field>
+
+        <Field>
+          <FieldLabel htmlFor="client-city">City / Town</FieldLabel>
+          <Input
+            id="client-city"
+            name="city"
+            type="text"
+            placeholder="e.g. Pretoria"
+            disabled={isPending}
+          />
+        </Field>
+
+        <Field>
+          <FieldLabel htmlFor="client-postal-code">Postal Code</FieldLabel>
+          <Input
+            id="client-postal-code"
+            name="postalCode"
+            type="text"
+            placeholder="e.g. 0157"
+            disabled={isPending}
+          />
+        </Field>
+
+        <Field>
+          <FieldLabel htmlFor="client-province">Province</FieldLabel>
+          <Input
+            id="client-province"
+            name="province"
+            type="text"
+            placeholder="e.g. Gauteng"
+            disabled={isPending}
+          />
+        </Field>
+
         <Field className="lg:col-span-2">
           <FieldLabel htmlFor="client-division">Linked Division</FieldLabel>
           <Select

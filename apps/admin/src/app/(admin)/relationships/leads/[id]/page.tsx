@@ -6,6 +6,7 @@ import { fmtDate } from '@/lib/format';
 import { LeadStatusForm } from '@/components/leads/lead-status-form';
 import { LeadNotesForm } from '@/components/leads/lead-notes-form';
 import { ConvertToClientButton } from '@/components/leads/convert-to-client-button';
+import { ShareOnboardingLinkDialog } from '@/components/onboarding/share-onboarding-link-dialog';
 import { BackButton } from '@/components/ui/back-button';
 
 export const dynamic = 'force-dynamic';
@@ -79,9 +80,16 @@ export default async function LeadDetailPage({ params }: LeadDetailPageProps) {
 
       {lead.status !== 'converted' ? (
         <div className="flex flex-col gap-4 rounded-lg border p-4 bg-emerald-500/5 border-emerald-500/20">
-          <h2 className="text-lg font-medium text-emerald-800">Actions</h2>
-          <div className="max-w-xs">
-            <ConvertToClientButton leadId={id} leadStatus={lead.status} />
+          <h2 className="text-lg font-medium text-emerald-800 dark:text-emerald-300">Actions</h2>
+          <div className="flex flex-wrap items-center gap-3">
+            <div className="max-w-xs">
+              <ConvertToClientButton leadId={id} leadStatus={lead.status} />
+            </div>
+            <ShareOnboardingLinkDialog
+              leadId={id}
+              leadName={lead.name ?? undefined}
+              leadPhone={lead.phone ?? undefined}
+            />
           </div>
         </div>
       ) : (

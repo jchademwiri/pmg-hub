@@ -18,6 +18,8 @@ export { default as InvitationEmail } from './templates/InvitationEmail';
 export { default as AdminQuoteAcceptedEmail } from './templates/AdminQuoteAcceptedEmail';
 export { default as PortalInvitationEmail } from './templates/PortalInvitationEmail';
 export { default as ComplianceReminderEmail } from './templates/ComplianceReminderEmail';
+export { default as AdminOnboardingNotificationEmail } from './templates/AdminOnboardingNotificationEmail';
+export { default as ClientOnboardingConfirmationEmail } from './templates/ClientOnboardingConfirmationEmail';
 
 // Template prop types
 export type { AdminNewLeadEmailProps } from './templates/AdminNewLeadEmail';
@@ -32,6 +34,8 @@ export type { InvitationEmailProps } from './templates/InvitationEmail';
 export type { AdminQuoteAcceptedEmailProps } from './templates/AdminQuoteAcceptedEmail';
 export type { PortalInvitationEmailProps } from './templates/PortalInvitationEmail';
 export type { ComplianceReminderEmailProps } from './templates/ComplianceReminderEmail';
+export type { AdminOnboardingNotificationEmailProps } from './templates/AdminOnboardingNotificationEmail';
+export type { ClientOnboardingConfirmationEmailProps } from './templates/ClientOnboardingConfirmationEmail';
 
 // Central config
 export {
