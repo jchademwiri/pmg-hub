@@ -65,9 +65,10 @@ This task list tracks the execution and verification of all bug fixes, security 
 
 ---
 
-- [ ] **Task 5: Portal Dev Mode User Selector**
-  - [ ] **5.1** `apps/portal/src/app/(auth)/login/page.tsx`
-    - When `process.env.NODE_ENV === 'development'`, render an interactive "Dev Mode: Quick Switch User" dropdown allowing developers to select any active client and authenticate with 1 click.
+- [x] **Task 5: Portal Dev Mode User Selector**
+  - [x] **5.1** `apps/portal/src/app/(auth)/login/page.tsx` & `apps/portal/src/app/actions/dev-auth.ts`
+    - In development mode, fetch all active clients and provide an interactive dropdown selector on `/login`.
+    - Allows instant switching to any active client without manual cookie manipulation.
 
 ---
 
