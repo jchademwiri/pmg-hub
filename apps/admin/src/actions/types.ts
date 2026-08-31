@@ -30,7 +30,7 @@ export function actionVoidSuccess(): ActionSuccess<void> {
 
 export function actionFailure(
   error: string,
-  options?: { code?: string; fieldErrors?: Record<string, string[]> }
+  options?: { code?: string; fieldErrors?: Record<string, string[]> },
 ): ActionFailure {
   return {
     success: false,
