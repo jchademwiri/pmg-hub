@@ -19,6 +19,7 @@ import {
 } from 'lucide-react';
 import { toast } from 'sonner';
 import type { OnboardingRow } from '@pmg/db';
+import { fmtDate } from '@/lib/format';
 import {
   Sheet,
   SheetContent,
@@ -117,8 +118,8 @@ export function OnboardingReviewDrawer({ entry, open, onOpenChange }: Onboarding
       <Sheet open={open} onOpenChange={onOpenChange}>
         <SheetContent className="sm:max-w-xl flex flex-col justify-between p-0 overflow-y-auto">
           <div>
-            <SheetHeader className="px-6 pt-6 pb-5 sm:px-8 border-b space-y-2">
-              <div className="flex items-center justify-between">
+            <SheetHeader className="px-6 pt-6 pb-5 sm:px-8 border-b pr-14 space-y-2">
+              <div className="flex flex-wrap items-center gap-2.5">
                 <Badge
                   variant={
                     entry.status === 'converted'
@@ -127,12 +128,12 @@ export function OnboardingReviewDrawer({ entry, open, onOpenChange }: Onboarding
                         ? 'secondary'
                         : 'outline'
                   }
-                  className="capitalize font-semibold text-xs"
+                  className="capitalize font-semibold text-xs shadow-none"
                 >
                   {entry.status}
                 </Badge>
-                <span className="text-[11px] text-muted-foreground mr-6">
-                  Submitted {new Date(entry.createdAt).toLocaleDateString()}
+                <span className="text-xs text-muted-foreground font-medium">
+                  Submitted {fmtDate(entry.createdAt)}
                 </span>
               </div>
               <SheetTitle className="text-xl font-bold mt-1 text-foreground">

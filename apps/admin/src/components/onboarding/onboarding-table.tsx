@@ -2,6 +2,7 @@
 
 import * as React from 'react';
 import type { OnboardingRow } from '@pmg/db';
+import { fmtDate } from '@/lib/format';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import {
@@ -96,9 +97,7 @@ export function OnboardingTable({ entries }: OnboardingTableProps) {
                   </Badge>
                 </TableCell>
                 <TableCell>
-                  <span className="text-xs text-muted-foreground">
-                    {new Date(entry.createdAt).toLocaleDateString()}
-                  </span>
+                  <span className="text-xs text-muted-foreground">{fmtDate(entry.createdAt)}</span>
                 </TableCell>
                 <TableCell className="text-right">
                   {entry.status === 'pending' ? (
