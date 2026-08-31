@@ -369,6 +369,7 @@ export async function reopenAccountingPeriod(period: string): Promise<{ error?: 
 }
 
 export async function fetchJournalsByMonth(year: number, month: number, status?: string) {
+  await getSessionOrRedirect();
   const { getJournalEntries } = await import('@pmg/db');
   const period = `${year}-${month.toString().padStart(2, '0')}`;
   const journalsResult = await getJournalEntries(
@@ -378,6 +379,7 @@ export async function fetchJournalsByMonth(year: number, month: number, status?:
 }
 
 export async function fetchJournalsByYear(year: number, status?: string) {
+  await getSessionOrRedirect();
   const { getJournalEntries } = await import('@pmg/db');
   const journalsResult = await getJournalEntries(
     { year, status, page: 1, pageSize: 5000 }
@@ -401,6 +403,7 @@ function getStartAndEndOfFinancialYear(year: number) {
 }
 
 export async function fetchGeneralLedgerByMonth(year: number, month: number, accountId?: string) {
+  await getSessionOrRedirect();
   const { getGeneralLedger } = await import('@pmg/db');
   const { startDate, endDate } = getStartAndEndOfMonth(year, month);
   const result = await getGeneralLedger(
@@ -410,6 +413,7 @@ export async function fetchGeneralLedgerByMonth(year: number, month: number, acc
 }
 
 export async function fetchGeneralLedgerByYear(year: number, accountId?: string) {
+  await getSessionOrRedirect();
   const { getGeneralLedger } = await import('@pmg/db');
   const { startDate, endDate } = getStartAndEndOfFinancialYear(year);
   const result = await getGeneralLedger(

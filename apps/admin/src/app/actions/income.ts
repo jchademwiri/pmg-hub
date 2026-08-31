@@ -4,9 +4,11 @@ import { revalidatePath } from 'next/cache';
 import { db, income, eq, getIncomeById, invoices, paymentAllocations, sql } from '@pmg/db';
 import { isPeriodClosed } from '@/lib/date-rules';
 import { voidPaymentJournalEntries } from '@/lib/accounting/posting';
+import { getSessionOrRedirect } from '@/lib/auth';
 
 export async function deleteIncome(id: string): Promise<{ error?: string }> {
   try {
+    await getSessionOrRedirect();
     const existing = await getIncomeById(id);
     if (!existing) return { error: 'Record not found.' };
 
@@ -169,6 +171,7 @@ async function enrichIncomeWithAllocations(incomeData: any[]) {
 }
 
 export async function fetchIncomeByMonth(year: number, month: number, divisionId?: string, clientId?: string) {
+  await getSessionOrRedirect();
   const { getAllIncome } = await import('@pmg/db');
   const incomeResult = await getAllIncome(
     { month: `${year}-${month.toString().padStart(2, '0')}`, divisionId, clientId },
@@ -180,6 +183,7 @@ export async function fetchIncomeByMonth(year: number, month: number, divisionId
 }
 
 export async function fetchIncomeByYear(year: number, divisionId?: string, clientId?: string) {
+  await getSessionOrRedirect();
   const { getAllIncome } = await import('@pmg/db');
   const incomeResult = await getAllIncome(
     { year, divisionId, clientId },

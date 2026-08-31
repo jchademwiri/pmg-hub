@@ -1,9 +1,10 @@
 'use server';
 
 import { headers as getHeaders } from 'next/headers';
-import { auth, requireRole } from '@/lib/auth';
+import { auth, requireRole, type Session } from '@/lib/auth';
 import { createHmac } from 'node:crypto';
 import { getPortalBaseUrl } from '@/lib/portal-url';
+import { getDb, clients, eq } from '@pmg/db';
 
 export async function generateImpersonationLink(clientId: string): Promise<{ url?: string; error?: string }> {
   try {
@@ -11,7 +12,16 @@ export async function generateImpersonationLink(clientId: string): Promise<{ url
     if (!session?.user) return { error: 'Not authenticated' };
 
     // Verify the caller has admin or super_admin role
-    if (!requireRole(session as any, 'admin')) return { error: 'Unauthorized' };
+    if (!requireRole(session as Session, 'admin')) return { error: 'Unauthorized' };
+
+    const db = getDb();
+    const [client] = await db
+      .select({ id: clients.id, userId: clients.userId })
+      .from(clients)
+      .where(eq(clients.id, clientId))
+      .limit(1);
+
+    if (!client) return { error: 'Client not found' };
 
     const secret = process.env.IMPERSONATION_SHARED_SECRET;
     if (!secret) return { error: 'IMPERSONATION_SHARED_SECRET not configured' };

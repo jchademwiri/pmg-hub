@@ -16,6 +16,7 @@ import { getClientOutstandingInvoices } from './billing-payments';
 import { generateBillingPdf } from '@/lib/server-billing-pdf';
 import { getPortalBaseUrl } from '@/lib/portal-url';
 import { formatZAR } from '@/lib/format';
+import { getSessionOrRedirect } from '@/lib/auth';
 import {
   createEmailClient,
   StatementDeliveryEmail,
@@ -35,8 +36,14 @@ import React from 'react';
  * and emails statements to clients with an outstanding balance > 0,
  * unless they are explicitly marked as excludeFromAutoStatements.
  */
-export async function triggerAutomatedStatementsRun(asOfDate?: string): Promise<{ error?: string; generatedCount?: number; skippedZeroBalance?: number }> {
+export async function triggerAutomatedStatementsRun(
+  asOfDate?: string,
+  options?: { isInternal?: boolean }
+): Promise<{ error?: string; generatedCount?: number; skippedZeroBalance?: number }> {
   try {
+    if (!options?.isInternal) {
+      await getSessionOrRedirect();
+    }
     const db = getDb();
     const todayStr = asOfDate || getSASTToday();
     

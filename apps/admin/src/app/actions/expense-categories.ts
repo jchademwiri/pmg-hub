@@ -3,6 +3,7 @@
 import { z } from 'zod';
 import { revalidatePath } from 'next/cache';
 import { db, expenseCategories, expenses, eq, sql } from '@pmg/db';
+import { getSessionOrRedirect } from '@/lib/auth';
 
 const ExpenseCategorySchema = z.object({
   name: z.string().min(1).max(100),
@@ -10,6 +11,7 @@ const ExpenseCategorySchema = z.object({
 
 export async function createExpenseCategory(formData: FormData): Promise<{ error?: string }> {
   try {
+    await getSessionOrRedirect();
     const raw = Object.fromEntries(formData) as Record<string, string>;
     const result = ExpenseCategorySchema.safeParse(raw);
     if (!result.success) {
@@ -26,6 +28,7 @@ export async function createExpenseCategory(formData: FormData): Promise<{ error
 
 export async function updateExpenseCategory(id: string, formData: FormData): Promise<{ error?: string }> {
   try {
+    await getSessionOrRedirect();
     const raw = Object.fromEntries(formData) as Record<string, string>;
     const result = ExpenseCategorySchema.safeParse(raw);
     if (!result.success) {
@@ -59,6 +62,7 @@ export async function updateExpenseCategory(id: string, formData: FormData): Pro
 
 export async function deleteExpenseCategory(id: string): Promise<{ error?: string }> {
   try {
+    await getSessionOrRedirect();
     const rows = await db.select().from(expenseCategories).where(eq(expenseCategories.id, id));
     if (rows.length === 0) {
       return { error: 'Category not found.' };

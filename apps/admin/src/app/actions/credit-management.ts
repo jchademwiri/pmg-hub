@@ -1075,8 +1075,11 @@ export async function refundCredit(data: {
 // Checks and expires credit notes past their expiry date.
 // Intended to run as a cron job or manual batch.
 
-export async function expireCreditNotes(): Promise<{ expired?: number; error?: string }> {
+export async function expireCreditNotes(options?: { isInternal?: boolean }): Promise<{ expired?: number; error?: string }> {
   try {
+    if (!options?.isInternal) {
+      await getSessionOrRedirect();
+    }
     const db = getDb();
     const now = new Date();
 

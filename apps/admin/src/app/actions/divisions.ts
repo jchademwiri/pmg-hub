@@ -3,10 +3,12 @@
 import { revalidatePath } from 'next/cache';
 import { db, divisions, income, expenses, leads, eq } from '@pmg/db';
 import { setDivisionActive } from '@pmg/db';
+import { getSessionOrRedirect } from '@/lib/auth';
 import { DivisionSchema } from './division-schema';
 
 export async function createDivision(formData: FormData): Promise<{ error?: string }> {
   try {
+    await getSessionOrRedirect();
     const raw = Object.fromEntries(formData);
     const result = DivisionSchema.safeParse(raw);
     if (!result.success) {
@@ -23,6 +25,7 @@ export async function createDivision(formData: FormData): Promise<{ error?: stri
 
 export async function updateDivision(id: string, formData: FormData): Promise<{ error?: string }> {
   try {
+    await getSessionOrRedirect();
     const raw = Object.fromEntries(formData);
     const result = DivisionSchema.safeParse(raw);
     if (!result.success) {
@@ -41,6 +44,7 @@ export async function updateDivision(id: string, formData: FormData): Promise<{ 
 
 export async function toggleDivisionActive(id: string, isActive: boolean): Promise<{ error?: string }> {
   try {
+    await getSessionOrRedirect();
     await setDivisionActive(id, isActive);
     revalidatePath('/relationships/divisions');
     revalidatePath('/dashboard');
@@ -52,6 +56,7 @@ export async function toggleDivisionActive(id: string, isActive: boolean): Promi
 
 export async function deleteDivision(id: string): Promise<{ error?: string }> {
   try {
+    await getSessionOrRedirect();
     const [incomeCount, expenseCount, leadCount] = await Promise.all([
       db.select({ id: income.id }).from(income).where(eq(income.divisionId, id)).limit(1),
       db.select({ id: expenses.id }).from(expenses).where(eq(expenses.divisionId, id)).limit(1),

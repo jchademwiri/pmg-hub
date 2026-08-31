@@ -39,6 +39,8 @@ const ClientSchema = z.object({
 
 export async function createClient(formData: FormData): Promise<{ error?: string }> {
   try {
+    await getSessionOrRedirect();
+
     const raw = Object.fromEntries(formData) as Record<string, string>;
     if (raw.businessName === '') delete raw.businessName;
     if (raw.email === '') delete raw.email;
@@ -70,6 +72,8 @@ export async function createClient(formData: FormData): Promise<{ error?: string
 
 export async function updateClient(id: string, formData: FormData): Promise<{ error?: string }> {
   try {
+    await getSessionOrRedirect();
+
     const raw = Object.fromEntries(formData) as Record<string, string>;
     if (raw.businessName === '') delete raw.businessName;
     if (raw.email === '') delete raw.email;
@@ -111,6 +115,8 @@ export async function toggleClientActive(
   isActive: boolean,
 ): Promise<{ error?: string }> {
   try {
+    await getSessionOrRedirect();
+
     await setClientActive(id, isActive);
     revalidatePath('/relationships/clients');
     return {};
@@ -122,6 +128,8 @@ export async function toggleClientActive(
 
 export async function deleteClient(id: string): Promise<{ error?: string }> {
   try {
+    await getSessionOrRedirect();
+
     // Check for income records
     const [incomeCount] = await db
       .select({ id: income.id })

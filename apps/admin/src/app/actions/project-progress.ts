@@ -5,9 +5,11 @@ import { projectProgressSections, projectProgressItems } from '@pmg/db';
 import { eq, sql } from 'drizzle-orm';
 import { revalidatePath } from 'next/cache';
 import { getProjectChecklist } from '@pmg/db';
+import { getSessionOrRedirect } from '@/lib/auth';
 
 export async function getProjectChecklistAction(projectId: string) {
   try {
+    await getSessionOrRedirect();
     if (!projectId) {
       return { error: 'Project ID is required.' };
     }
@@ -25,6 +27,7 @@ export async function addProgressSectionAction(
   title: string
 ): Promise<{ success: boolean; section?: any; error?: string }> {
   try {
+    await getSessionOrRedirect();
     if (!projectId || !title.trim()) {
       return { success: false, error: 'Project ID and title are required.' };
     }
@@ -58,6 +61,7 @@ export async function deleteProgressSectionAction(
   sectionId: string
 ): Promise<{ success: boolean; error?: string }> {
   try {
+    await getSessionOrRedirect();
     if (!sectionId) {
       return { success: false, error: 'Section ID is required.' };
     }
@@ -77,6 +81,7 @@ export async function renameProgressSectionAction(
   title: string
 ): Promise<{ success: boolean; section?: any; error?: string }> {
   try {
+    await getSessionOrRedirect();
     if (!sectionId || !title.trim()) {
       return { success: false, error: 'Section ID and title are required.' };
     }
@@ -100,6 +105,7 @@ export async function addProgressItemAction(
   task: string
 ): Promise<{ success: boolean; item?: any; error?: string }> {
   try {
+    await getSessionOrRedirect();
     if (!sectionId || !task.trim()) {
       return { success: false, error: 'Section ID and task are required.' };
     }
@@ -148,6 +154,7 @@ export async function deleteProgressItemAction(
   itemId: string
 ): Promise<{ success: boolean; error?: string }> {
   try {
+    await getSessionOrRedirect();
     if (!itemId) {
       return { success: false, error: 'Item ID is required.' };
     }
@@ -205,6 +212,7 @@ export async function toggleProgressItemAction(
   isCompleted: boolean
 ): Promise<{ success: boolean; item?: any; error?: string }> {
   try {
+    await getSessionOrRedirect();
     if (!itemId) {
       return { success: false, error: 'Item ID is required.' };
     }
@@ -263,6 +271,7 @@ export async function updateProgressItemTextAction(
   task: string
 ): Promise<{ success: boolean; item?: any; error?: string }> {
   try {
+    await getSessionOrRedirect();
     if (!itemId || !task.trim()) {
       return { success: false, error: 'Item ID and task description are required.' };
     }
@@ -286,6 +295,7 @@ export async function updateProgressSectionStatusAction(
   status: 'backlog' | 'in_progress' | 'completed'
 ): Promise<{ success: boolean; section?: any; error?: string }> {
   try {
+    await getSessionOrRedirect();
     if (!sectionId || !status) {
       return { success: false, error: 'Section ID and status are required.' };
     }

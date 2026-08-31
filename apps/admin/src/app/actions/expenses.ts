@@ -6,6 +6,7 @@ import { db, expenses, eq, getExpenseById } from '@pmg/db';
 import { isPeriodClosed, getMinAllowedDate, getMinDateErrorMessage } from '@/lib/date-rules';
 import { getSASTToday } from '@/lib/format';
 import { postExpenseJournalEntry, voidExpenseJournalEntries, updateExpenseJournalEntry } from '@/lib/accounting/posting';
+import { getSessionOrRedirect } from '@/lib/auth';
 
 const ExpenseSchema = z.object({
   date: z.string().min(1),
@@ -64,6 +65,7 @@ async function handleReceiptUpload(file: File | null): Promise<{ url?: string; f
 
 export async function createExpense(formData: FormData): Promise<{ error?: string }> {
   try {
+    await getSessionOrRedirect();
     const raw = Object.fromEntries(formData);
     const result = ExpenseSchema.safeParse(raw);
     if (!result.success) {
@@ -126,6 +128,7 @@ export async function createExpense(formData: FormData): Promise<{ error?: strin
 
 export async function updateExpense(id: string, formData: FormData): Promise<{ error?: string }> {
   try {
+    await getSessionOrRedirect();
     const raw = Object.fromEntries(formData);
     const result = ExpenseSchema.safeParse(raw);
     if (!result.success) {
@@ -191,6 +194,7 @@ export async function updateExpense(id: string, formData: FormData): Promise<{ e
 
 export async function deleteExpense(id: string): Promise<{ error?: string }> {
   try {
+    await getSessionOrRedirect();
     const existing = await getExpenseById(id);
     if (!existing) return { error: 'Record not found.' };
 
@@ -216,6 +220,7 @@ export async function deleteExpense(id: string): Promise<{ error?: string }> {
 }
 
 export async function fetchExpensesByMonth(year: number, month: number, divisionId?: string, category?: string) {
+  await getSessionOrRedirect();
   const { getAllExpenses } = await import('@pmg/db');
   const expensesResult = await getAllExpenses(
     { month: `${year}-${month.toString().padStart(2, '0')}`, divisionId, category },
@@ -225,6 +230,7 @@ export async function fetchExpensesByMonth(year: number, month: number, division
 }
 
 export async function fetchExpensesByYear(year: number, divisionId?: string, category?: string) {
+  await getSessionOrRedirect();
   const { getAllExpenses } = await import('@pmg/db');
   const expensesResult = await getAllExpenses(
     { year, divisionId, category },
