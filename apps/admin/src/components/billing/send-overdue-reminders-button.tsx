@@ -91,6 +91,7 @@ export function SendOverdueRemindersButton({
   const [activeKey, setActiveKey] = React.useState<string | null>(null);
   const [query, setQuery] = React.useState('');
   const [sortDirection, setSortDirection] = React.useState<'desc' | 'asc'>('desc');
+  const [tabFilter, setTabFilter] = React.useState<'all' | 'ad_hoc' | 'retainer'>('ad_hoc');
   const [selected, setSelected] = React.useState<Record<string, boolean>>({});
   const [configs, setConfigs] = React.useState<Record<string, ReminderConfig>>({});
   const [statuses, setStatuses] = React.useState<Record<string, SendStatus>>({});
@@ -107,28 +108,30 @@ export function SendOverdueRemindersButton({
 
   const filteredItems = React.useMemo(() => {
     const needle = query.trim().toLowerCase();
-    const filtered = needle
-      ? items.filter((item) => {
-          const haystack = [
-            clientLabel(item),
-            item.email ?? '',
-            item.divisionName,
-            item.headlineDocumentNumber,
-            String(item.invoiceCount),
-            String(item.outstandingBalance),
-          ]
-            .join(' ')
-            .toLowerCase();
-          return haystack.includes(needle);
-        })
-      : items;
+    const filtered = items.filter((item) => {
+      if (tabFilter === 'ad_hoc' && item.isRetainer) return false;
+      if (tabFilter === 'retainer' && !item.isRetainer) return false;
+
+      if (!needle) return true;
+      const haystack = [
+        clientLabel(item),
+        item.email ?? '',
+        item.divisionName,
+        item.headlineDocumentNumber,
+        String(item.invoiceCount),
+        String(item.outstandingBalance),
+      ]
+        .join(' ')
+        .toLowerCase();
+      return haystack.includes(needle);
+    });
 
     return [...filtered].sort((a, b) =>
       sortDirection === 'desc'
         ? b.outstandingBalance - a.outstandingBalance
         : a.outstandingBalance - b.outstandingBalance,
     );
-  }, [items, query, sortDirection]);
+  }, [items, query, sortDirection, tabFilter]);
 
   const selectedItems = React.useMemo(
     () => items.filter((item) => selected[item.reminderKey]),
@@ -149,8 +152,11 @@ export function SendOverdueRemindersButton({
       const data = result.data;
       setItems(data);
       setActiveKey(data[0]?.reminderKey ?? null);
+      // By default, select ad-hoc clients so retainers are not mass-messaged outside their 26th monthly statement cycle
       setSelected(
-        Object.fromEntries(result.data.map((item) => [item.reminderKey, Boolean(item.email)])),
+        Object.fromEntries(
+          result.data.map((item) => [item.reminderKey, Boolean(item.email) && !item.isRetainer]),
+        ),
       );
       setConfigs(
         Object.fromEntries(
@@ -360,12 +366,49 @@ export function SendOverdueRemindersButton({
         <div className="grid min-h-[680px] grid-cols-1 overflow-hidden lg:grid-cols-[340px_1fr] xl:grid-cols-[340px_minmax(320px,380px)_minmax(600px,1fr)]">
           <div className="flex min-h-0 flex-col border-b lg:border-r lg:border-b-0">
             <div className="space-y-3 border-b p-4">
+              {/* Category Segment Tabs */}
+              <div className="flex rounded-lg bg-muted p-1 text-xs">
+                <button
+                  type="button"
+                  onClick={() => setTabFilter('ad_hoc')}
+                  className={`flex-1 rounded-md py-1 px-2 font-medium transition ${
+                    tabFilter === 'ad_hoc'
+                      ? 'bg-background shadow-xs text-foreground font-semibold'
+                      : 'text-muted-foreground hover:text-foreground'
+                  }`}
+                >
+                  Ad-Hoc ({items.filter((i) => !i.isRetainer).length})
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setTabFilter('retainer')}
+                  className={`flex-1 rounded-md py-1 px-2 font-medium transition ${
+                    tabFilter === 'retainer'
+                      ? 'bg-background shadow-xs text-foreground font-semibold'
+                      : 'text-muted-foreground hover:text-foreground'
+                  }`}
+                >
+                  Retainers ({items.filter((i) => i.isRetainer).length})
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setTabFilter('all')}
+                  className={`flex-1 rounded-md py-1 px-2 font-medium transition ${
+                    tabFilter === 'all'
+                      ? 'bg-background shadow-xs text-foreground font-semibold'
+                      : 'text-muted-foreground hover:text-foreground'
+                  }`}
+                >
+                  All ({items.length})
+                </button>
+              </div>
+
               <div className="relative">
                 <Search className="pointer-events-none absolute top-1/2 left-2.5 size-4 -translate-y-1/2 text-muted-foreground" />
                 <Input
                   value={query}
                   onChange={(event) => setQuery(event.target.value)}
-                  placeholder="Search clients"
+                  placeholder="Search clients..."
                   className="pl-8"
                 />
               </div>
@@ -401,8 +444,10 @@ export function SendOverdueRemindersButton({
                   Loading overdue clients...
                 </div>
               ) : filteredItems.length === 0 ? (
-                <div className="p-6 text-sm text-muted-foreground">
-                  No overdue reminder candidates found.
+                <div className="p-6 text-sm text-muted-foreground text-center">
+                  No{' '}
+                  {tabFilter === 'ad_hoc' ? 'ad-hoc ' : tabFilter === 'retainer' ? 'retainer ' : ''}
+                  overdue clients found.
                 </div>
               ) : (
                 <div className="divide-y">
@@ -415,7 +460,7 @@ export function SendOverdueRemindersButton({
                       <div
                         key={item.reminderKey}
                         onClick={() => setActiveKey(item.reminderKey)}
-                        className={`w-full px-4 py-3 text-left transition hover:bg-muted/60 ${
+                        className={`w-full px-4 py-3 text-left transition cursor-pointer hover:bg-muted/60 ${
                           isActive ? 'bg-muted' : ''
                         }`}
                       >
@@ -434,7 +479,17 @@ export function SendOverdueRemindersButton({
                           </span>
                           <div className="min-w-0 flex-1">
                             <div className="flex items-start justify-between gap-2">
-                              <p className="truncate text-sm font-medium">{clientLabel(item)}</p>
+                              <div className="flex items-center gap-1.5 min-w-0">
+                                <p className="truncate text-sm font-medium">{clientLabel(item)}</p>
+                                {item.isRetainer && (
+                                  <Badge
+                                    variant="outline"
+                                    className="text-[10px] bg-purple-50 text-purple-700 border-purple-200 py-0 px-1 shrink-0"
+                                  >
+                                    Retainer
+                                  </Badge>
+                                )}
+                              </div>
                               <StatusBadge status={statuses[item.reminderKey] ?? 'idle'} />
                             </div>
                             <p className="mt-0.5 truncate text-xs text-muted-foreground">
@@ -478,12 +533,32 @@ export function SendOverdueRemindersButton({
                 <div>
                   <div className="flex items-start justify-between gap-3">
                     <div>
-                      <h3 className="text-base font-semibold">{clientLabel(activeItem)}</h3>
+                      <div className="flex items-center gap-2">
+                        <h3 className="text-base font-semibold">{clientLabel(activeItem)}</h3>
+                        {activeItem.isRetainer && (
+                          <Badge
+                            variant="outline"
+                            className="text-[10px] bg-purple-50 text-purple-700 border-purple-200"
+                          >
+                            Retainer Client
+                          </Badge>
+                        )}
+                      </div>
                       <p className="text-sm text-muted-foreground">{activeItem.divisionName}</p>
                     </div>
                     <Badge variant="outline">{formatMoney(activeItem.outstandingBalance)}</Badge>
                   </div>
                 </div>
+
+                {activeItem.isRetainer && (
+                  <div className="p-3 rounded-md bg-purple-50 border border-purple-200 text-purple-900 text-xs flex flex-col gap-0.5">
+                    <span className="font-semibold">💡 Retainer Account Notice</span>
+                    <span className="text-purple-700 leading-relaxed">
+                      This client is on a monthly retainer statement schedule (26th of the month).
+                      Only send ad-hoc notices if following up on overdue prior balances.
+                    </span>
+                  </div>
+                )}
 
                 <div className="space-y-2">
                   <label className="text-sm font-medium" htmlFor="reminder-recipient">

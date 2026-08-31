@@ -18,6 +18,12 @@ export const clients = pgTable(
     isRetainer: boolean('is_retainer').notNull().default(false),
     excludeFromAutoStatements: boolean('exclude_from_auto_statements').notNull().default(false),
     userId: text('user_id').references(() => user.id, { onDelete: 'set null' }),
+    registrationNumber: text('registration_number'),
+    website: text('website'),
+    billingAddress: text('billing_address'),
+    city: text('city'),
+    postalCode: text('postal_code'),
+    province: text('province'),
     createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
     // updatedAt is managed by the application layer on update. Any database-level operation
     // that bypasses the application (direct SQL fixes, migrations, external services) will

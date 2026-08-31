@@ -9,6 +9,9 @@ export type StatementDeliveryEmailProps = {
   statementDate: string;
   period: string;
   totalAmountDue: string;
+  openingBalance?: string;
+  currentCharges?: string;
+  paymentsReceived?: string;
   invoicesList?: Array<{
     documentNumber: string;
     invoiceDate: string;
@@ -30,6 +33,9 @@ const StatementDeliveryEmail = (props: StatementDeliveryEmailProps) => {
     statementDate,
     period,
     totalAmountDue,
+    openingBalance,
+    currentCharges,
+    paymentsReceived,
     invoicesList,
     personalMessage,
     portalUrl,
@@ -96,6 +102,24 @@ const StatementDeliveryEmail = (props: StatementDeliveryEmailProps) => {
               <td className="py-2 text-[#64748B]">Period:</td>
               <td className="py-2 text-[#020304] text-right">{period}</td>
             </tr>
+            {openingBalance && (
+              <tr className="border-b border-solid border-[#F1F5F9]">
+                <td className="py-2 text-[#64748B]">Carried Forward Balance:</td>
+                <td className="py-2 text-[#020304] text-right font-medium">{openingBalance}</td>
+              </tr>
+            )}
+            {currentCharges && (
+              <tr className="border-b border-solid border-[#F1F5F9]">
+                <td className="py-2 text-[#64748B]">Current Month Invoices:</td>
+                <td className="py-2 text-[#020304] text-right font-medium">{currentCharges}</td>
+              </tr>
+            )}
+            {paymentsReceived && (
+              <tr className="border-b border-solid border-[#F1F5F9]">
+                <td className="py-2 text-[#64748B]">Payments Received:</td>
+                <td className="py-2 text-[#10B981] text-right font-medium">-{paymentsReceived}</td>
+              </tr>
+            )}
             <tr>
               <td className="py-2 font-bold text-[#020304]">Total Balance Due:</td>
               <td className="py-2 text-[16px] font-bold text-brand text-right">{totalAmountDue}</td>

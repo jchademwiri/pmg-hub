@@ -130,13 +130,27 @@ export function getSASTToday(): string {
  * Returns date formatted as YYYY-MM-DD.
  */
 export function getEndOfMonth(dateStr?: string | Date | null): string {
-  const d = !dateStr
-    ? new Date()
-    : typeof dateStr === 'string'
-      ? dateStr.length === 10
-        ? new Date(dateStr + 'T00:00:00')
-        : new Date(dateStr)
-      : dateStr;
+  if (!dateStr) {
+    const { year, month } = getSASTParts();
+    const lastDay = new Date(Date.UTC(year, month + 1, 0));
+    const yyyy = lastDay.getUTCFullYear();
+    const mm = String(lastDay.getUTCMonth() + 1).padStart(2, '0');
+    const dd = String(lastDay.getUTCDate()).padStart(2, '0');
+    return `${yyyy}-${mm}-${dd}`;
+  }
+
+  if (typeof dateStr === 'string' && /^\d{4}-\d{2}(-\d{2})?$/.test(dateStr)) {
+    const [yStr, mStr] = dateStr.split('-');
+    const y = parseInt(yStr!, 10);
+    const m = parseInt(mStr!, 10);
+    const lastDay = new Date(Date.UTC(y, m, 0));
+    const yyyy = lastDay.getUTCFullYear();
+    const mm = String(lastDay.getUTCMonth() + 1).padStart(2, '0');
+    const dd = String(lastDay.getUTCDate()).padStart(2, '0');
+    return `${yyyy}-${mm}-${dd}`;
+  }
+
+  const d = typeof dateStr === 'string' ? new Date(dateStr) : dateStr;
   const year = d.getFullYear();
   const month = d.getMonth();
   const lastDay = new Date(year, month + 1, 0);
