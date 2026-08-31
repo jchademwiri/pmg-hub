@@ -29,10 +29,7 @@ interface ShareOnboardingLinkDialogProps {
   trigger?: React.ReactNode;
 }
 
-const DIVISION_CONFIG: Record<
-  string,
-  { name: string; url: string; defaultPhone: string }
-> = {
+const DIVISION_CONFIG: Record<string, { name: string; url: string; defaultPhone: string }> = {
   pmg: {
     name: 'Playhouse Media Group',
     url: 'https://playhousemedia.co.za/onboard',

@@ -218,9 +218,8 @@ export const server = {
 
       if (brand.apiKey) {
         const resendConfig = toResendConfig(brand);
-        const { AdminOnboardingNotificationEmail, ClientOnboardingConfirmationEmail } = await import(
-          '@pmg/emails'
-        );
+        const { AdminOnboardingNotificationEmail, ClientOnboardingConfirmationEmail } =
+          await import('@pmg/emails');
 
         try {
           // 1. Admin Alert

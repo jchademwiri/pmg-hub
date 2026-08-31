@@ -360,14 +360,18 @@ export const server = {
 
           dbSaved = true;
         } catch (dbErr) {
-          console.error("[submitOnboarding] Database persistence failed:", dbErr);
+          console.error(
+            "[submitOnboarding] Database persistence failed:",
+            dbErr,
+          );
         }
 
         if (brand.apiKey) {
           const resendConfig = toResendConfig(brand);
-          const { AdminOnboardingNotificationEmail, ClientOnboardingConfirmationEmail } = await import(
-            "@pmg/emails"
-          );
+          const {
+            AdminOnboardingNotificationEmail,
+            ClientOnboardingConfirmationEmail,
+          } = await import("@pmg/emails");
 
           try {
             // 1. Admin Alert
@@ -383,7 +387,8 @@ export const server = {
                 registrationNumber: input.registrationNumber || undefined,
                 divisionName: "Apex Web Solutions",
                 notes: input.notes || undefined,
-                adminReviewUrl: "https://admin.playhousemedia.co.za/relationships/onboarding",
+                adminReviewUrl:
+                  "https://admin.playhousemedia.co.za/relationships/onboarding",
                 companyName: brand.companyName,
                 primaryColor: brand.primaryColor,
                 websiteUrl: brand.websiteUrl,
@@ -409,7 +414,10 @@ export const server = {
               }),
             });
           } catch (emailErr) {
-            console.error("[submitOnboarding] Email dispatch failed:", emailErr);
+            console.error(
+              "[submitOnboarding] Email dispatch failed:",
+              emailErr,
+            );
           }
         }
 
