@@ -131,20 +131,21 @@ Follows the existing server action + form pattern (see `clients.ts` for referenc
 
 ### Form Fields
 
-| Field | Type | Required | Notes |
-|---|---|---|---|
-| Client Name | Text input | Yes | Auto-suggest from existing clients, with free-text fallback |
-| Tender Reference | Text input | Yes | Tender number or description |
-| Closing Date | Date picker | Yes | Must be in the future |
-| Estimated Effort | Number input (days) | Yes | Integer, > 0 |
-| Buffer Days | Number input (days) | No | Default 2 |
-| Start Date | Date picker (auto-calc) | Yes | Auto-calculated, editable |
-| Target Completion Date | Date (auto-calc, read-only) | — | Display-only: start + effort |
-| Priority | Select | No | Low / Normal / High / Urgent |
-| Division | Select | No | Defaults to Tender Edge Solutions |
-| Notes | Textarea | No | Free text |
+| Field                  | Type                        | Required | Notes                                                       |
+| ---------------------- | --------------------------- | -------- | ----------------------------------------------------------- |
+| Client Name            | Text input                  | Yes      | Auto-suggest from existing clients, with free-text fallback |
+| Tender Reference       | Text input                  | Yes      | Tender number or description                                |
+| Closing Date           | Date picker                 | Yes      | Must be in the future                                       |
+| Estimated Effort       | Number input (days)         | Yes      | Integer, > 0                                                |
+| Buffer Days            | Number input (days)         | No       | Default 2                                                   |
+| Start Date             | Date picker (auto-calc)     | Yes      | Auto-calculated, editable                                   |
+| Target Completion Date | Date (auto-calc, read-only) | —        | Display-only: start + effort                                |
+| Priority               | Select                      | No       | Low / Normal / High / Urgent                                |
+| Division               | Select                      | No       | Defaults to Tender Edge Solutions                           |
+| Notes                  | Textarea                    | No       | Free text                                                   |
 
 **Form behavior:**
+
 - When Closing Date, Effort, or Buffer changes → recalculate Start Date and Target Completion.
 - When Start Date changes manually → recalculate Target Completion only (buffer becomes implied).
 - If the calculated start date is in the past, show an inline warning "Recommended start date is in the past. Consider reducing buffer or effort."
@@ -156,40 +157,41 @@ Follows the existing server action + form pattern (see `clients.ts` for referenc
 
 All components should use the existing shadcn/ui set:
 
-| Need | Component |
-|---|---|
-| Data table | `@/components/ui/table` with sortable headers |
-| Cards | `@/components/ui/card` (size="sm" for compact cards) |
-| Buttons | `@/components/ui/button` (variants: default, outline, ghost, destructive) |
-| Badges | `@/components/ui/badge` (for status and risk indicators) |
-| Forms | `@/components/ui/form` with shadcn form patterns |
-| Dialogs | `@/components/ui/dialog` for create/edit |
-| Select | `@/components/ui/select` |
-| Date picker | `@/components/ui/date-picker` (or `input type="date"`) |
-| Sonner toast | for success/error notifications |
-| Confirm dialog | `@/components/ui/confirm-dialog` for destructive actions |
+| Need           | Component                                                                 |
+| -------------- | ------------------------------------------------------------------------- |
+| Data table     | `@/components/ui/table` with sortable headers                             |
+| Cards          | `@/components/ui/card` (size="sm" for compact cards)                      |
+| Buttons        | `@/components/ui/button` (variants: default, outline, ghost, destructive) |
+| Badges         | `@/components/ui/badge` (for status and risk indicators)                  |
+| Forms          | `@/components/ui/form` with shadcn form patterns                          |
+| Dialogs        | `@/components/ui/dialog` for create/edit                                  |
+| Select         | `@/components/ui/select`                                                  |
+| Date picker    | `@/components/ui/date-picker` (or `input type="date"`)                    |
+| Sonner toast   | for success/error notifications                                           |
+| Confirm dialog | `@/components/ui/confirm-dialog` for destructive actions                  |
 
 ## Color Coding & Status Indicators
 
 Following the existing PMG Hub conventions:
 
-| Status | Badge Variant | Icon |
-|---|---|---|
-| Planned | `secondary` | `Calendar` |
-| In Progress | `default` | `Play` |
-| Completed | `outline` (green text) | `Check` |
-| Submitted | `outline` (green with check) | `CheckCheck` |
-| Cancelled | `destructive` (muted) | `X` |
+| Status      | Badge Variant                | Icon         |
+| ----------- | ---------------------------- | ------------ |
+| Planned     | `secondary`                  | `Calendar`   |
+| In Progress | `default`                    | `Play`       |
+| Completed   | `outline` (green text)       | `Check`      |
+| Submitted   | `outline` (green with check) | `CheckCheck` |
+| Cancelled   | `destructive` (muted)        | `X`          |
 
-| Risk Level | Variant | Visual |
-|---|---|---|
-| On Track | — | Green dot or text |
-| At Risk | Warning/Amber | Amber badge |
-| Overdue | Destructive/Red | Red badge |
+| Risk Level | Variant         | Visual            |
+| ---------- | --------------- | ----------------- |
+| On Track   | —               | Green dot or text |
+| At Risk    | Warning/Amber   | Amber badge       |
+| Overdue    | Destructive/Red | Red badge         |
 
 ## Empty States
 
 ### No tenders at all
+
 ```
 ┌─────────────────────────────────────────────┐
 │  📋 No tenders scheduled yet                 │
@@ -199,6 +201,7 @@ Following the existing PMG Hub conventions:
 ```
 
 ### Nothing in progress
+
 ```
 ┌─────────────────────────────────────────────┐
 │  💤 Nothing in progress                      │
@@ -208,6 +211,7 @@ Following the existing PMG Hub conventions:
 ```
 
 ### No planned tenders (queue empty)
+
 ```
 No upcoming tenders. Add a new tender to build your queue.
 ```
@@ -215,25 +219,29 @@ No upcoming tenders. Add a new tender to build your queue.
 ## Warning / Overdue States
 
 ### Start Overdue Warning
+
 ```tsx
 <Badge variant="warning">Start overdue by 2 days</Badge>
 ```
 
 ### Tight Buffer Warning
+
 ```tsx
 <Badge variant="warning">Buffer: 1 day — tight</Badge>
 ```
 
 ### Overdue Warning
+
 ```tsx
 <Badge variant="destructive">Overdue by 3 days</Badge>
 ```
 
 ### WIP Overlap Warning
+
 ```tsx
 <Alert variant="warning">
-  ⚠️ "DEF Corp" and "JKL Tenders" have overlapping schedules.
-  Consider delaying one or reducing scope.
+  ⚠️ "DEF Corp" and "JKL Tenders" have overlapping schedules. Consider delaying one or reducing
+  scope.
 </Alert>
 ```
 

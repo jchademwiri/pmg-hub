@@ -6,15 +6,15 @@ The Settings section lives at `/settings` and is split into sub-pages. Each sub-
 
 ## Route Map
 
-| Route | Page | Status |
-|---|---|---|
-| `/settings` | Settings index - nav card grid | ✅ Active |
-| `/settings/organisation` | Company details for all documents | ✅ Shell - wire up save |
-| `/settings/billing` | Billing defaults per division | ✅ Active - wired to `getAllDivisions()` |
-| `/settings/users` | Team members, roles, invitations | ✅ Active - fully working |
-| `/settings/users/invite` | Invite user form | ✅ Active |
-| `/settings/security` | Password, 2FA, sessions, audit log | 🔜 Soon |
-| `/settings/data` | Exports, retention, danger zone | 🔜 Soon |
+| Route                    | Page                               | Status                                   |
+| ------------------------ | ---------------------------------- | ---------------------------------------- |
+| `/settings`              | Settings index - nav card grid     | ✅ Active                                |
+| `/settings/organisation` | Company details for all documents  | ✅ Shell - wire up save                  |
+| `/settings/billing`      | Billing defaults per division      | ✅ Active - wired to `getAllDivisions()` |
+| `/settings/users`        | Team members, roles, invitations   | ✅ Active - fully working                |
+| `/settings/users/invite` | Invite user form                   | ✅ Active                                |
+| `/settings/security`     | Password, 2FA, sessions, audit log | 🔜 Soon                                  |
+| `/settings/data`         | Exports, retention, danger zone    | 🔜 Soon                                  |
 
 ---
 
@@ -26,13 +26,13 @@ Renders a 2-column grid of clickable nav cards, one per section. Each card shows
 
 **Sections in order:**
 
-| Section | Icon | Badge |
-|---|---|---|
-| Organisation | Building2 | - |
-| Billing & Invoicing | Receipt | - |
-| Users | Users | - |
-| Security | Shield | Soon |
-| Data & Exports | Database | Soon |
+| Section             | Icon      | Badge |
+| ------------------- | --------- | ----- |
+| Organisation        | Building2 | -     |
+| Billing & Invoicing | Receipt   | -     |
+| Users               | Users     | -     |
+| Security            | Shield    | Soon  |
+| Data & Exports      | Database  | Soon  |
 
 ---
 
@@ -45,16 +45,19 @@ Manages company-wide identity used across all documents (invoices, quotes, state
 **Sections:**
 
 ### Company Identity
+
 - Company Name (defaults to "PMG" in shell)
 - Registration Number
 - VAT Number
 
 ### Contact Details
+
 - Email
 - Phone
 - Website
 
 ### Address
+
 - Street Address
 - City
 - Postal Code
@@ -62,6 +65,7 @@ Manages company-wide identity used across all documents (invoices, quotes, state
 - Country (default: South Africa)
 
 ### Logo
+
 - Upload PNG or SVG, max 2 MB
 - Displayed on all documents. Division logos in `/settings/billing` override this per division.
 
@@ -72,6 +76,7 @@ Manages company-wide identity used across all documents (invoices, quotes, state
 ## `/settings/billing`
 
 **Files:**
+
 - `src/app/(admin)/settings/billing/page.tsx` ✅ Active - server component, `export const dynamic = 'force-dynamic'`
 - `src/app/(admin)/settings/billing/billing-settings-client.tsx` ✅ Active - client component, manages tab state
 
@@ -83,10 +88,14 @@ Invoice and quote prefixes are auto-derived from the division name using `divisi
 
 ```typescript
 function divisionPrefix(name: string): string {
-  const firstWord = name.trim().split(/\s+/)[0]
-  if (/^[A-Z]{2,5}$/.test(firstWord)) return firstWord   // "AWS Solutions" → "AWS"
-  return name.trim().split(/\s+/).slice(0, 3)
-    .map((w) => w[0].toUpperCase()).join('')               // "Tender Edge" → "TE"
+  const firstWord = name.trim().split(/\s+/)[0];
+  if (/^[A-Z]{2,5}$/.test(firstWord)) return firstWord; // "AWS Solutions" → "AWS"
+  return name
+    .trim()
+    .split(/\s+/)
+    .slice(0, 3)
+    .map((w) => w[0].toUpperCase())
+    .join(''); // "Tender Edge" → "TE"
 }
 ```
 
@@ -97,21 +106,25 @@ This produces prefixes like `APX-INV-`, `APX-QTE-`, with document numbers format
 ### Sections (per division)
 
 **Document Numbering**
+
 - Invoice Prefix - derived, read-only (e.g. `APX-INV-`)
 - Next Invoice Number - shows current sequence, editable for initial setup
 - Quote Prefix - derived, read-only (e.g. `APX-QTE-`)
 - Next Quote Number - shows current sequence, editable for initial setup
 
 **Tax & Payment**
+
 - Default VAT Rate - default 15%
 - Default Payment Terms - default 30 days
 - Currency - ZAR (read-only in v1)
 
 **Logo**
+
 - Division-specific logo (overrides the org logo for documents from this division)
 - Upload PNG or SVG, max 2 MB
 
 **Banking Details**
+
 - Bank Name
 - Account Name
 - Account Number
@@ -120,6 +133,7 @@ This produces prefixes like `APX-INV-`, `APX-QTE-`, with document numbers format
 Printed on invoices and statements so clients know where to pay. These fields populate the `banking` prop on `DocumentPreview`.
 
 **Default Notes**
+
 - Invoice Notes - pre-filled on new invoices for this division
 - Quote Notes / Terms - pre-filled on new quotes
 
@@ -130,6 +144,7 @@ All Save buttons are currently disabled. When wiring up: add a `division_billing
 ## `/settings/users`
 
 **Files:**
+
 - `src/app/(admin)/settings/users/page.tsx` ✅ Active - fully working server component
 - `src/app/(admin)/settings/users/invite/page.tsx` ✅ Active
 
@@ -139,13 +154,13 @@ Fetches users and pending invitations directly via raw SQL (Better Auth manages 
 
 ### Team Members Table
 
-| Column | Notes |
-|---|---|
-| Name | User's display name |
-| Email | Login email |
-| Role | `super_admin`, `admin`, or `viewer` |
-| Status | Active / Invited / Suspended |
-| Actions | Change role, Revoke, Delete |
+| Column  | Notes                               |
+| ------- | ----------------------------------- |
+| Name    | User's display name                 |
+| Email   | Login email                         |
+| Role    | `super_admin`, `admin`, or `viewer` |
+| Status  | Active / Invited / Suspended        |
+| Actions | Change role, Revoke, Delete         |
 
 ### Pending Invitations Table
 
@@ -155,19 +170,19 @@ Shows pending (not yet accepted) invitation rows. Actions: Resend, Delete.
 
 Roles are fixed - not custom. Permission matrix:
 
-| Area | super_admin | admin | viewer |
-|---|:---:|:---:|:---:|
-| View dashboard & reports | ✅ | ✅ | ✅ |
-| View all billing documents | ✅ | ✅ | ✅ |
-| Create / edit invoices & quotes | ✅ | ✅ | ❌ |
-| Mark invoice paid | ✅ | ✅ | ❌ |
-| Create / edit expenses & income | ✅ | ✅ | ❌ |
-| Manage clients & leads | ✅ | ✅ | ❌ |
-| Manage items catalogue | ✅ | ✅ | ❌ |
-| View settings | ✅ | ✅ | ❌ |
-| Change settings | ✅ | ✅ | ❌ |
-| Manage users | ✅ | ❌ | ❌ |
-| Danger zone actions | ✅ | ❌ | ❌ |
+| Area                            | super_admin | admin | viewer |
+| ------------------------------- | :---------: | :---: | :----: |
+| View dashboard & reports        |     ✅      |  ✅   |   ✅   |
+| View all billing documents      |     ✅      |  ✅   |   ✅   |
+| Create / edit invoices & quotes |     ✅      |  ✅   |   ❌   |
+| Mark invoice paid               |     ✅      |  ✅   |   ❌   |
+| Create / edit expenses & income |     ✅      |  ✅   |   ❌   |
+| Manage clients & leads          |     ✅      |  ✅   |   ❌   |
+| Manage items catalogue          |     ✅      |  ✅   |   ❌   |
+| View settings                   |     ✅      |  ✅   |   ❌   |
+| Change settings                 |     ✅      |  ✅   |   ❌   |
+| Manage users                    |     ✅      |  ❌   |   ❌   |
+| Danger zone actions             |     ✅      |  ❌   |   ❌   |
 
 ### Invite User Form
 
@@ -204,12 +219,12 @@ Handles data exports, retention policies, and destructive operations.
 
 ### Export Data
 
-| Export | Format |
-|---|---|
-| Income & Expenses | CSV |
-| Invoices | CSV |
-| Clients | CSV |
-| Full Data Export | JSON |
+| Export            | Format |
+| ----------------- | ------ |
+| Income & Expenses | CSV    |
+| Invoices          | CSV    |
+| Clients           | CSV    |
+| Full Data Export  | JSON   |
 
 Wire export buttons to server actions that return downloadable content (mirrors the existing `exportFinancialsCsv` action pattern).
 

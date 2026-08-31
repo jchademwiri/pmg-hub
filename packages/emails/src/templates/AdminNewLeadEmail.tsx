@@ -1,12 +1,7 @@
-import {
-  Heading,
-  Section,
-  Text,
-  Button,
-} from "@react-email/components";
-import * as React from "react";
-import type { BrandingProps } from "../types";
-import { EmailLayout } from "./EmailLayout";
+import { Heading, Section, Text, Button } from '@react-email/components';
+import * as React from 'react';
+import type { BrandingProps } from '../types';
+import { EmailLayout } from './EmailLayout';
 
 export type AdminNewLeadEmailProps = {
   name: string;
@@ -29,9 +24,9 @@ const AdminNewLeadEmail = (props: AdminNewLeadEmailProps) => {
     package_price,
     package_type,
     message,
-    companyName = "Playhouse Media Group",
-    primaryColor = "#1d4ed8",
-    websiteUrl = "https://playhousemedia.co.za",
+    companyName = 'Playhouse Media Group',
+    primaryColor = '#1d4ed8',
+    websiteUrl = 'https://playhousemedia.co.za',
     logoUrl,
   } = props;
 
@@ -68,14 +63,15 @@ const AdminNewLeadEmail = (props: AdminNewLeadEmailProps) => {
               <td className="py-2 text-[#64748B]">Price:</td>
               <td className="py-2 text-brand font-semibold text-right">{package_price}</td>
             </tr>
-            <tr className={message ? "border-b border-solid border-[#F1F5F9]" : ""}>
+            <tr className={message ? 'border-b border-solid border-[#F1F5F9]' : ''}>
               <td className="py-2 text-[#64748B]">Type:</td>
               <td className="py-2 text-[#020304] text-right">{package_type}</td>
             </tr>
             {message && (
               <tr>
                 <td colSpan={2} className="py-2 text-[#020304] leading-[20px] whitespace-pre-wrap">
-                  <strong>Message:</strong><br />
+                  <strong>Message:</strong>
+                  <br />
                   <span className="text-[#475569] italic">"{message}"</span>
                 </td>
               </tr>
@@ -105,14 +101,21 @@ const AdminNewLeadEmail = (props: AdminNewLeadEmailProps) => {
               <tr className="border-b border-solid border-[#F1F5F9]">
                 <td className="py-2 text-[#64748B]">Phone:</td>
                 <td className="py-2 text-[#020304] text-right">
-                  <a href={`tel:${phone}`} className="text-brand no-underline hover:underline font-mono">{phone}</a>
+                  <a
+                    href={`tel:${phone}`}
+                    className="text-brand no-underline hover:underline font-mono"
+                  >
+                    {phone}
+                  </a>
                 </td>
               </tr>
             )}
             <tr>
               <td className="py-2 text-[#64748B]">Email:</td>
               <td className="py-2 text-right">
-                <a href={`mailto:${email}`} className="text-brand no-underline hover:underline">{email}</a>
+                <a href={`mailto:${email}`} className="text-brand no-underline hover:underline">
+                  {email}
+                </a>
               </td>
             </tr>
           </tbody>
@@ -134,16 +137,16 @@ const AdminNewLeadEmail = (props: AdminNewLeadEmailProps) => {
 };
 
 AdminNewLeadEmail.PreviewProps = {
-  name: "Sipho Dlamini",
-  email: "sipho@example.co.za",
-  phone: "074 501 7094",
-  companyName_lead: "Basadipele Cleaning & Hygiene",
-  package_name: "Tender-Ready Starter",
-  package_price: "R2,500",
-  package_type: "TES Enquiry",
-  companyName: "Tender Edge Solutions",
-  primaryColor: "#c9a227",
-  websiteUrl: "https://www.tenderedgesolutions.co.za",
+  name: 'Sipho Dlamini',
+  email: 'sipho@example.co.za',
+  phone: '074 501 7094',
+  companyName_lead: 'Basadipele Cleaning & Hygiene',
+  package_name: 'Tender-Ready Starter',
+  package_price: 'R2,500',
+  package_type: 'TES Enquiry',
+  companyName: 'Tender Edge Solutions',
+  primaryColor: '#c9a227',
+  websiteUrl: 'https://www.tenderedgesolutions.co.za',
 };
 
 export default AdminNewLeadEmail;

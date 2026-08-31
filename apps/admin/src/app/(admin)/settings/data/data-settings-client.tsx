@@ -239,25 +239,34 @@ export function DatabaseBackupPanel({
                     onClick={() => setSelectedBackupKey(backup.key)}
                     aria-pressed={isSelected}
                     className={cn(
-                      "flex items-center justify-between gap-4 py-3 text-left text-sm transition-colors hover:text-foreground",
-                      isSelected ? "font-medium text-foreground bg-muted/40 px-2.5 -mx-2.5 rounded-md" : ""
+                      'flex items-center justify-between gap-4 py-3 text-left text-sm transition-colors hover:text-foreground',
+                      isSelected
+                        ? 'font-medium text-foreground bg-muted/40 px-2.5 -mx-2.5 rounded-md'
+                        : '',
                     )}
                   >
                     <div className="flex items-center gap-2 min-w-0 truncate">
                       <span className="truncate">{backup.key.replace(`${backupPrefix}/`, '')}</span>
                       {isLatest && (
-                        <Badge variant="default" className="text-[10px] px-1.5 py-0 font-semibold bg-emerald-600 hover:bg-emerald-600 text-white shrink-0">
+                        <Badge
+                          variant="default"
+                          className="text-[10px] px-1.5 py-0 font-semibold bg-emerald-600 hover:bg-emerald-600 text-white shrink-0"
+                        >
                           Latest
                         </Badge>
                       )}
                       {isSelected && (
-                        <Badge variant="secondary" className="text-[10px] px-1.5 py-0 font-normal shrink-0">
+                        <Badge
+                          variant="secondary"
+                          className="text-[10px] px-1.5 py-0 font-normal shrink-0"
+                        >
                           Selected
                         </Badge>
                       )}
                     </div>
                     <span className="shrink-0 text-xs text-muted-foreground">
-                      {new Date(backup.lastModified).toLocaleString()} · {formatBytes(backup.sizeBytes)}
+                      {new Date(backup.lastModified).toLocaleString()} ·{' '}
+                      {formatBytes(backup.sizeBytes)}
                     </span>
                   </button>
                 );
@@ -288,7 +297,10 @@ export function DatabaseBackupPanel({
                   Target Backup for Restore:
                 </span>
                 {selectedBackupKey === visibleBackups[0]?.key && (
-                  <Badge variant="outline" className="text-[10px] px-1.5 py-0 border-amber-500/40 bg-amber-500/20 font-semibold">
+                  <Badge
+                    variant="outline"
+                    className="text-[10px] px-1.5 py-0 border-amber-500/40 bg-amber-500/20 font-semibold"
+                  >
                     Latest
                   </Badge>
                 )}
@@ -357,4 +369,3 @@ export function DatabaseBackupPanel({
     </div>
   );
 }
-

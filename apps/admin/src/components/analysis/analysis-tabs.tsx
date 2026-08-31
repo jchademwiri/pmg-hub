@@ -12,7 +12,7 @@ export function AnalysisTabs({ defaultTab, children }: AnalysisTabsProps) {
   const router = useRouter();
   const pathname = usePathname();
   const searchParams = useSearchParams();
-  
+
   let currentTab = searchParams.get('tab') || defaultTab;
   if (currentTab === 'comparison') {
     currentTab = 'mom';

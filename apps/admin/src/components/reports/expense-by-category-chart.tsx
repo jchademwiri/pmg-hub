@@ -1,20 +1,23 @@
-'use client'
+'use client';
 
-import { BarChart, Bar, XAxis, YAxis, CartesianGrid } from 'recharts'
+import { BarChart, Bar, XAxis, YAxis, CartesianGrid } from 'recharts';
 import {
   ChartContainer,
   ChartTooltip,
   ChartTooltipContent,
   type ChartConfig,
-} from '@/components/ui/chart'
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
-import { formatZAR } from '@/lib/format'
+} from '@/components/ui/chart';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { formatZAR } from '@/lib/format';
 
 const config: ChartConfig = {
   total: { label: 'Total', color: 'var(--chart-3)' },
-}
+};
 
-type Props = { data: { category: string; total: number }[]; onBarClick?: (category: string) => void }
+type Props = {
+  data: { category: string; total: number }[];
+  onBarClick?: (category: string) => void;
+};
 
 export function ExpenseByCategoryChart({ data, onBarClick }: Props) {
   return (
@@ -43,11 +46,18 @@ export function ExpenseByCategoryChart({ data, onBarClick }: Props) {
               <ChartTooltip
                 content={<ChartTooltipContent formatter={(v) => formatZAR(Number(v))} />}
               />
-              <Bar dataKey="total" fill="var(--chart-3)" onClick={onBarClick ? (_data, index) => onBarClick(data[index]?.category ?? '') : undefined} className={onBarClick ? 'cursor-pointer' : undefined} />
+              <Bar
+                dataKey="total"
+                fill="var(--chart-3)"
+                onClick={
+                  onBarClick ? (_data, index) => onBarClick(data[index]?.category ?? '') : undefined
+                }
+                className={onBarClick ? 'cursor-pointer' : undefined}
+              />
             </BarChart>
           </ChartContainer>
         )}
       </CardContent>
     </Card>
-  )
+  );
 }

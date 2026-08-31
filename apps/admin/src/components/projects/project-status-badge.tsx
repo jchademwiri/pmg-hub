@@ -43,9 +43,7 @@ export const STATUS_TRANSITIONS: Record<string, { value: string; label: string }
     { value: 'planned', label: 'Re-plan' },
   ],
   submitted: [],
-  cancelled: [
-    { value: 'planned', label: 'Reinstate' },
-  ],
+  cancelled: [{ value: 'planned', label: 'Reinstate' }],
 };
 
 export function getNextStatuses(status: string) {

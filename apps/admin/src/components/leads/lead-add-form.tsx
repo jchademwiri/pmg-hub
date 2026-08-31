@@ -1,48 +1,48 @@
-'use client'
+'use client';
 
-import * as React from 'react'
-import { Alert, AlertDescription } from '@/components/ui/alert'
-import { Button } from '@/components/ui/button'
-import { Field, FieldLabel } from '@/components/ui/field'
-import { Input } from '@/components/ui/input'
+import * as React from 'react';
+import { Alert, AlertDescription } from '@/components/ui/alert';
+import { Button } from '@/components/ui/button';
+import { Field, FieldLabel } from '@/components/ui/field';
+import { Input } from '@/components/ui/input';
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from '@/components/ui/select'
-import { Textarea } from '@/components/ui/textarea'
+} from '@/components/ui/select';
+import { Textarea } from '@/components/ui/textarea';
 
 interface LeadAddFormProps {
-  divisions: { id: string; name: string }[]
-  createAction: (formData: FormData) => Promise<{ error?: string }>
-  onCancel?: () => void
+  divisions: { id: string; name: string }[];
+  createAction: (formData: FormData) => Promise<{ error?: string }>;
+  onCancel?: () => void;
 }
 
 export function LeadAddForm({ divisions, createAction, onCancel }: LeadAddFormProps) {
-  const formRef = React.useRef<HTMLFormElement>(null)
-  const [isPending, startTransition] = React.useTransition()
-  const [errorMessage, setErrorMessage] = React.useState<string | null>(null)
-  const [divisionId, setDivisionId] = React.useState<string>('')
+  const formRef = React.useRef<HTMLFormElement>(null);
+  const [isPending, startTransition] = React.useTransition();
+  const [errorMessage, setErrorMessage] = React.useState<string | null>(null);
+  const [divisionId, setDivisionId] = React.useState<string>('');
 
   function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
-    e.preventDefault()
-    setErrorMessage(null)
+    e.preventDefault();
+    setErrorMessage(null);
 
     startTransition(async () => {
-      const fd = new FormData(formRef.current!)
+      const fd = new FormData(formRef.current!);
       if (divisionId) {
-        fd.set('divisionId', divisionId)
+        fd.set('divisionId', divisionId);
       }
-      const result = await createAction(fd)
+      const result = await createAction(fd);
       if (result.error) {
-        setErrorMessage(result.error)
+        setErrorMessage(result.error);
       } else {
-        formRef.current?.reset()
-        setDivisionId('')
+        formRef.current?.reset();
+        setDivisionId('');
       }
-    })
+    });
   }
 
   return (
@@ -150,13 +150,7 @@ export function LeadAddForm({ divisions, createAction, onCancel }: LeadAddFormPr
 
       <div className="flex items-center justify-end gap-3 border-t border-border/50 pt-4 mt-2">
         {onCancel && (
-          <Button
-            type="button"
-            variant="outline"
-            onClick={onCancel}
-            disabled={isPending}
-            size="sm"
-          >
+          <Button type="button" variant="outline" onClick={onCancel} disabled={isPending} size="sm">
             Cancel
           </Button>
         )}
@@ -171,5 +165,5 @@ export function LeadAddForm({ divisions, createAction, onCancel }: LeadAddFormPr
         </Alert>
       )}
     </form>
-  )
+  );
 }

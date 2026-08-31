@@ -1,4 +1,4 @@
-import { Skeleton } from '@/components/ui/skeleton'
+import { Skeleton } from '@/components/ui/skeleton';
 
 export default function RelationshipsLoading() {
   return (
@@ -88,5 +88,5 @@ export default function RelationshipsLoading() {
         </div>
       </div>
     </div>
-  )
+  );
 }

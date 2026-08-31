@@ -42,12 +42,12 @@ This means the app should work as a manual internal bookkeeping system where the
 
 The app should still have internal accounting accounts such as:
 
-* `1001 - Business Bank Account`
-* `1002 - Cash on Hand`
-* `1100 - Accounts Receivable`
-* `3000 - Owner Equity / Retained Earnings`
-* `4000 - Sales / Service Revenue`
-* `5000+ - Expense Accounts`
+- `1001 - Business Bank Account`
+- `1002 - Cash on Hand`
+- `1100 - Accounts Receivable`
+- `3000 - Owner Equity / Retained Earnings`
+- `4000 - Sales / Service Revenue`
+- `5000+ - Expense Accounts`
 
 These are accounting accounts only. They are not linked to real bank APIs.
 
@@ -57,20 +57,20 @@ These are accounting accounts only. They are not linked to real bank APIs.
 
 For the MVP:
 
-* Do not require VAT support.
-* Do not create VAT Output or VAT Input journal entries.
-* Do not create VAT reports as an MVP requirement.
-* Do not treat PMG invoices as VAT tax invoices.
-* Disable VAT by default.
-* Add or verify a system setting such as `isVatRegistered: false`.
-* When `isVatRegistered` is false:
+- Do not require VAT support.
+- Do not create VAT Output or VAT Input journal entries.
+- Do not create VAT reports as an MVP requirement.
+- Do not treat PMG invoices as VAT tax invoices.
+- Disable VAT by default.
+- Add or verify a system setting such as `isVatRegistered: false`.
+- When `isVatRegistered` is false:
 
-  * VAT toggle should be hidden or disabled on invoices.
-  * VAT amount must always be `0`.
-  * VAT rate must be ignored.
-  * invoice PDFs must not show a VAT number.
-  * invoice PDFs must not say "Tax Invoice" unless PMG becomes VAT registered.
-  * invoice totals must be calculated without VAT.
+  - VAT toggle should be hidden or disabled on invoices.
+  - VAT amount must always be `0`.
+  - VAT rate must be ignored.
+  - invoice PDFs must not show a VAT number.
+  - invoice PDFs must not say "Tax Invoice" unless PMG becomes VAT registered.
+  - invoice totals must be calculated without VAT.
 
 Move VAT to a later phase called:
 
@@ -84,21 +84,21 @@ If existing VAT fields already exist in the codebase, keep them only as future-r
 
 For the MVP:
 
-* Do not build bank feed integration.
-* Do not build bank API connection.
-* Do not build automatic bank syncing.
-* Do not require imported bank statements.
-* Do not overbuild bank reconciliation.
+- Do not build bank feed integration.
+- Do not build bank API connection.
+- Do not build automatic bank syncing.
+- Do not require imported bank statements.
+- Do not overbuild bank reconciliation.
 
 Instead, build manual bank/cash tracking only.
 
 The user should manually record:
 
-* invoice payments received
-* other income received
-* expenses paid
-* owner withdrawals
-* transfers between internal cash/bank accounts if needed
+- invoice payments received
+- other income received
+- expenses paid
+- owner withdrawals
+- transfers between internal cash/bank accounts if needed
 
 The system should post these manual transactions to the General Ledger.
 
@@ -112,23 +112,23 @@ Use the document `PMG-Accounting-Research-Gap-Analysis.docx` as a starting point
 
 The document already identifies these major accounting concepts:
 
-* double-entry bookkeeping
-* Chart of Accounts
-* General Ledger
-* journal entries
-* journal lines
-* Accounts Receivable
-* Accounts Payable
-* Profit & Loss
-* Balance Sheet
-* Cash Flow Statement
-* Trial Balance
-* Aged Receivables
-* Aged Payables
-* financial period locking
-* VAT/tax handling
-* bank reconciliation
-* audit trail
+- double-entry bookkeeping
+- Chart of Accounts
+- General Ledger
+- journal entries
+- journal lines
+- Accounts Receivable
+- Accounts Payable
+- Profit & Loss
+- Balance Sheet
+- Cash Flow Statement
+- Trial Balance
+- Aged Receivables
+- Aged Payables
+- financial period locking
+- VAT/tax handling
+- bank reconciliation
+- audit trail
 
 Your task is to validate which of these are actually needed for PMG's revised MVP and which should be deferred.
 
@@ -149,14 +149,14 @@ Clearly separate:
 
 PMG Control Center is expected to use:
 
-* Next.js App Router
-* TypeScript
-* Drizzle ORM
-* PostgreSQL/Neon
-* Server Actions
-* shadcn/ui or similar UI patterns
-* Better Auth
-* existing modules for divisions, clients, income, expenses, leads, billing, invoices, quotes, payment allocations, snapshots, and ledger/allocation tracking
+- Next.js App Router
+- TypeScript
+- Drizzle ORM
+- PostgreSQL/Neon
+- Server Actions
+- shadcn/ui or similar UI patterns
+- Better Auth
+- existing modules for divisions, clients, income, expenses, leads, billing, invoices, quotes, payment allocations, snapshots, and ledger/allocation tracking
 
 Follow the existing codebase style.
 
@@ -176,26 +176,26 @@ Do a deep scan of the repo.
 
 Inspect at minimum:
 
-* `package.json`
-* workspace/monorepo config files
-* `packages/db/src/schema/*`
-* `packages/db/src/queries/*`
-* `packages/db/src/*`
-* `apps/admin/src/app/actions/*`
-* `apps/admin/src/app/(admin)/*`
-* `apps/admin/src/lib/financial.ts`
-* billing routes/pages/components
-* income routes/pages/actions
-* expense routes/pages/actions
-* dashboard/reporting routes
-* snapshot/month-locking logic
-* ledger/allocation logic
-* PDF/export logic if available
-* email/payment reminder logic if available
-* docs/specifications
-* docs/architecture
-* docs/audits
-* docs/implementation-plans
+- `package.json`
+- workspace/monorepo config files
+- `packages/db/src/schema/*`
+- `packages/db/src/queries/*`
+- `packages/db/src/*`
+- `apps/admin/src/app/actions/*`
+- `apps/admin/src/app/(admin)/*`
+- `apps/admin/src/lib/financial.ts`
+- billing routes/pages/components
+- income routes/pages/actions
+- expense routes/pages/actions
+- dashboard/reporting routes
+- snapshot/month-locking logic
+- ledger/allocation logic
+- PDF/export logic if available
+- email/payment reminder logic if available
+- docs/specifications
+- docs/architecture
+- docs/audits
+- docs/implementation-plans
 
 Do not only search filenames.
 
@@ -211,12 +211,12 @@ Research how common invoicing/accounting systems handle their minimum features.
 
 Look at systems such as:
 
-* QuickBooks
-* Xero
-* FreshBooks
-* Wave
-* Zoho Books
-* Sage
+- QuickBooks
+- Xero
+- FreshBooks
+- Wave
+- Zoho Books
+- Sage
 
 Focus only on what is relevant to PMG's revised MVP.
 
@@ -254,13 +254,13 @@ Create a concise summary explaining how modern invoicing/accounting systems work
 
 Include:
 
-* common invoice lifecycle
-* difference between quote, invoice, payment, income, journal entry, and ledger entry
-* difference between cash-basis and accrual-basis accounting
-* what reports can be built on cash-basis
-* what requires full double-entry accounting
-* what is needed for a practical non-VAT small business bookkeeping system
-* what PMG can safely defer
+- common invoice lifecycle
+- difference between quote, invoice, payment, income, journal entry, and ledger entry
+- difference between cash-basis and accrual-basis accounting
+- what reports can be built on cash-basis
+- what requires full double-entry accounting
+- what is needed for a practical non-VAT small business bookkeeping system
+- what PMG can safely defer
 
 Make the explanation practical and PMG-focused.
 
@@ -349,12 +349,12 @@ Create a detailed table with these columns:
 
 Use these statuses:
 
-* ✅ Good enough for MVP
-* 🟡 Partially implemented
-* 🔴 Missing / required
-* ⚪ Not required for MVP
-* 🔵 Future phase
-* 📄 Documented only, not implemented
+- ✅ Good enough for MVP
+- 🟡 Partially implemented
+- 🔴 Missing / required
+- ⚪ Not required for MVP
+- 🔵 Future phase
+- 📄 Documented only, not implemented
 
 Audit at least these areas:
 

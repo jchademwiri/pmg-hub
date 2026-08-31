@@ -25,10 +25,9 @@ Lead -> Client -> Quote -> Invoice -> Payment -> Reports
 
 ## Quick Reference
 
-| I want to... | Go to... |
-|-------------|----------|
-| View clients | Relationships -> Clients |
-| Add a potential client | Relationships -> Leads |
-| Track pipeline stage | Relationships -> Leads |
+| I want to...                  | Go to...                   |
+| ----------------------------- | -------------------------- |
+| View clients                  | Relationships -> Clients   |
+| Add a potential client        | Relationships -> Leads     |
+| Track pipeline stage          | Relationships -> Leads     |
 | Check business unit ownership | Relationships -> Divisions |
-

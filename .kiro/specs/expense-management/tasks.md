@@ -11,7 +11,7 @@ Implement full CRUD for business expenses, mirroring the Income Management patte
   - Verify `formatZAR` exists in the shared utils module (e.g. `@/lib/utils` or `@/lib/format`). If it does not already exist from Income Management, create it as:
     ```ts
     export const formatZAR = (amount: number) =>
-      new Intl.NumberFormat('en-ZA', { style: 'currency', currency: 'ZAR' }).format(amount)
+      new Intl.NumberFormat('en-ZA', { style: 'currency', currency: 'ZAR' }).format(amount);
     ```
   - _Required by tasks 4.3 and 5.1_
 

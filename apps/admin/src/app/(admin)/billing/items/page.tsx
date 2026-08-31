@@ -52,7 +52,9 @@ export default async function ItemsPage({ searchParams }: ItemsPageProps) {
             <Link
               href="/billing/items"
               className={`rounded-md px-3 py-1 text-xs font-medium transition-colors ${
-                !showArchived ? 'bg-foreground text-background' : 'text-muted-foreground hover:text-foreground'
+                !showArchived
+                  ? 'bg-foreground text-background'
+                  : 'text-muted-foreground hover:text-foreground'
               }`}
             >
               Active
@@ -60,7 +62,9 @@ export default async function ItemsPage({ searchParams }: ItemsPageProps) {
             <Link
               href="/billing/items?status=archived"
               className={`rounded-md px-3 py-1 text-xs font-medium transition-colors ${
-                showArchived ? 'bg-foreground text-background' : 'text-muted-foreground hover:text-foreground'
+                showArchived
+                  ? 'bg-foreground text-background'
+                  : 'text-muted-foreground hover:text-foreground'
               }`}
             >
               Archived

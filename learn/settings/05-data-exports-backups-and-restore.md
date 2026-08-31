@@ -4,10 +4,10 @@
 
 ## Exports vs Backups
 
-| Type | Purpose |
-|------|---------|
+| Type   | Purpose                                                       |
+| ------ | ------------------------------------------------------------- |
 | Export | Human-readable files for review, handover, or accountant work |
-| Backup | Recoverable database copy for disaster recovery |
+| Backup | Recoverable database copy for disaster recovery               |
 
 Exports are not restore files. Use a database backup when you need to restore the system.
 
@@ -49,10 +49,9 @@ Before restoring:
 
 ## Common Mistakes
 
-| Mistake | Risk |
-|---------|------|
-| Restoring the wrong file | Current data may be replaced with old data |
-| Restoring while users work | New work may be lost |
-| Keeping too many backups | Storage grows quickly |
-| Keeping too few backups | Fewer recovery options |
-
+| Mistake                    | Risk                                       |
+| -------------------------- | ------------------------------------------ |
+| Restoring the wrong file   | Current data may be replaced with old data |
+| Restoring while users work | New work may be lost                       |
+| Keeping too many backups   | Storage grows quickly                      |
+| Keeping too few backups    | Fewer recovery options                     |

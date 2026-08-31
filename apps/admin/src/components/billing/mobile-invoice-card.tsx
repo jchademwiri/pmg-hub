@@ -52,10 +52,18 @@ export function MobileInvoiceCard({ inv, handleIssue, handleVoid }: MobileInvoic
       {/* Background Action Indicators */}
       <div className="absolute inset-0 flex justify-between items-center px-4">
         <div className="flex items-center text-primary font-medium text-sm">
-          {canIssue && <><Send className="size-4 mr-2" /> Issue</>}
+          {canIssue && (
+            <>
+              <Send className="size-4 mr-2" /> Issue
+            </>
+          )}
         </div>
         <div className="flex items-center text-destructive font-medium text-sm">
-          {canVoid && <><Trash className="size-4 ml-2" /> Void</>}
+          {canVoid && (
+            <>
+              <Trash className="size-4 ml-2" /> Void
+            </>
+          )}
         </div>
       </div>
 
@@ -73,9 +81,11 @@ export function MobileInvoiceCard({ inv, handleIssue, handleVoid }: MobileInvoic
         />
         {(() => {
           const invTotal = Number(inv.total);
-          const invPaid = inv.status === 'paid' ? invTotal : Math.min(invTotal, Number(inv.allocatedAmount || 0));
+          const invPaid =
+            inv.status === 'paid' ? invTotal : Math.min(invTotal, Number(inv.allocatedAmount || 0));
           const invBalance = Math.max(0, invTotal - invPaid);
-          const showBreakdown = invPaid > 0 || inv.status === 'paid' || inv.status === 'partially_paid';
+          const showBreakdown =
+            invPaid > 0 || inv.status === 'paid' || inv.status === 'partially_paid';
 
           return (
             <>
@@ -92,7 +102,13 @@ export function MobileInvoiceCard({ inv, handleIssue, handleVoid }: MobileInvoic
               {showBreakdown && (
                 <div className="flex justify-between items-center text-xs border-t border-border/40 pt-1.5 mt-1">
                   <span className="text-emerald-600 font-medium">Paid: {formatZAR(invPaid)}</span>
-                  <span className={invBalance === 0 ? "text-emerald-600 font-medium" : "text-amber-600 font-semibold"}>
+                  <span
+                    className={
+                      invBalance === 0
+                        ? 'text-emerald-600 font-medium'
+                        : 'text-amber-600 font-semibold'
+                    }
+                  >
                     Bal: {formatZAR(invBalance)}
                   </span>
                 </div>
@@ -105,7 +121,12 @@ export function MobileInvoiceCard({ inv, handleIssue, handleVoid }: MobileInvoic
           <div className="relative z-10">
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
-                <Button variant="ghost" size="touch" className="h-8 w-8 min-h-0 min-w-0 p-0" title="Actions">
+                <Button
+                  variant="ghost"
+                  size="touch"
+                  className="h-8 w-8 min-h-0 min-w-0 p-0"
+                  title="Actions"
+                >
                   <MoreHorizontal className="size-4" />
                 </Button>
               </DropdownMenuTrigger>

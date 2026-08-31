@@ -1,23 +1,21 @@
-import { index, numeric, pgTable, text, timestamp, uuid } from "drizzle-orm/pg-core";
+import { index, numeric, pgTable, text, timestamp, uuid } from 'drizzle-orm/pg-core';
 
 export const snapshots = pgTable(
-  "snapshots",
+  'snapshots',
   {
-    id: uuid("id").primaryKey().defaultRandom(),
-    period: text("period").notNull().unique(),
-    revenue:    numeric("revenue",     { precision: 12, scale: 2 }).notNull(),
-    expenses:   numeric("expenses",    { precision: 12, scale: 2 }).notNull(),
-    pmgShare:   numeric("pmg_share",   { precision: 12, scale: 2 }).notNull(),
-    profitPool: numeric("profit_pool", { precision: 12, scale: 2 }).notNull(),
-    createdBy:  uuid("created_by"),
-    status:     text("status").notNull().default("locked"),
-    notes:      text("notes"),
-    closedAt:   timestamp("closed_at", { withTimezone: true }).defaultNow().notNull(),
-    createdAt:  timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
+    id: uuid('id').primaryKey().defaultRandom(),
+    period: text('period').notNull().unique(),
+    revenue: numeric('revenue', { precision: 12, scale: 2 }).notNull(),
+    expenses: numeric('expenses', { precision: 12, scale: 2 }).notNull(),
+    pmgShare: numeric('pmg_share', { precision: 12, scale: 2 }).notNull(),
+    profitPool: numeric('profit_pool', { precision: 12, scale: 2 }).notNull(),
+    createdBy: uuid('created_by'),
+    status: text('status').notNull().default('locked'),
+    notes: text('notes'),
+    closedAt: timestamp('closed_at', { withTimezone: true }).defaultNow().notNull(),
+    createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
   },
-  (t) => [
-    index("snapshots_period_idx").on(t.period),
-  ],
+  (t) => [index('snapshots_period_idx').on(t.period)],
 );
 
 export type Snapshot = typeof snapshots.$inferSelect;

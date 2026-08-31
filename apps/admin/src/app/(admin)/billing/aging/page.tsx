@@ -9,10 +9,7 @@ export const dynamic = 'force-dynamic';
 export const metadata: Metadata = { title: 'AR Aging Report' };
 
 export default async function ARAgingReportPage() {
-  const [clientAging, globalAging] = await Promise.all([
-    getClientAgingReport(),
-    getAgingReport(),
-  ]);
+  const [clientAging, globalAging] = await Promise.all([getClientAgingReport(), getAgingReport()]);
 
   const totalAR = clientAging.reduce((s, c) => s + c.totalOutstanding, 0);
 
@@ -35,4 +32,3 @@ export default async function ARAgingReportPage() {
     </div>
   );
 }
-

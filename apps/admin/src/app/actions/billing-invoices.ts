@@ -1112,6 +1112,7 @@ export async function fetchInvoicesByMonth(
   divisionId?: string,
   status?: string,
 ) {
+  await getSessionOrRedirect();
   const { getAllInvoices } = await import('@pmg/db');
 
   const result = await getAllInvoices(
@@ -1123,6 +1124,7 @@ export async function fetchInvoicesByMonth(
 }
 
 export async function fetchInvoicesByYear(year: number, divisionId?: string, status?: string) {
+  await getSessionOrRedirect();
   const { getAllInvoices } = await import('@pmg/db');
   return getAllInvoices({ year, divisionId, status }, { page: 1, pageSize: 5000 });
 }

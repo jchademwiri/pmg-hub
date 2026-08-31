@@ -23,10 +23,12 @@
 Make the client pages more useful for day-to-day billing work. The client list should help users find the right account quickly and understand account health before opening it. The client detail page should work as a compact client billing command center, with recent billing activity becoming a useful timeline rather than a hidden summary.
 
 **Primary pages:**
+
 - `/relationships/clients`
 - `/relationships/clients/[id]`
 
 **Current implementation anchors:**
+
 - `apps/admin/src/app/(admin)/relationships/clients/clients-client.tsx`
 - `apps/admin/src/components/clients/clients-table.tsx`
 - `apps/admin/src/app/(admin)/relationships/clients/[id]/client-billing-workspace.tsx`
@@ -42,6 +44,7 @@ Comparable accounting and CRM products treat a client/customer page as both a co
 Zoho Books connects customer setup with sales transactions, invoices, payments received, statements, payment terms, credit limits, contact persons, and related customer actions. Customers are not treated as just name/email rows — they are the entry point for billing workflows and transaction history.
 
 **Patterns to borrow for PMG Hub:**
+
 - Client records should expose billing context directly, not force users to jump between separate invoice, payment, and statement pages.
 - The client list should show account status and financial urgency, not only contact details.
 - The detail page should place the most common next actions near the account summary.
@@ -57,12 +60,14 @@ Zoho Books connects customer setup with sales transactions, invoices, payments r
 The current list page is simple and readable, but not yet useful enough for operational billing work.
 
 **Strengths:**
+
 - Clear page title and Add Client action.
 - Inline add form keeps users in context.
 - Active/disabled status is visible.
 - Delete action is protected when the client has income records.
 
 **Gaps:**
+
 - Rows navigate to `/clients/{id}` — the real route is `/relationships/clients/{id}`. **This is a live bug.**
 - No search, filtering, or sorting.
 - `Income Records` is a weak signal; it shows history exists but not whether action is needed.
@@ -75,12 +80,14 @@ The current list page is simple and readable, but not yet useful enough for oper
 The client detail page is much more capable. It already loads invoices, quotes, payments, statement data, document previews, and billing settings. The main opportunity is information hierarchy.
 
 **Strengths:**
+
 - Combines invoice, quote, payment, and statement workflows in one place.
 - Supports document preview modals.
 - Has useful financial metrics: total invoiced, total paid, outstanding, overdue, quote conversion, ageing, health, average days to pay, collection efficiency.
 - Supports tab-specific selections and URL-driven selection for invoices, quotes, and payments.
 
 **Gaps:**
+
 - The page feels like a document workspace before it feels like a client account overview.
 - Recent Billing Activity is hidden behind an accordion and limited to a flat latest-10 feed.
 - Activity rows are not actionable even though the page has preview state available.
@@ -108,12 +115,15 @@ These are defects, not enhancements. They should be fixed before any other work 
 **File:** `apps/admin/src/components/clients/clients-table.tsx`
 
 Change:
+
 ```ts
-router.push('/clients/' + client.id)
+router.push('/clients/' + client.id);
 ```
+
 To:
+
 ```ts
-router.push('/relationships/clients/' + client.id)
+router.push('/relationships/clients/' + client.id);
 ```
 
 ### 1.2 Fix Statement Dialog Double-Render
@@ -127,16 +137,17 @@ In the `<Dialog>` component, the statement `DocumentPreview` is rendered twice �
 **File:** `apps/admin/src/app/(admin)/relationships/clients/[id]/client-financial-dashboard.tsx`
 
 Change:
+
 ```ts
-const lastPayment = payments.length > 0
-  ? payments.sort((a, b) => b.date.localeCompare(a.date))[0]
-  : null;
+const lastPayment =
+  payments.length > 0 ? payments.sort((a, b) => b.date.localeCompare(a.date))[0] : null;
 ```
+
 To:
+
 ```ts
-const lastPayment = payments.length > 0
-  ? [...payments].sort((a, b) => b.date.localeCompare(a.date))[0]
-  : null;
+const lastPayment =
+  payments.length > 0 ? [...payments].sort((a, b) => b.date.localeCompare(a.date))[0] : null;
 ```
 
 ### 1.4 Add Client-Aware Action URLs
@@ -144,6 +155,7 @@ const lastPayment = payments.length > 0
 **File:** `apps/admin/src/app/(admin)/relationships/clients/[id]/client-billing-workspace.tsx`
 
 Update quick action links so they preselect the current client:
+
 ```ts
 /billing/invoices/new?clientId={client.id}
 /billing/quotes/new?clientId={client.id}
@@ -157,6 +169,7 @@ If quote creation does not yet support `clientId` as a query param, add that sup
 **File:** `apps/admin/src/app/(admin)/relationships/clients/[id]/client-financial-dashboard.tsx`
 
 Replace emoji markers (`📥`, `📄`, `📜`) with `lucide-react` icons. Use:
+
 - `FileText` for invoices
 - `ScrollText` or `FileSignature` for quotes
 - `CircleDollarSign` or `Receipt` for payments
@@ -168,6 +181,7 @@ Do not use emoji in production UI.
 **File:** `apps/admin/src/app/(admin)/relationships/clients/[id]/client-billing-workspace.tsx`
 
 Update tab labels:
+
 ```tsx
 <TabsTrigger value="invoices">Invoices ({invoices.length})</TabsTrigger>
 <TabsTrigger value="quotes">Quotations ({quotes.length})</TabsTrigger>
@@ -176,6 +190,7 @@ Update tab labels:
 ```
 
 **Phase 1 acceptance criteria:**
+
 - [ ] Rows in the client list navigate to `/relationships/clients/[id]`.
 - [ ] Statement dialog renders `DocumentPreview` exactly once.
 - [ ] Payment array is not mutated when finding the last payment.
@@ -192,12 +207,14 @@ Improve the client list page to be useful for operational billing work. All chan
 ### 2.1 Improve the Page Header
 
 Replace the minimal header with a compact operational header:
+
 - Title: `Clients`
 - Supporting copy: `Find clients, review billing health, and act on outstanding accounts.`
 - Primary action: `Add Client`
 - Secondary actions (placeholder, not wired): `Import`, `Export`
 
 Add summary chips below the header using existing loaded data:
+
 - `Total clients` — count of all clients
 - `Active` — count where `isActive === true`
 - `Disabled` — count where `isActive === false`
@@ -208,6 +225,7 @@ Add summary chips below the header using existing loaded data:
 **File:** `apps/admin/src/components/clients/clients-table.tsx`
 
 Add a toolbar above the table:
+
 - Search input (`Search clients...`) filtering across `name`, `businessName`, `email`, and `phone`.
 - Status segmented control: `All` / `Active` / `Disabled`.
 
@@ -219,22 +237,23 @@ Move from a contact-only table to a billing-aware client table.
 
 **Recommended desktop columns:**
 
-| Column | Notes |
-|---|---|
-| Client | Business name primary; contact name secondary when distinct |
-| Contact | Email + phone; muted placeholders when missing, not empty cells |
-| Status | Active/Disabled badge; optional `No activity` badge |
-| Outstanding | Right-aligned, `tabular-nums`; amber emphasis when > 0 — **placeholder in Phase 2, wired in Phase 3** |
-| Overdue | Right-aligned, `tabular-nums`; red emphasis when > 0 — **placeholder in Phase 2, wired in Phase 3** |
-| Last payment | Date — **placeholder in Phase 2, wired in Phase 3** |
-| Last activity | Date — **placeholder in Phase 2, wired in Phase 3** |
-| Actions | Icon buttons with tooltips |
+| Column        | Notes                                                                                                 |
+| ------------- | ----------------------------------------------------------------------------------------------------- |
+| Client        | Business name primary; contact name secondary when distinct                                           |
+| Contact       | Email + phone; muted placeholders when missing, not empty cells                                       |
+| Status        | Active/Disabled badge; optional `No activity` badge                                                   |
+| Outstanding   | Right-aligned, `tabular-nums`; amber emphasis when > 0 — **placeholder in Phase 2, wired in Phase 3** |
+| Overdue       | Right-aligned, `tabular-nums`; red emphasis when > 0 — **placeholder in Phase 2, wired in Phase 3**   |
+| Last payment  | Date — **placeholder in Phase 2, wired in Phase 3**                                                   |
+| Last activity | Date — **placeholder in Phase 2, wired in Phase 3**                                                   |
+| Actions       | Icon buttons with tooltips                                                                            |
 
 Remove the `Income Records` column — it will be superseded by billing-aware columns.
 
 ### 2.4 Add Row Quick Actions
 
 Each row should support:
+
 - Open client (entire row clickable)
 - New invoice → `/billing/invoices/new?clientId={clientId}`
 - New quote → `/billing/quotes/new?clientId={clientId}`
@@ -247,6 +266,7 @@ Use icon buttons with tooltips for secondary actions. Action buttons must call `
 ### 2.5 Mobile Layout
 
 At narrow widths, replace the wide table with compact client cards:
+
 - Line 1: Client name + status badge
 - Line 2: Outstanding and overdue amounts
 - Line 3: Email / phone
@@ -255,6 +275,7 @@ At narrow widths, replace the wide table with compact client cards:
 Avoid horizontal table overflow on mobile. The primary mobile experience is identify and act, not inspect every column.
 
 **Phase 2 acceptance criteria:**
+
 - [ ] Users can search by name, business name, email, and phone.
 - [ ] Status filter (All / Active / Disabled) works correctly.
 - [ ] Table uses updated column set; `Income Records` column removed.
@@ -275,6 +296,7 @@ Add server-side billing health data to the client list. This phase unlocks the p
 Replace or augment `getClientsWithIncomeCount()` with a new query that returns billing health per client row.
 
 **Recommended row shape:**
+
 ```ts
 export type ClientOverviewRow = {
   id: string;
@@ -300,6 +322,7 @@ export type ClientOverviewRow = {
 ### 3.2 Wire Financial Columns and Filters
 
 Once `getClientsOverview()` is available:
+
 - Wire the outstanding, overdue, last payment, and last activity columns.
 - Enable the billing filter: `All` / `Outstanding` / `Overdue` / `No activity`.
 - Add sort options: `Name`, `Last activity`, `Outstanding`, `Overdue`, `Created`.
@@ -311,6 +334,7 @@ Once `getClientsOverview()` is available:
 - Edge cases: client with no invoices, client with fully paid invoices, client with partially paid invoices, voided invoices excluded from balances.
 
 **Phase 3 acceptance criteria:**
+
 - [ ] `getClientsOverview()` returns correct outstanding and overdue balances.
 - [ ] Balances exclude voided invoices.
 - [ ] `lastActivityDate` reflects the most recent invoice, quote, or payment date.
@@ -400,11 +424,13 @@ setIsPreviewOpen(true);
 ### 4.4 Visual Design
 
 Use a timeline/list hybrid layout:
+
 - Left icon column using `lucide-react` icons (already introduced in Phase 1)
 - Main event text with document number and status badge
 - Right-aligned amount (with `amountDirection` colouring) and date
 
 **Icon mapping:**
+
 - `FileText` — invoices
 - `ScrollText` or `FileSignature` — quotes
 - `CircleDollarSign` or `Receipt` — payments
@@ -420,6 +446,7 @@ Use a timeline/list hybrid layout:
 - Group events by date bucket: Today / This week / This month / Older.
 
 **Filters:**
+
 - All
 - Invoices
 - Quotes
@@ -443,6 +470,7 @@ Include quick actions: New Invoice / New Quote / Record Payment.
 - Confirm voided invoices produce a `voided` event, not an `overdue` event.
 
 **Phase 4 acceptance criteria:**
+
 - [ ] `ClientRecentActivity` is extracted and rendered from `ClientBillingWorkspace`.
 - [ ] Activity feed is visible by default on desktop.
 - [ ] Events are ordered newest-first.
@@ -463,12 +491,14 @@ Refine the information hierarchy of the client detail page so that account state
 ### 5.1 Make the Header an Account Command Center
 
 The top of the page should immediately answer:
+
 - Who is this client?
 - Are they active?
 - Do they owe money?
 - What should I do next?
 
 **Recommended header layout:**
+
 - Breadcrumb / back link to Clients.
 - Client identity block: business name or name, contact person if distinct, email, phone, active/disabled badge.
 - Financial summary strip: Outstanding / Overdue / Last payment / Average days to pay.
@@ -483,6 +513,7 @@ Keep the edit form accessible, but do not make users expand a section just to co
 Currently, `ClientEditForm` calls `router.push('/relationships/clients')` on successful save, navigating the user away from the client they just edited. This is disorienting.
 
 Change the success behaviour to:
+
 - Stay on the current page.
 - Collapse the edit form (call the existing `setIsDetailsOpen(false)` or equivalent).
 - Show a success toast.
@@ -494,6 +525,7 @@ This mirrors the behaviour of the Add Client form on the list page, which closes
 Current order in `ClientFinancialDashboard`: Total Invoiced / Total Paid / Outstanding / Overdue / Quote Conversion.
 
 **Recommended order:**
+
 1. Outstanding
 2. Overdue
 3. Total Invoiced
@@ -511,6 +543,7 @@ The overdue badge in the ageing card uses `animate-pulse`. Remove the pulse. Use
 ### 5.5 Add Helper Tooltips
 
 Add compact `Tooltip` components to explain:
+
 - Average days to pay
 - Collection efficiency
 - Quote conversion rate
@@ -521,11 +554,13 @@ Keep tooltip copy concise — one sentence each.
 ### 5.6 Tighten Selected Row Affordances
 
 Improve selected document feedback in all tabs:
+
 - Stronger selected row background.
 - Left accent border on the selected row.
 - A visible `Preview` affordance on hover/focus (icon or text label).
 
 **Phase 5 acceptance criteria:**
+
 - [ ] Client identity, account state, and primary actions visible without expanding any section.
 - [ ] Edit form stays on page after save and collapses the form.
 - [ ] KPIs ordered: Outstanding / Overdue / Total Invoiced / Total Paid / Quote Conversion.
@@ -539,6 +574,7 @@ Improve selected document feedback in all tabs:
 ## Acceptance Criteria (Full)
 
 ### Client List
+
 - [ ] Rows open `/relationships/clients/[id]`.
 - [ ] Users can search by name, business name, email, and phone.
 - [ ] Users can filter active/disabled clients.
@@ -547,6 +583,7 @@ Improve selected document feedback in all tabs:
 - [ ] Mobile layout remains readable without horizontal scrolling.
 
 ### Client Detail
+
 - [ ] Client identity, account state, and primary actions visible without expanding a section.
 - [ ] Quick actions preserve client context via `clientId` query params.
 - [ ] Tabs show document counts.
@@ -563,12 +600,14 @@ Improve selected document feedback in all tabs:
 ## Test Plan
 
 ### Automated
+
 - TypeScript build for `apps/admin`.
 - Unit tests for `buildActivityFeed()`: ordering, event types, target IDs, overdue/paid/voided cases.
 - Query tests for `getClientsOverview()`: balance totals, last activity, edge cases.
 - Component tests for client search/filter behaviour if test setup supports it.
 
 ### Manual
+
 - Client with no invoices, quotes, or payments.
 - Client with only quotes.
 - Client with issued, overdue, partially paid, paid, and void invoices.

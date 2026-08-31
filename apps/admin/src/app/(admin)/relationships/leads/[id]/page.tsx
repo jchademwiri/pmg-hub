@@ -1,24 +1,24 @@
-import type { Metadata } from 'next'
-import { notFound } from 'next/navigation'
-import { getLeadById } from '@pmg/db'
-import { updateLeadStatus, updateLeadNotes } from '@/app/actions/leads'
-import { fmtDate } from '@/lib/format'
-import { LeadStatusForm } from '@/components/leads/lead-status-form'
-import { LeadNotesForm } from '@/components/leads/lead-notes-form'
-import { ConvertToClientButton } from '@/components/leads/convert-to-client-button'
-import { BackButton } from '@/components/ui/back-button'
+import type { Metadata } from 'next';
+import { notFound } from 'next/navigation';
+import { getLeadById } from '@pmg/db';
+import { updateLeadStatus, updateLeadNotes } from '@/app/actions/leads';
+import { fmtDate } from '@/lib/format';
+import { LeadStatusForm } from '@/components/leads/lead-status-form';
+import { LeadNotesForm } from '@/components/leads/lead-notes-form';
+import { ConvertToClientButton } from '@/components/leads/convert-to-client-button';
+import { BackButton } from '@/components/ui/back-button';
 
-export const dynamic = 'force-dynamic'
-export const metadata: Metadata = { title: 'Lead Detail' }
+export const dynamic = 'force-dynamic';
+export const metadata: Metadata = { title: 'Lead Detail' };
 
 interface LeadDetailPageProps {
-  params: Promise<{ id: string }>
+  params: Promise<{ id: string }>;
 }
 
 export default async function LeadDetailPage({ params }: LeadDetailPageProps) {
-  const { id } = await params
-  const lead = await getLeadById(id)
-  if (!lead) notFound()
+  const { id } = await params;
+  const lead = await getLeadById(id);
+  if (!lead) notFound();
 
   return (
     <div className="flex flex-col gap-6">
@@ -103,11 +103,8 @@ export default async function LeadDetailPage({ params }: LeadDetailPageProps) {
 
       <div className="flex flex-col gap-4 rounded-lg border p-4">
         <h2 className="text-lg font-medium">Notes</h2>
-        <LeadNotesForm
-          currentNotes={lead.notes}
-          updateAction={updateLeadNotes.bind(null, id)}
-        />
+        <LeadNotesForm currentNotes={lead.notes} updateAction={updateLeadNotes.bind(null, id)} />
       </div>
     </div>
-  )
+  );
 }

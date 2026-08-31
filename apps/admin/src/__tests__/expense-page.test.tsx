@@ -94,8 +94,20 @@ describe('ExpensePage', () => {
   it('renders metrics cards computed from the financial-year monthly summaries', async () => {
     mockGetAllExpenses.mockResolvedValue({ data: [], total: 0, sum: 0 });
     mockGetExpenseMonthlySummaries.mockResolvedValue([
-      { month: currentMonthStr, count: 2, totalExpenses: 1000, totalCategorized: 700, totalUncategorized: 300 },
-      { month: '2026-01', count: 1, totalExpenses: 500, totalCategorized: 500, totalUncategorized: 0 },
+      {
+        month: currentMonthStr,
+        count: 2,
+        totalExpenses: 1000,
+        totalCategorized: 700,
+        totalUncategorized: 300,
+      },
+      {
+        month: '2026-01',
+        count: 1,
+        totalExpenses: 500,
+        totalCategorized: 500,
+        totalUncategorized: 0,
+      },
     ]);
 
     const page = await ExpensePage({ searchParams: Promise.resolve({}) });
@@ -172,12 +184,12 @@ describe('ExpensePage', () => {
 
     expect(mockGetAllExpenses).toHaveBeenCalledWith(
       expect.objectContaining({ divisionId: 'div-1', category: 'Software' }),
-      expect.any(Object)
+      expect.any(Object),
     );
     expect(mockGetExpenseMonthlySummaries).toHaveBeenCalledWith(
       expect.any(Number),
       'div-1',
-      'Software'
+      'Software',
     );
   });
 });

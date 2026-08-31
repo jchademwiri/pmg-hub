@@ -1,5 +1,6 @@
 # Implementation Spec — Phase 3: Interactive Preview
-*PMG Hub | Client Detail Page Redesign*
+
+_PMG Hub | Client Detail Page Redesign_
 
 > **Prerequisite:** Phase 2 must be complete before starting Phase 3.
 
@@ -56,11 +57,13 @@ lg+ screens:
 ### 1a — Add `useRef` for scroll reset
 
 Add to imports:
+
 ```typescript
 import React, { useState, useEffect, useTransition, useRef } from 'react';
 ```
 
 Add near other state declarations:
+
 ```typescript
 const previewPanelRef = useRef<HTMLDivElement>(null);
 ```
@@ -68,22 +71,24 @@ const previewPanelRef = useRef<HTMLDivElement>(null);
 ### 1b — Replace the tab content wrapper
 
 **Locate this block** (currently wraps the document list Card):
+
 ```tsx
-{/* Tab content wrappers */}
+{
+  /* Tab content wrappers */
+}
 <div className="w-full">
   {/* Left Pane (Document lists) */}
-  <Card className="w-full shadow-sm border-muted-foreground/10 bg-card overflow-hidden">
-    ...
-  </Card>
-</div>
+  <Card className="w-full shadow-sm border-muted-foreground/10 bg-card overflow-hidden">...</Card>
+</div>;
 ```
 
 **Replace the outer `<div className="w-full">` wrapper** with a two-column grid that activates at `lg`:
 
 ```tsx
-{/* Split pane: list (left) + preview (right on lg+) */}
+{
+  /* Split pane: list (left) + preview (right on lg+) */
+}
 <div className="flex flex-col lg:flex-row gap-4 items-start">
-
   {/* Document list — 40% on lg+, full width on mobile */}
   <div className="w-full lg:w-[40%] shrink-0">
     <Card className="w-full shadow-sm border-muted-foreground/10 bg-card overflow-hidden">
@@ -98,13 +103,13 @@ const previewPanelRef = useRef<HTMLDivElement>(null);
   >
     {/* Preview content — see Change 2 */}
   </div>
-
-</div>
+</div>;
 ```
 
 ### 1c — Auto-scroll preview panel on selection change
 
 Add a `useEffect` that scrolls the preview panel to the top whenever `selectedDocId` changes:
+
 ```typescript
 useEffect(() => {
   if (previewPanelRef.current) {
@@ -122,7 +127,9 @@ useEffect(() => {
 This is the content of the `hidden lg:flex` preview div introduced in Change 1. It reuses all existing preview logic that was previously inside the Dialog.
 
 ```tsx
-{/* ── Inline Preview Panel (lg+ only) ─────────────────────── */}
+{
+  /* ── Inline Preview Panel (lg+ only) ─────────────────────── */
+}
 <Card className="shadow-sm border-muted-foreground/10 bg-card overflow-hidden">
   {/* Panel header with action buttons */}
   <div className="p-4 border-b flex flex-row items-center justify-between shrink-0">
@@ -130,7 +137,9 @@ This is the content of the `hidden lg:flex` preview div introduced in Change 1. 
       <span className="text-sm font-semibold">
         {selectedDocType === 'invoice' && activeInvoice?.documentNumber}
         {selectedDocType === 'quote' && activeQuote?.documentNumber}
-        {selectedDocType === 'payment' && activePayment && `REC-${activePayment.id.slice(0, 8).toUpperCase()}`}
+        {selectedDocType === 'payment' &&
+          activePayment &&
+          `REC-${activePayment.id.slice(0, 8).toUpperCase()}`}
         {selectedDocType === 'statement' && 'Statement'}
         {!selectedDocId && selectedDocType !== 'statement' && 'No document selected'}
       </span>
@@ -225,7 +234,7 @@ This is the content of the `hidden lg:flex` preview div introduced in Change 1. 
       </div>
     )}
   </div>
-</Card>
+</Card>;
 ```
 
 ---
@@ -239,11 +248,13 @@ On desktop, clicking a row should update `selectedDocId` and `selectedDocType` b
 The cleanest approach is to conditionally call `setIsPreviewOpen` based on screen width. Use a custom hook or a simple window check. Since this is a client component, we can use a state variable that tracks whether we're on a large screen.
 
 **Add this state** with the other state declarations:
+
 ```typescript
 const [isLargeScreen, setIsLargeScreen] = useState(false);
 ```
 
 **Add this effect** to track screen size:
+
 ```typescript
 useEffect(() => {
   const mq = window.matchMedia('(min-width: 1024px)');
@@ -255,6 +266,7 @@ useEffect(() => {
 ```
 
 **Update every `TableRow` `onClick` handler** in the Invoices, Quotes, and Payments tabs. Currently each looks like:
+
 ```tsx
 onClick={() => {
   setSelectedDocId(inv.id);
@@ -264,6 +276,7 @@ onClick={() => {
 ```
 
 **Change to:**
+
 ```tsx
 onClick={() => {
   setSelectedDocId(inv.id);
@@ -275,6 +288,7 @@ onClick={() => {
 Apply the same pattern to the Quotes tab rows (`setSelectedDocType('quote')`) and Payments tab rows (`setSelectedDocType('payment')`).
 
 **The Statement "Preview Statement PDF" button** should also respect this:
+
 ```tsx
 onClick={() => {
   setSelectedDocType('statement');
@@ -294,6 +308,7 @@ When the user is on the Statement tab, the right pane should always show the sta
 This is already handled by the inline preview panel in Change 2 because `selectedDocType === 'statement'` always renders `<DocumentPreview type="statement" .../>`. The only required change is to ensure `selectedDocType` is set to `'statement'` when the Statement tab is active.
 
 **In the `onValueChange` handler on `<Tabs>`**, the existing `else if (val === 'statement')` block already does:
+
 ```typescript
 } else if (val === 'statement') {
   setActiveTab('statement');
@@ -305,19 +320,22 @@ This is already handled by the inline preview panel in Change 2 because `selecte
 This is correct — no changes needed.
 
 **Remove the "Preview Statement PDF" button from the Statement tab filter panel** on desktop (keep it for mobile). Wrap it in a conditional:
+
 ```tsx
-{!isLargeScreen && (
-  <div className="flex items-end mt-4 md:mt-0">
-    <Button
-      variant="default"
-      size="sm"
-      className="flex items-center gap-1.5 shadow-sm h-8"
-      onClick={() => setIsPreviewOpen(true)}
-    >
-      <Eye className="size-4" /> Preview Statement PDF
-    </Button>
-  </div>
-)}
+{
+  !isLargeScreen && (
+    <div className="flex items-end mt-4 md:mt-0">
+      <Button
+        variant="default"
+        size="sm"
+        className="flex items-center gap-1.5 shadow-sm h-8"
+        onClick={() => setIsPreviewOpen(true)}
+      >
+        <Eye className="size-4" /> Preview Statement PDF
+      </Button>
+    </div>
+  );
+}
 ```
 
 ---
@@ -329,10 +347,11 @@ This is correct — no changes needed.
 On mobile, add Prev/Next navigation to the Dialog so users can step through documents without closing and reopening.
 
 **Add a computed list** of navigable document IDs based on the active tab:
+
 ```typescript
 const navigableIds = (() => {
-  if (selectedDocType === 'invoice') return invoices.map(i => i.id);
-  if (selectedDocType === 'quote') return quotes.map(q => q.id);
+  if (selectedDocType === 'invoice') return invoices.map((i) => i.id);
+  if (selectedDocType === 'quote') return quotes.map((q) => q.id);
   if (selectedDocType === 'payment') return (payments?.data ?? []).map((p: any) => p.id);
   return [];
 })();
@@ -340,36 +359,39 @@ const currentNavIndex = selectedDocId ? navigableIds.indexOf(selectedDocId) : -1
 ```
 
 **In the Dialog footer area** (add inside `DialogContent` after the preview render area, before the closing tag):
+
 ```tsx
-{navigableIds.length > 1 && currentNavIndex >= 0 && (
-  <div className="flex items-center justify-between pt-3 border-t mt-2">
-    <Button
-      variant="ghost"
-      size="sm"
-      disabled={currentNavIndex === 0}
-      onClick={() => {
-        const prevId = navigableIds[currentNavIndex - 1];
-        if (prevId) setSelectedDocId(prevId);
-      }}
-    >
-      ← Previous
-    </Button>
-    <span className="text-xs text-muted-foreground">
-      {currentNavIndex + 1} of {navigableIds.length}
-    </span>
-    <Button
-      variant="ghost"
-      size="sm"
-      disabled={currentNavIndex === navigableIds.length - 1}
-      onClick={() => {
-        const nextId = navigableIds[currentNavIndex + 1];
-        if (nextId) setSelectedDocId(nextId);
-      }}
-    >
-      Next →
-    </Button>
-  </div>
-)}
+{
+  navigableIds.length > 1 && currentNavIndex >= 0 && (
+    <div className="flex items-center justify-between pt-3 border-t mt-2">
+      <Button
+        variant="ghost"
+        size="sm"
+        disabled={currentNavIndex === 0}
+        onClick={() => {
+          const prevId = navigableIds[currentNavIndex - 1];
+          if (prevId) setSelectedDocId(prevId);
+        }}
+      >
+        ← Previous
+      </Button>
+      <span className="text-xs text-muted-foreground">
+        {currentNavIndex + 1} of {navigableIds.length}
+      </span>
+      <Button
+        variant="ghost"
+        size="sm"
+        disabled={currentNavIndex === navigableIds.length - 1}
+        onClick={() => {
+          const nextId = navigableIds[currentNavIndex + 1];
+          if (nextId) setSelectedDocId(nextId);
+        }}
+      >
+        Next →
+      </Button>
+    </div>
+  );
+}
 ```
 
 ---

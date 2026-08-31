@@ -35,7 +35,7 @@ If that's confirmed, two things need to happen before Kiro touches code:
 1. `docs/finance/pmg-hub-finance-billing-accounting-implementation-plan-v2.md` section 6.4 and Phase 8 need to be rewritten to describe the AR-based model (this doc can be merged into it once approved).
 2. If `backfill-accounting.ts` has already been run against any real environment, every journal entry it created with `source_table = 'income'` was posted under the cash-basis rule and will double-count revenue once the accrual-basis entries exist alongside them. These need to be voided before the new backfill runs (section 8 has the pre-flight check).
 
-If accrual basis is *not* what's wanted after all, most of sections 2–6 below still apply (account mapping, atomicity, idempotency, VAT fix) — only section 4's AR-specific posting calls and section 8's backfill design would change to mirror the existing cash-basis pattern instead.
+If accrual basis is _not_ what's wanted after all, most of sections 2–6 below still apply (account mapping, atomicity, idempotency, VAT fix) — only section 4's AR-specific posting calls and section 8's backfill design would change to mirror the existing cash-basis pattern instead.
 
 ---
 
@@ -68,8 +68,8 @@ Divisions are free-text (`divisions.name`, no category enum), so account resolut
 function resolveRevenueAccountCode(divisionName: string): string {
   const n = divisionName.toLowerCase();
   if (n.includes('tender')) return '4011'; // TES
-  if (n.includes('apex'))   return '4012'; // AWS
-  return '4013';                            // PMG Professional Services (default)
+  if (n.includes('apex')) return '4012'; // AWS
+  return '4013'; // PMG Professional Services (default)
 }
 ```
 
@@ -79,7 +79,7 @@ Pre-flight check before retiring `4010`: if `backfill-accounting.ts` has ever ru
 
 ## 3. Shared posting module
 
-`apps/admin/src/lib/accounting/posting.ts` — build this **before** wiring any caller (this reorders the prior brief's Phase 1/Phase 2, which had Kiro route every issue path through a posting function *before* that function existed, guaranteeing rework).
+`apps/admin/src/lib/accounting/posting.ts` — build this **before** wiring any caller (this reorders the prior brief's Phase 1/Phase 2, which had Kiro route every issue path through a posting function _before_ that function existed, guaranteeing rework).
 
 Exports:
 
@@ -128,7 +128,7 @@ Out of scope here, but worth recording rather than silently dropping: `account-w
 
 ## 7. Atomicity and idempotency mechanics
 
-Since `db.transaction()` is unavailable (section 0), use the pattern this codebase already trusts in `document-numbers.ts`, extended one step further with `drizzle`'s `db.batch()`, which **is** supported on `neon-http` (it compiles down to Neon's own HTTP batch-transaction endpoint — confirmed by reading `node_modules/drizzle-orm/neon-http/session.js`). The catch: every query in a batch must be fully built before any of them run, so nothing in the batch can depend on a `.returning()` result from an earlier query in the *same* batch.
+Since `db.transaction()` is unavailable (section 0), use the pattern this codebase already trusts in `document-numbers.ts`, extended one step further with `drizzle`'s `db.batch()`, which **is** supported on `neon-http` (it compiles down to Neon's own HTTP batch-transaction endpoint — confirmed by reading `node_modules/drizzle-orm/neon-http/session.js`). The catch: every query in a batch must be fully built before any of them run, so nothing in the batch can depend on a `.returning()` result from an earlier query in the _same_ batch.
 
 The fix is to generate IDs in application code instead of relying on the DB's `defaultRandom()`:
 
@@ -139,9 +139,9 @@ const entryId = randomUUID();
 const lineIds = lines.map(() => randomUUID());
 
 await db.batch([
-  db.insert(journalEntries).values({ id: entryId, entryNumber, /* ... */ }),
+  db.insert(journalEntries).values({ id: entryId, entryNumber /* ... */ }),
   ...lines.map((line, i) =>
-    db.insert(journalLines).values({ id: lineIds[i], journalEntryId: entryId, ...line })
+    db.insert(journalLines).values({ id: lineIds[i], journalEntryId: entryId, ...line }),
   ),
   db.update(invoices).set({ status: 'issued' /* etc. */ }).where(eq(invoices.id, invoiceId)),
 ]);

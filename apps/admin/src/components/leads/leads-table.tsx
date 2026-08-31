@@ -1,13 +1,13 @@
-'use client'
+'use client';
 
-import * as React from 'react'
-import Link from 'next/link'
-import { Trash2 } from 'lucide-react'
-import { toast } from 'sonner'
-import type { LeadRow } from '@pmg/db'
-import { Badge } from '@/components/ui/badge'
-import { Button } from '@/components/ui/button'
-import { ConfirmDialog } from '@/components/ui/confirm-dialog'
+import * as React from 'react';
+import Link from 'next/link';
+import { Trash2 } from 'lucide-react';
+import { toast } from 'sonner';
+import type { LeadRow } from '@pmg/db';
+import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
+import { ConfirmDialog } from '@/components/ui/confirm-dialog';
 import {
   Table,
   TableBody,
@@ -15,11 +15,11 @@ import {
   TableHead,
   TableHeader,
   TableRow,
-} from '@/components/ui/table'
+} from '@/components/ui/table';
 
 interface LeadsTableProps {
-  entries: LeadRow[]
-  deleteAction: (id: string) => Promise<{ error?: string }>
+  entries: LeadRow[];
+  deleteAction: (id: string) => Promise<{ error?: string }>;
 }
 
 const statusBadgeClasses: Record<string, string> = {
@@ -27,23 +27,23 @@ const statusBadgeClasses: Record<string, string> = {
   contacted: 'bg-amber-500/15 text-amber-700 dark:text-amber-400 border-amber-500/30',
   converted: 'bg-emerald-500/15 text-emerald-700 dark:text-emerald-400 border-emerald-500/30',
   lost: 'bg-red-500/15 text-red-700 dark:text-red-400 border-red-500/30',
-}
+};
 
 export function LeadsTable({ entries, deleteAction }: LeadsTableProps) {
-  const [deleteId, setDeleteId] = React.useState<string | null>(null)
-  const [isPendingDelete, setIsPendingDelete] = React.useState(false)
+  const [deleteId, setDeleteId] = React.useState<string | null>(null);
+  const [isPendingDelete, setIsPendingDelete] = React.useState(false);
 
   async function handleDelete() {
-    if (!deleteId) return
-    setIsPendingDelete(true)
+    if (!deleteId) return;
+    setIsPendingDelete(true);
     try {
-      const result = await deleteAction(deleteId)
+      const result = await deleteAction(deleteId);
       if (result.error) {
-        toast.error(result.error)
+        toast.error(result.error);
       }
-      setDeleteId(null)
+      setDeleteId(null);
     } finally {
-      setIsPendingDelete(false)
+      setIsPendingDelete(false);
     }
   }
 
@@ -52,7 +52,7 @@ export function LeadsTable({ entries, deleteAction }: LeadsTableProps) {
       <ConfirmDialog
         open={!!deleteId}
         onOpenChange={(open) => {
-          if (!open) setDeleteId(null)
+          if (!open) setDeleteId(null);
         }}
         onConfirm={handleDelete}
         title="Delete lead?"
@@ -103,11 +103,7 @@ export function LeadsTable({ entries, deleteAction }: LeadsTableProps) {
                 </Link>
               </TableCell>
               <TableCell>
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  onClick={() => setDeleteId(entry.id)}
-                >
+                <Button variant="ghost" size="icon" onClick={() => setDeleteId(entry.id)}>
                   <Trash2 data-icon />
                   <span className="sr-only">Delete</span>
                 </Button>
@@ -117,5 +113,5 @@ export function LeadsTable({ entries, deleteAction }: LeadsTableProps) {
         </TableBody>
       </Table>
     </>
-  )
+  );
 }

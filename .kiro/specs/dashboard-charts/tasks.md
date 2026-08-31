@@ -89,7 +89,7 @@ All additions are purely additive; no existing code is modified except the sideb
     - **Property 5: getMoMChartData always returns exactly 3 ordered entries**
     - **Validates: Requirements 5.4, 13.3**
     - Generate arbitrary `{ currentRevenue, previousRevenue, currentExpenses,
-      previousExpenses }` objects (non-negative); assert length === 3, correct metric
+previousExpenses }` objects (non-negative); assert length === 3, correct metric
       names in order, and `result[2].current === result[0].current - result[1].current`.
     - Tag: `// Feature: dashboard-charts, Property 5: getMoMChartData always returns exactly 3 ordered entries`
 
@@ -103,7 +103,7 @@ All additions are purely additive; no existing code is modified except the sideb
 
 - [ ] 6. Implement chart components
   - [x] 6.1 Create `RevenueByDivisionChart` at
-    `apps/admin/src/components/reports/revenue-by-division-chart.tsx`
+        `apps/admin/src/components/reports/revenue-by-division-chart.tsx`
     - `'use client'` directive; accept `{ series, divisions }` props; build `ChartConfig`
       with `CHART_TOKENS[i % 5]` cycling; render `ChartContainer` → `AreaChart` with
       stacked `Area` per division (`type="monotone"`, `stackId="a"`); include
@@ -125,7 +125,7 @@ All additions are purely additive; no existing code is modified except the sideb
     - _Requirements: 8.10_
 
   - [x] 6.4 Create `RevenueVsExpensesChart` at
-    `apps/admin/src/components/reports/revenue-vs-expenses-chart.tsx`
+        `apps/admin/src/components/reports/revenue-vs-expenses-chart.tsx`
     - `'use client'` directive; accept `{ series }` props; static `ChartConfig` with
       `chart-1` / `chart-3`; render `ChartContainer` → `LineChart` with two `Line`
       components (`type="monotone"`, `dot={false}`); include `CartesianGrid`, `XAxis`,
@@ -138,7 +138,7 @@ All additions are purely additive; no existing code is modified except the sideb
     - _Requirements: 9.7_
 
   - [x] 6.6 Create `MoMComparisonChart` at
-    `apps/admin/src/components/reports/mom-comparison-chart.tsx`
+        `apps/admin/src/components/reports/mom-comparison-chart.tsx`
     - `'use client'` directive; accept `{ data }` props; static `ChartConfig` with
       `chart-1` / `chart-4`; render `ChartContainer` → `BarChart` with two side-by-side
       `Bar` components (no `stackId`); `XAxis dataKey="metric"`; include `CartesianGrid`,

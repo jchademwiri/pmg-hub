@@ -5,9 +5,9 @@ export default function ExpensesNotFound() {
     <NotFoundView
       noun="expense record"
       links={[
-        { label: 'Expenses',     href: '/finance/expenses'     },
-        { label: 'Payments',     href: '/billing/payments'     },
-        { label: 'Categories',   href: '/finance/categories'   },
+        { label: 'Expenses', href: '/finance/expenses' },
+        { label: 'Payments', href: '/billing/payments' },
+        { label: 'Categories', href: '/finance/categories' },
         { label: 'Distributions', href: '/finance/distributions' },
       ]}
     />

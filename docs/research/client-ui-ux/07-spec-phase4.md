@@ -1,5 +1,6 @@
 # Implementation Spec — Phase 4: Interactive KPI Tiles
-*PMG Hub | Client Detail Page Redesign*
+
+_PMG Hub | Client Detail Page Redesign_
 
 > **Prerequisite:** Phase 3 must be complete before starting Phase 4.
 
@@ -24,12 +25,12 @@ Phase 4 makes the 4 KPI metric tiles functional. Clicking a tile filters the inv
 
 ## Filter Behaviour Specification
 
-| Tile clicked | Filter key | Invoices shown | Quotes shown |
-|---|---|---|---|
-| Total Invoiced | `'all'` | All non-void invoices | All non-void quotes |
-| Total Paid | `'paid'` | `status === 'paid'` | `status === 'accepted' \|\| 'converted'` |
-| Outstanding | `'outstanding'` | `status === 'issued' \|\| 'partially_paid'` | `status === 'sent'` |
-| Overdue | `'overdue'` | `status === 'overdue'` | `status === 'declined'` (expired) |
+| Tile clicked   | Filter key      | Invoices shown                              | Quotes shown                             |
+| -------------- | --------------- | ------------------------------------------- | ---------------------------------------- |
+| Total Invoiced | `'all'`         | All non-void invoices                       | All non-void quotes                      |
+| Total Paid     | `'paid'`        | `status === 'paid'`                         | `status === 'accepted' \|\| 'converted'` |
+| Outstanding    | `'outstanding'` | `status === 'issued' \|\| 'partially_paid'` | `status === 'sent'`                      |
+| Overdue        | `'overdue'`     | `status === 'overdue'`                      | `status === 'declined'` (expired)        |
 
 **Payments tab:** Always shows all payments regardless of filter.
 **Statement tab:** Unaffected.
@@ -50,9 +51,7 @@ const filteredInvoices = (() => {
     case 'paid':
       return invoices.filter((inv) => inv.status === 'paid');
     case 'outstanding':
-      return invoices.filter(
-        (inv) => inv.status === 'issued' || inv.status === 'partially_paid'
-      );
+      return invoices.filter((inv) => inv.status === 'issued' || inv.status === 'partially_paid');
     case 'overdue':
       return invoices.filter((inv) => inv.status === 'overdue');
     case 'all':
@@ -64,9 +63,7 @@ const filteredInvoices = (() => {
 const filteredQuotes = (() => {
   switch (metricFilter) {
     case 'paid':
-      return quotes.filter(
-        (q) => q.status === 'accepted' || q.status === 'converted'
-      );
+      return quotes.filter((q) => q.status === 'accepted' || q.status === 'converted');
     case 'outstanding':
       return quotes.filter((q) => q.status === 'sent');
     case 'overdue':
@@ -87,6 +84,7 @@ const filteredQuotes = (() => {
 In the Invoices `TabsContent`, replace every reference to `invoices` in the table rendering with `filteredInvoices`.
 
 **Locate:**
+
 ```tsx
 {invoices.length === 0 ? (
   <p className="text-xs text-muted-foreground text-center py-8">No invoices for this client.</p>
@@ -97,6 +95,7 @@ In the Invoices `TabsContent`, replace every reference to `invoices` in the tabl
 ```
 
 **Replace with:**
+
 ```tsx
 {filteredInvoices.length === 0 ? (
   <p className="text-xs text-muted-foreground text-center py-8">
@@ -111,15 +110,19 @@ In the Invoices `TabsContent`, replace every reference to `invoices` in the tabl
 ```
 
 **Also update the "select all" checkbox** in the invoice table header. It currently uses `invoices.length` for its checked state:
+
 ```tsx
 checked={selectedInvoiceIds.size === invoices.length}
 ```
+
 **Change to:**
+
 ```tsx
 checked={filteredInvoices.length > 0 && selectedInvoiceIds.size === filteredInvoices.length}
 ```
 
 **Update `handleSelectAllInvoices`** — it currently selects all `invoices`. Change to select only `filteredInvoices`:
+
 ```typescript
 const handleSelectAllInvoices = (checked: boolean) => {
   if (checked) {
@@ -143,11 +146,13 @@ Apply the same pattern to the Quotes `TabsContent`.
 **Replace `quotes.map((q) =>` with `filteredQuotes.map((q) =>`.**
 
 **Update the "select all" checkbox:**
+
 ```tsx
 checked={filteredQuotes.length > 0 && selectedQuoteIds.size === filteredQuotes.length}
 ```
 
 **Update `handleSelectAllQuotes`:**
+
 ```typescript
 const handleSelectAllQuotes = (checked: boolean) => {
   if (checked) {
@@ -189,21 +194,23 @@ When a filter is active (not `'all'`), show a small dismissible indicator so use
 **Add this block directly above the `<Tabs>` component**, after the quick action buttons:
 
 ```tsx
-{metricFilter !== 'all' && (activeTab === 'invoices' || activeTab === 'quotes') && (
-  <div className="flex items-center gap-2 text-xs text-muted-foreground bg-muted/30 rounded-md px-3 py-1.5 border border-muted-foreground/10 self-start">
-    <span>
-      Showing <span className="font-semibold text-foreground capitalize">{metricFilter}</span>{' '}
-      {activeTab} only
-    </span>
-    <button
-      onClick={() => setMetricFilter('all')}
-      className="text-muted-foreground hover:text-foreground transition-colors ml-1 font-medium"
-      aria-label="Clear filter"
-    >
-      ✕
-    </button>
-  </div>
-)}
+{
+  metricFilter !== 'all' && (activeTab === 'invoices' || activeTab === 'quotes') && (
+    <div className="flex items-center gap-2 text-xs text-muted-foreground bg-muted/30 rounded-md px-3 py-1.5 border border-muted-foreground/10 self-start">
+      <span>
+        Showing <span className="font-semibold text-foreground capitalize">{metricFilter}</span>{' '}
+        {activeTab} only
+      </span>
+      <button
+        onClick={() => setMetricFilter('all')}
+        className="text-muted-foreground hover:text-foreground transition-colors ml-1 font-medium"
+        aria-label="Clear filter"
+      >
+        ✕
+      </button>
+    </div>
+  );
+}
 ```
 
 ---

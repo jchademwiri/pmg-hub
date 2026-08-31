@@ -1,22 +1,22 @@
-'use client'
+'use client';
 
-import * as React from 'react'
-import { useRouter } from 'next/navigation'
-import { Plus, Pencil, Check, X, BookOpen, ChevronDown, ChevronRight } from 'lucide-react'
-import { Button } from '@/components/ui/button'
-import { Switch } from '@/components/ui/switch'
-import { EmptyState } from '@/components/ui/empty-state'
-import { toast } from 'sonner'
-import type { ChartAccount } from '@pmg/db'
+import * as React from 'react';
+import { useRouter } from 'next/navigation';
+import { Plus, Pencil, Check, X, BookOpen, ChevronDown, ChevronRight } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { Switch } from '@/components/ui/switch';
+import { EmptyState } from '@/components/ui/empty-state';
+import { toast } from 'sonner';
+import type { ChartAccount } from '@pmg/db';
 
 // ── Types ────────────────────────────────────────────────────────────────────
 
-type FilterValue = 'all' | 'active' | 'inactive'
+type FilterValue = 'all' | 'active' | 'inactive';
 
 interface ChartOfAccountsClientProps {
-  accountsByType: Record<string, ChartAccount[]>
-  createAction: (formData: FormData) => Promise<{ error?: string; accountId?: string }>
-  updateAction: (id: string, formData: FormData) => Promise<{ error?: string }>
+  accountsByType: Record<string, ChartAccount[]>;
+  createAction: (formData: FormData) => Promise<{ error?: string; accountId?: string }>;
+  updateAction: (id: string, formData: FormData) => Promise<{ error?: string }>;
 }
 
 const TYPE_LABELS: Record<string, string> = {
@@ -25,17 +25,17 @@ const TYPE_LABELS: Record<string, string> = {
   equity: 'Equity',
   revenue: 'Revenue',
   expense: 'Expenses',
-}
+};
 
 const TYPE_DESCRIPTIONS: Record<string, string> = {
   asset: 'Resources owned by the business (bank, receivables, equipment)',
   liability: 'Obligations owed by the business (payables, loans)',
-  equity: 'Owner\'s claim on business assets (capital, retained earnings)',
+  equity: "Owner's claim on business assets (capital, retained earnings)",
   revenue: 'Income earned from business operations',
   expense: 'Costs incurred to generate revenue',
-}
+};
 
-const TYPE_ORDER = ['asset', 'liability', 'equity', 'revenue', 'expense']
+const TYPE_ORDER = ['asset', 'liability', 'equity', 'revenue', 'expense'];
 
 // ── Account Form ─────────────────────────────────────────────────────────────
 
@@ -45,30 +45,30 @@ function AccountForm({
   onCancel,
   createAction,
 }: {
-  type: string
-  onSuccess: () => void
-  onCancel: () => void
-  createAction: (formData: FormData) => Promise<{ error?: string; accountId?: string }>
+  type: string;
+  onSuccess: () => void;
+  onCancel: () => void;
+  createAction: (formData: FormData) => Promise<{ error?: string; accountId?: string }>;
 }) {
-  const [saving, setSaving] = React.useState(false)
+  const [saving, setSaving] = React.useState(false);
 
   async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
-    e.preventDefault()
-    setSaving(true)
+    e.preventDefault();
+    setSaving(true);
     try {
-      const formData = new FormData(e.currentTarget)
-      formData.set('type', type)
-      const result = await createAction(formData)
+      const formData = new FormData(e.currentTarget);
+      formData.set('type', type);
+      const result = await createAction(formData);
       if (result.error) {
-        toast.error(result.error)
+        toast.error(result.error);
       } else {
-        toast.success('Account created')
-        onSuccess()
+        toast.success('Account created');
+        onSuccess();
       }
     } catch {
-      toast.error('Failed to create account')
+      toast.error('Failed to create account');
     } finally {
-      setSaving(false)
+      setSaving(false);
     }
   }
 
@@ -115,7 +115,7 @@ function AccountForm({
         </Button>
       </div>
     </form>
-  )
+  );
 }
 
 // ── Account Row ──────────────────────────────────────────────────────────────
@@ -124,23 +124,23 @@ function AccountRow({
   account,
   updateAction,
 }: {
-  account: ChartAccount
-  updateAction: (id: string, formData: FormData) => Promise<{ error?: string }>
+  account: ChartAccount;
+  updateAction: (id: string, formData: FormData) => Promise<{ error?: string }>;
 }) {
-  const [editing, setEditing] = React.useState(false)
-  const [active, setActive] = React.useState(account.isActive)
-  const router = useRouter()
+  const [editing, setEditing] = React.useState(false);
+  const [active, setActive] = React.useState(account.isActive);
+  const router = useRouter();
 
   async function handleToggle(checked: boolean) {
-    const formData = new FormData()
-    formData.set('isActive', checked ? 'on' : 'off')
-    const result = await updateAction(account.id, formData)
+    const formData = new FormData();
+    formData.set('isActive', checked ? 'on' : 'off');
+    const result = await updateAction(account.id, formData);
     if (result.error) {
-      toast.error(result.error)
+      toast.error(result.error);
     } else {
-      setActive(checked)
-      toast.success(checked ? 'Account activated' : 'Account deactivated')
-      router.refresh()
+      setActive(checked);
+      toast.success(checked ? 'Account activated' : 'Account deactivated');
+      router.refresh();
     }
   }
 
@@ -151,36 +151,45 @@ function AccountRow({
         updateAction={updateAction}
         onCancel={() => setEditing(false)}
         onSaved={() => {
-          setEditing(false)
-          router.refresh()
+          setEditing(false);
+          router.refresh();
         }}
       />
-    )
+    );
   }
 
   return (
-    <div className={`flex items-center gap-3 px-4 py-3 border-b last:border-b-0 transition-colors ${
-      active ? 'hover:bg-muted/30' : 'bg-muted/20 opacity-60'
-    }`}>
-      <span className={`text-xs font-mono w-16 shrink-0 ${active ? 'text-muted-foreground' : 'text-muted-foreground/60'}`}>{account.code}</span>
+    <div
+      className={`flex items-center gap-3 px-4 py-3 border-b last:border-b-0 transition-colors ${
+        active ? 'hover:bg-muted/30' : 'bg-muted/20 opacity-60'
+      }`}
+    >
+      <span
+        className={`text-xs font-mono w-16 shrink-0 ${active ? 'text-muted-foreground' : 'text-muted-foreground/60'}`}
+      >
+        {account.code}
+      </span>
       <div className="flex-1 min-w-0">
-        <span className={`text-sm font-medium ${!active ? 'line-through decoration-muted-foreground/40' : ''}`}>{account.name}</span>
+        <span
+          className={`text-sm font-medium ${!active ? 'line-through decoration-muted-foreground/40' : ''}`}
+        >
+          {account.name}
+        </span>
         {account.description && (
-          <span className="text-xs text-muted-foreground ml-2 truncate">— {account.description}</span>
+          <span className="text-xs text-muted-foreground ml-2 truncate">
+            — {account.description}
+          </span>
         )}
       </div>
       {!account.isPostingAccount && (
         <span className="text-xs text-muted-foreground bg-muted px-2 py-0.5 rounded">Header</span>
       )}
       {!active && (
-        <span className="text-xs text-amber-600 bg-amber-500/15 px-2 py-0.5 rounded font-medium">Inactive</span>
+        <span className="text-xs text-amber-600 bg-amber-500/15 px-2 py-0.5 rounded font-medium">
+          Inactive
+        </span>
       )}
-      <Button
-        variant="ghost"
-        size="icon-sm"
-        onClick={() => setEditing(true)}
-        className="shrink-0"
-      >
+      <Button variant="ghost" size="icon-sm" onClick={() => setEditing(true)} className="shrink-0">
         <Pencil className="h-3.5 w-3.5" />
       </Button>
       <Switch
@@ -190,7 +199,7 @@ function AccountRow({
         aria-label={`Toggle ${account.name} active status`}
       />
     </div>
-  )
+  );
 }
 
 // ── Edit Row ─────────────────────────────────────────────────────────────────
@@ -201,27 +210,27 @@ function EditRow({
   onCancel,
   onSaved,
 }: {
-  account: ChartAccount
-  updateAction: (id: string, formData: FormData) => Promise<{ error?: string }>
-  onCancel: () => void
-  onSaved: () => void
+  account: ChartAccount;
+  updateAction: (id: string, formData: FormData) => Promise<{ error?: string }>;
+  onCancel: () => void;
+  onSaved: () => void;
 }) {
-  const [saving, setSaving] = React.useState(false)
-  const [name, setName] = React.useState(account.name)
-  const [description, setDescription] = React.useState(account.description ?? '')
+  const [saving, setSaving] = React.useState(false);
+  const [name, setName] = React.useState(account.name);
+  const [description, setDescription] = React.useState(account.description ?? '');
 
   async function handleSave() {
-    setSaving(true)
-    const formData = new FormData()
-    formData.set('name', name)
-    formData.set('description', description)
-    const result = await updateAction(account.id, formData)
-    setSaving(false)
+    setSaving(true);
+    const formData = new FormData();
+    formData.set('name', name);
+    formData.set('description', description);
+    const result = await updateAction(account.id, formData);
+    setSaving(false);
     if (result.error) {
-      toast.error(result.error)
+      toast.error(result.error);
     } else {
-      toast.success('Account updated')
-      onSaved()
+      toast.success('Account updated');
+      onSaved();
     }
   }
 
@@ -249,7 +258,7 @@ function EditRow({
         Cancel
       </Button>
     </div>
-  )
+  );
 }
 
 // ── Type Section ─────────────────────────────────────────────────────────────
@@ -260,14 +269,14 @@ function TypeSection({
   createAction,
   updateAction,
 }: {
-  type: string
-  accounts: ChartAccount[]
-  createAction: (formData: FormData) => Promise<{ error?: string; accountId?: string }>
-  updateAction: (id: string, formData: FormData) => Promise<{ error?: string }>
+  type: string;
+  accounts: ChartAccount[];
+  createAction: (formData: FormData) => Promise<{ error?: string; accountId?: string }>;
+  updateAction: (id: string, formData: FormData) => Promise<{ error?: string }>;
 }) {
-  const [expanded, setExpanded] = React.useState(true)
-  const [adding, setAdding] = React.useState(false)
-  const router = useRouter()
+  const [expanded, setExpanded] = React.useState(true);
+  const [adding, setAdding] = React.useState(false);
+  const router = useRouter();
 
   return (
     <div className="rounded-xl border bg-card overflow-hidden">
@@ -299,11 +308,7 @@ function TypeSection({
           ) : (
             <div>
               {accounts.map((account) => (
-                <AccountRow
-                  key={account.id}
-                  account={account}
-                  updateAction={updateAction}
-                />
+                <AccountRow key={account.id} account={account} updateAction={updateAction} />
               ))}
             </div>
           )}
@@ -315,19 +320,14 @@ function TypeSection({
                 createAction={createAction}
                 onCancel={() => setAdding(false)}
                 onSuccess={() => {
-                  setAdding(false)
-                  router.refresh()
+                  setAdding(false);
+                  router.refresh();
                 }}
               />
             </div>
           ) : (
             <div className="px-4 py-2 border-t">
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={() => setAdding(true)}
-                className="text-xs"
-              >
+              <Button variant="ghost" size="sm" onClick={() => setAdding(true)} className="text-xs">
                 <Plus className="h-3.5 w-3.5 mr-1.5" />
                 Add {TYPE_LABELS[type]?.replace(/s$/, '')} Account
               </Button>
@@ -336,7 +336,7 @@ function TypeSection({
         </div>
       )}
     </div>
-  )
+  );
 }
 
 // ── Main Component ───────────────────────────────────────────────────────────
@@ -345,12 +345,12 @@ const FILTER_OPTIONS: { value: FilterValue; label: string }[] = [
   { value: 'all', label: 'All' },
   { value: 'active', label: 'Active Only' },
   { value: 'inactive', label: 'Inactive Only' },
-]
+];
 
 function filterAccounts(accounts: ChartAccount[], filter: FilterValue): ChartAccount[] {
-  if (filter === 'active') return accounts.filter((a) => a.isActive)
-  if (filter === 'inactive') return accounts.filter((a) => !a.isActive)
-  return accounts
+  if (filter === 'active') return accounts.filter((a) => a.isActive);
+  if (filter === 'inactive') return accounts.filter((a) => !a.isActive);
+  return accounts;
 }
 
 export function ChartOfAccountsClient({
@@ -358,26 +358,29 @@ export function ChartOfAccountsClient({
   createAction,
   updateAction,
 }: ChartOfAccountsClientProps) {
-  const [filter, setFilter] = React.useState<FilterValue>('all')
+  const [filter, setFilter] = React.useState<FilterValue>('all');
 
   // Filter accounts within each type
   const filteredByType = React.useMemo(() => {
-    const result: Record<string, ChartAccount[]> = {}
+    const result: Record<string, ChartAccount[]> = {};
     for (const type of TYPE_ORDER) {
-      result[type] = filterAccounts(accountsByType[type] || [], filter)
+      result[type] = filterAccounts(accountsByType[type] || [], filter);
     }
-    return result
-  }, [accountsByType, filter])
+    return result;
+  }, [accountsByType, filter]);
 
-  const totalAll = Object.values(accountsByType).reduce((s, a) => s + a.length, 0)
-  const totalActive = Object.values(accountsByType).reduce((s, a) => s + a.filter((x) => x.isActive).length, 0)
-  const totalInactive = totalAll - totalActive
-  const hasAccounts = totalAll > 0
+  const totalAll = Object.values(accountsByType).reduce((s, a) => s + a.length, 0);
+  const totalActive = Object.values(accountsByType).reduce(
+    (s, a) => s + a.filter((x) => x.isActive).length,
+    0,
+  );
+  const totalInactive = totalAll - totalActive;
+  const hasAccounts = totalAll > 0;
 
   if (!hasAccounts) {
     return (
       <EmptyState message="No accounts configured yet. Add your first account to get started." />
-    )
+    );
   }
 
   return (
@@ -407,9 +410,9 @@ export function ChartOfAccountsClient({
       </div>
 
       {TYPE_ORDER.map((type) => {
-        const filtered = filteredByType[type] || []
+        const filtered = filteredByType[type] || [];
         // Hide type sections with no accounts when a filter is active
-        if (filter !== 'all' && filtered.length === 0) return null
+        if (filter !== 'all' && filtered.length === 0) return null;
         return (
           <TypeSection
             key={type}
@@ -418,8 +421,8 @@ export function ChartOfAccountsClient({
             createAction={createAction}
             updateAction={updateAction}
           />
-        )
+        );
       })}
     </div>
-  )
+  );
 }

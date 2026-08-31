@@ -20,10 +20,10 @@ interface Props {
   deleteAction: (id: string) => Promise<{ error?: string }>;
 }
 
-export function LazyExpensesTable({ 
-  year, 
-  month, 
-  divisionId, 
+export function LazyExpensesTable({
+  year,
+  month,
+  divisionId,
   category,
   divisions,
   categories,
@@ -31,7 +31,7 @@ export function LazyExpensesTable({
   closedPeriods,
   minDate,
   updateAction,
-  deleteAction
+  deleteAction,
 }: Props) {
   const [data, setData] = useState<any[] | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -41,11 +41,11 @@ export function LazyExpensesTable({
     let mounted = true;
     setData(null);
     setError(null);
-    
-    const fetchPromise = month 
+
+    const fetchPromise = month
       ? fetchExpensesByMonth(year, month, divisionId, category)
       : fetchExpensesByYear(year, divisionId, category);
-      
+
     fetchPromise
       .then((res) => {
         if (mounted) setData(res.data);
@@ -53,14 +53,21 @@ export function LazyExpensesTable({
       .catch(() => {
         if (mounted) setError('Failed to load data.');
       });
-    return () => { mounted = false; };
+    return () => {
+      mounted = false;
+    };
   }, [year, month, divisionId, category, refreshCounter]);
 
   if (error) {
     return (
       <div className="p-4 rounded-md bg-destructive/10 text-destructive mt-4 flex items-center justify-between">
         <span>{error}</span>
-        <button onClick={() => setRefreshCounter(c => c + 1)} className="px-3 py-1 bg-background border rounded text-sm text-foreground hover:bg-muted">Retry</button>
+        <button
+          onClick={() => setRefreshCounter((c) => c + 1)}
+          className="px-3 py-1 bg-background border rounded text-sm text-foreground hover:bg-muted"
+        >
+          Retry
+        </button>
       </div>
     );
   }
@@ -72,17 +79,17 @@ export function LazyExpensesTable({
   // Need to wrap deleteAction/updateAction to increment refreshCounter on success
   const wrappedDeleteAction = async (id: string) => {
     const res = await deleteAction(id);
-    if (!res.error) setRefreshCounter(c => c + 1);
+    if (!res.error) setRefreshCounter((c) => c + 1);
     return res;
   };
   const wrappedUpdateAction = async (id: string, formData: FormData) => {
     const res = await updateAction(id, formData);
-    if (!res.error) setRefreshCounter(c => c + 1);
+    if (!res.error) setRefreshCounter((c) => c + 1);
     return res;
   };
 
   return (
-    <ExpenseTable 
+    <ExpenseTable
       entries={data}
       divisions={divisions}
       categories={categories}

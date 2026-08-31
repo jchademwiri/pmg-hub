@@ -14,34 +14,43 @@ interface Props {
   voidAction: (id: string) => Promise<{ error?: string }>;
 }
 
-export function LazyInvoicesTable({ year, month, divisionId, status, issueAction, voidAction }: Props) {
+export function LazyInvoicesTable({
+  year,
+  month,
+  divisionId,
+  status,
+  issueAction,
+  voidAction,
+}: Props) {
   const [data, setData] = useState<any[] | null>(null);
   const [refreshCounter, setRefreshCounter] = useState(0);
 
   useEffect(() => {
     let mounted = true;
-    
-    const fetchPromise = month 
+
+    const fetchPromise = month
       ? fetchInvoicesByMonth(year, month, divisionId, status)
       : fetchInvoicesByYear(year, divisionId, status);
-      
+
     fetchPromise.then((res) => {
       if (mounted) {
         setData(res.data);
       }
     });
-    return () => { mounted = false; };
+    return () => {
+      mounted = false;
+    };
   }, [year, month, divisionId, status, refreshCounter]);
 
   const wrappedIssueAction = async (id: string) => {
     const res = await issueAction(id);
-    if (!res.error) setRefreshCounter(c => c + 1);
+    if (!res.error) setRefreshCounter((c) => c + 1);
     return res;
   };
 
   const wrappedVoidAction = async (id: string) => {
     const res = await voidAction(id);
-    if (!res.error) setRefreshCounter(c => c + 1);
+    if (!res.error) setRefreshCounter((c) => c + 1);
     return res;
   };
 
@@ -49,5 +58,7 @@ export function LazyInvoicesTable({ year, month, divisionId, status, issueAction
     return <Skeleton className="h-32 w-full mt-4" />;
   }
 
-  return <InvoicesTable entries={data} issueAction={wrappedIssueAction} voidAction={wrappedVoidAction} />;
+  return (
+    <InvoicesTable entries={data} issueAction={wrappedIssueAction} voidAction={wrappedVoidAction} />
+  );
 }

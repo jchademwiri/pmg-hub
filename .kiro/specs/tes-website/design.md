@@ -55,12 +55,12 @@ Visitor fills LeadForm
 
 ### Monorepo Integration
 
-| Concern | Package | Import |
-|---|---|---|
-| Database | `@pmg/db` | `import { db, leads } from '@pmg/db'` |
-| Email | `@pmg/emails` | `import { sendEmail, AdminNewLeadEmail } from '@pmg/emails'` |
-| Styles | `@pmg/tailwind-config` | `@import "@pmg/tailwind-config/base"` in globals.css |
-| Analytics | `@vercel/analytics` | `import Analytics from '@vercel/analytics/astro'` |
+| Concern   | Package                | Import                                                       |
+| --------- | ---------------------- | ------------------------------------------------------------ |
+| Database  | `@pmg/db`              | `import { db, leads } from '@pmg/db'`                        |
+| Email     | `@pmg/emails`          | `import { sendEmail, AdminNewLeadEmail } from '@pmg/emails'` |
+| Styles    | `@pmg/tailwind-config` | `@import "@pmg/tailwind-config/base"` in globals.css         |
+| Analytics | `@vercel/analytics`    | `import Analytics from '@vercel/analytics/astro'`            |
 
 ---
 
@@ -105,15 +105,17 @@ Accepts `title`, `description`, and `canonical` props. Renders the full `<html>`
 with SEO meta tags, Open Graph tags, Google Fonts, Vercel Analytics, and the grain noise overlay.
 
 **Props interface:**
+
 ```ts
 interface Props {
-  title?: string;       // default: "CSD Registration & Tender Compliance | Tender Edge Solutions - Centurion"
+  title?: string; // default: "CSD Registration & Tender Compliance | Tender Edge Solutions - Centurion"
   description?: string; // default: "Get CSD-registered, CIDB-graded, and tender-ready..."
-  canonical?: string;   // default: "https://www.tenderedgesolutions.co.za"
+  canonical?: string; // default: "https://www.tenderedgesolutions.co.za"
 }
 ```
 
 **Rendered head elements:**
+
 - `<meta charset>`, `<meta viewport>`
 - `<title>`, `<meta name="description">`
 - `<link rel="canonical">`
@@ -123,10 +125,12 @@ interface Props {
 - `<Analytics />` from `@vercel/analytics/astro`
 
 **Body structure:**
+
 ```html
 <html lang="en" class="dark" style="scroll-behavior: smooth;">
   <body class="min-h-screen bg-background text-foreground font-sans overflow-x-hidden">
-    <div class="noise" aria-hidden="true"></div>  <!-- grain overlay, fixed, 4% opacity -->
+    <div class="noise" aria-hidden="true"></div>
+    <!-- grain overlay, fixed, 4% opacity -->
     <slot />
   </body>
 </html>
@@ -138,18 +142,18 @@ Each section component is a pure `.astro` file - no props, no client-side JS exc
 explicitly noted. All styling uses Tailwind v4 utility classes referencing the CSS custom
 properties defined in `globals.css`.
 
-| Component | id | Background | Notes |
-|---|---|---|---|
-| `Nav.astro` | - | transparent → `bg-background/90` | Sticky, scroll-driven JS |
-| `Hero.astro` | `hero` | `--background` | `min-h-screen`, CSS animations |
-| `TrustBar.astro` | - | `--card` | Horizontal scroll on mobile |
-| `ProblemSection.astro` | `problem` | `--background` | 2-col desktop |
-| `ServicesSection.astro` | `services` | `--card` | 2-col grid desktop |
-| `HowItWorks.astro` | `process` | `--background` | 3-step horizontal/vertical |
-| `PricingSection.astro` | `pricing` | `--card` | Bundle cards + table |
-| `CaseStudy.astro` | `results` | `--background` | Split panel desktop |
-| `LeadForm.astro` | `contact` | `--card` | 2-col desktop, action-driven |
-| `Footer.astro` | - | `--background` | 3-col desktop |
+| Component               | id         | Background                       | Notes                          |
+| ----------------------- | ---------- | -------------------------------- | ------------------------------ |
+| `Nav.astro`             | -          | transparent → `bg-background/90` | Sticky, scroll-driven JS       |
+| `Hero.astro`            | `hero`     | `--background`                   | `min-h-screen`, CSS animations |
+| `TrustBar.astro`        | -          | `--card`                         | Horizontal scroll on mobile    |
+| `ProblemSection.astro`  | `problem`  | `--background`                   | 2-col desktop                  |
+| `ServicesSection.astro` | `services` | `--card`                         | 2-col grid desktop             |
+| `HowItWorks.astro`      | `process`  | `--background`                   | 3-step horizontal/vertical     |
+| `PricingSection.astro`  | `pricing`  | `--card`                         | Bundle cards + table           |
+| `CaseStudy.astro`       | `results`  | `--background`                   | Split panel desktop            |
+| `LeadForm.astro`        | `contact`  | `--card`                         | 2-col desktop, action-driven   |
+| `Footer.astro`          | -          | `--background`                   | 3-col desktop                  |
 
 ### LeadForm - Action Integration
 
@@ -168,13 +172,16 @@ const submitted = result?.data?.success === true;
 ```
 
 **Form markup pattern:**
+
 ```html
-<form method="POST" action={actions.enquireLead}>
-  <input type="text"   name="name"            required />
-  <input type="text"   name="companyName" />
-  <input type="tel"    name="phone"           required />
-  <input type="email"  name="email" />
-  <select              name="serviceInterest" required>...</select>
+<form method="POST" action="{actions.enquireLead}">
+  <input type="text" name="name" required />
+  <input type="text" name="companyName" />
+  <input type="tel" name="phone" required />
+  <input type="email" name="email" />
+  <select name="serviceInterest" required>
+    ...
+  </select>
   <button type="submit">Send My Enquiry</button>
 </form>
 ```
@@ -191,12 +198,12 @@ Defined in `src/actions/index.ts` using `z` from `astro:schema`:
 
 ```ts
 z.object({
-  name:            z.string().min(1, 'Name is required'),
-  phone:           z.string().min(7, 'Phone number is required'),
-  email:           z.string().email().optional().or(z.literal('')),
-  companyName:     z.string().optional().or(z.literal('')),
+  name: z.string().min(1, 'Name is required'),
+  phone: z.string().min(7, 'Phone number is required'),
+  email: z.string().email().optional().or(z.literal('')),
+  companyName: z.string().optional().or(z.literal('')),
   serviceInterest: z.string().min(1, 'Please select a service'),
-})
+});
 ```
 
 ### Database Write - `leads` Table
@@ -205,13 +212,13 @@ The `leads` table is defined in `packages/db/src/schema/leads.ts`. The action in
 
 ```ts
 await db.insert(leads).values({
-  name:            input.name,
-  phone:           input.phone,
-  email:           input.email || null,
-  companyName:     input.companyName || null,   // stored in `message` field - see note
+  name: input.name,
+  phone: input.phone,
+  email: input.email || null,
+  companyName: input.companyName || null, // stored in `message` field - see note
   serviceInterest: input.serviceInterest,
-  source:          'tes',
-  status:          'new',
+  source: 'tes',
+  status: 'new',
 });
 ```
 
@@ -264,13 +271,13 @@ TES_SITE_URL=https://www.tenderedgesolutions.co.za
 
 ## Correctness Properties
 
-*A property is a characteristic or behavior that should hold true across all valid executions of
+_A property is a characteristic or behavior that should hold true across all valid executions of
 a system - essentially, a formal statement about what the system should do. Properties serve as
-the bridge between human-readable specifications and machine-verifiable correctness guarantees.*
+the bridge between human-readable specifications and machine-verifiable correctness guarantees._
 
 ### Property 1: Valid form submission persists a lead
 
-*For any* valid form payload (non-empty name, phone ≥ 7 chars, valid or empty email, any
+_For any_ valid form payload (non-empty name, phone ≥ 7 chars, valid or empty email, any
 serviceInterest), calling the `enquireLead` handler SHALL insert exactly one row into the
 `leads` table with `source = 'tes'`, `status = 'new'`, and field values matching the input.
 
@@ -278,7 +285,7 @@ serviceInterest), calling the `enquireLead` handler SHALL insert exactly one row
 
 ### Property 2: Email failure does not prevent lead persistence
 
-*For any* valid form payload where the email send throws or returns an error, the `enquireLead`
+_For any_ valid form payload where the email send throws or returns an error, the `enquireLead`
 handler SHALL still insert the lead row and return `{ success: true }` - the email failure SHALL
 NOT propagate to the caller.
 
@@ -286,7 +293,7 @@ NOT propagate to the caller.
 
 ### Property 3: Invalid inputs are rejected before database write
 
-*For any* form payload where a required field (name, phone, or serviceInterest) is empty or
+_For any_ form payload where a required field (name, phone, or serviceInterest) is empty or
 phone is fewer than 7 characters, the `enquireLead` action SHALL return a validation error and
 SHALL NOT insert any row into the `leads` table.
 
@@ -294,7 +301,7 @@ SHALL NOT insert any row into the `leads` table.
 
 ### Property 4: WhatsApp URL consistency
 
-*For any* WhatsApp CTA rendered anywhere on the page, the `href` attribute SHALL equal
+_For any_ WhatsApp CTA rendered anywhere on the page, the `href` attribute SHALL equal
 `https://wa.me/27745017094?text=Hi%2C+I'm+interested+in+your+tender+compliance+services.`
 and the element SHALL carry `target="_blank"` and `rel="noopener noreferrer"`.
 
@@ -302,14 +309,14 @@ and the element SHALL carry `target="_blank"` and `rel="noopener noreferrer"`.
 
 ### Property 5: Service card completeness
 
-*For any* of the six service cards rendered by `ServicesSection`, the rendered HTML SHALL
+_For any_ of the six service cards rendered by `ServicesSection`, the rendered HTML SHALL
 contain the service name, a description, and a price string beginning with "R".
 
 **Validates: Requirements 8.3, 8.4**
 
 ### Property 6: Pricing table row completeness
 
-*For any* of the eleven individual service rows rendered by `PricingSection`, the rendered HTML
+_For any_ of the eleven individual service rows rendered by `PricingSection`, the rendered HTML
 SHALL contain a service name, a price string, and a turnaround duration string.
 
 **Validates: Requirements 10.5**

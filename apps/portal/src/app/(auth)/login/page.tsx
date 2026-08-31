@@ -1,22 +1,41 @@
 'use client';
 
 import * as React from 'react';
+import { useRouter } from 'next/navigation';
 import { authClient } from '@/lib/auth-client';
-import { Loader2, Mail, KeyRound, ArrowRight, ShieldCheck } from 'lucide-react';
+import { Loader2, Mail, KeyRound, ArrowRight, ShieldCheck, UserCheck } from 'lucide-react';
 import { toast } from 'sonner';
+import { getDevClientsAction, loginAsDevClientAction } from '@/app/actions/dev-auth';
 
 export default function LoginPage() {
+  const router = useRouter();
   const [email, setEmail] = React.useState('');
   const [otpCode, setOtpCode] = React.useState('');
   const [isPending, setIsPending] = React.useState(false);
   const [isSent, setIsSent] = React.useState(false);
   const [useOtp, setUseOtp] = React.useState(false);
 
+  const isDev = process.env.NODE_ENV === 'development';
+  const [devClients, setDevClients] = React.useState<
+    Array<{ id: string; name: string; businessName: string | null; email: string | null }>
+  >([]);
+  const [selectedDevClient, setSelectedDevClient] = React.useState<string>('');
+  const [isDevLoading, setIsDevLoading] = React.useState(false);
+
   React.useEffect(() => {
     // Clear any lingering impersonation cookies when accessing the login page
     document.cookie = 'impersonate_client_id=; path=/; max-age=0; SameSite=Lax';
     document.cookie = 'dev_impersonate_client_id=; path=/; max-age=0; SameSite=Lax';
-  }, []);
+
+    if (isDev) {
+      getDevClientsAction().then((clients) => {
+        setDevClients(clients);
+        if (clients.length > 0) {
+          setSelectedDevClient(clients[0].id);
+        }
+      });
+    }
+  }, [isDev]);
 
   async function handleSendMagicLink(e: React.FormEvent) {
     e.preventDefault();
@@ -57,6 +76,27 @@ export default function LoginPage() {
       console.error(err);
     } finally {
       setIsPending(false);
+    }
+  }
+
+  async function handleDevLogin(e: React.FormEvent) {
+    e.preventDefault();
+    if (!selectedDevClient) return;
+    setIsDevLoading(true);
+    try {
+      const res = await loginAsDevClientAction(selectedDevClient);
+      if (res.success) {
+        toast.success('Switched user in Dev Mode. Redirecting...');
+        router.push('/dashboard');
+        router.refresh();
+      } else {
+        toast.error(res.error || 'Failed to switch user.');
+      }
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : 'Dev switch failed';
+      toast.error(message);
+    } finally {
+      setIsDevLoading(false);
     }
   }
 
@@ -185,6 +225,47 @@ export default function LoginPage() {
             </form>
           )}
         </div>
+
+        {/* Development Mode Quick User Switcher */}
+        {isDev && devClients.length > 0 && (
+          <div className="mt-6 rounded-2xl border border-amber-500/20 bg-amber-500/[0.04] p-5 backdrop-blur-xl shadow-xl animate-in fade-in duration-500">
+            <div className="flex items-center gap-2 mb-2 text-amber-400">
+              <UserCheck className="size-4" />
+              <h3 className="text-xs font-semibold uppercase tracking-wider">
+                Dev Mode User Selector
+              </h3>
+            </div>
+            <p className="text-xs text-muted-foreground mb-3">
+              Select any active client from your local database to switch login in 1 click:
+            </p>
+            <form onSubmit={handleDevLogin} className="space-y-3">
+              <select
+                value={selectedDevClient}
+                onChange={(e) => setSelectedDevClient(e.target.value)}
+                disabled={isDevLoading}
+                className="h-9 w-full rounded-lg border border-white/15 bg-[#0f172a] px-3 text-xs text-white outline-none focus:border-amber-500/50"
+              >
+                {devClients.map((c) => (
+                  <option key={c.id} value={c.id} className="bg-[#0f172a] text-white">
+                    {c.name} {c.businessName ? `(${c.businessName})` : ''}{' '}
+                    {c.email ? `• ${c.email}` : ''}
+                  </option>
+                ))}
+              </select>
+              <button
+                type="submit"
+                disabled={isDevLoading || !selectedDevClient}
+                className="flex h-8 w-full items-center justify-center gap-1.5 rounded-lg bg-amber-500/20 border border-amber-500/40 text-xs font-medium text-amber-300 hover:bg-amber-500/30 transition-colors disabled:opacity-50"
+              >
+                {isDevLoading ? (
+                  <Loader2 className="size-3.5 animate-spin" />
+                ) : (
+                  'Log In As Selected Client'
+                )}
+              </button>
+            </form>
+          </div>
+        )}
 
         {/* Footer */}
         <p className="mt-8 text-center text-xs text-muted-foreground/60">

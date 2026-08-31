@@ -105,25 +105,27 @@ export function UniversalEmailDialog({
     }
     onOpenChange?.(newOpen);
   };
-  
+
   // Form fields
   const [recipient, setRecipient] = useState(defaultRecipientEmail || '');
   const [showCcBcc, setShowCcBcc] = useState(false);
   const [cc, setCc] = useState('');
   const [bcc, setBcc] = useState('');
-  
-  const defaultSubjectText = 
-    documentType === 'invoice' ? `New Invoice ${documentNumber}` :
-    documentType === 'quote' ? `New Quotation ${documentNumber}` :
-    `Payment Receipt ${documentNumber}`;
-  
+
+  const defaultSubjectText =
+    documentType === 'invoice'
+      ? `New Invoice ${documentNumber}`
+      : documentType === 'quote'
+        ? `New Quotation ${documentNumber}`
+        : `Payment Receipt ${documentNumber}`;
+
   const [subject, setSubject] = useState(defaultSubjectText);
   const [message, setMessage] = useState('');
   const [attachStatement, setAttachStatement] = useState(documentType === 'invoice');
-  
+
   // Custom attachments
   const [customFiles, setCustomFiles] = useState<CustomFile[]>([]);
-  
+
   // Status states
   const [isSending, setIsSending] = useState(false);
   const [statusText, setStatusText] = useState('');
@@ -185,7 +187,7 @@ export function UniversalEmailDialog({
   const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     if (!e.target.files) return;
     const files = Array.from(e.target.files);
-    
+
     const newFiles: CustomFile[] = [];
     for (const file of files) {
       if (file.size > 5 * 1024 * 1024) {
@@ -217,11 +219,12 @@ export function UniversalEmailDialog({
       toast.error('Recipient email is required.');
       return;
     }
-    
+
     setIsSending(true);
     try {
       // 1. Compile primary document
-      const docLabel = documentType === 'invoice' ? 'Invoice' : documentType === 'quote' ? 'Quote' : 'Receipt';
+      const docLabel =
+        documentType === 'invoice' ? 'Invoice' : documentType === 'quote' ? 'Quote' : 'Receipt';
       setStatusText(`Compiling ${docLabel.toLowerCase()} PDF...`);
       const pdfBase64 = pdfUrl
         ? await serverPdfUrlToBase64(pdfUrl, `${docLabel} PDF`)
@@ -253,7 +256,7 @@ export function UniversalEmailDialog({
       // 4. Transmit email
       setStatusText('Transmitting documents via Resend...');
       let result;
-      
+
       if (documentType === 'receipt') {
         result = await sendReceiptEmailAction({
           incomeId: documentId,
@@ -302,28 +305,54 @@ export function UniversalEmailDialog({
     }
   }
 
-  const primaryDocName = 
-    documentType === 'invoice' ? `Invoice-${documentNumber}.pdf` :
-    documentType === 'quote' ? `Quote-${documentNumber}.pdf` :
-    `Receipt-${documentNumber}.pdf`;
+  const primaryDocName =
+    documentType === 'invoice'
+      ? `Invoice-${documentNumber}.pdf`
+      : documentType === 'quote'
+        ? `Quote-${documentNumber}.pdf`
+        : `Receipt-${documentNumber}.pdf`;
 
   return (
     <Dialog open={currentOpen} onOpenChange={handleOpenChange}>
       {trigger !== null && (
         <DialogTrigger asChild>
           {trigger || (
-            <Button variant="outline" size="sm" className={documentType === 'receipt' ? 'border-emerald-200 hover:border-emerald-300 hover:bg-emerald-50/50 dark:hover:bg-emerald-950/20' : ''}>
-              <Mail data-icon="inline-start" className={documentType === 'receipt' ? 'text-emerald-500' : ''} />
-              Email {documentType === 'invoice' ? 'Invoice' : documentType === 'quote' ? 'Quote' : 'Receipt'}
+            <Button
+              variant="outline"
+              size="sm"
+              className={
+                documentType === 'receipt'
+                  ? 'border-emerald-200 hover:border-emerald-300 hover:bg-emerald-50/50 dark:hover:bg-emerald-950/20'
+                  : ''
+              }
+            >
+              <Mail
+                data-icon="inline-start"
+                className={documentType === 'receipt' ? 'text-emerald-500' : ''}
+              />
+              Email{' '}
+              {documentType === 'invoice'
+                ? 'Invoice'
+                : documentType === 'quote'
+                  ? 'Quote'
+                  : 'Receipt'}
             </Button>
           )}
         </DialogTrigger>
       )}
       <DialogContent className="max-h-[94vh] w-[calc(100vw-2rem)] max-w-[1180px] overflow-hidden p-0">
         <DialogHeader className="border-b px-5 pt-5">
-          <DialogTitle>Email {documentType === 'invoice' ? 'Invoice' : documentType === 'quote' ? 'Quotation' : 'Payment Receipt'}</DialogTitle>
+          <DialogTitle>
+            Email{' '}
+            {documentType === 'invoice'
+              ? 'Invoice'
+              : documentType === 'quote'
+                ? 'Quotation'
+                : 'Payment Receipt'}
+          </DialogTitle>
           <DialogDescription>
-            Send document **{documentNumber}** directly to the client as a high-fidelity PDF attachment.
+            Send document **{documentNumber}** directly to the client as a high-fidelity PDF
+            attachment.
           </DialogDescription>
         </DialogHeader>
 
@@ -334,14 +363,19 @@ export function UniversalEmailDialog({
               <Field>
                 <div className="flex items-center justify-between">
                   <FieldLabel htmlFor="email-recipient">Recipient Email Address</FieldLabel>
-                  <Button 
-                    type="button" 
-                    variant="ghost" 
-                    size="sm" 
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="sm"
                     onClick={() => setShowCcBcc(!showCcBcc)}
                     className="h-7 text-xs text-muted-foreground hover:text-foreground"
                   >
-                    CC/BCC {showCcBcc ? <ChevronUp className="size-3 ml-1" /> : <ChevronDown className="size-3 ml-1" />}
+                    CC/BCC{' '}
+                    {showCcBcc ? (
+                      <ChevronUp className="size-3 ml-1" />
+                    ) : (
+                      <ChevronDown className="size-3 ml-1" />
+                    )}
                   </Button>
                 </div>
                 <Input
@@ -400,9 +434,11 @@ export function UniversalEmailDialog({
                   value={message}
                   onChange={(e) => setMessage(e.target.value)}
                   placeholder={
-                    documentType === 'invoice' ? "Hi there, please find our invoice attached. Let us know if you have any questions!" :
-                    documentType === 'quote' ? "Hi there, please find our quotation attached. We look forward to working with you!" :
-                    "Thank you for your payment! Please find your official receipt attached."
+                    documentType === 'invoice'
+                      ? 'Hi there, please find our invoice attached. Let us know if you have any questions!'
+                      : documentType === 'quote'
+                        ? 'Hi there, please find our quotation attached. We look forward to working with you!'
+                        : 'Thank you for your payment! Please find your official receipt attached.'
                   }
                   rows={4}
                   disabled={isSending}
@@ -454,19 +490,28 @@ export function UniversalEmailDialog({
                         onCheckedChange={(checked) => setAttachStatement(Boolean(checked))}
                         disabled={isSending}
                       />
-                      <span className="font-medium truncate text-foreground">Client Account Statement.pdf</span>
+                      <span className="font-medium truncate text-foreground">
+                        Client Account Statement.pdf
+                      </span>
                     </label>
-                    <span className="text-muted-foreground/70 shrink-0 text-[10px]">(optional)</span>
+                    <span className="text-muted-foreground/70 shrink-0 text-[10px]">
+                      (optional)
+                    </span>
                   </div>
                 )}
 
                 {/* Custom Uploaded Files */}
                 {customFiles.map((file, idx) => (
-                  <div key={idx} className="flex items-center justify-between p-2 rounded-lg border border-dashed bg-background text-xs">
+                  <div
+                    key={idx}
+                    className="flex items-center justify-between p-2 rounded-lg border border-dashed bg-background text-xs"
+                  >
                     <div className="flex items-center gap-2 min-w-0">
                       <Paperclip className="size-3.5 text-muted-foreground shrink-0" />
                       <span className="font-medium truncate text-foreground">{file.name}</span>
-                      <span className="text-muted-foreground/70 shrink-0">({formatBytes(file.size)})</span>
+                      <span className="text-muted-foreground/70 shrink-0">
+                        ({formatBytes(file.size)})
+                      </span>
                     </div>
                     <Button
                       type="button"
@@ -500,10 +545,12 @@ export function UniversalEmailDialog({
           <Button variant="outline" onClick={() => handleOpenChange(false)} disabled={isSending}>
             Cancel
           </Button>
-          <Button 
-            onClick={handleSend} 
-            disabled={isSending} 
-            className={documentType === 'receipt' ? 'bg-emerald-600 hover:bg-emerald-700 text-white' : ''}
+          <Button
+            onClick={handleSend}
+            disabled={isSending}
+            className={
+              documentType === 'receipt' ? 'bg-emerald-600 hover:bg-emerald-700 text-white' : ''
+            }
           >
             {isSending ? (
               <>

@@ -1,13 +1,13 @@
-'use client'
+'use client';
 
-import { useState, useTransition } from 'react'
-import { useRouter } from 'next/navigation'
-import { AlertTriangle, ArrowLeft, ArrowRight, CheckCircle2, Loader2, Lock } from 'lucide-react'
-import { toast } from 'sonner'
-import { closeMonth, runPreCloseChecks } from '@/app/actions/snapshots'
-import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert'
-import { Badge } from '@/components/ui/badge'
-import { Button } from '@/components/ui/button'
+import { useState, useTransition } from 'react';
+import { useRouter } from 'next/navigation';
+import { AlertTriangle, ArrowLeft, ArrowRight, CheckCircle2, Loader2, Lock } from 'lucide-react';
+import { toast } from 'sonner';
+import { closeMonth, runPreCloseChecks } from '@/app/actions/snapshots';
+import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
+import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
 import {
   Dialog,
   DialogContent,
@@ -15,37 +15,33 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
-} from '@/components/ui/dialog'
-import {
-  Field,
-  FieldDescription,
-  FieldGroup,
-  FieldLabel,
-} from '@/components/ui/field'
-import { Textarea } from '@/components/ui/textarea'
-import { cn } from '@/lib/utils'
-import { fmtMonthYear, formatZAR } from '@/lib/format'
+} from '@/components/ui/dialog';
+import { Field, FieldDescription, FieldGroup, FieldLabel } from '@/components/ui/field';
+import { Textarea } from '@/components/ui/textarea';
+import { cn } from '@/lib/utils';
+import { fmtMonthYear, formatZAR } from '@/lib/format';
 
 interface PreCloseChecks {
-  uncategorizedExpenses: number
-  draftInvoices: number
-  incomeTotal: number
-  expenseTotal: number
+  uncategorizedExpenses: number;
+  draftInvoices: number;
+  incomeTotal: number;
+  expenseTotal: number;
 }
 
 interface CloseMonthWizardProps {
-  open: boolean
-  onOpenChange: (open: boolean) => void
-  period: string
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+  period: string;
   summary: {
-    revenue: number
-    expenses: number
-    pmgShare: number
-    profitPool: number
-  }
+    revenue: number;
+    expenses: number;
+    pmgShare: number;
+    profitPool: number;
+  };
 }
 
-type AmountTone = 'default' | 'revenue' | 'expense' | 'positive' | 'negative' | 'share' | 'allocation'
+type AmountTone =
+  'default' | 'revenue' | 'expense' | 'positive' | 'negative' | 'share' | 'allocation';
 
 function amountToneClass(tone: AmountTone) {
   return cn(
@@ -55,67 +51,64 @@ function amountToneClass(tone: AmountTone) {
     tone === 'negative' && 'text-destructive',
     tone === 'share' && 'text-[color:var(--chart-3)]',
     tone === 'allocation' && 'text-[color:var(--chart-4)]',
-  )
+  );
 }
 
-export function CloseMonthWizard({
-  open,
-  onOpenChange,
-  period,
-  summary,
-}: CloseMonthWizardProps) {
-  const [step, setStep] = useState<0 | 1>(0)
-  const [checks, setChecks] = useState<PreCloseChecks | null>(null)
-  const [checksLoading, setChecksLoading] = useState(false)
-  const [notes, setNotes] = useState('')
-  const [isPending, startTransition] = useTransition()
-  const router = useRouter()
-  const periodLabel = fmtMonthYear(period)
-  const isProfitable = summary.profitPool >= 0
+export function CloseMonthWizard({ open, onOpenChange, period, summary }: CloseMonthWizardProps) {
+  const [step, setStep] = useState<0 | 1>(0);
+  const [checks, setChecks] = useState<PreCloseChecks | null>(null);
+  const [checksLoading, setChecksLoading] = useState(false);
+  const [notes, setNotes] = useState('');
+  const [isPending, startTransition] = useTransition();
+  const router = useRouter();
+  const periodLabel = fmtMonthYear(period);
+  const isProfitable = summary.profitPool >= 0;
 
   const hasWarnings = checks
-    ? checks.uncategorizedExpenses > 0 || checks.draftInvoices > 0 || (checks.incomeTotal === 0 && checks.expenseTotal === 0)
-    : false
+    ? checks.uncategorizedExpenses > 0 ||
+      checks.draftInvoices > 0 ||
+      (checks.incomeTotal === 0 && checks.expenseTotal === 0)
+    : false;
 
   const loadChecks = async () => {
     if (checks) {
-      setStep(1)
-      return
+      setStep(1);
+      return;
     }
 
-    setChecksLoading(true)
+    setChecksLoading(true);
     try {
-      const result = await runPreCloseChecks(period)
-      setChecks(result)
-      setStep(1)
+      const result = await runPreCloseChecks(period);
+      setChecks(result);
+      setStep(1);
     } catch {
-      toast.error('Unable to run pre-close checks. Please try again.')
+      toast.error('Unable to run pre-close checks. Please try again.');
     } finally {
-      setChecksLoading(false)
+      setChecksLoading(false);
     }
-  }
+  };
 
   const handleClose = () => {
     startTransition(async () => {
-      const result = await closeMonth(period, { notes: notes || undefined })
+      const result = await closeMonth(period, { notes: notes || undefined });
       if ('error' in result) {
-        toast.error(result.error)
-        return
+        toast.error(result.error);
+        return;
       }
 
-      toast.success(`${periodLabel} has been closed`)
-      resetWizard(false)
-      router.refresh()
-    })
-  }
+      toast.success(`${periodLabel} has been closed`);
+      resetWizard(false);
+      router.refresh();
+    });
+  };
 
   const resetWizard = (nextOpen: boolean) => {
-    onOpenChange(nextOpen)
-    setStep(0)
-    setChecks(null)
-    setNotes('')
-    setChecksLoading(false)
-  }
+    onOpenChange(nextOpen);
+    setStep(0);
+    setChecks(null);
+    setNotes('');
+    setChecksLoading(false);
+  };
 
   return (
     <Dialog open={open} onOpenChange={resetWizard}>
@@ -177,7 +170,7 @@ export function CloseMonthWizard({
         </DialogFooter>
       </DialogContent>
     </Dialog>
-  )
+  );
 }
 
 function StepBadge({ active, done, label }: { active: boolean; done?: boolean; label: string }) {
@@ -186,7 +179,7 @@ function StepBadge({ active, done, label }: { active: boolean; done?: boolean; l
       {done && <CheckCircle2 data-icon="inline-start" />}
       {label}
     </Badge>
-  )
+  );
 }
 
 function ReviewFigures({
@@ -194,9 +187,9 @@ function ReviewFigures({
   isProfitable,
   periodLabel,
 }: {
-  summary: CloseMonthWizardProps['summary']
-  isProfitable: boolean
-  periodLabel: string
+  summary: CloseMonthWizardProps['summary'];
+  isProfitable: boolean;
+  periodLabel: string;
 }) {
   return (
     <div className="flex flex-col gap-4">
@@ -211,7 +204,6 @@ function ReviewFigures({
         />
       </div>
 
-
       <Alert>
         <Lock className="size-4" />
         <AlertTitle>This creates the locked record for {periodLabel}</AlertTitle>
@@ -220,7 +212,7 @@ function ReviewFigures({
         </AlertDescription>
       </Alert>
     </div>
-  )
+  );
 }
 
 function ChecksAndConfirm({
@@ -230,43 +222,48 @@ function ChecksAndConfirm({
   onNotesChange,
   periodLabel,
 }: {
-  checks: PreCloseChecks | null
-  hasWarnings: boolean
-  notes: string
-  onNotesChange: (value: string) => void
-  periodLabel: string
+  checks: PreCloseChecks | null;
+  hasWarnings: boolean;
+  notes: string;
+  onNotesChange: (value: string) => void;
+  periodLabel: string;
 }) {
   const checkItems = checks
     ? [
         {
           label: 'Expenses are categorized',
-          detail: checks.uncategorizedExpenses > 0
-            ? `${checks.uncategorizedExpenses} expense(s) still need a category.`
-            : 'All expenses have categories.',
+          detail:
+            checks.uncategorizedExpenses > 0
+              ? `${checks.uncategorizedExpenses} expense(s) still need a category.`
+              : 'All expenses have categories.',
           passed: checks.uncategorizedExpenses === 0,
         },
         {
           label: 'Invoices are finalized',
-          detail: checks.draftInvoices > 0
-            ? `${checks.draftInvoices} draft invoice(s) remain.`
-            : 'No draft invoices found.',
+          detail:
+            checks.draftInvoices > 0
+              ? `${checks.draftInvoices} draft invoice(s) remain.`
+              : 'No draft invoices found.',
           passed: checks.draftInvoices === 0,
         },
         {
           label: 'Period has activity',
-          detail: checks.incomeTotal > 0 || checks.expenseTotal > 0
-            ? `${formatZAR(checks.incomeTotal + checks.expenseTotal)} total activity.`
-            : 'No income or expenses were found for this period.',
+          detail:
+            checks.incomeTotal > 0 || checks.expenseTotal > 0
+              ? `${formatZAR(checks.incomeTotal + checks.expenseTotal)} total activity.`
+              : 'No income or expenses were found for this period.',
           passed: checks.incomeTotal > 0 || checks.expenseTotal > 0,
         },
       ]
-    : []
+    : [];
 
   return (
     <div className="flex flex-col gap-4">
       <Alert variant={hasWarnings ? 'default' : 'default'}>
         {hasWarnings ? <AlertTriangle className="size-4" /> : <CheckCircle2 className="size-4" />}
-        <AlertTitle>{hasWarnings ? 'Review warnings before closing' : `${periodLabel} is ready to close`}</AlertTitle>
+        <AlertTitle>
+          {hasWarnings ? 'Review warnings before closing' : `${periodLabel} is ready to close`}
+        </AlertTitle>
         <AlertDescription>
           {hasWarnings
             ? 'You can still close the month, but these items may need follow-up.'
@@ -276,7 +273,10 @@ function ChecksAndConfirm({
 
       <div className="flex flex-col gap-2">
         {checkItems.map((item) => (
-          <div key={item.label} className="flex items-start gap-3 rounded-md border border-border p-3">
+          <div
+            key={item.label}
+            className="flex items-start gap-3 rounded-md border border-border p-3"
+          >
             {item.passed ? (
               <CheckCircle2 className="mt-0.5 size-4 shrink-0 text-muted-foreground" />
             ) : (
@@ -305,7 +305,7 @@ function ChecksAndConfirm({
         </Field>
       </FieldGroup>
     </div>
-  )
+  );
 }
 
 function FigureTile({
@@ -314,10 +314,10 @@ function FigureTile({
   tone = 'default',
   compact = false,
 }: {
-  label: string
-  value: number
-  tone?: AmountTone
-  compact?: boolean
+  label: string;
+  value: number;
+  tone?: AmountTone;
+  compact?: boolean;
 }) {
   return (
     <div className="flex flex-col gap-1 rounded-md border border-border p-3">
@@ -332,5 +332,5 @@ function FigureTile({
         {formatZAR(value)}
       </span>
     </div>
-  )
+  );
 }

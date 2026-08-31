@@ -33,7 +33,7 @@ classDiagram
         invoiceId: UUID
         amount: Decimal
     }
-    
+
     Client "1" --> "*" Invoice : receives
     Client "1" --> "*" Income : pays
     Income "1" --> "*" PaymentAllocation : distributes
@@ -60,7 +60,7 @@ To make this a highly premium enterprise solution, we will implement the followi
 4. **Automated LIFO Downward Adjustment Algorithm (Confirmed)**
    - When a payment is edited to reduce its total value, the system automatically uses **LIFO (Last In, First Out)** to reduce the allocations.
    - It strips money from the **newest invoice** (the last one that was allocated money) first. This protects your oldest outstanding debts, keeping their paid/prioritized state intact as much as possible.
-   - *Example*: A payment of R5,000 was allocated to Invoice A (Oldest: R3,000) and Invoice B (Newer: R2,000). If you adjust the payment down to R3,500, the system deducts the R1,500 reduction from Invoice B first, leaving it at R500 (partially paid), while keeping Invoice A 100% paid at R3,000.
+   - _Example_: A payment of R5,000 was allocated to Invoice A (Oldest: R3,000) and Invoice B (Newer: R2,000). If you adjust the payment down to R3,500, the system deducts the R1,500 reduction from Invoice B first, leaving it at R500 (partially paid), while keeping Invoice A 100% paid at R3,000.
 
 5. **Automated FIFO Upward Adjustment Algorithm (Confirmed)**
    - When a payment is edited to increase its total value, the system automatically uses **FIFO (First In, First Out)** to distribute the extra cash.
@@ -78,40 +78,42 @@ To make this a highly premium enterprise solution, we will implement the followi
 We must introduce the `payment_allocations` table and add the new status value.
 
 #### [MODIFY] [billing.ts](file:///D:/websites/pmg-hub/packages/db/src/schema/billing.ts)
+
 - Extend `invoiceStatusEnum` to support `'partially_paid'`.
 - Define the new `paymentAllocations` table:
+
 ```typescript
-import { pgTable, uuid, numeric, timestamp, index } from "drizzle-orm/pg-core";
-import { income } from "./income";
+import { pgTable, uuid, numeric, timestamp, index } from 'drizzle-orm/pg-core';
+import { income } from './income';
 
 // Extend invoiceStatusEnum:
-export const invoiceStatusEnum = pgEnum("invoice_status", [
-  "draft",
-  "issued",
-  "partially_paid",
-  "paid",
-  "overdue",
-  "void",
+export const invoiceStatusEnum = pgEnum('invoice_status', [
+  'draft',
+  'issued',
+  'partially_paid',
+  'paid',
+  'overdue',
+  'void',
 ]);
 
 export const paymentAllocations = pgTable(
-  "payment_allocations",
+  'payment_allocations',
   {
-    id: uuid("id").primaryKey().defaultRandom(),
-    incomeId: uuid("income_id")
+    id: uuid('id').primaryKey().defaultRandom(),
+    incomeId: uuid('income_id')
       .notNull()
-      .references(() => income.id, { onDelete: "cascade" }), // Cascade delete if the payment record is cleared
-    invoiceId: uuid("invoice_id")
+      .references(() => income.id, { onDelete: 'cascade' }), // Cascade delete if the payment record is cleared
+    invoiceId: uuid('invoice_id')
       .notNull()
-      .references(() => invoices.id, { onDelete: "restrict" }), // Prevent invoice deletion if allocations exist
-    amount: numeric("amount", { precision: 12, scale: 2 }).notNull(),
-    createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
-    updatedAt: timestamp("updated_at", { withTimezone: true }),
+      .references(() => invoices.id, { onDelete: 'restrict' }), // Prevent invoice deletion if allocations exist
+    amount: numeric('amount', { precision: 12, scale: 2 }).notNull(),
+    createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
+    updatedAt: timestamp('updated_at', { withTimezone: true }),
   },
   (t) => [
-    index("payment_allocations_income_idx").on(t.incomeId),
-    index("payment_allocations_invoice_idx").on(t.invoiceId),
-  ]
+    index('payment_allocations_income_idx').on(t.incomeId),
+    index('payment_allocations_invoice_idx').on(t.invoiceId),
+  ],
 );
 
 export type PaymentAllocation = typeof paymentAllocations.$inferSelect;
@@ -119,7 +121,9 @@ export type NewPaymentAllocation = typeof paymentAllocations.$inferInsert;
 ```
 
 #### [NEW] [000X_payments_migration.sql](file:///D:/websites/pmg-hub/packages/db/src/migrations/000X_payments_migration.sql)
+
 A SQL migration that:
+
 1. Adds `'partially_paid'` to the `invoice_status` enum.
 2. Creates the `payment_allocations` table.
 3. **Data Backfill Migration**: Loops through all existing `invoices` with `status = 'paid'` and `income_id IS NOT NULL`, inserting a row into `payment_allocations` with `amount = total` to preserve all past payments history with 100% fidelity.
@@ -131,7 +135,9 @@ A SQL migration that:
 We will create a set of robust actions to calculate outstanding balances, compute auto-allocations, and record multi-invoice payments within transactions.
 
 #### [NEW] [payment-actions.ts](file:///D:/websites/pmg-hub/apps/admin/src/app/actions/billing-payments.ts)
+
 This file will contain critical server actions:
+
 1. **`getClientOutstandingInvoices(clientId: string)`**:
    - Queries all invoices for the client where status is `'issued'`, `'overdue'`, or `'partially_paid'`.
    - Aggregates the sum of all existing `payment_allocations` for each invoice to calculate the exact `amountOutstanding = invoice.total - sum(allocations)`.
@@ -176,6 +182,7 @@ This file will contain critical server actions:
 ## Verification Plan
 
 ### Automated Tests
+
 - Test cases verifying the auto-allocation math under standard and edge conditions:
   - Payment amount is less than the oldest invoice.
   - Payment amount perfectly covers multiple invoices.
@@ -183,6 +190,7 @@ This file will contain critical server actions:
 - Validate state updates (`issued` -> `partially_paid` -> `paid`).
 
 ### Manual Verification
+
 1. **Adding Partial Payment**:
    - Create an invoice for R10,000.
    - Add a payment of R3,000 for this client.

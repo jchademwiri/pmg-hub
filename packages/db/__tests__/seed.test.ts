@@ -1,12 +1,12 @@
-import { describe, it, expect, vi, beforeEach } from "vitest";
-import * as fc from "fast-check";
-import { spawnSync } from "child_process";
-import { resolve, dirname } from "path";
-import { fileURLToPath } from "url";
-import pg from "pg";
-import { drizzle } from "drizzle-orm/node-postgres";
-import { sql } from "drizzle-orm";
-import { config } from "dotenv";
+import { describe, it, expect, vi, beforeEach } from 'vitest';
+import * as fc from 'fast-check';
+import { spawnSync } from 'child_process';
+import { resolve, dirname } from 'path';
+import { fileURLToPath } from 'url';
+import pg from 'pg';
+import { drizzle } from 'drizzle-orm/node-postgres';
+import { sql } from 'drizzle-orm';
+import { config } from 'dotenv';
 
 // Feature: drizzle-db-schema, Property 7: Seed idempotency
 // Feature: drizzle-db-schema, Property 10: Seed transaction atomicity
@@ -76,19 +76,19 @@ async function runSeedBlock2(
 // Validates: Requirements 9.7, 9.9
 // ---------------------------------------------------------------------------
 
-describe("Property 7: Seed idempotency", () => {
-  it("does not insert records that already exist (unit: all exist)", async () => {
+describe('Property 7: Seed idempotency', () => {
+  it('does not insert records that already exist (unit: all exist)', async () => {
     const insertMock = vi.fn();
     const mockDb = {
-      select: async (_key: string) => [{ id: "existing" }], // always returns existing
+      select: async (_key: string) => [{ id: 'existing' }], // always returns existing
       insert: insertMock,
       transaction: async <T>(cb: () => Promise<T>) => cb(),
     };
 
     const fixtures = [
-      { key: "division:TES", exists: true },
-      { key: "division:AWS", exists: true },
-      { key: "client:John Smith", exists: true },
+      { key: 'division:TES', exists: true },
+      { key: 'division:AWS', exists: true },
+      { key: 'client:John Smith', exists: true },
     ];
 
     const { inserted, skipped } = await runSeedBlock2(fixtures, mockDb);
@@ -98,7 +98,7 @@ describe("Property 7: Seed idempotency", () => {
     expect(insertMock).not.toHaveBeenCalled();
   });
 
-  it("inserts records that do not exist (unit: none exist)", async () => {
+  it('inserts records that do not exist (unit: none exist)', async () => {
     const insertMock = vi.fn().mockResolvedValue(undefined);
     const mockDb = {
       select: async (_key: string) => [], // always returns empty
@@ -107,9 +107,9 @@ describe("Property 7: Seed idempotency", () => {
     };
 
     const fixtures = [
-      { key: "division:TES", exists: false },
-      { key: "division:AWS", exists: false },
-      { key: "client:John Smith", exists: false },
+      { key: 'division:TES', exists: false },
+      { key: 'division:AWS', exists: false },
+      { key: 'client:John Smith', exists: false },
     ];
 
     const { inserted, skipped } = await runSeedBlock2(fixtures, mockDb);
@@ -119,7 +119,7 @@ describe("Property 7: Seed idempotency", () => {
     expect(insertMock).toHaveBeenCalledTimes(3);
   });
 
-  it("property: running seed twice yields identical row counts", async () => {
+  it('property: running seed twice yields identical row counts', async () => {
     // Feature: drizzle-db-schema, Property 7: Seed idempotency
     // Validates: Requirements 9.7, 9.9
     await fc.assert(
@@ -165,7 +165,7 @@ describe("Property 7: Seed idempotency", () => {
     );
   });
 
-  it("property: partial existence - only missing records are inserted", async () => {
+  it('property: partial existence - only missing records are inserted', async () => {
     // Feature: drizzle-db-schema, Property 7: Seed idempotency
     // Validates: Requirements 9.7, 9.9
     await fc.assert(
@@ -224,12 +224,12 @@ describe("Property 7: Seed idempotency", () => {
 // Validates: Requirements 9.10
 // ---------------------------------------------------------------------------
 
-describe("Property 10: Seed transaction atomicity", () => {
-  it("rolls back all inserts when transaction throws mid-way", async () => {
+describe('Property 10: Seed transaction atomicity', () => {
+  it('rolls back all inserts when transaction throws mid-way', async () => {
     const fixtures = [
-      { key: "division:TES", exists: false },
-      { key: "division:AWS", exists: false },
-      { key: "client:John Smith", exists: false },
+      { key: 'division:TES', exists: false },
+      { key: 'division:AWS', exists: false },
+      { key: 'client:John Smith', exists: false },
     ];
 
     // Use Map to avoid prototype pollution
@@ -241,7 +241,7 @@ describe("Property 10: Seed transaction atomicity", () => {
       insert: vi.fn().mockImplementation(async (key: string) => {
         callCount++;
         if (callCount === 2) {
-          throw new Error("Simulated mid-seed failure");
+          throw new Error('Simulated mid-seed failure');
         }
         rollbackDb.set(key, true);
       }),
@@ -259,14 +259,14 @@ describe("Property 10: Seed transaction atomicity", () => {
     };
 
     await expect(runSeedBlock2(fixtures, mockDbWithRollback)).rejects.toThrow(
-      "Simulated mid-seed failure",
+      'Simulated mid-seed failure',
     );
 
     // After rollback, db should be empty (no partial commits)
     expect(rollbackDb.size).toBe(0);
   });
 
-  it("property: transaction failure leaves no partial records", async () => {
+  it('property: transaction failure leaves no partial records', async () => {
     // Feature: drizzle-db-schema, Property 10: Seed transaction atomicity
     // Validates: Requirements 9.10
     await fc.assert(
@@ -294,12 +294,11 @@ describe("Property 10: Seed transaction atomicity", () => {
           let callCount = 0;
 
           const mockDb = {
-            select: async (key: string) =>
-              rollbackDb.has(key) ? [{ id: key }] : [],
+            select: async (key: string) => (rollbackDb.has(key) ? [{ id: key }] : []),
             insert: vi.fn().mockImplementation(async (key: string) => {
               callCount++;
               if (callCount > actualFailIndex) {
-                throw new Error("Simulated failure");
+                throw new Error('Simulated failure');
               }
               rollbackDb.set(key, true);
             }),
@@ -316,9 +315,7 @@ describe("Property 10: Seed transaction atomicity", () => {
             },
           };
 
-          await expect(runSeedBlock2(fixtures, mockDb)).rejects.toThrow(
-            "Simulated failure",
-          );
+          await expect(runSeedBlock2(fixtures, mockDb)).rejects.toThrow('Simulated failure');
 
           // After rollback, no partial records should remain
           expect(rollbackDb.size).toBe(0);
@@ -328,7 +325,7 @@ describe("Property 10: Seed transaction atomicity", () => {
     );
   });
 
-  it("commits all records when transaction succeeds", async () => {
+  it('commits all records when transaction succeeds', async () => {
     const db: Record<string, boolean> = {};
 
     const mockDb = {
@@ -340,9 +337,9 @@ describe("Property 10: Seed transaction atomicity", () => {
     };
 
     const fixtures = [
-      { key: "division:TES", exists: false },
-      { key: "division:AWS", exists: false },
-      { key: "client:John Smith", exists: false },
+      { key: 'division:TES', exists: false },
+      { key: 'division:AWS', exists: false },
+      { key: 'client:John Smith', exists: false },
     ];
 
     const { inserted } = await runSeedBlock2(fixtures, mockDb);
@@ -361,7 +358,7 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
 
 // Load .env from packages/db/.env
-config({ path: resolve(__dirname, "../.env") });
+config({ path: resolve(__dirname, '../.env') });
 
 const DB_URL = process.env.DATABASE_URL_UNPOOLED ?? process.env.DATABASE_URL;
 const hasDb = Boolean(DB_URL);
@@ -371,17 +368,17 @@ const hasDb = Boolean(DB_URL);
  * Returns { exitCode, stderr, stdout }.
  */
 function runSeed(): { exitCode: number | null; stdout: string; stderr: string } {
-  const seedPath = resolve(__dirname, "../src/seed.ts");
-  const result = spawnSync("bun", ["run", seedPath], {
-    cwd: resolve(__dirname, ".."),
-    encoding: "utf-8",
+  const seedPath = resolve(__dirname, '../src/seed.ts');
+  const result = spawnSync('bun', ['run', seedPath], {
+    cwd: resolve(__dirname, '..'),
+    encoding: 'utf-8',
     timeout: 120_000, // 2 minutes - seed does a lot of DB work
     env: { ...process.env },
   });
   return {
     exitCode: result.status,
-    stdout: result.stdout ?? "",
-    stderr: result.stderr ?? "",
+    stdout: result.stdout ?? '',
+    stderr: result.stderr ?? '',
   };
 }
 
@@ -398,24 +395,22 @@ async function createTestDb() {
   return { client, db };
 }
 
-describe.skipIf(!hasDb)("Integration: seed idempotency (real database)", () => {
+describe.skipIf(!hasDb)('Integration: seed idempotency (real database)', () => {
   // Run seed once before all integration assertions
   // We run it here so the describe block can share the connection
-  it("seed runs without error on first execution", () => {
+  it('seed runs without error on first execution', () => {
     const { exitCode, stderr } = runSeed();
     // Print stderr for debugging if it fails
     if (exitCode !== 0) {
-      console.error("Seed stderr:", stderr);
+      console.error('Seed stderr:', stderr);
     }
     expect(exitCode).toBe(0);
   }, 120_000); // 2 minute timeout
 
-  it("expenses table covers ≥ 3 distinct divisionId values after seed", async () => {
+  it('expenses table covers ≥ 3 distinct divisionId values after seed', async () => {
     const { client, db } = await createTestDb();
     try {
-      const result = await db.execute(
-        sql`SELECT COUNT(DISTINCT division_id) AS cnt FROM expenses`
-      );
+      const result = await db.execute(sql`SELECT COUNT(DISTINCT division_id) AS cnt FROM expenses`);
       const cnt = Number((result.rows[0] as { cnt: string }).cnt);
       expect(cnt).toBeGreaterThanOrEqual(3);
     } finally {
@@ -423,12 +418,10 @@ describe.skipIf(!hasDb)("Integration: seed idempotency (real database)", () => {
     }
   }, 30_000);
 
-  it("expenses table covers ≥ 3 distinct category values after seed", async () => {
+  it('expenses table covers ≥ 3 distinct category values after seed', async () => {
     const { client, db } = await createTestDb();
     try {
-      const result = await db.execute(
-        sql`SELECT COUNT(DISTINCT category) AS cnt FROM expenses`
-      );
+      const result = await db.execute(sql`SELECT COUNT(DISTINCT category) AS cnt FROM expenses`);
       const cnt = Number((result.rows[0] as { cnt: string }).cnt);
       expect(cnt).toBeGreaterThanOrEqual(3);
     } finally {
@@ -436,27 +429,25 @@ describe.skipIf(!hasDb)("Integration: seed idempotency (real database)", () => {
     }
   }, 30_000);
 
-  it("leads table contains all four statuses after seed", async () => {
+  it('leads table contains all four statuses after seed', async () => {
     const { client, db } = await createTestDb();
     try {
-      const result = await db.execute(
-        sql`SELECT DISTINCT status FROM leads ORDER BY status`
-      );
+      const result = await db.execute(sql`SELECT DISTINCT status FROM leads ORDER BY status`);
       const statuses = (result.rows as { status: string }[]).map((r) => r.status);
-      expect(statuses).toContain("new");
-      expect(statuses).toContain("contacted");
-      expect(statuses).toContain("converted");
-      expect(statuses).toContain("lost");
+      expect(statuses).toContain('new');
+      expect(statuses).toContain('contacted');
+      expect(statuses).toContain('converted');
+      expect(statuses).toContain('lost');
     } finally {
       await client.end();
     }
   }, 30_000);
 
-  it("snapshots table has ≥ 1 row with valid numeric fields after seed", async () => {
+  it('snapshots table has ≥ 1 row with valid numeric fields after seed', async () => {
     const { client, db } = await createTestDb();
     try {
       const result = await db.execute(
-        sql`SELECT revenue, expenses, pmg_share, profit_pool FROM snapshots LIMIT 1`
+        sql`SELECT revenue, expenses, pmg_share, profit_pool FROM snapshots LIMIT 1`,
       );
       expect(result.rows.length).toBeGreaterThanOrEqual(1);
       const row = result.rows[0] as {
@@ -474,7 +465,7 @@ describe.skipIf(!hasDb)("Integration: seed idempotency (real database)", () => {
     }
   }, 30_000);
 
-  it("seed is idempotent: row counts unchanged after running a second time", async () => {
+  it('seed is idempotent: row counts unchanged after running a second time', async () => {
     // Capture row counts after first seed (already run above)
     const { client: c1, db: db1 } = await createTestDb();
     let expensesBefore: number;
@@ -496,7 +487,7 @@ describe.skipIf(!hasDb)("Integration: seed idempotency (real database)", () => {
     // Run seed a second time
     const { exitCode, stderr } = runSeed();
     if (exitCode !== 0) {
-      console.error("Second seed run stderr:", stderr);
+      console.error('Second seed run stderr:', stderr);
     }
     expect(exitCode).toBe(0);
 

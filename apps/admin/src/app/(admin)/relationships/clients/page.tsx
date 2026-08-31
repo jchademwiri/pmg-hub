@@ -7,10 +7,7 @@ export const dynamic = 'force-dynamic';
 export const metadata: Metadata = { title: 'Clients' };
 
 export default async function ClientsPage() {
-  const [clients, divisions] = await Promise.all([
-    getClientsWithIncomeCount(),
-    getAllDivisions(),
-  ]);
+  const [clients, divisions] = await Promise.all([getClientsWithIncomeCount(), getAllDivisions()]);
 
   return (
     <ClientsPageClient

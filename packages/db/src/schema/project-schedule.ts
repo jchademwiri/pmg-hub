@@ -9,136 +9,128 @@ import {
   text,
   timestamp,
   uuid,
-} from "drizzle-orm/pg-core";
-import { relations } from "drizzle-orm";
-import { clients } from "./clients";
-import { divisions } from "./divisions";
+} from 'drizzle-orm/pg-core';
+import { relations } from 'drizzle-orm';
+import { clients } from './clients';
+import { divisions } from './divisions';
 
 // ── Enums ─────────────────────────────────────────────────────────────────────
 
-export const projectScheduleStatusEnum = pgEnum("project_schedule_status", [
-  "planned",
-  "in_progress",
-  "completed",
-  "submitted",
-  "cancelled",
-  ]);
-  
-export const projectSchedulePriorityEnum = pgEnum("project_schedule_priority", [
-  "low",
-  "normal",
-  "high",
-  "urgent",
+export const projectScheduleStatusEnum = pgEnum('project_schedule_status', [
+  'planned',
+  'in_progress',
+  'completed',
+  'submitted',
+  'cancelled',
 ]);
 
-export const projectScheduleOutcomeEnum = pgEnum("project_schedule_outcome", [
-  "won",
-  "lost",
-  "pending",
+export const projectSchedulePriorityEnum = pgEnum('project_schedule_priority', [
+  'low',
+  'normal',
+  'high',
+  'urgent',
 ]);
 
-export const projectTaskStatusEnum = pgEnum("project_task_status", [
-  "backlog",
-  "in_progress",
-  "completed",
+export const projectScheduleOutcomeEnum = pgEnum('project_schedule_outcome', [
+  'won',
+  'lost',
+  'pending',
+]);
+
+export const projectTaskStatusEnum = pgEnum('project_task_status', [
+  'backlog',
+  'in_progress',
+  'completed',
 ]);
 
 // ── Main table ────────────────────────────────────────────────────────────────
 
 export const projectScheduleEntries = pgTable(
-  "project_schedule_entries",
+  'project_schedule_entries',
   {
-    id: uuid("id").primaryKey().defaultRandom(),
-    clientId: uuid("client_id")
+    id: uuid('id').primaryKey().defaultRandom(),
+    clientId: uuid('client_id')
       .notNull()
-      .references(() => clients.id, { onDelete: "restrict" }),
-    divisionId: uuid("division_id").references(() => divisions.id, {
-      onDelete: "restrict",
+      .references(() => clients.id, { onDelete: 'restrict' }),
+    divisionId: uuid('division_id').references(() => divisions.id, {
+      onDelete: 'restrict',
     }),
-    projectReference: text("project_reference").notNull(),
-    description: text("description"),
-    closingDate: date("closing_date").notNull(),
-    effortDays: integer("effort_days").notNull(),
-    actualEffortDays: integer("actual_effort_days"),
-    bufferDays: integer("buffer_days").notNull().default(5),
-    startDate: date("start_date").notNull(),
-    targetCompletionDate: date("target_completion_date").notNull(),
-    actualCompletionDate: date("actual_completion_date"),
-    submissionDate: date("submission_date"),
-    status: projectScheduleStatusEnum("status").notNull().default("planned"),
-    priority: projectSchedulePriorityEnum("priority")
-      .notNull()
-      .default("normal"),
-    notes: text("notes"),
-    sortOrder: integer("sort_order"),
-    blockers: text("blockers"),
-    outcome: projectScheduleOutcomeEnum("outcome"),
-    createdBy: text("created_by").notNull(),
-    createdAt: timestamp("created_at", { withTimezone: true })
-      .defaultNow()
-      .notNull(),
-    updatedAt: timestamp("updated_at", { withTimezone: true }),
+    projectReference: text('project_reference').notNull(),
+    description: text('description'),
+    closingDate: date('closing_date').notNull(),
+    effortDays: integer('effort_days').notNull(),
+    actualEffortDays: integer('actual_effort_days'),
+    bufferDays: integer('buffer_days').notNull().default(5),
+    startDate: date('start_date').notNull(),
+    targetCompletionDate: date('target_completion_date').notNull(),
+    actualCompletionDate: date('actual_completion_date'),
+    submissionDate: date('submission_date'),
+    status: projectScheduleStatusEnum('status').notNull().default('planned'),
+    priority: projectSchedulePriorityEnum('priority').notNull().default('normal'),
+    notes: text('notes'),
+    sortOrder: integer('sort_order'),
+    blockers: text('blockers'),
+    outcome: projectScheduleOutcomeEnum('outcome'),
+    createdBy: text('created_by').notNull(),
+    createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
+    updatedAt: timestamp('updated_at', { withTimezone: true }),
   },
   (t) => [
-    index("project_schedule_status_idx").on(t.status),
-    index("project_schedule_closing_date_idx").on(t.closingDate),
-    index("project_schedule_client_id_idx").on(t.clientId),
-    index("project_schedule_division_id_idx").on(t.divisionId),
+    index('project_schedule_status_idx').on(t.status),
+    index('project_schedule_closing_date_idx').on(t.closingDate),
+    index('project_schedule_client_id_idx').on(t.clientId),
+    index('project_schedule_division_id_idx').on(t.divisionId),
   ],
 );
 
 // ── Progress Sections table ───────────────────────────────────────────────────
 
 export const projectProgressSections = pgTable(
-  "project_progress_sections",
+  'project_progress_sections',
   {
-    id: uuid("id").primaryKey().defaultRandom(),
-    projectId: uuid("project_id").notNull(),
-    title: text("title").notNull(),
-    sortOrder: integer("sort_order").notNull(),
-    status: projectTaskStatusEnum("status").notNull().default("backlog"),
-    createdAt: timestamp("created_at", { withTimezone: true })
-      .defaultNow()
-      .notNull(),
-    updatedAt: timestamp("updated_at", { withTimezone: true }),
+    id: uuid('id').primaryKey().defaultRandom(),
+    projectId: uuid('project_id').notNull(),
+    title: text('title').notNull(),
+    sortOrder: integer('sort_order').notNull(),
+    status: projectTaskStatusEnum('status').notNull().default('backlog'),
+    createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
+    updatedAt: timestamp('updated_at', { withTimezone: true }),
   },
   (t) => [
-    index("project_progress_sections_project_id_idx").on(t.projectId),
+    index('project_progress_sections_project_id_idx').on(t.projectId),
     // Named explicitly - the Drizzle-default name for this FK exceeds
     // Postgres's 63-byte identifier limit and gets silently truncated,
     // which made `db:generate` show a spurious drop+recreate diff forever.
     foreignKey({
       columns: [t.projectId],
       foreignColumns: [projectScheduleEntries.id],
-      name: "project_progress_sections_project_id_fk",
-    }).onDelete("cascade"),
+      name: 'project_progress_sections_project_id_fk',
+    }).onDelete('cascade'),
   ],
 );
 
 // ── Progress Items table ──────────────────────────────────────────────────────
 
 export const projectProgressItems = pgTable(
-  "project_progress_items",
+  'project_progress_items',
   {
-    id: uuid("id").primaryKey().defaultRandom(),
-    sectionId: uuid("section_id").notNull(),
-    task: text("task").notNull(),
-    isCompleted: boolean("is_completed").notNull().default(false),
-    completedAt: timestamp("completed_at", { withTimezone: true }),
-    sortOrder: integer("sort_order").notNull(),
-    createdAt: timestamp("created_at", { withTimezone: true })
-      .defaultNow()
-      .notNull(),
-    updatedAt: timestamp("updated_at", { withTimezone: true }),
+    id: uuid('id').primaryKey().defaultRandom(),
+    sectionId: uuid('section_id').notNull(),
+    task: text('task').notNull(),
+    isCompleted: boolean('is_completed').notNull().default(false),
+    completedAt: timestamp('completed_at', { withTimezone: true }),
+    sortOrder: integer('sort_order').notNull(),
+    createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
+    updatedAt: timestamp('updated_at', { withTimezone: true }),
   },
   (t) => [
-    index("project_progress_items_section_id_idx").on(t.sectionId),
+    index('project_progress_items_section_id_idx').on(t.sectionId),
     // Named explicitly - see projectProgressSections' FK comment above.
     foreignKey({
       columns: [t.sectionId],
       foreignColumns: [projectProgressSections.id],
-      name: "project_progress_items_section_id_fk",
-    }).onDelete("cascade"),
+      name: 'project_progress_items_section_id_fk',
+    }).onDelete('cascade'),
   ],
 );
 
@@ -181,12 +173,9 @@ export const projectProgressSectionsRelations = relations(
   }),
 );
 
-export const projectProgressItemsRelations = relations(
-  projectProgressItems,
-  ({ one }) => ({
-    section: one(projectProgressSections, {
-      fields: [projectProgressItems.sectionId],
-      references: [projectProgressSections.id],
-    }),
+export const projectProgressItemsRelations = relations(projectProgressItems, ({ one }) => ({
+  section: one(projectProgressSections, {
+    fields: [projectProgressItems.sectionId],
+    references: [projectProgressSections.id],
   }),
-);
+}));

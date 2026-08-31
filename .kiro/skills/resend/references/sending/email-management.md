@@ -8,21 +8,21 @@ After sending, emails can be retrieved, listed, rescheduled, or cancelled. Updat
 
 ### Node.js
 
-| Operation | Method | Notes |
-|-----------|--------|-------|
-| Get | `resend.emails.get(id)` | Returns full email details and status |
-| List | `resend.emails.list({ limit, offset })` | Paginated list of sent emails |
-| Update | `resend.emails.update({ id, scheduledAt })` | Reschedule only - no content changes |
-| Cancel | `resend.emails.cancel(id)` | Cancel a scheduled email before it sends |
+| Operation | Method                                      | Notes                                    |
+| --------- | ------------------------------------------- | ---------------------------------------- |
+| Get       | `resend.emails.get(id)`                     | Returns full email details and status    |
+| List      | `resend.emails.list({ limit, offset })`     | Paginated list of sent emails            |
+| Update    | `resend.emails.update({ id, scheduledAt })` | Reschedule only - no content changes     |
+| Cancel    | `resend.emails.cancel(id)`                  | Cancel a scheduled email before it sends |
 
 ### Python
 
-| Operation | Method |
-|-----------|--------|
-| Get | `resend.Emails.get(id)` |
-| List | `resend.Emails.list(params)` |
-| Update | `resend.Emails.update(params)` - params: `{ "id": ..., "scheduled_at": ... }` |
-| Cancel | `resend.Emails.cancel(id)` |
+| Operation | Method                                                                        |
+| --------- | ----------------------------------------------------------------------------- |
+| Get       | `resend.Emails.get(id)`                                                       |
+| List      | `resend.Emails.list(params)`                                                  |
+| Update    | `resend.Emails.update(params)` - params: `{ "id": ..., "scheduled_at": ... }` |
+| Cancel    | `resend.Emails.cancel(id)`                                                    |
 
 ## Examples
 
@@ -74,10 +74,10 @@ resend.Emails.cancel("email_abc123")
 
 ## Common Mistakes
 
-| Mistake | Fix |
-|---------|-----|
-| Trying to update `subject`, `html`, or `to` | Only `scheduledAt` can be updated - cancel and resend for content changes |
-| Cancelling an already-sent email | Cancel only works on emails with `scheduled` status |
-| Cancelling too late | Cancel before the `scheduled_at` time - there's a brief processing window before send |
-| Not checking `error` in Node.js | SDK returns `{ data, error }`, does not throw - always destructure and check |
-| Using `.list()` without pagination | Pass `limit` and `offset` to paginate through results |
+| Mistake                                     | Fix                                                                                   |
+| ------------------------------------------- | ------------------------------------------------------------------------------------- |
+| Trying to update `subject`, `html`, or `to` | Only `scheduledAt` can be updated - cancel and resend for content changes             |
+| Cancelling an already-sent email            | Cancel only works on emails with `scheduled` status                                   |
+| Cancelling too late                         | Cancel before the `scheduled_at` time - there's a brief processing window before send |
+| Not checking `error` in Node.js             | SDK returns `{ data, error }`, does not throw - always destructure and check          |
+| Using `.list()` without pagination          | Pass `limit` and `offset` to paginate through results                                 |

@@ -12,7 +12,11 @@ function formatCurrency(val: string | number) {
 }
 
 function formatDate(d: string) {
-  return new Date(d).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' });
+  return new Date(d).toLocaleDateString('en-GB', {
+    day: 'numeric',
+    month: 'short',
+    year: 'numeric',
+  });
 }
 
 interface PageProps {
@@ -78,9 +82,13 @@ export default async function QuotesPage({ searchParams }: PageProps) {
               }`}
             >
               <span>{tab.label}</span>
-              <span className={`inline-flex items-center justify-center px-1.5 py-0.5 text-[10px] font-bold rounded-md ${
-                isActive ? 'bg-blue-500/20 text-blue-300' : 'bg-white/[0.05] text-muted-foreground'
-              }`}>
+              <span
+                className={`inline-flex items-center justify-center px-1.5 py-0.5 text-[10px] font-bold rounded-md ${
+                  isActive
+                    ? 'bg-blue-500/20 text-blue-300'
+                    : 'bg-white/[0.05] text-muted-foreground'
+                }`}
+              >
                 {tab.count}
               </span>
             </Link>
@@ -113,7 +121,10 @@ export default async function QuotesPage({ searchParams }: PageProps) {
                 </thead>
                 <tbody className="divide-y divide-white/5 text-xs">
                   {filteredQuotes.map((q) => (
-                    <tr key={q.id} className="relative hover:bg-white/[0.02] transition-colors group cursor-pointer">
+                    <tr
+                      key={q.id}
+                      className="relative hover:bg-white/[0.02] transition-colors group cursor-pointer"
+                    >
                       <td className="px-6 py-4 font-semibold text-white">
                         <Link
                           href={`/quotes/${q.id}`}
@@ -128,12 +139,19 @@ export default async function QuotesPage({ searchParams }: PageProps) {
                       <td className="px-6 py-4 text-muted-foreground">
                         {q.expiryDate ? formatDate(q.expiryDate) : '—'}
                       </td>
-                      <td className="px-6 py-4 text-right font-bold text-white">{formatCurrency(q.total)}</td>
+                      <td className="px-6 py-4 text-right font-bold text-white">
+                        {formatCurrency(q.total)}
+                      </td>
                       <td className="px-6 py-4">
-                        <span className={`inline-block text-[10px] font-semibold uppercase px-2 py-0.5 rounded-full ${
-                          q.status === 'accepted' || q.status === 'converted' ? 'bg-emerald-500/10 text-emerald-400' :
-                          q.status === 'declined' ? 'bg-red-500/10 text-red-400' : 'bg-purple-500/10 text-purple-400'
-                        }`}>
+                        <span
+                          className={`inline-block text-[10px] font-semibold uppercase px-2 py-0.5 rounded-full ${
+                            q.status === 'accepted' || q.status === 'converted'
+                              ? 'bg-emerald-500/10 text-emerald-400'
+                              : q.status === 'declined'
+                                ? 'bg-red-500/10 text-red-400'
+                                : 'bg-purple-500/10 text-purple-400'
+                          }`}
+                        >
                           {q.status === 'sent' ? 'Awaiting Response' : q.status}
                         </span>
                       </td>
@@ -151,18 +169,29 @@ export default async function QuotesPage({ searchParams }: PageProps) {
                     className="flex items-center justify-between py-4 hover:bg-white/[0.02] px-4 transition-colors group"
                   >
                     <div>
-                      <p className="text-sm font-semibold text-white group-hover:text-blue-400 transition-colors">{q.documentNumber}</p>
-                      <p className="text-xs text-muted-foreground mt-1">Date: {formatDate(q.quoteDate)}</p>
+                      <p className="text-sm font-semibold text-white group-hover:text-blue-400 transition-colors">
+                        {q.documentNumber}
+                      </p>
+                      <p className="text-xs text-muted-foreground mt-1">
+                        Date: {formatDate(q.quoteDate)}
+                      </p>
                       {q.expiryDate && (
-                        <p className="text-xs text-muted-foreground mt-0.5">Expires: {formatDate(q.expiryDate)}</p>
+                        <p className="text-xs text-muted-foreground mt-0.5">
+                          Expires: {formatDate(q.expiryDate)}
+                        </p>
                       )}
                     </div>
                     <div className="text-right flex flex-col items-end gap-1.5">
                       <p className="text-sm font-bold text-white">{formatCurrency(q.total)}</p>
-                      <span className={`inline-block text-[10px] font-semibold uppercase px-2 py-0.5 rounded-full ${
-                        q.status === 'accepted' || q.status === 'converted' ? 'bg-emerald-500/10 text-emerald-400' :
-                        q.status === 'declined' ? 'bg-red-500/10 text-red-400' : 'bg-purple-500/10 text-purple-400'
-                      }`}>
+                      <span
+                        className={`inline-block text-[10px] font-semibold uppercase px-2 py-0.5 rounded-full ${
+                          q.status === 'accepted' || q.status === 'converted'
+                            ? 'bg-emerald-500/10 text-emerald-400'
+                            : q.status === 'declined'
+                              ? 'bg-red-500/10 text-red-400'
+                              : 'bg-purple-500/10 text-purple-400'
+                        }`}
+                      >
                         {q.status === 'sent' ? 'Awaiting Response' : q.status}
                       </span>
                     </div>

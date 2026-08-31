@@ -5,17 +5,18 @@
 Based on the "Tender Schedule Timetable.xlsx" spreadsheet, the current manual workflow is:
 
 ### Spreadsheet Structure
+
 The Excel file captures tender scheduling using the following columns:
 
-| Field | Description |
-|---|---|
-| **Client** | Name of the client requesting the tender |
-| **Tender Number** | Reference number or description of the tender opportunity |
-| **Closing Date** | The hard deadline when the tender must be submitted |
-| **Effort** | Estimated number of days required to complete the preparation |
-| **Duration** | The total calendar duration (may account for weekends or non-working days) |
-| **Start Date** | When Jacob plans to begin working on this tender |
-| **End Date** | When Jacob expects to complete the preparation (before or on the closing date) |
+| Field             | Description                                                                    |
+| ----------------- | ------------------------------------------------------------------------------ |
+| **Client**        | Name of the client requesting the tender                                       |
+| **Tender Number** | Reference number or description of the tender opportunity                      |
+| **Closing Date**  | The hard deadline when the tender must be submitted                            |
+| **Effort**        | Estimated number of days required to complete the preparation                  |
+| **Duration**      | The total calendar duration (may account for weekends or non-working days)     |
+| **Start Date**    | When Jacob plans to begin working on this tender                               |
+| **End Date**      | When Jacob expects to complete the preparation (before or on the closing date) |
 
 ### Current Process Flow
 
@@ -66,13 +67,13 @@ planned ──→ in_progress ──→ completed ──→ submitted
    └──→ cancelled                 └──→ (terminal)
 ```
 
-| Status | Meaning |
-|---|---|
-| `planned` | Tender has been captured and is in the queue awaiting work |
-| `in_progress` | Jacob has started working on this tender |
-| `completed` | Preparation work is finished (before submission) |
-| `submitted` | Tender has been formally submitted on or before closing date |
-| `cancelled` | Tender was withdrawn, lost, or is no longer being pursued |
+| Status        | Meaning                                                      |
+| ------------- | ------------------------------------------------------------ |
+| `planned`     | Tender has been captured and is in the queue awaiting work   |
+| `in_progress` | Jacob has started working on this tender                     |
+| `completed`   | Preparation work is finished (before submission)             |
+| `submitted`   | Tender has been formally submitted on or before closing date |
+| `cancelled`   | Tender was withdrawn, lost, or is no longer being pursued    |
 
 ### Valid Status Transitions
 
@@ -101,7 +102,7 @@ STAGE 1: CAPTURE
 ─────────────────────────────────────────────────────────────────
 Action:       Jacob enters tender details
 Trigger:      New tender opportunity identified
-User input:   Client, tender reference, closing date, 
+User input:   Client, tender reference, closing date,
               estimated effort (days), notes
 Auto calc:    Recommended start date = closing_date - effort_days - buffer
               Target completion date = start_date + effort_days
@@ -182,10 +183,10 @@ Result:       Tender status = "submitted" — terminal state
 
 ## Key Design Decisions
 
-| Decision | Rationale |
-|---|---|
-| Soft-delete (cancel status) | Preserves data for future analysis (what tenders were pursued vs. declined) |
-| WIP warnings, not hard blocks | Jacob is the best judge of his own capacity; the app should inform, not restrict |
-| Auto-calculated dates with manual override | Reduces manual data entry while preserving flexibility |
-| Buffer days default of 2 | Provides a safety margin for unexpected delays without being overly conservative |
+| Decision                                      | Rationale                                                                                |
+| --------------------------------------------- | ---------------------------------------------------------------------------------------- |
+| Soft-delete (cancel status)                   | Preserves data for future analysis (what tenders were pursued vs. declined)              |
+| WIP warnings, not hard blocks                 | Jacob is the best judge of his own capacity; the app should inform, not restrict         |
+| Auto-calculated dates with manual override    | Reduces manual data entry while preserving flexibility                                   |
+| Buffer days default of 2                      | Provides a safety margin for unexpected delays without being overly conservative         |
 | Calendar-day calculations (not business days) | Simpler to implement and reason about; weekends can be accounted for in effort estimates |

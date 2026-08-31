@@ -31,8 +31,20 @@ vi.mock('@pmg/db', () => {
     getDb: () => mockDb,
     expenses: { id: 'expenses_id' },
     chartAccounts: { id: 'chart_id', code: 'code', name: 'name' },
-    journalEntries: { id: 'je_id', status: 'status', sourceModule: 'source_module', sourceTable: 'source_table', sourceId: 'source_id' },
-    journalLines: { id: 'jl_id', journalEntryId: 'je_id', accountId: 'account_id', debit: 'debit', credit: 'credit' },
+    journalEntries: {
+      id: 'je_id',
+      status: 'status',
+      sourceModule: 'source_module',
+      sourceTable: 'source_table',
+      sourceId: 'source_id',
+    },
+    journalLines: {
+      id: 'jl_id',
+      journalEntryId: 'je_id',
+      accountId: 'account_id',
+      debit: 'debit',
+      credit: 'credit',
+    },
     paymentAllocations: { id: 'pa_id', invoiceId: 'invoice_id', incomeId: 'income_id' },
     eq: vi.fn().mockReturnValue({}),
     and: vi.fn().mockReturnValue({}),
@@ -56,7 +68,7 @@ import {
   getAllExpenseCategories,
   getDistinctExpenseMonths,
   getAllClients,
-  getExpenseById
+  getExpenseById,
 } from '@pmg/db';
 
 vi.mock('next/cache', () => ({
@@ -88,9 +100,7 @@ vi.mock('@/components/navigation/page-header-context', () => ({
 
 vi.mock('@/components/expenses/expense-filter-bar', () => ({
   ExpenseFilterBar: ({ currentDivisionId }: any) => (
-    <div data-testid="expense-filter-bar">
-      FilterBar: {currentDivisionId}
-    </div>
+    <div data-testid="expense-filter-bar">FilterBar: {currentDivisionId}</div>
   ),
 }));
 
@@ -308,5 +318,4 @@ describe('Finance Expenses Module', () => {
       expect(db.delete).not.toHaveBeenCalled();
     });
   });
-
 });

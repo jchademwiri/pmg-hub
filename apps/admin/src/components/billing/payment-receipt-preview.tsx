@@ -61,18 +61,30 @@ export function PaymentReceiptPreview({
           <div className="flex flex-col gap-0.5">
             <span className="text-lg font-bold tracking-tight">{payment.divisionName}</span>
             <span className="text-xs text-zinc-500">Playhouse Media Group</span>
-            {divSettings?.salesRepEmail && <span className="text-xs text-zinc-500">{divSettings.salesRepEmail}</span>}
-            {divSettings?.salesRepPhone && <span className="text-xs text-zinc-500">{divSettings.salesRepPhone}</span>}
-            {divSettings?.divisionWebsite && <span className="text-xs text-zinc-500">{divSettings.divisionWebsite}</span>}
+            {divSettings?.salesRepEmail && (
+              <span className="text-xs text-zinc-500">{divSettings.salesRepEmail}</span>
+            )}
+            {divSettings?.salesRepPhone && (
+              <span className="text-xs text-zinc-500">{divSettings.salesRepPhone}</span>
+            )}
+            {divSettings?.divisionWebsite && (
+              <span className="text-xs text-zinc-500">{divSettings.divisionWebsite}</span>
+            )}
           </div>
         </div>
 
         {/* Center: Logo */}
         <div className="flex h-16 w-40 items-center justify-center overflow-hidden bg-transparent">
           {logoUrl ? (
-            <img src={logoUrl} alt={payment.divisionName} className="max-h-full max-w-full object-contain" />
+            <img
+              src={logoUrl}
+              alt={payment.divisionName}
+              className="max-h-full max-w-full object-contain"
+            />
           ) : (
-            <span className="text-xs font-bold text-zinc-800">{payment.divisionName.slice(0, 3).toUpperCase()}</span>
+            <span className="text-xs font-bold text-zinc-800">
+              {payment.divisionName.slice(0, 3).toUpperCase()}
+            </span>
           )}
         </div>
 
@@ -165,7 +177,10 @@ export function PaymentReceiptPreview({
             </thead>
             <tbody>
               {payment.allocations.map((alloc) => (
-                <tr key={alloc.id} className="border-b border-zinc-100 print:break-inside-avoid [break-inside:avoid]">
+                <tr
+                  key={alloc.id}
+                  className="border-b border-zinc-100 print:break-inside-avoid [break-inside:avoid]"
+                >
                   <td className="py-3 pr-4 text-zinc-900 font-medium">{alloc.invoiceNumber}</td>
                   <td className="py-3 px-4 text-zinc-500 text-xs">
                     {fmtDateLong(alloc.createdAt ? new Date(alloc.createdAt) : payment.date)}

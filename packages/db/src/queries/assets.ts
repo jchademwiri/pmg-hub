@@ -1,6 +1,6 @@
-import { db } from "../client";
-import { assets, assetValuations, assetTransactions } from "../schema/assets";
-import { and, asc, desc, eq, sql } from "drizzle-orm";
+import { db } from '../client';
+import { assets, assetValuations, assetTransactions } from '../schema/assets';
+import { and, asc, desc, eq, sql } from 'drizzle-orm';
 
 export type AssetRow = typeof assets.$inferSelect;
 export type NewAssetRow = typeof assets.$inferInsert;
@@ -16,11 +16,11 @@ export type NewAssetTransactionRow = typeof assetTransactions.$inferInsert;
  * Ordered by acquisition date DESC (most recently acquired first).
  */
 export async function getAllAssets(filters?: {
-  kind?: "fixed_asset" | "investment";
-  status?: "active" | "disposed";
+  kind?: 'fixed_asset' | 'investment';
+  status?: 'active' | 'disposed';
   category?: string;
 }): Promise<AssetRow[]> {
-  const conditions = [eq(assets.status, filters?.status ?? "active")];
+  const conditions = [eq(assets.status, filters?.status ?? 'active')];
   if (filters?.kind) conditions.push(eq(assets.kind, filters.kind));
   if (filters?.category) conditions.push(eq(assets.category, filters.category));
 
@@ -42,22 +42,19 @@ export async function getAssetById(id: string): Promise<AssetRow | null> {
 
 export async function createAsset(data: NewAssetRow): Promise<AssetRow> {
   const [inserted] = await db.insert(assets).values(data).returning();
-  if (!inserted) throw new Error("Failed to create asset.");
+  if (!inserted) throw new Error('Failed to create asset.');
   return inserted;
 }
 
 // ── updateAsset ───────────────────────────────────────────────────────────────
 
-export async function updateAsset(
-  id: string,
-  data: Partial<NewAssetRow>,
-): Promise<AssetRow> {
+export async function updateAsset(id: string, data: Partial<NewAssetRow>): Promise<AssetRow> {
   const [updated] = await db
     .update(assets)
     .set({ ...data, updatedAt: new Date() })
     .where(eq(assets.id, id))
     .returning();
-  if (!updated) throw new Error("Asset not found.");
+  if (!updated) throw new Error('Asset not found.');
   return updated;
 }
 
@@ -67,7 +64,7 @@ export async function disposeAsset(id: string, disposalNotes?: string): Promise<
   await db
     .update(assets)
     .set({
-      status: "disposed",
+      status: 'disposed',
       disposedAt: new Date().toISOString().slice(0, 10),
       disposalNotes: disposalNotes ?? null,
       updatedAt: new Date(),
@@ -80,7 +77,7 @@ export async function disposeAsset(id: string, disposalNotes?: string): Promise<
 export async function reactivateAsset(id: string): Promise<void> {
   await db
     .update(assets)
-    .set({ status: "active", disposedAt: null, updatedAt: new Date() })
+    .set({ status: 'active', disposedAt: null, updatedAt: new Date() })
     .where(eq(assets.id, id));
 }
 
@@ -93,8 +90,16 @@ export async function reactivateAsset(id: string): Promise<void> {
  */
 export async function hasAssetHistory(id: string): Promise<boolean> {
   const [[valuation], [transaction]] = await Promise.all([
-    db.select({ id: assetValuations.id }).from(assetValuations).where(eq(assetValuations.assetId, id)).limit(1),
-    db.select({ id: assetTransactions.id }).from(assetTransactions).where(eq(assetTransactions.assetId, id)).limit(1),
+    db
+      .select({ id: assetValuations.id })
+      .from(assetValuations)
+      .where(eq(assetValuations.assetId, id))
+      .limit(1),
+    db
+      .select({ id: assetTransactions.id })
+      .from(assetTransactions)
+      .where(eq(assetTransactions.assetId, id))
+      .limit(1),
   ]);
   return Boolean(valuation || transaction);
 }
@@ -125,7 +130,7 @@ export async function getAssetsSummary(): Promise<AssetsSummary> {
       count: sql<number>`count(*)::int`,
     })
     .from(assets)
-    .where(eq(assets.status, "active"))
+    .where(eq(assets.status, 'active'))
     .groupBy(assets.kind);
 
   let totalFixedAssetsValue = 0;
@@ -134,8 +139,8 @@ export async function getAssetsSummary(): Promise<AssetsSummary> {
 
   for (const row of rows) {
     totalCount += row.count;
-    if (row.kind === "fixed_asset") totalFixedAssetsValue = Number(row.total);
-    if (row.kind === "investment") totalInvestmentsValue = Number(row.total);
+    if (row.kind === 'fixed_asset') totalFixedAssetsValue = Number(row.total);
+    if (row.kind === 'investment') totalInvestmentsValue = Number(row.total);
   }
 
   return { totalFixedAssetsValue, totalInvestmentsValue, totalCount };
@@ -169,7 +174,7 @@ export async function addAssetValuation(
     .insert(assetValuations)
     .values({ assetId, ...data })
     .returning();
-  if (!inserted) throw new Error("Failed to record valuation.");
+  if (!inserted) throw new Error('Failed to record valuation.');
 
   await syncCurrentValueFromLatestValuation(assetId);
 
@@ -223,7 +228,7 @@ export async function getAssetTransactions(assetId: string): Promise<AssetTransa
 export async function addAssetTransaction(
   assetId: string,
   data: {
-    type: "deposit" | "withdrawal";
+    type: 'deposit' | 'withdrawal';
     transactionDate: string;
     amount: string;
     quantity?: string | null;
@@ -234,10 +239,11 @@ export async function addAssetTransaction(
     .insert(assetTransactions)
     .values({ assetId, ...data })
     .returning();
-  if (!inserted) throw new Error("Failed to record transaction.");
+  if (!inserted) throw new Error('Failed to record transaction.');
 
   if (data.quantity != null) {
-    const delta = data.type === "withdrawal" ? sql`-${data.quantity}::numeric` : sql`${data.quantity}::numeric`;
+    const delta =
+      data.type === 'withdrawal' ? sql`-${data.quantity}::numeric` : sql`${data.quantity}::numeric`;
     await db
       .update(assets)
       .set({
@@ -262,7 +268,8 @@ export async function deleteAssetTransaction(id: string, assetId: string): Promi
 
   if (txn?.quantity != null) {
     // Reverse the original effect on quantity.
-    const delta = txn.type === "withdrawal" ? sql`${txn.quantity}::numeric` : sql`-${txn.quantity}::numeric`;
+    const delta =
+      txn.type === 'withdrawal' ? sql`${txn.quantity}::numeric` : sql`-${txn.quantity}::numeric`;
     await db
       .update(assets)
       .set({
@@ -294,7 +301,7 @@ export async function getAssetTotalInvested(assetId: string): Promise<number> {
 
   let net = Number(asset.cost);
   for (const row of rows) {
-    net += row.type === "withdrawal" ? -Number(row.total) : Number(row.total);
+    net += row.type === 'withdrawal' ? -Number(row.total) : Number(row.total);
   }
   return net;
 }

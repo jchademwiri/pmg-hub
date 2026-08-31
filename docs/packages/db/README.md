@@ -3,6 +3,7 @@
 This folder contains documentation scoped specifically to the shared database package (`packages/db`).
 
 ## Tech Stack & Architecture
+
 - **ORM**: Drizzle ORM
 - **Database Engine**: Neon PostgreSQL (Serverless branching)
 - **Environments**:

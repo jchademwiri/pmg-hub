@@ -39,11 +39,13 @@ Beyond schema definitions, this feature also covers the full Drizzle ORM + Postg
 4. IF the `DATABASE_URL` environment variable is not set at connection time, THEN THE DB_Package SHALL throw a descriptive error before attempting to connect.
 5. THE DB_Package SHALL declare `drizzle-orm`, `drizzle-kit`, and `postgres` as dependencies in `package.json`.
 6. THE DB_Package SHALL include a `.env.example` file at the package root containing the following template (with no real credentials):
+
 ```
 # Required: PostgreSQL connection string
 # Format: postgres://USER:PASSWORD@HOST:PORT/DATABASE
 DATABASE_URL=postgres://user:password@localhost:5432/pmg_db
 ```
+
 7. THE DB_Package README or inline comment in `db.ts` SHALL reference `.env.example` so that new developers know where to find the required environment variable format.
 
 ---
@@ -59,9 +61,9 @@ DATABASE_URL=postgres://user:password@localhost:5432/pmg_db
 3. THE `divisions` Table SHALL include an `id` column of type `uuid` that is the primary key and defaults to a random UUID.
 4. THE `divisions` Table SHALL include a `name` column of type `text` that is not null.
 5. THE `divisions` Table SHALL include a `createdAt` column of type `timestamp({ withTimezone: true })` that defaults to the current time.
-5a. THE `divisions` Table SHALL include an `updatedAt` column of type `timestamp({ withTimezone: true })` that is nullable, to be set by the application on update.
+   5a. THE `divisions` Table SHALL include an `updatedAt` column of type `timestamp({ withTimezone: true })` that is nullable, to be set by the application on update.
 6. THE `divisions` Table SHALL define an index on the `name` column.
-6a. THE `divisions` Table SHALL define a unique constraint on the `name` column.
+   6a. THE `divisions` Table SHALL define a unique constraint on the `name` column.
 7. THE Schema_Module SHALL export Inferred_Types for select and insert operations on the `divisions` Table.
 8. IF a column constraint is violated at the database level, THEN THE DB_Package SHALL propagate the database error to the caller without swallowing it.
 
@@ -77,13 +79,13 @@ DATABASE_URL=postgres://user:password@localhost:5432/pmg_db
 2. THE Schema_Module SHALL define a Table named `income` using Drizzle ORM's `pgTable`.
 3. THE `income` Table SHALL include an `id` column of type `uuid` that is the primary key and defaults to a random UUID.
 4. THE `income` Table SHALL include a `date` column of type `date` that is not null.
-4a. THE `date` column SHALL represent the transaction date - the date on which money was received - and SHALL NOT default to the current time.
+   4a. THE `date` column SHALL represent the transaction date - the date on which money was received - and SHALL NOT default to the current time.
 5. THE `income` Table SHALL include a `divisionId` column of type `uuid` that is a foreign key referencing `divisions.id`, is not null, and defines `onDelete: "restrict"`.
 6. THE `income` Table SHALL include a `clientId` column of type `uuid` that is a nullable foreign key referencing `clients.id` and defines `onDelete: "set null"`.
 7. THE `income` Table SHALL include a `description` column of type `text` that is nullable.
 8. THE `income` Table SHALL include an `amount` column of type `numeric(12,2)` that is not null.
 9. THE `income` Table SHALL include a `createdAt` column of type `timestamp({ withTimezone: true })` that defaults to the current time.
-9a. THE `income` Table SHALL include an `updatedAt` column of type `timestamp({ withTimezone: true })` that is nullable, to be set by the application on update.
+   9a. THE `income` Table SHALL include an `updatedAt` column of type `timestamp({ withTimezone: true })` that is nullable, to be set by the application on update.
 10. THE `income` Table SHALL enforce a check constraint that `amount > 0`.
 11. THE `income` Table SHALL define indexes on the `date`, `divisionId`, and `clientId` columns.
 12. THE Schema_Module SHALL export Inferred_Types for select and insert operations on the `income` Table.
@@ -106,7 +108,7 @@ DATABASE_URL=postgres://user:password@localhost:5432/pmg_db
 6. THE `clients` Table SHALL include an `email` column of type `text` that is nullable.
 7. THE `clients` Table SHALL include a `phone` column of type `text` that is nullable.
 8. THE `clients` Table SHALL include a `createdAt` column of type `timestamp({ withTimezone: true })` that defaults to the current time.
-8a. THE `clients` Table SHALL include an `updatedAt` column of type `timestamp({ withTimezone: true })` that is nullable, to be set by the application on update.
+   8a. THE `clients` Table SHALL include an `updatedAt` column of type `timestamp({ withTimezone: true })` that is nullable, to be set by the application on update.
 9. THE `clients` Table SHALL define an index on the `name` column.
 10. THE Schema_Module SHALL export Inferred_Types for select and insert operations on the `clients` Table.
 11. THE `clients` Table SHOULD define a partial unique index on the `email` column where `email IS NOT NULL`, to prevent duplicate email addresses among clients who have one.
@@ -123,13 +125,13 @@ DATABASE_URL=postgres://user:password@localhost:5432/pmg_db
 2. THE Schema_Module SHALL define a Table named `expenses` using Drizzle ORM's `pgTable`.
 3. THE `expenses` Table SHALL include an `id` column of type `uuid` that is the primary key and defaults to a random UUID.
 4. THE `expenses` Table SHALL include a `date` column of type `date` that is not null.
-4a. THE `date` column SHALL represent the transaction date - the date on which money was spent - and SHALL NOT default to the current time.
+   4a. THE `date` column SHALL represent the transaction date - the date on which money was spent - and SHALL NOT default to the current time.
 5. THE `expenses` Table SHALL include a `divisionId` column of type `uuid` that is a foreign key referencing `divisions.id`, is not null, and defines `onDelete: "restrict"`.
 6. THE `expenses` Table SHALL include a `category` column of type `text` that is not null.
 7. THE `expenses` Table SHALL include a `description` column of type `text` that is nullable.
 8. THE `expenses` Table SHALL include an `amount` column of type `numeric(12,2)` that is not null.
 9. THE `expenses` Table SHALL include a `createdAt` column of type `timestamp({ withTimezone: true })` that defaults to the current time.
-9a. THE `expenses` Table SHALL include an `updatedAt` column of type `timestamp({ withTimezone: true })` that is nullable, to be set by the application on update.
+   9a. THE `expenses` Table SHALL include an `updatedAt` column of type `timestamp({ withTimezone: true })` that is nullable, to be set by the application on update.
 10. THE `expenses` Table SHALL enforce a check constraint that `amount > 0`.
 11. THE `expenses` Table SHALL define indexes on the `date`, `divisionId`, and `category` columns.
 12. THE Schema_Module SHALL export Inferred_Types for select and insert operations on the `expenses` Table.
@@ -154,11 +156,11 @@ DATABASE_URL=postgres://user:password@localhost:5432/pmg_db
 9. THE `leads` Table SHALL include a `serviceInterest` column of type `text` that is nullable.
 10. THE `leads` Table SHALL include a `status` column using a `pgEnum` with values `new`, `contacted`, `converted`, and `lost`, defaulting to `new`.
 11. THE `leads` Table SHALL include a `createdAt` column of type `timestamp({ withTimezone: true })` that defaults to the current time.
-11a. THE `leads` Table SHALL include an `updatedAt` column of type `timestamp({ withTimezone: true })` that is nullable, to be set by the application on update.
+    11a. THE `leads` Table SHALL include an `updatedAt` column of type `timestamp({ withTimezone: true })` that is nullable, to be set by the application on update.
 12. THE `leads` Table SHALL define indexes on the `status` and `createdAt` columns.
-12a. THE `leads` Table SHALL define an index on the `email` column to support frequent lookups.
+    12a. THE `leads` Table SHALL define an index on the `email` column to support frequent lookups.
 13. THE `leads` Table SHALL include a `divisionId` column of type `uuid` that is a nullable foreign key referencing `divisions.id` and defines `onDelete: "set null"`.
-13a. THE `leads` Table SHALL define an index on the `divisionId` column.
+    13a. THE `leads` Table SHALL define an index on the `divisionId` column.
 14. THE Schema_Module SHALL export the `pgEnum` definition and Inferred_Types for select and insert operations on the `leads` Table.
 15. THE `leads` Table SHALL enforce a CHECK constraint ensuring that at least one of `email` or `phone` is not null.
 16. THE `leads` Table SHOULD store the `email` value normalized to lowercase before insertion to ensure consistent lookups regardless of input casing. This normalization SHALL be applied at the application layer before the insert. Note: The CHECK constraint ensures data capture quality but does not prevent duplicate leads. Deduplication logic is the responsibility of the application layer before insert.
@@ -273,7 +275,7 @@ DATABASE_URL=postgres://user:password@localhost:5432/pmg_db
 4. ALL timestamp columns in every Table SHALL use timezone-aware types (`timestamp({ withTimezone: true })` / `timestamptz`) to ensure consistent time representation across environments.
 5. ALL Tables SHALL include a `createdAt` column of type `timestamp({ withTimezone: true })` defaulting to the current time, and SHOULD include an `updatedAt` column of type `timestamp({ withTimezone: true })` that is nullable and set by the application on update. APPLICATION LAYER NOTE: The `updatedAt` column is set by the application layer on update. This is a known tradeoff. Any database-level operation that bypasses the application (direct SQL fixes, migrations, external services) will leave `updatedAt` stale. Teams that require guaranteed accuracy SHOULD implement a PostgreSQL trigger as an alternative. Document this decision in a code comment above every `updatedAt` column definition.
 6. ALL foreign key columns referencing `divisions.id` in the `income` and `expenses` tables SHALL define `onDelete: "restrict"` to prevent deletion of a Division that has associated financial records. Each such column definition SHALL include an inline code comment explaining this choice, e.g.: `// restrict: prevent division deletion while financial records exist`.
-6a. THE `leads.divisionId` foreign key column referencing `divisions.id` SHALL define `onDelete: "set null"` so that deleting a Division nullifies the reference on associated leads rather than restricting or cascading. This differs intentionally from income/expenses because leads are soft-association data, not financial records. Each such column definition SHALL include an inline code comment explaining this choice, e.g.: `// set null: leads are soft-linked; division deletion should not block or cascade`.
+   6a. THE `leads.divisionId` foreign key column referencing `divisions.id` SHALL define `onDelete: "set null"` so that deleting a Division nullifies the reference on associated leads rather than restricting or cascading. This differs intentionally from income/expenses because leads are soft-association data, not financial records. Each such column definition SHALL include an inline code comment explaining this choice, e.g.: `// set null: leads are soft-linked; division deletion should not block or cascade`.
 7. ALL foreign key columns referencing `clients.id` SHALL define `onDelete: "set null"` so that deleting a Client nullifies the reference rather than cascading the deletion.
 8. THE `divisions.name` column SHALL be unique across all rows in the `divisions` table.
 9. THE `leads` Table SHALL enforce a CHECK constraint ensuring that at least one of `email` or `phone` is not null.

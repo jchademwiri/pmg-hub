@@ -1,18 +1,18 @@
 // packages/db/src/reset.ts
 // Truncates all table data - preserves schema, tables, and types
-import { config } from "dotenv";
-import { resolve } from "path";
-import pg from "pg";
+import { config } from 'dotenv';
+import { resolve } from 'path';
+import pg from 'pg';
 
-config({ path: resolve(import.meta.dir, "../.env") });
+config({ path: resolve(import.meta.dir, '../.env') });
 
 const url = process.env.DATABASE_URL_UNPOOLED;
-if (!url) throw new Error("DATABASE_URL_UNPOOLED is not set");
+if (!url) throw new Error('DATABASE_URL_UNPOOLED is not set');
 
 const client = new pg.Client({ connectionString: url, ssl: { rejectUnauthorized: true } });
 await client.connect();
 
-console.log("⚠️  Truncating all table data...");
+console.log('⚠️  Truncating all table data...');
 
 await client.query(`
   truncate table
@@ -27,5 +27,5 @@ await client.query(`
   restart identity cascade
 `);
 
-console.log("✅ All data cleared. Schema intact.");
+console.log('✅ All data cleared. Schema intact.');
 await client.end();

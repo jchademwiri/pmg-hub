@@ -25,7 +25,10 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en" className="dark">
-      <body className={`${geistSans.variable} ${geistMono.variable} antialiased bg-[#080c14] text-foreground overflow-x-hidden`} suppressHydrationWarning>
+      <body
+        className={`${geistSans.variable} ${geistMono.variable} antialiased bg-[#080c14] text-foreground overflow-x-hidden`}
+        suppressHydrationWarning
+      >
         {children}
         <Toaster theme="dark" closeButton position="top-right" />
       </body>

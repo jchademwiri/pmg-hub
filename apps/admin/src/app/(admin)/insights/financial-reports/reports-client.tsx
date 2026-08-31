@@ -2,7 +2,27 @@
 
 import * as React from 'react';
 import { useSearchParams, useRouter, usePathname } from 'next/navigation';
-import { Download, Printer, BookOpen, FileText, Table2, Scale, TrendingUp, Building2, Landmark, Banknote, Calendar, Filter, Layers, ShieldCheck, Users, LayoutDashboard, ArrowLeft, ArrowRight, Sparkles } from 'lucide-react';
+import {
+  Download,
+  Printer,
+  BookOpen,
+  FileText,
+  Table2,
+  Scale,
+  TrendingUp,
+  Building2,
+  Landmark,
+  Banknote,
+  Calendar,
+  Filter,
+  Layers,
+  ShieldCheck,
+  Users,
+  LayoutDashboard,
+  ArrowLeft,
+  ArrowRight,
+  Sparkles,
+} from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import {
@@ -64,7 +84,8 @@ const REPORT_TYPES: ReportConfig[] = [
   {
     id: 'annual-financial-statements',
     label: 'AFS',
-    description: 'Full CIPC-compliant AFS package: Directors Report, Position, Income, Equity, Cash Flows & Notes',
+    description:
+      'Full CIPC-compliant AFS package: Directors Report, Position, Income, Equity, Cash Flows & Notes',
     icon: ShieldCheck,
     needsPeriod: true,
     needsAccount: false,
@@ -173,7 +194,12 @@ const REPORT_TYPES: ReportConfig[] = [
   },
 ];
 
-export function ReportsClient({ periods, accounts, divisions, selectedPeriod }: ReportsClientProps) {
+export function ReportsClient({
+  periods,
+  accounts,
+  divisions,
+  selectedPeriod,
+}: ReportsClientProps) {
   const searchParams = useSearchParams();
   const router = useRouter();
   const pathname = usePathname();
@@ -207,10 +233,13 @@ export function ReportsClient({ periods, accounts, divisions, selectedPeriod }: 
   const currentFyYear = currentMonth >= 3 ? currentYear + 1 : currentYear;
   const defaultFinancialYear = `${currentFyYear}-FY`;
 
-  const initialReport: ReportType = urlType && validReportTypes.includes(urlType) ? urlType : 'overview';
+  const initialReport: ReportType =
+    urlType && validReportTypes.includes(urlType) ? urlType : 'overview';
 
   const [selectedReport, setSelectedReportState] = React.useState<ReportType>(initialReport);
-  const [period, setPeriodState] = React.useState<string>(urlPeriod || selectedPeriod || defaultFinancialYear);
+  const [period, setPeriodState] = React.useState<string>(
+    urlPeriod || selectedPeriod || defaultFinancialYear,
+  );
   const [startDate, setStartDateState] = React.useState<string>(urlStartDate || '');
   const [endDate, setEndDateState] = React.useState<string>(urlEndDate || '');
   const [accountId, setAccountIdState] = React.useState<string>(urlAccountId || 'all');
@@ -229,42 +258,98 @@ export function ReportsClient({ periods, accounts, divisions, selectedPeriod }: 
       });
       router.replace(`${pathname}?${params.toString()}`, { scroll: false });
     },
-    [router, pathname, searchParams]
+    [router, pathname, searchParams],
   );
 
   const setSelectedReport = (r: ReportType) => {
     setSelectedReportState(r);
-    updateUrl({ type: r === 'overview' ? undefined : r, period, divisionId, accountId, startDate, endDate, category });
+    updateUrl({
+      type: r === 'overview' ? undefined : r,
+      period,
+      divisionId,
+      accountId,
+      startDate,
+      endDate,
+      category,
+    });
   };
 
   const setPeriod = (p: string) => {
     setPeriodState(p);
-    updateUrl({ type: selectedReport, period: p, divisionId, accountId, startDate, endDate, category });
+    updateUrl({
+      type: selectedReport,
+      period: p,
+      divisionId,
+      accountId,
+      startDate,
+      endDate,
+      category,
+    });
   };
 
   const setDivisionId = (d: string) => {
     setDivisionIdState(d);
-    updateUrl({ type: selectedReport, period, divisionId: d, accountId, startDate, endDate, category });
+    updateUrl({
+      type: selectedReport,
+      period,
+      divisionId: d,
+      accountId,
+      startDate,
+      endDate,
+      category,
+    });
   };
 
   const setAccountId = (a: string) => {
     setAccountIdState(a);
-    updateUrl({ type: selectedReport, period, divisionId, accountId: a, startDate, endDate, category });
+    updateUrl({
+      type: selectedReport,
+      period,
+      divisionId,
+      accountId: a,
+      startDate,
+      endDate,
+      category,
+    });
   };
 
   const setStartDate = (s: string) => {
     setStartDateState(s);
-    updateUrl({ type: selectedReport, period, divisionId, accountId, startDate: s, endDate, category });
+    updateUrl({
+      type: selectedReport,
+      period,
+      divisionId,
+      accountId,
+      startDate: s,
+      endDate,
+      category,
+    });
   };
 
   const setEndDate = (e: string) => {
     setEndDateState(e);
-    updateUrl({ type: selectedReport, period, divisionId, accountId, startDate, endDate: e, category });
+    updateUrl({
+      type: selectedReport,
+      period,
+      divisionId,
+      accountId,
+      startDate,
+      endDate: e,
+      category,
+    });
   };
 
   const setCategory = (c: string) => {
     setCategoryState(c);
-    updateUrl({ type: selectedReport, period, divisionId, accountId, startDate, endDate, category: c });
+    updateUrl({
+      type: selectedReport,
+      period,
+      divisionId,
+      accountId,
+      startDate,
+      endDate,
+      category: c,
+    });
   };
 
   const [previewData, setPreviewData] = React.useState<any>(null);
@@ -340,7 +425,8 @@ export function ReportsClient({ periods, accounts, divisions, selectedPeriod }: 
 
   // Handle PDF Export download link
   function handleDownloadPdf() {
-    const exportType = selectedReport === 'overview' ? 'annual-financial-statements' : selectedReport;
+    const exportType =
+      selectedReport === 'overview' ? 'annual-financial-statements' : selectedReport;
     const params = new URLSearchParams();
     if (reportConfig.needsPeriod && period !== 'all') params.set('period', period);
     if (startDate) params.set('startDate', startDate);
@@ -357,16 +443,20 @@ export function ReportsClient({ periods, accounts, divisions, selectedPeriod }: 
     window.print();
   }
 
-  const selectedDivisionName = divisionId !== 'all' 
-    ? (divisions.find((d) => d.id === divisionId)?.name ?? 'All Divisions')
-    : 'All Divisions';
+  const selectedDivisionName =
+    divisionId !== 'all'
+      ? (divisions.find((d) => d.id === divisionId)?.name ?? 'All Divisions')
+      : 'All Divisions';
 
   let periodDisplay = 'All Time';
   if (period && period !== 'all') {
     if (period.endsWith('-FY')) periodDisplay = `Annual FY${period.substring(0, 4)}`;
-    else if (period.endsWith('-H1')) periodDisplay = `Bi-Annual ${period.substring(0, 4)} H1 (Jan–Jun)`;
-    else if (period.endsWith('-H2')) periodDisplay = `Bi-Annual ${period.substring(0, 4)} H2 (Jul–Dec)`;
-    else if (period.includes('-Q')) periodDisplay = `Quarterly ${period.substring(0, 4)} ${period.substring(5)}`;
+    else if (period.endsWith('-H1'))
+      periodDisplay = `Bi-Annual ${period.substring(0, 4)} H1 (Jan–Jun)`;
+    else if (period.endsWith('-H2'))
+      periodDisplay = `Bi-Annual ${period.substring(0, 4)} H2 (Jul–Dec)`;
+    else if (period.includes('-Q'))
+      periodDisplay = `Quarterly ${period.substring(0, 4)} ${period.substring(5)}`;
     else periodDisplay = fmtMonthYear(period);
   }
 
@@ -415,14 +505,21 @@ export function ReportsClient({ periods, accounts, divisions, selectedPeriod }: 
                       : 'bg-card border-border/70 hover:bg-muted/40 hover:border-muted-foreground/30'
                   }`}
                 >
-                  <div className={`flex h-6 w-6 shrink-0 items-center justify-center rounded-md transition-colors ${
-                    isSelected ? 'bg-primary text-primary-foreground shadow-xs' : 'bg-muted text-muted-foreground group-hover:text-foreground'
-                  }`}>
+                  <div
+                    className={`flex h-6 w-6 shrink-0 items-center justify-center rounded-md transition-colors ${
+                      isSelected
+                        ? 'bg-primary text-primary-foreground shadow-xs'
+                        : 'bg-muted text-muted-foreground group-hover:text-foreground'
+                    }`}
+                  >
                     <Icon className="h-3.5 w-3.5" />
                   </div>
 
                   <div className="flex-1 min-w-0">
-                    <p suppressHydrationWarning className={`text-[11px] font-semibold truncate ${isSelected ? 'text-primary' : 'text-foreground'}`}>
+                    <p
+                      suppressHydrationWarning
+                      className={`text-[11px] font-semibold truncate ${isSelected ? 'text-primary' : 'text-foreground'}`}
+                    >
                       {type.label}
                     </p>
                   </div>
@@ -480,19 +577,34 @@ export function ReportsClient({ periods, accounts, divisions, selectedPeriod }: 
                 <div className="relative z-10 flex flex-col sm:flex-row sm:items-center justify-between gap-6">
                   <div className="flex flex-col gap-2.5 max-w-xl">
                     <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-amber-500/15 text-amber-300 border border-amber-500/30 text-xs font-semibold w-fit shadow-xs">
-                      <Sparkles className="h-3.5 w-3.5 text-amber-400" /> PMG Financial Intelligence Hub
+                      <Sparkles className="h-3.5 w-3.5 text-amber-400" /> PMG Financial Intelligence
+                      Hub
                     </div>
-                    <h2 className="text-xl sm:text-2xl font-bold tracking-tight text-white">Financial Reports & Statements Workbench</h2>
+                    <h2 className="text-xl sm:text-2xl font-bold tracking-tight text-white">
+                      Financial Reports & Statements Workbench
+                    </h2>
                     <p className="text-xs sm:text-sm text-zinc-300 leading-relaxed font-normal">
-                      Consolidated corporate reporting for <span className="font-semibold text-white">{orgSettings?.registeredName || 'PLAYHOUSE MEDIA GROUP (PTY) LTD'}</span>. Generating CIPC compliant Annual Financial Statements (AFS), real-time financial position, income statements, and cash flows.
+                      Consolidated corporate reporting for{' '}
+                      <span className="font-semibold text-white">
+                        {orgSettings?.registeredName || 'PLAYHOUSE MEDIA GROUP (PTY) LTD'}
+                      </span>
+                      . Generating CIPC compliant Annual Financial Statements (AFS), real-time
+                      financial position, income statements, and cash flows.
                     </p>
                   </div>
 
                   <div className="flex flex-col sm:flex-row lg:flex-col gap-2.5 shrink-0">
-                    <Button onClick={() => setSelectedReport('annual-financial-statements')} className="gap-2 bg-emerald-600 hover:bg-emerald-500 text-white font-semibold shadow-lg">
+                    <Button
+                      onClick={() => setSelectedReport('annual-financial-statements')}
+                      className="gap-2 bg-emerald-600 hover:bg-emerald-500 text-white font-semibold shadow-lg"
+                    >
                       <ShieldCheck className="h-4 w-4" /> Open Full AFS Package
                     </Button>
-                    <Button onClick={handleDownloadPdf} variant="outline" className="gap-2 text-zinc-100 border-zinc-700 bg-zinc-800/80 hover:bg-zinc-700 hover:text-white">
+                    <Button
+                      onClick={handleDownloadPdf}
+                      variant="outline"
+                      className="gap-2 text-zinc-100 border-zinc-700 bg-zinc-800/80 hover:bg-zinc-700 hover:text-white"
+                    >
                       <Download className="h-4 w-4" /> Export Complete AFS PDF
                     </Button>
                   </div>
@@ -503,9 +615,12 @@ export function ReportsClient({ periods, accounts, divisions, selectedPeriod }: 
               <div className="flex flex-col gap-3">
                 <div className="flex items-center justify-between">
                   <h3 className="text-sm font-bold tracking-tight text-foreground uppercase flex items-center gap-2">
-                    <Landmark className="h-4 w-4 text-primary" /> Core Financial Statements ({periodDisplay})
+                    <Landmark className="h-4 w-4 text-primary" /> Core Financial Statements (
+                    {periodDisplay})
                   </h3>
-                  <span className="text-xs text-muted-foreground font-medium">IFRS & CIPC Compliant</span>
+                  <span className="text-xs text-muted-foreground font-medium">
+                    IFRS & CIPC Compliant
+                  </span>
                 </div>
 
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
@@ -520,10 +635,20 @@ export function ReportsClient({ periods, accounts, divisions, selectedPeriod }: 
                           Complete 6-Page Package
                         </span>
                       </div>
-                      <h4 className="text-base font-bold group-hover:text-primary transition-colors">Annual Financial Statements (AFS)</h4>
-                      <p className="text-xs text-muted-foreground">Full CIPC compliance package: Directors Report, Position, Income, Equity, Cash Flows & Notes.</p>
+                      <h4 className="text-base font-bold group-hover:text-primary transition-colors">
+                        Annual Financial Statements (AFS)
+                      </h4>
+                      <p className="text-xs text-muted-foreground">
+                        Full CIPC compliance package: Directors Report, Position, Income, Equity,
+                        Cash Flows & Notes.
+                      </p>
                     </div>
-                    <Button onClick={() => setSelectedReport('annual-financial-statements')} variant="secondary" size="sm" className="w-full gap-1.5 text-xs font-semibold">
+                    <Button
+                      onClick={() => setSelectedReport('annual-financial-statements')}
+                      variant="secondary"
+                      size="sm"
+                      className="w-full gap-1.5 text-xs font-semibold"
+                    >
                       Preview Full Document <ArrowRight className="h-3.5 w-3.5" />
                     </Button>
                   </div>
@@ -539,10 +664,20 @@ export function ReportsClient({ periods, accounts, divisions, selectedPeriod }: 
                           {formatZAR(bsSummary?.totalAssets?.current || 0)}
                         </span>
                       </div>
-                      <h4 className="text-base font-bold group-hover:text-primary transition-colors">Financial Position</h4>
-                      <p className="text-xs text-muted-foreground">Statement of Financial Position: Total corporate assets, liabilities, and shareholder equity.</p>
+                      <h4 className="text-base font-bold group-hover:text-primary transition-colors">
+                        Financial Position
+                      </h4>
+                      <p className="text-xs text-muted-foreground">
+                        Statement of Financial Position: Total corporate assets, liabilities, and
+                        shareholder equity.
+                      </p>
                     </div>
-                    <Button onClick={() => setSelectedReport('balance-sheet')} variant="outline" size="sm" className="w-full gap-1.5 text-xs font-semibold">
+                    <Button
+                      onClick={() => setSelectedReport('balance-sheet')}
+                      variant="outline"
+                      size="sm"
+                      className="w-full gap-1.5 text-xs font-semibold"
+                    >
                       View Position Statement <ArrowRight className="h-3.5 w-3.5" />
                     </Button>
                   </div>
@@ -554,14 +689,26 @@ export function ReportsClient({ periods, accounts, divisions, selectedPeriod }: 
                         <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-violet-500/10 text-violet-600 dark:text-violet-400">
                           <TrendingUp className="h-5 w-5" />
                         </div>
-                        <span className={`text-xs font-mono font-bold ${(pnlSummary?.netProfit?.current || 0) >= 0 ? 'text-emerald-600 dark:text-emerald-400' : 'text-red-500'}`}>
+                        <span
+                          className={`text-xs font-mono font-bold ${(pnlSummary?.netProfit?.current || 0) >= 0 ? 'text-emerald-600 dark:text-emerald-400' : 'text-red-500'}`}
+                        >
                           Net: {formatZAR(pnlSummary?.netProfit?.current || 0)}
                         </span>
                       </div>
-                      <h4 className="text-base font-bold group-hover:text-primary transition-colors">Income Statement</h4>
-                      <p className="text-xs text-muted-foreground">Statement of Comprehensive Income: Gross sales revenue, operating expenses, and net profit.</p>
+                      <h4 className="text-base font-bold group-hover:text-primary transition-colors">
+                        Income Statement
+                      </h4>
+                      <p className="text-xs text-muted-foreground">
+                        Statement of Comprehensive Income: Gross sales revenue, operating expenses,
+                        and net profit.
+                      </p>
                     </div>
-                    <Button onClick={() => setSelectedReport('profit-and-loss')} variant="outline" size="sm" className="w-full gap-1.5 text-xs font-semibold">
+                    <Button
+                      onClick={() => setSelectedReport('profit-and-loss')}
+                      variant="outline"
+                      size="sm"
+                      className="w-full gap-1.5 text-xs font-semibold"
+                    >
                       View Income Statement <ArrowRight className="h-3.5 w-3.5" />
                     </Button>
                   </div>
@@ -577,10 +724,20 @@ export function ReportsClient({ periods, accounts, divisions, selectedPeriod }: 
                           {formatZAR(cfSummary?.current?.netOperatingCashFlow || 0)}
                         </span>
                       </div>
-                      <h4 className="text-base font-bold group-hover:text-primary transition-colors">Cash Flows</h4>
-                      <p className="text-xs text-muted-foreground">Statement of Cash Flows: Customer receipts, operating cash expenses, and bank balances.</p>
+                      <h4 className="text-base font-bold group-hover:text-primary transition-colors">
+                        Cash Flows
+                      </h4>
+                      <p className="text-xs text-muted-foreground">
+                        Statement of Cash Flows: Customer receipts, operating cash expenses, and
+                        bank balances.
+                      </p>
                     </div>
-                    <Button onClick={() => setSelectedReport('cash-flow')} variant="outline" size="sm" className="w-full gap-1.5 text-xs font-semibold">
+                    <Button
+                      onClick={() => setSelectedReport('cash-flow')}
+                      variant="outline"
+                      size="sm"
+                      className="w-full gap-1.5 text-xs font-semibold"
+                    >
                       View Cash Flows <ArrowRight className="h-3.5 w-3.5" />
                     </Button>
                   </div>
@@ -596,10 +753,20 @@ export function ReportsClient({ periods, accounts, divisions, selectedPeriod }: 
                           {formatZAR(100 + (eqSummary?.currentClosingRetained || 0))}
                         </span>
                       </div>
-                      <h4 className="text-base font-bold group-hover:text-primary transition-colors">Changes in Equity</h4>
-                      <p className="text-xs text-muted-foreground">Statement of Changes in Equity: Share capital and retained earnings balance movements.</p>
+                      <h4 className="text-base font-bold group-hover:text-primary transition-colors">
+                        Changes in Equity
+                      </h4>
+                      <p className="text-xs text-muted-foreground">
+                        Statement of Changes in Equity: Share capital and retained earnings balance
+                        movements.
+                      </p>
                     </div>
-                    <Button onClick={() => setSelectedReport('changes-in-equity')} variant="outline" size="sm" className="w-full gap-1.5 text-xs font-semibold">
+                    <Button
+                      onClick={() => setSelectedReport('changes-in-equity')}
+                      variant="outline"
+                      size="sm"
+                      className="w-full gap-1.5 text-xs font-semibold"
+                    >
                       View Equity Statement <ArrowRight className="h-3.5 w-3.5" />
                     </Button>
                   </div>
@@ -620,12 +787,24 @@ export function ReportsClient({ periods, accounts, divisions, selectedPeriod }: 
                         <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-indigo-500/10 text-indigo-600 dark:text-indigo-400">
                           <Building2 className="h-5 w-5" />
                         </div>
-                        <span className="text-xs font-semibold text-muted-foreground">Operating Divisions</span>
+                        <span className="text-xs font-semibold text-muted-foreground">
+                          Operating Divisions
+                        </span>
                       </div>
-                      <h4 className="text-base font-bold group-hover:text-primary transition-colors">Division Performance</h4>
-                      <p className="text-xs text-muted-foreground">Revenue, cash collected, outstanding AR, operating expenses, and profit margin % grouped by division.</p>
+                      <h4 className="text-base font-bold group-hover:text-primary transition-colors">
+                        Division Performance
+                      </h4>
+                      <p className="text-xs text-muted-foreground">
+                        Revenue, cash collected, outstanding AR, operating expenses, and profit
+                        margin % grouped by division.
+                      </p>
                     </div>
-                    <Button onClick={() => setSelectedReport('division-performance')} variant="outline" size="sm" className="w-full gap-1.5 text-xs font-semibold">
+                    <Button
+                      onClick={() => setSelectedReport('division-performance')}
+                      variant="outline"
+                      size="sm"
+                      className="w-full gap-1.5 text-xs font-semibold"
+                    >
                       View Division Performance <ArrowRight className="h-3.5 w-3.5" />
                     </Button>
                   </div>
@@ -637,12 +816,24 @@ export function ReportsClient({ periods, accounts, divisions, selectedPeriod }: 
                         <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-rose-500/10 text-rose-600 dark:text-rose-400">
                           <Users className="h-5 w-5" />
                         </div>
-                        <span className="text-xs font-semibold text-muted-foreground">Client Analytics</span>
+                        <span className="text-xs font-semibold text-muted-foreground">
+                          Client Analytics
+                        </span>
                       </div>
-                      <h4 className="text-base font-bold group-hover:text-primary transition-colors">Client Performance</h4>
-                      <p className="text-xs text-muted-foreground">Invoiced billing totals, cash collections, accounts receivable balance, and collection rate % per client.</p>
+                      <h4 className="text-base font-bold group-hover:text-primary transition-colors">
+                        Client Performance
+                      </h4>
+                      <p className="text-xs text-muted-foreground">
+                        Invoiced billing totals, cash collections, accounts receivable balance, and
+                        collection rate % per client.
+                      </p>
                     </div>
-                    <Button onClick={() => setSelectedReport('client-performance')} variant="outline" size="sm" className="w-full gap-1.5 text-xs font-semibold">
+                    <Button
+                      onClick={() => setSelectedReport('client-performance')}
+                      variant="outline"
+                      size="sm"
+                      className="w-full gap-1.5 text-xs font-semibold"
+                    >
                       View Client Performance <ArrowRight className="h-3.5 w-3.5" />
                     </Button>
                   </div>
@@ -662,10 +853,19 @@ export function ReportsClient({ periods, accounts, divisions, selectedPeriod }: 
                       <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-teal-500/10 text-teal-600 dark:text-teal-400">
                         <Scale className="h-4 w-4" />
                       </div>
-                      <h4 className="text-sm font-bold group-hover:text-primary transition-colors">Trial Balance</h4>
-                      <p className="text-[11px] text-muted-foreground">Verifying debit & credit equality.</p>
+                      <h4 className="text-sm font-bold group-hover:text-primary transition-colors">
+                        Trial Balance
+                      </h4>
+                      <p className="text-[11px] text-muted-foreground">
+                        Verifying debit & credit equality.
+                      </p>
                     </div>
-                    <Button onClick={() => setSelectedReport('trial-balance')} variant="ghost" size="sm" className="w-full gap-1 text-xs justify-between">
+                    <Button
+                      onClick={() => setSelectedReport('trial-balance')}
+                      variant="ghost"
+                      size="sm"
+                      className="w-full gap-1 text-xs justify-between"
+                    >
                       Open <ArrowRight className="h-3 w-3" />
                     </Button>
                   </div>
@@ -676,10 +876,19 @@ export function ReportsClient({ periods, accounts, divisions, selectedPeriod }: 
                       <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-sky-500/10 text-sky-600 dark:text-sky-400">
                         <Table2 className="h-4 w-4" />
                       </div>
-                      <h4 className="text-sm font-bold group-hover:text-primary transition-colors">General Ledger</h4>
-                      <p className="text-[11px] text-muted-foreground">Detailed line items per account.</p>
+                      <h4 className="text-sm font-bold group-hover:text-primary transition-colors">
+                        General Ledger
+                      </h4>
+                      <p className="text-[11px] text-muted-foreground">
+                        Detailed line items per account.
+                      </p>
                     </div>
-                    <Button onClick={() => setSelectedReport('general-ledger')} variant="ghost" size="sm" className="w-full gap-1 text-xs justify-between">
+                    <Button
+                      onClick={() => setSelectedReport('general-ledger')}
+                      variant="ghost"
+                      size="sm"
+                      className="w-full gap-1 text-xs justify-between"
+                    >
                       Open <ArrowRight className="h-3 w-3" />
                     </Button>
                   </div>
@@ -690,10 +899,19 @@ export function ReportsClient({ periods, accounts, divisions, selectedPeriod }: 
                       <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-orange-500/10 text-orange-600 dark:text-orange-400">
                         <FileText className="h-4 w-4" />
                       </div>
-                      <h4 className="text-sm font-bold group-hover:text-primary transition-colors">Journal Entries</h4>
-                      <p className="text-[11px] text-muted-foreground">Double-entry posted vouchers.</p>
+                      <h4 className="text-sm font-bold group-hover:text-primary transition-colors">
+                        Journal Entries
+                      </h4>
+                      <p className="text-[11px] text-muted-foreground">
+                        Double-entry posted vouchers.
+                      </p>
                     </div>
-                    <Button onClick={() => setSelectedReport('journal-entries')} variant="ghost" size="sm" className="w-full gap-1 text-xs justify-between">
+                    <Button
+                      onClick={() => setSelectedReport('journal-entries')}
+                      variant="ghost"
+                      size="sm"
+                      className="w-full gap-1 text-xs justify-between"
+                    >
                       Open <ArrowRight className="h-3 w-3" />
                     </Button>
                   </div>
@@ -704,10 +922,19 @@ export function ReportsClient({ periods, accounts, divisions, selectedPeriod }: 
                       <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-purple-500/10 text-purple-600 dark:text-purple-400">
                         <BookOpen className="h-4 w-4" />
                       </div>
-                      <h4 className="text-sm font-bold group-hover:text-primary transition-colors">Chart of Accounts</h4>
-                      <p className="text-[11px] text-muted-foreground">Posting accounts master list.</p>
+                      <h4 className="text-sm font-bold group-hover:text-primary transition-colors">
+                        Chart of Accounts
+                      </h4>
+                      <p className="text-[11px] text-muted-foreground">
+                        Posting accounts master list.
+                      </p>
                     </div>
-                    <Button onClick={() => setSelectedReport('chart-of-accounts')} variant="ghost" size="sm" className="w-full gap-1 text-xs justify-between">
+                    <Button
+                      onClick={() => setSelectedReport('chart-of-accounts')}
+                      variant="ghost"
+                      size="sm"
+                      className="w-full gap-1 text-xs justify-between"
+                    >
                       Open <ArrowRight className="h-3 w-3" />
                     </Button>
                   </div>

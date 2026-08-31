@@ -1,23 +1,23 @@
-'use client'
+'use client';
 
-import { useRouter } from 'next/navigation'
-import { Badge } from '@/components/ui/badge'
-import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs'
+import { useRouter } from 'next/navigation';
+import { Badge } from '@/components/ui/badge';
+import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 
 interface LeadStatusTabsProps {
-  counts: { all: number; new: number; contacted: number; converted: number; lost: number }
-  currentStatus?: string
-  currentDivisionId?: string
-  currentSource?: string
+  counts: { all: number; new: number; contacted: number; converted: number; lost: number };
+  currentStatus?: string;
+  currentDivisionId?: string;
+  currentSource?: string;
 }
 
 const TABS: { key: string; label: string }[] = [
-  { key: 'all',       label: 'All' },
-  { key: 'new',       label: 'New' },
+  { key: 'all', label: 'All' },
+  { key: 'new', label: 'New' },
   { key: 'contacted', label: 'Contacted' },
   { key: 'converted', label: 'Converted' },
-  { key: 'lost',      label: 'Lost' },
-]
+  { key: 'lost', label: 'Lost' },
+];
 
 export function LeadStatusTabs({
   counts,
@@ -25,16 +25,16 @@ export function LeadStatusTabs({
   currentDivisionId,
   currentSource,
 }: LeadStatusTabsProps) {
-  const router = useRouter()
-  const activeTab = currentStatus ?? 'all'
+  const router = useRouter();
+  const activeTab = currentStatus ?? 'all';
 
   function handleTabChange(value: string) {
-    const params = new URLSearchParams()
-    if (value !== 'all') params.set('status', value)
-    if (currentDivisionId) params.set('divisionId', currentDivisionId)
-    if (currentSource) params.set('source', currentSource)
-    const qs = params.toString()
-    router.push(qs ? `/relationships/leads?${qs}` : '/relationships/leads')
+    const params = new URLSearchParams();
+    if (value !== 'all') params.set('status', value);
+    if (currentDivisionId) params.set('divisionId', currentDivisionId);
+    if (currentSource) params.set('source', currentSource);
+    const qs = params.toString();
+    router.push(qs ? `/relationships/leads?${qs}` : '/relationships/leads');
   }
 
   return (
@@ -50,5 +50,5 @@ export function LeadStatusTabs({
         </TabsList>
       </div>
     </Tabs>
-  )
+  );
 }

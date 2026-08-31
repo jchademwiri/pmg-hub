@@ -22,4 +22,3 @@
 - smoke success does not imply trusted correctness
 - smoke success does not imply global benchmark validity
 - smoke failure should block broader candidate execution when the blocker is structural
-

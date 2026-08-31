@@ -1,13 +1,8 @@
-import * as React from "react";
-import {
-  Button,
-  Heading,
-  Section,
-  Text,
-} from "@react-email/components";
-import type { BrandingProps } from "../types";
-import { DEFAULT_WEBSITE_URL } from "../domains";
-import { EmailLayout } from "./EmailLayout";
+import * as React from 'react';
+import { Button, Heading, Section, Text } from '@react-email/components';
+import type { BrandingProps } from '../types';
+import { DEFAULT_WEBSITE_URL } from '../domains';
+import { EmailLayout } from './EmailLayout';
 
 export type StatementDeliveryEmailProps = {
   clientName: string;
@@ -39,8 +34,8 @@ const StatementDeliveryEmail = (props: StatementDeliveryEmailProps) => {
     personalMessage,
     portalUrl,
     bankDetails,
-    companyName = "Playhouse Media Group",
-    primaryColor = "#1d4ed8",
+    companyName = 'Playhouse Media Group',
+    primaryColor = '#1d4ed8',
     websiteUrl = DEFAULT_WEBSITE_URL,
     logoUrl,
   } = props;
@@ -126,7 +121,9 @@ const StatementDeliveryEmail = (props: StatementDeliveryEmailProps) => {
                   <tr key={idx} className="border-b border-solid border-[#F1F5F9]">
                     <td className="py-2 text-[#020304]">{inv.documentNumber}</td>
                     <td className="py-2 text-[#64748B]">{inv.invoiceDate}</td>
-                    <td className="py-2 text-[#020304] text-right font-medium">{inv.outstanding}</td>
+                    <td className="py-2 text-[#020304] text-right font-medium">
+                      {inv.outstanding}
+                    </td>
                   </tr>
                 ))}
               </tbody>
@@ -142,7 +139,8 @@ const StatementDeliveryEmail = (props: StatementDeliveryEmailProps) => {
             Payment Instructions (EFT/Bank Transfer)
           </Heading>
           <Text className="m-0 mb-[12px] text-[13px] leading-[20px] text-[#475569]">
-            Please make payment directly to our bank account. Use your account name as your deposit reference.
+            Please make payment directly to our bank account. Use your account name as your deposit
+            reference.
           </Text>
           <table className="w-full text-[13px] text-[#020304]">
             <tbody>
@@ -175,7 +173,8 @@ const StatementDeliveryEmail = (props: StatementDeliveryEmailProps) => {
           If you have any questions about this statement, feel free to reply directly to this email.
         </Text>
         <Text className="m-0 mt-[12px] text-[14px] text-[#020304]">
-          Kind regards,<br />
+          Kind regards,
+          <br />
           <strong>{companyName}</strong>
         </Text>
       </Section>
@@ -184,20 +183,21 @@ const StatementDeliveryEmail = (props: StatementDeliveryEmailProps) => {
 };
 
 StatementDeliveryEmail.PreviewProps = {
-  clientName: "Acme Corporation",
-  statementDate: "2026-07-17",
-  period: "Rolling 3 Months",
-  totalAmountDue: "R 12,500.00",
-  personalMessage: "Hi there, thank you for your business. Please find attached your account statement.",
-  portalUrl: "https://portal.playhousemedia.co.za",
+  clientName: 'Acme Corporation',
+  statementDate: '2026-07-17',
+  period: 'Rolling 3 Months',
+  totalAmountDue: 'R 12,500.00',
+  personalMessage:
+    'Hi there, thank you for your business. Please find attached your account statement.',
+  portalUrl: 'https://portal.playhousemedia.co.za',
   bankDetails: {
-    bankName: "First National Bank",
-    accountName: "Playhouse Media Group",
-    accountNumber: "62891234567",
-    branchCode: "250655",
+    bankName: 'First National Bank',
+    accountName: 'Playhouse Media Group',
+    accountNumber: '62891234567',
+    branchCode: '250655',
   },
-  companyName: "Playhouse Media Group",
-  primaryColor: "#1d4ed8",
+  companyName: 'Playhouse Media Group',
+  primaryColor: '#1d4ed8',
   websiteUrl: DEFAULT_WEBSITE_URL,
 };
 

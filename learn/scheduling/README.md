@@ -4,10 +4,10 @@
 
 ## Lessons
 
-| # | Lesson | What You Learn |
-|---|--------|----------------|
-| 1 | [Scheduling Overview](./01-scheduling-overview.md) | What scheduling is for, statuses, risk levels, date auto-calculations |
-| 2 | [Creating And Editing Tenders](./02-creating-tenders.md) | How to create, edit, manage status transitions, and cancel tenders |
+| #   | Lesson                                                   | What You Learn                                                        |
+| --- | -------------------------------------------------------- | --------------------------------------------------------------------- |
+| 1   | [Scheduling Overview](./01-scheduling-overview.md)       | What scheduling is for, statuses, risk levels, date auto-calculations |
+| 2   | [Creating And Editing Tenders](./02-creating-tenders.md) | How to create, edit, manage status transitions, and cancel tenders    |
 
 ## Quick Rule
 

@@ -14,13 +14,7 @@ interface Props {
   voidAction: (id: string, reason: string) => Promise<{ error?: string }>;
 }
 
-export function LazyJournalsTable({ 
-  year, 
-  month, 
-  status,
-  postAction,
-  voidAction
-}: Props) {
+export function LazyJournalsTable({ year, month, status, postAction, voidAction }: Props) {
   const [data, setData] = useState<any[] | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [refreshCounter, setRefreshCounter] = useState(0);
@@ -29,11 +23,11 @@ export function LazyJournalsTable({
     let mounted = true;
     setData(null);
     setError(null);
-    
-    const fetchPromise = month 
+
+    const fetchPromise = month
       ? fetchJournalsByMonth(year, month, status)
       : fetchJournalsByYear(year, status);
-      
+
     fetchPromise
       .then((res) => {
         if (mounted) setData(res.data);
@@ -41,14 +35,21 @@ export function LazyJournalsTable({
       .catch(() => {
         if (mounted) setError('Failed to load data.');
       });
-    return () => { mounted = false; };
+    return () => {
+      mounted = false;
+    };
   }, [year, month, status, refreshCounter]);
 
   if (error) {
     return (
       <div className="p-4 rounded-md bg-destructive/10 text-destructive mt-4 flex items-center justify-between">
         <span>{error}</span>
-        <button onClick={() => setRefreshCounter(c => c + 1)} className="px-3 py-1 bg-background border rounded text-sm text-foreground hover:bg-muted">Retry</button>
+        <button
+          onClick={() => setRefreshCounter((c) => c + 1)}
+          className="px-3 py-1 bg-background border rounded text-sm text-foreground hover:bg-muted"
+        >
+          Retry
+        </button>
       </div>
     );
   }
@@ -59,21 +60,17 @@ export function LazyJournalsTable({
 
   const wrappedPostAction = async (id: string) => {
     const res = await postAction(id);
-    if (!res.error) setRefreshCounter(c => c + 1);
+    if (!res.error) setRefreshCounter((c) => c + 1);
     return res;
   };
 
   const wrappedVoidAction = async (id: string, reason: string) => {
     const res = await voidAction(id, reason);
-    if (!res.error) setRefreshCounter(c => c + 1);
+    if (!res.error) setRefreshCounter((c) => c + 1);
     return res;
   };
 
   return (
-    <JournalsTable 
-      entries={data}
-      postAction={wrappedPostAction}
-      voidAction={wrappedVoidAction}
-    />
+    <JournalsTable entries={data} postAction={wrappedPostAction} voidAction={wrappedVoidAction} />
   );
 }

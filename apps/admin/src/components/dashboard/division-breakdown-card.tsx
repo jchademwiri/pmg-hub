@@ -1,23 +1,23 @@
-import Link from 'next/link'
-import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card'
-import { formatZAR } from '@/lib/format'
+import Link from 'next/link';
+import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
+import { formatZAR } from '@/lib/format';
 
-export type DivisionMetric = { label: string; value: number; colorClass: string }
+export type DivisionMetric = { label: string; value: number; colorClass: string };
 
 export type DivisionBreakdownRow = {
-  divisionId?: string
-  divisionName: string
-  metrics: DivisionMetric[]
-  pct: number
-}
+  divisionId?: string;
+  divisionName: string;
+  metrics: DivisionMetric[];
+  pct: number;
+};
 
 type DivisionBreakdownCardProps = {
-  title: string
-  totals: DivisionMetric[]
-  rows: DivisionBreakdownRow[]
-  emptyMessage: string
-  dotColorFor?: (divisionName: string, index: number) => string
-}
+  title: string;
+  totals: DivisionMetric[];
+  rows: DivisionBreakdownRow[];
+  emptyMessage: string;
+  dotColorFor?: (divisionName: string, index: number) => string;
+};
 
 export function DivisionBreakdownCard({
   title,
@@ -36,7 +36,7 @@ export function DivisionBreakdownCard({
           <p className="text-muted-foreground/50 text-xs">{emptyMessage}</p>
         </CardContent>
       </Card>
-    )
+    );
   }
 
   return (
@@ -58,7 +58,7 @@ export function DivisionBreakdownCard({
       <CardContent>
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
           {rows.map((row, i) => {
-            const dotColor = dotColorFor(row.divisionName, i)
+            const dotColor = dotColorFor(row.divisionName, i);
 
             const content = (
               <div
@@ -92,7 +92,7 @@ export function DivisionBreakdownCard({
                 </div>
                 <p className="text-muted-foreground/60 text-[10px] mt-1.5">{row.pct}% of total</p>
               </div>
-            )
+            );
 
             if (row.divisionId) {
               return (
@@ -103,17 +103,17 @@ export function DivisionBreakdownCard({
                 >
                   {content}
                 </Link>
-              )
+              );
             }
 
             return (
               <div key={row.divisionName} className="block">
                 {content}
               </div>
-            )
+            );
           })}
         </div>
       </CardContent>
     </Card>
-  )
+  );
 }

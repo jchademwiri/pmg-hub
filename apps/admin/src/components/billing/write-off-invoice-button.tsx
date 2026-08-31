@@ -4,7 +4,15 @@ import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
-import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from '@/components/ui/dialog';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 
@@ -57,7 +65,8 @@ export function WriteOffInvoiceButton({ invoiceId, writeOffAction }: WriteOffInv
         <DialogHeader>
           <DialogTitle>Write Off Invoice</DialogTitle>
           <DialogDescription>
-            Are you sure you want to write off this invoice? This action will adjust your bad debt expense and close the invoice.
+            Are you sure you want to write off this invoice? This action will adjust your bad debt
+            expense and close the invoice.
           </DialogDescription>
         </DialogHeader>
         <div className="grid gap-4 py-4">
@@ -73,7 +82,9 @@ export function WriteOffInvoiceButton({ invoiceId, writeOffAction }: WriteOffInv
           </div>
         </div>
         <DialogFooter>
-          <Button variant="outline" onClick={() => setIsOpen(false)} disabled={isPending}>Cancel</Button>
+          <Button variant="outline" onClick={() => setIsOpen(false)} disabled={isPending}>
+            Cancel
+          </Button>
           <Button variant="destructive" onClick={handleSubmit} disabled={isPending}>
             {isPending ? 'Writing off...' : 'Confirm Write Off'}
           </Button>

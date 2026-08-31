@@ -1,7 +1,16 @@
 'use client';
 
 import * as React from 'react';
-import { Calendar, Filter, Download, Printer, RefreshCw, Building2, Layers, Tag } from 'lucide-react';
+import {
+  Calendar,
+  Filter,
+  Download,
+  Printer,
+  RefreshCw,
+  Building2,
+  Layers,
+  Tag,
+} from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import {
@@ -81,10 +90,12 @@ export function ReportFilterCard({
   const currentFyYear = currentMonth >= 3 ? currentYear + 1 : currentYear;
 
   // Filter Visibility Config per Report Type
-  const isAnnualOnlyReport = reportType === 'annual-financial-statements' || reportType === 'changes-in-equity';
+  const isAnnualOnlyReport =
+    reportType === 'annual-financial-statements' || reportType === 'changes-in-equity';
   const hidesPeriodFilter = reportType === 'chart-of-accounts';
 
-  const showDivisionFilter = reportType !== 'client-performance' && reportType !== 'chart-of-accounts';
+  const showDivisionFilter =
+    reportType !== 'client-performance' && reportType !== 'chart-of-accounts';
   const showAccountFilter = reportType === 'general-ledger';
   const showCategoryFilter = reportType === 'chart-of-accounts';
 
@@ -101,7 +112,8 @@ export function ReportFilterCard({
 
   // Calculate active filter count
   let activeFilterCount = 0;
-  if (selectedPeriod && selectedPeriod !== `${currentFyYear}-FY` && !hidesPeriodFilter) activeFilterCount++;
+  if (selectedPeriod && selectedPeriod !== `${currentFyYear}-FY` && !hidesPeriodFilter)
+    activeFilterCount++;
   if (selectedDivisionId && selectedDivisionId !== 'all' && showDivisionFilter) activeFilterCount++;
   if (selectedAccountId && selectedAccountId !== 'all' && showAccountFilter) activeFilterCount++;
   if (selectedCategory && selectedCategory !== 'all' && showCategoryFilter) activeFilterCount++;
@@ -117,9 +129,10 @@ export function ReportFilterCard({
     onEndDateChange('');
   };
 
-  const selectedDivisionName = selectedDivisionId !== 'all'
-    ? (divisions.find((d) => d.id === selectedDivisionId)?.name ?? 'Selected Division')
-    : null;
+  const selectedDivisionName =
+    selectedDivisionId !== 'all'
+      ? (divisions.find((d) => d.id === selectedDivisionId)?.name ?? 'Selected Division')
+      : null;
 
   return (
     <div className="rounded-2xl border bg-card p-3.5 sm:p-4 shadow-xs flex flex-col gap-3 transition-all">
@@ -155,7 +168,9 @@ export function ReportFilterCard({
               Exp: {formatZAR(divisionSummary.expenses)}
             </span>
             <span className="text-zinc-500 font-mono">|</span>
-            <span className={`font-mono font-bold ${divisionSummary.revenue - divisionSummary.expenses >= 0 ? 'text-emerald-600 dark:text-emerald-400' : 'text-red-600'}`}>
+            <span
+              className={`font-mono font-bold ${divisionSummary.revenue - divisionSummary.expenses >= 0 ? 'text-emerald-600 dark:text-emerald-400' : 'text-red-600'}`}
+            >
               Net: {formatZAR(divisionSummary.revenue - divisionSummary.expenses)}
             </span>
           </div>
@@ -164,15 +179,29 @@ export function ReportFilterCard({
         {/* Top Right Action Buttons */}
         <div className="flex items-center gap-1.5 ml-auto">
           {activeFilterCount > 0 && (
-            <Button onClick={handleReset} variant="ghost" size="sm" className="h-7 text-xs px-2 gap-1 text-muted-foreground hover:text-foreground">
+            <Button
+              onClick={handleReset}
+              variant="ghost"
+              size="sm"
+              className="h-7 text-xs px-2 gap-1 text-muted-foreground hover:text-foreground"
+            >
               <RefreshCw className="h-3 w-3" /> Reset
             </Button>
           )}
-          <Button onClick={onPrint} variant="outline" size="sm" className="h-7 text-xs px-2.5 gap-1.5">
+          <Button
+            onClick={onPrint}
+            variant="outline"
+            size="sm"
+            className="h-7 text-xs px-2.5 gap-1.5"
+          >
             <Printer className="h-3.5 w-3.5" />
             <span className="hidden sm:inline">Print</span>
           </Button>
-          <Button onClick={onDownloadPdf} size="sm" className="h-7 text-xs px-2.5 gap-1.5 shadow-xs">
+          <Button
+            onClick={onDownloadPdf}
+            size="sm"
+            className="h-7 text-xs px-2.5 gap-1.5 shadow-xs"
+          >
             <Download className="h-3.5 w-3.5" />
             Download PDF
           </Button>
@@ -194,9 +223,16 @@ export function ReportFilterCard({
               <SelectContent className="text-xs">
                 {isAnnualOnlyReport ? (
                   <SelectGroup>
-                    <SelectLabel className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">Annual Financial Years</SelectLabel>
-                    <SelectItem value={`${currentFyYear}-FY`}>Annual: FY{currentFyYear} (1 Mar {currentFyYear - 1} – 28 Feb {currentFyYear})</SelectItem>
-                    <SelectItem value={`${currentFyYear - 1}-FY`}>Annual: FY{currentFyYear - 1} (1 Mar {currentFyYear - 2} – 28 Feb {currentFyYear - 1})</SelectItem>
+                    <SelectLabel className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">
+                      Annual Financial Years
+                    </SelectLabel>
+                    <SelectItem value={`${currentFyYear}-FY`}>
+                      Annual: FY{currentFyYear} (1 Mar {currentFyYear - 1} – 28 Feb {currentFyYear})
+                    </SelectItem>
+                    <SelectItem value={`${currentFyYear - 1}-FY`}>
+                      Annual: FY{currentFyYear - 1} (1 Mar {currentFyYear - 2} – 28 Feb{' '}
+                      {currentFyYear - 1})
+                    </SelectItem>
                   </SelectGroup>
                 ) : (
                   <>
@@ -204,30 +240,58 @@ export function ReportFilterCard({
 
                     {/* Annual Financial Years */}
                     <SelectGroup>
-                      <SelectLabel className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">Annual Financial Years</SelectLabel>
-                      <SelectItem value={`${currentFyYear}-FY`}>Annual: FY{currentFyYear} (1 Mar {currentFyYear - 1} – 28 Feb {currentFyYear})</SelectItem>
-                      <SelectItem value={`${currentFyYear - 1}-FY`}>Annual: FY{currentFyYear - 1} (1 Mar {currentFyYear - 2} – 28 Feb {currentFyYear - 1})</SelectItem>
+                      <SelectLabel className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">
+                        Annual Financial Years
+                      </SelectLabel>
+                      <SelectItem value={`${currentFyYear}-FY`}>
+                        Annual: FY{currentFyYear} (1 Mar {currentFyYear - 1} – 28 Feb{' '}
+                        {currentFyYear})
+                      </SelectItem>
+                      <SelectItem value={`${currentFyYear - 1}-FY`}>
+                        Annual: FY{currentFyYear - 1} (1 Mar {currentFyYear - 2} – 28 Feb{' '}
+                        {currentFyYear - 1})
+                      </SelectItem>
                     </SelectGroup>
 
                     {/* Bi-Annually (Current Year) */}
                     <SelectGroup>
-                      <SelectLabel className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">Bi-Annual Periods</SelectLabel>
-                      <SelectItem value={`${currentFyYear}-H1`}>Bi-Annual: FY{currentFyYear} H1 (Mar – Aug {currentFyYear - 1})</SelectItem>
-                      <SelectItem value={`${currentFyYear}-H2`}>Bi-Annual: FY{currentFyYear} H2 (Sep {currentFyYear - 1} – Feb {currentFyYear})</SelectItem>
+                      <SelectLabel className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">
+                        Bi-Annual Periods
+                      </SelectLabel>
+                      <SelectItem value={`${currentFyYear}-H1`}>
+                        Bi-Annual: FY{currentFyYear} H1 (Mar – Aug {currentFyYear - 1})
+                      </SelectItem>
+                      <SelectItem value={`${currentFyYear}-H2`}>
+                        Bi-Annual: FY{currentFyYear} H2 (Sep {currentFyYear - 1} – Feb{' '}
+                        {currentFyYear})
+                      </SelectItem>
                     </SelectGroup>
 
                     {/* Quarterly (Current Year) */}
                     <SelectGroup>
-                      <SelectLabel className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">Quarterly Periods</SelectLabel>
-                      <SelectItem value={`${currentFyYear}-Q1`}>Quarterly: FY{currentFyYear} Q1 (Mar – May {currentFyYear - 1})</SelectItem>
-                      <SelectItem value={`${currentFyYear}-Q2`}>Quarterly: FY{currentFyYear} Q2 (Jun – Aug {currentFyYear - 1})</SelectItem>
-                      <SelectItem value={`${currentFyYear}-Q3`}>Quarterly: FY{currentFyYear} Q3 (Sep – Nov {currentFyYear - 1})</SelectItem>
-                      <SelectItem value={`${currentFyYear}-Q4`}>Quarterly: FY{currentFyYear} Q4 (Dec {currentFyYear - 1} – Feb {currentFyYear})</SelectItem>
+                      <SelectLabel className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">
+                        Quarterly Periods
+                      </SelectLabel>
+                      <SelectItem value={`${currentFyYear}-Q1`}>
+                        Quarterly: FY{currentFyYear} Q1 (Mar – May {currentFyYear - 1})
+                      </SelectItem>
+                      <SelectItem value={`${currentFyYear}-Q2`}>
+                        Quarterly: FY{currentFyYear} Q2 (Jun – Aug {currentFyYear - 1})
+                      </SelectItem>
+                      <SelectItem value={`${currentFyYear}-Q3`}>
+                        Quarterly: FY{currentFyYear} Q3 (Sep – Nov {currentFyYear - 1})
+                      </SelectItem>
+                      <SelectItem value={`${currentFyYear}-Q4`}>
+                        Quarterly: FY{currentFyYear} Q4 (Dec {currentFyYear - 1} – Feb{' '}
+                        {currentFyYear})
+                      </SelectItem>
                     </SelectGroup>
 
                     {/* Monthly */}
                     <SelectGroup>
-                      <SelectLabel className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">Monthly Periods</SelectLabel>
+                      <SelectLabel className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">
+                        Monthly Periods
+                      </SelectLabel>
                       {periods.map((p) => (
                         <SelectItem key={p} value={p}>
                           Monthly: {fmtMonthYear(p)}

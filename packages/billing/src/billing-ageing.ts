@@ -29,10 +29,7 @@ export type AgeingInvoice = {
  * @param todayStr - Today's date in YYYY-MM-DD format (SAST-aware).
  * @returns An AgeingBucket with totals per overdue range.
  */
-export function calculateAgeing(
-  invoices: AgeingInvoice[],
-  todayStr: string,
-): AgeingBucket {
+export function calculateAgeing(invoices: AgeingInvoice[], todayStr: string): AgeingBucket {
   const ageing: AgeingBucket = {
     current: 0,
     days1_14: 0,
@@ -76,11 +73,5 @@ export function calculateAgeing(
  * Sum the six ageing buckets into a single total-due figure.
  */
 export function totalAgeingDue(ageing: AgeingBucket): number {
-  return (
-    ageing.current +
-    ageing.days1_14 +
-    ageing.days15_30 +
-    ageing.days31_60 +
-    ageing.days61plus
-  );
+  return ageing.current + ageing.days1_14 + ageing.days15_30 + ageing.days31_60 + ageing.days61plus;
 }

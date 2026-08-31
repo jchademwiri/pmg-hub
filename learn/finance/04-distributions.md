@@ -36,9 +36,8 @@ Use Finance -> Distributions to check:
 
 ## Common Questions
 
-| Question | Answer |
-|----------|--------|
-| Why does PMG share show on reports? | It is part of the configured financial model |
-| Can rates differ by division? | Yes, settings and distribution rules can vary |
+| Question                                 | Answer                                              |
+| ---------------------------------------- | --------------------------------------------------- |
+| Why does PMG share show on reports?      | It is part of the configured financial model        |
+| Can rates differ by division?            | Yes, settings and distribution rules can vary       |
 | Why does profit look lower than revenue? | Profit is after expenses and configured allocations |
-

@@ -99,7 +99,9 @@ export function AddItemDialog() {
                   Unit Price (ZAR) <span className="text-destructive">*</span>
                 </FieldLabel>
                 <div className="relative">
-                  <span className="absolute left-3 top-2 text-xs font-semibold text-muted-foreground">R</span>
+                  <span className="absolute left-3 top-2 text-xs font-semibold text-muted-foreground">
+                    R
+                  </span>
                   <Input
                     id="item-price"
                     type="number"
@@ -140,7 +142,12 @@ export function AddItemDialog() {
             </Field>
 
             <DialogFooter className="mt-2">
-              <Button type="button" variant="outline" onClick={() => setOpen(false)} disabled={isPending}>
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => setOpen(false)}
+                disabled={isPending}
+              >
                 Cancel
               </Button>
               <Button type="submit" disabled={isPending}>

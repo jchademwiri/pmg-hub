@@ -68,6 +68,7 @@ END FUNCTION
 ### Preservation Requirements
 
 **Unchanged Behaviors:**
+
 - Requests carrying no session cookie (neither plain nor `__Secure-` prefixed) MUST continue
   to be redirected to `/login`.
 - Requests to `/login` or any `/api/auth/` path MUST continue to pass through unconditionally,
@@ -180,6 +181,7 @@ function and assert that the response is NOT a redirect - this assertion will FA
 code, confirming the bug.
 
 **Test Cases**:
+
 1. **Secure cookie only - protected path** (will fail on unfixed code): Request to `/dashboard`
    with `__Secure-better-auth.session_token` set; expect `NextResponse.next()`.
 2. **Secure cookie on allowlisted path** (should pass even on unfixed code): Request to
@@ -190,6 +192,7 @@ code, confirming the bug.
    to `/dashboard` with no cookies; expect redirect to `/login`.
 
 **Expected Counterexamples**:
+
 - Test case 1 returns a redirect response instead of `NextResponse.next()`.
 - Confirms root cause: the plain cookie name lookup misses the `__Secure-` prefixed cookie.
 
@@ -222,6 +225,7 @@ END FOR
 ```
 
 **Testing Approach**: Property-based testing is recommended for preservation checking because:
+
 - It generates many test cases automatically across the input domain.
 - It catches edge cases that manual unit tests might miss.
 - It provides strong guarantees that behaviour is unchanged for all non-buggy inputs.
@@ -230,6 +234,7 @@ END FOR
 cookie, then write property-based tests capturing that behaviour.
 
 **Test Cases**:
+
 1. **Plain cookie preservation**: Verify requests with `better-auth.session_token` still pass
    through after the fix.
 2. **No-cookie redirect preservation**: Verify requests with no session cookie still redirect

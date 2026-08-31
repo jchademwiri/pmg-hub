@@ -41,12 +41,12 @@ This means the app should work as a manual internal bookkeeping system where the
 
 The app should still have internal accounting accounts such as:
 
-* `1001 - Business Bank Account`
-* `1002 - Cash on Hand`
-* `1100 - Accounts Receivable`
-* `3000 - Owner Equity / Retained Earnings`
-* `4000 - Sales / Service Revenue`
-* `5000+ - Expense Accounts`
+- `1001 - Business Bank Account`
+- `1002 - Cash on Hand`
+- `1100 - Accounts Receivable`
+- `3000 - Owner Equity / Retained Earnings`
+- `4000 - Sales / Service Revenue`
+- `5000+ - Expense Accounts`
 
 These are accounting accounts only. They are not linked to real bank APIs.
 
@@ -56,20 +56,20 @@ These are accounting accounts only. They are not linked to real bank APIs.
 
 For the MVP:
 
-* Do not require VAT support.
-* Do not create VAT Output or VAT Input journal entries.
-* Do not create VAT reports as an MVP requirement.
-* Do not treat PMG invoices as VAT tax invoices.
-* Disable VAT by default.
-* Add or verify a system setting such as `isVatRegistered: false`.
-* When `isVatRegistered` is false:
+- Do not require VAT support.
+- Do not create VAT Output or VAT Input journal entries.
+- Do not create VAT reports as an MVP requirement.
+- Do not treat PMG invoices as VAT tax invoices.
+- Disable VAT by default.
+- Add or verify a system setting such as `isVatRegistered: false`.
+- When `isVatRegistered` is false:
 
-  * VAT toggle should be hidden or disabled on invoices.
-  * VAT amount must always be `0`.
-  * VAT rate must be ignored.
-  * invoice PDFs must not show a VAT number.
-  * invoice PDFs must not say “Tax Invoice” unless PMG becomes VAT registered.
-  * invoice totals must be calculated without VAT.
+  - VAT toggle should be hidden or disabled on invoices.
+  - VAT amount must always be `0`.
+  - VAT rate must be ignored.
+  - invoice PDFs must not show a VAT number.
+  - invoice PDFs must not say “Tax Invoice” unless PMG becomes VAT registered.
+  - invoice totals must be calculated without VAT.
 
 Move VAT to a later phase called:
 
@@ -83,21 +83,21 @@ If existing VAT fields already exist in the codebase, keep them only as future-r
 
 For the MVP:
 
-* Do not build bank feed integration.
-* Do not build bank API connection.
-* Do not build automatic bank syncing.
-* Do not require imported bank statements.
-* Do not overbuild bank reconciliation.
+- Do not build bank feed integration.
+- Do not build bank API connection.
+- Do not build automatic bank syncing.
+- Do not require imported bank statements.
+- Do not overbuild bank reconciliation.
 
 Instead, build manual bank/cash tracking only.
 
 The user should manually record:
 
-* invoice payments received
-* other income received
-* expenses paid
-* owner withdrawals
-* transfers between internal cash/bank accounts if needed
+- invoice payments received
+- other income received
+- expenses paid
+- owner withdrawals
+- transfers between internal cash/bank accounts if needed
 
 The system should post these manual transactions to the General Ledger.
 
@@ -111,23 +111,23 @@ Use the document `PMG-Accounting-Research-Gap-Analysis.docx` as a starting point
 
 The document already identifies these major accounting concepts:
 
-* double-entry bookkeeping
-* Chart of Accounts
-* General Ledger
-* journal entries
-* journal lines
-* Accounts Receivable
-* Accounts Payable
-* Profit & Loss
-* Balance Sheet
-* Cash Flow Statement
-* Trial Balance
-* Aged Receivables
-* Aged Payables
-* financial period locking
-* VAT/tax handling
-* bank reconciliation
-* audit trail
+- double-entry bookkeeping
+- Chart of Accounts
+- General Ledger
+- journal entries
+- journal lines
+- Accounts Receivable
+- Accounts Payable
+- Profit & Loss
+- Balance Sheet
+- Cash Flow Statement
+- Trial Balance
+- Aged Receivables
+- Aged Payables
+- financial period locking
+- VAT/tax handling
+- bank reconciliation
+- audit trail
 
 Your task is to validate which of these are actually needed for PMG’s revised MVP and which should be deferred.
 
@@ -148,14 +148,14 @@ Clearly separate:
 
 PMG Control Center is expected to use:
 
-* Next.js App Router
-* TypeScript
-* Drizzle ORM
-* PostgreSQL/Neon
-* Server Actions
-* shadcn/ui or similar UI patterns
-* Better Auth
-* existing modules for divisions, clients, income, expenses, leads, billing, invoices, quotes, payment allocations, snapshots, and ledger/allocation tracking
+- Next.js App Router
+- TypeScript
+- Drizzle ORM
+- PostgreSQL/Neon
+- Server Actions
+- shadcn/ui or similar UI patterns
+- Better Auth
+- existing modules for divisions, clients, income, expenses, leads, billing, invoices, quotes, payment allocations, snapshots, and ledger/allocation tracking
 
 Follow the existing codebase style.
 
@@ -175,26 +175,26 @@ Do a deep scan of the repo.
 
 Inspect at minimum:
 
-* `package.json`
-* workspace/monorepo config files
-* `packages/db/src/schema/*`
-* `packages/db/src/queries/*`
-* `packages/db/src/*`
-* `apps/admin/src/app/actions/*`
-* `apps/admin/src/app/(admin)/*`
-* `apps/admin/src/lib/financial.ts`
-* billing routes/pages/components
-* income routes/pages/actions
-* expense routes/pages/actions
-* dashboard/reporting routes
-* snapshot/month-locking logic
-* ledger/allocation logic
-* PDF/export logic if available
-* email/payment reminder logic if available
-* docs/specifications
-* docs/architecture
-* docs/audits
-* docs/implementation-plans
+- `package.json`
+- workspace/monorepo config files
+- `packages/db/src/schema/*`
+- `packages/db/src/queries/*`
+- `packages/db/src/*`
+- `apps/admin/src/app/actions/*`
+- `apps/admin/src/app/(admin)/*`
+- `apps/admin/src/lib/financial.ts`
+- billing routes/pages/components
+- income routes/pages/actions
+- expense routes/pages/actions
+- dashboard/reporting routes
+- snapshot/month-locking logic
+- ledger/allocation logic
+- PDF/export logic if available
+- email/payment reminder logic if available
+- docs/specifications
+- docs/architecture
+- docs/audits
+- docs/implementation-plans
 
 Do not only search filenames.
 
@@ -210,12 +210,12 @@ Research how common invoicing/accounting systems handle their minimum features.
 
 Look at systems such as:
 
-* QuickBooks
-* Xero
-* FreshBooks
-* Wave
-* Zoho Books
-* Sage
+- QuickBooks
+- Xero
+- FreshBooks
+- Wave
+- Zoho Books
+- Sage
 
 Focus only on what is relevant to PMG’s revised MVP.
 
@@ -253,13 +253,13 @@ Create a concise summary explaining how modern invoicing/accounting systems work
 
 Include:
 
-* common invoice lifecycle
-* difference between quote, invoice, payment, income, journal entry, and ledger entry
-* difference between cash-basis and accrual-basis accounting
-* what reports can be built on cash-basis
-* what requires full double-entry accounting
-* what is needed for a practical non-VAT small business bookkeeping system
-* what PMG can safely defer
+- common invoice lifecycle
+- difference between quote, invoice, payment, income, journal entry, and ledger entry
+- difference between cash-basis and accrual-basis accounting
+- what reports can be built on cash-basis
+- what requires full double-entry accounting
+- what is needed for a practical non-VAT small business bookkeeping system
+- what PMG can safely defer
 
 Make the explanation practical and PMG-focused.
 
@@ -348,12 +348,12 @@ Create a detailed table with these columns:
 
 Use these statuses:
 
-* ✅ Good enough for MVP
-* 🟡 Partially implemented
-* 🔴 Missing / required
-* ⚪ Not required for MVP
-* 🔵 Future phase
-* 📄 Documented only, not implemented
+- ✅ Good enough for MVP
+- 🟡 Partially implemented
+- 🔴 Missing / required
+- ⚪ Not required for MVP
+- 🔵 Future phase
+- 📄 Documented only, not implemented
 
 Audit at least these areas:
 
@@ -413,33 +413,33 @@ Propose database changes using the existing Drizzle ORM style.
 
 Evaluate whether PMG needs these tables now or later:
 
-* `chart_of_accounts`
-* `journal_entries`
-* `journal_entry_lines`
-* `bank_accounts`
-* `bank_transactions`
-* `manual_reconciliations`
-* `credit_notes`
-* `refunds`
-* `suppliers`
-* `bills`
-* `bill_payments`
-* `tax_settings`
-* `audit_logs`
-* `attachments`
-* `assets`
-* `liabilities`
+- `chart_of_accounts`
+- `journal_entries`
+- `journal_entry_lines`
+- `bank_accounts`
+- `bank_transactions`
+- `manual_reconciliations`
+- `credit_notes`
+- `refunds`
+- `suppliers`
+- `bills`
+- `bill_payments`
+- `tax_settings`
+- `audit_logs`
+- `attachments`
+- `assets`
+- `liabilities`
 
 For each table, state:
 
-* Required for MVP or future
-* Purpose
-* Key columns
-* Relationships
-* Whether existing tables can be reused
-* Whether it should be created now
-* Migration risks
-* How it fits the current repo structure
+- Required for MVP or future
+- Purpose
+- Key columns
+- Relationships
+- Whether existing tables can be reused
+- Whether it should be created now
+- Migration risks
+- How it fits the current repo structure
 
 For the MVP, prioritise:
 
@@ -459,55 +459,55 @@ Create a simple starting Chart of Accounts for PMG.
 
 It must support:
 
-* non-VAT operation
-* manual cash-basis bookkeeping
-* multiple divisions
-* service income
-* project/admin expenses
-* owner withdrawals
-* PMG share/allocation model
+- non-VAT operation
+- manual cash-basis bookkeeping
+- multiple divisions
+- service income
+- project/admin expenses
+- owner withdrawals
+- PMG share/allocation model
 
 Use account codes similar to:
 
 ## Assets
 
-* 1001 Business Bank Account
-* 1002 Cash on Hand
-* 1100 Accounts Receivable
+- 1001 Business Bank Account
+- 1002 Cash on Hand
+- 1100 Accounts Receivable
 
 ## Liabilities
 
-* 2000 General Liabilities
-* 2100 Accounts Payable, future
-* 2300 Loans Payable, future if needed
+- 2000 General Liabilities
+- 2100 Accounts Payable, future
+- 2300 Loans Payable, future if needed
 
 ## Equity
 
-* 3000 Owner Equity
-* 3100 Retained Earnings
-* 3200 Owner Drawings
-* 3300 PMG Share / Internal Allocation Equity if appropriate
+- 3000 Owner Equity
+- 3100 Retained Earnings
+- 3200 Owner Drawings
+- 3300 PMG Share / Internal Allocation Equity if appropriate
 
 ## Revenue
 
-* 4000 Service Revenue
-* 4100 Tender Edge Revenue
-* 4200 Apex Web Solutions Revenue
-* 4300 PMG Services Revenue
-* 4900 Other Income
+- 4000 Service Revenue
+- 4100 Tender Edge Revenue
+- 4200 Apex Web Solutions Revenue
+- 4300 PMG Services Revenue
+- 4900 Other Income
 
 ## Expenses
 
-* 5000 General Expenses
-* 5100 Software & Subscriptions
-* 5200 Printing & Stationery
-* 5300 Transport & Courier
-* 5400 Marketing
-* 5500 Communication
-* 5600 Professional Fees
-* 5700 Bank Charges
-* 5800 Office/Admin Expenses
-* 5900 Miscellaneous Expenses
+- 5000 General Expenses
+- 5100 Software & Subscriptions
+- 5200 Printing & Stationery
+- 5300 Transport & Courier
+- 5400 Marketing
+- 5500 Communication
+- 5600 Professional Fees
+- 5700 Bank Charges
+- 5800 Office/Admin Expenses
+- 5900 Miscellaneous Expenses
 
 Recommend whether revenue accounts should be per division or whether division should remain a separate dimension.
 
@@ -525,29 +525,29 @@ No journal entry required for pure cash-basis MVP, unless PMG wants to track Acc
 
 Recommended practical option:
 
-* Create invoice record
-* Do not count it as income yet
-* Include it in Accounts Receivable reports
-* Do not include it in Profit & Loss until paid
+- Create invoice record
+- Do not count it as income yet
+- Include it in Accounts Receivable reports
+- Do not include it in Profit & Loss until paid
 
 ## When invoice payment is recorded
 
 Post:
 
-* Dr Business Bank Account
-* Cr Service Revenue
+- Dr Business Bank Account
+- Cr Service Revenue
 
 If using Accounts Receivable tracking with double-entry:
 
 On invoice issue:
 
-* Dr Accounts Receivable
-* Cr Service Revenue
+- Dr Accounts Receivable
+- Cr Service Revenue
 
 On payment:
 
-* Dr Business Bank Account
-* Cr Accounts Receivable
+- Dr Business Bank Account
+- Cr Accounts Receivable
 
 Explain which option is better for PMG now.
 
@@ -555,22 +555,22 @@ Explain which option is better for PMG now.
 
 Post:
 
-* Dr Business Bank Account or Cash on Hand
-* Cr Other Income or relevant Revenue account
+- Dr Business Bank Account or Cash on Hand
+- Cr Other Income or relevant Revenue account
 
 ## When expense is recorded
 
 Post:
 
-* Dr Expense account
-* Cr Business Bank Account or Cash on Hand
+- Dr Expense account
+- Cr Business Bank Account or Cash on Hand
 
 ## When owner withdrawal is recorded
 
 Post:
 
-* Dr Owner Drawings
-* Cr Business Bank Account
+- Dr Owner Drawings
+- Cr Business Bank Account
 
 ## When PMG allocation/spending is recorded
 
@@ -609,12 +609,12 @@ For future:
 
 For each report, define:
 
-* purpose
-* required data
-* filters
-* route suggestion
-* whether it is MVP or future
-* acceptance criteria
+- purpose
+- required data
+- filters
+- route suggestion
+- whether it is MVP or future
+- acceptance criteria
 
 ---
 
@@ -624,90 +624,90 @@ Create a phased implementation plan.
 
 Each phase must include:
 
-* objective
-* files likely to change
-* database changes
-* UI changes
-* Server Actions
-* query helpers
-* validation rules
-* reports added
-* testing checklist
-* acceptance criteria
+- objective
+- files likely to change
+- database changes
+- UI changes
+- Server Actions
+- query helpers
+- validation rules
+- reports added
+- testing checklist
+- acceptance criteria
 
 Use this revised build order:
 
 ## Phase 1: Repo audit and financial flow stabilisation
 
-* Audit current invoice, payment, income, expense, and report flows
-* Identify bugs and inconsistencies
-* Confirm what already exists vs documented only
-* Fix obvious calculation and status issues
+- Audit current invoice, payment, income, expense, and report flows
+- Identify bugs and inconsistencies
+- Confirm what already exists vs documented only
+- Fix obvious calculation and status issues
 
 ## Phase 2: Non-VAT setting and invoice simplification
 
-* Add/verify `isVatRegistered: false`
-* Disable VAT UI and calculations
-* Ensure invoices are not labelled tax invoices
-* Ensure VAT amount is always zero while disabled
+- Add/verify `isVatRegistered: false`
+- Disable VAT UI and calculations
+- Ensure invoices are not labelled tax invoices
+- Ensure VAT amount is always zero while disabled
 
 ## Phase 3: Accounts Receivable and payment flow
 
-* Ensure issued/unpaid invoices appear in AR
-* Add reliable partial payment support if missing
-* Add outstanding balance calculation
-* Add Aged Receivables report
+- Ensure issued/unpaid invoices appear in AR
+- Add reliable partial payment support if missing
+- Add outstanding balance calculation
+- Add Aged Receivables report
 
 ## Phase 4: Chart of Accounts
 
-* Add `chart_of_accounts`
-* Seed PMG accounts
-* Link income and expenses to accounts
-* Keep division as reporting dimension
+- Add `chart_of_accounts`
+- Seed PMG accounts
+- Link income and expenses to accounts
+- Keep division as reporting dimension
 
 ## Phase 5: Journal entries and journal lines
 
-* Add `journal_entries`
-* Add `journal_entry_lines`
-* Add posting helpers
-* Ensure every posted transaction balances
-* Use DB transactions for multi-step writes
+- Add `journal_entries`
+- Add `journal_entry_lines`
+- Add posting helpers
+- Ensure every posted transaction balances
+- Use DB transactions for multi-step writes
 
 ## Phase 6: General Ledger and Trial Balance
 
-* Build General Ledger report
-* Build Trial Balance report
-* Add debit/credit validation
-* Add out-of-balance warnings
+- Build General Ledger report
+- Build Trial Balance report
+- Add debit/credit validation
+- Add out-of-balance warnings
 
 ## Phase 7: Profit & Loss report
 
-* Build formal P&L using revenue and expense accounts
-* Add filters by date range, division, and account
-* Compare against existing dashboard figures
+- Build formal P&L using revenue and expense accounts
+- Add filters by date range, division, and account
+- Compare against existing dashboard figures
 
 ## Phase 8: Manual Bank/Cash account summary
 
-* Add internal bank/cash account balances
-* Show opening balance, money in, money out, calculated closing balance
-* No external bank linking
+- Add internal bank/cash account balances
+- Show opening balance, money in, money out, calculated closing balance
+- No external bank linking
 
 ## Phase 9: Audit trail and period lock hardening
 
-* Add `audit_logs`
-* Log create/edit/delete/issue/void/pay actions
-* Ensure closed periods cannot be changed through Server Actions
-* Add reversal flow instead of editing locked records
+- Add `audit_logs`
+- Log create/edit/delete/issue/void/pay actions
+- Ensure closed periods cannot be changed through Server Actions
+- Add reversal flow instead of editing locked records
 
 ## Phase 10: Future accounting reports
 
-* Balance Sheet
-* Cash Flow Statement
-* Accounts Payable
-* Credit notes
-* Refunds
-* VAT registration support
-* Bank CSV import/reconciliation
+- Balance Sheet
+- Cash Flow Statement
+- Accounts Payable
+- Credit notes
+- Refunds
+- VAT registration support
+- Bank CSV import/reconciliation
 
 ---
 
@@ -715,36 +715,36 @@ Use this revised build order:
 
 Look specifically for:
 
-* invoice totals not matching line items
-* VAT being applied even though PMG is not VAT registered
-* invoice PDF showing VAT/tax invoice incorrectly
-* hardcoded VAT rate
-* paid invoices editable
-* issued invoices editable without audit trail
-* missing DB transactions
-* income being created without reliable invoice/payment linkage
-* partial payment status not fully implemented
-* payment allocation bugs
-* period lock bypasses
-* financial calculations done only in UI
-* rounding errors
-* duplicate document numbers
-* orphaned line items
-* missing indexes
-* missing constraints
-* inconsistent date/timezone handling
-* user permission gaps
-* old PMG allocation ledger being confused with true accounting General Ledger
-* salary/reinvest/reserve/flex being double-counted as expenses
-* documented features not actually implemented
+- invoice totals not matching line items
+- VAT being applied even though PMG is not VAT registered
+- invoice PDF showing VAT/tax invoice incorrectly
+- hardcoded VAT rate
+- paid invoices editable
+- issued invoices editable without audit trail
+- missing DB transactions
+- income being created without reliable invoice/payment linkage
+- partial payment status not fully implemented
+- payment allocation bugs
+- period lock bypasses
+- financial calculations done only in UI
+- rounding errors
+- duplicate document numbers
+- orphaned line items
+- missing indexes
+- missing constraints
+- inconsistent date/timezone handling
+- user permission gaps
+- old PMG allocation ledger being confused with true accounting General Ledger
+- salary/reinvest/reserve/flex being double-counted as expenses
+- documented features not actually implemented
 
 For each risk, provide:
 
-* severity: High / Medium / Low
-* affected file path
-* explanation
-* recommended fix
-* whether it blocks MVP
+- severity: High / Medium / Low
+- affected file path
+- explanation
+- recommended fix
+- whether it blocks MVP
 
 ---
 

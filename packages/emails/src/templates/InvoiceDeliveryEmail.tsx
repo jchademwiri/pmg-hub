@@ -1,13 +1,8 @@
-import * as React from "react";
-import {
-  Button,
-  Heading,
-  Section,
-  Text,
-} from "@react-email/components";
-import type { BrandingProps } from "../types";
-import { DEFAULT_WEBSITE_URL } from "../domains";
-import { EmailLayout } from "./EmailLayout";
+import * as React from 'react';
+import { Button, Heading, Section, Text } from '@react-email/components';
+import type { BrandingProps } from '../types';
+import { DEFAULT_WEBSITE_URL } from '../domains';
+import { EmailLayout } from './EmailLayout';
 
 export type InvoiceDeliveryEmailProps = {
   clientName: string;
@@ -39,8 +34,8 @@ const InvoiceDeliveryEmail = (props: InvoiceDeliveryEmailProps) => {
     portalUrl,
     bankDetails,
     hasStatementAttached = false,
-    companyName = "Playhouse Media Group",
-    primaryColor = "#1d4ed8",
+    companyName = 'Playhouse Media Group',
+    primaryColor = '#1d4ed8',
     websiteUrl = DEFAULT_WEBSITE_URL,
     logoUrl,
   } = props;
@@ -59,8 +54,10 @@ const InvoiceDeliveryEmail = (props: InvoiceDeliveryEmailProps) => {
       </Heading>
 
       <Text className="m-0 mb-[16px] text-[15px] leading-[24px] text-[#334155]">
-        Please find attached invoice <strong>{documentNumber}</strong> issued by <strong>{companyName}</strong>.
-        {hasStatementAttached && " We have also attached your current account statement for your convenience."}
+        Please find attached invoice <strong>{documentNumber}</strong> issued by{' '}
+        <strong>{companyName}</strong>.
+        {hasStatementAttached &&
+          ' We have also attached your current account statement for your convenience.'}
       </Text>
 
       {portalUrl && (
@@ -127,7 +124,8 @@ const InvoiceDeliveryEmail = (props: InvoiceDeliveryEmailProps) => {
             Payment Instructions (EFT/Bank Transfer)
           </Heading>
           <Text className="m-0 mb-[12px] text-[13px] leading-[20px] text-[#475569]">
-            Please make payment directly to our bank account. Use invoice number <strong>{documentNumber}</strong> as your deposit reference.
+            Please make payment directly to our bank account. Use invoice number{' '}
+            <strong>{documentNumber}</strong> as your deposit reference.
           </Text>
           <table className="w-full text-[13px] text-[#020304]">
             <tbody>
@@ -160,7 +158,8 @@ const InvoiceDeliveryEmail = (props: InvoiceDeliveryEmailProps) => {
           If you have any questions, feel free to reply directly to this email.
         </Text>
         <Text className="m-0 mt-[12px] text-[14px] text-[#020304]">
-          Kind regards,<br />
+          Kind regards,
+          <br />
           <strong>{companyName}</strong>
         </Text>
       </Section>
@@ -169,23 +168,24 @@ const InvoiceDeliveryEmail = (props: InvoiceDeliveryEmailProps) => {
 };
 
 InvoiceDeliveryEmail.PreviewProps = {
-  clientName: "Acme Corporation",
-  documentNumber: "INV-2026-001",
-  invoiceDate: "2026-05-23",
-  dueDate: "2026-06-23",
-  totalAmount: "R 12,500.00",
-  reference: "REF-9912",
-  personalMessage: "Hi there, thank you for your business. Please find attached our invoice and statement.",
-  portalUrl: "https://portal.playhousemedia.co.za/invoices/inv-123",
+  clientName: 'Acme Corporation',
+  documentNumber: 'INV-2026-001',
+  invoiceDate: '2026-05-23',
+  dueDate: '2026-06-23',
+  totalAmount: 'R 12,500.00',
+  reference: 'REF-9912',
+  personalMessage:
+    'Hi there, thank you for your business. Please find attached our invoice and statement.',
+  portalUrl: 'https://portal.playhousemedia.co.za/invoices/inv-123',
   bankDetails: {
-    bankName: "First National Bank",
-    accountName: "Playhouse Media Group",
-    accountNumber: "62891234567",
-    branchCode: "250655",
+    bankName: 'First National Bank',
+    accountName: 'Playhouse Media Group',
+    accountNumber: '62891234567',
+    branchCode: '250655',
   },
   hasStatementAttached: true,
-  companyName: "Playhouse Media Group",
-  primaryColor: "#1d4ed8",
+  companyName: 'Playhouse Media Group',
+  primaryColor: '#1d4ed8',
   websiteUrl: DEFAULT_WEBSITE_URL,
 };
 

@@ -1,11 +1,11 @@
-'use client'
+'use client';
 
-import { formatZAR } from '@/lib/format'
-import { TrendingUp, TrendingDown, Minus } from 'lucide-react'
-import { Card, CardHeader, CardDescription, CardContent } from '@/components/ui/card'
-import { cn } from '@/lib/utils'
+import { formatZAR } from '@/lib/format';
+import { TrendingUp, TrendingDown, Minus } from 'lucide-react';
+import { Card, CardHeader, CardDescription, CardContent } from '@/components/ui/card';
+import { cn } from '@/lib/utils';
 
-type Delta = { current: number; previous: number } | null
+type Delta = { current: number; previous: number } | null;
 
 export function DeltaBadge({
   current,
@@ -13,80 +13,104 @@ export function DeltaBadge({
   invertDelta,
   label = 'vs prev year',
 }: {
-  current: number
-  previous: number
-  invertDelta?: boolean
-  label?: string
+  current: number;
+  previous: number;
+  invertDelta?: boolean;
+  label?: string;
 }) {
-  if (previous === 0 && current === 0) return null
+  if (previous === 0 && current === 0) return null;
   if (previous === 0) {
     return (
       <span className="inline-flex items-center gap-1 text-[10px] sm:text-xs font-semibold text-emerald-500">
         <TrendingUp className="size-3" />
         new {label}
       </span>
-    )
+    );
   }
-  const diff = current - previous
-  const pct = Math.abs((diff / previous) * 100)
-  const isUp = diff > 0
-  const isGood = invertDelta ? !isUp : isUp
-  const isFlat = pct < 0.05
+  const diff = current - previous;
+  const pct = Math.abs((diff / previous) * 100);
+  const isUp = diff > 0;
+  const isGood = invertDelta ? !isUp : isUp;
+  const isFlat = pct < 0.05;
 
   if (isFlat) {
     return (
       <span className="inline-flex items-center gap-1 text-[10px] sm:text-xs text-muted-foreground">
         <Minus className="size-3" /> 0%
       </span>
-    )
+    );
   }
 
   return (
-    <span className={cn('inline-flex items-center gap-1 text-[10px] sm:text-xs font-semibold', isGood ? 'text-emerald-500' : 'text-red-500')}>
+    <span
+      className={cn(
+        'inline-flex items-center gap-1 text-[10px] sm:text-xs font-semibold',
+        isGood ? 'text-emerald-500' : 'text-red-500',
+      )}
+    >
       {isUp ? <TrendingUp className="size-3" /> : <TrendingDown className="size-3" />}
-      {isUp ? '+' : '-'}{pct.toFixed(1)}% {label}
+      {isUp ? '+' : '-'}
+      {pct.toFixed(1)}% {label}
     </span>
-  )
+  );
 }
 
-export function Sparkline({ data, colorClass = 'text-emerald-500' }: { data: number[]; colorClass?: string }) {
-  if (!data || data.length <= 1) return null
-  const max = Math.max(...data)
-  const min = Math.min(...data)
-  const range = max - min === 0 ? 1 : max - min
-  const width = 100
-  const height = 30
+export function Sparkline({
+  data,
+  colorClass = 'text-emerald-500',
+}: {
+  data: number[];
+  colorClass?: string;
+}) {
+  if (!data || data.length <= 1) return null;
+  const max = Math.max(...data);
+  const min = Math.min(...data);
+  const range = max - min === 0 ? 1 : max - min;
+  const width = 100;
+  const height = 30;
   const points = data
     .map((val, index) => {
-      const x = (index / (data.length - 1)) * width
-      const y = height - ((val - min) / range) * height
-      return `${x},${y}`
+      const x = (index / (data.length - 1)) * width;
+      const y = height - ((val - min) / range) * height;
+      return `${x},${y}`;
     })
-    .join(' ')
+    .join(' ');
 
   return (
-    <svg className={cn('w-16 sm:w-20 h-7 overflow-visible', colorClass)} viewBox={`0 0 ${width} ${height}`}>
-      <polyline fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" points={points} />
+    <svg
+      className={cn('w-16 sm:w-20 h-7 overflow-visible', colorClass)}
+      viewBox={`0 0 ${width} ${height}`}
+    >
+      <polyline
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="2"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        points={points}
+      />
     </svg>
-  )
+  );
 }
 
 export type ReportKpiData = {
-  revenue: number
-  expenses: number
-  pmgShare: number
-  profitPool: number
-  monthlyRevenue: number[]
-  monthlyExpenses: number[]
-  pmgShareRate?: number
-}
+  revenue: number;
+  expenses: number;
+  pmgShare: number;
+  profitPool: number;
+  monthlyRevenue: number[];
+  monthlyExpenses: number[];
+  pmgShareRate?: number;
+};
 
 export function ReportKpiStrip({ data }: { data: ReportKpiData }) {
-  const profitMargin = data.revenue > 0 ? (data.profitPool / data.revenue) * 100 : 0
+  const profitMargin = data.revenue > 0 ? (data.profitPool / data.revenue) * 100 : 0;
 
-  const rate = data.pmgShareRate ?? 0.25
-  const monthlyPmg = data.monthlyRevenue.map((r) => r * rate)
-  const monthlyProfit = data.monthlyRevenue.map((r, i) => r * (1 - rate) - (data.monthlyExpenses[i] || 0))
+  const rate = data.pmgShareRate ?? 0.25;
+  const monthlyPmg = data.monthlyRevenue.map((r) => r * rate);
+  const monthlyProfit = data.monthlyRevenue.map(
+    (r, i) => r * (1 - rate) - (data.monthlyExpenses[i] || 0),
+  );
 
   const cards = [
     {
@@ -115,19 +139,24 @@ export function ReportKpiStrip({ data }: { data: ReportKpiData }) {
       label: `Profit Pool · ${profitMargin.toFixed(0)}% margin`,
       value: data.profitPool,
       highlight: data.profitPool < 0 ? 'danger' : 'success',
-      textColor: data.profitPool >= 0 ? 'text-emerald-600 dark:text-emerald-400' : 'text-red-600 dark:text-red-400',
+      textColor:
+        data.profitPool >= 0
+          ? 'text-emerald-600 dark:text-emerald-400'
+          : 'text-red-600 dark:text-red-400',
       sparklineData: monthlyProfit,
       sparklineColor: data.profitPool < 0 ? 'text-red-500' : 'text-teal-500',
     },
-  ]
+  ];
 
   return (
     <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
       {cards.map((k) => {
         const borderClass =
-          k.highlight === 'danger' ? 'border-red-500/30 hover:border-red-500/50' :
-          k.highlight === 'success' ? 'border-emerald-500/30 hover:border-emerald-500/50' :
-          'border-border/60 hover:border-border/100'
+          k.highlight === 'danger'
+            ? 'border-red-500/30 hover:border-red-500/50'
+            : k.highlight === 'success'
+              ? 'border-emerald-500/30 hover:border-emerald-500/50'
+              : 'border-border/60 hover:border-border/100';
 
         return (
           <Card
@@ -135,7 +164,7 @@ export function ReportKpiStrip({ data }: { data: ReportKpiData }) {
             size="sm"
             className={cn(
               'rounded-xl border bg-gradient-to-tr from-card to-card/75 backdrop-blur-md shadow-none hover:-translate-y-1 hover:shadow-md hover:shadow-primary/5 transition-all duration-300 group',
-              borderClass
+              borderClass,
             )}
           >
             <CardHeader className="pb-1">
@@ -145,7 +174,12 @@ export function ReportKpiStrip({ data }: { data: ReportKpiData }) {
             </CardHeader>
             <CardContent className="flex flex-col items-start gap-2 pt-0.5 w-full xl:flex-row xl:items-end xl:justify-between xl:gap-1.5">
               <div className="flex flex-col gap-0.5 min-w-0 w-full xl:w-auto">
-                <p className={cn('text-base sm:text-lg lg:text-xl xl:text-2xl font-bold tabular-nums tracking-tight whitespace-nowrap', k.textColor)}>
+                <p
+                  className={cn(
+                    'text-base sm:text-lg lg:text-xl xl:text-2xl font-bold tabular-nums tracking-tight whitespace-nowrap',
+                    k.textColor,
+                  )}
+                >
                   {formatZAR(k.value)}
                 </p>
               </div>
@@ -156,8 +190,8 @@ export function ReportKpiStrip({ data }: { data: ReportKpiData }) {
               )}
             </CardContent>
           </Card>
-        )
+        );
       })}
     </div>
-  )
+  );
 }

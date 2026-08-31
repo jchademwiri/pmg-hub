@@ -10,7 +10,10 @@ import { StatementsClient } from './statements-client';
 export const dynamic = 'force-dynamic';
 export const metadata: Metadata = { title: 'Statements' };
 
-const BUCKET_THEMES: Record<string, { colorClass: string; bgClass: string; borderClass: string; icon: LucideIcon }> = {
+const BUCKET_THEMES: Record<
+  string,
+  { colorClass: string; bgClass: string; borderClass: string; icon: LucideIcon }
+> = {
   current: {
     colorClass: 'text-emerald-600 dark:text-emerald-400',
     bgClass: 'bg-emerald-500/5',
@@ -76,7 +79,8 @@ export default async function StatementsPage() {
             Aged Receivables Summary
           </h3>
           <span className="text-xs text-muted-foreground font-medium bg-muted border border-border px-2.5 py-1 rounded-full">
-            Total Outstanding: <span className="font-semibold text-foreground">{formatZAR(totalOutstanding)}</span>
+            Total Outstanding:{' '}
+            <span className="font-semibold text-foreground">{formatZAR(totalOutstanding)}</span>
           </span>
         </div>
         <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-5">
@@ -93,7 +97,9 @@ export default async function StatementsPage() {
               >
                 <CardHeader className="pb-1.5 pt-4 px-4">
                   <div className="flex items-center justify-between">
-                    <span className={`text-[10px] font-bold uppercase tracking-wider ${theme.colorClass} opacity-85`}>
+                    <span
+                      className={`text-[10px] font-bold uppercase tracking-wider ${theme.colorClass} opacity-85`}
+                    >
                       {r.label}
                     </span>
                     <Icon className={`size-3.5 ${theme.colorClass}`} />
@@ -119,7 +125,9 @@ export default async function StatementsPage() {
       <div className="space-y-4">
         <div>
           <h3 className="text-sm font-semibold">Client Statements</h3>
-          <p className="text-xs text-muted-foreground">Select a client to view their full account statement</p>
+          <p className="text-xs text-muted-foreground">
+            Select a client to view their full account statement
+          </p>
         </div>
         <StatementsClient initialClients={clients} />
       </div>

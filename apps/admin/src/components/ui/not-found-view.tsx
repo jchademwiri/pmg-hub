@@ -28,7 +28,7 @@ export function NotFoundView({ noun = 'record', links }: NotFoundViewProps) {
           {noun.charAt(0).toUpperCase() + noun.slice(1)} not found
         </h2>
         <p className="text-sm text-muted-foreground max-w-sm">
-          This {noun} doesn't exist or may have been deleted.
+          This {noun} doesn&apos;t exist or may have been deleted.
         </p>
       </div>
 

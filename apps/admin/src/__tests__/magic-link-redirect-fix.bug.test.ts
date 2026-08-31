@@ -14,21 +14,21 @@
  * Validates: Requirements 1.1, 1.2
  */
 
-import { describe, it, expect, vi, beforeEach } from 'vitest'
-import { NextRequest } from 'next/server'
+import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { NextRequest } from 'next/server';
 
-vi.mock('server-only', () => ({}))
+vi.mock('server-only', () => ({}));
 
-const mockGetSession = vi.fn()
+const mockGetSession = vi.fn();
 vi.mock('@/lib/auth', () => ({
   auth: {
     api: {
       getSession: (...args: any[]) => mockGetSession(...args),
     },
   },
-}))
+}));
 
-import { proxy } from '@/proxy'
+import { proxy } from '@/proxy';
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
 
@@ -41,7 +41,7 @@ function makeSecureCookieRequest(pathname: string, secureCookieValue: string): N
     headers: {
       cookie: `__Secure-better-auth.session_token=${secureCookieValue}`,
     },
-  })
+  });
 }
 
 // ─── Bug Condition Exploration Test ──────────────────────────────────────────
@@ -59,21 +59,20 @@ describe('magic-link-redirect-fix - Property 1: Bug Condition - Secure-Prefixed 
    *   returns redirect to /login instead of NextResponse.next()
    */
   beforeEach(() => {
-    mockGetSession.mockResolvedValue({ user: { id: '1', name: 'Test', email: 'test@test.com', isActive: true } })
-  })
+    mockGetSession.mockResolvedValue({
+      user: { id: '1', name: 'Test', email: 'test@test.com', isActive: true },
+    });
+  });
 
-  it(
-    'proxy returns NextResponse.next() (not a redirect) when only __Secure-better-auth.session_token is set on a protected path - Validates: Requirements 1.1, 1.2',
-    async () => {
-      const req = makeSecureCookieRequest('/dashboard', 'abc123')
-      const res = await proxy(req)
+  it('proxy returns NextResponse.next() (not a redirect) when only __Secure-better-auth.session_token is set on a protected path - Validates: Requirements 1.1, 1.2', async () => {
+    const req = makeSecureCookieRequest('/dashboard', 'abc123');
+    const res = await proxy(req);
 
-      // The response MUST NOT be a redirect
-      expect(res.status).not.toBe(302)
-      expect(res.status).not.toBe(307)
+    // The response MUST NOT be a redirect
+    expect(res.status).not.toBe(302);
+    expect(res.status).not.toBe(307);
 
-      // The response MUST be NextResponse.next() - no Location header
-      expect(res.headers.get('location')).toBeNull()
-    }
-  )
-})
+    // The response MUST be NextResponse.next() - no Location header
+    expect(res.headers.get('location')).toBeNull();
+  });
+});

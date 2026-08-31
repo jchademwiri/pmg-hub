@@ -8,84 +8,86 @@ The tender scheduling feature requires a single new database table (`tender_sche
 
 ### Column Definitions
 
-| Column | Type | Constraints | Description |
-|---|---|---|---|
-| `id` | `uuid` | PK, default `gen_random_uuid()` | Primary key |
-| `client_id` | `uuid` | FK → `clients.id`, NOT NULL | Link to an existing client in PMG Hub (every tender must be linked to a client record) |
-| `division_id` | `uuid` | FK → `divisions.id` (nullable) | Which PMG division this tender belongs to (defaults to TES) |
-| `tender_reference` | `text` | Not null | Tender number, description, or reference (e.g. "T12/2026") |
-| `closing_date` | `date` | Not null | Hard deadline — tender must be submitted by this date |
-| `effort_days` | `integer` | Not null, > 0 | Estimated number of working days required to complete preparation |
-| `actual_effort_days` | `integer` | Nullable, > 0 | Actual days spent (filled on completion — for future estimation accuracy) |
-| `buffer_days` | `integer` | Not null, default 2 | Safety buffer between target completion and closing date (global default, not per-tender configurable) |
-| `start_date` | `date` | Not null | Planned or actual start date |
-| `target_completion_date` | `date` | Not null | Planned completion date (before closing date) |
-| `actual_completion_date` | `date` | Nullable | When preparation was actually completed |
-| `submission_date` | `date` | Nullable | When the tender was actually submitted |
-| `status` | `text` | Not null, default `'planned'` | Current status (see status enum below) |
-| `priority` | `text` | default `'normal'` | Priority: `'low'`, `'normal'`, `'high'`, `'urgent'` |
-| `notes` | `text` | Nullable | Free-text notes about the tender (requirements, observations, etc.) |
-| `blockers` | `text` | Nullable | Structured field for any blockers or issues delaying progress |
-| `outcome` | `text` | Nullable, default `'pending'` | Outcome after submission: `'won'`, `'lost'`, `'pending'` |
-| `created_by` | `text` | Not null | Session user ID (matches Better Auth user table pattern) |
-| `created_at` | `timestamp with tz` | default `now()` | Record creation timestamp |
-| `updated_at` | `timestamp with tz` | Nullable | Last update timestamp (application-managed) |
+| Column                   | Type                | Constraints                     | Description                                                                                            |
+| ------------------------ | ------------------- | ------------------------------- | ------------------------------------------------------------------------------------------------------ |
+| `id`                     | `uuid`              | PK, default `gen_random_uuid()` | Primary key                                                                                            |
+| `client_id`              | `uuid`              | FK → `clients.id`, NOT NULL     | Link to an existing client in PMG Hub (every tender must be linked to a client record)                 |
+| `division_id`            | `uuid`              | FK → `divisions.id` (nullable)  | Which PMG division this tender belongs to (defaults to TES)                                            |
+| `tender_reference`       | `text`              | Not null                        | Tender number, description, or reference (e.g. "T12/2026")                                             |
+| `closing_date`           | `date`              | Not null                        | Hard deadline — tender must be submitted by this date                                                  |
+| `effort_days`            | `integer`           | Not null, > 0                   | Estimated number of working days required to complete preparation                                      |
+| `actual_effort_days`     | `integer`           | Nullable, > 0                   | Actual days spent (filled on completion — for future estimation accuracy)                              |
+| `buffer_days`            | `integer`           | Not null, default 2             | Safety buffer between target completion and closing date (global default, not per-tender configurable) |
+| `start_date`             | `date`              | Not null                        | Planned or actual start date                                                                           |
+| `target_completion_date` | `date`              | Not null                        | Planned completion date (before closing date)                                                          |
+| `actual_completion_date` | `date`              | Nullable                        | When preparation was actually completed                                                                |
+| `submission_date`        | `date`              | Nullable                        | When the tender was actually submitted                                                                 |
+| `status`                 | `text`              | Not null, default `'planned'`   | Current status (see status enum below)                                                                 |
+| `priority`               | `text`              | default `'normal'`              | Priority: `'low'`, `'normal'`, `'high'`, `'urgent'`                                                    |
+| `notes`                  | `text`              | Nullable                        | Free-text notes about the tender (requirements, observations, etc.)                                    |
+| `blockers`               | `text`              | Nullable                        | Structured field for any blockers or issues delaying progress                                          |
+| `outcome`                | `text`              | Nullable, default `'pending'`   | Outcome after submission: `'won'`, `'lost'`, `'pending'`                                               |
+| `created_by`             | `text`              | Not null                        | Session user ID (matches Better Auth user table pattern)                                               |
+| `created_at`             | `timestamp with tz` | default `now()`                 | Record creation timestamp                                                                              |
+| `updated_at`             | `timestamp with tz` | Nullable                        | Last update timestamp (application-managed)                                                            |
 
 ### TypeScript Types (Drizzle ORM)
 
 ```typescript
 // Following existing patterns in packages/db/src/schema/
 
-export const tenderScheduleEntryStatusEnum = pgEnum("tender_schedule_entry_status", [
-  "planned",
-  "in_progress",
-  "completed",
-  "submitted",
-  "cancelled",
+export const tenderScheduleEntryStatusEnum = pgEnum('tender_schedule_entry_status', [
+  'planned',
+  'in_progress',
+  'completed',
+  'submitted',
+  'cancelled',
 ]);
 
-export const tenderSchedulePriorityEnum = pgEnum("tender_schedule_priority", [
-  "low",
-  "normal",
-  "high",
-  "urgent",
+export const tenderSchedulePriorityEnum = pgEnum('tender_schedule_priority', [
+  'low',
+  'normal',
+  'high',
+  'urgent',
 ]);
 
-export const tenderScheduleOutcomeEnum = pgEnum("tender_schedule_outcome", [
-  "won",
-  "lost",
-  "pending",
+export const tenderScheduleOutcomeEnum = pgEnum('tender_schedule_outcome', [
+  'won',
+  'lost',
+  'pending',
 ]);
 
 export const tenderScheduleEntries = pgTable(
-  "tender_schedule_entries",
+  'tender_schedule_entries',
   {
-    id: uuid("id").primaryKey().defaultRandom(),
-    clientId: uuid("client_id").notNull().references(() => clients.id, { onDelete: "restrict" }),
-    divisionId: uuid("division_id").references(() => divisions.id, { onDelete: "restrict" }),
-    tenderReference: text("tender_reference").notNull(),
-    closingDate: date("closing_date").notNull(),
-    effortDays: integer("effort_days").notNull(),
-    actualEffortDays: integer("actual_effort_days"),
-    bufferDays: integer("buffer_days").notNull().default(2),
-    startDate: date("start_date").notNull(),
-    targetCompletionDate: date("target_completion_date").notNull(),
-    actualCompletionDate: date("actual_completion_date"),
-    submissionDate: date("submission_date"),
-    status: tenderScheduleEntryStatusEnum("status").notNull().default("planned"),
-    priority: tenderSchedulePriorityEnum("priority").notNull().default("normal"),
-    notes: text("notes"),
-    blockers: text("blockers"),
-    outcome: tenderScheduleOutcomeEnum("outcome"),
-    createdBy: text("created_by").notNull(),
-    createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
-    updatedAt: timestamp("updated_at", { withTimezone: true }),
+    id: uuid('id').primaryKey().defaultRandom(),
+    clientId: uuid('client_id')
+      .notNull()
+      .references(() => clients.id, { onDelete: 'restrict' }),
+    divisionId: uuid('division_id').references(() => divisions.id, { onDelete: 'restrict' }),
+    tenderReference: text('tender_reference').notNull(),
+    closingDate: date('closing_date').notNull(),
+    effortDays: integer('effort_days').notNull(),
+    actualEffortDays: integer('actual_effort_days'),
+    bufferDays: integer('buffer_days').notNull().default(2),
+    startDate: date('start_date').notNull(),
+    targetCompletionDate: date('target_completion_date').notNull(),
+    actualCompletionDate: date('actual_completion_date'),
+    submissionDate: date('submission_date'),
+    status: tenderScheduleEntryStatusEnum('status').notNull().default('planned'),
+    priority: tenderSchedulePriorityEnum('priority').notNull().default('normal'),
+    notes: text('notes'),
+    blockers: text('blockers'),
+    outcome: tenderScheduleOutcomeEnum('outcome'),
+    createdBy: text('created_by').notNull(),
+    createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
+    updatedAt: timestamp('updated_at', { withTimezone: true }),
   },
   (t) => [
-    index("tender_schedule_status_idx").on(t.status),
-    index("tender_schedule_closing_date_idx").on(t.closingDate),
-    index("tender_schedule_client_id_idx").on(t.clientId),
-    index("tender_schedule_division_id_idx").on(t.divisionId),
+    index('tender_schedule_status_idx').on(t.status),
+    index('tender_schedule_closing_date_idx').on(t.closingDate),
+    index('tender_schedule_client_id_idx').on(t.clientId),
+    index('tender_schedule_division_id_idx').on(t.divisionId),
   ],
 );
 ```
@@ -127,13 +129,13 @@ clients ────< tender_schedule_entries >──── divisions
 
 ## Statuses
 
-| Status | Description | Transitions To |
-|---|---|---|
-| `planned` | Captured and queued, not yet started | `in_progress`, `cancelled` |
-| `in_progress` | Currently being worked on | `completed`, `cancelled` |
-| `completed` | Preparation work finished | `submitted`, `cancelled` |
-| `submitted` | Tender formally submitted (terminal) | — |
-| `cancelled` | No longer being pursued (terminal) | — |
+| Status        | Description                          | Transitions To             |
+| ------------- | ------------------------------------ | -------------------------- |
+| `planned`     | Captured and queued, not yet started | `in_progress`, `cancelled` |
+| `in_progress` | Currently being worked on            | `completed`, `cancelled`   |
+| `completed`   | Preparation work finished            | `submitted`, `cancelled`   |
+| `submitted`   | Tender formally submitted (terminal) | —                          |
+| `cancelled`   | No longer being pursued (terminal)   | —                          |
 
 ## Scheduling Logic (Application Layer)
 
@@ -176,11 +178,11 @@ Two entries WHERE status IN ('planned', 'in_progress')
 
 ### Default Values
 
-| Field | Default |
-|---|---|
-| `status` | `'planned'` |
-| `priority` | `'normal'` |
-| `buffer_days` | `2` |
+| Field         | Default     |
+| ------------- | ----------- |
+| `status`      | `'planned'` |
+| `priority`    | `'normal'`  |
+| `buffer_days` | `2`         |
 
 ## Migration Notes
 

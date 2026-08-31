@@ -1,13 +1,8 @@
-import * as React from "react";
-import {
-  Button,
-  Heading,
-  Section,
-  Text,
-} from "@react-email/components";
-import type { BrandingProps } from "../types";
-import { DEFAULT_WEBSITE_URL } from "../domains";
-import { EmailLayout } from "./EmailLayout";
+import * as React from 'react';
+import { Button, Heading, Section, Text } from '@react-email/components';
+import type { BrandingProps } from '../types';
+import { DEFAULT_WEBSITE_URL } from '../domains';
+import { EmailLayout } from './EmailLayout';
 
 export type PaymentThankYouEmailProps = {
   clientName: string;
@@ -29,8 +24,8 @@ const PaymentThankYouEmail = (props: PaymentThankYouEmailProps) => {
     paymentDescription,
     portalUrl,
     allocations = [],
-    companyName = "Playhouse Media Group",
-    primaryColor = "#1d4ed8",
+    companyName = 'Playhouse Media Group',
+    primaryColor = '#1d4ed8',
     websiteUrl = DEFAULT_WEBSITE_URL,
     logoUrl,
   } = props;
@@ -49,7 +44,9 @@ const PaymentThankYouEmail = (props: PaymentThankYouEmailProps) => {
       </Heading>
 
       <Text className="m-0 mb-[24px] text-[15px] leading-[24px] text-[#334155]">
-        Thank you for your business! We have successfully recorded your payment of <strong className="text-brand">{amountPaid}</strong> on <strong>{paymentDate}</strong>. Please find the details of your payment receipt below.
+        Thank you for your business! We have successfully recorded your payment of{' '}
+        <strong className="text-brand">{amountPaid}</strong> on <strong>{paymentDate}</strong>.
+        Please find the details of your payment receipt below.
       </Text>
 
       {portalUrl && (
@@ -104,7 +101,9 @@ const PaymentThankYouEmail = (props: PaymentThankYouEmailProps) => {
               <tbody>
                 {allocations.map((alloc, idx) => (
                   <tr key={idx} className="border-t border-solid border-[#F1F5F9]">
-                    <td className="py-2 text-[#475569] font-medium">Invoice {alloc.documentNumber}</td>
+                    <td className="py-2 text-[#475569] font-medium">
+                      Invoice {alloc.documentNumber}
+                    </td>
                     <td className="py-2 text-[#020304] font-semibold text-right">{alloc.amount}</td>
                   </tr>
                 ))}
@@ -120,7 +119,8 @@ const PaymentThankYouEmail = (props: PaymentThankYouEmailProps) => {
           If you have any questions regarding this receipt, please do not hesitate to contact us.
         </Text>
         <Text className="m-0 mt-[12px] text-[14px] text-[#020304]">
-          Kind regards,<br />
+          Kind regards,
+          <br />
           <strong>{companyName}</strong>
         </Text>
       </Section>
@@ -129,17 +129,17 @@ const PaymentThankYouEmail = (props: PaymentThankYouEmailProps) => {
 };
 
 PaymentThankYouEmail.PreviewProps = {
-  clientName: "Acme Corporation",
-  amountPaid: "R 12,500.00",
-  paymentDate: "24 May 2026",
-  paymentDescription: "Monthly retainer payment for SLA services",
-  portalUrl: "https://portal.playhousemedia.co.za/statements",
+  clientName: 'Acme Corporation',
+  amountPaid: 'R 12,500.00',
+  paymentDate: '24 May 2026',
+  paymentDescription: 'Monthly retainer payment for SLA services',
+  portalUrl: 'https://portal.playhousemedia.co.za/statements',
   allocations: [
-    { documentNumber: "INV-2026-001", amount: "R 10,000.00" },
-    { documentNumber: "INV-2026-002", amount: "R 2,500.00" },
+    { documentNumber: 'INV-2026-001', amount: 'R 10,000.00' },
+    { documentNumber: 'INV-2026-002', amount: 'R 2,500.00' },
   ],
-  companyName: "Playhouse Media Group",
-  primaryColor: "#1d4ed8",
+  companyName: 'Playhouse Media Group',
+  primaryColor: '#1d4ed8',
   websiteUrl: DEFAULT_WEBSITE_URL,
 };
 

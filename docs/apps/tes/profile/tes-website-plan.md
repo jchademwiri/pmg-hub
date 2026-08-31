@@ -1,4 +1,5 @@
 # Tender Edge Solutions - Website Content & Development Plan
+
 ### `apps/tes` · Single-Page Site · Astro 6 + Tailwind v4
 
 > **Internal reference · Playhouse Media Group**
@@ -35,18 +36,19 @@
 
 ## 1. Tech Stack & Constraints
 
-| Layer | Choice | Notes |
-|---|---|---|
-| Framework | Astro 6 | Hybrid (SSG + SSR for form action via `getActionResult`) |
-| Styling | Tailwind v4 + `@pmg/tailwind-config` | Inherits base config from monorepo |
-| Form handling | **Astro Actions** | No API endpoints - all form logic via `src/actions/index.ts` |
-| Fonts | Barlow Condensed (display) + DM Sans (body) | Already loaded in existing `ComingSoon.astro` |
-| Database | `@pmg/db` - writes to `leads` table | `source = "tes"` |
-| Email | `@pmg/emails` - `AdminNewLeadEmail` template | Notifies Jacob on new lead |
-| Analytics | `@vercel/analytics` | Already in `package.json` |
-| Deployment | Vercel | `tenderedgesolutions.co.za` |
+| Layer         | Choice                                       | Notes                                                        |
+| ------------- | -------------------------------------------- | ------------------------------------------------------------ |
+| Framework     | Astro 6                                      | Hybrid (SSG + SSR for form action via `getActionResult`)     |
+| Styling       | Tailwind v4 + `@pmg/tailwind-config`         | Inherits base config from monorepo                           |
+| Form handling | **Astro Actions**                            | No API endpoints - all form logic via `src/actions/index.ts` |
+| Fonts         | Barlow Condensed (display) + DM Sans (body)  | Already loaded in existing `ComingSoon.astro`                |
+| Database      | `@pmg/db` - writes to `leads` table          | `source = "tes"`                                             |
+| Email         | `@pmg/emails` - `AdminNewLeadEmail` template | Notifies Jacob on new lead                                   |
+| Analytics     | `@vercel/analytics`                          | Already in `package.json`                                    |
+| Deployment    | Vercel                                       | `tenderedgesolutions.co.za`                                  |
 
 ### Key Constraints
+
 - **No API endpoint files** (`src/pages/api/`). All form submissions use Astro Actions exclusively.
 - Single `.astro` page file. Components are broken into `src/components/` but the page is one scrolling document.
 - Smooth scroll navigation - all section links use `#section-id` anchors.
@@ -63,21 +65,21 @@ TES operates in a sector built on credibility, compliance, and results. The desi
 
 **Palette**
 
-| Token | Value | Usage |
-|---|---|---|
-| `--background` | `#0b1929` | Near-black navy - page background |
-| `--foreground` | `#f0f4f8` | Off-white body text |
-| `--primary` | `#c9a227` | Gold accent - CTAs, highlights, underlines |
-| `--primary-foreground` | `#0b1929` | Text on gold buttons |
-| `--primary-hover` | `#e0b82e` | Gold hover state |
-| `--secondary` | `#1a3350` | Supporting surface |
-| `--muted-foreground` | `#8ca0b3` | Subtext, labels, metadata |
-| `--card` | `#0f2237` | Section cards, service tiles |
-| `--border` | `rgba(201,162,39,0.2)` | Subtle gold borders |
-| `--input` | `rgba(201,162,39,0.15)` | Form input borders |
-| `--outline` | `rgba(201,162,39,0.4)` | Focus rings |
-| `--whatsapp` | `#25D366` | WhatsApp button always this colour |
-| `--whatsapp-hover` | `#1fb155` | WhatsApp hover state |
+| Token                  | Value                   | Usage                                      |
+| ---------------------- | ----------------------- | ------------------------------------------ |
+| `--background`         | `#0b1929`               | Near-black navy - page background          |
+| `--foreground`         | `#f0f4f8`               | Off-white body text                        |
+| `--primary`            | `#c9a227`               | Gold accent - CTAs, highlights, underlines |
+| `--primary-foreground` | `#0b1929`               | Text on gold buttons                       |
+| `--primary-hover`      | `#e0b82e`               | Gold hover state                           |
+| `--secondary`          | `#1a3350`               | Supporting surface                         |
+| `--muted-foreground`   | `#8ca0b3`               | Subtext, labels, metadata                  |
+| `--card`               | `#0f2237`               | Section cards, service tiles               |
+| `--border`             | `rgba(201,162,39,0.2)`  | Subtle gold borders                        |
+| `--input`              | `rgba(201,162,39,0.15)` | Form input borders                         |
+| `--outline`            | `rgba(201,162,39,0.4)`  | Focus rings                                |
+| `--whatsapp`           | `#25D366`               | WhatsApp button always this colour         |
+| `--whatsapp-hover`     | `#1fb155`               | WhatsApp hover state                       |
 
 **Typography**
 
@@ -116,8 +118,9 @@ Always green (#25D366). Never adapts to the gold palette. Muscle-memory recognit
 ```
 
 **Smooth scroll setup** - add to `<html>` tag:
+
 ```html
-<html lang="en" class="dark" style="scroll-behavior: smooth;">
+<html lang="en" class="dark" style="scroll-behavior: smooth;"></html>
 ```
 
 **Section spacing** - every section uses `py-20 md:py-28` as a base. The hero uses `min-h-screen`.
@@ -133,6 +136,7 @@ Always green (#25D366). Never adapts to the gold palette. Muscle-memory recognit
 **Purpose:** Orientation + quick-jump navigation. Sticky on scroll. WhatsApp CTA always visible.
 
 **Behaviour:**
+
 - Transparent on load, transitions to `bg-background/90 backdrop-blur` on scroll (JS scroll listener or CSS scroll-driven animation).
 - Logo left: "TenderEdge **Solutions**" wordmark - "TenderEdge" in foreground, "Solutions" in gold.
 - Nav links centre (desktop): Services · Process · Pricing · Results · Contact.
@@ -140,6 +144,7 @@ Always green (#25D366). Never adapts to the gold palette. Muscle-memory recognit
 - Right: WhatsApp button - compact, icon + "WhatsApp Us" label.
 
 **Content:**
+
 ```
 Logo: TenderEdge Solutions
 Links: Services | Process | Pricing | Results | Contact
@@ -157,6 +162,7 @@ CTA: [WhatsApp icon] WhatsApp Us
 **Layout:** Full viewport height. Text left-aligned on a dark navy background. Radial gold glow positioned upper-right. Grain overlay.
 
 **Content:**
+
 ```
 Eyebrow:      GAUTENG'S TENDER COMPLIANCE SPECIALISTS
 
@@ -178,6 +184,7 @@ Trust note:   Based in Centurion · Serving all of South Africa
 ```
 
 **Design notes:**
+
 - H1 uses Barlow Condensed at `clamp(72px, 14vw, 120px)`, uppercase, line-height 0.9.
 - "TENDERS." renders in gold (`--primary`).
 - Animate in: eyebrow fades up (0ms), H1 fades up (100ms), sub + CTAs (250ms). CSS `@keyframes up` - already in `ComingSoon.astro`.
@@ -194,6 +201,7 @@ Trust note:   Based in Centurion · Serving all of South Africa
 **Layout:** Horizontal scrolling row of 4–5 stat/badge pills on a slightly lighter card background. No heading. No CTA.
 
 **Content:**
+
 ```
 [✓]  CSD Registered Supplier
 [✓]  CIDB Grading Specialists
@@ -215,6 +223,7 @@ Trust note:   Based in Centurion · Serving all of South Africa
 **Layout:** Two-column on desktop (problem left, implications right). Single column on mobile. Dark background.
 
 **Content:**
+
 ```
 Eyebrow:  THE PROBLEM
 
@@ -571,22 +580,22 @@ export const server = {
   enquireLead: defineAction({
     accept: 'form',
     input: z.object({
-      name:            z.string().min(1, 'Name is required'),
-      phone:           z.string().min(7, 'Phone number is required'),
-      email:           z.string().email().optional().or(z.literal('')),
-      companyName:     z.string().optional().or(z.literal('')),
+      name: z.string().min(1, 'Name is required'),
+      phone: z.string().min(7, 'Phone number is required'),
+      email: z.string().email().optional().or(z.literal('')),
+      companyName: z.string().optional().or(z.literal('')),
       serviceInterest: z.string().min(1, 'Please select a service'),
     }),
     handler: async (input) => {
       // 1. Write to leads table
       await db.insert(leads).values({
-        name:            input.name,
-        phone:           input.phone,
-        email:           input.email || null,
-        companyName:     input.companyName || null,
+        name: input.name,
+        phone: input.phone,
+        email: input.email || null,
+        companyName: input.companyName || null,
         serviceInterest: input.serviceInterest,
-        source:          'tes',
-        status:          'new',
+        source: 'tes',
+        status: 'new',
       });
 
       // 2. Send admin notification email
@@ -594,25 +603,25 @@ export const server = {
       try {
         await sendEmail(
           {
-            apiKey:     import.meta.env.TES_RESEND_API_KEY,
-            from:       import.meta.env.TES_FROM_EMAIL,
+            apiKey: import.meta.env.TES_RESEND_API_KEY,
+            from: import.meta.env.TES_FROM_EMAIL,
             adminEmail: import.meta.env.TES_ADMIN_EMAIL,
           },
           {
             to: import.meta.env.TES_ADMIN_EMAIL,
             subject: `New TES Lead: ${input.name} - ${input.serviceInterest}`,
             react: React.createElement(AdminNewLeadEmail, {
-              name:          input.name,
-              email:         input.email || 'Not provided',
-              phone:         input.phone,
-              package_name:  input.serviceInterest,
+              name: input.name,
+              email: input.email || 'Not provided',
+              phone: input.phone,
+              package_name: input.serviceInterest,
               package_price: 'TBC',
-              package_type:  'TES Enquiry',
-              companyName:   'Tender Edge Solutions',
-              primaryColor:  '#c9a227',
-              websiteUrl:    'https://www.tenderedgesolutions.co.za',
+              package_type: 'TES Enquiry',
+              companyName: 'Tender Edge Solutions',
+              primaryColor: '#c9a227',
+              websiteUrl: 'https://www.tenderedgesolutions.co.za',
             }),
-          }
+          },
         );
       } catch (emailErr) {
         console.error('Admin notification email failed:', emailErr);
@@ -675,7 +684,7 @@ import vercel from '@astrojs/vercel';
 import tailwindcss from '@tailwindcss/vite';
 
 export default defineConfig({
-  output: 'hybrid',         // SSG everywhere, SSR only where needed
+  output: 'hybrid', // SSG everywhere, SSR only where needed
   adapter: vercel(),
   site: 'https://www.tenderedgesolutions.co.za',
   vite: { plugins: [tailwindcss()] },
@@ -737,6 +746,7 @@ Build in this order. Each step is independently testable.
 ### Step 0 - Astro Config & Dependencies
 
 **Tasks:**
+
 - Update `astro.config.mjs` to add `output: 'hybrid'` and Vercel adapter.
 - Add `@pmg/db` and `@pmg/emails` to `apps/tes/package.json`.
 - Create `src/actions/index.ts` with the `enquireLead` action stub.
@@ -1338,6 +1348,7 @@ Notes:
 Full copy for each section is embedded in the Section Specs above. This section provides quick-access to all key strings used across the site.
 
 ### Brand Strings
+
 ```
 Full name:    TenderEdge Solutions
 Tagline:      Your Edge in Every Tender
@@ -1349,6 +1360,7 @@ Parent:       A Division of Playhouse Media Group (PTY) Ltd
 ```
 
 ### WhatsApp Message Presets (for different CTAs)
+
 ```
 Hero / Nav:    ?text=Hi%2C+I'm+interested+in+your+tender+compliance+services.
 Pricing CTA:   ?text=Hi%2C+I'd+like+to+enquire+about+the+Tender-Ready+Starter+package.
@@ -1356,6 +1368,7 @@ Process CTA:   ?text=Hi%2C+I'd+like+to+start+my+free+Tender+Readiness+Assessment
 ```
 
 ### SEO Strings
+
 ```
 Title:    CSD Registration & Tender Compliance | Tender Edge Solutions - Centurion
 Desc:     Get CSD-registered, CIDB-graded, and tender-ready with Tender Edge Solutions.
@@ -1367,6 +1380,6 @@ Keywords: CSD registration, tender compliance South Africa, CIDB grading Gauteng
 
 ---
 
-*Last updated: April 2026 · Playhouse Media Group (PTY) Ltd*
-*Jacob Chademwiri · Centurion, Gauteng*
-*"Your Edge in Every Tender."*
+_Last updated: April 2026 · Playhouse Media Group (PTY) Ltd_
+_Jacob Chademwiri · Centurion, Gauteng_
+_"Your Edge in Every Tender."_

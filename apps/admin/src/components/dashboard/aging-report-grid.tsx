@@ -63,7 +63,8 @@ export function AgingReportGrid({ data = [] }: AgingReportGridProps) {
           Accounts Receivable Ageing
         </h3>
         <span className="text-xs text-muted-foreground bg-muted border border-border px-2.5 py-1 rounded-full font-medium">
-          Total Expected: <span className="font-bold text-emerald-600">{formatZAR(totalOutstanding)}</span>
+          Total Expected:{' '}
+          <span className="font-bold text-emerald-600">{formatZAR(totalOutstanding)}</span>
         </span>
       </div>
 
@@ -75,25 +76,25 @@ export function AgingReportGrid({ data = [] }: AgingReportGridProps) {
           const hasTotal = r.total > 0;
 
           return (
-            <Link
-              href={`/billing/aging?filter=${r.bucket}`}
-              key={r.bucket}
-              className="block group"
-            >
+            <Link href={`/billing/aging?filter=${r.bucket}`} key={r.bucket} className="block group">
               <Card
                 size="sm"
                 className={`rounded-xl border transition-all duration-200 group-hover:scale-[1.01] group-hover:border-primary/20 group-hover:shadow-sm ${theme.borderClass} ${theme.bgClass} shadow-none cursor-pointer`}
               >
                 <CardHeader className="pb-1.5 pt-4 px-4">
                   <div className="flex items-center justify-between">
-                    <span className={`text-[10px] font-bold uppercase tracking-wider ${theme.colorClass} opacity-85 group-hover:underline`}>
+                    <span
+                      className={`text-[10px] font-bold uppercase tracking-wider ${theme.colorClass} opacity-85 group-hover:underline`}
+                    >
                       {r.label}
                     </span>
                     <Icon className={`size-3.5 ${theme.colorClass}`} />
                   </div>
                 </CardHeader>
                 <CardContent className="pb-4 pt-1 px-4 space-y-1">
-                  <p className={`text-2xl font-bold tabular-nums tracking-tight ${hasTotal ? theme.colorClass : 'text-muted-foreground/40'}`}>
+                  <p
+                    className={`text-2xl font-bold tabular-nums tracking-tight ${hasTotal ? theme.colorClass : 'text-muted-foreground/40'}`}
+                  >
                     {formatZAR(r.total)}
                   </p>
                   <p className="text-xs text-muted-foreground">

@@ -16,3 +16,14 @@ node_modules/
 
 # Environment files
 .env*
+
+# Generated & editor files
+.astro/
+.vscode/
+packages/db/src/migrations/meta/
+
+# Agents & Documentation (contain pseudo-code snippets in markdown)
+.agents/
+docs/
+
+

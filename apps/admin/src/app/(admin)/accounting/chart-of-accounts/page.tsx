@@ -1,19 +1,19 @@
-import type { Metadata } from 'next'
-import { getChartAccountsByType } from '@pmg/db'
-import { SetPageTotal } from '@/components/navigation/page-header-context'
-import { createChartAccount, updateChartAccount } from '@/app/actions/accounting'
-import { ChartOfAccountsClient } from './chart-of-accounts-client'
+import type { Metadata } from 'next';
+import { getChartAccountsByType } from '@pmg/db';
+import { SetPageTotal } from '@/components/navigation/page-header-context';
+import { createChartAccount, updateChartAccount } from '@/app/actions/accounting';
+import { ChartOfAccountsClient } from './chart-of-accounts-client';
 
-export const dynamic = 'force-dynamic'
-export const metadata: Metadata = { title: 'Chart of Accounts' }
+export const dynamic = 'force-dynamic';
+export const metadata: Metadata = { title: 'Chart of Accounts' };
 
 export default async function ChartOfAccountsPage() {
-  const accountsByType = await getChartAccountsByType()
+  const accountsByType = await getChartAccountsByType();
 
   const totalAccounts = Object.values(accountsByType).reduce(
     (sum, accounts) => sum + accounts.length,
-    0
-  )
+    0,
+  );
 
   return (
     <div className="flex flex-col gap-6">
@@ -32,5 +32,5 @@ export default async function ChartOfAccountsPage() {
         updateAction={updateChartAccount}
       />
     </div>
-  )
+  );
 }

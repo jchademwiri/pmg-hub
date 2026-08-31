@@ -1,8 +1,8 @@
-import { eq, and, sql } from "drizzle-orm";
-import { getDb } from "../client";
-import { documentSequences } from "../schema/billing";
-import { divisions } from "../schema/divisions";
-import { deriveDivisionPrefix as _deriveDivisionPrefix } from "@pmg/utils";
+import { eq, and, sql } from 'drizzle-orm';
+import { getDb } from '../client';
+import { documentSequences } from '../schema/billing';
+import { divisions } from '../schema/divisions';
+import { deriveDivisionPrefix as _deriveDivisionPrefix } from '@pmg/utils';
 
 /**
  * Derives a short uppercase prefix from a division name.
@@ -34,7 +34,7 @@ export const deriveDivisionPrefix = _deriveDivisionPrefix;
  */
 export async function getNextDocumentNumber(
   divisionId: string,
-  type: "quote" | "invoice",
+  type: 'quote' | 'invoice',
   year: number,
 ): Promise<string> {
   const db = getDb();
@@ -50,8 +50,8 @@ export async function getNextDocumentNumber(
   }
 
   const prefix = deriveDivisionPrefix(division.name);
-  const typeCode = type === "quote" ? "Q" : "INV";
-  const docType = type as "quote" | "invoice";
+  const typeCode = type === 'quote' ? 'Q' : 'INV';
+  const docType = type as 'quote' | 'invoice';
 
   // Atomic upsert: insert sequence row if it doesn't exist, otherwise increment.
   // The RETURNING clause gives us the new sequence value in one round-trip.
@@ -68,7 +68,7 @@ export async function getNextDocumentNumber(
   `);
 
   const sequence = (result.rows[0] as { last_sequence: number }).last_sequence;
-  const seq = String(sequence).padStart(3, "0");
+  const seq = String(sequence).padStart(3, '0');
 
   return `${prefix}-${typeCode}-${year}-${seq}`;
 }

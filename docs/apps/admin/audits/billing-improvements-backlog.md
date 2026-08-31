@@ -12,6 +12,7 @@
 > Any feature that references "year to date", year filters, period defaults, or date range calculations must use this convention - not the calendar year (Jan–Dec).
 >
 > Examples of affected areas:
+>
 > - Statement period defaults (`periodFrom`, `periodTo`)
 > - Statement year filter links (currently shows calendar years)
 > - `getAllIncome` and `getClientStatement` year filters
@@ -24,6 +25,7 @@
 ## Quick Wins
 
 ### 1. Statement `incomeResult` not filtered by year
+
 **File:** `apps/admin/src/app/(admin)/billing/statements/[clientId]/page.tsx`
 
 `getAllIncome({ clientId })` fetches all-time payments regardless of the selected year filter. Invoices are correctly filtered by year via `getClientStatement`, but the income/payment rows in the transaction list and the Income Records table at the bottom include payments from all years. When switching to a prior year, payments from other years bleed in.
@@ -33,9 +35,11 @@
 ---
 
 ### 2. Statement status is hardcoded `'Current'`
+
 **File:** `apps/admin/src/app/(admin)/billing/statements/[clientId]/page.tsx`
 
 The `status` prop passed to `DocumentPreview` is always `'Current'`. It should reflect the actual account state:
+
 - `'Paid'` - balance is zero, all invoices settled
 - `'Outstanding'` - balance > 0, no overdue invoices
 - `'Overdue'` - one or more issued invoices past their due date
@@ -43,6 +47,7 @@ The `status` prop passed to `DocumentPreview` is always `'Current'`. It should r
 ---
 
 ### 3. Invoice sidebar missing `self-start`
+
 **File:** `apps/admin/src/app/(admin)/billing/invoices/[id]/page.tsx`
 
 The sticky sidebar wrapper is missing `self-start`. The quote detail page has it correctly. Without it, `lg:sticky` doesn't behave as expected because the element stretches to full column height.
@@ -55,7 +60,9 @@ The sticky sidebar wrapper is missing `self-start`. The quote detail page has it
 ---
 
 ### 4. Action buttons don't wrap on medium screens
+
 **Files:**
+
 - `apps/admin/src/app/(admin)/billing/invoices/[id]/page.tsx`
 - `apps/admin/src/app/(admin)/billing/quotes/[id]/page.tsx`
 
@@ -69,6 +76,7 @@ The header button row (Print, Send, Export PDF, Edit) uses `flex items-center ga
 ---
 
 ### 5. Income records table missing `overflow-x-auto`
+
 **File:** `apps/admin/src/app/(admin)/billing/statements/[clientId]/page.tsx`
 
 The raw `<table>` at the bottom of the statement page has no scroll wrapper. On smaller screens it overflows the card boundary with no scroll affordance.
@@ -84,6 +92,7 @@ The raw `<table>` at the bottom of the statement page has no scroll wrapper. On 
 ## Medium Effort
 
 ### 6. Statement org info missing on document
+
 **File:** `apps/admin/src/app/(admin)/billing/statements/[clientId]/page.tsx`
 
 The statement passes `org: { name: 'PMG' }` with no address, email, phone, or logo. Invoice and quote pages call `getDivisionBillingSettings` to populate this. A client receiving a statement has no contact details to reach the business.
@@ -93,28 +102,32 @@ The statement passes `org: { name: 'PMG' }` with no address, email, phone, or lo
 ---
 
 ### 7. Per-row running balance is unreliable
+
 **File:** `apps/admin/src/components/billing/document-preview.tsx`
 
 The Balance column on each statement row is computed from the running balance array, which is then reversed for display (newest first). When payments predate their invoices, the per-row balance shows negative mid-statement before recovering. The summary totals (Total Invoiced / Total Paid / Balance Due) are now correct, but the individual row balance column can still look confusing.
 
 **Options:**
+
 - Hide the Balance column entirely and rely on the summary block
 - Recompute balances from the ASC-sorted data and attach them before reversing (already done for the summary - just needs to be preserved per-row)
 
 ---
 
 ### 8. Empty state when no transactions exist
+
 **File:** `apps/admin/src/components/billing/document-preview.tsx`
 
 When `transactions.length === 0` the statement table is silently hidden with no message. A client with no invoices in the selected period sees a blank document body.
 
 **Fix:** Add an empty state message inside the statement section:
+
 ```tsx
-{transactions.length === 0 && (
-  <p className="text-sm text-zinc-400 py-6 text-center">
-    No transactions for this period.
-  </p>
-)}
+{
+  transactions.length === 0 && (
+    <p className="text-sm text-zinc-400 py-6 text-center">No transactions for this period.</p>
+  );
+}
 ```
 
 ---
@@ -122,7 +135,9 @@ When `transactions.length === 0` the statement table is silently hidden with no 
 ## Larger Items
 
 ### 9. Print / Export PDF are disabled
+
 **Files:**
+
 - `apps/admin/src/app/(admin)/billing/invoices/[id]/page.tsx`
 - `apps/admin/src/app/(admin)/billing/quotes/[id]/page.tsx`
 - `apps/admin/src/app/(admin)/billing/statements/[clientId]/page.tsx`
@@ -130,12 +145,14 @@ When `transactions.length === 0` the statement table is silently hidden with no 
 All three document pages have Print and Export PDF buttons that are permanently disabled with "Coming soon". The `DocumentPreview` component already has `print:shadow-none print:ring-0` styles applied, so `window.print()` would work immediately as a baseline.
 
 **Suggested approach:**
+
 1. Wire Print button to `window.print()` - works today with no backend changes
 2. Export PDF via a headless browser (Puppeteer/Playwright) or a service like `@react-pdf/renderer` as a follow-up
 
 ---
 
 ### 10. Statement year filter only shows 3 years
+
 **File:** `apps/admin/src/app/(admin)/billing/statements/[clientId]/page.tsx`
 
 The year filter links are hardcoded to the current year and two prior years. Clients with older history can't access it from the UI.
@@ -146,19 +163,18 @@ The year filter links are hardcoded to the current year and two prior years. Cli
 
 ## Summary Table
 
-| # | Area | Description | Effort |
-|---|------|-------------|--------|
-| 1 | Statement | Income not filtered by year | Quick |
-| 2 | Statement | Status hardcoded to 'Current' | Quick |
-| 3 | Invoice detail | Sidebar missing `self-start` | Quick |
-| 4 | Invoice + Quote detail | Action buttons don't wrap | Quick |
-| 5 | Statement | Income table missing overflow wrapper | Quick |
-| 6 | Statement | Org info not passed to document | Medium |
-| 7 | Statement | Per-row balance unreliable when payments predate invoices | Medium |
-| 8 | Statement | No empty state when no transactions | Medium |
-| 9 | All documents | Print / Export PDF disabled | Large |
-| 10 | Statement | Year filter limited to 3 years | Large |
-
+| #   | Area                   | Description                                               | Effort |
+| --- | ---------------------- | --------------------------------------------------------- | ------ |
+| 1   | Statement              | Income not filtered by year                               | Quick  |
+| 2   | Statement              | Status hardcoded to 'Current'                             | Quick  |
+| 3   | Invoice detail         | Sidebar missing `self-start`                              | Quick  |
+| 4   | Invoice + Quote detail | Action buttons don't wrap                                 | Quick  |
+| 5   | Statement              | Income table missing overflow wrapper                     | Quick  |
+| 6   | Statement              | Org info not passed to document                           | Medium |
+| 7   | Statement              | Per-row balance unreliable when payments predate invoices | Medium |
+| 8   | Statement              | No empty state when no transactions                       | Medium |
+| 9   | All documents          | Print / Export PDF disabled                               | Large  |
+| 10  | Statement              | Year filter limited to 3 years                            | Large  |
 
 ---
 
@@ -169,20 +185,20 @@ After opening the edit page, all items are cleared/reset, forcing the user to ma
 
 Expected behavior:
 
-* When editing a quote or invoice, all existing data must preload correctly.
-* Previously selected items/products/services must remain attached to the document.
-* Quantities, rates, descriptions, totals, VAT settings, and any item-specific values must populate automatically.
-* Editing should behave like updating existing data, not creating a new blank document.
+- When editing a quote or invoice, all existing data must preload correctly.
+- Previously selected items/products/services must remain attached to the document.
+- Quantities, rates, descriptions, totals, VAT settings, and any item-specific values must populate automatically.
+- Editing should behave like updating existing data, not creating a new blank document.
 
 Current issue:
 
-* The edit form loads without the saved items.
-* Item selection state is being lost during initialization or form hydration.
-* This suggests the items array is either:
+- The edit form loads without the saved items.
+- Item selection state is being lost during initialization or form hydration.
+- This suggests the items array is either:
 
-  * not being fetched from the database,
-  * not being passed into default form values,
-  * or being overwritten/reset when the form mounts.
+  - not being fetched from the database,
+  - not being passed into default form values,
+  - or being overwritten/reset when the form mounts.
 
 Things to check:
 
@@ -191,8 +207,9 @@ Things to check:
 3. Prevent form reset logic from clearing items on mount/re-render.
 4. If using React Hook Form + Field Arrays:
 
-   * ensure `useFieldArray` is initialized with existing items
-   * avoid calling `replace([])` or `reset()` incorrectly
+   - ensure `useFieldArray` is initialized with existing items
+   - avoid calling `replace([])` or `reset()` incorrectly
+
 5. Ensure item IDs and selected product references persist during edit mode.
 6. Verify server-to-client serialization is not stripping nested item data.
 

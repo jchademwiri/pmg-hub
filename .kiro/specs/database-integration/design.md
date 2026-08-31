@@ -64,9 +64,9 @@ Validates both connection strings at import time using Zod. Throws immediately w
 ```ts
 // Public shape
 export const env: {
-  DATABASE_URL: string;        // pooled - runtime queries
+  DATABASE_URL: string; // pooled - runtime queries
   DATABASE_URL_UNPOOLED: string; // direct - migrations only
-}
+};
 ```
 
 ### `src/client.ts` - Drizzle Client
@@ -74,12 +74,13 @@ export const env: {
 Constructs the Drizzle ORM client using the `neon-http` driver and `DATABASE_URL`.
 
 ```ts
-export const db: NeonHttpDatabase<typeof schema>
+export const db: NeonHttpDatabase<typeof schema>;
 ```
 
 ### `src/schema/tes.ts` - TES Schema
 
 Exports:
+
 - `tesServiceEnum` - `pgEnum("tes_service", [...])`
 - `tesLeadStatusEnum` - `pgEnum("tes_lead_status", [...])`
 - `tesLeads` - `pgTable("tes_leads", {...})`
@@ -89,6 +90,7 @@ Exports:
 ### `src/schema/aws.ts` - AWS Schema
 
 Exports:
+
 - `awsPackageTypeEnum` - `pgEnum("aws_package_type", [...])`
 - `awsMessageStatusEnum` - `pgEnum("aws_message_status", [...])`
 - `awsBookingStatusEnum` - `pgEnum("aws_booking_status", [...])`
@@ -102,6 +104,7 @@ Exports:
 ### `src/schema/pmg.ts` - PMG Schema
 
 Exports:
+
 - `pmgLeadServiceEnum` - `pgEnum("pmg_lead_service", [...])`
 - `pmgLeadStatusEnum` - `pgEnum("pmg_lead_status", [...])`
 - `pmgLeads` - `pgTable("pmg_leads", {...})`
@@ -115,8 +118,8 @@ Re-exports everything from `tes.ts`, `aws.ts`, and `pmg.ts`. The `connection_tes
 ### `src/index.ts` - Public Entry Point
 
 ```ts
-export * from "./client";
-export * from "./schema";
+export * from './client';
+export * from './schema';
 ```
 
 ### `src/seed.ts` - Seed Script
@@ -127,11 +130,11 @@ Standalone script (run directly with `bun packages/db/src/seed.ts`). Inserts ini
 
 ```ts
 export default defineConfig({
-  schema: "./src/schema/index.ts",
-  out: "./src/migrations",
-  dialect: "postgresql",
+  schema: './src/schema/index.ts',
+  out: './src/migrations',
+  dialect: 'postgresql',
   dbCredentials: {
-    url: env.DATABASE_URL_UNPOOLED,  // direct connection required for DDL
+    url: env.DATABASE_URL_UNPOOLED, // direct connection required for DDL
   },
 });
 ```
@@ -142,117 +145,117 @@ export default defineConfig({
 
 ### Enums
 
-| Enum name | Values |
-|---|---|
-| `tes_service` | `bid_preparation`, `tender_tracking`, `compliance_docs`, `method_statements`, `pricing_boq`, `post_award`, `project_management`, `full_service` |
-| `tes_lead_status` | `new`, `contacted`, `converted`, `archived` |
-| `aws_package_type` | `monthly`, `once_off` |
-| `aws_message_status` | `new`, `read`, `replied`, `archived` |
-| `aws_booking_status` | `new`, `contacted`, `active`, `completed`, `cancelled` |
-| `pmg_lead_service` | `tendering`, `web_dev`, `both`, `general` |
-| `pmg_lead_status` | `new`, `contacted`, `referred_tes`, `referred_aws`, `converted`, `archived` |
+| Enum name            | Values                                                                                                                                          |
+| -------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------- |
+| `tes_service`        | `bid_preparation`, `tender_tracking`, `compliance_docs`, `method_statements`, `pricing_boq`, `post_award`, `project_management`, `full_service` |
+| `tes_lead_status`    | `new`, `contacted`, `converted`, `archived`                                                                                                     |
+| `aws_package_type`   | `monthly`, `once_off`                                                                                                                           |
+| `aws_message_status` | `new`, `read`, `replied`, `archived`                                                                                                            |
+| `aws_booking_status` | `new`, `contacted`, `active`, `completed`, `cancelled`                                                                                          |
+| `pmg_lead_service`   | `tendering`, `web_dev`, `both`, `general`                                                                                                       |
+| `pmg_lead_status`    | `new`, `contacted`, `referred_tes`, `referred_aws`, `converted`, `archived`                                                                     |
 
 ### `tes_leads`
 
-| Column | Type | Constraints |
-|---|---|---|
-| `id` | uuid | PK, defaultRandom |
-| `name` | text | not null |
-| `email` | text | not null |
-| `phone` | text | not null |
-| `company` | text | nullable |
-| `service_interest` | `tes_service` | nullable |
-| `message` | text | not null |
-| `newsletter_opt_in` | boolean | default false |
-| `status` | `tes_lead_status` | not null, default `new` |
-| `is_read` | boolean | not null, default false |
-| `notes` | text | nullable |
-| `created_at` | timestamp | not null, defaultNow |
+| Column              | Type              | Constraints             |
+| ------------------- | ----------------- | ----------------------- |
+| `id`                | uuid              | PK, defaultRandom       |
+| `name`              | text              | not null                |
+| `email`             | text              | not null                |
+| `phone`             | text              | not null                |
+| `company`           | text              | nullable                |
+| `service_interest`  | `tes_service`     | nullable                |
+| `message`           | text              | not null                |
+| `newsletter_opt_in` | boolean           | default false           |
+| `status`            | `tes_lead_status` | not null, default `new` |
+| `is_read`           | boolean           | not null, default false |
+| `notes`             | text              | nullable                |
+| `created_at`        | timestamp         | not null, defaultNow    |
 
 Indexes: `status`, `email`
 
 ### `aws_messages`
 
-| Column | Type | Constraints |
-|---|---|---|
-| `id` | uuid | PK, defaultRandom |
-| `name` | text | not null |
-| `email` | text | not null |
-| `phone` | text | nullable |
-| `subject` | text | nullable |
-| `message` | text | not null |
-| `newsletter_opt_in` | boolean | default false |
-| `status` | `aws_message_status` | not null, default `new` |
-| `is_read` | boolean | not null, default false |
-| `notes` | text | nullable |
-| `created_at` | timestamp | not null, defaultNow |
+| Column              | Type                 | Constraints             |
+| ------------------- | -------------------- | ----------------------- |
+| `id`                | uuid                 | PK, defaultRandom       |
+| `name`              | text                 | not null                |
+| `email`             | text                 | not null                |
+| `phone`             | text                 | nullable                |
+| `subject`           | text                 | nullable                |
+| `message`           | text                 | not null                |
+| `newsletter_opt_in` | boolean              | default false           |
+| `status`            | `aws_message_status` | not null, default `new` |
+| `is_read`           | boolean              | not null, default false |
+| `notes`             | text                 | nullable                |
+| `created_at`        | timestamp            | not null, defaultNow    |
 
 Indexes: `status`, `email`
 
 ### `aws_bookings`
 
-| Column | Type | Constraints |
-|---|---|---|
-| `id` | uuid | PK, defaultRandom |
-| `name` | text | not null |
-| `email` | text | not null |
-| `phone` | text | not null |
-| `package_name` | text | not null |
-| `package_price` | integer | not null (ZAR cents) |
-| `package_type` | `aws_package_type` | not null |
-| `newsletter_opt_in` | boolean | default false |
-| `status` | `aws_booking_status` | not null, default `new` |
-| `is_read` | boolean | not null, default false |
-| `notes` | text | nullable |
-| `created_at` | timestamp | not null, defaultNow |
+| Column              | Type                 | Constraints             |
+| ------------------- | -------------------- | ----------------------- |
+| `id`                | uuid                 | PK, defaultRandom       |
+| `name`              | text                 | not null                |
+| `email`             | text                 | not null                |
+| `phone`             | text                 | not null                |
+| `package_name`      | text                 | not null                |
+| `package_price`     | integer              | not null (ZAR cents)    |
+| `package_type`      | `aws_package_type`   | not null                |
+| `newsletter_opt_in` | boolean              | default false           |
+| `status`            | `aws_booking_status` | not null, default `new` |
+| `is_read`           | boolean              | not null, default false |
+| `notes`             | text                 | nullable                |
+| `created_at`        | timestamp            | not null, defaultNow    |
 
 Indexes: `status`, `email`
 
 ### `aws_pricing`
 
-| Column | Type | Constraints |
-|---|---|---|
-| `id` | uuid | PK, defaultRandom |
-| `name` | text | not null |
-| `price` | integer | not null (ZAR cents) |
-| `period` | text | nullable (e.g. `/month`) |
-| `upfront` | integer | nullable (setup fee, ZAR cents) |
-| `description` | text | not null |
-| `features` | jsonb | not null, typed as `string[]` |
-| `cta` | text | not null |
-| `popular` | boolean | default false |
-| `type` | `aws_package_type` | not null |
-| `sort_order` | integer | default 0 |
-| `is_active` | boolean | default true |
+| Column        | Type               | Constraints                     |
+| ------------- | ------------------ | ------------------------------- |
+| `id`          | uuid               | PK, defaultRandom               |
+| `name`        | text               | not null                        |
+| `price`       | integer            | not null (ZAR cents)            |
+| `period`      | text               | nullable (e.g. `/month`)        |
+| `upfront`     | integer            | nullable (setup fee, ZAR cents) |
+| `description` | text               | not null                        |
+| `features`    | jsonb              | not null, typed as `string[]`   |
+| `cta`         | text               | not null                        |
+| `popular`     | boolean            | default false                   |
+| `type`        | `aws_package_type` | not null                        |
+| `sort_order`  | integer            | default 0                       |
+| `is_active`   | boolean            | default true                    |
 
 ### `pmg_leads`
 
-| Column | Type | Constraints |
-|---|---|---|
-| `id` | uuid | PK, defaultRandom |
-| `name` | text | not null |
-| `email` | text | not null |
-| `phone` | text | nullable |
-| `company` | text | nullable |
-| `service_interest` | `pmg_lead_service` | not null, default `general` |
-| `message` | text | nullable |
-| `newsletter_opt_in` | boolean | not null, default false |
-| `status` | `pmg_lead_status` | not null, default `new` |
-| `is_read` | boolean | not null, default false |
-| `notes` | text | nullable |
-| `created_at` | timestamp | not null, defaultNow |
+| Column              | Type               | Constraints                 |
+| ------------------- | ------------------ | --------------------------- |
+| `id`                | uuid               | PK, defaultRandom           |
+| `name`              | text               | not null                    |
+| `email`             | text               | not null                    |
+| `phone`             | text               | nullable                    |
+| `company`           | text               | nullable                    |
+| `service_interest`  | `pmg_lead_service` | not null, default `general` |
+| `message`           | text               | nullable                    |
+| `newsletter_opt_in` | boolean            | not null, default false     |
+| `status`            | `pmg_lead_status`  | not null, default `new`     |
+| `is_read`           | boolean            | not null, default false     |
+| `notes`             | text               | nullable                    |
+| `created_at`        | timestamp          | not null, defaultNow        |
 
 Indexes: `status`, `email`
 
 ### Seed Data - `aws_pricing`
 
-| name | price (cents) | period | upfront (cents) | type | popular |
-|---|---|---|---|---|---|
-| Starter | 29900 | /month | - | monthly | false |
-| Growth | 59900 | /month | 150000 | monthly | true |
-| Pro | 99900 | /month | 250000 | monthly | false |
-| Landing Page | 250000 | - | - | once_off | false |
-| Business Website | 650000 | - | - | once_off | false |
+| name             | price (cents) | period | upfront (cents) | type     | popular |
+| ---------------- | ------------- | ------ | --------------- | -------- | ------- |
+| Starter          | 29900         | /month | -               | monthly  | false   |
+| Growth           | 59900         | /month | 150000          | monthly  | true    |
+| Pro              | 99900         | /month | 250000          | monthly  | false   |
+| Landing Page     | 250000        | -      | -               | once_off | false   |
+| Business Website | 650000        | -      | -               | once_off | false   |
 
 Idempotence is achieved via `onConflictDoNothing()` keyed on `name`.
 
@@ -288,17 +291,17 @@ Root `package.json` scripts delegate to the `@pmg/db` package:
 
 ## Correctness Properties
 
-*A property is a characteristic or behavior that should hold true across all valid executions of a system - essentially, a formal statement about what the system should do. Properties serve as the bridge between human-readable specifications and machine-verifiable correctness guarantees.*
+_A property is a characteristic or behavior that should hold true across all valid executions of a system - essentially, a formal statement about what the system should do. Properties serve as the bridge between human-readable specifications and machine-verifiable correctness guarantees._
 
 ### Property 1: Env validator rejects invalid inputs
 
-*For any* object passed to the env validator where `DATABASE_URL`, `DATABASE_URL_UNPOOLED`, or both are missing or not valid URL strings, the validator SHALL throw (or return a failure result) and SHALL include the name of each invalid field in the error output.
+_For any_ object passed to the env validator where `DATABASE_URL`, `DATABASE_URL_UNPOOLED`, or both are missing or not valid URL strings, the validator SHALL throw (or return a failure result) and SHALL include the name of each invalid field in the error output.
 
 **Validates: Requirements 1.1, 1.2, 1.3**
 
 ### Property 2: Seed script is idempotent
 
-*For any* initial state of the `aws_pricing` table, running the seed logic twice SHALL produce the same set of rows as running it once - no duplicate rows are created on the second run.
+_For any_ initial state of the `aws_pricing` table, running the seed logic twice SHALL produce the same set of rows as running it once - no duplicate rows are created on the second run.
 
 **Validates: Requirements 11.5**
 
@@ -306,13 +309,13 @@ Root `package.json` scripts delegate to the `@pmg/db` package:
 
 ## Error Handling
 
-| Scenario | Behaviour |
-|---|---|
-| `DATABASE_URL` missing or invalid | `env.ts` throws at import time with field-level error message |
-| `DATABASE_URL_UNPOOLED` missing or invalid | `env.ts` throws at import time with field-level error message |
-| Seed run on already-seeded table | `onConflictDoNothing()` silently skips existing rows; script exits 0 |
-| `drizzle-kit push` run without `DATABASE_URL_UNPOOLED` | `env.ts` throws before drizzle-kit connects |
-| Schema type mismatch at compile time | TypeScript compiler error via `$inferSelect` / `$inferInsert` types |
+| Scenario                                               | Behaviour                                                            |
+| ------------------------------------------------------ | -------------------------------------------------------------------- |
+| `DATABASE_URL` missing or invalid                      | `env.ts` throws at import time with field-level error message        |
+| `DATABASE_URL_UNPOOLED` missing or invalid             | `env.ts` throws at import time with field-level error message        |
+| Seed run on already-seeded table                       | `onConflictDoNothing()` silently skips existing rows; script exits 0 |
+| `drizzle-kit push` run without `DATABASE_URL_UNPOOLED` | `env.ts` throws before drizzle-kit connects                          |
+| Schema type mismatch at compile time                   | TypeScript compiler error via `$inferSelect` / `$inferInsert` types  |
 
 ---
 
@@ -325,6 +328,7 @@ Testing is scoped entirely to `packages/db`. No live database connection is requ
 Located in `packages/db/src/__tests__/`. Run with `vitest run`.
 
 Focus areas:
+
 - `env.ts`: specific examples of valid and invalid env objects
 - Schema exports: verify expected table and type names are exported from `src/index.ts`
 - Seed data: verify the seed rows array contains the expected 5 entries with correct field values
@@ -356,15 +360,16 @@ Extract the seed rows array and the upsert logic into a pure function that accep
 
 ```ts
 // vitest.config.ts in packages/db
-import { defineConfig } from "vitest/config";
+import { defineConfig } from 'vitest/config';
 export default defineConfig({
   test: {
-    environment: "node",
+    environment: 'node',
   },
 });
 ```
 
 fast-check is added as a dev dependency:
+
 ```
 bun add -D fast-check --filter @pmg/db
 ```

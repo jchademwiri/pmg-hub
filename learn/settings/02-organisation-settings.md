@@ -31,4 +31,3 @@ If something looks wrong on a quote, invoice, or PDF, check Organisation and Bil
 3. Check the address.
 4. Save changes.
 5. Generate or preview a document to confirm it looks right.
-

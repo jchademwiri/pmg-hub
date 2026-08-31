@@ -8,9 +8,7 @@ import { reorderProjectQueue as reorderProjectQueueDb } from '@pmg/db';
  * Reorder the tender queue by setting sort_order for each tender.
  * Accepts an ordered array of tender IDs — the first item gets sort_order=1, second gets 2, etc.
  */
-export async function reorderProjectQueue(
-  orderedIds: string[],
-): Promise<{ error?: string }> {
+export async function reorderProjectQueue(orderedIds: string[]): Promise<{ error?: string }> {
   try {
     await getSessionOrRedirect();
     await reorderProjectQueueDb(orderedIds);

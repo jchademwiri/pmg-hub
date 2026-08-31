@@ -31,7 +31,10 @@ export async function GET(
   const statementType = url.searchParams.get('statementType');
   const includeDraftInvoiceId = url.searchParams.get('includeDraftInvoiceId') ?? undefined;
   const yearNum = year == null ? undefined : Number(year);
-  if (year != null && (year.trim() === '' || !Number.isFinite(yearNum) || !Number.isInteger(yearNum))) {
+  if (
+    year != null &&
+    (year.trim() === '' || !Number.isFinite(yearNum) || !Number.isInteger(yearNum))
+  ) {
     return NextResponse.json({ error: 'Invalid year parameter.' }, { status: 400 });
   }
 

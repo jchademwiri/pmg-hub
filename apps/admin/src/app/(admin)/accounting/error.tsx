@@ -14,8 +14,8 @@ export default function AccountingError({ error, reset }: ErrorProps) {
       <div className="flex flex-col items-center gap-2">
         <h2 className="text-2xl font-semibold tracking-tight">Something went wrong</h2>
         <p className="text-muted-foreground max-w-md">
-          An unexpected error occurred in the accounting module. You can try again or return to
-          the dashboard.
+          An unexpected error occurred in the accounting module. You can try again or return to the
+          dashboard.
         </p>
         {error.digest && (
           <p className="text-xs text-muted-foreground/60 font-mono">Reference: {error.digest}</p>

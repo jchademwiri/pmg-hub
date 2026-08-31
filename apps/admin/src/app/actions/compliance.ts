@@ -39,7 +39,7 @@ export async function addComplianceRecord(formData: FormData): Promise<{ error?:
     revalidatePath(`/clients/${parsed.clientId}`);
     revalidatePath(`/relationships/clients/${parsed.clientId}`);
     revalidatePath('/insights/compliance-radar');
-    
+
     return {};
   } catch (e) {
     console.error('addComplianceRecord failed:', e);
@@ -47,7 +47,10 @@ export async function addComplianceRecord(formData: FormData): Promise<{ error?:
   }
 }
 
-export async function updateComplianceRecord(id: string, formData: FormData): Promise<{ error?: string }> {
+export async function updateComplianceRecord(
+  id: string,
+  formData: FormData,
+): Promise<{ error?: string }> {
   const session = await getSessionOrRedirect();
 
   try {
@@ -69,7 +72,7 @@ export async function updateComplianceRecord(id: string, formData: FormData): Pr
     revalidatePath(`/clients/${parsed.clientId}`);
     revalidatePath(`/relationships/clients/${parsed.clientId}`);
     revalidatePath('/insights/compliance-radar');
-    
+
     return {};
   } catch (e) {
     console.error('updateComplianceRecord failed:', e);
@@ -77,7 +80,10 @@ export async function updateComplianceRecord(id: string, formData: FormData): Pr
   }
 }
 
-export async function deleteComplianceRecord(id: string, clientId: string): Promise<{ error?: string }> {
+export async function deleteComplianceRecord(
+  id: string,
+  clientId: string,
+): Promise<{ error?: string }> {
   await getSessionOrRedirect();
 
   try {
@@ -86,7 +92,7 @@ export async function deleteComplianceRecord(id: string, clientId: string): Prom
     revalidatePath(`/clients/${clientId}`);
     revalidatePath(`/relationships/clients/${clientId}`);
     revalidatePath('/insights/compliance-radar');
-    
+
     return {};
   } catch (e) {
     console.error('deleteComplianceRecord failed:', e);

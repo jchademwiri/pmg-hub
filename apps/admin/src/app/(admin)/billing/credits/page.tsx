@@ -1,5 +1,15 @@
 import type { Metadata } from 'next';
-import { getDb, getAllClients, getAllDivisions, creditNotes, creditApplications, eq, sql, and, desc } from '@pmg/db';
+import {
+  getDb,
+  getAllClients,
+  getAllDivisions,
+  creditNotes,
+  creditApplications,
+  eq,
+  sql,
+  and,
+  desc,
+} from '@pmg/db';
 import { formatZAR } from '@/lib/format';
 import { CreditsClient } from './credits-client';
 import { SetPageTotal } from '@/components/navigation/page-header-context';
@@ -72,7 +82,9 @@ export default async function CreditsPage() {
       <div className="flex items-center justify-between">
         <div>
           <h2 className="text-lg font-semibold">Credit Management</h2>
-          <p className="text-sm text-muted-foreground">Monitor client credits, credit notes, and credit balances</p>
+          <p className="text-sm text-muted-foreground">
+            Monitor client credits, credit notes, and credit balances
+          </p>
         </div>
       </div>
 

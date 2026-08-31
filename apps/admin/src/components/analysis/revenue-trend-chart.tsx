@@ -10,7 +10,7 @@ import {
   Tooltip,
   ResponsiveContainer,
   Legend,
-  Label
+  Label,
 } from 'recharts';
 import { formatZAR } from '@/lib/format';
 
@@ -27,7 +27,12 @@ interface RevenueTrendChartProps {
   sastYear?: number;
 }
 
-export function RevenueTrendChart({ data, currentYear, currentMonth, sastYear }: RevenueTrendChartProps) {
+export function RevenueTrendChart({
+  data,
+  currentYear,
+  currentMonth,
+  sastYear,
+}: RevenueTrendChartProps) {
   const currentKey = String(currentYear);
   const priorKey = String(currentYear - 1);
   const prior2Key = String(currentYear - 2);
@@ -70,60 +75,70 @@ export function RevenueTrendChart({ data, currentYear, currentMonth, sastYear }:
           }}
         >
           <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#334155" />
-          <XAxis 
-            dataKey="month" 
-            tickLine={false}
-            axisLine={false}
-            tick={{ fill: '#94a3b8' }}
-          >
-            <Label value="Month" offset={-15} position="insideBottom" fill="#94a3b8" style={{ fontSize: 12, fontWeight: 500 }} />
+          <XAxis dataKey="month" tickLine={false} axisLine={false} tick={{ fill: '#94a3b8' }}>
+            <Label
+              value="Month"
+              offset={-15}
+              position="insideBottom"
+              fill="#94a3b8"
+              style={{ fontSize: 12, fontWeight: 500 }}
+            />
           </XAxis>
-          <YAxis 
+          <YAxis
             tickFormatter={(value) => `R${value / 1000}k`}
             tickLine={false}
             axisLine={false}
             tick={{ fill: '#94a3b8' }}
           >
-            <Label value="Revenue (ZAR)" angle={-90} position="insideLeft" offset={10} fill="#94a3b8" style={{ textAnchor: 'middle', fontSize: 12, fontWeight: 500 }} />
+            <Label
+              value="Revenue (ZAR)"
+              angle={-90}
+              position="insideLeft"
+              offset={10}
+              fill="#94a3b8"
+              style={{ textAnchor: 'middle', fontSize: 12, fontWeight: 500 }}
+            />
           </YAxis>
           <Tooltip
-            formatter={(value: any) => (value === null || value === undefined ? '—' : formatZAR(Number(value) || 0))}
+            formatter={(value: any) =>
+              value === null || value === undefined ? '—' : formatZAR(Number(value) || 0)
+            }
             cursor={false}
-            contentStyle={{ 
-              backgroundColor: 'hsl(var(--muted)/0.75)', 
+            contentStyle={{
+              backgroundColor: 'hsl(var(--muted)/0.75)',
               borderColor: 'hsl(var(--border))',
               borderRadius: '8px',
               boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1)',
               backdropFilter: 'blur(12px)',
-              WebkitBackdropFilter: 'blur(12px)'
+              WebkitBackdropFilter: 'blur(12px)',
             }}
             itemStyle={{ fontWeight: 500 }}
           />
           <Legend verticalAlign="top" height={36} />
-          
-          <Line 
-            type="monotone" 
-            name={`FY ${currentYear}`} 
-            dataKey={currentKey} 
-            stroke="#10b981" 
+
+          <Line
+            type="monotone"
+            name={`FY ${currentYear}`}
+            dataKey={currentKey}
+            stroke="#10b981"
             strokeWidth={3}
-            activeDot={{ r: 6 }} 
+            activeDot={{ r: 6 }}
             connectNulls={false}
           />
-          <Line 
-            type="monotone" 
-            name={`FY ${currentYear - 1}`} 
-            dataKey={priorKey} 
-            stroke="#94a3b8" 
+          <Line
+            type="monotone"
+            name={`FY ${currentYear - 1}`}
+            dataKey={priorKey}
+            stroke="#94a3b8"
             strokeWidth={2}
             strokeDasharray="5 5"
             connectNulls={true}
           />
-          <Line 
-            type="monotone" 
-            name={`FY ${currentYear - 2}`} 
-            dataKey={prior2Key} 
-            stroke="#475569" 
+          <Line
+            type="monotone"
+            name={`FY ${currentYear - 2}`}
+            dataKey={prior2Key}
+            stroke="#475569"
             strokeWidth={2}
             strokeDasharray="3 3"
             connectNulls={true}

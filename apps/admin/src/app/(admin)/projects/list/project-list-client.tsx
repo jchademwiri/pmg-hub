@@ -3,7 +3,16 @@
 import * as React from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
-import { Search, X, Filter, Archive, Trash2, CheckSquare, ChevronDown, MoreHorizontal } from 'lucide-react';
+import {
+  Search,
+  X,
+  Filter,
+  Archive,
+  Trash2,
+  CheckSquare,
+  ChevronDown,
+  MoreHorizontal,
+} from 'lucide-react';
 import { toast } from 'sonner';
 import { DataList } from '@/components/ui/data-list';
 import type { ProjectScheduleEntry } from '@pmg/db';
@@ -63,7 +72,12 @@ interface ProjectListClientProps {
 
 // ── Component ─────────────────────────────────────────────────────────────────
 
-export function ProjectListClient({ entries, clients, divisions, progressMap = {} }: ProjectListClientProps) {
+export function ProjectListClient({
+  entries,
+  clients,
+  divisions,
+  progressMap = {},
+}: ProjectListClientProps) {
   const router = useRouter();
   const clientMap = React.useMemo(() => new Map(clients.map((c) => [c.id, c])), [clients]);
 
@@ -446,7 +460,7 @@ export function ProjectListClient({ entries, clients, divisions, progressMap = {
                             onClick={(e) => {
                               if (
                                 (e.target as HTMLElement).closest(
-                                  'button, input[type="checkbox"], [role="menuitem"], a, [data-slot="checkbox"]'
+                                  'button, input[type="checkbox"], [role="menuitem"], a, [data-slot="checkbox"]',
                                 )
                               ) {
                                 return;
@@ -463,7 +477,9 @@ export function ProjectListClient({ entries, clients, divisions, progressMap = {
                             </TableCell>
 
                             <TableCell>
-                              <p className="text-xs font-medium leading-tight">{client?.name ?? '—'}</p>
+                              <p className="text-xs font-medium leading-tight">
+                                {client?.name ?? '—'}
+                              </p>
                               <p className="text-[11px] text-muted-foreground leading-tight mt-0.5">
                                 {entry.projectReference}
                               </p>
@@ -502,10 +518,18 @@ export function ProjectListClient({ entries, clients, divisions, progressMap = {
 
                             <TableCell>
                               {(() => {
-                                const progress = progressMap[entry.id] || { total: 0, completed: 0 };
-                                const percent = progress.total > 0 ? Math.round((progress.completed / progress.total) * 100) : 0;
+                                const progress = progressMap[entry.id] || {
+                                  total: 0,
+                                  completed: 0,
+                                };
+                                const percent =
+                                  progress.total > 0
+                                    ? Math.round((progress.completed / progress.total) * 100)
+                                    : 0;
                                 if (progress.total === 0) {
-                                  return <span className="text-[10px] text-muted-foreground">—</span>;
+                                  return (
+                                    <span className="text-[10px] text-muted-foreground">—</span>
+                                  );
                                 }
                                 return (
                                   <div className="flex flex-col gap-1 w-24">
@@ -590,13 +614,8 @@ export function ProjectListClient({ entries, clients, divisions, progressMap = {
                                       {opt.label}
                                     </DropdownMenuItem>
                                   ))}
-                                  <DropdownMenuItem
-                                    className="text-xs"
-                                    asChild
-                                  >
-                                    <Link href={`/projects/${entry.id}/edit`}>
-                                      Edit project
-                                    </Link>
+                                  <DropdownMenuItem className="text-xs" asChild>
+                                    <Link href={`/projects/${entry.id}/edit`}>Edit project</Link>
                                   </DropdownMenuItem>
                                   {entry.status !== 'submitted' && entry.status !== 'cancelled' && (
                                     <DropdownMenuItem
@@ -622,13 +641,16 @@ export function ProjectListClient({ entries, clients, divisions, progressMap = {
                     const client = clientMap.get(entry.clientId);
                     const isSelected = selectedIds.has(entry.id);
                     const transitions = getNextStatuses(entry.status);
-                    
+
                     const progress = progressMap[entry.id] || { total: 0, completed: 0 };
-                    const percent = progress.total > 0 ? Math.round((progress.completed / progress.total) * 100) : 0;
+                    const percent =
+                      progress.total > 0
+                        ? Math.round((progress.completed / progress.total) * 100)
+                        : 0;
 
                     return (
-                      <div 
-                        key={entry.id} 
+                      <div
+                        key={entry.id}
                         className={`relative flex flex-col p-4 border border-border rounded-lg bg-card shadow-sm transition-shadow ${entry.status === 'cancelled' ? 'opacity-60' : ''} ${isSelected ? 'border-primary bg-primary/5' : ''}`}
                       >
                         <Link
@@ -636,7 +658,7 @@ export function ProjectListClient({ entries, clients, divisions, progressMap = {
                           className="absolute inset-0 focus:outline-none focus-visible:ring-2 focus-visible:ring-ring rounded-lg"
                           aria-label={`View project ${entry.projectReference}`}
                         />
-                        
+
                         <div className="flex justify-between items-start mb-2 relative z-10">
                           <div className="flex items-center gap-3">
                             <Checkbox
@@ -646,13 +668,17 @@ export function ProjectListClient({ entries, clients, divisions, progressMap = {
                               className="mt-0.5"
                             />
                             <div>
-                              <p className="font-semibold text-foreground text-sm leading-tight">{client?.name ?? '—'}</p>
-                              <p className="text-xs text-muted-foreground">{entry.projectReference}</p>
+                              <p className="font-semibold text-foreground text-sm leading-tight">
+                                {client?.name ?? '—'}
+                              </p>
+                              <p className="text-xs text-muted-foreground">
+                                {entry.projectReference}
+                              </p>
                             </div>
                           </div>
                           <ProjectStatusBadge status={entry.status} />
                         </div>
-                        
+
                         <div className="flex items-center justify-between mt-2 mb-3 relative z-10 ml-7">
                           <div className="flex-1 mr-4">
                             {progress.total > 0 ? (
@@ -671,19 +697,34 @@ export function ProjectListClient({ entries, clients, divisions, progressMap = {
                               <span className="text-[10px] text-muted-foreground">No tasks</span>
                             )}
                           </div>
-                          <Badge variant={entry.priority === 'urgent' ? 'destructive' : 'secondary'} className="text-[10px] capitalize">
+                          <Badge
+                            variant={entry.priority === 'urgent' ? 'destructive' : 'secondary'}
+                            className="text-[10px] capitalize"
+                          >
                             {entry.priority}
                           </Badge>
                         </div>
 
                         <div className="flex justify-between items-center text-xs text-muted-foreground mt-2 border-t border-border/50 pt-2 relative z-10">
                           <div className="flex flex-col gap-0.5">
-                            <span>Closes: {new Date(entry.closingDate).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: '2-digit' })}</span>
+                            <span>
+                              Closes:{' '}
+                              {new Date(entry.closingDate).toLocaleDateString('en-GB', {
+                                day: 'numeric',
+                                month: 'short',
+                                year: '2-digit',
+                              })}
+                            </span>
                           </div>
                           <div>
                             <DropdownMenu>
                               <DropdownMenuTrigger asChild>
-                                <Button variant="ghost" size="touch" className="h-8 w-8 min-h-0 min-w-0 p-0" title="Actions">
+                                <Button
+                                  variant="ghost"
+                                  size="touch"
+                                  className="h-8 w-8 min-h-0 min-w-0 p-0"
+                                  title="Actions"
+                                >
                                   <MoreHorizontal className="size-4" />
                                 </Button>
                               </DropdownMenuTrigger>

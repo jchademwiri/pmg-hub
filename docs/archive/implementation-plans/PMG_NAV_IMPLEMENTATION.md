@@ -44,16 +44,17 @@ Collapsible groups, each with a group icon. **Overview renders as a static
 pinned to the bottom**. When collapsed (`collapsible="icon"`), only item icons
 render and group headers hide.
 
-| Group             | Group icon         | Items                                                         | Status                          |
-|-------------------|--------------------|---------------------------------------------------------------|---------------------------------|
-| Overview (static) | `Home`             | Dashboard                                                     | ✅ Exists at `/dashboard`       |
-| Finance           | `Banknote`         | Income · Expenses · Categories · Corporate Ledger · Accounts  | ✅ All exist                    |
-| Billing           | `FileSpreadsheet`  | Quotations · Invoices · Statements                            | ❌ **Missing - shell pages added** |
-| Relationships     | `Network`          | Clients · Leads · Divisions                                   | ✅ All exist                    |
-| Insights          | `LineChart`        | Snapshots · Reports                                           | ✅ Both exist                   |
-| **System** (bottom) | `Cog`            | Users · Settings                                              | ⚠️ Users ✅, Settings ❌ added  |
+| Group               | Group icon        | Items                                                        | Status                             |
+| ------------------- | ----------------- | ------------------------------------------------------------ | ---------------------------------- |
+| Overview (static)   | `Home`            | Dashboard                                                    | ✅ Exists at `/dashboard`          |
+| Finance             | `Banknote`        | Income · Expenses · Categories · Corporate Ledger · Accounts | ✅ All exist                       |
+| Billing             | `FileSpreadsheet` | Quotations · Invoices · Statements                           | ❌ **Missing - shell pages added** |
+| Relationships       | `Network`         | Clients · Leads · Divisions                                  | ✅ All exist                       |
+| Insights            | `LineChart`       | Snapshots · Reports                                          | ✅ Both exist                      |
+| **System** (bottom) | `Cog`             | Users · Settings                                             | ⚠️ Users ✅, Settings ❌ added     |
 
 **Behavior:**
+
 - Multi-item groups are collapsible via shadcn `<Collapsible>` + chevron rotation.
 - Active group auto-expands (matched against `usePathname()`).
 - Single-item groups (Overview) render as a plain label without a toggle.
@@ -62,65 +63,91 @@ render and group headers hide.
 ### Updated `src/components/layout/app-sidebar.tsx`
 
 ```tsx
-'use client'
+'use client';
 
-import Link from 'next/link'
-import { usePathname } from 'next/navigation'
+import Link from 'next/link';
+import { usePathname } from 'next/navigation';
 import {
-  Home, Banknote, FileSpreadsheet, Network, LineChart, Cog,
-  LayoutDashboard, TrendingUp, TrendingDown, Tags, BookOpen, Wallet,
-  FileText, Receipt, ScrollText, Users, UserPlus, Building2,
-  Camera, BarChart3, Settings, ChevronDown, UserCog, PiggyBank,
-} from 'lucide-react'
+  Home,
+  Banknote,
+  FileSpreadsheet,
+  Network,
+  LineChart,
+  Cog,
+  LayoutDashboard,
+  TrendingUp,
+  TrendingDown,
+  Tags,
+  BookOpen,
+  Wallet,
+  FileText,
+  Receipt,
+  ScrollText,
+  Users,
+  UserPlus,
+  Building2,
+  Camera,
+  BarChart3,
+  Settings,
+  ChevronDown,
+  UserCog,
+  PiggyBank,
+} from 'lucide-react';
 import {
-  Sidebar, SidebarContent, SidebarFooter, SidebarGroup,
-  SidebarGroupContent, SidebarGroupLabel, SidebarHeader,
-  SidebarMenu, SidebarMenuButton, SidebarMenuItem, useSidebar,
-} from '@/components/ui/sidebar'
-import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible'
-import { SignOutButton } from '@/components/layout/sign-out-button'
+  Sidebar,
+  SidebarContent,
+  SidebarFooter,
+  SidebarGroup,
+  SidebarGroupContent,
+  SidebarGroupLabel,
+  SidebarHeader,
+  SidebarMenu,
+  SidebarMenuButton,
+  SidebarMenuItem,
+  useSidebar,
+} from '@/components/ui/sidebar';
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
+import { SignOutButton } from '@/components/layout/sign-out-button';
 
-type NavItem = { title: string; url: string; icon: React.ElementType }
+type NavItem = { title: string; url: string; icon: React.ElementType };
 
-const overview: NavItem[] = [
-  { title: 'Dashboard', url: '/dashboard', icon: LayoutDashboard },
-]
+const overview: NavItem[] = [{ title: 'Dashboard', url: '/dashboard', icon: LayoutDashboard }];
 const finance: NavItem[] = [
-  { title: 'Income',           url: '/income',             icon: TrendingUp },
-  { title: 'Expenses',         url: '/expenses',           icon: TrendingDown },
-  { title: 'Categories',       url: '/expense-categories', icon: Tags },
-  { title: 'Corporate Ledger', url: '/ledger',             icon: BookOpen },
-  { title: 'Accounts',         url: '/accounts',           icon: PiggyBank },
-]
+  { title: 'Income', url: '/income', icon: TrendingUp },
+  { title: 'Expenses', url: '/expenses', icon: TrendingDown },
+  { title: 'Categories', url: '/expense-categories', icon: Tags },
+  { title: 'Corporate Ledger', url: '/ledger', icon: BookOpen },
+  { title: 'Accounts', url: '/accounts', icon: PiggyBank },
+];
 const billing: NavItem[] = [
-  { title: 'Quotations', url: '/billing/quotes',     icon: FileText },
-  { title: 'Invoices',   url: '/billing/invoices',   icon: Receipt },
+  { title: 'Quotations', url: '/billing/quotes', icon: FileText },
+  { title: 'Invoices', url: '/billing/invoices', icon: Receipt },
   { title: 'Statements', url: '/billing/statements', icon: ScrollText },
-]
+];
 const relationships: NavItem[] = [
-  { title: 'Clients',   url: '/clients',   icon: Users },
-  { title: 'Leads',     url: '/leads',     icon: UserPlus },
+  { title: 'Clients', url: '/clients', icon: Users },
+  { title: 'Leads', url: '/leads', icon: UserPlus },
   { title: 'Divisions', url: '/divisions', icon: Building2 },
-]
+];
 const insights: NavItem[] = [
   { title: 'Snapshots', url: '/snapshots', icon: Camera },
-  { title: 'Reports',   url: '/reports',   icon: BarChart3 },
-]
+  { title: 'Reports', url: '/reports', icon: BarChart3 },
+];
 const system: NavItem[] = [
-  { title: 'Users',    url: '/users',    icon: UserCog },
+  { title: 'Users', url: '/users', icon: UserCog },
   { title: 'Settings', url: '/settings', icon: Settings },
-]
+];
 
 interface AppSidebarProps {
-  user: { name: string; email: string; role: string }
+  user: { name: string; email: string; role: string };
 }
 
 export function AppSidebar({ user }: AppSidebarProps) {
-  const pathname = usePathname()
-  const { state } = useSidebar()
-  const collapsed = state === 'collapsed'
+  const pathname = usePathname();
+  const { state } = useSidebar();
+  const collapsed = state === 'collapsed';
 
-  const isActive = (url: string) => pathname.startsWith(url)
+  const isActive = (url: string) => pathname.startsWith(url);
 
   const renderMenu = (items: NavItem[]) => (
     <SidebarMenu>
@@ -135,7 +162,7 @@ export function AppSidebar({ user }: AppSidebarProps) {
         </SidebarMenuItem>
       ))}
     </SidebarMenu>
-  )
+  );
 
   const renderStaticGroup = (label: string, GroupIcon: React.ElementType, items: NavItem[]) => (
     <SidebarGroup>
@@ -147,16 +174,20 @@ export function AppSidebar({ user }: AppSidebarProps) {
       )}
       <SidebarGroupContent>{renderMenu(items)}</SidebarGroupContent>
     </SidebarGroup>
-  )
+  );
 
-  const renderCollapsibleGroup = (label: string, GroupIcon: React.ElementType, items: NavItem[]) => {
-    const hasActive = items.some((i) => isActive(i.url))
+  const renderCollapsibleGroup = (
+    label: string,
+    GroupIcon: React.ElementType,
+    items: NavItem[],
+  ) => {
+    const hasActive = items.some((i) => isActive(i.url));
     if (collapsed) {
       return (
         <SidebarGroup>
           <SidebarGroupContent>{renderMenu(items)}</SidebarGroupContent>
         </SidebarGroup>
-      )
+      );
     }
     return (
       <Collapsible defaultOpen={hasActive} className="group/collapsible">
@@ -175,13 +206,16 @@ export function AppSidebar({ user }: AppSidebarProps) {
           </CollapsibleContent>
         </SidebarGroup>
       </Collapsible>
-    )
-  }
+    );
+  };
 
   return (
     <Sidebar variant="inset">
       <SidebarHeader>
-        <Link href="/dashboard" className="flex flex-col gap-0.5 px-2 py-3 hover:opacity-80 transition-opacity">
+        <Link
+          href="/dashboard"
+          className="flex flex-col gap-0.5 px-2 py-3 hover:opacity-80 transition-opacity"
+        >
           <span className="text-sidebar-foreground/50 text-xs uppercase tracking-widest">PMG</span>
           <span className="text-sidebar-foreground text-sm font-semibold">Control Center</span>
         </Link>
@@ -207,7 +241,7 @@ export function AppSidebar({ user }: AppSidebarProps) {
         </div>
       </SidebarFooter>
     </Sidebar>
-  )
+  );
 }
 ```
 
@@ -220,23 +254,23 @@ Add billing routes to `ROUTE_LABELS`:
 
 ```ts
 const ROUTE_LABELS: Record<string, string> = {
-  '/dashboard':          'Dashboard',
-  '/income':             'Income',
-  '/expenses':           'Expenses',
+  '/dashboard': 'Dashboard',
+  '/income': 'Income',
+  '/expenses': 'Expenses',
   '/expense-categories': 'Categories',
-  '/ledger':             'Corporate Ledger',
-  '/accounts':           'Accounts',
-  '/billing/quotes':     'Quotations',
-  '/billing/invoices':   'Invoices',
+  '/ledger': 'Corporate Ledger',
+  '/accounts': 'Accounts',
+  '/billing/quotes': 'Quotations',
+  '/billing/invoices': 'Invoices',
   '/billing/statements': 'Statements',
-  '/clients':            'Clients',
-  '/leads':              'Leads',
-  '/divisions':          'Divisions',
-  '/snapshots':          'Financial Snapshots',
-  '/reports':            'Reports & Insights',
-  '/users':              'Users',
-  '/settings':           'Settings',
-}
+  '/clients': 'Clients',
+  '/leads': 'Leads',
+  '/divisions': 'Divisions',
+  '/snapshots': 'Financial Snapshots',
+  '/reports': 'Reports & Insights',
+  '/users': 'Users',
+  '/settings': 'Settings',
+};
 ```
 
 ### Current Admin Layout (`src/app/(admin)/layout.tsx`)
@@ -347,7 +381,7 @@ src/app/(admin)/
 
 ---
 
-## 4. Billing *(Next build phase)*
+## 4. Billing _(Next build phase)_
 
 ### `/billing/quotes` - Quotations
 
@@ -431,20 +465,20 @@ src/app/(admin)/
 
 ```ts
 // src/app/actions/billing-quotes.ts
-'use server'
+'use server';
 
-import { z } from 'zod'
-import { revalidatePath } from 'next/cache'
-import { redirect } from 'next/navigation'
-import { getDb } from '@pmg/db'
-import { getSessionOrRedirect } from '@/lib/auth'
+import { z } from 'zod';
+import { revalidatePath } from 'next/cache';
+import { redirect } from 'next/navigation';
+import { getDb } from '@pmg/db';
+import { getSessionOrRedirect } from '@/lib/auth';
 
 const LineSchema = z.object({
   description: z.string().min(1).max(500),
   qty: z.number().positive(),
   unitPrice: z.number().nonnegative(),
   taxRate: z.number().min(0).max(100),
-})
+});
 
 const QuoteSchema = z.object({
   clientId: z.string().uuid(),
@@ -452,18 +486,18 @@ const QuoteSchema = z.object({
   notes: z.string().max(2000).optional(),
   terms: z.string().max(2000).optional(),
   lines: z.array(LineSchema).min(1).max(100),
-})
+});
 
 export async function createQuotation(input: unknown) {
-  await getSessionOrRedirect()
-  const data = QuoteSchema.parse(input)
-  const db = getDb()
+  await getSessionOrRedirect();
+  const data = QuoteSchema.parse(input);
+  const db = getDb();
 
   // TODO: implement once billing schema is in @pmg/db
   // const id = await db.transaction(async (tx) => { ... })
 
-  revalidatePath('/billing/quotes')
-  redirect(`/billing/quotes/new`) // update to /billing/quotes/${id} after schema
+  revalidatePath('/billing/quotes');
+  redirect(`/billing/quotes/new`); // update to /billing/quotes/${id} after schema
 }
 ```
 
@@ -521,7 +555,7 @@ export async function createQuotation(input: unknown) {
 
 ---
 
-## 7. System *(pinned to sidebar bottom)*
+## 7. System _(pinned to sidebar bottom)_
 
 ### `/users` - User Management
 
@@ -538,6 +572,7 @@ export async function createQuotation(input: unknown) {
 **Status:** 🔲 **Shell page created**
 
 **Planned sections:**
+
 - Company profile (name, address, contact, logo)
 - Document numbering (prefixes per division, sequences)
 - Tax settings (VAT rate, registration number)
@@ -566,7 +601,7 @@ Enums: `quote_status` (DRAFT, SENT, ACCEPTED, DECLINED, CANCELLED),
 
 ## 9. Build Order
 
-1. **Phase 0** *(done)* - Core finance, relationships, insights, users.
+1. **Phase 0** _(done)_ - Core finance, relationships, insights, users.
 2. **Phase 1** - Billing schema in `@pmg/db` + `getNextDocumentNumber`.
 3. **Phase 2** - `/billing/quotes` end-to-end (form, actions, detail, status workflow).
 4. **Phase 3** - `/billing/invoices` + income auto-insert on paid.

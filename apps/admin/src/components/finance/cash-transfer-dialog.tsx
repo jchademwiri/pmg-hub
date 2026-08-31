@@ -30,7 +30,12 @@ interface CashTransferDialogProps {
   suggestedAmount?: number;
 }
 
-export function CashTransferDialog({ open, onOpenChange, accounts, suggestedAmount }: CashTransferDialogProps) {
+export function CashTransferDialog({
+  open,
+  onOpenChange,
+  accounts,
+  suggestedAmount,
+}: CashTransferDialogProps) {
   const [loading, setLoading] = useState(false);
   const [amount, setAmount] = useState('');
   const [fromAccountId, setFromAccountId] = useState('');
@@ -106,9 +111,18 @@ export function CashTransferDialog({ open, onOpenChange, accounts, suggestedAmou
           {suggestedAmount && suggestedAmount > 0 && (
             <div className="flex items-center justify-between p-2.5 rounded-lg bg-blue-500/10 border border-blue-500/20 text-xs">
               <span className="text-blue-600 dark:text-blue-400 font-medium">
-                Pending PMG Share Transfer: <strong>R {suggestedAmount.toLocaleString('en-ZA', { minimumFractionDigits: 2 })}</strong>
+                Pending PMG Share Transfer:{' '}
+                <strong>
+                  R {suggestedAmount.toLocaleString('en-ZA', { minimumFractionDigits: 2 })}
+                </strong>
               </span>
-              <Button type="button" variant="outline" size="xs" onClick={handleAutofill} className="h-6 text-[11px] px-2">
+              <Button
+                type="button"
+                variant="outline"
+                size="xs"
+                onClick={handleAutofill}
+                className="h-6 text-[11px] px-2"
+              >
                 Auto-fill
               </Button>
             </div>
@@ -177,8 +191,17 @@ export function CashTransferDialog({ open, onOpenChange, accounts, suggestedAmou
             <Button type="button" variant="outline" size="sm" onClick={() => onOpenChange(false)}>
               Cancel
             </Button>
-            <Button type="submit" size="sm" disabled={loading} className="gap-1.5 bg-blue-600 hover:bg-blue-500 text-white">
-              {loading ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <ArrowRightLeft className="h-3.5 w-3.5" />}
+            <Button
+              type="submit"
+              size="sm"
+              disabled={loading}
+              className="gap-1.5 bg-blue-600 hover:bg-blue-500 text-white"
+            >
+              {loading ? (
+                <Loader2 className="h-3.5 w-3.5 animate-spin" />
+              ) : (
+                <ArrowRightLeft className="h-3.5 w-3.5" />
+              )}
               Record Transfer
             </Button>
           </DialogFooter>

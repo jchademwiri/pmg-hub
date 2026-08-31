@@ -25,18 +25,18 @@
 
 Phases 0–9 are complete. The app is functionally operational.
 
-| Route | Status |
-|---|---|
-| `/dashboard` | Complete |
-| `/income` + `/income/[id]` | Complete |
-| `/expenses` + `/expenses/[id]` | Complete |
-| `/leads` + `/leads/[id]` | Complete (read/update only) |
-| `/divisions` | Complete |
-| `/snapshots` | Complete |
-| `/reports` | Complete |
-| `/clients` | MISSING entirely |
-| `/withdrawals` | No dedicated page |
-| `/login` | Stub - auth deferred to Phase 10 |
+| Route                          | Status                           |
+| ------------------------------ | -------------------------------- |
+| `/dashboard`                   | Complete                         |
+| `/income` + `/income/[id]`     | Complete                         |
+| `/expenses` + `/expenses/[id]` | Complete                         |
+| `/leads` + `/leads/[id]`       | Complete (read/update only)      |
+| `/divisions`                   | Complete                         |
+| `/snapshots`                   | Complete                         |
+| `/reports`                     | Complete                         |
+| `/clients`                     | MISSING entirely                 |
+| `/withdrawals`                 | No dedicated page                |
+| `/login`                       | Stub - auth deferred to Phase 10 |
 
 **Stack:** Next.js 16 · React 19 · TypeScript · Drizzle ORM · Neon PostgreSQL · Tailwind v4 · shadcn/ui · Recharts · Sonner · Zod · Bun · Turborepo
 
@@ -46,36 +46,36 @@ Phases 0–9 are complete. The app is functionally operational.
 
 ### CRUD Coverage
 
-| Entity | Create | Read | Update | Delete |
-|---|---|---|---|---|
-| Income | Yes | Yes | Yes | Yes |
-| Expenses | Yes | Yes | Yes | Yes |
-| Divisions | Yes | Yes | Yes | Yes |
-| Clients | NO | Yes (via income) | NO | NO |
-| Leads | NO | Yes | Yes (status/notes only) | NO |
-| Withdrawals | Yes | Yes (dashboard only) | NO | NO |
-| Snapshots | Yes | Yes | NO | NO |
+| Entity      | Create | Read                 | Update                  | Delete |
+| ----------- | ------ | -------------------- | ----------------------- | ------ |
+| Income      | Yes    | Yes                  | Yes                     | Yes    |
+| Expenses    | Yes    | Yes                  | Yes                     | Yes    |
+| Divisions   | Yes    | Yes                  | Yes                     | Yes    |
+| Clients     | NO     | Yes (via income)     | NO                      | NO     |
+| Leads       | NO     | Yes                  | Yes (status/notes only) | NO     |
+| Withdrawals | Yes    | Yes (dashboard only) | NO                      | NO     |
+| Snapshots   | Yes    | Yes                  | NO                      | NO     |
 
 ### All Identified Gaps
 
-| # | Gap | Source | Stage |
-|---|---|---|---|
-| 1 | `clientId` is optional on income - must be required | Owner rule | Blocker |
-| 2 | No `/clients` page - cannot add/edit/delete clients | Codebase scan | Blocker |
-| 3 | Expense categories are freetext - typos cause chart drift | Codebase scan | Blocker |
-| 4 | Breadcrumb hardcoded to "Dashboard" on every page | Codebase scan | Blocker |
-| 5 | `formatZAR` missing on income table amount column | Codebase scan | Blocker |
-| 6 | No withdrawal history page or edit/delete | Owner + scan | High |
-| 7 | No lead create or delete in admin | Owner + scan | High |
-| 8 | Delete buttons have no loading/pending state | Codebase scan | High |
-| 9 | No success toast on create/update - only errors shown | Codebase scan | High |
-| 10 | Date fields do not default to today | Codebase scan | High |
-| 11 | Close month button flashes before snapshot check resolves | Codebase scan | High |
-| 12 | Withdrawal over-limit has no guard | Codebase scan | High |
-| 13 | No pagination - all rows loaded at once | Codebase scan | Medium |
-| 14 | Leads notes textarea style inconsistent with other inputs | Codebase scan | Medium |
-| 15 | Dashboard loading skeleton does not match actual layout | Codebase scan | Medium |
-| 16 | No client revenue report | Owner | Medium |
+| #   | Gap                                                       | Source        | Stage   |
+| --- | --------------------------------------------------------- | ------------- | ------- |
+| 1   | `clientId` is optional on income - must be required       | Owner rule    | Blocker |
+| 2   | No `/clients` page - cannot add/edit/delete clients       | Codebase scan | Blocker |
+| 3   | Expense categories are freetext - typos cause chart drift | Codebase scan | Blocker |
+| 4   | Breadcrumb hardcoded to "Dashboard" on every page         | Codebase scan | Blocker |
+| 5   | `formatZAR` missing on income table amount column         | Codebase scan | Blocker |
+| 6   | No withdrawal history page or edit/delete                 | Owner + scan  | High    |
+| 7   | No lead create or delete in admin                         | Owner + scan  | High    |
+| 8   | Delete buttons have no loading/pending state              | Codebase scan | High    |
+| 9   | No success toast on create/update - only errors shown     | Codebase scan | High    |
+| 10  | Date fields do not default to today                       | Codebase scan | High    |
+| 11  | Close month button flashes before snapshot check resolves | Codebase scan | High    |
+| 12  | Withdrawal over-limit has no guard                        | Codebase scan | High    |
+| 13  | No pagination - all rows loaded at once                   | Codebase scan | Medium  |
+| 14  | Leads notes textarea style inconsistent with other inputs | Codebase scan | Medium  |
+| 15  | Dashboard loading skeleton does not match actual layout   | Codebase scan | Medium  |
+| 16  | No client revenue report                                  | Owner         | Medium  |
 
 ---
 
@@ -92,6 +92,7 @@ The `clients` table exists with full schema. There is no route, no server action
 no UI. Clients can only be selected in the income form - there is no way to add one.
 
 **Files needed:**
+
 - `apps/admin/src/app/actions/clients.ts`
 - `apps/admin/src/app/(admin)/clients/page.tsx`
 - `apps/admin/src/app/(admin)/clients/[id]/page.tsx`
@@ -161,6 +162,7 @@ Owner rule: all income must have a client. Currently clientId is nullable at eve
 layer - schema, server action, and UI all allow "No client".
 
 **Files to change:**
+
 - `packages/db/src/schema/income.ts` - remove nullable on clientId
 - Drizzle migration - handle existing nulls, then ALTER COLUMN SET NOT NULL
 - `apps/admin/src/app/actions/income.ts` - make clientId required in Zod
@@ -209,6 +211,7 @@ break the expense-by-category chart grouping (e.g. "Software" vs "software" are
 treated as different categories). A managed table fixes this permanently.
 
 **Files needed:**
+
 - `packages/db/src/schema/expense-categories.ts` - new table
 - Drizzle migration - create table, seed from existing distinct categories
 - `apps/admin/src/app/actions/expense-categories.ts`
@@ -632,16 +635,16 @@ The reports page currently has no client dimension.
 
 Low priority. Address post-launch based on real usage feedback.
 
-| # | Item | Notes |
-|---|---|---|
-| P1 | Audit trail | Add createdBy / updatedBy fields once auth is live (Phase 10) |
-| P2 | Bulk import | CSV import for income/expenses - useful for historical data entry |
-| P3 | Mobile form UX | Inline add forms are cramped on small screens - consider modal forms |
-| P4 | Dark mode toggle | Currently hardcoded dark - low demand for MVP |
-| P5 | Email alerts | Notify on large transactions or low reserve - needs auth first |
-| P6 | Lead to Client conversion | One-click convert a lead to a client when status changes to converted |
-| P7 | Snapshot edit/delete | Currently immutable - add admin override with confirmation |
-| P8 | Division archiving | Soft-delete divisions instead of hard FK block |
+| #   | Item                      | Notes                                                                 |
+| --- | ------------------------- | --------------------------------------------------------------------- |
+| P1  | Audit trail               | Add createdBy / updatedBy fields once auth is live (Phase 10)         |
+| P2  | Bulk import               | CSV import for income/expenses - useful for historical data entry     |
+| P3  | Mobile form UX            | Inline add forms are cramped on small screens - consider modal forms  |
+| P4  | Dark mode toggle          | Currently hardcoded dark - low demand for MVP                         |
+| P5  | Email alerts              | Notify on large transactions or low reserve - needs auth first        |
+| P6  | Lead to Client conversion | One-click convert a lead to a client when status changes to converted |
+| P7  | Snapshot edit/delete      | Currently immutable - add admin override with confirmation            |
+| P8  | Division archiving        | Soft-delete divisions instead of hard FK block                        |
 
 ---
 

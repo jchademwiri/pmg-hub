@@ -9,7 +9,12 @@ import { issueInvoice, voidInvoice } from '@/app/actions/billing-invoices';
 import { InvoicesTable } from './invoices-table';
 import { LazyInvoicesTable } from './lazy-invoices-table';
 import { InvoicesClient } from './invoices-client';
-import { Accordion, AccordionItem, AccordionTrigger, AccordionContent } from '@/components/ui/accordion';
+import {
+  Accordion,
+  AccordionItem,
+  AccordionTrigger,
+  AccordionContent,
+} from '@/components/ui/accordion';
 import { generateFinancialYearGroups } from '@/lib/billing-groups';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { FileText, CheckCircle2, Clock } from 'lucide-react';
@@ -34,10 +39,7 @@ export default async function InvoicesPage({ searchParams }: InvoicesPageProps) 
 
   let result;
   if (isFiltered) {
-    result = await getAllInvoices(
-      { divisionId, status },
-      { page: currentPage, pageSize }
-    );
+    result = await getAllInvoices({ divisionId, status }, { page: currentPage, pageSize });
   } else {
     result = await getAllInvoices(
       { divisionId, status, month: currentMonth },
@@ -46,7 +48,7 @@ export default async function InvoicesPage({ searchParams }: InvoicesPageProps) 
   }
 
   const { currentMonths, previousYearGroup } = generateFinancialYearGroups();
-  
+
   // The first month in currentMonths is the current month
   const currentMonthGroup = currentMonths[0];
   const previousMonths = currentMonths.slice(1);
@@ -95,7 +97,11 @@ export default async function InvoicesPage({ searchParams }: InvoicesPageProps) 
       </div>
 
       {/* Mobile FAB */}
-      <Button asChild size="icon" className="md:hidden fixed bottom-20 right-4 z-50 rounded-full shadow-lg h-14 w-14">
+      <Button
+        asChild
+        size="icon"
+        className="md:hidden fixed bottom-20 right-4 z-50 rounded-full shadow-lg h-14 w-14"
+      >
         <Link href="/billing/invoices/new">
           <Plus className="size-6" />
         </Link>
@@ -109,32 +115,53 @@ export default async function InvoicesPage({ searchParams }: InvoicesPageProps) 
             <FileText className="size-3.5 md:size-4 text-primary shrink-0" />
           </div>
           <div>
-            <div className="text-base sm:text-lg md:text-2xl font-bold truncate" title={formatZAR(totalInvoiced)}>{formatZAR(totalInvoiced)}</div>
-            <p className="text-[10px] md:text-xs text-muted-foreground truncate mt-0.5">Current FY</p>
+            <div
+              className="text-base sm:text-lg md:text-2xl font-bold truncate"
+              title={formatZAR(totalInvoiced)}
+            >
+              {formatZAR(totalInvoiced)}
+            </div>
+            <p className="text-[10px] md:text-xs text-muted-foreground truncate mt-0.5">
+              Current FY
+            </p>
           </div>
         </Card>
-        
+
         <Card className="shadow-sm flex flex-col p-4 md:p-6 justify-center gap-1.5 md:gap-2">
           <div className="flex items-center justify-between">
             <h3 className="text-xs md:text-sm font-medium text-muted-foreground">Collected</h3>
             <CheckCircle2 className="size-3.5 md:size-4 text-emerald-500 shrink-0" />
           </div>
           <div>
-            <div className="text-base sm:text-lg md:text-2xl font-bold text-emerald-600 dark:text-emerald-400 truncate" title={formatZAR(totalPaid)}>{formatZAR(totalPaid)}</div>
-            <p className="text-[10px] md:text-xs text-muted-foreground truncate mt-0.5">Paid invoices</p>
+            <div
+              className="text-base sm:text-lg md:text-2xl font-bold text-emerald-600 dark:text-emerald-400 truncate"
+              title={formatZAR(totalPaid)}
+            >
+              {formatZAR(totalPaid)}
+            </div>
+            <p className="text-[10px] md:text-xs text-muted-foreground truncate mt-0.5">
+              Paid invoices
+            </p>
           </div>
         </Card>
-        
+
         <Card className="shadow-sm col-span-2 md:col-span-1 flex flex-col p-4 md:p-6 justify-center gap-1.5 md:gap-2 border-amber-500/20 bg-amber-500/5">
           <div className="flex items-center justify-between">
-            <h3 className="text-xs md:text-sm font-semibold text-amber-600/80 dark:text-amber-500/80 uppercase tracking-wider">Outstanding</h3>
+            <h3 className="text-xs md:text-sm font-semibold text-amber-600/80 dark:text-amber-500/80 uppercase tracking-wider">
+              Outstanding
+            </h3>
             <Clock className="size-3.5 md:size-4 text-amber-600 dark:text-amber-500 shrink-0" />
           </div>
           <div>
-            <div className={`text-xl md:text-2xl font-bold truncate ${totalOutstanding > 0 ? 'text-amber-600 dark:text-amber-500' : 'text-emerald-600 dark:text-emerald-500'}`} title={formatZAR(totalOutstanding)}>
+            <div
+              className={`text-xl md:text-2xl font-bold truncate ${totalOutstanding > 0 ? 'text-amber-600 dark:text-amber-500' : 'text-emerald-600 dark:text-emerald-500'}`}
+              title={formatZAR(totalOutstanding)}
+            >
               {formatZAR(totalOutstanding)}
             </div>
-            <p className="text-[10px] md:text-xs text-amber-600/70 dark:text-amber-500/70 truncate mt-0.5 font-medium">Pending collection</p>
+            <p className="text-[10px] md:text-xs text-amber-600/70 dark:text-amber-500/70 truncate mt-0.5 font-medium">
+              Pending collection
+            </p>
           </div>
         </Card>
       </div>
@@ -151,9 +178,14 @@ export default async function InvoicesPage({ searchParams }: InvoicesPageProps) 
           voidAction={voidInvoice}
         />
       ) : (
-        <Accordion type="single" collapsible defaultValue={currentMonthGroup.value} className="w-full flex flex-col gap-4">
+        <Accordion
+          type="single"
+          collapsible
+          defaultValue={currentMonthGroup.value}
+          className="w-full flex flex-col gap-4"
+        >
           {[currentMonthGroup, ...previousMonths].map((m, idx) => {
-            const summary = monthlySummaries.find(s => s.month === m.value);
+            const summary = monthlySummaries.find((s) => s.month === m.value);
             const count = summary?.count || 0;
             const invoiced = summary?.total || 0;
             const outstanding = summary?.outstanding || 0;
@@ -161,7 +193,11 @@ export default async function InvoicesPage({ searchParams }: InvoicesPageProps) 
             const isCurrent = idx === 0;
 
             return (
-              <AccordionItem key={m.value} value={m.value} className="border bg-card rounded-lg px-6 data-[state=open]:pb-6">
+              <AccordionItem
+                key={m.value}
+                value={m.value}
+                className="border bg-card rounded-lg px-6 data-[state=open]:pb-6"
+              >
                 <AccordionTrigger className="hover:no-underline py-4">
                   <div className="flex flex-1 items-center justify-between text-left pr-4">
                     <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-4 w-full">
@@ -199,21 +235,37 @@ export default async function InvoicesPage({ searchParams }: InvoicesPageProps) 
                       voidAction={voidInvoice}
                     />
                   ) : (
-                    <LazyInvoicesTable year={m.year} month={m.month} divisionId={divisionId} status={status} issueAction={issueInvoice} voidAction={voidInvoice} />
+                    <LazyInvoicesTable
+                      year={m.year}
+                      month={m.month}
+                      divisionId={divisionId}
+                      status={status}
+                      issueAction={issueInvoice}
+                      voidAction={voidInvoice}
+                    />
                   )}
                 </AccordionContent>
               </AccordionItem>
             );
           })}
-          
-          <AccordionItem value={previousYearGroup.value} className="border bg-card rounded-lg px-6 data-[state=open]:pb-6 mt-4">
+
+          <AccordionItem
+            value={previousYearGroup.value}
+            className="border bg-card rounded-lg px-6 data-[state=open]:pb-6 mt-4"
+          >
             <AccordionTrigger className="flex items-center w-full pr-4 hover:no-underline group/trigger">
               <span className="flex-1 text-left text-lg font-medium text-muted-foreground group-data-[state=open]/trigger:text-foreground transition-colors">
                 {previousYearGroup.label}
               </span>
             </AccordionTrigger>
             <AccordionContent className="pt-2">
-              <LazyInvoicesTable year={previousYearGroup.year} divisionId={divisionId} status={status} issueAction={issueInvoice} voidAction={voidInvoice} />
+              <LazyInvoicesTable
+                year={previousYearGroup.year}
+                divisionId={divisionId}
+                status={status}
+                issueAction={issueInvoice}
+                voidAction={voidInvoice}
+              />
             </AccordionContent>
           </AccordionItem>
         </Accordion>

@@ -15,17 +15,17 @@ Implemented automatic double-entry journal posting across the entire billing lif
 
 **703 lines** — the canonical module for all auto-posted journal entries.
 
-| Function | Entry Shape | Trigger |
-|----------|------------|---------|
-| `postInvoiceIssueJournalEntry` | Dr AR (1100) / Cr Revenue (4010) | Invoice issued |
-| `postPaymentJournalEntries` | Dr Bank (1010) / Cr AR (1100) + Dr Savings (1020) / Cr Bank (1010) | Payment received |
-| `voidInvoiceJournalEntries` | Voids AR + payment entries linked to invoice | Invoice voided |
-| `voidPaymentJournalEntries` | Voids entries linked to income record | Payment deleted |
-| `updatePaymentJournalEntries` | Void + repost with new amount | Payment adjusted |
-| `updateInvoiceJournalEntry` | Voids ONLY AR entry (not payment entries) + repost | Invoice amount edited |
-| `postExpenseJournalEntry` | Dr Expense Account / Cr Bank (1010) | Expense recorded |
-| `voidExpenseJournalEntries` | Voids expense entry | Expense deleted |
-| `updateExpenseJournalEntry` | Void + repost with new amount/category | Expense edited |
+| Function                       | Entry Shape                                                        | Trigger               |
+| ------------------------------ | ------------------------------------------------------------------ | --------------------- |
+| `postInvoiceIssueJournalEntry` | Dr AR (1100) / Cr Revenue (4010)                                   | Invoice issued        |
+| `postPaymentJournalEntries`    | Dr Bank (1010) / Cr AR (1100) + Dr Savings (1020) / Cr Bank (1010) | Payment received      |
+| `voidInvoiceJournalEntries`    | Voids AR + payment entries linked to invoice                       | Invoice voided        |
+| `voidPaymentJournalEntries`    | Voids entries linked to income record                              | Payment deleted       |
+| `updatePaymentJournalEntries`  | Void + repost with new amount                                      | Payment adjusted      |
+| `updateInvoiceJournalEntry`    | Voids ONLY AR entry (not payment entries) + repost                 | Invoice amount edited |
+| `postExpenseJournalEntry`      | Dr Expense Account / Cr Bank (1010)                                | Expense recorded      |
+| `voidExpenseJournalEntries`    | Voids expense entry                                                | Expense deleted       |
+| `updateExpenseJournalEntry`    | Void + repost with new amount/category                             | Expense edited        |
 
 ### 2. Atomicity via `db.batch()`
 
@@ -36,16 +36,17 @@ Implemented automatic double-entry journal posting across the entire billing lif
 
 ### 3. Wiring Into Server Actions
 
-| File | Changes |
-|------|---------|
+| File                  | Changes                                                                                                                                   |
+| --------------------- | ----------------------------------------------------------------------------------------------------------------------------------------- |
 | `billing-invoices.ts` | `issueInvoice`, `bulkIssueInvoices`, `markInvoicePaid`, `voidInvoice`, `bulkVoidInvoices`, `updateInvoice` (amount edit → void+repost AR) |
-| `billing-payments.ts` | `recordClientPayment`, `adjustClientPayment`, `updateClientPayment`, `deleteClientPayment` |
-| `expenses.ts` | `createExpense`, `updateExpense`, `deleteExpense` |
-| `income.ts` | `deleteIncome` |
+| `billing-payments.ts` | `recordClientPayment`, `adjustClientPayment`, `updateClientPayment`, `deleteClientPayment`                                                |
+| `expenses.ts`         | `createExpense`, `updateExpense`, `deleteExpense`                                                                                         |
+| `income.ts`           | `deleteIncome`                                                                                                                            |
 
 ### 4. Backfill Script (`backfill-accrual-ar.ts`)
 
 494-line migration script that:
+
 - Voids old cash-basis income entries (pre-flight cleanup)
 - Posts Dr AR / Cr Revenue for all existing invoices
 - Posts Dr Bank / Cr AR per payment allocation
@@ -58,6 +59,7 @@ Implemented automatic double-entry journal posting across the entire billing lif
 ### 5. Test Mock Fixes
 
 Updated `finance-expenses.test.tsx` mocks to include:
+
 - `chartAccounts`, `journalEntries`, `journalLines`, `paymentAllocations` tables
 - `ACCOUNT_RATES`, `getNextJournalEntryNumber`, `ensureOpenPeriod`, `sql`, `and`, `batch`
 - Proper `db.select().from().where()` chain support
@@ -89,16 +91,16 @@ Updated `finance-expenses.test.tsx` mocks to include:
 
 ## Files Changed
 
-| File | Lines Changed |
-|------|--------------|
-| `apps/admin/src/app/actions/accounting-auto-post.ts` | +703 (new) |
-| `apps/admin/src/app/actions/billing-invoices.ts` | +98 |
-| `apps/admin/src/app/actions/billing-payments.ts` | +52 |
-| `apps/admin/src/app/actions/expenses.ts` | +45 |
-| `apps/admin/src/app/actions/income.ts` | +13 |
-| `packages/db/src/backfill-accrual-ar.ts` | +494 (new) |
-| `apps/admin/src/__tests__/finance-expenses.test.tsx` | ~30 (mock updates) |
-| `pmg-hub-phase8-ar-journal-posting-plan.md` | +229 (reference doc) |
+| File                                                 | Lines Changed        |
+| ---------------------------------------------------- | -------------------- |
+| `apps/admin/src/app/actions/accounting-auto-post.ts` | +703 (new)           |
+| `apps/admin/src/app/actions/billing-invoices.ts`     | +98                  |
+| `apps/admin/src/app/actions/billing-payments.ts`     | +52                  |
+| `apps/admin/src/app/actions/expenses.ts`             | +45                  |
+| `apps/admin/src/app/actions/income.ts`               | +13                  |
+| `packages/db/src/backfill-accrual-ar.ts`             | +494 (new)           |
+| `apps/admin/src/__tests__/finance-expenses.test.tsx` | ~30 (mock updates)   |
+| `pmg-hub-phase8-ar-journal-posting-plan.md`          | +229 (reference doc) |
 
 **Total:** ~1,600+ lines across 8 files
 

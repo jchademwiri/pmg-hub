@@ -59,10 +59,10 @@ Users may NOT:
 
 ### Grace Period Boundary - Exact Definition
 
-| Day of Month | Previous Month Allowed? | Notes |
-|---|---|---|
-| 1st – 5th | ✅ Yes (if no snapshot) | Grace period active |
-| 6th onwards | ❌ No | Grace period over |
+| Day of Month | Previous Month Allowed? | Notes               |
+| ------------ | ----------------------- | ------------------- |
+| 1st – 5th    | ✅ Yes (if no snapshot) | Grace period active |
+| 6th onwards  | ❌ No                   | Grace period over   |
 
 > Day 5 is the last day of the grace period. From day 6, only the current month is permitted.
 >
@@ -122,21 +122,21 @@ This applies to: income, expenses, and ledger entries.
 
 ## 1.6 Acceptance Criteria
 
-| Scenario | Expected Outcome |
-|----------|----------------|
-| Create record in current month | ✅ Allowed |
-| Create record in previous month, day 1–5, no snapshot | ✅ Allowed |
-| Create record in previous month, day 1–5, snapshot exists | ❌ Blocked |
-| Create record in previous month, day 6+ | ❌ Blocked |
-| Create record in any month older than previous | ❌ Blocked |
-| Edit record in open period | ✅ Allowed |
-| Edit record in closed period | ❌ Blocked |
-| Delete record in open period | ✅ Allowed |
-| Delete record in closed period | ❌ Blocked |
-| Create future-dated record | ❌ Blocked |
-| Close Month button targets correct period (previous month) | ✅ Required |
-| Create snapshot for a period that already has one | ❌ Blocked (already implemented) |
-| Modify or delete snapshot via UI | ❌ No UI exists (by design) |
+| Scenario                                                   | Expected Outcome                 |
+| ---------------------------------------------------------- | -------------------------------- |
+| Create record in current month                             | ✅ Allowed                       |
+| Create record in previous month, day 1–5, no snapshot      | ✅ Allowed                       |
+| Create record in previous month, day 1–5, snapshot exists  | ❌ Blocked                       |
+| Create record in previous month, day 6+                    | ❌ Blocked                       |
+| Create record in any month older than previous             | ❌ Blocked                       |
+| Edit record in open period                                 | ✅ Allowed                       |
+| Edit record in closed period                               | ❌ Blocked                       |
+| Delete record in open period                               | ✅ Allowed                       |
+| Delete record in closed period                             | ❌ Blocked                       |
+| Create future-dated record                                 | ❌ Blocked                       |
+| Close Month button targets correct period (previous month) | ✅ Required                      |
+| Create snapshot for a period that already has one          | ❌ Blocked (already implemented) |
+| Modify or delete snapshot via UI                           | ❌ No UI exists (by design)      |
 
 ---
 
@@ -177,17 +177,17 @@ Server actions are the **single source of enforcement**. UI restrictions are a U
 
 ```ts
 // Returns YYYY-MM-DD string: the earliest date allowed for new records
-export async function getMinAllowedDate(): Promise<string>
+export async function getMinAllowedDate(): Promise<string>;
 
 // Returns true if the period containing `date` is closed
-export async function isPeriodClosed(date: string): Promise<boolean>
+export async function isPeriodClosed(date: string): Promise<boolean>;
 
 // Returns a human-readable error message for a rejected date
-export function getMinDateErrorMessage(minDate: string): string
+export function getMinDateErrorMessage(minDate: string): string;
 
 // Returns sorted array of closed period strings (YYYY-MM) from a list of dates
 // Used by UI table components to determine which rows are locked
-export async function getClosedPeriodsFromDates(dates: string[]): Promise<string[]>
+export async function getClosedPeriodsFromDates(dates: string[]): Promise<string[]>;
 ```
 
 > **⚠️ `getMinAllowedDate` must be `async`.**
@@ -266,17 +266,17 @@ down to table components for UI enforcement.
 
 ```ts
 // On June 3rd, no May snapshot
-await getMinAllowedDate()     // → "2026-05-01"
-await isPeriodClosed("2026-05-15")  // → false
-await isPeriodClosed("2026-04-10")  // → true  (older than previous)
+await getMinAllowedDate(); // → "2026-05-01"
+await isPeriodClosed('2026-05-15'); // → false
+await isPeriodClosed('2026-04-10'); // → true  (older than previous)
 
 // On June 6th, regardless of snapshot
-await getMinAllowedDate()     // → "2026-06-01"
-await isPeriodClosed("2026-05-15")  // → true  (grace period over)
+await getMinAllowedDate(); // → "2026-06-01"
+await isPeriodClosed('2026-05-15'); // → true  (grace period over)
 
 // On June 3rd, May snapshot exists
-await getMinAllowedDate()     // → "2026-06-01"
-await isPeriodClosed("2026-05-15")  // → true  (snapshot exists)
+await getMinAllowedDate(); // → "2026-06-01"
+await isPeriodClosed('2026-05-15'); // → true  (snapshot exists)
 ```
 
 ---
@@ -291,11 +291,11 @@ The `currentPeriod` passed to `CloseMonthButton` must be the **previous month**,
 
 ```ts
 // CURRENT (WRONG) - closes current month
-const currentPeriod = now.toISOString().slice(0, 7)
+const currentPeriod = now.toISOString().slice(0, 7);
 
 // FIXED - closes previous month
-const prev = new Date(now.getFullYear(), now.getMonth() - 1, 1)
-const periodToClose = `${prev.getFullYear()}-${String(prev.getMonth() + 1).padStart(2, '0')}`
+const prev = new Date(now.getFullYear(), now.getMonth() - 1, 1);
+const periodToClose = `${prev.getFullYear()}-${String(prev.getMonth() + 1).padStart(2, '0')}`;
 ```
 
 Pass `periodToClose` to `CloseMonthButton` and `hasSnapshot` should check `periodToClose`, not `currentPeriod`.
@@ -325,11 +325,11 @@ No additional code changes needed for snapshot immutability beyond the dashboard
 
 Apply `isPeriodClosed` checks to these files:
 
-| File | Create | Update | Delete |
-|------|--------|--------|--------|
-| `actions/income.ts` | ✅ | ✅ | ✅ |
-| `actions/expenses.ts` | ✅ | ✅ | ✅ |
-| `actions/ledger.ts` | ✅ | ✅ | ✅ |
+| File                  | Create | Update | Delete |
+| --------------------- | ------ | ------ | ------ |
+| `actions/income.ts`   | ✅     | ✅     | ✅     |
+| `actions/expenses.ts` | ✅     | ✅     | ✅     |
+| `actions/ledger.ts`   | ✅     | ✅     | ✅     |
 
 > **`actions/account-withdrawal.ts` does NOT need changes.**
 > It is a thin wrapper that calls `createLedgerEntry`, which will be protected
@@ -340,17 +340,17 @@ Apply `isPeriodClosed` checks to these files:
 ### Create / Update Pattern
 
 ```ts
-import { isPeriodClosed, getMinAllowedDate, getMinDateErrorMessage } from '@/lib/date-rules'
+import { isPeriodClosed, getMinAllowedDate, getMinDateErrorMessage } from '@/lib/date-rules';
 
 // In createX / updateX:
-const today = new Date().toISOString().split('T')[0]!
+const today = new Date().toISOString().split('T')[0]!;
 if (parsed.date > today) {
-  return { error: 'Date cannot be in the future.' }
+  return { error: 'Date cannot be in the future.' };
 }
 
 if (await isPeriodClosed(parsed.date)) {
-  const minDate = await getMinAllowedDate()
-  return { error: getMinDateErrorMessage(minDate) }
+  const minDate = await getMinAllowedDate();
+  return { error: getMinDateErrorMessage(minDate) };
 }
 ```
 
@@ -366,21 +366,21 @@ Always fetch the record from the database first, then validate using the stored 
 export async function deleteIncome(id: string): Promise<{ error?: string }> {
   try {
     // 1. Fetch from DB - do not use any client-provided date
-    const existing = await getIncomeById(id)
-    if (!existing) return { error: 'Record not found.' }
+    const existing = await getIncomeById(id);
+    if (!existing) return { error: 'Record not found.' };
 
     // 2. Validate using stored date
     if (await isPeriodClosed(existing.date)) {
-      return { error: 'Cannot delete records from a closed financial period.' }
+      return { error: 'Cannot delete records from a closed financial period.' };
     }
 
     // 3. Proceed
-    await db.delete(income).where(eq(income.id, id))
-    revalidatePath('/income')
-    revalidatePath('/dashboard')
-    return {}
+    await db.delete(income).where(eq(income.id, id));
+    revalidatePath('/income');
+    revalidatePath('/dashboard');
+    return {};
   } catch {
-    return { error: 'Failed to delete. Please try again.' }
+    return { error: 'Failed to delete. Please try again.' };
   }
 }
 ```
@@ -431,8 +431,8 @@ closedPeriods: string[]
 Usage inside each row:
 
 ```ts
-const period = entry.date.slice(0, 7)  // "YYYY-MM"
-const isLocked = closedPeriods.includes(period)
+const period = entry.date.slice(0, 7); // "YYYY-MM"
+const isLocked = closedPeriods.includes(period);
 ```
 
 If `isLocked`:
@@ -442,15 +442,17 @@ If `isLocked`:
 - Optionally show a small lock badge on the row
 
 ```tsx
-{isLocked ? (
-  <span title="Period is closed" className="text-muted-foreground/40">
-    <Lock className="h-4 w-4" />
-  </span>
-) : (
-  <Button variant="ghost" size="icon" onClick={startEdit}>
-    <Pencil className="h-4 w-4" />
-  </Button>
-)}
+{
+  isLocked ? (
+    <span title="Period is closed" className="text-muted-foreground/40">
+      <Lock className="h-4 w-4" />
+    </span>
+  ) : (
+    <Button variant="ghost" size="icon" onClick={startEdit}>
+      <Pencil className="h-4 w-4" />
+    </Button>
+  );
+}
 ```
 
 ---
@@ -460,12 +462,7 @@ If `isLocked`:
 Pass `minDate: string` down from the page through the client component to the add and edit forms.
 
 ```tsx
-<Input
-  type="date"
-  name="date"
-  min={minDate}
-  max={today}
-/>
+<Input type="date" name="date" min={minDate} max={today} />
 ```
 
 ---
@@ -493,13 +490,13 @@ Server Action receives payload
 
 ## 2.7 Edge Cases
 
-| Case | Behaviour |
-|------|-----------|
-| Snapshot created on day 2 | Immediately locks that period - grace period irrelevant |
-| Empty month (no income/expenses) | Auto-close skips it; still locked by day ≥ 6 rule via `isPeriodClosed` |
-| Month 2+ months ago | Always closed - no snapshot check needed, `period < prevPeriod` short-circuits |
-| Timezone offset | Always use server time (`new Date()` in server actions). Never trust client dates |
-| Manual DB edits bypassing the app | Not in scope - requires DB-level triggers if needed in future |
+| Case                              | Behaviour                                                                         |
+| --------------------------------- | --------------------------------------------------------------------------------- |
+| Snapshot created on day 2         | Immediately locks that period - grace period irrelevant                           |
+| Empty month (no income/expenses)  | Auto-close skips it; still locked by day ≥ 6 rule via `isPeriodClosed`            |
+| Month 2+ months ago               | Always closed - no snapshot check needed, `period < prevPeriod` short-circuits    |
+| Timezone offset                   | Always use server time (`new Date()` in server actions). Never trust client dates |
+| Manual DB edits bypassing the app | Not in scope - requires DB-level triggers if needed in future                     |
 
 ---
 
@@ -514,13 +511,13 @@ Server Action receives payload
 
 ## 2.9 Implementation Phases
 
-| Phase | File(s) | Description | Commit |
-|-------|---------|-------------|--------|
-| P1 | `lib/date-rules.ts` | Create async date rules engine | `feat(core): add date rules engine` |
-| P2 | `dashboard/page.tsx` | Fix Close Month period target | `fix(snapshots): close previous month not current` |
-| P3 | `actions/income.ts`, `actions/expenses.ts`, `actions/ledger.ts` | Add create/update/delete locks | `feat(actions): block mutations on closed periods` |
-| P4 | `income/page.tsx`, `expenses/page.tsx`, `ledger/page.tsx` | Compute `minDate` + `closedPeriods` server-side | `feat(ui): pass lock data to client components` |
-| P5 | `income-table.tsx`, `expense-table.tsx`, `ledger-table.tsx`, add/edit forms | Apply `closedPeriods` and `minDate` to UI | `feat(ui): hide edit/delete for locked periods` |
+| Phase | File(s)                                                                     | Description                                     | Commit                                             |
+| ----- | --------------------------------------------------------------------------- | ----------------------------------------------- | -------------------------------------------------- |
+| P1    | `lib/date-rules.ts`                                                         | Create async date rules engine                  | `feat(core): add date rules engine`                |
+| P2    | `dashboard/page.tsx`                                                        | Fix Close Month period target                   | `fix(snapshots): close previous month not current` |
+| P3    | `actions/income.ts`, `actions/expenses.ts`, `actions/ledger.ts`             | Add create/update/delete locks                  | `feat(actions): block mutations on closed periods` |
+| P4    | `income/page.tsx`, `expenses/page.tsx`, `ledger/page.tsx`                   | Compute `minDate` + `closedPeriods` server-side | `feat(ui): pass lock data to client components`    |
+| P5    | `income-table.tsx`, `expense-table.tsx`, `ledger-table.tsx`, add/edit forms | Apply `closedPeriods` and `minDate` to UI       | `feat(ui): hide edit/delete for locked periods`    |
 
 ---
 

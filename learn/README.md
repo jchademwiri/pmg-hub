@@ -39,29 +39,29 @@ Use the operational pages first. The accounting pages are mainly for review, cor
 
 ## Which Guide Should I Read?
 
-| Area | Guide | Use It When |
-|------|-------|-------------|
-| Billing | [Billing Guide](./billing/README.md) | You create quotes, invoices, payments, statements, or credit notes |
-| Finance | [Finance Guide](./finance/README.md) | You record income, expenses, categories, and distributions |
-| Relationships | [Relationships Guide](./relationships/README.md) | You manage clients, leads, and divisions |
-| Scheduling | [Scheduling Guide](./scheduling/README.md) | You plan, track, and manage tender submissions |
-| Insights | [Insights Guide](./insights/README.md) | You review snapshots, reports, trends, and executive commentary |
-| Accounting | [Accounting Guide](./accounting/README.md) | You check journals, ledgers, trial balance, P&L, periods, and exports |
-| Settings | [Settings Guide](./settings/README.md) | You manage organisation details, billing setup, users, security, data exports, and backups |
+| Area          | Guide                                            | Use It When                                                                                |
+| ------------- | ------------------------------------------------ | ------------------------------------------------------------------------------------------ |
+| Billing       | [Billing Guide](./billing/README.md)             | You create quotes, invoices, payments, statements, or credit notes                         |
+| Finance       | [Finance Guide](./finance/README.md)             | You record income, expenses, categories, and distributions                                 |
+| Relationships | [Relationships Guide](./relationships/README.md) | You manage clients, leads, and divisions                                                   |
+| Scheduling    | [Scheduling Guide](./scheduling/README.md)       | You plan, track, and manage tender submissions                                             |
+| Insights      | [Insights Guide](./insights/README.md)           | You review snapshots, reports, trends, and executive commentary                            |
+| Accounting    | [Accounting Guide](./accounting/README.md)       | You check journals, ledgers, trial balance, P&L, periods, and exports                      |
+| Settings      | [Settings Guide](./settings/README.md)           | You manage organisation details, billing setup, users, security, data exports, and backups |
 
 ---
 
 ## Daily Routine
 
-| Task | Where To Go | Notes |
-|------|-------------|-------|
-| Add a new client | Relationships -> Clients | Do this before billing them |
-| Send a quote | Billing -> Quotes | Use the correct division |
-| Issue an invoice | Billing -> Invoices | Drafts are not sent yet |
-| Record a payment | Billing -> Payments | Allocate it to the right invoice |
-| Record an expense | Finance -> Expenses | Choose the best category |
-| Check what is owed | Billing -> Statements or client billing | Useful for follow-ups |
-| Review performance | Dashboard or Insights -> Reports | Use actual numbers, not memory |
+| Task               | Where To Go                             | Notes                            |
+| ------------------ | --------------------------------------- | -------------------------------- |
+| Add a new client   | Relationships -> Clients                | Do this before billing them      |
+| Send a quote       | Billing -> Quotes                       | Use the correct division         |
+| Issue an invoice   | Billing -> Invoices                     | Drafts are not sent yet          |
+| Record a payment   | Billing -> Payments                     | Allocate it to the right invoice |
+| Record an expense  | Finance -> Expenses                     | Choose the best category         |
+| Check what is owed | Billing -> Statements or client billing | Useful for follow-ups            |
+| Review performance | Dashboard or Insights -> Reports        | Use actual numbers, not memory   |
 
 ---
 

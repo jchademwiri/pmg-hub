@@ -1,26 +1,26 @@
-'use client'
+'use client';
 
-import { useRouter } from 'next/navigation'
+import { useRouter } from 'next/navigation';
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from '@/components/ui/select'
+} from '@/components/ui/select';
 
 interface YearFilterProps {
-  years: number[]
-  currentYear: number
+  years: number[];
+  currentYear: number;
 }
 
 export function YearFilter({ years, currentYear }: YearFilterProps) {
-  const router = useRouter()
+  const router = useRouter();
 
-  const options = years.length > 0 ? years : [currentYear]
+  const options = years.length > 0 ? years : [currentYear];
 
   function handleYearChange(value: string) {
-    router.push('/insights/reports?year=' + value)
+    router.push('/insights/reports?year=' + value);
   }
 
   return (
@@ -36,5 +36,5 @@ export function YearFilter({ years, currentYear }: YearFilterProps) {
         ))}
       </SelectContent>
     </Select>
-  )
+  );
 }

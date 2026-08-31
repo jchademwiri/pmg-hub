@@ -9,6 +9,7 @@ Drizzle ORM. The page is built entirely with React Server Components; no client-
 state, no loading spinners, no browser-initiated API calls.
 
 The two client component boundaries are:
+
 - `NavLink` - needs `usePathname` for active route highlighting
 - `AllocationTooltipBar` - needs shadcn Tooltip (which requires client interactivity)
 
@@ -55,7 +56,6 @@ apps/admin/src/
         ├── division-revenue.tsx
         └── leads-summary.tsx
 ```
-
 
 ### Data Flow
 
@@ -113,13 +113,16 @@ Client Components ('use client'):
 Run these commands before writing any Phase 2 code:
 
 **Step 1 - Sidebar block (auto-installs sidebar + all its dependencies):**
+
 ```bash
 npx shadcn@latest add sidebar-08 --cwd apps/admin
 ```
+
 This automatically installs: `sidebar`, `button`, `separator`, `skeleton`, `sheet`,
 `tooltip`, `input`, `avatar`. Do NOT install these separately.
 
 **Step 2 - Remaining components:**
+
 ```bash
 npx shadcn@latest add progress --cwd apps/admin
 npx shadcn@latest add scroll-area --cwd apps/admin
@@ -130,6 +133,7 @@ npx shadcn@latest add breadcrumb --cwd apps/admin
 **Already installed (verify, do not reinstall):** `card`, `badge`, `button`, `separator`
 
 **Optional reference scaffold (do not use verbatim):**
+
 ```bash
 npx shadcn@latest add login-01 --cwd apps/admin
 ```
@@ -146,20 +150,20 @@ Next.js 16 breaking change: the auth guard file must be named `proxy.ts` (not
 `middleware.ts`) and the exported function must be named `proxy` (not `middleware`).
 
 ```typescript
-import { NextResponse, type NextRequest } from 'next/server'
+import { NextResponse, type NextRequest } from 'next/server';
 
 export function proxy(request: NextRequest) {
   if (request.nextUrl.pathname.startsWith('/login')) {
-    return NextResponse.next()
+    return NextResponse.next();
   }
-  const session = request.cookies.get('better-auth.session_token')
+  const session = request.cookies.get('better-auth.session_token');
   if (!session) {
-    return NextResponse.redirect(new URL('/login', request.url))
+    return NextResponse.redirect(new URL('/login', request.url));
   }
-  return NextResponse.next()
+  return NextResponse.next();
 }
 
-export const config = { matcher: ['/:path*'] }
+export const config = { matcher: ['/:path*'] };
 ```
 
 > The `/login` path exclusion is required to prevent an infinite redirect loop.
@@ -188,6 +192,7 @@ No database calls. Cookie check only.
 > by browser extensions modifying the DOM before React hydrates.
 
 Key changes from current file:
+
 - Add `className="dark"` and `lang="en"` to `<html>`
 - Import Noto Sans from `next/font/google`, apply to `<body>`
 - Export `metadata` with title template, description, and noindex robots
@@ -232,10 +237,10 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
 > `(admin)` would create a circular route - `/dashboard` redirecting to `/dashboard`.
 
 ```typescript
-import { redirect } from 'next/navigation'
+import { redirect } from 'next/navigation';
 
 export default function AdminPage() {
-  redirect('/dashboard')
+  redirect('/dashboard');
 }
 ```
 
@@ -288,19 +293,21 @@ The `sidebar-08` block scaffolds this file. Customise it in place - do not creat
 separate sidebar component alongside it.
 
 Nav items:
+
 ```typescript
 const navItems = [
   { href: '/dashboard', label: 'Dashboard', icon: LayoutDashboard },
-  { href: '/income',    label: 'Income',    icon: TrendingUp },
-  { href: '/expenses',  label: 'Expenses',  icon: TrendingDown },
-  { href: '/leads',     label: 'Leads',     icon: Users },
+  { href: '/income', label: 'Income', icon: TrendingUp },
+  { href: '/expenses', label: 'Expenses', icon: TrendingDown },
+  { href: '/leads', label: 'Leads', icon: Users },
   { href: '/divisions', label: 'Divisions', icon: Layers },
-]
+];
 ```
 
 All icons from `lucide-react`.
 
 Sidebar header brand:
+
 ```tsx
 <div className="flex flex-col gap-0.5 px-2 py-3">
   <span className="text-sidebar-foreground/50 text-xs uppercase tracking-widest">PMG</span>
@@ -309,6 +316,7 @@ Sidebar header brand:
 ```
 
 Sidebar footer (replace user section):
+
 ```tsx
 <div className="px-2 py-3">
   <span className="text-sidebar-foreground/50 text-xs">PMG Admin</span>
@@ -400,7 +408,6 @@ export function NavLink({ href, label, icon }: NavLinkProps) {
 Active condition: `pathname === href || pathname.startsWith(href + '/')` - exact match or
 sub-route match. This prevents `/dashboard` matching `/dashboard-settings`.
 
-
 ---
 
 ### app/(admin)/dashboard/page.tsx
@@ -468,14 +475,15 @@ page component itself - that is handled by `error.tsx` in Phase 9.
 
 ```typescript
 type KpiCardProps = {
-  label: string
-  value: number
-  sub?: string
-  icon?: React.ReactNode
-}
+  label: string;
+  value: number;
+  sub?: string;
+  icon?: React.ReactNode;
+};
 ```
 
 Rendering:
+
 ```tsx
 <Card className="rounded-xl border border-border bg-card shadow-none">
   <CardHeader className="pb-2">
@@ -500,16 +508,15 @@ Imports `formatZAR` from `@/lib/financial`. No `'use client'`.
 **Location:** `apps/admin/src/components/dashboard/salary-card.tsx`
 
 ```typescript
-type SalaryCardProps = { salary: number }
+type SalaryCardProps = { salary: number };
 ```
 
 Rendering:
+
 ```tsx
 <Card className="rounded-xl border border-chart-1/40 bg-chart-1/10 shadow-none">
   <CardHeader className="pb-2">
-    <CardTitle className="text-chart-1 text-sm font-normal">
-      Recommended Owner Salary
-    </CardTitle>
+    <CardTitle className="text-chart-1 text-sm font-normal">Recommended Owner Salary</CardTitle>
   </CardHeader>
   <CardContent>
     <p className="text-chart-1 text-3xl font-bold">{formatZAR(salary)}</p>
@@ -529,31 +536,33 @@ No `'use client'`.
 **Location:** `apps/admin/src/components/dashboard/allocation-bar.tsx`
 
 ```typescript
-import type { FinancialSummary } from '@/lib/financial'
+import type { FinancialSummary } from '@/lib/financial';
 
-type AllocationBarProps = { summary: FinancialSummary }
+type AllocationBarProps = { summary: FinancialSummary };
 ```
 
 The `ALLOCATIONS` constant is defined in this file:
 
 ```typescript
 const ALLOCATIONS = [
-  { key: 'salary',   label: 'Salary',   pct: 35, color: 'bg-chart-1' },
+  { key: 'salary', label: 'Salary', pct: 35, color: 'bg-chart-1' },
   { key: 'reinvest', label: 'Reinvest', pct: 30, color: 'bg-chart-2' },
-  { key: 'reserve',  label: 'Reserve',  pct: 30, color: 'bg-chart-3' },
-  { key: 'flex',     label: 'Flex',     pct: 5,  color: 'bg-chart-4' },
-] as const
+  { key: 'reserve', label: 'Reserve', pct: 30, color: 'bg-chart-3' },
+  { key: 'flex', label: 'Flex', pct: 5, color: 'bg-chart-4' },
+] as const;
 ```
 
 At render time, `amount` is added from `summary[item.key]`:
+
 ```typescript
-const allocations = ALLOCATIONS.map(item => ({
+const allocations = ALLOCATIONS.map((item) => ({
   ...item,
   amount: summary[item.key as keyof FinancialSummary] as number,
-}))
+}));
 ```
 
 Rendering:
+
 ```tsx
 <Card className="rounded-xl border border-border bg-card shadow-none">
   <CardHeader className="pb-2">
@@ -564,11 +573,13 @@ Rendering:
   <CardContent className="space-y-4">
     <AllocationTooltipBar allocations={allocations} />
     <div className="grid grid-cols-2 gap-3">
-      {allocations.map(item => (
+      {allocations.map((item) => (
         <div key={item.key} className="flex items-center justify-between">
           <div className="flex items-center gap-1.5">
             <span className={`inline-block h-2 w-2 rounded-full ${item.color}`} />
-            <span className="text-muted-foreground text-xs">{item.label} {item.pct}%</span>
+            <span className="text-muted-foreground text-xs">
+              {item.label} {item.pct}%
+            </span>
           </div>
           <span className="text-foreground text-xs font-medium">{formatZAR(item.amount)}</span>
         </div>
@@ -587,17 +598,17 @@ No `'use client'`. `AllocationTooltipBar` carries the client boundary.
 **Location:** `apps/admin/src/components/dashboard/allocation-tooltip-bar.tsx`
 
 ```typescript
-'use client'
+'use client';
 
 type AllocationItem = {
-  key: string
-  label: string
-  pct: number
-  color: string
-  amount: number
-}
+  key: string;
+  label: string;
+  pct: number;
+  color: string;
+  amount: number;
+};
 
-type AllocationTooltipBarProps = { allocations: AllocationItem[] }
+type AllocationTooltipBarProps = { allocations: AllocationItem[] };
 ```
 
 Rendering - outer container is a flex row, each segment is a raw `div` (not `Progress`)
@@ -605,14 +616,11 @@ to avoid flush-gap issues in stacked layout:
 
 ```tsx
 <div className="flex h-3 w-full overflow-hidden rounded-full bg-muted">
-  {allocations.map(item => (
+  {allocations.map((item) => (
     <TooltipProvider key={item.key}>
       <Tooltip>
         <TooltipTrigger asChild>
-          <div
-            className={item.color}
-            style={{ width: `${item.pct}%` }}
-          />
+          <div className={item.color} style={{ width: `${item.pct}%` }} />
         </TooltipTrigger>
         <TooltipContent>
           {item.label}: {formatZAR(item.amount)} ({item.pct}%)
@@ -637,9 +645,9 @@ flex row. Raw `div`s with `width` percentages compose flush without gaps.
 **Location:** `apps/admin/src/components/dashboard/division-revenue.tsx`
 
 ```typescript
-import type { DivisionRevenue } from '@/lib/financial'
+import type { DivisionRevenue } from '@/lib/financial';
 
-type DivisionRevenueProps = { divisions: DivisionRevenue[] }
+type DivisionRevenueProps = { divisions: DivisionRevenue[] };
 ```
 
 Bar width calculation: `Math.round((division.total / max) * 100)` where
@@ -647,19 +655,20 @@ Bar width calculation: `Math.round((division.total / max) * 100)` where
 
 > `max` is computed before the empty array guard, with a fallback of `1` to prevent
 > division by zero if the guard is bypassed or the array contains all-zero totals:
+>
 > ```typescript
-> const max = Math.max(...divisions.map(d => d.total), 1)
+> const max = Math.max(...divisions.map((d) => d.total), 1);
 > ```
+>
 > The `, 1` argument ensures `max` is never `0`, which would produce `Infinity` or `NaN`
 > in the bar width calculation.
 
 Rendering:
+
 ```tsx
 <Card className="rounded-xl border border-border bg-card shadow-none">
   <CardHeader className="pb-2">
-    <CardTitle className="text-card-foreground text-sm font-medium">
-      Revenue by Division
-    </CardTitle>
+    <CardTitle className="text-card-foreground text-sm font-medium">Revenue by Division</CardTitle>
   </CardHeader>
   <CardContent>
     {divisions.length === 0 ? (
@@ -667,7 +676,7 @@ Rendering:
     ) : (
       <ScrollArea className="max-h-64">
         <div className="space-y-3">
-          {divisions.map(div => (
+          {divisions.map((div) => (
             <div key={div.divisionName} className="space-y-1">
               <div className="flex justify-between">
                 <span className="text-card-foreground text-sm">{div.divisionName}</span>
@@ -695,39 +704,38 @@ No `'use client'`.
 **Location:** `apps/admin/src/components/dashboard/leads-summary.tsx`
 
 ```typescript
-import type { LeadStatusCount } from '@/lib/financial'
+import type { LeadStatusCount } from '@/lib/financial';
 
-type LeadsSummaryProps = { leads: LeadStatusCount[] }
+type LeadsSummaryProps = { leads: LeadStatusCount[] };
 ```
 
 Status color maps (defined as constants in the component file):
 
 ```typescript
 const BADGE_CLASS: Record<string, string> = {
-  new:       'bg-chart-2/20 text-chart-2 border-chart-2/30',
+  new: 'bg-chart-2/20 text-chart-2 border-chart-2/30',
   contacted: 'bg-chart-1/20 text-chart-1 border-chart-1/30',
   converted: 'bg-chart-3/20 text-chart-3 border-chart-3/30',
-  lost:      'bg-muted text-muted-foreground border-border',
-}
+  lost: 'bg-muted text-muted-foreground border-border',
+};
 
 const PROGRESS_CLASS: Record<string, string> = {
-  new:       '[&>div]:bg-chart-2 bg-muted h-1.5',
+  new: '[&>div]:bg-chart-2 bg-muted h-1.5',
   contacted: '[&>div]:bg-chart-1 bg-muted h-1.5',
   converted: '[&>div]:bg-chart-3 bg-muted h-1.5',
-  lost:      '[&>div]:bg-muted-foreground/30 bg-muted h-1.5',
-}
+  lost: '[&>div]:bg-muted-foreground/30 bg-muted h-1.5',
+};
 ```
 
 Bar width: `Math.round((lead.count / total) * 100)` where
 `total = leads.reduce((sum, l) => sum + l.count, 0)`.
 
 Rendering:
+
 ```tsx
 <Card className="rounded-xl border border-border bg-card shadow-none">
   <CardHeader className="pb-2">
-    <CardTitle className="text-card-foreground text-sm font-medium">
-      Leads by Status
-    </CardTitle>
+    <CardTitle className="text-card-foreground text-sm font-medium">Leads by Status</CardTitle>
   </CardHeader>
   <CardContent>
     {leads.length === 0 ? (
@@ -735,13 +743,10 @@ Rendering:
     ) : (
       <ScrollArea className="max-h-64">
         <div className="space-y-3">
-          {leads.map(lead => (
+          {leads.map((lead) => (
             <div key={lead.status} className="space-y-1">
               <div className="flex items-center justify-between">
-                <Badge
-                  variant="secondary"
-                  className={BADGE_CLASS[lead.status] ?? BADGE_CLASS.lost}
-                >
+                <Badge variant="secondary" className={BADGE_CLASS[lead.status] ?? BADGE_CLASS.lost}>
                   {lead.status.charAt(0).toUpperCase() + lead.status.slice(1)}
                 </Badge>
                 <span className="text-muted-foreground text-xs">{lead.count}</span>
@@ -794,7 +799,6 @@ export default function LoginPage() {
 
 No `'use client'`. No layout file in `(auth)` - inherits root layout only.
 
-
 ---
 
 ## Data Models
@@ -805,19 +809,19 @@ Phase 2 components consume these types as read-only props.
 ```typescript
 // Already exported from lib/financial.ts
 type FinancialSummary = {
-  revenue: number
-  expenses: number
-  pmgShare: number
-  profitPool: number
-  salary: number
-  reinvest: number
-  reserve: number
-  flex: number
-}
+  revenue: number;
+  expenses: number;
+  pmgShare: number;
+  profitPool: number;
+  salary: number;
+  reinvest: number;
+  reserve: number;
+  flex: number;
+};
 
-type DivisionRevenue = { divisionName: string; total: number }
+type DivisionRevenue = { divisionName: string; total: number };
 
-type LeadStatusCount = { status: string; count: number }
+type LeadStatusCount = { status: string; count: number };
 ```
 
 ### Allocation Constant
@@ -826,67 +830,68 @@ Defined in `allocation-bar.tsx`. Static - percentages never change at runtime.
 
 ```typescript
 const ALLOCATIONS = [
-  { key: 'salary',   label: 'Salary',   pct: 35, color: 'bg-chart-1' },
+  { key: 'salary', label: 'Salary', pct: 35, color: 'bg-chart-1' },
   { key: 'reinvest', label: 'Reinvest', pct: 30, color: 'bg-chart-2' },
-  { key: 'reserve',  label: 'Reserve',  pct: 30, color: 'bg-chart-3' },
-  { key: 'flex',     label: 'Flex',     pct: 5,  color: 'bg-chart-4' },
-] as const
+  { key: 'reserve', label: 'Reserve', pct: 30, color: 'bg-chart-3' },
+  { key: 'flex', label: 'Flex', pct: 5, color: 'bg-chart-4' },
+] as const;
 // 35 + 30 + 30 + 5 === 100 ✓
 ```
 
 The `amount` field is computed at render time:
+
 ```typescript
-const allocations = ALLOCATIONS.map(item => ({
+const allocations = ALLOCATIONS.map((item) => ({
   ...item,
   amount: summary[item.key as keyof FinancialSummary] as number,
-}))
+}));
 ```
 
 ### Component Prop Interfaces Summary
 
 ```typescript
 // kpi-card.tsx
-type KpiCardProps = { label: string; value: number; sub?: string; icon?: React.ReactNode }
+type KpiCardProps = { label: string; value: number; sub?: string; icon?: React.ReactNode };
 
 // salary-card.tsx
-type SalaryCardProps = { salary: number }
+type SalaryCardProps = { salary: number };
 
 // allocation-bar.tsx
-type AllocationBarProps = { summary: FinancialSummary }
+type AllocationBarProps = { summary: FinancialSummary };
 
 // allocation-tooltip-bar.tsx
-type AllocationItem = { key: string; label: string; pct: number; color: string; amount: number }
-type AllocationTooltipBarProps = { allocations: AllocationItem[] }
+type AllocationItem = { key: string; label: string; pct: number; color: string; amount: number };
+type AllocationTooltipBarProps = { allocations: AllocationItem[] };
 
 // division-revenue.tsx
-type DivisionRevenueProps = { divisions: DivisionRevenue[] }
+type DivisionRevenueProps = { divisions: DivisionRevenue[] };
 
 // leads-summary.tsx
-type LeadsSummaryProps = { leads: LeadStatusCount[] }
+type LeadsSummaryProps = { leads: LeadStatusCount[] };
 
 // nav-link.tsx
-type NavLinkProps = { href: string; label: string; icon?: React.ReactNode }
+type NavLinkProps = { href: string; label: string; icon?: React.ReactNode };
 ```
 
 ---
 
 ## Correctness Properties
 
-*A property is a characteristic or behavior that should hold true across all valid
+_A property is a characteristic or behavior that should hold true across all valid
 executions of a system - essentially, a formal statement about what the system should do.
 Properties serve as the bridge between human-readable specifications and machine-verifiable
-correctness guarantees.*
+correctness guarantees._
 
 ### Property 1: formatZAR output correctness
 
-*For any* finite number passed to `formatZAR`, the returned string is non-empty and
+_For any_ finite number passed to `formatZAR`, the returned string is non-empty and
 contains the character "R".
 
 **Validates: Requirements 4.3, 5.1, 15.5**
 
 ### Property 2: Proportional bar width invariant
 
-*For any* non-negative value `v` and positive maximum `max`, the expression
+_For any_ non-negative value `v` and positive maximum `max`, the expression
 `(v / max) * 100` is always in the range `[0, 100]`.
 
 This property covers both `DivisionRevenue` (bar width = `total / max * 100`) and
@@ -896,16 +901,16 @@ This property covers both `DivisionRevenue` (bar width = `total / max * 100`) an
 
 ### Property 3: Array length preservation
 
-*For any* non-empty array of `DivisionRevenue` entries, the number of `Progress` bar
+_For any_ non-empty array of `DivisionRevenue` entries, the number of `Progress` bar
 elements rendered by `DivisionRevenue` equals the length of the input array. Likewise,
-*for any* non-empty array of `LeadStatusCount` entries, the number of rows rendered by
+_for any_ non-empty array of `LeadStatusCount` entries, the number of rows rendered by
 `LeadsSummary` equals the length of the input array.
 
 **Validates: Requirements 7.1, 8.1**
 
 ### Property 4: Empty state rendering
 
-*For any* component that accepts an array prop (`DivisionRevenue`, `LeadsSummary`), when
+_For any_ component that accepts an array prop (`DivisionRevenue`, `LeadsSummary`), when
 the array is empty the component renders its designated empty state string and does not
 throw.
 
@@ -920,7 +925,7 @@ This is a static invariant - the constant never changes at runtime.
 
 ### Property 6: Proxy cookie check
 
-*For any* incoming request whose pathname does **not** start with `/login` and that has
+_For any_ incoming request whose pathname does **not** start with `/login` and that has
 no `better-auth.session_token` cookie, the proxy returns a redirect to `/login`. For any
 request that has the cookie, or whose pathname starts with `/login`, the proxy returns
 `NextResponse.next()`.
@@ -929,7 +934,7 @@ request that has the cookie, or whose pathname starts with `/login`, the proxy r
 
 ### Property 7: AllocationTooltipBar tooltip content
 
-*For any* `AllocationItem`, the tooltip content rendered for that segment equals the
+_For any_ `AllocationItem`, the tooltip content rendered for that segment equals the
 string `"{label}: {formatZAR(amount)} ({pct}%)"`.
 
 **Validates: Requirements 17.4, 28.7**
@@ -949,9 +954,11 @@ error page is shown. Phase 9 adds `error.tsx` with `toast()` from sonner.
 
 `DivisionRevenue` and `LeadsSummary` handle empty arrays with a guard before the
 `ScrollArea`:
+
 ```typescript
 if (divisions.length === 0) return <p>No income recorded yet.</p>
 ```
+
 No crash, no division-by-zero in bar width calculation.
 
 ### Unknown Lead Statuses
@@ -967,10 +974,10 @@ loop, the proxy must exclude `/login` from the redirect target check. Implementa
 
 ```typescript
 export function proxy(request: NextRequest) {
-  if (request.nextUrl.pathname.startsWith('/login')) return NextResponse.next()
-  const session = request.cookies.get('better-auth.session_token')
-  if (!session) return NextResponse.redirect(new URL('/login', request.url))
-  return NextResponse.next()
+  if (request.nextUrl.pathname.startsWith('/login')) return NextResponse.next();
+  const session = request.cookies.get('better-auth.session_token');
+  if (!session) return NextResponse.redirect(new URL('/login', request.url));
+  return NextResponse.next();
 }
 ```
 
@@ -1005,11 +1012,13 @@ Unit tests and property tests are complementary. Unit tests cover specific examp
 edge cases. Property tests verify universal correctness across generated inputs.
 
 **Unit tests focus on:**
+
 - Specific rendering examples (correct text, correct className)
 - Edge cases (empty arrays, unknown status strings)
 - Integration between components (AllocationBar passes correct amounts to AllocationTooltipBar)
 
 **Property tests focus on:**
+
 - Universal mathematical invariants (bar width always in [0,100])
 - Output format guarantees (formatZAR always returns string with "R")
 - Behavioral contracts (proxy redirects iff cookie absent)
@@ -1027,14 +1036,16 @@ bun add -d @testing-library/react @testing-library/jest-dom --cwd apps/admin
 ```
 
 And update `apps/admin/vitest.config.ts`:
+
 ```typescript
-environment: 'jsdom'  // replace 'node'
-setupFiles: ['./src/__tests__/setup.ts']
+environment: 'jsdom'; // replace 'node'
+setupFiles: ['./src/__tests__/setup.ts'];
 ```
 
 Create `apps/admin/src/__tests__/setup.ts` containing:
+
 ```typescript
-import '@testing-library/jest-dom'
+import '@testing-library/jest-dom';
 ```
 
 > If installing `@testing-library` is out of scope for Phase 2, the component render
@@ -1044,33 +1055,37 @@ import '@testing-library/jest-dom'
 Each property test must include a comment referencing the design property:
 
 **Property 1 - formatZAR output correctness**
+
 ```typescript
 // Feature: dashboard-ui, Property 1: formatZAR output correctness
-fc.assert(fc.property(
-  fc.double({ noNaN: true, noDefaultInfinity: true }),
-  (amount) => {
-    const result = formatZAR(amount)
-    expect(result.length).toBeGreaterThan(0)
-    expect(result).toMatch(/R/)
-  }
-))
+fc.assert(
+  fc.property(fc.double({ noNaN: true, noDefaultInfinity: true }), (amount) => {
+    const result = formatZAR(amount);
+    expect(result.length).toBeGreaterThan(0);
+    expect(result).toMatch(/R/);
+  }),
+);
 ```
 
 **Property 2 - Proportional bar width invariant**
+
 ```typescript
 // Feature: dashboard-ui, Property 2: Proportional bar width invariant
-fc.assert(fc.property(
-  fc.double({ min: 0, noNaN: true, noDefaultInfinity: true }),
-  fc.double({ min: 0.001, noNaN: true, noDefaultInfinity: true }),
-  (value, max) => {
-    const width = (value / max) * 100
-    expect(width).toBeGreaterThanOrEqual(0)
-    expect(width).toBeLessThanOrEqual(100 + Number.EPSILON)
-  }
-))
+fc.assert(
+  fc.property(
+    fc.double({ min: 0, noNaN: true, noDefaultInfinity: true }),
+    fc.double({ min: 0.001, noNaN: true, noDefaultInfinity: true }),
+    (value, max) => {
+      const width = (value / max) * 100;
+      expect(width).toBeGreaterThanOrEqual(0);
+      expect(width).toBeLessThanOrEqual(100 + Number.EPSILON);
+    },
+  ),
+);
 ```
 
 **Property 3 - Array length preservation**
+
 ```typescript
 // Feature: dashboard-ui, Property 3: Array length preservation
 fc.assert(fc.property(
@@ -1084,6 +1099,7 @@ fc.assert(fc.property(
 ```
 
 **Property 4 - Empty state rendering**
+
 ```typescript
 // Feature: dashboard-ui, Property 4: Empty state rendering
 it('DivisionRevenue renders empty state for empty array', () => {
@@ -1097,33 +1113,38 @@ it('LeadsSummary renders empty state for empty array', () => {
 ```
 
 **Property 5 - Allocation percentages sum to 100**
+
 ```typescript
 // Feature: dashboard-ui, Property 5: Allocation percentages sum to 100
 it('ALLOCATIONS pct values sum to 100', () => {
-  const sum = ALLOCATIONS.reduce((acc, item) => acc + item.pct, 0)
-  expect(sum).toBe(100)
-})
+  const sum = ALLOCATIONS.reduce((acc, item) => acc + item.pct, 0);
+  expect(sum).toBe(100);
+});
 ```
 
 **Property 6 - Proxy cookie check**
+
 ```typescript
 // Feature: dashboard-ui, Property 6: Proxy cookie check
-fc.assert(fc.property(
-  fc.string(), // random path
-  (path) => {
-    const req = new NextRequest(new URL(`http://localhost${path}`))
-    // no cookie set
-    const res = proxy(req)
-    if (!path.startsWith('/login')) {
-      expect(res.status).toBe(307) // redirect
-    } else {
-      expect(res.status).not.toBe(307) // login path bypasses cookie check
-    }
-  }
-))
+fc.assert(
+  fc.property(
+    fc.string(), // random path
+    (path) => {
+      const req = new NextRequest(new URL(`http://localhost${path}`));
+      // no cookie set
+      const res = proxy(req);
+      if (!path.startsWith('/login')) {
+        expect(res.status).toBe(307); // redirect
+      } else {
+        expect(res.status).not.toBe(307); // login path bypasses cookie check
+      }
+    },
+  ),
+);
 ```
 
 **Property 7 - AllocationTooltipBar tooltip content**
+
 ```typescript
 // Feature: dashboard-ui, Property 7: AllocationTooltipBar tooltip content
 fc.assert(fc.property(
@@ -1183,9 +1204,11 @@ available as Tailwind utilities.
 
 shadcn's `Progress` component uses a nested `div` for the filled bar. To override its
 color, use the Tailwind arbitrary variant:
+
 ```
 className="[&>div]:bg-chart-2 bg-muted h-1.5"
 ```
+
 The `[&>div]` selector targets the inner fill div. `bg-muted` sets the track color.
 
 ### sidebar-08 Scaffold Customisation

@@ -36,9 +36,8 @@ Invoice payments may clear Accounts Receivable instead of posting directly to re
 
 ## Common Mistakes
 
-| Mistake | Fix |
-|---------|-----|
-| Recording invoice payments directly as income | Use Billing -> Payments so invoice status updates |
-| Missing division | Correct the source record |
-| Duplicate income | Check whether a billing payment already created it |
-
+| Mistake                                       | Fix                                                |
+| --------------------------------------------- | -------------------------------------------------- |
+| Recording invoice payments directly as income | Use Billing -> Payments so invoice status updates  |
+| Missing division                              | Correct the source record                          |
+| Duplicate income                              | Check whether a billing payment already created it |

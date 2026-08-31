@@ -1,4 +1,14 @@
-import { pgEnum, pgTable, uuid, date, numeric, text, timestamp, check, index } from 'drizzle-orm/pg-core';
+import {
+  pgEnum,
+  pgTable,
+  uuid,
+  date,
+  numeric,
+  text,
+  timestamp,
+  check,
+  index,
+} from 'drizzle-orm/pg-core';
 import { sql } from 'drizzle-orm';
 
 // 'salary', 'reinvest', 'reserve', 'flex' are legacy allocation types — those
@@ -13,16 +23,14 @@ export const allocationEnum = pgEnum('allocation_type', [
   'pmg_share',
 ]);
 
-export const entryTypeEnum = pgEnum('entry_type', [
-  'spend',
-  'transfer',
-  'adjustment',
-]);
+export const entryTypeEnum = pgEnum('entry_type', ['spend', 'transfer', 'adjustment']);
 
 export const ledger = pgTable(
   'ledger',
   {
-    id: uuid('id').primaryKey().default(sql`gen_random_uuid()`),
+    id: uuid('id')
+      .primaryKey()
+      .default(sql`gen_random_uuid()`),
     date: date('date').notNull(),
     amount: numeric('amount', { precision: 12, scale: 2 }).notNull(),
     allocationType: allocationEnum('allocation_type').notNull().default('pmg_share'),

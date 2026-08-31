@@ -1,4 +1,5 @@
 # LaunchPad SA
+
 ### Brand Profile - Division 03 of Playhouse Media Group
 
 ---
@@ -13,23 +14,23 @@ LaunchPad SA is the **lead generation engine** of the PMG group. Every client wh
 
 ## Quick Profile
 
-| Field | Detail |
-|---|---|
-| Brand Name | LaunchPad SA |
-| Parent Company | Playhouse Media Group (PTY) Ltd |
-| Division | 03 - Company Registrations & Compliance |
-| Status | Formalising - launching as standalone brand |
-| Domain | launchpadsa.co.za *(to register)* |
-| Email | info@launchpadsa.co.za |
-| Social Media | @launchpadsa |
-| Revenue Model | Per-service fees + bundle packages |
+| Field           | Detail                                                                   |
+| --------------- | ------------------------------------------------------------------------ |
+| Brand Name      | LaunchPad SA                                                             |
+| Parent Company  | Playhouse Media Group (PTY) Ltd                                          |
+| Division        | 03 - Company Registrations & Compliance                                  |
+| Status          | Formalising - launching as standalone brand                              |
+| Domain          | launchpadsa.co.za _(to register)_                                        |
+| Email           | info@launchpadsa.co.za                                                   |
+| Social Media    | @launchpadsa                                                             |
+| Revenue Model   | Per-service fees + bundle packages                                       |
 | Strategic Focus | Part of the 10% supporting focus - critical as the entry funnel into PMG |
 
 ---
 
 ## Tagline
 
-> *"Where Every Business Begins"*
+> _"Where Every Business Begins"_
 
 ---
 
@@ -43,27 +44,27 @@ LaunchPad SA guides first-time entrepreneurs and new business owners through for
 
 ### Company Registration
 
-| Service | Price |
-|---|---|
-| PTY (Ltd) Registration - CIPC | R1,200 |
-| Non-Profit Company (NPC) Registration | POA |
-| Business name reservation | R350 |
+| Service                               | Price  |
+| ------------------------------------- | ------ |
+| PTY (Ltd) Registration - CIPC         | R1,200 |
+| Non-Profit Company (NPC) Registration | POA    |
+| Business name reservation             | R350   |
 
 ### Government Database Registrations
 
-| Service | Price |
-|---|---|
-| CSD (Central Supplier Database) registration | R650 |
-| COIDA registration | R750 |
-| B-BBEE Affidavit (EME/QSE) | R550 |
-| CIDB Grade 1 registration | R1,200 |
-| Municipal supplier database registration | R500 |
+| Service                                      | Price  |
+| -------------------------------------------- | ------ |
+| CSD (Central Supplier Database) registration | R650   |
+| COIDA registration                           | R750   |
+| B-BBEE Affidavit (EME/QSE)                   | R550   |
+| CIDB Grade 1 registration                    | R1,200 |
+| Municipal supplier database registration     | R500   |
 
 ### Bundles
 
-| Bundle | What's Included | Price |
-|---|---|---|
-| BizStart Starter | CIPC + CSD + B-BBEE Affidavit | R2,200 |
+| Bundle            | What's Included                          | Price  |
+| ----------------- | ---------------------------------------- | ------ |
+| BizStart Starter  | CIPC + CSD + B-BBEE Affidavit            | R2,200 |
 | Business-in-a-Box | CIPC + CSD + BEE + Logo + 1-page website | R4,500 |
 
 ---
@@ -80,12 +81,12 @@ LaunchPad SA guides first-time entrepreneurs and new business owners through for
 
 ## Cross-Sell Opportunities
 
-| If the client needs... | Refer to... |
-|---|---|
+| If the client needs...                     | Refer to...               |
+| ------------------------------------------ | ------------------------- |
 | A logo, brand identity, or company profile | Playhouse Creative Studio |
-| A business website | Apex Web Solutions |
-| Tender compliance and bid preparation | Tender Edge Solutions |
-| Social media setup and management | Playhouse Creative Studio |
+| A business website                         | Apex Web Solutions        |
+| Tender compliance and bid preparation      | Tender Edge Solutions     |
+| Social media setup and management          | Playhouse Creative Studio |
 
 ---
 
@@ -93,13 +94,13 @@ LaunchPad SA guides first-time entrepreneurs and new business owners through for
 
 Current name **LaunchPad SA** is retained. Alternatives researched from top Google search keywords for future consideration:
 
-| # | Name | Domain | Keyword Strength | Why Consider It |
-|---|---|---|---|---|
-| 1 | **RegisterFast SA** | registerfastsa.co.za | ★★★★★ | "Register" + "fast" - the two highest-intent modifiers people search. Direct keyword match. Top recommendation. |
-| 2 | **PTYdone SA** | ptydone.co.za | ★★★★★ | "PTY registration" is a top-3 search term. "Done" promises completion. Punchy and unique. |
-| 3 | **BizRegister SA** | bizregistersa.co.za | ★★★★☆ | Targets "business registration South Africa". Professional yet approachable. |
-| 4 | **CompanyGo SA** | companygosa.co.za | ★★★★☆ | "Company" is the #1 search anchor. "Go" signals speed and action. |
-| 5 | **FoundIt Co.** | foundit.co.za | ★★★☆☆ | Double meaning - "founded it" and "found it". Smart and memorable for social media. |
+| #   | Name                | Domain               | Keyword Strength | Why Consider It                                                                                                 |
+| --- | ------------------- | -------------------- | ---------------- | --------------------------------------------------------------------------------------------------------------- |
+| 1   | **RegisterFast SA** | registerfastsa.co.za | ★★★★★            | "Register" + "fast" - the two highest-intent modifiers people search. Direct keyword match. Top recommendation. |
+| 2   | **PTYdone SA**      | ptydone.co.za        | ★★★★★            | "PTY registration" is a top-3 search term. "Done" promises completion. Punchy and unique.                       |
+| 3   | **BizRegister SA**  | bizregistersa.co.za  | ★★★★☆            | Targets "business registration South Africa". Professional yet approachable.                                    |
+| 4   | **CompanyGo SA**    | companygosa.co.za    | ★★★★☆            | "Company" is the #1 search anchor. "Go" signals speed and action.                                               |
+| 5   | **FoundIt Co.**     | foundit.co.za        | ★★★☆☆            | Double meaning - "founded it" and "found it". Smart and memorable for social media.                             |
 
 > **Top search keywords:** company registration South Africa · CIPC registration · PTY registration · how to register a company SA · register Pty Ltd online · company registration Gauteng · start a business South Africa · register company online fast
 
@@ -107,13 +108,13 @@ Current name **LaunchPad SA** is retained. Alternatives researched from top Goog
 
 ## Brand Identity
 
-| Element | Detail |
-|---|---|
-| Primary Colour | Sunrise Orange `#EA580C` |
-| Background | Warm Cream `#FFF7ED` |
-| Dark | Espresso `#1C1917` |
-| Display Font | Syne Bold |
-| Tone | Approachable, energetic, empowering, accessible |
+| Element        | Detail                                          |
+| -------------- | ----------------------------------------------- |
+| Primary Colour | Sunrise Orange `#EA580C`                        |
+| Background     | Warm Cream `#FFF7ED`                            |
+| Dark           | Espresso `#1C1917`                              |
+| Display Font   | Syne Bold                                       |
+| Tone           | Approachable, energetic, empowering, accessible |
 
 ---
 
@@ -123,6 +124,6 @@ Current name **LaunchPad SA** is retained. Alternatives researched from top Goog
 
 ---
 
-*Last updated: March 2026 | Version 2.0*
-*LaunchPad SA - a Playhouse Media Group division*
-*launchpadsa.co.za | info@launchpadsa.co.za*
+_Last updated: March 2026 | Version 2.0_
+_LaunchPad SA - a Playhouse Media Group division_
+_launchpadsa.co.za | info@launchpadsa.co.za_

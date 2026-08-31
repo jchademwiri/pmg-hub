@@ -1,13 +1,8 @@
-import * as React from "react";
-import {
-  Button,
-  Heading,
-  Section,
-  Text,
-} from "@react-email/components";
-import type { BrandingProps } from "../types";
-import { DEFAULT_WEBSITE_URL } from "../domains";
-import { EmailLayout } from "./EmailLayout";
+import * as React from 'react';
+import { Button, Heading, Section, Text } from '@react-email/components';
+import type { BrandingProps } from '../types';
+import { DEFAULT_WEBSITE_URL } from '../domains';
+import { EmailLayout } from './EmailLayout';
 
 export type ExpiringDocument = {
   documentType: string;
@@ -27,8 +22,8 @@ const ComplianceReminderEmail = (props: ComplianceReminderEmailProps) => {
     recipientName,
     documents,
     portalUrl,
-    companyName = "Playhouse Media Group",
-    primaryColor = "#1d4ed8",
+    companyName = 'Playhouse Media Group',
+    primaryColor = '#1d4ed8',
     websiteUrl = DEFAULT_WEBSITE_URL,
     logoUrl,
   } = props;
@@ -51,16 +46,23 @@ const ComplianceReminderEmail = (props: ComplianceReminderEmailProps) => {
       </Text>
 
       <Text className="m-0 mb-[16px] text-[15px] leading-[24px] text-[#334155]">
-        This is a friendly reminder that you have compliance documents that require your attention. Maintaining your compliance is critical to ensure uninterrupted business operations.
+        This is a friendly reminder that you have compliance documents that require your attention.
+        Maintaining your compliance is critical to ensure uninterrupted business operations.
       </Text>
 
       <Section className="mb-[24px] rounded-[6px] border border-solid border-[#E2E8F0] overflow-hidden">
         <table className="w-full border-collapse text-left text-[14px]">
           <thead className="bg-[#F8FAFC]">
             <tr>
-              <th className="border-b border-solid border-[#E2E8F0] px-[16px] py-[12px] font-semibold text-[#475569]">Document</th>
-              <th className="border-b border-solid border-[#E2E8F0] px-[16px] py-[12px] font-semibold text-[#475569]">Expiry Date</th>
-              <th className="border-b border-solid border-[#E2E8F0] px-[16px] py-[12px] font-semibold text-[#475569]">Status</th>
+              <th className="border-b border-solid border-[#E2E8F0] px-[16px] py-[12px] font-semibold text-[#475569]">
+                Document
+              </th>
+              <th className="border-b border-solid border-[#E2E8F0] px-[16px] py-[12px] font-semibold text-[#475569]">
+                Expiry Date
+              </th>
+              <th className="border-b border-solid border-[#E2E8F0] px-[16px] py-[12px] font-semibold text-[#475569]">
+                Status
+              </th>
             </tr>
           </thead>
           <tbody>
@@ -93,10 +95,12 @@ const ComplianceReminderEmail = (props: ComplianceReminderEmailProps) => {
 
       <Section className="border-t border-solid border-[#E2E8F0] pt-[20px]">
         <Text className="m-0 text-[13px] text-[#475569]">
-          If you have already renewed these documents, please update the expiry dates in your client portal.
+          If you have already renewed these documents, please update the expiry dates in your client
+          portal.
         </Text>
         <Text className="m-0 mt-[12px] text-[13px] text-[#020304]">
-          Warm regards,<br />
+          Warm regards,
+          <br />
           <strong>The {companyName} Team</strong>
         </Text>
       </Section>
@@ -105,15 +109,19 @@ const ComplianceReminderEmail = (props: ComplianceReminderEmailProps) => {
 };
 
 ComplianceReminderEmail.PreviewProps = {
-  recipientName: "Jane Smith",
-  portalUrl: "https://portal.playhousemedia.co.za",
-  companyName: "Playhouse Media Group",
-  primaryColor: "#1d4ed8",
+  recipientName: 'Jane Smith',
+  portalUrl: 'https://portal.playhousemedia.co.za',
+  companyName: 'Playhouse Media Group',
+  primaryColor: '#1d4ed8',
   websiteUrl: DEFAULT_WEBSITE_URL,
   documents: [
-    { documentType: 'SARS Tax Clearance PIN', expiryDate: '2026-08-01', status: 'Expiring in 14 Days' },
+    {
+      documentType: 'SARS Tax Clearance PIN',
+      expiryDate: '2026-08-01',
+      status: 'Expiring in 14 Days',
+    },
     { documentType: 'B-BBEE Affidavit', expiryDate: '2026-07-16', status: 'Expired Yesterday' },
-  ]
+  ],
 };
 
 export default ComplianceReminderEmail;

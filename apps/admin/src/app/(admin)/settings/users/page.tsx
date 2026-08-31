@@ -33,7 +33,9 @@ export default async function UsersPage() {
   );
   const pending = pendingResult.rows as unknown as PendingInvitationRow[];
   const activeUsers = users.filter((user) => user.isActive).length;
-  const adminUsers = users.filter((user) => user.role === 'admin' || user.role === 'super_admin').length;
+  const adminUsers = users.filter(
+    (user) => user.role === 'admin' || user.role === 'super_admin',
+  ).length;
 
   return (
     <div className="flex flex-col gap-6">

@@ -36,11 +36,7 @@ interface InvoicesTableProps {
   voidAction: (id: string) => Promise<{ error?: string }>;
 }
 
-export function InvoicesTable({
-  entries,
-  issueAction,
-  voidAction,
-}: InvoicesTableProps) {
+export function InvoicesTable({ entries, issueAction, voidAction }: InvoicesTableProps) {
   const router = useRouter();
   const [, startTransition] = useTransition();
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
@@ -56,16 +52,22 @@ export function InvoicesTable({
   };
 
   const toggleSelectOne = (id: string) => {
-    setSelectedIds((prev) =>
-      prev.includes(id) ? prev.filter((i) => i !== id) : [...prev, id]
-    );
+    setSelectedIds((prev) => (prev.includes(id) ? prev.filter((i) => i !== id) : [...prev, id]));
   };
 
   const handleBulkExportCSV = () => {
     const selectedRows = entries.filter((e) => selectedIds.includes(e.id));
     if (selectedRows.length === 0) return;
 
-    const headers = ['Invoice Number', 'Client', 'Reference', 'Issue Date', 'Due Date', 'Total (ZAR)', 'Status'];
+    const headers = [
+      'Invoice Number',
+      'Client',
+      'Reference',
+      'Issue Date',
+      'Due Date',
+      'Total (ZAR)',
+      'Status',
+    ];
     const csvContent = [
       headers.join(','),
       ...selectedRows.map((r) =>
@@ -77,7 +79,7 @@ export function InvoicesTable({
           `"${r.dueDate}"`,
           `"${r.total}"`,
           `"${r.status}"`,
-        ].join(',')
+        ].join(','),
       ),
     ].join('\n');
 
@@ -105,7 +107,8 @@ export function InvoicesTable({
     const selectedRows = entries.filter((e) => selectedIds.includes(e.id));
     if (selectedRows.length === 0) return;
 
-    const { sendCustomizedReminderAction, getPendingRemindersAction } = await import('@/app/actions/send-overdue-reminders');
+    const { sendCustomizedReminderAction, getPendingRemindersAction } =
+      await import('@/app/actions/send-overdue-reminders');
 
     startTransition(async () => {
       try {
@@ -192,19 +195,39 @@ export function InvoicesTable({
             <span>{selectedIds.length} invoice(s) selected</span>
           </div>
           <div className="flex items-center gap-2">
-            <Button size="sm" variant="outline" className="h-7 text-xs gap-1 border-amber-500/30 bg-amber-500/10 text-amber-700 dark:text-amber-300 hover:bg-amber-500/20" onClick={handleBulkSendReminders}>
+            <Button
+              size="sm"
+              variant="outline"
+              className="h-7 text-xs gap-1 border-amber-500/30 bg-amber-500/10 text-amber-700 dark:text-amber-300 hover:bg-amber-500/20"
+              onClick={handleBulkSendReminders}
+            >
               <Mail className="h-3 w-3" />
               Send Reminders
             </Button>
-            <Button size="sm" variant="outline" className="h-7 text-xs gap-1" onClick={handleBulkExportCSV}>
+            <Button
+              size="sm"
+              variant="outline"
+              className="h-7 text-xs gap-1"
+              onClick={handleBulkExportCSV}
+            >
               <Download className="h-3 w-3" />
               Export CSV
             </Button>
-            <Button size="sm" variant="outline" className="h-7 text-xs gap-1" onClick={handleCopyNumbers}>
+            <Button
+              size="sm"
+              variant="outline"
+              className="h-7 text-xs gap-1"
+              onClick={handleCopyNumbers}
+            >
               <Copy className="h-3 w-3" />
               Copy Numbers
             </Button>
-            <Button size="sm" variant="ghost" className="h-7 text-xs px-2" onClick={() => setSelectedIds([])}>
+            <Button
+              size="sm"
+              variant="ghost"
+              className="h-7 text-xs px-2"
+              onClick={() => setSelectedIds([])}
+            >
               <X className="h-3 w-3" />
             </Button>
           </div>
@@ -244,11 +267,14 @@ export function InvoicesTable({
               entries.map((inv) => {
                 const isSelected = selectedIds.includes(inv.id);
                 const invTotal = Number(inv.total);
-                const invPaid = inv.status === 'paid' ? invTotal : Math.min(invTotal, Number(inv.allocatedAmount || 0));
+                const invPaid =
+                  inv.status === 'paid'
+                    ? invTotal
+                    : Math.min(invTotal, Number(inv.allocatedAmount || 0));
                 const invBalance = Math.max(0, invTotal - invPaid);
 
                 return (
-                  <TableRow 
+                  <TableRow
                     key={inv.id}
                     className={`hover:bg-muted/40 transition-colors border-b border-border relative cursor-pointer ${isSelected ? 'bg-blue-500/5' : ''}`}
                   >
@@ -271,7 +297,11 @@ export function InvoicesTable({
                     </TableCell>
                     <TableCell>
                       {inv.reference ? (
-                        <span className="text-muted-foreground">{inv.reference.length > 30 ? inv.reference.slice(0, 30) + '...' : inv.reference}</span>
+                        <span className="text-muted-foreground">
+                          {inv.reference.length > 30
+                            ? inv.reference.slice(0, 30) + '...'
+                            : inv.reference}
+                        </span>
                       ) : (
                         <span className="italic text-muted-foreground/50">None</span>
                       )}
@@ -289,12 +319,22 @@ export function InvoicesTable({
                       {formatZAR(invTotal)}
                     </TableCell>
                     <TableCell className="text-right tabular-nums text-sm">
-                      <span className={invPaid > 0 ? "text-emerald-600 font-medium" : "text-muted-foreground"}>
+                      <span
+                        className={
+                          invPaid > 0 ? 'text-emerald-600 font-medium' : 'text-muted-foreground'
+                        }
+                      >
                         {formatZAR(invPaid)}
                       </span>
                     </TableCell>
                     <TableCell className="text-right tabular-nums text-sm font-semibold">
-                      <span className={invBalance === 0 ? "text-emerald-600 font-medium" : "text-amber-600 font-semibold"}>
+                      <span
+                        className={
+                          invBalance === 0
+                            ? 'text-emerald-600 font-medium'
+                            : 'text-amber-600 font-semibold'
+                        }
+                      >
                         {formatZAR(invBalance)}
                       </span>
                     </TableCell>
@@ -319,13 +359,16 @@ export function InvoicesTable({
         </div>
       ) : (
         entries.map((inv) => (
-          <MobileInvoiceCard key={inv.id} inv={inv} handleIssue={handleIssue} handleVoid={handleVoid} />
+          <MobileInvoiceCard
+            key={inv.id}
+            inv={inv}
+            handleIssue={handleIssue}
+            handleVoid={handleVoid}
+          />
         ))
       )}
     </>
   );
 
-  return (
-    <DataList desktop={desktopView} mobile={mobileView} />
-  );
+  return <DataList desktop={desktopView} mobile={mobileView} />;
 }

@@ -1,4 +1,4 @@
-import { Skeleton } from '@/components/ui/skeleton'
+import { Skeleton } from '@/components/ui/skeleton';
 
 export default function FinanceLoading() {
   return (
@@ -118,5 +118,5 @@ export default function FinanceLoading() {
         </div>
       </div>
     </div>
-  )
+  );
 }

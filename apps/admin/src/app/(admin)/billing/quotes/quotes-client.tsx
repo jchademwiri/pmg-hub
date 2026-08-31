@@ -154,7 +154,7 @@ export function QuotesClient({
         </TableHeader>
         <TableBody>
           {entries.map((quote) => (
-            <TableRow 
+            <TableRow
               key={quote.id}
               className="hover:bg-muted/40 transition-colors border-b border-border relative"
             >
@@ -168,7 +168,11 @@ export function QuotesClient({
               </TableCell>
               <TableCell>
                 {quote.reference ? (
-                  <span className="text-muted-foreground">{quote.reference.length > 30 ? quote.reference.slice(0, 30) + '...' : quote.reference}</span>
+                  <span className="text-muted-foreground">
+                    {quote.reference.length > 30
+                      ? quote.reference.slice(0, 30) + '...'
+                      : quote.reference}
+                  </span>
                 ) : (
                   <span className="italic text-muted-foreground/50">None</span>
                 )}
@@ -176,13 +180,13 @@ export function QuotesClient({
               <TableCell className="text-muted-foreground">
                 {quote.clientName ?? <span className="italic">No client</span>}
               </TableCell>
-              <TableCell className="tabular-nums text-sm">
-                {fmtDate(quote.quoteDate)}
-              </TableCell>
+              <TableCell className="tabular-nums text-sm">{fmtDate(quote.quoteDate)}</TableCell>
               <TableCell className="tabular-nums text-sm text-muted-foreground">
                 {fmtDate(quote.expiryDate)}
               </TableCell>
-              <TableCell className={`text-right tabular-nums text-sm font-medium ${QUOTE_STATUS_COLORS[quote.status] || ''}`}>
+              <TableCell
+                className={`text-right tabular-nums text-sm font-medium ${QUOTE_STATUS_COLORS[quote.status] || ''}`}
+              >
                 {formatZAR(Number(quote.total))}
               </TableCell>
               <TableCell>
@@ -201,22 +205,16 @@ export function QuotesClient({
                       <Link href={`/billing/quotes/${quote.id}`}>View</Link>
                     </DropdownMenuItem>
                     {quote.status === 'draft' && (
-                      <DropdownMenuItem
-                        onClick={() => handleStatusChange(quote.id, 'sent')}
-                      >
+                      <DropdownMenuItem onClick={() => handleStatusChange(quote.id, 'sent')}>
                         Mark Sent
                       </DropdownMenuItem>
                     )}
                     {quote.status === 'sent' && (
                       <>
-                        <DropdownMenuItem
-                          onClick={() => handleStatusChange(quote.id, 'accepted')}
-                        >
+                        <DropdownMenuItem onClick={() => handleStatusChange(quote.id, 'accepted')}>
                           Mark Accepted
                         </DropdownMenuItem>
-                        <DropdownMenuItem
-                          onClick={() => handleStatusChange(quote.id, 'declined')}
-                        >
+                        <DropdownMenuItem onClick={() => handleStatusChange(quote.id, 'declined')}>
                           Mark Declined
                         </DropdownMenuItem>
                       </>
@@ -248,8 +246,8 @@ export function QuotesClient({
       {/* Pagination */}
       <div className="flex items-center justify-between px-2">
         <span className="text-sm text-muted-foreground">
-          Showing {(currentPage - 1) * pageSize + 1}–
-          {Math.min(currentPage * pageSize, total)} of {total}
+          Showing {(currentPage - 1) * pageSize + 1}–{Math.min(currentPage * pageSize, total)} of{' '}
+          {total}
         </span>
         <Pagination
           currentPage={currentPage}

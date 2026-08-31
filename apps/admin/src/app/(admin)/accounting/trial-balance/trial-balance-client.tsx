@@ -1,14 +1,14 @@
-'use client'
+'use client';
 
-import * as React from 'react'
-import { useRouter, useSearchParams } from 'next/navigation'
+import * as React from 'react';
+import { useRouter, useSearchParams } from 'next/navigation';
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from '@/components/ui/select'
+} from '@/components/ui/select';
 import {
   Table,
   TableBody,
@@ -16,14 +16,14 @@ import {
   TableHead,
   TableHeader,
   TableRow,
-} from '@/components/ui/table'
-import { formatZAR, fmtMonthYear } from '@/lib/format'
-import type { TrialBalanceRow } from '@pmg/db'
+} from '@/components/ui/table';
+import { formatZAR, fmtMonthYear } from '@/lib/format';
+import type { TrialBalanceRow } from '@pmg/db';
 
 interface TrialBalanceClientProps {
-  data: TrialBalanceRow[]
-  periods: string[]
-  selectedPeriod: string
+  data: TrialBalanceRow[];
+  periods: string[];
+  selectedPeriod: string;
 }
 
 const TYPE_LABELS: Record<string, string> = {
@@ -32,29 +32,29 @@ const TYPE_LABELS: Record<string, string> = {
   equity: 'Equity',
   revenue: 'Revenue',
   expense: 'Expense',
-}
+};
 
 export function TrialBalanceClient({ data, periods, selectedPeriod }: TrialBalanceClientProps) {
-  const router = useRouter()
-  const searchParams = useSearchParams()
+  const router = useRouter();
+  const searchParams = useSearchParams();
 
   function handlePeriodChange(value: string) {
-    const params = new URLSearchParams(searchParams.toString())
+    const params = new URLSearchParams(searchParams.toString());
     if (value === 'all') {
-      params.delete('period')
+      params.delete('period');
     } else {
-      params.set('period', value)
+      params.set('period', value);
     }
-    router.push(`/accounting/trial-balance?${params.toString()}`, { scroll: false })
+    router.push(`/accounting/trial-balance?${params.toString()}`, { scroll: false });
   }
 
-  const totalDebits = data.reduce((s, r) => s + r.totalDebits, 0)
-  const totalCredits = data.reduce((s, r) => s + r.totalCredits, 0)
-  const isBalanced = Math.abs(totalDebits - totalCredits) < 0.01
+  const totalDebits = data.reduce((s, r) => s + r.totalDebits, 0);
+  const totalCredits = data.reduce((s, r) => s + r.totalCredits, 0);
+  const isBalanced = Math.abs(totalDebits - totalCredits) < 0.01;
   const visibleRows = data.filter(
-    (row) => row.totalDebits > 0 || row.totalCredits > 0 || Math.abs(row.balance) > 0.01
-  )
-  const hiddenZeroRows = data.length - visibleRows.length
+    (row) => row.totalDebits > 0 || row.totalCredits > 0 || Math.abs(row.balance) > 0.01,
+  );
+  const hiddenZeroRows = data.length - visibleRows.length;
 
   return (
     <div className="flex flex-col gap-4">
@@ -67,24 +67,29 @@ export function TrialBalanceClient({ data, periods, selectedPeriod }: TrialBalan
           <SelectContent>
             <SelectItem value="all">All Time</SelectItem>
             {periods.map((p) => (
-              <SelectItem key={p} value={p}>{fmtMonthYear(p)}</SelectItem>
+              <SelectItem key={p} value={p}>
+                {fmtMonthYear(p)}
+              </SelectItem>
             ))}
           </SelectContent>
         </Select>
       </div>
 
       {/* Balance indicator */}
-      <div className={`flex items-center gap-2 px-4 py-3 rounded-lg border text-sm font-medium ${
-        isBalanced
-          ? 'bg-emerald-500/10 border-emerald-500/30 text-emerald-600'
-          : 'bg-destructive/10 border-destructive/30 text-destructive'
-      }`}>
+      <div
+        className={`flex items-center gap-2 px-4 py-3 rounded-lg border text-sm font-medium ${
+          isBalanced
+            ? 'bg-emerald-500/10 border-emerald-500/30 text-emerald-600'
+            : 'bg-destructive/10 border-destructive/30 text-destructive'
+        }`}
+      >
         <span>{isBalanced ? 'Trial balance is in balance' : 'Trial balance does not balance'}</span>
       </div>
 
       {hiddenZeroRows > 0 && (
         <div className="rounded-lg border bg-muted/30 px-4 py-3 text-sm text-muted-foreground">
-          Showing {visibleRows.length} account{visibleRows.length !== 1 ? 's' : ''} with activity. Hidden {hiddenZeroRows} zero-balance account{hiddenZeroRows !== 1 ? 's' : ''}.
+          Showing {visibleRows.length} account{visibleRows.length !== 1 ? 's' : ''} with activity.
+          Hidden {hiddenZeroRows} zero-balance account{hiddenZeroRows !== 1 ? 's' : ''}.
         </div>
       )}
 
@@ -124,7 +129,9 @@ export function TrialBalanceClient({ data, periods, selectedPeriod }: TrialBalan
                 <TableCell className="text-right text-sm font-medium tabular-nums">
                   {formatZAR(Math.abs(row.balance))}
                   {row.balance !== 0 && (
-                    <span className={`ml-1 text-xs ${row.balance > 0 ? 'text-emerald-600' : 'text-destructive'}`}>
+                    <span
+                      className={`ml-1 text-xs ${row.balance > 0 ? 'text-emerald-600' : 'text-destructive'}`}
+                    >
                       {row.balance > 0 ? 'Dr' : 'Cr'}
                     </span>
                   )}
@@ -144,5 +151,5 @@ export function TrialBalanceClient({ data, periods, selectedPeriod }: TrialBalan
         </Table>
       )}
     </div>
-  )
+  );
 }

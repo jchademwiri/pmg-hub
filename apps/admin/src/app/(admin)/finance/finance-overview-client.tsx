@@ -1,8 +1,8 @@
-'use client'
+'use client';
 
-import * as React from 'react'
-import Link from 'next/link'
-import { formatZAR, fmtDate } from '@/lib/format'
+import * as React from 'react';
+import Link from 'next/link';
+import { formatZAR, fmtDate } from '@/lib/format';
 import {
   ArrowRight,
   TrendingUp,
@@ -16,27 +16,39 @@ import {
   Building2,
   PiggyBank,
   ArrowRightLeft,
-} from 'lucide-react'
-import { Button } from '@/components/ui/button'
-import { EmptyState } from '@/components/ui/empty-state'
-import { CashTransferDialog } from '@/components/finance/cash-transfer-dialog'
+} from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { EmptyState } from '@/components/ui/empty-state';
+import { CashTransferDialog } from '@/components/finance/cash-transfer-dialog';
 
 interface FinanceOverviewClientProps {
   summary: {
-    revenue: number
-    expenses: number
-    pmgShare: number
-    profitPool: number
-  }
+    revenue: number;
+    expenses: number;
+    pmgShare: number;
+    profitPool: number;
+  };
   liquidBalances?: {
-    cheque: number
-    savings: number
-  }
-  liquidAccounts?: Array<{ id: string; code: string; name: string }>
-  revenueByDivision: Array<{ divisionName: string; total: number }>
-  expensesByCategory: Array<{ category: string; total: number }>
-  recentIncome: Array<{ id: string; date: string; description: string | null; amount: number; divisionName: string }>
-  recentExpenses: Array<{ id: string; date: string; description: string | null; amount: number; category: string }>
+    cheque: number;
+    savings: number;
+  };
+  liquidAccounts?: Array<{ id: string; code: string; name: string }>;
+  revenueByDivision: Array<{ divisionName: string; total: number }>;
+  expensesByCategory: Array<{ category: string; total: number }>;
+  recentIncome: Array<{
+    id: string;
+    date: string;
+    description: string | null;
+    amount: number;
+    divisionName: string;
+  }>;
+  recentExpenses: Array<{
+    id: string;
+    date: string;
+    description: string | null;
+    amount: number;
+    category: string;
+  }>;
 }
 
 export function FinanceOverviewClient({
@@ -48,13 +60,13 @@ export function FinanceOverviewClient({
   recentIncome,
   recentExpenses,
 }: FinanceOverviewClientProps) {
-  const [transferOpen, setTransferOpen] = React.useState(false)
-  const isProfitable = summary.profitPool >= 0
-  const totalIncomeCount = recentIncome.length
-  const totalExpenseCount = recentExpenses.length
+  const [transferOpen, setTransferOpen] = React.useState(false);
+  const isProfitable = summary.profitPool >= 0;
+  const totalIncomeCount = recentIncome.length;
+  const totalExpenseCount = recentExpenses.length;
 
-  const totalLiquidCash = liquidBalances.cheque + liquidBalances.savings
-  const pendingTransfer = Math.max(0, summary.pmgShare - liquidBalances.savings)
+  const totalLiquidCash = liquidBalances.cheque + liquidBalances.savings;
+  const pendingTransfer = Math.max(0, summary.pmgShare - liquidBalances.savings);
 
   return (
     <div className="flex flex-col gap-6">
@@ -93,8 +105,12 @@ export function FinanceOverviewClient({
               <span>1010 · Cheque Account</span>
               <Building2 className="h-3.5 w-3.5 text-blue-500" />
             </div>
-            <p className="text-xl font-bold mt-1.5 tabular-nums text-foreground">{formatZAR(liquidBalances.cheque)}</p>
-            <p className="text-[11px] text-muted-foreground mt-0.5">Operational liquidity in bank</p>
+            <p className="text-xl font-bold mt-1.5 tabular-nums text-foreground">
+              {formatZAR(liquidBalances.cheque)}
+            </p>
+            <p className="text-[11px] text-muted-foreground mt-0.5">
+              Operational liquidity in bank
+            </p>
           </div>
 
           <div className="rounded-lg border bg-card p-3.5">
@@ -102,7 +118,9 @@ export function FinanceOverviewClient({
               <span>1020 · Savings Account</span>
               <PiggyBank className="h-3.5 w-3.5 text-emerald-500" />
             </div>
-            <p className="text-xl font-bold mt-1.5 tabular-nums text-emerald-600 dark:text-emerald-400">{formatZAR(liquidBalances.savings)}</p>
+            <p className="text-xl font-bold mt-1.5 tabular-nums text-emerald-600 dark:text-emerald-400">
+              {formatZAR(liquidBalances.savings)}
+            </p>
             <p className="text-[11px] text-muted-foreground mt-0.5">
               Physical cash in savings account
               {pendingTransfer > 0 && (
@@ -118,7 +136,9 @@ export function FinanceOverviewClient({
               <span>Total Liquid Cash</span>
               <DollarSign className="h-3.5 w-3.5 text-primary" />
             </div>
-            <p className="text-xl font-bold mt-1.5 tabular-nums text-primary">{formatZAR(totalLiquidCash)}</p>
+            <p className="text-xl font-bold mt-1.5 tabular-nums text-primary">
+              {formatZAR(totalLiquidCash)}
+            </p>
             <p className="text-[11px] text-muted-foreground mt-0.5">Combined physical bank cash</p>
           </div>
         </div>
@@ -128,49 +148,67 @@ export function FinanceOverviewClient({
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         <div className="rounded-xl border bg-card p-5 hover:shadow-md transition-all duration-200">
           <div className="flex items-center justify-between">
-            <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider">Total Revenue</p>
+            <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider">
+              Total Revenue
+            </p>
             <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-emerald-500/10">
               <TrendingUp className="h-4 w-4 text-emerald-600" />
             </div>
           </div>
-          <p className="text-2xl font-bold mt-2 tabular-nums text-emerald-600">{formatZAR(summary.revenue)}</p>
+          <p className="text-2xl font-bold mt-2 tabular-nums text-emerald-600">
+            {formatZAR(summary.revenue)}
+          </p>
           <p className="text-xs text-muted-foreground mt-1">{totalIncomeCount} income entries</p>
         </div>
 
         <div className="rounded-xl border bg-card p-5 hover:shadow-md transition-all duration-200">
           <div className="flex items-center justify-between">
-            <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider">Total Expenses</p>
+            <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider">
+              Total Expenses
+            </p>
             <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-red-500/10">
               <TrendingDown className="h-4 w-4 text-red-600" />
             </div>
           </div>
-          <p className="text-2xl font-bold mt-2 tabular-nums text-red-600">{formatZAR(summary.expenses)}</p>
+          <p className="text-2xl font-bold mt-2 tabular-nums text-red-600">
+            {formatZAR(summary.expenses)}
+          </p>
           <p className="text-xs text-muted-foreground mt-1">{totalExpenseCount} expense entries</p>
         </div>
 
         <div className="rounded-xl border bg-card p-5 hover:shadow-md transition-all duration-200">
           <div className="flex items-center justify-between">
-            <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider">Profit Pool</p>
-            <div className={`flex h-8 w-8 items-center justify-center rounded-lg ${isProfitable ? 'bg-emerald-500/10' : 'bg-red-500/10'}`}>
-              <DollarSign className={`h-4 w-4 ${isProfitable ? 'text-emerald-600' : 'text-red-600'}`} />
+            <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider">
+              Profit Pool
+            </p>
+            <div
+              className={`flex h-8 w-8 items-center justify-center rounded-lg ${isProfitable ? 'bg-emerald-500/10' : 'bg-red-500/10'}`}
+            >
+              <DollarSign
+                className={`h-4 w-4 ${isProfitable ? 'text-emerald-600' : 'text-red-600'}`}
+              />
             </div>
           </div>
-          <p className={`text-2xl font-bold mt-2 tabular-nums ${isProfitable ? 'text-emerald-600' : 'text-red-600'}`}>
+          <p
+            className={`text-2xl font-bold mt-2 tabular-nums ${isProfitable ? 'text-emerald-600' : 'text-red-600'}`}
+          >
             {formatZAR(summary.profitPool)}
           </p>
-          <p className="text-xs text-muted-foreground mt-1">
-            Revenue − Expenses − PMG Share
-          </p>
+          <p className="text-xs text-muted-foreground mt-1">Revenue − Expenses − PMG Share</p>
         </div>
 
         <div className="rounded-xl border bg-card p-5 hover:shadow-md transition-all duration-200">
           <div className="flex items-center justify-between">
-            <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider">PMG Share (25%)</p>
+            <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider">
+              PMG Share (25%)
+            </p>
             <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-blue-500/10">
               <PieChart className="h-4 w-4 text-blue-600" />
             </div>
           </div>
-          <p className="text-2xl font-bold mt-2 tabular-nums text-blue-600">{formatZAR(summary.pmgShare)}</p>
+          <p className="text-2xl font-bold mt-2 tabular-nums text-blue-600">
+            {formatZAR(summary.pmgShare)}
+          </p>
           <p className="text-xs text-muted-foreground mt-1">Calculated 25% equity reserve earned</p>
         </div>
       </div>
@@ -181,20 +219,33 @@ export function FinanceOverviewClient({
         <div className="rounded-xl border bg-card overflow-hidden">
           <div className="px-5 py-3.5 border-b bg-muted/30 flex items-center justify-between">
             <h3 className="text-sm font-semibold">Recent Income</h3>
-            <Link href="/finance/income" className="text-xs text-muted-foreground hover:text-foreground transition-colors flex items-center gap-1">
+            <Link
+              href="/finance/income"
+              className="text-xs text-muted-foreground hover:text-foreground transition-colors flex items-center gap-1"
+            >
               View all <ArrowUpRight className="h-3 w-3" />
             </Link>
           </div>
           {recentIncome.length === 0 ? (
             <div className="px-5 py-6">
-              <EmptyState message="No income recorded yet. Add your first income entry to get started." ctaLabel="Add Income" ctaHref="/finance/income" filtered={false} />
+              <EmptyState
+                message="No income recorded yet. Add your first income entry to get started."
+                ctaLabel="Add Income"
+                ctaHref="/finance/income"
+                filtered={false}
+              />
             </div>
           ) : (
             <div className="divide-y">
               {recentIncome.map((inc) => (
-                <div key={inc.id} className="px-5 py-3 flex items-start justify-between hover:bg-muted/20 transition-colors">
+                <div
+                  key={inc.id}
+                  className="px-5 py-3 flex items-start justify-between hover:bg-muted/20 transition-colors"
+                >
                   <div className="min-w-0">
-                    <p className="text-sm font-medium truncate">{inc.description || 'Income entry'}</p>
+                    <p className="text-sm font-medium truncate">
+                      {inc.description || 'Income entry'}
+                    </p>
                     <div className="flex items-center gap-2 mt-0.5">
                       <span className="text-xs text-muted-foreground">{fmtDate(inc.date)}</span>
                       <span className="inline-flex items-center rounded-full px-1.5 py-0.5 text-[10px] font-medium bg-emerald-500/10 text-emerald-600">
@@ -202,7 +253,9 @@ export function FinanceOverviewClient({
                       </span>
                     </div>
                   </div>
-                  <p className="text-sm font-medium tabular-nums text-emerald-600 shrink-0 ml-4">{formatZAR(inc.amount)}</p>
+                  <p className="text-sm font-medium tabular-nums text-emerald-600 shrink-0 ml-4">
+                    {formatZAR(inc.amount)}
+                  </p>
                 </div>
               ))}
             </div>
@@ -213,20 +266,33 @@ export function FinanceOverviewClient({
         <div className="rounded-xl border bg-card overflow-hidden">
           <div className="px-5 py-3.5 border-b bg-muted/30 flex items-center justify-between">
             <h3 className="text-sm font-semibold">Recent Expenses</h3>
-            <Link href="/finance/expenses" className="text-xs text-muted-foreground hover:text-foreground transition-colors flex items-center gap-1">
+            <Link
+              href="/finance/expenses"
+              className="text-xs text-muted-foreground hover:text-foreground transition-colors flex items-center gap-1"
+            >
               View all <ArrowUpRight className="h-3 w-3" />
             </Link>
           </div>
           {recentExpenses.length === 0 ? (
             <div className="px-5 py-6">
-              <EmptyState message="No expenses recorded yet. Add your first expense entry to get started." ctaLabel="Add Expense" ctaHref="/finance/expenses" filtered={false} />
+              <EmptyState
+                message="No expenses recorded yet. Add your first expense entry to get started."
+                ctaLabel="Add Expense"
+                ctaHref="/finance/expenses"
+                filtered={false}
+              />
             </div>
           ) : (
             <div className="divide-y">
               {recentExpenses.map((exp) => (
-                <div key={exp.id} className="px-5 py-3 flex items-start justify-between hover:bg-muted/20 transition-colors">
+                <div
+                  key={exp.id}
+                  className="px-5 py-3 flex items-start justify-between hover:bg-muted/20 transition-colors"
+                >
                   <div className="min-w-0">
-                    <p className="text-sm font-medium truncate">{exp.description || 'Expense entry'}</p>
+                    <p className="text-sm font-medium truncate">
+                      {exp.description || 'Expense entry'}
+                    </p>
                     <div className="flex items-center gap-2 mt-0.5">
                       <span className="text-xs text-muted-foreground">{fmtDate(exp.date)}</span>
                       <span className="inline-flex items-center rounded-full px-1.5 py-0.5 text-[10px] font-medium bg-red-500/10 text-red-600">
@@ -234,7 +300,9 @@ export function FinanceOverviewClient({
                       </span>
                     </div>
                   </div>
-                  <p className="text-sm font-medium tabular-nums text-red-600 shrink-0 ml-4">{formatZAR(exp.amount)}</p>
+                  <p className="text-sm font-medium tabular-nums text-red-600 shrink-0 ml-4">
+                    {formatZAR(exp.amount)}
+                  </p>
                 </div>
               ))}
             </div>
@@ -248,30 +316,46 @@ export function FinanceOverviewClient({
         <div className="rounded-xl border bg-card overflow-hidden">
           <div className="px-5 py-3.5 border-b bg-muted/30 flex items-center justify-between">
             <h3 className="text-sm font-semibold">Revenue by Division</h3>
-            <Link href="/finance/income" className="text-xs text-muted-foreground hover:text-foreground transition-colors flex items-center gap-1">
+            <Link
+              href="/finance/income"
+              className="text-xs text-muted-foreground hover:text-foreground transition-colors flex items-center gap-1"
+            >
               View all <ArrowUpRight className="h-3 w-3" />
             </Link>
           </div>
           {revenueByDivision.length === 0 ? (
             <div className="px-5 py-6">
-              <EmptyState message="No revenue recorded yet. Income entries will appear here once added." filtered={false} />
+              <EmptyState
+                message="No revenue recorded yet. Income entries will appear here once added."
+                filtered={false}
+              />
             </div>
           ) : (
             <div className="divide-y">
               {revenueByDivision.map((div) => {
-                const pct = summary.revenue > 0 ? (div.total / summary.revenue) * 100 : 0
+                const pct = summary.revenue > 0 ? (div.total / summary.revenue) * 100 : 0;
                 return (
-                  <div key={div.divisionName} className="px-5 py-3 hover:bg-muted/20 transition-colors">
+                  <div
+                    key={div.divisionName}
+                    className="px-5 py-3 hover:bg-muted/20 transition-colors"
+                  >
                     <div className="flex items-center justify-between mb-1">
                       <span className="text-sm font-medium">{div.divisionName}</span>
-                      <span className="text-sm font-semibold tabular-nums text-emerald-600">{formatZAR(div.total)}</span>
+                      <span className="text-sm font-semibold tabular-nums text-emerald-600">
+                        {formatZAR(div.total)}
+                      </span>
                     </div>
                     <div className="w-full h-1.5 bg-muted rounded-full overflow-hidden">
-                      <div className="h-full bg-emerald-500 rounded-full transition-all" style={{ width: `${Math.max(pct, 1)}%` }} />
+                      <div
+                        className="h-full bg-emerald-500 rounded-full transition-all"
+                        style={{ width: `${Math.max(pct, 1)}%` }}
+                      />
                     </div>
-                    <p className="text-[11px] text-muted-foreground mt-0.5">{pct.toFixed(1)}% of total</p>
+                    <p className="text-[11px] text-muted-foreground mt-0.5">
+                      {pct.toFixed(1)}% of total
+                    </p>
                   </div>
-                )
+                );
               })}
             </div>
           )}
@@ -281,30 +365,45 @@ export function FinanceOverviewClient({
         <div className="rounded-xl border bg-card overflow-hidden">
           <div className="px-5 py-3.5 border-b bg-muted/30 flex items-center justify-between">
             <h3 className="text-sm font-semibold">Expenses by Category</h3>
-            <Link href="/finance/expenses" className="text-xs text-muted-foreground hover:text-foreground transition-colors flex items-center gap-1">
+            <Link
+              href="/finance/expenses"
+              className="text-xs text-muted-foreground hover:text-foreground transition-colors flex items-center gap-1"
+            >
               View all <ArrowUpRight className="h-3 w-3" />
             </Link>
           </div>
           {expensesByCategory.length === 0 ? (
             <div className="px-5 py-6">
-              <EmptyState message="No expenses recorded yet. Expense entries will appear here once added." filtered={false} />
+              <EmptyState
+                message="No expenses recorded yet. Expense entries will appear here once added."
+                filtered={false}
+              />
             </div>
           ) : (
             <div className="divide-y">
               {expensesByCategory.map((cat) => {
-                const pct = summary.expenses > 0 ? (cat.total / summary.expenses) * 100 : 0
+                const pct = summary.expenses > 0 ? (cat.total / summary.expenses) * 100 : 0;
                 return (
                   <div key={cat.category} className="px-5 py-3 hover:bg-muted/20 transition-colors">
                     <div className="flex items-center justify-between mb-1">
-                      <span className="text-sm font-medium capitalize">{cat.category.replace(/_/g, ' ')}</span>
-                      <span className="text-sm font-semibold tabular-nums text-red-600">{formatZAR(cat.total)}</span>
+                      <span className="text-sm font-medium capitalize">
+                        {cat.category.replace(/_/g, ' ')}
+                      </span>
+                      <span className="text-sm font-semibold tabular-nums text-red-600">
+                        {formatZAR(cat.total)}
+                      </span>
                     </div>
                     <div className="w-full h-1.5 bg-muted rounded-full overflow-hidden">
-                      <div className="h-full bg-red-500 rounded-full transition-all" style={{ width: `${Math.max(pct, 1)}%` }} />
+                      <div
+                        className="h-full bg-red-500 rounded-full transition-all"
+                        style={{ width: `${Math.max(pct, 1)}%` }}
+                      />
                     </div>
-                    <p className="text-[11px] text-muted-foreground mt-0.5">{pct.toFixed(1)}% of total</p>
+                    <p className="text-[11px] text-muted-foreground mt-0.5">
+                      {pct.toFixed(1)}% of total
+                    </p>
                   </div>
-                )
+                );
               })}
             </div>
           )}
@@ -316,20 +415,42 @@ export function FinanceOverviewClient({
         <h3 className="text-sm font-semibold mb-3">Modules</h3>
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
           {[
-            { href: '/finance/income', label: 'Income', description: 'Track payments received', color: 'bg-emerald-500/10 text-emerald-600', icon: ArrowDownLeft },
-            { href: '/finance/expenses', label: 'Expenses', description: 'Record business costs', color: 'bg-red-500/10 text-red-600', icon: TrendingDown },
-            { href: '/finance/categories', label: 'Categories', description: 'Manage expense categories', color: 'bg-amber-500/10 text-amber-600', icon: Tags },
+            {
+              href: '/finance/income',
+              label: 'Income',
+              description: 'Track payments received',
+              color: 'bg-emerald-500/10 text-emerald-600',
+              icon: ArrowDownLeft,
+            },
+            {
+              href: '/finance/expenses',
+              label: 'Expenses',
+              description: 'Record business costs',
+              color: 'bg-red-500/10 text-red-600',
+              icon: TrendingDown,
+            },
+            {
+              href: '/finance/categories',
+              label: 'Categories',
+              description: 'Manage expense categories',
+              color: 'bg-amber-500/10 text-amber-600',
+              icon: Tags,
+            },
           ].map((link) => (
             <Link
               key={link.href}
               href={link.href}
               className="group flex items-center gap-3 rounded-xl border bg-card p-3.5 hover:bg-muted/30 hover:shadow-sm transition-all duration-200"
             >
-              <div className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-lg ${link.color}`}>
+              <div
+                className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-lg ${link.color}`}
+              >
                 <link.icon className="h-4 w-4" />
               </div>
               <div className="flex-1 min-w-0">
-                <p className="text-sm font-medium group-hover:underline underline-offset-2">{link.label}</p>
+                <p className="text-sm font-medium group-hover:underline underline-offset-2">
+                  {link.label}
+                </p>
                 <p className="text-[11px] text-muted-foreground truncate">{link.description}</p>
               </div>
               <ArrowRight className="h-3.5 w-3.5 text-muted-foreground shrink-0 opacity-0 group-hover:opacity-100 transition-all duration-200 -translate-x-1 group-hover:translate-x-0" />
@@ -338,5 +459,5 @@ export function FinanceOverviewClient({
         </div>
       </div>
     </div>
-  )
+  );
 }

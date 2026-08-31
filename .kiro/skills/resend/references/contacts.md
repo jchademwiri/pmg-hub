@@ -8,13 +8,13 @@ Contacts represent email recipients stored in Resend. They support custom proper
 
 ### Node.js
 
-| Operation | Method | Notes |
-|-----------|--------|-------|
-| Create | `resend.contacts.create(params)` | Add a contact with properties, segments, topics |
-| Get | `resend.contacts.get({ id })` or `resend.contacts.get({ email })` | Lookup by ID or email |
-| List | `resend.contacts.list({ limit?, offset?, segmentId? })` | Filter by segment |
-| Update | `resend.contacts.update(params)` | By `id` or `email` |
-| Delete | `resend.contacts.remove({ id })` or `resend.contacts.remove({ email })` | Not `.delete()` |
+| Operation | Method                                                                  | Notes                                           |
+| --------- | ----------------------------------------------------------------------- | ----------------------------------------------- |
+| Create    | `resend.contacts.create(params)`                                        | Add a contact with properties, segments, topics |
+| Get       | `resend.contacts.get({ id })` or `resend.contacts.get({ email })`       | Lookup by ID or email                           |
+| List      | `resend.contacts.list({ limit?, offset?, segmentId? })`                 | Filter by segment                               |
+| Update    | `resend.contacts.update(params)`                                        | By `id` or `email`                              |
+| Delete    | `resend.contacts.remove({ id })` or `resend.contacts.remove({ email })` | Not `.delete()`                                 |
 
 ### Python
 
@@ -73,8 +73,8 @@ const { data: updated, error: updateErr } = await resend.contacts.update({
   email: 'alice@example.com',
   firstName: 'Alicia',
   properties: {
-    plan: 'pro',       // update existing property
-    company: null,     // delete this property
+    plan: 'pro', // update existing property
+    company: null, // delete this property
   },
 });
 ```
@@ -94,11 +94,11 @@ const { data: contacts, error: listErr } = await resend.contacts.list({
 
 ## Common Mistakes
 
-| Mistake | Fix |
-|---------|-----|
-| Passing both `id` and `email` to get/update/remove | Use one or the other - not both |
-| Using `audienceId` (Node.js) | Segments replaced audiences - use `segmentId`. Python SDK still uses `audience_id` in create params |
-| Calling `.delete()` | SDK method is `.remove()` |
-| Expecting property deletion with empty string | Set property value to `null` to delete it |
-| Not checking `error` in Node.js | SDK returns `{ data, error }`, does not throw - always destructure and check |
-| Forgetting `email` is required on create | `email` is the only required field - all others are optional |
+| Mistake                                            | Fix                                                                                                 |
+| -------------------------------------------------- | --------------------------------------------------------------------------------------------------- |
+| Passing both `id` and `email` to get/update/remove | Use one or the other - not both                                                                     |
+| Using `audienceId` (Node.js)                       | Segments replaced audiences - use `segmentId`. Python SDK still uses `audience_id` in create params |
+| Calling `.delete()`                                | SDK method is `.remove()`                                                                           |
+| Expecting property deletion with empty string      | Set property value to `null` to delete it                                                           |
+| Not checking `error` in Node.js                    | SDK returns `{ data, error }`, does not throw - always destructure and check                        |
+| Forgetting `email` is required on create           | `email` is the only required field - all others are optional                                        |

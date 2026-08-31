@@ -1,13 +1,7 @@
 'use client';
 
 import * as React from 'react';
-import { 
-  ChevronDown, 
-  ChevronRight, 
-  CheckCircle2,
-  PlayCircle,
-  HelpCircle
-} from 'lucide-react';
+import { ChevronDown, ChevronRight, CheckCircle2, PlayCircle, HelpCircle } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 
 type BucketType = 'backlog' | 'in_progress' | 'completed';
@@ -50,23 +44,23 @@ export function TaskBoardReadOnly({ sections }: TaskBoardReadOnlyProps) {
   };
 
   const columns: { id: BucketType; title: string; colorClass: string; icon: React.ReactNode }[] = [
-    { 
-      id: 'backlog', 
-      title: 'Backlog', 
+    {
+      id: 'backlog',
+      title: 'Backlog',
       colorClass: 'border-t-2 border-t-sky-500 bg-sky-500/5',
-      icon: <HelpCircle className="size-4 text-sky-400" />
+      icon: <HelpCircle className="size-4 text-sky-400" />,
     },
-    { 
-      id: 'in_progress', 
-      title: 'In Progress', 
+    {
+      id: 'in_progress',
+      title: 'In Progress',
       colorClass: 'border-t-2 border-t-blue-500 bg-blue-500/5',
-      icon: <PlayCircle className="size-4 text-blue-400" />
+      icon: <PlayCircle className="size-4 text-blue-400" />,
     },
-    { 
-      id: 'completed', 
-      title: 'Completed', 
+    {
+      id: 'completed',
+      title: 'Completed',
       colorClass: 'border-t-2 border-t-emerald-500 bg-emerald-500/5',
-      icon: <CheckCircle2 className="size-4 text-emerald-400" />
+      icon: <CheckCircle2 className="size-4 text-emerald-400" />,
     },
   ];
 
@@ -74,8 +68,8 @@ export function TaskBoardReadOnly({ sections }: TaskBoardReadOnlyProps) {
     <div className="space-y-6">
       {/* Board Columns Grid */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        {columns.map(col => {
-          const colTasks = sections.filter(s => s.status === col.id);
+        {columns.map((col) => {
+          const colTasks = sections.filter((s) => s.status === col.id);
           const expandedTaskId = expandedTasks[col.id];
 
           return (
@@ -89,17 +83,20 @@ export function TaskBoardReadOnly({ sections }: TaskBoardReadOnlyProps) {
                   {col.icon}
                   <h3 className="text-sm font-bold text-white">{col.title}</h3>
                 </div>
-                <Badge variant="outline" className="text-xs font-semibold px-2 py-0.5 border-white/10 text-muted-foreground bg-white/5">
+                <Badge
+                  variant="outline"
+                  className="text-xs font-semibold px-2 py-0.5 border-white/10 text-muted-foreground bg-white/5"
+                >
                   {colTasks.length}
                 </Badge>
               </div>
 
               {/* Tasks List */}
               <div className="flex-1 space-y-3 overflow-y-auto">
-                {colTasks.map(task => {
+                {colTasks.map((task) => {
                   const isExpanded = expandedTaskId === task.id;
                   const totalSub = task.items.length;
-                  const completedSub = task.items.filter(i => i.isCompleted).length;
+                  const completedSub = task.items.filter((i) => i.isCompleted).length;
                   const pct = totalSub > 0 ? Math.round((completedSub / totalSub) * 100) : 0;
 
                   return (
@@ -108,7 +105,7 @@ export function TaskBoardReadOnly({ sections }: TaskBoardReadOnlyProps) {
                       className="flex flex-col border border-white/5 rounded-lg bg-white/[0.01] shadow-sm hover:shadow transition-all group"
                     >
                       {/* Task Header */}
-                      <button 
+                      <button
                         type="button"
                         className="w-full flex items-center gap-2.5 p-3 text-left cursor-pointer select-none focus:outline-none focus-visible:ring-1 focus-visible:ring-white/20"
                         onClick={() => toggleExpand(col.id, task.id)}
@@ -118,7 +115,7 @@ export function TaskBoardReadOnly({ sections }: TaskBoardReadOnlyProps) {
                         <span className="text-xs font-bold text-white flex-1 truncate">
                           {task.title}
                         </span>
-                        
+
                         {totalSub > 0 && (
                           <span className="text-[10px] font-medium text-muted-foreground bg-white/5 px-1.5 py-0.5 rounded-full shrink-0">
                             {completedSub}/{totalSub} ({pct}%)
@@ -126,19 +123,23 @@ export function TaskBoardReadOnly({ sections }: TaskBoardReadOnlyProps) {
                         )}
 
                         <div className="text-muted-foreground shrink-0">
-                          {isExpanded ? <ChevronDown className="size-3.5" /> : <ChevronRight className="size-3.5" />}
+                          {isExpanded ? (
+                            <ChevronDown className="size-3.5" />
+                          ) : (
+                            <ChevronRight className="size-3.5" />
+                          )}
                         </div>
                       </button>
 
                       {/* Expandable Sub-tasks section */}
                       {isExpanded && (
-                        <div 
+                        <div
                           id={`subtasks-${task.id}`}
                           className="border-t border-white/5 p-3 bg-white/[0.01] space-y-2.5 animate-in slide-in-from-top-1 duration-150"
                         >
                           {/* Sub-tasks checklist */}
                           <ul className="space-y-2">
-                            {task.items.map(item => (
+                            {task.items.map((item) => (
                               <li key={item.id} className="flex items-start gap-2.5 text-xs py-0.5">
                                 <input
                                   type="checkbox"
@@ -148,8 +149,8 @@ export function TaskBoardReadOnly({ sections }: TaskBoardReadOnlyProps) {
                                 />
                                 <span
                                   className={`text-xs flex-1 truncate ${
-                                    item.isCompleted 
-                                      ? 'text-muted-foreground line-through decoration-muted-foreground/45' 
+                                    item.isCompleted
+                                      ? 'text-muted-foreground line-through decoration-muted-foreground/45'
                                       : 'text-white font-medium'
                                   }`}
                                 >

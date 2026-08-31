@@ -43,9 +43,7 @@ export function ItemsTable({ items }: { items: Item[] }) {
               className="cursor-pointer hover:bg-muted/40 transition-colors border-b border-border"
               onClick={() => router.push(`/billing/items/${item.id}`)}
             >
-              <TableCell className="font-medium">
-                {item.name}
-              </TableCell>
+              <TableCell className="font-medium">{item.name}</TableCell>
               <TableCell className="max-w-xs truncate text-sm text-muted-foreground">
                 {item.description ?? '-'}
               </TableCell>
@@ -79,9 +77,7 @@ export function ItemsTable({ items }: { items: Item[] }) {
           No items found.
         </div>
       ) : (
-        items.map((item) => (
-          <MobileItemCard key={item.id} {...item} />
-        ))
+        items.map((item) => <MobileItemCard key={item.id} {...item} />)
       )}
     </div>
   );

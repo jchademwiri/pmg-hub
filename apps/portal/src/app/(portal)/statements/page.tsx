@@ -1,6 +1,13 @@
 import * as React from 'react';
 import { getPortalSessionOrRedirect } from '@/lib/portal-session';
-import { getDb, invoices, paymentAllocations, divisions, divisionBillingSettings, income } from '@pmg/db';
+import {
+  getDb,
+  invoices,
+  paymentAllocations,
+  divisions,
+  divisionBillingSettings,
+  income,
+} from '@pmg/db';
 import { eq, and, ne, desc, inArray } from 'drizzle-orm';
 import { Card, CardContent } from '@/components/ui/card';
 import { PrintButton } from '@/components/print-button';
@@ -35,8 +42,8 @@ export default async function StatementsPage({ searchParams }: PageProps) {
       and(
         eq(invoices.clientId, client.id),
         ne(invoices.status, 'draft'),
-        ne(invoices.status, 'void')
-      )
+        ne(invoices.status, 'void'),
+      ),
     )
     .orderBy(desc(invoices.invoiceDate));
 
@@ -69,10 +76,7 @@ export default async function StatementsPage({ searchParams }: PageProps) {
   }
 
   if (!division) {
-    const [firstDivision] = await db
-      .select()
-      .from(divisions)
-      .limit(1);
+    const [firstDivision] = await db.select().from(divisions).limit(1);
     division = firstDivision;
 
     if (firstDivision) {
@@ -87,12 +91,13 @@ export default async function StatementsPage({ searchParams }: PageProps) {
 
   // Fetch payment allocations for these invoices to calculate remaining balances
   const invoiceIds = allInvoices.map((inv) => inv.id);
-  const allocations = invoiceIds.length > 0
-    ? await db
-        .select()
-        .from(paymentAllocations)
-        .where(inArray(paymentAllocations.invoiceId, invoiceIds))
-    : [];
+  const allocations =
+    invoiceIds.length > 0
+      ? await db
+          .select()
+          .from(paymentAllocations)
+          .where(inArray(paymentAllocations.invoiceId, invoiceIds))
+      : [];
 
   const allocationMap = new Map<string, number>();
   allocations.forEach((alloc) => {
@@ -230,10 +235,7 @@ export default async function StatementsPage({ searchParams }: PageProps) {
           </p>
         </div>
 
-        <PrintButton
-          type="statement"
-          id={`${client.id}?monthPeriod=${currentPeriod}`}
-        />
+        <PrintButton type="statement" id={`${client.id}?monthPeriod=${currentPeriod}`} />
       </div>
 
       {/* Period Selector */}
@@ -279,12 +281,23 @@ export default async function StatementsPage({ searchParams }: PageProps) {
                 </div>
               )}
               <p className="text-xs text-muted-foreground print:text-black/60 leading-relaxed mt-2">
-                {division ? division.name : 'Playhouse Media Group (Pty) Ltd'}<br />
-                {divSettings?.salesRepEmail || 'billing@playhousemedia.co.za'}<br />
-                {divSettings?.salesRepPhone && <span>{divSettings.salesRepPhone}<br /></span>}
+                {division ? division.name : 'Playhouse Media Group (Pty) Ltd'}
+                <br />
+                {divSettings?.salesRepEmail || 'billing@playhousemedia.co.za'}
+                <br />
+                {divSettings?.salesRepPhone && (
+                  <span>
+                    {divSettings.salesRepPhone}
+                    <br />
+                  </span>
+                )}
                 {divSettings?.divisionWebsite && (
                   <a
-                    href={divSettings.divisionWebsite.startsWith('http') ? divSettings.divisionWebsite : `https://${divSettings.divisionWebsite}`}
+                    href={
+                      divSettings.divisionWebsite.startsWith('http')
+                        ? divSettings.divisionWebsite
+                        : `https://${divSettings.divisionWebsite}`
+                    }
                     target="_blank"
                     rel="noopener noreferrer"
                     className="hover:underline text-blue-400 print:text-black"
@@ -295,12 +308,18 @@ export default async function StatementsPage({ searchParams }: PageProps) {
               </p>
             </div>
             <div className="text-left sm:text-right">
-              <h2 className="text-xl font-bold text-white print:text-black tracking-tight">STATEMENT OF ACCOUNT</h2>
+              <h2 className="text-xl font-bold text-white print:text-black tracking-tight">
+                STATEMENT OF ACCOUNT
+              </h2>
               <div className="mt-4 grid grid-cols-2 gap-x-4 gap-y-1 text-xs text-muted-foreground print:text-black/70">
                 <span>Statement Date:</span>
-                <span className="font-medium text-white print:text-black">{formatDate(today.toISOString())}</span>
+                <span className="font-medium text-white print:text-black">
+                  {formatDate(today.toISOString())}
+                </span>
                 <span>Account Number:</span>
-                <span className="font-medium text-white print:text-black">{client.name.substring(0, 8).toUpperCase()}</span>
+                <span className="font-medium text-white print:text-black">
+                  {client.name.substring(0, 8).toUpperCase()}
+                </span>
               </div>
             </div>
           </div>
@@ -311,10 +330,14 @@ export default async function StatementsPage({ searchParams }: PageProps) {
               <p className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground/70 print:text-black/50 mb-2">
                 Statement For
               </p>
-              <p className="text-xs font-bold text-white print:text-black">{client.businessName || client.name}</p>
+              <p className="text-xs font-bold text-white print:text-black">
+                {client.businessName || client.name}
+              </p>
               <p className="text-xs text-muted-foreground print:text-black/70 mt-1 leading-relaxed">
-                {client.name}<br />
-                {client.email}<br />
+                {client.name}
+                <br />
+                {client.email}
+                <br />
                 {client.phone}
               </p>
             </div>
@@ -356,23 +379,33 @@ export default async function StatementsPage({ searchParams }: PageProps) {
             <div className="grid grid-cols-2 gap-4 sm:grid-cols-5 text-center text-xs">
               <div className="rounded-lg border border-white/5 p-3 print:border-black/10">
                 <p className="text-muted-foreground print:text-black/60 font-medium">Current</p>
-                <p className="mt-1 font-bold text-white print:text-black">{formatCurrency(current)}</p>
+                <p className="mt-1 font-bold text-white print:text-black">
+                  {formatCurrency(current)}
+                </p>
               </div>
               <div className="rounded-lg border border-white/5 p-3 print:border-black/10">
                 <p className="text-muted-foreground print:text-black/60 font-medium">30 Days</p>
-                <p className="mt-1 font-bold text-amber-400 print:text-black">{formatCurrency(age30)}</p>
+                <p className="mt-1 font-bold text-amber-400 print:text-black">
+                  {formatCurrency(age30)}
+                </p>
               </div>
               <div className="rounded-lg border border-white/5 p-3 print:border-black/10">
                 <p className="text-muted-foreground print:text-black/60 font-medium">60 Days</p>
-                <p className="mt-1 font-bold text-orange-400 print:text-black">{formatCurrency(age60)}</p>
+                <p className="mt-1 font-bold text-orange-400 print:text-black">
+                  {formatCurrency(age60)}
+                </p>
               </div>
               <div className="rounded-lg border border-white/5 p-3 print:border-black/10">
                 <p className="text-muted-foreground print:text-black/60 font-medium">90 Days+</p>
-                <p className="mt-1 font-bold text-red-400 print:text-black">{formatCurrency(age90)}</p>
+                <p className="mt-1 font-bold text-red-400 print:text-black">
+                  {formatCurrency(age90)}
+                </p>
               </div>
               <div className="col-span-2 sm:col-span-1 rounded-lg border border-red-500/20 bg-red-500/5 p-3 print:border-black/10 print:bg-black/5">
                 <p className="text-red-400 print:text-black font-bold">Total Due</p>
-                <p className="mt-1 font-extrabold text-red-400 print:text-black">{formatCurrency(totalOutstanding)}</p>
+                <p className="mt-1 font-extrabold text-red-400 print:text-black">
+                  {formatCurrency(totalOutstanding)}
+                </p>
               </div>
             </div>
           </div>
@@ -383,82 +416,95 @@ export default async function StatementsPage({ searchParams }: PageProps) {
               Ledger Transactions
             </p>
             {filteredLedger.length === 0 ? (
-              <p className="text-xs text-muted-foreground py-6 text-center">No transactions found for this period.</p>
+              <p className="text-xs text-muted-foreground py-6 text-center">
+                No transactions found for this period.
+              </p>
             ) : (
               <>
-              <div className="overflow-x-auto hidden md:block print:block">
-                <table className="w-full text-left border-collapse">
-                <thead>
-                  <tr className="border-b border-white/5 print:border-black/20 text-[10px] font-bold uppercase tracking-wider text-muted-foreground/75 print:text-black/60">
-                    <th className="py-3 pr-4">Date</th>
-                    <th className="py-3 px-4">Reference</th>
-                    <th className="py-3 px-4 text-right">Charge (Debit)</th>
-                    <th className="py-3 px-4 text-right">Payment (Credit)</th>
-                    <th className="py-3 pl-4 text-right">Balance</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-white/5 print:divide-black/10 text-xs">
+                <div className="overflow-x-auto hidden md:block print:block">
+                  <table className="w-full text-left border-collapse">
+                    <thead>
+                      <tr className="border-b border-white/5 print:border-black/20 text-[10px] font-bold uppercase tracking-wider text-muted-foreground/75 print:text-black/60">
+                        <th className="py-3 pr-4">Date</th>
+                        <th className="py-3 px-4">Reference</th>
+                        <th className="py-3 px-4 text-right">Charge (Debit)</th>
+                        <th className="py-3 px-4 text-right">Payment (Credit)</th>
+                        <th className="py-3 pl-4 text-right">Balance</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-white/5 print:divide-black/10 text-xs">
+                      {filteredLedger.map((tx) => {
+                        const isInvoice = tx.type === 'invoice';
+                        return (
+                          <tr key={tx.id}>
+                            <td className="py-4 pr-4 text-muted-foreground print:text-black/70">
+                              {formatDate(tx.date)}
+                            </td>
+                            <td className="py-4 px-4 font-semibold text-white print:text-black">
+                              {tx.reference}
+                              {tx.status && tx.status !== 'paid' && (
+                                <span className="inline-block text-[9px] font-bold uppercase px-1.5 py-0.2 ml-2 rounded bg-amber-500/10 text-amber-400 print:border">
+                                  {tx.status}
+                                </span>
+                              )}
+                            </td>
+                            <td className="py-4 px-4 text-right text-white print:text-black">
+                              {isInvoice ? formatCurrency(tx.amount) : '—'}
+                            </td>
+                            <td className="py-4 px-4 text-right text-emerald-400 print:text-emerald-600 font-semibold">
+                              {!isInvoice ? `-${formatCurrency(tx.amount)}` : '—'}
+                            </td>
+                            <td className="py-4 pl-4 text-right font-bold text-white print:text-black">
+                              {formatCurrency(tx.runningBalance)}
+                            </td>
+                          </tr>
+                        );
+                      })}
+                    </tbody>
+                  </table>
+                </div>
+
+                {/* Mobile Card View */}
+                <div className="md:hidden print:hidden divide-y divide-white/5">
                   {filteredLedger.map((tx) => {
                     const isInvoice = tx.type === 'invoice';
                     return (
-                      <tr key={tx.id}>
-                        <td className="py-4 pr-4 text-muted-foreground print:text-black/70">
-                          {formatDate(tx.date)}
-                        </td>
-                        <td className="py-4 px-4 font-semibold text-white print:text-black">
-                          {tx.reference}
-                          {tx.status && tx.status !== 'paid' && (
-                            <span className="inline-block text-[9px] font-bold uppercase px-1.5 py-0.2 ml-2 rounded bg-amber-500/10 text-amber-400 print:border">
-                              {tx.status}
-                            </span>
-                          )}
-                        </td>
-                        <td className="py-4 px-4 text-right text-white print:text-black">
-                          {isInvoice ? formatCurrency(tx.amount) : '—'}
-                        </td>
-                        <td className="py-4 px-4 text-right text-emerald-400 print:text-emerald-600 font-semibold">
-                          {!isInvoice ? `-${formatCurrency(tx.amount)}` : '—'}
-                        </td>
-                        <td className="py-4 pl-4 text-right font-bold text-white print:text-black">
-                          {formatCurrency(tx.runningBalance)}
-                        </td>
-                      </tr>
+                      <div
+                        key={tx.id}
+                        className="py-4 hover:bg-white/[0.02] px-4 transition-colors"
+                      >
+                        <div className="flex items-start justify-between mb-2">
+                          <div>
+                            <p className="text-sm font-semibold text-white">{tx.reference}</p>
+                            <p className="text-xs text-muted-foreground mt-0.5">
+                              {formatDate(tx.date)}
+                            </p>
+                          </div>
+                          <div className="text-right flex flex-col items-end gap-1">
+                            <p
+                              className={`text-sm font-bold ${isInvoice ? 'text-white' : 'text-emerald-400'}`}
+                            >
+                              {isInvoice
+                                ? formatCurrency(tx.amount)
+                                : `-${formatCurrency(tx.amount)}`}
+                            </p>
+                            {tx.status && tx.status !== 'paid' && (
+                              <span className="inline-block text-[9px] font-bold uppercase px-1.5 py-0.5 rounded bg-amber-500/10 text-amber-400 mt-1">
+                                {tx.status}
+                              </span>
+                            )}
+                          </div>
+                        </div>
+                        <div className="flex justify-between items-center text-xs mt-3 pt-3 border-t border-white/5">
+                          <span className="text-muted-foreground">Running Balance</span>
+                          <span className="font-bold text-white">
+                            {formatCurrency(tx.runningBalance)}
+                          </span>
+                        </div>
+                      </div>
                     );
                   })}
-                </tbody>
-              </table>
-              </div>
-
-              {/* Mobile Card View */}
-              <div className="md:hidden print:hidden divide-y divide-white/5">
-                {filteredLedger.map((tx) => {
-                  const isInvoice = tx.type === 'invoice';
-                  return (
-                    <div key={tx.id} className="py-4 hover:bg-white/[0.02] px-4 transition-colors">
-                      <div className="flex items-start justify-between mb-2">
-                        <div>
-                          <p className="text-sm font-semibold text-white">{tx.reference}</p>
-                          <p className="text-xs text-muted-foreground mt-0.5">{formatDate(tx.date)}</p>
-                        </div>
-                        <div className="text-right flex flex-col items-end gap-1">
-                          <p className={`text-sm font-bold ${isInvoice ? 'text-white' : 'text-emerald-400'}`}>
-                            {isInvoice ? formatCurrency(tx.amount) : `-${formatCurrency(tx.amount)}`}
-                          </p>
-                          {tx.status && tx.status !== 'paid' && (
-                            <span className="inline-block text-[9px] font-bold uppercase px-1.5 py-0.5 rounded bg-amber-500/10 text-amber-400 mt-1">
-                              {tx.status}
-                            </span>
-                          )}
-                        </div>
-                      </div>
-                      <div className="flex justify-between items-center text-xs mt-3 pt-3 border-t border-white/5">
-                        <span className="text-muted-foreground">Running Balance</span>
-                        <span className="font-bold text-white">{formatCurrency(tx.runningBalance)}</span>
-                      </div>
-                    </div>
-                  );
-                })}
-              </div>
+                </div>
               </>
             )}
           </div>

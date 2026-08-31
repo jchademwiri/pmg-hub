@@ -105,24 +105,27 @@ deleteIncome(id: string): Promise<{ error?: string }>
 ```
 
 IncomeSchema (Zod):
+
 ```ts
 const IncomeSchema = z.object({
-  date:        z.string().min(1),
-  divisionId:  z.string().uuid(),
-  clientId:    z.string().uuid().optional(),   // empty string → undefined via transform
+  date: z.string().min(1),
+  divisionId: z.string().uuid(),
+  clientId: z.string().uuid().optional(), // empty string → undefined via transform
   description: z.string().optional(),
-  amount:      z.coerce.number().positive(),
-})
+  amount: z.coerce.number().positive(),
+});
 ```
 
 `clientId` empty string handling: before parsing, replace `''` with `undefined`
 so Zod's `.optional()` accepts it cleanly.
 
 Before calling `IncomeSchema.parse()`, normalize the raw FormData object:
+
 ```ts
-const raw = Object.fromEntries(formData)
-if (raw.clientId === '') delete raw.clientId
+const raw = Object.fromEntries(formData);
+if (raw.clientId === '') delete raw.clientId;
 ```
+
 This ensures Zod's `.optional()` accepts the missing key cleanly. Do NOT pass the
 empty string directly to the schema - it will fail UUID validation.
 
@@ -134,17 +137,18 @@ empty string directly to the schema - it will fail UUID validation.
 Server Component. Props: `{ searchParams: Promise<{ divisionId?: string; month?: string }> }`.
 
 ```ts
-const { divisionId, month } = await searchParams
+const { divisionId, month } = await searchParams;
 const [entries, divisions, clients, months] = await Promise.all([
   getAllIncome({ divisionId, month }),
   getAllDivisions(),
   getAllClients(),
   getDistinctIncomeMonths(),
-])
-const runningTotal = entries.reduce((sum, e) => sum + Number(e.amount), 0)
+]);
+const runningTotal = entries.reduce((sum, e) => sum + Number(e.amount), 0);
 ```
 
 Renders:
+
 1. Page header + formatted running total (`formatZAR(runningTotal)`)
 2. `<FilterBar divisions months currentDivisionId currentMonth />`
 3. `<IncomeAddForm divisions clients createAction={createIncome} />`
@@ -155,10 +159,10 @@ Renders:
 Server Component. Props: `{ params: Promise<{ id: string }> }`.
 
 ```ts
-const { id } = await params
-const entry = await getIncomeById(id)
-if (!entry) notFound()
-const [divisions, clients] = await Promise.all([getAllDivisions(), getAllClients()])
+const { id } = await params;
+const entry = await getIncomeById(id);
+if (!entry) notFound();
+const [divisions, clients] = await Promise.all([getAllDivisions(), getAllClients()]);
 ```
 
 Renders: back link to `/income` + `<IncomeEditForm entry divisions clients updateAction={updateIncome.bind(null, id)} />`
@@ -166,12 +170,13 @@ Renders: back link to `/income` + `<IncomeEditForm entry divisions clients updat
 ### FilterBar (`apps/admin/src/components/income/filter-bar.tsx`)
 
 `'use client'`. Props:
+
 ```ts
 interface FilterBarProps {
-  divisions: { id: string; name: string }[]
-  months: string[]
-  currentDivisionId?: string
-  currentMonth?: string
+  divisions: { id: string; name: string }[];
+  months: string[];
+  currentDivisionId?: string;
+  currentMonth?: string;
 }
 ```
 
@@ -181,9 +186,11 @@ controls: "All divisions" default + division options; "All months" default + mon
 
 > **Month display format:** The month select MUST display options as human-readable
 > labels. Convert `YYYY-MM` to a display label using:
+>
 > ```ts
-> new Date(month + '-01').toLocaleString('en-ZA', { month: 'long', year: 'numeric' })
+> new Date(month + '-01').toLocaleString('en-ZA', { month: 'long', year: 'numeric' });
 > ```
+>
 > The option `value` remains `YYYY-MM` (what gets pushed to the URL).
 > Example: `value="2026-03"` displays as `"March 2026"`.
 > This is consistent with the label format used in the dashboard period selector.
@@ -191,15 +198,17 @@ controls: "All divisions" default + division options; "All months" default + mon
 ### IncomeAddForm (`apps/admin/src/components/income/income-add-form.tsx`)
 
 `'use client'`. Props:
+
 ```ts
 interface IncomeAddFormProps {
-  divisions: { id: string; name: string }[]
-  clients: { id: string; name: string; businessName: string | null }[]
-  createAction: (formData: FormData) => Promise<{ error?: string }>
+  divisions: { id: string; name: string }[];
+  clients: { id: string; name: string; businessName: string | null }[];
+  createAction: (formData: FormData) => Promise<{ error?: string }>;
 }
 ```
 
 Uses `useTransition` + `useRef` on the `<form>` element. On submit:
+
 1. Calls `createAction(new FormData(formRef.current))`
 2. On success (`!result.error`): resets form via `formRef.current.reset()`
 3. On error: sets `errorMessage` state, displays below form
@@ -215,10 +224,11 @@ min="0.01" step="0.01"). Submit button: "Add Income" / "Adding…" while pending
 ### IncomeTable (`apps/admin/src/components/income/income-table.tsx`)
 
 `'use client'`. Props:
+
 ```ts
 interface IncomeTableProps {
-  entries: IncomeRow[]
-  deleteAction: (id: string) => Promise<{ error?: string }>
+  entries: IncomeRow[];
+  deleteAction: (id: string) => Promise<{ error?: string }>;
 }
 ```
 
@@ -226,6 +236,7 @@ State: `pendingDeleteId: string | null`. Renders shadcn `<Table>` with columns:
 Date | Division | Client | Description | Amount | Actions.
 
 Actions cell per row:
+
 - Edit: `<Link href={'/income/' + entry.id}>` with Pencil icon button
 - Delete: when `pendingDeleteId !== entry.id`, shows trash icon button that sets
   `pendingDeleteId = entry.id`. When `pendingDeleteId === entry.id`, shows two
@@ -235,17 +246,19 @@ Actions cell per row:
 ### IncomeEditForm (`apps/admin/src/components/income/income-edit-form.tsx`)
 
 `'use client'`. Props:
+
 ```ts
 interface IncomeEditFormProps {
-  entry: IncomeRow
-  divisions: { id: string; name: string }[]
-  clients: { id: string; name: string; businessName: string | null }[]
-  updateAction: (formData: FormData) => Promise<{ error?: string }>
+  entry: IncomeRow;
+  divisions: { id: string; name: string }[];
+  clients: { id: string; name: string; businessName: string | null }[];
+  updateAction: (formData: FormData) => Promise<{ error?: string }>;
 }
 ```
 
 Same fields as IncomeAddForm, pre-populated with `entry` values. Uses `useTransition`
-+ `useRouter`. On success: `router.push('/income')`. On error: inline error display.
+
+- `useRouter`. On success: `router.push('/income')`. On error: inline error display.
 
 > **"No client" option:** The leading client select option MUST render with the visible
 > label `"No client"` and `value=""`. It MUST be the first option in the list. When
@@ -258,16 +271,16 @@ Same fields as IncomeAddForm, pre-populated with `entry` values. Uses `useTransi
 
 ### `income` table (existing - `packages/db/src/schema/income.ts`)
 
-| Column | Type | Notes |
-|---|---|---|
-| id | uuid PK | defaultRandom() |
-| date | date | NOT NULL |
-| division_id | uuid FK → divisions.id | NOT NULL, onDelete: restrict |
-| client_id | uuid FK → clients.id | nullable, onDelete: set null |
-| description | text | nullable |
-| amount | numeric(12,2) | NOT NULL, CHECK > 0 |
-| created_at | timestamptz | defaultNow() |
-| updated_at | timestamptz | nullable, set by app on update |
+| Column      | Type                   | Notes                          |
+| ----------- | ---------------------- | ------------------------------ |
+| id          | uuid PK                | defaultRandom()                |
+| date        | date                   | NOT NULL                       |
+| division_id | uuid FK → divisions.id | NOT NULL, onDelete: restrict   |
+| client_id   | uuid FK → clients.id   | nullable, onDelete: set null   |
+| description | text                   | nullable                       |
+| amount      | numeric(12,2)          | NOT NULL, CHECK > 0            |
+| created_at  | timestamptz            | defaultNow()                   |
+| updated_at  | timestamptz            | nullable, set by app on update |
 
 DB constraint `income_amount_positive` enforces `amount > 0` at the database level,
 complementing the Zod `z.coerce.number().positive()` check in the Server Action.
@@ -275,6 +288,7 @@ complementing the Zod `z.coerce.number().positive()` check in the Server Action.
 ### `getAllIncome` query shape
 
 The query performs:
+
 - `INNER JOIN divisions` on `income.division_id = divisions.id`
 - `LEFT JOIN clients` on `income.client_id = clients.id`
 - Optional `WHERE income.division_id = $divisionId`
@@ -304,14 +318,14 @@ round-trip preserves two decimal places as long as the input is a valid decimal.
 
 ## Correctness Properties
 
-*A property is a characteristic or behavior that should hold true across all valid
+_A property is a characteristic or behavior that should hold true across all valid
 executions of a system - essentially, a formal statement about what the system should
 do. Properties serve as the bridge between human-readable specifications and
-machine-verifiable correctness guarantees.*
+machine-verifiable correctness guarantees._
 
 ### Property 1: getAllIncome returns all entries with correct shape, sorted date DESC
 
-*For any* set of income entries inserted into the database, `getAllIncome()` with no
+_For any_ set of income entries inserted into the database, `getAllIncome()` with no
 filters should return all of them, each with the fields `id`, `date`, `divisionId`,
 `divisionName`, `clientId`, `clientName`, `description`, and `amount`, and the result
 array should be sorted by `date` in descending order.
@@ -322,7 +336,7 @@ array should be sorted by `date` in descending order.
 
 ### Property 2: Division filter excludes entries from other divisions
 
-*For any* `divisionId` value, `getAllIncome({ divisionId })` should never return an
+_For any_ `divisionId` value, `getAllIncome({ divisionId })` should never return an
 entry whose `divisionId` differs from the filter value.
 
 **Validates: Requirements 2.3, 7.3**
@@ -331,7 +345,7 @@ entry whose `divisionId` differs from the filter value.
 
 ### Property 3: Month filter excludes entries outside the calendar month
 
-*For any* `month` value in `YYYY-MM` format, `getAllIncome({ month })` should never
+_For any_ `month` value in `YYYY-MM` format, `getAllIncome({ month })` should never
 return an entry whose `date` falls outside that calendar month.
 
 **Validates: Requirements 2.4, 7.3**
@@ -340,7 +354,7 @@ return an entry whose `date` falls outside that calendar month.
 
 ### Property 4: Running total equals sum of amounts in the result set
 
-*For any* result set returned by `getAllIncome()` (with or without filters), the
+_For any_ result set returned by `getAllIncome()` (with or without filters), the
 running total computed as `entries.reduce((sum, e) => sum + Number(e.amount), 0)`
 should equal the arithmetic sum of all `amount` values in that result set.
 
@@ -350,7 +364,7 @@ should equal the arithmetic sum of all `amount` values in that result set.
 
 ### Property 5: createIncome round-trip - valid input succeeds and entry is retrievable
 
-*For any* valid `IncomeSchema` input (non-empty date, valid division UUID, optional
+_For any_ valid `IncomeSchema` input (non-empty date, valid division UUID, optional
 client UUID, optional description, positive amount), `createIncome` should return `{}`
 (no error) and the new entry should subsequently appear in `getAllIncome()` with the
 correct field values.
@@ -361,7 +375,7 @@ correct field values.
 
 ### Property 6: updateIncome round-trip - valid input succeeds and changes are reflected
 
-*For any* existing income entry and any valid `IncomeSchema` update input,
+_For any_ existing income entry and any valid `IncomeSchema` update input,
 `updateIncome(id, formData)` should return `{}` and `getAllIncome()` should
 subsequently reflect the updated field values for that entry.
 
@@ -371,7 +385,7 @@ subsequently reflect the updated field values for that entry.
 
 ### Property 7: deleteIncome round-trip - deleted entry is no longer retrievable
 
-*For any* existing income entry id, `deleteIncome(id)` should return `{}` and
+_For any_ existing income entry id, `deleteIncome(id)` should return `{}` and
 `getIncomeById(id)` should return `null` afterwards.
 
 **Validates: Requirements 5.3, 5.4**
@@ -380,8 +394,8 @@ subsequently reflect the updated field values for that entry.
 
 ### Property 8: getIncomeById returns the correct entry or null
 
-*For any* income entry that has been inserted, `getIncomeById(entry.id)` should return
-that entry with all correct field values. *For any* UUID that does not correspond to an
+_For any_ income entry that has been inserted, `getIncomeById(entry.id)` should return
+that entry with all correct field values. _For any_ UUID that does not correspond to an
 existing income entry, `getIncomeById(id)` should return `null`.
 
 **Validates: Requirements 4.2, 4.9, 8.2**
@@ -390,7 +404,7 @@ existing income entry, `getIncomeById(id)` should return `null`.
 
 ### Property 9: getDistinctIncomeMonths returns distinct YYYY-MM strings sorted DESC
 
-*For any* set of income entries spanning multiple months, `getDistinctIncomeMonths()`
+_For any_ set of income entries spanning multiple months, `getDistinctIncomeMonths()`
 should return a list of distinct `YYYY-MM` strings, with no duplicates, sorted in
 descending order.
 
@@ -400,7 +414,7 @@ descending order.
 
 ### Property 10: Invalid input to createIncome/updateIncome always returns an error
 
-*For any* input that violates `IncomeSchema` - including amount ≤ 0, a non-UUID
+_For any_ input that violates `IncomeSchema` - including amount ≤ 0, a non-UUID
 `divisionId`, a missing required field, or a non-positive amount string - both
 `createIncome` and `updateIncome` should return `{ error: <non-empty string> }` and
 must not write any record to the database.
@@ -411,7 +425,7 @@ must not write any record to the database.
 
 ### Property 11: Amount precision is preserved on round-trip
 
-*For any* valid positive decimal amount submitted through `createIncome`, the value
+_For any_ valid positive decimal amount submitted through `createIncome`, the value
 stored in the database (as `String(parsed.amount)`) should equal the original amount
 when read back and converted with `Number()`, within two decimal places of precision.
 
@@ -421,7 +435,7 @@ when read back and converted with `Number()`, within two decimal places of preci
 
 ### Property 12: getAllDivisions returns all divisions sorted by name ASC
 
-*For any* set of divisions in the database, `getAllDivisions()` should return all of
+_For any_ set of divisions in the database, `getAllDivisions()` should return all of
 them as `{ id, name }` objects, sorted alphabetically by `name` ascending.
 
 **Validates: Requirements 8.4**
@@ -430,7 +444,7 @@ them as `{ id, name }` objects, sorted alphabetically by `name` ascending.
 
 ### Property 13: getAllClients returns all clients sorted by name ASC
 
-*For any* set of clients in the database, `getAllClients()` should return all of them
+_For any_ set of clients in the database, `getAllClients()` should return all of them
 as `{ id, name, businessName }` objects, sorted alphabetically by `name` ascending.
 
 **Validates: Requirements 8.5**
@@ -451,34 +465,37 @@ All three Server Actions follow the same pattern:
 
 ```ts
 try {
-  const raw = Object.fromEntries(formData)
+  const raw = Object.fromEntries(formData);
   // normalize empty clientId
-  if (raw.clientId === '') delete raw.clientId
-  const parsed = IncomeSchema.parse(raw)
+  if (raw.clientId === '') delete raw.clientId;
+  const parsed = IncomeSchema.parse(raw);
   // ... DB operation
-  revalidatePath('/income')
-  revalidatePath('/dashboard')
-  return {}
+  revalidatePath('/income');
+  revalidatePath('/dashboard');
+  return {};
 } catch (err) {
   if (err instanceof z.ZodError) {
-    return { error: err.errors[0]?.message ?? 'Validation error' }
+    return { error: err.errors[0]?.message ?? 'Validation error' };
   }
-  const message = err instanceof Error ? err.message : 'Unknown error'
-  return { error: message }
+  const message = err instanceof Error ? err.message : 'Unknown error';
+  return { error: message };
 }
 ```
 
 Key points:
+
 - Zod errors produce human-readable field-level messages
 - DB errors (FK violation, connection failure) are caught and returned as `{ error }`
 - No exception is ever thrown to the caller
 - `revalidatePath` is only called on success (inside the try, before `return {}`)
 
 For `updateIncome`, the Drizzle update call MUST include `updatedAt: new Date()`:
+
 ```ts
-await db.update(income)
+await db
+  .update(income)
   .set({ ...parsed, amount: String(parsed.amount), updatedAt: new Date() })
-  .where(eq(income.id, id))
+  .where(eq(income.id, id));
 ```
 
 ### deleteIncome error handling
@@ -489,18 +506,19 @@ await db.update(income)
 ```ts
 export async function deleteIncome(id: string): Promise<{ error?: string }> {
   try {
-    await db.delete(income).where(eq(income.id, id))
-    revalidatePath('/income')
-    revalidatePath('/dashboard')
-    return {}
+    await db.delete(income).where(eq(income.id, id));
+    revalidatePath('/income');
+    revalidatePath('/dashboard');
+    return {};
   } catch (err) {
-    const message = err instanceof Error ? err.message : 'Unknown error'
-    return { error: message }
+    const message = err instanceof Error ? err.message : 'Unknown error';
+    return { error: message };
   }
 }
 ```
 
 Key points:
+
 - `revalidatePath('/income')` AND `revalidatePath('/dashboard')` are BOTH called on
   success - this satisfies R11 (dashboard consistency after delete).
 - `revalidatePath` is only called inside the `try` block, BEFORE `return {}`. It is
@@ -539,6 +557,7 @@ Use **fast-check** (already a dev dependency from Phase 1 tests). Each property
 test runs a minimum of **100 iterations**.
 
 Tag format for each property test:
+
 ```
 // Feature: income-management, Property N: <property_text>
 ```
@@ -547,21 +566,21 @@ Tag format for each property test:
 
 Each property below maps 1:1 to a Correctness Property in this document.
 
-| Test | Property | fast-check arbitraries |
-|---|---|---|
-| P1 | getAllIncome shape + sort | `fc.array(incomeArb)` - insert, query, assert |
-| P2 | Division filter | `fc.uuid()` as divisionId filter |
-| P3 | Month filter | `fc.date()` mapped to YYYY-MM |
-| P4 | Running total | `fc.array(fc.float({ min: 0.01 }))` as amounts |
-| P5 | createIncome round-trip | `fc.record({ date, divisionId, amount, ... })` |
-| P6 | updateIncome round-trip | existing entry + `fc.record(...)` for new values |
-| P7 | deleteIncome round-trip | existing entry id |
-| P8 | getIncomeById | existing id + random non-existent UUID |
-| P9 | getDistinctIncomeMonths | `fc.array(fc.date())` spanning multiple months |
-| P10 | Invalid input returns error | `fc.oneof(invalidAmountArb, invalidUuidArb, ...)` |
-| P11 | Amount precision | `fc.float({ min: 0.01, max: 999999.99 })` |
-| P12 | getAllDivisions sort | `fc.array(fc.string())` as division names |
-| P13 | getAllClients sort | `fc.array(fc.record({ name, businessName }))` |
+| Test | Property                    | fast-check arbitraries                            |
+| ---- | --------------------------- | ------------------------------------------------- |
+| P1   | getAllIncome shape + sort   | `fc.array(incomeArb)` - insert, query, assert     |
+| P2   | Division filter             | `fc.uuid()` as divisionId filter                  |
+| P3   | Month filter                | `fc.date()` mapped to YYYY-MM                     |
+| P4   | Running total               | `fc.array(fc.float({ min: 0.01 }))` as amounts    |
+| P5   | createIncome round-trip     | `fc.record({ date, divisionId, amount, ... })`    |
+| P6   | updateIncome round-trip     | existing entry + `fc.record(...)` for new values  |
+| P7   | deleteIncome round-trip     | existing entry id                                 |
+| P8   | getIncomeById               | existing id + random non-existent UUID            |
+| P9   | getDistinctIncomeMonths     | `fc.array(fc.date())` spanning multiple months    |
+| P10  | Invalid input returns error | `fc.oneof(invalidAmountArb, invalidUuidArb, ...)` |
+| P11  | Amount precision            | `fc.float({ min: 0.01, max: 999999.99 })`         |
+| P12  | getAllDivisions sort        | `fc.array(fc.string())` as division names         |
+| P13  | getAllClients sort          | `fc.array(fc.record({ name, businessName }))`     |
 
 ### Unit tests
 

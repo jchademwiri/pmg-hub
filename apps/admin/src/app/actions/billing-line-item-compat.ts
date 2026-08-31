@@ -5,7 +5,8 @@ let hasBillingLineItemItemIdColumnPromise: Promise<boolean> | null = null;
 export async function hasBillingLineItemItemIdColumn() {
   if (!hasBillingLineItemItemIdColumnPromise) {
     hasBillingLineItemItemIdColumnPromise = getDb()
-      .execute(`
+      .execute(
+        `
         SELECT EXISTS (
           SELECT 1
           FROM information_schema.columns
@@ -13,7 +14,8 @@ export async function hasBillingLineItemItemIdColumn() {
             AND table_name = 'billing_line_items'
             AND column_name = 'item_id'
         ) AS "exists"
-      `)
+      `,
+      )
       .then((res) => {
         const rows = (res as { rows?: Array<{ exists?: boolean }> }).rows;
         const exists = Boolean(rows?.[0]?.exists);

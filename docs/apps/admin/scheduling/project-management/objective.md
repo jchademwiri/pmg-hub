@@ -46,25 +46,25 @@ A minimal, practical scheduling feature within PMG Hub that enables Jacob to:
 
 The feature should answer these questions at a glance:
 
-> *What tender am I working on now? What tender is next? When should I start? When should I finish? Am I at risk of missing the closing date? Do I have too many tenders scheduled at once?*
+> _What tender am I working on now? What tender is next? When should I start? When should I finish? Am I at risk of missing the closing date? Do I have too many tenders scheduled at once?_
 
 ## Scope
 
-| In Scope (MVP) | Out of Scope (Future / Avoid for Now) |
-|---|---|
-| Tender schedule CRUD (create, read, update, delete) | Full project management (tasks, subtasks, milestones, Gantt charts) |
-| Status tracking (planned → in progress → completed → submitted) | Team collaboration / multi-user assignments |
-| Effort estimation (days) + actual effort tracking | Automated notifications / email reminders (future enhancement) |
-| Start date, target completion date, closing date tracking | Kanban board with drag-and-drop |
-| Basic workload view (current, next, queue) | Calendar integration (Google Calendar, Outlook) |
-| Deadline risk indicators (buffer warnings, overlap detection) | File uploads / document management per tender |
-| Integration with existing clients (must link to client record) | Resource leveling / auto-scheduling |
-| Structured notes and blockers (separate fields) | Reporting / historical analysis |
-| Overdue/warning states in UI | Public client-facing portal |
-| Mobile-friendly responsive layout (desktop primary) | Time tracking / timesheets |
-| Priority levels (urgent/high first, then by closing date) | |
-| Outcome tracking (won / lost / pending after submission) | |
-| Fixed 2-day buffer (global default, not configurable per tender) | |
+| In Scope (MVP)                                                   | Out of Scope (Future / Avoid for Now)                               |
+| ---------------------------------------------------------------- | ------------------------------------------------------------------- |
+| Tender schedule CRUD (create, read, update, delete)              | Full project management (tasks, subtasks, milestones, Gantt charts) |
+| Status tracking (planned → in progress → completed → submitted)  | Team collaboration / multi-user assignments                         |
+| Effort estimation (days) + actual effort tracking                | Automated notifications / email reminders (future enhancement)      |
+| Start date, target completion date, closing date tracking        | Kanban board with drag-and-drop                                     |
+| Basic workload view (current, next, queue)                       | Calendar integration (Google Calendar, Outlook)                     |
+| Deadline risk indicators (buffer warnings, overlap detection)    | File uploads / document management per tender                       |
+| Integration with existing clients (must link to client record)   | Resource leveling / auto-scheduling                                 |
+| Structured notes and blockers (separate fields)                  | Reporting / historical analysis                                     |
+| Overdue/warning states in UI                                     | Public client-facing portal                                         |
+| Mobile-friendly responsive layout (desktop primary)              | Time tracking / timesheets                                          |
+| Priority levels (urgent/high first, then by closing date)        |                                                                     |
+| Outcome tracking (won / lost / pending after submission)         |                                                                     |
+| Fixed 2-day buffer (global default, not configurable per tender) |                                                                     |
 
 ## Non-Scope (Explicitly Avoided)
 

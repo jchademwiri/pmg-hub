@@ -2,15 +2,7 @@
 
 import * as React from 'react';
 import { toast } from 'sonner';
-import {
-  AlertCircle,
-  CheckCircle2,
-  Loader2,
-  Mail,
-  RefreshCw,
-  Search,
-  Send,
-} from 'lucide-react';
+import { AlertCircle, CheckCircle2, Loader2, Mail, RefreshCw, Search, Send } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
@@ -88,7 +80,10 @@ function StatusBadge({ status }: { status: SendStatus }) {
   return null;
 }
 
-export function SendOverdueRemindersButton({ clientId, trigger }: { clientId?: string; trigger?: React.ReactNode } = {}) {
+export function SendOverdueRemindersButton({
+  clientId,
+  trigger,
+}: { clientId?: string; trigger?: React.ReactNode } = {}) {
   const [open, setOpen] = React.useState(false);
   const [isLoading, setIsLoading] = React.useState(false);
   const [isSending, setIsSending] = React.useState(false);
@@ -256,9 +251,7 @@ export function SendOverdueRemindersButton({ clientId, trigger }: { clientId?: s
     const messageValidation = validatePersonalMessage(config.personalMessage);
     if (!emailValidation.valid || !messageValidation.valid || !config.subject.trim()) {
       const error =
-        emailValidation.error ??
-        messageValidation.error ??
-        'Subject is required before sending.';
+        emailValidation.error ?? messageValidation.error ?? 'Subject is required before sending.';
       setStatuses((current) => ({ ...current, [item.reminderKey]: 'failed' }));
       setErrors((current) => ({ ...current, [item.reminderKey]: error }));
       return false;
@@ -292,7 +285,12 @@ export function SendOverdueRemindersButton({ clientId, trigger }: { clientId?: s
   async function sendCurrent() {
     if (!activeItem || isSending) return;
     setIsSending(true);
-    const ok = await sendOne(activeItem, typeof crypto !== 'undefined' && crypto.randomUUID ? crypto.randomUUID() : Math.random().toString(36).substring(2, 15));
+    const ok = await sendOne(
+      activeItem,
+      typeof crypto !== 'undefined' && crypto.randomUUID
+        ? crypto.randomUUID()
+        : Math.random().toString(36).substring(2, 15),
+    );
     setIsSending(false);
     if (ok) toast.success(`Reminder sent to ${clientLabel(activeItem)}.`);
     else toast.error(errors[activeItem.reminderKey] ?? 'Failed to send reminder.');
@@ -302,7 +300,10 @@ export function SendOverdueRemindersButton({ clientId, trigger }: { clientId?: s
     if (selectedItems.length === 0 || isSending) return;
 
     setIsSending(true);
-    const batchId = typeof crypto !== 'undefined' && crypto.randomUUID ? crypto.randomUUID() : Math.random().toString(36).substring(2, 15);
+    const batchId =
+      typeof crypto !== 'undefined' && crypto.randomUUID
+        ? crypto.randomUUID()
+        : Math.random().toString(36).substring(2, 15);
     let cursor = 0;
     let sentCount = 0;
 
@@ -334,7 +335,9 @@ export function SendOverdueRemindersButton({ clientId, trigger }: { clientId?: s
     : undefined;
   const activeSubjectError =
     activeConfig && !activeConfig.subject.trim() ? 'Subject is required.' : undefined;
-  const activeCanSend = Boolean(activeItem && activeConfig && !activeEmailError && !activeMessageError && !activeSubjectError);
+  const activeCanSend = Boolean(
+    activeItem && activeConfig && !activeEmailError && !activeMessageError && !activeSubjectError,
+  );
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
@@ -369,7 +372,10 @@ export function SendOverdueRemindersButton({ clientId, trigger }: { clientId?: s
               <div className="flex items-center justify-between gap-2">
                 <label className="flex items-center gap-2 text-sm">
                   <Checkbox
-                    checked={filteredItems.length > 0 && filteredItems.every((item) => selected[item.reminderKey])}
+                    checked={
+                      filteredItems.length > 0 &&
+                      filteredItems.every((item) => selected[item.reminderKey])
+                    }
                     onCheckedChange={(value) => toggleAll(value === true)}
                     disabled={filteredItems.length === 0 || isSending}
                   />
@@ -379,7 +385,9 @@ export function SendOverdueRemindersButton({ clientId, trigger }: { clientId?: s
                   type="button"
                   variant="ghost"
                   size="sm"
-                  onClick={() => setSortDirection((current) => (current === 'desc' ? 'asc' : 'desc'))}
+                  onClick={() =>
+                    setSortDirection((current) => (current === 'desc' ? 'asc' : 'desc'))
+                  }
                 >
                   Balance {sortDirection === 'desc' ? 'high' : 'low'}
                 </Button>
@@ -393,7 +401,9 @@ export function SendOverdueRemindersButton({ clientId, trigger }: { clientId?: s
                   Loading overdue clients...
                 </div>
               ) : filteredItems.length === 0 ? (
-                <div className="p-6 text-sm text-muted-foreground">No overdue reminder candidates found.</div>
+                <div className="p-6 text-sm text-muted-foreground">
+                  No overdue reminder candidates found.
+                </div>
               ) : (
                 <div className="divide-y">
                   {filteredItems.map((item) => {
@@ -427,15 +437,21 @@ export function SendOverdueRemindersButton({ clientId, trigger }: { clientId?: s
                               <p className="truncate text-sm font-medium">{clientLabel(item)}</p>
                               <StatusBadge status={statuses[item.reminderKey] ?? 'idle'} />
                             </div>
-                            <p className="mt-0.5 truncate text-xs text-muted-foreground">{item.divisionName}</p>
+                            <p className="mt-0.5 truncate text-xs text-muted-foreground">
+                              {item.divisionName}
+                            </p>
                             <div className="mt-2 flex items-center justify-between gap-2 text-xs">
                               <span className="text-muted-foreground">
                                 {item.invoiceCount} invoice{item.invoiceCount === 1 ? '' : 's'}
                               </span>
-                              <span className="font-medium">{formatMoney(item.outstandingBalance)}</span>
+                              <span className="font-medium">
+                                {formatMoney(item.outstandingBalance)}
+                              </span>
                             </div>
                             {!emailValid && (
-                              <p className="mt-2 text-xs text-destructive">Recipient email needed</p>
+                              <p className="mt-2 text-xs text-destructive">
+                                Recipient email needed
+                              </p>
                             )}
                             {errors[item.reminderKey] && (
                               <p className="mt-2 line-clamp-2 text-xs text-destructive">
@@ -459,78 +475,93 @@ export function SendOverdueRemindersButton({ clientId, trigger }: { clientId?: s
               </div>
             ) : (
               <div className="space-y-5">
-                  <div>
-                    <div className="flex items-start justify-between gap-3">
-                      <div>
-                        <h3 className="text-base font-semibold">{clientLabel(activeItem)}</h3>
-                        <p className="text-sm text-muted-foreground">{activeItem.divisionName}</p>
-                      </div>
-                      <Badge variant="outline">{formatMoney(activeItem.outstandingBalance)}</Badge>
+                <div>
+                  <div className="flex items-start justify-between gap-3">
+                    <div>
+                      <h3 className="text-base font-semibold">{clientLabel(activeItem)}</h3>
+                      <p className="text-sm text-muted-foreground">{activeItem.divisionName}</p>
                     </div>
+                    <Badge variant="outline">{formatMoney(activeItem.outstandingBalance)}</Badge>
                   </div>
+                </div>
 
-                  <div className="space-y-2">
-                    <label className="text-sm font-medium" htmlFor="reminder-recipient">
-                      Recipient Email
+                <div className="space-y-2">
+                  <label className="text-sm font-medium" htmlFor="reminder-recipient">
+                    Recipient Email
+                  </label>
+                  <Input
+                    id="reminder-recipient"
+                    value={activeConfig.recipientEmail}
+                    onChange={(event) => updateActiveConfig({ recipientEmail: event.target.value })}
+                    aria-invalid={Boolean(activeEmailError)}
+                  />
+                  {activeEmailError && (
+                    <p className="text-xs text-destructive">{activeEmailError}</p>
+                  )}
+                </div>
+
+                <div className="space-y-2">
+                  <label className="text-sm font-medium" htmlFor="reminder-subject">
+                    Subject
+                  </label>
+                  <Input
+                    id="reminder-subject"
+                    value={activeConfig.subject}
+                    onChange={(event) => updateActiveConfig({ subject: event.target.value })}
+                    aria-invalid={Boolean(activeSubjectError)}
+                  />
+                  {activeSubjectError && (
+                    <p className="text-xs text-destructive">{activeSubjectError}</p>
+                  )}
+                </div>
+
+                <div className="space-y-2">
+                  <div className="flex items-center justify-between gap-3">
+                    <label className="text-sm font-medium" htmlFor="reminder-message">
+                      Personal Message
                     </label>
-                    <Input
-                      id="reminder-recipient"
-                      value={activeConfig.recipientEmail}
-                      onChange={(event) => updateActiveConfig({ recipientEmail: event.target.value })}
-                      aria-invalid={Boolean(activeEmailError)}
-                    />
-                    {activeEmailError && <p className="text-xs text-destructive">{activeEmailError}</p>}
+                    <span className="text-xs text-muted-foreground">
+                      {activeConfig.personalMessage.trim().length}/500
+                    </span>
                   </div>
+                  <Textarea
+                    id="reminder-message"
+                    value={activeConfig.personalMessage}
+                    onChange={(event) =>
+                      updateActiveConfig({ personalMessage: event.target.value })
+                    }
+                    maxLength={500}
+                    rows={5}
+                    aria-invalid={Boolean(activeMessageError)}
+                  />
+                  {activeMessageError && (
+                    <p className="text-xs text-destructive">{activeMessageError}</p>
+                  )}
+                </div>
 
-                  <div className="space-y-2">
-                    <label className="text-sm font-medium" htmlFor="reminder-subject">
-                      Subject
-                    </label>
-                    <Input
-                      id="reminder-subject"
-                      value={activeConfig.subject}
-                      onChange={(event) => updateActiveConfig({ subject: event.target.value })}
-                      aria-invalid={Boolean(activeSubjectError)}
-                    />
-                    {activeSubjectError && <p className="text-xs text-destructive">{activeSubjectError}</p>}
-                  </div>
-
-                  <div className="space-y-2">
-                    <div className="flex items-center justify-between gap-3">
-                      <label className="text-sm font-medium" htmlFor="reminder-message">
-                        Personal Message
-                      </label>
-                      <span className="text-xs text-muted-foreground">
-                        {activeConfig.personalMessage.trim().length}/500
-                      </span>
-                    </div>
-                    <Textarea
-                      id="reminder-message"
-                      value={activeConfig.personalMessage}
-                      onChange={(event) => updateActiveConfig({ personalMessage: event.target.value })}
-                      maxLength={500}
-                      rows={5}
-                      aria-invalid={Boolean(activeMessageError)}
-                    />
-                    {activeMessageError && <p className="text-xs text-destructive">{activeMessageError}</p>}
-                  </div>
-
-                  <div className="rounded-md border">
-                    <div className="border-b px-3 py-2 text-sm font-medium">Outstanding Invoices</div>
-                    <div className="divide-y">
-                      {activeItem.invoices.map((invoice) => (
-                        <div key={invoice.id} className="grid grid-cols-[1fr_auto] gap-3 px-3 py-2 text-sm">
-                          <div className="min-w-0">
-                            <p className="truncate font-medium">{invoice.documentNumber}</p>
-                            <p className="text-xs text-muted-foreground">
-                              Due {fmtDate(invoice.dueDate) === '-' ? 'N/A' : fmtDate(invoice.dueDate)} · Total {formatMoney(invoice.total)}
-                            </p>
-                          </div>
-                          <div className="text-right font-medium">{formatMoney(invoice.outstanding)}</div>
+                <div className="rounded-md border">
+                  <div className="border-b px-3 py-2 text-sm font-medium">Outstanding Invoices</div>
+                  <div className="divide-y">
+                    {activeItem.invoices.map((invoice) => (
+                      <div
+                        key={invoice.id}
+                        className="grid grid-cols-[1fr_auto] gap-3 px-3 py-2 text-sm"
+                      >
+                        <div className="min-w-0">
+                          <p className="truncate font-medium">{invoice.documentNumber}</p>
+                          <p className="text-xs text-muted-foreground">
+                            Due{' '}
+                            {fmtDate(invoice.dueDate) === '-' ? 'N/A' : fmtDate(invoice.dueDate)} ·
+                            Total {formatMoney(invoice.total)}
+                          </p>
                         </div>
-                      ))}
-                    </div>
+                        <div className="text-right font-medium">
+                          {formatMoney(invoice.outstanding)}
+                        </div>
+                      </div>
+                    ))}
                   </div>
+                </div>
               </div>
             )}
           </div>
@@ -550,17 +581,40 @@ export function SendOverdueRemindersButton({ clientId, trigger }: { clientId?: s
             <span>
               {selectedItems.length} selected of {items.length}
             </span>
-            <Button type="button" variant="ghost" size="sm" onClick={loadPending} disabled={isLoading || isSending}>
+            <Button
+              type="button"
+              variant="ghost"
+              size="sm"
+              onClick={loadPending}
+              disabled={isLoading || isSending}
+            >
               <RefreshCw data-icon="inline-start" />
               Refresh
             </Button>
           </div>
-          <Button type="button" variant="outline" onClick={sendCurrent} disabled={!activeCanSend || isSending}>
-            {isSending ? <Loader2 data-icon="inline-start" className="animate-spin" /> : <Send data-icon="inline-start" />}
+          <Button
+            type="button"
+            variant="outline"
+            onClick={sendCurrent}
+            disabled={!activeCanSend || isSending}
+          >
+            {isSending ? (
+              <Loader2 data-icon="inline-start" className="animate-spin" />
+            ) : (
+              <Send data-icon="inline-start" />
+            )}
             Send Current
           </Button>
-          <Button type="button" onClick={sendSelected} disabled={selectedItems.length === 0 || isSending}>
-            {isSending ? <Loader2 data-icon="inline-start" className="animate-spin" /> : <Mail data-icon="inline-start" />}
+          <Button
+            type="button"
+            onClick={sendSelected}
+            disabled={selectedItems.length === 0 || isSending}
+          >
+            {isSending ? (
+              <Loader2 data-icon="inline-start" className="animate-spin" />
+            ) : (
+              <Mail data-icon="inline-start" />
+            )}
             Send Selected
           </Button>
         </DialogFooter>

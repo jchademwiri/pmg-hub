@@ -41,11 +41,7 @@ export async function GET(request: NextRequest) {
   const db = getDb();
 
   // Verify the admin user exists and has admin/super_admin role
-  const [adminUser] = await db
-    .select()
-    .from(user)
-    .where(eq(user.id, adminUserId))
-    .limit(1);
+  const [adminUser] = await db.select().from(user).where(eq(user.id, adminUserId)).limit(1);
 
   if (!adminUser || !['admin', 'super_admin'].includes(adminUser.role || '')) {
     return redirectToLogin(request);
@@ -75,7 +71,8 @@ export async function GET(request: NextRequest) {
     expiresAt,
     createdAt: now,
     updatedAt: now,
-    ipAddress: request.headers.get('x-forwarded-for') ?? request.headers.get('x-real-ip') ?? undefined,
+    ipAddress:
+      request.headers.get('x-forwarded-for') ?? request.headers.get('x-real-ip') ?? undefined,
     userAgent: request.headers.get('user-agent') ?? undefined,
   });
 
@@ -109,7 +106,9 @@ export async function GET(request: NextRequest) {
     console.error('[Impersonate] BETTER_AUTH_SECRET not configured');
     return redirectToLogin(request);
   }
-  const sessionSignature = createHmac('sha256', authSecret).update(sessionToken).digest('base64url');
+  const sessionSignature = createHmac('sha256', authSecret)
+    .update(sessionToken)
+    .digest('base64url');
   const signedSessionValue = `${sessionToken}.${sessionSignature}`;
 
   response.cookies.set(`${secureCookiePrefix}better-auth.session_token`, signedSessionValue, {

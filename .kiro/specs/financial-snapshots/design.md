@@ -43,52 +43,50 @@ Drizzle table definition. Uses `.defaultRandom()` for UUID (consistent with `inc
 
 ```ts
 export const snapshots = pgTable(
-  "snapshots",
+  'snapshots',
   {
-    id: uuid("id").primaryKey().defaultRandom(),
-    period: text("period").notNull().unique(),
-    revenue:    numeric("revenue",     { precision: 12, scale: 2 }).notNull(),
-    expenses:   numeric("expenses",    { precision: 12, scale: 2 }).notNull(),
-    pmgShare:   numeric("pmg_share",   { precision: 12, scale: 2 }).notNull(),
-    profitPool: numeric("profit_pool", { precision: 12, scale: 2 }).notNull(),
-    salary:     numeric("salary",      { precision: 12, scale: 2 }).notNull(),
-    reinvest:   numeric("reinvest",    { precision: 12, scale: 2 }).notNull(),
-    reserve:    numeric("reserve",     { precision: 12, scale: 2 }).notNull(),
-    flex:       numeric("flex",        { precision: 12, scale: 2 }).notNull(),
-    createdAt:  timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
+    id: uuid('id').primaryKey().defaultRandom(),
+    period: text('period').notNull().unique(),
+    revenue: numeric('revenue', { precision: 12, scale: 2 }).notNull(),
+    expenses: numeric('expenses', { precision: 12, scale: 2 }).notNull(),
+    pmgShare: numeric('pmg_share', { precision: 12, scale: 2 }).notNull(),
+    profitPool: numeric('profit_pool', { precision: 12, scale: 2 }).notNull(),
+    salary: numeric('salary', { precision: 12, scale: 2 }).notNull(),
+    reinvest: numeric('reinvest', { precision: 12, scale: 2 }).notNull(),
+    reserve: numeric('reserve', { precision: 12, scale: 2 }).notNull(),
+    flex: numeric('flex', { precision: 12, scale: 2 }).notNull(),
+    createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
   },
-  (t) => [
-    index("snapshots_period_idx").on(t.period),
-  ],
-)
+  (t) => [index('snapshots_period_idx').on(t.period)],
+);
 ```
 
 ### packages/db/src/queries.ts - new additions
 
 Three new helpers appended to the existing file:
 
-| Helper | Signature | Returns |
-|---|---|---|
-| `getAllSnapshots` | `() => Promise<SnapshotRow[]>` | All rows, ordered by `period DESC` |
-| `getSnapshotByPeriod` | `(period: string) => Promise<SnapshotRow \| null>` | Matching row or `null` |
-| `insertSnapshot` | `(period: string, summary: PeriodSummary) => Promise<SnapshotRow>` | Inserted row |
+| Helper                | Signature                                                          | Returns                            |
+| --------------------- | ------------------------------------------------------------------ | ---------------------------------- |
+| `getAllSnapshots`     | `() => Promise<SnapshotRow[]>`                                     | All rows, ordered by `period DESC` |
+| `getSnapshotByPeriod` | `(period: string) => Promise<SnapshotRow \| null>`                 | Matching row or `null`             |
+| `insertSnapshot`      | `(period: string, summary: PeriodSummary) => Promise<SnapshotRow>` | Inserted row                       |
 
 `SnapshotRow` type mirrors the DB columns with numeric fields as `string` (Drizzle returns `numeric` as string):
 
 ```ts
 export type SnapshotRow = {
-  id: string
-  period: string
-  revenue: string
-  expenses: string
-  pmgShare: string
-  profitPool: string
-  salary: string
-  reinvest: string
-  reserve: string
-  flex: string
-  createdAt: Date
-}
+  id: string;
+  period: string;
+  revenue: string;
+  expenses: string;
+  pmgShare: string;
+  profitPool: string;
+  salary: string;
+  reinvest: string;
+  reserve: string;
+  flex: string;
+  createdAt: Date;
+};
 ```
 
 ### apps/admin/src/app/actions/snapshots.ts
@@ -114,19 +112,19 @@ Server Component. Calls `getAllSnapshots()` and renders either a table (rows ord
 
 ### snapshots table
 
-| Column | Type | Constraints |
-|---|---|---|
-| `id` | `uuid` | PK, default `gen_random_uuid()` |
-| `period` | `text` | NOT NULL, UNIQUE |
-| `revenue` | `numeric(12,2)` | NOT NULL |
-| `expenses` | `numeric(12,2)` | NOT NULL |
-| `pmg_share` | `numeric(12,2)` | NOT NULL |
-| `profit_pool` | `numeric(12,2)` | NOT NULL |
-| `salary` | `numeric(12,2)` | NOT NULL |
-| `reinvest` | `numeric(12,2)` | NOT NULL |
-| `reserve` | `numeric(12,2)` | NOT NULL |
-| `flex` | `numeric(12,2)` | NOT NULL |
-| `created_at` | `timestamptz` | NOT NULL, default `now()` |
+| Column        | Type            | Constraints                     |
+| ------------- | --------------- | ------------------------------- |
+| `id`          | `uuid`          | PK, default `gen_random_uuid()` |
+| `period`      | `text`          | NOT NULL, UNIQUE                |
+| `revenue`     | `numeric(12,2)` | NOT NULL                        |
+| `expenses`    | `numeric(12,2)` | NOT NULL                        |
+| `pmg_share`   | `numeric(12,2)` | NOT NULL                        |
+| `profit_pool` | `numeric(12,2)` | NOT NULL                        |
+| `salary`      | `numeric(12,2)` | NOT NULL                        |
+| `reinvest`    | `numeric(12,2)` | NOT NULL                        |
+| `reserve`     | `numeric(12,2)` | NOT NULL                        |
+| `flex`        | `numeric(12,2)` | NOT NULL                        |
+| `created_at`  | `timestamptz`   | NOT NULL, default `now()`       |
 
 The `period` unique constraint is the primary integrity mechanism - it prevents duplicate snapshots at the DB level, independent of application-layer checks.
 
@@ -147,53 +145,54 @@ flex       = profitPool × 0.05
 
 ## Correctness Properties
 
-*A property is a characteristic or behavior that should hold true across all valid executions of a system - essentially, a formal statement about what the system should do. Properties serve as the bridge between human-readable specifications and machine-verifiable correctness guarantees.*
+_A property is a characteristic or behavior that should hold true across all valid executions of a system - essentially, a formal statement about what the system should do. Properties serve as the bridge between human-readable specifications and machine-verifiable correctness guarantees._
 
 ### Property 1: getAllSnapshots ordering invariant
 
-*For any* set of snapshots inserted in any order, `getAllSnapshots()` SHALL return them sorted by `period` in descending lexicographic order (which equals descending chronological order for `YYYY-MM` strings).
+_For any_ set of snapshots inserted in any order, `getAllSnapshots()` SHALL return them sorted by `period` in descending lexicographic order (which equals descending chronological order for `YYYY-MM` strings).
 
 **Validates: Requirements 2.1, 5.3**
 
 ### Property 2: getSnapshotByPeriod returns null for non-existent period
 
-*For any* `YYYY-MM` string that has not been inserted as a snapshot, `getSnapshotByPeriod(period)` SHALL return `null` without throwing an error.
+_For any_ `YYYY-MM` string that has not been inserted as a snapshot, `getSnapshotByPeriod(period)` SHALL return `null` without throwing an error.
 
 **Validates: Requirements 2.2, 2.4**
 
 ### Property 3: Numeric round-trip - insert then retrieve preserves values
 
-*For any* valid `PeriodSummary` object with finite numeric fields, inserting it as a snapshot via `insertSnapshot(period, summary)` and then retrieving it via `getSnapshotByPeriod(period)` SHALL return a row where `Number(row.revenue) === summary.revenue`, `Number(row.expenses) === summary.expenses`, and the same equality holds for all eight numeric fields (`pmgShare`, `profitPool`, `salary`, `reinvest`, `reserve`, `flex`).
+_For any_ valid `PeriodSummary` object with finite numeric fields, inserting it as a snapshot via `insertSnapshot(period, summary)` and then retrieving it via `getSnapshotByPeriod(period)` SHALL return a row where `Number(row.revenue) === summary.revenue`, `Number(row.expenses) === summary.expenses`, and the same equality holds for all eight numeric fields (`pmgShare`, `profitPool`, `salary`, `reinvest`, `reserve`, `flex`).
 
 **Validates: Requirements 2.2, 2.3, 6.2, 6.3**
 
 ### Property 4: Duplicate period insert returns 'Month already closed'
 
-*For any* valid `YYYY-MM` period that already has a snapshot, calling `closeMonth(period)` a second time SHALL return `{ error: 'Month already closed' }` and SHALL NOT insert a second row.
+_For any_ valid `YYYY-MM` period that already has a snapshot, calling `closeMonth(period)` a second time SHALL return `{ error: 'Month already closed' }` and SHALL NOT insert a second row.
 
 **Validates: Requirements 1.2, 1.4, 3.4**
 
 ### Property 5: Invalid period format returns validation error
 
-*For any* string that does NOT match the pattern `/^\d{4}-\d{2}$/`, calling `closeMonth(invalidPeriod)` SHALL return `{ error: string }` (never `{}`, never throw).
+_For any_ string that does NOT match the pattern `/^\d{4}-\d{2}$/`, calling `closeMonth(invalidPeriod)` SHALL return `{ error: string }` (never `{}`, never throw).
 
 **Validates: Requirements 3.5, 3.6**
 
 ### Property 6: closeMonth success - valid period returns {} and snapshot is retrievable
 
-*For any* valid `YYYY-MM` period string for which no snapshot yet exists, calling `closeMonth(period)` SHALL return `{}` and a subsequent call to `getSnapshotByPeriod(period)` SHALL return a non-null `SnapshotRow`.
+_For any_ valid `YYYY-MM` period string for which no snapshot yet exists, calling `closeMonth(period)` SHALL return `{}` and a subsequent call to `getSnapshotByPeriod(period)` SHALL return a non-null `SnapshotRow`.
 
 **Validates: Requirements 3.2, 3.3**
 
 ### Property 7: Period formatting produces correct month name and year
 
-*For any* valid `YYYY-MM` string, the expression `new Date(period + '-01').toLocaleString('en-ZA', { month: 'long', year: 'numeric' })` SHALL produce a string containing the correct full month name and the correct four-digit year.
+_For any_ valid `YYYY-MM` string, the expression `new Date(period + '-01').toLocaleString('en-ZA', { month: 'long', year: 'numeric' })` SHALL produce a string containing the correct full month name and the correct four-digit year.
 
 **Validates: Requirements 5.9**
 
 ### Property 8: Financial model formula invariants
 
-*For any* non-negative `revenue` and `expenses` values, the `PeriodSummary` computed by `getFinancialSummaryForPeriod` SHALL satisfy:
+_For any_ non-negative `revenue` and `expenses` values, the `PeriodSummary` computed by `getFinancialSummaryForPeriod` SHALL satisfy:
+
 - `pmgShare === revenue * 0.20`
 - `profitPool === revenue - expenses - pmgShare`
 - `salary === profitPool * 0.35`
@@ -208,15 +207,15 @@ flex       = profitPool × 0.05
 
 ## Error Handling
 
-| Scenario | Handling |
-|---|---|
-| `closeMonth` called with invalid period format | Zod `safeParse` fails → return `{ error: 'Period must be YYYY-MM' }` |
-| `closeMonth` called for already-closed period | `getSnapshotByPeriod` returns non-null → return `{ error: 'Month already closed' }` |
-| DB error during `insertSnapshot` | Caught in try/catch → return `{ error: err.message }` |
-| `getAllSnapshots` DB error | Propagates as Next.js error boundary (Server Component) |
-| `getSnapshotByPeriod` called with non-existent period | Returns `null` - not an error |
-| CloseMonthButton receives `{ error }` | `toast.error(error)` via sonner |
-| CloseMonthButton receives `{}` | `router.refresh()` - page re-fetches, button replaced by badge |
+| Scenario                                              | Handling                                                                            |
+| ----------------------------------------------------- | ----------------------------------------------------------------------------------- |
+| `closeMonth` called with invalid period format        | Zod `safeParse` fails → return `{ error: 'Period must be YYYY-MM' }`                |
+| `closeMonth` called for already-closed period         | `getSnapshotByPeriod` returns non-null → return `{ error: 'Month already closed' }` |
+| DB error during `insertSnapshot`                      | Caught in try/catch → return `{ error: err.message }`                               |
+| `getAllSnapshots` DB error                            | Propagates as Next.js error boundary (Server Component)                             |
+| `getSnapshotByPeriod` called with non-existent period | Returns `null` - not an error                                                       |
+| CloseMonthButton receives `{ error }`                 | `toast.error(error)` via sonner                                                     |
+| CloseMonthButton receives `{}`                        | `router.refresh()` - page re-fetches, button replaced by badge                      |
 
 The Server Action never throws. All error paths return `{ error: string }`. This is consistent with `recordWithdrawal` and other existing Server Actions in the codebase.
 
@@ -233,6 +232,7 @@ The Server Action never throws. All error paths return `{ error: string }`. This
 fast-check is the property-based testing library for TypeScript. Each test is tagged with its design property reference.
 
 **P1 - getAllSnapshots ordering invariant**
+
 ```
 // Feature: financial-snapshots, Property 1: getAllSnapshots ordering invariant
 fc.assert(fc.asyncProperty(
@@ -244,6 +244,7 @@ fc.assert(fc.asyncProperty(
 ```
 
 **P2 - getSnapshotByPeriod returns null for non-existent period**
+
 ```
 // Feature: financial-snapshots, Property 2: getSnapshotByPeriod returns null for non-existent period
 fc.assert(fc.asyncProperty(
@@ -256,6 +257,7 @@ fc.assert(fc.asyncProperty(
 ```
 
 **P3 - Numeric round-trip**
+
 ```
 // Feature: financial-snapshots, Property 3: Numeric round-trip
 fc.assert(fc.asyncProperty(
@@ -270,6 +272,7 @@ fc.assert(fc.asyncProperty(
 ```
 
 **P4 - Duplicate period returns 'Month already closed'**
+
 ```
 // Feature: financial-snapshots, Property 4: Duplicate period returns 'Month already closed'
 fc.assert(fc.asyncProperty(
@@ -283,6 +286,7 @@ fc.assert(fc.asyncProperty(
 ```
 
 **P5 - Invalid period format returns error**
+
 ```
 // Feature: financial-snapshots, Property 5: Invalid period format returns error
 fc.assert(fc.asyncProperty(
@@ -295,6 +299,7 @@ fc.assert(fc.asyncProperty(
 ```
 
 **P6 - closeMonth success round-trip**
+
 ```
 // Feature: financial-snapshots, Property 6: closeMonth success round-trip
 fc.assert(fc.asyncProperty(
@@ -309,6 +314,7 @@ fc.assert(fc.asyncProperty(
 ```
 
 **P7 - Period formatting**
+
 ```
 // Feature: financial-snapshots, Property 7: Period formatting
 fc.assert(fc.property(
@@ -323,6 +329,7 @@ fc.assert(fc.property(
 ```
 
 **P8 - Financial model formula invariants**
+
 ```
 // Feature: financial-snapshots, Property 8: Financial model formula invariants
 fc.assert(fc.property(

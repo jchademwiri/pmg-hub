@@ -31,9 +31,8 @@ Accounting       -> Reports
 
 ## Common Divisions
 
-| Acronym | Division |
-|---------|----------|
-| AWS | Apex Web Solutions |
-| TES | Tender Edge Solutions |
-| PMG | Playhouse Media Group |
-
+| Acronym | Division              |
+| ------- | --------------------- |
+| AWS     | Apex Web Solutions    |
+| TES     | Tender Edge Solutions |
+| PMG     | Playhouse Media Group |

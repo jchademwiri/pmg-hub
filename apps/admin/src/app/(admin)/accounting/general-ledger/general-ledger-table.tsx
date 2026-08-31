@@ -1,6 +1,6 @@
-'use client'
+'use client';
 
-import * as React from 'react'
+import * as React from 'react';
 import {
   Table,
   TableBody,
@@ -8,17 +8,15 @@ import {
   TableHead,
   TableHeader,
   TableRow,
-} from '@/components/ui/table'
-import { fmtDate, formatZAR } from '@/lib/format'
-import type { GeneralLedgerRow } from '@pmg/db'
+} from '@/components/ui/table';
+import { fmtDate, formatZAR } from '@/lib/format';
+import type { GeneralLedgerRow } from '@pmg/db';
 
 interface GeneralLedgerTableProps {
-  entries: GeneralLedgerRow[]
+  entries: GeneralLedgerRow[];
 }
 
-export function GeneralLedgerTable({
-  entries,
-}: GeneralLedgerTableProps) {
+export function GeneralLedgerTable({ entries }: GeneralLedgerTableProps) {
   return (
     <div className="flex flex-col gap-4">
       {entries.length === 0 ? (
@@ -44,14 +42,17 @@ export function GeneralLedgerTable({
               return (
                 <TableRow key={`${row.id}-${i}`}>
                   <TableCell className="text-sm">{fmtDate(row.entryDate)}</TableCell>
-                  <TableCell className="text-sm font-mono">
-                    {row.entryNumber}
-                  </TableCell>
+                  <TableCell className="text-sm font-mono">{row.entryNumber}</TableCell>
                   <TableCell className="text-sm">
                     <span className="font-medium">{row.accountCode}</span> — {row.accountName}
                   </TableCell>
-                  <TableCell className="text-sm truncate max-w-[200px]" title={row.description || ''}>
-                    {row.description || <span className="text-muted-foreground italic">No description</span>}
+                  <TableCell
+                    className="text-sm truncate max-w-[200px]"
+                    title={row.description || ''}
+                  >
+                    {row.description || (
+                      <span className="text-muted-foreground italic">No description</span>
+                    )}
                   </TableCell>
                   <TableCell className="text-right text-sm">
                     {row.debit > 0 ? formatZAR(row.debit) : '-'}
@@ -63,11 +64,11 @@ export function GeneralLedgerTable({
                     {formatZAR(movement)}
                   </TableCell>
                 </TableRow>
-              )
+              );
             })}
           </TableBody>
         </Table>
       )}
     </div>
-  )
+  );
 }

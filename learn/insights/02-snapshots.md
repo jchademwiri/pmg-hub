@@ -32,10 +32,9 @@ Example: if you are in June, June is still open. The system may show **May 2026 
 
 ## What To Look For
 
-| Question | Look At |
-|----------|---------|
-| Which months are closed? | Snapshot list |
-| How much did we make? | Revenue and Profit/Loss |
-| What did we spend? | Expenses |
+| Question                     | Look At                  |
+| ---------------------------- | ------------------------ |
+| Which months are closed?     | Snapshot list            |
+| How much did we make?        | Revenue and Profit/Loss  |
+| What did we spend?           | Expenses                 |
 | Can this month still change? | If it is not closed, yes |
-

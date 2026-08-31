@@ -1,6 +1,14 @@
 import * as React from 'react';
 import { getPortalSessionOrRedirect } from '@/lib/portal-session';
-import { getDb, invoices, billingLineItems, divisions, divisionBillingSettings, eq, and } from '@pmg/db';
+import {
+  getDb,
+  invoices,
+  billingLineItems,
+  divisions,
+  divisionBillingSettings,
+  eq,
+  and,
+} from '@pmg/db';
 import { notFound } from 'next/navigation';
 import { BillingDocumentView } from '@/components/billing-document-view';
 
@@ -44,8 +52,8 @@ export default async function InvoiceDetailPage({ params }: PageProps) {
     .where(
       and(
         eq(billingLineItems.documentType, 'invoice'),
-        eq(billingLineItems.documentId, invoice.id)
-      )
+        eq(billingLineItems.documentId, invoice.id),
+      ),
     )
     .orderBy(billingLineItems.sortOrder);
 

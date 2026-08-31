@@ -1,17 +1,17 @@
-import type { Metadata } from 'next'
-import { Noto_Sans } from 'next/font/google'
-import { Providers } from '@/components/providers'
-import { Toaster } from '@/components/ui/sonner'
-import './globals.css'
+import type { Metadata } from 'next';
+import { Noto_Sans } from 'next/font/google';
+import { Providers } from '@/components/providers';
+import { Toaster } from '@/components/ui/sonner';
+import './globals.css';
 
-const notoSans = Noto_Sans({ subsets: ['latin'], variable: '--font-sans' })
+const notoSans = Noto_Sans({ subsets: ['latin'], variable: '--font-sans' });
 
 export const metadata: Metadata = {
   title: { template: '%s · PMG Admin', default: 'PMG Admin' },
   description: 'PMG Control Center',
   robots: { index: false, follow: false },
   manifest: '/site.webmanifest',
-}
+};
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
@@ -26,5 +26,5 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         </Providers>
       </body>
     </html>
-  )
+  );
 }

@@ -18,13 +18,22 @@ import type { QuotationRow } from '@pmg/db';
 
 interface MobileQuoteCardProps {
   quote: QuotationRow;
-  handleStatusChange: (id: string, newStatus: 'sent' | 'accepted' | 'declined' | 'cancelled') => void;
+  handleStatusChange: (
+    id: string,
+    newStatus: 'sent' | 'accepted' | 'declined' | 'cancelled',
+  ) => void;
   handleDelete: (id: string, docNumber: string) => void;
   handleDuplicate: (id: string) => void;
   statusColors: Record<string, string>;
 }
 
-export function MobileQuoteCard({ quote, handleStatusChange, handleDelete, handleDuplicate, statusColors }: MobileQuoteCardProps) {
+export function MobileQuoteCard({
+  quote,
+  handleStatusChange,
+  handleDelete,
+  handleDuplicate,
+  statusColors,
+}: MobileQuoteCardProps) {
   const [swipeOffset, setSwipeOffset] = useState(0);
 
   const canSend = quote.status === 'draft';
@@ -54,10 +63,18 @@ export function MobileQuoteCard({ quote, handleStatusChange, handleDelete, handl
       {/* Background Action Indicators */}
       <div className="absolute inset-0 flex justify-between items-center px-4">
         <div className="flex items-center text-primary font-medium text-sm">
-          {canSend && <><Send className="size-4 mr-2" /> Send</>}
+          {canSend && (
+            <>
+              <Send className="size-4 mr-2" /> Send
+            </>
+          )}
         </div>
         <div className="flex items-center text-destructive font-medium text-sm">
-          {canDelete && <><Trash className="size-4 ml-2" /> Delete</>}
+          {canDelete && (
+            <>
+              <Trash className="size-4 ml-2" /> Delete
+            </>
+          )}
         </div>
       </div>
 
@@ -90,7 +107,12 @@ export function MobileQuoteCard({ quote, handleStatusChange, handleDelete, handl
           <div className="relative z-10">
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
-                <Button variant="ghost" size="touch" className="h-8 w-8 min-h-0 min-w-0 p-0" title="Actions">
+                <Button
+                  variant="ghost"
+                  size="touch"
+                  className="h-8 w-8 min-h-0 min-w-0 p-0"
+                  title="Actions"
+                >
                   <MoreHorizontal className="size-4" />
                 </Button>
               </DropdownMenuTrigger>

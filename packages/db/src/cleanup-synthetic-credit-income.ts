@@ -20,18 +20,18 @@
 // Usage:
 //   bun src/cleanup-synthetic-credit-income.ts --dry-run   (default)
 //   bun src/cleanup-synthetic-credit-income.ts --apply
-import { config } from "dotenv";
-import { resolve } from "path";
-import pg from "pg";
+import { config } from 'dotenv';
+import { resolve } from 'path';
+import pg from 'pg';
 
-config({ path: resolve(import.meta.dir, "../.env") });
-config({ path: resolve(import.meta.dir, "../../../.env"), override: false });
-config({ path: resolve(import.meta.dir, "../../../.env.local"), override: false });
+config({ path: resolve(import.meta.dir, '../.env') });
+config({ path: resolve(import.meta.dir, '../../../.env'), override: false });
+config({ path: resolve(import.meta.dir, '../../../.env.local'), override: false });
 
 const url = process.env.DATABASE_URL_UNPOOLED;
-if (!url) throw new Error("DATABASE_URL_UNPOOLED is not set");
+if (!url) throw new Error('DATABASE_URL_UNPOOLED is not set');
 
-const apply = process.argv.includes("--apply");
+const apply = process.argv.includes('--apply');
 
 const client = new pg.Client({ connectionString: url, ssl: { rejectUnauthorized: true } });
 await client.connect();
@@ -52,7 +52,7 @@ const { rows } = await client.query<SyntheticRow>(`
 `);
 
 if (rows.length === 0) {
-  console.log("No synthetic credit-application income rows found — nothing to clean up.");
+  console.log('No synthetic credit-application income rows found — nothing to clean up.');
   await client.end();
   process.exit(0);
 }
@@ -61,7 +61,7 @@ console.log(`Found ${rows.length} synthetic income/payment_allocations pair(s) t
 
 const byClient = new Map<string, { count: number; total: number }>();
 for (const row of rows) {
-  const key = row.client_id ?? "(no client)";
+  const key = row.client_id ?? '(no client)';
   const entry = byClient.get(key) ?? { count: 0, total: 0 };
   entry.count += 1;
   entry.total += Number(row.amount);
@@ -75,23 +75,23 @@ for (const [clientId, { count, total }] of byClient) {
 }
 
 if (!apply) {
-  console.log("\nDry run only — no changes made. Re-run with --apply to delete these rows.");
+  console.log('\nDry run only — no changes made. Re-run with --apply to delete these rows.');
   await client.end();
   process.exit(0);
 }
 
-console.log("\nApplying cleanup...");
+console.log('\nApplying cleanup...');
 
 let deleted = 0;
 for (const row of rows) {
-  await client.query("begin");
+  await client.query('begin');
   try {
     await client.query(`delete from payment_allocations where income_id = $1`, [row.income_id]);
     await client.query(`delete from income where id = $1`, [row.income_id]);
-    await client.query("commit");
+    await client.query('commit');
     deleted += 1;
   } catch (err) {
-    await client.query("rollback");
+    await client.query('rollback');
     console.error(`Failed to clean up income row ${row.income_id}:`, err);
   }
 }

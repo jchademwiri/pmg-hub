@@ -48,12 +48,12 @@ describe('RestoreWriteOffButton', () => {
     const user = userEvent.setup();
 
     render(
-      <RestoreWriteOffButton invoiceId="inv-1" restoreWriteOffAction={restoreWriteOffAction} />
+      <RestoreWriteOffButton invoiceId="inv-1" restoreWriteOffAction={restoreWriteOffAction} />,
     );
     await user.click(screen.getByRole('button', { name: 'Remove Write-off' }));
 
     expect(mockConfirm).toHaveBeenCalledWith(
-      expect.objectContaining({ title: 'Remove Write-off?' })
+      expect.objectContaining({ title: 'Remove Write-off?' }),
     );
     expect(restoreWriteOffAction).not.toHaveBeenCalled();
   });
@@ -63,7 +63,7 @@ describe('RestoreWriteOffButton', () => {
     const user = userEvent.setup();
 
     render(
-      <RestoreWriteOffButton invoiceId="inv-1" restoreWriteOffAction={restoreWriteOffAction} />
+      <RestoreWriteOffButton invoiceId="inv-1" restoreWriteOffAction={restoreWriteOffAction} />,
     );
     await user.click(screen.getByRole('button', { name: 'Remove Write-off' }));
 
@@ -79,7 +79,7 @@ describe('RestoreWriteOffButton', () => {
     const user = userEvent.setup();
 
     render(
-      <RestoreWriteOffButton invoiceId="inv-1" restoreWriteOffAction={restoreWriteOffAction} />
+      <RestoreWriteOffButton invoiceId="inv-1" restoreWriteOffAction={restoreWriteOffAction} />,
     );
     await user.click(screen.getByRole('button', { name: 'Remove Write-off' }));
 
@@ -94,13 +94,13 @@ describe('RestoreWriteOffButton', () => {
     const user = userEvent.setup();
 
     render(
-      <RestoreWriteOffButton invoiceId="inv-1" restoreWriteOffAction={restoreWriteOffAction} />
+      <RestoreWriteOffButton invoiceId="inv-1" restoreWriteOffAction={restoreWriteOffAction} />,
     );
     await user.click(screen.getByRole('button', { name: 'Remove Write-off' }));
 
     await waitFor(() => {
       expect(toast.error).toHaveBeenCalledWith(
-        'An unexpected error occurred while removing the write-off.'
+        'An unexpected error occurred while removing the write-off.',
       );
     });
     expect(mockRefresh).not.toHaveBeenCalled();
@@ -109,12 +109,15 @@ describe('RestoreWriteOffButton', () => {
   it('disables the button while the restore is pending', async () => {
     let resolveAction: (v: { error?: string }) => void;
     const restoreWriteOffAction = vi.fn(
-      () => new Promise<{ error?: string }>((resolve) => { resolveAction = resolve; })
+      () =>
+        new Promise<{ error?: string }>((resolve) => {
+          resolveAction = resolve;
+        }),
     );
     const user = userEvent.setup();
 
     render(
-      <RestoreWriteOffButton invoiceId="inv-1" restoreWriteOffAction={restoreWriteOffAction} />
+      <RestoreWriteOffButton invoiceId="inv-1" restoreWriteOffAction={restoreWriteOffAction} />,
     );
     const button = screen.getByRole('button', { name: 'Remove Write-off' });
     await user.click(button);

@@ -1,14 +1,23 @@
 'use server';
 
 import { revalidatePath } from 'next/cache';
-import { getDb, projectScheduleEntries, eq, and, inArray, recalculateProjectWaterfall } from '@pmg/db';
+import {
+  getDb,
+  projectScheduleEntries,
+  eq,
+  and,
+  inArray,
+  recalculateProjectWaterfall,
+} from '@pmg/db';
 import { getSessionOrRedirect } from '@/lib/auth';
 
 /**
  * Bulk archive: sets status to 'cancelled' for all selected completed/submitted tenders.
  * This removes them from the active views while preserving the data.
  */
-export async function bulkArchiveTenders(ids: string[]): Promise<{ error?: string; count?: number }> {
+export async function bulkArchiveTenders(
+  ids: string[],
+): Promise<{ error?: string; count?: number }> {
   try {
     await getSessionOrRedirect();
     if (ids.length === 0) return { count: 0 };
@@ -40,7 +49,9 @@ export async function bulkArchiveTenders(ids: string[]): Promise<{ error?: strin
  * Bulk delete: hard-deletes selected cancelled tenders only.
  * Restricted to cancelled status to prevent accidental data loss.
  */
-export async function bulkDeleteTenders(ids: string[]): Promise<{ error?: string; count?: number }> {
+export async function bulkDeleteTenders(
+  ids: string[],
+): Promise<{ error?: string; count?: number }> {
   try {
     await getSessionOrRedirect();
     if (ids.length === 0) return { count: 0 };

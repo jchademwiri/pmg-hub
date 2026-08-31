@@ -5,7 +5,7 @@
 When a user emails a brand-new invoice (status `draft`) via the "Email Invoice" dialog with
 "Attach Current Client Statement" checked (the default for invoices), the attached statement
 PDF understates what the client owes — it's missing the very invoice being sent. This is
-because of an ordering problem: the statement PDF is compiled *before* the invoice's status
+because of an ordering problem: the statement PDF is compiled _before_ the invoice's status
 flips from `draft` to `issued`, and the statement query explicitly excludes `draft` invoices.
 The user asked us to confirm the bug and recommend the correct flow.
 
@@ -18,7 +18,10 @@ The user asked us to confirm the bug and recommend the correct flow.
 2. `apps/admin/src/app/actions/email-delivery.ts` `sendDocumentEmailAction` sends the email first, and only on success flips status (L409-415):
    ```js
    if (invoice.status === 'draft') {
-     await db.update(invoices).set({ status: 'issued', updatedAt: new Date() }).where(eq(invoices.id, documentId));
+     await db
+       .update(invoices)
+       .set({ status: 'issued', updatedAt: new Date() })
+       .where(eq(invoices.id, documentId));
    }
    ```
 3. The statement PDF is built by `buildStatementPdfData` (`packages/billing/src/server-billing-pdf.ts`) → `getClientStatement` (`packages/db/src/queries/billing.ts:877`), which filters out `draft` invoices at **four** sites: L901 (main invoice list), L978/L984 (global outstanding totals), L1068 (period credit totals), L1134 (`outstandingInvoices` ageing sub-query, via `inArray(status, ['issued','overdue','partially_paid'])`).
@@ -29,7 +32,7 @@ The invoice's **own standalone PDF** has no status filter and is unaffected — 
 aggregated statement attachment is wrong.
 
 (Workaround that already avoids the bug: clicking the separate "Issue Invoice" button, which
-flips `draft → issued` *and* posts an AR/Revenue journal entry via `postInvoiceIssueJournalEntry`,
+flips `draft → issued` _and_ posts an AR/Revenue journal entry via `postInvoiceIssueJournalEntry`,
 before emailing separately.)
 
 ## Approach chosen: force-include the in-flight invoice in the statement read, don't reorder the send flow
@@ -38,8 +41,8 @@ Two approaches were evaluated:
 
 - **Reorder (flip status before building PDFs, roll back on send failure)** — rejected. The
   existing `issueInvoice()` action doesn't just flip status; it posts a Dr AR / Cr Revenue
-  journal entry and checks the accounting period is open. Doing that *before* confirming the
-  email sent means a failed send would need to roll back both the status *and* the journal
+  journal entry and checks the accounting period is open. Doing that _before_ confirming the
+  email sent means a failed send would need to roll back both the status _and_ the journal
   entry (possibly failing if the period has since closed) — a much bigger, riskier change than
   the bug warrants. Duplicating just the bare status flip earlier would perpetuate an existing
   status/journal inconsistency and require new rollback logic that doesn't exist today.
@@ -50,6 +53,7 @@ Two approaches were evaluated:
 ## Implementation
 
 **1. `packages/db/src/queries/billing.ts` — `getClientStatement`**
+
 - Extend the `filters` param: `{ year?; monthPeriod?; includeInvoiceId?: string }`.
 - Add two small helpers and use them in place of the raw filters:
   ```ts
@@ -60,7 +64,10 @@ Two approaches were evaluated:
   }
   function outstandingInvoiceStatusCondition(includeInvoiceId?: string) {
     return includeInvoiceId
-      ? or(inArray(invoices.status, ['issued', 'overdue', 'partially_paid']), and(eq(invoices.id, includeInvoiceId), eq(invoices.status, 'draft')))
+      ? or(
+          inArray(invoices.status, ['issued', 'overdue', 'partially_paid']),
+          and(eq(invoices.id, includeInvoiceId), eq(invoices.status, 'draft')),
+        )
       : inArray(invoices.status, ['issued', 'overdue', 'partially_paid']);
   }
   ```
@@ -70,7 +77,7 @@ Two approaches were evaluated:
 - Leave the prior-period conditions (L1026, L1035, used only for opening-balance-before-period
   math) unchanged — an invoice being emailed today can never predate the statement's period
   start, so including it there would be a no-op anyway. Add a one-line comment noting this.
-- Before the final `return`, correct the *displayed* status for the force-included row so
+- Before the final `return`, correct the _displayed_ status for the force-included row so
   ageing calculations (which check the literal `status` string, not just row presence) work:
   ```ts
   const outstandingInvoicesFinal = filters?.includeInvoiceId
@@ -84,11 +91,13 @@ Two approaches were evaluated:
   and return `outstandingInvoices: outstandingInvoicesFinal as InvoiceRow[]`.
 
 **2. `packages/billing/src/server-billing-pdf.ts`**
+
 - Widen the `filters` type on `buildStatementPdfData` and `generateBillingPdf` to include
   `includeInvoiceId?: string`. Both already forward the whole `filters` object straight into
   `getClientStatement`, so no other logic change is needed here.
 
 **3. `apps/admin/src/app/api/billing/pdf/[type]/[id]/route.ts`**
+
 - Parse an optional `includeInvoiceId` query param (basic UUID-shape check, same pattern as the
   existing `year` param validation) and forward it into `filters` only when `type === 'statement'`.
 - No extra cross-client check needed: the condition is always ANDed with
@@ -96,6 +105,7 @@ Two approaches were evaluated:
   different client simply can't match any row.
 
 **4. `apps/admin/src/app/(admin)/billing/invoices/[id]/page.tsx`**
+
 - The actual activation point — update L134:
   ```ts
   const statementPdfUrl = invoice.clientId
@@ -108,6 +118,7 @@ Two approaches were evaluated:
   aligned.
 
 **Confirmed unaffected, no changes needed:**
+
 - `apps/admin/src/app/(admin)/billing/statements/[clientId]/page.tsx` and
   `.../billing/statements/page.tsx` — standalone statement view never passes `includeInvoiceId`;
   keeps excluding all drafts as before.

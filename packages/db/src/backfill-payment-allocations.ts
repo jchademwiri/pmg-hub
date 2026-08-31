@@ -14,18 +14,18 @@
 // Idempotent: re-running after a fix finds nothing (the NOT EXISTS guard means
 // already-linked invoices are never touched), and can be safely run multiple
 // times.
-import { config } from "dotenv";
-import { resolve } from "path";
-import pg from "pg";
+import { config } from 'dotenv';
+import { resolve } from 'path';
+import pg from 'pg';
 
-config({ path: resolve(import.meta.dir, "../.env") });
-config({ path: resolve(import.meta.dir, "../../../.env"), override: false });
-config({ path: resolve(import.meta.dir, "../../../.env.local"), override: false });
+config({ path: resolve(import.meta.dir, '../.env') });
+config({ path: resolve(import.meta.dir, '../../../.env'), override: false });
+config({ path: resolve(import.meta.dir, '../../../.env.local'), override: false });
 
 const url = process.env.DATABASE_URL_UNPOOLED;
-if (!url) throw new Error("DATABASE_URL_UNPOOLED is not set");
+if (!url) throw new Error('DATABASE_URL_UNPOOLED is not set');
 
-const apply = process.argv.includes("--apply");
+const apply = process.argv.includes('--apply');
 
 const client = new pg.Client({ connectionString: url, ssl: { rejectUnauthorized: true } });
 await client.connect();
@@ -51,7 +51,7 @@ const { rows } = await client.query<AffectedRow>(`
 `);
 
 if (rows.length === 0) {
-  console.log("No affected invoices found — nothing to backfill.");
+  console.log('No affected invoices found — nothing to backfill.');
   await client.end();
   process.exit(0);
 }
@@ -61,7 +61,7 @@ console.log(`Found ${rows.length} paid invoice(s) missing a payment_allocations 
 // Group by client to show the credit-balance delta this backfill will correct.
 const byClient = new Map<string, { count: number; total: number }>();
 for (const row of rows) {
-  const key = row.client_id ?? "(no client)";
+  const key = row.client_id ?? '(no client)';
   const entry = byClient.get(key) ?? { count: 0, total: 0 };
   entry.count += 1;
   entry.total += Number(row.total);
@@ -75,16 +75,16 @@ for (const [clientId, { count, total }] of byClient) {
 }
 
 if (!apply) {
-  console.log("\nDry run only — no changes made. Re-run with --apply to insert the missing rows.");
+  console.log('\nDry run only — no changes made. Re-run with --apply to insert the missing rows.');
   await client.end();
   process.exit(0);
 }
 
-console.log("\nApplying fix...");
+console.log('\nApplying fix...');
 
 let inserted = 0;
 for (const row of rows) {
-  await client.query("begin");
+  await client.query('begin');
   try {
     // Re-check under the transaction in case of concurrent normal traffic
     // creating this allocation between the select above and now.
@@ -99,9 +99,9 @@ for (const row of rows) {
       );
       inserted += 1;
     }
-    await client.query("commit");
+    await client.query('commit');
   } catch (err) {
-    await client.query("rollback");
+    await client.query('rollback');
     console.error(`Failed to backfill invoice ${row.id}:`, err);
   }
 }

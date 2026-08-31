@@ -38,4 +38,3 @@ This reduces revenue and reduces what the client owes.
 - "Service cancelled before delivery"
 - "Duplicate line item corrected"
 - "Partial write-off approved"
-

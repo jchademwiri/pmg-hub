@@ -1,6 +1,14 @@
 import * as React from 'react';
 import { getPortalSessionOrRedirect } from '@/lib/portal-session';
-import { getDb, quotations, billingLineItems, divisions, divisionBillingSettings, eq, and } from '@pmg/db';
+import {
+  getDb,
+  quotations,
+  billingLineItems,
+  divisions,
+  divisionBillingSettings,
+  eq,
+  and,
+} from '@pmg/db';
 import { notFound } from 'next/navigation';
 import { BillingDocumentView } from '@/components/billing-document-view';
 import { QuoteActionsClient } from './quote-actions-client';
@@ -49,10 +57,7 @@ export default async function QuoteDetailPage({ params }: PageProps) {
     .select()
     .from(billingLineItems)
     .where(
-      and(
-        eq(billingLineItems.documentType, 'quote'),
-        eq(billingLineItems.documentId, quote.id)
-      )
+      and(eq(billingLineItems.documentType, 'quote'), eq(billingLineItems.documentId, quote.id)),
     )
     .orderBy(billingLineItems.sortOrder);
 
@@ -118,9 +123,7 @@ export default async function QuoteDetailPage({ params }: PageProps) {
       divSettings={divSettings}
       lineItems={lineItems}
       statusBanner={statusBanner}
-      actionButtons={
-        quote.status === 'sent' ? <QuoteActionsClient quoteId={quote.id} /> : null
-      }
+      actionButtons={quote.status === 'sent' ? <QuoteActionsClient quoteId={quote.id} /> : null}
     />
   );
 }

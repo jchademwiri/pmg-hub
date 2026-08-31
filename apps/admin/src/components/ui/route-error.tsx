@@ -1,12 +1,12 @@
-'use client'
+'use client';
 
-import { AlertTriangle } from 'lucide-react'
-import { Button } from '@/components/ui/button'
+import { AlertTriangle } from 'lucide-react';
+import { Button } from '@/components/ui/button';
 
 interface RouteErrorProps {
-  routeName: string
-  error: Error & { digest?: string }
-  reset: () => void
+  routeName: string;
+  error: Error & { digest?: string };
+  reset: () => void;
 }
 
 export function RouteError({ routeName, error, reset }: RouteErrorProps) {
@@ -23,5 +23,5 @@ export function RouteError({ routeName, error, reset }: RouteErrorProps) {
         Try Again
       </Button>
     </div>
-  )
+  );
 }

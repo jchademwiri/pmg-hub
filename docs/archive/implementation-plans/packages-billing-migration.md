@@ -9,6 +9,7 @@ This plan outlines the steps to extract the duplicated billing and PDF generatio
 We will initialize a new package under the `packages` directory:
 
 #### [NEW] [package.json](file:///d:/websites/pmg-hub/packages/billing/package.json)
+
 ```json
 {
   "name": "@pmg/billing",
@@ -32,6 +33,7 @@ We will initialize a new package under the `packages` directory:
 ```
 
 #### [NEW] [tsconfig.json](file:///d:/websites/pmg-hub/packages/billing/tsconfig.json)
+
 ```json
 {
   "extends": "@pmg/typescript-config/base.json",
@@ -43,7 +45,9 @@ We will initialize a new package under the `packages` directory:
 ```
 
 #### [NEW] [index.ts](file:///d:/websites/pmg-hub/packages/billing/src/index.ts)
+
 Expose the public APIs of the billing package:
+
 ```typescript
 export * from './server-billing-pdf';
 export * from './client-billing-helpers';
@@ -58,34 +62,35 @@ export * from './document-logo';
 
 We will move the 5 identical files from `apps/portal/src/lib/` into `packages/billing/src/`:
 
-*   [NEW] [server-billing-pdf.ts](file:///d:/websites/pmg-hub/packages/billing/src/server-billing-pdf.ts)
-*   [NEW] [client-billing-helpers.ts](file:///d:/websites/pmg-hub/packages/billing/src/client-billing-helpers.ts)
-*   [NEW] [billing-ageing.ts](file:///d:/websites/pmg-hub/packages/billing/src/billing-ageing.ts)
-*   [NEW] [format.ts](file:///d:/websites/pmg-hub/packages/billing/src/format.ts)
-*   [NEW] [document-logo.ts](file:///d:/websites/pmg-hub/packages/billing/src/document-logo.ts)
+- [NEW] [server-billing-pdf.ts](file:///d:/websites/pmg-hub/packages/billing/src/server-billing-pdf.ts)
+- [NEW] [client-billing-helpers.ts](file:///d:/websites/pmg-hub/packages/billing/src/client-billing-helpers.ts)
+- [NEW] [billing-ageing.ts](file:///d:/websites/pmg-hub/packages/billing/src/billing-ageing.ts)
+- [NEW] [format.ts](file:///d:/websites/pmg-hub/packages/billing/src/format.ts)
+- [NEW] [document-logo.ts](file:///d:/websites/pmg-hub/packages/billing/src/document-logo.ts)
 
 Then, we will delete the duplicates from:
-*   `apps/admin/src/lib/`
-*   `apps/portal/src/lib/`
+
+- `apps/admin/src/lib/`
+- `apps/portal/src/lib/`
 
 ---
 
 ### 3. Update Dependencies and Imports
 
 1.  **Add `@pmg/billing` to App Dependencies**:
-    *   In [apps/admin/package.json](file:///d:/websites/pmg-hub/apps/admin/package.json), add `"@pmg/billing": "workspace:*"`
-    *   In [apps/portal/package.json](file:///d:/websites/pmg-hub/apps/portal/package.json), add `"@pmg/billing": "workspace:*"`
+    - In [apps/admin/package.json](file:///d:/websites/pmg-hub/apps/admin/package.json), add `"@pmg/billing": "workspace:*"`
+    - In [apps/portal/package.json](file:///d:/websites/pmg-hub/apps/portal/package.json), add `"@pmg/billing": "workspace:*"`
 
 2.  **Update Imports**:
     Update all references in both `admin` and `portal` apps from:
-    *   `import { ... } from '@/lib/server-billing-pdf'`
-    *   `import { ... } from '@/lib/client-billing-helpers'`
-    *   `import { ... } from '@/lib/billing-ageing'`
-    *   `import { ... } from '@/lib/format'`
-    *   `import { ... } from '@/lib/document-logo'`
-    
+    - `import { ... } from '@/lib/server-billing-pdf'`
+    - `import { ... } from '@/lib/client-billing-helpers'`
+    - `import { ... } from '@/lib/billing-ageing'`
+    - `import { ... } from '@/lib/format'`
+    - `import { ... } from '@/lib/document-logo'`
+
     To:
-    *   `import { ... } from '@pmg/billing'`
+    - `import { ... } from '@pmg/billing'`
 
 ---
 

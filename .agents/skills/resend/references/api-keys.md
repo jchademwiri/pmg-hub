@@ -4,11 +4,11 @@ Create, list, and delete API keys programmatically. No get or update endpoints e
 
 ## SDK Methods
 
-| Operation | Node.js | Python |
-|-----------|---------|--------|
-| Create | `resend.apiKeys.create(params)` | `resend.ApiKeys.create(params)` |
-| List | `resend.apiKeys.list(params?)` | `resend.ApiKeys.list()` |
-| Delete | `resend.apiKeys.remove(id)` | `resend.ApiKeys.remove(id)` |
+| Operation | Node.js                         | Python                          |
+| --------- | ------------------------------- | ------------------------------- |
+| Create    | `resend.apiKeys.create(params)` | `resend.ApiKeys.create(params)` |
+| List      | `resend.apiKeys.list(params?)`  | `resend.ApiKeys.list()`         |
+| Delete    | `resend.apiKeys.remove(id)`     | `resend.ApiKeys.remove(id)`     |
 
 ## Create Parameters
 
@@ -41,7 +41,7 @@ if (error) {
 }
 
 // IMPORTANT: This is the only time the token is returned -- store it now
-console.log('API Key:', data.token);  // re_xxxxxxxxx
+console.log('API Key:', data.token); // re_xxxxxxxxx
 console.log('Key ID:', data.id);
 
 // List all keys (tokens are NOT included in list response)
@@ -77,11 +77,11 @@ resend.ApiKeys.remove("api_key_id")
 
 ## Common Mistakes
 
-| Mistake | Fix |
-|---------|-----|
-| Not storing the token on create | The token is returned **once** - store it immediately |
-| Expecting a get or update endpoint | Neither exists - list returns metadata only (no tokens) |
-| Setting `domainId` with `full_access` | `domainId` only applies to `sending_access` keys |
-| Calling `.delete()` instead of `.remove()` | Node.js SDK uses `.remove()` for all delete operations |
-| Ignoring `error` return | Node.js SDK returns `{ data, error }` - always check `error` |
-| Name over 50 characters | `name` has a 50-character limit |
+| Mistake                                    | Fix                                                          |
+| ------------------------------------------ | ------------------------------------------------------------ |
+| Not storing the token on create            | The token is returned **once** - store it immediately        |
+| Expecting a get or update endpoint         | Neither exists - list returns metadata only (no tokens)      |
+| Setting `domainId` with `full_access`      | `domainId` only applies to `sending_access` keys             |
+| Calling `.delete()` instead of `.remove()` | Node.js SDK uses `.remove()` for all delete operations       |
+| Ignoring `error` return                    | Node.js SDK returns `{ data, error }` - always check `error` |
+| Name over 50 characters                    | `name` has a 50-character limit                              |

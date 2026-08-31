@@ -18,7 +18,11 @@ import { CreditNoteDetailClient } from './credit-note-detail-client';
 
 export const dynamic = 'force-dynamic';
 
-export async function generateMetadata({ params }: { params: Promise<{ id: string }> }): Promise<Metadata> {
+export async function generateMetadata({
+  params,
+}: {
+  params: Promise<{ id: string }>;
+}): Promise<Metadata> {
   const { id } = await params;
   const db = getDb();
   const [note] = await db
@@ -31,16 +35,16 @@ export async function generateMetadata({ params }: { params: Promise<{ id: strin
   };
 }
 
-export default async function CreditNoteDetailPage({ params }: { params: Promise<{ id: string }> }) {
+export default async function CreditNoteDetailPage({
+  params,
+}: {
+  params: Promise<{ id: string }>;
+}) {
   const { id } = await params;
   const db = getDb();
 
   // Fetch credit note
-  const [note] = await db
-    .select()
-    .from(creditNotes)
-    .where(eq(creditNotes.id, id))
-    .limit(1);
+  const [note] = await db.select().from(creditNotes).where(eq(creditNotes.id, id)).limit(1);
 
   if (!note) notFound();
 

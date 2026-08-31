@@ -39,6 +39,8 @@ const ClientSchema = z.object({
 
 export async function createClient(formData: FormData): Promise<{ error?: string }> {
   try {
+    await getSessionOrRedirect();
+
     const raw = Object.fromEntries(formData) as Record<string, string>;
     if (raw.businessName === '') delete raw.businessName;
     if (raw.email === '') delete raw.email;
@@ -46,7 +48,11 @@ export async function createClient(formData: FormData): Promise<{ error?: string
     if (raw.divisionId === '__none__') delete raw.divisionId;
     const isExcluded = raw.excludeFromAutoStatements === 'on';
     const isRetainer = raw.isRetainer === 'on';
-    const result = ClientSchema.safeParse({ ...raw, excludeFromAutoStatements: isExcluded, isRetainer });
+    const result = ClientSchema.safeParse({
+      ...raw,
+      excludeFromAutoStatements: isExcluded,
+      isRetainer,
+    });
     if (!result.success) {
       return { error: result.error.issues[0]?.message ?? 'Validation error' };
     }
@@ -70,17 +76,23 @@ export async function createClient(formData: FormData): Promise<{ error?: string
 
 export async function updateClient(id: string, formData: FormData): Promise<{ error?: string }> {
   try {
+    await getSessionOrRedirect();
+
     const raw = Object.fromEntries(formData) as Record<string, string>;
     if (raw.businessName === '') delete raw.businessName;
     if (raw.email === '') delete raw.email;
     if (raw.phone === '') delete raw.phone;
     if (raw.divisionId === '__none__') delete raw.divisionId;
-    
+
     // Convert checkbox 'on' value to boolean
     const isExcluded = raw.excludeFromAutoStatements === 'on';
     const isRetainer = raw.isRetainer === 'on';
 
-    const result = ClientSchema.safeParse({ ...raw, excludeFromAutoStatements: isExcluded, isRetainer });
+    const result = ClientSchema.safeParse({
+      ...raw,
+      excludeFromAutoStatements: isExcluded,
+      isRetainer,
+    });
     if (!result.success) {
       return { error: result.error.issues[0]?.message ?? 'Validation error' };
     }
@@ -111,6 +123,8 @@ export async function toggleClientActive(
   isActive: boolean,
 ): Promise<{ error?: string }> {
   try {
+    await getSessionOrRedirect();
+
     await setClientActive(id, isActive);
     revalidatePath('/relationships/clients');
     return {};
@@ -122,6 +136,8 @@ export async function toggleClientActive(
 
 export async function deleteClient(id: string): Promise<{ error?: string }> {
   try {
+    await getSessionOrRedirect();
+
     // Check for income records
     const [incomeCount] = await db
       .select({ id: income.id })
