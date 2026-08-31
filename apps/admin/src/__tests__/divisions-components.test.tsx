@@ -6,6 +6,8 @@ import { DivisionsTable } from '@/components/divisions/divisions-table';
 import { DivisionAddForm } from '@/components/divisions/division-add-form';
 import { TooltipProvider } from '@/components/ui/tooltip';
 import type { DivisionWithPnl } from '@/app/(admin)/relationships/divisions/divisions-client';
+import { db } from '@pmg/db';
+import { deleteDivision, createDivision, updateDivision } from '@/app/actions/divisions';
 
 /** Fixture builder — zero-filled DivisionWithPnl with per-test overrides. */
 function makeDivision(
@@ -426,9 +428,8 @@ describe('Divisions page empty state', () => {
 // ── deleteDivision FK constraint violation ──────────────────────────────────
 
 describe('deleteDivision - FK constraint violation returns { error }', () => {
-  beforeEach(async () => {
+  beforeEach(() => {
     vi.clearAllMocks();
-    const { db } = await import('@pmg/db');
     vi.mocked(db.select).mockReturnValue({
       from: vi.fn().mockReturnValue({
         where: vi.fn().mockReturnValue({
@@ -439,9 +440,6 @@ describe('deleteDivision - FK constraint violation returns { error }', () => {
   });
 
   it('returns { error: "Cannot delete division with existing income or expense records." } on FK constraint violation - Validates: Requirements 4.4', async () => {
-    const { db } = await import('@pmg/db');
-    const { deleteDivision } = await import('@/app/actions/divisions');
-
     // Mock db.delete to throw a FK constraint error (Postgres code 23503)
     const fkError = new Error('insert or update on table violates foreign key constraint 23503');
     vi.mocked(db.delete).mockReturnValue({
@@ -465,8 +463,6 @@ describe('createDivision - validation failure returns { error }', () => {
   });
 
   it('returns { error: <non-empty string> } when name is empty - Validates: Requirements 2.4', async () => {
-    const { createDivision } = await import('@/app/actions/divisions');
-
     const formData = new FormData();
     formData.append('name', '');
 
@@ -486,8 +482,6 @@ describe('updateDivision - validation failure returns { error }', () => {
   });
 
   it('returns { error: <non-empty string> } when name is empty - Validates: Requirements 3.4', async () => {
-    const { updateDivision } = await import('@/app/actions/divisions');
-
     const formData = new FormData();
     formData.append('name', '');
 
