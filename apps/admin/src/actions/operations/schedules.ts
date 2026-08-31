@@ -168,6 +168,14 @@ export async function updateProjectScheduleEntry(
   }
 }
 
+const UpdateProjectScheduleJsonSchema = z.object({
+  notes: z.string().optional().nullable(),
+  blockers: z.string().optional().nullable(),
+  actualEffortDays: z.coerce.number().min(0).optional().nullable(),
+  outcome: z.enum(['won', 'lost', 'pending']).optional().nullable(),
+  priority: z.enum(['low', 'normal', 'high', 'urgent']).optional(),
+});
+
 export async function updateProjectScheduleEntryJson(
   id: string,
   data: Record<string, unknown>,
@@ -175,15 +183,20 @@ export async function updateProjectScheduleEntryJson(
   try {
     await getSessionOrRedirect();
 
-    // Build partial update from the provided data object
+    const validation = UpdateProjectScheduleJsonSchema.safeParse(data);
+    if (!validation.success) {
+      return { error: validation.error.issues[0]?.message ?? 'Invalid update data' };
+    }
+    const validated = validation.data;
+
+    // Build partial update from the validated data object
     const update: Partial<NewProjectScheduleEntry> = {};
-    if (data.notes !== undefined) update.notes = data.notes as string;
-    if (data.blockers !== undefined) update.blockers = data.blockers as string;
-    if (data.actualEffortDays !== undefined)
-      update.actualEffortDays = data.actualEffortDays as number;
-    if (data.outcome !== undefined) update.outcome = data.outcome as 'won' | 'lost' | 'pending';
-    if (data.priority !== undefined)
-      update.priority = data.priority as 'low' | 'normal' | 'high' | 'urgent';
+    if (validated.notes !== undefined) update.notes = validated.notes;
+    if (validated.blockers !== undefined) update.blockers = validated.blockers;
+    if (validated.actualEffortDays !== undefined)
+      update.actualEffortDays = validated.actualEffortDays;
+    if (validated.outcome !== undefined) update.outcome = validated.outcome;
+    if (validated.priority !== undefined) update.priority = validated.priority;
 
     await updateEntry(id, update);
 

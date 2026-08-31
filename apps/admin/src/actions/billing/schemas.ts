@@ -97,3 +97,69 @@ export const CreateInvoiceSchema = z
   });
 
 export type CreateInvoiceInput = z.infer<typeof CreateInvoiceSchema>;
+
+// ── Payments ──────────────────────────────────────────────────────────────────
+
+export const RecordPaymentSchema = z.object({
+  clientId: z.string().min(1, 'Client is required'),
+  divisionId: z.string().min(1).optional().nullable(),
+  date: z.string().min(1, 'Payment date is required'),
+  amount: z.coerce.number().positive('Payment amount must be positive'),
+  method: z.string().min(1, 'Payment method is required'),
+  reference: z.string().max(200).optional().nullable(),
+  description: z.string().max(2000).optional().nullable(),
+  sendReceiptEmail: z.boolean().default(false),
+  allocations: z
+    .array(
+      z.object({
+        invoiceId: z.string().min(1, 'Invoice is required'),
+        amount: z.coerce.number().positive(),
+      }),
+    )
+    .optional(),
+});
+
+export type RecordPaymentInput = z.infer<typeof RecordPaymentSchema>;
+
+export const AdjustPaymentSchema = z.object({
+  incomeId: z.string().min(1, 'Payment ID is required'),
+  newAmount: z.coerce.number().positive('Adjusted amount must be positive'),
+});
+
+export type AdjustPaymentInput = z.infer<typeof AdjustPaymentSchema>;
+
+// ── Credit Notes ──────────────────────────────────────────────────────────────
+
+export const CreateCreditNoteSchema = z.object({
+  clientId: z.string().min(1, 'Client is required'),
+  divisionId: z.string().min(1, 'Division is required'),
+  reason: z.string().min(1, 'Reason is required').max(500),
+  creditDate: z.string().min(1, 'Credit date is required'),
+  total: z.coerce.number().positive('Total credit must be positive'),
+  notes: z.string().max(2000).optional().nullable(),
+  lineItems: z.array(LineItemSchema).min(1, 'At least one line item is required'),
+});
+
+export type CreateCreditNoteInput = z.infer<typeof CreateCreditNoteSchema>;
+
+export const ApplyCreditToInvoiceSchema = z.object({
+  creditNoteId: z.string().min(1, 'Credit note is required'),
+  invoiceId: z.string().min(1, 'Invoice is required'),
+  amountToApply: z.coerce.number().positive('Amount to apply must be positive'),
+});
+
+export type ApplyCreditToInvoiceInput = z.infer<typeof ApplyCreditToInvoiceSchema>;
+
+export const ApplyCreditToInvoicesSchema = z.object({
+  creditNoteId: z.string().min(1, 'Credit note is required'),
+  invoices: z
+    .array(
+      z.object({
+        invoiceId: z.string().min(1, 'Invoice is required'),
+        amount: z.coerce.number().positive(),
+      }),
+    )
+    .min(1, 'At least one invoice is required'),
+});
+
+export type ApplyCreditToInvoicesInput = z.infer<typeof ApplyCreditToInvoicesSchema>;

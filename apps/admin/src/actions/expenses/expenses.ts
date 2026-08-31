@@ -12,18 +12,7 @@ import {
 } from '@/lib/accounting/posting';
 import { getSessionOrRedirect } from '@/lib/auth';
 import { uploadReceiptToR2 } from '@/lib/r2';
-
-const ExpenseSchema = z.object({
-  date: z.string().min(1),
-  divisionId: z.string().uuid(),
-  clientId: z
-    .string()
-    .optional()
-    .transform((val) => (val === '' || val === 'none' ? undefined : val)),
-  category: z.string().min(1),
-  description: z.string().optional(),
-  amount: z.coerce.number().positive(),
-});
+import { ExpenseSchema } from './schemas';
 
 export async function createExpense(formData: FormData): Promise<{ error?: string }> {
   try {

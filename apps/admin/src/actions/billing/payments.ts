@@ -26,6 +26,7 @@ import {
   postBadDebtRecoveryJournalEntry,
 } from '@/lib/accounting/posting';
 import { getPortalBaseUrl } from '@/lib/portal-url';
+import { RecordPaymentSchema, AdjustPaymentSchema } from './schemas';
 
 export interface PaymentAllocationInput {
   invoiceId: string;
@@ -147,6 +148,20 @@ export async function recordClientPayment(
 ): Promise<{ error?: string; success?: boolean }> {
   try {
     await getSessionOrRedirect();
+    const validation = RecordPaymentSchema.safeParse({
+      clientId: data.clientId,
+      divisionId: data.divisionId,
+      date: data.date,
+      amount: data.amount,
+      method: (data as any).method || 'bank_transfer',
+      reference: (data as any).reference || null,
+      description: data.description || null,
+      sendReceiptEmail: Boolean(data.sendReceiptEmail),
+      allocations: data.allocations,
+    });
+    if (!validation.success) {
+      return { error: validation.error.issues[0]?.message ?? 'Invalid payment data' };
+    }
     const db = getDb();
 
     // 1. Check period lock and future date
@@ -471,98 +486,94 @@ export async function recordClientPayment(
     revalidatePath('/accounting/general-ledger');
     revalidatePath('/accounting/profit-and-loss');
 
-    // 6. Asynchronously trigger Payment Thank You email receipt via Resend
+    // 6. Trigger Payment Thank You email receipt via Resend
     if (data.sendReceiptEmail && client.email) {
-      (async () => {
-        try {
-          // Fetch division billing config and division details
-          const [billingConfig] = await db
-            .select()
-            .from(divisionBillingSettings)
-            .where(eq(divisionBillingSettings.divisionId, finalDivisionId));
+      try {
+        // Fetch division billing config and division details
+        const [billingConfig] = await db
+          .select()
+          .from(divisionBillingSettings)
+          .where(eq(divisionBillingSettings.divisionId, finalDivisionId));
 
-          const [divRow] = await db
-            .select({ name: divisions.name })
-            .from(divisions)
-            .where(eq(divisions.id, finalDivisionId));
+        const [divRow] = await db
+          .select({ name: divisions.name })
+          .from(divisions)
+          .where(eq(divisions.id, finalDivisionId));
 
-          // Set up environment config for email dispatcher (matching email-delivery.ts)
-          const isTes = divRow?.name?.toLowerCase().includes('tender') || false;
-          const isAws = divRow?.name?.toLowerCase().includes('apex') || false;
-          const apiKey =
-            (isTes
-              ? process.env.TES_RESEND_API_KEY
-              : isAws
-                ? process.env.AWS_RESEND_API_KEY
-                : undefined) || process.env.PMG_RESEND_API_KEY!;
+        // Set up environment config for email dispatcher (matching email-delivery.ts)
+        const isTes = divRow?.name?.toLowerCase().includes('tender') || false;
+        const isAws = divRow?.name?.toLowerCase().includes('apex') || false;
+        const apiKey =
+          (isTes
+            ? process.env.TES_RESEND_API_KEY
+            : isAws
+              ? process.env.AWS_RESEND_API_KEY
+              : undefined) || process.env.PMG_RESEND_API_KEY!;
 
-          const {
-            createEmailClient,
-            PaymentThankYouEmail,
-            DEFAULT_REPLY_TO,
-            resolveDivisionAdminEmail,
-            resolveDivisionSenderName,
-            resolveDefaultFromEmail,
-          } = await import('@pmg/emails');
+        const {
+          createEmailClient,
+          PaymentThankYouEmail,
+          DEFAULT_REPLY_TO,
+          resolveDivisionAdminEmail,
+          resolveDivisionSenderName,
+          resolveDefaultFromEmail,
+        } = await import('@pmg/emails');
 
-          const defaultFrom = resolveDefaultFromEmail(divRow?.name);
-          const fromName = resolveDivisionSenderName(divRow?.name);
+        const defaultFrom = resolveDefaultFromEmail(divRow?.name);
+        const fromName = resolveDivisionSenderName(divRow?.name);
 
-          // Resolve info subdomain sender (helper matching email-delivery.ts)
-          let fromEmail = defaultFrom;
-          if (billingConfig?.divisionWebsite) {
-            const domain = billingConfig.divisionWebsite
-              .trim()
-              .replace(/^(https?:\/\/)?(www\.)?/, '')
-              .split('/')[0]
-              .toLowerCase();
-            if (domain) {
-              fromEmail = domain.startsWith('info.')
-                ? `noreply@${domain}`
-                : `noreply@info.${domain}`;
-            }
+        // Resolve info subdomain sender (helper matching email-delivery.ts)
+        let fromEmail = defaultFrom;
+        if (billingConfig?.divisionWebsite) {
+          const domain = billingConfig.divisionWebsite
+            .trim()
+            .replace(/^(https?:\/\/)?(www\.)?/, '')
+            .split('/')[0]
+            .toLowerCase();
+          if (domain) {
+            fromEmail = domain.startsWith('info.') ? `noreply@${domain}` : `noreply@info.${domain}`;
           }
-
-          // CC the division admin — salesRepEmail takes priority, then brand default
-          const adminCc = resolveDivisionAdminEmail(
-            divRow?.name,
-            billingConfig?.salesRepEmail ?? null,
-          );
-
-          const emailClient = createEmailClient({
-            apiKey,
-            from: `${fromName} <${fromEmail}>`,
-            adminEmail: fromEmail,
-          });
-
-          const portalBaseUrl = getPortalBaseUrl();
-          const portalUrl = `${portalBaseUrl}/statements`;
-
-          const emailProps = {
-            clientName: client.businessName || client.name,
-            amountPaid: `R ${Number(data.amount).toLocaleString('en-ZA', { minimumFractionDigits: 2 })}`,
-            paymentDate: fmtDateLong(data.date),
-            paymentDescription: data.description || undefined,
-            allocations: allocatedInvoicesInfo,
-            companyName: divRow?.name || 'Playhouse Media Group',
-            primaryColor: '#1d4ed8',
-            websiteUrl: billingConfig?.divisionWebsite || undefined,
-            logoUrl: billingConfig?.logoUrl || undefined,
-            portalUrl,
-          };
-
-          const React = await import('react');
-          await emailClient({
-            to: client.email!,
-            cc: adminCc,
-            subject: `Payment Receipt Confirmation: Thank you for your payment`,
-            react: React.createElement(PaymentThankYouEmail, emailProps),
-            replyTo: DEFAULT_REPLY_TO,
-          });
-        } catch (mailErr) {
-          console.error('Failed to send Payment Thank You email:', mailErr);
         }
-      })();
+
+        // CC the division admin — salesRepEmail takes priority, then brand default
+        const adminCc = resolveDivisionAdminEmail(
+          divRow?.name,
+          billingConfig?.salesRepEmail ?? null,
+        );
+
+        const emailClient = createEmailClient({
+          apiKey,
+          from: `${fromName} <${fromEmail}>`,
+          adminEmail: fromEmail,
+        });
+
+        const portalBaseUrl = getPortalBaseUrl();
+        const portalUrl = `${portalBaseUrl}/statements`;
+
+        const emailProps = {
+          clientName: client.businessName || client.name,
+          amountPaid: `R ${Number(data.amount).toLocaleString('en-ZA', { minimumFractionDigits: 2 })}`,
+          paymentDate: fmtDateLong(data.date),
+          paymentDescription: data.description || undefined,
+          allocations: allocatedInvoicesInfo,
+          companyName: divRow?.name || 'Playhouse Media Group',
+          primaryColor: '#1d4ed8',
+          websiteUrl: billingConfig?.divisionWebsite || undefined,
+          logoUrl: billingConfig?.logoUrl || undefined,
+          portalUrl,
+        };
+
+        const React = await import('react');
+        await emailClient({
+          to: client.email!,
+          cc: adminCc,
+          subject: `Payment Receipt Confirmation: Thank you for your payment`,
+          react: React.createElement(PaymentThankYouEmail, emailProps),
+          replyTo: DEFAULT_REPLY_TO,
+        });
+      } catch (mailErr) {
+        console.error('Failed to send Payment Thank You email:', mailErr);
+      }
     }
 
     return { success: true };
@@ -584,6 +595,10 @@ export async function adjustClientPayment(
 ): Promise<{ error?: string; success?: boolean }> {
   try {
     await getSessionOrRedirect();
+    const validation = AdjustPaymentSchema.safeParse({ incomeId, newAmount });
+    if (!validation.success) {
+      return { error: validation.error.issues[0]?.message ?? 'Invalid adjustment parameters' };
+    }
     const db = getDb();
 
     // 1. Fetch original income record

@@ -50,11 +50,13 @@ export async function acceptQuoteAction(quoteId: string): Promise<{ error?: stri
       .where(eq(quotations.id, quote.id));
 
     // Resolve sales rep / admin email
-    const [divSettings] = await db
-      .select()
-      .from(divisionBillingSettings)
-      .where(eq(divisionBillingSettings.divisionId, quote.divisionId))
-      .limit(1);
+    const [divSettings] = quote.divisionId
+      ? await db
+          .select()
+          .from(divisionBillingSettings)
+          .where(eq(divisionBillingSettings.divisionId, quote.divisionId))
+          .limit(1)
+      : [null];
 
     const [orgSettings] = await db.select().from(organisationSettings).limit(1);
 
@@ -149,11 +151,13 @@ export async function declineQuoteAction(
       .where(eq(quotations.id, quote.id));
 
     // Resolve sales rep / admin email
-    const [divSettings] = await db
-      .select()
-      .from(divisionBillingSettings)
-      .where(eq(divisionBillingSettings.divisionId, quote.divisionId))
-      .limit(1);
+    const [divSettings] = quote.divisionId
+      ? await db
+          .select()
+          .from(divisionBillingSettings)
+          .where(eq(divisionBillingSettings.divisionId, quote.divisionId))
+          .limit(1)
+      : [null];
 
     const [orgSettings] = await db.select().from(organisationSettings).limit(1);
 

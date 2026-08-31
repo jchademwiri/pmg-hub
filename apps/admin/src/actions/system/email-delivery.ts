@@ -333,8 +333,10 @@ export async function sendDocumentEmailAction(rawPayload: unknown) {
       customAttachments,
       statementData,
     } = parsed.data;
+    const docLabel =
+      documentType === 'invoice' ? 'Invoice' : documentType === 'quote' ? 'Quote' : 'Statement';
     const pdfError =
-      getPdfAttachmentError(base64Pdf, `${documentType === 'invoice' ? 'Invoice' : 'Quote'} PDF`) ??
+      getPdfAttachmentError(base64Pdf, `${docLabel} PDF`) ??
       getPdfAttachmentError(base64StatementPdf, 'Statement PDF');
     if (pdfError) return { error: pdfError };
 
