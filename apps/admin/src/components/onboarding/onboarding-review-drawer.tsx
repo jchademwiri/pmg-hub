@@ -183,25 +183,24 @@ export function OnboardingReviewDrawer({ entry, open, onOpenChange }: Onboarding
                 </p>
               </div>
 
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <div>
-                  <Label className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">
-                    Email Address
-                  </Label>
-                  <p className="text-xs font-medium text-foreground mt-1 break-all flex items-center gap-1.5">
-                    <Mail className="size-3.5 text-muted-foreground shrink-0" />
-                    <span>{entry.email}</span>
-                  </p>
-                </div>
-                <div>
-                  <Label className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">
-                    Phone Number
-                  </Label>
-                  <p className="text-xs font-mono font-medium text-foreground mt-1 flex items-center gap-1.5">
-                    <Phone className="size-3.5 text-muted-foreground shrink-0" />
-                    <span>{entry.phone}</span>
-                  </p>
-                </div>
+              <div>
+                <Label className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">
+                  Email Address
+                </Label>
+                <p className="text-xs font-medium text-foreground mt-1 break-all flex items-center gap-2">
+                  <Mail className="size-3.5 text-muted-foreground shrink-0" />
+                  <span>{entry.email}</span>
+                </p>
+              </div>
+
+              <div>
+                <Label className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">
+                  Phone Number
+                </Label>
+                <p className="text-xs font-mono font-medium text-foreground mt-1 flex items-center gap-2">
+                  <Phone className="size-3.5 text-muted-foreground shrink-0" />
+                  <span>{entry.phone}</span>
+                </p>
               </div>
 
               {entry.registrationNumber && (
