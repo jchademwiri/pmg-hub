@@ -149,7 +149,7 @@ jobs:
           if [ -z "$files" ]; then
             echo "No formattable files changed."
           else
-            echo "$files" | xargs bunx prettier --check
+            echo "$files" | xargs -d '\n' bunx prettier --check
           fi
 
   typecheck:
