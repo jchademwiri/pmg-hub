@@ -29,6 +29,27 @@ interface ShareOnboardingLinkDialogProps {
   trigger?: React.ReactNode;
 }
 
+const DIVISION_CONFIG: Record<
+  string,
+  { name: string; url: string; defaultPhone: string }
+> = {
+  pmg: {
+    name: 'Playhouse Media Group',
+    url: 'https://playhousemedia.co.za/onboard',
+    defaultPhone: '27740491433',
+  },
+  tes: {
+    name: 'Tender Edge Solutions',
+    url: 'https://tenderedgesolutions.co.za/onboard',
+    defaultPhone: '27745017094',
+  },
+  aws: {
+    name: 'Apex Web Solutions',
+    url: 'https://apexwebsolutions.co.za/onboard',
+    defaultPhone: '27740491433',
+  },
+};
+
 export function ShareOnboardingLinkDialog({
   divisions = [],
   leadId,
@@ -40,21 +61,18 @@ export function ShareOnboardingLinkDialog({
   const [selectedDivision, setSelectedDivision] = React.useState<string>('pmg');
   const [copied, setCopied] = React.useState(false);
 
-  // Derive target URL
-  const baseUrl = 'https://playhousemedia.co.za/onboard';
+  // Derive division-specific target URL
+  const activeDivision = DIVISION_CONFIG[selectedDivision] || DIVISION_CONFIG.pmg;
   const queryParams = new URLSearchParams();
-  if (selectedDivision !== 'pmg') {
-    queryParams.set('division', selectedDivision);
-  }
   if (leadId) {
     queryParams.set('lead', leadId);
   }
   const queryString = queryParams.toString();
-  const fullUrl = queryString ? `${baseUrl}?${queryString}` : baseUrl;
+  const fullUrl = queryString ? `${activeDivision.url}?${queryString}` : activeDivision.url;
 
-  // Pre-written WhatsApp invitation copy
+  // Pre-written WhatsApp invitation copy mentioning the specific brand
   const recipientName = leadName ? ` ${leadName}` : '';
-  const whatsAppMessage = `Hi${recipientName}! Please take 10 seconds to confirm your contact and business details here so we can set up your account: ${fullUrl}`;
+  const whatsAppMessage = `Hi${recipientName}! Please take 10 seconds to confirm your contact and business details for ${activeDivision.name} so we can set up your account: ${fullUrl}`;
 
   // WhatsApp click-to-chat URL
   const rawDigits = leadPhone ? leadPhone.replace(/[^0-9]/g, '') : '';

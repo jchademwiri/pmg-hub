@@ -9,7 +9,7 @@ const isSuccess = result?.data?.success === true;
 
 // Query parameters for pre-filling and theming
 const leadId = Astro.url.searchParams.get('lead') || '';
-const divisionParam = (Astro.url.searchParams.get('division') || 'pmg').toLowerCase();
+const divisionParam = (Astro.url.searchParams.get('division') || 'aws').toLowerCase();
 
 // Safe lead data pre-population
 let prefilled = {
